@@ -53,7 +53,7 @@ endif()
 # addressed yet.
 
 # For pthreadpool_new_if_impl. TODO: Remove when threadpools are unitied.
-if(NOT MSVC)
+if(NOT MSVC AND USE_XNNPACK)
   if(NOT TARGET fxdiv)
     set(FXDIV_BUILD_TESTS OFF CACHE BOOL "")
     set(FXDIV_BUILD_BENCHMARKS OFF CACHE BOOL "")
@@ -587,7 +587,7 @@ elseif(USE_CUDA)
 endif()
 
 
-if(NOT MSVC)
+if(NOT MSVC AND USE_XNNPACK)
   target_link_libraries(torch_cpu PRIVATE fxdiv)
 endif()
 
