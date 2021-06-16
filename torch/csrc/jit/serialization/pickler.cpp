@@ -534,7 +534,7 @@ void Pickler::pushDict(const IValue& ivalue) {
 
   push<PickleOpCode>(PickleOpCode::EMPTY_DICT);
 
-  if (dict.size() >= 0) {
+  if (!dict.empty()) {
     push<PickleOpCode>(PickleOpCode::MARK);
 
     // Sort the dict for deterministic keys
