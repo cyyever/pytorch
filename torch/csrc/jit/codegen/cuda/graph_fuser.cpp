@@ -1021,8 +1021,6 @@ void guardFusionGroup(Node* fusion) {
   Value* typecheck_result = typecheck_node->output();
   typecheck_node->tys_(attr::types, guard_types);
 
-  std::unordered_map<Value*, Value*> typechecked_inputs;
-
   // Insert if block
   auto versioning_if =
       fusion->owningGraph()

@@ -227,9 +227,6 @@ HazardKind getPotentialHazards(
   BoundsInfo aBounds = getInferredBounds(analyzer, A, true);
   BoundsInfo bBounds = getInferredBounds(analyzer, B, true);
 
-  BoundSet aWrites;
-  BoundSet aReads;
-
   for (auto& pair : bBounds) {
     const Buf* buf = pair.first;
     if (aBounds.find(buf) == aBounds.end()) {

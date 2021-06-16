@@ -48,7 +48,6 @@ void GpuLower::replaceSymbolicSizes() {
   // variable to be T0->size[...] we need it to be T9->size[...]
   for (TensorView* tv : inputs_and_outputs) {
     // Replace the domain with one based on Ti.size[j]
-    std::vector<IterDomain*> new_domain_iters;
     const std::vector<IterDomain*>& root_td = tv->getRootDomain();
 
     size_t dim = 0;
