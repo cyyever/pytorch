@@ -218,7 +218,7 @@ std::vector<std::string> inputTypes(const at::RecordFunction& fn) {
 KinetoThreadLocalState* getProfilerTLSState() {
   const auto& state = c10::ThreadLocalDebugInfo::get(
       c10::DebugInfoKind::PROFILER_STATE);
-  return static_cast<KinetoThreadLocalState*>(state);
+  return dynamic_cast<KinetoThreadLocalState*>(state);
 }
 
 void pushProfilingCallbacks() {
@@ -289,7 +289,7 @@ void pushProfilingCallbacks() {
             config.state != ProfilerState::KINETO_GPU_FALLBACK) {
           return;
         }
-        auto* kineto_ctx_ptr = static_cast<KinetoObserverContext*>(ctx_ptr);
+        auto* kineto_ctx_ptr = dynamic_cast<KinetoObserverContext*>(ctx_ptr);
         TORCH_INTERNAL_ASSERT(kineto_ctx_ptr != nullptr);
 
         kineto_ctx_ptr->endThreadId = at::RecordFunction::currentThreadId();
@@ -438,7 +438,7 @@ std::unique_ptr<ProfilerResult> disableProfiler() {
   // all the DebugInfoBase objects are scope based and supposed to use DebugInfoGuard
   auto state = c10::ThreadLocalDebugInfo::_pop(c10::DebugInfoKind::PROFILER_STATE);
 
-  auto state_ptr = static_cast<KinetoThreadLocalState*>(state.get());
+  auto state_ptr = std::dynamic_pointer_cast<KinetoThreadLocalState>(state);
   const auto& config = state_ptr->config();
   TORCH_CHECK(state_ptr && (
       config.state == ProfilerState::KINETO ||

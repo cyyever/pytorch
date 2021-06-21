@@ -270,7 +270,7 @@ const Expr* IRMutator::mutate(const Polynomial* v) {
 
   std::vector<const Term*> variables;
   for (const auto* t : v->variables()) {
-    variables.push_back(static_cast<const Term*>(t->accept_mutator(this)));
+    variables.push_back(dynamic_cast<const Term*>(t->accept_mutator(this)));
   }
   return new Polynomial(v->hasher(), newScalar, variables);
 }
@@ -311,7 +311,8 @@ const Expr* IRMutator::mutate(const ReduceOp* v) {
 
   std::vector<const Var*> new_reduce_args;
   for (auto* r : v->reduce_args()) {
-    new_reduce_args.push_back(static_cast<const Var*>(r->accept_mutator(this)));
+    new_reduce_args.push_back(
+        dynamic_cast<const Var*>(r->accept_mutator(this)));
   }
 
   return new ReduceOp(body_new, new_reduce_args, v->reducer());
