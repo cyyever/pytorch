@@ -74,7 +74,7 @@ if(MSVC)
 endif(MSVC)
 
 # ---[ Threads
-include(${CMAKE_CURRENT_LIST_DIR}/public/threads.cmake)
+find_package(Threads REQUIRED)
 if(TARGET Threads::Threads)
   list(APPEND Caffe2_PUBLIC_DEPENDENCY_LIBS Threads::Threads)
 else()

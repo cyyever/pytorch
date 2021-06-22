@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 cmake_policy(VERSION 2.8.12)
 
 set(TORCH_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../)
-include(${TORCH_ROOT}/cmake/public/threads.cmake)
+find_package(Threads REQUIRED)
 
 if(NOT LIBSHM_INSTALL_LIB_SUBDIR)
   set(LIBSHM_INSTALL_LIB_SUBDIR "lib" CACHE PATH "libshm install library directory")
