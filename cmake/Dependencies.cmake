@@ -76,7 +76,7 @@ endif(MSVC)
 # ---[ Threads
 find_package(Threads REQUIRED)
 if(TARGET Threads::Threads)
-  list(APPEND Caffe2_PUBLIC_DEPENDENCY_LIBS Threads::Threads)
+  list(APPEND Caffe2_PRIVATE_DEPENDENCY_LIBS Threads::Threads)
 else()
   message(FATAL_ERROR
       "Cannot find threading library. Caffe2 requires Threads to compile.")
@@ -131,7 +131,7 @@ elseif(BLAS STREQUAL "ATLAS")
   list(APPEND Caffe2_PUBLIC_DEPENDENCY_LIBS cblas)
 elseif(BLAS STREQUAL "OpenBLAS")
   find_package(OpenBLAS REQUIRED)
-  list(APPEND Caffe2_PUBLIC_DEPENDENCY_LIBS OpenBLAS::OpenBLAS)
+  list(APPEND Caffe2_PRIVATE_DEPENDENCY_LIBS OpenBLAS::OpenBLAS)
 elseif(BLAS STREQUAL "BLIS")
   find_package(BLIS REQUIRED)
   include_directories(SYSTEM ${BLIS_INCLUDE_DIR})
@@ -586,7 +586,7 @@ endif()
 
 # ---[ gflags
 if(USE_GFLAGS)
-  include(${CMAKE_CURRENT_LIST_DIR}/public/gflags.cmake)
+  find_package(gflags CONFIG QUIET)
   if(NOT TARGET gflags)
     message(WARNING
         "gflags is not found. Caffe2 will build without gflags support but "
@@ -598,7 +598,7 @@ endif()
 
 # ---[ Google-glog
 if(USE_GLOG)
-  include(${CMAKE_CURRENT_LIST_DIR}/public/glog.cmake)
+  find_package(glog CONFIG QUIET)
   if(TARGET glog::glog)
     set(CAFFE2_USE_GOOGLE_GLOG 1)
     include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
