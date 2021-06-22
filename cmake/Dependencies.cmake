@@ -1062,61 +1062,7 @@ endif()
 
 # ---[ OpenMP
 if(USE_OPENMP)
-  # OpenMP support?
-  set(WITH_OPENMP ON CACHE BOOL "OpenMP support if available?")
-
-  # macOS + GCC
-  if(APPLE AND CMAKE_COMPILER_IS_GNUCC)
-    exec_program(uname ARGS -v  OUTPUT_VARIABLE DARWIN_VERSION)
-    string(REGEX MATCH "[0-9]+" DARWIN_VERSION ${DARWIN_VERSION})
-    message(STATUS "macOS Darwin version: ${DARWIN_VERSION}")
-    if(DARWIN_VERSION GREATER 9)
-      set(APPLE_OPENMP_SUCKS 1)
-    endif(DARWIN_VERSION GREATER 9)
-    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-      OUTPUT_VARIABLE GCC_VERSION)
-    if(APPLE_OPENMP_SUCKS AND GCC_VERSION VERSION_LESS 4.6.2)
-      message(WARNING "Disabling OpenMP (unstable with this version of GCC). "
-        "Install GCC >= 4.6.2 or change your OS to enable OpenMP.")
-      add_compile_options(-Wno-unknown-pragmas)
-      set(WITH_OPENMP OFF CACHE BOOL "OpenMP support if available?" FORCE)
-    endif()
-  endif()
-
-  if("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC"
-    AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    message(STATUS "Setting OpenMP flags for clang-cl")
-    set(OpenMP_CXX_FLAGS "-Xclang -fopenmp")
-    set(OpenMP_C_FLAGS "-Xclang -fopenmp")
-    set(CHECKED_OPENMP ON CACHE BOOL "already checked for OpenMP")
-    set(OPENMP_FOUND ON CACHE BOOL "OpenMP Support found")
-    if(NOT MKL_FOUND)
-      execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version OUTPUT_VARIABLE clang_version_output)
-      string(REGEX REPLACE ".*InstalledDir: ([^\n]+).*" "\\1" CLANG_BINDIR ${clang_version_output})
-
-      get_filename_component(CLANG_ROOT ${CLANG_BINDIR} DIRECTORY)
-      set(CLANG_OPENMP_LIBRARY "${CLANG_ROOT}/lib/libiomp5md.lib")
-
-      if(NOT TARGET caffe2::openmp)
-        add_library(caffe2::openmp INTERFACE IMPORTED)
-      endif()
-
-      set_property(
-        TARGET caffe2::openmp PROPERTY INTERFACE_LINK_LIBRARIES
-        ${CLANG_OPENMP_LIBRARY})
-
-      list(APPEND Caffe2_PUBLIC_DEPENDENCY_LIBS caffe2::openmp)
-    endif()
-  endif()
-
-  if(WITH_OPENMP AND NOT CHECKED_OPENMP)
-    find_package(OpenMP QUIET)
-    set(CHECKED_OPENMP ON CACHE BOOL "already checked for OpenMP")
-
-    # OPENMP_FOUND is not cached in FindOpenMP.cmake (all other variables are cached)
-    # see https://github.com/Kitware/CMake/blob/master/Modules/FindOpenMP.cmake
-    set(OPENMP_FOUND ${OPENMP_FOUND} CACHE BOOL "OpenMP Support found")
-  endif()
+  find_package(OpenMP QUIET)
 
   if(OPENMP_FOUND)
     message(STATUS "Adding OpenMP CXX_FLAGS: " ${OpenMP_CXX_FLAGS})
