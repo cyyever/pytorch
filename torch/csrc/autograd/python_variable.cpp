@@ -1150,10 +1150,8 @@ static void clear_slots(PyTypeObject* type, PyObject* self) {
     if (mp->type == T_OBJECT_EX && !(mp->flags & READONLY)) {
       char* addr = (char*)self + mp->offset;
       PyObject* obj = *(PyObject**)addr;
-      // NOLINTNEXTLINE(modernize-use-nullptr)
-      if (obj != NULL) {
-        // NOLINTNEXTLINE(modernize-use-nullptr)
-        *(PyObject**)addr = NULL;
+      if (obj != nullptr) {
+        *(PyObject**)addr = nullptr;
         Py_DECREF(obj);
       }
     }
@@ -1237,14 +1235,11 @@ void THPVariable_subclass_dealloc(PyObject* self) {
   // All Python defined classes have __dict__
   if (C10_LIKELY(type->tp_dictoffset)) {
     PyObject** dictptr = _PyObject_GetDictPtr(self);
-    // NOLINTNEXTLINE(modernize-use-nullptr)
-    if (dictptr != NULL) {
+    if (dictptr != nullptr) {
       PyObject* dict = *dictptr;
-      // NOLINTNEXTLINE(modernize-use-nullptr)
-      if (dict != NULL) {
+      if (dict != nullptr) {
         Py_DECREF(dict);
-        // NOLINTNEXTLINE(modernize-use-nullptr)
-        *dictptr = NULL;
+        *dictptr = nullptr;
       }
     }
   }
@@ -1319,8 +1314,7 @@ static int traverse_slots(
     if (mp->type == T_OBJECT_EX) {
       char* addr = (char*)self + mp->offset;
       PyObject* obj = *(PyObject**)addr;
-      // NOLINTNEXTLINE(modernize-use-nullptr)
-      if (obj != NULL) {
+      if (obj != nullptr) {
         int err = visit(obj, arg);
         if (err)
           return err;
