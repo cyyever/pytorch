@@ -39,6 +39,10 @@
 #include <type_traits>
 #include <utility>
 
+#ifdef __cpp_lib_optional
+#include <optional>
+#endif
+
 #include <c10/util/Metaprogramming.h>
 
 #define TR2_OPTIONAL_REQUIRES(...) \
@@ -46,6 +50,9 @@
 
 namespace c10 {
 
+#ifdef __cpp_lib_optional
+using optional = std::optional
+#else
 // 20.5.4, optional for object types
 template <class T>
 class optional;
@@ -1246,7 +1253,7 @@ template <class X>
 constexpr optional<X&> make_optional(std::reference_wrapper<X> v) {
   return optional<X&>(v.get());
 }
-
+#endif
 } // namespace c10
 
 namespace std {
