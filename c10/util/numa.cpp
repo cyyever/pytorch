@@ -50,7 +50,7 @@ int GetNUMANode(const void* ptr) {
   TORCH_CHECK(
       get_mempolicy(
           &numa_node,
-          NULL,
+          nullptr,
           0,
           const_cast<void*>(ptr),
           MPOL_F_NODE | MPOL_F_ADDR) == 0,
