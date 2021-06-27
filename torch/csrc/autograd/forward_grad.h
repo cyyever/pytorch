@@ -111,8 +111,7 @@ private:
 };
 
 struct TORCH_API ForwardGrad : std::enable_shared_from_this<ForwardGrad> {
-  // NOLINTNEXTLINE(modernize-use-equals-default,cppcoreguidelines-pro-type-member-init)
-  ForwardGrad() {}
+  ForwardGrad() = default;
 
   // This function must only be called when AutogradMeta or SavedVariable is
   // being destructed as it ensures that:
