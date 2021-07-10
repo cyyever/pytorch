@@ -1140,23 +1140,17 @@ endif()
 
 if(USE_OPENMP)
   find_package(OpenMP QUIET)
-endif()
-if(USE_OPENMP AND OPENMP_FOUND)
-  if(MSVC AND OpenMP_CXX_LIBRARIES MATCHES "libiomp5md\\.lib")
-    set(AT_MKL_MT 1)
-  else()
-    set(AT_MKL_MT 0)
+  if(OPENMP_FOUND)
+    if(MSVC AND OpenMP_CXX_LIBRARIES MATCHES "libiomp5md\\.lib")
+      set(AT_MKL_MT 1)
+    else()
+      set(AT_MKL_MT 0)
+    endif()
+    message(STATUS "pytorch is compiling with OpenMP. \n"
+      "OpenMP CXX_FLAGS: ${OpenMP_CXX_FLAGS}. \n"
+      "OpenMP libraries: ${OpenMP_CXX_LIBRARIES}.")
+    target_link_libraries(torch_cpu PRIVATE OpenMP::OpenMP_CXX)
   endif()
-  message(STATUS "pytorch is compiling with OpenMP. \n"
-    "OpenMP CXX_FLAGS: ${OpenMP_CXX_FLAGS}. \n"
-    "OpenMP libraries: ${OpenMP_CXX_LIBRARIES}.")
-  if(UNIX)
-    separate_arguments(OpenMP_CXX_OPTIONS UNIX_COMMAND "${OpenMP_CXX_FLAGS}")
-  else()
-    separate_arguments(OpenMP_CXX_OPTIONS WINDOWS_COMMAND "${OpenMP_CXX_FLAGS}")
-  endif()
-  target_compile_options(torch_cpu PRIVATE ${OpenMP_CXX_OPTIONS})
-  target_link_libraries(torch_cpu PRIVATE ${OpenMP_CXX_LIBRARIES})
 endif()
 
 
@@ -1264,13 +1258,6 @@ if(NOT INTERN_BUILD_MOBILE OR BUILD_CAFFE2_MOBILE)
   endif()
 endif()
 
-if(USE_OPENMP AND OPENMP_FOUND)
-  message(STATUS "Caffe2 is compiling with OpenMP. \n"
-    "OpenMP CXX_FLAGS: ${OpenMP_CXX_FLAGS}. \n"
-    "OpenMP libraries: ${OpenMP_CXX_LIBRARIES}.")
-  target_link_libraries(torch_cpu PRIVATE ${OpenMP_CXX_LIBRARIES})
-endif()
-
 if($ENV{TH_BINARY_BUILD})
   if(NOT MSVC AND USE_CUDA AND NOT APPLE)
     # Note [Extra MKL symbols for MAGMA in torch_cpu]
@@ -1302,6 +1289,7 @@ endif()
 
 target_link_libraries(torch_cpu PUBLIC c10)
 target_link_libraries(torch_cpu PUBLIC ${Caffe2_PUBLIC_DEPENDENCY_LIBS})
+target_link_libraries(torch_cpu PRIVATE ${Caffe2_PRIVATE_DEPENDENCY_LIBS})
 target_link_libraries(torch_cpu PRIVATE ${Caffe2_DEPENDENCY_LIBS})
 target_link_libraries(torch_cpu PRIVATE ${Caffe2_DEPENDENCY_WHOLE_LINK_LIBS})
 target_include_directories(torch_cpu INTERFACE $<INSTALL_INTERFACE:include>)
