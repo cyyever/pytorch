@@ -10,6 +10,7 @@ import torch
 import warnings
 import zipfile
 
+import urllib
 from urllib.request import urlopen, Request
 from urllib.parse import urlparse  # noqa: F401
 
@@ -121,13 +122,18 @@ def _validate_not_a_forked_repo(repo_owner, repo_name, branch):
         page = 1
         while True:
             url = url_prefix + '?per_page=100&page=' + str(page)
-            with urlopen(url) as r:
-                response = json.loads(r.read().decode(r.headers.get_content_charset('utf-8')))
-                if not response:
-                    continue
-                for br in response:
-                    if br['name'] == branch or br['commit']['sha'].startswith(branch):
-                        return
+            try:
+                with urlopen(url) as r:
+                    response = json.loads(r.read().decode(r.headers.get_content_charset('utf-8')))
+                    if not response:
+                        continue
+                    for br in response:
+                        if br['name'] == branch or br['commit']['sha'].startswith(branch):
+                            return
+            except urllib.error.HTTPError as e:
+                # Github API rate limit exceeded, we treat this case as success
+                if e.code == 403:
+                    return
 
         page += 1
     raise ValueError(f'Cannot find {branch} in https://github.com/{repo_owner}/{repo_name}. '
