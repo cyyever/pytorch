@@ -81,9 +81,7 @@ def build_caffe2(
 ) -> None:
     my_env = _create_build_env()
     build_test = not check_negative_env_flag("BUILD_TEST")
-    cmake.generate(
-        version, cmake_python_library, build_python, build_test, my_env, rerun_cmake
-    )
+    cmake.generate(version, build_python, build_test, my_env, rerun_cmake)
     if cmake_only:
         return
     cmake.build(my_env)

@@ -13,8 +13,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE FUNCTORCH_BUILD_MAIN_LIB)
 target_compile_definitions(${PROJECT_NAME} PRIVATE TORCH_EXTENSION_NAME=_C)
 target_compile_definitions(${PROJECT_NAME} PRIVATE TORCH_API_INCLUDE_EXTENSION_H)
-target_link_libraries(${PROJECT_NAME} PRIVATE torch torch_python)
-target_link_libraries(${PROJECT_NAME} PRIVATE pybind::pybind11)
+target_link_libraries(${PROJECT_NAME} PRIVATE torch torch_python pybind::pybind11)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
       ${CMAKE_BINARY_DIR}/functorch)
