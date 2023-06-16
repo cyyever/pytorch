@@ -357,8 +357,16 @@ static Tensor add_scalar(
       self_arg, other, c10::optional<Scalar>(alpha), VK_KERNEL(add_scalar));
 }
 
+<<<<<<< HEAD:aten/src/ATen/native/vulkan/ops/BinaryOp.cpp
 Tensor& add_scalar_(Tensor& self, const Scalar& other, const Scalar& alpha) {
   return binary_op_scalar_(
+=======
+static Tensor& add_scalar_(
+    Tensor& self,
+    const Scalar& other,
+    const Scalar& alpha) {
+  return arithmetic_scalar_(
+>>>>>>> 58e36cc1f7d (format code):aten/src/ATen/native/vulkan/ops/Arithmetic.cpp
       self, other, c10::optional<Scalar>(alpha), VK_KERNEL(add_scalar_));
 }
 
@@ -425,8 +433,16 @@ static Tensor sub_scalar(
       VK_KERNEL(add_scalar));
 }
 
+<<<<<<< HEAD:aten/src/ATen/native/vulkan/ops/BinaryOp.cpp
 Tensor& sub_scalar_(Tensor& self, const Scalar& other, const Scalar& alpha) {
   return binary_op_scalar_(
+=======
+static Tensor& sub_scalar_(
+    Tensor& self,
+    const Scalar& other,
+    const Scalar& alpha) {
+  return arithmetic_scalar_(
+>>>>>>> 58e36cc1f7d (format code):aten/src/ATen/native/vulkan/ops/Arithmetic.cpp
       self,
       other,
       c10::optional<Scalar>(-1 * alpha.to<float>()),
