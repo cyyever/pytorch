@@ -78,7 +78,7 @@ class SizeCheckMover {
   }
 };
 
-static void DeferSizeCheck(std::shared_ptr<Graph>& graph) {
+void DeferSizeCheck(std::shared_ptr<Graph>& graph) {
   SizeCheckMover(graph->block(), graph).run();
 }
 
