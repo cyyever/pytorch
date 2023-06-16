@@ -349,7 +349,7 @@ Tensor& binary_op_tensor_(
   return self_arg;
 }
 
-Tensor add_scalar(
+static Tensor add_scalar(
     const Tensor& self_arg,
     const Scalar& other,
     const Scalar& alpha) {
@@ -398,7 +398,7 @@ Tensor quantized_div(
       self_arg, other_arg, scale, zero_point, VK_KERNEL(quantized_div));
 }
 
-Tensor add_tensor(
+static Tensor add_tensor(
     const Tensor& self_arg,
     const Tensor& other_arg,
     const Scalar& alpha) {
@@ -406,7 +406,7 @@ Tensor add_tensor(
       self_arg, other_arg, c10::optional<Scalar>(alpha), VK_KERNEL(add));
 }
 
-Tensor& add_tensor_(
+static Tensor& add_tensor_(
     Tensor& self,
     const Tensor& other_arg,
     const Scalar& alpha) {
@@ -414,7 +414,7 @@ Tensor& add_tensor_(
       self, other_arg, c10::optional<Scalar>(alpha), VK_KERNEL(add_));
 }
 
-Tensor sub_scalar(
+static Tensor sub_scalar(
     const Tensor& self_arg,
     const Scalar& other,
     const Scalar& alpha) {
@@ -433,7 +433,7 @@ Tensor& sub_scalar_(Tensor& self, const Scalar& other, const Scalar& alpha) {
       VK_KERNEL(add_scalar_));
 }
 
-Tensor sub_tensor(
+static Tensor sub_tensor(
     const Tensor& self_arg,
     const Tensor& other_arg,
     const Scalar& alpha) {
@@ -441,7 +441,7 @@ Tensor sub_tensor(
       self_arg, other_arg, c10::optional<Scalar>(alpha), VK_KERNEL(sub));
 }
 
-Tensor& sub_tensor_(
+static Tensor& sub_tensor_(
     Tensor& self,
     const Tensor& other_arg,
     const Scalar& alpha) {
@@ -449,6 +449,7 @@ Tensor& sub_tensor_(
       self, other_arg, c10::optional<Scalar>(alpha), VK_KERNEL(sub_));
 }
 
+<<<<<<< HEAD:aten/src/ATen/native/vulkan/ops/BinaryOp.cpp
 Tensor mul_scalar(const Tensor& self_arg, const Scalar& other) {
   return binary_op_scalar(
       self_arg, other, c10::optional<Scalar>(), VK_KERNEL(mul_scalar));
@@ -471,6 +472,30 @@ Tensor& mul_tensor_(Tensor& self, const Tensor& other_arg) {
 
 Tensor div_scalar(const Tensor& self_arg, const Scalar& other) {
   return binary_op_scalar(
+=======
+static Tensor mul_scalar(const Tensor& self_arg, const Scalar& other) {
+  return arithmetic_scalar(
+      self_arg, other, c10::optional<Scalar>(), VK_KERNEL(mul_scalar));
+}
+
+static Tensor& mul_scalar_(Tensor& self, const Scalar& other) {
+  return arithmetic_scalar_(
+      self, other, c10::optional<Scalar>(), VK_KERNEL(mul_scalar_));
+}
+
+static Tensor mul_tensor(const Tensor& self_arg, const Tensor& other_arg) {
+  return arithmetic_tensor(
+      self_arg, other_arg, c10::optional<Scalar>(), VK_KERNEL(mul));
+}
+
+static Tensor& mul_tensor_(Tensor& self, const Tensor& other_arg) {
+  return arithmetic_tensor_(
+      self, other_arg, c10::optional<Scalar>(), VK_KERNEL(mul_));
+}
+
+static Tensor div_scalar(const Tensor& self_arg, const Scalar& other) {
+  return arithmetic_scalar(
+>>>>>>> 86db76eca84 (turn functions into static):aten/src/ATen/native/vulkan/ops/Arithmetic.cpp
       self_arg,
       1.0 / other.to<float>(),
       c10::optional<Scalar>(),
@@ -485,6 +510,7 @@ Tensor& div_scalar_(Tensor& self, const Scalar& other) {
       VK_KERNEL(mul_scalar_));
 }
 
+<<<<<<< HEAD:aten/src/ATen/native/vulkan/ops/BinaryOp.cpp
 Tensor div_tensor(const Tensor& self_arg, const Tensor& other_arg) {
   return binary_op_tensor(
       self_arg, other_arg, c10::optional<Scalar>(), VK_KERNEL(div));
@@ -492,6 +518,15 @@ Tensor div_tensor(const Tensor& self_arg, const Tensor& other_arg) {
 
 Tensor& div_tensor_(Tensor& self, const Tensor& other_arg) {
   return binary_op_tensor_(
+=======
+static Tensor div_tensor(const Tensor& self_arg, const Tensor& other_arg) {
+  return arithmetic_tensor(
+      self_arg, other_arg, c10::optional<Scalar>(), VK_KERNEL(div));
+}
+
+static Tensor& div_tensor_(Tensor& self, const Tensor& other_arg) {
+  return arithmetic_tensor_(
+>>>>>>> 86db76eca84 (turn functions into static):aten/src/ATen/native/vulkan/ops/Arithmetic.cpp
       self, other_arg, c10::optional<Scalar>(), VK_KERNEL(div_));
 }
 
