@@ -357,8 +357,8 @@ inline PythonArgs PythonArgParser::parse(
     ParsedArgs<N>& dst) {
   if (N < max_args) {
     throw ValueError(
-        "PythonArgParser: dst ParsedArgs buffer does not have enough capacity, expected %d (got %d)",
-        (int)max_args,
+        "PythonArgParser: dst ParsedArgs buffer does not have enough capacity, expected {} (got {})",
+        max_args,
         N);
   }
   return raw_parse(self, args, kwargs, dst.args);

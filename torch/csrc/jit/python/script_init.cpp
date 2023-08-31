@@ -778,7 +778,7 @@ void initJitScriptBindings(PyObject* module) {
                 try {
                   return toPyObject(self.attr(name));
                 } catch (const ObjectAttributeError& err) {
-                  throw AttributeError("%s", err.what());
+                  throw AttributeError(err.what());
                 }
               })
           .def(
@@ -799,7 +799,7 @@ void initJitScriptBindings(PyObject* module) {
                   }
                   return toPyObject(self.attr(name));
                 } catch (const ObjectAttributeError& err) {
-                  throw AttributeError("%s", err.what());
+                  throw AttributeError(err.what());
                 }
               })
           .def(
@@ -829,7 +829,7 @@ void initJitScriptBindings(PyObject* module) {
                   auto ivalue = toIValue(std::move(value), type);
                   self.setattr(name, ivalue);
                 } catch (const ObjectAttributeError& err) {
-                  throw AttributeError("%s", err.what());
+                  throw AttributeError(err.what());
                 }
               })
           .def(
@@ -1380,7 +1380,7 @@ void initJitScriptBindings(PyObject* module) {
               return StrongFunctionPtr(std::move(self), fn);
             } else {
               throw AttributeError(
-                  "'CompilationUnit' has no attribute '%s'", name.c_str());
+                  "'CompilationUnit' has no attribute '{}'", name);
             }
           })
       .def(

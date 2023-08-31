@@ -186,7 +186,7 @@ static PyObject* THPModule_setWorkerPIDs(PyObject* module, PyObject* args) {
   PyObject* child_pids = PyTuple_GET_ITEM(args, 1);
   if (!PyTuple_Check(child_pids)) {
     throw TypeError(
-        "_set_worker_pids expects a tuple for child_pids, but got %s.",
+        "_set_worker_pids expects a tuple for child_pids, but got {}.",
         Py_TYPE(child_pids)->tp_name);
   }
 

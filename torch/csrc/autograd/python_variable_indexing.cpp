@@ -93,7 +93,7 @@ static inline int64_t count_specified_dimensions(PyObject* index) {
 [[noreturn]] static inline void invalid_index(PyObject* obj) {
   throw IndexError(
       "only integers, slices (`:`), ellipsis (`...`), None and long or byte "
-      "Variables are valid indices (got %s)",
+      "Variables are valid indices (got {})",
       Py_TYPE(obj)->tp_name);
 }
 

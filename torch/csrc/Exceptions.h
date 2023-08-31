@@ -5,12 +5,14 @@
 #include <mutex>
 #include <queue>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 #include <ATen/detail/FunctionTraits.h>
 #include <c10/util/C++17.h>
 #include <c10/util/Exception.h>
 #include <c10/util/StringUtil.h>
+#include <fmt/format.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/runtime/jit_exception.h>
@@ -264,27 +266,21 @@ TORCH_PYTHON_API std::string processErrorMsg(std::string str);
 // Abstract base class for exceptions which translate to specific Python types
 struct PyTorchError : public std::exception {
   PyTorchError() = default;
-  PyTorchError(std::string msg_) : msg(std::move(msg_)) {}
+  PyTorchError(std::string_view msg_) : msg(msg_) {}
+  PyTorchError(const char* msg_) : msg(msg_) {}
   virtual PyObject* python_type() = 0;
   const char* what() const noexcept override {
     return msg.c_str();
   }
+  template <typename... T>
+  TORCH_PYTHON_API PyTorchError(fmt::format_string<T...> format, T&&... args)
+      : msg(fmt::vformat(format, fmt::make_format_args(args...))) {}
   std::string msg;
 };
-
-// Declare a printf-like function on gcc & clang
-// The compiler can then warn on invalid format specifiers
-#ifdef __GNUC__
-#define TORCH_FORMAT_FUNC(FORMAT_INDEX, VA_ARGS_INDEX) \
-  __attribute__((format(printf, FORMAT_INDEX, VA_ARGS_INDEX)))
-#else
-#define TORCH_FORMAT_FUNC(FORMAT_INDEX, VA_ARGS_INDEX)
-#endif
 
 // Translates to Python IndexError
 struct IndexError : public PyTorchError {
   using PyTorchError::PyTorchError;
-  IndexError(const char* format, ...) TORCH_FORMAT_FUNC(2, 3);
   PyObject* python_type() override {
     return PyExc_IndexError;
   }
@@ -293,7 +289,6 @@ struct IndexError : public PyTorchError {
 // Translates to Python TypeError
 struct TypeError : public PyTorchError {
   using PyTorchError::PyTorchError;
-  TORCH_PYTHON_API TypeError(const char* format, ...) TORCH_FORMAT_FUNC(2, 3);
   PyObject* python_type() override {
     return PyExc_TypeError;
   }
@@ -302,7 +297,6 @@ struct TypeError : public PyTorchError {
 // Translates to Python ValueError
 struct ValueError : public PyTorchError {
   using PyTorchError::PyTorchError;
-  TORCH_PYTHON_API ValueError(const char* format, ...) TORCH_FORMAT_FUNC(2, 3);
   PyObject* python_type() override {
     return PyExc_ValueError;
   }
@@ -310,8 +304,7 @@ struct ValueError : public PyTorchError {
 
 // Translates to Python NotImplementedError
 struct NotImplementedError : public PyTorchError {
-  NotImplementedError(const char* format, ...) TORCH_FORMAT_FUNC(2, 3);
-  NotImplementedError() = default;
+  using PyTorchError::PyTorchError;
   PyObject* python_type() override {
     return PyExc_NotImplementedError;
   }
@@ -319,7 +312,7 @@ struct NotImplementedError : public PyTorchError {
 
 // Translates to Python AttributeError
 struct AttributeError : public PyTorchError {
-  AttributeError(const char* format, ...) TORCH_FORMAT_FUNC(2, 3);
+  using PyTorchError::PyTorchError;
   PyObject* python_type() override {
     return PyExc_AttributeError;
   }
@@ -327,7 +320,7 @@ struct AttributeError : public PyTorchError {
 
 // Translates to Python LinAlgError
 struct LinAlgError : public PyTorchError {
-  LinAlgError(const char* format, ...) TORCH_FORMAT_FUNC(2, 3);
+  using PyTorchError::PyTorchError;
   PyObject* python_type() override {
     return THPException_LinAlgError;
   }

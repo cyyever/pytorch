@@ -85,7 +85,7 @@ at::Dimname THPDimname_parse(PyObject* obj) {
 
   if (!THPUtils_checkString(obj)) {
     throw torch::TypeError(
-        "expected None or string for Dimname but got %s",
+        "expected None or string for Dimname but got {}",
         Py_TYPE(obj)->tp_name);
   }
 

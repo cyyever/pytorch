@@ -743,7 +743,7 @@ bool is_tensor_list_and_append_overloaded(
     if (!is_tensor_and_append_overloaded(iobj, overloaded_args)) {
       if (throw_error) {
         throw TypeError(
-            "expected Tensor as element %d in argument %d, but got %s",
+            "expected Tensor as element {} in argument {}, but got {}",
             static_cast<int>(idx),
             argnum,
             Py_TYPE(iobj)->tp_name);
@@ -1299,14 +1299,14 @@ std::string FunctionSignature::toString() const {
   const long nargs_ = nargs;
   if (min_args != max_pos_args) {
     throw TypeError(
-        "%s() takes from %zu to %zu positional arguments but %ld were given",
+        "{}() takes from {} to {} positional arguments but {} were given",
         signature.name.c_str(),
         min_args,
         max_pos_args,
         nargs_);
   }
   throw TypeError(
-      "%s() takes %zu positional argument%s but %ld %s given",
+      "{}() takes {} positional argument{} but {} {} given",
       signature.name.c_str(),
       max_pos_args,
       max_pos_args == 1 ? "" : "s",
@@ -1332,7 +1332,7 @@ std::string FunctionSignature::toString() const {
   }
 
   throw TypeError(
-      "%s() missing %d required positional argument%s: %s",
+      "{}() missing {} required positional argument{}: {}",
       signature.name.c_str(),
       num_missing,
       num_missing == 1 ? "s" : "",
@@ -1369,14 +1369,14 @@ static Py_ssize_t find_param(FunctionSignature& signature, PyObject* name) {
     auto param_idx = find_param(signature, key);
     if (param_idx < 0) {
       throw TypeError(
-          "%s() got an unexpected keyword argument '%s'",
+          "{}() got an unexpected keyword argument '{}'",
           signature.name.c_str(),
           THPUtils_unpackString(key).c_str());
     }
 
     if (param_idx < num_pos_args) {
       throw TypeError(
-          "%s() got multiple values for argument '%s'",
+          "{}() got multiple values for argument '{}'",
           signature.name.c_str(),
           THPUtils_unpackString(key).c_str());
     }
@@ -1469,7 +1469,7 @@ bool FunctionSignature::parse(
       if (is_kwd) {
         // foo(): argument 'other' must be str, not int
         throw TypeError(
-            "%s(): argument '%s' must be %s, not %s",
+            "{}(): argument '{}' must be {}, not {}",
             name.c_str(),
             param.name.c_str(),
             param.type_name().c_str(),
@@ -1483,7 +1483,7 @@ bool FunctionSignature::parse(
           }
           TORCH_INTERNAL_ASSERT(failed_idx < PySequence_Size(obj));
           throw TypeError(
-              "%s(): argument '%s' (position %ld) must be %s, but found element of type %s at pos %ld",
+              "{}(): argument '{}' (position {}) must be {}, but found element of type {} at pos {}",
               name.c_str(),
               param.name.c_str(),
               static_cast<long>(arg_pos + 1),
@@ -1495,7 +1495,7 @@ bool FunctionSignature::parse(
               static_cast<long>(failed_idx));
         }
         throw TypeError(
-            "%s(): argument '%s' (position %ld) must be %s, not %s",
+            "{}(): argument '{}' (position {}) must be {}, not {}",
             name.c_str(),
             param.name.c_str(),
             static_cast<long>(arg_pos + 1),
@@ -1622,7 +1622,7 @@ void PythonArgParser::print_error(
   auto options = get_signatures();
   auto msg =
       torch::format_invalid_args(args, kwargs, function_name + "()", options);
-  throw TypeError("%s", msg.c_str());
+  throw TypeError(msg);
 }
 
 std::vector<std::string> PythonArgParser::get_signatures() const {
@@ -1676,7 +1676,7 @@ at::Tensor PythonArgs::tensor_slow(int i) {
     // as *allowing none*; you can do this by writing 'Tensor?' instead
     // of 'Tensor' in the ATen metadata.
     throw TypeError(
-        "expected Tensor as argument %d, but got %s", i, Py_TYPE(obj)->tp_name);
+        "expected Tensor as argument {}, but got {}", i, Py_TYPE(obj)->tp_name);
   }
   at::AutoDispatchBelowADInplaceOrView guard; // TODO: remove
   at::tracer::impl::NoTracerDispatchMode tracer_guard;
