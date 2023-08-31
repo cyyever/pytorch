@@ -581,7 +581,7 @@ static PyObject* THPVariable_as_subclass(
   PyObject* cls = r.pyobject(0);
   if (!PyType_Check(cls)) {
     throw torch::TypeError(
-        "cls must be a type (got %s)", Py_TYPE(cls)->tp_name);
+        "cls must be a type (got {})", Py_TYPE(cls)->tp_name);
   }
   return THPVariable_NewWithVar(
       (PyTypeObject*)cls,
@@ -603,7 +603,7 @@ static PyObject* THPVariable_make_subclass(
   PyObject* cls = r.pyobject(0);
   if (!PyType_Check(cls)) {
     throw torch::TypeError(
-        "cls must be a type (got %s)", Py_TYPE(cls)->tp_name);
+        "cls must be a type (got {})", Py_TYPE(cls)->tp_name);
   }
   // guard completely turns off torch dispatch modes, doesn't just pop off the
   // stack
@@ -923,7 +923,7 @@ int THPVariable_set_data(THPVariable* self, PyObject* data, void* unused) {
       -1, data, "Deleting tensor data is not allowed. Delete tensor instead!");
   if (!THPVariable_Check(data)) {
     throw torch::TypeError(
-        "Variable data has to be a tensor, but got %s", Py_TYPE(data)->tp_name);
+        "Variable data has to be a tensor, but got {}", Py_TYPE(data)->tp_name);
   }
 
   THPVariable_Unpack(self).set_data(THPVariable_Unpack(data));

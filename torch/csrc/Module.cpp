@@ -209,7 +209,7 @@ static PyObject* THPModule_crashIfCsrcASAN(PyObject* module, PyObject* arg) {
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "crash_if_csrc_asan expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays)
   volatile char x[3];
@@ -222,7 +222,7 @@ static PyObject* THPModule_crashIfCsrcUBSAN(PyObject* module, PyObject* arg) {
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "crash_if_csrc_ubsan expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   int32_t x = THPUtils_unpackInt(arg);
   double y = 1.0 / x;
@@ -252,7 +252,7 @@ static PyObject* THPModule_crashIfATenASAN(PyObject* module, PyObject* arg) {
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "crash_if_aten_asan expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   return THPUtils_packInt32(at::_crash_if_asan(THPUtils_unpackInt(arg)));
 }
@@ -268,7 +268,7 @@ static PyObject* THPModule_crashIfDebugAssertsFail(
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "crash_if_debug_asserts_fail expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(
       THPUtils_unpackInt(arg) != 424242,
@@ -285,7 +285,7 @@ static PyObject* THPModule_setNumThreads(PyObject* module, PyObject* arg) {
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "set_num_threads expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   int nthreads = (int)THPUtils_unpackLong(arg);
   THPUtils_assert(nthreads > 0, "set_num_threads expects a positive integer");
@@ -307,7 +307,7 @@ static PyObject* THPModule_setNumInteropThreads(
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "set_num_interop_threads expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   int nthreads = (int)THPUtils_unpackLong(arg);
   THPUtils_assert(
@@ -438,7 +438,7 @@ static PyObject* THPModule_setBackcompatBroadcastWarn(
   THPUtils_assert(
       PyBool_Check(arg),
       "set_backcompat_broadcast_warn expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   setBackCompatBroadcastWarn(arg == Py_True);
   Py_RETURN_NONE;
@@ -459,7 +459,7 @@ static PyObject* THPModule_setBackcompatKeepdimWarn(
   THPUtils_assert(
       PyBool_Check(arg),
       "set_backcompat_keepdim_warn expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   setBackCompatKeepdimWarn(arg == Py_True);
   Py_RETURN_NONE;
@@ -564,7 +564,7 @@ static PyObject* THModule_rename_privateuse1_backend(
   THPUtils_assert(
       THPUtils_checkString(arg),
       "_rename_privateuse1_backend expects a str, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   const std::string backend_name = THPUtils_unpackString(arg);
   c10::register_privateuse1_backend(backend_name);
@@ -584,7 +584,7 @@ PyObject* THPModule_setAllowTF32CuDNN(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_allow_tf32_cublas expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setAllowTF32CuDNN(arg == Py_True);
   Py_RETURN_NONE;
@@ -603,7 +603,7 @@ PyObject* THPModule_setFloat32MatmulPrecision(
   THPUtils_assert(
       THPUtils_checkString(arg),
       "set_float32_matmul_precision expects a str, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   std::string s = THPUtils_unpackString(arg);
   at::globalContext().setFloat32MatmulPrecision(s);
@@ -626,7 +626,7 @@ PyObject* THPModule_setSDPUseFlash(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_sdp_use_math expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setSDPUseFlash(arg == Py_True);
   Py_RETURN_NONE;
@@ -641,7 +641,7 @@ PyObject* THPModule_setSDPUseMemEfficient(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_sdp_use_math expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setSDPUseMemEfficient(arg == Py_True);
   Py_RETURN_NONE;
@@ -656,7 +656,7 @@ PyObject* THPModule_setSDPUseMath(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_sdp_use_math expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setSDPUseMath(arg == Py_True);
   Py_RETURN_NONE;
@@ -671,7 +671,7 @@ PyObject* THPModule_setUserEnabledCuDNN(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_enabled_cudnn expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setUserEnabledCuDNN(arg == Py_True);
   Py_RETURN_NONE;
@@ -688,7 +688,7 @@ PyObject* THPModule_setUserEnabledMkldnn(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_enabled_mkldnn expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setUserEnabledMkldnn(arg == Py_True);
   Py_RETURN_NONE;
@@ -706,7 +706,7 @@ PyObject* THPModule_setDeterministicCuDNN(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_deterministic_cudnn expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setDeterministicCuDNN(arg == Py_True);
   Py_RETURN_NONE;
@@ -759,7 +759,7 @@ PyObject* THPModule_setDeterministicFillUninitializedMemory(
     PyObject* arg) {
   HANDLE_TH_ERRORS
   THPUtils_assert(
-      PyBool_Check(arg), "expected a bool, but got %s", THPUtils_typename(arg));
+      PyBool_Check(arg), "expected a bool, but got {}", THPUtils_typename(arg));
   at::globalContext().setDeterministicFillUninitializedMemory(arg == Py_True);
   Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
@@ -778,7 +778,7 @@ PyObject* THPModule_setWarnAlways(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "setWarnOnlyOnce expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   c10::WarningUtils::set_warnAlways(arg == Py_True);
   Py_RETURN_NONE;
@@ -811,7 +811,7 @@ PyObject* THPModule_setBenchmarkCuDNN(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_benchmark_cudnn expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setBenchmarkCuDNN(arg == Py_True);
   Py_RETURN_NONE;
@@ -828,7 +828,7 @@ PyObject* THPModule_setAllowTF32CuBLAS(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "set_allow_tf32_cublas expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setAllowTF32CuBLAS(arg == Py_True);
   Py_RETURN_NONE;
@@ -847,7 +847,7 @@ PyObject* THPModule_setAllowFP16ReductionCuBLAS(
   THPUtils_assert(
       PyBool_Check(arg),
       "set_allow_fp16_reduction_cublas expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setAllowFP16ReductionCuBLAS(arg == Py_True);
   Py_RETURN_NONE;
@@ -868,7 +868,7 @@ PyObject* THPModule_setAllowBF16ReductionCuBLAS(
   THPUtils_assert(
       PyBool_Check(arg),
       "set_allow_bf16_reduction_cublas expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setAllowBF16ReductionCuBLAS(arg == Py_True);
   Py_RETURN_NONE;
@@ -887,7 +887,7 @@ PyObject* THPModule_setFlushDenormal(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       PyBool_Check(arg),
       "flush_denormal expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   if (!at::globalContext().setFlushDenormal(arg == Py_True)) {
     Py_RETURN_FALSE;
@@ -916,7 +916,7 @@ PyObject* THPModule_setQEngine(PyObject* /* unused */, PyObject* arg) {
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "set_qengine expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   HANDLE_TH_ERRORS
   auto qengine = THPUtils_unpackLong(arg);
@@ -958,7 +958,7 @@ PyObject* THPModule_setCheckSparseTensorInvariants(
   THPUtils_assert(
       PyBool_Check(arg),
       "set_check_sparse_tensor_invariants expects a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setCheckSparseTensorInvariants(arg == Py_True);
   Py_RETURN_NONE;
@@ -980,7 +980,7 @@ PyObject* THPModule_willEngineExecuteNode(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       isTHPFunction || isTHPCppFunction,
       "_will_engine_execute_node expects an grad_fn, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   const auto exec_info = torch::autograd::get_current_graph_task_exec_info();
   THPUtils_assert(
@@ -1092,7 +1092,7 @@ static PyObject* THPModule_set_display_vmap_fallback_warnings_mode(
   THPUtils_assert(
       PyBool_Check(arg),
       "enabled must be a bool, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
   at::globalContext().setDisplayVmapFallbackWarnings(arg == Py_True);
   Py_RETURN_NONE;

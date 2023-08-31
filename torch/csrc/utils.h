@@ -2,6 +2,7 @@
 #define THP_UTILS_H
 
 #include <ATen/ATen.h>
+#include <fmt/format.h>
 #include <torch/csrc/Storage.h>
 #include <torch/csrc/THConcat.h>
 #include <torch/csrc/utils/object_ptr.h>
@@ -159,7 +160,17 @@
     THPUtils_setError(__VA_ARGS__);          \
     return value;                            \
   }
-TORCH_PYTHON_API void THPUtils_setError(const char* format, ...);
+
+template <typename U, typename... T>
+TORCH_PYTHON_API void THPUtils_setError(U&& format, T&&... args) {
+  if constexpr (sizeof...(args) == 0) {
+    PyErr_SetString(PyExc_RuntimeError, format);
+  } else {
+    auto error = fmt::vformat(std::forward<U>(format), fmt::make_format_args(args...));
+    PyErr_SetString(PyExc_RuntimeError, error.c_str());
+  }
+}
+
 TORCH_PYTHON_API void THPUtils_invalidArguments(
     PyObject* given_args,
     PyObject* given_kwargs,

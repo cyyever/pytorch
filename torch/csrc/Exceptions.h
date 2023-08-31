@@ -1,9 +1,8 @@
 #pragma once
 
+#include <fmt/format.h>
 #include <exception>
 #include <memory>
-#include <mutex>
-#include <queue>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -12,7 +11,6 @@
 #include <c10/util/C++17.h>
 #include <c10/util/Exception.h>
 #include <c10/util/StringUtil.h>
-#include <fmt/format.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/runtime/jit_exception.h>
@@ -272,10 +270,12 @@ struct PyTorchError : public std::exception {
   const char* what() const noexcept override {
     return msg.c_str();
   }
-  template <typename... T>
-  TORCH_PYTHON_API PyTorchError(fmt::format_string<T...> format, T&&... args)
-      : msg(fmt::vformat(format, fmt::make_format_args(args...))) {}
   std::string msg;
+  template <typename U, typename... T>
+  PyTorchError(U&& format, T&&... args)
+      : msg(fmt::vformat(
+            std::forward<U>(format),
+            fmt::make_format_args(args...))) {}
 };
 
 // Translates to Python IndexError
@@ -287,7 +287,7 @@ struct IndexError : public PyTorchError {
 };
 
 // Translates to Python TypeError
-struct TypeError : public PyTorchError {
+struct TORCH_PYTHON_API TypeError : public PyTorchError {
   using PyTorchError::PyTorchError;
   PyObject* python_type() override {
     return PyExc_TypeError;
@@ -295,7 +295,7 @@ struct TypeError : public PyTorchError {
 };
 
 // Translates to Python ValueError
-struct ValueError : public PyTorchError {
+struct TORCH_PYTHON_API ValueError : public PyTorchError {
   using PyTorchError::PyTorchError;
   PyObject* python_type() override {
     return PyExc_ValueError;

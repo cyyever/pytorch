@@ -130,7 +130,7 @@ static PyObject* THPStorage_resize_(PyObject* self, PyObject* number_arg) {
   THPUtils_assert(
       THPUtils_checkLong(number_arg),
       "resize_ expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(number_arg));
   int64_t newsize = THPUtils_unpackLong(number_arg);
   c10::DeviceType device_type = storage.device_type();
@@ -201,7 +201,7 @@ static PyObject* THPStorage_fill_(PyObject* self, PyObject* number_arg) {
   THPUtils_assert(
       THPByteUtils_checkReal(number_arg),
       "fill_ expects int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(number_arg));
   storage_fill(storage, THPByteUtils_unpackReal(number_arg));
   Py_INCREF(self);
@@ -575,7 +575,7 @@ PyObject* THPStorage__setCdata(PyObject* _self, PyObject* new_cdata) {
   THPUtils_assert(
       THPUtils_checkLong(new_cdata),
       "given an invalid argument to "
-      "_set_cdata - expected an int or long, but got %s",
+      "_set_cdata - expected an int or long, but got {}",
       THPUtils_typename(new_cdata));
   c10::StorageImpl* ptr = (c10::StorageImpl*)PyLong_AsVoidPtr(new_cdata);
   self->cdata.~MaybeOwned<c10::Storage>();
@@ -606,7 +606,7 @@ PyObject* THPStorage_byteswap(PyObject* self, PyObject* args) {
   }
   THPUtils_assert(
       nbytes % elem_size == 0,
-      "the length of data is not a multiple of %ld",
+      "the length of data is not a multiple of {}",
       elem_size);
 
   if (elem_size == 2) {

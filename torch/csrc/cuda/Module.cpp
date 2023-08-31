@@ -375,7 +375,7 @@ PyObject* THCPModule_cudaJiteratorCompileAndLaunchKernel(
   THPUtils_assert(
       PyTuple_Check(tensors_o),
       "tensors argument is expected to "
-      "be a tuple, but got %s",
+      "be a tuple, but got {}",
       THPUtils_typename(tensors_o));
   Py_ssize_t num_tensors = PyTuple_GET_SIZE(tensors_o);
 
@@ -384,7 +384,7 @@ PyObject* THCPModule_cudaJiteratorCompileAndLaunchKernel(
     PyObject* _tensor = PyTuple_GET_ITEM(tensors_o, i);
     THPUtils_assert(
         THPVariable_Check(_tensor),
-        "%d of input tensors tuple is not a Tensor",
+        "{} of input tensors tuple is not a Tensor",
         i);
 
     tensors.emplace_back(THPVariable_Unpack(_tensor));
@@ -1355,7 +1355,7 @@ PyObject* THCPModule_setBenchmarkLimitCuDNN(PyObject* _unused, PyObject* arg) {
   THPUtils_assert(
       THPUtils_checkLong(arg),
       "set_benchmark_limit_cudnn expects an int, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(arg));
 #if defined(USE_ROCM)
   TORCH_WARN_ONCE(

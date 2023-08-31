@@ -458,7 +458,7 @@ class SocketListenOp {
   bool tryListen(const ::addrinfo& addr);
 
   template <typename... Args>
-  void recordError(fmt::string_view format, Args&&... args) {
+  void recordError(fmt::format_string<Args...> format, Args&&... args) {
     auto msg = fmt::vformat(format, fmt::make_format_args(args...));
 
     C10D_WARNING(msg);

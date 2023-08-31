@@ -107,7 +107,7 @@ static PyObject* THPGenerator_setState(PyObject* _self, PyObject* _new_state) {
   HANDLE_TH_ERRORS
   if (!THPVariable_Check(_new_state)) {
     throw torch::TypeError(
-        "expected a torch.ByteTensor, but got %s",
+        "expected a torch.ByteTensor, but got {}",
         Py_TYPE(_new_state)->tp_name);
   }
   auto self = (THPGenerator*)_self;
@@ -150,7 +150,7 @@ static PyObject* THPGenerator_manualSeed(PyObject* _self, PyObject* seed) {
   THPUtils_assert(
       THPUtils_checkLong(seed),
       "manual_seed expected a long, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(seed));
   uint64_t unsigned_seed = unpack_uint64(seed);
   // See Note [Acquire lock when using random generators]
@@ -168,7 +168,7 @@ static PyObject* THPGenerator_setOffset(PyObject* _self, PyObject* offset) {
   THPUtils_assert(
       THPUtils_checkLong(offset),
       "manual_offset expected a long, "
-      "but got %s",
+      "but got {}",
       THPUtils_typename(offset));
   uint64_t unsigned_offset = unpack_uint64(offset);
   // See Note [Acquire lock when using random generators]

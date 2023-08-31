@@ -374,7 +374,7 @@ static std::unordered_set<at::TensorImpl*> _mark_dirty(THPFunction* self) {
       PyTuple_Check(self->dirty_tensors),
       "autograd "
       "internal error: dirty_tensors attribute is expected to be a tuple "
-      "but is %s",
+      "but is {}",
       THPUtils_typename(self->dirty_tensors));
   Py_ssize_t num_dirty = PyTuple_GET_SIZE(self->dirty_tensors);
   dirty_inputs.reserve(num_dirty);
@@ -383,7 +383,7 @@ static std::unordered_set<at::TensorImpl*> _mark_dirty(THPFunction* self) {
     THPFunction_assert(
         THPVariable_Check(obj),
         "mark_dirty can "
-        "only accept variables, but argument %d is of type %s",
+        "only accept variables, but argument {} is of type {}",
         i,
         THPUtils_typename(obj));
 
@@ -564,7 +564,7 @@ static void _get_tensors_to_save(
     THPFunction_assert(
         PyTuple_Check(self->saved_for_forward),
         "autograd internal "
-        "error: saved_for_forward attribute is expected to be a tuple but is %s",
+        "error: saved_for_forward attribute is expected to be a tuple but is {}",
         THPUtils_typename(self->saved_for_forward));
     Py_ssize_t num_saved_for_forward =
         PyTuple_GET_SIZE(self->saved_for_forward);
@@ -580,7 +580,7 @@ static void _get_tensors_to_save(
     THPFunction_assert(
         PyTuple_Check(self->to_save),
         "autograd internal "
-        "error: to_save attribute is expected to be a tuple but is %s",
+        "error: to_save attribute is expected to be a tuple but is {}",
         THPUtils_typename(self->to_save));
 
     Py_ssize_t num_saved = PyTuple_GET_SIZE(self->to_save);
@@ -602,8 +602,8 @@ static void _get_tensors_to_save(
           // TODO: We should really just ALWAYS throw an error here, but
           // doing so will break some internal tests. We should fix those.
           throw torch::TypeError(
-              "save_for_backward can only save variables, but argument %zu is of "
-              "type %s",
+              "save_for_backward can only save variables, but argument {} is of "
+              "type {}",
               i,
               Py_TYPE(obj)->tp_name);
         }
@@ -645,7 +645,7 @@ static std::unordered_set<at::TensorImpl*> _parse_non_differentiable(
       PyTuple_Check(self->non_differentiable),
       "autograd "
       "internal error: non_differentiable attribute is expected to be a "
-      "tuple but is %s",
+      "tuple but is {}",
       THPUtils_typename(self->non_differentiable));
   Py_ssize_t num_nondiff = PyTuple_GET_SIZE(self->non_differentiable);
   set.reserve(num_nondiff);
@@ -654,7 +654,7 @@ static std::unordered_set<at::TensorImpl*> _parse_non_differentiable(
     THPFunction_assert(
         THPVariable_Check(t),
         "mark_non_differentiable "
-        "only accepts variable arguments, but got %s",
+        "only accepts variable arguments, but got {}",
         THPUtils_typename(t));
     set.insert(THPVariable_Unpack(t).unsafeGetTensorImpl());
   }
@@ -692,7 +692,7 @@ std::pair<UnpackedInput, InputFlags> unpack_input(PyObject* args) {
       // Python
       if (enforce_variables) {
         THPUtils_setError(
-            "expected a Tensor argument, but got %s", THPUtils_typename(arg));
+            "expected a Tensor argument, but got {}", THPUtils_typename(arg));
         throw python_error();
       }
       Py_INCREF(Py_False);

@@ -113,7 +113,7 @@ PyObject* THCPModule_nccl_init_rank(PyObject* self, PyObject* args) {
   }
   THPUtils_assert(
       id_len == NCCL_UNIQUE_ID_BYTES,
-      "invalid unqiue_id (expected %d bytes, got %zd)",
+      "invalid unqiue_id (expected {} bytes, got {})",
       NCCL_UNIQUE_ID_BYTES,
       id_len);
 
@@ -288,7 +288,7 @@ PyObject* THCPModule_nccl_reduce_scatter(PyObject* self, PyObject* args) {
 
 static inline at::Tensor extract_tensor(PyObject* obj) {
   if (!THPVariable_Check(obj)) {
-    throw torch::TypeError("expected Tensor (got %s)", Py_TYPE(obj)->tp_name);
+    throw torch::TypeError("expected Tensor (got {})", Py_TYPE(obj)->tp_name);
   }
   return THPVariable_Unpack(obj);
 }
@@ -307,7 +307,7 @@ static inline std::vector<at::Tensor> extract_tensors(PyObject* obj) {
     PyObject* item = PySequence_Fast_GET_ITEM(seq.get(), i);
     if (!THPVariable_Check(item)) {
       throw torch::TypeError(
-          "expected Tensor at %d (got %s)", (int)i, Py_TYPE(item)->tp_name);
+          "expected Tensor at {} (got {})", i, Py_TYPE(item)->tp_name);
     }
     list.emplace_back(THPVariable_Unpack(item));
   }

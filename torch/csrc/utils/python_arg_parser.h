@@ -486,7 +486,7 @@ inline std::array<at::Tensor, N> PythonArgs::tensorlist_n(int i) {
   // NOLINTNEXTLINE(bugprone-branch-clone)
   auto size = tuple ? PyTuple_GET_SIZE(arg.get()) : PyList_GET_SIZE(arg.get());
   if (size != N) {
-    throw TypeError("expected tuple of %d elements but got %d", N, (int)size);
+    throw TypeError("expected tuple of {} elements but got {}", N, size);
   }
   for (const auto idx : c10::irange(size)) {
     PyObject* obj = tuple ? PyTuple_GET_ITEM(arg.get(), idx)
@@ -524,7 +524,7 @@ inline void throw_intlist_exception(
       : std::string("type must be ") + args->signature.params[i].type_name() +
           ",but got " + Py_TYPE(obj)->tp_name;
   throw TypeError(
-      "%s(): argument '%s' failed to unpack the object at pos %zu with error \"%s\"",
+      "{}(): argument '{}' failed to unpack the object at pos {} with error \"{}\"",
       args->signature.name.c_str(),
       args->signature.params[i].name.c_str(),
       idx + 1,
@@ -713,7 +713,7 @@ inline std::vector<double> PythonArgs::getDoublelist(int i) {
       res[idx] = THPUtils_unpackDouble(obj);
     } catch (const std::exception& e) {
       throw TypeError(
-          "%s(): argument '%s' must be %s, but found element of type %s at pos %zu",
+          "{}(): argument '{}' must be {}, but found element of type {} at pos {}",
           signature.name.c_str(),
           signature.params[i].name.c_str(),
           signature.params[i].type_name().c_str(),
@@ -981,7 +981,7 @@ inline c10::SymInt PythonArgs::toSymInt(int i) {
         !at::isIntegralType(
             var.dtype().toScalarType(), /*include_bool*/ true)) {
       throw TypeError(
-          "%s(): argument '%s' must be %s, failed to convert %s with sizes.empty()=%d",
+          "{}(): argument '{}' must be {}, failed to convert {} with sizes.empty()={}",
           signature.name.c_str(),
           signature.params[i].name.c_str(),
           signature.params[i].type_name().c_str(),
@@ -1130,7 +1130,7 @@ inline c10::Stream PythonArgs::stream(int i) {
         c10::Stream::Default::DEFAULT, c10::Device(c10::DeviceType::CPU, -1));
   if (!THPStream_Check(args[i])) {
     throw TypeError(
-        "expected Stream object. Got '%s'", Py_TYPE(args[i])->tp_name);
+        "expected Stream object. Got '{}'", Py_TYPE(args[i])->tp_name);
   }
   return c10::Stream::unpack3(
       ((THPStream*)args[i])->stream_id,

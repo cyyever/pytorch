@@ -6,7 +6,6 @@
 #include <exception>
 #include <utility>
 
-#include <fmt/format.h>
 #include <torch/csrc/THP.h>
 
 #include <c10/util/StringUtil.h>

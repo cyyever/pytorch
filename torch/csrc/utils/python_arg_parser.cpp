@@ -157,7 +157,7 @@ auto handle_torch_function_getter(
     THPVariable* self,
     const std::string& property_name) -> PyObject* {
   py::object torch_api = PyObject_FastGetAttrString(
-      THPVariableClass, (char*)property_name.c_str());
+      THPVariableClass, property_name.c_str());
   std::string module_name = "torch.Tensor." + property_name;
   return handle_torch_function(
       (PyObject*)self,
@@ -173,7 +173,7 @@ auto handle_torch_function_setter(
     const std::string& property_name,
     PyObject* value) -> int {
   py::object torch_api = PyObject_FastGetAttrString(
-      THPVariableClass, (char*)property_name.c_str());
+      THPVariableClass, property_name.c_str());
   std::string module_name = "torch.Tensor." + property_name;
   if (value != nullptr) {
     py::tuple args_ = py::make_tuple(py::handle(value));
@@ -230,7 +230,7 @@ auto handle_torch_function(
     PyObject* torch_api,
     const std::string& module_name) -> PyObject* {
   py::object torch_api_function =
-      PyObject_FastGetAttrString(torch_api, (char*)func_name.c_str());
+      PyObject_FastGetAttrString(torch_api, func_name.c_str());
   TORCH_INTERNAL_ASSERT(
       torch_api_function.ptr() != nullptr, "torch API function must exist");
   py::tuple args_ = combine_self_args(self, args);
@@ -541,8 +541,7 @@ auto handle_torch_function(
     const char* func_name_override) -> PyObject* {
   py::object torch_api_function = PyObject_FastGetAttrString(
       torch_api,
-      (char*)(func_name_override ? func_name_override
-                                 : r.get_func_name().c_str()));
+      func_name_override ? func_name_override : r.get_func_name().c_str());
   TORCH_INTERNAL_ASSERT(
       torch_api_function.ptr() != nullptr, "torch API function must exist");
   py::tuple args_ = combine_self_args(self, args);
@@ -1300,14 +1299,14 @@ std::string FunctionSignature::toString() const {
   if (min_args != max_pos_args) {
     throw TypeError(
         "{}() takes from {} to {} positional arguments but {} were given",
-        signature.name.c_str(),
+        signature.name,
         min_args,
         max_pos_args,
         nargs_);
   }
   throw TypeError(
       "{}() takes {} positional argument{} but {} {} given",
-      signature.name.c_str(),
+      signature.name,
       max_pos_args,
       max_pos_args == 1 ? "" : "s",
       nargs_,
@@ -1333,10 +1332,10 @@ std::string FunctionSignature::toString() const {
 
   throw TypeError(
       "{}() missing {} required positional argument{}: {}",
-      signature.name.c_str(),
+      signature.name,
       num_missing,
       num_missing == 1 ? "s" : "",
-      ss.str().c_str());
+      ss.str());
 }
 
 static Py_ssize_t find_param(FunctionSignature& signature, PyObject* name) {
@@ -1370,15 +1369,15 @@ static Py_ssize_t find_param(FunctionSignature& signature, PyObject* name) {
     if (param_idx < 0) {
       throw TypeError(
           "{}() got an unexpected keyword argument '{}'",
-          signature.name.c_str(),
-          THPUtils_unpackString(key).c_str());
+          signature.name,
+          THPUtils_unpackString(key));
     }
 
     if (param_idx < num_pos_args) {
       throw TypeError(
           "{}() got multiple values for argument '{}'",
-          signature.name.c_str(),
-          THPUtils_unpackString(key).c_str());
+          signature.name,
+          THPUtils_unpackString(key));
     }
   }
 
@@ -1470,9 +1469,9 @@ bool FunctionSignature::parse(
         // foo(): argument 'other' must be str, not int
         throw TypeError(
             "{}(): argument '{}' must be {}, not {}",
-            name.c_str(),
-            param.name.c_str(),
-            param.type_name().c_str(),
+            name,
+            param.name,
+            param.type_name(),
             Py_TYPE(obj)->tp_name);
       } else {
         // foo(): argument 'other' (position 2) must be str, not int
@@ -1484,10 +1483,10 @@ bool FunctionSignature::parse(
           TORCH_INTERNAL_ASSERT(failed_idx < PySequence_Size(obj));
           throw TypeError(
               "{}(): argument '{}' (position {}) must be {}, but found element of type {} at pos {}",
-              name.c_str(),
-              param.name.c_str(),
+              name,
+              param.name,
               static_cast<long>(arg_pos + 1),
-              param.type_name().c_str(),
+              param.type_name(),
               Py_TYPE(py::reinterpret_steal<py::object>(
                           PySequence_GetItem(obj, failed_idx))
                           .ptr())
@@ -1496,10 +1495,10 @@ bool FunctionSignature::parse(
         }
         throw TypeError(
             "{}(): argument '{}' (position {}) must be {}, not {}",
-            name.c_str(),
-            param.name.c_str(),
+            name,
+            param.name,
             static_cast<long>(arg_pos + 1),
-            param.type_name().c_str(),
+            param.type_name(),
             Py_TYPE(obj)->tp_name);
       }
     } else {

@@ -44,7 +44,7 @@ inline bool THPCopy(
     return true;
   }
   THPUtils_setError(
-      "copy from %s to %s isn't implemented",
+      "copy from {} to {} isn't implemented",
       THPUtils_typename(src),
       THPUtils_typename(dst));
   return false;
