@@ -7,7 +7,6 @@
 #include <c10/core/DeviceType.h>
 #include <c10/core/impl/DeviceGuardImplInterface.h>
 #include <c10/core/impl/VirtualGuardImpl.h>
-#include <c10/util/Exception.h>
 #include <c10/util/Optional.h>
 #include <type_traits>
 #include <utility>
