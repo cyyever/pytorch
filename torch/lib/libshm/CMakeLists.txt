@@ -7,7 +7,7 @@ if(NOT LIBSHM_INSTALL_LIB_SUBDIR)
   set(LIBSHM_INSTALL_LIB_SUBDIR "lib" CACHE PATH "libshm install library directory")
 endif()
 
-add_library(shm SHARED core.cpp)
+add_library(shm core.cpp)
 if(HAVE_SOVERSION)
   set_target_properties(shm PROPERTIES
       VERSION ${TORCH_VERSION} SOVERSION ${TORCH_SOVERSION})
