@@ -33,6 +33,11 @@ if(USE_CUDA)
   target_compile_definitions(test_cpp_rpc PRIVATE "USE_CUDA")
 endif()
 
+if(USE_TENSORPIPE)
+  get_target_property(_include_dirs tensorpipe INCLUDE_DIRECTORIES)
+  target_include_directories(test_cpp_rpc PRIVATE ${_include_dirs})
+endif()
+
 if(INSTALL_TEST)
   set_target_properties(test_cpp_rpc PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
   install(TARGETS test_cpp_rpc DESTINATION bin)
