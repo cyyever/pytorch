@@ -379,26 +379,26 @@ if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "s390x")
 endif()
 
 if(NOT MSVC AND NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
-  # Preserve values for the main build
-  set(__aten_sleef_build_shared_libs ${BUILD_SHARED_LIBS})
-  set(__aten_sleef_build_tests ${BUILD_TESTS})
-
-  # Unset our restrictive C++ flags here and reset them later.
-  # Remove this once we use proper target_compile_options.
-  set(OLD_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  set(CMAKE_CXX_FLAGS)
-
-  # Bump up optimization level for sleef to -O1, since at -O0 the compiler
-  # excessively spills intermediate vector registers to the stack
-  # and makes things run impossibly slowly
-  set(OLD_CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-  if(${CMAKE_C_FLAGS_DEBUG} MATCHES "-O0")
-    string(REGEX REPLACE "-O0" "-O1" CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
-  else()
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O1")
-  endif()
-
   if(NOT USE_SYSTEM_SLEEF)
+    # Preserve values for the main build
+    set(__aten_sleef_build_shared_libs ${BUILD_SHARED_LIBS})
+    set(__aten_sleef_build_tests ${BUILD_TESTS})
+
+    # Unset our restrictive C++ flags here and reset them later.
+    # Remove this once we use proper target_compile_options.
+    set(OLD_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    set(CMAKE_CXX_FLAGS)
+
+    # Bump up optimization level for sleef to -O1, since at -O0 the compiler
+    # excessively spills intermediate vector registers to the stack
+    # and makes things run impossibly slowly
+    set(OLD_CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
+    if(${CMAKE_C_FLAGS_DEBUG} MATCHES "-O0")
+      string(REGEX REPLACE "-O0" "-O1" CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
+    else()
+      set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O1")
+    endif()
+
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build sleef static" FORCE)
     set(BUILD_DFT OFF CACHE BOOL "Don't build sleef DFT lib" FORCE)
     set(BUILD_GNUABI_LIBS OFF CACHE BOOL "Don't build sleef gnuabi libs" FORCE)
@@ -411,6 +411,13 @@ if(NOT MSVC AND NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef" ${CMAKE_BINARY_DIR}/sleef)
     target_link_directories(sleef PRIVATE ${CMAKE_BINARY_DIR}/sleef/lib)
     target_include_directories(sleef PUBLIC ${CMAKE_BINARY_DIR}/include)
+    target_compile_options_if_supported(sleef -Wno-ignored-qualifiers)
+    set(CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
+    set(CMAKE_CXX_FLAGS ${OLD_CMAKE_CXX_FLAGS})
+
+    # Set these back. TODO: Use SLEEF_ to pass these instead
+    set(BUILD_SHARED_LIBS ${__aten_sleef_build_shared_libs} CACHE BOOL "Build shared libs" FORCE)
+    set(BUILD_TESTS ${__aten_sleef_build_tests} CACHE BOOL "Build tests" FORCE)
   else()
     add_library(sleef SHARED IMPORTED)
     find_library(SLEEF_LIBRARY sleef)
@@ -421,13 +428,6 @@ if(NOT MSVC AND NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
     set_target_properties(sleef PROPERTIES IMPORTED_LOCATION "${SLEEF_LIBRARY}")
   endif()
   list(APPEND ATen_CPU_DEPENDENCY_LIBS sleef)
-
-  set(CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
-  set(CMAKE_CXX_FLAGS ${OLD_CMAKE_CXX_FLAGS})
-
-  # Set these back. TODO: Use SLEEF_ to pass these instead
-  set(BUILD_SHARED_LIBS ${__aten_sleef_build_shared_libs} CACHE BOOL "Build shared libs" FORCE)
-  set(BUILD_TESTS ${__aten_sleef_build_tests} CACHE BOOL "Build tests" FORCE)
 endif()
 
 if(USE_CUDA AND NOT USE_ROCM)
