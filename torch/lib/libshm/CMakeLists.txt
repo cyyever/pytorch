@@ -11,7 +11,7 @@ target_include_directories(torch_shm_manager PUBLIC
   ${TORCH_ROOT}/torch/lib # provides "libshm/libshm.h"
 )
 
-target_link_libraries(torch_shm_manager PUBLIC torch_cpu)
+target_link_libraries(torch_shm_manager PUBLIC torch_cpu rt)
 
 set_target_properties(torch_shm_manager PROPERTIES
   INSTALL_RPATH "${_rpath_portable_origin}/../lib")
