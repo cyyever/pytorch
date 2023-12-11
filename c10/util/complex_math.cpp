@@ -1,7 +1,3 @@
-#include <c10/util/complex.h>
-
-#include <cmath>
-
 // Note [ Complex Square root in libc++]
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // In libc++ complex square root is computed using polar form
@@ -14,6 +10,10 @@
 
 #if defined(_LIBCPP_VERSION) || \
     (defined(__GLIBCXX__) && !defined(_GLIBCXX11_USE_C99_COMPLEX))
+
+#include <c10/util/complex.h>
+#include <c10/util/math_compat.h>
+#include <cmath>
 
 namespace {
 template <typename T>
