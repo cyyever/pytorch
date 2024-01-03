@@ -111,9 +111,9 @@ PyObject* THCPModule_nccl_init_rank(PyObject* self, PyObject* args) {
           args, "is#i:nccl_init_rank", &nranks, &id, &id_len, &rank)) {
     return nullptr;
   }
-  THPUtils_assert(
+  THPUtils_assert_ext(
       id_len == NCCL_UNIQUE_ID_BYTES,
-      "invalid unqiue_id (expected %d bytes, got %zd)",
+      "invalid unqiue_id (expected {} bytes, got {})",
       NCCL_UNIQUE_ID_BYTES,
       id_len);
 
@@ -210,7 +210,7 @@ PyObject* THCPModule_nccl_broadcast(PyObject* self, PyObject* args) {
   }
 
   std::vector<at::Tensor> inputs = extract_tensors(_inputs);
-  THPUtils_assert(root >= 0 && (size_t)root < inputs.size(), "invalid root");
+  THPUtils_assert_ext(root >= 0 && (size_t)root < inputs.size(), "invalid root");
   auto streams = unpack_streams(_streams, inputs.size());
   auto user_comms = unpack_comms(_comms, inputs.size());
 
