@@ -82,12 +82,12 @@ DEFINE_DISPATCH(batch_norm_cpu_backward_stub);
 DEFINE_DISPATCH(renorm_scale_factor_stub);
 
 namespace {
-  void check_dims_match_num_input_features(const char* arg_name, SymInt expected, SymInt actual){
+  void check_dims_match_num_input_features(const char* arg_name, const SymInt& expected, const SymInt& actual){
     TORCH_CHECK(actual == expected,
              arg_name, " should contain ", expected, " elements not ", actual);
   }
 
-  static inline Tensor repeat_if_defined(const Tensor& t, SymInt repeat) {
+  static inline Tensor repeat_if_defined(const Tensor& t, const SymInt& repeat) {
     if (t.defined()) {
       return t.repeat_symint(repeat);
     }

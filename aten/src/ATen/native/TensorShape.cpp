@@ -387,7 +387,7 @@ Tensor& set_storage_cpu_(Tensor& result, Storage storage, int64_t storage_offset
   return result;
 }
 
-Tensor& set_storage_meta__symint(Tensor& result, Storage storage, c10::SymInt storage_offset, c10::SymIntArrayRef size, c10::SymIntArrayRef stride) {
+Tensor& set_storage_meta__symint(Tensor& result, const Storage& storage, c10::SymInt storage_offset, c10::SymIntArrayRef size, c10::SymIntArrayRef stride) {
   checkSetStorage(result, storage, storage_offset, size, stride);
 
   c10::SymDimVector contiguous_strides;
@@ -420,13 +420,13 @@ Tensor& set_storage_meta__symint(Tensor& result, Storage storage, c10::SymInt st
     // pointers to track whether or not fake cuda tensors are pinned or not
     const auto itemsize = result.dtype().itemsize();
     c10::SymInt size_bytes = at::detail::computeStorageNbytes(
-        size, stride, itemsize, std::move(storage_offset));
+        size, stride, itemsize, storage_offset);
     storage.set_nbytes(std::move(size_bytes));
   }
   return result;
 }
 
-Tensor& set__symint(Tensor& result, const Tensor& storage, c10::SymInt storage_offset, c10::SymIntArrayRef size, c10::SymIntArrayRef stride) {
+Tensor& set__symint(Tensor& result, const Tensor& storage, const c10::SymInt& storage_offset, c10::SymIntArrayRef size, c10::SymIntArrayRef stride) {
   TORCH_CHECK(storage.is_contiguous(), "passed in tensor to be used as storage must be contiguous");
   return result.set__symint(storage.storage(), storage_offset + storage.sym_storage_offset(), size, stride);
 }
@@ -944,7 +944,7 @@ std::vector<Tensor> chunk(const Tensor& self, int64_t chunks, int64_t dim) {
   }
 }
 
-std::vector<Tensor> tensor_split_sections_symint(const Tensor& self, c10::SymInt sym_sections, int64_t dim) {
+std::vector<Tensor> tensor_split_sections_symint(const Tensor& self, const c10::SymInt& sym_sections, int64_t dim) {
   TORCH_CHECK(self.dim() > 0, "tensor_split expected at least a 1-dimensional tensor, but got a tensor with ", self.dim()," dims");
   int64_t dim_ = maybe_wrap_dim(dim, self.dim());
   // NB: intentional, sections specifies number of output tensors, which
@@ -1153,7 +1153,7 @@ Tensor sum_to_size_symint(const Tensor& self, SymIntArrayRef size) {
 
 // We currently do not support per-channel quant for unfold, diagonal, expand, permute.
 // TODO: Make this an aten function and replace as_strided_qtensorimpl once that is done.
-static Tensor make_qtensor(const Tensor& self, IntArrayRef size, IntArrayRef stride, QuantizerPtr quantizer) {
+static Tensor make_qtensor(const Tensor& self, IntArrayRef size, IntArrayRef stride, const QuantizerPtr& quantizer) {
   auto result = at::detail::make_tensor<QTensorImpl>(
       c10::TensorImpl::VIEW, Storage(self.storage()), self.key_set(), self.dtype(), quantizer);
   setStrided(result, size, stride, self.storage_offset());
@@ -1187,7 +1187,7 @@ inline void setStridedUnchecked(
   self_->set_sizes_and_strides(size, stride, c10::make_optional(std::forward<T>(storage_offset)));
 }
 
-Tensor as_strided_tensorimpl_meta_symint(const Tensor& self, SymIntArrayRef sym_size, SymIntArrayRef sym_stride, optional<c10::SymInt> sym_storage_offset_) {
+Tensor as_strided_tensorimpl_meta_symint(const Tensor& self, SymIntArrayRef sym_size, SymIntArrayRef sym_stride, const optional<c10::SymInt>& sym_storage_offset_) {
   auto sym_storage_offset = sym_storage_offset_.value_or(self.sym_storage_offset());
   auto result = at::detail::make_tensor<TensorImpl>(
       c10::TensorImpl::VIEW, Storage(self.storage()), self.key_set(), self.dtype());
@@ -1219,7 +1219,7 @@ Tensor as_strided_qtensorimpl(const Tensor& self, IntArrayRef size, IntArrayRef 
 // input, quantizer, is called by the select & slice methods.
 // TODO: Make this function compatible with the dispatcher
 static Tensor as_strided_qtensorimpl(const Tensor& self, IntArrayRef size, IntArrayRef stride, optional<int64_t> storage_offset_,
-  QuantizerPtr quantizer) {
+  const QuantizerPtr& quantizer) {
   auto storage_offset = storage_offset_.value_or(self.storage_offset());
   TORCH_CHECK(
       (quantizer->qscheme() == QScheme::PER_TENSOR_AFFINE) ||
@@ -1231,7 +1231,7 @@ static Tensor as_strided_qtensorimpl(const Tensor& self, IntArrayRef size, IntAr
   return result;
 }
 
-const Tensor &as_strided__symint(const Tensor& self, SymIntArrayRef size, SymIntArrayRef stride, optional<c10::SymInt> storage_offset_) {
+const Tensor &as_strided__symint(const Tensor& self, SymIntArrayRef size, SymIntArrayRef stride, const optional<c10::SymInt>& storage_offset_) {
   auto storage_offset = storage_offset_.value_or(self.sym_storage_offset());
   setStrided(self, size, stride, std::move(storage_offset));
   return self;
@@ -1386,7 +1386,7 @@ Tensor narrow(const Tensor& self, int64_t dim, int64_t start, int64_t length) {
   return at::slice(self, dim, start, start + length, 1);
 }
 
-Tensor narrow_symint(const Tensor& self, int64_t dim, SymInt start, SymInt length) {
+Tensor narrow_symint(const Tensor& self, int64_t dim, SymInt start, const SymInt& length) {
   TORCH_CHECK(self.dim() > 0, "narrow() cannot be applied to a 0-dim tensor.");
   TORCH_SYM_CHECK(length.sym_ge(0), "narrow(): length must be non-negative.");
   auto cur_size = self.sym_size(dim);
@@ -2556,9 +2556,9 @@ Tensor slice_inverse_symint(
     const Tensor& self,
     const Tensor& base,
     int64_t /* dim */,
-    c10::optional<SymInt> /* start */,
-    c10::optional<SymInt> /* end */,
-    SymInt /* step */) {
+    const c10::optional<SymInt>& /* start */,
+    const c10::optional<SymInt>& /* end */,
+    const SymInt& /* step */) {
   // assume self has enough to storage to be viewed with base's metadata
   return self.as_strided_symint(base.sym_sizes(), base.sym_strides(), base.sym_storage_offset());
 }

@@ -35,7 +35,7 @@
 namespace at::native {
 
 Tensor embedding_symint(const Tensor & weight, const Tensor & indices,
-                        c10::SymInt padding_idx, bool scale_grad_by_freq, bool sparse) {
+                        const c10::SymInt& padding_idx, bool scale_grad_by_freq, bool sparse) {
   TORCH_CHECK(weight.dim() == 2,  "'weight' must be 2-D");
   auto indices_arg = TensorArg(indices, "indices", 1);
   checkScalarTypes("embedding", indices_arg, {kLong, kInt});
@@ -55,7 +55,7 @@ Tensor embedding_symint(const Tensor & weight, const Tensor & indices,
 
 Tensor embedding_backward_symint(
     const Tensor & grad, const Tensor & indices, c10::SymInt num_weights,
-    c10::SymInt padding_idx, bool scale_grad_by_freq, bool sparse) {
+    const c10::SymInt& padding_idx, bool scale_grad_by_freq, bool sparse) {
   if (sparse) {
     // TODO: if we teach sparse tensor how to propagate symints, the guard
     // here is not strictly necessary.  However, we think it is fine as is

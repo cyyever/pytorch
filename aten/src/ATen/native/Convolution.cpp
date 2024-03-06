@@ -305,7 +305,7 @@ struct ConvParams {
 
   bool is_dilated() const {
     bool is_dilated = false;
-    for (auto d : dilation) {
+    for (const auto& d : dilation) {
       is_dilated |= (d != 1);
     }
     return is_dilated;
@@ -353,7 +353,7 @@ struct ConvParams {
 
   bool is_stride_nonpos() const {
     bool is_nonpos = false;
-    for (auto s : stride) {
+    for (const auto& s : stride) {
       is_nonpos |= (s <= 0);
     }
     return is_nonpos;
@@ -846,7 +846,7 @@ at::Tensor complex_convolution(
     SymIntArrayRef dilation,
     bool transposed,
     SymIntArrayRef output_padding,
-    c10::SymInt groups) {
+    const c10::SymInt& groups) {
   check_input_same_type_as_parameters(input, weight, bias);
   auto [i_r, i_i] = complex_to_real(input.resolve_conj());
   auto [w_r, w_i] = complex_to_real(weight.resolve_conj());
@@ -882,7 +882,7 @@ at::Tensor complex_convolution_mode(
     c10::SymIntArrayRef stride,
     c10::string_view padding,
     c10::SymIntArrayRef dilation,
-    c10::SymInt groups) {
+    const c10::SymInt& groups) {
   auto bias = bias_opt.value_or(Tensor());
   check_input_same_type_as_parameters(input, weight, bias);
   auto [i_r, i_i] = complex_to_real(input.resolve_conj());
@@ -909,7 +909,7 @@ at::Tensor complex_convolution_mode(
 
 at::Tensor conv1d_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
-    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef dilation, c10::SymInt groups) {
+    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef dilation, const c10::SymInt& groups) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -934,7 +934,7 @@ at::Tensor conv1d_symint(
 
 at::Tensor conv2d_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
-    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef dilation, c10::SymInt groups) {
+    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef dilation, const c10::SymInt& groups) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -959,7 +959,7 @@ at::Tensor conv2d_symint(
 
 at::Tensor conv3d_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
-    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef dilation, c10::SymInt groups) {
+    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef dilation, const c10::SymInt& groups) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -985,7 +985,7 @@ at::Tensor conv3d_symint(
 
 static Tensor convolution_same(
     const Tensor &input, const Tensor &weight, const Tensor &bias,
-    SymIntArrayRef stride, SymIntArrayRef dilation, c10::SymInt groups) {
+    SymIntArrayRef stride, SymIntArrayRef dilation, const c10::SymInt& groups) {
 
   auto k = weight.dim();
   TORCH_CHECK(k > 2, "weight should have at least three dimensions");
@@ -1051,7 +1051,7 @@ static Tensor convolution_same(
 Tensor _convolution_mode_symint(
     const Tensor& input, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
     SymIntArrayRef stride, c10::string_view padding, SymIntArrayRef dilation,
-    c10::SymInt groups) {
+    const c10::SymInt& groups) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -1069,13 +1069,13 @@ Tensor _convolution_mode_symint(
 at::Tensor conv1d_padding_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias,
     c10::SymIntArrayRef stride, c10::string_view padding, c10::SymIntArrayRef dilation,
-    c10::SymInt groups) {
+    const c10::SymInt& groups) {
   auto [input, is_batched] = batchify(input_, /*num_spatial_dims=*/ 1, "conv1d");
   Tensor output;
   if (at::isComplexType(input_.scalar_type())) {
-    output = complex_convolution_mode(input, weight, bias, stride, std::move(padding), dilation, groups);
+    output = complex_convolution_mode(input, weight, bias, stride, padding, dilation, groups);
   } else {
-    output = at::_convolution_mode_symint(input, weight, bias, stride, std::move(padding), dilation, groups);
+    output = at::_convolution_mode_symint(input, weight, bias, stride, padding, dilation, groups);
   }
   return is_batched ? std::move(output) : output.squeeze(0);
 }
@@ -1083,13 +1083,13 @@ at::Tensor conv1d_padding_symint(
 at::Tensor conv2d_padding_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias,
     c10::SymIntArrayRef stride, c10::string_view padding, c10::SymIntArrayRef dilation,
-    c10::SymInt groups) {
+    const c10::SymInt& groups) {
   auto [input, is_batched] = batchify(input_, /*num_spatial_dims=*/ 2, "conv2d");
   Tensor output;
   if (at::isComplexType(input_.scalar_type())) {
-    output = complex_convolution_mode(input, weight, bias, stride, std::move(padding), dilation, groups);
+    output = complex_convolution_mode(input, weight, bias, stride, padding, dilation, groups);
   } else {
-    output = at::_convolution_mode_symint(input, weight, bias, stride, std::move(padding), dilation, groups);
+    output = at::_convolution_mode_symint(input, weight, bias, stride, padding, dilation, groups);
   }
   return is_batched ? std::move(output) : output.squeeze(0);
 }
@@ -1097,20 +1097,20 @@ at::Tensor conv2d_padding_symint(
 at::Tensor conv3d_padding_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias,
     c10::SymIntArrayRef stride, c10::string_view padding, c10::SymIntArrayRef dilation,
-    c10::SymInt groups) {
+    const c10::SymInt& groups) {
   auto [input, is_batched] = batchify(input_, /*num_spatial_dims=*/ 3, "conv3d");
   Tensor output;
   if (at::isComplexType(input_.scalar_type())) {
-    output = complex_convolution_mode(input, weight, bias, stride, std::move(padding), dilation, groups);
+    output = complex_convolution_mode(input, weight, bias, stride, padding, dilation, groups);
   } else {
-    output = at::_convolution_mode_symint(input, weight, bias, stride, std::move(padding), dilation, groups);
+    output = at::_convolution_mode_symint(input, weight, bias, stride, padding, dilation, groups);
   }
   return is_batched ? std::move(output) : output.squeeze(0);
 }
 
 at::Tensor conv_transpose1d_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
-    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef output_padding, c10::SymInt groups, SymIntArrayRef dilation) {
+    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef output_padding, const c10::SymInt& groups, SymIntArrayRef dilation) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -1129,7 +1129,7 @@ at::Tensor conv_transpose1d_symint(
 
 at::Tensor conv_transpose2d_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
-    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef output_padding, c10::SymInt groups, SymIntArrayRef dilation) {
+    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef output_padding, const c10::SymInt& groups, SymIntArrayRef dilation) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -1148,7 +1148,7 @@ at::Tensor conv_transpose2d_symint(
 
 at::Tensor conv_transpose3d_symint(
     const Tensor& input_, const Tensor& weight, const c10::optional<Tensor>& bias_opt,
-    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef output_padding, c10::SymInt groups, SymIntArrayRef dilation) {
+    SymIntArrayRef stride, SymIntArrayRef padding, SymIntArrayRef output_padding, const c10::SymInt& groups, SymIntArrayRef dilation) {
   // See [Note: hacky wrapper removal for optional tensor]
   c10::MaybeOwned<Tensor> bias_maybe_owned = at::borrow_from_optional_tensor(bias_opt);
   const Tensor& bias = *bias_maybe_owned;
@@ -1319,7 +1319,7 @@ ConvBackend select_conv_backend(
   params.dilation = expand_param_if_needed(dilation_, "dilation", dim);
   params.transposed = transposed_;
   params.output_padding = expand_param_if_needed(output_padding_, "output_padding", dim);
-  params.groups = groups_;
+  params.groups = std::move(groups_);
   params.benchmark = ctx.benchmarkCuDNN();
   params.deterministic = ctx.deterministicCuDNN() || ctx.deterministicAlgorithms();
   params.cudnn_enabled = ctx.userEnabledCuDNN();

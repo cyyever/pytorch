@@ -62,6 +62,7 @@
 #endif
 
 #include <algorithm>
+#include <utility>
 
 namespace at::native {
 
@@ -171,7 +172,7 @@ Tensor fft_r2c_maybe_out(
 
 Tensor fft_c2r_maybe_out(
     c10::string_view fname, const Tensor& out, const Tensor& input,
-    IntArrayRef dim, int64_t norm, SymInt last_dim_size) {
+    IntArrayRef dim, int64_t norm, const SymInt& last_dim_size) {
   // Support out argument if defined, otherwise call functional
   // variant so autograd works properly.
   if (out.defined()) {
@@ -197,7 +198,7 @@ Tensor fft_c2c_maybe_out(
 
 // Complex to real FFT
 Tensor fft_c2r(c10::string_view function_name,
-               Tensor out, Tensor input, c10::optional<SymInt> n_opt,
+               const Tensor& out, Tensor input, const c10::optional<SymInt>& n_opt,
                int64_t unwrapped_dim, c10::optional<c10::string_view> norm_str,
                bool forward) {
   TORCH_CHECK(!out.defined() || out.is_floating_point(), function_name,
@@ -221,7 +222,7 @@ Tensor fft_c2r(c10::string_view function_name,
 
 // Real to complex FFT
 Tensor fft_r2c(c10::string_view function_name,
-               Tensor out, Tensor input, c10::optional<SymInt> n_opt,
+               Tensor out, Tensor input, const c10::optional<SymInt>& n_opt,
                int64_t unwrapped_dim, c10::optional<c10::string_view> norm_str,
                bool forward, bool onesided) {
   TORCH_CHECK(!input.is_complex(), function_name,
@@ -256,7 +257,7 @@ Tensor fft_r2c(c10::string_view function_name,
 
 // Complex to complex FFT
 Tensor fft_c2c(c10::string_view function_name,
-               Tensor out, Tensor input, c10::optional<SymInt> n_opt,
+               const Tensor& out, Tensor input, const c10::optional<SymInt>& n_opt,
                int64_t unwrapped_dim, c10::optional<c10::string_view> norm_str,
                bool forward) {
   TORCH_CHECK(input.is_complex(), function_name,
@@ -282,7 +283,7 @@ struct ShapeAndDims {
 // Wraps dimensions and applies defaulting behavior.
 // Also checks transform dims are unique and transform shape is non-empty.
 ShapeAndDims canonicalize_fft_shape_and_dim_args(
-    Tensor input, at::OptionalSymIntArrayRef shape, at::OptionalIntArrayRef dim) {
+    const Tensor& input, at::OptionalSymIntArrayRef shape, at::OptionalIntArrayRef dim) {
   const int64_t input_dim = input.dim();
   const SymIntArrayRef input_sizes = input.sym_sizes();
   ShapeAndDims ret;
@@ -345,7 +346,7 @@ ShapeAndDims canonicalize_fft_shape_and_dim_args(
 // Complex to complex n-dimensional fft
 Tensor fftn_c2c(
     c10::string_view function_name,
-    Tensor out, const Tensor& input, SymIntArrayRef shape,
+    const Tensor& out, const Tensor& input, SymIntArrayRef shape,
     IntArrayRef dim, c10::optional<c10::string_view> norm_str, bool forward) {
   TORCH_CHECK(input.is_complex(), function_name, " expects a complex input tensor, but got", input.scalar_type());
   Tensor x = resize_fft_input(input, dim, shape);
@@ -357,14 +358,14 @@ Tensor fftn_c2c(
 }  // namespace (anonymous)
 
 // torch.fft.fft, analogous to NumPy's numpy.fft.fft
-Tensor fft_fft_symint(const Tensor& self, c10::optional<SymInt> n, int64_t dim,
+Tensor fft_fft_symint(const Tensor& self, const c10::optional<SymInt>& n, int64_t dim,
                c10::optional<c10::string_view> norm) {
   return self.is_complex() ?
     fft_c2c("fft", {}, self, n, dim, norm, /*forward=*/true) :
     fft_r2c("fft", {}, self, n, dim, norm, /*forward=*/true, /*onesided=*/false);
 }
 
-Tensor& fft_fft_symint_out(const Tensor& self, c10::optional<SymInt> n,
+Tensor& fft_fft_symint_out(const Tensor& self, const c10::optional<SymInt>& n,
                     int64_t dim, c10::optional<c10::string_view> norm, Tensor& out) {
   if (self.is_complex()) {
     fft_c2c("fft", out, self, n, dim, norm, /*forward=*/true);
@@ -374,14 +375,14 @@ Tensor& fft_fft_symint_out(const Tensor& self, c10::optional<SymInt> n,
   return out;
 }
 
-Tensor fft_ifft_symint(const Tensor& self, c10::optional<SymInt> n, int64_t dim,
+Tensor fft_ifft_symint(const Tensor& self, const c10::optional<SymInt>& n, int64_t dim,
                 c10::optional<c10::string_view> norm) {
   return self.is_complex() ?
     fft_c2c("ifft", {}, self, n, dim, norm, /*forward=*/false) :
     fft_r2c("ifft", {}, self, n, dim, norm, /*forward=*/false, /*onesided=*/false);
 }
 
-Tensor& fft_ifft_symint_out(const Tensor& self, c10::optional<SymInt> n,
+Tensor& fft_ifft_symint_out(const Tensor& self, const c10::optional<SymInt>& n,
                      int64_t dim, c10::optional<c10::string_view> norm, Tensor& out) {
   if (self.is_complex()) {
     fft_c2c("ifft", out, self, n, dim, norm, /*forward=*/false);
@@ -393,45 +394,45 @@ Tensor& fft_ifft_symint_out(const Tensor& self, c10::optional<SymInt> n,
 
 Tensor fft_rfft_symint(const Tensor& self, c10::optional<SymInt> n, int64_t dim,
                 c10::optional<c10::string_view> norm) {
-  return fft_r2c("rfft", {}, self, n, dim, norm, /*forward=*/true, /*onesided=*/true);
+  return fft_r2c("rfft", {}, self, std::move(n), dim, norm, /*forward=*/true, /*onesided=*/true);
 }
 
 Tensor& fft_rfft_symint_out(const Tensor& self, c10::optional<SymInt> n,
                      int64_t dim, c10::optional<c10::string_view> norm, Tensor& out) {
-  fft_r2c("rfft", out, self, n, dim, norm, /*forward=*/true, /*onesided=*/true);
+  fft_r2c("rfft", out, self, std::move(n), dim, norm, /*forward=*/true, /*onesided=*/true);
   return out;
 }
 
 Tensor fft_irfft_symint(const Tensor& self, c10::optional<SymInt> n, int64_t dim,
                  c10::optional<c10::string_view> norm) {
-  return fft_c2r("irfft", {}, self, n, dim, norm, /*forward=*/false);
+  return fft_c2r("irfft", {}, self, std::move(n), dim, norm, /*forward=*/false);
 }
 
 Tensor& fft_irfft_symint_out(const Tensor& self, c10::optional<SymInt> n,
                   int64_t dim, c10::optional<c10::string_view> norm, Tensor& out) {
-  fft_c2r("irfft", out, self, n, dim, norm, /*forward=*/false);
+  fft_c2r("irfft", out, self, std::move(n), dim, norm, /*forward=*/false);
   return out;
 }
 
 Tensor fft_hfft_symint(const Tensor& self, c10::optional<SymInt> n, int64_t dim,
                 c10::optional<c10::string_view> norm) {
-  return fft_c2r("hfft", {}, self, n, dim, norm, /*forward=*/true);
+  return fft_c2r("hfft", {}, self, std::move(n), dim, norm, /*forward=*/true);
 }
 
 Tensor& fft_hfft_symint_out(const Tensor& self, c10::optional<SymInt> n,
                      int64_t dim, c10::optional<c10::string_view> norm, Tensor& out) {
-  fft_c2r("hfft", out, self, n, dim, norm, /*forward=*/true);
+  fft_c2r("hfft", out, self, std::move(n), dim, norm, /*forward=*/true);
   return out;
 }
 
 Tensor fft_ihfft_symint(const Tensor& self, c10::optional<SymInt> n, int64_t dim,
                  c10::optional<c10::string_view> norm) {
-  return fft_r2c("ihfft", {}, self, n, dim, norm, /*forward=*/false, /*onesided=*/true);
+  return fft_r2c("ihfft", {}, self, std::move(n), dim, norm, /*forward=*/false, /*onesided=*/true);
 }
 
 Tensor& fft_ihfft_symint_out(const Tensor& self, c10::optional<SymInt> n,
                      int64_t dim, c10::optional<c10::string_view> norm, Tensor& out) {
-  fft_r2c("ihfft", out, self, n, dim, norm, /*forward=*/false, /*onesided=*/true);
+  fft_r2c("ihfft", out, self, std::move(n), dim, norm, /*forward=*/false, /*onesided=*/true);
   return out;
 }
 
@@ -473,7 +474,7 @@ Tensor& fft_ifftn_symint_out(const Tensor& self,
   return out;
 }
 
-static Tensor fft_rfftn_impl(Tensor out, const Tensor& self,
+static Tensor fft_rfftn_impl(const Tensor& out, const Tensor& self,
                              at::OptionalSymIntArrayRef s,
                              at::OptionalIntArrayRef dim,
                              const c10::optional<c10::string_view>& norm_str) {
@@ -525,7 +526,7 @@ static ShapeAndDims canonicalize_fft_c2r_shape_and_dim_args(
   return desc;
 }
 
-static Tensor fft_irfftn_impl(Tensor out, const Tensor& self,
+static Tensor fft_irfftn_impl(const Tensor& out, const Tensor& self,
                               at::OptionalSymIntArrayRef s,
                               at::OptionalIntArrayRef dim,
                               const c10::optional<c10::string_view>& norm_str) {
