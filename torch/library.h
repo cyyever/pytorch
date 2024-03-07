@@ -739,6 +739,7 @@ class TORCH_API Library final {
     return def(raw_schema.operator const char*(), tags);
   }
   template <typename Func>
+  // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
   Library& def(detail::SelectiveStr<false>, Func&& /*raw_f*/, const std::vector<at::Tag>& tags = {}) & {
     return *this;
   }
@@ -749,13 +750,16 @@ class TORCH_API Library final {
   }
 
   template <typename Func>
+  // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
   Library& impl(detail::SelectiveStr<false>, Func&& /*raw_f*/) & {
     return *this;
   }
   template <typename Dispatch, typename Func>
   Library& impl(
       detail::SelectiveStr<false>,
+      // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
       Dispatch&& /*key*/,
+      // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
       Func&& /*raw_f*/) & {
     return *this;
   }
