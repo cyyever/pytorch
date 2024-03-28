@@ -63,8 +63,8 @@ struct GemmParams : OpParams {
     at::Tensor oth = at::from_blob(other->c, {m*n}, options);
     at::Tensor ref_float = ref.to(at::kFloat);
     at::Tensor oth_float = oth.to(at::kFloat);
-    std::vector<double> atols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
-    std::vector<double> rtols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
+    constexpr auto atols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
+    constexpr auto rtols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
     double last_succeed_atol = 1;
     double last_succeed_rtol = 1;
     for (auto& atol : atols) {
@@ -130,8 +130,8 @@ struct GemmStridedBatchedParams : OpParams {
     at::Tensor oth = at::from_blob(other->c, {batch*stride_c}, options);
     at::Tensor ref_float = ref.to(at::kFloat);
     at::Tensor oth_float = oth.to(at::kFloat);
-    std::vector<double> atols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
-    std::vector<double> rtols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
+    constexpr auto atols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
+    constexpr auto rtols{1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
     double last_succeed_atol = 1;
     double last_succeed_rtol = 1;
     for (auto& atol : atols) {
