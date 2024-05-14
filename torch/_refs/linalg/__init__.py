@@ -1,6 +1,6 @@
 from functools import partial
 
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import torch
 
@@ -17,7 +17,6 @@ from torch._prims_common import (
     DimsType,
     ELEMENTWISE_TYPE_PROMOTION_KIND,
     IntLike,
-    NumberType,
     TensorLikeType,
 )
 from torch._prims_common.wrappers import (
