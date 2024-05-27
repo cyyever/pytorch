@@ -54,7 +54,7 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
 
   // uuid of this instance's current capture, used to
   // specify the pool.
-  CaptureId_t id_;
+  CaptureId_t id_ = -1;
 
   // the ID assigned by cuda during graph capture,
   // used to identify when a stream is participating in capture
@@ -80,13 +80,13 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
   // multiple generator states and their wholegraph_increments in this graph
   // that are managed by the CUDA Graph
   ska::flat_hash_map<c10::intrusive_ptr<at::CUDAGeneratorState>, uint64_t>
-      captured_generator_states_;
+      captured_generator_states_{};
 
   // Device where capture occurred. Right now, for simplicity, we require all ops
   // in a capture to run on the same device, but this is a limitation of CUDAGraph,
   // not CUDA itself.  We can straightforwardly modify CUDAGraph to support multi-device
   // captures if needed.
-  int capture_dev_;
+  int capture_dev_{};
 };
 
 } // namespace cuda
