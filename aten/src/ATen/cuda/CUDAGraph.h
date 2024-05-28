@@ -39,8 +39,8 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
   void debug_dump(const std::string& debug_path);
 
  protected:
-  cudaGraph_t graph_ = NULL;
-  cudaGraphExec_t graph_exec_ = NULL;
+  cudaGraph_t graph_ = nullptr;
+  cudaGraphExec_t graph_exec_ = nullptr;
 
   static std::atomic<int> pending_event_queries;
 
@@ -54,7 +54,7 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
 
   // uuid of this instance's current capture, used to
   // specify the pool.
-  CaptureId_t id_;
+  CaptureId_t id_{};
 
   // the ID assigned by cuda during graph capture,
   // used to identify when a stream is participating in capture
@@ -86,7 +86,7 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
   // in a capture to run on the same device, but this is a limitation of CUDAGraph,
   // not CUDA itself.  We can straightforwardly modify CUDAGraph to support multi-device
   // captures if needed.
-  int capture_dev_;
+  int capture_dev_{};
 };
 
 } // namespace cuda

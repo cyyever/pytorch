@@ -24,7 +24,7 @@ class EventPool {
   using Event = std::unique_ptr<
       at::cuda::CUDAEvent,
       std::function<void(at::cuda::CUDAEvent*)>>;
-  EventPool() : pools_(at::cuda::device_count()) {}
+  EventPool() : pools_(at::cuda::device_count()) = default;
 
   Event get(DeviceIndex device) {
     TORCH_INTERNAL_ASSERT(0 <= device);
@@ -161,7 +161,7 @@ struct CUDACachingHostAllocatorImpl
         cudaHostRegister((void*)ptr, (size_t)size, cudaHostRegisterDefault));
 
     // If host and device pointer don't match, give a warning and exit
-    void* devptr;
+    void* devptr = nullptr;
     AT_CUDA_CHECK(cudaHostGetDevicePointer(&devptr, (void*)ptr, 0));
     TORCH_CHECK(
         (void*)devptr == (void*)ptr,

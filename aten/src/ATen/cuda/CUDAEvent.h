@@ -31,13 +31,12 @@ struct TORCH_CUDA_CPP_API CUDAEvent {
   CUDAEvent() noexcept = default;
   CUDAEvent(unsigned int flags) noexcept : flags_{flags} {}
 
-  CUDAEvent(
-      DeviceIndex device_index, const cudaIpcEventHandle_t* handle) {
-      device_index_ = device_index;
-      CUDAGuard guard(device_index_);
+  CUDAEvent(DeviceIndex device_index, const cudaIpcEventHandle_t* handle)
+      : device_index_(device_index) {
+    CUDAGuard guard(device_index_);
 
-      AT_CUDA_CHECK(cudaIpcOpenEventHandle(&event_, *handle));
-      is_created_ = true;
+    AT_CUDA_CHECK(cudaIpcOpenEventHandle(&event_, *handle));
+    is_created_ = true;
   }
 
   // Note: event destruction done on creating device to avoid creating a
