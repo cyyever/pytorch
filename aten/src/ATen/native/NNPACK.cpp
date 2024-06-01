@@ -4,8 +4,6 @@
 
 #include <c10/util/CallOnce.h>
 
-#include <thread>
-
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
@@ -39,7 +37,6 @@ bool _nnpack_available() {
 
 #include <nnpack.h>
 
-#include <caffe2/utils/threadpool/pthreadpool-cpp.h>
 #include <ATen/native/ConvUtils.h>
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
@@ -69,9 +66,6 @@ static bool init_nnpack() {
 }
 
 static pthreadpool_t nnpack_threadpool() {
-#ifdef C10_MOBILE
-  return caffe2::pthreadpool_();
-#else
   static pthreadpool_t nnpack_threadpool_ = nullptr;
   static bool called_nnpack_threadpool_ = false;
 
@@ -91,7 +85,6 @@ static pthreadpool_t nnpack_threadpool() {
   }
 
   return nnpack_threadpool_;
-#endif
 }
 
 bool _nnpack_available() {
