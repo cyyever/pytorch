@@ -4,10 +4,10 @@
 #include <ATen/autocast_mode.h>
 #include <c10/core/ScalarType.h>
 #include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/quantization/helper.h>
+#include <optional>
 
 #include <stack>
 #include <unordered_set>

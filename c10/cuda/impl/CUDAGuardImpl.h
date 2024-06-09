@@ -14,9 +14,9 @@
 #include <c10/core/DeviceType.h>
 #include <c10/core/Stream.h>
 #include <c10/core/impl/PyInterpreter.h>
-#include <c10/util/Optional.h>
 #include <cuda_runtime_api.h>
 #include <cstdint>
+#include <optional>
 
 namespace c10::cuda::impl {
 

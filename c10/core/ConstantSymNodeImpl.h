@@ -3,8 +3,8 @@
 #include <c10/core/SymNodeImpl.h>
 #include <c10/macros/Export.h>
 #include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <variant>
 

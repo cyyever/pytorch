@@ -1,5 +1,5 @@
-#include <c10/util/Optional.h>
 #include <torch/csrc/utils/pybind.h>
+#include <optional>
 #include <tuple>
 
 namespace torch::impl {

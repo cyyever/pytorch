@@ -2,8 +2,8 @@
 
 #include <ATen/core/TensorBase.h>
 #include <c10/core/Device.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/jit/mobile/module.h>
+#include <optional>
 
 #include <istream>
 #include <map>

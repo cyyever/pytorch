@@ -1,12 +1,12 @@
 #pragma once
 
 #include <c10/core/ScalarType.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/lazy/backend/backend_interface.h>
 #include <torch/csrc/lazy/core/config.h>
 #include <torch/csrc/lazy/core/ir.h>
 #include <torch/csrc/lazy/core/tensor.h>
 #include <torch/csrc/lazy/core/trie.h>
+#include <optional>
 #include <vector>
 
 // This file is part of the backend interface. So, ops shouldn't be added or

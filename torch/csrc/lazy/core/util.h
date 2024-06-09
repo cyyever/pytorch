@@ -9,8 +9,8 @@
 #include <functional>
 #include <vector>
 
-#include <c10/util/Optional.h>
 #include <c10/util/OptionalArrayRef.h>
+#include <optional>
 
 namespace torch {
 namespace lazy {

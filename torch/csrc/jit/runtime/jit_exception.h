@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 
-#include <c10/util/Optional.h>
 #include <torch/csrc/Export.h>
+#include <optional>
 #include <string>
 
 namespace torch::jit {

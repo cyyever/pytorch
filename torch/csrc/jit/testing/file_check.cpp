@@ -10,13 +10,13 @@
 // API modified from llvm::FileCheck
 
 #include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <c10/util/StringUtil.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/frontend/source_range.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/testing/file_check.h>
+#include <optional>
 
 #include <algorithm>
 #include <iostream>
@@ -543,7 +543,7 @@ struct FileCheckImpl {
   std::vector<std::vector<Check>> groups;
 };
 
-FileCheck::FileCheck() : fcImpl(new FileCheckImpl()){};
+FileCheck::FileCheck() : fcImpl(new FileCheckImpl()) {};
 
 std::ostream& operator<<(std::ostream& out, const FileCheckImpl& fc) {
   out << "FileCheck checks:\n";

@@ -9,8 +9,8 @@
 #include <ATen/core/ivalue.h>
 #include <c10/core/Device.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/jit/mobile/module.h>
+#include <optional>
 
 /**
  * Defines the public API for loading flatbuffer-serialized mobile modules.

@@ -1,6 +1,6 @@
 #pragma once
-#include <c10/util/Optional.h>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <ATen/ThreadLocalState.h>

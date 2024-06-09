@@ -1,10 +1,10 @@
 #pragma once
 
 #include <c10/core/Device.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/types.h>
+#include <optional>
 
 #include <iosfwd>
 #include <memory>

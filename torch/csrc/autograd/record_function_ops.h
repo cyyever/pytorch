@@ -1,7 +1,7 @@
 #pragma once
 #include <ATen/record_function.h>
-#include <c10/util/Optional.h>
 #include <torch/custom_class.h>
+#include <optional>
 
 namespace torch::autograd::profiler {
 

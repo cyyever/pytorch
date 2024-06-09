@@ -2,10 +2,10 @@
 
 #include <c10/core/Device.h>
 #include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <c10/util/StringUtil.h>
 #include <torch/csrc/lazy/backend/backend_interface.h>
 #include <torch/csrc/lazy/core/tensor.h>
+#include <optional>
 
 namespace torch {
 namespace lazy {

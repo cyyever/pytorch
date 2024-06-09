@@ -1,6 +1,5 @@
 #include <torch/csrc/jit/runtime/profiling_graph_executor_impl.h>
 
-#include <c10/util/Optional.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/add_if_then_else.h>
@@ -37,6 +36,7 @@
 #include <torch/csrc/jit/passes/utils/subgraph_utils.h>
 #include <chrono>
 #include <mutex>
+#include <optional>
 
 C10_DEFINE_bool(
     torch_jit_enable_new_executor,

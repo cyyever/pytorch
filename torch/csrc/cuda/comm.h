@@ -3,8 +3,8 @@
 #include <ATen/ATen.h>
 #include <ATen/cuda/ATenCUDAGeneral.h>
 #include <ATen/cuda/CUDAContext.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/Export.h>
+#include <optional>
 
 #include <cstddef>
 #include <vector>

@@ -6,7 +6,7 @@
 
 #include <ATen/ATen.h>
 #include <c10/cuda/CUDAStream.h>
-#include <c10/util/Optional.h>
+#include <optional>
 
 #include <cstddef>
 #include <vector>

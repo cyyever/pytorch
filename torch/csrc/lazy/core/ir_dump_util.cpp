@@ -1,10 +1,10 @@
 #include <torch/csrc/lazy/core/ir_dump_util.h>
 
-#include <c10/util/Optional.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/lazy/backend/backend_interface.h>
 #include <torch/csrc/lazy/backend/lowering_context.h>
 #include <torch/csrc/lazy/core/ir_util.h>
+#include <optional>
 
 #include <regex>
 #include <sstream>

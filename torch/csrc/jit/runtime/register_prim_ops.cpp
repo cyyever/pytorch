@@ -1,6 +1,5 @@
 #include <ATen/autocast_mode.h>
 #include <ATen/core/Generator.h>
-#include <c10/util/Optional.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/mobile/promoted_prim_ops.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
@@ -8,6 +7,7 @@
 #include <torch/csrc/jit/runtime/register_ops_utils.h>
 #include <torch/csrc/jit/runtime/slice_indices_adjust.h>
 #include <torch/library.h>
+#include <optional>
 
 #include <algorithm>
 #include <bitset>

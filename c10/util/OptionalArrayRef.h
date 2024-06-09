@@ -12,9 +12,9 @@
 #pragma once
 
 #include <c10/util/ArrayRef.h>
-#include <c10/util/Optional.h>
 #include <cstdint>
 #include <initializer_list>
+#include <optional>
 #include <type_traits>
 #include <utility>
 

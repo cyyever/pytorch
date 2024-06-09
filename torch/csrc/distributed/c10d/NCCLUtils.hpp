@@ -11,8 +11,8 @@
 
 #include <ATen/ATen.h>
 #include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <nccl.h>
+#include <optional>
 
 #if defined(NCCL_MAJOR) && (NCCL_MAJOR == 2) && defined(NCCL_MINOR) && \
     (NCCL_MINOR >= 14)

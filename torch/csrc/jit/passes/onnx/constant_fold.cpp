@@ -5,9 +5,9 @@
 #include <ATen/Functions.h>
 
 #include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <c10/util/irange.h>
 #include <algorithm>
+#include <optional>
 
 namespace torch {
 namespace jit {

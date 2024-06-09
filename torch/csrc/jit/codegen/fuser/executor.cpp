@@ -4,7 +4,6 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/core/functional.h>
 #include <ATen/core/stack.h>
-#include <c10/util/Optional.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/codegen/fuser/compiler.h>
 #include <torch/csrc/jit/codegen/fuser/interface.h>
@@ -12,6 +11,7 @@
 #include <torch/csrc/jit/codegen/fuser/kernel_spec.h>
 #include <torch/csrc/jit/codegen/fuser/tensor_info.h>
 #include <torch/csrc/jit/passes/graph_fuser.h>
+#include <optional>
 
 #include <algorithm>
 #include <iostream> // TODO: remove, debugging only

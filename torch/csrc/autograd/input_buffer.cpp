@@ -11,7 +11,7 @@
 #include <c10/core/DeviceGuard.h>
 #include <c10/core/Event.h>
 #include <c10/core/StreamGuard.h>
-#include <c10/util/Optional.h>
+#include <optional>
 
 #include <cstddef>
 #include <utility>

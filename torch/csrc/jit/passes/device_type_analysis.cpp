@@ -2,12 +2,12 @@
 #include <ATen/core/jit_type.h>
 #include <c10/core/Device.h>
 #include <c10/util/ArrayRef.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/device_type_analysis.h>
 #include <torch/csrc/jit/passes/shape_analysis.h>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace torch {

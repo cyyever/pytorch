@@ -7,7 +7,7 @@
 #include <torch/csrc/jit/tensorexpr/ir.h>
 #include <torch/csrc/jit/tensorexpr/ir_visitor.h>
 
-#include <c10/util/Optional.h>
+#include <optional>
 
 #include <unordered_map>
 #include <vector>

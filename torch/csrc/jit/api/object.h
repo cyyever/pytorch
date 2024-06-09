@@ -2,8 +2,8 @@
 
 #include <ATen/core/functional.h>
 #include <ATen/core/ivalue.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/jit/api/method.h>
+#include <optional>
 
 #include <utility>
 

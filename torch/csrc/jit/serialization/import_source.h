@@ -2,7 +2,6 @@
 
 #include <ATen/core/ivalue_inl.h>
 #include <ATen/core/qualified_name.h>
-#include <c10/util/Optional.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/frontend/parser.h>
 #include <torch/csrc/jit/frontend/resolver.h>
@@ -13,6 +12,7 @@
 #include <torch/custom_class.h>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <regex>
 #include <string>
 #include <vector>

@@ -16,7 +16,7 @@
 #include <ATen/ops/ones_like_native.h>
 #endif
 
-#include <c10/util/Optional.h>
+#include <optional>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>

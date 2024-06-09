@@ -32,8 +32,8 @@
 
 #include <torch/csrc/jit/ir/constants.h>
 
-#include <c10/util/Optional.h>
 #include <c10/util/hash.h>
+#include <optional>
 
 #include <ATen/core/interned_strings.h>
 #include <ATen/core/jit_type.h>
