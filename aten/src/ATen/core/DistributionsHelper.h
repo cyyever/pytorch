@@ -5,7 +5,7 @@
 #include <c10/util/Half.h>
 #include <c10/util/BFloat16.h>
 #include <c10/util/MathConstants.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/macros/Macros.h>
 
 #include <type_traits>

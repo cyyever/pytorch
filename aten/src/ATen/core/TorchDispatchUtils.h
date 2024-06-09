@@ -3,7 +3,7 @@
 #include <torch/library.h>
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/util/ArrayRef.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/core/impl/TorchDispatchModeTLS.h>
 
 namespace at::impl {

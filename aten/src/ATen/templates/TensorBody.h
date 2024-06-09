@@ -24,7 +24,7 @@
 #include <c10/util/ExclusivelyOwned.h>
 #include <c10/util/Deprecated.h>
 #include <c10/util/MaybeOwned.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/util/OptionalArrayRef.h>
 #include <c10/util/intrusive_ptr.h>
 #include <c10/macros/Export.h>

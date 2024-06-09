@@ -16,7 +16,7 @@
 #include <c10/util/ExclusivelyOwned.h>
 #include <c10/util/ExclusivelyOwnedTensorTraits.h>
 #include <c10/util/MaybeOwned.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/util/intrusive_ptr.h>
 
 #include <ATen/core/NamedTensor.h>

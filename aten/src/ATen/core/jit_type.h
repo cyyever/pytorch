@@ -8,7 +8,7 @@
 #include <ATen/core/type_factory.h>
 #include <ATen/core/qualified_name.h>
 #include <c10/util/TypeList.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/core/SymFloat.h>
 #include <c10/core/SymBool.h>
 #include <c10/core/Device.h>

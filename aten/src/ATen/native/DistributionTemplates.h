@@ -10,7 +10,7 @@
 #include <ATen/NamedTensorUtils.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/TensorIterator.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <limits>
 #include <cmath>
 

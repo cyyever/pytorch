@@ -3,7 +3,7 @@
 #include <ATen/cuda/Atomic.cuh>
 
 #include <c10/util/ArrayRef.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/util/SmallVector.h>
 #include <c10/util/OptionalArrayRef.h>
 

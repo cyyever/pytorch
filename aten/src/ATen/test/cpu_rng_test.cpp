@@ -6,7 +6,7 @@
 #include <ATen/native/DistributionTemplates.h>
 #include <ATen/native/cpu/DistributionTemplates.h>
 #include <torch/library.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <torch/all.h>
 #include <stdexcept>
 

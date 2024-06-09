@@ -1,5 +1,5 @@
 #include <c10/core/Allocator.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/util/flat_hash_map.h>
 #include <c10/util/llvmMathExtras.h>
 
