@@ -304,7 +304,7 @@ void FunctionalTensorWrapper::storage_resize_(c10::SymInt new_size) {
   // Mark the tensor as having its storage resized.
   // This is so we can detect it for inputs in AOTAutograd and error / emit
   // an input mutation resize_() appropriately
-  functional_storage_impl()->mark_inductor_storage_resize(new_size);
+  functional_storage_impl()->mark_inductor_storage_resize(std::move(new_size));
 }
 
 void FunctionalTensorWrapper::maybe_replace_storage(const Tensor& other) {

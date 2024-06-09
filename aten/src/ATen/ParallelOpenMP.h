@@ -1,17 +1,16 @@
 #pragma once
+#ifdef _OPENMP
 
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <exception>
 
-#ifdef _OPENMP
 #define INTRA_OP_PARALLEL
 
 #include <omp.h>
-#endif
+#include <aten/src/ATen/Parallel.h>
 
-#ifdef _OPENMP
 namespace at::internal {
 template <typename F>
 inline void invoke_parallel(
