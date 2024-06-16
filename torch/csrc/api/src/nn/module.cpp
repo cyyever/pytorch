@@ -13,8 +13,7 @@
 #include <string>
 #include <typeinfo>
 
-namespace torch {
-namespace nn {
+namespace torch::nn {
 namespace {
 /// Joins names hierarchically: "name_prefix.name" if `name_prefix` is
 /// non-empty, else just "name".
@@ -37,9 +36,7 @@ std::string join_name(const std::string& name_prefix, const std::string& name) {
 Module::Module()
     : parameters_("Parameter"), buffers_("Buffer"), children_("Submodule") {}
 
-Module::Module(std::string name) : Module() {
-  name_ = std::move(name);
-}
+Module::Module(std::string name) : Module(), name_(std::move(name)) {}
 
 const std::string& Module::name() const noexcept {
   // If the name optional is empty at this point, we grab the name of the
@@ -414,5 +411,4 @@ serialize::InputArchive& operator>>(
   module->load(archive);
   return archive;
 }
-} // namespace nn
-} // namespace torch
+} // namespace torch::nn
