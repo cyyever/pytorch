@@ -580,8 +580,8 @@ inline std::tuple<dim3, dim3, StackArray<int64_t>> check_shape_and_partition_(
       div_round_up(outer_dense_size * jagged_folded_size, threads_y));
 
   StackArray<int64_t> jagged_dims_tensor;
-  const int num_jagged_dim = dense_tensor.dim() - 2;
-  TORCH_CHECK(num_jagged_dim <= kStackArrayMaxDims);
+  const auto num_jagged_dim = dense_tensor.dim() - 2;
+  TORCH_CHECK(num_jagged_dim <= static_cast<int64_t>(kStackArrayMaxDims));
   jagged_dims_tensor.ndim = num_jagged_dim;
   std::memcpy(
       &(jagged_dims_tensor.vals[0]),
