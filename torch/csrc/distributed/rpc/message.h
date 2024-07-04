@@ -3,12 +3,10 @@
 #include <torch/types.h>
 #include <vector>
 
-namespace torch {
-namespace distributed {
-namespace rpc {
+namespace torch::distributed::rpc {
 
 // An enum denoting common RPC errors to allow specific error handling for them.
-enum RPCErrorType {
+enum RPCErrorType : std::uint8_t {
   UNKNOWN_ERROR = 0, /* Indicates that error type could not be parsed */
   TIMEOUT = 1, /* Indicates that the RPC has timed out */
   INTENTIONAL_FAILURE = 2 /* Deliberate failure, such as those injected by
@@ -188,6 +186,4 @@ withStorages(c10::intrusive_ptr<Message> message) {
 
 using JitFuture = c10::ivalue::Future;
 
-} // namespace rpc
-} // namespace distributed
-} // namespace torch
+} // namespace torch::distributed::rpc
