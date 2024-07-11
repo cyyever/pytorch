@@ -45,7 +45,7 @@ TORCH_API c10::intrusive_ptr<ConstantString> ConstantString::create(
 }
 
 TORCH_API c10::intrusive_ptr<ConstantString> ConstantString::create(
-    c10::string_view str_) {
+    std::string_view str_) {
   return c10::make_intrusive<ConstantString>(std::string(str_));
 }
 

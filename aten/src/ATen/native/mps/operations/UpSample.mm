@@ -45,7 +45,7 @@ static void upsample_out_template(const Tensor& input,
                                   std::optional<double> scale_w_opt,
                                   const Tensor& output,
                                   bool align_corners,
-                                  const c10::string_view resize_mode_str) {
+                                  const std::string_view resize_mode_str) {
   if (input.numel() == 0) {
     return;
   }
@@ -239,7 +239,7 @@ static void upsample_out_template(const Tensor& input,
 
 } // namespace mps
 
-static bool check_mps_compatibility(const c10::string_view resize_mode_str, std::optional<double> scale) {
+static bool check_mps_compatibility(const std::string_view resize_mode_str, std::optional<double> scale) {
   static const bool is_macOS_13_0_or_newer = is_macos_13_or_newer();
   if (!is_macOS_13_0_or_newer) {
     // passing scale factors to MPS's resize APIs is not supported on macOS < 13

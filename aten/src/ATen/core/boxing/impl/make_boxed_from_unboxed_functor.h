@@ -76,7 +76,7 @@ namespace impl {
     int64_t,
     double,
     bool,
-    c10::string_view,
+    std::string_view,
     at::Tensor,
     at::Scalar,
     c10::QScheme,
@@ -188,7 +188,7 @@ namespace impl {
   template<class T, bool AllowDeprecatedTypes>
   struct assert_is_valid_input_type<T, AllowDeprecatedTypes, std::enable_if_t<std::is_same<const char*, T>::value>> {
     static_assert(guts::false_t<T>::value,
-      "You tried to register a kernel with an unsupported input type: const char*. Please use c10::string_view instead.");
+      "You tried to register a kernel with an unsupported input type: const char*. Please use std::string_view instead.");
   };
   template<class T, bool AllowDeprecatedTypes>
   struct assert_is_valid_input_type<T, AllowDeprecatedTypes, std::enable_if_t<std::is_same<std::vector<bool>, T>::value>> {
@@ -288,7 +288,7 @@ namespace impl {
   template<class T, bool AllowDeprecatedTypes>
   struct assert_is_valid_output_type<T, AllowDeprecatedTypes, std::enable_if_t<std::is_same<const char*, T>::value>> {
     static_assert(guts::false_t<T>::value,
-      "You tried to register a kernel with an unsupported output type: const char*. Please use c10::string_view instead.");
+      "You tried to register a kernel with an unsupported output type: const char*. Please use std::string_view instead.");
   };
   template<class T, bool AllowDeprecatedTypes>
   struct assert_is_valid_output_type<T, AllowDeprecatedTypes, std::enable_if_t<std::is_same<std::vector<bool>, T>::value>> {

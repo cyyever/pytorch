@@ -126,7 +126,7 @@ void _assert_async_cuda(const Tensor& self_tensor) {
 }
 
 // TODO (tmanlaibaatar) Ignore assert msg for now
-void _assert_async_msg_cuda(const Tensor& self_tensor, c10::string_view assert_msg) {
+void _assert_async_msg_cuda(const Tensor& self_tensor, std::string_view assert_msg) {
   _assert_async_cuda(self_tensor);
 }
 
