@@ -916,7 +916,7 @@ Tensor _nested_strided_to_jagged(const Tensor& self) {
   jagged_offsets = jagged_offsets.to(self_ptr->get_buffer().device());
   jagged_lengths = jagged_lengths.to(self_ptr->get_buffer().device());
 
-  c10::optional<at::Tensor> jagged_lengths_arg = lengths_needed ? c10::optional(jagged_lengths) : c10::nullopt;
+  auto jagged_lengths_arg = lengths_needed ? std::optional(jagged_lengths) : std::nullopt;
   std::vector<int64_t> njt_sizes(self_ptr->dim()-1);
   int njt_sizes_it = 0;
   for (int64_t i = 0; i < self_ptr->dim(); ++i) {
