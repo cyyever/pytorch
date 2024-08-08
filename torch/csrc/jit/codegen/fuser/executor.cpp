@@ -215,8 +215,7 @@ static void launchFusion(
 
   // Computes map_size, numel from the first input
   at::IntArrayRef map_size;
-  // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-  uint32_t numel;
+  uint32_t numel = 0;
   std::vector<int64_t> keep_alive_size;
   if (fusion.chunkDesc()[0].isNoop()) {
     map_size = inputs[0].sizes();

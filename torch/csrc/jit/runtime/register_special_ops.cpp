@@ -187,8 +187,7 @@ template <bool if_set_requires_grad>
 void createTensorFromList(Stack& stack) {
   // torch.tensor has a fourth requires_grad arg but torch.as_tensor not, so
   // we use the template arg to distinguish between these two cases
-  // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-  bool requires_grad;
+  bool requires_grad = false;
   IValue data;
   IValue dtype;
   IValue device;
@@ -334,10 +333,8 @@ RegisterOperators reg({
         [](Stack& stack) {
           at::Tensor weight;
           at::Tensor input;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double max_norm;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double norm_type;
+          double max_norm = 0;
+          double norm_type = 0;
           pop(stack, weight, input, max_norm, norm_type);
 
           // TODO: remove when script supports setting grad mode
@@ -402,13 +399,11 @@ RegisterOperators reg({
           torch::NoGradGuard no_grad;
 
           at::Tensor tensor;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double a;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double b;
           std::optional<at::Generator> generator =
               pop(stack).toOptional<at::Generator>();
 
+          double a = 0;
+          double b = 0;
           pop(stack, tensor, a, b);
           push(stack, tensor.uniform_(a, b, generator));
         },
@@ -421,10 +416,8 @@ RegisterOperators reg({
           torch::NoGradGuard no_grad;
 
           at::Tensor tensor;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double mean;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double std;
+          double mean = 0;
+          double std = 0;
           std::optional<at::Generator> generator =
               pop(stack).toOptional<at::Generator>();
 
@@ -440,8 +433,7 @@ RegisterOperators reg({
           torch::NoGradGuard no_grad;
 
           at::Tensor tensor;
-          // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-          double val;
+          double val = 0;
           pop(stack, tensor, val);
           push(stack, at::fill_(tensor, val));
         },
