@@ -20,7 +20,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace at::cuda::tunable {
 
@@ -105,9 +104,9 @@ class TORCH_CUDA_CPP_API TuningResultsManager {
 
     ResultEntry Lookup(const std::string& op_signature, const std::string& params_signature);
 
-    inline void AddImpl(const std::string& op_signature,
+    static inline void AddImpl(const std::string& op_signature,
         const std::string& params_signature,
-        ResultEntry best,
+        const ResultEntry& best,
         KernelMap& kernel_map);
 
     void Add(const std::string& op_signature,
@@ -148,7 +147,7 @@ class TORCH_CUDA_CPP_API TuningResultsValidator {
     void RegisterValidator(const std::string& key, const GetFunc& gf, const ValidateFunc& vf);
 
   protected:
-    std::string GetPyTorchVersion() const;
+    static std::string GetPyTorchVersion() ;
     TuningStatus ValidatePyTorchVersion(const std::string& value) const;
 
   public:
