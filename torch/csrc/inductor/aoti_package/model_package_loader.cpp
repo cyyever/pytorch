@@ -13,7 +13,6 @@
 // TODO: Investigate why this is necessary, but fixes build problems in FRL
 #if __has_include("filesystem")
 #include <filesystem>
-namespace fs = std::filesystem;
 #else
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -42,7 +41,7 @@ bool file_exists(std::string& path) {
 #ifdef _WIN32
   return fs::exists(path);
 #else
-  struct stat rc;
+  struct stat rc{};
   return lstat(path.c_str(), &rc) == 0;
 #endif
 }
