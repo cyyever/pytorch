@@ -89,7 +89,7 @@ PIP_PATTERNS = [
 
 def run(command):
     """Return (return-code, stdout, stderr)."""
-    shell = True if type(command) is str else False
+    shell = True if isinstance(command, str) else False
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, shell=shell)
     raw_output, raw_err = p.communicate()
@@ -332,7 +332,7 @@ def get_cpu_info(run_lambda):
             lst = []
             try:
                 obj = json.loads(out)
-                if type(obj) is list:
+                if isinstance(obj, list):
                     for o in obj:
                         lst.append("----------------------")
                         lst.extend([f"{k}: {v}" for (k, v) in o.items()])
@@ -469,10 +469,10 @@ def get_cuda_module_loading_config():
         return "N/A"
 
 
-def is_xnnpack_available():
+def is_xnnpack_available() -> str:
     if TORCH_AVAILABLE:
         import torch.backends.xnnpack
-        return str(torch.backends.xnnpack.enabled)  # type: ignore[attr-defined]
+        return str(torch.backends.xnnpack.enabled)
     else:
         return "N/A"
 

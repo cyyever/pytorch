@@ -175,7 +175,7 @@ def _default_to_fused_or_foreach(
     fused = use_fused and all(
         p is None
         or (
-            type(p) in _foreach_supported_types
+            isinstance(p, tuple(_foreach_supported_types))
             and p.device.type in fused_supported_devices
             and torch.is_floating_point(p)
         )
