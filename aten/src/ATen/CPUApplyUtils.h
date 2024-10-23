@@ -65,7 +65,7 @@ struct strided_tensor_iter_fixed {
 
   strided_tensor_iter_fixed(strided_tensor_iter_fixed const&) = delete;
   void operator=(strided_tensor_iter_fixed const& x) = delete;
-  strided_tensor_iter_fixed(strided_tensor_iter_fixed&&) = default;
+  strided_tensor_iter_fixed(strided_tensor_iter_fixed&&) noexcept = default;
   strided_tensor_iter_fixed(
       Tensor& tensor,
       [[maybe_unused]] bool sort_strides = false)
@@ -94,7 +94,7 @@ struct strided_tensor_iter {
 
   strided_tensor_iter(strided_tensor_iter const&) = delete;
   void operator=(strided_tensor_iter const& x) = delete;
-  strided_tensor_iter(strided_tensor_iter&&) = default;
+  strided_tensor_iter(strided_tensor_iter&&) noexcept = default;
   strided_tensor_iter(Tensor& tensor)
       : data_(tensor.data_ptr<T>()),
         dim_(tensor.ndimension()),
@@ -151,7 +151,7 @@ inline int64_t _max_dim_tensors(ArrayRef<Tensor> tensors) {
   return dim;
 }
 
-inline void iterate(int64_t /*size*/){};
+inline void iterate(int64_t /*size*/) {};
 
 template <typename Arg, typename... Args>
 inline void iterate(int64_t size, Arg& iter, Args&... iter_tail) {
@@ -181,7 +181,7 @@ inline int64_t max_iterate_size(Arg& iter, Args&... iter_tail) {
       max_iterate_size(iter_tail...));
 }
 
-inline void iterate_overflow(){};
+inline void iterate_overflow() {};
 
 template <typename Arg, typename... Args>
 inline void iterate_overflow(Arg& iter, Args&... iter_tail) {
@@ -198,7 +198,7 @@ inline void iterate_overflow(Arg& iter, Args&... iter_tail) {
   iterate_overflow(iter_tail...);
 }
 
-inline void forward(int64_t /*offset*/){};
+inline void forward(int64_t /*offset*/) {};
 
 template <typename Arg, typename... Args>
 inline void forward(int64_t offset, Arg& iter, Args&... iter_tail) {
@@ -221,7 +221,7 @@ inline int64_t max_dim(Arg& iter, Args&... iter_tail) {
   return std::max(iter.dim_, max_dim(iter_tail...));
 }
 
-inline void apply_op(){};
+inline void apply_op() {};
 
 template <typename Op, typename... Args>
 inline void apply_op(
