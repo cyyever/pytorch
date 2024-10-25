@@ -145,7 +145,8 @@ void extra_state_set_region_exec_strategy(
 
 ExtraState* get_extra_state(PyCodeObject* code) {
   ExtraState* extra = nullptr;
-  _PyCode_GetExtra((PyObject*)code, extra_index, (void**)&extra);
+  auto res = _PyCode_GetExtra((PyObject*)code, extra_index, (void**)&extra);
+  CHECK(res != -1);
   return extra;
 }
 
@@ -156,8 +157,10 @@ void destroy_extra_state(void* obj) {
 
 void set_extra_state(PyCodeObject* code, ExtraState* extra_state) {
   ExtraState* old_extra_state = get_extra_state(code);
+  CHECK(extra_index >= 0);
   CHECK(extra_state == nullptr || old_extra_state != extra_state);
-  _PyCode_SetExtra((PyObject*)code, extra_index, extra_state);
+  auto res = _PyCode_SetExtra((PyObject*)code, extra_index, extra_state);
+  CHECK(res != -1);
 }
 
 ExtraState* init_and_set_extra_state(PyCodeObject* code) {
