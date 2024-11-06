@@ -1427,6 +1427,7 @@ struct C10_EXPORT ivalue::Await final : c10::intrusive_ptr_target {
   Await(Await&&) = delete;
   Await& operator=(const Await&) = delete;
   Await& operator=(Await&&) = delete;
+  ~Await() override = default;
 
   IValue wait() {
     if (!completed_) {
