@@ -52,8 +52,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter {
 
 template<>
 struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint8_t, 4> {
-    using result_type = Array<half_t, 4>;
-    using source_type = Array<uint8_t, 4>;
+    using result_type = std::array<half_t, 4>;
+    using source_type = std::array<uint8_t, 4>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -89,8 +89,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint8_t, N> {
     static constexpr int VEC_WIDTH = 4;
     static_assert(!(N % VEC_WIDTH), "N must be multiple of 4.");
 
-    using result_type = Array<half_t, N>;
-    using source_type = Array<uint8_t, N>;
+    using result_type = std::array<half_t, N>;
+    using source_type = std::array<uint8_t, N>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -101,8 +101,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint8_t, N> {
             convert_vector_;
 
         result_type result;
-        using vec_result = Array<scalar_result_type, VEC_WIDTH>;
-        using vec_source = Array<scalar_source_type, VEC_WIDTH>;
+        using vec_result = std::array<scalar_result_type, VEC_WIDTH>;
+        using vec_source = std::array<scalar_source_type, VEC_WIDTH>;
 
         vec_result*       result_ptr = reinterpret_cast<vec_result*>(&result);
         vec_source const* source_ptr = reinterpret_cast<vec_source const*>(&source);
@@ -124,8 +124,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint8_t, N> {
 
 template<>
 struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint8_t, 4> {
-    using result_type = Array<bfloat16_t, 4>;
-    using source_type = Array<uint8_t, 4>;
+    using result_type = std::array<bfloat16_t, 4>;
+    using source_type = std::array<uint8_t, 4>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -179,8 +179,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint8_t, N> {
     static constexpr int VEC_WIDTH = 4;
     static_assert(!(N % VEC_WIDTH), "N must be multiple of 4.");
 
-    using result_type = Array<bfloat16_t, N>;
-    using source_type = Array<uint8_t, N>;
+    using result_type = std::array<bfloat16_t, N>;
+    using source_type = std::array<uint8_t, N>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -191,8 +191,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint8_t, N> {
             convert_vector_;
 
         result_type result;
-        using vec_result = Array<scalar_result_type, VEC_WIDTH>;
-        using vec_source = Array<scalar_source_type, VEC_WIDTH>;
+        using vec_result = std::array<scalar_result_type, VEC_WIDTH>;
+        using vec_source = std::array<scalar_source_type, VEC_WIDTH>;
 
         vec_result*       result_ptr = reinterpret_cast<vec_result*>(&result);
         vec_source const* source_ptr = reinterpret_cast<vec_source const*>(&source);
@@ -214,8 +214,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint8_t, N> {
 
 template<>
 struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint4b_t, 8> {
-    using result_type = Array<half_t, 8>;
-    using source_type = Array<uint4b_t, 8>;
+    using result_type = std::array<half_t, 8>;
+    using source_type = std::array<uint4b_t, 8>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -291,8 +291,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint4b_t, N> {
     static constexpr int VEC_WIDTH = 8;
     static_assert(!(N % VEC_WIDTH), "N must be multiple of 8.");
 
-    using result_type = Array<half_t, N>;
-    using source_type = Array<uint4b_t, N>;
+    using result_type = std::array<half_t, N>;
+    using source_type = std::array<uint4b_t, N>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -303,8 +303,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint4b_t, N> {
             convert_vector_;
 
         result_type result;
-        using vec_result = Array<scalar_result_type, VEC_WIDTH>;
-        using vec_source = Array<scalar_source_type, VEC_WIDTH>;
+        using vec_result = std::array<scalar_result_type, VEC_WIDTH>;
+        using vec_source = std::array<scalar_source_type, VEC_WIDTH>;
 
         vec_result*       result_ptr = reinterpret_cast<vec_result*>(&result);
         vec_source const* source_ptr = reinterpret_cast<vec_source const*>(&source);
@@ -326,8 +326,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<half_t, uint4b_t, N> {
 
 template<>
 struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint4b_t, 8> {
-    using result_type = Array<bfloat16_t, 8>;
-    using source_type = Array<uint4b_t, 8>;
+    using result_type = std::array<bfloat16_t, 8>;
+    using source_type = std::array<uint4b_t, 8>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -389,8 +389,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint4b_t, N> {
     static constexpr int VEC_WIDTH = 8;
     static_assert(!(N % VEC_WIDTH), "N must be multiple of 8.");
 
-    using result_type = Array<bfloat16_t, N>;
-    using source_type = Array<uint4b_t, N>;
+    using result_type = std::array<bfloat16_t, N>;
+    using source_type = std::array<uint4b_t, N>;
 
     CUTLASS_DEVICE
     static result_type convert(source_type const& source)
@@ -401,8 +401,8 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint4b_t, N> {
             convert_vector_;
 
         result_type result;
-        using vec_result = Array<scalar_result_type, VEC_WIDTH>;
-        using vec_source = Array<scalar_source_type, VEC_WIDTH>;
+        using vec_result = std::array<scalar_result_type, VEC_WIDTH>;
+        using vec_source = std::array<scalar_source_type, VEC_WIDTH>;
 
         vec_result*       result_ptr = reinterpret_cast<vec_result*>(&result);
         vec_source const* source_ptr = reinterpret_cast<vec_source const*>(&source);

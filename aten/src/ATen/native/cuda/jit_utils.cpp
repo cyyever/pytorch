@@ -498,8 +498,8 @@ const std::string dynamic_cast_support_literal = R"ESCAPE(
 
   template <int N>
   struct LoadWithCast {
-    using array_t = Array<ScalarType, N==0? 1 : N>;
-    using size_array_t = Array<uint32_t, N==0? 1: N>;
+    using array_t = std::array<ScalarType, N==0? 1 : N>;
+    using size_array_t = std::array<uint32_t, N==0? 1: N>;
 
     array_t dtypes;
     size_array_t element_sizes;
@@ -512,8 +512,8 @@ const std::string dynamic_cast_support_literal = R"ESCAPE(
 
   template <int N = 1>
   struct StoreWithCast {
-    using array_t = Array<ScalarType, N==0? 1 : N>;
-    using size_array_t = Array<uint32_t, N==0? 1: N>;
+    using array_t = std::array<ScalarType, N==0? 1 : N>;
+    using size_array_t = std::array<uint32_t, N==0? 1: N>;
 
     array_t dtypes;
     size_array_t element_sizes;
@@ -584,8 +584,8 @@ const std::string offset_calc_template = R"ESCAPE(
   struct TrivialOffsetCalculator {
     // The offset for each argument. Wrapper around fixed-size array.
     // The offsets are in # of elements, not in bytes.
-    Array<${index_type}, NARGS> get(${index_type} linear_idx) const {
-      Array<${index_type}, NARGS> offsets;
+    std::array<${index_type}, NARGS> get(${index_type} linear_idx) const {
+      std::array<${index_type}, NARGS> offsets;
       #pragma unroll
       for (int arg = 0; arg < NARGS; arg++) {
         offsets[arg] = linear_idx;
@@ -597,8 +597,8 @@ const std::string offset_calc_template = R"ESCAPE(
   template<int NARGS>
   struct OffsetCalculator {
   OffsetCalculator() = default;
-  __device__ __forceinline__ Array<${index_type}, NARGS> get(${index_type} linear_idx) const {
-      Array<${index_type}, NARGS> offsets;
+  __device__ __forceinline__ std::array<${index_type}, NARGS> get(${index_type} linear_idx) const {
+      std::array<${index_type}, NARGS> offsets;
       #pragma unroll
       for (int arg = 0; arg < NARGS; ++arg) {
       offsets[arg] = 0;
@@ -644,7 +644,7 @@ const std::string jit_code_template = R"ESCAPE(
   extern "C" __global__
   void ${name}_kernel(
       const int numel,
-      Array<char*, ${nInputs}+${nOutputs}> data, //[${nInputs}+${nOutputs}],
+      std::array<char*, ${nInputs}+${nOutputs}> data, //[${nInputs}+${nOutputs}],
       ${offset_calculator}<${nInputs}> input_calculator,
       ${offset_calculator}<${nOutputs}> output_calculator,
       ${loader} l,
@@ -741,7 +741,7 @@ const std::string jit_vectorized_code_template = R"ESCAPE(
   extern "C" __global__
   void ${name}_vectorized${vec_size}_kernel(
       const int N,
-      Array<char*, ${nInputs}+${nOutputs}> data,
+      std::array<char*, ${nInputs}+${nOutputs}> data,
       ${compute_type} scalar_val${extra_params}) //[${nInputs}+${nOutputs}],
       {
       constexpr int vec_size = ${vec_size};

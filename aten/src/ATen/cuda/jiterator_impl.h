@@ -122,7 +122,7 @@ struct OffsetCalculatorVariant {
 
 struct ArrayVariant {
 // works for up to 8 input + 8 outputs
-#define DEFINE_CASE(index) at::detail::Array<char*, index>, at::detail::Array<char*, index+8>
+#define DEFINE_CASE(index) std::array<char*, index>, std::array<char*, index+8>
   using ArrayTypes = std::variant<
     AT_FOR_8_CASES_WITH_COMMA(DEFINE_CASE)
   >;
@@ -132,8 +132,8 @@ struct ArrayVariant {
     int ntensors = iter.ntensors();
     switch(ntensors) {
 #define DEFINE_CASE(index)                                            \
-      case index: array = at::detail::Array<char*, index>{}; break;   \
-      case index+8: array = at::detail::Array<char*, index+8>{}; break;
+      case index: array = std::array<char*, index>{}; break;   \
+      case index+8: array = std::array<char*, index+8>{}; break;
 
       AT_FOR_8_CASES(DEFINE_CASE)
 #undef DEFINE_CASE

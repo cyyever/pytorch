@@ -44,6 +44,7 @@
 */
 #pragma once
 
+#include <array>
 #include <cutlass/gemm/gemm.h>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +127,7 @@ class WarpIteratorFromSmem {
   //
 
   /// Fragment object holding a thread's part of a tile
-  using Fragment = Array<
+  using Fragment = std::array<
       Element,
       (kOperand == Operand::kA)
           ? (Shape::kRow* InstructionShape::kColumn / kThreads)
@@ -134,7 +135,7 @@ class WarpIteratorFromSmem {
 
   /// Memory access type
   // using AccessType = AlignedArray<Element, kElementsPerAccess>;
-  using AccessType = Array<unsigned, 4>;
+  using AccessType = std::array<unsigned, 4>;
 
   static int constexpr kWarpShapeDivisibleInner =
       (kOperand == Operand::kA ? InstructionShape::kColumn

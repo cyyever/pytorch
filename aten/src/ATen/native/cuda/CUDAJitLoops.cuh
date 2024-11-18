@@ -117,11 +117,11 @@ void launch_jitted_vectorized_kernel(
   // N is still int64_t for the computation, but it's always safe to cast result to int
   const uint32_t grid = (N + block_work_size() - 1) / block_work_size();
   const int vec_size = at::cuda::jit::can_vectorize_up_to(
-      desc, c10::ArrayRef<char*>(data.data, data.size()));
+      desc, c10::ArrayRef<char*>(data.data(), data.size()));
 
   // Different kernels are compiled depending on what we're vectorizing up to (1, 2 or 4 elements)
   //   fn_ptr is set to the appropriate function based on the vec size and GPU used
-  at::cuda::jit::NvrtcFunction* fn_ptr;
+  at::cuda::jit::NvrtcFunction* fn_ptr = nullptr;
   if (vec_size == 4) {
     fn_ptr = &fn_cache.vec4;
   } else if (vec_size == 2) {
@@ -186,7 +186,7 @@ void jitted_gpu_kernel_generic(
   TORCH_INTERNAL_ASSERT(iter.noutputs() == 1);
 
   constexpr int ntensors = arity + 1;
-  at::detail::Array<char*, ntensors> data;
+  std::array<char*, ntensors> data;
   for (auto i : c10::irange(ntensors)) {
     data[i] = (char*)iter.data_ptr(i);
   }

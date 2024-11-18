@@ -117,12 +117,12 @@ public:
     using ElementScale = bfloat16_t;
 
     /// Fragment to hold B data before Mma
-    using FragmentDequantizedOperand = Array<ElementScale, MmaOperator::FragmentB::kElements>;
+    using FragmentDequantizedOperand = std::array<ElementScale, MmaOperator::FragmentB::kElements>;
 
     // Fragment to hold scale data to apply to B before mma
     // We need 1 fp16 per matrix iteration in the N dimension
     static constexpr int kColsPerMmaPerThread = 1;
-    using FragmentScale = Array<ElementScale, kColsPerMmaPerThread * MmaOperator::MmaIterations::kColumn>;
+    using FragmentScale = std::array<ElementScale, kColsPerMmaPerThread * MmaOperator::MmaIterations::kColumn>;
 
     /// Warp mma shape
     using Shape = Shape_;
@@ -158,7 +158,7 @@ public:
 //#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800) && defined(ENABLE_BF16))
 #if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
         using _MmaOperandB        = typename ArchMmaOperator::FragmentB;
-        using ExpandedMmaOperandB = Array<typename _MmaOperandB::Element, kExpansionFactor * _MmaOperandB::kElements>;
+        using ExpandedMmaOperandB = std::array<typename _MmaOperandB::Element, kExpansionFactor * _MmaOperandB::kElements>;
         static_assert(ExpandedMmaOperandB::kElements * MmaOperator::MmaIterations::kColumn
                           == FragmentDequantizedOperand::kElements,
                       "");
@@ -225,12 +225,12 @@ public:
     using ElementScale = half_t;
 
     /// Fragment to hold B data before Mma
-    using FragmentDequantizedOperand = Array<ElementScale, MmaOperator::FragmentB::kElements>;
+    using FragmentDequantizedOperand = std::array<ElementScale, MmaOperator::FragmentB::kElements>;
 
     // Fragment to hold scale data to apply to B before mma
     // We need 1 fp16 per matrix iteration in the N dimension
     static constexpr int kColsPerMmaPerThread = 1;
-    using FragmentScale = Array<ElementScale, kColsPerMmaPerThread * MmaOperator::MmaIterations::kColumn>;
+    using FragmentScale = std::array<ElementScale, kColsPerMmaPerThread * MmaOperator::MmaIterations::kColumn>;
 
     /// Warp mma shape
     using Shape = Shape_;
@@ -264,7 +264,7 @@ public:
     void dequantize(FragmentDequantizedOperand& operand_frag, const FragmentScale& scale_frag)
     {
         using _MmaOperandB        = typename ArchMmaOperator::FragmentB;
-        using ExpandedMmaOperandB = Array<typename _MmaOperandB::Element, kExpansionFactor * _MmaOperandB::kElements>;
+        using ExpandedMmaOperandB = std::array<typename _MmaOperandB::Element, kExpansionFactor * _MmaOperandB::kElements>;
         static_assert(ExpandedMmaOperandB::kElements * MmaOperator::MmaIterations::kColumn
                           == FragmentDequantizedOperand::kElements,
                       "");
@@ -317,7 +317,7 @@ public:
     using ElementScale = half_t;
 
     /// Fragment to hold B data before Mma
-    using FragmentDequantizedOperand = Array<ElementScale, MmaOperator::FragmentB::kElements>;
+    using FragmentDequantizedOperand = std::array<ElementScale, MmaOperator::FragmentB::kElements>;
 
     /// Warp mma shape
     using Shape = Shape_;
@@ -326,8 +326,8 @@ public:
     // Each 32x32x4 matmul uses 8 elements from B.
     static constexpr int ColsPerMmaTile  = 32;
     static constexpr int TileNIterations = Shape::kN / ColsPerMmaTile;
-    using FragmentScale                  = Array<ElementScale, TileNIterations * 8>;
-    using AccessType                     = Array<ElementScale, 8>;
+    using FragmentScale                  = std::array<ElementScale, TileNIterations * 8>;
+    using AccessType                     = std::array<ElementScale, 8>;
 
     /// Layout of the scales in shared memory
     using Layout = layout::RowMajor;
@@ -404,7 +404,7 @@ public:
     using ElementScale = half_t;
 
     /// Fragment to hold B data before Mma
-    using FragmentDequantizedOperand = Array<ElementScale, MmaOperator::FragmentB::kElements>;
+    using FragmentDequantizedOperand = std::array<ElementScale, MmaOperator::FragmentB::kElements>;
 
     /// Warp mma shape
     using Shape = Shape_;
@@ -413,7 +413,7 @@ public:
     // Each 32x32x4 matmul uses 8 elements from B.
     static constexpr int ColsPerMmaTile  = 32;
     static constexpr int TileNIterations = Shape::kN / ColsPerMmaTile;
-    using FragmentScale                  = Array<ElementScale, TileNIterations * 2>;
+    using FragmentScale                  = std::array<ElementScale, TileNIterations * 2>;
 
     /// Layout of the scales in shared memory
     using Layout = layout::RowMajor;

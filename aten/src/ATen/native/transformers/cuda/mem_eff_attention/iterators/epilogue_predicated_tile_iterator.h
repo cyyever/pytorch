@@ -37,6 +37,7 @@
 
 #pragma once
 
+#include <array>
 #include <cutlass/arch/arch.h>
 #include <cutlass/arch/memory.h>
 #include <cutlass/array.h>
@@ -105,7 +106,7 @@ class PredicatedTileIteratorPrefetch {
       "ThreadMap::Iterations::kColumn must be > 0");
 
   /// Fragment object
-  using Fragment = Array<
+  using Fragment = std::array<
       Element,
       ThreadMap::Iterations::kColumn * ThreadMap::Iterations::kRow *
           ThreadMap::Iterations::kGroup * ThreadMap::Iterations::kCluster *

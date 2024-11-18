@@ -179,7 +179,7 @@ public:
     using FragmentA = typename IteratorA::Fragment;
 
     /// Storage for transformed A tile
-    using TransformedFragmentA = Array<typename ArchMmaOperator::ElementA, FragmentA::kElements>;
+    using TransformedFragmentA = std::array<typename ArchMmaOperator::ElementA, FragmentA::kElements>;
 
     /// Iterates over the B operand in memory
     using IteratorB =
@@ -196,7 +196,7 @@ public:
     using FragmentB = typename IteratorB::Fragment;
 
     /// Storage for transformed B tile
-    using TransformedFragmentB = Array<typename ArchMmaOperator::ElementB, FragmentB::kElements>;
+    using TransformedFragmentB = std::array<typename ArchMmaOperator::ElementB, FragmentB::kElements>;
 
     /// Iterates over the C operand in memory
     using IteratorC = MmaTensorOpAccumulatorTileIterator<MatrixShape<Shape::kM, Shape::kN>,
