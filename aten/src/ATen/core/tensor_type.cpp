@@ -413,15 +413,17 @@ bool TensorType::equals(const c10::Type& rhs) const {
 }
 
 VaryingShape<int64_t> TensorType::strides() const {
-  if (!strides_.size().has_value()) {
+  auto strides_size = strides_.size();
+  if (!strides_size.has_value()) {
     return VaryingShape<int64_t>();
   }
-  std::vector<std::optional<int64_t>> ss(*strides_.size());
-  for (size_t i = 0; i < *strides_.size(); i++) {
-    if (!strides_[i].has_value()) {
+  std::vector<std::optional<int64_t>> ss(*strides_size);
+  for (size_t i = 0; i < *strides_size; i++) {
+    auto const& stride = strides_[i];
+    if (!stride.has_value()) {
       continue;
     }
-    auto s = *strides_[i];
+    auto s = *stride;
     if (s.stride_index_.has_value() && s.stride_.has_value()) {
       ss[*s.stride_index_] = *s.stride_;
     }
