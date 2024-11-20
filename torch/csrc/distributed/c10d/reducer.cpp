@@ -1624,6 +1624,7 @@ void Reducer::finalize_backward() {
     if (bucket.expect_sparse_gradient) {
       // sparse metadata is set so the bucket should have sparse_tensor_indices
       if (sparse_metadata_) {
+        TORCH_INTERNAL_ASSERT(bucket.sparse_tensor_indices.has_value());
         REDUCER_CHECK(
             bucket.sparse_tensor_indices.value().numel() ==
                 bucket.gradients.sizes()[0],
