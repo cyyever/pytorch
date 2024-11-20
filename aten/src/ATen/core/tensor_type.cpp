@@ -102,10 +102,11 @@ std::ostream& operator<<(
     os << "(*)";
     return os;
   }
-
+  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
   auto sizes = ss.sizes().value();
 
   os << "(";
+  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
   for (size_t i = 0; i < ss.rank().value(); i++) {
     if (i > 0) {
       os << ", ";
@@ -280,16 +281,14 @@ TensorTypePtr TensorType::create(
     const VaryingShape<int64_t>& strides,
     std::optional<bool> requires_grad,
     std::optional<bool> undefined, bool tensor_contiguity) {
-  if(strides.concrete_sizes() && strides.concrete_sizes().has_value()){
+  const auto stride_concrete_sizes = strides.concrete_sizes();
+  if(stride_concrete_sizes.has_value()){
+    const auto size_concrete_sizes = sizes.concrete_sizes();
     // handles case where strides are set
-    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    TORCH_INTERNAL_ASSERT(sizes.concrete_sizes()->size() == strides.concrete_sizes()->size());
-    auto sprops = strides.concrete_sizes().has_value()
-      // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-      ? computeStrideProps(*sizes.concrete_sizes(), *strides.concrete_sizes(), tensor_contiguity)
-      : VaryingShape<Stride>();
-    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    auto symbol_sizes = SymbolicShape(*sizes.concrete_sizes());
+    TORCH_INTERNAL_ASSERT(size_concrete_sizes.has_value() && size_concrete_sizes->size() == stride_concrete_sizes->size());
+    auto sprops = 
+       computeStrideProps(*size_concrete_sizes, *stride_concrete_sizes, tensor_contiguity);
+    auto symbol_sizes = SymbolicShape(*size_concrete_sizes);
     return TensorType::create(
       scalar_type, device, symbol_sizes, sprops, requires_grad, undefined);
   } else {
