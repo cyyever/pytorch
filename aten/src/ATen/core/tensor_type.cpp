@@ -75,9 +75,9 @@ std::ostream& operator<<(std::ostream& out, const VaryingShape<T>& vs) {
     if (i > 0) {
       out << ", ";
     }
-    if (vs[i].has_value()) {
-      // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-      out << vs[i].value();
+    auto const& v = vs[i];
+    if (v.has_value()) {
+      out << v.value();
     } else {
       out << "*";
     }
