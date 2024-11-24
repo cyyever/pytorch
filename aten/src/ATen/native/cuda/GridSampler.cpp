@@ -16,9 +16,12 @@
 
 namespace at::native {
 
-Tensor grid_sampler_2d_cuda(const Tensor& input, const Tensor& grid,
-                            int64_t interpolation_mode, int64_t padding_mode,
-                            bool align_corners) {
+Tensor grid_sampler_2d_cuda(
+    const Tensor& input,
+    const Tensor& grid,
+    int64_t interpolation_mode,
+    int64_t padding_mode,
+    bool align_corners) {
   auto in_size = input.sizes();
   auto grid_size = grid.sizes();
   auto output = at::empty(
@@ -28,9 +31,12 @@ Tensor grid_sampler_2d_cuda(const Tensor& input, const Tensor& grid,
   return output;
 }
 
-Tensor grid_sampler_3d_cuda(const Tensor& input, const Tensor& grid,
-                            int64_t interpolation_mode, int64_t padding_mode,
-                            bool align_corners) {
+Tensor grid_sampler_3d_cuda(
+    const Tensor& input,
+    const Tensor& grid,
+    int64_t interpolation_mode,
+    int64_t padding_mode,
+    bool align_corners) {
   auto in_size = input.sizes();
   auto grid_size = grid.sizes();
   auto output = at::empty(
@@ -41,10 +47,14 @@ Tensor grid_sampler_3d_cuda(const Tensor& input, const Tensor& grid,
   return output;
 }
 
-std::tuple<Tensor, Tensor>
-grid_sampler_2d_backward_cuda(const Tensor& grad_output, const Tensor& input,
-                              const Tensor& grid, int64_t interpolation_mode, int64_t padding_mode,
-                              bool align_corners, std::array<bool, 2> output_mask) {
+std::tuple<Tensor, Tensor> grid_sampler_2d_backward_cuda(
+    const Tensor& grad_output,
+    const Tensor& input,
+    const Tensor& grid,
+    int64_t interpolation_mode,
+    int64_t padding_mode,
+    bool align_corners,
+    std::array<bool, 2> output_mask) {
   auto input_requires_grad = output_mask[0];
   Tensor grad_input = ([&]() {
     if (input_requires_grad) {
@@ -55,15 +65,26 @@ grid_sampler_2d_backward_cuda(const Tensor& grad_output, const Tensor& input,
   })();
   auto grad_grid = at::empty_like(grid, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
   launch_grid_sampler_2d_backward_kernel(
-      grad_input, grad_grid, grad_output, input,
-      grid, interpolation_mode, padding_mode, align_corners, output_mask);
+      grad_input,
+      grad_grid,
+      grad_output,
+      input,
+      grid,
+      interpolation_mode,
+      padding_mode,
+      align_corners,
+      output_mask);
   return std::make_tuple(grad_input, grad_grid);
 }
 
-std::tuple<Tensor, Tensor>
-grid_sampler_3d_backward_cuda(const Tensor& grad_output, const Tensor& input,
-                              const Tensor& grid, int64_t interpolation_mode, int64_t padding_mode,
-                              bool align_corners, std::array<bool,2> output_mask) {
+std::tuple<Tensor, Tensor> grid_sampler_3d_backward_cuda(
+    const Tensor& grad_output,
+    const Tensor& input,
+    const Tensor& grid,
+    int64_t interpolation_mode,
+    int64_t padding_mode,
+    bool align_corners,
+    std::array<bool, 2> output_mask) {
   auto input_requires_grad = output_mask[0];
   Tensor grad_input = ([&]() {
     if (input_requires_grad) {
@@ -74,9 +95,16 @@ grid_sampler_3d_backward_cuda(const Tensor& grad_output, const Tensor& input,
   })();
   auto grad_grid = at::empty_like(grid, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
   launch_grid_sampler_3d_backward_kernel(
-      grad_input, grad_grid, grad_output, input,
-      grid, interpolation_mode, padding_mode, align_corners, output_mask);
+      grad_input,
+      grad_grid,
+      grad_output,
+      input,
+      grid,
+      interpolation_mode,
+      padding_mode,
+      align_corners,
+      output_mask);
   return std::make_tuple(grad_input, grad_grid);
 }
 
-}  // namespace at::native
+} // namespace at::native

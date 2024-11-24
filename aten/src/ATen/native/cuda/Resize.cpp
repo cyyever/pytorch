@@ -1,9 +1,9 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/native/cuda/Resize.h>
 #include <ATen/core/Tensor.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/PeerToPeerAccess.h>
 #include <ATen/native/ResizeCommon.h>
+#include <ATen/native/cuda/Resize.h>
 #include <c10/cuda/CUDAGuard.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
@@ -15,9 +15,11 @@
 namespace at::native {
 
 void resize_bytes_cuda(StorageImpl* storage, size_t size_bytes) {
-  TORCH_CHECK(storage->resizable(), "Trying to resize storage that is not resizable");
+  TORCH_CHECK(
+      storage->resizable(), "Trying to resize storage that is not resizable");
   auto allocator = storage->allocator();
-  TORCH_CHECK(allocator != nullptr, "Trying to resize storage without an allocator");
+  TORCH_CHECK(
+      allocator != nullptr, "Trying to resize storage without an allocator");
 
   c10::Device device = storage->device();
 
@@ -32,13 +34,12 @@ void resize_bytes_cuda(StorageImpl* storage, size_t size_bytes) {
   if (storage->data_ptr()) {
     at::globalContext().lazyInitDevice(c10::DeviceType::CUDA);
 
-    C10_CUDA_CHECK(
-        cudaMemcpyAsync(
-            data.get(),
-            storage->data(),
-            std::min(storage->nbytes(), size_bytes),
-            cudaMemcpyDeviceToDevice,
-            c10::cuda::getCurrentCUDAStream()));
+    C10_CUDA_CHECK(cudaMemcpyAsync(
+        data.get(),
+        storage->data(),
+        std::min(storage->nbytes(), size_bytes),
+        cudaMemcpyDeviceToDevice,
+        c10::cuda::getCurrentCUDAStream()));
   }
 
   // Destructively overwrite data_ptr
@@ -54,11 +55,11 @@ const Tensor& resize_cuda_(
     return resize_named_tensor_(self, size, optional_memory_format);
   }
   auto* self_ = self.unsafeGetTensorImpl();
-  auto old_storage_nbytes = self_->unsafe_storage() ? self_->unsafe_storage().nbytes() : 0;
+  auto old_storage_nbytes =
+      self_->unsafe_storage() ? self_->unsafe_storage().nbytes() : 0;
   resize_impl_cuda_(self_, size, /*stride=*/std::nullopt);
   if (optional_memory_format.has_value()) {
-    auto memory_format =
-        optional_memory_format.value();
+    auto memory_format = optional_memory_format.value();
     TORCH_CHECK(
         memory_format != MemoryFormat::Preserve,
         "Unsupported memory format",
@@ -66,8 +67,11 @@ const Tensor& resize_cuda_(
     self_->empty_tensor_restride(memory_format);
   }
   // See Note [Enabling Deterministic Operations]
-  if (C10_UNLIKELY(at::globalContext().deterministicAlgorithms() && at::globalContext().deterministicFillUninitializedMemory())) {
-    at::native::fill_resize_deterministic_(self, static_cast<int64_t>(old_storage_nbytes));
+  if (C10_UNLIKELY(
+          at::globalContext().deterministicAlgorithms() &&
+          at::globalContext().deterministicFillUninitializedMemory())) {
+    at::native::fill_resize_deterministic_(
+        self, static_cast<int64_t>(old_storage_nbytes));
   }
   return self;
 }
