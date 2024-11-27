@@ -89,6 +89,7 @@ struct WarnNotImplemented : public Node {
   size_t num_outputs;
 };
 
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 auto WarnNotImplemented::apply(variable_list&& inputs) -> variable_list {
   warnAutogradNotImplemented(op_name);
   std::vector<at::Tensor> output(num_outputs);
