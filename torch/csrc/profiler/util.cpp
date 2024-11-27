@@ -377,7 +377,7 @@ std::vector<std::string> inputTypes(const at::RecordFunction& fn) {
 static constexpr int32_t kTruncatLength = 30;
 
 template <typename ListLikeType>
-inline std::string format_list(
+static std::string format_list(
     ListLikeType list,
     bool truncate,
     bool with_escaped_quotes = true) {
@@ -533,7 +533,7 @@ std::unordered_map<std::string, std::string> saveNcclMeta(
       }
     }
     if (config.introspectOutputs) {
-      const auto outputs = fn.outputs();
+      const auto& outputs = fn.outputs();
       auto num_outputs = fn.num_outputs();
       if (checkFunctionOutputsForLogging(fn)) {
         // need to account for Stack mode where the outputs are at the end.
