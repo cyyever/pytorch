@@ -1,17 +1,8 @@
 # mypy: allow-untyped-defs
 import warnings
 from collections import defaultdict
-from typing import (
-    Any,
-    Callable,
-    DefaultDict,
-    Iterator,
-    List,
-    Optional,
-    Sized,
-    Type,
-    TypeVar,
-)
+from collections.abc import Iterator, Sized
+from typing import Any, Callable, DefaultDict, List, Optional, Type, TypeVar
 
 import torch.utils.data.datapipes.iter.sharding
 from torch.utils.data.datapipes._decorator import functional_datapipe

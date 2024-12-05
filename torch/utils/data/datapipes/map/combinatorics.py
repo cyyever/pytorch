@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 import random
-from typing import Iterator, List, Optional, TypeVar
+from collections.abc import Iterator
+from typing import List, Optional, TypeVar
 
 import torch
 from torch.utils.data.datapipes.datapipe import IterDataPipe, MapDataPipe

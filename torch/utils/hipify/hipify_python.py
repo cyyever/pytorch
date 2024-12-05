@@ -35,7 +35,8 @@ from . import constants
 from .cuda_to_hip_mappings import CUDA_TO_HIP_MAPPINGS
 from .cuda_to_hip_mappings import MATH_TRANSPILATIONS
 
-from typing import Dict, List, Iterator, Optional
+from typing import Dict, List, Optional
+from collections.abc import Iterator
 from collections.abc import Mapping, Iterable
 from enum import Enum
 import functools

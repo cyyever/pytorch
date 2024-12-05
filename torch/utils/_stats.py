@@ -4,7 +4,7 @@
 # AND SCRUB AWAY TORCH NOTIONS THERE.
 import collections
 import functools
-from typing import OrderedDict
+from collections import OrderedDict
 
 simple_call_counter: OrderedDict[str, int] = collections.OrderedDict()
 

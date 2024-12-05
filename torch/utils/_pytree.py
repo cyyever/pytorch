@@ -23,7 +23,14 @@ import sys
 import threading
 import types
 import warnings
-from collections import defaultdict, deque, namedtuple, OrderedDict
+from collections import (
+    defaultdict,
+    deque,
+    namedtuple,
+    OrderedDict,
+    OrderedDict as GenericOrderedDict,
+)
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from enum import Enum
 from typing import (
     Any,
@@ -34,16 +41,11 @@ from typing import (
     Dict,
     FrozenSet,
     Generic,
-    Hashable,
-    Iterable,
     List,
-    Mapping,
     NamedTuple,
     Optional,
-    OrderedDict as GenericOrderedDict,
     overload,
     Protocol,
-    Sequence,
     Tuple,
     Type,
     TypeVar,

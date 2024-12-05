@@ -3,7 +3,8 @@
 import torch
 from torch.utils._pytree import tree_map, tree_flatten, tree_unflatten
 from .module_tracker import ModuleTracker
-from typing import List, Any, Dict, Optional, Union, Tuple, Iterator
+from typing import List, Any, Dict, Optional, Union, Tuple
+from collections.abc import Iterator
 from collections import defaultdict
 from torch.utils._python_dispatch import TorchDispatchMode
 from math import prod

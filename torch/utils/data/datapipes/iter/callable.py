@@ -1,7 +1,8 @@
 # mypy: allow-untyped-defs
 import functools
 from collections import namedtuple
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sized, TypeVar, Union
+from collections.abc import Iterator, Sized
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.datapipes._decorator import functional_datapipe

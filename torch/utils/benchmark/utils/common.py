@@ -8,7 +8,8 @@ import shutil
 import tempfile
 import textwrap
 import time
-from typing import cast, Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import cast, Any, DefaultDict, Dict, List, Optional, Tuple
+from collections.abc import Iterable, Iterator
 import uuid
 
 import torch

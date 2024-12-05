@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
-from typing import List, Sized, Type, TypeVar
+from collections.abc import Sized
+from typing import List, Type, TypeVar
 
 from torch.utils.data.datapipes._decorator import functional_datapipe
 from torch.utils.data.datapipes.datapipe import DataChunk, MapDataPipe

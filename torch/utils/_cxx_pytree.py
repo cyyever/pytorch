@@ -15,18 +15,8 @@ collection support for PyTorch APIs.
 import functools
 import sys
 import types
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    List,
-    Optional,
-    overload,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from collections.abc import Iterable
+from typing import Any, Callable, List, Optional, overload, Tuple, Type, TypeVar, Union
 from typing_extensions import deprecated
 
 import optree

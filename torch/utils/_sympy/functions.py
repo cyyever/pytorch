@@ -6,11 +6,11 @@ import sys
 from typing import (
     Any,
     Callable,
-    Iterable,
     List,
     Optional,
     SupportsFloat,
     Tuple,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -28,6 +28,10 @@ from sympy.core.traversal import walk
 from sympy.utilities.iterables import sift
 
 from .numbers import int_oo
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 _T = TypeVar("_T", bound=SupportsFloat)

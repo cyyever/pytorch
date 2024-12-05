@@ -1,16 +1,7 @@
 # mypy: allow-untyped-defs
 import itertools
-from typing import (
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Sized,
-    TypeVar,
-    Union,
-)
+from collections.abc import Iterable, Iterator, Sequence, Sized
+from typing import Generic, List, Optional, TypeVar, Union
 
 import torch
 

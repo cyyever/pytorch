@@ -11,8 +11,9 @@ import subprocess
 import sys
 import textwrap
 from typing import (
-    cast, Any, Callable, DefaultDict, Dict, Iterator, List, NamedTuple,
+    cast, Any, Callable, DefaultDict, Dict, List, NamedTuple,
     Optional, Tuple, Union, TYPE_CHECKING)
+from collections.abc import Iterator
 
 import torch
 from torch.utils.benchmark.utils import common, cpp_jit

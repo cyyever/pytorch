@@ -6,8 +6,9 @@ import os
 import re
 import subprocess
 import time
+from collections.abc import Sequence
 from threading import Lock
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
 
 logger = logging.getLogger("strobelight_function_profiler")

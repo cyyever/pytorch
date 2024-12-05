@@ -4,8 +4,9 @@ import functools
 import inspect
 import os
 import warnings
+from collections.abc import Iterable
 from io import IOBase
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from torch.utils._import_utils import dill_available
 

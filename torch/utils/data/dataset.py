@@ -3,18 +3,8 @@ import bisect
 import itertools
 import math
 import warnings
-from typing import (
-    cast,
-    Dict,
-    Generic,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from collections.abc import Iterable, Sequence
+from typing import cast, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from typing_extensions import deprecated
 
 # No 'default_generator' in torch/__init__.pyi

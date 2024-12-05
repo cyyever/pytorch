@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
-from typing import Iterator, List, Sequence, Union
+from collections.abc import Iterator, Sequence
+from typing import List, Union
 
 from torch.utils.data.datapipes._decorator import functional_datapipe
 from torch.utils.data.datapipes.datapipe import IterDataPipe

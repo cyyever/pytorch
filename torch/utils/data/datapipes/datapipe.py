@@ -1,6 +1,7 @@
 import functools
 import pickle
-from typing import Callable, Dict, Iterable, Iterator, List, Optional, TypeVar
+from collections.abc import Iterable, Iterator
+from typing import Callable, Dict, List, Optional, TypeVar
 
 from torch.utils._import_utils import import_dill
 from torch.utils.data.datapipes._hook_iterator import _SnapshotState

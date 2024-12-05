@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import dataclasses
 import itertools
-from typing import Generator, List, Type, TYPE_CHECKING, TypeVar
+from typing import List, Type, TYPE_CHECKING, TypeVar
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from _typeshed import DataclassInstance
 
 

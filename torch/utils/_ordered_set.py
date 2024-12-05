@@ -1,19 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import MutableSet, Set as AbstractSet
-from typing import (
-    Any,
-    cast,
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from collections.abc import Iterable, Iterator, MutableSet, Set as AbstractSet
+from typing import Any, cast, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
 
 T = TypeVar("T")

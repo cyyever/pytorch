@@ -14,7 +14,8 @@ import os
 import queue
 import threading
 import warnings
-from typing import Any, Callable, Generic, Iterable, List, Optional, TypeVar, Union
+from collections.abc import Iterable
+from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
 
 import torch
 import torch.distributed as dist
