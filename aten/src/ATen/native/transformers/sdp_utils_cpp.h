@@ -18,7 +18,6 @@
 #include <c10/util/Array.h>
 #include <cmath>
 #include <cstdint>
-#include <functional>
 
 namespace sdp {
 
@@ -56,10 +55,9 @@ SDPBackend select_sdp_backend_cpp(sdp_params const& kernel_params);
 inline c10::SymFloat calculate_scale(
     const at::Tensor& query,
     std::optional<double> scale) {
-  const auto softmax_scale = scale.has_value()
+  return scale.has_value()
       ? scale.value()
       : (c10::SymFloat(1.0) / (c10::SymFloat(query.sym_size(-1)).sqrt()));
-  return c10::SymFloat(softmax_scale);
 }
 
 using c10::array_of;
@@ -91,7 +89,7 @@ inline bool check_tensor_dtype(
     sdp_params const& params,
     dtype_vector allowed_dtypes,
     bool debug) {
-  auto query_dtype = params.query.dtype();
+  const auto query_dtype = params.query.dtype();
   if (!(query_dtype == params.key.dtype() &&
         query_dtype == params.value.dtype() &&
         (std::find(allowed_dtypes.begin(), allowed_dtypes.end(), query_dtype) !=
@@ -116,9 +114,9 @@ inline bool check_tensor_dtype(
 
 
 inline bool try_broadcast_param_size(
-    const c10::SymInt q_size,
-    const c10::SymInt k_size,
-    const c10::SymInt v_size,
+    const c10::SymInt& q_size,
+    const c10::SymInt& k_size,
+    const c10::SymInt& v_size,
     c10::string_view param_name,
     bool debug) {
   auto max_size = std::max({q_size, k_size, v_size});
@@ -163,7 +161,7 @@ inline bool check_for_seq_len_0_and_consistent_head_dim_nested_tensor_helper(
     return false;
   }
 
-  auto* sizes_ptr = sizes.data_ptr<int64_t>();
+  const auto* sizes_ptr = sizes.const_data_ptr<int64_t>();
   const int64_t n_tensors = param.size(0);
   const int64_t size_tensor_stride = sizes.stride(0);
 
@@ -276,7 +274,7 @@ inline bool check_for_attn_mask(sdp_params const& params, bool debug) {
 }
 
 inline bool check_attn_mask_shape(sdp_params const& params, bool debug) {
-  auto attn_mask = params.attn_mask;
+  const auto& attn_mask = params.attn_mask;
   if (!attn_mask.has_value()) {
     return true;
   }
