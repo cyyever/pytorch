@@ -5,7 +5,7 @@
 #include <ATen/NestedTensorImpl.h>
 #include <ATen/native/nested/NestedTensorUtils.h>
 
-#include <c10/util/string_view.h>
+#include <string_view>
 #include <c10/util/Exception.h>
 #include <optional>
 
