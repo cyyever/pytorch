@@ -9,6 +9,8 @@
 #include <c10/util/complex.h>
 #include <c10/util/overflows.h>
 
+#include <cmath>
+#include <cstdint>
 #include <type_traits>
 
 namespace c10 {
@@ -57,16 +59,20 @@ struct static_cast_with_inter_type {
   C10_HOST_DEVICE static inline dest_t apply(src_t src) {
     constexpr bool real = needs_real<dest_t, src_t>::value;
     auto r = maybe_real<real, src_t>::apply(src);
-
     // Note: Converting from negative float values to unsigned integer types is
     // undefined behavior in C++, and current CPU and GPU compilers exhibit
     // divergent behavior. Casting from negative float values to signed
     // integer types and then to unsigned integer types is not undefined,
     // however, so this cast improves the consistency of type conversions
     // across compilers.
-    if constexpr (std::is_unsigned_v<dest_t>) {
-      return static_cast<dest_t>( static_cast<int64_t>(r));
-    } else{
+    if constexpr (::std::is_unsigned_v<dest_t>) {
+      if constexpr (::std::is_floating_point_v<decltype(r)>) {
+        if (static_cast<double>(r) <= ::std::rint(INT64_MIN)) {
+          return static_cast<dest_t>(INT64_MIN);
+        }
+      }
+      return static_cast<dest_t>(static_cast<int64_t>(r));
+    } else {
       return static_cast<dest_t>(r);
     }
   }
