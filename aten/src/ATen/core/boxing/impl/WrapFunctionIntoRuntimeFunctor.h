@@ -5,12 +5,11 @@
 namespace c10::impl {
 
 namespace detail {
-template <class FuncType, class ReturnType, class ParameterList>
+template <class FuncType, class ParameterList>
 class WrapFunctionIntoRuntimeFunctor_ {};
-template <class FuncType, class ReturnType, class... Parameters>
+template <class FuncType, class... Parameters>
 class WrapFunctionIntoRuntimeFunctor_<
     FuncType,
-    ReturnType,
     guts::typelist::typelist<Parameters...>>
     final : public c10::OperatorKernel {
  public:
@@ -18,7 +17,7 @@ class WrapFunctionIntoRuntimeFunctor_<
   explicit WrapFunctionIntoRuntimeFunctor_(FuncType_&& kernel_func)
       : kernel_func_(std::forward<FuncType_>(kernel_func)) {}
 
-  decltype(auto) operator()(Parameters... args) {
+  auto operator()(Parameters... args) {
     return kernel_func_(std::forward<Parameters>(args)...);
   }
 
@@ -35,7 +34,6 @@ class WrapFunctionIntoRuntimeFunctor_<
 template <class FuncType>
 using WrapFunctionIntoRuntimeFunctor = detail::WrapFunctionIntoRuntimeFunctor_<
     FuncType,
-    typename guts::infer_function_traits_t<FuncType>::return_type,
     typename guts::infer_function_traits_t<FuncType>::parameter_types>;
 
 } // namespace c10::impl

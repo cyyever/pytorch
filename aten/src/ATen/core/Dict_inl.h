@@ -16,7 +16,7 @@ inline bool DictKeyEqualTo::operator()(const IValue& lhs, const IValue& rhs) con
 }
 }
 
-template<class T> decltype(auto) getTypePtr();
+template<class T> auto getTypePtr();
 std::string toString(const Type& type);
 
 namespace impl {

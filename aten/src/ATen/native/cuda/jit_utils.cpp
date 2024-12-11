@@ -421,7 +421,7 @@ const std::string dynamic_cast_support_literal = R"ESCAPE(
 
   template <typename src_t>
   struct maybe_real<true, src_t> {
-    static inline decltype(auto) apply(src_t src) {
+    static inline auto apply(src_t src) {
       return src.real();
     }
   };

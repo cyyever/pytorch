@@ -48,7 +48,7 @@ CACHE_ALIGN #define
 #define NAME_INFO(name) TOSTRING(name) " " TOSTRING(__FILE__) ":" TOSTRING(__LINE__)
 
 #define RESOLVE_OVERLOAD(...)                                  \
-  [](auto&&... args) -> decltype(auto) {                       \
+  [](auto&&... args) -> auto {                       \
     return __VA_ARGS__(std::forward<decltype(args)>(args)...); \
   }
 

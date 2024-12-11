@@ -1797,7 +1797,7 @@ TORCH_API std::optional<TypePtr> unifyTypeList(
 namespace detail {
 template <typename T>
 struct getTypePtr_ final {
-  static decltype(auto) call() {
+  static auto call() {
     return ([]() {
       try {
         return getCustomClassType<T>();
@@ -1815,147 +1815,147 @@ struct getTypePtr_ final {
 
 template <typename T, bool fake>
 struct getMaybeFakeTypePtr_ final {
-  static decltype(auto) call() {
+  static auto call() {
     return getTypePtr_<T>::call();
   }
 };
 
 template <>
 struct getTypePtr_<at::IValue> final {
-  static decltype(auto) call() {
+  static auto call() {
     return AnyType::get();
   }
 };
 
 template <>
 struct getTypePtr_<at::Tensor> final {
-  static decltype(auto) call() {
+  static auto call() {
     return TensorType::get();
   }
 };
 template <>
 struct getTypePtr_<c10::Storage> final {
-  static decltype(auto) call() {
+  static auto call() {
     return StorageType::get();
   }
 };
 template <>
 struct getTypePtr_<c10::Stream> final {
-  static decltype(auto) call() {
+  static auto call() {
     return StreamObjType::get();
   }
 };
 template <>
 struct getTypePtr_<double> final {
-  static decltype(auto) call() {
+  static auto call() {
     return FloatType::get();
   }
 };
 template <>
 struct getTypePtr_<c10::complex<double>> final {
-  static decltype(auto) call() {
+  static auto call() {
     return ComplexType::get();
   }
 };
 template <>
 struct getTypePtr_<int64_t> final {
-  static decltype(auto) call() {
+  static auto call() {
     return IntType::get();
   }
 };
 
 template <>
 struct getTypePtr_<DeviceIndex> final {
-  static decltype(auto) call() {
+  static auto call() {
     return IntType::get();
   }
 };
 
 template <>
 struct getMaybeFakeTypePtr_<SymInt, false> final {
-  static decltype(auto) call() {
+  static auto call() {
     return SymIntType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<SymInt, true> final {
-  static decltype(auto) call() {
+  static auto call() {
     return IntType::get();
   }
 };
 
 template <>
 struct getMaybeFakeTypePtr_<SymFloat, false> final {
-  static decltype(auto) call() {
+  static auto call() {
     return SymFloatType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<SymFloat, true> final {
-  static decltype(auto) call() {
+  static auto call() {
     return FloatType::get();
   }
 };
 
 template <>
 struct getMaybeFakeTypePtr_<SymBool, false> final {
-  static decltype(auto) call() {
+  static auto call() {
     return SymBoolType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<SymBool, true> final {
-  static decltype(auto) call() {
+  static auto call() {
     return BoolType::get();
   }
 };
 
 template <>
 struct getTypePtr_<c10::Device> final {
-  static decltype(auto) call() {
+  static auto call() {
     return DeviceObjType::get();
   }
 };
 template <>
 struct getTypePtr_<bool> final {
-  static decltype(auto) call() {
+  static auto call() {
     return BoolType::get();
   }
 };
 template <>
 struct getTypePtr_<at::Scalar> final {
-  static decltype(auto) call() {
+  static auto call() {
     return NumberType::get();
   }
 };
 template <>
 struct getTypePtr_<c10::QScheme> final {
-  static decltype(auto) call() {
+  static auto call() {
     return QSchemeType::get();
   }
 };
 template <>
 struct getTypePtr_<at::Generator> final {
-  static decltype(auto) call() {
+  static auto call() {
     return TypeFactory::create<OptionalType>(
         TypeFactory::get<GeneratorType>());
   }
 };
 template <>
 struct getTypePtr_<std::string> final {
-  static decltype(auto) call() {
+  static auto call() {
     return StringType::get();
   }
 };
 template <>
 struct getTypePtr_<std::string_view> final {
-  static decltype(auto) call() {
+  static auto call() {
     return StringType::get();
   }
 };
 template <>
 struct getTypePtr_<at::Dimname> final {
-  static decltype(auto) call() {
+  static auto call() {
     return StringType::get();
   }
 };
@@ -2087,13 +2087,13 @@ struct getMaybeFakeTypePtr_<std::tuple<Contained...>, fake> final {
 };
 template <>
 struct getTypePtr_<void> final {
-  static decltype(auto) call() {
+  static auto call() {
     return NoneType::get();
   }
 };
 } // namespace detail
 template <class T>
-inline decltype(auto) getTypePtr() {
+inline auto getTypePtr() {
   // TODO: static_assert that a templated function exists, and throw a friendly
   // error message if not
   return detail::getMaybeFakeTypePtr_<T, false>::call();
@@ -2107,7 +2107,7 @@ inline TypePtr getTypePtrCopy() {
 }
 
 template <class T>
-inline decltype(auto) getFakeTypePtr() {
+inline auto getFakeTypePtr() {
   return detail::getMaybeFakeTypePtr_<T, true>::call();
 }
 
@@ -2275,37 +2275,37 @@ LayoutType()  {}
 namespace detail {
 template <>
 struct getMaybeFakeTypePtr_<c10::ScalarType, false> final {
-  static decltype(auto) call() {
+  static auto call() {
     return ScalarTypeType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<c10::Layout, false> final {
-  static decltype(auto) call() {
+  static auto call() {
     return LayoutType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<c10::MemoryFormat, false> final {
-  static decltype(auto) call() {
+  static auto call() {
     return MemoryFormatType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<c10::ScalarType, true> final {
-  static decltype(auto) call() {
+  static auto call() {
     return IntType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<c10::Layout, true> final {
-  static decltype(auto) call() {
+  static auto call() {
     return IntType::get();
   }
 };
 template <>
 struct getMaybeFakeTypePtr_<c10::MemoryFormat, true> final {
-  static decltype(auto) call() {
+  static auto call() {
     return IntType::get();
   }
 };

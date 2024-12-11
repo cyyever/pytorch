@@ -545,7 +545,7 @@ class TORCH_API Tensor: public TensorBase {
   }
 
   template <typename F, typename... Args>
-  decltype(auto) m(F func, Args&&... params) const {
+  auto m(F func, Args&&... params) const {
     return func(*this, std::forward<Args>(params)...);
   }
 
