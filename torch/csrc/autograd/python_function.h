@@ -11,7 +11,6 @@
 #include <torch/csrc/utils/object_ptr.h>
 
 #include <c10/core/DeviceGuard.h>
-#include <optional>
 
 #include <memory>
 #include <vector>

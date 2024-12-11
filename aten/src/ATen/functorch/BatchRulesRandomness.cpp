@@ -27,6 +27,7 @@ static Tensor random_batching_rule(SymIntArrayRef shape, ExtraArgs... extra_args
   c10::SmallVector<SymInt> shapeVec(1, maybe_layer->batchSize());
   shapeVec.reserve(shape.size() + 1);
   shapeVec.insert(shapeVec.end(), shape.begin(), shape.end());
+  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
   RandomnessType randomness = maybe_layer->randomness();
   check_randomness(randomness);
   if (randomness == RandomnessType::Different) {
