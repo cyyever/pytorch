@@ -41,12 +41,13 @@ from typing import (
     Union,
     ValuesView,
 )
-from typing_extensions import Concatenate, dataclass_transform, ParamSpec
+from typing_extensions import Concatenate, dataclass_transform, ParamSpec, TypeGuard
 from unittest import mock
 
 import sympy
 
 import torch
+from torch._inductor.runtime.hints import DeviceProperties
 
 
 if TYPE_CHECKING:
@@ -447,7 +448,7 @@ def pad_listlike(x, size):
 
 
 # Used to ensure that iterating over a set is deterministic
-def tuple_sorted(x):
+def tuple_sorted(x: Tuple[_T, ...]) -> List[_T]:
     if len(x) == 0:
         return []
 
@@ -586,7 +587,7 @@ def get_kernel_metadata(node_schedule, wrapper):
             key = str(node.meta["original_aten"]._overloadpacket)
             original_aten_dict[key].append(node.name)
         if "from_node" in node.meta:
-            key = node.meta["from_node"][0][0]
+            key = node.meta["from_node"][0].name
             from_node_dict[key].append(node.name)
     sort_str = "Topologically Sorted" if single_graph is not None else "Unsorted"
     metadata = (
@@ -731,7 +732,7 @@ def sympy_subs(expr: sympy.Expr, replacements: Dict[sympy.Expr, Any]) -> sympy.E
     )
 
 
-def is_symbolic(a: Any) -> bool:
+def is_symbolic(a: Any) -> TypeGuard[Union[torch.SymInt, torch.Tensor]]:
     return isinstance(a, torch.SymInt) or (
         isinstance(a, torch.Tensor)
         and any(is_symbolic(x) for x in itertools.chain(a.size(), a.stride()))
@@ -1113,12 +1114,18 @@ class DelayReplaceLine(DeferredLineBase):
 
 
 @functools.lru_cache(None)
-def is_big_gpu(index) -> bool:
-    prop = torch.cuda.get_device_properties(index)
+def is_big_gpu(index_or_device: Union[int, torch.device] = 0) -> bool:
+    if isinstance(index_or_device, torch.device):
+        device = index_or_device
+    else:
+        device = torch.device("cuda", index_or_device)
+
+    prop = DeviceProperties.create(device)
 
     # SM logic is not relevant to ROCm gpus
     # Arbitrarily skipping the older models
     if torch.version.hip:
+        assert prop.major is not None
         if prop.major < 9 or prop.major == 10:
             log.warning("GPU arch does not support max_autotune_gemm mode usage")
             return False
@@ -1145,7 +1152,7 @@ def _use_template_for_cuda(layout, allowed_layout_dtypes: List[torch.dtype]) -> 
     return (
         layout.device.type == "cuda"
         and layout.dtype in allowed_layout_dtypes
-        and is_big_gpu(layout.device.index or 0)
+        and is_big_gpu(layout.device)
     )
 
 
@@ -1946,8 +1953,13 @@ def device_need_guard(device: str):
 
 
 def needs_fallback_due_to_atomic_add_limitations(dtype):
-    # tl.atomic_add does NOT support the following types
-    return dtype in {torch.int64, torch.bool, torch.bfloat16}
+    # tl.atomic add has bfloat16 support in fbcode
+    # but not in OSS https://github.com/pytorch/pytorch/issues/97016
+    # we will fallback until the code is upstreamed to OSS
+    if config.is_fbcode() and dtype == torch.bfloat16:
+        return False
+    else:
+        return dtype in {torch.int64, torch.bool, torch.bfloat16}
 
 
 def use_scatter_fallback(
