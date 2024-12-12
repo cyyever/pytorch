@@ -5,16 +5,14 @@
 
 namespace at::caching {
 
-
 using weakref_type = c10::weak_intrusive_ptr<TensorImpl, UndefinedTensorImpl>;
 
-bool cached_tensorimpls_enabled = false;
+static bool cached_tensorimpls_enabled = false;
 
 // Like `cached_casts` in autocast_mode, we hash on the TensorImpl*
 //  and keep the pointer alive with a weakref value.
-ska::flat_hash_map<TensorImpl*, weakref_type> cached_tensorimpls;
-std::mutex cached_tensorimpl_mutex;
-
+static ska::flat_hash_map<TensorImpl*, weakref_type> cached_tensorimpls;
+static std::mutex cached_tensorimpl_mutex;
 
 bool is_cached_tensor(const at::Tensor& t) {
   if (!cached_tensorimpls_enabled) {
@@ -27,7 +25,8 @@ bool is_cached_tensor(const at::Tensor& t) {
 void add_cached_tensor(const at::Tensor& t) {
   TORCH_INTERNAL_ASSERT(cached_tensorimpls_enabled);
   const std::lock_guard<std::mutex> lock(cached_tensorimpl_mutex);
-  cached_tensorimpls.emplace(t.unsafeGetTensorImpl(), weakref_type(t.getIntrusivePtr()));
+  cached_tensorimpls.emplace(
+      t.unsafeGetTensorImpl(), weakref_type(t.getIntrusivePtr()));
 }
 
 void remove_cached_tensor(const at::Tensor& t) {
