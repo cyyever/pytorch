@@ -292,6 +292,7 @@ bool operator==(const IValue& lhs, const IValue& rhs) {
   return eq.toTensor().is_nonzero();
 }
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 bool IValue::ptrEqual(const IValue& lhs, const IValue& rhs) {
   TORCH_INTERNAL_ASSERT(lhs.isIntrusivePtr());
   TORCH_INTERNAL_ASSERT(rhs.isIntrusivePtr());
@@ -1239,5 +1240,6 @@ TORCH_API intrusive_ptr<ivalue::Future> collectAny(
   }
   return ctx->dstFuture;
 }
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)
 
 } // namespace c10

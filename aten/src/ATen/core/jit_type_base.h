@@ -16,6 +16,7 @@
 #include <c10/util/Exception.h>
 #include <optional>
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 namespace c10 {
 
 #define C10_FORALL_TYPES(_) \
@@ -719,3 +720,4 @@ struct hash<c10::SingletonOrSharedTypePtr<T>> {
   }
 };
 } // namespace std
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)

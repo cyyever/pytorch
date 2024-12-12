@@ -114,6 +114,7 @@ using DynamicTypePtr = std::shared_ptr<DynamicType>;
  * requirement of DynamicType to interface with existing JIT types, but we might
  * want to inherit from c10::Type to reduce the migration cost.
  */
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 class DynamicType : public SharedType {
   using ClassTypePtr = std::shared_ptr<const c10::ClassType>;
 
@@ -211,6 +212,7 @@ class DynamicType : public SharedType {
     ClassTypePtr class_;
   };
 };
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)
 
 template <typename T>
 struct DynamicTypeTrait {

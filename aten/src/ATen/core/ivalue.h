@@ -218,6 +218,7 @@ struct Capsule {
 ///   // `my_ivalue` is tagged as an int and cannot be used as another type
 ///   torch::Tensor my_tensor = my_ivalue.toTensor();
 /// \endrst
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 struct TORCH_API IValue final {
   IValue(const IValue& rhs) : IValue(rhs.payload, rhs.tag) {
     if (isIntrusivePtr() &&
@@ -1581,7 +1582,7 @@ struct TORCH_API WeakOrStrongTypePtr {
     return cu_.holdingEmptyStrongRef();
   }
 };
-
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)
 } // namespace c10
 
 #include <ATen/core/ivalue_inl.h> // IWYU pragma: keep

@@ -92,6 +92,7 @@ inline bool THPUtils_checkScalar(PyObject* obj) {
       torch::is_symfloat(py::handle(obj)) || torch::is_symbool(py::handle(obj));
 }
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 namespace torch {
 
 bool should_allow_numbers_as_tensors(const std::string& name);
@@ -1299,3 +1300,4 @@ void append_overloaded_type(
     PyObject* obj);
 
 } // namespace torch
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)

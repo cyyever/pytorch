@@ -1191,6 +1191,7 @@ static std::string parse_string_literal(std::string_view str) {
   return parsed;
 }
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 void FunctionParameter::set_default_str(const std::string& str) {
   if (str == "None") {
     allow_none = true;
@@ -1285,6 +1286,7 @@ void FunctionParameter::set_default_str(const std::string& str) {
   }
   default_value = str;
 }
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 FunctionSignature::FunctionSignature(const std::string& fmt, int index)

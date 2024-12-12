@@ -148,7 +148,9 @@ TORCH_API void THP_decodeBuffer<c10::Half, bool>(
       uint16_t x;
       c10::Half f;
     };
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     x = (do_byte_swap ? decodeUInt16ByteSwapped(src) : decodeUInt16(src));
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     dst[i] = f;
     src += sizeof(uint16_t);
   }
@@ -191,7 +193,9 @@ TORCH_API void THP_decodeBuffer<float, bool>(
       uint32_t x;
       float f;
     };
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     x = (do_byte_swap ? decodeUInt32ByteSwapped(src) : decodeUInt32(src));
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     dst[i] = f;
     src += sizeof(float);
   }
@@ -209,7 +213,9 @@ TORCH_API void THP_decodeBuffer<double, bool>(
       uint64_t x;
       double d;
     };
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     x = (do_byte_swap ? decodeUInt64ByteSwapped(src) : decodeUInt64(src));
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     dst[i] = d;
     src += sizeof(double);
   }
@@ -233,11 +239,14 @@ TORCH_API void THP_decodeBuffer<c10::complex<float>, bool>(
       float im;
     };
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     x = (do_byte_swap ? decodeUInt32ByteSwapped(src) : decodeUInt32(src));
     src += sizeof(float);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     y = (do_byte_swap ? decodeUInt32ByteSwapped(src) : decodeUInt32(src));
     src += sizeof(float);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     dst[i] = c10::complex<float>(re, im);
   }
 }
@@ -261,11 +270,14 @@ TORCH_API void THP_decodeBuffer<c10::complex<double>, bool>(
     };
     static_assert(sizeof(uint64_t) == sizeof(double));
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     x = (do_byte_swap ? decodeUInt64ByteSwapped(src) : decodeUInt64(src));
     src += sizeof(double);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     y = (do_byte_swap ? decodeUInt64ByteSwapped(src) : decodeUInt64(src));
     src += sizeof(double);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     dst[i] = c10::complex<double>(re, im);
   }
 }

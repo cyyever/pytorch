@@ -8,6 +8,7 @@
 #include <ATen/core/type_factory.h>
 #include <c10/util/Exception.h>
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
 namespace c10 {
 
 namespace {
@@ -401,3 +402,4 @@ TORCH_API TupleTypePtr ivalue::TupleTypeFactory<TupleType>::fallback(
 }
 
 } // namespace c10
+// NOLINTEND(cppcoreguidelines-pro-type-union-access)
