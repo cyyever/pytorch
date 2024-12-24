@@ -10,6 +10,8 @@ class AllocatorMap {
  public:
   AllocatorMap(const AllocatorMap&) = delete;
   AllocatorMap& operator=(const AllocatorMap&) = delete;
+  AllocatorMap(AllocatorMap&&) = delete;
+  AllocatorMap& operator=(AllocatorMap&&) = delete;
   static AllocatorMap& get() {
     static AllocatorMap instance;
     return instance;

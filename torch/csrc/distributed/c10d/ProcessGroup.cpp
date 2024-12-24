@@ -4,7 +4,6 @@
 
 #include <c10/util/Logging.h>
 #include <fmt/format.h>
-#include <string_view>
 
 #include <torch/csrc/distributed/c10d/PrefixStore.hpp>
 #include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
@@ -164,6 +163,9 @@ namespace {
 
 class WorkRegistry {
  public:
+  WorkRegistry() = default;
+  WorkRegistry(WorkRegistry&&) = delete;
+  WorkRegistry& operator=(WorkRegistry&&) = delete;
   void register_work(
       const at::Tensor& tensor,
       const c10::intrusive_ptr<c10d::Work>& work) {
