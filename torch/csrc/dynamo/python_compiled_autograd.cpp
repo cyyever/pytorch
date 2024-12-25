@@ -421,7 +421,7 @@ static struct PyModuleDef _module = {
     -1,
     _methods};
 
-PyObject* wrap_lifted_ivalue_args(
+static PyObject* wrap_lifted_ivalue_args(
     const std::vector<LiftedIValueArg>& lifted_ivalue_args) {
   PyObject* pyivalueargs =
       PyList_New(static_cast<Py_ssize_t>(lifted_ivalue_args.size()));
@@ -440,7 +440,7 @@ PyObject* wrap_lifted_ivalue_args(
   return pyivalueargs;
 }
 
-PyObject* wrap_node_origins(
+static PyObject* wrap_node_origins(
     const AutogradCompilerCall& compiler,
     size_t dynamic_sizes) {
   TORCH_INTERNAL_ASSERT(
@@ -475,7 +475,7 @@ PyObject* wrap_node_origins(
   return pyallorigins;
 }
 
-void set_ivalue_proxies(
+static void set_ivalue_proxies(
     PyObject* fake_ivalue_args,
     std::vector<LiftedIValueArg>& lifted_ivalue_args) {
   TORCH_INTERNAL_ASSERT(PyList_Check(fake_ivalue_args));
@@ -569,7 +569,7 @@ static SizeInput::DynType get_default_dyn_type() {
 }
 
 // Only call this function while holding GIL
-CacheNode* _compiled_autograd_impl(
+static CacheNode* _compiled_autograd_impl(
     const std::shared_ptr<Node>& graph_root,
     GraphTask& graph_task,
     bool accumulate_grad,
@@ -811,7 +811,7 @@ struct LockGuardWithErrorLogs {
   std::mutex& mtx_;
 };
 
-variable_list compiled_autograd(
+static variable_list compiled_autograd(
     const std::shared_ptr<Node>& graph_root,
     GraphTask& graph_task,
     bool accumulate_grad,

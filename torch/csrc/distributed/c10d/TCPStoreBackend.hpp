@@ -44,7 +44,7 @@ enum class WaitResponseType : uint8_t { STOP_WAITING, WAIT_CANCELED };
 // shutdown sequence for the thread
 class BackgroundThread {
  public:
-  explicit BackgroundThread();
+  explicit BackgroundThread() = default;
 
   virtual ~BackgroundThread() = 0;
   virtual std::uint16_t port() const = 0;

@@ -20,8 +20,6 @@
 namespace c10d::detail {
 
 // Background thread parent class methods
-BackgroundThread::BackgroundThread() = default;
-
 BackgroundThread::~BackgroundThread() = default;
 
 // WARNING:
