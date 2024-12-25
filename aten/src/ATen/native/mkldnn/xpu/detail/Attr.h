@@ -131,7 +131,7 @@ struct PostOpParam {
 
 class Attr {
  public:
-  Attr() : q_scale_(1.f), q_zero_point_(0) {}
+  Attr() : q_scale_(1.f) {}
   Attr(float q_scale, int64_t zp = 0) : q_scale_(q_scale), q_zero_point_(zp) {}
 
   /***** eltwise *****/
@@ -210,7 +210,7 @@ class Attr {
 
   Attr& append_scale_binary(
       dnnl::algorithm algo,
-      at::Tensor binary,
+      const at::Tensor& binary,
       float scale,
       float sum_q_scale = 1.f,
       int64_t zp = 0) {
@@ -363,7 +363,7 @@ class Attr {
   float q_scale_ = 1.0; // the scale used to quantize the fused result from fp32
                         // to int8, only works for int8 case
   int64_t q_zero_point_ = 0;
-  std::vector<PostOpParam> ops_params_; // series of post ops
+  std::vector<PostOpParam> ops_params_{}; // series of post ops
   dnnl::post_ops dnnl_post_ops_;
 };
 

@@ -1,3 +1,4 @@
+#include <utility>
 #include <vector>
 
 #include <ATen/core/ATen_fwd.h>
@@ -16,19 +17,18 @@ using namespace dnnl;
 using namespace at::native;
 using namespace at::native::onednn;
 
-namespace at::native {
-namespace xpu {
+namespace at::native::xpu {
 namespace impl {
 
 struct ConvParams {
-  std::vector<int64_t> stride;
-  std::vector<int64_t> padding;
-  std::vector<int64_t> dilation;
-  bool transposed;
-  std::vector<int64_t> output_padding;
-  int groups;
-  bool benchmark;
-  bool deterministic;
+  std::vector<int64_t> stride{};
+  std::vector<int64_t> padding{};
+  std::vector<int64_t> dilation{};
+  bool transposed{};
+  std::vector<int64_t> output_padding{};
+  int groups{};
+  bool benchmark{};
+  bool deterministic{};
 
   bool is_strided() const;
   bool is_dilated() const;
@@ -496,7 +496,7 @@ Tensor _convolution_out(
     // (padding_left, padding_right,
     //  padding_top, padding_bottom,
     //  padding_front, padding_back)
-    if (pad_nd.vec().size() > 0) {
+    if (!pad_nd.vec().empty()) {
       for (int i = 0; i < dim; ++i) {
         padding_front_top_left[i] += pad_nd[2 * dim - 2 * i - 2]; // 4, 2, 0
         padding_back_bottom_right[i] += pad_nd[2 * dim - 2 * i - 1]; // 5, 3, 1
@@ -562,7 +562,7 @@ Tensor _convolution(
       transposed_,
       output_padding_,
       groups_,
-      attr);
+      std::move(attr));
 }
 
 Tensor convolution_overrideable(
@@ -628,8 +628,8 @@ std::tuple<Tensor, Tensor, Tensor> convolution_backward_overrideable(
 
   Tensor grad_output_, input_, weight_;
   IntArrayRef stride_, padding_, dilation_, output_padding_;
-  bool transposed_;
-  int64_t groups_;
+  bool transposed_ = false;
+  int64_t groups_ = 0;
   ConvParams params;
   if (3 == ndim) {
     grad_output_ = view4d(grad_output);
@@ -744,5 +744,4 @@ TORCH_LIBRARY_IMPL(aten, XPU, m) {
       TORCH_FN(convolution_backward_overrideable));
 }
 
-} // namespace xpu
-} // namespace at::native
+} // namespace at::native::xpu

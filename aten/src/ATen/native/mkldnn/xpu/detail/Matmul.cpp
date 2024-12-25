@@ -130,8 +130,9 @@ sycl::event matmul(
     dst_dt = dnnl::memory::data_type::bf16;
   }
 
-  dnnl::memory::dims m1_dims, m2_dims, dst_dims, bias_dims;
-  dnnl::memory::dims m1_strides, m2_strides, dst_strides, bias_strides;
+  dnnl::memory::dims m1_dims = 0, m2_dims = 0, dst_dims = 0, bias_dims = 0;
+  dnnl::memory::dims m1_strides = 0, m2_strides = 0, dst_strides = 0,
+                     bias_strides = 0;
   if (dims == 2) {
     m1_dims = {m, k};
     m2_dims = {k, n};
