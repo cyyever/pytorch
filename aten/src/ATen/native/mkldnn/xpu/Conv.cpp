@@ -549,7 +549,7 @@ Tensor _convolution(
     bool transposed_,
     IntArrayRef output_padding_,
     int64_t groups_,
-    Attr attr) {
+    const Attr& attr) {
   Tensor output_r;
   return _convolution_out(
       output_r,

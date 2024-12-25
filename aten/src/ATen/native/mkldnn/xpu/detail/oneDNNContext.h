@@ -14,7 +14,7 @@
 namespace at::native::onednn {
 
 TORCH_XPU_API dnnl::memory make_onednn_memory(
-    dnnl::memory::desc md,
+    const dnnl::memory::desc& md,
     dnnl::engine& engine,
     void* ptr);
 
@@ -44,7 +44,7 @@ struct TORCH_XPU_API GpuEngineManager {
               c10::xpu::get_raw_device(i), c10::xpu::get_device_context())));
     }
   }
-  ~GpuEngineManager() {}
+  ~GpuEngineManager() = default;
 
  private:
   std::vector<std::shared_ptr<dnnl::engine>> engine_pool;
@@ -78,7 +78,7 @@ struct TORCH_XPU_API GpuStreamManager {
     TORCH_INTERNAL_ASSERT(device_count > 0);
     stream_pool.resize(device_count);
   }
-  ~GpuStreamManager() {}
+  ~GpuStreamManager() = default;
 
  private:
   using stream_hash_map =

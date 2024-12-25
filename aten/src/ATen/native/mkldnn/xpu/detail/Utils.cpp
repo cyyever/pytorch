@@ -3,7 +3,7 @@
 namespace at::native::onednn {
 
 dnnl::memory make_onednn_memory(
-    dnnl::memory::desc md,
+    const dnnl::memory::desc& md,
     dnnl::engine& engine,
     void* ptr) {
   return dnnl::sycl_interop::make_memory(
@@ -114,7 +114,7 @@ dnnl::memory::dims get_onednn_strides(const at::Tensor& tensor) {
 }
 
 dnnl::memory::desc get_onednn_md(const at::Tensor& tensor) {
-  Tensor t = tensor.sizes().size() == 0 ? tensor.unsqueeze(0) : tensor;
+  Tensor t = tensor.sizes().empty() ? tensor.unsqueeze(0) : tensor;
   return {get_onednn_dims(t), get_onednn_dtype(t), get_onednn_strides(t)};
 }
 
@@ -127,11 +127,11 @@ bool onednn_strides_check(const Tensor& src) {
   auto strides_info = get_onednn_strides(src);
   auto strides = strides_info.empty() ? nullptr : &strides_info[0];
 
-  dnnl_memory_desc_t md;
+  dnnl_memory_desc_t md = nullptr;
   dnnl_memory_desc_create_with_strides(&md, ndims, dims, data_type, strides);
   dnnl_format_kind_t md_fmt_kind;
-  int md_ndims;
-  int md_inner_nblks;
+  int md_ndims = 0;
+  int md_inner_nblks = 0;
   dnnl_dims_t* md_padded_dims = nullptr;
 
   dnnl_memory_desc_query(md, dnnl_query_inner_nblks_s32, &md_inner_nblks);
