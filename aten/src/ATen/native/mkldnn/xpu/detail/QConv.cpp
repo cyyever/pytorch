@@ -48,12 +48,12 @@ qconv_get_md(
 }
 
 at::Tensor quantized_convolution(
-    at::Tensor act,
+    const at::Tensor& act,
     double act_scale,
     int64_t act_zero_point,
-    at::Tensor weight,
+    const at::Tensor& weight,
     at::Tensor weight_scales,
-    at::Tensor weight_zero_points,
+    const at::Tensor& weight_zero_points,
     std::optional<at::Tensor> bias,
     torch::List<int64_t> stride,
     torch::List<int64_t> padding,
@@ -63,7 +63,7 @@ at::Tensor quantized_convolution(
     at::Tensor output,
     double inv_output_scale,
     int64_t output_zero_point,
-    std::optional<at::Tensor> accum,
+    const std::optional<at::Tensor>& accum,
     double accum_scale,
     int64_t accum_zero_point,
     std::optional<c10::ScalarType> output_dtype,
@@ -116,7 +116,7 @@ at::Tensor quantized_convolution(
       output,
       /*is_quantized*/ true,
       output.scalar_type() == at::kByte || output.scalar_type() == at::kChar);
-  int mask_ac = 0, mask_weight;
+  int mask_ac = 0, mask_weight = 0;
   // [Note: Per-channel quantization mask setting]
   // Per-channel quantization is on weight output channel mostly, mask_weight=
   // 1 here means 2^0. 0 means the 0th dimension of weight tensor, aka output

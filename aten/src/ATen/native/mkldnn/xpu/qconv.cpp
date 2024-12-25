@@ -10,7 +10,7 @@ namespace at::native::xpu {
 
 at::Tensor qconv_prepack_xpu(
     at::Tensor weight,
-    at::Tensor weight_scales,
+    const at::Tensor& weight_scales,
     double input_scale,
     int64_t input_zero_point,
     torch::List<int64_t> stride,
@@ -25,13 +25,13 @@ at::Tensor qconv_prepack_xpu(
 class QConvoneDNNXPU final {
  public:
   static at::Tensor run_pointwise(
-      at::Tensor act,
+      const at::Tensor& act,
       double act_scale,
       int64_t act_zero_point,
-      at::Tensor weight,
-      at::Tensor weight_scales,
-      at::Tensor weight_zero_points,
-      std::optional<at::Tensor> bias,
+      const at::Tensor& weight,
+      const at::Tensor& weight_scales,
+      const at::Tensor& weight_zero_points,
+      const std::optional<at::Tensor>& bias,
       torch::List<int64_t> stride,
       torch::List<int64_t> padding,
       torch::List<int64_t> dilation,
