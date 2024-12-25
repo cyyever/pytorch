@@ -214,10 +214,8 @@ namespace {
 
 at::Tensor one_shot_all_reduce_meta(
     const at::Tensor& input,
-    // NOLINTNEXTLINE(performance-unnecessary-value-param)
-    std::string reduce_op,
-    // NOLINTNEXTLINE(performance-unnecessary-value-param)
-    std::string group_name) {
+    const std::string& reduce_op,
+    const std::string& group_name) {
   return at::empty_like(input);
 }
 
