@@ -131,7 +131,7 @@ struct PostOpParam {
 
 class Attr {
  public:
-  Attr() : q_scale_(1.f), q_zero_point_(0) {}
+  Attr() = default;
   Attr(float q_scale, int64_t zp = 0) : q_scale_(q_scale), q_zero_point_(zp) {}
 
   /***** eltwise *****/
@@ -176,8 +176,8 @@ class Attr {
       float sum_scale,
       float sum_q_scale = 1.f,
       int64_t zp = 0) {
-    ops_params_.push_back(
-        PostOpParam(/*scale_sum*/ sum_scale * sum_q_scale, kind_t::sum));
+    ops_params_.emplace_back(
+        /*scale_sum*/ sum_scale * sum_q_scale, kind_t::sum);
     return *this;
   }
 
@@ -187,8 +187,7 @@ class Attr {
       float alpha,
       float beta,
       dnnl::algorithm algo) {
-    ops_params_.push_back(
-        PostOpParam(scale, alpha, beta, algo, kind_t::eltwise));
+    ops_params_.emplace_back(scale, alpha, beta, algo, kind_t::eltwise);
     return *this;
   }
 
@@ -203,8 +202,7 @@ class Attr {
     dnnl::memory::desc md = get_onednn_md(binary_);
     auto expected_md = dnnl::memory::desc(
         md.get_dims(), md.get_data_type(), dnnl::memory::format_tag::any);
-    ops_params_.push_back(
-        PostOpParam(binary_, md, expected_md, algo, kind_t::binary));
+    ops_params_.emplace_back(binary_, md, expected_md, algo, kind_t::binary);
     return *this;
   }
 
@@ -214,8 +212,8 @@ class Attr {
       float scale,
       float sum_q_scale = 1.f,
       int64_t zp = 0) {
-    ops_params_.push_back(PostOpParam(
-        binary, /*scale_sum*/ scale * sum_q_scale, algo, kind_t::binary));
+    ops_params_.emplace_back(
+        binary, /*scale_sum*/ scale * sum_q_scale, algo, kind_t::binary);
     return *this;
   }
 
@@ -250,14 +248,14 @@ class Attr {
             0, "XPU only supports append_bias for Conv1d, Conv2d and Conv3d.");
     }
     // In this case, expected_md = binary_md
-    ops_params_.push_back(PostOpParam(
-        binary_, binary_md, binary_md, kind_with_binary_add, kind_t::binary));
+    ops_params_.emplace_back(
+        binary_, binary_md, binary_md, kind_with_binary_add, kind_t::binary);
     return *this;
   }
 
   // append prelu post op
   Attr& append_post_prelu(int mask) {
-    ops_params_.push_back(PostOpParam(mask, kind_t::prelu));
+    ops_params_.emplace_back(mask, kind_t::prelu);
     return *this;
   }
 
@@ -267,27 +265,27 @@ class Attr {
       bool int8_output = false) {
     // this function is used to extract post ops params from the ops_params_
     // and put them into onednn post ops
-    for (size_t i = 0; i < ops_params_.size(); ++i) {
-      kind_t kind = ops_params_[i].kind_;
+    for (const auto& ops_param : ops_params_) {
+      kind_t kind = ops_param.kind_;
       switch (kind) {
         case kind_t::eltwise: {
-          dnnl::algorithm algo = ops_params_[i].algo_;
-          float alpha = ops_params_[i].alpha_;
-          float beta = ops_params_[i].beta_;
+          dnnl::algorithm algo = ops_param.algo_;
+          float alpha = ops_param.alpha_;
+          float beta = ops_param.beta_;
           dnnl_post_ops_.append_eltwise(algo, alpha, beta);
           break;
         }
         case kind_t::sum: {
-          float scale = ops_params_[i].scale_;
-          int64_t zero_point = ops_params_[i].zero_point_;
+          float scale = ops_param.scale_;
+          int64_t zero_point = ops_param.zero_point_;
           // TODO [Asymmetric]:
           // Post-sum zp for gpu is not supported currently
-          dnnl_post_ops_.append_sum(scale, zero_point);
+          dnnl_post_ops_.append_sum(scale, static_cast<int32_t>(zero_point));
           break;
         }
         case kind_t::binary: {
-          dnnl::algorithm algo = ops_params_[i].algo_;
-          auto expected_md = ops_params_[i].expected_meta_;
+          dnnl::algorithm algo = ops_param.algo_;
+          auto expected_md = ops_param.expected_meta_;
           // In this case user may create src1 memory descriptor with
           // format_tag::any or set a specific tag. However, in later case if
           // tags mismatch with dst, it would result in suboptimal performance.
@@ -306,14 +304,15 @@ class Attr {
     // if output is quantized, then append the eltwise linear to adjust the
     // output scale/zero_point
     if (is_quantized && int8_output) {
-      dnnl_post_ops_.append_eltwise(kind_with_linear, q_scale_, q_zero_point_);
+      dnnl_post_ops_.append_eltwise(
+          kind_with_linear, q_scale_, static_cast<float>(q_zero_point_));
     }
     return dnnl_post_ops_;
   }
 
   bool with_sum() {
-    for (size_t i = 0; i < ops_params_.size(); ++i) {
-      if (ops_params_[i].kind_ == kind_t::sum) {
+    for (const auto& ops_param : ops_params_) {
+      if (ops_param.kind_ == kind_t::sum) {
         return true;
       }
     }
@@ -321,8 +320,8 @@ class Attr {
   }
 
   bool with_binary() {
-    for (size_t i = 0; i < ops_params_.size(); ++i) {
-      if (ops_params_[i].kind_ == kind_t::binary) {
+    for (const auto& ops_param : ops_params_) {
+      if (ops_param.kind_ == kind_t::binary) {
         return true;
       }
     }
@@ -364,7 +363,7 @@ class Attr {
                         // to int8, only works for int8 case
   int64_t q_zero_point_ = 0;
   std::vector<PostOpParam> ops_params_; // series of post ops
-  dnnl::post_ops dnnl_post_ops_;
+  dnnl::post_ops dnnl_post_ops_{};
 };
 
 static inline void construct_attr_for_unary(
@@ -374,7 +373,7 @@ static inline void construct_attr_for_unary(
     at::native::onednn::Attr& attr) {
   if (unary_post_op == "relu") {
     attr = attr.append_post_eltwise(
-        /* eltwise_scale */ 1.f,
+        /* scale */ 1.f,
         /* alpha */ 0.f,
         /* beta */ 0.f,
         attr.kind_with_relu);
@@ -405,7 +404,7 @@ static inline void construct_attr_for_unary(
   }
 }
 
-static inline void construct_attr_by_post_op(
+inline void construct_attr_by_post_op(
     const std::string_view& binary_post_op,
     double binary_alpha,
     double input1_scale,

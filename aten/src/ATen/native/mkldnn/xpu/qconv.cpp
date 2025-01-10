@@ -97,7 +97,6 @@ class QConvoneDNNXPU final {
         /*accum*/ std::nullopt,
         /*accum_scale*/ 0.0,
         /*accum_zero_point*/ 0,
-        /*output_dtype*/ output_dtype,
         /*binary_attr*/ std::nullopt,
         /*binary_alpha*/ std::nullopt,
         /*unary_attr*/ attr,

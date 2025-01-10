@@ -5,6 +5,7 @@
 
 #include <ATen/native/mkldnn/xpu/detail/Attr.h>
 #include <ATen/native/mkldnn/xpu/detail/Utils.h>
+#include <ATen/native/mkldnn/xpu/detail/oneDNN.h>
 #include <ATen/native/mkldnn/xpu/detail/oneDNNContext.h>
 
 #include <oneapi/dnnl/dnnl.hpp>
@@ -48,30 +49,29 @@ qconv_get_md(
 }
 
 at::Tensor quantized_convolution(
-    at::Tensor act,
+    const at::Tensor& act,
     double act_scale,
     int64_t act_zero_point,
-    at::Tensor weight,
+    const at::Tensor& weight,
     at::Tensor weight_scales,
-    at::Tensor weight_zero_points,
-    std::optional<at::Tensor> bias,
-    torch::List<int64_t> stride,
-    torch::List<int64_t> padding,
-    torch::List<int64_t> dilation,
+    const at::Tensor& weight_zero_points,
+    const std::optional<at::Tensor>& bias,
+    const torch::List<int64_t>& stride,
+    const torch::List<int64_t>& padding,
+    const torch::List<int64_t>& dilation,
     bool transposed,
     int64_t groups,
     at::Tensor output,
     double inv_output_scale,
     int64_t output_zero_point,
-    std::optional<at::Tensor> accum,
+    const std::optional<at::Tensor>& accum,
     double accum_scale,
     int64_t accum_zero_point,
-    std::optional<c10::ScalarType> output_dtype,
-    std::optional<std::string_view> binary_attr,
-    std::optional<at::Scalar> binary_alpha,
-    std::optional<std::string_view> unary_attr,
-    torch::List<std::optional<at::Scalar>> unary_scalars,
-    std::optional<std::string_view> unary_algorithm) {
+    const std::optional<std::string_view>& binary_attr,
+    const std::optional<at::Scalar>& binary_alpha,
+    const std::optional<std::string_view>& unary_attr,
+    const torch::List<std::optional<at::Scalar>>& unary_scalars,
+    const std::optional<std::string_view>& unary_algorithm) {
   Attr attr =
       Attr(/*q_scale=*/1.0 / inv_output_scale, /*zp=*/output_zero_point);
 
@@ -100,8 +100,6 @@ at::Tensor quantized_convolution(
       {c10::kXPU, c10::xpu::current_device()});
   auto stream = GpuStreamManager::Instance().get_stream();
 
-  // create usr_md for tensors, and md for conv primitive
-  dnnl::memory::desc src_md, weight_md, output_md;
   // input tensors config
   dnnl::memory::dims src_dims = act.sizes().vec();
   dnnl::memory::dims weight_dims = weight.sizes().vec();
@@ -116,7 +114,7 @@ at::Tensor quantized_convolution(
       output,
       /*is_quantized*/ true,
       output.scalar_type() == at::kByte || output.scalar_type() == at::kChar);
-  int mask_ac = 0, mask_weight;
+  int mask_ac = 0;
   // [Note: Per-channel quantization mask setting]
   // Per-channel quantization is on weight output channel mostly, mask_weight=
   // 1 here means 2^0. 0 means the 0th dimension of weight tensor, aka output
@@ -125,12 +123,13 @@ at::Tensor quantized_convolution(
   // is not supported. In addition, src, output should still be per-tensor
   // quant, aka mask=0. Per-channel quantization on activation is not
   // supported in conv.
-  mask_weight = weight_zero_points.numel() > 1 ? 1 : 0;
+  int mask_weight = weight_zero_points.numel() > 1 ? 1 : 0;
   dnnl::primitive_attr pattr;
 
   bool src_need_zp = (act_scale != 0);
 
-  std::tie(src_md, weight_md, output_md) =
+  // create usr_md for tensors, and md for conv primitive
+  auto [src_md, weight_md, output_md] =
       qconv_get_md(act, weight, output, groups);
 
   // get tensor md
