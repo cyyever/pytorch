@@ -27,7 +27,7 @@ from torch.overrides import (
 
 
 if TYPE_CHECKING:
-    from torch.types import _dtype as DType
+    from torch.types import dtype as DType
 else:
     # The JIT doesn't understand Union, nor torch.dtype here
     DType = int

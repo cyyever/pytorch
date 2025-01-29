@@ -927,13 +927,13 @@ def argument_type_str_pyi(t: Type) -> str:
         elif t.name == BaseTy.Scalar:
             ret = "Union[Number, _complex]"
         elif t.name == BaseTy.ScalarType:
-            ret = "_dtype"
+            ret = "dtype"
         elif t.name == BaseTy.bool:
             ret = "_bool"
         elif t.name == BaseTy.QScheme:
-            ret = "_qscheme"
+            ret = "qscheme"
         elif t.name == BaseTy.Layout:
-            ret = "_layout"
+            ret = "layout"
         elif t.name == BaseTy.Device:
             ret = "Optional[DeviceLikeType]"
         elif t.name == BaseTy.MemoryFormat:
@@ -987,7 +987,7 @@ def return_type_str_pyi(t: Type) -> str:
 
     if isinstance(t, BaseType):
         if t.name == BaseTy.Device:
-            return "_device"
+            return "device"
         elif t.name == BaseTy.Dimname:
             return "Optional[str]"
         else:

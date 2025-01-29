@@ -1511,7 +1511,7 @@ def _low_contention_reduce_scatter(
 from collections.abc import Sequence
 from typing import Any, overload, TYPE_CHECKING, Union
 
-from torch.types import _device, _dtype, _int
+from torch.types import _int, device, dtype
 
 
 if TYPE_CHECKING:
@@ -1520,7 +1520,7 @@ if TYPE_CHECKING:
 
 @overload
 def empty(
-    *size: _int, dtype: Optional[_dtype] = None, device: Optional[_device] = None
+    *size: _int, dtype: Optional[dtype] = None, device: Optional[device] = None
 ) -> torch.Tensor:
     ...
 
@@ -1529,16 +1529,16 @@ def empty(
 def empty(
     size: Sequence[_int],
     *,
-    dtype: Optional[_dtype] = None,
-    device: Optional[_device] = None,
+    dtype: Optional[dtype] = None,
+    device: Optional[device] = None,
 ) -> torch.Tensor:
     ...
 
 
 def empty(  # type: ignore[misc]
     *size: Any,
-    dtype: Optional[_dtype] = None,
-    device: Optional[_device] = None,
+    dtype: Optional[dtype] = None,
+    device: Optional[device] = None,
 ) -> torch.Tensor:
     r"""
     empty(*size, *, dtype=None, device=None) -> Tensor

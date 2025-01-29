@@ -17,11 +17,11 @@ from typing_extensions import Self, TypeAlias
 
 # `as` imports have better static analysis support than assignment `ExposedType: TypeAlias = HiddenType`
 from torch import (  # noqa: F401
-    device as _device,
+    device as device,
     DispatchKey as DispatchKey,
-    dtype as _dtype,
-    layout as _layout,
-    qscheme as _qscheme,
+    dtype as dtype,
+    layout as layout,
+    qscheme as qscheme,
     Size as Size,
     SymBool as SymBool,
     SymFloat as SymFloat,
@@ -71,14 +71,14 @@ FileLike: TypeAlias = Union[str, os.PathLike[str], IO[bytes]]
 # Meta-type for "device-like" things.  Not to be confused with 'device' (a
 # literal device object).  This nomenclature is consistent with PythonArgParser.
 # None means use the default device (typically CPU)
-Device: TypeAlias = Union[_device, str, int, None]
+Device: TypeAlias = Union[device, str, int, None]
 
 
 # Storage protocol implemented by ${Type}StorageBase classes
 class Storage:
     _cdata: int
-    device: _device
-    dtype: _dtype
+    device: device
+    dtype: dtype
     _torch_load_uninitialized: bool
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:

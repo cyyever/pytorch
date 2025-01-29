@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch import SymInt, Tensor
 from torch._C import _add_docstr, _nested  # type: ignore[attr-defined]
-from torch.types import _device as Device, _dtype as DType
+from torch.types import device as Device, dtype as DType
 
 
 __all__ = [

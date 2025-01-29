@@ -31,7 +31,7 @@ from torch._library.custom_ops import (
 from torch._library.infer_schema import infer_schema  # noqa: F401
 from torch._library.triton import triton_op, wrap_triton
 from torch._ops import OpOverload
-from torch.types import _dtype
+from torch.types import dtype
 
 
 __all__ = [
@@ -831,7 +831,7 @@ def register_kernel(
 def register_autocast(
     op: _op_identifier,
     device_type: str,
-    cast_inputs: _dtype,
+    cast_inputs: dtype,
     /,
     *,
     lib: Optional[Library] = None,

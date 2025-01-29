@@ -4,7 +4,7 @@
 from typing import List, Literal, Optional, overload, Sequence, Tuple, Union
 
 from torch import memory_format, Tensor
-from torch.types import _bool, _device, _dtype, _int, _size
+from torch.types import _bool, device, dtype, _int, _size
 
 # Defined in tools/autograd/templates/python_nn_functions.cpp
 
@@ -35,21 +35,21 @@ def mkldnn_prelu(input: Tensor, weight: Tensor) -> Tensor: ...
 # Defined at tools/autograd/templates/python_nn_functions.cpp
 @overload
 def _parse_to(
-    device: _device,
-    dtype: _dtype,
+    device: device,
+    dtype: dtype,
     non_blocking: _bool,
     copy: _bool,
     *,
     memory_format: memory_format,
-) -> Tuple[_device, _dtype, _bool, memory_format]: ...
+) -> Tuple[device, dtype, _bool, memory_format]: ...
 @overload
 def _parse_to(
-    dtype: _dtype,
+    dtype: dtype,
     non_blocking: _bool,
     copy: _bool,
     *,
     memory_format: memory_format,
-) -> Tuple[_device, _dtype, _bool, memory_format]: ...
+) -> Tuple[device, dtype, _bool, memory_format]: ...
 @overload
 def _parse_to(
     tensor: Tensor,
@@ -57,7 +57,7 @@ def _parse_to(
     copy: _bool,
     *,
     memory_format: memory_format,
-) -> Tuple[_device, _dtype, _bool, memory_format]: ...
+) -> Tuple[device, dtype, _bool, memory_format]: ...
 
 # Defined in aten/src/ATen/native/PackedSequence.cpp
 def pad_sequence(

@@ -85,7 +85,7 @@ def get_py_torch_functions(
 # the stubs to read on the human eye.
 
 DEVICE_PARAM = "device: Optional[DeviceLikeType] = None"
-FACTORY_PARAMS = f"dtype: Optional[_dtype] = None, {DEVICE_PARAM}, requires_grad: _bool = False, pin_memory: _bool = False"
+FACTORY_PARAMS = f"dtype: Optional[torch._C.dtype] = None, {DEVICE_PARAM}, requires_grad: _bool = False, pin_memory: _bool = False"
 
 # NOTE: specifying indices for Tensor.__getitem__
 # We can imitate numpy's definition of ndarray.__getitem__ found in numpy/__init__.pyi:
@@ -699,7 +699,7 @@ def gen_pyi(
                                 "values: Union[Tensor, list]",
                                 "size: Optional[_size] = None",
                                 "*",
-                                "dtype: Optional[_dtype] = None",
+                                "dtype: Optional[torch._C.dtype] = None",
                                 "device: Optional[DeviceLikeType] = None",
                                 "requires_grad: _bool = False",
                                 "check_invariants: Optional[_bool] = None",
@@ -713,14 +713,14 @@ def gen_pyi(
     unsorted_function_hints.update(
         {
             "set_flush_denormal": ["def set_flush_denormal(mode: _bool) -> _bool: ..."],
-            "get_default_dtype": ["def get_default_dtype() -> _dtype: ..."],
+            "get_default_dtype": ["def get_default_dtype() -> dtype: ..."],
             "asarray": [
                 "def asarray({}) -> Tensor: ...".format(
                     ", ".join(
                         [
                             "obj: Any",
                             "*",
-                            "dtype: Optional[_dtype] = None",
+                            "dtype: Optional[torch._C.dtype] = None",
                             "device: Optional[DeviceLikeType] = None",
                             "copy: Optional[_bool] = None",
                             "requires_grad: _bool = False",
@@ -735,7 +735,7 @@ def gen_pyi(
                         [
                             "buffer: Any",
                             "*",
-                            "dtype: _dtype",
+                            "dtype: torch._C.dtype",
                             "count: int = -1",
                             "offset: int = 0",
                             "requires_grad: _bool = False",
@@ -749,7 +749,7 @@ def gen_pyi(
                     ", ".join(
                         [
                             "data: Any",
-                            "dtype: Optional[_dtype] = None",
+                            "dtype: Optional[torch._C.dtype] = None",
                             DEVICE_PARAM,
                         ]
                     )
@@ -774,7 +774,7 @@ def gen_pyi(
                             "values: Union[Tensor, list]",
                             "size: Optional[_size] = None",
                             "*",
-                            "dtype: Optional[_dtype] = None",
+                            "dtype: Optional[dtype] = None",
                             "device: Optional[DeviceLikeType] = None",
                             "requires_grad: _bool = False",
                             "check_invariants: Optional[_bool] = None",
@@ -792,8 +792,8 @@ def gen_pyi(
                             "values: Union[Tensor, list]",
                             "size: Optional[_size] = None",
                             "*",
-                            "dtype: Optional[_dtype] = None",
-                            "layout: Optional[_layout] = None",
+                            "dtype: Optional[dtype] = None",
+                            "layout: Optional[layout] = None",
                             "device: Optional[DeviceLikeType] = None",
                             "requires_grad: _bool = False",
                             "check_invariants: Optional[_bool] = None",
@@ -966,7 +966,7 @@ def gen_pyi(
                             "fill_value: Union[Number, _complex]",
                             "*",
                             "out: Optional[Tensor] = None",
-                            "layout: _layout = strided",
+                            "layout: layout = strided",
                             FACTORY_PARAMS,
                         ]
                     )
@@ -978,7 +978,7 @@ def gen_pyi(
                             "fill_value: Union[Number, _complex]",
                             "*",
                             "names: list[Union[str, None]]",
-                            "layout: _layout = strided",
+                            "layout: layout = strided",
                             FACTORY_PARAMS,
                         ]
                     )
@@ -1125,7 +1125,7 @@ def gen_pyi(
                             "require_grad: _bool = False",
                             "dispatch_strides: _bool = False",
                             "dispatch_device: _bool = False",
-                            "device_for_backend_keys: Optional[_device] = None",
+                            "device_for_backend_keys: Optional[torch._C.device] = None",
                         ]
                     )
                 )
@@ -1154,7 +1154,7 @@ def gen_pyi(
                     ", ".join(
                         [
                             "self",
-                            "device: Optional[Union[_device, _int, str]] = None",
+                            "device: Optional[Union[torch._C.device, _int, str]] = None",
                             "non_blocking: _bool = False",
                             "memory_format: torch.memory_format = torch.preserve_format",
                         ]
@@ -1166,7 +1166,7 @@ def gen_pyi(
                     ", ".join(
                         [
                             "self",
-                            "device: Optional[Union[_device, _int, str]] = None",
+                            "device: Optional[Union[torch._C.device, _int, str]] = None",
                             "non_blocking: _bool = False",
                             "memory_format: torch.memory_format = torch.preserve_format",
                         ]
@@ -1187,8 +1187,8 @@ def gen_pyi(
             "storage": ["def untyped_storage(self) -> UntypedStorage: ..."],
             "storage_type": ["def storage_type(self) -> Storage: ..."],
             "type": [
-                "def type(self, dtype: None = None, non_blocking: _bool = False) -> str: ...",
-                "def type(self, dtype: Union[str, _dtype], non_blocking: _bool = False) -> Tensor: ...",
+                "def type(self, dtype: Optional[torch._C.dtype] = None, non_blocking: _bool = False) -> str: ...",
+                "def type(self, dtype: Union[str, torch._C.dtype], non_blocking: _bool = False) -> Tensor: ...",
             ],
             "get_device": ["def get_device(self) -> _int: ..."],
             "contiguous": [
@@ -1221,8 +1221,8 @@ def gen_pyi(
                     "memory_format: Optional[torch.memory_format] = None) -> Tensor: ..."
                 )
                 for args in [
-                    "dtype: _dtype",
-                    "device: Optional[DeviceLikeType] = None, dtype: Optional[_dtype] = None",
+                    "dtype: torch._C.dtype",
+                    "device: Optional[DeviceLikeType] = None, dtype: Optional[torch._C.dtype] = None",
                     "other: Tensor",
                 ]
             ],
@@ -1365,7 +1365,7 @@ def gen_pyi(
     # TODO: don't explicitly list dtypes here; get it from canonical
     # source
     dtype_class_hints = [
-        f"{n}: dtype = ..."
+        f"{n}: torch._C.dtype = ..."
         for n in [
             "float32",
             "float",

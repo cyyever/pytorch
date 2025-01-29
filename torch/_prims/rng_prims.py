@@ -14,7 +14,7 @@ from torch.fx.experimental.proxy_tensor import (
     ProxyTorchDispatchMode,
     track_tensor_tree,
 )
-from torch.types import _device, _dtype
+from torch.types import device, dtype
 
 
 def throw_on_non_cuda(device):
@@ -86,8 +86,8 @@ def register_philox_rand():
         seed: torch.Tensor,
         offset: torch.Tensor,
         stride: Optional[tuple[int, ...]],
-        device: _device,
-        dtype: _dtype,
+        device: device,
+        dtype: dtype,
     ):
         # stride arg will be useful for distributed usecase. Currently, its unused.
         assert stride is None
@@ -103,8 +103,8 @@ def register_philox_rand():
         seed: torch.Tensor,
         offset: torch.Tensor,
         stride: Optional[tuple[int, ...]],
-        device: _device,
-        dtype: _dtype,
+        device: device,
+        dtype: dtype,
     ):
         # stride arg will be useful for distributed usecase. Currently, its unused.
         assert stride is None

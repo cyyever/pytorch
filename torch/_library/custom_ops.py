@@ -9,7 +9,7 @@ from typing import Any, Callable, Literal, Optional, overload, Union
 
 import torch
 from torch import _C, _ops, Tensor
-from torch.types import _dtype
+from torch.types import dtype
 from torch.utils._exposed_in import exposed_in
 
 from . import autograd, utils
@@ -197,8 +197,8 @@ class CustomOpDef:
         self._backward_fn: Optional[Callable] = None
         self._torch_dispatch_fns: dict[type, Callable] = {}
         self._vmap_fn: Optional[Callable] = None
-        self._autocast_cuda_dtype: Optional[_dtype] = None
-        self._autocast_cpu_dtype: Optional[_dtype] = None
+        self._autocast_cuda_dtype: Optional[dtype] = None
+        self._autocast_cpu_dtype: Optional[dtype] = None
 
         self._lib = get_library_allowing_overwrite(self._namespace, self._name)
         self._register_to_dispatcher()
@@ -770,7 +770,7 @@ class CustomOpDef:
     def register_autocast(
         self,
         device_type: str,
-        cast_inputs: _dtype,
+        cast_inputs: dtype,
     ):
         r"""Register an autocast dispatch rule for this custom op.
 
@@ -838,7 +838,7 @@ class CustomOpDef:
 
 # TODO: Merge this function with torch.amp.autocast_mode._cast, and refactor it
 # into a utility function once custom ops support arbitrary input types.
-def _cast(value, device_type: str, dtype: _dtype):
+def _cast(value, device_type: str, dtype: dtype):
     if isinstance(value, torch.Tensor):
         is_eligible = (
             value.is_floating_point()

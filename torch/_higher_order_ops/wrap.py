@@ -6,7 +6,7 @@ from typing import Optional
 
 from torch._logging import warning_once
 from torch._ops import HigherOrderOperator
-from torch.types import _dtype
+from torch.types import dtype
 
 
 log = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class WrapWithAutocast(HigherOrderOperator):
     def __call__(
         self,
         device_type: str,
-        dtype: Optional[_dtype],
+        dtype: Optional[dtype],
         enabled: bool,
         cache_enabled: Optional[bool],
         wrapped_func,

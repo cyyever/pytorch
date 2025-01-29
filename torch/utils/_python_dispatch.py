@@ -332,7 +332,7 @@ class TensorWithFlatten(Protocol):
     @overload
     def to(
             self,
-            dtype: torch.types._dtype,
+            dtype: torch.types.dtype,
             non_blocking: bool = False,
             copy: bool = False,
             *,
@@ -344,7 +344,7 @@ class TensorWithFlatten(Protocol):
     def to(
             self,
             device: Optional["torch._prims_common.DeviceLikeType"] = None,
-            dtype: Optional[torch.types._dtype] = None,
+            dtype: Optional[torch.types.dtype] = None,
             non_blocking: bool = False,
             copy: bool = False,
             *,

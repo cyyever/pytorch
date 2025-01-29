@@ -12,7 +12,7 @@ from torch.masked.maskedtensor.creation import as_masked_tensor
 
 
 if TYPE_CHECKING:
-    from torch.types import _dtype as DType
+    from torch.types import dtype as DType
 
     DimOrDims = Optional[Union[int, tuple[int], list[int]]]
 else:

@@ -24,13 +24,13 @@ from torch import contiguous_format, Generator, inf, memory_format, strided, Sym
 from torch.types import (
     _bool,
     _complex,
-    _device,
-    _dtype,
     _float,
     _int,
-    _layout,
-    _qscheme,
     _size,
+    device,
+    dtype,
+    layout,
+    qscheme,
     Device,
     Number,
 )

@@ -5,7 +5,7 @@ import warnings
 from typing import Any, Optional
 
 import torch
-from torch.types import _dtype
+from torch.types import dtype
 
 
 try:
@@ -218,7 +218,7 @@ class autocast:
     def __init__(
         self,
         device_type: str,
-        dtype: Optional[_dtype] = None,
+        dtype: Optional[dtype] = None,
         enabled: bool = True,
         cache_enabled: Optional[bool] = None,
     ):
@@ -440,7 +440,7 @@ def _exit_autocast(mode):
 
 # Casts Tensors and containers of Tensors.  Special-cases passthroughs for strings and np.ndarrays, which
 # may be falsely detected as "Iterables."
-def _cast(value, device_type: str, dtype: _dtype):
+def _cast(value, device_type: str, dtype: dtype):
     if isinstance(value, torch.Tensor):
         is_eligible = (
             value.is_floating_point()
@@ -471,7 +471,7 @@ def custom_fwd(
     fwd=None,
     *,
     device_type: str,
-    cast_inputs: Optional[_dtype] = None,
+    cast_inputs: Optional[dtype] = None,
 ):
     """
     Create a helper decorator for ``forward`` methods of custom autograd functions.
