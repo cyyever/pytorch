@@ -6111,7 +6111,6 @@ else:
         self._run_scaling_case(device.type, run, unskipped=3, skipped=1)
 
     @onlyNativeDeviceTypes
-    @unittest.skipIf(IS_WINDOWS, 'FIXME: fix this test for Windows')
     def test_grad_scaling_penalty(self, device):
         device = torch.device(device)
 
@@ -9595,7 +9594,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
     @slowTest
     @unittest.skipIf(NO_MULTIPROCESSING_SPAWN, "Disabled for environments that \
                         don't support multiprocessing with spawn start method")
-    @unittest.skipIf(IS_WINDOWS, 'FIXME: CUDA OOM error on Windows')
     def test_multinomial_invalid_probs(self):
         def _spawn_method(self, method, arg):
             try:
