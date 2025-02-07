@@ -34,7 +34,7 @@ class TestNumPyInterop(TestCase):
     @onlyCPU
     def test_numpy_unresizable(self, device) -> None:
         x = np.zeros((2, 2))
-        y = torch.from_numpy(x)  # noqa: F841
+        torch.from_numpy(x)
         with self.assertRaises(ValueError):
             x.resize((5, 5))
 
@@ -412,7 +412,7 @@ class TestNumPyInterop(TestCase):
         ]
         for tp, dtype in zip(types, dtypes):
             # Only concrete class can be given where "Type[number[_64Bit]]" is expected
-            if np.dtype(dtype).kind == "u":  # type: ignore[misc]
+            if np.dtype(dtype).kind == "u":
                 # .type expects a XxxTensor, which have no type hints on
                 # purpose, so ignore during mypy type checking
                 x = torch.tensor([1, 2, 3, 4]).type(tp)  # type: ignore[call-overload]
@@ -441,7 +441,7 @@ class TestNumPyInterop(TestCase):
             asarray = np.asarray(x, dtype=dtype)
             self.assertEqual(asarray.dtype, dtype)
             # Only concrete class can be given where "Type[number[_64Bit]]" is expected
-            if np.dtype(dtype).kind == "u":  # type: ignore[misc]
+            if np.dtype(dtype).kind == "u":
                 wrapped_x = np.array([1, -2, 3, -4]).astype(dtype)
                 for i in range(len(x)):
                     self.assertEqual(asarray[i], wrapped_x[i])

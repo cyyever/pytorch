@@ -2,7 +2,7 @@
 
 import os
 import sys
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple  # noqa: F401
+from typing import Any, Dict, List, NamedTuple, Tuple  # noqa: F401
 
 import torch
 from torch.jit._monkeytype_config import _IS_MONKEYTYPE_INSTALLED
