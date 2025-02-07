@@ -101,7 +101,7 @@ class InplaceForeachVersionBumpCheck:
     def __init__(
         self,
         testcase: TestCase,
-        tensorlist: "List[torch.Tensor]",  # noqa: F821
+        tensorlist: list[torch.Tensor],
     ) -> None:
         self._testcase = testcase
         self._tensorlist = tensorlist

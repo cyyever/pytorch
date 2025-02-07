@@ -2308,7 +2308,7 @@ class TestNamedTuple(JitTestCase):
     def test_namedtuple_inside_forwardref(self):
         class FeatureVector(NamedTuple):
             float_features: "float"
-            sequence_features: "List[float]"
+            sequence_features: list[float]
             time_since_first: "float"
 
         @torch.jit.script
