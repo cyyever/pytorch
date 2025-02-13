@@ -62,10 +62,10 @@ struct WithCurrentNode {
 };
 
 struct NodeSourceInfo {
-  const char* func_name_;
-  const char* file_name_;
-  size_t line_;
-  NodeSourceInfo() : func_name_(nullptr), file_name_(nullptr), line_(0) {}
+  const char* func_name_{nullptr};
+  const char* file_name_{nullptr};
+  size_t line_{0};
+  NodeSourceInfo() = default;
 };
 
 struct CodeImpl {
