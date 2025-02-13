@@ -8,10 +8,7 @@
 
 #include <sstream>
 
-namespace torch {
-namespace jit {
-namespace xnnpack {
-namespace delegate {
+namespace torch::jit::xnnpack::delegate {
 
 using namespace fb_xnnpack;
 
@@ -99,7 +96,4 @@ std::string XNNSerializer::finishAndSerialize(
   return ss.str();
 }
 
-} // namespace delegate
-} // namespace xnnpack
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit::xnnpack::delegate

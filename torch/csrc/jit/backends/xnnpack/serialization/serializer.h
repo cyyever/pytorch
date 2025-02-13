@@ -9,10 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace torch {
-namespace jit {
-namespace xnnpack {
-namespace delegate {
+namespace torch::jit::xnnpack::delegate {
 
 using namespace fb_xnnpack; // Specified in the schema
 
@@ -83,7 +80,4 @@ class XNNSerializer {
   std::vector<uint32_t> _bufferSizes;
 };
 
-} // namespace delegate
-} // namespace xnnpack
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit::xnnpack::delegate
