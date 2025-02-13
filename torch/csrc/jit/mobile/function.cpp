@@ -8,10 +8,7 @@
 #include <torch/csrc/jit/runtime/instruction.h>
 #include <torch/csrc/jit/runtime/operator.h>
 
-namespace torch::jit {
-
-char const* toString(OpCode op);
-namespace mobile {
+namespace torch::jit::mobile {
 Function::Function(c10::QualifiedName name) : name_(std::move(name)) {}
 
 Function::Function(
@@ -271,5 +268,4 @@ Function& Function::registerFunc(
   return upgrader_function_in_holder;
 }
 
-} // namespace mobile
-} // namespace torch::jit
+} // namespace torch::jit::mobile
