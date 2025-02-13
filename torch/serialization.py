@@ -15,11 +15,11 @@ import threading
 import warnings
 from contextlib import closing, contextmanager
 from enum import Enum
-from typing import Any, Callable, cast, Dict, Generic, IO, Optional, TypeVar, Union
+from typing import Any, Callable, cast, Generic, IO, Optional, TypeVar, Union
 from typing_extensions import TypeAlias, TypeIs
 
 import torch
-import torch._weights_only_unpickler as _weights_only_unpickler
+from torch import _weights_only_unpickler
 from torch._sources import get_source_lines_and_file
 from torch._utils import _import_dotted_name
 from torch.storage import _get_dtype_from_pickle_storage_type
@@ -1905,7 +1905,7 @@ def _load(
     data_descripter_size64 = 24
     data_descripter_size32 = 16
     mz_uint32_max = 0xFFFFFFFF
-    offsets: Dict[str, int] = dict()
+    offsets: dict[str, int] = dict()
 
     def _get_offset(key, name, numel):
         """
