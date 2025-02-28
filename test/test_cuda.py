@@ -59,7 +59,7 @@ from torch.testing._internal.common_utils import (
     IS_LINUX,
     IS_SANDCASTLE,
     IS_WINDOWS,
-    load_tests,  
+    load_tests,
     parametrize,
     run_tests,
     serialTest,
@@ -2008,7 +2008,7 @@ exit(2)
                 )
 
     @unittest.skipIf(
-        (not TEST_CUDA) or TEST_WITH_ROCM or int(torch.version.cuda.split(".")[0]) < 11,
+        (not TEST_CUDA) or TEST_WITH_ROCM,
         "CUDA >= 11.0 required for graphs",
     )
     def test_graph_warn_if_has_zero_nodes(self):
