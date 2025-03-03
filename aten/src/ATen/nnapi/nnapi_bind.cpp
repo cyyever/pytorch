@@ -177,9 +177,8 @@ void NnapiCompilation::get_operand_type(const at::Tensor& t, ANeuralNetworksOper
   if (t.scalar_type() == c10::kQUInt8) {
     TORCH_CHECK(t.is_quantized());
     operand->type = ANEURALNETWORKS_TENSOR_QUANT8_ASYMM;
-    // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-    operand->scale = t.q_scale();
-    operand->zeroPoint = t.q_zero_point();
+    operand->scale = static_cast<float>(t.q_scale());
+    operand->zeroPoint = static_cast<int32_t>(t.q_zero_point());
     return;
   }
   if (t.scalar_type() == c10::kInt) {
@@ -194,8 +193,7 @@ void NnapiCompilation::get_operand_type(const at::Tensor& t, ANeuralNetworksOper
       "testing with fixed scale, zero_point. Please change your ",
       "inputs if you see this in production");
     operand->type = ANEURALNETWORKS_TENSOR_QUANT16_ASYMM;
-    // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-    operand->scale = 0.125;
+    operand->scale = 0.125f;
     operand->zeroPoint = 0;
     return;
   }

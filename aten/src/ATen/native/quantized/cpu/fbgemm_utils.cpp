@@ -83,10 +83,8 @@ void CopyICFirst3dTensorToChannelsLast3dTensor(
   for (int64_t i = 0; i < G * OC_G; ++i) {
     for (const auto j : c10::irange(inner_size)) {
       for (const auto ic : c10::irange(IC_G)) {
-        // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-        int g = i / OC_G;
-        // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-        int oc = i % OC_G;
+        int64_t g = i / OC_G;
+        int64_t oc = i % OC_G;
         dst[(i * inner_size + j) * IC_G + ic] =
             src[((g * IC_G + ic) * OC_G + oc) * inner_size + j];
       }
