@@ -404,11 +404,6 @@ function(torch_compile_options libname)
 
       endif()
       list(APPEND private_compile_options -Wmove)
-    else()
-      list(APPEND private_compile_options
-        # Considered to be flaky.  See the discussion at
-        # https://github.com/pytorch/pytorch/pull/9608
-        -Wno-maybe-uninitialized)
     endif()
 
     if(WERROR)
