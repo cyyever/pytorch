@@ -9,12 +9,11 @@
 #include <torch/csrc/jit/runtime/register_ops_utils.h>
 #include <torch/jit.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(CustomOperatorTest, InferredSchema) {
   torch::RegisterOperators reg(
-      "foo::bar", [](double a, at::Tensor b) { return a + b; });
+      "foo::bar", [](double a, const at::Tensor& b) { return a + b; });
   auto& ops = getAllOperatorsFor(Symbol::fromQualString("foo::bar"));
   ASSERT_EQ(ops.size(), 1);
 
@@ -41,7 +40,7 @@ TEST(CustomOperatorTest, InferredSchema) {
 TEST(CustomOperatorTest, ExplicitSchema) {
   torch::RegisterOperators reg(
       "foo::bar_with_schema(float a, Tensor b) -> Tensor",
-      [](double a, at::Tensor b) { return a + b; });
+      [](double a, const at::Tensor& b) { return a + b; });
 
   auto& ops =
       getAllOperatorsFor(Symbol::fromQualString("foo::bar_with_schema"));
@@ -121,7 +120,7 @@ TEST(CustomOperatorTest, ListParameters) {
 TEST(CustomOperatorTest, ListParameters2) {
   torch::RegisterOperators reg(
       "foo::lists2(Tensor[] tensors) -> Tensor[]",
-      [](torch::List<at::Tensor> tensors) { return tensors; });
+      [](const torch::List<at::Tensor>& tensors) { return tensors; });
 
   auto& ops = getAllOperatorsFor(Symbol::fromQualString("foo::lists2"));
   ASSERT_EQ(ops.size(), 1);
@@ -150,7 +149,7 @@ TEST(CustomOperatorTest, ListParameters2) {
 
 TEST(CustomOperatorTest, Aliasing) {
   torch::RegisterOperators reg(
-      "foo::aliasing", [](at::Tensor a, at::Tensor b) -> at::Tensor {
+      "foo::aliasing", [](at::Tensor a, const at::Tensor& b) -> at::Tensor {
         a.add_(b);
         return a;
       });
@@ -256,5 +255,4 @@ TEST(TestCustomOperator, OperatorGeneratorBasic) {
   ASSERT_TRUE(output.allclose(at::full(5, 3.0f)));
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

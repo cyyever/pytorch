@@ -8,8 +8,7 @@
 #include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(ConcatOptTest, SimpleCommonInputsEliminationPrefix) {
   auto graph = std::make_shared<Graph>();
@@ -742,5 +741,4 @@ TEST(ConcatOpt, CombineConcatsMutation) {
   ASSERT_FALSE(CombineConcats(graph));
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

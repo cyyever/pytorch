@@ -3,8 +3,7 @@
 #include <test/cpp/jit/test_utils.h>
 #include <torch/csrc/jit/ir/irparser.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(IRTest, Attributes) {
   Graph g;
@@ -149,7 +148,7 @@ graph(%x : Tensor,
       Value* j_val = name_to_value[value_names[j]];
       Block* common_ancestor =
           i_val->node()->findCommonAncestorBlockWith(j_val->node());
-      int blocks_from_graph_block =
+      auto blocks_from_graph_block =
           common_ancestor->param_node()->blocksFromGraphBlock();
       ASSERT_EQ(blocks_from_graph_block, ref_blocks_from_graph[i][j]);
     }
@@ -208,5 +207,4 @@ TEST(IRTest, OperatorMap) {
   ASSERT_FALSE(o6.has_value());
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -36,21 +36,20 @@
 // NNC's design and implementation of TE was heavily inspired by Halide and TVM
 // projects.
 #include <iostream>
+#include <sstream>
 #include <string>
+#include "torch/csrc/jit/tensorexpr/fwd_decls.h"
+#include "torch/csrc/jit/tensorexpr/types.h"
 
-#include <c10/util/irange.h>
-#include <torch/csrc/jit/ir/ir.h>
-#include <torch/csrc/jit/ir/irparser.h>
 #include <torch/csrc/jit/tensorexpr/eval.h>
 #include <torch/csrc/jit/tensorexpr/expr.h>
 #include <torch/csrc/jit/tensorexpr/ir.h>
 #include <torch/csrc/jit/tensorexpr/ir_printer.h>
 #include <torch/csrc/jit/tensorexpr/ir_simplifier.h>
-#include <torch/csrc/jit/tensorexpr/kernel.h>
 #include <torch/csrc/jit/tensorexpr/loopnest.h>
 #include <torch/csrc/jit/tensorexpr/stmt.h>
 #include <torch/csrc/jit/tensorexpr/tensor.h>
-#include <torch/torch.h>
+#include <vector>
 
 using namespace torch::jit::tensorexpr;
 
@@ -61,9 +60,8 @@ static void printLinesToFrom(const std::string& input_str, int from, int to);
 
 #endif
 
-int main(int argc, char* argv[]) {
-  std::cout << "*** Structure of tensor expressions and statements ***"
-            << std::endl;
+int main(int /*argc*/, char* /*argv*/[]) {
+  std::cout << "*** Structure of tensor expressions and statements ***" << '\n';
   {
     // A tensor expression is a tree of expressions. Each expression has a type,
     // and that type defines what sub-expressions the current expression has.
@@ -72,10 +70,10 @@ int main(int argc, char* argv[]) {
     // also be a 'Mul' or some other expression.
     //
     // Let's construct a simple TE:
-    ExprPtr lhs = alloc<IntImm>(5);
-    ExprPtr rhs = alloc<Var>("x", kInt);
-    ExprPtr mul = alloc<Mul>(lhs, rhs);
-    std::cout << "Tensor expression: " << *mul << std::endl;
+    ExprPtr const lhs = alloc<IntImm>(5);
+    ExprPtr const rhs = alloc<Var>("x", kInt);
+    ExprPtr const mul = alloc<Mul>(lhs, rhs);
+    std::cout << "Tensor expression: " << *mul << '\n';
     // Prints: Tensor expression: 5 * x
 
     // Here we created an expression representing a 5*x computation, where x is
@@ -86,26 +84,26 @@ int main(int argc, char* argv[]) {
     // like we did in the previous example). Expression handles overload common
     // operations and allow us to express the same semantics in a more natural
     // way:
-    ExprHandle l = 5;
-    ExprHandle r = Var::make("x", kInt);
+    ExprHandle const l = 5;
+    ExprHandle const r = Var::make("x", kInt);
     ExprHandle m = l * r;
-    std::cout << "Tensor expression: " << *m.node() << std::endl;
+    std::cout << "Tensor expression: " << *m.node() << '\n';
     // Prints: Tensor expression: 5 * x
 
     // Converting from handles to raw expressions and back is easy:
     ExprHandle handle = Var::make("x", kInt);
-    ExprPtr raw_expr_from_handle = handle.node();
-    ExprPtr raw_expr = alloc<Var>("x", kInt);
-    ExprHandle handle_from_raw_expr = ExprHandle(raw_expr);
+    ExprPtr const raw_expr_from_handle = handle.node();
+    ExprPtr const raw_expr = alloc<Var>("x", kInt);
+    ExprHandle const handle_from_raw_expr = ExprHandle(raw_expr);
 
     // We could construct arbitrarily complex expressions using mathematical
     // and logical operations, casts between various data types, and a bunch of
     // intrinsics.
-    ExprHandle a = Var::make("a", kInt);
-    ExprHandle b = Var::make("b", kFloat);
-    ExprHandle c = Var::make("c", kFloat);
-    ExprHandle x = ExprHandle(5) * a + b / (sigmoid(c) - 3.0f);
-    std::cout << "Tensor expression: " << *x.node() << std::endl;
+    ExprHandle const a = Var::make("a", kInt);
+    ExprHandle const b = Var::make("b", kFloat);
+    ExprHandle const c = Var::make("c", kFloat);
+    ExprHandle x = ExprHandle(5) * a + b / (sigmoid(c) - 3.0F);
+    std::cout << "Tensor expression: " << *x.node() << '\n';
     // Prints: Tensor expression: float(5 * a) + b / ((sigmoid(c)) - 3.f)
 
     // An ultimate purpose of tensor expressions is to optimize tensor
@@ -116,11 +114,13 @@ int main(int argc, char* argv[]) {
     // placeholder similar to Var, but with dimensions info.
     //
     // Let's construct a simple load:
-    BufHandle A("A", {64, 32}, kInt);
-    VarPtr i_var = alloc<Var>("i", kInt), j_var = alloc<Var>("j", kInt);
-    ExprHandle i(i_var), j(j_var);
+    BufHandle const A("A", {64, 32}, kInt);
+    VarPtr i_var = alloc<Var>("i", kInt);
+    VarPtr j_var = alloc<Var>("j", kInt);
+    ExprHandle i(i_var);
+    ExprHandle j(j_var);
     ExprHandle load = Load::make(A.dtype(), A, {i, j});
-    std::cout << "Tensor expression: " << *load.node() << std::endl;
+    std::cout << "Tensor expression: " << *load.node() << '\n';
     // Prints: Tensor expression: A[i, j]
 
     // Tensor Expressions constitute Tensor Statements, which are used to
@@ -137,18 +137,18 @@ int main(int argc, char* argv[]) {
     // similarly to Load expressions, have a base and indices, but on top of
     // that they also include a value - an expression representing what needs
     // to be stored at the given memory location. Let's create a Store stmt:
-    StmtPtr store_a = Store::make(A, {i, j}, i + j);
-    std::cout << "Store statement: " << *store_a << std::endl;
+    StmtPtr const store_a = Store::make(A, {i, j}, i + j);
+    std::cout << "Store statement: " << *store_a << '\n';
     // Prints: Store statement: A[i, j] = i + j;
 
     // An operator fills the entire tensor, not just a single element, and to
     // represent this we need to use For stmt: let's wrap our store stmt with
     // two nested loops to represent that variables i and j need to iterate
     // over some ranges.
-    ForPtr loop_j_a = For::make(VarHandle(j_var), 0, 32, store_a);
-    ForPtr loop_i_a = For::make(VarHandle(i_var), 0, 64, loop_j_a);
+    ForPtr const loop_j_a = For::make(VarHandle(j_var), 0, 32, store_a);
+    ForPtr const loop_i_a = For::make(VarHandle(i_var), 0, 64, loop_j_a);
 
-    std::cout << "Nested for loops: " << std::endl << *loop_i_a << std::endl;
+    std::cout << "Nested for loops: " << '\n' << *loop_i_a << '\n';
     // Prints:
     // Nested for loops:
     // for (const auto i : c10::irange(64)) {
@@ -160,14 +160,13 @@ int main(int argc, char* argv[]) {
     // A Block statement is used when we need a sequence of other statements.
     // E.g. if a fusion group contains several operators, we initially define
     // separate loopnest for each of them and put them all into a common block:
-    BufHandle B("B", {64, 32}, kInt);
-    StmtPtr store_b = Store::make(B, {i, j}, A.load(i, j));
-    ForPtr loop_j_b = For::make(VarHandle(j_var), 0, 32, store_b);
-    ForPtr loop_i_b = For::make(VarHandle(i_var), 0, 64, loop_j_b);
+    BufHandle const B("B", {64, 32}, kInt);
+    StmtPtr const store_b = Store::make(B, {i, j}, A.load(i, j));
+    ForPtr const loop_j_b = For::make(VarHandle(j_var), 0, 32, store_b);
+    ForPtr const loop_i_b = For::make(VarHandle(i_var), 0, 64, loop_j_b);
 
-    BlockPtr block = Block::make({loop_i_a, loop_i_b});
-    std::cout << "Compound Block statement: " << std::endl
-              << *block << std::endl;
+    BlockPtr const block = Block::make({loop_i_a, loop_i_b});
+    std::cout << "Compound Block statement: " << '\n' << *block << '\n';
     // Prints:
     // Compound Block statement:
     // {
@@ -194,8 +193,8 @@ int main(int argc, char* argv[]) {
         Compute("C", {64, 32}, [&](const VarHandle& i, const VarHandle& j) {
           return i * j;
         });
-    std::cout << "Stmt produced by 'Compute' API: " << std::endl
-              << *C.stmt() << std::endl;
+    std::cout << "Stmt produced by 'Compute' API: " << '\n'
+              << *C.stmt() << '\n';
     // Prints:
     // Stmt produced by 'Compute' API:
     // for (const auto i : c10::irange(64)) {
@@ -208,17 +207,16 @@ int main(int argc, char* argv[]) {
     // can use a 'Reduce' API - it is similar to 'Compute' but takes a couple
     // of extra arguments defining how to perform the reduction. Let's define a
     // simple 2D sum of C using that:
-    Tensor D = Reduce(
+    Tensor const D = Reduce(
         "D",
         {},
         Sum(),
         [&](const VarHandle& i, const VarHandle& j) { return C.load(i, j); },
         {64, 32});
-    std::cout << "Stmt produced by 'Reduce' API: " << std::endl
-              << *D.stmt() << std::endl;
+    std::cout << "Stmt produced by 'Reduce' API: " << '\n' << *D.stmt() << '\n';
   }
 
-  std::cout << "*** Loopnests transformations ***" << std::endl;
+  std::cout << "*** Loopnests transformations ***" << '\n';
   {
     // When a statement for the computation is generated, we might want to
     // apply some optimizations to it. These transformations allow us to end up
@@ -227,18 +225,17 @@ int main(int argc, char* argv[]) {
     // Let's look at a couple of transformations that are used in NNC. We will
     // begin with constructing a Block statement like we did before.
 
-    Tensor C =
+    Tensor const C =
         Compute("C", {64, 32}, [&](const VarHandle& i, const VarHandle& j) {
           return i * (j + 1);
         });
     BufHandle c_buf(C.buf());
-    Tensor D =
+    Tensor const D =
         Compute("D", {64, 32}, [&](const VarHandle& i, const VarHandle& j) {
           return c_buf.load(i, j) - i;
         });
-    StmtPtr block = Block::make({C.stmt(), D.stmt()});
-    std::cout << "Stmt produced by 'Compute' API: " << std::endl
-              << *block << std::endl;
+    StmtPtr const block = Block::make({C.stmt(), D.stmt()});
+    std::cout << "Stmt produced by 'Compute' API: " << '\n' << *block << '\n';
     // Prints:
     // Stmt produced by 'Compute' API:
     // {
@@ -263,8 +260,7 @@ int main(int argc, char* argv[]) {
     LoopNest nest(block, {D.buf()});
 
     // We can always retrieve the Stmt back from LoopNest:
-    std::cout << "LoopNest root stmt: " << std::endl
-              << *nest.root_stmt() << std::endl;
+    std::cout << "LoopNest root stmt: " << '\n' << *nest.root_stmt() << '\n';
     // Prints:
     // LoopNest root stmt:
     // {
@@ -282,8 +278,7 @@ int main(int argc, char* argv[]) {
 
     // Now we can apply the inlining transformation:
     nest.computeInline(C.buf());
-    std::cout << "Stmt after inlining:" << std::endl
-              << *nest.root_stmt() << std::endl;
+    std::cout << "Stmt after inlining:" << '\n' << *nest.root_stmt() << '\n';
     // Prints:
     // Stmt after inlining:
     // {
@@ -296,8 +291,7 @@ int main(int argc, char* argv[]) {
 
     // We can also apply algebraic simplification to a statement:
     StmtPtr simplified = IRSimplifier::simplify(nest.root_stmt());
-    std::cout << "Stmt after simplification:" << std::endl
-              << *simplified << std::endl;
+    std::cout << "Stmt after simplification:" << '\n' << *simplified << '\n';
     // Prints:
     // Stmt after simplification:
     // {
@@ -313,12 +307,11 @@ int main(int argc, char* argv[]) {
     // stateless.
     // splitWithTail is one such transformation: it splits an iteration space
     // of a given loop into two with a given factor.
-    ForPtr outer_loop = to<For>(to<Block>(simplified)->stmts().front());
+    ForPtr const outer_loop = to<For>(to<Block>(simplified)->stmts().front());
     LoopNest::splitWithTail(outer_loop, 13);
     // Call simplifier once more to fold some arithmetic.
     simplified = IRSimplifier::simplify(simplified);
-    std::cout << "Stmt after splitWithTail:" << std::endl
-              << *simplified << std::endl;
+    std::cout << "Stmt after splitWithTail:" << '\n' << *simplified << '\n';
     // Prints:
     // Stmt after splitWithTail:
     // {
@@ -342,7 +335,7 @@ int main(int argc, char* argv[]) {
     // for more details.
   }
 
-  std::cout << "*** Codegen ***" << std::endl;
+  std::cout << "*** Codegen ***" << '\n';
   {
     // An ultimate goal of tensor expressions is to be provide a mechanism to
     // execute a given computation in the fastest possible way. So far we've
@@ -355,15 +348,15 @@ int main(int argc, char* argv[]) {
     // Let's start by constructing a simple computation for us to work with:
     BufHandle A("A", {64, 32}, kInt);
     BufHandle B("B", {64, 32}, kInt);
-    Tensor X =
+    Tensor const X =
         Compute("X", {64, 32}, [&](const VarHandle& i, const VarHandle& j) {
           return A.load(i, j) + B.load(i, j);
         });
 
     // And let's lower it to a loop nest, as we did in the previous section. We
     // can pass Tensor object directly:
-    LoopNest loopnest({X});
-    std::cout << *loopnest.root_stmt() << std::endl;
+    LoopNest const loopnest({X});
+    std::cout << *loopnest.root_stmt() << '\n';
     // Prints:
     // {
     //   for (const auto i : c10::irange(64)) {
@@ -419,16 +412,16 @@ int main(int argc, char* argv[]) {
 
     // Let's print one of the elements from each array to verify that the
     // computation did happen:
-    std::cout << "A[10] = " << data_A[10] << std::endl
-              << "B[10] = " << data_B[10] << std::endl
-              << "X[10] = A[10] + B[10] = " << data_X[10] << std::endl;
+    std::cout << "A[10] = " << data_A[10] << '\n'
+              << "B[10] = " << data_B[10] << '\n'
+              << "X[10] = A[10] + B[10] = " << data_X[10] << '\n';
     // Prints:
     // A[10] = 3
     // B[10] = 5
     // X[10] = A[10] + B[10] = 8
   }
 
-  std::cout << "*** Lowering TorchScript IR to TensorExpr IR ***" << std::endl;
+  std::cout << "*** Lowering TorchScript IR to TensorExpr IR ***" << '\n';
   {
     // This section requires a LLVM-enabled PyTorch build, so we have to use a
     // guard:
@@ -527,7 +520,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-void printLinesToFrom(const std::string& input_str, int from, int to) {
+static void printLinesToFrom(const std::string& input_str, int from, int to) {
   std::istringstream f(input_str);
   std::string s;
   int idx = 0;

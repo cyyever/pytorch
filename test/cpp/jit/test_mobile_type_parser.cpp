@@ -4,8 +4,7 @@
 #include <ATen/core/jit_type.h>
 #include <torch/csrc/jit/mobile/type_parser.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 // Parse Success cases
 TEST(MobileTypeParserTest, Int) {
@@ -227,5 +226,4 @@ TEST(MobileTypeParserTest, DictNestedNamedTupleTypeListRaises) {
   ASSERT_THROWS_WITH_MESSAGE(c10::parseType(type_strs), error_message);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

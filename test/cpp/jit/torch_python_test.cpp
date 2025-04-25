@@ -1,17 +1,11 @@
 #include <ATen/core/ivalue.h>
 #include <c10/util/Exception.h>
+#include <test/cpp/jit/torch_python_test.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/script.h>
 
-namespace torch {
-namespace jit {
-
-#ifdef _MSC_VER
-#define JIT_TEST_API
-#else
-#define JIT_TEST_API TORCH_API
-#endif
+namespace torch::jit {
 
 namespace {
 
@@ -77,11 +71,10 @@ void testTorchSaveError() {
 }
 } // namespace
 
-JIT_TEST_API void runJITCPPTests() {
+void runJITCPPTests() {
   // TODO: this test never ran before and is broken.
   // testSerializationInterop();
   testEvalModeForLoadedModule();
   testTorchSaveError();
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

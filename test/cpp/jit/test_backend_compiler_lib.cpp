@@ -8,8 +8,7 @@
 #include <torch/csrc/jit/mobile/profiler_edge.h>
 #endif
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 // Implementation of a PyTorch Backend that can process, compile and execute
 // TorchScript Modules composed of 'add' and 'sub' operators. It just supports
@@ -43,7 +42,7 @@ std::vector<std::tuple<std::string, int64_t>> parseMethodHandle(
     const std::string& blob) {
   std::vector<std::tuple<std::string, int64_t>> result;
   std::stringstream s_stream(blob);
-  constexpr char debug_handle_token[] = "<debug_handle>";
+  constexpr const auto debug_handle_token = "<debug_handle>";
   while (s_stream.good()) {
     std::string substr;
     getline(s_stream, substr, ',');
@@ -54,7 +53,7 @@ std::vector<std::tuple<std::string, int64_t>> parseMethodHandle(
       instruction = substr.substr(0, debug_handle_pos);
       debug_handle = stoi(substr.substr(debug_handle_pos + 14));
     }
-    result.push_back(std::make_tuple(instruction, debug_handle));
+    result.emplace_back(instruction, debug_handle);
   }
   return result;
 }
@@ -67,9 +66,8 @@ float* float_data_ptr(const at::Tensor& t) {
 class BackendWithCompiler : public PyTorchBackendInterface {
  public:
   // Constructor.
-  // NOLINTNEXTLINE(modernize-use-equals-default)
-  explicit BackendWithCompiler() {}
-  virtual ~BackendWithCompiler() override = default;
+  explicit BackendWithCompiler() = default;
+  ~BackendWithCompiler() override = default;
 
   bool is_available() override {
     return true;
@@ -79,7 +77,7 @@ class BackendWithCompiler : public PyTorchBackendInterface {
   // forwards everything along. In a non toy setup this could grab information
   // from that runtime that might be relevant to execute, such as build flags
   // the resolution of the devices camera, or basically any runtime specific
-  // information that wouldnt be available server side where preprocess is
+  // information that wouldn't be available server side where preprocess is
   // called.
   c10::impl::GenericDict compile(
       c10::IValue processed,
@@ -105,9 +103,9 @@ class BackendWithCompiler : public PyTorchBackendInterface {
       c10::impl::GenericList inputs) override {
     TORCH_INTERNAL_ASSERT(inputs.size() == 2);
     c10::IValue val0 = inputs[0];
-    at::Tensor x = val0.toTensor();
+    const at::Tensor& x = val0.toTensor();
     c10::IValue val1 = inputs[1];
-    at::Tensor h = val1.toTensor();
+    const at::Tensor& h = val1.toTensor();
     std::vector<std::tuple<int64_t, int64_t, std::string>> op_runtimes_us;
     op_runtimes_us.reserve(handle.toList().size());
 
@@ -129,8 +127,6 @@ class BackendWithCompiler : public PyTorchBackendInterface {
               instruction.size() > 15,
               "Constant value is expected in ",
               instruction);
-          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-          auto sub = instruction.substr(15);
         } else if (instruction == "aten::add" || instruction == "aten::sub") {
           TORCH_CHECK(x.sizes() == h.sizes());
           if (x.dim() > 1 || (x.dim() == 1 && x.size(0) > 1)) {
@@ -197,5 +193,4 @@ constexpr auto backend_name = "backend_with_compiler_demo";
 static auto cls = torch::jit::backend<BackendWithCompiler>(backend_name);
 } // namespace
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

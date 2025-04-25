@@ -11,8 +11,7 @@
 
 #include <limits>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -28,7 +27,7 @@ class GraphOpt : public ::testing::Test {
   }
 
  private:
-  bool old_cat_wo_conditionals_;
+  bool old_cat_wo_conditionals_{};
 };
 
 TEST_F(GraphOpt, OptimizeCat) {
@@ -315,5 +314,4 @@ TEST_F(GraphOpt, AOTGraphPrepPasses) {
   testing::FileCheck().check("return (%x, %y, %z)")->run(*g);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

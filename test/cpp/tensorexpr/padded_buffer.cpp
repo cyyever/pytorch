@@ -4,9 +4,7 @@
 #include <c10/util/irange.h>
 #include <sstream>
 
-namespace torch {
-namespace jit {
-namespace tensorexpr {
+namespace torch::jit::tensorexpr {
 
 int PaddedBufferBase::Index(const std::vector<int>& indices) const {
   TORCH_DCHECK_EQ(dims_.size(), indices.size());
@@ -32,6 +30,4 @@ PaddedBufferBase::PaddedBufferBase(
   total_size_ = strides_[0] * dims[0];
 }
 
-} // namespace tensorexpr
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit::tensorexpr

@@ -18,12 +18,13 @@
 #include "torch/torch.h"
 
 #include <ATen/ATen.h>
+
+#include <utility>
 #include "torch/csrc/autograd/engine.h"
 #include "torch/csrc/autograd/generated/variable_factories.h"
 #include "torch/csrc/autograd/variable.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::autograd;
 
@@ -40,8 +41,8 @@ struct ADTestSpec {
       test_fn_type test_fn,
       float clampMax = -1.0f)
       : name(name),
-        input_meta(input_meta),
-        test_fn(test_fn),
+        input_meta(std::move(input_meta)),
+        test_fn(std::move(test_fn)),
         clampMax(clampMax) {}
 
   variable_list operator()(const variable_list& inputs) const {
@@ -67,13 +68,13 @@ struct ADTestSpec {
   float clampMax;
 };
 
-variable_list get_grad_outputs(const variable_list& vars) {
+static variable_list get_grad_outputs(const variable_list& vars) {
   return fmap(vars, [](const Variable& v) -> Variable {
     return at::randn(v.sizes(), v.options());
   });
 }
 
-variable_list grad(
+static variable_list grad(
     const variable_list& outputs,
     const variable_list& inputs,
     const variable_list& grad_outputs) {
@@ -154,7 +155,7 @@ TEST(AutodiffTest, ADFormulas) {
     // Trace and differentiate the op
     auto graph = tracer::trace(
                      fmap<IValue>(vars_in),
-                     [&test](Stack in) -> Stack {
+                     [&test](const Stack& in) -> Stack {
                        auto ivalue_inps = fmap(in, [](const IValue& v) {
                          return Variable(v.toTensor());
                        });
@@ -296,9 +297,9 @@ class AutodiffRemoveUnusedGradientsTest : public ::testing::Test {
     debugSetAutodiffSubgraphInlining(prev_inline_autodiff);
   }
 
-  bool prev_exec;
-  bool prev_profiling;
-  bool prev_inline_autodiff;
+  bool prev_exec{};
+  bool prev_profiling{};
+  bool prev_inline_autodiff{};
 };
 
 TEST_F(AutodiffRemoveUnusedGradientsTest, Linear) {
@@ -343,5 +344,4 @@ graph(%inp.1 : Tensor,
   testing::FileCheck().check_count("matmul", 1, true)->run(*backward_graph);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

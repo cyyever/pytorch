@@ -11,14 +11,13 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 /**
  * Inverts an unordered map.
  */
 template <typename K, typename V>
-std::unordered_map<V, K> invert_map(std::unordered_map<K, V>& map) {
+static std::unordered_map<V, K> invert_map(std::unordered_map<K, V>& map) {
   std::unordered_map<V, K> inverted;
   std::for_each(map.begin(), map.end(), [&inverted](const std::pair<K, V>& p) {
     inverted.insert(std::make_pair(p.second, p.first));
@@ -31,8 +30,8 @@ std::unordered_map<V, K> invert_map(std::unordered_map<K, V>& map) {
  * returns an array containing the original names in the string
  * graph.
  */
-std::vector<std::string> traverse_depth_first(
-    std::string graph_string,
+static std::vector<std::string> traverse_depth_first(
+    const std::string& graph_string,
     int max_count = 100) {
   auto graph = std::make_shared<Graph>();
   std::unordered_map<std::string, Value*> vmap;
@@ -55,7 +54,7 @@ std::vector<std::string> traverse_depth_first(
 }
 
 /** Checks that the iteration order matches the expected/provided order. */
-void assert_ordering(
+static void assert_ordering(
     std::vector<std::string> actual,
     std::initializer_list<std::string> expected_list) {
   auto expected = std::vector<std::string>(expected_list);
@@ -199,5 +198,4 @@ graph(%a.1 : Tensor):
        "%8 : Tensor = prim::Loop(%2, %1, %a.1)"});
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <test/cpp/tensorexpr/test_base.h>
+#include <cstddef>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 
 #include <test/cpp/tensorexpr/padded_buffer.h>
 #include <test/cpp/tensorexpr/test_utils.h>
@@ -18,18 +20,17 @@
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
-void checkIR(StmtPtr s, const std::string& pattern) {
+void checkIR(const StmtPtr& s, const std::string& pattern) {
   std::ostringstream oss;
   oss << *s;
   torch::jit::testing::FileCheck().run(pattern, oss.str());
 }
 
-void checkExprIR(ExprPtr e, const std::string& pattern) {
+void checkExprIR(const ExprPtr& e, const std::string& pattern) {
   std::string prefixed_pattern = "# CHECK: " + pattern + "\n";
   std::ostringstream oss;
   oss << *e << "\n";
@@ -130,13 +131,16 @@ TEST(LoopNest, ExprSimple02) {
   }
 }
 
-BlockPtr getSimplifiedBody(const LoopNest& l) {
+static BlockPtr getSimplifiedBody(const LoopNest& l) {
   StmtPtr stmt = l.root_stmt();
   StmtPtr simplified = IRSimplifier::simplify(stmt);
   return to<Block>(simplified);
 }
 
-void assertForRange(ForPtr f, int expected_start, int expected_stop) {
+static void assertForRange(
+    const ForPtr& f,
+    int expected_start,
+    int expected_stop) {
   ASSERT_NE(f, nullptr);
   IntImmPtr start = to<IntImm>(f->start());
   ASSERT_NE(start, nullptr);
@@ -146,8 +150,8 @@ void assertForRange(ForPtr f, int expected_start, int expected_stop) {
   ASSERT_EQ(stop->value(), expected_stop);
 }
 
-void assertForRanges(
-    BlockPtr body,
+static void assertForRanges(
+    const BlockPtr& body,
     const std::vector<std::pair<int, int>>& start_stops) {
   ASSERT_EQ(body->nstmts(), start_stops.size());
 
@@ -444,7 +448,7 @@ TEST(LoopNest, ExprSliceAndNormalize) {
 }
 
 template <typename T>
-T evalExpr(const ExprHandle& expr, const VarHandle& var, T value) {
+static T evalExpr(const ExprHandle& expr, const VarHandle& var, T value) {
   ExprEval<SimpleIREvaluator> eval(expr, {var});
   return eval.value<T>(value);
 }
@@ -860,7 +864,7 @@ TEST(LoopNest, SplitWithTailWithLoopOptions) {
   LoopNest::splitWithTail(loops[0], 4, &inner, &tail);
   ASSERT_NE(inner, nullptr);
   ASSERT_NE(tail, nullptr);
-  ForPtr outer = loops[0];
+  const ForPtr& outer = loops[0];
 
   // Outer loop carries loop axis bindings.
   ASSERT_TRUE(outer->loop_options().is_gpu_block_index());
@@ -887,7 +891,7 @@ TEST(LoopNest, SplitWithMaskWithLoopOptions) {
   auto loops = NodeFinder<For>::find(l.root_stmt());
   loops[0]->set_gpu_block_index(LoopOptions::IDX_Y);
   LoopNest::splitWithMask(loops[0], 4, &inner);
-  ForPtr outer = loops[0];
+  const ForPtr& outer = loops[0];
 
   // Outer loop carries loop axis bindings.
   ASSERT_TRUE(outer->loop_options().is_gpu_block_index());
@@ -1081,7 +1085,7 @@ static std::string remove_space(const std::string& str) {
   return str_new;
 }
 
-void InlineFunc01Helper(const std::vector<std::string>& inline_order) {
+static void InlineFunc01Helper(const std::vector<std::string>& inline_order) {
   const int M = 4;
   const int N = 5;
   const int K = 6;
@@ -1518,7 +1522,7 @@ TEST(LoopNest, ScheduleInlineThreeMixedOnce) {
   l.prepareForCodegen();
 
   StmtPtr s = IRSimplifier::simplify(l.root_stmt());
-  std::vector<int> output(4 * 3, 0);
+  std::vector<int> output(static_cast<size_t>(4 * 3), 0);
   SimpleIREvaluator eval(s, {c});
   eval(output);
 
@@ -1545,7 +1549,7 @@ TEST(LoopNest, ScheduleInlineThreeMixedTwice) {
   l.prepareForCodegen();
 
   StmtPtr s = IRSimplifier::simplify(l.root_stmt());
-  std::vector<int> output(4 * 3, 0);
+  std::vector<int> output(static_cast<size_t>(4 * 3), 0);
   SimpleIREvaluator eval(s, {c});
   eval(output);
 
@@ -1571,7 +1575,7 @@ TEST(LoopNest, ScheduleInlineThreeMixedInner) {
   l.prepareForCodegen();
 
   StmtPtr s = IRSimplifier::simplify(l.root_stmt());
-  std::vector<int> output(4 * 3, 0);
+  std::vector<int> output(static_cast<size_t>(4 * 3), 0);
   SimpleIREvaluator eval(s, {c});
   eval(output);
 
@@ -1843,11 +1847,12 @@ TEST(LoopNest, ScheduleDynamicShape2D) {
     LoopNest l({c});
     StmtPtr s = l.root_stmt();
     SimpleIREvaluator cg(s, {a, b, c, m, n});
-    std::vector<float> aData(M * N, 1.0f);
-    std::vector<float> bData(M * N, 2.0f);
-    std::vector<float> cData(M * N, 0.0f);
+    std::vector<float> aData(static_cast<size_t>(M * N), 1.0f);
+    std::vector<float> bData(static_cast<size_t>(M * N), 2.0f);
+    std::vector<float> cData(static_cast<size_t>(M * N), 0.0f);
     cg.call({aData, bData, cData, M, N});
-    ExpectAllNear(cData, std::vector<float>(M * N, 3.0f), 1e-7);
+    ExpectAllNear(
+        cData, std::vector<float>(static_cast<size_t>(M * N), 3.0f), 1e-7);
   };
   testWithSize(1, 8);
   testWithSize(16, 32);
@@ -1927,7 +1932,7 @@ TEST(LoopNest, LoopNestComputeAt_2) {
             p.load(y + 1, x + 1);
       });
 
-  std::vector<int> c_ref(kW * kH, 0);
+  std::vector<int> c_ref(static_cast<size_t>(kW * kH), 0);
   for (int y = 0; y < kH; y++) {
     for (int x = 0; x < kW; x++) {
       c_ref[y * kW + x] = y * x + (y + 1) * x + y * (x + 1) + (y + 1) * (x + 1);
@@ -1956,7 +1961,7 @@ TEST(LoopNest, LoopNestComputeAt_2) {
 # CHECK: Free(temp))IR");
 
     // Now check that the loop still produces the correct result.
-    std::vector<int> c_data(kW * kH, 0);
+    std::vector<int> c_data(static_cast<size_t>(kW * kH), 0);
     cg.call({c_data, kW, kH});
 
     assertAllEqual(c_data, c_ref);
@@ -1982,7 +1987,7 @@ TEST(LoopNest, LoopNestComputeAt_2) {
 # CHECK: Free(temp))IR");
 
     // Now check that the loop still produces the correct result.
-    std::vector<int> c_data(kW * kH, 0);
+    std::vector<int> c_data(static_cast<size_t>(kW * kH), 0);
     cg.call({c_data, kW, kH});
 
     assertAllEqual(c_data, c_ref);
@@ -2019,7 +2024,7 @@ TEST(LoopNest, LoopNestComputeAt_3) {
         return A.load(dy + 1, dx) + C.load(dy, dx);
       });
 
-  std::vector<int> c_ref(kW * kH, 0);
+  std::vector<int> c_ref(static_cast<size_t>(kW * kH), 0);
   for (int y = 0; y < kH; y++) {
     for (int x = 0; x < kW; x++) {
       c_ref[y * kW + x] = (y + 1) * x + y * (x + 1);
@@ -2053,7 +2058,7 @@ TEST(LoopNest, LoopNestComputeAt_3) {
 # CHECK-NOT: A[)IR");
 
     // Now check that the loop still produces the correct result.
-    std::vector<int> c_data(kW * kH, 0);
+    std::vector<int> c_data(static_cast<size_t>(kW * kH), 0);
     cg.call({c_data, kW, kH});
 
     assertAllEqual(c_data, c_ref);
@@ -2084,7 +2089,7 @@ TEST(LoopNest, LoopNestComputeAt_3) {
 # CHECK-NOT: A[)IR");
 
     // Now check that the loop still produces the correct result.
-    std::vector<int> c_data(kW * kH, 0);
+    std::vector<int> c_data(static_cast<size_t>(kW * kH), 0);
     cg.call({c_data, kW, kH});
 
     assertAllEqual(c_data, c_ref);
@@ -2107,7 +2112,7 @@ TEST(LoopNest, Reduce2dComputeAt) {
       [&](Axis y, Axis x, Axis r, Axis s) { return p.load(y + r, x + s); },
       {2, 2});
 
-  std::vector<int> c_ref(kW * kH, 0);
+  std::vector<int> c_ref(static_cast<size_t>(kW * kH), 0);
   for (int y = 0; y < kH; y++) {
     for (int x = 0; x < kW; x++) {
       c_ref[y * kW + x] = y * x + (y + 1) * x + y * (x + 1) + (y + 1) * (x + 1);
@@ -2164,7 +2169,7 @@ TEST(LoopNest, Reduce2dComputeAt) {
 )IR");
 
     // Now check that the loop still produces the correct result.
-    std::vector<int> c_data(kW * kH, 0);
+    std::vector<int> c_data(static_cast<size_t>(kW * kH), 0);
     cg.call({c_data, kW, kH});
     assertAllEqual(c_data, c_ref);
   }
@@ -2198,7 +2203,7 @@ TEST(LoopNest, Reduce2dComputeAt) {
 )IR");
 
     // Now check that the loop still produces the correct result.
-    std::vector<int> c_data(kW * kH, 0);
+    std::vector<int> c_data(static_cast<size_t>(kW * kH), 0);
     cg.call({c_data, kW, kH});
     assertAllEqual(c_data, c_ref);
   }
@@ -2286,7 +2291,7 @@ class LoopOrderHelper : public IRVisitor {
   std::stringstream ordering;
 
  public:
-  std::string getOrder(StmtPtr s) {
+  std::string getOrder(const StmtPtr& s) {
     ordering.str("");
     s->accept(this);
     return ordering.str();
@@ -2619,7 +2624,7 @@ TEST(LoopNest, LoopNestReorderExtraStatements) {
   }
 }
 
-void LoopNestReorderTestHelper(
+static void LoopNestReorderTestHelper(
     bool prepend,
     bool append,
     int index1,
@@ -2632,7 +2637,7 @@ void LoopNestReorderTestHelper(
 
   auto loops = l.getAllLoopNestsWritingToBuf(c.buf()).at(0);
   int j = 0;
-  for (auto l : loops) {
+  for (const auto& l : loops) {
     // Add an increment at each layer of the loop which counts the number of
     // times the loop executes.
     LoadPtr load =
@@ -2653,7 +2658,7 @@ void LoopNestReorderTestHelper(
   StmtPtr stmt1 = Stmt::clone(l.root_stmt());
 
   std::vector<int> extra1(5, 0);
-  std::vector<int> res1(2 * 3 * 2 * 3 * 2, 0);
+  std::vector<int> res1(static_cast<size_t>(2 * 3 * 2 * 3 * 2), 0);
   SimpleIREvaluator cg(stmt1, {c, extra});
   cg.call({res1, extra1});
 
@@ -4772,7 +4777,7 @@ static std::pair<BufHandle, Tensor> colReduce(int M, int N) {
   return {a, Tensor(t.buf(), LoopNest::sanitizeNames(t.stmt()))};
 }
 
-static StmtPtr splitTailReorder(Tensor b) {
+static StmtPtr splitTailReorder(const Tensor& b) {
   constexpr int kVectorWidth = 8;
   LoopNest nest({b});
   auto loops = nest.getAllLoopNestsWritingToBuf(b.buf())[0];
@@ -4802,7 +4807,7 @@ static StmtPtr splitTailReorder(Tensor b) {
   return nest.root_stmt();
 }
 
-static StmtPtr splitMaskReorder(Tensor b) {
+static StmtPtr splitMaskReorder(const Tensor& b) {
   constexpr int kVectorWidth = 8;
   LoopNest nest({b});
   auto loops = nest.getAllLoopNestsWritingToBuf(b.buf())[1];
@@ -4813,7 +4818,7 @@ static StmtPtr splitMaskReorder(Tensor b) {
   return nest.root_stmt();
 }
 
-static void checkColReduce(StmtPtr s, BufHandle p, Tensor t) {
+static void checkColReduce(StmtPtr s, const BufHandle& p, const Tensor& t) {
   int M = immediateAs<int>(p.dim(0));
   int N = immediateAs<int>(p.dim(1));
   PaddedBuffer<float> a(M, N);
@@ -4830,7 +4835,7 @@ static void checkColReduce(StmtPtr s, BufHandle p, Tensor t) {
   for (int i = 0; i < N; i++) {
     ref(i) = 76.0f;
   }
-  SimpleIREvaluator(s, {p, t}).call({a, b});
+  SimpleIREvaluator(std::move(s), {p, t}).call({a, b});
   ExpectAllNear(b, ref, 1e-5);
 }
 
@@ -4958,7 +4963,7 @@ TEST(LoopNest, VectorizeUse) {
       oss.str());
 }
 
-const char* int64Loop = R"IR(
+const static char* int64Loop = R"IR(
 # CHECK: for (int64_t i = 0ll; i < 12ll; i++) {
 # CHECK:   b[i] = (a[i]) + 1ll;
 # CHECK: }
@@ -6890,12 +6895,12 @@ TEST(LoopNest, sanitizeNames) {
   std::vector<ExprHandle> dim_args;
   // Let's pick names that would overlap with default index names if not
   // sanitized properly:
-  dim_args.emplace_back(ExprHandle(alloc<Var>("i", kInt)));
-  dim_args.emplace_back(ExprHandle(alloc<Var>("N:2", kInt)));
+  dim_args.emplace_back(alloc<Var>("i", kInt));
+  dim_args.emplace_back(alloc<Var>("N:2", kInt));
   // Now let's create a many dimensions so that we had to use the same letter
   // for different loops
   for (int i = 0; i < 10; i++) {
-    dim_args.emplace_back(ExprHandle(alloc<Var>("N", kInt)));
+    dim_args.emplace_back(alloc<Var>("N", kInt));
   }
 
   // Now create two Computes with conflicting after sanitization names:
@@ -6949,5 +6954,4 @@ TEST(LoopNest, sanitizeNames) {
   torch::jit::testing::FileCheck().run(verification_pattern, oss.str());
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -4,8 +4,7 @@
 #include "torch/csrc/jit/tensorexpr/ir.h"
 #include "torch/csrc/jit/tensorexpr/tensor.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 using namespace torch::jit::tensorexpr;
 
 TEST(Type, Test01) {
@@ -198,5 +197,4 @@ TEST(Type, Propagation) {
     ASSERT_EQ(body.dtype(), kShort);
   }
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

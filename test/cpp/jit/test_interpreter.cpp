@@ -9,8 +9,9 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-namespace torch {
-namespace jit {
+#include <utility>
+
+namespace torch::jit {
 
 class TypeCheckTest : public ::testing::Test {
  protected:
@@ -134,8 +135,10 @@ TEST(InterpreterTest, Basic_CUDA) {
   auto input = at::randn({seq_len, batch_size, input_size}, at::kCUDA);
   auto hx = at::randn({batch_size, hidden_size}, at::kCUDA);
   auto cx = at::randn({batch_size, hidden_size}, at::kCUDA);
-  auto w_ih = t_def(at::randn({4 * hidden_size, input_size}, at::kCUDA));
-  auto w_hh = t_def(at::randn({4 * hidden_size, hidden_size}, at::kCUDA));
+  auto w_ih = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), input_size}, at::kCUDA));
+  auto w_hh = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), hidden_size}, at::kCUDA));
 
   auto lstm_g = build_lstm();
   Code lstm_function(lstm_g, "");
@@ -211,7 +214,7 @@ TEST(InterpreterTest, runAsyncBasicTest) {
     mtx.lock();
     ++asyncCounter;
     mtx.unlock();
-    at::launch(f);
+    at::launch(std::move(f));
   };
   std::vector<IValue> stack;
   // NOLINTNEXTLINE(modernize-use-emplace)
@@ -292,5 +295,4 @@ graph(%0 : Tensor,
   FLAGS_torch_jit_enable_rethrow_caught_exception = original_flag_value;
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

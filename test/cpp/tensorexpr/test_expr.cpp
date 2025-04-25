@@ -19,8 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 using namespace torch::jit::tensorexpr;
 
 using SimpleIRExprEval = ExprEval<SimpleIREvaluator>;
@@ -91,21 +90,22 @@ TEST(Expr, IsChannelsLastContiguous) {
                           int ndims, shapGenInfo shape_gen_info) -> shapeInfo {
     auto dims_expr_vec = dims_expr_vec_conf.at(ndims);
     std::vector<std::vector<ExprHandle>> strides_expr_vec;
-    for (size_t i = 0; i < strides_expr_vec.size(); i++) {
-      strides_expr_vec[i].resize(ndims);
+    for (auto& i : strides_expr_vec) {
+      i.resize(ndims);
     }
 
-    auto stride_gen_fn = [](int indicator, ExprHandle a, ExprHandle b) {
-      if (indicator % 2 == 0) {
-        return a * b;
-      } else {
-        return b * a;
-      }
-    };
+    auto stride_gen_fn =
+        [](int indicator, const ExprHandle& a, const ExprHandle& b) {
+          if (indicator % 2 == 0) {
+            return a * b;
+          } else {
+            return b * a;
+          }
+        };
 
-    auto stride_order_vec = shape_gen_info.at(ndims);
+    const auto& stride_order_vec = shape_gen_info.at(ndims);
     for (size_t i = 0; i < strides_expr_vec.size(); i++) {
-      auto stride_order = stride_order_vec[i];
+      const auto& stride_order = stride_order_vec[i];
 
       strides_expr_vec[i][stride_order[0]] = 1;
       for (size_t j = 1; j < stride_order.size(); j++) {
@@ -122,7 +122,8 @@ TEST(Expr, IsChannelsLastContiguous) {
     return {dims_expr_vec, strides_expr_vec};
   };
 
-  auto check_channels_last_fn = [](int ndims, BufHandle buf_handle) -> bool {
+  auto check_channels_last_fn = [](int ndims,
+                                   const BufHandle& buf_handle) -> bool {
     if (ndims == 3) {
       return buf_handle.is_channels_last_1d_contiguous();
     } else if (ndims == 4) {
@@ -133,26 +134,26 @@ TEST(Expr, IsChannelsLastContiguous) {
   };
 
   // channels-last contiguous
-  for (size_t i = 0; i < dims.size(); i++) {
-    auto shape_info = shape_gen_fn(dims[i], channels_last_cont_shape_conf);
+  for (int dim : dims) {
+    auto shape_info = shape_gen_fn(dim, channels_last_cont_shape_conf);
     for (size_t j = 0; j < shape_info.second.size(); j++) {
       BufHandle buf_handle("a", shape_info.first, shape_info.second[j], kFloat);
-      ASSERT_EQ(check_channels_last_fn(dims[i], buf_handle), true);
+      ASSERT_EQ(check_channels_last_fn(dim, buf_handle), true);
     }
   }
 
   // channels-last non-contiguous
-  for (size_t i = 0; i < dims.size(); i++) {
-    auto shape_info = shape_gen_fn(dims[i], channels_last_non_cont_shape_conf);
+  for (int dim : dims) {
+    auto shape_info = shape_gen_fn(dim, channels_last_non_cont_shape_conf);
     for (size_t j = 0; j < shape_info.second.size(); j++) {
       BufHandle buf_handle("a", shape_info.first, shape_info.second[j], kFloat);
-      ASSERT_EQ(check_channels_last_fn(dims[i], buf_handle), false);
+      ASSERT_EQ(check_channels_last_fn(dim, buf_handle), false);
     }
   }
 
   // contiguous
-  for (size_t i = 0; i < dims.size(); i++) {
-    auto shape_info = shape_gen_fn(dims[i], cont_shape_conf);
+  for (int dim : dims) {
+    auto shape_info = shape_gen_fn(dim, cont_shape_conf);
     for (size_t j = 0; j < shape_info.second.size(); j++) {
       BufHandle buf_handle("a", shape_info.first, shape_info.second[j], kFloat);
       ASSERT_EQ(buf_handle.is_contiguous(), true);
@@ -160,8 +161,8 @@ TEST(Expr, IsChannelsLastContiguous) {
   }
 
   // non-contiguous
-  for (size_t i = 0; i < dims.size(); i++) {
-    auto shape_info = shape_gen_fn(dims[i], channels_last_cont_shape_conf);
+  for (int dim : dims) {
+    auto shape_info = shape_gen_fn(dim, channels_last_cont_shape_conf);
     for (size_t j = 0; j < shape_info.second.size(); j++) {
       BufHandle buf_handle("a", shape_info.first, shape_info.second[j], kFloat);
       ASSERT_EQ(buf_handle.is_contiguous(), false);
@@ -743,7 +744,7 @@ TEST(Expr, OutOfBounds2dFlattenedIndex) {
   EXPECT_ANY_THROW(SimpleIREvaluator(stmt, {X})(data));
 }
 
-void testCond01() {
+static void testCond01() {
   const int N = 16;
   PaddedBuffer<float> a_v(N);
   BufHandle a_buf("a", {N}, kFloat);
@@ -766,7 +767,7 @@ void testCond01() {
   ExpectAllNear(a_v, a_ref, 1e-5);
 }
 
-void testIfThenElse01() {
+static void testIfThenElse01() {
   ExprHandle v = ifThenElse(ExprHandle(1), ExprHandle(1.0f), ExprHandle(2.0f));
 
   std::ostringstream oss;
@@ -777,7 +778,7 @@ void testIfThenElse01() {
   ASSERT_EQ(eval.value<float>(), 1.0f);
 }
 
-void testIfThenElse02() {
+static void testIfThenElse02() {
   ExprHandle v = ifThenElse(ExprHandle(0), ExprHandle(1.0f), ExprHandle(2.0f));
 
   std::ostringstream oss;
@@ -788,7 +789,7 @@ void testIfThenElse02() {
   ASSERT_EQ(eval.value<float>(), 2.0f);
 }
 
-void testIfThenElse03() {
+static void testIfThenElse03() {
   ExprHandle v =
       ifThenElse(BoolImm::make(false), ExprHandle(1.0f), ExprHandle(2.0f));
 
@@ -800,7 +801,7 @@ void testIfThenElse03() {
   ASSERT_EQ(eval.value<float>(), 2.0f);
 }
 
-void testStmtClone() {
+static void testStmtClone() {
   const int N = 16;
 
   BufHandle a_buf("a", {N}, kInt);
@@ -832,5 +833,4 @@ void testStmtClone() {
   assertAllEqual(cloned_loop_results_after_mutation, 33);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

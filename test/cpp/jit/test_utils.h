@@ -76,12 +76,12 @@ std::shared_ptr<Graph> build_mobile_export_analysis_graph_nested();
 std::shared_ptr<Graph> build_mobile_export_analysis_graph_non_const();
 
 at::Tensor t_use(at::Tensor x);
-at::Tensor t_def(at::Tensor x);
+at::Tensor t_def(const at::Tensor& x);
 
 // given the difference of output vs expected tensor, check whether the
 // difference is within a relative tolerance range. This is a standard way of
 // matching tensor values up to certain precision
-bool checkRtol(const at::Tensor& diff, const std::vector<at::Tensor> inputs);
+bool checkRtol(const at::Tensor& diff, const std::vector<at::Tensor>& inputs);
 bool almostEqual(const at::Tensor& a, const at::Tensor& b);
 
 bool exactlyEqual(const at::Tensor& a, const at::Tensor& b);
@@ -90,13 +90,13 @@ bool exactlyEqual(
     const std::vector<at::Tensor>& b);
 
 std::vector<at::Tensor> runGraph(
-    std::shared_ptr<Graph> graph,
+    const std::shared_ptr<Graph>& graph,
     const std::vector<at::Tensor>& inputs);
 
 std::pair<at::Tensor, at::Tensor> lstm(
-    at::Tensor input,
-    at::Tensor hx,
-    at::Tensor cx,
+    const at::Tensor& input,
+    const at::Tensor& hx,
+    const at::Tensor& cx,
     at::Tensor w_ih,
     at::Tensor w_hh);
 

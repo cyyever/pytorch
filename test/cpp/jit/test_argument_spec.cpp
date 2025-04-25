@@ -7,8 +7,7 @@
 
 #include "test/cpp/jit/test_utils.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 namespace {
 
@@ -197,5 +196,4 @@ TEST(ArgumentSpecTest, Basic_CUDA) {
   ASSERT_EQ(spec.count(c), 1);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

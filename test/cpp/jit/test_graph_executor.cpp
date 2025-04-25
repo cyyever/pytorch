@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+
 #include "test/cpp/jit/test_utils.h"
 #include "torch/csrc/jit/runtime/graph_executor.h"
 #include "torch/jit.h"
 #include "torch/script.h"
 #include "torch/torch.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(GraphExecutorTest, Basic_CUDA) {
   constexpr int batch_size = 4;
@@ -18,8 +19,10 @@ TEST(GraphExecutorTest, Basic_CUDA) {
   auto input = at::randn({batch_size, input_size}, at::kCUDA);
   auto hx = at::randn({batch_size, hidden_size}, at::kCUDA);
   auto cx = at::randn({batch_size, hidden_size}, at::kCUDA);
-  auto w_ih = t_def(at::randn({4 * hidden_size, input_size}, at::kCUDA));
-  auto w_hh = t_def(at::randn({4 * hidden_size, hidden_size}, at::kCUDA));
+  auto w_ih = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), input_size}, at::kCUDA));
+  auto w_hh = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), hidden_size}, at::kCUDA));
 
   auto g = build_lstm();
   GraphExecutor executor(g, "");
@@ -67,5 +70,4 @@ TEST(GraphExecutorTest, runAsync_executor) {
   ASSERT_TRUE(asyncCounter > 0);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

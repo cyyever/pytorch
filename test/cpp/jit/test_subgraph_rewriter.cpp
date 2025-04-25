@@ -5,8 +5,7 @@
 #include <torch/csrc/jit/passes/subgraph_rewrite.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 using namespace testing;
 
 TEST(SubgraphRewriterTest, FilterMatch) {
@@ -306,5 +305,4 @@ graph(%a, %b):
   }
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -5,8 +5,8 @@
 #include <sstream>
 
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 TEST(FileFormatTest, IdentifiesFlatbufferStream) {
   // Create data whose initial bytes look like a Flatbuffer stream.
@@ -120,5 +120,4 @@ TEST(FileFormatTest, HandlesMissingFile) {
       FileFormat::UnknownFileFormat);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

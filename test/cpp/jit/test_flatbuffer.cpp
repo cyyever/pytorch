@@ -36,8 +36,8 @@ namespace flatbuffers = flatbuffers_fbsource;
 #include <torch/csrc/jit/serialization/mobile_bytecode_generated.h> // NOLINT
 #endif
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 namespace {
 mobile::Module parse_mobile_module(
@@ -88,13 +88,13 @@ TEST(FlatbufferTest, UpsampleNearest2d) {
   res = bc.forward(inputs);
 
   auto resd = res.toTensor();
-  auto refd = ref.toTensor();
+  const auto& refd = ref.toTensor();
   ASSERT_TRUE(resd.equal(refd));
 
   auto buff = save_mobile_module_to_bytes(bc);
   mobile::Module bc2 = parse_mobile_module(buff->data(), buff->size());
   auto res2 = bc2.forward(inputs);
-  auto resd2 = res2.toTensor();
+  const auto& resd2 = res2.toTensor();
   ASSERT_TRUE(resd2.equal(refd));
 }
 
@@ -116,14 +116,14 @@ TEST(FlatbufferTest, UpsampleNearest2dWithCopyTensorMemory) {
   res = bc.forward(inputs);
 
   auto resd = res.toTensor();
-  auto refd = ref.toTensor();
+  const auto& refd = ref.toTensor();
   ASSERT_TRUE(resd.equal(refd));
 
   auto buff = save_mobile_module_to_bytes(bc);
   mobile::Module bc2 = parse_mobile_module(buff->data(), buff->size(), true);
 
   auto res2 = bc2.forward(inputs);
-  auto resd2 = res2.toTensor();
+  const auto& resd2 = res2.toTensor();
   ASSERT_TRUE(resd2.equal(refd));
 }
 
@@ -589,7 +589,7 @@ TEST(FlatbufferTest, SetState) {
 
 class TorchBindFlatbufferTestStruct : public torch::jit::CustomClassHolder {
  public:
-  std::string get(at::Tensor t) {
+  std::string get(const at::Tensor& t) {
     std::stringstream ss;
     ss << "Hello! Your tensor has ";
     ss << t.numel();
@@ -1302,7 +1302,7 @@ TEST(FlatbufferTest, OperatorTest2) { // NOLINT (use =delete in gtest)
   }
 }
 
-Module jitModuleFromBuffer(void* data, size_t size) {
+static Module jitModuleFromBuffer(void* data, size_t size) {
   // Make a copy of the data so we can use the existing API, which takes
   // ownership. The `data` param might point into the middle of a buffer, so we
   // can't safely take ownership of it directly.
@@ -1311,7 +1311,7 @@ Module jitModuleFromBuffer(void* data, size_t size) {
   memcpy(copy.get(), data, size);
 
   ExtraFilesMap extra_files;
-  return parse_and_initialize_jit_module(std::move(copy), size, extra_files);
+  return parse_and_initialize_jit_module(copy, size, extra_files);
 }
 
 TEST(TestSourceFlatbuffer, UpsampleNearest2d) {
@@ -1327,16 +1327,16 @@ TEST(TestSourceFlatbuffer, UpsampleNearest2d) {
   auto ref = m.forward(inputs);
 
   std::stringstream ss;
-  m._save_for_mobile(ss, {}, false, /*use_fatbuffer=*/true);
+  m._save_for_mobile(ss, {}, false, /*use_flatbuffer=*/true);
   auto mm = _load_for_mobile(ss);
   auto m2 = load(ss);
 
   auto res = m2.forward(inputs);
   auto resm = mm.forward(inputs);
 
-  auto resd = res.toTensor();
-  auto refd = ref.toTensor();
-  auto resmd = resm.toTensor();
+  const auto& resd = res.toTensor();
+  const auto& refd = ref.toTensor();
+  const auto& resmd = resm.toTensor();
   ASSERT_TRUE(resd.equal(refd));
   ASSERT_TRUE(resmd.equal(refd));
 }
@@ -1570,7 +1570,7 @@ TEST(FlatbufferUpgraderTest, DivScalarFloatV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -1610,7 +1610,7 @@ TEST(FlatbufferUpgraderTest, DivScalarReciprocalFloatV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 0.5 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
 }
@@ -1649,7 +1649,7 @@ TEST(FlatbufferUpgraderTest, DivScalarReciprocalIntV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 0.5 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -1742,7 +1742,7 @@ TEST(FlatbufferUpgraderTest, DivScalarIntV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -1782,7 +1782,7 @@ TEST(FlatbufferUpgraderTest, DivScalarInplaceFloatV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -1822,7 +1822,7 @@ TEST(FlatbufferUpgraderTest, DivScalarInplaceIntV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -1835,10 +1835,9 @@ TEST(FlatbufferUpgraderTest, DivScalarInplaceIntV2) {
 // Do not add any other tests after this section.
 //
 
-} // namespace jit
-} // namespace torch
-namespace torch {
-namespace jit {
+} // namespace torch::jit
+
+namespace torch::jit {
 
 /**
  * An Allocator that can only deallocate (using delete []), counting
@@ -1953,5 +1952,4 @@ TEST(FlatbufferTest, DetachedBufferNullOwner) {
 // the beginning of this section.
 //
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

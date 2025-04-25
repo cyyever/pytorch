@@ -17,10 +17,8 @@
 #include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/jit/testing/file_check.h>
 #include <torch/cuda.h>
-#include <unordered_map>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 namespace {
 
@@ -307,7 +305,7 @@ void assertShapeEqual(c10::SymbolicShape& a, c10::SymbolicShape& e) {
 
 void assertShapeEqual(
     std::optional<std::vector<c10::SymbolicShape>>& actual,
-    std::vector<std::optional<int64_t>> expected) {
+    const std::vector<std::optional<int64_t>>& expected) {
   ASSERT_TRUE(actual.has_value());
   ASSERT_EQ(actual->size(), 1);
 
@@ -495,5 +493,4 @@ TEST(ShapeAnalysisTest, TestShapeMultipleReturns) {
   EXPECT_EQ(res->at(0), res->at(1));
   EXPECT_EQ(get_shape_cache_size(), 1);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

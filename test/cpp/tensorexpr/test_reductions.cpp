@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <sstream>
@@ -19,8 +20,7 @@
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -241,7 +241,8 @@ TEST(Reductions, ReduceProduct) {
   std::vector<float> out(M, -1.f);
 
   Reducer product(
-      ExprHandle(1.f), [](ExprHandle a, ExprHandle b) { return a * b; });
+      ExprHandle(1.f),
+      [](const ExprHandle& a, const ExprHandle& b) { return a * b; });
 
   Tensor c = Reduce("product", {M}, product, b, {N});
   LoopNest loop({c});
@@ -344,7 +345,7 @@ TEST(Reductions, ReduceAnyAll) {
   VarHandle searchValue("searchValue", kInt);
   BufHandle b("b", {4, 10}, kInt);
 
-  Reducer anyEqSV(ExprHandle(0), [](ExprHandle a, ExprHandle b) {
+  Reducer anyEqSV(ExprHandle(0), [](const ExprHandle& a, const ExprHandle& b) {
     return CompareSelect::make(a, 1, 1, b, kEQ);
   });
 
@@ -387,7 +388,7 @@ TEST(Reductions, ReduceAnyAll) {
   ASSERT_EQ(out[2], 0);
   ASSERT_EQ(out[3], 0);
 
-  Reducer allGTSV(ExprHandle(1), [](ExprHandle a, ExprHandle b) {
+  Reducer allGTSV(ExprHandle(1), [](const ExprHandle& a, const ExprHandle& b) {
     return CompareSelect::make(a, 0, 0, b, kEQ);
   });
 
@@ -1206,9 +1207,10 @@ TEST(Reductions, ReduceInlineReducerInternal) {
         return a_buf.load(m, n, k) + b_buf.load(m, n, k);
       });
 
-  Reducer minimum(ExprHandle(0.f), [&](ExprHandle a, ExprHandle b) {
-    return Add::make(ExprHandle(1.f), Min::make(a, b, false));
-  });
+  Reducer minimum(
+      ExprHandle(0.f), [&](const ExprHandle& a, const ExprHandle& b) {
+        return Add::make(ExprHandle(1.f), Min::make(a, b, false));
+      });
   Tensor y = Reduce("y", {M}, minimum, x, {N, K});
 
   PaddedBuffer<float> a_v(M, N, K);
@@ -1929,5 +1931,4 @@ TEST(Reductions, InitFunction) {
       )IR";
   torch::jit::testing::FileCheck().run(expected_ir, oss.str());
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -24,8 +24,8 @@
 #include <unordered_set>
 
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 TEST(LiteInterpreterDirectTest, UpsampleNearest2d) {
   Module m("m");
@@ -45,7 +45,7 @@ TEST(LiteInterpreterDirectTest, UpsampleNearest2d) {
   res = bc.forward(inputs);
 
   auto resd = res.toTensor();
-  auto refd = ref.toTensor();
+  const auto& refd = ref.toTensor();
   ASSERT_TRUE(resd.equal(refd));
 }
 
@@ -99,12 +99,12 @@ TEST(
     CompilationOptions options;
     mobile::Module bc = jitModuleToMobile(m, options);
     const auto& test_func = bc.get_method("test_func");
-    std::cerr << "hello " << std::endl;
+    std::cerr << "hello " << '\n';
     IValue res;
     for (int i = 0; i < 3; ++i) {
       res = test_func({minput});
     }
-    std::cerr << "hello 3" << std::endl;
+    std::cerr << "hello 3" << '\n';
 
     auto resd = res.toTensor().item<float>();
     auto refd = ref.toTensor().item<float>();
@@ -306,7 +306,7 @@ TEST(LiteInterpreterDirectTest, SetState) {
 class TorchBindLiteInterpreterDirectTestStruct
     : public torch::jit::CustomClassHolder {
  public:
-  std::string get(at::Tensor t) {
+  std::string get(const at::Tensor& t) {
     std::stringstream ss;
     ss << "Hello! Your tensor has ";
     ss << t.numel();
@@ -756,7 +756,7 @@ TEST(LiteInterpreterDirectTest, DefaultArgsTensorinvSpecifyDefault) {
   testLiteModuleCompareResultTensors(m, inputs);
 }
 
-void testDefaultArgsPinvWithOutArg2(int num_args) {
+static void testDefaultArgsPinvWithOutArg2(int num_args) {
   Module m("m");
   if (num_args == 1) {
     m.define(R"(
@@ -917,5 +917,4 @@ TEST(LiteInterpreterDirectTest, OperatorCacheDifferentiatesDefaultArgs) {
   testLiteModuleCompareResultTensors(m, inputs, "forward3");
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

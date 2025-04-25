@@ -13,11 +13,10 @@
 #include <torch/csrc/jit/testing/file_check.h>
 #include <torch/torch.h>
 #include <cmath>
+#include <cstddef>
 #include <sstream>
-#include <stdexcept>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::indexing;
 using namespace torch::jit::tensorexpr;
@@ -175,7 +174,7 @@ TEST_F(Kernel, _1) {
   std::vector<IValue> stack = fmap<IValue>(inputs);
   k.run(stack);
   o = stack[0].toTensor();
-  for (size_t i = 0; i < 5 * 3; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(5 * 3); i++) {
     TORCH_CHECK_EQ(((float*)o.data_ptr())[i], ((float*)ref.data_ptr())[i]);
   }
 }
@@ -213,7 +212,7 @@ TEST_F(Kernel, _2) {
   std::vector<IValue> stack = fmap<IValue>(inputs);
   k.run(stack);
   o = stack[0].toTensor();
-  for (size_t i = 0; i < 5 * 3; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(5 * 3); i++) {
     TORCH_CHECK_EQ(((float*)o.data_ptr())[i], ((float*)ref.data_ptr())[i]);
   }
 }
@@ -251,7 +250,7 @@ TEST_F(Kernel, _3) {
   std::vector<IValue> stack = fmap<IValue>(inputs);
   k.run(stack);
   o = stack[0].toTensor();
-  for (size_t i = 0; i < 5 * 3; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(5 * 3); i++) {
     TORCH_CHECK_EQ(((float*)o.data_ptr())[i], ((float*)ref.data_ptr())[i]);
   }
 }
@@ -299,7 +298,7 @@ TEST_F(Kernel, ParallelStrided) {
   std::vector<IValue> stack = fmap<IValue>(inputs);
   k.run(stack);
   o = stack[0].toTensor();
-  for (size_t i = 0; i < 5 * 3; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(5 * 3); i++) {
     TORCH_CHECK_EQ(((float*)o.data_ptr())[i], ((float*)ref.data_ptr())[i]);
   }
 }
@@ -342,7 +341,7 @@ TEST_F(Kernel, DISABLED_Shape_Inference) {
     std::vector<IValue> stack = fmap<IValue>(inputs);
     k.run(stack);
     o = stack[0].toTensor();
-    for (size_t i = 0; i < 5 * 3; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(5 * 3); i++) {
       TORCH_CHECK_EQ(((float*)o.data_ptr())[i], ((float*)ref.data_ptr())[i]);
     }
   }
@@ -380,7 +379,7 @@ TEST_F(Kernel, DISABLED_Shape_Inference) {
     o = stack[0].toTensor();
     TORCH_CHECK_EQ(o.sizes()[0], 8);
     TORCH_CHECK_EQ(o.sizes()[1], 4);
-    for (size_t i = 0; i < 8 * 4; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(8 * 4); i++) {
       TORCH_CHECK_EQ(((float*)o.data_ptr())[i], ((float*)ref.data_ptr())[i]);
     }
   }
@@ -668,7 +667,7 @@ TEST_F(Kernel, CatAndInlineWithAConstantDim) {
 
   auto a = at::rand({1, 512}, TensorOptions(kCPU).dtype(at::kFloat));
   auto b = at::rand({1, 512}, TensorOptions(kCPU).dtype(at::kFloat));
-  auto ref = at::_cast_Float(at::cat({a, b}, 1), 0);
+  auto ref = at::_cast_Float(at::cat({a, b}, 1), false);
 
   std::vector<at::Tensor> inputs = {a, b};
   std::vector<IValue> stack = fmap<IValue>(inputs);
@@ -916,7 +915,7 @@ TEST_F(Kernel, SumAllAxes) {
   }
 }
 
-std::string li_to_str(at::ArrayRef<int64_t> li) {
+static std::string li_to_str(at::ArrayRef<int64_t> li) {
   std::stringstream out;
   bool first = true;
   for (auto elem : li) {
@@ -940,7 +939,7 @@ TEST_F(Kernel, SumOneAxis) {
         return (%4))IR";
   auto a = iotaTensor({5, 3}, TensorOptions(kCPU).dtype(at::kFloat));
 
-  for (int dim = -a.dim(); dim < a.dim(); ++dim) {
+  for (int64_t dim = -a.dim(); dim < a.dim(); ++dim) {
     for (bool keepdim : {false, true}) {
       for (auto scalar_type : {ScalarType::Undefined, ScalarType::Double}) {
         at::jit::TemplateEnv env;
@@ -1156,7 +1155,7 @@ TEST_F(Kernel, Softmax3D) {
   for (auto log_softmax : {false, true}) {
     for (const auto softmax_dim : c10::irange(a.dim())) {
       auto softmax_dim_size = a.sizes()[softmax_dim];
-      std::vector<int> other_dims;
+      std::vector<int64_t> other_dims;
       for (const auto i : c10::irange(a.dim())) {
         if (i != softmax_dim) {
           other_dims.push_back(i);
@@ -1237,7 +1236,7 @@ TEST_F(Kernel, Softmax4D) {
   for (auto log_softmax : {false, true}) {
     for (const auto softmax_dim : c10::irange(a.dim())) {
       auto softmax_dim_size = a.sizes()[softmax_dim];
-      std::vector<int> other_dims;
+      std::vector<int64_t> other_dims;
       for (const auto i : c10::irange(a.dim())) {
         if (i != softmax_dim) {
           other_dims.push_back(i);
@@ -1661,7 +1660,7 @@ TEST_F(Kernel, CodegenInspection) {
 #endif
 }
 
-Tensor lowerNanToNum(
+static Tensor lowerNanToNum(
     const std::vector<ArgValue>& inputs,
     const std::vector<ExprHandle>& outputShape,
     const std::vector<ExprHandle>& outputStrides,
@@ -2129,5 +2128,4 @@ TEST_F(Kernel, DoNotFuseLoopsWithMismatchingVariableDims) {
 #endif
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

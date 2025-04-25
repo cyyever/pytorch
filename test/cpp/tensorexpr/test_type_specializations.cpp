@@ -11,8 +11,7 @@
 // Test that tensor type specializations are available in
 // the custom passes
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 namespace {
 
@@ -71,5 +70,4 @@ graph(%a.1 : Tensor,
   }
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

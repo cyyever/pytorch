@@ -7,8 +7,7 @@
 
 #include <test/cpp/jit/test_utils.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 // Basic tests to check if C++ torch::jit::load
 // can load the upgraders fine
@@ -39,5 +38,4 @@ TEST(UpgraderLoad, CanPopulateUpgradersGraph) {
   testing::FileCheck().check_count("aten::div", 1, true)->run(*test_graph);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

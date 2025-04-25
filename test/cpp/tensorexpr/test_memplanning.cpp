@@ -10,8 +10,7 @@
 #include <torch/csrc/jit/tensorexpr/loopnest.h>
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -69,12 +68,12 @@ TEST(BufLiveRange, MulRangeLine) {
   StorePtr aStore_1 = Store::make(a, {i}, i + i);
   StorePtr bStore_1 = Store::make(b, {i}, i * i);
   StmtPtr loop_1 = For::make(
-      i, 0, 32, Cond::make(i < 10, Block::make({aStore_1, bStore_1}), NULL));
+      i, 0, 32, Cond::make(i < 10, Block::make({aStore_1, bStore_1}), nullptr));
 
   StorePtr aStore_2 = Store::make(a, {i}, i * i);
   StorePtr bStore_2 = Store::make(b, {i}, i + i);
   StmtPtr loop_2 = For::make(
-      i, 0, 32, Cond::make(i > 10, Block::make({aStore_2, bStore_2}), NULL));
+      i, 0, 32, Cond::make(i > 10, Block::make({aStore_2, bStore_2}), nullptr));
 
   StmtPtr stmt = Block::make({loop_1, loop_2});
 
@@ -704,5 +703,4 @@ TEST(MemPlanning, SmallerBufSizeNonMemReuse) {
 #endif
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

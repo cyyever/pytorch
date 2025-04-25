@@ -11,11 +11,11 @@
 #include <torch/torch.h>
 #include <cmath>
 #include <sstream>
+#include <utility>
 #include "torch/csrc/jit/tensorexpr/eval.h"
 #include "torch/csrc/jit/tensorexpr/ir.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 using SimpleIRExprEval = ExprEval<SimpleIREvaluator>;
@@ -53,8 +53,8 @@ TEST_F(Quantization, QuantDequantInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
@@ -83,8 +83,8 @@ TEST_F(Quantization, QuantDequantUInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
@@ -115,14 +115,14 @@ TEST_F(Quantization, QuantDequantUInt8_NLC) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x:\n" << x << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x:\n" << x << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
 
-at::Tensor quantized_add(
+static at::Tensor quantized_add(
     at::Tensor x1,
     at::Tensor x2,
     double scale,
@@ -131,7 +131,7 @@ at::Tensor quantized_add(
       c10::Dispatcher::singleton()
           .findSchemaOrThrow("quantized::add", "")
           .typed<at::Tensor(at::Tensor, at::Tensor, double, int64_t)>();
-  return qadd_op.call(x1, x2, scale, zero);
+  return qadd_op.call(std::move(x1), std::move(x2), scale, zero);
 }
 
 TEST_F(Quantization, QuantAddDequantInt8) {
@@ -167,12 +167,12 @@ TEST_F(Quantization, QuantAddDequantInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x1:\n" << x1 << std::endl;
-    std::cout << "q1:\n" << q1 << std::endl;
-    std::cout << "x2:\n" << x2 << std::endl;
-    std::cout << "q2:\n" << q2 << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x1:\n" << x1 << '\n';
+    std::cout << "q1:\n" << q1 << '\n';
+    std::cout << "x2:\n" << x2 << '\n';
+    std::cout << "q2:\n" << q2 << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
@@ -211,12 +211,12 @@ TEST_F(Quantization, QuantAddDequantUInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x1:\n" << x1 << std::endl;
-    std::cout << "q1:\n" << q1 << std::endl;
-    std::cout << "x2:\n" << x2 << std::endl;
-    std::cout << "q2:\n" << q2 << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x1:\n" << x1 << '\n';
+    std::cout << "q1:\n" << q1 << '\n';
+    std::cout << "x2:\n" << x2 << '\n';
+    std::cout << "q2:\n" << q2 << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
@@ -248,16 +248,16 @@ TEST_F(Quantization, QuantSigmoidDequantUInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x1:\n" << x1 << std::endl;
-    std::cout << "q1:\n" << q1 << std::endl;
-    std::cout << "qs:\n" << qs << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x1:\n" << x1 << '\n';
+    std::cout << "q1:\n" << q1 << '\n';
+    std::cout << "qs:\n" << qs << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
 
-at::Tensor quantized_mul(
+static at::Tensor quantized_mul(
     at::Tensor x1,
     at::Tensor x2,
     double scale,
@@ -266,7 +266,7 @@ at::Tensor quantized_mul(
       c10::Dispatcher::singleton()
           .findSchemaOrThrow("quantized::mul", "")
           .typed<at::Tensor(at::Tensor, at::Tensor, double, int64_t)>();
-  return op.call(x1, x2, scale, zero);
+  return op.call(std::move(x1), std::move(x2), scale, zero);
 }
 
 TEST_F(Quantization, QuantMulDequantUInt8) {
@@ -303,12 +303,12 @@ TEST_F(Quantization, QuantMulDequantUInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x1:\n" << x1 << std::endl;
-    std::cout << "q1:\n" << q1 << std::endl;
-    std::cout << "x2:\n" << x2 << std::endl;
-    std::cout << "q2:\n" << q2 << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x1:\n" << x1 << '\n';
+    std::cout << "q1:\n" << q1 << '\n';
+    std::cout << "x2:\n" << x2 << '\n';
+    std::cout << "q2:\n" << q2 << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
@@ -342,11 +342,11 @@ TEST_F(Quantization, QuantUpsampleNearst2dDequantUInt8) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x:\n" << x << std::endl;
-    std::cout << "q:\n" << q << std::endl;
-    std::cout << "qu:\n" << qu << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x:\n" << x << '\n';
+    std::cout << "q:\n" << q << '\n';
+    std::cout << "qu:\n" << qu << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
@@ -373,14 +373,14 @@ TEST_F(Quantization, UpsampleNearst2d) {
   auto y = stack[0].toTensor();
   bool check = at::allclose(y_expected, y);
   if (!check) {
-    std::cout << "x:\n" << x << std::endl;
-    std::cout << "y_expected:\n" << y_expected << std::endl;
-    std::cout << "y:\n" << y << std::endl;
+    std::cout << "x:\n" << x << '\n';
+    std::cout << "y_expected:\n" << y_expected << '\n';
+    std::cout << "y:\n" << y << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
 
-at::Tensor quantized_cat(
+static at::Tensor quantized_cat(
     c10::List<at::Tensor> const& xs,
     int64_t dim,
     double scale,
@@ -435,18 +435,17 @@ TEST_F(Quantization, QuantCatDequantUInt8) {
   auto result = stack[0].toTensor();
   bool check = at::allclose(expected, result);
   if (!check) {
-    std::cout << "x:\n" << x << std::endl;
-    std::cout << "y:\n" << y << std::endl;
-    std::cout << "z:\n" << z << std::endl;
-    std::cout << "qx:\n" << qx << std::endl;
-    std::cout << "qy:\n" << qy << std::endl;
-    std::cout << "qz:\n" << qz << std::endl;
-    std::cout << "qcat:\n" << qcat << std::endl;
-    std::cout << "expected:\n" << expected << std::endl;
-    std::cout << "result:\n" << result << std::endl;
+    std::cout << "x:\n" << x << '\n';
+    std::cout << "y:\n" << y << '\n';
+    std::cout << "z:\n" << z << '\n';
+    std::cout << "qx:\n" << qx << '\n';
+    std::cout << "qy:\n" << qy << '\n';
+    std::cout << "qz:\n" << qz << '\n';
+    std::cout << "qcat:\n" << qcat << '\n';
+    std::cout << "expected:\n" << expected << '\n';
+    std::cout << "result:\n" << result << '\n';
   }
   TORCH_CHECK_EQ(check, 1);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

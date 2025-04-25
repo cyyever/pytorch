@@ -4,8 +4,7 @@
 
 #include "torch/csrc/jit/passes/create_autodiff_subgraphs.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(CreateAutodiffSubgraphsTest, Basic) {
   auto graph = build_lstm();
@@ -21,5 +20,4 @@ TEST(CreateAutodiffSubgraphsTest, Basic) {
       ->run(*graph);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

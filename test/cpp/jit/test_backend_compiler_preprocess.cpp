@@ -3,8 +3,7 @@
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/inliner.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 namespace {
 // For this backend, the actual compilation happens in preprocess function AOT.
 // Put here for demonstration of backend
@@ -24,12 +23,10 @@ c10::IValue preprocess(
     // Must inline the graph for debug info map.
     Inline(*graph);
     // This is here because to test module hierarchy we will have
-    // getattr nodes which after inlining dont serve any purpose.
+    // getattr nodes which after inlining don't serve any purpose.
     // Without removing them we will run into compilation errors.
     // So eliminate deadcode just remove those getattr nodes.
     EliminateDeadCode(graph);
-    // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
-    auto key = method.name();
     auto node_debug_handles = generate_debug_handles(graph);
     std::stringstream ss;
     for (const auto& node : graph->nodes()) {
@@ -72,5 +69,4 @@ constexpr auto backend_name = "backend_with_compiler_demo";
 static auto pre_reg = backend_preprocess_register(backend_name, preprocess);
 } // namespace
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

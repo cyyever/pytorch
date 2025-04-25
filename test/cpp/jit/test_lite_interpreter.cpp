@@ -21,11 +21,12 @@
 #include <torch/torch.h>
 
 #include <torch/csrc/jit/serialization/import_export_functions.h>
+#include <memory>
 #include <unordered_set>
 
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 TEST(LiteInterpreterTest, UpsampleNearest2d) {
   Module m("m");
@@ -46,7 +47,7 @@ TEST(LiteInterpreterTest, UpsampleNearest2d) {
   res = bc.forward(inputs);
 
   auto resd = res.toTensor();
-  auto refd = ref.toTensor();
+  const auto& refd = ref.toTensor();
   ASSERT_TRUE(resd.equal(refd));
 }
 
@@ -403,7 +404,7 @@ TEST(LiteInterpreterTest, SetState) {
 class TorchBindLiteInterpreterTestStruct
     : public torch::jit::CustomClassHolder {
  public:
-  std::string get(at::Tensor t) {
+  std::string get(const at::Tensor& t) {
     std::stringstream ss;
     ss << "Hello! Your tensor has ";
     ss << t.numel();
@@ -649,8 +650,8 @@ void backportAllVersionCheck(
     // flag in stringstream causing a problematic stream. Instead, it's cleaner
     // and safer to just declare a new std::stringstream one and swap them.
     std::stringstream oss;
-    bool backPortSuccess =
-        _backport_for_mobile(test_model_file_stream, oss, current_to_version);
+    bool backPortSuccess = _backport_for_mobile(
+        test_model_file_stream, oss, static_cast<int64_t>(current_to_version));
     AT_ASSERT(backPortSuccess);
 
     // Check backport model version
@@ -730,14 +731,14 @@ TEST(LiteInterpreterTest, BackPortByteCodeModelAllVersions) {
       at::ones({1, 20, 24, 24}, ScalarType::Float) * 26);
   expect_result_list.emplace_back(3 * at::ones({1}));
   // "cpu" False, False, True, tensor(1), "abc", 2, False)
-  expect_result_list.emplace_back(c10::IValue("cpu"));
-  expect_result_list.emplace_back(c10::IValue(false));
-  expect_result_list.emplace_back(c10::IValue(false));
-  expect_result_list.emplace_back(c10::IValue(true));
-  expect_result_list.emplace_back(c10::IValue(at::ones({1})));
-  expect_result_list.emplace_back(c10::IValue("abc"));
-  expect_result_list.emplace_back(c10::IValue(2));
-  expect_result_list.emplace_back(c10::IValue(false));
+  expect_result_list.emplace_back("cpu");
+  expect_result_list.emplace_back(false);
+  expect_result_list.emplace_back(false);
+  expect_result_list.emplace_back(true);
+  expect_result_list.emplace_back(at::ones({1}));
+  expect_result_list.emplace_back("abc");
+  expect_result_list.emplace_back(2);
+  expect_result_list.emplace_back(false);
 
   backportAllVersionCheck(
       input_model_stream,
@@ -788,7 +789,7 @@ TEST(LiteInterpreterTest, isCompatibleFail) {
       _get_mobile_supported_types()};
 
   auto result = is_compatible(runtime_info, model_info);
-  AT_ASSERT(result.status = ModelCompatibilityStatus::ERROR);
+  AT_ASSERT(result.status == ModelCompatibilityStatus::ERROR);
   AT_ASSERT(
       result.errors[0] ==
       "Operator 'aten::add.Scalar' missing from runtime (not found)");
@@ -806,7 +807,7 @@ TEST(LiteInterpreterTest, isCompatibleFail) {
       caffe2::serialize::kMaxSupportedBytecodeVersion + 1;
 
   result = is_compatible(runtime_info, model_info);
-  AT_ASSERT(result.status = ModelCompatibilityStatus::ERROR);
+  AT_ASSERT(result.status == ModelCompatibilityStatus::ERROR);
 
   // test trivial failure due to bytecode less than min supported bytecode
   // version
@@ -821,7 +822,7 @@ TEST(LiteInterpreterTest, isCompatibleFail) {
       caffe2::serialize::kMinSupportedBytecodeVersion - 1;
 
   result = is_compatible(runtime_info, model_info);
-  AT_ASSERT(result.status = ModelCompatibilityStatus::ERROR);
+  AT_ASSERT(result.status == ModelCompatibilityStatus::ERROR);
 
   // test trivial failure due to type
   runtime_info = RuntimeCompatibilityInfo::get();
@@ -1074,7 +1075,7 @@ TEST(LiteInterpreterTest, DefaultArgsConv) {
       return torch.conv2d(input, self.weight, self.bias, [1, 1], [0, 0], [1, 1], 1)
   )");
 
-  inputs.push_back(torch::ones({1, 1, 28, 28}));
+  inputs.emplace_back(torch::ones({1, 1, 28, 28}));
 
   auto outputref = m.forward(inputs).toTensor();
 
@@ -1133,8 +1134,8 @@ TEST(RunTimeTest, ParseBytecode) {
   std::vector<IValue> types{"List[int]", "List[int]"};
   // 2. Parse the function
   std::string function_name("test_function");
-  auto function = std::unique_ptr<mobile::Function>(
-      new mobile::Function(c10::QualifiedName(function_name)));
+  auto function =
+      std::make_unique<mobile::Function>(c10::QualifiedName(function_name));
   c10::ivalue::TupleElements debug_handles_m_tuple;
   parseInstructions(
       function_name,
@@ -1193,8 +1194,8 @@ TEST(RunTimeTest, ParseOperator) {
   };
   // 2. Parse the function
   std::string function_name("test_function");
-  auto function = std::unique_ptr<mobile::Function>(
-      new mobile::Function(c10::QualifiedName(function_name)));
+  auto function =
+      std::make_unique<mobile::Function>(c10::QualifiedName(function_name));
   c10::ivalue::TupleElements debug_handles_m_tuple;
   parseInstructions(
       function_name,
@@ -1261,7 +1262,7 @@ void testDefaultArgsPinv(int num_args) {
   auto input = torch::range(1, N * N, 1);
   input[0] = 1; // a more stable matrix
   input = input.view({N, N});
-  inputs.push_back(input);
+  inputs.emplace_back(input);
   testLiteModuleCompareResultTensors(m, inputs);
 }
 } // namespace
@@ -1361,11 +1362,11 @@ TEST(LiteInterpreterTest, DefaultArgsTensorinvSpecifyDefault) {
   std::vector<torch::jit::IValue> inputs;
   const int N = 4;
   auto input = torch::rand({N, N, N, N});
-  inputs.push_back(input);
+  inputs.emplace_back(input);
   testLiteModuleCompareResultTensors(m, inputs);
 }
 
-void testDefaultArgsPinvWithOutArg(int num_args) {
+static void testDefaultArgsPinvWithOutArg(int num_args) {
   Module m("m");
   if (num_args == 1) {
     m.define(R"(
@@ -1831,7 +1832,7 @@ TEST(LiteInterpreterUpgraderTest, DivScalarFloatV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -1871,7 +1872,7 @@ TEST(LiteInterpreterUpgraderTest, DivScalarReciprocalFloatV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 0.5 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
   std::cout << "expect output: " << expect_output;
   std::cout << "actual output: " << actual_output;
   // The out argument will be overwritten with the output
@@ -1912,7 +1913,7 @@ TEST(LiteInterpreterUpgraderTest, DivScalarReciprocalIntV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 0.5 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -2005,7 +2006,7 @@ TEST(LiteInterpreterUpgraderTest, DivScalarIntV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -2045,7 +2046,7 @@ TEST(LiteInterpreterUpgraderTest, DivScalarInplaceFloatV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3.0)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -2085,7 +2086,7 @@ TEST(LiteInterpreterUpgraderTest, DivScalarInplaceIntV2) {
   std::vector<IValue> inputs{IValue(6 * torch::ones({1})), IValue(3)};
   auto output = m_module.forward(inputs);
   auto expect_output = 2.0 * torch::ones({1});
-  auto actual_output = output.toTensor();
+  const auto& actual_output = output.toTensor();
 
   // The out argument will be overwritten with the output
   ASSERT_TRUE(actual_output.equal(expect_output));
@@ -2113,7 +2114,7 @@ TEST(LiteInterpreterUpgraderTest, Upgrader) {
   ASSERT_EQ(getUpgraderBytecodeList().size(), upgrader_functions.size());
 }
 
-void enumerateTupleType(
+static void enumerateTupleType(
     size_t depth,
     std::vector<TypePtr>& current,
     const std::vector<TypePtr>& candidates,
@@ -2126,11 +2127,11 @@ void enumerateTupleType(
     }
   }
   if (depth == 0) {
-    out.push_back(TupleType::create(current));
+    out.emplace_back(TupleType::create(current));
     while (fieldNames.size() > current.size()) {
       fieldNames.pop_back();
     }
-    out.push_back(TupleType::createNamed("NamedTuple", fieldNames, current));
+    out.emplace_back(TupleType::createNamed("NamedTuple", fieldNames, current));
     return;
   }
   for (const auto& type : candidates) {
@@ -2235,5 +2236,4 @@ INSTANTIATE_TEST_SUITE_P(
         static_cast<size_t>(0),
         LiteInterpreterDynamicTypeTestFixture::kNumSplits));
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

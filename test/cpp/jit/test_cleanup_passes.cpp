@@ -5,8 +5,7 @@
 #include <torch/csrc/jit/ir/irparser.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(CleanupPassTest, Basic) {
   // Tests stability of clean up passes when dealing with constant pooling
@@ -45,5 +44,4 @@ graph(%cond.1 : Tensor,
   auto graph_after_pass_twice = graph->toString();
   ASSERT_EQ(graph_after_pass_once, graph_after_pass_twice);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

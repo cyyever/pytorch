@@ -9,8 +9,7 @@
 #include <torch/csrc/jit/testing/file_check.h>
 #include <sstream>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -398,5 +397,4 @@ TEST(TEFuserPass, DynamicShapeFusion) {
   run_and_compare(inputs3);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

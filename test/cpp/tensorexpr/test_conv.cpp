@@ -6,8 +6,7 @@
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 #include <torch/torch.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 namespace te = torch::jit::tensorexpr;
 namespace F = torch::nn::functional;
@@ -230,5 +229,4 @@ TEST(Conv, Conv2D) {
   ASSERT_TRUE(at::allclose(ref, result, 1e-3, 1e-3));
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

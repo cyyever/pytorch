@@ -6,8 +6,7 @@
 
 #include <vector>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(UpgraderUtils, FindCorrectUpgrader) {
   std::vector<UpgraderEntry> dummy_entry = {
@@ -34,6 +33,7 @@ TEST(UpgraderUtils, IsVersionMapSorted) {
   // their bumped_at_version field.
   for (const auto& entry : map) {
     std::vector<int> versions;
+    versions.reserve(entry.second.size());
     for (const auto& el : entry.second) {
       versions.push_back(el.bumped_at_version);
     }
@@ -95,5 +95,4 @@ TEST(UpgraderUtils, CanLoadHistoricOp) {
   test_only_remove_entry("old_op_not_exist_no_overload");
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

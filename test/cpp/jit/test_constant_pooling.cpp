@@ -9,8 +9,7 @@
 #include <sstream>
 #include <string>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(ConstantPoolingTest, Int) {
   auto graph = std::make_shared<Graph>();
@@ -110,5 +109,4 @@ graph():
           /*exactly*/ true)
       ->run(*graph);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -134,6 +134,20 @@ inline void pop(Stack& stack, Types&... args) {
       (args = std::move(peek(stack, i++, N)).template to<Types>(), 0)...};
   drop(stack, N);
 }
+// variadic pop:
+// auto [a, b] = pop<int64_t, at::Tensor>(stack, a, b);
+// equivalent to:
+// at::Tensor b = pop(stack).toTensor();
+// int64_t a = pop(stack).toInt();
+template <typename... Types>
+inline std::tuple<Types...> pop(Stack& stack) {
+  size_t i = 0;
+  constexpr size_t N = sizeof...(Types);
+  std::tuple<Types...> result{
+      (std::move(peek(stack, i++, N)).template to<Types>(), 0)...};
+  drop(stack, N);
+  return result;
+}
 template <typename... Types>
 inline void pop(Stack* stack, Types&... args) {
   pop(*stack, args...);

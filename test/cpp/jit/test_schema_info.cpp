@@ -2,8 +2,7 @@
 #include <torch/csrc/autograd/generated/variable_factories.h>
 #include <torch/csrc/utils/schema_info.h>
 
-namespace torch {
-namespace utils {
+namespace torch::utils {
 using c10::SchemaArgType;
 
 TEST(FunctionSchemaIsAliasingTest, Basic) {
@@ -390,5 +389,4 @@ TEST(SchemaInfoMayContainAliasTest, Wildcard) {
   ASSERT_TRUE(schema.may_contain_alias(
       {SchemaArgType::input, 2}, {SchemaArgType::input, 1}));
 }
-} // namespace utils
-} // namespace torch
+} // namespace torch::utils

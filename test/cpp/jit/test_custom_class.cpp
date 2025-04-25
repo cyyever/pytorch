@@ -9,8 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(CustomClassTest, TorchbindIValueAPI) {
   script::Module m("m");
@@ -23,7 +22,7 @@ TEST(CustomClassTest, TorchbindIValueAPI) {
       return s.pop(), s
   )");
 
-  auto test_with_obj = [&m](IValue obj, std::string expected) {
+  auto test_with_obj = [&m](const IValue& obj, const std::string& expected) {
     auto res = m.run_method("forward", obj);
     auto tup = res.toTuple();
     AT_ASSERT(tup->elements().size() == 2);
@@ -146,5 +145,4 @@ TEST(CustomClassTest, Serialization) {
   auto loaded_frozen_module = torch::jit::load(iss_frozen, torch::kCPU);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

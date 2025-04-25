@@ -3,8 +3,7 @@
 #include "test/cpp/jit/test_utils.h"
 #include "torch/csrc/jit/ir/subgraph_matcher.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(SubgraphMatcherTest, Trivial1) {
   Graph graph, pattern;
@@ -358,7 +357,7 @@ graph(%x, %y):
   %z2 = aten::mul(%y, %z1)
   return (%z2))IR",
       &pattern1);
-  AT_ASSERT(findPatternMatches(pattern1, graph).size() == 0);
+  AT_ASSERT(findPatternMatches(pattern1, graph).empty());
 }
 
 TEST(SubgraphMatcherTest, MatchInBasicBlocks2) {
@@ -393,7 +392,7 @@ graph(%x, %y):
   %v = my::mul(%y, %u)
   return (%v))IR",
       &pattern1);
-  AT_ASSERT(findPatternMatches(pattern1, graph).size() == 0);
+  AT_ASSERT(findPatternMatches(pattern1, graph).empty());
 }
 
 TEST(SubgraphMatcherTest, MatchesAttributes) {
@@ -565,5 +564,4 @@ graph(%0, %1):
   }
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

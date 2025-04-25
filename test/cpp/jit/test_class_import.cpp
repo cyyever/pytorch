@@ -6,8 +6,9 @@
 #include <torch/csrc/jit/serialization/import_source.h>
 #include <torch/torch.h>
 
-namespace torch {
-namespace jit {
+#include <utility>
+
+namespace torch::jit {
 
 static constexpr std::string_view classSrcs1 = R"JIT(
 class FooNestedTest:
@@ -38,7 +39,7 @@ static void import_libs(
     const std::shared_ptr<Source>& src,
     const std::vector<at::IValue>& tensor_table) {
   SourceImporter si(
-      cu,
+      std::move(cu),
       &tensor_table,
       [&](const std::string& name) -> std::shared_ptr<Source> { return src; },
       /*version=*/2);
@@ -154,5 +155,4 @@ TEST(ClassImportTest, CustomClass) {
       constantTable);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

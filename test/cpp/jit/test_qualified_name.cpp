@@ -5,8 +5,7 @@
 
 using c10::QualifiedName;
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 TEST(QualifiedNameTest, PrefixConstruction) {
   // Test prefix construction
   auto foo = QualifiedName("foo");
@@ -70,5 +69,4 @@ TEST(QualifiedNameTest, IsPrefixOf) {
   ASSERT_FALSE(foo1.isPrefixOf(foo2));
   ASSERT_FALSE(foo2.isPrefixOf(foo3));
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

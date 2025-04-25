@@ -7,8 +7,7 @@
 #include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(StackOptTest, UseVariadicStack) {
   auto graph = std::make_shared<Graph>();
@@ -305,5 +304,4 @@ TEST(StackOptTest, UseVariadicStackWithMultipleListMutations) {
       ->run(*graph);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

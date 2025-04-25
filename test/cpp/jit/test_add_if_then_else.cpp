@@ -4,8 +4,7 @@
 #include <torch/csrc/jit/ir/irparser.h>
 #include <torch/csrc/jit/passes/add_if_then_else.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(AddIfThenElseOpTest, AddIfThenElseOpSimple) {
   const auto src = R"IR(
@@ -49,5 +48,4 @@ TEST(AddIfThenElseOpTest, NoIfThenElseOpMultipleOutputs) {
       ->run(*graph);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -16,8 +16,7 @@
 #include <torch/csrc/jit/tensorexpr/loopnest.h>
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -208,7 +207,7 @@ TEST(BoundsInference, _5) {
   ForPtr tail;
   std::vector<ForPtr> loops = l.getLoopStmtsFor(b);
   LoopNest::splitWithTail(loops[0], 16, &inner, &tail);
-  ForPtr outer = loops[0];
+  const ForPtr& outer = loops[0];
 
   {
     // Verify inferred bounds for the outer loop
@@ -391,7 +390,7 @@ TEST(BoundsInference, MultipleTopLoopLoad) {
     auto bounds = bounds_info[a.node()];
     ASSERT_EQ(bounds.size(), 1);
     // One dimension.
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kLoad);
     // Bounds:
     // start: Min of the 3 load bounds = Min of loop starts + offset = 0+0 (b).
@@ -404,7 +403,7 @@ TEST(BoundsInference, MultipleTopLoopLoad) {
   {
     auto bounds = bounds_info[b.buf()];
     ASSERT_EQ(bounds.size(), 1);
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kStore);
     // Just the loop extents for b.
     verifyConstBounds(bound, {{0, 63}});
@@ -412,7 +411,7 @@ TEST(BoundsInference, MultipleTopLoopLoad) {
   {
     auto bounds = bounds_info[c.buf()];
     ASSERT_EQ(bounds.size(), 1);
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kStore);
     // Just the loop extents for c.
     verifyConstBounds(bound, {{0, 31}});
@@ -420,7 +419,7 @@ TEST(BoundsInference, MultipleTopLoopLoad) {
   {
     auto bounds = bounds_info[d.buf()];
     ASSERT_EQ(bounds.size(), 1);
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kStore);
     // Just the loop extents for d.
     verifyConstBounds(bound, {{0, 95}});
@@ -450,7 +449,7 @@ TEST(BoundsInference, MultipleTopLoopStore) {
     auto bounds = bounds_info[a.node()];
     ASSERT_EQ(bounds.size(), 1);
     // One dimension.
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kLoad);
     // Bounds: there are no offsets, so this is just the max loop bounds.
     verifyConstBounds(bound, {{0, 95}});
@@ -460,7 +459,7 @@ TEST(BoundsInference, MultipleTopLoopStore) {
   {
     auto bounds = bounds_info[b.node()];
     ASSERT_EQ(bounds.size(), 1);
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kStore);
     // This should be equivalent to {offset, extent + offset} for the b loop.
     // b loop has no offset, so just the loop extents.
@@ -469,7 +468,7 @@ TEST(BoundsInference, MultipleTopLoopStore) {
   {
     auto bounds = bounds_info[c.node()];
     ASSERT_EQ(bounds.size(), 1);
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kStore);
     // This should be equivalent to {offset, extent + offset} for the c loop.
     // Offset is 10, extent is 32-1.
@@ -478,7 +477,7 @@ TEST(BoundsInference, MultipleTopLoopStore) {
   {
     auto bounds = bounds_info[d.node()];
     ASSERT_EQ(bounds.size(), 1);
-    auto bound = bounds[0];
+    const auto& bound = bounds[0];
     ASSERT_EQ(bound.kind, TensorAccessKind::kStore);
     // This should be equivalent to {offset, extent + offset} for the d loop.
     // Offset is 2, extent is 96-1.
@@ -1018,5 +1017,4 @@ TEST(BoundsInference, IsOverlapping) {
   ASSERT_FALSE(isOverlapping(analyzer, storeA1, storeA3));
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

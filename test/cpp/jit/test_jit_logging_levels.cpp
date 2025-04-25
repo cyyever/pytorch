@@ -4,8 +4,7 @@
 #include <torch/csrc/jit/jit_log.h>
 #include <sstream>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(JitLoggingTest, CheckSetLoggingLevel) {
   ::torch::jit::set_jit_logging_levels("file_to_test");
@@ -50,8 +49,7 @@ TEST(JitLoggingTest, CheckOutputStreamSetting) {
       __FILE__,
       __LINE__,
       ::c10::str("Message"));
-  ASSERT_TRUE(test_stream.str().size() > 0);
+  ASSERT_TRUE(!test_stream.str().empty());
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

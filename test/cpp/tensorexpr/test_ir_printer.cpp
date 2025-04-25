@@ -11,8 +11,8 @@
 #include <torch/csrc/jit/testing/file_check.h>
 
 #include <sstream>
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -94,5 +94,4 @@ TEST(IRPrinter, FunctionName) {
 
   torch::jit::testing::FileCheck().run(verification_pattern, ss.str());
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

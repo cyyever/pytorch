@@ -6,10 +6,9 @@
 #include <torch/csrc/jit/passes/replacement_of_old_operators.h>
 #include <memory>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
-std::unordered_map<std::string, std::string> test_upgraders(
+static std::unordered_map<std::string, std::string> test_upgraders(
     {{"_test_serialization_subcmul_0_2", R"IR(graph(%self.1 : Tensor,
                                                     %other.1 : Tensor,
                                                     %alpha.1 : Union(float, int)):
@@ -141,5 +140,4 @@ TEST(OpReplacementTest, ReplaceTestSubcmulInSimpleFunction) {
   test_only_remove_entry("aten::_test_serialization_subcmul");
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -17,8 +17,7 @@
 
 #include "caffe2/serialize/istream_adapter.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 namespace {
 
@@ -198,8 +197,8 @@ TEST(TestSourceRoundTrip, UpsampleNearest2d) {
   Module m2 = roundtripThroughMobile(m);
   auto res = m2.forward(inputs);
 
-  auto resd = res.toTensor();
-  auto refd = ref.toTensor();
+  const auto& resd = res.toTensor();
+  const auto& refd = ref.toTensor();
   ASSERT_TRUE(resd.equal(refd));
 }
 
@@ -361,5 +360,4 @@ TEST(SerializationTest, TestPickleAppend) {
   ASSERT_EQ(expected, actual);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -4,6 +4,7 @@
 #include <torch/csrc/utils/schema_info.h>
 
 #include <ATen/core/operator_name.h>
+#include <test/cpp/jit/torch_python_test.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/backends/backend_init.h>
 #include <torch/csrc/jit/codegen/cuda/interface.h>
@@ -162,10 +163,6 @@ std::optional<IValue> toTypeInferredIValueOptional(py::handle input) {
   }
 }
 } // anonymous namespace
-
-#if !defined(USE_ROCM)
-TORCH_API void runJITCPPTests();
-#endif
 
 void initJITBindings(PyObject* module) {
   auto m = py::handle(module).cast<py::module>();

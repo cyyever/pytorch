@@ -3,8 +3,7 @@
 #include <torch/csrc/jit/frontend/parser.h>
 #include <torch/csrc/jit/frontend/resolver.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 constexpr std::string_view testSource = R"JIT(
   class FooTest:
     def __init__(self, x):
@@ -33,5 +32,4 @@ TEST(ClassParserTest, Basic) {
   ASSERT_FALSE(Assign(classDef.body()[2]).rhs().present());
   ASSERT_TRUE(Assign(classDef.body()[2]).type().present());
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

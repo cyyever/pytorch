@@ -7,8 +7,7 @@
 
 #include <iostream>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 using namespace torch::jit::tensorexpr;
 
 // Can replace a simple scalar access with a local variable.
@@ -3698,5 +3697,4 @@ TEST(Registerizer, RegisterizerMultiDim3DReduction2) {
   torch::jit::testing::FileCheck().run(verification_pattern, oss.str());
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

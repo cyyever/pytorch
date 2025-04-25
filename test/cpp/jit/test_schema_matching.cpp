@@ -8,8 +8,7 @@
 #include <sstream>
 #include <string>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(SchemaMatchingTest, VarType) {
   RegisterOperators reg({
@@ -87,5 +86,4 @@ TEST(SchemaMatchingTest, VarType2) {
   TORCH_INTERNAL_ASSERT(
       err.find("previously matched to type") != std::string::npos);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

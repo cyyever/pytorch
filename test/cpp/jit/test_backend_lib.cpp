@@ -2,8 +2,7 @@
 #include <torch/csrc/jit/backends/backend_debug_handler.h>
 #include <torch/csrc/jit/backends/backend_preprocess.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 // This test JIT backend is intended to do the minimal amount of work
 // necessary to test that the JIT backend registration endpoints and
 // code generation are working correctly. It is not intended to
@@ -14,7 +13,7 @@ class TestBackend : public PyTorchBackendInterface {
   // Constructor.
   // NOLINTNEXTLINE(modernize-use-equals-default)
   explicit TestBackend() {}
-  virtual ~TestBackend() override = default;
+  ~TestBackend() override = default;
 
   bool is_available() override {
     return isAvailable;
@@ -37,7 +36,7 @@ class TestBackend : public PyTorchBackendInterface {
       c10::IValue handle,
       c10::impl::GenericList inputs) override {
     TORCH_INTERNAL_ASSERT(handle.isString());
-    TORCH_INTERNAL_ASSERT(inputs.size() > 0);
+    TORCH_INTERNAL_ASSERT(!inputs.empty());
 
     c10::List<at::Tensor> output_list;
 
@@ -89,5 +88,4 @@ static auto pre_reg_unavailable =
     backend_preprocess_register(backend_unavailable_name, preprocess);
 
 } // namespace
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

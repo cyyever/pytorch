@@ -6,8 +6,7 @@
 #include <torch/csrc/jit/ir/irparser.h>
 #include <torch/csrc/jit/runtime/script_profile.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(ScriptProfileTest, Basic) {
   const std::string source_string = R"V0G0N(
@@ -58,5 +57,4 @@ TEST(ScriptProfileTest, CallingOrder) {
   EXPECT_THROW(p.addDatapoint(std::move(dp)), c10::Error);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

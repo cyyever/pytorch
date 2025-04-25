@@ -27,8 +27,9 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/native/xnnpack/OpContext.h>
 
-namespace torch {
-namespace jit {
+#include <cstddef>
+
+namespace torch::jit {
 using namespace torch::jit::tensorexpr;
 
 TEST(ExternalCall, Conv1d_float) {
@@ -495,9 +496,11 @@ TEST(ExternalCall, Prepacked_Linear_float) {
                      .device(at::kCPU)
                      .requires_grad(false);
   at::Tensor input =
-      at::linspace(-10.0, 10.0, 100 * 200, options).resize_({100, 200});
+      at::linspace(-10.0, 10.0, static_cast<int64_t>(100 * 200), options)
+          .resize_({100, 200});
   at::Tensor weight =
-      at::linspace(-10.0, 10.0, 300 * 200, options).resize_({300, 200});
+      at::linspace(-10.0, 10.0, static_cast<int64_t>(300 * 200), options)
+          .resize_({300, 200});
   at::Tensor bias = at::linspace(-10.0, 10.0, 300, options);
   at::Tensor ref = at::linear(input, weight, bias);
 
@@ -527,7 +530,8 @@ TEST(ExternalCall, Prepacked_Linear_float) {
 
   at::Tensor nnc_result;
   std::vector<float> input_buf(
-      input.data_ptr<float>(), input.data_ptr<float>() + 100 * 200);
+      input.data_ptr<float>(),
+      input.data_ptr<float>() + static_cast<ptrdiff_t>(100 * 200));
   std::vector<float> result_buf(100 * 300, -1.f);
 
 #ifdef TORCH_ENABLE_LLVM
@@ -561,10 +565,13 @@ TEST(ExternalCall, Prepacked_Conv2d_float) {
                      .layout(at::kStrided)
                      .device(at::kCPU)
                      .requires_grad(false);
-  at::Tensor input = at::linspace(-10.0, 10.0, 1 * 3 * 224 * 224, options)
-                         .resize_({1, 3, 224, 224});
+  at::Tensor input =
+      at::linspace(
+          -10.0, 10.0, static_cast<int64_t>(1 * 3 * 224 * 224), options)
+          .resize_({1, 3, 224, 224});
   at::Tensor weight =
-      at::linspace(-10.0, 10.0, 16 * 3 * 3 * 3, options).resize_({16, 3, 3, 3});
+      at::linspace(-10.0, 10.0, static_cast<int64_t>(16 * 3 * 3 * 3), options)
+          .resize_({16, 3, 3, 3});
   at::Tensor bias = at::linspace(-10.0, 10.0, 16, options);
   at::Tensor ref = at::conv2d(
       input,
@@ -612,7 +619,8 @@ TEST(ExternalCall, Prepacked_Conv2d_float) {
 
   at::Tensor nnc_result;
   std::vector<float> input_buf(
-      input.data_ptr<float>(), input.data_ptr<float>() + 1 * 3 * 224 * 224);
+      input.data_ptr<float>(),
+      input.data_ptr<float>() + static_cast<ptrdiff_t>(1 * 3 * 224 * 224));
   std::vector<float> result_buf(1 * 16 * 112 * 112, -1.f);
 
 #ifdef TORCH_ENABLE_LLVM
@@ -650,7 +658,7 @@ TEST(ExternalCall, BinaryFloat) {
       {100, 300},
       [&](const at::Tensor& a, const at::Tensor& b) { return at::mm(a, b); },
       "nnc_aten_mm"});
-  for (auto curTest : tests) {
+  for (const auto& curTest : tests) {
     auto [aShape, bShape, resShape, torchFunc, externCallName] = curTest;
     auto toExprHandleVec = [](std::vector<int64_t> v) {
       auto intV = std::vector<int>(v.begin(), v.end());
@@ -719,7 +727,7 @@ TEST(ExternalCall, UnaryFloat) {
   tests.push_back(Test{// NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
                        {1, 64, 8, 9},
                        {1, 64, 5, 7},
-                       [](at::Tensor x) {
+                       [](const at::Tensor& x) {
                          return at::adaptive_avg_pool2d(x, {5, 7});
                        },
                        "nnc_aten_adaptive_avg_pool2d",
@@ -727,10 +735,10 @@ TEST(ExternalCall, UnaryFloat) {
   tests.push_back(Test{// NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
                        {100, 200},
                        {100},
-                       [](at::Tensor x) { return at::mean(x, {1}); },
+                       [](const at::Tensor& x) { return at::mean(x, {1}); },
                        "nnc_aten_mean",
                        toExprHandleVec({1, /*keepdim=*/0})});
-  for (auto curTest : tests) {
+  for (const auto& curTest : tests) {
     auto [aShape, resShape, torchFunc, externCallName, externCallArgs] =
         curTest;
     BufHandle A("A", toExprHandleVec(aShape), kFloat);
@@ -1058,5 +1066,4 @@ TEST(ExternalCall, JitCustomFusionOp) {
 #endif
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

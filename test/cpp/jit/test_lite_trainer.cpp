@@ -17,8 +17,8 @@
 #include <torch/torch.h>
 
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 TEST(LiteTrainerTest, Params) {
   Module m("m");
@@ -157,7 +157,7 @@ TEST(MobileTest, SaveLoadParametersEmpty) {
 
   // load back the named parameters, test is empty
   auto mobile_params = _load_parameters(ss_data);
-  AT_ASSERT(mobile_params.size() == 0);
+  AT_ASSERT(mobile_params.empty());
 }
 
 TEST(MobileTest, SaveParametersDefaultsToZip) {
@@ -388,5 +388,4 @@ TEST(LiteTrainerTest, RandomSamplerResetsWithNewSizeWell) {
   AT_ASSERT(sampler.next(2).has_value() == false);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

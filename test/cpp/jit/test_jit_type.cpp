@@ -3,10 +3,8 @@
 #include <test/cpp/jit/test_utils.h>
 #include <torch/csrc/jit/testing/file_check.h>
 #include "torch/csrc/jit/ir/ir.h"
-#include "torch/csrc/jit/ir/irparser.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(JitTypeTest, IsComplete) {
   auto tt = c10::TensorType::create(
@@ -26,6 +24,7 @@ TEST(JitTypeTest, UnifyTypes) {
   auto bool_tensor = TensorType::get()->withScalarType(at::kBool);
   auto opt_bool_tensor = OptionalType::create(bool_tensor);
   auto unified_opt_bool = unifyTypes(bool_tensor, opt_bool_tensor);
+  TORCH_INTERNAL_ASSERT(unified_opt_bool.has_value());
   TORCH_INTERNAL_ASSERT(opt_bool_tensor->isSubtypeOf(**unified_opt_bool));
 
   auto tensor = TensorType::get();
@@ -60,5 +59,4 @@ TEST(JitTypeTest, UnifyTypes) {
   TORCH_INTERNAL_ASSERT(!dict_out);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

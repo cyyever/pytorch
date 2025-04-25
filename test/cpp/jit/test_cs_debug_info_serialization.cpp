@@ -20,8 +20,8 @@
 #include <unordered_set>
 
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 
 namespace {
 bool validate_debug_info(
@@ -136,8 +136,8 @@ TEST(CSDebugInfoSerializaitionTest, TwoSubmodules) {
       cs_debug_info_pickler.pickle(debug_handle_cs_ptr_map, source_range_tags);
   at::DataPtr data_ptr(cs_data.data(), DeviceType::CPU);
   CallStackDebugInfoUnpickler unpickler;
-  auto deserialized_cs_map = unpickler.unpickle(
-      std::move(data_ptr), cs_data.size(), source_range_map, cu);
+  auto deserialized_cs_map =
+      unpickler.unpickle(data_ptr, cs_data.size(), source_range_map, cu);
   for (const auto& it : debug_handle_cs_ptr_map) {
     auto handle = it.first;
     auto debug_info_one = it.second;
@@ -151,5 +151,4 @@ TEST(CSDebugInfoSerializaitionTest, TwoSubmodules) {
 
 } // namespace
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

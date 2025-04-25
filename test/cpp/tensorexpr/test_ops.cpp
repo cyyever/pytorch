@@ -9,7 +9,7 @@ using namespace torch::jit::tensorexpr;
 
 using Tensors = std::vector<Tensor>;
 using Args = std::vector<CodeGen::BufferArg>;
-std::unique_ptr<SimpleIREvaluator> compile(
+static std::unique_ptr<SimpleIREvaluator> compile(
     const Args& inputs,
     const Tensors& outputs) {
   LoopNest nest({outputs});

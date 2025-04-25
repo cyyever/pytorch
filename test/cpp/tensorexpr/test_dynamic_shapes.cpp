@@ -14,8 +14,7 @@
 #include <stdexcept>
 #include <thread>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::indexing;
 using namespace torch::jit::tensorexpr;
@@ -697,5 +696,4 @@ TEST(DynamicShapes, MultiThreadedExecution) {
 #endif
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

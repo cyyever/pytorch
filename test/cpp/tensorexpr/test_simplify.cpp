@@ -9,8 +9,7 @@
 
 #include <cmath>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 using namespace torch::jit::tensorexpr;
 using SimpleIRExprEval = ExprEval<SimpleIREvaluator>;
 
@@ -3474,12 +3473,14 @@ TEST(Simplify, SimplifyEliminateEmptyCond) {
 }
 
 TEST(Simplify, SimplifyConstantComparisons) {
-  auto ComparisonTest =
-      [](ExprHandle a, ExprHandle b, CompareSelectOperation op, int result) {
-        ExprHandle body = CompareSelect::make(a, b, op);
-        ExprHandle simplified = IRSimplifier::simplify(body);
-        IS_IMM_WITH_VAL(Int, simplified.node(), result);
-      };
+  auto ComparisonTest = [](const ExprHandle& a,
+                           const ExprHandle& b,
+                           CompareSelectOperation op,
+                           int result) {
+    ExprHandle body = CompareSelect::make(a, b, op);
+    ExprHandle simplified = IRSimplifier::simplify(body);
+    IS_IMM_WITH_VAL(Int, simplified.node(), result);
+  };
 
   // Equals.
   ComparisonTest(2, 2, kEQ, 1);
@@ -5676,5 +5677,4 @@ TEST(Simplify, DISABLED_SimplifyLoopBounds) {
       oss.str());
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

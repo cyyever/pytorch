@@ -7,8 +7,8 @@
 #include <torch/torch.h>
 
 // Tests go in torch::jit
-namespace torch {
-namespace jit {
+
+namespace torch::jit {
 TEST(BackendTest, ToBackend) {
   Module m("m");
   m.define(R"(
@@ -240,7 +240,7 @@ TEST(BackendTest, TestPrimDtype) {
   ASSERT_EQ(res_jit.toInt(), res_mobile.toInt());
 }
 
-Module getCompositeModuleWithSameNameSubModules() {
+static Module getCompositeModuleWithSameNameSubModules() {
   // Two submodules with same module name but different forward and other
   // functions should be serialized and loaded correctly.
 
@@ -857,5 +857,4 @@ Traceback of TorchScript (most recent call last):
   ASSERT_THROWS_WITH_MESSAGE(c_loaded.forward(inputs), error_pattern);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

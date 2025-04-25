@@ -6,8 +6,7 @@
 #include "torch/csrc/jit/passes/common_subexpression_elimination.h"
 #include "torch/csrc/jit/passes/utils/subgraph_utils.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(SubgraphUtilsTest, Basic) {
   auto graph = build_lstm();
@@ -93,7 +92,7 @@ graph(%a : Tensor, %b : Tensor, %c : Tensor):
       SubgraphUtils::mergeNodeIntoSubgraph(graph1, graph2);
       subgraph = graph2;
     }
-    auto run_file_check = [](std::shared_ptr<Graph> graph) {
+    auto run_file_check = [](const std::shared_ptr<Graph>& graph) {
       graph->lint();
       testing::FileCheck()
           .check("aten::sigmoid")
@@ -145,5 +144,4 @@ graph(%a : Tensor, %b : Tensor, %c : Tensor):
   ASSERT_LE(truncated_name.size(), ref_full_name.size());
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

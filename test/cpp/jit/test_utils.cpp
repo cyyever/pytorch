@@ -5,9 +5,11 @@
 #include <torch/csrc/jit/passes/clear_undefinedness.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
 
-namespace torch {
-namespace jit {
+#include <utility>
 
+namespace torch::jit {
+
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 Stack createStack(std::vector<at::Tensor>&& list) {
   return Stack(
       std::make_move_iterator(list.begin()),
@@ -53,13 +55,15 @@ std::pair<tensor_list, tensor_list> runGradient(
   df_stack.insert(
       df_stack.end(), tensor_grads_in.begin(), tensor_grads_in.end());
   for (auto offset : grad_spec.df_input_captured_inputs)
-    df_stack.push_back(tensors_in[offset]);
+    df_stack.emplace_back(tensors_in[offset]);
   for (auto offset : grad_spec.df_input_captured_outputs)
     df_stack.push_back(f_stack[offset]);
   df_interpreter.run(df_stack);
   unpackReturnTuple(df_stack);
   // Outputs of f needs to be sliced
-  f_stack.erase(f_stack.begin() + grad_spec.f_real_outputs, f_stack.end());
+  f_stack.erase(
+      f_stack.begin() + static_cast<std::ptrdiff_t>(grad_spec.f_real_outputs),
+      f_stack.end());
   return std::make_pair(as_tensorlist(f_stack), as_tensorlist(df_stack));
 }
 
@@ -202,11 +206,11 @@ std::shared_ptr<Graph> build_mobile_export_analysis_graph_non_const() {
 at::Tensor t_use(at::Tensor x) {
   return x;
 }
-at::Tensor t_def(at::Tensor x) {
+at::Tensor t_def(const at::Tensor& x) {
   return x.t();
 }
 
-bool checkRtol(const at::Tensor& diff, const std::vector<at::Tensor> inputs) {
+bool checkRtol(const at::Tensor& diff, const std::vector<at::Tensor>& inputs) {
   double maxValue = 0.0;
   for (auto& tensor : inputs) {
     maxValue = fmax(tensor.abs().max().item<float>(), maxValue);
@@ -237,12 +241,12 @@ bool exactlyEqual(
 }
 
 std::pair<at::Tensor, at::Tensor> lstm(
-    at::Tensor input,
-    at::Tensor hx,
-    at::Tensor cx,
+    const at::Tensor& input,
+    const at::Tensor& hx,
+    const at::Tensor& cx,
     at::Tensor w_ih,
     at::Tensor w_hh) {
-  auto gates = input.mm(t_use(w_ih)) + hx.mm(t_use(w_hh));
+  auto gates = input.mm(t_use(std::move(w_ih))) + hx.mm(t_use(std::move(w_hh)));
 
   auto chunked_gates = gates.chunk(4, 1);
   auto ingate = chunked_gates[0];
@@ -261,7 +265,7 @@ std::pair<at::Tensor, at::Tensor> lstm(
   return {hy, cy};
 }
 
-inline c10::AliasAnalysisKind aliasAnalysisFromSchema() {
+inline static c10::AliasAnalysisKind aliasAnalysisFromSchema() {
   return c10::AliasAnalysisKind::FROM_SCHEMA;
 }
 
@@ -279,7 +283,7 @@ RegisterOperators reg({
 } // namespace
 
 std::vector<at::Tensor> runGraph(
-    std::shared_ptr<Graph> graph,
+    const std::shared_ptr<Graph>& graph,
     const std::vector<at::Tensor>& inputs) {
   std::vector<IValue> stack = fmap<IValue>(inputs);
   Code code(graph, "test");
@@ -295,5 +299,4 @@ std::vector<at::Tensor> runGraph(
   return {stack.front().toTensor()};
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

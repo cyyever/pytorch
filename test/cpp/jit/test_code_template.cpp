@@ -3,8 +3,7 @@
 #include <ATen/code_template.h>
 #include <test/cpp/jit/test_utils.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 static const auto ct = at::jit::CodeTemplate(R"(
   int foo($args) {
@@ -58,5 +57,4 @@ TEST(TestCodeTemplate, Formatting) {
   ASSERT_EQ(s, ct_expect);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

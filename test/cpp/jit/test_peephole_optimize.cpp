@@ -6,8 +6,7 @@
 #include <torch/csrc/jit/ir/irparser.h>
 #include <torch/csrc/jit/passes/peephole.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(PeepholeOptimizeTest, IsAndIsNot)
 // test is / is not none optimization
@@ -115,5 +114,4 @@ TEST(PeepholeOptimizeTest, AddMMFusion) {
   FuseAddMM(graph);
   testing::FileCheck().check("addmm")->run(*graph);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

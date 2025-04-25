@@ -83,14 +83,13 @@
 #include <utility>
 #include <vector>
 
-namespace torch {
-namespace jit {
-inline c10::AliasAnalysisKind aliasAnalysisFromSchema() {
+namespace torch::jit {
+inline static c10::AliasAnalysisKind aliasAnalysisFromSchema() {
   return c10::AliasAnalysisKind::FROM_SCHEMA;
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& out, const std::vector<T>& list) {
+static std::ostream& operator<<(std::ostream& out, const std::vector<T>& list) {
   size_t i = 0;
   out << "{";
   for (auto&& e : list) {
@@ -720,7 +719,7 @@ TEST(TopologicalIndexTest, Reindex) {
   }
 }
 
-at::Tensor invokeTestRecordFunction(at::Tensor& t) {
+static at::Tensor invokeTestRecordFunction(at::Tensor& t) {
   RECORD_FUNCTION("test", std::vector<c10::IValue>({t}));
 
   auto t2 = t.pow(2);
@@ -736,7 +735,7 @@ static const auto invokeTestRecordFunction_JIT = R"JIT(
     return self.foo(t)
 )JIT";
 
-at::Tensor invokeTestRecordFunctionJIT(at::Tensor& t) {
+static at::Tensor invokeTestRecordFunctionJIT(at::Tensor& t) {
   RECORD_FUNCTION("test", std::vector<c10::IValue>({t}));
 
   auto module = std::make_shared<script::Module>(
@@ -748,7 +747,7 @@ at::Tensor invokeTestRecordFunctionJIT(at::Tensor& t) {
 using TracedTestValues =
     std::vector<std::tuple<std::string, std::vector<std::vector<int64_t>>>>;
 
-void checkTracedInputs(const TracedTestValues& inputs) {
+static void checkTracedInputs(const TracedTestValues& inputs) {
   bool found_test = false;
   bool found_pow = false;
   bool found_mul = false;
@@ -776,7 +775,7 @@ void checkTracedInputs(const TracedTestValues& inputs) {
   TORCH_CHECK(found_mul);
 }
 
-void checkTracedOutputs(const TracedTestValues& outputs) {
+static void checkTracedOutputs(const TracedTestValues& outputs) {
   bool found_test = false;
   bool found_pow = false;
   bool found_mul = false;
@@ -804,7 +803,7 @@ void checkTracedOutputs(const TracedTestValues& outputs) {
 
 static bool bad_scope = false;
 template <RecordScope scope, size_t* cnt>
-std::unique_ptr<at::ObserverContext> checkScopeCallback(
+static std::unique_ptr<at::ObserverContext> checkScopeCallback(
     const at::RecordFunction& fn) {
   if (fn.scope() == scope) {
     ++(*cnt);
@@ -815,7 +814,7 @@ std::unique_ptr<at::ObserverContext> checkScopeCallback(
 }
 
 template <RecordScope scope, size_t* cnt>
-void pushScopedCallback() {
+static void pushScopedCallback() {
   at::addGlobalCallback(
       at::RecordFunctionCallback(checkScopeCallback<scope, cnt>)
           .scopes({scope}));
@@ -827,7 +826,7 @@ static size_t fun_cnt;
 static size_t ts_fun_cnt;
 static size_t user_scope_cnt;
 
-void checkScopeCallbacks() {
+static void checkScopeCallbacks() {
   static bool found_function_scope;
   static bool found_method_scope;
   static bool found_user_scope;
@@ -882,7 +881,7 @@ static TracedTestValues traced_outputs;
 static std::unordered_set<std::string> ts_input_names;
 static std::unordered_set<std::string> ts_output_names;
 
-std::unique_ptr<at::ObserverContext> tracedInputsCallback(
+static std::unique_ptr<at::ObserverContext> tracedInputsCallback(
     const RecordFunction& fn) {
   if (fn.scope() == RecordScope::FUNCTION) {
     auto inputs = fn.inputs();
@@ -895,14 +894,16 @@ std::unique_ptr<at::ObserverContext> tracedInputsCallback(
         sizes.push_back(std::vector<int64_t>());
       }
     }
-    traced_inputs.push_back(std::make_tuple(fn.name(), sizes));
+    traced_inputs.emplace_back(fn.name(), sizes);
   } else if (fn.scope() == RecordScope::TORCHSCRIPT_FUNCTION) {
     ts_input_names.insert(fn.name());
   }
   return nullptr;
 }
 
-void tracedOutputsCallback(const RecordFunction& fn, ObserverContext* ctx_ptr) {
+static void tracedOutputsCallback(
+    const RecordFunction& fn,
+    ObserverContext* ctx_ptr) {
   if (fn.scope() == RecordScope::FUNCTION) {
     auto outputs = fn.outputs();
     std::vector<std::vector<int64_t>> sizes;
@@ -913,7 +914,7 @@ void tracedOutputsCallback(const RecordFunction& fn, ObserverContext* ctx_ptr) {
         sizes.emplace_back();
       }
     }
-    traced_outputs.push_back(std::make_tuple(fn.name(), sizes));
+    traced_outputs.emplace_back(fn.name(), sizes);
   } else if (fn.scope() == RecordScope::TORCHSCRIPT_FUNCTION) {
     ts_output_names.insert(fn.name());
   }
@@ -966,7 +967,8 @@ TEST(RecordFunctionTest, TracedTestInputsOutputs) {
 }
 
 static int sampled_cb_ctr = 0;
-std::unique_ptr<ObserverContext> sampledCallback(const RecordFunction& fn) {
+static std::unique_ptr<ObserverContext> sampledCallback(
+    const RecordFunction& fn) {
   if (std::string(fn.name()) == "test") {
     ++sampled_cb_ctr;
   }
@@ -974,7 +976,8 @@ std::unique_ptr<ObserverContext> sampledCallback(const RecordFunction& fn) {
 }
 
 static int non_sampled_cb_ctr = 0;
-std::unique_ptr<ObserverContext> nonSampledCallback(const RecordFunction& fn) {
+static std::unique_ptr<ObserverContext> nonSampledCallback(
+    const RecordFunction& fn) {
   if (std::string(fn.name()) == "test") {
     ++non_sampled_cb_ctr;
   }
@@ -1068,7 +1071,7 @@ TEST(RecordFunctionTest, RecordFunctionGuard) {
 static std::vector<size_t> ids;
 
 template <size_t id>
-auto add_remove_test_add_cb() {
+static auto add_remove_test_add_cb() {
   return addGlobalCallback(RecordFunctionCallback(
       [](const RecordFunction& fn) -> std::unique_ptr<at::ObserverContext> {
         ids.push_back(id);
@@ -1175,7 +1178,6 @@ TEST(RecordFunctionTest, Callbacks) {
   } // END: global test
   { // START: thread local test
     auto ctx_th = std::thread([]() {
-      const std::string test_str = "test thread str";
       addThreadLocalCallback(RecordFunctionCallback(
           [](const RecordFunction&
              /* unused */) -> std::unique_ptr<at::ObserverContext> {
@@ -1326,13 +1328,13 @@ class TestThreadLocalDebugInfo : public c10::DebugInfoBase {
   }
 
   // NOLINTNEXTLINE(modernize-use-equals-default)
-  virtual ~TestThreadLocalDebugInfo() override {}
+  ~TestThreadLocalDebugInfo() override {}
 
  private:
   int model_id_ = 0;
 };
 
-void checkDebugInfo(c10::DebugInfoKind kind, int model_id) {
+static void checkDebugInfo(c10::DebugInfoKind kind, int model_id) {
   auto* debug_info = c10::ThreadLocalDebugInfo::get(kind);
   TORCH_CHECK(debug_info != nullptr);
   auto* test_debug_info = dynamic_cast<TestThreadLocalDebugInfo*>(debug_info);
@@ -1571,12 +1573,12 @@ TEST(NoneSchemaMatchTest, Basic) {
 }
 
 static int testPassValue = 0;
-void fakePass(std::shared_ptr<Graph>& g) {
+static void fakePass(std::shared_ptr<Graph>& g) {
   testPassValue++;
   return;
 }
 
-RegisterPass p(fakePass);
+static RegisterPass p(fakePass);
 
 TEST(PassManagementTest, Basic) {
   std::shared_ptr<Graph> graph = std::make_shared<Graph>();
@@ -1599,20 +1601,22 @@ graph(%a):
   }
 }
 
-static void checkShape(TypePtr typ, std::vector<int64_t> expected) {
+static void checkShape(
+    const TypePtr& typ,
+    const std::vector<int64_t>& expected) {
   auto ptp = typ->expect<TensorType>();
   ASSERT_EQ(ptp->sizes().concrete_sizes().value(), expected);
 }
 
 static void checkShape(
     Node* n,
-    std::vector<int64_t> expected,
+    const std::vector<int64_t>& expected,
     bool prev = true) {
   auto profile = (prev) ? n->inputs().at(0)->node() : n;
   checkShape(profile->output()->type(), expected);
 }
 
-void count_(
+static void count_(
     Block* block,
     const std::function<bool(Node* n)>& pred,
     size_t& count) {
@@ -1627,7 +1631,7 @@ void count_(
   }
 }
 
-size_t countNodes(
+static size_t countNodes(
     const std::shared_ptr<Graph>& graph,
     const std::function<bool(Node* n)>& pred) {
   size_t count = 0;
@@ -1635,11 +1639,11 @@ size_t countNodes(
   return count;
 }
 
-bool true_pred(Node* n) {
+static bool true_pred(Node* n) {
   return true;
 };
 
-bool is_loop(Node* n) {
+static bool is_loop(Node* n) {
   return n->kind() == prim::Loop;
 };
 
@@ -1661,7 +1665,7 @@ TEST(LoopPeelerTest, NoInductionVariableUse) {
     LoopsPeeler peeler(true_pred, 1);
     auto copy = f.graph()->copy();
     peeler.run(copy);
-    int num_loops =
+    auto num_loops =
         std::count_if(copy->nodes().begin(), copy->nodes().end(), is_loop);
     ASSERT_EQ(num_loops, 2);
     Code code(copy, "");
@@ -1675,7 +1679,7 @@ TEST(LoopPeelerTest, NoInductionVariableUse) {
     LoopsPeeler peeler(true_pred, 3);
     auto copy = f.graph()->copy();
     peeler.run(copy);
-    int num_loops =
+    auto num_loops =
         std::count_if(copy->nodes().begin(), copy->nodes().end(), is_loop);
     ASSERT_EQ(num_loops, 2);
     Code code(copy, "");
@@ -1703,7 +1707,7 @@ TEST(LoopPeelerTest, YesInductionVariableUse) {
     LoopsPeeler peeler(true_pred, 1);
     auto copy = f.graph()->copy();
     peeler.run(copy);
-    int num_loops =
+    auto num_loops =
         std::count_if(copy->nodes().begin(), copy->nodes().end(), is_loop);
     ASSERT_EQ(num_loops, 2);
     Code code(copy, "");
@@ -1717,7 +1721,7 @@ TEST(LoopPeelerTest, YesInductionVariableUse) {
     LoopsPeeler peeler(true_pred, 3);
     auto copy = f.graph()->copy();
     peeler.run(copy);
-    int num_loops =
+    auto num_loops =
         std::count_if(copy->nodes().begin(), copy->nodes().end(), is_loop);
     ASSERT_EQ(num_loops, 2);
     Code code(copy, "");
@@ -1750,7 +1754,7 @@ TEST(LoopPeelerTest, LoopWithTerminationCondition) {
     LoopsPeeler peeler(true_pred, 5);
     auto copy = f.graph()->copy();
     peeler.run(copy);
-    int num_loops =
+    auto num_loops =
         std::count_if(copy->nodes().begin(), copy->nodes().end(), is_loop);
     ASSERT_EQ(num_loops, 2);
     Code code(copy, "");
@@ -1764,7 +1768,7 @@ TEST(LoopPeelerTest, LoopWithTerminationCondition) {
     LoopsPeeler peeler(true_pred, 1);
     auto copy = f.graph()->copy();
     peeler.run(copy);
-    int num_loops =
+    auto num_loops =
         std::count_if(copy->nodes().begin(), copy->nodes().end(), is_loop);
     ASSERT_EQ(num_loops, 2);
     Code code(copy, "");
@@ -1861,8 +1865,10 @@ TEST(JitTracing, Basic) {
   auto input = at::randn({batch_size, input_size}, at::kCPU);
   auto hx = at::randn({batch_size, hidden_size}, at::kCPU);
   auto cx = at::randn({batch_size, hidden_size}, at::kCPU);
-  auto w_ih = t_def(at::randn({4 * hidden_size, input_size}, at::kCPU));
-  auto w_hh = t_def(at::randn({4 * hidden_size, hidden_size}, at::kCPU));
+  auto w_ih = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), input_size}, at::kCPU));
+  auto w_hh = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), hidden_size}, at::kCPU));
 
   auto graph = build_lstm();
   auto stack = createStack({input, hx, cx, w_ih, w_hh});
@@ -1935,7 +1941,7 @@ TEST(InsertAndEliminateRedundantGuardsTest, Basic) {
       std::nullopt);
   checkShape(*guard, {2, 3}, false);
   auto is_guard = [](Node* n) { return n->kind() == prim::Guard; };
-  int num_guards = std::count_if(nodes.begin(), nodes.end(), is_guard);
+  auto num_guards = std::count_if(nodes.begin(), nodes.end(), is_guard);
   ASSERT_EQ(num_guards, 12);
   // now eliminate as many guards as possible
   // we should be left with two guards on x and y's defs
@@ -2002,8 +2008,10 @@ TEST(ProfilerTest, Basic) {
   auto input = at::randn({batch_size, input_size}, at::kCPU);
   auto hx = at::randn({batch_size, hidden_size}, at::kCPU);
   auto cx = at::randn({batch_size, hidden_size}, at::kCPU);
-  auto w_ih = t_def(at::randn({4 * hidden_size, input_size}, at::kCPU));
-  auto w_hh = t_def(at::randn({4 * hidden_size, hidden_size}, at::kCPU));
+  auto w_ih = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), input_size}, at::kCPU));
+  auto w_hh = t_def(at::randn(
+      {static_cast<const long>(4 * hidden_size), hidden_size}, at::kCPU));
 
   auto g = build_lstm();
   auto stack = createStack({input, hx, cx, w_ih, w_hh});
@@ -2125,7 +2133,7 @@ def foo(x):
           n->kindOf(attr::value) != AttributeKind::i) {
         continue;
       }
-      int v = n->i(attr::value);
+      auto v = n->i(attr::value);
       switch (v) {
         case 3: {
           // Const 3 comes from function 'bar', which gets inlined to 'foo'.
@@ -2166,7 +2174,7 @@ def foo(x):
           n->kindOf(attr::value) != AttributeKind::i) {
         continue;
       }
-      int v = n->i(attr::value);
+      auto v = n->i(attr::value);
       ASSERT_TRUE(v == 7);
       // Const 7 comes from function 'ham', which gets inlined to 'baz'. 'baz'
       // was also inlined into 'foo', but when looking at the graph of 'baz' we
@@ -2208,7 +2216,6 @@ def c(x):
           n->kindOf(attr::value) != AttributeKind::s) {
         continue;
       }
-      // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
       std::string v = n->s(attr::value);
       if (n->callstack()) {
         callstack_objects[v] = n->callstack()->get();
@@ -2732,7 +2739,7 @@ TEST(RecordDebugHandles, ScopedCallbacks) {
     auto c = a + b;
   }
   auto profiler_results_ptr = torch::autograd::profiler::disableProfiler();
-  ASSERT_TRUE(profiler_results_ptr->events().size() > 0);
+  ASSERT_TRUE(!profiler_results_ptr->events().empty());
 
   // Enable the profiler in this thread
   torch::autograd::profiler::prepareProfiler(
@@ -2750,7 +2757,7 @@ TEST(RecordDebugHandles, ScopedCallbacks) {
     auto c = a + b;
   }
   profiler_results_ptr = torch::autograd::profiler::disableProfiler();
-  ASSERT_TRUE(profiler_results_ptr->events().size() == 0);
+  ASSERT_TRUE(profiler_results_ptr->events().empty());
 
   torch::autograd::profiler::prepareProfiler(
       torch::autograd::profiler::ProfilerConfig(
@@ -3148,5 +3155,4 @@ TEST(ConstantPropagation, CustomClassesCanBePropagated) {
 #endif
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

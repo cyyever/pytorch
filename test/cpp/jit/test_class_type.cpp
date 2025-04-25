@@ -4,8 +4,7 @@
 #include <torch/csrc/jit/testing/file_check.h>
 #include <torch/torch.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(ClassTypeTest, AddRemoveAttr) {
   auto cu = std::make_shared<CompilationUnit>();
@@ -107,5 +106,4 @@ TEST(ClassTypeTest, IdenticalTypesDifferentCus) {
   ASSERT_TRUE(false);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <sstream>
-#include <stdexcept>
 
 #include <gtest/gtest.h>
 
@@ -8,10 +6,8 @@
 #include <c10/util/irange.h>
 #include "test/cpp/tensorexpr/padded_buffer.h"
 #include "test/cpp/tensorexpr/test_base.h"
-#include "torch/csrc/jit/tensorexpr/ir_printer.h"
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -606,7 +602,7 @@ TEST(ATen, minFloat) {
   }
 }
 
-void __ubsan_ignore_float_divide_by_zero__ testATenreciprocal() {
+static void __ubsan_ignore_float_divide_by_zero__ testATenreciprocal() {
   const int kTotalSize = 128;
   BufHandle a_buf("A", {ExprHandle(kTotalSize)}, kFloat);
   BufHandle b_buf("B", {ExprHandle(kTotalSize)}, kFloat);
@@ -1064,5 +1060,4 @@ TEST(ATen, ltInt) {
   assertAllEqual(c_buffer, 0);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

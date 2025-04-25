@@ -3,8 +3,7 @@
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/passes/utils/memory_dag.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 TEST(MemoryDAGTest, Basic) {
   auto graph = std::make_shared<Graph>();
@@ -134,5 +133,4 @@ TEST(MemoryDAGTest, Basic) {
   }
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

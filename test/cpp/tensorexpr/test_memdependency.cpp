@@ -9,8 +9,7 @@
 #include <torch/csrc/jit/tensorexpr/mem_dependency_checker.h>
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -712,7 +711,7 @@ TEST(MemDependency, MemDependencyCheckerLoopReduce) {
   // Find loads within the reduction:
   auto reduceLoads = NodeFinder<Load>::find(reduce.node());
   // Pull out the access for the load inside the loop.
-  for (auto load : reduceLoads) {
+  for (const auto& load : reduceLoads) {
     auto loopLoad = analyzer.accessFor(load);
     // It should have 10 element long bounds.
     ASSERT_TRUE(indexBoundsEquals(
@@ -3169,7 +3168,7 @@ TEST(MemDependency, MemDependencyCheckerComputeGEMM) {
     // Lowering will change the dimensionality of all bounds due to index
     // flattening and will insert Allocates and Frees.
 
-    auto history_before = analyzer_unlowered.getHistory();
+    const auto& history_before = analyzer_unlowered.getHistory();
     auto history_after = analyzer_lowered.getHistory();
 
     ASSERT_EQ(history_before.size() + 2, history_after.size());
@@ -3248,5 +3247,4 @@ TEST(MemDependency, MemDependencyCheckerComputeGEMM) {
   }
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

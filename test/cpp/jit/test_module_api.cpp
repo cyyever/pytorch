@@ -10,8 +10,9 @@
 #include <torch/csrc/jit/testing/file_check.h>
 #include <torch/torch.h>
 
-namespace torch {
-namespace jit {
+#include <utility>
+
+namespace torch::jit {
 
 static constexpr std::string_view moduleInterfaceSrc = R"JIT(
 class OneInterface(ModuleInterface):
@@ -38,7 +39,7 @@ static void import_libs(
     const std::shared_ptr<Source>& src,
     const std::vector<at::IValue>& tensor_table) {
   SourceImporter si(
-      cu,
+      std::move(cu),
       &tensor_table,
       [&](const std::string& name) -> std::shared_ptr<Source> { return src; },
       /*version=*/2);
@@ -466,5 +467,4 @@ TEST(ModuleAPITest, To_CUDA) {
   }
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

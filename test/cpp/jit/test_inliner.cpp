@@ -19,8 +19,7 @@ def foo3(x):
     return foo2(x)
 )JIT";
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 using namespace testing;
 
 struct InlinerGuard {
@@ -47,5 +46,4 @@ TEST(InlinerTest, Basic) {
   Inline(*g);
   FileCheck().check_count("prim::Print", 3)->run(*g);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

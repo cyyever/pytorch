@@ -9,8 +9,7 @@
 #include <torch/csrc/jit/tensorexpr/tensor.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 using namespace torch::jit::tensorexpr;
 
@@ -255,5 +254,4 @@ TEST(CppPrinter, ExternalCall) {
   FILE_CHECK(call, pattern);
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

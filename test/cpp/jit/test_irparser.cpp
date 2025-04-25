@@ -7,8 +7,7 @@
 #include <sstream>
 #include <string>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 /** \brief Parse IR from \p S, print the parsed graph and verify that the output
  * string matches the original string.
@@ -33,8 +32,8 @@ static void checkRoundtrip(const std::string& s) {
   }
   std::string original = s.substr(i, s.size());
   if (original != parsed) {
-    std::cerr << "Input:" << std::endl << original << std::endl;
-    std::cerr << "Parsed:" << std::endl << parsed << std::endl;
+    std::cerr << "Input:" << '\n' << original << '\n';
+    std::cerr << "Parsed:" << '\n' << parsed << '\n';
   }
   AT_ASSERT(original == parsed);
 }
@@ -351,7 +350,7 @@ graph():
   AT_ASSERT(n->kind() == prim::Constant);
   AT_ASSERT(n->kindOf(attr::value) == AttributeKind::ival);
   const auto& genericList = n->ival(attr::value).toList();
-  std::vector<int> int_vals;
+  std::vector<int64_t> int_vals;
   // NOLINTNEXTLINE(performance-implicit-conversion-in-loop)
   for (const IValue& ival : genericList) {
     int_vals.push_back(ival.toInt());
@@ -377,5 +376,4 @@ graph(%x : Double(*, 200, *, requires_grad=1, device=cuda:1),
   return (%x)
 )IR");
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

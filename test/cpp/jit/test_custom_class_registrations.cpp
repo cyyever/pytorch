@@ -3,8 +3,10 @@
 #include <torch/custom_class.h>
 #include <torch/script.h>
 
+#include <cstddef>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace torch::jit;
@@ -12,7 +14,7 @@ using namespace torch::jit;
 namespace {
 
 struct DefaultArgs : torch::CustomClassHolder {
-  int x;
+  int64_t x;
   DefaultArgs(int64_t start = 3) : x(start) {}
   int64_t increment(int64_t val = 1) {
     x += val;
@@ -23,13 +25,11 @@ struct DefaultArgs : torch::CustomClassHolder {
     return x;
   }
   int64_t scale_add(int64_t add, int64_t scale = 1) {
-    // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
     x = scale * x + add;
     return x;
   }
   int64_t divide(std::optional<int64_t> factor) {
     if (factor) {
-      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
       x = x / *factor;
     }
     return x;
@@ -41,22 +41,22 @@ struct Foo : torch::CustomClassHolder {
   Foo() : x(0), y(0) {}
   Foo(int x_, int y_) : x(x_), y(y_) {}
   int64_t info() {
-    return this->x * this->y;
+    return static_cast<int64_t>(this->x * this->y);
   }
   int64_t add(int64_t z) {
     return (x + y) * z;
   }
-  at::Tensor add_tensor(at::Tensor z) {
+  at::Tensor add_tensor(const at::Tensor& z) {
     return (x + y) * z;
   }
   void increment(int64_t z) {
     this->x += z;
     this->y += z;
   }
-  int64_t combine(c10::intrusive_ptr<Foo> b) {
+  int64_t combine(const c10::intrusive_ptr<Foo>& b) {
     return this->info() + b->info();
   }
-  bool eq(c10::intrusive_ptr<Foo> other) {
+  bool eq(const c10::intrusive_ptr<Foo>& other) {
     return this->x == other->x && this->y == other->y;
   }
   std::tuple<std::tuple<std::string, int64_t>, std::tuple<std::string, int64_t>>
@@ -128,9 +128,9 @@ struct PickleTester : torch::CustomClassHolder {
 
 // Thread-safe Tensor Queue
 struct TensorQueue : torch::CustomClassHolder {
-  explicit TensorQueue(at::Tensor t) : init_tensor_(t) {}
+  explicit TensorQueue(at::Tensor t) : init_tensor_(std::move(std::move(t))) {}
 
-  explicit TensorQueue(c10::Dict<std::string, at::Tensor> dict) {
+  explicit TensorQueue(const c10::Dict<std::string, at::Tensor>& dict) {
     init_tensor_ = dict.at(std::string("init_tensor"));
     const std::string key = "queue";
     at::Tensor size_tensor;
@@ -172,7 +172,7 @@ struct TensorQueue : torch::CustomClassHolder {
     TORCH_CHECK(std::get<0>(queue_tuple) == std::string("queue"));
 
     for (auto& value : std::get<1>(queue_tuple)) {
-      queue->push(value);
+      queue->push(std::move(value));
     }
 
     return queue;
@@ -182,7 +182,7 @@ struct TensorQueue : torch::CustomClassHolder {
   // Lock is added for thread safe.
   void push(at::Tensor x) {
     std::lock_guard<std::mutex> guard(mutex_);
-    queue_.push_back(x);
+    queue_.push_back(std::move(x));
   }
   // Pop the front element of queue and return it.
   // If empty, return init_tensor_.
@@ -224,6 +224,7 @@ struct TensorQueue : torch::CustomClassHolder {
   std::vector<at::Tensor> clone_queue() {
     std::lock_guard<std::mutex> guard(mutex_);
     std::vector<at::Tensor> ret;
+    ret.reserve(queue_.size());
     for (const auto& t : queue_) {
       ret.push_back(t.clone());
     }
@@ -245,7 +246,8 @@ struct TensorQueue : torch::CustomClassHolder {
 };
 
 struct ConstantTensorContainer : torch::CustomClassHolder {
-  explicit ConstantTensorContainer(at::Tensor x) : x_(x) {}
+  explicit ConstantTensorContainer(at::Tensor x)
+      : x_(std::move(std::move(x))) {}
 
   at::Tensor get() {
     return x_;
@@ -418,7 +420,7 @@ struct ReLUClass : public torch::CustomClassHolder {
 };
 
 struct FlattenWithTensorOp : public torch::CustomClassHolder {
-  explicit FlattenWithTensorOp(at::Tensor t) : t_(t) {}
+  explicit FlattenWithTensorOp(at::Tensor t) : t_(std::move(std::move(t))) {}
 
   at::Tensor get() {
     return t_;
@@ -434,7 +436,7 @@ struct FlattenWithTensorOp : public torch::CustomClassHolder {
 };
 
 struct ContainsTensor : public torch::CustomClassHolder {
-  explicit ContainsTensor(at::Tensor t) : t_(t) {}
+  explicit ContainsTensor(at::Tensor t) : t_(std::move(std::move(t))) {}
 
   at::Tensor get() {
     return t_;
@@ -673,17 +675,17 @@ TORCH_LIBRARY(_TorchScriptTesting, m) {
               std::tuple<std::string, at::Tensor>,
               std::tuple<std::string, std::vector<at::Tensor>>> data)
               -> c10::intrusive_ptr<TensorQueue> {
-            return TensorQueue::deserialize(data);
+            return TensorQueue::deserialize(std::move(data));
           });
 }
 
-at::Tensor takes_foo(c10::intrusive_ptr<Foo> foo, at::Tensor x) {
+at::Tensor takes_foo(const c10::intrusive_ptr<Foo>& foo, const at::Tensor& x) {
   return foo->add_tensor(x);
 }
 
 std::vector<at::Tensor> takes_foo_list_return(
-    c10::intrusive_ptr<Foo> foo,
-    at::Tensor x) {
+    const c10::intrusive_ptr<Foo>& foo,
+    const at::Tensor& x) {
   std::vector<at::Tensor> result;
   result.reserve(3);
   auto a = foo->add_tensor(x);
@@ -696,26 +698,30 @@ std::vector<at::Tensor> takes_foo_list_return(
 }
 
 std::tuple<at::Tensor, at::Tensor> takes_foo_tuple_return(
-    c10::intrusive_ptr<Foo> foo,
-    at::Tensor x) {
+    const c10::intrusive_ptr<Foo>& foo,
+    const at::Tensor& x) {
   auto a = foo->add_tensor(x);
   auto b = foo->add_tensor(a);
   return std::make_tuple(a, b);
 }
 
-at::Tensor takes_foo_tensor_return(c10::intrusive_ptr<Foo> foo, at::Tensor x) {
+at::Tensor takes_foo_tensor_return(
+    const c10::intrusive_ptr<Foo>& foo,
+    const at::Tensor& x) {
   return at::ones({foo->x, foo->y}, at::device(at::kCPU).dtype(at::kInt));
 }
 
-void queue_push(c10::intrusive_ptr<TensorQueue> tq, at::Tensor x) {
+void queue_push(
+    const c10::intrusive_ptr<TensorQueue>& tq,
+    const at::Tensor& x) {
   tq->push(x);
 }
 
-at::Tensor queue_pop(c10::intrusive_ptr<TensorQueue> tq) {
+at::Tensor queue_pop(const c10::intrusive_ptr<TensorQueue>& tq) {
   return tq->pop();
 }
 
-int64_t queue_size(c10::intrusive_ptr<TensorQueue> tq) {
+int64_t queue_size(const c10::intrusive_ptr<TensorQueue>& tq) {
   return tq->size();
 }
 

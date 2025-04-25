@@ -52,8 +52,7 @@
 #include <utility>
 #include <vector>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 class FuserTest : public ::testing::Test {
   void SetUp() override {
@@ -64,7 +63,7 @@ class FuserTest : public ::testing::Test {
   }
 
  private:
-  bool old_nvfuser_value_;
+  bool old_nvfuser_value_{};
 };
 
 TEST_F(FuserTest, TestSimple_CUDA) {
@@ -276,5 +275,4 @@ TEST_F(FuserTest, KernelCaching) {
   // and therefore share a KernelSpec to share kernels for specializations
   ASSERT_EQ(second_key, expected_key);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

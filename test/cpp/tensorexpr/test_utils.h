@@ -70,8 +70,8 @@ using namespace torch::jit::tensorexpr;
     ASSERT_EQ(node_->op_type(), kRand); \
   }
 
-void checkIR(StmtPtr s, const std::string& pattern);
-void checkExprIR(ExprPtr e, const std::string& pattern);
+void checkIR(const StmtPtr& s, const std::string& pattern);
+void checkExprIR(const ExprPtr& e, const std::string& pattern);
 void checkExprIR(const ExprHandle& e, const std::string& pattern);
 
 } // namespace jit

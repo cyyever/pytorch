@@ -11,10 +11,9 @@
 
 #include <ATen/TensorOperators.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
-inline c10::AliasAnalysisKind aliasAnalysisFromSchema() {
+inline static c10::AliasAnalysisKind aliasAnalysisFromSchema() {
   return c10::AliasAnalysisKind::FROM_SCHEMA;
 }
 
@@ -66,7 +65,7 @@ class TopologicalMoveTest : public ::testing::Test {
     node->output()->setDebugName(name);
     nodes[name] = node;
 
-    if (blockInputNames.size() != 0) {
+    if (!blockInputNames.empty()) {
       node->addBlock();
       std::vector<Value*> blockDeps;
       for (const auto& name_ : blockInputNames) {
@@ -102,7 +101,7 @@ class TopologicalMoveTest : public ::testing::Test {
   bool moveWithChecks(
       const std::string& toInsert,
       const std::string& insertPoint,
-      std::function<bool(Node*, Node*)> func) {
+      const std::function<bool(Node*, Node*)>& func) {
     auto n = nodes.at(toInsert);
     auto insert = nodes.at(insertPoint);
     bool isAfter = n->isAfter(insert);
@@ -262,8 +261,8 @@ namespace {
 Node* insertIf(
     Graph& g,
     Value* condValue,
-    std::function<std::vector<Value*>()> trueInst,
-    std::function<std::vector<Value*>()> falseInst) {
+    const std::function<std::vector<Value*>()>& trueInst,
+    const std::function<std::vector<Value*>()>& falseInst) {
   auto if_ = g.insertNode(g.create(prim::If, 0));
   if_->addInput(condValue); // condition value
   auto trueBlock = if_->addBlock();
@@ -1706,5 +1705,4 @@ TEST(TypeHashing, HashTypes) {
   ASSERT_NE(hasher(int2_type), hasher(int3_type));
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

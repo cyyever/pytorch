@@ -4,8 +4,7 @@
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 TEST(EliminateDeadCodeTest, Basic) {
   auto graph = std::make_shared<Graph>();
 
@@ -48,5 +47,4 @@ graph():
   // Check that dead code elimin
   testing::FileCheck().run(input, *graph);
 }
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit

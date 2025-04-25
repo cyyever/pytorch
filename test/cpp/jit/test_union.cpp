@@ -4,8 +4,7 @@
 #include <test/cpp/jit/test_utils.h>
 #include <torch/csrc/jit/ir/ir.h>
 
-namespace torch {
-namespace jit {
+namespace torch::jit {
 
 class UnionTypeTest : public ::testing::Test {
  public:
@@ -31,7 +30,7 @@ class UnionTypeTest : public ::testing::Test {
   // Tuple[int, int]
   const TypePtr tup2 = TupleType::create({IntType::get(), IntType::get()});
 
-  bool hasType(UnionTypePtr u, TypePtr t) {
+  bool hasType(const UnionTypePtr& u, const TypePtr& t) {
     auto res = std::find(u->getTypes().begin(), u->getTypes().end(), t);
     return res != u->getTypes().end();
   }
@@ -145,5 +144,4 @@ TEST_F(UnionTypeTest, Subtyping_OptionalType) {
   ASSERT_FALSE(union2->isSubtypeOf(union1));
 }
 
-} // namespace jit
-} // namespace torch
+} // namespace torch::jit
