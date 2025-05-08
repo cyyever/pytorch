@@ -209,6 +209,7 @@ void FatalSignalHandler::fatalSignalHandler(int signum) {
     pid_t currentTid = static_cast<pid_t>(syscall(SYS_gettid));
     struct dirent* entry = nullptr;
     std::unique_lock<std::mutex> ul(writingMutex);
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
     while ((entry = readdir(procDir)) != nullptr) {
       if (entry->d_name[0] == '.') {
         continue;

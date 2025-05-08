@@ -60,7 +60,11 @@ static void setSignalHandler(
   if (sigemptyset(&sa.sa_mask) != 0 ||
       sigaction(signal, &sa, old_sa_ptr) != 0) {
     std::ostringstream oss;
+#ifdef _GNU_SOURCE
+    oss << "An error occurred while setting handler for " << sigdescr_np(signal)
+#else
     oss << "An error occurred while setting handler for " << strsignal(signal)
+#endif
         << ".";
     throw std::runtime_error(oss.str());
   }
@@ -155,7 +159,11 @@ static PyObject* THPModule_errorIfAnyWorkerFails(
           infop.si_code == CLD_DUMPED) { // killed by signal
         std::ostringstream oss;
         oss << "DataLoader worker (pid " << worker_pid << ") is killed "
+#ifdef _GNU_SOURCE
+            << "by signal: " << sigdescr_np(infop.si_status) << ". ";
+#else
             << "by signal: " << strsignal(infop.si_status) << ". ";
+#endif
         if (infop.si_status == SIGBUS) {
           oss << "It is possible that dataloader's workers are out of shared memory. "
               << "Please try to raise your shared memory limit.";
