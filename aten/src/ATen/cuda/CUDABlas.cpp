@@ -1858,7 +1858,6 @@ void scaled_gemm(
     bool use_rowwise) {
   // Note: see `cublasCommonArgs` for various non-intuitive manupulations
   // of input arguments to this function.
-#if CUDA_VERSION >= 11080 || defined(USE_ROCM)
   const auto computeType = CUBLAS_COMPUTE_32F;
   const auto scaleType = CUDA_R_32F;
   const float alpha_val = 1.0;
@@ -2037,8 +2036,6 @@ void scaled_gemm(
       " scaleType ",
       scaleType);
   return;
-#endif // if CUDA_VERSION >= 11080 || defined(USE_ROCM)
-  TORCH_CHECK(false, "scaled_gemm is only supported for CUDA 11.8 and above");
 }
 
 void int8_gemm(
