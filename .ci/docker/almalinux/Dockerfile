@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=12.4
+ARG CUDA_VERSION=12.6
 ARG BASE_TARGET=cuda${CUDA_VERSION}
 ARG ROCM_IMAGE=rocm/dev-almalinux-8:6.3-complete
 FROM amd64/almalinux:8.10-20250519 as base
@@ -73,7 +73,7 @@ RUN bash ./install_mnist.sh
 
 FROM base as all_cuda
 COPY --from=cuda12.6  /usr/local/cuda-12.6 /usr/local/cuda-12.6
-COPY --from=cuda12.4  /usr/local/cuda-12.8 /usr/local/cuda-12.8
+COPY --from=cuda12.8  /usr/local/cuda-12.8 /usr/local/cuda-12.8
 
 # Final step
 FROM ${BASE_TARGET} as final
