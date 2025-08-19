@@ -2992,8 +2992,10 @@ class DeviceCachingAllocator {
   bool release_cached_blocks(
       const std::shared_ptr<GatheredContext>& context,
       MempoolId_t mempool_id) {
-    if (mempool_id.first == 0 && mempool_id.second == 0 &&
-        captures_underway.empty()) {
+    if (mempool_id.first == 0 && mempool_id.second == 0) {
+
+     if (   captures_underway.empty()) {
+        TORCH_WARN("Free all blocks");
       // If there is no active mempool, we work on releasing *all* blocks.
 
       // First ensure that all blocks that can't currently be allocated due to
@@ -3003,6 +3005,12 @@ class DeviceCachingAllocator {
       // Free all non-split cached blocks to system allocator
       release_blocks(large_blocks, context);
       release_blocks(small_blocks, context);
+        
+      } else {
+        TORCH_WARN("Can't free all blocks");
+      // If there is no active mempool, we work on releasing *all* blocks.
+
+      }
     }
 
     for (auto it = graph_pools_freeable.begin();
@@ -3031,6 +3039,26 @@ class DeviceCachingAllocator {
       }
     }
 
+      auto allocated_bytes =
+          stats.allocated_bytes[static_cast<size_t>(StatType::AGGREGATE)]
+              .current;
+      auto reserved_bytes =
+          stats.reserved_bytes[static_cast<size_t>(StatType::AGGREGATE)]
+              .current;
+      size_t allocated_in_private_pools = 0;
+      auto get_size_block = [](const BlockPool& pool) {
+        size_t res = 0;
+        for (const auto& block : pool.blocks) {
+          res += block->size;
+        }
+        return res;
+      };
+      for (const auto& p : graph_pools) {
+        allocated_in_private_pools += get_size_block(p.second->large_blocks);
+        allocated_in_private_pools += get_size_block(p.second->small_blocks);
+      }
+
+        TORCH_WARN("After empty allocated_bytes is ",format_size(allocated_bytes),"reserved bytes is ",format_size(reserved_bytes)," allocated_in_private_pools size is ",format_size(allocated_in_private_pools));
     return true;
   }
 
