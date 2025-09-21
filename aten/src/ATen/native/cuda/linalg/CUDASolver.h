@@ -2,12 +2,12 @@
 
 #include <ATen/cuda/CUDAContext.h>
 
-#if defined(CUDART_VERSION) && defined(CUSOLVER_VERSION) && CUSOLVER_VERSION >= 11000
+#if defined(CUDART_VERSION) && defined(CUSOLVER_VERSION)
 // cuSOLVER version >= 11000 includes 64-bit API
 #define USE_CUSOLVER_64_BIT
 #endif
 
-#if defined(CUDART_VERSION) && defined(CUSOLVER_VERSION) && CUSOLVER_VERSION >= 11701
+#if defined(CUDART_VERSION) && defined(CUSOLVER_VERSION)
 // cuSOLVER version >= 11701 includes 64-bit API for batched syev
 #define USE_CUSOLVER_64_BIT_XSYEV_BATCHED
 #endif

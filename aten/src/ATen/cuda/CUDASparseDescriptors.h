@@ -123,8 +123,6 @@ class TORCH_CUDA_CPP_API CuSparseBsrsm2Info
 
 #endif // AT_USE_HIPSPARSE_TRIANGULAR_SOLVE
 
-#if AT_USE_CUSPARSE_GENERIC_API() || AT_USE_HIPSPARSE_GENERIC_API()
-
 cusparseIndexType_t getCuSparseIndexType(const c10::ScalarType& scalar_type);
 
 #if AT_USE_CUSPARSE_NON_CONST_DESCRIPTORS() || AT_USE_HIPSPARSE_NON_CONST_DESCRIPTORS()
@@ -226,7 +224,6 @@ class TORCH_CUDA_CPP_API CuSparseSpMatCsrDescriptor
         values.data_ptr()));
   }
 
-#if AT_USE_CUSPARSE_GENERIC_SPSV()
   void set_mat_fill_mode(bool upper) {
     cusparseFillMode_t fill_mode =
         upper ? CUSPARSE_FILL_MODE_UPPER : CUSPARSE_FILL_MODE_LOWER;
@@ -246,10 +243,8 @@ class TORCH_CUDA_CPP_API CuSparseSpMatCsrDescriptor
         &diag_type,
         sizeof(diag_type)));
   }
-#endif
 };
 
-#if AT_USE_CUSPARSE_GENERIC_SPSV()
 class TORCH_CUDA_CPP_API CuSparseSpSVDescriptor
     : public CuSparseDescriptor<cusparseSpSVDescr, &cusparseSpSV_destroyDescr> {
  public:
@@ -259,9 +254,7 @@ class TORCH_CUDA_CPP_API CuSparseSpSVDescriptor
     descriptor_.reset(raw_descriptor);
   }
 };
-#endif
 
-#if AT_USE_CUSPARSE_GENERIC_SPSM()
 class TORCH_CUDA_CPP_API CuSparseSpSMDescriptor
     : public CuSparseDescriptor<cusparseSpSMDescr, &cusparseSpSM_destroyDescr> {
  public:
@@ -271,7 +264,6 @@ class TORCH_CUDA_CPP_API CuSparseSpSMDescriptor
     descriptor_.reset(raw_descriptor);
   }
 };
-#endif
 
 class TORCH_CUDA_CPP_API CuSparseSpGEMMDescriptor
     : public CuSparseDescriptor<cusparseSpGEMMDescr, &cusparseSpGEMM_destroyDescr> {
@@ -282,7 +274,5 @@ class TORCH_CUDA_CPP_API CuSparseSpGEMMDescriptor
     descriptor_.reset(raw_descriptor);
   }
 };
-
-#endif // AT_USE_CUSPARSE_GENERIC_API() || AT_USE_HIPSPARSE_GENERIC_API()
 
 } // namespace at::cuda::sparse

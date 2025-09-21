@@ -127,13 +127,6 @@ void apply_ldl_solve_cusolver(
     const Tensor& pivots,
     const Tensor& B,
     bool upper) {
-#if !(defined(CUDART_VERSION) && defined(CUSOLVER_VERSION) && \
-    CUSOLVER_VERSION >= 11102)
-  TORCH_CHECK(
-      false,
-      "Calling torch.linalg.ldl_solve on a CUDA tensor requires compiling ",
-      "PyTorch with cuSOLVER. Please use PyTorch built with cuSOLVER 11.1.2+ (CUDA 11.3.1+) support.");
-#else
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(batchCount(A) > 0);
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(batchCount(pivots.unsqueeze(-1)) > 0);
   auto batch_size = batchCount(B);
@@ -212,7 +205,6 @@ void apply_ldl_solve_cusolver(
   // info from sytrs only reports if the i-th parameter is wrong
   // so we don't need to check it all the time
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(info.item().toInt() == 0);
-#endif
 }
 
 } // anonymous namespace
