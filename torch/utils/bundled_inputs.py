@@ -288,7 +288,7 @@ def augment_many_model_functions_with_bundled_inputs(
             deflated_inputs = []
             parts = []
             for inp_idx, args in enumerate(input_list):
-                if not isinstance(args, tuple) and not isinstance(args, list):  # type: ignore[arg-type]
+                if not isinstance(args, tuple) and not isinstance(args, list):
                     raise TypeError(
                         f"Error bundled input for function {function_name} idx: {inp_idx} is not a Tuple or a List"
                     )
