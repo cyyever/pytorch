@@ -380,7 +380,7 @@ class LazyBatchNorm1d(_LazyNormBase, _BatchNorm):
             in both training and eval modes. Default: ``True``
     """
 
-    cls_to_become = BatchNorm1d  # type: ignore[assignment]
+    cls_to_become = BatchNorm1d
 
     def _check_input_dim(self, input) -> None:
         if input.dim() != 2 and input.dim() != 3:
@@ -492,7 +492,7 @@ class LazyBatchNorm2d(_LazyNormBase, _BatchNorm):
             in both training and eval modes. Default: ``True``
     """
 
-    cls_to_become = BatchNorm2d  # type: ignore[assignment]
+    cls_to_become = BatchNorm2d
 
     def _check_input_dim(self, input) -> None:
         if input.dim() != 4:
@@ -604,7 +604,7 @@ class LazyBatchNorm3d(_LazyNormBase, _BatchNorm):
             in both training and eval modes. Default: ``True``
     """
 
-    cls_to_become = BatchNorm3d  # type: ignore[assignment]
+    cls_to_become = BatchNorm3d
 
     def _check_input_dim(self, input) -> None:
         if input.dim() != 5:

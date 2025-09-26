@@ -285,7 +285,7 @@ class LazyLinear(LazyModuleMixin, Linear):
 
     """
 
-    cls_to_become = Linear  # type: ignore[assignment]
+    cls_to_become = Linear
     # pyrefly: ignore [bad-override]
     weight: UninitializedParameter
     bias: UninitializedParameter  # type: ignore[assignment]
