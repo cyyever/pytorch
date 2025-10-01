@@ -1119,9 +1119,8 @@ def _context_parallel_dispatcher(
             )
             _cp_global_vars.torch_function_mode = tf_mode
 
-        with tf_mode:
-            with _enable_cp_dtensor_dispatcher():
-                yield
+        with tf_mode, _enable_cp_dtensor_dispatcher():
+            yield
     else:
         raise NotImplementedError("torch dispatch mode is not supported yet.")
 
