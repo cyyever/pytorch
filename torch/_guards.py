@@ -914,7 +914,7 @@ class TracingContext:
         prior = {}
         ctx = TracingContext.get()
 
-        for key in kwargs.keys():
+        for key in kwargs:
             # KeyError on invalid entry
             prior[key] = getattr(ctx, key)
         for key, val in kwargs.items():
