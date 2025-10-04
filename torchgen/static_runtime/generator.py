@@ -388,7 +388,7 @@ test_tensor_dim_ops_1_ = frozenset(
     )
 )
 test_tensor_dim_ops_2_ = frozenset(
-    ("addmm", "mm", "nuclear_norm", "diag", "_addmm_activation", "matrix_H", "t")
+    ("addmm", "mm", "diag", "_addmm_activation", "matrix_H", "t")
 )
 
 
@@ -583,7 +583,6 @@ no_memory_resize_ops = frozenset(
         "index_add",
         "dot",
         "vdot",
-        "nuclear_norm",
         "histc",
         "l1_loss",
         "multi_margin_loss",

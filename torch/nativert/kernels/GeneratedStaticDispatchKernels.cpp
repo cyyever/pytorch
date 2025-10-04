@@ -1354,21 +1354,6 @@ REGISTER_CPU_KERNEL("torch.ops.aten.fix.default", aten_fix_default, {
   at::native::fix_out(self, out);
 })
 
-REGISTER_CPU_KERNEL(
-    "torch.ops.aten.nuclear_norm.default",
-    aten_nuclear_norm_default,
-    {
-      const auto& self = KernelInput(0).toTensor();
-      const auto keepdim = KernelInput(1).toBool();
-      if (KernelOutput(0).isNone()) {
-        KernelOutput(0) = at::native::nuclear_norm(self, keepdim);
-        return;
-      }
-      auto& out = KernelOutput(0).toTensor();
-      fastResizeToZero(out);
-      at::native::nuclear_norm_out(self, keepdim, out);
-    })
-
 REGISTER_CPU_KERNEL("torch.ops.aten.subtract.Tensor", aten_subtract_Tensor, {
   const auto& self = KernelInput(0).toTensor();
   const auto& other = KernelInput(1).toTensor();

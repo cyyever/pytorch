@@ -247,8 +247,6 @@ all_generated_ops:
 - aten::frac
 - aten::fractional_max_pool2d
 - aten::fractional_max_pool3d
-- aten::frobenius_norm.dim
-- aten::frobenius_norm.out
 - aten::full
 - aten::full_like
 - aten::gather
@@ -449,10 +447,6 @@ all_generated_ops:
 - aten::norm.out
 - aten::normal.float_float
 - aten::normal_
-- aten::nuclear_norm
-- aten::nuclear_norm.dim
-- aten::nuclear_norm.dim_out
-- aten::nuclear_norm.out
 - aten::numel
 - aten::one_hot
 - aten::ones

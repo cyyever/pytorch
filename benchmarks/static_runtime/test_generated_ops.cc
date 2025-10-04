@@ -3160,38 +3160,6 @@ TEST(StaticRuntime, autogen_fix) {
       /*check_resize=*/true);
 }
 
-TEST(StaticRuntime, autogen_nuclear_norm) {
-  const std::string script = R"IR(
-    graph(%self: Tensor, %keepdim: bool):
-        %bias: None = prim::Constant()
-        %ret = aten::nuclear_norm(%self, %keepdim)
-        %cloned = aten::clone(%ret, %bias)
-        return (%cloned)
-  )IR";
-
-  auto self0 = at::rand({8, 8});
-  auto keepdim0 = false;
-  std::vector<IValue> args{self0, keepdim0};
-  testStaticRuntime(
-      script,
-      args,
-      {},
-      /*use_allclose=*/false,
-      /*use_equalnan=*/false,
-      /*check_resize=*/false);
-
-  auto self1 = at::rand({32, 32});
-  auto keepdim1 = false;
-  std::vector<IValue> args2{self1, keepdim1};
-  testStaticRuntime(
-      script,
-      args,
-      args2,
-      /*use_allclose=*/false,
-      /*use_equalnan=*/false,
-      /*check_resize=*/false);
-}
-
 TEST(StaticRuntime, autogen_subtract_Tensor) {
   const std::string script = R"IR(
     graph(%self: Tensor, %other: Tensor, %alpha: int):

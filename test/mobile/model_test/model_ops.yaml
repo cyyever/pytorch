@@ -154,7 +154,6 @@ root_operators:
   aten::floor_divide.Scalar: 37
   aten::floordiv.int: 50
   aten::format: 49
-  aten::frobenius_norm.dim: 1
   aten::full: 18
   aten::full_like: 18
   aten::gather: 25

@@ -416,8 +416,6 @@ void handleBlock(Block* block, AutocastContext initial_state) {
       case aten::gelu:
       case aten::layer_norm:
       case aten::group_norm:
-      case aten::frobenius_norm:
-      case aten::nuclear_norm:
       case aten::cosine_similarity:
       case aten::cosine_embedding_loss:
       case aten::nll_loss:

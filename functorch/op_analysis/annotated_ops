@@ -304,8 +304,6 @@ poisson, factory
 binomial, factory
 norm, reduction
 frexp, composite pointwise
-frobenius_norm, reduction
-nuclear_norm, reduction
 clone, view/reshape
 positive, composite pointwise
 sub, primitive pointwise

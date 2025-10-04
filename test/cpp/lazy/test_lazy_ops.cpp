@@ -1994,34 +1994,6 @@ TEST_F(LazyOpsTest, TestNormNuclear) {
   });
 }
 
-TEST_F(LazyOpsTest, TestFrobeniusNormInDim) {
-  torch::Tensor a = torch::rand(
-      {4, 3, 4}, torch::TensorOptions(torch::kFloat).device(DefaultDevice()));
-  for (int dim : {1, -2}) {
-    torch::Tensor b = torch::frobenius_norm(a, {dim}, /*keepdim=*/false);
-    ForEachDevice([&](const torch::Device& device) {
-      torch::Tensor lazy_a = CopyToDevice(a, device);
-      torch::Tensor lazy_b =
-          torch::frobenius_norm(lazy_a, {dim}, /*keepdim=*/false);
-      AllClose(b, lazy_b);
-    });
-  }
-}
-
-TEST_F(LazyOpsTest, TestFrobeniusNormInDims) {
-  torch::Tensor a = torch::rand(
-      {4, 3, 4}, torch::TensorOptions(torch::kFloat).device(DefaultDevice()));
-  for (auto dims : std::vector<std::vector<int64_t>>{{1, 2}, {-2, -1}}) {
-    torch::Tensor b = torch::frobenius_norm(a, dims, /*keepdim=*/false);
-    ForEachDevice([&](const torch::Device& device) {
-      torch::Tensor lazy_a = CopyToDevice(a, device);
-      torch::Tensor lazy_b =
-          torch::frobenius_norm(lazy_a, dims, /*keepdim=*/false);
-      AllClose(b, lazy_b);
-    });
-  }
-}
-
 TEST_F(LazyOpsTest, TestGroupNorm) {
   int num_channels = 6;
   torch::Tensor input = torch::rand(
@@ -2235,17 +2207,6 @@ TEST_F(LazyOpsTest, TestLayerNormBackward) {
       });
     }
   }
-}
-
-TEST_F(LazyOpsTest, TestNuclearNorm) {
-  torch::Tensor a = torch::rand(
-      {4, 3}, torch::TensorOptions(torch::kFloat).device(DefaultDevice()));
-  torch::Tensor b = torch::nuclear_norm(a);
-  ForEachDevice([&](const torch::Device& device) {
-    torch::Tensor lazy_a = CopyToDevice(a, device);
-    torch::Tensor lazy_b = torch::nuclear_norm(lazy_a);
-    AllClose(b, lazy_b);
-  });
 }
 
 TEST_F(LazyOpsTest, TestPairwiseDistance) {

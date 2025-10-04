@@ -1955,28 +1955,6 @@ REGISTER_OPERATOR_FUNCTOR(aten::fix, aten_fix, [](Node* n) -> SROperator {
   return nullptr;
 })
 
-REGISTER_OPERATOR_FUNCTOR(
-    aten::nuclear_norm,
-    aten_nuclear_norm,
-    [](Node* n) -> SROperator {
-      if (n->matches(torch::schema(
-              "aten::nuclear_norm(Tensor self, bool keepdim=False) -> Tensor"))) {
-        return [](ProcessedNode* p_node) {
-          const auto& self = p_node->Input(0).toTensor();
-          const auto keepdim = p_node->Input(1).toBool();
-          if (p_node->Output(0).isNone()) {
-            p_node->Output(0) = at::native::nuclear_norm(self, keepdim);
-            return;
-          }
-          auto& out = p_node->Output(0).toTensor();
-          fastResizeToZero(out);
-          at::native::nuclear_norm_out(self, keepdim, out);
-        };
-      }
-      LogAndDumpSchema(n);
-      return nullptr;
-    })
-
 REGISTER_OPERATOR_FUNCTOR(aten::subtract, aten_subtract, [](Node* n) -> SROperator {
   if (n->matches(torch::schema(
           "aten::subtract.Tensor(Tensor self, Tensor other, *, Scalar alpha=1) -> Tensor"))) {

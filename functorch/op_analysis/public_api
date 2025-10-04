@@ -236,7 +236,6 @@ diagonal
 dot
 eig
 einsum
-frobenius_norm
 geqrf
 ger
 inner
@@ -284,7 +283,6 @@ matrix_exp
 mm
 mv
 norm
-nuclear_norm
 orgqr
 ormqr
 outer
