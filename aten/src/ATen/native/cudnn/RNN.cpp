@@ -1405,7 +1405,7 @@ Tensor _cudnn_rnn_flatten_weight(
       /*set_orig_weights_to_flat_buf=*/true));
 }
 
-Tensor _cudnn_rnn_flatten_weight_meta(
+static Tensor _cudnn_rnn_flatten_weight_meta(
     TensorList weight_arr,
     int64_t weight_stride0,
     c10::SymInt input_size,
@@ -1441,7 +1441,7 @@ Tensor _cudnn_rnn_flatten_weight_meta(
   return at::zeros_symint({num_weights}, weight_arr[0].options());
 }
 
-const char* WEIGHT_FORMAT_WARN =
+static const char* WEIGHT_FORMAT_WARN =
     "RNN module weights are not part of single contiguous "
     "chunk of memory. This means they need to be compacted "
     "at every call, possibly greatly increasing memory usage. "
@@ -1735,7 +1735,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   return std::make_tuple(output, hy, cy, reserve, weight_buf);
 }
 
-std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_input(
+static std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_input(
     const Tensor& input_r,
     const Tensor& weight_buf,
     const Tensor& hx,
@@ -1965,7 +1965,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_input(
 
 // NB: This MUST BE CALLED AFTER _cudnn_rnn_backward_input.
 // We'll give a user friendly combined function...
-std::vector<Tensor> _cudnn_rnn_backward_weight(
+static std::vector<Tensor> _cudnn_rnn_backward_weight(
     // TODO: I think tensor geometry sufficient for weight_buf/weight
     const Tensor& input_r,
     TensorList weight_arr,

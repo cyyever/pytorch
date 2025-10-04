@@ -46,7 +46,7 @@ cudnnHandle_t getCudnnHandle() {
   // This thread local unique_ptrs will be destroyed when the thread terminates,
   // releasing its reserved handles back to the pool.
   static auto pool = std::make_shared<CudnnPoolType>();
-  thread_local std::unique_ptr<CudnnPoolType::PoolWindow> myPoolWindow(
+  static thread_local std::unique_ptr<CudnnPoolType::PoolWindow> myPoolWindow(
       pool->newPoolWindow());
 
   auto handle = myPoolWindow->reserve(device);

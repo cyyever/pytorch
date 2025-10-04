@@ -601,7 +601,7 @@ static void svd_cusolver_gesvdaStridedBatched(
 // If not converged, return a vector that contains indices of the non-converging batches.
 // If the returned vector is empty, all the matrices are converged.
 // This function will cause a device-host sync.
-std::vector<int64_t> _check_gesvdj_convergence(const Tensor& infos, int64_t non_converging_info) {
+static std::vector<int64_t> _check_gesvdj_convergence(const Tensor& infos, int64_t non_converging_info) {
   at::Tensor infos_cpu = infos.cpu();
   auto infos_cpu_data = infos_cpu.data_ptr<int>();
 
@@ -628,7 +628,7 @@ std::vector<int64_t> _check_gesvdj_convergence(const Tensor& infos, int64_t non_
 // format the non-converging batches string as either (no leading or trailing whitespaces)
 // batches 2, 3, 5  // or
 // batches 2, 3, 5, 7, 11 and other 65535 batches
-std::string _format_non_converging_batches(const std::vector<int64_t>& batches) {
+static std::string _format_non_converging_batches(const std::vector<int64_t>& batches) {
   std::stringstream ss;
   const int too_long = 5;
 
@@ -935,7 +935,7 @@ Tensor _cholesky_solve_helper_cuda_cusolver(const Tensor& self, const Tensor& A,
 }
 
 
-void _cholesky_inverse_cusolver_potrs_based(Tensor& result, Tensor& infos, bool upper) {
+static void _cholesky_inverse_cusolver_potrs_based(Tensor& result, Tensor& infos, bool upper) {
   at::Tensor input_working_copy = cloneBatchedColumnMajor(result);
   at::Tensor infos_gpu = at::zeros({1}, result.options().dtype(at::kInt));
   result.fill_(0);

@@ -13,9 +13,8 @@ using shared_ptr_class_ = py::class_<T, std::shared_ptr<T>>;
 namespace torch {
 namespace nativert {
 
-using torch::nativert::detail::argsToIValue;
 
-void initModelRunnerPybind(py::module& m) {
+static void initModelRunnerPybind(py::module& m) {
 #if !defined(OVRSOURCE)
   shared_ptr_class_<ModelRunner>(m, "PyModelRunner")
       .def(

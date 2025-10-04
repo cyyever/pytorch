@@ -22,7 +22,7 @@
 namespace torch::jit::fuser::cuda {
 
 // See NOTE [ USE OF NVRTC AND DRIVER API ]
-const at::cuda::NVRTC& nvrtc() {
+static const at::cuda::NVRTC& nvrtc() {
   return at::globalContext().getNVRTC();
 }
 
@@ -261,6 +261,6 @@ static std::shared_ptr<FusedKernel> createFusionKernel(
       has_random);
 }
 
-RegisterFusionBackend reg(DeviceType::CUDA, createFusionKernel);
+static RegisterFusionBackend reg(DeviceType::CUDA, createFusionKernel);
 
 } // namespace torch::jit::fuser::cuda

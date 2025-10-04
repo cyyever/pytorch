@@ -96,7 +96,7 @@ DEFINE_DISPATCH(bf16_dot_stub);
 
 namespace blas_impl {
 #if !defined(C10_MOBILE)
-void fp16_gemv_trans(
+static void fp16_gemv_trans(
     const int m,
     const int n,
     const float alpha,
@@ -539,7 +539,7 @@ static inline void scal(int64_t n, scalar_t a, scalar_t *x, int64_t incx)
 }
 
 template<typename scalar_t>
-void gemv(char trans, int64_t m, int64_t n, scalar_t alpha, const scalar_t *a, int64_t lda, const scalar_t *x, int64_t incx, scalar_t beta, scalar_t *y, int64_t incy) {
+static void gemv(char trans, int64_t m, int64_t n, scalar_t alpha, const scalar_t *a, int64_t lda, const scalar_t *x, int64_t incx, scalar_t beta, scalar_t *y, int64_t incy) {
   if(n == 1) lda = m;
 
 #if AT_BUILD_WITH_BLAS()
@@ -687,7 +687,7 @@ static scalar_t dot_impl_floating(int64_t n, const scalar_t* x, int64_t incx, co
 }
 
 template <typename scalar_t>
-scalar_t dot_impl(int64_t n, const scalar_t* x, int64_t incx, const scalar_t* y, int64_t incy) {
+static scalar_t dot_impl(int64_t n, const scalar_t* x, int64_t incx, const scalar_t* y, int64_t incy) {
   if (n == 1) {
     incx = 1;
     incy = 1;
@@ -753,7 +753,7 @@ struct vdot_op {
 } // anonymous namespace
 
 template <typename scalar_t>
-scalar_t vdot_impl(int64_t n, const scalar_t* x, int64_t incx, const scalar_t* y, int64_t incy) {
+static scalar_t vdot_impl(int64_t n, const scalar_t* x, int64_t incx, const scalar_t* y, int64_t incy) {
   if (n == 1) {
     incx = 1;
     incy = 1;

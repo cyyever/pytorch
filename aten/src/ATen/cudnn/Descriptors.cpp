@@ -159,7 +159,7 @@ void FilterDescriptor::set(const at::Tensor &t, const at::MemoryFormat memory_fo
   set(getDataType(t), static_cast<int>(dim), size, filter_format);
 }
 
-std::string cudnnMemoryFormatToString(cudnnTensorFormat_t tformat) {
+static std::string cudnnMemoryFormatToString(cudnnTensorFormat_t tformat) {
   switch (tformat) {
     case CUDNN_TENSOR_NCHW:
       return "CUDNN_TENSOR_NCHW";

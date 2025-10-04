@@ -1349,6 +1349,6 @@ void CudaCodeGen::CompileToNVRTC(
 
 CudaCodeGen::~CudaCodeGen() = default;
 
-RegisterCodeGen<CudaCodeGen> cuda_codegen_reg("cuda_codegen");
+static RegisterCodeGen<CudaCodeGen> cuda_codegen_reg("cuda_codegen");
 
 } // namespace torch::jit::tensorexpr

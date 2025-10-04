@@ -23,7 +23,7 @@ void Xcoo2csr(const int *coorowind, int64_t nnz, int64_t m, int *csrrowptr) {
   TORCH_CUDASPARSE_CHECK(cusparseXcoo2csr(handle, coorowind, i_nnz, i_m, csrrowptr, CUSPARSE_INDEX_BASE_ZERO));
 }
 
-cusparseOperation_t convertTransToCusparseOperation(char trans) {
+static cusparseOperation_t convertTransToCusparseOperation(char trans) {
   if (trans == 't') return CUSPARSE_OPERATION_TRANSPOSE;
   else if (trans == 'n') return CUSPARSE_OPERATION_NON_TRANSPOSE;
   else if (trans == 'c') return CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE;

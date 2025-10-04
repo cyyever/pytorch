@@ -63,7 +63,7 @@
 // algo, under the hood, cudnn will run with the slower kernel since it sees
 // fastest algorithm combination with a sub optimal mathType.
 
-constexpr size_t operator"" _TiB(unsigned long long n) {
+static constexpr size_t operator"" _TiB(unsigned long long n) {
   return size_t(n) * 1024 * 1024 * 1024 * 1024;
 }
 
@@ -87,7 +87,7 @@ struct ConvolutionArgs {
       : input(input), output(output), weight(weight) {}
 };
 
-std::ostream& operator<<(std::ostream& out, const ConvolutionArgs& args) {
+static std::ostream& operator<<(std::ostream& out, const ConvolutionArgs& args) {
   out << repro_from_args(args.params) // already has a trailing newline
       << args.params // already has a trailing newline
       << "input: " << args.idesc // already has a trailing newline
@@ -135,9 +135,9 @@ struct BenchmarkCache {
   }
 };
 
-BenchmarkCache<cudnnConvolutionFwdAlgoPerf_t> fwd_algos;
-BenchmarkCache<cudnnConvolutionBwdDataAlgoPerf_t> bwd_data_algos;
-BenchmarkCache<cudnnConvolutionBwdFilterAlgoPerf_t> bwd_filter_algos;
+static BenchmarkCache<cudnnConvolutionFwdAlgoPerf_t> fwd_algos;
+static BenchmarkCache<cudnnConvolutionBwdDataAlgoPerf_t> bwd_data_algos;
+static BenchmarkCache<cudnnConvolutionBwdFilterAlgoPerf_t> bwd_filter_algos;
 
 // TODO: Stop manually allocating CUDA memory; allocate an ATen byte
 // tensor instead.
@@ -166,7 +166,7 @@ struct Workspace {
 template <typename perf_t>
 struct algorithm_search {};
 
-cudnnStatus_t getWorkspaceSize(
+static cudnnStatus_t getWorkspaceSize(
     const ConvolutionArgs& args,
     cudnnConvolutionFwdAlgo_t algo,
     size_t* sz) {
@@ -179,7 +179,7 @@ cudnnStatus_t getWorkspaceSize(
       algo,
       sz);
 }
-cudnnStatus_t getWorkspaceSize(
+static cudnnStatus_t getWorkspaceSize(
     const ConvolutionArgs& args,
     cudnnConvolutionBwdDataAlgo_t algo,
     size_t* sz) {
@@ -192,7 +192,7 @@ cudnnStatus_t getWorkspaceSize(
       algo,
       sz);
 }
-cudnnStatus_t getWorkspaceSize(
+static cudnnStatus_t getWorkspaceSize(
     const ConvolutionArgs& args,
     cudnnConvolutionBwdFilterAlgo_t algo,
     size_t* sz) {
@@ -207,7 +207,7 @@ cudnnStatus_t getWorkspaceSize(
 }
 
 template <typename algo_t>
-size_t getMaxWorkspaceSize(
+static size_t getMaxWorkspaceSize(
     const ConvolutionArgs& args,
     const algo_t* algo,
     int n_algo) {
@@ -233,7 +233,7 @@ size_t getMaxWorkspaceSize(
 }
 
 template <typename perf_t>
-std::vector<perf_t> getValidAlgorithms(
+static std::vector<perf_t> getValidAlgorithms(
     perf_t* perfResults,
     const ConvolutionArgs& args,
     int n_algo) {
@@ -577,7 +577,7 @@ class AlgoIterator {
   }
 };
 
-inline Tensor allocate_workspace(size_t size, const Tensor& other) {
+static inline Tensor allocate_workspace(size_t size, const Tensor& other) {
   // Sometimes cuDNN returns a workspace size > 2^63, this could makes the
   // allocation of workspace fail with some 64bit indexing error instead of an
   // OOM error. In such case, we manually fail with OOM.
@@ -696,7 +696,7 @@ static inline void split_batch_dim_to_32bit_out(
 //
 // ---------------------------------------------------------------------
 
-void raw_cudnn_convolution_forward_out_32bit(
+static void raw_cudnn_convolution_forward_out_32bit(
     const Tensor& output,
     const Tensor& input,
     const Tensor& weight,
@@ -811,7 +811,7 @@ void raw_cudnn_convolution_forward_out_v7(
 //
 // ---------------------------------------------------------------------
 
-void raw_cudnn_convolution_backward_input_out_32bit(
+static void raw_cudnn_convolution_backward_input_out_32bit(
     const at::Tensor& grad_input,
     const at::Tensor& grad_output,
     const at::Tensor& weight,
@@ -929,7 +929,7 @@ void raw_cudnn_convolution_backward_input_out_v7(
 //
 // ---------------------------------------------------------------------
 
-void raw_cudnn_convolution_backward_weight_out_32bit(
+static void raw_cudnn_convolution_backward_weight_out_32bit(
     const Tensor& grad_weight,
     const Tensor& grad_output,
     const Tensor& input,
