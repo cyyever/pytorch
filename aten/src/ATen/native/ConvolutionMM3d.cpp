@@ -287,7 +287,6 @@ Tensor view_weight_2d(const Tensor& weight_) {
 
 template <typename scalar_t>
 void slow_conv3d_update_output_frame(
-    TensorAccessor<const scalar_t, 4> input,
     TensorAccessor<scalar_t, 4> output,
     TensorAccessor<const scalar_t, 2> weight,
     bool has_bias,
@@ -295,17 +294,8 @@ void slow_conv3d_update_output_frame(
     int64_t kernel_depth,
     int64_t kernel_height,
     int64_t kernel_width,
-    int64_t stride_depth,
-    int64_t stride_height,
-    int64_t stride_width,
-    int64_t pad_depth,
-    int64_t pad_height,
-    int64_t pad_width,
     int64_t n_input_plane,
     int64_t groups,
-    int64_t input_depth,
-    int64_t input_height,
-    int64_t input_width,
     int64_t n_output_plane,
     int64_t output_depth,
     int64_t output_height,
@@ -649,7 +639,6 @@ Tensor& slow_conv3d_forward_out_cpu(const Tensor& self,
   TORCH_CHECK(output.is_contiguous(), "slow_conv3d output must be contiguous");
 
   AT_DISPATCH_ALL_TYPES_AND2(kBFloat16, kHalf, input.scalar_type(), "slow_conv3d_cpu", [&] {
-    auto input_a = input.accessor<const scalar_t, 5>();
     auto output_a = output.accessor<scalar_t, 5>();
     auto finput_a = finput.accessor<const scalar_t, 3>();
     auto weight_2d_a = weight_2d.accessor<const scalar_t, 2>();
@@ -657,11 +646,9 @@ Tensor& slow_conv3d_forward_out_cpu(const Tensor& self,
     at::parallel_for(
         0, batch_size, CONV3D_GRAIN_SALT, [&](int64_t start, int64_t end) {
           for (const auto t : c10::irange(start, end)) {
-            auto input_t = input_a[t];
             auto output_t = output_a[t];
             auto finput_t = finput_a[t];
             slow_conv3d_update_output_frame(
-                input_t,
                 output_t,
                 weight_2d_a,
                 bias.defined(),
@@ -669,17 +656,8 @@ Tensor& slow_conv3d_forward_out_cpu(const Tensor& self,
                 kernel_depth,
                 kernel_height,
                 kernel_width,
-                stride_depth,
-                stride_height,
-                stride_width,
-                pad_depth,
-                pad_height,
-                pad_width,
                 n_input_plane,
                 groups,
-                input_depth,
-                input_height,
-                input_width,
                 n_output_plane,
                 output_depth,
                 output_height,
