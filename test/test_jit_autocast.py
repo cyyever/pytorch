@@ -1,7 +1,6 @@
 # Owner(s): ["oncall: jit"]
 
 import torch
-from torch.cuda.amp import autocast
 from typing import Optional
 
 import unittest
@@ -42,7 +41,7 @@ class TestAutocast(JitTestCase):
     def test_jit_generic_autocast(self):
         @torch.jit.script
         def fn_cuda_autocast(a, b):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda'):
                 x = torch.mm(a, b)
                 y = torch.sum(x)
                 return x, y
@@ -59,7 +58,7 @@ class TestAutocast(JitTestCase):
     def test_minimal(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda'):
                 x = torch.mm(a, b)
                 y = torch.sum(x)
                 return x, y
@@ -71,7 +70,7 @@ class TestAutocast(JitTestCase):
     def test_linear_bf16(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast(dtype=torch.bfloat16):
+            with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
                 x = torch.mm(a, b)
                 y = torch.sum(x)
                 return x, y
@@ -83,7 +82,7 @@ class TestAutocast(JitTestCase):
     def test_minimal_cpu(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda'):
                 return torch.mm(a, b)
         result = fn(self.a_fp32.to('cpu'), self.b_fp32.to('cpu'))
         self.assertEqual(result.dtype, torch.float32)
@@ -92,7 +91,7 @@ class TestAutocast(JitTestCase):
     def test_minimal_off(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=False):
+            with torch.amp.autocast(device_type='cuda', enabled=False):
                 return torch.mm(a, b)
         result = fn(self.a_fp32, self.b_fp32)
         self.assertEqual(result.dtype, torch.float32)
@@ -101,7 +100,7 @@ class TestAutocast(JitTestCase):
     def test_runtime_autocast_state(self):
         @torch.jit.script
         def fn(a, b, use_amp: bool):
-            with autocast(enabled=use_amp):
+            with torch.amp.autocast(device_type='cuda', enabled=use_amp):
                 return torch.mm(a, b)
         # runtime values for autocast enable argument are not supported
         with self.assertRaises(RuntimeError):
@@ -111,7 +110,7 @@ class TestAutocast(JitTestCase):
     def test_runtime_autocast_state_expr(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=(a[0][0] > 0.5).item()):
+            with torch.amp.autocast(device_type='cuda', enabled=(a[0][0] > 0.5).item()):
                 return torch.mm(a, b)
         # runtime values for autocast enable argument are not supported
         with self.assertRaises(RuntimeError):
@@ -121,7 +120,7 @@ class TestAutocast(JitTestCase):
     def test_explicit_casts(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda') :
                 e = torch.mm(a.double(), b.double()).float()
                 f = torch.mm(c, d).double()
             g = torch.mm(c.double(), f)
@@ -136,7 +135,7 @@ class TestAutocast(JitTestCase):
     def test_duplicate_inputs(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda') :
                 e = torch.mm(a, a)
                 f = torch.mm(e, e)
             return e, f
@@ -148,7 +147,7 @@ class TestAutocast(JitTestCase):
     def test_fp32_policy(self):
         @torch.jit.script
         def fn(a):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return torch.log(a)
         result = fn(self.a_fp16)
         self.assertEqual(result.dtype, torch.float32)
@@ -157,7 +156,7 @@ class TestAutocast(JitTestCase):
     def test_fp32_policy_with_fp64(self):
         @torch.jit.script
         def fn(a):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return torch.log(a)
         # fp32 policy should not narrow fp64 to fp32!
         result = fn(self.a_fp32.double())
@@ -167,7 +166,7 @@ class TestAutocast(JitTestCase):
     def test_promote_policy(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda') :
                 e = torch.mm(a, b)
                 f = torch.addcmul(e, c, d, value=0.1)
             return e, f
@@ -179,7 +178,7 @@ class TestAutocast(JitTestCase):
     def test_promote_policy_fp64(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return torch.addcmul(a, a, b, value=0.1)
         result = fn(self.a_fp32.double(), self.b_fp32.double())
         self.assertEqual(result.dtype, torch.float64)
@@ -188,7 +187,7 @@ class TestAutocast(JitTestCase):
     def test_fp32_set_opt_dtype_policy(self):
         @torch.jit.script
         def fn(a, b, c, d, dtype: Optional[int]):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 x = torch.softmax(a, 0)
                 y = torch.softmax(b, 0, None)
                 z = torch.softmax(c, 0, torch.float64)
@@ -204,7 +203,7 @@ class TestAutocast(JitTestCase):
     def test_fp32_set_opt_dtype_policy_fp64(self):
         @torch.jit.script
         def fn(a, b, c, d, dtype: Optional[int]):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 x = torch.softmax(a, 0)
                 y = torch.softmax(b, 0, None)
                 z = torch.softmax(c, 0, torch.float64)
@@ -221,7 +220,7 @@ class TestAutocast(JitTestCase):
     def test_control_flow(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda') :
                 if a[0][0] > 0.5:
                     e = torch.mm(a, b)
                     x = 1
@@ -241,7 +240,7 @@ class TestAutocast(JitTestCase):
     def test_divergent_types(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda') :
                 if a[0][0] > 0.5:
                     e = torch.mm(a, b)
                     f = torch.mm(a, b).float()
@@ -257,8 +256,8 @@ class TestAutocast(JitTestCase):
     def test_divergent_autocast(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            autocast_on = autocast(enabled=True)
-            autocast_off = autocast(enabled=False)
+            autocast_on = torch.amp.autocast(device_type='cuda', enabled=True)
+            autocast_off = torch.amp.autocast(device_type='cuda', enabled=False)
             if a[0][0] > 0.5:
                 with autocast_on:
                     e = torch.mm(a, b)
@@ -272,8 +271,8 @@ class TestAutocast(JitTestCase):
     def test_conditional_autocast(self):
         @torch.jit.script
         def fn(a, b):
-            autocast_on = autocast(enabled=True)
-            autocast_off = autocast(enabled=False)
+            autocast_on = torch.amp.autocast(device_type='cuda', enabled=True)
+            autocast_off = torch.amp.autocast(device_type='cuda', enabled=False)
             with autocast_on if a[0][0] > 0.5 else autocast_off:
                 return torch.mm(a, b)
         # conditional autocast expressions are not supported
@@ -284,11 +283,11 @@ class TestAutocast(JitTestCase):
     def test_nested_autocast(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            with autocast(enabled=False):
+            with torch.amp.autocast(device_type='cuda', enabled=False):
                 e = torch.mm(a, b)
-                with autocast(enabled=True):
+                with torch.amp.autocast(device_type='cuda', enabled=True):
                     f = torch.mm(e, c)
-                    with autocast(enabled=False):
+                    with torch.amp.autocast(device_type='cuda', enabled=False):
                         g = torch.mm(e, d)
             return e, f, g
         e, f, g = fn(self.a_fp32, self.b_fp32, self.c_fp32, self.d_fp32)
@@ -300,7 +299,7 @@ class TestAutocast(JitTestCase):
     def test_implicitly_nested_autocast(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=False), autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=False), torch.amp.autocast(enabled=True):
                 return torch.mm(a, b)
         result = fn(self.a_fp32, self.b_fp32)
         self.assertEqual(result.dtype, torch.float16)
@@ -309,7 +308,7 @@ class TestAutocast(JitTestCase):
     def test_reused_autocast(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            autocast_instance = autocast(enabled=True)
+            autocast_instance = torch.amp.autocast(device_type='cuda', enabled=True)
             with autocast_instance:
                 e = torch.mm(a, b)
                 with autocast_instance:
@@ -328,7 +327,7 @@ class TestAutocast(JitTestCase):
     def test_reused_autocast_expr(self):
         @torch.jit.script
         def fn(a, b, c, d):
-            with autocast(enabled=True) as autocast_instance:
+            with torch.amp.autocast(device_type='cuda', enabled=True) as autocast_instance:
                 e = torch.mm(a, b)
                 with autocast_instance:
                     e = torch.mm(c, d)
@@ -347,7 +346,7 @@ class TestAutocast(JitTestCase):
 
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 tmp = helper(a, b)
                 tmp = helper(tmp, tmp)
                 tmp = helper(tmp, tmp)
@@ -360,12 +359,12 @@ class TestAutocast(JitTestCase):
     @unittest.skipIf(not TEST_CUDA, "No cuda")
     def test_callees_with_autocast_on(self):
         def helper(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return torch.mm(a, b)
 
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=False):
+            with torch.amp.autocast(device_type='cuda', enabled=False):
                 return helper(a, b)
 
         result = fn(self.a_fp32, self.b_fp32)
@@ -374,12 +373,12 @@ class TestAutocast(JitTestCase):
     @unittest.skipIf(not TEST_CUDA, "No cuda")
     def test_callees_with_autocast_off(self):
         def helper(a, b):
-            with autocast(enabled=False):
+            with torch.amp.autocast(device_type='cuda', enabled=False):
                 return torch.mm(a, b)
 
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return helper(a, b)
 
         result = fn(self.a_fp32, self.b_fp32)
@@ -394,7 +393,7 @@ class TestAutocast(JitTestCase):
         for i in range(8):
             use_autocast = (i % 2 == 0)
             expected_dtype = torch.float16 if use_autocast else torch.float32
-            with autocast(enabled=use_autocast):
+            with torch.amp.autocast(device_type='cuda', enabled=use_autocast):
                 result = fn(self.a_fp32, self.b_fp32)
             self.assertEqual(result.dtype, expected_dtype)
 
@@ -408,7 +407,7 @@ class TestAutocast(JitTestCase):
 
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return traced(a, b)
 
         result = fn(self.a_fp32, self.b_fp32)
@@ -419,14 +418,14 @@ class TestAutocast(JitTestCase):
     @unittest.skipIf(not TEST_CUDA, "No cuda")
     def test_script_and_tracing_with_autocast(self):
         def helper(a, b):
-            with autocast(enabled=False):
+            with torch.amp.autocast(device_type='cuda', enabled=False):
                 return torch.mm(a, b) * 2.0
 
         traced = torch.jit.trace(helper, (self.a_fp32, self.a_fp32))
 
         @torch.jit.script
         def fn(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return traced(a, b)
 
         result = fn(self.a_fp32, self.b_fp32)
@@ -437,7 +436,7 @@ class TestAutocast(JitTestCase):
     def test_tracing_and_script(self):
         @torch.jit.script
         def fn(a, b):
-            with autocast():
+            with torch.amp.autocast(device_type='cuda') :
                 return torch.mm(a, b)
 
         def traced(a, b):
@@ -456,7 +455,7 @@ class TestAutocast(JitTestCase):
             return torch.mm(a, b)
 
         def traced(a, b):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 return fn(a, b)
 
         traced = torch.jit.trace(traced, (self.a_fp32, self.b_fp32))
@@ -472,7 +471,7 @@ class TestAutocast(JitTestCase):
                 self.linear = torch.nn.Linear(N, M).float()
 
             def forward(self, input):
-                with autocast(enabled=True):
+                with torch.amp.autocast(device_type='cuda', enabled=True):
                     output = self.weight.mv(input)
                     output = self.linear(output)
                     return output
@@ -486,7 +485,7 @@ class TestAutocast(JitTestCase):
     @unittest.skipIf(not TEST_CUDA, "No cuda")
     def test_autocast_decorator(self):
         @torch.jit.script
-        @autocast(enabled=True)
+        @torch.amp.autocast(device_type='cuda', enabled=True)
         def fn(a, b):
             return torch.mm(a, b)
         result = fn(self.a_fp32, self.b_fp32)
@@ -496,7 +495,7 @@ class TestAutocast(JitTestCase):
     # (see also test_eager_and_script)
     @unittest.skipIf(not TEST_CUDA, "No cuda")
     def test_autocast_decorator_outside_jit(self):
-        @autocast(enabled=True)
+        @torch.amp.autocast(device_type='cuda', enabled=True)
         @torch.jit.script
         def fn(a, b):
             return torch.mm(a, b)
@@ -507,7 +506,7 @@ class TestAutocast(JitTestCase):
     def test_inplace(self):
         @torch.jit.script
         def fn(a, b, c):
-            with autocast(enabled=True):
+            with torch.amp.autocast(device_type='cuda', enabled=True):
                 x = torch.addmm(a, b, c)
                 y = torch.addmm(a, b, c, out=a)
                 z = a.addmm_(b, c)
