@@ -100,7 +100,7 @@ __global__ void upsample_nearest1d_backward_out_frame(
 }
 
 template<nn_compute_source_index_fn_t nn_compute_source_index_fn>
-static void upsample_nearest1d_out_cuda_template(
+void upsample_nearest1d_out_cuda_template(
     const Tensor& output,
     const Tensor& input_,
     IntArrayRef output_size,
@@ -144,7 +144,7 @@ static void upsample_nearest1d_out_cuda_template(
 }
 
 template<nn_compute_source_index_fn_t nn_bw_compute_source_index_fn>
-static void upsample_nearest1d_backward_out_cuda_template(
+void upsample_nearest1d_backward_out_cuda_template(
     const Tensor& grad_input,
     const Tensor& grad_output_,
     IntArrayRef output_size,

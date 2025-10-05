@@ -63,7 +63,7 @@ template <class F, class Tuple, std::size_t... INDEX>
 C10_HOST_DEVICE constexpr decltype(auto) apply_impl(
     F&& f,
     Tuple&& t,
-    std::index_sequence<INDEX...>) {
+    std::index_sequence<INDEX...> /*unused*/) {
   return std::forward<F>(f)(std::get<INDEX>(std::forward<Tuple>(t))...);
 }
 } // namespace detail

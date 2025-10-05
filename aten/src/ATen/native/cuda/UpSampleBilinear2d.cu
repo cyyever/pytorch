@@ -259,7 +259,7 @@ __global__ void upsample_bilinear2d_backward_nhwc_out_frame(
   }
 }
 
-static void upsample_bilinear2d_out_cuda_template(
+void upsample_bilinear2d_out_cuda_template(
     const Tensor& output,
     const Tensor& input,
     IntArrayRef output_size,
@@ -356,7 +356,7 @@ static void upsample_bilinear2d_out_cuda_template(
   });
 }
 
-static void upsample_bilinear2d_backward_out_cuda_template(
+void upsample_bilinear2d_backward_out_cuda_template(
     const Tensor& grad_input,
     const Tensor& grad_output_,
     IntArrayRef output_size,
@@ -671,7 +671,7 @@ __global__ void upsample_gen2d_aa_backward_out_frame(
 // InterpFilter as BilinearFilterFunctor <--> bilinear
 // InterpFilter as BicubicFilterFunctor <--> bicubic
 template<typename InterpFilter>
-static void upsample_gen2d_aa_out_cuda_template(
+void upsample_gen2d_aa_out_cuda_template(
     const Tensor& output,
     const Tensor& input_,
     IntArrayRef output_size,
@@ -766,7 +766,7 @@ static void upsample_gen2d_aa_out_cuda_template(
 // InterpFilter as BilinearFilterFunctor <--> bilinear
 // InterpFilter as BicubicFilterFunctor <--> bicubic
 template<typename InterpFilter>
-static void upsample_gen2d_aa_backward_out_cuda_template(
+void upsample_gen2d_aa_backward_out_cuda_template(
     const Tensor& grad_input,
     const Tensor& grad_output_,
     IntArrayRef output_size,

@@ -240,7 +240,7 @@ __global__ void upsample_trilinear3d_backward_out_frame(
   }
 }
 
-static void upsample_trilinear3d_out_cuda_template(
+void upsample_trilinear3d_out_cuda_template(
     const Tensor& output,
     const Tensor& input,
     IntArrayRef output_size,
@@ -295,7 +295,7 @@ static void upsample_trilinear3d_out_cuda_template(
       });
 }
 
-static void upsample_trilinear3d_backward_out_cuda_template(
+void upsample_trilinear3d_backward_out_cuda_template(
     const Tensor& grad_input_,
     const Tensor& grad_output_,
     IntArrayRef output_size,

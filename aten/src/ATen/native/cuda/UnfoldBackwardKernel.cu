@@ -35,7 +35,7 @@ __global__ void _unfold_backward_elementwise_kernel(int total_n_elems, func_t f)
 }
 
 template <int n_threads, int n_elems_per_thread, typename func_t>
-static void _launch_unfold_backward_kernel(int total_n_elems, func_t f) {
+void _launch_unfold_backward_kernel(int total_n_elems, func_t f) {
   TORCH_INTERNAL_ASSERT(
     total_n_elems >= 0 && total_n_elems <= std::numeric_limits<int32_t>::max()
   );

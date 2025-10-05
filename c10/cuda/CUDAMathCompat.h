@@ -106,10 +106,10 @@ __MATH_FUNCTIONS_DECL__ double pow(double x, double y) {
 }
 
 __MATH_FUNCTIONS_DECL__ void sincos(float x, float* sptr, float* cptr) {
-  return ::sincosf(x, sptr, cptr);
+  ::sincosf(x, sptr, cptr);
 }
 __MATH_FUNCTIONS_DECL__ void sincos(double x, double* sptr, double* cptr) {
-  return ::sincos(x, sptr, cptr);
+  ::sincos(x, sptr, cptr);
 }
 
 __MATH_FUNCTIONS_DECL__ float sqrt(float x) {
