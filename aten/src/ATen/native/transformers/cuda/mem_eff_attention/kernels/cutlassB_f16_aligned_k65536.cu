@@ -24,7 +24,7 @@ fmha_cutlassB_f16_aligned_128x64_k65536_sm70(typename AttentionBackwardKernel<cu
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_128x64_k65536_sm70` is for sm70-sm75, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -43,7 +43,7 @@ fmha_cutlassB_f16_aligned_128x64_k65536_sm75(typename AttentionBackwardKernel<cu
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_128x64_k65536_sm75` is for sm75-sm80, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -62,7 +62,7 @@ fmha_cutlassB_f16_aligned_128x64_k65536_sm80(typename AttentionBackwardKernel<cu
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_128x64_k65536_sm80` is for sm80-sm100, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -81,7 +81,7 @@ fmha_cutlassB_f16_aligned_64x64_k65536_sm50(typename AttentionBackwardKernel<cut
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_64x64_k65536_sm50` is for sm50-sm70, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -100,7 +100,7 @@ fmha_cutlassB_f16_aligned_64x64_k65536_sm70(typename AttentionBackwardKernel<cut
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_64x64_k65536_sm70` is for sm70-sm75, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -119,7 +119,7 @@ fmha_cutlassB_f16_aligned_64x64_k65536_sm75(typename AttentionBackwardKernel<cut
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_64x64_k65536_sm75` is for sm75-sm80, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -138,6 +138,6 @@ fmha_cutlassB_f16_aligned_64x64_k65536_sm80(typename AttentionBackwardKernel<cut
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_64x64_k65536_sm80` is for sm80-sm100, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }

@@ -130,7 +130,7 @@ __device__ __forceinline__ void binary_op_scalar(
       for (int ii = 0; ii < kILP; ii++) {
         r_args[0][ii] = static_cast<T>(
             op(static_cast<opmath_t>(r_args[0][ii]),
-               static_cast<opmath_t>(scalar)));
+               scalar));
       }
       // store
       load_store(args[res_arg_index], r_args[0], i_start, 0);
@@ -145,7 +145,7 @@ __device__ __forceinline__ void binary_op_scalar(
       for (int ii = 0; ii < kILP; ii++) {
         r_args[0][ii] = static_cast<T>(
             op(static_cast<opmath_t>(r_args[0][ii]),
-               static_cast<opmath_t>(scalar)));
+               scalar));
       }
       store_args(args[res_arg_index], r_args[0], i_start, chunk_size, n);
     }

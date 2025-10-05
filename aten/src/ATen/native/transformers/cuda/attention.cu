@@ -167,9 +167,8 @@ namespace cuda::philox {
 
 __global__ void unpack_cudnn(at::PhiloxCudaState arg, int64_t* seed_ptr, int64_t* offset_ptr) {
   if (arg.captured_) {
-    *seed_ptr = static_cast<int64_t>(*arg.seed_.ptr);
-    *offset_ptr = static_cast<int64_t>(
-                    *(arg.offset_.ptr) + static_cast<int64_t>(arg.offset_intragraph_));
+    *seed_ptr = (*arg.seed_.ptr);
+    *offset_ptr = (*(arg.offset_.ptr) + static_cast<int64_t>(arg.offset_intragraph_));
   } else {
     *seed_ptr = static_cast<int64_t>(arg.seed_.val);
     *offset_ptr = static_cast<int64_t>(arg.offset_.val);

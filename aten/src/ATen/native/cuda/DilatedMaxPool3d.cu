@@ -86,7 +86,7 @@ __global__ static void max_pool3d_with_indices_single_out_frame(
     int64_t maxIndex = tStart * iheight * iwidth + hStart * iwidth + wStart;
 
     if (!channels_last) {
-        inputData += (int64_t) slice * itime * iheight * iwidth;
+        inputData += slice * itime * iheight * iwidth;
     } else {
         inputData += ((int64_t) batch * itime * iheight * iwidth * features) + channel;
     }
@@ -119,7 +119,7 @@ __global__ static void max_pool3d_with_indices_single_out_frame(
 
     int64_t out_index;
     if (!channels_last) {
-      out_index = (int64_t) slice*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn;
+      out_index = slice*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn;
     } else {
       out_index = ((int64_t) batch*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn)*features + channel;
     }
@@ -218,14 +218,14 @@ __global__ static void max_pool3d_with_indices_backward_single_out_frame(
   {
     int64_t out_index;
     if (!channels_last) {
-      out_index = (int64_t) slice*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn;
+      out_index = slice*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn;
     } else {
       out_index = ((int64_t) batch*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn)*features + channel;
     }
     int64_t maxIndex = indicesData[out_index];
     if (maxIndex != -1) {
       if (!channels_last) {
-        gpuAtomicAddNoReturn(&gradInputData[(int64_t) slice * itime  * iheight * iwidth + maxIndex],
+        gpuAtomicAddNoReturn(&gradInputData[ slice * itime  * iheight * iwidth + maxIndex],
           gradOutputData[out_index]);
       } else {
         gpuAtomicAddNoReturn(&gradInputData[((int64_t) batch * itime * iheight * iwidth + maxIndex) * features + channel],

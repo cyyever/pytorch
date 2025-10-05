@@ -98,9 +98,9 @@ struct ReduceConfig {
   template <typename T>
   void set_block_dimension(int64_t dim0, int64_t dim1) {
     const int max_num_threads = mnt_wrapper<T>::MAX_NUM_THREADS / output_vec_size;
-    int dim0_pow2 = dim0 < max_num_threads ? static_cast<int>(last_pow2(dim0)) : max_num_threads;
-    int dim1_pow2 = dim1 < max_num_threads ? static_cast<int>(last_pow2(dim1)) : max_num_threads;
-    block_width = std::min(dim0_pow2, int(at::cuda::warp_size()));
+    int dim0_pow2 = dim0 < max_num_threads ? last_pow2(dim0) : max_num_threads;
+    int dim1_pow2 = dim1 < max_num_threads ? last_pow2(dim1) : max_num_threads;
+    block_width = std::min(dim0_pow2, at::cuda::warp_size());
     block_height = std::min(dim1_pow2, int(max_num_threads / block_width));
     block_width = std::min(dim0_pow2, int(max_num_threads / block_height));
     num_threads = block_width * block_height;
@@ -968,10 +968,10 @@ class AccumulationBuffer {
   AccumulationBuffer() {}
 
   AccumulationBuffer(size_t acc_t_size, size_t out_t_size, char* out_ptr, int64_t size) {
-    out_ptr_ = (char*)out_ptr;
+    out_ptr_ = out_ptr;
     if (out_t_size >= acc_t_size) {
       // reusing output buffer for accumulation.
-      acc_ptr_ = (char*)out_ptr;
+      acc_ptr_ = out_ptr;
       numerator_ = 1;
       denominator_ = 1;
     } else {

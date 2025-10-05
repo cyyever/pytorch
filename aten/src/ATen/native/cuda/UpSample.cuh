@@ -314,7 +314,7 @@ __device__ __forceinline__ void _compute_weights_span(
     int& xsize,
     accscalar_t& center) {
   center = scale * (i + static_cast<accscalar_t>(0.5));
-  xmin = max(static_cast<int>(center - support + static_cast<accscalar_t>(0.5)), static_cast<int>(0));
+  xmin = max(static_cast<int>(center - support + static_cast<accscalar_t>(0.5)), 0);
   xsize = min(static_cast<int>(center + support + static_cast<accscalar_t>(0.5)), input_size) - xmin;
 }
 

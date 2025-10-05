@@ -200,7 +200,7 @@ struct AttentionKernel {
       auto head_id = blockIdx.y;
       auto query_start = blockIdx.x * kQueriesPerBlock;
 
-      auto lse_dim = ceil_div((int32_t)num_queries, kAlignLSE) * kAlignLSE;
+      auto lse_dim = ceil_div(num_queries, kAlignLSE) * kAlignLSE;
 
       if (kSupportsDropout) {
         dropout_batch_head_rng_offset =

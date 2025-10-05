@@ -24,7 +24,7 @@ fmha_cutlassF_f32_notaligned_64x64_rf_sm50(typename AttentionKernel<float, cutla
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_64x64_rf_sm50` is for sm50-sm70, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -43,7 +43,7 @@ fmha_cutlassF_f32_notaligned_64x64_rf_sm70(typename AttentionKernel<float, cutla
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_64x64_rf_sm70` is for sm70-sm75, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -62,7 +62,7 @@ fmha_cutlassF_f32_notaligned_64x64_rf_sm75(typename AttentionKernel<float, cutla
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_64x64_rf_sm75` is for sm75-sm80, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -81,7 +81,7 @@ fmha_cutlassF_f32_notaligned_32x128_rf_sm50(typename AttentionKernel<float, cutl
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_32x128_rf_sm50` is for sm50-sm70, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -100,7 +100,7 @@ fmha_cutlassF_f32_notaligned_32x128_rf_sm70(typename AttentionKernel<float, cutl
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_32x128_rf_sm70` is for sm70-sm75, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -119,7 +119,7 @@ fmha_cutlassF_f32_notaligned_32x128_rf_sm75(typename AttentionKernel<float, cutl
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_32x128_rf_sm75` is for sm75-sm80, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -138,7 +138,7 @@ fmha_cutlassF_f32_notaligned_32x128_gmem_sm50(typename AttentionKernel<float, cu
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_32x128_gmem_sm50` is for sm50-sm70, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -157,7 +157,7 @@ fmha_cutlassF_f32_notaligned_32x128_gmem_sm70(typename AttentionKernel<float, cu
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_32x128_gmem_sm70` is for sm70-sm75, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -176,6 +176,6 @@ fmha_cutlassF_f32_notaligned_32x128_gmem_sm75(typename AttentionKernel<float, cu
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f32_notaligned_32x128_gmem_sm75` is for sm75-sm80, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }

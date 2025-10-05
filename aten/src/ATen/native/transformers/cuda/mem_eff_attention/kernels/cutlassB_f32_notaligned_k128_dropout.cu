@@ -24,7 +24,7 @@ fmha_cutlassB_f32_notaligned_64x64_k128_dropout_sm50(typename AttentionBackwardK
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f32_notaligned_64x64_k128_dropout_sm50` is for sm50-sm70, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -43,7 +43,7 @@ fmha_cutlassB_f32_notaligned_64x64_k128_dropout_sm70(typename AttentionBackwardK
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f32_notaligned_64x64_k128_dropout_sm70` is for sm70-sm75, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -62,6 +62,6 @@ fmha_cutlassB_f32_notaligned_64x64_k128_dropout_sm75(typename AttentionBackwardK
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f32_notaligned_64x64_k128_dropout_sm75` is for sm75-sm80, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }

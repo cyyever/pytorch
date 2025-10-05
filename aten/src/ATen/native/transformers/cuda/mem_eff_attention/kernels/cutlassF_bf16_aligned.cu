@@ -24,7 +24,7 @@ fmha_cutlassF_bf16_aligned_64x64_rf_sm80(typename AttentionKernel<cutlass::bfloa
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_bf16_aligned_64x64_rf_sm80` is for sm80-sm100, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -43,7 +43,7 @@ fmha_cutlassF_bf16_aligned_64x128_rf_sm80(typename AttentionKernel<cutlass::bflo
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_bf16_aligned_64x128_rf_sm80` is for sm80-sm100, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }
 __global__ void __launch_bounds__(
@@ -62,6 +62,6 @@ fmha_cutlassF_bf16_aligned_32x128_gmem_sm80(typename AttentionKernel<cutlass::bf
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_bf16_aligned_32x128_gmem_sm80` is for sm80-sm100, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }

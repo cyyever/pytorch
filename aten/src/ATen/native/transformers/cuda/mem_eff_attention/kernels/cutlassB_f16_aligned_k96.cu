@@ -24,6 +24,6 @@ fmha_cutlassB_f16_aligned_128x64_k96_sm80(typename AttentionBackwardKernel<cutla
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassB_f16_aligned_128x64_k96_sm80` is for sm80-sm100, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
+        (__CUDA_ARCH__ + 0) / 10);
 #endif
 }

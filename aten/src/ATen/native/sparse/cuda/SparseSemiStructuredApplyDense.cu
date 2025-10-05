@@ -104,7 +104,7 @@ __global__ void __launch_bounds__(32 /* num_threads */, 32) sparse_semi_structur
         CUTLASS_PRAGMA_UNROLL
         for (int c = 0; c < 4; ++c) {
           lines[4 * row + r][4 * m + c] = lines[4 * row + r][4 * m + c] *
-              int((masks[m] >> (4 * r + c)) & 1);
+              ((masks[m] >> (4 * r + c)) & 1);
         }
       }
     }
