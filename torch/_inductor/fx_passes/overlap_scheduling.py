@@ -598,7 +598,7 @@ class OverlapScheduler:
                 info = self.collective_info[self.wait_to_start[node]]
                 if info.hiding_node and info.hiding_node != curr_compute_node:
                     continue
-                elif node not in self.potentially_hidden_waits:
+                if node not in self.potentially_hidden_waits:
                     continue
 
                 return None

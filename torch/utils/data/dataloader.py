@@ -1520,7 +1520,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
             if self._workers_status[worker_queue_idx]:
                 if self._in_order:
                     break
-                elif self._workers_num_tasks[worker_queue_idx] < max_tasks // sum(
+                if self._workers_num_tasks[worker_queue_idx] < max_tasks // sum(
                     self._workers_status
                 ):
                     # when self._in_order is False, distribute work to a worker if it has capacity

@@ -1974,10 +1974,9 @@ class TestLinalg(TestCase):
                 msg = f'ord={ord}, matrix={matrix}'
                 if is_broken_matrix_norm_case(ord, x):
                     continue
-                else:
-                    result_n = np.linalg.norm(x_n, ord=ord)
-                    result = torch.linalg.norm(x, ord=ord)
-                    self.assertEqual(result, result_n, msg=msg)
+                result_n = np.linalg.norm(x_n, ord=ord)
+                result = torch.linalg.norm(x, ord=ord)
+                self.assertEqual(result, result_n, msg=msg)
 
     # Test degenerate shape results match numpy for linalg.norm vector norms
     @skipCUDAIfNoMagma

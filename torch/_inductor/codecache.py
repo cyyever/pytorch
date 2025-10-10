@@ -1112,10 +1112,9 @@ class GuardedCache(Generic[T]):
                 result_status = "hit"
                 sample_guards_expr = candidate.guards_expr
                 break
-            else:
-                # At least one guard missed, log this
-                result_status = "guard_miss"
-                sample_guards_expr = candidate.guards_expr
+            # At least one guard missed, log this
+            result_status = "guard_miss"
+            sample_guards_expr = candidate.guards_expr
 
         info = {"cache_status_detailed": result_status}
         if sample_guards_expr is not None:

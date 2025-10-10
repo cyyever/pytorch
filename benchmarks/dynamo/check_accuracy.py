@@ -80,7 +80,7 @@ def check_accuracy(actual_csv, expected_csv, expected_filename):
             status = "PASS" if expected_accuracy == "pass" else "XFAIL"
             print(f"{model:34}  {status}")
             continue
-        elif model in flaky_models:
+        if model in flaky_models:
             if accuracy == "pass":
                 # model passed but marked xfailed
                 status = "PASS_BUT_FLAKY:"

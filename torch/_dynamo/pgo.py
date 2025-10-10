@@ -639,7 +639,7 @@ def _collect_missing_sources(all_sources: OrderedSet[str]) -> OrderedSet[str]:
     for src in all_sources:
         if src in _KNOWN_DYNAMIC_SOURCES:
             continue
-        elif is_dynamic_source(src):
+        if is_dynamic_source(src):
             _KNOWN_DYNAMIC_SOURCES.add(src)
             continue
         missing_sources.add(src)

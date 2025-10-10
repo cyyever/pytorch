@@ -1076,8 +1076,7 @@ def _build_table(
             break
         if top_level_events_only and evt.cpu_parent is not None:
             continue
-        else:
-            event_limit += 1
+        event_limit += 1
         name = evt.key
         if max_name_column_width is not None and len(name) >= max_name_column_width - 3:
             name = name[: (max_name_column_width - 3)] + "..."

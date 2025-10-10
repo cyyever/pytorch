@@ -100,8 +100,7 @@ class TestPythonBuiltinOP(JitTestCase):
             for y in inputs:
                 if x < 0:
                     continue
-                else:
-                    self.checkScript(func5, (x, y))
+                self.checkScript(func5, (x, y))
 
     def test_triple(self):
         def func(x):

@@ -165,12 +165,11 @@ def match_coalesced_groups(
                 if op.match(other).state == MatchState.FULLY_MATCHED:
                     match_idx = i
                     break
-                elif op.dst == other.src:
+                if op.dst == other.src:
                     # Rule 3
                     break
-                else:
-                    # Rule 1
-                    continue
+                # Rule 1
+                continue
         else:
             raise NotImplementedError("coalesced collective ops")
         if match_idx >= 0:
@@ -300,12 +299,11 @@ def match_coalesced_groups_with_non_p2p(
                 if op.match(other).state == MatchState.FULLY_MATCHED:
                     match_idx = i
                     break
-                elif op.dst == other.src:
+                if op.dst == other.src:
                     # Rule 3
                     break
-                else:
-                    # Rule 1
-                    continue
+                # Rule 1
+                continue
             if match_idx >= 0:
                 my_ops.pop(0)
                 peer_ops.pop(match_idx)
@@ -569,7 +567,7 @@ def find_coalesced_group(
     for i, e in enumerate(entries):
         if _pg_guids[(e["process_group"][0], rank)] != pg_name:
             continue
-        elif collective_seq_id is None:
+        if collective_seq_id is None:
             collective_seq_id = (
                 e["p2p_seq_id"] if e["is_p2p"] else e["collective_seq_id"]
             )
@@ -602,7 +600,7 @@ def find_coalesced_group_with_non_p2p(
     for i, e in enumerate(entries):
         if _pg_guids[(e["process_group"][0], rank)] != pg_name:
             continue
-        elif collective_seq_id is None:
+        if collective_seq_id is None:
             collective_seq_id = (
                 e["p2p_seq_id"] if e["is_p2p"] else e["collective_seq_id"]
             )

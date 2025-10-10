@@ -158,7 +158,7 @@ def run_fuzzer_with_seed(
                 if line.strip() == "OPERATION_STATS:":
                     in_stats_section = True
                     continue
-                elif in_stats_section:
+                if in_stats_section:
                     if line.startswith("  ") and ":" in line:
                         # Parse line like "  torch.add: 3"
                         op_line = line.strip()

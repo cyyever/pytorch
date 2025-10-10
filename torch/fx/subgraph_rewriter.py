@@ -69,7 +69,7 @@ def _replace_attributes(gm: GraphModule, replacement: torch.nn.Module) -> None:
 
             # CASE 2: The target exists as an attribute in `replacement`
             # only, so we need to copy it over.
-            elif replacement_attr is not None:
+            if replacement_attr is not None:
                 new_attr = copy.deepcopy(replacement_attr)
                 if isinstance(replacement_attr, torch.nn.Module):
                     gm.add_submodule(node.target, new_attr)
@@ -388,8 +388,7 @@ def _replace_pattern(
                 if n in match.returning_nodes:
                     first_next_node = next_node
                     break
-                else:
-                    next_node = n
+                next_node = n
         insert_point = (
             first_user_node if first_user_node is not None else first_next_node
         )

@@ -450,7 +450,7 @@ def draft_export(
                 str_to_filename[log_contents[1]] = log_contents[0]  # type: ignore[index]
                 continue
 
-            elif log_name == "propagate_real_tensors_provenance":
+            if log_name == "propagate_real_tensors_provenance":
                 log_contents["occurrences"] = (
                     capture_structured_log.log_record.get_log_count(
                         (log_name, log_contents)

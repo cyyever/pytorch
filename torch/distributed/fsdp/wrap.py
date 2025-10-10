@@ -102,7 +102,7 @@ def _run_mixed_precision_override_policy(
     for module in root_module.modules():
         if module in ignored_modules:
             continue
-        elif isinstance(module, module_classes_tuple):
+        if isinstance(module, module_classes_tuple):
             # This policy overrides any existing policy
             if module not in target_module_to_kwargs:
                 # Only inherit from the root kwargs if not already specified
@@ -194,7 +194,7 @@ class ModuleWrapPolicy(_Policy):
         for module in root_module.modules():
             if module in ignored_modules:
                 continue
-            elif isinstance(module, module_classes):
+            if isinstance(module, module_classes):
                 # Shallow copy to avoid coupling changes across modules
                 target_module_to_kwargs[module] = copy.copy(root_kwargs)
         return target_module_to_kwargs

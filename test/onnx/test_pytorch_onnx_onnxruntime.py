@@ -3029,11 +3029,11 @@ class TestONNXRuntime(onnx_test_common._TestONNXRuntime):
                 # TODO: enable bicubic downsample when ORT precision loss fixed
                 if mode == "bicubic" and xi.dim() != 4:
                     continue
-                elif mode == "linear":
+                if mode == "linear":
                     if xi.dim() == 3:
                         # TODO : enable when linear mode is implemented for 1d inputs in ORT
                         continue
-                    elif xi.dim() == 4:
+                    if xi.dim() == 4:
                         mode_i = "bilinear"
                     elif xi.dim() == 5:
                         # TODO : enable when linear mode is implemented for 3d inputs in ORT
@@ -3124,7 +3124,7 @@ class TestONNXRuntime(onnx_test_common._TestONNXRuntime):
                 mode_i = mode
                 if mode == "bicubic" and xi.dim() != 4:
                     continue
-                elif mode == "linear":
+                if mode == "linear":
                     if xi.dim() == 4:
                         mode_i = "bilinear"
                     elif xi.dim() == 5:

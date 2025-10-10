@@ -698,7 +698,7 @@ def validate_args_and_maybe_create_graph_inputs(
             if set_subgraph_inputs == "automatic":
                 args.append(a)
                 continue
-            elif set_subgraph_inputs == "semi_automatic":
+            if set_subgraph_inputs == "semi_automatic":
                 if isinstance(a, AutogradFunctionContextVariable):
                     example_value = a.as_proxy().node.meta["example_value"]
                     arg_name = (

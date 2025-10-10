@@ -456,7 +456,7 @@ def _add_mutation_dependencies(
             for user in mutated_arg.users:
                 if user is node:
                     continue
-                elif user < node:
+                if user < node:
                     node_to_additional_deps[node].add(user)
                 elif user > node:
                     node_to_additional_deps[user].add(node)

@@ -1240,7 +1240,7 @@ def _get_dim_name_mapping(
             continue
         if isinstance(dim, int):
             continue
-        elif isinstance(dim, Dim):
+        if isinstance(dim, Dim):
             name_to_dim[dim.__name__] = dim
             if isinstance(dim, _DerivedDim):
                 name_to_dim[dim.root.__name__] = dim.root  # type: ignore[attr-defined]

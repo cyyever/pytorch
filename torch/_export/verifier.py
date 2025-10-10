@@ -295,17 +295,16 @@ class Verifier(metaclass=_VerifierMeta):
                                 and hasattr(attr, "original_module")
                             ):
                                 continue
-                            else:
-                                backend_id = getattr(attr, "backend_id", None)
-                                processed_bytes = getattr(attr, "processed_bytes", None)
-                                compile_specs = getattr(attr, "compile_specs", None)
-                                raise SpecViolationError(
-                                    f"Invalid get_attr type {type(attr)}. \n"
-                                    f"LoweredBackendModule fields: "
-                                    f"backend_id(str) : {type(backend_id)}, "
-                                    f"processed_bytes(bytes) : {type(processed_bytes)}, "
-                                    f"compile_specs(list) : {type(compile_specs)}"
-                                )
+                            backend_id = getattr(attr, "backend_id", None)
+                            processed_bytes = getattr(attr, "processed_bytes", None)
+                            compile_specs = getattr(attr, "compile_specs", None)
+                            raise SpecViolationError(
+                                f"Invalid get_attr type {type(attr)}. \n"
+                                f"LoweredBackendModule fields: "
+                                f"backend_id(str) : {type(backend_id)}, "
+                                f"processed_bytes(bytes) : {type(processed_bytes)}, "
+                                f"compile_specs(list) : {type(compile_specs)}"
+                            )
                         elif type(attr).__name__ == "AOTInductorEPModule":
                             continue
 
@@ -376,7 +375,7 @@ def _verify_exported_program_signature(exported_program) -> None:
         if input_spec.kind == InputKind.USER_INPUT:
             continue
 
-        elif input_spec.kind == InputKind.PARAMETER:
+        if input_spec.kind == InputKind.PARAMETER:
             if not isinstance(input_spec.arg, TensorArgument):
                 raise SpecViolationError(
                     f"Parameter {input_spec.name} is not a tensor argument. Found {input_spec.arg} instead."

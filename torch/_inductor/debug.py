@@ -228,9 +228,8 @@ def update_orig_fx_node_name_to_buf_name(
                 buf_name if parent_buf_name is None else parent_buf_name,
             )
             continue
-        else:
-            # pyrefly: ignore  # bad-argument-type, unsupported-operation
-            assert len(children_nodes) == 1 and children_nodes[0] == node
+        # pyrefly: ignore  # bad-argument-type, unsupported-operation
+        assert len(children_nodes) == 1 and children_nodes[0] == node
 
         ir_node = node.node
         if ir_node is None or ir_node.origins is None:

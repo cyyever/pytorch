@@ -2548,7 +2548,7 @@ class SIMDScheduling(BaseScheduling):
             for candidate_tiling in cls.candidate_tilings(node, numel, reduction_numel):
                 if candidate_tiling.name in seen_names:
                     continue
-                elif candidate_tiling.name is not None:
+                if candidate_tiling.name is not None:
                     seen_names.add(candidate_tiling.name)
                 candidate_tiles[candidate_tiling] += candidate_tiling.score
 

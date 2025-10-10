@@ -5639,7 +5639,7 @@ class ShapeEnv:
                 )
                 track_symint(source, t, constraint)
                 continue
-            elif isinstance(t, (SymFloat, float)):
+            if isinstance(t, (SymFloat, float)):
                 track_symfloat(source, t)
                 continue
             assert isinstance(t, Tensorlike)

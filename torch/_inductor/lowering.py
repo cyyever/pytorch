@@ -7289,7 +7289,7 @@ def control_deps_op_lowering(additional_deps, subgraph_fn, *args):
             assert node not in V.graph.env
             V.graph.env[node] = args[i]
             continue
-        elif node.op == "output":
+        if node.op == "output":
             args, kwargs = V.graph.fetch_args_kwargs_from_env(node)
             output = torch.fx.Interpreter.output(V.graph, node, args, kwargs)
         else:
@@ -7325,7 +7325,7 @@ def invoke_quant_tracer(subgraph_fn: ir.Subgraph, *operands, scheme=None):
             V.graph.env[node] = operands[i]
             continue
         # todo getattr
-        elif node.op == "output":
+        if node.op == "output":
             args, kwargs = V.graph.fetch_args_kwargs_from_env(node)
 
             for v in itertools.chain(args, kwargs.values()):

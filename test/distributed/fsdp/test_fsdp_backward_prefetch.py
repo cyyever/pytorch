@@ -140,7 +140,7 @@ class TestBackwardPrefetch(FSDPTest):
                 if backward_prefetch is None:
                     self.assertEqual(len(all_handle_fqns), 0)
                     continue
-                elif backward_prefetch == BackwardPrefetch.BACKWARD_PRE:
+                if backward_prefetch == BackwardPrefetch.BACKWARD_PRE:
                     # state._exec_order_data.handles_post_forward_order
                     # equals forward order
                     #     encoder 0...5 -> decoder 0...5 -> root

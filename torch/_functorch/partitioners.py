@@ -216,7 +216,7 @@ def _extract_graph_with_inputs_outputs(
             # input to start must have been created by this loop and won't be in
             # joint_graph.nodes).
             continue
-        elif node.op == "placeholder":
+        if node.op == "placeholder":
             env[node] = InvalidNode  # type: ignore[assignment]
         elif node.op == "call_function":
             all_args = pytree.arg_tree_leaves(*node.args, **node.kwargs)

@@ -121,8 +121,7 @@ def clang_search_dirs() -> list[str]:
         if re.match(search_start, line):
             if append_path:
                 continue
-            else:
-                append_path = True
+            append_path = True
         elif re.match(search_end, line):
             break
         elif append_path:

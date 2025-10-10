@@ -2567,7 +2567,7 @@ class GraphModuleDeserializer(metaclass=Final):
                 if kind == ArgumentKind.POSITIONAL:
                     args.append(arg)
                     continue
-                elif kind == ArgumentKind.KEYWORD and not keyword.iskeyword(
+                if kind == ArgumentKind.KEYWORD and not keyword.iskeyword(
                     schema_arg.name
                 ):
                     kwargs[schema_arg.name] = arg

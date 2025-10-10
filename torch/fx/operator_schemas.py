@@ -270,7 +270,7 @@ def create_type_hint(x):
             for t in x:
                 if issubclass(t, base_type):
                     continue
-                elif issubclass(base_type, t):
+                if issubclass(base_type, t):
                     base_type = t
                 else:
                     return ret_type(Any)

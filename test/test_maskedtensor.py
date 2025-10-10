@@ -916,8 +916,7 @@ class TestOperators(TestCase):
                 if input.shape != sample_args[0].shape:
                     continue
                 # Binary operations also don't support kwargs right now
-                else:
-                    sample_kwargs = {}
+                sample_kwargs = {}
 
             mt = masked_tensor(input, mask)
             mt_args = self._convert_mt_args(sample_args, mask, layout)

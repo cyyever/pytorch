@@ -6549,7 +6549,7 @@ class TestAgainstScipy(DistributionsTestCase):
             if isinstance(pytorch_dist, (Cauchy, HalfCauchy)):
                 # Cauchy, HalfCauchy distributions' mean is nan, skipping check
                 continue
-            elif isinstance(
+            if isinstance(
                 pytorch_dist, (LowRankMultivariateNormal, MultivariateNormal)
             ):
                 self.assertEqual(pytorch_dist.mean, scipy_dist.mean, msg=pytorch_dist)
@@ -6562,7 +6562,7 @@ class TestAgainstScipy(DistributionsTestCase):
                 # Cauchy, HalfCauchy distributions' standard deviation is nan, skipping check
                 # VonMises variance is circular and scipy doesn't produce a correct result
                 continue
-            elif isinstance(pytorch_dist, (Multinomial, OneHotCategorical)):
+            if isinstance(pytorch_dist, (Multinomial, OneHotCategorical)):
                 self.assertEqual(
                     pytorch_dist.variance, np.diag(scipy_dist.cov()), msg=pytorch_dist
                 )

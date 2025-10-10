@@ -1837,7 +1837,7 @@ def _get_overridable_functions() -> tuple[
             if namespace is not torch.Tensor:
                 if func_name.startswith("__"):
                     continue
-                elif func_name.startswith("_"):
+                if func_name.startswith("_"):
                     ignore = True
                 elif func_name.endswith("_"):
                     ignore = True
@@ -1875,9 +1875,8 @@ def _get_overridable_functions() -> tuple[
                         namespace, func.__name__
                     )
                     continue
-                else:
-                    overridable_funcs[func].append(func.__get__)
-                    continue
+                overridable_funcs[func].append(func.__get__)
+                continue
 
             if not callable(func):
                 continue

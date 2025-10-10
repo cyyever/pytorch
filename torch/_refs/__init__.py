@@ -431,14 +431,13 @@ def _broadcast_shapes(*_shapes):
             if not is_nested_int(shape[idx]) and guard_or_false(shape[idx] == 1):
                 # broadcast case .
                 continue
-            else:
-                # If broadcasting is undecided we pick non-broadcast path and add runtime assertion.
-                torch._check(
-                    common_shape[idx] == shape[idx],
-                    lambda: f"Attempting to broadcast a dimension of length {shape[idx]} at {idx}! "
-                    f"Mismatching argument at index {arg_idx} had {shape}; but expected shape "
-                    f"should be broadcastable to {common_shape}",
-                )
+            # If broadcasting is undecided we pick non-broadcast path and add runtime assertion.
+            torch._check(
+                common_shape[idx] == shape[idx],
+                lambda: f"Attempting to broadcast a dimension of length {shape[idx]} at {idx}! "
+                f"Mismatching argument at index {arg_idx} had {shape}; but expected shape "
+                f"should be broadcastable to {common_shape}",
+            )
 
     return common_shape
 

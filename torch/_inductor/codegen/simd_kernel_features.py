@@ -275,7 +275,7 @@ class MemoryEstimator:
                 self.inside_reduction = False
                 self.kernel_sizes = kernel_size_outside_loop
                 continue
-            elif node is EnableReduction:
+            if node is EnableReduction:
                 self.inside_reduction = True
                 self.kernel_sizes = kernel_size_inside_loop
                 self.loops.append(MemoryEstimate())

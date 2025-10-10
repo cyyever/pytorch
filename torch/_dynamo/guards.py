@@ -4278,8 +4278,7 @@ def get_guard_fail_reason_helper(
                 except Exception:
                     if is_recompiles_verbose_enabled():
                         continue
-                    else:
-                        raise
+                    raise
             # Only ___check_tensors knows how to return a fancy fail reason;
             # for everything else we just report the code that failed
 

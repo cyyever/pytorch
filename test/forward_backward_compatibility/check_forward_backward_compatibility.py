@@ -273,23 +273,21 @@ def check_bc(existing_schemas):
             if trust_not_core_aten or not is_core_aten_op(existing_schema):
                 log.info("schema: %s found on allowlist, skipping", existing_schema)
                 continue
-            else:
-                log.info(
-                    "schema: %s found on allowlist, but is a core ATen op, checking BC. "
-                    "NOTE: If you have removed an operator we will conservatively assume that "
-                    "it is a core ATen op. If the operator you removed is not a core ATen op, "
-                    "please specify that in the ALLOW_LIST entry (see comment block on top "
-                    "of ALLOW_LIST more info)",
-                    existing_schema,
-                )
+            log.info(
+                "schema: %s found on allowlist, but is a core ATen op, checking BC. "
+                "NOTE: If you have removed an operator we will conservatively assume that "
+                "it is a core ATen op. If the operator you removed is not a core ATen op, "
+                "please specify that in the ALLOW_LIST entry (see comment block on top "
+                "of ALLOW_LIST more info)",
+                existing_schema,
+            )
         if has_valid_upgraders(existing_schema, version_map):
             if not is_core_aten_op(existing_schema):
                 log.info("schema: %s has valid upgrader, skipping", existing_schema)
                 continue
-            else:
-                log.info(
-                    "schema: %s has a valid upgrader, but is a core ATen op, checking BC"
-                )
+            log.info(
+                "schema: %s has a valid upgrader, but is a core ATen op, checking BC"
+            )
         log.debug("processing existing schema: %s", existing_schema)
         matching_new_schemas = new_schema_dict.get(existing_schema.name, [])
         found = False

@@ -1575,7 +1575,7 @@ def gradient(f: ArrayLike, *varargs, axis=None, edge_order=1):
             distances = torch.as_tensor(distances)
             if distances.ndim == 0:
                 continue
-            elif distances.ndim != 1:
+            if distances.ndim != 1:
                 raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
                 raise ValueError(

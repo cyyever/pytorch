@@ -1019,7 +1019,7 @@ class SplitCatSimplifier:
                         to_stack_meta.append(user_input_new.meta["example_value"])
                         stack_dim = unsqueeze_params[0]
                         continue
-                    elif to_stack:
+                    if to_stack:
                         stacked_input = graph.call_function(
                             torch.stack, args=(to_stack,), kwargs={"dim": stack_dim}
                         )

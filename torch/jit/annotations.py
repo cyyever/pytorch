@@ -287,7 +287,7 @@ def get_type_line(source):
         if "# type: (...) -> " in line:
             return_line = (line_num, line)
             break
-        elif type_comment in line:
+        if type_comment in line:
             parameter_type_lines.append(line)
     if return_line is None:
         raise RuntimeError(

@@ -1647,8 +1647,7 @@ def _wait_for(condition, timeout=10, interval=1, name=None):
         while True:
             if condition():
                 break
-            else:
-                time.sleep(interval)
+            time.sleep(interval)
 
     wait_thread = threading.Thread(target=_wait_while, name=name)
     wait_thread.start()

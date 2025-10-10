@@ -5076,7 +5076,7 @@ def wrap_test_class(orig_cls):
         fn = dct[name]
         if not callable(fn) or name in skipped_tests:
             continue
-        elif (
+        if (
             xfail_re.match(name)
             or name in xfail_by_backend["ca_eager"]
             or name in xfail_divergence_from_eager

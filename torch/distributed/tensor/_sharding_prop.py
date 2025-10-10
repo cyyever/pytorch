@@ -274,11 +274,10 @@ class ShardingPropagator:
                             assert isinstance(output_specs, list)
                             new_specs.append(None)
                             continue
-                        else:
-                            raise ValueError(
-                                f"ShardingPropagator error: output {i} of {op.name()} "
-                                "does not have an associated TensorMeta"
-                            )
+                        raise ValueError(
+                            f"ShardingPropagator error: output {i} of {op.name()} "
+                            "does not have an associated TensorMeta"
+                        )
 
                     new_specs.append(
                         spec.shallow_copy_with_tensor_meta(output_tensor_meta_i)

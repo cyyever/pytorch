@@ -132,8 +132,7 @@ def tensorify_python_scalars(
         if node.op != "placeholder":
             first_non_placeholder = node
             break
-        else:
-            placeholders.add(node)
+        placeholders.add(node)
 
     Analysis = TensorReferenceAnalysis
 

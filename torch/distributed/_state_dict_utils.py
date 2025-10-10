@@ -711,7 +711,7 @@ def _distribute_state_dict(
             local_state = local_state_dict.get(key, None)
             if local_state is None:
                 continue
-            elif isinstance(local_state, DTensor):
+            if isinstance(local_state, DTensor):
                 local_state_dict[key] = distribute_tensor(
                     value.detach().to(device),
                     local_state.device_mesh,

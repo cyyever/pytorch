@@ -77,7 +77,7 @@ def should_run_test(
         file_type = test_impact_of_file(touched_file)
         if file_type == "NONE":
             continue
-        elif file_type == "CI":
+        if file_type == "CI":
             # Force all tests to run if any change is made to the CI
             # configurations.
             log_test_reason(file_type, touched_file, test, options)

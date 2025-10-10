@@ -172,7 +172,7 @@ def _resolve_parameter_dtypes(
         if isinstance(arg, (int, float, bool, str, Sequence, torch.Tensor)):
             # Skip the Python constants because we do not know what dtype they should take yet
             continue
-        elif isinstance(arg, ir.Value):
+        if isinstance(arg, ir.Value):
             if arg.type is None:
                 # Skip the ir.Value if the type is not set
                 continue
@@ -424,38 +424,35 @@ def _process_python_sequences(
                     new_args.append(constant_value)
             named_inputs[name] = new_args
             continue
-        else:
-            # 3. Concat the list as a single input
-            # E.g. [Value, 42] should be converted to op.Concat(Value, Constant(42))
-            # when the expected input type is INT64
-            # We assume this only happens for 0D cases
-            if all(isinstance(val, ir.Value) for val in arg):
-                expanded_args = [_reshape_to_1d_tensor(opset, val) for val in arg]
-                named_inputs[name] = opset.Concat(*expanded_args, axis=0)
-                continue
-
-            dtype = _determine_input_dtype(param, arg, type_binding)
-            new_args = []
-            for val in arg:
-                if isinstance(val, ir.Value):
-                    new_args.append(_reshape_to_1d_tensor(opset, val))
-                elif val is None:
-                    # Skip None values
-                    continue
-                elif isinstance(val, (ir.Tensor, ir.TensorProtocol)):
-                    new_args.append(
-                        _reshape_to_1d_tensor(opset, opset.Constant(value=val))
-                    )
-                else:
-                    # Turn the Python constant into 1D tensor for the constant
-                    assert isinstance(val, (bool, int, float)), (
-                        f"Expected int or float, got {type(val)}"
-                    )
-                    new_args.append(
-                        _get_or_create_constant(constant_farm, [val], dtype, opset)  # type: ignore[arg-type]
-                    )
-            named_inputs[name] = opset.Concat(*new_args, axis=0)
+        # 3. Concat the list as a single input
+        # E.g. [Value, 42] should be converted to op.Concat(Value, Constant(42))
+        # when the expected input type is INT64
+        # We assume this only happens for 0D cases
+        if all(isinstance(val, ir.Value) for val in arg):
+            expanded_args = [_reshape_to_1d_tensor(opset, val) for val in arg]
+            named_inputs[name] = opset.Concat(*expanded_args, axis=0)
             continue
+
+        dtype = _determine_input_dtype(param, arg, type_binding)
+        new_args = []
+        for val in arg:
+            if isinstance(val, ir.Value):
+                new_args.append(_reshape_to_1d_tensor(opset, val))
+            elif val is None:
+                # Skip None values
+                continue
+            elif isinstance(val, (ir.Tensor, ir.TensorProtocol)):
+                new_args.append(_reshape_to_1d_tensor(opset, opset.Constant(value=val)))
+            else:
+                # Turn the Python constant into 1D tensor for the constant
+                assert isinstance(val, (bool, int, float)), (
+                    f"Expected int or float, got {type(val)}"
+                )
+                new_args.append(
+                    _get_or_create_constant(constant_farm, [val], dtype, opset)  # type: ignore[arg-type]
+                )
+        named_inputs[name] = opset.Concat(*new_args, axis=0)
+        continue
     return named_inputs
 
 

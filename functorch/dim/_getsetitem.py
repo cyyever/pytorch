@@ -82,8 +82,7 @@ def _bind_dims_to_size(sz: int, sd: int, dims: list, nsz: list, nsd: list) -> No
             dim.size = inferred_size
             rhs_prod = sz
             break
-        else:
-            rhs_prod *= dim.size
+        rhs_prod *= dim.size
 
     # Final validation that dimensions match
     if rhs_prod != sz:

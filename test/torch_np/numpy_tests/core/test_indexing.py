@@ -777,7 +777,7 @@ class TestMultiIndexingAutomated(TestCase):
                 indx = np.arange(*indx.indices(arr.shape[ax]))
                 indices.append(["s", indx])
                 continue
-            elif indx is None:
+            if indx is None:
                 # this is like taking a slice with one element from a new axis:
                 indices.append(["n", np.array([0], dtype=np.intp)])
                 arr = arr.reshape(arr.shape[:ax] + (1,) + arr.shape[ax:])

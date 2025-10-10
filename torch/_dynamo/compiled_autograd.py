@@ -515,8 +515,7 @@ class AutogradCompilerInstance:
                     if node.op == "placeholder":
                         num_args += 1
                         continue
-                    else:
-                        break
+                    break
                 return num_args
 
             # set up the proxy inputs to bw_module

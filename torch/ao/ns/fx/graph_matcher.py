@@ -457,18 +457,17 @@ of subgraphs, and each pair of subgraphs is related to each other."""
             )
             results[key_name_a] = (cur_subgraph_a, cur_subgraph_b)
             continue
-        elif cur_subgraph_a is None and cur_subgraph_b is None:
+        if cur_subgraph_a is None and cur_subgraph_b is None:
             # we reached the end of both graphs
             break
-        else:
-            # only one node was fetched, no match possible, throw error
-            msg = f"""
+        # only one node was fetched, no match possible, throw error
+        msg = f"""
 Attempting to match
 ({cur_subgraph_a}, {type_start_a}) and
 ({cur_subgraph_b}, {type_start_b}),
 one of which is empty. Please ensure that the two models you pass in have the same number
 of subgraphs."""
-            raise GraphMatchingException(msg)
+        raise GraphMatchingException(msg)
 
     # The subgraph pairs are originally created by traversing the two graphs
     # from the outputs to the inputs. Reverse the results to return the

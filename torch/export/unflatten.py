@@ -1640,7 +1640,7 @@ def _deduplicate_modules(partitions):
                         entry.parent_call_module.target = seen_target
                         redirected_call_indices[child_fqn] = seen_child_fqn
                         break
-                    elif not deduplicated:
+                    if not deduplicated:
                         # Case 2: The current module has a different fqn than the seen module.
                         # In this case we replace the current module with the seen module.
                         # There should be nothing pointing to the current module any more,

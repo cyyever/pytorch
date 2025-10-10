@@ -1939,7 +1939,7 @@ def _run_prepare_fx_on_standalone_modules(
     ) in node_name_to_match_result_with_qconfig.values():
         if qhandler is None:
             continue
-        elif not qhandler.is_standalone_module():
+        if not qhandler.is_standalone_module():
             continue
 
         (

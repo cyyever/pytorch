@@ -96,7 +96,7 @@ def should_pad_common(
         for x in t.size():
             if isinstance(x, int):
                 continue
-            elif utils.is_symbolic(x):
+            if utils.is_symbolic(x):
                 # pyrefly: ignore  # missing-attribute
                 if not x.node.has_hint():
                     return False

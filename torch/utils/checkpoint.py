@@ -1028,7 +1028,7 @@ def _get_debug_context_and_cb() -> Tuple[Callable[[], Any], Callable[[Checkpoint
                     is_torch_dispatch = line['name'] == '__torch_dispatch__'
                     if not found_torch_dispatch and not is_torch_dispatch:
                         continue
-                    elif is_torch_dispatch:
+                    if is_torch_dispatch:
                         found_torch_dispatch = True
                         continue
                     out += f"{line['filename']}:{line['line']}:{line['name']}\n"

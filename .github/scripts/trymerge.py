@@ -1606,7 +1606,7 @@ def find_matching_merge_rule(
                     )
                 )
             continue
-        elif len(pending_checks) > 0:
+        if len(pending_checks) > 0:
             if reject_reason_score < 20000:
                 reject_reason_score = 20000
                 reject_reason = "\n".join(
@@ -1956,7 +1956,7 @@ def get_classifications(
             )
             continue
 
-        elif is_flaky(check, drci_classifications):
+        if is_flaky(check, drci_classifications):
             checks_with_classifications[name] = JobCheckState(
                 check.name,
                 check.url,
@@ -1968,7 +1968,7 @@ def get_classifications(
             )
             continue
 
-        elif is_invalid_cancel(name, check.status, drci_classifications):
+        if is_invalid_cancel(name, check.status, drci_classifications):
             # NB: Create a new category here for invalid cancelled signals because
             # there are usually many of them when they happen. So, they shouldn't
             # be counted toward ignorable failures threshold

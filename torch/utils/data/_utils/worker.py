@@ -330,11 +330,11 @@ def _worker_loop(
                     dataset_kind, dataset, auto_collation, collate_fn, drop_last
                 )
                 continue
-            elif r is None:
+            if r is None:
                 # Received the final signal
                 assert done_event.is_set() or iteration_end
                 break
-            elif done_event.is_set() or iteration_end:
+            if done_event.is_set() or iteration_end:
                 # `done_event` is set. But I haven't received the final signal
                 # (None) yet. I will keep continuing until get it, and skip the
                 # processing steps.

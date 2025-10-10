@@ -85,9 +85,8 @@ class EventKey:
                 if prev_interval.end > curr_interval.end:
                     j += 1
                     continue
-                else:
-                    curr_interval.start = prev_interval.end
-                    i = j
+                curr_interval.start = prev_interval.end
+                i = j
 
             overlap_start = max(self.event.start_time_ns, curr_interval.start)
             overlap_end = min(self.event.end_time_ns, curr_interval.end)

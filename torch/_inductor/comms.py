@@ -531,15 +531,14 @@ def _reorder_communication_preserving_peak_memory_internal(
                         info.grouped_info = _group_names(gns)
                         candidate = _prev[candidate]
                         continue
-                    else:
-                        msg = (
-                            f"data dependency {data_dep}(dep_names:{list(data_deps.keys())})"
-                            f"\n candidate:{candidate.get_name()}(outs:{[candidate.get_buffer_names()]})"
-                            f"dep on {_group_names(gns)}"
-                            f"\n non_group_reason:{grouping_reason}"
-                        )
-                        info.limiting_factor = msg
-                        break
+                    msg = (
+                        f"data dependency {data_dep}(dep_names:{list(data_deps.keys())})"
+                        f"\n candidate:{candidate.get_name()}(outs:{[candidate.get_buffer_names()]})"
+                        f"dep on {_group_names(gns)}"
+                        f"\n non_group_reason:{grouping_reason}"
+                    )
+                    info.limiting_factor = msg
+                    break
 
                 candidate_allocfree: SNodeMemory = snodes_allocfree[candidate]
                 candidate_delta_mem: int = (
@@ -1099,21 +1098,20 @@ def _sink_waits_iterative_internal(
                         candidate = _next[candidate]
                         continue
                     # pyrefly: ignore  # unbound-name
-                    elif (data_dep is None) and both_contain_comms:
+                    if (data_dep is None) and both_contain_comms:
                         info.limiting_factor = (
                             f"collective ordering {_group_names(gns)}"
                             f" with candidate:{candidate.get_name()}"
                         )
                         break
-                    else:
-                        info.limiting_factor = (
-                            f"data dependency {data_dep}(dep_names:{list(data_deps.keys())})"
-                            f"\n candidate:{candidate.get_name()}(os:{[candidate.get_buffer_names()]})"
-                            f"dep on {gns}"
-                            f"\n outs:{[o.get_name() for o in group_outs]}"
-                            f"\n non_group_reason:{grp_reason}"
-                        )
-                        break
+                    info.limiting_factor = (
+                        f"data dependency {data_dep}(dep_names:{list(data_deps.keys())})"
+                        f"\n candidate:{candidate.get_name()}(os:{[candidate.get_buffer_names()]})"
+                        f"dep on {gns}"
+                        f"\n outs:{[o.get_name() for o in group_outs]}"
+                        f"\n non_group_reason:{grp_reason}"
+                    )
+                    break
                 candidate_allocfree: SNodeMemory = snodes_allocfree[candidate]
                 candidate_delta_mem = (
                     candidate_allocfree.size_alloc - candidate_allocfree.size_free

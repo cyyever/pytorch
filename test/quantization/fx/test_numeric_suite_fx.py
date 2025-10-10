@@ -1615,7 +1615,7 @@ class TestFXNumericSuiteCoreAPIs(FXNumericSuiteQuantizationTestCase):
                 # TODO(future PR): implement shadowing for binary ops
                 # TODO(future PR): implement shadowing for RNN ops
                 continue
-            elif qhandler_cls == qh.CatQuantizeHandler:
+            if qhandler_cls == qh.CatQuantizeHandler:
                 self.assertTrue(
                     base_op in FUNS_IO_TYPE_FP32_OR_INT8,
                     f"missing IO type handling for {base_op}")

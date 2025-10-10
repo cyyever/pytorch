@@ -435,8 +435,7 @@ def _multi_tensor_sgd(
                 if device_momentum_buffer_list[i] is None:
                     all_states_with_momentum_buffer = False
                     break
-                else:
-                    bufs.append(cast(Tensor, device_momentum_buffer_list[i]))
+                bufs.append(cast(Tensor, device_momentum_buffer_list[i]))
 
             if all_states_with_momentum_buffer:
                 torch._foreach_mul_(bufs, momentum)

@@ -178,7 +178,7 @@ def coalesce(layout: Layout, profile: LayoutProfile = None) -> Layout:
         if shape == 1:
             continue
         # replace our shape-1 with anything
-        elif result_shape[-1] == 1:
+        if result_shape[-1] == 1:
             result_shape[-1] = shape
             result_stride[-1] = stride
         # merge modes if the shape*stride match

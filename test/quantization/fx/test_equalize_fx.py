@@ -588,7 +588,7 @@ class TestEqualizeFx(QuantizationTestCase):
                 # Skip the equalization and mul nodes
                 eq_idx += 2
                 continue
-            elif orig_nodes[orig_idx].op != eq_nodes[eq_idx].op:
+            if orig_nodes[orig_idx].op != eq_nodes[eq_idx].op:
                 return False
             elif orig_nodes[orig_idx].op == 'call_module':
                 # Check that the type of call_modules are the same (ex. nn.Linear, MinMaxObserver)

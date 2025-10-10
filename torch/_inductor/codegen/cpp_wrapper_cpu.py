@@ -2196,7 +2196,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
             # None output is supported, but Optional return types are not yet supported
             if output_arg is None:
                 continue
-            elif isinstance(raw_output_arg, int):
+            if isinstance(raw_output_arg, int):
                 new_int_args.append(str(raw_output_arg))
             elif isinstance(output_arg, list):
                 for out in output_arg:

@@ -953,7 +953,7 @@ class MetalKernel(SIMDKernel):
             if isinstance(tree.numel, (sympy.Integer, int)):
                 # Don't need to pass in integers as inputs
                 continue
-            elif isinstance(tree.numel, sympy.Symbol):
+            if isinstance(tree.numel, sympy.Symbol):
                 expr = tree.numel
             else:
                 expr = V.graph.wrapper_code.generate_numel_expr(name, tree).inner

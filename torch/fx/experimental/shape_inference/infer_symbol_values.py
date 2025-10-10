@@ -54,7 +54,7 @@ def infer_symbol_values(
         for left_element in left_elements:
             if sp.sympify(left_element) == sp.sympify("-1"):
                 continue
-            elif sp.sympify(left_element).is_number:
+            if sp.sympify(left_element).is_number:
                 left_num *= int(left_element)
             else:
                 left_equation *= sp.sympify(left_element)

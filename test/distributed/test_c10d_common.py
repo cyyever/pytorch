@@ -2001,7 +2001,7 @@ class ProcessGroupWithDispatchedCollectivesTests(MultiProcessTestCase):
             # skip if the backend is not available on the system
             if backend == dist.Backend.UNDEFINED:
                 continue
-            elif backend == dist.Backend.MPI:
+            if backend == dist.Backend.MPI:
                 if not dist.is_mpi_available():
                     continue
             elif backend == dist.Backend.NCCL:

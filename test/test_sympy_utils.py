@@ -418,7 +418,7 @@ class TestSympyInterp(TestCase):
         for args in itertools.product(vals, repeat=arity):
             if arity == 1 and not valid_unary(fn, *args):
                 continue
-            elif arity == 2 and not valid_binary(fn, *args):
+            if arity == 2 and not valid_binary(fn, *args):
                 continue
             with self.subTest(args=args):
                 sargs = [sympy.sympify(a) for a in args]
@@ -467,13 +467,13 @@ class TestSympyInterp(TestCase):
         for args in itertools.product(vals, repeat=arity):
             if arity == 1 and not valid_unary(fn, *args):
                 continue
-            elif arity == 2 and not valid_binary(fn, *args):
+            if arity == 2 and not valid_binary(fn, *args):
                 continue
             if fn == "truncdiv" and args[1] == 0:
                 continue
-            elif fn in ("pow", "pow_by_natural") and (args[0] == 0 and args[1] <= 0):
+            if fn in ("pow", "pow_by_natural") and (args[0] == 0 and args[1] <= 0):
                 continue
-            elif fn == "floordiv" and args[1] == 0:
+            if fn == "floordiv" and args[1] == 0:
                 continue
             with self.subTest(args=args):
                 # Workaround mpf from symbol error
@@ -539,7 +539,7 @@ class TestSympyInterp(TestCase):
         for args in itertools.product(vals, repeat=arity):
             if arity == 1 and not valid_unary(fn, *args):
                 continue
-            elif arity == 2 and not valid_binary(fn, *args):
+            if arity == 2 and not valid_binary(fn, *args):
                 continue
 
             with self.subTest(args=args):

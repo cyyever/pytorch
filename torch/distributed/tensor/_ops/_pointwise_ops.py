@@ -570,11 +570,10 @@ def common_pointwise_strategy(
                             )
                         )
                         continue
-                    else:
-                        raise ValueError(
-                            f"Could not run pointwise computation across different mesh: "
-                            f"Found {input_arg.mesh} and {followed_strategy.mesh}!"
-                        )
+                    raise ValueError(
+                        f"Could not run pointwise computation across different mesh: "
+                        f"Found {input_arg.mesh} and {followed_strategy.mesh}!"
+                    )
 
                 # every arg follow the out_placements, but need to handle broadcasting
                 input_arg_dims_map = infer_broadcast_dims_map(

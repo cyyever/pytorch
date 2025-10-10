@@ -712,7 +712,7 @@ def make_constraints(
         ):
             continue
 
-        elif _is_constant_argument(meta_val) or isinstance(meta_val, CustomObjArgument):
+        if _is_constant_argument(meta_val) or isinstance(meta_val, CustomObjArgument):
             continue
 
         shape_spec = flat_dynamic_shapes[input_index - num_lifted_inputs]

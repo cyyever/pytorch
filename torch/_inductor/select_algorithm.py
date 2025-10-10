@@ -3048,8 +3048,7 @@ class AlgorithmSelectorCache(PersistentCache):
             if c.kernel_hash_key() in seen_choices:
                 log.debug("Skipping already seen choice: %s", c)
                 continue
-            else:
-                seen_choices.add(c.kernel_hash_key())
+            seen_choices.add(c.kernel_hash_key())
 
             if hasattr(c, "precompile"):
                 triton_cuda_choice = isinstance(c, TritonTemplateCaller) and isinstance(

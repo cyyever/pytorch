@@ -398,7 +398,7 @@ def _flatten_vts(vts):
             if isinstance(vt, ListVariable):
                 vts.extend(vt.items)
                 continue
-            elif isinstance(vt, ConstDictVariable):
+            if isinstance(vt, ConstDictVariable):
                 vts.extend(vt.items.values())
                 continue
 

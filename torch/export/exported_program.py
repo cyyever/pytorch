@@ -1343,7 +1343,7 @@ class ExportedProgram:
         for input_ in self.graph_signature.input_specs:
             if input_.kind == InputKind.USER_INPUT:
                 continue
-            elif input_.kind in (
+            if input_.kind in (
                 InputKind.PARAMETER,
                 InputKind.BUFFER,
             ):

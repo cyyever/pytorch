@@ -41,10 +41,9 @@ def tail_logfile(
                 if finished.is_set():
                     # log line producer is finished
                     break
-                else:
-                    # log line producer is still going
-                    # wait for a bit before looping again
-                    time.sleep(interval_sec)
+                # log line producer is still going
+                # wait for a bit before looping again
+                time.sleep(interval_sec)
 
 
 class TailLog:

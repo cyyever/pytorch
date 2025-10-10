@@ -4926,8 +4926,7 @@ a")
             for y in inputs:
                 if x < 0:
                     continue
-                else:
-                    self.checkScript(func5, (x, y))
+                self.checkScript(func5, (x, y))
 
     @unittest.skipIf(not RUN_CUDA, "device tests require CUDA")
     def test_pow_scalar_backward_cuda(self):
@@ -7803,9 +7802,8 @@ dedent """
                     for i in range(6):
                         if i == 3:
                             continue
-                        else:
-                            if i > 3:
-                                break
+                        if i > 3:
+                            break
                         z += 2
                 if int(y) == 18:
                     break
@@ -7901,10 +7899,9 @@ dedent """
                     x = 5
                     break
                     assert 1 == 2
-                else:
-                    x = x + 1
-                    break
-                    assert 1 == 2
+                x = x + 1
+                break
+                assert 1 == 2
                 x = -30
                 assert 1 == 2
             return x

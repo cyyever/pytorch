@@ -362,8 +362,7 @@ class ModularIndexing(sympy.Function):
                         # this optimization would become valid
                         all_positive = False
                         break
-                    else:
-                        new_terms.append(term)
+                    new_terms.append(term)
 
             if len(new_terms) != len(base.args) and all_positive:
                 return ModularIndexing(sum(new_terms), divisor, modulus)

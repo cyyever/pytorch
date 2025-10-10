@@ -230,10 +230,9 @@ Works only with Python3.\n A few examples:
             if not bench.is_supported():
                 if allow_skip:
                     continue
-                else:
-                    raise ValueError(
-                        f"attempted to run an unsupported benchmark: {bench.desc()}"
-                    )
+                raise ValueError(
+                    f"attempted to run an unsupported benchmark: {bench.desc()}"
+                )
             bench.run(args)
 
     def run_with_input_iter(bench_cls, input_iter, allow_skip=True):
@@ -269,10 +268,9 @@ Works only with Python3.\n A few examples:
             if not bench.is_supported():
                 if allow_skip:
                     continue
-                else:
-                    raise ValueError(
-                        f"attempted to run an unsupported benchmark: {bench.desc()}"
-                    )
+                raise ValueError(
+                    f"attempted to run an unsupported benchmark: {bench.desc()}"
+                )
             bench.run(args)
 
     benchmark_classes = benchmark.benchmark_classes

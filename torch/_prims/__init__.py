@@ -416,8 +416,7 @@ def _prim_elementwise_meta(
             if not utils.is_cpu_scalar_tensor(arg):
                 dtype = arg.dtype
                 break
-            else:
-                dtype = arg.dtype
+            dtype = arg.dtype
         elif isinstance(arg, Number):
             scalar_type = type(arg)
 

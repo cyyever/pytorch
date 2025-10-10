@@ -3757,8 +3757,7 @@ class TestTorchDeviceType(TestCase):
                 with self.assertRaisesRegex(RuntimeError, r'expected BoolTensor for mask'):
                     dst = src.masked_select(mask)
                 continue
-            else:
-                dst = src.masked_select(mask)
+            dst = src.masked_select(mask)
             dst2 = []
             for i in range(num_src):
                 if mask[i]:

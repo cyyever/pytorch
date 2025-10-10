@@ -146,9 +146,9 @@ class CustomDecompTable(dict[torch._ops.OperatorBase, Callable]):
         for op in _collect_all_valid_cia_ops():
             if _is_aten_op(op):
                 continue
-            elif op in self.decomp_table:
+            if op in self.decomp_table:
                 continue
-            elif op not in self.deleted_custom_ops:
+            if op not in self.deleted_custom_ops:
                 self.decomp_table[op] = _get_decomp_for_cia(op)
 
         self.has_materialized = True

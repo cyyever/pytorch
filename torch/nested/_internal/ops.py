@@ -277,8 +277,7 @@ def lookup_jagged(func, *args, **kwargs) -> Optional[Callable]:
                 if isinstance(arg.type, torch.TensorType):
                     schema_parts.append(f"{arg.name}: jt_all")
                     break
-                else:
-                    schema_parts.append(f"{arg.name}: any")
+                schema_parts.append(f"{arg.name}: any")
             schema_parts.append("...")
             check_schema_str = ", ".join(schema_parts)
             check_schema(check_schema_str, func, *args, **kwargs)

@@ -3962,7 +3962,7 @@ class TilingSelect:
                 stride = stride_at_vec_range(index, var, tiling_factor)
                 if stride == 0:
                     continue
-                elif stride == 1:
+                if stride == 1:
                     contig_vars.add(int(var.name[1:]))
                     contig_vars_list.append(int(var.name[1:]))
                 elif all(symbol_is_type(s, SymT.SIZE) for s in stride.free_symbols):

@@ -877,7 +877,7 @@ def check_same_device(*args, allow_cpu_scalar_tensors):
     for arg in args:
         if isinstance(arg, Number):
             continue
-        elif isinstance(arg, TensorLike):
+        if isinstance(arg, TensorLike):
             if allow_cpu_scalar_tensors and is_cpu_scalar_tensor(arg):
                 continue
 
@@ -925,7 +925,7 @@ def check_same_shape(*args, allow_cpu_scalar_tensors: bool):
     for arg in args:
         if isinstance(arg, Number):
             continue
-        elif isinstance(arg, TensorLike):
+        if isinstance(arg, TensorLike):
             if allow_cpu_scalar_tensors and is_cpu_scalar_tensor(arg):
                 continue
 
@@ -952,7 +952,7 @@ def extract_shape(*args, allow_cpu_scalar_tensors: bool) -> Optional[ShapeType]:
     for arg in args:
         if isinstance(arg, Number):
             continue
-        elif isinstance(arg, TensorLike):
+        if isinstance(arg, TensorLike):
             if allow_cpu_scalar_tensors and is_cpu_scalar_tensor(arg):
                 scalar_shape = arg.shape
                 continue
@@ -1414,7 +1414,7 @@ def check_same_dtype(*args):
             #         + "!"
             #     )
             #     raise RuntimeError(msg)
-        elif isinstance(arg, TensorLike):
+        if isinstance(arg, TensorLike):
             if full_dtype is None:
                 full_dtype = arg.dtype
             if scalar_type is None:

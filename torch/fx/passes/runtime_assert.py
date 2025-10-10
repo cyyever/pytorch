@@ -131,8 +131,7 @@ def insert_deferred_runtime_asserts(
         if node.op != "placeholder":
             first_non_placeholder = node
             break
-        else:
-            placeholders.add(node)
+        placeholders.add(node)
 
     def _is_intermediate_tensor_sym_call(node: fx.Node) -> bool:
         """
@@ -158,7 +157,7 @@ def insert_deferred_runtime_asserts(
         if "example_value" in node.meta:
             val_key = "example_value"
             break
-        elif "val" in node.meta:
+        if "val" in node.meta:
             break
 
     def _node_metadata_hook(

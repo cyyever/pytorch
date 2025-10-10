@@ -608,10 +608,9 @@ def b2b_gemm_handler(match: Match, mat1: torch.fx.Node, mat2: torch.fx.Node) -> 
         if is_mm(node):
             outer_mm = node
             break
-        elif is_pointwise_node(node):
+        if is_pointwise_node(node):
             continue
-        else:
-            break
+        break
     if not outer_mm:
         return
 

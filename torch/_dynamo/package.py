@@ -472,8 +472,7 @@ class PrecompileCacheEntry:
                     )
                     code.bypassed = True
                     break
-                else:
-                    backend_content[backend_id] = backends[backend_id]
+                backend_content[backend_id] = backends[backend_id]
 
         return PrecompileCacheEntry(dynamo=cache_entry, backends=backend_content)
 

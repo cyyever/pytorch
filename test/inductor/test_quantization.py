@@ -84,7 +84,7 @@ class TestQuantization(TestCase):
                     res_dict[key2],
                 )
                 continue
-            elif not torch.allclose(
+            if not torch.allclose(
                 ref_dict[key1], res_dict[key2], rtol=rtol, atol=atol, equal_nan=True
             ):
                 log.info(
