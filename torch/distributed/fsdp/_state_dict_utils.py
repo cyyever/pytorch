@@ -336,7 +336,8 @@ def _full_post_state_dict_hook(
                     "This may mean that this state_dict entry could point to invalid "
                     "memory regions after returning from state_dict() call if this "
                     "parameter is managed by FSDP. Please check clone "
-                    f"implementation of {fqn}. Error: {str(e)}"
+                    f"implementation of {fqn}. Error: {str(e)}",
+                    stacklevel=2,
                 )
 
     return _common_unshard_post_state_dict_hook(
@@ -700,7 +701,8 @@ def _post_state_dict_hook(
         context = _replace_with_full_state_dict_type(fsdp_state)
         warnings.warn(
             "When using ``NO_SHARD`` for ``ShardingStrategy``, full_state_dict will "
-            "be returned."
+            "be returned.",
+            stacklevel=2,
         )
     else:
         context = contextlib.nullcontext()
@@ -762,7 +764,8 @@ def _pre_state_dict_hook(
         context = _replace_with_full_state_dict_type(fsdp_state)
         warnings.warn(
             "When using ``NO_SHARD`` for ``ShardingStrategy``, full_state_dict will "
-            "be returned."
+            "be returned.",
+            stacklevel=2,
         )
     else:
         _set_use_dtensor(fsdp_state)
@@ -816,7 +819,8 @@ def _pre_load_state_dict_hook(
         context = _replace_with_full_state_dict_type(fsdp_state)
         warnings.warn(
             "When using ``NO_SHARD`` for ``ShardingStrategy``, full_state_dict will"
-            "be returned."
+            "be returned.",
+            stacklevel=2,
         )
     else:
         _set_use_dtensor(fsdp_state)
@@ -853,7 +857,8 @@ def _post_load_state_dict_hook(
         context = _replace_with_full_state_dict_type(fsdp_state)
         warnings.warn(
             "When using ``NO_SHARD`` for ``ShardingStrategy``, full_state_dict will"
-            "be returned."
+            "be returned.",
+            stacklevel=2,
         )
     else:
         context = contextlib.nullcontext()

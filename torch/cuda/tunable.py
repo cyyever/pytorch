@@ -639,7 +639,8 @@ def _process_single_offline_gemm(untuned_gemm_line: str, gpu_id: int) -> None:
             else:
                 warnings.warn(
                     "Offline tuning is not supported for this GEMM. Use online tuning instead. "
-                    + f"Skipped tuning for: {untuned_gemm[1]}"
+                    + f"Skipped tuning for: {untuned_gemm[1]}",
+                    stacklevel=2,
                 )
                 return
 
@@ -657,7 +658,8 @@ def _process_single_offline_gemm(untuned_gemm_line: str, gpu_id: int) -> None:
         if m == 1 or n == 1 or k == 1:
             warnings.warn(
                 "Offline tuning is not support for this GEMM. Use online tuning instead. "
-                + f"Skipped tuning for: {untuned_gemm[1]}"
+                + f"Skipped tuning for: {untuned_gemm[1]}",
+                stacklevel=2,
             )
             return
 
@@ -760,7 +762,7 @@ def _process_single_offline_gemm(untuned_gemm_line: str, gpu_id: int) -> None:
         matA = matA.t()
         torch.nn.functional.linear(X, matA, bias)
     else:
-        warnings.warn(f"error: unknown op {op_sig}")
+        warnings.warn(f"error: unknown op {op_sig}", stacklevel=2)
 
 
 def _check_tuning_assertions() -> None:
@@ -769,7 +771,7 @@ def _check_tuning_assertions() -> None:
     """
 
     if is_enabled() is False:
-        warnings.warn("TunableOp was disabled. Trying to enable now.")
+        warnings.warn("TunableOp was disabled. Trying to enable now.", stacklevel=2)
         enable(True)
     assert is_enabled() is True
     assert tuning_is_enabled() is True
