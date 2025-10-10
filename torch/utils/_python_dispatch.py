@@ -200,9 +200,7 @@ class TorchDispatchMode:
         The way this will usually happen is that :func:`torch.compile`
         will just fallback to eager-mode PyTorch.
         """
-        if cls.is_infra_mode():
-            return True
-        return False
+        return bool(cls.is_infra_mode())
 
 
 def _get_current_dispatch_mode() -> Optional[TorchDispatchMode]:

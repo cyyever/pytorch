@@ -552,11 +552,10 @@ class MatMulDimInFP16Pattern(Pattern):
         if not input_dtypes(event):
             return False
         arg_dtype = input_dtypes(event)[0]
-        if arg_dtype in (torch.bfloat16, torch.half) and not mutiple_of(
-            input_shapes(event), 8
-        ):
-            return True
-        return False
+        return bool(
+            arg_dtype in (torch.bfloat16, torch.half)
+            and not mutiple_of(input_shapes(event), 8)
+        )
 
     def benchmark(self, events: list[_ProfilerEvent]):
         def closest_multiple(shapes, multiple):

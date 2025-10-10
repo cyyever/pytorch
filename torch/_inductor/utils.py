@@ -1803,12 +1803,10 @@ def can_use_tma(
             return False
 
         # FP8 special case: inner ≥ 32
-        if dtype == torch.float8_e4m3fn and not V.graph.sizevars.statically_known_geq(
-            inner_dim, 32
-        ):
-            return False
-
-        return True
+        return not (
+            dtype == torch.float8_e4m3fn
+            and not V.graph.sizevars.statically_known_geq(inner_dim, 32)
+        )
 
     return (
         has_triton_tma_device()

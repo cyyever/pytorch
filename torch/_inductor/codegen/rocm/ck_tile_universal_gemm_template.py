@@ -402,9 +402,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         if op.datatype_b != self._TORCH_DTYPE_TO_CK[W_dtype]:
             return False
-        if op.datatype_c != self._TORCH_DTYPE_TO_CK[out_dtype]:
-            return False
-        return True
+        return op.datatype_c == self._TORCH_DTYPE_TO_CK[out_dtype]
 
     def check_layouts(self, op: "CKTileGemmOperation"):
         X_layout, W_layout, out_layout = [
@@ -415,9 +413,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         if op.layout_b != W_layout:
             return False
-        if op.layout_c != out_layout:
-            return False
-        return True
+        return op.layout_c == out_layout
 
     def get_gemm_problem_size(self):
         X_size, W_size = [T.get_layout().size for T in [*self.input_nodes]]
@@ -435,13 +431,11 @@ class CKTileGemmTemplate(CKTileTemplate):
         M, N, K = self.get_gemm_problem_size()
 
         def check(dim_size, tile_size, is_padded):
-            if (
+            return not (
                 is_static_int(dim_size)
                 and dim_size % tile_size != 0
                 and is_padded == "false"
-            ):
-                return False
-            return True
+            )
 
         if op.layout_a == "Row":
             # handle in kBatch check
@@ -547,9 +541,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         if op.tile_n % (op.warp_n * op.warp_tile_n) != 0:
             return False
-        if op.tile_k % (op.warp_k * op.warp_tile_k) != 0:
-            return False
-        return True
+        return op.tile_k % (op.warp_k * op.warp_tile_k) == 0
 
     def check_block_tile_size(self, op: "CKTileGemmOperation"):
         # assuming LDS size is 64KB
@@ -562,9 +554,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             self.ck_dtype_to_size[op.datatype_a] * op.tile_m * op.tile_k
             + self.ck_dtype_to_size[op.datatype_b] * op.tile_n * op.tile_k
         )
-        if block_tile_size > max_block_tile_size:
-            return False
-        return True
+        return not block_tile_size > max_block_tile_size
 
     def filter_op(self, op: "CKTileGemmOperation"):
         """
@@ -925,13 +915,11 @@ class CKTileGemmTemplate(CKTileTemplate):
         default_choices = (1, 2, 4, 8, 16, 32)
 
         def check(dim_size, tile_size, is_padded):
-            if (
+            return not (
                 is_static_int(dim_size)
                 and dim_size % tile_size != 0
                 and is_padded == "false"
-            ):
-                return False
-            return True
+            )
 
         _, _, K, _, _, _ = self.size_args()
         if op.layout_a == "Row" or op.layout_b == "Col":

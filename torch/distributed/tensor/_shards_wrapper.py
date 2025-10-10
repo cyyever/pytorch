@@ -187,9 +187,7 @@ class LocalShardsWrapper(torch.Tensor):
             aten.equal.default(x, y) for x, y in zip(a.local_shards(), b.local_shards())
         ):
             return False
-        if a.storage_metadata() != b.storage_metadata():
-            return False
-        return True
+        return a.storage_metadata() == b.storage_metadata()
 
     @staticmethod
     def handle_detach(args, kwargs) -> "LocalShardsWrapper":

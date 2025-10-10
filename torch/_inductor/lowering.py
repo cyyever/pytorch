@@ -1808,10 +1808,7 @@ def cat(inputs, dim=0):
         if isinstance(x, (TensorBox, ir.StorageBox)):
             return should_lower_cat_input(unwrap_tensor(x))
 
-        if isinstance(x, ir.Pointwise):
-            return True
-
-        return False
+        return bool(isinstance(x, ir.Pointwise))
 
     if config.force_pointwise_cat:
         return pointwise_cat(inputs, dim)
