@@ -1867,10 +1867,7 @@ class BaseScaledMMConfigMixin(MMTemplateConfigMixin):
                 return True
 
             # Both need to be scalars or len(1) tensors
-            if len(size_a) <= 1 and len(size_b) <= 1:
-                return True
-
-            return False
+            return bool(len(size_a) <= 1 and len(size_b) <= 1)
 
         def is_scalar_like(sz: Any) -> bool:
             return (len(sz) == 0) or all(
@@ -1930,9 +1927,7 @@ class ScaledMMConfigMixin(BaseScaledMMConfigMixin):
 
         # On NVIDIA B200 GPUs, K dim must be >= 32 for tcgen05.mma.kind::f8f6f4.* PTX instruction to be valid
         # source: https://docs.nvidia.com/cuda/parallel-thread-execution/#tcgen05-matrix-shape
-        if using_b200() and V.graph.sizevars.guard_or_false(sympy.Lt(k, 32)):
-            return False
-        return True
+        return not (using_b200() and V.graph.sizevars.guard_or_false(sympy.Lt(k, 32)))
 
 
 # Scaled TMA-specific mixin for scaled MM templates with TMA

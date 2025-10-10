@@ -306,9 +306,7 @@ class _LoggerState:
             if not logger.name.startswith("torch._inductor"):
                 return False
             # If this logger propagates then assume we'll track its parent
-            if logger.propagate:
-                return False
-            return True
+            return not logger.propagate
 
         root = logging.getLogger("torch._inductor")
         if sys.version_info < (3, 12):

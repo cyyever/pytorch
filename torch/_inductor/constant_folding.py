@@ -159,9 +159,7 @@ class ConstantFolder(torch.fx.Interpreter):
             # int8_weight and leave dq in graph to be fused
             return True
 
-        if node.target in _dont_constant_fold:
-            return True
-        return False
+        return node.target in _dont_constant_fold
 
     def node_to_last_non_output_use(self) -> dict[torch.fx.Node, list[torch.fx.Node]]:
         last_non_output_use = collections.defaultdict(list)

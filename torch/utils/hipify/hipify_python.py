@@ -622,9 +622,7 @@ def is_out_of_place(rel_filepath):
         return False
     if rel_filepath.startswith("third_party/nvfuser/"):
         return False
-    if rel_filepath.startswith("tools/autograd/templates/"):
-        return False
-    return True
+    return not rel_filepath.startswith("tools/autograd/templates/")
 
 
 # Keep this synchronized with includes/ignores in build_amd.py
@@ -632,9 +630,7 @@ def is_pytorch_file(rel_filepath):
     if os.path.isabs(rel_filepath):
         raise AssertionError("rel_filepath must be a relative path")
     if rel_filepath.startswith("aten/"):
-        if rel_filepath.startswith("aten/src/ATen/core/"):
-            return False
-        return True
+        return not rel_filepath.startswith("aten/src/ATen/core/")
     if rel_filepath.startswith("torch/"):
         return True
     if rel_filepath.startswith("third_party/nvfuser/"):

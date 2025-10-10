@@ -1441,10 +1441,7 @@ class CppGemmTemplate(CppTemplate):
             # there will be epilogue_creators after the GEMM.
             # The GEMM output buffer is localized while
             # the output buffer of the epilogue_creators is a global buffer.
-            if epilogue_creators:
-                return False
-
-            return True
+            return not epilogue_creators
 
         if need_copy_from_local_to_global_buffer_epilogue(
             use_local_acc, template_buffer_has_other_users, epilogue_creators

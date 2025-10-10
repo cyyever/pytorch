@@ -52,9 +52,7 @@ def matches_module_function_pattern(
     if node.target != pattern[1]:
         return False
     # make sure node.args[0] output is only used by current node.
-    if len(node.args[0].users) > 1:
-        return False
-    return True
+    return not len(node.args[0].users) > 1
 
 
 class FakeTensorUpdater:
@@ -183,14 +181,11 @@ class FakeTensorUpdater:
             # This is the case where it returns a completely fresh storage that's used nowhere else.
             # If the FakeTensor's storage is fresh and none of the node's users can alias it, then
             # we don't need to update this node.
-            if (
+            return bool(
                 existing_storages[get_storage(old)] == 1
                 and get_storage(new) not in existing_storages
                 and not any_user_may_alias(node)
-            ):
-                return True
-
-            return False
+            )
 
         def should_process_node(node):
             # node.target for nodes returning true from this function

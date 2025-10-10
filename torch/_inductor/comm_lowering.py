@@ -68,10 +68,9 @@ def can_realize_as_comm_buffer(
     if isinstance(layout, ir.CommBufferLayout):
         return True
 
-    if isinstance(layout, ir.FlexibleLayout) and not is_symbolic(data.get_numel()):
-        return True
-
-    return False
+    return bool(
+        isinstance(layout, ir.FlexibleLayout) and not is_symbolic(data.get_numel())
+    )
 
 
 def realize_as_comm_buffer(

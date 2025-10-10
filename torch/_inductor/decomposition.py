@@ -390,10 +390,7 @@ def cat(
         if len(x.shape) == 1 and guard_or_false(x.shape[0] == 0):
             return False
 
-        if dim < len(x.shape) and guard_or_false(x.shape[dim] == 0):
-            return False
-
-        return True
+        return not (dim < len(x.shape) and guard_or_false(x.shape[dim] == 0))
 
     filtered_tensors = list(filter(non_empty_tensor, tensors))
 

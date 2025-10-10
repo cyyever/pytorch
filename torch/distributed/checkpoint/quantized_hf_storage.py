@@ -249,10 +249,7 @@ class QuantizedHuggingFaceStorageReader(HuggingFaceStorageReader):
             return False
 
         # Check if this weight tensor has a corresponding scale tensor
-        if tensor_fqn not in self._weight_scale_mapping:
-            return False
-
-        return True
+        return tensor_fqn in self._weight_scale_mapping
 
     def _read_quantized_tensor_with_block_alignment(
         self, req: ReadItem, safetensor_file: Any

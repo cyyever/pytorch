@@ -3191,12 +3191,10 @@ def _simulate_comms_compute(
                 in prev_ops
             ):
                 return True
-            if (
+            return (
                 _Action(action.stage_index + 1, FULL_BACKWARD, action.microbatch_index)
                 in prev_ops
-            ):
-                return True
-            return False
+            )
         elif action.computation_type == BACKWARD_WEIGHT:
             return True
         elif action.computation_type == SEND_F:

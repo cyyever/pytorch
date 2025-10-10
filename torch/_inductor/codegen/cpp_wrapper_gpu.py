@@ -289,9 +289,7 @@ class DeferredTritonCallWrapper:
                         return False
                     if sig == "nvTmaDesc":
                         return True
-                    if sig.startswith("tensordesc<"):
-                        return True
-                    return False
+                    return bool(sig.startswith("tensordesc<"))
 
                 curr_arg_id = -1
                 total_args = []
@@ -650,9 +648,7 @@ class CppWrapperGpu(CppWrapperCpu):
                 return False
             if sig == "nvTmaDesc":
                 return True
-            if sig.startswith("tensordesc<"):
-                return True
-            return False
+            return bool(sig.startswith("tensordesc<"))
 
         def process_tma_stable_arg(arg, arg_type, arg_signature, var_name):
             # [Note: AOTI TMA Stable handling]

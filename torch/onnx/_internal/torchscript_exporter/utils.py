@@ -1688,10 +1688,9 @@ def _should_aten_fallback(
     if not name.startswith("aten::"):
         return False
 
-    if is_onnx_aten_export or (is_aten_fallback_export and not is_exportable_aten_op):
-        return True
-
-    return False
+    return bool(
+        is_onnx_aten_export or is_aten_fallback_export and not is_exportable_aten_op
+    )
 
 
 def _get_aten_op_overload_name(n: _C.Node) -> str:
