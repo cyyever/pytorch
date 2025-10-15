@@ -1044,19 +1044,13 @@ void initJITBindings(PyObject* module) {
           [](std::shared_ptr<Graph>& graph) { RefineTupleTypes(graph); })
       .def(
           "_jit_pass_transform_conv1d_to_conv2d",
-          [](std::shared_ptr<Graph>& graph) {
-            transformConv1dToConv2d(graph);
-          })
+          [](std::shared_ptr<Graph>& graph) { transformConv1dToConv2d(graph); })
       .def(
           "_jit_pass_transform_conv1d_to_conv2d",
-          [](script::Module& module) {
-            transformConv1dToConv2d(module);
-          })
+          [](script::Module& module) { transformConv1dToConv2d(module); })
       .def(
           "_jit_pass_insert_prepacked_ops",
-          [](std::shared_ptr<Graph>& graph) {
-            insertPrePackedOps(graph);
-          })
+          [](std::shared_ptr<Graph>& graph) { insertPrePackedOps(graph); })
       .def(
           "_jit_pass_insert_prepacked_ops",
           [](script::Module& module) { insertPrePackedOps(module); })
@@ -1096,9 +1090,7 @@ void initJITBindings(PyObject* module) {
           })
       .def(
           "_jit_pass_vulkan_insert_prepacked_ops",
-          [](script::Module& module) {
-            vulkanInsertPrePackedOps(module);
-          })
+          [](script::Module& module) { vulkanInsertPrePackedOps(module); })
       .def(
           "_jit_pass_vulkan_fuse_clamp_w_prepacked_conv",
           [](script::Module& module) {
@@ -1106,9 +1098,7 @@ void initJITBindings(PyObject* module) {
           })
       .def(
           "_jit_pass_vulkan_fold_prepacking_ops",
-          [](script::Module& module) {
-            vulkanFoldPrePackingOps(module);
-          })
+          [](script::Module& module) { vulkanFoldPrePackingOps(module); })
       .def(
           "_jit_pass_vulkan_optimize_for_mobile",
           [](script::Module& module,
@@ -1119,14 +1109,10 @@ void initJITBindings(PyObject* module) {
           })
       .def(
           "_jit_pass_metal_insert_prepacked_ops",
-          [](std::shared_ptr<Graph>& graph) {
-            metalInsertPrePackedOps(graph);
-          })
+          [](std::shared_ptr<Graph>& graph) { metalInsertPrePackedOps(graph); })
       .def(
           "_jit_pass_metal_insert_prepacked_ops",
-          [](script::Module& module) {
-            metalInsertPrePackedOps(module);
-          })
+          [](script::Module& module) { metalInsertPrePackedOps(module); })
       .def(
           "_jit_pass_metal_fuse_clamp_w_prepacked_conv",
           [](script::Module& module) {
