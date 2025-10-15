@@ -29,7 +29,8 @@
 from __future__ import annotations
 
 import re
-from typing import Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from torchgen.api import cpp
 from torchgen.api.autograd import (

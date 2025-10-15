@@ -3,7 +3,8 @@ from __future__ import annotations
 import dis
 import inspect
 import sys
-from typing import Any, Callable, Optional, TYPE_CHECKING, Union
+from collections.abc import Callable
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 
 if TYPE_CHECKING:

@@ -7,9 +7,10 @@ import math
 import os
 import time
 import zipfile
+from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Callable, cast, Optional
+from typing import Any, cast, Optional
 
 import boto3  # type: ignore[import]
 import requests

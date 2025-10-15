@@ -20,9 +20,10 @@ import json
 import logging
 import os
 import re
+from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 from yaml import load
 

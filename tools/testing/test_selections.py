@@ -3,8 +3,9 @@ from __future__ import annotations
 import math
 import os
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from tools.stats.import_test_stats import get_disabled_tests
 from tools.testing.test_run import ShardedTest, TestRun

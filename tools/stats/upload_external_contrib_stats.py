@@ -6,7 +6,8 @@ import json
 import os
 import time
 import urllib.parse
-from typing import Any, Callable, cast
+from collections.abc import Callable
+from typing import Any, cast
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 

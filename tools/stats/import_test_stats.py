@@ -6,8 +6,9 @@ import datetime
 import json
 import os
 import shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, cast
 from urllib.request import urlopen
 
 

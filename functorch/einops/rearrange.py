@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import functools
-from typing import Callable, TYPE_CHECKING, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Union
 
 import torch
 from functorch.dim import dims  # noqa: F401

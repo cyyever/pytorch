@@ -5,7 +5,8 @@ Python implementation of function wrapping functionality for functorch.dim.
 from __future__ import annotations
 
 import functools
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 import torch
 from torch.utils._pytree import tree_map

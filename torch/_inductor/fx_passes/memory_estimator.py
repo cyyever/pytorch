@@ -1,8 +1,9 @@
 import itertools
 import logging
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 
 import torch
 import torch.fx as fx

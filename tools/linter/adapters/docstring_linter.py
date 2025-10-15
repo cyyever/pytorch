@@ -3,9 +3,10 @@ from __future__ import annotations
 import itertools
 import json
 import sys
+from collections.abc import Callable
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 
 _FILE = Path(__file__).absolute()
