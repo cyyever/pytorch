@@ -5,6 +5,7 @@ import unittest
 from torch.ao.quantization.experimental.observer import APoTObserver
 from torch.ao.quantization.experimental.quantizer import quantize_APoT
 
+
 class TestQuantizedTensor(unittest.TestCase):
     r""" Tests int_repr on APoTQuantizer with random tensor2quantize
     and hard-coded values
@@ -36,6 +37,7 @@ class TestQuantizedTensor(unittest.TestCase):
         expected_qtensor_data = torch.tensor([0, 3, 8, 13, 5, 12], dtype=torch.int32)
 
         self.assertTrue(torch.equal(qtensor_data, expected_qtensor_data))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -13,6 +13,7 @@ try:
 except Exception:
     HAS_FUNCTIONALIZATION = False
 
+
 class TestReinplacePass(TestCase):
 
     def test_reinplace_basic(self):
@@ -37,7 +38,6 @@ def forward(self, x_1):
     add = torch.ops.aten.add_.Tensor(clone, 1);  add = None
     return clone
     """)
-
 
     def test_reinplace_with_view(self):
         def f(x):
@@ -300,7 +300,6 @@ def forward(self, a__1):
     copy__default = torch.ops.aten.copy_.default(select_int, add);  select_int = add = copy__default = None
     return as_strided
     """)  # noqa: B950
-
 
     def test_out_node_updated(self):
         def f():

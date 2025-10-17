@@ -7,6 +7,7 @@ from typing import Any
 
 __all__ = ["RemovableHandle", "unserializable_hook", "warn_if_has_hooks", "BackwardHook"]
 
+
 class RemovableHandle:
     r"""
     A handle which provides the capability to remove a hook.
@@ -89,6 +90,7 @@ def warn_if_has_hooks(tensor):
                               "serialized.  If this is expected, you can "
                               "decorate the function with @torch.utils.hooks.unserializable_hook "
                               "to suppress this warning")
+
 
 class BackwardHook:
     """

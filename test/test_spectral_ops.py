@@ -487,7 +487,6 @@ class TestFFT(TestCase):
             expect = inp.to(expect_dtype)
             self.assertEqual(expect, out)
 
-
     @skipCPUIfNoFFT
     @onlyNativeDeviceTypes
     @toleranceOverride({
@@ -567,12 +566,10 @@ class TestFFT(TestCase):
             actual = torch.fft.ihfftn(input, dim=dim, norm="ortho")
             self.assertEqual(expect, actual)
 
-
     # 2d-fft tests
 
     # NOTE: 2d transforms are only thin wrappers over n-dim transforms,
     # so don't require exhaustive testing.
-
 
     @skipCPUIfNoFFT
     @onlyNativeDeviceTypes
@@ -719,7 +716,6 @@ class TestFFT(TestCase):
             with self.assertWarnsRegex(UserWarning, "out tensor will be resized"):
                 func(n=100, d=.5, out=actual)
             self.assertEqual(actual, expect)
-
 
     @skipCPUIfNoFFT
     @onlyNativeDeviceTypes
@@ -1121,7 +1117,6 @@ class TestFFT(TestCase):
                 self.assertEqual(x_roundtrip.real, x)
             else:
                 self.assertEqual(x_roundtrip, x)
-
 
     @skipCPUIfNoFFT
     @dtypes(torch.cdouble)
@@ -1632,6 +1627,7 @@ class FFTDocTestFinder:
 class TestFFTDocExamples(TestCase):
     pass
 
+
 def generate_doc_test(doc_test):
     def test(self, device):
         self.assertEqual(device, 'cpu')
@@ -1643,6 +1639,7 @@ def generate_doc_test(doc_test):
             self.fail('Doctest failed')
 
     setattr(TestFFTDocExamples, 'test_' + doc_test.name, skipCPUIfNoFFT(test))
+
 
 for doc_test in FFTDocTestFinder().find(torch.fft, globs=dict(torch=torch)):
     generate_doc_test(doc_test)

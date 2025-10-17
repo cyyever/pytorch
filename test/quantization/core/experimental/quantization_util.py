@@ -28,6 +28,7 @@ _ = torch.manual_seed(191009)
 train_batch_size = 30
 eval_batch_size = 50
 
+
 class AverageMeter:
     """Computes and stores the average and current value"""
     def __init__(self, name, fmt=':f'):
@@ -85,12 +86,14 @@ def evaluate(model, criterion, data_loader):
 
     return top1, top5
 
+
 def load_model(model_file):
     model = resnet18(pretrained=False)
     state_dict = torch.load(model_file)
     model.load_state_dict(state_dict)
     model.to("cpu")
     return model
+
 
 def print_size_of_model(model):
     if isinstance(model, torch.jit.RecursiveScriptModule):
@@ -99,6 +102,7 @@ def print_size_of_model(model):
         torch.jit.save(torch.jit.script(model), "temp.p")
     print("Size (MB):", os.path.getsize("temp.p") / 1e6)
     os.remove("temp.p")
+
 
 def prepare_data_loaders(data_path):
 
@@ -129,6 +133,7 @@ def prepare_data_loaders(data_path):
         sampler=test_sampler)
 
     return data_loader, data_loader_test
+
 
 def training_loop(model, criterion, data_loader):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

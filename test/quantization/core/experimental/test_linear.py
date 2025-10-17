@@ -5,6 +5,7 @@ from torch.ao.quantization.experimental.linear import LinearAPoT
 from torch.nn.modules.linear import Linear
 import unittest
 
+
 class TestNonUniformObserver(unittest.TestCase):
     """
         Test linear_APoT_fn by comparing to uniform linear
@@ -60,6 +61,7 @@ class TestNonUniformObserver(unittest.TestCase):
         fp_linear_result = fp_linear(activation).data
 
         self.assertTrue(torch.equal(apot_linear_result, fp_linear_result))
+
 
 if __name__ == '__main__':
     unittest.main()

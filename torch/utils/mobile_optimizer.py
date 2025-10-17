@@ -6,11 +6,13 @@ from enum import Enum
 from torch._C import _MobileOptimizerType as MobileOptimizerType
 from typing import Optional, AnyStr
 
+
 class LintCode(Enum):
     BUNDLED_INPUT = 1
     REQUIRES_GRAD = 2
     DROPOUT = 3
     BATCHNORM = 4
+
 
 def optimize_for_mobile(
         script_module: torch.jit.ScriptModule,
@@ -113,6 +115,7 @@ def generate_mobile_module_lints(script_module: torch.jit.ScriptModule):
                               "operator."})
 
     return lint_list
+
 
 def _get_bundled_inputs_preserved_attributes(script_module: torch.jit.ScriptModule, preserved_methods: list[str]) -> list[str]:
 

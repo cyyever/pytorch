@@ -19,16 +19,18 @@ pytorch_test_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(pytorch_test_dir)
 
 
-
 def secretly_aliasing(x):
     return x.view(-1)
+
 
 def secretly_mutating(x):
     x.mul_(2)
     return x * 3
 
+
 def output_is_input(x):
     return x
+
 
 custom_lib = torch.library.Library("bad_schemas", "DEF")  # noqa: TOR901
 custom_lib.define("secretly_aliasing(Tensor x) -> Tensor")
@@ -47,6 +49,7 @@ custom_lib_meta.impl("output_is_input", output_is_input)
 
 # This TorchDispatchTensor Subclass is used to simulate an incorrect schema
 # which is then used to test that SchemaCheckMode behaves as expected
+
 
 class IncorrectAliasTensor(torch.Tensor):
     ALIAS_ARG_OUT = {"aten::add"}
@@ -95,6 +98,7 @@ class IncorrectAliasTensor(torch.Tensor):
             return tree_map(wrap, tuple(incorrect_out))
 
         return tree_map(wrap, out)
+
 
 # Tests various schema checking functionalities.
 class TestSchemaCheck(JitTestCase):
@@ -496,6 +500,7 @@ class TestSchemaCheck(JitTestCase):
         with SchemaInfoBindTestMode(self) as schemaInfoCheck:
             x.add(x)
 
+
 class TestSchemaCheckModeOpInfo(JitTestCase):
     @ops(op_db, dtypes=OpDTypes.supported)
     @slowTestIf(IS_WINDOWS)
@@ -507,6 +512,7 @@ class TestSchemaCheckModeOpInfo(JitTestCase):
         for sample in op.sample_inputs(device, dtype, requires_grad=False):
             with SchemaCheckMode():
                 op(sample.input, *sample.args, **sample.kwargs)
+
 
 instantiate_device_type_tests(TestSchemaCheckModeOpInfo, globals(), only_for=("cpu", "cuda"))
 

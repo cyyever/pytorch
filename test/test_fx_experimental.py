@@ -644,7 +644,6 @@ class TestFXExperimental(JitTestCase):
 
                 torch.testing.assert_close(loaded(x), mttm(x))
 
-
     def test_call_to_assert_with_msg(self):
         class M(torch.nn.Module):
             def forward(self, a, b):
@@ -879,7 +878,6 @@ terrible spacing
                 break
         else:
             raise RuntimeError("Expected the subgraph to have an output node.")
-
 
     def test_split_module_kwargs_expansion(self):
         class ModuleWithKwargsExpansion(torch.nn.Module):

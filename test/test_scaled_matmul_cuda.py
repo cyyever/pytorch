@@ -61,6 +61,7 @@ mxfp8_grouped_mm_skip_msg = "MXFP8 grouped GEMM is only supported when PyTorch i
 # avoid division by zero when calculating scale
 EPS = 1e-12
 
+
 def amax_to_scale(
     amax: torch.Tensor, float8_dtype: torch.dtype, orig_dtype: torch.dtype
 ):
@@ -87,6 +88,7 @@ def amax_to_scale(
     scale.copy_(res)
     return scale
 
+
 def tensor_to_scale(x: torch.Tensor, float8_dtype: torch.dtype, dim=None):
     if dim is None:
         amax = torch.max(torch.abs(x))
@@ -94,6 +96,7 @@ def tensor_to_scale(x: torch.Tensor, float8_dtype: torch.dtype, dim=None):
         amax = torch.max(torch.abs(x), dim=dim, keepdim=True).values
 
     return amax_to_scale(amax, float8_dtype, x.dtype)
+
 
 def tensor_to_scale_block(
     x: torch.Tensor,
@@ -186,6 +189,7 @@ def infer_scale_swizzle(mat, scale):
 
 wrap: bool = True
 
+
 def scaled_mm_wrap(
     a,
     b,
@@ -234,6 +238,7 @@ def scaled_mm_wrap(
         )
         return out
 
+
 def scaled_grouped_mm_wrap(
     a,
     b,
@@ -276,7 +281,6 @@ def scaled_grouped_mm_wrap(
             use_fast_accum=use_fast_accum)
 
 
-
 def mm_float8_emulated(x, x_scale, y, y_scale, out_dtype) -> torch.Tensor:
     # naive implementation: dq -> op -> q
     x_fp32 = x.to(torch.float) / x_scale
@@ -284,6 +288,7 @@ def mm_float8_emulated(x, x_scale, y, y_scale, out_dtype) -> torch.Tensor:
     out_fp32 = torch.mm(x_fp32, y_fp32)
 
     return out_fp32.to(out_dtype)
+
 
 def mm_float8_emulated_block(x, x_scale, y, y_scale, out_dtype) -> torch.Tensor:
     x = x.unflatten(1, (x_scale.shape[1], -1)).unflatten(0, (x_scale.shape[0], -1))
@@ -295,6 +300,7 @@ def mm_float8_emulated_block(x, x_scale, y, y_scale, out_dtype) -> torch.Tensor:
     out_fp32 = torch.mm(x_fp32, y_fp32)
 
     return out_fp32.to(out_dtype)
+
 
 def addmm_float8_unwrapped(
     a_data: torch.Tensor,
@@ -330,6 +336,7 @@ def addmm_float8_unwrapped(
     )
     return output
 
+
 def to_fp8_saturated(
     x: torch.Tensor,
     fp8_dtype: torch.dtype
@@ -342,7 +349,6 @@ def to_fp8_saturated(
         raise ValueError(f"to_fp8_saturated(): Unsupported fp8_dtype: {fp8_dtype}")
 
     return x.to(fp8_dtype)
-
 
 
 def compute_error(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -371,6 +377,7 @@ F8E8M0_EXP_BIAS = 127
 # exponent and mantissa bits of `torch.float4_e2m1fn_x2`
 FP4_EBITS, FP4_MBITS = 2, 1
 FP4_MAX_VAL = 6.0
+
 
 def data_to_mx_scale(x, block_size, recipe):
     # simple implementation of https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
@@ -649,7 +656,6 @@ class TestFP8Matmul(TestCase):
             swizzle_b=SwizzleType.SWIZZLE_32_4_4,
             wrap_v2=wrap_v2)
 
-
         # Compute reference bf16 grouped gemm.
         y_bf16 = torch._grouped_mm(
             X,
@@ -660,7 +666,6 @@ class TestFP8Matmul(TestCase):
 
         # Assert outputs are close.
         torch.testing.assert_close(y_mxfp8, y_bf16, atol=8.0e-2, rtol=8.0e-2)
-
 
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8, f8_msg)
     @parametrize("base_dtype", [torch.float16, torch.bfloat16, torch.float32])
@@ -675,7 +680,6 @@ class TestFP8Matmul(TestCase):
 
         x_scale = tensor_to_scale(x, input_dtype).float()
         y_scale = tensor_to_scale(y, input_dtype).float()
-
 
         x_fp8 = to_fp8_saturated(x * x_scale, input_dtype)
         y_fp8 = to_fp8_saturated(y * y_scale, input_dtype)
@@ -1061,7 +1065,6 @@ class TestFP8Matmul(TestCase):
             rhs_recipe = ScalingType.BlockWise1x128
         else:
             rhs_recipe = ScalingType.BlockWise128x128
-
 
         # Calculate actual F8 mm
         out_scaled_mm = scaled_mm_wrap(
@@ -1645,7 +1648,6 @@ class TestFP8Matmul(TestCase):
             start = offs_cpu[i]
         self.scaled_grouped_mm_helper(alist, blist, ascalelist, bscalelist, out, fast_accum)
 
-
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8_GROUPED_GEMM, f8_grouped_msg)
     @parametrize("fast_accum", [False, True])
     # AMD does not support non-contiguous inputs yet
@@ -1690,7 +1692,6 @@ class TestFP8Matmul(TestCase):
                 start = offs_cpu[i]
                 self.scaled_grouped_mm_helper(alist, b, ascalelist, scale_b, outlist, fast_accum)
 
-
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8_GROUPED_GEMM, f8_grouped_msg)
     @parametrize("fast_accum", [False, True])
     # AMD does not support non-contiguous inputs yet
@@ -1712,7 +1713,6 @@ class TestFP8Matmul(TestCase):
                 out_dtype=torch.bfloat16, use_fast_accum=fast_accum)
 
         self.scaled_grouped_mm_helper(a, b, scale_a, scale_b, out, fast_accum)
-
 
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8_GROUPED_GEMM, f8_grouped_msg)
     @parametrize("fast_accum", [False, True])
@@ -1749,7 +1749,6 @@ class TestFP8Matmul(TestCase):
                 outlist.append(out[:, start:offs_cpu[i]])
                 start = offs_cpu[i]
                 self.scaled_grouped_mm_helper(a, blist, scale_a, bscalelist, outlist, fast_accum)
-
 
     @unittest.skipIf(not PLATFORM_SUPPORTS_MX_GEMM, mx_skip_msg)
     def test_blockwise_mxfp8_compile(self) -> None:

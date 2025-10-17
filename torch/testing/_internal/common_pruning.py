@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+
 class ImplementedSparsifier(BaseSparsifier):
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(defaults=kwargs)

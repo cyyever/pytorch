@@ -20,6 +20,7 @@ from torch.testing._internal.jit_utils import JitTestCase
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+
 class TestModule(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -44,6 +45,7 @@ class TestModule(torch.nn.Module):
         relu = add_6.relu()
 
         return add_4, add_6, relu
+
 
 class TestDeepModule(torch.nn.Module):
     def __init__(self) -> None:
@@ -240,6 +242,7 @@ class TestPartitionFunctions:
         a0, a1 = torch.ops.aten.var_mean(a)
         return a0
 
+
 # A mock OperatorSupport class, where only operator.add is supported
 class MockOperatorSupport(OperatorSupport):
     def is_node_supported(self, submodules, node: torch.fx.Node) -> bool:
@@ -248,6 +251,7 @@ class MockOperatorSupport(OperatorSupport):
                                 torch.ops.aten.view,
                                 torch.ops.aten.permute,
                                 torch.ops.aten.std_mean})
+
 
 @instantiate_parametrized_tests
 class TestFXGraphPasses(JitTestCase):
@@ -401,12 +405,14 @@ class TestFXGraphPasses(JitTestCase):
                                                  allows_single_node_partition=True)
         partitions = partitioner.propose_partitions()
 
+
 @dataclass
 class TestCase:
     match_output: bool
     match_placeholder: bool
     num_matches: int
     remove_overlapping_matches: bool = True
+
 
 class SingleNodePattern:
     @staticmethod
@@ -425,6 +431,8 @@ class SingleNodePattern:
         TestCase(False, True, 1),
         TestCase(True, True, 0)
     ]
+
+
 class SimplePattern:
     @staticmethod
     def forward(x, w1, w2):
@@ -445,6 +453,7 @@ class SimplePattern:
         TestCase(True, True, 0)
     ]
 
+
 class SimpleFullGraphMatching:
     @staticmethod
     def forward(x):
@@ -463,6 +472,7 @@ class SimpleFullGraphMatching:
         TestCase(False, True, 1),
         TestCase(True, True, 1)
     ]
+
 
 class DiamondShapePatternTestCase:
     @staticmethod
@@ -491,6 +501,7 @@ class DiamondShapePatternTestCase:
         TestCase(False, True, 0),
         TestCase(True, True, 0)
     ]
+
 
 class NonFullyContainedMatches:
     @staticmethod
@@ -524,6 +535,7 @@ class NonFullyContainedMatches:
         TestCase(False, True, 1),     # leaked used of placeholder is not leaking
     ]
 
+
 class ChainRepeatedPattern:
     @staticmethod
     def forward(x):
@@ -544,6 +556,7 @@ class ChainRepeatedPattern:
         TestCase(False, True, 1),
         TestCase(True, True, 0)
     ]
+
 
 class QuantizationModel:
     @staticmethod
@@ -569,6 +582,7 @@ class QuantizationModel:
         TestCase(True, True, 0)
     ]
 
+
 class MultipleOutputsWithDependency:
     @staticmethod
     def forward(x):
@@ -589,6 +603,7 @@ class MultipleOutputsWithDependency:
         TestCase(False, True, 1),
         TestCase(True, True, 0)
     ]
+
 
 class MultipleOutputsWithoutDependency:
     @staticmethod
@@ -618,6 +633,7 @@ class MultipleOutputsWithoutDependency:
         TestCase(True, True, 0)
     ]
 
+
 class MultipleOutputsMultipleOverlappingMatches:
     @staticmethod
     def forward(x):
@@ -644,6 +660,7 @@ class MultipleOutputsMultipleOverlappingMatches:
         TestCase(False, False, 4, remove_overlapping_matches=False),
         TestCase(False, False, 1, remove_overlapping_matches=True),
     ]
+
 
 class MultipleOutputsMultipleNonOverlappingMatches:
     @staticmethod
@@ -672,6 +689,7 @@ class MultipleOutputsMultipleNonOverlappingMatches:
         # match_output, match_placeholder, num_matches
         TestCase(False, False, 1),
     ]
+
 
 class MultipleOutputsIdenticalAnchor:
     @staticmethod
@@ -726,6 +744,7 @@ class MultipleOutputsHorizontalPattern:
         TestCase(True, True, 0)
     ]
 
+
 class MultiOutputWithWithInvalidMatches:
     @staticmethod
     def forward(x):
@@ -747,6 +766,7 @@ class MultiOutputWithWithInvalidMatches:
         TestCase(True, False, 0),
         TestCase(False, True, 0),
     ]
+
 
 class QuantizationFp8Pattern:
     @classmethod
@@ -791,6 +811,7 @@ class QuantizationFp8Pattern:
         TestCase(False, False, 1),
     ]
 
+
 class NoAnchorFound:
     # This test case is for pattern where no matching anchor is found in the target graph
     # `anchor` is the starting point of the pattern matching, it's usually the boundary returning nodes
@@ -811,6 +832,7 @@ class NoAnchorFound:
         TestCase(False, True, 0),
         TestCase(True, True, 0)
     ]
+
 
 @instantiate_parametrized_tests
 class TestFXMatcherUtils(JitTestCase):

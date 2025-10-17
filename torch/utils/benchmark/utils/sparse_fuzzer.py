@@ -5,6 +5,7 @@ import torch
 from torch.utils.benchmark import FuzzedTensor
 import math
 
+
 class FuzzedSparseTensor(FuzzedTensor):
     def __init__(
         self,

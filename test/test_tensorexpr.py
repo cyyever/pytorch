@@ -14,6 +14,7 @@ from torch.testing._internal.jit_utils import JitTestCase, TensorExprTestOptions
 
 LLVM_ENABLED = torch._C._llvm_enabled()
 
+
 class BaseTestClass(JitTestCase):
     def setUp(self):
         super().setUp()
@@ -927,7 +928,6 @@ class TestTensorExprFuser(BaseTestClass):
             #     print("Failed on dev=", dev, "function=", torch_fn)
             #     # np.testing.assert_allclose(x.cpu().numpy(), y.cpu().numpy())
 
-
     def test_round_2(self):
         def round(x):
             return torch.round(x)
@@ -1716,6 +1716,7 @@ class TestTensorExprFuser(BaseTestClass):
                 run_foo_case(_func, a, b, c)
 
             torch.jit.set_fusion_strategy(old_strategy)
+
 
 if __name__ == '__main__':
     run_tests()

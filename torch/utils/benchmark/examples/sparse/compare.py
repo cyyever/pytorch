@@ -43,6 +43,7 @@ class FauxTorch:
         def mm(self, *args, **kwargs):
             return self.extra_overhead(self._real_torch.sparse.mm(*args, **kwargs))
 
+
 def generate_coo_data(size, sparse_dim, nnz, dtype, device):
     """
     Parameters
@@ -67,11 +68,13 @@ def generate_coo_data(size, sparse_dim, nnz, dtype, device):
     values = torch.rand([nnz, ], dtype=dtype, device=device)
     return indices, values
 
+
 def gen_sparse(size, density, dtype, device='cpu'):
     sparse_dim = len(size)
     nnz = int(size[0] * size[1] * density)
     indices, values = generate_coo_data(size, sparse_dim, nnz, dtype, device)
     return torch.sparse_coo_tensor(indices, values, size, dtype=dtype, device=device)
+
 
 def main():
     tasks = [

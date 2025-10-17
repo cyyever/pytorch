@@ -5,6 +5,7 @@ from torch.ao.quantization.experimental.observer import APoTObserver
 import unittest
 import torch
 
+
 class TestNonUniformObserver(unittest.TestCase):
     """
         Test case 1: calculate_qparams

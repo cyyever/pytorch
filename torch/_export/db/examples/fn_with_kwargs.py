@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 import torch
 
+
 class FnWithKwargs(torch.nn.Module):
     """
     Keyword arguments are not supported at the moment.
@@ -15,6 +16,7 @@ class FnWithKwargs(torch.nn.Module):
         out = out * mykw0
         out = out * mykwargs["input0"] * mykwargs["input1"]
         return out
+
 
 example_args = (
     torch.randn(4),

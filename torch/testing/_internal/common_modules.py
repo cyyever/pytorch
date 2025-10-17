@@ -178,10 +178,12 @@ class ModuleInput:
 
             self.reference_fn = copy_reference_fn
 
+
 class ModuleErrorEnum(Enum):
     """ Enumerates when error is raised when testing modules. """
     CONSTRUCTION_ERROR = 0
     FORWARD_ERROR = 1
+
 
 class ErrorModuleInput:
     """
@@ -266,6 +268,7 @@ class ModuleInfo:
         return self.name.replace('.', '_')
 
 # Start of module inputs functions.
+
 
 def module_inputs_torch_nn_Linear(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -719,7 +722,6 @@ def module_inputs_torch_nn_AvgPool2d(module_info, device, dtype, requires_grad, 
                     desc='divisor_stride_pad')]
 
 
-
 def module_inputs_torch_nn_AvgPool3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -771,7 +773,6 @@ def module_inputs_torch_nn_AvgPool3d(module_info, device, dtype, requires_grad, 
                     desc='divisor_stride_pad_gpu_input_nooverlap')]
 
 
-
 def module_inputs_torch_nn_AdaptiveAvgPool1d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -808,6 +809,7 @@ def module_inputs_torch_nn_AdaptiveAvgPool2d(module_info, device, dtype, require
         ModuleInput(constructor_input=FunctionInput((3, None)),
                     forward_input=FunctionInput(make_input((1, 3, 5, 6))),
                     desc='tuple_none')]
+
 
 def module_inputs_torch_nn_AdaptiveAvgPool3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -1353,7 +1355,6 @@ def module_inputs_torch_nn_Tanh(module_info, device, dtype, requires_grad, train
                     desc='no_batch_dim')]
 
 
-
 def module_inputs_torch_nn_Tanhshrink(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -1423,7 +1424,6 @@ def module_inputs_torch_nn_L1Loss(module_info, device, dtype, requires_grad, tra
 def module_inputs_torch_nn_SmoothL1Loss(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
-
     cases: list[tuple[str, dict]] = [
         ('', {}),
         ('reduction_sum', {'reduction': 'sum'}),
@@ -1452,7 +1452,6 @@ def module_inputs_torch_nn_SmoothL1Loss(module_info, device, dtype, requires_gra
         )
 
     return module_inputs
-
 
 
 def module_inputs_torch_nn_BCELoss(module_info, device, dtype, requires_grad, training, **kwargs):
@@ -1631,7 +1630,6 @@ def module_inputs_torch_nn_CrossEntropyLoss(module_info, device, dtype, requires
             )
 
     return module_inputs
-
 
 
 def module_inputs_torch_nn_CTCLoss(module_info, device, dtype, requires_grad, training, **kwargs):
@@ -1900,6 +1898,7 @@ def module_inputs_torch_nn_InstanceNormNd(module_info, device, dtype, requires_g
             desc='no_batch_dim')
     ]
 
+
 def module_inputs_torch_nn_LayerNorm(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -1933,6 +1932,7 @@ def module_inputs_torch_nn_LayerNorm(module_info, device, dtype, requires_grad, 
             forward_input=FunctionInput(make_input((4, 2, 2, 5))),
             desc='3d_elementwise_affine_no_bias'),
     ]
+
 
 def module_inputs_torch_nn_RMSNorm(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2023,7 +2023,6 @@ def module_inputs_torch_nn_LPPool1d(module_info, device, dtype, requires_grad, t
     ]
 
 
-
 def module_inputs_torch_nn_LPPool2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2098,6 +2097,7 @@ def module_inputs_torch_nn_MaxPool2d(module_info, device, dtype, requires_grad, 
             forward_input=FunctionInput(make_input((1, 3, 7, 7))),
             desc='return_indices'),
     ]
+
 
 def module_inputs_torch_nn_MaxPool3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2430,6 +2430,7 @@ def module_inputs_torch_nn_TransformerEncoder(module_info, device, dtype, requir
         ))
     return samples
 
+
 def module_inputs_torch_nn_TransformerEncoderLayer(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2712,6 +2713,7 @@ def module_inputs_torch_nn_LSTMCell(module_info, device, dtype, requires_grad, t
 
     return samples
 
+
 def make_packed_sequence(inp, batch_sizes):
     required_grad = inp.requires_grad
     inp.requires_grad_(False)  # user won't have access to inp so won't be able to get its grads
@@ -2819,9 +2821,7 @@ def module_inputs_torch_nn_LSTM(module_info, device, dtype, requires_grad, train
             )
         )
 
-
     return samples
-
 
 
 def module_inputs_torch_nn_ReflectionPad1d(module_info, device, dtype, requires_grad, training, **kwargs):
@@ -2839,6 +2839,7 @@ def module_inputs_torch_nn_ReflectionPad1d(module_info, device, dtype, requires_
         ),
     ]
 
+
 def module_inputs_torch_nn_ReflectionPad2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2853,6 +2854,7 @@ def module_inputs_torch_nn_ReflectionPad2d(module_info, device, dtype, requires_
             forward_input=FunctionInput(make_input((3, 4, 5, 6))),
         ),
     ]
+
 
 def module_inputs_torch_nn_ReflectionPad3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2869,6 +2871,7 @@ def module_inputs_torch_nn_ReflectionPad3d(module_info, device, dtype, requires_
         ),
     ]
 
+
 def module_inputs_torch_nn_ReplicationPad1d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2883,6 +2886,7 @@ def module_inputs_torch_nn_ReplicationPad1d(module_info, device, dtype, requires
             forward_input=FunctionInput(make_input((3, 4, 5))),
         ),
     ]
+
 
 def module_inputs_torch_nn_ReplicationPad2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2899,6 +2903,7 @@ def module_inputs_torch_nn_ReplicationPad2d(module_info, device, dtype, requires
         ),
     ]
 
+
 def module_inputs_torch_nn_ReplicationPad3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2913,6 +2918,7 @@ def module_inputs_torch_nn_ReplicationPad3d(module_info, device, dtype, requires
             forward_input=FunctionInput(make_input((3, 4, 5, 6, 7))),
         ),
     ]
+
 
 def module_inputs_torch_nn_ZeroPad1d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2929,6 +2935,7 @@ def module_inputs_torch_nn_ZeroPad1d(module_info, device, dtype, requires_grad, 
         ),
     ]
 
+
 def module_inputs_torch_nn_ZeroPad2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2943,6 +2950,7 @@ def module_inputs_torch_nn_ZeroPad2d(module_info, device, dtype, requires_grad, 
             forward_input=FunctionInput(make_input((1, 2, 3, 4))),
         ),
     ]
+
 
 def module_inputs_torch_nn_ZeroPad3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2959,6 +2967,7 @@ def module_inputs_torch_nn_ZeroPad3d(module_info, device, dtype, requires_grad, 
         ),
     ]
 
+
 def module_inputs_torch_nn_ConstantPad1d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -2973,6 +2982,7 @@ def module_inputs_torch_nn_ConstantPad1d(module_info, device, dtype, requires_gr
             forward_input=FunctionInput(make_input((3, 4, 5))),
         ),
     ]
+
 
 def module_inputs_torch_nn_ConstantPad2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -2989,6 +2999,7 @@ def module_inputs_torch_nn_ConstantPad2d(module_info, device, dtype, requires_gr
         ),
     ]
 
+
 def module_inputs_torch_nn_ConstantPad3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -3003,6 +3014,7 @@ def module_inputs_torch_nn_ConstantPad3d(module_info, device, dtype, requires_gr
             forward_input=FunctionInput(make_input((1, 2, 1, 2, 1))),
         ),
     ]
+
 
 def module_inputs_torch_nn_CircularPad1d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -3040,6 +3052,7 @@ def module_inputs_torch_nn_CircularPad1d(module_info, device, dtype, requires_gr
             reference_fn=lambda m, p, i: padding1d_circular_ref(i, m.padding),
         ),
     ]
+
 
 def module_inputs_torch_nn_CircularPad2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -3082,9 +3095,9 @@ def module_inputs_torch_nn_CircularPad2d(module_info, device, dtype, requires_gr
         ),
     ]
 
+
 def module_inputs_torch_nn_CircularPad3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
-
 
     def padding3d_circular_ref(inp, pad):
         r"""input:
@@ -3179,6 +3192,7 @@ rnn_gru_lstm_module_info_decorators = (
 
 # Start of module error inputs functions.
 
+
 def module_error_inputs_torch_nn_RNN_GRU_Cell(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
     samples = [
@@ -3238,6 +3252,7 @@ def module_error_inputs_torch_nn_RNN_GRU_Cell(module_info, device, dtype, requir
         ),
     ]
     return samples
+
 
 def module_error_inputs_torch_nn_LSTMCell(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
@@ -3299,6 +3314,7 @@ def module_error_inputs_torch_nn_RNN_GRU(module_info, device, dtype, requires_gr
     ]
     return samples
 
+
 def module_error_inputs_torch_nn_Pad1d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -3317,6 +3333,7 @@ def module_error_inputs_torch_nn_Pad1d(module_info, device, dtype, requires_grad
         ),
     ]
 
+
 def module_error_inputs_torch_nn_Pad2d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
@@ -3334,6 +3351,7 @@ def module_error_inputs_torch_nn_Pad2d(module_info, device, dtype, requires_grad
 
         ),
     ]
+
 
 def module_error_inputs_torch_nn_Pad3d(module_info, device, dtype, requires_grad, training, **kwargs):
     make_input = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)

@@ -322,6 +322,7 @@ class TestBackendConfig(QuantizationTestCase):
         }
         self.assertEqual(conf.to_dict(), conf_dict)
 
+
 if __name__ == '__main__':
     raise RuntimeError("This _test file is not meant to be run directly, use:\n\n"
                        "\tpython _test/_test_quantization.py TESTNAME\n\n"

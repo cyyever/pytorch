@@ -8,6 +8,7 @@ from torch.ao.quantization.experimental.quantizer import APoTQuantizer, quantize
 import unittest
 import random
 
+
 class TestQuantizer(unittest.TestCase):
     r""" Tests quantize_APoT result on random 1-dim tensor
         and hardcoded values for b, k by comparing to uniform quantization
@@ -224,6 +225,7 @@ class TestQuantizer(unittest.TestCase):
     def test_q_apot_alpha(self):
         with self.assertRaises(NotImplementedError):
             APoTQuantizer.q_apot_alpha(self)
+
 
 if __name__ == '__main__':
     unittest.main()

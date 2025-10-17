@@ -68,6 +68,7 @@ class TaskSpec:
         ]
         return "\n".join([f"{i}\n" if "\n" in i else i for i in sections if i])
 
+
 _TASKSPEC_FIELDS = tuple(i.name for i in dataclasses.fields(TaskSpec))
 
 
@@ -180,7 +181,6 @@ class Measurement:
                 add_warning("This suggests significant environmental influence.")
             elif not self.meets_confidence(_IQR_WARN_THRESHOLD):
                 add_warning("This could indicate system fluctuation.")
-
 
     def meets_confidence(self, threshold: float = _IQR_WARN_THRESHOLD) -> bool:
         return self.iqr / self.median < threshold

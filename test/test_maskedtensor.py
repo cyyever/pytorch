@@ -38,6 +38,7 @@ def _compare_mt_t(mt_result, t_result, rtol=1e-05, atol=1e-05):
     if not _tensors_match(a, b, exact=False, rtol=rtol, atol=atol):
         raise ValueError("The data in MaskedTensor a and Tensor b do not match")
 
+
 def _compare_mts(mt1, mt2, rtol=1e-05, atol=1e-08):
     mt_data1 = mt1.get_data()
     mt_data2 = mt2.get_data()
@@ -64,6 +65,7 @@ def _compare_mts(mt1, mt2, rtol=1e-05, atol=1e-08):
     if not _tensors_match(a, b, exact=False, rtol=rtol, atol=atol):
         raise ValueError("The data in MaskedTensor mt1 and MaskedTensor mt2 do not match")
 
+
 def _compare_forward_backward(data, mask, fn):
     mt = masked_tensor(data, mask, requires_grad=True)
     masked_res = fn(mt)
@@ -76,8 +78,10 @@ def _compare_forward_backward(data, mask, fn):
     _compare_mt_t(masked_res, tensor_res)
     _compare_mt_t(mt.grad, t.grad, atol=1e-06)
 
+
 def _create_random_mask(shape, device):
     return make_tensor(shape, device=device, dtype=torch.bool)
+
 
 def _generate_sample_data(
     device="cpu", dtype=torch.float, requires_grad=True, layout=torch.strided
@@ -107,6 +111,7 @@ def _generate_sample_data(
             data = data.sparse_mask(mask)
         inputs.append(SampleInput(data, kwargs={"mask": mask}))
     return inputs
+
 
 def _fix_fn_name(fn_name):
     if fn_name[-1] == "_":
@@ -417,6 +422,7 @@ class TestBasics(TestCase):
         self.assertEqual(now_contiguous_mt.get_data().is_contiguous(), True)
         self.assertEqual(now_contiguous_mt.is_contiguous(), True)
 
+
 class TestUnary(TestCase):
     def _get_test_data(self, fn_name):
         data = torch.randn(10, 10)
@@ -479,6 +485,7 @@ class TestUnary(TestCase):
         mt_result = fn(*mt_args, **kwargs)
         t_result = fn(*t_args, **kwargs)
         _compare_mt_t(mt_result, t_result)
+
 
 class TestBinary(TestCase):
     def _get_test_data(self, fn_name):
@@ -557,6 +564,7 @@ class TestBinary(TestCase):
                 "Input masks must match. If you need support for this, please open an issue on Github."
                 == str(e)
             )
+
 
 class TestReductions(TestCase):
     def test_max_not_implemented(self):
@@ -684,7 +692,6 @@ class TestReductions(TestCase):
         msg = "element 0 of tensors does not require grad and does not have a grad_fn"
         with self.assertRaisesRegex(RuntimeError, msg):
             result.backward()
-
 
     def test_mean_grad_case_1d(self):
         """ values.requires_grad = False
@@ -863,11 +870,14 @@ class TestReductions(TestCase):
 def is_unary(op):
     return op.name in UNARY_NAMES
 
+
 def is_binary(op):
     return op.name in BINARY_NAMES
 
+
 def is_reduction(op):
     return op.name in REDUCE_NAMES and op.name not in {"all", "mean", "std", "var"}
+
 
 mt_unary_ufuncs = [op for op in unary_ufuncs if is_unary(op)]
 mt_binary_ufuncs = [op for op in binary_ufuncs if is_binary(op)]
@@ -878,6 +888,7 @@ MASKEDTENSOR_FLOAT_TYPES = {
     torch.float32,
     torch.float64,
 }
+
 
 class TestOperators(TestCase):
     def _convert_mt_args(self, args, mask, layout):

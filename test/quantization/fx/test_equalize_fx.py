@@ -569,7 +569,6 @@ class TestEqualizeFx(QuantizationTestCase):
                         self.assertEqual(modules[str(node.target)].max_val, exp_max_val)
                         inp_counter += 1
 
-
     def check_orig_and_eq_graphs(self, orig_model, eq_model):
         """ Given a non-equalized model and an equalized model, check that the
         graphs are structured in the same way, except the equalized model has
@@ -895,6 +894,7 @@ class TestEqualizeFx(QuantizationTestCase):
 
         # Check the order of nodes in the graph
         self.checkGraphModuleNodes(equalized_model, expected_node_list=node_list)
+
 
 if __name__ == "__main__":
     raise_on_run_directly("test/test_quantization.py")

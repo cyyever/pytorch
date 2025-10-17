@@ -21,12 +21,14 @@ from torch._C import TensorType
 
 import io
 
+
 def check_output_types(self, func, ref_outputs, args, kwargs):
     graph = getattr(func, 'last_graph', None)
     types = [o.type() for o in graph.outputs()]
     self.assertTrue(len(types) == 1)
     t = types[0]
     torch._C._jit_assert_is_instance(ref_outputs, t)
+
 
 # Test names in this set are only checked for a single derivative
 nn_functional_single_grad = frozenset('test_nn_' + name for name in [
@@ -39,6 +41,7 @@ nn_functional_single_grad = frozenset('test_nn_' + name for name in [
     'ctc_loss',
     'grid_sample',
 ])
+
 
 def check_against_reference(self, func, reference_func, output_func, args, kwargs=None,
                             allow_unused=True, check_types=True, no_grad=False, no_gradgrad=False):
@@ -139,6 +142,7 @@ def check_against_reference(self, func, reference_func, output_func, args, kwarg
             if g2 is None and g2_test is None:
                 continue
             self.assertEqual(g2, g2_test, atol=5e-4, rtol=1e-4)
+
 
 class JitCommonTestCase(TestCase):
     def createFunctionFromGraph(self, trace):

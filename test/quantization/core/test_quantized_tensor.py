@@ -21,10 +21,12 @@ hu.assert_deadline_disabled()
 import itertools
 import tempfile
 
+
 class Foo(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.qscheme = torch.per_tensor_symmetric
+
 
 def _calculate_dynamic_qparams(X, dtype, reduce_range=False):
     """Calculate the dynamic quantization parameters (scale, zero_point)
@@ -69,6 +71,7 @@ def _calculate_dynamic_qparams(X, dtype, reduce_range=False):
         nudged_zero_point = int(round(initial_zero_point))
 
     return [scale.astype(np.float32), int(nudged_zero_point)]
+
 
 # Note we explicitly cast variables to np.float32 in a couple of places to avoid
 # the default casting in Python often resulting in double precision and to make
@@ -138,6 +141,7 @@ def _compress_uniform_simplified(X, bit_rate, xmin, xmax, fp16_scale_bias=True):
     loss = np.sqrt(loss)
 
     return Xq, loss
+
 
 class TestQuantizedTensor(TestCase):
     def test_qtensor_equal(self):
@@ -1123,7 +1127,6 @@ class TestQuantizedTensor(TestCase):
                     x = x_orig.clone()
                     qx = torch.quantize_per_tensor(x, scale=scale, zero_point=zero_point, dtype=qtype)
                     output = qx.index_put((indices,), values, accumulate=False)
-
 
                     x_ref = x_orig.clone()
                     output_ref = x_ref.index_put((indices,), values, accumulate=False)

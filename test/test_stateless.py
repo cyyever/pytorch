@@ -904,6 +904,7 @@ exit(len(w))
         with self.assertWarnsRegex(FutureWarning, "Please use `torch.func.functional_call`"):
             stateless.functional_call(m, params, x)
 
+
 class TestPythonOptimizeMode(TestCase):
     def test_runs_with_optimize_flag(self):
         script = "import torch; import torch._functorch.deprecated"

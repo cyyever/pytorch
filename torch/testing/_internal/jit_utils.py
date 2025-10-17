@@ -52,16 +52,20 @@ if torch.cuda.is_available() and not torch.version.hip:
         if (major < 6):
             RUN_CUDA_HALF = False
 
+
 def execWrapper(code, glob, loc):
     exec(code, glob, loc)
 
+
 def do_input_map(fn, input):
     return _nested_map(lambda t: isinstance(t, torch.Tensor), fn)(input)
+
 
 def clear_class_registry():
     torch._C._jit_clear_class_registry()
     torch.jit._recursive.concrete_type_store = torch.jit._recursive.ConcreteTypeStore()
     torch.jit._state._clear_class_state()
+
 
 def get_execution_plan(graph_executor_state):
     execution_plans = list(graph_executor_state.execution_plans.values())
@@ -70,6 +74,7 @@ def get_execution_plan(graph_executor_state):
         raise RuntimeError('This test assumes this GraphExecutor should '
                            f'only have one execution plan, got: {num_plans}')
     return execution_plans[0]
+
 
 class _AssertRaisesRegexWithHighlightContext:
     """
@@ -96,7 +101,9 @@ class _AssertRaisesRegexWithHighlightContext:
 
         return True
 
+
 FUSION_GROUP = "prim::TensorExprGroup"
+
 
 class JitTestCase(JitCommonTestCase):
     _do_cuda_memory_leak_check = True
@@ -255,7 +262,6 @@ class JitTestCase(JitCommonTestCase):
             if isinstance(m, torch._C.ScriptModule):
                 self.assertTrue(torch._C._ivalue_tags_match(m, imported._c))
 
-
     def emitFunctionHook(self, func):
         # func has invalid names for export, skip the jitter check
         if func.name == "<lambda>" or "aten::" in func.name:
@@ -264,7 +270,6 @@ class JitTestCase(JitCommonTestCase):
 
     def emitModuleHook(self, module):
         self._compared_saved_loaded(module)
-
 
     def getExportImportCopyWithPacking(self, m, also_test_file=True, map_location=None):
         buffer = io.BytesIO()
@@ -642,6 +647,7 @@ class JitTestCase(JitCommonTestCase):
 
         return sm
 
+
 class NoTracerWarnContextManager:
     def __enter__(self):
         self.prev = torch._C._jit_get_tracer_state_warn()
@@ -649,6 +655,7 @@ class NoTracerWarnContextManager:
 
     def __exit__(self, *args):
         torch._C._jit_set_tracer_state_warn(self.prev)
+
 
 @contextmanager
 def inline_everything_mode(should_inline):
@@ -659,6 +666,7 @@ def inline_everything_mode(should_inline):
     finally:
         torch._C._jit_set_inline_everything_mode(old)
 
+
 @contextmanager
 def set_fusion_group_inlining(inlining):
     old = torch._C._debug_get_fusion_group_inlining()
@@ -667,6 +675,7 @@ def set_fusion_group_inlining(inlining):
         yield
     finally:
         torch._C._debug_set_fusion_group_inlining(old)
+
 
 # note: not re-entrant, use unnested only
 @contextmanager
@@ -677,12 +686,14 @@ def disable_autodiff_subgraph_inlining(enabled=True):
     finally:
         torch._C._debug_set_autodiff_subgraph_inlining(True)
 
+
 def _inline_everything(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         with inline_everything_mode(True):
             fn(*args, **kwargs)
     return wrapper
+
 
 # this exists for forward compatibility reasons temporarily.
 # TODO(suo) remove
@@ -692,6 +703,7 @@ def _tmp_donotuse_dont_inline_everything(fn):
         with inline_everything_mode(False):
             fn(*args, **kwargs)
     return wrapper
+
 
 # make it easy to quickly define/trace a function for these tests
 def _trace(*args, **kwargs):
@@ -724,18 +736,23 @@ def enable_cpu_fuser_if(cond):
             return wrapper
         return noop_fuser
 
+
 def get_forward(c):
     return c._get_method('forward')
+
 
 def get_forward_graph(c):
     return c._get_method('forward').graph
 
+
 def get_module_method(m, module, method):
     return m._c.getattr(module)._get_method(method)
+
 
 def attrs_with_prefix(module, prefix):
     return [x for x, _ in module._modules._c.items()
             if x.startswith(prefix)]
+
 
 def warmup_backward(f, *args):
     profiling_count = 3
@@ -749,10 +766,12 @@ def warmup_backward(f, *args):
 
     return results
 
+
 # TODO: Remove me once https://bugs.python.org/issue42666 is resolved
 def make_global(*args):
     for arg in args:
         setattr(sys.modules[arg.__module__], arg.__name__, arg)
+
 
 # Helper function to eval Python3 code without causing a syntax error for
 # this file under py2
@@ -768,6 +787,7 @@ def _get_py3_code(code, fn_name):
         loader.exec_module(module)
         fn = getattr(module, fn_name)
         return fn
+
 
 class TensorExprTestOptions:
     def __init__(self) -> None:
@@ -795,6 +815,7 @@ class TensorExprTestOptions:
         torch._C._debug_set_fusion_group_inlining(self.old_fusion_inlining)
         torch._C._jit_set_te_must_use_llvm_cpu(self.old_te_must_use_llvm_cpu)
 
+
 def clone_inputs(args):
     inputs: list[Union[torch.Tensor, list[torch.Tensor]]] = []
 
@@ -807,6 +828,7 @@ def clone_inputs(args):
             inputs.append(arg)
 
     return inputs
+
 
 def get_traced_sample_variant_pairs(device, dtype, op):
     # tuples of (variant, sample)
@@ -886,6 +908,7 @@ def get_traced_sample_variant_pairs(device, dtype, op):
             outputs.append((variant, sample))
 
     return outputs
+
 
 # types.LambdaType gave false positives
 def is_lambda(lamb):

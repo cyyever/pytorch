@@ -956,7 +956,6 @@ class SummaryWriter:
         )
         self._projector_config.embeddings.extend([embedding_info])
 
-
         from google.protobuf import text_format
 
         config_pbtxt = text_format.MessageToString(self._projector_config)

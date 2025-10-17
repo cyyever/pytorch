@@ -36,6 +36,7 @@ _ENFORCED_ZERO_POINT = defaultdict(lambda: None, {
     torch.qint32: 0
 })
 
+
 def _get_valid_min_max(qparams):
     scale, zero_point, _quantized_type = qparams
     adjustment = 1 + torch.finfo(torch.float).eps
@@ -45,6 +46,7 @@ def _get_valid_min_max(qparams):
     min_value = max((long_min - zero_point) * scale, (long_min / scale + zero_point))
     max_value = min((long_max - zero_point) * scale, (long_max / scale + zero_point))
     return np.float32(min_value), np.float32(max_value)
+
 
 # This wrapper wraps around `st.floats` and checks the version of `hypothesis`, if
 # it is too old, removes the `width` parameter (which was introduced)
@@ -76,10 +78,12 @@ def _floats_wrapper(*args, **kwargs):
         kwargs.pop('width')
     return st.floats(*args, **kwargs)
 
+
 def floats(*args, **kwargs):
     if 'width' not in kwargs:
         kwargs['width'] = 32
     return _floats_wrapper(*args, **kwargs)
+
 
 """Hypothesis filter to avoid overflows with quantized tensors.
 
@@ -96,11 +100,14 @@ Raises:
 Note: This filter is slow. Use it only when filtering of the test cases is
       absolutely necessary!
 """
+
+
 def assume_not_overflowing(tensor, qparams):
     min_value, max_value = _get_valid_min_max(qparams)
     assume(tensor.min() >= min_value)
     assume(tensor.max() <= max_value)
     return True
+
 
 """Strategy for generating the quantization parameters.
 
@@ -117,6 +124,8 @@ Generates:
     zero_point: Sampled zero point.
     quantized_type: Sampled quantized type.
 """
+
+
 @st.composite
 def qparams(draw, dtypes=None, scale_min=None, scale_max=None,
             zero_point_min=None, zero_point_max=None):
@@ -146,6 +155,7 @@ def qparams(draw, dtypes=None, scale_min=None, scale_max=None,
 
     return scale, zero_point, quantized_type
 
+
 """Strategy to create different shapes.
 Args:
     min_dims / max_dims: minimum and maximum rank.
@@ -159,6 +169,8 @@ Example:
     @given(Q = qtensor(shapes=array_shapes(min_dims=3, max_dims=4))
     some_test(self, Q):...
 """
+
+
 @st.composite
 def array_shapes(draw, min_dims=1, max_dims=None, min_side=1, max_side=None, max_numel=None):
     """Return a strategy for array shapes (tuples of int >= 1)."""
@@ -191,6 +203,8 @@ Generates:
         The returned parameters are `(scale, zero_point, quantization_type)`.
         (If `qparams` arg is None), returns None.
 """
+
+
 @st.composite
 def tensor(draw, shapes=None, elements=None, qparams=None, dtype=np.float32):
     if isinstance(shapes, SearchStrategy):
@@ -215,6 +229,7 @@ def tensor(draw, shapes=None, elements=None, qparams=None, dtype=np.float32):
     if enforced_zp is not None:
         zp = enforced_zp
     return X, (scale, zp, qparams[2])
+
 
 @st.composite
 def per_channel_tensor(draw, shapes=None, elements=None, qparams=None):
@@ -247,6 +262,7 @@ def per_channel_tensor(draw, shapes=None, elements=None, qparams=None):
     X = np.transpose(X, permute_axes)
 
     return X, (scale, zp, axis, qparams[2])
+
 
 """Strategy for generating test cases for tensors used in Conv.
 The resulting tensors is in float32 format.
@@ -295,6 +311,8 @@ Example:
         qparams=qparams()
     ))
 """
+
+
 @st.composite
 def tensor_conv(
     draw, spatial_dim=2, batch_size_range=(1, 4),

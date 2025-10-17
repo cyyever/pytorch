@@ -18,6 +18,7 @@ if __name__ == '__main__':
 from test_jit import JitTestCase
 TEST_BFLOAT16 = TEST_CUDA and torch.cuda.is_bf16_supported()
 
+
 @skipIfTorchDynamo("Not a TorchDynamo suitable test")
 class TestAutocast(JitTestCase):
     def setUp(self):
@@ -771,6 +772,7 @@ class TestAutocast(JitTestCase):
         g = torch.jit.last_executed_optimized_graph()
         FileCheck().check_not("_autocast_to_reduced").run(g)
 
+
 class convbn(torch.nn.Module):
     def __init__(self, bias_enabled=True):
         super().__init__()
@@ -779,6 +781,7 @@ class convbn(torch.nn.Module):
 
     def forward(self, x):
         return self.bn(self.conv(x))
+
 
 @skipIfTorchDynamo("Not a TorchDynamo suitable test")
 class TestJitTraceAutocast(JitTestCase):
@@ -901,7 +904,6 @@ class TestJitTraceAutocast(JitTestCase):
 
         self.assertTrue(any("is_autocast_enabled" in x.kind() for x in fn_s.graph.nodes()))
 
-
     def test_scripted_aliasing(self):
         # torch.is_autocast_enabled should not be able to move inside of the autocast context.
         def fn(x):
@@ -925,7 +927,6 @@ class TestJitTraceAutocast(JitTestCase):
         self.assertEqual(len(enter_nodes), 1)
 
         self.assertFalse(aliasdb.move_after_topologically_valid(is_enabled_nodes[0], enter_nodes[0]))
-
 
     def test_script_autocast_enable_and_check(self):
         def fn(x, y) -> tuple[torch.Tensor, bool, torch.Tensor, bool, torch.Tensor, bool]:

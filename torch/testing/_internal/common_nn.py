@@ -2715,7 +2715,6 @@ def get_new_module_tests():
         activation_test_info.update(extra_info)
         new_module_tests.append(activation_test_info)
 
-
     return new_module_tests
 
 
@@ -3958,6 +3957,7 @@ def _test_bfloat16_ops(test_case, op, device, inp_dims=(), prec=1e-2, scale_fact
 
     test_case.assertEqual(out1, out2, atol=prec, rtol=prec, exact_dtype=False)
     test_case.assertEqual(input1.grad.data, input2.grad.data, atol=prec, rtol=prec, exact_dtype=False)
+
 
 def _test_module_empty_input(test_case, module, inp, check_size=True, inference=False):
     if not inference:

@@ -19,6 +19,7 @@ if __name__ == '__main__':
                        "\tpython test/test_fx.py TESTNAME\n\n"
                        "instead.")
 
+
 class TestSubgraphRewriter(JitTestCase):
 
     def test_subgraph_rewriter_preserves_logic(self):

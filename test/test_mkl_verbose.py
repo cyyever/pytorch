@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 
+
 class TestMKLVerbose(TestCase):
     def test_verbose_on(self):
         num = 0
@@ -29,6 +30,7 @@ class TestMKLVerbose(TestCase):
                 if line.startswith("MKL_VERBOSE"):
                     num = num + 1
         self.assertEqual(num, 0, 'unexpected oneMKL verbose messages found.')
+
 
 if __name__ == '__main__':
     run_tests()

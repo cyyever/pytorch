@@ -80,6 +80,8 @@ CUDA_CLANG_VERSIONS: VersionMap = {
 __all__ = ["get_default_build_root", "check_compiler_ok_for_platform", "get_compiler_abi_compatibility_and_version", "BuildExtension",
            "CppExtension", "CUDAExtension", "SyclExtension", "include_paths", "library_paths", "load", "load_inline", "is_ninja_available",
            "verify_ninja_availability", "remove_extension_h_precompiler_headers", "get_cxx_compiler", "check_compiler_is_gcc"]
+
+
 # Taken directly from python stdlib < 3.9
 # See https://github.com/pytorch/pytorch/issues/48617
 def _nt_quote_args(args: Optional[list[str]]) -> list[str]:
@@ -92,6 +94,7 @@ def _nt_quote_args(args: Optional[list[str]]) -> list[str]:
     if not args:
         return []
     return [f'"{arg}"' if ' ' in arg else arg for arg in args]
+
 
 def _find_cuda_home() -> Optional[str]:
     """Find the CUDA install path."""
@@ -119,6 +122,7 @@ def _find_cuda_home() -> Optional[str]:
         logger.warning("No CUDA runtime is found, using CUDA_HOME='%s'", cuda_home)
     return cuda_home
 
+
 def _find_rocm_home() -> Optional[str]:
     """Find the ROCm install path."""
     # Guess #1
@@ -140,6 +144,7 @@ def _find_rocm_home() -> Optional[str]:
     if rocm_home and torch.version.hip is None:
         logger.warning("No ROCm runtime is found, using ROCM_HOME='%s'", rocm_home)
     return rocm_home
+
 
 def _find_sycl_home() -> Optional[str]:
     sycl_home = None
@@ -163,6 +168,7 @@ def _find_sycl_home() -> Optional[str]:
             logger.warning("Trying to find SYCL_HOME from intel-sycl-rt package, but it is not installed.")
     return sycl_home
 
+
 def _join_rocm_home(*paths) -> str:
     """
     Join paths with ROCM_HOME, or raises an error if it ROCM_HOME is not set.
@@ -174,6 +180,7 @@ def _join_rocm_home(*paths) -> str:
         raise OSError('ROCM_HOME environment variable is not set. '
                       'Please set it to your ROCm install root.')
     return os.path.join(ROCM_HOME, *paths)
+
 
 def _join_sycl_home(*paths) -> str:
     """
@@ -189,7 +196,6 @@ def _join_sycl_home(*paths) -> str:
                       'or install intel-sycl-rt via pip.')
 
     return os.path.join(SYCL_HOME, *paths)
-
 
 
 ABI_INCOMPATIBILITY_WARNING = (
@@ -320,6 +326,7 @@ def _append_sycl_targets_if_missing(cflags):
         # JIT (spir64)
         cflags.append('-fsycl-targets=spir64')
 
+
 def _get_sycl_device_flags(cflags):
     # We need last occurrence of -fsycl-targets as it will be the one taking effect.
     # So searching in reversed list.
@@ -330,6 +337,7 @@ def _get_sycl_device_flags(cflags):
     if arch_list != '':
         flags += [f'-Xs "-device {arch_list}"']
     return flags
+
 
 _COMMON_SYCL_FLAGS = [
     '-fsycl',
@@ -350,12 +358,14 @@ PLAT_TO_VCVARS = {
 
 min_supported_cpython = "0x030A0000"  # Python 3.10 hexcode
 
+
 def get_cxx_compiler():
     if IS_WINDOWS:
         compiler = os.environ.get('CXX', 'cl')
     else:
         compiler = os.environ.get('CXX', 'c++')
     return compiler
+
 
 def _is_binary_build() -> bool:
     return not BUILT_FROM_SOURCE_VERSION_PATTERN.match(torch.version.__version__)
@@ -364,6 +374,7 @@ def _is_binary_build() -> bool:
 def _accepted_compilers_for_platform() -> list[str]:
     # gnu-c++ and gnu-cc are the conda gcc compilers
     return ['clang++', 'clang'] if IS_MACOS else ['g++', 'gcc', 'gnu-c++', 'gnu-cc', 'clang++', 'clang']
+
 
 def _maybe_write(filename, new_content):
     r'''
@@ -380,6 +391,7 @@ def _maybe_write(filename, new_content):
 
     with open(filename, 'w') as source_file:
         source_file.write(new_content)
+
 
 def get_default_build_root() -> str:
     """
@@ -568,6 +580,7 @@ def _set_hipcc_runtime_lib(is_standalone, debug):
             COMMON_HIP_FLAGS.append('-fms-runtime-lib=dll_dbg')
         else:
             COMMON_HIP_FLAGS.append('-fms-runtime-lib=dll')
+
 
 def _append_sycl_std_if_no_std_present(cflags):
     if not any(flag.startswith('-sycl-std=') for flag in cflags):
@@ -1501,6 +1514,7 @@ def SyclExtension(name, sources, *args, **kwargs):
 
     return setuptools.Extension(name, sources, *args, **kwargs)
 
+
 def include_paths(device_type: str = "cpu", torch_include_dirs=True) -> list[str]:
     """
     Get the include paths required to build a C++ or CUDA or SYCL extension.
@@ -1723,9 +1737,11 @@ def load(name,
         is_standalone,
         keep_intermediates=keep_intermediates)
 
+
 @deprecated("PyBind11 ABI handling is internal to PyBind11; this will be removed after PyTorch 2.9.0")
 def _get_pybind11_abi_build_flags() -> list[str]:
     return []
+
 
 def check_compiler_is_gcc(compiler):
     if not IS_LINUX:
@@ -1750,6 +1766,7 @@ def check_compiler_is_gcc(compiler):
     if os.path.basename(compiler_path) == 'c++' and 'gcc version' in version_string:
         return True
     return False
+
 
 def _check_and_build_extension_h_precompiler_headers(
         extra_cflags,
@@ -1870,6 +1887,7 @@ def _check_and_build_extension_h_precompiler_headers(
             build_precompile_header(pch_cmd)
             write_pch_signature_to_file(head_file_signature, pch_sign)
 
+
 def remove_extension_h_precompiler_headers():
     def _remove_if_file_exists(path_file):
         if os.path.exists(path_file):
@@ -1880,6 +1898,7 @@ def remove_extension_h_precompiler_headers():
 
     _remove_if_file_exists(head_file_pch)
     _remove_if_file_exists(head_file_signature)
+
 
 def load_inline(name,
                 cpp_sources,
@@ -2177,6 +2196,7 @@ def _jit_compile(name,
 
     return _import_module_from_library(name, build_directory, is_python_module)
 
+
 def _get_hipcc_path():
     if IS_WINDOWS:
         # mypy thinks ROCM_VERSION is None but it will never be None here
@@ -2184,6 +2204,7 @@ def _get_hipcc_path():
         return _join_rocm_home('bin', hipcc_exe)
     else:
         return _join_rocm_home('bin', 'hipcc')
+
 
 def _write_ninja_file_and_compile_objects(
         sources: list[str],
@@ -2521,6 +2542,7 @@ def _get_rocm_arch_flags(cflags: Optional[list[str]] = None) -> list[str]:
     flags += [] if has_gpu_rdc_flag else ['-fno-gpu-rdc']
     return flags
 
+
 def _get_build_directory(name: str, verbose: bool) -> str:
     """
     Get the build directory for an extension.
@@ -2582,6 +2604,7 @@ def _get_vc_env(vc_arch: str) -> dict[str, str]:
         except AttributeError:
             from setuptools._distutils.compilers.C import msvc
             return msvc._get_vc_env(vc_arch)  # type: ignore[attr-defined]
+
 
 def _run_ninja_build(build_directory: str, verbose: bool, error_prefix: str) -> None:
     command = ['ninja', '-v']
@@ -2934,7 +2957,6 @@ e.
         sycl_compile_rule.append(
             '  command = $sycl $sycl_cflags -c -x c++ $in -o $out $sycl_post_cflags')
 
-
     # Emit one build rule per source to enable incremental build.
     build = []
     for source_file, object_file in zip(sources, objects):
@@ -3002,6 +3024,7 @@ e.
     content += "\n"
     _maybe_write(path, content)
 
+
 def _join_cuda_home(*paths) -> str:
     """
     Join paths with CUDA_HOME, or raises an error if it CUDA_HOME is not set.
@@ -3020,6 +3043,7 @@ def _is_cuda_file(path: str) -> bool:
     if IS_HIP_EXTENSION:
         valid_ext.append('.hip')
     return os.path.splitext(path)[1] in valid_ext
+
 
 def _is_sycl_file(path: str) -> bool:
     valid_ext = ['.sycl']

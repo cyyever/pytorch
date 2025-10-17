@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 
+
 class TestMKLDNNVerbose(TestCase):
     def test_verbose_on(self):
         num = 0
@@ -29,6 +30,7 @@ class TestMKLDNNVerbose(TestCase):
                 if line.startswith("onednn_verbose"):
                     num = num + 1
         self.assertEqual(num, 0, 'unexpected oneDNN verbose messages found.')
+
 
 if __name__ == '__main__':
     run_tests()

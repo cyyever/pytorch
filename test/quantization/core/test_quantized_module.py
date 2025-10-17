@@ -50,6 +50,7 @@ not correctness test for the underlying quantized operators. For correctness
 test please see `test/quantization/test_quantized_op.py`.
 """
 
+
 class TestStaticQuantizedModule(QuantizationTestCase):
     def test_relu(self):
         relu_module = nn.ReLU()
@@ -968,8 +969,6 @@ class TestStaticQuantizedModule(QuantizationTestCase):
 
         self._test_dropout_serialization(_get_model, data1, data2)
 
-
-
     def test_batch_norm2d(self):
         """Tests the correctness of the batchnorm2d module.
         The correctness is defined against the functional implementation.
@@ -1318,7 +1317,6 @@ class TestStaticQuantizedModule(QuantizationTestCase):
             x = torch.randn(4, num_parameters, 4)
             qx = torch.quantize_per_tensor_dynamic(x, dtype=torch.quint8, reduce_range=False)
 
-
             f_prelu = torch.nn.PReLU(num_parameters=num_parameters)
             f_prelu.weight = torch.nn.Parameter(torch.randn(num_parameters).abs())
             f_prelu.qconfig = torch.ao.quantization.QConfig(
@@ -1409,6 +1407,7 @@ class TestStaticQuantizedModule(QuantizationTestCase):
                     torch.ops.quantized.linear_tanh,
                     batch_size, in_features, out_features, use_bias,
                     per_channel)
+
 
 class TestDynamicQuantizedModule(QuantizationTestCase):
     def _test_qconv_impl(self, q_mod, dq_mod, dim, dtype, bias):
@@ -1751,7 +1750,6 @@ class TestDynamicQuantizedModule(QuantizationTestCase):
                                           dtype=dtype,
                                           use_dynamic=True)
 
-
             y, (h, c) = cell_dq(x, (h, c))
             self.assertEqual(result[0], y)
             self.assertEqual(result[1], h)
@@ -1783,7 +1781,6 @@ class TestDynamicQuantizedModule(QuantizationTestCase):
             x = torch.rand(seq_len, batch, input_size)
             h = torch.rand(num_layers * (bidirectional + 1), batch, hidden_size)
 
-
             cell_dq = torch.ao.nn.quantized.dynamic.GRU(input_size=input_size,
                                                         hidden_size=hidden_size,
                                                         num_layers=num_layers,
@@ -1803,7 +1800,6 @@ class TestDynamicQuantizedModule(QuantizationTestCase):
                                          False,
                                          bidirectional,
                                          False)
-
 
             y, h = cell_dq(x, h)
             self.assertEqual(result[0], y, msg="GRU module API failed")
@@ -1860,6 +1856,7 @@ class TestDynamicQuantizedModule(QuantizationTestCase):
                 bias_keys = ['bias_ih', 'bias_hh']
                 self.check_eager_serialization(cell_dq, cell_dict[rnn_type](**kwargs), [x])
                 self.check_weight_bias_api(cell_dq, weight_keys, bias_keys)
+
 
 class TestReferenceQuantizedModule(QuantizationTestCase):
     def _quant_dequant_weight(self, weight, weight_qparams):
@@ -2096,6 +2093,7 @@ class TestReferenceQuantizedModule(QuantizationTestCase):
                 self.assertTrue(qmax == 127)
                 found += 1
         self.assertTrue(found == 2)
+
 
 if __name__ == "__main__":
     raise_on_run_directly("test/test_quantization.py")

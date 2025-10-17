@@ -9,6 +9,7 @@ from torch.utils._pytree import tree_map
 
 import itertools
 
+
 class Int16Tensor(torch.Tensor):
     def __new__(cls, elem):
         assert elem.dtype == torch.bits16
@@ -79,12 +80,12 @@ class TestBits(TestCase):
                 z = torch.cat([x, y_b], dim=dim)
                 self.assertEqual(z_ref, z.view(view_type))
 
-
     def test_subclass(self):
         t = torch.zeros(20, dtype=torch.int16).view(torch.bits16)
         s = Int16Tensor(t)
         s = s + 1 - 1
         self.assertTrue(torch.allclose(s, torch.zeros(20, dtype=torch.bits16)))
+
 
 instantiate_device_type_tests(TestBits, globals())
 

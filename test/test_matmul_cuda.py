@@ -56,6 +56,7 @@ if TEST_CUDA:
 # Protects against includes accidentally setting the default dtype
 assert torch.get_default_dtype() is torch.float32
 
+
 def xfailIfSM100OrLaterNonRTXAndCondition(condition_fn):
     """
     Conditionally xfail tests on SM100+ datacenter SKUs based on a condition function.
@@ -76,6 +77,7 @@ def blas_library_context(backend):
         yield
     finally:
         torch.backends.cuda.preferred_blas_library(prev_backend)
+
 
 class TestMatmulCuda(InductorTestCase):
     def setUp(self):
@@ -419,7 +421,6 @@ class TestMatmulCuda(InductorTestCase):
                 start = offs_cpu[i]
             self.grouped_mm_helper(alist, b, gOlist, agradlist, bgradlist, outlist)
 
-
     @xfailIfSM120OrLater
     @unittest.skipIf(not SM80OrLater, "Grouped gemm supported only on SM80 or greater")
     @parametrize("strided", [False, True])
@@ -624,7 +625,6 @@ class TestMatmulCuda(InductorTestCase):
         C = f(A, B.transpose(-2, -1), offs=offs)
         torch.testing.assert_close(C, C_ref)
 
-
     @onlyCUDA
     @parametrize("input_dtype", [torch.float32, torch.float16, torch.bfloat16])
     @parametrize("M", [1, 32, 64])
@@ -688,7 +688,6 @@ class TestMatmulCuda(InductorTestCase):
                     self.assertEqual(out.dtype, output_dtype)
 
                     torch.testing.assert_close(out, baseline, atol=1e-3, rtol=1e-3)
-
 
     @onlyCUDA
     @parametrize("input_dtype", [torch.float32, torch.float16, torch.bfloat16])
@@ -761,7 +760,6 @@ class TestMatmulCuda(InductorTestCase):
 
                     self.assertEqual(out.dtype, output_dtype)
                     torch.testing.assert_close(out, baseline, atol=1e-3, rtol=1e-3)
-
 
     @onlyCUDA
     @parametrize("batch_size", [1, 32])
@@ -974,6 +972,7 @@ class TestMixedDtypesLinearCuda(TestCase):
                 rtol,
                 atol,
             )
+
 
 instantiate_device_type_tests(TestMatmulCuda, globals(), except_for="cpu")
 instantiate_device_type_tests(TestMixedDtypesLinearCuda, globals(), except_for="cpu")

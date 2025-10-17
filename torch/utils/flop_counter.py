@@ -19,12 +19,15 @@ _P = ParamSpec("_P")
 
 aten = torch.ops.aten
 
+
 def get_shape(i):
     if isinstance(i, torch.Tensor):
         return i.shape
     return i
 
+
 flop_registry: dict[Any, Any] = {}
+
 
 def shape_wrapper(f):
     @wraps(f)
@@ -32,6 +35,7 @@ def shape_wrapper(f):
         args, kwargs, out_shape = tree_map(get_shape, (args, kwargs, out_val))
         return f(*args, out_shape=out_shape, **kwargs)
     return nf
+
 
 def register_flop_formula(targets, get_raw=False) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
     def register_fun(flop_formula: Callable[_P, _T]) -> Callable[_P, _T]:
@@ -55,6 +59,7 @@ def register_flop_formula(targets, get_raw=False) -> Callable[[Callable[_P, _T]]
 
     return register_fun
 
+
 @register_flop_formula(aten.mm)
 def mm_flop(a_shape, b_shape, *args, out_shape=None, **kwargs) -> int:
     """Count flops for matmul."""
@@ -66,10 +71,12 @@ def mm_flop(a_shape, b_shape, *args, out_shape=None, **kwargs) -> int:
     # NB(chilli): Should be 2 * k - 1 technically for FLOPs.
     return m * n * 2 * k
 
+
 @register_flop_formula(aten.addmm)
 def addmm_flop(self_shape, a_shape, b_shape, out_shape=None, **kwargs) -> int:
     """Count flops for addmm."""
     return mm_flop(a_shape, b_shape)
+
 
 @register_flop_formula(aten.bmm)
 def bmm_flop(a_shape, b_shape, out_shape=None, **kwargs) -> int:
@@ -84,12 +91,14 @@ def bmm_flop(a_shape, b_shape, out_shape=None, **kwargs) -> int:
     flop = b * m * n * 2 * k
     return flop
 
+
 @register_flop_formula(aten.baddbmm)
 def baddbmm_flop(self_shape, a_shape, b_shape, out_shape=None, **kwargs) -> int:
     """Count flops for the baddbmm operation."""
     # Inputs should be a list of length 3.
     # Inputs contains the shapes of three tensors.
     return bmm_flop(a_shape, b_shape)
+
 
 @register_flop_formula(aten._scaled_mm)
 def _scaled_mm_flop(
@@ -145,6 +154,7 @@ def conv_flop_count(
     # NB(chilli): Should be 2 * c_in - 1 technically for FLOPs.
     flop = prod(conv_shape) * prod(filter_size) * batch_size * c_out * c_in * 2
     return flop
+
 
 @register_flop_formula([aten.convolution, aten._convolution, aten.cudnn_convolution, aten._slow_conv2d_forward])
 def conv_flop(x_shape, w_shape, _bias, _stride, _padding, _dilation, transposed, *args, out_shape=None, **kwargs) -> int:
@@ -256,6 +266,7 @@ def conv_backward_flop(
             flop_count += conv_flop_count(t(x_shape), t(grad_out_shape), t(grad_weight_shape), transposed=False)
 
     return flop_count
+
 
 def sdpa_flop_count(query_shape, key_shape, value_shape):
     """
@@ -488,6 +499,7 @@ def sdpa_backward_flop(grad_out_shape, query_shape, key_shape, value_shape, *arg
     """Count flops for self-attention backward."""
     return sdpa_backward_flop_count(grad_out_shape, query_shape, key_shape, value_shape)
 
+
 @register_flop_formula(aten._flash_attention_backward, get_raw=True)
 def _flash_attention_backward_flop(
     grad_out,
@@ -577,6 +589,7 @@ flop_registry = {
     aten._efficient_attention_backward: _efficient_attention_backward_flop,
 }
 
+
 def normalize_tuple(x):
     if not isinstance(x, tuple):
         return (x,)
@@ -585,6 +598,8 @@ def normalize_tuple(x):
 
 # Define the suffixes for different orders of magnitude
 suffixes = ["", "K", "M", "B", "T"]
+
+
 # Thanks BingChat!
 def get_suffix_str(number):
     # Find the index of the appropriate suffix based on the number of digits
@@ -593,6 +608,7 @@ def get_suffix_str(number):
     index = max(0, min(len(suffixes) - 1, (len(str(number)) - 2) // 3))
     return suffixes[index]
 
+
 def convert_num_with_suffix(number, suffix):
     index = suffixes.index(suffix)
     # Divide the number by 1000^index and format it to two decimal places
@@ -600,10 +616,12 @@ def convert_num_with_suffix(number, suffix):
     # Return the value and the suffix as a string
     return value + suffixes[index]
 
+
 def convert_to_percent_str(num, denom):
     if denom == 0:
         return "0%"
     return f"{num / denom:.2%}"
+
 
 def _pytreeify_preserve_structure(f):
     @wraps(f)
@@ -676,7 +694,6 @@ class FlopCounterMode:
             depth = self.depth
         if depth is None:
             depth = 999999
-
 
         import tabulate
 
@@ -758,6 +775,7 @@ class FlopCounterMode:
                 self.flop_counts[par][func_packet] += flop_count
 
         return out
+
 
 class _FlopCounterMode(TorchDispatchMode):
     supports_higher_order_operators = True

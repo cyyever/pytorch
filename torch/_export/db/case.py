@@ -60,6 +60,7 @@ def check_inputs_type(args, kwargs):
                 f"Expecting kwargs keys to be a string, got: {type(key)}"
             )
 
+
 def _validate_tag(tag: str):
     parts = tag.split(".")
     t = _TAGS

@@ -828,7 +828,6 @@ class TestModule(TestCase):
                 else:
                     raise e
 
-
     @onlyCPU
     @modules(module_db)
     def test_device_ctx_init(self, device, dtype, module_info, training):
@@ -855,7 +854,6 @@ class TestModule(TestCase):
                     continue
                 self.assertTrue(p_meta.is_meta)
                 assert_metadata_eq(self.assertEqual, p_meta, p_cpu)
-
 
     @modules([module for module in module_db if module.module_error_inputs_func is not None])
     def test_errors(self, device, dtype, module_info, training):

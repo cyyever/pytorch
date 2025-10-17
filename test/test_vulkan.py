@@ -8,6 +8,7 @@ from torch.testing._internal.common_utils import TestCase, run_tests
 from torch.testing import FileCheck
 import io
 
+
 @unittest.skipUnless(torch.is_vulkan_available(),
                      "Vulkan backend must be available for these tests.")
 class TestVulkanRewritePass(TestCase):
@@ -122,7 +123,6 @@ class TestVulkanRewritePass(TestCase):
             prepack_removal=True,
             fuse_clamping_ops=True)
 
-
         class Conv2DHardtanh(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
@@ -158,6 +158,7 @@ class TestVulkanRewritePass(TestCase):
             data_shape,
             prepack_removal=True,
             fuse_clamping_ops=True)
+
 
 if __name__ == "__main__":
     run_tests()

@@ -28,11 +28,13 @@ Prepare models
 # Note that this is temporary, we'll expose these functions to torch.ao.quantization after official releasee
 from torch.ao.quantization.quantize_fx import prepare_qat_fx
 
+
 def calibrate(model, data_loader):
     model.eval()
     with torch.no_grad():
         for image, _ in data_loader:
             model(image)
+
 
 from torch.ao.quantization.experimental.qconfig import (
     uniform_qconfig_8bit,
@@ -54,11 +56,14 @@ print(f"Model #0 Evaluation accuracy on test dataset: {top1.avg:2.2f}, {top5.avg
 """
 Prepare model PTQ for specified qconfig for torch.nn.Linear
 """
+
+
 def prepare_ptq_linear(qconfig):
     qconfig_dict = {"object_type": [(torch.nn.Linear, qconfig)]}
     prepared_model = prepare_qat_fx(copy.deepcopy(float_model), qconfig_dict)  # fuse modules and insert observers
     calibrate(prepared_model, data_loader_test)  # run calibration on sample data
     return prepared_model
+
 
 """
 Prepare model with uniform activation, uniform weight

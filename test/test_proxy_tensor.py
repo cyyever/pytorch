@@ -107,9 +107,12 @@ def _create_new_input(x):
     else:
         return torch.rand_like(x)
 
+
 """
 Delays a cos being executed on the unwraptensor until its used. Simulates a CommTensor used
 """
+
+
 class UnwrapTensor(torch.Tensor):
     @staticmethod
     def __new__(cls, tensor: torch.Tensor):
@@ -142,6 +145,7 @@ class UnwrapTensor(torch.Tensor):
         args = tree_map(unwrap, args)
         kwargs = tree_map(unwrap, kwargs)
         return func(*args, **kwargs)
+
 
 class TestGenericProxyTensor(TestCase):
     # WARNING: if any of your inputs are index tensors, DO NOT use this
@@ -663,11 +667,9 @@ def forward(self, x_1):
                 z = mod_self.layer_norm(y)
                 return z
 
-
         gm = make_fx(Emformer())(torch.randn(16, 1, 256))
         ops = {n.target for n in gm.graph.nodes if n.op == 'call_function'}
         self.assertEqual(len(ops), 2)
-
 
     def test_make_fx_model_fwd_bwd_wgtupdate(self):
         class Foo(torch.nn.Module):
@@ -753,7 +755,6 @@ def forward(self, x_1):
         traced = make_fx(f, decomposition_table={torch.ops.aten.t.default: nop})(torch.randn(5))
         self.assertEqual(len([n for n in traced.graph.nodes if n.target == torch.ops.aten.t.default]), 0)
 
-
     @unittest.skipIf(not HAS_CUDA, 'CUDA-only test')
     def test_amp_cache(self):
         layer = torch.nn.Conv2d(3, 3, 3).cuda()
@@ -797,6 +798,7 @@ def forward(self, x_1):
 
         self._test(f, [torch.randn(1, 10), torch.zeros(1, dtype=torch.long)])
 
+
 class TestGenericProxyTensorReal(TestGenericProxyTensor):
     tracing_mode = "real"
 
@@ -824,6 +826,7 @@ class TestRealProxyTensor(TestCase):
         # Smoke tests
         make_fx(f, _error_on_data_dependent_ops=False)()
         make_fx(f, pre_dispatch=True, _error_on_data_dependent_ops=False)()
+
 
 class TestFakeProxyTensor(TestCase):
     def test_issue82547(self):
@@ -938,19 +941,23 @@ def forward(self, x_1):
         fake_mode = detect_fake_mode([node.meta.get('val', None) for node in out.graph.nodes])
         self.assertEqual(fake_mode, existing_fake_mode)
 
+
 def _get_node(fx_g, cond):
     for n in fx_g.graph.nodes:
         if cond(n):
             return n
     raise AssertionError
 
+
 def _get_free_symbols(shape_env):
     vars = tuple(shape_env.var_to_val.keys())
     return len([var for var in vars if var not in shape_env.replacements])
 
+
 def _trace(f, *args):
     inps = [torch.randn(arg) for arg in args]
     return make_fx(f, tracing_mode="symbolic")(*inps)
+
 
 # TODO: Need to test the guards themselves specifically as well
 class TestSymbolicTracing(TestCase):
@@ -967,7 +974,6 @@ class TestSymbolicTracing(TestCase):
             if assert_eq:
                 self.assertEqual(rx, ry)
         return traced_f
-
 
     def test_debug_interpreter(self):
         import torch.library
@@ -1167,7 +1173,6 @@ def forward(self, x_1):
     return cumsum"""  # noqa: B950
         )
 
-
     def test_repeat_interleave_unbacked_output_size(self):
         def f(x, y):
             s = x.sum().item()
@@ -1299,7 +1304,6 @@ def forward(self, a_1):
     empty = torch.ops.aten.empty.memory_format([_local_scalar_dense], device = device(type='cpu'), pin_memory = False);  _local_scalar_dense = None
     return empty"""  # noqa: B950
         )
-
 
     def test_setitem_symint(self):
         # from moco
@@ -1550,7 +1554,6 @@ def forward(self, x_1, y_1):
                 torch.tensor(20, device="cuda"), torch.tensor(10, device="cuda"),
                 torch.tensor(10, device="cuda"), torch.tensor([1.0], device="cuda")
             )
-
 
     def test_split_unbacked_sizes(self):
         def f(lengths, values):
@@ -2054,6 +2057,7 @@ out_symbolic_tensor_segfaults = {
 
 out_symbolic_tensor_failures.update(out_symbolic_tensor_segfaults)
 
+
 # Copies inputs to inplace operations to avoid inplace modifications
 #   to leaves requiring gradient
 def _get_safe_inplace(inplace_variant):
@@ -2062,6 +2066,7 @@ def _get_safe_inplace(inplace_variant):
         return inplace_variant(t.clone(), *args, **kwargs)
 
     return _fn
+
 
 def _test_make_fx_helper(self, device, dtype, op, tracing_mode, inplace=False, out=False):
     fn = _get_safe_inplace(op.get_inplace()) if inplace else op.op
@@ -2099,8 +2104,10 @@ def skipIfNameMatches(pattern):
         return wrapper
     return decorator
 
+
 # Auto functionalize shouldn't work with make_fx directly
 filtered_hop_db = [op for op in hop_db if op.name != "auto_functionalize"]
+
 
 @unittest.skipIf(not torch._dynamo.is_dynamo_supported(), "Cond requires dynamo")
 class TestProxyTensorOpInfo(TestCase):

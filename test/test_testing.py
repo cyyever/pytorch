@@ -36,6 +36,7 @@ from torch.testing._internal.opinfo.core import SampleInput, DecorateInfo, OpInf
 import operator
 import string
 
+
 # For testing TestCase methods and torch.testing functions
 class TestTesting(TestCase):
     # Ensure that assertEqual handles numpy arrays properly
@@ -319,7 +320,6 @@ if __name__ == '__main__':
         # should run only 1 test because it throws unrecoverable error.
         self.assertIn('errors=1', stderr)
 
-
     @unittest.skipIf(TEST_WITH_ROCM, "ROCm doesn't support device side asserts")
     @onlyCUDA
     @slowTest
@@ -359,7 +359,6 @@ if __name__ == '__main__':
         self.assertIn('CUDA error: device-side assert triggered', stderr)
         # should run only 1 test because it throws unrecoverable error.
         self.assertIn('errors=1', stderr)
-
 
     @unittest.skipIf(TEST_WITH_ROCM, "ROCm doesn't support device side asserts")
     @onlyCUDA
@@ -827,7 +826,6 @@ class TestAssertClose(TestCase):
                 with self.assertRaises(AssertionError):
                     fn()
 
-
     def test_docstring_examples(self):
         finder = doctest.DocTestFinder(verbose=False)
         runner = doctest.DocTestRunner(verbose=False, optionflags=doctest.NORMALIZE_WHITESPACE)
@@ -868,8 +866,6 @@ class TestAssertClose(TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "unexpected exception"):
             torch.testing.assert_close(actual, expected)
-
-
 
 
 class TestAssertCloseMultiDevice(TestCase):
@@ -1963,7 +1959,6 @@ class TestTestParametrizationDeviceType(TestCase):
             def test_two_things_default_names(self, device, x, y):
                 pass
 
-
         locals_dict = dict(locals())
         instantiate_device_type_tests(TestParametrized, locals_dict, only_for=device)
 
@@ -2441,6 +2436,7 @@ class TestImports(TestCase):
         ]
         out = self._check_python_output("; ".join(commands))
         self.assertEqual(out.strip(), expected)
+
 
 class TestOpInfos(TestCase):
     def test_sample_input(self) -> None:

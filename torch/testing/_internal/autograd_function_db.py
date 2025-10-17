@@ -137,14 +137,17 @@ class NumpyMul(torch.autograd.Function):
         x, y = ctx.saved_tensors
         return x_tangent * y + y_tangent * x
 
+
 def sample_inputs_numpy_mul(opinfo, device, dtype, requires_grad, **kwargs):
     make_arg = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
     # Broadcasting
     yield SampleInput(make_arg(4, low=0.9, high=2), args=(make_arg(3, 4, low=0.9, high=2),))
 
+
 def sample_inputs_numpy_mul_scalar(opinfo, device, dtype, requires_grad, **kwargs):
     make_arg = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
     yield SampleInput(make_arg(4, low=0.9, high=2), args=(), kwargs={"scalar": 3.14})
+
 
 class MulGenVmap(torch.autograd.Function):
     generate_vmap_rule = True
@@ -206,6 +209,7 @@ class NumpyExp_(torch.autograd.Function):
         x_tangent.mul_(output)
         return x_tangent
 
+
 class NumpySort(torch.autograd.Function):
     @staticmethod
     def forward(x, dim):
@@ -245,6 +249,7 @@ class NumpySort(torch.autograd.Function):
     def jvp(ctx, x_tangent, _):
         ind, ind_inv = ctx.saved_tensors
         return NumpyTake.apply(x_tangent, ind, ind_inv, ctx.dim), None, None
+
 
 class SortGenVmap(torch.autograd.Function):
     generate_vmap_rule = True
@@ -336,6 +341,7 @@ class NumpyTake(torch.autograd.Function):
         ind, ind_inv = ctx.saved_tensors
         return NumpyTake.apply(x_tangent, ind, ind_inv, ctx.dim)
 
+
 class TakeGenVmap(torch.autograd.Function):
     generate_vmap_rule = True
 
@@ -360,6 +366,7 @@ class TakeGenVmap(torch.autograd.Function):
     def jvp(ctx, x_tangent, ind_tangent, ind_inv_tangent, _):
         ind, ind_inv = ctx.saved_tensors
         return TakeGenVmap.apply(x_tangent, ind, ind_inv, ctx.dim)
+
 
 class Select(torch.autograd.Function):
     @staticmethod
@@ -387,6 +394,7 @@ class Select(torch.autograd.Function):
     @staticmethod
     def jvp(ctx, x_tangent, _):
         return Select.apply(x_tangent, ctx.idx)
+
 
 class SelectGenVmap(torch.autograd.Function):
     generate_vmap_rule = True
@@ -416,6 +424,7 @@ def sample_inputs_select(opinfo, device, dtype, requires_grad, **kwargs):
     make_arg = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
     yield SampleInput(make_arg(3, 5), args=(2,))
 
+
 class ScaleGradGenVmap(torch.autograd.Function):
     generate_vmap_rule = True
     scale = 3.14
@@ -435,6 +444,7 @@ class ScaleGradGenVmap(torch.autograd.Function):
     @staticmethod
     def jvp(ctx, x_tangent):
         return x_tangent * ScaleGradGenVmap.scale
+
 
 class ZeroGradientsGenVmap(torch.autograd.Function):
     generate_vmap_rule = True

@@ -329,6 +329,7 @@ class CheckpointFunction(torch.autograd.Function):
 def noop_context_fn():
     return contextlib.nullcontext(), contextlib.nullcontext()
 
+
 # Note: [torch.compile and checkpoint]
 # TorchDynamo does not step inside utils.checkpoint function.  The flow
 # looks likes this
@@ -986,6 +987,7 @@ Operations executed during recomputation:
 --------------------------------------------------------------------------------
 """
 
+
 class CheckpointError(RuntimeError):
     pass
 
@@ -1050,6 +1052,7 @@ def _get_debug_context_and_cb() -> Tuple[Callable[[], Any], Callable[[Checkpoint
 
     return context_fn, unpack_error_cb
 
+
 def _default_meta_extractor(x: torch.Tensor) -> Dict[str, Any]:
     # These properties are fast to check, easy to understand
     return {
@@ -1058,10 +1061,12 @@ def _default_meta_extractor(x: torch.Tensor) -> Dict[str, Any]:
         "device": x.device
     }
 
+
 _allowed_determinism_checks_to_fns: Dict[str, Callable[[torch.Tensor], Any]] = {
     _DEFAULT_DETERMINISM_MODE: _default_meta_extractor,
     "none": lambda _: None,
 }
+
 
 # See Rule 5
 class _StopRecomputationError(Exception):
@@ -1331,6 +1336,7 @@ class _CachingTorchDispatchMode(TorchDispatchMode):
             self.storage[func].append(tree_map(lambda x: _VersionWrapper(_maybe_detach(x, any_ret_has_alias_info)), out))
         return out
 
+
 class _CachedTorchDispatchMode(TorchDispatchMode):
     # Used together with _CachedTorchDispatchMode to implement SAC.
     def __init__(self, policy_fn, storage, allow_cache_entry_mutation):
@@ -1452,6 +1458,7 @@ def create_selective_checkpoint_contexts(policy_fn_or_list, allow_cache_entry_mu
 
 # NB: this helper wraps fn before calling checkpoint_impl. kwargs and
 #     saving/restoring of global state is handled here.
+
 
 def _checkpoint_without_reentrant_generator(
     fn,

@@ -108,6 +108,7 @@ class MkldnnConv2d(_MkldnnConvNd):
         self.bias = state[1].to_mkldnn()
         self.training = state[2]
 
+
 class MkldnnConv3d(_MkldnnConvNd):
     def __init__(self, dense_module, dtype):
         super().__init__(dense_module)
@@ -182,6 +183,7 @@ class MkldnnBatchNorm(torch.jit.ScriptModule):
             False,  # cuda_enabled
         )
 
+
 class MkldnnPrelu(torch.jit.ScriptModule):
     def __init__(self, dense_module, dtype):
         super().__init__()
@@ -202,6 +204,7 @@ class MkldnnPrelu(torch.jit.ScriptModule):
         y_mkldnn = torch.prelu(x_mkldnn, self.weight)
         y = y_mkldnn if x.is_mkldnn else y_mkldnn.to_dense()
         return y
+
 
 def to_mkldnn(module, dtype=torch.float):
     assert dtype in [torch.float, torch.bfloat16, torch.half], \

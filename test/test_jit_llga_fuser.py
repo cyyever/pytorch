@@ -16,6 +16,7 @@ from torch.testing._internal.common_device_type import (
     dtypes
 )
 
+
 # We use this wrapper to run UTs of TorchVision models because of a memory-leak
 # issue with JIT tracing that causes traced model objects to persist in the
 # memory. Ref: https://github.com/pytorch/pytorch/issues/35600
@@ -31,6 +32,7 @@ def separate_process(func):
             futures.wait([future])
     return wrapper
 
+
 def is_avx512_supported():
     if sys.platform != 'linux':
         return False
@@ -38,16 +40,19 @@ def is_avx512_supported():
         lines = f.read()
     return "avx512" in lines
 
+
 IS_AVX512_UNSUPPORTED = not is_avx512_supported()
 
 LLGA_FUSION_GROUP = 'prim::oneDNNFusionGroup'
 LLGA_NOT_ENABLED = not torch.backends.mkldnn.is_available() or IS_WINDOWS or IS_MACOS
+
 
 def warmup_forward(f, *args, profiling_count=3):
     for _ in range(profiling_count):
         results = f(*args)
 
     return results
+
 
 class JitLlgaTestCase(JitTestCase):
 
@@ -87,7 +92,6 @@ class JitLlgaTestCase(JitTestCase):
             self.assertEqual(jit_o, ref_o)
             return traced, fwd_graph
 
-
     def assertFused(self, graph, fused_patterns):
         for pat in fused_patterns:
             self.assertGraphContainsExactly(graph, pat, 0)
@@ -110,6 +114,7 @@ class JitLlgaTestCase(JitTestCase):
             for pattern in patterns[i]:
                 self.assertGraphContains(fusion_groups[i], pattern)
 
+
 try:
     import torchvision
     HAS_TORCHVISION = True
@@ -118,6 +123,7 @@ except ImportError:
 except RuntimeError:
     HAS_TORCHVISION = False
 skipIfNoTorchVision = unittest.skipIf(not HAS_TORCHVISION, 'no torchvision')
+
 
 def get_eltwise_fn(name):
     if hasattr(torch, name):
@@ -264,7 +270,6 @@ class TestOp(JitLlgaTestCase):
             _, graph = self.checkTrace(m, [x], dtype)
             self.assertGraphContainsExactly(graph, LLGA_FUSION_GROUP, 1)
             self.assertFused(graph, ['aten::linear'])
-
 
     def _gen_binary_inputs(self, gen_permute=True):
         for xshape, yshape in [
@@ -724,6 +729,7 @@ class TestFusionPattern(JitLlgaTestCase):
         # correct strides info of the channels-last tensor.
         self.checkTrace(m, [x, y], dtype)
 
+
 @unittest.skipIf(LLGA_NOT_ENABLED, "MKL-DNN build is disabled")
 class TestEnableDisableLlgaFuser(JitTestCase):
     def setUp(self):
@@ -811,6 +817,7 @@ class TestModel(JitLlgaTestCase):
         self.assertFused(graph, ['aten::_convolution', 'aten::batch_norm',
                                  'aten::relu', 'aten::linear',
                                  'aten::avg_pool2d', 'aten::max_pool2d'])
+
 
 for model_name, enabled in [
     ['resnet50', True],

@@ -10,6 +10,7 @@ forward_helper = fake_quantize_function.forward
 backward = fake_quantize_function.backward
 from torch.autograd import gradcheck
 
+
 class TestFakeQuantize(unittest.TestCase):
     r""" Tests fake quantize calculate_qparams() method
          by comparing with result from observer calculate_qparams.
@@ -87,6 +88,7 @@ class TestFakeQuantize(unittest.TestCase):
         alpha, gamma, quantization_levels, level_indices = observer.calculate_qparams(signed=False)
 
         gradcheck(fake_quantize_function.apply, (input, alpha, gamma, quantization_levels, level_indices), atol=1e-4)
+
 
 if __name__ == '__main__':
     unittest.main()

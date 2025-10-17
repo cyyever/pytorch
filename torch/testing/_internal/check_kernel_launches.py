@@ -44,6 +44,7 @@ has_check = re.compile(
     r"\s*;(?![^;}]*C10_CUDA_KERNEL_LAUNCH_CHECK\(\);)", flags=re.MULTILINE
 )
 
+
 def find_matching_paren(s: str, startpos: int) -> int:
     """Given a string "prefix (unknown number of characters) suffix"
     and the position of the first `(` returns the index of the character

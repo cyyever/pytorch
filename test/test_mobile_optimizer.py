@@ -21,6 +21,7 @@ except ImportError:
 
 FileCheck = torch._C.FileCheck
 
+
 class TestOptimizer(TestCase):
 
     @skipIfNoXNNPACK
@@ -82,7 +83,6 @@ class TestOptimizer(TestCase):
                 o = o + x
                 return F.relu(o)
 
-
         class BNTestModule(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
@@ -131,7 +131,6 @@ class TestOptimizer(TestCase):
                    .run(optimized_scripted_model.foo.graph)
         torch.testing.assert_close(initial_foo_result, optimized_foo_result, rtol=1e-2, atol=1e-3)
 
-
         optimization_blocklist_no_prepack = {MobileOptimizerType.INSERT_FOLD_PREPACK_OPS}
         optimized_scripted_model_no_prepack = optimize_for_mobile(scripted_model, optimization_blocklist_no_prepack)
         optimized_result_no_prepack = optimized_scripted_model_no_prepack(input_data)
@@ -141,7 +140,6 @@ class TestOptimizer(TestCase):
                    .check_not("prepacked::conv2d_clamp_run") \
                    .run(optimized_scripted_model_no_prepack.graph)
         torch.testing.assert_close(initial_result, optimized_result_no_prepack, rtol=1e-2, atol=1e-3)
-
 
         bn_test_module = BNTestModule()
         bn_scripted_module = torch.jit.script(bn_test_module)
@@ -583,7 +581,6 @@ class TestOptimizer(TestCase):
              f"'__torch__.', but got: {cloned.qualified_name}"),
         )
 
-
         # Case-2: Successfully clone the module, ignoring the attribute pqr, and the method that references it.
         cloned = torch._C._hack_do_not_use_clone_module_with_class(
             m._c,
@@ -597,7 +594,6 @@ class TestOptimizer(TestCase):
         self.assertEqual(hasattr(cloned, "dummy_method_not_cloned2"), False)
         self.assertEqual(hasattr(cloned, "dummy_method_ref_attr_pqr"), False)
         self.assertEqual(hasattr(cloned, "pqr"), False)
-
 
         # Case-3: The statement below will throw since dummy_method_cloned2 is preserved,
         # and references dummy_method_not_cloned, which is not cloned.

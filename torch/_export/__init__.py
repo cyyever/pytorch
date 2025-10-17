@@ -55,6 +55,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+
 @dataclasses.dataclass
 class ExportDynamoConfig:
     """
@@ -152,6 +153,7 @@ def aot_compile(
 
     assert isinstance(so_path, (str, list))
     return so_path
+
 
 def aot_load(so_path: str, device: str) -> Callable:
     """

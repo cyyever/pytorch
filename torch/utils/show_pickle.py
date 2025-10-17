@@ -10,6 +10,7 @@ from typing import Any, IO
 
 __all__ = ["FakeObject", "FakeClass", "DumpUnpickler", "main"]
 
+
 class FakeObject:
     def __init__(self, module, name, args):
         self.module = module

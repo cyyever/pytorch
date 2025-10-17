@@ -31,6 +31,7 @@ SOURCE_ROOT = os.path.split(os.path.abspath(__file__))[0]
 # first pass through the loop.
 _BUILD_ROOT: Optional[str] = None
 
+
 def _get_build_root() -> str:
     global _BUILD_ROOT
     if _BUILD_ROOT is None:
@@ -90,6 +91,8 @@ if CONDA_PREFIX is not None:
 
 
 COMPAT_CALLGRIND_BINDINGS: Optional[CallgrindModuleType] = None
+
+
 def get_compat_bindings() -> CallgrindModuleType:
     with LOCK:
         global COMPAT_CALLGRIND_BINDINGS

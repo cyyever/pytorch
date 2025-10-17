@@ -479,7 +479,6 @@ class TestSegmentReductions(TestCase):
                 self.assertTrue(gradcheck(partial(fn, mode='lengths'), (data.detach().clone().requires_grad_(True))))
                 self.assertTrue(gradcheck(partial(fn, mode='offsets'), (data.detach().clone().requires_grad_(True))))
 
-
     @dtypes(
         *product(
             (torch.half, torch.bfloat16, torch.float, torch.double),
@@ -565,8 +564,6 @@ class TestSegmentReductions(TestCase):
         nd_data = torch.arange(12, dtype=torch.float, device=device).reshape(2, 6)
         with self.assertRaisesRegex(RuntimeError, "Expected all rows of lengths along axis"):
             torch._segment_reduce(nd_data, 'sum', lengths=nd_lengths, axis=1, unsafe=False)
-
-
 
 
 instantiate_device_type_tests(TestSegmentReductions, globals())

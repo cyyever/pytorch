@@ -28,6 +28,7 @@ from torch.testing._internal.common_device_type import (
 from torch.testing._internal.common_methods_invocations import (
     ReductionOpInfo, ReductionPythonRefInfo, reduction_ops, reference_masked_ops)
 
+
 # TODO: replace with make_tensor
 def _generate_input(shape, dtype, device, with_extremal):
     if shape == ():
@@ -58,12 +59,14 @@ def _generate_input(shape, dtype, device, with_extremal):
 
     return x
 
+
 # TODO: replace with make_tensor
 def _rand_shape(dim, min_size, max_size):
     shape = []
     for _ in range(dim):
         shape.append(random.randint(min_size, max_size))
     return tuple(shape)
+
 
 def _reduced_shape(shape, empty_dim_as_none=False, dim=None, keepdim=False):
     """Computes the expected reduced shape given dim and keepdim
@@ -92,6 +95,7 @@ def _reduced_shape(shape, empty_dim_as_none=False, dim=None, keepdim=False):
             result.append(1)
 
     return result
+
 
 class TestReductions(TestCase):
 
@@ -1057,7 +1061,6 @@ class TestReductions(TestCase):
             indexed = a.gather(1, indices.unsqueeze(1)).squeeze(1)
             self.assertEqual(values, indexed)
 
-
     @expectedFailureMeta  # mode only supports CPU and CUDA device type
     @onlyNativeDeviceTypes
     def test_mode_wrong_dtype(self, device):
@@ -1404,7 +1407,6 @@ class TestReductions(TestCase):
                 reduce_dims = list(combinations(dim_sequences[len(shape)], i))
                 for reduce_dim in reduce_dims:
                     helper(self, shape, reduce_dim, device, dtype)
-
 
     @onlyCPU
     @dtypes(torch.bool, torch.double)
@@ -2131,7 +2133,6 @@ class TestReductions(TestCase):
         self.assertEqual(x.argmin(dim=None).item(), 0)
         self.assertEqual(x.argmin(dim=0).item(), 0)
         self.assertEqual(x.argmin(dim=0, keepdim=True), torch.tensor(0, dtype=torch.int64))
-
 
     @precisionOverride({torch.float16: 1e-2, torch.bfloat16: 1e-2})
     @dtypes(*set(all_types_and(torch.half, torch.bfloat16)) - {torch.uint8})
@@ -3754,6 +3755,7 @@ as the input tensor excluding its innermost dimension'):
             RuntimeError, err_msg) if dtype is torch.chalf else contextlib.nullcontext()
         with ctx:
             self.assertEqual(torch.mean(t), expected)
+
 
 instantiate_device_type_tests(TestReductions, globals())
 

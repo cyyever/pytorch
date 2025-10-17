@@ -18,8 +18,10 @@ if not TEST_CUDA:
 code_string = "template <typename T> T my_fused_kernel(T x, T y, T alpha, T beta) { return alpha * x + beta * y; }"
 jitted_fn = create_jit_fn(code_string, alpha=1, beta=1)
 
+
 def ref_fn(x, y, alpha=1, beta=1):
     return alpha * x + beta * y
+
 
 class TestPythonJiterator(TestCase):
     @parametrize("shape_strides", [
