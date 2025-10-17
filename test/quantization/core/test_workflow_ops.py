@@ -33,12 +33,14 @@ hu.assert_deadline_disabled()
 from torch.testing._internal.common_cuda import TEST_CUDA, TEST_WITH_ROCM
 from torch.testing._internal.common_utils import TestCase, skipIfTorchDynamo
 
+
 # Reference method for fake quantize
 # Note: because scale/zero_point are left as float in the actual kernel, this mimics how fake_quant works for float16/64
 def _fake_quantize_per_tensor_affine_reference(X, scale, zero_point, quant_min, quant_max):
     dtype = X.dtype
     res = ((torch.clamp(torch.round(X.to(torch.float32) * (1.0 / scale) + zero_point), quant_min, quant_max) - zero_point) * scale)
     return res.to(dtype)
+
 
 # Reference method for the gradient of the fake quantize operator
 # Note: because scale/zero_point are left as float in the actual kernel, this mimics how fake_quant works for float16/64
@@ -49,6 +51,7 @@ def _fake_quantize_per_tensor_affine_grad_reference(dY, X, scale, zero_point, qu
     res = torch.zeros_like(dY)
     res[mask] = dY[mask]
     return res.to(dtype)
+
 
 # Reference method for the gradients of the fake quantize operator
 def _fake_quantize_learnable_per_tensor_affine_grad_reference(dY, X, scale, zero_point, quant_min, quant_max, device, dtype):
@@ -106,6 +109,7 @@ def _fake_quantize_learnable_per_tensor_affine_grad_reference(dY, X, scale, zero
 # Reference method for quantization.
 def _quantize_per_tensor(x, scale, zero_point, quant_min, quant_max):
     return ((x / scale) + zero_point).round().clamp(quant_min, quant_max)
+
 
 # Reference method for the per channel gradients of the learnable fake quantize operator
 def _fake_quantize_learnable_per_channel_affine_grad_reference(
@@ -180,6 +184,7 @@ def _fake_quantize_learnable_per_channel_affine_grad_reference(
 
     return grad_X, grad_scale, grad_zero_point
 
+
 def _get_tensor_min_max(
         X: torch.Tensor,
         running_min: Union[float, torch.Tensor] = float("inf"),
@@ -202,6 +207,7 @@ def _get_tensor_min_max(
 
     return min_val_tensor.item(), max_val_tensor.item()
 
+
 def _get_per_row_min_max(
         x: torch.Tensor,
         min_vals: torch.Tensor,
@@ -223,6 +229,7 @@ def _get_per_row_min_max(
         min_vals = min_vals + averaging_const * (min_vals_cur - min_vals)
         max_vals = max_vals + averaging_const * (max_vals_cur - max_vals)
     return min_vals, max_vals
+
 
 def _get_scale_zp(
         min_val: float,
@@ -283,8 +290,10 @@ def _get_scale_zp(
 
     return (scale, int(nudged_zero_point))
 
+
 NP_RANDOM_SEED = 19
 tolerance = 1e-6
+
 
 class TestFakeQuantizeOps(TestCase):
     @given(device=st.sampled_from(['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']),
@@ -713,7 +722,6 @@ class TestFakeQuantizeOps(TestCase):
             loaded_module = torch.jit.load(buf)
             self.assertEqual(fq_module.calculate_qparams(), loaded_module.calculate_qparams())
 
-
     @given(device=st.sampled_from(['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']),
            X=hu.per_channel_tensor(shapes=hu.array_shapes(1, 5,),
            qparams=hu.qparams(dtypes=torch.quint8)))
@@ -920,7 +928,6 @@ class TestFakeQuantizeOps(TestCase):
             np.testing.assert_allclose(
                 dX.cpu().detach().numpy(), X.grad.cpu().detach().numpy(), rtol=tolerance, atol=tolerance)
             assert X.grad.dtype == float_type
-
 
     def test_backward_per_channel_cachemask_cpu(self):
         self._test_backward_per_channel_cachemask_impl('cpu')
@@ -1335,7 +1342,6 @@ class TestFusedObsFakeQuant(TestCase):
             x_min, x_max, torch.quint8
         )
 
-
         pt_op = torch.fused_moving_avg_obs_fake_quant
         out = pt_op(
             x,
@@ -1362,6 +1368,7 @@ class TestFusedObsFakeQuant(TestCase):
             dout, x, x_scale, x_zero_point, 0, 255)
         self.assertEqual(dX, x.grad)
         self.assertTrue(x.grad.dtype == torch.float32)
+
 
 if __name__ == '__main__':
     raise RuntimeError("This test file is not meant to be run directly, use:\n\n"

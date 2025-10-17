@@ -12,6 +12,7 @@ import atexit
 import logging
 logger = logging.getLogger(__name__)
 
+
 def observe_garbage(observer):
     enabled = True
 
@@ -85,12 +86,15 @@ def observe_garbage(observer):
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def _get_cell_type():
     def f(x=None):
         return lambda: x
     return type(f().__closure__[0])
 
+
 CellType = _get_cell_type()
+
 
 def annotated_references(obj):
     """
@@ -133,7 +137,6 @@ def annotated_references(obj):
                   "__annotations__",
                   "__kwdefaults__")
 
-
     def add_sequence_references():
         for position, item in enumerate(obj):
             add_reference(f"[{position}]", item)
@@ -158,7 +161,6 @@ def annotated_references(obj):
             if len(referents) == 1:
                 target = referents[0]
                 add_reference("__callback__", target)
-
 
     def add_frame_references():
         f_locals = obj.f_locals
@@ -203,6 +205,7 @@ def annotated_references(obj):
 
 BASE_TYPES = (int, float, complex, type(None), str, bytes)
 FRAME_FILENAME_LIMIT = 32
+
 
 def object_annotation(obj):
     """
@@ -253,12 +256,12 @@ def object_annotation(obj):
         return f"object\n{type(obj).__module__}.{type(obj).__name__}"
 
 
-
 class Node(NamedTuple):
     label: str
     context: Optional[str]
     root: bool
     referrents: list[tuple[str, int]]
+
 
 def create_graph(objects, *, context=None, filter=None):
     if context is None:
@@ -306,12 +309,14 @@ def create_graph(objects, *, context=None, filter=None):
                            if idx in id_to_filtered_id]
     return filtered
 
+
 def escape(n):
     return json.dumps(n)
 
 
 def is_cuda_tensor(obj):
     return isinstance(obj, torch.Tensor) and obj.is_cuda and not isinstance(obj, torch._subclasses.FakeTensor)
+
 
 def cuda_allocation_context():
     snapshot = torch.cuda.memory._snapshot()
@@ -333,6 +338,7 @@ def cuda_allocation_context():
         return None
     return object_context
 
+
 def to_dot(nodes):
     lines = ["digraph GraphName {", "node [shape=rect];", 'rankdir=LR;']
     for i, n in enumerate(nodes):
@@ -343,6 +349,7 @@ def to_dot(nodes):
             lines.append(f'{i} -> {j} [label = {escape(label)}]')
     lines.append("}\n")
     return '\n'.join(lines)
+
 
 _template = """
 <!DOCTYPE html>
@@ -455,6 +462,8 @@ document.getElementById('node{id}').addEventListener('mouseover', function(event
   document.getElementById("stacktrace").textContent = {stack}
 }})
 """
+
+
 def to_html(nodes):
     listeners = []
     for i, n in enumerate(nodes):
@@ -465,6 +474,7 @@ def to_html(nodes):
         listeners.append(s)
     dot = to_dot(nodes)
     return _template.replace('$DOT', repr(dot)).replace('$LISTENERS', '\n'.join(listeners))
+
 
 def observe_tensor_cycles(callback):
     torch.cuda.memory._record_memory_history(max_entries=100000)

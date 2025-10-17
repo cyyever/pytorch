@@ -6,6 +6,7 @@ import torch
 import time
 from torch.utils.benchmark import Timer
 
+
 def extract_ir(filename: str) -> list[str]:
     BEGIN = "<GRAPH_EXPORT>"
     END = "</GRAPH_EXPORT>"
@@ -42,6 +43,7 @@ def make_tensor_from_type(inp_type: torch._C.TensorType):
         raise AssertionError("make_tensor_from_type: 'dtype' is None (inp_type.dtype() returned None)")
     return torch.empty_strided(size=size, stride=stride, device=device, dtype=dtype)
 
+
 def load_graph_and_inputs(ir: str) -> tuple[Any, list[Any]]:
     graph = torch._C.parse_ir(ir, parse_tensor_constants=True)
     graph.makeMultiOutputIntoTuple()
@@ -63,10 +65,12 @@ def load_graph_and_inputs(ir: str) -> tuple[Any, list[Any]]:
     torch._C._jit_pass_erase_shape_information(func.graph)
     return (func, inputs)
 
+
 def time_cuda(fn, inputs, test_runs):
     t = Timer(stmt="fn(*inputs)", globals={"fn": fn, "inputs" : inputs})
     times = t.blocked_autorange()
     return times.median * 1000  # time in ms
+
 
 def time_cpu(fn, inputs, test_runs):
     s = time.perf_counter()
@@ -74,6 +78,7 @@ def time_cpu(fn, inputs, test_runs):
         fn(*inputs)
     e = time.perf_counter()
     return (e - s) / test_runs * 1000  # time in ms
+
 
 def run_test(ir, inputs, *, warmup_runs=10, test_runs=20) -> float:
     graph, _ = load_graph_and_inputs(ir)
@@ -91,6 +96,7 @@ def run_test(ir, inputs, *, warmup_runs=10, test_runs=20) -> float:
     out = time_cpu(graph, inputs, test_runs) if is_cpu else time_cuda(graph, inputs, test_runs)
     return out
 
+
 @contextmanager
 def no_fuser(*args, **kwargs):
     old_optimize = torch._C._get_graph_executor_optimize(False)
@@ -98,6 +104,7 @@ def no_fuser(*args, **kwargs):
         yield
     finally:
         torch._C._get_graph_executor_optimize(old_optimize)
+
 
 def run_baseline_no_fusion(ir, inputs) -> float:
     with no_fuser():
@@ -112,6 +119,7 @@ def run_nnc(ir, inputs, dynamic) -> float:
             return run_test(ir, inputs)
     finally:
         torch.jit.set_fusion_strategy(old_strat)
+
 
 def run_nvfuser(ir, inputs) -> float:
     with torch.jit.fuser("fuser2"):

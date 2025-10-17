@@ -86,6 +86,7 @@ DEFAULT_EXTRA_FILE_SIZE_LIMIT = 16 * 1024
 __all__ = ['get_storage_info', 'hierarchical_pickle', 'get_model_info', 'get_inline_skeleton',
            'burn_in_info', 'get_info_and_burn_skeleton']
 
+
 def get_storage_info(storage):
     if not isinstance(storage, torch.utils.show_pickle.FakeObject):
         raise AssertionError(f"storage is not FakeObject: {type(storage)}")

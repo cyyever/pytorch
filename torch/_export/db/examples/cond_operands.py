@@ -7,6 +7,7 @@ x = torch.randn(3, 2)
 y = torch.randn(2)
 dim0_x = Dim("dim0_x")
 
+
 class CondOperands(torch.nn.Module):
     """
     The operands passed to cond() must be:
@@ -24,6 +25,7 @@ class CondOperands(torch.nn.Module):
             return x - y
 
         return torch.cond(x.shape[0] > 2, true_fn, false_fn, [x, y])
+
 
 example_args = (x, y)
 tags = {

@@ -15,6 +15,7 @@ from torch._C._profiler import gather_traceback, symbolize_tracebacks
 
 logger = logging.getLogger("LoggingTensor")
 
+
 # How the chain of calls works for LoggingTensor:
 # 1. Call torch.sin
 # 2. Attempt __torch_function__. In LoggingTensor torch function is disabled so we bypass it entirely
@@ -69,6 +70,7 @@ class LoggingTensor(torch.Tensor):
         logging.getLogger("LoggingTensor").info(f"{func.__module__}.{func.__name__}", args, kwargs, rs)  # noqa: G004
         return rs
 
+
 class LoggingTensorMode(TorchDispatchMode):
     def __torch_dispatch__(self, func, types, args=(), kwargs=None):
         if kwargs is None:
@@ -77,8 +79,10 @@ class LoggingTensorMode(TorchDispatchMode):
         logging.getLogger("LoggingTensor").info(f"{func.__module__}.{func.__name__}", args, kwargs, rs)  # noqa: G004
         return rs
 
+
 class LoggingTensorReentrant(LoggingTensor):
     context = torch.overrides.enable_reentrant_dispatch
+
 
 # https://stackoverflow.com/questions/36408496/python-logging-handler-to-append-to-list
 class LoggingTensorHandler(logging.Handler):
@@ -122,8 +126,10 @@ class LoggingTensorHandler(logging.Handler):
         if self.tracebacks_list is not None:
             self.tracebacks_list.append(record.traceback)
 
+
 def log_input(name: str, var: object) -> None:
     logger.info("input", (name,), {}, var)  # noqa: PLE1205
+
 
 class GatherTraceback(logging.Filter):
     def __init__(self, python=True, script=True, cpp=False):
@@ -134,6 +140,7 @@ class GatherTraceback(logging.Filter):
     def filter(self, record):
         record.traceback = gather_traceback(python=self.python, script=self.script, cpp=self.cpp)
         return True
+
 
 @contextlib.contextmanager
 def capture_logs(is_mode=False, python_tb=False, script_tb=False, cpp_tb=False) -> Iterator[list[str]]:
@@ -161,6 +168,7 @@ def capture_logs(is_mode=False, python_tb=False, script_tb=False, cpp_tb=False) 
         tracebacks_list.clear()
         tracebacks_list.extend(symbolized_tracebacks)
         logger.removeHandler(handler)
+
 
 @contextlib.contextmanager
 def capture_logs_with_logging_tensor_mode(python_tb=False, script_tb=False, cpp_tb=False):

@@ -6,6 +6,7 @@ from torch.export import Dim
 x = torch.randn(3, 2)
 dim1_x = Dim("dim1_x")
 
+
 class ScalarOutput(torch.nn.Module):
     """
     Returning scalar values from the graph is supported, in addition to Tensor
@@ -16,6 +17,7 @@ class ScalarOutput(torch.nn.Module):
 
     def forward(self, x):
         return x.shape[1] + 1
+
 
 example_args = (x,)
 tags = {"torch.dynamic-shape"}

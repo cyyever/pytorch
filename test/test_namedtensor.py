@@ -1397,7 +1397,6 @@ class TestNamedTensor(TestCase):
             (create('N:2,None:3'), (create('2,3') > 0).rename('N', 'C'), 3.14),
             maybe_raises_regex="not the same as the computed output names")
 
-
     def test_using_seen_interned_string_doesnt_bump_refcount(self):
         def see_name():
             seen_name = 'N'

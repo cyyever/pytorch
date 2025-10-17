@@ -66,7 +66,6 @@ if HAS_TABULATE:
             globals={"model": model, "sample_input": sample_input, "optimizer": optimizer, "loss_fn": loss_fn},
         )
 
-
         result = timer.timeit(number=num_iters)
 
         # Get the average time per iteration in milliseconds
@@ -114,9 +113,7 @@ if HAS_TABULATE:
         compilation_time = round(compilation_time, 2) if compilation_time else None
         running_time = round(running_time, 2) if running_time else None
 
-
         return compilation_time, running_time
-
 
     def bench_all(
         model : Union[torch.nn.Module, Callable],
@@ -143,7 +140,6 @@ if HAS_TABULATE:
         """
         field_names = ["Train/Inference", "Backend", "Mode", "Compilation Time", "Average Running Time"]
         table = []
-
 
         eager_time = None
         torch._dynamo.reset()
@@ -189,7 +185,6 @@ if HAS_TABULATE:
                         f"{compilation_time} ms " or "-",
                         f"{running_time} ms ",
                     ])
-
 
         # pyrefly: ignore  # not-callable
         return tabulate(table, headers=field_names, tablefmt="github")

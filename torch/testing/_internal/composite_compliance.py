@@ -25,6 +25,7 @@ def check_attr_consistency(wrapper_tensor, metadata_name, metadata_accessor):
         f"{metadata_name} of the tensor was modified directly without "
         f"going through the PyTorch dispatcher.")
 
+
 def check_metadata_consistency(wrapper_tensor, CCT):
     # CCT: CompositeCompliantTensor class which is generated using generate_cct
     if not isinstance(wrapper_tensor, CCT):
@@ -39,6 +40,7 @@ def check_metadata_consistency(wrapper_tensor, CCT):
     }
     for metadata_name, metadata_accessor in things_to_check.items():
         check_attr_consistency(wrapper_tensor, metadata_name, metadata_accessor)
+
 
 def is_view_fn(func):
     return func.overloadpacket.__name__ in {
@@ -77,6 +79,7 @@ def is_view_fn(func):
         '_conj',
         'alias',
     }
+
 
 # manually populated from native_functions that have inplace_view: True.
 # In the future we will probably be able to grab that list directly
@@ -257,6 +260,7 @@ def generate_cct_and_mode(autograd_view_consistency=True):
 
     return CompositeCompliantTensor, CompositeCompliantTensorMode()
 
+
 def is_tensorlist(lst):
     if not isinstance(lst, list) and not isinstance(lst, tuple):
         return False
@@ -377,6 +381,7 @@ def check_all_permutations(op, args, kwargs, assert_equal_fn):
 
         assert_equal_fn(tree_map(unwrap, actual), expected)
 
+
 # Checks via the usage of torch dispatch mode certain anti-patterns that
 # are not composite compliant.
 #
@@ -410,6 +415,7 @@ def check_with_mode(op, args, kwargs, assert_equal_fn):
         return e.elem if isinstance(e, CCT) else e
 
     assert_equal_fn(tree_map(unwrap, actual), expected)
+
 
 def gather_leaf_tensors(args, kwargs):
     leaf_tensors = []
@@ -504,6 +510,7 @@ def check_backward_formula(op: Callable, args, kwargs,
                 return e.elem if isinstance(e, CCT) else e
 
             assert_equal_fn(tuple(map(unwrap, actual)), expected, equal_nan=True)
+
 
 # Checks if the forward AD formula is composite compliant by testing
 # all possible permutations of {primals, tangents} being

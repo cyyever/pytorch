@@ -79,6 +79,7 @@ _INT_DTYPES = (
     torch.uint16,
 )
 
+
 class TestObserver(QuantizationTestCase):
     @given(qdtype=st.sampled_from(_INT_DTYPES),
            qscheme=st.sampled_from((torch.per_tensor_affine, torch.per_tensor_symmetric)),
@@ -172,7 +173,6 @@ class TestObserver(QuantizationTestCase):
                 self.assertEqual(myobs.max_val, loaded_obs.max_val)
                 self.assertEqual(myobs.calculate_qparams(), loaded_obs.calculate_qparams())
 
-
     @given(qdtype=st.sampled_from((torch.qint8, torch.quint8)),
            qscheme=st.sampled_from((torch.per_channel_affine, torch.per_channel_symmetric, torch.per_channel_affine_float_qparams)),
            ch_axis=st.sampled_from((0, 1, 2, 3)), reduce_range=st.booleans())
@@ -265,7 +265,6 @@ class TestObserver(QuantizationTestCase):
             else:
                 self.assertEqual(qparams[1], torch.tensor(ref_zero_points, dtype=qparams[1].dtype))
 
-
             # Test for serializability
             state_dict = myobs.state_dict()
             b = io.BytesIO()
@@ -280,7 +279,6 @@ class TestObserver(QuantizationTestCase):
             self.assertEqual(myobs.min_val, loaded_obs.min_val)
             self.assertEqual(myobs.max_val, loaded_obs.max_val)
             self.assertEqual(myobs.calculate_qparams(), loaded_obs.calculate_qparams())
-
 
     def test_observer_scriptable(self):
         obs_list = [MinMaxObserver(), MovingAverageMinMaxObserver()]
@@ -405,7 +403,6 @@ class TestObserver(QuantizationTestCase):
         self.assertEqual(obs2.min_val.shape, torch.Size([]))
         self.assertEqual(obs2.max_val.shape, torch.Size([]))
 
-
     def test_save_load_state_dict_script(self):
         """
         Tests that we can save and load state_dict for observers that are scripted
@@ -429,7 +426,6 @@ class TestObserver(QuantizationTestCase):
             torch.ao.quantization.load_observer_state_dict(scripted_2, obs_dict)
             # Verify that state_dict matches exactly with original one.
             self.assertEqual(scripted.state_dict(), scripted_2.state_dict())
-
 
     @unittest.skipIf(not TEST_MULTIGPU, "multi-GPU not supported")
     @unittest.skipIf(not TEST_CUDA, "CUDA unavailable")
@@ -497,6 +493,7 @@ class TestObserver(QuantizationTestCase):
             new_obs.load_state_dict(obs.state_dict())
             self.assertTrue(torch.equal(obs.min_val, new_obs.min_val))
             self.assertTrue(torch.equal(obs.max_val, new_obs.max_val))
+
 
 # HistogramObserver that works like it does on master
 class _ReferenceHistogramObserver(HistogramObserver):
@@ -636,6 +633,7 @@ class _ReferenceHistogramObserver(HistogramObserver):
         new_max = self.min_val + bin_width * (end_bin + 1)
         return new_min, new_max
 
+
 class TestRecordHistogramObserver(QuantizationTestCase):
     # TODO: move this to quantize.py
     def test_record_observer(self):
@@ -671,6 +669,7 @@ class TestRecordHistogramObserver(QuantizationTestCase):
         buf.seek(0)
         loaded = torch.jit.load(buf)
         self.assertTrue(torch.equal(obs.get_tensor_value()[0], loaded.get_tensor_value()[0]))
+
 
 class TestHistogramObserver(QuantizationTestCase):
     @given(qdtype=st.sampled_from((torch.qint8, torch.quint8)),
@@ -853,6 +852,7 @@ class TestHistogramObserver(QuantizationTestCase):
         self.assertEqual(myobs.max_val, 9.0)
         self.assertEqual(myobs.histogram, [1., 0., 1., 2., 1., 0., 0., 1., 1., 1.])
 
+
 class TestFakeQuantize(TestCase):
     @given(device=st.sampled_from(['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']),
            X=hu.per_channel_tensor(shapes=hu.array_shapes(2, 5,),
@@ -923,11 +923,13 @@ class TestFakeQuantize(TestCase):
         finally:
             torch.set_default_dtype(torch.float32)
 
+
 def _get_buffer_ids(module):
     """
     Object addresses stay constant if and only if all modifications are in-place
     """
     return [id(v) for k, v in module._buffers.items()]
+
 
 class TestFusedModuleScriptable(QuantizationTestCase):
     def test_fx_qat_convbn_fused_jit_scriptable(self):
@@ -1005,6 +1007,7 @@ class TestFusedModuleScriptable(QuantizationTestCase):
                 # Prepared eager module fails due to observer hooks not being scriptable
                 with self.assertRaises(RuntimeError):
                     torch.jit.script(fused_model)
+
 
 class TestDistributed(QuantizationTestCase):
 
@@ -1186,6 +1189,7 @@ class TestDistributed(QuantizationTestCase):
         # ensure that running an input on CUDA works without any needed changes
         input = torch.randn(4, 1, 4, 4, device=device)
         model(input)
+
 
 class TestFusedObsFakeQuantModule(TestCase):
     @given(
@@ -1401,7 +1405,6 @@ class TestFusedObsFakeQuantModule(TestCase):
             def forward(self, indices):
                 return torch.cat((self.emb1(indices), self.emb2(indices)))
 
-
         qconfigs = [torch.ao.quantization.default_embedding_qat_qconfig,
                     torch.ao.quantization.default_embedding_qat_qconfig_4bit]
         for qconfig in qconfigs:
@@ -1515,6 +1518,7 @@ class TestFusedObsFakeQuantModule(TestCase):
             self.assertEqual(ref_model.quant.activation_post_process.activation_post_process.quant_max, upper_bnd)
             self.assertEqual(type(ref_model.module.linear.weight_fake_quant.activation_post_process),
                              obs2match)
+
 
 if __name__ == '__main__':
     raise RuntimeError("This test file is not meant to be run directly, use:\n\n"

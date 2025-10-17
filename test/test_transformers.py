@@ -87,6 +87,7 @@ isLessThanSM80Device = torch.cuda.is_available() and torch.cuda.get_device_capab
 
 TEST_WITH_CK = TEST_WITH_ROCM and torch.backends.cuda.preferred_rocm_fa_library() == torch.backends.cuda._ROCmFABackends['ck']
 
+
 def _check_equal(
     golden: torch.Tensor,
     reference: torch.Tensor,
@@ -201,6 +202,7 @@ def query_key_value_clones(query: torch.Tensor, key: torch.Tensor, value: torch.
     value_ref = value.detach().clone().to(dtype).requires_grad_(value.requires_grad)
     return query_ref, key_ref, value_ref
 
+
 def get_platform_specific_sdpa():
     ret = []
     if PLATFORM_SUPPORTS_FLASH_ATTENTION:
@@ -214,11 +216,13 @@ def get_platform_specific_sdpa():
         ret.append(SDPBackend.EFFICIENT_ATTENTION)
     return ret
 
+
 PLATFORM_SPECIFIC_SDPA = get_platform_specific_sdpa()
 # Indicate the Efficient attention backend can support:
 # 1. sequence longher than 512
 # 2. head dimsion larger than 64
 MEM_EFF_CAPABILITY_MATCHES_SM80 = SM80OrLater or TEST_WITH_ROCM
+
 
 def rand_sdpa_tensor(shape: SdpaShape, device: str, dtype: torch.dtype, type: str,
                      requires_grad: bool = False, packed: bool = False) -> torch.Tensor:
@@ -955,8 +959,6 @@ class TestTransformers(NNTestCase):
 
         self.assertEqual(out.is_nested, True)
 
-
-
     def test_script_encoder_subclass(self, device):
         class MyCustomLayer(nn.TransformerEncoderLayer):
             pass
@@ -1002,7 +1004,6 @@ class TestTransformers(NNTestCase):
             scripted_result = script_model(src, src_mask=src_mask)
             self.assertEqual(result, scripted_result)
 
-
     def test_transformerencoderlayer_subclass_model(self, device):
         class MyCustomLayer(nn.TransformerEncoderLayer):
             pass
@@ -1039,7 +1040,6 @@ class TestTransformers(NNTestCase):
             result = model(src, mask=src_mask)
             scripted_result = script_model(src, mask=src_mask)
             self.assertEqual(result, scripted_result)
-
 
     @onlyCUDA
     @unittest.skipIf(not TEST_FAIRSEQ, "Fairseq not found")
@@ -2071,6 +2071,7 @@ class TestSDPA(NNTestCase):
         y = torch.nn.functional.scaled_dot_product_attention(x, x, x)
         self.assertFalse(y.isnan().any().item())
 
+
 class TestSDPACpuOnly(NNTestCase):
     """ Used to test CPU only functionality of scaled_dot_product_attention """
 
@@ -2437,6 +2438,7 @@ class TestSDPACpuOnly(NNTestCase):
             sdp_math = torch.nn.functional.scaled_dot_product_attention(x, x, x, scale=-1.0 / 0.0001)
         self.assertEqual(ref_result, sdp_math)
 
+
 class TestSDPACudaOnly(NNTestCase):
     """ Used to test CUDA only functionality of scaled_dot_product_attention
     Quarks:
@@ -2704,7 +2706,6 @@ class TestSDPACudaOnly(NNTestCase):
                 attn_mask=None, dropout_p=0.0, is_causal=False)
 
         self.assertEqual(actual.contiguous(), math_ref.contiguous().to(dtype), atol=1e-3, rtol=1e-2)
-
 
     @unittest.skipIf(not PLATFORM_SUPPORTS_CUDNN_ATTENTION, "cuDNN Attention is not supported on this system")
     @unittest.skipIf(True, "broken as of cuDNN 9.10")
@@ -4170,6 +4171,7 @@ class TestSDPACudaOnly(NNTestCase):
             }
         )
 
+
 class TestSDPAXpuOnly(NNTestCase):
     """ Used to test XPU only functionality of scaled_dot_product_attention
     Mostly migrate from TestSDPACudaOnly in test/test_transformers.py
@@ -4624,6 +4626,7 @@ class TestAttnBias(NNTestCase):
 
         with self.assertRaisesRegex(ValueError, "CausalBias should not be used with causal=True"):
             scaled_dot_product_attention(query, key, value, attn_mask=attn_bias, is_causal=True, dropout_p=0.0)
+
 
 if NOTEST_CPU:
     device_types = ("cuda", "mps")

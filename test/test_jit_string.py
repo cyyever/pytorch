@@ -328,5 +328,6 @@ class TestScript(JitTestCase):
 
         self.checkScript(test_slice, ("hellotest",))
 
+
 if __name__ == '__main__':
     run_tests()

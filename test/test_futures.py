@@ -337,5 +337,6 @@ class TestFuture(TestCase):
         with self.assertRaisesRegex(RuntimeError, "Future can't be None"):
             torch.futures.collect_all((fut1, None,))  # type: ignore[arg-type]
 
+
 if __name__ == '__main__':
     run_tests()

@@ -76,12 +76,15 @@ atol_rtol_kw = {
     },
 }
 
+
 def sparse24_largest_mask_2d(original):
     sparse = SparseSemiStructuredTensorCUTLASS.prune_dense_static_sort(original)
     return sparse.to_dense().bool()
 
+
 def sparsify24_dense(original):
     return sparse24_largest_mask_2d(original) * original
+
 
 def rand_sparse_semi_structured_mask(
     r, c, dtype=torch.float16, device="cuda", choice=None
@@ -99,6 +102,7 @@ def rand_sparse_semi_structured_mask(
         .reshape(r, c)
         .contiguous()
     )
+
 
 def rand_sparse_semi_structured(r, c, dtype, device, choice=None):
     pattern = '2by4' if dtype != torch.float32 else '1by2'
@@ -232,7 +236,6 @@ class SparseSemiStructuredTensorCompileTest(torch._dynamo.test_case.TestCase):
         for dense_input_shape in [(1, 128), (64, 128), (128, 128), (64, 128, 128)]:
             SparseSemiStructuredTensorCompileTest._test_mlp_contiguous_relu_compile("cusparselt", dense_input_shape)
 
-
     @unittest.skipIf("cutlass" not in SEMI_STRUCTURED_SUPPORTED_BACKENDS, "cutlass not supported on this machine")
     @unittest.skipIf(IS_WINDOWS, "torch.compile not supported on windows")
     @unittest.skipIf(TEST_WITH_ROCM, "Not supported on ROCm")
@@ -242,7 +245,6 @@ class SparseSemiStructuredTensorCompileTest(torch._dynamo.test_case.TestCase):
         """
         for dense_input_shape in [(1, 128), (64, 128), (128, 128), (64, 128, 128)]:
             SparseSemiStructuredTensorCompileTest._test_mlp_contiguous_relu_compile("cutlass", dense_input_shape)
-
 
     @unittest.skipIf(IS_WINDOWS, "torch.compile not supported on windows")
     @unittest.skipIf("cusparselt" not in SEMI_STRUCTURED_SUPPORTED_BACKENDS, "cusparselt not supported on this machine")
@@ -265,6 +267,7 @@ class SparseSemiStructuredTensorCompileTest(torch._dynamo.test_case.TestCase):
         # Torch compile
         output = torch.compile(fn)(x)
         output.backward(output)
+
 
 class TestSparseSemiStructured(TestCase):
 
@@ -568,6 +571,7 @@ def create_random_mask(shape) -> torch.Tensor:
             mask[line, col : col + 4] = torch.tensor(sparsity, dtype=torch.bool)
     return mask
 
+
 class TestSparseSemiStructuredTraining(TestCase):
 
     def setUp(self):
@@ -576,7 +580,6 @@ class TestSparseSemiStructuredTraining(TestCase):
 
         if IS_WINDOWS:
             self.skipTest('CUTLASS not supported on windows')
-
 
     @training_dtypes
     @unittest.skipIf(TEST_WITH_ROCM, "Not supported on ROCm")
@@ -624,8 +627,6 @@ class TestSparseSemiStructuredTraining(TestCase):
                                                           compressed_swizzled_bitmask)
         torch.testing.assert_close(reference_cusparselt.to_dense(), cusparselt.to_dense())
 
-
-
     @training_dtypes
     @parametrize_backends
     @unittest.skipIf(TEST_WITH_ROCM, "Not supported on ROCm")
@@ -665,7 +666,6 @@ class TestSparseSemiStructuredTraining(TestCase):
         ref_out = masked_a @ b
         sp24_out = a_sparse @ b
         torch.testing.assert_close(ref_out, sp24_out, **atol_rtol_kw[dtype])
-
 
     @training_dtypes
     @parametrize_backends
@@ -837,7 +837,6 @@ class TestSparseSemiStructuredTraining(TestCase):
         torch.testing.assert_close(dense, expected)
         torch.testing.assert_close(sparse.to_dense(), expected)
 
-
     @training_dtypes
     @unittest.skipIf(TEST_WITH_ROCM, "Not supported on ROCm")
     @unittest.skipIf(
@@ -905,6 +904,7 @@ class TestSparseSemiStructuredTraining(TestCase):
 
         with pytest.raises(NotImplementedError):
             torch.testing.assert_close(a_s @ b, (a * a_m) @ b, **atol_rtol_kw[a.dtype])
+
 
 class TestSparseSemiStructuredCUTLASS(TestCase):
     """
@@ -977,7 +977,6 @@ class TestSparseSemiStructuredCUTLASS(TestCase):
         if dtype == torch.float32:
             torch.backends.cuda.matmul.allow_tf32 = orig
 
-
     @unittest.skipIf(TEST_WITH_ROCM or IS_WINDOWS, "ROCm and Windows doesn't support CUTLASS")
     @parametrize("backend", ["cutlass"])
     @inference_dtypes
@@ -1044,7 +1043,6 @@ class TestSparseSemiStructuredCUTLASS(TestCase):
         if dtype == torch.float32:
             torch.backends.cuda.matmul.allow_tf32 = orig
 
-
     @unittest.skipIf(not HAS_GPU, "Inductor+gpu needs triton and recent GPU arch")
     @inference_dtypes
     @unittest.skipIf(TEST_WITH_ROCM, "Not supported on ROCm")
@@ -1090,6 +1088,7 @@ class TestSparseSemiStructuredCUTLASS(TestCase):
 
 CUSPARSELT_MIXED_DTYPE_SUPPORT = [torch.float16, torch.bfloat16, torch.int32]
 
+
 def to_float8(x, dtype=torch.float8_e4m3fn):
     finfo = torch.finfo(dtype)
     # Calculate the scale as dtype max divided by absmax
@@ -1101,6 +1100,7 @@ def to_float8(x, dtype=torch.float8_e4m3fn):
     # Return both float8 data and the inverse scale (as float),
     # as both required as inputs to torch._scaled_mm
     return x_scl_sat.to(dtype), scale.float().reciprocal()
+
 
 class TestSparseSemiStructuredCUSPARSELT(TestCase):
     """
@@ -1289,6 +1289,7 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
             assert torch.backends.cusparselt.version() >= 602
         else:
             assert torch.backends.cusparselt.version() is None
+
 
 if len(SEMI_STRUCTURED_SUPPORTED_BACKENDS) > 0:
     instantiate_device_type_tests(TestSparseSemiStructured, globals(), only_for="cuda")

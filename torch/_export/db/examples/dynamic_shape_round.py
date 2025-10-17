@@ -4,6 +4,7 @@ import torch
 from torch._export.db.case import SupportLevel
 from torch.export import Dim
 
+
 class DynamicShapeRound(torch.nn.Module):
     """
     Calling round on dynamic shapes is not supported.
@@ -11,6 +12,7 @@ class DynamicShapeRound(torch.nn.Module):
 
     def forward(self, x):
         return x[: round(x.shape[0] / 2)]
+
 
 x = torch.randn(3, 2)
 dim0_x = Dim("dim0_x")

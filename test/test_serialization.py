@@ -122,16 +122,20 @@ class FilelikeMock:
     def was_called(self, name):
         return name in self.calls
 
+
 class ClassAMock:
     class Nested:
         pass
+
 
 class ClassBMock:
     class Nested:
         pass
 
+
 def up_size(size):
     return (*size[:-1], size[-1] * 2)
+
 
 class UInt4Tensor(torch.Tensor):
     @staticmethod
@@ -802,7 +806,6 @@ class SerializationMixin:
             # Tries to serialize ndarray into ndarray
             torch.save(x, x)
 
-
     def test_serialization_storage_slice(self):
         # Generated using:
         #
@@ -970,7 +973,9 @@ class serialization_method:
     def __exit__(self, *args, **kwargs):
         torch.save = self.torch_save
 
+
 Point = namedtuple('Point', ['x', 'y'])
+
 
 class ClassThatUsesBuildInstruction:
     def __init__(self, num):
@@ -980,17 +985,20 @@ class ClassThatUsesBuildInstruction:
         # Third item, state here will cause pickle to push a BUILD instruction
         return ClassThatUsesBuildInstruction, (self.num,), {'foo': 'bar'}
 
+
 @dataclass
 class ClassThatUsesBuildInstructionAllSlots:
     __slots__ = ["x", "y"]
     x: int
     y: int
 
+
 @dataclass
 class ClassThatUsesBuildInstructionSomeSlots(ClassThatUsesBuildInstructionAllSlots):
     x: int
     y: int
     c: str
+
 
 class TestBothSerialization(TestCase):
     @parametrize("weights_only", (True, False))
@@ -1387,7 +1395,6 @@ class TestSerialization(TestCase, SerializationMixin):
             with torch.serialization.safe_globals([datetime.datetime, getattr, zoneinfo.ZoneInfo]):
                 with self.assertRaisesRegex(UnpicklingError, ".*_unpickle.*zoneinfo.ZoneInfo.*"):
                     torch.load(f)
-
 
     def test_weights_only_with_zoneinfo_unpickle_registration_success(self):
         import datetime
@@ -4751,7 +4758,6 @@ class TestSerialization(TestCase, SerializationMixin):
             finally:
                 serialization_config.save.storage_alignment = storage_alignment_before
 
-
     @parametrize('path_type', (str, Path))
     @unittest.skipIf(IS_WINDOWS, "TemporaryFileName on windows")
     def test_mmap_load_offset_calculation(self, path_type):
@@ -4805,6 +4811,7 @@ class TestSerialization(TestCase, SerializationMixin):
     def run(self, *args, **kwargs):
         with serialization_method(use_zip=True):
             return super().run(*args, **kwargs)
+
 
 class TestWrapperSubclass(torch.Tensor):
     elem: torch.Tensor

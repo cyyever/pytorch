@@ -45,6 +45,7 @@ from torch.testing._internal.common_utils import (
 
 log: logging.Logger = logging.getLogger(__name__)
 
+
 def test_cpu():
     try:
         CppCodeCache.load("")
@@ -56,6 +57,7 @@ def test_cpu():
         torch._inductor.exc.CppCompileError,
     ):
         return False
+
 
 HAS_CPU = LazyVal(test_cpu)
 
@@ -96,6 +98,7 @@ RUN_CPU = (
     and any(getattr(x, "device_type", "") == "cpu" for x in _desired_test_bases)
 )
 
+
 def _check_has_dynamic_shape(
     self: TestCase,
     code,
@@ -135,6 +138,7 @@ def skipDeviceIf(cond, msg, *, device):
 
     return decorate_fn
 
+
 def skip_windows_ci(name: str, file: str) -> None:
     if IS_WINDOWS and IS_CI:
         module = os.path.basename(file).strip(".py")
@@ -145,10 +149,12 @@ def skip_windows_ci(name: str, file: str) -> None:
             sys.exit(0)
         raise unittest.SkipTest("requires sympy/functorch/filelock")
 
+
 # TODO: Remove HAS_MPS condition  when `HAS_GPU` includes HAS_MPS
 requires_gpu = functools.partial(unittest.skipIf, not (HAS_GPU or HAS_MPS), "requires gpu")
 requires_triton = functools.partial(unittest.skipIf, not HAS_TRITON, "requires triton")
 requires_helion = functools.partial(unittest.skipIf, not HAS_HELION, "requires helion")
+
 
 def requires_cuda_with_enough_memory(min_mem_required):
     def inner(fn):
@@ -158,6 +164,7 @@ def requires_cuda_with_enough_memory(min_mem_required):
             return fn
 
     return inner
+
 
 skipCUDAIf = functools.partial(skipDeviceIf, device="cuda")
 skipXPUIf = functools.partial(skipDeviceIf, device="xpu")
@@ -175,6 +182,7 @@ IS_H100 = LazyVal(
 
 IS_BIG_GPU = LazyVal(lambda: HAS_CUDA_AND_TRITON and is_big_gpu())
 
+
 def dummy_graph() -> GraphLowering:
     """
     Create a graph. This is useful for unit testing code which accesses
@@ -189,6 +197,7 @@ def dummy_graph() -> GraphLowering:
     )
 
     return graph
+
 
 def maybe_skip_size_asserts(op):
     """
@@ -226,11 +235,14 @@ def maybe_skip_size_asserts(op):
     else:
         return contextlib.nullcontext()
 
+
 def get_func_call() -> str:
     return "void inductor_entry_impl(" if torch._inductor.config.cpp_wrapper else "def call("
 
+
 def get_kernel_launch() -> str:
     return "call_triton_" if torch._inductor.config.cpp_wrapper else ".run("
+
 
 def clone_preserve_strides_offset(x, device=None):
     if not isinstance(x, torch.Tensor):
@@ -245,6 +257,7 @@ def clone_preserve_strides_offset(x, device=None):
     out = torch.as_strided(buffer, x.size(), x.stride(), x.storage_offset())
     return out
 
+
 # define the e4m3/e5m2 constants
 E4M3_MAX_POS = torch.finfo(torch.float8_e4m3fn).max
 E5M2_MAX_POS = torch.finfo(torch.float8_e5m2).max
@@ -255,6 +268,7 @@ FP16_MAX_POS: float = torch.finfo(torch.float16).max
 EPS: float = 1e-12
 
 Tensor = torch.Tensor
+
 
 def _to_fp8_saturated(x: Tensor, float8_dtype: torch.dtype) -> Tensor:
     # The default behavior in PyTorch for casting to `float8_e4m3fn`
@@ -275,6 +289,7 @@ def _to_fp8_saturated(x: Tensor, float8_dtype: torch.dtype) -> Tensor:
         raise TypeError(f"Unsupported float8_dtype: {float8_dtype}")
     return x.to(float8_dtype)
 
+
 @torch.no_grad()
 def _amax_to_scale(
     amax: torch.Tensor, float8_dtype: torch.dtype, orig_dtype: torch.dtype
@@ -293,6 +308,7 @@ def _amax_to_scale(
         res = torch.clamp(res, max=FP16_MAX_POS)
     return res
 
+
 def _quantize_tensorwise(x: Tensor, float8_dtype: torch.dtype):
     amax = torch.max(torch.abs(x))
     scale = _amax_to_scale(amax, float8_dtype, x.dtype)
@@ -300,12 +316,14 @@ def _quantize_tensorwise(x: Tensor, float8_dtype: torch.dtype):
     inverse_scale = scale.reciprocal()
     return x_fp8, inverse_scale
 
+
 def _quantize_rowwise(x: Tensor, float8_dtype: torch.dtype):
     amax = torch.max(torch.abs(x), dim=1, keepdim=True).values
     scale = _amax_to_scale(amax, float8_dtype, x.dtype)
     x_fp8 = _to_fp8_saturated(x * scale, float8_dtype)
     inverse_scale = scale.reciprocal()
     return x_fp8, inverse_scale
+
 
 class MockGraphHandler(GraphLowering):
     """Minimal mock graph handler for testing virtualized context."""
@@ -324,6 +342,7 @@ class MockGraphHandler(GraphLowering):
     def get_dtype(self, buffer_name: str) -> torch.dtype:  # noqa: ARG002
         """Return default dtype for any buffer (for testing)."""
         return torch.float32
+
 
 @contextlib.contextmanager
 def patch_inductor_backend(

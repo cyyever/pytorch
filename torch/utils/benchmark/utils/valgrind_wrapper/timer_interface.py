@@ -915,6 +915,8 @@ class _ValgrindWrapper:
 
 
 CALLGRIND_SINGLETON: Optional[_ValgrindWrapper] = None
+
+
 def wrapper_singleton() -> _ValgrindWrapper:
     global CALLGRIND_SINGLETON
     if CALLGRIND_SINGLETON is None:

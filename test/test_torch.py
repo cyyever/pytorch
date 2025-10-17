@@ -83,6 +83,7 @@ load_tests = load_tests  # noqa: PLW0127
 
 AMPERE_OR_ROCM = TEST_WITH_ROCM or torch.cuda.is_tf32_supported()
 
+
 @contextlib.contextmanager
 def torch_vital_set(value):
     stash = None
@@ -96,6 +97,7 @@ def torch_vital_set(value):
             os.environ['TORCH_VITAL'] = stash
         else:
             del os.environ['TORCH_VITAL']
+
 
 # Tests Vital Signs for Torch
 # FIXME: document or deprecate whatever this is
@@ -122,6 +124,7 @@ class TestBasicVitalSigns(TestCase):
             torch.utils.data.DataLoader(dataset, batch_size=2)
             self.assertIn('Dataloader.enabled\t\t True', torch.read_vitals())
 
+
 # FIXME: document or deprecate whatever this is
 class TestVitalSignsCuda(TestCase):
     @onlyCUDA
@@ -131,6 +134,7 @@ class TestVitalSignsCuda(TestCase):
 
 
 is_cuda_sm86 = torch.cuda.is_available() and torch.cuda.get_device_capability(0) == (8, 6)
+
 
 class TestTorchDeviceType(TestCase):
     exact_dtype = True
@@ -1692,7 +1696,6 @@ class TestTorchDeviceType(TestCase):
         input = torch.randn(2, 3, 5, 5, device=device)
         target = torch.rand(2, 5, 5, device=device).mul(3).floor().long()
 
-
         self.check_nondeterministic_alert(
             lambda: module(input, target),
             'nll_loss2d_forward_out_cuda_template',
@@ -2117,7 +2120,6 @@ class TestTorchDeviceType(TestCase):
             _no_sync_helper(f, level)
         for f, level in product(expect_sync, (1, 2)):
             _sync_raises_helper(f, level)
-
 
     @dtypes(*floating_types_and(torch.half, torch.bfloat16))
     @skipIfMPS
@@ -3454,7 +3456,6 @@ class TestTorchDeviceType(TestCase):
                 # in-place
                 dst.put_(idx, src, accumulate)
                 self.assertEqual(dst, reference)
-
 
         # Create the 8 possible combinations of scalar sizes for target / index / source
         scalars = ((make_arg(size_t),
@@ -5222,7 +5223,6 @@ class TestTorchDeviceType(TestCase):
 
         clone = transformation_fn(xc, memory_format=torch.preserve_format)
 
-
         self.assertFalse(clone.is_contiguous())
         self.assertTrue(clone.is_contiguous(memory_format=memory_format))
         if not TEST_WITH_TORCHINDUCTOR:
@@ -5341,7 +5341,6 @@ class TestTorchDeviceType(TestCase):
                 return torch.randn(shape, device=device, dtype=dtype).clamp(0, 1) \
                     .round().contiguous(memory_format=memory_format)
             return input_generator_fn
-
 
         def get_fn(fn_name):
             def transformation_fn(tensor, **kwargs):
@@ -6096,7 +6095,6 @@ class TestTorchDeviceType(TestCase):
                         check_equal(torch.tensor(True), x, y)
                         check_equal(torch.tensor(True), y, x)
 
-
     @skipIfTorchInductor("FIXME")
     def test_hook_remove(self, device):
         # Reference: https://github.com/pytorch/pytorch/issues/58354
@@ -6464,6 +6462,7 @@ class TestDevicePrecision(TestCase):
         y = torch._efficientzerotensor(3, device=device)
         self.assertEqual(x.device, y.device)
 
+
 # we implemented custom deallocation for subclasses, so it behooves
 # us to make sure all of these bits work.  We'll use __del__ to
 # track if objects die or not
@@ -6479,6 +6478,7 @@ class Tracker:
     def __del__(self):
         self.marker[0] = True
 
+
 @contextlib.contextmanager
 def disable_gc():
     if gc.isenabled():
@@ -6489,6 +6489,7 @@ def disable_gc():
             gc.enable()
     else:
         yield
+
 
 class TestTorch(TestCase):
     exact_dtype = True
@@ -8101,7 +8102,6 @@ tensor([ 0.0000e+00, 9.8813e-324, 9.8813e-323, 1.0000e+307, 1.0000e+308,
             self.assertExpectedInline(str(y), '''tensor([123], device='cpu')''')
         torch.set_default_tensor_type(default_type)
 
-
         # test integral floats and requires_grad
         x = torch.tensor([123.], requires_grad=True)
         self.assertEqual(x.__repr__(), str(x))
@@ -8620,7 +8620,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
                     dim_order_target, t.dim_order(ambiguity_check=[torch.contiguous_format, torch.channels_last])
                 )
 
-
         ambiguous_shapes = [[2, 1, 2, 2], [2, 2, 1, 1], [1, 2, 1, 1], [2, 1, 1, 2], [2, 1, 2, 1],
                             [1, 1, 1, 2], [1, 1, 2, 2], [1, 1, 1, 1], [2, 1, 1, 1], [1, 1, 2, 1]]
 
@@ -8745,7 +8744,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
                   [0.999994993209838867187500000, 0.099999502301216125488281250]],
                  [[0.999994993209838867187500000, 0.499997496604919433593750000],
                   [1.499992489814758300781250000, -1.499992489814758300781250000]]]])]
-
 
         for i in range(len(inputs)):
             for affine in [False, True]:
@@ -10248,7 +10246,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
         # was cleared. But is the object really gone?
         self.assertFalse(any(isinstance(o, SlotTensor1) for o in gc.get_objects()))
 
-
     def test_storage_cycle_via_slots(self):
         m1 = [False]
         m2 = [False]
@@ -10609,7 +10606,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
             with self.assertRaisesRegex(RuntimeError, "has weakref"):
                 torch.utils.swap_tensors(t1, t2)
 
-
     @unittest.skipIf(TEST_WITH_TORCHDYNAMO, "Dynamo adds weakrefs")
     def test_swap_fail_slots(self):
         class MyTwoTensor(TwoTensor):
@@ -10623,7 +10619,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
 
         class MyTwoTensor4(TwoTensor):
             __slots__ = ("a", "c")
-
 
         t1 = torch.rand(4)
         t2 = TwoTensor(torch.rand(4), torch.rand(4))
@@ -10693,6 +10688,7 @@ INPLACE_METHOD = 2
 FUNCTIONAL = 4
 DIM_ARG: None = None
 
+
 def make_neg_dim_test(name, tensor_arg, arg_constr, types, extra_dim=0):
     def neg_dim_test(self):
         if isinstance(tensor_arg, list):
@@ -10735,8 +10731,10 @@ def make_neg_dim_test(name, tensor_arg, arg_constr, types, extra_dim=0):
 
     return neg_dim_test
 
+
 def idx_tensor(size, max_val):
     return torch.LongTensor(*size).random_(0, max_val - 1)
+
 
 def add_neg_dim_tests():
     neg_dim_tests = [
@@ -10791,13 +10789,16 @@ def add_neg_dim_tests():
         assert not hasattr(TestTorch, test_name), "Duplicated test name: " + test_name
         setattr(TestTorch, test_name, make_neg_dim_test(name, tensor_arg, arg_constr, types, extra_dim))
 
+
 # TODO: these empty classes are temporarily instantiated for XLA compatibility
 #   once XLA updates their test suite it should be removed
 class TestViewOps(TestCase):
     pass
 
+
 class TestTensorDeviceOps(TestCase):
     pass
+
 
 # Generates tests
 # Note: test generation must be done at file scope, not within main, or

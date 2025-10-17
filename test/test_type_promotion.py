@@ -24,6 +24,7 @@ import operator
 # sharding on sandcastle. This line silences flake warnings
 load_tests = load_tests  # noqa: PLW0127
 
+
 # Not thread-safe decorator that runs the decorated test once with
 # the default dtype being torch.float and again with the default dtype
 # being torch.double.
@@ -36,6 +37,7 @@ def float_double_default_dtype(fn):
             fn(*args, **kwargs)
 
     return wrapped_fn
+
 
 class TestTypePromotion(TestCase):
 
@@ -708,7 +710,6 @@ class TestTypePromotion(TestCase):
         expected = torch.tensor([(1, 0), (1, 0), (1, 0), (1, 0), (1, 0)], dtype=torch.double, device=device)
         self.assertEqual(x, expected)
 
-
         # https://github.com/pytorch/pytorch/issues/27824
         tmp = torch.ones(9, 9, dtype=torch.float, device=device)
         mask = torch.ones(10, 10, dtype=torch.uint8, device=device)
@@ -1007,7 +1008,6 @@ class TestTypePromotion(TestCase):
                     )
                     self.fail(msg)
 
-
     @onlyNativeDeviceTypes
     def test_cat_different_dtypes(self, device):
         dtypes = all_types_and_complex_and(torch.half, torch.bool)
@@ -1181,8 +1181,6 @@ class TestTypePromotion(TestCase):
                 op(x, x, x, out=y)
                 op(x, x, x, out=y_promo)
                 self.assertEqual(y, y_promo.to(dtype=dtype))
-
-
 
 
 instantiate_device_type_tests(TestTypePromotion, globals())

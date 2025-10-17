@@ -36,6 +36,7 @@ gradgradcheck = functools.partial(gradgradcheck, check_batched_grad=False)
 
 types = [torch.float, torch.bfloat16, torch.half]
 
+
 # Comment the line below to find out the CI machines having MKL-DNN build disabled
 @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKL-DNN build is disabled")
 class TestMkldnn(TestCase):
@@ -442,7 +443,6 @@ class TestMkldnn(TestCase):
             self._test_conv_deconv_nhwc_base(torch.nn.Conv3d, torch.contiguous_format, dtype=dtype, prec=prec)
             self._test_conv_deconv_nhwc_base(torch.nn.Conv3d, torch.channels_last_3d, dtype=dtype, prec=prec)
 
-
     @reduced_f32_on_and_off()
     def test_conv_transpose_nhwc_fp32(self):
         self._test_conv_deconv_nhwc_base(torch.nn.ConvTranspose2d, torch.contiguous_format, dtype=torch.float32)
@@ -763,7 +763,6 @@ class TestMkldnn(TestCase):
         for D, H, W in [(64, 64, 64), (35, 39, 35), (16, 19, 20), [7, 8, 9]]:
             x = torch.randn(N, C, D, H, W, dtype=torch.float32) * 10
             self._test_max_pool_base(dim=3, input=x)
-
 
     @unittest.skipIf(IS_WINDOWS, "Limit support for bf16 path")
     def _test_max_pool_bf16_base(self, dim, input):
@@ -1673,7 +1672,6 @@ class TestMkldnn(TestCase):
             if out_dtype is not None:
                 self.assertEqual(out_dtype, out.dtype)
             self.assertEqual(out_emulated.float(), out.float(), atol=5e-2, rtol=5e-2)
-
 
     @recover_orig_fp32_precision
     def test_mlkdnn_get_set(self):

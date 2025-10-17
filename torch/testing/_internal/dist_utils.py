@@ -18,6 +18,7 @@ if not dist.is_available():
 
 INIT_METHOD_TEMPLATE = FILE_SCHEMA + "{file_name}"
 
+
 def dist_init(
     old_test_method=None,
     setup_rpc: bool = True,

@@ -233,5 +233,6 @@ def forward(self, x_1, w_1):
         with self.assertRaisesRegex(ValueError, "out_dtype's can only apply to ops that return a single tensor"):
             singleton_list_out(*inp)
 
+
 if __name__ == '__main__':
     run_tests()

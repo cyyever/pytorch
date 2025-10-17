@@ -86,12 +86,14 @@ MPS_DTYPES = [t for t in get_all_dtypes() if t not in MPS_UNSUPPORTED_TYPES]
 # Determine whether to enable MPS memory leak check (uses same code as CUDA).
 TEST_MPS_MEM_LEAK_CHECK = os.getenv('PYTORCH_TEST_MPS_MEM_LEAK_CHECK', '0') == '1'
 
+
 def skipMPSMemoryLeakCheckIf(condition):
     def dec(fn):
         if getattr(fn, '_do_mps_memory_leak_check', True):
             fn._do_mps_memory_leak_check = not condition
         return fn
     return dec
+
 
 class MpsMemoryLeakCheck:
     def __init__(self, testcase, name=None):
@@ -164,6 +166,7 @@ class MpsMemoryLeakCheck:
                    f"MPS driver allocated memory was {self.driver_before} and is now {driver_mem_allocated}.")
 
             raise RuntimeError(msg)
+
 
 class TestAutocastMPS(TestCase):
 
@@ -346,6 +349,7 @@ class TestAutocastMPS(TestCase):
         self.assertEqual(updated_linear1_weight_cpu, updated_linear1_weight_mps, atol=6e-4, rtol=1e-6)
         self.assertEqual(updated_linear2_weight_cpu, updated_linear2_weight_mps, atol=6e-4, rtol=1e-6)
 
+
 # Expand TestCase class with Memory Leak Detection on MPS device
 class TestCaseMPS(TestCase):
     _do_mps_memory_leak_check = True
@@ -370,6 +374,7 @@ class TestCaseMPS(TestCase):
     # checks for leaks even if TEST_MPS_MEM_LEAK_CHECK is 0
     def wrap_with_mps_memory_check(self, method):
         return super().wrap_method_with_policy(method, self.assertLeaksNoMpsTensors)
+
 
 class TestMemoryLeak(TestCaseMPS):
     def test_mps_memory_leak_detection(self):
@@ -542,6 +547,7 @@ class TestPixelShuffle(TestCaseMPS):
         test_pixel_shuffle_unshuffle_4D()
         test_pixel_shuffle_unshuffle_5D()
 
+
 class MPSReluTest(TestCaseMPS):
     def _npRelu(self, np_features):
         return np.maximum(np_features, np.zeros(np_features.shape)).astype(np_features.dtype)
@@ -596,6 +602,7 @@ class MPSReluTest(TestCaseMPS):
             self._testRelu(np.array([]).astype(t), device="mps")
             self._testReluInPlace(np.array([]).astype(t), device="mps")
 
+
 class MatmulTest(TestCaseMPS):
     def _helper(self, shape_tensor_1, shape_tensor_2, expand_tensor_1_shape=None, expand_tensor_2_shape=None):
         if expand_tensor_1_shape:
@@ -645,6 +652,7 @@ class MatmulTest(TestCaseMPS):
         matmul_cpu = torch.matmul(tensor1_cpu, tensor2_cpu)
 
         self.assertEqual(matmul_cpu, matmul_mps.to("cpu"))
+
 
 class MPSLeakyReluTest(TestCaseMPS):
     def _npLeakyRelu(self, np_features, negative_slope=0.1):
@@ -697,6 +705,7 @@ class MPSLeakyReluTest(TestCaseMPS):
                                         dtype=t,
                                         negative_slope=0.2,
                                         contiguous=contiguous)
+
 
 class TestAvgPool(TestCaseMPS):
     def _sum_pool2d(self, x, kernel_size):
@@ -994,7 +1003,6 @@ class TestMPS(TestCaseMPS):
             # Check that the backward pass does not contain invalid
             # values such as nan or inf
             assert torch.isfinite(x.grad).all()
-
 
     def _brute_cdist(self, x, y, p=2):
         r1 = x.shape[-2]
@@ -3377,7 +3385,6 @@ class TestMPS(TestCaseMPS):
         for x_cpu in [cpu_byte, cpu_char]:
             x_mps = x_cpu.to('mps')
             self.assertEqual(x_mps.to(torch.float32), x_cpu.to(torch.float32))
-
 
     def test_setitem_scalar(self) -> None:
         device = 'mps'
@@ -6764,7 +6771,6 @@ class TestMPS(TestCaseMPS):
         mps_transpose3 = torch.transpose(mps_x, 1, 2).to('cpu')
         self.assertEqual(cpu_transpose3, mps_transpose3)
 
-
     def test_transpose_4D(self):
         values = [[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], [[7.0, 8.0, 9.0], [10.0, 11.0, 12.0]]],
                   [[[13.0, 14.0, 15.0], [16.0, 17.0, 18.0]], [[19.0, 20.0, 21.0], [22.0, 23.0, 24.0]]]]
@@ -7585,7 +7591,6 @@ class TestMPS(TestCaseMPS):
         with self.assertRaises(TypeError):
             helper((10, 10), 10, 11, dtype=torch.int32)
 
-
     def test_bernoulli(self):
         shape = (10, 10)
         all_ones = torch.ones(shape, device='mps')
@@ -7645,7 +7650,6 @@ class TestMPS(TestCaseMPS):
                 self.assertEqual(input.grad, output_grad * mask * grad_scale)
             else:
                 self.assertEqual(input.grad, output_grad)
-
 
     def test_mps_generator(self):
         # explicit manual seeding by creating an MPS Generator
@@ -7911,7 +7915,6 @@ class TestMPS(TestCaseMPS):
                 # secondary tensor is scalar
                 self.assertEqual(op(cpu_x, cpu_s), op(mps_x, mps_s), rtol=tol, atol=tol)
 
-
         for op_name, inplace in product(["add", "sub"], [True, False]):
             helper((), 0.0, op_name, inplace)
             helper((2, 8, 4, 5), 0.0, op_name, inplace)
@@ -8002,7 +8005,6 @@ class TestMPS(TestCaseMPS):
         helper((2, 8, 3, 5), torch.cos)
         helper((2, 8, 3, 5), torch.erfinv)
 
-
     def test_non_dense_in_storage_unary_ops(self):
         def helper(op):
             for dtypef in [torch.float32]:
@@ -8030,7 +8032,6 @@ class TestMPS(TestCaseMPS):
             cpu_y = op(cpu_x[1])
             self.assertEqual(y, cpu_y)
 
-
             # See https://github.com/pytorch/pytorch/issues/100764
             if not inplace:
                 cpu_x = torch.randn(shape, device='cpu', dtype=dtype)
@@ -8053,7 +8054,6 @@ class TestMPS(TestCaseMPS):
                 mps_x, mps_y = torch.randn((2, shape[0] * 2, shape[1] * 2), device='mps', dtype=dtype).unbind(0)
                 op(mps_x[::2, ::2], out=mps_y[::2, ::2])
                 self.assertEqual(mps_y[::2, ::2], op(mps_x[::2, ::2].contiguous()))
-
 
         helper((5, 5), torch.exp, False)
         helper((5, 5), torch.cos, False)
@@ -8425,6 +8425,7 @@ class TestSmoothL1Loss(TestCaseMPS):
         helper((3, ))
         helper((3, 3, 0))
 
+
 class TestNLLLoss(TestCaseMPS):
     def test_nll_loss_mismatched_batch(self, device='mps'):
         x = torch.randn((10, 3), requires_grad=True, device=device)
@@ -8645,6 +8646,7 @@ class TestTopK(TestCase):
             e_string = str(e)
             self.assertEqual(e_string, "On-going issue on MPSGraph topk when ndims() - axis > 4, see issue #154890")
 
+
 class TestNNMPS(NNTestCase):
 
     def _create_basic_net(self):
@@ -8769,7 +8771,6 @@ class TestNNMPS(NNTestCase):
         self.assertIsNone(module.weight.grad)
         self.assertIsNone(module.bias.grad)
 
-
     def test_no_grad(self):
         for dtype in [torch.bfloat16, torch.float, torch.double]:
             module = nn.Conv2d(2, 5, kernel_size=3, padding=1).to(dtype)
@@ -8846,7 +8847,6 @@ class TestNNMPS(NNTestCase):
             self.assertRaisesRegex(RuntimeError,
                                    'Input type \\(MPSFloatType\\) and weight type \\(torch\\.FloatTensor\\) should be the same',
                                    lambda: torch.conv2d(torch.rand(1, 3, 32, 32, device='mps'), torch.rand(1, 3, 3, 3)))
-
 
     def test_conv2d_valid_padding(self, device='mps'):
         # Test F.conv2d padding='valid' is the same as no padding
@@ -8943,7 +8943,6 @@ class TestNNMPS(NNTestCase):
             loss = (out - target).norm(dim=-1).sum()
             grad = -torch.autograd.grad(loss, x)[0]
             self.assertFalse(grad.detach().isnan().any().item(), 'NaN gradients returned by autograd')
-
 
     # def test_conv2d_same_padding(self, device='mps'):
         # x = torch.rand(1, 1, 10, 11, device=device)
@@ -9085,6 +9084,7 @@ class TestPad(TestCaseMPS):
         input_mps = torch.randn((2, 3, 4), device="mps")
         output_mps = torch.constant_pad_nd(input_mps, [])
         self.assertEqual(output_mps, input_mps)
+
 
 class TestLinalgMPS(TestCaseMPS):
     def _test_addmm_addmv(self, f, t, m, v, *, alpha=None, beta=None, transpose_out=False):
@@ -9679,7 +9679,6 @@ class TestSDPA(TestCaseMPS):
         self.run_fast_attention_test(q, k, v, with_mask)
 
 
-
 class TestSDPAMetaDispatchMode(TorchDispatchMode):
     """
     TorchDispatchMode which intercepts the
@@ -9747,8 +9746,10 @@ def create_sdpa_meta_test():
 
     return new_test_cls
 
+
 TestSDPAMeta = create_sdpa_meta_test()
 instantiate_parametrized_tests(TestSDPAMeta)
+
 
 class TestGatherScatter(TestCaseMPS):
     def test_slicing_with_step(self):
@@ -9810,6 +9811,7 @@ class TestGatherScatter(TestCaseMPS):
         a_mps[:, 0] = a_mps[:, 0] + b_mps[:, 0]
         a_cpu[:, 0] = a_cpu[:, 0] + b_cpu[:, 0]
         self.assertEqual(a_cpu, a_mps)
+
 
 # These tests were taken from test/test_view_ops.py
 # They are subset of those tests as currently only this subset is working.
@@ -10634,6 +10636,7 @@ class TestViewOpsMPS(TestCaseMPS):
             x = torch.tensor([[1, 2], [3, 4], [5, 6]], dtype=dt, device=device)
             self.assertEqual(x.view(6).shape, [6])
 
+
 class TestConvolutionMPS(TestCaseMPS):
     def test_conv1d_all_strides_paddings(self):
         # https://github.com/pytorch/pytorch/issues/82921
@@ -10649,7 +10652,6 @@ class TestConvolutionMPS(TestCaseMPS):
         for stride in range(1, 4):
             for padding in range(1, 4):
                 helper(stride, padding)
-
 
     def test_conv1d_channels_last(self):
         # https://github.com/pytorch/pytorch/issues/81557
@@ -10701,7 +10703,6 @@ class TestConvolutionMPS(TestCaseMPS):
                 in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, groups=groups).to("mps")
             conv_mps.weight.data = conv_cpu.weight.data.detach().clone().to("mps").requires_grad_(True)
             conv_mps.bias.data = conv_cpu.bias.data.detach().clone().to("mps").requires_grad_(True)
-
 
             data = torch.rand(shape, dtype=torch.float32)
             x_cpu = data.permute(0, 2, 1).contiguous().requires_grad_(True)
@@ -10893,7 +10894,6 @@ class TestConvolutionMPS(TestCaseMPS):
 
                     gradients = torch.randn_like(out_cpu)
                     out_cpu.backward(gradients)
-
 
                     # Compare against unvectorized CPU fallback
 
@@ -11096,6 +11096,7 @@ class TestConvolutionMPS(TestCaseMPS):
                     self.assertEqual(output, groundtruth, atol=1e-5, rtol=0,
                                      msg=f"groundtruth comparison failed for mode={mode}, "
                                      f"padding_mode={padding_mode}")
+
 
 class TestAdvancedIndexing(TestCaseMPS):
     supported_dtypes = [torch.float32, torch.float16, torch.int64, torch.int32, torch.int16, torch.uint8]
@@ -12187,6 +12188,7 @@ if len(w) != 1:
                 self.assertTrue(False, "Running a not implemented op failed even though PYTORCH_ENABLE_MPS_FALLBACK is set. " +
                                        e.output.decode("utf-8"))
 
+
 class TestNoRegression(TestCase):
     def test_assert_close(self):
         a = torch.ones(1, device="mps")
@@ -12284,6 +12286,7 @@ def transform_opinfo_sample_to_cpu(sample):
         cpu_sample.kwargs["device"] = "cpu"
 
     return cpu_sample
+
 
 class TestConsistency(TestCaseMPS):
     # TODO: This is only used while some ops are being added.
@@ -12619,7 +12622,6 @@ class TestConsistency(TestCaseMPS):
             self.assertEqual(op(x, y[0]), op(x.to("mps"), y.to("mps")[0]).cpu())
 
 
-
 class TestErrorInputs(TestCase):
     _ignore_not_implemented_error = True
 
@@ -12649,6 +12651,7 @@ class TestErrorInputs(TestCase):
 
             with self.assertRaisesRegex(error_type, error_regex):
                 op(*mps_args, **mps_kwargs)
+
 
 class TestComplex(TestCase):
     def test_tensor_scalar_binops(self):
@@ -12722,6 +12725,7 @@ class TestCommon(TestCase):
             mps_tensor = ones(device)
             cpu_tensor = ones("cpu")
             self.assertEqual(mps_tensor.cpu(), cpu_tensor)
+
 
 class TestMetalLibrary(TestCaseMPS):
     def test_metal_arange(self):

@@ -43,6 +43,7 @@ IS_SM89 = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_ca
 IS_SM90 = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() == (9, 0))
 IS_SM100 = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() == (10, 0))
 
+
 def evaluate_gfx_arch_within(arch_list):
     if not torch.cuda.is_available():
         return False
@@ -52,11 +53,14 @@ def evaluate_gfx_arch_within(arch_list):
     # Hence the matching should be done reversely
     return any(arch in effective_arch for arch in arch_list)
 
+
 def CDNA3OrLater():
     return evaluate_gfx_arch_within(["gfx940", "gfx941", "gfx942", "gfx950"])
 
+
 def CDNA2OrLater():
     return evaluate_gfx_arch_within(["gfx90a", "gfx942"])
+
 
 def evaluate_platform_supports_flash_attention():
     if TEST_WITH_ROCM:
@@ -68,6 +72,7 @@ def evaluate_platform_supports_flash_attention():
         return not IS_WINDOWS and SM80OrLater
     return False
 
+
 def evaluate_platform_supports_efficient_attention():
     if TEST_WITH_ROCM:
         arch_list = ["gfx90a", "gfx942", "gfx1100", "gfx1201", "gfx950"]
@@ -78,8 +83,10 @@ def evaluate_platform_supports_efficient_attention():
         return True
     return False
 
+
 def evaluate_platform_supports_cudnn_attention():
     return (not TEST_WITH_ROCM) and SM80OrLater and (TEST_CUDNN_VERSION >= 90000)
+
 
 def evaluate_platform_supports_green_context():
     if IS_WINDOWS:
@@ -90,6 +97,7 @@ def evaluate_platform_supports_green_context():
     if driver_version is None:
         return False
     return int(driver_version.split('.')[0]) >= 550
+
 
 PLATFORM_SUPPORTS_FLASH_ATTENTION: bool = LazyVal(lambda: evaluate_platform_supports_flash_attention())
 PLATFORM_SUPPORTS_MEM_EFF_ATTENTION: bool = LazyVal(lambda: evaluate_platform_supports_efficient_attention())
@@ -104,6 +112,7 @@ PLATFORM_SUPPORTS_FUSED_SDPA: bool = TEST_CUDA and not TEST_WITH_ROCM
 PLATFORM_SUPPORTS_BF16: bool = LazyVal(lambda: TEST_CUDA and SM80OrLater)
 
 PLATFORM_SUPPORTS_GREEN_CONTEXT: bool = LazyVal(lambda: evaluate_platform_supports_green_context())
+
 
 def evaluate_platform_supports_fp8():
     if torch.cuda.is_available():
@@ -120,6 +129,7 @@ def evaluate_platform_supports_fp8():
             return SM90OrLater or torch.cuda.get_device_capability() == (8, 9)
     return False
 
+
 def evaluate_platform_supports_fp8_grouped_gemm():
     if torch.cuda.is_available():
         if torch.version.hip:
@@ -133,6 +143,7 @@ def evaluate_platform_supports_fp8_grouped_gemm():
             return SM90OrLater and not SM100OrLater
     return False
 
+
 def evaluate_platform_supports_mx_gemm():
     if torch.cuda.is_available():
         if torch.version.hip:
@@ -142,11 +153,13 @@ def evaluate_platform_supports_mx_gemm():
             return SM100OrLater
     return False
 
+
 def evaluate_platform_supports_mxfp8_grouped_gemm():
     if torch.cuda.is_available() and not torch.version.hip:
         built_with_fbgemm_genai = "USE_FBGEMM_GENAI" in torch.__config__.show()
         return built_with_fbgemm_genai and IS_SM100
     return False
+
 
 PLATFORM_SUPPORTS_MX_GEMM: bool = LazyVal(lambda: evaluate_platform_supports_mx_gemm())
 PLATFORM_SUPPORTS_FP8: bool = LazyVal(lambda: evaluate_platform_supports_fp8())
@@ -279,6 +292,7 @@ def tf32_on_and_off(tf32_precision=1e-5, *, only_if=True):
         return wrapped
     return wrapper
 
+
 # This is a wrapper that wraps a test to run it with TF32 turned off.
 # This wrapper is designed to be used when a test uses matmul or convolutions
 # but the purpose of that test is not testing matmul or convolutions.
@@ -292,6 +306,7 @@ def with_tf32_off(f):
 
     return wrapped
 
+
 def _get_magma_version():
     if 'Magma' not in torch.__config__.show():
         return (0, 0)
@@ -299,11 +314,13 @@ def _get_magma_version():
     version_str = torch.__config__.show()[position + len('Magma '):].split('\n')[0]
     return tuple(int(x) for x in version_str.split("."))
 
+
 def _get_torch_cuda_version():
     if torch.version.cuda is None:
         return (0, 0)
     cuda_version = str(torch.version.cuda)
     return tuple(int(x) for x in cuda_version.split("."))
+
 
 def _get_torch_rocm_version():
     if not TEST_WITH_ROCM or torch.version.hip is None:
@@ -312,8 +329,10 @@ def _get_torch_rocm_version():
     rocm_version = rocm_version.split("-", maxsplit=1)[0]    # ignore git sha
     return tuple(int(x) for x in rocm_version.split("."))
 
+
 def _check_cusparse_generic_available():
     return not TEST_WITH_ROCM
+
 
 def _check_hipsparse_generic_available():
     if not TEST_WITH_ROCM:
@@ -329,6 +348,7 @@ def _check_hipsparse_generic_available():
 
 TEST_CUSPARSE_GENERIC = _check_cusparse_generic_available()
 TEST_HIPSPARSE_GENERIC = _check_hipsparse_generic_available()
+
 
 # Shared by test_torch.py and test_multigpu.py
 def _create_scaling_models_optimizers(device="cuda", optimizer_ctor=torch.optim.SGD, optimizer_kwargs=None):
@@ -347,6 +367,7 @@ def _create_scaling_models_optimizers(device="cuda", optimizer_ctor=torch.optim.
     opt_scaling = optimizer_ctor(mod_scaling.parameters(), **kwargs)
 
     return mod_control, mod_scaling, opt_control, opt_scaling
+
 
 # Shared by test_torch.py, test_cuda.py and test_multigpu.py
 def _create_scaling_case(device="cuda", dtype=torch.float, optimizer_ctor=torch.optim.SGD, optimizer_kwargs=None):
@@ -367,14 +388,18 @@ def _create_scaling_case(device="cuda", dtype=torch.float, optimizer_ctor=torch.
 def xfailIfSM89(func):
     return func if not IS_SM89 else unittest.expectedFailure(func)
 
+
 def xfailIfSM100OrLater(func):
     return func if not SM100OrLater else unittest.expectedFailure(func)
+
 
 def xfailIfSM120OrLater(func):
     return func if not SM120OrLater else unittest.expectedFailure(func)
 
+
 def xfailIfDistributedNotSupported(func):
     return func if not (IS_MACOS or IS_JETSON) else unittest.expectedFailure(func)
+
 
 # Importing this module should NOT eagerly initialize CUDA
 if not CUDA_ALREADY_INITIALIZED_ON_IMPORT:

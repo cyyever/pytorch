@@ -47,6 +47,7 @@ from torch.testing._internal.common_dtype import (
 
 from torch.utils.dlpack import to_dlpack
 
+
 # TODO: replace with make_tensor
 def _generate_input(shape, dtype, device, with_extremal):
     if shape == ():
@@ -93,6 +94,7 @@ def _rand_shape(dim, min_size, max_size):
 #   test_torch.py) OR numpy interop (which is also still tested in test_torch.py)
 #
 # See https://pytorch.org/docs/main/torch.html#creation-ops
+
 
 class TestTensorCreation(TestCase):
     exact_dtype = True
@@ -1542,7 +1544,6 @@ class TestTensorCreation(TestCase):
                 torch_grids = torch.meshgrid(*tensors, **torch_kwargs)
                 numpy_grids = np.meshgrid(*(tensor.cpu().numpy() for tensor in tensors), **numpy_kwargs)
                 self.assertEqual(torch_grids, numpy_grids)
-
 
     def test_cartesian_prod(self, device):
         a = torch.tensor([1], device=device)
@@ -3592,7 +3593,6 @@ class TestRandomTensorCreation(TestCase):
             self.assertTrue((res1 < 6).all().item())
             self.assertTrue((res1 >= 0).all().item())
 
-
     @unittest.skipIf(IS_FBCODE or IS_SANDCASTLE, "For fb compatibility random not changed in fbcode")
     def test_randint_distribution(self, device):
         size = 1_000_000
@@ -3609,7 +3609,6 @@ class TestRandomTensorCreation(TestCase):
         expected_error = math.sqrt(expected_bin) / expected_bin * 3
         error = (hist - expected_bin).abs().max() / expected_bin
         self.assertTrue(error < expected_error)
-
 
     @dtypes(torch.half, torch.float, torch.bfloat16, torch.double,
             torch.complex32, torch.complex64, torch.complex128)
@@ -3692,7 +3691,6 @@ class TestRandomTensorCreation(TestCase):
             self.assertEqual(non_contiguous_tensor, res)
             self.assertEqual(res.sort().values.long(), torch.arange(n, device=device))
 
-
     @largeTensorTest("10GB", "cpu")
     @largeTensorTest("40GB", "cuda")
     @slowTest
@@ -3751,6 +3749,7 @@ class TestRandomTensorCreation(TestCase):
             self.assertRaisesRegex(RuntimeError, regex, lambda: torch.randperm(n, device='cpu', generator=cuda_gen, out=cpu_t))
             self.assertRaisesRegex(RuntimeError, regex, lambda: torch.randperm(n, generator=cuda_gen))  # implicitly on CPU
 
+
 # Class for testing *like ops, like torch.ones_like
 class TestLikeTensorCreation(TestCase):
     exact_dtype = True
@@ -3808,17 +3807,21 @@ class TestLikeTensorCreation(TestCase):
         self.assertEqual(torch.full_like(like, 1., dtype=torch.complex64).dtype,
                          torch.complex64)
 
+
 # Tests for the `frombuffer` function (only work on CPU):
 #   Constructs tensors from Python objects that implement the buffer protocol,
 #   without copying data.
 SIZE = 5
 SHAPE = (SIZE,)
 
+
 def may_require_grad(dtype):
     return dtype.is_floating_point or dtype.is_complex
 
+
 def get_dtype_size(dtype):
     return int(torch.empty((), dtype=dtype).element_size())
+
 
 class TestBufferProtocol(TestCase):
     def _run_test(self, shape, dtype, count=-1, first=0, offset=None, **kwargs):
@@ -3975,6 +3978,7 @@ class TestBufferProtocol(TestCase):
         self.assertEqual(tensor.numel(), 2)
         self.assertSequenceEqual(tensor, [255, 255])
 
+
 # Tests for the `asarray` function:
 #   Constructs tensors from a Python object that has one of the following
 #   characteristics:
@@ -3987,12 +3991,18 @@ class TestBufferProtocol(TestCase):
 def get_another_device(device):
     return "cuda" if torch.device(device).type == "cpu" else "cpu"
 
+
 def identity(tensor):
     return tensor
+
+
 def to_numpy(tensor):
     return tensor.numpy()
+
+
 def to_memview(tensor):
     return memoryview(to_numpy(tensor))
+
 
 class TestAsArray(TestCase):
     def _check(self, original, cvt=lambda t: t, is_alias=True, same_dtype=True, same_device=True, **kwargs):

@@ -19,6 +19,7 @@ _POW_TWO_SIZES = tuple(2 ** i for i in range(
     int(np.log2(_MAX_DIM_SIZE)) + 1,
 ))
 
+
 class UnaryOpSparseFuzzer(Fuzzer):
     def __init__(self, seed: Optional[int], dtype: _dtype | None = None, cuda: bool = False) -> None:
         if dtype is None:

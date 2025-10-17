@@ -12,6 +12,7 @@ T = TypeVar("T")
 
 MAX_RAW_TENSOR_SIZE = 16
 
+
 class InflatableArg(NamedTuple):
     """Helper type for bundled inputs.
 
@@ -125,6 +126,7 @@ def bundle_inputs(
         assert isinstance(info, list) or info is None
         augment_model_with_bundled_inputs(cloned_module, inputs, _receive_inflate_expr, info)
     return cloned_module
+
 
 def augment_model_with_bundled_inputs(
         model: torch.jit.ScriptModule,
@@ -262,7 +264,6 @@ def augment_many_model_functions_with_bundled_inputs(
                 raise Exception(  # noqa: TRY002
                     'At least one of your functions has no attribute name please ensure all have one. m.foo.name = "foo"')
 
-
         if input_list is not None and not isinstance(input_list, Sequence):
             raise TypeError(f"Error inputs for function {function_name} is not a Sequence")
 
@@ -362,6 +363,7 @@ def augment_many_model_functions_with_bundled_inputs(
             return all_inputs
         """))
 
+
 def _inflate_expr(
     arg: T, ref: str, inflate_helper_fn_name: str, skip_size_check: bool = False
 ) -> tuple[Union[T, torch.Tensor], str, Optional[str]]:
@@ -410,6 +412,7 @@ def _inflate_expr(
     else:
         return arg, ref, None
 
+
 def _get_bundled_inputs_attributes_and_methods(script_module: torch.jit.ScriptModule) -> tuple[list[str], list[str]]:
     methods: list[str] = []
     attributes: list[str] = []
@@ -456,7 +459,6 @@ def _get_inflate_helper_fn_name(
     function_name: str,
 ) -> str:
     return f"_inflate_helper_for_{function_name}_input_{input_idx}_arg_{arg_idx}"
-
 
 
 def bundle_randn(*size, dtype=None):

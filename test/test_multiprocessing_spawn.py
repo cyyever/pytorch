@@ -18,6 +18,7 @@ from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests
 )
 
+
 def _test_success_func(i):
     pass
 
@@ -92,6 +93,7 @@ def _test_nested(i, pids_queue, nested_child_sleep, start_method):
 
     # Kill self. This should take down the child processes as well.
     os.kill(os.getpid(), signal.SIGTERM)
+
 
 @instantiate_parametrized_tests
 class _TestMultiProcessing:
@@ -210,6 +212,7 @@ class _TestMultiProcessing:
             # after (nested_child_sleep / 2) seconds.
             self.assertLess(time.time() - start, nested_child_sleep / 2)
             time.sleep(0.1)
+
 
 class SpawnTest(TestCase, _TestMultiProcessing):
     start_method = 'spawn'

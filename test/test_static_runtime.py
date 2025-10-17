@@ -90,22 +90,28 @@ def trivial_graph(a, b, c):
     s = torch.tensor([[3, 3], [3, 3]])
     return a + b * c + s
 
+
 def elementwise_square_addition(input1, input2):
     return input1 * input1 + input2 * input2
+
 
 def fork_wait_graph1(input1, input2):
     fut = torch.jit.fork(elementwise_square_addition, input1, input2)
     return torch.jit.wait(fut)
 
+
 def fork_wait_graph2(input1, input2):
     fut = torch.jit.fork(loop_graph, input1, input2, 5)
     return torch.jit.wait(fut)
+
 
 """
    graph with multiple fork/wait operations
    :param input: torch.tensor input to forked subgraph
    :param iters: number of future/wait pairs to be created
 """
+
+
 def fork_wait_graph3(input, iters: int):
     futures : list[torch.jit.Future[torch.Tensor]] = []
     for _ in range(iters):
@@ -115,12 +121,15 @@ def fork_wait_graph3(input, iters: int):
         results.append(torch.jit.wait(future))
     return torch.sum(torch.stack(results))
 
+
 """
    graph with multi-level fork/wait operations
    :param input: torch.tensor input to forked subgraph
    :param num_forks: number of top level forks
    :param num_child_forks: number of child forks per parent fork
 """
+
+
 def fork_wait_graph4(input, num_forks: int, num_child_forks: int):
     futures : list[torch.jit.Future[torch.Tensor]] = []
     for _ in range(num_forks):
@@ -130,12 +139,15 @@ def fork_wait_graph4(input, num_forks: int, num_child_forks: int):
         results.append(torch.jit.wait(future))
     return torch.sum(torch.stack(results))
 
+
 def add_tensor(input1, input2):
     return input1 + input2
+
 
 def fork_wait_graph_exception(input1, input2):
     fut = torch.jit.fork(add_tensor, input1, input2)
     return torch.jit.wait(fut)
+
 
 def loop_graph(a, b, iters: int):
     c = a + b * 2
@@ -580,6 +592,7 @@ class TestStaticModule(TestCase):
         actual = static_mod(y)
 
         self.assertEqual(expected, actual)
+
 
 if __name__ == "__main__":
     run_tests()

@@ -153,6 +153,7 @@ def sample_inputs_invoke_subgraph(opinfo, device, dtype, requires_grad, **kwargs
 def fn_for_invoke_subgraph(x):
     return torch.sin(x)
 
+
 def simple_invoke_subgraph(x):
     return fn_for_invoke_subgraph(x)
 
@@ -202,6 +203,7 @@ def simple_while_loop(iter_t, x):
 
     return torch._higher_order_ops.while_loop(cond_fn, body_fn, (iter_t, x))
 
+
 def simple_while_loop_stack_output(iter_t, x):
     def cond_fn(iter_t, x):
         return iter_t > 0
@@ -238,6 +240,7 @@ def simple_local_map_hop(inp1, inp2):
     # TODO: Dynamo would rewrite this op differently
     return torch._higher_order_ops.local_map_hop(gm, inp1, inp2)
 
+
 def sample_inputs_scan(opinfo, device, dtype, requires_grad, **kwargs):
     make_arg = functools.partial(
         make_tensor, device=device, dtype=dtype, requires_grad=requires_grad
@@ -272,7 +275,6 @@ def simple_invoke_quant_packed(x):
         return (torch.sin(x),)
 
     return invoke_quant_packed(fn, x)[0] * 2.
-
 
 
 hop_db = [

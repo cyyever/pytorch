@@ -157,8 +157,10 @@ import tracemalloc
 def canonical(graph):
     return torch._C._jit_pass_canonicalize(graph).str(False)
 
+
 def LSTMCellF(input, hx, cx, *params):
     return LSTMCell(input, (hx, cx), *params)
+
 
 def doAutodiffCheck(testname):
     # TODO: setting false on test itself is not working
@@ -171,7 +173,6 @@ def doAutodiffCheck(testname):
 
     if GRAPH_EXECUTOR == ProfilingMode.LEGACY:
         return True
-
 
     # these tests are disabled because BailOut nodes
     # inserted by ProfilingExecutor interfere with
@@ -213,6 +214,7 @@ assert GRAPH_EXECUTOR
 # TODO: enable TE in PE when all tests are fixed
 torch._C._jit_set_texpr_fuser_enabled(GRAPH_EXECUTOR == ProfilingMode.PROFILING)
 torch._C._jit_set_profiling_executor(GRAPH_EXECUTOR != ProfilingMode.LEGACY)
+
 
 def LSTMCell(input, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
     hx, cx = hidden
@@ -263,7 +265,6 @@ def MiLSTMCell(x, hx, cx, w_ih, w_hh, alpha, beta_i, beta_h, bias):
     return hy, cy
 
 
-
 def get_lstm_inputs(device, training=False, seq_length=None):
     input_shape = (3, 10) if seq_length is None else (seq_length, 3, 10)
     input = torch.randn(*input_shape, dtype=torch.float, device=device, requires_grad=training)
@@ -301,6 +302,7 @@ def get_fn(file_name, script_path):
     spec.loader.exec_module(module)
     fn = module.fn
     return fn
+
 
 def get_grad_executor(plan_state, diff_graph_idx=None, skip_check=False):
     if diff_graph_idx is None:
@@ -2757,7 +2759,6 @@ graph(%Ra, %Rb):
                 # type: (Dict[str, int]) -> Dict[str, int]
                 return x
 
-
     def test_module_default_values(self):
         four = torch.tensor(4)
 
@@ -2797,7 +2798,6 @@ graph(%Ra, %Rb):
                 if bool(x < 2):
                     warnings.warn("x is less than 2")
                 return x
-
 
         scripted_mod = torch.jit.script(M())
         scripted_fn = torch.jit.script(fn)
@@ -2971,7 +2971,6 @@ class TestFrontend(JitTestCase):
             def unscriptable(self):
                 return "a" + 200
 
-
         class TestModule(torch.nn.Module):
             def forward(self, x):
                 return MyScriptClass()
@@ -3050,7 +3049,6 @@ class TestScript(JitTestCase):
             def forward(self, x):
                 return torch.sub(x, x)
 
-
         class MyMod(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
@@ -3127,7 +3125,6 @@ class TestScript(JitTestCase):
 
         self.assertEqual(src, src_eic)
         self.assertEqual(CONSTANTS.c0, CONSTANTS_eic.c0)
-
 
     def test_oneline_func(self):
         def fn(x): return x  # noqa: E704
@@ -3240,7 +3237,6 @@ class TestScript(JitTestCase):
                 graph_str = torch.jit.last_executed_optimized_graph()
                 FileCheck().check("profiled_type=Float(*, 2, strides=[2, 1], requires_grad=0, device=cpu").run(graph_str)
                 FileCheck().check_not("profiled_type=Float(1, 2, strides=[2, 1], requires_grad=0, device=cpu").run(graph_str)
-
 
     def test_nested_bailouts(self):
         @torch.jit.script
@@ -4174,7 +4170,6 @@ def foo(x):
 
         self.checkScript(annotate_none, ())
 
-
     def test_robust_op_resolution(self):
         neg = torch.add  # misleading name to make sure we resolve by function
 
@@ -4594,7 +4589,6 @@ def foo(xyz):
             return x.shape
 
         self.checkScript(f, (x,))
-
 
     def test_block_input_grad_in_loop(self):
 
@@ -5419,7 +5413,6 @@ a")
                 grad_ref = torch.autograd.grad(_sum_of_list(outputs_ref), x)
                 self.assertEqual(grad, grad_ref)
 
-
     @unittest.skipIf(GRAPH_EXECUTOR == ProfilingMode.PROFILING,
                      "Profiling executor fails to recognize that tensors in a list require gradients")
     def test_meshgrid(self):
@@ -5615,7 +5608,6 @@ a")
         self.getExportImportCopy(m)
         with self.assertRaisesRegex(RuntimeError, "expected int"):
             m()
-
 
     @unittest.skipIf(GRAPH_EXECUTOR == ProfilingMode.SIMPLE, "Simple Executor doesn't use requires_grad information")
     @unittest.skipIf(GRAPH_EXECUTOR == ProfilingMode.PROFILING, "Peeling is now disabled")
@@ -5899,7 +5891,6 @@ a")
     def _make_scalar_vars(self, arr, dtype):
         return [torch.tensor(val, dtype=dtype) for val in arr]
 
-
     def test_string_print(self):
         def func(a):
             print(a, "a" 'b' '''c''' """d""", 2, 1.5)
@@ -6082,7 +6073,6 @@ a")
                 return 2
         self.assertEqual(test_bool_arith_or(torch.zeros(3)), 1)
         self.assertTrue(str(test_bool_arith_or.graph).count('if') == 0)
-
 
         @torch.jit.script
         def test_bool_arith_not(lhs):
@@ -6974,7 +6964,6 @@ a")
         self.assertTrue(test_all_float_list([3.14, 8.1]))
         self.assertFalse(test_all_float_list([3.14, 0, 8.9]))
 
-
     @skipIfTorchDynamo("Not a TorchDynamo suitable test")
     def test_number_math(self):
         ops_template = dedent('''
@@ -7176,7 +7165,6 @@ a")
         self.assertEqual(scripted_fn_ne(False, True), compare_ne(False, True))
         self.assertEqual(scripted_fn_ne(True, True), compare_ne(True, True))
         self.assertEqual(scripted_fn_ne(False, False), compare_ne(False, False))
-
 
     def _test_tensor_number_math(self, device='cpu'):
         template = dedent('''
@@ -8570,7 +8558,6 @@ dedent """
         else:
             return jit_type.lower()
 
-
     def _test_dtype_op_shape(self, ops, args, input_dims=1):
         if input_dims < 1:
             raise RuntimeError("input dims must be at least 1")
@@ -8620,7 +8607,6 @@ dedent """
         self._test_dtype_op_shape(ops, args=[0])
 
         self._test_dtype_op_shape(ops, args=[1], input_dims=4)
-
 
     def _test_binary_op_shape(self, ops, input_dims=1):
 
@@ -8708,7 +8694,6 @@ dedent """
         g2 = foo2.graph_for(t)
         type = next(g.outputs())
         self.assertTrue(type.type() == torch._C.TensorType.get())
-
 
     def test_filecheck_parse(self):
         def test_check():
@@ -11033,7 +11018,6 @@ dedent """
             for i in range(4):
                 self.assertTrue((foo(x, y, W).grad_fn is None) == (jitted_foo(x, y, W).grad_fn is None))
 
-
     def test_linear_grad(self):
         with enable_profiling_mode_for_profiling_tests():
             def t(x: torch.Tensor, w: torch.Tensor, b: Optional[torch.Tensor]):
@@ -11118,7 +11102,6 @@ dedent """
                 graph_str = torch.jit.last_executed_optimized_graph()
                 self.assertEqual(out.dtype, torch.int64)
                 FileCheck().check("profiled_type=Long(1, 2, strides=[2, 1], requires_grad=0, device=cpu)").run(graph_str)
-
 
     def test_erase_number_types(self):
         def func(a):
@@ -11592,7 +11575,6 @@ dedent """
                 self.checkModule(mod, (torch.tensor(.5),))
                 mod2 = ZipWithValues(mods[i], mods[j])
                 self.checkModule(mod2, (torch.tensor(.5),))
-
 
     def test_enumerate_modlist_range(self):
         class Double(torch.nn.Module):
@@ -12325,7 +12307,6 @@ dedent """
             @_trace(torch.rand(3, 4))
             def traced_fn(x):
                 return sm(x) + 1.0
-
 
     def test_call_python_fn_from_traced_module(self):
         def python_fn(x):
@@ -13283,7 +13264,6 @@ dedent """
         self.assertTrue(isinstance(f, torch.jit.ScriptModule))
         self.assertTrue(isinstance(f.call(), property))
 
-
     def test_pass(self):
         def foo(x):
             # type: (bool) -> int
@@ -13718,8 +13698,6 @@ dedent """
             self.assertEqual(loaded.buffer1, torch.ones(2, 2) + 5)
             self.assertEqual(loaded.buffer2, torch.ones(2, 2) + 10)
 
-
-
     def test_string_slicing(self):
         def fn1(x):
             # type: (str) -> str
@@ -13930,7 +13908,6 @@ dedent """
         self.checkScript(test_loop_exception_with_continue, (-1,))
         self.checkScriptRaisesRegex(test_loop_exception_with_continue, (1,), Exception, "")
         test_num_ifs(test_loop_exception_with_continue, 1)  # no ifs added to guard print
-
 
     def test_exception_exits_closure(self):
         code = dedent('''
@@ -14600,7 +14577,6 @@ dedent """
         def test():
             impl_compile_failure("one", "two")
 
-
         with self.assertRaisesRegex(Exception, "Arguments for call are not valid"):
             torch.jit.script(test)
 
@@ -14617,7 +14593,6 @@ dedent """
             return good_overload()
 
         self.assertEqual(foo(), 1)
-
 
         with self.assertRaisesRegex(Exception, "must equal to the default parameter"):
             @torch.jit._overload  # noqa: F811
@@ -14720,7 +14695,6 @@ dedent """
 
         with self.assertRaisesRegex(RuntimeError, 'Implementation for the method ".+" is missing.'):
             m = torch.jit.script(OverloadMisuse())
-
 
     def test_script_method_torch_function_overload(self):
         class MyCustomTensor(torch.Tensor):
@@ -15392,7 +15366,6 @@ dedent """
                     continue
                 self.assertEqual(value, getattr(loaded, "_" + name))
 
-
     def test_submodule_attribute_serialization(self):
         class S(torch.jit.ScriptModule):
             def __init__(self, list_data):
@@ -15521,7 +15494,6 @@ dedent """
         f = Foo()
         torch.jit.script(f)
 
-
     def test_named_buffers_are_iterable(self):
         class MyMod(torch.nn.Module):
             def __init__(self) -> None:
@@ -15559,7 +15531,6 @@ dedent """
         names = x.method()
         for name in names:
             self.assertNotEqual('z', name)
-
 
     def test_static_if_prop(self):
         class MaybeHasAttr(torch.nn.Module):
@@ -16013,6 +15984,7 @@ dedent """
             return x[x > 0]
         jf = torch.jit.trace(f, torch.tensor(2., device="cpu"))
 
+
 # known to be failing in tracer
 EXCLUDE_TRACED = {
     # The following fail due to #12024.
@@ -16099,9 +16071,11 @@ class TestJitGeneratedModule(JitTestCase):
 class TestJitGeneratedFunctional(JitTestCase):
     pass
 
+
 L = 20
 M = 10
 S = 5
+
 
 def add_nn_module_test(*args, **kwargs):
     no_grad = kwargs.get('no_grad', False)
@@ -16262,6 +16236,7 @@ class TestProducerVersion(TestCase):
     def test_version(self):
         # issue gh-32561
         self.assertTrue(torch.__version__.startswith(torch.onnx.producer_version))
+
 
 for test in get_all_nn_module_tests():
     add_nn_module_test(**test)

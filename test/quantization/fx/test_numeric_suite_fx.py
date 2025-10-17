@@ -277,9 +277,11 @@ class AllConvFunctional(torch.nn.Module):
         x = F.relu(x)
         return x
 
+
 @torch.fx.wrap
 def _wrapped_hardswish(x):
     return F.hardswish(x)
+
 
 @torch.fx.wrap
 def _wrapped_hardswish_fp16(x):
@@ -288,13 +290,16 @@ def _wrapped_hardswish_fp16(x):
     x = x.to(torch.float16)
     return x
 
+
 @torch.fx.wrap
 def _wrapped_sigmoid(x):
     return F.sigmoid(x)
 
+
 @torch.fx.wrap
 def _wrapped_linear(x, w, b):
     return F.linear(x, w, b)
+
 
 def get_all_quant_patterns():
     """ we are in the process to migrate the frontend of fx graph mode quant
@@ -309,6 +314,7 @@ def get_all_quant_patterns():
     for pattern, quantize_handler in _get_pattern_to_quantize_handlers(get_native_backend_config()).items():
         all_quant_patterns[pattern] = quantize_handler
     return all_quant_patterns
+
 
 class TestFXGraphMatcher(QuantizationTestCase):
 
@@ -1340,7 +1346,6 @@ class TestFXNumericSuiteCoreAPIs(FXNumericSuiteQuantizationTestCase):
         self.assertTrue(len(act_compare_dict) == 1)
         self.assert_ns_compare_dict_valid(act_compare_dict)
 
-
     @skipIfNoFBGEMM
     def test_op_with_either_fp32_or_int8_input(self):
         """
@@ -2074,6 +2079,7 @@ class TestFXNumericSuiteCoreAPIs(FXNumericSuiteQuantizationTestCase):
             mt_shadows_mt_copy, OutputLogger, 'b')
         self.assertTrue(len(act_compare_dict) == 1)
 
+
 @skipIfNoQNNPACK
 class TestFXNumericSuiteNShadows(FXNumericSuiteQuantizationTestCase):
     """
@@ -2608,7 +2614,6 @@ class TestFXNumericSuiteNShadows(FXNumericSuiteQuantizationTestCase):
             '', F.linear, 3, per_tensor_qconfig)
         self._test_extract_weights_impl(m, example_input, qconfig_mapping)
 
-
     def _test_add_loggers_impl(self, m, example_input, qconfig_mapping):
         backend_config = get_native_backend_config()
         m_copy = copy.deepcopy(m)
@@ -2915,6 +2920,7 @@ class TestFXNumericSuiteCoreAPIsModels(FXNumericSuiteQuantizationTestCase):
             m, (torch.randn(1, 3, 224, 224),),
             qconfig_dict=qconfig_dict,
             should_log_inputs=False)
+
 
 if __name__ == "__main__":
     raise_on_run_directly("test/test_quantization.py")

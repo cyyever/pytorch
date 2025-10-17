@@ -27,7 +27,9 @@ def _collect_examples():
         variables = [name for name in dir(case) if name in case_fields]
         export_case(**{v: getattr(case, v) for v in variables})(case.model)
 
+
 _collect_examples()
+
 
 def all_examples():
     return _EXAMPLE_CASES

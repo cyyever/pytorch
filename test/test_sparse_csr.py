@@ -63,6 +63,7 @@ UNARY_EWISE_CSR_ALLOW_AUTOGRAD = [
     'rad2deg'
 ]
 
+
 # This should be just an import from test_linalg instead of code duplication
 # but https://github.com/pytorch/pytorch/pull/63511#discussion_r733989701
 def _test_addmm_addmv(
@@ -945,7 +946,6 @@ class TestSparseCompressed(TestCase):
             sparse = torch.sparse_compressed_tensor(compressed_indices, plain_indices, values, size, layout=layout)
             self.assertEqual(sparse.sparse_dim(), sparse_dim)
             self.assertEqual(sparse.dense_dim(), dense_dim)
-
 
     @skipMeta
     @all_sparse_compressed_layouts()
@@ -2178,7 +2178,6 @@ class TestSparseCSR(TestCase):
             self.assertEqual(res, expected)
             self.assertEqual(res_perm, expected)
 
-
         ns = [2, 5]
         batch_shapes = [(), (2,), (2, 3)]
         for b, m, n in itertools.product(batch_shapes, ns, ns):
@@ -3001,7 +3000,6 @@ class TestSparseCSR(TestCase):
                                                      dense_dims=n_dense,
                                                      dtype=dtype)
 
-
             sparse0 = len(shape) - n_dense - 1
             sparse1 = sparse0 - 1
 
@@ -3505,6 +3503,7 @@ def skipIfNoTriton(cls):
 
         return skipped_cls
 
+
 @skipIfNoTriton
 class TestSparseCompressedTritonKernels(TestCase):
 
@@ -3731,7 +3730,6 @@ class TestSparseCompressedTritonKernels(TestCase):
                 for mask_dtype in (torch.bool, dtype):
                     res = _scaled_dot_product_attention(query, key, value, attn_mask_bsr.to(mask_dtype), scale=scale)
                     self.assertEqual(res, expected)
-
 
     @parametrize("block_size", [16, 32, 64])
     @onlyCUDA

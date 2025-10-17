@@ -55,7 +55,6 @@ class PruningOpTest(TestCase):
         self.assertEqual(pt_compressed_indices_map, ref_compressed_indices_map)
         self.assertEqual(pt_compressed_indices_map.dtype, indices_type)
 
-
     @skipIfTorchDynamo()
     @given(
         embedding_rows=st.integers(1, 100),
@@ -66,7 +65,6 @@ class PruningOpTest(TestCase):
     )
     def test_rowwise_prune_op_32bit_indices(self, embedding_rows, embedding_dims, weights_dtype):
         self._test_rowwise_prune_op(embedding_rows, embedding_dims, torch.int, weights_dtype)
-
 
     @skipIfTorchDynamo()
     @given(

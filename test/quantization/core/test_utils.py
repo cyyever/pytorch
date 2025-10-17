@@ -221,5 +221,6 @@ class TestUtils(TestCase):
             ], dtype=torch.uint8))
             assert x.dtype == dtype
 
+
 if __name__ == "__main__":
     raise_on_run_directly("test/test_quantization.py")

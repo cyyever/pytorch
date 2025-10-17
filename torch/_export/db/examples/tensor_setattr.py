@@ -10,6 +10,7 @@ class TensorSetattr(torch.nn.Module):
         setattr(x, attr, torch.randn(3, 2))
         return x + 4
 
+
 example_args = (torch.randn(3, 2), "attr")
 tags = {"python.builtin"}
 model = TensorSetattr()

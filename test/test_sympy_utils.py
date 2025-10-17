@@ -962,6 +962,7 @@ class TestSingletonInt(TestCase):
 
         self.assertEqual(j1.free_symbols, set())
 
+
 class TestIdentity(TestCase):
     def test_expand_identity(self):
         """
@@ -993,6 +994,7 @@ class TestIdentity(TestCase):
         tup_I = Identity(tup)
         self.assertRaises(TypeError, int, tup_I)
         self.assertRaises(TypeError, float, tup_I)
+
 
 class TestTypedExpr(TestCase):
     def test_typed_expr(self):

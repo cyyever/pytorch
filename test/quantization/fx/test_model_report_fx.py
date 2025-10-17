@@ -82,6 +82,7 @@ FUSION_CONV_LINEAR_EXAMPLE = torch.nn.Sequential(
     torch.nn.Conv2d(3, 3, 2, 1),
 )
 
+
 # Test class
 # example model to use for tests
 class ThreeOps(nn.Module):
@@ -100,6 +101,7 @@ class ThreeOps(nn.Module):
     def get_example_inputs(self):
         return (torch.randn(1, 3, 3, 3),)
 
+
 class TwoThreeOps(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -115,6 +117,7 @@ class TwoThreeOps(nn.Module):
 
     def get_example_inputs(self):
         return (torch.randn(1, 3, 3, 3),)
+
 
 class TestFxModelReportDetector(QuantizationTestCase):
 
@@ -808,7 +811,6 @@ class TestFxModelReportDetectDynamicStatic(QuantizationTestCase):
                 z = F.relu(z)
                 return z
 
-
         with override_quantized_engine('fbgemm'):
             # create model, example input, and qconfig mapping
             torch.backends.quantized.engine = "fbgemm"
@@ -872,6 +874,7 @@ class TestFxModelReportDetectDynamicStatic(QuantizationTestCase):
             self.assertTrue("stationary" in data_dist_info)
             self.assertTrue("non-stationary" in data_dist_info)
             self.assertTrue(dynam_vs_stat_dict[linear_fqn]["dynamic_recommended"])
+
 
 class TestFxModelReportClass(QuantizationTestCase):
 
@@ -988,7 +991,6 @@ class TestFxModelReportClass(QuantizationTestCase):
             # ensure that we can prepare for callibration only once
             with self.assertRaises(ValueError):
                 prepared_for_callibrate_model = model_report.prepare_detailed_calibration()
-
 
     def get_module_and_graph_cnts(self, callibrated_fx_module):
         r"""
@@ -1173,7 +1175,6 @@ class TestFxModelReportClass(QuantizationTestCase):
 
             prepared_for_callibrate_model(example_input)
 
-
             # get the mapping without error
             qconfig_mapping = mod_report.generate_qconfig_mapping()
 
@@ -1231,7 +1232,6 @@ class TestFxModelReportClass(QuantizationTestCase):
 
             prepared_for_callibrate_model(example_input)
 
-
             # get the mapping without error
             qconfig_mapping = mod_report.generate_qconfig_mapping()
             equalization_mapping = mod_report.generate_equalization_mapping()
@@ -1240,7 +1240,6 @@ class TestFxModelReportClass(QuantizationTestCase):
 
             # shouldn't have any equalization suggestions for this case
             self.assertEqual(len(qconfig_mapping.module_name_qconfigs), 2)
-
 
             # make sure these can actually be used to prepare the model
             prepared = quantize_fx.prepare_fx(
@@ -1252,6 +1251,7 @@ class TestFxModelReportClass(QuantizationTestCase):
 
             # now convert the model to ensure no errors in conversion
             converted = quantize_fx.convert_fx(prepared)
+
 
 class TestFxDetectInputWeightEqualization(QuantizationTestCase):
 
@@ -1528,7 +1528,6 @@ class TestFxDetectOutliers(QuantizationTestCase):
             random_vals[:, 0:param_size:2, 0, 3] = torch.tensor([3.28e8])
             return (random_vals,)
 
-
     def _get_prepped_for_calibration_model(self, model, detector_set, use_outlier_data=False):
         r"""Returns a model that has been prepared for callibration and corresponding model_report"""
         # call the general helper function to callibrate
@@ -1629,7 +1628,6 @@ class TestFxDetectOutliers(QuantizationTestCase):
                 # ensure that the number of ratios and batches counted is the same as the number of params
                 self.assertEqual(len(module_dict[OutlierDetector.COMP_METRIC_KEY]), param_size)
                 self.assertEqual(len(module_dict[OutlierDetector.NUM_BATCHES_KEY]), param_size)
-
 
     @skipIfNoFBGEMM
     def test_all_outlier_report_gen(self):
@@ -1936,6 +1934,7 @@ class TestFxModelReportVisualizer(QuantizationTestCase):
             self.assertEqual(tensor_info_features, 0)
             self.assertEqual(channel_info_features, 1)
 
+
 def _get_prepped_for_calibration_model_helper(model, detector_set, example_input, fused: bool = False):
     r"""Returns a model that has been prepared for callibration and corresponding model_report"""
     # set the backend for this test
@@ -1957,6 +1956,7 @@ def _get_prepped_for_calibration_model_helper(model, detector_set, example_input
     prepared_for_callibrate_model = model_report.prepare_detailed_calibration()
 
     return (prepared_for_callibrate_model, model_report)
+
 
 if __name__ == "__main__":
     raise_on_run_directly("test/test_quantization.py")

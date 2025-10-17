@@ -121,7 +121,6 @@ class TestScatterGather(TestCase):
             ref_cpu = torch.gather(src.cpu(), dim=1, index=ind.cpu())
             self.assertEqual(res.cpu(), ref_cpu, atol=0, rtol=0)
 
-
     @dtypes(torch.bool)
     def test_gather_bool(self, device, dtype):
         src = torch.tensor(((False, True), (True, True)), device=device, dtype=dtype)
@@ -321,7 +320,6 @@ class TestScatterGather(TestCase):
                     expected_result[1] = 0
                 self.assertEqual(input, expected_result)
 
-
     @dtypes(*get_all_dtypes(include_half=True, include_bfloat16=True, include_complex=False))
     @dtypesIfCUDA(*get_all_dtypes(include_half=True, include_bfloat16=True, include_complex=False, include_bool=False))
     def test_scatter_reduce_amin(self, device, dtype):
@@ -396,7 +394,6 @@ class TestScatterGather(TestCase):
                 res = inp.clone().scatter_add_(d, idx, src)
             self.assertEqual(res, ref)
 
-
     @onlyCPU
     @dtypes(torch.float32, torch.float64, torch.bfloat16)
     def test_gather_expanded_index(self, device, dtype):
@@ -455,6 +452,7 @@ class TestScatterGather(TestCase):
         helper([50, 1], 100)
         helper([50, 8, 7], 100)
         helper([50, 3, 4, 5], 100)
+
 
 # Generic Device Test Framework instantiation, see
 #   https://github.com/pytorch/pytorch/wiki/Running-and-writing-tests

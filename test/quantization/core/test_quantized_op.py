@@ -68,12 +68,14 @@ np_dtype = {torch.quint8: np.uint8, torch.qint8: np.int8, torch.qint32: np.int32
 
 TEST_ROCM = TEST_CUDA and torch.version.hip is not None and ROCM_HOME is not None
 
+
 class PointwisePostOp(NamedTuple):
     binary_attr : str = "none"
     alpha : float = 1.0
     unary_attr : str = "none"
     scalars : list = []
     algorithm : str = ""
+
 
 # Make sure we won't have overflows from vpmaddubsw instruction used in FBGEMM.
 # On the current Intel x86 architecture, we need to utilize vpmaddubsw instruction
@@ -127,7 +129,10 @@ def qlinear_ref(X_q, X_scale, X_zp, W_q, W_scale, W_zp, b_q, Y_scale, Y_zp, dtyp
     Y_q_ref = _quantize(Prod_XqWq_ref, Y_scale / (X_scale * W_scale), Y_zp, dtype=dtype)
     return Y_q_ref
 
+
 """Computes the output shape given pooling parameters."""
+
+
 def pool_output_shape(input_size, kernel_size, padding, stride,
                       dilation, ceiling_mode=False):
     if stride is None:
@@ -140,10 +145,13 @@ def pool_output_shape(input_size, kernel_size, padding, stride,
         output_size -= 1
     return output_size
 
+
 """
 Util for creating a random tensor and quantization params when Hypothesis
 is undesirable.
 """
+
+
 def _get_random_tensor_and_q_params(shapes, rand_scale, torch_type):
     X = (torch.rand(*shapes, dtype=torch.float) - 0.5) * rand_scale
     # Calculate reasonable quantization params
@@ -165,6 +173,7 @@ def _get_random_tensor_and_q_params(shapes, rand_scale, torch_type):
         X_scale = 1e-10
     return X, X_scale, X_zero_point
 
+
 def _quantize_fp8e4m3(t: torch.Tensor, channelwise: bool, scale: Optional[torch.Tensor] = None):
     quant_max = torch.finfo(torch.float8_e4m3fn).max
     eps = torch.Tensor([torch.finfo(torch.float32).eps])
@@ -181,6 +190,7 @@ def _quantize_fp8e4m3(t: torch.Tensor, channelwise: bool, scale: Optional[torch.
     qt = qt.clamp(-448, 448).half().to(torch.float8_e4m3fn)
     return qt, scale
 
+
 def _dequantize_fp8e4m3(qt: torch.Tensor, scale: torch.Tensor):
     dqt = qt.float()
     if scale.numel() == 1:
@@ -191,6 +201,7 @@ def _dequantize_fp8e4m3(qt: torch.Tensor, scale: torch.Tensor):
         scale_reshape = scale.reshape((-1,) + (1,) * (qt.dim() - 1))
         dqt = dqt * scale_reshape
     return dqt
+
 
 class TestQuantizedOps(TestCase):
 
@@ -501,7 +512,6 @@ class TestQuantizedOps(TestCase):
         self.assertEqual(qY, qY_hat,
                          msg=f"F.elu failed ({qY} vs {qY_hat})")
 
-
     """Tests the correctness of the quantized::celu op."""
     @given(X=hu.tensor(shapes=hu.array_shapes(1, 5, 1, 5),
                        elements=hu.floats(-1e2, 1e2, allow_nan=False, allow_infinity=False),
@@ -682,7 +692,6 @@ class TestQuantizedOps(TestCase):
                 self.assertTrue(pct_diff < 1e-6)
                 self.assertTrue(pct_diff_off_by_one < 0.01)
 
-
     """Tests the correctness of the quantized::qnnpack_tanh op."""
     @given(X=hu.tensor(shapes=hu.array_shapes(1, 5, 1, 5),
                        qparams=hu.qparams()))
@@ -777,7 +786,6 @@ class TestQuantizedOps(TestCase):
                                                          zero_point=zero_point, dtype=torch_type)
                 qY_max_clamp = torch.quantize_per_tensor(Y_max_clamp, scale=scale,
                                                          zero_point=zero_point, dtype=torch_type)
-
 
                 for name, op in ops_under_test.items():
                     qY_min_clamp_hat = op(qX, min=min_val)
@@ -1260,7 +1268,6 @@ class TestQuantizedOps(TestCase):
                                        scale_C,
                                        zero_point_C)
 
-
     """Tests the correctness of the quantized softmax op."""
     @given(dims=st.lists(st.integers(2, 5), min_size=5, max_size=5))
     def test_qsoftmax(self, dims):
@@ -1288,7 +1295,6 @@ class TestQuantizedOps(TestCase):
                                            scale=scale_X,
                                            zero_point=zero_point_X,
                                            dtype=torch_dtype)
-
 
             # softmax ground truth
             Y = torch.softmax(qX.dequantize(), dim=dim).numpy()
@@ -1527,7 +1533,6 @@ class TestQuantizedOps(TestCase):
         self.assertEqual(a_ref, a_hat.dequantize(),
                          msg="ops.quantized.max_pool2d results are off")
 
-
     @unittest.skipIf(IS_FBCODE, "Skip pt2e ops in fbcode")
     def test_max_pool2d_pt2e(self):
         kernel_list = [2, 3]
@@ -1554,7 +1559,6 @@ class TestQuantizedOps(TestCase):
                              msg="ops.quantized.max_pool2d input output diff memory format")
             self.assertEqual(a_pool, a_hat,
                              msg="ops.quantized.max_pool2d results are off")
-
 
     """Tests 3D max pool operation on quantized tensors."""
     def test_max_pool3d(self):
@@ -1778,7 +1782,6 @@ class TestQuantizedOps(TestCase):
         X, (scale, zero_point, torch_type) = X
         H, W = X.shape[-2:]
 
-
         if X.shape[1] < 176:
             X = np.repeat(X, 176 / X.shape[1], 1)
 
@@ -1891,7 +1894,6 @@ class TestQuantizedOps(TestCase):
         """
         X, (scale, zero_point, torch_type) = X
         D, H, W = X.shape[-3:]
-
 
         if X.shape[1] < 176:
             X = np.repeat(X, 176 / X.shape[1], 1)
@@ -2754,7 +2756,6 @@ class TestQuantizedOps(TestCase):
                     qy = torch.ops.quantized.batch_norm3d_relu(
                         qx, weight, bias, mean, var, eps, Y_scale, Y_zero_point)
 
-
                 float_ref = F.batch_norm(qx.dequantize(), weight=weight, bias=bias,
                                          running_mean=mean, running_var=var,
                                          training=False, momentum=0, eps=eps).numpy()
@@ -3545,7 +3546,6 @@ class TestDynamicQuantizedOps(TestCase):
 
             self.assertEqual(out, ref)
 
-
     @skipIfNoFBGEMM
     def test_unpacked_qlinear_dynamic_fp16_opcheck(self):
         qlinear_dynamic = torch.ops.quantized.linear_dynamic_fp16_unpacked_weight.default
@@ -3614,7 +3614,6 @@ class TestDynamicQuantizedOps(TestCase):
         compiled_out = compiled(x, w)
 
         self.assertEqual(ref_out, compiled_out)
-
 
     """Tests the correctness of the dynamic quantized lstm/gru."""
 
@@ -4929,9 +4928,6 @@ class TestQuantizedEmbeddingOps(TestCase):
             self.assertEqual(unpacked_weight.q_per_channel_scales(), qweight.q_per_channel_scales())
             self.assertEqual(unpacked_weight.q_per_channel_zero_points(), qweight.q_per_channel_zero_points())
 
-
-
-
     def _test_embedding_bag_unpack_fn(self, pack_fn, unpack_fn, num_embeddings, embedding_dim, bit_rate,
                                       optimized_qparams, num_batches, data_type=np.float32):
 
@@ -4947,8 +4943,6 @@ class TestQuantizedEmbeddingOps(TestCase):
         split_weights = torch.split(unsplit_weight, 1, dim=split_dim)
         for weight in split_weights:
             self._test_embedding_bag_unpack_impl(pack_fn, unpack_fn, bit_rate, optimized_qparams, weight)
-
-
 
     def embedding_bag_rowwise_offsets_run(
             self, bit_rate, num_embeddings,
@@ -5051,7 +5045,6 @@ class TestQuantizedEmbeddingOps(TestCase):
             per_sample_weights, indices, offsets)
 
         torch.testing.assert_close(reference_result, result, atol=atol, rtol=rtol)
-
 
         if bit_rate == 8 or bit_rate == 4:
             # Test operator that accepts TorchBind packed weights.
@@ -6127,7 +6120,6 @@ class TestQuantizedConv(TestCase):
                                                     dtype=X_qdtype)
                 Y_q = qconv_op(X_q)
                 self.assertEqual(Y_q_ref, Y_q)
-
 
     """Tests the correctness of quantized convolution op."""
     @given(batch_size=st.integers(1, 3),
@@ -8113,7 +8105,6 @@ class TestQuantizedConv(TestCase):
         pointwise_post_op = PointwisePostOp()
         self._test_qconv_fp8_helper(1, pointwise_post_op)
 
-
     @unittest.skipIf(IS_FBCODE, "Skip pt2e ops in fbcode")
     @skipIfNoONEDNN
     def test_qconv1d_relu_fp8(self):
@@ -8168,7 +8159,6 @@ class TestQuantizedConv(TestCase):
         pointwise_post_op = PointwisePostOp()
         torch.manual_seed(0)  # For reproducibility in 3D conv tests
         self._test_qconv_fp8_helper(3, pointwise_post_op)
-
 
 
 class TestPadding(TestCase):
@@ -8491,7 +8481,6 @@ class TestQNNPackOps(TestCase):
                 np.testing.assert_equal(qCrelu.int_repr().numpy(), qCrelu_hat.int_repr(),
                                         "Quantized addition with ReLU failed.")
 
-
     """Tests that quantized add works with broadcasting """
     def test_qnnpack_add_broadcast(self):
         def _run_test(A, B):
@@ -8638,7 +8627,6 @@ class TestQNNPackOps(TestCase):
             np.testing.assert_array_almost_equal(a_pool_q.int_repr().numpy(),
                                                  qa_pool.int_repr().numpy(), decimal=0)
 
-
     @given(batch_size=st.integers(1, 5),
            channels=st.sampled_from([2, 4, 5, 8, 16, 32]),
            height=st.integers(4, 20),
@@ -8685,7 +8673,6 @@ class TestQNNPackOps(TestCase):
                                                  dtype=torch.quint8)
             np.testing.assert_array_almost_equal(a_pool_q.int_repr().numpy(),
                                                  qa_pool.int_repr().numpy(), decimal=0)
-
 
     @given(batch_size=st.integers(1, 5),
            channels=st.sampled_from([2, 4, 5, 8, 16, 32]),
@@ -8734,7 +8721,10 @@ class TestQNNPackOps(TestCase):
                     qY, qY_hat,
                     msg=f"hardtanh failed:\nactual {qY_hat}\nexpected {qY}\nmemory_format {memory_format}")
 
+
 """Tests the correctness of the tensor comparators."""
+
+
 class TestComparatorOps(TestCase):
     """Tests the element-wise equality ops."""
     @given(A=hu.tensor(shapes=((3, 4, 5),),
@@ -8806,7 +8796,10 @@ class TestComparatorOps(TestCase):
             self.assertEqual(result_ref, result,
                              msg=f"'tensor.{op}(scalar)'' failed")
 
+
 """Tests the correctness of the quantized::embedding_bag_(byte|4bit|2bit)_prepack_with_rowwise_min_max ops."""
+
+
 class TestQuantizedWithMinMax(TestCase):
     """Validates that the *rowwsie_min_max* quantization functions are equivalent to the ones without it."""
     def test_quantize_tensor_with_min_max(self):
@@ -8866,6 +8859,7 @@ class TestQuantizedWithMinMax(TestCase):
                     assert not torch.equal(
                         weight_incorrectly_quantized, weight_quantized_no_rowwise_min_max
                     )
+
 
 if __name__ == "__main__":
     raise_on_run_directly("test/test_quantization.py")

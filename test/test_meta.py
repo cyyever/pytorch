@@ -344,6 +344,7 @@ class TestMetaConverter(TestCase):
         del m
         self.assertIs(ref(), None)
 
+
 aten = torch.ops.aten
 
 CHECK_STRIDES = {
@@ -394,10 +395,12 @@ CHECK_CONJ_SKIPS = {
     aten.linalg_lu_solve.out,
 }
 
+
 class CheckStrides(Enum):
     NONE = 0
     SIGNIFICANT = 1
     ALL = 2
+
 
 def should_check_strides(func):
     if func in CHECK_ALL_STRIDES:
@@ -417,6 +420,7 @@ def should_check_strides(func):
         return CheckStrides.SIGNIFICANT
     # TODO: check for TensorIterator
     return CheckStrides.SIGNIFICANT
+
 
 def assert_ref_meta_equal(test_case, func, meta_rs, rs, msg_callable):
     flat_meta_rs = pytree.tree_leaves(meta_rs)
@@ -470,6 +474,8 @@ COLLECT_EXPECT = os.getenv('PYTORCH_COLLECT_EXPECT', '0') == '1'
 seen_succeeded = {}
 seen_failed = {}
 failed_reasons = defaultdict(set)
+
+
 def print_seen():
     expected_failures = []
     skips = []
@@ -502,11 +508,14 @@ skips = {{
 {nl.join(skips)}
 }}
 """)
+
+
 if COLLECT_EXPECT:
     atexit.register(print_seen)
 
 # Success forces pass; failure forces fail; skip unconditionally skips testing
 TestExpect = Enum("TestExpect", ("SUCCESS", "XFAILURE", "SKIP"))
+
 
 # unlike print produce strides
 def verbose_print(e):
@@ -526,6 +535,7 @@ def verbose_print(e):
             return t
 
     return repr(tree_map(go, e))
+
 
 def run_meta_crossref(
     test_case,
@@ -654,7 +664,6 @@ meta disagrees with real impl:
     return rs
 
 
-
 RE_NOT_IMPLEMENTED_MSG = re.compile(r"Could not run '([^']+)' with arguments ")
 
 meta_function_expected_failures = {
@@ -771,6 +780,7 @@ meta_function_device_skips['cuda'] = {
     torch.svd: {f32, f64},
 }
 
+
 # This is a __torch_function__ mode that, when enabled, interposes every
 # Torch API call and runs the operator as normal, and then reruns it
 # with meta inputs, and then checks that everything about the output agrees.
@@ -826,6 +836,7 @@ class MetaCrossRefFunctionMode(torch.overrides.TorchFunctionMode):
             self.test_case, test_expect, func, args,
             kwargs, dtype=self.dtype, device_type=self.device_type, run_symbolic_meta=False
         )
+
 
 # these always fail
 meta_dispatch_expected_failures = {
@@ -933,6 +944,7 @@ meta_dispatch_device_skips['cuda'] = {
     aten.miopen_batch_norm.default: {f32},
 }
 
+
 def get_strided_args(args):
 
     def get_strided_variants(t, include_storage_offset=False):
@@ -980,6 +992,7 @@ def get_strided_args(args):
         strided_args.append(strided_arg_variants)
 
     yield from itertools.product(*strided_args)
+
 
 class MetaCrossRefDispatchMode(torch.utils._python_dispatch.TorchDispatchMode):
     test_case: TestCase
@@ -1135,6 +1148,7 @@ class MetaCrossRefDispatchMode(torch.utils._python_dispatch.TorchDispatchMode):
 
         return expected
 
+
 # NB: we're running these tests only on CUDA because there are some
 # inconsistencies between CUDA and CPU, and running on CUDA makes it easier
 # to ignore the CPU case when inconsistencies arise.  Ideally we deal
@@ -1262,7 +1276,6 @@ class TestMeta(TestCase):
                     if not inplace and isinstance(expected, torch.Tensor) and op.supports_out:
                         func(*args, **kwargs, out=expected)
 
-
     @skipIfCrossRef
     @suppress_warnings
     @ops(itertools.chain(op_db, foreach_op_db))
@@ -1280,7 +1293,6 @@ class TestMeta(TestCase):
     @ops(itertools.chain(op_db, foreach_op_db))
     def test_dispatch_symbolic_meta_outplace(self, device, dtype, op):
         self._run_dispatch_meta_test(device, dtype, op, symbolic_meta=True, inplace=False)
-
 
     @skipIfCrossRef
     @suppress_warnings
@@ -1327,7 +1339,6 @@ class TestMeta(TestCase):
         op.sample_inputs_func = sample_input
 
         self._run_dispatch_meta_test(device, dtype, op, symbolic_meta=True, inplace=False)
-
 
     def test_empty_quantized(self):
         r = torch.empty(2 ** 52, device='meta', dtype=torch.qint8)
@@ -1706,7 +1717,6 @@ class TestMeta(TestCase):
             self.assertEqual(ref_out.size(), meta_out.size())
             self.assertEqual(ref_out.stride(), meta_out.stride())
 
-
     def test_map_location_deserialize(self):
         import io
 
@@ -1807,7 +1817,6 @@ class TestMeta(TestCase):
         self.assertEqual(nz.shape, torch.Size([24, 3]))
         self.assertEqual(nz.stride(), torch.Size([1, 24]))
 
-
     def test_stride_for_index_Tensor(self):
         from torch._subclasses import FakeTensorMode
         x = torch.randn((24, 16, 32, 32)).to(memory_format=torch.channels_last)
@@ -1826,7 +1835,6 @@ class TestMeta(TestCase):
             f_out = f_x[f_i1, f_i2]
 
         self.assertEqual(out.stride(), f_out.stride())
-
 
     @parametrize("in_dtype", [torch.float32, torch.float16])
     @parametrize("bias_dtype", [torch.float32, torch.float16, None])
@@ -1864,7 +1872,9 @@ class TestMeta(TestCase):
         else:
             self.assertEqual(out_dtype, [in_dtype,])
 
+
 instantiate_device_type_tests(TestMeta, globals())
+
 
 def print_op_str_if_not_supported(op_str):
     op = OperatorName.parse(op_str)

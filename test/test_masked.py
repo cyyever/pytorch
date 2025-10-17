@@ -395,7 +395,6 @@ class TestMasked(TestCase):
                             [Z, 11, F, F, F]])
         tmp = to_sparse(tmp)
 
-
         sparse = torch.masked._where(mask, input,
                                      torch.tensor(fill_value, dtype=input.dtype, device=input.device))
 

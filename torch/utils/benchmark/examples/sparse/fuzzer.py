@@ -8,6 +8,7 @@ import sys
 
 import torch.utils.benchmark as benchmark_utils
 
+
 def main():
     add_fuzzer = benchmark_utils.Fuzzer(
         parameters=[
@@ -96,6 +97,7 @@ def main():
     print("\n" + template.format("Worst:"))
     for m in measurements[-10:]:
         print(f"{time_fn(m) * 1e9:>5.2f} ns / element     {m.description}")
+
 
 if __name__ == "__main__":
     main()

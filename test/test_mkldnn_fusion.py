@@ -13,14 +13,17 @@ from test_tensorexpr import warmup_and_run_forward
 
 FUSION_GROUP = 'prim::TensorExprGroup'
 
+
 class PointwisePostOp(NamedTuple):
     attr : str
     pointwise_module : nn.Module
     scalars : list = []
     algorithm : str = ""
 
+
 CONV_MODULES = {2: torch.nn.Conv2d, 3: torch.nn.Conv3d}
 CONV_TRANSPOSE_MODULES = {2: torch.nn.ConvTranspose2d}
+
 
 @skipIfTorchDynamo("too slow")
 @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKL-DNN build is disabled")
@@ -224,7 +227,6 @@ class TestMkldnnFusion(JitTestCase):
                     )
                     self.assertEqual(ref, fused)
 
-
     def test_conv_unary_fusion_ops(self):
         class M(nn.Module):
             def __init__(self, unary_fn, dim, in_channels, out_channels, dilation, groups, bias, **kwargs):
@@ -259,7 +261,6 @@ class TestMkldnnFusion(JitTestCase):
                             mod.conv.groups, attr, scalars, algorithm
                         )
                     self.assertEqual(ref, fused)
-
 
     def test_conv_binary_fusion_ops(self):
         class M(nn.Module):
@@ -307,7 +308,6 @@ class TestMkldnnFusion(JitTestCase):
                             self.assertEqual(ref, fused_inplace)
 
                         self.assertEqual(ref, fused, atol=5e-4, rtol=5e-4)
-
 
     def test_linear_binary_fusion_ops(self):
         class M(nn.Module):
@@ -400,6 +400,7 @@ class TestMkldnnFusion(JitTestCase):
                             scalars,
                             algorithm)
                     self.assertEqual(ref, fused)
+
 
 if __name__ == "__main__":
     run_tests()

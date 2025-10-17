@@ -51,6 +51,7 @@ assert torch.get_default_dtype() is torch.float32
 if TEST_SCIPY:
     import scipy
 
+
 def blaslt_supported_device():
     if torch.cuda.is_available():
         if torch.version.hip:
@@ -66,6 +67,7 @@ def blaslt_supported_device():
         else:
             return True
     return False
+
 
 def tunableop_matmul(device, dtype, result_filename=None, offline=False):
     # Helper function to test TunableOp in a subprocess
@@ -87,10 +89,12 @@ def tunableop_matmul(device, dtype, result_filename=None, offline=False):
     C = torch.matmul(A, B)
     del os.environ["PYTORCH_TUNABLEOP_ENABLED"]
 
+
 def get_tunableop_validators():
     assert len(torch.cuda.tunable.get_validators()) > 0
     validators = dict(torch.cuda.tunable.get_validators())
     return validators
+
 
 def find_tunableop_result(results, OpSig, ParamSig):
     assert isinstance(results, tuple)
@@ -99,6 +103,7 @@ def find_tunableop_result(results, OpSig, ParamSig):
             return inner_tuple
     return None
 
+
 def get_tunableop_untuned_filename():
     import os
     ordinal = torch.cuda.current_device()
@@ -106,6 +111,7 @@ def get_tunableop_untuned_filename():
     untuned_filename_base, _, _ = untuned_filename_env.rpartition('.')
     untuned_filename = f"{untuned_filename_base}{ordinal}.csv"
     return untuned_filename
+
 
 class TestLinalg(TestCase):
     def setUp(self):
@@ -603,7 +609,6 @@ class TestLinalg(TestCase):
         else:
             with self.assertRaisesRegex(RuntimeError, r'parameter `driver` should be one of \(gels, gelsy, gelsd, gelss\)'):
                 torch.linalg.lstsq(a, b, driver='fictitious_driver')
-
 
     @skipCUDAIfNoMagma
     @skipCPUIfNoLapack
@@ -1451,7 +1456,6 @@ class TestLinalg(TestCase):
                             dim,
                             keepdim,
                             norm_dtype)
-
 
     def test_vector_norm_decom_unbacked_checks(self):
         from torch._refs.linalg import _check_vector_norm_args
@@ -4239,7 +4243,6 @@ class TestLinalg(TestCase):
         self.assertTrue(result.is_contiguous())
         self.assertEqual(result.stride(), expected.stride())
 
-
     def test_einsum_corner_cases(self, device):
         def check(equation, *operands, expected_output):
             tensors = [torch.tensor(operand, device=device, dtype=torch.float32) if not isinstance(operand, tuple)
@@ -5087,7 +5090,6 @@ class TestLinalg(TestCase):
         torch.cuda.tunable.set_rotating_buffer_size(-1)
         self.assertEqual(torch.cuda.tunable.get_rotating_buffer_size(), l2_cache_size)
 
-
     @onlyCUDA
     @skipCUDAIfNotRocm
     @dtypes(torch.float)
@@ -5253,7 +5255,6 @@ class TestLinalg(TestCase):
             # the this test and verify that it agrees with the number of
             # GEMMs.
             self.assertEqual((total_num_results - ref_num_results), count_matmul)
-
 
     @onlyCUDA
     @dtypes(torch.float)
@@ -5536,7 +5537,6 @@ class TestLinalg(TestCase):
                 self.assertTrue(found_result is not None)
                 self.assertTrue('Rocblas' not in found_result)
 
-
                 # Now disable TF32
                 torch.backends.cuda.matmul.allow_tf32 = False
 
@@ -5633,7 +5633,6 @@ class TestLinalg(TestCase):
         finally:
             # Disable TF32
             torch.backends.cuda.matmul.allow_tf32 = False
-
 
     @onlyCUDA
     @skipCUDAIfNotRocm
@@ -5858,11 +5857,9 @@ class TestLinalg(TestCase):
             results_filename = torch.cuda.tunable.get_filename()
             self.assertTrue(os.path.exists(results_filename))
 
-
             # Compare Param Signature of untuned and tuned results
             ok = self._compare_untuned_tuned_entries()
             self.assertTrue(ok)
-
 
     @onlyCUDA
     @skipCUDAIfNotRocm
@@ -5944,7 +5941,6 @@ class TestLinalg(TestCase):
                 result_lines = [l for l in content.split('\n')
                                 if l and not l.startswith('Validator')]
                 self.assertGreater(len(result_lines), 0)
-
 
     @onlyCUDA
     @skipCUDAIfNotRocm
@@ -6062,7 +6058,6 @@ class TestLinalg(TestCase):
                 torch.cuda.tunable.set_numerical_check_tolerances(True, atol, rtol)
                 C_numeric = a @ b
             self.assertTrue(torch.allclose(C_baseline, C_numeric, atol=atol, rtol=rtol))
-
 
     @dtypes(torch.float, torch.complex64)
     def test_matmul_out_kernel_errors_with_autograd(self, device, dtype):
@@ -7326,7 +7321,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
             torch.cuda.tunable.set_rotating_buffer_size(0)
             torch.cuda.tunable.set_max_tuning_iterations(1)
             self._test_addmm_impl(torch._addmm_activation, "relu", device, dtype)
-
 
     @precisionOverride({torch.double: 1e-8, torch.float: 1e-4, torch.bfloat16: 5e-2,
                         torch.half: 5e-2, torch.cfloat: 1e-4, torch.cdouble: 1e-8})
@@ -9997,6 +9991,7 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
         expect = torch.from_numpy(
             a_strided.cpu().numpy() @ b_strided.cpu().numpy()).to(device=device, dtype=dtype)
         self.assertEqual(expect, res)
+
 
 instantiate_device_type_tests(TestLinalg, globals())
 

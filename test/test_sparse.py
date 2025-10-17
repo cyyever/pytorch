@@ -36,6 +36,7 @@ from torch.testing._internal.opinfo.refs import (
     ReductionPythonRefInfo
 )
 
+
 def _op_supports_any_sparse(op):
     return (op.supports_sparse
             or op.supports_sparse_csr
@@ -70,6 +71,7 @@ CUSPARSE_SPMM_COMPLEX128_SUPPORTED = (
 
 HIPSPARSE_SPMM_COMPLEX128_SUPPORTED = torch.version.hip and version.parse(torch.version.hip.split("-")[0]) >= version.parse("6.0")
 
+
 def all_sparse_layouts(test_name='layout', include_strided=False):
     return parametrize(test_name, [
         subtest(torch.strided, name='Strided'),
@@ -79,6 +81,7 @@ def all_sparse_layouts(test_name='layout', include_strided=False):
         subtest(torch.sparse_bsr, name='SparseBSR'),
         subtest(torch.sparse_bsc, name='SparseBSC'),
     ][(0 if include_strided else 1):])
+
 
 def gradcheck_semantics(test_name='gradcheck'):
     gradcheck_sparse = functools.partial(gradcheck, masked=False)
@@ -112,6 +115,7 @@ class CrossRefSparseFakeMode(torch._subclasses.CrossRefFakeMode):
             torch.ops.aten.values.default,
             torch.ops.aten._values.default,
         )
+
 
 class TestSparseLegacyAndDeprecation(TestCase):
 
@@ -174,6 +178,7 @@ class TestSparseBase(TestCase):
                 return super().run(result)
         else:
             return super().run(result)
+
 
 class TestSparse(TestSparseBase):
 
@@ -1219,7 +1224,6 @@ class TestSparse(TestSparseBase):
                 dense_result = torch.select(x.to_dense(), select_dim, select_index)
                 self.assertEqual(dense_result, result)
 
-
         sizes = [5, 7, 11, 13, 17]
         # hybrid sparse/dense, select sparse dim, result is dense
         for i in range(sizes[0]):
@@ -1638,7 +1642,6 @@ class TestSparse(TestSparseBase):
     def test_sparse_addmm(self, device, dtype, coalesced):
         if (dtype is torch.bfloat16 or dtype is torch.float16) and device.startswith("cuda"):
             self.skipTest('addmm_sparse_cuda is not implemented for BFloat16 and Half')
-
 
         def test_shape(m, n, p, nnz, broadcast, alpha_beta=None):
             if alpha_beta is None:
@@ -3682,7 +3685,6 @@ class TestSparse(TestSparseBase):
         test_op(3, 100, [3, 4, 2, 3, 5, 2], coalesced)
         test_op(4, 100, [3, 4, 2, 3, 5, 2], coalesced)
 
-
     def _check_zero_nnz_softmax_op(self, func, ndim, device, dtype):
         # create a sparse tensor with shape (0,..., 3) it has no materialize values
         t = torch.sparse_coo_tensor([[] for _ in range(ndim)], [], (0,) * (ndim - 1) + (3,), device=device, dtype=dtype)
@@ -3692,7 +3694,6 @@ class TestSparse(TestSparseBase):
         # gradient
         t = t.requires_grad_()
         gradcheck(lambda x: func(x, 0).to_dense(), (t,), masked=True)
-
 
     @dtypes(torch.double, torch.float)
     @dtypesIfMPS(torch.float32)
@@ -4140,7 +4141,6 @@ class TestSparse(TestSparseBase):
             yield (make_diags((2, 5)), make_offsets([0, 0]), (5, 5)), "Offset tensor contains duplicate values"
             yield (make_diags((1, 5)), make_offsets([0]).to(torch.int32), (5, 5)), r"Offset Tensor must have dtype Long but got \w+"
 
-
         for case, error_regex in invalid_cases():
             check_invalid(case, error_regex)
 
@@ -4231,9 +4231,10 @@ def _sparse_to_dense(tensor):
 
 _sparse_unary_ops = ops(mps_ops_modifier(sparse_unary_ufuncs, sparse=True), dtypes=OpDTypes.supported,
                         allowed_dtypes=all_types_and_complex())
+
+
 class TestSparseUnaryUfuncs(TestCase):
     exact_dtype = True
-
 
     @_sparse_unary_ops
     def test_sparse_consistency(self, device, dtype, op):
@@ -5307,7 +5308,6 @@ class TestSparseAny(TestCase):
                                 " is not supported"):
                             x_sparse.to_sparse(sparse_dim_out)
 
-
     @onlyNativeDeviceTypes
     @suppress_warnings
     @ops(like_fns_with_sparse_support)
@@ -5553,7 +5553,6 @@ class TestSparseAny(TestCase):
                 pass
             else:
                 assert 0  # unreachable
-
 
     @unittest.skipIf(not torch.cuda.is_available(), 'requires cuda')
     @onlyCPU

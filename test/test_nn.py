@@ -1833,7 +1833,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         check_weight_norm(torch.nn.LSTM(32, 32), 'weight_ih_l0', 4)
         check_weight_norm(torch.nn.LSTM(32, 32, proj_size=16), 'weight_hr_l0', 5)
 
-
     def test_weight_norm(self):
         for dtype in [torch.float, torch.bfloat16, torch.float16]:
             input = torch.randn(3, 4, dtype=dtype)
@@ -2893,7 +2892,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         self.assertRaises(Exception, lambda: lstm(input, (hx, cx)))
         self.assertRaises(Exception, lambda: lstm(input, (cx, hx)))
 
-
     @unittest.skipIf(not TEST_CUDA, 'CUDA not available')
     def test_pack_sequence_batch_sizes_throw(self):
         with self.assertRaisesRegex(ValueError, r"batch_sizes should always be on CPU"):
@@ -3606,7 +3604,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
             output_cpu = rnn(input.cpu(), hx)
             self.assertEqual(output_cuda, output_cpu)
 
-
     def test_transformer_args_check(self):
         model_name = 'Transformer'
         d_model = 128
@@ -3678,7 +3675,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
                       src_is_causal=src_is_causal,
                       tgt_is_causal=tgt_is_causal,
                       memory_is_causal=memory_is_causal)
-
 
         correct_encoder_input_shape = (seq_len, bsz, d_model)
         correct_decoder_input_shape = (tgt_len, bsz, d_model)
@@ -3763,7 +3759,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         with self.assertRaises(RuntimeError):
             model = getattr(nn, model_name)(d_model, nhead, num_encoder_layers, num_decoder_layers,
                                             dim_feedforward, dropout, wrong_activation)
-
 
     def test_transformer_layer_args_check(self):
         model_names = ['TransformerEncoderLayer', 'TransformerDecoderLayer']
@@ -4485,7 +4480,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
             output.backward(grad_output)
             self.assertEqual(grad_output, grad_output_clone)
 
-
     def test_pixel_shuffle_unshuffle(self):
         def _test_pixel_shuffle_unshuffle_helper(num_input_dims, valid_channels_dim=True,
                                                  upscale_factor=None):
@@ -5154,7 +5148,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         self.assertTrue(torch.equal(running_mean, bn.running_mean))
         self.assertTrue(torch.equal(running_var, bn.running_var))
 
-
     @unittest.skipIf(not torch.cuda.is_available(), "CUDA not available")
     @parametrize_test("dims", [2, 3], name_fn=lambda x: f"{x}D")
     @parametrize_test("mode", ["train", "inference"], name_fn=lambda x: x)
@@ -5713,7 +5706,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         out = F.cosine_similarity(a, b)
         self.assertEqual(out, torch.ones(2, dtype=torch.float))
 
-
     def test_grid_sample_error_checking(self):
         input = torch.empty(1, 1, 2, 2)
         grid = torch.empty(1, 1, 1, 2)
@@ -5884,7 +5876,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
 
                     gradients = torch.randn_like(out_cpu)
                     out_cpu.backward(gradients)
-
 
                     # Compare against unvectorized CPU fallback
 
@@ -6868,7 +6859,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
                     for is_channels_last in (True, False):
                         helper(size, dtype, mode, device, is_channels_last)
 
-
     @set_default_dtype(torch.double)
     def test_interpolate(self):
         def _test_interpolate_non_integer_size_warning(in_t, out_size, dim, **kwargs):
@@ -7430,7 +7420,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         ln = torch.nn.LayerNorm(2, eps=1e-6, elementwise_affine=False)
         self.assertEqual(ln.forward(x), torch.zeros_like(x))
 
-
     @unittest.skipIf(not TEST_CUDA, "CUDA not available")
     def test_layer_norm_backwards_eps(self):
         dtype = torch.float
@@ -7530,6 +7519,7 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
         with warnings.catch_warnings(record=True) as w:
             pickle.loads(pickle.dumps(torch.nn.Linear(10, 10)))
         self.assertEqual(len(w), 0)
+
 
 class TestFusionEval(TestCase):
     @set_default_dtype(torch.double)
@@ -7687,6 +7677,7 @@ def add_test(test, decorator=None):
             add(cuda_test_name + '_tf32', with_tf32_on)
         else:
             add(cuda_test_name, with_tf32_off)
+
 
 for test_params in module_tests + get_new_module_tests():
     # TODO: CUDA is not implemented yet
@@ -7848,10 +7839,12 @@ add_test(NewModuleTest(
     check_gradgrad=False,
     default_dtype=torch.double,))
 
+
 class _AdaptiveLogSoftmaxWithLoss(nn.AdaptiveLogSoftmaxWithLoss):
     def __call__(self, input):
         t = torch.tensor([0, 1, 4, 8]).to(input.device)
         return nn.AdaptiveLogSoftmaxWithLoss.__call__(self, input, t).output
+
 
 add_test(NewModuleTest(
     constructor=lambda: _AdaptiveLogSoftmaxWithLoss(16, 10, [2, 6]),
@@ -8632,7 +8625,6 @@ class TestNNDeviceType(NNTestCase):
                         self.assertEqual(affine_tensor[0, i, r, c], grid_out[:3], exact_dtype=False)
 
             self.assertEqual(scipy_ary, gridsample_ary.reshape_as(scipy_ary))
-
 
     @onlyCUDA
     @dtypes(torch.float, torch.half)
@@ -10849,7 +10841,6 @@ class TestNNDeviceType(NNTestCase):
 
         run_test(1024 * 256 + 1, 8192)  # https://github.com/pytorch/pytorch/issues/84144
 
-
     @dtypes(torch.float)
     @dtypesIfCUDA(torch.float, torch.half)
     def test_log_softmax_big(self, device, dtype):
@@ -12334,8 +12325,6 @@ if __name__ == '__main__':
         """)
         self.assertIn('CUDA error: device-side assert triggered', stderr)
 
-
-
     def test_cross_entropy_loss_prob_target_all_reductions(self, device):
         # Test with k-dimensional loss.
         for k in range(5):
@@ -12500,7 +12489,6 @@ if __name__ == '__main__':
 
                 self.assertEqual(output_with_smoothing, output_with_manual_smoothing)
 
-
     def test_cross_entropy_label_smoothing_weight_ignore_indices(self, device):
         reductions = ['none', 'sum', 'mean']
         label_smoothings = [0.05, 0.15]
@@ -12620,7 +12608,6 @@ if __name__ == '__main__':
             gradgradcheck(func, [x], check_fwd_over_rev=True)
             if device == 'cpu':
                 test_dtype(func, x, torch.bfloat16)
-
 
     def test_logsigmoid_out(self, device):
         # this isn't actually documented, but was broken previously:
@@ -13162,7 +13149,6 @@ if __name__ == '__main__':
                 # Fast Paths
                 self.assertTrue(np.isnan(result).all())
 
-
             # deterministic input
             encoder_input = perm_fn(torch.tensor([[[1., 2., 3., 4.]],
                                                   [[5., 6., 7., 8.]]], device=device, dtype=dtype))
@@ -13278,7 +13264,6 @@ if __name__ == '__main__':
                 else:
                     torch.testing.assert_close(result, ref_output)
 
-
         for batch_first in (True, False):
             for training in (True, False):
                 if training:
@@ -13320,7 +13305,6 @@ if __name__ == '__main__':
         # Provide both masks
         with torch.no_grad():
             model(src, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask)
-
 
     @dtypes(torch.float)
     @dtypesIfCUDA(torch.half, torch.float)
@@ -13744,6 +13728,7 @@ class TestFusionUtils(TestCase):
                                        bn.running_mean, bn.running_var, bn.eps, bn.weight, bn.bias)
             self.assertEqual(weight.requires_grad, w_rg)
             self.assertEqual(bias.requires_grad, b_rg)
+
 
 class TestUtils(TestCase):
     def test_consume_prefix_in_state_dict_if_present(self):

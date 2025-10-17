@@ -15,11 +15,13 @@ supported_qengines = torch.backends.quantized.supported_engines
 if 'qnnpack' in supported_qengines and any([IS_PPC, TEST_WITH_TSAN, IS_MACOS, IS_WINDOWS]):
     supported_qengines.remove('qnnpack')
 
+
 def _conv_output_shape(input_size, kernel_size, padding, stride, dilation,
                        output_padding=0):
     """Computes the output shape given convolution parameters."""
     return np.floor((input_size + 2 * padding - kernel_size - (kernel_size - 1)
                      * (dilation - 1)) / stride) + 2 * output_padding + 1
+
 
 # Quantization references
 def _quantize(x, scale, zero_point, qmin=None, qmax=None, dtype=np.uint8):
@@ -46,6 +48,7 @@ def _requantize(x, multiplier, zero_point, qmin=0, qmax=255, qtype=np.uint8):
     qx = (x * multiplier).round() + zero_point
     qx = np.clip(qx, qmin, qmax).astype(qtype)
     return qx
+
 
 def _calculate_dynamic_qparams(X, dtype, reduce_range=False, qscheme=torch.per_tensor_affine):
     """Calculate the dynamic quantization parameters (scale, zero_point)
@@ -88,6 +91,7 @@ def _calculate_dynamic_qparams(X, dtype, reduce_range=False, qscheme=torch.per_t
             zero_point = min(qmax, zero_point)
     return [float(scale), int(zero_point)]
 
+
 def _calculate_dynamic_per_channel_qparams(X, dtype):
     """Calculate the dynamic quantization parameters (scale, zero_point)
     according to the min and max element of the tensor"""
@@ -113,6 +117,7 @@ def _calculate_dynamic_per_channel_qparams(X, dtype):
             zero_point[i] = min(qmax, zero_point[i])
 
     return scale, zero_point
+
 
 def _snr(x, x_hat):
     """Calculates the signal to noise ratio and returns the signal and noise
@@ -141,6 +146,7 @@ def _snr(x, x_hat):
     snr_db = 20 * snr.log10()
     return signal, noise, snr_db
 
+
 @contextmanager
 def override_quantized_engine(qengine):
     previous = torch.backends.quantized.engine
@@ -149,6 +155,7 @@ def override_quantized_engine(qengine):
         yield
     finally:
         torch.backends.quantized.engine = previous
+
 
 @contextmanager
 def override_cpu_allocator_for_qnnpack(qengine_is_qnnpack):
@@ -159,6 +166,7 @@ def override_cpu_allocator_for_qnnpack(qengine_is_qnnpack):
     finally:
         if qengine_is_qnnpack:
             torch._C._unset_default_mobile_cpu_allocator()
+
 
 # TODO: Update all quantization tests to use this decorator.
 # Currently for some of the tests it seems to have inconsistent params
@@ -171,14 +179,22 @@ def override_qengines(qfunction):
                 qfunction(*args, **kwargs)
     return test_fn
 
+
 def qengine_is_fbgemm():
     return torch.backends.quantized.engine == 'fbgemm'
+
+
 def qengine_is_qnnpack():
     return torch.backends.quantized.engine == 'qnnpack'
+
+
 def qengine_is_onednn():
     return torch.backends.quantized.engine == 'onednn'
+
+
 def qengine_is_x86():
     return torch.backends.quantized.engine == 'x86'
+
 
 # Helper function used to simulate per-channel fake-quant against any axis
 def _permute_to_axis_zero(X, axis):
@@ -187,6 +203,7 @@ def _permute_to_axis_zero(X, axis):
     new_axis_list[0] = axis
     y = X.permute(tuple(new_axis_list))
     return y, new_axis_list
+
 
 # Reference method for fake quantize
 # Note: because scale/zero_point are left as float in the actual kernel, this mimics how fake_quant works for float16/64
@@ -202,6 +219,7 @@ def _fake_quantize_per_channel_affine_reference(X, per_channel_scale, per_channe
     out = res.permute(tuple(permute_axis_list))
     return out.to(dtype)
 
+
 # Reference method for the gradient of the fake quantize operator
 # Note: because scale/zero_point are left as float in the actual kernel, this mimics how fake_quant works for float16/64
 def _fake_quantize_per_channel_affine_grad_reference(dY, X, per_channel_scale, per_channel_zero_point, axis, quant_min, quant_max):
@@ -216,6 +234,7 @@ def _fake_quantize_per_channel_affine_grad_reference(dY, X, per_channel_scale, p
     res[mask] = dY[mask]
     return res.to(dtype)
 
+
 def to_tensor(X, device):
     if not isinstance(X, torch.Tensor):
         X = torch.tensor(X)
@@ -223,13 +242,16 @@ def to_tensor(X, device):
         X = X.detach().clone()
     return X.to(device=torch.device(device), dtype=torch.float32)
 
+
 # copy-pasted from
 # https://github.com/pytorch/ao/blob/bc4f51da86956275da7db0da6e420c506df97820/torchao/prototype/custom_fp_utils.py#L27C1-L142C29
 def _n_ones(n: int) -> int:
     return (1 << n) - 1
 
+
 EBITS_F32, MBITS_F32 = 8, 23
 F32_EXP_BIAS = _n_ones(EBITS_F32 - 1)
+
 
 # copy-pasted from
 # https://github.com/pytorch/ao/blob/bc4f51da86956275da7db0da6e420c506df97820/torchao/prototype/custom_fp_utils.py#L27C1-L142C29
@@ -443,9 +465,11 @@ def _floatx_unpacked_to_f32(x: Tensor, ebits: int, mbits: int) -> Tensor:
 
     return result.view(torch.float)
 
+
 # copied from https://github.com/drisspg/transformer_nuggets/blob/main/transformer_nuggets/mx/to_blocked.py
 def ceil_div(a, b):
     return (a + b - 1) // b
+
 
 def to_blocked(input_matrix) -> torch.Tensor:
     """
@@ -479,6 +503,7 @@ def to_blocked(input_matrix) -> torch.Tensor:
     rearranged = blocks.reshape(-1, 4, 32, 4).transpose(1, 2).reshape(-1, 32, 16)
 
     return rearranged.flatten()
+
 
 # This function is extracted from https://github.com/pytorch/ao/blob/v0.12.0/torchao/prototype/mx_formats/mx_tensor.py#L142
 def to_mxfp8(
@@ -549,6 +574,7 @@ def to_mxfp8(
     scale_e8m0_biased = scale_e8m0_biased.view(torch.float8_e8m0fnu)
     scale_e8m0_biased = scale_e8m0_biased.squeeze(-1)
     return scale_e8m0_biased, data_lp
+
 
 # Source: https://github.com/pytorch/ao/blob/568c1932a16ae9f30d48da214a88dc0013e98ed8/torchao/prototype/moe_training/utils.py#L310
 def generate_jagged_offs(E, M, multiple_of=16, dtype=torch.int32, device="cuda"):

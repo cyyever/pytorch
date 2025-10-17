@@ -32,10 +32,13 @@ def unpack_variables(args):
     else:
         return args
 
+
 class dont_convert(tuple):
     __slots__ = ()
 
+
 non_differentiable = collections.namedtuple('non_differentiable', ['tensor'])
+
 
 def create_input(call_args, requires_grad=True, non_contiguous=False, call_kwargs=None, dtype=torch.float, device=None):
     if not isinstance(call_args, tuple):
@@ -79,6 +82,7 @@ def create_input(call_args, requires_grad=True, non_contiguous=False, call_kwarg
     args_out = tuple(map_arg(arg) for arg in call_args)
     kwargs_out = {k: map_arg(v) for k, v in call_kwargs.items()} if call_kwargs else {}
     return args_out, kwargs_out
+
 
 # NB: JIT script tests for all nn functional interfaces, script mode does
 # not support in_place operations yet, so no inplace operation tests added.
@@ -318,10 +322,12 @@ def get_nn_functional_tests():
     ]
     return nn_functional_tests
 
+
 script_template = '''
 def the_method({}):
     return {}
 '''
+
 
 def value_to_literal(value):
     if isinstance(value, str):
@@ -331,6 +337,7 @@ def value_to_literal(value):
         return 'torch.' + str(value)
     else:
         return str(value)
+
 
 def get_call(method_name, func_type, args, kwargs):
     kwargs_str = ', '.join([k + '=' + value_to_literal(v) for k, v in kwargs.items()])
@@ -353,12 +360,14 @@ def get_call(method_name, func_type, args, kwargs):
 
     return call
 
+
 def get_constant(x):
     if x == inf:
         return 'math.inf'
     if x == -inf:
         return '-math.inf'
     return x
+
 
 def get_script_args(args):
     formals: list[str] = []
@@ -381,6 +390,7 @@ def get_script_args(args):
             actuals.append(str(get_constant(arg)))
     return (formals, tensors, actuals)
 
+
 # create a script function from (name, func_type, output_process_fn),
 # and returns the compiled function and example inputs
 def gen_script_fn_and_args(method_name, func_type, *args, **kwargs):
@@ -389,6 +399,7 @@ def gen_script_fn_and_args(method_name, func_type, *args, **kwargs):
     script = script_template.format(', '.join(formals), call)
     CU = torch.jit.CompilationUnit(script)
     return CU.the_method, tensors
+
 
 # create a script function from (name, func_type),
 # returns a function takes in (args, kwargs) and runs the compiled function
@@ -403,6 +414,7 @@ def create_script_fn(self, method_name, func_type):
         script_fn.last_graph = fn.graph_for(*tensors)  # type: ignore[attr-defined]
         return output
     return script_fn
+
 
 class SplitInputs:
     all_tensors: list[Any]
@@ -441,6 +453,7 @@ class SplitInputs:
             return False
         return True
 
+
 # make a new function where all non-tensor arguments in 'args' have been partially
 # applied, and all tensor arguments remain.
 # used to trace functions when some arguments are not tensors
@@ -454,6 +467,7 @@ def partial_apply_nontensors(fn, args, kwargs):
         return fn(*full_args, **full_kwargs)
 
     return new_fn, inputs
+
 
 # create a trace function from input fn
 def create_traced_fn(self, fn, cache_traced_fn=False):
@@ -480,6 +494,7 @@ def create_traced_fn(self, fn, cache_traced_fn=False):
         return output
     return traced_fn
 
+
 # known to be failing in script
 EXCLUDE_SCRIPT = {
     'test_norm_fro_default',
@@ -501,6 +516,7 @@ EXCLUDE_SCRIPT = {
     'test_to_sparse',
     'test_to_sparse_dim',
 }
+
 
 # generates a script function and set of example inputs
 # from a specified test in the format of nn_functional_tests
@@ -525,7 +541,6 @@ def get_nn_functional_compiled_fn_and_inputs(name, self_size, args, variant_name
     return script_fn, inputs
 
 
-
 EXCLUDE_SCRIPT_MODULES = {
     'test_nn_AdaptiveAvgPool2d_tuple_none',
     'test_nn_AdaptiveAvgPool3d_tuple_none',
@@ -546,6 +561,7 @@ script_method_template = '''
 def forward({}):
     return {}
 '''
+
 
 def create_script_module(self, nn_module, constructor_args, *args, **kwargs):
     def script_module(*args, **kwargs):
@@ -584,6 +600,7 @@ def create_script_module(self, nn_module, constructor_args, *args, **kwargs):
         return module
     return script_module
 
+
 def check_alias_annotation(method_name, args, kwargs, *, aten_name, func_type='method'):
     formals, tensors, actuals = get_script_args(args)
     call = get_call(method_name, func_type, actuals, kwargs)
@@ -594,6 +611,7 @@ def check_alias_annotation(method_name, args, kwargs, *, aten_name, func_type='m
     torch._C._jit_pass_constant_propagation(CU.the_method.graph)
     torch._C._jit_check_alias_annotation(CU.the_method.graph, tuple(tensors), aten_name)
 
+
 def get_nn_module_name_from_kwargs(**kwargs):
     if 'module_name' in kwargs:
         return kwargs['module_name']
@@ -601,6 +619,7 @@ def get_nn_module_name_from_kwargs(**kwargs):
         return kwargs['fullname']
     elif 'constructor' in kwargs:
         return kwargs['constructor'].__name__
+
 
 def get_nn_mod_test_name(**kwargs):
     if 'fullname' in kwargs:
@@ -611,6 +630,7 @@ def get_nn_mod_test_name(**kwargs):
             test_name = f"{test_name}_{kwargs['desc']}"
     return f'test_nn_{test_name}'
 
+
 def get_nn_module_class_from_kwargs(**kwargs):
     name = get_nn_module_name_from_kwargs(**kwargs)
     index = name.find("_")
@@ -618,6 +638,7 @@ def get_nn_module_class_from_kwargs(**kwargs):
         return name
     else:
         return name[0:name.find("_")]
+
 
 def try_get_nn_module_compiled_mod_and_inputs(*args, **kwargs):
     name = get_nn_module_name_from_kwargs(**kwargs)
@@ -672,7 +693,6 @@ def try_get_nn_module_compiled_mod_and_inputs(*args, **kwargs):
     args_variable, _kwargs_variable = create_input(input, dtype=input_dtype)
     f_args_variable = deepcopy(unpack_variables(args_variable))
     out_var = deepcopy(f_args_variable)
-
 
     _args, mod = f_args_variable, create_script_module(
         None, nn_module, constructor_args, *f_args_variable

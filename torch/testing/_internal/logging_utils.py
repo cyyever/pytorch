@@ -13,6 +13,7 @@ from torch._inductor import config as inductor_config
 import logging
 import io
 
+
 @contextlib.contextmanager
 def preserve_log_state():
     prev_state = torch._logging._internal._get_log_state()
@@ -23,6 +24,7 @@ def preserve_log_state():
         torch._logging._internal._set_log_state(prev_state)
         torch._logging._internal._init_logs()
 
+
 def log_settings(settings):
     exit_stack = contextlib.ExitStack()
     settings_patch = unittest.mock.patch.dict(os.environ, {"TORCH_LOGS": settings})
@@ -30,6 +32,7 @@ def log_settings(settings):
     exit_stack.enter_context(settings_patch)
     torch._logging._internal._init_logs()
     return exit_stack
+
 
 def log_api(**kwargs):
     exit_stack = contextlib.ExitStack()
@@ -96,10 +99,10 @@ def make_logging_test(**kwargs):
             with log_api(**kwargs), self._handler_watcher(records):
                 fn(self, records)
 
-
         return test_fn
 
     return wrapper
+
 
 def make_settings_test(settings):
     def wrapper(fn):
@@ -113,6 +116,7 @@ def make_settings_test(settings):
         return test_fn
 
     return wrapper
+
 
 class LoggingTestCase(torch._dynamo.test_case.TestCase):
     @classmethod

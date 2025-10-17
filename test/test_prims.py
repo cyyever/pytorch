@@ -34,6 +34,7 @@ if TEST_SCIPY:
 NVPRIM_ATEN_FALLBACK_WARNING = "fallback to aten executor"
 GET_ISOLATED_GRAPHMODULE_ERROR = "get_isolated_graphmodule failed on decomposition"
 
+
 class TestPrims(TestCase):
     @onlyCUDA
     @dtypes(torch.float32)
@@ -154,7 +155,6 @@ class TestPrims(TestCase):
                 with self.assertRaises(AssertionError):
                     fn(t, start, end)
 
-
     def test_aten_overload_to_prims(self, device):
         # This test is to ensure that the torch.ops.aten calls are replaced with refs
         from torch.fx.experimental.proxy_tensor import make_fx
@@ -271,7 +271,6 @@ class TestPrims(TestCase):
         result_refs = refs.view(a, *new_shape)
         self.assertEqual(result_eager, result_refs)
 
-
     @onlyCUDA
     @dtypes(torch.float32)
     def test_philox_rand(self, device, dtype):
@@ -300,14 +299,12 @@ class TestPrims(TestCase):
             for a, b in zip(references, results):
                 self.assertEqual(a, b)
 
-
     @dtypes(torch.float32)
     def test_functional_rng_wrappers(self, device, dtype):
 
         torch.manual_seed(123)
         ref1 = torch.rand(10, device=device, dtype=dtype)
         ref2 = torch.rand(10, device=device, dtype=dtype)
-
 
         torch.manual_seed(123)
         rng_state1, res1 = torch._prims.rng_prims.run_and_save_rng_state(torch.rand, 10, device=device, dtype=dtype)
@@ -320,6 +317,7 @@ class TestPrims(TestCase):
         self.assertEqual(ref2, res2)
         self.assertEqual(ref1, res3)
         self.assertEqual(ref2, res4)
+
 
 class TestPrimsBasic(TestCase):
     def test_torch_ops(self):
@@ -422,7 +420,6 @@ class TestRefs(TestCase):
 
     def test_inferred_tags(self):
         self.assertEqual(torch.ops.prims.normal.default.tags, (torch.Tag.nondeterministic_seeded, torch.Tag.pt2_compliant_tag))
-
 
 
 instantiate_device_type_tests(TestRefs, globals())

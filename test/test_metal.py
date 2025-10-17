@@ -7,6 +7,7 @@ from torch.testing._internal.common_utils import TestCase, run_tests
 from torch.testing import FileCheck
 import io
 
+
 class TestMetalRewritePass(TestCase):
     @staticmethod
     def validate_transformed_module(
@@ -119,7 +120,6 @@ class TestMetalRewritePass(TestCase):
             prepack_removal=True,
             fuse_clamping_ops=True)
 
-
         class Conv2DHardtanh(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
@@ -155,6 +155,7 @@ class TestMetalRewritePass(TestCase):
             data_shape,
             prepack_removal=True,
             fuse_clamping_ops=True)
+
 
 if __name__ == "__main__":
     run_tests()
