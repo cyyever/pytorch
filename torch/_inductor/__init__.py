@@ -8,8 +8,6 @@ from typing import Any, IO, Literal, Optional, TYPE_CHECKING, Union
 
 import torch.fx
 
-from .standalone_compile import CompiledArtifact  # noqa: TC001
-
 
 if TYPE_CHECKING:
     from torch._inductor.utils import InputType
@@ -17,6 +15,8 @@ if TYPE_CHECKING:
     from torch.export.pt2_archive._package import AOTICompiledModel
     from torch.export.pt2_archive._package_weights import Weights
     from torch.types import FileLike
+
+    from .standalone_compile import CompiledArtifact
 
 __all__ = [
     "compile",

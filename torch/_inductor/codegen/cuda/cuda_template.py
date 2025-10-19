@@ -24,9 +24,7 @@ from .cutlass_utils import DTYPE_TO_CUTLASS_TYPE
 
 
 if TYPE_CHECKING:
-    from ...scheduler import BaseSchedulerNode  # noqa: TC004
-else:
-    BaseSchedulerNode = Any
+    from ...scheduler import BaseSchedulerNode
 
 GemmOperation = Any
 
@@ -218,7 +216,7 @@ class CUDATemplate(KernelTemplate):
 
         def make_kernel_render(
             template_node: CUDATemplateBuffer,
-            epilogue_nodes: Optional[list[BaseSchedulerNode]] = None,
+            epilogue_nodes: Optional[list["BaseSchedulerNode"]] = None,
         ) -> tuple[CUDATemplateKernel, functools.partial[str]]:
             assert supports_epilogue_fusion or not epilogue_nodes, (
                 "epilogue fusion is not supported for this kernel"

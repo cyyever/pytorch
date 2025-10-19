@@ -206,10 +206,10 @@ _NodeOrNodes: TypeAlias = Union[
     int,
     "TensorBox",
     dict[str, "TensorBox"],
-    "Symbol",
+    Symbol,
     "IRNode",
     Sequence[
-        Optional[Union[int, dict[str, "TensorBox"], "TensorBox", "Symbol", "IRNode"]]
+        Optional[Union[int, dict[str, "TensorBox"], "TensorBox", Symbol, "IRNode"]]
     ],
 ]
 

@@ -2,7 +2,7 @@
 import copy
 import logging
 import random
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from typing_extensions import override
 
 from torch._inductor.virtualized import V
@@ -19,9 +19,6 @@ if ck4inductor is not None:
     from ck4inductor.grouped_conv_fwd.gen_instances import (  # type: ignore[import]
         gen_conv_ops_library,
     )
-    from ck4inductor.grouped_conv_fwd.op import (  # type: ignore[import]  # noqa: TCH002
-        CKGroupedConvFwdOp,
-    )
 else:
 
     def gen_conv_ops_library():
@@ -32,6 +29,12 @@ from torch._inductor import config
 from torch._inductor.codegen.rocm.ck_template import CKTemplate
 from torch._inductor.codegen.rocm.rocm_kernel import ROCmTemplateKernel
 from torch._inductor.utils import IndentedBuffer
+
+
+if TYPE_CHECKING:
+    from ck4inductor.grouped_conv_fwd.op import (
+        CKGroupedConvFwdOp,  # type: ignore[import]
+    )
 
 
 log = logging.getLogger(__name__)
