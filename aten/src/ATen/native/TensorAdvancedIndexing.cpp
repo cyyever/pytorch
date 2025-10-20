@@ -1242,7 +1242,7 @@ TORCH_IMPL_FUNC(index_add_cpu_out)
         TORCH_CHECK_INDEX(
             (self_i >= 0) && (self_i < self_dim_size),
             "index out of range in self");
-        auto self_data = static_cast<char*>(selfSlice.data_ptr()) +
+        auto self_data = static_cast<const char*>(selfSlice.data_ptr()) +
             self_i * self_stride_bytes;
         auto source_data =
             static_cast<const char*>(sourceSlice.const_data_ptr()) +
@@ -1378,7 +1378,7 @@ static void index_reduce_func_impl(
         TORCH_CHECK_INDEX(
             (self_i >= 0) && (self_i < self_dim_size),
             "index out of range in self");
-        auto self_data = static_cast<char*>(selfSlice.data_ptr()) +
+        auto self_data = static_cast<const char*>(selfSlice.data_ptr()) +
             self_i * self_stride_bytes;
         auto source_data =
             static_cast<const char*>(sourceSlice.const_data_ptr()) +
@@ -1540,7 +1540,7 @@ static Tensor& index_select_out_cpu_dim1_(
   const caffe2::TypeMeta dataType = self_contig.dtype();
   size_t item_bytesize = dataType.itemsize();
 
-  auto out = static_cast<char*>(result_contig.data_ptr());
+  auto out = static_cast<const char*>(result_contig.data_ptr());
 
   auto src_base = static_cast<const char*>(self_contig.const_data_ptr());
 
@@ -1703,7 +1703,7 @@ Tensor& index_select_out_cpu_(
                       "index out of range in self");
                   auto self_data = static_cast<const char*>(selfSlice_data) +
                       self_i * self_stride_bytes;
-                  auto result_data = static_cast<char*>(resultSlice_data) +
+                  auto result_data = static_cast<const char*>(resultSlice_data) +
                       i * result_stride_bytes;
                   sub_iter.unsafe_replace_operand(0, result_data);
                   sub_iter.unsafe_replace_operand(
@@ -1758,7 +1758,7 @@ Tensor& index_select_out_cpu_(
                       auto self_data =
                           static_cast<const char*>(selfSlice_data) +
                           self_i * self_stride_bytes;
-                      auto result_data = static_cast<char*>(resultSlice_data) +
+                      auto result_data = static_cast<const char*>(resultSlice_data) +
                           i * result_stride_bytes;
                       memcpy(result_data, self_data, slice_size_bytes);
                     }

@@ -12,12 +12,12 @@ namespace {
 // return false for expanded tensors and permuted tensors, for which dimensional
 // collapsing is safe.
 bool possible_cross_dimension_overlap(c10::IntArrayRef sizes, c10::IntArrayRef strides) {
-  int n_dim = static_cast<int>(sizes.size());
+  auto n_dim = sizes.size();
   std::vector<size_t> stride_indices(n_dim);
   std::iota(stride_indices.rbegin(), stride_indices.rend(), 0);
 
   // sort indices going with ascending strides
-  for (int i = 1; i < n_dim; i++) {
+  for (size_t i = 1; i < n_dim; i++) {
     auto c = i;
     for (int j = i - 1; j >= 0; j--) {
       if (strides[stride_indices[j]] > strides[stride_indices[c]]) {
@@ -151,7 +151,7 @@ VaryingShape<Stride> TensorType::computeStrideProps(
     at::IntArrayRef sizes,
     at::IntArrayRef strides,
     bool tensor_contiguity) {
-  int n_dim = static_cast<int>(sizes.size());
+  auto n_dim = sizes.size();
   std::vector<size_t> stride_indices(n_dim);
   // default has_overlap to false as we only compute overlap when:
   // 1. input sizes/strides fails format check;
@@ -203,9 +203,9 @@ VaryingShape<Stride> TensorType::computeStrideProps(
       }
       return 0;
     };
-    for (int i = 1; i < n_dim; i++) {
-      int dim1 = i;
-      for (int dim0 = i - 1; dim0 >= 0; dim0--) {
+    for (size_t i = 1; i < n_dim; i++) {
+      size_t dim1 = i;
+      for (size_t dim0 = i - 1; dim0 >= 0; dim0--) {
         int comparison = should_swap(stride_indices[dim0], stride_indices[dim1]);
         if (comparison > 0) {
           std::swap(stride_indices[dim0], stride_indices[dim1]);
