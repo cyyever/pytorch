@@ -73,7 +73,7 @@ Tensor nested_from_padded_cuda(
       if (do_transform_0213) {
         remove_padding_transform0213_kernelLauncher(
             padded_contiguous.const_data_ptr<float>(),
-            output.data_ptr<float>(),
+            output.mutable_data_ptr<float>(),
             offsets_ptr,
             input_size_ptr,
             output_size_ptr,
@@ -82,7 +82,7 @@ Tensor nested_from_padded_cuda(
       } else {
         remove_padding_kernelLauncher(
             padded_contiguous.const_data_ptr<float>(),
-            output.data_ptr<float>(),
+            output.mutable_data_ptr<float>(),
             offsets_ptr,
             input_size_ptr,
             output_size_ptr,
@@ -93,7 +93,7 @@ Tensor nested_from_padded_cuda(
       if (do_transform_0213) {
         remove_padding_transform0213_kernelLauncher(
             padded_contiguous.const_data_ptr<c10::Half>(),
-            output.data_ptr<c10::Half>(),
+            output.mutable_data_ptr<c10::Half>(),
             offsets_ptr,
             input_size_ptr,
             output_size_ptr,
@@ -102,7 +102,7 @@ Tensor nested_from_padded_cuda(
       } else {
         remove_padding_kernelLauncher(
             padded_contiguous.const_data_ptr<c10::Half>(),
-            output.data_ptr<c10::Half>(),
+            output.mutable_data_ptr<c10::Half>(),
             offsets_ptr,
             input_size_ptr,
             output_size_ptr,
@@ -201,7 +201,7 @@ Tensor NestedTensor_to_padded_tensor_cuda(
         nt_buffer.scalar_type(), "NestedTensor_to_padded_tensor_cuda", [&]() {
           add_padding_kernelLauncher(
               nt_buffer.const_data_ptr<scalar_t>(),
-              output.data_ptr<scalar_t>(),
+              output.mutable_data_ptr<scalar_t>(),
               (scalar_t)(padding),
               offsets.const_data_ptr<int>(),
               nt_sizes.const_data_ptr<int>(),

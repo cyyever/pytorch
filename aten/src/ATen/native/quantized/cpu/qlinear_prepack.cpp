@@ -98,7 +98,7 @@ c10::intrusive_ptr<LinearPackedParamsBase> PackedLinearWeight::prepack(
   }
 
   int8_t* weight_ptr_int8 =
-      reinterpret_cast<int8_t*>(weight_contig.data_ptr<c10::qint8>());
+      reinterpret_cast<int8_t*>(weight_contig.mutable_data_ptr<c10::qint8>());
 
   std::vector<int32_t> col_offsets(N);
   calc_col_offsets_transpose(
@@ -198,7 +198,7 @@ c10::intrusive_ptr<LinearPackedParamsBase> PackedLinearWeightFp16::prepack(
   const int64_t K = weight.size(1);
   const int64_t N = weight.size(0);
   at::Tensor weight_contig = weight.contiguous();
-  float* weight_contig_ptr = weight_contig.data_ptr<float>();
+  float* weight_contig_ptr = weight_contig.mutable_data_ptr<float>();
 
   // TODO(mingzhe09088):
   // Consider using a functor here in PackedGemmMatrixFP16
@@ -361,7 +361,7 @@ namespace at::native {
 
 at::Tensor _saturate_weight_to_fp16(const Tensor& weight) {
   Tensor weight_contig = weight.contiguous();
-  float* weight_contig_ptr = weight_contig.data_ptr<float>();
+  float* weight_contig_ptr = weight_contig.mutable_data_ptr<float>();
   quant_utils::HandleWeightsSaturation(weight.size(0) * weight.size(1), weight_contig_ptr);
   return weight;
 }
