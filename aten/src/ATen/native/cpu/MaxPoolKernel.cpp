@@ -263,8 +263,8 @@ void cpu_max_pool(
   auto indices = indices_.contiguous();
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
-  auto indices_data = indices.data_ptr<int64_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
+  auto indices_data = indices.mutable_data_ptr<int64_t>();
 
   int64_t ndim = input.ndimension();
   // treat batch size and channels as one dimension
@@ -393,8 +393,8 @@ void cpu_max_pool_channels_last(
   auto indices = indices_.contiguous(memory_format);
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
-  auto indices_data = indices.data_ptr<int64_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
+  auto indices_data = indices.mutable_data_ptr<int64_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);

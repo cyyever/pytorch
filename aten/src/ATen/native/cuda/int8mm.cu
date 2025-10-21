@@ -43,10 +43,10 @@ void launch_weight_int8pack_mm_cuda_kernel(
   auto stream = at::cuda::getCurrentCUDAStream();
 
   weight_int8pack_mm_kernel<<<grid, block, 0, stream>>>(
-      x.data_ptr<float>(),
-      w_int8.data_ptr<int8_t>(),
-      scale.data_ptr<float>(),
-      out.data_ptr<float>(),
+      x.mutable_data_ptr<float>(),
+      w_int8.mutable_data_ptr<int8_t>(),
+      scale.mutable_data_ptr<float>(),
+      out.mutable_data_ptr<float>(),
       B,
       K,
       N);

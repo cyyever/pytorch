@@ -1277,7 +1277,7 @@ TORCH_IMPL_FUNC(index_add_cpu_out)
           auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
           auto source_stride = source.dim() == 0 ? 1 : source.stride(dim);
           // TODO: Maybe TensorAccessor can be used here?
-          auto* result_ptr = result.data_ptr<scalar_t>();
+          auto* result_ptr = result.mutable_data_ptr<scalar_t>();
           auto* source_ptr = source.const_data_ptr<scalar_t>();
           AT_DISPATCH_INDEX_TYPES(
               index_contig.scalar_type(),
@@ -1437,9 +1437,9 @@ static void index_reduce_func_impl(
           auto source_stride = source.dim() == 0 ? 1 : source.stride(dim);
           auto counts_stride = counts.dim() == 0 ? 1 : counts.stride(dim);
           // TODO: Maybe TensorAccessor can be used here?
-          auto* result_ptr = result.data_ptr<scalar_t>();
+          auto* result_ptr = result.mutable_data_ptr<scalar_t>();
           auto* source_ptr = source.const_data_ptr<scalar_t>();
-          auto counts_ptr = counts.data_ptr<scalar_t>();
+          auto counts_ptr = counts.mutable_data_ptr<scalar_t>();
           AT_DISPATCH_INDEX_TYPES(
               index_contig.scalar_type(),
               "index_func_cpu_",
@@ -1787,7 +1787,7 @@ Tensor& index_select_out_cpu_(
             auto self_stride = self.dim() == 0 ? 1 : self.stride(dim);
             auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
             auto self_data_ptr = self.const_data_ptr<scalar_t>();
-            auto result_data_ptr = result.data_ptr<scalar_t>();
+            auto result_data_ptr = result.mutable_data_ptr<scalar_t>();
             auto self_numel = self.numel();
             AT_DISPATCH_INDEX_TYPES(
                 index_contig.scalar_type(),
@@ -1820,7 +1820,7 @@ Tensor& index_select_out_cpu_(
             auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
 
             auto self_data_ptr = self.const_data_ptr<scalar_t>();
-            auto result_data_ptr = result.data_ptr<scalar_t>();
+            auto result_data_ptr = result.mutable_data_ptr<scalar_t>();
             auto self_numel = self.numel();
             AT_DISPATCH_INDEX_TYPES(
                 index_contig.scalar_type(),
@@ -2575,8 +2575,8 @@ static Tensor& masked_select_out_impl_cpu(
   auto mask_long =
       at::empty(shape, self.options().dtype(at::kLong)).copy_(*_mask);
   auto mask_prefix_sum = at::empty(shape, self.options().dtype(at::kLong));
-  auto mask_long_data = mask_long.data_ptr<int64_t>();
-  auto mask_prefix_sum_data = mask_prefix_sum.data_ptr<int64_t>();
+  auto mask_long_data = mask_long.mutable_data_ptr<int64_t>();
+  auto mask_prefix_sum_data = mask_prefix_sum.mutable_data_ptr<int64_t>();
   // TODO: Here can only use std::partial_sum for C++14,
   // use std::exclusive_scan when PyTorch upgrades to C++17, which have better
   // performance. std::exclusive_scan(mask_long_data, mask_long_data +

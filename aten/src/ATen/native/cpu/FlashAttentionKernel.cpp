@@ -433,12 +433,12 @@ void cpu_flash_attention(
   const scalar_t* k_data = key.const_data_ptr<scalar_t>();
   const scalar_t* v_data = value.const_data_ptr<scalar_t>();
   mask_t* mask_data = has_attn_mask
-      ? attn_mask.value().data_ptr<mask_t>()
+      ? attn_mask.value().mutable_data_ptr<mask_t>()
       : nullptr;
-  scalar_t* out_data = output.data_ptr<scalar_t>();
-  accum_t* lse_data = logsumexp.data_ptr<accum_t>();
-  accum_t* buf_data = buf.data_ptr<accum_t>();
-  scalar_t* buf_reduced_data = is_reduced_type ? buf_reduced.data_ptr<scalar_t>() : nullptr;
+  scalar_t* out_data = output.mutable_data_ptr<scalar_t>();
+  accum_t* lse_data = logsumexp.mutable_data_ptr<accum_t>();
+  accum_t* buf_data = buf.mutable_data_ptr<accum_t>();
+  scalar_t* buf_reduced_data = is_reduced_type ? buf_reduced.mutable_data_ptr<scalar_t>() : nullptr;
 
   // Buffer to store padding query and packing key/value
   scalar_t* key_reorder_ptr = nullptr;
@@ -455,15 +455,15 @@ void cpu_flash_attention(
     value_t_reorder = at::empty(
       {batchSize, kv_num_head, kv_padding_size, headSize},
       c10::CppTypeToScalarType<scalar_t>::value);
-    key_reorder_ptr = key_t_reorder.data_ptr<scalar_t>();
-    value_reorder_ptr = value_t_reorder.data_ptr<scalar_t>();
+    key_reorder_ptr = key_t_reorder.mutable_data_ptr<scalar_t>();
+    value_reorder_ptr = value_t_reorder.mutable_data_ptr<scalar_t>();
   }
 
   if (!headSize_even && need_pack) {
     qeury_t_padding = at::empty(
       {num_thread, qSplitSize, eheadSize},
       c10::CppTypeToScalarType<scalar_t>::value);
-    query_padding_ptr = qeury_t_padding.data_ptr<scalar_t>();
+    query_padding_ptr = qeury_t_padding.mutable_data_ptr<scalar_t>();
   }
 
   // Reorder K, V
@@ -471,7 +471,7 @@ void cpu_flash_attention(
     at::Tensor tranpose_t_reorder = at::empty(
       {num_thread, kvSplitSize, headSize},
       c10::CppTypeToScalarType<scalar_t>::value);
-    scalar_t* transpose_buffer_ptr = tranpose_t_reorder.data_ptr<scalar_t>();
+    scalar_t* transpose_buffer_ptr = tranpose_t_reorder.mutable_data_ptr<scalar_t>();
     at::parallel_for(0, batchSize * kv_num_head * kvSlice, 1, [&](int64_t begin, int64_t end) {
         int ompIdx = at::get_thread_num();
         int64_t i = 0, kv_j = 0, l = 0, n = 0;
@@ -862,20 +862,20 @@ void cpu_flash_attention_backward(
 
   at::Tensor buf_reduced = at::empty({num_thread, is_reduced_type ? size_per_thread_reduced : 0}, query.options());
 
-  scalar_t* grad_q_data = grad_q.data_ptr<scalar_t>();
-  scalar_t* grad_k_data = grad_k.data_ptr<scalar_t>();
-  scalar_t* grad_v_data = grad_v.data_ptr<scalar_t>();
+  scalar_t* grad_q_data = grad_q.mutable_data_ptr<scalar_t>();
+  scalar_t* grad_k_data = grad_k.mutable_data_ptr<scalar_t>();
+  scalar_t* grad_v_data = grad_v.mutable_data_ptr<scalar_t>();
   const scalar_t* grad_out_data = grad_out.const_data_ptr<scalar_t>();
   const scalar_t* q_data = query.const_data_ptr<scalar_t>();
   const scalar_t* k_data = key.const_data_ptr<scalar_t>();
   const scalar_t* v_data = value.const_data_ptr<scalar_t>();
   mask_t* mask_data = has_attn_mask
-      ? attn_mask.value().data_ptr<mask_t>()
+      ? attn_mask.value().mutable_data_ptr<mask_t>()
       : nullptr;
   const scalar_t* out_data = out.const_data_ptr<scalar_t>();
   const accum_t* lse_data = logsumexp.const_data_ptr<accum_t>();
-  accum_t* buf_data = buf.data_ptr<accum_t>();
-  scalar_t* buf_reduced_data = is_reduced_type ? buf_reduced.data_ptr<scalar_t>() : nullptr;
+  accum_t* buf_data = buf.mutable_data_ptr<accum_t>();
+  scalar_t* buf_reduced_data = is_reduced_type ? buf_reduced.mutable_data_ptr<scalar_t>() : nullptr;
 
   at::parallel_for(0, batchSize * kv_num_head, 1, [&](int64_t begin, int64_t end) {
     int64_t i = 0, kv_j = 0;
@@ -889,7 +889,7 @@ void cpu_flash_attention_backward(
     scalar_t* grad_attn_reduced_data = is_reduced_type ? attn_reduced_data + qSplitSize * kvSplitSize : nullptr;
 
     at::Tensor dsum = at::empty({qSplitSize}, query.options().dtype(accumulate_dtype));
-    accum_t* dsum_data = dsum.data_ptr<accum_t>();
+    accum_t* dsum_data = dsum.mutable_data_ptr<accum_t>();
     for ([[maybe_unused]] auto z : c10::irange(begin, end)) {
       for (int64_t r = 0; r < repeat_factor; r++) {
         int64_t j = kv_j * repeat_factor + r;

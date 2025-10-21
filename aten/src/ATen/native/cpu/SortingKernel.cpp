@@ -111,8 +111,8 @@ void parallel_sort1d_kernel(
     const TensorBase& indices) {
   AT_DISPATCH_INTEGRAL_TYPES(values.scalar_type(), "parallel_sort1d_kernel", [&] {
     const auto elements = values.numel();
-    auto* const keys = values.data_ptr<scalar_t>();
-    auto* const vals = indices.data_ptr<int64_t>();
+    auto* const keys = values.mutable_data_ptr<scalar_t>();
+    auto* const vals = indices.mutable_data_ptr<int64_t>();
     std::vector<scalar_t> tmp_keys(elements);
     std::vector<int64_t> tmp_vals(elements);
     const scalar_t* sorted_keys = nullptr;

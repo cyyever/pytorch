@@ -280,11 +280,11 @@ void adam_fused_step_impl(
     const float* grad_scale_ptr) {
   using opmath_t = at::opmath_type<scalar_t>;
   double step = state_step.item<float>();
-  scalar_t* param_data = param.data_ptr<scalar_t>();
-  scalar_t* exp_avg_data = exp_avg.data_ptr<scalar_t>();
-  scalar_t* exp_avg_sq_data = exp_avg_sq.data_ptr<scalar_t>();
-  scalar_t* max_exp_avg_sq_data = amsgrad ? max_exp_avg_sq.data_ptr<scalar_t>() : nullptr;
-  scalar_t* grad_data = grad.data_ptr<scalar_t>();
+  scalar_t* param_data = param.mutable_data_ptr<scalar_t>();
+  scalar_t* exp_avg_data = exp_avg.mutable_data_ptr<scalar_t>();
+  scalar_t* exp_avg_sq_data = exp_avg_sq.mutable_data_ptr<scalar_t>();
+  scalar_t* max_exp_avg_sq_data = amsgrad ? max_exp_avg_sq.mutable_data_ptr<scalar_t>() : nullptr;
+  scalar_t* grad_data = grad.mutable_data_ptr<scalar_t>();
 
   // need to use double here to align with non-fused adam
   double bias_correction1 = 1 - std::pow(beta1, step);

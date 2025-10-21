@@ -38,7 +38,7 @@ void max_pool1d_impl(
       "max_pool1d_impl",
       [&] {
         const Tensor in = input.contiguous();
-        scalar_t* const OP = output.data_ptr<scalar_t>();
+        scalar_t* const OP = output.mutable_data_ptr<scalar_t>();
         const scalar_t* const IP = in.const_data_ptr<scalar_t>();
 
         // Value used for padding

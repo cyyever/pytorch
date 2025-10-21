@@ -115,7 +115,7 @@ at::Tensor construct_nested_strides(const at::Tensor& sizes) {
   }
   at::Tensor strides = sizes.new_empty(sizes.sizes());
   const int64_t* sizes_ptr = sizes.const_data_ptr<int64_t>();
-  int64_t* strides_ptr = strides.data_ptr<int64_t>();
+  int64_t* strides_ptr = strides.mutable_data_ptr<int64_t>();
   for (int64_t i = 0; i < sizes.size(0); i++) {
     strides_ptr[orig_dim - 1] = 1;
     int64_t product = sizes_ptr[orig_dim - 1];

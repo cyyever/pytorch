@@ -137,7 +137,7 @@ void cpu_padding(
   auto output = output_.contiguous();
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   // fold nbatch and channels into single dimension for channels first.
   int64_t channels = p.nbatch * p.channels;
@@ -244,7 +244,7 @@ void cpu_padding_channels_last(
   auto output = output_.contiguous(memory_format);
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = p.nbatch;
   int64_t channels = p.channels;
@@ -318,7 +318,7 @@ void cpu_padding_backward(
   auto grad_input = grad_input_.contiguous();
 
   auto grad_output_data = grad_output.const_data_ptr<scalar_t>();
-  auto grad_input_data = grad_input.data_ptr<scalar_t>();
+  auto grad_input_data = grad_input.mutable_data_ptr<scalar_t>();
 
   // fold nbatch and channels into single dimension for channels first.
   int64_t channels = p.nbatch * p.channels;
@@ -405,7 +405,7 @@ void cpu_padding_backward_channels_last(
   auto grad_input = grad_input_.contiguous(memory_format);
   auto grad_output = grad_output_.contiguous(memory_format);
 
-  auto grad_input_data = grad_input.data_ptr<scalar_t>();
+  auto grad_input_data = grad_input.mutable_data_ptr<scalar_t>();
   auto grad_output_data = grad_output.const_data_ptr<scalar_t>();
 
   int64_t nbatch = p.nbatch;

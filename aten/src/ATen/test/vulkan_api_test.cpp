@@ -45,8 +45,8 @@ bool almostEqual(const at::Tensor& a, const at::Tensor& b) {
 
 bool checkHardShrink(
     const at::Tensor& ref, const at::Tensor& out, const float clamp_thresh) {
-  float* ref_ptr = ref.data_ptr<float>();
-  float* out_ptr = out.data_ptr<float>();
+  float* ref_ptr = ref.mutable_data_ptr<float>();
+  float* out_ptr = out.mutable_data_ptr<float>();
   float ref_max = ref.abs().max().item<float>();
   float out_max = out.abs().max().item<float>();
   float max_val = std::fmax(ref_max, out_max);
@@ -85,8 +85,8 @@ bool checkThreshold(
     const at::Tensor& out,
     const float clamp_thresh,
     const float value) {
-  float* ref_ptr = ref.data_ptr<float>();
-  float* out_ptr = out.data_ptr<float>();
+  float* ref_ptr = ref.mutable_data_ptr<float>();
+  float* out_ptr = out.mutable_data_ptr<float>();
   float ref_max = ref.abs().max().item<float>();
   float out_max = out.abs().max().item<float>();
   float max_val = std::fmax(ref_max, out_max);

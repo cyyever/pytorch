@@ -500,7 +500,7 @@ Tensor _convolution_depthwise3x3_winograd(
   auto input_data = input.const_data_ptr<float>();
   auto kernel_data = kernel.const_data_ptr<float>();
   auto bias_data = bias.const_data_ptr<float>();
-  auto output_data = output.data_ptr<float>();
+  auto output_data = output.mutable_data_ptr<float>();
 
   at::parallel_for(0, args.batch * args.out_channels, 0, [&](int64_t start, int64_t end) {
     for (const auto k : c10::irange(start, end)) {

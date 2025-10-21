@@ -68,8 +68,8 @@ void bernoulli_scalar_kernel(const TensorBase &self, double p, std::optional<Gen
       tmp_int_tensor = at::empty(self.sizes(), self.options().dtype(at::kInt));
     }
 
-    scalar_t *self_ptr = self.data_ptr<scalar_t>();
-    int *sample_int_ptr = tmp_int_tensor.data_ptr<int>();
+    scalar_t *self_ptr = self.mutable_data_ptr<scalar_t>();
+    int *sample_int_ptr = tmp_int_tensor.mutable_data_ptr<int>();
 
     auto sample = [&](int64_t begin, int64_t end) {
       int64_t len = end - begin;
@@ -141,9 +141,9 @@ void exponential_kernel(TensorIteratorBase &iter, double lambda, std::optional<G
         tmp_tensor = at::empty(self.sizes(), self.options().dtype(at::kFloat));
       }
 
-      scalar_t *self_ptr = self.data_ptr<scalar_t>();
+      scalar_t *self_ptr = self.mutable_data_ptr<scalar_t>();
       using tmp_scalar_t = typename std::conditional_t<std::is_same_v<scalar_t, double>, double, float>;
-      tmp_scalar_t *sample_ptr = tmp_tensor.data_ptr<tmp_scalar_t>();
+      tmp_scalar_t *sample_ptr = tmp_tensor.mutable_data_ptr<tmp_scalar_t>();
 
       // Intel MKL vRngExponential variate originally does not exclude 0.
       // However, to align with pytorch exponential variate definition which excludes 0,

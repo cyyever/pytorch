@@ -364,7 +364,7 @@ void int8pack_mm_kernel_(
 
   const auto* A_data = A.const_data_ptr<T>();
   const auto* B_data = B.const_data_ptr<int8_t>();
-  auto* C_data = C.data_ptr<T>();
+  auto* C_data = C.mutable_data_ptr<T>();
   const auto* S_data = scales.const_data_ptr<T>();
 
   int64_t M = A.size(0);

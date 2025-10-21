@@ -113,8 +113,8 @@ static void apply_lu_factor_batched_cublas(const Tensor& A, const Tensor& pivots
   auto n = cuda_int_cast(A.size(-2), "n");
   auto lda = cuda_int_cast(std::max<int>(1, n), "lda");
 
-  auto pivots_data = get_pivots ? pivots.data_ptr<int>() : nullptr;
-  auto infos_data = infos.data_ptr<int>();
+  auto pivots_data = get_pivots ? pivots.mutable_data_ptr<int>() : nullptr;
+  auto infos_data = infos.mutable_data_ptr<int>();
   Tensor a_ptr_array = get_device_pointers<scalar_t>(A);
   auto a_ptr_array_data = reinterpret_cast<scalar_t**>(a_ptr_array.data_ptr());
 
@@ -164,8 +164,8 @@ static void apply_triangular_solve(const Tensor& A, const Tensor& B, bool left, 
   cublasSideMode_t side = left ? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT;
   cublasDiagType_t diag = unitriangular ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
 
-  auto A_data = A.data_ptr<scalar_t>();
-  auto B_data = B.data_ptr<scalar_t>();
+  auto A_data = A.mutable_data_ptr<scalar_t>();
+  auto B_data = B.mutable_data_ptr<scalar_t>();
   auto A_mat_stride = matrixStride(A);
   auto B_mat_stride = matrixStride(B);
   auto batch_size = batchCount(A);
@@ -275,7 +275,7 @@ inline void apply_gels_batched(const Tensor& A, Tensor& B, Tensor& infos) {
   auto A_ptr_array_data = reinterpret_cast<scalar_t**>(A_ptr_array.data_ptr());
   auto B_ptr_array_data = reinterpret_cast<scalar_t**>(B_ptr_array.data_ptr());
 
-  auto infos_data = infos.data_ptr<int>();
+  auto infos_data = infos.mutable_data_ptr<int>();
   auto handle = at::cuda::getCurrentCUDABlasHandle();
   int info;
 

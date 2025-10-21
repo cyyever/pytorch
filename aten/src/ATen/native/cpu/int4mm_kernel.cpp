@@ -619,7 +619,7 @@ void weight_to_int4pack_kernel(
     const Tensor& weight) {
 
   auto weight_packed_data = reinterpret_cast<uint8_t*>(weight_packed.data_ptr());
-  const auto weight_data = weight.data_ptr<int32_t>();
+  const auto weight_data = weight.mutable_data_ptr<int32_t>();
 
   int N = weight.size(0);
   int K = weight.size(1);
@@ -704,7 +704,7 @@ void int4pack_mm_kernel_(
 
   const auto* A_data = A.const_data_ptr<T>();
   const auto* B_data = reinterpret_cast<const uint8_t*>(B.const_data_ptr());
-  auto* C_data = C.data_ptr<T>();
+  auto* C_data = C.mutable_data_ptr<T>();
   const auto* S_data = qScaleAndZeros.const_data_ptr<T>();
 
   int M = A.size(0);

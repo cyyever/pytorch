@@ -23,7 +23,7 @@ void cpu_adaptive_avg_pool2d(
   auto output = output_.contiguous();
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t ndim = input.ndimension();
   // treat batch size and channels as one dimension
@@ -78,7 +78,7 @@ cpu_adaptive_avg_pool2d_channels_last(
   auto output = output_.contiguous(memory_format);
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);
@@ -165,7 +165,7 @@ cpu_adaptive_avg_pool2d_channels_last(
   auto output = output_.contiguous(memory_format);
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);
@@ -417,8 +417,8 @@ void cpu_adaptive_avg_pool3d(
   auto input = input_.contiguous();
   auto output = output_.contiguous();
 
-  auto input_data = input.data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto input_data = input.mutable_data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t ndim = input.ndimension();
   // treat batch size and channels as one dimension
@@ -483,8 +483,8 @@ cpu_adaptive_avg_pool3d_channels_last(
   auto input = input_.contiguous(memory_format);
   auto output = output_.contiguous(memory_format);
 
-  auto input_data = input.data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto input_data = input.mutable_data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);
@@ -579,8 +579,8 @@ cpu_adaptive_avg_pool3d_channels_last(
   auto input = input_.contiguous(memory_format);
   auto output = output_.contiguous(memory_format);
 
-  auto input_data = input.data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto input_data = input.mutable_data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);
@@ -685,7 +685,7 @@ void cpu_adaptive_avg_pool3d_backward(
   auto grad_output = grad_output_.contiguous();
   auto grad_input = grad_input_.contiguous();
 
-  auto grad_output_data = grad_output.data_ptr<scalar_t>();
+  auto grad_output_data = grad_output.mutable_data_ptr<scalar_t>();
   auto grad_input_data = grad_input.mutable_data_ptr<scalar_t>();
 
   int64_t ndim = grad_output.ndimension();
@@ -746,7 +746,7 @@ void cpu_adaptive_avg_pool3d_backward_channels_last(
   auto grad_output = grad_output_.contiguous(memory_format);
 
   auto grad_input_data = grad_input.mutable_data_ptr<scalar_t>();
-  auto grad_output_data = grad_output.data_ptr<scalar_t>();
+  auto grad_output_data = grad_output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = grad_input.size(0);
   int64_t channels = grad_input.size(1);

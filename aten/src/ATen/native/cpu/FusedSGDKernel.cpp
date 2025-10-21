@@ -195,10 +195,10 @@ void sgd_fused_step_impl(
     const bool is_first_step,
     const float* grad_scale_ptr) {
   using opmath_t = at::opmath_type<scalar_t>;
-  scalar_t* param_data = param.data_ptr<scalar_t>();
-  scalar_t* grad_data = grad.data_ptr<scalar_t>();
+  scalar_t* param_data = param.mutable_data_ptr<scalar_t>();
+  scalar_t* grad_data = grad.mutable_data_ptr<scalar_t>();
   bool has_momentum_buffer = momentum != 0.0;
-  scalar_t* momentum_buffer_data = has_momentum_buffer ? momentum_buffer.data_ptr<scalar_t>() : nullptr;
+  scalar_t* momentum_buffer_data = has_momentum_buffer ? momentum_buffer.mutable_data_ptr<scalar_t>() : nullptr;
 
   constexpr size_t cache_line_size = 64;
   constexpr int64_t cache_line_aligned_task_unit = cache_line_size / sizeof(scalar_t);

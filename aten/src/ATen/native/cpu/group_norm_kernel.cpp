@@ -46,9 +46,9 @@ void GroupNormKernelImplInternal(
   const T* X_data = X.const_data_ptr<T>();
   const PT* gamma_data = gamma.defined() ? gamma.const_data_ptr<PT>() : nullptr;
   const PT* beta_data = beta.defined() ? beta.const_data_ptr<PT>() : nullptr;
-  T* Y_data = Y.data_ptr<T>();
-  PT* mean_data = mean.data_ptr<PT>();
-  PT* rstd_data = rstd.data_ptr<PT>();
+  T* Y_data = Y.mutable_data_ptr<T>();
+  PT* mean_data = mean.mutable_data_ptr<PT>();
+  PT* rstd_data = rstd.mutable_data_ptr<PT>();
   const bool gamma_null = (gamma_data == nullptr);
   const bool beta_null = beta_data == nullptr;
   const int64_t inner_size = D * HxW;
@@ -301,9 +301,9 @@ void GroupNormKernelImplChannelsLastInternal(
   const T* X_data = X.const_data_ptr<T>();
   const PT* gamma_data = gamma.defined() ? gamma.const_data_ptr<PT>() : nullptr;
   const PT* beta_data = beta.defined() ? beta.const_data_ptr<PT>() : nullptr;
-  T* Y_data = Y.data_ptr<T>();
-  PT* mean_data = mean.data_ptr<PT>();
-  PT* rstd_data = rstd.data_ptr<PT>();
+  T* Y_data = Y.mutable_data_ptr<T>();
+  PT* mean_data = mean.mutable_data_ptr<PT>();
+  PT* rstd_data = rstd.mutable_data_ptr<PT>();
 
   using opmath_t = at::opmath_type<T>;
 
@@ -332,7 +332,7 @@ void GroupNormKernelImplChannelsLastInternal(
     //
     // for each plain of HxW, scale and bias is calculated only once
     Tensor buffer = at::empty({N * G, 2 * D}, X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
-    opmath_t* buffer_data = buffer.data_ptr<opmath_t>();
+    opmath_t* buffer_data = buffer.mutable_data_ptr<opmath_t>();
 
     at::parallel_for(0, N * G, 1, [&](int64_t begin, int64_t end) {
       int64_t n{0}, g{0};
@@ -383,10 +383,10 @@ void GroupNormKernelImplChannelsLastInternal(
     int num_threads = at::get_num_threads();
     Tensor buffer = at::empty({num_threads, N, 2 * C},
       X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value)).zero_();
-    opmath_t* buffer_data = buffer.data_ptr<opmath_t>();
+    opmath_t* buffer_data = buffer.mutable_data_ptr<opmath_t>();
     Tensor tmp_buffer = at::empty({N, 2 * G},
       X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
-    opmath_t* tmp_buffer_data = tmp_buffer.data_ptr<opmath_t>();
+    opmath_t* tmp_buffer_data = tmp_buffer.mutable_data_ptr<opmath_t>();
     // step-1: accumulate on dimension of C
     //
     // In order to improve multi-core performance when N=1,
@@ -900,14 +900,14 @@ void GroupNormBackwardKernelImplInternal(
   const PT* mean_data = mean.const_data_ptr<PT>();
   const PT* rstd_data = rstd.const_data_ptr<PT>();
   const PT* gamma_data = gamma.defined() ? gamma.const_data_ptr<PT>() : nullptr;
-  T* dX_data = dX.defined() ? dX.data_ptr<T>() : nullptr;
-  PT* dgamma_data = dgamma.defined() ? dgamma.data_ptr<PT>() : nullptr;
-  PT* dbeta_data = dbeta.defined() ? dbeta.data_ptr<PT>() : nullptr;
+  T* dX_data = dX.defined() ? dX.mutable_data_ptr<T>() : nullptr;
+  PT* dgamma_data = dgamma.defined() ? dgamma.mutable_data_ptr<PT>() : nullptr;
+  PT* dbeta_data = dbeta.defined() ? dbeta.mutable_data_ptr<PT>() : nullptr;
   using opmath_t = at::opmath_type<T>;
   Tensor ds = at::empty({N, C}, X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
   Tensor db = at::empty({N, C}, X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
-  opmath_t* ds_data = ds.data_ptr<opmath_t>();
-  opmath_t* db_data = db.data_ptr<opmath_t>();
+  opmath_t* ds_data = ds.mutable_data_ptr<opmath_t>();
+  opmath_t* db_data = db.mutable_data_ptr<opmath_t>();
   ComputeInternalGradients<T, opmath_t>(N, C, HxW, dY_data, X_data, ds_data, db_data);
 
   if (dX_data != nullptr) {
@@ -1380,15 +1380,15 @@ void GroupNormBackwardKernelImplChannelsLastInternal(
   const PT* mean_data = mean.const_data_ptr<PT>();
   const PT* rstd_data = rstd.const_data_ptr<PT>();
   const PT* gamma_data = gamma.defined() ? gamma.const_data_ptr<PT>() : nullptr;
-  T* dX_data = dX.defined() ? dX.data_ptr<T>() : nullptr;
-  PT* dgamma_data = dgamma.defined() ? dgamma.data_ptr<PT>() : nullptr;
-  PT* dbeta_data = dbeta.defined() ? dbeta.data_ptr<PT>() : nullptr;
+  T* dX_data = dX.defined() ? dX.mutable_data_ptr<T>() : nullptr;
+  PT* dgamma_data = dgamma.defined() ? dgamma.mutable_data_ptr<PT>() : nullptr;
+  PT* dbeta_data = dbeta.defined() ? dbeta.mutable_data_ptr<PT>() : nullptr;
   const bool gamma_null = (gamma_data == nullptr);
   using opmath_t = at::opmath_type<T>;
   Tensor ds = at::empty({N, C}, X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
   Tensor db = at::empty({N, C}, X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
-  opmath_t* ds_data = ds.data_ptr<opmath_t>();
-  opmath_t* db_data = db.data_ptr<opmath_t>();
+  opmath_t* ds_data = ds.mutable_data_ptr<opmath_t>();
+  opmath_t* db_data = db.mutable_data_ptr<opmath_t>();
   const opmath_t s = opmath_t(1) / static_cast<opmath_t>(D * HxW);
 
   // Similar to channels last forward, channels last backward has also 2 impls.
@@ -1439,11 +1439,11 @@ void GroupNormBackwardKernelImplChannelsLastInternal(
     int num_threads = at::get_num_threads();
     Tensor buffer = at::empty({num_threads, N, 2 * C},
       X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value)).zero_();
-    opmath_t* buffer_data = buffer.data_ptr<opmath_t>();
+    opmath_t* buffer_data = buffer.mutable_data_ptr<opmath_t>();
 
     Tensor tmp_buffer = at::empty({N, 2 * G},
       X.options().dtype(c10::CppTypeToScalarType<opmath_t>::value));
-    opmath_t* tmp_buffer_data = tmp_buffer.data_ptr<opmath_t>();
+    opmath_t* tmp_buffer_data = tmp_buffer.mutable_data_ptr<opmath_t>();
 
     // Step 1. Each thread compute their own internal gradients to the buffer.
     at::parallel_for(0, N * HxW, 1, [&](int64_t begin, int64_t end) {

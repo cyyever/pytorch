@@ -17,8 +17,8 @@ void cpu_channel_shuffle(
     TensorBase& output,
     const TensorBase& input,
     int64_t groups) {
-  auto input_data = input.data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto input_data = input.mutable_data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);
@@ -62,8 +62,8 @@ void cpu_channel_shuffle_cl(
     TensorBase& output,
     const TensorBase& input,
     int64_t groups) {
-  auto input_data = input.data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto input_data = input.mutable_data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);

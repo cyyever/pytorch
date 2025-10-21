@@ -73,7 +73,7 @@ void cpu_take_put_kernel(
   const auto offset_indexed = IndexToOffset(indexed);
 
   auto* indexed_data = is_indexed_data_mutated ?
-   indexed.data_ptr<scalar_t>()
+   indexed.mutable_data_ptr<scalar_t>()
    : const_cast<scalar_t*>(indexed.const_data_ptr<scalar_t>());
   auto loop = [&](char** data, const int64_t* strides, int64_t n) {
     auto* iterated_data_bytes = data[0];

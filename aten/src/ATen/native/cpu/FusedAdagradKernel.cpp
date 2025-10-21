@@ -149,9 +149,9 @@ void adagrad_fused_step_impl(
     const bool maximize,
     const float* grad_scale_ptr) {
   using opmath_t = at::opmath_type<scalar_t>;
-  scalar_t* param_data = param.data_ptr<scalar_t>();
-  scalar_t* grad_data = grad.data_ptr<scalar_t>();
-  scalar_t* state_sum_data = state_sum.data_ptr<scalar_t>();
+  scalar_t* param_data = param.mutable_data_ptr<scalar_t>();
+  scalar_t* grad_data = grad.mutable_data_ptr<scalar_t>();
+  scalar_t* state_sum_data = state_sum.mutable_data_ptr<scalar_t>();
   double step = state_step.item<float>();
   double clr = lr / (1.0 + (step - 1.0) * lr_decay);
 

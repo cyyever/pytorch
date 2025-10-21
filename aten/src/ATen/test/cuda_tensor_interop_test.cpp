@@ -34,7 +34,7 @@ TEST(CUDACaffe2ToPytorch, SimpleLegacy) {
   ASSERT_TRUE(at_tensor.is_cuda());
 
   auto at_cpu = at_tensor.cpu();
-  auto it = at_cpu.data_ptr<int64_t>();
+  auto it = at_cpu.mutable_data_ptr<int64_t>();
   for (const auto i : c10::irange(16)) {
     ASSERT_EQ(it[i], 777);
   }
@@ -53,7 +53,7 @@ TEST(CUDACaffe2ToPytorch, Simple) {
   ASSERT_TRUE(at_tensor.is_cuda());
 
   auto at_cpu = at_tensor.cpu();
-  auto it = at_cpu.data_ptr<int64_t>();
+  auto it = at_cpu.mutable_data_ptr<int64_t>();
   for (const auto i : c10::irange(16)) {
     ASSERT_EQ(it[i], 777);
   }

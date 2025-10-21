@@ -619,7 +619,7 @@ struct vec_host_softmax_lastdim {
     for (int64_t i = 0; i < input.ndimension() - 1; ++i)
       outer_size *= input.size(i);
     const scalar_t* input_data_base = input.const_data_ptr<scalar_t>();
-    scalar_t* output_data_base = output.data_ptr<scalar_t>();
+    scalar_t* output_data_base = output.mutable_data_ptr<scalar_t>();
     if (LogSoftMax) {
       _vec_log_softmax_lastdim(
           input_data_base, output_data_base, outer_size, dim_size);
@@ -898,7 +898,7 @@ struct vec_softmax {
     for (int64_t i = dim + 1; i < input.dim(); ++i)
       inner_size *= input.size(i);
     const scalar_t* input_data_base = input.const_data_ptr<scalar_t>();
-    scalar_t* output_data_base = output.data_ptr<scalar_t>();
+    scalar_t* output_data_base = output.mutable_data_ptr<scalar_t>();
     if (LogSoftMax) {
       _vec_logsoftmax(
           input_data_base, output_data_base, outer_size, inner_size, dim_size);

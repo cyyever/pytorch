@@ -79,7 +79,7 @@ void spmm_reduce_kernel_impl(
   auto other = other_.contiguous();
 
   // access `crow_indices`, `col_indices` and `values` via TensorAccessor
-  scalar_t* out_data = out.data_ptr<scalar_t>();
+  scalar_t* out_data = out.mutable_data_ptr<scalar_t>();
   auto csr_data = crow_indices.accessor<const index_t, 1>();
   auto col_data = col_indices.accessor<const index_t, 1>();
   auto val_data = values.accessor<const scalar_t, 1>();
@@ -96,7 +96,7 @@ void spmm_reduce_kernel_impl(
   if constexpr (need_acc) {
     auto acc_type = at::toAccumulateType(out.scalar_type(), /*is_cuda=*/true);
     buffer = at::zeros({num_threads, K}, out.options().dtype(acc_type));
-    buffer_data = buffer.data_ptr<opmath_t>();
+    buffer_data = buffer.mutable_data_ptr<opmath_t>();
   }
 
   utils::parallel_sparse_csr(csr_data, M, nnz, [&](int64_t begin, int64_t end) {
@@ -176,8 +176,8 @@ void spmm_reduce_arg_kernel_impl(
 
   auto other = other_.contiguous();
 
-  scalar_t* out_data = out.data_ptr<scalar_t>();
-  index_t* arg_out_data = arg_out.data_ptr<index_t>();
+  scalar_t* out_data = out.mutable_data_ptr<scalar_t>();
+  index_t* arg_out_data = arg_out.mutable_data_ptr<index_t>();
   auto csr_data = crow_indices.accessor<const index_t, 1>();
   auto col_data = col_indices.accessor<const index_t, 1>();
   auto val_data = values.accessor<const scalar_t, 1>();
@@ -194,7 +194,7 @@ void spmm_reduce_arg_kernel_impl(
   if constexpr (need_acc) {
     auto acc_type = at::toAccumulateType(out.scalar_type(), /*is_cuda=*/true);
     buffer = at::zeros({num_threads, K}, out.options().dtype(acc_type));
-    buffer_data = buffer.data_ptr<opmath_t>();
+    buffer_data = buffer.mutable_data_ptr<opmath_t>();
   }
 
   at::parallel_for(0, M, 1, [&](int64_t begin, int64_t end) {
@@ -310,7 +310,7 @@ void spmm_reduce_backward_input_arg_kernel_impl(
   const scalar_t* grad_out_data = grad_out.const_data_ptr<scalar_t>();
   auto col_data = col_indices.accessor<const index_t, 1>();
   const scalar_t* other_data = other.const_data_ptr<scalar_t>();
-  index_t* arg_out_data = arg_out.data_ptr<index_t>();
+  index_t* arg_out_data = arg_out.mutable_data_ptr<index_t>();
 
   int64_t M = grad_out.size(0);
   int64_t K = grad_out.size(1);
@@ -388,7 +388,7 @@ void spmm_reduce_backward_other_arg_kernel_impl(
   auto grad_out = grad_out_.contiguous();
   auto arg_out = arg_out_.contiguous();
 
-  scalar_t* grad_other_data = grad_other.data_ptr<scalar_t>();
+  scalar_t* grad_other_data = grad_other.mutable_data_ptr<scalar_t>();
   const scalar_t* grad_out_data = grad_out.const_data_ptr<scalar_t>();
   auto col_data = col_indices.accessor<const index_t, 1>();
   auto values_data = values.accessor<const scalar_t, 1>();

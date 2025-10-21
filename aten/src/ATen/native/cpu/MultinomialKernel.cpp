@@ -37,8 +37,8 @@ multinomial_with_replacement_apply(
   Tensor cum_dist = at::empty({n_categories}, self.options());
 
   const scalar_t* const self_ptr = self.const_data_ptr<scalar_t>();
-  scalar_t* const cum_dist_ptr = cum_dist.data_ptr<scalar_t>();
-  int64_t* const result_ptr = result.data_ptr<int64_t>();
+  scalar_t* const cum_dist_ptr = cum_dist.mutable_data_ptr<scalar_t>();
+  int64_t* const result_ptr = result.mutable_data_ptr<int64_t>();
 
   auto self_stride_0 = self.dim() > 1 ? self.stride(-2) : 0;
   auto self_stride_1 = self.stride(-1);
@@ -133,8 +133,8 @@ multinomial_with_replacement_apply(
   Tensor cum_dist = at::empty({n_categories}, self.options().dtype(kFloat));
 
   const scalar_t* const self_ptr = self.const_data_ptr<scalar_t>();
-  float* const cum_dist_ptr = cum_dist.data_ptr<float>();
-  int64_t* const result_ptr = result.data_ptr<int64_t>();
+  float* const cum_dist_ptr = cum_dist.mutable_data_ptr<float>();
+  int64_t* const result_ptr = result.mutable_data_ptr<int64_t>();
 
   auto self_stride_0 = self.dim() > 1 ? self.stride(-2) : 0;
   auto self_stride_1 = self.stride(-1);

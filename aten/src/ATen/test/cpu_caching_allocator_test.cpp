@@ -13,10 +13,10 @@ TEST(CPUCachingAllocatorTest, check_alloc_free) {
   c10::WithCPUCachingAllocatorGuard cachine_allocator_guard(
       &caching_allocator);
   at::Tensor a = at::rand({23, 23});
-  float* data_ptr = a.data_ptr<float>();
+  float* data_ptr = a.mutable_data_ptr<float>();
   a.reset();
   a = at::rand({23, 23});
-  ASSERT_TRUE(data_ptr == a.data_ptr<float>());
+  ASSERT_TRUE(data_ptr == a.mutable_data_ptr<float>());
 }
 
 // This should just free the pointer correctly.
@@ -26,7 +26,7 @@ TEST(CPUCachingAllocatorTest, check_alloc_outside_free_inside) {
   {
     c10::WithCPUCachingAllocatorGuard cachine_allocator_guard(
         &caching_allocator);
-    [[maybe_unused]] float* data_ptr = a.data_ptr<float>();
+    [[maybe_unused]] float* data_ptr = a.mutable_data_ptr<float>();
     a.reset();
     a = at::rand({23, 23});
   }

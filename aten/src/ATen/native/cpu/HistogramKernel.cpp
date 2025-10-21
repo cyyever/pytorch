@@ -112,7 +112,7 @@ void histogramdd_cpu_contiguous(Tensor& hist, const TensorList& bin_edges,
     std::vector<input_t> leftmost_edge(D), rightmost_edge(D);
 
     for (const auto dim : c10::irange(D)) {
-        bin_seq[dim] = bin_edges[dim].data_ptr<input_t>();
+        bin_seq[dim] = bin_edges[dim].mutable_data_ptr<input_t>();
         num_bin_edges[dim] = bin_edges[dim].numel();
         leftmost_edge[dim] = bin_seq[dim][0];
         rightmost_edge[dim] = bin_seq[dim][num_bin_edges[dim] - 1];
@@ -136,7 +136,7 @@ void histogramdd_cpu_contiguous(Tensor& hist, const TensorList& bin_edges,
     at::parallel_for(0, N, GRAIN_SIZE, [&](int64_t start, int64_t end) {
         const auto tid = at::get_thread_num();
         auto hist_strides = thread_histograms.strides();
-        input_t *hist_local_data = thread_histograms.data_ptr<input_t>();
+        input_t *hist_local_data = thread_histograms.mutable_data_ptr<input_t>();
 
         // View only this thread's local results
         hist_local_data += hist_strides[0] * tid;

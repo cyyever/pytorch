@@ -256,7 +256,7 @@ std::pair<at::Tensor, std::vector<int64_t*>> pack_vecs(
   size_t offset = 0;
   for (const auto* vec : vecs) {
     memcpy(
-        packed.data_ptr<int64_t>() + offset,
+        packed.mutable_data_ptr<int64_t>() + offset,
         vec->data(),
         sizeof(int64_t) * vec->size());
     offset += vec->size();
@@ -267,7 +267,7 @@ std::pair<at::Tensor, std::vector<int64_t*>> pack_vecs(
   ptrs.reserve(vecs.size());
   offset = 0;
   for (const auto* vec : vecs) {
-    ptrs.push_back(packed.data_ptr<int64_t>() + offset);
+    ptrs.push_back(packed.mutable_data_ptr<int64_t>() + offset);
     offset += vec->size();
   }
   return std::make_pair(std::move(packed), std::move(ptrs));

@@ -22,7 +22,7 @@ void cpu_max_unpool(
 
   auto input_data = input.const_data_ptr<scalar_t>();
   auto indices_data = indices.const_data_ptr<int64_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   // NB: input tensor dimensions:
   // MaxUnpool2d:
@@ -110,7 +110,7 @@ void cpu_max_unpool_channels_last(
 
   auto input_data = input.const_data_ptr<scalar_t>();
   auto indices_data = indices.const_data_ptr<int64_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t nbatch = input.size(0);
   int64_t channels = input.size(1);
@@ -168,8 +168,8 @@ void cpu_max_unpool_backward(
     const Tensor& indices) {
   auto grad_input = grad_input_.contiguous();
 
-  auto grad_output_data = grad_output.data_ptr<scalar_t>();
-  auto indices_data = indices.data_ptr<int64_t>();
+  auto grad_output_data = grad_output.mutable_data_ptr<scalar_t>();
+  auto indices_data = indices.mutable_data_ptr<int64_t>();
   auto grad_input_data = grad_input.mutable_data_ptr<scalar_t>();
 
   int64_t numel = grad_input.numel();

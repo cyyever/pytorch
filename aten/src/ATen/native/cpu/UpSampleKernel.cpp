@@ -473,7 +473,7 @@ void cpu_upsample_nearest_channels_last(
   auto output = output_.contiguous(channels_last_memory_format);
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t num_batches =  input_sizes[0];
   int64_t channels =  input_sizes[1];
@@ -579,7 +579,7 @@ void cpu_upsample_linear_channels_last(
   auto output = output_.contiguous(channels_last_memory_format);
 
   auto input_data = input.const_data_ptr<scalar_t>();
-  auto output_data = output.data_ptr<scalar_t>();
+  auto output_data = output.mutable_data_ptr<scalar_t>();
 
   int64_t num_batches =  input_sizes[0];
   int64_t channels =  input_sizes[1];
@@ -898,11 +898,11 @@ struct HelperInterpBase {
           empty(new_shape, at::device(kCPU).dtype(c10::CppTypeToScalarType<int64_t>())));
     }
 
-    int64_t* idx_ptr_xmin = output[0].data_ptr<int64_t>();
-    int64_t* idx_ptr_size = output[1].data_ptr<int64_t>();
-    int64_t* idx_ptr_stride = output[2].data_ptr<int64_t>();
-    scalar_t* wt_ptr = output[3].data_ptr<scalar_t>();
-    int64_t* wt_idx_ptr = output[4].data_ptr<int64_t>();
+    int64_t* idx_ptr_xmin = output[0].mutable_data_ptr<int64_t>();
+    int64_t* idx_ptr_size = output[1].mutable_data_ptr<int64_t>();
+    int64_t* idx_ptr_stride = output[2].mutable_data_ptr<int64_t>();
+    scalar_t* wt_ptr = output[3].mutable_data_ptr<scalar_t>();
+    int64_t* wt_idx_ptr = output[4].mutable_data_ptr<int64_t>();
 
     scalar_t wt_max = 0.0;
     for (const auto i : c10::irange(output_size)) {
@@ -1082,7 +1082,7 @@ struct HelperInterpNearest : public HelperInterpBase {
         using opmath_t = at::opmath_type<scalar_t>;
         opmath_t scale = area_pixel_compute_scale<opmath_t>(input_size, output_size, align_corners, opt_scale);
 
-        auto input_index_ptr = output[0].data_ptr<int64_t>();
+        auto input_index_ptr = output[0].mutable_data_ptr<int64_t>();
         int64_t input_index;
 
         // Indices are computed as following:
@@ -1132,7 +1132,7 @@ struct HelperInterpNearestExact : public HelperInterpNearest {
         using opmath_t = at::opmath_type<scalar_t>;
         opmath_t scale = area_pixel_compute_scale<opmath_t>(input_size, output_size, align_corners, opt_scale);
 
-        auto input_index_ptr = output[0].data_ptr<int64_t>();
+        auto input_index_ptr = output[0].mutable_data_ptr<int64_t>();
         int64_t input_index;
 
         // Indices should be computed as following:
@@ -1180,10 +1180,10 @@ struct HelperInterpLinear : public HelperInterpBase {
         using opmath_t = at::opmath_type<scalar_t>;
         opmath_t scale = area_pixel_compute_scale<opmath_t>(input_size, output_size, align_corners, opt_scale);
 
-        auto input_index0_ptr = output[0].data_ptr<int64_t>();
-        auto lambda0_ptr = output[1].data_ptr<scalar_t>();
-        auto input_index1_ptr = output[2].data_ptr<int64_t>();
-        auto lambda1_ptr = output[3].data_ptr<scalar_t>();
+        auto input_index0_ptr = output[0].mutable_data_ptr<int64_t>();
+        auto lambda0_ptr = output[1].mutable_data_ptr<scalar_t>();
+        auto input_index1_ptr = output[2].mutable_data_ptr<int64_t>();
+        auto lambda1_ptr = output[3].mutable_data_ptr<scalar_t>();
 
         for (const auto i : c10::irange(output_size)) {
 
@@ -1317,9 +1317,9 @@ struct HelperInterpCubic : public HelperInterpBase {
           get_cubic_upsample_coefficients<opmath_t>(coeffs, lambda);
 
           for (const auto j : c10::irange(interp_size)) {
-            idx_ptr = output[2 * j + 0].data_ptr<int64_t>();
+            idx_ptr = output[2 * j + 0].mutable_data_ptr<int64_t>();
             idx_ptr[i] = static_cast<int64_t>(std::max(std::min(input_index + j - 1, input_size - 1), zero)) * stride;
-            wt_ptr = output[2 * j + 1].data_ptr<scalar_t>();
+            wt_ptr = output[2 * j + 1].mutable_data_ptr<scalar_t>();
             wt_ptr[i] = coeffs[j];
           }
         }

@@ -14,7 +14,7 @@ TEST(Caffe2ToPytorch, SimpleLegacy) {
   }
   at::Tensor at_tensor(c2_tensor);
 
-  auto it = at_tensor.data_ptr<int64_t>();
+  auto it = at_tensor.mutable_data_ptr<int64_t>();
   for (const auto i : c10::irange(16)) {
     ASSERT_EQ(it[i], i);
   }
@@ -28,7 +28,7 @@ TEST(Caffe2ToPytorch, Simple) {
   }
   at::Tensor at_tensor(c2_tensor);
 
-  auto it = at_tensor.data_ptr<int64_t>();
+  auto it = at_tensor.mutable_data_ptr<int64_t>();
   for (const auto i : c10::irange(16)) {
     ASSERT_EQ(it[i], i);
   }
@@ -48,7 +48,7 @@ TEST(Caffe2ToPytorch, ExternalData) {
   at::Tensor at_tensor(c2_tensor);
   at_tensor.permute({1, 0});
   at_tensor.permute({1, 0});
-  auto it = at_tensor.data_ptr<int64_t>();
+  auto it = at_tensor.mutable_data_ptr<int64_t>();
   for (const auto i : c10::irange(16)) {
     ASSERT_EQ(it[i], i);
   }

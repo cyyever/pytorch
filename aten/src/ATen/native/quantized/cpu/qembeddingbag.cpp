@@ -48,9 +48,9 @@ at::Tensor& embedding_lookup_fallback_impl(
     const int64_t output_size,
     bool include_last_offset,
     bool pruned) {
-  auto* output_data = output.data_ptr<float>();
-  const auto weight_data = weight.data_ptr<uint8_t>();
-  const auto indices_data = indices.data_ptr<IndexType>();
+  auto* output_data = output.mutable_data_ptr<float>();
+  const auto weight_data = weight.mutable_data_ptr<uint8_t>();
+  const auto indices_data = indices.mutable_data_ptr<IndexType>();
   int32_t* compressed_indices_mapping_data = nullptr;
   const auto weight_sizes = weight.sizes();
   const int64_t N = weight_sizes[0];
@@ -72,7 +72,7 @@ at::Tensor& embedding_lookup_fallback_impl(
   int64_t current = 0;
   float* per_sample_weights_data = nullptr;
   if (per_sample_weights_.has_value()) {
-    per_sample_weights_data = per_sample_weights_.value().data_ptr<float>();
+    per_sample_weights_data = per_sample_weights_.value().mutable_data_ptr<float>();
   }
   for (const auto m : c10::irange(output_size)) {
     memset(output_data, 0, block_size * sizeof(float));
@@ -89,7 +89,7 @@ at::Tensor& embedding_lookup_fallback_impl(
         int64_t uncompressed_idx = indices_data[current];
         int compressed_index_size = compressed_indices_mapping.value().numel();
         compressed_indices_mapping_data =
-            compressed_indices_mapping.value().data_ptr<int32_t>();
+            compressed_indices_mapping.value().mutable_data_ptr<int32_t>();
         TORCH_CHECK(
             uncompressed_idx >= 0 && uncompressed_idx < compressed_index_size,
             "Invalid indices data for Sparse Op.")
@@ -288,9 +288,9 @@ at::Tensor& embedding_lookup_byte_neon_impl(
     const int64_t block_size,
     const int64_t output_size,
     bool include_last_offset) {
-  auto* output_data = output.data_ptr<float>();
-  const auto weight_data = weight.data_ptr<uint8_t>();
-  const auto indices_data = indices.data_ptr<IndexType>();
+  auto* output_data = output.mutable_data_ptr<float>();
+  const auto weight_data = weight.mutable_data_ptr<uint8_t>();
+  const auto indices_data = indices.mutable_data_ptr<IndexType>();
   const auto weight_sizes = weight.sizes();
   const int64_t weight_size = weight_sizes[1];
   const int index_size = indices.numel();
@@ -641,7 +641,7 @@ at::Tensor& embedding_bag_nbit_impl(
   TORCH_CHECK(weight.dim() == 2);
   TORCH_CHECK(offsets.dim() == 1);
 
-  auto offsets_data = offsets.data_ptr<OffsetType>();
+  auto offsets_data = offsets.mutable_data_ptr<OffsetType>();
 
   // Get compressed indices for pruned_weights op.
   int32_t* compressed_indices_mapping_data = nullptr;
@@ -650,7 +650,7 @@ at::Tensor& embedding_bag_nbit_impl(
   if (pruned_weights) {
     compressed_index_size = compressed_indices_mapping.value().numel();
     compressed_indices_mapping_data =
-        compressed_indices_mapping.value().data_ptr<int32_t>();
+        compressed_indices_mapping.value().mutable_data_ptr<int32_t>();
 
     // if compressed_indices_mapping is [0], it is a indicator that
     // we should fallback to non sparse embedding look up kernel.
@@ -700,9 +700,9 @@ at::Tensor& embedding_bag_nbit_impl(
     at::native::resize_(output, shape, std::nullopt);
   }
 #ifdef USE_FBGEMM
-  const auto indices_data = indices.data_ptr<IndexType>();
-  const auto weight_data = weight.data_ptr<uint8_t>();
-  auto* output_data = output.data_ptr<float>();
+  const auto indices_data = indices.mutable_data_ptr<IndexType>();
+  const auto weight_data = weight.mutable_data_ptr<uint8_t>();
+  auto* output_data = output.mutable_data_ptr<float>();
   const int64_t N = weight_sizes[0];
 
   const int64_t block_size = D;
@@ -728,7 +728,7 @@ at::Tensor& embedding_bag_nbit_impl(
         /*offsets=*/offsets_data,
         /*weights=*/
         per_sample_weights_.has_value()
-            ? per_sample_weights_.value().data_ptr<float>()
+            ? per_sample_weights_.value().mutable_data_ptr<float>()
             : nullptr,
         /*output=*/output_data);
 
@@ -755,7 +755,7 @@ at::Tensor& embedding_bag_nbit_impl(
         /*offsets=*/offsets_data,
         /*weights=*/
         per_sample_weights_.has_value()
-            ? per_sample_weights_.value().data_ptr<float>()
+            ? per_sample_weights_.value().mutable_data_ptr<float>()
             : nullptr,
         /*output=*/output_data,
         /*compressed_indices_table=*/compressed_indices_mapping_data);
@@ -812,7 +812,7 @@ at::Tensor& embedding_bag_byte_impl(
   TORCH_CHECK(weight.scalar_type() == at::kByte);
   TORCH_CHECK(weight.dim() == 2);
   TORCH_CHECK(offsets.dim() == 1);
-  auto offsets_data = offsets.data_ptr<OffsetType>();
+  auto offsets_data = offsets.mutable_data_ptr<OffsetType>();
 
   // Get compressed indices for pruned_weights.
   int32_t* compressed_indices_mapping_data = nullptr;
@@ -821,7 +821,7 @@ at::Tensor& embedding_bag_byte_impl(
   if (pruned_weights) {
     compressed_index_size = compressed_indices_mapping.value().numel();
     compressed_indices_mapping_data =
-        compressed_indices_mapping.value().data_ptr<int32_t>();
+        compressed_indices_mapping.value().mutable_data_ptr<int32_t>();
 
     // if compressed_indices_mapping is [0], it is a indicator that
     // we should fallback to non sparse embedding look up kernel.
@@ -870,9 +870,9 @@ at::Tensor& embedding_bag_byte_impl(
   }
 #ifdef USE_FBGEMM
   const int64_t N = weight_sizes[0];
-  const auto weight_data = weight.data_ptr<uint8_t>();
-  const auto indices_data = indices.data_ptr<IndexType>();
-  auto* output_data = output.data_ptr<float>();
+  const auto weight_data = weight.mutable_data_ptr<uint8_t>();
+  const auto indices_data = indices.mutable_data_ptr<IndexType>();
+  auto* output_data = output.mutable_data_ptr<float>();
   const int index_size = indices.numel();
 
   if (!pruned_weights || fallback_to_no_sparse) {
@@ -930,7 +930,7 @@ at::Tensor& embedding_bag_byte_impl(
         /*offsets=*/offsets_data,
         /*weights=*/
         per_sample_weights_.has_value()
-            ? per_sample_weights_.value().data_ptr<float>()
+            ? per_sample_weights_.value().mutable_data_ptr<float>()
             : nullptr,
         /*output=*/output_data,
         /*compressed_indices_table=*/compressed_indices_mapping_data);

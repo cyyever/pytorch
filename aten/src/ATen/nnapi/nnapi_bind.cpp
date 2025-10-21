@@ -67,8 +67,8 @@ void NnapiCompilation::init2(
   // and possible future changes to the generator.
   uint8_t* ser_model_ptr =
     serialized_model_tensor.scalar_type() == at::ScalarType::Byte
-      ? serialized_model_tensor.data_ptr<uint8_t>()
-      : reinterpret_cast<uint8_t*>(serialized_model_tensor.data_ptr<int32_t>());
+      ? serialized_model_tensor.mutable_data_ptr<uint8_t>()
+      : reinterpret_cast<uint8_t*>(serialized_model_tensor.mutable_data_ptr<int32_t>());
   c10::ArrayRef<uint8_t> ser_model = {
     ser_model_ptr,
     serialized_model_tensor.nbytes()

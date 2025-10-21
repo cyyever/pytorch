@@ -692,7 +692,7 @@ std::pair<K*, V*> radix_sort_parallel(
 template <typename scalar_t, ReductionType reduce>
 void cpu_scatter_reduce_expanded_index(const Tensor& self, const Tensor& index, const Tensor& src, bool include_self) {
   const int64_t* index_data = index.const_data_ptr<int64_t>();
-  scalar_t* self_data = self.data_ptr<scalar_t>();
+  scalar_t* self_data = self.mutable_data_ptr<scalar_t>();
   const scalar_t* src_data = src.const_data_ptr<scalar_t>();
 
   const int64_t M = ensure_nonempty_size(self, 0);
@@ -773,7 +773,7 @@ void cpu_scatter_reduce_expanded_index(const Tensor& self, const Tensor& index, 
   if constexpr (need_acc) {
     auto acc_type = at::toAccumulateType(self.scalar_type(), /*is_cuda=*/true);
     buffer = at::zeros({num_threads, K}, self.options().dtype(acc_type));
-    buffer_data = buffer.data_ptr<opmath_t>();
+    buffer_data = buffer.mutable_data_ptr<opmath_t>();
   }
 
   // TODO: do blocking on col dimension to reduce WR bandwidth
@@ -818,7 +818,7 @@ template <typename scalar_t>
 void cpu_gather_expanded_index_kernel(const Tensor& result, const Tensor& _index, const Tensor& self) {
   Tensor index = _index.to(ScalarType::Long);
   const int64_t* index_data = index.const_data_ptr<int64_t>();
-  scalar_t* result_data = result.data_ptr<scalar_t>();
+  scalar_t* result_data = result.mutable_data_ptr<scalar_t>();
   const scalar_t* self_data = self.const_data_ptr<scalar_t>();
 
   const int64_t M = ensure_nonempty_size(result, 0);

@@ -158,7 +158,7 @@ c10::intrusive_ptr<c10::TensorImpl> XPUGeneratorImpl::get_state() const {
       std::nullopt,
       std::nullopt,
       std::nullopt);
-  auto rng_state = state_tensor.data_ptr<uint8_t>();
+  auto rng_state = state_tensor.mutable_data_ptr<uint8_t>();
   auto current_seed = this->current_seed();
   auto offset = this->philox_offset_per_thread();
   memcpy(rng_state, &current_seed, seed_size);
@@ -210,8 +210,8 @@ PhiloxXpuState XPUGeneratorImpl::philox_xpu_state(uint64_t increment) {
     uint32_t offset = state_->offset_intragraph_;
     state_->increase(increment);
     return PhiloxXpuState(
-        state_->seed_extragraph_.data_ptr<int64_t>(),
-        state_->offset_extragraph_.data_ptr<int64_t>(),
+        state_->seed_extragraph_.mutable_data_ptr<int64_t>(),
+        state_->offset_extragraph_.mutable_data_ptr<int64_t>(),
         offset);
   } else {
     uint64_t offset = state_->philox_offset_per_thread_;

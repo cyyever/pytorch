@@ -173,8 +173,8 @@ void host_softmax(
   }
   int64_t dim_stride = inner_size;
   int64_t outer_stride = dim_size * dim_stride;
-  scalar_t* input_data_base = input.data_ptr<scalar_t>();
-  scalar_t* output_data_base = output.data_ptr<scalar_t>();
+  scalar_t* input_data_base = input.mutable_data_ptr<scalar_t>();
+  scalar_t* output_data_base = output.mutable_data_ptr<scalar_t>();
   bool* mask_data_base = mask;
   int64_t grain_size = std::min(internal::GRAIN_SIZE / dim_size, (int64_t)1);
   parallel_for(
@@ -261,9 +261,9 @@ void host_softmax_backward(
   }
   int64_t dim_stride = inner_size;
   int64_t outer_stride = dim_size * dim_stride;
-  scalar_t* gradInput_data_base = gI.data_ptr<scalar_t>();
-  scalar_t* output_data_base = output.data_ptr<scalar_t>();
-  scalar_t* gradOutput_data_base = grad.data_ptr<scalar_t>();
+  scalar_t* gradInput_data_base = gI.mutable_data_ptr<scalar_t>();
+  scalar_t* output_data_base = output.mutable_data_ptr<scalar_t>();
+  scalar_t* gradOutput_data_base = grad.mutable_data_ptr<scalar_t>();
   bool* mask_data_base = mask;
   int64_t grain_size = std::min(internal::GRAIN_SIZE / dim_size, (int64_t)1);
   parallel_for(
@@ -590,7 +590,7 @@ Tensor masked_softmax_cpu(const Tensor& input_, const Tensor& mask_, const std::
   AT_DISPATCH_FLOATING_TYPES_AND2(
       at::ScalarType::BFloat16, at::ScalarType::Half, input.scalar_type(), "masked_softmax", [&] {
         host_softmax<scalar_t>(
-            output, input, dim, mask.data_ptr<bool>(), mask_type);
+            output, input, dim, mask.mutable_data_ptr<bool>(), mask_type);
       });
   return output;
 }
@@ -619,7 +619,7 @@ Tensor masked_softmax_backward_cpu(
   Tensor grad_input = at::empty_like(grad, grad.options());
   AT_DISPATCH_FLOATING_TYPES_AND2(
       at::ScalarType::BFloat16, at::ScalarType::Half, grad.scalar_type(), "masked_softmax_backward", [&] {
-        host_softmax_backward<scalar_t>(grad_input, grad, output, dim, mask.data_ptr<bool>());
+        host_softmax_backward<scalar_t>(grad_input, grad, output, dim, mask.mutable_data_ptr<bool>());
       });
   return grad_input;
 }

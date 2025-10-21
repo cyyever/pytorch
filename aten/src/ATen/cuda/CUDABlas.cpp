@@ -2056,7 +2056,7 @@ void scaled_gemm(
       // Tell cublasLt we're using device-side pointers for alpha/beta
       auto pointer_mode = CUBLASLT_POINTER_MODE_DEVICE;
       computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_POINTER_MODE, pointer_mode);
-      alpha_ptr = user_alpha.data_ptr<float>();
+      alpha_ptr = user_alpha.mutable_data_ptr<float>();
       beta_ptr = at::cuda::detail::get_cublas_device_zero();
     } else {
       alpha_val = a.item<float>();
