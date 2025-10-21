@@ -1242,13 +1242,13 @@ TORCH_IMPL_FUNC(index_add_cpu_out)
         TORCH_CHECK_INDEX(
             (self_i >= 0) && (self_i < self_dim_size),
             "index out of range in self");
-        auto self_data = static_cast<char*>(selfSlice.data_ptr()) +
-            self_i * self_stride_bytes;
-        auto source_data = static_cast<char*>(sourceSlice.data_ptr()) +
-            i * source_stride_bytes;
+        auto self_data =
+            selfSlice.mutable_data_ptr<char>() + self_i * self_stride_bytes;
+        auto source_data =
+            sourceSlice.const_data_ptr<char>() + i * source_stride_bytes;
         iter.unsafe_replace_operand(0, self_data);
         iter.unsafe_replace_operand(1, self_data);
-        iter.unsafe_replace_operand(2, source_data);
+        iter.unsafe_replace_operand(2, const_cast<char*>(source_data));
         add_stub(iter.device_type(), iter, alpha);
       }
     });
@@ -1276,7 +1276,7 @@ TORCH_IMPL_FUNC(index_add_cpu_out)
           auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
           auto source_stride = source.dim() == 0 ? 1 : source.stride(dim);
           // TODO: Maybe TensorAccessor can be used here?
-          auto* result_ptr = result.data_ptr<scalar_t>();
+          auto* result_ptr = result.mutable_data_ptr<scalar_t>();
           auto* source_ptr = source.const_data_ptr<scalar_t>();
           AT_DISPATCH_INDEX_TYPES(
               index_contig.scalar_type(),
@@ -1377,13 +1377,13 @@ static void index_reduce_func_impl(
         TORCH_CHECK_INDEX(
             (self_i >= 0) && (self_i < self_dim_size),
             "index out of range in self");
-        auto self_data = static_cast<char*>(selfSlice.data_ptr()) +
-            self_i * self_stride_bytes;
-        auto source_data = static_cast<char*>(sourceSlice.data_ptr()) +
-            i * source_stride_bytes;
+        auto self_data =
+            selfSlice.mutable_data_ptr<char>() + self_i * self_stride_bytes;
+        auto source_data =
+            sourceSlice.const_data_ptr<char>() + i * source_stride_bytes;
         iter.unsafe_replace_operand(0, self_data);
         iter.unsafe_replace_operand(1, self_data);
-        iter.unsafe_replace_operand(2, source_data);
+        iter.unsafe_replace_operand(2, const_cast<char*>(source_data));
 
         switch (op) {
           case ReductionType::PROD:
@@ -1435,9 +1435,9 @@ static void index_reduce_func_impl(
           auto source_stride = source.dim() == 0 ? 1 : source.stride(dim);
           auto counts_stride = counts.dim() == 0 ? 1 : counts.stride(dim);
           // TODO: Maybe TensorAccessor can be used here?
-          auto* result_ptr = result.data_ptr<scalar_t>();
+          auto* result_ptr = result.mutable_data_ptr<scalar_t>();
           auto* source_ptr = source.const_data_ptr<scalar_t>();
-          auto counts_ptr = counts.data_ptr<scalar_t>();
+          auto counts_ptr = counts.mutable_data_ptr<scalar_t>();
           AT_DISPATCH_INDEX_TYPES(
               index_contig.scalar_type(),
               "index_func_cpu_",
@@ -1538,9 +1538,9 @@ static Tensor& index_select_out_cpu_dim1_(
   const caffe2::TypeMeta dataType = self_contig.dtype();
   size_t item_bytesize = dataType.itemsize();
 
-  auto out = static_cast<char*>(result_contig.data_ptr());
+  auto out = result_contig.mutable_data_ptr<char>();
 
-  auto src_base = static_cast<const char*>(self_contig.const_data_ptr());
+  auto src_base = self_contig.const_data_ptr<char>();
 
   auto self_sizes = self_contig.sizes();
   auto outer_dims_product = c10::size_to_dim_(1, self_sizes);
@@ -1652,8 +1652,8 @@ Tensor& index_select_out_cpu_(
 
     auto selfSlice = self.select(dim, 0);
     auto resultSlice = result.select(dim, 0);
-    auto selfSlice_data = selfSlice.const_data_ptr();
-    auto resultSlice_data = resultSlice.data_ptr();
+    auto selfSlice_data = selfSlice.const_data_ptr<char>();
+    auto resultSlice_data = resultSlice.mutable_data_ptr<char>();
     auto self_stride_bytes = self.stride(dim) * elementSize(self.scalar_type());
     auto result_stride_bytes =
         result.stride(dim) * elementSize(result.scalar_type());
@@ -1699,11 +1699,9 @@ Tensor& index_select_out_cpu_(
                   TORCH_CHECK_INDEX(
                       (self_i >= 0) && (self_i < self_dim_size),
                       "index out of range in self");
-                  auto self_data = const_cast<char*>(static_cast<const char*>(
-                                       selfSlice_data)) +
+                  auto self_data = const_cast<char*>(selfSlice_data) +
                       self_i * self_stride_bytes;
-                  auto result_data = static_cast<char*>(resultSlice_data) +
-                      i * result_stride_bytes;
+                  auto result_data = resultSlice_data + i * result_stride_bytes;
                   sub_iter.unsafe_replace_operand(0, result_data);
                   sub_iter.unsafe_replace_operand(1, self_data);
                   copy_stub(sub_iter.device_type(), sub_iter, false);
@@ -1756,8 +1754,8 @@ Tensor& index_select_out_cpu_(
                       auto self_data =
                           static_cast<const char*>(selfSlice_data) +
                           self_i * self_stride_bytes;
-                      auto result_data = static_cast<char*>(resultSlice_data) +
-                          i * result_stride_bytes;
+                      auto result_data =
+                          resultSlice_data + i * result_stride_bytes;
                       memcpy(result_data, self_data, slice_size_bytes);
                     }
                   });
@@ -1785,7 +1783,7 @@ Tensor& index_select_out_cpu_(
             auto self_stride = self.dim() == 0 ? 1 : self.stride(dim);
             auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
             auto self_data_ptr = self.const_data_ptr<scalar_t>();
-            auto result_data_ptr = result.data_ptr<scalar_t>();
+            auto result_data_ptr = result.mutable_data_ptr<scalar_t>();
             auto self_numel = self.numel();
             AT_DISPATCH_INDEX_TYPES(
                 index_contig.scalar_type(),
@@ -1818,7 +1816,7 @@ Tensor& index_select_out_cpu_(
             auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
 
             auto self_data_ptr = self.const_data_ptr<scalar_t>();
-            auto result_data_ptr = result.data_ptr<scalar_t>();
+            auto result_data_ptr = result.mutable_data_ptr<scalar_t>();
             auto self_numel = self.numel();
             AT_DISPATCH_INDEX_TYPES(
                 index_contig.scalar_type(),
@@ -2573,8 +2571,8 @@ static Tensor& masked_select_out_impl_cpu(
   auto mask_long =
       at::empty(shape, self.options().dtype(at::kLong)).copy_(*_mask);
   auto mask_prefix_sum = at::empty(shape, self.options().dtype(at::kLong));
-  auto mask_long_data = mask_long.data_ptr<int64_t>();
-  auto mask_prefix_sum_data = mask_prefix_sum.data_ptr<int64_t>();
+  auto mask_long_data = mask_long.mutable_data_ptr<int64_t>();
+  auto mask_prefix_sum_data = mask_prefix_sum.mutable_data_ptr<int64_t>();
   // TODO: Here can only use std::partial_sum for C++14,
   // use std::exclusive_scan when PyTorch upgrades to C++17, which have better
   // performance. std::exclusive_scan(mask_long_data, mask_long_data +
