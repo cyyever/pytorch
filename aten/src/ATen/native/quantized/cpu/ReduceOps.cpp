@@ -110,9 +110,9 @@ static Tensor qnnpack_mean(const Tensor& input, IntArrayRef dim, bool keepdim) {
           qnnpack_operator,
           batch_size,
           inH * inW,
-          (uint8_t*)input_contig.data_ptr<c10::quint8>() /* input data */,
+          (uint8_t*)input_contig.mutable_data_ptr<c10::quint8>() /* input data */,
           inC,
-          (uint8_t*)output.data_ptr<c10::quint8>() /* output data */,
+          (uint8_t*)output.mutable_data_ptr<c10::quint8>() /* output data */,
           outC);
   CAFFE_ENFORCE(
       setupStatus == pytorch_qnnp_status_success,

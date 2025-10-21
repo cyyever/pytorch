@@ -220,8 +220,8 @@ Tensor _adaptive_avg_pool(const Tensor& input,
     output = at::_empty_affine_quantized(
         output_shape, input.options(), input.q_scale(), input.q_zero_point());
     auto input_contig = input.contiguous();
-    auto input_data = input_contig.data_ptr<scalar_t>();
-    auto output_data = output.data_ptr<scalar_t>();
+    auto input_data = input_contig.mutable_data_ptr<scalar_t>();
+    auto output_data = output.mutable_data_ptr<scalar_t>();
     auto in_stride = input_contig.strides();
 
     adaptive_avg_pool_single_out_frame<scalar_t>(
