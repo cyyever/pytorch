@@ -41,7 +41,7 @@ std::tuple<Tensor, Tensor> _sobol_engine_draw(const Tensor& quasi, int64_t n, co
     // We deal with `data` and `strides` due to performance issues.
     int64_t l;
     int64_t* wquasi_data = wquasi.mutable_data_ptr<int64_t>();
-    int64_t* sobolstate_data = sobolstate.mutable_data_ptr<int64_t>();
+    const int64_t* sobolstate_data = sobolstate.const_data_ptr<int64_t>();
     scalar_t* result_data = result.mutable_data_ptr<scalar_t>();
 
     int64_t wquasi_stride = wquasi.stride(0);

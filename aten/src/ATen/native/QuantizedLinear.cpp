@@ -239,7 +239,7 @@ std::tuple<Tensor, Tensor, double, int64_t> fbgemm_linear_quantize_weight(
   float w_min = std::numeric_limits<float>::quiet_NaN();
   float w_max = std::numeric_limits<float>::quiet_NaN();
   fbgemm::FindMinMax(
-      /*m=*/weight_contig.mutable_data_ptr<float>(),
+      /*m=*/weight_contig.const_data_ptr<float>(),
       /*min=*/&w_min,
       /*max=*/&w_max,
       /*len=*/weight_contig.numel());
@@ -266,7 +266,7 @@ std::tuple<Tensor, Tensor, double, int64_t> fbgemm_linear_quantize_weight(
   // Tensor quantized = at::native::empty_cpu(
   //     weight_contig.sizes(), weight_contig.options().dtype(at::kChar));
   fbgemm::Quantize<int8_t, false /*LEGACY*/>(
-      /*src=*/weight_contig.mutable_data_ptr<float>(),
+      /*src=*/weight_contig.const_data_ptr<float>(),
       /*dst=*/quantized.mutable_data_ptr<int8_t>(),
       /*len=*/weight_contig.numel(),
       /*qparams=*/q_params);

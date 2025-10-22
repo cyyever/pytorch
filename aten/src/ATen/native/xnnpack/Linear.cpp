@@ -149,7 +149,7 @@ Tensor run(
 
   const xnn_status setup_status = xnn_setup_fully_connected_nc_f32(
       context.op.get(),                                   // operator
-      padded_input.mutable_data_ptr<float>(),                     // input
+      padded_input.const_data_ptr<float>(),                     // input
       output.mutable_data_ptr<float>());                          // output
 
   TORCH_CHECK(

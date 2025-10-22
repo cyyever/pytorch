@@ -3526,8 +3526,7 @@ void dequantize_tensor_per_tensor_affine_cpu(
   AT_DISPATCH_QINT_TYPES(
       qtensor.scalar_type(), "dequantize_tensor_per_tensor_affine_cpu", [&]() {
         check_tensor_memory_format(qtensor, rtensor);
-        const auto* qd =
-            reinterpret_cast<const underlying_t*>(qtensor.mutable_data_ptr<scalar_t>());
+        const auto* qd = qtensor.const_data_ptr<underlying_t>();
         fbgemm::TensorQuantizationParams qparams{};
         qparams.scale = scale;
         qparams.zero_point = zero_point;

@@ -80,8 +80,8 @@ static Tensor matmul_with_bmm_nested(const Tensor& self, const Tensor& mat2) {
   // metadata for self
   std::vector<IntArrayRef> self_sizes = NestedTensor_get_sizes(self_ptr);
   std::vector<IntArrayRef> self_strides = NestedTensor_get_strides(self_ptr);
-  int64_t* self_offsets_ptr =
-      self_ptr->get_storage_offsets().mutable_data_ptr<int64_t>();
+  const int64_t* self_offsets_ptr =
+      self_ptr->get_storage_offsets().const_data_ptr<int64_t>();
   auto opt = self_ptr->get_nested_sizes().options();
 
   // metadata for mat2

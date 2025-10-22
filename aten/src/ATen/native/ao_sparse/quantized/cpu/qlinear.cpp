@@ -37,7 +37,7 @@ at::Tensor PackedLinearWeight::apply_impl(
   // TODO: contiguous is called for further jit optimizations.
   auto input_contig = input.contiguous();
   const auto* input_ptr =
-      reinterpret_cast<uint8_t*>(input_contig.mutable_data_ptr<c10::quint8>());
+      reinterpret_cast<const uint8_t*>(input_contig.const_data_ptr<c10::quint8>());
 
   TORCH_CHECK(
       input.dim() >= 2,
@@ -126,7 +126,7 @@ at::Tensor PackedLinearWeight::apply_impl(
       input_zero_point_int32);
 
   auto* input_tr_ptr =
-      reinterpret_cast<uint8_t*>(input_tr.mutable_data_ptr<c10::quint8>());
+      reinterpret_cast<const uint8_t*>(input_tr.const_data_ptr<c10::quint8>());
   // TODO: Activation transpose before and after the kernel can be removed if we
   // keep activation tensor always tranposed.
   fbgemm::transpose_simd<uint8_t>(

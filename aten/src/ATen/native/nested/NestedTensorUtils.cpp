@@ -37,7 +37,7 @@ std::vector<int64_t> NestedTensor_get_max_size_from_size_tensor(
   if (sizes.dim() == 0) {
     return {};
   }
-  const auto sizes_ptr = sizes.mutable_data_ptr<int64_t>();
+  const auto sizes_ptr = sizes.const_data_ptr<int64_t>();
   const auto sizes_size_0 = sizes.sizes()[0];
   const auto sizes_size_1 = sizes.sizes()[1];
   TORCH_INTERNAL_ASSERT(sizes_size_1 > 0);
