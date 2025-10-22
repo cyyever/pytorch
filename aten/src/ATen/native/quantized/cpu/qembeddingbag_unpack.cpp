@@ -44,9 +44,13 @@ at::Tensor PackedEmbeddingBagWeight::unpack() {
             num_elem_per_byte};
 
     auto scales = at::from_blob(
-        w_scale.data(), w_scale.size(), at::device(c10::kCPU).dtype(c10::kFloat));
+        w_scale.data(),
+        static_cast<int64_t>(w_scale.size()),
+        at::device(c10::kCPU).dtype(c10::kFloat));
     auto zero_points = at::from_blob(
-        w_zp.data(), w_zp.size(), at::device(c10::kCPU).dtype(c10::kFloat));
+        w_zp.data(),
+        static_cast<int64_t>(w_zp.size()),
+        at::device(c10::kCPU).dtype(c10::kFloat));
 
     auto output_columns = output_shape[1];
     uint8_t* output_data = nullptr;
@@ -115,11 +119,14 @@ Tensor& qembeddingbag_byte_unpack_out(Tensor& output, const Tensor& packed_weigh
   // assert(unpacked_weights.size() == torch.Size([2, 10, 3]))
   const auto packed_weight_sizes = packed_weight.sizes();
   const auto col_dim = packed_weight_sizes.size() - 1;
-  const int64_t input_rows = c10::size_to_dim_(col_dim, packed_weight_sizes);
-  const int32_t input_columns = packed_weight_sizes[col_dim];
+  const int64_t input_rows =
+      c10::size_to_dim_(static_cast<int>(col_dim), packed_weight_sizes);
+  const int32_t input_columns =
+      static_cast<int32_t>(packed_weight_sizes[col_dim]);
   // The last 2 values are used to store the FP32 scale and zero_point values
   // per row.
-  const int32_t output_columns = input_columns - 2 * sizeof(float);
+  const int32_t output_columns =
+      static_cast<int32_t>(input_columns - 2 * sizeof(float));
   const auto* input_data = packed_weight.const_data_ptr<uint8_t>();
 
   std::vector<int64_t> output_shape = packed_weight_sizes.vec();
@@ -203,7 +210,7 @@ Tensor _qembeddingbag_nbit_unpack_helper(
         BIT_RATE,
         input_data + start_idx * input_columns,
         end_idx - start_idx,
-        input_columns,
+        static_cast<int>(input_columns),
         output_data + start_idx * output_dimensions[1]);
   });
 #else

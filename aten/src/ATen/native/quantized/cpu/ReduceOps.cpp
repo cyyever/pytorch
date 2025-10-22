@@ -91,9 +91,9 @@ static Tensor qnnpack_mean(const Tensor& input, IntArrayRef dim, bool keepdim) {
       pytorch_qnnp_create_global_average_pooling_nwc_q8(
           inC,
           zero_point,
-          scale,
+          static_cast<float>(scale),
           zero_point,
-          scale,
+          static_cast<float>(scale),
           std::numeric_limits<uint8_t>::min() /* output min */,
           std::numeric_limits<uint8_t>::max() /* output max */,
           0,

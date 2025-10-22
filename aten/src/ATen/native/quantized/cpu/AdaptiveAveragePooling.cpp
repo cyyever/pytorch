@@ -30,7 +30,7 @@ DEFINE_DISPATCH(qadaptive_avg_pool3d_ndhwc_stub);
 
 namespace {
 
-inline int start_index(int out_idx, int out_len, int in_len) {
+inline int64_t start_index(int64_t out_idx, int64_t out_len, int64_t in_len) {
   /*
    * out_idx: the current index of output matrix
    * out_len: the dimension_size of output matrix
@@ -39,17 +39,17 @@ inline int start_index(int out_idx, int out_len, int in_len) {
    * elements in each average computation.
    * This function computes the start index on input matrix.
    */
-  // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-  return static_cast<int>(std::floor(static_cast<float>(out_idx * in_len) / out_len));
+  return static_cast<int64_t>(std::floor(
+      static_cast<float>(out_idx * in_len) / static_cast<float>(out_len)));
 }
 
-inline int end_index(int out_idx, int out_len, int in_len) {
+inline int64_t end_index(int64_t out_idx, int64_t out_len, int64_t in_len) {
   /*
    * Parameter definition is the same as start_index.
    * This function computes the end index on input matrix.
    */
-  // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-  return static_cast<int>(std::ceil(static_cast<float>((out_idx + 1) * in_len) / out_len));
+  return static_cast<int64_t>(std::ceil(
+      static_cast<float>((out_idx + 1) * in_len) / static_cast<float>(out_len)));
 }
 
 // adaptive avg pool for 2D and 3D inputs
@@ -72,24 +72,21 @@ void adaptive_avg_pool_single_out_frame(
     for (const auto c : c10::irange(start, end)) {
       /* loop over output */
       for (int64_t od = 0; od < osizeD; od++) {
-        int istartD = start_index(od, osizeD, isizeD);
-        int iendD = end_index(od, osizeD, isizeD);
-        int kD = iendD - istartD;
-        // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-        float kDr = 1.0 / kD;
+        int64_t istartD = start_index(od, osizeD, isizeD);
+        int64_t iendD = end_index(od, osizeD, isizeD);
+        int64_t kD = iendD - istartD;
+        float kDr = 1.0f / static_cast<float>(kD);
         for (int64_t oh = 0; oh < osizeH; oh++) {
-          int istartH = start_index(oh, osizeH, isizeH);
-          int iendH = end_index(oh, osizeH, isizeH);
-          int kH = iendH - istartH;
-          // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-          float kDHr = kDr / kH;
+          int64_t istartH = start_index(oh, osizeH, isizeH);
+          int64_t iendH = end_index(oh, osizeH, isizeH);
+          int64_t kH = iendH - istartH;
+          float kDHr = kDr / static_cast<float>(kH);
 
           for (int64_t ow = 0; ow < osizeW; ow++) {
-            int istartW = start_index(ow, osizeW, isizeW);
-            int iendW = end_index(ow, osizeW, isizeW);
-            int kW = iendW - istartW;
-            // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-            float kDHWr = kDHr / kW;
+            int64_t istartW = start_index(ow, osizeW, isizeW);
+            int64_t iendW = end_index(ow, osizeW, isizeW);
+            int64_t kW = iendW - istartW;
+            float kDHWr = kDHr / static_cast<float>(kW);
 
             /* local pointers */
             const scalar_t* ip = input_p +
@@ -121,7 +118,7 @@ void adaptive_avg_pool_single_out_frame(
             /* set output to local average */
             // TODO: add the max/min clip
             op->val_ = static_cast<typename scalar_t::underlying>(
-                std::nearbyint(sum * kDHWr));
+                std::nearbyint(static_cast<float>(sum) * kDHWr));
           } // ow
         } // oh
       } // od

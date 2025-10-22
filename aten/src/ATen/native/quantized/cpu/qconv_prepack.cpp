@@ -62,12 +62,10 @@ c10::intrusive_ptr<ConvPackedParamsBase<kSpatialDim>> PackedConvWeight<
       " elements for ",
       kSpatialDim,
       "D convolution.");
-  const int input_channels = transpose ? weight.size(0)
-                                       : weight.size(1) * groups;
-  // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-  const int output_channels = transpose ? weight.size(1) * groups
-                                        // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-                                        : weight.size(0);
+  const int input_channels = static_cast<int>(transpose ? weight.size(0)
+                                                         : weight.size(1) * groups);
+  const int output_channels = static_cast<int>(transpose ? weight.size(1) * groups
+                                                          : weight.size(0));
   const int kernel_d = kSpatialDim == 2 ? 1 : weight.size(2);
   const int kernel_h = weight.size(kSpatialDim);
   const int kernel_w = weight.size(kSpatialDim + 1);
@@ -123,16 +121,13 @@ c10::intrusive_ptr<ConvPackedParamsBase<kSpatialDim>> PackedConvWeight<
   // fbgemm::col_offsets_with_zero_pt_s8acc32_ref) please note that offsets
   // include the sum of columns as well as the scalar term weight_zero_point *
   // KDim
-  // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-  const int input_channels_per_group = input_channels / groups;
-  // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-  const int output_channels_per_group = output_channels / groups;
+  const int input_channels_per_group = static_cast<int>(input_channels / groups);
+  const int output_channels_per_group = static_cast<int>(output_channels / groups);
   const int inner_size =
       kernel_d * kernel_h * kernel_w * input_channels_per_group;
   for (const auto g : c10::irange(groups)) {
     for (const auto i : c10::irange(output_channels_per_group)) {
-      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-      const int c = g * output_channels_per_group + i;
+      const int c = static_cast<int>(g * output_channels_per_group + i);
       int32_t sum = 0;
       for (const auto j : c10::irange(inner_size)) {
         sum += static_cast<int32_t>(weight_data_int8[c * inner_size + j]);
@@ -371,19 +366,19 @@ c10::intrusive_ptr<ConvPackedParamsBase<kSpatialDim>> PackedConvWeightsOnednn<
   auto op_attr = ideep::attr_t();
   std::vector<int32_t> wgt_zero_points;
   ideep::scale_t wgt_scales;
-  const int output_channels = transpose ? weight.size(1) * groups
-                                        : weight.size(0);
+  const int output_channels = static_cast<int>(transpose ? weight.size(1) * groups
+                                                          : weight.size(0));
   const auto qtype = weight.qscheme();
   if (qtype == c10::kPerTensorAffine) {
     TORCH_CHECK(
         weight.q_zero_point()==0,
         "quantized::qconv_prepack: ONEDNN only supports symmetric quantization of weight,"
         " whose zero point must be 0.");
-    wgt_zero_points = std::vector<int32_t>(1, weight.q_zero_point());
+    wgt_zero_points = std::vector<int32_t>(1, static_cast<int32_t>(weight.q_zero_point()));
 #if IDEEP_PREREQ(3, 1, 0, 1)
-    wgt_scales = ideep::scale_t(1, weight.q_scale());
+    wgt_scales = ideep::scale_t(1, static_cast<float>(weight.q_scale()));
 #elif IDEEP_PREREQ(3, 1, 0, 0)
-    wgt_scales = ideep::scale_t(1, 1.0/weight.q_scale()); // Scales of ONEDNN and PyTorch are reciprocal
+    wgt_scales = ideep::scale_t(1, static_cast<float>(1.0/weight.q_scale())); // Scales of ONEDNN and PyTorch are reciprocal
 #else
     TORCH_CHECK(false, "Unexpected IDeep version to do qconv weight prepack.");
 #endif
@@ -422,7 +417,7 @@ c10::intrusive_ptr<ConvPackedParamsBase<kSpatialDim>> PackedConvWeightsOnednn<
     // template args: <(src/dst) is_channels_last, transposed>
     w_desc = ideep::convolution_transpose_forward::expected_weights_desc<true, false>(
         dims, dnnl::memory::data_type::s8,
-        strides, padding_l, padding_r, dilates, groups,
+        strides, padding_l, padding_r, dilates, static_cast<int>(groups),
         dnnl::algorithm::deconvolution_direct, dnnl::prop_kind::forward_inference,
         ideep::dims(), op_attr);
     // convolution_transpose_forward::expected_weights_desc() gives format [i, o, ...],
@@ -436,7 +431,7 @@ c10::intrusive_ptr<ConvPackedParamsBase<kSpatialDim>> PackedConvWeightsOnednn<
   } else {
     w_desc = ideep::convolution_forward::expected_weights_desc(
         dims, dnnl::memory::data_type::s8,
-        strides, padding_l, padding_r, dilates, groups,
+        strides, padding_l, padding_r, dilates, static_cast<int>(groups),
         dnnl::algorithm::convolution_direct, dnnl::prop_kind::forward_inference,
         dnnl::memory::data_type::u8, ideep::dims(), op_attr, /*is_channels_last=*/true);
     weight_copy = weight.clone();
@@ -503,7 +498,7 @@ at::Tensor _qconv_prepack_onednn(
     torch::List<int64_t> dilation,
     int64_t groups,
     std::optional<torch::List<int64_t>> input_shape) {
-  int kSpatialDim = weight.ndimension() - 2;
+  int64_t kSpatialDim = weight.ndimension() - 2;
   TORCH_CHECK(
       weight.ndimension() == kSpatialDim + 2,
       "Weights are expected to have ", kSpatialDim + 2, " dimensions");
@@ -564,9 +559,9 @@ at::Tensor _qconv_prepack_onednn(
         weight_scales.numel() == 1,
         "Weight is quant per tensor, weight scale expects 1 element but got ", weight_scales.numel(), " elements.");
 #if IDEEP_PREREQ(3, 1, 0, 1)
-    weights_scales[0] = weight_scales.item().toDouble();
+    weights_scales[0] = static_cast<float>(weight_scales.item().toDouble());
 #elif IDEEP_PREREQ(3, 1, 0, 0)
-    weights_scales[0] = 1.0 / weight_scales.item().toDouble(); // Scales of ONEDNN and PyTorch are reciprocal
+    weights_scales[0] = static_cast<float>(1.0 / weight_scales.item().toDouble()); // Scales of ONEDNN and PyTorch are reciprocal
 #else
     TORCH_CHECK(false, "Unexpected IDeep version to do qconv weight prepack.");
 #endif
@@ -574,9 +569,9 @@ at::Tensor _qconv_prepack_onednn(
     // Weight is quant per channel
     for (int i = 0; i < weight_scales.numel(); ++i) {
 #if IDEEP_PREREQ(3, 1, 0, 1)
-      weights_scales[i] = weight_scales[i].item().toDouble();
+      weights_scales[i] = static_cast<float>(weight_scales[i].item().toDouble());
 #elif IDEEP_PREREQ(3, 1, 0, 0)
-      weights_scales[i] = 1.0 / weight_scales[i].item().toDouble();
+      weights_scales[i] = static_cast<float>(1.0 / weight_scales[i].item().toDouble());
 #else
       TORCH_CHECK(false, "Unexpected IDeep version to do qconv weight prepack.");
 #endif
@@ -599,7 +594,7 @@ at::Tensor _qconv_prepack_onednn(
   auto x_dnnl_dtype = is_fp8 ? dnnl::memory::data_type::f8_e4m3 : dnnl::memory::data_type::u8;
   w_desc = ideep::convolution_forward::expected_weights_desc(
       w_dims, w_dnnl_dtype,
-      strides, padding_l, padding_r, dilates, groups,
+      strides, padding_l, padding_r, dilates, static_cast<int>(groups),
       dnnl::algorithm::convolution_direct, dnnl::prop_kind::forward_inference,
       x_dnnl_dtype, x_dims, op_attr, /*is_channels_last=*/true);
 
@@ -683,7 +678,7 @@ class QConvPackWeightInt8 final {
   if (ctx.qEngine() == at::QEngine::X86) {
 #if AT_MKLDNN_ENABLED()
     bool use_onednn = onednn_utils::should_use_onednn_quant(
-          weight, transpose, groups, output_padding);
+          weight, transpose, static_cast<int>(groups), output_padding);
     if (use_onednn) {
       return PackedConvWeightsOnednn<kSpatialDim>::prepack(
           weight, bias, stride, padding, output_padding, dilation, groups, transpose);
@@ -776,7 +771,7 @@ class QConv1dPackWeightInt8 final {
   if (ctx.qEngine() == at::QEngine::X86) {
 #if AT_MKLDNN_ENABLED()
     bool use_onednn = onednn_utils::should_use_onednn_quant(
-        weight, transpose, groups, output_padding);
+        weight, transpose, static_cast<int>(groups), output_padding);
     if (use_onednn) {
       return PackedConvWeightsOnednn<2>::prepack(
           weight, bias, stride, padding, output_padding, dilation, groups,

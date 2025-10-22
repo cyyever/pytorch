@@ -46,7 +46,7 @@ static Tensor qnnpack_tanh(Tensor input) {
   const pytorch_qnnp_status createStatus = pytorch_qnnp_create_tanh_nc_q8(
     num_elems /* channels */,
     zero_point /* input zero point */,
-    scale /* input scale */,
+    static_cast<float>(scale) /* input scale */,
     output_zero_point /* output zero point */,
     output_scale /* output scale */,
     std::numeric_limits<uint8_t>::min() /* output min */,

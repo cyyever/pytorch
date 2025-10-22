@@ -50,10 +50,9 @@ static Tensor qnnpack_sigmoid(
   const pytorch_qnnp_status createStatus = pytorch_qnnp_create_sigmoid_nc_q8(
     num_elems /* channels */,
     zero_point /* input zero point */,
-    scale /* input scale */,
+    static_cast<float>(scale) /* input scale */,
     output_zero_point /* output zero point */,
-    // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-    output_scale /* output scale */,
+    static_cast<float>(output_scale) /* output scale */,
     std::numeric_limits<uint8_t>::min() /* output min */,
     std::numeric_limits<uint8_t>::max() /* output max */,
     0 /* flags */,

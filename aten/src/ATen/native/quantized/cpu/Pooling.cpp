@@ -200,13 +200,13 @@ Tensor q_maxpool_2d(
       dW,
       ")");
 
-  int ndim = qx.dim();
+  int64_t ndim = qx.dim();
   TORCH_CHECK(
       ndim == 3 || ndim == 4, "Expecting the input tensor of rank 3 or 4.");
   int dimc = 0;
   int dimh = 1;
   int dimw = 2;
-  int nbatch = 1;
+  int64_t nbatch = 1;
   if (ndim == 4) { // Includes batches
     ++dimc;
     ++dimh;
@@ -369,7 +369,7 @@ Tensor q_maxpool_3d(
       ", ",
       dW,
       ")");
-  int ndim = qx.dim();
+  int64_t ndim = qx.dim();
   // TODO leslie: Support non batch mode input when input is THWC which is 4-d tensor.
   TORCH_CHECK(ndim == 5, "Expecting the input tensor of rank 5.");
 
@@ -378,7 +378,7 @@ Tensor q_maxpool_3d(
   int dimt = 2;
   int dimh = 3;
   int dimw = 4;
-  int nbatch = qx.size(0);
+  int64_t nbatch = qx.size(0);
   // Check if inputs are valid.
   int64_t iC = qx.size(dimc);
   int64_t iT = qx.size(dimt);
@@ -703,7 +703,7 @@ Tensor quantized_max_pool1d(
   check_max_pool1d(qx, kernel_size, stride, padding, dilation, ceil_mode);
   // (C, L) -> (C, 1, L) => kSqueezeDim = 1
   // (N, C, L) -> (N, C, 1, L) => kSqueezeDim = 2
-  const int32_t kSqueezeDim = qx.dim() - 1;
+  const int64_t kSqueezeDim = qx.dim() - 1;
   const auto qx_unsqueeze = qx.unsqueeze(kSqueezeDim);
   if (stride.empty()) {
     stride = kernel_size;

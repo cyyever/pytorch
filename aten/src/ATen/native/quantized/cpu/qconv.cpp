@@ -289,11 +289,11 @@ at::Tensor PackedConvWeight<kSpatialDim>::apply_impl(
       act.ndimension(), stride().size(), padding().size(),
       output_padding().size(), dilation().size(), func_name, transpose());
 
-  const int N = act.size(0);
-  const int C = act.size(1);
-  const int D = kSpatialDim == 2 ? 1 : act.size(2);
-  const int H = act.size(kSpatialDim);
-  const int W = act.size(kSpatialDim + 1);
+  const int N = static_cast<int>(act.size(0));
+  const int C = static_cast<int>(act.size(1));
+  const int D = static_cast<int>(kSpatialDim == 2 ? 1 : act.size(2));
+  const int H = static_cast<int>(act.size(kSpatialDim));
+  const int W = static_cast<int>(act.size(kSpatialDim + 1));
 
   const at::Tensor act_ndhwc = kSpatialDim == 2
       ? act.contiguous(c10::MemoryFormat::ChannelsLast)
@@ -400,9 +400,8 @@ at::Tensor PackedConvWeight<kSpatialDim>::apply_impl(
                                  output_padding_w},
           transpose());
 
-  // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-  const float act_scale = act.q_scale();
-  const int32_t act_zero_point = act.q_zero_point();
+  const float act_scale = static_cast<float>(act.q_scale());
+  const int32_t act_zero_point = static_cast<int32_t>(act.q_zero_point());
 
   at::Tensor bias;
   const float* bias_data = GetBiasData(&bias);
@@ -696,12 +695,10 @@ at::Tensor PackedConvWeightsQnnp<kSpatialDim>::apply_impl_xnnp(
             kSpatialDim>(weight_tensor, groups(), transpose());
 
     auto output_min = kReluFused
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        ? activationLimits<underlying_t>(output_scale, output_zero_point, Activation::RELU).first
+        ? activationLimits<underlying_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU).first
         : std::numeric_limits<underlying_t>::min();
     auto output_max = kReluFused
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        ? activationLimits<underlying_t>(output_scale, output_zero_point, Activation::RELU).second
+        ? activationLimits<underlying_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU).second
         : std::numeric_limits<underlying_t>::max();
 
 
@@ -862,12 +859,12 @@ at::Tensor PackedConvWeightsQnnp<kSpatialDim>::apply_impl(
   const int out_ch_idx = transpose() ? 1 : 0;
   const auto out_ch = bias.size(0);
   // inputs are in semantic NCHW format
-  const int N = act.size(0);
-  const int C = act.size(1);
-  const int D = kSpatialDim == 3 ? act.size(2) : 1;
-  const int H = act.size(kSpatialDim);
-  const int W = act.size(kSpatialDim + 1);
-  const int M = out_ch; // output channels
+  const int N = static_cast<int>(act.size(0));
+  const int C = static_cast<int>(act.size(1));
+  const int D = static_cast<int>(kSpatialDim == 3 ? act.size(2) : 1);
+  const int H = static_cast<int>(act.size(kSpatialDim));
+  const int W = static_cast<int>(act.size(kSpatialDim + 1));
+  const int M = static_cast<int>(out_ch); // output channels
 
   const auto channels_last = kSpatialDim == 2
       ? c10::MemoryFormat::ChannelsLast
@@ -875,13 +872,11 @@ at::Tensor PackedConvWeightsQnnp<kSpatialDim>::apply_impl(
   const at::Tensor act_ndhwc = act.contiguous(channels_last);
 
   auto output_min = kReluFused
-      // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-      ? activationLimits<uint8_t>(output_scale, output_zero_point, Activation::RELU)
+      ? activationLimits<uint8_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU)
             .first
       : std::numeric_limits<uint8_t>::min();
   auto output_max = kReluFused
-      // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-      ? activationLimits<uint8_t>(output_scale, output_zero_point, Activation::RELU)
+      ? activationLimits<uint8_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU)
             .second
       : std::numeric_limits<uint8_t>::max();
 
@@ -904,8 +899,7 @@ at::Tensor PackedConvWeightsQnnp<kSpatialDim>::apply_impl(
     // We calculate requant scale here as the vector holding the requant scale
     // is owned by this module. The pointer is then passed to qnnpack backend.
     generate_requantization_scales(
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        w_scales, act_input_scale, output_scale, requantization_scales);
+        w_scales, static_cast<float>(act_input_scale), static_cast<float>(output_scale), requantization_scales);
 
     // TODO Kimish, we are allocating affine_quantized regardless of per channel or not.
     // This allocation is actually used only for packing weight and thus will be freed.
@@ -944,7 +938,7 @@ at::Tensor PackedConvWeightsQnnp<kSpatialDim>::apply_impl(
     if (zero_buffer_size) {
       memset(
           convolution_op->zero_buffer,
-          act_ndhwc.q_zero_point(),
+          static_cast<int>(act_ndhwc.q_zero_point()),
           zero_buffer_size);
     }
   }
@@ -1206,15 +1200,15 @@ at::Tensor PackedConvWeightsOnednn<kSpatialDim>::apply_impl(
   std::vector<int64_t> output_sizes;
   if (transpose()) {
     // Prepacked weight format: [o, i, ...]
-    const int N = act.size(0); // batch size
-    const int C = act.size(1); // input channels
-    const int M = weights.get_dim(0); // output channels
-    const int D = kSpatialDim == 2 ? 1 : act.size(2); // input depth
-    const int H = act.size(kSpatialDim); // input height
-    const int W = act.size(kSpatialDim + 1); // input width
-    const int KH = weights.get_dim(kSpatialDim); // kernel height
-    const int KW = weights.get_dim(kSpatialDim + 1); // kernel width
-    const int KD = kSpatialDim == 2 ? 1 : weights.get_dim(2); // kernel depth
+    const int N = static_cast<int>(act.size(0)); // batch size
+    const int C = static_cast<int>(act.size(1)); // input channels
+    const int M = static_cast<int>(weights.get_dim(0)); // output channels
+    const int D = static_cast<int>(kSpatialDim == 2 ? 1 : act.size(2)); // input depth
+    const int H = static_cast<int>(act.size(kSpatialDim)); // input height
+    const int W = static_cast<int>(act.size(kSpatialDim + 1)); // input width
+    const int KH = static_cast<int>(weights.get_dim(kSpatialDim)); // kernel height
+    const int KW = static_cast<int>(weights.get_dim(kSpatialDim + 1)); // kernel width
+    const int KD = static_cast<int>(kSpatialDim == 2 ? 1 : weights.get_dim(2)); // kernel depth
     TORCH_CHECK(C == groups() * weights.get_dim(1), // weight: [o, i, ...]
                 func_name, " (ONEDNN): input channel number should be ",
                 groups() * weights.get_dim(1), ", but got ", C);
@@ -1267,19 +1261,19 @@ at::Tensor PackedConvWeightsOnednn<kSpatialDim>::apply_impl(
   double input_scale = act.q_scale();
   int64_t input_zp = act.q_zero_point();
   // Scales of ONEDNN and PyTorch are reciprocal
-  const ideep::scale_t& src_scales = ideep::scale_t(1, 1.0/input_scale);
+  const ideep::scale_t& src_scales = ideep::scale_t(1, static_cast<float>(1.0/input_scale));
   const ideep::scale_t& weights_scales = weights.get_scale();
   double inv_output_scale = 1.0/output_scale;
-  const ideep::zero_point_t src_zero_points = ideep::zero_point_t(1, input_zp);
-  const ideep::zero_point_t dst_zero_points = ideep::zero_point_t(1, output_zero_point);
+  const ideep::zero_point_t src_zero_points = ideep::zero_point_t(1, static_cast<int32_t>(input_zp));
+  const ideep::zero_point_t dst_zero_points = ideep::zero_point_t(1, static_cast<int32_t>(output_zero_point));
 
   ideep::attr_t op_attr;
-  float sum_scale = has_accum ? accum.value().q_scale() : 1.0;
-  int32_t sum_zero_point = has_accum ? accum.value().q_zero_point() : 0;
+  float sum_scale = has_accum ? static_cast<float>(accum.value().q_scale()) : 1.0;
+  int32_t sum_zero_point = has_accum ? static_cast<int32_t>(accum.value().q_zero_point()) : 0;
   if (has_accum) {
     // Just tells we have these post op, the actual value such as scale and zero point will be set later.
     op_attr = kReluFused ? ideep::attr_t::residual_with_sum_zero_point() : ideep::attr_t::fuse_sum();
-    const ideep::scale_t accum_scale = ideep::scale_t(1, 1.0/sum_scale);
+    const ideep::scale_t accum_scale = ideep::scale_t(1, static_cast<float>(1.0/sum_scale));
     const ideep::zero_point_t accum_zero_points = ideep::zero_point_t(1, sum_zero_point);
     // Set the dst scale and zero point with the value of accum.
     // The true scale and zero point is stored in ideep::scale_t(scale_size, inv_output_scale) and dst_zero_points.
@@ -1306,7 +1300,7 @@ at::Tensor PackedConvWeightsOnednn<kSpatialDim>::apply_impl(
         ideep::convolution_transpose_forward::prepare(
             params, src, weights, b, dst_dims, dst,
             strides, padding_l, padding_r, dilates, groups(),
-            src_scales, weights_scales, ideep::scale_t(1, inv_output_scale),
+            src_scales, weights_scales, ideep::scale_t(1, static_cast<float>(inv_output_scale)),
             src_zero_points, dst_zero_points, op_attr,
             dnnl::algorithm::deconvolution_direct,
             dnnl::prop_kind::forward_inference,
@@ -1324,7 +1318,7 @@ at::Tensor PackedConvWeightsOnednn<kSpatialDim>::apply_impl(
           src, weights, b, dst_dims, dst,
           strides, padding_l, padding_r, dilates,
           groups(), src_scales, weights_scales,
-          ideep::scale_t(1, inv_output_scale),
+          ideep::scale_t(1, static_cast<float>(inv_output_scale)),
           src_zero_points, dst_zero_points, op_attr,
           dnnl::algorithm::deconvolution_direct,
           dnnl::prop_kind::forward_inference,
@@ -1338,7 +1332,7 @@ at::Tensor PackedConvWeightsOnednn<kSpatialDim>::apply_impl(
         ideep::convolution_forward::prepare(
             params, src, weights, b, dst_dims, dst,
             strides, dilates, padding_l, padding_r, groups(),
-            src_scales, weights_scales, ideep::scale_t(1, inv_output_scale),
+            src_scales, weights_scales, ideep::scale_t(1, static_cast<float>(inv_output_scale)),
             src_zero_points, dst_zero_points,
             op_attr, dnnl::algorithm::convolution_direct,
             dnnl::prop_kind::forward_inference,
@@ -1355,7 +1349,7 @@ at::Tensor PackedConvWeightsOnednn<kSpatialDim>::apply_impl(
       ideep::convolution_forward::compute(
           src, weights, b, dst_dims, dst,
           strides, dilates, padding_l, padding_r, groups(),
-          src_scales, weights_scales, ideep::scale_t(1, inv_output_scale),
+          src_scales, weights_scales, ideep::scale_t(1, static_cast<float>(inv_output_scale)),
           src_zero_points, dst_zero_points, op_attr,
           dnnl::algorithm::convolution_direct,
           dnnl::prop_kind::forward_inference,
@@ -1415,7 +1409,7 @@ static at::Tensor _fp8_convolution_onednn_ref(
   TORCH_CHECK(
     act.scalar_type() == at::ScalarType::Float8_e4m3fn && weight.scalar_type() == at::ScalarType::Float8_e4m3fn,
     "FP8 qconv: Unexpected dtype of input and weight:", act.scalar_type(), ", ", weight.scalar_type());
-  int kSpatialDim = act.dim() - 2;
+  int64_t kSpatialDim = act.dim() - 2;
   // conv1d is converted to conv2d before calling this function
   TORCH_CHECK(kSpatialDim != 1, "Expect 2D or 3D convolution, but got 1D convolution.");
   auto act_contig = act.contiguous(kSpatialDim == 2 ?
@@ -1554,7 +1548,7 @@ static at::Tensor _quantized_convolution_onednn(
     TORCH_CHECK(output_zero_point == 0,  " (ONEDNN): fp32 or bf16 output, output_zero_point must be 0");
   }
 
-  int kSpatialDim = act.dim() - 2;
+  int64_t kSpatialDim = act.dim() - 2;
   bool is_1d = (1 == kSpatialDim);
 
   bool has_binary_post_op = binary_attr.has_value() && binary_attr.value() != "none";
@@ -1696,15 +1690,15 @@ static at::Tensor _quantized_convolution_onednn(
   TORCH_CHECK(false, "Unexpected IDeep version to do qconv calculation.");
 #endif
 
-  const ideep::zero_point_t src_zero_points = ideep::zero_point_t(1, act_zero_point);
-  const ideep::zero_point_t dst_zero_points = ideep::zero_point_t(1, output_zero_point);
+  const ideep::zero_point_t src_zero_points = ideep::zero_point_t(1, static_cast<int32_t>(act_zero_point));
+  const ideep::zero_point_t dst_zero_points = ideep::zero_point_t(1, static_cast<int32_t>(output_zero_point));
 
   // Weight
   auto packed_weight = at::native::itensor_from_mkldnn(weight);
 
   // Bias
   ideep::tensor onednn_bias;
-  const int output_channels = weight.size(0);
+  const int64_t output_channels = weight.size(0);
   bool with_bias = bias.has_value();
 
   at::Tensor bias_val_float;
@@ -1774,7 +1768,7 @@ static at::Tensor _quantized_convolution_onednn(
     // To avoid NaN, we need to clamp the intermediate results (in fp32) to [-488, 488]
     // before converting to fp8
     auto post_ops = op_attr.get_post_ops();
-    post_ops.append_eltwise(dnnl::algorithm::eltwise_linear, 1.0/output_scale, 0.0);
+    post_ops.append_eltwise(dnnl::algorithm::eltwise_linear, static_cast<float>(1.0/output_scale), 0.0);
     post_ops.append_eltwise(dnnl::algorithm::eltwise_clip, -FP8E4M3_MAX, FP8E4M3_MAX);
     op_attr.set_post_ops(post_ops);
     output_scale = 1.0f;
@@ -1784,10 +1778,10 @@ static at::Tensor _quantized_convolution_onednn(
   // Use oneDNN's APIs instead of prepare/compute from ideep to reduce integration overhead.
   // The functions from ideep are heavy because they have complex data structures for unified API
   // oneDNN version >= 3.1.0 is required.
-  auto weight_grouped = packed_weight.make_grouped_weights(groups, /* is_deconv */false);
+  auto weight_grouped = packed_weight.make_grouped_weights(static_cast<int>(groups), /* is_deconv */false);
   auto weights_desc = tensor::desc(weight_grouped.get_dims(), packed_weight.get_data_type(), ideep::format_tag::any);
   if (groups > 1) {
-    weights_desc = weights_desc.to_grouped(groups);
+    weights_desc = weights_desc.to_grouped(static_cast<int>(groups));
   }
   auto dst_desc = dst.get_desc();
   auto bias_desc = with_bias ?
@@ -1799,8 +1793,8 @@ static at::Tensor _quantized_convolution_onednn(
   if (act_zero_point != 0) {
     op_attr.set_zero_points_mask(DNNL_ARG_SRC, 0);
   }
-  int oc_per_group = weight_grouped.get_dim(0) / groups;
-  int wei_scale_mask = ideep::utils::conv_weight_scale_mask(weight_scales.numel(), oc_per_group, groups, false);
+  int oc_per_group = static_cast<int>(weight_grouped.get_dim(0) / groups);
+  int wei_scale_mask = ideep::utils::conv_weight_scale_mask(static_cast<int>(weight_scales.numel()), oc_per_group, static_cast<int>(groups), false);
   op_attr.set_scales_mask(DNNL_ARG_WEIGHTS, wei_scale_mask);
   if (output_scale != 1.0f) {
     op_attr.set_scales_mask(DNNL_ARG_DST, 0);
@@ -1837,11 +1831,11 @@ static at::Tensor _quantized_convolution_onednn(
   if (with_bias) {
     args.insert({DNNL_ARG_BIAS, expected_bias});
   }
-  tensor src_scales_t = tensor(ideep::scale_t(1, act_scale));
+  tensor src_scales_t = tensor(ideep::scale_t(1, static_cast<float>(act_scale)));
   tensor wei_scales_t = tensor(weights_scales);
-  tensor dst_scales_t = tensor(ideep::scale_t(1, output_scale));
-  tensor src_zp_t = tensor(ideep::zero_point_t(1, act_zero_point));
-  tensor dst_zp_t = tensor(ideep::zero_point_t(1, output_zero_point));
+  tensor dst_scales_t = tensor(ideep::scale_t(1, static_cast<float>(output_scale)));
+  tensor src_zp_t = tensor(ideep::zero_point_t(1, static_cast<int32_t>(act_zero_point)));
+  tensor dst_zp_t = tensor(ideep::zero_point_t(1, static_cast<int32_t>(output_zero_point)));
   if (act_scale != 1.0f) {
     args.insert({DNNL_ARG_ATTR_SCALES | DNNL_ARG_SRC, src_scales_t});
   }

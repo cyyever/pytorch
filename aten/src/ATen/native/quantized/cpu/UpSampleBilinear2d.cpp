@@ -74,7 +74,7 @@ void upsample_bilinear2d_out_frame(
   const auto rwidth = area_pixel_compute_scale<float>(
       input_width, output_width, align_corners, scales_w);
 
-  float output_scale = static_cast<float>(output.q_scale() / input.q_scale());
+  double output_scale = output.q_scale() / input.q_scale();
 
   const int64_t input_q_zero_point = input.q_zero_point();
   const int64_t output_q_zero_point = output.q_zero_point();
@@ -85,10 +85,10 @@ void upsample_bilinear2d_out_frame(
     const auto w1r = area_pixel_compute_source_index<float>(
         rwidth, w2, align_corners, /*cubic=*/false);
 
-    const int64_t w1 = w1r;
+    const int64_t w1 = static_cast<int64_t>(w1r);
     const int64_t w1p = (w1 < input_width - 1) ? 1 : 0;
 
-    const float w1lambda = w1r - w1;
+    const float w1lambda = w1r - static_cast<float>(w1);
     const float w0lambda = static_cast<float>(1.) - w1lambda;
 
     params_w.emplace_back(w1, w1p, w0lambda, w1lambda);
@@ -105,10 +105,10 @@ void upsample_bilinear2d_out_frame(
       const auto h1r = area_pixel_compute_source_index<float>(
           rheight, h2, align_corners, /*cubic=*/false);
 
-      const int64_t h1 = h1r;
+      const int64_t h1 = static_cast<int64_t>(h1r);
       const int64_t h1p = (h1 < input_height - 1) ? 1 : 0;
 
-      const float h1lambda = h1r - h1;
+      const float h1lambda = h1r - static_cast<float>(h1);
       const float h0lambda = static_cast<float>(1.) - h1lambda;
 
       const auto* i_ptr = &i_p[nc * input_height * input_width];

@@ -55,7 +55,7 @@ at::Tensor& embedding_lookup_fallback_impl(
   const auto weight_sizes = weight.sizes();
   const int64_t N = weight_sizes[0];
   const int64_t weight_size = weight_sizes[1];
-  const int index_size = indices.numel();
+  const int index_size = static_cast<int>(indices.numel());
 
   auto accessor = offsets.accessor<OffsetType, 1>();
   std::vector<OffsetType> lengths_data;
@@ -87,7 +87,8 @@ at::Tensor& embedding_lookup_fallback_impl(
         TORCH_CHECK((idx >= 0 && idx < N), "Invalid indices data");
       } else {
         int64_t uncompressed_idx = indices_data[current];
-        int compressed_index_size = compressed_indices_mapping.value().numel();
+        int compressed_index_size =
+            static_cast<int>(compressed_indices_mapping.value().numel());
         compressed_indices_mapping_data =
             compressed_indices_mapping.value().const_data_ptr<int32_t>();
         TORCH_CHECK(
@@ -182,7 +183,8 @@ at::Tensor& embedding_lookup_fallback_impl(
         quantized >>= (j % NUM_ELEM_PER_BYTE) * BIT_RATE;
         quantized &= (1 << BIT_RATE) - 1;
 
-        output_data[j] = fma(scale, quantized, output_data[j] + bias);
+        output_data[j] =
+            static_cast<float>(fma(scale, quantized, output_data[j] + bias));
       }
     } // for each i
     output_data += block_size;
@@ -648,7 +650,8 @@ at::Tensor& embedding_bag_nbit_impl(
   int compressed_index_size = 0;
   bool fallback_to_no_sparse = false;
   if (pruned_weights) {
-    compressed_index_size = compressed_indices_mapping.value().numel();
+    compressed_index_size =
+        static_cast<int>(compressed_indices_mapping.value().numel());
     compressed_indices_mapping_data =
         compressed_indices_mapping.value().const_data_ptr<int32_t>();
 
@@ -663,8 +666,9 @@ at::Tensor& embedding_bag_nbit_impl(
   const auto weight_sizes = weight.sizes();
   const int64_t weight_size = weight_sizes[1];
   int NUM_ELEM_PER_BYTE = 8 / bit_width;
-  const int64_t D =
-      (weight_size - 2 * sizeof(at::Half)) * NUM_ELEM_PER_BYTE; // NB: 2-byte fp16 scale and 2-byte zero_offset
+  const int64_t D = static_cast<int64_t>(
+      (weight_size - 2 * sizeof(at::Half)) *
+      NUM_ELEM_PER_BYTE); // NB: 2-byte fp16 scale and 2-byte zero_offset
   const int64_t M = offsets.sizes()[0];
 
   int64_t output_size = M - 1;
@@ -706,7 +710,7 @@ at::Tensor& embedding_bag_nbit_impl(
   const int64_t N = weight_sizes[0];
 
   const int64_t block_size = D;
-  const int index_size = indices.numel();
+  const int index_size = static_cast<int>(indices.numel());
   constexpr int prefetch_distance = 16;
   if (!pruned_weights || fallback_to_no_sparse) {
     // Generate the fbgemm kernel
@@ -819,7 +823,8 @@ at::Tensor& embedding_bag_byte_impl(
   int compressed_index_size = 0;
   bool fallback_to_no_sparse = false;
   if (pruned_weights) {
-    compressed_index_size = compressed_indices_mapping.value().numel();
+    compressed_index_size =
+        static_cast<int>(compressed_indices_mapping.value().numel());
     compressed_indices_mapping_data =
         compressed_indices_mapping.value().const_data_ptr<int32_t>();
 
@@ -873,7 +878,7 @@ at::Tensor& embedding_bag_byte_impl(
   const auto weight_data = weight.const_data_ptr<uint8_t>();
   const auto indices_data = indices.const_data_ptr<IndexType>();
   auto* output_data = output.data_ptr<float>();
-  const int index_size = indices.numel();
+  const int index_size = static_cast<int>(indices.numel());
 
   if (!pruned_weights || fallback_to_no_sparse) {
     auto kernel_i8 =

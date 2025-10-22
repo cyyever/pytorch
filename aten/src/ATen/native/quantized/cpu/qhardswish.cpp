@@ -40,9 +40,9 @@ Tensor qnnpack_hardswish(const Tensor& qx, Tensor& qy) {
   const pytorch_qnnp_status createStatus = pytorch_qnnp_create_hardswish_nc_q8(
     num_elems, // channels
     i_zero_point,
-    i_scale,
+    static_cast<float>(i_scale),
     o_zero_point,
-    o_scale,
+    static_cast<float>(o_scale),
     std::numeric_limits<uint8_t>::min(), // output min
     std::numeric_limits<uint8_t>::max(), // output max
     0, // flags

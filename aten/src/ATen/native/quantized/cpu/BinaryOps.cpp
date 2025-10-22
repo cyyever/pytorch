@@ -178,24 +178,21 @@ Tensor qnnpack_add(Tensor qa, Tensor qb, double scale, int64_t zero_point) {
 
   size_t num_elems = qa_contig.numel() / qa_contig.size(0);
   auto output_min = ReLUFused
-      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-      ? activationLimits<uint8_t>(scale, zero_point, Activation::RELU)
+      ? activationLimits<uint8_t>(static_cast<float>(scale), static_cast<int32_t>(zero_point), Activation::RELU)
             .first
       : std::numeric_limits<uint8_t>::min();
   auto output_max = ReLUFused
-      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-      ? activationLimits<uint8_t>(scale, zero_point, Activation::RELU)
+      ? activationLimits<uint8_t>(static_cast<float>(scale), static_cast<int32_t>(zero_point), Activation::RELU)
             .second
       : std::numeric_limits<uint8_t>::max();
   const pytorch_qnnp_status createStatus = pytorch_qnnp_create_add_nc_q8(
       num_elems /* input size */,
       a_zero_point /* a zero_point */,
-      a_scale /* a scale */,
+      static_cast<float>(a_scale) /* a scale */,
       b_zero_point /* b zero_point */,
-      b_scale /* b scale */,
+      static_cast<float>(b_scale) /* b scale */,
       static_cast<uint8_t>(zero_point) /* sum zero_point */,
-      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-      scale /* sum scale */,
+      static_cast<float>(scale) /* sum scale */,
       output_min /* output min */,
       output_max /* output max */,
       0 /* flags */,

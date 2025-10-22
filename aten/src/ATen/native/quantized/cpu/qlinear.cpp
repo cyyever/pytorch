@@ -73,8 +73,7 @@ at::Tensor& PackedLinearWeight::apply_impl(
       "The dimension of input tensor should be larger than or equal to 2");
   // C(output) = A(input) x B(weight), where C, A, B are M x N, M x K, K x N
   // matrices, respectively.
-  // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-  int64_t M = size_to_dim_(input.dim() - 1, input.sizes());
+  int64_t M = size_to_dim_(static_cast<int>(input.dim() - 1), input.sizes());
 
   auto packB = w.get();
 
@@ -85,9 +84,8 @@ at::Tensor& PackedLinearWeight::apply_impl(
       "The number of rows in the packB should be equal to K: " +
           std::to_string(K));
 
-  // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-  float input_scale_float = input.q_scale();
-  int32_t input_zero_point_int32 = input.q_zero_point();
+  float input_scale_float = static_cast<float>(input.q_scale());
+  int32_t input_zero_point_int32 = static_cast<int32_t>(input.q_zero_point());
 
   std::vector<float> output_multiplier_float(1, 0.0);
   std::vector<float> act_times_w_scale(1, 0.0);
@@ -331,7 +329,7 @@ at::Tensor PackedLinearWeight::apply_with_input_q_dq_qweight_dq_output_fp32_impl
   TORCH_CHECK(
       input.dim() >= 2,
       "The dimension of input tensor should be larger than or equal to 2");
-  int64_t M = size_to_dim_(input.dim() - 1, input.sizes());
+  int64_t M = size_to_dim_(static_cast<int>(input.dim() - 1), input.sizes());
 
   auto packB = w.get();
 
@@ -342,9 +340,8 @@ at::Tensor PackedLinearWeight::apply_with_input_q_dq_qweight_dq_output_fp32_impl
       "The number of rows in the packB should be equal to K: " +
           std::to_string(K));
 
-  // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-  float input_scale_float = input_scale;
-  int32_t input_zero_point_int32 = input_zero_point;
+  float input_scale_float = static_cast<float>(input_scale);
+  int32_t input_zero_point_int32 = static_cast<int32_t>(input_zero_point);
 
   TORCH_CHECK(
       w_scale.size() == w_zp.size(),
@@ -376,10 +373,10 @@ at::Tensor PackedLinearWeight::apply_with_input_q_dq_qweight_dq_output_fp32_impl
   at::parallel_for(0, num_tasks, 1, [&](int64_t begin, int64_t end) {
     fbgemm::PackAWithQuantRowOffset<uint8_t> packA(
         /*trans=*/fbgemm::matrix_op_t::NoTranspose,
-        /*nRow=*/M,
-        /*nCol=*/K,
+        /*nRow=*/static_cast<std::int32_t>(M),
+        /*nCol=*/static_cast<std::int32_t>(K),
         /*smat=*/input_ptr,
-        /*ld=*/K,
+        /*ld=*/static_cast<std::int32_t>(K),
         /*pmat=*/nullptr,
         /*scale=*/input_scale_float,
         /*zero_pt=*/input_zero_point_int32);
@@ -517,12 +514,10 @@ at::Tensor PackedLinearWeightsQnnp::apply_impl_xnnp(
 
     // output limits
    auto output_min = kReluFused
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        ? activationLimits<underlying_t>(output_scale, output_zero_point, Activation::RELU).first
+        ? activationLimits<underlying_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU).first
         : std::numeric_limits<underlying_t>::min();
     auto output_max = kReluFused
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        ? activationLimits<underlying_t>(output_scale, output_zero_point, Activation::RELU).second
+        ? activationLimits<underlying_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU).second
         : std::numeric_limits<underlying_t>::max();
 
     // Create an operator
@@ -650,8 +645,7 @@ at::Tensor PackedLinearWeightsQnnp::apply_impl(
     // We calculate requant scale here as the vector holding the requant scale
     // is owned by this module. The pointer is then passed to qnnpack backend.
     generate_requantization_scales(
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        w_scales, input_scale, output_scale, requantization_scales);
+        w_scales, static_cast<float>(input_scale), static_cast<float>(output_scale), requantization_scales);
 
     at::Tensor qnnp_weight = at::_empty_affine_quantized(
         weight_contig.sizes(),
@@ -713,13 +707,11 @@ at::Tensor PackedLinearWeightsQnnp::apply_impl(
       output_zero_point);
 
   auto output_min = ReluFused
-      // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-      ? activationLimits<uint8_t>(output_scale, output_zero_point, Activation::RELU)
+      ? activationLimits<uint8_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU)
             .first
       : std::numeric_limits<uint8_t>::min();
   auto output_max = ReluFused
-      // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-      ? activationLimits<uint8_t>(output_scale, output_zero_point, Activation::RELU)
+      ? activationLimits<uint8_t>(static_cast<float>(output_scale), static_cast<int32_t>(output_zero_point), Activation::RELU)
             .second
       : std::numeric_limits<uint8_t>::max();
   TORCH_INTERNAL_ASSERT(packB != nullptr, "Packed Weights are NULL");
@@ -821,7 +813,7 @@ at::Tensor PackedLinearWeightsOnednn::apply_impl(
   if (post_op == Relu) {
     op_attr = ideep::attr_t::fuse_relu();
   } else if (post_op == LeakyRelu) {
-    op_attr = ideep::attr_t::fuse_relu(/*scale=*/1.0f, /*alpha=*/post_op_args.get(0).to<double>());
+    op_attr = ideep::attr_t::fuse_relu(/*scale=*/1.0f, /*alpha=*/static_cast<float>(post_op_args.get(0).to<double>()));
   } else if (post_op == Tanh) {
     op_attr = ideep::attr_t::fuse_tanh();
   }
@@ -829,12 +821,12 @@ at::Tensor PackedLinearWeightsOnednn::apply_impl(
   auto dst_dims = {M, N};
   double input_scale = input.q_scale();
   int64_t input_zero_point = input.q_zero_point();
-  const ideep::scale_t& src_scales = ideep::scale_t(1, 1.0/input_scale);
+  const ideep::scale_t& src_scales = ideep::scale_t(1, static_cast<float>(1.0/input_scale));
   const ideep::scale_t& weights_scales = w.get_scale();
   // Scales of ONEDNN and PyTorch are reciprocal
-  const ideep::scale_t& dst_scales = ideep::scale_t(1, 1.0/output_scale);
-  const ideep::zero_point_t& src_zero_point = ideep::zero_point_t(1, input_zero_point);
-  const ideep::zero_point_t& dst_zero_point = ideep::zero_point_t(1, output_zero_point);
+  const ideep::scale_t& dst_scales = ideep::scale_t(1, static_cast<float>(1.0/output_scale));
+  const ideep::zero_point_t& src_zero_point = ideep::zero_point_t(1, static_cast<int32_t>(input_zero_point));
+  const ideep::zero_point_t& dst_zero_point = ideep::zero_point_t(1, static_cast<int32_t>(output_zero_point));
   // Compute: Use ideep::matmul_forward to support asymmetric quantization
   // Allocate output Tensor
   at::Tensor output = at::_empty_affine_quantized(
@@ -1284,7 +1276,7 @@ static at::Tensor linear_int8_with_onednn_weight(
     // To avoid NaN, we need to clamp the intermediate results (in fp32) to [-488, 488]
     // before converting to fp8
     auto post_ops = op_attr.get_post_ops();
-    post_ops.append_eltwise(dnnl::algorithm::eltwise_linear, 1.0/output_scale, 0.0);
+    post_ops.append_eltwise(dnnl::algorithm::eltwise_linear, static_cast<float>(1.0/output_scale), 0.0);
     post_ops.append_eltwise(dnnl::algorithm::eltwise_clip, -FP8E4M3_MAX, FP8E4M3_MAX);
     op_attr.set_post_ops(post_ops);
     output_scale = 1.0f;
@@ -1322,11 +1314,11 @@ static at::Tensor linear_int8_with_onednn_weight(
   if (with_bias) {
     args.insert({DNNL_ARG_BIAS, onednn_bias});
   }
-  tensor src_scales_t = tensor(ideep::scale_t(1, input_scale));
+  tensor src_scales_t = tensor(ideep::scale_t(1, static_cast<float>(input_scale)));
   tensor wei_scales_t = at::native::itensor_from_tensor(weight_scales);
-  tensor dst_scales_t = tensor(ideep::scale_t(1, output_scale));
-  tensor src_zp_t = tensor(ideep::zero_point_t(1, input_zero_point));
-  tensor dst_zp_t = tensor(ideep::zero_point_t(1, output_zero_point));
+  tensor dst_scales_t = tensor(ideep::scale_t(1, static_cast<float>(output_scale)));
+  tensor src_zp_t = tensor(ideep::zero_point_t(1, static_cast<int32_t>(input_zero_point)));
+  tensor dst_zp_t = tensor(ideep::zero_point_t(1, static_cast<int32_t>(output_zero_point)));
   if (input_scale != 1.0f) {
     args.insert({DNNL_ARG_ATTR_SCALES | DNNL_ARG_SRC, src_scales_t});
   }
@@ -1532,7 +1524,7 @@ namespace at::native {
       const Tensor& qScaleAndZeros) {
     TORCH_CHECK(qGroupSize.numel() == 1, __func__, ": group size must be a scalar.");
     TORCH_CHECK(qGroupSize.scalar_type() == c10::kLong, __func__, ": group size must be int64.");
-    int group_size = qGroupSize.item<int64_t>();
+    int64_t group_size = qGroupSize.item<int64_t>();
     return at::_weight_int4pack_mm_for_cpu(A, B, group_size, qScaleAndZeros);
   }
 

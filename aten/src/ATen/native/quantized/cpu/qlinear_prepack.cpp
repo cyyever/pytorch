@@ -234,8 +234,8 @@ c10::intrusive_ptr<LinearPackedParamsBase> PackedLinearWeightsOnednn::prepack(
         weight.q_zero_point() == 0,
         "quantized::linear_prepack: ONEDNN only supports symmetric quantization of weight,"
         " whose zero point must be 0, but got ", weight.q_zero_point());
-    wgt_zero_points = std::vector<int32_t>(1, weight.q_zero_point());
-    wgt_scales = ideep::scale_t(1, 1.0/weight.q_scale()); // Scales of ONEDNN and PyTorch are reciprocal
+    wgt_zero_points = std::vector<int32_t>(1, static_cast<int32_t>(weight.q_zero_point()));
+    wgt_scales = ideep::scale_t(1, static_cast<float>(1.0/weight.q_scale())); // Scales of ONEDNN and PyTorch are reciprocal
   } else if (qtype == c10::kPerChannelAffine) {
     wgt_zero_points.resize(N);
     wgt_scales.resize(N);

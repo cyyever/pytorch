@@ -95,18 +95,17 @@ void avg_pool2d_out_frame(
             for (int64_t kx = wstart; kx < wend; kx++)
               sum_int += (ptr_input + ky * inputWidth + kx)->val_;
           }
-          // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-          float multiplier = scale_factor / divide_factor;
+          float multiplier = static_cast<float>(scale_factor / static_cast<double>(divide_factor));
 
-          // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-          sum_int -= size * input_zero_point;
-          // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions,bugprone-narrowing-conversions)
-          float sum = sum_int * 1.0;
+          sum_int -= static_cast<int32_t>(size * input_zero_point);
+          float sum = static_cast<float>(sum_int);
           /* Update output by requantizing the result */
           ptr_output->val_ =
               static_cast<typename scalar_t::underlying>(std::min<int32_t>(
                   std::max<int32_t>(
-                      std::nearbyint(sum * multiplier + output_zero_point),
+                      std::nearbyint(
+                          sum * multiplier +
+                          static_cast<float>(output_zero_point)),
                       minimum),
                   maximum));
           ptr_output++;
@@ -310,9 +309,9 @@ Tensor qnnpack_avg_pool2d(
           dW /* stride width */,
           inC /* input channels */,
           zero_point /* input zero_point */,
-          scale /* input scale */,
+          static_cast<float>(scale) /* input scale */,
           zero_point /* output zero_point */,
-          scale /* output scale */,
+          static_cast<float>(scale) /* output scale */,
           std::numeric_limits<uint8_t>::min() /* output min */,
           std::numeric_limits<uint8_t>::max() /* output max */,
           0 /* flags */,

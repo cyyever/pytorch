@@ -55,8 +55,7 @@ at::Tensor PackedLinearWeight::apply_dynamic_impl(
       "The dimension of input tensor should be larger than or equal to 2");
   // C(output) = A(input) x B(weight), where C, A, B are M x N, M x K, K x N
   // matrices, respectively.
-  // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-  int64_t M = size_to_dim_(input.dim() - 1, input.sizes());
+  int64_t M = size_to_dim_(static_cast<int>(input.dim() - 1), input.sizes());
 
   auto packB = w.get();
 
@@ -141,13 +140,12 @@ at::Tensor PackedLinearWeight::apply_dynamic_impl(
 
     fbgemm::PackAWithQuantRowOffset<uint8_t> packA(
         /*trans=*/fbgemm::matrix_op_t::NoTranspose,
-        /*nRow=*/M,
-        /*nCol=*/K,
+        /*nRow=*/static_cast<std::int32_t>(M),
+        /*nCol=*/static_cast<std::int32_t>(K),
         /*smat=*/input_ptr,
-        /*ld=*/K,
+        /*ld=*/static_cast<std::int32_t>(K),
         /*pmat=*/nullptr, // Currently, packA manages ownership of `pmat`.
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
-        /*scale=*/q_params.scale,
+        /*scale=*/static_cast<float>(q_params.scale),
         /*zero_pt=*/q_params.zero_point);
     // TODO: Consider a way to pre-allocate and reuse
     // pmat buffer.
@@ -293,9 +291,8 @@ at::Tensor PackedLinearWeightsQnnp::apply_dynamic_impl(
 
   if (!input_scale.has_value() || input_scale.value() != q_params.scale) {
     generate_requantization_scales(
-        // NOLINTNEXTLINE(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
         w_scales,
-        q_params.scale,
+        static_cast<float>(q_params.scale),
         1.f,
         requantization_scales);
   }
@@ -349,7 +346,7 @@ at::Tensor PackedLinearWeightsQnnp::apply_dynamic_impl(
   // 1. If the input tensor is {M, K}, the output tensor is {M, N}.
   // 2. If the input tensor is {b, M, K}, the output tensor is {b, M, N}.
   std::vector<int64_t> out_sizes = input.sizes().vec();
-  out_sizes.back() = rows_w;
+  out_sizes.back() = static_cast<int64_t>(rows_w);
 
   auto output = at::empty(out_sizes, input.options().dtype(at::kFloat));
 
@@ -414,7 +411,7 @@ at::Tensor& PackedLinearWeightFp16::apply_dynamic_impl(
   TORCH_CHECK(input.size(input.dim() - 1) == packed_weight_fp16.numRows())
   TORCH_CHECK(input.dim() >= 2);
 
-  const int64_t M = size_to_dim_(input.dim() - 1, input.sizes());
+  const int64_t M = size_to_dim_(static_cast<int>(input.dim() - 1), input.sizes());
   const int64_t N = packed_weight_fp16.numCols();
   std::vector<int64_t> output_sizes = input.sizes().vec();
   TORCH_CHECK(!output_sizes.empty())
@@ -546,7 +543,7 @@ at::Tensor PackedLinearWeightsOnednn::apply_dynamic_impl(
   // weights, dst
   auto w = *weight_;
   auto dst_dims = {x.get_dim(0), w.get_dim(1)};
-  const ideep::scale_t& src_scales = ideep::scale_t(1, 1.0/q_params.scale);
+  const ideep::scale_t& src_scales = ideep::scale_t(1, static_cast<float>(1.0/q_params.scale));
   const ideep::scale_t& weights_scales = w.get_scale();
   // Compute -> f32
   // Use ideep::matmul_forward instead of ideep::inner_product_forward,

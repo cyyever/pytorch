@@ -33,9 +33,9 @@ std::tuple<at::Tensor, std::optional<at::Tensor>> PackedLinearWeight::unpack() {
         {N, K}, at::device(c10::kCPU).dtype(c10::kQInt8), w_scale[0], w_zp[0]);
   } else if (q_scheme == c10::kPerChannelAffine) {
     auto scales = at::from_blob(
-        w_scale.data(), w_scale.size(), at::device(c10::kCPU).dtype(c10::kFloat));
+        w_scale.data(), static_cast<int64_t>(w_scale.size()), at::device(c10::kCPU).dtype(c10::kFloat));
     auto zero_points = at::from_blob(
-        w_zp.data(), w_zp.size(), at::device(c10::kCPU).dtype(c10::kInt));
+        w_zp.data(), static_cast<int64_t>(w_zp.size()), at::device(c10::kCPU).dtype(c10::kInt));
 
     weight_origin = at::_empty_per_channel_affine_quantized(
         {N, K},

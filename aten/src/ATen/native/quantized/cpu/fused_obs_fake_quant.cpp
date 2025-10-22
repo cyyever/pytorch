@@ -184,9 +184,9 @@ std::tuple<at::Tensor, at::Tensor> fused_moving_avg_obs_fake_quant_cpu(
           y,
           running_min,
           running_max,
-          averaging_const,
+          static_cast<float>(averaging_const),
           per_row_fake_quant,
-          ch_axis);
+          static_cast<int>(ch_axis));
     }
   } else {
     if (observe) {
@@ -194,9 +194,9 @@ std::tuple<at::Tensor, at::Tensor> fused_moving_avg_obs_fake_quant_cpu(
           self,
           running_min,
           running_max,
-          averaging_const,
+          static_cast<float>(averaging_const),
           per_row_fake_quant,
-          ch_axis);
+          static_cast<int>(ch_axis));
     }
   }
   // Calculate qparams and fake_quantize
@@ -210,9 +210,9 @@ std::tuple<at::Tensor, at::Tensor> fused_moving_avg_obs_fake_quant_cpu(
         zero_point,
         per_row_fake_quant,
         symmetric_quant,
-        quant_min,
-        quant_max,
-        ch_axis);
+        static_cast<int>(quant_min),
+        static_cast<int>(quant_max),
+        static_cast<int>(ch_axis));
   }
   auto mask = at::ones_like(self, at::kBool, MemoryFormat::Preserve);
   return std::make_tuple(self.clone(), std::move(mask));
