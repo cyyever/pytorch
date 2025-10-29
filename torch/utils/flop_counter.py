@@ -136,10 +136,9 @@ def conv_flop_count(
 ) -> int:
     """Count flops for convolution.
 
-    Note only multiplication is
-    counted. Computation for bias are ignored.
+    Counts as 2 FLOPs per multiply-add (the * 2 factor); bias add is ignored.
     Flops for a transposed convolution are calculated as
-    flops = (x_shape[2:] * prod(w_shape) * batch_size).
+    flops = (prod(x_shape[2:]) * prod(w_shape) * batch_size).
     Args:
         x_shape (list(int)): The input shape before convolution.
         w_shape (list(int)): The filter shape.
@@ -150,21 +149,9 @@ def conv_flop_count(
     """
     batch_size = x_shape[0]
     conv_shape = (x_shape if transposed else out_shape)[2:]
-    c_out, c_in, *filter_size = w_shape
-
-    """
-    General idea here is that for a regular conv, for each point in the output
-    spatial dimension we convolve the filter with something (hence
-    `prod(conv_shape) * prod(filter_size)` ops). Then, this gets multiplied by
-    1. batch_size, 2. the cross product of input and weight channels.
-
-    For the transpose, it's not each point in the *output* spatial dimension but
-    each point in the *input* spatial dimension.
-    """
-    # NB(chilli): I don't think this properly accounts for padding :think:
-    # NB(chilli): Should be 2 * c_in - 1 technically for FLOPs.
-    flop = prod(conv_shape) * prod(filter_size) * batch_size * c_out * c_in * 2
-    return flop
+    # NB(chilli): Slightly overcounts: strictly 2 * prod(w_shape) - 1 per
+    # output element, not 2 * prod(w_shape).
+    return prod(conv_shape) * prod(w_shape) * batch_size * 2
 
 @register_flop_formula([aten.convolution,
                         aten._convolution,
@@ -193,8 +180,10 @@ def conv_backward_flop(
         out_shape,
         **kwargs) -> int:
 
-    def t(shape):
-        return [shape[1], shape[0]] + list(shape[2:])
+    def t(shape, groups=1):
+        # groups > 1 also divides the channel count: grad_weight only has
+        # C/groups channels along that axis.
+        return [shape[1] // groups, shape[0]] + list(shape[2:])
     flop_count = 0
 
     """
@@ -261,8 +250,7 @@ def conv_backward_flop(
     {AD + BE + CF, AE + BF + CG} [out (grad_weight)]
 
     For the full backwards formula, there are also some details involving
-    transpose of the batch/channel dimensions and groups, but I skip those for
-    the sake of brevity (and they're pretty similar to matmul backwards)
+    transpose of the batch/channel dimensions, similar to matmul backwards.
 
     Check [conv backwards decomposition as conv forwards]
     """
@@ -275,10 +263,10 @@ def conv_backward_flop(
         grad_weight_shape = get_shape(out_shape[1])
         if transposed:
             # grad_weight of transposed conv as conv(grad_out, inp)
-            flop_count += conv_flop_count(t(grad_out_shape), t(x_shape), t(grad_weight_shape), transposed=False)
+            flop_count += conv_flop_count(t(grad_out_shape, _groups), t(x_shape), t(grad_weight_shape), transposed=False)
         else:
             # grad_weight as conv(inp, grad_out)
-            flop_count += conv_flop_count(t(x_shape), t(grad_out_shape), t(grad_weight_shape), transposed=False)
+            flop_count += conv_flop_count(t(x_shape, _groups), t(grad_out_shape), t(grad_weight_shape), transposed=False)
 
     return flop_count
 
