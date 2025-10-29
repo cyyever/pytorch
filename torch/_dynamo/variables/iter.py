@@ -400,7 +400,11 @@ class ZipVariable(IteratorVariable):
             else:
                 return it.next_variable(tx)
 
+<<<<<<< HEAD
         idx: int | None = None
+=======
+        idx = -1
+>>>>>>> 3b8fd212e19 (Fix unused loop variables)
         try:
             for idx, it in enumerate(self.iterables):  # noqa:B007
                 args.append(get_item(it))

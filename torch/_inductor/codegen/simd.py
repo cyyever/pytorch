@@ -2153,13 +2153,12 @@ class SIMDScheduling(BaseScheduling):
         for node_group in partitions:
             if len(node_group) == 0:
                 continue
-            fused_node_lists = [node.get_nodes() for node in node_group]
             kernel = ComboKernel(
                 enable_autotune=enable_autotune,
                 mixed_sizes=mixed_sizes,
             )
 
-            for pn, nodes in zip(node_group, fused_node_lists):
+            for pn in node_group:
                 self.codegen_node_schedule_with_kernel(
                     node_schedule_map[pn][0],
                     kernel.create_sub_kernel(subkernel_map[pn]),
@@ -2414,11 +2413,13 @@ class SIMDScheduling(BaseScheduling):
                 all_var_ranges = [*dep.ranges.items()]
                 pointwise_vars_numel = sympy.S.One
                 sizevars = V.graph.sizevars
-                for pointwise_end_idx, (var, numel) in enumerate(all_var_ranges):
+                pointwise_end_idx = -1
+                for idx, (_var, numel) in enumerate(all_var_ranges):
                     pointwise_vars_numel *= numel
                     if sizevars.statically_known_geq(
                         pointwise_vars_numel, pointwise_numel
                     ):
+                        pointwise_end_idx = idx
                         break
 
                 # Reject the split if it does not match the total pointwise numel.
@@ -2428,6 +2429,7 @@ class SIMDScheduling(BaseScheduling):
                     continue
 
                 # Partition var ranges into pointwise and reduction splits.
+                assert pointwise_end_idx != -1
                 reduction_start_idx = pointwise_end_idx + 1
                 var_ranges = (
                     all_var_ranges[:reduction_start_idx]
