@@ -5,7 +5,7 @@
 
 namespace c10 {
 
-template<class T> auto getTypePtr();
+template<class T> decltype(auto) getTypePtr();
 std::string toString(const Type& type);
 
 template<class T>

@@ -1797,7 +1797,7 @@ TORCH_API std::optional<TypePtr> unifyTypeList(
 namespace detail {
 template <typename T>
 struct getTypePtr_ final {
-  static auto call() {
+  static decltype(auto) call() {
     return ([]() {
       try {
         return getCustomClassType<T>();
@@ -1815,7 +1815,7 @@ struct getTypePtr_ final {
 
 template <typename T, bool fake>
 struct getMaybeFakeTypePtr_ final {
-  static auto call() {
+  static decltype(auto) call() {
     return getTypePtr_<T>::call();
   }
 };
@@ -2093,7 +2093,7 @@ struct getTypePtr_<void> final {
 };
 } // namespace detail
 template <class T>
-inline auto getTypePtr() {
+inline decltype(auto) getTypePtr() {
   // TODO: static_assert that a templated function exists, and throw a friendly
   // error message if not
   return detail::getMaybeFakeTypePtr_<T, false>::call();
