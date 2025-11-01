@@ -1686,7 +1686,7 @@ class TestTEFuser(JitTestCase):
         for dtype_x, dtype_y, op, device in product(
             dtypes, dtypes, binary_ops, devices
         ):
-            code = ir_template.format(**locals())
+            code = ir_template.format(dtype_x=dtype_x, dtype_y=dtype_y, op=op)
 
             # Interpret the graph
             try:
@@ -1707,6 +1707,8 @@ class TestTEFuser(JitTestCase):
 
             # Run the graph
             for x, y in product(values[dtype_x], values[dtype_y]):
+                x = torch.tensor(x, device=device)
+                y = torch.tensor(y, device=device)
                 ref = torch._C._jit_interpret_graph(graph, (x, y))
                 try:
                     res = k.run((x, y))
