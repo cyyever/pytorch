@@ -4,7 +4,6 @@ import argparse
 import json
 import logging
 import os
-import re
 import subprocess
 import sys
 import time
@@ -31,33 +30,6 @@ class LintMessage(NamedTuple):
     description: str | None
 
 
-# tools/linter/flake8_linter.py:15:13: error: Incompatibl...int")  [assignment]
-RESULTS_RE: re.Pattern[str] = re.compile(
-    r"""(?mx)
-    ^
-    (?P<file>.*?):
-    (?P<line>\d+):
-    (?:(?P<column>-?\d+):)?
-    \s(?P<severity>\S+?):?
-    \s(?P<message>.*)
-    \s(?P<code>\[.*\])
-    $
-    """
-)
-
-# torch/_dynamo/variables/tensor.py:363: error: INTERNAL ERROR
-INTERNAL_ERROR_RE: re.Pattern[str] = re.compile(
-    r"""(?mx)
-    ^
-    (?P<file>.*?):
-    (?P<line>\d+):
-    \s(?P<severity>\S+?):?
-    \s(?P<message>INTERNAL\sERROR.*)
-    $
-    """
-)
-
-
 def run_command(
     args: list[str],
 ) -> subprocess.CompletedProcess[bytes]:
@@ -67,6 +39,7 @@ def run_command(
         return subprocess.run(
             args,
             capture_output=True,
+            check=False,
         )
     finally:
         end_time = time.monotonic()
@@ -106,7 +79,7 @@ def check_files(
 ) -> list[LintMessage]:
     try:
         proc = run_command(
-            ["pylint", f"--rcfile={config}"] + filenames,
+            ["pylint", f"--rcfile={config}", "-f", "json"] + filenames,
         )
     except OSError as err:
         return [
@@ -122,9 +95,8 @@ def check_files(
                 description=(f"Failed due to {err.__class__.__name__}:\n{err}"),
             )
         ]
-    stdout = str(proc.stdout, "utf-8").strip()
-    stderr = str(proc.stderr, "utf-8").strip()
-    if proc.returncode not in (0, 1):
+    if proc.returncode == 32:
+        stderr = str(proc.stderr, "utf-8").strip()
         return [
             LintMessage(
                 path=None,
@@ -138,37 +110,23 @@ def check_files(
                 description=stderr,
             )
         ]
+    stdout = str(proc.stdout, "utf-8").strip()
+    errors = json.loads(stdout)
 
-    rc = [
+    return [
         LintMessage(
-            path=match["file"],
-            name=match["code"],
-            description=match["message"],
-            line=int(match["line"]),
-            char=int(match["column"])
-            if match["column"] is not None and not match["column"].startswith("-")
-            else None,
+            path=error["path"],
+            name=error["message-id"],
+            description=error["message"],
+            line=int(error["line"]),
+            char=int(error["column"]),
             code=code,
             severity=LintSeverity.ERROR,
             original=None,
             replacement=None,
         )
-        for match in RESULTS_RE.finditer(stdout)
-    ] + [
-        LintMessage(
-            path=match["file"],
-            name="INTERNAL ERROR",
-            description=match["message"],
-            line=int(match["line"]),
-            char=None,
-            code=code,
-            severity=LintSeverity.ERROR,
-            original=None,
-            replacement=None,
-        )
-        for match in INTERNAL_ERROR_RE.finditer(stderr)
+        for error in errors
     ]
-    return rc
 
 
 def main() -> None:
