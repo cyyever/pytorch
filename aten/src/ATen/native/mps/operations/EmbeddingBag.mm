@@ -56,8 +56,7 @@ static std::tuple<Tensor, Tensor, Tensor, Tensor> _embedding_bag_mps_impl(
   }
   TORCH_CHECK(weight.dim() == 2, "weight has to be a 2D Tensor, but got Tensor of dimension ", weight.dim());
 
-  Tensor indices, offsets;
-  std::tie(indices, offsets) = promoteIndicesAndOffsets(indices_, offsets_);
+  auto [indices, offsets] = promoteIndicesAndOffsets(indices_, offsets_);
   auto indices_arg = TensorArg(indices, "indices", 1);
   checkScalarTypes("embedding_bag_mps", indices_arg, {kLong, kInt});
   auto offsets_arg = TensorArg(offsets, "offsets", 1);

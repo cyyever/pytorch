@@ -717,9 +717,7 @@ void cpu_scatter_reduce_expanded_index(const Tensor& self, const Tensor& index, 
     }
   });
 
-  int64_t* sorted_col_index_keys = nullptr;
-  int64_t* sorted_col_index_values = nullptr;
-  std::tie(sorted_col_index_keys, sorted_col_index_values) = fbgemm::radix_sort_parallel(
+  auto [sorted_col_index_keys, sorted_col_index_values] = fbgemm::radix_sort_parallel(
       keys.get(),
       values.get(),
       keys_tmp.get(),

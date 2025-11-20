@@ -60,9 +60,7 @@ c10::IValue IValueUnpickler::readArchive(
     std::optional<at::Device> device) {
   std::stringstream picklename;
   picklename << archive_name << ".pkl";
-  at::DataPtr pickle_ptr;
-  size_t pickle_size = 0;
-  std::tie(pickle_ptr, pickle_size) = reader_->getRecord(picklename.str());
+  auto [pickle_ptr, pickle_size] = reader_->getRecord(picklename.str());
 
   size_t bytes_read = 0;
   auto data = reinterpret_cast<const char*>(pickle_ptr.get());
