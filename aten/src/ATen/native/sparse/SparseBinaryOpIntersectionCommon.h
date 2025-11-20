@@ -161,10 +161,8 @@ void _sparse_binary_op_intersection_kernel_impl(
     }
   };
 
-  Tensor x, y;
-  OptTensor x_hash_opt, y_hash_opt;
-  std::tie(x, x_hash_opt) = coalesce_if_not_distributive(x_, x_hash_opt_);
-  std::tie(y, y_hash_opt) = coalesce_if_not_distributive(y_, y_hash_opt_);
+  auto [x, x_hash_opt] = coalesce_if_not_distributive(x_, x_hash_opt_);
+  auto [y, y_hash_opt] = coalesce_if_not_distributive(y_, y_hash_opt_);
 
   // Given sparse tensors x and y we decide which one is source, and which one
   // is probably_coalesced. The indices of both source and probably_coalesced are
@@ -173,9 +171,7 @@ void _sparse_binary_op_intersection_kernel_impl(
   // If probably_coalesce is coalesced, by the property of the hashing method
   // (see below), the hash values are already sorted and we can avoid any
   // explicit sorting routines.
-  Tensor probably_coalesced, source;
-  OptTensor probably_coalesced_indices_hash_opt, source_indices_hash_opt;
-  std::tie(probably_coalesced, probably_coalesced_indices_hash_opt, source, source_indices_hash_opt) = [&]() -> auto {
+  auto [probably_coalesced, probably_coalesced_indices_hash_opt, source, source_indices_hash_opt] = [&]() -> auto {
     // Case 1: either x or y is coalesced.
     if ((x.is_coalesced() ^ y.is_coalesced())) {
       return x.is_coalesced()
@@ -186,9 +182,7 @@ void _sparse_binary_op_intersection_kernel_impl(
     // If both are coalesced, search into the larger tensor is faster.
     // Same holds when both are non-coalesced.
     else {
-      Tensor larger, smaller;
-      OptTensor larger_hash_opt, smaller_hash_opt;
-      std::tie(larger, larger_hash_opt, smaller, smaller_hash_opt) = [&]() -> auto {
+      auto [larger, larger_hash_opt, smaller, smaller_hash_opt] = [&]() -> auto {
         return x._nnz() >= y._nnz()
           ? std::make_tuple(x, x_hash_opt, y, y_hash_opt)
           : std::make_tuple(y, y_hash_opt, x, x_hash_opt);
@@ -293,8 +287,7 @@ void _sparse_binary_op_intersection_kernel_impl(
   // Now that we have hash values of probably_coalesced.indices,
   // we need to decide whether they need to get sorted.
   // The sort is not requires if probably_coalesced is coalesced.
-  Tensor sorted_hash, argsort_hash;
-  std::tie(sorted_hash, argsort_hash) = [&]() -> std::tuple<Tensor, Tensor> {
+  auto [sorted_hash, argsort_hash] = [&]() -> std::tuple<Tensor, Tensor> {
     if (probably_coalesced.is_coalesced()) {
       // NOTE: argsort.dtype == nnz_arange.dtype
       const auto argsort = nnz_arange.narrow(-1, 0, probably_coalesced._nnz());
@@ -304,8 +297,7 @@ void _sparse_binary_op_intersection_kernel_impl(
       // but sort() produces indices of type int64_t,
       // so we convert to nnz_arange.dtype to avoid issues
       // with pointer types in the kernels below.
-      Tensor sorted, argsort;
-      std::tie(sorted, argsort) = probably_coalesced_indices_hash.sort();
+      auto [sorted, argsort] = probably_coalesced_indices_hash.sort();
       return std::make_tuple(sorted, argsort.to(nnz_arange.scalar_type()));
     }
   }();

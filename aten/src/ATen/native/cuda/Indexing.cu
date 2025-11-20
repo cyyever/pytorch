@@ -666,14 +666,11 @@ void index_put_with_sort_kernel(Tensor & self, const c10::List<std::optional<Ten
   }
   bool self_contiguous = self.is_contiguous();
   auto self_ = self_contiguous ? self : self.contiguous();
-  Tensor linearIndex, src, expandedValue = value;
-  int64_t nElemBefore, strideBefore, sliceSize, dims_before, dims_indexed;
-  std::vector<int64_t> inversePerm;
-  std::tie(linearIndex, src, nElemBefore, strideBefore, sliceSize, inversePerm,
-  dims_before, dims_indexed) = makeLinearIndex(self_, indices, !unsafe);
+  auto [linearIndex, src, nElemBefore, strideBefore, sliceSize, inversePerm,
+  dims_before, dims_indexed] = makeLinearIndex(self_, indices, !unsafe);
   auto vals_shape = valsShape(src.sizes(), dims_before, dims_indexed, linearIndex.sizes());
   int64_t num_indices = linearIndex.numel();
-  expandedValue = expandedValue.expand(vals_shape).contiguous();
+  auto expandedValue = value.expand(vals_shape).contiguous();
 
   if (num_indices > 0 && sliceSize > 0) {
       const bool permuted = !src.is_contiguous();

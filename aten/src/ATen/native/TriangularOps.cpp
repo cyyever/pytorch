@@ -143,9 +143,7 @@ void compute_triu_tril(const Tensor& self, int64_t k, const Tensor &result) {
 
   bool inplace_op = self.is_same(result);
 
-  bool inplace_update = false;
-  Tensor self_c;
-  std::tie(inplace_update, self_c) = checkTrilTriuBatchContiguous(self, inplace_op);
+  auto [inplace_update, self_c] = checkTrilTriuBatchContiguous(self, inplace_op);
 
   Tensor result_c;
   if (inplace_op && !inplace_update) {

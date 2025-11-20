@@ -886,9 +886,7 @@ static void add_out_dense_sparse_compressed_cpu(
 
   auto valuesBuffer = src_values.to(commonDtype).reshape({-1, src_values.size(-1)});
   resultBuffer = resultBuffer.view({-1, out.size(-2), out.size(-1)});
-  Tensor src_compressed_indices;
-  Tensor src_plain_indices;
-  std::tie(src_compressed_indices, src_plain_indices) =
+  auto [src_compressed_indices, src_plain_indices] =
       at::sparse_csr::getCompressedPlainIndices(src);
   src_compressed_indices =
       src_compressed_indices.reshape({-1, src_compressed_indices.size(-1)});

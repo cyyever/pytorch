@@ -910,9 +910,7 @@ std::tuple<FunctionExtractor::scope_ctx_map, node_list> FunctionExtractor::
 
 FunctionExtractor::scope_ctx_map FunctionExtractor::PartitionNodesByScope(
     const std::shared_ptr<Graph>& graph) {
-  scope_ctx_map scope_ctxs;
-  node_list no_scope_nlist;
-  std::tie(scope_ctxs, no_scope_nlist) = PartitionNodesByScope(graph->block());
+  auto [scope_ctxs, no_scope_nlist] = PartitionNodesByScope(graph->block());
 
   HandleNoScopeNodes(scope_ctxs, no_scope_nlist);
 

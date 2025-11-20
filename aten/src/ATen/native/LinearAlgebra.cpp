@@ -3164,8 +3164,7 @@ Tensor& nuclear_norm_out(const Tensor& self, IntArrayRef dim, bool keepdim, Tens
 
 // This function helps to dispatch norm computations depending on 'ord' of variant type
 static Tensor _linalg_cond_helper(const Tensor& self, std::variant<Scalar, std::string_view> ord_variant) {
-  Tensor inverse, info;
-  std::tie(inverse, info) = at::linalg_inv_ex(self);
+  auto [inverse, info] = at::linalg_inv_ex(self);
   info.unsqueeze_(-1).unsqueeze_(-1);
   inverse.masked_fill_(info > 0, INFINITY);
 

@@ -16,9 +16,7 @@ IValue readArchiveAndTensors(
     c10::TypePtr (*type_parser)(const std::string&),
     std::shared_ptr<DeserializationStorageContext> storage_context) {
   std::string picklename = pickle_prefix + archive_name + ".pkl";
-  at::DataPtr pickle_ptr;
-  size_t pickle_size = 0;
-  std::tie(pickle_ptr, pickle_size) = stream_reader.getRecord(picklename);
+  auto [pickle_ptr, pickle_size] = stream_reader.getRecord(picklename);
 
   size_t bytes_read = 0;
   auto data = reinterpret_cast<const char*>(pickle_ptr.get());

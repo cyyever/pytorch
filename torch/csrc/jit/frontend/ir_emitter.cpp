@@ -2747,9 +2747,7 @@ struct to_ir {
     if (lhs->type()->kind() == TypeKind::ClassType) {
       // Call `__iadd__` so updates happen in place on class types
       // https://docs.python.org/3/reference/datamodel.html#object.__iadd__
-      std::string in_place_method_name;
-      std::string out_of_place_method_name;
-      std::tie(in_place_method_name, out_of_place_method_name) =
+      auto [in_place_method_name, out_of_place_method_name] =
           getAugMagicMethod(stmt);
       const auto rhs = emitExpr(stmt.rhs());
 
