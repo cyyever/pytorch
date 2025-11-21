@@ -15,6 +15,10 @@
             "download_url": "https://oss-clang-format.s3.us-east-2.amazonaws.com/macos-i386/19.1.4/clang-format",
             "hash": "f5eb5037b9aa9d1d2de650fb2e0fe1a2517768a462fae8e98791a67b698302f4"
         },
+        "FreeBSD-amd64": {
+            "download_url": "https://oss-clang-format.s3.us-east-2.amazonaws.com/linux64/19.1.4/clang-format",
+            "hash": "bfa9ef6eccb372f79ffcb6196af966fd84519ea9567f5ae7b6ad30208cd82109"
+        },
         "Linux": {
             "download_url": "https://oss-clang-format.s3.us-east-2.amazonaws.com/linux64/19.1.4/clang-format",
             "hash": "bfa9ef6eccb372f79ffcb6196af966fd84519ea9567f5ae7b6ad30208cd82109"
@@ -28,6 +32,10 @@
         "Darwin-arm": {
             "download_url": "https://oss-clang-format.s3.us-east-2.amazonaws.com/macos-arm/19.1.4/clang-tidy",
             "hash": "04243f4044fe6d95f6d51d15be803331c3cbb61f2d8fcfeba5a5dec1e7ae6dfb"
+        },
+        "FreeBSD-amd64": {
+            "download_url": "https://oss-clang-format.s3.us-east-2.amazonaws.com/linux64/19.1.4/clang-tidy",
+            "hash": "5637bd0fca665d2797926fedf53ca5ad4655bb9dbed1e1c8654c8e032ce1e7a8"
         },
         "Linux": {
             "download_url": "https://oss-clang-format.s3.us-east-2.amazonaws.com/linux64/19.1.4/clang-tidy",
