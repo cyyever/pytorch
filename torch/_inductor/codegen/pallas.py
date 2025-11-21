@@ -5,7 +5,7 @@ from typing import Any, Optional, TYPE_CHECKING, Union
 
 import sympy  # noqa: TC002
 
-import torch  # noqa: TC001
+import torch
 from torch.utils._ordered_set import OrderedSet
 
 from .. import config

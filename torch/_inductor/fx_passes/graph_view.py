@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import itertools
 import re
-from typing import Any, Optional, Union
+from typing import Any, Optional, TYPE_CHECKING, Union
 
-import torch.fx as fx  # noqa: TC001
 from torch.utils._ordered_set import OrderedSet
+
+
+if TYPE_CHECKING:
+    from torch import fx
 
 
 def _get_module_stack(node: fx.Node) -> list[tuple[str, type[Any]]]:

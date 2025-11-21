@@ -5,17 +5,11 @@
 
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
+from torch.ao.nn import intrinsic, qat, quantizable, quantized, sparse
+
 
 if _TYPE_CHECKING:
     from types import ModuleType
-
-    from torch.ao.nn import (  # noqa: TC004
-        intrinsic as intrinsic,
-        qat as qat,
-        quantizable as quantizable,
-        quantized as quantized,
-        sparse as sparse,
-    )
 
 
 __all__ = [

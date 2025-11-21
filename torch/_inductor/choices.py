@@ -12,7 +12,6 @@ from torch.utils._sympy.value_ranges import bound_sympy
 
 from . import config
 from .codecache import write_text
-from .kernel_inputs import KernelInputs  # noqa: TC001
 from .kernel_template_choice import make_ktc_generator
 from .metrics import get_metric_table, is_metric_table_enabled
 from .runtime.hints import DeviceProperties, ReductionHint
@@ -41,6 +40,7 @@ if TYPE_CHECKING:
     from .codegen.simd_kernel_features import SIMDKernelFeatures
     from .codegen.triton import TritonKernel
     from .ir import ChoiceCaller
+    from .kernel_inputs import KernelInputs
     from .kernel_template_choice import KernelTemplateChoice
 
     from torch.utils._ordered_set import OrderedSet  # isort: skip
