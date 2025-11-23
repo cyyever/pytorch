@@ -1432,13 +1432,6 @@ class ConvBackend(Enum): ...  # type: ignore[misc]
 class Tag(Enum):
     ${tag_attributes}
 
-# Defined in `valgrind.h` and `callgrind.h` respectively.
-def _valgrind_supported_platform() -> _bool: ...  # NVALGRIND
-def _valgrind_toggle() -> None: ...  # CALLGRIND_TOGGLE_COLLECT
-def _valgrind_toggle_and_dump_stats() -> (
-    None
-): ...  # CALLGRIND_TOGGLE_COLLECT and CALLGRIND_DUMP_STATS
-
 has_openmp: _bool
 has_mkl: _bool
 _has_kleidiai: _bool

@@ -134,10 +134,6 @@
 #endif
 #endif
 
-#if defined(USE_VALGRIND)
-#include <callgrind.h>
-#endif
-
 #ifdef USE_ITT
 #include <torch/csrc/itt.h>
 #endif
@@ -2298,34 +2294,6 @@ Call this whenever a new thread is created in order to propagate values from
       set_module_attr("has_lapack", at::hasLAPACK() ? Py_True : Py_False));
   ASSERT_TRUE(set_module_attr(
       "_has_eigen_sparse", at::hasEigenSparse() ? Py_True : Py_False));
-
-  py_module.def("_valgrind_supported_platform", []() {
-#if defined(USE_VALGRIND)
-    return true;
-#else
-      return false;
-#endif
-  });
-
-  py_module.def("_valgrind_toggle", []() {
-#if defined(USE_VALGRIND)
-    CALLGRIND_TOGGLE_COLLECT;
-#else
-      TORCH_CHECK(false, "Valgrind is not supported.");
-#endif
-  });
-
-  py_module.def("_valgrind_toggle_and_dump_stats", []() {
-#if defined(USE_VALGRIND)
-    // NB: If we don't toggle collect around dump stats, callgrind_annotate
-    //     won't process the results correctly. Specifically,
-    //     `callgrind_annotate --inclusive=no` will be almost completely empty.
-    CALLGRIND_TOGGLE_COLLECT;
-    CALLGRIND_DUMP_STATS;
-#else
-      TORCH_CHECK(false, "Valgrind is not supported.");
-#endif
-  });
 
   py::class_<WeakTensorRef>(py_module, "_WeakTensorRef")
       .def(py::init([](py::object tensor) {
