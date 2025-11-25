@@ -106,7 +106,7 @@ struct multi_outputs_store_helper {
   C10_HOST_DEVICE static void apply(
       const data_t& data,
       const offsets_t& offsets,
-      thrust::tuple<Args...> ret) {
+      const thrust::tuple<Args...>& ret) {
     using T = typename thrust::tuple_element<current, thrust::tuple<Args...>>::type;
     T *to = reinterpret_cast<T *>(data[current]) + offsets[current];
     *to = thrust::get<current>(ret);
@@ -331,7 +331,7 @@ struct vectorized {
   }
 
   template<typename accessor_t, typename scalar_t>
-  __device__ inline void load_single_arg(accessor_t to, scalar_t *from) {
+  __device__ inline void load_single_arg(const accessor_t& to, scalar_t *from) {
     int thread_idx = threadIdx.x;
     #pragma unroll
     for (int i = 0; i < loop_size; i++) {
