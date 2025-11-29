@@ -26,7 +26,7 @@ void initializeLayouts() {
   if (PyModule_AddObject(torch_module, "strided", strided_layout) != 0) {
     throw python_error();
   }
-  registerLayoutObject((THPLayout*)strided_layout, at::Layout::Strided);
+  registerLayoutObject(reinterpret_cast<THPLayout*>(strided_layout), at::Layout::Strided);
 
   PyObject* sparse_coo_layout =
       THPLayout_New(at::Layout::Sparse, "torch.sparse_coo");
@@ -34,7 +34,7 @@ void initializeLayouts() {
   if (PyModule_AddObject(torch_module, "sparse_coo", sparse_coo_layout) != 0) {
     throw python_error();
   }
-  registerLayoutObject((THPLayout*)sparse_coo_layout, at::Layout::Sparse);
+  registerLayoutObject(reinterpret_cast<THPLayout*>(sparse_coo_layout), at::Layout::Sparse);
 
   REGISTER_LAYOUT(sparse_csr, SparseCsr)
   REGISTER_LAYOUT(sparse_csc, SparseCsc)
@@ -46,7 +46,7 @@ void initializeLayouts() {
   if (PyModule_AddObject(torch_module, "_mkldnn", mkldnn_layout) != 0) {
     throw python_error();
   }
-  registerLayoutObject((THPLayout*)mkldnn_layout, at::Layout::Mkldnn);
+  registerLayoutObject(reinterpret_cast<THPLayout*>(mkldnn_layout), at::Layout::Mkldnn);
 
   REGISTER_LAYOUT(jagged, Jagged);
 }
