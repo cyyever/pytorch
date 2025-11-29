@@ -5,7 +5,6 @@
 
 #include <atomic>
 #include <deque>
-#include <mutex>
 #include <vector>
 
 namespace c10::xpu {
@@ -238,6 +237,7 @@ sycl::queue& XPUStream::queue() const {
   switch (st) {
     case StreamIdType::NORMAL:
     case StreamIdType::HIGH:
+      // NOLINTNEXTLINE(performance-no-int-to-ptr)
       return *streams[device_index][static_cast<uint8_t>(st)][si];
     // See Note [External XPU Stream]
     case StreamIdType::EXT:
