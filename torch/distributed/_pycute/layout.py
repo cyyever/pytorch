@@ -53,9 +53,6 @@ from .int_tuple import (
 
 
 # Type aliases
-LayoutOrIntTuple: TypeAlias = Union["Layout", IntTuple]
-LayoutProfile: TypeAlias = Union[tuple[object, ...], "Layout"] | None
-LayoutInput: TypeAlias = Union["Layout", IntTuple, tuple[object, ...]] | None
 CoordinateType: TypeAlias = (
     int | IntTuple | tuple[object, ...] | None
 )  # Input for slice_ and crd2idx functions
@@ -133,6 +130,12 @@ class Layout(LayoutBase):
     # error msgs and representation
     def __repr__(self) -> str:
         return f"Layout({self.shape},{self.stride})"
+
+
+# Type aliases
+LayoutOrIntTuple: TypeAlias = Layout | IntTuple
+LayoutProfile: TypeAlias = tuple[object, ...] | Layout | None
+LayoutInput: TypeAlias = Layout | IntTuple | tuple[object, ...] | None
 
 
 # Make Layout from a list of layouts (each layout it's own mode in the result)

@@ -1,6 +1,6 @@
 # mypy: allow-untyped-defs
 from dataclasses import dataclass
-from typing import cast, TYPE_CHECKING, Union
+from typing import cast, TYPE_CHECKING
 
 import torch
 import torch.distributed as dist
@@ -50,7 +50,7 @@ class ChunkShardingSpec(ShardingSpec):
             :class:`torch.distributed._remote_device`
     """
 
-    ShardingDim = Union[int, str]
+    ShardingDim = int | str
 
     dim: ShardingDim
     placements: list[torch.distributed._remote_device | str]
