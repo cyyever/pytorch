@@ -425,7 +425,7 @@ class LocalMapAutogradOp(torch.autograd.Function):
 
     @staticmethod
     def backward(
-        ctx: Any, *_grads: tuple[torch.Tensor]
+        ctx: Any, *_grads: tuple[torch.Tensor, ...]
     ) -> tuple[Optional[torch.Tensor], ...]:
         from torch._functorch._aot_autograd.runtime_wrappers import (
             coerce_to_expected_memory_format,
