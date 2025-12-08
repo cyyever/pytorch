@@ -71,9 +71,9 @@ Weights::Weights(
                            const std::unordered_map<std::string, std::string>&
                                tensorPaths,
                            bool isUsed,
-                           std::shared_ptr<std::unordered_map<
+                           const std::shared_ptr<std::unordered_map<
                                std::string,
-                               std::shared_ptr<torch::nativert::TensorMeta>>>
+                               std::shared_ptr<torch::nativert::TensorMeta>>>&
                                maybeNewWeightsMeta) {
     if (cachedWeights) {
       auto cacheIt = cachedWeights->find(tensorName);
@@ -119,7 +119,7 @@ Weights::Weights(
         TORCH_CHECK(false, "Tensor name not found in state dict paths");
       }
 
-      std::string paramName = stateDictPaths.at(tensorName);
+      const std::string& paramName = stateDictPaths.at(tensorName);
       if (maybeNewWeightsMeta->find(paramName) != maybeNewWeightsMeta->end()) {
         newTensorMeta = *maybeNewWeightsMeta->at(paramName);
       } else {
