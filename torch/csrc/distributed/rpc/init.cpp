@@ -149,8 +149,7 @@ PyObject* rpc_init(PyObject* _unused, PyObject* noargs) {
               py::call_guard<py::gil_scoped_release>())
           .def(
               "get_worker_info",
-              static_cast<const WorkerInfo& (RpcAgent::*)(void) const>(
-                  &RpcAgent::getWorkerInfo),
+              (&RpcAgent::getWorkerInfo),
               py::call_guard<py::gil_scoped_release>())
           .def(
               "get_worker_info",
