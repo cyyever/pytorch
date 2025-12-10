@@ -815,7 +815,8 @@ class SmallVectorImpl : public SmallVectorTemplateBase<T> {
   iterator insert_one_impl(iterator I, ArgType&& Elt) {
     // Callers ensure that ArgType is derived from T.
     static_assert(
-        std::is_same_v<std::remove_const_t<std::remove_reference_t<ArgType>>, T>,
+        std::
+            is_same_v<std::remove_const_t<std::remove_reference_t<ArgType>>, T>,
         "ArgType must be derived from T!");
 
     if (I == this->end()) { // Important special case for empty vector.
