@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/core/grad_mode.h>
 #include <ATen/ExpandUtils.h>
 #include <ATen/NamedTensorUtils.h>
@@ -29,7 +28,6 @@
 #include <ATen/ops/ones_like.h>
 #include <ATen/ops/pairwise_distance_native.h>
 #include <ATen/ops/pdist_native.h>
-#include <ATen/ops/pow.h>
 #include <ATen/ops/result_type.h>
 #include <ATen/ops/scalar_tensor.h>
 #include <ATen/ops/sum.h>

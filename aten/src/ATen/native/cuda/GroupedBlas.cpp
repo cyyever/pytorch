@@ -1,8 +1,5 @@
 #include <cstdint>
-#include <c10/util/typeid.h>
 #include <c10/util/Exception.h>
-#include <c10/util/SmallVector.h>
-#include <c10/core/Scalar.h>
 #include <c10/core/ScalarType.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/Context.h>
@@ -19,13 +16,11 @@
 #include <ATen/native/Resize.h>
 #include <c10/util/MaybeOwned.h>
 #include <ATen/native/GroupedMMUtils.h>
-#include <ATen/native/cuda/RowwiseScaledMM.h>
 #include <ATen/native/cuda/ScaledGroupMM.h>
 #include <ATen/native/cuda/GroupMM.h>
 #ifdef USE_ROCM
 #include <ATen/native/hip/ck_group_gemm.h>
 #endif
-#include <ATen/ceil_div.h>
 
 #ifdef USE_MSLK
 #include <mslk/gemm/gemm_torch.h>
