@@ -25,7 +25,7 @@ void initModelRunnerPybind(py::module& m) {
       .def(
           "run",
           [](torch::nativert::ModelRunner& self,
-             py::args pyargs,
+             const py::args& pyargs,
              const py::kwargs& pykwargs) {
             std::vector<c10::IValue> args;
             args.reserve(pyargs.size());
@@ -46,7 +46,7 @@ void initModelRunnerPybind(py::module& m) {
       .def(
           "__call__",
           [](torch::nativert::ModelRunner& self,
-             py::args pyargs,
+             const py::args& pyargs,
              const py::kwargs& pykwargs) {
             std::vector<c10::IValue> args;
             args.reserve(pyargs.size());
@@ -66,7 +66,7 @@ void initModelRunnerPybind(py::module& m) {
           })
       .def(
           "run_with_flat_inputs_and_outputs",
-          [](torch::nativert::ModelRunner& self, py::args pyargs) {
+          [](torch::nativert::ModelRunner& self, const py::args& pyargs) {
             std::vector<c10::IValue> args;
             args.reserve(pyargs.size());
             for (const auto i : c10::irange(pyargs.size())) {
