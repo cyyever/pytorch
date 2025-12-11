@@ -104,6 +104,7 @@ Reducer::Reducer(
       gradient_as_bucket_view_(gradient_as_bucket_view),
       batched_grad_copy_(batched_grad_copy),
       bucket_bytes_cap_(bucket_bytes_cap),
+      div_factor_(kUnsetDivFactor),
       skip_all_reduce_unused_params_(skip_all_reduce_unused_params),
       comm_hook_(nullptr),
       ddp_debug_level_(debug_level()),
