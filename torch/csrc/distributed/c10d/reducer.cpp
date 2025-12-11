@@ -100,13 +100,10 @@ Reducer::Reducer(
     : params_(std::move(params)),
       process_group_(std::move(process_group)),
       expect_sparse_gradients_(std::move(expect_sparse_gradients)),
-
       find_unused_parameters_(find_unused_parameters),
       gradient_as_bucket_view_(gradient_as_bucket_view),
       batched_grad_copy_(batched_grad_copy),
-
       bucket_bytes_cap_(bucket_bytes_cap),
-
       skip_all_reduce_unused_params_(skip_all_reduce_unused_params),
       comm_hook_(nullptr),
       ddp_debug_level_(debug_level()),
