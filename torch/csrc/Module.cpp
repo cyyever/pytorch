@@ -668,14 +668,14 @@ static PyObject* THPModule_toDLPack(
     PyObject* self,
     PyObject* args,
     PyObject* kwargs) {
-  return THPModule_toDLPackImpl<DLManagedTensor>(self, args, kwargs);
+  return THPModule_toDLPackImpl<DLManagedTensor>(args, kwargs);
 }
 
 static PyObject* THPModule_toDLPackVersioned(
     PyObject* self,
     PyObject* args,
     PyObject* kwargs) {
-  return THPModule_toDLPackImpl<DLManagedTensorVersioned>(self, args, kwargs);
+  return THPModule_toDLPackImpl<DLManagedTensorVersioned>(args, kwargs);
 }
 
 static PyObject* THPModule_fromDLPack(PyObject* /*_unused*/, PyObject* data) {
