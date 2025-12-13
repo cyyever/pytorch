@@ -591,6 +591,7 @@ void gesvdaStridedBatched<c10::complex<double>>(
     lwork, info, h_R_nrmF, batchSize
   ));
 }
+#endif
 
 
 template<>
