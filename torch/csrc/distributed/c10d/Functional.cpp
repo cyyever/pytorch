@@ -165,7 +165,7 @@ at::Tensor all_gather_into_tensor(
 
 at::Tensor& all_gather_into_tensor_out(
     at::Tensor& input,
-    int64_t group_size,
+    int64_t /*group_size*/,
     const std::string& group_name,
     at::Tensor& output) {
   TORCH_CHECK(input.is_contiguous());
@@ -205,8 +205,6 @@ static std::vector<at::Tensor> reduce_scatter_tensor_coalesced_out(
     std::vector<at::Tensor> inputs,
     // NOLINTNEXTLINE(performance-unnecessary-value-param)
     std::string reduce_op,
-    int64_t group_size,
-    // NOLINTNEXTLINE(performance-unnecessary-value-param)
     std::string group_name,
     std::vector<at::Tensor>& outputs) {
   c10d::ReduceScatterOptions opts;
@@ -251,20 +249,12 @@ at::Tensor reduce_scatter_tensor_out(
     auto real_output = at::view_as_real(output);
     std::vector<at::Tensor> outputs{std::move(real_output)};
     return at::view_as_complex(reduce_scatter_tensor_coalesced_out(
-        inputs,
-        std::move(reduce_op),
-        group_size,
-        std::move(group_name),
-        outputs)[0]);
+        inputs, std::move(reduce_op), std::move(group_name), outputs)[0]);
   }
   std::vector<at::Tensor> inputs{std::move(input)};
   std::vector<at::Tensor> outputs{std::move(output)};
   return reduce_scatter_tensor_coalesced_out(
-      inputs,
-      std::move(reduce_op),
-      group_size,
-      std::move(group_name),
-      outputs)[0];
+      inputs, std::move(reduce_op), std::move(group_name), outputs)[0];
 }
 
 at::Tensor all_to_all_single(

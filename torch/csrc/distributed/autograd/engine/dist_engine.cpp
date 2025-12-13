@@ -182,7 +182,7 @@ void DistEngine::validateRootsAndRetrieveEdges(
 void DistEngine::computeDependencies(
     const ContextPtr& autogradContext,
     const edge_list& rootEdges,
-    const variable_list& grads,
+    const variable_list& /*grads*/,
     const std::shared_ptr<Node>& graphRoot,
     edge_list& outputEdges,
     bool retainGraph) {

@@ -8,7 +8,7 @@ namespace c10d {
 class FakeWork : public Work {
  public:
   int seq_id = -1;
-  bool wait(std::chrono::milliseconds timeout = kNoTimeout) override {
+  bool wait(std::chrono::milliseconds /*timeout*/ = kNoTimeout) override {
     return true;
   }
 
@@ -192,7 +192,7 @@ class FakeProcessGroup : public Backend {
   c10::intrusive_ptr<Work> alltoall(
       std::vector<at::Tensor>& /* outputTensors */,
       std::vector<at::Tensor>& /* inputTensors */,
-      const AllToAllOptions& opts = AllToAllOptions()) override {
+      const AllToAllOptions& /*opts*/ = AllToAllOptions()) override {
     checkCollectiveError();
     return c10::make_intrusive<FakeWork>();
   }

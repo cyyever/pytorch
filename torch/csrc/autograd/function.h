@@ -216,7 +216,7 @@ struct TORCH_API Node : std::enable_shared_from_this<Node> {
   }
 
   /// Adds a placeholder for an input that will not be used.
-  uint32_t add_input_metadata(undefined_input u) noexcept {
+  uint32_t add_input_metadata(undefined_input /*u*/) noexcept {
     uint32_t input_nr = input_metadata_.size();
     input_metadata_.emplace_back();
     return input_nr;
@@ -594,7 +594,7 @@ struct TORCH_API Node : std::enable_shared_from_this<Node> {
   //   2) Collect node information for specialization and caching
   // Implementations in subclasses should call args.collect() with all node
   // attrs. These functions are only called during backward.
-  virtual void compiled_args(CompiledNodeArgs& args) const {
+  virtual void compiled_args(CompiledNodeArgs& /*args*/) const {
     TORCH_CHECK_NOT_IMPLEMENTED(
         false, std::string("compiled_args not implemented: ") + name());
   }
@@ -603,8 +603,8 @@ struct TORCH_API Node : std::enable_shared_from_this<Node> {
   // Implementations should call saved.before() on all attrs, then apply(), then
   // saved.after() on all attrs in the same order.
   virtual variable_list apply_with_saved(
-      const variable_list& inputs,
-      SwapSavedVariables& saved) {
+      const variable_list& /*inputs*/,
+      SwapSavedVariables& /*saved*/) {
     TORCH_CHECK_NOT_IMPLEMENTED(
         false, std::string("apply_with_saved not implemented: ") + name());
   }

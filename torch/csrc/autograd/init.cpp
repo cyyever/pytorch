@@ -99,7 +99,9 @@ struct EnablePreDispatch {
 
 } // namespace
 
-PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
+PyObject* THPAutograd_initExtension(
+    PyObject* /*_unused*/,
+    PyObject* /*unused*/) {
   using namespace torch::autograd::profiler;
   using namespace torch::profiler::impl;
   auto tensor_module = THPObjectPtr(PyImport_ImportModule("torch._tensor"));
@@ -628,7 +630,7 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
 namespace torch::autograd {
 
 static PyObject* set_autocast_enabled(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -651,7 +653,7 @@ static PyObject* set_autocast_enabled(
 }
 
 static PyObject* is_autocast_enabled(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -674,7 +676,7 @@ static PyObject* is_autocast_enabled(
 }
 
 static PyObject* get_autocast_dtype(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -689,7 +691,7 @@ static PyObject* get_autocast_dtype(
 }
 
 static PyObject* set_autocast_dtype(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -704,7 +706,9 @@ static PyObject* set_autocast_dtype(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_any_autocast_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_any_autocast_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (at::autocast::is_autocast_enabled(at::kCPU) ||
       at::autocast::is_autocast_enabled(at::kCUDA) ||
@@ -721,7 +725,7 @@ static PyObject* is_any_autocast_enabled(PyObject* _unused, PyObject* arg) {
 }
 
 static PyObject* is_autocast_available(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -738,7 +742,9 @@ static PyObject* is_autocast_available(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_cpu_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_cpu_enabled(
+    PyObject* /*_unused*/,
+    PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       PyBool_Check(arg),
@@ -752,7 +758,9 @@ static PyObject* set_autocast_cpu_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_autocast_cpu_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_autocast_cpu_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.is_autocast_cpu_enabled() is deprecated. Please use torch.is_autocast_enabled('cpu') instead.")
@@ -764,7 +772,9 @@ static PyObject* is_autocast_cpu_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_ipu_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_ipu_enabled(
+    PyObject* /*_unused*/,
+    PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       PyBool_Check(arg),
@@ -778,7 +788,9 @@ static PyObject* set_autocast_ipu_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_autocast_ipu_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_autocast_ipu_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.is_autocast_ipu_enabled() is deprecated. Please use torch.is_autocast_enabled('ipu') instead.")
@@ -790,7 +802,9 @@ static PyObject* is_autocast_ipu_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_xla_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_xla_enabled(
+    PyObject* /*_unused*/,
+    PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       PyBool_Check(arg),
@@ -804,7 +818,9 @@ static PyObject* set_autocast_xla_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_autocast_xla_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_autocast_xla_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.is_autocast_xla_enabled() is deprecated. Please use torch.is_autocast_enabled('xla') instead.")
@@ -816,7 +832,7 @@ static PyObject* is_autocast_xla_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_gpu_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_gpu_dtype(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       THPDtype_Check(arg),
@@ -831,7 +847,7 @@ static PyObject* set_autocast_gpu_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_cpu_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_cpu_dtype(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       THPDtype_Check(arg),
@@ -846,7 +862,7 @@ static PyObject* set_autocast_cpu_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_ipu_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_ipu_dtype(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       THPDtype_Check(arg),
@@ -861,7 +877,7 @@ static PyObject* set_autocast_ipu_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_xla_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_xla_dtype(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       THPDtype_Check(arg),
@@ -876,7 +892,9 @@ static PyObject* set_autocast_xla_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* get_autocast_gpu_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* get_autocast_gpu_dtype(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.get_autocast_gpu_dtype() is deprecated. Please use torch.get_autocast_dtype('cuda') instead.")
@@ -885,7 +903,9 @@ static PyObject* get_autocast_gpu_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* get_autocast_cpu_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* get_autocast_cpu_dtype(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.get_autocast_cpu_dtype() is deprecated. Please use torch.get_autocast_dtype('cpu') instead.")
@@ -894,7 +914,9 @@ static PyObject* get_autocast_cpu_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* get_autocast_ipu_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* get_autocast_ipu_dtype(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.get_autocast_ipu_dtype() is deprecated. Please use torch.get_autocast_dtype('ipu') instead.")
@@ -903,7 +925,9 @@ static PyObject* get_autocast_ipu_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* get_autocast_xla_dtype(PyObject* _unused, PyObject* arg) {
+static PyObject* get_autocast_xla_dtype(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   TORCH_WARN_DEPRECATION(
       "torch.get_autocast_xla_dtype() is deprecated. Please use torch.get_autocast_dtype('xla') instead.")
@@ -912,7 +936,9 @@ static PyObject* get_autocast_xla_dtype(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* clear_autocast_cache(PyObject* _unused, PyObject* arg) {
+static PyObject* clear_autocast_cache(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS {
     pybind11::gil_scoped_release no_gil;
     at::autocast::clear_cache();
@@ -921,19 +947,25 @@ static PyObject* clear_autocast_cache(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* autocast_increment_nesting(PyObject* _unused, PyObject* arg) {
+static PyObject* autocast_increment_nesting(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   return THPUtils_packInt64(at::autocast::increment_nesting());
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* autocast_decrement_nesting(PyObject* _unused, PyObject* arg) {
+static PyObject* autocast_decrement_nesting(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   return THPUtils_packInt64(at::autocast::decrement_nesting());
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_autocast_cache_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_autocast_cache_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (at::autocast::is_autocast_cache_enabled()) {
     Py_RETURN_TRUE;
@@ -943,7 +975,9 @@ static PyObject* is_autocast_cache_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_autocast_cache_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* set_autocast_cache_enabled(
+    PyObject* /*_unused*/,
+    PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       PyBool_Check(arg),
@@ -956,7 +990,7 @@ static PyObject* set_autocast_cache_enabled(PyObject* _unused, PyObject* arg) {
 }
 
 static PyObject* set_grad_enabled(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -977,7 +1011,7 @@ static PyObject* set_grad_enabled(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_grad_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_grad_enabled(PyObject* /*_unused*/, PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (GradMode::is_enabled()) {
     Py_RETURN_TRUE;
@@ -987,7 +1021,7 @@ static PyObject* is_grad_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_fwd_grad_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* set_fwd_grad_enabled(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK_TYPE(
       PyBool_Check(arg),
@@ -999,7 +1033,7 @@ static PyObject* set_fwd_grad_enabled(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_fwd_grad_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_fwd_grad_enabled(PyObject* /*_unused*/, PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (c10::AutogradState::get_tls_state().get_fw_grad_mode()) {
     Py_RETURN_TRUE;
@@ -1068,7 +1102,7 @@ static void visit_tensors(
 // Returns true if any of the args, kwargs tensor leaves have requires_grad.
 // Only List[Tensor] container in args is supported.
 static PyObject* any_requires_grad(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1096,7 +1130,7 @@ static PyObject* any_requires_grad(
 // Only List container is supported.
 // Tensors in Lists that has not only Tensor are checked.
 static PyObject* any_output_is_alias_to_input_or_output(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args) {
   HANDLE_TH_ERRORS
   PyObject* inps = PyTuple_GET_ITEM(args, 0);
@@ -1137,7 +1171,7 @@ static PyObject* any_output_is_alias_to_input_or_output(
 }
 
 static PyObject* set_multithreading_enabled(
-    PyObject* self,
+    PyObject* /*self*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1164,7 +1198,9 @@ static PyObject* set_multithreading_enabled(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_multithreading_enabled(PyObject* self, PyObject* args) {
+static PyObject* is_multithreading_enabled(
+    PyObject* /*self*/,
+    PyObject* /*args*/) {
   HANDLE_TH_ERRORS
   if (c10::AutogradState::get_tls_state().get_multithreading_enabled()) {
     Py_RETURN_TRUE;
@@ -1175,7 +1211,7 @@ static PyObject* is_multithreading_enabled(PyObject* self, PyObject* args) {
 }
 
 static PyObject* set_view_replay_enabled(
-    PyObject* self,
+    PyObject* /*self*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1202,7 +1238,9 @@ static PyObject* set_view_replay_enabled(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_view_replay_enabled(PyObject* self, PyObject* args) {
+static PyObject* is_view_replay_enabled(
+    PyObject* /*self*/,
+    PyObject* /*args*/) {
   HANDLE_TH_ERRORS
   if (c10::AutogradState::get_tls_state().get_view_replay_enabled()) {
     Py_RETURN_TRUE;
@@ -1212,7 +1250,7 @@ static PyObject* is_view_replay_enabled(PyObject* self, PyObject* args) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_graph_exec_group(PyObject* self, PyObject* obj) {
+static PyObject* set_graph_exec_group(PyObject* /*self*/, PyObject* obj) {
   HANDLE_TH_ERRORS
   if (obj == Py_None) {
     c10::AutogradState::get_tls_state().set_graph_exec_group(std::nullopt);
@@ -1225,7 +1263,7 @@ static PyObject* set_graph_exec_group(PyObject* self, PyObject* obj) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* get_graph_exec_group(PyObject* self, PyObject* args) {
+static PyObject* get_graph_exec_group(PyObject* /*self*/, PyObject* /*args*/) {
   HANDLE_TH_ERRORS
   const auto& group =
       c10::AutogradState::get_tls_state().get_graph_exec_group();
@@ -1239,7 +1277,9 @@ static PyObject* get_graph_exec_group(PyObject* self, PyObject* args) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_inference_mode_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_inference_mode_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (c10::InferenceMode::is_enabled()) {
     Py_RETURN_TRUE;
@@ -1250,7 +1290,7 @@ static PyObject* is_inference_mode_enabled(PyObject* _unused, PyObject* arg) {
 }
 
 static PyObject* set_anomaly_mode_enabled(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1264,7 +1304,9 @@ static PyObject* set_anomaly_mode_enabled(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* is_anomaly_mode_enabled(PyObject* _unused, PyObject* arg) {
+static PyObject* is_anomaly_mode_enabled(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (AnomalyMode::is_enabled()) {
     Py_RETURN_TRUE;
@@ -1275,8 +1317,8 @@ static PyObject* is_anomaly_mode_enabled(PyObject* _unused, PyObject* arg) {
 }
 
 static PyObject* is_anomaly_check_nan_enabled(
-    PyObject* _unused,
-    PyObject* arg) {
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   if (AnomalyMode::should_check_nan()) {
     Py_RETURN_TRUE;
@@ -1286,7 +1328,9 @@ static PyObject* is_anomaly_check_nan_enabled(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* python_enter_dual_level(PyObject* _unused, PyObject* arg) {
+static PyObject* python_enter_dual_level(
+    PyObject* /*_unused*/,
+    PyObject* /*arg*/) {
   HANDLE_TH_ERRORS
   // It is unlikely that the depth of forward nesting will overflow int64_t so
   // we just static cast here.
@@ -1295,7 +1339,7 @@ static PyObject* python_enter_dual_level(PyObject* _unused, PyObject* arg) {
 }
 
 static PyObject* python_exit_dual_level(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1313,8 +1357,8 @@ static PyObject* python_exit_dual_level(
 }
 
 static PyObject* is_torch_function_mode_enabled(
-    PyObject* _unused,
-    PyObject* _unused2) {
+    PyObject* /*_unused*/,
+    PyObject* /*_unused2*/) {
   HANDLE_TH_ERRORS
   if (at::impl::torch_function_mode_enabled()) {
     Py_RETURN_TRUE;
@@ -1325,7 +1369,7 @@ static PyObject* is_torch_function_mode_enabled(
 }
 
 static PyObject* push_on_torch_function_stack(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* arg) {
   HANDLE_TH_ERRORS
   if (arg != Py_None) {
@@ -1338,8 +1382,8 @@ static PyObject* push_on_torch_function_stack(
 }
 
 static PyObject* pop_torch_function_stack(
-    PyObject* _unused,
-    PyObject* _unused2) {
+    PyObject* /*_unused*/,
+    PyObject* /*_unused2*/) {
   HANDLE_TH_ERRORS
   const auto& mode = at::impl::PythonTorchFunctionTLS::pop_stack();
   auto* r = mode->ptr(getPyInterpreter());
@@ -1349,7 +1393,7 @@ static PyObject* pop_torch_function_stack(
 }
 
 static PyObject* get_function_stack_at(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1367,8 +1411,8 @@ static PyObject* get_function_stack_at(
 }
 
 static PyObject* len_torch_function_stack(
-    PyObject* _unused,
-    PyObject* _unused2) {
+    PyObject* /*_unused*/,
+    PyObject* /*_unused2*/) {
   HANDLE_TH_ERRORS
   const auto len = at::impl::PythonTorchFunctionTLS::stack_len();
   return utils::wrap(static_cast<int64_t>(len));
@@ -1376,7 +1420,7 @@ static PyObject* len_torch_function_stack(
 }
 
 static PyObject* push_on_torch_dispatch_stack(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* arg) {
   HANDLE_TH_ERRORS
   if (arg != Py_None) {
@@ -1404,7 +1448,7 @@ static PyObject* push_on_torch_dispatch_stack(
 }
 
 static PyObject* pop_torch_dispatch_stack(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* maybe_mode_key) {
   HANDLE_TH_ERRORS
   std::optional<c10::impl::TorchDispatchModeKey> mode_key;
@@ -1430,7 +1474,7 @@ static PyObject* pop_torch_dispatch_stack(
 }
 
 static PyObject* get_dispatch_stack_at(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* args,
     PyObject* kwargs) {
   HANDLE_TH_ERRORS
@@ -1447,7 +1491,7 @@ static PyObject* get_dispatch_stack_at(
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* set_dispatch_mode(PyObject* _unused, PyObject* mode) {
+static PyObject* set_dispatch_mode(PyObject* /*_unused*/, PyObject* mode) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(mode != Py_None);
 
@@ -1467,7 +1511,7 @@ static PyObject* set_dispatch_mode(PyObject* _unused, PyObject* mode) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* get_dispatch_mode(PyObject* _unused, PyObject* arg) {
+static PyObject* get_dispatch_mode(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(arg != Py_None);
   auto mode_key = py::cast<c10::impl::TorchDispatchModeKey>(arg);
@@ -1482,7 +1526,7 @@ static PyObject* get_dispatch_mode(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* unset_dispatch_mode(PyObject* _unused, PyObject* arg) {
+static PyObject* unset_dispatch_mode(PyObject* /*_unused*/, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(arg != Py_None);
   auto mode_key = py::cast<c10::impl::TorchDispatchModeKey>(arg);
@@ -1497,7 +1541,9 @@ static PyObject* unset_dispatch_mode(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* len_torch_dispatch_stack(PyObject* _unused, PyObject* args) {
+static PyObject* len_torch_dispatch_stack(
+    PyObject* /*_unused*/,
+    PyObject* /*args*/) {
   HANDLE_TH_ERRORS
   const auto len = c10::impl::TorchDispatchModeTLS::stack_len();
   return utils::wrap(static_cast<int64_t>(len));
@@ -1505,7 +1551,7 @@ static PyObject* len_torch_dispatch_stack(PyObject* _unused, PyObject* args) {
 }
 
 static PyObject* THPModule_increment_version(
-    PyObject* _unused,
+    PyObject* /*_unused*/,
     PyObject* tensor_list) {
   HANDLE_TH_ERRORS
   auto iterator = THPObjectPtr(PyObject_GetIter(tensor_list));

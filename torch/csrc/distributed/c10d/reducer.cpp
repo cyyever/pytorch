@@ -197,7 +197,7 @@ Reducer::Reducer(
                 this->autograd_hook(variable_index);
                 return outputs;
               },
-              [this](torch::autograd::CompiledNodeArgs& args) {
+              [this](torch::autograd::CompiledNodeArgs& /*args*/) {
                 TORCH_CHECK(
                     this->use_python_reducer_,
                     "Compiled autograd is not compatible with C++ DDP Reducer, please use torch._dynamo.config.optimize_ddp=\"python_reducer\".");
@@ -1648,7 +1648,8 @@ void Reducer::finalize_bucket_dense(Bucket& bucket) {
     if (!gradient_as_bucket_view_) {
       if (optim_in_backward_) {
         // Return early if optimizer has already run.
-        runGradCallbackForVariable(variable, [&](auto& grad) { return true; });
+        runGradCallbackForVariable(
+            variable, [&](auto& /*grad*/) { return true; });
       } else {
         RECORD_FUNCTION(
             "torch.distributed.ddp.reducer::copy_bucket_to_grad",

@@ -81,8 +81,8 @@ std::atomic<bool> DebugInfoWriter::hasWriterRegistered_(false);
 
 template <>
 float getDurationFromEvent<c10::Event>(
-    c10::Event& startEvent,
-    c10::Event& endEvent) {
+    c10::Event& /*startEvent*/,
+    c10::Event& /*endEvent*/) {
   TORCH_CHECK(false, "getDuration not supported by c10::Event.");
 }
 

@@ -83,7 +83,7 @@ void initPlacementBindings(PyObject* module) {
           // object().__reduce__().
           // test_placement_types.test_type_identification will repro if an
           // enterprising reader wants to get this fixed.
-          [](const Replicate& repl) { return py::dict(); },
+          [](const Replicate& /*repl*/) { return py::dict(); },
           [](const py::dict&) { return Replicate(); }));
   py::class_<Partial, Placement>(distributed_module, "Partial")
       .def(py::init<>())

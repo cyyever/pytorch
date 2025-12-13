@@ -107,8 +107,8 @@ Tensor unpack_opt(const Tensor& t, const char* name, int pos) {
 
 std::vector<at::Tensor> unpack(
     const at::ITensorListRef& tl,
-    const char* name,
-    int pos) {
+    const char* /*name*/,
+    int /*pos*/) {
   std::vector<at::Tensor> ret;
   ret.reserve(tl.size());
   for (const auto& t : tl) {
@@ -301,7 +301,7 @@ Tensor detach(c10::DispatchKeySet ks, const Tensor& self) {
   return result;
 }
 
-Tensor& detach_(c10::DispatchKeySet ks, Tensor& self) {
+Tensor& detach_(c10::DispatchKeySet /*ks*/, Tensor& self) {
   RECORD_FUNCTION("detach_", std::vector<c10::IValue>({self}));
   if (self.is_view()) {
     // See NOTE [ View + Inplace detection ]
@@ -468,9 +468,9 @@ static Tensor detach(c10::DispatchKeySet ks, const Tensor& self) {
 }
 
 static Tensor _fw_primal(
-    c10::DispatchKeySet ks,
+    c10::DispatchKeySet /*ks*/,
     const Tensor& self,
-    int64_t level) {
+    int64_t /*level*/) {
   auto tmp = ([&]() {
     at::AutoDispatchBelowADInplaceOrView guard;
     return at::alias(self);
@@ -479,7 +479,7 @@ static Tensor _fw_primal(
   std::function<at::Tensor(const at::Tensor&)> rev_func = nullptr;
   if (!self.unsafeGetTensorImpl()->support_as_strided()) {
     func = std::make_unique<ViewViewFunc>(self.sym_sizes());
-    rev_func = [=](const at::Tensor& input_view) {
+    rev_func = [=](const at::Tensor& /*input_view*/) {
       TORCH_INTERNAL_ASSERT(
           false,
           "Reverse view_func for _fw_primal() is not currently supported");
@@ -500,10 +500,10 @@ static Tensor _fw_primal(
 
 // NB: This does not redispatch any further
 static Tensor _make_dual(
-    c10::DispatchKeySet ks,
+    c10::DispatchKeySet /*ks*/,
     const Tensor& primal,
-    const Tensor& tangent,
-    int64_t level) {
+    const Tensor& /*tangent*/,
+    int64_t /*level*/) {
   auto tmp = ([&]() {
     at::AutoDispatchBelowADInplaceOrView guard;
     return at::alias(primal);
@@ -512,7 +512,7 @@ static Tensor _make_dual(
   std::function<at::Tensor(const at::Tensor&)> rev_func = nullptr;
   if (!primal.unsafeGetTensorImpl()->support_as_strided()) {
     func = std::make_unique<ViewViewFunc>(primal.sym_sizes());
-    rev_func = [=](const at::Tensor& input_view) {
+    rev_func = [=](const at::Tensor& /*input_view*/) {
       TORCH_INTERNAL_ASSERT(
           false,
           "Reverse view_func for _make_dual() is not currently supported");

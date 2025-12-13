@@ -646,7 +646,7 @@ void Engine::reentrant_thread_init() {
 void Engine::thread_on_exception(
     const std::shared_ptr<GraphTask>& graph_task,
     const std::shared_ptr<Node>& fn,
-    std::exception& e) {
+    std::exception& /*e*/) {
   graph_task->set_exception(std::current_exception(), fn);
 }
 

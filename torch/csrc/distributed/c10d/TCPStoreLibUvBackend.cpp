@@ -1573,7 +1573,7 @@ std::vector<std::string> LibUVStoreDaemon::listKeys() {
 #endif
 
 std::unique_ptr<BackgroundThread> create_libuv_tcpstore_backend(
-    const TCPStoreOptions& opts) {
+    const TCPStoreOptions& /*opts*/) {
 #ifdef TORCH_USE_LIBUV
   auto res = std::make_unique<LibUVStoreDaemon>(opts.port);
   res->init(opts);

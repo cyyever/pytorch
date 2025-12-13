@@ -4351,7 +4351,7 @@ c10::intrusive_ptr<Work> ProcessGroupNCCL::pointToPoint(
 
 c10::intrusive_ptr<Work> ProcessGroupNCCL::allreduce_sparse(
     std::vector<at::Tensor>& tensors,
-    const AllreduceOptions& opts) {
+    const AllreduceOptions& /*opts*/) {
   TORCH_CHECK(tensors.size() == 1, MULTI_DEVICE_ERROR_MSG);
   auto tensor = tensors.back();
   TORCH_CHECK(
@@ -4588,7 +4588,7 @@ c10::intrusive_ptr<Work> ProcessGroupNCCL::broadcast(
       tensor,
       tensor,
       [&](at::Tensor& input,
-          at::Tensor& output,
+          at::Tensor& /*output*/,
           ncclComm_t comm,
           at::cuda::CUDAStream& stream) {
         return ncclBcast(
@@ -5751,7 +5751,7 @@ c10::intrusive_ptr<Work> ProcessGroupNCCL::_allgather_base(
 // >>> pool = torch.cuda.MemPool(backend.mem_allocator)
 
 // Allocate function
-static void* _ncclMemAlloc(size_t size, int device, void* stream) {
+static void* _ncclMemAlloc(size_t size, int device, void* /*stream*/) {
 #ifndef NCCL_HAS_MEM_ALLOC
   TORCH_CHECK(
       false, "NCCL mem allocator is not supported in this NCCL version");
@@ -5765,7 +5765,7 @@ static void* _ncclMemAlloc(size_t size, int device, void* stream) {
 }
 
 // Free function
-static void _ncclMemFree(void* ptr, size_t size, int device, void* stream) {
+static void _ncclMemFree(void* ptr, size_t size, int device, void* /*stream*/) {
 #ifndef NCCL_HAS_MEM_ALLOC
   TORCH_CHECK(
       false, "NCCL mem allocator is not supported in this NCCL version");

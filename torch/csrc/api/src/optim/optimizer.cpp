@@ -40,7 +40,8 @@ std::unique_ptr<OptimizerParamState> OptimizerParamState::clone() const {
       "instead of torch::optim::OptimizerParamState to inherit the ability to clone.");
 }
 
-void OptimizerParamState::serialize(torch::serialize::InputArchive& archive) {
+void OptimizerParamState::serialize(
+    torch::serialize::InputArchive& /*archive*/) {
   TORCH_CHECK(
       false,
       "void serialize(torch::serialize::InputArchive& archive) has not been implemented for torch::optim::OptimizerParamState. ",
@@ -48,7 +49,7 @@ void OptimizerParamState::serialize(torch::serialize::InputArchive& archive) {
 }
 
 void OptimizerParamState::serialize(
-    torch::serialize::OutputArchive& archive) const {
+    torch::serialize::OutputArchive& /*archive*/) const {
   TORCH_CHECK(
       false,
       "void serialize(torch::serialize::OutputArchive& archive) has not been implemented for torch::optim::OptimizerParamState. ",
@@ -61,7 +62,7 @@ double OptimizerOptions::get_lr() const {
       "double get_lr() has not been overridden and implemented in subclass of torch::optim::OptimizerOptions, you must override it in your subclass.");
 }
 
-void OptimizerOptions::set_lr(const double lr) {
+void OptimizerOptions::set_lr(const double /*lr*/) {
   TORCH_CHECK(
       false,
       "double set_lr() has not been overridden and implemented in subclass of torch::optim::OptimizerOptions, you must override it in your subclass.");
@@ -75,7 +76,7 @@ std::unique_ptr<OptimizerOptions> OptimizerOptions::clone() const {
       "instead of torch::optim::OptimizerOptions to inherit the ability to clone.");
 }
 
-void OptimizerOptions::serialize(torch::serialize::InputArchive& archive) {
+void OptimizerOptions::serialize(torch::serialize::InputArchive& /*archive*/) {
   TORCH_CHECK(
       false,
       "void serialize(torch::serialize::InputArchive& archive) has not been implemented for torch::optim::OptimizerOptions. ",
@@ -83,7 +84,7 @@ void OptimizerOptions::serialize(torch::serialize::InputArchive& archive) {
 }
 
 void OptimizerOptions::serialize(
-    torch::serialize::OutputArchive& archive) const {
+    torch::serialize::OutputArchive& /*archive*/) const {
   TORCH_CHECK(
       false,
       "void serialize(torch::serialize::OutputArchive& archive) has not been implemented for torch::optim::OptimizerOptions. ",

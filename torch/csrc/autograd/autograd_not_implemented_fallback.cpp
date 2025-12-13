@@ -130,7 +130,7 @@ static void basicAutogradNotImplementedFallbackImpl(
 
   bool any_input_requires_grad = false;
   _foreach_tensor(
-      [&](size_t _, size_t idx_arg, const at::Tensor& t) {
+      [&](size_t /*_*/, size_t /*idx_arg*/, const at::Tensor& t) {
         if (t.requires_grad()) {
           any_input_requires_grad = true;
         }
@@ -148,7 +148,7 @@ static void basicAutogradNotImplementedFallbackImpl(
     // (see generated/VariableTypeEverything.cpp for examples)
     std::vector<const at::Tensor*> all_tensors_on_stack;
     _foreach_tensor(
-        [&](size_t _, size_t idx_arg, const at::Tensor& t) {
+        [&](size_t /*_*/, size_t /*idx_arg*/, const at::Tensor& t) {
           all_tensors_on_stack.push_back(&t);
         },
         stack,
@@ -169,7 +169,7 @@ static void basicAutogradNotImplementedFallbackImpl(
     // of technical expertise necessary (you would need to manually register an
     // autograd kernel without using autograd.Function)
     _foreach_tensor(
-        [&](size_t _, size_t idx_ret, const at::Tensor& t) {
+        [&](size_t /*_*/, size_t idx_ret, const at::Tensor& t) {
           if (!isDifferentiableType(t.scalar_type())) {
             return;
           }
@@ -191,7 +191,7 @@ static void basicAutogradNotImplementedFallbackImpl(
           // >>> y = op(k)
           // >>> torch.autograd.grad(z.sum(), w)
           if (t.requires_grad()) {
-            t.register_hook([op_name](const at::Tensor& grad) {
+            t.register_hook([op_name](const at::Tensor& /*grad*/) {
               warnAutogradNotImplemented(op_name);
             });
             // If history is rebased, then we will attempt to warn
@@ -202,7 +202,7 @@ static void basicAutogradNotImplementedFallbackImpl(
               const auto& base = t._base();
               if (base.requires_grad()) {
                 // Can only register_hook on tensors that require grad.
-                base.register_hook([op_name](const at::TensorBase& grad) {
+                base.register_hook([op_name](const at::TensorBase& /*grad*/) {
                   warnAutogradNotImplemented(op_name);
                 });
               }
@@ -298,7 +298,7 @@ static void autogradNotImplementedFallbackImpl(
 
   size_t num_tensor_inputs = 0; // Only used for DEBUG-only checks
   _foreach_tensor(
-      [&](size_t _, size_t idx_arg, const at::Tensor& t) {
+      [&](size_t /*_*/, size_t /*idx_arg*/, const at::Tensor& t) {
         if (grad_mode && t.requires_grad()) {
           tensors_requiring_grad_on_stack.push_back(&t);
         }
@@ -320,7 +320,7 @@ static void autogradNotImplementedFallbackImpl(
       [](const c10::Argument& arg) { return arg.is_out(); });
 
   _foreach_tensor(
-      [&](size_t _, size_t i, const at::Tensor& t) {
+      [&](size_t /*_*/, size_t i, const at::Tensor& t) {
         if (schema.is_mutable({c10::SchemaArgType::input, i})) {
           if (has_out_arg) {
             // Normally out argument overloads would not support any arguments
@@ -471,7 +471,7 @@ static void autogradNotImplementedFallbackImpl(
 
   if (any_requires_grad) {
     _foreach_tensor(
-        [&](size_t idx_tensor, size_t idx_ret, const at::Tensor& t) {
+        [&](size_t /*idx_tensor*/, size_t idx_ret, const at::Tensor& t) {
           if (isDifferentiableType(t.scalar_type())) {
             if (is_inplace_output[idx_ret]) {
               rebase_history(t, grad_fn);

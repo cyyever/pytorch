@@ -90,7 +90,9 @@ void addMetadata(
 #endif // USE_KINETO
 }
 
-TraceWrapper::TraceWrapper(const int64_t start_time, const std::string& name)
+TraceWrapper::TraceWrapper(
+    const int64_t /*start_time*/,
+    const std::string& /*name*/)
 #ifdef USE_KINETO
     : cpu_trace_(std::make_unique<libkineto::CpuTraceBuffer>()) {
   cpu_trace_->span.startTime = start_time;
@@ -103,12 +105,12 @@ TraceWrapper::TraceWrapper(const int64_t start_time, const std::string& name)
 #endif // USE_KINETO
 
 activity_t* TraceWrapper::addCPUActivity(
-    const std::string& name,
-    const libkineto::ActivityType type,
-    const DeviceAndResource device_and_resource,
-    const uint64_t correlation_id,
-    const int64_t start_time,
-    const int64_t end_time) {
+    const std::string& /*name*/,
+    const libkineto::ActivityType /*type*/,
+    const DeviceAndResource /*device_and_resource*/,
+    const uint64_t /*correlation_id*/,
+    const int64_t /*start_time*/,
+    const int64_t /*end_time*/) {
 #ifdef USE_KINETO
   TORCH_CHECK((bool)(*this), "Cannot add event to non-existent trace.");
   cpu_trace_->emplace_activity(cpu_trace_->span, type, name);
@@ -153,7 +155,7 @@ ActivityTraceWrapper::operator bool() const {
 #endif // USE_KINETO
 }
 
-void ActivityTraceWrapper::save(const std::string& path) {
+void ActivityTraceWrapper::save(const std::string& /*path*/) {
 #ifdef USE_KINETO
   TORCH_CHECK(!saved_, "Trace is already saved.");
   TORCH_CHECK(trace_ != nullptr, "Missing trace.")
@@ -448,7 +450,7 @@ c10::DeviceType deviceTypeFromActivity(libkineto::ActivityType activity_type) {
   }
 }
 
-void addMetadataJson(const std::string& key, const std::string& value) {
+void addMetadataJson(const std::string& /*key*/, const std::string& /*value*/) {
 #ifdef USE_KINETO
   if (libkineto::api().isProfilerInitialized()) {
     libkineto::api().activityProfiler().addMetadata(key, value);
