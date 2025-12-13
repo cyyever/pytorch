@@ -54,9 +54,9 @@ class ForwardRef {
 
  public:
   ForwardRef(): ptr_(std::make_unique<T>()) {}
-  ForwardRef(ForwardRef<T>&&);
+  ForwardRef(ForwardRef<T>&&) noexcept;
   ForwardRef(const ForwardRef<T>& other): ptr_(std::make_unique<T>(*other.ptr_)) {}
-  ForwardRef<T>& operator=(ForwardRef<T>&&);
+  ForwardRef<T>& operator=(ForwardRef<T>&&) noexcept;
   ForwardRef<T>& operator=(const ForwardRef<T>& other) {
     ptr_ = std::make_unique<T>(*other.ptr_);
     return *this;
@@ -3863,8 +3863,8 @@ inline void from_json(const nlohmann::json& nlohmann_json_j, UserOutputSpec& nlo
 }
 
 
-template <typename T> ForwardRef<T>::ForwardRef(ForwardRef<T>&&) = default;
-template <typename T> ForwardRef<T>& ForwardRef<T>::operator=(ForwardRef<T>&&) = default;
+template <typename T> ForwardRef<T>::ForwardRef(ForwardRef<T>&&) noexcept = default;
+template <typename T> ForwardRef<T>& ForwardRef<T>::operator=(ForwardRef<T>&&) noexcept = default;
 template <typename T> ForwardRef<T>::~ForwardRef() = default;
 } // namespace torch::_export
 
