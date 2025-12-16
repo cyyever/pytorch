@@ -3,7 +3,7 @@ import functools
 import hashlib
 import itertools
 from dataclasses import dataclass
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 from typing_extensions import override
 from unittest.mock import patch
 
@@ -51,7 +51,7 @@ class CUDATemplate(KernelTemplate):
         name: str,
         input_nodes: list[Buffer],
         layout: Layout,
-        input_reorder: Optional[list[int]] = None,
+        input_reorder: list[int] | None = None,
     ) -> None:
         """
         Baseclass for CUDA C++ Templates, derived from KernelTemplate.
@@ -109,7 +109,7 @@ class CUDATemplate(KernelTemplate):
         Generate code and args with caching. We cache the code even if runtime
         args are different.
         """
-        key: Optional[str] = None
+        key: str | None = None
         if config.cuda.enable_caching_codegen:
             key = self.make_key(name=name, input_key=input_key, layout_repr=layout_repr)
 
@@ -171,8 +171,8 @@ class CUDATemplate(KernelTemplate):
         description: str,
         input_key: str,
         layout_repr: str,
-        input_tensor_meta: Union[TensorMeta, list[TensorMeta]],
-        output_tensor_meta: Union[TensorMeta, list[TensorMeta]],
+        input_tensor_meta: TensorMeta | list[TensorMeta],
+        output_tensor_meta: TensorMeta | list[TensorMeta],
         **kwargs,
     ) -> CUDATemplateCaller:
         """
@@ -218,7 +218,7 @@ class CUDATemplate(KernelTemplate):
 
         def make_kernel_render(
             template_node: CUDATemplateBuffer,
-            epilogue_nodes: Optional[list[BaseSchedulerNode]] = None,
+            epilogue_nodes: list[BaseSchedulerNode] | None = None,
         ) -> tuple[CUDATemplateKernel, functools.partial[str]]:
             assert supports_epilogue_fusion or not epilogue_nodes, (
                 "epilogue fusion is not supported for this kernel"

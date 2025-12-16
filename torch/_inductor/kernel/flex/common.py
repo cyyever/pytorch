@@ -5,7 +5,7 @@ import math
 from collections.abc import Sequence
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING, Union
 
 import sympy
 
@@ -47,7 +47,7 @@ from ...select_algorithm import realize_inputs
 from ...utils import load_template
 
 
-SubgraphResults = Union[list[Optional[ComputedBuffer]], Optional[ComputedBuffer]]
+SubgraphResults = Union[list[ComputedBuffer | None], ComputedBuffer | None]
 
 
 def zeros_and_scatter_lowering(shape: list[int], indices, values):
@@ -97,7 +97,7 @@ def zeros_and_scatter_lowering(shape: list[int], indices, values):
 
 def get_fwd_subgraph_outputs(
     subgraph_buffer: SubgraphResults, mask_graph_buffer: SubgraphResults
-) -> list[Optional[ComputedBuffer]]:
+) -> list[ComputedBuffer | None]:
     subgraph_buffer = (
         # pyrefly: ignore [bad-assignment]
         subgraph_buffer if isinstance(subgraph_buffer, Sequence) else [subgraph_buffer]
@@ -113,7 +113,7 @@ def get_fwd_subgraph_outputs(
 
 
 def build_subgraph_module_buffer(
-    args: list[Union[TensorBox, ShapeAsConstantBuffer]],
+    args: list[TensorBox | ShapeAsConstantBuffer],
     graph_module: torch.fx.GraphModule,
 ) -> SubgraphResults:
     """This function's goal is to take in the required args and produce the subgraph buffer
@@ -137,7 +137,7 @@ def build_subgraph_module_buffer(
     with V.set_graph_handler(pw_subgraph):  # type: ignore[arg-type]
         pw_subgraph.run(*args)
 
-    def convert_output_node_to_buffer(output_buffer) -> Optional[ComputedBuffer]:
+    def convert_output_node_to_buffer(output_buffer) -> ComputedBuffer | None:
         if output_buffer is None:
             return None
         if isinstance(output_buffer, ComputedBuffer):
@@ -168,12 +168,12 @@ def build_subgraph_module_buffer(
 
 
 def build_subgraph_buffer(
-    args: list[Union[TensorBox, ShapeAsConstantBuffer]], subgraph: Subgraph
+    args: list[TensorBox | ShapeAsConstantBuffer], subgraph: Subgraph
 ) -> SubgraphResults:
     return build_subgraph_module_buffer(args, subgraph.graph_module)
 
 
-def maybe_realize(args: list[Optional[IRNode]]):
+def maybe_realize(args: list[IRNode | None]):
     """Accepts a list of optional IRNodes and returns a list of realized IRNodes"""
     return tree_map(
         lambda x: (
@@ -205,8 +205,8 @@ def create_placeholder(
     name: str,
     dtype: torch.dtype,
     device: torch.device,
-    size: Optional[list[int]] = None,
-) -> Union[TensorBox, ShapeAsConstantBuffer]:
+    size: list[int] | None = None,
+) -> TensorBox | ShapeAsConstantBuffer:
     """Creates a placeholder input buffers for producing subgraph_output."""
     input_buffer = InputBuffer(
         name=name,

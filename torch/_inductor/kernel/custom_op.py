@@ -3,7 +3,7 @@
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from torch._inductor.codegen.subgraph import SubgraphTemplate
@@ -59,7 +59,7 @@ class CustomOpConfig:
 
     def __init__(
         self,
-        decomposition: Optional[Callable[..., Any]] = None,
+        decomposition: Callable[..., Any] | None = None,
         **params: Any,
     ):
         if decomposition is not None and not callable(decomposition):
@@ -71,7 +71,7 @@ class CustomOpConfig:
         self.params = params
 
     def get_decomposition(
-        self, default_impl: Optional[Callable[..., Any]] = None
+        self, default_impl: Callable[..., Any] | None = None
     ) -> Callable[..., Any]:
         """Return the decomposition function for this config.
         When decomposition is not specified, return the default implementation.
@@ -242,10 +242,8 @@ def autotune_custom_op(
     inputs: list[Any],
     non_tensor_args: list[dict[str, Any]],
     op_overload: torch._ops.OpOverload,
-    user_input_gen_fns: Optional[
-        dict[str, Callable[[torch.Tensor], torch.Tensor]]
-    ] = None,
-) -> Union[TensorBox, Any]:
+    user_input_gen_fns: dict[str, Callable[[torch.Tensor], torch.Tensor]] | None = None,
+) -> TensorBox | Any:
     """Autotune custom operations by comparing multiple decomposition implementations.
 
     Currently supports SINGLE OUTPUT custom ops only.
@@ -400,12 +398,11 @@ def _generate_dynamic_configs(
 
 def register_custom_op_autotuning(
     custom_op: torch._library.custom_ops.CustomOpDef,
-    configs: Optional[Union[list[CustomOpConfig], list[Callable[..., Any]]]] = None,
-    config_generator: Optional[
-        Callable[[dict[str, torch.Tensor]], list[CustomOpConfig]]
-    ] = None,
-    name: Optional[str] = None,
-    input_gen_fns: Optional[dict[str, Callable[[torch.Tensor], torch.Tensor]]] = None,
+    configs: list[CustomOpConfig] | list[Callable[..., Any]] | None = None,
+    config_generator: Callable[[dict[str, torch.Tensor]], list[CustomOpConfig]]
+    | None = None,
+    name: str | None = None,
+    input_gen_fns: dict[str, Callable[[torch.Tensor], torch.Tensor]] | None = None,
 ) -> None:
     """Register custom op for autotuning with custom_op configs where each config
     specifies a decomposition implementation function with its parameter values.

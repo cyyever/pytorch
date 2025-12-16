@@ -7,7 +7,7 @@ template kernels, particularly for flex attention modifications.
 """
 
 import math
-from typing import Optional, Union
+from typing import Union
 
 import sympy
 
@@ -78,7 +78,7 @@ class CuteDSLOpOverrides(OpOverrides):
     @staticmethod
     def _extract_dtype_and_bounds(
         *args: CuteDSLArg,
-    ) -> tuple[Optional[torch.dtype], ValueRanges[sympy.Expr]]:
+    ) -> tuple[torch.dtype | None, ValueRanges[sympy.Expr]]:
         """Extract dtype and bounds from CSEVariable arguments."""
         for arg in args:
             if isinstance(arg, CSEVariable):
@@ -144,7 +144,7 @@ class CuteDSLOpOverrides(OpOverrides):
         return op_format.format(x=x)
 
     @staticmethod
-    def constant(value: Union[bool, float, int], dtype: torch.dtype) -> str:
+    def constant(value: bool | float | int, dtype: torch.dtype) -> str:
         """Generate CuteDSL constant representation."""
         if value == float("-inf"):
             return "float('-inf')"

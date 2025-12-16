@@ -5,7 +5,7 @@ import functools
 import importlib
 from collections.abc import Callable, Sequence
 from contextlib import contextmanager
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import sympy
 from sympy import Expr, Integer
@@ -50,7 +50,7 @@ flash_attention_backward_cutedsl_template = CuteDSLTemplate(
 
 def _fixed_indexer_cute(
     size: Sequence[int],
-    stride: Optional[Sequence[int]] = None,
+    stride: Sequence[int] | None = None,
     offset: Expr = Integer(0),
 ) -> Callable[[Sequence[Expr]], Expr]:
     """

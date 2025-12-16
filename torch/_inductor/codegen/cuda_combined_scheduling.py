@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 from ..scheduler import (
     BaseSchedulerNode,
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     from .common import BackendFeature
 
-    _IntLike: TypeAlias = Union[int, Expr]
+    _IntLike: TypeAlias = int | Expr
 
 
 class CUDACombinedScheduling(BaseScheduling):
@@ -40,7 +40,7 @@ class CUDACombinedScheduling(BaseScheduling):
     this would also be the place to do it.
     """
 
-    def __init__(self, scheduler: Optional[Scheduler]) -> None:
+    def __init__(self, scheduler: Scheduler | None) -> None:
         super().__init__(scheduler)
         self._triton_scheduling = TritonScheduling(scheduler)
         self._cuda_cpp_scheduling = CUDACPPScheduling(scheduler)
@@ -99,7 +99,7 @@ class CUDACombinedScheduling(BaseScheduling):
         template_node: BaseSchedulerNode,
         epilogue_nodes: Sequence[BaseSchedulerNode],
         prologue_nodes: Sequence[BaseSchedulerNode],
-    ) -> Optional[str]:
+    ) -> str | None:
         if self._cuda_cpp_scheduling.is_cuda_cpp_template(template_node):
             assert not prologue_nodes
             return self._cuda_cpp_scheduling.codegen_template(
@@ -126,7 +126,7 @@ class CUDACombinedScheduling(BaseScheduling):
     def codegen_mix_order_reduction(self, node):
         return self._triton_scheduling.codegen_mix_order_reduction(node)
 
-    def codegen_node(self, node: Union[FusedSchedulerNode, SchedulerNode]) -> None:
+    def codegen_node(self, node: FusedSchedulerNode | SchedulerNode) -> None:
         return self._triton_scheduling.codegen_node(node)
 
     def codegen_sync(self) -> None:
@@ -150,7 +150,7 @@ class CUDACombinedScheduling(BaseScheduling):
         self,
         nodes: Sequence[Any],
         benchmark_kernel: bool = False,
-        hint_override: Optional[int] = None,
+        hint_override: int | None = None,
     ) -> str:
         return self._triton_scheduling.generate_kernel_code_from_nodes(
             nodes, benchmark_kernel, hint_override=hint_override
@@ -158,5 +158,5 @@ class CUDACombinedScheduling(BaseScheduling):
 
     def benchmark_combo_kernel(
         self, node_list: Sequence[BaseSchedulerNode]
-    ) -> tuple[float, float, list[Optional[str]]]:
+    ) -> tuple[float, float, list[str | None]]:
         return self._triton_scheduling.benchmark_combo_kernel(node_list)
