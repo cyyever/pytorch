@@ -60,23 +60,10 @@ def infer_schema(
         (Tensor x) -> Tensor
     """
     UNKNOWN_MUTATES = "unknown"
-    pf_globals = prototype_function.__globals__
-    pf_locals = None
-    # TODO: Once our minimum version is py3.10+ pass `eval_str=True` to
-    # inspect.signature() and we no longer need to deal with stringified
-    # annotations below.
-    sig = inspect.signature(prototype_function)
+    sig = inspect.signature(prototype_function, eval_str=True)
 
     def error_fn(what):
         raise ValueError(f"infer_schema(func): {what} Got func with signature {sig})")
-
-    def convert_type_string(annotation_type: str):
-        try:
-            return eval(annotation_type, pf_globals, pf_locals)
-        except Exception:
-            error_fn(
-                f"Unsupported type annotation {annotation_type}. It is not a type."
-            )
 
     def unstringify_types(
         tys: tuple[Union[type[object], str], ...],
@@ -97,7 +84,7 @@ def infer_schema(
         # convert that to a real type. The second return value indicates if the
         # type contained a string or not.
         if isinstance(ty, str):
-            return convert_type_string(ty), True
+            return ty, True
         elif origin := typing.get_origin(ty):
             args, args_changed = unstringify_types(typing.get_args(ty))
             if args_changed:
