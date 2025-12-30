@@ -197,6 +197,22 @@ TORCH_API std::unique_ptr<PostAccumulateGradHook>& post_acc_grad_hooks(
 TORCH_API void create_cpp_hook(
     const at::TensorBase& /*self*/,
     bool is_retains_grad_hooks = false);
+
+inline bool is_tensor_stealable(
+    const at::Tensor& new_grad,
+    size_t num_expected_refs = 1) {
+  size_t use_count = new_grad.use_count();
+  if (use_count <= num_expected_refs) {
+    return true;
+  }
+  if (use_count >= 2 &&
+      new_grad.unsafeGetTensorImpl()->pyobj_slot()->has_unique_reference()) {
+    // The Python wrapper, if it exists, also has a reference to the Tensor.
+    num_expected_refs++;
+  }
+  return use_count <= num_expected_refs;
+}
+
 } // namespace impl
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -858,16 +874,25 @@ inline Variable make_variable_differentiable_view(
 inline Variable make_variable_non_differentiable_view(
     const Variable& base,
     const at::Tensor& data,
-    bool allow_tensor_metadata_change = true) {
+    bool allow_tensor_metadata_change = true,
+    bool is_fresh_tensor = false) {
   if (data.defined()) {
-    // Currently all of non-differentiable view ops(detach/_indices/_values)
-    // share the same TensorImpl as their base Tensor. Thus a new TensorImpl
-    // allocation here is required.
+    // If we already allocated a new tensor, no need to
+    // shallow_copy_and_detach here. (See #163671 history; we tried to
+    // fan out to _indices and _values and ran into a SparseTensorImpl
+    // can of worms.)
+    if (is_fresh_tensor) {
+      auto* data_impl = data.unsafeGetTensorImpl();
+      data_impl->set_version_counter(impl::version_counter(base));
+      data_impl->set_allow_tensor_metadata_change(allow_tensor_metadata_change);
+      data_impl->set_autograd_meta(nullptr);
+      return data;
+    }
     auto data_impl_copy = data.getIntrusivePtr()->shallow_copy_and_detach(
         /*version_counter=*/impl::version_counter(base),
         /*allow_tensor_metadata_change=*/allow_tensor_metadata_change);
     data_impl_copy->set_autograd_meta(nullptr);
-    return Variable(data_impl_copy);
+    return Variable(std::move(data_impl_copy));
   }
   return Variable();
 }
@@ -885,7 +910,7 @@ inline Variable make_variable(
     bool requires_grad = false,
     bool allow_tensor_metadata_change = true) {
   if (data.defined()) {
-    if (data.getIntrusivePtr().use_count() == 1 &&
+    if (impl::is_tensor_stealable(data) &&
         data.getIntrusivePtr()->unique_version()) {
       auto data_impl = data.unsafeReleaseIntrusivePtr();
       data_impl->set_allow_tensor_metadata_change(allow_tensor_metadata_change);
@@ -926,7 +951,7 @@ inline Variable make_variable(
         /*allow_tensor_metadata_change=*/allow_tensor_metadata_change);
     data_impl_copy->set_autograd_meta(std::make_unique<AutogradMeta>(
         data_impl_copy.get(), false, std::move(gradient_edge)));
-    return Variable(data_impl_copy);
+    return Variable(std::move(data_impl_copy));
   }
   return Variable();
 }
