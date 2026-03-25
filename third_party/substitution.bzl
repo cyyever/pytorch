@@ -38,8 +38,6 @@ template_rule = rule(
         ),
         "substitutions": attr.string_dict(mandatory = True),
     },
-    # output_to_genfiles is required for header files.
-    output_to_genfiles = True,
     implementation = template_rule_impl,
 )
 
@@ -75,7 +73,5 @@ header_template_rule = rule(
         ),
         "substitutions": attr.string_dict(mandatory = True),
     },
-    # output_to_genfiles is required for header files.
-    output_to_genfiles = True,
     implementation = header_template_rule_impl,
 )

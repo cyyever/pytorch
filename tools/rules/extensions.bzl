@@ -1,7 +1,5 @@
 """Module extension for PyTorch's local third-party dependencies."""
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
 def _new_local_repo_impl(repository_ctx):
     """Symlinks a local directory and uses a provided BUILD file."""
     workspace_root = repository_ctx.path(Label("@pytorch//:MODULE.bazel")).dirname
@@ -194,6 +192,25 @@ _find_cuda = repository_rule(
     environ = ["CUDA_PATH"],
 )
 
+def _mkl_archive_impl(repository_ctx):
+    """Downloads an MKL archive and applies a BUILD file."""
+    repository_ctx.download_and_extract(
+        url = repository_ctx.attr.urls,
+        sha256 = repository_ctx.attr.sha256,
+        stripPrefix = repository_ctx.attr.strip_prefix,
+    )
+    repository_ctx.symlink(repository_ctx.path(repository_ctx.attr.build_file), "BUILD.bazel")
+
+_mkl_archive = repository_rule(
+    implementation = _mkl_archive_impl,
+    attrs = {
+        "build_file": attr.label(allow_single_file = True, mandatory = True),
+        "sha256": attr.string(),
+        "strip_prefix": attr.string(),
+        "urls": attr.string_list(mandatory = True),
+    },
+)
+
 def _pytorch_local_repos_impl(module_ctx):
     # new_local_repository equivalents (custom BUILD files)
     _new_local_repo(name = "gloo", path = "third_party/gloo", build_file = Label("@pytorch//third_party:gloo.BUILD"))
@@ -222,8 +239,8 @@ def _pytorch_local_repos_impl(module_ctx):
     _find_cuda(name = "cuda")
     _find_cudnn(name = "cudnn")
 
-    # MKL (http_archive equivalents)
-    http_archive(
+    # MKL
+    _mkl_archive(
         name = "mkl",
         build_file = Label("@pytorch//third_party:mkl.BUILD"),
         sha256 = "59154b30dd74561e90d547f9a3af26c75b6f4546210888f09c9d4db8f4bf9d4c",
@@ -233,7 +250,7 @@ def _pytorch_local_repos_impl(module_ctx):
         ],
     )
 
-    http_archive(
+    _mkl_archive(
         name = "mkl_headers",
         build_file = Label("@pytorch//third_party:mkl_headers.BUILD"),
         sha256 = "2af3494a4bebe5ddccfdc43bacc80fcd78d14c1954b81d2c8e3d73b55527af90",
