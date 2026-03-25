@@ -383,7 +383,7 @@ cc_library(
         ":torch_headers",
         "@fbgemm",
         "@ideep",
-        "@nlohmann",
+        "@nlohmann//:json",
     ],
     alwayslink = True,
 )
@@ -789,7 +789,7 @@ cc_library(
         ":torch_headers",
         "@kineto",
         "@cpp-httplib",
-        "@nlohmann",
+        "@nlohmann//:json",
     ] + if_cuda([
         "//c10/cuda",
         "@cutlass",

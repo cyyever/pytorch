@@ -43,6 +43,13 @@ local_path_override(
     path = "third_party/cpuinfo",
 )
 
+# nlohmann JSON (local submodule with its own Bazel build)
+bazel_dep(name = "nlohmann_json", version = "0.0.0", repo_name = "nlohmann")
+local_path_override(
+    module_name = "nlohmann_json",
+    path = "third_party/nlohmann",
+)
+
 # Python toolchain
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
@@ -76,7 +83,6 @@ use_repo(
     "fmt",
     "kineto",
     "cpp-httplib",
-    "nlohmann",
     "moodycamel",
     "tensorpipe",
     "cudnn_frontend",
