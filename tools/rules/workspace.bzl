@@ -53,6 +53,20 @@ This is mostly useful to create wrappers for specific target that we want
 to be used with the '@' syntax.
 """
 
+_CUDA_STUB_NAMES = [
+    "cuda_headers", "cuda_driver", "cuda", "cufft",
+    "cublas", "curand", "cusolver", "cusparse", "cufile", "nvrtc",
+]
+
+def _cuda_stub_build(repository_ctx):
+    lines = []
+    for name in _CUDA_STUB_NAMES:
+        lines.append('cc_library(name = "{name}", visibility = ["//visibility:public"])'.format(name = name))
+    repository_ctx.file("BUILD.bazel", "\n".join(lines))
+
+def _cudnn_stub_build(repository_ctx):
+    repository_ctx.file("BUILD.bazel", 'cc_library(name = "cudnn", visibility = ["//visibility:public"])')
+
 def _find_cudnn_impl(repository_ctx):
     cudnn_path = repository_ctx.attr.path
     if not cudnn_path:
@@ -65,13 +79,16 @@ def _find_cudnn_impl(repository_ctx):
         # Pip cuDNN: find via python
         python = repository_ctx.which("python3") or repository_ctx.which("python")
         if not python:
-            fail("CUDNN_PATH not set and python3 not found for pip fallback")
+            # No cuDNN found — generate stub targets so cpu-only builds still work.
+            _cudnn_stub_build(repository_ctx)
+            return
         result = repository_ctx.execute([
             python, "-c",
             "import nvidia.cudnn; print(nvidia.cudnn.__path__[0])",
         ])
         if result.return_code != 0:
-            fail("CUDNN_PATH not set and pip nvidia-cudnn not found: " + result.stderr)
+            _cudnn_stub_build(repository_ctx)
+            return
         repository_ctx.symlink(result.stdout.strip(), "cudnn")
 
     # Detect lib directory (system uses lib64/, pip uses lib/)
@@ -117,7 +134,9 @@ def _find_cuda_impl(repository_ctx):
     if not cuda_path:
         cuda_path = "/usr/local/cuda"
     if not repository_ctx.path(cuda_path).exists:
-        fail("CUDA toolkit not found. Set CUDA_PATH or pass path attribute.")
+        # No CUDA found — generate stub targets so cpu-only builds still work.
+        _cuda_stub_build(repository_ctx)
+        return
     repository_ctx.symlink(cuda_path, "cuda")
 
     # Detect lib/include layout
