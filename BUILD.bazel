@@ -537,9 +537,7 @@ cc_library(
         exclude = [
             "caffe2/core/macros.h",
         ],
-    ) + if_cuda(glob([
-        "caffe2/**/*.cuh",
-    ])),
+    ),
     copts = CAFFE2_COPTS,
     visibility = ["//visibility:public"],
     deps = [
@@ -839,9 +837,7 @@ cc_library(
         + if_cuda(libtorch_python_cuda_sources)
         + if_cuda(libtorch_python_distributed_sources)
         + GENERATED_AUTOGRAD_PYTHON,
-    hdrs = glob([
-        "torch/csrc/generic/*.cpp",
-    ]),
+    hdrs = [],
     copts = COMMON_COPTS + if_cuda(["-DUSE_CUDA=1"]),
     deps = [
         ":torch",
@@ -1017,8 +1013,6 @@ cc_test(
         [
             "test/cpp/jit/*.cpp",
             "test/cpp/jit/*.h",
-            "test/cpp/tensorexpr/*.cpp",
-            "test/cpp/tensorexpr/*.h",
         ],
         exclude = [
             # skip this since <pybind11/embed.h> is not found in OSS build

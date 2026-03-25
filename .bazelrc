@@ -19,7 +19,9 @@ build --define=cuda=true
 build --@rules_cuda//cuda:enable=True
 build --@rules_cuda//cuda:archs=sm_52
 build --@rules_cuda//cuda:compiler=nvcc
-build --repo_env=CUDA_PATH=/usr/local/cuda
+# Forward CUDA_PATH from the environment (defaults to /usr/local/cuda in
+# tools/rules/extensions.bzl when unset).
+build --repo_env=CUDA_PATH
 
 # Configuration to build without GPU support
 build:cpu-only --define=cuda=false
@@ -113,4 +115,4 @@ build --per_file_copt='//:aten/src/ATen/RegisterZeroTensor\.cpp$'@-Wno-error=unu
 build --per_file_copt='//:torch/csrc/lazy/generated/RegisterAutogradLazy\.cpp$'@-Wno-error=unused-function
 build --per_file_copt='//:torch/csrc/lazy/generated/RegisterLazy\.cpp$'@-Wno-error=unused-function
 build --per_file_copt='^//.*\.(cpp|cc)$'@-Wno-dangling-reference
-common --noincompatible_disallow_empty_glob
+common --incompatible_disallow_empty_glob

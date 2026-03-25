@@ -133,7 +133,6 @@ TENSORPIPE_CPU_HEADERS = glob(
 
 TENSORPIPE_CPU_SOURCES = glob(
     [
-        "tensorpipe/*.cc",
         "tensorpipe/channel/*.cc",
         "tensorpipe/channel/*/*.cc",
         "tensorpipe/common/*.cc",

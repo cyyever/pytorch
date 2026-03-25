@@ -4,7 +4,6 @@ cc_library(
     name = "ideep",
     hdrs = glob([
         "include/**/*.hpp",
-        "include/**/*.h",
     ]),
     defines = [
         "IDEEP_USE_MKL",

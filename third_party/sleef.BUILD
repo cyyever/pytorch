@@ -24,11 +24,9 @@ SLEEF_COMMON_TARGET_COPTS = [
 ]
 
 SLEEF_PRIVATE_HEADERS = glob([
-    "build/include/*.h",
     "src/arch/*.h",
     "src/common/*.h",
     "src/libm/*.h",
-    "src/libm/include/*.h",
 ])
 
 SLEEF_PUBLIC_HEADERS = [

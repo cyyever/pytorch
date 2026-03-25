@@ -11,7 +11,6 @@ cc_library(
         "include/**/*.inl",
         "tools/util/include/**/*.h",
         "tools/util/include/**/*.hpp",
-        "tools/util/include/**/*.inl",
     ]),
     defines = [
         "CUTLASS_ENABLE_TENSOR_CORE_MMA=1",

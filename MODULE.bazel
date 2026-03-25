@@ -30,7 +30,7 @@ local_path_override(
 )
 
 # Flatbuffers (from BCR, submodule MODULE.bazel is empty)
-bazel_dep(name = "flatbuffers", version = "25.2.10", repo_name = "com_github_google_flatbuffers")
+bazel_dep(name = "flatbuffers", version = "25.12.19", repo_name = "com_github_google_flatbuffers")
 
 # glog/gflags (from BCR)
 bazel_dep(name = "glog", version = "0.7.1", repo_name = "com_github_glog")
