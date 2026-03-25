@@ -394,7 +394,9 @@ void UpdateLoggingLevelsFromFlags() {
 
 void ShowLogInfoToStderr() {
   FLAGS_logtostderr = 1;
-  FLAGS_minloglevel = std::min(FLAGS_minloglevel, static_cast<decltype(FLAGS_minloglevel)>(google::GLOG_INFO));
+  FLAGS_minloglevel = std::min(
+      FLAGS_minloglevel,
+      static_cast<decltype(FLAGS_minloglevel)>(google::GLOG_INFO));
 }
 } // namespace c10
 
