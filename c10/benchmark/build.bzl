@@ -5,6 +5,6 @@ def define_targets(rules):
         tags = ["benchmark"],
         deps = [
             "//c10/util:base",
-            "@google_benchmark//:benchmark",
+            "@com_google_benchmark//:benchmark",
         ],
     )

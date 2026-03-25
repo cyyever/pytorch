@@ -113,5 +113,4 @@ build --per_file_copt='//:aten/src/ATen/RegisterZeroTensor\.cpp$'@-Wno-error=unu
 build --per_file_copt='//:torch/csrc/lazy/generated/RegisterAutogradLazy\.cpp$'@-Wno-error=unused-function
 build --per_file_copt='//:torch/csrc/lazy/generated/RegisterLazy\.cpp$'@-Wno-error=unused-function
 build --per_file_copt='^//.*\.(cpp|cc)$'@-Wno-dangling-reference
-common --enable_bzlmod --enable_workspace
 common --noincompatible_disallow_empty_glob

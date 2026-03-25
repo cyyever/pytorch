@@ -35,14 +35,13 @@ SLEEF_PUBLIC_HEADERS = [
     ":sleef_h",
 ]
 
-SLEEF_PRIVATE_INCLUDES = [
-    "-Iexternal/sleef/src/arch",
-    "-Iexternal/sleef/src/common",
-    "-Iexternal/sleef/src/libm",
-]
+SLEEF_PRIVATE_INCLUDES = []
 
 SLEEF_PUBLIC_INCLUDES = [
     "build/include",
+    "src/arch",
+    "src/common",
+    "src/libm",
 ]
 
 SLEEF_VISIBILITY = [
@@ -275,6 +274,7 @@ cc_library(
     copts = SLEEF_PRIVATE_INCLUDES + SLEEF_COPTS + [
         "-Wno-unused-result",
     ],
+    includes = SLEEF_PUBLIC_INCLUDES,
     linkstatic = True,
     visibility = SLEEF_VISIBILITY,
     alwayslink = True,
