@@ -2250,9 +2250,8 @@ Node* ProfileIValueOp::allocNewInstance(Graph* g) {
 TypePtr NamedValue::type() const {
   if (value_) {
     return value_->type();
-  } else {
-    return ivalue_.type();
   }
+  return ivalue_.type();
 }
 
 const Symbol ProfileOp::Kind = ::c10::prim::profile;

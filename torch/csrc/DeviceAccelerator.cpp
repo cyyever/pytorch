@@ -13,9 +13,8 @@ void initModule(PyObject* module) {
     auto acc = at::getAccelerator(false);
     if (acc.has_value()) {
       return acc.value();
-    } else {
-      return std::nullopt;
     }
+    return std::nullopt;
   });
 
   m.def("_accelerator_setDeviceIndex", [](c10::DeviceIndex device_index) {

@@ -272,9 +272,8 @@ std::pair<py::object, py::dict> parseIValuesToPyArgsKwargs(
         result[i] = py::cast(static_cast<c10::MemoryFormat>(list[i].toInt()));
       }
       return result;
-    } else {
-      return torch::jit::toPyObject(argument);
     }
+    return torch::jit::toPyObject(argument);
   };
 
   // Populate positional arguments
@@ -2873,9 +2872,8 @@ static PyObject* THPVariable_get_requires_grad(
   }
   if (THPVariable_Unpack(self).requires_grad()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -2886,9 +2884,8 @@ static PyObject* THPVariable_retains_grad(THPVariable* self, void* unused) {
   }
   if (THPVariable_Unpack(self).retains_grad()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -3319,9 +3316,8 @@ static PyObject* THPVariable_get_grad_dtype(THPVariable* self, void* unused) {
       !var.grad_fn(), "grad_dtype can only be accessed on leaf tensors.");
   if (!var.grad_dtype().has_value()) {
     Py_RETURN_NONE;
-  } else {
-    return torch::autograd::utils::wrap(var.grad_dtype().value());
   }
+  return torch::autograd::utils::wrap(var.grad_dtype().value());
   END_HANDLE_TH_ERRORS
 }
 

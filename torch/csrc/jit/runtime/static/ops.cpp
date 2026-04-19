@@ -1561,15 +1561,13 @@ auto get_to_copy_functor(
   if (has_constant_non_tensor_dtype_and_flags) {
     if (has_memory_format) {
       return to_copy_functor<true, true>;
-    } else {
-      return to_copy_functor<true, false>;
     }
+    return to_copy_functor<true, false>;
   } else {
     if (has_memory_format) {
       return to_copy_functor<false, true>;
-    } else {
-      return to_copy_functor<false, false>;
     }
+    return to_copy_functor<false, false>;
   }
 }
 
@@ -1607,15 +1605,13 @@ REGISTER_OPERATOR_FUNCTOR(
       if (has_constant_non_tensor_dtype_and_flags) {
         if (has_memory_format) {
           return to_maybe_copy_out_functor<true, true>;
-        } else {
-          return to_maybe_copy_out_functor<true, false>;
         }
+        return to_maybe_copy_out_functor<true, false>;
       } else {
         if (has_memory_format) {
           return to_maybe_copy_out_functor<false, true>;
-        } else {
-          return to_maybe_copy_out_functor<false, false>;
         }
+        return to_maybe_copy_out_functor<false, false>;
       }
     })
 

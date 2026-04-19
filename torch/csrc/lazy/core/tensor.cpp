@@ -418,9 +418,8 @@ at::Tensor to_lazy_tensor(
   if (functionalize_output) {
     // See Note [Lazy Tensor Functionalization]
     return at::functionalization::impl::to_functional_tensor(out);
-  } else {
-    return out;
   }
+  return out;
 }
 
 } // namespace torch::lazy

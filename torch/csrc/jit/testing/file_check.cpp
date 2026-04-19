@@ -311,9 +311,8 @@ struct FileCheckImpl {
     static const std::string check = "CHECK";
     if (source->text_str().substr(start + i, check.size()) == check) {
       return start + i + check.size();
-    } else {
-      return findNextStart(source, start + i + 1);
     }
+    return findNextStart(source, start + i + 1);
   }
 
   void parseStrings(const std::shared_ptr<Source>& source) {

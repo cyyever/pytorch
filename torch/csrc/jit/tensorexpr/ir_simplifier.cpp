@@ -1547,9 +1547,8 @@ ExprPtr PolynomialTransformer::mutate(const IfThenElsePtr& v) {
   if (condition_new->isConstant()) {
     if (!immediateEquals(condition_new, 0)) {
       return true_value_new;
-    } else {
-      return false_value_new;
     }
+    return false_value_new;
   }
 
   // If both branches are the same then don't do the condition.
@@ -1594,9 +1593,8 @@ StmtPtr PolynomialBase::mutate(const CondPtr& v) {
   if (cond_new->isConstant()) {
     if (!immediateEquals(cond_new, 0)) {
       return true_new;
-    } else {
-      return false_new;
     }
+    return false_new;
   }
 
   // If both branches are the same then don't do the condition.

@@ -48,9 +48,8 @@ static ArgValue convertPyToArgValue(py::handle inp) {
       return py::cast<IntList>(inp);
     } else if (py::isinstance<BufHandle>(l[0])) {
       return py::cast<BufList>(inp);
-    } else {
-      throw std::runtime_error("vector conversion failed");
     }
+    throw std::runtime_error("vector conversion failed");
   } else {
     throw std::runtime_error("conversion not yet implemented");
   }
@@ -59,9 +58,8 @@ static ArgValue convertPyToArgValue(py::handle inp) {
 static Dtype parsePythonDtype(py::handle obj) {
   if (THPDtype_Check(obj.ptr())) {
     return Dtype(reinterpret_cast<THPDtype*>(obj.ptr())->scalar_type);
-  } else {
-    throw std::runtime_error("expected a torch.dtype instance");
   }
+  throw std::runtime_error("expected a torch.dtype instance");
 }
 
 void initTensorExprBindings(PyObject* module) {

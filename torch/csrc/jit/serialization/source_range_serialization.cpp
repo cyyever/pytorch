@@ -112,9 +112,8 @@ int64_t SourceRangeSerializer::store_text_and_get_index(
     texts_.emplace_back(text_view);
     text_to_idx_[texts_.back().toStringView()] = text_pos;
     return text_pos;
-  } else {
-    return text_iter->second;
   }
+  return text_iter->second;
 }
 
 c10::IValue SourceRangeSerializer::serialize_source(

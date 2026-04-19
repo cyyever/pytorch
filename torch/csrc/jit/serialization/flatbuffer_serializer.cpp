@@ -59,9 +59,8 @@ constexpr int kNoneIndex = 0;
 static TypePtr realType(TypePtr type) {
   if (auto dyn = type->castRaw<c10::DynamicType>()) {
     return dyn->fallback();
-  } else {
-    return type;
   }
+  return type;
 }
 
 auto print_type(const c10::Type& t) -> std::optional<std::string> {

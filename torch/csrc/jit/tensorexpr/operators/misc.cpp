@@ -285,9 +285,8 @@ ExprHandle constant(const ArgValue& v) {
     // is operator-specific and should be handled properly in
     // the operator-specific lowering code.
     return IntImm::make(0);
-  } else {
-    throw unsupported_dtype("Trying to convert unsupported dtype to constant");
   }
+  throw unsupported_dtype("Trying to convert unsupported dtype to constant");
 }
 
 std::vector<ExprHandle> computeIndicesToBroadcast(

@@ -400,9 +400,8 @@ at::Generator make_generator_for_device(
   if (device.is_cpu()) {
     if (seed.has_value()) {
       return at::detail::createCPUGenerator(seed.value());
-    } else {
-      return at::detail::createCPUGenerator();
     }
+    return at::detail::createCPUGenerator();
 // TODO(antoniojkim): Enable support for CUDA device
 //                    Implementation below causes issues during rocm build
 // #ifdef USE_CUDA
@@ -417,9 +416,8 @@ at::Generator make_generator_for_device(
   } else if (device.is_mps()) {
     if (seed.has_value()) {
       return at::mps::detail::createMPSGenerator(seed.value());
-    } else {
-      return at::mps::detail::createMPSGenerator();
     }
+    return at::mps::detail::createMPSGenerator();
 #endif
   } else {
     TORCH_CHECK(

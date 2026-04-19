@@ -70,9 +70,8 @@ static std::string getScalarValue(const c10::IValue& val) {
     double d_val = val.toDouble();
     if (std::isinf(d_val) || std::isnan(d_val)) {
       return fmt::format("\"{}\"", std::to_string(d_val));
-    } else {
-      return std::to_string(d_val);
     }
+    return std::to_string(d_val);
   } else if (val.isInt()) {
     return std::to_string(val.toInt());
   } else if (val.isBool()) {

@@ -416,9 +416,8 @@ struct ParserImpl {
       auto maybe_third = third ? Maybe<Expr>::create(range, Expr(third))
                                : Maybe<Expr>::create(range);
       return SliceExpr::create(range, maybe_first, maybe_second, maybe_third);
-    } else {
-      return Expr(first);
     }
+    return Expr(first);
   }
 
   TreeRef parseSubscript(const TreeRef& value) {
@@ -439,9 +438,8 @@ struct ParserImpl {
       // call.
       auto expr = parseExp();
       return Maybe<Expr>::create(expr.range(), expr);
-    } else {
-      return Maybe<Expr>::create(L.cur().range);
     }
+    return Maybe<Expr>::create(L.cur().range);
   }
 
   TreeRef parseFormalParam(bool kwarg_only) {
@@ -702,9 +700,8 @@ struct ParserImpl {
       // Exactly one expression for return type annotation
       auto return_type_range = L.cur().range;
       return Maybe<Expr>::create(return_type_range, parseExp());
-    } else {
-      return Maybe<Expr>::create(L.cur().range);
     }
+    return Maybe<Expr>::create(L.cur().range);
   }
 
   List<Param> parseFormalParams() {

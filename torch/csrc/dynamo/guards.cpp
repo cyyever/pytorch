@@ -793,9 +793,8 @@ PyObject* GlobalStateGuard_check(
     PyObject* kwargs) {
   if (self->check()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 PyObject* GlobalStateGuard_reason(
@@ -855,9 +854,8 @@ static PyObject* check_type_id(PyObject* dummy, PyObject* args) {
   // NOLINTNEXTLINE(performance-no-int-to-ptr)
   if (Py_TYPE(obj) == (void*)expected) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 static PyObject* check_obj_id(PyObject* dummy, PyObject* args) {
@@ -870,9 +868,8 @@ static PyObject* check_obj_id(PyObject* dummy, PyObject* args) {
   // NOLINTNEXTLINE(performance-no-int-to-ptr)
   if (obj == (void*)expected) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 #if IS_PYTHON_3_12_PLUS
@@ -8292,9 +8289,8 @@ PyObject* torch_c_dynamo_guards_init() {
         // dealing with symbolic values or not.
         if (symbolic) {
           return compute_overlapping_tensors<DynamicMeta>(tensors);
-        } else {
-          return compute_overlapping_tensors<StaticMeta>(tensors);
         }
+        return compute_overlapping_tensors<StaticMeta>(tensors);
       },
       py::arg("tensors"),
       py::arg("symbolic") = true);

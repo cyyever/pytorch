@@ -212,9 +212,8 @@ std::optional<AliasInfo> SchemaTypeParser::parseAliasAnnotation() {
         Symbol::fromQualString("alias::$" + std::to_string(next_id++)));
     alias_info.setIsWrite(true);
     return alias_info;
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 }
 
 std::optional<at::ScalarType> SchemaTypeParser::parseTensorDType(
@@ -257,9 +256,8 @@ std::optional<c10::Device> SchemaTypeParser::tryToParseDeviceType() {
     }
     if (dev == "cuda") {
       return c10::Device(at::kCUDA, device_idx);
-    } else {
-      return c10::Device(at::kHPU, device_idx);
     }
+    return c10::Device(at::kHPU, device_idx);
   }
 
   throw(ErrorReport(L.cur()) << "cannot parse device type '" << dev << "'\n");

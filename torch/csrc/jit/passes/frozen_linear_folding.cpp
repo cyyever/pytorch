@@ -21,9 +21,8 @@ using Tensor = at::Tensor;
 bool supportedLinearNode(Node* n) {
   if (n->kind() == aten::linear) {
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 bool FoldFrozenLinearBatchnorm(Block* b) {

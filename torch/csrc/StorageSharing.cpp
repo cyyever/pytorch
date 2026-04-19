@@ -633,9 +633,8 @@ static PyObject* THPStorage_isShared(PyObject* self, PyObject* noargs) {
   if (at::MapAllocator::fromDataPtr(storage.data_ptr()) ||
       THManagedMapAllocator::fromDataPtr(storage.data_ptr())) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-non-const-global-variables)

@@ -537,9 +537,8 @@ std::optional<at::Tensor> runTorchBackendForOnnx(
     int64_t axis = node->hasAttributeS("axis") ? node->i(attr::axis) : -1;
     updated_val = at::softmax(inputTensorValues[0], axis);
     return std::optional<at::Tensor>(updated_val);
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 }
 
 static bool isConstant(Value* val, const ValueToParamPairMap& valsToParamsMap) {

@@ -193,9 +193,8 @@ class VarNameSanitizer : public IRMutator {
     auto counter = level_ / names_num;
     if (counter == 0) {
       return index_var_names_[level_ % names_num];
-    } else {
-      return index_var_names_[level_ % names_num] + std::to_string(counter);
     }
+    return index_var_names_[level_ % names_num] + std::to_string(counter);
   }
   std::string getNextAvailableName(const std::string& base_name) {
     std::string name = base_name;
@@ -798,9 +797,8 @@ class FunctionInliner : public IRMutator {
       }
       in_producer_ = false;
       return nullptr;
-    } else {
-      return IRMutator::mutate(v);
     }
+    return IRMutator::mutate(v);
   }
 
   // Any Random Intrinsics that were turned into vars must be inserted here.

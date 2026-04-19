@@ -87,9 +87,8 @@ py::handle type_caster<c10::SymFloat>::cast(
         dynamic_cast<torch::impl::PythonSymNodeImpl*>(si.toSymNodeImpl().get());
     TORCH_INTERNAL_ASSERT(py_node);
     return torch::get_symfloat_class()(py_node->getPyObj()).release();
-  } else {
-    return py::cast(si.as_float_unchecked()).release();
   }
+  return py::cast(si.as_float_unchecked()).release();
 }
 
 bool type_caster<c10::SymBool>::load(py::handle src, bool /*unused*/) {
@@ -140,17 +139,15 @@ py::handle type_caster<c10::Scalar>::cast(
     } else {
       if (scalar.type() == at::ScalarType::UInt64) {
         return py::cast(scalar.toUInt64()).release();
-      } else {
-        return py::cast(scalar.toLong()).release();
       }
+      return py::cast(scalar.toLong()).release();
     }
   } else if (scalar.isFloatingPoint()) {
     // This isn't strictly necessary but we add it for symmetry
     if (scalar.isSymbolic()) {
       return py::cast(scalar.toSymFloat()).release();
-    } else {
-      return py::cast(scalar.toDouble()).release();
     }
+    return py::cast(scalar.toDouble()).release();
   } else if (scalar.isBoolean()) {
     if (scalar.isSymbolic()) {
       return py::cast(scalar.toSymBool()).release();

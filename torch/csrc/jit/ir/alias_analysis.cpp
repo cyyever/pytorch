@@ -75,9 +75,8 @@ class MutableTypePtrHelper {
       auto it =
           mutable_type_cache_->emplace(type, std::move(*mutable_types)).first;
       return &it->second;
-    } else {
-      return nullptr;
     }
+    return nullptr;
   }
 
  private:
@@ -165,9 +164,8 @@ bool isMutableTypeImpl(
   MutableTypePtrHelper helper(mutable_type_cache);
   if (mutable_type_cache) {
     return helper.mapTypeToBorrowedAliasTypeSet(type) != nullptr;
-  } else {
-    return helper.mapTypeToAliasTypeSet(type).has_value();
   }
+  return helper.mapTypeToAliasTypeSet(type).has_value();
 }
 
 } // namespace
@@ -1628,9 +1626,8 @@ class AliasDb::WorkingSet {
     const Node* pivot = mover_ ? mover_ : nodes_.front();
     if (n->isAfter(pivot)) {
       return producesFor(n);
-    } else {
-      return consumesFrom(n);
     }
+    return consumesFrom(n);
   }
 
   bool hasMutabilityDependency(Node* n) const {

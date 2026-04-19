@@ -508,9 +508,8 @@ std::string AOTIPythonKernelHolder::produce_aoti_kernel_lib(
                                         .attr(func_name.c_str());
     if (overload_name.empty()) {
       return torch_api_function.attr("default").ptr();
-    } else {
-      return torch_api_function.attr(overload_name.c_str()).ptr();
     }
+    return torch_api_function.attr(overload_name.c_str()).ptr();
   });
 
   TORCH_INTERNAL_ASSERT(

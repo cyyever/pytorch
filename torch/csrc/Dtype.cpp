@@ -24,9 +24,8 @@ static PyObject* THPDtype_is_floating_point(THPDtype* self, PyObject* noargs) {
   HANDLE_TH_ERRORS
   if (at::isFloatingType(self->scalar_type)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -41,9 +40,8 @@ static PyObject* THPDtype_is_complex(THPDtype* self, PyObject* noargs) {
   HANDLE_TH_ERRORS
   if (at::isComplexType(self->scalar_type)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -51,9 +49,8 @@ static PyObject* THPDtype_is_signed(THPDtype* self, PyObject* noargs) {
   HANDLE_TH_ERRORS
   if (at::isSignedType(self->scalar_type)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 

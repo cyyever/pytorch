@@ -506,9 +506,8 @@ PyObject* THCPModule_hasPrimaryContext(PyObject* _unused, PyObject* arg) {
   auto device_index = THPUtils_unpackDeviceIndex(arg);
   if (c10::cuda::hasPrimaryContext(device_index)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1685,9 +1684,8 @@ PyObject* THCPModule_rocm_is_backward_pass(
 #if USE_ROCM
   if (at::ROCmBackwardPassGuard::is_backward_pass()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 #else
   Py_RETURN_FALSE;
 #endif
@@ -1712,9 +1710,8 @@ PyObject* THCPModule_cuda_tunableop_is_enabled(
   HANDLE_TH_ERRORS
   if (at::cuda::tunable::getTuningContext()->IsTunableOpEnabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1737,9 +1734,8 @@ PyObject* THCPModule_cuda_tunableop_tuning_is_enabled(
   HANDLE_TH_ERRORS
   if (at::cuda::tunable::getTuningContext()->IsTuningEnabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1763,9 +1759,8 @@ PyObject* THCPModule_cuda_record_untuned_is_enabled(
   HANDLE_TH_ERRORS
   if (at::cuda::tunable::getTuningContext()->IsRecordUntunedEnabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1870,9 +1865,8 @@ PyObject* THCPModule_cuda_tunableop_read_file(
   }
   if (success) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -2039,9 +2033,8 @@ static PyObject* THCPModule_isCurrentStreamCapturing_wrap(
   // CaptureStatus::None without initializing a context.
   if (at::cuda::currentStreamCaptureStatus() == at::cuda::CaptureStatus::None) {
     Py_RETURN_FALSE;
-  } else {
-    Py_RETURN_TRUE;
   }
+  Py_RETURN_TRUE;
   END_HANDLE_TH_ERRORS
 }
 

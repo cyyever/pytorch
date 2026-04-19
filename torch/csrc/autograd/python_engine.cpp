@@ -378,9 +378,8 @@ static PyObject* THPEngine_run_backward(
       PyTuple_SET_ITEM(py_outputs.get(), i, THPVariable_Wrap(outputs[i]));
     }
     return py_outputs.release();
-  } else {
-    Py_RETURN_NONE;
   }
+  Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -426,9 +425,8 @@ static PyObject* THPEngine_is_checkpoint_valid(
   auto& engine = python::PythonEngine::get_python_engine();
   if (engine.is_checkpoint_valid()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 

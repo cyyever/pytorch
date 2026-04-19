@@ -660,9 +660,8 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
               PyObject* raw = data_obj.ptr(getPyInterpreter());
               TORCH_INTERNAL_ASSERT(raw != nullptr);
               return py::reinterpret_borrow<py::object>(raw);
-            } else {
-              return py::cast(s.get_raw_data().value());
             }
+            return py::cast(s.get_raw_data().value());
           })
       .def_property_readonly(
           "unpack_hook",
@@ -735,9 +734,8 @@ static PyObject* is_autocast_enabled(
   }
   if (at::autocast::is_autocast_enabled(device_type)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -782,9 +780,8 @@ static PyObject* is_any_autocast_enabled(PyObject* _unused, PyObject* arg) {
       at::autocast::is_autocast_enabled(at::kHPU) ||
       at::autocast::is_autocast_enabled(at::kPrivateUse1)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -800,9 +797,8 @@ static PyObject* is_autocast_available(
   auto device_type = at::Device(r.string(0)).type();
   if (at::autocast::is_autocast_available(device_type)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -826,9 +822,8 @@ static PyObject* is_autocast_cpu_enabled(PyObject* _unused, PyObject* arg) {
       "torch.is_autocast_cpu_enabled() is deprecated. Please use torch.is_autocast_enabled('cpu') instead.")
   if (at::autocast::is_autocast_enabled(at::kCPU)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -852,9 +847,8 @@ static PyObject* is_autocast_ipu_enabled(PyObject* _unused, PyObject* arg) {
       "torch.is_autocast_ipu_enabled() is deprecated. Please use torch.is_autocast_enabled('ipu') instead.")
   if (at::autocast::is_autocast_enabled(at::kIPU)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -878,9 +872,8 @@ static PyObject* is_autocast_xla_enabled(PyObject* _unused, PyObject* arg) {
       "torch.is_autocast_xla_enabled() is deprecated. Please use torch.is_autocast_enabled('xla') instead.")
   if (at::autocast::is_autocast_enabled(at::kXLA)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1005,9 +998,8 @@ static PyObject* is_autocast_cache_enabled(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   if (at::autocast::is_autocast_cache_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1049,9 +1041,8 @@ static PyObject* is_grad_enabled(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   if (GradMode::is_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1071,9 +1062,8 @@ static PyObject* is_fwd_grad_enabled(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   if (c10::AutogradState::get_tls_state().get_fw_grad_mode()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1236,9 +1226,8 @@ static PyObject* is_multithreading_enabled(PyObject* self, PyObject* args) {
   HANDLE_TH_ERRORS
   if (c10::AutogradState::get_tls_state().get_multithreading_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1274,9 +1263,8 @@ static PyObject* is_view_replay_enabled(PyObject* self, PyObject* args) {
   HANDLE_TH_ERRORS
   if (c10::AutogradState::get_tls_state().get_view_replay_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1301,9 +1289,8 @@ static PyObject* get_graph_exec_group(PyObject* self, PyObject* args) {
     PyObject* obj = group->ptr(getPyInterpreter());
     Py_INCREF(obj);
     return obj;
-  } else {
-    Py_RETURN_NONE;
   }
+  Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1311,9 +1298,8 @@ static PyObject* is_inference_mode_enabled(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   if (c10::InferenceMode::is_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1336,9 +1322,8 @@ static PyObject* is_anomaly_mode_enabled(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   if (AnomalyMode::is_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1348,9 +1333,8 @@ static PyObject* is_anomaly_check_nan_enabled(
   HANDLE_TH_ERRORS
   if (AnomalyMode::should_check_nan()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1386,9 +1370,8 @@ static PyObject* is_torch_function_mode_enabled(
   HANDLE_TH_ERRORS
   if (at::impl::torch_function_mode_enabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 

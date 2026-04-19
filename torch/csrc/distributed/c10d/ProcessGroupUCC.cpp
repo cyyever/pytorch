@@ -415,9 +415,8 @@ std::shared_ptr<Comm> Comm::get_comm(
       }
     }
     return shared_comm;
-  } else {
-    return std::make_shared<Comm>(logger, oob, dev, is_health_check);
   }
+  return std::make_shared<Comm>(logger, oob, dev, is_health_check);
 }
 
 void Comm::ucc_create_team(

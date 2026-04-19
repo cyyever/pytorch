@@ -197,9 +197,8 @@ IValue UserRRef::toHere(const float timeoutSeconds) const {
     // wrap python serialized vector of ivalues into tuple, this
     // made the C++ toHere interface to return single IValue
     return ivalue::Tuple::create(rrefFetchRet.values());
-  } else {
-    return rrefFetchRet.values().front();
   }
+  return rrefFetchRet.values().front();
 }
 
 RRefForkData UserRRef::fork() const {

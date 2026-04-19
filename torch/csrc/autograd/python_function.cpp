@@ -1582,9 +1582,8 @@ PyObject* THPFunction_get_materialize_non_diff_grads(
   HANDLE_TH_ERRORS
   if (self->materialize_non_diff_grads) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 

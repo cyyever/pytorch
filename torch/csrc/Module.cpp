@@ -1658,9 +1658,8 @@ static PyObject* THPModule_willEngineExecuteNode(
   }
   if (ret) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1763,9 +1762,8 @@ static PyObject* THPModule_are_vmap_fallback_warnings_enabled(
   HANDLE_TH_ERRORS
   if (at::globalContext().areVmapFallbackWarningsEnabled()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -1789,9 +1787,8 @@ static PyObject* THPModule_warn_on_accumulate_grad_stream_mismatch(
   HANDLE_TH_ERRORS
   if (at::globalContext().warnOnAccumulateGradStreamMismatch()) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 

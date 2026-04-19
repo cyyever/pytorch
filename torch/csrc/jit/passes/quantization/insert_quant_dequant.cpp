@@ -926,9 +926,8 @@ void SubGraphCloneHelper::cloneNodeInGraph(
       remap_old_to_new[v] = new_value;
       new_value->copyMetadata(v);
       return new_value;
-    } else {
-      return remap_old_to_new[v];
     }
+    return remap_old_to_new[v];
   };
 
   auto new_node = block->appendNode(g->createClone(node, value_fn));

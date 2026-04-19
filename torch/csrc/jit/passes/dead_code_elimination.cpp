@@ -304,9 +304,8 @@ class DeadCodeEliminator {
       // there is no valid schema for a node
       auto schema = node->maybeSchema();
       return schema && schema->is_mutable();
-    } else {
-      return getOrCreateAliasDb()->writesToWildcard(node);
     }
+    return getOrCreateAliasDb()->writesToWildcard(node);
   }
 
   bool hasSideEffects(Node* node) {
@@ -435,9 +434,8 @@ class DeadCodeEliminator {
   ValueSet& getLiveValues() {
     if (useAliasDb_) {
       return getLiveValuesAndMemoryLocations().getValueSet();
-    } else {
-      return getLiveValuesSet();
     }
+    return getLiveValuesSet();
   }
 
   void insertLiveValue(Value* v) {
@@ -451,9 +449,8 @@ class DeadCodeEliminator {
   bool liveValuesContains(Value* v) {
     if (useAliasDb_) {
       return getLiveValuesAndMemoryLocations().getValueSet().count(v);
-    } else {
-      return getLiveValuesSet().count(v);
     }
+    return getLiveValuesSet().count(v);
   }
 
   DCESideEffectPolicy sideEffectPolicy_;

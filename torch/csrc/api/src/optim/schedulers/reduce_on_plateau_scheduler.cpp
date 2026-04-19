@@ -99,9 +99,8 @@ bool ReduceLROnPlateauScheduler::is_better(float a) {
   } else if (mode == max && threshold_mode == rel) {
     auto rel_epsilon = 1.0 + threshold;
     return a > best * rel_epsilon;
-  } else {
-    return a > best * threshold;
   }
+  return a > best * threshold;
 }
 
 void ReduceLROnPlateauScheduler::init_is_better(

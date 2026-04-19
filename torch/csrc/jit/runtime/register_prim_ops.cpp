@@ -1324,9 +1324,8 @@ static const std::vector<OperatorGeneratorArgs> opGenArgs{
     DEFINE_STRING_CHAR_MAP_OP(aten::swapcase, ([](char c) {
                                 if (c == static_cast<char>(::toupper(c))) {
                                   return static_cast<char>(::tolower(c));
-                                } else {
-                                  return static_cast<char>(::toupper(c));
                                 }
+                                return static_cast<char>(::toupper(c));
                               }))};
 
 static std::vector<std::optional<Operator>> createOperators(

@@ -208,9 +208,8 @@ std::optional<size_t> normIndex(int64_t index, size_t len) {
   }
   if (index >= 0 && index < static_cast<int64_t>(len)) {
     return index;
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 }
 
 bool shapeGraphCleanupPasses(std::shared_ptr<Graph> graph) {
@@ -630,9 +629,8 @@ SSArgument tensorShapeArg(Value* tensor_v) {
     auto size = constant_as<at::Tensor>(tensor_v)->sizes();
     if (!symbolic_shape_analysis_test_mode) {
       return IValue(size);
-    } else {
-      return c10::SymbolicShape(size);
     }
+    return c10::SymbolicShape(size);
   }
   return symbolic_shapes;
 }

@@ -191,9 +191,8 @@ void CUDAPluggableAllocator::cacheInfo(
 void* CUDAPluggableAllocator::getBaseAllocation(void* ptr, size_t* size) {
   if (base_alloc_fn_) {
     return base_alloc_fn_(ptr, size);
-  } else {
-    return ptr;
   }
+  return ptr;
 }
 
 void CUDAPluggableAllocator::recordStream(

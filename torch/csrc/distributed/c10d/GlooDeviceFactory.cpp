@@ -62,9 +62,8 @@ static std::shared_ptr<::gloo::transport::Device> makeTCPDevice(
   }
   if (lazyInit) {
     return ::gloo::transport::tcp::CreateLazyDevice(attr);
-  } else {
-    return ::gloo::transport::tcp::CreateDevice(attr);
   }
+  return ::gloo::transport::tcp::CreateDevice(attr);
 }
 
 // Registry priority is per key identifier. We register TCP to `LINUX` for

@@ -13,9 +13,8 @@ std::string getFuncName(Value* func_value) {
   auto rdot_idx = name.rfind('.');
   if (rdot_idx != std::string::npos) {
     return name.substr(rdot_idx + 1, name.length());
-  } else {
-    return name;
   }
+  return name;
 }
 
 Value* getValue(

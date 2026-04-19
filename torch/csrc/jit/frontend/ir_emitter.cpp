@@ -281,9 +281,8 @@ struct Environment {
     auto msg = runner->error_messages.find(name);
     if (msg != runner->error_messages.end()) {
       return msg->second();
-    } else {
-      return std::nullopt;
     }
+    return std::nullopt;
   }
 
   SugaredValuePtr insertLoad(const std::string& name, const TypePtr& type) {
@@ -1336,9 +1335,8 @@ struct to_ir {
     if (cond_value.staticIf()) {
       if (*cond_value.staticIf()) {
         return emitExpr(expr.true_expr(), type_hint);
-      } else {
-        return emitExpr(expr.false_expr(), type_hint);
       }
+      return emitExpr(expr.false_expr(), type_hint);
     }
     auto true_expr = [&] { return emitExpr(expr.true_expr(), type_hint); };
     auto false_expr = [&] { return emitExpr(expr.false_expr(), type_hint); };
@@ -2229,9 +2227,8 @@ struct to_ir {
           return t1;
         } else if (t2->isSubtypeOf(*t1)) {
           return t2;
-        } else {
-          return nullptr;
         }
+        return nullptr;
       };
 
       TypePtr found_refinement = nullptr;
@@ -4717,9 +4714,8 @@ struct to_ir {
           Value* output = graph->insertNode(node)->output();
           output->setType(StringType::get());
           return output;
-        } else {
-          return emitBinaryOp(tree);
         }
+        return emitBinaryOp(tree);
       }
       case TK_IN:
       case TK_POW:
@@ -4956,9 +4952,8 @@ struct to_ir {
       if (subscript_expr.kind() == TK_SLICE_EXPR) {
         if (is_reverse) {
           return dim - 1;
-        } else {
-          return dim + 1;
         }
+        return dim + 1;
       }
 
       // Slice object case, does not represent a single index.
@@ -4966,9 +4961,8 @@ struct to_ir {
       if (dynamic_cast<SliceValue*>(subscript_sv.get())) {
         if (is_reverse) {
           return dim - 1;
-        } else {
-          return dim + 1;
         }
+        return dim + 1;
       }
 
       TypePtr type_hint;
@@ -5009,15 +5003,13 @@ struct to_ir {
       if (index->type()->isSubtypeOf(*NoneType::get())) {
         if (is_reverse) {
           return dim;
-        } else {
-          return dim + 1;
         }
+        return dim + 1;
       } else if (index->type() == IntType::get()) {
         if (is_reverse) {
           return dim - 1;
-        } else {
-          return dim;
         }
+        return dim;
       } else if (index->type()->isSubtypeOf(*OptionalType::ofTensor())) {
         if (is_reverse) {
           throw(

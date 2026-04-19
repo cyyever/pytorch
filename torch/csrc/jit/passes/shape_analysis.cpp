@@ -193,9 +193,8 @@ c10::ScalarType unionScalarTypes(
     c10::ScalarType next) {
   if (original == c10::ScalarType::Undefined) {
     return next;
-  } else {
-    return c10::promoteTypes(original, next);
   }
+  return c10::promoteTypes(original, next);
 }
 
 // Promotes result types for arithmetic operations on Tensor operands using
@@ -1192,9 +1191,8 @@ class ShapePropagator : public PropertyPropBase {
             auto ret = type->withDim(0);
             if (maybe_dtype_option && !maybe_dtype_option->isNone()) {
               return {ret->withScalarType(maybe_dtype_option->toScalarType())};
-            } else {
-              return {std::move(ret)};
             }
+            return {std::move(ret)};
           }
           return {};
         }};
@@ -1250,9 +1248,8 @@ class ShapePropagator : public PropertyPropBase {
         if (static_cast<int64_t>(*type->dim()) >= num_reduced_dim &&
             num_reduced_dim > 0) {
           return {type->withDim(*type->dim() - num_reduced_dim)};
-        } else {
-          return {std::move(type)};
         }
+        return {std::move(type)};
       }
       return {};
     };
@@ -1837,9 +1834,8 @@ class ShapePropagator : public PropertyPropBase {
           return t->withDim(2);
         } else if (t->dim() && *t->dim() == 2) {
           return t->withDim(1);
-        } else {
-          return nullptr;
         }
+        return nullptr;
       } else if (
           node->matches(
               "aten::unfold(Tensor self, int dimension, int size, int step) -> Tensor")) {

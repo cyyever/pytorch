@@ -151,9 +151,8 @@ std::optional<std::pair<TypePtr, int32_t>> ScriptTypeParser::parseBroadcastList(
     if (broadcast_list) {
       TypePtr opt_type = OptionalType::create(broadcast_list->first);
       return std::pair<TypePtr, int32_t>(opt_type, broadcast_list->second);
-    } else {
-      return std::nullopt;
     }
+    return std::nullopt;
   } else if (var.name().name().find("BroadcastingList") != 0) {
     return std::nullopt;
   }

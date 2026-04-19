@@ -896,9 +896,8 @@ This class does not support ``__members__`` property.)");
                     r.supplement_.get());
             if (!preMulSupplement->tensor_factor.defined()) {
               return py::make_tuple(r.op_, preMulSupplement->double_factor);
-            } else {
-              return py::make_tuple(r.op_, preMulSupplement->tensor_factor);
             }
+            return py::make_tuple(r.op_, preMulSupplement->tensor_factor);
           },
           [](const py::tuple& t) {
             // __setstate__
@@ -911,9 +910,8 @@ This class does not support ``__members__`` property.)");
             const auto preMulSupplement_factor = t[1];
             if (py::isinstance<py::float_>(preMulSupplement_factor)) {
               return ::c10d::makePreMulSum(t[1].cast<double>());
-            } else {
-              return ::c10d::makePreMulSum(t[1].cast<at::Tensor>());
             }
+            return ::c10d::makePreMulSum(t[1].cast<at::Tensor>());
           }));
 
   py::enum_<::c10d::ReduceOp::RedOpType>(reduce_op, "RedOpType")
@@ -938,9 +936,8 @@ This class does not support ``__members__`` property.)");
             if (py::isinstance<py::float_>(factor) ||
                 py::isinstance<py::int_>(factor)) {
               return ::c10d::makePreMulSum(factor.cast<double>());
-            } else {
-              return ::c10d::makePreMulSum(factor.cast<at::Tensor>());
             }
+            return ::c10d::makePreMulSum(factor.cast<at::Tensor>());
           },
           py::arg("factor"),
           R"(Create a PREMUL_SUM ReduceOp with the given factor.

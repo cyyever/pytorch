@@ -214,9 +214,8 @@ std::optional<IValue> tryCalculateDefaultParam(
     if (n && *n > 0 && list_type) {
       // BroadcastingList, allow default values T for arg types List[T]
       return toIValue(def_value, list_type->getElementType());
-    } else {
-      return toIValue(def_value, arg.type());
     }
+    return toIValue(def_value, arg.type());
   } catch (...) {
     return std::nullopt;
   }

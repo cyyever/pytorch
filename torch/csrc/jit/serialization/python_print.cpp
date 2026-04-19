@@ -539,9 +539,8 @@ struct PythonPrintImpl {
     if (lhs->type()->kind() == UnionType::Kind ||
         lhs->type()->kind() == OptionalType::Kind) {
       return annotated_unions_.insert(lhs).second;
-    } else {
-      return *lhs->type() != *rhs->type();
     }
+    return *lhs->type() != *rhs->type();
   }
 
   void printAnnotatedAssignment(

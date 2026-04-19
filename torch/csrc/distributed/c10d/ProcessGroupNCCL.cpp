@@ -1272,9 +1272,8 @@ c10::intrusive_ptr<intra_node_comm::IntraNodeComm> ProcessGroupNCCL::
       prefixStore, rank_, size_, std::nullopt, groupName);
   if (comm->rendezvous()) {
     return comm;
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 void ProcessGroupNCCL::setSequenceNumberForGroup() {

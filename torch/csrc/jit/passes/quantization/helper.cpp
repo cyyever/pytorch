@@ -369,9 +369,8 @@ std::vector<Value*> getPassThroughInputs(Value* v) {
     // only propagate dequantize for Tensor
     if (v->type()->isSubtypeOf(*TensorType::get())) {
       return {n->input(0)};
-    } else {
-      return {};
     }
+    return {};
   } else if (
       n->kind() == prim::ListConstruct &&
       v->type()->isSubtypeOf(*ListType::ofTensors())) {

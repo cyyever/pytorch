@@ -52,9 +52,8 @@ struct type_caster<torch::monitor::data_value_t> {
     } else if (std::holds_alternative<bool>(src)) {
       if (std::get<bool>(src)) {
         Py_RETURN_TRUE;
-      } else {
-        Py_RETURN_FALSE;
       }
+      Py_RETURN_FALSE;
     } else if (std::holds_alternative<std::string>(src)) {
       std::string& str = std::get<std::string>(src);
       return THPUtils_packString(str);

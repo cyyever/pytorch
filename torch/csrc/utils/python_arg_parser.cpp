@@ -2031,9 +2031,8 @@ at::Scalar PythonArgs::scalar_slow(PyObject* arg) {
         throw python_error();
       }
       return at::Scalar(static_cast<uint64_t>(value));
-    } else {
-      return at::Scalar(static_cast<int64_t>(value));
     }
+    return at::Scalar(static_cast<int64_t>(value));
   }
 
   if (PyBool_Check(arg)) {

@@ -72,9 +72,8 @@ static std::ostream& printPyObject(std::ostream& out, const THPObjectPtr& obj) {
     }
     out << ')';
     return out;
-  } else {
-    return out << THPUtils_unpackString(py::str(pyobj).ptr());
   }
+  return out << THPUtils_unpackString(py::str(pyobj).ptr());
 }
 
 static Node* findNode(
@@ -106,9 +105,8 @@ std::string ConcretePythonOp::name() const {
   pybind11::gil_scoped_acquire gil;
   if (auto autograd = autogradFunction()) {
     return getPythonName(autograd->get());
-  } else {
-    return getPythonName(pyobj.get());
   }
+  return getPythonName(pyobj.get());
 }
 
 void ConcretePythonOp::cloneFrom(Node* other_) {

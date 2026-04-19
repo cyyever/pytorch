@@ -276,9 +276,8 @@ void set_grad_accumulator(
 std::shared_ptr<Node> try_get_grad_accumulator(const at::TensorBase& self) {
   if (get_autograd_meta(self)) {
     return get_autograd_meta(self)->grad_accumulator_.lock();
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 std::shared_ptr<Node> try_get_grad_accumulator(const Variable& self) {
@@ -322,9 +321,8 @@ Edge gradient_edge(const Variable& self) {
   // True` can have gradient accumulators.
   if (const auto& gradient = self.grad_fn()) {
     return Edge(gradient, self.output_nr());
-  } else {
-    return Edge(grad_accumulator(self), 0);
   }
+  return Edge(grad_accumulator(self), 0);
 }
 
 void set_gradient_edge(const Variable& self, Edge edge) {
@@ -345,9 +343,8 @@ void set_gradient_edge(const Variable& self, Edge edge) {
 Node* grad_fn_unsafe(const Variable& self) {
   if (get_autograd_meta(self)) {
     return get_autograd_meta(self)->grad_fn_.get();
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 // Versions
@@ -426,9 +423,8 @@ DifferentiableViewMeta* get_view_autograd_meta(const at::TensorBase& self) {
   AutogradMeta* meta = get_autograd_meta(self);
   if (meta && meta->is_view_) {
     return static_cast<DifferentiableViewMeta*>(meta);
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 } // namespace impl
@@ -460,17 +456,15 @@ at::TensorBase VariableHooks::tensor_data(const at::TensorBase& self) const {
 bool VariableHooks::is_leaf(const at::TensorBase& self) const {
   if (impl::get_autograd_meta(self)) {
     return impl::get_autograd_meta(self)->grad_fn_ == nullptr;
-  } else {
-    return true;
   }
+  return true;
 }
 
 int64_t VariableHooks::output_nr(const at::TensorBase& self) const {
   if (impl::get_autograd_meta(self)) {
     return impl::get_autograd_meta(self)->output_nr_;
-  } else {
-    return 0;
   }
+  return 0;
 }
 
 void VariableHooks::set_data(
@@ -576,9 +570,8 @@ void VariableHooks::retain_grad(const at::TensorBase& self) const {
 bool VariableHooks::retains_grad(const at::TensorBase& self) const {
   if (impl::get_autograd_meta(self)) {
     return impl::get_autograd_meta(self)->retains_grad_;
-  } else {
-    return false;
   }
+  return false;
 }
 
 void VariableHooks::_backward(
@@ -613,9 +606,8 @@ bool VariableHooks::is_view(const at::TensorBase& self) const {
   auto diff_view_meta = torch::autograd::impl::get_view_autograd_meta(self);
   if (diff_view_meta) {
     return diff_view_meta->has_bw_view();
-  } else {
-    return false;
   }
+  return false;
 }
 
 const at::TensorBase& VariableHooks::base(const at::TensorBase& self) const {
@@ -639,9 +631,8 @@ const std::string& VariableHooks::name(const at::TensorBase& self) const {
       self.defined(), "cannot call variable_data() on undefined tensor");
   if (torch::autograd::impl::get_autograd_meta(self)) {
     return torch::autograd::impl::get_autograd_meta(self)->name_;
-  } else {
-    return singleton_string;
   }
+  return singleton_string;
 }
 
 namespace {
@@ -730,9 +721,8 @@ const std::shared_ptr<torch::autograd::Node>& VariableHooks::grad_fn(
 
   if (torch::autograd::impl::get_autograd_meta(self)) {
     return torch::autograd::impl::get_autograd_meta(self)->grad_fn_;
-  } else {
-    return singleton_shared_ptr;
   }
+  return singleton_shared_ptr;
 }
 
 void VariableHooks::remove_hook(const at::TensorBase& self, unsigned pos)
@@ -934,9 +924,8 @@ std::optional<at::ScalarType> AutogradMeta::grad_dtype(
     return std::nullopt;
   } else if (grad_dtype_.has_value()) {
     return grad_dtype_;
-  } else {
-    return std::optional<at::ScalarType>(self.scalar_type());
   }
+  return std::optional<at::ScalarType>(self.scalar_type());
 }
 void AutogradMeta::set_grad_dtype(
     const std::optional<at::ScalarType>& grad_dtype,

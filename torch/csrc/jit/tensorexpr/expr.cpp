@@ -555,9 +555,8 @@ bool Buf::is_stride_one(int cur_dim) const {
 ExprHandle expr_to_vec(const ExprHandle& v, int lanes) {
   if (lanes == 1) {
     return v;
-  } else {
-    return Broadcast::make(v, lanes);
   }
+  return Broadcast::make(v, lanes);
 }
 
 } // namespace torch::jit::tensorexpr

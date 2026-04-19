@@ -125,33 +125,29 @@ static PyObject* Tensor_layout(PyTensorType* self, void* unused) {
 static PyObject* Tensor_is_cuda(PyTensorType* self, void* unused) {
   if (self->is_cuda) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 static PyObject* Tensor_is_xpu(PyTensorType* self, void* unused) {
   if (self->is_xpu) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 static PyObject* Tensor_is_sparse(PyTensorType* self, void* unused) {
   if (self->layout->layout == at::Layout::Strided) {
     Py_RETURN_FALSE;
-  } else {
-    Py_RETURN_TRUE;
   }
+  Py_RETURN_TRUE;
 }
 
 static PyObject* Tensor_is_sparse_csr(PyTensorType* self, void* unused) {
   if (self->layout->layout == at::Layout::SparseCsr) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-non-const-global-variables,modernize-avoid-c-arrays)

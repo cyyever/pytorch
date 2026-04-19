@@ -111,9 +111,8 @@ std::string getNvtxStr(
           "{}, input_op_ids = {}", str, inputOpIdsToStr(input_op_ids));
     }
     return str;
-  } else {
-    return name;
   }
+  return name;
 }
 
 // ----------------------------------------------------------------------------

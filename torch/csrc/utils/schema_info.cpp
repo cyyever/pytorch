@@ -178,9 +178,8 @@ bool SchemaInfo::may_alias(
     return false;
   } else if (lhs.type == c10::SchemaArgType::output) {
     return output_alias_map_[lhs.index].count(rhs.index);
-  } else {
-    return output_alias_map_[rhs.index].count(lhs.index);
   }
+  return output_alias_map_[rhs.index].count(lhs.index);
 }
 
 bool SchemaInfo::may_contain_alias(
@@ -196,9 +195,8 @@ bool SchemaInfo::may_contain_alias(
   }
   if (bidirectional) {
     return mayContainAliasImpl(lhs, rhs) || mayContainAliasImpl(rhs, lhs);
-  } else {
-    return mayContainAliasImpl(lhs, rhs);
   }
+  return mayContainAliasImpl(lhs, rhs);
 }
 
 bool SchemaInfo::mayContainAliasImpl(

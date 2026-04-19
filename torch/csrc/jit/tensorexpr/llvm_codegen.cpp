@@ -467,9 +467,8 @@ std::string LLVMCodeGen::getCodeText(const std::string& attr /*=""*/) {
       "LLVMCodeGen memory has been cleaned up. So, code text is not available at this point");
   if (attr == "asm") {
     return impl_->getASMCodeText();
-  } else {
-    return impl_->getLLVMCodeText();
   }
+  return impl_->getLLVMCodeText();
 }
 
 llvm::JITTargetAddress LLVMCodeGenImpl::getKernelAddress() const {
@@ -1119,9 +1118,8 @@ void LLVMCodeGenImpl::visit(const BoolImmPtr& v) {
 static llvm::Type* llvmTypeToVec(llvm::Type* type, int lanes) {
   if (lanes > 1) {
     return llvm::VectorType::get(type, ElementCount(lanes));
-  } else {
-    return type;
   }
+  return type;
 }
 
 void LLVMCodeGenImpl::visit(const CastPtr& v) {
@@ -1934,9 +1932,8 @@ static void applyMathFunctionAttributes(llvm::Function* f) {
 llvm::Value* LLVMCodeGenImpl::toVec(llvm::Value* v, int lanes) {
   if (lanes > 1) {
     return irb_.CreateVectorSplat(lanes, v);
-  } else {
-    return v;
   }
+  return v;
 }
 
 void LLVMCodeGenImpl::emitIsNan(IntrinsicsPtr v) {

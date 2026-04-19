@@ -322,9 +322,8 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
           }
           if (is_symbolic) {
             return listToIValue<c10::SymInt>(obj);
-          } else {
-            return listToIValue<int64_t>(obj);
           }
+          return listToIValue<int64_t>(obj);
         }
         case TypeKind::SymFloatType: {
           bool is_symbolic = false;
@@ -338,9 +337,8 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
           }
           if (is_symbolic) {
             return listToIValue<c10::SymFloat>(obj);
-          } else {
-            return listToIValue<double>(obj);
           }
+          return listToIValue<double>(obj);
         }
         case TypeKind::SymBoolType: {
           bool is_symbolic = false;
@@ -353,9 +351,8 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
           }
           if (is_symbolic) {
             return listToIValue<c10::SymBool>(obj);
-          } else {
-            return listToIValue<bool>(obj);
           }
+          return listToIValue<bool>(obj);
         }
         case TypeKind::FloatType:
           if (!N || !py::isinstance<py::float_>(obj)) {
@@ -664,9 +661,8 @@ py::object toPyObject(IValue ivalue) {
       std::string s = std::move(ivalue).toStringRef();
       PyObject* pyObj = PyUnicode_DecodeUTF8(s.data(), s.length(), "ignore");
       return py::reinterpret_steal<py::object>(pyObj);
-    } else {
-      return py::cast(std::move(ivalue).toStringRef());
     }
+    return py::cast(std::move(ivalue).toStringRef());
   } else if (ivalue.isList()) {
     auto list = std::move(ivalue).toList();
     py::list t{list.size()};

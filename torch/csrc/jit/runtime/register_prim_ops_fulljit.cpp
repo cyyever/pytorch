@@ -390,9 +390,8 @@ std::vector<int64_t> _output_size(
     if (size.isInt()) {
       std::vector<int64_t> repeated(dim, size.toInt());
       return repeated;
-    } else {
-      return size.toIntVector();
     }
+    return size.toIntVector();
   }
   std::vector<double> scale_repeated;
   if (scale_factors.isDouble()) {

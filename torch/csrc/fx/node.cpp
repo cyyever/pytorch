@@ -713,9 +713,8 @@ static PyObject* NodeIter_iternext(PyObject* _self) {
   NodeIter* self = (NodeIter*)_self;
   if (self->_reversed) {
     return NodeIter_iternext_helper<true>(self);
-  } else {
-    return NodeIter_iternext_helper<false>(self);
   }
+  return NodeIter_iternext_helper<false>(self);
 }
 
 static int NodeIter_traverse(NodeIter* self, visitproc visit, void* arg) {

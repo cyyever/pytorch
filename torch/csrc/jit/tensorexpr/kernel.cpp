@@ -208,9 +208,8 @@ static std::optional<TensorInfo> getTensorInfoJit(torch::jit::Value* v) {
 static std::vector<int64_t> _pair_int(const IValue& v) {
   if (v.isIntList()) {
     return v.toIntVector();
-  } else {
-    return {v.toInt(), v.toInt()};
   }
+  return {v.toInt(), v.toInt()};
 }
 
 bool isContiguous(const torch::jit::Value* v, at::MemoryFormat memory_format) {
@@ -412,9 +411,8 @@ ExprHandle TensorExprKernel::constant(const torch::jit::Value* v) {
       // is operator-specific and should be handled properly in
       // the operator-specific lowering code.
       return IntImm::make(0);
-    } else {
-      throw unsupported_dtype();
     }
+    throw unsupported_dtype();
   }
 
   if (!scalars_.count(v)) {
@@ -466,9 +464,8 @@ ArgValue TensorExprKernel::toArg(const torch::jit::Value* v) const {
       return val.toDoubleVector();
     } else if (val.isString()) {
       return val.toStringRef();
-    } else {
-      throw unsupported_dtype(val.type()->str());
     }
+    throw unsupported_dtype(val.type()->str());
   }
 
   if (!scalars_.count(v)) {
@@ -1121,9 +1118,8 @@ Tensor TensorExprKernel::bindInput(const torch::jit::Value* input) {
           ? at::MemoryFormat::Contiguous
           : at::MemoryFormat::ChannelsLast;
       return isContiguous(input, mem_layout);
-    } else {
-      return false;
     }
+    return false;
   };
 
   auto is_symbolic_cont = [](std::vector<torch::jit::StrideInput> desc,
@@ -1133,9 +1129,8 @@ Tensor TensorExprKernel::bindInput(const torch::jit::Value* input) {
           ? torch::jit::StrideInput::TENSOR_CONT
           : torch::jit::StrideInput::TENSOR_CONT_CHANNELS_LAST;
       return desc[0] == mem_layout;
-    } else {
-      return false;
     }
+    return false;
   };
 
   Tensor result(nullptr, nullptr);

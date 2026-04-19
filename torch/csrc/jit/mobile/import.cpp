@@ -103,9 +103,8 @@ TypePtr resolveTypeNameMobile(
       compilation_unit->register_type(typeptr);
     }
     return compilation_unit->get_class(qn);
-  } else {
-    return c10::parseType(qn.qualifiedName());
   }
+  return c10::parseType(qn.qualifiedName());
 }
 
 c10::StrongTypePtr typeResolverMobile(

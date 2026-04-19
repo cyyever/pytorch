@@ -96,9 +96,8 @@ Tensor computeSum(
         auto indexed = tensorOrConstant(inputs[0], indices_exprs);
         if (outputType) {
           return Cast::make(ToDtype(*outputType), indexed);
-        } else {
-          return indexed;
         }
+        return indexed;
       },
       reductionDims);
 }

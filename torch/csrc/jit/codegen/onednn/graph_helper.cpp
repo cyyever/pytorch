@@ -20,9 +20,8 @@ static void fixConvOptionalBias(Node* node) {
 static std::optional<size_t> getDimensions(Value* v) {
   if (v->type()->isSubtypeOf(TensorType::get())) {
     return v->type()->cast<TensorType>()->sizes().size();
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 }
 
 // PyTorch ops that can't otherwise be mapped to oneDNN Graph ops are mapped as

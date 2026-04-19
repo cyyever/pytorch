@@ -309,9 +309,8 @@ c10::intrusive_ptr<RRef> RRefContext::getOrCreateRRef(
   auto& forkId = rrefForkData.forkId_;
   if (ownerId == getWorkerId()) {
     return getOrCreateOwnerRRef(rrefId, type);
-  } else {
-    return createUserRRef(ownerId, rrefId, forkId, type);
   }
+  return createUserRRef(ownerId, rrefId, forkId, type);
 }
 
 c10::intrusive_ptr<OwnerRRef> RRefContext::getOrCreateOwnerRRef(
@@ -405,9 +404,8 @@ c10::intrusive_ptr<JitFuture> RRefContext::getOwnerRRef(
           RRefType::create(c10::AnyType::get()), agent_->getDevices());
       pendingOwners_[rrefId] = futureOwner;
       return futureOwner;
-    } else {
-      return pendingOwnerIter->second;
     }
+    return pendingOwnerIter->second;
   } else {
     // Scenario (2) retrieving an existing RRef
     // Marks IValue Future as completed with the RRef IValue.

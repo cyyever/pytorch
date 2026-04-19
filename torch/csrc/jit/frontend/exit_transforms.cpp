@@ -105,9 +105,8 @@ struct ExitTransformer {
       return ExitStatus::WONT;
     } else if (exit_v == throws_val_) {
       return ExitStatus::THROWS;
-    } else {
-      return ExitStatus::MIGHT;
     }
+    return ExitStatus::MIGHT;
   }
 
   static Symbol owningNodeKind(Block* block) {

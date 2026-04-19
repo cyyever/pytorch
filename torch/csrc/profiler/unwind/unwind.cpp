@@ -499,9 +499,8 @@ static std::vector<Frame> symbolize_addr2line(
 std::vector<Frame> symbolize(const std::vector<void*>& frames, Mode mode) {
   if (mode == Mode::addr2line) {
     return symbolize_addr2line(frames);
-  } else {
-    return symbolize_fast(frames, mode);
   }
+  return symbolize_fast(frames, mode);
 }
 #endif
 

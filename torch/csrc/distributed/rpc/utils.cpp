@@ -78,9 +78,8 @@ RPCErrorType getRPCErrorType(const JitFuture& jitFuture) {
     auto errStr = err.substr(errStartIdx, errEndIdx - errStartIdx);
     auto errType = static_cast<RPCErrorType>(std::stoi(errStr));
     return errType;
-  } else {
-    return RPCErrorType::UNKNOWN_ERROR;
   }
+  return RPCErrorType::UNKNOWN_ERROR;
 }
 
 std::string makeRPCError(

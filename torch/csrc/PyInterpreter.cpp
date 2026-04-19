@@ -839,9 +839,8 @@ c10::Layout ConcretePyInterpreterVTable::layout(
 
   if (THPLayout_Check(out.ptr())) {
     return toLayout(out.ptr());
-  } else {
-    return c10::Layout(py::cast<int64_t>(out));
   }
+  return c10::Layout(py::cast<int64_t>(out));
 }
 
 int64_t ConcretePyInterpreterVTable::numel(const c10::TensorImpl* self) const {
@@ -984,9 +983,8 @@ py::handle getTorchApiFunction(const c10::OperatorHandle& op) {
         py::module::import("torch").attr("ops").attr(ns).attr(func_name);
     if (overload_name.empty()) {
       return torch_api_function.attr("default").ptr();
-    } else {
-      return torch_api_function.attr(overload_name.c_str()).ptr();
     }
+    return torch_api_function.attr(overload_name.c_str()).ptr();
   });
 }
 

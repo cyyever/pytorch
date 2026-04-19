@@ -901,9 +901,8 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
   bool runImpl(Stack& stack) {
     if (!profiling::isProfilingOngoing()) {
       return runTemplate</*EnableProfiling*/ false>(stack);
-    } else {
-      return runTemplate</*EnableProfiling*/ true>(stack);
     }
+    return runTemplate</*EnableProfiling*/ true>(stack);
   }
 
   void formatStackTrace(std::ostream& out) {

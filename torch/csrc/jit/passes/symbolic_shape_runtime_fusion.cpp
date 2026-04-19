@@ -133,9 +133,8 @@ static inline StrideInput summarizeStrideDim(
       dim > 0 && strides[dim] == strides[dim - 1] * sizes[dim - 1] &&
       (stride_inputs[dim - 1 + stride_inputs_offset] != StrideInput::S_CONT)) {
     return StrideInput::S_TRAN_CONT;
-  } else {
-    return StrideInput::S_AS_ARG;
   }
+  return StrideInput::S_AS_ARG;
 }
 
 static std::vector<StrideInput> summarizeInputStrides(const TensorType& tt) {

@@ -140,9 +140,8 @@ Tensor maybe_multiply(const Tensor& t, const Scalar& s) {
 
   if (is_one) {
     return t;
-  } else {
-    return t * s;
   }
+  return t * s;
 }
 
 int64_t _safe_size(IntArrayRef sizes, IntArrayRef dim) {
@@ -606,9 +605,8 @@ Tensor pow_backward_exponent(
     auto cond = [](const auto& exp) {
       if (exp.is_complex()) {
         return at::logical_and(at::imag(exp) == 0, at::real(exp) >= 0);
-      } else {
-        return exp >= 0;
       }
+      return exp >= 0;
     };
     auto out = grad *
         at::where(cond(exponent),
@@ -909,9 +907,8 @@ Tensor prod_backward(
   int64_t total_zeros = slice_zero_count.sum().item<int64_t>();
   if (total_zeros == 0) {
     return grad * (result / input).conj();
-  } else {
-    return prod_safe_zeros_backward(grad, input, dim);
   }
+  return prod_safe_zeros_backward(grad, input, dim);
 }
 
 template <typename solve_f>
@@ -1249,9 +1246,8 @@ Tensor clamp_backward(
   } else if (max) {
     auto zero = at::scalar_tensor(0., grad.options());
     return where(self <= *max, grad, zero);
-  } else {
-    return grad;
   }
+  return grad;
 }
 
 Tensor clamp_backward(
@@ -1275,9 +1271,8 @@ Tensor clamp_backward(
   } else if (max.defined()) {
     auto zero = at::scalar_tensor(0., grad.options());
     return where(self <= max, grad, zero);
-  } else {
-    return grad;
   }
+  return grad;
 }
 
 std::tuple<at::Tensor, at::Tensor> clamp_backward_min_max(
@@ -1334,9 +1329,8 @@ at::Tensor clamp_jvp(
     return where(self_p > min_p, self_t, min_t);
   } else if (max_p.defined()) {
     return where(self_p < max_p, self_t, max_t);
-  } else {
-    return self_t;
   }
+  return self_t;
 }
 
 Tensor convolution_jvp(
@@ -1478,9 +1472,8 @@ at::SymIntArrayRef strides_or_error(
     if (input.is_sparse() || at::sparse_csr::is_sparse_compressed(input))
       return {};
     return input.sym_strides();
-  } else {
-    return {};
   }
+  return {};
 }
 
 Tensor mm_mat1_backward(
@@ -1882,9 +1875,8 @@ Tensor _fused_dropout_backward(
   if (grad.requires_grad()) {
     // Use autograd-friendly backward if double backward is required
     return grad * (mask.type_as(grad) * (1. / p1m));
-  } else {
-    return at::_masked_scale(grad, mask, 1. / p1m);
   }
+  return at::_masked_scale(grad, mask, 1. / p1m);
 }
 
 // scale == (1 / (1 - prob))
@@ -3779,9 +3771,8 @@ Tensor svd_backward(
       if (gU.defined()) {
         if (gVh.defined()) {
           return (UhgU * S.unsqueeze(-2) + S.unsqueeze(-1) * VhgV) / E;
-        } else {
-          return (UhgU / E) * S.unsqueeze(-2);
         }
+        return (UhgU / E) * S.unsqueeze(-2);
       } else { // gVh.defined();
         return S.unsqueeze(-1) * (VhgV / E);
       }
@@ -3857,9 +3848,8 @@ Tensor linalg_eig_backward(
   if (!gV.defined()) {
     if (is_hermitian) {
       return at::matmul(V * gL.unsqueeze(-2), V.mH());
-    } else {
-      return at::linalg_solve(V.mH(), gL.unsqueeze(-1) * V.mH());
     }
+    return at::linalg_solve(V.mH(), gL.unsqueeze(-1) * V.mH());
   }
   auto VhgV = at::matmul(V.mH(), gV);
   const auto diag_VhgV = VhgV.diagonal(0, -2, -1);
@@ -3915,9 +3905,8 @@ Tensor linalg_eig_backward(
   // Conjugate by V^{-H}
   if (is_hermitian) {
     return at::matmul(V, at::matmul(gA, V.mH()));
-  } else {
-    return at::linalg_solve(V.mH(), at::matmul(gA, V.mH()));
   }
+  return at::linalg_solve(V.mH(), at::matmul(gA, V.mH()));
 }
 
 std::tuple<Tensor, Tensor> linalg_eig_jvp(
@@ -4136,18 +4125,16 @@ std::tuple<Tensor, Tensor> linalg_qr_jvp(
         auto ret = X.tril();
         at::real(ret.diagonal(0, -2, -1)).zero_();
         return ret;
-      } else {
-        return X.tril(-1);
       }
+      return X.tril(-1);
     };
     const auto triliminv = [](const Tensor& X) {
       if (X.is_complex()) {
         auto ret = X - X.mH();
         ret.diagonal(0, -2, -1).mul_(0.5);
         return ret;
-      } else {
-        return X - X.mT();
       }
+      return X - X.mT();
     };
 
     auto QHdA = Q.mH().matmul(dA);
@@ -4666,9 +4653,8 @@ std::tuple<Tensor, Tensor> linalg_solve_triangular_backward(
     G_A = upper ? G_A.triu(static_cast<int>(unitriangular))
                 : G_A.tril(-static_cast<int>(unitriangular));
     return std::make_tuple(std::move(G_A), B_requires_grad ? G_B : Tensor{});
-  } else {
-    return std::make_tuple(Tensor{}, G_B);
   }
+  return std::make_tuple(Tensor{}, G_B);
 }
 
 std::tuple<Tensor, Tensor> cholesky_solve_backward(

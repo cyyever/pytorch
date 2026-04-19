@@ -1404,9 +1404,8 @@ int64_t adjust_durations_dfs(std::shared_ptr<Result>& r) {
                 r->name());
           }));
       return children_total_duration;
-    } else {
-      return original_duration;
     }
+    return original_duration;
   } else {
     return 0;
   }

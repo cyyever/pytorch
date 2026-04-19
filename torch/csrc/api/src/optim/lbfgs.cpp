@@ -213,9 +213,8 @@ static double _cubic_interpolate(
       min_pos = x1 - ((x1 - x2) * ((g1 + d2 - d1) / (g1 - g2 + 2 * d2)));
     }
     return std::min(std::max(min_pos, xmin_bound), xmax_bound);
-  } else {
-    return (xmin_bound + xmax_bound) / 2;
   }
+  return (xmin_bound + xmax_bound) / 2;
 }
 
 using Function = std::function<std::tuple<double, Tensor>(

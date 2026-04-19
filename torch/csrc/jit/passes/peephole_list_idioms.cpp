@@ -16,9 +16,8 @@ static std::optional<size_t> normalizeIndex(int64_t index, size_t len) {
   }
   if (index >= 0 && index < static_cast<int64_t>(len)) {
     return index;
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 }
 
 // see [value refinement algorithm]

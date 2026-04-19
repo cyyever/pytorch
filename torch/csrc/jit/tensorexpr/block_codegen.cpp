@@ -43,18 +43,16 @@ BufPtr BlockAnalysis::getMultiDimBuf(const BufPtr& buf) const {
   auto input_ = map_input_to_tensor_bufs_.find(buf->name_hint());
   if (input_ != map_input_to_tensor_bufs_.end()) {
     return input_->second;
-  } else {
-    throw std::runtime_error("BlockCodeGen: Entry not in input/Buffer map");
   }
+  throw std::runtime_error("BlockCodeGen: Entry not in input/Buffer map");
 }
 
 std::string BlockAnalysis::getInputName(const BufPtr& buf) const {
   auto input_ = map_input_to_tensor_bufs_.find(buf->name_hint());
   if (input_ != map_input_to_tensor_bufs_.end()) {
     return input_->second->name_hint();
-  } else {
-    throw std::runtime_error("BlockCodeGen: Entry not in input/Buffer map");
   }
+  throw std::runtime_error("BlockCodeGen: Entry not in input/Buffer map");
 }
 
 void BlockAnalysis::visit(const StorePtr& v) {

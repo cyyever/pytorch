@@ -1068,9 +1068,8 @@ void GraphEncoder::AddAttribute(
           "_" + std::to_string(num_external_data);
       num_external_data++;
       return name;
-    } else {
-      return node_proto->name() + "_" + attr_name.toDisplayString();
     }
+    return node_proto->name() + "_" + attr_name.toDisplayString();
   };
 
   auto attr = node_proto->add_attribute();

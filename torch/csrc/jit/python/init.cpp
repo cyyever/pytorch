@@ -1855,9 +1855,8 @@ void initJITBindings(PyObject* module) {
             kwargs);
         if (res) {
           return py::make_tuple(true, *res);
-        } else {
-          return py::make_tuple(false, py::none());
         }
+        return py::make_tuple(false, py::none());
       });
 
   m.def(

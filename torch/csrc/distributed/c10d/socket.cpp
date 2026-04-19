@@ -439,9 +439,8 @@ std::uint16_t SocketImpl::getPort() const {
 
   if (addr_s.ss_family == AF_INET) {
     return ntohs(reinterpret_cast<::sockaddr_in*>(&addr_s)->sin_port);
-  } else {
-    return ntohs(reinterpret_cast<::sockaddr_in6*>(&addr_s)->sin6_port);
   }
+  return ntohs(reinterpret_cast<::sockaddr_in6*>(&addr_s)->sin6_port);
 }
 
 bool SocketImpl::setSocketFlag(int level, int optname, bool value) noexcept {
@@ -1013,9 +1012,8 @@ SocketConnectOp::ConnectResult SocketConnectOp::tryConnectCore(
     setSocketError(err_code);
 
     return ConnectResult::Error;
-  } else {
-    return ConnectResult::Success;
   }
+  return ConnectResult::Success;
 }
 
 void SocketConnectOp::throwTimeoutError() const {

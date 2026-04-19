@@ -82,9 +82,8 @@ c10::intrusive_ptr<c10d::ProcessGroup> resolve_process_group(
     const std::string& group_name) {
   if (thread_isolation_mode) {
     return RankLocal<::GroupRegistry>::get().resolve_group(group_name);
-  } else {
-    return process_registry.resolve_group(group_name);
   }
+  return process_registry.resolve_group(group_name);
 }
 
 void unregister_process_group(const std::string& group_name) {

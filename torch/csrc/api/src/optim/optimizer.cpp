@@ -40,9 +40,8 @@ void OptimizerCloneableOptions<Derived>::_merge_by_comparison(
         return Derived(1e-2);
       } else if constexpr (std::is_same_v<Derived, LBFGSOptions>) {
         return Derived(1);
-      } else {
-        return Derived{};
       }
+      return Derived{};
     }
   }();
 

@@ -112,9 +112,8 @@ at::Tensor InputMetadata::maybe_reduce(
 
   if (needs_reduce) {
     return reduce_grad(grad);
-  } else {
-    return grad;
   }
+  return grad;
 }
 
 bool InputMetadata::is_same_shape(const at::Tensor& grad) const {

@@ -100,15 +100,13 @@ static PyObject* THPDTypeInfo_compare(
     case Py_EQ:
       if (a->type == b->type) {
         Py_RETURN_TRUE;
-      } else {
-        Py_RETURN_FALSE;
       }
+      Py_RETURN_FALSE;
     case Py_NE:
       if (a->type != b->type) {
         Py_RETURN_TRUE;
-      } else {
-        Py_RETURN_FALSE;
       }
+      Py_RETURN_FALSE;
   }
   return Py_INCREF(Py_NotImplemented), Py_NotImplemented;
 }
@@ -166,9 +164,8 @@ static PyObject* THPIInfo_max(THPIInfo* self, void* /*unused*/) {
     return AT_DISPATCH_IINFO_TYPES(self->type, "max", [] {
       if (std::is_unsigned_v<scalar_t>) {
         return THPUtils_packUInt64(std::numeric_limits<scalar_t>::max());
-      } else {
-        return THPUtils_packInt64(std::numeric_limits<scalar_t>::max());
       }
+      return THPUtils_packInt64(std::numeric_limits<scalar_t>::max());
     });
   }
   // Quantized Type
@@ -184,9 +181,8 @@ static PyObject* THPIInfo_min(THPIInfo* self, void* /*unused*/) {
     return AT_DISPATCH_IINFO_TYPES(self->type, "min", [] {
       if (std::is_unsigned_v<scalar_t>) {
         return THPUtils_packUInt64(std::numeric_limits<scalar_t>::lowest());
-      } else {
-        return THPUtils_packInt64(std::numeric_limits<scalar_t>::lowest());
       }
+      return THPUtils_packInt64(std::numeric_limits<scalar_t>::lowest());
     });
   }
   // Quantized Type

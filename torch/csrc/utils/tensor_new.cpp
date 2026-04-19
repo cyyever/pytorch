@@ -590,9 +590,8 @@ std::optional<Device> device_or_from_dispatch_key(
     c10::DispatchKey dispatch_key) {
   if (device.has_value()) {
     return device;
-  } else {
-    return Device(dispatchKeyToDeviceType(dispatch_key));
   }
+  return Device(dispatchKeyToDeviceType(dispatch_key));
 }
 
 enum class CtorOrNew {

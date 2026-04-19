@@ -98,9 +98,8 @@ static PyObject* THPDevice_index(THPDevice* self, PyObject* noargs) {
   HANDLE_TH_ERRORS
   if (self->device.has_index()) {
     return THPUtils_packInt64(self->device.index());
-  } else {
-    Py_RETURN_NONE;
   }
+  Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -126,15 +125,13 @@ static PyObject* THPDevice_rc(PyObject* a, PyObject* b, int op) {
     case Py_EQ:
       if (da->device == db->device) {
         Py_RETURN_TRUE;
-      } else {
-        Py_RETURN_FALSE;
       }
+      Py_RETURN_FALSE;
     case Py_NE:
       if (da->device == db->device) {
         Py_RETURN_FALSE;
-      } else {
-        Py_RETURN_TRUE;
       }
+      Py_RETURN_TRUE;
     case Py_LT:
     case Py_LE:
     case Py_GT:

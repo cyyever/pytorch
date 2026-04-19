@@ -40,9 +40,8 @@ static PyObject* MPSModule_isAvailable(PyObject* _unused, PyObject* noargs) {
   if (at::detail::getMPSHooks().hasMPS()) {
     torch::utils::register_fork_handler_for_device_init(at::kMPS);
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -55,9 +54,8 @@ static PyObject* MPSModule_isMacOSorNewer(PyObject* _unused, PyObject* args) {
   }
   if (at::detail::getMPSHooks().isOnMacOSorNewer(major, minor)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -189,9 +187,8 @@ static PyObject* MPSModule_queryEvent(PyObject* _unused, PyObject* args) {
 
   if (at::detail::getMPSHooks().queryEvent(event_id)) {
     Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
   }
+  Py_RETURN_FALSE;
   END_HANDLE_TH_ERRORS
 }
 

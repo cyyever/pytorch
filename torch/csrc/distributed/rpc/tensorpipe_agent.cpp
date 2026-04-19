@@ -1427,9 +1427,8 @@ std::vector<c10::Device> TensorPipeAgent::getDevicesForRemote(
           t.device());
     }
     return {};
-  } else {
-    return getDevicesForTensors(message.tensors(), iter->second, errStr);
   }
+  return getDevicesForTensors(message.tensors(), iter->second, errStr);
 }
 
 DeviceMap TensorPipeAgent::getDeviceMap(const WorkerInfo& dst) const {

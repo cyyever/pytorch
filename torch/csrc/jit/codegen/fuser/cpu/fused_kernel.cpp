@@ -239,9 +239,8 @@ static std::string getArchFlags() {
     return "/arch:AVX2";
   } else if (__isa_available >= 4) {
     return "/arch:AVX";
-  } else {
-    return "";
   }
+  return "";
 }
 static const std::string arch_flags = getArchFlags();
 static const std::string compile_string = "cd /D \"" + temp_dir +

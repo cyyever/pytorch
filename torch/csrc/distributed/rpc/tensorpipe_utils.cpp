@@ -29,9 +29,8 @@ constexpr int kTpMessagePickleIdx = 3;
 inline c10::Device indexToDevice(c10::DeviceIndex index) {
   if (index == -1) {
     return c10::Device(at::kCPU);
-  } else {
-    return c10::Device(at::kCUDA, index);
   }
+  return c10::Device(at::kCUDA, index);
 }
 
 class TensorpipeCpuConverter : public TensorpipeDeviceTypeConverter {

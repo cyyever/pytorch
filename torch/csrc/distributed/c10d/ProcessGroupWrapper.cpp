@@ -278,9 +278,8 @@ struct CollectiveFingerPrint {
     check("Tensor devices", other_devices, this_devices);
     if (!found_diff) {
       return std::make_pair(false, ss.str());
-    } else {
-      return std::make_pair(true, ss.str());
     }
+    return std::make_pair(true, ss.str());
   }
 
   // Serializes the information (op type, input shapes, data types, device
