@@ -289,8 +289,7 @@ PyObject* functionToPyObject(const std::shared_ptr<Node>& cdata) {
 
   if (auto pfw = dynamic_cast<PyNode*>(cdata.get())) {
     PyObject* obj = pfw->obj;
-    Py_INCREF(obj);
-    return obj;
+    return Py_NewRef(obj);
   }
 
   if (cdata->pyobj()) {
@@ -365,8 +364,7 @@ PyObject* registerFunctionHook(Node& fn, PyObject* hook) {
   }
 
   PyObject* handle = PyTuple_GET_ITEM(res.get(), 1);
-  Py_INCREF(handle);
-  return handle;
+  return Py_NewRef(handle);
 }
 
 // This is almost a copy of the function above except post -> pre
@@ -388,8 +386,7 @@ PyObject* registerFunctionPreHook(Node& fn, PyObject* hook) {
   }
 
   PyObject* handle = PyTuple_GET_ITEM(res.get(), 1);
-  Py_INCREF(handle);
-  return handle;
+  return Py_NewRef(handle);
 }
 
 } // namespace torch::autograd
