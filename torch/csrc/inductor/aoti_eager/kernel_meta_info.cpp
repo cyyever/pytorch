@@ -128,19 +128,21 @@ std::ostream& operator<<(
 ParameterMetadata::ParameterMetadata(
     TensorMetadata tensor_metadata,
     uint64_t input_order)
-    : tag_(TENSOR), value_(tensor_metadata), order_(input_order) {}
+    : tag_(TENSOR),
+      value_(std::move(tensor_metadata)),
+      order_(input_order) {}
 
 ParameterMetadata::ParameterMetadata(
     const at::Tensor& tensor,
     uint64_t input_order)
-    : tag_(TENSOR), order_(input_order) {
-  value_ = TensorMetadata(tensor);
-}
+    : tag_(TENSOR), value_(TensorMetadata(tensor)), order_(input_order) {}
 
 ParameterMetadata::ParameterMetadata(
-    const std::vector<TensorMetadata>& tensor_metadata_list,
+    std::vector<TensorMetadata> tensor_metadata_list,
     uint64_t input_order)
-    : tag_(TENSOR_LIST), value_(tensor_metadata_list), order_(input_order) {}
+    : tag_(TENSOR_LIST),
+      value_(std::move(tensor_metadata_list)),
+      order_(input_order) {}
 
 ParameterMetadata::ParameterMetadata(
     const std::vector<at::Tensor>& tensor_list,
@@ -160,9 +162,9 @@ ParameterMetadata::ParameterMetadata(
     : tag_(SCALAR), value_(scalar), order_(input_order) {}
 
 ParameterMetadata::ParameterMetadata(
-    const std::string& str,
+    std::string str,
     uint64_t input_order)
-    : tag_(STRING), value_(str), order_(input_order) {}
+    : tag_(STRING), value_(std::move(str)), order_(input_order) {}
 
 ParameterMetadata::ParameterMetadata(
     const c10::Device& device,
