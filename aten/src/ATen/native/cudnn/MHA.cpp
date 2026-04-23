@@ -1675,30 +1675,31 @@ void run_cudnn_SDP_fprop(
   }
   const fe::graph::Graph& mha_graph = *cache_it->second;
   std::unordered_map<int64_t, void*> variant_pack = {
-      {Q, q.mutable_data_ptr()},
-      {K, k.mutable_data_ptr()},
-      {V, v.mutable_data_ptr()},
+      {Q, const_cast<void*>(q.const_data_ptr())},
+      {K, const_cast<void*>(k.const_data_ptr())},
+      {V, const_cast<void*>(v.const_data_ptr())},
       {SCALE, &scaling_factor},
       {O, o.mutable_data_ptr()}};
   if (return_softmaxstats) {
     variant_pack[LSE] = softmaxstats.mutable_data_ptr();
   }
   if (attn_bias.has_value()) {
-    variant_pack[BIAS] = attn_bias.value().mutable_data_ptr();
+    variant_pack[BIAS] = const_cast<void*>(attn_bias.value().const_data_ptr());
   }
   if (dropout_probability != 0.0f) {
-    variant_pack[SEED] = _dropoutseed.mutable_data_ptr();
-    variant_pack[OFFSET] = _dropoutoffset.mutable_data_ptr();
+    variant_pack[SEED] = const_cast<void*>(_dropoutseed.const_data_ptr());
+    variant_pack[OFFSET] = const_cast<void*>(_dropoutoffset.const_data_ptr());
   }
   if (use_ragged_in_dense(q, k, v, o, attn_bias.has_value())) {
-    variant_pack[SEQ_LEN_Q] = seqlen_q.mutable_data_ptr();
-    variant_pack[SEQ_LEN_KV] = seqlen_kv.mutable_data_ptr();
-    variant_pack[RAG_Q_OFF] = rag_off_q.mutable_data_ptr();
-    variant_pack[RAG_K_OFF] = rag_off_k.mutable_data_ptr();
-    variant_pack[RAG_V_OFF] = rag_off_v.mutable_data_ptr();
-    variant_pack[RAG_O_OFF] = rag_off_o.mutable_data_ptr();
+    variant_pack[SEQ_LEN_Q] = const_cast<void*>(seqlen_q.const_data_ptr());
+    variant_pack[SEQ_LEN_KV] = const_cast<void*>(seqlen_kv.const_data_ptr());
+    variant_pack[RAG_Q_OFF] = const_cast<void*>(rag_off_q.const_data_ptr());
+    variant_pack[RAG_K_OFF] = const_cast<void*>(rag_off_k.const_data_ptr());
+    variant_pack[RAG_V_OFF] = const_cast<void*>(rag_off_v.const_data_ptr());
+    variant_pack[RAG_O_OFF] = const_cast<void*>(rag_off_o.const_data_ptr());
     if (return_softmaxstats) {
-      variant_pack[RAG_LSE_OFF] = rag_off_lse.mutable_data_ptr();
+      variant_pack[RAG_LSE_OFF] =
+          const_cast<void*>(rag_off_lse.const_data_ptr());
     }
   }
   auto workspace_size = mha_graph.get_workspace_size();
@@ -1854,20 +1855,24 @@ void run_cudnn_SDP_fprop_nestedtensor(
     check_ragged_offset_capacity(v, "value");
   }
   std::unordered_map<int64_t, void*> variant_pack = {
-      {Q, q.mutable_data_ptr()},
-      {K, k.mutable_data_ptr()},
-      {V, v.mutable_data_ptr()},
+      {Q, const_cast<void*>(q.const_data_ptr())},
+      {K, const_cast<void*>(k.const_data_ptr())},
+      {V, const_cast<void*>(v.const_data_ptr())},
       {SCALE, &scaling_factor},
       {O, o.mutable_data_ptr()}};
   Tensor seqlen_q, seqlen_kv, rag_q_off, rag_k_off, rag_v_off, rag_o_off;
 #if AT_CUDNN_HAS_CUMULATIVE_SEQUENCE_LENGTHS
   if (sequence_length_mode == SequenceLengthMode::CUMULATIVE) {
-    variant_pack[CU_SEQ_LEN_Q] = cum_seqlen_q.mutable_data_ptr();
-    variant_pack[CU_SEQ_LEN_KV] = cum_seqlen_kv.mutable_data_ptr();
-    variant_pack[RAG_Q_OFF] = cum_seqlen_q.mutable_data_ptr();
-    variant_pack[RAG_O_OFF] = cum_seqlen_q.mutable_data_ptr();
-    variant_pack[RAG_K_OFF] = cum_seqlen_kv.mutable_data_ptr();
-    variant_pack[RAG_V_OFF] = cum_seqlen_kv.mutable_data_ptr();
+    variant_pack[CU_SEQ_LEN_Q] =
+        const_cast<void*>(cum_seqlen_q.const_data_ptr());
+    variant_pack[CU_SEQ_LEN_KV] =
+        const_cast<void*>(cum_seqlen_kv.const_data_ptr());
+    variant_pack[RAG_Q_OFF] = const_cast<void*>(cum_seqlen_q.const_data_ptr());
+    variant_pack[RAG_O_OFF] = const_cast<void*>(cum_seqlen_q.const_data_ptr());
+    variant_pack[RAG_K_OFF] =
+        const_cast<void*>(cum_seqlen_kv.const_data_ptr());
+    variant_pack[RAG_V_OFF] =
+        const_cast<void*>(cum_seqlen_kv.const_data_ptr());
   }
 #endif
   if (sequence_length_mode == SequenceLengthMode::PER_SEQUENCE) {
@@ -1883,34 +1888,37 @@ void run_cudnn_SDP_fprop_nestedtensor(
     rag_q_off = cum_seqlen_q.mul(q.stride(-3));
     rag_o_off =
         ragged_offset(cum_seqlen_q, o.stride(-3), rag_q_off, q.stride(-3));
-    variant_pack[RAG_Q_OFF] = rag_q_off.mutable_data_ptr();
-    variant_pack[RAG_O_OFF] = rag_o_off.mutable_data_ptr();
-    variant_pack[SEQ_LEN_Q] = seqlen_q.mutable_data_ptr();
-    variant_pack[SEQ_LEN_KV] = seqlen_kv.mutable_data_ptr();
+    variant_pack[RAG_Q_OFF] = const_cast<void*>(rag_q_off.const_data_ptr());
+    variant_pack[RAG_O_OFF] = const_cast<void*>(rag_o_off.const_data_ptr());
+    variant_pack[SEQ_LEN_Q] = const_cast<void*>(seqlen_q.const_data_ptr());
+    variant_pack[SEQ_LEN_KV] = const_cast<void*>(seqlen_kv.const_data_ptr());
     if (!is_paged) {
       rag_k_off = shared_cum_seqlen && k.stride(-3) == q.stride(-3)
           ? rag_q_off
           : cum_seqlen_kv.mul(k.stride(-3));
       rag_v_off =
           ragged_offset(cum_seqlen_kv, v.stride(-3), rag_k_off, k.stride(-3));
-      variant_pack[RAG_K_OFF] = rag_k_off.mutable_data_ptr();
-      variant_pack[RAG_V_OFF] = rag_v_off.mutable_data_ptr();
+      variant_pack[RAG_K_OFF] = const_cast<void*>(rag_k_off.const_data_ptr());
+      variant_pack[RAG_V_OFF] = const_cast<void*>(rag_v_off.const_data_ptr());
     }
   }
   if (is_paged) {
-    variant_pack[PAGE_TABLE_K] = page_table.value().mutable_data_ptr();
-    variant_pack[PAGE_TABLE_V] = page_table.value().mutable_data_ptr();
+    variant_pack[PAGE_TABLE_K] =
+        const_cast<void*>(page_table.value().const_data_ptr());
+    variant_pack[PAGE_TABLE_V] =
+        const_cast<void*>(page_table.value().const_data_ptr());
   }
   if (return_softmaxstats) {
     TORCH_INTERNAL_ASSERT(
         softmaxstats_.stride(-3) == 1,
         "cuDNN SDPA expected a contiguous (H, T) softmax_lse");
     variant_pack[LSE] = softmaxstats_.mutable_data_ptr();
-    variant_pack[RAG_LSE_OFF] = cum_seqlen_q.mutable_data_ptr();
+    variant_pack[RAG_LSE_OFF] =
+        const_cast<void*>(cum_seqlen_q.const_data_ptr());
   }
   if (dropout_probability != 0.0f) {
-    variant_pack[SEED] = dropoutseed.mutable_data_ptr();
-    variant_pack[OFFSET] = dropoutoffset.mutable_data_ptr();
+    variant_pack[SEED] = const_cast<void*>(dropoutseed.const_data_ptr());
+    variant_pack[OFFSET] = const_cast<void*>(dropoutoffset.const_data_ptr());
   }
   if (attn_bias.has_value()) {
     TORCH_CHECK(false, "bias not supported with nestedtensor");
@@ -2051,32 +2059,32 @@ void run_cudnn_SDP_bprop(
 
   std::unordered_map<int64_t, void*> variant_pack = {
       // inputs
-      {Q, q.mutable_data_ptr()},
-      {K, k.mutable_data_ptr()},
-      {V, v.mutable_data_ptr()},
-      {O, o.mutable_data_ptr()},
-      {DO, dO_.mutable_data_ptr()},
-      {LSE, softmaxstats.mutable_data_ptr()},
+      {Q, const_cast<void*>(q.const_data_ptr())},
+      {K, const_cast<void*>(k.const_data_ptr())},
+      {V, const_cast<void*>(v.const_data_ptr())},
+      {O, const_cast<void*>(o.const_data_ptr())},
+      {DO, const_cast<void*>(dO_.const_data_ptr())},
+      {LSE, const_cast<void*>(softmaxstats.const_data_ptr())},
       // outputs
       {DQ, dQ.mutable_data_ptr()},
       {DK, dK.mutable_data_ptr()},
       {DV, dV.mutable_data_ptr()},
       {SCALE, &scaling_factor}};
   if (dropout_probability != 0.0f) {
-    variant_pack[SEED] = _dropoutseed.mutable_data_ptr();
-    variant_pack[OFFSET] = _dropoutoffset.mutable_data_ptr();
+    variant_pack[SEED] = const_cast<void*>(_dropoutseed.const_data_ptr());
+    variant_pack[OFFSET] = const_cast<void*>(_dropoutoffset.const_data_ptr());
   }
   if (attn_bias.has_value()) {
-    variant_pack[BIAS] = attn_bias.value().mutable_data_ptr();
+    variant_pack[BIAS] = const_cast<void*>(attn_bias.value().const_data_ptr());
   }
   if (use_ragged_in_dense(q, k, v, o, attn_bias.has_value())) {
-    variant_pack[SEQ_LEN_Q] = seqlen_q.mutable_data_ptr();
-    variant_pack[SEQ_LEN_KV] = seqlen_kv.mutable_data_ptr();
-    variant_pack[RAG_Q_OFF] = rag_off_q.mutable_data_ptr();
-    variant_pack[RAG_K_OFF] = rag_off_k.mutable_data_ptr();
-    variant_pack[RAG_V_OFF] = rag_off_v.mutable_data_ptr();
-    variant_pack[RAG_O_OFF] = rag_off_o.mutable_data_ptr();
-    variant_pack[RAG_LSE_OFF] = rag_off_lse.mutable_data_ptr();
+    variant_pack[SEQ_LEN_Q] = const_cast<void*>(seqlen_q.const_data_ptr());
+    variant_pack[SEQ_LEN_KV] = const_cast<void*>(seqlen_kv.const_data_ptr());
+    variant_pack[RAG_Q_OFF] = const_cast<void*>(rag_off_q.const_data_ptr());
+    variant_pack[RAG_K_OFF] = const_cast<void*>(rag_off_k.const_data_ptr());
+    variant_pack[RAG_V_OFF] = const_cast<void*>(rag_off_v.const_data_ptr());
+    variant_pack[RAG_O_OFF] = const_cast<void*>(rag_off_o.const_data_ptr());
+    variant_pack[RAG_LSE_OFF] = const_cast<void*>(rag_off_lse.const_data_ptr());
   }
 
   auto workspace_size = mha_graph.get_workspace_size();
@@ -2234,31 +2242,31 @@ void run_cudnn_SDP_bprop_nestedtensor(
   const fe::graph::Graph& mha_graph = *cache_it->second;
   std::unordered_map<int64_t, void*> variant_pack = {
       // inputs
-      {Q, q.mutable_data_ptr()},
-      {K, k.mutable_data_ptr()},
-      {V, v.mutable_data_ptr()},
-      {O, o.mutable_data_ptr()},
-      {DO, dO_.mutable_data_ptr()},
-      {LSE, softmaxstats_.mutable_data_ptr()},
+      {Q, const_cast<void*>(q.const_data_ptr())},
+      {K, const_cast<void*>(k.const_data_ptr())},
+      {V, const_cast<void*>(v.const_data_ptr())},
+      {O, const_cast<void*>(o.const_data_ptr())},
+      {DO, const_cast<void*>(dO_.const_data_ptr())},
+      {LSE, const_cast<void*>(softmaxstats_.const_data_ptr())},
       // outputs
       {DQ, dQ.mutable_data_ptr()},
       {DK, dK.mutable_data_ptr()},
       {DV, dV.mutable_data_ptr()},
       {SCALE, &scaling_factor},
-      {RAG_Q_OFF, rag_q_off.mutable_data_ptr()},
-      {RAG_O_OFF, rag_o_off.mutable_data_ptr()},
-      {RAG_K_OFF, rag_k_off.mutable_data_ptr()},
-      {RAG_V_OFF, rag_v_off.mutable_data_ptr()},
-      {RAG_DQ_OFF, rag_dq_off.mutable_data_ptr()},
-      {RAG_DK_OFF, rag_dk_off.mutable_data_ptr()},
-      {RAG_DV_OFF, rag_dv_off.mutable_data_ptr()},
-      {RAG_DO_OFF, rag_do_off.mutable_data_ptr()},
-      {RAG_LSE_OFF, cum_seqlen_q.mutable_data_ptr()},
-      {SEQ_LEN_Q, seqlen_q.mutable_data_ptr()},
-      {SEQ_LEN_KV, seqlen_kv.mutable_data_ptr()}};
+      {RAG_Q_OFF, const_cast<void*>(rag_q_off.const_data_ptr())},
+      {RAG_O_OFF, const_cast<void*>(rag_o_off.const_data_ptr())},
+      {RAG_K_OFF, const_cast<void*>(rag_k_off.const_data_ptr())},
+      {RAG_V_OFF, const_cast<void*>(rag_v_off.const_data_ptr())},
+      {RAG_DQ_OFF, const_cast<void*>(rag_dq_off.const_data_ptr())},
+      {RAG_DK_OFF, const_cast<void*>(rag_dk_off.const_data_ptr())},
+      {RAG_DV_OFF, const_cast<void*>(rag_dv_off.const_data_ptr())},
+      {RAG_DO_OFF, const_cast<void*>(rag_do_off.const_data_ptr())},
+      {RAG_LSE_OFF, const_cast<void*>(cum_seqlen_q.const_data_ptr())},
+      {SEQ_LEN_Q, const_cast<void*>(seqlen_q.const_data_ptr())},
+      {SEQ_LEN_KV, const_cast<void*>(seqlen_kv.const_data_ptr())}};
   if (dropout_probability != 0.0f) {
-    variant_pack[SEED] = _dropoutseed.mutable_data_ptr();
-    variant_pack[OFFSET] = _dropoutoffset.mutable_data_ptr();
+    variant_pack[SEED] = const_cast<void*>(_dropoutseed.const_data_ptr());
+    variant_pack[OFFSET] = const_cast<void*>(_dropoutoffset.const_data_ptr());
   }
   TORCH_CHECK(
       !attn_bias.has_value(),
