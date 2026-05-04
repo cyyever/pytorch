@@ -172,19 +172,27 @@ def _type_repr(obj: object) -> str:
 
 
 def _get_qualified_name(func: Callable[..., Any]) -> str:
+    name = getattr(func, "__name__", None)
+    if name is None:
+        # Custom callables (objects with __call__) may lack __name__; fall back
+        # to qualname joined with module, then to repr.
+        qualname = getattr(func, "__qualname__", None)
+        module = getattr(func, "__module__", None)
+        if qualname is None or module is None:
+            return repr(func)
+        return f"{module}.{qualname}"
     # things like getattr just appear in builtins
-    if getattr(builtins, func.__name__, None) is func:
-        return func.__name__
+    if getattr(builtins, name, None) is func:
+        return name
     # torch.Tensor.{fn}
     if (
         isinstance(func, (types.MethodDescriptorType, types.WrapperDescriptorType))
-        and func is getattr(torch.Tensor, func.__name__, None)
+        and func is getattr(torch.Tensor, name, None)
     ) or (
         func.__module__ == torch._tensor.__name__
-        and func.__qualname__ == f"Tensor.{func.__name__}"
+        and func.__qualname__ == f"Tensor.{name}"
     ):
-        return f"torch.Tensor.{func.__name__}"
-    name = func.__name__
+        return f"torch.Tensor.{name}"
 
     if name == "<lambda>":
         # For lambdas, try to get their defining name in the module
@@ -577,19 +585,15 @@ class Node(_NodeBase):
         """
         if isinstance(target, str):
             return target
-        if hasattr(target, "__module__"):
-            name = getattr(target, "__name__", None)
-            if name is None:
-                # Just to be defensive, if we don't have `__name__`, get the
-                # qualname. Not sure if this happens for any members of `operator`
-                # or `builtins`. This fallback path is not as good, since e.g.
-                # things in `operator` have `_operator` as their __module__.
-                # TODO: THIS IS BROKEN: _get_qualified_name calls `__name__`
-                return _get_qualified_name(target)  # type: ignore[arg-type]
-            if target.__module__ == "builtins":
-                return f"builtins.{name}"
-            elif target.__module__ == "_operator":
-                return f"operator.{name}"
+        if not hasattr(target, "__module__"):
+            return _get_qualified_name(target)  # type: ignore[arg-type]
+        name = getattr(target, "__name__", None)
+        if name is None:
+            return _get_qualified_name(target)  # type: ignore[arg-type]
+        if target.__module__ == "builtins":
+            return f"builtins.{name}"
+        if target.__module__ == "_operator":
+            return f"operator.{name}"
         return _get_qualified_name(target)  # type: ignore[arg-type]
 
     @compatibility(is_backward_compatible=True)

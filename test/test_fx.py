@@ -1330,6 +1330,27 @@ class TestFX(JitTestCase):
         self.assertIn("operator.add", graph_str)
         self.assertIn("torch.add", graph_str)
 
+        # Callable instances (objects with __call__) lack __name__ on the
+        # instance itself; previously this crashed _get_qualified_name with
+        # AttributeError. Should fall back to {module}.{qualname}.
+        class CallableNoName:
+            __module__ = "somemodule"
+            __qualname__ = "CallableNoName.thing"
+
+            def __call__(self, x):
+                return x
+
+        target = CallableNoName()
+        self.assertFalse(hasattr(target, "__name__"))
+        self.assertEqual(
+            torch.fx.Node._pretty_print_target(target),
+            "somemodule.CallableNoName.thing",
+        )
+        self.assertEqual(
+            torch.fx.node._get_qualified_name(target),
+            "somemodule.CallableNoName.thing",
+        )
+
     def test_pretty_print_node(self):
         class M(torch.nn.Module):
             def __init__(self) -> None:
