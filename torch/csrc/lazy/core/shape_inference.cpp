@@ -1184,6 +1184,15 @@ std::vector<Shape> compute_shape_as_strided(
     const int64_t& storage_offset) {
   return {Shape(input.shape().scalar_type(), size)};
 }
+
+std::vector<Shape> compute_shape_as_strided(
+    const at::Tensor& self,
+    at::IntArrayRef size,
+    at::IntArrayRef stride,
+    ::std::optional<int64_t> storage_offset) {
+  return {Shape(self.scalar_type(), size.vec())};
+}
+
 std::vector<Shape> compute_shape_diagonal_view_update(
     const Output& target,
     const Output& input,

@@ -143,6 +143,7 @@ full_codegen:
   - zero
   - alias_copy
   - as_strided_copy
+  - as_strided
   - diagonal_copy
   - expand_copy
   - permute_copy
@@ -210,6 +211,7 @@ symint:
   - narrow_copy
   - view_copy
   - as_strided_copy
+  - as_strided
   - as_strided_scatter
   - diagonal_backward
   - slice_backward
