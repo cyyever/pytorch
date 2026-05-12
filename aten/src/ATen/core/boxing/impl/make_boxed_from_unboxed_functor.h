@@ -399,7 +399,7 @@ struct decay_if_not_tensor<const at::Tensor&> final {
 
 template <class T, bool AllowDeprecatedTypes>
 struct ivalue_to_arg final {
-  static decltype(auto) call(IValue& v) {
+  static auto call(IValue& v) {
     assert_is_valid_input_type<T, AllowDeprecatedTypes>();
     return std::move(v).to<T>();
   }

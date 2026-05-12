@@ -4,16 +4,13 @@
 
 namespace c10::impl {
 namespace detail {
-template <class FuncPtr, class ReturnType, class ParameterList>
+template <class FuncPtr, class ParameterList>
 class WrapFunctionIntoFunctor_ {};
-template <class FuncPtr, class ReturnType, class... Parameters>
-class WrapFunctionIntoFunctor_<
-    FuncPtr,
-    ReturnType,
-    guts::typelist::typelist<Parameters...>>
+template <class FuncPtr, class... Parameters>
+class WrapFunctionIntoFunctor_<FuncPtr, guts::typelist::typelist<Parameters...>>
     final : public c10::OperatorKernel {
  public:
-  C10_ALWAYS_INLINE decltype(auto) operator()(Parameters... args) {
+  C10_ALWAYS_INLINE auto operator()(Parameters... args) {
     return (*FuncPtr::func_ptr())(std::forward<Parameters>(args)...);
   }
 };
@@ -30,7 +27,6 @@ struct WrapFunctionIntoFunctor final {
       "WrapFunctionIntoFunctor can only wrap functions created with TORCH_FN.");
   using type = detail::WrapFunctionIntoFunctor_<
       FuncPtr,
-      typename guts::function_traits<typename FuncPtr::FuncType>::return_type,
       typename guts::function_traits<
           typename FuncPtr::FuncType>::parameter_types>;
 };
