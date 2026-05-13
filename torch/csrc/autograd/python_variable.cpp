@@ -3933,19 +3933,15 @@ static void initTensorImplConversion(PyObject* module) {
 
 bool THPVariable_initModule(PyObject* module) {
   THPVariableMetaType.tp_base = &PyType_Type;
-  if (PyType_Ready(&THPVariableMetaType) < 0)
+  if (PyModule_AddType(module, &THPVariableMetaType) < 0)
     return false;
-  Py_INCREF(&THPVariableMetaType);
-  PyModule_AddObject(module, "_TensorMeta", (PyObject*)&THPVariableMetaType);
 
   static std::vector<PyMethodDef> methods;
   THPUtils_addPyMethodDefs(methods, torch::autograd::variable_methods);
   THPUtils_addPyMethodDefs(methods, extra_methods);
   THPVariableType.tp_methods = methods.data();
-  if (PyType_Ready(&THPVariableType) < 0)
+  if (PyModule_AddType(module, &THPVariableType) < 0)
     return false;
-  Py_INCREF(&THPVariableType);
-  PyModule_AddObject(module, "TensorBase", (PyObject*)&THPVariableType);
   Py_INCREF(&THPVariableType);
   PyModule_AddObject(module, "_TensorBase", (PyObject*)&THPVariableType);
 #ifdef USE_DISTRIBUTED
