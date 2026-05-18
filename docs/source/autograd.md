@@ -315,8 +315,6 @@ and vtune profiler based using
     profiler.profile.key_averages
     profiler.profile.self_cpu_time_total
     profiler.profile.total_average
-    profiler.parse_nvprof_trace
-    profiler.EnforceUnique
     profiler.KinetoStepTracker
     profiler.record_function
     profiler_util.EventList
@@ -336,14 +334,6 @@ and vtune profiler based using
 ```{eval-rst}
 .. autoclass:: torch.autograd.profiler.emit_itt
 
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    profiler.load_nvprof
 ```
 
 ## Debugging and anomaly detection
