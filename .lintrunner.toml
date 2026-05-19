@@ -296,6 +296,41 @@ command = [
 ]
 
 [[linter]]
+code = 'CLANGTIDY_CUDA'
+include_patterns = [
+    'aten/src/ATen/native/cuda/**/*.cu',
+    'aten/src/ATen/cuda/**/*.cu',
+    'c10/cuda/**/*.cu',
+    'torch/csrc/cuda/**/*.cu',
+    'torch/csrc/distributed/c10d/**/*.cu',
+]
+exclude_patterns = [
+    '**/fb/**',
+    '**/generated/**',
+    'third_party/**/*',
+    # Pulls in heavy NVSHMEM/Thrust template stacks that hang clang-tidy.
+    'torch/csrc/distributed/c10d/symm_mem/rocshmem_extension.cu',
+]
+init_command = [
+    'python3',
+    'tools/linter/adapters/s3_init.py',
+    '--config-json=tools/linter/adapters/s3_init_config.json',
+    '--linter=clang-tidy',
+    '--dry-run={{DRYRUN}}',
+    '--output-dir=.lintbin',
+    '--output-name=clang-tidy',
+]
+command = [
+    'python3',
+    'tools/linter/adapters/clangtidy_linter.py',
+    '--binary=.lintbin/clang-tidy',
+    '--build_dir=./build',
+    '--cuda',
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
 code = 'TYPEIGNORE'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [

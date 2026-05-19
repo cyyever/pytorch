@@ -144,11 +144,94 @@ for dir in include_dir:
     include_args += ["--extra-arg", f"-I{dir}"]
 
 
+def detect_cuda_path() -> str | None:
+    for candidate in (os.environ.get("CUDA_HOME"), "/opt/cuda", "/usr/local/cuda"):
+        if candidate and os.path.isdir(os.path.join(candidate, "include")):
+            return candidate
+    return None
+
+
+def detect_clang_resource_dir() -> str | None:
+    # Look for clang's bundled headers, which include __clang_cuda_runtime_wrapper.h.
+    # The clang-tidy binary at .lintbin/ does not ship its own resource dir, so we
+    # fall back to whatever system clang installation exposes one.
+    for clang in ("clang", "clang++"):
+        path = shutil.which(clang)
+        if path is None:
+            continue
+        try:
+            result = subprocess.run(
+                [path, "-print-resource-dir"],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+            candidate = result.stdout.strip()
+            if candidate and os.path.isfile(
+                os.path.join(candidate, "include", "__clang_cuda_runtime_wrapper.h")
+            ):
+                return candidate
+        except (OSError, subprocess.CalledProcessError):
+            continue
+    # Fall back: scan known system locations.
+    for base in ("/usr/lib/clang", "/usr/lib64/clang"):
+        if not os.path.isdir(base):
+            continue
+        for entry in sorted(os.listdir(base), reverse=True):
+            candidate = os.path.join(base, entry)
+            if os.path.isfile(
+                os.path.join(candidate, "include", "__clang_cuda_runtime_wrapper.h")
+            ):
+                return candidate
+    return None
+
+
+# Checks disabled in CUDA mode (noisy false positives or risky transforms).
+CUDA_DISABLED_CHECKS = (
+    "cppcoreguidelines-init-variables",  # FP: out-by-ref params, inline-asm outputs
+    "readability-redundant-declaration",  # FP: per-kernel `extern __shared__` redecls
+    "modernize-loop-convert",  # risky inside __device__ + #pragma unroll
+    "cppcoreguidelines-pro-type-member-init",  # forced memset on large prep structs
+    "misc-static-assert",  # FP: device-side runtime asserts in CUDA test kernels
+)
+
+
+def build_cuda_extra_args(cuda_path: str, resource_dir: str | None) -> list[str]:
+    extras = [
+        "-x",
+        "cuda",
+        f"--cuda-path={cuda_path}",
+        "--no-cuda-version-check",
+        "--cuda-host-only",
+        # Errors-as-warnings are forced on by .clang-tidy WarningsAsErrors='*';
+        # these CUDA-mode quirks are not real issues.
+        "-Wno-unknown-cuda-version",
+        "-Wno-unused-command-line-argument",
+        f"-I{cuda_path}/include",
+        f"-I{os.path.join(PYTORCH_ROOT, 'aten/src')}",
+    ]
+    # CUDA 13 bundles Thrust/CUB/libcudacxx under include/cccl; older toolkits
+    # put them directly under include/. Add the cccl path when present.
+    cccl_path = os.path.join(cuda_path, "include", "cccl")
+    if os.path.isdir(cccl_path):
+        extras.append(f"-I{cccl_path}")
+    if resource_dir is not None:
+        extras.append(f"-resource-dir={resource_dir}")
+    # --checks is appended to .clang-tidy Checks (last match wins), so trailing
+    # negative entries override the positive globs.
+    disabled = ",".join(f"-{c}" for c in CUDA_DISABLED_CHECKS)
+    flattened = [f"--checks={disabled}"]
+    for arg in extras:
+        flattened += ["--extra-arg", arg]
+    return flattened
+
+
 def check_file(
     filename: str,
     binary: str,
     build_dir: Path,
     std: str | None,
+    cuda_extras: list[str] | None,
 ) -> list[LintMessage]:
     # Explicitly pass include path for linters that only check headers.
     # build/aten/src covers generated <ATen/...> headers (Functions.h etc.).
@@ -158,12 +241,23 @@ def check_file(
         "--extra-arg",
         f"-I{build_dir}/aten/src",
     ]
-    cmd = [
-        binary,
-        f"-p={build_dir}",
-        *build_include_args,
-        filename,
-    ]
+    if cuda_extras is not None:
+        # In CUDA mode we bypass the compile_commands.json lookup: nvcc commands
+        # contain flags clang cannot parse (-Xfatbin, -gencode, etc). Build a
+        # minimal clang-driver command ourselves.
+        cmd = [
+            binary,
+            *build_include_args,
+            *cuda_extras,
+            filename,
+        ]
+    else:
+        cmd = [
+            binary,
+            f"-p={build_dir}",
+            *build_include_args,
+            filename,
+        ]
     # Only add -- and -std flag if std is explicitly specified
     if std is not None:
         cmd.extend(["--", f"-std={std}"])
@@ -195,6 +289,13 @@ def check_file(
             # Convert the reported path to an absolute path.
             abs_path = str(Path(match["file"]).resolve())
             if not abs_path.startswith(PYTORCH_ROOT):
+                continue
+            # Skip CUTLASS template parse failures (not actionable lint).
+            if (
+                cuda_extras is not None
+                and match["code"] == "clang-diagnostic-error"
+                and "third_party/cutlass/" in abs_path
+            ):
                 continue
             message = LintMessage(
                 path=abs_path,
@@ -242,6 +343,19 @@ def main() -> None:
             "C++ standard to use for compilation (e.g., c++17, c++20). "
             "If not specified, uses the standard from compile_commands.json."
         ),
+    )
+    parser.add_argument(
+        "--cuda",
+        action="store_true",
+        help=(
+            "Treat inputs as CUDA sources/headers. Bypasses compile_commands.json "
+            "and builds a clang -x cuda command line with --cuda-host-only."
+        ),
+    )
+    parser.add_argument(
+        "--cuda-path",
+        default=None,
+        help="CUDA toolkit path (default: $CUDA_HOME or /opt/cuda or /usr/local/cuda).",
     )
     parser.add_argument(
         "--verbose",
@@ -293,6 +407,28 @@ def main() -> None:
     # the following no such file or directory error: '.lintbin/clang-tidy'
     binary_path = os.path.abspath(args.binary)
 
+    cuda_extras: list[str] | None = None
+    if args.cuda:
+        cuda_path = args.cuda_path or detect_cuda_path()
+        if cuda_path is None:
+            err = LintMessage(
+                path="<none>",
+                line=None,
+                char=None,
+                code="CLANGTIDY",
+                severity=LintSeverity.ERROR,
+                name="command-failed",
+                original=None,
+                replacement=None,
+                description=(
+                    "CUDA toolkit not found. Set --cuda-path, $CUDA_HOME, or install "
+                    "to /opt/cuda or /usr/local/cuda."
+                ),
+            )
+            print(json.dumps(err._asdict()), flush=True)
+            sys.exit(0)
+        cuda_extras = build_cuda_extra_args(cuda_path, detect_clang_resource_dir())
+
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=os.cpu_count(),
         thread_name_prefix="Thread",
@@ -304,6 +440,7 @@ def main() -> None:
                 binary_path,
                 abs_build_dir,
                 args.std,
+                cuda_extras,
             ): filename
             for filename in args.filenames
         }
