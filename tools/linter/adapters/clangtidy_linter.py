@@ -152,11 +152,56 @@ for dir in include_dir:
     include_args += ["--extra-arg", f"-I{dir}"]
 
 
+def detect_cuda_path() -> str | None:
+    for candidate in (os.environ.get("CUDA_HOME"), "/opt/cuda", "/usr/local/cuda"):
+        if candidate and os.path.isdir(os.path.join(candidate, "include")):
+            return candidate
+    return None
+
+
+def detect_clang_resource_dir() -> str | None:
+    # The .lintbin clang-tidy has no resource dir; borrow the one from a system
+    # clang, which provides __clang_cuda_runtime_wrapper.h.
+    clang = shutil.which("clang") or shutil.which("clang++")
+    if clang is None:
+        return None
+    result = subprocess.run(
+        [clang, "-print-resource-dir"], capture_output=True, check=False, text=True
+    )
+    candidate = result.stdout.strip()
+    wrapper = os.path.join(candidate, "include", "__clang_cuda_runtime_wrapper.h")
+    return candidate if os.path.isfile(wrapper) else None
+
+
+def build_cuda_extra_args(cuda_path: str, resource_dir: str | None) -> list[str]:
+    extras = [
+        "-x",
+        "cuda",
+        "-std=c++20",
+        f"--cuda-path={cuda_path}",
+        "--no-cuda-version-check",
+        "--cuda-host-only",
+        "-Wno-unknown-cuda-version",
+        "-Wno-unused-command-line-argument",
+        f"-I{cuda_path}/include",
+        f"-I{os.path.join(PYTORCH_ROOT, 'aten/src')}",
+    ]
+    # CUDA 13 ships Thrust/CUB/libcudacxx under include/cccl
+    cccl_path = os.path.join(cuda_path, "include", "cccl")
+    if os.path.isdir(cccl_path):
+        extras.append(f"-I{cccl_path}")
+    if resource_dir is not None:
+        extras.append(f"-resource-dir={resource_dir}")
+    return [x for arg in extras for x in ("--extra-arg", arg)]
+
+
 def check_file(
     filename: str,
     binary: str,
     build_dir: Path,
     std: str | None,
+    cuda_extras: list[str] | None,
+    code: str,
 ) -> list[LintMessage]:
     # Explicitly pass include path for linters that only check headers.
     # build/aten/src covers generated <ATen/...> headers (Functions.h etc.).
@@ -166,10 +211,13 @@ def check_file(
         "--extra-arg",
         f"-I{build_dir}/aten/src",
     ]
+    # CUDA mode skips compile_commands.json: nvcc commands contain flags clang
+    # cannot parse (-Xfatbin, -gencode, ...).
     cmd = [
         binary,
-        f"-p={build_dir}",
+        *([] if cuda_extras is not None else [f"-p={build_dir}"]),
         *build_include_args,
+        *(cuda_extras or []),
         filename,
     ]
     # Only add -- and -std flag if std is explicitly specified
@@ -184,7 +232,7 @@ def check_file(
                 path=filename,
                 line=None,
                 char=None,
-                code="CLANGTIDY",
+                code=code,
                 severity=LintSeverity.ERROR,
                 name="command-failed",
                 original=None,
@@ -204,6 +252,13 @@ def check_file(
             abs_path = str(Path(match["file"]).resolve())
             if not abs_path.startswith(PYTORCH_ROOT):
                 continue
+            # Skip CUTLASS template parse failures (not actionable lint).
+            if (
+                cuda_extras is not None
+                and match["code"] == "clang-diagnostic-error"
+                and "third_party/cutlass/" in abs_path
+            ):
+                continue
             message = LintMessage(
                 path=abs_path,
                 name=match["code"],
@@ -212,7 +267,7 @@ def check_file(
                 char=int(match["column"])
                 if match["column"] is not None and not match["column"].startswith("-")
                 else None,
-                code="CLANGTIDY",
+                code=code,
                 severity=severities.get(match["severity"], LintSeverity.ERROR),
                 original=None,
                 replacement=None,
@@ -252,6 +307,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--cuda",
+        action="store_true",
+        help=(
+            "Treat inputs as CUDA sources/headers. Bypasses compile_commands.json "
+            "and builds a clang -x cuda command line with --cuda-host-only."
+        ),
+    )
+    parser.add_argument(
+        "--cuda-path",
+        default=None,
+        help="CUDA toolkit path (default: $CUDA_HOME or /opt/cuda or /usr/local/cuda).",
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="verbose logging",
@@ -286,12 +354,14 @@ def main() -> None:
         stream=sys.stderr,
     )
 
+    code = "CLANGTIDY_CUDA" if args.cuda else "CLANGTIDY"
+
     if not os.path.exists(args.binary):
         err_msg = LintMessage(
             path="<none>",
             line=None,
             char=None,
-            code="CLANGTIDY",
+            code=code,
             severity=LintSeverity.ERROR,
             name="command-failed",
             original=None,
@@ -314,6 +384,28 @@ def main() -> None:
     # the following no such file or directory error: '.lintbin/clang-tidy'
     binary_path = os.path.abspath(args.binary)
 
+    cuda_extras: list[str] | None = None
+    if args.cuda:
+        cuda_path = args.cuda_path or detect_cuda_path()
+        if cuda_path is None:
+            err = LintMessage(
+                path="<none>",
+                line=None,
+                char=None,
+                code=code,
+                severity=LintSeverity.ERROR,
+                name="command-failed",
+                original=None,
+                replacement=None,
+                description=(
+                    "CUDA toolkit not found. Set --cuda-path, $CUDA_HOME, or install "
+                    "to /opt/cuda or /usr/local/cuda."
+                ),
+            )
+            print(json.dumps(err._asdict()), flush=True)
+            sys.exit(0)
+        cuda_extras = build_cuda_extra_args(cuda_path, detect_clang_resource_dir())
+
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=num_workers,
         thread_name_prefix="Thread",
@@ -325,6 +417,8 @@ def main() -> None:
                 binary_path,
                 abs_build_dir,
                 args.std,
+                cuda_extras,
+                code,
             ): filename
             for filename in args.filenames
         }
