@@ -15,7 +15,7 @@ constexpr int num_threads() {
 
 constexpr int thread_work_size() { return 4; }
 #else
-constexpr uint32_t num_threads() {
+constexpr int num_threads() {
   return C10_WARP_SIZE * 4;
 }
 
