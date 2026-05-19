@@ -75,9 +75,9 @@ __global__ void adaptivemaxpool(
   // input offset by slice/feature and earliest relevant frame/time
   const T *input_dt = input + d*istrideD + istartT*istrideT;
   // output offset by slice/feature and frame/time
-  T *output_dt = output + o_plane*osizeH*osizeW;
+  T *output_dt = output + static_cast<int64_t>(o_plane) * osizeH * osizeW;
   // indices offset by slice/feature and frame/time
-  int64_t *indices_dt = indices + o_plane*osizeH*osizeW;
+  int64_t *indices_dt = indices + static_cast<int64_t>(o_plane) * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {
@@ -180,11 +180,11 @@ __global__ void adaptivemaxgradinput(
   int d = o_plane / osizeT;     // output slice/feature
 
   // gradInput offset by slice/feature
-  T *gradInput_d = gradInput + d*isizeT*isizeH*isizeW;
+  T *gradInput_d = gradInput + static_cast<int64_t>(d) * isizeT * isizeH * isizeW;
   // gradOutput offset by slice/feature and frame/otme
-  const T *gradOutput_dt = gradOutput + o_plane*osizeH*osizeW;
+  const T *gradOutput_dt = gradOutput + static_cast<int64_t>(o_plane) * osizeH * osizeW;
   // indices offset by slice/feature and frame/otme
-  const int64_t *indices_dt = indices + o_plane*osizeH*osizeW;
+  const int64_t *indices_dt = indices + static_cast<int64_t>(o_plane) * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {
@@ -256,11 +256,11 @@ __global__ void atomicadaptivemaxgradinput(
   int d = o_plane / osizeT;     // output slice/feature
 
   // gradInput offset by slice/feature
-  T *gradInput_d = gradInput + d*isizeT*isizeH*isizeW;
+  T *gradInput_d = gradInput + static_cast<int64_t>(d) * isizeT * isizeH * isizeW;
   // gradOutput offset by slice/feature and frame/otme
-  const T *gradOutput_dt = gradOutput + o_plane*osizeH*osizeW;
+  const T *gradOutput_dt = gradOutput + static_cast<int64_t>(o_plane) * osizeH * osizeW;
   // indices offset by slice/feature and frame/otme
-  const int64_t *indices_dt = indices + o_plane*osizeH*osizeW;
+  const int64_t *indices_dt = indices + static_cast<int64_t>(o_plane) * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {

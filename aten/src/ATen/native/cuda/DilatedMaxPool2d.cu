@@ -346,9 +346,11 @@ __global__ void max_pool_backward_nhwc(const scalar_t* top_diff,
 
   out_cached = &out_cached[(threadIdx.z * blockDim.y + threadIdx.y) * kernel_size_C*blockDim.x];
 
-  bottom_diff = bottom_diff + batch_id * height * width * channels;
-  top_mask = top_mask + batch_id * pooled_height * pooled_width * channels;
-  top_diff = top_diff + batch_id * pooled_height * pooled_width * channels;
+  // Per-batch offsets may overflow int when N*C*H*W > INT_MAX; promote to
+  // int64 for the multiplication chain.
+  bottom_diff = bottom_diff + static_cast<int64_t>(batch_id) * height * width * channels;
+  top_mask = top_mask + static_cast<int64_t>(batch_id) * pooled_height * pooled_width * channels;
+  top_diff = top_diff + static_cast<int64_t>(batch_id) * pooled_height * pooled_width * channels;
 
   int iH = (height + gridDim.z-1) / gridDim.z;
   int iW = (width + gridDim.y-1) / gridDim.y;

@@ -62,10 +62,12 @@ __global__ void adaptivemaxpool(const T *input, T *output, int64_t *indices,
   int ostartH = blockDim.y*blockIdx.y + threadIdx.y;
   int oendH = osizeH;
   const int ostepH = blockDim.y*gridDim.y;
-  // select input/output plane
-  output = output + o_plane*osizeH*osizeW;
+  // select input/output plane; use int64 for the per-plane offset since
+  // o_plane * osizeH * osizeW can overflow int for tall output tensors
+  // (e.g., issue #145453: 8195 * 262143 * 1 > INT_MAX).
+  output = output + static_cast<int64_t>(o_plane) * osizeH * osizeW;
   input = input + i_plane*istrideD;
-  indices = indices + o_plane*osizeH*osizeW;
+  indices = indices + static_cast<int64_t>(o_plane) * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {
@@ -129,10 +131,10 @@ __global__ void adaptivemaxgradinput(T *gradInput, const T *gradOutput, const in
   int oendH = osizeH;
   int ostepH = blockDim.y*gridDim.y;
 
-  // select input/output plane
-  gradOutput = gradOutput + o_plane*osizeH*osizeW;
-  gradInput = gradInput + i_plane*isizeH*isizeW;
-  indices = indices + o_plane*osizeH*osizeW;
+  // select input/output plane; see note above on int64 cast.
+  gradOutput = gradOutput + static_cast<int64_t>(o_plane) * osizeH * osizeW;
+  gradInput = gradInput + static_cast<int64_t>(i_plane) * isizeH * isizeW;
+  indices = indices + static_cast<int64_t>(o_plane) * osizeH * osizeW;
 
   // compute gradInput
   for(oh = ostartH; oh < oendH; oh += ostepH) {
@@ -176,10 +178,10 @@ __global__ void atomicadaptivemaxgradinput(
   int oendH = osizeH;
   int ostepH = blockDim.y*gridDim.y;
 
-  // select input/output plane
-  gradOutput = gradOutput + o_plane*osizeH*osizeW;
-  gradInput = gradInput + i_plane*isizeH*isizeW;
-  indices = indices + o_plane*osizeH*osizeW;
+  // select input/output plane; see note above on int64 cast.
+  gradOutput = gradOutput + static_cast<int64_t>(o_plane) * osizeH * osizeW;
+  gradInput = gradInput + static_cast<int64_t>(i_plane) * isizeH * isizeW;
+  indices = indices + static_cast<int64_t>(o_plane) * osizeH * osizeW;
 
   // compute gradInput
   for(oh = ostartH; oh < oendH; oh += ostepH) {
