@@ -119,9 +119,9 @@ __global__ static void max_pool3d_with_indices_single_out_frame(
 
     int64_t out_index;
     if (!channels_last) {
-      out_index = (int64_t) slice*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn;
+      out_index = (int64_t) slice*otime*oheight*owidth + static_cast<int64_t>(oFrame)*oheight*owidth + oRow*owidth + oColumn;
     } else {
-      out_index = ((int64_t) batch*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn)*features + channel;
+      out_index = ((int64_t) batch*otime*oheight*owidth + static_cast<int64_t>(oFrame)*oheight*owidth + oRow*owidth + oColumn)*features + channel;
     }
     outputData[out_index] = max;
     indicesData[out_index] = maxIndex;
@@ -218,9 +218,9 @@ __global__ static void max_pool3d_with_indices_backward_single_out_frame(
   {
     int64_t out_index;
     if (!channels_last) {
-      out_index = (int64_t) slice*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn;
+      out_index = (int64_t) slice*otime*oheight*owidth + static_cast<int64_t>(oFrame)*oheight*owidth + oRow*owidth + oColumn;
     } else {
-      out_index = ((int64_t) batch*otime*oheight*owidth + oFrame*oheight*owidth + oRow*owidth + oColumn)*features + channel;
+      out_index = ((int64_t) batch*otime*oheight*owidth + static_cast<int64_t>(oFrame)*oheight*owidth + oRow*owidth + oColumn)*features + channel;
     }
     int64_t maxIndex = indicesData[out_index];
     if (maxIndex != -1) {

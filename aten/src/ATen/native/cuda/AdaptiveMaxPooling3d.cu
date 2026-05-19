@@ -64,8 +64,9 @@ __global__ void adaptivemaxpool(
 
   // select output plane
   int64_t o_plane = blockIdx.x + offsetZ;
-  ot = o_plane % osizeT;     // output frame/time
-  int d = o_plane / osizeT;  // slice/feature
+  ot = o_plane % osizeT;         // output frame/time
+  int64_t d = o_plane / osizeT;  // slice/feature; int64 so o_plane / osizeT
+                                 // does not truncate when totalZ > INT_MAX.
 
   // input frame/time ramge is fixed.
   int istartT = start_index(ot, osizeT, isizeT);
@@ -75,9 +76,9 @@ __global__ void adaptivemaxpool(
   // input offset by slice/feature and earliest relevant frame/time
   const T *input_dt = input + d*istrideD + istartT*istrideT;
   // output offset by slice/feature and frame/time
-  T *output_dt = output + o_plane*osizeH*osizeW;
+  T *output_dt = output + o_plane * osizeH * osizeW;
   // indices offset by slice/feature and frame/time
-  int64_t *indices_dt = indices + o_plane*osizeH*osizeW;
+  int64_t *indices_dt = indices + o_plane * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {
@@ -177,14 +178,15 @@ __global__ void adaptivemaxgradinput(
 
   // select output plane
   int64_t o_plane = blockIdx.x + offsetZ;
-  int d = o_plane / osizeT;     // output slice/feature
+  int64_t d = o_plane / osizeT;  // output slice/feature; int64 so o_plane /
+                                 // osizeT does not truncate when totalZ > INT_MAX.
 
   // gradInput offset by slice/feature
-  T *gradInput_d = gradInput + d*isizeT*isizeH*isizeW;
+  T *gradInput_d = gradInput + d * isizeT * isizeH * isizeW;
   // gradOutput offset by slice/feature and frame/otme
-  const T *gradOutput_dt = gradOutput + o_plane*osizeH*osizeW;
+  const T *gradOutput_dt = gradOutput + o_plane * osizeH * osizeW;
   // indices offset by slice/feature and frame/otme
-  const int64_t *indices_dt = indices + o_plane*osizeH*osizeW;
+  const int64_t *indices_dt = indices + o_plane * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {
@@ -253,14 +255,15 @@ __global__ void atomicadaptivemaxgradinput(
 
   // select output plane
   int64_t o_plane = blockIdx.x + offsetZ;
-  int d = o_plane / osizeT;     // output slice/feature
+  int64_t d = o_plane / osizeT;  // output slice/feature; int64 so o_plane /
+                                 // osizeT does not truncate when totalZ > INT_MAX.
 
   // gradInput offset by slice/feature
-  T *gradInput_d = gradInput + d*isizeT*isizeH*isizeW;
+  T *gradInput_d = gradInput + d * isizeT * isizeH * isizeW;
   // gradOutput offset by slice/feature and frame/otme
-  const T *gradOutput_dt = gradOutput + o_plane*osizeH*osizeW;
+  const T *gradOutput_dt = gradOutput + o_plane * osizeH * osizeW;
   // indices offset by slice/feature and frame/otme
-  const int64_t *indices_dt = indices + o_plane*osizeH*osizeW;
+  const int64_t *indices_dt = indices + o_plane * osizeH * osizeW;
 
   // For all output pixels...
   for(oh = ostartH; oh < oendH; oh += ostepH) {

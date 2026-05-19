@@ -480,7 +480,7 @@ namespace {
         // preserve channels_last stride on output tensor;
         if (!output.is_contiguous(at::MemoryFormat::ChannelsLast)) {
           // TODO: modify this after resize_ added `memory_format` tag
-          output.resize_({sizeB, sizeC, osizeH, osizeW}).as_strided_({sizeB, sizeC, osizeH, osizeW}, {sizeC*osizeH*osizeW, 1, osizeW*sizeC, sizeC});
+          output.resize_({sizeB, sizeC, osizeH, osizeW}).as_strided_({sizeB, sizeC, osizeH, osizeW}, {static_cast<int64_t>(sizeC)*osizeH*osizeW, 1, osizeW*sizeC, sizeC});
         }
 
         if (output.numel() == 0) {
@@ -638,7 +638,7 @@ namespace {
         if (!gradInput.is_contiguous(at::MemoryFormat::ChannelsLast)) {
           gradInput.as_strided_(
               {sizeB, sizeC, isizeH, isizeW},
-              {sizeC*isizeH*isizeW, 1, isizeW*sizeC, sizeC});
+              {static_cast<int64_t>(sizeC)*isizeH*isizeW, 1, isizeW*sizeC, sizeC});
         }
 
         int max_threads = std::min<int>(
