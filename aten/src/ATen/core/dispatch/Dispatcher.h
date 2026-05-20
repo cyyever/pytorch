@@ -723,7 +723,7 @@ inline Return Dispatcher::callWithDispatchKeySlowPath(
     if (guard.needsInputs()) {
       // If we used std::array<IValue, num_boxed_args> here, we would
       // have to spend time default constructing the IValues in
-      // boxedArgs. aligned_storage has no such requirement.
+      // boxedArgs. A raw byte buffer has no such requirement.
       // NOLINTNEXTLINE(*array*)
       alignas(IValue) std::byte boxedArgs[num_boxed_args * sizeof(IValue)];
       // For debugging only; could be removed (but the compiler will do
