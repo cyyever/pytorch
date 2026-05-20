@@ -304,18 +304,20 @@ struct PyCompilerInterfaceImpl : PyCompilerInterface {
 };
 
 static PyObject* wrap_int_list(const std::vector<int64_t>& inputs) {
-  PyObject* pyinput = PyList_New(static_cast<Py_ssize_t>(inputs.size()));
-  for (const auto i : c10::irange(inputs.size())) {
-    PyList_SET_ITEM(pyinput, i, PyLong_FromSsize_t(inputs[i]));
+  PyObject* pyinput = PyList_New(std::ssize(inputs));
+  Py_ssize_t i = 0;
+  for (int64_t v : inputs) {
+    PyList_SET_ITEM(pyinput, i++, PyLong_FromSsize_t(v));
   }
   return pyinput;
 }
 
 static PyObject* convert_pyobj_list(std::vector<c10::SafePyObject>& inputs) {
   // inplace, consumes the input hooks
-  PyObject* pyinput = PyTuple_New(static_cast<Py_ssize_t>(inputs.size()));
-  for (const auto i : c10::irange(inputs.size())) {
-    PyTuple_SET_ITEM(pyinput, i, inputs[i].release());
+  PyObject* pyinput = PyTuple_New(std::ssize(inputs));
+  Py_ssize_t i = 0;
+  for (auto& obj : inputs) {
+    PyTuple_SET_ITEM(pyinput, i++, obj.release());
   }
   return pyinput;
 }
@@ -409,7 +411,7 @@ struct VerboseLogger : public PythonLogger {
       const CacheKey& key,
       size_t node_idx) {
     std::string node_name =
-        fn.name() + " (NodeCall " + std::to_string(node_idx) + ")";
+        fmt::format("{} (NodeCall {})", fn.name(), node_idx);
     return _log_node_miss(typeid(fn), cached_keys, key, node_name);
   }
 
@@ -564,14 +566,11 @@ struct CacheNode {
   }
 
   PyObject* wrap_dynamic_inputs() const {
-    size_t dynamic_count = 0;
-    size_t idx = 0;
-    for (const auto& i : expected_sizes) {
-      if (i.dyn_type == SizeInput::DYNAMIC) {
-        ++dynamic_count;
-      }
-    }
-    PyObject* pyinput = PyTuple_New(static_cast<Py_ssize_t>(dynamic_count));
+    auto dynamic_count = std::ranges::count_if(
+        expected_sizes,
+        [](const SizeInput& i) { return i.dyn_type == SizeInput::DYNAMIC; });
+    PyObject* pyinput = PyTuple_New(dynamic_count);
+    Py_ssize_t idx = 0;
     for (const auto& i : expected_sizes) {
       if (i.dyn_type == SizeInput::DYNAMIC) {
         PyTuple_SET_ITEM(pyinput, idx++, PyLong_FromSsize_t(i.value));
@@ -673,9 +672,8 @@ static struct PyModuleDef _module = {
 
 static PyObject* wrap_lifted_ivalue_args(
     const std::vector<LiftedIValueArg>& lifted_ivalue_args) {
-  PyObject* pyivalueargs =
-      PyList_New(static_cast<Py_ssize_t>(lifted_ivalue_args.size()));
-  size_t idx = 0;
+  PyObject* pyivalueargs = PyList_New(std::ssize(lifted_ivalue_args));
+  Py_ssize_t idx = 0;
   for (const auto& arg : lifted_ivalue_args) {
     if (arg.actual_ptr->isInt() || arg.actual_ptr->isSymInt()) {
       PyList_SET_ITEM(
@@ -705,20 +703,20 @@ static PyObject* wrap_node_origins(
       (compiler.lifted_ivalue_args.args_origins.size() ==
        compiler.lifted_ivalue_args.args.size()));
   PyObject* pyallorigins = PyList_New(3);
-  size_t next = 0;
+  Py_ssize_t next = 0;
   for (const std::vector<uint32_t>& vec :
        {compiler.tensor_args.input_origins,
         compiler.size_input_origins,
         compiler.lifted_ivalue_args.args_origins}) {
-    PyObject* pyorigins = PyList_New(static_cast<Py_ssize_t>(vec.size()));
-    for (const auto i : c10::irange(vec.size())) {
-      uint32_t node_id = vec[i];
+    PyObject* pyorigins = PyList_New(std::ssize(vec));
+    Py_ssize_t i = 0;
+    for (uint32_t node_id : vec) {
       PyObject* pyorigin = PyTuple_Pack(
           2,
           THPUtils_packUInt32(node_id),
           PyUnicode_FromString(
               compiler.node_calls.lookup(node_id).node->name().c_str()));
-      PyList_SET_ITEM(pyorigins, i, pyorigin);
+      PyList_SET_ITEM(pyorigins, i++, pyorigin);
     }
     PyList_SET_ITEM(pyallorigins, next++, pyorigins);
   }
@@ -726,10 +724,10 @@ static PyObject* wrap_node_origins(
 }
 
 static PyObject* wrap_string_list(const std::vector<std::string>& strs) {
-  PyObject* pystrs = PyList_New(static_cast<Py_ssize_t>(strs.size()));
-  for (const auto i : c10::irange(strs.size())) {
-    PyObject* pystr = PyUnicode_FromString(strs[i].c_str());
-    PyList_SET_ITEM(pystrs, i, pystr);
+  PyObject* pystrs = PyList_New(std::ssize(strs));
+  Py_ssize_t i = 0;
+  for (const auto& s : strs) {
+    PyList_SET_ITEM(pystrs, i++, PyUnicode_FromString(s.c_str()));
   }
   return pystrs;
 }
@@ -1218,7 +1216,7 @@ static variable_list compiled_autograd(
     TORCH_INTERNAL_ASSERT(c10::impl::TorchDispatchModeTLS::stack_len() == 0);
   } catch (const c10::NotImplementedError& e) {
     TORCH_CHECK_NOT_IMPLEMENTED(
-        false, std::string(e.what()) + " " + TURN_OFF_COMPILED_AUTOGRAD_MSG());
+        false, fmt::format("{} {}", e.what(), TURN_OFF_COMPILED_AUTOGRAD_MSG()));
   }
   TORCH_INTERNAL_ASSERT(cache != nullptr);
 

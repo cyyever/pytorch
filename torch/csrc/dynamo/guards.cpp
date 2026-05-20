@@ -1484,7 +1484,7 @@ bool check_overlapping(
   auto range = c10::irange(overlapping.size());
   return indices.size() == overlapping.size() &&
       std::all_of(range.begin(), range.end(), [&](int64_t i) {
-           return indices.count(i) == 1;
+           return indices.contains(i);
          });
 }
 
@@ -3618,7 +3618,7 @@ class GuardManager {
     if (!_disable_dict_tag_matching) {
       if (_is_tag_safe_root) {
         // Check if the `value` object was recorded earlier
-        if (_dict_pointers.find(value) != _dict_pointers.end()) {
+        if (_dict_pointers.contains(value)) {
           // Check for fast path
           // if (is_weakref_valid(value) && check_dict_pointer_tags(value)) {
           if (check_dict_pointer_tags(value) &&
@@ -3806,7 +3806,7 @@ class GuardManager {
         auto& managers = map[dict_pointer];
 
         // (1) Always: remove this manager from the per-dict list.
-        auto it = std::find(managers.begin(), managers.end(), this);
+        auto it = std::ranges::find(managers, this);
         if (it != managers.end()) {
           managers.erase(it);
         }
@@ -3884,9 +3884,8 @@ class GuardManager {
       // popping and creating a new pq on each run_guards. Moreover, this sort
       // is happening on the unhappy path when check_verbose guard
       // fails. So, its probably ok.
-      std::sort(
-          _accessors.begin(),
-          _accessors.end(),
+      std::ranges::sort(
+          _accessors,
           [](const std::unique_ptr<GuardAccessor>& a,
              const std::unique_ptr<GuardAccessor>& b) {
             return a->get_guard_manager()->fail_count() >
@@ -4760,7 +4759,7 @@ class DictGuardManager : public GuardManager {
     }
     _indices.push_back(index);
     // Always keep the _indices array sorted
-    std::sort(_indices.begin(), _indices.end());
+    std::ranges::sort(_indices);
     _key_value_managers[index] = std::make_pair(nullptr, nullptr);
     return _key_value_managers[index];
   }
@@ -5129,8 +5128,8 @@ class GetAttrGuardAccessor : public GuardAccessor {
 
   std::string repr() const override {
     // Helpful when printing GuardManager tree structure.
-    return "GetAttrGuardAccessor(" + py::str(_attr_name).cast<std::string>() +
-        ")";
+    return fmt::format(
+        "GetAttrGuardAccessor({})", py::str(_attr_name).cast<std::string>());
   }
 
   std::string get_attr_name() {
@@ -5360,8 +5359,8 @@ class GetItemGuardAccessor : public GuardAccessor {
   }
 
   std::string repr() const override {
-    return "GetItemGuardAccessor(" + py::str(_attr_name).cast<std::string>() +
-        ")";
+    return fmt::format(
+        "GetItemGuardAccessor({})", py::str(_attr_name).cast<std::string>());
   }
 
  public: // cloning functions
@@ -5565,8 +5564,8 @@ class DictGetItemGuardAccessor : public GuardAccessor {
   }
 
   std::string repr() const override {
-    return "DictGetItemGuardAccessor(" + py::repr(_key).cast<std::string>() +
-        ")";
+    return fmt::format(
+        "DictGetItemGuardAccessor({})", py::repr(_key).cast<std::string>());
   }
 
  public: // cloning functions
@@ -6002,8 +6001,8 @@ class IndexedGuardAccessor : public GuardAccessor {
 
   std::string repr() const override {
     // Helpful when printing GuardManager tree structure.
-    return "IndexedGuardAccesor(" +
-        std::to_string(py::cast<Py_ssize_t>(_index)) + ")";
+    return fmt::format(
+        "IndexedGuardAccesor({})", py::cast<Py_ssize_t>(_index));
   }
 
  public: // cloning functions
