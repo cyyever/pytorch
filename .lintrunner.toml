@@ -360,6 +360,34 @@ command = [
 ]
 
 [[linter]]
+code = 'FUSE_PATTERNS'
+include_patterns = ['**/*.py']
+exclude_patterns = [
+    'caffe2/**',
+    'fb/**',
+    '**/fb/**',
+    'third_party/**',
+    'torch/_vendor/**',
+    # SDPA/flash kernels and quantized MHA require contiguous strides.
+    'torch/nn/attention/**',
+    'torch/ao/nn/quantizable/**',
+    # Legacy autograd View Function: contiguous-then-view is the semantic.
+    'torch/autograd/_functions/**',
+    # FX pattern matchers must spell ops literally to match user graphs.
+    'torch/_inductor/fx_passes/**',
+    # Docstrings spell out alternative forms intentionally.
+    'torch/_torch_docs.py',
+    'torch/_tensor_docs.py',
+    'test/**',
+]
+command = [
+    'python3',
+    'tools/linter/adapters/fuse_pattern_linter.py',
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
 code = 'NATIVEFUNCTIONS'
 include_patterns=['aten/src/ATen/native/native_functions.yaml']
 command = [
