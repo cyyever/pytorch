@@ -144,22 +144,42 @@ namespace {
         for (auto& x : ref_storage) {
             x = generator.get();
         }
-        // test counted load stores
-#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
+        // test counted loads: loadu(ptr, i) must read only the first i lanes.
+        // Place those lanes at the tail of a heap buffer so that reading past
+        // lane i lands in the allocation's redzone, tripping ASAN/valgrind.
+        std::vector<unsigned char> load_src(b_size);
         for (int i = 1; i < 2 * vec::size(); i++) {
-            vec v = vec::loadu(ref_storage, i);
+            size_t nbytes = std::min<size_t>(i, vec::size()) * sizeof(VT);
+            unsigned char* src = load_src.data() + (b_size - nbytes);
+            std::memcpy(src, ref_storage, nbytes);
+            vec v = vec::loadu(src, i);
             v.store(storage);
-            size_t count = std::min(i * sizeof(VT), b_size);
-            bool cmp = (std::memcmp(ref_storage, storage, count) == 0);
+            bool cmp = (std::memcmp(ref_storage, storage, nbytes) == 0);
             ASSERT_TRUE(cmp) << "Failure Details:\nTest Seed to reproduce: " << seed
                 << "\nCount: " << i;
             if (::testing::Test::HasFailure()) {
                 break;
             }
-            // clear storage
-            std::memset(storage, 0, b_size);
         }
-#endif
+        // test counted stores: store(ptr, i) must write the first i lanes and
+        // leave bytes past i*sizeof(VT) untouched.
+        for (int i = 1; i < 2 * vec::size(); i++) {
+            vec v = vec::loadu(ref_storage);
+            std::memset(storage, 0xCC, b_size);
+            v.store(storage, i);
+            size_t written = std::min<size_t>(i, vec::size()) * sizeof(VT);
+            bool head_ok = std::memcmp(ref_storage, storage, written) == 0;
+            bool tail_ok = std::ranges::all_of(
+                storage + written, storage + b_size,
+                [](unsigned char b) { return b == 0xCC; });
+            ASSERT_TRUE(head_ok && tail_ok)
+                << "Failure Details:\nTest Seed to reproduce: " << seed
+                << "\nCount: " << i
+                << "\nhead_ok=" << head_ok << " tail_ok=" << tail_ok;
+            if (::testing::Test::HasFailure()) {
+                break;
+            }
+        }
         // testing unaligned load store
         for (size_t offset = 0; offset < b_size; offset += 1) {
             unsigned char* p1 = ref_storage + offset;
