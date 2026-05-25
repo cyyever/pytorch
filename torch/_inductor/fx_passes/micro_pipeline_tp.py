@@ -424,7 +424,7 @@ class _Matmul:
             with graph.inserting_after(new_node):
                 new_mm_node = graph.call_function(
                     aten.reshape.default,
-                    args=(new_node, list(_get_tensor(mm_node).shape)),
+                    args=(new_node, _get_tensor(mm_node).shape),
                 )
             mm_node.replace_all_uses_with(new_mm_node)
 
@@ -960,8 +960,8 @@ def fuse_matmul_reduce_scatter(reduce_scatter: _ReduceScatterMatch) -> None:
     if matmul.post_mm_reshape:
         output_shape = list(_get_tensor(matmul.post_mm_reshape).shape)
     else:
-        A_orig_shape = list(_get_tensor(matmul.A_node).shape)
-        B_shape = list(_get_tensor(matmul.B_node).shape)
+        A_orig_shape = _get_tensor(matmul.A_node).shape
+        B_shape = _get_tensor(matmul.B_node).shape
         output_shape = [*A_orig_shape[:-1], B_shape[-1]]
 
     graph = rs_wait_tensor_node.graph

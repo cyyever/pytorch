@@ -387,7 +387,7 @@ def _get_tensor_meta(node: fx.Node) -> dict[str, Any] | None:
         return None
 
     return {
-        "shape": tuple(val.shape),
+        "shape": val.shape,
         "dtype": val.dtype,
         "device": val.device,
         "numel": val.numel(),

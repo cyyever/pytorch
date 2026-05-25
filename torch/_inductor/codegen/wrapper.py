@@ -2654,7 +2654,7 @@ class PythonWrapperCodegen(CodeGen):
                     )
                     storage_groups[storage_key] = group
 
-                group.inputs[name] = (list(ex.shape), list(ex.stride()))
+                group.inputs[name] = (ex.shape, list(ex.stride()))
 
         # Generate get_args() to create input tensors separately from benchmarking
         output.writelines(["", "", "def get_args():"])

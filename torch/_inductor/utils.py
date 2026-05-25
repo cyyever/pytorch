@@ -4843,7 +4843,7 @@ def infer_scale_swizzle(
     """
     return _infer_scale_swizzle_impl(
         mat_size=(mat.shape[0], mat.shape[1]),
-        scale_size=tuple(scale.shape),
+        scale_size=scale.shape,
         scale_numel=scale.numel(),
         mat_dtype=mat.dtype,
         scale_dtype=scale.dtype,

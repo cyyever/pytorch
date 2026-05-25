@@ -539,7 +539,7 @@ class SizeHintMultiKernelCall(MultiKernelCall):
         shapes = []
         for arg in args:
             if hasattr(arg, "shape"):
-                shapes.append(tuple(arg.shape))
+                shapes.append(arg.shape)
         return tuple(shapes)
 
     def _get_cached_shape_choice(self, cache_key):

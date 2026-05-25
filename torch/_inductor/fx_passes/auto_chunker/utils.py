@@ -75,7 +75,7 @@ def format_node_with_chunking_meta(
     from .core import get_chunking_meta
 
     fake_tensor = get_fake_tensor_from_node_arg(node)
-    shape = list(fake_tensor.shape) if fake_tensor is not None else "?"
+    shape = fake_tensor.shape if fake_tensor is not None else "?"
     print(f"  {shape} {node.format_node()}")
 
     if meta := get_chunking_meta(node):

@@ -466,7 +466,7 @@ def normalize_reshape_default(match: Match, *args, **kwargs):
     with match.graph.inserting_after(reshape_node):
         new_reshape_node = match.graph.call_function(
             torch.reshape,
-            args=(reshape_input, tuple(reshape_node.meta["example_value"].shape)),
+            args=(reshape_input, reshape_node.meta["example_value"].shape),
         )
     reshape_node.replace_all_uses_with(new_reshape_node)
     new_reshape_node.meta.update(reshape_node.meta)
@@ -2186,7 +2186,7 @@ def update_args_from_unbind_getitem(
     unbind_dim = get_arg_value(parents_seen[-1], 1, "dim")  # split or unbind dim
     cat_dim = get_arg_value(node, 1, "dim")  # cat or stack dim
     # case 1: the number of getitems is the same as the split size, eliminate the split
-    size = list(unbind_input.meta["example_value"].shape)[unbind_dim]
+    size = unbind_input.meta["example_value"].shape[unbind_dim]
     if size == len(getitem_indices):
         cat_shape = torch.cat(
             [idx_to_getitems[i].meta["example_value"] for i in getitem_indices],
@@ -2972,7 +2972,7 @@ def move_view_after_cat(match: Match, *args, **kwargs):
         with graph.inserting_before(cat_node):
             view_node = graph.call_function(
                 torch.ops.aten.reshape.default,
-                args=(permute_node, list(cat_node.meta["val"].shape)),
+                args=(permute_node, cat_node.meta["val"].shape),
             )
             cat_node.replace_all_uses_with(view_node)
             view_node.meta.update(cat_node.meta)

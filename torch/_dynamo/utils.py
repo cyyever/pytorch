@@ -3536,7 +3536,7 @@ def same(
                             int(union.item()),
                             int(ref.sum().item()),
                             int(res.sum().item()),
-                            list(ref.shape),
+                            ref.shape,
                         )
                         return False
                     return True

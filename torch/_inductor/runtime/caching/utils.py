@@ -60,7 +60,7 @@ def _encode_tensor(t: Tensor) -> EncodedTensor:
         Dict containing shape, stride, and dtype information
     """
     return EncodedTensor(
-        shape=tuple(t.shape),
+        shape=t.shape,
         stride=tuple(t.stride()),
         dtype=str(t.dtype),
     )

@@ -4559,7 +4559,7 @@ def _wrap_to_fake_tensor_and_record_impl(
         log.debug(
             "wrap_to_fake %s %s %s %s",
             source.name,
-            tuple(e.shape),
+            e.shape,
             symbolic_context,
             type(e),
         )

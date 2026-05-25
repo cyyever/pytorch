@@ -713,8 +713,8 @@ def _find_chunk_dim_after_reshape(
 def propagate_view(view_node: Node) -> _HandlerRetType:
     input_node = view_node.args[0]
     assert isinstance(input_node, Node)
-    input_shape = list(get_fake_tensor_from_node_arg(input_node).shape)  # type: ignore[union-attr]
-    output_shape = list(get_fake_tensor_from_node_arg(view_node).shape)  # type: ignore[union-attr]
+    input_shape = get_fake_tensor_from_node_arg(input_node).shape  # type: ignore[union-attr]
+    output_shape = get_fake_tensor_from_node_arg(view_node).shape  # type: ignore[union-attr]
 
     def fwd() -> PropagateStatus:
         assert isinstance(input_node, Node)
@@ -764,8 +764,8 @@ def propagate_expand(expand_node: Node) -> _HandlerRetType:
     assert input_ft is not None
     output_ft = get_fake_tensor_from_node_arg(expand_node)
     assert output_ft is not None
-    input_shape = list(input_ft.shape)
-    output_shape = list(output_ft.shape)
+    input_shape = input_ft.shape
+    output_shape = output_ft.shape
 
     if input_ft.numel() == 1:
         # Scalar input: combined fwd/bwd rule
