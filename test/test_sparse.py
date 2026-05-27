@@ -1967,31 +1967,38 @@ class TestSparse(TestSparseBase):
     @dtypes(torch.double, torch.cdouble)
     @dtypesIfMPS(torch.float32, torch.complex64)
     def test_norm(self, device, dtype, coalesced):
+        # Downcast to a different precision in the same domain so the
+        # in-kernel .to(target_dtype) is not a no-op. Skip when no safe
+        # smaller dtype is available for the current device.
+        target_dtype = {
+            torch.float64: torch.float32,
+            torch.complex128: torch.complex64,
+        }.get(dtype)
+
         def test_shape(sparse_dims, nnz, with_size):
             x, _, _ = self._gen_sparse(sparse_dims, nnz, with_size, dtype, device, coalesced)
             y = x.coalesce()
-            self.assertEqual(
-                torch.linalg.vector_norm(x),
-                torch.linalg.vector_norm(y._values()),
-            )
+            ref = torch.linalg.vector_norm(y._values())
+            self.assertEqual(torch.linalg.vector_norm(x), ref)
+            kd = torch.linalg.vector_norm(x, keepdim=True)
+            self.assertEqual(kd.shape, torch.Size([1] * x.dim()))
+            self.assertEqual(kd, ref.expand(kd.shape))
+            if target_dtype is not None:
+                self.assertEqual(
+                    torch.linalg.vector_norm(x, dtype=target_dtype),
+                    torch.linalg.vector_norm(y._values().to(target_dtype)),
+                )
 
         test_shape(3, 10, 100)
         test_shape(4, 10, [100, 100, 100, 5, 5, 5, 0])
         test_shape(4, 0, [0, 0, 100, 5, 5, 5, 0])
 
-        # Unsupported arguments should error
-        kwarg_error_pairs = [
-            ({'keepdim': True},
-             RuntimeError, r'norm_sparse currently does not support keepdim=True'),
-            ({'dim': 0},
-             RuntimeError, r'norm_sparse currently only supports full reductions'),
-            ({'dtype': torch.double, 'ord': 0},
-             RuntimeError, r"norm_sparse currently does not support 'dtype' argument"),
-        ]
+        # Partial-dim reductions are still unsupported
         x = self._gen_sparse(3, 10, 100, dtype, device, coalesced)[0]
-        for kwargs, err, msg in kwarg_error_pairs:
-            with self.assertRaisesRegex(err, msg):
-                torch.linalg.vector_norm(x, **kwargs)
+        with self.assertRaisesRegex(
+            RuntimeError, r'norm on sparse tensors only supports full reductions'
+        ):
+            torch.linalg.vector_norm(x, dim=0)
 
     @coalescedonoff
     @dtypes(torch.double)

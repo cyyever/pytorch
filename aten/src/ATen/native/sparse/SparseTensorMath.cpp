@@ -372,13 +372,19 @@ Tensor norm_sparse(const SparseTensor& self, const std::optional<Scalar>& p, Int
       }
     }
     TORCH_CHECK(passed_full_reduction_check,
-      "norm_sparse currently only supports full reductions, so 'dim' must either be empty or contain all dimensions of the input");
+      "norm on sparse tensors only supports full reductions: 'dim' must either be empty or contain all dimensions of the input");
   }
-  TORCH_CHECK(keepdim == false, "norm_sparse currently does not support keepdim=True");
-  TORCH_CHECK(!dtype.has_value(), "norm_sparse currently does not support 'dtype' argument");
   constexpr auto TWO = 2.0;
   auto p_ = p.value_or(TWO);
-  return self.coalesce()._values().norm(p_);
+  auto values = self.coalesce()._values();
+  if (dtype.has_value()) {
+    values = values.to(*dtype);
+  }
+  auto result = values.norm(p_);
+  if (keepdim) {
+    result = result.view(at::DimVector(self.dim(), 1));
+  }
+  return result;
 }
 
 // --------------------------------------------------------------------
