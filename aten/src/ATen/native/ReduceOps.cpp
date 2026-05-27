@@ -1644,6 +1644,16 @@ Tensor sparse_dtype_norm(
   return at::native_norm(self, p, dim, keepdim, dtype);
 }
 
+Tensor linalg_vector_norm_sparse(
+    const Tensor& self,
+    const Scalar& ord,
+    OptionalIntArrayRef opt_dim,
+    bool keepdim,
+    std::optional<ScalarType> opt_dtype) {
+  return at::native_norm(
+      self, ord, opt_dim.value_or(IntArrayRef{}), keepdim, opt_dtype);
+}
+
 Tensor norm(const Tensor& self, const std::optional<Scalar>& p, ScalarType dtype) {
   return at::norm(self, p, IntArrayRef{}, false, dtype);
 }
