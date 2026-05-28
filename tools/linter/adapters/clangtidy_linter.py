@@ -200,6 +200,7 @@ def build_cuda_extra_args(cuda_path: str, resource_dir: str | None) -> list[str]
     extras = [
         "-x",
         "cuda",
+        "-std=c++20",
         f"--cuda-path={cuda_path}",
         "--no-cuda-version-check",
         "--cuda-host-only",
