@@ -18,7 +18,7 @@
 namespace at::native {
 
 // Helper to check if all tensors in a list are 0D (scalar tensors)
-inline bool all_tensors_are_0d(TensorList tensors) {
+static inline bool all_tensors_are_0d(TensorList tensors) {
   return std::all_of(tensors.begin(), tensors.end(), [](const Tensor& t) {
     return t.dim() == 0;
   });
@@ -31,7 +31,7 @@ inline bool all_same_dtype(TensorList tensors, ScalarType dtype) {
   });
 }
 
-inline bool all_same_device(TensorList tensors, Device device) {
+static inline bool all_same_device(TensorList tensors, Device device) {
   return std::all_of(tensors.begin(), tensors.end(), [device](const Tensor& t) {
     return t.device() == device;
   });
@@ -39,7 +39,7 @@ inline bool all_same_device(TensorList tensors, Device device) {
 
 // Inplace variant for when tensor1 is a list of 0D tensors (scalars)
 template <template <class> class Op>
-void foreach_pointwise_op_0d_tensor1_(
+static void foreach_pointwise_op_0d_tensor1_(
     TensorList input,
     TensorList tensors1,
     TensorList tensors2,
@@ -68,7 +68,7 @@ void foreach_pointwise_op_0d_tensor1_(
 }
 
 template <template <class> class Op>
-std::vector<Tensor> foreach_pointwise_op(
+static std::vector<Tensor> foreach_pointwise_op(
     TensorList input,
     TensorList tensors1,
     TensorList tensors2,
@@ -107,7 +107,7 @@ std::vector<Tensor> foreach_pointwise_op(
 // tensor_lists: input, tensor1 (0D), tensor2, output
 // The 0D tensor1 values are loaded from device memory in the functor
 template <template <class> class Op>
-std::vector<Tensor> foreach_pointwise_op_0d_tensor1(
+static std::vector<Tensor> foreach_pointwise_op_0d_tensor1(
     TensorList input,
     TensorList tensors1,
     TensorList tensors2,
@@ -143,7 +143,7 @@ std::vector<Tensor> foreach_pointwise_op_0d_tensor1(
 }
 
 template <template <class> class Op>
-void foreach_pointwise_op_(
+static void foreach_pointwise_op_(
     TensorList input,
     TensorList tensors1,
     TensorList tensors2,
