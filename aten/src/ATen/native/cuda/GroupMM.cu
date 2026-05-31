@@ -93,7 +93,7 @@ void bf16bf16_grouped_gemm_impl_sm90_sm100(
     at::Tensor mat_a, // bf16
     at::Tensor mat_b, // bf16
     std::optional<at::Tensor> offs,
-    std::optional<at::Tensor> bias, // BF16
+    [[maybe_unused]] std::optional<at::Tensor> bias, // BF16, not yet wired up
     at::Tensor& out) {
   using DtypeA = cutlass::bfloat16_t;
   using DtypeB = cutlass::bfloat16_t;

@@ -131,7 +131,7 @@ void f8f8bf16_grouped_gemm_impl_sm90(
     at::Tensor scale_a, // FP32
     at::Tensor scale_b, // FP32
     std::optional<at::Tensor> offs,
-    std::optional<at::Tensor> bias, // BF16
+    [[maybe_unused]] std::optional<at::Tensor> bias, // BF16, not yet wired up
     bool use_fast_accum,
     at::Tensor& out) {
   using DtypeA = cutlass::float_e4m3_t;
