@@ -16,8 +16,8 @@
 #include <c10/core/ScalarType.h>
 #include <c10/core/TensorOptions.h>
 #include <c10/util/Exception.h>
-#include <c10/util/MathConstants.h>
 #include <c10/util/irange.h>
+#include <numbers>
 
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
@@ -1941,9 +1941,10 @@ Tensor blackman_window(
     window_length += 1;
   }
   // from https://en.wikipedia.org/wiki/Window_function#Blackman_window
-  auto window =
-      native::arange(window_length, dtype, layout, device, pin_memory)
-          .mul_(c10::pi<double> / static_cast<double>(window_length - 1));
+  auto window = native::arange(window_length, dtype, layout, device, pin_memory)
+                    .mul_(
+                        std::numbers::pi_v<double> /
+                        static_cast<double>(window_length - 1));
   window =
       window.mul(4).cos_().mul_(0.08) - window.mul(2).cos_().mul_(0.5) + 0.42;
   return periodic ? window.narrow(0, 0, window_length - 1) : std::move(window);
@@ -2024,7 +2025,10 @@ Tensor hamming_window(
   }
   auto window =
       native::arange(window_length, dtype, layout, device, pin_memory);
-  window.mul_(c10::pi<double> * 2. / static_cast<double>(window_length - 1))
+  window
+      .mul_(
+          std::numbers::pi_v<double> * 2. /
+          static_cast<double>(window_length - 1))
       .cos_()
       .mul_(-beta)
       .add_(alpha);

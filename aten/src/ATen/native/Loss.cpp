@@ -11,6 +11,8 @@
 #include <c10/util/Exception.h>
 #include <ATen/TensorSubclassLikeUtils.h>
 
+#include <numbers>
+
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
@@ -373,8 +375,9 @@ Tensor poisson_nll_loss(const Tensor& input, const Tensor& target, const bool lo
     }
 
     if (full) {
-        auto stirling_term = target * at::log(target) - target + 0.5 * at::log(2 * c10::pi<double> * target);
-        loss += stirling_term.masked_fill(target <= 1, 0);
+      auto stirling_term = target * at::log(target) - target +
+          0.5 * at::log(2 * std::numbers::pi_v<double> * target);
+      loss += stirling_term.masked_fill(target <= 1, 0);
     }
 
     return apply_loss_reduction(loss, reduction);

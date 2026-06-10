@@ -11,6 +11,8 @@
 #include <ATen/native/cpu/UpSampleKernelAVXAntialias.h>
 #include <ATen/native/cpu/UpSampleKernelNEONAntialias.h>
 
+#include <numbers>
+
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
 #else
@@ -1427,7 +1429,7 @@ struct HelperInterpLanczos : public HelperInterpBase {
     if (x == 0.0) {
       return 1.0;
     }
-    x *= c10::pi<scalar_t>;
+    x *= std::numbers::pi_v<scalar_t>;
     return std::sin(x) / x;
   }
 

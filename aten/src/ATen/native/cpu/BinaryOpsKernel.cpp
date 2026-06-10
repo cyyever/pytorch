@@ -17,6 +17,8 @@
 #include <c10/util/TypeSafeSignMath.h>
 #include <c10/util/generic_math.h>
 
+#include <numbers>
+
 namespace at::native {
 
 namespace {
@@ -1126,7 +1128,8 @@ void logaddexp2_kernel(TensorIteratorBase& iter) {
   if (at::isReducedFloatingType(iter.dtype())) {
     AT_DISPATCH_REDUCED_FLOATING_TYPES(iter.dtype(), "logaddexp2_cpu", [&]() {
       using Vec = Vectorized<scalar_t>;
-      constexpr auto inv_log_2 = static_cast<float>(1.0 / c10::ln_2<double>);
+      constexpr auto inv_log_2 =
+          static_cast<float>(1.0 / std::numbers::ln2_v<double>);
       cpu_kernel_vec(
           iter,
           [=](scalar_t a, scalar_t b) -> scalar_t {
@@ -1159,7 +1162,8 @@ void logaddexp2_kernel(TensorIteratorBase& iter) {
     });
   } else {
     AT_DISPATCH_FLOATING_TYPES(iter.dtype(), "logaddexp2_cpu", [&]() {
-      constexpr auto inv_log_2 = static_cast<scalar_t>(1.0 / c10::ln_2<double>);
+      constexpr auto inv_log_2 =
+          static_cast<scalar_t>(1.0 / std::numbers::ln2_v<double>);
       cpu_kernel_vec(
           iter,
           [=](scalar_t a, scalar_t b) -> scalar_t {

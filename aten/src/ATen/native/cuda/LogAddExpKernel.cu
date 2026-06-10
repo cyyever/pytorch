@@ -8,11 +8,11 @@
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/BinaryOps.h>
 #include <ATen/OpMathType.h>
-#include <c10/util/MathConstants.h>
 #include <c10/util/complex.h>
 
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 // NOTE: CUDA on Windows requires that the enclosing function
 // of a __device__ lambda not have internal linkage.
@@ -270,7 +270,8 @@ void logaddexp2_kernel_cuda(TensorIteratorBase& iter) {
       iter.dtype(), "logaddexp2_cuda",
       [&]() {
         using opmath_t = at::opmath_type<scalar_t>;
-        const auto inv_log_2 = static_cast<opmath_t>(1.0 / c10::ln_2<double>);
+        const auto inv_log_2 =
+            static_cast<opmath_t>(1.0 / std::numbers::ln2_v<double>);
         gpu_kernel(iter, [inv_log_2] GPU_LAMBDA (scalar_t a_, scalar_t b_) -> scalar_t {
           const auto a = static_cast<opmath_t>(a_);
           const auto b = static_cast<opmath_t>(b_);
