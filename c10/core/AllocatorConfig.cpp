@@ -1,6 +1,7 @@
 #include <c10/core/AllocatorConfig.h>
 #include <c10/util/Exception.h>
 #include <c10/util/env.h>
+#include <algorithm>
 #include <array>
 #include <limits>
 
@@ -61,10 +62,9 @@ AcceleratorAllocatorConfig& AcceleratorAllocatorConfig::instance() {
   return instance;
 }
 
-AcceleratorAllocatorConfig::AcceleratorAllocatorConfig() {
-  max_non_split_rounding_size_ = large_segment_size_.load();
-  roundup_power2_divisions_.assign(kRoundUpPowerOfTwoIntervals, 0);
-}
+AcceleratorAllocatorConfig::AcceleratorAllocatorConfig()
+    : max_non_split_rounding_size_(large_segment_size_.load()),
+      roundup_power2_divisions_(kRoundUpPowerOfTwoIntervals, 0) {}
 
 size_t AcceleratorAllocatorConfig::roundup_power2_divisions(size_t size) {
   size_t log_size = (63 - llvm::countLeadingZeros(size));
@@ -216,10 +216,7 @@ size_t AcceleratorAllocatorConfig::parseRoundUpPower2Divisions(
     TORCH_CHECK_VALUE(
         llvm::isPowerOf2_64(value),
         "For roundups, the divisions has to be power of 2 ");
-    std::fill(
-        roundup_power2_divisions_.begin(),
-        roundup_power2_divisions_.end(),
-        value);
+    std::ranges::fill(roundup_power2_divisions_, value);
   }
   return i;
 }
@@ -314,7 +311,7 @@ void AcceleratorAllocatorConfig::parseArgs(const std::string& env) {
       // check if the key is unrecognized.
       if (getConfigParserHook()) {
         TORCH_CHECK_VALUE(
-            getKeys().find(key) != getKeys().end(),
+            getKeys().contains(key),
             "Unrecognized key '",
             key,
             "' in Accelerator allocator config.");

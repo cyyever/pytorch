@@ -16,6 +16,9 @@
 
 namespace c10 {
 
+// This header is mirrored to ExecuTorch, which builds with C++17, so
+// std::enable_if_t is used instead of C++20 requires clauses.
+// NOLINTNEXTLINE(modernize-use-constraints)
 template <typename T, typename std::enable_if_t<std::is_integral_v<T>, int> = 0>
 C10_ALWAYS_INLINE bool add_overflows(T a, T b, T* out) {
 #if C10_HAS_BUILTIN_OVERFLOW()
@@ -50,6 +53,7 @@ C10_ALWAYS_INLINE bool add_overflows(uint64_t a, uint64_t b, uint64_t* out) {
   return add_overflows<uint64_t>(a, b, out);
 }
 
+// NOLINTNEXTLINE(modernize-use-constraints)
 template <typename T, typename std::enable_if_t<std::is_integral_v<T>, int> = 0>
 C10_ALWAYS_INLINE bool mul_overflows(T a, T b, T* out) {
 #if C10_HAS_BUILTIN_OVERFLOW()
