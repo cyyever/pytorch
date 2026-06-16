@@ -13,6 +13,9 @@ import functools
 from torch._C._profiler import gather_traceback, symbolize_tracebacks
 
 logger = logging.getLogger("LoggingTensor")
+# Records carry non-format args, so an ancestor handler (e.g. pytest's) would
+# raise on msg % args. Keep them local.
+logger.propagate = False
 
 # How the chain of calls works for LoggingTensor:
 # 1. Call torch.sin
