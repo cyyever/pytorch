@@ -145,6 +145,11 @@ Tensor& binary_cross_entropy_backward_out_cuda(const Tensor& grad, const Tensor&
 namespace {
 
 int nll_loss_threads(int64_t nframe){
+  // nframe < 16 makes nframe/16 == 0, so log2 is -inf and the cast/shift below
+  // are UB. clamp's min is 32, so return it directly.
+  if (nframe < 16) {
+    return 32;
+  }
   return std::clamp(1 << static_cast<int64_t>(std::round(std::log2(nframe/16))), 32, 1024);
 }
 
