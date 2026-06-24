@@ -866,10 +866,8 @@ struct ExpandableSegment {
   }
 
   void mapAndSetAccess(size_t begin, size_t end) {
-    // Map/setAccess can fail partway. On failure, unmap the prefix we mapped
-    // and release every handle in [begin, end) so no active-but-unmapped slot
-    // survives; otherwise teardown would later unmap a never-mapped range.
-    // Non-throwing: runs during unwinding.
+    // On partial failure, unmap the mapped prefix and release the range so no
+    // active-but-unmapped slot survives. Non-throwing: runs during unwinding.
     size_t mapped = begin;
     auto rollback = c10::make_scope_exit([&] {
       if (mapped > begin) {
@@ -981,10 +979,8 @@ struct ExpandableSegment {
   size_t segment_size_;
   size_t mapped_size_;
   size_t max_handles_;
-  // An engaged `handle` marks ownership; a default-constructed Handle is an
-  // empty slot. `shareable_handle` is a separate, producer-only export artifact
-  // (a POSIX fd or fabric handle) that coexists with `handle` and must also be
-  // closed.
+  // Move-only RAII owner; default-constructed means an empty slot.
+  // shareable_handle is the producer's exported fd/handle, also closed on free.
   struct Handle {
     std::optional<CUmemGenericAllocationHandle> handle;
     std::optional<std::variant<int, CUmemFabricHandle>> shareable_handle;
@@ -1019,9 +1015,8 @@ struct ExpandableSegment {
     CUmemGenericAllocationHandle get() const {
       return handle.value();
     }
-    // Free the physical handle (and close the shareable fd) and reset to an
-    // empty slot; callers must unmap the slot first. No-op when inactive. Must
-    // not throw: may run during unwinding, so release errors are ignored.
+    // Free the handle and close the shareable fd, resetting to empty; the slot
+    // must already be unmapped. noexcept: may run during unwinding.
     void release() noexcept {
       if (!handle) {
         return;
