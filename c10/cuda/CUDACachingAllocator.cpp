@@ -460,11 +460,13 @@ struct ExpandableSegment {
       handle_type_ = detectHandleType(device_);
     }
 
-    if (end > handles_.size()) {
-      handles_.resize(end);
-    }
+    // Create the physical handles into a local vector; mapAndSetAccess sizes
+    // handles_ and publishes them only after mapping, so a failure here cannot
+    // leave an active-but-unmapped slot. On any throw, `staged` releases them.
+    std::vector<Handle> staged;
+    staged.reserve(end - begin);
     for (auto i : c10::irange(begin, end)) {
-      TORCH_INTERNAL_ASSERT(!handles_.at(i).active());
+      TORCH_INTERNAL_ASSERT(i >= handles_.size() || !handles_.at(i).active());
       CUmemGenericAllocationHandle handle = 0;
       CUmemAllocationProp prop = {};
       prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
@@ -516,9 +518,8 @@ struct ExpandableSegment {
         // Unlike the corresponding CUDA Driver API.
         (void)hipGetLastError();
 #endif
-        // Roll back the handles created in this call (none are mapped yet)
-        // and report no progress so the caller treats it as OOM.
-        releaseHandles(begin, i);
+        // Report no progress so the caller treats it as OOM; `staged` releases
+        // the handles created so far.
         return rangeFromHandles(begin, begin);
       }
       // Throws on any other error; a no-op on success.
@@ -527,9 +528,9 @@ struct ExpandableSegment {
 #else
       C10_CUDA_DRIVER_CHECK(status);
 #endif
-      handles_.at(i) = Handle(handle, std::nullopt);
+      staged.emplace_back(handle, std::nullopt);
     }
-    mapAndSetAccess(begin, end);
+    mapAndSetAccess(begin, std::move(staged));
     return rangeFromHandles(begin, end);
   }
 
@@ -752,11 +753,9 @@ struct ExpandableSegment {
       }
 #endif
     }
-    // Publish imported handles only after every import succeeds; on any throw
-    // above, `imported` releases them via ~Handle and the segment stays empty,
-    // so no partial state is mapped or leaked.
-    segment->handles_ = std::move(imported);
-    segment->mapAndSetAccess(0, header.num_handles);
+    // On any throw above, `imported` releases the handles and the segment
+    // stays empty. mapAndSetAccess maps then publishes them into the segment.
+    segment->mapAndSetAccess(0, std::move(imported));
     return segment;
   }
 
@@ -865,44 +864,52 @@ struct ExpandableSegment {
 #endif
   }
 
-  void mapAndSetAccess(size_t begin, size_t end) {
-    // On partial failure, unmap the mapped prefix and release the range so no
-    // active-but-unmapped slot survives. Non-throwing: runs during unwinding.
-    size_t mapped = begin;
+  // Map the staged handles to slots [begin, begin + staged.size()) and publish
+  // them into handles_ only after every slot is mapped, so active() <=> mapped
+  // holds. On failure, unmap the mapped prefix; `staged` releases the physical
+  // handles and handles_ is left untouched.
+  void mapAndSetAccess(size_t begin, std::vector<Handle> staged) {
+    size_t end = begin + staged.size();
+    if (handles_.size() < end) {
+      handles_.resize(end);
+    }
+    size_t mapped = 0;
+    // Non-throwing: runs during unwinding.
     auto rollback = c10::make_scope_exit([&] {
-      if (mapped > begin) {
+      if (mapped > 0) {
 #ifdef USE_ROCM
-        C10_CUDA_IGNORE_ERROR(hipMemUnmap(
-            ptr() + begin * segment_size_, (mapped - begin) * segment_size_));
+        C10_CUDA_IGNORE_ERROR(
+            hipMemUnmap(ptr() + begin * segment_size_, mapped * segment_size_));
 #else
         (void)DriverAPI::get()->cuMemUnmap_(
-            ptr_ + begin * segment_size_, (mapped - begin) * segment_size_);
+            ptr_ + begin * segment_size_, mapped * segment_size_);
 #endif
       }
-      releaseHandles(begin, end);
     });
-    for (auto i : c10::irange(begin, end)) {
+    for (auto k : c10::irange(staged.size())) {
 #ifdef USE_ROCM
       C10_CUDA_CHECK(hipMemMap(
-          ptr() + i * segment_size_,
+          ptr() + (begin + k) * segment_size_,
           segment_size_,
           0,
-          handles_.at(i).get(),
+          staged[k].get(),
           0ULL));
 #else
       C10_CUDA_DRIVER_CHECK(DriverAPI::get()->cuMemMap_(
-          ptr_ + i * segment_size_,
+          ptr_ + (begin + k) * segment_size_,
           segment_size_,
           0,
-          handles_.at(i).get(),
+          staged[k].get(),
           0ULL));
 #endif
-      mapped = i + 1;
+      mapped = k + 1;
     }
     setAccess(device_, begin, end);
     for (auto p : peers_) {
       setAccess(p, begin, end);
     }
+    // Publish only now that every slot is mapped (active() <=> mapped).
+    std::move(staged.begin(), staged.end(), handles_.begin() + begin);
     mapped_size_ += (end - begin) * segment_size_;
     rollback.release();
   }
