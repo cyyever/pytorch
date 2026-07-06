@@ -16,11 +16,15 @@ namespace torch::detail {
 
 namespace {
 
+// NB: func_name is a runtime const char* rather than a template parameter.
+// An earlier version of this code passed it as a non-type template
+// parameter, which triggered an MSVC internal compiler error (MSVC
+// 14.16.27023 / vs2017_15.9); keep it as a plain argument.
 template <typename... Args>
 static void concrete_gpu_trace(
     at::DeviceType device_type,
     const char* func_name,
-    Args&&... args) {
+    Args... args) {
   at::impl::MaybeSetTLSOnEntryGuard guard;
   if (!Py_IsInitialized()) {
     return;
@@ -35,7 +39,7 @@ static void concrete_gpu_trace(
     py::module mod = py::module::import(module_name.c_str());
     py::object hook =
         mod.attr("_gpu_trace").attr(func_name).attr("fire_callbacks");
-    hook(std::forward<Args>(args)...);
+    hook(args...);
   } catch (const std::exception& e) {
     LOG(ERROR) << device_type << " trace hook execution failed: " << e.what();
   }
