@@ -16,29 +16,30 @@ namespace torch::detail {
 
 namespace {
 
-// NB: This is a macro and not a template function (like it was before)
-// because passing in constexpr char* as template argument breaks some
-// versions of MSVC that are being used internally at Meta.
-// MSVC 14.16.27023 (vs2017_15.9)
-#define CONCRETE_GPU_TRACE(device_type, func_name, ...)                       \
-  at::impl::MaybeSetTLSOnEntryGuard guard;                                    \
-  if (Py_IsInitialized()) {                                                   \
-    pybind11::gil_scoped_acquire gil;                                         \
-    try {                                                                     \
-      /* Masquerade hip as cuda because hip uses `torch.cuda` module. */      \
-      if (device_type == at::kHIP) {                                          \
-        device_type = at::kCUDA;                                              \
-      }                                                                       \
-      std::string module_name = "torch." + DeviceTypeName(device_type, true); \
-      py::module mod = py::module::import(module_name.c_str());               \
-      py::object hook =                                                       \
-          mod.attr("_gpu_trace").attr(func_name).attr("fire_callbacks");      \
-      hook(__VA_ARGS__);                                                      \
-    } catch (const std::exception& e) {                                       \
-      LOG(ERROR) << device_type                                               \
-                 << " trace hook execution failed: " << e.what();             \
-    }                                                                         \
+template <typename... Args>
+static void concrete_gpu_trace(
+    at::DeviceType device_type,
+    const char* func_name,
+    Args&&... args) {
+  at::impl::MaybeSetTLSOnEntryGuard guard;
+  if (!Py_IsInitialized()) {
+    return;
   }
+  try {
+    pybind11::gil_scoped_acquire gil;
+    // Masquerade hip as cuda because hip uses `torch.cuda` module.
+    if (device_type == at::kHIP) {
+      device_type = at::kCUDA;
+    }
+    std::string module_name = "torch." + DeviceTypeName(device_type, true);
+    py::module mod = py::module::import(module_name.c_str());
+    py::object hook =
+        mod.attr("_gpu_trace").attr(func_name).attr("fire_callbacks");
+    hook(std::forward<Args>(args)...);
+  } catch (const std::exception& e) {
+    LOG(ERROR) << device_type << " trace hook execution failed: " << e.what();
+  }
+}
 
 struct ConcretePyInterpreterVTable final
     : public c10::impl::PyInterpreterVTable {
@@ -105,49 +106,49 @@ struct ConcretePyInterpreterVTable final
 
   void trace_gpu_event_creation(at::DeviceType device_type, uintptr_t event)
       const override {
-    CONCRETE_GPU_TRACE(device_type, "EventCreationCallbacks", event);
+    concrete_gpu_trace(device_type, "EventCreationCallbacks", event);
   }
   void trace_gpu_event_deletion(at::DeviceType device_type, uintptr_t event)
       const override {
-    CONCRETE_GPU_TRACE(device_type, "EventDeletionCallbacks", event);
+    concrete_gpu_trace(device_type, "EventDeletionCallbacks", event);
   }
   void trace_gpu_event_record(
       at::DeviceType device_type,
       uintptr_t event,
       uintptr_t stream) const override {
-    CONCRETE_GPU_TRACE(device_type, "EventRecordCallbacks", event, stream);
+    concrete_gpu_trace(device_type, "EventRecordCallbacks", event, stream);
   }
   void trace_gpu_event_wait(
       at::DeviceType device_type,
       uintptr_t event,
       uintptr_t stream) const override {
-    CONCRETE_GPU_TRACE(device_type, "EventWaitCallbacks", event, stream);
+    concrete_gpu_trace(device_type, "EventWaitCallbacks", event, stream);
   }
   void trace_gpu_memory_allocation(at::DeviceType device_type, uintptr_t ptr)
       const override {
-    CONCRETE_GPU_TRACE(device_type, "MemoryAllocationCallbacks", ptr);
+    concrete_gpu_trace(device_type, "MemoryAllocationCallbacks", ptr);
   }
   void trace_gpu_memory_deallocation(at::DeviceType device_type, uintptr_t ptr)
       const override {
-    CONCRETE_GPU_TRACE(device_type, "MemoryDeallocationCallbacks", ptr);
+    concrete_gpu_trace(device_type, "MemoryDeallocationCallbacks", ptr);
   }
   void trace_gpu_stream_creation(at::DeviceType device_type, uintptr_t stream)
       const override {
-    CONCRETE_GPU_TRACE(device_type, "StreamCreationCallbacks", stream);
+    concrete_gpu_trace(device_type, "StreamCreationCallbacks", stream);
   }
   void trace_gpu_device_synchronization(
       at::DeviceType device_type) const override {
-    CONCRETE_GPU_TRACE(device_type, "DeviceSynchronizationCallbacks");
+    concrete_gpu_trace(device_type, "DeviceSynchronizationCallbacks");
   }
   void trace_gpu_stream_synchronization(
       at::DeviceType device_type,
       uintptr_t stream) const override {
-    CONCRETE_GPU_TRACE(device_type, "StreamSynchronizationCallbacks", stream);
+    concrete_gpu_trace(device_type, "StreamSynchronizationCallbacks", stream);
   }
   void trace_gpu_event_synchronization(
       at::DeviceType device_type,
       uintptr_t event) const override {
-    CONCRETE_GPU_TRACE(device_type, "EventSynchronizationCallbacks", event);
+    concrete_gpu_trace(device_type, "EventSynchronizationCallbacks", event);
   }
 
   void reset_backward_hooks(const c10::TensorImpl* self) const override;
