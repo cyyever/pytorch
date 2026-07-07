@@ -23,6 +23,7 @@
 #include <c10/util/Semaphore.h>
 #include <c10/util/flat_hash_map.h>
 #include <c10/util/irange.h>
+#include <torch/csrc/Exceptions.h>
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/profiler/collection.h>
 #include <torch/csrc/profiler/containers.h>
@@ -691,7 +692,6 @@ static PyObject* c_call_callback(
 class PythonTracer final : public python_tracer::PythonTracerBase {
  public:
   PythonTracer(torch::profiler::impl::RecordQueue* queue);
-  // NOLINTNEXTLINE(bugprone-exception-escape)
   ~PythonTracer() override;
 
   static int pyProfileFn(
@@ -1213,15 +1213,24 @@ void PythonTracer::restart() {
 #endif
 }
 
-// NOLINTNEXTLINE(bugprone-exception-escape)
 PythonTracer::~PythonTracer() {
   if (active_) {
     TORCH_WARN("`PythonTracer::stop()` was not called.");
-    stop();
+    // stop() itself acquires the GIL (via a bare pybind11::gil_scoped_acquire,
+    // which can throw) and asserts internally, so it must not be allowed to
+    // escape this destructor.
+    try {
+      stop();
+    } catch (const std::exception& e) {
+      LOG(ERROR) << "PythonTracer::stop() threw during destruction: "
+                 << e.what();
+    }
   }
   if (Py_IsInitialized() && !Py_IsFinalizing()) {
-    pybind11::gil_scoped_acquire gil;
-    Py_XDECREF((PyObject*)shared_ctx_);
+    torch::detail::SafeGilScopedAcquire gil;
+    if (gil) {
+      Py_XDECREF((PyObject*)shared_ctx_);
+    }
   }
 }
 

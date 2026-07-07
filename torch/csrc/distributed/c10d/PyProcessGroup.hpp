@@ -1,5 +1,6 @@
 #pragma once
 
+#include <torch/csrc/Exceptions.h>
 #include <torch/csrc/distributed/c10d/ProcessGroup.hpp>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/pybind.h>
@@ -68,8 +69,14 @@ class PyProcessGroup : public ProcessGroup {
 
     ~PyWorkHolder() override {
       // GIL must be held when freeing python objects.
-      py::gil_scoped_acquire gil;
-      pyWork_ = py::object();
+      torch::detail::SafeGilScopedAcquire gil;
+      if (gil) {
+        pyWork_.dec_ref();
+      }
+      // explicitly setting PyObject* to nullptr to prevent py::object's dtor
+      // to decref on the PyObject again.
+      // See Note [Destructing py::object] in python_ivalue.h
+      pyWork_.ptr() = nullptr;
     }
 
     bool wait(std::chrono::milliseconds timeout = kNoTimeout) override {
@@ -459,10 +466,11 @@ class TORCH_PYTHON_API PythonOnCompletionHook {
   PythonOnCompletionHook(py::object hook) : hook_(std::move(hook)) {}
   PythonOnCompletionHook(const PythonOnCompletionHook&) = default;
 
-  // NOLINTNEXTLINE(bugprone-exception-escape)
   ~PythonOnCompletionHook() {
-    py::gil_scoped_acquire ag;
-    hook_.dec_ref();
+    torch::detail::SafeGilScopedAcquire ag;
+    if (ag) {
+      hook_.dec_ref();
+    }
     // Explicitly set hook_ to nullptr to prevent py::object's dtor
     // to decref on the PyObject again.
     // See Note [Destructing py::object] in python_ivalue.h

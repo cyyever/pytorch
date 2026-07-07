@@ -2,6 +2,7 @@
 #include <torch/csrc/autograd/python_saved_variable_hooks.h>
 
 #include <c10/core/SafePyObject.h>
+#include <torch/csrc/Exceptions.h>
 #include <torch/csrc/PyInterpreter.h>
 #include <torch/csrc/THP.h>
 
@@ -55,14 +56,15 @@ PySavedVariableHooks::retrieve_unpack_hook_data() const {
       c10::SafePyObject(data_, getPyInterpreter()));
 }
 
-// NOLINTNEXTLINE(bugprone-exception-escape)
 PySavedVariableHooks::~PySavedVariableHooks() {
   // If python is already dead, leak the wrapped python objects
   if (Py_IsInitialized()) {
-    py::gil_scoped_acquire gil;
-    Py_XDECREF(pack_hook_);
-    Py_XDECREF(unpack_hook_);
-    Py_XDECREF(data_);
+    torch::detail::SafeGilScopedAcquire gil;
+    if (gil) {
+      Py_XDECREF(pack_hook_);
+      Py_XDECREF(unpack_hook_);
+      Py_XDECREF(data_);
+    }
   }
 }
 
