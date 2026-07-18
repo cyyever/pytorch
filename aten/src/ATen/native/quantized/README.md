@@ -38,7 +38,7 @@ Tensor quantized_xand(Tensor qa, Tensor qb) {
 
 The code above is fairly straight-forward:
 It takes two quantized tensors `qa` and `qb`, and uses `binary_kernel` to produce a quantized tensor `qc`.
-We also use the [`TensorIterator`](https://caffe2.ai/doxygen-c/html/structat_1_1_tensor_iterator.html) in this example.
+We also use the [`TensorIterator`](https://github.com/pytorch/pytorch/blob/main/aten/src/ATen/TensorIterator.h) in this example.
 The only part that requires explicit explanation is the `AT_DISPATCH_QINT_TYPES`.
 This macro makes sure that the underlying code works with all quantized types.
 It provides several useful "aliases":
@@ -137,21 +137,11 @@ namespace at {
 
 Before the op can be used, it needs to be compiled.
 If the op is placed under `native/quantized/cpu`, this already done for you.
-However, if the location is changed, two files must be notified:
-
-- *`caffe2/aten/TARGETS`* -- You can follow the same example, and add your path in somewhere in that file. Notice in this file we places the path to the quantized source files:
-```bash
-ATEN_NATIVE_CPP = glob([
-#...
-  "src/ATen/native/quantized/**/*.cpp",
-])
-```
-
-- *`caffe2/aten/src/ATen/CMakeLists.txt`* -- Again, following the example, you must add your paths.
+However, if the location is changed, `aten/src/ATen/CMakeLists.txt` must be notified by adding your paths.
 The current quantization paths are added as
 
-```bash
-FILE(GLOB native_quantized_cpp
+```cmake
+file(GLOB native_quantized_cpp
           "native/quantized/*.cpp"
           "native/quantized/cpu/*.cpp")
 ```
