@@ -61,7 +61,6 @@ aspects of contributing to PyTorch.
   - [Why this stuff with `LD_PRELOAD` and `LIBASAN_RT`?](#why-this-stuff-with-ld_preload-and-libasan_rt)
   - [Why LD_PRELOAD in the build function?](#why-ld_preload-in-the-build-function)
   - [Why no leak detection?](#why-no-leak-detection)
-- [Caffe2 notes](#caffe2-notes)
 - [CI failure tips](#ci-failure-tips)
   - [Which commit is used in CI?](#which-commit-is-used-in-ci)
 - [Dev Infra Office Hours](#dev-infra-office-hours)
@@ -271,12 +270,9 @@ dependencies as well as the nightly binaries into the repo directory.
     * [jit](test/cpp/jit) - [README](test/cpp/jit/README.md)
   * [expect](test/expect) - Automatically generated "expect" files
     which are used to compare against expected output.
-  * [onnx](test/onnx) - Tests for ONNX export functionality,
-    using both PyTorch and Caffe2.
-* [caffe2](caffe2) - The Caffe2 library.
-  * [core](caffe2/core) - Core files of Caffe2, e.g., tensor, workspace,
-    blobs, etc.
-  * ...
+  * [onnx](test/onnx) - Tests for ONNX export functionality.
+* [caffe2](caffe2) - Legacy remnants of the Caffe2 library still used by
+  PyTorch (e.g., serialization).
 
 ## AI-Assisted Development
 
@@ -1111,7 +1107,7 @@ than Linux, which are worth keeping in mind when fixing these problems.
 1. Symbols are NOT exported by default on Windows; instead, you have to explicitly
    mark a symbol as exported/imported in a header file with `__declspec(dllexport)` /
    `__declspec(dllimport)`. We have codified this pattern into a set of macros
-   which follow the convention `*_API`, e.g., `TORCH_API` inside Caffe2, Aten and Torch.
+   which follow the convention `*_API`, e.g., `C10_API` and `TORCH_API`.
    (Every separate shared library needs a unique macro name, because symbol visibility
    is on a per shared library basis. See c10/macros/Macros.h for more details.)
 
@@ -1331,23 +1327,6 @@ We don’t actually need either of these if we fix the cmake checks.
 
 Python leaks a lot of memory. Possibly we could configure a suppression file,
 but we haven’t gotten around to it.
-
-## Caffe2 notes
-
-In 2018, we merged Caffe2 into the PyTorch source repository. While the
-steady state aspiration is that Caffe2 and PyTorch share code freely,
-in the meantime there will be some separation.
-
-There are a few "unusual" directories which, for historical reasons,
-are Caffe2/PyTorch specific. Here they are:
-
-- `CMakeLists.txt`, `Makefile`, `binaries`, `cmake`, `modules`,
-  `scripts` are Caffe2-specific. Don't put PyTorch code in them without
-  extra coordination.
-
-- `mypy*`, `requirements.txt`, `setup.py`, `test`, `tools` are
-  PyTorch-specific. Don't put Caffe2 code in them without extra
-  coordination.
 
 ## CI failure tips
 
