@@ -102,8 +102,6 @@ TESTS = discover_tests(
         "distributed/test_c10d_spawn",
         "distributions/test_transforms",
         "distributions/test_utils",
-        "lazy/test_meta_kernel",
-        "lazy/test_extract_compiled_graph",
         "test/inductor/test_aot_inductor_utils",
         "inductor/test_aoti_cross_compile_windows",
         # These are not C++ tests

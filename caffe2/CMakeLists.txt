@@ -266,13 +266,6 @@ if(NOT INTERN_DISABLE_AUTOGRAD)
     "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
     "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_aten.cpp"
   )
-  if(BUILD_LAZY_TS_BACKEND)
-    list(APPEND GENERATED_CXX_TORCH
-      "${TORCH_SRC_DIR}/csrc/lazy/generated/LazyNativeFunctions.cpp"
-      "${TORCH_SRC_DIR}/csrc/lazy/generated/RegisterAutogradLazy.cpp"
-      "${TORCH_SRC_DIR}/csrc/lazy/generated/RegisterLazy.cpp"
-    )
-  endif()
   if(USE_MPS)
     list(APPEND GENERATED_CXX_TORCH
       "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_mps.cpp"
@@ -289,9 +282,6 @@ set(GENERATED_H_TORCH
 if(NOT INTERN_DISABLE_AUTOGRAD)
   list(APPEND GENERATED_H_TORCH
     "${TORCH_SRC_DIR}/csrc/autograd/generated/VariableType.h"
-    "${TORCH_SRC_DIR}/csrc/lazy/generated/LazyIr.h"
-    "${TORCH_SRC_DIR}/csrc/lazy/generated/LazyNonNativeIr.h"
-    "${TORCH_SRC_DIR}/csrc/lazy/generated/LazyNativeFunctions.h"
   )
 endif()
 
@@ -346,11 +336,6 @@ if(USE_XPU)
   list(APPEND TORCH_GENERATED_CODE ${GENERATED_CXX_TORCH_XPU})
 endif()
 
-set(GEN_PER_OPERATOR_FLAG)
-if(USE_PER_OPERATOR_HEADERS)
-  list(APPEND GEN_PER_OPERATOR_FLAG "--per_operator_headers")
-endif()
-
 file(GLOB_RECURSE autograd_python CONFIGURE_DEPENDS "${TOOLS_PATH}/autograd/*.py")
 file(GLOB_RECURSE autograd_yaml CONFIGURE_DEPENDS "${TOOLS_PATH}/autograd/*.yaml")
 file(GLOB_RECURSE autograd_templates CONFIGURE_DEPENDS "${TOOLS_PATH}/autograd/templates/*")
@@ -364,18 +349,11 @@ add_custom_command(
     $<$<BOOL:${INTERN_DISABLE_AUTOGRAD}>:--disable-autograd>
     $<$<BOOL:${SELECTED_OP_LIST}>:--selected-op-list-path="${SELECTED_OP_LIST}">
     --force_schema_registration
-    --gen_lazy_ts_backend
-    ${GEN_PER_OPERATOR_FLAG}
   DEPENDS
     "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
     "${TORCH_ROOT}/aten/src/ATen/native/tags.yaml"
-    "${TORCH_ROOT}/aten/src/ATen/native/ts_native_functions.yaml"
-    "${TORCH_ROOT}/torch/csrc/lazy/core/shape_inference.h"
-    "${TORCH_ROOT}/torch/csrc/lazy/ts_backend/ts_native_functions.cpp"
     "${TORCH_ROOT}/aten/src/ATen/templates/DispatchKeyNativeFunctions.h"
     "${TORCH_ROOT}/aten/src/ATen/templates/DispatchKeyNativeFunctions.cpp"
-    "${TORCH_ROOT}/aten/src/ATen/templates/LazyIr.h"
-    "${TORCH_ROOT}/aten/src/ATen/templates/LazyNonNativeIr.h"
     "${TORCH_ROOT}/aten/src/ATen/templates/RegisterDispatchKey.cpp"
     "${TORCH_ROOT}/aten/src/ATen/templates/ViewMetaClasses.h"
     "${TORCH_ROOT}/aten/src/ATen/templates/ViewMetaClasses.cpp"
@@ -451,9 +429,6 @@ list(APPEND TORCH_SRCS ${GENERATED_H_TORCH})
 list(APPEND LIBTORCH_CMAKE_SRCS "")
 
 append_filelist("libtorch_cmake_sources" LIBTORCH_CMAKE_SRCS)
-if(BUILD_LAZY_TS_BACKEND)
-  append_filelist("lazy_tensor_ts_sources" LIBTORCH_CMAKE_SRCS)
-endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # TODO: Delete this when https://github.com/pytorch/pytorch/issues/35026 is fixed
   set_source_files_properties(../torch/csrc/autograd/record_function_ops.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
@@ -1269,7 +1244,6 @@ install(FILES
   DESTINATION ${TORCH_INSTALL_INCLUDE_DIR}/torch)
 if(BUILD_TEST)
   add_subdirectory(${TORCH_ROOT}/test/cpp/jit ${CMAKE_BINARY_DIR}/test_jit)
-  add_subdirectory(${TORCH_ROOT}/test/cpp/lazy ${CMAKE_BINARY_DIR}/test_lazy)
   add_subdirectory(${TORCH_ROOT}/test/cpp/profiler ${CMAKE_BINARY_DIR}/test_profiler)
   add_subdirectory(${TORCH_ROOT}/test/inductor ${CMAKE_BINARY_DIR}/test_inductor)
   add_subdirectory(${TORCH_ROOT}/test/cpp/aoti_abi_check ${CMAKE_BINARY_DIR}/test_aoti_abi_check)
