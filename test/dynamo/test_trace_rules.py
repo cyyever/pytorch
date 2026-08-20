@@ -87,7 +87,6 @@ ignored_c_binding_in_graph_function_names = {
     "torch._validate_compressed_sparse_indices",
 }
 
-
 # Helper function to dump the torch name rule map generated based on
 # the heuristic defined in gen_allowed_objs_and_ids.
 def dump_allowed_torch_name_rule_map() -> None:
@@ -175,10 +174,13 @@ def gen_allowed_objs_and_ids(record=False, c_binding_only=True) -> AllowedObject
             "torch.fx.",
             "torch._C._autograd",
             "torch._C._cudart",
+            "torch._C._distributed_autograd",
             "torch._C._distributed_c10d",
+            "torch._C._distributed_rpc",
             "torch._C._functorch",
             "torch._C._monitor",
             "torch._C._nvtx",
+            "torch._C._lazy",
             "torch._C._profiler",
             "torch.__config__",
             "torch._custom_op",
@@ -218,6 +220,7 @@ def gen_allowed_objs_and_ids(record=False, c_binding_only=True) -> AllowedObject
             "torch.nn.parallel",
             "torch.nn.utils",
             "torch.multiprocessing",
+            "torch.onnx",
             "torch.overrides",
             "torch.package",
             "torch.profiler",
