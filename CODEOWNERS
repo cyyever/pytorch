@@ -827,7 +827,6 @@
 /torch/ao/nn/quantized/ @jerryzh168
 /torch/ao/nn/quantizable/ @jerryzh168
 /torch/ao/nn/qat/ @jerryzh168
-/torch/quantization/ @jerryzh168
 /aten/src/ATen/native/quantized/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/native/quantized/cpu/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/native/quantized/cuda/ @jerryzh168
