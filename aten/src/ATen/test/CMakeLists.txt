@@ -25,7 +25,6 @@ list(APPEND ATen_CPU_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/math_kernel_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_format_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_overlapping_test.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mobile_memory_cleanup.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/native_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/operator_name_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/operators_test.cpp

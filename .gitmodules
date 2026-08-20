@@ -66,10 +66,6 @@
     ignore = dirty
     path = third_party/fbgemm
     url = https://github.com/pytorch/fbgemm
-[submodule "android/libs/fbjni"]
-    ignore = dirty
-    path = android/libs/fbjni
-    url = https://github.com/facebookincubator/fbjni.git
 [submodule "third_party/XNNPACK"]
     ignore = dirty
     path = third_party/XNNPACK
@@ -94,9 +90,6 @@
 [submodule "third_party/ittapi"]
 	path = third_party/ittapi
 	url = https://github.com/intel/ittapi.git
-[submodule "third_party/flatbuffers"]
-	path = third_party/flatbuffers
-	url = https://github.com/google/flatbuffers.git
 [submodule "third_party/nlohmann"]
 	path = third_party/nlohmann
 	url = https://github.com/nlohmann/json.git

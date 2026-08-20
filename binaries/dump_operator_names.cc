@@ -15,7 +15,6 @@
  */
 
 #include <torch/csrc/jit/api/module.h>
-#include <torch/csrc/jit/mobile/module.h>
 #include <torch/csrc/jit/serialization/import.h>
 #include <torch/csrc/jit/runtime/instruction.h>
 #include <c10/util/Flags.h>

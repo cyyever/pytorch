@@ -63,7 +63,6 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
 
     ${TORCH_ROOT}/third_party/gloo
     ${TORCH_ROOT}/third_party/onnx
-    ${TORCH_ROOT}/third_party/flatbuffers/include
     ${TORCH_ROOT}/third_party/kineto/libkineto/include
     ${TORCH_ROOT}/third_party/cpp-httplib
     ${TORCH_ROOT}/third_party/nlohmann/include
@@ -295,12 +294,6 @@ if(USE_NCCL AND NOT WIN32)
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_NCCL)
 endif()
 
-# coreml
-if(USE_COREML_DELEGATE)
-  list(APPEND TORCH_PYTHON_SRCS ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/cpp/backend.cpp)
-  list(APPEND TORCH_PYTHON_SRCS ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/cpp/preprocess.cpp)
-endif()
-
 
 add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})
 torch_compile_options(torch_python)  # see cmake/public/utils.cmake
@@ -375,7 +368,6 @@ if(BUILD_LIBTORCHLESS)
 endif()
 
 add_dependencies(torch_python torch_python_stubs)
-add_dependencies(torch_python flatbuffers)
 
 
 if(USE_PRECOMPILED_HEADERS)
@@ -554,26 +546,6 @@ install(FILES "${TORCH_SRC_DIR}/version.py" DESTINATION ".")
 # explicitly via cmake instead.
 if(USE_ROCM AND EXISTS "${TORCH_SRC_DIR}/_rocm_init.py")
   install(FILES "${TORCH_SRC_DIR}/_rocm_init.py" DESTINATION ".")
-endif()
-
-# Skip building this library under MacOS, since it is currently failing to build on Mac
-# Github issue #61930
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # Add Android Nnapi delegate library
-  add_library(nnapi_backend SHARED
-          ${TORCH_SRC_DIR}/csrc/jit/backends/nnapi/nnapi_backend_lib.cpp
-          ${TORCH_SRC_DIR}/csrc/jit/backends/nnapi/nnapi_backend_preprocess.cpp
-          )
-  # Pybind11 requires explicit linking of the torch_python library
-  if(BUILD_LIBTORCHLESS)
-    target_link_libraries(nnapi_backend PRIVATE ${TORCH_LIB})
-  else()
-    target_link_libraries(nnapi_backend PRIVATE torch)
-  endif()
-  target_link_libraries(nnapi_backend PRIVATE torch_python pybind::pybind11 fmt::fmt-header-only)
-  if(MSVC AND TORCH_PYTHON_LINK_FLAGS)
-    set_target_properties(nnapi_backend PROPERTIES LINK_FLAGS "${TORCH_PYTHON_LINK_FLAGS}")
-  endif()
 endif()
 
 set(TORCH_PYTHON_COMPILE_OPTIONS ${TORCH_PYTHON_COMPILE_OPTIONS} PARENT_SCOPE)

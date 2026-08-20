@@ -2,7 +2,7 @@
 #include <ATen/core/Generator.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
-#include <torch/csrc/jit/mobile/promoted_prim_ops.h>
+#include <torch/csrc/jit/runtime/promoted_prim_ops.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/jit/runtime/register_ops_utils.h>

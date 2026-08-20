@@ -47,7 +47,6 @@ from torch.ao.quantization.quantization_mappings import (
     get_default_qconfig_propagation_list,
 )
 
-from torch.jit.mobile import _load_for_lite_interpreter
 from torch.testing._internal.common_quantized import override_quantized_engine
 from torch.testing._internal.common_utils import TEST_WITH_ROCM, TestCase
 
@@ -1442,46 +1441,6 @@ class QuantizationLiteTestCase(QuantizationTestCase):
             model = quantize(model, test_only_eval_fn, [self.calib_data])
 
         return model
-
-    def _compare_script_and_mobile(self, model: torch.nn.Module, input: torch.Tensor):
-        # Compares the numerical outputs for script and lite modules
-        qengine = "qnnpack"
-        with override_quantized_engine(qengine):
-            script_module = torch.jit.script(model)
-            script_module_result = script_module(input)
-
-            max_retry = 5
-            for retry in range(1, max_retry + 1):
-                # retries `max_retry` times; breaks iff succeeds else throws exception
-                try:
-                    buffer = io.BytesIO(
-                        script_module._save_to_buffer_for_lite_interpreter()
-                    )
-                    buffer.seek(0)
-                    mobile_module = _load_for_lite_interpreter(buffer)
-
-                    mobile_module_result = mobile_module(input)
-
-                    torch.testing.assert_close(
-                        script_module_result, mobile_module_result
-                    )
-                    mobile_module_forward_result = mobile_module.forward(input)
-                    torch.testing.assert_close(
-                        script_module_result, mobile_module_forward_result
-                    )
-
-                    mobile_module_run_method_result = mobile_module.run_method(
-                        "forward", input
-                    )
-                    torch.testing.assert_close(
-                        script_module_result, mobile_module_run_method_result
-                    )
-                except AssertionError as e:
-                    if retry == max_retry:
-                        raise e
-                    else:
-                        continue
-                break
 
 
 # Below are a series of toy models to use in testing quantization

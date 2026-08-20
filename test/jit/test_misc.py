@@ -239,68 +239,6 @@ class TestMisc(JitTestCase):
         actual = script_index_fn(input2.clone(), index2, value2)
         self.assertEqual(expect, actual)
 
-    def test_export_opnames_interface(self):
-        @torch.jit.interface
-        class OneTwoModule(nn.Module):
-            def one(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-                pass
-
-            def two(self, x: torch.Tensor) -> torch.Tensor:
-                pass
-
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
-                pass
-
-        class FooMod(nn.Module):
-            def one(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-                return x + y
-
-            def two(self, x: torch.Tensor) -> torch.Tensor:
-                return 2 * x
-
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.one(self.two(x), x)
-
-        class BarMod(nn.Module):
-            def one(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-                return x * y
-
-            def two(self, x: torch.Tensor) -> torch.Tensor:
-                return 2 / x
-
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.two(self.one(x, x))
-
-        make_global(OneTwoModule)
-
-        class M(nn.Module):
-            sub: OneTwoModule
-
-            def __init__(self) -> None:
-                super().__init__()
-                self.sub = BarMod()
-
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.sub.forward(x)
-
-        def use_module_interface(mod_list: List[OneTwoModule], x: torch.Tensor):
-            return mod_list[0].forward(x) + mod_list[1].forward(x)
-
-        torch._C._enable_mobile_interface_call_export()
-        scripted_M_mod = torch.jit.script(M())
-        self.assertTrue(
-            {"aten::mul.Scalar", "aten::mul.Tensor", "aten::reciprocal"}.issubset(
-                set(torch.jit.export_opnames(scripted_M_mod))
-            )
-        )
-
-        scripted_M_mod.sub = torch.jit.script(FooMod())
-        self.assertTrue(
-            {"aten::add.Tensor", "aten::mul.Scalar"}.issubset(
-                set(torch.jit.export_opnames(scripted_M_mod))
-            )
-        )
-
     def test_math_inf(self):
         from math import inf
 

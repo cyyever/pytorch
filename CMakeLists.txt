@@ -297,7 +297,6 @@ option(BUILD_BINARY "Build C++ binaries" OFF)
 option(BUILD_CUSTOM_PROTOBUF
        "Build and use Caffe2's own protobuf under third_party" ON)
 option(BUILD_PYTHON "Build Python binaries" ON)
-option(BUILD_LITE_INTERPRETER "Master flag to build Lite Interpreter" OFF)
 option(BUILD_SHARED_LIBS "Build libcaffe2.so" ON)
 cmake_dependent_option(
   CAFFE2_LINK_LOCAL_PROTOBUF "If set, build protobuf inside libcaffe2.so." ON
@@ -410,11 +409,6 @@ if(NOT DEFINED USE_VULKAN)
   cmake_dependent_option(USE_VULKAN "Use Vulkan GPU backend" ON "ANDROID" OFF)
 endif()
 
-option(USE_SOURCE_DEBUG_ON_MOBILE "Enable" ON)
-option(USE_LITE_INTERPRETER_PROFILER "Enable" ON)
-cmake_dependent_option(
-  USE_LITE_AOTI "Include AOTI sources" OFF
-  "BUILD_LITE_INTERPRETER" OFF)
 option(USE_VULKAN_FP16_INFERENCE "Vulkan - Use fp16 inference" OFF)
 option(USE_VULKAN_RELAXED_PRECISION
        "Vulkan - Use relaxed precision math in the kernels (mediump)" OFF)
@@ -473,7 +467,6 @@ option(
   DEBUG_CUDA
   "When compiling DEBUG, also attempt to compile CUDA with debug flags (may cause nvcc to OOM)"
   OFF)
-option(USE_COREML_DELEGATE "Use the CoreML backend through delegate APIs" OFF)
 option(USE_PER_OPERATOR_HEADERS
        "Whether ATen should generate separate headers for each operator" ON)
 cmake_dependent_option(
@@ -925,9 +918,6 @@ if(INTERN_BUILD_MOBILE)
   else()
     set(INTERN_USE_EIGEN_BLAS OFF)
   endif()
-  # Disable developing mobile interpreter for actual mobile build. Enable it
-  # elsewhere to capture build error.
-  set(INTERN_DISABLE_MOBILE_INTERP ON)
 endif()
 
 # ---[ Version numbers for generated libraries
@@ -1165,10 +1155,6 @@ if(USE_VULKAN)
 
 endif()
 
-if(BUILD_LITE_INTERPRETER)
-  string(APPEND CMAKE_CXX_FLAGS " -DBUILD_LITE_INTERPRETER")
-endif()
-
 if(TRACING_BASED)
   string(APPEND CMAKE_CXX_FLAGS " -DTRACING_BASED")
 endif()
@@ -1179,18 +1165,6 @@ endif()
 
 if(USE_PYTORCH_METAL_EXPORT)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL_EXPORT")
-endif()
-
-if(USE_SOURCE_DEBUG_ON_MOBILE)
-  string(APPEND CMAKE_CXX_FLAGS " -DSYMBOLICATE_MOBILE_DEBUG_HANDLE")
-endif()
-
-if(BUILD_LITE_INTERPRETER AND USE_LITE_INTERPRETER_PROFILER)
-  string(APPEND CMAKE_CXX_FLAGS " -DEDGE_PROFILER_USE_KINETO")
-endif()
-
-if(USE_COREML_DELEGATE)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_COREML_DELEGATE")
 endif()
 
 # ---[ Allowlist file if allowlist is specified

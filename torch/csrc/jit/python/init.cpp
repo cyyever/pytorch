@@ -50,8 +50,6 @@
 #include <torch/csrc/jit/passes/loop_unrolling.h>
 #include <torch/csrc/jit/passes/lower_graph.h>
 #include <torch/csrc/jit/passes/lower_tuples.h>
-#include <torch/csrc/jit/passes/metal_rewrite.h>
-#include <torch/csrc/jit/passes/mobile_optimizer_type.h>
 #include <torch/csrc/jit/passes/normalize_ops.h>
 #include <torch/csrc/jit/passes/peephole.h>
 #include <torch/csrc/jit/passes/peephole_list_idioms.h>
@@ -74,8 +72,6 @@
 #include <torch/csrc/jit/passes/symbolic_shape_analysis.h>
 #include <torch/csrc/jit/passes/tensorexpr_fuser.h>
 #include <torch/csrc/jit/passes/utils/check_alias_annotation.h>
-#include <torch/csrc/jit/passes/vulkan_rewrite.h>
-#include <torch/csrc/jit/passes/xnnpack_rewrite.h>
 #include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/opaque_obj.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
@@ -974,105 +970,6 @@ void initJITBindings(PyObject* module) {
           "_jit_pass_refine_tuple_types",
           [](std::shared_ptr<Graph>& graph) { return RefineTupleTypes(graph); })
       .def(
-          "_jit_pass_transform_conv1d_to_conv2d",
-          [](std::shared_ptr<Graph>& graph) {
-            return transformConv1dToConv2d(graph);
-          })
-      .def(
-          "_jit_pass_transform_conv1d_to_conv2d",
-          [](script::Module& module) {
-            return transformConv1dToConv2d(module);
-          })
-      .def(
-          "_jit_pass_insert_prepacked_ops",
-          [](std::shared_ptr<Graph>& graph) {
-            return insertPrePackedOps(graph);
-          })
-      .def(
-          "_jit_pass_insert_prepacked_ops",
-          [](script::Module& module) { return insertPrePackedOps(module); })
-      .def(
-          "_jit_pass_fuse_clamp_w_prepacked_linear_conv",
-          [](script::Module& module) {
-            return fusePrePackedLinearConvWithClamp(module);
-          })
-      .def(
-          "_jit_pass_fold_prepacking_ops",
-          [](script::Module& module) { return FoldPrePackingOps(module); })
-      .def(
-          "_jit_pass_optimize_for_mobile",
-          [](script::Module& module,
-             std::set<MobileOptimizerType>& optimization_blocklist,
-             std::vector<std::string>& preserved_methods) {
-            return optimizeForMobile(
-                module, optimization_blocklist, preserved_methods);
-          })
-      .def(
-          "_hack_do_not_use_clone_module_with_class",
-          [](script::Module& module,
-             std::vector<std::string>& ignored_methods,
-             std::vector<std::string>& ignored_attributes) {
-            const bool inplace = false;
-            const std::unordered_set<std::string> ignored_methods_set(
-                ignored_methods.begin(), ignored_methods.end());
-            const std::unordered_set<std::string> ignored_attributes_set(
-                ignored_attributes.begin(), ignored_attributes.end());
-            return module.clone(
-                inplace, ignored_methods_set, ignored_attributes_set);
-          })
-      .def(
-          "_jit_pass_vulkan_insert_prepacked_ops",
-          [](std::shared_ptr<Graph>& graph) {
-            return vulkanInsertPrePackedOps(graph);
-          })
-      .def(
-          "_jit_pass_vulkan_insert_prepacked_ops",
-          [](script::Module& module) {
-            return vulkanInsertPrePackedOps(module);
-          })
-      .def(
-          "_jit_pass_vulkan_fuse_clamp_w_prepacked_conv",
-          [](script::Module& module) {
-            return vulkanFusePrePackedConvWithClamp(module);
-          })
-      .def(
-          "_jit_pass_vulkan_fold_prepacking_ops",
-          [](script::Module& module) {
-            return vulkanFoldPrePackingOps(module);
-          })
-      .def(
-          "_jit_pass_vulkan_optimize_for_mobile",
-          [](script::Module& module,
-             std::set<MobileOptimizerType>& optimization_blocklist,
-             std::vector<std::string>& preserved_methods) {
-            return vulkanOptimizeForMobile(
-                module, optimization_blocklist, preserved_methods);
-          })
-      .def(
-          "_jit_pass_metal_insert_prepacked_ops",
-          [](std::shared_ptr<Graph>& graph) {
-            return metalInsertPrePackedOps(graph);
-          })
-      .def(
-          "_jit_pass_metal_insert_prepacked_ops",
-          [](script::Module& module) {
-            return metalInsertPrePackedOps(module);
-          })
-      .def(
-          "_jit_pass_metal_fuse_clamp_w_prepacked_conv",
-          [](script::Module& module) {
-            return metalFusePrePackedConvWithClamp(module);
-          })
-      .def(
-          "_jit_pass_metal_fold_prepacking_ops",
-          [](script::Module& module) { return metalFoldPrePackingOps(module); })
-      .def(
-          "_jit_pass_metal_optimize_for_mobile",
-          [](script::Module& module,
-             std::vector<std::string>& preserved_methods) {
-            return metalOptimizeForMobile(module, preserved_methods);
-          })
-      .def(
           "_jit_pass_filter_non_tensor_arguments",
           [](std::map<std::string, IValue> params) {
             std::map<std::string, at::Tensor> retval;
@@ -1442,20 +1339,6 @@ void initJITBindings(PyObject* module) {
       .def(
           "get_all_written_records",
           &PyTorchStreamWriter::getAllWrittenRecords);
-
-  py::enum_<MobileOptimizerType>(m, "_MobileOptimizerType")
-      .value("CONV_BN_FUSION", MobileOptimizerType::CONV_BN_FUSION)
-      .value(
-          "INSERT_FOLD_PREPACK_OPS",
-          MobileOptimizerType::INSERT_FOLD_PREPACK_OPS)
-      .value("REMOVE_DROPOUT", MobileOptimizerType::REMOVE_DROPOUT)
-      .value("FUSE_ADD_RELU", MobileOptimizerType::FUSE_ADD_RELU)
-      .value(
-          "HOIST_CONV_PACKED_PARAMS",
-          MobileOptimizerType::HOIST_CONV_PACKED_PARAMS)
-      .value(
-          "VULKAN_AUTOMATIC_GPU_TRANSFER",
-          MobileOptimizerType::VULKAN_AUTOMATIC_GPU_TRANSFER);
 
   // This allows PyTorchStreamReader to read from a Python buffer. It requires
   // that the buffer implement `seek()`, `tell()`, and `read()`.

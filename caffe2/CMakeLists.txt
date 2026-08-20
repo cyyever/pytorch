@@ -260,7 +260,7 @@ set(GENERATED_CXX_TORCH
   "${TORCH_SRC_DIR}/csrc/autograd/generated/ViewFuncs.cpp"
   )
 
-if(NOT INTERN_DISABLE_AUTOGRAD AND NOT BUILD_LITE_INTERPRETER)
+if(NOT INTERN_DISABLE_AUTOGRAD)
   append_filelist("libtorch_generated_sources('{}', only_type_vars=True)" GENERATED_CXX_TORCH)
   list(APPEND GENERATED_CXX_TORCH
     "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
@@ -450,42 +450,13 @@ set(TORCH_SRCS ${GENERATED_CXX_TORCH})
 list(APPEND TORCH_SRCS ${GENERATED_H_TORCH})
 list(APPEND LIBTORCH_CMAKE_SRCS "")
 
-list(APPEND LITE_EAGER_SYMOBLICATION_SRCS "")
-if(USE_SOURCE_DEBUG_ON_MOBILE)
-  append_filelist("libtorch_lite_eager_symbolication" LITE_EAGER_SYMOBLICATION_SRCS)
-  # For source debug on lite interpreter, we have to add dependency on pickling
-  # but references to read/writeArchiveAndTensor is not built for mobile
-  # so this condition specifically says we are building for source debug
-  # on mobile.
-  if(BUILD_LITE_INTERPRETER)
-    set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/serialization/pickle.cpp PROPERTIES COMPILE_FLAGS "-DC10_MOBILE -DFEATURE_TORCH_MOBILE")
-  endif()
+append_filelist("libtorch_cmake_sources" LIBTORCH_CMAKE_SRCS)
+if(BUILD_LAZY_TS_BACKEND)
+  append_filelist("lazy_tensor_ts_sources" LIBTORCH_CMAKE_SRCS)
 endif()
-
-list(APPEND LITE_PROFILER_SRCS "")
-if(USE_LITE_INTERPRETER_PROFILER)
-  append_filelist("libtorch_edge_profiler_sources " LITE_PROFILER_SRCS)
-endif()
-
-# Switch between the full jit interpreter and lite interpreter
-if(BUILD_LITE_INTERPRETER)
-  append_filelist("libtorch_lite_cmake_sources" LIBTORCH_CMAKE_SRCS)
-  list(APPEND LIBTORCH_CMAKE_SRCS ${LITE_EAGER_SYMOBLICATION_SRCS})
-  list(APPEND LIBTORCH_CMAKE_SRCS ${LITE_PROFILER_SRCS})
-  if(USE_LITE_AOTI)
-    append_filelist("inductor_core_resources" LIBTORCH_CMAKE_SRCS)
-  endif()
-  set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-else()
-  append_filelist("libtorch_cmake_sources" LIBTORCH_CMAKE_SRCS)
-  list(APPEND LIBTORCH_CMAKE_SRCS ${LITE_EAGER_SYMOBLICATION_SRCS})
-  if(BUILD_LAZY_TS_BACKEND)
-    append_filelist("lazy_tensor_ts_sources" LIBTORCH_CMAKE_SRCS)
-  endif()
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # TODO: Delete this when https://github.com/pytorch/pytorch/issues/35026 is fixed
-    set_source_files_properties(../torch/csrc/autograd/record_function_ops.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-  endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # TODO: Delete this when https://github.com/pytorch/pytorch/issues/35026 is fixed
+  set_source_files_properties(../torch/csrc/autograd/record_function_ops.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 list(APPEND TORCH_SRCS ${LIBTORCH_CMAKE_SRCS})
 
@@ -494,27 +465,6 @@ if(PRINT_CMAKE_DEBUG_INFO)
   foreach(tmp ${LIBTORCH_CMAKE_SRCS})
     message(STATUS "  " ${tmp})
   endforeach()
-endif()
-
-# Mobile backend delegate srcs
-if(INTERN_BUILD_MOBILE)
-  set(DELEGATE_SRCS
-    ${TORCH_SRC_DIR}/csrc/jit/backends/backend_debug_info.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/backends/backend_interface.cpp
-  )
-  list(APPEND TORCH_SRCS ${DELEGATE_SRCS})
-  if(IOS AND USE_COREML_DELEGATE)
-    set(COREML_DELEGATE_SRCS
-      ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/cpp/context.cpp
-      ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/objc/PTMCoreMLBackend.mm
-      ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/objc/PTMCoreMLExecutor.mm
-      ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/objc/PTMCoreMLCompiler.mm
-      ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/objc/PTMCoreMLFeatureProvider.mm
-    )
-    set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/backends/coreml/objc/PTMCoreMLBackend.mm PROPERTIES COMPILE_FLAGS "-fno-objc-arc")
-    include_directories(${TORCH_ROOT}/third_party/nlohmann/single_include)
-    list(APPEND TORCH_SRCS ${COREML_DELEGATE_SRCS})
-  endif()
 endif()
 
 # Required workaround for LLVM 9 includes.
@@ -534,37 +484,13 @@ set_source_files_properties(${TORCH_ROOT}/aten/src/ATen/native/BlasKernel.cpp PR
 endif()
 
 
-if(NOT INTERN_DISABLE_MOBILE_INTERP)
-  set(MOBILE_SRCS
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/function.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/import.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/import_data.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/interpreter.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/compatibility/model_compatibility.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/module.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/flatbuffer_loader.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/observer.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/parse_bytecode.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/parse_operators.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/quantization.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/train/export_data.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/train/optim/sgd.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/train/random.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/train/sequential.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/mobile/upgrader_mobile.cpp
-     ${TORCH_SRC_DIR}/csrc/jit/serialization/flatbuffer_serializer.cpp
-     )
-  list(APPEND TORCH_SRCS ${MOBILE_SRCS})
-  list(APPEND TORCH_SRCS ${LITE_EAGER_SYMOBLICATION_SRCS})
-endif()
-
 # This one needs to be unconditionally added as Functions.cpp is also unconditionally added
 list(APPEND TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/autograd/FunctionsManual.cpp
   ${TORCH_SRC_DIR}/csrc/utils/out_types.cpp
 )
 
-if(NOT INTERN_DISABLE_AUTOGRAD AND NOT BUILD_LITE_INTERPRETER)
+if(NOT INTERN_DISABLE_AUTOGRAD)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/autograd/TraceTypeManual.cpp
     ${TORCH_SRC_DIR}/csrc/autograd/VariableTypeManual.cpp
@@ -578,16 +504,12 @@ if(${USE_ITT})
   )
 endif()
 
-if(NOT INTERN_BUILD_MOBILE AND NOT BUILD_LITE_INTERPRETER)
+if(NOT INTERN_BUILD_MOBILE)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/mobile/compatibility/backport.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/mobile/compatibility/backport_manager.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/onnx.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/serialization/export_bytecode.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/serialization/flatbuffer_serializer.cpp
     ${TORCH_SRC_DIR}/csrc/jit/codegen/fuser/cpu/fused_kernel.cpp
     ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
     ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp
@@ -699,7 +621,7 @@ if(USE_ROCM)
   install(TARGETS caffe2_nvrtc DESTINATION "${TORCH_INSTALL_LIB_DIR}")
 endif()
 
-if(NOT NO_API AND NOT BUILD_LITE_INTERPRETER)
+if(NOT NO_API)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/data/datasets/mnist.cpp
@@ -858,7 +780,7 @@ if(HAVE_SOVERSION)
 endif()
 torch_compile_options(torch_cpu)  # see cmake/public/utils.cmake
 
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND NOT USE_IOS AND NOT USE_COREML_DELEGATE)
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND NOT USE_IOS)
   target_compile_options_if_supported(torch_cpu "-Wmissing-prototypes")
   target_compile_options_if_supported(torch_cpu "-Werror=missing-prototypes")
   if(TARGET torch_cuda)
@@ -1283,56 +1205,6 @@ endif()
 # ==========================================================
 
 
-# Build model tracer for tracing-based selective build
-if(TRACING_BASED AND NOT BUILD_LITE_INTERPRETER AND NOT INTERN_BUILD_MOBILE)
-  add_subdirectory(
-    ${TORCH_ROOT}/torch/csrc/jit/mobile/model_tracer
-    ${CMAKE_BINARY_DIR}/model_tracer
-  )
-  string(APPEND CMAKE_CXX_FLAGS " -DENABLE_RECORD_KERNEL_FUNCTION_DTYPE")
-endif()
-
-# Codegen selected_mobile_ops.h for template selective build
-if(BUILD_LITE_INTERPRETER AND SELECTED_OP_LIST)
-  message("running gen_selected_mobile_ops_header for:  '${SELECTED_OP_LIST}'")
-  file(GLOB lite_interpreter_python CONFIGURE_DEPENDS "${TOOLS_PATH}/lite_interpreter/*.py")
-  if(${TRACING_BASED})
-    file(GLOB code_analyzer_python CONFIGURE_DEPENDS "${TOOLS_PATH}/code_analyzer/*.py")
-    add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR}/aten/src/ATen/selected_mobile_ops.h
-      COMMAND
-        Python::Interpreter
-        -m tools.code_analyzer.gen_oplist
-        --model_file_list_path "${SELECTED_OP_LIST}"
-        --output_dir "${CMAKE_BINARY_DIR}/aten/src/ATen"
-      DEPENDS
-        ${torchgen_python}
-        ${lite_interpreter_python}
-        ${code_analyzer_python}
-        "${SELECTED_OP_LIST}"
-        "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
-      WORKING_DIRECTORY "${TORCH_ROOT}")
-  else()
-    add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR}/aten/src/ATen/selected_mobile_ops.h
-      COMMAND
-        Python::Interpreter
-        -m tools.lite_interpreter.gen_selected_mobile_ops_header
-        --yaml_file_path "${SELECTED_OP_LIST}"
-        --output_file_path "${CMAKE_BINARY_DIR}/aten/src/ATen"
-      DEPENDS
-        ${torchgen_python}
-        ${lite_interpreter_python}
-        "${SELECTED_OP_LIST}"
-        "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
-      WORKING_DIRECTORY "${TORCH_ROOT}")
-  endif()
-
-  add_custom_target(
-    __selected_mobile_ops_header_gen
-    DEPENDS ${CMAKE_BINARY_DIR}/aten/src/ATen/selected_mobile_ops.h)
-  add_dependencies(torch_cpu __selected_mobile_ops_header_gen)
-endif()
 
 if(NOT NO_API)
   target_include_directories(torch_cpu PRIVATE
@@ -1346,17 +1218,15 @@ if(USE_CUDA AND MSVC)
   target_link_libraries(torch_cuda INTERFACE "-INCLUDE:?warp_size@cuda@at@@YAHXZ")
 endif()
 
-if(NOT BUILD_LITE_INTERPRETER)
-  set(TH_CPU_INCLUDE
-    # dense
-    aten/src/TH
-    ${CMAKE_CURRENT_BINARY_DIR}/aten/src/TH
-    ${TORCH_ROOT}/aten/src
-    ${CMAKE_CURRENT_BINARY_DIR}/aten/src
+set(TH_CPU_INCLUDE
+  # dense
+  aten/src/TH
+  ${CMAKE_CURRENT_BINARY_DIR}/aten/src/TH
+  ${TORCH_ROOT}/aten/src
+  ${CMAKE_CURRENT_BINARY_DIR}/aten/src
 
-    ${CMAKE_BINARY_DIR}/aten/src)
-    target_include_directories(torch_cpu PRIVATE ${TH_CPU_INCLUDE})
-endif()
+  ${CMAKE_BINARY_DIR}/aten/src)
+target_include_directories(torch_cpu PRIVATE ${TH_CPU_INCLUDE})
 
 set(ATen_CPU_INCLUDE
   ${TORCH_ROOT}/aten/src
@@ -1435,43 +1305,25 @@ install(FILES
   "${TORCH_SRC_DIR}/custom_class_detail.h"
   DESTINATION ${TORCH_INSTALL_INCLUDE_DIR}/torch)
 if(BUILD_TEST)
-  if(BUILD_LITE_INTERPRETER)
-    add_subdirectory(
-      ${TORCH_ROOT}/test/cpp/lite_interpreter_runtime
-      ${CMAKE_BINARY_DIR}/test_lite_interpreter_runtime
-    )
-    add_subdirectory(
-      ${TORCH_ROOT}/test/mobile/lightweight_dispatch
-      ${CMAKE_BINARY_DIR}/test_codegen_unboxing
-    )
-  else()
-    add_subdirectory(${TORCH_ROOT}/test/cpp/jit ${CMAKE_BINARY_DIR}/test_jit)
-    add_subdirectory(${TORCH_ROOT}/test/cpp/lazy ${CMAKE_BINARY_DIR}/test_lazy)
-    add_subdirectory(${TORCH_ROOT}/test/cpp/profiler ${CMAKE_BINARY_DIR}/test_profiler)
-    add_subdirectory(${TORCH_ROOT}/test/inductor ${CMAKE_BINARY_DIR}/test_inductor)
-    add_subdirectory(${TORCH_ROOT}/test/cpp/aoti_abi_check ${CMAKE_BINARY_DIR}/test_aoti_abi_check)
-    add_subdirectory(${TORCH_ROOT}/test/cpp/shim ${CMAKE_BINARY_DIR}/test_shim)
-    if(BUILD_AOT_INDUCTOR_TEST)
-      add_subdirectory(${TORCH_ROOT}/test/cpp/aoti_inference ${CMAKE_BINARY_DIR}/test_aoti_inference)
-    endif()
+  add_subdirectory(${TORCH_ROOT}/test/cpp/jit ${CMAKE_BINARY_DIR}/test_jit)
+  add_subdirectory(${TORCH_ROOT}/test/cpp/lazy ${CMAKE_BINARY_DIR}/test_lazy)
+  add_subdirectory(${TORCH_ROOT}/test/cpp/profiler ${CMAKE_BINARY_DIR}/test_profiler)
+  add_subdirectory(${TORCH_ROOT}/test/inductor ${CMAKE_BINARY_DIR}/test_inductor)
+  add_subdirectory(${TORCH_ROOT}/test/cpp/aoti_abi_check ${CMAKE_BINARY_DIR}/test_aoti_abi_check)
+  add_subdirectory(${TORCH_ROOT}/test/cpp/shim ${CMAKE_BINARY_DIR}/test_shim)
+  if(BUILD_AOT_INDUCTOR_TEST)
+    add_subdirectory(${TORCH_ROOT}/test/cpp/aoti_inference ${CMAKE_BINARY_DIR}/test_aoti_inference)
+  endif()
 
-    if(USE_DISTRIBUTED)
-      add_subdirectory(${TORCH_ROOT}/test/cpp/c10d ${CMAKE_BINARY_DIR}/test_cpp_c10d)
-      if(NOT WIN32)
-        add_subdirectory(${TORCH_ROOT}/test/cpp/dist_autograd ${CMAKE_BINARY_DIR}/dist_autograd)
-        add_subdirectory(${TORCH_ROOT}/test/cpp/rpc ${CMAKE_BINARY_DIR}/test_cpp_rpc)
-      endif()
+  if(USE_DISTRIBUTED)
+    add_subdirectory(${TORCH_ROOT}/test/cpp/c10d ${CMAKE_BINARY_DIR}/test_cpp_c10d)
+    if(NOT WIN32)
+      add_subdirectory(${TORCH_ROOT}/test/cpp/dist_autograd ${CMAKE_BINARY_DIR}/dist_autograd)
+      add_subdirectory(${TORCH_ROOT}/test/cpp/rpc ${CMAKE_BINARY_DIR}/test_cpp_rpc)
     endif()
-    if(NOT NO_API)
-      add_subdirectory(${TORCH_ROOT}/test/cpp/api ${CMAKE_BINARY_DIR}/test_api)
-    endif()
-
-    if(USE_LLVM AND LLVM_FOUND)
-      add_subdirectory(
-        ${TORCH_ROOT}/test/mobile/nnc
-        ${CMAKE_BINARY_DIR}/test_mobile_nnc
-      )
-    endif()
+  endif()
+  if(NOT NO_API)
+    add_subdirectory(${TORCH_ROOT}/test/cpp/api ${CMAKE_BINARY_DIR}/test_api)
   endif()
 endif()
 
@@ -1631,14 +1483,6 @@ if(USE_ROCM)
       message(WARNING "rocSHMEM not found (USE_NVSHMEM=ON). Building without rocSHMEM support.")
     endif()
   endif() #USE_NVSHMEM
-endif()
-
-if(BUILD_LITE_INTERPRETER)
-  target_compile_definitions(torch_cpu PRIVATE BUILD_LITE_INTERPRETER)
-  # Enable template selective build only when SELECTED_OP_LIST is provided.
-  if(SELECTED_OP_LIST)
-    target_compile_definitions(torch_cpu PRIVATE TEMPLATE_SELECTIVE_BUILD)
-  endif()
 endif()
 
 
@@ -1893,8 +1737,6 @@ if(APPLE AND USE_PYTORCH_METAL)
   endif()
 endif()
 
-
-target_link_libraries(torch_cpu PRIVATE flatbuffers)
 
 # Note [Global dependencies]
 # Some libraries (e.g. OpenMPI) like to dlopen plugins after they're initialized,

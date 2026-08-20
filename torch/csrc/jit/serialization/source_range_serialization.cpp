@@ -3,7 +3,7 @@
 
 #include <c10/util/Exception.h>
 #include <c10/util/Flags.h>
-#include <torch/csrc/jit/mobile/type_parser.h>
+#include <torch/csrc/jit/serialization/type_parser.h>
 #include <torch/csrc/jit/serialization/pickle.h>
 #include <algorithm>
 #include <memory>
