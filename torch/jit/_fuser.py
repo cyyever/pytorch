@@ -15,6 +15,7 @@ def optimized_execution(should_optimize):
     finally:
         torch._C._set_graph_executor_optimize(stored_flag)
 
+
 last_executed_optimized_graph = torch._C._last_executed_optimized_graph
 
 

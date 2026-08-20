@@ -87,6 +87,7 @@ ignored_c_binding_in_graph_function_names = {
     "torch._validate_compressed_sparse_indices",
 }
 
+
 # Helper function to dump the torch name rule map generated based on
 # the heuristic defined in gen_allowed_objs_and_ids.
 def dump_allowed_torch_name_rule_map() -> None:

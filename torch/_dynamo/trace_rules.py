@@ -962,8 +962,6 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
         "torch._C._jit_set_utf8_decoding_ignore",
         "torch._C._jit_shape_compute_graph_for_node",
         "torch._C._jit_symbolic_shapes_test_mode_enabled",
-        "torch._C._jit_to_backend_selective",
-        "torch._C._jit_to_backend",
         "torch._C._jit_trace_graph",
         "torch._C._jit_trace_module",
         "torch._C._jit_tree_views.FalseLiteral",

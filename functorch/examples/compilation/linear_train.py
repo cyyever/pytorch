@@ -12,8 +12,6 @@ from functorch import make_functional
 from functorch.compile import nnc_jit
 
 
-
-
 def bench(f, iters=100, warmup=10):
     for _ in range(warmup):
         f()
