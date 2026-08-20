@@ -58,11 +58,6 @@ if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
   fi
 fi
 
-# Remove onnxruntime if present to avoid interference with non-ONNX tests
-if [[ "$TEST_CONFIG" != "onnx" ]]; then
-  pip uninstall -y onnxruntime 2>/dev/null || true
-fi
-
 # Remove dill to test that serialization works without it
 if [[ "$BUILD_ENVIRONMENT" == *py3.10-gcc11 ]]; then
   pip uninstall -y dill 2>/dev/null || true
@@ -221,7 +216,7 @@ export LANG=C.UTF-8
 
 PR_NUMBER=${PR_NUMBER:-${CIRCLE_PR_NUMBER:-}}
 
-if [[ -d "${HF_CACHE}" && "$TEST_CONFIG" != "onnx" ]]; then
+if [[ -d "${HF_CACHE}" ]]; then
   export HF_HOME="${HF_CACHE}"
 fi
 
@@ -1540,8 +1535,6 @@ test_without_numpy() {
   if [[ "${TEST_CONFIG}" == *dynamo_wrapped* ]]; then
     python -c "import sys;sys.path.insert(0, 'fake_numpy');import torch;torch.compile(lambda x:print(x))('Hello World')"
   fi
-  # Regression test for https://github.com/pytorch/pytorch/pull/157734 (torch.onnx should be importable without numpy)
-  python -c "import sys;sys.path.insert(0, 'fake_numpy');import torch; import torch.onnx"
   popd
 }
 
@@ -2330,10 +2323,7 @@ if ! [[ "${BUILD_ENVIRONMENT}" == *libtorch* ]]; then
   (cd test && python -c "import torch; print(torch.__config__.show())")
   (cd test && python -c "import torch; print(torch.__config__.parallel_info())")
 fi
-if [[ "${TEST_CONFIG}" == "onnx" ]]; then
-  install_torchvision
-  "$(dirname "${BASH_SOURCE[0]}")/../../scripts/onnx/test.sh"
-elif [[ "${TEST_CONFIG}" == *numpy_2* ]]; then
+if [[ "${TEST_CONFIG}" == *numpy_2* ]]; then
   # Install numpy-2.0.2 and compatible scipy & numba versions
   # Force re-install of pandas to avoid error where pandas checks numpy version from initial install and fails upon import
   TMP_PANDAS_VERSION=$(python -c "import pandas; print(pandas.__version__)" 2>/dev/null)

@@ -26,7 +26,7 @@ set(Caffe2_GPU_INCLUDE)
 set(Caffe2_DEPENDENCY_LIBS "")
 set(Caffe2_CUDA_DEPENDENCY_LIBS "")
 # This variable contains dependency libraries of Caffe2 which requires whole
-# symbol linkage. One example is the onnx lib where we need all its schema
+# symbol linkage. One example is a schema-registration lib where we need all its
 # symbols. However, if the lib is whole linked in caffe2 lib, we don't want
 # it to be linked in binaries that will link caffe2 lib. Because if caffe2 lib
 # is built as dynamic library, it will result in two copied of symbols of

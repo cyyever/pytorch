@@ -27,7 +27,6 @@ project-excludes = [
   "torch/utils/data/typing.ipynb",
   "torch/utils/data/dataframes_pipes.ipynb",
   "torch/utils/data/standard_pipes.ipynb",
-  "torch/onnx/_internal/exporter/_torchlib/ops/nn.py",
   "torch/include/**",
   "torch/csrc/**",
   "torch/distributed/elastic/agent/server/api.py",
@@ -55,7 +54,6 @@ ignore-missing-imports = [
     "torch._C._StaticXpuLauncher",
     "torch.profiler._cupti._cupti_stubs",
     "torch._C._jit_tree_views.*",
-    "torch.for_onnx.onnx.*",
     "torch.ao.quantization.experimental.apot_utils.*",
     "torch.ao.quantization.experimental.quantizer.*",
     "torch.ao.quantization.experimental.observer.*",
@@ -108,9 +106,6 @@ ignore-missing-imports = [
     "torch.fb.*",
     "torch.*.fb.*",
     "torch_xla.*",
-    "onnx.*",
-    "onnxruntime.*",
-    "onnxscript.*",
     "redis.*",
     "tabulate.*",
     "shtab.*",
@@ -131,7 +126,7 @@ errors.implicit-import = false
 errors.deprecated = false # re-enable after we've fix import formatting
 
 permissive-ignores = true
-replace-imports-with-any = ["!sympy.printing.*", "sympy.*", "onnxscript.onnx_opset.*", "networkx.*"]
+replace-imports-with-any = ["!sympy.printing.*", "sympy.*", "networkx.*"]
 search-path = ["tools/experimental"]
 enable-fallback-search-path = true
 

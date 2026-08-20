@@ -1,14 +1,21 @@
-#include <torch/csrc/jit/passes/onnx/function_substitution.h>
+#include <torch/csrc/jit/passes/function_substitution.h>
 
+#include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/jit_log.h>
-#include <torch/csrc/jit/passes/onnx/helper.h>
-#include <torch/csrc/jit/passes/onnx/naming.h>
 
 namespace torch::jit {
 
 namespace {
 
 const std::string kTopModuleVariableName;
+
+// Scope names are "<class name>::<variable name>"; the separator is shared
+// with the scope-name parsing in ir.cpp.
+std::string createFullScopeName(
+    const std::string& class_name,
+    const std::string& variable_name) {
+  return std::string(class_name).append("::").append(variable_name);
+}
 
 std::string TidyClassNameFromTorchScript(
     const std::optional<c10::QualifiedName>& class_name) {
@@ -71,7 +78,7 @@ ScopePtr ForwardCallScope(Graph& graph, Node* call_node) {
     const std::string class_name = TidyClassNameFromTorchScript(type->name());
     const std::string variable_name = GetCallNodeVariableName(call_node);
     const std::string scope_name =
-        onnx::ONNXScopeName::createFullScopeName(class_name, variable_name);
+        createFullScopeName(class_name, variable_name);
     return graph.current_scope()->push(Symbol::scope(scope_name));
   }
   return graph.current_scope();
@@ -110,11 +117,11 @@ void functionCallSubstitution(Block* block) {
           cur->removeAllInputs();
           cur->destroy();
           GRAPH_UPDATE(
-              "ONNX function call substitution function: '",
+              "Function call substitution function: '",
               fun_type->function()->name(),
               "' to aten::__interpolate");
           GRAPH_UPDATE(
-              "Function in ONNX function call substitution body: ",
+              "Function in function call substitution body: ",
               toGraphFunction(*fun_type->function()).optimized_graph());
         } else {
           // Remove input[0] and the node that feeds into it
@@ -165,12 +172,12 @@ void functionCallSubstitution(Block* block) {
   }
 }
 
-ScopePtr ONNXGraphTopLevelScope(Graph& graph) {
+ScopePtr GraphTopLevelScope(Graph& graph) {
   if (graph.inputs().empty()) {
     return graph.current_scope();
   }
   if (auto top_module_type = graph.inputs().at(0)->type()->cast<ClassType>()) {
-    auto scope_name = ::torch::jit::onnx::ONNXScopeName::createFullScopeName(
+    auto scope_name = createFullScopeName(
         TidyClassNameFromTorchScript(top_module_type->name()),
         kTopModuleVariableName);
     return graph.current_scope()->push(Symbol::scope(scope_name));
@@ -180,14 +187,12 @@ ScopePtr ONNXGraphTopLevelScope(Graph& graph) {
 
 } // namespace
 
-// This pass is to be used for ONNX conversion only. The ONNX converter depends
-// on a number of deprecated aten operators. These operators are removed from IR
-// and replaced by the compiled python function code. However, in order to
-// maintain the behavior for ONNX conversion, we replace these function calls
-// with the aten symbolic which can still be used by the ONNX converter.
-void ONNXFunctionCallSubstitution(Graph& graph) {
+// Inlines prim::CallFunction / prim::CallMethod nodes so that consumers see a
+// flat graph of aten ops, assigning module-hierarchy scope names along the way.
+// Used by the TorchScript-to-ExportedProgram converter.
+void FunctionCallSubstitution(Graph& graph) {
   GRAPH_DUMP("Before function call substitution calls: ", &graph);
-  WithCurrentScope top_level_scope_guard(graph, ONNXGraphTopLevelScope(graph));
+  WithCurrentScope top_level_scope_guard(graph, GraphTopLevelScope(graph));
   functionCallSubstitution(graph.block());
   GRAPH_DUMP("After function call substitution calls: ", &graph);
 }

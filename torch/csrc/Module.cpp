@@ -93,7 +93,6 @@
 #include <torch/csrc/mps/Module.h>
 #include <torch/csrc/mtia/Module.h>
 #include <torch/csrc/multiprocessing/init.h>
-#include <torch/csrc/onnx/init.h>
 #include <torch/csrc/profiler/python/init.h>
 #include <torch/csrc/tensor/python_tensor.h>
 #include <torch/csrc/utils/disable_torch_function.h>
@@ -2585,10 +2584,6 @@ PyObject* initModule() {
   ASSERT_TRUE(THPVariable_initModule(module));
   ASSERT_TRUE(THPFunction_initModule(module));
   ASSERT_TRUE(THPEngine_initModule(module));
-  // NOTE: We need to be able to access OperatorExportTypes from ONNX for use in
-  // the export side of JIT, so this ONNX init needs to appear before the JIT
-  // init.
-  torch::onnx::initONNXBindings(module);
   torch::autograd::initEnumTag(module);
   torch::jit::initJITBindings(module);
   torch::monitor::initMonitorBindings(module);

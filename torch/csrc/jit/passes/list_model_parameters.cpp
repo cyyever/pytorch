@@ -1,12 +1,8 @@
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/jit_log.h>
-#include <torch/csrc/jit/passes/onnx/list_model_parameters.h>
+#include <torch/csrc/jit/passes/list_model_parameters.h>
 
 namespace torch::jit {
-
-namespace onnx {
-using namespace ::c10::onnx;
-}
 
 // findSubModuleAttr function chases getAttr chains backwards to locate the
 // submodules. For example: module M {
@@ -141,7 +137,7 @@ static std::vector<IValue> getParamAttributes(
                 << " This class type does not extend __getstate__ method.";
           }
         } else if (attr.isNone() || (attr.isBool() && name == "training")) {
-          // This attr is constant for ONNX.
+          // This attr is a constant.
           auto attrVal = tryInsertConstant(*graph, attr);
           n->output()->replaceAllUsesWith(*attrVal);
           nodesToDestroy.emplace(n);

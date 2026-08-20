@@ -46,7 +46,6 @@ register_log(
 register_log("pp", ["torch.distributed.pipelining"])
 register_log("fsdp", ["torch.distributed.fsdp", "torch.distributed._composable.fsdp"])
 register_log("dtensor", ["torch.distributed._tensor", "torch.distributed.tensor"])
-register_log("onnx", "torch.onnx")
 register_log("native_dsl", "torch._native")
 register_artifact(
     "native_dsl_compile",
@@ -194,7 +193,6 @@ register_artifact(
     off_by_default=True,
 )
 register_artifact("perf_hints", "", off_by_default=True)
-register_artifact("onnx_diagnostics", "", off_by_default=True)
 register_artifact("compute_dependencies", "", off_by_default=True)
 register_artifact(
     "fusion",

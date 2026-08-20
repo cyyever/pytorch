@@ -18,7 +18,6 @@ from tensorboard.summary.writer.event_file_writer import EventFileWriter
 
 from ._convert_np import make_np
 from ._embedding import get_embedding_info, make_mat, make_sprite, make_tsv, write_pbtxt
-from ._onnx_graph import load_onnx_graph
 from ._pytorch_graph import graph
 from ._utils import figure_to_image
 from .summary import (
@@ -132,17 +131,6 @@ class FileWriter:
             tag="step1", run_metadata=stepstats.SerializeToString()
         )
         event = event_pb2.Event(tagged_run_metadata=trm)
-        self.add_event(event, None, walltime)
-
-    def add_onnx_graph(self, graph, walltime=None) -> None:
-        """Add a `Graph` protocol buffer to the event file.
-
-        Args:
-          graph: A `Graph` protocol buffer.
-          walltime: float. Optional walltime to override the default (current)
-            _get_file_writerfrom time.time())
-        """
-        event = event_pb2.Event(graph_def=graph.SerializeToString())
         self.add_event(event, None, walltime)
 
     def flush(self) -> None:
@@ -822,10 +810,6 @@ class SummaryWriter:
         self._get_file_writer().add_summary(
             text(tag, text_string), global_step, walltime
         )
-
-    def add_onnx_graph(self, prototxt) -> None:
-        torch._C._log_api_usage_once("tensorboard.logging.add_onnx_graph")
-        self._get_file_writer().add_onnx_graph(load_onnx_graph(prototxt))
 
     def add_graph(
         self, model, input_to_model=None, verbose=False, use_strict_trace=True

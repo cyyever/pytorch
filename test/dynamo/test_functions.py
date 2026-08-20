@@ -939,13 +939,6 @@ partial_fn = functools.partial(fn, scale=2)
         compiled_fn()
 
     @make_test
-    def test_is_in_onnx_export(x, y):
-        if torch.onnx.is_in_onnx_export():
-            return x - 1
-        else:
-            return y + 1
-
-    @make_test
     def test_is_fx_tracing(x, y):
         if torch.fx._symbolic_trace.is_fx_tracing():
             return x - 1

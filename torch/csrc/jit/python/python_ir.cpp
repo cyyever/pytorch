@@ -8,7 +8,6 @@
 #include <torch/csrc/jit/ir/alias_analysis.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/passes/canonicalize.h>
-#include <torch/csrc/jit/passes/onnx/helper.h>
 #include <torch/csrc/jit/passes/shape_analysis.h>
 #include <torch/csrc/jit/passes/symbolic_shape_analysis.h>
 #include <torch/csrc/jit/python/pybind.h>
@@ -50,7 +49,7 @@ static std::ostream& printPyObject(std::ostream& out, const THPObjectPtr& obj) {
     //
     // This is a fairly fragile fix (What if you have nested tuples
     // in tuples? What if you have dictionaries?) but it seems to hit
-    // the cases that are triggered in practice in onnx-pytorch.  Revisit
+    // the cases that are triggered in practice.  Revisit
     // this code if this is not the case.
     //
     // By the way, one non-solution for this problem is to monkeypatch
@@ -126,7 +125,6 @@ void ConcretePythonOp::cloneFrom(Node* other_) {
 
 // recover the autograd.Function instance, if this PythonOp's function
 // was originally SomeFunction.apply
-// used in ONNX for discovering symbolics
 std::optional<THPObjectPtr> ConcretePythonOp::autogradFunction() const {
   pybind11::gil_scoped_acquire gil;
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
@@ -238,104 +236,6 @@ void initPythonIRBindings(PyObject* module_) {
             AliasDb db(std::move(g));
             db.dump();
           })
-      .def(
-          "_export_onnx",
-          [](const std::shared_ptr<Graph>& g,
-             const std::map<std::string, at::Tensor>& initializers,
-             int64_t onnx_opset_version,
-             const std::unordered_map<
-                 std::string,
-                 std::unordered_map<int64_t, std::string>>& dynamic_axes,
-             bool defer_weight_export,
-             ::torch::onnx::OperatorExportTypes operator_export_type,
-             bool strip_doc_string,
-             bool keep_initializers_as_inputs,
-             const std::map<std::string, int>& custom_opsets,
-             bool add_node_names,
-             const std::string& onnx_file_path,
-             const NodeAttrNameMap& node_attr_to_name) {
-            std::string graph;
-            auto
-                [model_proto,
-                 export_map,
-                 symbol_map,
-                 val_use_external_data_format,
-                 onnx_node_names] =
-                    export_onnx(
-                        g,
-                        initializers,
-                        onnx_opset_version,
-                        dynamic_axes,
-                        defer_weight_export,
-                        operator_export_type,
-                        strip_doc_string,
-                        keep_initializers_as_inputs,
-                        custom_opsets,
-                        add_node_names,
-                        false,
-                        onnx_file_path,
-                        node_attr_to_name);
-            std::unordered_map<std::string, py::bytes>
-                python_serialized_export_map;
-            for (auto& kv : export_map) {
-              auto t = kv.second;
-              size_t copy_bytes = t.element_size() * t.numel();
-              // TODO: this is an unnecessary copy. In theory we can directly
-              // return the map from identifier to Tensor, but we need some API
-              // in Python to get raw `bytes` containing the raw tensor data.
-              python_serialized_export_map[kv.first] =
-                  py::bytes(static_cast<const char*>(t.data_ptr()), copy_bytes);
-            }
-            graph = serialize_model_proto_to_string(model_proto);
-            return std::make_tuple(
-                py::bytes(graph),
-                python_serialized_export_map,
-                val_use_external_data_format,
-                onnx_node_names);
-          },
-          py::arg("initializers"),
-          py::arg("onnx_opset_version") = 0,
-          py::arg("dynamic_axes"),
-          py::arg("defer_weight_export") = false,
-          py::arg("operator_export_type") =
-              ::torch::onnx::OperatorExportTypes::ONNX,
-          py::arg("strip_doc_string") = true,
-          py::arg("keep_initializers_as_inputs") = true,
-          py::arg("custom_opsets"),
-          py::arg("add_node_names") = true,
-          py::arg("onnx_file_path") = std::string(),
-          py::arg("node_attr_to_name") = NodeAttrNameMap())
-      .def(
-          "_pretty_print_onnx",
-          [](const std::shared_ptr<Graph>& g,
-             const std::map<std::string, at::Tensor>& initializers,
-             int64_t onnx_opset_version,
-             bool defer_weight_export,
-             ::torch::onnx::OperatorExportTypes operator_export_type,
-             bool google_printer,
-             bool keep_initializers_as_inputs,
-             const std::map<std::string, int>& custom_opsets,
-             bool add_node_names) {
-            return pretty_print_onnx(
-                g,
-                initializers,
-                onnx_opset_version,
-                defer_weight_export,
-                operator_export_type,
-                google_printer,
-                keep_initializers_as_inputs,
-                custom_opsets,
-                add_node_names);
-          },
-          py::arg("initializers"),
-          py::arg("onnx_opset_version") = 0,
-          py::arg("defer_weight_export") = false,
-          py::arg("operator_export_type") =
-              ::torch::onnx::OperatorExportTypes::ONNX,
-          py::arg("google_printer") = false,
-          py::arg("keep_initializers_as_inputs") = true,
-          py::arg("custom_opsets"),
-          py::arg("add_node_names") = true)
       .def(
           "inputs",
           [](Graph& g) {
@@ -580,9 +480,14 @@ void initPythonIRBindings(PyObject* module_) {
       .def(
           "addNode",
           [](Block& b, const char* str, const std::vector<Value*>& inputs) {
-            return addNodeToBlock(&b, Symbol::fromQualString(str), inputs);
+            auto node = b.appendNode(
+                b.owningGraph()->create(Symbol::fromQualString(str)));
+            for (auto input : inputs) {
+              node->addInput(input);
+            }
+            return node;
           })
-      .def("addInputToBlock", [](Block& b) { return addInputToBlock(&b); })
+      .def("addInputToBlock", [](Block& b) { return b.addInput(); })
       .def("registerOutput", [](Block& b, Value* value) {
         return b.registerOutput(value);
       });

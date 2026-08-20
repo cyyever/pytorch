@@ -43,7 +43,6 @@ import weakref
 from collections.abc import Generator, Sized
 from dataclasses import dataclass
 from enum import Enum
-from os.path import dirname, join
 from typing import Any, cast, Literal, NamedTuple, TYPE_CHECKING
 from unittest.mock import patch
 
@@ -417,7 +416,6 @@ def _reset_guarded_backend_cache() -> None:
 DONT_WRAP_FILES = {
     # For tracing into fx modules
     inspect.getsourcefile(GraphModule),
-    join(dirname(dirname(__file__)), "onnx/_internal/fx/dynamo_graph_extractor.py"),
 }
 
 

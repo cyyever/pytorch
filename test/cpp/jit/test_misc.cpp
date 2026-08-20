@@ -58,7 +58,6 @@
 #include <torch/jit.h>
 #include <torch/script.h>
 
-#include <onnx/onnx_pb.h>
 
 #include <c10/util/Exception.h>
 #include <c10/util/ThreadLocalDebugInfo.h>
@@ -117,7 +116,6 @@ TEST(InternedStringsTest, Basic) {
 TEST(FromQualStringTest, Basic) {
   ASSERT_EQ(Symbol::fromQualString("prim::Param"), Symbol::prim("Param"));
   ASSERT_EQ(Symbol::fromQualString("aten::mm"), Symbol::aten("mm"));
-  ASSERT_EQ(Symbol::fromQualString("onnx::LSTM"), Symbol::onnx("LSTM"));
   ASSERT_EQ(Symbol::fromQualString("attr::value"), Symbol::attr("value"));
   ASSERT_EQ(Symbol::fromQualString("scope::"), Symbol::scope(""));
   ASSERT_EQ(Symbol::fromQualString("::").toUnqualString(), std::string(""));
@@ -377,15 +375,6 @@ TEST(ControlFlowTest, Basic) {
   ASSERT_EQ(2, run_binary("if_one", 3, 2));
   ASSERT_EQ(256, run_binary("while_test", 2, 0));
 }
-
-#if !(C10_ASAN_ENABLED || C10_UBSAN_ENABLED)
-// This test fails vptr UBSAN checks
-
-TEST(ProtoTest, Basic) {
-  ::ONNX_NAMESPACE::ModelProto proto;
-  proto.set_producer_name("foo");
-}
-#endif
 
 // test a few features that are not directly used in schemas yet
 TEST(SchemaParserTest, NestedArrays) {

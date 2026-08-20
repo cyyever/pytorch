@@ -39,7 +39,6 @@ import torch
 import torch._dynamo.testing
 import torch._inductor.config
 import torch._inductor.test_case
-import torch.onnx.operators
 import torch.utils._pytree as python_pytree
 import torch.utils.cpp_extension
 from torch import Tensor
@@ -8299,7 +8298,7 @@ not ___dict_contains('cccccccc', G['sys'].modules)""",
         result = f(torch.ones(6), 3)
         self.assertEqual(result, 3)
 
-    def test_onnx_shape_as_tensor(self):
+    def test_shape_as_tensor(self):
         @torch.compile(backend="eager", fullgraph=True)
         def f(x):
             return 1 + torch._shape_as_tensor(x)[0]
@@ -8311,14 +8310,6 @@ not ___dict_contains('cccccccc', G['sys'].modules)""",
         self.assertEqual(f(input_one_dim), 7)
         self.assertEqual(f(input_two_dims), 8)
         self.assertEqual(f(input_two_dims), 8)
-
-        @torch.compile(backend="eager", fullgraph=True)
-        def f_onnx(x):
-            return 1 + torch.onnx.operators.shape_as_tensor(x)[0]
-
-        self.assertEqual(f_onnx(input_one_dim), 7)
-        self.assertEqual(f_onnx(input_two_dims), 8)
-        self.assertEqual(f_onnx(input_two_dims), 8)
 
     def test_cond(self):
         from functorch.experimental.control_flow import cond

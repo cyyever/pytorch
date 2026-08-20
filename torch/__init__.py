@@ -3383,7 +3383,6 @@ if TYPE_CHECKING:
         _dynamo as _dynamo,
         _inductor as _inductor,
         _subclasses as _subclasses,
-        onnx as onnx,
     )
 
 else:
@@ -3391,8 +3390,6 @@ else:
         "_dynamo",
         "_inductor",
         "_export",
-        # ONNX must be imported after _dynamo, _ops, _subclasses, fx, func and jit
-        "onnx",
     }
 
     def __getattr__(name: str) -> _Any:

@@ -16263,12 +16263,6 @@ def normalize_check_ad(check_ad, name):
     return check_ad
 
 
-class TestProducerVersion(TestCase):
-
-    def test_version(self):
-        # issue gh-32561
-        self.assertTrue(torch.__version__.startswith(torch.onnx.producer_version))
-
 for test in get_all_nn_module_tests():
     add_nn_module_test(**test)
 

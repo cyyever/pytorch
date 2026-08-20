@@ -1187,7 +1187,7 @@ struct hash<NativeOpSchema> {
 
 // Helper to check if dtensor debug logging is enabled and log cache hits.
 // We cache the logger and debug-enabled check to avoid repeated Python calls.
-// Pattern follows torch/csrc/jit/passes/onnx/onnx_log.cpp
+// Pattern follows the JIT logging helpers.
 namespace {
 thread_local py::object dtensor_dispatch_logger;
 thread_local py::object logging_DEBUG;

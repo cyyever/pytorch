@@ -189,9 +189,8 @@ include_patterns = [
     'torch/headeronly/**/*.h',
 ]
 exclude_patterns = [
-    # The negative filters below are to exclude files that include onnx_pb.h or
-    # caffe2_pb.h, otherwise we'd have to build protos as part of this CI job.
-    # CUDA files are also excluded.
+    # The negative filters below exclude generated protobuf headers and CUDA
+    # files, which this CI job cannot compile.
     '**/fb/**',
     '**/*pb.h',
     '**/*inl.h',
@@ -1098,10 +1097,6 @@ exclude_patterns = [
     'test/lazy/test_extract_compiled_graph.py',
     'test/lazy/test_meta_kernel.py',
     'test/nn/test_init.py',
-    'test/onnx/model_defs/op_test.py',
-    'test/onnx/test_models_quantized_onnxruntime.py',
-    'test/onnx/test_onnxscript_no_runtime.py',
-    'test/onnx_caffe2/test_caffe2_common.py',
     'test/optim/test_lrscheduler.py',
     'test/optim/test_optim.py',
     'test/optim/test_swa_utils.py',
@@ -1539,7 +1534,6 @@ exclude_patterns = [
     'torch/utils/tensorboard/_caffe2_graph.py',
     'torch/utils/tensorboard/_convert_np.py',
     'torch/utils/tensorboard/_embedding.py',
-    'torch/utils/tensorboard/_onnx_graph.py',
     'torch/utils/tensorboard/_proto_graph.py',
     'torch/utils/tensorboard/_pytorch_graph.py',
     'torch/utils/tensorboard/_utils.py',

@@ -82,21 +82,11 @@ endif()
 # TODO temporary until we can delete the old gtest polyfills.
 target_compile_definitions(test_jit PRIVATE USE_GTEST)
 
-if(USE_SYSTEM_ONNX)
-  target_link_libraries(test_jit PRIVATE onnx_proto onnx)
-else()
-  target_link_libraries(test_jit PRIVATE onnx_library)
-endif()
-
 if(USE_MKLDNN)
   target_link_libraries(test_jit PRIVATE caffe2::mkldnn)
 endif()
 
 set(JIT_TEST_DEPENDENCIES torch gtest_main gmock)
-
-if(MSVC)
-  list(APPEND JIT_TEST_DEPENDENCIES onnx_library)
-endif(MSVC)
 
 target_link_libraries(test_jit PRIVATE ${JIT_TEST_DEPENDENCIES})
 target_include_directories(test_jit PRIVATE ${ATen_CPU_INCLUDE})
