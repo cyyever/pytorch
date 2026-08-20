@@ -116,17 +116,6 @@ TEST(TensorTest, ToDeviceAndDtype_MultiCUDA) {
   REQUIRE_TENSOR_OPTIONS(at::kCPU, -1, at::kInt, at::kStrided);
 }
 
-TEST(TensorTest, MagmaInitializesCorrectly_CUDA) {
-  // Any tensor will work here as long as it's invertible
-  // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
-  float data[] = {1, 1, 1, 0, 0, 3, 1, 2, 2, 3, 1, 0, 1, 0, 2, 1};
-  auto tensor =
-      at::from_blob(data, {4, 4}, at::TensorOptions(at::kFloat)).cuda();
-  if (at::hasMAGMA()) {
-    at::inverse(tensor);
-  }
-}
-
 #ifdef USE_CUDA
 #include <ATen/cuda/CUDAConfig.h>
 #if AT_CUDNN_ENABLED()

@@ -23,10 +23,6 @@
 #include <cudnn_frontend.h>
 #endif
 
-#if AT_MAGMA_ENABLED()
-#include <magma_v2.h>
-#endif
-
 #if defined(USE_ROCM)
 #include <miopen/version.h>
 #include <hipblaslt/hipblaslt-version.h>
@@ -49,12 +45,6 @@ namespace at::cuda::detail {
 
 const at::cuda::NVRTC& nvrtc();
 DeviceIndex current_device();
-
-static void (*magma_init_fn)() = nullptr;
-
-void set_magma_init_fn(void (*fn)()) {
-  magma_init_fn = fn;
-}
 
 namespace {
 bool _hasPrimaryContext(DeviceIndex device_index) {
@@ -89,11 +79,6 @@ void CUDAHooks::init() const {
   const auto num_devices = c10::cuda::device_count_ensure_non_zero();
   c10::cuda::CUDACachingAllocator::init(num_devices);
   at::cuda::detail::init_p2p_access_cache(num_devices);
-
-#if AT_MAGMA_ENABLED()
-  TORCH_INTERNAL_ASSERT(magma_init_fn != nullptr, "Cannot initialize magma, init routine not set");
-  magma_init_fn();
-#endif
 }
 
 const Generator& CUDAHooks::getDefaultGenerator(DeviceIndex device_index) const {
@@ -143,14 +128,6 @@ bool CUDAHooks::isPinnedPtr(const void* data) const {
 
 bool CUDAHooks::hasCUDA() const {
   return at::cuda::is_available();
-}
-
-bool CUDAHooks::hasMAGMA() const {
-#if AT_MAGMA_ENABLED()
-  return true;
-#else
-  return false;
-#endif
 }
 
 bool CUDAHooks::hasCuDNN() const {
@@ -479,10 +456,6 @@ std::string CUDAHooks::showConfig() const {
 #else
   // TODO: Check if miopen has the functions above and unify
   oss << "  - MIOpen " << MIOPEN_VERSION_MAJOR << '.' << MIOPEN_VERSION_MINOR << '.' << MIOPEN_VERSION_PATCH << '\n';
-#endif
-
-#if AT_MAGMA_ENABLED()
-  oss << "  - Magma " << MAGMA_VERSION_MAJOR << '.' << MAGMA_VERSION_MINOR << '.' << MAGMA_VERSION_MICRO << '\n';
 #endif
 
   return std::move(oss).str();

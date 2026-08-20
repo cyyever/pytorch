@@ -192,7 +192,6 @@ else:
 
 
 has_half: bool = True
-has_magma: bool = torch._C._has_magma
 
 default_generators: tuple[torch._C.Generator] = ()  # type: ignore[assignment]
 
@@ -2142,7 +2141,6 @@ __all__ = [
     "graph_pool_handle",
     "graphs",
     "has_half",
-    "has_magma",
     "host_memory_stats",
     "host_memory_stats_as_nested_dict",
     "init",
