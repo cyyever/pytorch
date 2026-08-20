@@ -368,7 +368,6 @@ class TestPublicBindings(TestCase):
             "torch._inductor.kernel.vendored_templates.cutedsl.wrappers.dense_blockscaled_gemm_kernel",  # depends on cutlass_api
             "torch._inductor.runtime.triton_helpers",
             "torch.ao.pruning._experimental.data_sparsifier.lightning.callbacks.data_sparsity",
-            "torch.backends._coreml.preprocess",
             "torch.contrib._tensorboard_vis",
             "torch.distributed._composable",
             "torch.distributed._functional_collectives",
