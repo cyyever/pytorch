@@ -20,14 +20,10 @@ endif()
 # ATen parallelism settings
 #  OMP - OpenMP for intra-op, native thread pool for inter-op parallelism
 #  NATIVE - using native thread pool for intra- and inter-op parallelism
-if(INTERN_BUILD_MOBILE)
-  set(ATEN_THREADING "NATIVE" CACHE STRING "ATen parallel backend")
+if(USE_OPENMP)
+  set(ATEN_THREADING "OMP" CACHE STRING "ATen parallel backend")
 else()
-  if(USE_OPENMP)
-    set(ATEN_THREADING "OMP" CACHE STRING "ATen parallel backend")
-  else()
-    set(ATEN_THREADING "NATIVE" CACHE STRING "ATen parallel backend")
-  endif()
+  set(ATEN_THREADING "NATIVE" CACHE STRING "ATen parallel backend")
 endif()
 
 set(AT_PARALLEL_OPENMP 0)
@@ -456,20 +452,18 @@ if(${USE_ITT})
   )
 endif()
 
-if(NOT INTERN_BUILD_MOBILE)
-  list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
-    ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp
-  )
+list(APPEND TORCH_SRCS
+  ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
+  ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
+  ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
+  ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
+  ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp
+)
 
-  if(USE_DISTRIBUTED)
-    append_filelist("libtorch_distributed_base_sources" TORCH_SRCS)
-    if(NOT WIN32)
-      append_filelist("libtorch_distributed_extra_sources" TORCH_SRCS)
-    endif()
+if(USE_DISTRIBUTED)
+  append_filelist("libtorch_distributed_base_sources" TORCH_SRCS)
+  if(NOT WIN32)
+    append_filelist("libtorch_distributed_extra_sources" TORCH_SRCS)
   endif()
 endif()
 
@@ -1649,14 +1643,12 @@ if(USE_ROCM)
 
   target_link_libraries(torch_hip PUBLIC c10_hip)
 
-  if(NOT INTERN_BUILD_MOBILE)
-    # TODO: Cut this over to ATEN_HIP_FILES_GEN_LIB.  At the moment, we
-    # only generate CUDA files
-    # NB: This dependency must be PRIVATE, because we don't install
-    # ATEN_CUDA_FILES_GEN_LIB (it's a synthetic target just to get the
-    # correct dependency from generated files.)
-    target_link_libraries(torch_hip PRIVATE ATEN_CUDA_FILES_GEN_LIB)
-  endif()
+  # TODO: Cut this over to ATEN_HIP_FILES_GEN_LIB.  At the moment, we
+  # only generate CUDA files
+  # NB: This dependency must be PRIVATE, because we don't install
+  # ATEN_CUDA_FILES_GEN_LIB (it's a synthetic target just to get the
+  # correct dependency from generated files.)
+  target_link_libraries(torch_hip PRIVATE ATEN_CUDA_FILES_GEN_LIB)
   target_link_libraries(torch_hip PUBLIC torch_cpu_library ${Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS})
   target_link_libraries(torch_hip PRIVATE ${Caffe2_HIP_DEPENDENCY_LIBS})
 

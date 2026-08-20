@@ -174,9 +174,6 @@ if(INTERN_BUILD_ATEN_OPS)
   endif()
 
   set(CUSTOM_BUILD_FLAGS)
-  if(INTERN_BUILD_MOBILE)
-    list(APPEND CUSTOM_BUILD_FLAGS --backend_whitelist CPU QuantizedCPU)
-  endif()
 
   if(SELECTED_OP_LIST)
     if(TRACING_BASED)
