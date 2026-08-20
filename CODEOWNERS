@@ -27,7 +27,7 @@
 # - Serialization and export: jit_torchscript, onnx_export, serialization_package
 # - Quantization: quantization
 # - Profiling: profiler
-# - Mobile: mobile_runtime, mobile_android, mobile_delegates
+# - Mobile: mobile_delegates
 # - Build and developer infrastructure: infra_ci, infra_github_automation, infra_build_packaging, infra_linting, infra_codegen, infra_developer_tools, infra_test
 # - Third-party dependencies: third_party_backend_deps, third_party_core_build_deps, third_party_serialization_schema
 # - Benchmarks: benchmark_compiler, benchmark_operator_runtime, benchmark_models
@@ -299,7 +299,6 @@
 # /aten/src/ATen/jit_macros.h
 # /aten/src/ATen/jiterator_macros.h
 # /aten/src/ATen/mkl/
-# /aten/src/ATen/nnapi/
 # /aten/src/ATen/ops/
 # /aten/src/ATen/quantized/
 # /aten/src/ATen/record_function.cpp
@@ -590,7 +589,6 @@
 /test/forward_backward_compatibility/check_forward_backward_compatibility.py @larryliu0820
 #
 # [backend_device_runtime]
-# /test/custom_backend/
 # /torch/backends/
 /aten/src/ATen/detail/MTIAHooksInterface.h @egienvalue
 /torch/csrc/mtia/ @egienvalue
@@ -657,7 +655,6 @@
 # [python_core_api]
 # /torch/CMakeLists.txt
 # /torch/_C/
-# /torch/_C_flatbuffer/
 # /torch/_VF.py
 # /torch/__config__.py
 # /torch/__future__.py
@@ -786,17 +783,11 @@
 # /test/test_jit.py
 # /test/test_jit_autocast.py
 # /test/test_jit_disabled.py
-# /test/test_jit_fuser.py
-# /test/test_jit_fuser_legacy.py
-# /test/test_jit_fuser_te.py
 # /test/test_jit_legacy.py
-# /test/test_jit_llga_fuser.py
 # /test/test_jit_profiling.py
 # /test/test_jit_simple.py
 # /test/test_jit_string.py
 # /test/test_jiterator.py
-# /test/test_tensorexpr.py
-# /test/test_tensorexpr_pybind.py
 # /torch/csrc/jit/
 # /torch/jit/
 # /torch/csrc/jit/python/init.cpp
@@ -879,24 +870,9 @@
 /torch/csrc/profiler/ @scotts @ryanzhang22
 /torch/profiler/ @scotts @ryanzhang22
 #
-# [mobile_runtime]
-# /test/cpp/jit/test_mobile_type_parser.cpp
-# /test/cpp/lite_interpreter_runtime/test_mobile_profiler.cpp
-# /test/mobile/
-# /test/test_mobile_optimizer.py
-# /torch/csrc/jit/mobile/
-#
-# [mobile_android]
-# /android/
-# /test/mobile/custom_build/
-#
 # [mobile_delegates]
 # /test/test_vulkan.py
-# /test/test_xnnpack_integration.py
-# /torch/backends/_coreml/
-# /torch/backends/_nnapi/
 # /torch/backends/xnnpack/
-# /torch/csrc/jit/backends/
 #
 # [infra_ci]
 /.ci/ @pytorch/pytorch-dev-infra
@@ -923,24 +899,17 @@
 # /.gitignore
 # /.lldbinit
 # /.spin/
-# /BUCK.oss
 # /CMakeLists.txt
 # /Dockerfile
 # /Makefile
-# /buckbuild.bzl
-# /build.bzl
 # /build_variables.bzl
 # /cmake/
 # /codex_setup.sh
-# /defs.bzl
 # /docker.Makefile
-# /pt_ops.bzl
-# /pt_template_srcs.bzl
 # /pyproject.toml
 # /pytest.ini
 # /setup.py
 # /ubsan.supp
-# /ufunc_defs.bzl
 # /version.txt
 #
 # [third_party_core_build_deps]
@@ -971,7 +940,6 @@
 /third_party/xpu.txt @EikanWang @gujinghui
 #
 # [third_party_serialization_schema]
-# /third_party/flatbuffers
 # /third_party/miniz-3.0.2/
 # /third_party/onnx
 # /third_party/protobuf
@@ -1069,7 +1037,6 @@
 # /benchmarks/profiler_benchmark/
 # /benchmarks/record_function_benchmark/
 # /benchmarks/sparse/
-# /benchmarks/static_runtime/
 # /test/test_functional_autograd_benchmark.py
 #
 # [benchmark_models]

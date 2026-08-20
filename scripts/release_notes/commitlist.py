@@ -293,7 +293,6 @@ class CommitList:
                     "torch/csrc/jit/mobile",
                     "aten/src/ATen/native/metal",
                     "test/mobile",
-                    "torch/backends/_nnapi/",
                     "test/test_nnapi.py",
                 ],
             ):

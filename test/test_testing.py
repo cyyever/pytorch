@@ -2637,7 +2637,6 @@ class TestImports(TestCase):
         Prevents regression reported in https://github.com/pytorch/pytorch/issues/77441 """
         ignored_modules = ["torch.utils.tensorboard",  # deps on tensorboard
                            "torch.distributed.elastic.rendezvous",  # depps on etcd
-                           "torch.backends._coreml",  # depends on pycoreml
                            "torch.contrib.",  # something weird
                            "torch.testing._internal.distributed.",  # just fails
                            "torch.ao.pruning._experimental.",  # depends on pytorch_lightning, not user-facing
