@@ -116,9 +116,10 @@ include_patterns = [
     'aten/src/ATen/native/cpu/group_norm*',
 ]
 exclude_patterns = [
-    # The negative filters below exclude generated protobuf headers and CUDA
-    # files, which this CI job cannot compile.
+    # The negative filters below exclude generated headers and CUDA files,
+    # which this CI job cannot compile.
     '**/fb/**',
+    '**/*inl.h',
     'aten/src/ATen/cpu/FlushDenormal.cpp',
     'aten/src/ATen/cpu/vml.h',
     # interned_strings.h includes the generated aten_interned_strings.h which

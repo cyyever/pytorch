@@ -929,7 +929,6 @@
 #
 # [third_party_serialization_schema]
 # /third_party/miniz-3.0.2/
-# /third_party/protobuf
 #
 # [benchmark_compiler]
 # /benchmarks/
