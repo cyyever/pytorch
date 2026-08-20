@@ -16,7 +16,6 @@ import torch._dynamo.testing
 import torch._inductor.config
 import torch._inductor.test_case
 import torch.fx.graph as fx_graph
-import torch.onnx.operators
 import torch.utils.cpp_extension
 from torch._dynamo.bytecode_transformation import transform_code_object
 from torch._dynamo.exc import PackageError

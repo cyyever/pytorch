@@ -96,7 +96,7 @@ provider = { path = "tools/metadata", module = "dependencies" }
 # Goal: ship exactly the git-tracked sources, minus repo/CI plumbing. The
 # sdist file walk applies gitignore semantics, and several vendored trees
 # commit files their own .gitignore matches (XNNPACK gen/ microkernels,
-# oneDNN *.cpp via ideep, protobuf *.pb.cc, clog under deps/); PyTorch's own
+# oneDNN *.cpp via ideep, clog under deps/); PyTorch's own
 # .gitignore (gen, *.pb.h) also hits tracked third-party files. The blanket
 # includes below restore all of them.
 #
@@ -215,16 +215,13 @@ exclude = [
     # rules (GNUInstallDirs lib/cmake, plus *.lib), the way *.a + share/cmake/*
     # do on Linux. The setuptools wheel ships none of these and downstream
     # find_package(Torch) works: nothing in torch/share/cmake/ (the Torch
-    # config tree, shipped identically) consumes them -- MKLDNN/Protobuf resolve
+    # config tree, shipped identically) consumes them -- MKLDNN resolves
     # via QUIET + bundled-static fallbacks, and dnnl is statically linked into
     # torch_cpu.dll. dnnl.lib alone is ~1.3GB uncompressed. Do NOT broaden to
     # **/*.lib: torch's own c10/torch/torch_cpu/torch_python import libs are
     # required for Windows downstream linking and must stay.
     "torch/lib/dnnl.lib",
     "torch/lib/kineto.lib",
-    "torch/lib/libprotobuf.lib",
-    "torch/lib/libprotobuf-lite.lib",
-    "torch/lib/libprotoc.lib",
     "torch/lib/mimalloc-2.3/mimalloc.lib",
     "torch/lib/cmake/**",
     "torch/cmake/**",
@@ -283,10 +280,8 @@ exclude = [
     "torch/custom_class.h",
     "torch/custom_class_detail.h",
     # .py files placed under torch/include/fp16/ by the third_party/FP16
-    # source layout (legacy ships only the .h files from that directory);
-    # and protobuf .inc files legacy did not ship under torch/include/google/.
+    # source layout (legacy ships only the .h files from that directory).
     "torch/include/fp16/*.py",
-    "torch/include/google/protobuf/*.inc",
     # Browser-side JS files loaded from a CDN URL (torch/cuda/_memory_viz.py
     # references the jsdelivr URL directly) -- the local install copy is
     # never consumed.

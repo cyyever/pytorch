@@ -38,9 +38,6 @@ endif()
 # is going to be done with android-cmake by setting
 #     -DANDROID_ABI="armeabi-v7a with NEON FP16"
 # in the build command.
-# Also, we will turn off deprecated-declarations
-# due to protobuf.
-
 # ---[ Check if the compiler has SVE support.
 find_package(ARM) # checks SVE
 if(CXX_SVE_FOUND)

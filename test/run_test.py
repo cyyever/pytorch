@@ -219,7 +219,6 @@ S390X_BLOCKLIST = [
     "inductor/test_cpu_select_algorithm",
     "inductor/test_torchinductor_codegen_dynamic_shapes",
     "lazy/test_meta_kernel",
-    "onnx/test_utility_funs",
     "profiler/test_profiler",
     "test_jit",
     "dynamo/test_utils",
@@ -249,9 +248,6 @@ S390X_BLOCKLIST = [
     "inductor/test_custom_post_grad_passes",
     "inductor/test_mkldnn_pattern_matcher",
     "test_metal",
-    # lacks quantization support
-    "onnx/test_models_quantized_onnxruntime",
-    "onnx/test_pytorch_onnx_onnxruntime",
     # sysctl -n hw.memsize is not available
     "test_mps",
     # https://github.com/pytorch/pytorch/issues/102078
@@ -265,8 +261,6 @@ S390X_BLOCKLIST = [
     "doctests",
     # new failures to investigate and fix
     "test_tensorboard",
-    # onnx + protobuf failure, see
-    # https://github.com/protocolbuffers/protobuf/issues/22104
     "dynamo/test_backends",
     "dynamo/test_modules",
     "inductor/test_config",
@@ -338,15 +332,6 @@ CI_SERIAL_LIST = [
     "inductor/test_cutlass_backend",  # slow due to many nvcc compilation steps,
     "inductor/test_flex_attention",  # OOM
 ]
-# A subset of onnx tests that cannot run in parallel due to high memory usage.
-ONNX_SERIAL_LIST = [
-    "onnx/test_models",
-    "onnx/test_models_quantized_onnxruntime",
-    "onnx/test_models_onnxruntime",
-    "onnx/test_custom_ops",
-    "onnx/test_utility_funs",
-]
-
 # A subset of our TEST list that validates PyTorch's ops, modules, and autograd function as expected
 CORE_TEST_LIST = [
     "test_autograd",
@@ -428,7 +413,6 @@ AOT_DISPATCH_TESTS = [
 FUNCTORCH_TESTS = [test for test in TESTS if test.startswith("functorch")]
 DYNAMO_CORE_TESTS = [test for test in TESTS if test.startswith("dynamo")]
 CPYTHON_TESTS = [test for test in TESTS if "cpython" in test]
-ONNX_TESTS = [test for test in TESTS if test.startswith("onnx")]
 QUANTIZATION_TESTS = [test for test in TESTS if test.startswith("test_quantization")]
 
 
@@ -1169,7 +1153,6 @@ def run_doctests(test_module, test_directory, options):
         "autograd_profiler": 0,
         "cpp_ext": 0,
         "monitor": 0,
-        "onnx": "auto",
     }
 
     # Resolve "auto" based on a test to determine if the feature is available.
@@ -1198,17 +1181,6 @@ def run_doctests(test_module, test_directory, options):
         else:
             enabled["qengine"] = True
 
-    if enabled["onnx"] == "auto":
-        try:
-            import onnx  # NOQA: F401
-            import onnxruntime  # NOQA: F401
-            import onnxscript  # NOQA: F401
-        except ImportError:
-            exclude_module_list.append("torch.onnx.*")
-            enabled["onnx"] = False
-        else:
-            enabled["onnx"] = True
-
     # Set doctest environment variables
     if enabled["cuda"]:
         os.environ["TORCH_DOCTEST_CUDA"] = "1"
@@ -1230,9 +1202,6 @@ def run_doctests(test_module, test_directory, options):
 
     if enabled["monitor"]:
         os.environ["TORCH_DOCTEST_MONITOR"] = "1"
-
-    if enabled["onnx"]:
-        os.environ["TORCH_DOCTEST_ONNX"] = "1"
 
     if torch.mps.is_available():
         os.environ["TORCH_DOCTEST_MPS"] = "1"
@@ -1534,15 +1503,6 @@ def parse_args():
         "and autograd. They are defined by CORE_TEST_LIST.",
     )
     parser.add_argument(
-        "--onnx",
-        "--onnx",
-        action="store_true",
-        help=(
-            "Only run ONNX tests, or tests that validate PyTorch's ONNX export. "
-            "If this flag is not present, we will exclude ONNX tests."
-        ),
-    )
-    parser.add_argument(
         "-k",
         "--pytest-k-expr",
         default="",
@@ -1622,7 +1582,6 @@ def parse_args():
         and not strtobool(os.environ.get("NO_TD", "False"))
         and not IS_MACOS
         and "xpu" not in BUILD_ENVIRONMENT
-        and "onnx" not in BUILD_ENVIRONMENT
         and (
             GITHUB_WORKFLOW in ("trunk", "pull")
             or GITHUB_WORKFLOW.startswith(("rocm-", "periodic-rocm-"))
@@ -1744,7 +1703,6 @@ def must_serial(file: str | ShardedTest) -> bool:
         or file in RUN_PARALLEL_BLOCKLIST
         or file in CI_SERIAL_LIST
         or file in JIT_EXECUTOR_TESTS
-        or file in ONNX_SERIAL_LIST
         or NUM_PROCS == 1
     )
 
@@ -1842,14 +1800,6 @@ def get_selected_tests(options) -> list[str]:
         selected_tests = ["test_openreg"]
     else:
         options.exclude.append("test_openreg")
-
-    # Filter to only run onnx tests when --onnx option is specified
-    onnx_tests = [tname for tname in selected_tests if tname in ONNX_TESTS]
-    if options.onnx:
-        selected_tests = onnx_tests
-    else:
-        # Exclude all onnx tests otherwise
-        options.exclude.extend(onnx_tests)
 
     # process exclusion
     if options.exclude_jit_executor:

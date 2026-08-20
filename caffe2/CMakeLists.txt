@@ -496,7 +496,6 @@ endif()
 if(NOT INTERN_BUILD_MOBILE)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/serialization/onnx.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
     ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
@@ -1461,14 +1460,6 @@ if(USE_DISTRIBUTED)
   endif()
 endif()
 
-if(NOT INTERN_BUILD_MOBILE)
-  if(${CAFFE2_LINK_LOCAL_PROTOBUF})
-    target_link_libraries(torch_cpu INTERFACE protobuf::libprotobuf)
-  else()
-    target_link_libraries(torch_cpu PUBLIC protobuf::libprotobuf)
-  endif()
-endif()
-
 if($ENV{TH_BINARY_BUILD})
   if(NOT MSVC AND USE_CUDA AND NOT APPLE)
     # Note [Extra MKL symbols for MAGMA in torch_cpu]
@@ -1526,12 +1517,6 @@ set(EXPERIMENTAL_SINGLE_THREAD_POOL "0" CACHE STRING
   "Experimental option to use a single thread pool for inter- and intra-op parallelism")
 if("${EXPERIMENTAL_SINGLE_THREAD_POOL}")
   target_compile_definitions(torch_cpu PUBLIC "-DAT_EXPERIMENTAL_SINGLE_THREAD_POOL=1")
-endif()
-
-if(MSVC AND BUILD_SHARED_LIBS)
-  # ONNX is linked statically and needs to be exported from this library
-  # to be used externally. Make sure that references match the export.
-  target_compile_options(torch_cpu PRIVATE "-DONNX_BUILD_MAIN_LIB")
 endif()
 
 caffe2_interface_library(torch_cpu torch_cpu_library)

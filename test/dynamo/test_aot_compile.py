@@ -22,7 +22,6 @@ import torch.distributed as c10d
 import torch.fx.traceback as fx_traceback
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.onnx.operators
 import torch.utils.cpp_extension
 from torch._dynamo.aot_compile import AOTCompiledModel, ModelInput, SerializableCallable
 from torch._dynamo.aot_compile_types import BundledAOTAutogradSerializableCallable

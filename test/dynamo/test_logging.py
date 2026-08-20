@@ -1644,8 +1644,6 @@ exclusions = {
     "trace_call",
     "trace_bytecode",
     "custom_format_test_artifact",
-    "onnx",
-    "onnx_diagnostics",
     "guards",
     "verbose_guards",
     "sym_node",
