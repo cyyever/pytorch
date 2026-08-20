@@ -397,13 +397,6 @@ cmake_dependent_option(
     USE_VALGRIND "Use Valgrind. Only available on Linux." ON
     "LINUX" OFF)
 
-if(NOT DEFINED USE_VULKAN)
-  cmake_dependent_option(USE_VULKAN "Use Vulkan GPU backend" ON "ANDROID" OFF)
-endif()
-
-option(USE_VULKAN_FP16_INFERENCE "Vulkan - Use fp16 inference" OFF)
-option(USE_VULKAN_RELAXED_PRECISION
-       "Vulkan - Use relaxed precision math in the kernels (mediump)" OFF)
 # option USE_XNNPACK: try to enable xnnpack by default.
 option(USE_XNNPACK "Use XNNPACK" OFF)
 option(USE_ROCM_KERNEL_ASSERT "Use Kernel Assert for ROCm" OFF)
@@ -1097,20 +1090,6 @@ endif()
 
 if(USE_XNNPACK)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_XNNPACK")
-endif()
-
-if(USE_VULKAN)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN")
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_API")
-
-  if(USE_VULKAN_FP16_INFERENCE)
-    string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_FP16_INFERENCE")
-  endif()
-
-  if(USE_VULKAN_RELAXED_PRECISION)
-    string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_RELAXED_PRECISION")
-  endif()
-
 endif()
 
 if(TRACING_BASED)

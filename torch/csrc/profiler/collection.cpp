@@ -1,5 +1,4 @@
 #include <torch/csrc/profiler/collection.h>
-#include <torch/csrc/profiler/orchestration/vulkan.h>
 
 #include <algorithm>
 #include <functional>
@@ -582,32 +581,6 @@ void ThreadLocalSubqueue::TorchOpStorage::materialize(
   inputs_outputs_.clear();
 }
 
-template <size_t BlockSize>
-static void materialize_vulkan(
-    std::vector<std::shared_ptr<Result>>& out,
-    AppendOnlyList<ExtraFields<EventType::Vulkan>::raw_event_t, BlockSize>&
-        raw_events,
-    const std::function<c10::time_t(c10::approx_time_t)>& time_converter,
-    const uint64_t tid,
-    const kineto::DeviceAndResource& kineto_info) {
-  for (const auto& i : raw_events) {
-    const auto name_and_duration_ns =
-        torch::profiler::impl::vulkan::getShaderNameAndDurationNs(i.second);
-
-    out.emplace_back(Result::create(
-        /*start_time_ns_=*/time_converter(i.first),
-        /*start_tid_=*/tid,
-        /*kineto_info_=*/kineto_info,
-        /*extra_fields_=*/
-        ExtraFields<EventType::Vulkan>{
-            /*name_=*/std::get<0>(name_and_duration_ns),
-            /*duration_ns_=*/
-            static_cast<int64_t>(std::get<1>(name_and_duration_ns)),
-            /*in_tree_building_=*/false}));
-  }
-  raw_events.clear();
-}
-
 namespace {
 // See `RecordQueue::getSubqueue()` for an overview of this cache.
 struct SubQueueThreadCache {
@@ -675,7 +648,6 @@ auto kinetoEventCorrelationID(
 
 std::string Result::name() const {
   return visit(c10::overloaded(
-      ATTRIBUTE(Vulkan, std::string(e.name_)),
       ATTRIBUTE(Allocation, std::string("[memory]")),
       ATTRIBUTE(OutOfMemory, std::string("[OutOfMemory]")),
       ATTRIBUTE(PyCall, toString(e)),
@@ -694,7 +666,6 @@ libkineto::ActivityType Result::kinetoType() const {
   return visit(c10::overloaded(
       ATTRIBUTE(TorchOp, scopeToType(e.scope_)),
       ATTRIBUTE(Backend, scopeToType(e.scope_)),
-      ATTRIBUTE(Vulkan, libkineto::ActivityType::CPU_OP),
       ATTRIBUTE(Allocation, libkineto::ActivityType::CPU_INSTANT_EVENT),
       ATTRIBUTE(OutOfMemory, libkineto::ActivityType::CPU_INSTANT_EVENT),
       ATTRIBUTE(PyCall, libkineto::ActivityType::PYTHON_FUNCTION),
@@ -714,8 +685,6 @@ int64_t Result::endTimeNS() const {
   auto end_time_ns = visit(c10::overloaded(
       ATTRIBUTE(TorchOp, torchOpEndNS(e, finished_, parent_)),
       ATTRIBUTE(Backend, e.end_time_us_ * 1000),
-      ATTRIBUTE(
-          Vulkan, start_time_ns_ + (e.in_tree_building_ ? 0 : e.duration_ns_)),
       ATTRIBUTE(Allocation, start_time_ns_),
       ATTRIBUTE(OutOfMemory, start_time_ns_),
       ATTRIBUTE(Kineto, start_time_ns_ + e.duration_ns_),
@@ -740,7 +709,6 @@ uint64_t Result::endTID() const {
 c10::DeviceType Result::deviceType() const {
   using torch::autograd::profiler::deviceTypeFromActivity;
   return visit(c10::overloaded(
-      ATTRIBUTE(Vulkan, c10::DeviceType::Vulkan),
       ATTRIBUTE(Allocation, e.device_type_),
       ATTRIBUTE(OutOfMemory, e.device_type_),
       ATTRIBUTE(Kineto, deviceTypeFromActivity(e.activity_type_)),
@@ -1466,23 +1434,7 @@ struct ResultGreater {
   }
 };
 
-void set_in_tree_building(
-    std::vector<result_ptr_t>& results,
-    const bool value) {
-  for (result_ptr_t& r : results) {
-    r->visit(c10::overloaded(
-        [value](ExtraFields<EventType::Vulkan>& i) {
-          i.in_tree_building_ = value;
-        },
-        [&](auto&) {
-          // pass
-        }));
-  }
-}
-
 void build_tree(std::vector<std::shared_ptr<Result>>& sorted_events) {
-  set_in_tree_building(sorted_events, true);
-
   using op_fields = ExtraFields<EventType::TorchOp>;
   ska::flat_hash_map<uint64_t, std::shared_ptr<Result>> stacks;
   std::priority_queue<result_ptr_t, std::vector<result_ptr_t>, ResultGreater>
@@ -1571,8 +1523,6 @@ void build_tree(std::vector<std::shared_ptr<Result>>& sorted_events) {
     pop_event(end_events_.top());
     end_events_.pop();
   }
-
-  set_in_tree_building(sorted_events, false);
 }
 
 /**
@@ -1595,9 +1545,6 @@ int64_t adjust_durations_dfs(std::shared_ptr<Result>& r) {
       r->visit(c10::overloaded(
           [&r, &children_total_duration](ExtraFields<EventType::TorchOp>& i) {
             i.end_time_ns_ = r->start_time_ns_ + children_total_duration;
-          },
-          [&children_total_duration](ExtraFields<EventType::Vulkan>& i) {
-            i.duration_ns_ = children_total_duration;
           },
           []([[maybe_unused]] ExtraFields<EventType::Allocation>& _) {
             // Pass- Allocation events can't have children
@@ -1635,9 +1582,6 @@ int64_t adjust_timestamps_dfs(
             i.end_time_ns_ =
                 new_start_time + (i.end_time_ns_ - r->start_time_ns_);
           },
-          []([[maybe_unused]] ExtraFields<EventType::Vulkan>& i) {
-            // Pass- We don't need to manually adjust end time for Vulkan events
-          },
           []([[maybe_unused]] ExtraFields<EventType::Allocation>& _) {
             // Pass- No duration or end time to adjust
           },
@@ -1667,7 +1611,6 @@ int64_t adjust_timestamps_dfs(
 
 /**
  * Adjust timestamps and durations of nodes in [out] such that
- *  - Vulkan event timelines are synchronized with CPU event times
  *  - Parent event timelines fully contain their child timelines
  *  - No overlaps in timelines for nodes at the same depth
  */
@@ -1681,13 +1624,8 @@ void adjust_timestamps(std::vector<std::shared_ptr<Result>>& out) {
     // Only begin traversal for root nodes.
     if (r->parent_.expired()) {
       adjust_durations_dfs(r);
-      min_start_time = adjust_timestamps_dfs(
-          r,
-          std::max(
-              r->tag() != EventType::Vulkan
-                  ? r->start_time_ns_
-                  : std::numeric_limits<int64_t>::min(),
-              min_start_time));
+      min_start_time =
+          adjust_timestamps_dfs(r, std::max(r->start_time_ns_, min_start_time));
     }
   }
 }
@@ -1732,8 +1670,6 @@ RecordQueue::getRecords(
     queue.torch_ops_.materialize(
         out, converter, queue.tid(), queue.kineto_info());
     materialize(queue.backend_events_);
-    materialize_vulkan(
-        out, queue.vulkan_events_, converter, queue.tid(), queue.kineto_info());
     for (auto& i : queue.allocations_) {
       out.emplace_back(Result::create(
           /*start_time_ns_=*/converter(i.start_time_),

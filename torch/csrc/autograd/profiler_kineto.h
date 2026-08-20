@@ -242,11 +242,4 @@ TORCH_API void disableProfilerInChildThread();
 
 } // namespace autograd::profiler
 
-namespace profiler::impl {
-
-// Experimental.
-TORCH_API void _reportVulkanEventToProfiler(vulkan_id_t id);
-
-} // namespace profiler::impl
-
 } // namespace torch

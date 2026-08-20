@@ -304,7 +304,6 @@ def get_ignored_functions() -> set[Callable]:
         torch.is_autocast_cache_enabled,
         torch.set_autocast_cache_enabled,
         torch.nn.functional.hardswish,
-        torch.is_vulkan_available,
         torch.are_deterministic_algorithms_enabled,
         torch.use_deterministic_algorithms,
         torch.is_deterministic_algorithms_warn_only_enabled,
