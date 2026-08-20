@@ -96,7 +96,6 @@ _wait = wait
 _set_fusion_strategy = set_fusion_strategy
 
 
-
 # torch.jit.Error
 Error = torch._C.JITException
 set_module(Error, "torch.jit")

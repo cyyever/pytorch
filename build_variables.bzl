@@ -163,9 +163,6 @@ core_sources_full_mobile_no_backend_interface_xplat = [
     "torch/csrc/jit/api/function_impl.cpp",
     "torch/csrc/jit/api/module.cpp",
     "torch/csrc/jit/api/object.cpp",
-    "torch/csrc/jit/backends/backend_debug_handler.cpp",
-    "torch/csrc/jit/backends/backend_detail.cpp",
-    "torch/csrc/jit/backends/backend_resolver.cpp",
     "torch/csrc/jit/frontend/builtin_functions.cpp",
     "torch/csrc/jit/frontend/versioned_symbols.cpp",
     "torch/csrc/jit/frontend/canonicalize_modified_loop.cpp",
@@ -324,12 +321,9 @@ core_sources_full_mobile_no_backend_interface = core_sources_full_mobile_no_back
     # __torch__.torch.classes.backend.BackendDebugInfo class
     # This should not be needed eventually.
     # TODO: Remove this dependency
-    "torch/csrc/jit/backends/backend_debug_info.cpp",
 ]
 
 core_sources_full_mobile = core_sources_full_mobile_no_backend_interface + [
-    "torch/csrc/jit/backends/backend_debug_info.cpp",
-    "torch/csrc/jit/backends/backend_interface.cpp",
 ]
 
 core_sources_full = core_sources_full_mobile + [
@@ -842,7 +836,6 @@ libtorch_python_core_sources = [
     "torch/csrc/inductor/resize_storage_bytes.cpp",
     "torch/csrc/inductor/static_launcher/cuda.cpp",
     "torch/csrc/inductor/static_launcher/xpu.cpp",
-    "torch/csrc/jit/backends/backend_init.cpp",
     "torch/csrc/jit/python/init.cpp",
     "torch/csrc/jit/passes/onnx.cpp",
     "torch/csrc/jit/passes/onnx/cast_all_constant_to_floating.cpp",
