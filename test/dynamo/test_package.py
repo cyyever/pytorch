@@ -11,7 +11,6 @@ import torch
 import torch._dynamo.testing
 import torch._inductor.config
 import torch._inductor.test_case
-import torch.onnx.operators
 import torch.utils.cpp_extension
 from torch._dynamo.package import CompilePackage, DiskDynamoStore, DynamoCache
 from torch._dynamo.precompile_context import PrecompileContext

@@ -76,7 +76,6 @@
 #   MKL_THREADING            MKL threading mode: SEQ, TBB, or OMP (default)
 #   MKLDNN_CPU_RUNTIME       MKL-DNN threading mode: TBB or OMP (default)
 #   ATEN_THREADING           OMP or NATIVE intra-/inter-op parallel backend
-#   ONNX_NAMESPACE           namespace for the ONNX built here
 #   ATEN_AVX512_256=TRUE     let ATen AVX2 kernels use 32 ymm registers (read from
 #                            the environment in cmake/Codegen.cmake)
 #
@@ -144,8 +143,6 @@ set(_ENV_PASSTHROUGH
   CAFFE2_USE_MSVC_STATIC_RUNTIME
   Numa_INCLUDE_DIR
   Numa_LIBRARIES
-  ONNX_ML
-  ONNX_NAMESPACE
   ATEN_THREADING
   WERROR
   OPENSSL_ROOT_DIR

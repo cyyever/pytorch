@@ -113,7 +113,6 @@ CONDA_PATTERNS = [
 PIP_PATTERNS = [
     "mypy",
     "flake8",
-    "onnx",
 ]
 
 

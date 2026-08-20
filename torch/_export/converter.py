@@ -83,11 +83,11 @@ def _create_jit_graph(
                 graph = model.forward.graph  # type: ignore[attr-defined]
             except AttributeError as e:
                 raise RuntimeError("'forward' method must be a script method") from e
-            _C._jit_pass_onnx_function_substitution(graph)
+            _C._jit_pass_function_substitution(graph)
             freezed_module = _C._freeze_module(
                 typing.cast(_C.ScriptModule, model._c), preserveParameters=True
             )
-            module, params = _C._jit_onnx_list_model_parameters(freezed_module)
+            module, params = _C._jit_list_model_parameters(freezed_module)
             method_graph = module._get_method("forward").graph
             args_params = tuple(args) + tuple(params)
             param_count_list = _get_param_count_list(method_graph, args_params)
@@ -100,7 +100,7 @@ def _create_jit_graph(
         # torch.jit.ScriptFunction
         params = []
         graph = model.graph
-        _C._jit_pass_onnx_function_substitution(graph)
+        _C._jit_pass_function_substitution(graph)
         param_count_list = _get_param_count_list(graph, args)
         graph = _C._propagate_and_assign_input_shapes(
             graph, flattened_args, param_count_list, False, False
@@ -108,7 +108,6 @@ def _create_jit_graph(
         return graph, params, torch_out, None
 
     graph, torch_out = _trace_and_get_graph_from_model(model, args)
-    _C._jit_pass_onnx_lint(graph)
     state_dict = torch.jit._unique_state_dict(model)
     params = list(state_dict.values())
     graph_inputs = list(graph.inputs())
@@ -117,7 +116,7 @@ def _create_jit_graph(
     for i, inp in enumerate(graph_inputs):
         if i >= user_input_num:
             inp.setDebugName(param_names[i - user_input_num])
-    _C._jit_pass_onnx_function_substitution(graph)
+    _C._jit_pass_function_substitution(graph)
     return graph, params, torch_out, None
 
 

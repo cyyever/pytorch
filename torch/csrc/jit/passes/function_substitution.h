@@ -4,6 +4,6 @@
 
 namespace torch::jit {
 
-TORCH_API void ONNXFunctionCallSubstitution(Graph& graph);
+TORCH_API void FunctionCallSubstitution(Graph& graph);
 
 }

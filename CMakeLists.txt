@@ -454,7 +454,6 @@ cmake_dependent_option(
 cmake_dependent_option(
     USE_TENSORPIPE "Use TensorPipe. Only available if USE_DISTRIBUTED is on." ON
     "USE_DISTRIBUTED AND NOT WIN32" OFF)
-option(ONNX_ML "Enable traditional ONNX ML API." ON)
 option(HAVE_SOVERSION "Whether to add SOVERSION to the shared objects" OFF)
 option(BUILD_LIBTORCH_CPU_WITH_DEBUG
        "Enable RelWithDebInfo for libtorch_cpu target only" OFF)
@@ -597,7 +596,6 @@ option(USE_SYSTEM_PTHREADPOOL "Use system-provided pthreadpool." OFF)
 option(USE_SYSTEM_PSIMD "Use system-provided psimd." OFF)
 option(USE_SYSTEM_FXDIV "Use system-provided fxdiv." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
-option(USE_SYSTEM_ONNX "Use system-provided onnx." OFF)
 option(USE_SYSTEM_XNNPACK "Use system-provided xnnpack." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
 option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
@@ -612,7 +610,6 @@ if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_PSIMD ON)
   set(USE_SYSTEM_FXDIV ON)
   set(USE_SYSTEM_BENCHMARK ON)
-  set(USE_SYSTEM_ONNX ON)
   set(USE_SYSTEM_XNNPACK ON)
   set(USE_SYSTEM_PYBIND11 ON)
   if(USE_NCCL)
@@ -631,21 +628,6 @@ cmake_dependent_option(
   "MSVC"
   OFF)
 
-if(NOT USE_SYSTEM_ONNX)
-  set(ONNX_NAMESPACE
-      "onnx_torch"
-      CACHE
-        STRING
-        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
-  )
-else()
-  set(ONNX_NAMESPACE
-      "onnx"
-      CACHE
-        STRING
-        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
-  )
-endif()
 set(SELECTED_OP_LIST
     ""
     CACHE
@@ -910,7 +892,6 @@ if(INTERN_BUILD_MOBILE)
   set(USE_DISTRIBUTED OFF)
   set(NO_API ON)
   set(USE_FBGEMM OFF)
-  set(INTERN_DISABLE_ONNX ON)
   if(USE_BLAS)
     set(INTERN_USE_EIGEN_BLAS ON)
   else()
