@@ -15,7 +15,6 @@
 #include <torch/csrc/jit/passes/create_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/decompose_ops.h>
-#include <torch/csrc/jit/passes/graph_fuser.h>
 #include <torch/csrc/jit/passes/inline_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/inliner.h>
 #include <torch/csrc/jit/passes/inplace_check.h>
@@ -797,8 +796,7 @@ struct GraphExecutorImpl : public GraphExecutorImplBase {
       // actual input data.
       runOptimization(opt_graph);
 
-      // Input-independent passes from runNondiffOptimization. Skipped:
-      // FuseGraph (needs specialized tensor types).
+      // Input-independent passes from runNondiffOptimization.
       for (const auto& passPair : getCustomPrePasses()) {
         passPair.first(opt_graph);
       }
@@ -966,9 +964,7 @@ bool needsGradient(const std::shared_ptr<const Graph>& graph) {
   return false;
 }
 
-void runNondiffOptimization(
-    std::shared_ptr<Graph>& graph,
-    bool strict_fuser_check) {
+void runNondiffOptimization(std::shared_ptr<Graph>& graph) {
   GRAPH_DEBUG(
       "Before customPrePasses (beginning of runNondiffOptimization)\n", *graph);
   // Run custom passes that different backends can register.
@@ -978,23 +974,17 @@ void runNondiffOptimization(
   GRAPH_DEBUG("After customPrePasses\n", *graph);
 
   // decomposition pass, decompose certain ops that will be used in the
-  // following passes (like batchmm and jit fusion)
+  // following passes (like batchmm)
   DecomposeOps(graph);
   GRAPH_DEBUG("After DecomposeOps\n", *graph);
 
-  // TupleConstruct / TupleUnpack pairs can still be present at this point
-  // and must be removed for fusion.
+  // TupleConstruct / TupleUnpack pairs can still be present at this point.
   LowerSimpleTuples(graph);
   GRAPH_DEBUG("After LowerSimpleTuples, before BatchMM\n", *graph);
 
   // Rewrite subgraphs with many MMs into expressions that batch them.
   BatchMM(graph);
-
-  GRAPH_DEBUG("After BatchMM, before Fusion\n", *graph);
-  if (!getExecutorMode()) {
-    FuseGraph(graph, strict_fuser_check);
-  }
-  GRAPH_DEBUG("After Fusion\n", *graph);
+  GRAPH_DEBUG("After BatchMM\n", *graph);
 
   // Run custom post-fusion passes
   for (const auto& passPair : getCustomPostPasses()) {
