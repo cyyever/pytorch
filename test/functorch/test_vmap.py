@@ -5384,7 +5384,8 @@ class TestVmapOperatorsOpInfo(TestCase):
                 vmap(torch.topk, (0, None, None))(t, 1, 0), torch.return_types.topk
             )
         )
-        if not (TEST_WITH_ROCM and not torch.cuda.has_magma):
+        if not TEST_WITH_ROCM:
+            # hipSOLVER only gained geev in ROCm 7.14
             self.assertTrue(
                 isinstance(
                     vmap(torch.linalg.eig, (0))(t), torch.return_types.linalg_eig
