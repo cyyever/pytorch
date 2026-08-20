@@ -126,6 +126,10 @@ def main():
     args.exclude = args.exclude or [r"^$"]
     args.size = args.size or [64, 256, 1024, 4096, 8192]
 
+    torch._C._jit_override_can_fuse_on_cpu(torch._C._llvm_enabled())
+    torch._C._jit_override_can_fuse_on_gpu(True)
+    torch._C._jit_set_texpr_fuser_enabled(True)
+
     if args.threads:
         torch.set_num_threads(args.threads)
         torch._inductor.config.cpp.threads = args.threads
