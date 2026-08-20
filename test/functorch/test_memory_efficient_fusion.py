@@ -97,31 +97,30 @@ def hard_mish(x):
 
 
 def run_and_compare_activation(self, fn, inps):
-    with torch.jit.fuser("none"):
-        device = "cuda"
-        dtype = torch.float
-        if isinstance(fn, nn.Module):
-            fn = fn.to(device=device, dtype=dtype)
+    device = "cuda"
+    dtype = torch.float
+    if isinstance(fn, nn.Module):
+        fn = fn.to(device=device, dtype=dtype)
 
-        ref_args = [
-            torch.randn(shape, device=device, dtype=dtype, requires_grad=True)
-            for shape in inps
-        ]
-        res_args = [i.detach().clone().requires_grad_(True) for i in ref_args]
+    ref_args = [
+        torch.randn(shape, device=device, dtype=dtype, requires_grad=True)
+        for shape in inps
+    ]
+    res_args = [i.detach().clone().requires_grad_(True) for i in ref_args]
 
-        ref = fn(*ref_args)
-        ref.sum().backward()
+    ref = fn(*ref_args)
+    ref.sum().backward()
 
-        mem_optimized_fn = memory_efficient_fusion(fn)
-        for _ in range(5):
-            for i in res_args:
-                i.grad = None
-            res = mem_optimized_fn(*res_args)
-            res.sum().backward()
+    mem_optimized_fn = memory_efficient_fusion(fn)
+    for _ in range(5):
+        for i in res_args:
+            i.grad = None
+        res = mem_optimized_fn(*res_args)
+        res.sum().backward()
 
-        self.assertEqual(ref, res)
-        for ref_arg, res_arg in zip(ref_args, res_args):
-            self.assertEqual(ref_arg.grad, res_arg.grad)
+    self.assertEqual(ref, res)
+    for ref_arg, res_arg in zip(ref_args, res_args):
+        self.assertEqual(ref_arg.grad, res_arg.grad)
 
 
 @unittest.skipIf(not torch.cuda.is_available(), "CUDA is unavailable")

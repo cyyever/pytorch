@@ -7,14 +7,10 @@
 namespace torch::jit {
 
 // Profiling-executor type utilities: the profiling executor annotates a graph
-// with prim::profile nodes and specialized TensorTypes, and consumers either
-// bake those types in behind a guard or strip them back out again.
+// with specialized TensorTypes, and consumers either bake those types in
+// behind a guard or strip them back out again.
 
-TORCH_API void RemoveProfileNodesAndSpecializeTypes(
-    std::shared_ptr<Graph>& graph);
-TORCH_API bool hasTensorTypeSpecialization(Value* v);
 TORCH_API void RemoveTensorTypeSpecializations(std::shared_ptr<Graph>& graph);
-TORCH_API void removeTensorTypeSpecializations(Block* block);
 
 using tensor_type_converter_t =
     c10::function_ref<TensorTypePtr(const TensorTypePtr& t)>;

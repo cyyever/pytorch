@@ -1017,7 +1017,6 @@ if(USE_FBGEMM AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
   set(USE_FBGEMM OFF)
 endif()
 
-set(BUILD_ONEDNN_GRAPH OFF)
 
 if(MSVC)
   # The source code is in utf-8 encoding

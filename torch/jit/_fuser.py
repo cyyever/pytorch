@@ -15,31 +15,6 @@ def optimized_execution(should_optimize):
     finally:
         torch._C._set_graph_executor_optimize(stored_flag)
 
-
-@contextlib.contextmanager
-def fuser(name):
-    """Context manager that facilitates switching between backend fusers.
-
-    Valid names:
-    * ``fuser3`` - enables only oneDNN Graph
-    """
-    old_llga_state = torch._C._jit_llga_enabled()
-    if name == "fuser3":  # oneDNN Graph
-        old_profiling_executor = torch._C._jit_set_profiling_executor(True)
-        old_profiling_mode = torch._C._get_graph_executor_optimize(True)
-        torch._C._jit_set_llga_enabled(True)
-    elif name == "none":  # Turn PyTorch fuser off
-        torch._C._jit_set_llga_enabled(False)
-    else:
-        raise Exception(f"unrecognized fuser option (name: {name})")  # noqa: TRY002
-    try:
-        yield
-    finally:
-        if name == "fuser3":  # oneDNN Graph
-            torch._C._jit_set_profiling_executor(old_profiling_executor)  # type: ignore[possibly-undefined]
-            torch._C._get_graph_executor_optimize(old_profiling_mode)  # type: ignore[possibly-undefined]
-        torch._C._jit_set_llga_enabled(old_llga_state)
-
 last_executed_optimized_graph = torch._C._last_executed_optimized_graph
 
 
