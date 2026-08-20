@@ -24,7 +24,7 @@
 # - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm, backend_vulkan
 # - Public APIs and extensions: python_core_api, python_nn_api, python_data_api, python_specialized_api, python_api_tests, cpp_api_custom_ops, cpp_runtime_tests, nativert
 # - Distributed: distributed
-# - Serialization and export: jit_torchscript, onnx_export, serialization_package
+# - Serialization and export: jit_torchscript, serialization_package
 # - Quantization: quantization
 # - Profiling: profiler
 # - Mobile: mobile_delegates
@@ -385,7 +385,6 @@
 # /torch/csrc/itt_wrapper.h
 # /torch/csrc/monitor/
 # /torch/csrc/multiprocessing/
-# /torch/csrc/onnx/
 # /torch/csrc/python_headers.h
 # /torch/csrc/serialization.cpp
 # /torch/csrc/serialization.h
@@ -427,8 +426,6 @@
 # /test/expect/TestJit.test_pretty_printer-python_op_name_test.expect
 # /test/expect/TestJit.test_pretty_printer-while_if_test.expect
 # /test/expect/TestJit.test_pretty_printer-while_test.expect
-# /test/expect/TestPytorchExportModes.test_aten_fallback.expect
-# /test/expect/TestPytorchExportModes.test_onnx_aten.expect
 # /test/expect/TestScript.test_annot_ast_mypy_fn.expect
 # /test/expect/TestScript.test_annot_ast_mypy_method.expect
 # /test/expect/TestScript.test_annot_ast_py3_fn.expect
@@ -440,7 +437,6 @@
 # /test/expect/TestScript.test_annotated_script_fn.expect
 # /test/expect/TestScript.test_annotated_script_method.expect
 # /test/expect/TestScript.test_format-stdout.expect
-# /test/expect/TestScript.test_listconstruct_erasure.expect
 # /test/expect/TestScript.test_parser_type_annotations.expect
 # /test/expect/TestScript.test_parser_type_annotations_comment.expect
 # /test/expect/TestScript.test_print-stdout.expect
@@ -827,16 +823,8 @@
 # /torch/utils/_cpp_extension_versioner.py
 /torch/utils/cpp_extension.py @fmassa @ezyang @malfet
 #
-# [onnx_export]
-/test/onnx/ @titaiwangms @xadupre @justinchuby
-/torch/onnx/ @titaiwangms @xadupre @justinchuby
-/torch/csrc/jit/passes/onnx.h @titaiwangms @xadupre
-/torch/csrc/jit/passes/onnx.cpp @titaiwangms @xadupre
-/torch/csrc/jit/passes/onnx/ @titaiwangms @xadupre
-#
 # [quantization]
 /test/ao/ @jerryzh168
-# /test/onnx/test_models_quantized_onnxruntime.py
 /test/quantization/ @jerryzh168
 /test/test_quantization.py @jerryzh168
 # /torch/ao/
@@ -941,7 +929,6 @@
 #
 # [third_party_serialization_schema]
 # /third_party/miniz-3.0.2/
-# /third_party/onnx
 # /third_party/protobuf
 #
 # [benchmark_compiler]
@@ -1065,8 +1052,6 @@
 # /test/export/
 # /test/fx/
 # /test/higher_order_ops/
-# /test/onnx/exporter/test_exportable_module.py
-# /test/onnx/test_fx_type_promotion.py
 # /test/package/package_bc/test_fx_module.pt
 # /test/test_dynamic_spec_make_fx.py
 # /test/test_fx.py
@@ -1091,11 +1076,9 @@
 # /test/dynamo_expected_failures/
 # /test/dynamo_skips/
 # /test/export/test_dynamic_shapes.py
-# /test/onnx/exporter/test_dynamic_shapes.py
 # /torch/_dynamo/
 # /torch/csrc/dynamo/
 /torch/_dynamo/backends/tvm.py @guan404ming
-/torch/_dynamo/backends/onnxrt.py @titaiwangms @xadupre @justinchuby
 /torch/_dynamo/variables/higher_order_ops.py @zou3519 @aorenste @bohnstingl
 /torch/_dynamo/polyfills/pytree.py @XuehaiPan
 #

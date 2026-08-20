@@ -218,6 +218,7 @@ S390X_BLOCKLIST = [
     "inductor/test_cpu_repro",
     "inductor/test_cpu_select_algorithm",
     "inductor/test_torchinductor_codegen_dynamic_shapes",
+    "lazy/test_meta_kernel",
     "profiler/test_profiler",
     "test_jit",
     "dynamo/test_utils",
@@ -246,6 +247,7 @@ S390X_BLOCKLIST = [
     # these tests fail when mkldnn is not available
     "inductor/test_custom_post_grad_passes",
     "inductor/test_mkldnn_pattern_matcher",
+    "test_metal",
     # sysctl -n hw.memsize is not available
     "test_mps",
     # https://github.com/pytorch/pytorch/issues/102078
@@ -1775,6 +1777,7 @@ def get_selected_tests(options) -> list[str]:
         selected_tests = [
             "test_ops",
             "test_mps",
+            "test_metal",
             "test_modules",
             "nn/test_convolution",
             "nn/test_dropout",
