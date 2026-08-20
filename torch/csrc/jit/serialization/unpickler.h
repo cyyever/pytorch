@@ -141,7 +141,6 @@ class TORCH_API Unpickler {
   void rebuildTensorFromTypeV2();
   void rebuildSparseTensor();
 #ifdef USE_DISTRIBUTED
-  void rebuildRRef();
 #endif
   PickleOpCode readInstruction();
   PickleOpCode readOpCode() {

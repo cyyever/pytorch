@@ -43,7 +43,7 @@ class TestReshard(ShardedTensorTestBase):
             st.local_shards()[0].metadata, st_compare.local_shards()[0].metadata
         )
 
-    @with_comms(init_rpc=False)
+    @with_comms
     @skip_if_lt_x_gpu(4)
     @requires_nccl()
     def test_sharded_tensor_reshard(self):
@@ -58,7 +58,7 @@ class TestReshard(ShardedTensorTestBase):
             self._run_sharded_tensor_reshard(spec, reshard_spec, [15, 26])
             self._run_sharded_tensor_reshard(spec, reshard_spec, [12, 24])
 
-    @with_comms(init_rpc=False)
+    @with_comms
     @skip_if_lt_x_gpu(4)
     @requires_nccl()
     def test_sharded_tensor_reshard_errors(self):

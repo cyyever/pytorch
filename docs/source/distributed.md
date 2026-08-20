@@ -1378,18 +1378,6 @@ This module is experimental and subject to change.
 ```
 
 ```{eval-rst}
-.. py:module:: torch.distributed.nn.api
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.nn.jit
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.nn.jit.templates
-```
-
-```{eval-rst}
 .. py:module:: torch.distributed.algorithms.ddp_comm_hooks.ddp_zero_hook
 ```
 
@@ -1666,19 +1654,7 @@ This module is experimental and subject to change.
 ```
 
 ```{eval-rst}
-.. py:module:: torch.distributed.nn.api.remote_module
-```
-
-```{eval-rst}
 .. py:module:: torch.distributed.nn.functional
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.nn.jit.instantiator
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.nn.jit.templates.remote_module_template
 ```
 
 ```{eval-rst}
@@ -1743,38 +1719,6 @@ This module is experimental and subject to change.
 
 ```{eval-rst}
 .. py:module:: torch.distributed.rendezvous
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.api
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.backend_registry
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.constants
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.functions
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.internal
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.options
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.rref_proxy
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.rpc.server_process_global_profiler
 ```
 
 ```{eval-rst}

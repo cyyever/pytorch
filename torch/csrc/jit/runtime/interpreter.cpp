@@ -23,11 +23,6 @@
 #include <torch/csrc/utils/cpp_stacktraces.h>
 #include <string>
 
-#ifdef USE_RPC
-#include <torch/csrc/distributed/autograd/context/container.h>
-using torch::distributed::autograd::DistAutogradContainer;
-#endif
-
 #include <exception>
 #include <memory>
 #include <mutex>
@@ -87,16 +82,6 @@ TensorTypePtr tensorTypeInCurrentExecutionContext(const at::Tensor& t) {
   }
   return r;
 }
-
-namespace {
-inline int64_t getDistAutogradContextId() {
-#ifdef USE_RPC
-  return DistAutogradContainer::currentContextId();
-#else
-  return 0;
-#endif
-}
-} // namespace
 
 static thread_local InterpreterStateImpl* tls_int_state_ptr_ = nullptr;
 struct TLSCurrentInterpreterGuard {
@@ -504,23 +489,18 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
                     Stack stack)
                     : stateImpl_(std::move(state)),
                       state_(stateImpl_),
-                      stack_(std::move(stack)),
-                      dist_autograd_context_id_(getDistAutogradContextId()) {
+                      stack_(std::move(stack)) {
                   state_ = InterpreterState(stateImpl_);
                 }
                 void operator()(c10::ivalue::Future& /* unused */) {
                   stateImpl_->taskLauncher_(InterpreterContinuation(
-                      state_,
-                      std::move(stack_),
-                      dist_autograd_context_id_,
-                      std::move(tls_state_)));
+                      state_, std::move(stack_), std::move(tls_state_)));
                 }
 
                private:
                 c10::intrusive_ptr<InterpreterStateImpl> stateImpl_;
                 InterpreterState state_;
                 Stack stack_;
-                int64_t dist_autograd_context_id_;
                 // preserve the original ThreadLocalState
                 at::ThreadLocalState tls_state_;
               };
@@ -770,9 +750,7 @@ struct InterpreterStateImpl : c10::intrusive_ptr_target {
             InterpreterState forked_interpreter(
                 forked_fn.get_executor().getPlanFor(stack).code, taskLauncher_);
             InterpreterContinuation continuation(
-                forked_interpreter,
-                pop(stack, static_cast<size_t>(inst.N)),
-                getDistAutogradContextId());
+                forked_interpreter, pop(stack, static_cast<size_t>(inst.N)));
             push(stack, forked_interpreter.getFuture());
             taskLauncher_(std::move(continuation));
           }
@@ -1239,19 +1217,12 @@ InterpreterState::InterpreterState(
     : pImpl(std::move(pImpl_)) {}
 
 void InterpreterContinuation::operator()() {
-#ifdef USE_RPC
-  auto prev_dist_id = DistAutogradContainer::currentContextId();
-  DistAutogradContainer::forceCurrentContextId(dist_autograd_context_id_);
-#endif
   if (tls_state_ != std::nullopt) {
     at::ThreadLocalStateGuard g(*tls_state_);
     state.runAsync(stack);
   } else {
     state.runAsync(stack);
   }
-#ifdef USE_RPC
-  DistAutogradContainer::forceCurrentContextId(prev_dist_id);
-#endif
 }
 
 } // namespace torch::jit

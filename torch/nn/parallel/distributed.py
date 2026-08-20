@@ -25,8 +25,6 @@ from torch.nn.parallel.scatter_gather import gather, scatter_kwargs
 from torch.utils._pytree import tree_flatten, tree_unflatten
 
 
-RPC_AVAILABLE = False
-
 # Default bucket size in MiB for gradient reduction
 _DEFAULT_BUCKET_CAP_MB = 25
 # Conversion factor from MiB to bytes
@@ -176,10 +174,6 @@ if dist.is_available():
         _to_kwargs,
         _verify_param_shape_across_processes,
     )
-if dist.rpc.is_available():
-    RPC_AVAILABLE = True
-    from torch.distributed.rpc import RRef
-
 if TYPE_CHECKING:
     from torch.utils.hooks import RemovableHandle
 
@@ -261,32 +255,8 @@ def _setup_mixed_precision_params(mixed_precision_config, root_module):
             param._fp_param = param.data
 
 
-def _tree_flatten_with_rref(output):
-    output_is_rref = RPC_AVAILABLE and isinstance(output, RRef)
-    if output_is_rref:
-        output_tensor_list, treespec = tree_flatten(output.local_value())
-    else:
-        output_tensor_list, treespec = tree_flatten(output)
-    # Need to return flattened tensors, spec to re-pack them, as well
-    # as if the return type was actually an RRef to reconstruct.
-    return output_tensor_list, treespec, output_is_rref
-
-
-def _tree_unflatten_with_rref(output, treespec, output_is_rref):
-    output = tree_unflatten(output, treespec)
-    if output_is_rref:
-        output = RRef(output)
-    return output
-
-
 def _find_tensors(obj):
     r"""Recursively find all tensors contained in the specified object."""
-    if RPC_AVAILABLE and isinstance(obj, RRef):
-        # If the current node is the owner of the RRef, unwrap it and try to
-        # find Tensors.
-        # TODO: Expand to remote RRefs.
-        if obj.is_owner():
-            return _find_tensors(obj.local_value())
     if isinstance(obj, torch.Tensor):
         return [obj]
     if isinstance(obj, (list, tuple)):
@@ -562,46 +532,6 @@ class DistributedDataParallel(Module, Joinable):
         0, to all other replicas in the system in every iteration.
 
     .. note::
-        If you are using DistributedDataParallel in conjunction with the
-        :ref:`distributed-rpc-framework`, you should always use
-        :meth:`torch.distributed.autograd.backward` to compute gradients and
-        :class:`torch.distributed.optim.DistributedOptimizer` for optimizing
-        parameters.
-
-        Example::
-
-            >>> # xdoctest: +SKIP("undefined variables")
-            >>> import torch.distributed.autograd as dist_autograd
-            >>> from torch.nn.parallel import DistributedDataParallel as DDP
-            >>> import torch
-            >>> from torch import optim
-            >>> from torch.distributed.optim import DistributedOptimizer
-            >>> import torch.distributed.rpc as rpc
-            >>> from torch.distributed.rpc import RRef
-            >>>
-            >>> t1 = torch.rand((3, 3), requires_grad=True)
-            >>> t2 = torch.rand((3, 3), requires_grad=True)
-            >>> rref = rpc.remote("worker1", torch.add, args=(t1, t2))
-            >>> ddp_model = DDP(my_model)
-            >>>
-            >>> # Setup optimizer
-            >>> optimizer_params = [rref]
-            >>> for param in ddp_model.parameters():
-            >>>     optimizer_params.append(RRef(param))
-            >>>
-            >>> dist_optim = DistributedOptimizer(
-            >>>     optim.SGD,
-            >>>     optimizer_params,
-            >>>     lr=0.05,
-            >>> )
-            >>>
-            >>> with dist_autograd.context() as context_id:
-            >>>     pred = ddp_model(rref.to_here())
-            >>>     loss = loss_func(pred, target)
-            >>>     dist_autograd.backward(context_id, [loss])
-            >>>     dist_optim.step(context_id)
-
-    .. note::
         DistributedDataParallel currently offers limited support for gradient
         checkpointing with :meth:`torch.utils.checkpoint`.
         If the checkpoint is done with use_reentrant=False (recommended), DDP
@@ -667,10 +597,6 @@ class DistributedDataParallel(Module, Joinable):
         time of construction. If you change the model's parameters afterwards,
         gradient reduction functions no longer match the correct set of
         parameters.
-
-    .. warning::
-        Using ``DistributedDataParallel`` in conjunction with the
-        :ref:`distributed-rpc-framework` is experimental and subject to change.
 
     Args:
         module (Module): module to be parallelized
@@ -1846,11 +1772,7 @@ class DistributedDataParallel(Module, Joinable):
         if (self.find_unused_parameters and not self.static_graph) or (
             self.static_graph and not self._static_graph_delay_allreduce_enqueued
         ):
-            (
-                output_tensor_list,
-                treespec,
-                output_is_rref,
-            ) = _tree_flatten_with_rref(output)
+            output_tensor_list, treespec = tree_flatten(output)
             output_placeholders: list[torch.Tensor | None] = [
                 None for _ in range(len(output_tensor_list))
             ]
@@ -1874,9 +1796,7 @@ class DistributedDataParallel(Module, Joinable):
                     output_placeholders[i] = passthrough_tensor_list[i]
 
             # Reconstruct output data structure.
-            output = _tree_unflatten_with_rref(
-                output_placeholders, treespec, output_is_rref
-            )
+            output = tree_unflatten(output_placeholders, treespec)
 
         # At the end of the forward pass, reset the grad buffer and grad views
         self._clear_grad_buffer()

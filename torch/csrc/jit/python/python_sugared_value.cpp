@@ -1191,11 +1191,6 @@ std::shared_ptr<SugaredValue> toSugaredValue(
     obj = py::getattr(obj, "op");
   }
 
-#ifdef USE_RPC
-  bool isRpcAvailable = py::cast<bool>(
-      py::module::import("torch.distributed.rpc").attr("is_available")());
-#endif
-
   if (auto callee = as_function(obj)) {
     return std::make_shared<FunctionValue>(callee->function_);
   } else if (py::isinstance<py::module>(obj)) {
@@ -1219,25 +1214,6 @@ std::shared_ptr<SugaredValue> toSugaredValue(
     return SpecialFormValue::create(prim::isinstance);
   } else if (obj.ptr() == py::module::import("torch").attr("_check").ptr()) {
     return std::make_shared<TorchCheckValue>();
-#ifdef USE_RPC
-    // RPC module is only available when build flag "USE_DISTRIBUTED" is on.
-  } else if (
-      isRpcAvailable &&
-      obj.ptr() ==
-          py::module::import("torch.distributed.rpc").attr("rpc_async").ptr()) {
-    return SpecialFormValue::create(prim::rpc_async);
-  } else if (
-      isRpcAvailable &&
-      obj.ptr() ==
-          py::module::import("torch.distributed.rpc").attr("rpc_sync").ptr()) {
-    return SpecialFormValue::create(prim::rpc_sync);
-  } else if (
-      isRpcAvailable &&
-      // RPC module is only available  when build flag "USE_DISTRIBUTED" is on.
-      obj.ptr() ==
-          py::module::import("torch.distributed.rpc").attr("remote").ptr()) {
-    return SpecialFormValue::create(prim::rpc_remote);
-#endif
   } else if (auto callee = as_module(obj)) {
     throw(
         ErrorReport(loc) << "Cannot call a ScriptModule that is not"
