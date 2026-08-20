@@ -5,7 +5,6 @@
 
 #include <ATen/core/operator_name.h>
 #include <torch/csrc/jit/api/module.h>
-#include <torch/csrc/jit/backends/backend_init.h>
 #include <c10/core/SymNodeImpl.h>
 #include <torch/csrc/jit/frontend/ir_emitter.h>
 #include <torch/csrc/jit/frontend/schema_type_parser.h>
@@ -2052,7 +2051,6 @@ void initJITBindings(PyObject* module) {
   tracer::initPythonTracerBindings(module);
   initTreeViewBindings(module);
   initJitScriptBindings(module);
-  initJitBackendBindings(module);
   // initNvFuserPythonBindings(module);
 
   setPrintHandler([](const std::string& str) {

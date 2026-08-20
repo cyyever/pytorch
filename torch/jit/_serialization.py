@@ -226,5 +226,3 @@ def validate_map_location(map_location=None):
         validate_cuda_device(map_location)
 
     return map_location
-
-

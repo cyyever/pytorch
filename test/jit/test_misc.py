@@ -7,7 +7,6 @@ import unittest
 from typing import Any, Dict, List, Optional, Tuple
 
 import torch
-import torch.nn as nn
 import torch.testing._internal.jit_utils
 from jit.test_module_interface import TestModuleInterface  # noqa: F401
 from torch import jit
@@ -17,7 +16,7 @@ from torch.testing._internal.common_utils import (
     raise_on_run_directly,
     skipIfTorchDynamo,
 )
-from torch.testing._internal.jit_utils import JitTestCase, make_global, RUN_CUDA_HALF
+from torch.testing._internal.jit_utils import JitTestCase, RUN_CUDA_HALF
 
 
 # Make the helper files in test/ importable
