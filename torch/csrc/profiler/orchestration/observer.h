@@ -124,13 +124,10 @@ struct TORCH_API ExperimentalConfig {
 
   /*
    * Controls whether or not timestamp adjustment occurs after profiling.
-   * The purpose of this is to adjust Vulkan event timelines to align with those
-   * of their parent CPU events.
    * This sometimes requires increasing CPU event durations (to fully contain
-   * their child events) and delaying CPU event start times (to
-   * prevent overlaps), so this should not be used unless Vulkan events are
-   * being profiled and it is ok to use this modified timestamp/duration
-   * information instead of the original information.
+   * their child events) and delaying CPU event start times (to prevent
+   * overlaps), so this should only be used when it is ok to use the modified
+   * timestamp/duration information instead of the original information.
    */
   bool adjust_timestamps;
 
