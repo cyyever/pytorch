@@ -174,18 +174,6 @@ def main() -> None:
         help="force it to generate schema-only registrations for ops that are not"
         "listed on --selected-op-list",
     )
-    parser.add_argument(
-        "--gen-lazy-ts-backend",
-        "--gen_lazy_ts_backend",
-        action="store_true",
-        help="Enable generation of the torch::lazy TorchScript backend",
-    )
-    parser.add_argument(
-        "--per-operator-headers",
-        "--per_operator_headers",
-        action="store_true",
-        help="Build lazy tensor ts backend with per-operator ATen headers, must match how ATen was built",
-    )
     options = parser.parse_args()
 
     # Path: aten/src/ATen
@@ -230,35 +218,6 @@ def main() -> None:
         install_dir=functionalization_install_dir,
         template_dir=functionalization_templates_dir,
     )
-
-    if options.gen_lazy_ts_backend:
-        ts_backend_yaml = os.path.join(aten_path, "native/ts_native_functions.yaml")
-        ts_native_functions = "torch/csrc/lazy/ts_backend/ts_native_functions.cpp"
-        ts_node_base = "torch/csrc/lazy/ts_backend/ts_node.h"
-        lazy_install_dir = os.path.join(install_dir, "lazy", "generated")
-        os.makedirs(lazy_install_dir, exist_ok=True)
-
-        if not os.path.isfile(ts_backend_yaml):
-            raise AssertionError(f"Unable to access ts_backend_yaml: {ts_backend_yaml}")
-        if not os.path.isfile(ts_native_functions):
-            raise AssertionError(f"Unable to access {ts_native_functions}")
-        from torchgen.dest.lazy_ir import GenTSLazyIR
-        from torchgen.gen_lazy_tensor import run_gen_lazy_tensor
-
-        run_gen_lazy_tensor(
-            aten_path=aten_path,
-            source_yaml=ts_backend_yaml,
-            backend_name="TorchScript",
-            output_dir=lazy_install_dir,
-            dry_run=False,
-            impl_path=ts_native_functions,
-            node_base="TsNode",
-            node_base_hdr=ts_node_base,
-            build_in_tree=True,
-            lazy_ir_generator=GenTSLazyIR,
-            per_operator_headers=options.per_operator_headers,
-            gen_forced_fallback_code=True,
-        )
 
 
 if __name__ == "__main__":

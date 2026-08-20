@@ -227,7 +227,6 @@ S390X_BLOCKLIST = [
     "inductor/test_cpu_repro",
     "inductor/test_cpu_select_algorithm",
     "inductor/test_torchinductor_codegen_dynamic_shapes",
-    "lazy/test_meta_kernel",
     "onnx/test_utility_funs",
     "profiler/test_profiler",
     "test_jit",

@@ -856,29 +856,6 @@ class CUDATestBase(DeviceTypeTestBase):
         cls.primary_device = f"cuda:{torch.cuda.current_device()}"
 
 
-# See Note [Lazy Tensor tests in device agnostic testing]
-lazy_ts_backend_init = False
-
-
-class LazyTestBase(DeviceTypeTestBase):
-    device_type = "lazy"
-
-    def _should_stop_test_suite(self):
-        return False
-
-    @classmethod
-    def setUpClass(cls):
-        import torch._lazy
-        import torch._lazy.metrics
-        import torch._lazy.ts_backend
-
-        global lazy_ts_backend_init
-        if not lazy_ts_backend_init:
-            # Need to connect the TS backend to lazy key before running tests
-            torch._lazy.ts_backend.init()
-            lazy_ts_backend_init = True
-
-
 class MPSTestBase(DeviceTypeTestBase):
     device_type = "mps"
     primary_device: ClassVar[str]
@@ -1119,9 +1096,9 @@ PYTORCH_TESTING_DEVICE_FOR_CUSTOM_KEY = "PYTORCH_TESTING_DEVICE_FOR_CUSTOM"
 
 
 def get_desired_device_type_test_bases(
-    except_for=None, only_for=None, include_lazy=False, allow_mps=False, allow_xpu=False
+    except_for=None, only_for=None, allow_mps=False, allow_xpu=False
 ):
-    # allow callers to specifically opt tests into being tested on MPS, similar to `include_lazy`
+    # allow callers to specifically opt tests into being tested on MPS
     test_bases = device_type_test_bases.copy()
     if allow_mps and TEST_MPS and MPSTestBase not in test_bases:
         test_bases.append(MPSTestBase)
@@ -1133,20 +1110,6 @@ def get_desired_device_type_test_bases(
     desired_device_type_test_bases = filter_desired_device_types(
         test_bases, except_for, only_for
     )
-    if include_lazy:
-        # Note [Lazy Tensor tests in device agnostic testing]
-        # Right now, test_view_ops.py runs with LazyTensor.
-        # We don't want to opt every device-agnostic test into using the lazy device,
-        # because many of them will fail.
-        # So instead, the only way to opt a specific device-agnostic test file into
-        # lazy tensor testing is with include_lazy=True
-        if IS_FBCODE:
-            print(
-                "TorchScript backend not yet supported in FBCODE/OVRSOURCE builds",
-                file=sys.stderr,
-            )
-        else:
-            desired_device_type_test_bases.append(LazyTestBase)
 
     def split_if_not_empty(x: str):
         return x.split(",") if x else []
@@ -1237,7 +1200,6 @@ def instantiate_device_type_tests(
     scope,
     except_for=None,
     only_for=None,
-    include_lazy=False,
     allow_mps=False,
     allow_xpu=False,
 ):
@@ -1250,7 +1212,7 @@ def instantiate_device_type_tests(
 
     # Creates device-specific test cases
     for base in get_desired_device_type_test_bases(
-        except_for, only_for, include_lazy, allow_mps, allow_xpu
+        except_for, only_for, allow_mps, allow_xpu
     ):
         # Skip the entire class
         if base._should_exclude(generic_test_class.__name__):
@@ -1696,12 +1658,6 @@ class skipXPUIf(skipIf):
 class skipGPUIf(skipIf):
     def __init__(self, dep, reason):
         super().__init__(dep, reason, device_type=GPU_TYPES)
-
-
-# Skips a test on Lazy if the condition is true.
-class skipLazyIf(skipIf):
-    def __init__(self, dep, reason):
-        super().__init__(dep, reason, device_type="lazy")
 
 
 # Skips a test on Meta if the condition is true.
@@ -2522,10 +2478,6 @@ def skipCUDAIfNoMiopen(fn):
     return skipCUDAIf(torch.version.hip is None, "MIOpen is not available")(
         skipCUDAIfNoCudnn(fn)
     )
-
-
-def skipLazy(fn):
-    return skipLazyIf(True, "test doesn't work with lazy tensors")(fn)
 
 
 def skipMeta(fn):
