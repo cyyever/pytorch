@@ -2,14 +2,13 @@
 """GPU/toolchain environment setup (runs once before any wheel is built).
 
 The manywheel builder image (.ci/docker/manywheel/Dockerfile_2_28) is
-expected to ship the heavy build dependencies (CUDA, cuDNN, NCCL, MAGMA,
+expected to ship the heavy build dependencies (CUDA, cuDNN, NCCL,
 cuSPARSELt, MKL, plus the standard OS package set). This script:
 
   * Installs the two packages historically added at wheel-build time
     (zip, openssl) to match the legacy build_common.sh contract.
-  * Falls back to running install_cuda.sh / install_magma.sh /
-    install_mkl.sh if CUDA, MAGMA, or MKL is missing, so the script
-    remains usable on a lean manylinux base.
+  * Falls back to running install_cuda.sh / install_mkl.sh if CUDA or MKL
+    is missing, so the script remains usable on a lean manylinux base.
   * Wires the symlinks/env to target the requested CUDA version.
 
 Build-flag exports (USE_CUDA, TH_BINARY_BUILD, ...) are written to the file
@@ -146,9 +145,6 @@ def cuda_build_env(cuda_version: str, arch: str) -> dict[str, str]:
         "TORCH_NVCC_FLAGS": nvcc_flags,
         "TORCH_CUDA_ARCH_LIST": torch_cuda_arch_list(cuda_version, arch),
     }
-    if arch == "aarch64":
-        # Pre-built MAGMA tarballs are x86-only.
-        env["USE_MAGMA"] = "0"
     # Bundle the CUDA 13.4 ptxas binary into nightly wheels so that users on
     # Rubin (sm_107) hardware can use torch.compile without needing to
     # install the CUDA 13.4 toolkit separately. Triton's default ptxas only
@@ -302,7 +298,7 @@ def cuda_version_from_env() -> str:
 
 
 def install_cuda_toolkit(cuda_version: str) -> None:
-    """Stage install_cuda.sh + its required siblings, then run install_cuda + install_magma."""
+    """Stage install_cuda.sh + its required siblings, then run install_cuda."""
     root = repo_root()
     docker_common = root / ".ci/docker/common"
     pins = root / ".ci/docker/ci_commit_pins"
@@ -317,14 +313,10 @@ def install_cuda_toolkit(cuda_version: str) -> None:
 
         subprocess.run(["bash", "install_cuda.sh", cuda_version], cwd=stage, check=True)
 
-    subprocess.run(
-        ["bash", str(docker_common / "install_magma.sh"), cuda_version], check=True
-    )
     print(f"CUDA {cuda_version} toolkit installation complete")
 
 
 def setup_cuda(cuda_version: str) -> None:
-    arch = platform.machine()
     cuda_dir = Path(f"/usr/local/cuda-{cuda_version}")
 
     if not cuda_dir.is_dir():
@@ -336,23 +328,6 @@ def setup_cuda(cuda_version: str) -> None:
         if symlink.is_symlink() or symlink.exists():
             symlink.unlink()
         symlink.symlink_to(cuda_dir)
-
-    if arch != "aarch64" and not (cuda_dir / "magma").is_dir():
-        print("MAGMA not found, installing...")
-        subprocess.run(
-            [
-                "bash",
-                str(repo_root() / ".ci/docker/common/install_magma.sh"),
-                cuda_version,
-            ],
-            check=True,
-        )
-
-    if arch != "aarch64":
-        magma_link = Path("/usr/local/magma")
-        if magma_link.is_symlink() or magma_link.exists():
-            magma_link.unlink()
-        magma_link.symlink_to(cuda_dir / "magma")
 
     create_cudnn_unversioned_symlinks()
     verify_cudnn()
@@ -514,9 +489,7 @@ def main() -> None:
     elif gpu_arch_type == "rocm":
         env_out.update(ROCM_BUILD_ENV_STATIC)
         # ROCM_HOME is read by repair_wheel.py to choose RPATH (wheel layout) vs
-        # bundling (OS layout). cmake finds ROCm itself via LoadHIP.cmake, and
-        # MAGMA is auto-disabled by find_package(MAGMA) when it is absent (as in
-        # the wheel layout), so no MAGMA_HOME/USE_MAGMA handling is needed here.
+        # bundling (OS layout). cmake finds ROCm itself via LoadHIP.cmake.
         rocm_home = discover_rocm_home()
         env_out["ROCM_HOME"] = rocm_home
         # DESIRED_CUDA is "rocmX.Y.Z" -- normalize so build_amd.py and
