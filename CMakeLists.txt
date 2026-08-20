@@ -206,53 +206,51 @@ if(APPLE)
                        CLANG_VERSION_STRING ${clang_full_version_string})
   message(STATUS "CLANG_VERSION_STRING:         " ${CLANG_VERSION_STRING})
 
-  if(NOT IOS)
-    # Determine if we can link against MPSGraph
-    set(MPS_FOUND OFF)
+  # Determine if we can link against MPSGraph
+  set(MPS_FOUND OFF)
+  execute_process(
+    COMMAND bash -c "xcrun --sdk macosx --show-sdk-version"
+    RESULT_VARIABLE _exit_code
+    OUTPUT_VARIABLE _macosx_sdk_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(_exit_code EQUAL 0)
+    set(_MPS_supported_os_version OFF)
+    if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
+      set(_MPS_supported_os_version ON)
+    endif()
+    message(
+      STATUS
+        "sdk version: ${_macosx_sdk_version}, mps supported: ${_MPS_supported_os_version}"
+    )
     execute_process(
-      COMMAND bash -c "xcrun --sdk macosx --show-sdk-version"
-      RESULT_VARIABLE _exit_code
-      OUTPUT_VARIABLE _macosx_sdk_version
+      COMMAND bash -c "xcrun --sdk macosx --show-sdk-path"
+      OUTPUT_VARIABLE _macosx_sdk_path
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(_exit_code EQUAL 0)
-      set(_MPS_supported_os_version OFF)
-      if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
-        set(_MPS_supported_os_version ON)
-      endif()
-      message(
-        STATUS
-          "sdk version: ${_macosx_sdk_version}, mps supported: ${_MPS_supported_os_version}"
-      )
-      execute_process(
-        COMMAND bash -c "xcrun --sdk macosx --show-sdk-path"
-        OUTPUT_VARIABLE _macosx_sdk_path
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-      set(_SDK_SEARCH_PATH "${_macosx_sdk_path}/System/Library/Frameworks/")
-      set(_FRAMEWORK_SEARCH_PATH "/System/Library/Frameworks/")
+    set(_SDK_SEARCH_PATH "${_macosx_sdk_path}/System/Library/Frameworks/")
+    set(_FRAMEWORK_SEARCH_PATH "/System/Library/Frameworks/")
 
-      find_library(
-        _MPS_fwrk_path_
-        NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
-        PATHS ${_FRAMEWORK_SEARCH_PATH}
-        NO_DEFAULT_PATH)
-      find_library(
-        _MPS_sdk_path_
-        NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
-        PATHS ${_SDK_SEARCH_PATH}
-        NO_DEFAULT_PATH)
+    find_library(
+      _MPS_fwrk_path_
+      NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
+      PATHS ${_FRAMEWORK_SEARCH_PATH}
+      NO_DEFAULT_PATH)
+    find_library(
+      _MPS_sdk_path_
+      NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
+      PATHS ${_SDK_SEARCH_PATH}
+      NO_DEFAULT_PATH)
 
-      if(_MPS_supported_os_version
-         AND _MPS_fwrk_path_
-         AND _MPS_sdk_path_)
-        set(MPS_FOUND ON)
-        message(STATUS "MPSGraph framework found")
-      else()
-        message(STATUS "MPSGraph framework not found")
-      endif()
+    if(_MPS_supported_os_version
+       AND _MPS_fwrk_path_
+       AND _MPS_sdk_path_)
+      set(MPS_FOUND ON)
+      message(STATUS "MPSGraph framework found")
     else()
-      message(STATUS "MPS: unable to get MacOS sdk version")
       message(STATUS "MPSGraph framework not found")
     endif()
+  else()
+    message(STATUS "MPS: unable to get MacOS sdk version")
+    message(STATUS "MPSGraph framework not found")
   endif()
 endif()
 
@@ -424,10 +422,10 @@ cmake_dependent_option(
     "USE_DISTRIBUTED" OFF)
 cmake_dependent_option(
   USE_GLOO_WITH_OPENSSL "Use Gloo with OpenSSL. Only available if USE_GLOO is on." OFF
-    "USE_GLOO AND LINUX AND NOT INTERN_BUILD_MOBILE" OFF)
+    "USE_GLOO AND LINUX" OFF)
 cmake_dependent_option(
   USE_GLOO_IBVERBS "Use Gloo with ibverbs backend. Only available if USE_GLOO is on." OFF
-    "USE_GLOO AND LINUX AND NOT INTERN_BUILD_MOBILE" OFF)
+    "USE_GLOO AND LINUX" OFF)
 cmake_dependent_option(
     USE_C10D_GLOO "USE C10D GLOO" ON "USE_DISTRIBUTED;USE_GLOO" OFF)
 cmake_dependent_option(
@@ -753,48 +751,6 @@ if(LINUX AND CPU_AARCH64)
   add_link_options_if_supported("--stub-group-size=0x2000000")
 endif()
 
-# Set INTERN_BUILD_MOBILE for all mobile builds. Components that are not
-# applicable to mobile are disabled by this variable. Setting
-# `BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN` environment variable can force it
-# to do mobile build with host toolchain - which is useful for testing purpose.
-if(ANDROID
-   OR IOS
-   OR DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
-  set(INTERN_BUILD_MOBILE ON)
-
-  set(USE_KLEIDIAI OFF)
-  message(WARNING "KleidiAI cannot be used on Mobile builds. Set it to OFF")
-
-  # Set -ffunction-sections and -fdata-sections so that each method has its own
-  # text section. This allows the linker to remove unused section when the flag
-  # -Wl,-gc-sections is provided at link time.
-  string(APPEND CMAKE_CXX_FLAGS " -ffunction-sections")
-  string(APPEND CMAKE_C_FLAGS " -ffunction-sections")
-  string(APPEND CMAKE_CXX_FLAGS " -fdata-sections")
-  string(APPEND CMAKE_C_FLAGS " -fdata-sections")
-
-  # Please note that the use of the following flags is required when linking
-  # against libtorch_cpu.a for mobile builds. -Wl,--whole-archive -ltorch_cpu
-  # -Wl,--no-whole-archive
-  #
-  # This allows global constructors to be included and run. Global constructors
-  # are used for operator/kernel registration with the PyTorch Dispatcher.
-
-  if(DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
-    # C10_MOBILE is derived from Android/iOS toolchain macros in
-    # c10/macros/Macros.h, so it needs to be explicitly set here.
-    string(APPEND CMAKE_CXX_FLAGS " -DC10_MOBILE")
-  endif()
-
-  if(DEFINED ENV{PYTORCH_MOBILE_TRIM_DISPATCH_KEY_SET})
-    # If PYTORCH_MOBILE_TRIM_DISPATCH_KEY_SET is defined (env var), then define
-    # C10_MOBILE_TRIM_DISPATCH_KEYS, which limits the number of dispatch keys in
-    # OperatorEntry::dispatchTable_ to reduce peak memory during library
-    # initialization.
-    string(APPEND CMAKE_CXX_FLAGS " -DC10_MOBILE_TRIM_DISPATCH_KEYS")
-  endif()
-endif()
-
 # INTERN_BUILD_ATEN_OPS is used to control whether to build ATen/TH operators.
 set(INTERN_BUILD_ATEN_OPS ON)
 
@@ -848,29 +804,6 @@ if(USE_LLVM_BOLT)
        DESTINATION "${LLVM_BOLT_PROFILES_DIR}")
 endif()
 
-# Build libtorch mobile library, which contains ATen/TH ops and native support
-# for TorchScript model, but doesn't contain not-yet-unified caffe2 ops;
-if(INTERN_BUILD_MOBILE)
-  if(NOT BUILD_SHARED_LIBS AND NOT "${SELECTED_OP_LIST}" STREQUAL "")
-    string(APPEND CMAKE_CXX_FLAGS " -DNO_EXPORT")
-  endif()
-  if(BUILD_MOBILE_AUTOGRAD)
-    set(INTERN_DISABLE_AUTOGRAD OFF)
-  else()
-    set(INTERN_DISABLE_AUTOGRAD ON)
-  endif()
-  set(BUILD_PYTHON OFF)
-  set(BUILD_FUNCTORCH OFF)
-  set(USE_DISTRIBUTED OFF)
-  set(NO_API ON)
-  set(USE_FBGEMM OFF)
-  if(USE_BLAS)
-    set(INTERN_USE_EIGEN_BLAS ON)
-  else()
-    set(INTERN_USE_EIGEN_BLAS OFF)
-  endif()
-endif()
-
 # ---[ Version numbers for generated libraries
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS version.txt)
 file(READ version.txt TORCH_DEFAULT_VERSION)
@@ -921,8 +854,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # The below means we are cross compiling for arm64 or x86_64 on MacOSX
-if(NOT IOS
-   AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin"
    AND CMAKE_OSX_ARCHITECTURES MATCHES "^(x86_64|arm64)$")
   set(CROSS_COMPILING_MACOSX TRUE)
 endif()
@@ -1072,7 +1004,7 @@ endif()
 include(cmake/Allowlist.cmake)
 
 # ---[ Set link flag, handle additional deps for gcc 4.8 and above
-if(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
+if(CMAKE_COMPILER_IS_GNUCXX)
   message(
     STATUS
       "GCC ${CMAKE_CXX_COMPILER_VERSION}: Adding gcc and gcc_s libs to link line"
@@ -1271,16 +1203,6 @@ if(EMSCRIPTEN)
 endif()
 
 append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
-
-if(ANDROID AND (NOT ANDROID_DEBUG_SYMBOLS))
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    string(APPEND CMAKE_CXX_FLAGS " -s")
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    string(APPEND CMAKE_CXX_FLAGS " -g0")
-  else()
-    string(APPEND CMAKE_EXE_LINKER_FLAGS " -s")
-  endif()
-endif()
 
 if(NOT APPLE AND UNIX)
   list(APPEND Caffe2_DEPENDENCY_LIBS dl)
