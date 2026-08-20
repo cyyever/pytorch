@@ -189,10 +189,9 @@ include_patterns = [
     'torch/headeronly/**/*.h',
 ]
 exclude_patterns = [
-    # The negative filters below exclude generated protobuf headers and CUDA
-    # files, which this CI job cannot compile.
+    # The negative filters below exclude generated headers and CUDA files,
+    # which this CI job cannot compile.
     '**/fb/**',
-    '**/*pb.h',
     '**/*inl.h',
     'aten/src/ATen/cpu/FlushDenormal.cpp',
     'aten/src/ATen/cpu/vml.h',

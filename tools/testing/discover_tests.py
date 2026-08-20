@@ -112,8 +112,6 @@ TESTS = discover_tests(
         f"{CPP_TEST_PREFIX}/c10_intrusive_ptr_benchmark",
         f"{CPP_TEST_PREFIX}/example_allreduce",
         f"{CPP_TEST_PREFIX}/parallel_benchmark",
-        f"{CPP_TEST_PREFIX}/protoc",
-        f"{CPP_TEST_PREFIX}/protoc-3.13.0.0",
         f"{CPP_TEST_PREFIX}/torch_shm_manager",
     ],
     extra_tests=[

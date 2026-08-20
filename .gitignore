@@ -104,14 +104,11 @@ torch/lib/*.h
 torch/lib/*.lib
 torch/lib/*.pdb
 torch/lib/*.so*
-torch/lib/protobuf*.pc
 torch/lib/build
 torch/lib/caffe2/
 torch/lib/cmake
 torch/lib/include
 torch/lib/pkgconfig
-torch/lib/protoc
-torch/lib/protobuf/
 torch/lib/tmp_install
 torch/lib/torch_shm_manager
 torch/lib/site-packages/
@@ -246,7 +243,6 @@ docs/source/scripts/lr_scheduler_images/
 build/
 # Allow tools/build/bazel for build support.
 !tools/build/bazel
-build_host_protoc
 build_android
 build_ios
 .build_debug/*
