@@ -209,7 +209,6 @@ class TestPublicBindings(TestCase):
             "set_num_interop_threads",
             "set_num_threads",
             "Size",
-            "StaticModule",
             "Stream",
             "StreamObjType",
             "Event",

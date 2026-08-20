@@ -32,7 +32,6 @@
 #include <c10/util/Enumerate.h>
 #include <c10/util/irange.h>
 
-#include <torch/csrc/jit/runtime/static/ops.h>
 
 namespace at::native {
 
