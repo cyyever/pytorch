@@ -5,7 +5,7 @@
 #include <c10/util/Exception.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
-#include <torch/csrc/jit/passes/quantization/helper.h>
+#include <torch/csrc/jit/passes/graph_rewrite_helper.h>
 #include <atomic>
 #include <optional>
 
@@ -37,7 +37,7 @@ struct AutocastScope {
 };
 
 bool isAutocastNode(Value* value) {
-  const auto class_name = getModuleName(value);
+  const auto class_name = graph_rewrite_helper::getModuleName(value);
   return class_name.has_value() &&
       (*class_name == "__torch__.torch.cuda.amp.autocast_mode.autocast" ||
        *class_name == "__torch__.torch.cpu.amp.autocast_mode.autocast" ||

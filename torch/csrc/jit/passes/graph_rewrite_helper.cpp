@@ -4,6 +4,8 @@
 #include <torch/csrc/jit/passes/constant_propagation.h>
 #include <torch/csrc/jit/passes/subgraph_rewrite.h>
 
+#include <regex>
+
 namespace torch::jit::graph_rewrite_helper {
 
 std::string getFuncName(Value* func_value) {
@@ -16,6 +18,15 @@ std::string getFuncName(Value* func_value) {
   } else {
     return name;
   }
+}
+
+std::optional<std::string> getModuleName(Value* value) {
+  auto type = value->type()->cast<ClassType>();
+  if (type && type->name()) {
+    static std::regex mangle_re("\\.___torch_mangle_\\d+");
+    return std::regex_replace(type->name()->qualifiedName(), mangle_re, "");
+  }
+  return std::nullopt;
 }
 
 Value* getValue(

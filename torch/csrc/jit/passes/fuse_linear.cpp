@@ -1,9 +1,23 @@
 #include <torch/csrc/jit/passes/fuse_linear.h>
+
+#include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/passes/graph_rewrite_helper.h>
-#include <torch/csrc/jit/passes/quantization/helper.h>
 #include <torch/csrc/jit/passes/subgraph_rewrite.h>
 
 namespace torch::jit {
+
+namespace {
+
+bool is_int_constant(
+    const Match& match,
+    const std::unordered_map<std::string, Value*>& vmap,
+    const std::string& vname,
+    int value) {
+  auto v = toIValue(match.values_map.at(vmap.at(vname)));
+  return v && v->isInt() && v->toInt() == value;
+}
+
+} // namespace
 
 void FuseLinear(std::shared_ptr<Graph>& graph) {
   std::string addmm_pattern = R"IR(
@@ -19,6 +33,11 @@ void FuseLinear(std::shared_ptr<Graph>& graph) {
   auto beta_is_one = [](const Match& match,
                         const std::unordered_map<std::string, Value*>& vmap) {
     return is_int_constant(match, vmap, "beta", 1);
+  };
+
+  auto alpha_is_one = [](const Match& match,
+                         const std::unordered_map<std::string, Value*>& vmap) {
+    return is_int_constant(match, vmap, "alpha", 1);
   };
 
   // check %weight_t is produced by `aten::t` to make sure
@@ -38,7 +57,7 @@ void FuseLinear(std::shared_ptr<Graph>& graph) {
   addmm_to_linear.RegisterRewritePattern(
       addmm_pattern, fused_linear_addmm, value_mappings);
   addmm_to_linear.runOnGraph(
-      graph, {aten_add_alpha_is_one, beta_is_one, weight_transposed});
+      graph, {alpha_is_one, beta_is_one, weight_transposed});
 
   std::string matmul_add_pattern = R"IR(
     graph(%input, %weight_t, %bias, %alpha):
@@ -56,7 +75,7 @@ void FuseLinear(std::shared_ptr<Graph>& graph) {
   matmuladd_to_linear.RegisterRewritePattern(
       matmul_add_pattern, fused_linear_matmul, value_mappings);
   matmuladd_to_linear.runOnGraph(
-      graph, {aten_add_alpha_is_one, weight_transposed});
+      graph, {alpha_is_one, weight_transposed});
 
   std::string matmul_pattern = R"IR(
     graph(%input, %weight_t):
@@ -97,16 +116,6 @@ void FuseLinear(std::shared_ptr<Graph>& graph) {
   cleanup.runOnGraph(graph);
 
   SwapFunctionalLinear(graph);
-}
-
-void SwapFunctionalLinear(Module& module) {
-  for (auto& method : module.get_methods()) {
-    std::shared_ptr<Graph> g = method.graph();
-    SwapFunctionalLinear(g);
-  }
-  for (Module m : module.children()) {
-    SwapFunctionalLinear(m);
-  }
 }
 
 void SwapFunctionalLinear(std::shared_ptr<Graph>& graph) {

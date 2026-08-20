@@ -4,7 +4,7 @@
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/jit_log.h>
-#include <torch/csrc/jit/passes/quantization/helper.h>
+#include <torch/csrc/jit/passes/graph_rewrite_helper.h>
 #include <torch/csrc/jit/runtime/graph_iterator.h>
 
 namespace torch::jit {
@@ -12,7 +12,7 @@ namespace torch::jit {
 namespace {
 
 bool isStrictFusion(Value* value) {
-  const auto class_name = getModuleName(value);
+  const auto class_name = graph_rewrite_helper::getModuleName(value);
   return class_name.has_value() &&
       (*class_name == "__torch__.torch.jit.strict_fusion");
 }
