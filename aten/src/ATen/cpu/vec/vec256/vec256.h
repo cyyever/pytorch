@@ -6,9 +6,7 @@
 #include <ATen/cpu/vec/intrinsics.h>
 
 #include <ATen/cpu/vec/vec_base.h>
-#if !(                                                 \
-    defined(__VSX__) || defined(CPU_CAPABILITY_VSX) || \
-    defined(CPU_CAPABILITY_ZVECTOR))
+#if !defined(CPU_CAPABILITY_ZVECTOR)
 #if defined(CPU_CAPABILITY_SVE256)
 #include <ATen/cpu/vec/sve/vec_common_sve.h>
 #else
@@ -25,8 +23,6 @@
 #include <ATen/cpu/vec/vec256/vec256_complex_float.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_double.h>
 // clang-format on
-#elif defined(__VSX__) || defined(CPU_CAPABILITY_VSX)
-#include <ATen/cpu/vec/vec256/vsx/vec256_common_vsx.h>
 #else
 // clang-format off
 #include <ATen/cpu/vec/vec256/zarch/vec256_zarch.h>
