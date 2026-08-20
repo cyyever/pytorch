@@ -333,9 +333,7 @@ inps = [torch.ones(shape, dtype=dtype, device='cuda') for (shape, dtype) in inps
 from foo import FxModule
 mod = FxModule().cuda()
 
-with torch.jit.fuser("fuser2"):
-  # check_nvfuser_subprocess can be replaced with check_nvfuser_correctness_subprocess
-  minifier(fx.symbolic_trace(mod), inps, check_nvfuser_subprocess)
+minifier(fx.symbolic_trace(mod), inps, check_nvfuser_subprocess)
 """
     )
     # pyrefly: ignore[missing-import, missing-module-attribute]

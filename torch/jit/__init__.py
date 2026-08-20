@@ -26,7 +26,6 @@ from torch.jit._await import _awaitable, _awaitable_nowait, _awaitable_wait
 from torch.jit._decomposition_utils import _register_decomposition
 from torch.jit._freeze import freeze, optimize_for_inference, run_frozen_optimizations
 from torch.jit._fuser import (
-    fuser,
     last_executed_optimized_graph,
     optimized_execution,
     set_fusion_strategy,
@@ -72,7 +71,6 @@ __all__ = [
     "ScriptFunction",
     "ScriptModule",
     "annotate",
-    "enable_onednn_fusion",
     "export",
     "fork",
     "freeze",
@@ -80,7 +78,6 @@ __all__ = [
     "ignore",
     "isinstance",
     "load",
-    "onednn_fusion_enabled",
     "optimize_for_inference",
     "save",
     "script",
@@ -272,24 +269,6 @@ def _hide_source_ranges() -> Iterator[None]:
         yield
     finally:
         torch._C.Graph.set_global_print_source_ranges(old_enable_source_ranges)  # type: ignore[attr-defined]
-
-
-def enable_onednn_fusion(enabled: bool) -> None:
-    """Enable or disables onednn JIT fusion based on the parameter `enabled`.
-
-    .. deprecated:: 2.5
-        TorchScript is deprecated, please use ``torch.compile`` instead.
-    """
-    torch._C._jit_set_llga_enabled(enabled)
-
-
-def onednn_fusion_enabled():
-    """Return whether onednn JIT fusion is enabled.
-
-    .. deprecated:: 2.5
-        TorchScript is deprecated, please use ``torch.compile`` instead.
-    """
-    return torch._C._jit_llga_enabled()
 
 
 del Any

@@ -8,86 +8,7 @@
 
 namespace torch::jit {
 
-static void removeProfileNodesAndSpecializeTypes(Block* b) {
-  for (auto it = b->nodes().begin(); it != b->nodes().end(); it++) {
-    if (it->kind() == prim::profile) {
-      GRAPH_DEBUG("Removing prim::profile: %", it->output()->debugName());
-      it->output()->replaceAllUsesWith(it->input());
-      auto profiled_type = it->ty(attr::profiled_type)->expect<TensorType>();
-
-      TensorTypePtr input_tensor_type = nullptr;
-      bool input_is_optional = false;
-      if (it->input()->type()->kind() == c10::TypeKind::TensorType) {
-        input_tensor_type = it->input()->type()->expect<TensorType>();
-      } else {
-        auto element_type = it->input()
-                              ->type();
-        if (element_type->cast<OptionalType>()) {
-          input_tensor_type = element_type->expectRef<OptionalType>()
-                                          .getElementType()
-                                          ->expect<TensorType>();
-        } else {
-          // This handles the following scenario:
-          // 1. profiling nodes are inserted
-          // 2. optimizations simplify a Tensor? -> None type
-          // 3. Now the input to the prim::profile() is actually a None type.
-          element_type->expect<NoneType>();
-        }
-
-        input_is_optional = true;
-      }
-
-      if (input_is_optional) {
-        it.destroyCurrent();
-        continue;
-      }
-
-      // A value can be profiled with differently typed uses.
-      // This can occur from:
-      // - having a use which is not executed, so the type will be
-      // TensorType::get()
-      // - control-flow that depends on tensor type:
-      //   if x.size() == 2 op(x) else op(x)
-      // - mutation of the value on a field represented in the tensor type
-      //   op(x); x.resize_([...]); op(x)
-
-      // The most common case today with num_profiles = 1 is from the first
-      // case. Here we can just ignore non-profiled uses, and choose any of the
-      // profiled uses. Because we guard all tensor types in the runtime, even
-      // if we set a Value to have a profiled type from one use and then execute
-      // a use with a different profiled type, we will still be correct.
-      // In the future we could consider unifying the types of uses, or adding a
-      // type refinement node so uses can have the correct corresponding type.
-      if (profiled_type == TensorType::get()) {
-        continue;
-      }
-
-      // If we encounter non-identical profiled types for the same value, merge
-      // them.  This situation can happen if, e.g., loop unrolling duplicates
-      // profiled types in a loop body in a manner that isn't logically
-      // consistent (see TestTEFuser.test_unrolled_cat).
-      if (input_tensor_type == TensorType::get()) {
-        it->input()->setType(profiled_type);
-      } else {
-        it->input()->setType(input_tensor_type->merge(*profiled_type));
-      }
-
-      it.destroyCurrent();
-    } else {
-      for (Block* ib : it->blocks()) {
-        removeProfileNodesAndSpecializeTypes(ib);
-      }
-    }
-  }
-}
-
-void RemoveProfileNodesAndSpecializeTypes(std::shared_ptr<Graph>& graph) {
-  GRAPH_DEBUG("Before removeProfileNodesAndSpecializeTypes:\n", *graph);
-  removeProfileNodesAndSpecializeTypes(graph->block());
-  GRAPH_DEBUG("After removeProfileNodesAndSpecializeTypes:\n", *graph);
-}
-
-bool hasTensorTypeSpecialization(Value* v) {
+static bool hasTensorTypeSpecialization(Value* v) {
   if (!v->type()->cast<TensorType>()) {
     return false;
   }
@@ -110,7 +31,7 @@ static void removeTensorTypeSpecialization(Value* v) {
   }
 }
 
-void removeTensorTypeSpecializations(Block* block) {
+static void removeTensorTypeSpecializations(Block* block) {
   for (Value* v : block->inputs()) {
     removeTensorTypeSpecialization(v);
   }
