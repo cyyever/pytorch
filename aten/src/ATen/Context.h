@@ -161,9 +161,6 @@ class TORCH_API Context {
   static bool ckSDPASupported();
   static bool ckGemmSupported();
   static bool hasEigenSparse();
-  static bool hasMAGMA() {
-    return detail::getCUDAHooks().hasMAGMA();
-  }
   static bool hasCUDA() {
     return detail::getCUDAHooks().hasCUDA();
   }
@@ -675,10 +672,6 @@ inline bool hasLAPACK() {
 
 inline bool hasEigenSparse() {
   return globalContext().hasEigenSparse();
-}
-
-inline bool hasMAGMA() {
-  return globalContext().hasMAGMA();
 }
 
 inline bool hasMKLDNN() {
