@@ -161,6 +161,27 @@ quantization-support
 .. py:module:: torch.nn.quantized.modules.normalization
 .. py:module:: torch.nn.quantized.modules.rnn
 .. py:module:: torch.nn.quantized.modules.utils
+.. py:module:: torch.quantization.fake_quantize
+.. py:module:: torch.quantization.fuse_modules
+.. py:module:: torch.quantization.fuser_method_mappings
+.. py:module:: torch.quantization.fx.convert
+.. py:module:: torch.quantization.fx.fuse
+.. py:module:: torch.quantization.fx.fusion_patterns
+.. py:module:: torch.quantization.fx.graph_module
+.. py:module:: torch.quantization.fx.match_utils
+.. py:module:: torch.quantization.fx.pattern_utils
+.. py:module:: torch.quantization.fx.prepare
+.. py:module:: torch.quantization.fx.quantization_patterns
+.. py:module:: torch.quantization.fx.quantization_types
+.. py:module:: torch.quantization.fx.utils
+.. py:module:: torch.quantization.observer
+.. py:module:: torch.quantization.qconfig
+.. py:module:: torch.quantization.quant_type
+.. py:module:: torch.quantization.quantization_mappings
+.. py:module:: torch.quantization.quantize
+.. py:module:: torch.quantization.quantize_fx
+.. py:module:: torch.quantization.stubs
+.. py:module:: torch.quantization.utils
 
 .. currentmodule:: torch.ao.ns.fx.utils
 .. autofunction:: torch.ao.ns.fx.utils.compute_sqnr(x, y)
