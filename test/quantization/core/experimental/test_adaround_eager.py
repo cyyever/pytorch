@@ -7,8 +7,8 @@ import torch.nn as nn
 from torch.ao.quantization.experimental.adaround_optimization import (
     AdaptiveRoundingOptimizer,
 )
+from torch.ao.quantization.observer import MinMaxObserver
 from torch.nn import functional as F
-from torch.quantization.observer import MinMaxObserver
 from torch.testing._internal.common_quantization import QuantizationTestCase
 
 

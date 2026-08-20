@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 from torch.profiler import profile, ProfilerActivity
 
-from torch.quantization._quantized_conversions import (
+from torch.ao.quantization._quantized_conversions import (
     pack_int4_to_int8,
     quantized_weight_reorder_for_mixed_dtypes_linear_cutlass,
 )
