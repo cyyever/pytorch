@@ -8,6 +8,10 @@
 namespace torch::jit::graph_rewrite_helper {
 
 std::string getFuncName(Value* func_value);
+// Return the qualified name of the class type of `value`, with any
+// `___torch_mangle_N` components stripped, or std::nullopt if `value` is not a
+// class type.
+TORCH_API std::optional<std::string> getModuleName(Value* value);
 Value* getValue(
     const std::string& name,
     const std::unordered_map<const Value*, Value*>& match_vmap,
