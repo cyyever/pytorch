@@ -370,6 +370,14 @@ void THP_PyObject_VirtualFree(void* obj, size_t size) {
   arena.free(arena.ctx, obj, size);
 }
 
+#if !IS_PYTHON_3_13_PLUS
+// https://github.com/python/cpython/blob/fad48ea1816be3125ea51edcdfe2f999d6ade796/Objects/obmalloc.c#L641
+void THP_PyObject_VirtualFree(void* obj, size_t size) {
+  PyObjectArenaAllocator arena;
+  PyObject_GetArenaAllocator(&arena);
+  arena.free(arena.ctx, obj, size);
+}
+
 // https://github.com/python/cpython/blob/051b8a2589ff28f0194c3701b21f729444691752/Python/pystate.c#L2222
 void THP_PyThreadState_PopFrame(
     PyThreadState* tstate,
