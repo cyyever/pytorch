@@ -88,7 +88,7 @@ class MyShardedLinear(torch.nn.Module):
 
 
 class TestShardedOptimizer(ShardedTensorTestBase):
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(4)
     @requires_accelerator_dist_backend(["nccl", "xccl", "privateuse1"])
     def test_sharded_optim(self):
@@ -149,7 +149,7 @@ class TestShardedOptimizer(ShardedTensorTestBase):
                 self.assertNotEqual(val, new_val)
                 self.assertEqual(new_val, local_model.param)
 
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(4)
     @requires_accelerator_dist_backend(["nccl", "xccl", "privateuse1"])
     def test_named_params_with_sharded_tensor(self):

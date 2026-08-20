@@ -183,12 +183,6 @@ def _get_builtin_table():
     _builtin_ops.append((math.isfinite, "aten::isfinite"))
     _builtin_ops.append((math.remainder, "aten::mathremainder"))  # type: ignore[attr-defined]
 
-    import torch.distributed.autograd as dist_autograd
-
-    if dist_autograd.is_available():
-        _builtin_ops.append((dist_autograd.get_gradients, "aten::get_gradients"))
-        _builtin_ops.append((dist_autograd.backward, "aten::dist_backward"))
-
     # populate the _builtin_table from _builtin_ops
     for builtin, aten_op in _builtin_ops:
         _builtin_table[id(builtin)] = aten_op

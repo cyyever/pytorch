@@ -157,11 +157,6 @@ class TestChoices(list):
 FSDP_TEST = [test for test in TESTS if test.startswith("distributed/fsdp")]
 
 WINDOWS_BLOCKLIST = [
-    "distributed/nn/jit/test_instantiator",
-    "distributed/rpc/test_faulty_agent",
-    "distributed/rpc/test_tensorpipe_agent",
-    "distributed/rpc/test_share_memory",
-    "distributed/rpc/cuda/test_tensorpipe_agent",
     "distributed/pipeline/sync/skip/test_api",
     "distributed/pipeline/sync/skip/test_gpipe",
     "distributed/pipeline/sync/skip/test_inspect_skip_layout",
@@ -200,10 +195,6 @@ WINDOWS_BLOCKLIST = [
 ] + FSDP_TEST
 
 ROCM_BLOCKLIST = [
-    "distributed/rpc/test_faulty_agent",
-    "distributed/rpc/test_tensorpipe_agent",
-    "distributed/rpc/test_share_memory",
-    "distributed/rpc/cuda/test_tensorpipe_agent",
     "test_determination",
     "test_jit_legacy",
     "test_cuda_nvml_based_avail",
@@ -1414,10 +1405,6 @@ CUSTOM_HANDLERS = {
     "distributed/test_c10d_spawn_ucc": run_test_with_subprocess,
     "distributed/test_store": run_test_with_subprocess,
     "distributed/test_pg_wrapper": run_test_with_subprocess,
-    "distributed/rpc/test_faulty_agent": run_test_with_subprocess,
-    "distributed/rpc/test_tensorpipe_agent": run_test_with_subprocess,
-    "distributed/rpc/test_share_memory": run_test_with_subprocess,
-    "distributed/rpc/cuda/test_tensorpipe_agent": run_test_with_subprocess,
     "functorch/test_control_flow_cuda_initialization": run_test_with_subprocess,
     "doctests": run_doctests,
     "test_ci_sanity_check_fail": run_ci_sanity_check,

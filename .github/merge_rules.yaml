@@ -190,9 +190,6 @@
   patterns:
   - docs/source/pipeline.rst
   - docs/source/distributed*
-  - docs/source/rpc.rst
-  - docs/source/rpc/**
-  - docs/source/_static/img/rpc*
   - docs/source/_static/img/*distributed*
   - docs/source/elastic/**
   - benchmarks/distributed/**
@@ -203,8 +200,6 @@
   - torch/testing/_internal/distributed/**
   - torch/multiprocessing/**
   - test/distributed/**
-  - test/cpp/dist_autograd/**
-  - test/cpp/rpc/**
   - test/*multiprocessing*
   approved_by:
   - wconstab

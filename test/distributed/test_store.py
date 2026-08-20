@@ -16,7 +16,6 @@ from unittest import mock
 import torch
 import torch.distributed as dist
 import torch.distributed.distributed_c10d as c10d
-import torch.distributed.rpc as rpc
 from torch.distributed import DistError, DistNetworkError, DistStoreError
 from torch.testing._internal.common_distributed import MultiThreadedTestCase
 from torch.testing._internal.common_utils import instantiate_parametrized_tests
@@ -27,11 +26,7 @@ if not dist.is_available():
     sys.exit(0)
 
 import torch.testing._internal.common_utils as common
-from torch.testing._internal.common_distributed import (
-    create_tcp_store,
-    skip_if_win32,
-    tp_transports,
-)
+from torch.testing._internal.common_distributed import create_tcp_store, skip_if_win32
 from torch.testing._internal.common_utils import (
     ADDRESS_IN_USE,
     CONNECT_TIMEOUT,
@@ -290,27 +285,6 @@ class FileStoreTest(TestCase, StoreTestBase):
         store.set_timeout(timedelta(seconds=300))
         return store
 
-    def test_init_pg_and_rpc_with_same_file(self):
-        with tempfile.NamedTemporaryFile(delete=False) as file:
-            # Init RPC using file
-            rpc_backend_options = rpc.TensorPipeRpcBackendOptions()
-            rpc_backend_options.init_method = f"file://{file.name}"
-            rpc_backend_options._transports = tp_transports()
-            rpc.init_rpc(
-                "worker", rank=0, world_size=1, rpc_backend_options=rpc_backend_options
-            )
-
-            # Init PG using file
-            dist.init_process_group(
-                "gloo", rank=0, world_size=1, init_method=f"file://{file.name}"
-            )
-            dist.destroy_process_group()
-            if not os.path.exists(file.name):
-                raise AssertionError(f"Expected file {file.name} to exist")
-
-            rpc.shutdown()
-            os.remove(file.name)
-
     def test_refcount(self):
         with tempfile.NamedTemporaryFile(delete=False) as file:
             store = dist.FileStore(file.name, 1)
@@ -443,42 +417,6 @@ class TCPStoreTest(TestCase, StoreTestBase):
             r"client=TCPClient\(SocketImpl\(fd=\d+, addr=\[?localhost\]?:\d+, remote=\[?localhost\]?:\d+\)\), "
             r"server=<nullptr>\)",
         )
-
-    @skip_if_win32()
-    @retry_on_connect_failures
-    def test_init_pg_and_rpc_with_same_socket(self):
-        addr = DEFAULT_HOSTNAME
-        port = common.find_free_port()
-
-        os.environ["MASTER_ADDR"] = addr
-        os.environ["MASTER_PORT"] = str(port)
-
-        # We internally use a multi-tenant TCP store. Both PG and RPC should successfully
-        # initialize even when using the same socket address.
-
-        os.environ["USE_LIBUV"] = "1" if self._use_libuv else "0"
-        dist.init_process_group(
-            backend="gloo",
-            init_method="env://",
-            rank=0,
-            world_size=1,
-        )
-
-        backend_opts = rpc.TensorPipeRpcBackendOptions(
-            init_method=f"tcp://{addr}:{port}", _transports=tp_transports()
-        )
-        rpc.init_rpc(
-            name="worker0",
-            rank=0,
-            world_size=1,
-            rpc_backend_options=backend_opts,
-        )
-
-        del os.environ["USE_LIBUV"]
-        if "USE_LIBUV" in os.environ:
-            raise AssertionError("Expected USE_LIBUV to not be in os.environ")
-        rpc.shutdown()
-        dist.destroy_process_group()
 
     @skip_if_win32()
     def test_take_over_listen_socket(self):

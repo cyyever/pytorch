@@ -267,8 +267,6 @@ if(USE_DISTRIBUTED)
     endif()
     # Disable certain warnings for GCC-9.X
     if(CMAKE_COMPILER_IS_GNUCXX)
-      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/autograd/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
-      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/rpc/testing/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
       set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/c10d/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
     endif()
     # NCCL is a private dependency of libtorch, but libtorch_python includes
@@ -343,14 +341,6 @@ if(BUILD_LIBTORCHLESS)
 
   if(USE_GLOO AND USE_C10D_GLOO)
     target_compile_definitions(torch_python PRIVATE USE_C10D_GLOO)
-  endif()
-
-  if(NOT WIN32)
-    target_compile_definitions(torch_python PRIVATE USE_RPC)
-  endif()
-
-  if(USE_TENSORPIPE)
-    target_compile_definitions(torch_python PRIVATE USE_TENSORPIPE)
   endif()
 
   set(EXPERIMENTAL_SINGLE_THREAD_POOL "0" CACHE STRING

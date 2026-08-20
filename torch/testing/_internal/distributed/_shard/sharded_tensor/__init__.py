@@ -5,12 +5,7 @@ from functools import partial, wraps
 
 import torch
 import torch.distributed as dist
-from torch.distributed import rpc
-from torch.testing._internal.common_distributed import (
-    MultiProcessTestCase,
-    TEST_SKIPS,
-    tp_transports,
-)
+from torch.testing._internal.common_distributed import MultiProcessTestCase, TEST_SKIPS
 
 
 TEST_GPU_NUM = 4
@@ -36,34 +31,12 @@ class ShardedTensorTestBase(MultiProcessTestCase):
         if backend == "nccl" or backend == "xccl":
             torch.accelerator.set_device_index(self.rank)
 
-    def init_rpc(self):
-        rpc_backend_options = rpc.TensorPipeRpcBackendOptions(
-            _transports=tp_transports()
-        )
-        rpc_backend_options.init_method = f"file://{self.file_name}"
-        for rank in range(self.world_size):
-            rpc_backend_options.set_device_map(
-                f"worker{rank}", {rank: self.rank, self.rank: rank}
-            )
-
-        rpc.init_rpc(
-            name=f"worker{self.rank:d}",
-            rank=self.rank,
-            world_size=self.world_size,
-            rpc_backend_options=rpc_backend_options,
-        )
-
-    def init_comms(self, init_rpc=True, backend="nccl"):
-        if init_rpc:
-            self.init_rpc()
+    def init_comms(self, backend="nccl"):
         self.init_pg(backend=backend)
 
-    def destroy_comms(self, destroy_rpc=True):
+    def destroy_comms(self):
         # Wait for all ranks to reach here before starting shutdown.
         dist.barrier()
-
-        if destroy_rpc:
-            rpc.shutdown()
         dist.destroy_process_group()
 
     def setUp(self) -> None:
@@ -80,17 +53,12 @@ class ShardedTensorTestBase(MultiProcessTestCase):
 
         self.assertEqual(st1.metadata(), st2.metadata())
         self.assertEqual(st1.sharding_spec(), st2.sharding_spec())
-        self.assertEqual(len(st1.remote_shards()), len(st2.remote_shards()))
 
 
-# wrapper to initialize comms (processgroup + rpc)
-def with_comms(func=None, init_rpc=True, backend="nccl"):
+# wrapper to initialize comms (processgroup)
+def with_comms(func=None, backend="nccl"):
     if func is None:
-        return partial(
-            with_comms,
-            init_rpc=init_rpc,
-            backend=backend,
-        )
+        return partial(with_comms, backend=backend)
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -102,9 +70,14 @@ def with_comms(func=None, init_rpc=True, backend="nccl"):
                 or backend != dist.get_default_backend_for_device(acc)
                 or torch.accelerator.device_count() < self.world_size
             ):
+<<<<<<< HEAD
                 sys.exit(TEST_SKIPS[f"multi-device-{self.world_size}"].exit_code)
         self.init_comms(init_rpc=init_rpc, backend=backend)
+=======
+                sys.exit(TEST_SKIPS[f"multi-gpu-{self.world_size}"].exit_code)
+        self.init_comms(backend=backend)
+>>>>>>> 14685524f87 (Remove the distributed RPC framework)
         func(self, *args, **kwargs)
-        self.destroy_comms(destroy_rpc=init_rpc)
+        self.destroy_comms()
 
     return wrapper

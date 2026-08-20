@@ -451,9 +451,7 @@ cmake_dependent_option(
     USE_C10D_XCCL "USE C10D XCCL" ON "USE_DISTRIBUTED;USE_XCCL" OFF)
 cmake_dependent_option(
     USE_C10D_MPI "USE C10D MPI" ON "USE_DISTRIBUTED;USE_MPI" OFF)
-cmake_dependent_option(
-    USE_TENSORPIPE "Use TensorPipe. Only available if USE_DISTRIBUTED is on." ON
-    "USE_DISTRIBUTED AND NOT WIN32" OFF)
+option(ONNX_ML "Enable traditional ONNX ML API." ON)
 option(HAVE_SOVERSION "Whether to add SOVERSION to the shared objects" OFF)
 option(BUILD_LIBTORCH_CPU_WITH_DEBUG
        "Enable RelWithDebInfo for libtorch_cpu target only" OFF)
@@ -466,6 +464,10 @@ option(
   OFF)
 option(USE_PER_OPERATOR_HEADERS
        "Whether ATen should generate separate headers for each operator" ON)
+cmake_dependent_option(
+  BUILD_LAZY_TS_BACKEND
+  "Build the lazy Torchscript backend, not compatible with mobile builds" ON
+  "NOT INTERN_BUILD_MOBILE" OFF)
 cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)
@@ -541,12 +543,9 @@ if(USE_CCACHE)
   endif()
 endif()
 
-# Since TensorPipe does not support Windows, set it to OFF when WIN32 detected
 # On Windows platform, if user does not install libuv in build conda env and
 # does not set libuv_ROOT environment variable. Set USE_DISTRIBUTED to OFF.
 if(WIN32)
-  set(USE_TENSORPIPE OFF)
-  message(WARNING "TensorPipe cannot be used on Windows. Set it to OFF")
   set(USE_KLEIDIAI OFF)
   message(WARNING "KleidiAI cannot be used on Windows. Set it to OFF")
 
@@ -592,6 +591,7 @@ option(USE_SYSTEM_PTHREADPOOL "Use system-provided pthreadpool." OFF)
 option(USE_SYSTEM_PSIMD "Use system-provided psimd." OFF)
 option(USE_SYSTEM_FXDIV "Use system-provided fxdiv." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
+option(USE_SYSTEM_ONNX "Use system-provided onnx." OFF)
 option(USE_SYSTEM_XNNPACK "Use system-provided xnnpack." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
 option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
@@ -606,6 +606,7 @@ if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_PSIMD ON)
   set(USE_SYSTEM_FXDIV ON)
   set(USE_SYSTEM_BENCHMARK ON)
+  set(USE_SYSTEM_ONNX ON)
   set(USE_SYSTEM_XNNPACK ON)
   set(USE_SYSTEM_PYBIND11 ON)
   if(USE_NCCL)
@@ -624,6 +625,21 @@ cmake_dependent_option(
   "MSVC"
   OFF)
 
+if(NOT USE_SYSTEM_ONNX)
+  set(ONNX_NAMESPACE
+      "onnx_torch"
+      CACHE
+        STRING
+        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
+  )
+else()
+  set(ONNX_NAMESPACE
+      "onnx"
+      CACHE
+        STRING
+        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
+  )
+endif()
 set(SELECTED_OP_LIST
     ""
     CACHE
@@ -783,6 +799,8 @@ if(ANDROID
    OR IOS
    OR DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
   set(INTERN_BUILD_MOBILE ON)
+  message(WARNING "INTERN_BUILD_MOBILE is on, disabling BUILD_LAZY_TS_BACKEND")
+  set(BUILD_LAZY_TS_BACKEND OFF)
 
   set(USE_KLEIDIAI OFF)
   message(WARNING "KleidiAI cannot be used on Mobile builds. Set it to OFF")
@@ -886,6 +904,7 @@ if(INTERN_BUILD_MOBILE)
   set(USE_DISTRIBUTED OFF)
   set(NO_API ON)
   set(USE_FBGEMM OFF)
+  set(INTERN_DISABLE_ONNX ON)
   if(USE_BLAS)
     set(INTERN_USE_EIGEN_BLAS ON)
   else()
@@ -992,6 +1011,7 @@ if(USE_FBGEMM AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
   set(USE_FBGEMM OFF)
 endif()
 
+set(BUILD_ONEDNN_GRAPH OFF)
 
 if(MSVC)
   # The source code is in utf-8 encoding

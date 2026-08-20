@@ -67,7 +67,6 @@ optim
 complex_numbers
 ddp_comm_hooks
 quantization
-rpc
 torch.random <random>
 masked
 torch.nested <nested>

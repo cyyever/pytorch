@@ -55,16 +55,10 @@ from torch._jit_internal import (
     Tuple,
     Union,
 )
+from torch._ops import OpOverloadPacket
 from torch._sources import get_source_lines_and_file
 
 from ._state import _get_script_class
-
-
-if torch.distributed.rpc.is_available():
-    from torch._C import RRefType
-    from torch._jit_internal import is_rref, RRef
-
-from torch._ops import OpOverloadPacket
 
 
 class Module:
@@ -97,9 +91,6 @@ class EvalEnv:
 
     def __init__(self, rcb) -> None:
         self.rcb = rcb
-        if torch.distributed.rpc.is_available():
-            # pyrefly: ignore [bad-typed-dict-key, unsupported-operation]
-            self.env["RRef"] = RRef
 
     def __getitem__(self, name):
         if name in self.env:
@@ -463,8 +454,6 @@ def try_ann_to_type(ann, loc, rcb=None):
                 )
             inner.append(maybe_type)
         return UnionType(inner)  # type: ignore[arg-type]
-    if torch.distributed.rpc.is_available() and is_rref(ann):
-        return RRefType(try_ann_to_type(ann_args[0], loc))
     if is_future(ann):
         return FutureType(try_ann_to_type(ann_args[0], loc))
     if is_await(ann):

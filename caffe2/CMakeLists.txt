@@ -1254,10 +1254,6 @@ if(BUILD_TEST)
 
   if(USE_DISTRIBUTED)
     add_subdirectory(${TORCH_ROOT}/test/cpp/c10d ${CMAKE_BINARY_DIR}/test_cpp_c10d)
-    if(NOT WIN32)
-      add_subdirectory(${TORCH_ROOT}/test/cpp/dist_autograd ${CMAKE_BINARY_DIR}/dist_autograd)
-      add_subdirectory(${TORCH_ROOT}/test/cpp/rpc ${CMAKE_BINARY_DIR}/test_cpp_rpc)
-    endif()
   endif()
   if(NOT NO_API)
     add_subdirectory(${TORCH_ROOT}/test/cpp/api ${CMAKE_BINARY_DIR}/test_api)
@@ -1408,8 +1404,8 @@ if(USE_ROCM)
 endif()
 
 
-# Pass USE_DISTRIBUTED to torch_cpu, as some codes in jit/pickler.cpp and
-# jit/unpickler.cpp need to be compiled only when USE_DISTRIBUTED is set
+# Pass USE_DISTRIBUTED to torch_cpu, as some code is compiled only when
+# USE_DISTRIBUTED is set.
 if(USE_DISTRIBUTED)
   target_compile_definitions(torch_cpu PUBLIC USE_DISTRIBUTED)
   if(USE_GLOO AND USE_C10D_GLOO)
@@ -1435,17 +1431,6 @@ if(USE_DISTRIBUTED)
         PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
     endif()
     target_compile_definitions(torch_cpu PUBLIC USE_C10D_MPI)
-  endif()
-  # Pass USE_RPC in order to reduce use of
-  # #if defined(USE_DISTRIBUTED) && !defined(_WIN32)
-  # need to be removed when RPC is supported
-  if(NOT WIN32)
-    target_compile_definitions(torch_cpu PUBLIC USE_RPC)
-  endif()
-  # Pass USE_TENSORPIPE to torch_cpu as some parts of rpc/utils.cpp
-  # can only be compiled with USE_TENSORPIPE is set.
-  if(USE_TENSORPIPE)
-    target_compile_definitions(torch_cpu PUBLIC USE_TENSORPIPE)
   endif()
 endif()
 

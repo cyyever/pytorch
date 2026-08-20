@@ -24,7 +24,7 @@ backend = torch.distributed.get_default_backend_for_device(device_type)
 
 
 class TestTensorOps(ShardedTensorTestBase):
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_accelerator_dist_backend(["nccl", "xccl"])
     def test_deep_copy(self):
@@ -43,7 +43,7 @@ class TestTensorOps(ShardedTensorTestBase):
         self.assertEqual(copied_st.local_tensor(), st.local_tensor())
         self.assertFalse(copied_st is st)
 
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_accelerator_dist_backend(["nccl", "xccl"])
     def test_inplace_copy(self):
@@ -70,7 +70,7 @@ class TestTensorOps(ShardedTensorTestBase):
             st_with_grad.copy_(ones_st)
             self.assertEqual(st_with_grad.local_tensor(), ones_st.local_tensor())
 
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_accelerator_dist_backend(["nccl", "xccl"])
     def test_clone(self):
@@ -89,7 +89,7 @@ class TestTensorOps(ShardedTensorTestBase):
         self.assertEqual(copied_st.local_tensor(), st.local_tensor())
         self.assertFalse(copied_st is st)
 
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_accelerator_dist_backend(["nccl", "xccl"])
     def test_detach(self):
@@ -114,7 +114,7 @@ class TestTensorOps(ShardedTensorTestBase):
         for local_shard in detached_st.local_shards():
             self.assertFalse(local_shard.tensor.requires_grad)
 
-    @with_comms(init_rpc=False, backend=backend)
+    @with_comms(backend=backend)
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_accelerator_dist_backend(["nccl", "xccl"])
     def test_set_requires_grad(self):

@@ -127,11 +127,6 @@
     "field",
     "no_type_check"
   ],
-  "torch.distributed.autograd": [
-    "DistAutogradContext",
-    "backward",
-    "get_gradients"
-  ],
   "torch.distributed.elastic.events": [
     "Dict",
     "Enum",
@@ -205,10 +200,6 @@
     "ReduceOp",
     "group"
   ],
-  "torch.distributed.nn.jit.instantiator": [
-    "Optional",
-    "get_remote_module_template"
-  ],
   "torch.distributed.optim.utils": [
     "Type"
   ],
@@ -231,7 +222,6 @@
     "urlparse",
     "urlunparse"
   ],
-  "torch.distributed.rpc": [],
   "torch.fft": [
     "Tensor",
     "fft",
@@ -1495,11 +1485,6 @@
     "get_args_parser",
     "run"
   ],
-  "torch.distributed.rpc.rref_proxy": [
-    "Future",
-    "partial",
-    "rpc_async"
-  ],
   "torch.distributed.run": [
     "ArgumentParser",
     "Callable",
@@ -2290,13 +2275,6 @@
   ],
   "torch.ao.nn.intrinsic.modules": [
     "_FusedModule"
-  ],
-  "torch.distributed.benchmarks.benchmark_ddp_rpc": [
-    "BackendType",
-    "DDP",
-    "DistributedOptimizer",
-    "RRef",
-    "TensorPipeRpcBackendOptions"
   ],
   "torch.distributed.pipelining": [
     "Pipe",

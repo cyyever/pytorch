@@ -525,29 +525,10 @@ coverage_ignore_functions = [
     # torch.distributed.nn.functional
     "all_to_all",
     "all_to_all_single",
-    # torch.distributed.nn.jit.instantiator
-    "get_arg_return_types_from_interface",
-    "instantiate_non_scriptable_remote_module_template",
-    "instantiate_scriptable_remote_module_template",
-    # torch.distributed.nn.jit.templates.remote_module_template
-    "get_remote_module_template",
     # torch.distributed.optim.utils
     "as_functional_optim",
     # torch.distributed.rendezvous
     "rendezvous",
-    # torch.distributed.rpc.api
-    "method_factory",
-    "new_method",
-    "remote",
-    "rpc_async",
-    "rpc_sync",
-    "shutdown",
-    # torch.distributed.rpc.backend_registry
-    "construct_rpc_backend_options",
-    "init_backend",
-    # torch.distributed.rpc.internal
-    "deserialize",
-    "serialize",
     # torch.distributed.tensor.parallel.style
     "make_sharded_output_tensor",
     # torch.fx.passes.dialect.common.cse_pass
@@ -1311,23 +1292,10 @@ coverage_ignore_classes = [
     # torch.distributed.launcher.api
     "LaunchConfig",
     "elastic_launch",
-    # torch.distributed.optim.optimizer
-    "DistributedOptimizer",
     # torch.distributed.optim.post_localSGD_optimizer
     "PostLocalSGDOptimizer",
     # torch.distributed.optim.zero_redundancy_optimizer
     "ZeroRedundancyOptimizer",
-    # torch.distributed.rpc.api
-    "AllGatherStates",
-    "RRef",
-    # torch.distributed.rpc.backend_registry
-    "BackendValue",
-    # torch.distributed.rpc.internal
-    "PythonUDF",
-    "RPCExecMode",
-    "RemoteException",
-    # torch.distributed.rpc.rref_proxy
-    "RRefProxy",
     # torch.distributed.tensor.parallel.fsdp
     "DTensorExtensions",
     # torch.distributed.tensor.parallel.style

@@ -292,12 +292,7 @@ namespace torch {
 // (1) evaluate function and (2) queued callbacks.
 //
 // TODO: the engine is not actually responsible for persisting the error in the
-// custom autograd Function case today. It still seems to be needed for the
-// DistEngine; the reproducer is
-//
-//   python test/distributed/rpc/test_tensorpipe_agent.py -k
-//   test_backward_autograd_engine_error
-//
+// custom autograd Function case today.
 // See also https://github.com/pytorch/pytorch/pull/34845.
 //
 // Prefer TORCH_CHECK_PYTHON where there is a condition to check; this is for

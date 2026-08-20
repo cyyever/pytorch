@@ -23,11 +23,6 @@
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_arg_parser.h>
-#ifdef USE_DISTRIBUTED
-#include <torch/csrc/distributed/rpc/py_rref.h>
-#include <torch/csrc/distributed/rpc/rref_impl.h>
-#endif
-
 #include <ATen/core/function_schema.h>
 #include <c10/core/Stream.h>
 #include <c10/util/Exception.h>
@@ -501,11 +496,6 @@ inline InferredType tryToInferType(py::handle input) {
   if (py::isinstance<Object>(input)) {
     auto object = py::cast<Object>(input);
     return InferredType(object.type());
-#ifdef USE_RPC
-  } else if (py::isinstance<torch::distributed::rpc::PyRRef>(input)) {
-    auto rref_ivalue = input.cast<torch::distributed::rpc::PyRRef>().toIValue();
-    return InferredType(rref_ivalue.type());
-#endif
   }
 
   auto await_type = py::module::import("torch._awaits").attr("_Await");

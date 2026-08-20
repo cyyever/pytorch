@@ -1205,47 +1205,25 @@ if(USE_CUDA AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-deprecated-literal-operator")
 endif()
 
-if(USE_DISTRIBUTED AND USE_TENSORPIPE)
-  if(MSVC)
-    message(WARNING "Tensorpipe cannot be used on Windows.")
-  else()
-    if(USE_CUDA)
-      set(TP_USE_CUDA ON CACHE BOOL "" FORCE)
-      set(TP_ENABLE_CUDA_IPC ON CACHE BOOL "" FORCE)
-    endif()
-    set(TP_BUILD_LIBUV ON CACHE BOOL "" FORCE)
+# nlohmann-json and concurrentqueue are header-only and used by torch_cpu
+# (c10/util/Semaphore.h, the profiler, export serialization).
+list(APPEND Caffe2_DEPENDENCY_LIBS nlohmann)
+list(APPEND Caffe2_DEPENDENCY_LIBS moodycamel)
+
+# TCPStore's libuv backend used to compile and link against the libuv copy
+# vendored by TensorPipe. TensorPipe is gone, so look for libuv on the system;
+# without it TCPStore falls back to its legacy backend (USE_LIBUV=0). Windows
+# never had the libuv backend (TensorPipe was unavailable there), so keep it off.
+if(USE_DISTRIBUTED AND NOT WIN32)
+  find_path(libuv_INCLUDE_DIR NAMES uv.h HINTS $ENV{libuv_ROOT}/include)
+  find_library(libuv_LIBRARY NAMES uv libuv HINTS $ENV{libuv_ROOT}/lib)
+  if(libuv_INCLUDE_DIR AND libuv_LIBRARY)
+    include_directories(SYSTEM ${libuv_INCLUDE_DIR})
+    list(APPEND Caffe2_DEPENDENCY_LIBS ${libuv_LIBRARY})
     add_compile_options(-DTORCH_USE_LIBUV)
-    include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_LIST_DIR}/../third_party/tensorpipe/third_party/libuv/include)
-    set(TP_STATIC_OR_SHARED STATIC CACHE STRING "" FORCE)
-
-    # Tensorpipe uses cuda_add_library
-    torch_update_find_cuda_flags()
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/tensorpipe)
-    # Suppress warning to unblock libnop compilation by clang-17
-    # See https://github.com/pytorch/pytorch/issues/151316
-    target_compile_options_if_supported(tensorpipe -Wno-missing-template-arg-list-after-template-kw)
-    # tensorpipe_cuda pulls in the same libnop headers via the host compiler and
-    # is only built under USE_CUDA, so it needs the same suppression.
-    if(USE_CUDA)
-      target_compile_options_if_supported(tensorpipe_cuda -Wno-missing-template-arg-list-after-template-kw)
-    endif()
-    # Workaround for relocation truncated to fit: R_AARCH64_CALL26 against symbol __aarch64_swp4_relax'
-    # When compiling for ARMv8.0, build uv with embedded atomics, which are slightly slower
-    # But are used only once during shutdown
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-      target_compile_options_if_supported(tensorpipe_uv -mno-outline-atomics)
-    endif()
-
-    list(APPEND Caffe2_DEPENDENCY_LIBS tensorpipe)
-    list(APPEND Caffe2_DEPENDENCY_LIBS nlohmann)
-    list(APPEND Caffe2_DEPENDENCY_LIBS moodycamel)
-    if(USE_CUDA)
-      list(APPEND Caffe2_CUDA_DEPENDENCY_LIBS tensorpipe_cuda)
-    elseif(USE_ROCM)
-      message(WARNING "TensorPipe doesn't yet support ROCm")
-      # Not yet...
-      # list(APPEND Caffe2_HIP_DEPENDENCY_LIBS tensorpipe_hip)
-    endif()
+  else()
+    message(WARNING "libuv not found, building TCPStore without its libuv "
+                    "backend. Pass USE_LIBUV=0 at runtime to use the legacy one.")
   endif()
 endif()
 

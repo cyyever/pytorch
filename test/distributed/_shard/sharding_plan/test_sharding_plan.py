@@ -49,7 +49,7 @@ class ChunkAllShardingPlanner(ShardingPlanner):
 
 
 class TestShardingPlan(ShardedTensorTestBase):
-    @with_comms(init_rpc=False)
+    @with_comms
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_nccl()
     def test_sharding_plan_errors(self):
@@ -100,7 +100,7 @@ class TestShardingPlan(ShardedTensorTestBase):
             # shard the module with the provided sharding plan
             shard_module(megatron_lm, sharding_plan_wrong_param_path)
 
-    @with_comms(init_rpc=False)
+    @with_comms
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_nccl()
     def test_custom_sharding_planner(self):
@@ -118,7 +118,7 @@ class TestShardingPlan(ShardedTensorTestBase):
         self.assertTrue(isinstance(megatron_lm.fc1.bias, ShardedTensor))
         self.assertTrue(isinstance(megatron_lm.fc2.bias, ShardedTensor))
 
-    @with_comms(init_rpc=False)
+    @with_comms
     @skip_if_lt_x_gpu(TEST_GPU_NUM)
     @requires_nccl()
     def test_shard_module_sub_process_group(self):

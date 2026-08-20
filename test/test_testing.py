@@ -2650,7 +2650,6 @@ class TestImports(TestCase):
                            "torch._inductor.codegen.cuda",  # depends on cutlass
                            "torch._inductor.codegen.cutedsl",  # depends on cutlass
                            "torch._inductor.kernel.flex_gemm.output_layout_cutedsl",  # depends on cutlass
-                           "torch.distributed.benchmarks",  # depends on RPC and DDP Optim
                            "torch.distributed.debug._frontend",  # depends on tabulate
                            "torch.distributed.examples",  # requires CUDA and torchvision
                            "torch.distributed.tensor.examples",  # example scripts
@@ -2662,14 +2661,11 @@ class TestImports(TestCase):
                            "torch.profiler._cupti",  # depends on cupti-python
                            ]
         if IS_WINDOWS or IS_MACOS or IS_JETSON:
-            # Distributed should be importable on Windows(except nn.api.), but not on Mac
+            # Distributed should be importable on Windows, but not on Mac
             if IS_MACOS or IS_JETSON:
                 ignored_modules.append("torch.distributed.")
             else:
-                ignored_modules.append("torch.distributed.nn.api.")
                 ignored_modules.append("torch.distributed.optim.")
-                ignored_modules.append("torch.distributed.rpc.")
-            ignored_modules.append("torch.testing._internal.dist_utils")
             # And these both end up with transitive dependencies on distributed
             ignored_modules.append("torch.nn.parallel._replicated_tensor_ddp_interop")
             ignored_modules.append("torch.testing._internal.common_fsdp")
