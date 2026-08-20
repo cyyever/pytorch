@@ -842,7 +842,6 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
         "torch._C._jit_pass_cse",
         "torch._C._jit_pass_custom_pattern_based_rewrite_graph",
         "torch._C._jit_pass_custom_pattern_based_rewrite",
-        "torch._C._jit_pass_dbr_quant_remove_redundant_aliases",
         "torch._C._jit_pass_dce_allow_deleting_nodes_with_side_effects",
         "torch._C._jit_pass_dce",
         "torch._C._jit_pass_decompose_ops",
