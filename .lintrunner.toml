@@ -1398,7 +1398,6 @@ exclude_patterns = [
     'test/test_sparse_semi_structured.py',
     'test/test_spectral_ops.py',
     'test/test_stateless.py',
-    'test/test_static_runtime.py',
     'test/test_subclass.py',
     'test/test_sympy_utils.py',
     'test/test_tensor_creation_ops.py',

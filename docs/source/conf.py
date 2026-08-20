@@ -1129,7 +1129,6 @@ coverage_ignore_classes = [
     "ScriptObject",
     "ScriptObjectProperty",
     "SerializationStorageContext",
-    "StaticModule",
     "StringType",
     "SymIntType",
     "SymBoolType",
