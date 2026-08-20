@@ -84,19 +84,17 @@ core_sources_common = [
     "torch/csrc/autograd/autograd_meta.cpp",
     "torch/csrc/autograd/forward_grad.cpp",
     "torch/csrc/jit/frontend/edit_distance.cpp",
-    "torch/csrc/jit/mobile/compatibility/runtime_compatibility.cpp",
-    "torch/csrc/jit/mobile/type_parser.cpp",
+    "torch/csrc/jit/serialization/type_parser.cpp",
     "torch/csrc/jit/operator_upgraders/version_map.cpp",
     "torch/csrc/jit/runtime/instruction.cpp",
     "torch/csrc/jit/runtime/jit_exception.cpp",
     "torch/csrc/jit/runtime/operator.cpp",
-    "torch/csrc/jit/mobile/register_ops_common_utils.cpp",
+    "torch/csrc/jit/runtime/register_ops_common_utils.cpp",
     "torch/csrc/jit/runtime/print_handler.cpp",
     "torch/csrc/jit/runtime/slice_indices_adjust.cpp",
     "torch/csrc/jit/runtime/register_ops_utils.cpp",
     "torch/csrc/jit/runtime/vararg_functions.cpp",
-    "torch/csrc/jit/mobile/promoted_prim_ops.cpp",
-    "torch/csrc/jit/mobile/prim_ops_registery.cpp",
+    "torch/csrc/jit/runtime/promoted_prim_ops.cpp",
     "torch/csrc/profiler/util.cpp",
 ]
 
@@ -134,10 +132,6 @@ libtorch_profiler_sources = [
     "torch/csrc/monitor/events.cpp",
 ]
 
-libtorch_edge_profiler_sources = libtorch_profiler_sources + [
-    "torch/csrc/jit/mobile/profiler_edge.cpp",
-]
-
 core_trainer_sources = [
     "torch/csrc/autograd/anomaly_mode.cpp",
     "torch/csrc/autograd/autograd.cpp",
@@ -163,27 +157,6 @@ core_trainer_sources = [
     "torch/csrc/jit/ir/type_hashing.cpp",
     "torch/csrc/jit/serialization/pickler.cpp",
     "torch/csrc/jit/serialization/type_name_uniquer.cpp",
-]
-
-torch_mobile_core = [
-    # backend_debug_info.cpp provides
-    # __torch__.torch.classes.backend.BackendDebugInfo class
-    # This should not be needed eventually.
-    # TODO: Remove this dependency
-    "torch/csrc/jit/backends/backend_debug_info.cpp",
-    "torch/csrc/jit/mobile/compatibility/model_compatibility.cpp",
-    "torch/csrc/jit/mobile/function.cpp",
-    "torch/csrc/jit/mobile/import.cpp",
-    "torch/csrc/jit/mobile/flatbuffer_loader.cpp",
-    "torch/csrc/jit/mobile/interpreter.cpp",
-    "torch/csrc/jit/mobile/module.cpp",
-    "torch/csrc/jit/mobile/observer.cpp",
-    "torch/csrc/jit/mobile/parse_bytecode.cpp",
-    "torch/csrc/jit/mobile/parse_operators.cpp",
-    "torch/csrc/jit/mobile/quantization.cpp",
-    "torch/csrc/jit/mobile/upgrader_mobile.cpp",
-    "torch/csrc/jit/runtime/register_prim_ops.cpp",
-    "torch/csrc/jit/runtime/register_special_ops.cpp",
 ]
 
 core_sources_full_mobile_no_backend_interface_xplat = [
@@ -222,10 +195,6 @@ core_sources_full_mobile_no_backend_interface_xplat = [
     "torch/csrc/jit/ir/graph_utils.cpp",
     "torch/csrc/jit/jit_log.cpp",
     "torch/csrc/jit/jit_opt_limit.cpp",
-    "torch/csrc/jit/mobile/nnc/aot_compiler.cpp",
-    "torch/csrc/jit/mobile/nnc/backend.cpp",
-    "torch/csrc/jit/mobile/nnc/context.cpp",
-    "torch/csrc/jit/mobile/nnc/registry.cpp",
     "torch/csrc/jit/operator_upgraders/utils.cpp",
     "torch/csrc/jit/operator_upgraders/upgraders.cpp",
     "torch/csrc/jit/operator_upgraders/upgraders_entry.cpp",
@@ -312,9 +281,6 @@ core_sources_full_mobile_no_backend_interface_xplat = [
     "torch/csrc/jit/passes/utils/optimization_utils.cpp",
     "torch/csrc/jit/passes/utils/op_registry.cpp",
     "torch/csrc/jit/passes/mkldnn_rewrite.cpp",
-    "torch/csrc/jit/passes/xnnpack_rewrite.cpp",
-    "torch/csrc/jit/passes/vulkan_rewrite.cpp",
-    "torch/csrc/jit/passes/metal_rewrite.cpp",
     "torch/csrc/jit/passes/quantization/helper.cpp",
     "torch/csrc/jit/passes/quantization/quantization_type.cpp",
     "torch/csrc/jit/passes/quantization/insert_observers.cpp",
@@ -406,17 +372,6 @@ core_sources_full_mobile_no_backend_interface = core_sources_full_mobile_no_back
     # This should not be needed eventually.
     # TODO: Remove this dependency
     "torch/csrc/jit/backends/backend_debug_info.cpp",
-    "torch/csrc/jit/mobile/compatibility/model_compatibility.cpp",
-    "torch/csrc/jit/mobile/function.cpp",
-    "torch/csrc/jit/mobile/import.cpp",
-    "torch/csrc/jit/mobile/flatbuffer_loader.cpp",
-    "torch/csrc/jit/mobile/interpreter.cpp",
-    "torch/csrc/jit/mobile/module.cpp",
-    "torch/csrc/jit/mobile/observer.cpp",
-    "torch/csrc/jit/mobile/parse_bytecode.cpp",
-    "torch/csrc/jit/mobile/parse_operators.cpp",
-    "torch/csrc/jit/mobile/quantization.cpp",
-    "torch/csrc/jit/mobile/upgrader_mobile.cpp",
 ]
 
 core_sources_full_mobile = core_sources_full_mobile_no_backend_interface + [
@@ -676,39 +631,6 @@ libtorch_nativert_cuda_sources = [
     "torch/nativert/executor/AOTInductorModelContainerCudaShim.cpp",
 ]
 
-torch_mobile_tracer_sources = [
-    "torch/csrc/jit/mobile/model_tracer/tracer.cpp",
-    "torch/csrc/jit/mobile/model_tracer/TensorUtils.cpp",
-    "torch/csrc/jit/mobile/model_tracer/TracerRunner.cpp",
-    "torch/csrc/jit/mobile/model_tracer/MobileModelRunner.cpp",
-    "torch/csrc/jit/mobile/model_tracer/OperatorCallTracer.cpp",
-    "torch/csrc/jit/mobile/model_tracer/KernelDTypeTracer.cpp",
-    "torch/csrc/jit/mobile/model_tracer/CustomClassTracer.cpp",
-    "torch/csrc/jit/mobile/model_tracer/BuildFeatureTracer.cpp",
-]
-
-libtorch_lite_eager_symbolication = [
-    "torch/csrc/jit/frontend/source_range.cpp",
-    "torch/csrc/jit/ir/scope.cpp",
-    "torch/csrc/jit/mobile/debug_info.cpp",
-    "torch/csrc/jit/serialization/callstack_debug_info_serialization.cpp",
-    "torch/csrc/jit/serialization/source_range_serialization.cpp",
-    # Later we can split serialization and deserialization logic
-    # to have better separation within build and only build relevant parts.
-    "torch/csrc/jit/serialization/pickle.cpp",
-    "torch/csrc/jit/serialization/pickler_helper.cpp",
-    "torch/csrc/jit/serialization/pickler.cpp",
-    "torch/csrc/jit/serialization/unpickler.cpp",
-]
-
-# TODO: core_trainer_sources is not necessary for libtorch lite
-libtorch_lite_cmake_sources = sorted(
-    core_trainer_sources +
-    core_sources_common +
-    torch_unpickler_common +
-    torch_mobile_core,
-)
-
 libtorch_cmake_sources = libtorch_core_sources + libtorch_core_jit_sources
 
 libtorch_extra_sources = libtorch_core_jit_sources + [
@@ -717,32 +639,11 @@ libtorch_extra_sources = libtorch_core_jit_sources + [
     "torch/csrc/autograd/FunctionsManual.cpp",
     "torch/csrc/jit/api/module_save.cpp",
     "torch/csrc/jit/codegen/fuser/cpu/fused_kernel.cpp",
-    "torch/csrc/jit/mobile/compatibility/backport.cpp",
-    "torch/csrc/jit/mobile/compatibility/backport_manager.cpp",
-    "torch/csrc/jit/mobile/compatibility/model_compatibility.cpp",
     # To be included for eager symbolication in lite interpreter
     # when it is built in libtorch
-    "torch/csrc/jit/mobile/debug_info.cpp",
-    "torch/csrc/jit/mobile/function.cpp",
-    "torch/csrc/jit/mobile/flatbuffer_loader.cpp",
-    "torch/csrc/jit/mobile/import.cpp",
-    "torch/csrc/jit/mobile/import_data.cpp",
-    "torch/csrc/jit/mobile/interpreter.cpp",
-    "torch/csrc/jit/mobile/module.cpp",
-    "torch/csrc/jit/mobile/observer.cpp",
-    "torch/csrc/jit/mobile/parse_bytecode.cpp",
-    "torch/csrc/jit/mobile/parse_operators.cpp",
-    "torch/csrc/jit/mobile/quantization.cpp",
-    "torch/csrc/jit/mobile/train/export_data.cpp",
-    "torch/csrc/jit/mobile/train/optim/sgd.cpp",
-    "torch/csrc/jit/mobile/train/random.cpp",
-    "torch/csrc/jit/mobile/train/sequential.cpp",
-    "torch/csrc/jit/mobile/upgrader_mobile.cpp",
     "torch/csrc/jit/serialization/onnx.cpp",
     "torch/csrc/jit/serialization/export.cpp",
-    "torch/csrc/jit/serialization/export_bytecode.cpp",
     "torch/csrc/jit/serialization/export_module.cpp",
-    "torch/csrc/jit/serialization/flatbuffer_serializer.cpp",
     "torch/csrc/utils/byte_order.cpp",
     "torch/csrc/utils/out_types.cpp",
 ]
@@ -1651,29 +1552,19 @@ aten_cuda_cu_with_sort_by_key_source_list = [
 # Following are source code for xnnpack delegate
 
 xnnpack_delegate_serializer_header = [
-    "torch/csrc/jit/backends/xnnpack/serialization/serializer.h",
 ]
 
 xnnpack_delegate_serializer_source_list = [
-    "torch/csrc/jit/backends/xnnpack/serialization/serializer.cpp",
 ]
 
 xnnpack_delegate_core_source_list = [
-    "torch/csrc/jit/backends/xnnpack/compiler/xnn_compiler.cpp",
 ]
 
 xnnpack_delegate_core_header = [
-    "torch/csrc/jit/backends/xnnpack/compiler/xnn_compiler.h",
-    "torch/csrc/jit/backends/xnnpack/executor/xnn_executor.h",
 ]
 
 xnnpack_backend_header = [
-    "torch/csrc/jit/backends/xnnpack/xnnpack_graph_builder.h",
 ] + xnnpack_delegate_core_header
 
 xnnpack_backend_source_list = [
-    "torch/csrc/jit/backends/xnnpack/compiler/xnn_compiler.cpp",
-    "torch/csrc/jit/backends/xnnpack/xnnpack_backend_lib.cpp",
-    "torch/csrc/jit/backends/xnnpack/xnnpack_backend_preprocess.cpp",
-    "torch/csrc/jit/backends/xnnpack/xnnpack_graph_builder.cpp",
 ] + xnnpack_delegate_core_source_list

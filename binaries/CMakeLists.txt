@@ -14,3 +14,4 @@ if(BUILD_TEST)
 endif()
 
 caffe2_binary_target("dump_operator_names.cc")
+

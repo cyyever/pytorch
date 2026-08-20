@@ -57,10 +57,12 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}/aten/src
     ${CMAKE_BINARY_DIR}/caffe2/aten/src
     ${CMAKE_BINARY_DIR}/third_party
+    ${CMAKE_BINARY_DIR}/third_party/onnx
 
     ${TORCH_ROOT}/third_party/valgrind-headers
 
     ${TORCH_ROOT}/third_party/gloo
+    ${TORCH_ROOT}/third_party/onnx
     ${TORCH_ROOT}/third_party/kineto/libkineto/include
     ${TORCH_ROOT}/third_party/cpp-httplib
     ${TORCH_ROOT}/third_party/nlohmann/include
@@ -116,7 +118,7 @@ if(MSVC)
         break()
       endif()
     endforeach()
-    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${Python_LIBRARIES})
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${Python_LIBRARIES} onnx_library)
     if(NOT CMAKE_BUILD_TYPE MATCHES "Release")
       string(APPEND TORCH_PYTHON_LINK_FLAGS " /DEBUG:FULL")
     endif()
@@ -267,6 +269,8 @@ if(USE_DISTRIBUTED)
     endif()
     # Disable certain warnings for GCC-9.X
     if(CMAKE_COMPILER_IS_GNUCXX)
+      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/autograd/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
+      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/rpc/testing/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
       set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/c10d/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
     endif()
     # NCCL is a private dependency of libtorch, but libtorch_python includes
@@ -308,12 +312,16 @@ if(CAFFE2_USE_MKL AND BUILD_LIBTORCHLESS)
   target_link_libraries(torch_python PRIVATE caffe2::mkl)
 endif()
 
+add_dependencies(torch_python onnx_proto)
 # Avoid numpy for the DEPLOY build
 if(USE_NUMPY)
   target_link_libraries(torch_python PRIVATE Python::NumPy)
   target_compile_definitions(torch_python PRIVATE USE_NUMPY)
 endif()
 
+if(BUILD_LAZY_TS_BACKEND)
+  target_compile_definitions(torch_python PRIVATE BUILD_LAZY_TS_BACKEND)
+endif()
 
 if(HAVE_SOVERSION)
   set_target_properties(torch_python PROPERTIES
@@ -341,6 +349,14 @@ if(BUILD_LIBTORCHLESS)
 
   if(USE_GLOO AND USE_C10D_GLOO)
     target_compile_definitions(torch_python PRIVATE USE_C10D_GLOO)
+  endif()
+
+  if(NOT WIN32)
+    target_compile_definitions(torch_python PRIVATE USE_RPC)
+  endif()
+
+  if(USE_TENSORPIPE)
+    target_compile_definitions(torch_python PRIVATE USE_TENSORPIPE)
   endif()
 
   set(EXPERIMENTAL_SINGLE_THREAD_POOL "0" CACHE STRING
@@ -404,6 +420,13 @@ target_include_directories(torch_python PUBLIC ${TORCH_PYTHON_INCLUDE_DIRECTORIE
 if(USE_UCC)
   target_link_libraries(torch_python PRIVATE __caffe2_ucc)
   target_compile_definitions(torch_python PRIVATE USE_UCC)
+endif()
+
+if(BUILD_ONEDNN_GRAPH)
+  target_compile_definitions(torch_python PRIVATE "-DBUILD_ONEDNN_GRAPH")
+  if(NOT BUILD_LIBTORCHLESS)
+    target_compile_definitions(torch_cpu PRIVATE "-DBUILD_ONEDNN_GRAPH")
+  endif()
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithAssert")

@@ -35,8 +35,10 @@ set(JIT_TEST_SRCS
   ${JIT_TEST_ROOT}/test_custom_class_registrations.cpp
   ${JIT_TEST_ROOT}/test_custom_operators.cpp
   ${JIT_TEST_ROOT}/test_dce.cpp
+  ${JIT_TEST_ROOT}/test_fuser.cpp
   ${JIT_TEST_ROOT}/test_graph_executor.cpp
   ${JIT_TEST_ROOT}/test_graph_iterator.cpp
+  ${JIT_TEST_ROOT}/test_cs_debug_info_serialization.cpp
   ${JIT_TEST_ROOT}/test_inliner.cpp
   ${JIT_TEST_ROOT}/test_interface.cpp
   ${JIT_TEST_ROOT}/test_interpreter.cpp
@@ -56,11 +58,13 @@ set(JIT_TEST_SRCS
   ${JIT_TEST_ROOT}/test_subgraph_matcher.cpp
   ${JIT_TEST_ROOT}/test_subgraph_rewriter.cpp
   ${JIT_TEST_ROOT}/test_subgraph_utils.cpp
+  ${JIT_TEST_ROOT}/test_te.cpp
   ${JIT_TEST_ROOT}/test_union.cpp
   ${JIT_TEST_ROOT}/test_utils.cpp
   ${JIT_TEST_ROOT}/test_script_profile.cpp
   ${JIT_TEST_ROOT}/test_shape_analysis.cpp
   ${JIT_TEST_ROOT}/test_jit_logging_levels.cpp
+  ${JIT_TEST_ROOT}/test_file_format.cpp
 )
 
 add_executable(test_jit
@@ -82,11 +86,21 @@ endif()
 # TODO temporary until we can delete the old gtest polyfills.
 target_compile_definitions(test_jit PRIVATE USE_GTEST)
 
+if(USE_SYSTEM_ONNX)
+  target_link_libraries(test_jit PRIVATE onnx_proto onnx)
+else()
+  target_link_libraries(test_jit PRIVATE onnx_library)
+endif()
+
 if(USE_MKLDNN)
   target_link_libraries(test_jit PRIVATE caffe2::mkldnn)
 endif()
 
 set(JIT_TEST_DEPENDENCIES torch gtest_main gmock)
+
+if(MSVC)
+  list(APPEND JIT_TEST_DEPENDENCIES onnx_library)
+endif(MSVC)
 
 target_link_libraries(test_jit PRIVATE ${JIT_TEST_DEPENDENCIES})
 target_include_directories(test_jit PRIVATE ${ATen_CPU_INCLUDE})
