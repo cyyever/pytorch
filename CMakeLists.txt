@@ -294,8 +294,13 @@ endif()
 include(CMakeDependentOption)
 option(ATEN_NO_TEST "Do not build ATen test binaries" OFF)
 option(BUILD_BINARY "Build C++ binaries" OFF)
+option(BUILD_CUSTOM_PROTOBUF
+       "Build and use Caffe2's own protobuf under third_party" ON)
 option(BUILD_PYTHON "Build Python binaries" ON)
 option(BUILD_SHARED_LIBS "Build libcaffe2.so" ON)
+cmake_dependent_option(
+  CAFFE2_LINK_LOCAL_PROTOBUF "If set, build protobuf inside libcaffe2.so." ON
+  "BUILD_SHARED_LIBS AND BUILD_CUSTOM_PROTOBUF" OFF)
 cmake_dependent_option(
   CAFFE2_USE_MSVC_STATIC_RUNTIME "Using MSVC static runtime libraries" ON
   "NOT BUILD_SHARED_LIBS" OFF)
@@ -360,6 +365,8 @@ option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_GFLAGS "Use GFLAGS" OFF)
 option(USE_GLOG "Use GLOG" OFF)
+option(USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
+option(USE_MAGMA "Use MAGMA" ON)
 option(USE_PYTORCH_METAL "Use Metal for PyTorch iOS build" OFF)
 option(USE_PYTORCH_METAL_EXPORT "Export Metal models on MacOSX desktop" OFF)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
@@ -444,6 +451,7 @@ cmake_dependent_option(
     USE_C10D_XCCL "USE C10D XCCL" ON "USE_DISTRIBUTED;USE_XCCL" OFF)
 cmake_dependent_option(
     USE_C10D_MPI "USE C10D MPI" ON "USE_DISTRIBUTED;USE_MPI" OFF)
+option(ONNX_ML "Enable traditional ONNX ML API." ON)
 option(HAVE_SOVERSION "Whether to add SOVERSION to the shared objects" OFF)
 option(BUILD_LIBTORCH_CPU_WITH_DEBUG
        "Enable RelWithDebInfo for libtorch_cpu target only" OFF)
@@ -456,6 +464,10 @@ option(
   OFF)
 option(USE_PER_OPERATOR_HEADERS
        "Whether ATen should generate separate headers for each operator" ON)
+cmake_dependent_option(
+  BUILD_LAZY_TS_BACKEND
+  "Build the lazy Torchscript backend, not compatible with mobile builds" ON
+  "NOT INTERN_BUILD_MOBILE" OFF)
 cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)
@@ -579,6 +591,7 @@ option(USE_SYSTEM_PTHREADPOOL "Use system-provided pthreadpool." OFF)
 option(USE_SYSTEM_PSIMD "Use system-provided psimd." OFF)
 option(USE_SYSTEM_FXDIV "Use system-provided fxdiv." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
+option(USE_SYSTEM_ONNX "Use system-provided onnx." OFF)
 option(USE_SYSTEM_XNNPACK "Use system-provided xnnpack." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
 option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
@@ -586,12 +599,14 @@ if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_CPUINFO ON)
   set(USE_SYSTEM_SLEEF ON)
   set(USE_SYSTEM_GLOO ON)
+  set(BUILD_CUSTOM_PROTOBUF OFF)
   set(USE_SYSTEM_EIGEN_INSTALL ON)
   set(USE_SYSTEM_FP16 ON)
   set(USE_SYSTEM_PTHREADPOOL ON)
   set(USE_SYSTEM_PSIMD ON)
   set(USE_SYSTEM_FXDIV ON)
   set(USE_SYSTEM_BENCHMARK ON)
+  set(USE_SYSTEM_ONNX ON)
   set(USE_SYSTEM_XNNPACK ON)
   set(USE_SYSTEM_PYBIND11 ON)
   if(USE_NCCL)
@@ -610,6 +625,21 @@ cmake_dependent_option(
   "MSVC"
   OFF)
 
+if(NOT USE_SYSTEM_ONNX)
+  set(ONNX_NAMESPACE
+      "onnx_torch"
+      CACHE
+        STRING
+        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
+  )
+else()
+  set(ONNX_NAMESPACE
+      "onnx"
+      CACHE
+        STRING
+        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
+  )
+endif()
 set(SELECTED_OP_LIST
     ""
     CACHE
@@ -769,6 +799,8 @@ if(ANDROID
    OR IOS
    OR DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
   set(INTERN_BUILD_MOBILE ON)
+  message(WARNING "INTERN_BUILD_MOBILE is on, disabling BUILD_LAZY_TS_BACKEND")
+  set(BUILD_LAZY_TS_BACKEND OFF)
 
   set(USE_KLEIDIAI OFF)
   message(WARNING "KleidiAI cannot be used on Mobile builds. Set it to OFF")
@@ -872,6 +904,7 @@ if(INTERN_BUILD_MOBILE)
   set(USE_DISTRIBUTED OFF)
   set(NO_API ON)
   set(USE_FBGEMM OFF)
+  set(INTERN_DISABLE_ONNX ON)
   if(USE_BLAS)
     set(INTERN_USE_EIGEN_BLAS ON)
   else()
@@ -933,6 +966,33 @@ if(NOT IOS
    AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"
    AND CMAKE_OSX_ARCHITECTURES MATCHES "^(x86_64|arm64)$")
   set(CROSS_COMPILING_MACOSX TRUE)
+  # We need to compile a universal protoc to not fail protobuf build We set
+  # CMAKE_TRY_COMPILE_TARGET_TYPE to STATIC_LIBRARY (vs executable) to succeed
+  # the cmake compiler check for cross-compiling
+  set(protoc_build_command
+      "./scripts/build_host_protoc.sh --other-flags -DCMAKE_OSX_ARCHITECTURES=\"x86_64;arm64\" -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY -DCMAKE_C_COMPILER_WORKS=1 -DCMAKE_CXX_COMPILER_WORKS=1 -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+  )
+  # We write to a temp scriptfile because CMake COMMAND dislikes double quotes
+  # in commands
+  file(WRITE ${PROJECT_SOURCE_DIR}/tmp_protoc_script.sh
+       "#!/bin/bash\n${protoc_build_command}")
+  file(
+    COPY ${PROJECT_SOURCE_DIR}/tmp_protoc_script.sh
+    DESTINATION ${PROJECT_SOURCE_DIR}/scripts/
+    FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
+  execute_process(
+    COMMAND ./scripts/tmp_protoc_script.sh
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    RESULT_VARIABLE BUILD_HOST_PROTOC_RESULT)
+  file(REMOVE ${PROJECT_SOURCE_DIR}/tmp_protoc_script.sh
+       ${PROJECT_SOURCE_DIR}/scripts/tmp_protoc_script.sh)
+  if(NOT BUILD_HOST_PROTOC_RESULT EQUAL "0")
+    message(FATAL_ERROR "Could not compile universal protoc.")
+  endif()
+  set(PROTOBUF_PROTOC_EXECUTABLE
+      "${PROJECT_SOURCE_DIR}/build_host_protoc/bin/protoc")
+  set(CAFFE2_CUSTOM_PROTOC_EXECUTABLE
+      "${PROJECT_SOURCE_DIR}/build_host_protoc/bin/protoc")
 endif()
 
 # ---[ Misc checks to cope with various compiler modes
@@ -1361,9 +1421,11 @@ endif()
 # ---[ Make configuration files for cmake to allow dependent libraries easier
 # access to Caffe2.
 
-if((NOT USE_GLOG) OR (NOT USE_GFLAGS))
+if((NOT USE_GLOG)
+   OR(NOT USE_GFLAGS)
+   OR BUILD_CUSTOM_PROTOBUF)
   message(WARNING "Generated cmake files are only fully tested if one builds "
-                  "with system glog and gflags. Other settings may "
+                  "with system glog, gflags, and protobuf. Other settings may "
                   "generate files that are not well tested.")
 endif()
 
@@ -1388,6 +1450,7 @@ if(BUILD_SHARED_LIBS)
           ${PROJECT_SOURCE_DIR}/cmake/public/gflags.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkl.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkldnn.cmake
+          ${PROJECT_SOURCE_DIR}/cmake/public/protobuf.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/utils.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/LoadHIP.cmake
     DESTINATION share/cmake/Caffe2/public

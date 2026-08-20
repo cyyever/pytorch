@@ -58,11 +58,6 @@ if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
   fi
 fi
 
-# Remove onnxruntime if present to avoid interference with non-ONNX tests
-if [[ "$TEST_CONFIG" != "onnx" ]]; then
-  pip uninstall -y onnxruntime 2>/dev/null || true
-fi
-
 # Remove dill to test that serialization works without it
 if [[ "$BUILD_ENVIRONMENT" == *py3.10-gcc11 ]]; then
   pip uninstall -y dill 2>/dev/null || true
@@ -221,7 +216,7 @@ export LANG=C.UTF-8
 
 PR_NUMBER=${PR_NUMBER:-${CIRCLE_PR_NUMBER:-}}
 
-if [[ -d "${HF_CACHE}" && "$TEST_CONFIG" != "onnx" ]]; then
+if [[ -d "${HF_CACHE}" ]]; then
   export HF_HOME="${HF_CACHE}"
 fi
 
@@ -1540,8 +1535,6 @@ test_without_numpy() {
   if [[ "${TEST_CONFIG}" == *dynamo_wrapped* ]]; then
     python -c "import sys;sys.path.insert(0, 'fake_numpy');import torch;torch.compile(lambda x:print(x))('Hello World')"
   fi
-  # Regression test for https://github.com/pytorch/pytorch/pull/157734 (torch.onnx should be importable without numpy)
-  python -c "import sys;sys.path.insert(0, 'fake_numpy');import torch; import torch.onnx"
   popd
 }
 
@@ -1731,16 +1724,6 @@ test_quantization() {
   echo "Testing quantization"
 
   python test/test_quantization.py
-}
-
-test_rpc() {
-  echo "Testing RPC C++ tests"
-  # NB: the ending test_rpc must match the current function name for the current
-  # test reporting process to function as expected.
-  ln -sf "$TORCH_LIB_DIR"/libtorch* "$TORCH_BIN_DIR"
-  ln -sf "$TORCH_LIB_DIR"/libc10* "$TORCH_BIN_DIR"
-
-  CPP_TESTS_DIR="${TORCH_BIN_DIR}" python test/run_test.py --cpp --verbose -i cpp/test_cpp_rpc
 }
 
 
@@ -2302,10 +2285,7 @@ if ! [[ "${BUILD_ENVIRONMENT}" == *libtorch* ]]; then
   (cd test && python -c "import torch; print(torch.__config__.show())")
   (cd test && python -c "import torch; print(torch.__config__.parallel_info())")
 fi
-if [[ "${TEST_CONFIG}" == "onnx" ]]; then
-  install_torchvision
-  "$(dirname "${BASH_SOURCE[0]}")/../../scripts/onnx/test.sh"
-elif [[ "${TEST_CONFIG}" == *numpy_2* ]]; then
+if [[ "${TEST_CONFIG}" == *numpy_2* ]]; then
   # Install numpy-2.0.2 and compatible scipy & numba versions
   # Force re-install of pandas to avoid error where pandas checks numpy version from initial install and fails upon import
   TMP_PANDAS_VERSION=$(python -c "import pandas; print(pandas.__version__)" 2>/dev/null)
@@ -2351,10 +2331,6 @@ elif [[ "$TEST_CONFIG" == distributed ]]; then
     test_distributed multigpu
   else
     test_distributed
-  fi
-  # Only run RPC C++ tests on the first shard
-  if [[ "${SHARD_NUMBER}" == 1 ]]; then
-    test_rpc
   fi
 elif [[ "${TEST_CONFIG}" == *operator_benchmark* ]]; then
   TEST_MODE="short"

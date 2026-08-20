@@ -451,46 +451,7 @@ libtorch_distributed_base_sources = [
 
 # These files are only supported on Linux (and others) but not on Windows.
 libtorch_distributed_extra_sources = [
-    "torch/csrc/distributed/autograd/autograd.cpp",
-    "torch/csrc/distributed/autograd/utils.cpp",
-    "torch/csrc/distributed/autograd/context/container.cpp",
-    "torch/csrc/distributed/autograd/context/context.cpp",
-    "torch/csrc/distributed/autograd/engine/dist_engine.cpp",
-    "torch/csrc/distributed/autograd/functions/recvrpc_backward.cpp",
-    "torch/csrc/distributed/autograd/functions/sendrpc_backward.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/autograd_metadata.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/propagate_gradients_req.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/propagate_gradients_resp.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/cleanup_autograd_context_req.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/cleanup_autograd_context_resp.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/rpc_with_autograd.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/rpc_with_profiling_req.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/rpc_with_profiling_resp.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/rref_backward_req.cpp",
-    "torch/csrc/distributed/autograd/rpc_messages/rref_backward_resp.cpp",
     "torch/csrc/distributed/c10d/HashStore.cpp",
-    "torch/csrc/distributed/rpc/agent_utils.cpp",
-    "torch/csrc/distributed/rpc/message.cpp",
-    "torch/csrc/distributed/rpc/profiler/remote_profiler_manager.cpp",
-    "torch/csrc/distributed/rpc/profiler/server_process_global_profiler.cpp",
-    "torch/csrc/distributed/rpc/python_call.cpp",
-    "torch/csrc/distributed/rpc/python_remote_call.cpp",
-    "torch/csrc/distributed/rpc/python_resp.cpp",
-    "torch/csrc/distributed/rpc/request_callback.cpp",
-    "torch/csrc/distributed/rpc/request_callback_no_python.cpp",
-    "torch/csrc/distributed/rpc/rpc_agent.cpp",
-    "torch/csrc/distributed/rpc/rref_context.cpp",
-    "torch/csrc/distributed/rpc/rref_impl.cpp",
-    "torch/csrc/distributed/rpc/rref_proto.cpp",
-    "torch/csrc/distributed/rpc/script_call.cpp",
-    "torch/csrc/distributed/rpc/script_remote_call.cpp",
-    "torch/csrc/distributed/rpc/script_resp.cpp",
-    "torch/csrc/distributed/rpc/tensorpipe_agent.cpp",
-    "torch/csrc/distributed/rpc/tensorpipe_utils.cpp",
-    "torch/csrc/distributed/rpc/testing/faulty_tensorpipe_agent.cpp",
-    "torch/csrc/distributed/rpc/torchscript_functions.cpp",
-    "torch/csrc/distributed/rpc/types.cpp",
-    "torch/csrc/distributed/rpc/utils.cpp",
 ]
 
 libtorch_distributed_sources = libtorch_distributed_base_sources + libtorch_distributed_extra_sources
@@ -651,7 +612,6 @@ libtorch_cuda_distributed_extra_sources = [
     "torch/csrc/distributed/c10d/symm_mem/intra_node_comm.cpp",
     "torch/csrc/distributed/c10d/symm_mem/intra_node_comm.cu",
     "torch/csrc/distributed/c10d/symm_mem/cuda_mem_pool.cpp",
-    "torch/csrc/distributed/rpc/tensorpipe_cuda.cpp",
 ]
 
 libtorch_nvshmem_sources = [
@@ -920,16 +880,6 @@ libtorch_python_distributed_core_sources = [
 ]
 
 libtorch_python_distributed_sources = libtorch_python_distributed_core_sources + [
-    "torch/csrc/distributed/autograd/init.cpp",
-    "torch/csrc/distributed/rpc/init.cpp",
-    "torch/csrc/distributed/rpc/py_rref.cpp",
-    "torch/csrc/distributed/rpc/python_functions.cpp",
-    "torch/csrc/distributed/rpc/python_rpc_handler.cpp",
-    "torch/csrc/distributed/rpc/request_callback_impl.cpp",
-    "torch/csrc/distributed/rpc/testing/init.cpp",
-    "torch/csrc/distributed/rpc/unpickled_python_call.cpp",
-    "torch/csrc/distributed/rpc/unpickled_python_remote_call.cpp",
-    "torch/csrc/jit/runtime/register_distributed_ops.cpp",
     "torch/csrc/distributed/c10d/control_plane/PythonHandlers.cpp",
 ]
 
