@@ -112,7 +112,3 @@ def run_nnc(ir, inputs, dynamic) -> float:
             return run_test(ir, inputs)
     finally:
         torch.jit.set_fusion_strategy(old_strat)
-
-def run_nvfuser(ir, inputs) -> float:
-    with torch.jit.fuser("fuser2"):
-        return run_test(ir, inputs)

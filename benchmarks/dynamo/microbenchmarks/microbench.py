@@ -116,9 +116,6 @@ def main():
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="enable verbose debug printouts"
     )
-    parser.add_argument(
-        "--nvfuser", action="store_true", help="enable nvfuser globally"
-    )
     parser.add_argument("--transpose", action="store_true", help="transpose one input")
     parser.add_argument("--broadcast", action="store_true", help="broadcast one input")
     args = parser.parse_args()
@@ -129,17 +126,9 @@ def main():
     args.exclude = args.exclude or [r"^$"]
     args.size = args.size or [64, 256, 1024, 4096, 8192]
 
-    if args.nvfuser:
-        torch._C._jit_override_can_fuse_on_cpu(False)
-        torch._C._jit_override_can_fuse_on_gpu(False)
-        torch._C._jit_set_texpr_fuser_enabled(False)
-        torch._C._jit_set_nvfuser_enabled(True)
-    else:
-        torch._C._jit_override_can_fuse_on_cpu(torch._C._llvm_enabled())
-        torch._C._jit_override_can_fuse_on_gpu(True)
-        torch._C._jit_set_texpr_fuser_enabled(True)
-        if torch.cuda.is_available():
-            torch._C._jit_set_nvfuser_enabled(False)
+    torch._C._jit_override_can_fuse_on_cpu(torch._C._llvm_enabled())
+    torch._C._jit_override_can_fuse_on_gpu(True)
+    torch._C._jit_set_texpr_fuser_enabled(True)
 
     if args.threads:
         torch.set_num_threads(args.threads)

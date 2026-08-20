@@ -159,7 +159,6 @@ Works only with Python3.\n A few examples:
 
         torch._C._jit_set_profiling_executor(True)
         torch._C._jit_set_texpr_fuser_enabled(False)
-        torch._C._jit_set_nvfuser_enabled(True)
         torch._C._get_graph_executor_optimize(True)
     else:
         raise ValueError(f"Undefined fuser: {args.cuda_fuser}")
