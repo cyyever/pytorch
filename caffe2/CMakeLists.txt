@@ -774,7 +774,7 @@ set_property(SOURCE ${ATen_CORE_SRCS} APPEND
 set_property(SOURCE ${ATen_ATTENTION_KERNEL_SRCS} APPEND
     PROPERTY COMPILE_DEFINITIONS "TORCH_ASSERT_NO_OPERATORS")
 
-if(USE_MPS OR USE_PYTORCH_METAL)
+if(USE_MPS)
   enable_language(OBJC OBJCXX)
 endif()
 
@@ -1604,20 +1604,6 @@ if(USE_XPU)
     endif()
   endif()
 endif()
-
-# ---[ Metal(OSX) modification
-if(APPLE AND USE_PYTORCH_METAL)
-  if(NOT INTERN_BUILD_MOBILE)
-    include(../cmake/Metal.cmake)
-    # We need to link the system frameworks explicitly
-    find_library(metal NAMES Metal)
-    find_library(mps NAMES MetalPerformanceShaders)
-    find_library(foundation NAMES Foundation)
-    find_library(accelerate NAMES Accelerate)
-    target_link_libraries(torch_cpu PUBLIC ${metal} ${mps} ${foundation} ${accelerate})
-  endif()
-endif()
-
 
 # Note [Global dependencies]
 # Some libraries (e.g. OpenMPI) like to dlopen plugins after they're initialized,

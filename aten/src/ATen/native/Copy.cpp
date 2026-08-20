@@ -11,7 +11,6 @@
 #include <ATen/native/mps/Copy.h>
 #include <ATen/native/TensorShape.h>
 #include <ATen/quantized/Quantizer.h>
-#include <ATen/metal/Context.h>
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
 
@@ -128,7 +127,7 @@ void copy_same_type_transpose_(Tensor& self, const Tensor& src) {
 // (e.g. XLA) may be supported by overriding copy_ and _copy_from.
 bool is_supported_device(Device device) {
   DeviceType device_type = device.type();
-  return device_type == kCPU || device_type == kCUDA || device_type == kHIP || device_type == kMetal || device_type == kMPS || device_type == kXPU;
+  return device_type == kCPU || device_type == kCUDA || device_type == kHIP || device_type == kMPS || device_type == kXPU;
 }
 
 } // namespace
@@ -238,10 +237,6 @@ static Tensor & copy_impl(Tensor & self, const Tensor & src, bool non_blocking) 
 
   if (!self.is_quantized() && src.is_quantized()) {
     TORCH_CHECK(false, "Copying from quantized Tensor to non-quantized Tensor is not allowed, please use dequantize to get a float Tensor from a quantized Tensor");
-  }
-
-  if (self.device().type() == at::kMetal || src.device().type() == at::kMetal) {
-    return at::metal::metal_copy_(self, src);
   }
 
   // Exit early if self and src are views of the same data

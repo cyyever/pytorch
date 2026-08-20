@@ -29,7 +29,6 @@ MACOS_BUILD_ENV: dict[str, str] = {
     "USE_DISTRIBUTED": "1",
     "USE_MKLDNN": "OFF",
     "BUILD_TEST": "OFF",
-    "USE_PYTORCH_METAL_EXPORT": "1",
     "USE_COREML_DELEGATE": "1",
 }
 
