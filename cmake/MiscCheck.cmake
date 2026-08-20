@@ -31,11 +31,6 @@ if(NOT MSVC)
   endif()
 endif()
 
-# ---[ If we are building on ios, or building with opengl support, we will
-# enable -mfpu=neon-fp16 for iOS Metal build. For Android, this fpu setting
-# is going to be done with android-cmake by setting
-#     -DANDROID_ABI="armeabi-v7a with NEON FP16"
-# in the build command.
 # ---[ Check if the compiler has SVE support.
 find_package(ARM) # checks SVE
 if(CXX_SVE_FOUND)
