@@ -671,27 +671,6 @@ def _trace(*args, **kwargs):
     return wrapper
 
 
-def enable_cpu_fuser(fn):
-    def wrapper(*args, **kwargs):
-        torch._C._jit_override_can_fuse_on_cpu_legacy(True)
-        torch._C._jit_override_can_fuse_on_cpu(True)
-        try:
-            fn(*args, **kwargs)
-        finally:
-            torch._C._jit_override_can_fuse_on_cpu_legacy(False)
-            torch._C._jit_override_can_fuse_on_cpu(False)
-    return wrapper
-
-
-def enable_cpu_fuser_if(cond):
-    if cond:
-        return enable_cpu_fuser
-    else:
-        def noop_fuser(fn):
-            def wrapper(*args, **kwargs):
-                return fn(*args, **kwargs)
-            return wrapper
-        return noop_fuser
 
 def get_forward(c):
     return c._get_method('forward')

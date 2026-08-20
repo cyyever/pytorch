@@ -499,7 +499,6 @@ if(NOT INTERN_BUILD_MOBILE)
     ${TORCH_SRC_DIR}/csrc/jit/serialization/onnx.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
     ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
-    ${TORCH_SRC_DIR}/csrc/jit/codegen/fuser/cpu/fused_kernel.cpp
     ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
     ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp
   )
@@ -1342,21 +1341,6 @@ if(USE_ROCM)
     USE_ROCM
     __HIP_PLATFORM_AMD__
     )
-  # NB: Massive hack.  torch/csrc/jit/codegen/fuser/codegen.cpp includes
-  # torch/csrc/jit/codegen/fuser/cuda/resource_strings.h which changes the
-  # strings depending on if you're __HIP_PLATFORM_AMD__ or not.
-  # But that file is in torch_cpu!  So, against all odds, this macro
-  # has to be set on torch_cpu too.  I also added it to torch for
-  # better luck
-  target_compile_definitions(torch_cpu PRIVATE
-    USE_ROCM
-    __HIP_PLATFORM_AMD__
-    )
-  target_compile_definitions(torch PRIVATE
-    USE_ROCM
-    __HIP_PLATFORM_AMD__
-    )
-
   if(USE_FLASH_ATTENTION)
     target_compile_definitions(torch_hip PRIVATE
         USE_FLASH_ATTENTION

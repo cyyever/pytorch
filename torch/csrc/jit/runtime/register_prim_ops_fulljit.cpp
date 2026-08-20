@@ -1,4 +1,3 @@
-#include <torch/csrc/jit/codegen/fuser/interface.h>
 #include <torch/csrc/jit/runtime/register_ops_utils.h>
 
 #include <ATen/core/ivalue.h>
@@ -37,16 +36,6 @@ RegisterOperators reg({
             TORCH_CHECK(
                 false,
                 "Must be lowered to Interpreter's PROFILE instruction"); // NOLINT
-          };
-        },
-        aliasAnalysisSpecialCase()),
-    Operator(
-        prim::FusionGroup,
-        [](const Node* node) -> Operation {
-          const auto key = registerFusion(node);
-          return [key](Stack& stack) {
-            RECORD_FUNCTION("FusionGroup", std::vector<c10::IValue>());
-            runFusion(key, stack);
           };
         },
         aliasAnalysisSpecialCase()),

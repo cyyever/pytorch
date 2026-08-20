@@ -39,7 +39,6 @@ from torch.testing._internal.common_utils import (
 from torch.testing._internal.jit_utils import (
     _tmp_donotuse_dont_inline_everything,
     _trace,
-    enable_cpu_fuser,
     JitTestCase,
     make_global,
     RUN_CUDA,
@@ -946,7 +945,6 @@ class TestTracer(JitTestCase):
         self.run_ge_tests(False, False)
 
     @unittest.skipIf(IS_SANDCASTLE, "NYI: fuser support for Sandcastle")
-    @enable_cpu_fuser
     def test_ge_optimized(self):
         with enable_profiling_mode_for_profiling_tests():
             self.run_ge_tests(True, False)

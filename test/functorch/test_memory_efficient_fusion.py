@@ -97,7 +97,7 @@ def hard_mish(x):
 
 
 def run_and_compare_activation(self, fn, inps):
-    with torch.jit.fuser("fuser1"):
+    with torch.jit.fuser("none"):
         device = "cuda"
         dtype = torch.float
         if isinstance(fn, nn.Module):

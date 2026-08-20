@@ -35,9 +35,7 @@ void runOptimization(
     std::shared_ptr<Graph>& graph,
     bool unroll_non_constant_loops = true,
     bool const_prop_user_classes = true);
-void runNondiffOptimization(
-    std::shared_ptr<Graph>& graph,
-    bool strict_fuser_check = false);
+void runNondiffOptimization(std::shared_ptr<Graph>& graph);
 void debugSetAutodiffSubgraphInlining(bool state);
 bool TORCH_API getAutodiffSubgraphInlining();
 
