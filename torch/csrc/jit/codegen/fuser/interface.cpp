@@ -10,13 +10,7 @@ namespace torch::jit {
 
 namespace detail {
 
-#ifdef TORCH_ENABLE_LLVM
-bool cpu_fuser_enabled = true;
-#else
 static bool cpu_fuser_enabled = false;
-#endif
-
-// note: this doesn't necessarily enable NNC because NVFuser might override it
 static bool gpu_fuser_enabled = true;
 
 } // namespace detail

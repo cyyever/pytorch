@@ -27,7 +27,6 @@ from torch.testing._internal.common_utils import enable_profiling_mode  # noqa: 
 from contextlib import contextmanager
 from functools import reduce
 from io import StringIO
-from collections import defaultdict
 
 import importlib.util
 import inspect
@@ -96,7 +95,6 @@ class _AssertRaisesRegexWithHighlightContext:
 
         return True
 
-FUSION_GROUP = "prim::TensorExprGroup"
 
 class JitTestCase(JitCommonTestCase):
     _do_cuda_memory_leak_check = True
@@ -154,36 +152,6 @@ class JitTestCase(JitCommonTestCase):
         # the callback gets destructed
         self.clearHooks()
         clear_class_registry()
-
-    def assertAllFused(self, graph, except_for=()):
-
-        # note this helper collects nodes on 'fast path' only
-        # i.e. the true blocks of specialized checks
-        def get_nodes_and_parents_recursively(block, kind, acc):
-            for node in block.nodes():
-                if node.kind() == kind:
-                    acc[block].append(node)
-                elif node.kind() == 'prim::DifferentiableGraph':
-                    get_nodes_and_parents_recursively(node.g('Subgraph'), kind, acc)
-                elif node.kind() == 'prim::If' and (node.inputs().__next__().node().kind() == 'aten::all' or
-                                                    node.inputs().__next__().node().kind() == 'prim::TypeCheck' or
-                                                    node.inputs().__next__().node().kind() == 'prim::RequiresGradCheck'):
-                    get_nodes_and_parents_recursively(node.blocks().__next__(), kind, acc)
-                else:
-                    for inner_block in node.blocks():
-                        get_nodes_and_parents_recursively(inner_block, kind, acc)
-
-        allowed_nodes = {'prim::Constant', FUSION_GROUP, 'prim::BailoutTemplate',
-                         'prim::TupleConstruct', 'prim::If', 'prim::TypeCheck', 'prim::RequiresGradCheck'} | set(except_for)
-
-        fusion_groups : dict[torch._C.Block, list[torch._C.Node]] = defaultdict(list)
-        get_nodes_and_parents_recursively(graph, FUSION_GROUP, fusion_groups)
-        self.assertTrue(len(fusion_groups) == 1, f'got {graph}')
-        (graph, fusion_nodes) = next(iter(fusion_groups.items()))
-        # the block contains one FUSION_GROUP and the rest of nodes are `allowed_nodes`
-        self.assertTrue(len(fusion_nodes) == 1, f'got {graph}')
-        self.assertTrue(all(node.kind() in allowed_nodes for node in graph.nodes()),
-                        f'got {graph}')
 
     def _isHookExceptionOk(self, e):
         se = str(e)
@@ -707,13 +675,11 @@ def enable_cpu_fuser(fn):
     def wrapper(*args, **kwargs):
         torch._C._jit_override_can_fuse_on_cpu_legacy(True)
         torch._C._jit_override_can_fuse_on_cpu(True)
-        torch._C._jit_set_te_must_use_llvm_cpu(False)
         try:
             fn(*args, **kwargs)
         finally:
             torch._C._jit_override_can_fuse_on_cpu_legacy(False)
             torch._C._jit_override_can_fuse_on_cpu(False)
-            torch._C._jit_set_te_must_use_llvm_cpu(True)
     return wrapper
 
 
@@ -772,32 +738,6 @@ def _get_py3_code(code, fn_name):
         loader.exec_module(module)
         fn = getattr(module, fn_name)
         return fn
-
-class TensorExprTestOptions:
-    def __init__(self) -> None:
-        self.old_profiling_executor = torch._C._jit_set_profiling_executor(True)
-        self.old_profiling_mode = torch._C._get_graph_executor_optimize(True)
-
-        self.old_cpu_fuser_state = torch._C._jit_can_fuse_on_cpu()
-        self.old_gpu_fuser_state = torch._C._jit_can_fuse_on_gpu()
-        torch._C._jit_override_can_fuse_on_cpu(True)
-        torch._C._jit_override_can_fuse_on_gpu(True)
-        self.texpr_fuser_state = torch._C._jit_texpr_fuser_enabled()
-        torch._C._jit_set_texpr_fuser_enabled(True)
-        self.old_fusion_inlining = torch._C._debug_get_fusion_group_inlining()
-        torch._C._debug_set_fusion_group_inlining(False)
-        self.old_te_must_use_llvm_cpu = torch._C._jit_get_te_must_use_llvm_cpu()
-        torch._C._jit_set_te_must_use_llvm_cpu(False)
-
-    def restore(self):
-        torch._C._jit_set_profiling_executor(self.old_profiling_executor)
-        torch._C._get_graph_executor_optimize(self.old_profiling_mode)
-
-        torch._C._jit_set_texpr_fuser_enabled(self.texpr_fuser_state)
-        torch._C._jit_override_can_fuse_on_gpu(self.old_gpu_fuser_state)
-        torch._C._jit_override_can_fuse_on_cpu(self.old_cpu_fuser_state)
-        torch._C._debug_set_fusion_group_inlining(self.old_fusion_inlining)
-        torch._C._jit_set_te_must_use_llvm_cpu(self.old_te_must_use_llvm_cpu)
 
 def clone_inputs(args):
     inputs: list[torch.Tensor | list[torch.Tensor]] = []

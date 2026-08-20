@@ -667,9 +667,6 @@ void AliasDb::analyzeImpl(Node* node) {
       makePointerTo(node->outputs().at(1), node->inputs().at(1));
       return;
     }
-    // TODO: think more about TensorExpr alias correctness
-    case prim::TensorExprGroup:
-    case prim::TensorExprDynamicGroup:
     case prim::MKLDNNGroup:
     case prim::ConstantMKLDNNTensor:
     case prim::StaticSubgraph:

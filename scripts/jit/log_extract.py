@@ -1,5 +1,4 @@
 import argparse
-import functools
 import traceback
 from typing import Callable, List, Tuple
 
@@ -7,7 +6,6 @@ from torch.utils.jit.log_extract import (
     extract_ir,
     load_graph_and_inputs,
     run_baseline_no_fusion,
-    run_nnc,
 )
 
 
@@ -16,7 +14,7 @@ Usage:
 1. Run your script and pipe into a log file
   PYTORCH_JIT_LOG_LEVEL=">>graph_fuser" python3 my_test.py &> log.txt
 2. Run log_extract:
-  log_extract.py log.txt --nnc-dynamic --nnc-static
+  log_extract.py log.txt --baseline
 
 You can also extract the list of extracted IR:
   log_extract.py log.txt --output
@@ -61,34 +59,6 @@ def run():
     )
     parser.add_argument("filename", help="Filename of log file")
     parser.add_argument(
-        "--nnc-static",
-        dest="nnc_static",
-        action="store_true",
-        help="benchmark nnc static",
-    )
-    parser.add_argument(
-        "--no-nnc-static",
-        dest="nnc_static",
-        action="store_false",
-        help="DON'T benchmark nnc static",
-    )
-    parser.set_defaults(nnc_static=False)
-
-    parser.add_argument(
-        "--nnc-dynamic",
-        dest="nnc_dynamic",
-        action="store_true",
-        help="nnc with dynamic shapes",
-    )
-    parser.add_argument(
-        "--no-nnc-dynamic",
-        dest="nnc_dynamic",
-        action="store_false",
-        help="don't benchmark nnc with dynamic shapes",
-    )
-    parser.set_defaults(nnc_dynamic=False)
-
-    parser.add_argument(
         "--baseline", dest="baseline", action="store_true", help="benchmark baseline"
     )
     parser.add_argument(
@@ -120,10 +90,6 @@ def run():
     options = []
     if args.baseline:
         options.append(("Baseline no fusion", run_baseline_no_fusion))
-    if args.nnc_dynamic:
-        options.append(("NNC Dynamic", functools.partial(run_nnc, dynamic=True)))
-    if args.nnc_static:
-        options.append(("NNC Static", functools.partial(run_nnc, dynamic=False)))
 
     test_runners(graphs, options, graph_set)
 

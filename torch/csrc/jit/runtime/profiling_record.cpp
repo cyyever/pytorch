@@ -4,7 +4,6 @@
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/clear_profiling.h>
-#include <torch/csrc/jit/passes/tensorexpr_fuser.h>
 #include <torch/csrc/jit/runtime/autodiff.h>
 #include <torch/csrc/jit/runtime/graph_executor.h>
 #include <torch/csrc/jit/runtime/interpreter.h>
@@ -205,10 +204,6 @@ void ProfilingRecord::insertShapeProfile(
 }
 
 static bool needsProfiledInputs(Node* n) {
-  if (tensorexpr::isSupported(n)) {
-    return true;
-  }
-
   switch (n->kind()) {
     // specialize_autogradzero
     case prim::AutogradAdd:
@@ -236,10 +231,6 @@ static bool needsProfiledInputs(Node* n) {
 }
 
 static bool needsProfiledOutput(Node* n) {
-  if (tensorexpr::isSupported(n)) {
-    return true;
-  }
-
   switch (n->kind()) {
     case prim::AutogradAdd:
     case prim::AutogradZero:

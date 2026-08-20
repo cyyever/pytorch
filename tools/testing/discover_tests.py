@@ -121,7 +121,6 @@ TESTS = discover_tests(
         f"{CPP_TEST_PREFIX}/protoc",
         f"{CPP_TEST_PREFIX}/protoc-3.13.0.0",
         f"{CPP_TEST_PREFIX}/torch_shm_manager",
-        f"{CPP_TEST_PREFIX}/tutorial_tensorexpr",
     ],
     extra_tests=[
         "test_cpp_extensions_aot_ninja",

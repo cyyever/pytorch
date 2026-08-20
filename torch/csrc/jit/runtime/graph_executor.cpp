@@ -29,7 +29,6 @@
 #include <torch/csrc/jit/passes/requires_grad_analysis.h>
 #include <torch/csrc/jit/passes/shape_analysis.h>
 #include <torch/csrc/jit/passes/specialize_autogradzero.h>
-#include <torch/csrc/jit/passes/tensorexpr_fuser.h>
 #include <torch/csrc/jit/runtime/argument_spec.h>
 #include <torch/csrc/jit/runtime/autodiff.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
@@ -799,7 +798,7 @@ struct GraphExecutorImpl : public GraphExecutorImplBase {
       runOptimization(opt_graph);
 
       // Input-independent passes from runNondiffOptimization. Skipped:
-      // FuseTensorExprs/FuseGraph (need specialized tensor types).
+      // FuseGraph (needs specialized tensor types).
       for (const auto& passPair : getCustomPrePasses()) {
         passPair.first(opt_graph);
       }
@@ -992,13 +991,7 @@ void runNondiffOptimization(
   BatchMM(graph);
 
   GRAPH_DEBUG("After BatchMM, before Fusion\n", *graph);
-  if (getExecutorMode()) {
-    if (tensorExprFuserEnabled()) {
-      auto min_size = getFusionGroupInlining() ? 2 : 1;
-      auto dyn_shapes = tensorExprDynamicShapeFusionEnabled();
-      FuseTensorExprs(graph, min_size, /*composed_op*/ false, dyn_shapes);
-    }
-  } else {
+  if (!getExecutorMode()) {
     FuseGraph(graph, strict_fuser_check);
   }
   GRAPH_DEBUG("After Fusion\n", *graph);

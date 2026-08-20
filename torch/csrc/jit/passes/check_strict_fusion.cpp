@@ -20,7 +20,7 @@ bool isStrictFusion(Value* value) {
 } // namespace
 
 static bool fusionGuardCheck(Symbol k) {
-  return k == Symbol::prim("TensorExprDynamicGuard") || k == prim::TypeCheck ||
+  return k == prim::TypeCheck ||
       k == prim::CudaFusionGuard || k == prim::RequiresGradCheck;
 }
 

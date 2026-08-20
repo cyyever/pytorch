@@ -1739,16 +1739,6 @@ def patch_forward(obj: torch.nn.Module, new_method):
         obj.forward = original_method
 
 
-@contextmanager
-def _temp_disable_texpr_fuser():
-    original_state = torch._C._jit_texpr_fuser_enabled()
-    torch._C._jit_set_texpr_fuser_enabled(False)
-    try:
-        yield
-    finally:
-        torch._C._jit_set_texpr_fuser_enabled(original_state)
-
-
 def _strict_export(
     mod: torch.nn.Module,
     args: tuple[Any, ...],

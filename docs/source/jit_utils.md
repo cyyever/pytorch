@@ -20,6 +20,5 @@
     :nosignatures:
 
     run_baseline_no_fusion
-    run_nnc
     run_test
 ```

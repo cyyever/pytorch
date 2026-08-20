@@ -9,7 +9,7 @@
 #include <torch/csrc/jit/codegen/onednn/prepare_binary.h>
 #include <torch/csrc/jit/jit_log.h>
 #include <torch/csrc/jit/passes/remove_mutation.h>
-#include <torch/csrc/jit/passes/tensorexpr_fuser.h>
+#include <torch/csrc/jit/passes/type_guards.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
 #include <torch/csrc/jit/runtime/graph_executor.h>
 #include <torch/csrc/jit/runtime/operator_options.h>
@@ -18,7 +18,7 @@ namespace torch::jit {
 namespace fuser::onednn {
 
 void fuseGraph(std::shared_ptr<Graph>& g) {
-  // Follow the process of the tensorexpr_fuser in profiling mode:
+  // Follow the process the NNC fuser used in profiling mode:
   // Remove prim::profile nodes and embed the profile info directly in the
   // IR in value types to avoid breaking the fusion patterns.
   // Will add shape guard after LLGA optimization passes and
@@ -28,7 +28,7 @@ void fuseGraph(std::shared_ptr<Graph>& g) {
   // We rely on the shape specialization and shape guard to ensure the validity
   // of the cached compilation in the kernel, thus only support profiling mode.
   // TODO: add check on oneDNNFusionGroup to ensure allShapesAreKnown on nodes
-  // to fuse: torch/csrc/jit/passes/tensorexpr_fuser.cpp: allShapesAreKnown
+  // to fuse: all shapes must be known
   if (getProfilingMode()) {
     GRAPH_DUMP(
         "Before RemoveProfileNodesAndSpecializeTypes. Beginning of LLGA "

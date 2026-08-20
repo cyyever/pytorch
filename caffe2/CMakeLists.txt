@@ -467,17 +467,6 @@ if(PRINT_CMAKE_DEBUG_INFO)
   endforeach()
 endif()
 
-# Required workaround for LLVM 9 includes.
-if(NOT MSVC)
-  set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/tensorexpr/llvm_jit.cpp PROPERTIES COMPILE_FLAGS -Wno-noexcept-type)
-endif()
-# Disable certain warnings for GCC-9.X
-if(CMAKE_COMPILER_IS_GNUCXX)
-  # See https://github.com/pytorch/pytorch/issues/38856
-  set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/tensorexpr/llvm_jit.cpp PROPERTIES COMPILE_FLAGS "-Wno-redundant-move -Wno-noexcept-type")
-  set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/tensorexpr/llvm_codegen.cpp PROPERTIES COMPILE_FLAGS "-Wno-init-list-lifetime")
-endif()
-
 # Enable conditional FP16 arithmetic intrinsics
 if(CPU_AARCH64 AND LINUX)
 set_source_files_properties(${TORCH_ROOT}/aten/src/ATen/native/BlasKernel.cpp PROPERTIES COMPILE_FLAGS "-march=armv8.2-a+fp16")
@@ -872,13 +861,6 @@ if(CMAKE_COMPILER_IS_GNUCXX AND BUILD_LIBTORCH_CPU_WITH_DEBUG)
   # only really necessary for libtorch_cpu.
   target_compile_options(torch_cpu PRIVATE "-g")
 endif()
-
-if(USE_LLVM AND LLVM_FOUND)
-  llvm_map_components_to_libnames(LLVM_LINK_LIBS
-    support core analysis executionengine instcombine
-    scalaropts transformutils ${LLVM_TARGETS_TO_BUILD} orcjit)
-  target_link_libraries(torch_cpu PRIVATE ${LLVM_LINK_LIBS})
-endif(USE_LLVM AND LLVM_FOUND)
 
 # This is required for older versions of CMake, which don't allow
 # specifying add_library() without a list of source files

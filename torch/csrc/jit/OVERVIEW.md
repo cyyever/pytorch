@@ -1193,9 +1193,6 @@ has two benefits: first, it reduces dispatcher overhead by combining multiple op
 single call to the fused kernel; and second, on GPU it can reduce the number of reads and writes to
 global GPU memory, which can be a significant portion of the runtime for pointwise operators.
 
-The current default fuser is
-[NNC](https://github.com/pytorch/pytorch/tree/master/torch/csrc/jit/tensorexpr)
-
 Since fusers rely on specialized information that is only available at runtime - such as dtype,
 device, and shape - they are only applied after the first invocation of a torchscript function or
 module. As a result, the first invocation of a torchscript function can sometimes behave slightly
@@ -1210,11 +1207,8 @@ or switching the fuser could also provide a temporary fix in case of bugs.
 
 | Feature | Python API |
 |---|---|
-| NNC enable/disable | `torch._C._jit_set_texpr_fuser_enabled()` |
-| NNC on CPU | `torch._C._jit_override_can_fuse_on_cpu()` |
-| NNC on GPU | `torch._C._jit_override_can_fuse_on_gpu()` |
-| NNC context manager | `with torch.jit.fuser("fuser1"):` |
-| NVFuser context manager (deprecated) | `with torch.jit.fuser("fuser2")` |
+| Fusion on CPU | `torch._C._jit_override_can_fuse_on_cpu()` |
+| Fusion on GPU | `torch._C._jit_override_can_fuse_on_gpu()` |
 | oneDNN Graph on CPU | `torch._C._jit_set_llga_enabled(True)` |
 | oneDNN Graph context manager | `with torch.jit.fuser("fuser3"):` |
 
@@ -1222,9 +1216,8 @@ or switching the fuser could also provide a temporary fix in case of bugs.
 
 | Feature | C++ API | Header file |
 |---|---|---|
-| NNC enable/disable | `torch::jit::setTensorExprFuserEnabled(bool);` | [here](https://github.com/pytorch/pytorch/blob/1a7e560adecb0192f69f4d05b990800b60dc380b/torch/csrc/jit/passes/tensorexpr_fuser.h#L22) |
-| NNC on CPU | `torch::jit::overrideCanFuseOnCPU(bool);` | [here](https://github.com/pytorch/pytorch/blob/1a7e560adecb0192f69f4d05b990800b60dc380b/torch/csrc/jit/codegen/fuser/interface.h#L28-L29) |
-| NNC on GPU | `torch::jit::overrideCanFuseOnGPU(bool);` | [here](https://github.com/pytorch/pytorch/blob/1a7e560adecb0192f69f4d05b990800b60dc380b/torch/csrc/jit/codegen/fuser/interface.h#L28-L29) |
+| Fusion on CPU | `torch::jit::overrideCanFuseOnCPU(bool);` | [here](https://github.com/pytorch/pytorch/blob/main/torch/csrc/jit/codegen/fuser/interface.h) |
+| Fusion on GPU | `torch::jit::overrideCanFuseOnGPU(bool);` | [here](https://github.com/pytorch/pytorch/blob/main/torch/csrc/jit/codegen/fuser/interface.h) |
 
 ### Disabling Optimizations ###
 

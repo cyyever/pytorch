@@ -49,7 +49,6 @@ from jit.test_module_interface import TestModuleInterface  # noqa: F401
 from jit.test_with import TestWith  # noqa: F401
 from jit.test_enum import TestEnum  # noqa: F401
 from jit.test_string_formatting import TestStringFormatting  # noqa: F401
-from jit.test_profiler import TestProfiler  # noqa: F401
 from jit.test_slice import TestSlice  # noqa: F401
 from jit.test_ignorable_args import TestIgnorableArgs  # noqa: F401
 from jit.test_hooks import TestHooks  # noqa: F401
@@ -214,7 +213,6 @@ def doAutodiffCheck(testname):
 if not GRAPH_EXECUTOR:
     raise AssertionError("GRAPH_EXECUTOR is not set")
 # TODO: enable TE in PE when all tests are fixed
-torch._C._jit_set_texpr_fuser_enabled(GRAPH_EXECUTOR == ProfilingMode.PROFILING)
 torch._C._jit_set_profiling_executor(GRAPH_EXECUTOR != ProfilingMode.LEGACY)
 
 def LSTMCell(input, hidden, w_ih, w_hh, b_ih=None, b_hh=None):

@@ -5,11 +5,30 @@
 #include <torch/csrc/jit/passes/constant_propagation.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/mkldnn_rewrite.h>
-#include <torch/csrc/jit/tensorexpr/kernel.h>
 
 namespace torch::jit {
 
 #if AT_MKLDNN_ENABLED()
+
+// The prepack rewrite needs to know an input is contiguous in the requested
+// memory format.
+static bool isContiguous(const Value* v, at::MemoryFormat memory_format) {
+  auto const& tt = v->type()->cast<TensorType>();
+  if (!tt || !tt->isComplete()) {
+    return false;
+  }
+  auto const& sizes = tt->sizes().concrete_sizes();
+  auto const& strides = tt->strides().concrete_sizes();
+  if (!sizes || !strides) {
+    return false;
+  }
+  auto ndims = (*sizes).size();
+  if ((memory_format == at::MemoryFormat::ChannelsLast && ndims != 4) ||
+      (memory_format == at::MemoryFormat::ChannelsLast3d && ndims != 5)) {
+    return false;
+  }
+  return *strides == TensorType::contiguousStridesOf(*sizes, memory_format);
+}
 
 static c10::VaryingShape<int64_t> getSizesOf(Node* n, size_t idx) {
   auto tt = n->input(idx)->type()->cast<TensorType>();
@@ -19,23 +38,15 @@ static c10::VaryingShape<int64_t> getSizesOf(Node* n, size_t idx) {
 static void insertPrePackedConvOpForNode(Node* n) {
   constexpr int POS_INPUT = 0;
   constexpr int POS_WEIGHT = 1;
-  if (!tensorexpr::isContiguous(
-          n->input(POS_INPUT), at::MemoryFormat::ChannelsLast)) {
+  if (!isContiguous(n->input(POS_INPUT), at::MemoryFormat::ChannelsLast)) {
     GRAPH_DEBUG(
         "insertPrePackedConvOpForNode: input is not ChannelsLast contiguous");
     return;
   }
 
-  if (!tensorexpr::isContiguous(
-          n->input(POS_WEIGHT), at::MemoryFormat::ChannelsLast)) {
+  if (!isContiguous(n->input(POS_WEIGHT), at::MemoryFormat::ChannelsLast)) {
     GRAPH_DEBUG(
         "insertPrePackedConvOpForNode: weight is not ChannelsLast contiguous");
-    return;
-  }
-
-  // Leave depthwise conv2d to NNC
-  if (tensorexpr::conv2dIsSupportedJit(n)) {
-    GRAPH_DEBUG("insertPrePackedConvOpForNode: leave depthwise conv2d to NNC");
     return;
   }
 

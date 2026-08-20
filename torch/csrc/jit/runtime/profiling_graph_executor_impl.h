@@ -63,7 +63,7 @@ struct TORCH_API ProfilingGraphExecutorImpl : public GraphExecutorImplBase {
 
   // this plan is used if getGraphExecutorOptimize is unset
   std::optional<ExecutionPlan> fallback_plan_;
-  // fallback functions are inserted for tensorexpr fusion groups
+  // fallback functions are inserted for fusion groups
   // and by specialize_autogradzero. Whenever, at runtime, input
   // tensor don't match profiled properties, fallback functions are called
   // They are the deoptimized version of the logic in fusion groups
