@@ -1,7 +1,10 @@
 #include <torch/csrc/jit/passes/symbolic_shape_analysis.h>
 #include <torch/csrc/jit/passes/symbolic_shape_cache.h>
-#include <torch/csrc/lazy/core/cache.h>
 
+#include <list>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
 #include <utility>
 
 // SHAPE CACHING CODE
@@ -78,10 +81,73 @@ struct ArgumentsHasher {
   }
 };
 
-using ShapeCache = lazy::Cache<
-    ShapeCacheKey,
-    std::vector<CanonicalizedSymbolicShape>,
-    ArgumentsHasher>;
+// LRU cache keyed by op name plus canonicalized arguments. The map keys on a
+// pointer into the list so the (potentially large) key is stored only once.
+class ShapeCache {
+ public:
+  explicit ShapeCache(size_t max_size) : max_size_(max_size) {}
+
+  void Add(ShapeCacheKey key, std::shared_ptr<CanonicalRet> value) {
+    std::lock_guard<std::mutex> g(lock_);
+    element_list_.emplace_front(std::move(key), std::move(value));
+    auto it = element_list_.begin();
+    auto [pos, inserted] = element_map_.emplace(&it->first, it);
+    if (!inserted) {
+      element_list_.erase(it);
+      element_list_.splice(element_list_.begin(), element_list_, pos->second);
+    } else if (element_list_.size() > max_size_) {
+      element_map_.erase(&element_list_.back().first);
+      element_list_.pop_back();
+    }
+  }
+
+  std::shared_ptr<CanonicalRet> Get(const ShapeCacheKey& key) {
+    std::lock_guard<std::mutex> g(lock_);
+    auto it = element_map_.find(&key);
+    if (it == element_map_.end()) {
+      return nullptr;
+    }
+    element_list_.splice(element_list_.begin(), element_list_, it->second);
+    return it->second->second;
+  }
+
+  void Clear() {
+    std::lock_guard<std::mutex> g(lock_);
+    element_map_.clear();
+    element_list_.clear();
+  }
+
+  size_t Numel() const {
+    std::lock_guard<std::mutex> g(lock_);
+    return element_map_.size();
+  }
+
+ private:
+  using Element = std::pair<ShapeCacheKey, std::shared_ptr<CanonicalRet>>;
+  using ElementList = std::list<Element>;
+
+  struct KeyPtrHasher {
+    size_t operator()(const ShapeCacheKey* key) const {
+      return ArgumentsHasher{}(*key);
+    }
+  };
+
+  struct KeyPtrEqual {
+    bool operator()(const ShapeCacheKey* a, const ShapeCacheKey* b) const {
+      return *a == *b;
+    }
+  };
+
+  mutable std::mutex lock_;
+  size_t max_size_;
+  ElementList element_list_;
+  std::unordered_map<
+      const ShapeCacheKey*,
+      ElementList::iterator,
+      KeyPtrHasher,
+      KeyPtrEqual>
+      element_map_;
+};
 
 constexpr size_t kShapeCacheSize = 1024;
 ShapeCache shapeCache(kShapeCacheSize);

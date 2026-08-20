@@ -466,10 +466,6 @@ option(
   OFF)
 option(USE_PER_OPERATOR_HEADERS
        "Whether ATen should generate separate headers for each operator" ON)
-cmake_dependent_option(
-  BUILD_LAZY_TS_BACKEND
-  "Build the lazy Torchscript backend, not compatible with mobile builds" ON
-  "NOT INTERN_BUILD_MOBILE" OFF)
 cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)
@@ -787,8 +783,6 @@ if(ANDROID
    OR IOS
    OR DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
   set(INTERN_BUILD_MOBILE ON)
-  message(WARNING "INTERN_BUILD_MOBILE is on, disabling BUILD_LAZY_TS_BACKEND")
-  set(BUILD_LAZY_TS_BACKEND OFF)
 
   set(USE_KLEIDIAI OFF)
   message(WARNING "KleidiAI cannot be used on Mobile builds. Set it to OFF")

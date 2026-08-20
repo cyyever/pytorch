@@ -574,13 +574,6 @@ test_xpu_sycl_tla_backend() {
   TORCHINDUCTOR_CUTLASS_DIR=$(realpath "./third_party/sycl-tla") python test/run_test.py --include inductor/test_cutlass_backend $PYTHON_TEST_EXTRA_OPTION --upload-artifacts-while-running
 }
 
-test_lazy_tensor_meta_reference_disabled() {
-  export TORCH_DISABLE_FUNCTIONALIZATION_META_REFERENCE=1
-  echo "Testing lazy tensor operations without meta reference"
-  time python test/run_test.py --include lazy/test_ts_opinfo.py --verbose
-  export -n TORCH_DISABLE_FUNCTIONALIZATION_META_REFERENCE
-}
-
 test_dynamo_core() {
   time python test/run_test.py \
     --include-dynamo-core-tests \
@@ -1574,16 +1567,15 @@ test_libtorch_jit() {
   python cpp/jit/tests_setup.py setup
   popd
 
-  # Run jit and lazy tensor cpp tests together to finish them faster
-  if [[ "$BUILD_ENVIRONMENT" == *cuda* && "$TEST_CONFIG" != *nogpu* ]]; then
-    LTC_TS_CUDA=1 python test/run_test.py --cpp --verbose -i cpp/test_jit cpp/test_lazy
-  elif [[ "${PYTORCH_TEST_WITH_ASAN}" == "1" ]]; then
-    # cpp/test_jit times out under clang-21 ASAN+UBSAN; skip it for now and run
-    # only cpp/test_lazy. TODO: re-enable once the timeout is root-caused.
-    python test/run_test.py --cpp --verbose -i cpp/test_lazy -k "not CUDA"
+  if [[ "${PYTORCH_TEST_WITH_ASAN}" == "1" ]]; then
+    # cpp/test_jit times out under clang-21 ASAN+UBSAN; skip it for now.
+    # TODO: re-enable once the timeout is root-caused.
+    echo "Skipping cpp/test_jit under ASAN"
+  elif [[ "$BUILD_ENVIRONMENT" == *cuda* && "$TEST_CONFIG" != *nogpu* ]]; then
+    python test/run_test.py --cpp --verbose -i cpp/test_jit
   else
     # CUDA tests have already been skipped when CUDA is not available
-    python test/run_test.py --cpp --verbose -i cpp/test_jit cpp/test_lazy -k "not CUDA"
+    python test/run_test.py --cpp --verbose -i cpp/test_jit -k "not CUDA"
   fi
 
   # Cleaning up test artifacts in the test folder
@@ -2522,7 +2514,6 @@ elif [[ "${SHARD_NUMBER}" == 1 && $NUM_TEST_SHARDS -gt 1 ]]; then
   if [[ "${BUILD_ENVIRONMENT}" == *cuda* || "${BUILD_ENVIRONMENT}" == *rocm* ]]; then
     test_distributed_single_gpu
   fi
-  test_lazy_tensor_meta_reference_disabled
   test_without_numpy
   install_torchvision
   test_python_shard 1

@@ -316,9 +316,6 @@ if(USE_NUMPY)
   target_compile_definitions(torch_python PRIVATE USE_NUMPY)
 endif()
 
-if(BUILD_LAZY_TS_BACKEND)
-  target_compile_definitions(torch_python PRIVATE BUILD_LAZY_TS_BACKEND)
-endif()
 
 if(HAVE_SOVERSION)
   set_target_properties(torch_python PROPERTIES

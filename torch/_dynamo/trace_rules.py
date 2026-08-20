@@ -3468,7 +3468,6 @@ MOD_SKIPLIST = [
     "torch._higher_order_ops.wrap",
     "torch._inductor",
     "torch._jit_internal",
-    "torch._lazy",
     "torch._library",
     "torch._linalg_utils",
     "torch._lobpcg",

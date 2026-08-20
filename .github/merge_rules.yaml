@@ -383,25 +383,6 @@
   - Lint
   - pull
 
-- name: Lazy Tensor
-  patterns:
-  - torch/csrc/lazy/**
-  - test/cpp/lazy/**
-  - test/lazy/**
-  - torchgen/api/lazy.py
-  - torchgen/dest/lazy_ir.py
-  - torchgen/dest/lazy_ts_lowering.py
-  - torchgen/gen_lazy_tensor.py
-  - aten/src/ATen/native/ts_native_functions.yaml
-  - .github/ci_commit_pins/xla.txt
-  approved_by:
-  - alanwaketan
-  - JackCaoG
-  mandatory_checks_name:
-  - EasyCLA
-  - Lint
-  - pull
-
 - name: functorch
   patterns:
   - functorch/**

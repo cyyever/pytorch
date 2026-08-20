@@ -88,7 +88,6 @@
 #include <torch/csrc/jit/python/python_ir.h>
 #include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/jit/serialization/pickler.h>
-#include <torch/csrc/lazy/python/init.h>
 #include <torch/csrc/monitor/python_init.h>
 #include <torch/csrc/mps/Module.h>
 #include <torch/csrc/mtia/Module.h>
@@ -2601,7 +2600,6 @@ PyObject* initModule() {
   torch::autograd::init_legacy_variable(module);
   torch::profiler::initPythonBindings(module);
   torch::python::init_bindings(module);
-  torch::lazy::initLazyBindings(module);
   torch::_export::initExportBindings(module);
   torch::inductor::initAOTIRunnerBindings(module);
   torch::inductor::initAOTIPackageBindings(module);
