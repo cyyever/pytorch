@@ -24,7 +24,6 @@
 #include <torch/csrc/jit/passes/utils/subgraph_utils.h>
 #include <torch/csrc/jit/runtime/custom_operator.h>
 #include <torch/csrc/jit/runtime/operator_options.h>
-#include <torch/csrc/jit/tensorexpr/types.h>
 // clang-format off
 // moving ConvUtils include induces import cycle
 #include <ATen/native/ConvUtils.h>

@@ -70,7 +70,6 @@
 #include <torch/csrc/jit/passes/specialize_autogradzero.h>
 #include <torch/csrc/jit/passes/subgraph_rewrite.h>
 #include <torch/csrc/jit/passes/symbolic_shape_analysis.h>
-#include <torch/csrc/jit/passes/tensorexpr_fuser.h>
 #include <torch/csrc/jit/passes/utils/check_alias_annotation.h>
 #include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/opaque_obj.h>
@@ -93,8 +92,6 @@
 #include <torch/csrc/jit/runtime/symbolic_shape_registry.h>
 #include <torch/csrc/jit/serialization/export.h>
 #include <torch/csrc/jit/serialization/import.h>
-#include <torch/csrc/jit/tensorexpr/kernel.h>
-#include <torch/csrc/jit/tensorexpr/tensorexpr_init.h>
 #include <torch/csrc/utils/cpp_stacktraces.h>
 
 #include <c10/macros/Export.h>
@@ -692,12 +689,9 @@ void initJITBindings(PyObject* module) {
             return runJITCPPTests();
           })
       .def("_jit_has_cpp_tests", []() { return true; })
-      .def("_has_tensorexpr_cpp_tests", []() { return true; })
 #else
       .def("_jit_run_cpp_tests", []() { throw std::exception(); })
       .def("_jit_has_cpp_tests", []() { return false; })
-      .def("_run_tensorexpr_cpp_tests", []() { throw std::exception(); })
-      .def("_has_tensorexpr_cpp_tests", []() { return false; })
 #endif
       .def(
           "_jit_flatten",
@@ -857,105 +851,6 @@ void initJITBindings(PyObject* module) {
           "_jit_try_infer_type",
           [](py::object obj) -> InferredType {
             return tryToInferType(std::move(obj));
-          })
-      .def(
-          "_jit_get_te_cuda_pointwise_loop_levels",
-          []() -> int {
-            using namespace torch::jit::tensorexpr;
-            return getTECudaPointwiseLoopLevels();
-          })
-      .def(
-          "_jit_set_te_cuda_pointwise_loop_levels",
-          [](int level) {
-            using namespace torch::jit::tensorexpr;
-            return getTECudaPointwiseLoopLevels() = level;
-          })
-      .def(
-          "_jit_get_te_cuda_pointwise_block_count",
-          []() -> int {
-            using namespace torch::jit::tensorexpr;
-            return getTECudaPointwiseBlockCount();
-          })
-      .def(
-          "_jit_set_te_cuda_pointwise_block_count",
-          [](int block_count) {
-            using namespace torch::jit::tensorexpr;
-            return getTECudaPointwiseBlockCount() = block_count;
-          })
-      .def(
-          "_jit_get_te_cuda_pointwise_block_size",
-          []() -> int {
-            using namespace torch::jit::tensorexpr;
-            return getTECudaPointwiseBlockSize();
-          })
-      .def(
-          "_jit_set_te_cuda_pointwise_block_size",
-          [](int block_size) {
-            using namespace torch::jit::tensorexpr;
-            return getTECudaPointwiseBlockSize() = block_size;
-          })
-      .def("_jit_set_texpr_fuser_enabled", &setTensorExprFuserEnabled)
-      .def("_jit_texpr_fuser_enabled", &tensorExprFuserEnabled)
-      .def("_jit_texpr_fallback_allowed", &tensorexpr::fallbackAllowed)
-      .def("_jit_texpr_set_fallback_allowed", &tensorexpr::setFallbackAllowed)
-      .def("_jit_set_texpr_reductions_enabled", &setTexprReductionsEnabled)
-      .def(
-          "_jit_set_texpr_dynamic_shape_enabled",
-          &setTensorExprDynamicShapeFusionEnabled)
-      .def(
-          "_jit_texpr_dynamic_shape_enabled",
-          &tensorExprDynamicShapeFusionEnabled)
-      .def("_jit_texpr_reductions_enabled", &texprReductionsEnabled)
-      .def(
-          "_jit_set_te_generate_block_code",
-          [](bool gen_block_code) {
-            using namespace torch::jit::tensorexpr;
-            return getTEGenerateBlockCode() = gen_block_code;
-          })
-      .def(
-          "_jit_get_te_generate_block_code",
-          []() -> bool {
-            using namespace torch::jit::tensorexpr;
-            return getTEGenerateBlockCode();
-          })
-      .def(
-          "_jit_get_te_must_use_llvm_cpu",
-          []() -> bool {
-            using namespace torch::jit::tensorexpr;
-            return getTEMustUseLLVMOnCPU();
-          })
-      .def(
-          "_jit_set_te_must_use_llvm_cpu",
-          [](bool use_llvm) {
-            using namespace torch::jit::tensorexpr;
-            getTEMustUseLLVMOnCPU() = use_llvm;
-          })
-      .def(
-          "_jit_cat_wo_conditionals",
-          [](bool optimize_cat) {
-            using namespace torch::jit::tensorexpr;
-            getCatWoConditionals() = optimize_cat;
-          })
-      .def(
-          "_jit_opt_conditionals",
-          [](bool opt_conds) {
-            using namespace torch::jit::tensorexpr;
-            getOptConditionals() = opt_conds;
-          })
-      .def(
-          "_llvm_enabled",
-          []() {
-#ifdef TORCH_ENABLE_LLVM
-            return true;
-#else
-            return false;
-#endif
-          })
-      .def(
-          "_jit_pass_fuse_tensorexprs",
-          [](std::shared_ptr<Graph>& g) {
-            FuseTensorExprs(g);
-            RemoveTensorTypeSpecializations(g);
           })
       .def(
           "_jit_fuser_get_fused_kernel_code",
@@ -2186,7 +2081,6 @@ void initJITBindings(PyObject* module) {
   initTreeViewBindings(module);
   initJitScriptBindings(module);
   initJitBackendBindings(module);
-  initTensorExprBindings(module);
   // initNvFuserPythonBindings(module);
 
   setPrintHandler([](const std::string& str) {

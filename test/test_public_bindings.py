@@ -394,7 +394,6 @@ class TestPublicBindings(TestCase):
             "torch.ao.pruning._experimental.data_sparsifier.benchmarks.evaluate_forward_time",
             "torch.ao.pruning._experimental.data_sparsifier.benchmarks.evaluate_model_metrics",
             "torch.ao.pruning._experimental.data_sparsifier.lightning.tests.test_callbacks",
-            "torch.csrc.jit.tensorexpr.scripts.bisect",
             "torch.csrc.lazy.test_mnist",
             "torch.distributed._shard.checkpoint._fsspec_filesystem",
             "torch.distributed._tensor.examples.visualize_sharding_example",

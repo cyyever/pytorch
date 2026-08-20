@@ -86,14 +86,6 @@ ignored_c_binding_in_graph_function_names = {
     "torch._validate_sparse_bsc_tensor_args",
     "torch._validate_compressed_sparse_indices",
 }
-if torch._C._llvm_enabled():
-    ignored_c_binding_in_graph_function_names |= {
-        "torch._C._te.set_llvm_aot_workflow",
-        "torch._C._te.set_llvm_target_cpu",
-        "torch._C._te.set_llvm_target_attrs",
-        "torch._C._te.set_llvm_target_triple",
-    }
-
 
 # Helper function to dump the torch name rule map generated based on
 # the heuristic defined in gen_allowed_objs_and_ids.
