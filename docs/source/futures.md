@@ -8,9 +8,7 @@
 
 This package provides a {class}`~torch.futures.Future` type that encapsulates
 an asynchronous execution and a set of utility functions to simplify operations
-on {class}`~torch.futures.Future` objects. Currently, the
-{class}`~torch.futures.Future` type is primarily used by the
-{ref}`distributed-rpc-framework`.
+on {class}`~torch.futures.Future` objects.
 
 ```{eval-rst}
 .. automodule:: torch.futures

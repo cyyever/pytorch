@@ -10,9 +10,6 @@
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/utils/byte_order.h>
-#ifdef USE_RPC
-#include <torch/csrc/distributed/rpc/rref_context.h>
-#endif
 
 namespace torch::jit {
 
@@ -138,15 +135,7 @@ void Pickler::pushIValueImpl(const IValue& ivalue) {
            "this class.";
     TORCH_CHECK(false, std::move(err).str());
   } else if (ivalue.isRRef()) {
-#ifdef USE_RPC
-    TORCH_CHECK(
-        torch::distributed::rpc::getAllowJitRRefPickle() == true,
-        "RRef jit pickling is only allowed inside RPC calls.");
-    pushRRef(ivalue);
-#else
-    TORCH_CHECK(
-        false, "RRef pickling is only supported with the distributed package");
-#endif
+    TORCH_CHECK(false, "RRef pickling is not supported in this build");
   } else if (ivalue.isEnum()) {
     auto enum_holder = ivalue.toEnumHolder();
     const auto& qualified_class_name =
@@ -173,28 +162,6 @@ void Pickler::pushDevice(const IValue& ivalue) {
     pushBinGet(it->second);
   }
 }
-
-#ifdef USE_RPC
-void Pickler::pushRRef(const IValue& ivalue) {
-  // It is the same as how rref is pickled in python, see PyRRef::pickle
-  auto rrefInterface = ivalue.toRRef();
-  auto rref =
-      c10::static_intrusive_pointer_cast<distributed::rpc::RRef>(rrefInterface);
-  pushGlobal("torch.distributed.rpc", "rref");
-  auto& ctx = distributed::rpc::RRefContext::getInstance();
-  auto rrefForkData = ctx.prepareChildFork(rref);
-  push<PickleOpCode>(PickleOpCode::MARK);
-  pushInt(rrefForkData.ownerId_);
-  pushInt(rrefForkData.rrefId_.createdOn_);
-  pushInt(rrefForkData.rrefId_.localId_);
-  pushInt(rrefForkData.forkId_.createdOn_);
-  pushInt(rrefForkData.forkId_.localId_);
-  pushInt(rrefForkData.parent_);
-  pushString(rrefForkData.typeStr_);
-  push<PickleOpCode>(PickleOpCode::TUPLE);
-  push<PickleOpCode>(PickleOpCode::REDUCE);
-}
-#endif
 
 void Pickler::pushIValue(const IValue& ivalue) {
   bool shouldMemoizeByPointer =

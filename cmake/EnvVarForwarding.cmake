@@ -40,7 +40,6 @@
 #   USE_ITT=0                 disables Intel(R) VTune ITT functionality
 #   USE_NNPACK=0              disables NNPACK build
 #   USE_DISTRIBUTED=0         disables distributed (c10d, gloo, mpi, etc.) build
-#   USE_TENSORPIPE=0          disables the Tensorpipe backend
 #   USE_GLOO=0                disables the gloo backend
 #   USE_MPI=0                 disables the MPI backend
 #   USE_SYSTEM_NCCL=0         use the submoduled nccl instead of system nccl

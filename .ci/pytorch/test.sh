@@ -1735,16 +1735,6 @@ test_quantization() {
   python test/test_quantization.py
 }
 
-test_rpc() {
-  echo "Testing RPC C++ tests"
-  # NB: the ending test_rpc must match the current function name for the current
-  # test reporting process to function as expected.
-  ln -sf "$TORCH_LIB_DIR"/libtorch* "$TORCH_BIN_DIR"
-  ln -sf "$TORCH_LIB_DIR"/libc10* "$TORCH_BIN_DIR"
-
-  CPP_TESTS_DIR="${TORCH_BIN_DIR}" python test/run_test.py --cpp --verbose -i cpp/test_cpp_rpc
-}
-
 
 test_custom_script_ops() {
   echo "Testing custom script operators"
@@ -2353,10 +2343,6 @@ elif [[ "$TEST_CONFIG" == distributed ]]; then
     test_distributed multigpu
   else
     test_distributed
-  fi
-  # Only run RPC C++ tests on the first shard
-  if [[ "${SHARD_NUMBER}" == 1 ]]; then
-    test_rpc
   fi
 elif [[ "${TEST_CONFIG}" == *operator_benchmark* ]]; then
   TEST_MODE="short"

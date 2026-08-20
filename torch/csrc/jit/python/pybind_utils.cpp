@@ -531,11 +531,7 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
       }
     }
     case TypeKind::RRefType: {
-#ifdef USE_RPC
-      return obj.cast<torch::distributed::rpc::PyRRef>().toIValue();
-#else
-      TORCH_CHECK(false, "RRef is only supported with the distributed package");
-#endif
+      TORCH_CHECK(false, "RRef is not supported in this build");
     } break;
     case TypeKind::PyObjectType: {
       return c10::ivalue::ConcretePyObjectHolder::create(obj);
@@ -738,14 +734,7 @@ py::object toPyObject(IValue ivalue) {
     return py_dict;
 #endif
   } else if (ivalue.isRRef()) {
-#ifdef USE_RPC
-    auto RRefPtr =
-        c10::dynamic_intrusive_pointer_cast<torch::distributed::rpc::RRef>(
-            std::move(ivalue).toRRef());
-    return py::cast(torch::distributed::rpc::PyRRef(RRefPtr));
-#else
-    TORCH_CHECK(false, "RRef is only supported with the distributed package");
-#endif
+    TORCH_CHECK(false, "RRef is not supported in this build");
   } else if (ivalue.isObject()) {
     const auto obj = std::move(ivalue).toObject();
     if (obj->type()->is_module()) {
@@ -799,13 +788,7 @@ py::object toPyObject(IValue ivalue) {
     auto py_class = getScriptedClassOrError(enum_holder->type());
     return py_class.attr(enum_holder->name().c_str());
   } else if (ivalue.isRRef()) {
-#ifdef USE_RPC
-    return py::cast(torch::distributed::rpc::PyRRef(
-        c10::static_intrusive_pointer_cast<distributed::rpc::RRef>(
-            ivalue.toRRef())));
-#else
-    TORCH_CHECK(false, "RRef is only supported with the distributed package");
-#endif
+    TORCH_CHECK(false, "RRef is not supported in this build");
   } else if (ivalue.isSymInt()) {
     return py::cast(std::move(ivalue).toSymInt());
   } else if (ivalue.isSymFloat()) {

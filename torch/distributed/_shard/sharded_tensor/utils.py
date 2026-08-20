@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import torch
-from torch.distributed import distributed_c10d as c10d, rpc
+from torch.distributed import distributed_c10d as c10d
 from torch.distributed._shard.sharding_spec._internals import (
     check_tensor,
     validate_non_overlapping_shards_metadata,
@@ -37,17 +37,10 @@ def _parse_and_validate_remote_device(pg, remote_device):
             )
 
     if worker_name is not None:
-        if not rpc._is_current_rpc_agent_set():
-            raise RuntimeError(
-                f"RPC framework needs to be initialized for using worker names: {worker_name}"
-            )
-
-        workers = rpc._get_current_rpc_agent().get_worker_infos()
-        for worker in workers:
-            if worker.name == worker_name:
-                return worker.id, device
-
-        raise ValueError(f"Invalid worker name: {worker_name}")
+        raise RuntimeError(
+            f"Worker names require the RPC framework, which is not built in "
+            f"this version of PyTorch: {worker_name}"
+        )
 
     return rank, device
 

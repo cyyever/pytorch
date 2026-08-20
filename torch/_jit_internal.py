@@ -39,11 +39,6 @@ from typing import (  # noqa: UP035, F401  # (Dict, List, Tuple) imported by tor
 from typing_extensions import ParamSpec
 
 import torch
-
-# This is needed. `torch._jit_internal` is imported before `torch.distributed.__init__`.
-# Explicitly ask to import `torch.distributed.__init__` first.
-# Otherwise, "AttributeError: module 'torch' has no attribute 'distributed'" is raised.
-import torch.distributed.rpc
 import torch.package._mangling as package_mangling
 from torch._awaits import _Await
 from torch._C import _Await as CAwait, Future as CFuture
@@ -1246,27 +1241,9 @@ def is_await(ann) -> bool:
     return get_origin(ann) is _Await
 
 
-if torch.distributed.rpc.is_available():
-    from torch._C._distributed_rpc import PyRRef
-    from torch.distributed.rpc import RRef
-
-    def is_rref(ann) -> bool:
-        if ann is RRef:
-            raise RuntimeError(
-                "Attempted to use RRef without a "
-                "contained type. Please add a contained type, e.g. "
-                "RRef[int]"
-            )
-        return get_origin(ann) is RRef
-
-    def is_rref_instance(obj) -> bool:
-        return isinstance(obj, PyRRef)
-
-else:
-
-    def is_rref_instance(obj) -> bool:
-        # If the RPC module doesn't exist then RRefs don't exist either.
-        return False
+def is_rref_instance(obj) -> bool:
+    # The RPC module has been removed, so RRefs don't exist either.
+    return False
 
 
 def _try_get_dispatched_fn(fn):

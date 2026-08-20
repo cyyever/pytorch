@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 # macOS arm64 build flags.
-# USE_DISTRIBUTED=1 needs libuv, built as part of the tensorpipe submodule.
+# USE_DISTRIBUTED=1 needs libuv installed on the build host.
 # MKLDNN is off on Apple silicon.
 MACOS_BUILD_ENV: dict[str, str] = {
     "TH_BINARY_BUILD": "1",
