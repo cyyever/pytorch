@@ -41,21 +41,6 @@ namespace lazy_linalg {
 
 namespace {
 
-void _warn_once_magma_deprecation(const std::string& op_name, bool force_cusolver = true) {
-  if (at::globalContext().linalgPreferredBackend() == at::LinalgBackend::Magma) {
-    std::string warn_force_cusolver = force_cusolver
-      ? " " + op_name + " will try dispatching to cuSOLVER instead. " +
-        "If you see any error messages, please, file an issue on GitHub."
-      : "";
-    TORCH_WARN_ONCE(
-      op_name, ": "
-      "MAGMA, as a linear algebra backend, is deprecated and will be removed "
-      "in future releases.",
-      warn_force_cusolver
-    );
-  }
-}
-
 void ldl_factor_kernel(
     const Tensor& LD,
     const Tensor& pivots,
@@ -71,8 +56,6 @@ void ldl_solve_kernel(
     const Tensor& B,
     bool upper,
     bool hermitian) {
-  // TODO: It should be possible to add the MAGMA backend for this function when using MAGMA 2.6.0
-  // https://bitbucket.org/icl/magma/src/c703d112dcf19eb8c73676cef10888aa2ef73457/ReleaseNotes#lines-48
   if (LD.is_complex()) {
     TORCH_CHECK(
         !hermitian,
@@ -137,7 +120,6 @@ inline void _cholesky_solve_helper_cuda_cusolver_dispatcher(
 } // namespace (anonymous)
 
 Tensor _cholesky_solve_helper_cuda(const Tensor& self, const Tensor& A, bool upper) {
-  _warn_once_magma_deprecation("linalg.cholesky_solve");
   at::Tensor self_working_copy = cloneBatchedColumnMajor(self);
   _cholesky_solve_helper_cuda_cusolver_dispatcher(self_working_copy, A, upper);
   return self_working_copy;
@@ -146,7 +128,6 @@ Tensor _cholesky_solve_helper_cuda(const Tensor& self, const Tensor& A, bool upp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ cholesky ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 static void cholesky_kernel(const Tensor& input, const Tensor& info, bool upper) {
-  _warn_once_magma_deprecation("linalg.eig");
   cholesky_helper_cusolver(input, upper, info);
 }
 
@@ -158,7 +139,6 @@ Tensor& cholesky_inverse_kernel_impl(Tensor &result, [[maybe_unused]] Tensor& in
   // This function calculates the inverse matrix in-place
   // result should be in column major order and contain matrices to invert
   // the content of result is overwritten
-  _warn_once_magma_deprecation("linalg.cholesky_inverse");
   at::Tensor A = cloneBatchedColumnMajor(result);
   result.fill_(0);
   result.diagonal(/*offset=*/0, /*dim1=*/-2, /*dim2=*/-1).fill_(1);
@@ -315,11 +295,6 @@ REGISTER_CUDA_DISPATCH(triangular_solve_stub, &triangular_solve_kernel)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ orgqr ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tensor& orgqr_kernel_impl(Tensor& result, const Tensor& tau) {
-  // TODO: It is possible to implement efficient batched orgqr for small tau (tau.size(-1) <= 32)
-  // using MAGMA, however it fails on Windows because of some illegal memory reads inside MAGMA.
-  // See discussions in https://github.com/pytorch/pytorch/pull/51348 for comparison of cuSOLVER-MAGMA
-  // and Windows failure.
-  // For reference here is the MAGMA-based implementation: https://gist.github.com/IvanYashchuk/2db50002c9d3c1462ff769e6410ad983
 #ifdef USE_LINALG_SOLVER
   return orgqr_helper_cusolver(result, tau); // cusolver
 #else
@@ -345,7 +320,6 @@ REGISTER_CUDA_DISPATCH(ormqr_stub, &ormqr_kernel)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ qr ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void geqrf_kernel(const Tensor& input, const Tensor& tau) {
-  _warn_once_magma_deprecation("linalg.qr");
   auto geqrf_cusolver_backend = [](const Tensor& input, const Tensor& tau) {
       // For the benchmarks see
       // https://github.com/pytorch/pytorch/pull/56253#discussion_r622851107
@@ -368,7 +342,6 @@ REGISTER_CUDA_DISPATCH(geqrf_stub, &geqrf_kernel)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ linalg_eigh ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void linalg_eigh_kernel(const Tensor& eigenvalues, const Tensor& eigenvectors, const Tensor& infos, bool upper, bool compute_eigenvectors) {
-  _warn_once_magma_deprecation("linalg.eigh");
   linalg_eigh_cusolver(eigenvalues, eigenvectors, infos, upper, compute_eigenvectors);
 }
 
@@ -384,7 +357,6 @@ void linalg_eig_kernel(Tensor& eigenvalues, Tensor& eigenvectors, Tensor& infos,
   // 'linalg_eig_cusolver_xgeev', which modifies the provided input matrix in-place,
   // therefore we need a copy
 #if (defined(CUSOLVER_VERSION) && (CUSOLVER_VERSION >= 11702)) || (defined(USE_ROCM) && ROCM_VERSION >= 71400)
-  _warn_once_magma_deprecation("linalg.eig");
   linalg_eig_cusolver_xgeev(eigenvalues, eigenvectors, input, infos, compute_eigenvectors);
 #else
   // geev is only available from cuSOLVER 11.7.2 (CUDA 12.8) and hipSOLVER 3.5.0 (ROCm 7.14)
@@ -407,7 +379,6 @@ void svd_kernel(const Tensor& A,
                 const Tensor& S,
                 const Tensor& Vh,
                 const Tensor& info) {
-  _warn_once_magma_deprecation("linalg.svd");
   // svd_cusolver computes V rather than Vh, so we pass a view of Vh.mT
   // and then conjugate Vh in-place
   svd_cusolver(A, full_matrices, compute_uv, driver, U, S, compute_uv ? Vh.mT() : Vh, info);
@@ -456,7 +427,6 @@ static void lu_solve_kernel(const Tensor& LU, const Tensor& pivots, const Tensor
   // heuristics determined from tests discussed in https://github.com/pytorch/pytorch/pull/72935
 
   // Computes X = U^{-1}L^{-1}P^T B via triangular solves
-  // Helps mitigating the bugs in magma
   auto lu_solve_triangular = [n](const Tensor& LU, const Tensor& pivots, const Tensor& B, const TransposeType trans) {
     auto LU_ = maybe_expand_lu(B, LU);
     auto pivots_ = maybe_expand_pivots(B, pivots);
@@ -497,7 +467,6 @@ static void lu_solve_kernel(const Tensor& LU, const Tensor& pivots, const Tensor
     }
   };
 
-  _warn_once_magma_deprecation("linalg.lu_solve");
 
 #ifdef USE_LINALG_SOLVER
   auto lu_solve_batched_cublas_fn = [](const Tensor& LU, const Tensor& pivots, const Tensor& B, TransposeType trans) {
@@ -673,7 +642,6 @@ void lstsq_kernel(const Tensor& a, Tensor& b, Tensor& /*rank*/, Tensor& /*singul
   auto m = a.size(-2);
   auto n = a.size(-1);
 
-  _warn_once_magma_deprecation("linalg.lstsq");
   // first handle the underdetermined case (m < n)
   // this case is not supported by cuBLAS
   if (m < n) {

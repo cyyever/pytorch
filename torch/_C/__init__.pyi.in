@@ -1210,7 +1210,6 @@ def _ensureCUDADeviceGuardSet() -> None: ...
 class _LinalgBackend:
     Default: _LinalgBackend
     Cusolver: _LinalgBackend
-    Magma: _LinalgBackend
 
 # mypy error:
 # Detected enum "torch._C.BatchNormBackend" in a type stub with zero
@@ -1261,7 +1260,6 @@ _has_kleidiai: _bool
 _has_mps: _bool
 has_lapack: _bool
 _has_cuda: _bool
-_has_magma: _bool
 _has_xpu: _bool
 _has_mkldnn: _bool
 _has_mkldnn_acl: _bool
