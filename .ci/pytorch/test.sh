@@ -1149,18 +1149,17 @@ test_better_benchmark() {
   benchmark_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/better-benchmark.XXXXXX")"
   mkdir -p "${test_reports_dir}" "${debug_dir}"
 
-  git clone --depth 1 --branch main https://github.com/eellison/better-benchmark.git "${benchmark_dir}"
+  git clone --depth 1 --branch main \
+    https://github.com/eellison/better-benchmark.git "${benchmark_dir}"
   pushd "${benchmark_dir}"
 
   local gpu_indices
   gpu_indices="$(python - <<'PY'
-import sys
 import torch
 
 count = torch.cuda.device_count()
 if count < 1:
     raise RuntimeError("Expected at least one GPU")
-print(f"Found {count} GPUs", file=sys.stderr)
 print(",".join(str(index) for index in range(count)))
 PY
 )"
@@ -1170,11 +1169,10 @@ PY
     --all-shapes \
     --gpus "${gpu_indices}" \
     --output "${debug_dir}/current.json"
-  # TODO: Add a single-input CI export mode to bench_report.py. For now it
-  # requires --compare, so compare the result with itself and export the
-  # unchanged head values as PyTorch v3 dashboard records.
-  python scripts/bench_report.py \
-    --compare "${debug_dir}/current.json" "${debug_dir}/current.json" \
+  python scripts/dashboard_export.py \
+    --input "${debug_dir}/current.json" \
+    --model-accounting benchmarks/model_accounting/b200 \
+    --timing auto \
     --ci-json "${test_reports_dir}/inductor_kernel_benchmark.json"
   popd
 }
@@ -1658,6 +1656,15 @@ test_xpu_bin(){
       "$xpu_case" --gtest_output=xml:"$TEST_REPORTS_DIR"/"$case_name".xml
     fi
   done
+}
+
+test_vulkan() {
+  if [[ "$BUILD_ENVIRONMENT" == *vulkan* ]]; then
+    ln -sf "$TORCH_LIB_DIR"/libtorch* "$TORCH_TEST_DIR"
+    ln -sf "$TORCH_LIB_DIR"/libc10* "$TORCH_TEST_DIR"
+    export VK_ICD_FILENAMES=/var/lib/jenkins/swiftshader/swiftshader/build/Linux/vk_swiftshader_icd.json
+    CPP_TESTS_DIR="${TORCH_TEST_DIR}" LD_LIBRARY_PATH=/var/lib/jenkins/swiftshader/swiftshader/build/Linux/ python test/run_test.py --cpp --verbose -i cpp/vulkan_api_test
+  fi
 }
 
 test_distributed() {
@@ -2523,6 +2530,8 @@ elif [[ "${SHARD_NUMBER}" -gt 2 ]]; then
   fi
   install_torchvision
   test_python_shard "$SHARD_NUMBER"
+elif [[ "${BUILD_ENVIRONMENT}" == *vulkan* ]]; then
+  test_vulkan
 elif [[ "${BUILD_ENVIRONMENT}" == *-mobile-lightweight-dispatch* ]]; then
   test_libtorch
 elif [[ "${TEST_CONFIG}" = docs_test ]]; then
