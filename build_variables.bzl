@@ -236,7 +236,6 @@ core_sources_full_mobile_no_backend_interface_xplat = [
     "torch/csrc/jit/passes/prepack_folding.cpp",
     "torch/csrc/jit/passes/fold_conv_bn.cpp",
     "torch/csrc/jit/passes/fold_linear_bn.cpp",
-    "torch/csrc/jit/passes/dbr_quantization/remove_redundant_aliases.cpp",
     "torch/csrc/jit/passes/frozen_concat_linear.cpp",
     "torch/csrc/jit/passes/frozen_conv_add_relu_fusion.cpp",
     "torch/csrc/jit/passes/frozen_conv_folding.cpp",

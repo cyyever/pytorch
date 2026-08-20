@@ -20,7 +20,6 @@
 #include <torch/csrc/jit/passes/constant_propagation.h>
 #include <torch/csrc/jit/passes/create_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/create_functional_graphs.h>
-#include <torch/csrc/jit/passes/dbr_quantization/remove_redundant_aliases.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/decompose_ops.h>
 #include <torch/csrc/jit/passes/device_type_analysis.h>
@@ -287,9 +286,6 @@ void initJITBindings(PyObject* module) {
           [](std::shared_ptr<Graph>& g) {
             return EliminateCommonSubexpression(g); // overload resolution
           })
-      .def(
-          "_jit_pass_dbr_quant_remove_redundant_aliases",
-          [](Module& module) { return DBRQuantRemoveRedundantAliases(module); })
       .def(
           "_freeze_module",
           [](Module& module,
