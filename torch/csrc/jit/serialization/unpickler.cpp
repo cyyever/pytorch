@@ -7,7 +7,7 @@
 #include <c10/util/FbcodeMaps.h>
 #include <c10/util/safe_numerics.h>
 #include <torch/csrc/jit/api/function_impl.h>
-#include <torch/csrc/jit/mobile/type_parser.h>
+#include <torch/csrc/jit/serialization/type_parser.h>
 #include <torch/csrc/jit/serialization/storage_context.h>
 #include <torch/csrc/jit/serialization/unpickler.h>
 #include <torch/csrc/utils/byte_order.h>

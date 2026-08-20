@@ -17,7 +17,6 @@ from jit.test_tracer import TestTracer, TestMixTracingScripting  # noqa: F401
 from jit.test_recursive_script import TestRecursiveScript  # noqa: F401
 from jit.test_type_sharing import TestTypeSharing  # noqa: F401
 from jit.test_logging import TestLogging  # noqa: F401
-from jit.test_backends import TestBackends, TestBackendsWithCompiler  # noqa: F401
 from jit.test_backend_nnapi import TestNnapiBackend  # noqa: F401
 from jit.test_list_dict import TestList, TestDict, TestNamedTuple, TestScriptDict, TestScriptList  # noqa: F401
 from jit.test_async import TestAsync  # noqa: F401
@@ -38,7 +37,7 @@ from jit.test_unsupported_ops import TestUnsupportedOps  # noqa: F401
 from jit.test_freezing import TestFreezing, TestFrozenOptimizations, TestMKLDNNReinplacing  # noqa: F401
 from jit.test_peephole import TestPeephole  # noqa: F401
 from jit.test_alias_analysis import TestAliasAnalysis  # noqa: F401
-from jit.test_save_load import TestSaveLoad, TestSaveLoadFlatbuffer  # noqa: F401
+from jit.test_save_load import TestSaveLoad  # noqa: F401
 from jit.test_save_load_for_op_version import TestSaveLoadForOpVersion  # noqa: F401
 from jit.test_module_containers import TestModuleContainers  # noqa: F401
 from jit.test_python_bindings import TestPythonBindings  # noqa: F401
@@ -74,7 +73,6 @@ from jit.test_convert_activation import TestFunctionalToInplaceActivation, TestI
 from jit.test_parametrization import TestParametrization  # noqa: F401
 from jit.test_attr import TestGetDefaultAttr  # noqa: F401
 from jit.test_aten_pow import TestAtenPow  # noqa: F401
-from jit.test_optimize_for_mobile_preserve_debug_info import TestOptimizeForMobilePreserveDebugInfo  # noqa: F401
 from jit.test_union import TestUnion  # noqa: F401
 from jit.test_batch_mm import TestBatchMM  # noqa: F401
 from jit.test_dtype_analysis import TestDtypeAnalysis, TestDtypeCustomRulesCPU  # noqa: F401
@@ -2906,36 +2904,6 @@ graph(%Ra, %Rb):
                 self.assertTrue(hasattr(block, 'paramNode'))
                 self.assertTrue(type(block.paramNode()) is torch._C.Node)
         self.assertTrue(tested_blocks)
-
-    def test_export_opnames(self):
-        class Foo(torch.jit.ScriptModule):
-            def one(self, x, y):
-                # type: (Tensor, Tensor) -> Tensor
-                return x + y
-
-            def two(self, x):
-                # type: (Tensor) -> Tensor
-                return 2 * x
-
-            @torch.jit.script_method
-            def forward(self, x):
-                # type: (Tensor) -> Tensor
-                return self.one(self.two(x), x)
-
-        class Bar(torch.jit.ScriptModule):
-            def __init__(self) -> None:
-                super().__init__()
-                self.sub = Foo()
-
-            @torch.jit.script_method
-            def forward(self, x):
-                # type: (Tensor) -> Tensor
-                return self.sub.forward(x)
-
-        bar = Bar()
-        ops = torch.jit.export_opnames(bar)
-        expected = ['aten::add.Tensor', 'aten::mul.Scalar']
-        self.assertTrue(set(expected).issubset(set(ops)))
 
     def test_pytorch_jit_env_off(self):
         import subprocess

@@ -15,8 +15,6 @@
 #include <torch/csrc/jit/frontend/script_type_parser.h>
 #include <torch/csrc/jit/ir/graph_utils.h>
 #include <torch/csrc/jit/ir/ir.h>
-#include <torch/csrc/jit/mobile/file_format.h>
-#include <torch/csrc/jit/mobile/flatbuffer_loader.h>
 #include <torch/csrc/jit/operator_upgraders/upgraders_entry.h>
 #include <torch/csrc/jit/passes/shape_analysis.h>
 #include <torch/csrc/jit/passes/subgraph_rewrite.h>
@@ -360,52 +358,6 @@ Module import_ir_module(
       std::move(cu), in, device, extra_files, load_debug_files);
 }
 
-static Module _load_jit_module_from_bytes(
-    const std::shared_ptr<char>& data,
-    size_t size,
-    std::shared_ptr<CompilationUnit> cu,
-    std::optional<c10::Device> device,
-    ExtraFilesMap& extra_files,
-    bool restore_shapes);
-
-Module parse_and_initialize_jit_module(
-    const std::shared_ptr<char>& data,
-    size_t size,
-    ExtraFilesMap& extra_files,
-    std::optional<at::Device> device) {
-  populate_upgraders_graph_map();
-  ExtraFilesMap jit_files;
-  std::vector<IValue> jit_constants;
-  mobile::Module mobilem = parse_and_initialize_mobile_module_for_jit(
-      data.get(), size, jit_files, jit_constants, device, &extra_files);
-
-  Module m = jitModuleFromSourceAndConstants(
-      mobilem._ivalue(),
-      jit_files,
-      jit_constants,
-      static_cast<int32_t>(mobilem.bytecode_version()));
-  m.set_delete_memory(data);
-  return m;
-}
-
-Module load_jit_module_from_file(
-    const std::string& filename,
-    ExtraFilesMap& extra_files,
-    std::optional<at::Device> device) {
-  auto data = get_file_content(filename.c_str());
-  return parse_and_initialize_jit_module(
-      std::get<0>(data), std::get<1>(data), extra_files, device);
-}
-
-Module load_jit_module_from_stream(
-    std::istream& in,
-    ExtraFilesMap& extra_files,
-    std::optional<at::Device> device) {
-  auto data = get_stream_content(in);
-  return parse_and_initialize_jit_module(
-      std::get<0>(data), std::get<1>(data), extra_files, device);
-}
-
 Module import_ir_module(
     std::shared_ptr<CompilationUnit> cu,
     std::istream& in,
@@ -416,15 +368,10 @@ Module import_ir_module(
   in.seekg(0, in.beg);
   // NOTE: Zipformat can be large files. So using stream version directly
   // instead of reading the file all at once.
-  if (getFileFormat(in) != FileFormat::FlatbufferFileFormat) {
-    auto reader = std::make_unique<PyTorchStreamReader>(&in);
-    reader->setShouldLoadDebugSymbol(load_debug_files);
-    ScriptModuleDeserializer deserializer(std::move(cu), std::move(reader));
-    return deserializer.deserialize(device, extra_files, restore_shapes);
-  }
-  auto [data, size] = get_stream_content(in);
-  return _load_jit_module_from_bytes(
-      data, size, cu, device, extra_files, restore_shapes);
+  auto reader = std::make_unique<PyTorchStreamReader>(&in);
+  reader->setShouldLoadDebugSymbol(load_debug_files);
+  ScriptModuleDeserializer deserializer(std::move(cu), std::move(reader));
+  return deserializer.deserialize(device, extra_files, restore_shapes);
 }
 
 // For reading unified serialization format from torch.Package.
@@ -463,15 +410,10 @@ Module import_ir_module(
     bool restore_shapes) {
   // NOTE: Zipformat can be large files. So using stream version directly
   // instead of reading the file all at once.
-  if (getFileFormat(filename) != FileFormat::FlatbufferFileFormat) {
-    auto reader = std::make_unique<PyTorchStreamReader>(filename);
-    reader->setShouldLoadDebugSymbol(load_debug_files);
-    ScriptModuleDeserializer deserializer(std::move(cu), std::move(reader));
-    return deserializer.deserialize(device, extra_files, restore_shapes);
-  }
-  auto [data, size] = get_file_content(filename.c_str());
-  return _load_jit_module_from_bytes(
-      data, size, cu, device, extra_files, restore_shapes);
+  auto reader = std::make_unique<PyTorchStreamReader>(filename);
+  reader->setShouldLoadDebugSymbol(load_debug_files);
+  ScriptModuleDeserializer deserializer(std::move(cu), std::move(reader));
+  return deserializer.deserialize(device, extra_files, restore_shapes);
 }
 
 Module import_ir_module(
@@ -561,31 +503,6 @@ Module load(
   auto cu = std::make_shared<CompilationUnit>();
   return import_ir_module(
       std::move(cu), std::move(rai), device, extra_files, load_debug_files);
-}
-
-Module _load_jit_module_from_bytes(
-    const std::shared_ptr<char>& data,
-    size_t size,
-    std::shared_ptr<CompilationUnit> cu,
-    std::optional<c10::Device> device,
-    ExtraFilesMap& extra_files,
-    bool restore_shapes) {
-  TORCH_CHECK(size >= kFileFormatHeaderSize, "Unrecognized data format");
-  auto format = getFileFormat(data.get());
-  switch (format) {
-    case FileFormat::FlatbufferFileFormat: {
-      return parse_and_initialize_jit_module(data, size, extra_files, device);
-    }
-    case FileFormat::ZipFileFormat: {
-      auto rai = std::make_unique<MemoryReadAdapter>(data.get(), size);
-      auto reader = std::make_unique<PyTorchStreamReader>(std::move(rai));
-      ScriptModuleDeserializer deserializer(std::move(cu), std::move(reader));
-      return deserializer.deserialize(device, extra_files, restore_shapes);
-    }
-
-    default:
-      TORCH_CHECK(false, "Unrecognized data format");
-  }
 }
 
 // Replace object with a newly created but equivalent object.

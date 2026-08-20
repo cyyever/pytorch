@@ -1028,7 +1028,6 @@ coverage_ignore_functions = [
     "time_cuda",
     # torch.utils.mkldnn
     "to_mkldnn",
-    # torch.utils.mobile_optimizer
     # torch.utils.tensorboard.summary
     "audio",
     "compute_curve",
@@ -1227,7 +1226,6 @@ coverage_ignore_classes = [
     # torch.distributed.algorithms.ddp_comm_hooks
     "DDPCommHookType",
     # torch.jit.mobile
-    "LiteScriptModule",
     # torch.ao.nn.quantized.modules
     "DeQuantize",
     "Quantize",
@@ -2073,8 +2071,6 @@ coverage_ignore_classes = [
     "MkldnnConv3d",
     "MkldnnLinear",
     "MkldnnPrelu",
-    # torch.utils.mobile_optimizer
-    "LintCode",
     # torch.utils.show_pickle
     "DumpUnpickler",
     "FakeClass",

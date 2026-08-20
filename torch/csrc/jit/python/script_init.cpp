@@ -10,14 +10,6 @@
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/frontend/ir_emitter.h>
 #include <torch/csrc/jit/frontend/sugared_value.h>
-#include <torch/csrc/jit/mobile/code.h>
-#include <torch/csrc/jit/mobile/compatibility/backport.h>
-#include <torch/csrc/jit/mobile/compatibility/model_compatibility.h>
-#include <torch/csrc/jit/mobile/file_format.h>
-#include <torch/csrc/jit/mobile/flatbuffer_loader.h>
-#include <torch/csrc/jit/mobile/import.h>
-#include <torch/csrc/jit/mobile/module.h>
-#include <torch/csrc/jit/mobile/quantization.h>
 #include <torch/csrc/jit/operator_upgraders/upgraders.h>
 #include <torch/csrc/jit/operator_upgraders/upgraders_entry.h>
 #include <torch/csrc/jit/operator_upgraders/utils.h>
@@ -25,8 +17,6 @@
 #include <torch/csrc/jit/python/module_python.h>
 #include <torch/csrc/jit/python/python_ivalue.h>
 #include <torch/csrc/jit/python/python_sugared_value.h>
-#include <torch/csrc/jit/serialization/export_bytecode.h>
-#include <torch/csrc/jit/serialization/flatbuffer_serializer.h>
 #include <torch/csrc/jit/serialization/import.h>
 #include <torch/csrc/jit/testing/file_check.h>
 
@@ -64,7 +54,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-#include <torch/csrc/jit/mobile/train/export_data.h>
 #include <cstddef>
 #include <memory>
 #include <sstream>
@@ -864,30 +853,6 @@ static void pyCompilationUnitDefine(
   }
 }
 
-// This function will copy bytes into a shared_ptr of chars aligned
-// at kFlatbufferDataAlignmentBytes boundary (currently 16).
-// This is required because tensors need to be aligned at 16 bytes boundary.
-static std::shared_ptr<char> copyStr(const std::string& bytes) {
-  size_t size = (bytes.size() / kFlatbufferDataAlignmentBytes + 1) *
-      kFlatbufferDataAlignmentBytes;
-#ifdef _WIN32
-  std::shared_ptr<char> bytes_copy(
-      static_cast<char*>(_aligned_malloc(size, kFlatbufferDataAlignmentBytes)),
-      _aligned_free);
-#elif defined(__APPLE__)
-  void* p;
-  ::posix_memalign(&p, kFlatbufferDataAlignmentBytes, size);
-  TORCH_INTERNAL_ASSERT(p, "Could not allocate memory for flatbuffer");
-  std::shared_ptr<char> bytes_copy(static_cast<char*>(p), free);
-#else
-  std::shared_ptr<char> bytes_copy(
-      static_cast<char*>(aligned_alloc(kFlatbufferDataAlignmentBytes, size)),
-      free);
-#endif
-  memcpy(bytes_copy.get(), bytes.data(), bytes.size());
-  return bytes_copy;
-}
-
 void initJitScriptBindings(PyObject* module) {
   auto m = py::handle(module).cast<py::module>();
 
@@ -1259,37 +1224,6 @@ void initJitScriptBindings(PyObject* module) {
             return py::bytes(std::move(buf).str());
           },
           py::arg("_extra_files") = ExtraFilesMap())
-      .def(
-          "_save_for_mobile",
-          [](Module& m,
-             const std::string& filename,
-             const ExtraFilesMap& _extra_files = ExtraFilesMap(),
-             bool _save_mobile_debug_info = false,
-             bool _use_flatbuffer = false) {
-            m._save_for_mobile(
-                filename,
-                _extra_files,
-                _save_mobile_debug_info,
-                _use_flatbuffer);
-          },
-          py::arg("filename"),
-          py::arg("_extra_files") = ExtraFilesMap(),
-          py::arg("_save_mobile_debug_info") = false,
-          py::arg("_use_flatbuffer") = false)
-      .def(
-          "_save_to_buffer_for_mobile",
-          [](Module& m,
-             const ExtraFilesMap& _extra_files = ExtraFilesMap(),
-             bool _save_mobile_debug_info = false,
-             bool _use_flatbuffer = false) {
-            std::ostringstream buf;
-            m._save_for_mobile(
-                buf, _extra_files, _save_mobile_debug_info, _use_flatbuffer);
-            return py::bytes(std::move(buf).str());
-          },
-          py::arg("_extra_files") = ExtraFilesMap(),
-          py::arg("_save_mobile_debug_info") = false,
-          py::arg("_use_flatbuffer") = false)
       .def("_set_optimized", &Module::set_optimized)
       .def(
           "dump",
@@ -1501,41 +1435,6 @@ void initJitScriptBindings(PyObject* module) {
       .def_property_readonly("qualified_name", [](const Module& self) {
         return self.type()->name()->qualifiedName();
       });
-
-  py::class_<mobile::Module>(m, "LiteScriptModule")
-      .def(py::init<
-           c10::intrusive_ptr<c10::ivalue::Object>,
-           std::shared_ptr<mobile::CompilationUnit>>())
-      .def(
-          "find_method",
-          [](mobile::Module& m, const std::string& method_name) {
-            auto method = m.find_method(method_name);
-            return method != std::nullopt;
-          },
-          py::arg("method_name"))
-      .def(
-          "run_method",
-          [](mobile::Module& m,
-             const std::string& method_name,
-             const py::tuple& input_tuple) {
-            Stack stack;
-            for (auto& input : input_tuple) {
-              stack.push_back(toTypeInferredIValue(input));
-            }
-            return m.get_method(method_name)(stack);
-          },
-          py::arg("method_name"),
-          py::arg("input_tuple"))
-      .def(
-          "forward",
-          [](mobile::Module& m, const py::tuple& input_tuple) {
-            Stack stack;
-            for (auto& input : input_tuple) {
-              stack.push_back(toTypeInferredIValue(input));
-            }
-            return m.get_method("forward")(stack);
-          },
-          py::arg("input_tuple"));
 
   slot_dict_impl<detail::ParameterPolicy>::bind(m, "ParameterDict");
   slot_dict_impl<detail::BufferPolicy>::bind(m, "BufferDict");
@@ -1830,14 +1729,6 @@ void initJitScriptBindings(PyObject* module) {
       "_calculate_package_version_based_on_upgraders",
       &calculate_package_version_based_on_upgraders);
   m.def("_get_version_calculator_flag", &get_version_calculator_flag);
-  m.def(
-      "_compile_graph_to_code_table",
-      [](const std::string& name, const std::shared_ptr<Graph>& graph) {
-        CompilationOptions options;
-        GraphFunction jitFunc(name, graph, nullptr);
-        auto mobileFunc = convertJitFunctionToMobileFunction(jitFunc, options);
-        return convertMobileFunctionToCodeTable(*mobileFunc, options);
-      });
   m.def(
       "_jit_script_compile",
       [](const std::string& qualname,
@@ -2139,123 +2030,6 @@ void initJitScriptBindings(PyObject* module) {
         extra_files_to_python(extra_files_map, extra_files);
         return ret;
       });
-  m.def(
-      "_load_for_lite_interpreter",
-      [](const std::string& filename, py::object map_location) {
-        std::optional<at::Device> optional_device;
-        if (!map_location.is_none()) {
-          AT_ASSERT(THPDevice_Check(map_location.ptr()));
-          optional_device =
-              reinterpret_cast<THPDevice*>(map_location.ptr())->device;
-        }
-        return _load_for_mobile(filename, optional_device);
-      });
-  m.def(
-      "_load_for_lite_interpreter_from_buffer",
-      [](const std::string& buffer, py::object map_location) {
-        std::istringstream in(buffer);
-        std::optional<at::Device> optional_device;
-        if (!map_location.is_none()) {
-          AT_ASSERT(THPDevice_Check(map_location.ptr()));
-          optional_device =
-              reinterpret_cast<THPDevice*>(map_location.ptr())->device;
-        }
-        return _load_for_mobile(in, optional_device);
-      });
-  m.def(
-      "_backport_for_mobile",
-      [](const std::string& filename_input,
-         const std::string& filename_output,
-         const int64_t version) {
-        return _backport_for_mobile(filename_input, filename_output, version);
-      });
-  m.def(
-      "_backport_for_mobile_from_buffer",
-      [](const std::string& buffer_input,
-         const std::string& filename_output,
-         const int64_t version) {
-        std::istringstream in(buffer_input);
-        return _backport_for_mobile(in, filename_output, version);
-      });
-  m.def(
-      "_backport_for_mobile_to_buffer",
-      [](const std::string& filename_input, const int64_t version) {
-        std::ostringstream buffer_output;
-        bool success =
-            _backport_for_mobile(filename_input, buffer_output, version);
-        return success ? py::bytes(std::move(buffer_output).str())
-                       : py::bytes("");
-      });
-  m.def(
-      "_backport_for_mobile_from_buffer_to_buffer",
-      [](const std::string& buffer_input, const int64_t version) {
-        std::istringstream in(buffer_input);
-        std::ostringstream buffer_output;
-        bool success = _backport_for_mobile(in, buffer_output, version);
-        return success ? py::bytes(std::move(buffer_output).str())
-                       : py::bytes("");
-      });
-  m.def("_get_model_bytecode_version", [](const std::string& filename) {
-    return _get_model_bytecode_version(filename);
-  });
-  m.def(
-      "_get_model_extra_files",
-      [](const std::string& filename, const py::dict& py_extra_files) {
-        std::optional<at::Device> optional_device;
-        ExtraFilesMap cpp_extra_files = ExtraFilesMap();
-        _load_for_mobile(filename, optional_device, cpp_extra_files);
-        extra_files_to_python(cpp_extra_files, py_extra_files);
-
-        return py_extra_files;
-      });
-  m.def(
-      "_get_model_bytecode_version_from_buffer", [](const std::string& buffer) {
-        std::istringstream in(buffer);
-        return _get_model_bytecode_version(in);
-      });
-  m.def(
-      "_get_model_extra_files_from_buffer",
-      [](const std::string& buffer, const py::dict& py_extra_files) {
-        std::optional<at::Device> optional_device;
-        ExtraFilesMap cpp_extra_files = ExtraFilesMap();
-        std::istringstream in(buffer);
-        _load_for_mobile(in, optional_device, cpp_extra_files);
-        extra_files_to_python(cpp_extra_files, py_extra_files);
-
-        return py_extra_files;
-      });
-  m.def("_get_mobile_model_contained_types", [](const std::string& filename) {
-    return _get_mobile_model_contained_types(filename);
-  });
-  m.def(
-      "_get_mobile_model_contained_types_from_buffer",
-      [](const std::string& buffer) {
-        std::istringstream in(buffer);
-        return _get_mobile_model_contained_types(in);
-      });
-  m.def("_nn_module_to_mobile", [](const Module& module) {
-    CompilationOptions options;
-    return jitModuleToMobile(module, options);
-  });
-  py::class_<OperatorInfo>(m, "OperatorInfo")
-      .def_readonly("num_schema_args", &OperatorInfo::num_schema_args);
-  m.def("_get_model_ops_and_info", [](const std::string& filename) {
-    return _get_model_ops_and_info(filename);
-  });
-  m.def("_get_model_ops_and_info_from_buffer", [](const std::string& buffer) {
-    std::istringstream in(buffer);
-    return _get_model_ops_and_info(in);
-  });
-  m.def("_export_operator_list", [](torch::jit::mobile::Module& sm) {
-    return debugMakeSet(torch::jit::mobile::_export_operator_list(sm));
-  });
-  m.def(
-      "_quantize_ondevice_ptq_dynamic",
-      [](mobile::Module& m, const std::string& method_name) {
-        mobile::quantization::PTQQuanizationHelper ptq_helper;
-        ptq_helper.quantize_dynamic(m, method_name);
-      });
-
   m.def("_jit_set_emit_hooks", setEmitHooks);
   m.def("_jit_get_emit_hooks", getEmitHooks);
   m.def("_jit_clear_class_registry", []() {
@@ -2359,19 +2133,12 @@ void initJitScriptBindings(PyObject* module) {
       },
       py::arg("new_settings") = nullptr);
 
-  m.def(
-      "_enable_mobile_interface_call_export",
-      &torch::jit::enableMobileInterfaceCallExport);
-
   m.def("_create_module_with_type", [](const ClassTypePtr& type) {
      return Module(get_python_cu(), type);
    }).def("_create_object_with_type", [](const ClassTypePtr& type) {
     return Object(get_python_cu(), type);
   });
 
-  m.def("_export_opnames", [](Module& sm) {
-    return debugMakeList(torch::jit::export_opnames(sm));
-  });
 
   py::class_<
       ConcreteModuleTypeBuilder,
@@ -2662,90 +2429,6 @@ void initJitScriptBindings(PyObject* module) {
         }
         return root;
       });
-
-  m.def("_get_file_format", [](const std::string& path) {
-    switch (getFileFormat(path)) {
-      case FileFormat::FlatbufferFileFormat:
-        return "flatbuffer";
-      case FileFormat::ZipFileFormat:
-        return "zipfile";
-      default:
-        return "invalid";
-    }
-  });
-
-  m.def(
-      "_save_parameters",
-      [](const std::map<std::string, at::Tensor>& map,
-         const std::string& filename,
-         bool use_flatbuffer = false) {
-        _save_parameters(map, filename, use_flatbuffer);
-      });
-
-  m.def("_load_mobile_module_from_file", [](const std::string& filename) {
-    return torch::jit::load_mobile_module_from_file(filename);
-  });
-  m.def("_load_mobile_module_from_bytes", [](const std::string& bytes) {
-    auto bytes_copy = copyStr(bytes);
-    return torch::jit::parse_and_initialize_mobile_module(
-        bytes_copy, bytes.size());
-  });
-  m.def("_load_jit_module_from_file", [](const std::string& filename) {
-    ExtraFilesMap extra_files = ExtraFilesMap();
-    return torch::jit::load_jit_module_from_file(filename, extra_files);
-  });
-  m.def("_load_jit_module_from_bytes", [](const std::string& bytes) {
-    auto bytes_copy = copyStr(bytes);
-    ExtraFilesMap extra_files = ExtraFilesMap();
-    return torch::jit::parse_and_initialize_jit_module(
-        bytes_copy, bytes.size(), extra_files);
-  });
-  m.def(
-      "_save_mobile_module",
-      [](const torch::jit::mobile::Module& module,
-         const std::string& filename,
-         const ExtraFilesMap& _extra_files = ExtraFilesMap()) {
-        return torch::jit::save_mobile_module(module, filename, _extra_files);
-      });
-  m.def(
-      "_save_jit_module",
-      [](const torch::jit::Module& module,
-         const std::string& filename,
-         const ExtraFilesMap& _extra_files = ExtraFilesMap()) {
-        return torch::jit::save_jit_module(module, filename, _extra_files);
-      });
-  m.def(
-      "_save_mobile_module_to_bytes",
-      [](const torch::jit::mobile::Module& module,
-         const ExtraFilesMap& _extra_files = ExtraFilesMap()) {
-        auto detached_buffer =
-            torch::jit::save_mobile_module_to_bytes(module, _extra_files);
-        return py::bytes(
-            reinterpret_cast<char*>(detached_buffer->data()),
-            detached_buffer->size());
-      });
-  m.def(
-      "_save_jit_module_to_bytes",
-      [](const torch::jit::Module& module,
-         const ExtraFilesMap& _extra_files = ExtraFilesMap()) {
-        auto detached_buffer =
-            torch::jit::save_jit_module_to_bytes(module, _extra_files);
-        return py::bytes(
-            reinterpret_cast<char*>(detached_buffer->data()),
-            detached_buffer->size());
-      });
-  m.def("_get_module_info_from_flatbuffer", [](std::string flatbuffer_content) {
-    py::gil_scoped_acquire acquire;
-    py::dict result;
-    mobile::ModuleInfo minfo =
-        torch::jit::get_module_info_from_flatbuffer(&flatbuffer_content[0]);
-    result["bytecode_version"] = minfo.bytecode_version;
-    result["operator_version"] = minfo.operator_version;
-    result["function_names"] = minfo.function_names;
-    result["type_names"] = minfo.type_names;
-    result["opname_to_num_args"] = minfo.opname_to_num_args;
-    return result;
-  });
 
   m.def("_pickle_save", [](const IValue& v) {
     auto bytes = torch::jit::pickle_save(v);

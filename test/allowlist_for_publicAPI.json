@@ -334,14 +334,12 @@
     "interface",
     "is_scripting",
     "is_tracing",
-    "jit_module_from_flatbuffer",
     "last_executed_optimized_graph",
     "load",
     "optimize_for_inference",
     "optimized_execution",
     "run_frozen_optimizations",
     "save",
-    "save_jit_module_to_flatbuffer",
     "script",
     "script_method",
     "set_fusion_strategy",
@@ -2101,9 +2099,6 @@
   "torch.jit.generate_bytecode": [
     "List"
   ],
-  "torch.jit.mobile": [
-    "validate_map_location"
-  ],
   "torch.jit.quantized": [
     "List",
     "Optional",
@@ -2392,13 +2387,6 @@
     "Tuple",
     "cast",
     "contextmanager"
-  ],
-  "torch.utils.mobile_optimizer": [
-    "Enum",
-    "List",
-    "MobileOptimizerType",
-    "Optional",
-    "Set"
   ],
   "torch.utils.model_dump": [
     "main"

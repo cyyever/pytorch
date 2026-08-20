@@ -7,7 +7,6 @@
 #include <torch/csrc/jit/frontend/ir_emitter.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/operator_upgraders/upgraders.h>
-#include <torch/csrc/jit/serialization/export_bytecode.h>
 #include <string>
 #include <unordered_map>
 

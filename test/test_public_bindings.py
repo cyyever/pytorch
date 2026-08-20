@@ -162,7 +162,6 @@ class TestPublicBindings(TestCase):
             "JITException",
             "layout",
             "ListType",
-            "LiteScriptModule",
             "LockingLogger",
             "LoggerBase",
             "memory_format",

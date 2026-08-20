@@ -771,44 +771,6 @@ if _enabled:
             """
             return self._c.save(str(f), **kwargs)
 
-        @deprecated(
-            "Lite Interpreter is deprecated. Please consider switching to ExecuTorch. \
-            https://docs.pytorch.org/executorch/stable/getting-started.html"
-        )
-        def _save_for_lite_interpreter(self, *args, **kwargs):
-            r"""Add (or update) the bytecode session to the script model.
-
-            _save_for_lite_interpreter(f)
-
-            The updated model is used
-            in lite interpreter for mobile applications.
-
-            Args:
-                f: a string containing a file name.
-                _extra_files: Map from filename to contents which will be stored as part of 'f'.
-
-            """
-            warnings.warn(
-                "Lite Interpreter is deprecated. Please consider switching to ExecuTorch. \
-                https://docs.pytorch.org/executorch/stable/getting-started.html",
-                FutureWarning,
-                stacklevel=2,
-            )
-            return self._c._save_for_mobile(*args, **kwargs)
-
-        @deprecated(
-            "Lite Interpreter is deprecated. Please consider switching to ExecuTorch. \
-            https://docs.pytorch.org/executorch/stable/getting-started.html"
-        )
-        def _save_to_buffer_for_lite_interpreter(self, *args, **kwargs):
-            warnings.warn(
-                "Lite Interpreter is deprecated. Please consider switching to ExecuTorch. \
-                https://docs.pytorch.org/executorch/stable/getting-started.html",
-                FutureWarning,
-                stacklevel=2,
-            )
-            return self._c._save_to_buffer_for_mobile(*args, **kwargs)
-
         def save_to_buffer(self, *args: Any, **kwargs: Any) -> Any:
             return self._c.save_to_buffer(*args, **kwargs)
 

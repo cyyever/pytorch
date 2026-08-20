@@ -46,12 +46,7 @@ from torch.jit._script import (
     ScriptModule,
     ScriptWarning,
 )
-from torch.jit._serialization import (
-    jit_module_from_flatbuffer,
-    load,
-    save,
-    save_jit_module_to_flatbuffer,
-)
+from torch.jit._serialization import load, save
 from torch.jit._trace import (
     _flatten,
     _get_trace_graph,
@@ -79,7 +74,6 @@ __all__ = [
     "annotate",
     "enable_onednn_fusion",
     "export",
-    "export_opnames",
     "fork",
     "freeze",
     "interface",
@@ -104,17 +98,6 @@ _fork = fork
 _wait = wait
 _set_fusion_strategy = set_fusion_strategy
 
-
-def export_opnames(m):
-    r"""
-    Generate new bytecode for a Script module.
-
-    Returns what the op list would be for a Script Module based off the current code base.
-
-    If you have a LiteScriptModule and want to get the currently present
-    list of ops call _export_operator_list instead.
-    """
-    return torch._C._export_opnames(m._c)
 
 
 # torch.jit.Error
