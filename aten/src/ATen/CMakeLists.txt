@@ -49,6 +49,7 @@ set_bool(AT_BUILD_WITH_BLAS USE_BLAS)
 set_bool(AT_BUILD_WITH_LAPACK USE_LAPACK)
 set_bool(AT_BLAS_F2C BLAS_F2C)
 set_bool(AT_BLAS_USE_CBLAS_DOT BLAS_USE_CBLAS_DOT)
+set_bool(AT_MAGMA_ENABLED USE_MAGMA)
 set_bool(CAFFE2_STATIC_LINK_CUDA_INT CAFFE2_STATIC_LINK_CUDA)
 set_bool(AT_CUDNN_ENABLED CAFFE2_USE_CUDNN)
 set_bool(AT_CUSPARSELT_ENABLED CAFFE2_USE_CUSPARSELT)
@@ -672,10 +673,10 @@ if(LAPACK_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
   if(USE_CUDA AND MSVC)
     # Although Lapack provides CPU (and thus, one might expect that ATen_cuda
-    # would not need this at all), some of our libraries backend to CPU
-    # BLAS/LAPACK implementations, and so it is very important we get the
-    # *right* implementation, because even if the symbols are the same, LAPACK
-    # implementations may have different calling conventions.
+    # would not need this at all), some of our libraries (magma in particular)
+    # backend to CPU BLAS/LAPACK implementations, and so it is very important
+    # we get the *right* implementation, because even if the symbols are the
+    # same, LAPACK implementations may have different calling conventions.
     # This caused https://github.com/pytorch/pytorch/issues/7353
     #
     # We do NOT do this on Linux, since we just rely on torch_cpu to
@@ -742,7 +743,7 @@ if(USE_MKLDNN_ACL)
     list(APPEND ATen_CPU_DEPENDENCY_LIBS ${ACL_LIBRARIES})
 endif()
 
-if(NOT EMSCRIPTEN)
+if(NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
   if(NOT MSVC)
     # Bump up optimization level for sleef to -O1, since at -O0 the compiler
     # excessively spills intermediate vector registers to the stack
@@ -843,6 +844,22 @@ if(USE_CUDA AND NOT USE_ROCM)
 endif()
 
 
+  if(USE_MAGMA)
+    if(USE_CUDA AND NOT BUILD_LAZY_CUDA_LINALG)
+      list(APPEND ATen_CUDA_DEPENDENCY_LIBS torch::magma)
+    endif(USE_CUDA AND NOT BUILD_LAZY_CUDA_LINALG)
+    if(USE_ROCM)
+      list(APPEND ATen_HIP_DEPENDENCY_LIBS torch::magma)
+    endif(USE_ROCM)
+    if(MSVC)
+      if($ENV{TH_BINARY_BUILD})
+        # Do not do this on Linux: see Note [Extra MKL symbols for MAGMA in torch_cpu]
+        # in caffe2/CMakeLists.txt
+        list(APPEND ATen_CUDA_DEPENDENCY_LIBS ${BLAS_LIBRARIES})
+      endif($ENV{TH_BINARY_BUILD})
+    endif(MSVC)
+  endif(USE_MAGMA)
+
 # Include CPU paths for CUDA/HIP as well
 list(APPEND ATen_CUDA_INCLUDE ${ATen_CPU_INCLUDE})
 list(APPEND ATen_HIP_INCLUDE ${ATen_CPU_INCLUDE})
@@ -921,7 +938,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake-exports/ATenConfig.cmake"
   DESTINATION "${AT_INSTALL_SHARE_DIR}/cmake/ATen")
 
 set(INSTALL_HEADERS ${base_h} ${ATen_CORE_HEADERS} ${native_nested_h} ${ATen_TRANSFORMER_HEADERS})
-list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_ao_sparse_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_kleidiai_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
+if(NOT INTERN_BUILD_MOBILE)
+  list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_ao_sparse_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_kleidiai_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
+endif()
 
 # https://stackoverflow.com/questions/11096471/how-can-i-install-a-hierarchy-of-files-using-cmake
 foreach(HEADER  ${INSTALL_HEADERS})

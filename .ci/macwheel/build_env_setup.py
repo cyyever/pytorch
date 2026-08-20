@@ -29,6 +29,7 @@ MACOS_BUILD_ENV: dict[str, str] = {
     "USE_DISTRIBUTED": "1",
     "USE_MKLDNN": "OFF",
     "BUILD_TEST": "OFF",
+    "USE_COREML_DELEGATE": "1",
 }
 
 OMP_PREFIX = Path("/opt/llvm-openmp")
