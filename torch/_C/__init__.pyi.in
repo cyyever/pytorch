@@ -36,8 +36,6 @@ from torch._C import (
     _export,
     _functionalization,
     _functorch,
-    _lazy,
-    _lazy_ts_backend,
     _nn,
     _VariableFunctions,
     _verbose,

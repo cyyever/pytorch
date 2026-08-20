@@ -8,13 +8,6 @@
 # bzl files are not exported via ShipIt by default, so you may also need to
 # update PyTorch's ShipIt config)
 
-# This is duplicated in caffe2/CMakeLists.txt for now and not yet used in buck
-GENERATED_LAZY_TS_CPP = [
-    "lazy/generated/LazyNativeFunctions.cpp",
-    "lazy/generated/RegisterAutogradLazy.cpp",
-    "lazy/generated/RegisterLazy.cpp",
-]
-
 def libtorch_generated_sources(gencode_pattern, path_prefix="torch/csrc/", only_type_vars=False):
     type_vars = [
         "autograd/generated/VariableType_0.cpp",
@@ -329,55 +322,6 @@ core_sources_full_mobile = core_sources_full_mobile_no_backend_interface + [
 core_sources_full = core_sources_full_mobile + [
 ]
 
-lazy_tensor_core_sources = [
-    "torch/csrc/lazy/backend/backend_device.cpp",
-    "torch/csrc/lazy/backend/backend_interface.cpp",
-    "torch/csrc/lazy/backend/lowering_context.cpp",
-    "torch/csrc/lazy/core/config.cpp",
-    "torch/csrc/lazy/core/debug_util.cpp",
-    "torch/csrc/lazy/core/hash.cpp",
-    "torch/csrc/lazy/core/helpers.cpp",
-    "torch/csrc/lazy/core/ir.cpp",
-    "torch/csrc/lazy/core/ir_dump_util.cpp",
-    "torch/csrc/lazy/core/ir_metadata.cpp",
-    "torch/csrc/lazy/core/ir_util.cpp",
-    "torch/csrc/lazy/core/lazy_graph_executor.cpp",
-    "torch/csrc/lazy/core/metrics.cpp",
-    "torch/csrc/lazy/core/multi_wait.cpp",
-    "torch/csrc/lazy/core/ops/arithmetic_ir_ops.cpp",
-    "torch/csrc/lazy/core/ops/utils.cpp",
-    "torch/csrc/lazy/core/permutation_util.cpp",
-    "torch/csrc/lazy/core/shape.cpp",
-    "torch/csrc/lazy/core/shape_inference.cpp",
-    "torch/csrc/lazy/core/tensor.cpp",
-    "torch/csrc/lazy/core/tensor_impl.cpp",
-    "torch/csrc/lazy/core/tensor_util.cpp",
-    "torch/csrc/lazy/core/thread_pool.cpp",
-    "torch/csrc/lazy/core/trie.cpp",
-]
-
-# We can't build all of the ts backend under certain build configurations, e.g. mobile,
-# since it depends on things like autograd, meta functions, which may be disabled
-lazy_tensor_ts_sources = [
-    "torch/csrc/lazy/ts_backend/dynamic_ir.cpp",
-    "torch/csrc/lazy/ts_backend/config.cpp",
-    "torch/csrc/lazy/ts_backend/ops/device_data.cpp",
-    "torch/csrc/lazy/ts_backend/ops/generic.cpp",
-    "torch/csrc/lazy/ts_backend/tensor_aten_ops.cpp",
-    "torch/csrc/lazy/ts_backend/ts_autograd_functions.cpp",
-    "torch/csrc/lazy/ts_backend/ts_backend_impl.cpp",
-    "torch/csrc/lazy/ts_backend/ts_eager_fallback.cpp",
-    "torch/csrc/lazy/ts_backend/ts_lowering_context.cpp",
-    "torch/csrc/lazy/ts_backend/ts_native_functions.cpp",
-    "torch/csrc/lazy/ts_backend/ts_node.cpp",
-    "torch/csrc/lazy/ts_backend/ts_node_lowering.cpp",
-]
-
-lazy_tensor_core_python_sources = [
-    "torch/csrc/lazy/python/init.cpp",
-    "torch/csrc/lazy/python/python_util.cpp",
-]
-
 inductor_core_resources = [
     "torch/csrc/inductor/aoti_package/model_package_loader.cpp",
     "torch/csrc/inductor/aoti_runner/model_container_runner.cpp",
@@ -400,8 +344,7 @@ libtorch_core_sources = sorted(
     core_sources_full +
     core_trainer_sources +
     inductor_core_resources +
-    libtorch_profiler_sources +
-    lazy_tensor_core_sources,
+    libtorch_profiler_sources,
 )
 
 # These files are the only ones that are supported on Windows.
@@ -846,7 +789,7 @@ libtorch_python_core_sources = [
     "torch/csrc/functionalization/Module.cpp",
     "torch/csrc/instruction_counter/Module.cpp",
     "torch/nativert/python/Bindings.cpp",
-] + lazy_tensor_core_python_sources
+]
 
 libtorch_python_distributed_core_sources = [
     "torch/csrc/distributed/c10d/init.cpp",

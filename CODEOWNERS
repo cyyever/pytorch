@@ -20,7 +20,7 @@
 #
 # Review-surface hierarchy:
 # - Compiler: compiler_dynamo, compiler_inductor, compiler_export_fx, compiler_autograd, functorch
-# - Core operators and runtime: core_aten_native_ops, core_aten_linalg, sparse, core_aten_optimizers, core_aten_runtime, core_c10_dispatch, autograd, core_csrc_misc, core_lazy_runtime, core_tests
+# - Core operators and runtime: core_aten_native_ops, core_aten_linalg, sparse, core_aten_optimizers, core_aten_runtime, core_c10_dispatch, autograd, core_csrc_misc, core_tests
 # - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm, backend_vulkan
 # - Public APIs and extensions: python_core_api, python_nn_api, python_data_api, python_specialized_api, python_api_tests, cpp_api_custom_ops, cpp_runtime_tests, nativert
 # - Distributed: distributed
@@ -396,9 +396,6 @@
 # /torch/csrc/utils.h
 # /torch/csrc/utils/
 #
-# [core_lazy_runtime]
-# /torch/csrc/lazy/
-#
 # [core_tests]
 # /test/HowToWriteTestsUsingFileCheck.md
 /test/allowlist_for_publicAPI.json @albanD
@@ -472,7 +469,6 @@
 # /test/expect/TestTorch.test_print-non_contiguous.expect
 # /test/expect/__init__.py
 # /test/forward_backward_compatibility/
-# /test/lazy/
 # /test/linear.py
 # /test/load_torchscript_model.py
 # /test/minioptest_failures_dict.json
@@ -663,7 +659,6 @@
 # /torch/_environment.py
 # /torch/_guards.py
 # /torch/_jit_internal.py
-# /torch/_lazy/
 # /torch/_linalg_utils.py
 # /torch/_lobpcg.py
 # /torch/_lowrank.py
@@ -792,7 +787,6 @@
 # /aten/src/ATen/native/native_functions.yaml
 # /aten/src/ATen/native/prim_native_functions.cpp
 /aten/src/ATen/native/tags.yaml @ezyang
-# /aten/src/ATen/native/ts_native_functions.yaml
 # /test/cpp/jit/test_custom_operators.cpp
 # /test/cpp_extensions/
 # /test/custom_operator/

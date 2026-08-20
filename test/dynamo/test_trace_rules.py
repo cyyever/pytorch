@@ -179,7 +179,6 @@ def gen_allowed_objs_and_ids(record=False, c_binding_only=True) -> AllowedObject
             "torch._C._functorch",
             "torch._C._monitor",
             "torch._C._nvtx",
-            "torch._C._lazy",
             "torch._C._profiler",
             "torch.__config__",
             "torch._custom_op",
