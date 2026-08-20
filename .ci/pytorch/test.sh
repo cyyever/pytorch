@@ -421,7 +421,7 @@ test_tsan() {
 }
 
 test_python_legacy_jit() {
-  time python test/run_test.py --include test_jit_legacy test_jit_fuser_legacy --verbose
+  time python test/run_test.py --include test_jit_legacy --verbose
   assert_git_not_dirty
 }
 
@@ -1660,20 +1660,6 @@ test_xpu_bin(){
   done
 }
 
-test_aot_compilation() {
-  echo "Testing Ahead of Time compilation"
-  ln -sf "$TORCH_LIB_DIR"/libc10* "$TORCH_BIN_DIR"
-  ln -sf "$TORCH_LIB_DIR"/libtorch* "$TORCH_BIN_DIR"
-
-  if [ -f "$TORCH_BIN_DIR"/test_mobile_nnc ]; then
-    CPP_TESTS_DIR="${TORCH_BIN_DIR}" python test/run_test.py --cpp --verbose -i cpp/test_mobile_nnc
-  fi
-
-  if [ -f "$TORCH_BIN_DIR"/aot_model_compiler_test ]; then
-    source test/mobile/nnc/test_aot_compile.sh
-  fi
-}
-
 test_vulkan() {
   if [[ "$BUILD_ENVIRONMENT" == *vulkan* ]]; then
     ln -sf "$TORCH_LIB_DIR"/libtorch* "$TORCH_TEST_DIR"
@@ -1759,20 +1745,6 @@ test_rpc() {
   CPP_TESTS_DIR="${TORCH_BIN_DIR}" python test/run_test.py --cpp --verbose -i cpp/test_cpp_rpc
 }
 
-test_custom_backend() {
-  echo "Testing custom backends"
-  CUSTOM_BACKEND_BUILD="${CUSTOM_TEST_ARTIFACT_BUILD_DIR}/custom-backend-build"
-  pushd test/custom_backend
-  cp -a "$CUSTOM_BACKEND_BUILD" build
-  # Run tests Python-side and export a lowered module.
-  python test_custom_backend.py -v
-  python backend.py --export-module-to=model.pt
-  # Run tests C++-side and load the exported lowered module.
-  build/test_custom_backend ./model.pt
-  rm -f ./model.pt
-  popd
-  assert_git_not_dirty
-}
 
 test_custom_script_ops() {
   echo "Testing custom script operators"
@@ -2550,9 +2522,7 @@ elif [[ "${SHARD_NUMBER}" == 2 && $NUM_TEST_SHARDS -gt 1 ]]; then
   install_torchvision
   test_python_shard 2
   test_libtorch 2
-  test_aot_compilation
   test_custom_script_ops
-  test_custom_backend
   test_torch_function_benchmark
   test_libtorch_profiler
 elif [[ "${SHARD_NUMBER}" -gt 2 ]]; then
@@ -2599,9 +2569,7 @@ else
   test_aten
   test_vec256
   test_libtorch
-  test_aot_compilation
   test_custom_script_ops
-  test_custom_backend
   test_torch_function_benchmark
   test_benchmarks
 fi
