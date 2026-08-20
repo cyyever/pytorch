@@ -14,7 +14,6 @@
 #include <torch/csrc/jit/passes/create_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
 #include <torch/csrc/jit/passes/decompose_ops.h>
-#include <torch/csrc/jit/passes/graph_fuser.h>
 #include <torch/csrc/jit/passes/inline_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/inliner.h>
 #include <torch/csrc/jit/passes/inplace_check.h>
@@ -445,9 +444,6 @@ void ProfilingGraphExecutorImpl::runNoGradOptimizations(
     BatchMM(graph);
     GRAPH_DEBUG("After BatchMM, before Fusion\n", *graph);
 
-    FuseGraph(graph, true);
-    GRAPH_DEBUG("After Fusion, before customPostPasses\n", *graph);
-
     // Run custom post-fusion passes
     for (const auto& passPair : getCustomPostPasses()) {
       passPair.first(graph);
@@ -735,7 +731,6 @@ ProfilingGraphExecutorImpl::getInputIndependentPlanImpl() {
     // Run additional input-independent passes from runNoGradOptimizations
     // and runFinalOptimizations. These operate on graph structure (node
     // patterns, alias analysis) and do not require profiled type/shape info.
-    // Skipped: FuseGraph (needs profiled tensor types for fusion).
     for (const auto& passPair : getCustomPrePasses()) {
       passPair.first(copy);
     }

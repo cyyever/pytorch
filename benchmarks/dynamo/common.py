@@ -4419,10 +4419,6 @@ def run(runner, args, original_dir=None):
         global synchronize
         synchronize = torch.cuda.synchronize if HAS_CUDA else torch.xpu.synchronize
 
-    if args.nnc:
-        torch._C._jit_override_can_fuse_on_cpu(True)
-        torch._C._jit_override_can_fuse_on_gpu(True)
-
     if args.threads:
         torch.set_num_threads(args.threads)
 

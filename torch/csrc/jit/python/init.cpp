@@ -6,8 +6,6 @@
 #include <ATen/core/operator_name.h>
 #include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/backends/backend_init.h>
-#include <torch/csrc/jit/codegen/fuser/interface.h>
-#include <torch/csrc/jit/codegen/fuser/kernel_cache.h>
 #if (!defined(FBCODE_CAFFE2) && defined(BUILD_ONEDNN_GRAPH))
 #include <torch/csrc/jit/codegen/onednn/interface.h>
 #endif
@@ -43,7 +41,6 @@
 #include <torch/csrc/jit/passes/frozen_ops_to_mkldnn.h>
 #include <torch/csrc/jit/passes/fuse_linear.h>
 #include <torch/csrc/jit/passes/fuse_relu.h>
-#include <torch/csrc/jit/passes/graph_fuser.h>
 #include <torch/csrc/jit/passes/inline_fork_wait.h>
 #include <torch/csrc/jit/passes/inliner.h>
 #include <torch/csrc/jit/passes/integer_value_refinement.h>
@@ -202,9 +199,6 @@ void initJITBindings(PyObject* module) {
       "IODescriptor"); // NOLINT(bugprone-unused-raii)
 
   m.def("_jit_init", loadPythonClasses)
-      .def(
-          "_jit_debug_fuser_num_cached_kernel_specs",
-          torch::jit::fuser::debugNumCachedKernelSpecs)
       .def("_jit_pass_lower_all_tuples", LowerAllTuples)
       .def(
           "_new_symbolic_shape_symbol",
@@ -274,7 +268,6 @@ void initJITBindings(PyObject* module) {
           &symbolicShapeAnalysisTestModeEnabled)
       .def("_jit_pass_autocast", Autocast)
       .def("_jit_set_autocast_mode", &setAutocastMode)
-      .def("_jit_pass_fuse", FuseGraph)
       .def(
           "_jit_pass_replace_old_ops_with_upgraders",
           [](std::shared_ptr<Graph>& g) {
@@ -708,12 +701,6 @@ void initJITBindings(PyObject* module) {
       .def("_jit_pass_canonicalize_graph_fuser_ops", CanonicalizeOps)
       .def("_jit_pass_decompose_ops", DecomposeOps)
       .def("_jit_pass_specialize_autogradzero", specializeAutogradZero)
-      .def("_jit_override_can_fuse_on_cpu", &overrideCanFuseOnCPU)
-      .def("_jit_override_can_fuse_on_gpu", &overrideCanFuseOnGPU)
-      .def("_jit_can_fuse_on_cpu", &canFuseOnCPU)
-      .def("_jit_can_fuse_on_gpu", &canFuseOnGPU)
-      .def("_jit_can_fuse_on_cpu_legacy", &canFuseOnCPULegacy)
-      .def("_jit_override_can_fuse_on_cpu_legacy", &overrideCanFuseOnCPULegacy)
       .def(
           "_jit_differentiate",
           [](Graph& g) {
@@ -851,11 +838,6 @@ void initJITBindings(PyObject* module) {
           "_jit_try_infer_type",
           [](py::object obj) -> InferredType {
             return tryToInferType(std::move(obj));
-          })
-      .def(
-          "_jit_fuser_get_fused_kernel_code",
-          [](Graph& g, const std::vector<at::Tensor>& inps) {
-            return debugGetFusedKernelCode(g, inps);
           })
       .def(
           "_jit_pass_remove_dropout",

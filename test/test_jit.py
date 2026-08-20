@@ -105,7 +105,7 @@ from torch.testing._internal.common_utils import run_tests, IS_WINDOWS, \
     TestCase, freeze_rng_state, slowTest, TemporaryFileName, \
     enable_profiling_mode_for_profiling_tests, requires_mkl, set_default_dtype, num_profiled_runs, \
     skipIfCrossRef, skipIfTorchDynamo
-from torch.testing._internal.jit_utils import JitTestCase, enable_cpu_fuser, disable_autodiff_subgraph_inlining, \
+from torch.testing._internal.jit_utils import JitTestCase, disable_autodiff_subgraph_inlining, \
     _trace, do_input_map, get_execution_plan, make_global, \
     execWrapper, _inline_everything, _tmp_donotuse_dont_inline_everything, \
     RUN_CUDA
@@ -5700,7 +5700,6 @@ a")
 
     @unittest.skipIf(RUN_CUDA, 'This tests the CPU fuser')
     @unittest.skipIf(IS_SANDCASTLE, "NYI: fuser support for Sandcastle")
-    @enable_cpu_fuser
     def test_batchnorm_fuser_cpu(self):
         code = '''
             graph(%3 : Tensor,
@@ -5730,7 +5729,6 @@ a")
     @slowTest
     @unittest.skipIf(RUN_CUDA, 'This tests the CPU fuser')
     @unittest.skipIf(IS_SANDCASTLE, "NYI: fuser support for Sandcastle")
-    @enable_cpu_fuser
     def test_fuser_double_float_codegen(self):
         fns = ['log', 'log10', 'log1p', 'log2', 'lgamma', 'exp', 'expm1', 'erf',
                'erfc', 'cos', 'acos', 'cosh', 'sin', 'asin', 'sinh', 'tan',
@@ -5781,7 +5779,6 @@ a")
 
     @unittest.skipIf(RUN_CUDA, 'This tests the CPU fuser')
     @unittest.skipIf(IS_SANDCASTLE, "NYI: fuser support for Sandcastle")
-    @enable_cpu_fuser
     def test_fuser_double_literal_precision(self):
         code = '''
         graph(%2 : Float(*, *)):
@@ -16012,7 +16009,7 @@ dedent """
 
         x = torch.randn(3, 2, dtype=torch.float)
         y = torch.randn(3, 2, dtype=torch.float)
-        for fuser_name in ['fuser0', 'fuser1', 'none']:
+        for fuser_name in ['none']:
             with torch.jit.fuser(fuser_name):
                 self.checkModule(MyModule(), (x, y))
 

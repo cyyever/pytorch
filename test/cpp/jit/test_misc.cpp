@@ -16,7 +16,6 @@
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/api/module.h>
-#include <torch/csrc/jit/codegen/fuser/interface.h>
 #include <torch/csrc/jit/frontend/ir_emitter.h>
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/ir/alias_analysis.h>
@@ -31,7 +30,6 @@
 #include <torch/csrc/jit/passes/constant_propagation.h>
 #include <torch/csrc/jit/passes/create_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/dead_code_elimination.h>
-#include <torch/csrc/jit/passes/graph_fuser.h>
 #include <torch/csrc/jit/passes/guard_elimination.h>
 #include <torch/csrc/jit/passes/inline_autodiff_subgraphs.h>
 #include <torch/csrc/jit/passes/insert_guards.h>
@@ -356,111 +354,6 @@ TEST(ATenNativeBatchNormTest, Basic) {
   assertAllClose(tensors_out, expected_tensors_out);
   assertAllClose(tensor_grads_out, expected_tensor_grads_out);
 }
-
-TEST(CustomFusionTest, Basic) {
-#if defined(FBCODE_CAFFE2)
-  return;
-#endif
-
-  auto graph_string = R"IR(
-    graph(%0 : Float(2, 3, 4),
-          %1 : Float(2, 3, 4)):
-      %2 : Tensor = aten::mul(%0, %1)
-      %3 : Tensor = aten::mul(%2, %0)
-      return (%3))IR";
-  auto g = std::make_shared<Graph>();
-  torch::jit::parseIR(graph_string, g.get());
-
-  torch::jit::overrideCanFuseOnCPU(true);
-  CustomFuseGraph(
-      g,
-      [](Node* n) { return n->kind() != prim::Param; },
-      Symbol::fromQualString("prim::FusionGroup"));
-  torch::jit::overrideCanFuseOnCPU(false);
-
-  const auto& nodes = g->nodes();
-  auto fusion_group =
-      std::find_if(nodes.begin(), nodes.end(), [](const Node* node) {
-        return node->kind() == Symbol::fromQualString("prim::FusionGroup");
-      });
-  AT_ASSERT(fusion_group != nodes.end());
-
-  auto subgraph = fusion_group->g(attr::Subgraph);
-  auto hits = 0;
-  // two multiplications
-  for (const auto& n : subgraph->nodes()) {
-    (void)n;
-    hits++;
-  }
-  AT_ASSERT(hits == 2);
-}
-
-TEST(CustomFusionTest, NestedBlocks) {
-#if defined(FBCODE_CAFFE2)
-  return;
-#endif
-
-  auto graph_string = R"IR(
-  graph(%0 : Float(2, 3, 4),
-        %1 : Float(2, 3, 4),
-        %2 : Float(2, 3, 4)):
-    %3 : int = prim::Constant[value=1]()
-    %4 : Tensor = prim::If(%2)
-      block0():
-        %5 : Tensor = aten::mul(%0, %2)
-        %6 : Tensor = aten::mul(%5, %1)
-        -> (%6)
-      block1():
-        %7 : Tensor = aten::add(%0, %2, %3)
-        %8 : Tensor = aten::add(%7, %1, %3)
-        -> (%8)
-    %9 : Tensor = aten::add(%4, %2, %3)
-    return (%4))IR";
-  auto g = std::make_shared<Graph>();
-  torch::jit::parseIR(graph_string, g.get());
-
-  CustomFuseGraph(
-      g,
-      [](Node* n) { return n->kind() == aten::mul; },
-      Symbol::fromQualString("prim::FusionGroup"));
-
-  // Could be done in more efficient ways, but this is only a test.
-  std::function<bool(const Block*, Symbol)> dfs = [&](const Block* b,
-                                                      Symbol s) {
-    for (auto node : b->nodes()) {
-      if (node->kind() == s)
-        return true;
-      for (auto nested_b : node->blocks())
-        if (dfs(nested_b, s))
-          return true;
-    }
-    return false;
-  };
-
-  AT_ASSERT(dfs(g->block(), Symbol::fromQualString("prim::FusionGroup")));
-}
-
-static const auto cf_examples = R"JIT(
-  def if_test(a, b):
-      # FIXME: use 0 instead of a.
-      # c = 0
-      c = a
-      if bool(a < b):
-        c = b
-      else:
-        c = a
-      return c
-  def if_one(a, b):
-    c = b
-    if bool(a < b):
-      c = a
-    return c
-  def while_test(a, i):
-    while bool(i < 3):
-      a *= a
-      i += 1
-    return a
-)JIT";
 
 TEST(ControlFlowTest, Basic) {
   auto cu = compile(cf_examples);
