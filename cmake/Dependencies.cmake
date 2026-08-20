@@ -282,11 +282,6 @@ if(MKL_FOUND)
   endif()
   set(AT_MKL_ENABLED 1)
 endif()
-elseif(INTERN_USE_EIGEN_BLAS)
-# Eigen BLAS for Mobile
-set(USE_BLAS 1)
-include(${CMAKE_CURRENT_LIST_DIR}/External/EigenBLAS.cmake)
-list(APPEND Caffe2_DEPENDENCY_LIBS eigen_blas)
 
 # --- [ PocketFFT
 set(AT_POCKETFFT_ENABLED 0)
