@@ -1893,7 +1893,6 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
         "torch.is_nonzero",
         "torch.is_same_size",
         "torch.is_signed",
-        "torch.is_vulkan_available",
         "torch.isclose",
         "torch.isfinite",
         "torch.isin",

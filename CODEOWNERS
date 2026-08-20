@@ -21,7 +21,7 @@
 # Review-surface hierarchy:
 # - Compiler: compiler_dynamo, compiler_inductor, compiler_export_fx, compiler_autograd, functorch
 # - Core operators and runtime: core_aten_native_ops, core_aten_linalg, sparse, core_aten_optimizers, core_aten_runtime, core_c10_dispatch, autograd, core_csrc_misc, core_tests
-# - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm, backend_vulkan
+# - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm
 # - Public APIs and extensions: python_core_api, python_nn_api, python_data_api, python_specialized_api, python_api_tests, cpp_api_custom_ops, cpp_runtime_tests, nativert
 # - Distributed: distributed
 # - Serialization and export: jit_torchscript, serialization_package
@@ -305,7 +305,6 @@
 # /aten/src/ATen/record_function.h
 # /aten/src/ATen/templates/
 # /aten/src/ATen/test/
-# /aten/src/ATen/vulkan/
 # /aten/src/README.md
 # /aten/src/THC/
 # /aten/tools/
@@ -641,9 +640,6 @@
 /aten/src/ATen/native/miopen/ @jeffdaily @jithunnair-amd
 /aten/src/ATen/miopen/ @jeffdaily @jithunnair-amd
 #
-# [backend_vulkan]
-# /aten/src/ATen/native/vulkan/
-#
 # [python_core_api]
 # /torch/CMakeLists.txt
 # /torch/_C/
@@ -852,7 +848,6 @@
 /torch/profiler/ @scotts @ryanzhang22
 #
 # [mobile_delegates]
-# /test/test_vulkan.py
 # /torch/backends/xnnpack/
 #
 # [infra_ci]
@@ -901,7 +896,6 @@
 #
 # [third_party_backend_deps]
 # /third_party/NNPACK
-# /third_party/VulkanMemoryAllocator
 # /third_party/XNNPACK
 # /third_party/aiter
 # /third_party/composable_kernel
