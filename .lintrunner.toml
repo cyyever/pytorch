@@ -64,8 +64,6 @@ include_patterns = [
     'aten/src/ATen/native/mps/**/*.metal',
     'aten/src/ATen/native/mps/**/*.mm',
     'aten/src/ATen/native/mps/**/*.h',
-    'aten/src/ATen/native/vulkan/**/*.h',
-    'aten/src/ATen/native/vulkan/**/*.cpp',
     'aten/src/ATen/native/cuda/KernelUtils.cuh',
     'aten/src/ATen/native/cuda/MultiTensorApply.cuh',
     'aten/src/ATen/native/**/Foreach*.*',
@@ -91,7 +89,6 @@ include_patterns = [
     'test/cpp/**/*.cpp',
 ]
 exclude_patterns = [
-    'aten/src/ATen/native/vulkan/api/vk_mem_alloc.h',
     'aten/src/ATen/native/mps/kernels/Quantized.metal',
     'c10/util/strong_type.h',
     '**/fb/**',
@@ -477,7 +474,6 @@ exclude_patterns = [
     '**/*.diff',
     '**/*.patch',
     'third_party/**',
-    'aten/src/ATen/native/vulkan/api/vk_mem_alloc.h',
     'fb/**',
     '**/fb/**',
     'test/cpp/jit/upgrader_models/*.ptl',
@@ -509,7 +505,6 @@ exclude_patterns = [
     '**/.gitmodules',
     'fb/**',
     '**/fb/**',
-    'aten/src/ATen/native/vulkan/api/vk_mem_alloc.h',
     'test/cpp/jit/upgrader_models/*.ptl',
     'test/cpp/jit/upgrader_models/*.ptl.ff',
     '.ci/docker/common/install_rocm_drm.sh',
@@ -625,8 +620,6 @@ include_patterns = [
 ]
 exclude_patterns = [
     'aten/src/ATen/native/quantized/cpu/qnnpack/**',
-    'aten/src/ATen/native/vulkan/api/vk_mem_alloc.h',
-    'aten/src/ATen/native/vulkan/glsl/**',
     '**/fb/**',
     'torch/csrc/jit/serialization/mobile_bytecode_generated.h',
     'torch/csrc/utils/pythoncapi_compat.h',
@@ -1284,7 +1277,6 @@ command = [
     '@{{PATHSFILE}}'
 ]
 exclude_patterns = [
-    'tools/gen_vulkan_spv.py',
     # We don't care too much about files in this directory, don't enforce
     # formatting on them
     'caffe2/**/*.py',
@@ -1368,7 +1360,6 @@ exclude_patterns = [
     'test/test_matmul_cuda.py',
     'test/test_scaled_matmul_cuda.py',
     'test/test_meta.py',
-    'test/test_metal.py',
     'test/test_mkl_verbose.py',
     'test/test_mkldnn.py',
     'test/test_mkldnn_fusion.py',
@@ -1412,7 +1403,6 @@ exclude_patterns = [
     'test/test_transformers.py',
     'test/test_type_promotion.py',
     'test/test_unary_ufuncs.py',
-    'test/test_vulkan.py',
     'torch/_awaits/__init__.py',
     'torch/_export/__init__.py',
     'torch/_export/constraints.py',
@@ -1738,8 +1728,6 @@ include_patterns = [
     "aten/src/ATen/functorch/**/*.cpp",
     "aten/src/ATen/nnapi/*.cpp",
     "aten/src/ATen/quantized/*.cpp",
-    "aten/src/ATen/vulkan/*.cpp",
-    "aten/src/ATen/metal/*.cpp",
     "aten/src/ATen/detail/CPUGuardImpl.cpp",
     "aten/src/ATen/detail/MetaGuardImpl.cpp",
     # aten native source
@@ -1760,7 +1748,6 @@ include_patterns = [
     "aten/src/ATen/native/transformers/*.cpp",
     "aten/src/ATen/native/utils/*.cpp",
     "aten/src/ATen/native/xnnpack/*.cpp",
-    "aten/src/ATen/native/metal/MetalPrepackOpRegister.cpp",
     # aten headers
     "aten/src/ATen/*.h",
     "aten/src/ATen/functorch/**/*.h",
@@ -1768,8 +1755,6 @@ include_patterns = [
     "aten/src/ATen/cpu/**/*.h",
     "aten/src/ATen/nnapi/*.h",
     "aten/src/ATen/quantized/*.h",
-    "aten/src/ATen/vulkan/*.h",
-    "aten/src/ATen/metal/*.h",
     "aten/src/ATen/mps/*.h",
     # aten native headers
     "aten/src/ATen/native/*.h",
@@ -1785,9 +1770,7 @@ include_patterns = [
     "aten/src/ATen/native/transformers/*.h",
     "aten/src/ATen/native/quantized/cpu/qnnpack/include/*.h",
     "aten/src/ATen/native/utils/*.h",
-    "aten/src/ATen/native/vulkan/ops/*.h",
     "aten/src/ATen/native/xnnpack/*.h",
-    "aten/src/ATen/native/metal/MetalPrepackOpContext.h",
     "aten/src/ATen/native/mps/Copy.h",
     "aten/src/ATen/native/mkldnn/**/*.h",
 ]

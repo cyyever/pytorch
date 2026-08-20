@@ -361,8 +361,6 @@ option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_GFLAGS "Use GFLAGS" OFF)
 option(USE_GLOG "Use GLOG" OFF)
 option(USE_MAGMA "Use MAGMA" ON)
-option(USE_PYTORCH_METAL "Use Metal for PyTorch iOS build" OFF)
-option(USE_PYTORCH_METAL_EXPORT "Export Metal models on MacOSX desktop" OFF)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
 cmake_dependent_option(USE_MPS "Use MPS for macOS build" ON "MPS_FOUND" OFF)
 option(USE_DISTRIBUTED "Use distributed" ON)
@@ -397,13 +395,6 @@ cmake_dependent_option(
     USE_VALGRIND "Use Valgrind. Only available on Linux." ON
     "LINUX" OFF)
 
-if(NOT DEFINED USE_VULKAN)
-  cmake_dependent_option(USE_VULKAN "Use Vulkan GPU backend" ON "ANDROID" OFF)
-endif()
-
-option(USE_VULKAN_FP16_INFERENCE "Vulkan - Use fp16 inference" OFF)
-option(USE_VULKAN_RELAXED_PRECISION
-       "Vulkan - Use relaxed precision math in the kernels (mediump)" OFF)
 # option USE_XNNPACK: try to enable xnnpack by default.
 option(USE_XNNPACK "Use XNNPACK" OFF)
 option(USE_ROCM_KERNEL_ASSERT "Use Kernel Assert for ROCm" OFF)
@@ -1073,30 +1064,8 @@ if(USE_XNNPACK)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_XNNPACK")
 endif()
 
-if(USE_VULKAN)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN")
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_API")
-
-  if(USE_VULKAN_FP16_INFERENCE)
-    string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_FP16_INFERENCE")
-  endif()
-
-  if(USE_VULKAN_RELAXED_PRECISION)
-    string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_RELAXED_PRECISION")
-  endif()
-
-endif()
-
 if(TRACING_BASED)
   string(APPEND CMAKE_CXX_FLAGS " -DTRACING_BASED")
-endif()
-
-if(USE_PYTORCH_METAL)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL")
-endif()
-
-if(USE_PYTORCH_METAL_EXPORT)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL_EXPORT")
 endif()
 
 # ---[ Allowlist file if allowlist is specified

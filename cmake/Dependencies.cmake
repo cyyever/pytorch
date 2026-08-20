@@ -590,17 +590,6 @@ elseif(NOT TARGET XNNPACK AND USE_SYSTEM_XNNPACK)
   list(APPEND Caffe2_DEPENDENCY_LIBS XNNPACK microkernels-prod)
 endif()
 
-# ---[ Vulkan deps
-if(USE_VULKAN)
-  set(Vulkan_DEFINES)
-  set(Vulkan_INCLUDES)
-  set(Vulkan_LIBS)
-  include(${CMAKE_CURRENT_LIST_DIR}/VulkanDependencies.cmake)
-  string(APPEND CMAKE_CXX_FLAGS ${Vulkan_DEFINES})
-  include_directories(SYSTEM ${Vulkan_INCLUDES})
-  list(APPEND Caffe2_DEPENDENCY_LIBS ${Vulkan_LIBS})
-endif()
-
 # ---[ gflags
 if(USE_GFLAGS)
   include(${CMAKE_CURRENT_LIST_DIR}/public/gflags.cmake)

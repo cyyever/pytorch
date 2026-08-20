@@ -10,11 +10,6 @@ endif()
 # ---[ Generate and install header and cpp files
 include(../cmake/Codegen.cmake)
 
-# ---[ Vulkan code gen
-if(USE_VULKAN)
-  include(../cmake/VulkanCodegen.cmake)
-endif()
-
 # Debug messages - if you want to get a list of source files and examine
 # target information, enable the following by -DPRINT_CMAKE_DEBUG_INFO=ON.
 set(PRINT_CMAKE_DEBUG_INFO FALSE CACHE BOOL "print cmake debug information")
@@ -78,12 +73,10 @@ if(INTERN_BUILD_ATEN_OPS)
   list(APPEND Caffe2_HIP_TEST_SRCS ${ATen_HIP_TEST_SRCS})
   list(APPEND Caffe2_XPU_TEST_SRCS ${ATen_XPU_TEST_SRCS})
   list(APPEND Caffe2_CPU_TEST_SRCS ${ATen_CORE_TEST_SRCS})
-  list(APPEND Caffe2_VULKAN_TEST_SRCS ${ATen_VULKAN_TEST_SRCS})
   list(APPEND Caffe2_CPU_INCLUDE ${ATen_CPU_INCLUDE})
   list(APPEND Caffe2_GPU_INCLUDE ${ATen_CUDA_INCLUDE})
   list(APPEND Caffe2_HIP_INCLUDE ${ATen_HIP_INCLUDE})
   list(APPEND Caffe2_XPU_INCLUDE ${ATen_XPU_INCLUDE})
-  list(APPEND Caffe2_VULKAN_INCLUDE ${ATen_VULKAN_INCLUDE})
   list(APPEND Caffe2_DEPENDENCY_LIBS ${ATen_CPU_DEPENDENCY_LIBS})
   list(APPEND Caffe2_CUDA_DEPENDENCY_LIBS ${ATen_CUDA_DEPENDENCY_LIBS})
   list(APPEND Caffe2_HIP_DEPENDENCY_LIBS ${ATen_HIP_DEPENDENCY_LIBS})
@@ -212,11 +205,6 @@ if(PRINT_CMAKE_DEBUG_INFO)
 
   message(STATUS "ATen XPU test sources: ")
   foreach(tmp ${ATen_XPU_TEST_SRCS})
-    message(STATUS "  " ${tmp})
-  endforeach()
-
-  message(STATUS "ATen Vulkan test sources: ")
-  foreach(tmp ${ATen_VULKAN_TEST_SRCS})
     message(STATUS "  " ${tmp})
   endforeach()
 
@@ -786,7 +774,7 @@ set_property(SOURCE ${ATen_CORE_SRCS} APPEND
 set_property(SOURCE ${ATen_ATTENTION_KERNEL_SRCS} APPEND
     PROPERTY COMPILE_DEFINITIONS "TORCH_ASSERT_NO_OPERATORS")
 
-if(USE_MPS OR USE_PYTORCH_METAL)
+if(USE_MPS)
   enable_language(OBJC OBJCXX)
 endif()
 
@@ -1617,20 +1605,6 @@ if(USE_XPU)
   endif()
 endif()
 
-# ---[ Metal(OSX) modification
-if(APPLE AND USE_PYTORCH_METAL)
-  if(NOT INTERN_BUILD_MOBILE)
-    include(../cmake/Metal.cmake)
-    # We need to link the system frameworks explicitly
-    find_library(metal NAMES Metal)
-    find_library(mps NAMES MetalPerformanceShaders)
-    find_library(foundation NAMES Foundation)
-    find_library(accelerate NAMES Accelerate)
-    target_link_libraries(torch_cpu PUBLIC ${metal} ${mps} ${foundation} ${accelerate})
-  endif()
-endif()
-
-
 # Note [Global dependencies]
 # Some libraries (e.g. OpenMPI) like to dlopen plugins after they're initialized,
 # and they assume that all of their symbols will be available in the global namespace.
@@ -1855,25 +1829,6 @@ if(BUILD_TEST)
       if(INSTALL_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
-      endif()
-    endforeach()
-  endif()
-
-  if(USE_VULKAN)
-    foreach(test_src ${Caffe2_VULKAN_TEST_SRCS})
-      get_filename_component(test_name ${test_src} NAME_WE)
-      add_executable(${test_name} "${test_src}")
-      target_link_libraries(${test_name} torch_library gtest_main)
-      target_include_directories(${test_name} PRIVATE $<INSTALL_INTERFACE:include>)
-      target_include_directories(${test_name} PRIVATE ${Caffe2_CPU_INCLUDE})
-      add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
-      if(INSTALL_TEST)
-        set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
-        install(TARGETS ${test_name} DESTINATION test)
-        # Install PDB files for MSVC builds
-        if(MSVC AND BUILD_SHARED_LIBS)
-          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
-        endif()
       endif()
     endforeach()
   endif()
