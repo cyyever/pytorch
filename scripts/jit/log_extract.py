@@ -8,7 +8,6 @@ from torch.utils.jit.log_extract import (
     load_graph_and_inputs,
     run_baseline_no_fusion,
     run_nnc,
-    run_nvfuser,
 )
 
 
@@ -17,7 +16,7 @@ Usage:
 1. Run your script and pipe into a log file
   PYTORCH_JIT_LOG_LEVEL=">>graph_fuser" python3 my_test.py &> log.txt
 2. Run log_extract:
-  log_extract.py log.txt --nvfuser --nnc-dynamic --nnc-static
+  log_extract.py log.txt --nnc-dynamic --nnc-static
 
 You can also extract the list of extracted IR:
   log_extract.py log.txt --output
@@ -61,16 +60,6 @@ def run():
         description="Extracts torchscript IR from log files and, optionally, benchmarks it or outputs the IR"
     )
     parser.add_argument("filename", help="Filename of log file")
-    parser.add_argument(
-        "--nvfuser", dest="nvfuser", action="store_true", help="benchmark nvfuser"
-    )
-    parser.add_argument(
-        "--no-nvfuser",
-        dest="nvfuser",
-        action="store_false",
-        help="DON'T benchmark nvfuser",
-    )
-    parser.set_defaults(nvfuser=False)
     parser.add_argument(
         "--nnc-static",
         dest="nnc_static",
@@ -135,8 +124,6 @@ def run():
         options.append(("NNC Dynamic", functools.partial(run_nnc, dynamic=True)))
     if args.nnc_static:
         options.append(("NNC Static", functools.partial(run_nnc, dynamic=False)))
-    if args.nvfuser:
-        options.append(("NVFuser", run_nvfuser))
 
     test_runners(graphs, options, graph_set)
 

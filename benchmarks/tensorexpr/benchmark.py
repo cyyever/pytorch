@@ -131,7 +131,6 @@ class Benchmark:
             ):
                 return self.run_impl(True)
         elif args.cuda_fuser == "nvf":
-            torch._C._jit_set_nvfuser_enabled(True)
             torch._C._jit_set_profiling_executor(True)
             torch._C._jit_set_profiling_mode(True)
             torch._C._jit_override_can_fuse_on_cpu(False)

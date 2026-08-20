@@ -21,6 +21,5 @@
 
     run_baseline_no_fusion
     run_nnc
-    run_nvfuser
     run_test
 ```
