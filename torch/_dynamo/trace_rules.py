@@ -998,7 +998,6 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
         "torch._C._jit_texpr_set_fallback_allowed",
         "torch._C._jit_to_backend_selective",
         "torch._C._jit_to_backend",
-        "torch._C._jit_to_static_module",
         "torch._C._jit_trace_graph",
         "torch._C._jit_trace_module",
         "torch._C._jit_tree_views.FalseLiteral",

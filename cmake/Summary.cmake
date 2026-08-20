@@ -27,7 +27,6 @@ function(caffe2_print_configuration_summary)
   message(STATUS "")
 
   message(STATUS "  TORCH_VERSION         : ${TORCH_VERSION}")
-  message(STATUS "  BUILD_STATIC_RUNTIME_BENCHMARK: ${BUILD_STATIC_RUNTIME_BENCHMARK}")
   message(STATUS "  BUILD_BINARY          : ${BUILD_BINARY}")
   message(STATUS "  BUILD_CUSTOM_PROTOBUF : ${BUILD_CUSTOM_PROTOBUF}")
   if(${CAFFE2_LINK_LOCAL_PROTOBUF})

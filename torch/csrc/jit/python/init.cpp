@@ -90,7 +90,6 @@
 #include <torch/csrc/jit/runtime/jit_trace.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/jit/runtime/print_handler.h>
-#include <torch/csrc/jit/runtime/static/init.h>
 #include <torch/csrc/jit/runtime/symbolic_shape_registry.h>
 #include <torch/csrc/jit/serialization/export.h>
 #include <torch/csrc/jit/serialization/import.h>
@@ -2187,7 +2186,6 @@ void initJITBindings(PyObject* module) {
   initTreeViewBindings(module);
   initJitScriptBindings(module);
   initJitBackendBindings(module);
-  initStaticModuleBindings(module);
   initTensorExprBindings(module);
   // initNvFuserPythonBindings(module);
 
