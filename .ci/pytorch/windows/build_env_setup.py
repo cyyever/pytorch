@@ -2,7 +2,7 @@
 """GPU/toolchain environment setup for Windows manywheel/wheel CD builds.
 
 Mirrors the Linux `.ci/manywheel/build_env_setup.py` pattern: install heavy
-toolchain pieces (CUDA, MAGMA, MSVC env via vcvarsall, oneAPI for XPU),
+toolchain pieces (CUDA, MSVC env via vcvarsall, oneAPI for XPU),
 then emit `export KEY=VALUE` lines to the file given by --env-out for the
 parent bash wrapper to source. Without that handoff, the env we configure
 here would die with this process.
@@ -29,7 +29,7 @@ from _common import download, write_env_exports
 
 
 # Directory containing this script (.ci/pytorch/windows). Used as the root
-# for tmp_bin/, magma_*/, and the internal/*.bat installer scripts -- matches
+# for tmp_bin/ and the internal/*.bat installer scripts -- matches
 # the legacy `%~dp0` convention so the installers' own path math keeps
 # working.
 WIN_CI_DIR = Path(__file__).resolve().parent
@@ -75,10 +75,6 @@ TORCH_CUDA_ARCH_LIST_TABLE: dict[str, str] = {
 }
 
 
-MAGMA_VERSION = "2.5.4"
-MAGMA_URL_TEMPLATE = (
-    "https://s3.amazonaws.com/ossci-windows/magma_{version}_{prefix}_{build_type}.7z"
-)
 SCCACHE_URL = "https://s3.amazonaws.com/ossci-windows/sccache.exe"
 SCCACHE_CL_URL = "https://s3.amazonaws.com/ossci-windows/sccache-cl.exe"
 RANDOMTEMP_URL = "https://github.com/peterjc123/randomtemp-rust/releases/download/v0.4/randomtemp.exe"
@@ -239,31 +235,6 @@ def find_nvtoolsext() -> Path:
     )
 
 
-def install_magma(cuda_prefix: str, build_type: str) -> Path:
-    """Download + extract the pre-built MAGMA archive into WIN_CI_DIR.
-
-    Mirrors the MAGMA block in the legacy build_pytorch.bat. Returns the
-    extracted MAGMA root (set as MAGMA_HOME for the wheel build).
-    """
-    name = f"magma_{cuda_prefix}_{build_type}"
-    archive = WIN_CI_DIR / f"{name}.7z"
-    target = WIN_CI_DIR / name
-    if target.is_dir():
-        # Stale extract from a previous run; clear before re-downloading.
-        subprocess.run(["cmd", "/c", "rmdir", "/s", "/q", str(target)], check=False)
-    if archive.is_file():
-        archive.unlink()
-
-    url = MAGMA_URL_TEMPLATE.format(
-        version=MAGMA_VERSION, prefix=cuda_prefix, build_type=build_type
-    )
-    download(url, archive)
-    subprocess.run(
-        ["7z", "x", "-aoa", str(archive), f"-o{target}"], cwd=WIN_CI_DIR, check=True
-    )
-    return target
-
-
 def setup_sccache(tmp_bin: Path) -> dict[str, str]:
     """Download sccache + sccache-cl and return env wiring host compilation
     through them. Mirrors the USE_SCCACHE!=0 branch of check_opts.bat.
@@ -333,7 +304,6 @@ def setup_cuda() -> dict[str, str]:
     install_cuda_toolkit()
     cuda_path = find_cuda_path(dotted)
     nvtools_ext = find_nvtoolsext()
-    magma_home = install_magma(cuda_prefix, build_type)
 
     tmp_bin = WIN_CI_DIR / "tmp_bin"
     sccache_env = setup_sccache(tmp_bin)
@@ -345,7 +315,6 @@ def setup_cuda() -> dict[str, str]:
         "CUDA_PATH": str(cuda_path),
         "TORCH_CUDA_ARCH_LIST": arch_list,
         "NVTOOLSEXT_PATH": str(nvtools_ext),
-        "MAGMA_HOME": str(magma_home),
         **sccache_env,
         # PATH last so cuda_path/bin layers on top of sccache_env's PATH.
         "PATH": prepend_path(tmp_bin, cuda_path / "bin"),

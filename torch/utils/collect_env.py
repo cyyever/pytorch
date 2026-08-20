@@ -107,7 +107,6 @@ CONDA_PATTERNS = [
     "cudatoolkit",
     "soumith",
     "mkl",
-    "magma",
 ]
 
 PIP_PATTERNS = [
