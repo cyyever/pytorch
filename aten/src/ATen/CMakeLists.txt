@@ -107,16 +107,6 @@ file(GLOB native_mkldnn_cpp CONFIGURE_DEPENDS "native/mkldnn/*.cpp")
 
 file(GLOB native_eigen_cpp CONFIGURE_DEPENDS "native/sparse/eigen/*.cpp")
 
-# Metal
-file(GLOB metal_h CONFIGURE_DEPENDS "metal/*.h")
-file(GLOB metal_cpp CONFIGURE_DEPENDS "metal/*.cpp")
-file(GLOB_RECURSE native_metal_h CONFIGURE_DEPENDS "native/metal/*.h")
-file(GLOB metal_test_srcs CONFIGURE_DEPENDS "native/metal/mpscnn/tests/*.mm")
-file(GLOB_RECURSE native_metal_srcs CONFIGURE_DEPENDS "native/metal/*.mm" "native/metal/*.cpp")
-EXCLUDE(native_metal_srcs "${native_metal_srcs}" ${metal_test_srcs})
-file(GLOB metal_prepack_h CONFIGURE_DEPENDS "native/metal/MetalPrepackOpContext.h")
-file(GLOB metal_prepack_cpp CONFIGURE_DEPENDS "native/metal/MetalPrepackOpRegister.cpp")
-
 file(GLOB native_ao_sparse_cpp CONFIGURE_DEPENDS
             "native/ao_sparse/*.cpp"
             "native/ao_sparse/cpu/*.cpp"
@@ -541,17 +531,6 @@ if(USE_XPU)
   list(APPEND ATen_XPU_DEPENDENCY_LIBS ${SYCL_LIBRARY})
 endif()
 
-# Metal
-if(USE_PYTORCH_METAL_EXPORT)
-  # Add files needed from exporting metal models(optimized_for_mobile)
-  set(all_cpu_cpp ${all_cpu_cpp} ${metal_cpp} ${metal_prepack_cpp})
-elseif(APPLE AND USE_PYTORCH_METAL)
-  # Compile Metal kernels
-  set(all_cpu_cpp ${all_cpu_cpp} ${metal_cpp} ${native_metal_srcs})
-else()
-  set(all_cpu_cpp ${all_cpu_cpp} ${metal_cpp})
-endif()
-
 if(USE_CUDA)
   list(APPEND ATen_CUDA_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/cuda)
   # Next two lines are needed because TunableOp uses third-party/fmt
@@ -961,22 +940,6 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake-exports/ATenConfig.cmake"
 set(INSTALL_HEADERS ${base_h} ${ATen_CORE_HEADERS} ${native_nested_h} ${ATen_TRANSFORMER_HEADERS})
 if(NOT INTERN_BUILD_MOBILE)
   list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_ao_sparse_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_kleidiai_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
-  # Metal
-  if(USE_PYTORCH_METAL_EXPORT)
-    # Add files needed from exporting metal models(optimized_for_mobile)
-    list(APPEND INSTALL_HEADERS ${metal_h} ${metal_prepack_h})
-  elseif(APPLE AND USE_PYTORCH_METAL)
-    # Needed by Metal kernels
-    list(APPEND INSTALL_HEADERS ${metal_h} ${native_metal_h})
-  else()
-    list(APPEND INSTALL_HEADERS ${metal_h})
-  endif()
-else()
-  if(IOS AND USE_PYTORCH_METAL)
-      list(APPEND INSTALL_HEADERS ${metal_h} ${native_metal_h})
-  else()
-      list(APPEND INSTALL_HEADERS ${metal_h} ${metal_prepack_h})
-  endif()
 endif()
 
 # https://stackoverflow.com/questions/11096471/how-can-i-install-a-hierarchy-of-files-using-cmake

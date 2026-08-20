@@ -1360,7 +1360,6 @@ exclude_patterns = [
     'test/test_matmul_cuda.py',
     'test/test_scaled_matmul_cuda.py',
     'test/test_meta.py',
-    'test/test_metal.py',
     'test/test_mkl_verbose.py',
     'test/test_mkldnn.py',
     'test/test_mkldnn_fusion.py',
@@ -1729,7 +1728,6 @@ include_patterns = [
     "aten/src/ATen/functorch/**/*.cpp",
     "aten/src/ATen/nnapi/*.cpp",
     "aten/src/ATen/quantized/*.cpp",
-    "aten/src/ATen/metal/*.cpp",
     "aten/src/ATen/detail/CPUGuardImpl.cpp",
     "aten/src/ATen/detail/MetaGuardImpl.cpp",
     # aten native source
@@ -1750,7 +1748,6 @@ include_patterns = [
     "aten/src/ATen/native/transformers/*.cpp",
     "aten/src/ATen/native/utils/*.cpp",
     "aten/src/ATen/native/xnnpack/*.cpp",
-    "aten/src/ATen/native/metal/MetalPrepackOpRegister.cpp",
     # aten headers
     "aten/src/ATen/*.h",
     "aten/src/ATen/functorch/**/*.h",
@@ -1758,7 +1755,6 @@ include_patterns = [
     "aten/src/ATen/cpu/**/*.h",
     "aten/src/ATen/nnapi/*.h",
     "aten/src/ATen/quantized/*.h",
-    "aten/src/ATen/metal/*.h",
     "aten/src/ATen/mps/*.h",
     # aten native headers
     "aten/src/ATen/native/*.h",
@@ -1775,7 +1771,6 @@ include_patterns = [
     "aten/src/ATen/native/quantized/cpu/qnnpack/include/*.h",
     "aten/src/ATen/native/utils/*.h",
     "aten/src/ATen/native/xnnpack/*.h",
-    "aten/src/ATen/native/metal/MetalPrepackOpContext.h",
     "aten/src/ATen/native/mps/Copy.h",
     "aten/src/ATen/native/mkldnn/**/*.h",
 ]

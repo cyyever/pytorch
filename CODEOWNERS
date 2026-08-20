@@ -612,12 +612,10 @@
 /aten/src/ATen/cudnn/ @eqy @syed-ahmed @Aidyn-A
 #
 # [backend_mps]
-# /aten/src/ATen/metal/
 /aten/src/ATen/mps/ @malfet
 /aten/src/ATen/native/mps/ @malfet
 /c10/metal/ @malfet
 # /test/metal/
-# /test/test_metal.py
 /test/test_mps.py @malfet
 # /torch/backends/mps/
 # /torch/csrc/mps/
