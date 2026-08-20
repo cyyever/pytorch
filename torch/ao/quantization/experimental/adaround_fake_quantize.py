@@ -4,10 +4,10 @@ from __future__ import annotations
 from typing import Any
 
 import torch
+from torch.ao.quantization import FakeQuantize
 from torch.ao.quantization.fake_quantize import _is_symmetric_quant
+from torch.ao.quantization.observer import MinMaxObserver
 from torch.ao.quantization.utils import is_per_tensor
-from torch.quantization import FakeQuantize
-from torch.quantization.observer import MinMaxObserver
 
 
 class AdaroundFakeQuantizer(FakeQuantize):

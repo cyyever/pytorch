@@ -868,7 +868,6 @@ the `custom operator mechanism <https://pytorch.org/tutorials/advanced/torch_scr
 .. automodule:: torch.nn.quantized.dynamic
 .. automodule:: torch.nn.intrinsic
 .. automodule:: torch.nn.intrinsic.quantized.modules
-.. automodule:: torch.quantization.fx
 .. automodule:: torch.nn.intrinsic.quantized.dynamic
 .. automodule:: torch.nn.qat.dynamic
 .. automodule:: torch.nn.intrinsic.qat
@@ -878,11 +877,6 @@ the `custom operator mechanism <https://pytorch.org/tutorials/advanced/torch_scr
 .. automodule:: torch.nn.quantized
 .. automodule:: torch.nn.intrinsic.quantized.dynamic.modules
 .. automodule:: torch.nn.quantized.dynamic.modules
-.. automodule:: torch.quantization
-
-.. currentmodule:: torch.quantization
-.. autofunction:: default_eval_fn
-
 .. automodule:: torch.nn.intrinsic.modules
 ```
 

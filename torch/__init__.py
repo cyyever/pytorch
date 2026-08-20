@@ -2770,7 +2770,6 @@ if hasattr(torch._C, "_c10d_init"):
 
 # quantization depends on torch.fx and torch.ops
 # Import quantization
-from torch import quantization as quantization  # usort: skip
 
 # Import the quasi random sampler
 from torch import quasirandom as quasirandom  # usort: skip
