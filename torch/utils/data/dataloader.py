@@ -6,7 +6,6 @@ functions to be run in multiprocessing. E.g., the data loading worker loop is
 in `./_utils/worker.py`.
 """
 
-from __future__ import annotations
 
 import contextlib
 import functools
@@ -20,7 +19,7 @@ import warnings
 import weakref
 from collections.abc import Callable
 from typing import Any, Generic, NoReturn, TYPE_CHECKING, TypeVar
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.distributed as dist

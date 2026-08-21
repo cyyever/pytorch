@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 """Provide an API for writing protocol buffers to event files to be consumed by TensorBoard for visualization."""
-from __future__ import annotations
 
 import os
 import time

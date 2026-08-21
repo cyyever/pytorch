@@ -36,7 +36,7 @@ _MIN_CUSOLVER_VERSION = 12200
 
 # cuSOLVER Xpolar availability. Checked lazily on first use; flipped to False
 # permanently if a call ever hits a hard failure (e.g. runtime lacks the symbol).
-_nvmath_available: "bool | None" = None
+_nvmath_available: bool | None = None
 
 
 def _check_nvmath() -> bool:
@@ -97,7 +97,7 @@ def _polar_cond_cuda(A: torch.Tensor, *args, **kwargs) -> bool:
     return True
 
 
-def _run_xpolar(A: torch.Tensor) -> "tuple[torch.Tensor, torch.Tensor] | None":
+def _run_xpolar(A: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor] | None:
     # Returns (U, H) from cuSOLVER Xpolar, or None on a hard failure (after
     # permanently disabling the fast path).
     global _nvmath_available

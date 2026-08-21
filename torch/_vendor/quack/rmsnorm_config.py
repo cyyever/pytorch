@@ -8,7 +8,6 @@ knobs, plus arch-specific factories that own the heuristics.
 
 import itertools
 from dataclasses import dataclass
-from typing import List, Optional
 
 import torch
 
@@ -20,7 +19,7 @@ class RmsNormFwdConfig:
     cluster_n: int
     # None = compute once into registers; "smem" / "gmem" = reload x (and
     # residual) before the post-reduction epilogue.
-    reload_from: Optional[str]
+    reload_from: str | None
     # Defer the weight/bias load until after the row reduction.
     delay_w_load: bool = False
 
@@ -29,9 +28,9 @@ class RmsNormFwdConfig:
         cls,
         N: int,
         dtype_width: int,
-        arch_major: Optional[int] = None,
+        arch_major: int | None = None,
         is_layernorm: bool = False,
-    ) -> "RmsNormFwdConfig":
+    ) -> RmsNormFwdConfig:
         """Pick a launch config from the hand-tuned analytical heuristic.
 
         ``arch_major`` defaults to the current device's capability. The same
@@ -97,8 +96,8 @@ class RmsNormBwdConfig:
     threads_per_row: int
     cluster_n: int
     # None = recompute from registers; "smem" = reload from shared memory.
-    reload_wdy: Optional[str]
-    reload_x: Optional[str]
+    reload_wdy: str | None
+    reload_x: str | None
     use_tma: bool
     # Number of smem stages used by the prefetch pipeline. Drives both the
     # cp.async (use_tma=False) and TMA (use_tma=True) paths, which lead by
@@ -112,9 +111,9 @@ class RmsNormBwdConfig:
         N: int,
         dtype_width: int,
         dout_width: int,
-        arch_major: Optional[int] = None,
+        arch_major: int | None = None,
         T_hint: int = 0,
-    ) -> "RmsNormBwdConfig":
+    ) -> RmsNormBwdConfig:
         """Pick a launch config from the hand-tuned analytical heuristic.
 
         ``arch_major`` defaults to the current device's capability.
@@ -358,7 +357,7 @@ def _max_cluster_for(arch_major: int) -> int:
     return 8 if arch_major == 12 else 16
 
 
-def get_all_fwd_configs() -> List[RmsNormFwdConfig]:
+def get_all_fwd_configs() -> list[RmsNormFwdConfig]:
     """Exhaustive search space of RMSNorm fwd configs for the current device.
 
     The search space is over launch knobs only — ``device_capacity`` is not a
@@ -371,7 +370,7 @@ def get_all_fwd_configs() -> List[RmsNormFwdConfig]:
     reload_from_vals = (None, "smem", "gmem")
     delay_w_load_vals = (False,)
 
-    configs: List[RmsNormFwdConfig] = []
+    configs: list[RmsNormFwdConfig] = []
     for num_threads, threads_per_row, cluster_n, reload_from, delay_w_load in itertools.product(
         _CTA_THREAD_SIZE,
         _AUTOTUNE_THREADS_PER_REDUCTION_DIM,
@@ -395,7 +394,7 @@ def get_all_fwd_configs() -> List[RmsNormFwdConfig]:
     return configs
 
 
-def get_all_bwd_configs() -> List[RmsNormBwdConfig]:
+def get_all_bwd_configs() -> list[RmsNormBwdConfig]:
     """Exhaustive search space of RMSNorm bwd configs for the current device.
 
     Like :func:`get_all_fwd_configs`, the current device's capability bounds
@@ -408,7 +407,7 @@ def get_all_bwd_configs() -> List[RmsNormBwdConfig]:
     use_tma_vals = (False, True) if arch_major >= 9 else (False,)
     reload_vals = (None, "smem")
 
-    configs: List[RmsNormBwdConfig] = []
+    configs: list[RmsNormBwdConfig] = []
     for (
         num_threads,
         threads_per_row,

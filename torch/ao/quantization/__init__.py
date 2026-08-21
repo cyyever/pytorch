@@ -2,7 +2,7 @@
 
 import sys
 from collections.abc import Callable
-from typing_extensions import TypeAliasType
+from typing import TypeAliasType
 
 import torch
 from torch import Tensor

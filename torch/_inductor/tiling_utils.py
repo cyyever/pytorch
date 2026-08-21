@@ -254,11 +254,11 @@ class FusedNormalizedReadsWrites:
 
 @dataclasses.dataclass(frozen=True)
 class _FusedNodeView:
-    nodes: Sequence["BaseSchedulerNode"]
+    nodes: Sequence[BaseSchedulerNode]
     read_writes: ReadWrites
     group: Any
 
-    def get_nodes(self) -> Sequence["BaseSchedulerNode"]:
+    def get_nodes(self) -> Sequence[BaseSchedulerNode]:
         return self.nodes
 
     def get_buffer_names(self) -> OrderedSet[str]:
@@ -270,7 +270,7 @@ class _FusedNodeView:
 
 @overload
 def get_pw_red_splits(
-    n: "SchedulerNode",
+    n: SchedulerNode,
     pointwise_numel: sympy.Expr,
     red_numel: sympy.Expr,
     none_if_not_divisible: Literal[True],
@@ -279,7 +279,7 @@ def get_pw_red_splits(
 
 @overload
 def get_pw_red_splits(
-    n: "SchedulerNode",
+    n: SchedulerNode,
     pointwise_numel: sympy.Expr,
     red_numel: sympy.Expr,
     none_if_not_divisible: Literal[False] = False,
@@ -287,7 +287,7 @@ def get_pw_red_splits(
 
 
 def get_pw_red_splits(
-    n: "SchedulerNode",
+    n: SchedulerNode,
     pointwise_numel: sympy.Expr,
     red_numel: sympy.Expr,
     none_if_not_divisible: bool = False,
@@ -343,7 +343,7 @@ class NodeSplitGetter:
 
     def __init__(
         self,
-        node: Union["_FusedNodeView", "FusedSchedulerNode", "SchedulerNode"],
+        node: Union[_FusedNodeView, FusedSchedulerNode, SchedulerNode],
     ):
         self.node = node
         self.pointwise_numel: sympy.Expr = node.group[1][0]
@@ -545,7 +545,7 @@ def apply_var_mapping(
 
 
 def extract_normalized_read_writes(
-    node: Union["_FusedNodeView", "FusedSchedulerNode", "SchedulerNode"],
+    node: Union[_FusedNodeView, FusedSchedulerNode, SchedulerNode],
 ) -> FusedNormalizedReadsWrites | None:
     """Extracts index variables, reduce variables, read/write expressions, and variable ranges from a fused node."""
     reads: dict[sympy.Expr, OrderedSet[str]] = defaultdict(OrderedSet)
@@ -727,7 +727,7 @@ class CoalesceVarAnalysis:
 
 
 def _analyze_memory_coalescing(
-    fused_node: Union["_FusedNodeView", "FusedSchedulerNode", "SchedulerNode"],
+    fused_node: Union[_FusedNodeView, FusedSchedulerNode, SchedulerNode],
 ) -> CoalesceVarAnalysis | None:
     """
     Implementation for BaseSchedulerNode.get_coalesce_analysis().
@@ -919,7 +919,7 @@ def _analyze_memory_coalescing(
 
 
 def analyze_memory_coalescing_for_nodes(
-    nodes: Sequence["BaseSchedulerNode"],
+    nodes: Sequence[BaseSchedulerNode],
 ) -> CoalesceVarAnalysis | None:
     if not nodes:
         return None

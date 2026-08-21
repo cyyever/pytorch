@@ -43,8 +43,8 @@ class Pareto(TransformedDistribution):
         super().__init__(base_dist, transforms, validate_args=validate_args)
 
     def expand(
-        self, batch_shape: _size, _instance: Optional["Pareto"] = None
-    ) -> "Pareto":
+        self, batch_shape: _size, _instance: Optional[Pareto] = None
+    ) -> Pareto:
         new = self._get_checked_instance(Pareto, _instance)
         new.scale = self.scale.expand(batch_shape)
         new.alpha = self.alpha.expand(batch_shape)

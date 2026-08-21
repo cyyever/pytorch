@@ -48,7 +48,7 @@ class Extension(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def from_descriptor(version: str) -> "Extension":
+    def from_descriptor(version: str) -> Extension:
         """
         See ExtensionRegistry.from_descriptor_list
         """
@@ -94,7 +94,7 @@ class ZStandard(StreamTransformExtension):
         return zstandard is not None or pyzstd is not None
 
     @staticmethod
-    def from_descriptor(version: str) -> "ZStandard":
+    def from_descriptor(version: str) -> ZStandard:
         if version.partition(".")[0] != "1":
             raise ValueError(f"Unknown extension {version=}")
         if not ZStandard.is_available():

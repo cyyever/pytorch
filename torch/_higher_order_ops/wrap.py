@@ -5,7 +5,7 @@ import logging
 import weakref
 from collections.abc import Callable
 from typing import Any
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 import torch.utils._pytree as pytree

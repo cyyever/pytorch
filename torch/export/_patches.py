@@ -247,7 +247,7 @@ def gru_while_loop_impl(
 @contextlib.contextmanager
 def _register_rnn_while_loop_decomposition(
     rnn_op, rnn_impl
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Generic context manager for registering while_loop-based RNN decompositions.
 
@@ -293,7 +293,7 @@ def _register_rnn_while_loop_decomposition(
 
 
 @contextlib.contextmanager
-def register_lstm_while_loop_decomposition() -> Generator[None, None, None]:
+def register_lstm_while_loop_decomposition() -> Generator[None]:
     """
     Context manager that temporarily registers the while_loop-based LSTM decomposition.
 
@@ -323,7 +323,7 @@ def register_lstm_while_loop_decomposition() -> Generator[None, None, None]:
 
 
 @contextlib.contextmanager
-def register_gru_while_loop_decomposition() -> Generator[None, None, None]:
+def register_gru_while_loop_decomposition() -> Generator[None]:
     """
     Context manager that temporarily registers the while_loop-based GRU decomposition.
 

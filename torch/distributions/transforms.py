@@ -116,7 +116,7 @@ class Transform:
         raise ValueError("Please use either .domain.event_dim or .codomain.event_dim")
 
     @property
-    def inv(self) -> "Transform":
+    def inv(self) -> Transform:
         """
         Returns the inverse :class:`Transform` of this transform.
         This should satisfy ``t.inv.inv is t``.

@@ -203,7 +203,7 @@ class set_grad_enabled(_DecoratorContextManager):
     def __repr__(self) -> str:
         return str(self)
 
-    def clone(self) -> "set_grad_enabled":
+    def clone(self) -> set_grad_enabled:
         r"""
         Create a copy of this class
         """
@@ -294,7 +294,7 @@ class inference_mode(_DecoratorContextManager):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self._inference_mode_context.__exit__(exc_type, exc_value, traceback)
 
-    def clone(self) -> "inference_mode":
+    def clone(self) -> inference_mode:
         r"""
         Create a copy of this class
         """
@@ -346,7 +346,7 @@ class set_multithreading_enabled(_DecoratorContextManager):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         torch._C._set_multithreading_enabled(self.prev)
 
-    def clone(self) -> "set_multithreading_enabled":
+    def clone(self) -> set_multithreading_enabled:
         r"""
         Create a copy of this class
         """
@@ -404,7 +404,7 @@ class enforce_grad_layout_policy(_DecoratorContextManager):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         torch._C._set_grad_layout_enforcement_enabled(self.prev)
 
-    def clone(self) -> "enforce_grad_layout_policy":
+    def clone(self) -> enforce_grad_layout_policy:
         r"""
         Create a copy of this class
         """

@@ -1,6 +1,6 @@
 from collections.abc import Callable, Sequence
 from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 from ...ir import Buffer, Layout, TemplateBuffer
 
@@ -16,7 +16,7 @@ class ROCmTemplateBuffer(TemplateBuffer):
         inputs: Sequence[Buffer],
         make_kernel_render: Callable[_P, _T],
         workspace_size: int,
-        template: "ROCmTemplate",  # type: ignore[name-defined]  # noqa: F821
+        template: ROCmTemplate,  # type: ignore[name-defined]  # noqa: F821
     ) -> None:
         super().__init__(layout, inputs, make_kernel_render)
         # Global memory (in bytes) needed for this template.

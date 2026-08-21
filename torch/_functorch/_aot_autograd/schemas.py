@@ -3,7 +3,6 @@ The various dataclasses, Enums, namedtuples etc used in AOTAutograd. This includ
 input/output types, metadata, config, function signatures etc.
 """
 
-from __future__ import annotations
 
 import collections
 import functools
@@ -11,7 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, NewType, Protocol, TYPE_CHECKING, TypeAlias, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.utils._pytree as pytree

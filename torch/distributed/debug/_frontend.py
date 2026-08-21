@@ -49,7 +49,7 @@ class NavLink:
 @dataclass(slots=True)
 class Route:
     path: str
-    handler: Callable[["HTTPRequestHandler"], bytes]
+    handler: Callable[[HTTPRequestHandler], bytes]
 
 
 class DebugHandler(ABC):
@@ -109,7 +109,7 @@ def fetch_aiohttp(urls: list[str], timeout: float) -> list[Response]:
             async with session.post(url) as resp:
                 text = await resp.text()
                 return Response(resp.status, text)
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             return Response(408, f"TimeoutError: {e}")
         except aiohttp.ClientError as e:
             return Response(503, f"{type(e).__name__}: {e}")
@@ -328,7 +328,7 @@ class _IPv6HTTPServer(ThreadingHTTPServer):
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
-    frontend: "FrontendServer"
+    frontend: FrontendServer
 
     def log_message(self, format, *args):
         logger.info(

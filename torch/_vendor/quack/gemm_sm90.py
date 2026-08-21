@@ -3,7 +3,7 @@
 # Based on the cute-dsl example:
 # https://github.com/NVIDIA/cutlass/blob/main/examples/python/CuTeDSL/hopper/dense_gemm.py
 
-from typing import Tuple, Type, Callable, Optional
+from collections.abc import Callable
 from functools import partial
 import math
 
@@ -112,10 +112,10 @@ class GemmSm90(GemmTmaBase):
 
     def __init__(
         self,
-        acc_dtype: Type[cutlass.Numeric],
-        a_dtype: Type[cutlass.Numeric],
-        tile_shape_mnk: Tuple[int, int] | Tuple[int, int, int],
-        cluster_shape_mnk: Tuple[int, int, int],
+        acc_dtype: type[cutlass.Numeric],
+        a_dtype: type[cutlass.Numeric],
+        tile_shape_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mnk: tuple[int, int, int],
         pingpong: bool = False,
         is_persistent: bool = True,
         fp8_fast_accum: bool = False,
@@ -366,13 +366,13 @@ class GemmSm90(GemmTmaBase):
         self,
         mA: cute.Tensor,
         mB: cute.Tensor,
-        mD: Optional[cute.Tensor],
-        mC: Optional[cute.Tensor],
+        mD: cute.Tensor | None,
+        mC: cute.Tensor | None,
         epilogue_args: tuple,
         scheduler_args: TileSchedulerOptions,
-        varlen_args: Optional[VarlenArguments],
+        varlen_args: VarlenArguments | None,
         stream: cuda.CUstream,
-        trace_ptr: Optional[cutlass.Int64] = None,
+        trace_ptr: cutlass.Int64 | None = None,
     ):
         """Execute the GEMM operation in steps:
         - Setup static attributes
@@ -392,12 +392,12 @@ class GemmSm90(GemmTmaBase):
         """
 
         # Concat layout: interleave the non-contiguous dim (detected via leading_dim).
-        mA, mB, mD, mC = [
+        mA, mB, mD, mC = (
             layout_utils.concat_to_interleave(mT, 1 - mT.leading_dim)
             if const_expr(name in self.concat_layout and mT is not None)
             else mT
             for name, mT in [("A", mA), ("B", mB), ("out", mD), ("C", mC)]
-        ]
+        )
 
         # setup static attributes before smem/grid/tma computation
         self.a_dtype = mA.element_type
@@ -529,14 +529,14 @@ class GemmSm90(GemmTmaBase):
     def kernel(
         self,
         tiled_mma: cute.TiledMma,
-        tma_atom_a: Optional[cute.CopyAtom],
+        tma_atom_a: cute.CopyAtom | None,
         mA_mkl: cute.Tensor,
         tma_atom_b: cute.CopyAtom,
         mB_nkl: cute.Tensor,
-        tma_atom_d: Optional[cute.CopyAtom],
-        mD_mnl: Optional[cute.Tensor],
-        tma_atom_c: Optional[cute.CopyAtom],
-        mC_mnl: Optional[cute.Tensor],
+        tma_atom_d: cute.CopyAtom | None,
+        mD_mnl: cute.Tensor | None,
+        tma_atom_c: cute.CopyAtom | None,
+        mC_mnl: cute.Tensor | None,
         epilogue_params,
         varlen_params: VarlenManager.Params,
         cluster_layout_mnk: cute.Layout,
@@ -546,7 +546,7 @@ class GemmSm90(GemmTmaBase):
         epi_c_smem_layout: cute.ComposedLayout,
         tile_sched_params,
         TileSchedulerCls: cutlass.Constexpr[Callable],
-        trace_ptr: Optional[cutlass.Int64] = None,
+        trace_ptr: cutlass.Int64 | None = None,
     ):
         """
         GPU device kernel performing the batched GEMM computation.
@@ -966,7 +966,7 @@ class GemmSm90(GemmTmaBase):
         ab_pipeline: cutlass.pipeline.PipelineAsync,
         ab_producer_state: cutlass.pipeline.PipelineState,
         copy_A: Callable,
-        prefetch_A: Optional[Callable],
+        prefetch_A: Callable | None,
         copy_B: Callable,
         k_tile_cnt: Int32,
         varlen_m: bool = True,
@@ -1070,7 +1070,7 @@ class GemmSm90(GemmTmaBase):
         ab_read_state: cutlass.pipeline.PipelineState,
         mma_fn: Callable,
         acc: cute.Tensor,
-        acc_slow: Optional[cute.Tensor],
+        acc_slow: cute.Tensor | None,
         k_tile_cnt: Int32,
         warp_group_idx: Int32,
     ) -> cutlass.pipeline.PipelineState:
@@ -1160,11 +1160,11 @@ class GemmSm90(GemmTmaBase):
     def epilog_smem_store_and_partition(
         self,
         tiled_mma: cute.TiledMma,
-        d_layout: Optional[LayoutEnum],
-        dtype: Type[cutlass.Numeric],
-        sD: Optional[cute.Tensor],
+        d_layout: LayoutEnum | None,
+        dtype: type[cutlass.Numeric],
+        sD: cute.Tensor | None,
         tidx: Int32,
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         if d_layout is None:
             d_layout = LayoutEnum.ROW_MAJOR
         tiled_copy_C_atom = self.epilog_smem_copy_atom(tiled_mma)
@@ -1186,11 +1186,11 @@ class GemmSm90(GemmTmaBase):
         self,
         tiled_mma: cute.TiledMma,
         c_layout: LayoutEnum,
-        dtype: Type[cutlass.Numeric],
+        dtype: type[cutlass.Numeric],
         sC: cute.Tensor,
         tRS_rD_layout: cutlass.Layout,
         tidx: Int32,
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         tiled_copy_C_atom = self.epilog_smem_copy_atom(tiled_mma)
         copy_atom_s2r = copy_utils.sm90_get_smem_load_op(c_layout, dtype)
         tiled_copy_s2r = cute.make_tiled_copy_S(copy_atom_s2r, tiled_copy_C_atom)
@@ -1244,17 +1244,17 @@ class GemmSm90(GemmTmaBase):
     @classmethod
     def _compute_stages(
         cls,
-        cta_tile_shape_mnk: Tuple[int, int, int],
-        epi_tile: Tuple[int, int],
-        a_dtype: Type[cutlass.Numeric],
-        b_dtype: Type[cutlass.Numeric],
-        d_dtype: Optional[Type[cutlass.Numeric]],
-        c_dtype: Optional[Type[cutlass.Numeric]],
+        cta_tile_shape_mnk: tuple[int, int, int],
+        epi_tile: tuple[int, int],
+        a_dtype: type[cutlass.Numeric],
+        b_dtype: type[cutlass.Numeric],
+        d_dtype: type[cutlass.Numeric] | None,
+        c_dtype: type[cutlass.Numeric] | None,
         epilogue_args: EpilogueArguments,
         smem_capacity: int,
         occupancy: int,
-        warp_shape_mnk: Tuple[int, int, int] | None = None,
-    ) -> Tuple[int, int]:
+        warp_shape_mnk: tuple[int, int, int] | None = None,
+    ) -> tuple[int, int]:
         """Computes the number of stages for A/B/C operands based on heuristics.
 
         :param cta_tile_shape_mnk: The shape (M, N, K) of the CTA tile.
@@ -1309,11 +1309,11 @@ class GemmSm90(GemmTmaBase):
 
     @staticmethod
     def _compute_tile_shape_or_override(
-        cta_tile_shape_mnk: Tuple[int, int, int],
-        atom_layout_mnk: Tuple[int, int, int],
-        element_type: Optional[Type[cutlass.Numeric]] = None,
-        epi_tile_override: Tuple[int, int] | None = None,
-    ) -> Tuple[int, int]:
+        cta_tile_shape_mnk: tuple[int, int, int],
+        atom_layout_mnk: tuple[int, int, int],
+        element_type: type[cutlass.Numeric] | None = None,
+        epi_tile_override: tuple[int, int] | None = None,
+    ) -> tuple[int, int]:
         """Compute the epilogue tile shape or use override if provided.
 
         :param cta_tile_shape_mnk: CTA tile shape (M,N,K)
@@ -1350,21 +1350,21 @@ class GemmSm90(GemmTmaBase):
 
     @staticmethod
     def _make_smem_layouts(
-        cta_tile_shape_mnk: Tuple[int, int, int],
-        epi_tile: Tuple[int, int],
-        a_dtype: Type[cutlass.Numeric],
+        cta_tile_shape_mnk: tuple[int, int, int],
+        epi_tile: tuple[int, int],
+        a_dtype: type[cutlass.Numeric],
         a_layout: LayoutEnum,
-        b_dtype: Type[cutlass.Numeric],
+        b_dtype: type[cutlass.Numeric],
         b_layout: LayoutEnum,
         ab_stage: int,
-        d_dtype: Optional[Type[cutlass.Numeric]],
+        d_dtype: type[cutlass.Numeric] | None,
         d_layout: LayoutEnum,
         epi_stage: int,
-        c_dtype: Optional[Type[cutlass.Numeric]],
-        c_layout: Optional[LayoutEnum],
+        c_dtype: type[cutlass.Numeric] | None,
+        c_layout: LayoutEnum | None,
         epi_c_stage: int,
-    ) -> Tuple[
-        cute.ComposedLayout, cute.ComposedLayout, cute.ComposedLayout, Optional[cute.ComposedLayout]
+    ) -> tuple[
+        cute.ComposedLayout, cute.ComposedLayout, cute.ComposedLayout, cute.ComposedLayout | None
     ]:
         """Create shared memory layouts for A, B, and C tensors.
 
@@ -1442,10 +1442,10 @@ class GemmSm90(GemmTmaBase):
 
     @staticmethod
     def is_valid_dtypes(
-        a_dtype: Type[cutlass.Numeric],
-        b_dtype: Type[cutlass.Numeric],
-        acc_dtype: Type[cutlass.Numeric],
-        d_dtype: Optional[Type[cutlass.Numeric]],
+        a_dtype: type[cutlass.Numeric],
+        b_dtype: type[cutlass.Numeric],
+        acc_dtype: type[cutlass.Numeric],
+        d_dtype: type[cutlass.Numeric] | None,
         a_major: str,
         b_major: str,
     ) -> bool:

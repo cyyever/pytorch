@@ -5,14 +5,13 @@ Kept in a tiny leaf module (no intra-package imports) so both the generated
 without a cycle.
 """
 
-from __future__ import annotations
 
 from enum import Enum
 from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 class Ctype(Enum):

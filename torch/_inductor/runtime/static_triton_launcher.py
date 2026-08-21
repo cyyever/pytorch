@@ -2,7 +2,6 @@ import functools
 import os
 from functools import cached_property
 from typing import Any
-from typing_extensions import Unpack
 
 from ..utils import is_rocm
 from .triton_compat import ASTSource, CompiledKernel, knobs as triton_knobs
@@ -383,7 +382,7 @@ class StaticallyLaunchedTritonKernel:
         grid_y: int,
         grid_z: int,
         stream: int,
-        *args: Unpack[tuple[object, ...]],
+        *args: *tuple[object, ...],
     ) -> None:
         """Actually run the kernel at runtime. This function is the hot codepath."""
 

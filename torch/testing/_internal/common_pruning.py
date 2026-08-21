@@ -23,7 +23,7 @@ class MockSparseLinear(nn.Linear):
     well as an additional from_dense method.
     """
     @classmethod
-    def from_dense(cls, mod: nn.Linear) -> 'MockSparseLinear':
+    def from_dense(cls, mod: nn.Linear) -> MockSparseLinear:
         """
         """
         linear = cls(mod.in_features,

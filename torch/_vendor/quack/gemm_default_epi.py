@@ -1,5 +1,5 @@
 # Copyright (c) 2025, Wentao Guo, Tri Dao.
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 import cutlass
 import cutlass.cute as cute
@@ -28,13 +28,13 @@ class GemmDefaultEpiMixin(ComposableEpiMixin):
 
     @mlir_namedtuple
     class EpilogueArguments(NamedTuple):
-        alpha: Optional[Float32 | cute.Tensor] = None
-        beta: Optional[Float32 | cute.Tensor] = None
-        mRowVecBroadcast: Optional[cute.Tensor] = None
-        mColVecBroadcast: Optional[cute.Tensor] = None
+        alpha: Float32 | cute.Tensor | None = None
+        beta: Float32 | cute.Tensor | None = None
+        mRowVecBroadcast: cute.Tensor | None = None
+        mColVecBroadcast: cute.Tensor | None = None
         add_to_output: cutlass.Constexpr[bool] = False
         rounding_mode: cutlass.Constexpr[int] = RoundingMode.RN
-        sr_seed: Optional[Int32 | cute.Tensor] = None
+        sr_seed: Int32 | cute.Tensor | None = None
 
     # EpilogueParams auto-generated from _epi_ops
 
@@ -52,8 +52,8 @@ class GemmDefaultEpiMixin(ComposableEpiMixin):
         params,
         epi_loop_tensors,
         tRS_rD: cute.Tensor,
-        tRS_rC: Optional[cute.Tensor] = None,
-    ) -> Optional[cute.Tensor]:
+        tRS_rC: cute.Tensor | None = None,
+    ) -> cute.Tensor | None:
         # Use .get(): inactive ops are filtered out of epi_loop_tensors.
         alpha = epi_loop_tensors.get("alpha")
         beta = epi_loop_tensors.get("beta")

@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 # pyre-strict
-from __future__ import annotations
 
 import heapq
 import importlib

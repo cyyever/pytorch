@@ -1,13 +1,12 @@
 # mypy: ignore-errors
 
-from __future__ import annotations
 
 import contextlib
 import dataclasses
 import sys
 import threading
 from typing import Any, TYPE_CHECKING
-from typing_extensions import override, Self
+from typing import override, Self
 from unittest.mock import patch
 
 from torch._inductor import config

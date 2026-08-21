@@ -436,7 +436,7 @@ def _add_global_state_dependencies(
 
     def prev_cur_nodes(
         all_nodes: list[Node],
-    ) -> Generator[tuple[list[Node], Node], None, None]:
+    ) -> Generator[tuple[list[Node], Node]]:
         prev_nodes: list[Node] = []
         next_nodes = list(reversed(all_nodes))
 
@@ -548,7 +548,7 @@ def _is_tuple_node(node: Node) -> bool:
     return isinstance(node.meta["example_value"], tuple)
 
 
-def _get_children_getitems(node: Node) -> Generator[Node, None, None]:
+def _get_children_getitems(node: Node) -> Generator[Node]:
     for user in node.users:
         if user.target is operator.getitem and isinstance(user.args[1], int):
             yield user

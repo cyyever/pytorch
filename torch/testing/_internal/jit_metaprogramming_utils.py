@@ -429,7 +429,7 @@ class SplitInputs:
         self.all_tensors = [*self.tensor_args, *self.tensor_kwargs.values()]
         self.kwarg_order = list(kwargs.keys())
 
-    def nontensors_match(self, other: 'SplitInputs'):
+    def nontensors_match(self, other: SplitInputs):
         if self.arg_types != other.arg_types:
             return False
         if self.kwarg_types != other.kwarg_types:

@@ -124,7 +124,7 @@ class Std(IntFlag):
     ALL = OUT | ERR
 
     @classmethod
-    def from_str(cls, vm: str) -> Union["Std", dict[int, "Std"]]:
+    def from_str(cls, vm: str) -> Union[Std, dict[int, Std]]:
         """
         Example:
         ::

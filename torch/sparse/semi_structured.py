@@ -294,7 +294,7 @@ class SparseSemiStructuredTensor(torch.Tensor):
         cls,
         original_tensor: torch.Tensor,
         alg_id: int = _DEFAULT_ALG_ID,
-    ) -> "SparseSemiStructuredTensor":
+    ) -> SparseSemiStructuredTensor:
         raise NotImplementedError
 
     def _mm(
@@ -403,7 +403,7 @@ class SparseSemiStructuredTensorCUTLASS(SparseSemiStructuredTensor):
         cls,
         original_tensor: torch.Tensor,
         alg_id: int = SparseSemiStructuredTensor._DEFAULT_ALG_ID,
-    ) -> "SparseSemiStructuredTensorCUTLASS":
+    ) -> SparseSemiStructuredTensorCUTLASS:
         cls._validate_device_dim_dtype_shape(original_tensor)
         (
             sparse_tensor_cutlass,
@@ -435,7 +435,7 @@ class SparseSemiStructuredTensorCUTLASS(SparseSemiStructuredTensor):
     @classmethod
     def prune_dense_static_sort(
         cls, original_tensor: torch.Tensor, algorithm=""
-    ) -> "SparseSemiStructuredTensor":
+    ) -> SparseSemiStructuredTensor:
         """
         This function takes in a unpruned dense tensor and runs a (branchless) static sort across a 4x4 tile.
 
@@ -572,7 +572,7 @@ class SparseSemiStructuredTensorCUSPARSELT(SparseSemiStructuredTensor):
         cls,
         original_tensor: torch.Tensor,
         alg_id: int = SparseSemiStructuredTensor._DEFAULT_ALG_ID,
-    ) -> "SparseSemiStructuredTensorCUSPARSELT":
+    ) -> SparseSemiStructuredTensorCUSPARSELT:
         cls._validate_device_dim_dtype_shape(original_tensor)
         # pyrefly: ignore [no-matching-overload]
         return cls(
@@ -590,7 +590,7 @@ class SparseSemiStructuredTensorCUSPARSELT(SparseSemiStructuredTensor):
     @classmethod
     def prune_dense_static_sort(
         cls, original_tensor: torch.Tensor, algorithm=""
-    ) -> "SparseSemiStructuredTensor":
+    ) -> SparseSemiStructuredTensor:
         """
         This function does the same thing as described in SparseSemiStructuredCUTLASS, but uses the cuSPARSELt metadata
         layout and sparse matmul.

@@ -44,7 +44,7 @@ def _get_example_value(node: fx.Node) -> str | None:
         return None
 
 
-def _get_sym_val(node: fx.Node) -> Optional["sympy.Expr"]:
+def _get_sym_val(node: fx.Node) -> Optional[sympy.Expr]:
     val = _get_example_value(node)
     if isinstance(val, py_sym_types):
         return val.node.expr
@@ -230,7 +230,7 @@ def insert_deferred_runtime_asserts(
         )
         return expr_to_proxy[expr]
 
-    def _is_bound_expr_for_symbol(expr: "sympy.Expr") -> bool:
+    def _is_bound_expr_for_symbol(expr: sympy.Expr) -> bool:
         # This is probably unnecessary, but since torch._check() calls for single-symbol bounds
         # like u0 >= 0, 10 >= u0 accumulate range info in the ShapeEnv, we designate these calls as redundant
         # and instead add 2 runtime asserts at the end of this pass, if the min/max bounds are non-trivial.
@@ -254,7 +254,7 @@ def insert_deferred_runtime_asserts(
         return node.kwargs.get("cond", node.kwargs.get("self"))
 
     def _assertion_message(
-        node: fx.Node, cond: Any, assert_expr: Optional["sympy.Expr"]
+        node: fx.Node, cond: Any, assert_expr: Optional[sympy.Expr]
     ) -> str:
         def static_string_from_callable(fn: Callable[[], object]) -> str | None:
             code = getattr(fn, "__code__", None)
@@ -328,7 +328,7 @@ def insert_deferred_runtime_asserts(
         )
 
     def _replace_with_aten_assert(
-        node: fx.Node, cond: Any, assert_expr: Optional["sympy.Expr"]
+        node: fx.Node, cond: Any, assert_expr: Optional[sympy.Expr]
     ) -> None:
         with graph.inserting_before(node):
             new_node = graph.call_function(

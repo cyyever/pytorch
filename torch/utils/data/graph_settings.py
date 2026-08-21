@@ -2,7 +2,7 @@
 import inspect
 import warnings
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch.utils.data.datapipes.iter.sharding import (

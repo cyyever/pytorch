@@ -2,7 +2,6 @@
 Define the scalar types and supported dtypes and numpy <--> torch dtype mappings.
 """
 
-from __future__ import annotations
 
 import builtins
 from typing import TYPE_CHECKING, TypeGuard, TypeVar

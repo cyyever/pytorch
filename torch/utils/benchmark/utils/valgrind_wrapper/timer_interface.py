@@ -1,5 +1,4 @@
 """Intermediate layer between `Timer` and `valgrind`."""
-from __future__ import annotations
 
 import collections
 import enum

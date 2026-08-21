@@ -239,7 +239,7 @@ def _function_to_sparse_csr(func, *args, **kwargs):
     return _MaskedToSparseCsr.apply(args[0])
 
 
-_MASKEDTENSOR_DISPATCH_TABLE: dict["OpOverload", Callable[..., Any]] = {}
+_MASKEDTENSOR_DISPATCH_TABLE: dict[OpOverload, Callable[..., Any]] = {}
 
 
 def register_dispatch_func(aten_ops):

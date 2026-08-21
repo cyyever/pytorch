@@ -4,7 +4,6 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import annotations
 
 import contextlib
 import functools
@@ -12,7 +11,7 @@ import itertools
 from collections.abc import Callable  # noqa: TC003
 from functools import partial
 from typing import Any, cast, NoReturn, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 from torch import Tensor
@@ -482,7 +481,7 @@ def _check_randomness_arg(randomness: str) -> None:
 @contextlib.contextmanager
 def vmap_increment_nesting(
     batch_size: int, randomness: str
-) -> Generator[int, None, None]:
+) -> Generator[int]:
     try:
         vmap_level = _vmap_increment_nesting(batch_size, randomness)
         yield vmap_level

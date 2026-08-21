@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 # pylint: disable=useless-parent-delegation
-from __future__ import annotations
 
 from typing import cast, Generic, TYPE_CHECKING, TypeVar
 

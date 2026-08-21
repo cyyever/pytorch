@@ -2,7 +2,7 @@
 import warnings
 from collections.abc import Callable
 from typing import Any, TYPE_CHECKING, TypeAlias, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 from torch import sym_float, Tensor

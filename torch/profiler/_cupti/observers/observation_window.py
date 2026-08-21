@@ -12,7 +12,6 @@ thread, cover-detection, and teardown; the subclass supplies ``_collect_delivere
 :class:`CuptiMonitorObserver`, the same timebase as record START/END.
 """
 
-from __future__ import annotations
 
 import logging
 import threading

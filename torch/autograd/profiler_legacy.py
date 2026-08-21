@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 import itertools
 import warnings
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.cuda

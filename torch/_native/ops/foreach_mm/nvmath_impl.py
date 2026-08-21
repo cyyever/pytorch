@@ -96,7 +96,7 @@ class ForeachMMCublasLt:
             dtype=torch.int32,
             device=device,
         )
-        d_m, d_n, d_k, d_lda, d_ldb, d_ldd = [dims[i] for i in range(6)]
+        d_m, d_n, d_k, d_lda, d_ldb, d_ldd = (dims[i] for i in range(6))
 
         # Pinned host + device buffers for pointer arrays [Aptr|Bptr|Dptr]
         self._pinned = torch.empty(3 * G, dtype=torch.int64, pin_memory=True)

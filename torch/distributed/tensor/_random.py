@@ -22,7 +22,7 @@ __all__ = [
     "OffsetBasedRNGTracker",
 ]
 
-_rng_tracker: Optional["_RNGStateTracker"] = None
+_rng_tracker: Optional[_RNGStateTracker] = None
 
 
 def is_rng_supported_mesh(device_mesh: DeviceMesh) -> bool:

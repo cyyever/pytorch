@@ -60,7 +60,7 @@ from datetime import datetime
 from functools import wraps
 from string import Template
 from typing import Any, Optional, TypeVar, Union
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 from torch.distributed.elastic.utils.logging import get_logger
 

@@ -11,7 +11,6 @@ the ``_rebuild`` function it references in generated code. Kept as a leaf module
 is safe to import anywhere in the package.
 """
 
-from __future__ import annotations
 
 import inspect
 from typing import Any, NewType, TYPE_CHECKING

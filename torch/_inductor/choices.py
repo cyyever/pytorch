@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dataclasses
 import inspect
 import logging
@@ -154,7 +152,7 @@ class InductorChoices:
     # Conv configs
     def get_conv_configs(
         self, device_type: str | None = "cuda"
-    ) -> partial[Generator[TritonConfig, None, None]]:
+    ) -> partial[Generator[TritonConfig]]:
         conv_heuristics = self.get_config_heuristics(device_type)
         return conv_heuristics.get_conv_configs()
 
@@ -210,7 +208,7 @@ class InductorChoices:
 
     def _finalize_template_configs(
         self,
-        template_choices: dict[str, Generator[KernelTemplateChoice, None, None]],
+        template_choices: dict[str, Generator[KernelTemplateChoice]],
         kernel_inputs: KernelInputs,
         templates: list[KernelTemplate | ExternKernelChoice],
         op_name: str,
@@ -250,7 +248,7 @@ class InductorChoices:
         template: KernelTemplate | ExternKernelChoice,
         op_name: str,
         kwarg_overrides: dict[str, Any] | None = None,
-    ) -> Generator[KernelTemplateChoice, None, None]:
+    ) -> Generator[KernelTemplateChoice]:
         """
         Utility to get the KernelTemplateChoice generator for a specific input.
 

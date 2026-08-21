@@ -6,7 +6,6 @@ requests execute the captured body through ordinary Inductor lowering. Although 
 is stale and will fix up later on. See ``lower_quack_flex_gemm`` for the flow.
 """
 
-from __future__ import annotations
 
 from functools import partial
 from typing import Any, TYPE_CHECKING

@@ -48,8 +48,8 @@ def _validate_module(module: nn.Module, func_name: str) -> None:
 
 
 def _validate_mesh(
-    mesh: "DeviceMesh",
-    dp_mesh_dims: "DataParallelMeshDims | None" = None,
+    mesh: DeviceMesh,
+    dp_mesh_dims: DataParallelMeshDims | None = None,
 ) -> None:
     """
     Validate that the mesh can be used with fully_shard.
@@ -85,9 +85,9 @@ def _validate_mesh(
 
 
 def _get_mesh_info(
-    mesh: "DeviceMesh",
-    dp_mesh_dims: "DataParallelMeshDims | None" = None,
-) -> "DataParallelMeshInfo":
+    mesh: DeviceMesh,
+    dp_mesh_dims: DataParallelMeshDims | None = None,
+) -> DataParallelMeshInfo:
     """
     Get the appropriate mesh info for the given mesh.
 
@@ -106,13 +106,13 @@ def _get_mesh_info(
 
 
 def _get_mesh_info_from_named_dims(
-    mesh: "DeviceMesh",
-    dp_mesh_dims: "DataParallelMeshDims",
-) -> "DataParallelMeshInfo":
+    mesh: DeviceMesh,
+    dp_mesh_dims: DataParallelMeshDims,
+) -> DataParallelMeshInfo:
     shard_names = dp_mesh_dims.shard_names
     replicate_names = dp_mesh_dims.replicate_names
 
-    def _get_submesh(names: tuple[str, ...]) -> "DeviceMesh":
+    def _get_submesh(names: tuple[str, ...]) -> DeviceMesh:
         if len(names) == 1:
             return mesh[names[0]]
         # Flatten multi-dim submesh into a single dim so FSDP's internal
@@ -276,8 +276,8 @@ def _adjust_managed_modules(
 def _get_managed_modules(
     root_modules: tuple[nn.Module, ...],
     ignored_params: set[nn.Parameter] | None = None,
-    is_composable_fn: "Callable[[nn.Module], bool] | None" = None,
-    get_state_fn: "Callable[[nn.Module], Any] | None" = None,
+    is_composable_fn: Callable[[nn.Module], bool] | None = None,
+    get_state_fn: Callable[[nn.Module], Any] | None = None,
 ) -> list[nn.Module]:
     """
     Get the list of managed modules for FSDP/replicate.
@@ -406,7 +406,7 @@ def _apply_to_module(
     cls_to_wrapper_cls: dict[type, type],
     wrapper_module_cls: type,
     wrapper_cls_prefix: str,
-    unimplemented_deepcopy: "Callable",
+    unimplemented_deepcopy: Callable,
 ) -> None:
     """
     Modify module classes to include the wrapper class in their MRO.
@@ -431,15 +431,15 @@ def _apply_to_module(
 
 
 def _init_param_group(
-    state: "FSDPState",
+    state: FSDPState,
     params: list[nn.Parameter],
     modules: tuple[nn.Module, ...],
     mesh_info: DataParallelMeshInfo,
     post_forward_mesh_info: FSDPMeshInfo | None,
     device: torch.device,
-    shard_placement_fn: "Callable[[nn.Parameter], ShardPlacementFnResult] | None",
-    mp_policy: "MixedPrecisionPolicy",
-    offload_policy: "OffloadPolicy",
+    shard_placement_fn: Callable[[nn.Parameter], ShardPlacementFnResult] | None,
+    mp_policy: MixedPrecisionPolicy,
+    offload_policy: OffloadPolicy,
     reshard_after_forward: bool | int = True,
 ) -> None:
     """
@@ -537,8 +537,8 @@ def _get_modules_and_states(
     module: nn.Module,
     device: torch.device,
     ignored_params: set[nn.Parameter] | None,
-    is_composable_fn: "Callable[[nn.Module], bool] | None" = None,
-    get_state_fn: "Callable[[nn.Module], Any] | None" = None,
+    is_composable_fn: Callable[[nn.Module], bool] | None = None,
+    get_state_fn: Callable[[nn.Module], Any] | None = None,
 ) -> tuple[
     nn.Module,
     tuple[nn.Module, ...],

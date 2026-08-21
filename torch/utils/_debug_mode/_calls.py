@@ -295,7 +295,7 @@ class _TritonKernelCall(_DebugCall):
             post_hashes_str = ""
         return f"{base_str}{pre_hashes_str}{post_hashes_str}\n"
 
-    def finalize(self, device_interface: "DeviceInterface"):
+    def finalize(self, device_interface: DeviceInterface):
         # synchronize -> hash/store kernel results
         device_interface.synchronize(device_interface.current_device())
         if _utils._RECORD_TRITON_OUTPUTS:

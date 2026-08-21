@@ -1,7 +1,7 @@
 # Owner(s): ["module: unknown"]
 from collections import defaultdict
 from typing import Any, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.utils._pytree as pytree
@@ -89,7 +89,7 @@ class RuntimeEstimator(TorchDispatchMode):
         self._estimate_mode_type: str
         self._mod_tracker = ModTracker()
         self.mod_runtimes: dict[str, dict[str, float]] = defaultdict(
-            lambda: defaultdict(lambda: 0.0)
+            lambda: defaultdict(float)
         )
         self.mod_fw_pre_order: list[str] = []
         self.mod_bw_pre_order: list[str] = []
@@ -380,7 +380,7 @@ class RuntimeEstimator(TorchDispatchMode):
         RuntimeEstimator.fake_mode = fake_mode
         RuntimeEstimator.gpu_type = self._gpu_type
         self.total_runtime = 0.0
-        self.mod_runtimes = defaultdict(lambda: defaultdict(lambda: 0.0))
+        self.mod_runtimes = defaultdict(lambda: defaultdict(float))
         self.mod_fw_pre_order.clear()
         self.mod_bw_pre_order.clear()
         self.mod_fw_post_order.clear()

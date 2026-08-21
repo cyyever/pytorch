@@ -7,7 +7,8 @@ from collections.abc import Callable, Iterable, Sequence
 from copy import deepcopy
 from itertools import chain
 from typing import Any, cast, overload, TypeAlias, TypeVar
-from typing_extensions import deprecated, ParamSpec, Self
+from typing import ParamSpec, Self
+from warnings import deprecated
 
 import torch
 import torch.utils.hooks as hooks
@@ -379,18 +380,18 @@ class Optimizer:
     _optimizer_step_pre_hooks: dict[int, OptimizerPreHook]
     _optimizer_step_post_hooks: dict[int, OptimizerPostHook]
     # pyrefly: ignore [not-a-type]
-    _optimizer_state_dict_pre_hooks: 'OrderedDict[int, Callable[["Optimizer"], None]]'
+    _optimizer_state_dict_pre_hooks: OrderedDict[int, Callable[["Optimizer"], None]]
     _optimizer_state_dict_post_hooks: (
         # pyrefly: ignore [not-a-type]
-        'OrderedDict[int, Callable[["Optimizer", StateDict], StateDict | None]]'
+        OrderedDict[int, Callable[["Optimizer", StateDict], StateDict | None]]
     )
     _optimizer_load_state_dict_pre_hooks: (
         # pyrefly: ignore [not-a-type]
-        'OrderedDict[int, Callable[["Optimizer", StateDict], StateDict | None]]'
+        OrderedDict[int, Callable[["Optimizer", StateDict], StateDict | None]]
     )
     _optimizer_load_state_dict_post_hooks: (
         # pyrefly: ignore [not-a-type]
-        'OrderedDict[int, Callable[["Optimizer"], None]]'
+        OrderedDict[int, Callable[["Optimizer"], None]]
     )
 
     def __init__(self, params: ParamsT, defaults: dict[str, Any]) -> None:
@@ -631,7 +632,7 @@ class Optimizer:
         return handle
 
     def register_state_dict_pre_hook(
-        self, hook: Callable[["Optimizer"], None], prepend: bool = False
+        self, hook: Callable[[Optimizer], None], prepend: bool = False
     ) -> RemovableHandle:
         r"""Register a state dict pre-hook which will be called before :meth:`~torch.optim.Optimizer.state_dict` is called.
 
@@ -664,7 +665,7 @@ class Optimizer:
 
     def register_state_dict_post_hook(
         self,
-        hook: Callable[["Optimizer", StateDict], StateDict | None],
+        hook: Callable[[Optimizer, StateDict], StateDict | None],
         prepend: bool = False,
     ) -> RemovableHandle:
         r"""Register a state dict post-hook which will be called after :meth:`~torch.optim.Optimizer.state_dict` is called.
@@ -823,7 +824,7 @@ class Optimizer:
 
     def register_load_state_dict_pre_hook(
         self,
-        hook: Callable[["Optimizer", StateDict], StateDict | None],
+        hook: Callable[[Optimizer, StateDict], StateDict | None],
         prepend: bool = False,
     ) -> RemovableHandle:
         r"""Register a load_state_dict pre-hook which will be called before
@@ -861,7 +862,7 @@ class Optimizer:
         return handle
 
     def register_load_state_dict_post_hook(
-        self, hook: Callable[["Optimizer"], None], prepend: bool = False
+        self, hook: Callable[[Optimizer], None], prepend: bool = False
     ) -> RemovableHandle:
         r"""Register a load_state_dict post-hook which will be called after
         :meth:`~torch.optim.Optimizer.load_state_dict` is called. It should have the

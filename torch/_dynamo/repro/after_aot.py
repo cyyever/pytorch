@@ -17,7 +17,6 @@ This is primarily used by PyTorch developers and researchers to debug issues in
 the Dynamo AOT compilation pipeline, particularly for the Inductor backend.
 """
 
-from __future__ import annotations
 
 import argparse
 import ast
@@ -36,7 +35,7 @@ import uuid
 from importlib import import_module
 from tempfile import TemporaryFile
 from typing import Any, IO, TYPE_CHECKING, TypedDict
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 import sympy
 
@@ -1377,7 +1376,7 @@ def repro_analyze(options: ReproOptions, mod: nn.Module, load_args: Any) -> None
         if new_args:
             raise AssertionError("new_args should be empty after compiled() call")
 
-    def compare_tuples(t1: tuple[Unpack[_Ts]], t2: tuple[Unpack[_Ts]]) -> str | None:
+    def compare_tuples(t1: tuple[*_Ts], t2: tuple[*_Ts]) -> str | None:
         diff_indices = [i for i in range(len(t1)) if t1[i] != t2[i]]
         diff_values = [(t1[i], t2[i]) for i in diff_indices]
 

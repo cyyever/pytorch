@@ -45,13 +45,13 @@ def bind_locals(
 @dataclass
 class CompileArtifacts:
     signature: inspect.Signature
-    guard_manager: Optional["GuardManagerWrapper"]
+    guard_manager: Optional[GuardManagerWrapper]
     guards_state: bytes
     backend_id: str
     compiled_fn: SerializableCallable
     original_code: types.CodeType
     runtime_env: GraphRuntimeEnv
-    source_info: "SourceInfo"
+    source_info: SourceInfo
     device_type: str
     backend_name: str
     system_info: SystemInfo = dataclasses.field(default_factory=SystemInfo.current)
@@ -98,7 +98,7 @@ class AOTCompilePickler(pickle.Pickler):
         return importlib.import_module(name)
 
     @classmethod
-    def _unpickle_code(cls, serialized_code: "SerializedCode") -> types.CodeType:
+    def _unpickle_code(cls, serialized_code: SerializedCode) -> types.CodeType:
         from torch._dynamo.package import SerializedCode
 
         return SerializedCode.to_code_object(serialized_code)
@@ -243,7 +243,7 @@ class AOTCompiledFunction:
             raise RuntimeError(f"GuardManager check failed, reason: {reason}")
         return self.fn(*args, **kwargs)
 
-    def source_info(self) -> "SourceInfo":
+    def source_info(self) -> SourceInfo:
         return self._artifacts.source_info
 
     def save_compiled_function(
@@ -255,7 +255,7 @@ class AOTCompiledFunction:
 
     @classmethod
     def serialize(
-        cls, fn: "AOTCompiledFunction", external_data: dict[str, Any] | None = None
+        cls, fn: AOTCompiledFunction, external_data: dict[str, Any] | None = None
     ) -> AOTCompileSaveResult:
         from torch._dynamo.package import SerializedCode
 
@@ -287,7 +287,7 @@ class AOTCompiledFunction:
         data: bytes,
         f_globals: dict[str, object] | None = None,
         external_closure_data: dict[str, Any] | None = None,
-    ) -> "AOTCompiledFunction":
+    ) -> AOTCompiledFunction:
         from torch._dynamo.package import SerializedCode
 
         f = io.BytesIO(data)
@@ -500,7 +500,7 @@ class AOTCompiledModel:
         return pickle.dumps(data)
 
     @classmethod
-    def deserialize(cls, model: torch.nn.Module, data: bytes) -> "AOTCompiledModel":
+    def deserialize(cls, model: torch.nn.Module, data: bytes) -> AOTCompiledModel:
         from torch._dynamo.utils import get_metrics_context
         from torch._guards import compile_context, CompileContext
 

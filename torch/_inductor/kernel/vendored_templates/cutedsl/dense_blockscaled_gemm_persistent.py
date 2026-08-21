@@ -27,23 +27,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import argparse
-from typing import Tuple, Type, Union
 
 import cuda.bindings.driver as cuda
 
 import cutlass
 import cutlass.cute as cute
 import cutlass.pipeline as pipeline
-import cutlass.torch as cutlass_torch
 import cutlass.utils as utils
 import cutlass.utils.blackwell_helpers as sm100_utils
 import cutlass.utils.blockscaled_layout as blockscaled_utils
 from cutlass.cute.nvgpu import cpasync, tcgen05
-from cutlass.cute.runtime import from_dlpack
 from cutlass.pipeline import pipeline_init_arrive, pipeline_init_wait
 
-import torch
 from torch._inductor.kernel.vendored_templates.cutedsl.reduction_utils import (
     get_lane_warp_layouts,
     partition_for_epilogue,
@@ -176,8 +171,8 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
     def __init__(
         self,
         sf_vec_size: int,
-        mma_tiler_mn: Tuple[int, int],
-        cluster_shape_mn: Tuple[int, int],
+        mma_tiler_mn: tuple[int, int],
+        cluster_shape_mn: tuple[int, int],
         use_prefetch: bool = False,
     ):
         """Initializes the configuration for a Blackwell dense GEMM kernel.
@@ -530,10 +525,10 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
         self.primary_epilogue_output = primary_epilogue_output
 
         # Setup static attributes before smem/grid/tma computation
-        self.a_dtype: Type[cutlass.Numeric] = a_tensor.element_type
-        self.b_dtype: Type[cutlass.Numeric] = b_tensor.element_type
-        self.sf_dtype: Type[cutlass.Numeric] = sfa_tensor.element_type
-        self.c_dtype: Type[cutlass.Numeric] = c_tensor.element_type
+        self.a_dtype: type[cutlass.Numeric] = a_tensor.element_type
+        self.b_dtype: type[cutlass.Numeric] = b_tensor.element_type
+        self.sf_dtype: type[cutlass.Numeric] = sfa_tensor.element_type
+        self.c_dtype: type[cutlass.Numeric] = c_tensor.element_type
         self.a_major_mode = utils.LayoutEnum.from_tensor(a_tensor).mma_major_mode()
         self.b_major_mode = utils.LayoutEnum.from_tensor(b_tensor).mma_major_mode()
         self.c_layout = utils.LayoutEnum.from_tensor(c_tensor)
@@ -815,7 +810,7 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
         b_smem_layout_staged: cute.ComposedLayout,
         sfa_smem_layout_staged: cute.Layout,
         sfb_smem_layout_staged: cute.Layout,
-        c_smem_layout_staged: Union[cute.Layout, cute.ComposedLayout],
+        c_smem_layout_staged: cute.Layout | cute.ComposedLayout,
         epi_tile: cute.Tile,
         tile_sched_params: utils.PersistentTileSchedulerParams,
         epilogue_op: cutlass.Constexpr,
@@ -2124,7 +2119,7 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
         self,
         sSF: cute.Tensor,
         tSF: cute.Tensor,
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         """
         Make tiledCopy for smem to tmem load for scale factor tensor, then use it to partition smem memory (source) and tensor memory (destination).
 
@@ -2169,8 +2164,8 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
         tAcc: cute.Tensor,
         gC_mnl: cute.Tensor,
         epi_tile: cute.Tile,
-        use_2cta_instrs: Union[cutlass.Boolean, bool],
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+        use_2cta_instrs: cutlass.Boolean | bool,
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         """
         Make tiledCopy for tensor memory load, then use it to partition tensor memory (source) and register array (destination).
 
@@ -2232,7 +2227,7 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
         tTR_rC: cute.Tensor,
         tidx: cutlass.Int32,
         sC: cute.Tensor,
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         """
         Make tiledCopy for shared memory store, then use it to partition register array (source) and shared memory (destination).
 
@@ -2266,11 +2261,11 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
     def epilog_gmem_copy_and_partition(
         self,
         tidx: cutlass.Int32,
-        atom: Union[cute.CopyAtom, cute.TiledCopy],
+        atom: cute.CopyAtom | cute.TiledCopy,
         gC_mnl: cute.Tensor,
         epi_tile: cute.Tile,
         sC: cute.Tensor,
-    ) -> Tuple[cute.CopyAtom, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.CopyAtom, cute.Tensor, cute.Tensor]:
         """Make tiledCopy for global memory store, then use it to:
         partition shared memory (source) and global memory (destination) for TMA store version.
 
@@ -2313,17 +2308,17 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
     @staticmethod
     def _compute_stages(
         tiled_mma: cute.TiledMma,
-        mma_tiler_mnk: Tuple[int, int, int],
-        a_dtype: Type[cutlass.Numeric],
-        b_dtype: Type[cutlass.Numeric],
+        mma_tiler_mnk: tuple[int, int, int],
+        a_dtype: type[cutlass.Numeric],
+        b_dtype: type[cutlass.Numeric],
         epi_tile: cute.Tile,
-        c_dtype: Type[cutlass.Numeric],
+        c_dtype: type[cutlass.Numeric],
         c_layout: utils.LayoutEnum,
-        sf_dtype: Type[cutlass.Numeric],
+        sf_dtype: type[cutlass.Numeric],
         sf_vec_size: int,
         smem_capacity: int,
         occupancy: int,
-    ) -> Tuple[int, int, int]:
+    ) -> tuple[int, int, int]:
         """Computes the number of stages for A/B/C operands based on heuristics.
 
         :param tiled_mma: The tiled MMA object defining the core computation.
@@ -2424,10 +2419,10 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
     @staticmethod
     def _compute_grid(
         c: cute.Tensor,
-        cta_tile_shape_mnk: Tuple[int, int, int],
-        cluster_shape_mn: Tuple[int, int],
+        cta_tile_shape_mnk: tuple[int, int, int],
+        cluster_shape_mn: tuple[int, int],
         max_active_clusters: cutlass.Constexpr,
-    ) -> Tuple[utils.PersistentTileSchedulerParams, Tuple[int, int, int]]:
+    ) -> tuple[utils.PersistentTileSchedulerParams, tuple[int, int, int]]:
         """Use persistent tile scheduler to compute the grid size for the output tensor C.
 
         :param c: The output tensor C
@@ -2460,10 +2455,10 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
 
     @staticmethod
     def is_valid_dtypes_and_scale_factor_vec_size(
-        ab_dtype: Type[cutlass.Numeric],
-        sf_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        sf_dtype: type[cutlass.Numeric],
         sf_vec_size: int,
-        c_dtype: Type[cutlass.Numeric],
+        c_dtype: type[cutlass.Numeric],
     ) -> bool:
         """
         Check if the dtypes and sf_vec_size are valid combinations
@@ -2518,8 +2513,8 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
 
     @staticmethod
     def is_valid_layouts(
-        ab_dtype: Type[cutlass.Numeric],
-        c_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        c_dtype: type[cutlass.Numeric],
         a_major: str,
         b_major: str,
         c_major: str,
@@ -2549,8 +2544,8 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
 
     @staticmethod
     def is_valid_mma_tiler_and_cluster_shape(
-        mma_tiler_mn: Tuple[int, int],
-        cluster_shape_mn: Tuple[int, int],
+        mma_tiler_mn: tuple[int, int],
+        cluster_shape_mn: tuple[int, int],
     ) -> bool:
         """
         Check if the mma tiler and cluster shape are valid
@@ -2594,8 +2589,8 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
         n: int,
         k: int,
         l: int,
-        ab_dtype: Type[cutlass.Numeric],
-        c_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        c_dtype: type[cutlass.Numeric],
         a_major: str,
         b_major: str,
         c_major: str,
@@ -2643,12 +2638,12 @@ class Sm100BlockScaledPersistentDenseGemmKernel:
 
     @staticmethod
     def can_implement(
-        ab_dtype: Type[cutlass.Numeric],
-        sf_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        sf_dtype: type[cutlass.Numeric],
         sf_vec_size: int,
-        c_dtype: Type[cutlass.Numeric],
-        mma_tiler_mn: Tuple[int, int],
-        cluster_shape_mn: Tuple[int, int],
+        c_dtype: type[cutlass.Numeric],
+        mma_tiler_mn: tuple[int, int],
+        cluster_shape_mn: tuple[int, int],
         m: int,
         n: int,
         k: int,

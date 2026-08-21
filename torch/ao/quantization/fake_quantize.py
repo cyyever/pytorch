@@ -47,7 +47,7 @@ __all__ = [
 ]
 
 
-def _is_per_channel(qscheme: "torch.qscheme") -> bool:
+def _is_per_channel(qscheme: torch.qscheme) -> bool:
     return qscheme in [
         torch.per_channel_symmetric,
         torch.per_channel_affine,
@@ -55,15 +55,15 @@ def _is_per_channel(qscheme: "torch.qscheme") -> bool:
     ]
 
 
-def _is_per_tensor(qscheme: "torch.qscheme") -> bool:
+def _is_per_tensor(qscheme: torch.qscheme) -> bool:
     return qscheme in [torch.per_tensor_symmetric, torch.per_tensor_affine]
 
 
-def _is_symmetric_quant(qscheme: "torch.qscheme") -> bool:
+def _is_symmetric_quant(qscheme: torch.qscheme) -> bool:
     return qscheme in [torch.per_tensor_symmetric, torch.per_channel_symmetric]
 
 
-def _is_float_qparams(qscheme: "torch.qscheme") -> bool:
+def _is_float_qparams(qscheme: torch.qscheme) -> bool:
     return qscheme == torch.per_channel_affine_float_qparams
 
 

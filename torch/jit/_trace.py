@@ -15,12 +15,11 @@ import functools
 import inspect
 import os
 import re
-import sys
 import warnings
 from collections.abc import Callable
 from enum import Enum
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 from torch._jit_internal import (
@@ -996,17 +995,11 @@ def trace(
         module = torch.jit.trace(n, example_forward_input)
 
     """
-    if sys.version_info >= (3, 14):
-        warnings.warn(
-            "`torch.jit.trace` is not supported in Python 3.14+ and may break. "
-            "Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
-    else:
-        warnings.warn(
-            "`torch.jit.trace` is deprecated. Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
+    warnings.warn(
+        "`torch.jit.trace` is not supported in Python 3.14+ and may break. "
+        "Please switch to `torch.compile` or `torch.export`.",
+        FutureWarning,
+    )
     if not _enabled:
         return func
     if optimize is not None:
@@ -1135,17 +1128,11 @@ def trace_module(
         module = torch.jit.trace_module(n, inputs)
 
     """
-    if sys.version_info >= (3, 14):
-        warnings.warn(
-            "`torch.jit.trace_method` is not supported in Python 3.14+ and may break. "
-            "Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
-    else:
-        warnings.warn(
-            "`torch.jit.trace_method` is deprecated. Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
+    warnings.warn(
+        "`torch.jit.trace_method` is not supported in Python 3.14+ and may break. "
+        "Please switch to `torch.compile` or `torch.export`.",
+        FutureWarning,
+    )
     if not _enabled:
         return mod
     if optimize is not None:

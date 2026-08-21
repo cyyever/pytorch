@@ -285,7 +285,7 @@ def check_escaped_gradients(
 @contextlib.contextmanager
 def unflatten_args_with_modules(
     flat_args: tuple[Any, ...], input_spec: pytree.TreeSpec
-) -> Generator[tuple[list[Any] | tuple[Any, ...], dict[str, Any]], None, None]:
+) -> Generator[tuple[list[Any] | tuple[Any, ...], dict[str, Any]]]:
     args, kwargs = pytree.tree_unflatten(flat_args, input_spec)
 
     with contextlib.ExitStack() as stack:

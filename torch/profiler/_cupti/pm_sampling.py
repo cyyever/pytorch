@@ -11,7 +11,6 @@ live collectors and deinitializes exactly once, when the last is released. That 
 several devices at once safe: one device's teardown never deinitializes a profiler another device is
 still using."""
 
-from __future__ import annotations
 
 import functools
 import logging
@@ -33,7 +32,7 @@ import torch
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing_extensions import Self
+    from typing import Self
 
 
 logger = logging.getLogger(__name__)

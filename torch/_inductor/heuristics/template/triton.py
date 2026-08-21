@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dataclasses
 import itertools
 import logging
@@ -854,7 +852,7 @@ class BaseConfigHeuristic(metaclass=BaseHeuristicSingleton):
     def _finalize_mm_configs(
         self,
         configs: list[BaseConfig],
-    ) -> Generator[TritonConfig, None, None]:
+    ) -> Generator[TritonConfig]:
         """
         Finalizes configs after scaling, applying additional constraints.
         """
@@ -1143,7 +1141,7 @@ class BaseConfigHeuristic(metaclass=BaseHeuristicSingleton):
         dtype_size: int = 0,
         op_name: str = "mm",  # For preprocessing overrides e.g. on CPU
         **kwargs,
-    ) -> Generator[TritonConfig, None, None]:
+    ) -> Generator[TritonConfig]:
         configs = self._filter_configs(configs)
         scaled_configs = self._scale_mm_configs(
             m, n, k, configs, scale, has_int8_tensor, exclude
@@ -1169,10 +1167,10 @@ class BaseConfigHeuristic(metaclass=BaseHeuristicSingleton):
     ) -> TritonConfig:
         return TritonConfig(kwargs, num_stages=num_stages, num_warps=num_warps)
 
-    def get_mm_configs(self) -> partial[Generator[TritonConfig, None, None]]:
+    def get_mm_configs(self) -> partial[Generator[TritonConfig]]:
         return partial(self.preprocess_mm_configs, configs=self.mm_configs)
 
-    def get_exhaustive_mm_configs(self) -> partial[Generator[TritonConfig, None, None]]:
+    def get_exhaustive_mm_configs(self) -> partial[Generator[TritonConfig]]:
         """Get exhaustive MM configs for origami optimization.
 
         Note: When these configs are used with origami (on ROCm with
@@ -1183,7 +1181,7 @@ class BaseConfigHeuristic(metaclass=BaseHeuristicSingleton):
         """
         return partial(self.preprocess_mm_configs, configs=self.exhaustive_configs)
 
-    def get_conv_configs(self) -> partial[Generator[TritonConfig, None, None]]:
+    def get_conv_configs(self) -> partial[Generator[TritonConfig]]:
         return partial(
             self.preprocess_mm_configs, configs=self.conv_configs, op_name="conv"
         )
@@ -1322,7 +1320,7 @@ class CPUConfigHeuristic(BaseConfigHeuristic):
         dtype_size: int = 0,
         op_name: str = "mm",  # For preprocessing overrides e.g. on CPU
         **kwargs,
-    ) -> Generator[TritonConfig, None, None]:
+    ) -> Generator[TritonConfig]:
         """
         CPU-specific preprocessing that applies CPU-specific scaling (0.5) and exclusion logic.
         """
@@ -1811,7 +1809,7 @@ class ROCmConfigHeuristic(BaseConfigHeuristic):
     def _finalize_mm_configs(
         self,
         configs: list[BaseConfig],
-    ) -> Generator[TritonConfig, None, None]:
+    ) -> Generator[TritonConfig]:
         """
         Finalizes configs after scaling, applying additional constraints.
         """
@@ -2139,9 +2137,9 @@ class MMTemplateConfigMixin(GemmMaxAutotuneTemplateConfigHeuristics):
     """
 
     # Type annotations to ensure the mixin works with BaseConfigHeuristic
-    get_mm_configs: Callable[[], partial[Generator[TritonConfig, None, None]]]
+    get_mm_configs: Callable[[], partial[Generator[TritonConfig]]]
     get_exhaustive_mm_configs: Callable[
-        [], partial[Generator[TritonConfig, None, None]]
+        [], partial[Generator[TritonConfig]]
     ]
     _filter_configs: Callable[[list[BaseConfig]], list[BaseConfig]]
     # Provided by ROCmConfigHeuristic / BaseConfigHeuristic when this mixin is
@@ -2152,7 +2150,7 @@ class MMTemplateConfigMixin(GemmMaxAutotuneTemplateConfigHeuristics):
     _get_exceeding_shared_memory_checker: Callable[
         [bool, int], Callable[[BaseConfig, int], bool] | None
     ]
-    preprocess_mm_configs: Callable[..., Generator[TritonConfig, None, None]]
+    preprocess_mm_configs: Callable[..., Generator[TritonConfig]]
 
     # Whether to render the K loop ascending (range(0, tl.cdiv(K, BLOCK_K)))
     # instead of descending (range(K, 0, -BLOCK_K)). XPU's Triton->SPIR-V
@@ -2201,7 +2199,7 @@ class MMTemplateConfigMixin(GemmMaxAutotuneTemplateConfigHeuristics):
 
     def _get_config_generator(
         self,
-    ) -> partial[Generator[TritonConfig, None, None]]:
+    ) -> partial[Generator[TritonConfig]]:
         """
         Get the appropriate config generator based on search space.
         Can be overridden by subclasses for template-specific behavior.
@@ -2217,7 +2215,7 @@ class MMTemplateConfigMixin(GemmMaxAutotuneTemplateConfigHeuristics):
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """
         Convert config lists to template kwargs.
         This replaces the logic from choices.get_mm_configs and inlines mm_options.
@@ -2571,7 +2569,7 @@ class MMPlusMMTemplateConfigMixin(MMTemplateConfigMixin):
         dtype_size: int = 0,
         op_name: str = "mm",
         **kwargs,
-    ) -> Generator[TritonConfig, None, None]:
+    ) -> Generator[TritonConfig]:
         configs = [
             c for c in configs if V.graph.sizevars.statically_known_lt(c.block_k, k)
         ]
@@ -2593,7 +2591,7 @@ class MMPlusMMTemplateConfigMixin(MMTemplateConfigMixin):
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         if not isinstance(kernel_inputs, MMKernelInputs):
             raise AssertionError("Expect MMKernelInputs")
         m, n, k = kernel_inputs.mnk_symbolic()
@@ -2657,7 +2655,7 @@ class TMATemplateConfigMixin(TMAWorkspaceMixin, MMTemplateConfigMixin):
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """
         Generate TMA template configs by calling super and adding TMA-specific options.
         """
@@ -2699,7 +2697,7 @@ class BlackwellTMATemplateConfigMixin(TMATemplateConfigMixin):
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """
         Generate TMA template configs by calling super and adding TMA-specific options.
         """
@@ -2755,7 +2753,7 @@ class BlackwellTMATemplateConfigMixin(TMATemplateConfigMixin):
 
     def _get_config_generator(
         self,
-    ) -> partial[Generator[TritonConfig, None, None]]:
+    ) -> partial[Generator[TritonConfig]]:
         # No curated autoWS set yet: sweep the full autoWS space for both default
         # and exhaustive search, and let _get_template_configs_impl prune it.
         if _use_template_autows():
@@ -2886,7 +2884,7 @@ class BaseScaledMMConfigMixin(MMTemplateConfigMixin):
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """
         Generate scaled MM template configs with scaled MM-specific options.
         Handles the remaining logic from mm_common, including assertions.
@@ -3018,7 +3016,7 @@ class ScaledTMAConfigMixin(TMAWorkspaceMixin, BaseScaledMMConfigMixin):
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """
         Generate scaled TMA template configs with both scaled MM and TMA-specific options.
         """
@@ -3140,7 +3138,7 @@ class PersistentMMTemplateConfigHeuristic(
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         for template_kwargs in super()._get_template_configs_impl(
             kernel_inputs, op_name, **kwargs
         ):
@@ -3253,7 +3251,7 @@ class CUDAScaledTMAMainLoopScalingTemplateConfigHeuristic(
         kernel_inputs: KernelInputs,
         op_name: str,
         **kwargs,
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         """
         Generate main loop scaling kernel inputs.
         """

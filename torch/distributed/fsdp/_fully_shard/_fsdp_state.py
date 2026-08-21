@@ -76,7 +76,7 @@ class FSDPState(_State):
         # through ``fully_shard`` or ``set_reshard_after_forward``
         self._auto_reshard_after_forward: bool | None = True
 
-    def _get_state_for_module(self, module: nn.Module) -> "FSDPState | None":
+    def _get_state_for_module(self, module: nn.Module) -> FSDPState | None:
         """Get the state for a module. Subclasses can override to use different state getters."""
         return _get_module_fsdp_state(module)
 

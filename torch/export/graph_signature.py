@@ -633,10 +633,10 @@ def _make_argument_spec(node, token_names) -> ArgumentSpec:
 
 
 def _convert_to_export_graph_signature(
-    graph_signature: "GraphSignature",
-    gm: "torch.fx.GraphModule",
+    graph_signature: GraphSignature,
+    gm: torch.fx.GraphModule,
     non_persistent_buffers: set[str],
-) -> "ExportGraphSignature":
+) -> ExportGraphSignature:
     from torch.utils import _pytree as pytree
 
     is_joint = graph_signature.backward_signature is not None

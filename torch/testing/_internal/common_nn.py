@@ -3097,7 +3097,7 @@ def ctcloss_reference(log_probs, targets, input_lengths, target_lengths, blank=0
     return output
 
 
-loss_reference_fns: dict['str', Callable] = {
+loss_reference_fns: dict[str, Callable] = {
     'KLDivLoss': kldivloss_reference,
     'KLDivLoss_log_target': partial(kldivloss_reference, log_target=True),
     'NLLLoss': nllloss_reference,

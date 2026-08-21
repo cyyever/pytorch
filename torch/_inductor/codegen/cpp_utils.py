@@ -239,7 +239,7 @@ def value_to_cpp(value, cpp_type):
 
 
 def rewrite_index_for_function(
-    localize_buffer_handler: "LocalizeBufferHandler",
+    localize_buffer_handler: LocalizeBufferHandler,
     index: sympy.Expr,
     global_buf_name: str,
 ):
@@ -268,7 +268,7 @@ def rewrite_index_for_function(
 
 
 def rewrite_index_for_nodes(
-    localize_buffer_handler: "LocalizeBufferHandler",
+    localize_buffer_handler: LocalizeBufferHandler,
     index: sympy.Expr,
     global_buf_name: str,
 ):
@@ -289,7 +289,7 @@ class LocalizeBufferHandler(V.WrapperHandler):  # type: ignore[name-defined]
         self,
         inner,
         global_to_local: dict[str, ir.Buffer],
-        rewrite_index: Callable[["LocalizeBufferHandler", sympy.Expr, str], sympy.Expr],
+        rewrite_index: Callable[[LocalizeBufferHandler, sympy.Expr, str], sympy.Expr],
     ) -> None:
         super().__init__(inner)
         self.global_to_local = global_to_local
@@ -415,7 +415,7 @@ class LocalBufferContext:
         self,
         fn: Callable[..., Any],
         rewrite_index: Callable[
-            ["LocalizeBufferHandler", sympy.Expr, str], sympy.Expr
+            [LocalizeBufferHandler, sympy.Expr, str], sympy.Expr
         ] = rewrite_index_for_function,
     ):
         def inner(*args, **kwargs):
@@ -434,7 +434,7 @@ class LocalBufferContext:
         self,
         nodes: list[ir.IRNode],
         rewrite_index: Callable[
-            ["LocalizeBufferHandler", sympy.Expr, str], sympy.Expr
+            [LocalizeBufferHandler, sympy.Expr, str], sympy.Expr
         ] = rewrite_index_for_nodes,
     ) -> list[ir.IRNode]:
         """

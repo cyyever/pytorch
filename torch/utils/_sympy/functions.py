@@ -4,7 +4,7 @@ import operator
 import sys
 from collections.abc import Callable
 from typing import SupportsFloat, TYPE_CHECKING, TypeVar
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 import sympy
 from sympy import S
@@ -122,7 +122,7 @@ def _keep_float(
     f: Callable[[Unpack[_Ts]], _T],
 ) -> Callable[[Unpack[_Ts]], _T | sympy.Float]:
     @functools.wraps(f)
-    def inner(*args: Unpack[_Ts]) -> _T | sympy.Float:
+    def inner(*args: *_Ts) -> _T | sympy.Float:
         r: _T | sympy.Float = f(*args)
         if any(isinstance(a, sympy.Float) for a in args) and not isinstance(
             r, sympy.Float
@@ -709,7 +709,7 @@ class MinMaxBase(Expr, LatticeOp):  # type: ignore[misc]
 
     @classmethod
     def _satisfy_unique_summations_symbols(
-        cls, args: "Sequence[sympy.Expr]"
+        cls, args: Sequence[sympy.Expr]
     ) -> set[sympy.core.symbol.Symbol] | None:
         """
         One common case in some models is building expressions of the form
@@ -766,7 +766,7 @@ class MinMaxBase(Expr, LatticeOp):  # type: ignore[misc]
     @classmethod
     def _unique_symbols(
         cls,
-        args: "Iterable[sympy.Expr]",
+        args: Iterable[sympy.Expr],
         initial_set: set[sympy.core.symbol.Symbol] | None = None,
     ) -> set[sympy.core.symbol.Symbol] | None:
         """
@@ -786,8 +786,8 @@ class MinMaxBase(Expr, LatticeOp):  # type: ignore[misc]
 
     @classmethod
     def _collapse_arguments(
-        cls, args: "Iterable[sympy.Expr]", **assumptions: bool
-    ) -> "Iterable[sympy.Expr]":
+        cls, args: Iterable[sympy.Expr], **assumptions: bool
+    ) -> Iterable[sympy.Expr]:
         """Remove redundant args.
 
         Examples
@@ -924,8 +924,8 @@ class MinMaxBase(Expr, LatticeOp):  # type: ignore[misc]
 
     @classmethod
     def _new_args_filter(
-        cls, arg_sequence: "Iterable[sympy.Expr]"
-    ) -> "Iterator[sympy.Expr]":
+        cls, arg_sequence: Iterable[sympy.Expr]
+    ) -> Iterator[sympy.Expr]:
         """
         Generator filtering args.
 
@@ -953,7 +953,7 @@ class MinMaxBase(Expr, LatticeOp):  # type: ignore[misc]
 
     @classmethod
     def _find_localzeros(
-        cls, values: "Iterable[sympy.Expr]", **options: bool
+        cls, values: Iterable[sympy.Expr], **options: bool
     ) -> set[sympy.Expr]:
         """
         Sequentially allocate values to localzeros.

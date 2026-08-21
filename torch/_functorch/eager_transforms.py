@@ -4,12 +4,11 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import annotations
 
 import contextlib
 from functools import partial
 from typing import Any, overload, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 import torch.autograd.forward_ad as fwAD
@@ -67,7 +66,7 @@ def lazy_dynamo_disallow(func: Callable[_P, _R]) -> Callable[_P, _R]:
 
 
 @contextlib.contextmanager
-def enable_inplace_requires_grad(enabled: bool) -> Generator[None, None, None]:
+def enable_inplace_requires_grad(enabled: bool) -> Generator[None]:
     prev_state = get_inplace_requires_grad_allowed()
     set_inplace_requires_grad_allowed(enabled)
     try:
@@ -338,7 +337,7 @@ def vjp(
 
 
 @contextlib.contextmanager
-def _disable_inference_mode() -> Generator[None, None, None]:
+def _disable_inference_mode() -> Generator[None]:
     # Disable inference_mode without clobbering grad_mode / fw_grad_mode.
     # torch.inference_mode(False) unconditionally sets grad_mode=True and
     # fw_grad_mode=True; we save and restore those to avoid that.
@@ -355,7 +354,7 @@ def _disable_inference_mode() -> Generator[None, None, None]:
 
 
 @contextlib.contextmanager
-def grad_increment_nesting() -> Generator[int, None, None]:
+def grad_increment_nesting() -> Generator[int]:
     try:
         grad_level = _grad_increment_nesting()
         yield grad_level
@@ -377,7 +376,7 @@ def exit_jvp_nesting() -> None:
 
 
 @contextlib.contextmanager
-def jvp_increment_nesting() -> Generator[int, None, None]:
+def jvp_increment_nesting() -> Generator[int]:
     try:
         yield enter_jvp_nesting()
     finally:
@@ -861,7 +860,7 @@ def _chunked_standard_basis_for_(
     tensors: Sequence[torch.Tensor],
     tensor_numels: Sequence[int],
     chunk_size: int | None = None,
-) -> Generator[tuple[torch.Tensor, ...], None, None]:
+) -> Generator[tuple[torch.Tensor, ...]]:
     # This function:
     # - constructs a N=sum(tensor_numels) standard basis. i.e. an NxN identity matrix.
     # - Splits the identity matrix into chunks with each chunk size determined by `tensor_numels`.

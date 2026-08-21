@@ -3,7 +3,7 @@ import operator
 from collections.abc import Callable
 from functools import reduce
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import sympy
 

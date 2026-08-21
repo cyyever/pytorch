@@ -497,7 +497,7 @@ class EmbeddingBag(Module):
         sparse: bool = False,
         include_last_offset: bool = False,
         padding_idx: int | None = None,
-    ) -> "EmbeddingBag":
+    ) -> EmbeddingBag:
         r"""Create EmbeddingBag instance from given 2-dimensional FloatTensor.
 
         Args:

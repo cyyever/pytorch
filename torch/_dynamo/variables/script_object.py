@@ -24,7 +24,7 @@ import inspect
 import types
 from collections.abc import Callable, Iterable
 from typing import Any, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.utils._pytree as pytree
@@ -107,17 +107,17 @@ class CustomClassVariable(UserDefinedVariable):
         # allowing for proper validation and error handling
         return False
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         # CustomClassVariable wraps the CLASS, not an instance.
         # Classes are always hashable in CPython (type.__hash__ = object.__hash__).
         return hash(self.value), False
 
     def nb_or_impl(
         self,
-        tx: "InstructionTranslatorBase",
-        other: "VariableTracker",
+        tx: InstructionTranslatorBase,
+        other: VariableTracker,
         reverse: bool = False,
-    ) -> "VariableTracker":
+    ) -> VariableTracker:
         try:
             other_val = other.as_python_constant()
         except NotImplementedError:
@@ -135,7 +135,7 @@ class CustomClassVariable(UserDefinedVariable):
         return f"{self.__class__.__name__}({self.value})"
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         obj = None
         try:
@@ -178,7 +178,7 @@ class CustomClassVariable(UserDefinedVariable):
 
     def call_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -240,7 +240,7 @@ class CustomClassVariable(UserDefinedVariable):
 
 
 class CustomClassObjectVariable(UserDefinedObjectVariable):
-    _fake_script_object_cache: dict[int, "CustomClassObjectVariable"] = {}
+    _fake_script_object_cache: dict[int, CustomClassObjectVariable] = {}
 
     @classmethod
     def is_matching_cls(cls, user_cls: type) -> bool:
@@ -257,9 +257,9 @@ class CustomClassObjectVariable(UserDefinedObjectVariable):
         ctor_args_kwargs: Any = None,
         ctor_arg_sources: tuple[Source | None, ...] | None = None,
         *,
-        tx: "InstructionTranslatorBase | None" = None,
+        tx: InstructionTranslatorBase | None = None,
         **options: Any,
-    ) -> "CustomClassObjectVariable":
+    ) -> CustomClassObjectVariable:
         if isinstance(value, enum.Enum):
             raise AssertionError(
                 f"Enum {type(value)} should use UserDefinedObjectVariable, not CustomClassObjectVariable"
@@ -337,10 +337,10 @@ class CustomClassObjectVariable(UserDefinedObjectVariable):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
-        other: "VariableTracker",
+        tx: InstructionTranslatorBase,
+        other: VariableTracker,
         op: str,
-    ) -> "VariableTracker":
+    ) -> VariableTracker:
         from .constant import ConstantVariable
         from .object_protocol import object_richcompare
 
@@ -367,7 +367,7 @@ class CustomClassObjectVariable(UserDefinedObjectVariable):
         "Dynamo cannot safely trace script object due to graph break."
     )
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         from torch._higher_order_ops.torchbind import call_torchbind
 
@@ -457,9 +457,9 @@ class CustomClassObjectVariable(UserDefinedObjectVariable):
 
     def mp_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
-        key: "VariableTracker",
-    ) -> "VariableTracker":
+        tx: InstructionTranslatorBase,
+        key: VariableTracker,
+    ) -> VariableTracker:
         # Call call_method directly on this class to avoid the __getitem__ →
         # mp_subscript_impl loop in VariableTracker.call_method.
         return CustomClassObjectVariable.call_method(self, tx, "__getitem__", [key], {})
@@ -473,7 +473,7 @@ class CustomClassObjectVariable(UserDefinedObjectVariable):
     )
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: Iterable[Any],
         kwargs: dict[str, Any],
@@ -574,7 +574,7 @@ class CustomClassObjectVariable(UserDefinedObjectVariable):
             return self.value
         return super().as_python_constant()
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         from ..exc import raise_type_error
 
         real_obj = self.as_python_constant()

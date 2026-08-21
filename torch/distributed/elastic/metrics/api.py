@@ -11,7 +11,7 @@ import abc
 import time
 from collections import namedtuple
 from functools import wraps
-from typing_extensions import deprecated
+from warnings import deprecated
 
 
 __all__ = [

@@ -44,7 +44,7 @@ class GemmReductionGeometry:
     @classmethod
     def from_output_shape(
         cls, output_shape: Sequence[Any], gemm_shape: Sequence[Any]
-    ) -> "GemmReductionGeometry | None":
+    ) -> GemmReductionGeometry | None:
         if len(output_shape) != 3 or len(gemm_shape) != 2:
             return None
         for axis, group_dim in ((0, 1), (1, 2)):
@@ -94,7 +94,7 @@ class GemmReductionDescriptor:
     parameters: tuple[float, ...] = ()
 
     @classmethod
-    def parse(cls, value: str) -> "GemmReductionDescriptor":
+    def parse(cls, value: str) -> GemmReductionDescriptor:
         kind, *parameters = value.split(":")
         return cls(kind, tuple(float(parameter) for parameter in parameters))
 
@@ -491,7 +491,7 @@ class GemmEpilogueGraph:
     normalized_nodes: dict[torch.fx.Node, NormalizedNode]
 
     @classmethod
-    def from_nodes(cls, nodes: Sequence[torch.fx.Node]) -> "GemmEpilogueGraph":
+    def from_nodes(cls, nodes: Sequence[torch.fx.Node]) -> GemmEpilogueGraph:
         """Build the FX dependency and normalization indexes in one graph walk."""
         dependencies: dict[torch.fx.Node, frozenset[torch.fx.Node]] = {}
         normalized_nodes: dict[torch.fx.Node, NormalizedNode] = {}

@@ -9,7 +9,7 @@ LOAD_TENSOR_READER: ContentStoreReader | None = None
 
 
 @contextlib.contextmanager
-def load_tensor_reader(loc: str) -> Generator[None, None, None]:
+def load_tensor_reader(loc: str) -> Generator[None]:
     global LOAD_TENSOR_READER
     if LOAD_TENSOR_READER is not None:
         raise AssertionError("LOAD_TENSOR_READER is already set")

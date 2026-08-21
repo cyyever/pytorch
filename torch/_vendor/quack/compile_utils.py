@@ -1,11 +1,10 @@
 # Copyright (c) 2025, Wentao Guo, Ted Zadouri, Tri Dao.
 
-from typing import Optional
 
 import cutlass.cute as cute
 
 
-def make_fake_tensor(dtype, shape, divisibility=1, leading_dim=-1) -> Optional[cute.Tensor]:
+def make_fake_tensor(dtype, shape, divisibility=1, leading_dim=-1) -> cute.Tensor | None:
     if leading_dim < 0:
         leading_dim = len(shape) + leading_dim
     if dtype is None:

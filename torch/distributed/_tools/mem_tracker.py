@@ -7,7 +7,7 @@ from copy import deepcopy
 from enum import auto, Enum
 from functools import partial, wraps
 from typing import Any, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.distributed._tools.fake_collectives
@@ -878,7 +878,7 @@ class MemTracker(TorchDispatchMode):
         """
         self.memory_tracking.clear()
 
-    def __enter__(self) -> "MemTracker":
+    def __enter__(self) -> MemTracker:
         if self._depth == 0:
             # None in eager, a FakeTensorMode instance in SAC.  Used in
             # __torch_dispatch__ to skip DTensor propagation ops.

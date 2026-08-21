@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import copy
 import dataclasses
@@ -28,7 +26,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import (
+from typing import (
     assert_never,
     Never,
     override,
@@ -614,7 +612,7 @@ class IRNode:
 
     @staticmethod
     @contextlib.contextmanager
-    def current_origins(origins: OrderedSet[Node]) -> Generator[None, None, None]:
+    def current_origins(origins: OrderedSet[Node]) -> Generator[None]:
         old = IRNode._current_origins
         IRNode._current_origins = old | origins
         try:
@@ -626,7 +624,7 @@ class IRNode:
     @contextlib.contextmanager
     def current_stream_idx(
         stream_idx: int | None,
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         old = IRNode._current_stream_idx
         IRNode._current_stream_idx = stream_idx
         try:
@@ -638,7 +636,7 @@ class IRNode:
     @contextlib.contextmanager
     def current_mempool(
         mempool: tuple[int, int] | None,
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         old = IRNode._current_mempool
         IRNode._current_mempool = mempool
         try:

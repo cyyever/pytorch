@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import logging
 from typing import overload, TYPE_CHECKING

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import copy
 import logging
 import os
@@ -8,7 +6,7 @@ import random
 from contextlib import contextmanager
 from functools import partial
 from typing import Any, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import sympy
 
@@ -54,7 +52,7 @@ def _canonicalize(fx_g: fx.GraphModule) -> fx.GraphModule:
 
 
 @contextmanager
-def _disable_jit_autocast() -> Generator[None, None, None]:
+def _disable_jit_autocast() -> Generator[None]:
     # pyrefly: ignore [missing-attribute]
     old_jit_autocast_flag = torch._C._jit_set_autocast_mode(False)
     try:

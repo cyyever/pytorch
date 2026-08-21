@@ -40,7 +40,7 @@ class IntInfinity(Number, metaclass=Singleton):
 
     __slots__: tuple[str, ...] = ()
 
-    def __new__(cls) -> "IntInfinity":
+    def __new__(cls) -> IntInfinity:
         return AtomicExpr.__new__(cls)
 
     def _sympystr(self, printer: Any) -> str:
@@ -197,10 +197,10 @@ class IntInfinity(Number, metaclass=Singleton):
 
     __rmod__ = __mod__
 
-    def floor(self) -> "IntInfinity":
+    def floor(self) -> IntInfinity:
         return self
 
-    def ceiling(self) -> "IntInfinity":
+    def ceiling(self) -> IntInfinity:
         return self
 
 
@@ -251,7 +251,7 @@ class NegativeIntInfinity(Number, metaclass=Singleton):
 
     __slots__: tuple[str, ...] = ()
 
-    def __new__(cls) -> "NegativeIntInfinity":
+    def __new__(cls) -> NegativeIntInfinity:
         return AtomicExpr.__new__(cls)
 
     def _eval_subs(self, old: sympy.Basic, new: sympy.Basic) -> sympy.Basic | None:
@@ -412,10 +412,10 @@ class NegativeIntInfinity(Number, metaclass=Singleton):
 
     __rmod__ = __mod__
 
-    def floor(self) -> "NegativeIntInfinity":
+    def floor(self) -> NegativeIntInfinity:
         return self
 
-    def ceiling(self) -> "NegativeIntInfinity":
+    def ceiling(self) -> NegativeIntInfinity:
         return self
 
     def as_powers_dict(self) -> dict[sympy.Expr, int]:

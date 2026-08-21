@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 """This module implements the user facing API for flex_attention in PyTorch."""
 
-from __future__ import annotations
 
 import functools
 import inspect
@@ -14,7 +13,8 @@ import warnings
 from collections.abc import Callable
 from enum import Enum
 from typing import Any, cast, Literal, NamedTuple, overload, TypeAlias, TypeVar
-from typing_extensions import deprecated, Never, NotRequired, Self, TypedDict
+from typing import Never, NotRequired, Self, TypedDict
+from warnings import deprecated
 
 import torch
 from torch import Tensor

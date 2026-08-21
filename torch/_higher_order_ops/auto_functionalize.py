@@ -505,7 +505,7 @@ def get_mutable_args(op: OpOverload) -> tuple[list[str], list[torch.Type]]:
 
 
 def do_auto_functionalize(
-    mode: "torch._subclasses.functional_tensor.FunctionalTensorMode",
+    mode: torch._subclasses.functional_tensor.FunctionalTensorMode,
     op: OpOverload,
     args: tuple[Any, ...],
     kwargs: dict[str, Any],
@@ -643,7 +643,7 @@ class FunctionalCallableWithEpilogue:
 
 
 def do_auto_functionalize_v2(
-    mode: "torch._subclasses.functional_tensor.FunctionalTensorMode",
+    mode: torch._subclasses.functional_tensor.FunctionalTensorMode,
     op: OpOverload | HopInstance,
     args: tuple[Any, ...],
     kwargs: dict[str, Any],

@@ -1,5 +1,5 @@
 from typing import Any
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.ao.nn.intrinsic as nni

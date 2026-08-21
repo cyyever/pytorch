@@ -28,7 +28,6 @@ Every in-tree caller of ``at::TensorIteratorConfig`` fits the canonical-
 recipe shape; the lossiness is theoretical, not practical.
 """
 
-from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

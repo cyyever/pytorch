@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import heapq
 from collections import Counter, defaultdict
 from typing import Any, TYPE_CHECKING

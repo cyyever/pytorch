@@ -1,7 +1,6 @@
 # Copyright (c) 2025, Tri Dao.
 
 import math
-from typing import Tuple
 from functools import partial
 
 import cutlass.cute as cute
@@ -10,7 +9,7 @@ from cutlass.cutlass_dsl import T, dsl_user_op
 from cutlass._mlir.dialects import llvm, nvvm
 
 
-F32_or_F32x2 = Float32 | Tuple[Float32, Float32]
+F32_or_F32x2 = Float32 | tuple[Float32, Float32]
 
 
 sub_packed_f32x2 = partial(
@@ -78,7 +77,7 @@ def relu(x: F32_or_F32x2, *, loc=None, ip=None) -> F32_or_F32x2:
 @cute.jit
 def drelu(
     x: F32_or_F32x2, dout: F32_or_F32x2, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2]:
     if const_expr(not isinstance(x, tuple)):
         x_pos = Boolean(x > 0)
         return dout if x_pos else Float32(0.0), cute.arch.fmax(x, Float32(0.0))
@@ -102,7 +101,7 @@ def relu_sq(x: F32_or_F32x2, *, loc=None, ip=None) -> F32_or_F32x2:
 @cute.jit
 def drelu_sq(
     x: F32_or_F32x2, dout: F32_or_F32x2, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2]:
     """
     ReLU squared backward pass: computes gradient w.r.t. x and recomputes forward
     Given: relu_sq_out = max(x, 0) * x, and dout = grad w.r.t. relu_sq_out
@@ -152,7 +151,7 @@ def gelu_tanh_approx(x: F32_or_F32x2, *, loc=None, ip=None) -> F32_or_F32x2:
 @dsl_user_op
 def dgelu_tanh_approx(
     x: F32_or_F32x2, dout: F32_or_F32x2, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2]:
     """
     GELU tanh approximation backward pass: computes gradient w.r.t. x and recomputes forward
     Given: gelu_out = 0.5 * x * (1 + tanh(x * (c1 + c2 * x^2))), and dout = grad w.r.t. gelu_out
@@ -284,7 +283,7 @@ def dsilu(
     *,
     loc=None,
     ip=None,
-) -> Tuple[F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2]:
     """
     SiLU backward pass: computes d_silu(x) * dout and recomputes silu(x).
 
@@ -318,7 +317,7 @@ def dsilu_tanh(
     already_halved: bool = False,
     loc=None,
     ip=None,
-) -> Tuple[F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2]:
     """
     SiLU backward using sigmoid(x) = 0.5 * (1 + tanh(0.5 * x)).
     """
@@ -380,7 +379,7 @@ def dswiglu(
     *,
     loc=None,
     ip=None,
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """
     SwiGLU backward pass: computes gradients w.r.t. x (gate) and y (up projection)
     Given: swiglu_out = silu(x) * y, and dout = grad w.r.t. swiglu_out
@@ -433,7 +432,7 @@ def dswiglu_tanh(
     already_halved: bool = False,
     loc=None,
     ip=None,
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """
     SwiGLU backward using sigmoid(x) = 0.5 * (1 + tanh(0.5 * x)).
     """
@@ -513,7 +512,7 @@ def swiglu_oai_tanh(
 @dsl_user_op
 def dswiglu_oai(
     x: F32_or_F32x2, y: F32_or_F32x2, dout: F32_or_F32x2, alpha: float = 1.702, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """
     Swiglu OAI backward pass: computes gradients w.r.t. x and y
     Given: swiglu_oai_out = x * sigmoid(alpha * x) * (y + 1), and dout = grad w.r.t. swiglu_oai_out
@@ -552,7 +551,7 @@ def dswiglu_oai(
 @dsl_user_op
 def dswiglu_oai_tanh(
     x: F32_or_F32x2, y: F32_or_F32x2, dout: F32_or_F32x2, alpha: float = 1.702, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """Tanh-based dswiglu_oai kept for SASS/accuracy comparison."""
     if const_expr(not isinstance(x, tuple)):
         alpha_x_half = (0.5 * alpha) * x
@@ -599,7 +598,7 @@ def glu(x: F32_or_F32x2, y: F32_or_F32x2, *, loc=None, ip=None) -> F32_or_F32x2:
 @dsl_user_op
 def dglu(
     x: F32_or_F32x2, y: F32_or_F32x2, dout: F32_or_F32x2, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """
     GLU backward pass: computes gradients w.r.t. x (gate) and y (up projection)
     Given: glu_out = sigmoid(x) * y, and dout = grad w.r.t. glu_out
@@ -647,7 +646,7 @@ def reglu(x: F32_or_F32x2, y: F32_or_F32x2, *, loc=None, ip=None) -> F32_or_F32x
 @cute.jit
 def dreglu(
     x: F32_or_F32x2, y: F32_or_F32x2, dout: F32_or_F32x2, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """
     ReGLU backward pass: computes gradients w.r.t. x (gate) and y (up projection)
     Given: reglu_out = relu(x) * y, and dout = grad w.r.t. reglu_out
@@ -689,7 +688,7 @@ def geglu(x: F32_or_F32x2, y: F32_or_F32x2, *, loc=None, ip=None) -> F32_or_F32x
 @dsl_user_op
 def dgeglu(
     x: F32_or_F32x2, y: F32_or_F32x2, dout: F32_or_F32x2, *, loc=None, ip=None
-) -> Tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
+) -> tuple[F32_or_F32x2, F32_or_F32x2, F32_or_F32x2]:
     """
     GeGLU backward pass: computes gradients w.r.t. x (gate) and y (up projection)
     Given: geglu_out = gelu(x) * y, and dout = grad w.r.t. geglu_out

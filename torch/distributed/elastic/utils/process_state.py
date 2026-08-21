@@ -13,7 +13,6 @@ These are intentionally agent-agnostic so they can be reused outside of
 ``torch.distributed.elastic.agent``.
 """
 
-from __future__ import annotations
 
 
 __all__ = ["read_proc_state", "is_uninterruptible_state"]

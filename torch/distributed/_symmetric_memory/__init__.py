@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import math
 import os
 import socket
@@ -9,7 +7,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from enum import Enum
 from typing import Any, Literal
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.distributed._functional_collectives as funcol
@@ -63,7 +61,7 @@ _mocked_group_names: set[str] | None = None
 
 
 @contextmanager
-def _test_mode(group_names: set[str] | None = None) -> Generator[None, None, None]:
+def _test_mode(group_names: set[str] | None = None) -> Generator[None]:
     """
     Forces ``is_symm_mem_enabled_for_group()`` to return ``True`` and the ops
     defined in the ``symm_mem`` namespace to use fallback implementations.

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import json
 import operator
@@ -7,7 +5,7 @@ import os
 import time
 from contextlib import AbstractContextManager
 from typing import Any, TYPE_CHECKING
-from typing_extensions import TypeVar
+from typing import TypeVar
 
 import torch
 from torch.profiler import profile, ProfilerActivity

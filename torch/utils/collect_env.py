@@ -163,7 +163,7 @@ def get_conda_packages(run_lambda, patterns=None):
     if patterns is None:
         patterns = CONDA_PATTERNS + COMMON_PATTERNS + NVIDIA_PATTERNS + ONEAPI_PATTERNS
     conda = os.environ.get("CONDA_EXE", "conda")
-    out = run_and_read_all(run_lambda, "{} list".format(conda))
+    out = run_and_read_all(run_lambda, f"{conda} list")
     if out is None:
         return out
 
@@ -208,7 +208,7 @@ def get_gpu_info(run_lambda):
             if torch.version.hip is not None:
                 prop = torch.cuda.get_device_properties(0)
                 if hasattr(prop, "gcnArchName"):
-                    gcnArch = " ({})".format(prop.gcnArchName)
+                    gcnArch = f" ({prop.gcnArchName})"
                 else:
                     gcnArch = "NoGCNArchNameOnOldPyTorch"
             else:
@@ -234,7 +234,7 @@ def get_cudnn_version(run_lambda):
         system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
         cuda_path = os.environ.get("CUDA_PATH", "%CUDA_PATH%")
         where_cmd = os.path.join(system_root, "System32", "where")
-        cudnn_cmd = '{} /R "{}\\bin" cudnn*.dll'.format(where_cmd, cuda_path)
+        cudnn_cmd = f'{where_cmd} /R "{cuda_path}\\bin" cudnn*.dll'
     elif get_platform() == "darwin":
         # CUDA libraries and drivers can be found in /usr/local/cuda/. See
         # https://docs.nvidia.com/cuda/archive/9.0/cuda-installation-guide-mac-os-x/index.html#installation
@@ -262,7 +262,7 @@ def get_cudnn_version(run_lambda):
     if len(files) == 1:
         return files[0]
     result = "\n".join(files)
-    return "Probably one of the following:\n{}".format(result)
+    return f"Probably one of the following:\n{result}"
 
 
 def get_nvidia_smi():
@@ -278,7 +278,7 @@ def get_nvidia_smi():
         smis = [new_path, legacy_path]
         for candidate_smi in smis:
             if os.path.exists(candidate_smi):
-                smi = '"{}"'.format(candidate_smi)
+                smi = f'"{candidate_smi}"'
                 break
     return smi
 
@@ -596,20 +596,20 @@ def get_os(run_lambda):
         version = get_mac_version(run_lambda)
         if version is None:
             return None
-        return "macOS {} ({})".format(version, machine())
+        return f"macOS {version} ({machine()})"
 
     if platform == "linux":
         # Ubuntu/Debian based
         desc = get_lsb_version(run_lambda)
         if desc is not None:
-            return "{} ({})".format(desc, machine())
+            return f"{desc} ({machine()})"
 
         # Try reading /etc/*-release
         desc = check_release_file(run_lambda)
         if desc is not None:
-            return "{} ({})".format(desc, machine())
+            return f"{desc} ({machine()})"
 
-        return "{} ({})".format(platform, machine())
+        return f"{platform} ({machine()})"
 
     # Unknown platform
     return platform
@@ -837,7 +837,7 @@ def pretty_str(envinfo):
     def maybe_start_on_next_line(string):
         # If `string` is multiline, prepend a \n to it.
         if string is not None and len(string.split("\n")) > 1:
-            return "\n{}\n".format(string)
+            return f"\n{string}\n"
         return string
 
     mutable_dict = envinfo._asdict()
@@ -881,7 +881,7 @@ def pretty_str(envinfo):
     # If they were previously None, they'll show up as ie '[conda] Could not collect'
     if mutable_dict["pip_packages"]:
         mutable_dict["pip_packages"] = prepend(
-            mutable_dict["pip_packages"], "[{}] ".format(envinfo.pip_version)
+            mutable_dict["pip_packages"], f"[{envinfo.pip_version}] "
         )
     if mutable_dict["conda_packages"]:
         mutable_dict["conda_packages"] = prepend(

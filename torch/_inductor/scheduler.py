@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import collections
 import contextlib
 import dataclasses
@@ -19,7 +17,7 @@ import typing
 from collections import Counter, defaultdict
 from concurrent.futures import as_completed, Future
 from typing import Any, Generic, Literal, overload, TYPE_CHECKING, TypeAlias, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 from torch.utils._ordered_set import OrderedSet
 

@@ -322,7 +322,7 @@ def assign_epilogue_copy_streams(gm: torch.fx.GraphModule) -> None:
 
 
 def populate_fw_metadata_with_stream_indices(
-    gm: torch.fx.GraphModule, fw_metadata: "ViewAndMutationMeta"
+    gm: torch.fx.GraphModule, fw_metadata: ViewAndMutationMeta
 ) -> None:
     """
     Populates fw_metadata.mutated_inp_stream_indices with stream indices from the compiled graph.

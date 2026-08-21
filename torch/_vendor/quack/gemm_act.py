@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Wentao Guo, Tri Dao.
-from __future__ import annotations
 import math
-from typing import NamedTuple, Tuple, Optional, Callable, Type
+from typing import NamedTuple
+from collections.abc import Callable
 
 from torch import Tensor
 from torch._subclasses.fake_tensor import is_fake_tensor
@@ -102,7 +102,7 @@ def power_of_2_divisibility(value: int, max_divisibility: int) -> int:
 
 def tensor_stride_divisibility(
     tensor: Tensor | None,
-    dtype: Type[cutlass.Numeric],
+    dtype: type[cutlass.Numeric],
     leading_dim: int,
 ) -> int:
     """Return the strongest 16-byte-capped layout contract true for a tensor."""
@@ -208,28 +208,28 @@ class GemmActMixin(ComposableEpiMixin):
     @mlir_namedtuple
     class EpilogueArguments(NamedTuple):
         mAuxOut: cute.Tensor
-        act_fn: cutlass.Constexpr[Optional[Callable]] = None
-        tensor_epilogue_fn: cutlass.Constexpr[Optional[Callable]] = None
+        act_fn: cutlass.Constexpr[Callable | None] = None
+        tensor_epilogue_fn: cutlass.Constexpr[Callable | None] = None
         tensor_epilogue_arg_kinds: cutlass.Constexpr[tuple] = ()
         tensor_epilogue_returns_aux: cutlass.Constexpr[bool] = False
         tensor_epilogue_returns_local_reduce: cutlass.Constexpr[bool] = False
         local_reduce_feeds_main: cutlass.Constexpr[bool] = False
         local_reduce_group: cutlass.Constexpr[int] = 0
         local_reduce_axis: cutlass.Constexpr[int] = 1
-        local_reduce_output_layout: cutlass.Constexpr[Optional[Callable]] = None
-        local_reduce_combine_fn: cutlass.Constexpr[Optional[Callable]] = None
-        local_reduce_finalize_fn: cutlass.Constexpr[Optional[Callable]] = None
-        alpha: Optional[Float32 | cute.Tensor] = None
-        beta: Optional[Float32 | cute.Tensor] = None
-        mRowVecBroadcast: Optional[cute.Tensor] = None
-        mColVecBroadcast: Optional[cute.Tensor] = None
-        mTensorEpilogueRowVecBroadcasts: Optional[tuple[cute.Tensor, ...]] = None
-        mTensorEpilogueColVecBroadcasts: Optional[tuple[cute.Tensor, ...]] = None
-        mTensorEpilogueTiles: Optional[tuple[cute.Tensor, ...]] = None
-        mTensorEpilogueScalars: Optional[tuple[cute.Tensor, ...]] = None
-        mLocalReduce: Optional[cute.Tensor] = None
+        local_reduce_output_layout: cutlass.Constexpr[Callable | None] = None
+        local_reduce_combine_fn: cutlass.Constexpr[Callable | None] = None
+        local_reduce_finalize_fn: cutlass.Constexpr[Callable | None] = None
+        alpha: Float32 | cute.Tensor | None = None
+        beta: Float32 | cute.Tensor | None = None
+        mRowVecBroadcast: cute.Tensor | None = None
+        mColVecBroadcast: cute.Tensor | None = None
+        mTensorEpilogueRowVecBroadcasts: tuple[cute.Tensor, ...] | None = None
+        mTensorEpilogueColVecBroadcasts: tuple[cute.Tensor, ...] | None = None
+        mTensorEpilogueTiles: tuple[cute.Tensor, ...] | None = None
+        mTensorEpilogueScalars: tuple[cute.Tensor, ...] | None = None
+        mLocalReduce: cute.Tensor | None = None
         rounding_mode: cutlass.Constexpr[int] = RoundingMode.RN
-        sr_seed: Optional[Int32 | cute.Tensor] = None
+        sr_seed: Int32 | cute.Tensor | None = None
 
     # EpilogueParams auto-generated from _epi_ops + _extra_param_fields
 
@@ -436,10 +436,10 @@ class GemmActMixin(ComposableEpiMixin):
     def epi_visit_subtile(
         self,
         params,
-        epi_loop_tensors: Tuple[cute.Tensor, ...],
+        epi_loop_tensors: tuple[cute.Tensor, ...],
         tRS_rD: cute.Tensor,
-        tRS_rC: Optional[cute.Tensor] = None,
-    ) -> Optional[cute.Tensor]:
+        tRS_rC: cute.Tensor | None = None,
+    ) -> cute.Tensor | None:
         tDrLocalReduceValue = None
         if const_expr(params.local_reduce_feeds_main):
             tDrLocalReduce = epi_loop_tensors.get("mLocalReduce")
@@ -674,10 +674,10 @@ class GemmGatedMixin(GemmActMixin):
     def epi_visit_subtile(
         self,
         params: GemmActMixin.EpilogueParams,
-        epi_loop_tensors: Tuple[cute.Tensor, ...],
+        epi_loop_tensors: tuple[cute.Tensor, ...],
         tRS_rD: cute.Tensor,
-        tRS_rC: Optional[cute.Tensor] = None,
-    ) -> Optional[cute.Tensor]:
+        tRS_rC: cute.Tensor | None = None,
+    ) -> cute.Tensor | None:
         GemmDefaultEpiMixin.epi_visit_subtile(self, params, epi_loop_tensors, tRS_rD, tRS_rC)
         tRS_rAuxOut_layout = cute.recast_layout(2, 1, tRS_rD.layout)
         # If we don't have .shape here, the compiler generates local stores and loads
@@ -720,11 +720,11 @@ class GemmGatedSm100(GemmGatedMixin, GemmSm100):
 class GemmGatedSm120Mixin:
     @staticmethod
     def _compute_tile_shape_or_override(
-        cta_tile_shape_mnk: Tuple[int, int, int],
-        atom_layout_mnk: Tuple[int, int, int],
-        element_type: Optional[Type[cutlass.Numeric]] = None,
-        epi_tile_override: Tuple[int, int] | None = None,
-    ) -> Tuple[int, int]:
+        cta_tile_shape_mnk: tuple[int, int, int],
+        atom_layout_mnk: tuple[int, int, int],
+        element_type: type[cutlass.Numeric] | None = None,
+        epi_tile_override: tuple[int, int] | None = None,
+    ) -> tuple[int, int]:
         if epi_tile_override is not None:
             return epi_tile_override
         # Typically epi_tile is (64, 32) but since we want tile_n = 64 (see below), we might set
@@ -1021,11 +1021,11 @@ def _compile_gemm_act(
 def gemm_act(
     A: Tensor,  # (l, m, k) or (total_m, k) if varlen_m or (whatever, k) if gather_A with varlen_m
     B: Tensor,  # (l, n, k)
-    D: Optional[Tensor],  # (l, m, n) or (total_m, n) if varlen_m
-    C: Optional[Tensor],  # (l, m, n) or (total_m, n) if varlen_m
+    D: Tensor | None,  # (l, m, n) or (total_m, n) if varlen_m
+    C: Tensor | None,  # (l, m, n) or (total_m, n) if varlen_m
     PostAct: Tensor | tuple[Tensor, ...],  # tensor epilogues pass same-shape aux outputs as a tuple
-    tile_count_semaphore: Optional[Tensor],  # (1,)
-    activation: Optional[str],
+    tile_count_semaphore: Tensor | None,  # (1,)
+    activation: str | None,
     tile_M: int,
     tile_N: int,
     cluster_M: int,
@@ -1035,16 +1035,16 @@ def gemm_act(
     persistent: bool = True,
     is_dynamic_persistent: bool = False,
     max_swizzle_size: int = 8,
-    rowvec_bias: Optional[Tensor] = None,  # (l, n)
-    colvec_bias: Optional[Tensor] = None,  # (l, m), or (total_m,) if varlen_m
-    cu_seqlens_m: Optional[Tensor] = None,  # (l+1,) cumulative sum of m values for variable length
-    A_idx: Optional[Tensor] = None,  # (total_m,) if gather_A with varlen_m
+    rowvec_bias: Tensor | None = None,  # (l, n)
+    colvec_bias: Tensor | None = None,  # (l, m), or (total_m,) if varlen_m
+    cu_seqlens_m: Tensor | None = None,  # (l+1,) cumulative sum of m values for variable length
+    A_idx: Tensor | None = None,  # (total_m,) if gather_A with varlen_m
     rounding_mode: int = RoundingMode.RN,
     sr_seed: int | Tensor = 0,
     use_tma_gather: bool = False,
     concat_layout: tuple | None = None,
-    tensor_epilogue_fn: Optional[Callable] = None,
-    tensor_epilogue_key: Optional[str] = None,
+    tensor_epilogue_fn: Callable | None = None,
+    tensor_epilogue_key: str | None = None,
     tensor_epilogue_returns_aux: bool = False,
     tensor_epilogue_returns_local_reduce: bool = False,
     local_reduce_feeds_main: bool = False,
@@ -1053,12 +1053,12 @@ def gemm_act(
     tensor_epilogue_colvec_biases: tuple[Tensor, ...] = (),
     tensor_epilogue_tile_biases: tuple[Tensor, ...] = (),
     tensor_epilogue_scalar_biases: tuple[Tensor, ...] = (),
-    local_reduce_out: Optional[Tensor] = None,
+    local_reduce_out: Tensor | None = None,
     local_reduce_group: int = 0,
     local_reduce_axis: int = 1,
     local_reduce_output_layout: str | None = None,
-    local_reduce_combine_key: Optional[str] = None,
-    local_reduce_finalize_key: Optional[str] = None,
+    local_reduce_combine_key: str | None = None,
+    local_reduce_finalize_key: str | None = None,
     main_output_transform_group: int | None = None,
     alpha: float | Tensor = 1.0,
     beta: float | Tensor = 1.0,

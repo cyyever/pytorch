@@ -29,12 +29,12 @@ class CacheArtifact(ABC):
     content: bytes = dataclasses.field(repr=False)  # Do not display potential binary
 
     @staticmethod
-    def serialize(writer: BytesWriter, cls: "CacheArtifact") -> None:
+    def serialize(writer: BytesWriter, cls: CacheArtifact) -> None:
         writer.write_str(cls.key)
         writer.write_bytes(cls.content)
 
     @staticmethod
-    def deserialize(artifact_type: str, reader: BytesReader) -> "CacheArtifact":
+    def deserialize(artifact_type: str, reader: BytesReader) -> CacheArtifact:
         key = reader.read_str()
         content = reader.read_bytes()
         return CacheArtifactFactory.create(artifact_type, key, content)
@@ -148,7 +148,7 @@ class CacheInfo:
 
 
 def _serialize_single_cache(
-    writer: BytesWriter, cls: "tuple[str, list[CacheArtifact]]"
+    writer: BytesWriter, cls: tuple[str, list[CacheArtifact]]
 ) -> None:
     writer.write_str(cls[0])
     writer.write_uint64(len(cls[1]))
@@ -158,7 +158,7 @@ def _serialize_single_cache(
 
 def _deserialize_single_cache(
     reader: BytesReader,
-) -> "tuple[str, list[CacheArtifact]]":
+) -> tuple[str, list[CacheArtifact]]:
     artifacts = []
     artifact_type_key = reader.read_str()
     num_artifacts = reader.read_uint64()
@@ -227,7 +227,7 @@ class CacheArtifactManager:
 
     @classmethod
     @contextmanager
-    def with_fresh_cache(cls) -> Generator[None, None, None]:
+    def with_fresh_cache(cls) -> Generator[None]:
         original_new_cache_artifacts = cls._new_cache_artifacts
         original_seen_artifacts = cls._seen_artifacts
         original_serializer = cls._serializer

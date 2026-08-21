@@ -16,7 +16,7 @@ from os import PathLike
 from pathlib import Path
 from threading import Lock
 from typing import Generic, TypeVar
-from typing_extensions import override
+from typing import override
 
 from filelock import BaseFileLock, FileLock
 
@@ -391,7 +391,7 @@ except ModuleNotFoundError:
             @contextmanager
             def pseudo_lock(
                 timeout: float | None = None,
-            ) -> Generator[None, None, None]:
+            ) -> Generator[None]:
                 yield
 
             return pseudo_lock

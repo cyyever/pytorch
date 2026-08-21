@@ -54,7 +54,7 @@ class Linear(nn.Linear, ReferenceQuantizedModule):
     @classmethod
     def from_float(
         cls, float_linear: nn.Linear, weight_qparams: dict[str, Any]
-    ) -> "Linear":
+    ) -> Linear:
         qref_linear = Linear(
             float_linear.in_features,
             float_linear.out_features,

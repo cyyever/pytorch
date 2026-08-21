@@ -3,7 +3,7 @@ import unittest.mock
 from collections.abc import Callable, Generator, Iterator
 from contextlib import contextmanager
 from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._C
@@ -53,7 +53,7 @@ def all_py_loaded_overloads() -> Iterator[torch._ops.OpOverload]:
 
 
 @contextmanager
-def suspend_functionalization() -> Generator[None, None, None]:
+def suspend_functionalization() -> Generator[None]:
     f_tls = torch._C._dispatch_tls_is_dispatch_key_included(
         torch._C.DispatchKey.Functionalize
     )
@@ -190,7 +190,7 @@ def make_crossref_functionalize(
 # NB: enabling this is slow, don't do it in a hot loop.  This is purely
 # for debugging purposes.
 @contextmanager
-def enable_crossref_functionalize() -> Generator[None, None, None]:
+def enable_crossref_functionalize() -> Generator[None]:
     for op in all_py_loaded_overloads():
         op._uncache_dispatch(torch._C.DispatchKey.Functionalize)
     try:

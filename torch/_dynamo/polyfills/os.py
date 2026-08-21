@@ -2,7 +2,6 @@
 Python polyfills for os
 """
 
-from __future__ import annotations
 
 import os
 from typing import AnyStr

@@ -16,7 +16,7 @@ class Directory:
         self.is_dir = is_dir
         self.children: dict[str, Directory] = {}
 
-    def _get_dir(self, dirs: list[str]) -> "Directory":
+    def _get_dir(self, dirs: list[str]) -> Directory:
         """Builds path of Directories if not yet built and returns last directory
         in list.
 
@@ -109,8 +109,8 @@ class Directory:
 def _create_directory_from_file_list(
     filename: str,
     file_list: list[str],
-    include: "GlobPattern" = "**",
-    exclude: "GlobPattern" = (),
+    include: GlobPattern = "**",
+    exclude: GlobPattern = (),
 ) -> Directory:
     """Return a :class:`Directory` file structure representation created from a list of files.
 

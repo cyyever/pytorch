@@ -2,7 +2,7 @@
 import functools
 from collections.abc import Callable
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch import Tensor

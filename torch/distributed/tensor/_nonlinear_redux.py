@@ -44,7 +44,7 @@ def _prep_arguments(
 ) -> tuple[
     torch.Tensor,
     torch.Size,
-    "torch.distributed.device_mesh.DeviceMesh",
+    torch.distributed.device_mesh.DeviceMesh,
     tuple[Placement, ...],
     int | None,
     bool,
@@ -134,7 +134,7 @@ def _collect_shard_mesh_dims(
 def _convert_to_global_idxs(
     local_idx: torch.Tensor,
     global_shape: torch.Size,
-    device_mesh: "torch.distributed.device_mesh.DeviceMesh",
+    device_mesh: torch.distributed.device_mesh.DeviceMesh,
     placements: tuple[Placement, ...],
     dim: int | None,
 ) -> tuple[int, torch.Tensor]:
@@ -165,7 +165,7 @@ def _gather_tensors(
     gather_dim: int,
     gathered_idxs: torch.Tensor,
     local_redux: torch.Tensor,
-    device_mesh: "torch.distributed.device_mesh.DeviceMesh",
+    device_mesh: torch.distributed.device_mesh.DeviceMesh,
     shard_mesh_dims: list[int],
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """

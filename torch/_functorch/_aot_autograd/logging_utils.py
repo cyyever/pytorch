@@ -48,7 +48,7 @@ get_graph_being_compiled = get_aot_graph_name
 @contextmanager
 def track_graph_compiling(
     aot_config: AOTConfig, graph_name: str
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     global graph_being_compiled
     # TODO: Don't shove the aot_id in here; set it in the context
     graph_being_compiled = [f"{aot_config.aot_id}_{graph_name}"]

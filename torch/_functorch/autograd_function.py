@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from typing import Any, NamedTuple, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 import torch.utils._pytree as pytree

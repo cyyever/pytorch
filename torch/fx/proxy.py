@@ -5,14 +5,13 @@ import enum
 import inspect
 import logging
 import operator
-import sys
 import traceback
 import types
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
 from dataclasses import fields, is_dataclass
 from typing import Any, cast, TypeVar
-from typing_extensions import Never
+from typing import Never
 
 import torch
 import torch.fx.traceback as fx_traceback
@@ -333,7 +332,7 @@ class TracerBase:
         return traceback.StackSummary.from_list(user_frames)
 
     @compatibility(is_backward_compatible=True)
-    def proxy(self, node: Node) -> "Proxy":
+    def proxy(self, node: Node) -> Proxy:
         return Proxy(node, self)
 
     @compatibility(is_backward_compatible=True)
@@ -345,8 +344,8 @@ class TracerBase:
         kwargs: dict[str, Any],
         name: str | None = None,
         type_expr: Any | None = None,
-        proxy_factory_fn: Callable[[Node], "Proxy"] | None = None,
-    ) -> "Proxy":
+        proxy_factory_fn: Callable[[Node], Proxy] | None = None,
+    ) -> Proxy:
         """
         Create a Node from the given arguments, then return the Node
         wrapped in a Proxy object.
@@ -483,7 +482,7 @@ class TracerBase:
         raise NotImplementedError(f"argument of type: {type(a)}")
 
     @compatibility(is_backward_compatible=True)
-    def to_bool(self, obj: "Proxy") -> bool:
+    def to_bool(self, obj: Proxy) -> bool:
         """Called when a proxy object is being converted to a boolean, such as
         when used in control flow.  Normally we don't know what to do because
         we don't know the value of the proxy, but a custom tracer can attach more
@@ -494,7 +493,7 @@ class TracerBase:
         )
 
     @compatibility(is_backward_compatible=True)
-    def iter(self, obj: "Proxy") -> Iterator:  # pyrefly: ignore[implicit-any]
+    def iter(self, obj: Proxy) -> Iterator:  # pyrefly: ignore[implicit-any]
         """Called when a proxy object is being iterated over, such as
         when used in control flow.  Normally we don't know what to do because
         we don't know the value of the proxy, but a custom tracer can attach more
@@ -512,7 +511,7 @@ class TracerBase:
         )
 
     @compatibility(is_backward_compatible=True)
-    def keys(self, obj: "Proxy") -> "Proxy":
+    def keys(self, obj: Proxy) -> Proxy:
         """Called when a proxy object has the keys() method called.
         This is what happens when ** is called on a proxy. This should return an
         iterator if ** is supposed to work in your custom tracer.
@@ -627,7 +626,7 @@ class Proxy:
     """
 
     @compatibility(is_backward_compatible=True)
-    def __init__(self, node: Node, tracer: "TracerBase | None" = None) -> None:
+    def __init__(self, node: Node, tracer: TracerBase | None = None) -> None:
         if tracer is None:
             # This allows you to create a Proxy object around a raw Node
             tracer = GraphAppendingTracer(node.graph)
@@ -637,7 +636,7 @@ class Proxy:
     def __repr__(self) -> str:
         return f"Proxy({self.node.name})"
 
-    def __getattr__(self, k: str) -> "Attribute":
+    def __getattr__(self, k: str) -> Attribute:
         # note: not added to the graph yet, if this is a method call
         # we peephole optimize to the method invocation
         return Attribute(self, k)
@@ -645,7 +644,7 @@ class Proxy:
     def __getstate__(self) -> dict[str, Any]:
         return self.__dict__
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> "Proxy":
+    def __deepcopy__(self, memo: dict[int, Any]) -> Proxy:
         # We have to explicitly override this method, because otherwise deepcopy
         # will go to __getattr__(self, "__deepcopy__") and return a
         # Attribute(__deepcopy__), and may go into an infinite loop in some cases.
@@ -677,12 +676,12 @@ class Proxy:
         # This is called when being unpickled/loaded.
         self.__dict__ = d
 
-    def __call__(self, *args: Any, **kwargs: Any) -> "Proxy":
+    def __call__(self, *args: Any, **kwargs: Any) -> Proxy:
         return self.tracer.create_proxy(
             "call_method", "__call__", (self,) + args, kwargs
         )
 
-    def __iter__(self) -> Iterator["Proxy"]:
+    def __iter__(self) -> Iterator[Proxy]:
         frame = inspect.currentframe()
         if frame is None:
             raise AssertionError("inspect.currentframe() returned None")
@@ -690,21 +689,18 @@ class Proxy:
         if calling_frame is None:
             raise AssertionError("frame.f_back is None")
         inst_list = list(dis.get_instructions(calling_frame.f_code))
-        if sys.version_info >= (3, 11):
-            from bisect import bisect_left
+        from bisect import bisect_left
 
-            inst_idx = bisect_left(
-                inst_list, calling_frame.f_lasti, key=lambda x: x.offset
-            )
-        else:
-            inst_idx = calling_frame.f_lasti // 2
+        inst_idx = bisect_left(
+            inst_list, calling_frame.f_lasti, key=lambda x: x.offset
+        )
         inst = inst_list[inst_idx]
         if inst.opname == "UNPACK_SEQUENCE":
             return (self[i] for i in range(inst.argval))  # type: ignore[index]
 
         return self.tracer.iter(self)
 
-    def __abs__(self) -> "Proxy":
+    def __abs__(self) -> Proxy:
         return self.tracer.create_proxy("call_function", operator.abs, (self,), {})
 
     def __bool__(self) -> bool:
@@ -718,12 +714,9 @@ class Proxy:
             if calling_frame is None:
                 raise AssertionError("frame.f_back is None")
             insts = list(dis.get_instructions(calling_frame.f_code))
-            if sys.version_info >= (3, 11):
-                from bisect import bisect_left
+            from bisect import bisect_left
 
-                cur = bisect_left(insts, calling_frame.f_lasti, key=lambda x: x.offset)
-            else:
-                cur = calling_frame.f_lasti // 2
+            cur = bisect_left(insts, calling_frame.f_lasti, key=lambda x: x.offset)
             inst = insts[cur]
 
             if inst.opname == "POP_JUMP_IF_TRUE":
@@ -743,7 +736,7 @@ class Proxy:
         return self.tracer.to_bool(self)
 
     @compatibility(is_backward_compatible=True)
-    def keys(self) -> "Proxy":
+    def keys(self) -> Proxy:
         return self.tracer.keys(self)
 
     def __len__(self) -> int:
@@ -760,7 +753,7 @@ class Proxy:
         types: tuple[type, ...],
         args: tuple[Any, ...] | None = None,
         kwargs: dict[str, Any] | None = None,
-    ) -> "Proxy":
+    ) -> Proxy:
         args = args if args else ()
         kwargs = kwargs if kwargs else {}
 
@@ -813,7 +806,7 @@ class MetaProxy(Proxy):
     """
 
     def __init__(
-        self, node: Node, tracer: "TracerBase | None" = None, fake_mode: Any = None
+        self, node: Node, tracer: TracerBase | None = None, fake_mode: Any = None
     ) -> None:
         super().__init__(node, tracer)
         self.fake_mode = fake_mode
@@ -828,7 +821,7 @@ class MetaProxy(Proxy):
         types: tuple[type, ...],
         args: tuple[Any, ...] | None = None,
         kwargs: dict[str, Any] | None = None,
-    ) -> "MetaProxy":
+    ) -> MetaProxy:
         args = args if args else ()
         kwargs = kwargs if kwargs else {}
 
@@ -871,7 +864,7 @@ class Attribute(Proxy):
             ).node
         return self._node
 
-    def __call__(self, *args: Any, **kwargs: Any) -> "Proxy":
+    def __call__(self, *args: Any, **kwargs: Any) -> Proxy:
         return self.tracer.create_proxy(
             "call_method", self.attr, (self.root,) + args, kwargs
         )
@@ -921,7 +914,7 @@ class ParameterProxy(Proxy):
 for method in magic_methods:
 
     def _scope(method: str) -> None:
-        def impl(*args: Any, **kwargs: Any) -> "Proxy":
+        def impl(*args: Any, **kwargs: Any) -> Proxy:
             tracer = args[0].tracer
             target = getattr(operator, method)
             return tracer.create_proxy("call_function", target, args, kwargs)
@@ -936,7 +929,7 @@ for method in magic_methods:
 def _define_reflectable(orig_method_name: str) -> None:
     method_name = f"__r{orig_method_name.strip('_')}__"
 
-    def impl(self: "Proxy", rhs: Any) -> "Proxy":
+    def impl(self: Proxy, rhs: Any) -> Proxy:
         target = getattr(operator, orig_method_name)
         return self.tracer.create_proxy("call_function", target, (rhs, self), {})
 

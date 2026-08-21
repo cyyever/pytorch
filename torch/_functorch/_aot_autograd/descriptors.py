@@ -622,7 +622,7 @@ class IntermediateBaseAOTOutput(DifferentiableAOTOutput):
     """An intermediate base of multiple outputs which alias each other.  We only report ONE of
     the outputs that contributed to this base"""
 
-    base_of: "AOTOutput"
+    base_of: AOTOutput
 
     def expr(self) -> str:
         return f"__intermediate_base({self.base_of.expr()})"

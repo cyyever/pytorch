@@ -705,7 +705,7 @@ class DebugFormatter:
         self,
         name: str,
         input_nodes: list[ir.IRNode],
-        timings: dict["ChoiceCaller", float],  # type: ignore[name-defined] # noqa: F821
+        timings: dict[ChoiceCaller, float],  # type: ignore[name-defined] # noqa: F821
         elapse: float,
         precompile_elapse: float,
         prescreening_elapse: float | None,

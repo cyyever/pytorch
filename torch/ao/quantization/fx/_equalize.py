@@ -3,7 +3,7 @@ import operator
 import warnings
 from collections import namedtuple
 from typing import Any
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 import torch.ao.nn.intrinsic as nni

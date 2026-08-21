@@ -1,6 +1,5 @@
 """Utils for Meta Triton autoWS."""
 
-from __future__ import annotations
 
 import functools
 

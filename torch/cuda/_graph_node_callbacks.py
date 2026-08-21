@@ -21,7 +21,6 @@ and never raises (the monitor's switchboard swallows exceptions, but a raise wou
 cost a traceback per node).
 """
 
-from __future__ import annotations
 
 import warnings
 from logging import getLogger

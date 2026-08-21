@@ -9,7 +9,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 from inspect import getfullargspec, signature
 from typing import Any
-from typing_extensions import TypeAliasType
+from typing import TypeAliasType
 
 import torch
 from torch.ao.quantization.quant_type import QuantType
@@ -569,7 +569,7 @@ def _get_signature_locals(f: Callable, loc: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in loc.items() if k in signature(f).parameters}
 
 
-def _get_default_kwargs(f: Callable) -> "OrderedDict[str, Any]":
+def _get_default_kwargs(f: Callable) -> OrderedDict[str, Any]:
     """Get all default keyword arguments from function signature
 
     Example::
@@ -590,7 +590,7 @@ def _get_default_kwargs(f: Callable) -> "OrderedDict[str, Any]":
     return OrderedDict(kwargs)
 
 
-def _normalize_kwargs(func: Callable, loc: dict[str, Any]) -> "OrderedDict[str, Any]":
+def _normalize_kwargs(func: Callable, loc: dict[str, Any]) -> OrderedDict[str, Any]:
     """Given a function and local function arguments, normalize the keyword
     arguments by filling in default arguments from function signature
 

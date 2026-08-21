@@ -224,7 +224,7 @@ class ComptimeContext:
             self.__tx.output.graph.python_code("self", verbose=verbose).src, file=file
         )
 
-    def parent(self) -> "ComptimeContext":
+    def parent(self) -> ComptimeContext:
         return ComptimeContext(self.__tx.parent)  # type: ignore[arg-type]
 
     def __get_tx(self, stacklevel: int) -> Any:

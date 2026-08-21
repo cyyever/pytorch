@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -92,7 +90,7 @@ class FuncTorchInterpreter(ABC):
 
 
 @contextlib.contextmanager
-def temporarily_pop_interpreter_stack() -> Generator[None, None, None]:
+def temporarily_pop_interpreter_stack() -> Generator[None]:
     try:
         saved = pop_dynamic_layer_stack()
         yield
@@ -101,7 +99,7 @@ def temporarily_pop_interpreter_stack() -> Generator[None, None, None]:
 
 
 @contextlib.contextmanager
-def temporarily_clear_interpreter_stack() -> Generator[list[Any], None, None]:
+def temporarily_clear_interpreter_stack() -> Generator[list[Any]]:
     stack: list[Any] = []
     try:
         while torch._C._functorch.peek_interpreter_stack() is not None:
@@ -115,7 +113,7 @@ def temporarily_clear_interpreter_stack() -> Generator[list[Any], None, None]:
 @contextlib.contextmanager
 def temporarily_restore_interpreter_stack(
     stack: list[Any] | None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     pushed: list[Any] = []
     if stack is None:
         return
@@ -169,7 +167,7 @@ class VmapInterpreter(FuncTorchInterpreter):
 @contextlib.contextmanager
 def nested(
     *contexts: contextlib.AbstractContextManager[Any],
-) -> Generator[tuple[contextlib.AbstractContextManager[Any], ...], None, None]:
+) -> Generator[tuple[contextlib.AbstractContextManager[Any], ...]]:
     with contextlib.ExitStack() as stack:
         for ctx in contexts:
             stack.enter_context(ctx)

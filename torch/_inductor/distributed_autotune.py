@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import dataclasses
 from typing import Any, TYPE_CHECKING
@@ -85,7 +83,7 @@ def schedule(scheduler: torch._inductor.scheduler.Scheduler) -> None:
 
 
 @contextlib.contextmanager
-def graph_context() -> Generator[None, None, None]:
+def graph_context() -> Generator[None]:
     """
     Wrapped around processing a graph, sets up figuring out which ranks tune
     which shapes.

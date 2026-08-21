@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import dataclasses
 import enum
@@ -16,7 +14,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Generic, NamedTuple, overload, TYPE_CHECKING, TypeVar
-from typing_extensions import dataclass_transform
+from typing import dataclass_transform
 
 import torch
 from torch.utils import _pytree as pytree
@@ -727,7 +725,7 @@ class GuardsContext(Checkpointable[GuardsCheckpointState]):
         self.skip_install: bool = False
 
     @contextlib.contextmanager
-    def skip_guard_install(self) -> Generator[None, None, None]:
+    def skip_guard_install(self) -> Generator[None]:
         old = self.skip_install
         self.skip_install = True
         try:
@@ -1170,7 +1168,7 @@ class TracingContext:
 
     @staticmethod
     @contextmanager
-    def patch(**kwargs: Any) -> Generator[None, None, None]:
+    def patch(**kwargs: Any) -> Generator[None]:
         prior = {}
         ctx = TracingContext.get()
 
@@ -1216,7 +1214,7 @@ class TracingContext:
     # associated with the current frame state
     @staticmethod
     @contextlib.contextmanager
-    def clear_frame() -> Generator[None, None, None]:
+    def clear_frame() -> Generator[None]:
         tc = TracingContext.get()
         with (
             unittest.mock.patch.object(tc, "frame_summary_stack", []),
@@ -1251,7 +1249,7 @@ class TracingContext:
     @contextlib.contextmanager
     def current_frame(
         frame_summary: traceback.FrameSummary | None,
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         # frame_summary can be None to solely take advantage of real_stack
         # attachment to thrown exceptions
         tc = TracingContext.get()
@@ -1276,8 +1274,7 @@ class TracingContext:
     @staticmethod
     @contextlib.contextmanager
     def report_output_strides() -> Generator[
-        list[tuple[int, ...] | None] | None, None, None
-    ]:
+        list[tuple[int, ...] | None] | None]:
         tc = TracingContext.try_get()
         if tc is None:
             yield None
@@ -1313,7 +1310,7 @@ class TracingContext:
 @contextmanager
 def compile_context(
     context: CompileContext | None,
-) -> Generator[CompileContext | None, None, None]:
+) -> Generator[CompileContext | None]:
     old_context = getattr(_TLS, "compile_context", None)
     _TLS.compile_context = context
     try:
@@ -1325,7 +1322,7 @@ def compile_context(
 @contextmanager
 def tracing(
     context: TracingContext | None,
-) -> Generator[TracingContext | None, None, None]:
+) -> Generator[TracingContext | None]:
     """
     This function installs the passed in tracing context as a dynamic scoped
     global variable.

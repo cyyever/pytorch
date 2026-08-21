@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import dataclasses
 import os
@@ -7,7 +6,7 @@ import re
 import sys
 from itertools import count, zip_longest
 from typing import Any, cast
-from typing_extensions import Self
+from typing import Self
 
 import sympy
 

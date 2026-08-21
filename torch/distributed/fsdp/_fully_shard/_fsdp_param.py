@@ -368,8 +368,8 @@ class FSDPParam:
     def _resolve_spmd_types_for_storage(
         self,
         param: nn.Parameter,
-        partition_spec: "spmd.PartitionSpec | None",
-        init_local_type: "spmd.LocalSpmdType",
+        partition_spec: spmd.PartitionSpec | None,
+        init_local_type: spmd.LocalSpmdType,
         mesh_info: DataParallelMeshInfo,
     ) -> nn.Parameter:
         """
@@ -647,7 +647,7 @@ class FSDPParam:
 
     def _build_spmd_sharding_spec(
         self,
-        dp_dim_names: "DataParallelMeshDims",
+        dp_dim_names: DataParallelMeshDims,
         dp_shard_indices: list[int],
         fsdp_placement: Shard,
     ) -> DTensorSpec:

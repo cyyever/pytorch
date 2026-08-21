@@ -57,7 +57,7 @@ class NestedIntNode:
     def is_nested_int(self) -> bool:
         return True
 
-    def clone(self) -> "NestedIntNode":
+    def clone(self) -> NestedIntNode:
         return self
 
     def _str(self) -> Any:
@@ -77,7 +77,7 @@ class NestedIntNode:
     def _graph_repr(self) -> Any:
         return self._str()
 
-    def mul(self, other: Any) -> "NestedIntNode":
+    def mul(self, other: Any) -> NestedIntNode:
         if other.is_constant():
             other = other.constant_int()
         else:

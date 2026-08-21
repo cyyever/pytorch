@@ -4,7 +4,7 @@ import sys
 from collections import OrderedDict
 from dataclasses import astuple, dataclass
 from typing import Any, NamedTuple
-from typing_extensions import Self
+from typing import Self
 
 import torch
 from torch import nan, nn, UntypedStorage

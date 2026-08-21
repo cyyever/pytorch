@@ -13,7 +13,7 @@ TORCH_WORKER_SERVER_SOCKET = "TORCH_WORKER_SERVER_SOCKET"
 
 
 @contextmanager
-def _worker_server(socket_path: str) -> Generator[None, None, None]:
+def _worker_server(socket_path: str) -> Generator[None]:
     from torch._C._distributed_c10d import _WorkerServer
 
     server = _WorkerServer(socket_path)
@@ -25,7 +25,7 @@ def _worker_server(socket_path: str) -> Generator[None, None, None]:
 
 @record
 @contextmanager
-def worker_main() -> Generator[None, None, None]:
+def worker_main() -> Generator[None]:
     """
     This is a context manager that wraps your main entry function. This combines
     the existing ``errors.record`` logic as well as a new ``_WorkerServer`` that

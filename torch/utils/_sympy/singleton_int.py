@@ -16,7 +16,7 @@ class SingletonInt(sympy.AtomicExpr):
 
     def __new__(
         cls, *args: Any, coeff: int | None = None, **kwargs: Any
-    ) -> "SingletonInt":
+    ) -> SingletonInt:
         instance = super().__new__(cls, *args, **kwargs)
         return instance
 
@@ -44,14 +44,14 @@ class SingletonInt(sympy.AtomicExpr):
     def free_symbols(self) -> set[sympy.Symbol]:
         return set()
 
-    def __mul__(self, other: int) -> "SingletonInt":
+    def __mul__(self, other: int) -> SingletonInt:
         if isinstance(other, SingletonInt):
             raise ValueError(
                 "SingletonInt cannot be multiplied by another SingletonInt"
             )
         return SingletonInt(self._val, coeff=self._coeff * other)
 
-    def __rmul__(self, other: int) -> "SingletonInt":
+    def __rmul__(self, other: int) -> SingletonInt:
         if isinstance(other, SingletonInt):
             raise ValueError(
                 "SingletonInt cannot be multiplied by another SingletonInt"
@@ -60,19 +60,19 @@ class SingletonInt(sympy.AtomicExpr):
 
     # Make sure we promptly raise an error instead of falling back to building
     # an expression tree. There are probably more ops, how can we be exhaustive?
-    def __add__(self, other: object) -> "SingletonInt":
+    def __add__(self, other: object) -> SingletonInt:
         raise NotImplementedError("NYI")
 
-    def __sub__(self, other: object) -> "SingletonInt":
+    def __sub__(self, other: object) -> SingletonInt:
         raise NotImplementedError("NYI")
 
-    def __truediv__(self, other: object) -> "SingletonInt":
+    def __truediv__(self, other: object) -> SingletonInt:
         raise NotImplementedError("NYI")
 
-    def __floordiv__(self, other: object) -> "SingletonInt":
+    def __floordiv__(self, other: object) -> SingletonInt:
         raise NotImplementedError("NYI")
 
-    def __mod__(self, other: object) -> "SingletonInt":
+    def __mod__(self, other: object) -> SingletonInt:
         raise NotImplementedError("NYI")
 
 

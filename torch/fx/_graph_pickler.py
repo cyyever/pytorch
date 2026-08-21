@@ -8,7 +8,7 @@ import weakref
 from abc import abstractmethod
 from collections.abc import Callable, Generator
 from typing import Any, NewType, TypeVar
-from typing_extensions import override, Self
+from typing import override, Self
 
 from torch.utils._import_utils import import_dill
 
@@ -233,7 +233,7 @@ class GraphPickler(pickle.Pickler):
     def debug_dumps(
         cls,
         obj: object,
-        options: "Options | None" = None,
+        options: Options | None = None,
         *,
         max_depth: int = 80,
         max_iter_items: int = 50,
@@ -670,7 +670,7 @@ class _NodePickleData:
     def __init__(
         self,
         node: torch.fx.Node,
-        mapping: dict[torch.fx.Node, "_NodePickleData"],
+        mapping: dict[torch.fx.Node, _NodePickleData],
         options: Options,
     ) -> None:
         self.args = pytree.tree_map_only(torch.fx.Node, lambda n: mapping[n], node.args)
@@ -699,7 +699,7 @@ class _NodePickleData:
     def unpickle(
         self,
         graph: torch.fx.Graph,
-        mapping: dict["_NodePickleData", torch.fx.Node],
+        mapping: dict[_NodePickleData, torch.fx.Node],
         unpickle_state: _UnpickleState,
     ) -> torch.fx.Node:
         args = pytree.tree_map_only(_NodePickleData, lambda n: mapping[n], self.args)
@@ -723,7 +723,7 @@ class _OpPickleData:
         return (result.unpickle, (pickler._unpickle_state,))
 
     @classmethod
-    def pickle(cls, op: object, options: Options) -> "_OpPickleData":
+    def pickle(cls, op: object, options: Options) -> _OpPickleData:
         if isinstance(op, str):
             return _OpStrPickleData(op)
 
@@ -753,9 +753,9 @@ class _OpPickleData:
     @staticmethod
     def _pickle_op(
         name: str,
-        datacls: type["_OpOverloadPickleData"] | type["_OpOverloadPacketPickleData"],
+        datacls: type[_OpOverloadPickleData] | type[_OpOverloadPacketPickleData],
         options: Options,
-    ) -> "_OpPickleData":
+    ) -> _OpPickleData:
         if (ops_filter := options.ops_filter) and not ops_filter(name):
             from torch._inductor.codecache import CacheabilityValidator
 

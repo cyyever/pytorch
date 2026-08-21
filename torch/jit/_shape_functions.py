@@ -142,7 +142,7 @@ def expand_one_unused(self: list[int], sizes: list[int], inp0: Any):
 
 def infer_size_impl(shape: list[int], numel: int) -> list[int]:
     newsize = 1
-    infer_dim: Optional[int] = None
+    infer_dim: int | None = None
     for dim in range(len(shape)):
         if shape[dim] == -1:
             if infer_dim is not None:
@@ -179,7 +179,7 @@ def view_one_unused(self: list[int], sizes: list[int], *, implicit: bool = False
 
 
 def sum_mean_dim(
-    self: list[int], opt_dims: Optional[list[int]], keep_dim: bool, dt: Any
+    self: list[int], opt_dims: list[int] | None, keep_dim: bool, dt: Any
 ):
     out: list[int] = []
     if opt_dims is None or len(opt_dims) == 0:
@@ -389,8 +389,8 @@ def max_pool2d_with_indices(
 
 def upsample_nearest2d(
     input: list[int],
-    output_size: Optional[list[int]],
-    scale_factors: Optional[list[float]],
+    output_size: list[int] | None,
+    scale_factors: list[float] | None,
 ):
     out: list[int] = []
     out.append(input[0])
@@ -549,7 +549,7 @@ def max_int():
 
 
 def slice(
-    self: list[int], dim: int, start: Optional[int], end: Optional[int], step: int
+    self: list[int], dim: int, start: int | None, end: int | None, step: int
 ):
     ndim = len(self)
     if ndim == 0:
@@ -586,7 +586,7 @@ def check_cat_no_zero_dim(tensors: list[list[int]]):
 
 
 def legacy_cat_wrap_dim(dim: int, tensor_sizes: list[list[int]]):
-    out_dim: Optional[int] = None
+    out_dim: int | None = None
     for size in tensor_sizes:
         if not (len(size) == 1 and size[0] == 0):
             if out_dim is None:
@@ -624,7 +624,7 @@ def cat(tensors: list[list[int]], dim: int):
     dim = legacy_cat_wrap_dim(dim, tensors)
     if len(tensors) <= 0:
         raise AssertionError("Cannot concatenate empty list of tensors")
-    not_skipped_tensor: Optional[list[int]] = None
+    not_skipped_tensor: list[int] | None = None
     for tensor in tensors:
         if not should_skip(tensor):
             not_skipped_tensor = tensor
@@ -744,7 +744,7 @@ def transpose(self: list[int], dim0: int, dim1: int):
     return out
 
 
-def linear(input: list[int], weight: list[int], bias: Optional[list[int]]):
+def linear(input: list[int], weight: list[int], bias: list[int] | None):
     out = matmul(input, t(weight))
     if bias is not None:
         if broadcast(bias, out) != out:
@@ -770,7 +770,7 @@ def check_non_negative(array: list[int]) -> bool:
 def check_shape_forward(
     input: list[int],
     weight_sizes: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -824,7 +824,7 @@ def check_shape_forward(
 def conv_output_size(
     input_size: list[int],
     weight_size: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -854,7 +854,7 @@ def conv_output_size(
 def conv1d(
     input: list[int],
     weight: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -870,7 +870,7 @@ def conv1d(
 def conv2d(
     input: list[int],
     weight: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -887,7 +887,7 @@ def conv_backwards(
     grad_output: list[int],
     input: list[int],
     weight: list[int],
-    biases: Optional[list[int]],
+    biases: list[int] | None,
 ):
     # Bias gradient is always generated regardless of if biases is supplied
     return _copy(input), _copy(weight), [grad_output[1]]
@@ -896,12 +896,12 @@ def conv_backwards(
 def conv_transpose2d_input(
     input: list[int],
     weight: list[int],
-    bias: Optional[list[int]] = None,
-    stride: Optional[list[int]] = None,
-    padding: Optional[list[int]] = None,
-    output_padding: Optional[list[int]] = None,
+    bias: list[int] | None = None,
+    stride: list[int] | None = None,
+    padding: list[int] | None = None,
+    output_padding: list[int] | None = None,
     groups: int = 1,
-    dilation: Optional[list[int]] = None,
+    dilation: list[int] | None = None,
 ) -> list[int]:
     if stride is None:
         stride = [1, 1]
@@ -935,7 +935,7 @@ def conv_transpose2d_input(
 def conv_forwards(
     input: list[int],
     weight: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -978,7 +978,7 @@ def conv_forwards(
 def _conv_forwards(
     input: list[int],
     weight: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -1005,10 +1005,10 @@ def _conv_forwards(
 
 def batch_norm(
     input: list[int],
-    weight: Optional[list[int]],
-    bias: Optional[list[int]],
-    running_mean: Optional[list[int]],
-    running_var: Optional[list[int]],
+    weight: list[int] | None,
+    bias: list[int] | None,
+    running_mean: list[int] | None,
+    running_var: list[int] | None,
     training: bool,
     momentum: float,
     eps: float,
@@ -1023,7 +1023,7 @@ def batch_norm(
 def conv3d(
     input: list[int],
     weight: list[int],
-    bias: Optional[list[int]],
+    bias: list[int] | None,
     stride: list[int],
     padding: list[int],
     dilation: list[int],
@@ -1202,7 +1202,7 @@ def _reduce_along_dim(self: list[int], dim: int, keepdim: bool):
 
 
 def argmax(
-    self: list[int], dim: Optional[int] = None, keepdim: bool = False
+    self: list[int], dim: int | None = None, keepdim: bool = False
 ) -> list[int]:
     if dim is None:
         return []
@@ -1243,7 +1243,7 @@ def topk(self: list[int], k: int, dim: int = -1) -> tuple[list[int], list[int]]:
 
 
 def nll_loss_forward(
-    self: list[int], target: list[int], weight: Optional[list[int]], reduction: int
+    self: list[int], target: list[int], weight: list[int] | None, reduction: int
 ) -> tuple[list[int], list[int]]:
     # This is taken shamelessly from the meta function in LossNLL.cpp
     self_dim = len(self)
@@ -1290,10 +1290,10 @@ def native_layer_norm(
 
 def native_batch_norm(
     input: list[int],
-    weight: Optional[list[int]],
-    bias: Optional[list[int]],
-    running_mean: Optional[list[int]],
-    running_var: Optional[list[int]],
+    weight: list[int] | None,
+    bias: list[int] | None,
+    running_mean: list[int] | None,
+    running_var: list[int] | None,
     training: bool,
 ) -> tuple[list[int], list[int], list[int]]:
     if training:
@@ -1305,10 +1305,10 @@ def native_batch_norm(
 
 def _batch_norm_with_update(
     input: list[int],
-    weight: Optional[list[int]],
-    bias: Optional[list[int]],
-    running_mean: Optional[list[int]],
-    running_var: Optional[list[int]],
+    weight: list[int] | None,
+    bias: list[int] | None,
+    running_mean: list[int] | None,
+    running_var: list[int] | None,
 ) -> tuple[list[int], list[int], list[int], list[int]]:
     _size = [input[1]]
     return _copy(input), _size, _size, [0]
@@ -1317,7 +1317,7 @@ def _batch_norm_with_update(
 def cross_entropy_loss(
     self: list[int],
     target: list[int],
-    weight: Optional[list[int]] = None,
+    weight: list[int] | None = None,
     reduction: int = 1,
     ignore_index: int = -100,
     label_smoothing: float = 0.0,

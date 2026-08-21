@@ -7,7 +7,6 @@ tracing through its decomposition. The decomposed ops (which do have strategies)
 determine how placements propagate through the original op.
 """
 
-from __future__ import annotations
 
 import itertools
 from typing import Any, TYPE_CHECKING

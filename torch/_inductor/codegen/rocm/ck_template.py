@@ -1,5 +1,5 @@
 from typing import Any
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch._inductor.codegen.rocm.rocm_template import ROCmTemplate

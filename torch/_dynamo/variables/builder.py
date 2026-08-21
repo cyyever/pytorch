@@ -41,7 +41,7 @@ import typing
 import weakref
 from collections.abc import Callable, MutableMapping
 from types import ModuleType
-from typing import Any, cast, NamedTuple, NoReturn, overload, TYPE_CHECKING, Union
+from typing import Any, cast, NamedTuple, NoReturn, overload, TYPE_CHECKING
 
 import sympy
 
@@ -719,7 +719,7 @@ class GraphArg:
             if not is_fake(self.fake_tensor):
                 raise AssertionError("fake_tensor must be a FakeTensor")
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen(self.source)
 
     def reconstruct_pycode(self, codegen) -> str:
@@ -754,7 +754,7 @@ class BackwardStateGraphArg(GraphArg):
             is_tensor=False,
         )
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         if not codegen.tx.output.backward_state_var:
             raise AssertionError("backward_state_var must be set on output")
         codegen.add_push_null(
@@ -802,7 +802,7 @@ class VariableBuilder:
 
     def __init__(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         source: Source,
         allow_lazy_constant: bool = True,
     ) -> None:
@@ -1043,7 +1043,7 @@ class VariableBuilder:
     @functools.cache
     def _id_dispatch(
         cls,
-    ) -> dict[int, Callable[["VariableBuilder", Any], VariableTracker]]:
+    ) -> dict[int, Callable[[VariableBuilder, Any], VariableTracker]]:
         from ..comptime import comptime
 
         entries = [
@@ -2386,7 +2386,7 @@ class VariableBuilder:
         return self.tx.output.side_effects.track_object_existing(value, result)
 
     def wrap_listlike(
-        self, value: Union[tuple[Any, ...], list[Any], odict_values, NamedTuple]
+        self, value: tuple[Any, ...] | list[Any] | odict_values | NamedTuple
     ) -> VariableTracker:
         if config.specialize_int and type(value) is torch.Size:
             self.install_guards(GuardBuilder.CONSTANT_MATCH)
@@ -3760,7 +3760,7 @@ def _clone_input(value: Any, fake_mode: FakeTensorMode | None) -> Any:
 
 
 def wrap_fx_proxy(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     proxy: Any,
     example_value: Any | None = None,
     subclass_type: type | None = None,
@@ -3785,7 +3785,7 @@ def wrap_fx_proxy(
 
 
 def cache_real_value_when_export(
-    tx: "InstructionTranslatorBase", proxy: Any, example_value: Any
+    tx: InstructionTranslatorBase, proxy: Any, example_value: Any
 ) -> None:
     if tx.export:
         # The legacy behavior for real value cache with subclasses was
@@ -3843,7 +3843,7 @@ def cache_real_value_when_export(
 # this function without a proxy.
 def wrap_fx_proxy_cls(
     target_cls: type[VTTypeAlias],
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     proxy: Any,
     example_value: Any | None = None,
     subclass_type: type | None = None,
@@ -3883,7 +3883,7 @@ def wrap_fx_proxy_cls(
 # This is 1 above (wrapping a preexisting tensor)
 def _wrap_fx_preexisting_tensor(
     target_cls: type[VTTypeAlias],
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     proxy: torch.fx.Proxy,
     tensor: torch.Tensor,
     subclass_type: type | None = None,
@@ -3960,7 +3960,7 @@ def _wrap_fx_preexisting_tensor(
 # This is 2 in the above comment (wrapping the output of a traced op)
 def _wrap_fx_proxy(
     target_cls: type[VTTypeAlias],
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     proxy: torch.fx.Proxy,
     example_value: Any | None = None,
     subclass_type: type | None = None,
@@ -3998,7 +3998,7 @@ def _wrap_fx_proxy(
 # This handles wrapping of the output of an op traced into the graphs
 def handle_traced_output(
     example_value: Any,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     proxy: torch.fx.Proxy,
     options: dict[str, Any],
     subclass_type: type | None,
@@ -4313,7 +4313,7 @@ def infer_subclass_type(value: T) -> type[T] | None:
 
 def get_specialized_props(
     target_cls: Any,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     example_value: Any,
     subclass_type: type | None,
 ) -> TensorSpecializedProps:
@@ -4338,7 +4338,7 @@ def get_specialized_props(
 
 def construct_tensor_variable(
     target_cls: type[VTTypeAlias],
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     proxy: torch.fx.Proxy,
     example_value: Any,
     subclass_type: type | None,
@@ -4456,7 +4456,7 @@ def is_dynamic_source(source_name: str, dim: int | None = None) -> bool:
 
 
 def record_automatic_dynamic(
-    tx: "InstructionTranslatorBase", name: str, e: torch.Tensor
+    tx: InstructionTranslatorBase, name: str, e: torch.Tensor
 ) -> FrameStateSizeEntry:
     # This mimics stride inference algorithm in _create_symbolic_sizes_strides_storage_offset
     ex_size = e.size()
@@ -4612,7 +4612,7 @@ def is_dynamic_value(value: int) -> bool:
 # Returns a SymbolicContext
 def _automatic_dynamic(
     e: Any,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     source: Source,
     static_shapes: bool,
     outer_only: bool = False,
@@ -4737,7 +4737,7 @@ def _automatic_dynamic(
     dim2constraint = {}
 
     def update_dim2constraint(
-        dim: int, constraint_range: "StrictMinMaxConstraint", name: str
+        dim: int, constraint_range: StrictMinMaxConstraint, name: str
     ) -> None:
         if dim in dim2constraint:
             from torch.fx.experimental.symbolic_shapes import StrictMinMaxConstraint
@@ -4957,7 +4957,7 @@ def _automatic_dynamic(
 # See note [Tensor Fakification and Symbol Caching]
 def wrap_to_fake_tensor_and_record(
     e: Any,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     *,
     source: Source | None,
     is_tensor: bool,
@@ -4982,7 +4982,7 @@ def wrap_to_fake_tensor_and_record(
 
 def _wrap_to_fake_tensor_and_record_impl(
     e: Any,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     *,
     source: Source | None,
     is_tensor: bool,
@@ -5130,7 +5130,7 @@ class SourcelessBuilder:
     @overload
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         value: type[set[Any]]
         | type[dict[Any, Any]]
         | type[tuple[Any, ...]]
@@ -5139,26 +5139,26 @@ class SourcelessBuilder:
 
     @overload
     @staticmethod
-    def create(tx: "InstructionTranslatorBase", value: list[Any]) -> ListVariable: ...
+    def create(tx: InstructionTranslatorBase, value: list[Any]) -> ListVariable: ...
 
     @overload
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase", value: tuple[Any, ...]
+        tx: InstructionTranslatorBase, value: tuple[Any, ...]
     ) -> TupleVariable: ...
 
     @overload
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase", value: bool | int | float | str
+        tx: InstructionTranslatorBase, value: bool | int | float | str
     ) -> ConstantVariable: ...
 
     @overload
     @staticmethod
-    def create(tx: "InstructionTranslatorBase", value: Any) -> VariableTracker: ...
+    def create(tx: InstructionTranslatorBase, value: Any) -> VariableTracker: ...
 
     @staticmethod
-    def create(tx: "InstructionTranslatorBase", value: Any) -> VariableTracker:
+    def create(tx: InstructionTranslatorBase, value: Any) -> VariableTracker:
         value_type = type(value)
         # type: ignore[attr-defined]
         fast_handler = SourcelessBuilder._type_handlers.get(value_type)
@@ -5332,7 +5332,7 @@ class SourcelessBuilder:
 
     @staticmethod
     def make_type_handlers() -> dict[
-        type, Callable[["InstructionTranslatorBase", Any], VariableTracker]
+        type, Callable[[InstructionTranslatorBase, Any], VariableTracker]
     ]:
         create = SourcelessBuilder.create
         handlers: dict[
@@ -5411,7 +5411,7 @@ class SourcelessBuilder:
             )
         )
 
-        def passthrough(tx: "InstructionTranslatorBase", value: T) -> T:
+        def passthrough(tx: InstructionTranslatorBase, value: T) -> T:
             return value
 
         for cls in VariableTrackerMeta.all_subclasses:
@@ -5433,7 +5433,7 @@ class SourcelessUserDefinedObjectBuilder:
         raise AssertionError("Use SourcelessUserDefinedObjectBuilder.create()")
 
     @staticmethod
-    def create(tx: "InstructionTranslatorBase", value: Any) -> VariableTracker:
+    def create(tx: InstructionTranslatorBase, value: Any) -> VariableTracker:
         value_type = type(value)
         if issubclass(value_type, MutableMapping):
             return MutableMappingVariable(value, mutation_type=ValueMutationNew())

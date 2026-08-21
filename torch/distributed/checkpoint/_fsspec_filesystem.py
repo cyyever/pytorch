@@ -36,7 +36,7 @@ class FileSystem(FileSystemBase):
     @contextmanager
     def create_stream(
         self, path: str | os.PathLike, mode: str
-    ) -> Generator[io.IOBase, None, None]:
+    ) -> Generator[io.IOBase]:
         if self.fs is None:
             raise AssertionError("fs should not be None")
         path = os.fspath(path)

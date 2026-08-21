@@ -57,17 +57,17 @@ class AuxLoadVecInfo:
                 )
 
     @classmethod
-    def gather(cls) -> "AuxLoadVecInfo":
+    def gather(cls) -> AuxLoadVecInfo:
         """Create a gather-load classification."""
         return cls(LoadKind.GATHER)
 
     @classmethod
-    def lane_uniform(cls) -> "AuxLoadVecInfo":
+    def lane_uniform(cls) -> AuxLoadVecInfo:
         """Create a lane-uniform-load classification."""
         return cls(LoadKind.LANE_UNIFORM)
 
     @classmethod
-    def contiguous(cls, vec_size: int) -> "AuxLoadVecInfo":
+    def contiguous(cls, vec_size: int) -> AuxLoadVecInfo:
         """Create a contiguous direct-vector-load classification."""
         return cls(LoadKind.CONTIGUOUS, vec_size)
 

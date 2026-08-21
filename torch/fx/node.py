@@ -7,7 +7,7 @@ import types
 import typing
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, Optional, TYPE_CHECKING, TypeAlias, Union
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 from torch._C import _fx_map_aggregate, _fx_map_arg, _NodeBase
@@ -283,25 +283,25 @@ class Node(_NodeBase):
       in the Graph printout.
     """
 
-    _args: tuple["Argument", ...]
-    _kwargs: dict[str, "Argument"]
-    graph: "Graph"
+    _args: tuple[Argument, ...]
+    _kwargs: dict[str, Argument]
+    graph: Graph
     # unique name of value being created
     name: str
     # the kind of operation = placeholder|call_method|call_module|call_function|get_attr
     op: str
     # for method/module/function, the name of the method/module/function/attr
     # being invoked, e.g add, layer1, or torch.add
-    target: "Target"
+    target: Target
     # All `Node`-valued inputs. Key is the Node, value is don't-care.
     # The public API for this is `all_input_nodes`, this private attribute
     # should not be accessed directly.
-    _input_nodes: dict["Node", None]
+    _input_nodes: dict[Node, None]
     # All of the nodes that use the value produced by this Node
     # Note one user may correspond to several uses, e.g. the node for ``x + x``
     # would appear once here, but represents two uses.
     # Is a dict to act as an "ordered set". Keys are significant, value don't-care
-    users: dict["Node", None]
+    users: dict[Node, None]
     # Type expression representing the output value of this node.
     # This should contain the same class of Type objects that would appear
     # as type annotations for function inputs/outputs.
@@ -316,7 +316,7 @@ class Node(_NodeBase):
     type: Any | None
     _sort_key: Any
     # If set, use this fn to print this node
-    _repr_fn: Callable[["Node"], str] | None
+    _repr_fn: Callable[[Node], str] | None
     # Dictionary to store metadata passes need to do their
     # transformations. This metadata is preserved across node copies
     meta: dict[str, Any]
@@ -324,12 +324,12 @@ class Node(_NodeBase):
     @compatibility(is_backward_compatible=True)
     def __init__(
         self,
-        graph: "Graph",
+        graph: Graph,
         name: str,
         op: str,
-        target: "Target",
-        args: tuple["Argument", ...],
-        kwargs: dict[str, "Argument"],
+        target: Target,
+        args: tuple[Argument, ...],
+        kwargs: dict[str, Argument],
         return_type: Any | None = None,
     ) -> None:
         """
@@ -400,7 +400,7 @@ class Node(_NodeBase):
             setattr(self, k, v)
 
     @property
-    def next(self) -> "Node":
+    def next(self) -> Node:
         """
         Returns the next ``Node`` in the linked list of Nodes.
 
@@ -411,7 +411,7 @@ class Node(_NodeBase):
         return self._next
 
     @property
-    def prev(self) -> "Node":
+    def prev(self) -> Node:
         """
         Returns the previous ``Node`` in the linked list of Nodes.
 
@@ -422,7 +422,7 @@ class Node(_NodeBase):
         return self._prev
 
     @compatibility(is_backward_compatible=True)
-    def prepend(self, x: "Node") -> None:
+    def prepend(self, x: Node) -> None:
         """
         Insert x before this node in the list of nodes in the graph. Example::
 
@@ -438,7 +438,7 @@ class Node(_NodeBase):
         self._prepend(x)
 
     @compatibility(is_backward_compatible=True)
-    def append(self, x: "Node") -> None:
+    def append(self, x: Node) -> None:
         """
         Insert ``x`` after this node in the list of nodes in the graph.
         Equivalent to ``self.next.prepend(x)``
@@ -496,7 +496,7 @@ class Node(_NodeBase):
         self._update_args_kwargs(self._args, k)
 
     @property
-    def all_input_nodes(self) -> list["Node"]:
+    def all_input_nodes(self) -> list[Node]:
         """
         Return all Nodes that are inputs to this Node. This is equivalent to
         iterating over ``args`` and ``kwargs`` and only collecting the values that
@@ -712,11 +712,11 @@ class Node(_NodeBase):
     @compatibility(is_backward_compatible=True)
     def replace_all_uses_with(
         self,
-        replace_with: "Node",
-        delete_user_cb: Callable[["Node"], bool] | None = None,
+        replace_with: Node,
+        delete_user_cb: Callable[[Node], bool] | None = None,
         *,
         propagate_meta: bool = False,
-    ) -> list["Node"]:
+    ) -> list[Node]:
         """
         Replace all uses of ``self`` in the Graph with the Node ``replace_with``.
 
@@ -866,7 +866,7 @@ class Node(_NodeBase):
         return None
 
     @compatibility(is_backward_compatible=True)
-    def replace_input_with(self, old_input: "Node", new_input: "Node") -> None:
+    def replace_input_with(self, old_input: Node, new_input: Node) -> None:
         """
         Loop through input nodes of ``self``, and replace all instances of
         ``old_input`` with ``new_input``.

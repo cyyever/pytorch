@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import builtins
 import contextlib
 import copy
@@ -57,11 +55,11 @@ if TYPE_CHECKING:
 # Mapping of builtins to their `typing` equivalent.
 # (PEP585: See D68459095 test plan)
 _origin_type_map = {
-    list: typing.List,  # noqa: UP006
-    dict: typing.Dict,  # noqa: UP006
-    set: typing.Set,  # noqa: UP006
-    frozenset: typing.FrozenSet,  # noqa: UP006
-    tuple: typing.Tuple,  # noqa: UP006
+    list: list,  # noqa: UP006
+    dict: dict,  # noqa: UP006
+    set: set,  # noqa: UP006
+    frozenset: frozenset,  # noqa: UP006
+    tuple: tuple,  # noqa: UP006
 }
 
 _legal_ops = dict.fromkeys(
@@ -2515,7 +2513,7 @@ class Graph:
             return namespace.create_name(n.name, n)
 
         @contextmanager
-        def override_node_repr(graph: Graph) -> Generator[None, None, None]:
+        def override_node_repr(graph: Graph) -> Generator[None]:
             orig_repr_fns = {}
             for node in graph.nodes:
                 orig_repr_fns[node] = node._repr_fn
@@ -2856,7 +2854,7 @@ class Graph:
         self._codegen._body_transformer = make_transformer(on_gen_code_old)
 
         @contextlib.contextmanager
-        def on_generate_code_context_manager() -> Generator[None, None, None]:
+        def on_generate_code_context_manager() -> Generator[None]:
             try:
                 yield
             finally:
@@ -2873,7 +2871,7 @@ class Graph:
 @contextmanager
 def _override_sym_repr(
     override: Callable[[torch.types.PySymType], str],
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     tmp = CodeGen._sym_repr
     try:
         CodeGen._sym_repr = override

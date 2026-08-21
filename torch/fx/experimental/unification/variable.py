@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -65,7 +63,7 @@ def isvar(o: object) -> bool:  # noqa: F811
 
 
 @contextmanager
-def variables(*variables: Hashable) -> Generator[None, None, None]:
+def variables(*variables: Hashable) -> Generator[None]:
     """
     Context manager for logic variables
 

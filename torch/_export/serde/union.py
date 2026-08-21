@@ -2,7 +2,7 @@ import functools
 from collections.abc import Hashable
 from dataclasses import dataclass, fields
 from typing import Any, TypeVar
-from typing_extensions import dataclass_transform
+from typing import dataclass_transform
 
 
 T = TypeVar("T", bound="_Union")
@@ -13,7 +13,7 @@ class _UnionTag(str):
     _cls: Hashable
 
     @staticmethod
-    def create(t: str, cls: type["_Union"]) -> "_UnionTag":
+    def create(t: str, cls: type[_Union]) -> _UnionTag:
         tag = _UnionTag(t)
         if hasattr(tag, "_cls"):
             raise AssertionError("tag already has _cls attribute")
@@ -35,7 +35,7 @@ class _UnionTag(str):
 
 
 @functools.cache
-def _get_field_names(cls: type["_Union"]) -> set[str]:
+def _get_field_names(cls: type[_Union]) -> set[str]:
     # pyrefly: ignore[bad-argument-type]  # TODO _Union subclasses are dataclasses at runtime via _union_dataclass
     return {f.name for f in fields(cls)}
 

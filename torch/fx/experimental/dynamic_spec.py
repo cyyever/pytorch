@@ -3,7 +3,6 @@ Currently only supports unbacked dynamic shapes.
 
 """
 
-from __future__ import annotations
 
 import itertools
 import logging

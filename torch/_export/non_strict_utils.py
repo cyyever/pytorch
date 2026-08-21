@@ -260,7 +260,7 @@ def _create_symbolic_context_for_tensor(
     t_constraints: dict[int, dict[int, Constraint]],
     sources: dict[tuple[int, int], list[Source]],
     mode: FakeTensorMode,
-) -> "SymbolicContext":
+) -> SymbolicContext:
     """Helper function to create symbolic context for a tensor."""
     from torch._dynamo.source import AttrSource
     from torch.fx.experimental.symbolic_shapes import (
@@ -416,7 +416,7 @@ def _tensor_min_max(
 
 
 @contextmanager
-def _override_builtin_ops() -> Generator[None, None, None]:
+def _override_builtin_ops() -> Generator[None]:
     original_max = builtins.max
     original_min = builtins.min
     original_pow = math.pow
@@ -541,7 +541,7 @@ def make_fake_inputs(
     nn_module: torch.nn.Module,
     args: tuple[Any, ...],
     kwargs: dict[str, Any],
-    dynamic_shapes: "dict[str, Any] | tuple[Any, ...] | list[Any] | ShapesSpec | ParamsSpec | None",
+    dynamic_shapes: dict[str, Any] | tuple[Any, ...] | list[Any] | ShapesSpec | ParamsSpec | None,
     prefer_deferred_runtime_asserts_over_guards: bool = False,
 ) -> tuple[
     FakeTensorMode,
@@ -802,7 +802,7 @@ def _constrain_user_specified_dimhint_range(
     symint: torch.SymInt,
     hint: int,
     dim: _DimHint,
-    range_constraints: dict["Expr", "ValueRanges[Expr]"],
+    range_constraints: dict[Expr, ValueRanges[Expr]],
     shape_env: ShapeEnv,
     keypath: KeyPath,
     i: int | None = None,
@@ -877,7 +877,7 @@ def make_constraints(
     combined_args: dict[str, Any],
     dynamic_shapes: dict[str, Any] | tuple[Any] | list[Any] | None,
     num_lifted_inputs: int,
-) -> dict["Expr", "ValueRanges[Expr]"]:
+) -> dict[Expr, ValueRanges[Expr]]:
     """
     Given a fake mode's shape env and user-specified dynamic shapes,
     return the resulting range constraints and equality constraints.
@@ -1074,7 +1074,7 @@ def _exit_enable_graph_inputs_of_type_nn_module(
 @contextlib.contextmanager
 def _enable_graph_inputs_of_type_nn_module(
     args: tuple[tuple[Any], dict[Any, Any]] | None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     if args is None:
         yield
         return
@@ -1092,7 +1092,7 @@ def _fakify_module_inputs(
     args: tuple[Any],
     kwargs: dict[Any, Any],
     fake_mode: torch._subclasses.fake_tensor.FakeTensorMode,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     # This context manager is used to fakify module inputs.
     # Inputs:
     #   args, kwargs: the args and kwargs containing module inputs that haven't been fakified.
@@ -1123,7 +1123,7 @@ def _fakify_script_objects(
     args: Sequence[Any],
     kwargs: dict[Any, Any],
     fake_mode: torch._subclasses.fake_tensor.FakeTensorMode | None,
-) -> Generator[tuple[_ModuleT, Any, Any, ConstantAttrMap, dict[Any, Any]], None, None]:
+) -> Generator[tuple[_ModuleT, Any, Any, ConstantAttrMap, dict[Any, Any]]]:
     # This context manager is used to fakify script objects into FakeScriptObject.
     # Inputs:
     #   mod: the module to be exported, it (and its recursive submodules)'s script object attrs haven't been fakified.

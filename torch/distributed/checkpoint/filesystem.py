@@ -487,7 +487,7 @@ class FileSystemBase(ABC):
     @abstractmethod
     def create_stream(
         self, path: str | os.PathLike, mode: str
-    ) -> Generator[io.IOBase, None, None]: ...
+    ) -> Generator[io.IOBase]: ...
 
     @abstractmethod
     def concat_path(
@@ -518,7 +518,7 @@ class FileSystem(FileSystemBase):
     @contextmanager
     def create_stream(
         self, path: str | os.PathLike, mode: str
-    ) -> Generator[io.IOBase, None, None]:
+    ) -> Generator[io.IOBase]:
         if not isinstance(path, Path):
             path = Path(path)
         with path.open(mode) as stream:

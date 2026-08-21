@@ -15,7 +15,8 @@ from collections import defaultdict
 from collections.abc import Callable
 from types import ModuleType
 from typing import Any, cast, Generic, TYPE_CHECKING, TypedDict
-from typing_extensions import deprecated, NotRequired, ParamSpec
+from typing import NotRequired, ParamSpec
+from warnings import deprecated
 
 import torch
 
@@ -274,7 +275,7 @@ def _rebuild_tensor_v3(
     return t
 
 
-_sparse_tensors_to_validate: list["torch.Tensor"] = []
+_sparse_tensors_to_validate: list[torch.Tensor] = []
 
 
 # In _legacy_load() in serialization.py we unpickle storages after the sparse
@@ -1168,11 +1169,11 @@ NAME_MAPPING.update(
 
 
 def _chunk_or_narrow_cat(
-    tensor: "torch.Tensor",
+    tensor: torch.Tensor,
     num_chunks: int,
     narrow_dim: int,
     cat_dim: int = 0,
-) -> "torch.Tensor":
+) -> torch.Tensor:
     """
     Splits tensor along narrow_dim into num_chunks and concatenates along cat_dim.
     Uses torch.chunk in eager mode, but torch.narrow under tracing to be unbacked-symint safe.
@@ -1194,8 +1195,8 @@ def _chunk_or_narrow_cat(
 
 
 def _maybe_view_chunk_cat(
-    res: "torch.Tensor", group_size: int, gather_dim: int
-) -> "torch.Tensor":
+    res: torch.Tensor, group_size: int, gather_dim: int
+) -> torch.Tensor:
     """
     This is intuitively the same as torch.cat(torch.chunk(res, group_size,
     dim=0), dim=gather_dim), but returns a view if data movement is not
@@ -1434,7 +1435,7 @@ def _is_privateuse1_backend_available():
     ) and is_available()
 
 
-def getenv(name: str) -> "str | None":
+def getenv(name: str) -> str | None:
     """Read an environment variable through torch's serialized env access.
 
     Prefer this over :func:`os.getenv` when torch is loaded: it shares c10's
@@ -1480,15 +1481,15 @@ def unsetenv(name: str) -> None:
 
 # Saved originals so os.environ interception can be reverted; ``None`` means the
 # hook is not currently installed.
-_original_os_putenv: "Callable[..., None] | None" = None
-_original_os_unsetenv: "Callable[..., None] | None" = None
+_original_os_putenv: Callable[..., None] | None = None
+_original_os_unsetenv: Callable[..., None] | None = None
 
 
-def _torch_putenv(key: "str | bytes", value: "str | bytes") -> None:
+def _torch_putenv(key: str | bytes, value: str | bytes) -> None:
     setenv(os.fsdecode(key), os.fsdecode(value))
 
 
-def _torch_unsetenv(key: "str | bytes") -> None:
+def _torch_unsetenv(key: str | bytes) -> None:
     unsetenv(os.fsdecode(key))
 
 

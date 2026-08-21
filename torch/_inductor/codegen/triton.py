@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import ast
 import collections
@@ -6063,7 +6062,7 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
     ):
         accumulator_max = self.reduction_collapse_dims(buffer, accumulator_max, dtype)
         accumulator_sum = self.reduction_collapse_dims(buffer, accumulator_sum, dtype)
-        result_max, result_sum = [str(self.cse.newvar(dtype=dtype)) for _ in range(2)]
+        result_max, result_sum = (str(self.cse.newvar(dtype=dtype)) for _ in range(2))
         buffer.splice(
             f"""
             {result_max}, {result_sum} = triton_helpers.online_softmax_reduce(

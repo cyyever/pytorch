@@ -410,7 +410,7 @@ class _IterDataPipeSerializationWrapper(_DataPipeSerializationWrapper, IterDataP
         # pyrefly: ignore [invalid-type-var]
         self._datapipe_iter: Iterator[_T_co] | None = None
 
-    def __iter__(self) -> "_IterDataPipeSerializationWrapper":
+    def __iter__(self) -> _IterDataPipeSerializationWrapper:
         self._datapipe_iter = iter(self._datapipe)
         return self
 

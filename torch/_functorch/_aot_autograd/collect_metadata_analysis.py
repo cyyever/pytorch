@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 """
 This module is one of the analysis modules - it takes as input a function or graph
 and some preexisting properties, and returns some data that is useful for deciding

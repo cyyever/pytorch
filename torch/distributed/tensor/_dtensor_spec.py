@@ -700,7 +700,7 @@ class DTensorSpec:
         dim_map: list[int],
         sums: list[int],
         tensor_meta: TensorMeta | None = None,
-    ) -> "DTensorSpec":
+    ) -> DTensorSpec:
         """
         Construct a DTensorSpec from dim_map list and pending sum.
 
@@ -752,7 +752,7 @@ class DTensorSpec:
 
     def shallow_copy_with_tensor_meta(
         self, tensor_meta: TensorMeta | None
-    ) -> "DTensorSpec":
+    ) -> DTensorSpec:
         """
         Shallow copy the DTensorSpec with a new tensor_meta.
         """

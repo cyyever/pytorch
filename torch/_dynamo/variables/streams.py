@@ -55,7 +55,7 @@ def new_stream(*args: tuple[Any], **kwargs: Any) -> int:
     )
 
 
-def _codegen_current_stream(device: torch.device, cg: "PyCodegen") -> None:
+def _codegen_current_stream(device: torch.device, cg: PyCodegen) -> None:
     cg.add_push_null(
         lambda: cg.load_import_from(
             torch._dynamo.graph_bytecode_inputs.__name__,  # type: ignore[implicit-imports]
@@ -294,13 +294,13 @@ class SymbolicStreamState:
             cur_stack
         )
 
-    def enter_stream(self, stream: "StreamVariable") -> None:
+    def enter_stream(self, stream: StreamVariable) -> None:
         self.cur_stream_stack.append(stream)
 
     def exit_stream(self) -> None:
         self.cur_stream_stack.pop()
 
-    def cur_stream(self, device: torch.device | None = None) -> "StreamVariable":
+    def cur_stream(self, device: torch.device | None = None) -> StreamVariable:
         if device is not None:
             for stream in reversed(self.cur_stream_stack):
                 if stream.device == device:
@@ -324,16 +324,16 @@ class StreamContextVariable(FxTracebackAnnotateVariable):
 
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase",
-        stream_to_enter: "StreamVariable",
+        tx: InstructionTranslatorBase,
+        stream_to_enter: StreamVariable,
         **kwargs: dict[str, Any],
-    ) -> "StreamContextVariable":
+    ) -> StreamContextVariable:
         return StreamContextVariable(
             stream_to_enter,
             **kwargs,
         )
 
-    def __init__(self, stream: Optional["StreamVariable"], **kwargs: Any) -> None:
+    def __init__(self, stream: Optional[StreamVariable], **kwargs: Any) -> None:
         self.stream = stream
         super().__init__(
             annotation={"stream": self.get_stream().user_object_index},
@@ -342,7 +342,7 @@ class StreamContextVariable(FxTracebackAnnotateVariable):
         )
 
     def enter(
-        self, tx: "InstructionTranslatorBase", *args: VariableTracker
+        self, tx: InstructionTranslatorBase, *args: VariableTracker
     ) -> VariableTracker:
         # to stream, from stream is the order of the arguments
         # we are entering the target, and leaving the initial stream
@@ -350,7 +350,7 @@ class StreamContextVariable(FxTracebackAnnotateVariable):
         return super().enter(tx)
 
     def exit(
-        self, tx: "InstructionTranslatorBase", *args: VariableTracker
+        self, tx: InstructionTranslatorBase, *args: VariableTracker
     ) -> VariableTracker:
         # to stream, from stream is the order of the arguments
         # we are leaving the target, and entering the initial stream
@@ -363,7 +363,7 @@ class StreamContextVariable(FxTracebackAnnotateVariable):
     def supports_graph_breaks(self) -> bool:
         return True
 
-    def get_stream(self) -> "StreamVariable":
+    def get_stream(self) -> StreamVariable:
         if not self.stream:
             raise AssertionError("Stream context should have a separate stream")
         return self.stream
@@ -403,8 +403,8 @@ class StreamVariable(StreamContextVariable):
         return self._cpython_type
 
     def _stream_device_handle_get(
-        self: "StreamVariable", tx: "InstructionTranslatorBase"
-    ) -> "VariableTracker | None":
+        self: StreamVariable, tx: InstructionTranslatorBase
+    ) -> VariableTracker | None:
         from ..guards import GuardBuilder, install_guard
 
         name = self._device_handle_attr
@@ -425,7 +425,7 @@ class StreamVariable(StreamContextVariable):
 
     def wait_event(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -442,7 +442,7 @@ class StreamVariable(StreamContextVariable):
 
     def wait_stream(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -459,7 +459,7 @@ class StreamVariable(StreamContextVariable):
 
     def synchronize(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -473,7 +473,7 @@ class StreamVariable(StreamContextVariable):
 
     def query(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -490,7 +490,7 @@ class StreamVariable(StreamContextVariable):
 
     def record_event(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -561,7 +561,7 @@ class StreamVariable(StreamContextVariable):
     def fn_name(self) -> str:
         return "Stream"
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # If we got here, this stream is fully subsumed by the graph - this means it is
         # not an input or global
         if self.source:
@@ -581,14 +581,14 @@ class StreamVariable(StreamContextVariable):
             name = codegen.tx.output.install_global_by_id(prefix, self.value)
             codegen.append_output(codegen.create_load_global(name, add=True))
 
-    def get_stream(self) -> "StreamVariable":
+    def get_stream(self) -> StreamVariable:
         return self
 
     @staticmethod
     def make_construct_in_graph_stream_fn(
         args: TupleVariable, kwargs: ConstDictVariable
-    ) -> Callable[[int, "PyCodegen"], None]:
-        def fn(index: int, codegen: "PyCodegen") -> None:
+    ) -> Callable[[int, PyCodegen], None]:
+        def fn(index: int, codegen: PyCodegen) -> None:
             codegen.add_push_null(
                 lambda: codegen.load_import_from(
                     torch._dynamo.graph_bytecode_inputs.__name__,  # type: ignore[implicit-imports]
@@ -659,7 +659,7 @@ class EventVariable(VariableTracker):
         self.user_object_index = user_object_index
 
     def tp_richcompare_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker, op: str
+        self, tx: InstructionTranslatorBase, other: VariableTracker, op: str
     ) -> VariableTracker:
         from .object_protocol import object_richcompare
 
@@ -673,7 +673,7 @@ class EventVariable(VariableTracker):
 
     def wait(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -691,7 +691,7 @@ class EventVariable(VariableTracker):
 
     def record(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -710,7 +710,7 @@ class EventVariable(VariableTracker):
 
     def synchronize(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -724,7 +724,7 @@ class EventVariable(VariableTracker):
 
     def query(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -748,7 +748,7 @@ class EventVariable(VariableTracker):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -776,10 +776,10 @@ class EventVariable(VariableTracker):
 
     @staticmethod
     def _get_stream_arg(
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
-    ) -> tuple["StreamVariable", int]:
+    ) -> tuple[StreamVariable, int]:
         """Returns (stream_variable, stream_index_for_op).
 
         The ambient current stream is registered at index 0 in the external
@@ -802,8 +802,8 @@ class EventVariable(VariableTracker):
     @staticmethod
     def make_construct_in_graph_event_fn(
         args: TupleVariable, kwargs: ConstDictVariable
-    ) -> Callable[[int, "PyCodegen"], None]:
-        def fn(index: int, codegen: "PyCodegen") -> None:
+    ) -> Callable[[int, PyCodegen], None]:
+        def fn(index: int, codegen: PyCodegen) -> None:
             codegen.add_push_null(
                 lambda: codegen.load_import_from(
                     torch._dynamo.graph_bytecode_inputs.__name__,  # type: ignore[implicit-imports]
@@ -822,7 +822,7 @@ class EventVariable(VariableTracker):
 
         return fn
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # If we got here, this event is fully subsumed by the graph - this means it is
         # not an input or global
         if self.source:

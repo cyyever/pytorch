@@ -5,7 +5,7 @@ import importlib
 import math
 import warnings
 from collections.abc import Callable
-from typing import Any as _Any, Optional, TYPE_CHECKING
+from typing import Any as _Any, TYPE_CHECKING
 
 import torch
 from torch import _VF, sym_int as _sym_int, Tensor
@@ -441,8 +441,8 @@ Args:
 def fractional_max_pool2d_with_indices(
     input: Tensor,
     kernel_size: BroadcastingList2[int],
-    output_size: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
-    output_ratio: Optional[BroadcastingList2[float]] = None,  # noqa: UP045
+    output_size: BroadcastingList2[int] | None = None,  # noqa: UP045
+    output_ratio: BroadcastingList2[float] | None = None,  # noqa: UP045
     return_indices: bool = False,
     _random_samples: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
@@ -519,8 +519,8 @@ def fractional_max_pool2d_with_indices(
 def _fractional_max_pool2d(
     input: Tensor,
     kernel_size: BroadcastingList2[int],
-    output_size: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
-    output_ratio: Optional[BroadcastingList2[float]] = None,  # noqa: UP045
+    output_size: BroadcastingList2[int] | None = None,  # noqa: UP045
+    output_ratio: BroadcastingList2[float] | None = None,  # noqa: UP045
     return_indices: bool = False,
     _random_samples: Tensor | None = None,
 ) -> Tensor:
@@ -554,8 +554,8 @@ fractional_max_pool2d = boolean_dispatch(
 def fractional_max_pool3d_with_indices(
     input: Tensor,
     kernel_size: BroadcastingList3[int],
-    output_size: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
-    output_ratio: Optional[BroadcastingList3[float]] = None,  # noqa: UP045
+    output_size: BroadcastingList3[int] | None = None,  # noqa: UP045
+    output_ratio: BroadcastingList3[float] | None = None,  # noqa: UP045
     return_indices: bool = False,
     _random_samples: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
@@ -636,8 +636,8 @@ def fractional_max_pool3d_with_indices(
 def _fractional_max_pool3d(
     input: Tensor,
     kernel_size: BroadcastingList3[int],
-    output_size: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
-    output_ratio: Optional[BroadcastingList3[float]] = None,  # noqa: UP045
+    output_size: BroadcastingList3[int] | None = None,  # noqa: UP045
+    output_ratio: BroadcastingList3[float] | None = None,  # noqa: UP045
     return_indices: bool = False,
     _random_samples: Tensor | None = None,
 ) -> Tensor:
@@ -671,7 +671,7 @@ fractional_max_pool3d = boolean_dispatch(
 def max_pool1d_with_indices(
     input: Tensor,
     kernel_size: BroadcastingList1[int],
-    stride: Optional[BroadcastingList1[int]] = None,  # noqa: UP045
+    stride: BroadcastingList1[int] | None = None,  # noqa: UP045
     padding: BroadcastingList1[int] = 0,
     dilation: BroadcastingList1[int] = 1,
     ceil_mode: bool = False,
@@ -724,7 +724,7 @@ def max_pool1d_with_indices(
 def _max_pool1d(
     input: Tensor,
     kernel_size: BroadcastingList1[int],
-    stride: Optional[BroadcastingList1[int]] = None,  # noqa: UP045
+    stride: BroadcastingList1[int] | None = None,  # noqa: UP045
     padding: BroadcastingList1[int] = 0,
     dilation: BroadcastingList1[int] = 1,
     ceil_mode: bool = False,
@@ -761,7 +761,7 @@ max_pool1d = boolean_dispatch(
 def max_pool2d_with_indices(
     input: Tensor,
     kernel_size: BroadcastingList2[int],
-    stride: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
+    stride: BroadcastingList2[int] | None = None,  # noqa: UP045
     padding: BroadcastingList2[int] = 0,
     dilation: BroadcastingList2[int] = 1,
     ceil_mode: bool = False,
@@ -814,7 +814,7 @@ def max_pool2d_with_indices(
 def _max_pool2d(
     input: Tensor,
     kernel_size: BroadcastingList2[int],
-    stride: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
+    stride: BroadcastingList2[int] | None = None,  # noqa: UP045
     padding: BroadcastingList2[int] = 0,
     dilation: BroadcastingList2[int] = 1,
     ceil_mode: bool = False,
@@ -851,7 +851,7 @@ max_pool2d = boolean_dispatch(
 def max_pool3d_with_indices(
     input: Tensor,
     kernel_size: BroadcastingList3[int],
-    stride: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
+    stride: BroadcastingList3[int] | None = None,  # noqa: UP045
     padding: BroadcastingList3[int] = 0,
     dilation: BroadcastingList3[int] = 1,
     ceil_mode: bool = False,
@@ -911,7 +911,7 @@ def max_pool3d_with_indices(
 def _max_pool3d(
     input: Tensor,
     kernel_size: BroadcastingList3[int],
-    stride: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
+    stride: BroadcastingList3[int] | None = None,  # noqa: UP045
     padding: BroadcastingList3[int] = 0,
     dilation: BroadcastingList3[int] = 1,
     ceil_mode: bool = False,
@@ -1007,9 +1007,9 @@ def max_unpool1d(
     input: Tensor,
     indices: Tensor,
     kernel_size: BroadcastingList1[int],
-    stride: Optional[BroadcastingList1[int]] = None,  # noqa: UP045
+    stride: BroadcastingList1[int] | None = None,  # noqa: UP045
     padding: BroadcastingList1[int] = 0,
-    output_size: Optional[BroadcastingList1[int]] = None,  # noqa: UP045
+    output_size: BroadcastingList1[int] | None = None,  # noqa: UP045
 ) -> Tensor:
     r"""Compute a partial inverse of :class:`MaxPool1d`.
 
@@ -1046,9 +1046,9 @@ def max_unpool2d(
     input: Tensor,
     indices: Tensor,
     kernel_size: BroadcastingList2[int],
-    stride: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
+    stride: BroadcastingList2[int] | None = None,  # noqa: UP045
     padding: BroadcastingList2[int] = 0,
-    output_size: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
+    output_size: BroadcastingList2[int] | None = None,  # noqa: UP045
 ) -> Tensor:
     r"""Compute a partial inverse of :class:`MaxPool2d`.
 
@@ -1079,9 +1079,9 @@ def max_unpool3d(
     input: Tensor,
     indices: Tensor,
     kernel_size: BroadcastingList3[int],
-    stride: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
+    stride: BroadcastingList3[int] | None = None,  # noqa: UP045
     padding: BroadcastingList3[int] = 0,
-    output_size: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
+    output_size: BroadcastingList3[int] | None = None,  # noqa: UP045
 ) -> Tensor:
     r"""Compute a partial inverse of :class:`MaxPool3d`.
 
@@ -1112,7 +1112,7 @@ def lp_pool3d(
     input: Tensor,
     norm_type: int | float,
     kernel_size: BroadcastingList3[int],
-    stride: Optional[BroadcastingList3[int]] = None,  # noqa: UP045
+    stride: BroadcastingList3[int] | None = None,  # noqa: UP045
     ceil_mode: bool = False,
 ) -> Tensor:
     r"""
@@ -1161,7 +1161,7 @@ def lp_pool2d(
     input: Tensor,
     norm_type: int | float,
     kernel_size: BroadcastingList2[int],
-    stride: Optional[BroadcastingList2[int]] = None,  # noqa: UP045
+    stride: BroadcastingList2[int] | None = None,  # noqa: UP045
     ceil_mode: bool = False,
 ) -> Tensor:
     r"""
@@ -1208,7 +1208,7 @@ def lp_pool1d(
     input: Tensor,
     norm_type: int | float,
     kernel_size: int,
-    stride: Optional[BroadcastingList1[int]] = None,  # noqa: UP045
+    stride: BroadcastingList1[int] | None = None,  # noqa: UP045
     ceil_mode: bool = False,
 ) -> Tensor:
     r"""Apply a 1D power-average pooling over an input signal composed of several input planes.
@@ -3711,7 +3711,7 @@ def linear_cross_entropy(
     reduction: str = "mean",
     ignore_index: int | None = None,
     label_smoothing: float = 0.0,
-    options: "LinearCrossEntropyOptions | None" = None,
+    options: LinearCrossEntropyOptions | None = None,
 ) -> Tensor:
     r"""Compute the cross entropy loss between inputs, transformed linearly, and target.
 

@@ -28,5 +28,5 @@ class NodeMetadata:
     def __contains__(self, key: str) -> bool:
         return key in self.data
 
-    def copy(self) -> "NodeMetadata":
+    def copy(self) -> NodeMetadata:
         return NodeMetadata(self.data.copy())

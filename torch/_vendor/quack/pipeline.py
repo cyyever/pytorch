@@ -1,6 +1,5 @@
 # Copyright (c) 2025-2026, Tri Dao.
 
-from typing import Optional
 from dataclasses import dataclass
 
 import cutlass.cute as cute
@@ -93,7 +92,7 @@ class _PipelineIndexPhaseMixin:
         self,
         index: Int32,
         phase: Int32,
-        try_acquire_token: Optional[Boolean] = None,
+        try_acquire_token: Boolean | None = None,
         *,
         loc=None,
         ip=None,
@@ -111,7 +110,7 @@ class _PipelineIndexPhaseMixin:
         self,
         index: Int32,
         phase: Int32,
-        try_wait_token: Optional[Boolean] = None,
+        try_wait_token: Boolean | None = None,
         *,
         loc=None,
         ip=None,
@@ -274,7 +273,7 @@ class PipelineTmaAsync(_PipelineIndexPhaseMixin, PipelineTmaAsyncOg):
     def producer_acquire(
         self,
         state: PipelineState,
-        try_acquire_token: Optional[Boolean] = None,
+        try_acquire_token: Boolean | None = None,
         extra_tx_count: int = 0,
         *,
         loc=None,
@@ -310,8 +309,8 @@ class PipelineTmaUmma(_PipelineIndexPhaseMixin, PipelineTmaUmmaOg):
     def producer_acquire(
         self,
         state: PipelineState,
-        try_acquire_token: Optional[Boolean] = None,
-        is_tma_warp: Optional[Boolean] = True,
+        try_acquire_token: Boolean | None = None,
+        is_tma_warp: Boolean | None = True,
         extra_tx_count: int = 0,
         *,
         loc=None,
@@ -388,8 +387,8 @@ class PipelineTmaCpAsync(_PipelineIndexPhaseMixin, PipelineTmaAsyncOg):
     def producer_acquire(
         self,
         state: PipelineState,
-        try_acquire_token: Optional[Boolean] = None,
-        is_tma_warp: Optional[Boolean] = True,
+        try_acquire_token: Boolean | None = None,
+        is_tma_warp: Boolean | None = True,
         *,
         loc=None,
         ip=None,
@@ -431,7 +430,7 @@ class MbarrierArrayWDropCount(MbarrierArray):
         num_stages: int,
         agent: tuple[PipelineOp, CooperativeGroup],
         tx_count: int = 0,
-        drop_count: Optional[Int32] = None,
+        drop_count: Int32 | None = None,
         *,
         loc=None,
         ip=None,
@@ -487,10 +486,10 @@ class PipelineTmaCpAsyncUmma(PipelineTmaUmmaOg):
         consumer_group: CooperativeGroup,
         tx_count: int,
         barrier_storage: cute.Pointer = None,
-        cta_layout_vmnk: Optional[cute.Layout] = None,
+        cta_layout_vmnk: cute.Layout | None = None,
         mcast_mode_mn: tuple[int, int] = (1, 1),
         defer_sync: bool = False,
-        producer_drop_count: Optional[Int32] = None,
+        producer_drop_count: Int32 | None = None,
         loc=None,
         ip=None,
     ):
@@ -584,8 +583,8 @@ class PipelineTmaCpAsyncUmma(PipelineTmaUmmaOg):
     def producer_acquire(
         self,
         state: PipelineState,
-        try_acquire_token: Optional[Boolean] = None,
-        is_tma_warp: Optional[Boolean] = True,
+        try_acquire_token: Boolean | None = None,
+        is_tma_warp: Boolean | None = True,
         *,
         loc=None,
         ip=None,

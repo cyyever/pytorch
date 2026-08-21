@@ -27,7 +27,7 @@ class TensorboardEventHandler:
         >>> register_event_handler(TensorboardEventHandler(writer))
     """
 
-    def __init__(self, writer: "SummaryWriter") -> None:
+    def __init__(self, writer: SummaryWriter) -> None:
         """
         Constructs the ``TensorboardEventHandler``.
         """

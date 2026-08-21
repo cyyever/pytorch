@@ -6,7 +6,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, cast, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import sympy
 
@@ -62,7 +62,7 @@ class PointwiseSubgraphLowering(torch.fx.Interpreter):
         self.buffers = []
 
     @contextmanager
-    def _op_context(self, op: TargetType) -> Generator[None, None, None]:
+    def _op_context(self, op: TargetType) -> Generator[None]:
         """Set which op is being processed in call function to know if we can mutate buffers"""
         previous = self._current_op
         self._current_op = op

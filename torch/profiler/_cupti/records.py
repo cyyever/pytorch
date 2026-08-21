@@ -19,7 +19,6 @@ each completed buffer; the monitor decodes a buffer against that captured layout
 :data:`FIELD_CTYPE` only to interpret each field's bytes (signed/unsigned/float/str).
 """
 
-from __future__ import annotations
 
 from cupti.cupti import ActivityKind  # pyrefly: ignore[missing-import]
 

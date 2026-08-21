@@ -30,17 +30,17 @@ from .virtualized import V
 
 def _prepare_convolution_fusion_create(
     cls,
-    x: "TensorBox",
-    weight: "TensorBox",
-    bias: "TensorBox",
+    x: TensorBox,
+    weight: TensorBox,
+    bias: TensorBox,
     padding: Sequence[int],
     stride: Sequence[int],
     dilation: Sequence[int],
     groups: int,
     transposed: bool = False,
     output_padding: Sequence[int] | None = None,
-    quantize_args: list["TensorBox"] | None = None,
-    other: Optional["TensorBox"] = None,
+    quantize_args: list[TensorBox] | None = None,
+    other: Optional[TensorBox] = None,
 ):
     """
     This function is a helper function to prepare inputs, layout and constant args
@@ -263,11 +263,11 @@ def _prepare_convolution_fusion_create(
 
 def _prepare_linear_fusion_create(
     cls,
-    x: "TensorBox",
-    weight: "TensorBox",
-    bias: "TensorBox",
-    quantize_args: list["TensorBox"] | None = None,
-    other: Optional["TensorBox"] = None,
+    x: TensorBox,
+    weight: TensorBox,
+    bias: TensorBox,
+    quantize_args: list[TensorBox] | None = None,
+    other: Optional[TensorBox] = None,
     binary_sum: bool = False,
 ):
     """
@@ -366,9 +366,9 @@ class ConvolutionUnary(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        x: "TensorBox",
-        weight: "TensorBox",
-        bias: "TensorBox",
+        x: TensorBox,
+        weight: TensorBox,
+        bias: TensorBox,
         padding_: list[int],
         stride_: list[int],
         dilation_: list[int],
@@ -427,10 +427,10 @@ class ConvolutionBinary(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        x: "TensorBox",
-        other: "TensorBox",
-        weight: "TensorBox",
-        bias: "TensorBox",
+        x: TensorBox,
+        other: TensorBox,
+        weight: TensorBox,
+        bias: TensorBox,
         padding_: list[int],
         stride_: list[int],
         dilation_: list[int],
@@ -505,10 +505,10 @@ class ConvolutionBinaryInplace(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        x: "TensorBox",
-        other: "TensorBox",
-        weight: "TensorBox",
-        bias: "TensorBox",
+        x: TensorBox,
+        other: TensorBox,
+        weight: TensorBox,
+        bias: TensorBox,
         padding_: list[int],
         stride_: list[int],
         dilation_: list[int],
@@ -575,9 +575,9 @@ class ConvolutionTransposeUnary(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        x: "TensorBox",
-        weight: "TensorBox",
-        bias: "TensorBox",
+        x: TensorBox,
+        weight: TensorBox,
+        bias: TensorBox,
         padding_: list[int],
         output_padding_: list[int],
         stride_: list[int],
@@ -658,13 +658,13 @@ class QConvPointWisePT2E(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        qx: "TensorBox",
-        x_scale: "TensorBox",
-        x_zero_point: "TensorBox",
-        qw: "TensorBox",  # qw
-        w_scale: "TensorBox",
+        qx: TensorBox,
+        x_scale: TensorBox,
+        x_zero_point: TensorBox,
+        qw: TensorBox,  # qw
+        w_scale: TensorBox,
         w_zero_point,
-        bias: "TensorBox",
+        bias: TensorBox,
         stride: list[int],
         padding: list[int],
         dilation: list[int],
@@ -775,20 +775,20 @@ class QConvPointWiseBinaryPT2E(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        qx: "TensorBox",
-        x_scale: "TensorBox",
-        x_zero_point: "TensorBox",
-        qw: "TensorBox",  # packed_weight
+        qx: TensorBox,
+        x_scale: TensorBox,
+        x_zero_point: TensorBox,
+        qw: TensorBox,  # packed_weight
         w_scale,
         w_zero_point,
-        qaccum: "TensorBox",
-        bias: "TensorBox",
+        qaccum: TensorBox,
+        bias: TensorBox,
         stride: list[int],
         padding: list[int],
         dilation: list[int],
         groups: int,
-        output_scale: "TensorBox",
-        output_zero_point: "TensorBox",
+        output_scale: TensorBox,
+        output_zero_point: TensorBox,
         output_dtype,
         accum_scale,
         accum_zero_point,
@@ -1061,13 +1061,13 @@ class QLinearPointwisePT2E(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        qx: "TensorBox",
-        x_scale: "TensorBox",
-        x_zero_point: "TensorBox",
-        qw: "TensorBox",  # packed_weight
-        w_scale: "TensorBox",
-        w_zero_point: "TensorBox",
-        bias: "TensorBox",
+        qx: TensorBox,
+        x_scale: TensorBox,
+        x_zero_point: TensorBox,
+        qw: TensorBox,  # packed_weight
+        w_scale: TensorBox,
+        w_zero_point: TensorBox,
+        bias: TensorBox,
         output_scale: float,
         output_zero_point: int,
         output_dtype,
@@ -1158,14 +1158,14 @@ class QLinearPointwiseBinaryPT2E(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        qx: "TensorBox",
-        x_scale: "TensorBox",
-        x_zero_point: "TensorBox",
-        qw: "TensorBox",  # packed_weight
-        w_scale: "TensorBox",
-        w_zero_point: "TensorBox",
-        other: "TensorBox",
-        bias: "TensorBox",
+        qx: TensorBox,
+        x_scale: TensorBox,
+        x_zero_point: TensorBox,
+        qw: TensorBox,  # packed_weight
+        w_scale: TensorBox,
+        w_zero_point: TensorBox,
+        other: TensorBox,
+        bias: TensorBox,
         output_scale: float,
         output_zero_point: int,
         output_dtype,
@@ -1250,13 +1250,13 @@ class MkldnnRnnLayer(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        x: "TensorBox",
-        w0: "TensorBox",
-        w1: "TensorBox",
-        w2: "TensorBox",
-        w3: "TensorBox",
-        hx: "TensorBox",
-        cx: "TensorBox",
+        x: TensorBox,
+        w0: TensorBox,
+        w1: TensorBox,
+        w2: TensorBox,
+        w3: TensorBox,
+        hx: TensorBox,
+        cx: TensorBox,
         reverse: bool,
         batch_sizes: list[int],
         mode: int,
@@ -1393,10 +1393,10 @@ class WeightInt4PackMatmul(ExternKernelAlloc):
     @classmethod
     def create(
         cls,
-        x: "TensorBox",
-        w: "TensorBox",
-        qGroupSize: "TensorBox",
-        qScalesAndZeros: "TensorBox",
+        x: TensorBox,
+        w: TensorBox,
+        qGroupSize: TensorBox,
+        qScalesAndZeros: TensorBox,
     ):
         inputs = [x, w, qGroupSize, qScalesAndZeros]
         *m, _ = x.get_size()

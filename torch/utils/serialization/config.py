@@ -10,7 +10,7 @@ from torch.utils._config_module import install_config_module as _install_config_
 
 class load:
     mmap: bool = False
-    endianness: _Optional["_LoadEndianess"] = None
+    endianness: _Optional[_LoadEndianess] = None
     # MAP_PRIVATE = 2
     mmap_flags: int | None = None if sys.platform == "win32" else 2
     calculate_storage_offsets: bool = False

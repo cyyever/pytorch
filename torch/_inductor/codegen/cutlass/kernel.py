@@ -218,7 +218,7 @@ class CUTLASSTemplateKernel(CUTLASSKernel):
     def __init__(
         self,
         kernel_name: str,
-        runtime_arg_info: list["ArgInfo"],
+        runtime_arg_info: list[ArgInfo],
         runtime_arg_values: list[Any],
         device_type: str = "cuda",  # type: ignore[assignment]
     ) -> None:
@@ -360,7 +360,7 @@ class CUTLASSTemplateKernel(CUTLASSKernel):
     def call_kernel(
         self,
         name: str,
-        node: "CUTLASSTemplateBuffer",  # type: ignore[name-defined]
+        node: CUTLASSTemplateBuffer,  # type: ignore[name-defined]
     ) -> None:
         """
         Generates code to call the kernel through V.graph.wrapper_code.
@@ -621,7 +621,7 @@ class CUTLASSTemplateCaller(ChoiceCaller):
         ],
         bmreq: CUTLASSBenchmarkRequest,
         supports_epilogue_fusion: bool,
-        template: "CUTLASSTemplate",  # type: ignore[name-defined]
+        template: CUTLASSTemplate,  # type: ignore[name-defined]
         info_kwargs: dict[str, PrimitiveInfoType | list[PrimitiveInfoType]] | None,  # type: ignore[type-arg]
         description: str,
     ) -> None:

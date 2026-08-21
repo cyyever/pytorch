@@ -41,7 +41,6 @@ followed by ``remap_to_exec_graph(graph)``; call those directly for finer
 control (e.g. resolving once before remapping several graphs).
 """
 
-from __future__ import annotations
 
 import importlib.metadata
 import threading

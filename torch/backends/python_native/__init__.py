@@ -323,7 +323,7 @@ class PythonNativeModule(PropModule):
                 self.enable_operations(*ops_to_reenable)
 
     @functools.lru_cache(maxsize=16)  # noqa: B019
-    def _get_dsl_controller(self, name: str) -> "DSLController":
+    def _get_dsl_controller(self, name: str) -> DSLController:
         """Get or create a DSL controller (cached)."""
         return DSLController(name)
 

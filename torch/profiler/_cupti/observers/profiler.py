@@ -3,7 +3,6 @@
 decoded records + trace metadata into the window dict monitor_trace splices into a Kineto
 trace. Collection, annotation join, and window management live here."""
 
-from __future__ import annotations
 
 import contextlib
 import ctypes

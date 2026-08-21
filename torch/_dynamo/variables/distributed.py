@@ -70,7 +70,7 @@ class DistributedVariable(VariableTracker):
         # check if the distributed package is available or not
         return torch.distributed.is_available()
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         return hash(self.value), False
 
     def tp_richcompare_impl(self, tx, other, op):
@@ -130,7 +130,7 @@ class WorldMetaClassVariable(DistributedVariable):
 
     # dynamo-internal getset (not real CPython descriptors): _WorldMeta
     # exposes the WORLD and NON_GROUP_MEMBER process-group sentinels.
-    def _world_getset(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def _world_getset(self, tx: InstructionTranslatorBase) -> VariableTracker:
         if not self.source:
             raise AssertionError(
                 "WorldMetaClassVariable requires a source for WORLD attribute"
@@ -140,7 +140,7 @@ class WorldMetaClassVariable(DistributedVariable):
         return VariableTracker.build(tx, self.value.WORLD, source)
 
     def _non_group_member_getset(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> VariableTracker:
         if not self.source:
             raise AssertionError(
@@ -164,11 +164,11 @@ class BackwardHookVariable(VariableTracker):
 
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         module: VariableTracker,
         user_hooks: VariableTracker,
         user_pre_hooks: VariableTracker,
-    ) -> "BackwardHookVariable":
+    ) -> BackwardHookVariable:
         if not compiled_autograd.compiled_autograd_enabled:
             unimplemented(
                 gb_type="Module-level backwards hooks require compiled autograd.",
@@ -244,7 +244,7 @@ class BackwardHookVariable(VariableTracker):
 
     def setup_input_hook(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -252,7 +252,7 @@ class BackwardHookVariable(VariableTracker):
 
     def setup_output_hook(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -265,7 +265,7 @@ class BackwardHookVariable(VariableTracker):
 
     def _setup_hook(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         hook_method_name: str,
         args: VariableTracker,
     ) -> VariableTracker:

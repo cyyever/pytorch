@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import dataclasses
 import functools
@@ -19,7 +17,7 @@ from typing import (
     TypeGuard,
     TypeVar,
 )
-from typing_extensions import override, TypedDict, Unpack
+from typing import override, TypedDict, Unpack
 
 import torch
 from torch._C._autograd import CreationMeta
@@ -123,7 +121,7 @@ tls.disable_inference_mode = False
 
 
 @contextmanager
-def disable_inference_mode_for_fake_prop() -> Generator[None, None, None]:
+def disable_inference_mode_for_fake_prop() -> Generator[None]:
     prior = getattr(tls, "disable_inference_mode", False)
     tls.disable_inference_mode = True
     try:

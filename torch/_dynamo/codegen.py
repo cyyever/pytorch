@@ -187,9 +187,8 @@ class PyCodegen:
             self._output.extend(add_push_null_call_function_ex(added_insts))
         else:
             self._output.extend(add_push_null(added_insts))
-        if sys.version_info >= (3, 13):
-            # NULL will be at top of stack
-            self.clear_tos()
+        # NULL will be at top of stack
+        self.clear_tos()
 
     def __call__(
         self, value: VariableTracker | Source | None, allow_cache: bool = True
@@ -682,15 +681,12 @@ class PyCodegen:
         output.append(self.create_load_const(code))
         if sys.version_info < (3, 11):
             output.append(self.create_load_const(fn_name))
-        if sys.version_info >= (3, 13):
-            output.extend(
-                [
-                    create_instruction("MAKE_FUNCTION"),
-                    create_instruction("SET_FUNCTION_ATTRIBUTE", arg=0x08),
-                ]
-            )
-        else:
-            output.append(create_instruction("MAKE_FUNCTION", arg=0x08))
+        output.extend(
+            [
+                create_instruction("MAKE_FUNCTION"),
+                create_instruction("SET_FUNCTION_ATTRIBUTE", arg=0x08),
+            ]
+        )
 
         self.clear_tos()
 
@@ -856,23 +852,14 @@ class PyCodegen:
     def create_call_function_kw(
         self, nargs: int, kw_names: Iterable[str], push_null: bool
     ) -> list[Instruction]:
-        if sys.version_info >= (3, 13):
-            output = create_call_function(nargs, push_null)
-            if output[-1].opname != "CALL":
-                raise AssertionError(
-                    f"expected last instruction to be CALL, got {output[-1].opname}"
-                )
-            output.insert(-1, self.create_load_const(kw_names))
-            output[-1] = create_instruction("CALL_KW", arg=nargs)
-            return output
-        elif sys.version_info >= (3, 11):
-            output = create_call_function(nargs, push_null)
-            if sys.version_info >= (3, 12):
-                idx = -1
-                expected_inst = "CALL"
-            else:
-                idx = -2
-                expected_inst = "PRECALL"
+        output = create_call_function(nargs, push_null)
+        if output[-1].opname != "CALL":
+            raise AssertionError(
+                f"expected last instruction to be CALL, got {output[-1].opname}"
+            )
+        output.insert(-1, self.create_load_const(kw_names))
+        output[-1] = create_instruction("CALL_KW", arg=nargs)
+        return output
             if output[idx].opname != expected_inst:
                 raise AssertionError(
                     f"expected instruction at index {idx} to be {expected_inst}, "

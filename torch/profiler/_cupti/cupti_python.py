@@ -9,7 +9,6 @@ under ``TYPE_CHECKING``. cupti-python is a hard requirement, so importing this
 module without it raises ``ModuleNotFoundError`` (catchable by optional consumers).
 """
 
-from __future__ import annotations
 
 import ctypes
 import logging

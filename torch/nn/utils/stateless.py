@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 import contextlib
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch import Tensor
@@ -12,7 +12,7 @@ __all__ = ["functional_call"]
 
 
 def _untie_named_tensors_map(
-    module: "torch.nn.Module",
+    module: torch.nn.Module,
     parameters_and_buffers: dict[str, Tensor],
 ) -> dict[str, Tensor]:
     """
@@ -97,7 +97,7 @@ def _untie_named_tensors_map(
 
 @contextlib.contextmanager
 def _reparametrize_module(
-    module: "torch.nn.Module",
+    module: torch.nn.Module,
     parameters_and_buffers: dict[str, Tensor],
     tie_weights: bool = False,
     strict: bool = False,
@@ -163,7 +163,7 @@ def _reparametrize_module(
     category=FutureWarning,
 )
 def functional_call(
-    module: "torch.nn.Module",
+    module: torch.nn.Module,
     parameters_and_buffers: dict[str, Tensor],
     args: Any | tuple | None = None,
     kwargs: dict[str, Any] | None = None,
@@ -241,7 +241,7 @@ def functional_call(
 
 
 def _functional_call(
-    module: "torch.nn.Module",
+    module: torch.nn.Module,
     parameters_and_buffers: dict[str, Tensor],
     args: Any | tuple | None = None,
     kwargs: dict[str, Any] | None = None,

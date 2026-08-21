@@ -9,11 +9,10 @@ The module offers both context manager and manual acquisition patterns:
 - Unsafe acquisition: Manual acquisition that requires explicit release by the caller
 """
 
-from __future__ import annotations
 
 from contextlib import _GeneratorContextManager, contextmanager, ExitStack
 from typing import TYPE_CHECKING, TypeAlias
-from typing_extensions import Protocol
+from typing import Protocol
 
 from filelock import BaseFileLock, Timeout
 
@@ -48,7 +47,7 @@ _DEFAULT_TIMEOUT: float = _BLOCKING_WITH_TIMEOUT
 def _acquire_lock_with_timeout(
     lock: Lock,
     timeout: float | None = None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """Context manager that safely acquires a threading.Lock with timeout and automatically releases it.
 
     This function provides a safe way to acquire a lock with timeout support, ensuring
@@ -121,7 +120,7 @@ def _unsafe_acquire_lock_with_timeout(lock: Lock, timeout: float | None = None) 
 def _acquire_flock_with_timeout(
     flock: BaseFileLock,
     timeout: float | None = None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """Context manager that safely acquires a FileLock with timeout and automatically releases it.
 
     This function provides a safe way to acquire a file lock with timeout support, ensuring
@@ -200,7 +199,7 @@ def _unsafe_acquire_flock_with_timeout(
 def _acquire_many_impl_locks_with_timeout(
     *impls: _CacheImpl,
     timeout: float | None = None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     with ExitStack() as stack:
         for impl in impls:
             stack.enter_context(impl.lock(timeout))

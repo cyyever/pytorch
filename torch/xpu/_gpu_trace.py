@@ -3,28 +3,28 @@ from collections.abc import Callable
 from torch._utils import CallbackRegistry
 
 
-EventCreationCallbacks: "CallbackRegistry[int]" = CallbackRegistry("XPU event creation")
-EventDeletionCallbacks: "CallbackRegistry[int]" = CallbackRegistry("XPU event deletion")
-EventRecordCallbacks: "CallbackRegistry[int, int]" = CallbackRegistry(
+EventCreationCallbacks: CallbackRegistry[int] = CallbackRegistry("XPU event creation")
+EventDeletionCallbacks: CallbackRegistry[int] = CallbackRegistry("XPU event deletion")
+EventRecordCallbacks: CallbackRegistry[int, int] = CallbackRegistry(
     "XPU event record"
 )
-EventWaitCallbacks: "CallbackRegistry[int, int]" = CallbackRegistry("XPU event wait")
-MemoryAllocationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+EventWaitCallbacks: CallbackRegistry[int, int] = CallbackRegistry("XPU event wait")
+MemoryAllocationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "XPU memory allocation"
 )
-MemoryDeallocationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+MemoryDeallocationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "XPU memory deallocation"
 )
-StreamCreationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+StreamCreationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "XPU stream creation"
 )
-DeviceSynchronizationCallbacks: "CallbackRegistry[[]]" = CallbackRegistry(
+DeviceSynchronizationCallbacks: CallbackRegistry[[]] = CallbackRegistry(
     "XPU device synchronization"
 )
-StreamSynchronizationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+StreamSynchronizationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "XPU stream synchronization"
 )
-EventSynchronizationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+EventSynchronizationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "XPU event synchronization"
 )
 

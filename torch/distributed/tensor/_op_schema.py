@@ -27,7 +27,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch._C import (
@@ -638,7 +638,7 @@ class OpSchema:
             is_leaf=lambda x: isinstance(x, DTensorSpec),
         )
 
-    def _inplace_rewrap_schema_suggestion(self, origin_schema: "OpSchema") -> None:
+    def _inplace_rewrap_schema_suggestion(self, origin_schema: OpSchema) -> None:
         suggestion_args_spec = self.args_spec
         new_arg_schema: list[object] = []
         idx_of_args_spec = 0

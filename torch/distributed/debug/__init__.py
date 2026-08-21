@@ -31,7 +31,7 @@ def start_debug_server(
     dump_dir: str | None = None,
     dump_interval: float = 60.0,
     enabled_dumps: set[str] | None = None,
-    handlers: list["DebugHandler"] | None = None,
+    handlers: list[DebugHandler] | None = None,
     fetch_timeout: float = 60.0,
 ) -> None:
     """

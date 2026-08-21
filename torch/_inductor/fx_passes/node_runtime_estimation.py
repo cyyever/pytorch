@@ -2,7 +2,6 @@
 Node runtime estimation for overlap scheduling.
 """
 
-from __future__ import annotations
 
 import functools
 import itertools

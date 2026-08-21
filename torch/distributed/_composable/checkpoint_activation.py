@@ -31,7 +31,7 @@ def _no_hook(module: nn.Module, user_ctx: AbstractContextManager | None = None):
 
 class _CheckpointState(_State):
     enable_hook: bool = False
-    _ac_generator: Generator[None, None, None] | None
+    _ac_generator: Generator[None] | None
 
 
 @contract(_CheckpointState)

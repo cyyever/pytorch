@@ -76,7 +76,7 @@ _IGNORE_OPS = _VIEW_OPS | _CREATE_OPS
 
 
 def flops_to_ns(
-    flops: float | int, dtype: "torch.dtype", gpu_type: str | None = None
+    flops: float | int, dtype: torch.dtype, gpu_type: str | None = None
 ) -> float:
     """Convert a FLOPs count to estimated nanoseconds on the GPU.
 

@@ -1,8 +1,5 @@
-from __future__ import annotations
-
 import inspect
 import logging
-import sys
 import traceback
 import types
 from collections import namedtuple
@@ -653,12 +650,9 @@ def create_fx_graph_from_captured_output(
             )
         graph_module._modules.update(root._modules)
         graph_module._non_persistent_buffers_set = root._non_persistent_buffers_set
-        if sys.version_info >= (3, 14):
-            import annotationlib  # added in 3.14
+        import annotationlib  # added in 3.14
 
-            annotations = annotationlib.get_annotations(torch.nn.Module)
-        else:
-            annotations = getattr(torch.nn.Module, "__annotations__", None)
+        annotations = annotationlib.get_annotations(torch.nn.Module)
         for name, value in root.__dict__.items():
             if annotations and name not in annotations:
                 graph_module.__dict__[name] = value

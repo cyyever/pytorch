@@ -37,7 +37,6 @@ violates the aliasing contract runs SILENTLY in the standalone artifact where th
 eager / compiled path would error -- an intentional trade-off, not a numerics bug.
 """
 
-from __future__ import annotations
 
 import ast
 import re

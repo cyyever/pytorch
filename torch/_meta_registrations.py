@@ -4,7 +4,7 @@ from collections.abc import Callable, Sequence
 from enum import Enum
 from functools import wraps
 from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._prims_common as utils
@@ -2634,7 +2634,7 @@ def _compute_reduction_shape(self, dims, keepdim):
 # when running meta kernels. Here, access the "fake device" of FakeTensor if it
 # exists so meta kernels which have diverge per device will be more
 # accurate when run with FakeTensors
-def device_hint(tensor) -> "str":
+def device_hint(tensor) -> str:
     fake_device = torch._subclasses.fake_tensor.maybe_get_fake_device(tensor)
     if fake_device is not None:
         return fake_device.type

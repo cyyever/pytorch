@@ -40,7 +40,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Literal, NewType, TYPE_CHECKING, TypeAlias
-from typing_extensions import TypeIs
+from typing import TypeIs
 from weakref import WeakKeyDictionary
 
 import torch

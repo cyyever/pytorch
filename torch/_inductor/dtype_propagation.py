@@ -156,7 +156,7 @@ class DtypePropagationOpsHandler:
     # Singleton DtypePropagationOpsHandler, because we meta program over a number of op rules.
     # Those are only defined after other inductor state has run.
 
-    _instance: Optional["DtypePropagationOpsHandler"] = None
+    _instance: Optional[DtypePropagationOpsHandler] = None
 
     # The registries the rules are meta programmed from, as of the last time the
     # singleton was populated. Python calls __init__ on every construction, so

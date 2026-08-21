@@ -40,14 +40,13 @@ records resolve to ``None``, never guessed.
 away -- the record would join like any other graphed activity.)
 """
 
-from __future__ import annotations
 
 import threading
 from typing import Any, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 # Node kinds whose bodies get_graph_data() does not descend into. Their event nodes are

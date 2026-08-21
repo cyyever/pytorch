@@ -27,7 +27,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> "ModuleType":
+def __getattr__(name: str) -> ModuleType:
     if name in __all__:
         import importlib
 

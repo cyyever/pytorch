@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from collections.abc import Iterator, Sequence
 from typing import cast, TYPE_CHECKING, TypeVar
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 from torch._utils import _get_device_index
@@ -18,25 +18,25 @@ if TYPE_CHECKING:
 __all__ = ["replicate"]
 
 
-def _is_script_module(module: Module) -> TypeIs["ScriptModule"]:
+def _is_script_module(module: Module) -> TypeIs[ScriptModule]:
     import torch.jit
 
     return isinstance(module, torch.jit.ScriptModule)
 
 
-def _is_script_method(module: object) -> TypeIs["ScriptMethod"]:
+def _is_script_method(module: object) -> TypeIs[ScriptMethod]:
     import torch.jit
 
     return isinstance(module, torch._C.ScriptMethod)
 
 
-def _init_script_module() -> "ScriptModule":
+def _init_script_module() -> ScriptModule:
     import torch.jit
 
     return torch.jit.ScriptModule()
 
 
-def _is_jit_enabled() -> "EnabledProxy":
+def _is_jit_enabled() -> EnabledProxy:
     import torch.jit._state
 
     return torch.jit._state._enabled

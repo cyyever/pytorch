@@ -20,7 +20,7 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Generic, Optional
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from weakref import WeakSet
 
 import torch._logging.structured
@@ -54,7 +54,7 @@ LOG_TRACE_ID_FILTER = "TORCH_LOGS_TRACE_ID_FILTER"
 TRACE_ENV_VAR = "TORCH_TRACE"
 DTRACE_ENV_VAR = "TORCH_DTRACE"
 
-LOG_TRACE_HANDLER: Optional["LazyTraceHandler"] = None
+LOG_TRACE_HANDLER: Optional[LazyTraceHandler] = None
 
 GET_DTRACE_STRUCTURED = False
 

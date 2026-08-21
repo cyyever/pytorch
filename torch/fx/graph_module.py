@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import contextlib
 import contextvars
@@ -1181,7 +1179,7 @@ class {module_name}(torch.nn.Module):
     @contextlib.contextmanager
     def _set_replace_hook(
         self, f: Callable[[Node, str, Node], object]
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         """
         Takes a callable which will be called every time when we replace a node
         to a new node, or change the node's name. Callable takes three arguments:

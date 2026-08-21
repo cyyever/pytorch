@@ -3,7 +3,8 @@
 import enum
 import math
 from dataclasses import dataclass
-from typing import Callable, Dict, Literal, Optional, Sequence, Tuple
+from typing import Literal
+from collections.abc import Callable, Sequence
 
 import cutlass
 import cutlass.cute as cute
@@ -57,30 +58,30 @@ class GemmBase:
     def epilogue(
         self,
         params: EpilogueParams,
-        epi_smem_tensors: Dict[str, cute.Tensor],
-        epi_pipeline: Optional[cutlass.pipeline.PipelineAsync],
-        epi_store_pipeline: Optional[cutlass.pipeline.PipelineAsync],
-        epi_read_state: Optional[cutlass.pipeline.PipelineState],
-        epi_producer_state: Optional[cutlass.pipeline.PipelineState],
+        epi_smem_tensors: dict[str, cute.Tensor],
+        epi_pipeline: cutlass.pipeline.PipelineAsync | None,
+        epi_store_pipeline: cutlass.pipeline.PipelineAsync | None,
+        epi_read_state: cutlass.pipeline.PipelineState | None,
+        epi_producer_state: cutlass.pipeline.PipelineState | None,
         epi_tile: cute.Tile,
         load_acc_subtile: Callable,
         tRS_rD: cute.Tensor,
-        tRS_rC: Optional[cute.Tensor],
-        tiled_copy_t2r: Optional[cute.TiledCopy],  # Only for Sm100
+        tRS_rC: cute.Tensor | None,
+        tiled_copy_t2r: cute.TiledCopy | None,  # Only for Sm100
         tiled_copy_r2s: cute.TiledCopy,
         tRS_sD: cute.Tensor,
-        tiled_copy_s2r: Optional[cute.ThrCopy],
-        tSR_rC: Optional[cute.Tensor],
-        tSR_sC: Optional[cute.Tensor],
-        copy_D: Optional[Callable],
-        copy_C: Optional[Callable],
+        tiled_copy_s2r: cute.ThrCopy | None,
+        tSR_rC: cute.Tensor | None,
+        tSR_sC: cute.Tensor | None,
+        copy_D: Callable | None,
+        copy_C: Callable | None,
         tile_coord_mnkl: cute.Coord,
         varlen_manager: VarlenManager,
         epilogue_barrier: cutlass.pipeline.NamedBarrier,
         tile_scheduler,
         tidx: Int32,
         is_tma_warp: cutlass.Boolean,
-    ) -> Tuple[cutlass.pipeline.PipelineState, cutlass.pipeline.PipelineState]:
+    ) -> tuple[cutlass.pipeline.PipelineState, cutlass.pipeline.PipelineState]:
         has_C = const_expr(tRS_rC is not None)
         has_epi_load = const_expr(self.epi_c_stage > 0)
         has_D = const_expr(copy_D is not None)
@@ -280,7 +281,7 @@ class GemmBase:
         self,
         mA: cute.Tensor,
         mB: cute.Tensor,
-        mD: Optional[cute.Tensor],
+        mD: cute.Tensor | None,
         scheduler_args,
         varlen_args,
         epilogue_args,
@@ -360,30 +361,30 @@ class GemmBase:
     def epi_begin(
         self,
         params: EpilogueParams,
-        epi_smem_tensors: Dict[str, cute.Tensor],
+        epi_smem_tensors: dict[str, cute.Tensor],
         epi_tile: cute.Tile,
-        tiled_copy_t2r: Optional[cute.TiledCopy],
+        tiled_copy_t2r: cute.TiledCopy | None,
         tiled_copy_r2s: cute.TiledCopy,
         tile_coord_mnkl: cute.Coord,
         varlen_manager: VarlenManager,
         epilogue_barrier: cutlass.pipeline.NamedBarrier,
         tidx: Int32,
         tRS_rD_layout=None,
-    ) -> Tuple[cute.Tensor, ...]:
+    ) -> tuple[cute.Tensor, ...]:
         return ()
 
     def epi_begin_loop(
-        self, params: EpilogueParams, epi_tensors: Tuple[cute.Tensor, ...], epi_coord: cute.Coord
-    ) -> Tuple[cute.Tensor, ...]:
+        self, params: EpilogueParams, epi_tensors: tuple[cute.Tensor, ...], epi_coord: cute.Coord
+    ) -> tuple[cute.Tensor, ...]:
         return ()
 
     def epi_visit_subtile(
         self,
         params: EpilogueParams,
-        epi_loop_tensors: Tuple[cute.Tensor, ...],
+        epi_loop_tensors: tuple[cute.Tensor, ...],
         tRS_rD: cute.Tensor,
-        tRS_rC: Optional[cute.Tensor] = None,
-    ) -> Optional[cute.Tensor]:
+        tRS_rC: cute.Tensor | None = None,
+    ) -> cute.Tensor | None:
         return None
 
     def epi_visit_acc(
@@ -400,10 +401,10 @@ class GemmBase:
     def epi_end_loop(
         self,
         params: EpilogueParams,
-        epi_tensors: Tuple[cute.Tensor, ...],
+        epi_tensors: tuple[cute.Tensor, ...],
         epi_coord: cute.Coord,
         epi_tile: cute.Tile,
-        tiled_copy_t2r: Optional[cute.TiledCopy],
+        tiled_copy_t2r: cute.TiledCopy | None,
         tiled_copy_r2s: cute.TiledCopy,
         tile_coord_mnkl: cute.Coord,
         varlen_manager,
@@ -415,9 +416,9 @@ class GemmBase:
     def epi_end(
         self,
         params: EpilogueParams,
-        epi_tensors: Tuple[cute.Tensor, ...],
+        epi_tensors: tuple[cute.Tensor, ...],
         epi_tile: cute.Tile,
-        tiled_copy_t2r: Optional[cute.TiledCopy],
+        tiled_copy_t2r: cute.TiledCopy | None,
         tiled_copy_r2s: cute.TiledCopy,
         tile_coord_mnkl: cute.Coord,
         varlen_manager,
@@ -452,17 +453,17 @@ class GemmBase:
 
     @staticmethod
     def epi_smem_bytes(
-        args: Optional[EpilogueArguments],
-        cta_tile_shape_mnk: Tuple[int, int, int],
+        args: EpilogueArguments | None,
+        cta_tile_shape_mnk: tuple[int, int, int],
         epi_tile: cute.Tile,
-        warp_shape_mnk: Tuple[int, int, int] | None = None,
+        warp_shape_mnk: tuple[int, int, int] | None = None,
     ) -> EpiSmemBytes:
         return EpiSmemBytes()
 
     def epi_get_smem_struct(self, params: EpilogueParams):
         return cute.struct.MemRange[Int32, 0]  # Dummy struct
 
-    def epi_get_smem_tensors(self, params: EpilogueParams, storage) -> Dict[str, cute.Tensor]:
+    def epi_get_smem_tensors(self, params: EpilogueParams, storage) -> dict[str, cute.Tensor]:
         return {}
 
     def epi_setup_aux_out(
@@ -494,7 +495,7 @@ class GemmTmaBase(GemmBase):
         self,
         pipeline: cutlass.pipeline.PipelineAsync,
         producer_state: cutlass.pipeline.PipelineState,
-        copy_fns: Sequence[Optional[Callable]],
+        copy_fns: Sequence[Callable | None],
         k_tile_cnt: Int32,
     ) -> cutlass.pipeline.PipelineState:
         # Peek (try_wait) AB buffer empty for k_block = prefetch_k_tile_cnt.
@@ -577,8 +578,8 @@ class GemmTmaBase(GemmBase):
 
     def make_tma_epilogue_atoms_and_tensors(
         self,
-        mD: Optional[cute.Tensor],
-        mC: Optional[cute.Tensor],
+        mD: cute.Tensor | None,
+        mC: cute.Tensor | None,
         epilogue_args,
         varlen_m: bool,
     ):
@@ -609,7 +610,7 @@ class GemmTmaBase(GemmBase):
         epi_tile: cute.Tile,
         sD: cute.Tensor,
         tile_coord_mnkl: cute.Coord,
-    ) -> Tuple[cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.Tensor, cute.Tensor]:
         gD = cute.local_tile(mD_mn, tile_shape_mn, tile_coord_mnkl[:2])  # (bM, bN)
         tDgD_for_tma_partition = cute.zipped_divide(gD, epi_tile)
         is_s2g = isinstance(
@@ -683,9 +684,9 @@ class GemmTmaBase(GemmBase):
     def _make_tma_epi_atoms_and_tensors(
         tensor_d: cute.Tensor,
         epi_smem_layout_staged: cute.ComposedLayout,
-        epi_tile: Tuple[int, int],
+        epi_tile: tuple[int, int],
         op_type: Literal["store", "load", "add"],
-    ) -> Tuple[cute.CopyAtom, cute.Tensor]:
+    ) -> tuple[cute.CopyAtom, cute.Tensor]:
         """Create TMA atoms and tensors for storing D or loading C."""
         assert op_type in ["load", "store", "add"]
         epi_smem_layout = cute.slice_(epi_smem_layout_staged, (None, None, 0))
@@ -704,9 +705,9 @@ class GemmTmaBase(GemmBase):
     def _make_tma_atoms_and_tensors(
         tensor: cute.Tensor,
         smem_layout: cute.ComposedLayout,
-        smem_tile: Tuple[int, int],
+        smem_tile: tuple[int, int],
         mcast_dim: int,
-    ) -> Tuple[cute.CopyAtom, cute.Tensor]:
+    ) -> tuple[cute.CopyAtom, cute.Tensor]:
         """Create TMA atoms and tensors for input tensors."""
         op = (
             cpasync.CopyBulkTensorTileG2SOp()

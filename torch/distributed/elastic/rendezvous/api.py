@@ -74,7 +74,7 @@ class RendezvousStoreInfo:
         store: Store,
         local_addr: str | None,
         server_port: int | None = None,
-    ) -> "RendezvousStoreInfo":
+    ) -> RendezvousStoreInfo:
         """Factory method, finds unused new port on rank0 host and addr/port info with all ranks.
 
         If master_addr/master_port is known (useful when sharing existing tcp store server) use the constructor.

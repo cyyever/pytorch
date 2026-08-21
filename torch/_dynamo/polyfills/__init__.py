@@ -6,7 +6,6 @@ Python polyfills for common builtins.
 #       2. While adding a new polyfill module, also add it to POLYFILLED_MODULE_NAMES in loader.py.
 #          Add it in the TYPE_CHECKING block below as well.
 
-from __future__ import annotations
 
 import importlib
 import sys as py_sys
@@ -16,7 +15,7 @@ from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Seq
 from itertools import repeat as _repeat
 from operator import eq, ge, gt, le, lt, ne
 from typing import Any, TYPE_CHECKING, TypeGuard, TypeVar
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 

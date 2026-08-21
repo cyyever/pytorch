@@ -373,7 +373,7 @@ def serialize_tensor_meta(t: torch.Tensor) -> TensorMeta:
     )
 
 
-_CURRENT_DESERIALIZER: Optional["GraphModuleDeserializer"] = None
+_CURRENT_DESERIALIZER: Optional[GraphModuleDeserializer] = None
 
 
 def _reduce_fake_tensor(fake_tensor: FakeTensor):

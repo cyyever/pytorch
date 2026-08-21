@@ -72,7 +72,7 @@ def _append_items(lines: list[str], label: str, items: Iterable[str]) -> None:
     lines.extend(f"  {value}" for value in values or ("(none)",))
 
 
-def _format_ir_tensor(name: str, node: "ir.IRNode") -> str:
+def _format_ir_tensor(name: str, node: ir.IRNode) -> str:
     """Format the tensor contract visible to Inductor lowering."""
     stride = node.maybe_get_stride()
     return (
@@ -85,8 +85,8 @@ def _format_ir_tensor(name: str, node: "ir.IRNode") -> str:
 def format_flex_gemm_problem(
     graph_module: torch.fx.GraphModule,
     gemm_op: torch._ops.OpOverload,
-    gemm_inputs: Sequence[tuple[str, "ir.IRNode"]],
-    captures: Sequence[tuple[str, "ir.IRNode"]],
+    gemm_inputs: Sequence[tuple[str, ir.IRNode]],
+    captures: Sequence[tuple[str, ir.IRNode]],
     *,
     alpha: float,
     beta: float,
@@ -183,7 +183,7 @@ def _format_normalized_dataflow(node: torch.fx.Node, normalized: Any) -> str:
     return f"{normalized.source.name} -> {operation}"
 
 
-def format_flex_gemm_analysis(analysis: "FlexGemmEpilogueAnalysis") -> str:
+def format_flex_gemm_analysis(analysis: FlexGemmEpilogueAnalysis) -> str:
     """Render the semantic decisions a FlexGEMM developer acts on first."""
     outputs = analysis.outputs
     lines = [
@@ -248,7 +248,7 @@ def format_flex_gemm_analysis(analysis: "FlexGemmEpilogueAnalysis") -> str:
 
 
 def format_flex_gemm_analysis_details(
-    analysis: "FlexGemmEpilogueAnalysis",
+    analysis: FlexGemmEpilogueAnalysis,
 ) -> str:
     """Render normalized nodes and recognizer records for deep debugging."""
     lines: list[str] = []
@@ -322,7 +322,7 @@ def format_flex_gemm_lowering_plan(
     return "\n".join(lines)
 
 
-def format_flex_gemm_config_key(config_key: "GemmConfigKey") -> str:
+def format_flex_gemm_config_key(config_key: GemmConfigKey) -> str:
     """Render every config field so new GemmConfig fields remain visible."""
     return "\n".join(
         f"{name}: {'auto' if value is None else repr(value)}"
@@ -331,7 +331,7 @@ def format_flex_gemm_config_key(config_key: "GemmConfigKey") -> str:
 
 
 def format_flex_gemm_config_candidates(
-    config_keys: Sequence["GemmConfigKey"],
+    config_keys: Sequence[GemmConfigKey],
 ) -> str:
     """Render every lowering-approved config for verbose diagnostics."""
     lines: list[str] = []
@@ -346,8 +346,8 @@ def format_flex_gemm_config_candidates(
 
 
 def format_flex_gemm_selection(
-    choice: "ir.ChoiceCaller | None",
-    config_key: "GemmConfigKey | None",
+    choice: ir.ChoiceCaller | None,
+    config_key: GemmConfigKey | None,
     *,
     candidate_count: int,
     tuned: bool,

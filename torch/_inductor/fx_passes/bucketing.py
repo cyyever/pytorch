@@ -35,7 +35,7 @@ logger.setLevel(logging.INFO)
 overlap_log = torch._logging.getArtifactLogger(__name__, "overlap")
 
 
-def _resolve_group_name(group_name: Any) -> "GroupName":
+def _resolve_group_name(group_name: Any) -> GroupName:
     """Resolve group_name to a GroupName string.
 
     In compile-on-one-rank graphs, collective ops receive their

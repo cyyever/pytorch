@@ -48,7 +48,8 @@ from typing import (
     TypedDict,
     Union,
 )
-from typing_extensions import NotRequired, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
+from typing import NotRequired
 
 import sympy
 
@@ -479,7 +480,7 @@ class OutputGraphGuardsState:
     def aotautograd_guards(self) -> list[torch._guards.GuardEnvExpr]:
         return self._aotautograd_guards
 
-    def dump_guards_state(self) -> "OutputGraphGuardsState":
+    def dump_guards_state(self) -> OutputGraphGuardsState:
         # Dump a serializable version of self without extras
         return OutputGraphGuardsState(
             local_scope=self.local_scope,
@@ -704,7 +705,7 @@ class OutputGraph(OutputGraphCommon):
         self,
         code_options: CodeOptions,
         compiler_fn: CompilerFn | None,
-        root_tx: "InstructionTranslatorBase",
+        root_tx: InstructionTranslatorBase,
         export: bool,
         export_constraints: Sequence[_ConstraintTarget],
         frame_state: Any,
@@ -712,7 +713,7 @@ class OutputGraph(OutputGraphCommon):
         global_scope: Scope,
         f_code: CodeType,
         torch_function_mode_stack: list[torch.overrides.TorchFunctionMode],
-        package: Optional["CompilePackage"],
+        package: Optional[CompilePackage],
         one_graph: bool = False,
     ) -> None:
         OutputGraphGuardsState.__init__(
@@ -1003,10 +1004,10 @@ class OutputGraph(OutputGraphCommon):
         self.attr_source_cache: dict[tuple[Source, str], AttrSource] = {}
         self._cached_replayed_side_effect_source_refs: tuple[str, ...] | None = None
 
-    def track_generator(self, gen: "LocalGeneratorObjectVariable") -> None:
+    def track_generator(self, gen: LocalGeneratorObjectVariable) -> None:
         self.local_generators.append(gen)
 
-    def close_local_generators(self, tx: "InstructionTranslatorBase") -> None:
+    def close_local_generators(self, tx: InstructionTranslatorBase) -> None:
         from .symbolic_convert import temporarely_allow_writes_to_output_graph
 
         with temporarely_allow_writes_to_output_graph(tx):
@@ -1087,7 +1088,7 @@ class OutputGraph(OutputGraphCommon):
 
     def get_chained_param_buffer_source(
         self, base: Source, path: str
-    ) -> "ParamBufferSource":
+    ) -> ParamBufferSource:
         parts = path.rsplit(".", 1)
         if len(parts) == 1:
             return ParamBufferSource(base, path)
@@ -1297,11 +1298,11 @@ class OutputGraph(OutputGraphCommon):
         self.cleanup_hooks.clear()
 
     @property
-    def root_tracer(self) -> "SubgraphTracer":
+    def root_tracer(self) -> SubgraphTracer:
         return self.tracers[0]
 
     @property
-    def current_tracer(self) -> "SubgraphTracer":
+    def current_tracer(self) -> SubgraphTracer:
         return self.tracers[-1]
 
     def is_root_tracer(self) -> bool:
@@ -1309,7 +1310,7 @@ class OutputGraph(OutputGraphCommon):
         return len(self.tracers) == 1
 
     def check_input_mutation_on_current_stream(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> None:
         """Record which stream index has input mutations by comparing current
         tensor versions against the versions captured at graph input creation."""
@@ -1395,7 +1396,7 @@ class OutputGraph(OutputGraphCommon):
         return self.current_tracer.real_value_cache
 
     @property
-    def bound_symbols(self) -> dict[sympy.Symbol, Union[torch.fx.Proxy, "LazyProxy"]]:
+    def bound_symbols(self) -> dict[sympy.Symbol, Union[torch.fx.Proxy, LazyProxy]]:
         return self.current_tracer.bound_symbols
 
     # If you are here, and you're looking for create_graph_input,
@@ -1417,9 +1418,9 @@ class OutputGraph(OutputGraphCommon):
     def subtracer(
         self,
         source_target: Target | None,
-        prior_tracer: Optional["SubgraphTracer"],
+        prior_tracer: Optional[SubgraphTracer],
         description: str | None = None,
-    ) -> Generator["SubgraphTracer", None, None]:
+    ) -> Generator[SubgraphTracer]:
         new_scope_ctx = enter_new_scope()
         try:
             if prior_tracer:
@@ -1447,7 +1448,7 @@ class OutputGraph(OutputGraphCommon):
             self.tracers.pop()
 
     @property
-    def output(self) -> "OutputGraph":
+    def output(self) -> OutputGraph:
         return self
 
     @property
@@ -1517,14 +1518,14 @@ class OutputGraph(OutputGraphCommon):
             torch.is_autocast_cache_enabled(),
         )
 
-    def push_tx(self, tx: "InstructionTranslatorBase") -> None:
+    def push_tx(self, tx: InstructionTranslatorBase) -> None:
         self._current_tx.append(tx)
 
-    def pop_tx(self) -> "InstructionTranslatorBase":
+    def pop_tx(self) -> InstructionTranslatorBase:
         return self._current_tx.pop()
 
     @property
-    def current_tx(self) -> "InstructionTranslatorBase":
+    def current_tx(self) -> InstructionTranslatorBase:
         return self.root_tx if not self._current_tx else self._current_tx[-1]
 
     def resolve_source_value(self, source: Source) -> Any:
@@ -1796,7 +1797,7 @@ class OutputGraph(OutputGraphCommon):
         return wrap_name(name)
 
     def handle_aliases_for_stolen_lists(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> tuple[list[Instruction], dict[Source, Source]]:
         # If list inputs are stolen, but still needed after the function call, create aliases to keep them alive
         maybe_gm = self.local_scope.get("self")
@@ -1891,7 +1892,7 @@ class OutputGraph(OutputGraphCommon):
         return alias_insts, overridden_sources
 
     def _get_stack_values_to_restore(
-        self, tx: "InstructionTranslatorBase", stack_pops: int
+        self, tx: InstructionTranslatorBase, stack_pops: int
     ) -> tuple[list[VariableTracker], StackLocalsMetadata]:
         """
         Gets the stack + locals values belonging to tx that need to be restored.
@@ -2009,7 +2010,7 @@ class OutputGraph(OutputGraphCommon):
 
     def compile_subgraph(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         reason: GraphCompileReason,
         stack_pops: int = 0,
     ) -> list[StackLocalsMetadata]:
@@ -2056,21 +2057,20 @@ class OutputGraph(OutputGraphCommon):
 
         # prefix instructions (Python 3.11+)
         prefix_insts: list[Instruction] = []
-        if sys.version_info >= (3, 11):
-            for inst in self.root_tx.prefix_insts:
-                if inst.opname == "COPY_FREE_VARS":
-                    prefix_insts.append(
-                        create_instruction(
-                            "COPY_FREE_VARS",
-                            arg=len(self.root_tx.code_options["co_freevars"]),
-                        )
+        for inst in self.root_tx.prefix_insts:
+            if inst.opname == "COPY_FREE_VARS":
+                prefix_insts.append(
+                    create_instruction(
+                        "COPY_FREE_VARS",
+                        arg=len(self.root_tx.code_options["co_freevars"]),
                     )
-                else:
-                    inst_copy = copy.copy(inst)
-                    # Prefix instructions are copied without the original
-                    # exception table range; generated bytecode owns a new body.
-                    inst_copy.exn_tab_entry = None
-                    prefix_insts.append(inst_copy)
+                )
+            else:
+                inst_copy = copy.copy(inst)
+                # Prefix instructions are copied without the original
+                # exception table range; generated bytecode owns a new body.
+                inst_copy.exn_tab_entry = None
+                prefix_insts.append(inst_copy)
 
         # stack values and restore vars for each frame are pushed in reverse order
         # i.e. last element corresponds to root frame (1),
@@ -2479,7 +2479,7 @@ class OutputGraph(OutputGraphCommon):
 
         return all_stack_locals_metas
 
-    def codegen_cells(self, tx: "InstructionTranslatorBase", cg: PyCodegen) -> None:
+    def codegen_cells(self, tx: InstructionTranslatorBase, cg: PyCodegen) -> None:
         # no need to codegen if reason.graph_break is False (since we won't resume)
         if self.compile_subgraph_reason.graph_break:
             tx_cnt = 0
@@ -2512,7 +2512,7 @@ class OutputGraph(OutputGraphCommon):
 
     def codegen_suffix(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         stack_values: list[VariableTracker],
         cg: PyCodegen,
         log_side_effects: bool,
@@ -2699,7 +2699,7 @@ class OutputGraph(OutputGraphCommon):
             raise exc.CompileCollectiveRestartAnalysis
 
     def _validate_outputs_safe_for_autograd_nodes(
-        self, rv: list["VariableTracker"], tx: "InstructionTranslatorBase"
+        self, rv: list[VariableTracker], tx: InstructionTranslatorBase
     ) -> None:
         """
         Validate that if torch.autograd.grad is used in the graph and outputs
@@ -2743,7 +2743,7 @@ class OutputGraph(OutputGraphCommon):
             )
 
     def _check_requires_grad_intermediate_outputs(
-        self, rv: list["VariableTracker"], tx: "InstructionTranslatorBase"
+        self, rv: list[VariableTracker], tx: InstructionTranslatorBase
     ) -> None:
         """Skip frame if a source-less requires_grad_() intermediate leaks as output.
 
@@ -2808,7 +2808,7 @@ class OutputGraph(OutputGraphCommon):
 
     def compile_and_call_fx_graph(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         rv: list[VariableTracker],
         root: FakeRootModule,
     ) -> tuple[list[Instruction], list[str] | None]:
@@ -3693,7 +3693,7 @@ class DynamoTracerOutput:
     f_globals: dict[str, Any]
 
     def __init__(
-        self, tracer: "InstructionTranslatorBase", error: Any | None = None
+        self, tracer: InstructionTranslatorBase, error: Any | None = None
     ) -> None:
         self.error_on_graph_break = tracer.error_on_graph_break
         self.is_tracing_resume_prologue = tracer.is_tracing_resume_prologue
@@ -3840,7 +3840,7 @@ R = TypeVar("R")
 class LazyProxy:
     def __init__(
         self,
-        tracer: "SubgraphTracer",
+        tracer: SubgraphTracer,
         fn: Callable[P, R],
         *args: P.args,
         **kwargs: P.kwargs,
@@ -3865,8 +3865,8 @@ class SubgraphTracer(fx.Tracer):
 
     def __init__(
         self,
-        output_graph: "OutputGraph",
-        parent: Optional["SubgraphTracer"] = None,
+        output_graph: OutputGraph,
+        parent: Optional[SubgraphTracer] = None,
         is_export: bool = False,
         source_target: Target | None = None,
         description: str | None = None,
@@ -3973,7 +3973,7 @@ class SubgraphTracer(fx.Tracer):
 
     # preserve original meta if it is available
     def _maybe_preserve_original_meta(
-        self, tx: "InstructionTranslatorBase", node: fx.Node
+        self, tx: InstructionTranslatorBase, node: fx.Node
     ) -> None:
         if (
             self._orig_gm_meta

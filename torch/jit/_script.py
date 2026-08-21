@@ -13,11 +13,10 @@ import enum
 import functools
 import inspect
 import pickle
-import sys
 import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import Any, TypeVar
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch._jit_internal as _jit_internal
@@ -355,17 +354,11 @@ class ScriptWarning(Warning):
 
 
 def script_method(fn):
-    if sys.version_info >= (3, 14):
-        warnings.warn(
-            "`torch.jit.script_method` is not supported in Python 3.14+ and may break. "
-            "Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
-    else:
-        warnings.warn(
-            "`torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
+    warnings.warn(
+        "`torch.jit.script_method` is not supported in Python 3.14+ and may break. "
+        "Please switch to `torch.compile` or `torch.export`.",
+        FutureWarning,
+    )
     if not _enabled:
         return fn
     # NOTE: we need to traverse two frames here because the meta-class frame
@@ -1443,17 +1436,11 @@ def script(
             # Run the scripted_model with actual inputs
             print(scripted_model([20]))
     """
-    if sys.version_info >= (3, 14):
-        warnings.warn(
-            "`torch.jit.script` is not supported in Python 3.14+ and may break. "
-            "Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
-    else:
-        warnings.warn(
-            "`torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.",
-            FutureWarning,
-        )
+    warnings.warn(
+        "`torch.jit.script` is not supported in Python 3.14+ and may break. "
+        "Please switch to `torch.compile` or `torch.export`.",
+        FutureWarning,
+    )
     if not _enabled:
         return obj
     try:

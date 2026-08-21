@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import AbstractContextManager, contextmanager, ExitStack, nullcontext
 from dataclasses import dataclass
 from typing import Any, overload, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.fx.traceback as fx_traceback
@@ -441,7 +441,6 @@ def has_potential_input_alias_or_mutation(gm, inputs, pre_dispatch=False):
 
 
 def _collect_fake_inputs(inputs):
-    from torch._subclasses.fake_tensor import FakeTensor
 
     # Get the example values of the inputs.
     inputs_fake: list[FakeTensor | torch.Tensor | int] = []

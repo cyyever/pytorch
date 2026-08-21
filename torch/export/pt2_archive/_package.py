@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 from dataclasses import dataclass
 from typing import Any, IO, TYPE_CHECKING, TypeAlias
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 import torch.utils._pytree as pytree
@@ -104,7 +104,7 @@ class PT2ArchiveWriter:
         # archive_version is the version of the PT2 archive spec, which write to /archive_version
         self.archive_file.set_min_version(6)
 
-    def __enter__(self) -> "PT2ArchiveWriter":
+    def __enter__(self) -> PT2ArchiveWriter:
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -204,7 +204,7 @@ class PT2ArchiveReader:
         if self.read_string(ARCHIVE_FORMAT_PATH) != ARCHIVE_FORMAT_VALUE:
             raise AssertionError("Invalid archive format")
 
-    def __enter__(self) -> "PT2ArchiveReader":
+    def __enter__(self) -> PT2ArchiveReader:
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -778,7 +778,7 @@ class AOTICompiledModel:
     def get_constant_fqns(self) -> list[str]:
         return self.loader.get_constant_fqns()
 
-    def __deepcopy__(self, memo: dict[Any, Any] | None) -> "AOTICompiledModel":
+    def __deepcopy__(self, memo: dict[Any, Any] | None) -> AOTICompiledModel:
         logger.warning(
             "AOTICompiledModel deepcopy warning: AOTICompiledModel.loader is not deepcopied."
         )

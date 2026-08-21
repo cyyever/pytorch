@@ -65,7 +65,7 @@ class PackedMaskInterval:
     )
 
     @classmethod
-    def full(cls) -> "PackedMaskInterval":
+    def full(cls) -> PackedMaskInterval:
         return cls(sympy.Integer(0), sympy.Integer(32))
 
     def is_full(self) -> bool:
@@ -73,7 +73,7 @@ class PackedMaskInterval:
 
     def with_symbol_codes(
         self, symbol_codes: Mapping[sympy.Symbol, str]
-    ) -> "PackedMaskInterval":
+    ) -> PackedMaskInterval:
         return dataclasses.replace(self, symbol_codes=dict(symbol_codes))
 
     def render_lower(self) -> str:
@@ -659,7 +659,7 @@ class PackedMaskAuxPlaceholderMap:
         placeholders: Sequence[torch.fx.Node],
         other_buffers: Sequence[object],
         symbol_codes: Mapping[sympy.Symbol, str],
-    ) -> "PackedMaskAuxPlaceholderMap | None":
+    ) -> PackedMaskAuxPlaceholderMap | None:
         """Render lane-uniform mask_mod captures for packed interval analysis."""
         codes: dict[torch.fx.Node, str] = {}
         exprs: dict[torch.fx.Node, sympy.Expr] = {}

@@ -3,7 +3,8 @@ import copy
 import warnings
 from collections import namedtuple
 from typing import Any
-from typing_extensions import deprecated, TypeAliasType
+from typing import TypeAliasType
+from warnings import deprecated
 
 import torch
 import torch.nn as nn

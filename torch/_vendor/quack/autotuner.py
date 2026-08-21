@@ -1,6 +1,5 @@
 # Adapted from https://github.com/triton-lang/triton/blob/main/python/triton/runtime/autotuner.py
 # Copyright (C) 2025, Tri Dao.
-from __future__ import annotations
 
 import builtins
 import os
@@ -15,7 +14,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from functools import cached_property, partial
-from typing import Dict, Tuple, List, Optional, Any
+from typing import Any
 from .bench.bench_utils import (
     _bench_cuda_graph_l2_rotate,
     _clone_l2_rotate_inputs,
@@ -156,13 +155,13 @@ class _PrecompileHandle:
     immediately as a no-op, so the bench loop can iterate uniformly.
     """
 
-    events: Dict[int, threading.Event] = field(default_factory=dict)
-    failures: Dict[int, str] = field(default_factory=dict)
-    _workers: List[Any] = field(default_factory=list)  # subprocess.Popen
-    _reader_threads: List[threading.Thread] = field(default_factory=list)
+    events: dict[int, threading.Event] = field(default_factory=dict)
+    failures: dict[int, str] = field(default_factory=dict)
+    _workers: list[Any] = field(default_factory=list)  # subprocess.Popen
+    _reader_threads: list[threading.Thread] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
-    def wait_for(self, config_idx: int, timeout: Optional[float] = None) -> None:
+    def wait_for(self, config_idx: int, timeout: float | None = None) -> None:
         """Block until ``config_idx``'s compile completes (or failed).
 
         No-op for indices that were never registered (e.g. the entire handle
@@ -285,7 +284,7 @@ class Autotuner:
         key,
         configs,
         restore_value=None,
-        prune_configs_by: Optional[Dict] = None,
+        prune_configs_by: dict | None = None,
         do_bench=None,
         cache_results=False,
         precompile_configs=True,
@@ -302,7 +301,7 @@ class Autotuner:
             self.configs = configs
         signature = inspect.signature(fn)
         self.keys = key
-        self.cache: Dict[Tuple, AutotuneConfig] = {}
+        self.cache: dict[tuple, AutotuneConfig] = {}
         self.arg_names = list(signature.parameters.keys())
         self.cache_results = (
             cache_results or os.getenv(f"{PACKAGE_NAME.upper()}_CACHE_AUTOTUNING", None) == "1"
@@ -451,7 +450,7 @@ class Autotuner:
         # benchmark, overlapping the still-pending compiles with GPU work.
         handle = _PrecompileHandle()
         handle._workers = workers
-        assignments: List[List[int]] = [[] for _ in workers]
+        assignments: list[list[int]] = [[] for _ in workers]
         for i, config in enumerate(configs):
             wi = i % len(workers)
             try:
@@ -592,7 +591,7 @@ class Autotuner:
         # There's an environment variable to force cache update
         if path and not os.environ.get(f"{PACKAGE_NAME.upper()}_FORCE_CACHE_UPDATE", False):
             str2config = {s: c for s, c in zip(config_str_list, configs)}
-            with open(path, "r") as cached_configs:
+            with open(path) as cached_configs:
                 timings = json.load(cached_configs)["configs_timings"]
                 timings = {str2config[config]: timing for config, timing in timings}
                 self.cache[tuning_key] = builtins.min(timings, key=timings.get)
@@ -756,7 +755,7 @@ class Autotuner:
         self.nargs = None
         return ret
 
-    def prune_configs(self, kwargs: Dict) -> List[Any]:
+    def prune_configs(self, kwargs: dict) -> list[Any]:
         pruned_configs = self.configs
         if self.early_config_prune:
             pruned_configs = self.early_config_prune(self.configs, self.nargs, **kwargs)

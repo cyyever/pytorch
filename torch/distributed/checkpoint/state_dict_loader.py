@@ -5,7 +5,7 @@ import logging
 import os
 import warnings
 from typing import Any, cast, TYPE_CHECKING
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.distributed as dist

@@ -73,7 +73,7 @@ class Node(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def next_functions(self) -> tuple[tuple[Optional["Node"], int], ...]:
+    def next_functions(self) -> tuple[tuple[Optional[Node], int], ...]:
         r"""Return the edges from this node to its input functions.
 
         Each entry is a ``(Node, int)`` pair. The node is ``None`` for an input
@@ -194,7 +194,7 @@ class Node(abc.ABC):
         return NotImplemented
 
 
-def _get_grad_fn_or_grad_acc(t: Union[torch.Tensor, "GradientEdge"]) -> Node:
+def _get_grad_fn_or_grad_acc(t: Union[torch.Tensor, GradientEdge]) -> Node:
     if isinstance(t, GradientEdge):
         return t.node
     if t.requires_grad and t.grad_fn is None:
@@ -428,7 +428,7 @@ class save_on_cpu(saved_tensors_hooks):
 
 
 @contextlib.contextmanager
-def disable_saved_tensors_hooks(error_message: str) -> Generator[None, None, None]:
+def disable_saved_tensors_hooks(error_message: str) -> Generator[None]:
     """Context-manager that disables the saved tensors default hooks feature.
 
     Useful for if you are creating a feature that does not work with saved
@@ -854,7 +854,7 @@ class _Handle:
 
 
 class _swap_with_cloned(saved_tensors_hooks):
-    def __init__(self, ctx: "_AllowMutationOnSavedContext") -> None:
+    def __init__(self, ctx: _AllowMutationOnSavedContext) -> None:
         def pack_hook(tensor: torch.Tensor) -> _Handle:
             tid = _get_tid(tensor)
             sid = _get_sid(tensor)
@@ -893,12 +893,12 @@ class _swap_with_cloned(saved_tensors_hooks):
 
 
 class _CloneArgBeforeMutateMode(TorchDispatchMode):
-    def __init__(self, ctx: "_AllowMutationOnSavedContext") -> None:
+    def __init__(self, ctx: _AllowMutationOnSavedContext) -> None:
         self.ctx = ctx
 
     def __torch_dispatch__(
         self,
-        func: "OpOverload",
+        func: OpOverload,
         types: Iterable[type],
         args: tuple[Any, ...] = (),
         kwargs: dict[Any, Any] | None = None,
@@ -960,8 +960,7 @@ class _AllowMutationOnSavedContext:
 
 @contextlib.contextmanager
 def allow_mutation_on_saved_tensors() -> Generator[
-    _AllowMutationOnSavedContext, None, None
-]:
+    _AllowMutationOnSavedContext]:
     """Context manager under which mutating tensors saved for backward is allowed.
 
     Under this context manager, tensors saved for backward are cloned on mutation,

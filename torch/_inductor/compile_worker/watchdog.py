@@ -22,7 +22,6 @@ are free in the main process and in non-forking pools (spawn workers do not
 inherit the buffer and simply degrade to duration-only reporting).
 """
 
-from __future__ import annotations
 
 import multiprocessing
 import os

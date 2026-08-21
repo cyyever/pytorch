@@ -117,7 +117,7 @@ class GraphTransformObserver:
             "inductor", self.subsystem, lambda: self.passname
         )
 
-    def __enter__(self) -> "GraphTransformObserver":
+    def __enter__(self) -> GraphTransformObserver:
         if not self.active:
             return self
         self.gm._register_create_node_hook(self._node_creation_hook)

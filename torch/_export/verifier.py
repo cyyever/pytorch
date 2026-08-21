@@ -96,7 +96,7 @@ def _check_torch_fn(node: torch.fx.Node) -> None:
 
 
 class _VerifierMeta(type):
-    _registry: dict[str, type["Verifier"]] = {}
+    _registry: dict[str, type[Verifier]] = {}
 
     def __new__(metacls, name, bases, attrs):
         if bases:
@@ -193,7 +193,7 @@ class Verifier(metaclass=_VerifierMeta):
         """
 
     @final
-    def check(self, ep: "ExportedProgram") -> None:
+    def check(self, ep: ExportedProgram) -> None:
         self._check_graph_module(ep.graph_module)
         _verify_exported_program_module_call_graph(ep)
         _verify_exported_program_signature(ep)

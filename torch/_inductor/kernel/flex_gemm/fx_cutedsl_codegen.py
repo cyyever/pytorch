@@ -691,7 +691,7 @@ class FlexGemmEpilogueAnalysis:
     @classmethod
     def from_graph_module(
         cls, graph_module: torch.fx.GraphModule, gemm: torch.fx.Node
-    ) -> "FlexGemmEpilogueAnalysis":
+    ) -> FlexGemmEpilogueAnalysis:
         """Analyze grouped values and classify logical output consumers."""
         local_reduce = FlexGemmLocalReduceAnalysis.from_graph_module(graph_module)
         outputs = bind_terminal_output_storage(

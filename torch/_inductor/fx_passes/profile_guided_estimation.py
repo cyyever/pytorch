@@ -9,7 +9,6 @@ When the same profile is loaded on all ranks, estimates are deterministic
 and no cross-rank synchronization is needed.
 """
 
-from __future__ import annotations
 
 import functools
 import json

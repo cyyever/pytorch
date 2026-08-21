@@ -49,7 +49,7 @@ class TypeInfo(NamedTuple):
     fields: list[tuple[str, type]]  # type: ignore[type-arg]
 
     @classmethod
-    def from_type(cls, c: T) -> "TypeInfo":
+    def from_type(cls, c: T) -> TypeInfo:
         if hasattr(c, "__name__"):
             name = c.__name__
         else:
@@ -157,7 +157,7 @@ class Collective(NamedTuple):
     input_numel: int | None = None
     output_numel: int | None = None
     missing_ranks: set[int] | None = None
-    mismatch_collectives: dict[int, "Collective"] | None = None
+    mismatch_collectives: dict[int, Collective] | None = None
     type_of_mismatch: MatchInfo | None = None
 
 
@@ -550,7 +550,7 @@ class Op:
             f"{p2p_info}, " if p2p_info else ""
         )
 
-    def dtype_mismatch(self, other: "Op") -> bool:
+    def dtype_mismatch(self, other: Op) -> bool:
         if (
             (
                 self.type not in ["scatter", "gather", "broadcast"]
@@ -591,7 +591,7 @@ class Op:
             and gathered_numel == shard_numel * self.pg_size
         )
 
-    def match(self, other: "Op") -> MatchInfo:
+    def match(self, other: Op) -> MatchInfo:
         # TODO: I think this can validly not match,
         # e.g. if one PG was used for p2p ops between only some of the peers?
         # if self.seq_id != other.seq_id:

@@ -8,7 +8,6 @@ Provides centralized registration for both:
 Both share one underlying registry dict and cascading fallback lookup.
 """
 
-from __future__ import annotations
 
 import contextlib
 import logging

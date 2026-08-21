@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import ctypes
 import json
@@ -37,7 +36,7 @@ _PY_PROFILER = torch._C._profiler
 _cupti_monitor_native = _PY_PROFILER._cupti_monitor
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,6 @@ mappings between nodes and their duplicates, enabling efficient graph analysis a
 optimization operations.
 """
 
-from __future__ import annotations
 
 import copyreg
 import io

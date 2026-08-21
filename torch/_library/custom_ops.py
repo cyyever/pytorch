@@ -47,7 +47,7 @@ def custom_op(
     device_types: device_types_t = None,
     schema: str | None = None,
     tags: tags_t = None,
-) -> Callable[[Callable[..., object]], "CustomOpDef"]: ...
+) -> Callable[[Callable[..., object]], CustomOpDef]: ...
 
 
 @overload
@@ -60,7 +60,7 @@ def custom_op(
     device_types: device_types_t = None,
     schema: str | None = None,
     tags: tags_t = None,
-) -> "CustomOpDef": ...
+) -> CustomOpDef: ...
 
 
 @exposed_in("torch.library")
@@ -73,7 +73,7 @@ def custom_op(
     device_types: device_types_t = None,
     schema: str | None = None,
     tags: tags_t = None,
-) -> Union[Callable[[Callable[..., object]], "CustomOpDef"], "CustomOpDef"]:
+) -> Union[Callable[[Callable[..., object]], CustomOpDef], CustomOpDef]:
     """Wraps a function into custom operator.
 
     Reasons why you may want to create a custom op include:
@@ -1091,13 +1091,13 @@ def increment_version(val: Any) -> None:
 # decorator.
 
 
-OPDEF_TO_LIB: dict[str, "torch.library.Library"] = {}
+OPDEF_TO_LIB: dict[str, torch.library.Library] = {}
 OPDEFS: weakref.WeakValueDictionary = weakref.WeakValueDictionary()
 
 
 def get_library_allowing_overwrite(
     namespace: str, name: str
-) -> "torch.library.Library":
+) -> torch.library.Library:
     qualname = f"{namespace}::{name}"
 
     if qualname in OPDEF_TO_LIB:

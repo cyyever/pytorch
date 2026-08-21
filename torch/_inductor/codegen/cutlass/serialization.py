@@ -29,7 +29,7 @@ class CUTLASSOperationSerializer:
     ]
 
     @classmethod
-    def serialize(cls, operation: "GemmOperation") -> str:  # type: ignore[name-defined]  # noqa: F821
+    def serialize(cls, operation: GemmOperation) -> str:  # type: ignore[name-defined]  # noqa: F821
         """Serialize a GEMM operation to JSON string.
 
         Args:
@@ -45,7 +45,7 @@ class CUTLASSOperationSerializer:
         return json.dumps(cls._gemm_operation_to_json(operation))
 
     @classmethod
-    def deserialize(cls, json_str: str) -> "GemmOperation":  # type: ignore[name-defined]  # noqa: F821
+    def deserialize(cls, json_str: str) -> GemmOperation:  # type: ignore[name-defined]  # noqa: F821
         """Deserialize JSON string to a GEMM operation.
 
         Args:
@@ -58,7 +58,7 @@ class CUTLASSOperationSerializer:
         return cls._json_to_gemm_operation(json_dict)
 
     @classmethod
-    def _gemm_operation_to_json(cls, operation: "GemmOperation") -> dict[str, Any]:  # type: ignore[name-defined]  # noqa: F821
+    def _gemm_operation_to_json(cls, operation: GemmOperation) -> dict[str, Any]:  # type: ignore[name-defined]  # noqa: F821
         """Convert GemmOperation to JSON-serializable dict.
 
         Args:
@@ -120,7 +120,7 @@ class CUTLASSOperationSerializer:
         return result
 
     @classmethod
-    def _json_to_gemm_operation(cls, json_dict: dict[str, Any]) -> "GemmOperation":  # type: ignore[name-defined]  # noqa: F821
+    def _json_to_gemm_operation(cls, json_dict: dict[str, Any]) -> GemmOperation:  # type: ignore[name-defined]  # noqa: F821
         """Convert JSON dict to GemmOperation object.
 
         Args:
@@ -220,7 +220,7 @@ class CUTLASSOperationSerializer:
 
     @classmethod
     @functools.lru_cache(None)
-    def _tile_description_to_json(cls, tile_desc: "TileDescription") -> str:  # type: ignore[name-defined]  # noqa: F821
+    def _tile_description_to_json(cls, tile_desc: TileDescription) -> str:  # type: ignore[name-defined]  # noqa: F821
         """
         Convert TileDescription to JSON string.
 
@@ -258,7 +258,7 @@ class CUTLASSOperationSerializer:
     @functools.lru_cache(None)
     def _json_to_tile_description(
         cls, json_dict: str | None
-    ) -> Optional["TileDescription"]:  # type: ignore[name-defined]  # noqa: F821
+    ) -> Optional[TileDescription]:  # type: ignore[name-defined]  # noqa: F821
         """
         Convert JSON dict to TileDescription object.
 
@@ -313,7 +313,7 @@ class CUTLASSOperationSerializer:
     @functools.lru_cache(None)
     def _math_instruction_to_json(
         cls,
-        math_instruction: Optional["MathInstruction"],  # type: ignore[name-defined]  # noqa: F821
+        math_instruction: Optional[MathInstruction],  # type: ignore[name-defined]  # noqa: F821
     ) -> str | None:
         """Convert MathInstruction to JSON string.
 
@@ -346,7 +346,7 @@ class CUTLASSOperationSerializer:
     @functools.lru_cache(None)
     def _json_to_math_instruction(
         cls, json_dict: str | None
-    ) -> Optional["MathInstruction"]:  # type: ignore[name-defined]  # noqa: F821
+    ) -> Optional[MathInstruction]:  # type: ignore[name-defined]  # noqa: F821
         """Convert JSON string to MathInstruction object.
 
         Args:
@@ -399,7 +399,7 @@ class CUTLASSOperationSerializer:
     @functools.lru_cache(None)
     def _tensor_description_to_json(
         cls,
-        tensor_desc: Optional["TensorDescription"],  # type: ignore[name-defined]  # noqa: F821
+        tensor_desc: Optional[TensorDescription],  # type: ignore[name-defined]  # noqa: F821
     ) -> str | None:
         """Convert TensorDescription to JSON string.
 
@@ -427,7 +427,7 @@ class CUTLASSOperationSerializer:
         cls,
         json_dict: str | None,
         tensor_name: str | None = None,
-    ) -> Optional["TensorDescription"]:  # type: ignore[name-defined]  # noqa: F821
+    ) -> Optional[TensorDescription]:  # type: ignore[name-defined]  # noqa: F821
         """Convert JSON string to TensorDescription object.
 
         Args:

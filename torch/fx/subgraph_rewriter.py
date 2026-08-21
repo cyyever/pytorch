@@ -227,10 +227,10 @@ def replace_pattern_with_filters(
     gm: GraphModule,
     pattern: Callable[..., Any] | Graph | GraphModule,
     replacement: Callable[..., Any] | Graph | GraphModule | None = None,
-    match_filters: list[Callable[["InternalMatch", Graph, Graph], bool]] | None = None,
+    match_filters: list[Callable[[InternalMatch, Graph, Graph], bool]] | None = None,
     ignore_literals: bool = False,
     # Placed at the end to avoid breaking backward compatibility
-    replacement_callback: Callable[["InternalMatch", Graph, Graph], Graph]
+    replacement_callback: Callable[[InternalMatch, Graph, Graph], Graph]
     | None = None,
     node_name_match: str = "",
 ) -> list[ReplacedPatterns]:
@@ -263,14 +263,14 @@ def _replace_pattern(
     gm: GraphModule,
     pattern: Callable[..., Any] | Graph | GraphModule,
     replacement: Callable[..., Any] | Graph | GraphModule | None = None,
-    match_filters: list[Callable[["InternalMatch", Graph, Graph], bool]] | None = None,
+    match_filters: list[Callable[[InternalMatch, Graph, Graph], bool]] | None = None,
     ignore_literals: bool = False,
     # Placed at the end to avoid breaking backward compatibility
-    replacement_callback: Callable[["InternalMatch", Graph, Graph], Graph]
+    replacement_callback: Callable[[InternalMatch, Graph, Graph], Graph]
     | None = None,
     node_name_match: str = "",
 ) -> list[ReplacedPatterns]:
-    from torch.fx.passes.utils.matcher_utils import InternalMatch, SubgraphMatcher
+    from torch.fx.passes.utils.matcher_utils import SubgraphMatcher
 
     if match_filters is None:
         match_filters = []

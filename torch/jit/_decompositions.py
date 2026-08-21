@@ -8,7 +8,7 @@ import inspect
 import warnings
 from collections.abc import Callable
 from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 from torch.types import Number
 

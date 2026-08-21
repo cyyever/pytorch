@@ -98,7 +98,7 @@ class _StateDictMeta:
 
 
 @contextmanager
-def _timeit(name: str) -> Generator[None, None, None]:
+def _timeit(name: str) -> Generator[None]:
     start = time.perf_counter()
     yield
     dur = time.perf_counter() - start

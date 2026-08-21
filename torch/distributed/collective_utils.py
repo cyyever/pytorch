@@ -7,7 +7,6 @@ A set of primitive functions for performing collective ops.
 Each should also handle single rank scenario.
 """
 
-from __future__ import annotations
 
 import importlib
 import logging

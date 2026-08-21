@@ -10,7 +10,6 @@ concrete integer hints. Two strategies are provided:
   symbols. Use for performance optimization decisions.
 """
 
-from __future__ import annotations
 
 import logging
 import sys

@@ -144,7 +144,7 @@ class FxNetAccFusionsFinder:
 
     def recursive_add_node(
         self,
-        fusion_group: "FxNetAccFusionsFinder.FusionGroup",
+        fusion_group: FxNetAccFusionsFinder.FusionGroup,
         inputs: NodeSet | NodeList,
         visited: NodeSet | None = None,
     ) -> bool:

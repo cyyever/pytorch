@@ -67,7 +67,7 @@ MAX_ITERATOR_LIMIT = 100 * 1024  # 100k
 
 
 def is_iterator_exhausted(
-    tx: "InstructionTranslatorBase", iterator: VariableTracker
+    tx: InstructionTranslatorBase, iterator: VariableTracker
 ) -> bool:
     try:
         pyiter_next(tx, iterator)
@@ -83,7 +83,7 @@ class ItertoolsVariable(VariableTracker):
         self.value = value
 
     def tp_richcompare_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker, op: str
+        self, tx: InstructionTranslatorBase, other: VariableTracker, op: str
     ) -> VariableTracker:
         from .object_protocol import python_constant_richcompare_impl
 
@@ -99,8 +99,8 @@ class ItertoolsVariable(VariableTracker):
         return self.value
 
     def _get_from_iterable(
-        self, tx: "InstructionTranslatorBase"
-    ) -> "VariableTracker | None":
+        self, tx: InstructionTranslatorBase
+    ) -> VariableTracker | None:
         # Only itertools.chain has from_iterable; declining (None) falls
         # through to the generic protocol for other itertools callables.
         if self.value is itertools.chain:
@@ -113,10 +113,10 @@ class ItertoolsVariable(VariableTracker):
 
     def call_function(
         self,
-        tx: "InstructionTranslatorBase",
-        args: list["VariableTracker"],
-        kwargs: "dict[str, VariableTracker]",
-    ) -> "VariableTracker":
+        tx: InstructionTranslatorBase,
+        args: list[VariableTracker],
+        kwargs: dict[str, VariableTracker],
+    ) -> VariableTracker:
         # See also: module `torch._dynamo.polyfills.itertools`
 
         if self.value is itertools.chain and not kwargs:
@@ -307,13 +307,13 @@ class IteratorVariable(VariableTracker):
         super().__init__(**kwargs)
 
     def tp_richcompare_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker, op: str
+        self, tx: InstructionTranslatorBase, other: VariableTracker, op: str
     ) -> VariableTracker:
         from .object_protocol import object_richcompare
 
         return object_richcompare(self, tx, other, op)
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         unimplemented(
             gb_type="Unimplemented next() call",
             context=f"next({self})",
@@ -322,13 +322,13 @@ class IteratorVariable(VariableTracker):
         )
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
-    ) -> "ConstantVariable":
+        self, tx: InstructionTranslatorBase, name: str
+    ) -> ConstantVariable:
         if name == "__iter__" or name == "__next__":
             return variables.ConstantVariable.create(True)
         return super().call_obj_hasattr(tx, name)
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """Iterators are their own iterator."""
         return self
 
@@ -347,8 +347,8 @@ class ChainVariable(IteratorVariable):
 
     def __init__(
         self,
-        source_iterator: "VariableTracker",
-        current: "VariableTracker | None" = None,
+        source_iterator: VariableTracker,
+        current: VariableTracker | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -360,14 +360,14 @@ class ChainVariable(IteratorVariable):
     def python_type(self) -> type:
         return itertools.chain
 
-    def _get_from_iterable(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def _get_from_iterable(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return ItertoolsVariable(_CHAIN_FROM_ITERABLE)
 
     tp_getset = {
         "from_iterable": GetSet(_get_from_iterable),
     }
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         if not self.is_mutable():
             raise AssertionError("ChainVariable must be mutable for next()")
         while True:
@@ -389,7 +389,7 @@ class ChainVariable(IteratorVariable):
                 tx.output.side_effects.mutation(self)
                 self.current = None
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # Reconstruct as itertools.chain(current, itertools.chain.from_iterable(source))
         codegen.add_push_null(
             lambda: codegen.extend_output(
@@ -443,7 +443,7 @@ class RepeatIteratorVariable(IteratorVariable):
     def python_type(self) -> type:
         return itertools.repeat
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Modules/itertoolsmodule.c repeat_next
         if self.remaining is None:
             return self.item
@@ -457,7 +457,7 @@ class RepeatIteratorVariable(IteratorVariable):
 
     def repeat_length_hint(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -472,13 +472,13 @@ class RepeatIteratorVariable(IteratorVariable):
         "__length_hint__": Method(repeat_length_hint),
     }
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         item_repr = tracked_repr(tx, self.item)
         if self.times is None:
             return ConstantVariable.create(f"repeat({item_repr})")
         return ConstantVariable.create(f"repeat({item_repr}, {self.remaining})")
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.extend_output(
                 [
@@ -522,7 +522,7 @@ class CountIteratorVariable(IteratorVariable):
         self.step = step
         self.advance_count = advance_count
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Modules/itertoolsmodule.c#L4189-L4216
         if not self.is_mutable():
             raise AssertionError("CountIteratorVariable must be mutable for next()")
@@ -532,7 +532,7 @@ class CountIteratorVariable(IteratorVariable):
         self.advance_count += 1
         return old_item
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Modules/itertoolsmodule.c#L4218-L4243
         if not (self.item.is_python_constant() and self.step.is_python_constant()):
             return super().tp_repr_impl(tx)
@@ -545,7 +545,7 @@ class CountIteratorVariable(IteratorVariable):
             result = f"count({cnt!r}, {step!r})"
         return ConstantVariable.create(result)
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.extend_output(
                 [
@@ -588,7 +588,7 @@ class ZipVariable(IteratorVariable):
     def python_type(self) -> type[zip]:  # type: ignore[type-arg]
         return zip
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Python/bltinmodule.c#L2906-L2994
         if not self.is_mutable():
             raise AssertionError("ZipVariable must be mutable for next()")
@@ -628,7 +628,7 @@ class ZipVariable(IteratorVariable):
 
         return variables.TupleVariable(items)
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.load_import_from("builtins", "zip"), call_function_ex=True
         )
@@ -658,9 +658,9 @@ class ZipLongestVariable(IteratorVariable):
 
     def __init__(
         self,
-        iterables: "list[VariableTracker]",
-        fillvalue: "VariableTracker",
-        exhausted: "list[bool] | None" = None,
+        iterables: list[VariableTracker],
+        fillvalue: VariableTracker,
+        exhausted: list[bool] | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -673,7 +673,7 @@ class ZipLongestVariable(IteratorVariable):
     def python_type(self) -> type:
         return itertools.zip_longest
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Modules/itertoolsmodule.c#L2737-L2808
         if not self.is_mutable():
             raise AssertionError("ZipLongestVariable must be mutable for next()")
@@ -698,7 +698,7 @@ class ZipLongestVariable(IteratorVariable):
             raise_observed_exception(StopIteration, tx)
         return variables.TupleVariable(values)
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.extend_output(
                 [
@@ -768,7 +768,7 @@ class MapVariable(IteratorVariable):
     def python_type(self) -> type:
         return map
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Python/bltinmodule.c#L1409-L1450
         if not self.is_mutable():
             raise AssertionError("MapVariable must be mutable for next()")
@@ -805,7 +805,7 @@ class MapVariable(IteratorVariable):
         # type: ignore[attr-defined]
         return self.fn.call_function(tx, items, {})
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.load_import_from("builtins", "map"), call_function_ex=True
         )
@@ -848,7 +848,7 @@ class FilterVariable(IteratorVariable):
     def python_type(self) -> type:
         return filter
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Python/bltinmodule.c#L573-L606
         # A do-while loop to find elements that make fn return true
         while True:
@@ -863,7 +863,7 @@ class FilterVariable(IteratorVariable):
             if pred_res.as_python_constant():
                 return item
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(lambda: codegen.load_import_from("builtins", "filter"))
         codegen(self.fn)
         codegen(self.iterable)
@@ -897,7 +897,7 @@ class DictViewIterator(IteratorVariable):
                 )
             self._iter = iter(items.items())  # type: ignore[bad-assignment]
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # dictiter_iternextitem: https://github.com/python/cpython/blob/v3.13.3/Objects/dictobject.c#L5538-L5578
         # dictiter_iternextkey: https://github.com/python/cpython/blob/v3.13.3/Objects/dictobject.c#L5125-L5144
         # dictiter_iternextvalue: https://github.com/python/cpython/blob/v3.13.3/Objects/dictobject.c#L5248-L5267
@@ -920,7 +920,7 @@ class DictViewIterator(IteratorVariable):
 
     def dict_view_iter_length_hint(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:

@@ -55,7 +55,6 @@ In particular, we typically have an operator for every basic pointwise PyTorch o
 supported.
 """
 
-from __future__ import annotations
 
 from contextlib import AbstractContextManager, contextmanager
 from threading import local

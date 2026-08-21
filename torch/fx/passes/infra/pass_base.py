@@ -20,7 +20,7 @@ class PassResult(namedtuple("PassResult", ["graph_module", "modified"])):
 
     __slots__: tuple[str, ...] = ()
 
-    def __new__(cls, graph_module: nn.Module, modified: bool) -> "PassResult":
+    def __new__(cls, graph_module: nn.Module, modified: bool) -> PassResult:
         return super().__new__(cls, graph_module, modified)
 
 

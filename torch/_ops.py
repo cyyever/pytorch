@@ -10,7 +10,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, ClassVar, Concatenate, final, Generic, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 import torch.utils._pytree as pytree
@@ -169,8 +169,8 @@ class OperatorBase:
     #           out = ctx.functionalize(inner_f)(*args_unwrapped)
     #           return ctx.wrap_tensors(out)
     def py_functionalize_impl(
-        self, fn: Callable[Concatenate["BaseFunctionalizeAPI", _P], _T]
-    ) -> Callable[Concatenate["BaseFunctionalizeAPI", _P], _T]:
+        self, fn: Callable[Concatenate[BaseFunctionalizeAPI, _P], _T]
+    ) -> Callable[Concatenate[BaseFunctionalizeAPI, _P], _T]:
         from torch._subclasses.functional_tensor import (
             CppFunctionalizeAPI,
             FunctionalTensorMode,
@@ -266,7 +266,7 @@ def resolve_key(op: OperatorBase, k: DispatchKey):  # type: ignore[valid-type]
     raise NotImplementedError(f"could not find kernel for {op} at dispatch key {k}")
 
 
-_higher_order_ops: dict[str, "HigherOrderOperator"] = {}
+_higher_order_ops: dict[str, HigherOrderOperator] = {}
 
 _HIGHER_ORDER_OP_DEFAULT_FALLTHROUGH_DISPATCH_KEYS = [
     DispatchKey.PythonDispatcher,  # type: ignore[attr-defined]
@@ -789,7 +789,7 @@ def mode_stack_state_for_pre_dispatch():
     return _mode_stack_state_for_pre_dispatch
 
 
-cached_ops: set["OpOverload"] = set()
+cached_ops: set[OpOverload] = set()
 
 
 def add_cached_op(op_overload):
@@ -837,7 +837,7 @@ class _PyObjectDispatcher(Generic[_P, _T]):
 class OpOverload(OperatorBase, Generic[_P, _T]):
     def __init__(
         self,
-        overloadpacket: "OpOverloadPacket",
+        overloadpacket: OpOverloadPacket,
         op: Callable[_P, _T],
         op_dk: Callable[Concatenate[DispatchKey, _P], _T],
         schema: torch._C.FunctionSchema,

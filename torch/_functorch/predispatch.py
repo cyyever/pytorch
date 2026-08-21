@@ -9,7 +9,6 @@ This module contains pre-dispatch wrappers for functorch operations
 that enable proper tracing in PT2 non-strict export/compile fx graph.
 """
 
-from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

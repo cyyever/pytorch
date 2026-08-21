@@ -8,7 +8,7 @@ import sys
 import warnings
 from collections.abc import Callable
 from typing import Any, cast, overload, TypeVar
-from typing_extensions import Self
+from typing import Self
 
 
 # Used for annotating the decorator usage of _DecoratorContextManager (e.g.,

@@ -4,7 +4,6 @@ in the 'public' layer.
 Anything here only deals with torch objects, e.g. "dtype" is a torch.dtype instance etc
 """
 
-from __future__ import annotations
 
 import functools
 from typing import Concatenate, ParamSpec, TYPE_CHECKING, TypeVar

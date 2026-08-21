@@ -29,7 +29,7 @@ class CppWrapperMps(CppWrapperGpu):
         subgraph_name: str | None,
         parent_wrapper: PythonWrapperCodegen | None,
         partition_signatures: GraphPartitionSignature | None = None,
-    ) -> "CppWrapperMps":
+    ) -> CppWrapperMps:
         return CppWrapperMps()
 
     def _generate_kernel_call_helper(

@@ -21,7 +21,6 @@ By going down the _torchdynamo_orig_backend chain, one can recover the original 
 which is checked for during the Dynamo cache lookup.
 """
 
-from __future__ import annotations
 
 import collections
 import contextlib
@@ -52,7 +51,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import CellType, CodeType, FunctionType, ModuleType
 from typing import Any, cast, NoReturn, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from weakref import ReferenceType
 
 import torch
@@ -2585,10 +2584,7 @@ class CatchErrorsWrapper:
         input_codes.add(frame.f_code)
 
         is_skipfile = trace_rules.check(frame.f_code, frame=frame)
-        if sys.version_info >= (3, 13):
-            has_started_execution = frame.f_lasti > first_real_inst_idx(frame.f_code)
-        else:
-            has_started_execution = frame.f_lasti >= first_real_inst_idx(frame.f_code)
+        has_started_execution = frame.f_lasti > first_real_inst_idx(frame.f_code)
 
         # Check if we should skip due to torch dispatch mode.
         # When inline_torch_dispatch_torch_compile is True (new behavior), we walk

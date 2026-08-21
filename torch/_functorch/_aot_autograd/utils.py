@@ -12,7 +12,7 @@ from collections.abc import Callable, Sequence
 from contextlib import nullcontext
 from functools import partial, wraps
 from typing import Any, overload, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar, TypeVarTuple, Unpack
+from typing import ParamSpec, TypeVar, TypeVarTuple
 
 import torch
 import torch.utils._pytree as pytree
@@ -51,7 +51,7 @@ annotation_log = getArtifactLogger(__name__, "annotation")
 strict_zip = partial(zip, strict=True)
 
 
-def get_loaded_async_collective_tensor_type() -> type["AsyncCollectiveTensor"] | None:
+def get_loaded_async_collective_tensor_type() -> type[AsyncCollectiveTensor] | None:
     """Return the ACT type if distributed collectives are already loaded."""
     if "torch.distributed._functional_collectives" not in sys.modules:
         return None
@@ -60,7 +60,7 @@ def get_loaded_async_collective_tensor_type() -> type["AsyncCollectiveTensor"] |
     return AsyncCollectiveTensor
 
 
-def import_async_collective_tensor_type() -> type["AsyncCollectiveTensor"]:
+def import_async_collective_tensor_type() -> type[AsyncCollectiveTensor]:
     """Import and return the ACT type."""
     from torch.distributed._functional_collectives import AsyncCollectiveTensor
 
@@ -252,7 +252,7 @@ def create_tree_flattened_fn(
 # (2) There could be multiple, if this index corresponds to a synthetic base
 #     that has multiple input aliases.
 # (3) If any of those corresponding inputs get metadata mutations, then we clone the base.
-def maybe_to_fresh_input(idx: int, t: Any, meta: "ViewAndMutationMeta") -> Any:
+def maybe_to_fresh_input(idx: int, t: Any, meta: ViewAndMutationMeta) -> Any:
     if not isinstance(t, torch.Tensor):
         return t
     if idx in meta.mutated_inp_runtime_indices:
@@ -299,8 +299,8 @@ def is_with_effects(node: torch.fx.Node) -> bool:
 
 def unlift_tokens(
     fw_module: torch.fx.GraphModule,
-    fw_metadata: "ViewAndMutationMeta",
-    aot_config: "AOTConfig",
+    fw_metadata: ViewAndMutationMeta,
+    aot_config: AOTConfig,
     bw_module: torch.fx.GraphModule | None = None,
 ) -> None:
     # Remove the tokens from the inputs/outputs of the graph since inductor does
@@ -838,7 +838,7 @@ _Ts = TypeVarTuple("_Ts")
 
 
 def call_and_expect_output_descs(
-    fn: Callable[[*_Ts], tuple[Any, Any]], args: tuple[Unpack[_Ts]]
+    fn: Callable[[*_Ts], tuple[Any, Any]], args: tuple[*_Ts]
 ) -> tuple[Any, Any]:
     from .descriptors import AOTOutput
 

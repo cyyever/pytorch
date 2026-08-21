@@ -29,7 +29,7 @@ class CuteDSLTemplate(KernelTemplate):
     kernel_type: type[Any] = CuteDSLTemplateKernel
     caller_type: type[Any] | None = None
     index_counter = itertools.count()
-    all_templates: dict[str, "CuteDSLTemplate"] = {}
+    all_templates: dict[str, CuteDSLTemplate] = {}
 
     def __init__(
         self,
@@ -192,7 +192,7 @@ class CuteDSLTemplateCaller(ChoiceCaller):
         layout: Layout,
         make_kernel_render: Any,
         bmreq: CuteDSLBenchmarkRequest,
-        template: "CuteDSLTemplate",
+        template: CuteDSLTemplate,
         mutated_inputs: Iterable[IRNode] | None = None,
         template_kwargs: dict[str, Any] | None = None,
     ):

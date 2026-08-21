@@ -11,7 +11,6 @@ The workflow is:
    for the specific kernel to be ready, then runs it with autotuning
 """
 
-from __future__ import annotations
 
 import dataclasses
 import logging

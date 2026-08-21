@@ -1,7 +1,6 @@
 # Copyright (c) 2025, Wentao Guo, Ted Zadouri, Tri Dao.
 
 import math
-from typing import Optional, Tuple, Union
 
 import cutlass
 import cutlass.cute as cute
@@ -122,7 +121,7 @@ def store_shared_remote_x4(
 
 
 @dsl_user_op
-def fmin(a: Union[float, Float32], b: Union[float, Float32], *, loc=None, ip=None) -> Float32:
+def fmin(a: float | Float32, b: float | Float32, *, loc=None, ip=None) -> Float32:
     if cutlass.const_expr(cutlass.CUDA_VERSION.major) == 12:
         return Float32(
             nvvm.fmin(
@@ -172,7 +171,7 @@ def ceil(a: float | Float32, *, loc=None, ip=None) -> Int32:
 
 
 @cute.jit
-def fill_oob(tXsX: cute.Tensor, tXpX: Optional[cute.Tensor], fill_value: cute.Numeric) -> None:
+def fill_oob(tXsX: cute.Tensor, tXpX: cute.Tensor | None, fill_value: cute.Numeric) -> None:
     """Fill out-of-bounds values in shared memory tensor.
 
     Args:
@@ -232,7 +231,7 @@ def f32x2_to_i64(a: Float32, b: Float32, *, loc=None, ip=None) -> cutlass.Int64:
 
 
 @dsl_user_op
-def i64_to_f32x2(c: cutlass.Int64, *, loc=None, ip=None) -> Tuple[Float32, Float32]:
+def i64_to_f32x2(c: cutlass.Int64, *, loc=None, ip=None) -> tuple[Float32, Float32]:
     vec_i64x1 = vector.from_elements(T.vector(1, T.i64()), (c.ir_value(),), loc=loc, ip=ip)
     vec_f32x2 = vector.bitcast(T.vector(2, T.f32()), vec_i64x1)
     res0 = Float32(
@@ -245,7 +244,7 @@ def i64_to_f32x2(c: cutlass.Int64, *, loc=None, ip=None) -> Tuple[Float32, Float
 
 
 @cute.jit
-def warp_prefix_sum(val: Int32, lane: Optional[Int32] = None) -> Int32:
+def warp_prefix_sum(val: Int32, lane: Int32 | None = None) -> Int32:
     if const_expr(lane is None):
         lane = cute.arch.lane_idx()
     for i in cutlass.range_constexpr(int(math.log2(cute.arch.WARP_SIZE))):

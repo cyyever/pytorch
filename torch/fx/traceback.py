@@ -100,9 +100,9 @@ class NodeSource:
             self.graph_id = graph_id
 
     pass_name: str
-    action: list["NodeSourceAction"]
-    from_node: list["NodeSource"]
-    node_info: Optional["NodeInfo"]
+    action: list[NodeSourceAction]
+    from_node: list[NodeSource]
+    node_info: Optional[NodeInfo]
     _dict: dict[str, Any] | None
     _action_string: str | None
 
@@ -110,7 +110,7 @@ class NodeSource:
         self,
         node: Node | None,
         pass_name: str = "",
-        action: Union["NodeSourceAction", list["NodeSourceAction"]] | None = None,
+        action: Union[NodeSourceAction, list[NodeSourceAction]] | None = None,
     ) -> None:
         self.pass_name = pass_name
 
@@ -208,7 +208,7 @@ class NodeSource:
         return hash(_make_hashable(self.to_dict()))
 
     @classmethod
-    def _from_dict(cls, d: dict[str, Any] | None) -> Optional["NodeSource"]:
+    def _from_dict(cls, d: dict[str, Any] | None) -> Optional[NodeSource]:
         """
         Recursively deserialize from_node metadata from dictionary data.
         It is used to deserialize the from_node field from serialized metadata.

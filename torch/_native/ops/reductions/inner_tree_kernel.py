@@ -41,7 +41,6 @@ number of loads contributes zeros for the extra loads; zeros are additive
 identities, so this reproduces the ragged CUDA loop bit-for-bit.
 """
 
-from __future__ import annotations
 
 from typing import NamedTuple, TYPE_CHECKING
 

@@ -7,7 +7,7 @@ import inspect
 import warnings
 from collections.abc import Callable, Sequence
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.distributed.tensor._dispatch as op_dispatch
@@ -103,7 +103,7 @@ class _ToTorchTensor(torch.autograd.Function):
     @staticmethod
     def forward(  # type: ignore[override]
         ctx,
-        input: "DTensor",
+        input: DTensor,
         grad_placements: Sequence[Placement] | None,
     ):
         ctx.dtensor_spec = input._spec
@@ -231,7 +231,7 @@ class _FromTorchTensor(torch.autograd.Function):
         shape: torch.Size | None = None,
         stride: tuple[int, ...] | None = None,
         grad_placements: tuple[Placement, ...] | None = None,
-    ) -> "DTensor":
+    ) -> DTensor:
         ctx.forward_input_placements = placements
         ctx.forward_input_device_mesh = device_mesh
         ctx.grad_placements = grad_placements
@@ -295,7 +295,7 @@ class _FromTorchTensor(torch.autograd.Function):
         return dist_tensor
 
     @staticmethod
-    def backward(ctx, grad_output: "DTensor | None"):  # type: ignore[override]
+    def backward(ctx, grad_output: DTensor | None):  # type: ignore[override]
         forward_input_placements = ctx.forward_input_placements
         forward_input_device_mesh = ctx.forward_input_device_mesh
         grad_placements = ctx.grad_placements
@@ -390,7 +390,7 @@ class DTensor(torch.Tensor):
         spec: DTensorSpec,
         *,
         requires_grad: bool,
-    ) -> "DTensor":
+    ) -> DTensor:
         r = torch.Tensor._dtensor__new__(
             cls, local_tensor, spec, requires_grad=requires_grad
         )
@@ -525,7 +525,7 @@ class DTensor(torch.Tensor):
         shape: torch.Size | None = None,
         stride: tuple[int, ...] | None = None,
         grad_placements: Sequence[Placement] | None = None,
-    ) -> "DTensor":
+    ) -> DTensor:
         """
         Create a :class:`DTensor` from a local torch.Tensor on each rank
         according to the ``device_mesh`` and ``placements`` specified.
@@ -715,7 +715,7 @@ class DTensor(torch.Tensor):
         async_op: bool = False,
         forward_dtype: torch.dtype | None = None,
         backward_dtype: torch.dtype | None = None,
-    ) -> "DTensor":
+    ) -> DTensor:
         """
         ``redistribute`` performs necessary collective operations that redistribute the current
         DTensor from its current placements to a new placements, or from its current DeviceMesh
@@ -1115,7 +1115,7 @@ def _shard_tensor(
     full_tensor: torch.Tensor,
     placements: Sequence[Shard],
     device_mesh: DeviceMesh | None = None,
-) -> "DTensor":
+) -> DTensor:
     """
     Locally shards a full tensor based on indicated sharding arrangement, and
     returns a DTensor containing the local shard.

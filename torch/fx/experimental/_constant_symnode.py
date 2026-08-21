@@ -26,7 +26,7 @@ class ConstantIntNode:
     def is_nested_int(self) -> bool:
         return False
 
-    def clone(self) -> "ConstantIntNode":
+    def clone(self) -> ConstantIntNode:
         return self
 
     def _str(self) -> str:

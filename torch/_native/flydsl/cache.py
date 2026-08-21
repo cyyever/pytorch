@@ -21,7 +21,6 @@ a caller that sweeps a specialization parameter over an open range should
 a decorated method: ``self`` joins the key, so the instance stays alive too.
 """
 
-from __future__ import annotations
 
 import functools
 from collections import namedtuple

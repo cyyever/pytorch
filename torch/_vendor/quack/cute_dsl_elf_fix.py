@@ -66,7 +66,7 @@ def patch() -> None:
         self.enable_tvm_ffi = enable_tvm_ffi
         assert self.load_provider is not None, "Load provider is not set for ExternalBinaryModule."
         shared_libs = self.load_provider.dsl._get_dsl().get_shared_libs()
-        object_file_content = bytes()
+        object_file_content = b''
         if file_path.endswith(".so"):
             shared_libs.append(file_path)
         else:

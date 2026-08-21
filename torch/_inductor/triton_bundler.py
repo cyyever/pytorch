@@ -55,7 +55,7 @@ class StaticallyLaunchedAutotuner:
 
     cache_key: str
     kernel_name: str
-    kernel: "CachingAutotuner"  # type: ignore[name-defined] # noqa: F821
+    kernel: CachingAutotuner  # type: ignore[name-defined] # noqa: F821
 
 
 @dataclasses.dataclass(frozen=True)
@@ -182,7 +182,7 @@ class TritonBundler:
             cls._winners.add(kernel_hash)
 
     @classmethod
-    def put_static_autotuner(cls, key: str, kernel: "CachingAutotuner") -> None:  # type: ignore[name-defined] # noqa: F821
+    def put_static_autotuner(cls, key: str, kernel: CachingAutotuner) -> None:  # type: ignore[name-defined] # noqa: F821
         from torch._inductor import config
 
         if not config.use_static_triton_launcher:

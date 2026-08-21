@@ -30,7 +30,7 @@ class GemmEpilogueIRExpression:
     args: tuple[Any, ...]
     kwargs: tuple[tuple[str, Any], ...] = ()
     loads: frozenset[str] = frozenset()
-    reductions: tuple["GemmEpilogueIRReduction", ...] = ()
+    reductions: tuple[GemmEpilogueIRReduction, ...] = ()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -206,7 +206,7 @@ class GemmEpilogueIRAnalysis:
     @classmethod
     def from_buffers(
         cls, buffers: Sequence[ComputedBuffer]
-    ) -> "GemmEpilogueIRAnalysis":
+    ) -> GemmEpilogueIRAnalysis:
         handler = _GemmEpilogueIRHandler()
         with V.set_ops_handler(handler):
             for buffer in buffers:

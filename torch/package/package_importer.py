@@ -324,7 +324,7 @@ class PackageImporter(Importer):
         return self._mangler.parent_name()
 
     def file_structure(
-        self, *, include: "GlobPattern" = "**", exclude: "GlobPattern" = ()
+        self, *, include: GlobPattern = "**", exclude: GlobPattern = ()
     ) -> Directory:
         """Returns a file structure representation of package's zipfile.
 
@@ -652,7 +652,7 @@ class PackageImporter(Importer):
         else:
             return f"{name.replace('.', '/')}"
 
-    def _get_or_create_package(self, atoms: list[str]) -> "_PackageNode | _ExternNode":
+    def _get_or_create_package(self, atoms: list[str]) -> _PackageNode | _ExternNode:
         cur = self.root
         for i, atom in enumerate(atoms):
             node = cur.children.get(atom, None)

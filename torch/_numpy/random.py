@@ -6,7 +6,6 @@ Q: default dtype is float64 in numpy
 
 """
 
-from __future__ import annotations
 
 import functools
 from math import sqrt

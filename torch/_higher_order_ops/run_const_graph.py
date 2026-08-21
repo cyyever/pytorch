@@ -47,7 +47,7 @@ def run_const_graph_dispatch_mode(
 
 @run_const_graph.py_functionalize_impl
 def run_const_graph_functional(
-    ctx: "BaseFunctionalizeAPI", graph: torch.fx.GraphModule, args: tuple[Any, ...]
+    ctx: BaseFunctionalizeAPI, graph: torch.fx.GraphModule, args: tuple[Any, ...]
 ) -> Any:
     unwrapped_args = ctx.unwrap_tensors(args)
 
