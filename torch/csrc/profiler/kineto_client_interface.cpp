@@ -52,6 +52,8 @@ class LibKinetoClient : public libkineto::ClientInterface {
     enableProfiler(cfg, activities, scopes);
   }
 
+  void init() override {}
+
   void stop() override {
     (void)disableProfiler();
   }
