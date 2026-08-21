@@ -29,7 +29,6 @@ from .freezing_patterns import register_freezing_graph_pattern
 from .post_grad import register_lowering_pattern
 from .quantization import (
     _register_int8_woq_concat_linear_pattern,
-    _register_quantization_lowerings,
     _register_woq_lowerings,
 )
 
@@ -1625,8 +1624,6 @@ if torch._C._has_mkldnn:
             _register_inplace_fusion()
             _register_binary_unary_fusion()
             _register_binary_fusion()
-            _register_quantization_lowerings()
-
         _register_woq_lowerings()
 
     @functools.cache

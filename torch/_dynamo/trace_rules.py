@@ -3281,12 +3281,6 @@ LEGACY_MOD_INLINELIST = {
     "torch._library.fake_class_registry",
     "torch.utils._typing_utils",
     "torch.nn.attention.flex_attention",
-    "torch.ao.quantization.stubs",
-    "torch.ao.quantization.pt2e.export_utils",
-    "torch.ao.quantization.pt2e.qat_utils",
-    "torch.ao.quantization.pt2e.representation.rewrite",
-    "torch.ao.quantization.pt2e.utils",
-    "torch.ao.quantization.quantizer.xnnpack_quantizer",
     "torch.export.unflatten",
 }
 
@@ -3334,8 +3328,6 @@ MOD_INLINELIST = [
     "torch._refs",
     "torch._tensor",
     "torch.amp.autocast_mode",
-    "torch.ao.nn",
-    "torch.ao.quantization.fx._decomposed",
     "torch.autograd.function",
     "torch.backends.cuda",
     "torch.cuda.amp.autocast_mode",
@@ -3445,7 +3437,6 @@ MOD_SKIPLIST = [
     "torch._weights_only_unpickler",
     "torch.accelerator",
     "torch.amp",
-    "torch.ao",
     "torch.autograd",
     "torch.backends",
     "torch.compiler",
@@ -3762,7 +3753,7 @@ def check_verbose(
         if (
             module is not None
             and isinstance(module, torch.nn.Module)
-            and module.__class__.__module__.startswith(("torch.nn.", "torch.ao."))
+            and module.__class__.__module__.startswith("torch.nn.")
             and nnmodule_has_hooks(module, check_forward_hooks=True)
         ):
             return SkipResult(

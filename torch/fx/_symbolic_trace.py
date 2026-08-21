@@ -513,7 +513,7 @@ class Tracer(TracerBase):
         """
         return (
             m.__module__.startswith("torch.nn")
-            or m.__module__.startswith("torch.ao.nn")
+           
         ) and not isinstance(m, torch.nn.Sequential)
 
     @compatibility(is_backward_compatible=True)

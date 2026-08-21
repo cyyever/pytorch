@@ -1637,7 +1637,6 @@ class PythonWrapperCodegen(CodeGen):
             """
                 aten = torch.ops.aten
                 inductor_ops = torch.ops.inductor
-                _quantized = torch.ops._quantized
                 assert_size_stride = torch._C._dynamo.guards.assert_size_stride
                 assert_size_stride_grouped = torch._C._dynamo.guards.assert_size_stride_grouped
                 assert_alignment = torch._C._dynamo.guards.assert_alignment

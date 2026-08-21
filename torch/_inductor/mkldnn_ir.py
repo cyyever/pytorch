@@ -1379,7 +1379,7 @@ class WeightInt4PackMatmul(ExternKernelAlloc):
             inputs,
             constant_args,
             None,
-            op_overload=(torch.ops.quantized.int4mm_packed_weight_cpu.default),
+            op_overload=(torch.ops.aten._weight_int4pack_mm_for_cpu.default),
             cpp_kernel_name=("aoti_torch_cpu__weight_int4pack_mm_cpu_tensor"),
         )
 

@@ -2726,17 +2726,6 @@ from torch import (
 from torch.signal import windows as windows
 
 
-# Quantized, sparse, AO, etc. should be last to get imported, as nothing
-# is expected to depend on them.
-from torch import ao as ao  # usort: skip
-
-# nn.quant* depends on ao -- so should be after those.
-import torch.nn.intrinsic
-import torch.nn.qat
-import torch.nn.quantizable
-import torch.nn.quantized
-
-
 _C._init_names(list(_storage_classes))
 
 # attach docstrings to torch and tensor functions
@@ -2766,9 +2755,6 @@ if hasattr(torch._C, "_c10d_init"):
 
     _register_process_group_opaque_type()
     del _register_process_group_opaque_type
-
-# quantization depends on torch.fx and torch.ops
-# Import quantization
 
 # Import the quasi random sampler
 from torch import quasirandom as quasirandom  # usort: skip

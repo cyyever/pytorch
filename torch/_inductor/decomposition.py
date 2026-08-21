@@ -11,7 +11,6 @@ from typing_extensions import ParamSpec
 import torch
 import torch._decomp as decomp
 import torch._prims_common as utils
-import torch.ao.quantization.fx._decomposed
 from torch._decomp import (
     core_aten_decompositions,
     get_decompositions,
@@ -58,9 +57,6 @@ _GenericOperator: TypeAlias = torch._ops.OperatorBase | torch._ops.OpOverloadPac
 log = logging.getLogger(__name__)
 aten = torch.ops.aten
 prims = torch.ops.prims
-quantized = torch.ops.quantized
-_quantized = torch.ops._quantized
-quantized_decomposed = torch.ops.quantized_decomposed
 
 inductor_decompositions = get_decompositions(
     [
@@ -107,8 +103,6 @@ inductor_decompositions = get_decompositions(
         aten.unbind_copy.int,
         aten.upsample_bilinear2d.vec,
         aten.hann_window,
-        quantized.linear_dynamic_fp16_unpacked_weight,
-        _quantized.wrapped_quantized_linear,
     ]
 )
 decompositions = {**core_aten_decompositions(), **inductor_decompositions}
@@ -966,59 +960,6 @@ def uniform(
     return res.as_strided(shape, stride)
 
 
-@register_decomposition(quantized.linear_dynamic_fp16_unpacked_weight.default)
-def linear_dynamic_fp16_unpacked_weight(
-    input: torch.Tensor,
-    weight: torch.Tensor,
-    bias: torch.Tensor | None = None,
-) -> torch.Tensor:
-    packed_weight = torch.ops._quantized.wrapped_fbgemm_pack_gemm_matrix_fp16(weight)
-    return torch.ops._quantized.wrapped_fbgemm_linear_fp16_weight(
-        input, packed_weight, bias, weight.size()[0]
-    )
-
-
-@register_decomposition(_quantized.wrapped_quantized_linear.default)
-def wrapped_quantized_linear(
-    input: torch.Tensor,
-    input_scale: torch.Tensor,
-    input_zero_point: torch.Tensor,
-    weight: torch.Tensor,
-    weight_scale: torch.Tensor,
-    weight_zero_point: torch.Tensor,
-    bias: torch.Tensor,
-    out_scale: torch.Tensor,
-    out_zero_point: torch.Tensor,
-    out_channel: int,
-) -> torch.Tensor:
-    packed_weight = torch.ops._quantized._wrapped_linear_prepack(
-        weight, weight_scale, weight_zero_point, bias
-    )
-    return torch.ops._quantized._wrapped_quantized_linear_prepacked(
-        input,
-        input_scale,
-        input_zero_point,
-        packed_weight,
-        out_scale,
-        out_zero_point,
-        out_channel,
-    )
-
-
-@register_decomposition(torch.ops.quantized.embedding_bag_byte_unpack)
-def q_embedding_bag_byte_unpack_decomp(packed: torch.Tensor) -> torch.Tensor:
-    def bitcast_u8_to_f32(u8: torch.Tensor) -> torch.Tensor:
-        x, y, z, w = (u8[..., n].to(torch.int32) for n in (0, 1, 2, 3))
-        if sys.byteorder == "little":
-            return (x + (y << 8) + (z << 16) + (w << 24)).view(torch.float32)[..., None]
-        else:
-            return ((x << 24) + (y << 16) + (z << 8) + w).view(torch.float32)[..., None]
-
-    scales = bitcast_u8_to_f32(packed[..., -8:-4])
-    offsets = bitcast_u8_to_f32(packed[..., -4:])
-    return packed[..., :-8].to(torch.float32) * scales + offsets
-
-
 @register_decomposition([aten.grid_sampler_2d])
 @pw_cast_for_opmath
 def grid_sampler_2d(
@@ -1187,10 +1128,6 @@ def select_decomp_table() -> dict[Any, Callable[..., Any]]:
     """decomps can change based on config"""
     if config.fallback_random:
         return decompositions
-    if config.fallback_embedding_bag_byte_unpack:
-        # remove q_embedding_bag_byte_unpack_decomp from decompositions
-        decompositions.pop(torch.ops.quantized.embedding_bag_byte_unpack.default, None)
-        return decompositions
     result = fast_random_decomps()
     return result
 
@@ -1212,22 +1149,6 @@ def masked_scatter(
         result = aten._unsafe_masked_index(source_flat, mask_flat, [source_idx], 0)
         return torch.where(mask_flat, result, self_flat).view(self.shape)
     return NotImplemented
-
-
-@register_decomposition(quantized_decomposed.choose_qparams.tensor)
-def choose_qparams_tensor(
-    input: torch.Tensor,
-    quant_min: int,
-    quant_max: int,
-    eps: float,
-    dtype: torch.dtype,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    min_val, max_val = torch.aminmax(input)
-    scale = (max_val - min_val) / float(quant_max - quant_min)
-    scale = torch.max(scale, torch.Tensor([eps]))
-    zero_point = quant_min - torch.round(min_val / scale).to(torch.int)
-    zero_point = torch.clamp(zero_point, quant_min, quant_max)
-    return scale.to(torch.float64), zero_point.to(torch.int64)
 
 
 @register_decomposition(aten.put)

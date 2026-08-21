@@ -941,8 +941,6 @@ fallback_random = False
 # align random/dropout as eager mode(aten) behavior, maintaining fused possibility and faster gpu kernel
 align_random_eager = False
 
-# fallback embedding_bag_byte_unpack to eager
-fallback_embedding_bag_byte_unpack = False
 
 # automatically create fallbacks when encountering an unhandled op
 implicit_fallbacks = True

@@ -2676,7 +2676,7 @@ class VariableBuilder:
                 self.tx.output.nn_modules[self.name] = value
 
             if (
-                value.__module__.startswith(("torch.nn.modules", "torch.ao."))
+                value.__module__.startswith("torch.nn.modules")
                 and not value.__module__.startswith("torch.nn.modules.container")
             ) or getattr(value.__class__, "_dynamo_marked_static", False):
                 new_source = self.source
