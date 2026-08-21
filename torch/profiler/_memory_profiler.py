@@ -259,48 +259,91 @@ class SchemaMatcher:
         )
 
         def matches(schema) -> bool:
-            return len(schema.arguments) == len(signature) and all(
-                cls._types_match(observed, schema_arg.type)
-                for observed, schema_arg in zip(
-                    signature, schema.arguments, strict=True
-                )
+            type_strs = _argument_type_strs(str(schema))
+            return len(type_strs) == len(signature) and all(
+                _types_match(observed, ty)
+                for observed, ty in zip(signature, type_strs, strict=True)
             )
 
         return tuple(s for s in cls.lookup_schemas(t.name) or () if matches(s))
 
-    @classmethod
-    def _types_match(cls, observed, schema_type) -> bool:
-        if isinstance(schema_type, torch._C.OptionalType):
-            schema_type = schema_type.getElementType()
-            return observed is None or cls._types_match(observed, schema_type)
 
-        if isinstance(schema_type, torch._C.AnyType):
-            return True
+def _argument_type_strs(schema_str: str) -> list[str]:
+    # The JitType python bindings no longer exist, so argument types are
+    # recovered from the schema's string form instead of Argument.type.
+    start = schema_str.index("(")
+    depth = 0
+    end = len(schema_str)
+    for i, c in enumerate(schema_str[start:], start):
+        if c == "(":
+            depth += 1
+        elif c == ")":
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+    inner = schema_str[start + 1 : end]
 
-        if schema_type.isSubtypeOf(torch._C.ListType.ofTensors()):
-            return isinstance(observed, list) and all(
-                isinstance(i, TensorKey) for i in observed
-            )
+    args = []
+    depth = 0
+    cur = []
+    for c in inner:
+        if c in "([":
+            depth += 1
+        elif c in ")]":
+            depth -= 1
+        if c == "," and depth == 0:
+            args.append("".join(cur))
+            cur = []
+        else:
+            cur.append(c)
+    if cur:
+        args.append("".join(cur))
 
-        type_map: tuple[tuple[Any, type | tuple[type, ...]], ...] = (
-            (torch._C.TensorType, TensorKey),
-            (torch._C.NoneType, type(None)),
-            (torch._C.BoolType, bool),
-            (torch._C.IntType, int),
-            (torch._C.FloatType, float),
-            (torch._C.ComplexType, complex),
-            (torch._C.NumberType, (bool, int, float, complex)),
+    out = []
+    for arg in args:
+        # Drop the name, alias annotation and default; keep the type token.
+        token = arg.strip().split(" ")[0]
+        token = token.split("(")[0] or token
+        token = token.split("=")[0] or token
+        out.append(token)
+    return out
+
+
+def _types_match(observed: Any, ty: str) -> bool:
+    if ty.endswith("?"):
+        return observed is None or _types_match(observed, ty[:-1])
+    if ty.startswith("Optional["):
+        return observed is None or _types_match(observed, ty[len("Optional[") : -1])
+
+    if ty in ("Any", "PyObject"):
+        return True
+    if ty in ("List(Tensor)", "Tensor[]"):
+        return isinstance(observed, list) and all(
+            isinstance(i, TensorKey) for i in observed
         )
 
-        for jit_type, py_types in type_map:
-            if isinstance(schema_type, jit_type):
-                return isinstance(observed, py_types)
+    type_map: tuple[tuple[str, type | tuple[type, ...]], ...] = (
+        ("Tensor", TensorKey),
+        ("None", type(None)),
+        ("bool", bool),
+        ("int", int),
+        ("float", float),
+        ("complex", complex),
+        ("str", str),
+        ("Scalar", (bool, int, float, complex)),
+        ("SymInt", int),
+        ("number", (bool, int, float, complex)),
+    )
+    for ty_str, py_types in type_map:
+        if ty == ty_str:
+            return isinstance(observed, py_types)
 
-        # Profiler only records a subset of possible argument types. If we
-        # reach this point then the schema must call for a type that profiler
-        # does not record. Thus, the schema can only be a match if `observed`
-        # is also None.
-        return observed is None
+    # Profiler only records a subset of possible argument types. If we
+    # reach this point then the schema must call for a type that profiler
+    # does not record. Thus, the schema can only be a match if `observed`
+    # is also None.
+    return observed is None
 
     @staticmethod
     def lookup_schemas(name: str) -> tuple[FunctionSchema, ...] | None:

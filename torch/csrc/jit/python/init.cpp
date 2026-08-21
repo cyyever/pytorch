@@ -170,11 +170,6 @@ void initJITBindings(PyObject* module) {
                 ten.storage().unsafeGetStorageImpl());
           })
       .def(
-          "_jit_try_infer_type",
-          [](py::object obj) -> InferredType {
-            return tryToInferType(std::move(obj));
-          })
-      .def(
           "_jit_set_utf8_decoding_ignore",
           &setUTF8DecodingIgnore)
       .def("_is_tracing", []() { return jit::tracer::isTracing(); });
@@ -1033,10 +1028,6 @@ void initJITBindings(PyObject* module) {
             });
       },
       py::call_guard<py::gil_scoped_release>());
-
-  m.def("_jit_assert_is_instance", [](py::object obj, const TypePtr& type) {
-    toIValue(std::move(obj), type);
-  });
 
 #if defined(C10_SUPPORTS_FATAL_SIGNAL_HANDLERS)
   m.def("_set_print_stack_traces_on_fatal_signal", [](bool print) {

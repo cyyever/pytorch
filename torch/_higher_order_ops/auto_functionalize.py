@@ -662,10 +662,12 @@ def do_auto_functionalize_v2(
     if not isinstance(op, get_args(_MutableOpType)):
         raise AssertionError(f"Expected _MutableOpType, got {type(op)}")
 
+    # Generated HOP schemas record Any-typed args by name; Argument.type is
+    # not accessible from Python any more.
     subgraph_arg_names = {
         arg_info.name
         for arg_info in schema.arguments
-        if isinstance(arg_info.type, torch._C.AnyType)
+        if arg_info.name in getattr(schema, "any_arg_names", ())
     }
 
     def _maybe_functionalize(name: str, arg: Any) -> Any:
@@ -1196,7 +1198,7 @@ def auto_functionalized_v2_proxy(
         subgraph_arg_names = {
             arg_info.name
             for arg_info in schema.arguments
-            if isinstance(arg_info.type, torch._C.AnyType)
+            if arg_info.name in getattr(schema, "any_arg_names", ())
         }
         for k, v in kwargs.items():
             if k in subgraph_arg_names and callable(v):
