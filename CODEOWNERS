@@ -919,8 +919,6 @@
 # /test/distributed/
 # /torch/csrc/distributed/
 # /torch/distributed/
-/torch/csrc/distributed/rpc/tensorpipe_agent.cpp @jiayisuse @lw
-/torch/csrc/distributed/rpc/tensorpipe_agent.h @jiayisuse @lw
 /torch/csrc/distributed/c10d/ @d4l3k @fduwjj @kapilsh
 /torch/csrc/distributed/c10d/Backend.* @kwen2501
 /torch/csrc/distributed/c10d/Ops.* @kwen2501
