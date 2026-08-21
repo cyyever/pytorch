@@ -25,7 +25,6 @@ std::optional<c10::DeviceType> getAccelerator(bool checked) {
     return k##device_name;                          \
   }
 
-  DETECT_RUNTIME_ACCELERATOR(MTIA)
 
 #undef DETECT_RUNTIME_ACCELERATOR
 
@@ -58,7 +57,6 @@ std::optional<c10::DeviceType> getAccelerator(bool checked) {
 bool isAccelerator(c10::DeviceType device_type) {
   switch (device_type) {
     case at::kCUDA:
-    case at::kMTIA:
     case at::kXPU:
     case at::kHIP:
     case at::kMPS:
