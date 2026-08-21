@@ -250,7 +250,6 @@ class ModelReportObserver(ObserverBase):
 
         return x_copy
 
-    @torch.jit.export
     def get_batch_to_epoch_ratio(self):
         epoch_activation_range = self.epoch_activation_max - self.epoch_activation_min
 
@@ -263,7 +262,6 @@ class ModelReportObserver(ObserverBase):
         else:
             return self.average_batch_activation_range / epoch_activation_range
 
-    @torch.jit.export
     def reset_batch_and_epoch_values(self):
         # set all the values back to their original defaults for a new epoch
         # keep device
@@ -278,7 +276,6 @@ class ModelReportObserver(ObserverBase):
         self.percentile_batches_tracked = torch.tensor([], device=device)
         self.constant_channels = torch.tensor([], device=device)
 
-    @torch.jit.export
     def calculate_qparams(self):  # type: ignore[override]
         raise Exception(  # noqa: TRY002
             "calculate_qparams should not be called for ModelReportObserver"

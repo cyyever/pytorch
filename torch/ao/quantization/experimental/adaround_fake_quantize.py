@@ -61,11 +61,9 @@ class AdaroundFakeQuantizer(FakeQuantize):
         self.sigmoid = torch.nn.Sigmoid()
         self.use_soft_rounding = True
 
-    @torch.jit.export
     def calculate_qparams(self) -> tuple[torch.Tensor, torch.Tensor]:  # type: ignore[override]
         return self.scale, self.zero_point
 
-    @torch.jit.export
     def extra_repr(self) -> str:
         return (
             f"fake_quant_enabled={self.fake_quant_enabled}, observer_enabled={self.observer_enabled}, "
@@ -88,7 +86,6 @@ class AdaroundFakeQuantizer(FakeQuantize):
             # This will dump a binary solution
             return (self.V >= 0).int()
 
-    @torch.jit.ignore
     def update_scale(
         self, X: torch.Tensor, _scale: torch.Tensor, _zero_point: torch.Tensor
     ) -> None:

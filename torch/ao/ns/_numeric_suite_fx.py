@@ -585,10 +585,7 @@ def _extract_logger_info_one_model(
     )
     for _gm_name, mod in model.named_modules():
         # TODO(future PR): better check when scripted
-        is_logger = isinstance(mod, logger_cls) or (  # type: ignore[arg-type]
-            isinstance(mod, torch.jit.RecursiveScriptModule)
-            and mod.original_name == "OutputLogger"
-        )
+        is_logger = isinstance(mod, logger_cls)  # type: ignore[arg-type]
         if is_logger:
             key = mod.ref_name
             if key not in results:

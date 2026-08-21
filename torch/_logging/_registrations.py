@@ -60,7 +60,6 @@ register_log(
         "torch.export",
         "torch.export.dynamic_shapes",
         *DYNAMIC,
-        "torch._export.converter",
         "torch._export.non_strict_utils",
         "torch._export.serde.serialize",
         "torch.fx.experimental.proxy_tensor",

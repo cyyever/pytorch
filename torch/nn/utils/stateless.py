@@ -250,18 +250,7 @@ def _functional_call(
     strict: bool = False,
 ):
     # TODO allow kwargs such as unsafe and others for parametrization
-    if (
-        torch.jit.is_tracing()
-        or torch.jit.is_scripting()
-        or isinstance(
-            module,
-            (
-                torch.jit.RecursiveScriptModule,
-                torch.jit.ScriptModule,
-                torch.jit.ScriptFunction,
-            ),
-        )
-    ):
+    if torch.jit.is_tracing() or torch.jit.is_scripting():
         raise RuntimeError("The stateless API can't be used with Jitted modules")
     if isinstance(module, torch.nn.DataParallel):
         raise RuntimeError(

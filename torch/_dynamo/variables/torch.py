@@ -1760,12 +1760,6 @@ class TorchInGraphFunctionVariable(BaseTorchVariable):
                 example_value=None,
             )
 
-        @register(torch.jit.annotate)
-        def handle_jit_annotate(
-            self, tx: "InstructionTranslatorBase", the_type: Any, the_value: V
-        ) -> V:
-            return the_value
-
         @register(torch.backends.cudnn.is_acceptable)
         def handle_cudnn_is_acceptable(
             self, tx: "InstructionTranslatorBase", tensor: Any, *extra: Any

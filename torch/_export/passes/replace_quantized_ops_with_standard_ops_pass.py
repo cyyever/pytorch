@@ -16,6 +16,26 @@ from torch.fx.graph_module import _assign_attr
 
 log = logging.getLogger(__name__)
 
+# Mirrors the ScalarType enum values in ATen Core.
+_TORCH_DTYPE_TO_ENUM = {
+    torch.uint8: 0,
+    torch.int8: 1,
+    torch.int16: 2,
+    torch.int32: 3,
+    torch.int64: 4,
+    torch.float16: 5,
+    torch.float32: 6,
+    torch.float64: 7,
+    torch.complex32: 8,
+    torch.complex64: 9,
+    torch.complex128: 10,
+    torch.bool: 11,
+    torch.qint8: 12,
+    torch.quint8: 13,
+    torch.bfloat16: 15,
+}
+_TORCH_ENUM_TO_DTYPE = {value: key for key, value in _TORCH_DTYPE_TO_ENUM.items()}
+
 # Those values will need to be carried over multiple operators.
 _INPUT_Q_DTYPE: torch.dtype | torch.fx.Node | None = None
 _SCALE: float | torch.fx.Node | None = None
@@ -23,8 +43,6 @@ _ZERO_POINT: float | torch.fx.Node | None = None
 
 
 def int_to_valid_dtype(val: int) -> torch.dtype:
-    from torch._export.converter import _TORCH_ENUM_TO_DTYPE  # No circular import.
-
     if isinstance(val, torch.dtype):
         return val
     dtype = _TORCH_ENUM_TO_DTYPE[val]

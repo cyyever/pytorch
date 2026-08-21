@@ -1329,6 +1329,9 @@ def _get_named_tuple_properties(
                         f" Issue occurred at {loc.highlight()}"
                     )
                 field_type = rcb_type
+            # torch.jit.annotations was removed with TorchScript; this path is
+            # only reachable from the script compiler.
+            # pyrefly: ignore [missing-attribute]
             the_type = torch.jit.annotations.ann_to_type(field_type, loc, rcb)
             annotations.append(the_type)
         else:
@@ -1551,12 +1554,8 @@ def _extract_tensors(obj):
 
 
 def _get_model_id(obj) -> str | None:
-    if isinstance(obj, torch.jit.ScriptModule):
-        return str(obj._c._type())
-    elif isinstance(obj, torch.jit.ScriptFunction):
-        return obj.qualified_name
-    else:
-        return None
+    # ScriptModules and ScriptFunctions no longer exist.
+    return None
 
 
 # In Python-3.11+ typed enums (i.e. IntEnum for example) retain number of base class methods in subclass

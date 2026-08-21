@@ -8,7 +8,6 @@ Key Debugging Backends:
 - eager_debug: Adds schema validation checks for custom operators
 - aot_eager: Uses AOT Autograd with nop compiler for debugging
 - aot_eager_decomp_partition: Uses TorchInductor decompositions for debugging
-- torchscript: Compiles using TorchScript for debugging JIT-related issues
 
 Testing and Development Tools:
 - Backends for inducing specific errors (compile/runtime/accuracy)
@@ -35,7 +34,6 @@ from functorch.compile import min_cut_rematerialization_partition
 from torch import _guards
 from torch._dynamo.output_graph import GraphCompileReason
 from torch._functorch import config as functorch_config
-from torch._functorch.compilers import ts_compile
 from torch._inductor.output_code import OutputCode
 
 from .common import aot_autograd
@@ -146,15 +144,6 @@ def eager_debug(
             return torch.fx.Interpreter(gm).run(*args)
 
     return inner
-
-
-@register_backend(name="ts")  # type: ignore[misc]
-def torchscript(
-    gm: torch.fx.GraphModule, fake_tensor_inputs: list[torch.Tensor]
-) -> torch.jit.ScriptModule:
-    from torch.fx._lazy_graph_module import _unwrap_lazy_graph_module
-
-    return torch.jit.script(_unwrap_lazy_graph_module(gm))
 
 
 def invoke_subgraph_inner_compiler(
@@ -528,13 +517,6 @@ register_backend(
     name="aot_eager_decomp_partition_crossref",
     compiler_fn=aot_eager_decomp_partition_crossref,
 )
-
-
-# AOT Autograd with torchscript backend. Default partitioner.
-# aot_ts uses torchscript backend. We can use this with both nnc and nvfuser
-# by using the relevant fuser with torch.jit.fuser(...)
-aot_ts = aot_autograd(fw_compiler=ts_compile)
-register_backend(name="aot_ts", compiler_fn=aot_ts)
 
 # These buggy backends are used for inducing bugs so that we can test
 # our repro extraction / minifier scripts

@@ -28,7 +28,6 @@ class LinearPackedParams(torch.nn.Module):
     def _get_name(self):
         return "SparseQuantizedLinearPackedParams"
 
-    @torch.jit.export
     def set_weight_bias(
         self,
         weight: torch.Tensor,
@@ -45,7 +44,6 @@ class LinearPackedParams(torch.nn.Module):
             weight, bias, row_block_size, col_block_size
         )
 
-    @torch.jit.export
     def _weight_bias(self):
         (weight, bias, block_sizes) = torch.ops.sparse.qlinear_unpack(
             self._packed_params
@@ -90,11 +88,9 @@ class LinearPackedParams(torch.nn.Module):
             error_msgs,
         )
 
-    @torch.jit.export
     def __getstate__(self):
         return self._packed_params, self.training, self.dtype
 
-    @torch.jit.export
     def __setstate__(self, state):
         (self._packed_params, self.training, self.dtype) = state
 

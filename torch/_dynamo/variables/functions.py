@@ -643,7 +643,7 @@ class UserFunctionVariable(BaseUserFunctionVariable):
 
     def __init__(
         self,
-        fn: types.FunctionType | torch.jit.ScriptFunction,  # type: ignore[type-arg]
+        fn: types.FunctionType,
         is_constant: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -656,7 +656,7 @@ class UserFunctionVariable(BaseUserFunctionVariable):
 
         # TODO putting this here to avoid duplication, because we could hit this
         # from several paths (e.g., SuperVariable or `tp_getattro_impl`s).
-        if not isinstance(fn, (types.FunctionType, torch.jit.ScriptFunction)):
+        if not isinstance(fn, types.FunctionType):
             unimplemented(
                 gb_type="can't handle functions not implemented in python ",
                 context=f"{fn}",

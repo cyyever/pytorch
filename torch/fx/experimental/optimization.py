@@ -187,8 +187,6 @@ def modules_to_mkldnn(
     then we do so and create a mapping to allow us to convert from the MKLDNN
     version of the module to the original.
     """
-    # Built lazily so importing this module does not compile any TorchScript
-    # ScriptModule via torch.utils.mkldnn.
     mkldnn_map = {
         nn.Conv2d: th_mkldnn.MkldnnConv2d,
         nn.Linear: th_mkldnn.MkldnnLinear,

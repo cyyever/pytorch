@@ -29,7 +29,6 @@ class LinearPackedParams(torch.nn.Module):
             wq = torch.zeros([1, 1], dtype=torch.float)
         self.set_weight_bias(wq, None)  # type: ignore[possibly-undefined]
 
-    @torch.jit.export
     def set_weight_bias(self, weight: torch.Tensor, bias: torch.Tensor | None) -> None:
         if self.dtype == torch.qint8:
             self._packed_params = torch.ops.quantized.linear_prepack(weight, bias)
@@ -38,7 +37,6 @@ class LinearPackedParams(torch.nn.Module):
         else:
             raise RuntimeError("Unsupported dtype on dynamic quantized linear!")
 
-    @torch.jit.export
     def _weight_bias(self):
         if self.dtype == torch.qint8:
             return torch.ops.quantized.linear_unpack(self._packed_params)

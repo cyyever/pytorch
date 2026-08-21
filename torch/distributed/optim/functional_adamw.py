@@ -57,7 +57,7 @@ class _FunctionalAdamW:
         self.maximize = maximize
         self.foreach = foreach
         self.fused = fused
-        self.state = torch.jit.annotate(dict[torch.Tensor, dict[str, torch.Tensor]], {})
+        self.state = {}
 
         if len(params) == 0 and not _allow_empty_param_list:
             raise ValueError("optimizer got an empty parameter list")

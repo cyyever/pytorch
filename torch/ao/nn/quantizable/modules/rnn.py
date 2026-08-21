@@ -326,8 +326,8 @@ class _LSTMLayer(torch.nn.Module):
             hidden_fw = None
         else:
             hidden_fw = (
-                torch.jit._unwrap_optional(hx_fw),
-                torch.jit._unwrap_optional(cx_fw),
+                hx_fw,
+                cx_fw,
             )
         result_fw, hidden_fw = self.layer_fw(x, hidden_fw)
 
@@ -341,15 +341,15 @@ class _LSTMLayer(torch.nn.Module):
                 h = None
                 c = None
             elif hidden_fw is None:
-                (h, c) = torch.jit._unwrap_optional(hidden_bw)
+                (h, c) = hidden_bw
             elif hidden_bw is None:
-                (h, c) = torch.jit._unwrap_optional(hidden_fw)
+                (h, c) = hidden_fw
             else:
                 h = torch.stack([hidden_fw[0], hidden_bw[0]], 0)  # type: ignore[list-item]
                 c = torch.stack([hidden_fw[1], hidden_bw[1]], 0)  # type: ignore[list-item]
         else:
             result = result_fw
-            h, c = torch.jit._unwrap_optional(hidden_fw)  # type: ignore[assignment]
+            h, c = hidden_fw  # type: ignore[assignment]
 
         if self.batch_first:
             result.transpose_(0, 1)
@@ -536,7 +536,7 @@ class LSTM(torch.nn.Module):
                 )
             hxcx = [(zeros, zeros) for _ in range(self.num_layers)]
         else:
-            hidden_non_opt = torch.jit._unwrap_optional(hidden)
+            hidden_non_opt = hidden
             if isinstance(hidden_non_opt[0], Tensor):
                 hx = hidden_non_opt[0].reshape(
                     self.num_layers, num_directions, max_batch_size, self.hidden_size
@@ -555,8 +555,8 @@ class LSTM(torch.nn.Module):
         cx_list = []
         for idx, layer in enumerate(self.layers):
             x, (h, c) = layer(x, hxcx[idx])
-            hx_list.append(torch.jit._unwrap_optional(h))
-            cx_list.append(torch.jit._unwrap_optional(c))
+            hx_list.append(h)
+            cx_list.append(c)
         hx_tensor = torch.stack(hx_list)
         cx_tensor = torch.stack(cx_list)
 

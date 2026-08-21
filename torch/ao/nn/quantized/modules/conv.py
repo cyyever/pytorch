@@ -165,7 +165,6 @@ class _ConvNd(WeightedQuantizedModule):
         destination[prefix + "scale"] = torch.tensor(self.scale)
         destination[prefix + "zero_point"] = torch.tensor(self.zero_point)
 
-    @torch.jit.export
     def __getstate__(self):
         (w, b) = self._weight_bias()
         return (
@@ -216,7 +215,6 @@ class _ConvNd(WeightedQuantizedModule):
             error_msgs,
         )
 
-    @torch.jit.export
     def __setstate__(self, state):
         self.in_channels = state[0]
         self.out_channels = state[1]
@@ -787,7 +785,7 @@ class _ConvTransposeNd(_ConvNd):
     def _input_padding(
         self, kernel_size: list[int], dilation: list[int], padding: list[int]
     ) -> list[int]:
-        res = torch.jit.annotate(list[int], [])
+        res = []
         for kdx in range(len(kernel_size)):
             pad = dilation[kdx] * (kernel_size[kdx] - 1) - padding[kdx]
             res.append(pad)

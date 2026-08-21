@@ -1358,7 +1358,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
             else nullcontext()
         )
         with ctx:
-            if not isinstance(fn, (types.FunctionType, torch.jit.ScriptFunction)):
+            if not isinstance(fn, types.FunctionType):
                 fn_vt = VariableTracker.build(tx, fn, source=source, realize=True)
                 return fn_vt.call_function(tx, [self] + list(args), kwargs)
             else:

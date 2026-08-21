@@ -300,12 +300,10 @@ class CallgrindStats:
 class Serialization(enum.Enum):
     PICKLE = 0
     TORCH = 1
-    TORCH_JIT = 2
 
 
 _GLOBALS_ALLOWED_TYPES: dict[Serialization, tuple[Any, ...]] = {
     Serialization.PICKLE: (str, bytes, bool, int, float, complex),
-    Serialization.TORCH_JIT: (torch.jit.ScriptFunction, torch.jit.ScriptModule),
     Serialization.TORCH: (torch.nn.Module,),
 }
 
@@ -469,12 +467,6 @@ class GlobalsBridge:
                 # https://dev-discuss.pytorch.org/t/bc-breaking-change-torch-load-is-being-flipped-to-use-weights-only-true-by-default-in-the-nightlies-after-137602/2573
                 load_lines.append(f"{name} = torch.load({repr(path)}, weights_only=False)")
                 torch.save(wrapped_value.value, path)
-
-            elif wrapped_value.serialization == Serialization.TORCH_JIT:
-                path = os.path.join(self._data_dir, f"{name}.pt")
-                load_lines.append(f"{name} = torch.jit.load({repr(path)})")
-                with open(path, "wb") as f:
-                    torch.jit.save(wrapped_value.value, f)  # type: ignore[no-untyped-call]
 
             else:
                 raise NotImplementedError(

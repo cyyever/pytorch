@@ -715,7 +715,7 @@ def max_pool1d_with_indices(
             return_indices=return_indices,
         )
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch.max_pool1d_with_indices(
         input, kernel_size, stride, padding, dilation, ceil_mode
     )
@@ -743,7 +743,7 @@ def _max_pool1d(
             return_indices=return_indices,
         )
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch.max_pool1d(input, kernel_size, stride, padding, dilation, ceil_mode)
 
 
@@ -805,7 +805,7 @@ def max_pool2d_with_indices(
             return_indices=return_indices,
         )
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch._C._nn.max_pool2d_with_indices(
         input, kernel_size, stride, padding, dilation, ceil_mode
     )
@@ -833,7 +833,7 @@ def _max_pool2d(
             return_indices=return_indices,
         )
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch.max_pool2d(input, kernel_size, stride, padding, dilation, ceil_mode)
 
 
@@ -895,7 +895,7 @@ def max_pool3d_with_indices(
             return_indices=return_indices,
         )
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     if not torch.jit.is_scripting():
         if input.is_cuda and torch.are_deterministic_algorithms_enabled():
             return importlib.import_module(
@@ -930,7 +930,7 @@ def _max_pool3d(
             return_indices=return_indices,
         )
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch.max_pool3d(input, kernel_size, stride, padding, dilation, ceil_mode)
 
 
@@ -964,7 +964,7 @@ def _unpool_output_size(
     output_size: list[int] | None,
 ) -> list[int]:
     input_size = input.size()
-    default_size = torch.jit.annotate(list[int], [])
+    default_size = []
     for d in range(len(kernel_size)):
         default_size.append(
             (input_size[-len(kernel_size) + d] - 1) * stride[d]

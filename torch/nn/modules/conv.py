@@ -798,8 +798,8 @@ class _ConvTransposeNd(_ConvNd):
                     f"or {num_non_spatial_dims + num_spatial_dims} elements (got {len(output_size)})"
                 )
 
-            min_sizes = torch.jit.annotate(list[int], [])
-            max_sizes = torch.jit.annotate(list[int], [])
+            min_sizes = []
+            max_sizes = []
             for d in range(num_spatial_dims):
                 dim_size = (
                     (input.size(d + num_non_spatial_dims) - 1) * stride[d]
@@ -821,7 +821,7 @@ class _ConvTransposeNd(_ConvNd):
                         f"from {min_sizes} to {max_sizes} (for an input of {input.size()[2:]})"
                     )
 
-            res = torch.jit.annotate(list[int], [])
+            res = []
             for d in range(num_spatial_dims):
                 res.append(output_size[d] - min_sizes[d])
 

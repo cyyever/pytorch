@@ -2,7 +2,6 @@
 import warnings
 
 import torch
-import torch.jit  # this is needed to avoid a circular import
 import torch.nn.functional as F
 from torch import nn, Tensor
 
@@ -195,7 +194,6 @@ class MultiheadAttention(nn.MultiheadAttention):
         observed = torch.ao.quantization.prepare(observed, inplace=True)
         return observed
 
-    @torch.jit.unused
     def dequantize(self):
         r"""Utility to convert the quantized MHA back to float.
 

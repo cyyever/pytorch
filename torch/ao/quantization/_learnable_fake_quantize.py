@@ -82,7 +82,6 @@ class _LearnableFakeQuantize(torch.ao.quantization.FakeQuantizeBase):
         self.bitwidth = int(torch.log2(bitrange).item())
         self.register_buffer("eps", torch.tensor([torch.finfo(torch.float32).eps]))
 
-    @torch.jit.export
     def enable_param_learning(self):
         r"""Enable parameter learning over static observer estimates.
 
@@ -94,7 +93,6 @@ class _LearnableFakeQuantize(torch.ao.quantization.FakeQuantizeBase):
         ).toggle_observer_update(enabled=False)
         return self
 
-    @torch.jit.export
     def enable_static_estimate(self):
         """Enable static estimates of quantization parameters.
 
@@ -105,7 +103,6 @@ class _LearnableFakeQuantize(torch.ao.quantization.FakeQuantizeBase):
             enabled=True
         ).toggle_observer_update(enabled=True)
 
-    @torch.jit.export
     def enable_static_observation(self):
         """Enable accumulation of data without updating quantization parameters.
 
@@ -116,33 +113,27 @@ class _LearnableFakeQuantize(torch.ao.quantization.FakeQuantizeBase):
             enabled=False
         ).toggle_observer_update(enabled=True)
 
-    @torch.jit.export
     def toggle_observer_update(self, enabled=True):
         self.static_enabled[0] = int(enabled)  # type: ignore[operator]
         return self
 
-    @torch.jit.export
     def enable_observer(self, enabled=True):
         self.toggle_observer_update(enabled)
 
-    @torch.jit.export
     def toggle_qparam_learning(self, enabled=True):
         self.learning_enabled[0] = int(enabled)  # type: ignore[operator]
         self.scale.requires_grad = enabled
         self.zero_point.requires_grad = enabled
         return self
 
-    @torch.jit.export
     def toggle_fake_quant(self, enabled=True):
         self.fake_quant_enabled[0] = int(enabled)
         return self
 
-    @torch.jit.export
     def observe_quant_params(self):
         print(f"_LearnableFakeQuantize Scale: {self.scale.detach()}")
         print(f"_LearnableFakeQuantize Zero Point: {self.zero_point.detach()}")
 
-    @torch.jit.export
     def calculate_qparams(self):  # type: ignore[override]
         self.scale.data.clamp_(min=self.eps.item())  # type: ignore[operator]
         scale = self.scale.detach()

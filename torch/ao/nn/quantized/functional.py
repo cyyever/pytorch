@@ -5,7 +5,6 @@ import warnings
 
 import torch
 from torch import Tensor
-from torch.jit.annotations import BroadcastingList2
 from torch.nn.modules.utils import _pair, _triple
 
 from .modules.utils import _pair_from_first
@@ -130,7 +129,7 @@ def avg_pool3d(
     )
 
 
-def adaptive_avg_pool2d(input: Tensor, output_size: BroadcastingList2[int]) -> Tensor:
+def adaptive_avg_pool2d(input: Tensor, output_size: list[int]) -> Tensor:
     r"""
     Applies a 2D adaptive average pooling over a quantized input signal composed
     of several quantized input planes.
@@ -150,7 +149,7 @@ def adaptive_avg_pool2d(input: Tensor, output_size: BroadcastingList2[int]) -> T
     return torch.nn.functional.adaptive_avg_pool2d(input, output_size)
 
 
-def adaptive_avg_pool3d(input: Tensor, output_size: BroadcastingList2[int]) -> Tensor:
+def adaptive_avg_pool3d(input: Tensor, output_size: list[int]) -> Tensor:
     r"""
     Applies a 3D adaptive average pooling over a quantized input signal composed
     of several quantized input planes.
@@ -496,7 +495,7 @@ def max_pool1d(
     if return_indices:
         raise NotImplementedError("return_indices is not yet implemented!")
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch.nn.functional.max_pool1d(
         input,
         kernel_size,
@@ -527,7 +526,7 @@ def max_pool2d(
     if return_indices:
         raise NotImplementedError("return_indices is not yet implemented!")
     if stride is None:
-        stride = torch.jit.annotate(list[int], [])
+        stride = []
     return torch.nn.functional.max_pool2d(
         input,
         kernel_size,

@@ -594,7 +594,6 @@ class LSTM(RNNBase):
 
         return output, hidden
 
-    @torch.jit.export
     def forward_tensor(
         self, input: Tensor, hx: Optional[tuple[Tensor, Tensor]] = None
     ) -> tuple[Tensor, tuple[Tensor, Tensor]]:
@@ -609,7 +608,6 @@ class LSTM(RNNBase):
 
         return output, self.permute_hidden(hidden, unsorted_indices)
 
-    @torch.jit.export
     def forward_packed(
         self, input: PackedSequence, hx: Optional[tuple[Tensor, Tensor]] = None
     ) -> tuple[PackedSequence, tuple[Tensor, Tensor]]:
@@ -652,7 +650,6 @@ class LSTM(RNNBase):
             hidden[1], expected_hidden_size, "Expected hidden[1] size {}, got {}"
         )
 
-    @torch.jit.ignore
     def forward(self, input, hx=None):
         if isinstance(input, PackedSequence):
             return self.forward_packed(input, hx)
@@ -888,7 +885,6 @@ class GRU(RNNBase):
 
         return output, hidden
 
-    @torch.jit.export
     def forward_tensor(
         self, input: Tensor, hx: Optional[Tensor] = None
     ) -> tuple[Tensor, Tensor]:
@@ -903,7 +899,6 @@ class GRU(RNNBase):
 
         return output, self.permute_hidden(hidden, unsorted_indices)
 
-    @torch.jit.export
     def forward_packed(
         self, input: PackedSequence, hx: Optional[Tensor] = None
     ) -> tuple[PackedSequence, Tensor]:
@@ -921,7 +916,6 @@ class GRU(RNNBase):
             return hx
         return _apply_permutation(hx, permutation)
 
-    @torch.jit.ignore
     def forward(self, input, hx=None):
         if isinstance(input, PackedSequence):
             return self.forward_packed(input, hx)

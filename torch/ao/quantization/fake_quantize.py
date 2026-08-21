@@ -2,7 +2,6 @@
 # mypy: allow-untyped-defs
 """Implements modules  used to perform fake quantization."""
 
-import re
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -100,19 +99,15 @@ class FakeQuantizeBase(ABC, Module):
     def calculate_qparams(self, **kwargs):
         pass
 
-    @torch.jit.export
     def enable_fake_quant(self, enabled: bool = True) -> None:
         self.fake_quant_enabled[0] = 1 if enabled else 0
 
-    @torch.jit.export
     def disable_fake_quant(self):
         self.enable_fake_quant(False)
 
-    @torch.jit.export
     def enable_observer(self, enabled: bool = True) -> None:
         self.observer_enabled[0] = 1 if enabled else 0
 
-    @torch.jit.export
     def disable_observer(self):
         self.enable_observer(False)
 
@@ -221,7 +216,6 @@ class FakeQuantize(FakeQuantizeBase):
             )
         self.is_per_channel = _is_per_channel(self.qscheme)
 
-    @torch.jit.export
     def calculate_qparams(self):  # type: ignore[override]
         return self.activation_post_process.calculate_qparams()
 
@@ -259,7 +253,6 @@ class FakeQuantize(FakeQuantizeBase):
                 )
         return X
 
-    @torch.jit.export
     def extra_repr(self):
         return (
             f"fake_quant_enabled={self.fake_quant_enabled}, observer_enabled={self.observer_enabled}, "
@@ -353,11 +346,9 @@ class FixedQParamsFakeQuantize(FakeQuantize):
                 + str(self.qscheme)
             )
 
-    @torch.jit.export
     def calculate_qparams(self):  # type: ignore[override]
         return self.scale, self.zero_point
 
-    @torch.jit.export
     def extra_repr(self):
         """Define a string representation of the object's attributes."""
         return (
@@ -407,11 +398,9 @@ class FusedMovingAvgObsFakeQuantize(FakeQuantize):
             self.activation_post_process.qscheme
         )
 
-    @torch.jit.export
     def calculate_qparams(self) -> tuple[torch.Tensor, torch.Tensor]:  # type: ignore[override]
         return self.activation_post_process.calculate_qparams()
 
-    @torch.jit.export
     def extra_repr(self) -> str:
         return (
             f"fake_quant_enabled={self.fake_quant_enabled}, observer_enabled={self.observer_enabled}, "
@@ -597,20 +586,6 @@ Fused version of `default_per_channel_weight_fake_quant`, with the 8-bit values 
 """
 
 
-def _is_fake_quant_script_module(mod):
-    """Return true if given mod is an instance of FakeQuantize script module."""
-    if isinstance(mod, torch.jit.RecursiveScriptModule):
-        # qualified name looks like '__torch__.torch.ao.quantization.fake_quantize.___torch_mangle_2.FakeQuantize'
-        suffix = mod._c.qualified_name.split(".", 1)[1]
-        name = re.sub(r"\.___torch_mangle_\d+", "", suffix)
-        return (
-            name == "torch.ao.quantization.fake_quantize.FakeQuantize"
-            or name
-            == "torch.ao.quantization.fake_quantize.FusedMovingAvgObsFakeQuantize"
-        )
-    return False
-
-
 def disable_fake_quant(mod):
     """Disable fake quantization for the module.
 
@@ -620,7 +595,7 @@ def disable_fake_quant(mod):
       model.apply(torch.ao.quantization.disable_fake_quant)
 
     """
-    if isinstance(mod, FakeQuantizeBase) or _is_fake_quant_script_module(mod):
+    if isinstance(mod, FakeQuantizeBase):
         mod.disable_fake_quant()
 
 
@@ -633,7 +608,7 @@ def enable_fake_quant(mod):
       model.apply(torch.ao.quantization.enable_fake_quant)
 
     """
-    if isinstance(mod, FakeQuantizeBase) or _is_fake_quant_script_module(mod):
+    if isinstance(mod, FakeQuantizeBase):
         mod.enable_fake_quant()
 
 
@@ -646,7 +621,7 @@ def disable_observer(mod):
       model.apply(torch.ao.quantization.disable_observer)
 
     """
-    if isinstance(mod, FakeQuantizeBase) or _is_fake_quant_script_module(mod):
+    if isinstance(mod, FakeQuantizeBase):
         mod.disable_observer()
 
 
@@ -659,5 +634,5 @@ def enable_observer(mod):
       model.apply(torch.ao.quantization.enable_observer)
 
     """
-    if isinstance(mod, FakeQuantizeBase) or _is_fake_quant_script_module(mod):
+    if isinstance(mod, FakeQuantizeBase):
         mod.enable_observer()
