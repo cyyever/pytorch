@@ -153,7 +153,6 @@ endif()
 set(AT_MKLDNN_ACL_ENABLED 0)
 set(AT_MKLDNN_ENABLED 0)
 set(AT_MKL_ENABLED 0)
-set(AT_KLEIDIAI_ENABLED 0)
 set(AT_USE_EIGEN_SPARSE 0)
 # setting default preferred BLAS options if not already present.
 set(BLAS "MKL" CACHE STRING "Selected BLAS library")
@@ -1424,17 +1423,6 @@ else()
   message("disabling MKLDNN because USE_MKLDNN is not set")
 endif()
 
-if(USE_KLEIDIAI)
-  set(TEMP_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs" FORCE)
-  set(AT_KLEIDIAI_ENABLED 1)
-  set(KLEIDIAI_BUILD_TESTS OFF) # Disable building KLEIDIAI tests
-  set(KLEIDIAI_SRC "${PROJECT_SOURCE_DIR}/third_party/kleidiai")
-  add_subdirectory(${KLEIDIAI_SRC})
-  list(APPEND Caffe2_DEPENDENCY_LIBS kleidiai)
-  # Recover build options.
-  set(BUILD_SHARED_LIBS ${TEMP_BUILD_SHARED_LIBS} CACHE BOOL "Build shared libs" FORCE)
-endif()
 
 if(UNIX AND NOT APPLE)
    include(CheckLibraryExists)

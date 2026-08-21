@@ -418,11 +418,6 @@ These backends include:
 .. py:module:: torch.backends.xnnpack
 ```
 
-```{eval-rst}
-.. py:module:: torch.backends.kleidiai
-
-.. autofunction:: torch.backends.kleidiai.is_available
-```
 
 ## torch.backends.opt_einsum
 
