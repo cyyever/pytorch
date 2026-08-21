@@ -340,11 +340,6 @@ std::ostream& Node::print(
   // In debug print, append file:line:col as a comment after each node
   if (print_source_locations) {
     SourceRange r = sourceRange();
-    if (sourceRange().source()) {
-      if (auto orig = sourceRange().source()->findSourceRangeThatGenerated(r)) {
-        r = *orig;
-      }
-    }
     if (auto file_line_col = r.file_line_col()) {
       auto [filename, line, col] = *file_line_col;
       out << " # " << filename << ':' << line << ':' << col;
@@ -2146,15 +2141,11 @@ std::vector<Value*> inlineCallTo(
   return new_outputs;
 }
 
-// inline_optimized_graph argument is used in substitute function call for
-// ONNX conversion
 std::vector<Value*> inlineCallTo(
     Node* to_replace,
     GraphFunction* callee,
-    bool inline_optimized_graph /*=true*/) {
-  auto graph =
-      inline_optimized_graph ? callee->optimized_graph() : callee->graph();
-  return inlineCallTo(to_replace, callee, graph.get());
+    bool /*inline_optimized_graph*/ /*=true*/) {
+  return inlineCallTo(to_replace, callee, callee->graph().get());
 }
 
 std::vector<Value*> unpackOutputs(const std::vector<Value*>& outputs) {

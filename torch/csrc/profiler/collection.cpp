@@ -24,7 +24,6 @@
 #include <c10/util/Exception.h>
 #include <c10/util/flat_hash_map.h>
 #include <c10/util/overloaded.h>
-#include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/profiler/data_flow.h>
 #include <torch/csrc/profiler/kineto_shim.h>
 

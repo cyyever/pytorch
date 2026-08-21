@@ -5,7 +5,6 @@
 #include <c10/util/ApproximateClock.h>
 #include <c10/util/Exception.h>
 #include <torch/csrc/cuda/memory_snapshot.h>
-#include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/profiler/combined_traceback.h>
 

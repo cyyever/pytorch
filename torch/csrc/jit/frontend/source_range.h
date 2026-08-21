@@ -11,7 +11,6 @@
 
 namespace torch::jit {
 
-class SourceRangeUnpickler;
 struct SourceRange;
 
 // A stringlike class backed by a vector of string_view
@@ -333,24 +332,20 @@ struct TORCH_API Source {
       std::string_view text_view,
       std::optional<std::string> filename = std::nullopt,
       size_t starting_line_no = 0,
-      std::shared_ptr<SourceRangeUnpickler> gen_ranges = nullptr,
       CopiesString copies_str = COPIES_STRING)
       : text_view_(create_text_view(copies_str, text_view)),
         filename_(std::move(filename)),
-        starting_line_no_(starting_line_no),
-        gen_ranges_(std::move(gen_ranges)) {
+        starting_line_no_(starting_line_no) {
     calc_line_start_offsets();
   }
 
   explicit Source(
       StringCordView str,
       std::optional<std::string> filename = std::nullopt,
-      size_t starting_line_no = 0,
-      std::shared_ptr<SourceRangeUnpickler> gen_ranges = nullptr)
+      size_t starting_line_no = 0)
       : text_view_(std::move(str)),
         filename_(std::move(filename)),
-        starting_line_no_(starting_line_no),
-        gen_ranges_(std::move(gen_ranges)) {
+        starting_line_no_(starting_line_no) {
     calc_line_start_offsets();
   }
   // Given a line number (within source_), return the byte offset of the
@@ -408,9 +403,6 @@ struct TORCH_API Source {
     return starting_line_no_;
   }
 
-  std::optional<SourceRange> findSourceRangeThatGenerated(
-      const SourceRange& range);
-
   ~Source() = default;
 
  private:
@@ -443,8 +435,6 @@ struct TORCH_API Source {
   // Starting offsets for lines into the source. e.g. line 0 starts at
   // line_starting_offsets_[0], etc.
   std::vector<size_t> line_starting_offsets_;
-
-  std::shared_ptr<SourceRangeUnpickler> gen_ranges_;
 };
 
 // A SourceRange is a reference to subset of a Source, specified by `start` and
@@ -525,13 +515,6 @@ struct TORCH_API SourceRange {
 
   bool operator!=(const SourceRange& rhs) const {
     return !(*this == rhs);
-  }
-
-  std::optional<SourceRange> findSourceRangeThatGenerated() const {
-    if (!source_view_) {
-      return std::nullopt;
-    }
-    return source_view_->findSourceRangeThatGenerated(*this);
   }
 
  protected:

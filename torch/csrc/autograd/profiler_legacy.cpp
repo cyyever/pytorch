@@ -2,7 +2,6 @@
 
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/jit/frontend/tracer.h>
-#include <torch/csrc/jit/runtime/interpreter.h>
 #include <torch/csrc/jit/runtime/operator.h>
 
 #include <ATen/code_template.h>

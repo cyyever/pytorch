@@ -56,10 +56,6 @@ struct TORCH_API Method : public torch::IMethod {
     return function_->num_inputs();
   }
 
-  GraphExecutor& get_executor() {
-    return toGraphFunction(*function_).get_executor();
-  }
-
   Function& function() const {
     return *function_;
   }
