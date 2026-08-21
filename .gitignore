@@ -370,11 +370,6 @@ coverage.xml
 coverage-html
 coverage.lcov
 
-# buck generated files
-.buckd/
-.lsp-buck-out/
-.lsp.buckd/
-buck-out/
 
 # Downloaded libraries
 third_party/ruy/
