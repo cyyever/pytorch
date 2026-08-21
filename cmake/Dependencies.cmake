@@ -494,8 +494,6 @@ if(USE_ITT)
   endif()
 endif()
 
-endif()
-list(APPEND Caffe2_DEPENDENCY_LIBS fp16)
 
 # ---[ Python Interpreter
 # If not given a Python installation, then use the current active Python

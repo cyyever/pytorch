@@ -27,7 +27,6 @@
 # - Serialization and export: jit_torchscript, serialization_package
 # - Quantization: quantization
 # - Profiling: profiler
-# - Mobile: mobile_delegates
 # - Build and developer infrastructure: infra_ci, infra_github_automation, infra_build_packaging, infra_linting, infra_codegen, infra_developer_tools, infra_test
 # - Third-party dependencies: third_party_backend_deps, third_party_core_build_deps, third_party_serialization_schema
 # - Benchmarks: benchmark_compiler, benchmark_operator_runtime, benchmark_models
@@ -133,7 +132,6 @@
 /test/test_sparse_csr.py @amjames @pearu @nikitaved
 # /test/test_sparse_semi_structured.py
 /torch/sparse/ @amjames @pearu @nikitaved
-/aten/src/ATen/native/ao_sparse/ @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/SparseCsrTensorImpl.cpp @amjames @pearu @nikitaved
 # /aten/src/ATen/SparseCsrTensorImpl.h
 # /aten/src/ATen/SparseCsrTensorUtils.h
@@ -694,7 +692,6 @@
 # /torch/legacy/
 # /torch/lib/
 # /torch/monitor/
-# /torch/mtia/
 # /torch/multiprocessing/
 # /torch/nested/
 # /torch/numa/
@@ -741,7 +738,6 @@
 /test/test_autograd_fallback.py @soulitzer
 # /test/test_modules.py
 # /test/test_nn.py
-# /test/test_nnapi.py
 # /test/test_numpy_interop.py
 /test/test_optim.py @janeyx99
 # /test/test_transformers.py
@@ -810,19 +806,10 @@
 /torch/utils/cpp_extension.py @fmassa @ezyang @malfet
 #
 # [quantization]
-/test/ao/ @jerryzh168
-/test/quantization/ @jerryzh168
 /test/test_quantization.py @jerryzh168
-# /torch/ao/
-/torch/ao/quantization/ @jerryzh168
-/torch/ao/nn/intrinsic/ @jerryzh168
-/torch/ao/nn/quantized/ @jerryzh168
-/torch/ao/nn/quantizable/ @jerryzh168
-/torch/ao/nn/qat/ @jerryzh168
 /aten/src/ATen/native/quantized/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/native/quantized/cpu/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/native/quantized/cuda/ @jerryzh168
-/aten/src/ATen/native/quantized/cudnn/ @jerryzh168
 #
 # [profiler]
 # /test/cpp/profiler/test_profiler_collection.cpp
@@ -843,8 +830,6 @@
 /torch/csrc/profiler/ @scotts @ryanzhang22
 /torch/profiler/ @scotts @ryanzhang22
 #
-# [mobile_delegates]
-# /torch/backends/xnnpack/
 #
 # [infra_ci]
 /.ci/ @pytorch/pytorch-dev-infra
@@ -891,8 +876,6 @@
 # /third_party/
 #
 # [third_party_backend_deps]
-# /third_party/NNPACK
-# /third_party/XNNPACK
 # /third_party/aiter
 # /third_party/composable_kernel
 # /third_party/cpuinfo
@@ -902,10 +885,6 @@
 # /third_party/flash-attention
 # /third_party/gemmlowp/
 # /third_party/ideep
-# /third_party/pthreadpool
-# /third_party/xnnpack_buck_shim.bzl
-# /third_party/xnnpack_src_defs.bzl
-# /third_party/xnnpack_wrapper_defs.bzl
 /third_party/xpu.txt @EikanWang @gujinghui
 #
 # [third_party_serialization_schema]

@@ -625,13 +625,7 @@ def get_testing_overrides() -> dict[Callable, Callable]:
         ),
         torch.fbgemm_linear_fp16_weight: lambda input, packed_weight, bias, output: -1,
         torch.fbgemm_linear_fp16_weight_fp32_activation: lambda input, packed_weight, bias, output: -1,
-        torch.fbgemm_linear_int8_weight: lambda input, weight, packed, col_offsets, weight_scale, weight_zero_point, bias: -1,
-        torch.fbgemm_linear_int8_weight_fp32_activation: (
-            lambda input, weight, packed, col_offsets, weight_scale, weight_zero_point, bias: -1
-        ),
-        torch.fbgemm_linear_quantize_weight: lambda input: -1,
         torch.fbgemm_pack_gemm_matrix_fp16: lambda input: -1,
-        torch.fbgemm_pack_quantized_matrix: lambda input, a, b: -1,
         torch.feature_alpha_dropout: lambda input, p, train: -1,
         torch.feature_dropout: lambda input, p, train: -1,
         torch.fft.ifft: lambda input, n=None, dim=-1, norm=None: -1,
@@ -1058,12 +1052,6 @@ def get_testing_overrides() -> dict[Callable, Callable]:
         torch.quantize_per_channel: lambda input, scales, zero_points, axis, dtype: -1,
         torch.quantize_per_tensor: lambda input, scale, zero_point, dtype: -1,
         torch.quantize_per_tensor_dynamic: lambda input, dtype, reduce_range: -1,
-        torch.quantized_gru_cell: (
-            lambda input, hx, w_ih, w_hh, b_ih, b_hh, packed_ih, packed_hh, col_offsets_ih, col_offsets_hh, scale_ih, scale_hh, zero_point_ih, zero_point_hh: -1
-        ),
-        torch.quantized_lstm_cell: (
-            lambda input, hx, w_ih, w_hh, b_ih, b_hh, packed_ih, packed_hh, col_offsets_ih, col_offsets_hh, scale_ih, scale_hh, zero_point_ih, zero_point_hh: -1
-        ),
         torch.quantized_max_pool1d: (
             lambda input, kernel_size, stride=(), padding=(0,), dilation=(
                 1,
@@ -1075,12 +1063,6 @@ def get_testing_overrides() -> dict[Callable, Callable]:
                 1,
                 1,
             ), ceil_mode=False: -1
-        ),
-        torch.quantized_rnn_relu_cell: (
-            lambda input, hx, w_ih, w_hh, b_ih, b_hh, packed_ih, packed_hh, col_offsets_ih, col_offsets_hh, scale_ih, scale_hh, zero_point_ih, zero_point_hh: -1
-        ),
-        torch.quantized_rnn_tanh_cell: (
-            lambda input, hx, w_ih, w_hh, b_ih, b_hh, packed_ih, packed_hh, col_offsets_ih, col_offsets_hh, scale_ih, scale_hh, zero_point_ih, zero_point_hh: -1
         ),
         torch.rad2deg: lambda input, out=None: -1,
         torch.ravel: lambda input: -1,
@@ -1270,9 +1252,6 @@ def get_testing_overrides() -> dict[Callable, Callable]:
         torch.vstack: lambda tensors, out=None: -1,
         torch.where: lambda condition, x=None, y=None: -1,
         torch._wrapped_linear_prepack: lambda weight, weight_scale, weight_zero_point, bias : -1,
-        torch._wrapped_quantized_linear_prepacked: (
-            lambda input, input_scale, input_zero_point, prepacked, out_scale, out_zero_point, out_channel : -1
-        ),
         torch.zeros_like: lambda input, dtype=None, layout=None, device=None, requires_grad=False: -1,
         torch._fw_primal_copy: lambda self, level: -1,
         torch._make_dual_copy: lambda primal, tangent, level: -1,

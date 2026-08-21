@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 #include <ATen/native/Resize.h>
-#include <ATen/native/xnnpack/Engine.h>
 #include <ATen/WrapDimUtilsMulti.h>
 #include <ATen/TensorOperators.h>
 #include <c10/util/irange.h>
@@ -98,11 +97,6 @@ Tensor linear(const Tensor& input, const Tensor& weight, const std::optional<Ten
   if (input.is_mkldnn()) {
     return at::mkldnn_linear(input, weight, *bias);
   }
-#if defined(C10_MOBILE)
-  if (xnnpack::use_linear(input, weight, *bias)) {
-    return xnnpack::linear(input, weight, *bias);
-  }
-#endif
   if (input_dim == 2 && bias->defined()) {
     // Fused op is marginally faster.
     return at::addmm(*bias, input, weight.t());

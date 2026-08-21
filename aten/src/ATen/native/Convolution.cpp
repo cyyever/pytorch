@@ -9,7 +9,6 @@
 #include <ATen/native/Pool.h>
 #include <ATen/native/cpu/DepthwiseConvKernel.h>
 #include <ATen/native/utils/ParamUtils.h>
-#include <ATen/native/xnnpack/Engine.h>
 #include <c10/core/GradMode.h>
 #include <c10/core/SymBool.h>
 #include <c10/util/accumulate.h>
@@ -253,32 +252,6 @@ static bool check_cudnn_depthwise_workload_with_filter(const at::Tensor& input, 
 }
 
 
-#if defined(C10_MOBILE)
-static bool xnnpack_use_convolution2d(
-    const Tensor& input,
-    const Tensor& weight,
-    const at::OptionalIntArrayRef bias_sizes_opt,
-    const IntArrayRef padding,
-    const IntArrayRef stride,
-    const IntArrayRef dilation,
-    const int64_t groups,
-    const bool transposed) {
-  return xnnpack::use_convolution2d(input, weight, bias_sizes_opt, padding, stride, dilation, groups, transposed);
-}
-
-static bool xnnpack_use_convolution2d(
-    const Tensor& input,
-    const Tensor& weight,
-    const at::OptionalSymIntArrayRef bias_sizes_opt,
-    const SymIntArrayRef padding,
-    const SymIntArrayRef stride,
-    const SymIntArrayRef dilation,
-    const c10::SymInt groups,
-    const bool transposed) {
-  // Never use xnnpack for symbolic tracing
-  return false;
-}
-#endif
 
 // This struct is templated so that we can run backend selection in a dynamic
 // shapes context; all of the real kernel selection in eager mode runs with
@@ -550,25 +523,8 @@ struct ConvParams {
     return false;
   }
   bool use_nnpack(const at::Tensor& /*input*/, const at::Tensor& /*weight*/) const { return false; }
-  bool use_xnnpack(const at::Tensor& input, const at::Tensor& weight,
-                   const at::OptionalArrayRef<T> bias_sizes_opt) const {
-#if defined(C10_MOBILE)
-    if (!transposed) {
-      // NB: for the call here, it MATTERS that we are templated. If you
-      // untemplate this to always use SymInt, the function
-      // xnnpack_use_convolution2d will always return false
-      return (at::symint::size<T>(input, 1) == groups) &&
-              xnnpack_use_convolution2d(
-                  input,
-                  weight,
-                  bias_sizes_opt,
-                  padding,
-                  stride,
-                  dilation,
-                  groups,
-                  transposed);
-    }
-#endif
+  bool use_xnnpack(const at::Tensor& /*input*/, const at::Tensor& /*weight*/,
+                   const at::OptionalArrayRef<T> /*bias_sizes_opt*/) const {
     return false;
   }
 
@@ -1688,8 +1644,7 @@ at::Tensor _convolution(
           input.device().type(), input, weight, bias, params.stride, params.padding, params.groups);
       break;
     case ConvBackend::Xnnpack2d:
-      output = xnnpack::convolution2d(
-          input, weight, bias, params.padding, params.stride, params.dilation, params.groups);
+      TORCH_INTERNAL_ASSERT(false, "Xnnpack2d backend was selected in a build without xnnpack support");
       break;
     // Handle backends that don't natively support groups > 1.
     case ConvBackend::NnpackSpatial:

@@ -1,4 +1,3 @@
-#include <ATen/native/quantized/cpu/qlinear.h>
 #include <ATen/record_function.h>
 #include <c10/core/DeviceType.h>
 #include <c10/core/DispatchKey.h>
@@ -43,7 +42,6 @@
 #include <ATen/ops/_scaled_dot_product_flash_attention.h>
 #include <ATen/ops/_scaled_mm.h>
 #include <ATen/ops/_wrapped_linear_prepack.h>
-#include <ATen/ops/_wrapped_quantized_linear_prepacked.h>
 #include <ATen/ops/addmm.h>
 #include <ATen/ops/aminmax.h>
 #include <ATen/ops/as_strided.h>
@@ -1055,35 +1053,6 @@ AOTITorchError aoti_torch_cpu_wrapped_fbgemm_linear_fp16_weight(
   });
 }
 
-AOTITorchError aoti_torch_cpu__wrapped_quantized_linear_prepacked(
-    AtenTensorHandle input,
-    AtenTensorHandle input_scale,
-    AtenTensorHandle input_zero_point,
-    AtenTensorHandle weight,
-    AtenTensorHandle out_scale,
-    AtenTensorHandle out_zeropoint,
-    int64_t out_channel,
-    AtenTensorHandle* out) {
-  AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE({
-    at::Tensor* input_tensor = tensor_handle_to_tensor_pointer(input);
-    at::Tensor* input_scale_tensor =
-        tensor_handle_to_tensor_pointer(input_scale);
-    at::Tensor* input_zero_point_tensor =
-        tensor_handle_to_tensor_pointer(input_zero_point);
-    at::Tensor* weight_tensor = tensor_handle_to_tensor_pointer(weight);
-    at::Tensor* out_scale_tensor = tensor_handle_to_tensor_pointer(out_scale);
-    at::Tensor* out_zeropoint_tensor =
-        tensor_handle_to_tensor_pointer(out_zeropoint);
-    *out = new_tensor_handle(at::_wrapped_quantized_linear_prepacked(
-        *input_tensor,
-        *input_scale_tensor,
-        *input_zero_point_tensor,
-        *weight_tensor,
-        *out_scale_tensor,
-        *out_zeropoint_tensor,
-        out_channel));
-  });
-}
 
 AOTITorchError aoti_torch_nonzero(
     AtenTensorHandle self,

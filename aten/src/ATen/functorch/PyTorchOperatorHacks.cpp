@@ -8,7 +8,6 @@
 #include <c10/util/irange.h>
 #include <c10/util/Exception.h>
 #include <ATen/native/LinearAlgebraUtils.h>
-#include <ATen/native/xnnpack/Engine.h>
 
 #include <utility>
 
@@ -47,11 +46,6 @@ Tensor linear_hack(const Tensor& input, const Tensor& weight, const std::optiona
   if (input.is_mkldnn()) {
     return at::mkldnn_linear(input, weight, *bias);
   }
-#if defined(C10_MOBILE)
-  if (at::native::xnnpack::use_linear(input, weight, *bias)) {
-    return at::native::xnnpack::linear(input, weight, *bias);
-  }
-#endif
   if (input.dim() == 2 && bias->defined()) {
     // Fused op is marginally faster.
     return at::addmm(*bias, input, weight.t());
