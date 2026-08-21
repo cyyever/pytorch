@@ -21,9 +21,7 @@
 #include <c10/cuda/CUDAStream.h>
 #include <ATen/cuda/CUDAGraphsUtils.cuh>
 
-#if defined(CUDA_VERSION) && CUDA_VERSION >= 13000
 #include <cuda_fp8.h>
-#endif
 
 namespace at::native {
 
@@ -71,7 +69,7 @@ void float16tofloat32_copy_kernel_cuda(TensorIteratorBase &iter) {
 template <typename SrcT>
 struct ConvertToFloat8E4M3fnOp {
   __device__ __forceinline__ Float8_e4m3fn operator()(SrcT value) const {
-#if defined(CUDA_VERSION) && CUDA_VERSION >= 13000 && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 890
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 890
     __nv_fp8_storage_t x;
     if constexpr (std::is_same_v<SrcT, float>) {
       x = __nv_cvt_float_to_fp8(value, __NV_SATFINITE, __NV_E4M3);

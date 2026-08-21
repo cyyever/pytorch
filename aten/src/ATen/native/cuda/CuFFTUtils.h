@@ -44,12 +44,6 @@ static inline std::string _cudaGetErrorEnum(cufftResult error)
       return "CUFFT_NO_WORKSPACE";
     case CUFFT_NOT_IMPLEMENTED:
       return "CUFFT_NOT_IMPLEMENTED";
-#if CUDA_VERSION <= 12090
-    case CUFFT_INCOMPLETE_PARAMETER_LIST:
-      return "CUFFT_INCOMPLETE_PARAMETER_LIST";
-    case CUFFT_PARSE_ERROR:
-      return "CUFFT_PARSE_ERROR";
-#endif
 #if !defined(USE_ROCM) && CUDA_VERSION <= 12090
     case CUFFT_LICENSE_ERROR:
       return "CUFFT_LICENSE_ERROR";

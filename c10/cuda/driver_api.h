@@ -102,17 +102,12 @@
   _(cuStreamWriteValue32, 12000)                   \
   _(cuGetErrorString, 12000)
 
-#if defined(CUDA_VERSION) && (CUDA_VERSION >= 12030)
 #define C10_LIBCUDA_DRIVER_API_12_3(_) \
   _(cuMulticastAddDevice, 12030)       \
   _(cuMulticastBindMem, 12030)         \
   _(cuMulticastCreate, 12030)          \
   _(cuMulticastUnbind, 12030)
-#else
-#define C10_LIBCUDA_DRIVER_API_12_3(_)
-#endif
 
-#if defined(CUDA_VERSION) && (CUDA_VERSION >= 12080)
 #define C10_LIBCUDA_DRIVER_API_12_8(_)  \
   _(cuCtxFromGreenCtx, 12080)           \
   _(cuCtxGetCurrent, 12080)             \
@@ -125,17 +120,10 @@
   _(cuDevSmResourceSplitByCount, 12080) \
   _(cuDeviceGetDevResource, 12080)      \
   _(cuDevResourceGenerateDesc, 12080)
-#else
-#define C10_LIBCUDA_DRIVER_API_12_8(_)
-#endif
 
-#if defined(CUDA_VERSION) && (CUDA_VERSION >= 12090)
 #define C10_LIBCUDA_DRIVER_API_12_9(_) \
   _(cuLogsRegisterCallback, 12090)     \
   _(cuLogsUnregisterCallback, 12090)
-#else
-#define C10_LIBCUDA_DRIVER_API_12_9(_)
-#endif
 
 #define C10_LIBCUDA_DRIVER_API_OPTIONAL(_) \
   C10_LIBCUDA_DRIVER_API_12_3(_)           \
@@ -150,11 +138,7 @@
   _(nvmlDeviceGetComputeRunningProcesses) \
   _(nvmlSystemGetCudaDriverVersion_v2)
 
-#if defined(CUDA_VERSION) && (CUDA_VERSION >= 12040)
 #define C10_NVML_DRIVER_API_12_4(_) _(nvmlDeviceGetGpuFabricInfoV)
-#else
-#define C10_NVML_DRIVER_API_12_4(_)
-#endif
 
 #define C10_NVML_DRIVER_API_OPTIONAL(_) C10_NVML_DRIVER_API_12_4(_)
 

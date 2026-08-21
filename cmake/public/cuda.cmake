@@ -21,7 +21,9 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../Modules_CUDA_fix)
 # More details can be found in the following links.
 # https://github.com/pytorch/pytorch/issues/20635
 # https://github.com/pytorch/pytorch/issues/17108
-set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE INTERNAL "")
+if(NOT MSVC)
+  set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE INTERNAL "")
+endif()
 
 # Find CUDA.
 find_package(CUDA)
@@ -77,7 +79,14 @@ if(CUDA_FOUND)
   # compiling with, e.g., if a ccache nvcc is fed to us by CUDA_NVCC_EXECUTABLE
   # but the PATH is not consistent with CUDA_HOME.  It's better safe
   # than sorry: make sure everything is consistent.
-  set(PROJECT_RANDOM_BINARY_DIR "${PROJECT_BINARY_DIR}")
+  if(MSVC AND CMAKE_GENERATOR MATCHES "Visual Studio")
+    # When using Visual Studio, it attempts to lock the whole binary dir when
+    # `try_run` is called, which will cause the build to fail.
+    string(RANDOM BUILD_SUFFIX)
+    set(PROJECT_RANDOM_BINARY_DIR "${PROJECT_BINARY_DIR}/${BUILD_SUFFIX}")
+  else()
+    set(PROJECT_RANDOM_BINARY_DIR "${PROJECT_BINARY_DIR}")
+  endif()
   set(file "${PROJECT_BINARY_DIR}/detect_cuda_version.cc")
   file(WRITE ${file} ""
     "#include <cuda.h>\n"
@@ -154,7 +163,7 @@ endif()
 
 # cublas
 add_library(caffe2::cublas INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
+if(CAFFE2_STATIC_LINK_CUDA AND NOT WIN32)
     set_property(
         TARGET caffe2::cublas PROPERTY INTERFACE_LINK_LIBRARIES
         # NOTE: cublas is always linked dynamically
@@ -191,7 +200,7 @@ if(CAFFE2_USE_CUDNN)
 
   add_library(torch::cudnn INTERFACE IMPORTED)
   target_include_directories(torch::cudnn INTERFACE ${CUDNN_INCLUDE_PATH})
-  if(CUDNN_STATIC)
+  if(CUDNN_STATIC AND NOT WIN32)
     target_link_options(torch::cudnn INTERFACE
         "-Wl,--exclude-libs,libcudnn_static.a")
   else()
@@ -236,7 +245,7 @@ endif()
 # cufile
 if(CAFFE2_USE_CUFILE)
   add_library(torch::cufile INTERFACE IMPORTED)
-  if(CAFFE2_STATIC_LINK_CUDA)
+  if(CAFFE2_STATIC_LINK_CUDA AND NOT WIN32)
       set_property(
           TARGET torch::cufile PROPERTY INTERFACE_LINK_LIBRARIES
           CUDA::cuFile_static)
@@ -251,7 +260,7 @@ endif()
 
 # curand
 add_library(caffe2::curand INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
+if(CAFFE2_STATIC_LINK_CUDA AND NOT WIN32)
     set_property(
         TARGET caffe2::curand PROPERTY INTERFACE_LINK_LIBRARIES
         CUDA::curand_static)
@@ -263,7 +272,7 @@ endif()
 
 # cufft
 add_library(caffe2::cufft INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
+if(CAFFE2_STATIC_LINK_CUDA AND NOT WIN32)
     set_property(
         TARGET caffe2::cufft PROPERTY INTERFACE_LINK_LIBRARIES
         CUDA::cufft_static)
@@ -286,6 +295,9 @@ add_library(caffe2::nvrtc INTERFACE IMPORTED)
 set_property(
     TARGET caffe2::nvrtc PROPERTY INTERFACE_LINK_LIBRARIES
     CUDA::nvrtc caffe2::cuda)
+
+# Don't activate VC env again for Ninja generators with MSVC on Windows if CUDAHOSTCXX is not defined
+# by adding --use-local-env.
 
 # setting nvcc arch flags
 torch_cuda_get_nvcc_gencode_flag(NVCC_FLAGS_EXTRA)
@@ -315,7 +327,22 @@ list(APPEND CUDA_NVCC_FLAGS -Xcudafe ${SUPPRESS_WARNING_FLAGS})
 set(CUDA_PROPAGATE_HOST_FLAGS_BLOCKLIST "-Werror")
 
 # Debug and Release symbol support
-if(CUDA_DEVICE_DEBUG)
+if(MSVC)
+  if(${CAFFE2_USE_MSVC_STATIC_RUNTIME})
+    string(APPEND CMAKE_CUDA_FLAGS_DEBUG " -Xcompiler /MTd")
+    string(APPEND CMAKE_CUDA_FLAGS_MINSIZEREL " -Xcompiler /MT")
+    string(APPEND CMAKE_CUDA_FLAGS_RELEASE " -Xcompiler /MT")
+    string(APPEND CMAKE_CUDA_FLAGS_RELWITHDEBINFO " -Xcompiler /MT")
+  else()
+    string(APPEND CMAKE_CUDA_FLAGS_DEBUG " -Xcompiler /MDd")
+    string(APPEND CMAKE_CUDA_FLAGS_MINSIZEREL " -Xcompiler /MD")
+    string(APPEND CMAKE_CUDA_FLAGS_RELEASE " -Xcompiler /MD")
+    string(APPEND CMAKE_CUDA_FLAGS_RELWITHDEBINFO " -Xcompiler /MD")
+  endif()
+  if(CUDA_NVCC_FLAGS MATCHES "Zi")
+    list(APPEND CUDA_NVCC_FLAGS "-Xcompiler" "-FS")
+  endif()
+elseif(CUDA_DEVICE_DEBUG)
   list(APPEND CUDA_NVCC_FLAGS "-g" "-G")  # -G enables device code debugging symbols
 endif()
 

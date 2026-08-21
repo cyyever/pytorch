@@ -51,19 +51,6 @@
 TORCH_SDT_DEFINE_SEMAPHORE(malloc)
 TORCH_SDT_DEFINE_SEMAPHORE(free)
 
-// add these definitions so that we can compile with CUDA < 12.3
-// borrowed from
-// https://github.com/NVIDIA/nccl/blob/3ea7eedf3b9b94f1d9f99f4e55536dfcbd23c1ca/src/include/p2p.h#L20
-#if CUDA_VERSION < 12030
-#define CU_MEM_HANDLE_TYPE_FABRIC ((CUmemAllocationHandleType)0x8ULL)
-#define CU_IPC_HANDLE_SIZE 64
-typedef struct CUmemFabricHandle_st {
-  // NOLINTNEXTLINE(*-avoid-c-arrays)
-  unsigned char data[CU_IPC_HANDLE_SIZE];
-} CUmemFabricHandle_v1;
-typedef CUmemFabricHandle_v1 CUmemFabricHandle;
-#endif
-
 namespace c10 {
 
 // NOLINTNEXTLINE(misc-use-internal-linkage)
@@ -2290,7 +2277,6 @@ class DeviceCachingAllocator {
 
   CaptureInfo stream_get_capture_info(cudaStream_t stream) const {
     CaptureInfo info{};
-#if (defined(CUDA_VERSION) && CUDA_VERSION >= 13000)
     C10_CUDA_CHECK(cudaStreamGetCaptureInfo(
         stream,
         &info.status,
@@ -2299,15 +2285,6 @@ class DeviceCachingAllocator {
         &info.terminals,
         nullptr,
         &info.num_terminals));
-#else
-    C10_CUDA_CHECK(cudaStreamGetCaptureInfo_v2(
-        stream,
-        &info.status,
-        &info.capture_id,
-        &info.graph,
-        &info.terminals,
-        &info.num_terminals));
-#endif
     TORCH_INTERNAL_ASSERT(
         info.status != cudaStreamCaptureStatusInvalidated,
         "Invalid stream capture status");
@@ -2375,7 +2352,6 @@ class DeviceCachingAllocator {
     // This is the versioned cudaGraphNodeGetDependencies helper function.
     auto node_get_dependencies =
         [](cudaGraphNode_t n, cudaGraphNode_t* deps, size_t* count) -> void {
-#if (defined(CUDA_VERSION) && CUDA_VERSION >= 13000)
       if (deps == nullptr) {
         C10_CUDA_CHECK(cudaGraphNodeGetDependencies(n, deps, nullptr, count));
       } else {
@@ -2384,9 +2360,6 @@ class DeviceCachingAllocator {
         C10_CUDA_CHECK(
             cudaGraphNodeGetDependencies(n, deps, edgeData.data(), count));
       }
-#else
-      C10_CUDA_CHECK(cudaGraphNodeGetDependencies(n, deps, count));
-#endif
     };
 
     // Helper to retrieve all parent nodes (dependencies) of a given node.
