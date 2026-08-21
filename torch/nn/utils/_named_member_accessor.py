@@ -9,7 +9,7 @@ import torch
 _MISSING: torch.Tensor = object()  # type: ignore[assignment]
 
 
-def set_tensor(module: "torch.nn.Module", name: str, tensor: torch.Tensor) -> None:
+def set_tensor(module: torch.nn.Module, name: str, tensor: torch.Tensor) -> None:
     if not isinstance(module, torch.nn.Module):
         raise TypeError(f"{module} is not an instance of torch.nn.Module")
     if not isinstance(tensor, torch.Tensor) and tensor is not None:
@@ -27,7 +27,7 @@ def set_tensor(module: "torch.nn.Module", name: str, tensor: torch.Tensor) -> No
 
 
 def swap_tensor(
-    module: "torch.nn.Module",
+    module: torch.nn.Module,
     name: str,
     tensor: torch.Tensor,
     allow_missing: bool = False,
@@ -82,10 +82,10 @@ def swap_tensor(
 
 
 def swap_submodule(
-    module: "torch.nn.Module",
+    module: torch.nn.Module,
     name: str,
-    submodule: "torch.nn.Module",
-) -> "torch.nn.Module":
+    submodule: torch.nn.Module,
+) -> torch.nn.Module:
     if not isinstance(module, torch.nn.Module):
         raise TypeError(f"{module} is not an instance of torch.nn.Module")
     if not isinstance(submodule, torch.nn.Module):
@@ -112,13 +112,13 @@ class NamedMemberAccessor:
     This is useful for functional programming to manipulate the module state.
     """
 
-    def __init__(self, module: "torch.nn.Module") -> None:
+    def __init__(self, module: torch.nn.Module) -> None:
         self.module = module
         self.memo: dict[str, torch.nn.Module] = {}
 
     # Nested attribute access
 
-    def get_submodule(self, name: str) -> "torch.nn.Module":
+    def get_submodule(self, name: str) -> torch.nn.Module:
         """
         Return the submodule specified by the given path.
 
@@ -152,7 +152,7 @@ class NamedMemberAccessor:
             self.memo[name] = submodule
             return submodule
 
-    def swap_submodule(self, path: str, value: "torch.nn.Module") -> "torch.nn.Module":
+    def swap_submodule(self, path: str, value: torch.nn.Module) -> torch.nn.Module:
         """
         Swap the submodule specified by the given ``path`` to ``value``.
 
@@ -376,6 +376,6 @@ class NamedMemberAccessor:
     def named_modules(
         self,
         remove_duplicate: bool = True,
-    ) -> Iterable[tuple[str, "torch.nn.Module"]]:
+    ) -> Iterable[tuple[str, torch.nn.Module]]:
         """Iterate over all the modules in the module."""
         yield from self.module.named_modules(remove_duplicate=remove_duplicate)

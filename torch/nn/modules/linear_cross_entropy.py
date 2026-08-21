@@ -63,7 +63,7 @@ class _ChunkViews:
     or scratch from ctx dispatch flags so call sites read raw.
     """
 
-    ctx: "_ChunkContext"
+    ctx: _ChunkContext
     bchunk_start: int
     bchunk_size: int
     input_chunk: torch.Tensor
@@ -444,7 +444,7 @@ class _ChunkContext:
         compute_linear_weight_grad: bool,
         compute_linear_bias_grad: bool,
         loss_grad_output: torch.Tensor | None = None,
-    ) -> "_ChunkContext":
+    ) -> _ChunkContext:
         # ===== Validation =====
         is_prob_target = target.dtype.is_floating_point
         if is_prob_target:

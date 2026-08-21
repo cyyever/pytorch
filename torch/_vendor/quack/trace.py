@@ -69,13 +69,11 @@ Device (safe to call from all lanes):
     ctx.flush()
 """
 
-from __future__ import annotations
 
 import json
 import math
 import os
 import struct
-from typing import Optional
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -322,7 +320,7 @@ class TraceContext(ParamsBase):
     @classmethod
     def create(
         cls,
-        buf_ptr: Optional[Int64],
+        buf_ptr: Int64 | None,
         per_warp_cap: int = 4096,
         warp_ids: tuple[int, ...] | list[int] | None = None,
     ):

@@ -535,15 +535,15 @@ def jagged_from_list(
 
     if len(tensors) == 0:
         raise RuntimeError("Cannot construct a nested tensor from an empty tensor list")
-    if not len(set(t.dtype for t in tensors)) == 1:  # noqa: C401
+    if not len({t.dtype for t in tensors}) == 1:  # noqa: C401
         raise RuntimeError(
             "When constructing a nested tensor, all tensors in list must have the same dtype"
         )
-    if not len(set(t.device for t in tensors)) == 1:  # noqa: C401
+    if not len({t.device for t in tensors}) == 1:  # noqa: C401
         raise RuntimeError(
             "When constructing a nested tensor, all tensors in list must be on the same device"
         )
-    if not len(set(t.dim() for t in tensors)) == 1:  # noqa: C401
+    if not len({t.dim() for t in tensors}) == 1:  # noqa: C401
         raise RuntimeError(
             "When constructing a nested tensor, all tensors in list must have the same dim"
         )

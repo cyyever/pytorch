@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import copyreg
 import dataclasses
@@ -42,7 +40,8 @@ from types import (
     ModuleType,
 )
 from typing import Any, cast, Generic, Literal, NoReturn, TYPE_CHECKING, TypeVar
-from typing_extensions import NotRequired, override, Self, TypedDict
+from typing import override, TypedDict
+from typing import NotRequired, Self
 
 import torch
 import torch._library.opaque_object as opaque_object
@@ -1839,7 +1838,7 @@ class GuardedCache(Generic[T]):
         local: bool,
         remote_cache: RemoteCache[JsonDataTy] | None,
         key: str,
-    ) -> Generator[tuple[T, bytes, bool], None, None]:
+    ) -> Generator[tuple[T, bytes, bool]]:
         if local:
             subdir = cls._get_tmp_dir_for_key(key)
             if os.path.exists(subdir):

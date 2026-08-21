@@ -4,7 +4,6 @@ Uses the vendored quack subset at ``torch._vendor.quack``.
 """
 # mypy: allow-untyped-defs
 
-from __future__ import annotations
 
 import math
 

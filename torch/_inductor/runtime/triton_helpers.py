@@ -556,7 +556,7 @@ def bucketize_binary_search(
     BOUNDARIES_STRIDE: int,
     boundary_indices: tl.tensor,
     indexing_dtype: tl.dtype,
-    right: "bool",  # triton can't handle the unquoted bool annotation
+    right: bool,  # triton can't handle the unquoted bool annotation
     sorter_ptr: tl.tensor,
     SORTER_STRIDE: int,
     sorter_indices: tl.tensor,

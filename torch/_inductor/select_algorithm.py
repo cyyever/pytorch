@@ -22,7 +22,7 @@ from io import StringIO
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast, NamedTuple, Optional, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 from unittest.mock import patch
 
 import sympy
@@ -361,11 +361,11 @@ class SubgraphInfo:
     loads: IndentedBuffer = dataclasses.field(default_factory=IndentedBuffer)
     stores: IndentedBuffer = dataclasses.field(default_factory=IndentedBuffer)
     ops_handler: V.WrapperHandler | None = None  # type: ignore[name-defined]
-    cse: Optional["CSE[Any, str]"] = None
+    cse: Optional[CSE[Any, str]] = None
 
     # only copied over if not None
-    range_trees: list["IterationRangesRoot"] | None = None
-    range_tree_nodes: dict[sympy.Symbol, "IterationRangesEntry"] | None = None
+    range_trees: list[IterationRangesRoot] | None = None
+    range_tree_nodes: dict[sympy.Symbol, IterationRangesEntry] | None = None
     numels: dict[str, sympy.Expr] | None = None
 
     # Mapping from original range-tree root variable names (e.g. "xindex")
@@ -1297,8 +1297,8 @@ class TritonTemplateKernel(TritonKernel):
                     self,
                     name: str,
                     index: sympy.Expr,
-                    value: "CSEVariable",
-                    mode: "StoreMode" = None,
+                    value: CSEVariable,
+                    mode: StoreMode = None,
                 ):
                     V.kernel.store_buffer_names.add(name)
                     V.kernel.cse.store_cache[name] = value
@@ -2084,7 +2084,7 @@ class ExternalTritonTemplateKernel(TritonTemplateKernel):
     template indexing support.
     """
 
-    def __init__(self, template_buffer: "ir.TemplateBuffer") -> None:
+    def __init__(self, template_buffer: ir.TemplateBuffer) -> None:
         class _RealOutputNode:
             def get_size(self) -> list:
                 return list(template_buffer.get_size())
@@ -2687,7 +2687,7 @@ class TritonTemplate(KernelTemplate):
     # Allow subclasses to override the kernel type
     kernel_type: type[Any] = TritonTemplateKernel
     index_counter = itertools.count()
-    all_templates: dict[str, "TritonTemplate"] = {}
+    all_templates: dict[str, TritonTemplate] = {}
 
     def __init__(
         self,
@@ -3234,7 +3234,7 @@ class ExternKernelChoice:
     before creating a new one to avoid duplicate registrations.
     """
 
-    _registry: dict[str, "ExternKernelChoice"] = {}
+    _registry: dict[str, ExternKernelChoice] = {}
 
     def __init__(
         self,
@@ -3274,7 +3274,7 @@ class ExternKernelChoice:
         ExternKernelChoice._registry[name] = self
 
     @classmethod
-    def lookup(cls, name: str) -> Optional["ExternKernelChoice"]:
+    def lookup(cls, name: str) -> Optional[ExternKernelChoice]:
         return cls._registry.get(name)
 
     def to_callable(self) -> Callable[..., Any]:

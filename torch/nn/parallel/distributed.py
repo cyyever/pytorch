@@ -65,7 +65,7 @@ class _BucketCapacityConfig:
         bucket_cap_mb: int | None,
         bucket_cap_mb_list: list[int] | None,
         use_python_reducer: bool,
-    ) -> "_BucketCapacityConfig":
+    ) -> _BucketCapacityConfig:
         """Factory method to create a BucketCapacityConfig from user inputs.
 
         Args:
@@ -737,7 +737,7 @@ class DistributedDataParallel(Module, Joinable):
     """
 
     # used to track whether the given thread is inside ddp forward for torchdynamo purposes
-    _active_ddp_module: Optional["DistributedDataParallel"] = None
+    _active_ddp_module: Optional[DistributedDataParallel] = None
 
     def __init__(
         self,

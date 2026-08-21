@@ -9,7 +9,6 @@ during compilation. The profiles track dynamic vs static properties of tensors
 and help Dynamo make better specialization decisions.
 """
 
-from __future__ import annotations
 
 import base64
 import copy
@@ -23,7 +22,8 @@ import re
 import zlib
 from collections import defaultdict
 from typing import TYPE_CHECKING, TypeVar
-from typing_extensions import override, Self
+from typing import override
+from typing import Self
 
 import torch._dynamo.config
 import torch._utils_internal

@@ -6,7 +6,7 @@ import operator
 import sys
 from collections.abc import Callable
 from typing import Any, cast, TypeAlias, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._decomp as decomp

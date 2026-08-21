@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import copy
 import enum
@@ -21,7 +19,7 @@ from inspect import currentframe
 from itertools import count
 from operator import attrgetter
 from typing import Any, Generic, TYPE_CHECKING, TypeVar
-from typing_extensions import Never, override, ParamSpec, Protocol, TypedDict, Unpack
+from typing import Never, override, ParamSpec, Protocol, TypedDict, Unpack
 from unittest import mock
 
 import torch._inductor.async_compile
@@ -638,7 +636,7 @@ def _unlift_graph(
 
 def _get_subgraph_names(
     gm: GraphModule, skip_invoke_subgraph: bool = False
-) -> Generator[str, None, None]:
+) -> Generator[str]:
     all_subgraph_names: OrderedSet[str] = OrderedSet(
         x.target for x in gm.graph.find_nodes(op="get_attr")
     )
@@ -975,7 +973,7 @@ def get_patched_config_dict(
 
 
 @contextlib.contextmanager
-def with_fresh_cache_if_config() -> Generator[None, None, None]:
+def with_fresh_cache_if_config() -> Generator[None]:
     if config.force_disable_caches:
         # Don't delete the cache dir because it has to survive beyond the
         # compile_fx call. Let's put the temp dirs under the default cache

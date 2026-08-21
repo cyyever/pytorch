@@ -22,19 +22,19 @@ class _KeyWrapper:
         self.mycmp = mycmp
         self.obj = obj
 
-    def __lt__(self, other: "_KeyWrapper") -> bool:
+    def __lt__(self, other: _KeyWrapper) -> bool:
         return self.mycmp(self.obj, other.obj) < 0
 
-    def __gt__(self, other: "_KeyWrapper") -> bool:
+    def __gt__(self, other: _KeyWrapper) -> bool:
         return self.mycmp(self.obj, other.obj) > 0
 
     def __eq__(self, other: object) -> bool:
         return self.mycmp(self.obj, other.obj) == 0  # type: ignore[attr-defined]
 
-    def __le__(self, other: "_KeyWrapper") -> bool:
+    def __le__(self, other: _KeyWrapper) -> bool:
         return self.mycmp(self.obj, other.obj) <= 0
 
-    def __ge__(self, other: "_KeyWrapper") -> bool:
+    def __ge__(self, other: _KeyWrapper) -> bool:
         return self.mycmp(self.obj, other.obj) >= 0
 
     __hash__ = None  # type: ignore[assignment]

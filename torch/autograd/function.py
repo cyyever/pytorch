@@ -6,7 +6,8 @@ import warnings
 from collections import OrderedDict
 from collections.abc import Callable
 from typing import Any, Concatenate, TypeVar
-from typing_extensions import deprecated, ParamSpec
+from typing import ParamSpec
+from warnings import deprecated
 
 import torch
 import torch._C as _C
@@ -36,7 +37,7 @@ _P = ParamSpec("_P")
 
 # Formerly known as: _ContextMethodMixin
 class FunctionCtx:
-    output_grad_dtypes: "tuple[torch.dtype | None, ...] | None"
+    output_grad_dtypes: tuple[torch.dtype | None, ...] | None
 
     def save_for_backward(self, *tensors: torch.Tensor):
         r"""Save given tensors for a future call to :func:`~Function.backward`.
@@ -233,7 +234,7 @@ class FunctionCtx:
         """
         self.non_differentiable = args
 
-    def set_output_grad_dtype(self, *dtypes: "torch.dtype | None") -> None:
+    def set_output_grad_dtype(self, *dtypes: torch.dtype | None) -> None:
         r"""Declare the gradient dtype for each of this Function's outputs.
 
         This should be called at most once, from either the

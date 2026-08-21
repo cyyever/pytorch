@@ -61,7 +61,6 @@ hijacks Triton's process-global ``knobs.runtime`` hooks (those would also
 capture Inductor's unrelated Triton compiles).
 """
 
-from __future__ import annotations
 
 import functools
 import time

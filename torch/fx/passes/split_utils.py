@@ -344,7 +344,7 @@ def split_by_tags(
 
 
 @compatibility(is_backward_compatible=False)
-def move_non_tensor_nodes_on_boundary(subgraphs: list["Subgraph"]) -> None:
+def move_non_tensor_nodes_on_boundary(subgraphs: list[Subgraph]) -> None:
     """
     Move non-tensor nodes on the boundary between subgraphs.
 

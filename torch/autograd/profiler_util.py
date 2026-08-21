@@ -7,7 +7,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Callable
 from operator import attrgetter
 from typing import Any, NamedTuple
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch.autograd import DeviceType

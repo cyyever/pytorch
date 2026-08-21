@@ -1,6 +1,6 @@
 # Copyright (c) 2025, Tri Dao.
 
-from typing import Literal, Type, Union, Optional
+from typing import Literal
 
 import cutlass
 import cutlass.cute as cute
@@ -13,15 +13,15 @@ from cutlass.utils import LayoutEnum
 
 @dsl_user_op
 def make_smem_layout(
-    dtype: Type[Numeric],
+    dtype: type[Numeric],
     layout: LayoutEnum,
     tile: cute.Tile,
-    stage: Optional[int] = None,
-    major_mode_size: Optional[int] = None,
+    stage: int | None = None,
+    major_mode_size: int | None = None,
     *,
     loc=None,
     ip=None,
-) -> Union[cute.Layout, cute.ComposedLayout]:
+) -> cute.Layout | cute.ComposedLayout:
     shape = cute.product_each(cute.shape(tile, loc=loc, ip=ip), loc=loc, ip=ip)
     if const_expr(major_mode_size is None):
         major_mode_size = shape[1] if layout.is_n_major_c() else shape[0]
@@ -43,15 +43,15 @@ make_smem_layout_epi = make_smem_layout
 
 
 def make_tiled_mma(
-    a_dtype: Type[Numeric],
+    a_dtype: type[Numeric],
     a_major: Literal["K", "MN"],
     b_major: Literal["K", "MN"],
     tiler_n: int,
     source: Literal["SS", "RS"] = "SS",
     atom_layout_mnk: tuple = (1, 1, 1),
     swap_AB: bool = False,
-    b_dtype: Optional[Type[Numeric]] = None,
-    acc_dtype: Type[Numeric] = Float32,
+    b_dtype: type[Numeric] | None = None,
+    acc_dtype: type[Numeric] = Float32,
 ) -> cute.TiledMma:
     """`b_dtype` defaults to `a_dtype`; pass it for mixed-precision MMAs (e.g. fp8).
     `acc_dtype` defaults to Float32."""
@@ -126,8 +126,8 @@ def gemm_zero_init(
     shape: cute.Shape,
     tCrA: cute.Tensor,
     tCrB: cute.Tensor,
-    A_idx: Optional[Int32] = None,
-    B_idx: Optional[Int32] = None,
+    A_idx: Int32 | None = None,
+    B_idx: Int32 | None = None,
     wg_wait: int = -1,
     swap_AB: bool = False,
 ) -> cute.Tensor:
@@ -149,8 +149,8 @@ def gemm_w_idx(
     tCrA: cute.Tensor,
     tCrB: cute.Tensor,
     zero_init: Boolean,
-    A_idx: Optional[Int32] = None,
-    B_idx: Optional[Int32] = None,
+    A_idx: Int32 | None = None,
+    B_idx: Int32 | None = None,
     wg_wait: int = -1,
     swap_AB: bool = False,
 ) -> None:
@@ -165,8 +165,8 @@ def gemm_w_idx(
 def partition_fragment_ABC(
     thr_mma: cute.ThrMma,
     shape_mnk: cute.Shape,
-    sA: Optional[cute.Tensor],
-    sB: Optional[cute.Tensor],
+    sA: cute.Tensor | None,
+    sB: cute.Tensor | None,
     swap_AB: bool = False,
 ):
     is_rs = thr_mma.op.a_src == warpgroup.OperandSource.RMEM

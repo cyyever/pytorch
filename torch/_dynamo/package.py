@@ -28,7 +28,7 @@ import types
 from collections.abc import Callable, Generator, Iterator
 from contextlib import nullcontext
 from typing import Any, NewType, Optional, TYPE_CHECKING, Union
-from typing_extensions import Never
+from typing import Never
 
 import torch
 from torch._dynamo.exc import PackageError
@@ -55,8 +55,8 @@ _CODE_CACHE = WeakIdKeyDictionary()
 
 def _code_cache(fn: Callable[..., Any]) -> Callable[..., Any]:
     def _(
-        cls: type[Any], code: Union["SerializedCode", types.CodeType]
-    ) -> Union["SerializedCode", types.CodeType]:
+        cls: type[Any], code: Union[SerializedCode, types.CodeType]
+    ) -> Union[SerializedCode, types.CodeType]:
         if code in _CODE_CACHE:
             return _CODE_CACHE[code]
         res = fn(cls, code)
@@ -90,7 +90,7 @@ class SerializedCode:
 
     @classmethod
     @_code_cache
-    def from_code_object(cls, code: types.CodeType) -> "SerializedCode":
+    def from_code_object(cls, code: types.CodeType) -> SerializedCode:
         kwargs = {key: getattr(code, key) for key in get_code_keys()}
         kwargs["co_consts"] = tuple(
             cls.from_code_object(c) if isinstance(c, types.CodeType) else c
@@ -100,7 +100,7 @@ class SerializedCode:
 
     @classmethod
     @_code_cache
-    def to_code_object(cls, serialized_code: "SerializedCode") -> types.CodeType:
+    def to_code_object(cls, serialized_code: SerializedCode) -> types.CodeType:
         kwargs = {key: getattr(serialized_code, key) for key in get_code_keys()}
         kwargs["co_consts"] = tuple(
             cls.to_code_object(c) if isinstance(c, SerializedCode) else c
@@ -136,10 +136,10 @@ def load_guards_state(guards_state: bytes) -> Any:
 
 
 def load_guard_manager(
-    guards_state: "GuardsState",
+    guards_state: GuardsState,
     target_code: types.CodeType,
     runtime_global_scope: Any,
-) -> "GuardManagerWrapper":
+) -> GuardManagerWrapper:
     from .output_graph import OutputGraphCommon
 
     return torch._dynamo.guards.CheckFunctionManager(
@@ -299,15 +299,14 @@ def _get_code_source(code: types.CodeType) -> tuple[str, str]:
         raise PackageError(f"Cannot find module for code {code}")
 
     toplevel: Any = module
-    if sys.version_info >= (3, 11):
-        parts = code.co_qualname.split(".")
+    parts = code.co_qualname.split(".")
 
-        for part in parts:
-            if not hasattr(toplevel, part):
-                _raise_resolution_error(code, toplevel)
-            toplevel = getattr(toplevel, part)
-            if inspect.isfunction(toplevel) or inspect.ismethod(toplevel):
-                break
+    for part in parts:
+        if not hasattr(toplevel, part):
+            _raise_resolution_error(code, toplevel)
+        toplevel = getattr(toplevel, part)
+        if inspect.isfunction(toplevel) or inspect.ismethod(toplevel):
+            break
     seen = set()
 
     def _find_code_source(obj: Any) -> str | None:
@@ -403,7 +402,7 @@ class SystemInfo:
     CHECK_GPUS = ("cuda", "xpu")
 
     @classmethod
-    def current(cls) -> "SystemInfo":
+    def current(cls) -> SystemInfo:
         """Create a SystemInfo instance with current system information."""
         # Get GPU name if CUDA or XPU is available
         gpu_name = None
@@ -428,7 +427,7 @@ class SystemInfo:
         )
 
     def check_compatibility(
-        self, other: "SystemInfo", device_type: str = "cpu"
+        self, other: SystemInfo, device_type: str = "cpu"
     ) -> None:
         """
         Check if this SystemInfo is compatible with another SystemInfo.
@@ -530,7 +529,7 @@ class PrecompileCacheEntry:
     @staticmethod
     def from_cache_entry(
         cache_entry: _DynamoCacheEntry, backends: dict[_BackendId, Any]
-    ) -> Optional["PrecompileCacheEntry"]:
+    ) -> Optional[PrecompileCacheEntry]:
         backend_content: dict[_BackendId, Any] = {}
 
         for code in cache_entry.codes:
@@ -753,7 +752,7 @@ class CompilePackage:
         )
 
     @contextlib.contextmanager
-    def code_context(self, code: types.CodeType) -> Generator[None, None, None]:
+    def code_context(self, code: types.CodeType) -> Generator[None]:
         if self._current_entry is not None:
             raise AssertionError("_current_entry is already set in code_context")
 

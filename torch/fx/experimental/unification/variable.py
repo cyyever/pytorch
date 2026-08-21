@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Hashable
-    from typing import Literal
 
 from .dispatch import dispatch
 from .utils import hashable
@@ -65,7 +62,7 @@ def isvar(o: object) -> bool:  # noqa: F811
 
 
 @contextmanager
-def variables(*variables: Hashable) -> Generator[None, None, None]:
+def variables(*variables: Hashable) -> Generator[None]:
     """
     Context manager for logic variables
 

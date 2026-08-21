@@ -25,7 +25,7 @@ import types
 import unittest
 from collections.abc import Callable, Generator, Sequence
 from typing import Any, overload, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from unittest.mock import patch
 
 import torch
@@ -522,15 +522,13 @@ def make_test_cls_with_patches(
 
 # test Python 3.11+ specific features
 def skipIfNotPy311(fn: Callable[_P, _T]) -> Callable[_P, _T]:
-    if sys.version_info >= (3, 11):
-        return fn
+    return fn
     # pyrefly: ignore [bad-return, bad-argument-type]
     return unittest.skip(fn)
 
 
 def skipIfNotPy312(fn: Callable[_P, _T]) -> Callable[_P, _T]:
-    if sys.version_info >= (3, 12):
-        return fn
+    return fn
     return unittest.skip("Requires Python 3.12+")(fn)
 
 
@@ -541,14 +539,12 @@ def skipIfOnlyNotPy312(fn: Callable[_P, _T]) -> Callable[_P, _T]:
 
 
 def xfailIfPy312(fn: Callable[_P, _T]) -> Callable[_P, _T]:
-    if sys.version_info >= (3, 12):
-        return unittest.expectedFailure(fn)
+    return unittest.expectedFailure(fn)
     return fn
 
 
 def skipIfPy312(fn: Callable[_P, _T]) -> Callable[_P, _T]:
-    if sys.version_info >= (3, 12):
-        return unittest.skip("Not supported in Python 3.12+")(fn)
+    return unittest.skip("Not supported in Python 3.12+")(fn)
     return fn
 
 

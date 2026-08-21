@@ -50,7 +50,7 @@ class LocalShardsWrapper(torch.Tensor):
     @staticmethod
     def __new__(
         cls, local_shards: list[torch.Tensor], offsets: list[torch.Size]
-    ) -> "LocalShardsWrapper":
+    ) -> LocalShardsWrapper:
         if len(local_shards) <= 0:
             raise AssertionError
         if len(local_shards) != len(offsets):

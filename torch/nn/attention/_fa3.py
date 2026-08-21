@@ -6,7 +6,6 @@ For fp16/bf16: supports forward and backward pass.
 """
 # mypy: allow-untyped-defs
 
-from __future__ import annotations
 
 import importlib
 import warnings
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 
 from dataclasses import dataclass
 from functools import cache
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple
 
 import torch
 from torch.library import Library
@@ -239,7 +238,7 @@ def _fa3_backward_support_error(
 Ts = TypeVarTuple("Ts")
 
 
-def _transpose_dense(*tensors: Unpack[Ts]) -> tuple[Unpack[Ts]]:
+def _transpose_dense(*tensors: *Ts) -> tuple[*Ts]:
     return tuple(t.transpose(1, 2) for t in tensors)  # type: ignore[attr-defined]
 
 

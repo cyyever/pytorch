@@ -23,7 +23,6 @@ INVARIANT: ``_extract_param_buffers`` reproduces
 ordering VERBATIM; the two must stay in sync (see Note [precompile programming model]).
 """
 
-from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

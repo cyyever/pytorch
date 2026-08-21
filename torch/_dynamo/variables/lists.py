@@ -129,7 +129,7 @@ class BaseListVariable(VariableTracker):
     _index_not_found_msg = "tuple.index(x): x not in tuple"
 
     @staticmethod
-    def cls_for_instance(obj: Any) -> type["BaseListVariable"]:
+    def cls_for_instance(obj: Any) -> type[BaseListVariable]:
         return BaseListVariable.cls_for(type(obj))
 
     @staticmethod
@@ -163,7 +163,7 @@ class BaseListVariable(VariableTracker):
 
     def modified(
         self, items: list[VariableTracker], **kwargs: Any
-    ) -> "BaseListVariable":
+    ) -> BaseListVariable:
         return type(self)(items, **kwargs)
 
     @property
@@ -176,7 +176,7 @@ class BaseListVariable(VariableTracker):
     def as_python_constant(self) -> Any:
         return self.python_type()([x.as_python_constant() for x in self.items])
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return VariableTracker.build(tx, self.debug_repr())
 
     def as_proxy(self) -> Any:
@@ -187,7 +187,7 @@ class BaseListVariable(VariableTracker):
         return self.python_type()(self._as_proxy())
 
     def getitem_const(
-        self, tx: "InstructionTranslatorBase", arg: VariableTracker
+        self, tx: InstructionTranslatorBase, arg: VariableTracker
     ) -> VariableTracker:
         if pyindex_check(maybe_get_python_type(arg)):
             index = pynumber_as_ssize_t(tx, arg).as_python_constant()
@@ -219,18 +219,18 @@ class BaseListVariable(VariableTracker):
             )
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> list[VariableTracker]:
         return list(self.items)
 
-    def sq_length_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def sq_length_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """Sequence length for lists, tuples, and range objects."""
         return VariableTracker.build(tx, len(self.items))
 
     mp_length_impl = sq_length_impl
 
     def sq_contains_impl(
-        self, tx: "InstructionTranslatorBase", item: VariableTracker
+        self, tx: InstructionTranslatorBase, item: VariableTracker
     ) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.0/Objects/listobject.c#L635-L652
 
@@ -240,7 +240,7 @@ class BaseListVariable(VariableTracker):
 
     def call_tree_map_branch(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         tree_map_fn: UserFunctionVariable,
         map_fn: VariableTracker,
         rest: list[VariableTracker],
@@ -284,7 +284,7 @@ class BaseListVariable(VariableTracker):
 
     def call_tree_map_with_path_branch(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         tree_map_fn: UserFunctionVariable,
         map_fn: VariableTracker,
         rest: list[VariableTracker],
@@ -331,7 +331,7 @@ class BaseListVariable(VariableTracker):
 
     def mp_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # list_subscript: https://github.com/python/cpython/blob/62a6e898e01/Objects/listobject.c#L3689-L3710
@@ -339,7 +339,7 @@ class BaseListVariable(VariableTracker):
 
     def sq_item_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # list_item: https://github.com/python/cpython/blob/62a6e898e01/Objects/listobject.c#L335-L351
@@ -358,7 +358,7 @@ class BaseListVariable(VariableTracker):
 
     def sq_repeat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         count: VariableTracker,
     ) -> VariableTracker:
         n = count.as_python_constant()
@@ -376,7 +376,7 @@ class BaseListVariable(VariableTracker):
 
     def _seq_richcompare(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
         accepted_type: type,
@@ -465,7 +465,7 @@ class BaseListVariable(VariableTracker):
 
     def list_index(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -495,7 +495,7 @@ class BaseListVariable(VariableTracker):
 
     def list_count(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -507,7 +507,7 @@ class BaseListVariable(VariableTracker):
 
     def list_append(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -520,7 +520,7 @@ class BaseListVariable(VariableTracker):
 
     def list_extend(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -555,7 +555,7 @@ class BaseListVariable(VariableTracker):
 
     def list_insert(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -576,7 +576,7 @@ class BaseListVariable(VariableTracker):
 
     def list_pop(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -598,7 +598,7 @@ class BaseListVariable(VariableTracker):
 
     def list_clear(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -610,7 +610,7 @@ class BaseListVariable(VariableTracker):
 
     def list_copy(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -620,7 +620,7 @@ class BaseListVariable(VariableTracker):
 
     def list_reverse(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -632,7 +632,7 @@ class BaseListVariable(VariableTracker):
 
     def list_remove(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -644,7 +644,7 @@ class BaseListVariable(VariableTracker):
 
     def list_sort(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -673,7 +673,7 @@ class BaseListVariable(VariableTracker):
             def __init__(self, key: VariableTracker) -> None:
                 self.key = key
 
-            def __lt__(self, other: "_TracedKey") -> bool:
+            def __lt__(self, other: _TracedKey) -> bool:
                 result = variables.BuiltinVariable(operator.lt).call_function(
                     tx, [self.key, other.key], {}
                 )
@@ -727,7 +727,7 @@ class BaseListVariable(VariableTracker):
 
     def list_reversed(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -787,7 +787,7 @@ class RangeVariable(BaseListVariable):
         repr += ")"
         return repr
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: range_repr in https://github.com/python/cpython/blob/6280bb547840b609feedb78887c6491af75548e8/Objects/rangeobject.c#L673-L691
         return VariableTracker.build(tx, self.debug_repr())
 
@@ -806,7 +806,7 @@ class RangeVariable(BaseListVariable):
     def step(self) -> int:
         return guard_if_dyn(self.items[2])
 
-    def nb_bool_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def nb_bool_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: range_bool in https://github.com/python/cpython/blob/v3.13.0/Objects/rangeobject.c#L740-L744
         return ConstantVariable.create(self.range_length() != 0)
 
@@ -874,7 +874,7 @@ class RangeVariable(BaseListVariable):
         return [start, stop, step]
 
     def apply_index(
-        self, tx: "InstructionTranslatorBase", index: int
+        self, tx: InstructionTranslatorBase, index: int
     ) -> VariableTracker:
         length = self.range_length()
         if index < 0:
@@ -889,7 +889,7 @@ class RangeVariable(BaseListVariable):
 
         return VariableTracker.build(tx, self.start() + (index * self.step()))
 
-    def apply_slice(self, slice: slice) -> "RangeVariable":
+    def apply_slice(self, slice: slice) -> RangeVariable:
         (slice_start, slice_stop, slice_step) = self._get_slice_indices(
             self.range_length(), slice
         )
@@ -914,7 +914,7 @@ class RangeVariable(BaseListVariable):
         return range(*[x.as_python_constant() for x in self.items])
 
     def getitem_const(
-        self, tx: "InstructionTranslatorBase", arg: VariableTracker
+        self, tx: InstructionTranslatorBase, arg: VariableTracker
     ) -> VariableTracker:
         # range_subscript: https://github.com/python/cpython/blob/62a6e898e01/Objects/rangeobject.c#L729-L748
         arg_type = maybe_get_python_type(arg)
@@ -934,22 +934,22 @@ class RangeVariable(BaseListVariable):
         return self.python_type()(*self._as_proxy())
 
     def unpack_var_sequence(
-        self, tx: Optional["InstructionTranslatorBase"] = None
+        self, tx: Optional[InstructionTranslatorBase] = None
     ) -> list[VariableTracker]:
         rng = range(self.start(), self.stop(), self.step())
         return [variables.ConstantVariable.create(x) for x in rng]
 
-    def sq_length_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def sq_length_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """Sequence length for range objects."""
         length = self.range_length()
         if length > sys.maxsize:
             raise_observed_exception(OverflowError, tx)
         return VariableTracker.build(tx, length)
 
-    def mp_length_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def mp_length_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.sq_length_impl(tx)
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         if "range" in codegen.tx.f_globals:
             raise AssertionError("'range' must not be shadowed in f_globals")
         codegen.add_push_null(
@@ -959,13 +959,13 @@ class RangeVariable(BaseListVariable):
         codegen.extend_output(create_call_function(3, False))
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         if self.python_type() is range:
             return VariableTracker.build(tx, name in range.__dict__)
         return super().call_obj_hasattr(tx, name)
 
-    def range_equals(self, other: "RangeVariable") -> bool:
+    def range_equals(self, other: RangeVariable) -> bool:
         # ref: https://github.com/python/cpython/blob/62a6e898e017c9878490544f6a227b8a187a949c/Objects/rangeobject.c#L514-L553  (range_equals)
         r0, r1 = self, other
         if r0 is r1:
@@ -1001,21 +1001,21 @@ class RangeVariable(BaseListVariable):
 
     def mp_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # range_subscript: https://github.com/python/cpython/blob/62a6e898e01/Objects/rangeobject.c#L729-L748
         return self.getitem_const(tx, key)
 
     def sq_contains_impl(
-        self, tx: "InstructionTranslatorBase", item: VariableTracker
+        self, tx: InstructionTranslatorBase, item: VariableTracker
     ) -> VariableTracker:
         # range_contains: https://github.com/python/cpython/blob/60403a5409ff2c3f3b07dd2ca91a7a3e096839c7/Objects/rangeobject.c#L482-L490
         if maybe_get_python_type(item) in (int, bool):
             return VariableTracker.build(tx, bool(self.range_count(item)))
         return iter_contains(self.unpack_var_sequence(tx), item, tx)
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Objects/rangeobject.c#L896-L927
         if not all(var.is_python_constant() for var in self.items):
             # Can't represent a `range_iterator` without well defined bounds
@@ -1028,7 +1028,7 @@ class RangeVariable(BaseListVariable):
 
     def sq_item_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # range_item: https://github.com/python/cpython/blob/62a6e898e01/Objects/rangeobject.c#L405-L416
@@ -1039,7 +1039,7 @@ class RangeVariable(BaseListVariable):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -1069,7 +1069,7 @@ class RangeVariable(BaseListVariable):
 
     def count(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1079,7 +1079,7 @@ class RangeVariable(BaseListVariable):
 
     def index(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1098,7 +1098,7 @@ class RangeVariable(BaseListVariable):
     # arithmetic implementations.
     def range_reversed(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1126,7 +1126,7 @@ class RangeVariable(BaseListVariable):
         "step": Member(getset_read(lambda s: s.items[2])),
     }
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         # CPython range_hash: https://github.com/python/cpython/blob/e76aa128fe/Objects/rangeobject.c#L572
         return hash(self.as_python_constant()), False
 
@@ -1143,7 +1143,7 @@ class ListVariable(BaseListVariable):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -1158,11 +1158,11 @@ class ListVariable(BaseListVariable):
     def debug_repr(self) -> str:
         return self.debug_repr_helper("[", "]")
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         items = ", ".join(tracked_repr(tx, item) for item in self.items)
         return VariableTracker.build(tx, f"[{items}]")
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         if self._contains_self_reference():
             # Self-referential list: create empty, cache, then extend
             codegen.extend_output(
@@ -1185,13 +1185,13 @@ class ListVariable(BaseListVariable):
             codegen.foreach(self.items)
             codegen.append_output(create_instruction("BUILD_LIST", arg=len(self.items)))
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.0/Include/internal/pycore_list.h#L55-L59
         return ListIteratorVariable(self.items, mutation_type=ValueMutationNew())
 
     def sq_inplace_repeat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         count: VariableTracker,
     ) -> VariableTracker:
         # list_inplace_repeat: https://github.com/python/cpython/blob/v3.13.13/Objects/listobject.c#L1071
@@ -1211,7 +1211,7 @@ class ListVariable(BaseListVariable):
 
     def tp_init_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1227,7 +1227,7 @@ class ListVariable(BaseListVariable):
         return ConstantVariable.create(None)
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         if self.python_type() is not list:
             return super().call_obj_hasattr(tx, name)
@@ -1235,7 +1235,7 @@ class ListVariable(BaseListVariable):
 
     def sq_ass_item_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
         value: VariableTracker | None,
     ) -> VariableTracker:
@@ -1260,7 +1260,7 @@ class ListVariable(BaseListVariable):
 
     def mp_ass_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
         value: VariableTracker | None,
     ) -> VariableTracker:
@@ -1323,7 +1323,7 @@ class ListVariable(BaseListVariable):
 
     def sq_concat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
     ) -> VariableTracker:
         # Implements PySequence_Concat for sequences
@@ -1339,7 +1339,7 @@ class ListVariable(BaseListVariable):
 
     def sq_inplace_concat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
     ) -> VariableTracker:
         # Implements PySequence_InPlaceConcat for sequences
@@ -1350,7 +1350,7 @@ class ListVariable(BaseListVariable):
     def is_hashable(self) -> bool:
         return False
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         from ..exc import raise_type_error
 
         raise_type_error(tx, f"unhashable type: '{self.python_type_name()}'")
@@ -1386,7 +1386,7 @@ class DequeVariable(BaseListVariable):
 
     def _rotate(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1414,7 +1414,7 @@ class DequeVariable(BaseListVariable):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -1422,7 +1422,7 @@ class DequeVariable(BaseListVariable):
 
     if sys.version_info < (3, 11):
 
-        def nb_bool_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+        def nb_bool_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
             # deque fills nb_bool (deque_bool: Py_SIZE(deque) != 0) up to Python
             # 3.10; CPython GH-32397 dropped the slot in 3.11, so newer versions
             # fall through to sq_length in generic_is_true and never reach here.
@@ -1431,14 +1431,14 @@ class DequeVariable(BaseListVariable):
     def is_hashable(self) -> bool:
         return False
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         from ..exc import raise_type_error
 
         raise_type_error(tx, f"unhashable type: '{self.python_type_name()}'")
 
     @staticmethod
     def validate_maxlen(
-        tx: "InstructionTranslatorBase", maxlen: VariableTracker
+        tx: InstructionTranslatorBase, maxlen: VariableTracker
     ) -> None:
         # deque_init: maxlenobj != Py_None is run through PyLong_AsSsize_t
         # https://github.com/python/cpython/blob/v3.13.0/Modules/_collectionsmodule.c#L1729-L1736
@@ -1475,7 +1475,7 @@ class DequeVariable(BaseListVariable):
 
     def sq_item_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # deque_item: https://github.com/python/cpython/blob/v3.13.0/Modules/_collectionsmodule.c#L1888
@@ -1489,7 +1489,7 @@ class DequeVariable(BaseListVariable):
 
     def sq_ass_item_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
         value: VariableTracker | None,
     ) -> VariableTracker:
@@ -1515,7 +1515,7 @@ class DequeVariable(BaseListVariable):
 
     def sq_concat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
     ) -> VariableTracker:
         # Implements PySequence_Concat for deque
@@ -1535,7 +1535,7 @@ class DequeVariable(BaseListVariable):
 
     def sq_inplace_concat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
     ) -> VariableTracker:
         # Implements PySequence_InPlaceConcat for deque
@@ -1545,7 +1545,7 @@ class DequeVariable(BaseListVariable):
 
     def sq_inplace_repeat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         count: VariableTracker,
     ) -> VariableTracker:
         # deque_inplace_repeat: https://github.com/python/cpython/blob/v3.13.0/Modules/_collectionsmodule.c#L811
@@ -1575,7 +1575,7 @@ class DequeVariable(BaseListVariable):
             "deque([", "], maxlen=" + self.maxlen.debug_repr() + ")"
         )
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         items = ", ".join(tracked_repr(tx, item) for item in self.items)
         if self.maxlen.as_python_constant() is None:
             return VariableTracker.build(tx, f"{self.python_type_name()}([{items}])")
@@ -1590,7 +1590,7 @@ class DequeVariable(BaseListVariable):
             maxlen=self.maxlen.as_python_constant(),
         )
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # To deal with self-referential sets
         codegen.add_push_null(
             lambda: codegen.append_output(
@@ -1637,7 +1637,7 @@ class DequeVariable(BaseListVariable):
 
     def append(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1650,7 +1650,7 @@ class DequeVariable(BaseListVariable):
 
     def extend(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1667,7 +1667,7 @@ class DequeVariable(BaseListVariable):
 
     def appendleft(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1681,7 +1681,7 @@ class DequeVariable(BaseListVariable):
 
     def extendleft(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1697,7 +1697,7 @@ class DequeVariable(BaseListVariable):
 
     def popleft(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1710,7 +1710,7 @@ class DequeVariable(BaseListVariable):
 
     def insert(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1734,7 +1734,7 @@ class DequeVariable(BaseListVariable):
 
     def copy(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1747,7 +1747,7 @@ class DequeVariable(BaseListVariable):
 
     def pop(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1759,7 +1759,7 @@ class DequeVariable(BaseListVariable):
 
     def clear(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -1771,7 +1771,7 @@ class DequeVariable(BaseListVariable):
 
     def deque_reversed(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1786,7 +1786,7 @@ class DequeVariable(BaseListVariable):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -1810,7 +1810,7 @@ class DequeVariable(BaseListVariable):
         return super().call_method(tx, name, args, kwargs)
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         if self.python_type() is collections.deque:
             return VariableTracker.build(tx, name in collections.deque.__dict__)
@@ -1818,7 +1818,7 @@ class DequeVariable(BaseListVariable):
 
     def tp_init_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1844,7 +1844,7 @@ class DequeVariable(BaseListVariable):
             self.call_method(tx, "extend", [iterable], {})
         return ConstantVariable.create(None)
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Modules/_collectionsmodule.c#L1886-L1904
         return DequeIteratorVariable(
             list(self.items),
@@ -1880,7 +1880,7 @@ class TupleVariable(BaseListVariable):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -1897,17 +1897,17 @@ class TupleVariable(BaseListVariable):
             return self.debug_repr_helper("(", ",)")
         return self.debug_repr_helper("(", ")")
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         items = ", ".join(tracked_repr(tx, item) for item in self.items)
         if len(self.items) == 1:
             items += ","
         return VariableTracker.build(tx, f"({items})")
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Objects/tupleobject.c#L1101-L1117
         return TupleIteratorVariable(self.items, mutation_type=ValueMutationNew())
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.foreach(self.items)
         codegen.append_output(create_build_tuple(len(self.items)))
 
@@ -1918,7 +1918,7 @@ class TupleVariable(BaseListVariable):
             return f"({', '.join([item.reconstruct_pycode(codegen) for item in self.items])},)"
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         if self.python_type() is not tuple:
             return super().call_obj_hasattr(tx, name)
@@ -1926,7 +1926,7 @@ class TupleVariable(BaseListVariable):
 
     def sq_concat_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
     ):
         # ref: https://github.com/python/cpython/blob/v3.13.0/Objects/tupleobject.c#L441-L486 (tuple_concat)
@@ -1943,7 +1943,7 @@ class TupleVariable(BaseListVariable):
             self.items + unpack_iterable(tx, other), mutation_type=ValueMutationNew()
         )
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         # CPython tuplehash: https://github.com/python/cpython/blob/e76aa128fe/Objects/tupleobject.c#L321
         # Collect per-item hashes and feed them through tuplehash.  We wrap
         # each hash in RawHash to bypass int.__hash__'s modular reduction,
@@ -1970,7 +1970,7 @@ class SizeVariable(TupleVariable):
         *TupleVariable._nonvar_fields,
     }
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         # torch.Size items may be TensorVariables wrapping scalar tensors with
         # known constant values (node.meta["example_value"].constant).  Extract
         # the actual int values so the hash matches eager torch.Size hashing.
@@ -2008,7 +2008,7 @@ class SizeVariable(TupleVariable):
     def debug_repr(self) -> str:
         return self.debug_repr_helper("torch.Size([", "])")
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         items = ", ".join(tracked_repr(tx, item) for item in self.items)
         return VariableTracker.build(tx, f"torch.Size([{items}])")
 
@@ -2062,7 +2062,7 @@ class SizeVariable(TupleVariable):
         )
         return proxy
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(lambda: codegen.load_import_from("torch", "Size"))
         codegen.foreach(self.items)
         build_torch_size = [
@@ -2071,13 +2071,13 @@ class SizeVariable(TupleVariable):
         codegen.extend_output(build_torch_size)
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> list[VariableTracker]:
         return list(self.items)
 
     def numel(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -2118,7 +2118,7 @@ class SizeVariable(TupleVariable):
 
     def mp_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # tuple_subscript: https://github.com/python/cpython/blob/62a6e898e01/Objects/tupleobject.c#L877-L930
@@ -2139,7 +2139,7 @@ class SizeVariable(TupleVariable):
         return self.get_item_dyn(tx, key)
 
     def get_item_dyn(
-        self, tx: "InstructionTranslatorBase", arg: VariableTracker
+        self, tx: InstructionTranslatorBase, arg: VariableTracker
     ) -> VariableTracker:
         from .tensor import SymNodeVariable, TensorVariable
 
@@ -2170,12 +2170,12 @@ class SizeVariable(TupleVariable):
             return self.items[index]
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         return VariableTracker.build(tx, hasattr(torch.Size, name))
 
     def sq_concat_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> VariableTracker:
         """
         Implements torch.Size concatenation via sq_concat protocol.
@@ -2192,7 +2192,7 @@ class SizeVariable(TupleVariable):
 
     def nb_add_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2216,7 +2216,7 @@ class SliceVariable(VariableTracker):
     def __init__(
         self,
         items: list[VariableTracker],
-        tx: Optional["InstructionTranslatorBase"] = None,
+        tx: Optional[InstructionTranslatorBase] = None,
         **kwargs: Any,
     ) -> None:
         items_to_map = items
@@ -2268,7 +2268,7 @@ class SliceVariable(VariableTracker):
     def as_python_constant(self) -> slice:
         return slice(*[guard_if_dyn(x) for x in self.items])
 
-    def as_index_slice(self, tx: "InstructionTranslatorBase") -> slice:
+    def as_index_slice(self, tx: InstructionTranslatorBase) -> slice:
         # PySlice_Unpack -> evaluate_slice_index: each non-None member is
         # coerced through __index__ (nb_index), so user objects with an
         # __index__ method are valid slice bounds.
@@ -2290,7 +2290,7 @@ class SliceVariable(VariableTracker):
         # Slices became hashable in Python 3.12 (CPython slicehash).
         return sys.version_info >= (3, 12)
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         if sys.version_info < (3, 12):
             raise_type_error(tx, "unhashable type: 'slice'")
         # CPython slicehash: https://github.com/python/cpython/blob/e76aa128fe/Objects/sliceobject.c#L667
@@ -2303,7 +2303,7 @@ class SliceVariable(VariableTracker):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -2319,7 +2319,7 @@ class SliceVariable(VariableTracker):
         other_tuple = TupleVariable(list(other.items))
         return generic_richcompare(tx, self_tuple, other_tuple, op)
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.foreach(self.items)
         codegen.append_output(create_instruction("BUILD_SLICE", arg=len(self.items)))
 
@@ -2333,7 +2333,7 @@ class SliceVariable(VariableTracker):
 
     def indices(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -2384,7 +2384,7 @@ class BaseListIteratorVariable(IteratorVariable):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(length={len(self.items)}, index={repr(self.index)})"
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/6280bb547840b609feedb78887c6491af75548e8/Objects/listobject.c#L4110-L4133
         if not self.is_mutable():
             raise AssertionError("list iterator must be mutable to iterate")
@@ -2398,7 +2398,7 @@ class BaseListIteratorVariable(IteratorVariable):
         return self.items[old_index]
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         return VariableTracker.build(tx, hasattr(iter([]), name))
 
@@ -2411,14 +2411,14 @@ class BaseListIteratorVariable(IteratorVariable):
         return iter([x.as_python_constant() for x in self.items])
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> list[VariableTracker]:
         if self.is_exhausted:
             return []
         self.is_exhausted = True
         return list(self.items[self.index :])
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # starting in 3.15 GET_ITER creates virtual iterators (see https://github.com/python/cpython/issues/145668), so use builtin iter instead
         codegen.add_push_null(
             lambda: codegen.append_output(codegen.create_load_python_module(iter))  # type: ignore[arg-type]
@@ -2462,7 +2462,7 @@ class DequeIteratorVariable(BaseListIteratorVariable):
     def __init__(
         self,
         items: list[VariableTracker],
-        source_deque: "DequeVariable",
+        source_deque: DequeVariable,
         saved_state: int,
         index: int = 0,
         **kwargs: Any,
@@ -2471,13 +2471,13 @@ class DequeIteratorVariable(BaseListIteratorVariable):
         self.source_deque = source_deque
         self.saved_state = saved_state
 
-    def _check_mutation(self, tx: "InstructionTranslatorBase") -> None:
+    def _check_mutation(self, tx: InstructionTranslatorBase) -> None:
         if self.source_deque.state != self.saved_state:
             raise_observed_exception(
                 RuntimeError, tx, args=["deque mutated during iteration"]
             )
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         self._check_mutation(tx)
         return super().tp_iternext_impl(tx)
 
@@ -2505,19 +2505,19 @@ class RangeIteratorVariable(IteratorVariable):
         self.step = step
         self.len = len_
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """Range iterators are their own iterator."""
         return self
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         if self.python_type() is range_iterator:
             ri = iter(range(0))
             return VariableTracker.build(tx, hasattr(ri, name))
         return super().call_obj_hasattr(tx, name)
 
-    def tp_iternext_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iternext_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.3/Objects/rangeobject.c#L1072-L1091
         if self.len <= 0:
             raise_observed_exception(StopIteration, tx)
@@ -2529,7 +2529,7 @@ class RangeIteratorVariable(IteratorVariable):
 
     def setstate(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -2544,7 +2544,7 @@ class RangeIteratorVariable(IteratorVariable):
 
     def length_hint(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -2561,7 +2561,7 @@ class RangeIteratorVariable(IteratorVariable):
     def python_type(self) -> type:
         return range_iterator
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # starting in 3.15 GET_ITER creates virtual iterators (see https://github.com/python/cpython/issues/145668), so use builtin iter instead
         codegen.add_push_null(
             lambda: codegen.append_output(codegen.create_load_python_module(iter))  # type: ignore[arg-type]

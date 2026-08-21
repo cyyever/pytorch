@@ -1,6 +1,5 @@
 # Copyright (C) 2025, Tri Dao.
 import itertools
-from typing import Optional, List
 from functools import partial
 from dataclasses import dataclass
 
@@ -26,9 +25,9 @@ class GemmConfig:
 
 
 def _get_sm90_configs(
-    epilogue: Optional[str] = None,
+    epilogue: str | None = None,
     tune_coop: bool = True,
-) -> List[GemmConfig]:
+) -> list[GemmConfig]:
     tile_n_vals = [128, 160, 192, 208]
     tile_mn_vals_coop = [(256, tile_n) for tile_n in tile_n_vals] + [
         (128, 224),
@@ -73,7 +72,7 @@ def _get_sm90_configs(
     ]
 
 
-def _get_sm80_configs() -> List[GemmConfig]:
+def _get_sm80_configs() -> list[GemmConfig]:
     tile_mn_warps_vals = [
         (128, 128, 4),
         (128, 128, 8),
@@ -107,8 +106,8 @@ def _get_sm80_configs() -> List[GemmConfig]:
 
 
 def _get_sm100_configs(
-    epilogue: Optional[str] = None,
-) -> List[GemmConfig]:
+    epilogue: str | None = None,
+) -> list[GemmConfig]:
     tile_n_vals = [64, 128, 160, 192, 224, 256]
     tile_mn_cluster_vals = (
         [(128, tile_n, (1, 1)) for tile_n in tile_n_vals]
@@ -145,9 +144,9 @@ def _get_sm100_configs(
 
 
 def _get_sm120_configs(
-    epilogue: Optional[str] = None,
+    epilogue: str | None = None,
     tune_coop: bool = True,
-) -> List[GemmConfig]:
+) -> list[GemmConfig]:
     tile_mn_vals_coop = [(128, 128), (128, 64), (64, 128), (128, 160), (128, 192)]
     tile_mn_vals_pingpong = [(128, 128), (128, 64), (64, 128), (128, 160)]
     tile_mn_vals = []
@@ -174,9 +173,9 @@ def _get_sm120_configs(
 
 
 def get_all_configs(
-    epilogue: Optional[str] = None,
+    epilogue: str | None = None,
     tune_coop: bool = True,
-) -> List[GemmConfig]:
+) -> list[GemmConfig]:
     """Return autotuning configs for all supported device capabilities.
 
     Each GemmConfig is tagged with its target device_capacity, so the caller can

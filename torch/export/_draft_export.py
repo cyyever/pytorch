@@ -291,7 +291,7 @@ class CaptureStructuredTrace(torch._logging._internal.LazyTraceHandler):
 
         self.setFormatter(torch._logging._internal.TorchLogsFormatter(trace=True))
 
-    def __enter__(self) -> "CaptureStructuredTrace":
+    def __enter__(self) -> CaptureStructuredTrace:
         self.log_record = LogRecord()
         self.expression_created_logs = {}
 

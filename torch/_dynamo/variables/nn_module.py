@@ -85,7 +85,7 @@ if TYPE_CHECKING:
 
 
 def initialize_lazy_module(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     mod: torch.nn.Module,
     args: list[VariableTracker],
     kwargs: dict[str, VariableTracker],
@@ -146,7 +146,7 @@ def initialize_lazy_module(
 def record_nn_module_stack(
     module_key: str,
     source: Source,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     mod: torch.nn.Module,
 ) -> Any:
     fully_qualified_name = source.name
@@ -297,13 +297,13 @@ class NNModuleVariable(VariableTracker):
     def python_type(self) -> type:
         return self.module_type
 
-    def get_id(self, tx: "InstructionTranslatorBase") -> int | None:
+    def get_id(self, tx: InstructionTranslatorBase) -> int | None:
         return id(tx.output.get_submodule(self.module_key))
 
     def get_real_python_backed_value(self) -> object:
         return self.value
 
-    def nb_bool_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def nb_bool_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """nb_bool for nn.Module.
 
         nn.Module itself has no __bool__ or __len__, so bare modules are always
@@ -316,13 +316,13 @@ class NNModuleVariable(VariableTracker):
         mod = tx.output.get_submodule(self.module_key)
         return ConstantVariable.create(bool(mod))
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         mod = tx.output.get_submodule(self.module_key)
         return VariableTracker.build(tx, repr(mod))
 
     def _wrap_submodule(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         source: Source,
         submod: torch.nn.Module,
         *key_extra: Any,
@@ -331,7 +331,7 @@ class NNModuleVariable(VariableTracker):
         return
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> list[VariableTracker]:
         # implement list/iter/tuple/etc calls
         base = tx.output.get_submodule(self.module_key)
@@ -366,8 +366,8 @@ class NNModuleVariable(VariableTracker):
         return result
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
-    ) -> "ConstantVariable":
+        self, tx: InstructionTranslatorBase, name: str
+    ) -> ConstantVariable:
         mod = tx.output.get_submodule(self.module_key)
         result = hasattr(mod, name)
         install_guard(
@@ -375,11 +375,11 @@ class NNModuleVariable(VariableTracker):
         )
         return VariableTracker.build(tx, result)
 
-    def is_training(self, tx: "InstructionTranslatorBase") -> bool:
+    def is_training(self, tx: InstructionTranslatorBase) -> bool:
         mod = tx.output.get_submodule(self.module_key)
         return getattr(mod, "training", False)
 
-    def convert_to_unspecialized(self, tx: "InstructionTranslatorBase") -> None:
+    def convert_to_unspecialized(self, tx: InstructionTranslatorBase) -> None:
         """Restart analysis treating this module as an UnspecializedNNModuleVariable"""
         mod = tx.output.get_submodule(self.module_key)
         GenerationTracker.tag(mod)
@@ -392,7 +392,7 @@ class NNModuleVariable(VariableTracker):
     def _custom_getattr_fallback(
         self,
         base: torch.nn.Module,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         obj_source: Source,
     ) -> VariableTracker | None:
@@ -453,7 +453,7 @@ class NNModuleVariable(VariableTracker):
         )
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         source = self.source and AttrSource(self.source, name)
 
@@ -570,7 +570,7 @@ class NNModuleVariable(VariableTracker):
 
     def call_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -682,9 +682,9 @@ class NNModuleVariable(VariableTracker):
 
     def mp_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
-        key: "VariableTracker",
-    ) -> "VariableTracker":
+        tx: InstructionTranslatorBase,
+        key: VariableTracker,
+    ) -> VariableTracker:
         # nn.Module containers (ModuleList/Dict/Sequential/ParameterDict/ParameterList)
         # These are Python-level __getitem__, not CPython C slots.
         from .lists import SliceVariable
@@ -778,7 +778,7 @@ class NNModuleVariable(VariableTracker):
             source=NNModuleSource(GetItemSource(self.source, key_value)),
         )
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         from . import ListIteratorVariable
 
         return ListIteratorVariable(
@@ -796,7 +796,7 @@ class NNModuleVariable(VariableTracker):
         return source
 
     def _generic_call_method_helper(
-        self, tx: "InstructionTranslatorBase", name: str, args: Any, kwargs: Any
+        self, tx: InstructionTranslatorBase, name: str, args: Any, kwargs: Any
     ) -> VariableTracker:
         # Put a `call_method` node in the FX graph, with the nn.Module as the
         # first arg.
@@ -814,7 +814,7 @@ class NNModuleVariable(VariableTracker):
         )
 
     def _assert_all_args_kwargs_const(
-        self, tx: "InstructionTranslatorBase", name: str, args: Any, kwargs: Any
+        self, tx: InstructionTranslatorBase, name: str, args: Any, kwargs: Any
     ) -> None:
         if not all(
             x.is_python_constant() for x in itertools.chain(args, kwargs.values())
@@ -830,7 +830,7 @@ class NNModuleVariable(VariableTracker):
 
     def _get_kwargs(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: Any,
         kwargs: Any,
@@ -848,8 +848,8 @@ class NNModuleVariable(VariableTracker):
         return {k: bound_args[k] for k in names}
 
     def _wrap_values(
-        self, tx: "InstructionTranslatorBase", items: Iterable[tuple[Any, Any]]
-    ) -> "variables.ListIteratorVariable":
+        self, tx: InstructionTranslatorBase, items: Iterable[tuple[Any, Any]]
+    ) -> variables.ListIteratorVariable:
         result: list[VariableTracker] = []
         for name, submod in items:
             result.append(
@@ -863,8 +863,8 @@ class NNModuleVariable(VariableTracker):
         return variables.ListIteratorVariable(result, mutation_type=ValueMutationNew())
 
     def _named_embed(
-        self, tx: "InstructionTranslatorBase", name: str, obj: Any
-    ) -> "variables.TupleVariable":
+        self, tx: InstructionTranslatorBase, name: str, obj: Any
+    ) -> variables.TupleVariable:
         return variables.TupleVariable(
             [
                 VariableTracker.build(tx, name),
@@ -879,7 +879,7 @@ class NNModuleVariable(VariableTracker):
 
     def _call_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -889,7 +889,7 @@ class NNModuleVariable(VariableTracker):
 
     def forward(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -903,7 +903,7 @@ class NNModuleVariable(VariableTracker):
 
     def _get_item_by_idx(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -929,7 +929,7 @@ class NNModuleVariable(VariableTracker):
 
     def named_children(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -949,7 +949,7 @@ class NNModuleVariable(VariableTracker):
 
     def named_parameters(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -963,7 +963,7 @@ class NNModuleVariable(VariableTracker):
 
     def named_buffers(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -979,7 +979,7 @@ class NNModuleVariable(VariableTracker):
 
     def named_modules(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -995,7 +995,7 @@ class NNModuleVariable(VariableTracker):
 
     def children(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1012,7 +1012,7 @@ class NNModuleVariable(VariableTracker):
 
     def modules(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1022,7 +1022,7 @@ class NNModuleVariable(VariableTracker):
 
     def parameters(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1033,7 +1033,7 @@ class NNModuleVariable(VariableTracker):
 
     def buffers(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1044,7 +1044,7 @@ class NNModuleVariable(VariableTracker):
 
     def keys(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1064,7 +1064,7 @@ class NNModuleVariable(VariableTracker):
 
     def values(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1080,7 +1080,7 @@ class NNModuleVariable(VariableTracker):
 
     def items(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1117,7 +1117,7 @@ class NNModuleVariable(VariableTracker):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -1180,7 +1180,7 @@ class NNModuleVariable(VariableTracker):
         else:
             return super().call_method(tx, name, list(args), kwargs)
 
-    def sq_length_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def sq_length_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """Sequence length for container modules (e.g., nn.Sequential)."""
         module = tx.output.get_submodule(self.module_key)
         return VariableTracker.build(tx, len(module))  # type: ignore[arg-type]
@@ -1251,7 +1251,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
         }
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> list[VariableTracker]:
         try:
             fn = inspect.getattr_static(self.value_type, "__iter__")
@@ -1278,7 +1278,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
 
     def call_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1372,7 +1372,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -1465,7 +1465,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
         return super().call_method(tx, name, list(args), kwargs)
 
     def getattr_helper(
-        self, tx: "InstructionTranslatorBase", field: str, name_vt: VariableTracker
+        self, tx: InstructionTranslatorBase, field: str, name_vt: VariableTracker
     ) -> VariableTracker | None:
         dict_vt = self.tp_getattro_impl(tx, field)
         if isinstance(dict_vt, variables.UserDefinedDictVariable):
@@ -1475,7 +1475,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
         return None
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         if (
             tx.output.side_effects.is_attribute_mutation(self)
@@ -1572,7 +1572,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
         return super().tp_getattro_impl(tx, name)
 
     def manually_trace_nn_module_getattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         """
         Dynamo tracing of nn.Module __getattr__ can be expensive if the model

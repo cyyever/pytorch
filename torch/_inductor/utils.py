@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import collections
 import contextlib
 import dataclasses
@@ -44,7 +42,7 @@ from typing import (
     TypeAlias,
     TypeGuard,
 )
-from typing_extensions import dataclass_transform, ParamSpec, TypeVar
+from typing import dataclass_transform, ParamSpec, TypeVar
 from unittest import mock
 
 import sympy
@@ -4352,7 +4350,7 @@ def zip_dicts(
     dict2: Mapping[KeyType, ValType],
     d1_default: ValType | None = None,
     d2_default: ValType | None = None,
-) -> Generator[tuple[KeyType, ValType | None, ValType | None], None, None]:
+) -> Generator[tuple[KeyType, ValType | None, ValType | None]]:
     """
     Zip two dictionaries together, replacing missing keys with default values.
 

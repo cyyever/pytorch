@@ -8,7 +8,7 @@
 # This is a work in progress and not very optimized.
 
 import math
-from typing import Tuple, Type, Callable, Optional
+from collections.abc import Callable
 from functools import partial
 
 import cutlass
@@ -40,10 +40,10 @@ class GemmSm120(GemmSm90):
 
     def __init__(
         self,
-        acc_dtype: Type[cutlass.Numeric],
-        a_dtype: Type[cutlass.Numeric],
-        tile_shape_mnk: Tuple[int, int] | Tuple[int, int, int],
-        cluster_shape_mnk: Tuple[int, int, int],
+        acc_dtype: type[cutlass.Numeric],
+        a_dtype: type[cutlass.Numeric],
+        tile_shape_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mnk: tuple[int, int, int],
         pingpong: bool = False,
         is_persistent: bool = True,
         gather_A: bool = False,
@@ -159,14 +159,14 @@ class GemmSm120(GemmSm90):
     def kernel(
         self,
         tiled_mma: cute.TiledMma,
-        tma_atom_a: Optional[cute.CopyAtom],
+        tma_atom_a: cute.CopyAtom | None,
         mA_mkl: cute.Tensor,
         tma_atom_b: cute.CopyAtom,
         mB_nkl: cute.Tensor,
-        tma_atom_d: Optional[cute.CopyAtom],
-        mD_mnl: Optional[cute.Tensor],
-        tma_atom_c: Optional[cute.CopyAtom],
-        mC_mnl: Optional[cute.Tensor],
+        tma_atom_d: cute.CopyAtom | None,
+        mD_mnl: cute.Tensor | None,
+        tma_atom_c: cute.CopyAtom | None,
+        mC_mnl: cute.Tensor | None,
         epilogue_params,
         varlen_params: VarlenManager.Params,
         cluster_layout_mnk: cute.Layout,
@@ -176,7 +176,7 @@ class GemmSm120(GemmSm90):
         epi_c_smem_layout: cute.ComposedLayout,
         tile_sched_params,
         TileSchedulerCls: cutlass.Constexpr[Callable],
-        trace_ptr: Optional[cutlass.Int64] = None,
+        trace_ptr: cutlass.Int64 | None = None,
     ):
         from .trace import TraceContext
 
@@ -649,11 +649,11 @@ class GemmSm120(GemmSm90):
 
     @staticmethod
     def _compute_tile_shape_or_override(
-        cta_tile_shape_mnk: Tuple[int, int, int],
-        atom_layout_mnk: Tuple[int, int, int],
-        element_type: Optional[Type[cutlass.Numeric]] = None,
-        epi_tile_override: Tuple[int, int] | None = None,
-    ) -> Tuple[int, int]:
+        cta_tile_shape_mnk: tuple[int, int, int],
+        atom_layout_mnk: tuple[int, int, int],
+        element_type: type[cutlass.Numeric] | None = None,
+        epi_tile_override: tuple[int, int] | None = None,
+    ) -> tuple[int, int]:
         """Compute the epilogue tile shape or use override if provided.
 
         :param cta_tile_shape_mnk: CTA tile shape (M,N,K)

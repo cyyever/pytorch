@@ -565,7 +565,7 @@ class CKGemmTemplate(CKTemplate):
 
         return stages
 
-    def emit_ck_instance(self, op: "CKGemmOperation"):
+    def emit_ck_instance(self, op: CKGemmOperation):
         # The Jinja template for generating a C++ type alias *definition* for a Universal GEMM instance
         struct_name = (
             "DeviceBatchedGemmMultiD_Xdl_CShuffle_V3"
@@ -609,7 +609,7 @@ class CKGemmTemplate(CKTemplate):
     def render(  # type: ignore[override]
         self,
         kernel: ROCmTemplateKernel,
-        op: "CKGemmOperation",
+        op: CKGemmOperation,
         **kwargs,
     ) -> str:
         """

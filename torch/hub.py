@@ -13,7 +13,7 @@ import warnings
 import zipfile
 from pathlib import Path
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen

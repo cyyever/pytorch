@@ -329,7 +329,7 @@ def _destroy_aten_override(op_symbol: str, dispatch_key: str) -> None:
         lib._destroy()
 
 
-def _resolve_aten_overload(op_symbol: str) -> "torch._ops.OpOverload | None":
+def _resolve_aten_overload(op_symbol: str) -> torch._ops.OpOverload | None:
     """
     Resolve `op_symbol` to a concrete OpOverload on `torch.ops.aten`.
 

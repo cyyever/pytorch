@@ -12,7 +12,6 @@ This module contains a collection of helper utilities used by various parts of D
 This is an internal module that provides shared functionality used across the Dynamo codebase.
 """
 
-from __future__ import annotations
 
 import atexit
 import collections
@@ -61,7 +60,7 @@ from typing import (
     TypeGuard,
     TypeVar,
 )
-from typing_extensions import ParamSpec, TypeIs
+from typing import ParamSpec, TypeIs
 
 import torch
 import torch._functorch.config
@@ -699,7 +698,7 @@ _dynamo_timed_tls = threading.local()
 
 
 @contextmanager
-def compile_time_record_function(name: str) -> Generator[Any, None, None]:
+def compile_time_record_function(name: str) -> Generator[Any]:
     """
     A context manager for compile-time profiling that uses _RecordFunctionFast
     for lower overhead than torch.profiler.record_function.
@@ -734,7 +733,7 @@ def dynamo_timed(
     is_backward: bool | None = None,
     log_waitcounter: bool = False,
     waitcounter_name_override: str | None = None,
-) -> Generator[Any, None, None]:
+) -> Generator[Any]:
     """
     dynamo_timed is a context manager
     By wrapping a function in dynamo_timed, we can get a few things:
@@ -1204,19 +1203,18 @@ def istype(obj: object, allowed_types: Any) -> bool:
 
 
 _builtin_final_typing_classes: tuple[Any, ...] = tuple()
-if sys.version_info >= (3, 12):
-    # Some typing classes moved to C in 3.12,
-    # which no longer have the _Final mixin.
-    # Check for consistency e.g. here:
-    # https://github.com/python/cpython/blob/f2b82b3b3b1f8c7a81e84df35ee921e44517cf32/Lib/typing.py#L32
-    _builtin_final_typing_classes = (
-        typing.ParamSpecArgs,
-        typing.ParamSpecKwargs,
-        typing.ParamSpec,
-        typing.TypeVar,
-        typing.TypeVarTuple,
-        typing.TypeAliasType,
-    )
+# Some typing classes moved to C in 3.12,
+# which no longer have the _Final mixin.
+# Check for consistency e.g. here:
+# https://github.com/python/cpython/blob/f2b82b3b3b1f8c7a81e84df35ee921e44517cf32/Lib/typing.py#L32
+_builtin_final_typing_classes = (
+    typing.ParamSpecArgs,
+    typing.ParamSpecKwargs,
+    typing.ParamSpec,
+    typing.TypeVar,
+    typing.TypeVarTuple,
+    typing.TypeAliasType,
+)
 
 
 def get_inputs_devices(
@@ -1234,8 +1232,7 @@ def get_inputs_devices(
     ] + [None]
 
 
-if sys.version_info >= (3, 14):
-    _builtin_final_typing_classes += (typing.Union,)
+_builtin_final_typing_classes += (typing.Union,)
 
 
 def is_typing(value: object) -> bool:
@@ -2441,7 +2438,7 @@ def chromium_event_timed(
     event_name: str,
     reset_event_log_on_exit: bool = False,
     log_pt2_compile_event: bool = False,
-) -> Generator[Any, None, None]:
+) -> Generator[Any]:
     """
     Context manager that creates a chromium start and end event. Chromium event
     logging is integrated with dynamo_timed, so you probably want to use that
@@ -2718,7 +2715,7 @@ def skip_frame_if_in_functorch_mode(val: torch.Tensor) -> None:
 
 
 @contextmanager
-def preserve_rng_state() -> Generator[None, None, None]:
+def preserve_rng_state() -> Generator[None]:
     disable_functorch = torch._C._DisableFuncTorch
     disable_current_modes = torch.utils._python_dispatch._disable_current_modes
     with disable_current_modes(), disable_functorch():
@@ -3892,7 +3889,7 @@ def format_func_info(code: CodeType) -> str:
 
 
 @contextlib.contextmanager
-def disable_cache_limit() -> Generator[None, None, None]:
+def disable_cache_limit() -> Generator[None]:
     prior = config.recompile_limit
     # pyrefly: ignore [bad-assignment]
     config.recompile_limit = sys.maxsize
@@ -4351,7 +4348,7 @@ def get_current_node() -> torch.fx.Node | None:
 
 
 @contextmanager
-def set_current_node(node: torch.fx.Node) -> Generator[None, None, None]:
+def set_current_node(node: torch.fx.Node) -> Generator[None]:
     old = get_current_node()
     _current_node.value = node
     try:
@@ -5481,7 +5478,7 @@ def get_first_attr(obj: Any, *attrs: str) -> Any:
 @contextlib.contextmanager
 def maybe_enable_compiled_autograd(
     should_enable: bool, fullgraph: bool = True, dynamic: bool = True
-) -> Generator[Any, None, None]:
+) -> Generator[Any]:
     if not should_enable:
         yield
     else:
@@ -5631,7 +5628,7 @@ def strip_color_from_string(text: str) -> str:
 
 
 @contextlib.contextmanager
-def _disable_saved_tensors_hooks_during_tracing() -> Generator[None, None, None]:
+def _disable_saved_tensors_hooks_during_tracing() -> Generator[None]:
     # See NOTE: [Deferring tensor pack/unpack hooks until runtime]
     try:
         prior = torch._C._autograd._saved_tensors_hooks_set_tracing(True)
@@ -5792,7 +5789,7 @@ class CompileTimeInstructionCounter:
 
     @classmethod
     @contextmanager
-    def record(cls) -> Generator[None, None, None]:
+    def record(cls) -> Generator[None]:
         try:
             if config.record_compile_time_instruction_count:
                 cls.start()
@@ -5849,7 +5846,7 @@ def get_optimize_ddp_mode() -> OptimizeDDPMode:
 
 
 @contextmanager
-def maybe_disable_inference_mode() -> Generator[None, None, None]:
+def maybe_disable_inference_mode() -> Generator[None]:
     """
     Disables torch.inference_mode for the compilation (still on at runtime).
     This simplifies the compile stack where we can assume that inference_mode
@@ -5873,7 +5870,7 @@ def maybe_disable_inference_mode() -> Generator[None, None, None]:
 
 
 @contextmanager
-def maybe_disable_inference_mode_for_fake_prop() -> Generator[None, None, None]:
+def maybe_disable_inference_mode_for_fake_prop() -> Generator[None]:
     """
     Turns off tracking of inference_mode for fake tensor propagation. With this
     context manager, when a real tensor is converted to fake tensor, the fake

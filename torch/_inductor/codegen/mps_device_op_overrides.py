@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .common import DeviceIdx, DeviceOpOverrides, register_device_op_overrides
 
 

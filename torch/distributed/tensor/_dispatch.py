@@ -78,7 +78,7 @@ def _ignore_fresh_unbacked_symbols_for_dtensor_tracing(
 
 
 def _as_strided_permutation(
-    tensor: "dtensor.DTensor",
+    tensor: dtensor.DTensor,
     size: Sequence[int],
     stride: Sequence[int],
 ) -> list[int] | None:

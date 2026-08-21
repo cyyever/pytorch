@@ -13,7 +13,6 @@ enabling accurate tracking and transformation of Python code into optimized
 computations.
 """
 
-from __future__ import annotations
 
 import collections
 import dataclasses

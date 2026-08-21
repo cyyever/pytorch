@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pickle
 from abc import ABC, abstractmethod
 from ast import literal_eval
@@ -10,7 +8,8 @@ from pathlib import Path
 from tempfile import gettempdir
 from threading import Lock
 from typing import Any, Generic, TYPE_CHECKING, TypeVar
-from typing_extensions import assert_never, override, Self
+from typing import override
+from typing import assert_never, Self
 
 from torch.utils._filelock import FileLock
 

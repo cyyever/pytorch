@@ -2,7 +2,7 @@
 r"""Weight Normalization from https://arxiv.org/abs/1602.07868."""
 
 from typing import Any, TypeVar
-from typing_extensions import deprecated
+from warnings import deprecated
 
 from torch import _weight_norm, norm_except_dim
 from torch.nn.modules import Module
@@ -34,7 +34,7 @@ class WeightNorm:
         "in favor of `torch.nn.utils.parametrizations.weight_norm`.",
         category=FutureWarning,
     )
-    def apply(module, name: str, dim: int) -> "WeightNorm":
+    def apply(module, name: str, dim: int) -> WeightNorm:
         for hook in module._forward_pre_hooks.values():
             if isinstance(hook, WeightNorm) and hook.name == name:
                 raise RuntimeError(

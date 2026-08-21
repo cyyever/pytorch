@@ -234,7 +234,7 @@ class _FSDPDeviceHandle:
             self.__backend = backend
 
     @classmethod
-    def from_device(cls, device: torch.device) -> "_FSDPDeviceHandle":
+    def from_device(cls, device: torch.device) -> _FSDPDeviceHandle:
         """
         Return a device handle corresponding to the device, and through this handle,
         operations with the same semantics as CUDA can be performed on the device.
@@ -350,7 +350,7 @@ def _is_composable(state: _FSDPState):
 
 
 @no_type_check
-def _module_handle(state: _FSDPState, module: nn.Module) -> Optional["FlatParamHandle"]:
+def _module_handle(state: _FSDPState, module: nn.Module) -> Optional[FlatParamHandle]:
     """
     Returns the ``FlatParamHandle`` s corresponding to ``module``. This is
     the handle that contains some parameter in ``module``.
@@ -515,7 +515,7 @@ def _get_param_to_fqns(
 
 @no_type_check
 def _log_post_backward_hook(
-    state: _FSDPState, handle: "FlatParamHandle", logger: logging.Logger
+    state: _FSDPState, handle: FlatParamHandle, logger: logging.Logger
 ) -> None:
     # Under TORCH_DISTRIBUTED_DEBUG=INFO, log the module names this hook fires for.
     # Below logging of module names this post-bwd hook fires for can help debug certain
@@ -527,7 +527,7 @@ def _log_post_backward_hook(
 
 @no_type_check
 def _get_handle_fqns_from_root(
-    state: _FSDPState, handle: "FlatParamHandle"
+    state: _FSDPState, handle: FlatParamHandle
 ) -> list[str] | None:
     if handle is None:
         return None

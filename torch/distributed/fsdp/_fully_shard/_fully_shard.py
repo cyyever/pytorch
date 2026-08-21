@@ -1,12 +1,11 @@
 # mypy: allow-untyped-decorators
 # mypy: allow-untyped-defs
 
-from __future__ import annotations
 
 import functools
 from contextlib import contextmanager
 from typing import Any, cast, Literal, NoReturn, overload, TYPE_CHECKING
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.nn as nn

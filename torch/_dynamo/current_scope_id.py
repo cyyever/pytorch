@@ -33,7 +33,7 @@ def current_scope_id() -> int:
 
 
 @contextlib.contextmanager
-def enter_new_scope() -> Generator[None, None, None]:
+def enter_new_scope() -> Generator[None]:
     global _current_scope_id
     try:
         _current_scope_id.value = current_scope_id() + 1

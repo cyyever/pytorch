@@ -30,7 +30,7 @@ def _identity_func(
 
 
 def _all_gather_sharded_tensor(
-    sharded_tensor: "ShardedTensor",
+    sharded_tensor: ShardedTensor,
     pg: dist.ProcessGroup | None = None,
     device: torch.device | None = None,
 ) -> torch.Tensor:

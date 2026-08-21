@@ -10,7 +10,7 @@ from base64 import b64encode
 from collections.abc import Sequence
 from functools import cache
 from hashlib import sha256
-from typing_extensions import override, TypedDict
+from typing import override, TypedDict
 
 import torch
 

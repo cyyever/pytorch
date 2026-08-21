@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 
-from __future__ import annotations
 
 import collections
 import copy
@@ -9,7 +8,7 @@ import io
 import threading
 import warnings
 from typing import Any, cast, TYPE_CHECKING, TypeVar
-from typing_extensions import Self
+from typing import Self
 
 import torch
 from torch._utils import _to, _type

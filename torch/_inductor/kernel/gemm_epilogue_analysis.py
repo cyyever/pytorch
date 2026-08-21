@@ -209,18 +209,18 @@ class GemmLocalReduceMatch:
     def to_plan(
         self,
         *,
-        store: "GemmLocalReduceStore | None",
+        store: GemmLocalReduceStore | None,
         feeds_main: bool,
-    ) -> "GemmOutputLocalReducePlan":
+    ) -> GemmOutputLocalReducePlan:
         """Bind this matched value to its output consumers."""
         return GemmOutputLocalReducePlan(self, store=store, feeds_main=feeds_main)
 
     @classmethod
     def common(
         cls,
-        matches: list["GemmLocalReduceMatch"],
+        matches: list[GemmLocalReduceMatch],
         mixed_match_error: str,
-    ) -> "GemmLocalReduceMatch | None":
+    ) -> GemmLocalReduceMatch | None:
         """Return the common match when all values use one reduction geometry."""
         if not matches:
             return None
@@ -232,9 +232,9 @@ class GemmLocalReduceMatch:
     @classmethod
     def common_value(
         cls,
-        matches: list["GemmLocalReduceMatch"],
+        matches: list[GemmLocalReduceMatch],
         mixed_match_error: str,
-    ) -> "GemmLocalReduceMatch | None":
+    ) -> GemmLocalReduceMatch | None:
         """Return the common match when all consumers use one physical value."""
         match = cls.common(matches, mixed_match_error)
         if match is None:
@@ -357,7 +357,7 @@ class GemmLocalReduceAnalysis:
     @classmethod
     def from_graph_module(
         cls, graph_module: torch.fx.GraphModule
-    ) -> "GemmLocalReduceAnalysis":
+    ) -> GemmLocalReduceAnalysis:
         """Build shared dependency and reduction state in one topological pass."""
         nodes = tuple(graph_module.graph.nodes)
         analysis = cls(GemmEpilogueGraph.from_nodes(nodes))

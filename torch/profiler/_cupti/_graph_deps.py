@@ -18,14 +18,13 @@ recorded before that observer existed. ``keep_graph`` is irrelevant: the hook ru
 during ``instantiate()`` while the template is still live.
 """
 
-from __future__ import annotations
 
 import threading
 from typing import Any, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 class _GraphDependencyRecorder:

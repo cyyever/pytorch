@@ -434,7 +434,7 @@ def _fuse_allreduce(
 
 def _bucket_size_fusion(
     graph: fx.Graph, comm_blocks: list[CommBlock], bucket_size_mb: int
-) -> Generator[list[CommBlock], None, None]:
+) -> Generator[list[CommBlock]]:
     MB = 1024**2
     bucket_size = 1 * MB
     bucket_cap_size = bucket_size_mb * MB

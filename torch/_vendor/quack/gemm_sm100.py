@@ -2,7 +2,8 @@
 # Based on the cute-dsl example:
 # https://github.com/NVIDIA/cutlass/blob/main/examples/python/CuTeDSL/blackwell/dense_gemm_persistent.py
 
-from typing import Optional, Type, Tuple, Union, Callable, Literal
+from typing import Literal
+from collections.abc import Callable
 from functools import partial
 import math
 
@@ -132,11 +133,11 @@ class GemmSm100(GemmTmaBase):
 
     def __init__(
         self,
-        acc_dtype: Type[cutlass.Numeric],
-        a_dtype: Type[cutlass.Numeric],  # ignored for now
-        mma_tiler_mnk: Union[Tuple[int, int], Tuple[int, int, int]],
-        cluster_shape_mnk: Tuple[int, int, int],
-        sf_vec_size: Optional[int] = None,
+        acc_dtype: type[cutlass.Numeric],
+        a_dtype: type[cutlass.Numeric],  # ignored for now
+        mma_tiler_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mnk: tuple[int, int, int],
+        sf_vec_size: int | None = None,
         gather_A: bool = False,
         use_tma_gather: bool = False,
         use_clc_persistence: bool = True,
@@ -165,7 +166,7 @@ class GemmSm100(GemmTmaBase):
         :type cluster_shape_mnk: Tuple[int, int]
         """
 
-        self.acc_dtype: Type[cutlass.Numeric] = acc_dtype
+        self.acc_dtype: type[cutlass.Numeric] = acc_dtype
         self.sf_vec_size = sf_vec_size
         self.blockscaled = sf_vec_size is not None
         assert len(mma_tiler_mnk) in [2, 3], "MMA tiler must be (M, N) or (M, N, K)"
@@ -517,15 +518,15 @@ class GemmSm100(GemmTmaBase):
         self,
         mA: cute.Tensor,
         mB: cute.Tensor,
-        mD: Optional[cute.Tensor],
-        mC: Optional[cute.Tensor],
+        mD: cute.Tensor | None,
+        mC: cute.Tensor | None,
         epilogue_args: tuple,
         scheduler_args: TileSchedulerOptions,
-        varlen_args: Optional[VarlenArguments],
+        varlen_args: VarlenArguments | None,
         stream: cuda.CUstream,
-        mSFA: Optional[cute.Tensor] = None,
-        mSFB: Optional[cute.Tensor] = None,
-        trace_ptr: Optional[cutlass.Int64] = None,
+        mSFA: cute.Tensor | None = None,
+        mSFB: cute.Tensor | None = None,
+        trace_ptr: cutlass.Int64 | None = None,
     ):
         """Execute the GEMM operation in steps:
         - Setup static attributes before smem/grid/tma computation
@@ -550,18 +551,18 @@ class GemmSm100(GemmTmaBase):
         if const_expr(self.blockscaled):
             assert mSFA is not None and mSFB is not None
         # Concat layout: interleave the non-contiguous dim (detected via leading_dim).
-        mA, mB, mD, mC = [
+        mA, mB, mD, mC = (
             layout_utils.concat_to_interleave(mT, 1 - mT.leading_dim)
             if const_expr(name in self.concat_layout and mT is not None)
             else mT
             for name, mT in [("A", mA), ("B", mB), ("out", mD), ("C", mC)]
-        ]
+        )
         # Setup static attributes before smem/grid/tma computation
         self.a_dtype = mA.element_type
         self.b_dtype = mB.element_type
         self.d_dtype = mD.element_type if mD is not None else None
         self.c_dtype = mC.element_type if mC is not None else None
-        self.sf_dtype: Optional[Type[cutlass.Numeric]] = (
+        self.sf_dtype: type[cutlass.Numeric] | None = (
             mSFA.element_type if mSFA is not None else None
         )
         self.a_layout = LayoutEnum.from_tensor(mA)
@@ -856,34 +857,34 @@ class GemmSm100(GemmTmaBase):
     def kernel(
         self,
         tiled_mma: cute.TiledMma,
-        tiled_mma_sfb: Optional[cute.TiledMma],
-        tma_atom_a: Optional[cute.CopyAtom],
+        tiled_mma_sfb: cute.TiledMma | None,
+        tma_atom_a: cute.CopyAtom | None,
         mA_mkl: cute.Tensor,
         tma_atom_b: cute.CopyAtom,
         mB_nkl: cute.Tensor,
-        tma_atom_sfa: Optional[cute.CopyAtom],
-        mSFA_mkl: Optional[cute.Tensor],
-        tma_atom_sfb: Optional[cute.CopyAtom],
-        mSFB_nkl: Optional[cute.Tensor],
-        tma_atom_d: Optional[cute.CopyAtom],
-        mD_mnl: Optional[cute.Tensor],
-        tma_atom_c: Optional[cute.CopyAtom],
-        mC_mnl: Optional[cute.Tensor],
+        tma_atom_sfa: cute.CopyAtom | None,
+        mSFA_mkl: cute.Tensor | None,
+        tma_atom_sfb: cute.CopyAtom | None,
+        mSFB_nkl: cute.Tensor | None,
+        tma_atom_d: cute.CopyAtom | None,
+        mD_mnl: cute.Tensor | None,
+        tma_atom_c: cute.CopyAtom | None,
+        mC_mnl: cute.Tensor | None,
         epilogue_params,
         varlen_params: VarlenManager.Params,
         cluster_layout_vmnk: cute.Layout,
-        cluster_layout_sfb_vmnk: Optional[cute.Layout],
+        cluster_layout_sfb_vmnk: cute.Layout | None,
         a_smem_layout: cute.ComposedLayout,
         a_smem_load_layout: cute.ComposedLayout,
         b_smem_layout: cute.ComposedLayout,
-        sfa_smem_layout: Optional[cute.Layout],
-        sfb_smem_layout: Optional[cute.Layout],
-        epi_smem_layout: Union[cute.Layout, cute.ComposedLayout, None],
-        epi_c_smem_layout: Union[cute.Layout, cute.ComposedLayout, None],
+        sfa_smem_layout: cute.Layout | None,
+        sfb_smem_layout: cute.Layout | None,
+        epi_smem_layout: cute.Layout | cute.ComposedLayout | None,
+        epi_c_smem_layout: cute.Layout | cute.ComposedLayout | None,
         epi_tile: cute.Tile,
         tile_sched_params,
         TileSchedulerCls: cutlass.Constexpr[Callable],
-        trace_ptr: Optional[cutlass.Int64] = None,
+        trace_ptr: cutlass.Int64 | None = None,
     ):
         """
         GPU device kernel performing the Persistent batched GEMM computation.
@@ -1533,7 +1534,7 @@ class GemmSm100(GemmTmaBase):
                 if const_expr(self.overlap_accum_sf):
                     # After iter 0, 2, ..., shift tmem ptr by -256.
                     # After iter 1, 3, ..., shift tmem ptr by 256.
-                    tCtSFA, tCtSFB = [
+                    tCtSFA, tCtSFB = (
                         cute.make_tensor(
                             cute.recast_ptr(
                                 # Doing tmem ptr arithmetic requires 32-bit type, wrong otherwise
@@ -1547,7 +1548,7 @@ class GemmSm100(GemmTmaBase):
                             mT.layout,
                         )
                         for mT in [tCtSFA, tCtSFB]
-                    ]
+                    )
                 tctx.e("mma")
                 # Advance to next tile
                 tile_scheduler.advance_to_next_work()
@@ -1704,7 +1705,7 @@ class GemmSm100(GemmTmaBase):
         mA_mkl: cute.Tensor,
         sA: cute.Tensor,
         sAIdx: cute.Tensor,  # if varlen, this is already sliced into the current prefetch stage
-        tma_atom_a: Optional[cute.CopyAtom],
+        tma_atom_a: cute.CopyAtom | None,
         varlen_manager: VarlenManager,
         tile_coord_mnkl,
         batch_idx: Int32,
@@ -1781,13 +1782,13 @@ class GemmSm100(GemmTmaBase):
         self,
         ab_pipeline: cutlass.pipeline.PipelineAsync,
         ab_producer_state: cutlass.pipeline.PipelineState,
-        a_prefetch_consumer_state: Optional[cutlass.pipeline.PipelineState],
+        a_prefetch_consumer_state: cutlass.pipeline.PipelineState | None,
         copy_A: Callable,
-        prefetch_A: Optional[Callable],
+        prefetch_A: Callable | None,
         copy_B: Callable,
         k_tile_cnt: Int32,
         varlen_m: bool = True,
-    ) -> Tuple[cutlass.pipeline.PipelineState, Optional[cutlass.pipeline.PipelineState]]:
+    ) -> tuple[cutlass.pipeline.PipelineState, cutlass.pipeline.PipelineState | None]:
         warp_idx = cute.arch.make_warp_uniform(cute.arch.warp_idx())
         # Peek (try_wait) AB buffer empty for k_block = prefetch_k_tile_cnt
         peek_ab_empty_status = Boolean(True)
@@ -1839,12 +1840,12 @@ class GemmSm100(GemmTmaBase):
         self,
         ab_pipeline: cutlass.pipeline.PipelineAsync,
         ab_producer_state: cutlass.pipeline.PipelineState,
-        a_prefetch_consumer_state: Optional[cutlass.pipeline.PipelineState],
+        a_prefetch_consumer_state: cutlass.pipeline.PipelineState | None,
         copy_A: Callable,
-        prefetch_A: Optional[Callable],
+        prefetch_A: Callable | None,
         copy_B: Callable,
         k_tile_cnt: Int32,
-    ) -> Tuple[cutlass.pipeline.PipelineState, Optional[cutlass.pipeline.PipelineState]]:
+    ) -> tuple[cutlass.pipeline.PipelineState, cutlass.pipeline.PipelineState | None]:
         """Unified TMA gather loading loop for both varlen_m and varlen_k.
 
         For varlen_m: a_prefetch_pipeline is None, copy_A receives k_tile as src_idx.
@@ -1888,11 +1889,11 @@ class GemmSm100(GemmTmaBase):
         k_tile_cnt: Int32,
         is_leader_cta: Boolean,
         cta_rank_in_cluster: Int32,
-        tCtSFA: Optional[cute.Tensor] = None,
-        tCtSFB: Optional[cute.Tensor] = None,
-        copy_s2t_sfa: Optional[Callable] = None,
-        copy_s2t_sfb: Optional[Callable] = None,
-    ) -> Tuple[cutlass.pipeline.PipelineState, cutlass.pipeline.PipelineState, cute.TiledMma]:
+        tCtSFA: cute.Tensor | None = None,
+        tCtSFB: cute.Tensor | None = None,
+        copy_s2t_sfa: Callable | None = None,
+        copy_s2t_sfb: Callable | None = None,
+    ) -> tuple[cutlass.pipeline.PipelineState, cutlass.pipeline.PipelineState, cute.TiledMma]:
         blockscaled = const_expr(copy_s2t_sfa is not None)
         if const_expr(blockscaled):
             assert all(x is not None for x in (tCtSFA, tCtSFB))
@@ -1986,8 +1987,8 @@ class GemmSm100(GemmTmaBase):
         tidx: Int32,
         tAcc: cute.Tensor,
         epi_tile: cute.Tile,
-        use_2cta_instrs: Union[Boolean, bool],
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+        use_2cta_instrs: Boolean | bool,
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         """
         Make tiledCopy for tensor memory load, then use it to partition tensor memory (source) and register array (destination).
 
@@ -2036,12 +2037,12 @@ class GemmSm100(GemmTmaBase):
     def epilog_smem_store_and_partition(
         self,
         tiled_copy_t2r: cute.TiledCopy,
-        d_layout: Optional[LayoutEnum],
-        dtype: Optional[Type[cutlass.Numeric]],
+        d_layout: LayoutEnum | None,
+        dtype: type[cutlass.Numeric] | None,
         tTR_rD: cute.Tensor,
         sD: cute.Tensor,
         tidx: Int32,
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         """
         Make tiledCopy for shared memory store, then use it to partition register array (source) and shared memory (destination).
 
@@ -2079,12 +2080,12 @@ class GemmSm100(GemmTmaBase):
         self,
         tiled_copy_t2r: cute.TiledCopy,
         c_layout: LayoutEnum,
-        dtype: Type[cutlass.Numeric],
+        dtype: type[cutlass.Numeric],
         # tTR_rC: cute.Tensor,
         sC: cute.Tensor,
         tRS_rD_layout: cutlass.Layout,
         tidx: Int32,
-    ) -> Tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
+    ) -> tuple[cute.TiledCopy, cute.Tensor, cute.Tensor]:
         copy_atom_r2s = sm100_utils.get_smem_store_op(
             c_layout, dtype, self.acc_dtype, tiled_copy_t2r
         )
@@ -2240,23 +2241,23 @@ class GemmSm100(GemmTmaBase):
     def _compute_stages(
         cls,
         tiled_mma: cute.TiledMma,
-        mma_tiler_mnk: Tuple[int, int, int],
-        cta_tile_shape_mnk: Tuple[int, int, int],
+        mma_tiler_mnk: tuple[int, int, int],
+        cta_tile_shape_mnk: tuple[int, int, int],
         epi_tile: cute.Tile,
-        a_dtype: Type[cutlass.Numeric],
-        b_dtype: Type[cutlass.Numeric],
-        sf_dtype: Optional[Type[cutlass.Numeric]],
-        sf_vec_size: Optional[int],
-        d_dtype: Optional[Type[cutlass.Numeric]],
-        c_dtype: Optional[Type[cutlass.Numeric]],
-        d_layout: Optional[LayoutEnum],
-        c_layout: Optional[LayoutEnum],
+        a_dtype: type[cutlass.Numeric],
+        b_dtype: type[cutlass.Numeric],
+        sf_dtype: type[cutlass.Numeric] | None,
+        sf_vec_size: int | None,
+        d_dtype: type[cutlass.Numeric] | None,
+        c_dtype: type[cutlass.Numeric] | None,
+        d_layout: LayoutEnum | None,
+        c_layout: LayoutEnum | None,
         epilogue_args: EpilogueArguments,
         prefetch_A_idx: Literal[None, "varlen_m", "varlen_k"],
         smem_capacity: int,
         occupancy: int,
-        warp_shape_mnk: Tuple[int, int, int] | None = None,
-    ) -> Tuple[int, int, int]:
+        warp_shape_mnk: tuple[int, int, int] | None = None,
+    ) -> tuple[int, int, int]:
         """Computes the number of stages for A/B/C operands based on heuristics.
 
         :param tiled_mma: The tiled MMA object defining the core computation.
@@ -2378,7 +2379,7 @@ class GemmSm100(GemmTmaBase):
     @staticmethod
     def _compute_num_tmem_alloc_cols(
         tiled_mma: cute.TiledMma,
-        mma_tiler: Tuple[int, int, int],
+        mma_tiler: tuple[int, int, int],
         num_acc_stage: int,
     ) -> int:
         """
@@ -2401,10 +2402,10 @@ class GemmSm100(GemmTmaBase):
 
     @staticmethod
     def is_valid_dtypes(
-        a_dtype: Type[cutlass.Numeric],
-        b_dtype: Type[cutlass.Numeric],
-        acc_dtype: Type[cutlass.Numeric],
-        d_dtype: Optional[Type[cutlass.Numeric]],
+        a_dtype: type[cutlass.Numeric],
+        b_dtype: type[cutlass.Numeric],
+        acc_dtype: type[cutlass.Numeric],
+        d_dtype: type[cutlass.Numeric] | None,
         a_major: str,
         b_major: str,
     ) -> bool:
@@ -2480,10 +2481,10 @@ class GemmSm100(GemmTmaBase):
 
     @staticmethod
     def is_valid_dtypes_and_scale_factor_vec_size(
-        ab_dtype: Type[cutlass.Numeric],
-        sf_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        sf_dtype: type[cutlass.Numeric],
         sf_vec_size: int,
-        d_dtype: Type[cutlass.Numeric],
+        d_dtype: type[cutlass.Numeric],
     ) -> bool:
         """
         Check if the dtypes and sf_vec_size are valid combinations
@@ -2534,8 +2535,8 @@ class GemmSm100(GemmTmaBase):
 
     @staticmethod
     def is_valid_mma_tiler_and_cluster_shape(
-        mma_tiler_mnk: Union[Tuple[int, int], Tuple[int, int, int]],
-        cluster_shape_mn: Tuple[int, int],
+        mma_tiler_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mn: tuple[int, int],
         blockscaled: bool,
     ) -> bool:
         """
@@ -2590,8 +2591,8 @@ class GemmSm100(GemmTmaBase):
         n: int,
         k: int,
         l: int,
-        ab_dtype: Type[cutlass.Numeric],
-        d_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        d_dtype: type[cutlass.Numeric],
         a_major: str,
         b_major: str,
         d_major: str,
@@ -2639,12 +2640,12 @@ class GemmSm100(GemmTmaBase):
 
     @staticmethod
     def can_implement_blockscaled(
-        ab_dtype: Type[cutlass.Numeric],
-        sf_dtype: Type[cutlass.Numeric],
+        ab_dtype: type[cutlass.Numeric],
+        sf_dtype: type[cutlass.Numeric],
         sf_vec_size: int,
-        d_dtype: Type[cutlass.Numeric],
-        mma_tiler_mnk: Union[Tuple[int, int], Tuple[int, int, int]],
-        cluster_shape_mn: Tuple[int, int],
+        d_dtype: type[cutlass.Numeric],
+        mma_tiler_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mn: tuple[int, int],
         m: int,
         n: int,
         k: int,
@@ -2672,11 +2673,11 @@ class GemmSm100(GemmTmaBase):
 
     @staticmethod
     def can_implement(
-        ab_dtype: Type[cutlass.Numeric],
-        acc_dtype: Type[cutlass.Numeric],
-        d_dtype: Type[cutlass.Numeric],
-        mma_tiler_mnk: Union[Tuple[int, int], Tuple[int, int, int]],
-        cluster_shape_mn: Tuple[int, int],
+        ab_dtype: type[cutlass.Numeric],
+        acc_dtype: type[cutlass.Numeric],
+        d_dtype: type[cutlass.Numeric],
+        mma_tiler_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mn: tuple[int, int],
         m: int,
         n: int,
         k: int,

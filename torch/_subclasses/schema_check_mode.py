@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from copy import deepcopy
 from itertools import combinations
 from typing import Any, NamedTuple, TYPE_CHECKING

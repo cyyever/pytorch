@@ -95,7 +95,7 @@ class FakeScriptObject:
             # Object is not hashable, use identity-based hash
             return id(real_obj)
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> "FakeScriptObject":
+    def __deepcopy__(self, memo: dict[int, Any]) -> FakeScriptObject:
         if id(self) in memo:
             return memo[id(self)]
         new_obj = FakeScriptObject.__new__(FakeScriptObject)

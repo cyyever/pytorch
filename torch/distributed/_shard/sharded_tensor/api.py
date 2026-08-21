@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations  # type: ignore[attr-defined]
 
 import copy
 import operator
@@ -7,7 +6,7 @@ import warnings
 from dataclasses import dataclass
 from functools import reduce
 from typing import cast, TYPE_CHECKING
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.distributed as dist

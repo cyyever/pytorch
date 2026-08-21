@@ -90,7 +90,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -107,7 +107,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -124,8 +124,8 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        ARGS_PASSED: "tl.constexpr",
-        BLOCK_SIZE: "tl.constexpr",
+        ARGS_PASSED: tl.constexpr,
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -146,8 +146,8 @@ if has_triton():
         out_ptr,
         n_elements,
         stride,
-        ARGS_PASSED: "tl.constexpr",
-        BLOCK_SIZE: "tl.constexpr",
+        ARGS_PASSED: tl.constexpr,
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -176,7 +176,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -202,7 +202,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -224,7 +224,7 @@ if has_triton():
         in_ptr0,
         in_ptr1,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
         out_ptr,
     ):
         # out_ptr is after an autotuned param that's declared as tl.constexpr.
@@ -262,8 +262,8 @@ if has_triton():
         out_ptr,
         x_elements,
         y_elements,
-        BLOCK_SIZE_X: "tl.constexpr",
-        BLOCK_SIZE_Y: "tl.constexpr",
+        BLOCK_SIZE_X: tl.constexpr,
+        BLOCK_SIZE_Y: tl.constexpr,
     ):
         xoffset = tl.program_id(0) * BLOCK_SIZE_X
         xindex = xoffset + tl.arange(0, BLOCK_SIZE_X)[:, None]
@@ -297,7 +297,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -315,7 +315,7 @@ if has_triton():
         out_ptr,
         n_elements,
         scaling_factor,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -331,7 +331,7 @@ if has_triton():
         in_desc_ptr0,
         in_desc_ptr1,
         out_desc_ptr,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         offset = pid * BLOCK_SIZE
@@ -362,8 +362,8 @@ if has_triton():
         in_desc_ptr0,
         in_desc_ptr1,
         out_desc_ptr,
-        BLOCK_SIZE_X: "tl.constexpr",
-        BLOCK_SIZE_Y: "tl.constexpr",
+        BLOCK_SIZE_X: tl.constexpr,
+        BLOCK_SIZE_Y: tl.constexpr,
     ):
         pid_x = tl.program_id(axis=0)
         pid_y = tl.program_id(axis=1)
@@ -396,7 +396,7 @@ if has_triton():
         in_desc_ptr0,
         in_desc_ptr1,
         out_desc_ptr,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         offset = pid * BLOCK_SIZE
@@ -423,8 +423,8 @@ if has_triton():
         in_desc_ptr0,
         in_desc_ptr1,
         out_desc_ptr,
-        BLOCK_SIZE_X: "tl.constexpr",
-        BLOCK_SIZE_Y: "tl.constexpr",
+        BLOCK_SIZE_X: tl.constexpr,
+        BLOCK_SIZE_Y: tl.constexpr,
     ):
         pid_x = tl.program_id(axis=0)
         pid_y = tl.program_id(axis=1)
@@ -456,7 +456,7 @@ if has_triton():
         m,
         n,
         workspace,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         a_desc_ptr = workspace
         b_desc_ptr = workspace + 128
@@ -524,7 +524,7 @@ if has_triton():
         m,
         n,
         workspace,  # unused but left here to match the old API kernel
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         # Create tensor descriptors using the new API
         a_desc = tl.make_tensor_descriptor(
@@ -576,7 +576,7 @@ if has_triton():
         in_ptr0,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -590,7 +590,7 @@ if has_triton():
     def mul2_inplace_kernel(
         ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -609,8 +609,8 @@ if has_triton():
         in_ptr0,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
-        ACTIVATION: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
+        ACTIVATION: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -629,8 +629,8 @@ if has_triton():
         out_ptr,
         in_y_stride,
         out_y_stride,
-        X_BLOCK_SIZE: "tl.constexpr",
-        Y_BLOCK_SIZE: "tl.constexpr",
+        X_BLOCK_SIZE: tl.constexpr,
+        Y_BLOCK_SIZE: tl.constexpr,
     ):
         xid = tl.program_id(axis=0)
         yid = tl.program_id(axis=1)
@@ -645,7 +645,7 @@ if has_triton():
 
     @triton.jit
     def inline_asm_kernel_is_pure_true(
-        X, Y, Z, n: "tl.constexpr", BLOCK: "tl.constexpr"
+        X, Y, Z, n: tl.constexpr, BLOCK: tl.constexpr
     ):
         x = tl.load(X + tl.arange(0, BLOCK))
         y = tl.load(Y + tl.arange(0, BLOCK))
@@ -662,7 +662,7 @@ if has_triton():
 
     @triton.jit
     def inline_asm_kernel_is_pure_false(
-        X, Y, Z, n: "tl.constexpr", BLOCK: "tl.constexpr"
+        X, Y, Z, n: tl.constexpr, BLOCK: tl.constexpr
     ):
         x = tl.load(X + tl.arange(0, BLOCK))
         y = tl.load(Y + tl.arange(0, BLOCK))
@@ -765,7 +765,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -782,7 +782,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -802,7 +802,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -819,7 +819,7 @@ if has_triton():
         in_ptr1,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -842,7 +842,7 @@ if has_triton():
         in_ptr1,
         n_elements,
         out_ptr,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -1053,7 +1053,7 @@ if has_triton():
         out_ptr,
         n_elements,
         add_xy,  # boolean param
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         pid = tl.program_id(axis=0)
         block_start = pid * BLOCK_SIZE
@@ -1074,7 +1074,7 @@ if has_triton():
         mask_ptr,
         out_ptr,
         n_elements,
-        BLOCK_SIZE: "tl.constexpr",
+        BLOCK_SIZE: tl.constexpr,
     ):
         """Kernel that loads a bool tensor and uses it as a mask."""
         pid = tl.program_id(axis=0)

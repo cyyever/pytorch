@@ -27,7 +27,7 @@ class FlyDSLTemplate(KernelTemplate):
     kernel_type: type[Any] = FlyDSLTemplateKernel
     caller_type: type[Any] | None = None
     index_counter = itertools.count()
-    all_templates: dict[str, "FlyDSLTemplate"] = {}
+    all_templates: dict[str, FlyDSLTemplate] = {}
 
     def __init__(self, name: str, source: str) -> None:
         super().__init__(name)
@@ -153,7 +153,7 @@ class FlyDSLTemplateCaller(ChoiceCaller):
         layout: Layout,
         make_kernel_render: Any,
         bmreq: FlyDSLBenchmarkRequest,
-        template: "FlyDSLTemplate",
+        template: FlyDSLTemplate,
         mutated_inputs: Iterable[IRNode] | None = None,
         template_kwargs: dict[str, Any] | None = None,
     ):

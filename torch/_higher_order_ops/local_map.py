@@ -36,7 +36,7 @@ GraphArg: TypeAlias = tuple[torch.Tensor, int, torch.SymInt, None]
 
 
 @contextmanager
-def defer_inlining() -> Generator[None, None, None]:
+def defer_inlining() -> Generator[None]:
     global _DEFER_INLINING
     prior = _DEFER_INLINING
     try:

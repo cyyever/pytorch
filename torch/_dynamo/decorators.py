@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from types import TracebackType
 from typing import Any, overload, Protocol, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.utils._pytree as pytree
@@ -187,7 +187,7 @@ class set_stance(_DecoratorContextManager):
     ) -> None:
         _set_stance(self.prev)
 
-    def clone(self) -> "set_stance":
+    def clone(self) -> set_stance:
         return self.__class__(self.stance.stance, force_backend=self.stance.backend)
 
 

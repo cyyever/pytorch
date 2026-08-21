@@ -67,7 +67,7 @@ class _ComputationType(str, Enum):
     REDUCE_GRAD = "REDUCE_GRAD"
 
     @staticmethod
-    def from_str(action: str) -> "_ComputationType":
+    def from_str(action: str) -> _ComputationType:
         try:
             return _ComputationType(action)
         except ValueError as exc:
@@ -110,7 +110,7 @@ class _Action(NamedTuple):
     stage_index: int
     computation_type: _ComputationType
     microbatch_index: int | None = None
-    sub_actions: tuple["_Action", ...] | None = None
+    sub_actions: tuple[_Action, ...] | None = None
 
     def __str__(self):
         return self.__repr__()

@@ -217,7 +217,7 @@ class OptionalTensorArgument(_Union):
 @dataclass
 class GraphArgument:
     name: Annotated[str, 10]
-    graph: Annotated["Graph", 20]
+    graph: Annotated[Graph, 20]
 
 
 @dataclass
@@ -264,7 +264,7 @@ class Argument(_Union):
     as_complex: Annotated[ComplexValue, 260]
     as_nested_tensors: Annotated[list[list[TensorArgument]], 270]
     as_int_lists: Annotated[list[list[int]], 280]
-    as_string_to_argument: Annotated[dict[str, "Argument"], 290]
+    as_string_to_argument: Annotated[dict[str, Argument], 290]
     as_float_lists: Annotated[list[list[float]], 300]
 
 

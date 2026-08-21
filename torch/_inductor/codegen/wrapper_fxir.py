@@ -253,12 +253,12 @@ class WrapperFxCodegen(PythonWrapperCodegen):
 
     @classmethod
     def create(
-        cls: type["WrapperFxCodegen"],
+        cls: type[WrapperFxCodegen],
         is_subgraph: bool,
         subgraph_name: str | None,
         parent_wrapper: PythonWrapperCodegen | None,
         partition_signatures: ir.GraphPartitionSignature | None = None,
-    ) -> "WrapperFxCodegen":
+    ) -> WrapperFxCodegen:
         if is_subgraph:
             if subgraph_name is None:
                 raise AssertionError("subgraph_name must not be None for subgraphs")
@@ -1030,7 +1030,7 @@ class FxConverter:
                 raise AssertionError(f"expected ir.IRNode, got {type(x)}")
             return self._generate_buffer(x)
 
-        (x, values) = [generate_buffer_or_none(t) for t in ir_node.inputs[:2]]
+        (x, values) = (generate_buffer_or_none(t) for t in ir_node.inputs[:2])
         indices = tuple(generate_buffer_or_none(t) for t in line.indices)
         accumulate = ir_node.constant_args[0]
         args = (x, indices, values, accumulate)

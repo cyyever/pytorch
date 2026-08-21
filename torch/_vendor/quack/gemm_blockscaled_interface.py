@@ -17,7 +17,6 @@ the quack kernel consumes. No data is copied.
 """
 
 from functools import lru_cache
-from typing import Optional, Tuple
 
 import torch
 from torch import Tensor
@@ -42,7 +41,7 @@ _TORCH_TO_CUTLASS_D = {
 }
 
 
-def _default_tiler_cluster(m: int, n: int) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+def _default_tiler_cluster(m: int, n: int) -> tuple[tuple[int, int], tuple[int, int]]:
     """Pick a reasonable default (mma_tiler_mn, cluster_shape_mn)."""
     if m >= 512 and n >= 128:
         return (256, 128), (2, 1)
@@ -55,8 +54,8 @@ def _compile_cached(
     n: int,
     k: int,
     l: int,
-    mma_tiler_mn: Tuple[int, int],
-    cluster_shape_mn: Tuple[int, int],
+    mma_tiler_mn: tuple[int, int],
+    cluster_shape_mn: tuple[int, int],
     out_torch_dtype,
     ab_dtype_cutlass,
     sf_dtype_cutlass,
@@ -102,7 +101,7 @@ def _to_kernel_layout(
     B: Tensor,
     A_scale: Tensor,
     B_scale: Tensor,
-) -> Tuple[int, int, int, int, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, bool]:
+) -> tuple[int, int, int, int, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, bool]:
     """Normalize shapes/strides, validate, and repack scales. Returns
     (m, n, k, l, mA_mkl, mB_nkl, sc_contig_A, sc_contig_B, sfa_view, sfb_view, was_2d).
 
@@ -160,8 +159,8 @@ def mxfp8_gemm_out(
     B_scale: Tensor,
     out: Tensor,
     *,
-    mma_tiler_mn: Optional[Tuple[int, int]] = None,
-    cluster_shape_mn: Optional[Tuple[int, int]] = None,
+    mma_tiler_mn: tuple[int, int] | None = None,
+    cluster_shape_mn: tuple[int, int] | None = None,
 ) -> None:
     """MXFP8 blockscaled GEMM with pre-allocated output. See module doc for shape conventions."""
     m, n, k, l, mA, mB, _scA, _scB, sfa, sfb, was_2d = _to_kernel_layout(A, B, A_scale, B_scale)
@@ -217,11 +216,11 @@ def mxfp8_gemm(
     B: Tensor,
     A_scale: Tensor,
     B_scale: Tensor,
-    out: Optional[Tensor] = None,
+    out: Tensor | None = None,
     out_dtype: torch.dtype = torch.bfloat16,
     *,
-    mma_tiler_mn: Optional[Tuple[int, int]] = None,
-    cluster_shape_mn: Optional[Tuple[int, int]] = None,
+    mma_tiler_mn: tuple[int, int] | None = None,
+    cluster_shape_mn: tuple[int, int] | None = None,
 ) -> Tensor:
     """MXFP8 blockscaled GEMM. Allocates output if not provided."""
     if out is None:
@@ -243,7 +242,7 @@ def mxfp8_gemm(
     return out
 
 
-def mxfp8_quantize(x: Tensor) -> Tuple[Tensor, Tensor]:
+def mxfp8_quantize(x: Tensor) -> tuple[Tensor, Tensor]:
     """Quantize a (..., K) bf16/fp32 tensor to MXFP8. Returns (qdata, scale_2d)
     in torchao-convention layout. Last dim (K) must be divisible by 32."""
     assert x.shape[-1] % _SF_VEC_SIZE == 0, (
@@ -255,11 +254,11 @@ def mxfp8_quantize(x: Tensor) -> Tuple[Tensor, Tensor]:
 def mxfp8_gemm_quantize(
     A: Tensor,
     B: Tensor,
-    out: Optional[Tensor] = None,
+    out: Tensor | None = None,
     out_dtype: torch.dtype = torch.bfloat16,
     *,
-    mma_tiler_mn: Optional[Tuple[int, int]] = None,
-    cluster_shape_mn: Optional[Tuple[int, int]] = None,
+    mma_tiler_mn: tuple[int, int] | None = None,
+    cluster_shape_mn: tuple[int, int] | None = None,
 ) -> Tensor:
     """High-level: quantize bf16 A, B_as_NK to MXFP8, then run C = A @ B_as_NK.mT.
     Inputs: A=(M,K)/(L,M,K), B_as_NK=(N,K)/(L,N,K) bf16/fp32. Quantization

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import functools
 import math
 from typing import ParamSpec, TYPE_CHECKING, TypeVar

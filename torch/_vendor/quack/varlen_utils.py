@@ -1,6 +1,6 @@
 # Copyright (c) 2025, Tri Dao.
 
-from typing import Optional, NamedTuple
+from typing import NamedTuple
 from dataclasses import dataclass
 
 import cutlass
@@ -14,21 +14,21 @@ from .cute_dsl_utils import mlir_namedtuple
 # Grouping arguments together that should be passed to __call__
 @mlir_namedtuple
 class VarlenArguments(NamedTuple):
-    mCuSeqlensM: Optional[cute.Tensor] = None
-    mCuSeqlensK: Optional[cute.Tensor] = None
-    mAIdx: Optional[cute.Tensor] = None
+    mCuSeqlensM: cute.Tensor | None = None
+    mCuSeqlensK: cute.Tensor | None = None
+    mAIdx: cute.Tensor | None = None
 
 
 class VarlenManager:
     @dataclass
     class Params:
-        cu_seqlens_m: Optional[cute.Tensor] = None
-        cu_seqlens_k: Optional[cute.Tensor] = None
-        mAIdx: Optional[cute.Tensor] = None
+        cu_seqlens_m: cute.Tensor | None = None
+        cu_seqlens_k: cute.Tensor | None = None
+        mAIdx: cute.Tensor | None = None
 
         @staticmethod
         @cute.jit
-        def create(args: VarlenArguments, *, loc=None, ip=None) -> "VarlenManager.Params":
+        def create(args: VarlenArguments, *, loc=None, ip=None) -> VarlenManager.Params:
             return VarlenManager.Params(
                 cu_seqlens_m=args.mCuSeqlensM,
                 cu_seqlens_k=args.mCuSeqlensK,
@@ -73,7 +73,7 @@ class VarlenManager:
         *,
         loc=None,
         ip=None,
-    ) -> "VarlenManager":
+    ) -> VarlenManager:
         return VarlenManager(params, len_m_static=len_m_static, len_k_static=len_k_static)
 
     def len_m(self, batch_idx: Int32) -> Int32:

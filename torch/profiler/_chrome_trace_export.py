@@ -6,7 +6,6 @@ through a (possibly gzip-compressed) text writer so we never materialize
 the full JSON string in memory.
 """
 
-from __future__ import annotations
 
 import gzip
 import json

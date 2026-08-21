@@ -26,7 +26,8 @@ from contextlib import nullcontext
 from itertools import chain
 from types import NoneType
 from typing import Any, NoReturn, Optional, TYPE_CHECKING
-from typing_extensions import NotRequired, TypedDict
+from typing import TypedDict
+from typing import NotRequired
 
 import sympy
 
@@ -299,7 +300,7 @@ class TensorVariable(VariableTracker):
         self._is_name_set: bool = _is_name_set
 
     def synchronize_attributes(
-        self, tx: "InstructionTranslatorBase", target_cls: type | None = None
+        self, tx: InstructionTranslatorBase, target_cls: type | None = None
     ) -> None:
         from .builder import get_specialized_props, infer_subclass_type
 
@@ -326,7 +327,7 @@ class TensorVariable(VariableTracker):
 
     def _sync_if_inplace_mutation(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         version_before: int | None,
     ) -> None:
         """
@@ -348,7 +349,7 @@ class TensorVariable(VariableTracker):
             self.proxy.node.meta["example_value"], self.python_type_name()
         )
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         unimplemented(
             gb_type="repr() on tensor",
             context=f"repr() on {self.python_type_name()}",
@@ -366,7 +367,7 @@ class TensorVariable(VariableTracker):
     def is_tensor(self) -> bool:
         return True
 
-    def nb_bool_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def nb_bool_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # THPVariable_bool calls at::Tensor::is_nonzero(), i.e. .item() != 0.
         from .constant import ConstantVariable
 
@@ -381,7 +382,7 @@ class TensorVariable(VariableTracker):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -449,7 +450,7 @@ class TensorVariable(VariableTracker):
         return props
 
     def dynamic_getattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         fake_val = self.proxy.node.meta["example_value"]
         # For getattrs on tensors without sources,
@@ -544,7 +545,7 @@ class TensorVariable(VariableTracker):
         )
         return VariableTracker.build(tx, real_value, attr_source)
 
-    def _view_attr(self, tx: "InstructionTranslatorBase", name: str) -> VariableTracker:
+    def _view_attr(self, tx: InstructionTranslatorBase, name: str) -> VariableTracker:
         """Trace a view attribute as a call to the aten op behind the C++ getter.
 
         Going through the op keeps the node on the current tracer. Reading the
@@ -558,53 +559,53 @@ class TensorVariable(VariableTracker):
             tx, [self], {}
         )
 
-    def method_attr_T(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_T(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self._view_attr(tx, "T")
 
-    def method_attr_mT(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_mT(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self._view_attr(tx, "mT")
 
-    def method_attr_H(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_H(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self._view_attr(tx, "H")
 
-    def method_attr_mH(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_mH(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self._view_attr(tx, "mH")
 
-    def method_attr_ndim(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_ndim(self, tx: InstructionTranslatorBase) -> VariableTracker:
         if self.ndim is not None:
             return VariableTracker.build(tx, self.ndim)
         else:
             return self.call_method(tx, "dim", [], {})
 
     def method_attr_dtype(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> VariableTracker | None:
         if self.dtype is not None:
             return VariableTracker.build(tx, self.dtype)
         return None
 
     def method_attr_device(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> VariableTracker | None:
         if self.device is not None:
             return VariableTracker.build(tx, self.device)
         return None
 
     def method_attr_layout(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> VariableTracker | None:
         if self.layout is not None:
             return VariableTracker.build(tx, self.layout)
         return None
 
     def method_attr_is_cuda(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.device is not None:
             return VariableTracker.build(tx, self.device.type == "cuda")
         return None
 
-    def method_attr_shape(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_shape(self, tx: InstructionTranslatorBase) -> VariableTracker:
         if self.valid_size():
             sizes: list[VariableTracker] = [
                 VariableTracker.build(tx, x) for x in self.size
@@ -614,34 +615,34 @@ class TensorVariable(VariableTracker):
             return self.call_method(tx, "size", [], {})
 
     def method_attr_requires_grad(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.requires_grad is not None:
             return VariableTracker.build(tx, self.requires_grad)
         return None
 
     def method_attr_is_quantized(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.is_quantized is not None:
             return VariableTracker.build(tx, self.is_quantized)
         return None
 
     def method_attr_is_sparse(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.is_sparse is not None:
             return VariableTracker.build(tx, self.is_sparse)
         return None
 
     def method_attr_is_nested(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.is_nested is not None:
             return VariableTracker.build(tx, self.is_nested)
         return None
 
-    def method_attr_retain_grad(self, tx: "InstructionTranslatorBase") -> NoReturn:
+    def method_attr_retain_grad(self, tx: InstructionTranslatorBase) -> NoReturn:
         unimplemented(
             gb_type="Tensor.retain_grad() with AOTDispatcher",
             context=f"tp_getattro_impl {self} retain_grad",
@@ -650,7 +651,7 @@ class TensorVariable(VariableTracker):
         )
 
     def method_attr_grad(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> VariableTracker | None:
         if tx.output.side_effects.has_pending_mutation_of_attr(self, "grad"):
             return tx.output.side_effects.load_attr(self, "grad")
@@ -662,13 +663,13 @@ class TensorVariable(VariableTracker):
         # None tells tp_getattro_impl to use default .grad handling
         return None
 
-    def method_attr_data(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr_data(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return variables.TorchInGraphFunctionVariable(
             torch._C._autograd._get_data_attr  # type: ignore[attr-defined]
         ).call_function(tx, [self], {})
 
     def method_attr_grad_fn(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.has_grad_fn:
             unimplemented(
@@ -680,7 +681,7 @@ class TensorVariable(VariableTracker):
         else:
             return variables.ConstantVariable.create(None)
 
-    def method_attr__version(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_attr__version(self, tx: InstructionTranslatorBase) -> VariableTracker:
         from ..tensor_version_op import _tensor_version
 
         return variables.TorchInGraphFunctionVariable(_tensor_version).call_function(
@@ -688,7 +689,7 @@ class TensorVariable(VariableTracker):
         )
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         from . import GetAttrVariable
 
@@ -719,7 +720,7 @@ class TensorVariable(VariableTracker):
         return VariableTracker.build(tx, ret_val)
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         fake_val = self.as_proxy().node.meta["example_value"]
         if (
@@ -839,7 +840,7 @@ class TensorVariable(VariableTracker):
         return result
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase", idxes: Sequence[int] | None = None
+        self, tx: InstructionTranslatorBase, idxes: Sequence[int] | None = None
     ) -> list[VariableTracker]:
         from .builder import wrap_fx_proxy_cls
         from .torch_function import TensorWithTFOverrideVariable
@@ -905,8 +906,8 @@ class TensorVariable(VariableTracker):
 
     def call_tree_map(
         self,
-        tx: "InstructionTranslatorBase",
-        tree_map_fn: "UserFunctionVariable",
+        tx: InstructionTranslatorBase,
+        tree_map_fn: UserFunctionVariable,
         map_fn: VariableTracker,
         rest: list[VariableTracker],
         tree_map_kwargs: dict[str, VariableTracker],
@@ -932,7 +933,7 @@ class TensorVariable(VariableTracker):
 
     def mp_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
     ) -> VariableTracker:
         # Tensor.__getitem__ is a custom C slot, not CPython's mp_subscript.
@@ -966,10 +967,10 @@ class TensorVariable(VariableTracker):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
-        kwargs: "dict[str, VariableTracker]",
+        kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
         from .builder import SourcelessBuilder, VariableBuilder
         from .torch_function import can_dispatch_torch_function, dispatch_torch_function
@@ -1109,12 +1110,12 @@ class TensorVariable(VariableTracker):
         return result
 
     def method_size(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker | None:
         return self._method_size_stride("size", *args, **kwargs)
 
     def method_stride(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker | None:
         return self._method_size_stride("stride", *args, **kwargs)
 
@@ -1162,7 +1163,7 @@ class TensorVariable(VariableTracker):
                     return ConstantVariable.create(int(fake_r))
         return None
 
-    def method_numel(self, tx: "InstructionTranslatorBase") -> VariableTracker | None:
+    def method_numel(self, tx: InstructionTranslatorBase) -> VariableTracker | None:
         if self.valid_size():
             return VariableTracker.build(tx, product(self.size))
 
@@ -1175,7 +1176,7 @@ class TensorVariable(VariableTracker):
 
     method_nelement = method_numel
 
-    def method_dim(self, tx: "InstructionTranslatorBase") -> VariableTracker | None:
+    def method_dim(self, tx: InstructionTranslatorBase) -> VariableTracker | None:
         if self.ndim is not None:
             return VariableTracker.build(tx, self.ndim)
         return None
@@ -1183,14 +1184,14 @@ class TensorVariable(VariableTracker):
     method_ndimension = method_dim
 
     def method_is_floating_point(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.dtype is not None:
             return VariableTracker.build(tx, self.dtype.is_floating_point)
         return None
 
     def method_is_inference(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if config.fake_tensor_disable_inference_mode:
             unimplemented(
@@ -1207,7 +1208,7 @@ class TensorVariable(VariableTracker):
         return None
 
     def method_is_complex(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> ConstantVariable | None:
         if self.dtype is not None:
             return VariableTracker.build(tx, self.dtype.is_complex)
@@ -1215,7 +1216,7 @@ class TensorVariable(VariableTracker):
 
     def method_is_contiguous(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         memory_format: VariableTracker | None = None,
     ) -> ConstantVariable | None:
         memory_format_const = (
@@ -1234,7 +1235,7 @@ class TensorVariable(VariableTracker):
 
     def method_type(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         dtype: Any | None = None,
         non_blocking: bool = False,
         **kwargs: Any,
@@ -1279,8 +1280,8 @@ class TensorVariable(VariableTracker):
         return None
 
     def method_as_subclass(
-        self, tx: "InstructionTranslatorBase", cls: VariableTracker
-    ) -> "TensorWithTFOverrideVariable":
+        self, tx: InstructionTranslatorBase, cls: VariableTracker
+    ) -> TensorWithTFOverrideVariable:
         if isinstance(cls, TensorSubclassVariable) and cls.source:
             from .torch_function import TensorWithTFOverrideVariable
 
@@ -1304,19 +1305,19 @@ class TensorVariable(VariableTracker):
         )
 
     def method_get_device(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> VariableTracker | None:
         if isinstance(self.device, torch.device):
             index = self.device.index if self.device.type != "cpu" else -1
             return VariableTracker.build(tx, index)
         return None
 
-    def method_element_size(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_element_size(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return VariableTracker.build(tx, self.dtype.itemsize)
 
     def method_numpy(
-        self, tx: "InstructionTranslatorBase", *, force: VariableTracker | bool = False
-    ) -> "NumpyNdarrayVariable":
+        self, tx: InstructionTranslatorBase, *, force: VariableTracker | bool = False
+    ) -> NumpyNdarrayVariable:
         if not config.trace_numpy:
             unimplemented(
                 gb_type="Tensor.numpy() with trace_numpy=False",
@@ -1356,7 +1357,7 @@ class TensorVariable(VariableTracker):
             )
         return NumpyNdarrayVariable.create(tx, proxy)
 
-    def method_tolist(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method_tolist(self, tx: InstructionTranslatorBase) -> VariableTracker:
         from .builder import wrap_fx_proxy
 
         def tolist(tensor: torch.Tensor, sub_proxy: torch.fx.Proxy) -> Any | list[Any]:
@@ -1461,7 +1462,7 @@ class TensorVariable(VariableTracker):
 
     def method_backward(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         gradient: VariableTracker | None = None,
         retain_graph: VariableTracker | None = None,
         create_graph: VariableTracker | None = None,
@@ -1580,23 +1581,23 @@ class TensorVariable(VariableTracker):
 
     def method_data_ptr(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
-    ) -> "DataPtrVariable":
+    ) -> DataPtrVariable:
         return DataPtrVariable(self)
 
     def method_const_data_ptr(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
-    ) -> "DataPtrVariable":
+    ) -> DataPtrVariable:
         return DataPtrVariable(self, method_name="const_data_ptr")
 
     def method_record_stream(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         stream: VariableTracker,
     ) -> VariableTracker:
         from .streams import StreamVariable
@@ -1615,7 +1616,7 @@ class TensorVariable(VariableTracker):
 
     def method_item(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> None:
@@ -1637,7 +1638,7 @@ class TensorVariable(VariableTracker):
 
     def nb_index_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # CPython: only integer tensors of a single element can be converted
         # to an index. Mirrors THPVariable_index_scalar in
@@ -1667,7 +1668,7 @@ class TensorVariable(VariableTracker):
 
     def nb_int_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # CPython: THPVariable_integral_scalar handles both integer and float
         # tensors (floats are truncated to int). Complex tensors raise
@@ -1693,12 +1694,12 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def method___int__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___int__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_int_impl(tx)
 
     def nb_float_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # CPython: THPVariable_float_scalar dispatches to double.
         # Complex tensors raise RuntimeError at runtime.
@@ -1721,12 +1722,12 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def method___float__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___float__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_float_impl(tx)
 
     def nb_negative_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         from .builder import wrap_fx_proxy
 
@@ -1740,12 +1741,12 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def method___neg__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___neg__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_negative_impl(tx)
 
     def nb_positive_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         from .builder import wrap_fx_proxy
 
@@ -1759,12 +1760,12 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def method___pos__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___pos__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_positive_impl(tx)
 
     def nb_absolute_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         from .builder import wrap_fx_proxy
 
@@ -1778,12 +1779,12 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def method___abs__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___abs__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_absolute_impl(tx)
 
     def nb_invert_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         from .builder import wrap_fx_proxy
 
@@ -1797,15 +1798,15 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def method___invert__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___invert__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_invert_impl(tx)
 
-    def method___index__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___index__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.nb_index_impl(tx)
 
     def method___getitem__(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker:
@@ -1854,24 +1855,24 @@ class TensorVariable(VariableTracker):
             user_stack_formatted,
         )
 
-    def method___len__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___len__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.sq_length_impl(tx)
 
-    def sq_length_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def sq_length_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """Sequence length for tensors (size along first dimension)."""
         return self.call_method(tx, "size", [VariableTracker.build(tx, 0)], {})
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return ListIteratorVariable(
             self.unpack_var_sequence(tx), mutation_type=ValueMutationNew()
         )
 
-    def method___iter__(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def method___iter__(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return self.tp_iter_impl(tx)
 
     def method_addcmul_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         tensor1: Any,
         tensor2: Any,
         *,
@@ -1889,7 +1890,7 @@ class TensorVariable(VariableTracker):
 
     def mp_ass_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
         value: VariableTracker | None,
     ) -> VariableTracker:
@@ -1899,7 +1900,7 @@ class TensorVariable(VariableTracker):
 
     def method___setitem__(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
         value: VariableTracker,
     ) -> VariableTracker:
@@ -1932,7 +1933,7 @@ class TensorVariable(VariableTracker):
 
     def method_resize_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> NoReturn:
@@ -1945,7 +1946,7 @@ class TensorVariable(VariableTracker):
 
     def method_resize_as_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> NoReturn:
@@ -1958,7 +1959,7 @@ class TensorVariable(VariableTracker):
 
     def method_sparse_resize_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> NoReturn:
@@ -1971,7 +1972,7 @@ class TensorVariable(VariableTracker):
 
     def method_sparse_resize_and_clear_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> NoReturn:
@@ -1984,7 +1985,7 @@ class TensorVariable(VariableTracker):
 
     def method_set_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> None:
@@ -2006,7 +2007,7 @@ class TensorVariable(VariableTracker):
 
     def method_add_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         *,
         alpha: VariableTracker | None = None,
@@ -2027,9 +2028,9 @@ class TensorVariable(VariableTracker):
 
     def method_addcdiv_(
         self,
-        tx: "InstructionTranslatorBase",
-        tensor1: "TensorVariable",
-        tensor2: "TensorVariable",
+        tx: InstructionTranslatorBase,
+        tensor1: TensorVariable,
+        tensor2: TensorVariable,
         *,
         value: VariableTracker | None = None,
     ) -> VariableTracker | None:
@@ -2045,7 +2046,7 @@ class TensorVariable(VariableTracker):
         return None
 
     def sq_contains_impl(
-        self, tx: "InstructionTranslatorBase", item: VariableTracker
+        self, tx: InstructionTranslatorBase, item: VariableTracker
     ) -> VariableTracker:
         # Rewrite __contains__ here so that downstream passes can trace through
         # without dealing with unbacked symbool. Roughly the code we translate is:
@@ -2060,13 +2061,13 @@ class TensorVariable(VariableTracker):
         return result.call_method(tx, "item", [], {})
 
     def method___contains__(
-        self, tx: "InstructionTranslatorBase", arg: VariableTracker
+        self, tx: InstructionTranslatorBase, arg: VariableTracker
     ) -> VariableTracker:
         return self.sq_contains_impl(tx, arg)
 
     def method_register_hook(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker:
@@ -2074,7 +2075,7 @@ class TensorVariable(VariableTracker):
 
     def method_register_post_accumulate_grad_hook(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker:
@@ -2083,7 +2084,7 @@ class TensorVariable(VariableTracker):
         )
 
     def _method_register_hook(
-        self, tx: "InstructionTranslatorBase", name: str, hook: VariableTracker
+        self, tx: InstructionTranslatorBase, name: str, hook: VariableTracker
     ) -> VariableTracker:
         # Note - do not arbitrarily add hooks here - make sure they match the same contract
         # see [On tensor.register_hook]
@@ -2198,7 +2199,7 @@ class TensorVariable(VariableTracker):
 
     def method_requires_grad_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         requires_grad: bool | VariableTracker = True,
     ) -> VariableTracker:
         if requires_grad is not True:
@@ -2285,7 +2286,7 @@ class TensorVariable(VariableTracker):
                     )
         return self
 
-    def method_detach_(self, tx: "InstructionTranslatorBase") -> "TensorVariable":
+    def method_detach_(self, tx: InstructionTranslatorBase) -> TensorVariable:
         from .builder import wrap_fx_proxy
 
         proxy = tx.output.create_proxy(
@@ -2299,7 +2300,7 @@ class TensorVariable(VariableTracker):
         self.synchronize_attributes(tx)
         return self
 
-    def method_share_memory_(self, tx: "InstructionTranslatorBase") -> NoReturn:
+    def method_share_memory_(self, tx: InstructionTranslatorBase) -> NoReturn:
         unimplemented(
             gb_type="Unsupported Tensor.share_memory_() call",
             context=f"call_method {self} share_memory_",
@@ -2312,7 +2313,7 @@ class TensorVariable(VariableTracker):
 
     def method_new(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker | None:
@@ -2329,8 +2330,8 @@ class TensorVariable(VariableTracker):
         return None
 
     def method_new_tensor(
-        self: "TensorVariable",
-        tx: "InstructionTranslatorBase",
+        self: TensorVariable,
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker | None:
@@ -2354,15 +2355,15 @@ class TensorVariable(VariableTracker):
         )
 
     def method_untyped_storage(
-        self, tx: "InstructionTranslatorBase"
-    ) -> "UntypedStorageVariable":
+        self, tx: InstructionTranslatorBase
+    ) -> UntypedStorageVariable:
         return UntypedStorageVariable(
             self, self.as_proxy().node.meta["example_value"].untyped_storage()
         )
 
     def method_wait(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker:
@@ -2383,7 +2384,7 @@ class TensorVariable(VariableTracker):
 
     def method_random_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> NoReturn:
@@ -2403,7 +2404,7 @@ class TensorVariable(VariableTracker):
 
     def method_uniform_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         *args: VariableTracker,
         **kwargs: VariableTracker,
     ) -> VariableTracker | None:
@@ -2488,7 +2489,7 @@ class TensorVariable(VariableTracker):
 
     def nb_add_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2507,7 +2508,7 @@ class TensorVariable(VariableTracker):
 
     def nb_lshift_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2525,7 +2526,7 @@ class TensorVariable(VariableTracker):
 
     def nb_rshift_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2543,7 +2544,7 @@ class TensorVariable(VariableTracker):
 
     def nb_or_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2561,7 +2562,7 @@ class TensorVariable(VariableTracker):
 
     def nb_and_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2579,7 +2580,7 @@ class TensorVariable(VariableTracker):
 
     def nb_xor_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2597,7 +2598,7 @@ class TensorVariable(VariableTracker):
 
     def nb_multiply_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2616,7 +2617,7 @@ class TensorVariable(VariableTracker):
 
     def nb_matrix_multiply_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2633,7 +2634,7 @@ class TensorVariable(VariableTracker):
 
     def nb_floor_divide_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2654,7 +2655,7 @@ class TensorVariable(VariableTracker):
 
     def nb_true_divide_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2675,7 +2676,7 @@ class TensorVariable(VariableTracker):
 
     def nb_remainder_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2694,7 +2695,7 @@ class TensorVariable(VariableTracker):
             ),
         )
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         # Tensor.__hash__ is `return id(self)`, so hash == id.
         # Always use the FakeTensor identity so aliased tensors
         # (e.g. y = x.add_(1)) hash consistently.
@@ -2703,7 +2704,7 @@ class TensorVariable(VariableTracker):
 
     def nb_subtract_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2721,7 +2722,7 @@ class TensorVariable(VariableTracker):
 
     def nb_power_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         z: VariableTracker | None,
         reverse: bool = False,
@@ -2761,11 +2762,11 @@ class SymNodeVariable(VariableTracker):
     @classmethod
     def create(
         cls,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         proxy: Any,
         sym_num: Any | None = None,
         **options: Any,
-    ) -> "VariableTracker":
+    ) -> VariableTracker:
         if sym_num is None:
             sym_num = get_fake_value(proxy.node, tx)
         if "example_value" in proxy.node.meta:
@@ -2805,7 +2806,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_bool_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # long_bool / float_bool: non-zero check. SymBool is already boolean.
         # https://github.com/python/cpython/blob/c09ccd9c429/Objects/longobject.c#L5200
@@ -2820,7 +2821,7 @@ class SymNodeVariable(VariableTracker):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -2836,7 +2837,7 @@ class SymNodeVariable(VariableTracker):
         )
         return SymNodeVariable.create(tx, proxy, sym_num=None)
 
-    def as_tensor(self, tx: "InstructionTranslatorBase", dtype: Any) -> TensorVariable:
+    def as_tensor(self, tx: InstructionTranslatorBase, dtype: Any) -> TensorVariable:
         if self._tensor_var is None:
             self._tensor_var = VariableTracker.build(
                 tx, torch.scalar_tensor
@@ -2844,7 +2845,7 @@ class SymNodeVariable(VariableTracker):
         return self._tensor_var
 
     def evaluate_expr(
-        self, output_graph: Optional["OutputGraph"] = None
+        self, output_graph: Optional[OutputGraph] = None
     ) -> bool | int | float:
         try:
             return guard_scalar(self.sym_num)
@@ -2860,7 +2861,7 @@ class SymNodeVariable(VariableTracker):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -2878,7 +2879,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_index_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # SymInt / SymBool define __index__ as `self.node.int_()`, which
         # specializes the symbolic value to a concrete int (with guard).
@@ -2892,7 +2893,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_int_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # SymInt.__int__: https://github.com/pytorch/pytorch/blob/ee336ca5440939b8ad65e916d47421f849e56178/torch/__init__.py#L462
         # SymFloat.__int__: https://github.com/pytorch/pytorch/blob/ee336ca5440939b8ad65e916d47421f849e56178/torch/__init__.py#L682
@@ -2910,13 +2911,13 @@ class SymNodeVariable(VariableTracker):
         )
 
     def method___int__(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker:
         return self.nb_int_impl(tx)
 
     def nb_add_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2934,7 +2935,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_or_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2950,7 +2951,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_and_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2966,7 +2967,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_xor_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2982,7 +2983,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_lshift_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -2999,7 +3000,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_rshift_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -3016,7 +3017,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_subtract_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -3034,7 +3035,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_multiply_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -3052,7 +3053,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_floor_divide_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -3069,7 +3070,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_true_divide_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -3086,7 +3087,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_remainder_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -3103,7 +3104,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_float_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         # SymFloat.__float__: https://github.com/pytorch/pytorch/blob/ee336ca5440939b8ad65e916d47421f849e56178/torch/__init__.py#L679
         from .builder import wrap_fx_proxy
@@ -3119,13 +3120,13 @@ class SymNodeVariable(VariableTracker):
         )
 
     def method___float__(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker:
         return self.nb_float_impl(tx)
 
     def nb_negative_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         return SymNodeVariable.create(
             tx,
@@ -3134,16 +3135,16 @@ class SymNodeVariable(VariableTracker):
         )
 
     def method___neg__(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker:
         return self.nb_negative_impl(tx)
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         return hash(self.evaluate_expr()), False
 
     def nb_positive_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         return SymNodeVariable.create(
             tx,
@@ -3152,13 +3153,13 @@ class SymNodeVariable(VariableTracker):
         )
 
     def method___pos__(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker:
         return self.nb_positive_impl(tx)
 
     def nb_absolute_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
     ) -> VariableTracker:
         return SymNodeVariable.create(
             tx,
@@ -3168,7 +3169,7 @@ class SymNodeVariable(VariableTracker):
 
     def nb_power_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         z: VariableTracker | None,
         reverse: bool = False,
@@ -3187,7 +3188,7 @@ class SymNodeVariable(VariableTracker):
         )
 
     def method___abs__(
-        self, tx: "InstructionTranslatorBase", *args: Any, **kwargs: Any
+        self, tx: InstructionTranslatorBase, *args: Any, **kwargs: Any
     ) -> VariableTracker:
         return self.nb_absolute_impl(tx)
 
@@ -3208,8 +3209,8 @@ class NumpyNdarrayVariable(TensorVariable):
 
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase", proxy: torch.fx.Proxy, **options: Any
-    ) -> "NumpyNdarrayVariable":
+        tx: InstructionTranslatorBase, proxy: torch.fx.Proxy, **options: Any
+    ) -> NumpyNdarrayVariable:
         from .builder import wrap_fx_proxy_cls
 
         return wrap_fx_proxy_cls(
@@ -3222,14 +3223,14 @@ class NumpyNdarrayVariable(TensorVariable):
     def is_hashable(self) -> bool:
         return False
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         from ..exc import raise_type_error
 
         raise_type_error(tx, "unhashable type: 'numpy.ndarray'")
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -3249,16 +3250,16 @@ class NumpyNdarrayVariable(TensorVariable):
 
     # NB: ndim/itemsize are ALWAYS specialized constants (numpy exposes them via
     # PyGetSetDef on ndarray), unlike size/shape which may carry free symbols.
-    def _get_ndim(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def _get_ndim(self, tx: InstructionTranslatorBase) -> VariableTracker:
         example_value = self.as_proxy().node.meta["example_value"]
         return VariableTracker.build(tx, tnp.ndarray(example_value).ndim)
 
-    def _get_itemsize(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def _get_itemsize(self, tx: InstructionTranslatorBase) -> VariableTracker:
         example_value = self.as_proxy().node.meta["example_value"]
         return VariableTracker.build(tx, tnp.ndarray(example_value).itemsize)
 
     def _get_numpy_attr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         from ..utils import numpy_attr_wrapper
 
@@ -3277,7 +3278,7 @@ class NumpyNdarrayVariable(TensorVariable):
     }
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         # NB: This INTENTIONALLY does not call super(), because there is
         # no intrinsic reason ndarray properties are related to Tensor
@@ -3347,7 +3348,7 @@ class NumpyNdarrayVariable(TensorVariable):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -3405,7 +3406,7 @@ class NumpyNdarrayVariable(TensorVariable):
 
     def mp_ass_subscript_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         key: VariableTracker,
         value: VariableTracker | None,
     ) -> VariableTracker:
@@ -3443,7 +3444,7 @@ class UnspecializedPythonVariable(TensorVariable):
         tensor_variable: TensorVariable,
         raw_value: float | int | None,
         need_unwrap: bool = True,
-    ) -> "UnspecializedPythonVariable":
+    ) -> UnspecializedPythonVariable:
         # Convert a `TensorVariable` instance into an `UnspecializedPythonVariable` instance.
         return UnspecializedPythonVariable(
             **dict(tensor_variable.__dict__),
@@ -3469,14 +3470,14 @@ class FakeItemVariable(TensorVariable):
     @classmethod
     def from_tensor_variable(
         cls, tensor_variable: TensorVariable
-    ) -> "FakeItemVariable":
+    ) -> FakeItemVariable:
         return FakeItemVariable(**dict(tensor_variable.__dict__))
 
 
 class TensorSubclassVariable(UserDefinedClassVariable):
     def call_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -3550,7 +3551,7 @@ class UntypedStorageVariable(VariableTracker):
 
     def method_size(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -3573,7 +3574,7 @@ class UntypedStorageVariable(VariableTracker):
 
     def method_resize_(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -3590,7 +3591,7 @@ class UntypedStorageVariable(VariableTracker):
         "resize_": Method(method_resize_),
     }
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen(self.from_tensor)
         codegen.load_method("untyped_storage")
         codegen.call_method(0)
@@ -3627,7 +3628,7 @@ class DataPtrVariable(VariableTracker):
             node = node.args[0]
         return node
 
-    def _is_same_data_ptr(self, other: "VariableTracker") -> bool:
+    def _is_same_data_ptr(self, other: VariableTracker) -> bool:
         if not isinstance(other, DataPtrVariable):
             return False
 
@@ -3644,7 +3645,7 @@ class DataPtrVariable(VariableTracker):
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -3662,7 +3663,7 @@ class DataPtrVariable(VariableTracker):
             hints=[],
         )
 
-    def nb_bool_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def nb_bool_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         """DataPtr nb_bool: mirrors long_bool, but the address is runtime-only."""
         unimplemented(
             gb_type="Data pointer truth value",
@@ -3672,7 +3673,7 @@ class DataPtrVariable(VariableTracker):
             hints=[],
         )
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen(self.from_tensor)
         codegen.load_method(self.method_name)
         codegen.call_method(0)

@@ -91,7 +91,7 @@ class CUDAMemPoolVariable(VariableTracker):
     def get_real_python_backed_value(self) -> object:
         return self.value
 
-    def _id(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def _id(self, tx: InstructionTranslatorBase) -> VariableTracker:
         if self.source:
             install_guard(self.source.make_guard(GuardBuilder.ID_MATCH))
         return ConstantVariable.create(self.value.id)
@@ -103,7 +103,7 @@ class CUDAMemPoolVariable(VariableTracker):
     def as_proxy(self) -> Proxy:
         return self.proxy
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         if self.source:
             return super().reconstruct(codegen)
 
@@ -132,11 +132,11 @@ class CUDAMemPoolContextVariable(ContextWrappingVariable):
 
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         mempool: VariableTracker,
         device: VariableTracker | None = None,
         **kwargs: Any,
-    ) -> "CUDAMemPoolContextVariable":
+    ) -> CUDAMemPoolContextVariable:
         if not isinstance(mempool, CUDAMemPoolVariable):
             raise_type_error(
                 tx,
@@ -164,7 +164,7 @@ class CUDAMemPoolContextVariable(ContextWrappingVariable):
 
         return CUDAMemPoolContextVariable(mempool, device_index, **kwargs)
 
-    def enter(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def enter(self, tx: InstructionTranslatorBase) -> VariableTracker:
         stack = ExitStack()
         stack.enter_context(
             torch.fx.traceback.annotate(
@@ -185,7 +185,7 @@ class CUDAMemPoolContextVariable(ContextWrappingVariable):
         return ConstantVariable.create(None)
 
     def exit(
-        self, tx: "InstructionTranslatorBase", *args: VariableTracker
+        self, tx: InstructionTranslatorBase, *args: VariableTracker
     ) -> VariableTracker:
         tx.output.create_proxy(
             "call_function",
@@ -202,7 +202,7 @@ class CUDAMemPoolContextVariable(ContextWrappingVariable):
     def fn_name(self) -> str:
         return "use_mem_pool"
 
-    def reconstruct_type(self, codegen: "PyCodegen") -> None:
+    def reconstruct_type(self, codegen: PyCodegen) -> None:
         # Supporting graph breaks safely requires reconstructing the eager
         # torch.cuda.use_mem_pool context on the resume path while keeping the
         # compiled begin/end marker ops balanced around each compiled segment.

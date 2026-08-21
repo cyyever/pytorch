@@ -6,7 +6,6 @@ values during compilation, ensuring proper handling of Python literals and
 maintaining type safety through the compilation process.
 """
 
-from __future__ import annotations
 
 import enum
 import operator

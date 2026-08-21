@@ -810,7 +810,7 @@ class _RuntimeForwardEpilogue:
 
 
 def _codegen_capture_orig_inputs(
-    buf: "PySourceBuilder",
+    buf: PySourceBuilder,
     epilogue_args_idx: tuple[int, ...],
 ) -> None:
     if epilogue_args_idx:
@@ -821,7 +821,7 @@ def _codegen_capture_orig_inputs(
 
 
 def _codegen_increment_mutation_versions(
-    buf: "PySourceBuilder",
+    buf: PySourceBuilder,
     keep_input_mutations: bool,
     runtime_metadata: ViewAndMutationMeta,
 ) -> None:
@@ -836,7 +836,7 @@ def _codegen_increment_mutation_versions(
 
 
 def _codegen_normalize_as_list(
-    buf: "PySourceBuilder", var_name: str, *, indent_level: int
+    buf: PySourceBuilder, var_name: str, *, indent_level: int
 ) -> None:
     buf.emit(f"if isinstance({var_name}, tuple):", indent=indent_level)
     buf.emit(f"{var_name} = list({var_name})", indent=indent_level + 1)
@@ -845,7 +845,7 @@ def _codegen_normalize_as_list(
 
 
 def _codegen_compiled_fn_invocation(
-    buf: "PySourceBuilder",
+    buf: PySourceBuilder,
     trace_joint: bool,
     indices_of_inps_to_detach: list[int],
     disable_amp: bool,
@@ -912,7 +912,7 @@ _EpilogueReplayAliasesFn = Callable[[dict[int, Tensor], list[Any]], list[Any]]
 
 
 def _codegen_epilogue(
-    buf: "PySourceBuilder",
+    buf: PySourceBuilder,
     runtime_metadata: ViewAndMutationMeta,
     apply_mutations_fn: _EpilogueApplyMutationsFn | None,
     replay_aliases_fn: _EpilogueReplayAliasesFn | None,
@@ -2537,7 +2537,7 @@ def coerce_to_expected_memory_format(
 
 
 @contextlib.contextmanager
-def _disable_saved_tensors_hooks() -> Generator[None, None, None]:
+def _disable_saved_tensors_hooks() -> Generator[None]:
     error_message = (
         "Saved tensors hooks were specialized as GraphModules."
         "In this case aot_autograd inlines them in forward and backward graph "

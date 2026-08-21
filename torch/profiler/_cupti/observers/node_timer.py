@@ -39,7 +39,6 @@ resolving each span graph-first then eager-fallback:
 With no ``annotations`` at all, nothing is named (everything in ``""``).
 """
 
-from __future__ import annotations
 
 import threading
 from typing import Any, TYPE_CHECKING

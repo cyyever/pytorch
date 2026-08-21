@@ -77,7 +77,7 @@ class _AllGatherMatch:
     ag_node: torch.fx.Node
     res_node: torch.fx.Node
     gather_dim: int
-    group_name: "torch.distributed.distributed_c10d.GroupName"
+    group_name: torch.distributed.distributed_c10d.GroupName
 
     def replace_with(self, new_node: torch.fx.Node) -> None:
         self.res_node.replace_all_uses_with(new_node)
@@ -308,7 +308,7 @@ class _ReduceScatterMatch:
     wait_tensor_node: torch.fx.Node
     reduce_op: str
     scatter_dim: int
-    group_name: "torch.distributed.distributed_c10d.GroupName"
+    group_name: torch.distributed.distributed_c10d.GroupName
 
     def replace_with(self, new_node: torch.fx.Node) -> None:
         # Replace all uses of the result node (wait_tensor) with the fused node.
@@ -624,7 +624,7 @@ class _Matmul:
                 node.graph.erase_node(node)
 
     @classmethod
-    def from_match(cls, match: list[torch.fx.Node]) -> "_Matmul":
+    def from_match(cls, match: list[torch.fx.Node]) -> _Matmul:
         if len(match) not in (1, 3):
             raise AssertionError(f"expected 1 or 3 nodes, got {len(match)}")
         if match[0].target not in (
@@ -661,7 +661,7 @@ class _ScaledMatmul(_Matmul):
         self.arg_ancestor_nodes |= _find_ancestors(self.B_scale_node)
 
     @classmethod
-    def from_match(cls, match: list[torch.fx.Node]) -> "_ScaledMatmul":
+    def from_match(cls, match: list[torch.fx.Node]) -> _ScaledMatmul:
         if len(match) not in (1, 3):
             raise AssertionError(f"expected 1 or 3 nodes, got {len(match)}")
         if match[0].target not in (
@@ -776,7 +776,7 @@ def _insert_fused_all_gather_matmul(
     matmuls: list[_Matmul],
     shard_node: torch.fx.Node,
     gather_dim: int,
-    group_name: "torch.distributed.distributed_c10d.GroupName",
+    group_name: torch.distributed.distributed_c10d.GroupName,
 ) -> torch.fx.Node:
     mm_types = OrderedSet(map(type, matmuls))
     if len(mm_types) != 1:
@@ -1024,7 +1024,7 @@ def _insert_fused_matmul_reduce_scatter(
     matmul: _Matmul,
     reduce_op: str,
     orig_scatter_dim: int,
-    group_name: "torch.distributed.distributed_c10d.GroupName",
+    group_name: torch.distributed.distributed_c10d.GroupName,
     scatter_dim_after_reshape: int,  # only used for reshape -> scaled_mm -> reshape pattern
     output_shape: list[int],  # only used for reshape -> scaled_mm -> reshape pattern
 ) -> torch.fx.Node:

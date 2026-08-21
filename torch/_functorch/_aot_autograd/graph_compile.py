@@ -128,7 +128,7 @@ def _should_save_cache(*compiled_fns: Callable[..., Any]) -> bool:
 
 
 @contextmanager
-def maybe_skip_decompose(aot_config: AOTConfig) -> Generator[AOTConfig, None, None]:
+def maybe_skip_decompose(aot_config: AOTConfig) -> Generator[AOTConfig]:
     if config.selective_decompose:
         yield dataclasses.replace(aot_config, decompositions={})
     else:
@@ -151,7 +151,7 @@ def maybe_skip_decompose(aot_config: AOTConfig) -> Generator[AOTConfig, None, No
 # which contains node.meta with additional information about that fx.Node.
 # Warning: This API may change without backward compatibility.
 @contextmanager
-def _saved_tensor_hook_context(state: dict[str, Any]) -> Generator[None, None, None]:
+def _saved_tensor_hook_context(state: dict[str, Any]) -> Generator[None]:
     previous_state = getattr(_thread_local, "state", None)
     try:
         _thread_local.state = state

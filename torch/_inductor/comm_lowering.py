@@ -85,7 +85,7 @@ def can_realize_as_comm_buffer(
 def realize_as_comm_buffer(
     x: ir.TensorBox,
     comm_buffer_type: ir.CommBufferType,
-    group_name: "torch.distributed.distributed_c10d.GroupName",
+    group_name: torch.distributed.distributed_c10d.GroupName,
 ) -> None:
     """
     Realize an input as a comm buffer of the specified `comm_buffer_type`.
@@ -160,7 +160,7 @@ def should_skip_wait(x: ir.IRNode) -> bool:
 def _should_lower_as_one_shot_all_reduce(
     inp: ir.TensorBox,
     reduce_op: str,
-    group_name: "torch.distributed.distributed_c10d.GroupName",
+    group_name: torch.distributed.distributed_c10d.GroupName,
 ):
     from torch.distributed._symmetric_memory import is_symm_mem_enabled_for_group
 
@@ -225,7 +225,7 @@ def register_comm_lowerings():
     def _all_reduce(
         inp: ir.TensorBox,
         reduce_op: str,
-        group_name: "torch.distributed.distributed_c10d.GroupName",
+        group_name: torch.distributed.distributed_c10d.GroupName,
     ) -> ir.TensorBox:
         if _should_lower_as_one_shot_all_reduce(inp, reduce_op, group_name):
             return _one_shot_all_reduce(inp, reduce_op, group_name)
@@ -256,7 +256,7 @@ def register_comm_lowerings():
     def _all_reduce_(
         inp: ir.TensorBox,
         reduce_op: str,
-        group_name: "torch.distributed.distributed_c10d.GroupName",
+        group_name: torch.distributed.distributed_c10d.GroupName,
     ) -> ir.TensorBox:
         if _should_lower_as_one_shot_all_reduce(inp, reduce_op, group_name):
             ret = copy_(
@@ -510,7 +510,7 @@ def register_symm_mem_lowerings():
     def _copy_input_to_comm_buffer(
         inp: ir.TensorBox,
         comm_buffer_type: ir.CommBufferType,
-        group_name: "torch.distributed.distributed_c10d.GroupName",
+        group_name: torch.distributed.distributed_c10d.GroupName,
     ) -> ir.TensorBox:
         """
         Fallback: insert a Pointwise identity copy allocated in P2P via
@@ -557,7 +557,7 @@ def register_symm_mem_lowerings():
     def _create_low_contention_ag_out(
         kernel: torch._ops.OpOverload,
         inp: ir.TensorBox,
-        group_name: "torch.distributed.distributed_c10d.GroupName",
+        group_name: torch.distributed.distributed_c10d.GroupName,
     ) -> ir.TensorBox:
         from torch.distributed import distributed_c10d as c10d
 
@@ -921,7 +921,7 @@ def register_symm_mem_lowerings():
     @register_lowering(symm_mem._low_contention_all_gather_ce_multicast)
     def _symm_mem_low_contention_all_gather_ce_multicast(
         inp: ir.TensorBox,
-        group_name: "torch.distributed.distributed_c10d.GroupName",
+        group_name: torch.distributed.distributed_c10d.GroupName,
     ):
         return _create_low_contention_ag_out(
             symm_mem._low_contention_all_gather_ce_multicast_out.default,
@@ -932,7 +932,7 @@ def register_symm_mem_lowerings():
     @register_lowering(symm_mem._low_contention_all_gather_ce_multicast_out)
     def _symm_mem_low_contention_all_gather_ce_multicast_out(
         inp: ir.TensorBox,
-        group_name: "torch.distributed.distributed_c10d.GroupName",
+        group_name: torch.distributed.distributed_c10d.GroupName,
         out: ir.TensorBox,
     ):
         inp.realize()

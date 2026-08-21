@@ -395,10 +395,10 @@ def register_graphsafe_run_with_rng_state_op():
 
 graphsafe_run_with_rng_state = register_graphsafe_run_with_rng_state_op()
 
-_registered_graphsafe_dispatch_keys: set["DispatchKey"] = set()
+_registered_graphsafe_dispatch_keys: set[DispatchKey] = set()
 
 
-def register_graphsafe_rng_dispatch(dispatch_key: "DispatchKey") -> None:
+def register_graphsafe_rng_dispatch(dispatch_key: DispatchKey) -> None:
     """Register graphsafe_run_with_rng_state py_impl for a dispatch key."""
     if dispatch_key in _registered_graphsafe_dispatch_keys:
         return

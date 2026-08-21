@@ -3,7 +3,7 @@ from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
 from typing import Any, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._custom_ops
@@ -68,7 +68,7 @@ def export_tracepoint_fake_tensor_mode(*args: Any, **kwargs: Any) -> tuple[Any, 
 
 @_export_tracepoint.py_functionalize_impl
 def export_tracepoint_functional(
-    ctx: "BaseFunctionalizeAPI", *args: Any, **kwargs: Any
+    ctx: BaseFunctionalizeAPI, *args: Any, **kwargs: Any
 ) -> tuple[Any, ...]:
     unwrapped_args = ctx.unwrap_tensors(args)
     # pyrefly: ignore[bad-argument-type]  # TODO unwrap_tensors accepts pytrees at runtime
@@ -93,7 +93,7 @@ def _wrap_submodule(
     mod: torch.nn.Module,
     path: str,
     module_call_specs: dict[str, dict[str, pytree.TreeSpec]],
-) -> tuple["RemovableHandle", "RemovableHandle"]:
+) -> tuple[RemovableHandle, RemovableHandle]:
     if not isinstance(mod, torch.nn.Module):
         raise AssertionError(f"expected torch.nn.Module, got {type(mod)}")
     if path == "":
@@ -153,7 +153,7 @@ def _wrap_submodules(
     f: torch.nn.Module | Callable[..., object],
     preserve_signature: Iterable[str],
     module_call_signatures: dict[str, dict[str, pytree.TreeSpec]],
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     handles: list[RemovableHandle] = []
 
     try:
@@ -175,8 +175,8 @@ def _mark_strict_experimental(cls: type[_R]) -> type[_R]:
 
 
 def _register_func_spec_proxy_in_tracer(
-    tracer: "_ProxyTracer", name: str, spec: pytree.TreeSpec
-) -> "Proxy":
+    tracer: _ProxyTracer, name: str, spec: pytree.TreeSpec
+) -> Proxy:
     """
     This is a wrapper utility method on top of tracer to cache the
     already registered subclass spec attribute. This is useful because
@@ -200,7 +200,7 @@ def _register_func_spec_proxy_in_tracer(
 
 def _emit_flat_apply_call(
     *,
-    tracer: "_ProxyTracer",
+    tracer: _ProxyTracer,
     spec_name: str,
     const_target_for_apply: Callable[..., object],
     graphable_args: pytree.PyTree,

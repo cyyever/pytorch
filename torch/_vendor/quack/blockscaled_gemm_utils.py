@@ -2,7 +2,7 @@
 
 import itertools
 from functools import partial
-from typing import Callable, Optional, Type, Tuple
+from collections.abc import Callable
 
 import torch
 
@@ -62,13 +62,13 @@ def ceil_div(a: int, b: int) -> int:
     return (a + b - 1) // b
 
 
-def torch_dtype_for_cutlass(dtype: Type[cutlass.Numeric]) -> torch.dtype:
+def torch_dtype_for_cutlass(dtype: type[cutlass.Numeric]) -> torch.dtype:
     if dtype not in TORCH_DTYPE_MAP:
         raise TypeError(f"Unsupported dtype: {dtype}")
     return TORCH_DTYPE_MAP[dtype]
 
 
-def _make_fake_tensor_like(tensor: torch.Tensor, dtype: Type[cutlass.Numeric]) -> cute.Tensor:
+def _make_fake_tensor_like(tensor: torch.Tensor, dtype: type[cutlass.Numeric]) -> cute.Tensor:
     return cute.runtime.make_fake_tensor(
         dtype,
         tensor.shape,
@@ -87,7 +87,7 @@ def _leading_dim_from_stride(tensor: torch.Tensor) -> int:
 
 
 def _make_compile_tensor_like(
-    tensor: torch.Tensor, dtype: Type[cutlass.Numeric], dynamic_layout: bool = False
+    tensor: torch.Tensor, dtype: type[cutlass.Numeric], dynamic_layout: bool = False
 ) -> cute.Tensor:
     compile_tensor = cute.runtime.from_dlpack(tensor)
     compile_tensor.element_type = dtype
@@ -99,7 +99,7 @@ def _make_compile_tensor_like(
 
 
 def _make_fake_compact_tensor(
-    shape: Tuple[int, ...], dtype: Type[cutlass.Numeric], leading_dim: int
+    shape: tuple[int, ...], dtype: type[cutlass.Numeric], leading_dim: int
 ) -> cute.Tensor:
     logical_shape = list(shape)
     if dtype == cutlass.Float4E2M1FN:
@@ -137,7 +137,7 @@ def _create_fp4_operand_tensor(
     is_mode0_major: bool,
     *,
     init: str,
-) -> Tuple[Optional[torch.Tensor], torch.Tensor]:
+) -> tuple[torch.Tensor | None, torch.Tensor]:
     if is_mode0_major:
         raise ValueError("Float4E2M1FN blockscaled operands must be K-major")
     tensor = torch.empty(
@@ -163,10 +163,10 @@ def create_blockscaled_operand_tensor(
     mode0: int,
     mode1: int,
     is_mode0_major: bool,
-    dtype: Type[cutlass.Numeric],
+    dtype: type[cutlass.Numeric],
     *,
     init: str = "normal",
-) -> Tuple[Optional[torch.Tensor], torch.Tensor]:
+) -> tuple[torch.Tensor | None, torch.Tensor]:
     if dtype == cutlass.Float4E2M1FN:
         return _create_fp4_operand_tensor(l, mode0, mode1, is_mode0_major, init=init)
     shape = (l, mode1, mode0) if is_mode0_major else (l, mode0, mode1)
@@ -213,8 +213,8 @@ def create_blockscaled_scale_tensor(
     mn: int,
     k: int,
     sf_vec_size: int,
-    dtype: Type[cutlass.Numeric],
-) -> Tuple[torch.Tensor, torch.Tensor]:
+    dtype: type[cutlass.Numeric],
+) -> tuple[torch.Tensor, torch.Tensor]:
     sf_k = ceil_div(k, sf_vec_size)
     if dtype == cutlass.Float8E8M0FNU:
         exponents = torch.randint(0, 2, (mn, sf_k, l), device="cuda", dtype=torch.int32)
@@ -319,11 +319,11 @@ def create_blockscaled_operand_quantized(
     k: int,
     is_mn_major: bool,
     sf_vec_size: int = 32,
-    ab_dtype: Type[cutlass.Numeric] = cutlass.Float8E4M3FN,
-    sf_dtype: Type[cutlass.Numeric] = cutlass.Float8E8M0FNU,
+    ab_dtype: type[cutlass.Numeric] = cutlass.Float8E4M3FN,
+    sf_dtype: type[cutlass.Numeric] = cutlass.Float8E8M0FNU,
     *,
-    randn_std: Optional[float] = None,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    randn_std: float | None = None,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Generate bf16 randn, quantize to MXFP8/MXFP4/NVFP4 and produce:
     ref:   (mn, k, l) float32 dequantized reference
     q_mkl: (mn, k, l) operand tensor in the layout the quack kernel consumes
@@ -393,11 +393,11 @@ def create_blockscaled_varlen_m_operands(
     n: int,
     k: int,
     sf_vec_size: int,
-    ab_dtype: Type[cutlass.Numeric] = cutlass.Float8E4M3FN,
-    sf_dtype: Type[cutlass.Numeric] = cutlass.Float8E8M0FNU,
+    ab_dtype: type[cutlass.Numeric] = cutlass.Float8E4M3FN,
+    sf_dtype: type[cutlass.Numeric] = cutlass.Float8E8M0FNU,
     *,
-    randn_std: Optional[float] = None,
-    seqlens_m: Optional[list] = None,
+    randn_std: float | None = None,
+    seqlens_m: list | None = None,
     b_major: str = "k",
 ):
     """Generate bf16 randn + quantize for a varlen_m blockscaled GEMM.
@@ -493,11 +493,11 @@ def create_blockscaled_varlen_k_operands(
     m: int,
     n: int,
     sf_vec_size: int,
-    ab_dtype: Type[cutlass.Numeric] = cutlass.Float8E4M3FN,
-    sf_dtype: Type[cutlass.Numeric] = cutlass.Float8E8M0FNU,
+    ab_dtype: type[cutlass.Numeric] = cutlass.Float8E4M3FN,
+    sf_dtype: type[cutlass.Numeric] = cutlass.Float8E8M0FNU,
     *,
-    randn_std: Optional[float] = None,
-    seqlens_k: Optional[list] = None,
+    randn_std: float | None = None,
+    seqlens_k: list | None = None,
 ):
     """Generate bf16 randn + quantize for a varlen_k blockscaled GEMM.
 
@@ -593,12 +593,12 @@ def create_blockscaled_varlen_k_operands(
 
 
 def compile_blockscaled_gemm_tvm_ffi(
-    ab_dtype: Type[cutlass.Numeric],
-    sf_dtype: Type[cutlass.Numeric],
+    ab_dtype: type[cutlass.Numeric],
+    sf_dtype: type[cutlass.Numeric],
     sf_vec_size: int,
-    d_dtype: Type[cutlass.Numeric],
-    mma_tiler_mn: Tuple[int, int],
-    cluster_shape_mn: Tuple[int, int],
+    d_dtype: type[cutlass.Numeric],
+    mma_tiler_mn: tuple[int, int],
+    cluster_shape_mn: tuple[int, int],
     mA: torch.Tensor,
     mB: torch.Tensor,
     mD: torch.Tensor,

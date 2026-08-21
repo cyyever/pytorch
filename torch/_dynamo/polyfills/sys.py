@@ -2,7 +2,6 @@
 Python polyfills for sys
 """
 
-from __future__ import annotations
 
 import sys
 
@@ -26,14 +25,13 @@ def getrecursionlimit() -> int:
     return sys.getrecursionlimit()
 
 
-if sys.version_info >= (3, 11):
 
-    @substitute_in_graph(sys.get_int_max_str_digits, can_constant_fold_through=True)
-    def get_int_max_str_digits() -> int:
-        return sys.get_int_max_str_digits()
+@substitute_in_graph(sys.get_int_max_str_digits, can_constant_fold_through=True)
+def get_int_max_str_digits() -> int:
+    return sys.get_int_max_str_digits()
 
-    @substitute_in_graph(sys.set_int_max_str_digits, can_constant_fold_through=True)
-    def set_int_max_str_digits(maxdigits: int) -> None:
-        sys.set_int_max_str_digits(maxdigits)
+@substitute_in_graph(sys.set_int_max_str_digits, can_constant_fold_through=True)
+def set_int_max_str_digits(maxdigits: int) -> None:
+    sys.set_int_max_str_digits(maxdigits)
 
-    __all__ += ["get_int_max_str_digits", "set_int_max_str_digits"]
+__all__ += ["get_int_max_str_digits", "set_int_max_str_digits"]

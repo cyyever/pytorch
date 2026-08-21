@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import dataclasses
 import functools
@@ -9,7 +8,7 @@ import math
 import operator
 from collections.abc import Callable
 from typing import Generic, overload, SupportsFloat, TYPE_CHECKING, TypeGuard, TypeVar
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import sympy
 from sympy.logic.boolalg import Boolean as SympyBoolean, BooleanAtom

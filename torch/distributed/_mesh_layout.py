@@ -99,7 +99,7 @@ class _FlatLayout:
     def numel(self) -> int:
         return math.prod(self.shape)
 
-    def composition(self, layout: "_MeshLayout") -> "_MeshLayout":
+    def composition(self, layout: _MeshLayout) -> _MeshLayout:
         """
         By-dimension composition allows one layout to "select from" or "filter through" another layout.
         Think of it as function composition: (self ∘ layout)(input) = self(layout(input))
@@ -129,7 +129,7 @@ class _FlatLayout:
         ]
         return _MeshLayout(result_axes)
 
-    def complement(self, world_size: int) -> "_FlatLayout":
+    def complement(self, world_size: int) -> _FlatLayout:
         """
         Compute the "complement layout" relative to a given world_size.
         A complement layout fills in the "missing" factor so that: self repeat a layout of complement(self, world_size)
@@ -290,7 +290,7 @@ class _MeshLayout(Sequence[_FlatLayout]):
     @classmethod
     def from_sizes_strides(
         cls, sizes: tuple[int, ...], strides: tuple[int, ...] | None = None
-    ) -> "_MeshLayout":
+    ) -> _MeshLayout:
         if strides is None:
             strides = flatten(suffix_product(sizes))
         if len(sizes) != len(strides):
@@ -307,9 +307,9 @@ class _MeshLayout(Sequence[_FlatLayout]):
     def __getitem__(self, i: int) -> _FlatLayout: ...
 
     @overload
-    def __getitem__(self, i: slice) -> "_MeshLayout": ...
+    def __getitem__(self, i: slice) -> _MeshLayout: ...
 
-    def __getitem__(self, i: int | slice) -> "_FlatLayout | _MeshLayout":
+    def __getitem__(self, i: int | slice) -> _FlatLayout | _MeshLayout:
         if isinstance(i, slice):
             return _MeshLayout(self.axes[i])
         return self.axes[i]
@@ -343,7 +343,7 @@ class _MeshLayout(Sequence[_FlatLayout]):
         strides = tuple(axis.stride for axis in self.axes)
         return _FlatLayout(shapes, strides)
 
-    def splice(self, start: int, end: int, layout: "_MeshLayout") -> "_MeshLayout":
+    def splice(self, start: int, end: int, layout: _MeshLayout) -> _MeshLayout:
         """
         Replace (out-of-place) the start:end slice with the given list of layouts
 

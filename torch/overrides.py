@@ -25,13 +25,12 @@ import __future__
 import collections
 import contextlib
 import functools
-import sys
 import types
 import warnings
 from collections.abc import Callable, Iterable
 from functools import wraps
 from typing import Any, cast, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 from torch._C import (
@@ -387,8 +386,7 @@ def get_ignored_functions() -> set[Callable]:
         Tensor._philox_uniform_,
     }
 
-    if sys.version_info >= (3, 14):
-        functions.add(Tensor.__annotate__)
+    functions.add(Tensor.__annotate__)
 
     return functions
 
@@ -2144,7 +2142,7 @@ class TorchFunctionMode:
     API self-referential (beware of infinite loops, in this case!)
     """
 
-    inner: "TorchFunctionMode"
+    inner: TorchFunctionMode
 
     # Force metaclass to generate constructor at the base of the hierarchy
     def __init__(self) -> None:

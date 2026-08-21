@@ -106,7 +106,7 @@ def to_cutlass_scale_mode(
 _CUTLASS_TO_TORCH_DTYPE: dict | None = None
 
 
-def cutlass_dtype_to_torch(cutlass_dtype: Any) -> "Any | None":
+def cutlass_dtype_to_torch(cutlass_dtype: Any) -> Any | None:
     """Map a cutlass dtype to the corresponding torch dtype."""
     import torch
 

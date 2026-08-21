@@ -319,7 +319,7 @@ def _split_decomp_table_to_cia_and_python_decomp(
     return cia_ops_to_callable, decomp_table
 
 
-def default_decompositions() -> "CustomDecompTable":
+def default_decompositions() -> CustomDecompTable:
     """
     This is the default decomposition table which contains decomposition of
     all ATEN operators to core aten opset. Use this API together with
@@ -329,7 +329,7 @@ def default_decompositions() -> "CustomDecompTable":
 
 
 def _decompose_and_get_gm_with_new_signature_constants(
-    ep: "ExportedProgram",
+    ep: ExportedProgram,
     *,
     cia_to_decomp: dict[torch._ops.OperatorBase, Callable],
     python_decomp_table: dict[torch._ops.OperatorBase, Callable],
@@ -1092,7 +1092,7 @@ class ExportedProgram:
     _state_dict: dict[str, Any]
     """Dictionary containing parameter and buffer values from the original module."""
 
-    _range_constraints: "dict[sympy.Symbol, ValueRanges]"
+    _range_constraints: dict[sympy.Symbol, ValueRanges]
     """Symbolic shape constraints for dynamic shapes in the graph."""
 
     _module_call_graph: list[ModuleCallEntry]
@@ -1115,7 +1115,7 @@ class ExportedProgram:
         graph: torch.fx.Graph,
         graph_signature: ExportGraphSignature,
         state_dict: dict[str, torch.Tensor | torch.nn.Parameter],
-        range_constraints: "dict[sympy.Symbol, Any]",
+        range_constraints: dict[sympy.Symbol, Any],
         module_call_graph: list[ModuleCallEntry],
         example_inputs: tuple[tuple[Any, ...], dict[str, Any]] | None = None,
         constants: dict[str, _ConstantAttributeType] | None = None,
@@ -1516,7 +1516,7 @@ class ExportedProgram:
         self,
         decomp_table: dict[torch._ops.OperatorBase, Callable] | None = None,
         decompose_custom_triton_ops: bool = False,
-    ) -> "ExportedProgram":
+    ) -> ExportedProgram:
         """
         Run a set of decompositions on the exported program and returns a new
         exported program. By default we will run the Core ATen decompositions to
@@ -1582,7 +1582,7 @@ class ExportedProgram:
             decompose_custom_triton_ops=decompose_custom_triton_ops,
         )
 
-    def _transform_do_not_use(self, *passes: PassType) -> "ExportedProgram":
+    def _transform_do_not_use(self, *passes: PassType) -> ExportedProgram:
         pm = PassManager(list(passes))
         # Since we abstractly run the passes, we need to disable backend decomp here
         # again.
@@ -1718,7 +1718,7 @@ class ExportedProgram:
         state_dict=None,
         constants=None,
         verifiers=None,
-    ) -> "ExportedProgram":
+    ) -> ExportedProgram:
         return ExportedProgram(
             root=graph_module,
             graph=graph_module.graph,
@@ -1750,8 +1750,8 @@ def _get_shape_env(gm):
 
 def _get_updated_range_constraints(
     gm: torch.fx.GraphModule,
-    old_range_constraints: "dict[sympy.Symbol, Any] | None" = None,
-) -> "dict[sympy.Symbol, Any]":
+    old_range_constraints: dict[sympy.Symbol, Any] | None = None,
+) -> dict[sympy.Symbol, Any]:
     if old_range_constraints is None:
         raise AssertionError("old_range_constraints must not be None")
 

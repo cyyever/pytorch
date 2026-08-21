@@ -177,7 +177,7 @@ class _LazyGraphModule(GraphModule):
         del dict_without_graph["_graph"]
         return (reduce_graph_module, (dict_without_graph, import_block))
 
-    def _real_recompile(self) -> "PythonCode":
+    def _real_recompile(self) -> PythonCode:
         return super().recompile()
 
     @classmethod

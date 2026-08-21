@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import copy
 import logging
 from functools import lru_cache
@@ -311,7 +309,7 @@ class LookupTableChoices(InductorChoices):
 
     def _finalize_template_configs(
         self,
-        template_choices: dict[str, Generator[KernelTemplateChoice, None, None]],
+        template_choices: dict[str, Generator[KernelTemplateChoice]],
         kernel_inputs: KernelInputs,
         templates: list[KernelTemplate | ExternKernelChoice],
         op_name: str,
@@ -362,7 +360,7 @@ class LookupTableChoices(InductorChoices):
 
     def _fallback(
         self,
-        template_choices: dict[str, Generator[KernelTemplateChoice, None, None]],
+        template_choices: dict[str, Generator[KernelTemplateChoice]],
         kernel_inputs: KernelInputs,
         templates: list[KernelTemplate | ExternKernelChoice],
         op_name: str,

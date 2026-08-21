@@ -67,10 +67,10 @@ _DISABLE_ATEN_TO_ASSERTION_PASS = False
 
 
 def _collect_and_set_constant_attrs(
-    graph_signature: "ExportGraphSignature",
+    graph_signature: ExportGraphSignature,
     constants: dict[str, Any],
     mod: torch.nn.Module,
-) -> "ConstantAttrMap":
+) -> ConstantAttrMap:
     # the exported module will store constants & non-persistent buffers such that
     # retracing treats them as persistent buffers, so we inform the constants lifting pass
     # and overwrite the new graph signature using the previous program. This is intended to only be used
@@ -127,8 +127,8 @@ def _register_constants_as_buffers(
 
 
 def _override_graph_signature_for_temp_registered_constants(
-    sig: "ExportGraphSignature", temp_registered_constants: set[str]
-) -> "ExportGraphSignature":
+    sig: ExportGraphSignature, temp_registered_constants: set[str]
+) -> ExportGraphSignature:
     for spec in sig.input_specs:
         if spec.target in temp_registered_constants:
             spec.kind = InputKind.CONSTANT_TENSOR
@@ -147,8 +147,8 @@ def _override_graph_signature_for_temp_registered_constants(
 
 
 def _overwrite_signature_for_non_persistent_buffers(
-    old_sig: "ExportGraphSignature", new_sig: "ExportGraphSignature"
-) -> "ExportGraphSignature":
+    old_sig: ExportGraphSignature, new_sig: ExportGraphSignature
+) -> ExportGraphSignature:
     # overwrite signature for non-persistent buffers
     non_persistent_buffers = {
         spec.target
@@ -252,7 +252,7 @@ def _maybe_find_pre_dispatch_tf_mode_for_export() -> (
 def _populate_param_buffer_metadata_to_new_gm(
     params_buffers_to_node_meta: dict[str, Any],
     gm: torch.fx.GraphModule,
-    new_sig: "ExportGraphSignature",
+    new_sig: ExportGraphSignature,
 ) -> None:
     """
     Given that we collected param'buffer metadata before, we put them back in
@@ -279,7 +279,7 @@ def _populate_param_buffer_metadata_to_new_gm(
                         node.meta[k] = v
 
 
-def _get_shape_env_from_gm(gm: torch.fx.GraphModule) -> "ShapeEnv | None":
+def _get_shape_env_from_gm(gm: torch.fx.GraphModule) -> ShapeEnv | None:
     vals = [
         node.meta["val"]
         for node in gm.graph.nodes
@@ -361,8 +361,8 @@ def get_keystr(key_path: KeyPath) -> str:
 def _check_symint(
     symint: int | torch.SymInt,
     arg: int,
-    range_constraints: dict["sympy.Expr", Any],
-    unification_map: dict["sympy.Symbol", Any],
+    range_constraints: dict[sympy.Expr, Any],
+    unification_map: dict[sympy.Symbol, Any],
     keypath: KeyPath,
     i: int | None = None,
 ) -> None:
@@ -455,7 +455,7 @@ def _check_symint(
 def _check_input_constraints_for_graph(
     input_placeholders: list[torch.fx.Node],
     flat_args_with_path: Sequence[tuple[tuple[Any, ...], Any]],
-    range_constraints: dict["sympy.Expr", Any],
+    range_constraints: dict[sympy.Expr, Any],
 ) -> None:
     if len(flat_args_with_path) != len(input_placeholders):
         raise RuntimeError(
@@ -570,7 +570,7 @@ def register_dataclass_as_pytree_node(
     )
 
 
-def is_param(program: "ExportedProgram", node: torch.fx.Node) -> bool:
+def is_param(program: ExportedProgram, node: torch.fx.Node) -> bool:
     """
     Checks if the given node is a parameter within the exported program
     """
@@ -579,7 +579,7 @@ def is_param(program: "ExportedProgram", node: torch.fx.Node) -> bool:
 
 
 def get_param(
-    program: "ExportedProgram",
+    program: ExportedProgram,
     node: torch.fx.Node,
 ) -> torch.nn.Parameter | None:
     """
@@ -594,7 +594,7 @@ def get_param(
     return None
 
 
-def is_buffer(program: "ExportedProgram", node: torch.fx.Node) -> bool:
+def is_buffer(program: ExportedProgram, node: torch.fx.Node) -> bool:
     """
     Checks if the given node is a buffer within the exported program
     """
@@ -603,7 +603,7 @@ def is_buffer(program: "ExportedProgram", node: torch.fx.Node) -> bool:
 
 
 def get_buffer(
-    program: "ExportedProgram",
+    program: ExportedProgram,
     node: torch.fx.Node,
 ) -> torch.Tensor | None:
     """
@@ -622,7 +622,7 @@ def get_buffer(
 
 
 def is_lifted_tensor_constant(
-    program: "ExportedProgram",
+    program: ExportedProgram,
     node: torch.fx.Node,
 ) -> bool:
     """
@@ -633,7 +633,7 @@ def is_lifted_tensor_constant(
 
 
 def get_lifted_tensor_constant(
-    program: "ExportedProgram",
+    program: ExportedProgram,
     node: torch.fx.Node,
 ) -> torch.Tensor | None:
     """
@@ -689,7 +689,7 @@ def nodes_filter(
 
 
 @contextmanager
-def _disable_aten_to_metadata_assertions() -> Generator[None, None, None]:
+def _disable_aten_to_metadata_assertions() -> Generator[None]:
     global _DISABLE_ATEN_TO_ASSERTION_PASS
     orig_val = _DISABLE_ATEN_TO_ASSERTION_PASS
     _DISABLE_ATEN_TO_ASSERTION_PASS = True
@@ -748,8 +748,8 @@ def _insert_aten_to_metadata_assert_pass(gm: torch.fx.GraphModule) -> None:
 
 
 def apply_runtime_assertion_pass(
-    gm: torch.fx.GraphModule, graph_signature: "GraphSignature"
-) -> tuple[torch.fx.GraphModule, "GraphSignature"]:
+    gm: torch.fx.GraphModule, graph_signature: GraphSignature
+) -> tuple[torch.fx.GraphModule, GraphSignature]:
     from torch._export.passes._node_metadata_hook import (
         _node_metadata_hook,
         _set_node_metadata_hook,
@@ -1043,7 +1043,7 @@ def _assign_new_node_names(
 
 def placeholder_naming_pass(
     gm: torch.fx.GraphModule,
-    export_graph_signature: "ExportGraphSignature",
+    export_graph_signature: ExportGraphSignature,
     mod: torch.nn.Module,
     fake_args: tuple[Any, ...],
     fake_kwargs: dict[str, Any],
@@ -1257,7 +1257,7 @@ def _detect_fake_mode_from_gm(
 @contextmanager
 def _disable_load_state_dict_hooks(
     mod: torch.nn.Module,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     state_dict_hooks: dict[int, Callable[..., object]] = dict(mod._state_dict_hooks)
     state_dict_pre_hooks: dict[int, Callable[..., object]] = dict(
         mod._state_dict_pre_hooks
@@ -1271,7 +1271,7 @@ def _disable_load_state_dict_hooks(
         mod._state_dict_pre_hooks = state_dict_pre_hooks
 
 
-def _is_cia_op(op: "OperatorBase") -> bool:
+def _is_cia_op(op: OperatorBase) -> bool:
     return (
         torch._C._dispatch_has_kernel_for_dispatch_key(
             op.name(), torch._C.DispatchKey.CompositeImplicitAutograd
@@ -1280,15 +1280,15 @@ def _is_cia_op(op: "OperatorBase") -> bool:
     )
 
 
-def _is_preservable_cia_op(op: "OperatorBase") -> bool:
+def _is_preservable_cia_op(op: OperatorBase) -> bool:
     return _check_valid_to_preserve(op) and _is_cia_op(op)
 
 
-def _is_aten_op(op: "OperatorBase") -> bool:
+def _is_aten_op(op: OperatorBase) -> bool:
     return op.name().split("::")[0] == "aten"
 
 
-def _is_custom_op(op: "OperatorBase") -> bool:
+def _is_custom_op(op: OperatorBase) -> bool:
     return not _is_aten_op(op)
 
 
@@ -1329,7 +1329,7 @@ def _special_op_to_preserve_cia(*args: Any, **kwargs: Any) -> Any:
 # 1. The op should be known statically that it is functional
 # 2. If it is maybe aliasing, we decompose because we must know if an op
 #    is mutating or aliasing.
-def _check_valid_to_preserve(op_overload: "OperatorBase") -> bool:
+def _check_valid_to_preserve(op_overload: OperatorBase) -> bool:
     from torch._decomp import _should_decompose_because_unsafe_op
 
     if _should_decompose_because_unsafe_op(op_overload):
@@ -1356,13 +1356,13 @@ def _check_valid_to_preserve(op_overload: "OperatorBase") -> bool:
 
 
 @functools.lru_cache(maxsize=1)
-def _collect_all_valid_cia_ops_for_aten_namespace() -> set["OperatorBase"]:
+def _collect_all_valid_cia_ops_for_aten_namespace() -> set[OperatorBase]:
     return _collect_all_valid_cia_ops_for_namespace(torch.ops.aten)
 
 
 def _collect_all_valid_cia_ops_for_namespace(
     op_namespace: torch._ops._OpNamespace,
-) -> set["OperatorBase"]:
+) -> set[OperatorBase]:
     # Step 1: Materialize all ops from C++ dispatcher
     _materialize_cpp_cia_ops()
 
@@ -1376,7 +1376,7 @@ def _collect_all_valid_cia_ops_for_namespace(
     return cia_ops
 
 
-def _collect_all_valid_cia_ops() -> set["OperatorBase"]:
+def _collect_all_valid_cia_ops() -> set[OperatorBase]:
     """
     This is an util function that gets the all CIA functional ops.
 
@@ -1407,7 +1407,7 @@ def _collect_all_valid_cia_ops() -> set["OperatorBase"]:
     return cia_ops
 
 
-def _get_decomp_for_cia(op: "OperatorBase") -> Callable[..., object]:
+def _get_decomp_for_cia(op: OperatorBase) -> Callable[..., object]:
     # [NOTE] Separating out func.decompose
     # Ideally we should be able to just register func.decompose but
     # we can't as this decomp is gonna be registered to the py_impl.
@@ -1437,7 +1437,7 @@ def _get_decomp_for_cia(op: "OperatorBase") -> Callable[..., object]:
 
 
 @contextmanager
-def _compiling_state_context() -> Generator[None, None, None]:
+def _compiling_state_context() -> Generator[None]:
     old_compiling_flag = torch.compiler._is_compiling_flag
     old_exporting_flag = torch.compiler._is_exporting_flag
     try:
@@ -1523,7 +1523,7 @@ def register_module_as_pytree_input_node(cls: type[torch.nn.Module]) -> None:
         def __eq__(self, other: object) -> bool:
             return self._proto_cls == other._proto_cls  # type: ignore[attr-defined]
 
-        def __deepcopy__(self, memo: dict[Any, Any]) -> "PrototypeModule":
+        def __deepcopy__(self, memo: dict[Any, Any]) -> PrototypeModule:
             # pyrefly: ignore[bad-argument-type]  # TODO referent is alive during deepcopy
             return PrototypeModule(self())
 
@@ -1596,7 +1596,7 @@ def register_module_as_pytree_input_node(cls: type[torch.nn.Module]) -> None:
         from_dumpable_context=from_dumpable_context,
     )
 
-    def default_flatten_fn_spec(obj: Any, spec: "TreeSpec") -> list[Any]:
+    def default_flatten_fn_spec(obj: Any, spec: TreeSpec) -> list[Any]:
         flats, context = flatten_fn(obj)
         if context != spec.context:
             raise AssertionError(f"context mismatch: {context} != {spec.context}")

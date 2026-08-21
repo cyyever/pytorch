@@ -7,7 +7,6 @@ This package is lazily initialized, so you can always import it, and use
 :func:`is_available()` to determine if your system supports XPU.
 """
 
-from __future__ import annotations
 
 import dataclasses
 import os

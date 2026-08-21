@@ -1,6 +1,5 @@
 # Copyright (c) 2025, Tri Dao.
 
-from typing import Type, Union
 
 import cutlass.cute as cute
 import cutlass.utils.blackwell_helpers as sm100_utils_og
@@ -12,12 +11,12 @@ from cutlass.cute.nvgpu import OperandMajorMode
 def make_smem_layout_cpasync_a(
     tiled_mma: cute.TiledMma,
     mma_tiler_mnk: cute.Tile,
-    a_dtype: Type[Numeric],
+    a_dtype: type[Numeric],
     num_stages: int,
     *,
     loc=None,
     ip=None,
-) -> Union[cute.Layout, cute.ComposedLayout]:
+) -> cute.Layout | cute.ComposedLayout:
     """
     :param tiled_mma: The tiled MMA used to partition tensor A
     :type tiled_mma: cute.TiledMma
@@ -66,12 +65,12 @@ def make_smem_layout_cpasync_a(
 def make_smem_layout_atom_tma_gather_a(
     tiled_mma: cute.TiledMma,
     mma_tiler_mnk: cute.Tile,
-    a_dtype: Type[Numeric],
+    a_dtype: type[Numeric],
     gather_size: int = 4,
     *,
     loc=None,
     ip=None,
-) -> Union[cute.Layout, cute.ComposedLayout]:
+) -> cute.Layout | cute.ComposedLayout:
     """SMEM load layout atom for A with TMA gather4."""
     is_k_major = tiled_mma.op.a_major_mode == OperandMajorMode.K
     a_smem_shape = tiled_mma.partition_shape_A(
@@ -122,12 +121,12 @@ def make_smem_layout_atom_tma_gather_a(
 def make_smem_layout_tma_gather_a(
     tiled_mma: cute.TiledMma,
     mma_tiler_mnk: cute.Tile,
-    a_dtype: Type[Numeric],
+    a_dtype: type[Numeric],
     num_stages: int,
     *,
     loc=None,
     ip=None,
-) -> Union[cute.Layout, cute.ComposedLayout]:
+) -> cute.Layout | cute.ComposedLayout:
     """SMEM load layout for A with TMA gather4."""
     is_k_major = tiled_mma.op.a_major_mode == OperandMajorMode.K
     a_smem_shape = tiled_mma.partition_shape_A(

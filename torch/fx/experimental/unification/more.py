@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
 
 from .core import (  # type: ignore[attr-defined]
     _reify as core_reify,
@@ -11,8 +8,7 @@ from .core import (  # type: ignore[attr-defined]
 from .dispatch import dispatch
 
 
-if TYPE_CHECKING:
-    from .variable import Var
+from .variable import Var
 
 
 __all__ = ["unifiable", "reify_object", "unify_object"]

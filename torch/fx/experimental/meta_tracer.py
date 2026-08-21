@@ -140,7 +140,7 @@ class MetaProxy(torch.fx.Proxy):
         )
 
     @property
-    def device(self) -> "MetaDeviceAttribute":
+    def device(self) -> MetaDeviceAttribute:
         # Hack so we can track when devices are used. During meta-tensor propagation,
         # replace these values with a constant 'meta'
         return MetaDeviceAttribute(self, "device")

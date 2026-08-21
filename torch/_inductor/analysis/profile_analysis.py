@@ -651,7 +651,7 @@ class JsonProfile:
         return new_headers, new_rows
 
     def report(
-        self, other: Optional["JsonProfile"] = None, name_limit: int = 40
+        self, other: Optional[JsonProfile] = None, name_limit: int = 40
     ) -> str:
         def create_ret(
             table_headers: list[str], table_rows: dict[str, list[str]]
@@ -711,7 +711,7 @@ class JsonProfile:
         with open(out, "w") as f:
             json.dump(self.data, f)
 
-    def combine_with(self, other: "JsonProfile") -> "JsonProfile":
+    def combine_with(self, other: JsonProfile) -> JsonProfile:
         """
         Combine this profile with another profile by merging their trace events.
         Returns a new JsonProfile object with combined data.

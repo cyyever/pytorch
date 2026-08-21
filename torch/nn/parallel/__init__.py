@@ -1,4 +1,4 @@
-from typing_extensions import deprecated
+from warnings import deprecated
 
 from torch.nn.parallel.data_parallel import data_parallel, DataParallel
 from torch.nn.parallel.distributed import DistributedDataParallel

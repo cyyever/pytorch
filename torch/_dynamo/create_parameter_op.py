@@ -57,7 +57,7 @@ _TLS = threading.local()
 
 
 @contextmanager
-def do_not_convert_to_tracable_parameter() -> Generator[bool, None, None]:
+def do_not_convert_to_tracable_parameter() -> Generator[bool]:
     old_flag = getattr(_TLS, "convert_tracable_parameter", True)
     _TLS.convert_tracable_parameter = False
     try:

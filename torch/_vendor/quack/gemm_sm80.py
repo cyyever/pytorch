@@ -3,7 +3,6 @@
 # Ampere GEMM using warp-level MMA and cp.async global-to-shared loads.
 # All CTA threads participate in cp.async, MMA, and epilogue.
 
-from typing import Optional, Tuple, Type, Union
 
 import cuda.bindings.driver as cuda
 
@@ -30,17 +29,17 @@ class GemmSm80(GemmBase):
 
     def __init__(
         self,
-        acc_dtype: Type[cutlass.Numeric],
-        a_dtype: Type[cutlass.Numeric],
-        tile_shape_mnk: Union[Tuple[int, int], Tuple[int, int, int]],
-        cluster_shape_mnk: Tuple[int, int, int],
+        acc_dtype: type[cutlass.Numeric],
+        a_dtype: type[cutlass.Numeric],
+        tile_shape_mnk: tuple[int, int] | tuple[int, int, int],
+        cluster_shape_mnk: tuple[int, int, int],
         pingpong: bool = False,
         is_persistent: bool = False,
         gather_A: bool = False,
         concat_layout: tuple | None = None,
         use_pdl: bool = False,
-        num_warps: Optional[int] = None,
-        occupancy: Optional[int] = None,
+        num_warps: int | None = None,
+        occupancy: int | None = None,
         arch: int = 80,
     ):
         if arch not in self._supported_archs:
@@ -139,12 +138,12 @@ class GemmSm80(GemmBase):
         self,
         mA: cute.Tensor,
         mB: cute.Tensor,
-        mD: Optional[cute.Tensor],
-        mC: Optional[cute.Tensor],
+        mD: cute.Tensor | None,
+        mC: cute.Tensor | None,
         epilogue_args: tuple,
         scheduler_args: TileSchedulerOptions,
-        varlen_args: Optional[VarlenArguments],
+        varlen_args: VarlenArguments | None,
         stream: cuda.CUstream,
-        trace_ptr: Optional[cutlass.Int64] = None,
+        trace_ptr: cutlass.Int64 | None = None,
     ):
         raise NotImplementedError("Gemm Sm80 is not implemented yet")

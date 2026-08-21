@@ -88,7 +88,7 @@ class CuteDSLVectorLoadConfig:
     @staticmethod
     def from_fixed_inputs(
         fixed_inputs: dict[str, Any],
-    ) -> "CuteDSLVectorLoadConfig | None":
+    ) -> CuteDSLVectorLoadConfig | None:
         vec_size = fixed_inputs.pop("vector_load_vec_size", None)
         index = fixed_inputs.pop("vector_load_index", None)
         dim = fixed_inputs.pop("vector_load_dim", None)

@@ -304,7 +304,7 @@ def fill_empty_tensor_to_shards(
 
 def check_tensor_meta(
     local_tensor, check_shape_stride=False
-) -> Optional["dtensor_spec.TensorMeta"]:
+) -> Optional[dtensor_spec.TensorMeta]:
     local_metadata = {
         "dtype": local_tensor.dtype,
         "requires_grad": local_tensor.requires_grad,
@@ -326,7 +326,7 @@ def check_tensor_meta(
     return None
 
 
-def spec_to_bytes(spec: "dtensor_spec.DTensorSpec") -> int:
+def spec_to_bytes(spec: dtensor_spec.DTensorSpec) -> int:
     if spec.tensor_meta is None:
         raise AssertionError("spec should have tensor meta defined!")
     return spec.tensor_meta.dtype.itemsize * math.prod(spec.shape)
@@ -345,7 +345,7 @@ class MeshTopoInfo:
 
     @staticmethod
     @lru_cache(None)
-    def build_from_mesh(mesh: DeviceMesh) -> "MeshTopoInfo":
+    def build_from_mesh(mesh: DeviceMesh) -> MeshTopoInfo:
         # Generate mesh topology info for intra-host/inter-host communication pattern
         # Note that we made bunch of assumptions for simplicity:
         # 1. we assume the mesh is homogeneous, and it's gpu/nccl model
@@ -414,8 +414,8 @@ def reduce_scatter_cost(
 
 
 def _compute_placement_transition_cost(
-    current_placement: "dtensor_spec.Placement",
-    target_placement: "dtensor_spec.Placement",
+    current_placement: dtensor_spec.Placement,
+    target_placement: dtensor_spec.Placement,
     mesh_topo: MeshTopoInfo,
     mesh_dim: int,
     comm_bytes_gb: float,
@@ -478,8 +478,8 @@ def _compute_placement_transition_cost(
 
 
 def one_step_redistribute_cost(
-    current_spec: "dtensor_spec.DTensorSpec",
-    target_spec: "dtensor_spec.DTensorSpec",
+    current_spec: dtensor_spec.DTensorSpec,
+    target_spec: dtensor_spec.DTensorSpec,
 ) -> float:
     """
     Calculate the cost of a single redistribution step between two DTensorSpecs.
@@ -536,8 +536,8 @@ def one_step_redistribute_cost(
 
 
 def redistribute_cost(
-    current_spec: "dtensor_spec.DTensorSpec",
-    target_spec: "dtensor_spec.DTensorSpec",
+    current_spec: dtensor_spec.DTensorSpec,
+    target_spec: dtensor_spec.DTensorSpec,
 ) -> float:
     """
     This function returns the cost of redistribute from current to target DTensorSpec.

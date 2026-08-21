@@ -479,7 +479,7 @@ wrap_triton_enabled_default = True
 
 
 @contextlib.contextmanager
-def set_wrap_triton_enabled(enabled: bool) -> Generator[None, None, None]:
+def set_wrap_triton_enabled(enabled: bool) -> Generator[None]:
     """If triton kernels annotated with @wrap_triton should dispatch via HOP
     or go straight to the triton kernel execution.
 

@@ -160,7 +160,7 @@ will not pass ``--local-rank`` when you specify this flag.
 
 """
 
-from typing_extensions import deprecated as _deprecated
+from warnings import deprecated as _deprecated
 
 from torch.distributed.run import get_args_parser, run
 

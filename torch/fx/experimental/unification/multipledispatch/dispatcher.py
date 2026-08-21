@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import inspect
 import itertools as itl
 from typing import Any, TYPE_CHECKING, TypeVar
-from typing_extensions import deprecated
+from warnings import deprecated
 from warnings import warn
 
 
@@ -76,7 +74,7 @@ def restart_ordering(on_ambiguity: Callable[..., None] = ambiguity_warn) -> None
 
 def variadic_signature_matches_iter(
     types: tuple[type, ...], full_signature: tuple[type, ...]
-) -> Generator[bool, None, None]:
+) -> Generator[bool]:
     """Check if a set of input types matches a variadic signature.
 
     Notes
@@ -356,7 +354,7 @@ class Dispatcher:
 
     def dispatch_iter(
         self, *types: type
-    ) -> Generator[Callable[..., object], None, None]:
+    ) -> Generator[Callable[..., object]]:
         n = len(types)
         for signature in self.ordering:
             if len(signature) == n and all(map(issubclass, types, signature)):

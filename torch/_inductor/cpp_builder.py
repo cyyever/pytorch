@@ -1989,7 +1989,7 @@ class CppBuilder:
                     new_tokens.append(os.path.basename(tok))
                 else:
                     new_tokens.append(tok)
-            rewritten.append(" ".join(shlex.quote(t) for t in new_tokens))
+            rewritten.append(shlex.join(new_tokens))
         if rpath_dirs:
             rewritten.append("-Wl,-rpath," + shlex.quote("$ORIGIN"))
             for rpath_dir in rpath_dirs:

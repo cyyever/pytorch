@@ -10,7 +10,7 @@ examine their input shapes and stack traces, study device kernel activity and vi
 
 import os
 from typing import Any
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 from torch._C._autograd import _supported_activities, DeviceType, kineto_available
 from torch._C._profiler import _ExperimentalConfig, ProfilerActivity, RecordScope
@@ -49,7 +49,7 @@ _Ts = TypeVarTuple("_Ts")
 
 
 def _optimizer_post_hook(
-    optimizer: Optimizer, args: tuple[Unpack[_Ts]], kwargs: dict[str, Any]
+    optimizer: Optimizer, args: tuple[*_Ts], kwargs: dict[str, Any]
 ) -> None:
     KinetoStepTracker.increment_step("Optimizer")
 

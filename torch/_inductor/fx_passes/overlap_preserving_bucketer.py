@@ -87,8 +87,8 @@ class PGEvent:
     node: fx.Node
     event_type: Literal["compute", "starts", "waits"]
     position: int
-    prev: Optional["PGEvent"] = None
-    next: Optional["PGEvent"] = None
+    prev: Optional[PGEvent] = None
+    next: Optional[PGEvent] = None
 
     @property
     def is_start(self) -> bool:
@@ -102,7 +102,7 @@ class PGEvent:
     def is_compute(self) -> bool:
         return self.event_type == "compute"
 
-    def unlink(self) -> tuple[Optional["PGEvent"], Optional["PGEvent"]]:
+    def unlink(self) -> tuple[Optional[PGEvent], Optional[PGEvent]]:
         """Remove this event from the linked list, return (prev, next)."""
         prev_event, next_event = self.prev, self.next
         if self.prev:
@@ -114,7 +114,7 @@ class PGEvent:
         return prev_event, next_event
 
     def insert_between(
-        self, prev_event: Optional["PGEvent"], next_event: Optional["PGEvent"]
+        self, prev_event: Optional[PGEvent], next_event: Optional[PGEvent]
     ) -> None:
         """Insert this event between prev_event and next_event in the linked list."""
         if prev_event:

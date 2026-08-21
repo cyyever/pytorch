@@ -2,11 +2,9 @@
 Python polyfills for itertools
 """
 
-from __future__ import annotations
 
 import itertools
 import operator
-import sys
 from collections.abc import Callable
 from typing import overload, TYPE_CHECKING, TypeAlias, TypeVar
 
@@ -33,8 +31,7 @@ __all__ = [
     "tee",
 ]
 
-if sys.version_info >= (3, 12):
-    __all__.append("batched")
+__all__.append("batched")
 
 
 _T = TypeVar("_T")
@@ -343,32 +340,31 @@ def combinations_with_replacement(
     return _combinations_with_replacement()
 
 
-if sys.version_info >= (3, 12):
-    # Reference: https://docs.python.org/3/library/itertools.html#itertools.batched
-    @substitute_in_graph(itertools.batched, is_embedded_type=True)  # type: ignore[arg-type]
-    def batched(*args, **kwargs) -> Iterator[tuple[_T, ...]]:  # type: ignore[no-untyped-def]
-        if len(args) != 2:
-            raise TypeError(
-                f"batched takes exactly 2 positional arguments({len(args)} given)"
-            )
-        if kwargs.keys() - {"strict"}:
-            unexpected = next(iter(kwargs.keys() - {"strict"}))
-            raise TypeError(
-                f"batched() got an unexpected keyword argument '{unexpected}'"
-            )
+# Reference: https://docs.python.org/3/library/itertools.html#itertools.batched
+@substitute_in_graph(itertools.batched, is_embedded_type=True)  # type: ignore[arg-type]
+def batched(*args, **kwargs) -> Iterator[tuple[_T, ...]]:  # type: ignore[no-untyped-def]
+    if len(args) != 2:
+        raise TypeError(
+            f"batched takes exactly 2 positional arguments({len(args)} given)"
+        )
+    if kwargs.keys() - {"strict"}:
+        unexpected = next(iter(kwargs.keys() - {"strict"}))
+        raise TypeError(
+            f"batched() got an unexpected keyword argument '{unexpected}'"
+        )
 
-        iterable, n = args
-        strict = kwargs.get("strict", False)
-        n = operator.index(n)
-        if n < 1:
-            raise ValueError("n must be at least one")
+    iterable, n = args
+    strict = kwargs.get("strict", False)
+    n = operator.index(n)
+    if n < 1:
+        raise ValueError("n must be at least one")
 
-        iterator = iter(iterable)
+    iterator = iter(iterable)
 
-        def _batched(iterator: Iterator[_T]) -> Iterator[tuple[_T, ...]]:
-            while batch := tuple(islice(iterator, n)):
-                if strict and len(batch) != n:
-                    raise ValueError("batched(): incomplete batch")
-                yield batch
+    def _batched(iterator: Iterator[_T]) -> Iterator[tuple[_T, ...]]:
+        while batch := tuple(islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError("batched(): incomplete batch")
+            yield batch
 
-        return _batched(iterator)
+    return _batched(iterator)

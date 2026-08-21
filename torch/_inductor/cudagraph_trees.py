@@ -34,7 +34,6 @@ reconstructed.  However, to record a new child CUDA graph, we must restore this
 book-keeping.  This is what checkpoint pool state is used for.
 """
 
-from __future__ import annotations
 
 import contextlib
 import dataclasses
@@ -181,7 +180,7 @@ def clear_cublass_cache() -> None:
 
 
 @contextlib.contextmanager
-def clear_cublas_manager() -> Generator[None, None, None]:
+def clear_cublas_manager() -> Generator[None]:
     "Context manager around clearing cublas caches that will clear on enter and exit"
     clear_cublass_cache()
     try:
@@ -191,7 +190,7 @@ def clear_cublas_manager() -> Generator[None, None, None]:
 
 
 @contextlib.contextmanager
-def disable_conv_cache_emptying() -> Generator[None, None, None]:
+def disable_conv_cache_emptying() -> Generator[None]:
     prev = torch._C._cuda_get_conv_benchmark_empty_cache()
     torch._C._cudnn_set_conv_benchmark_empty_cache(False)
     try:
@@ -201,7 +200,7 @@ def disable_conv_cache_emptying() -> Generator[None, None, None]:
 
 
 @contextlib.contextmanager
-def enable_history_recording() -> Generator[None, None, None]:
+def enable_history_recording() -> Generator[None]:
     "Turns on history recording in the CUDA Caching Allocator"
     enabled = torch._C._cuda_isHistoryEnabled()
     try:
@@ -495,7 +494,7 @@ def dynamo_timed_cudagraph(
     name: str,
     compile_id: CompileId | None,
     mode: CompilationMode | None,
-) -> Generator[Any, None, None]:
+) -> Generator[Any]:
     """
     Makes usages of dynamo_timed in this file less verbose. NOTE: This CM sums
     all durations into a single column in the dynamo_compile table. Use only if
@@ -653,7 +652,7 @@ def maybe_deref(
 @contextlib.contextmanager
 def _use_cuda_memory_pool_manager(
     device: int, mem_pool: tuple[int, int], stream: torch.cuda.Stream
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Context manager to use cuda graph pool for new allocations. If you use this manager
     all cudagraph tensors in use should be reflected in the allocator or they will be overwritten.
@@ -678,7 +677,7 @@ def _use_cuda_memory_pool_manager(
 
 
 @contextlib.contextmanager
-def _update_current_stream_external_object() -> Generator[None, None, None]:
+def _update_current_stream_external_object() -> Generator[None]:
     """Update the external object registry so custom ops see the capture stream.
 
     During cudagraph recording/warmup the current stream differs from the
@@ -848,7 +847,7 @@ class CUDAWarmupNode:
     @property
     def _path_from_root(
         self,
-    ) -> Generator[CUDAGraphNode | CUDAWarmupNode, None, None]:
+    ) -> Generator[CUDAGraphNode | CUDAWarmupNode]:
         nodes = []
         node: CUDAGraphNode | CUDAWarmupNode = self
         while node:
@@ -1405,7 +1404,7 @@ class CUDAGraphNode:
     def _record(self, model: ModelType, inputs: list[InputType]) -> OutputType:
         "Record the model"
 
-        def static_input_iter() -> Generator[torch.Tensor, None, None]:
+        def static_input_iter() -> Generator[torch.Tensor]:
             for i in self.wrapped_function.static_input_idxs:
                 _inp = inputs[i]
                 if isinstance(
@@ -1681,7 +1680,7 @@ class CUDAGraphNode:
         return self._parent() if self._parent is not None else None
 
     @property
-    def _path_to_root(self) -> Generator[CUDAGraphNode, None, None]:
+    def _path_to_root(self) -> Generator[CUDAGraphNode]:
         "Returns all nodes in the path starting at self and ending at root"
         node = self
         # pyrefly: ignore [bad-assignment]
@@ -1690,7 +1689,7 @@ class CUDAGraphNode:
             node = node.parent  # type: ignore[assignment]
 
     @property
-    def _path_from_root(self) -> Generator[CUDAGraphNode, None, None]:
+    def _path_from_root(self) -> Generator[CUDAGraphNode]:
         "Returns all nodes in the path starting at the root and ending at self"
         nodes = reversed(list(self._path_to_root))
         yield from nodes
@@ -2343,7 +2342,7 @@ class CUDAGraphTreeManager:
         # mapping from graph_id to (function id to re-record count). We fall back to
         # eager function if a function is re-recorded frequently on a node.
         self.num_rerecord: dict[GraphID | None, dict[FunctionID, int]] = defaultdict(
-            lambda: defaultdict(lambda: 0)
+            lambda: defaultdict(int)
         )
 
         # whether we the current node is in a state of warmup, recording, execution. If

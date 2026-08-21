@@ -5,7 +5,6 @@ These **need** to be in global scope since Py2 doesn't support serializing
 static methods.
 """
 
-from __future__ import annotations
 
 import os
 import queue

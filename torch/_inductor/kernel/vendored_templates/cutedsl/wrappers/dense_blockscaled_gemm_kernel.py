@@ -1,6 +1,5 @@
 """Kernel wrapper for dense_blockscaled_gemm_persistent vendored template."""
 
-from __future__ import annotations
 
 import ast
 import dataclasses
@@ -526,7 +525,7 @@ class VendoredDenseBlockScaledGemmKernel(CuteDslOperator):
         return True
 
     @staticmethod
-    def _metadata_operand_combinations() -> Generator[GemmOperandsMetadata, None, None]:
+    def _metadata_operand_combinations() -> Generator[GemmOperandsMetadata]:
         import cutlass
 
         ab_dtypes = [cutlass.Float8E5M2, cutlass.Float8E4M3FN, cutlass.Float4E2M1FN]

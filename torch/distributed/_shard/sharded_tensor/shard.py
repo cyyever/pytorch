@@ -43,7 +43,7 @@ class Shard:
     @classmethod
     def from_tensor_and_offsets(
         cls, tensor: torch.Tensor, shard_offsets: list[int], rank: int
-    ) -> "Shard":
+    ) -> Shard:
         """
         Creates a Shard of a ShardedTensor from a local torch.Tensor, shard_offsets and rank.
 

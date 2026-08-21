@@ -268,8 +268,8 @@ class CoordescTuner:
     def get_all_tuning_directions(
         self,
         # pyrefly: ignore [missing-attribute]
-        config: "triton.Config",
-    ) -> list["triton.Config"]:  # pyrefly: ignore [missing-attribute]
+        config: triton.Config,
+    ) -> list[triton.Config]:  # pyrefly: ignore [missing-attribute]
         """Return the Cartesian product of neighbour values across every
         tunable field, as a list of valid candidate configs."""
         candidate_values_list = []
@@ -304,7 +304,7 @@ class CoordescTuner:
     def check_all_tuning_directions(
         self,
         # pyrefly: ignore [missing-attribute]
-        func: Callable[["triton.Config"], float],
+        func: Callable[[triton.Config], float],
         best_config,
         best_timing,
     ):
@@ -354,9 +354,9 @@ class CoordescTuner:
     def get_neighbour_configs(
         self,
         # pyrefly: ignore [missing-attribute]
-        config: "triton.Config",
+        config: triton.Config,
         field: str,
-    ) -> list["triton.Config"]:  # pyrefly: ignore [missing-attribute]
+    ) -> list[triton.Config]:  # pyrefly: ignore [missing-attribute]
         """Return every valid neighbour of ``config`` along ``field``
         only — the per-axis counterpart of ``get_neighbour_values``.
 
@@ -377,11 +377,11 @@ class CoordescTuner:
     def autotune(
         self,
         # pyrefly: ignore [missing-attribute]
-        func: Callable[["triton.Config"], float],
+        func: Callable[[triton.Config], float],
         # pyrefly: ignore [missing-attribute]
-        baseline_config: "triton.Config",
+        baseline_config: triton.Config,
         baseline_timing: float | None = None,
-    ) -> "triton.Config":  # pyrefly: ignore  # missing-attribute
+    ) -> triton.Config:  # pyrefly: ignore  # missing-attribute
         """
         Perform coordinate descent autotuning starting from a baseline configuration.
         """

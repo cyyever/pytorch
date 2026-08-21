@@ -119,7 +119,7 @@ class PySourceBuilder(IndentedBuffer):
 _capture_tls = threading.local()
 
 
-def _current_capture_sink() -> "list[GeneratedSource] | None":
+def _current_capture_sink() -> list[GeneratedSource] | None:
     return getattr(_capture_tls, "sink", None)
 
 
@@ -160,7 +160,7 @@ class GeneratedSource:
 
 
 @contextlib.contextmanager
-def capture_generated_sources(into: "list[GeneratedSource]") -> "Iterator[None]":
+def capture_generated_sources(into: list[GeneratedSource]) -> Iterator[None]:
     """Within this context, record every codegen'd runtime-wrapper function's source
     into ``into`` (in codegen order). A no-op when not entered.
 

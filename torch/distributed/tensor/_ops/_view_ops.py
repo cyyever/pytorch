@@ -100,7 +100,7 @@ class ClaimedDim(NamedTuple):
 class DimSpec:
     """Specifies how an output dimension maps to an input dimension."""
 
-    def inputs(self) -> Iterable["DimSpec"]:
+    def inputs(self) -> Iterable[DimSpec]:
         return ()
 
 

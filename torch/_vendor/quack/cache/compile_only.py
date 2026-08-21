@@ -68,10 +68,9 @@ module's custom ``__setattr__`` raises :class:`AttributeError` to prevent
 the old leak-on-reset failure mode. See :mod:`quack.cache` for background.
 """
 
-from __future__ import annotations
 
 import contextlib
-from typing import Iterator
+from collections.abc import Iterator
 
 import torch
 from torch._subclasses.fake_tensor import FakeTensorMode

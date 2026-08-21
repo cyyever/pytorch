@@ -8,7 +8,6 @@ column}}``) sliced to its selection -- what it does with them is the subclass's
 clock passthroughs, and the user-annotation push/pop for naming regions.
 """
 
-from __future__ import annotations
 
 import contextlib
 import functools

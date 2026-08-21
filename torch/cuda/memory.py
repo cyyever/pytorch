@@ -10,7 +10,7 @@ import threading
 import warnings
 from inspect import signature
 from typing import Any, Literal, TYPE_CHECKING
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch import _C

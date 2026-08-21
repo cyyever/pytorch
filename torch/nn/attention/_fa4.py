@@ -1,13 +1,12 @@
 """UBER PROTOTYPE!!!"""
 # mypy: allow-untyped-defs
 
-from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass
 from functools import cache
 from typing import Any, TYPE_CHECKING
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple
 
 from . import _registry
 from ._utils import _empty_with_matching_layout
@@ -187,7 +186,7 @@ def _aten_to_fa4_window_size(val: int | None) -> int | None:
 Ts = TypeVarTuple("Ts")
 
 
-def _transpose_dense(*tensors: Unpack[Ts]) -> tuple[Unpack[Ts]]:
+def _transpose_dense(*tensors: *Ts) -> tuple[*Ts]:
     return tuple(t.transpose(1, 2) for t in tensors)  # type: ignore[attr-defined]
 
 

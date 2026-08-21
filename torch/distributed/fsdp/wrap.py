@@ -400,7 +400,7 @@ size_based_auto_wrap_policy.FORCE_LEAF_MODULES = {nn.MultiheadAttention}  # type
 @contextlib.contextmanager
 def enable_wrap(
     *, wrapper_cls: Any, **wrapper_kwargs: Any
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Context manager to wrap modules using a wrapper.
 

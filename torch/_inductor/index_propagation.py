@@ -193,7 +193,7 @@ class IndexPropVar:
     is_symbolic: bool = False
 
     @staticmethod
-    def new_symbolic(expr: TypedExpr) -> "IndexPropVar":
+    def new_symbolic(expr: TypedExpr) -> IndexPropVar:
         return IndexPropVar(expr, is_symbolic=True)
 
     def __post_init__(self):

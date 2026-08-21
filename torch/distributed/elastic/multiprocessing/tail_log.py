@@ -122,7 +122,7 @@ class TailLog:
         self._interval_sec = interval_sec
         self._stopped = False
 
-    def start(self) -> "TailLog":
+    def start(self) -> TailLog:
         if not self._threadpool or not self._dst:
             return self
 

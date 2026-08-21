@@ -160,7 +160,7 @@ class TorchFunctionModeVariable(GenericContextWrappingVariable):
         self.cm_obj = value  # type: ignore[assignment]
         self.source = source  # type: ignore[assignment]
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         # This shouldn't be called unless we have a source
         if not self.source:
             raise AssertionError(
@@ -179,7 +179,7 @@ class TorchFunctionModeVariable(GenericContextWrappingVariable):
 
     def call_torch_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         fn: VariableTracker,
         types: TupleVariable,
         args: Iterable[Any],
@@ -194,7 +194,7 @@ class TorchFunctionModeVariable(GenericContextWrappingVariable):
             kwargs,
         )
 
-    def enter(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def enter(self, tx: InstructionTranslatorBase) -> VariableTracker:
         from .torch import TorchInGraphFunctionVariable
 
         if isinstance(self.value, NoEnterTorchFunctionMode):
@@ -205,7 +205,7 @@ class TorchFunctionModeVariable(GenericContextWrappingVariable):
         ).call_function(tx, [self], {})
         return ConstantVariable.create(None)
 
-    def exit(self, tx: "InstructionTranslatorBase", *args: Any) -> VariableTracker:
+    def exit(self, tx: InstructionTranslatorBase, *args: Any) -> VariableTracker:
         from .torch import TorchInGraphFunctionVariable
 
         TorchInGraphFunctionVariable(torch._C._pop_torch_function_stack).call_function(
@@ -213,7 +213,7 @@ class TorchFunctionModeVariable(GenericContextWrappingVariable):
         )
         return ConstantVariable.create(None)
 
-    def reconstruct_type(self, codegen: "PyCodegen") -> None:
+    def reconstruct_type(self, codegen: PyCodegen) -> None:
         ty = NoEnterTorchFunctionMode
         codegen(
             AttrSource(
@@ -248,7 +248,7 @@ class TorchFunctionModeStackStateManager:
         self.stack = []
 
     @contextlib.contextmanager
-    def temp_restore_stack(self) -> Generator[None, None, None]:
+    def temp_restore_stack(self) -> Generator[None]:
         prev = torch.overrides._get_current_function_mode_stack()
         set_torch_function_mode_stack(self.stack)
         try:
@@ -316,7 +316,7 @@ class SymbolicTorchFunctionState:
 
     def call_torch_function_mode(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         fn: VariableTracker,
         types: TupleVariable,
         args: Iterable[Any],
@@ -328,7 +328,7 @@ class SymbolicTorchFunctionState:
     @contextlib.contextmanager
     def _pop_mode_for_inlining(
         self,
-    ) -> Generator[TorchFunctionModeVariable, None, None]:
+    ) -> Generator[TorchFunctionModeVariable]:
         old_mode = self.cur_mode
         self.cur_mode = self.pop_torch_function_mode()  # type: ignore[assignment]
         try:
@@ -369,7 +369,7 @@ class TorchFunctionModeStackVariable(VariableTracker):
         cls.offset = 0
 
     @classmethod
-    def register_mutation(cls, tx: "InstructionTranslatorBase") -> None:
+    def register_mutation(cls, tx: InstructionTranslatorBase) -> None:
         if cls.stack_value_singleton not in tx.output.side_effects:
             var = cls(
                 source=Source(),
@@ -379,7 +379,7 @@ class TorchFunctionModeStackVariable(VariableTracker):
             tx.output.side_effects.mutation(var)
 
     @classmethod
-    def register_device_context_insertion(cls, tx: "InstructionTranslatorBase") -> None:
+    def register_device_context_insertion(cls, tx: InstructionTranslatorBase) -> None:
         stack = tx.symbolic_torch_function_state.mode_stack
         if stack and cls.is_device_context(stack[0]):
             return
@@ -393,7 +393,7 @@ class TorchFunctionModeStackVariable(VariableTracker):
             )
 
     @classmethod
-    def clear_default_device(cls, tx: "InstructionTranslatorBase") -> None:
+    def clear_default_device(cls, tx: InstructionTranslatorBase) -> None:
         stack = tx.symbolic_torch_function_state.mode_stack
         if stack and cls.is_device_context(stack[0]):
             stack.popleft()
@@ -449,7 +449,7 @@ def _get_subclass_type(var: VariableTracker) -> type:
 
 
 def _get_subclass_type_var(
-    tx: "InstructionTranslatorBase", var: VariableTracker
+    tx: InstructionTranslatorBase, var: VariableTracker
 ) -> VariableTracker:
     if isinstance(var, TensorWithTFOverrideVariable):
         return var.class_type_var(tx)
@@ -461,7 +461,7 @@ def _get_subclass_type_var(
 
 
 def _is_attr_overridden(
-    tx: "InstructionTranslatorBase", var: VariableTracker, name: str
+    tx: InstructionTranslatorBase, var: VariableTracker, name: str
 ) -> bool:
     if not isinstance(var, (TensorWithTFOverrideVariable, UserDefinedObjectVariable)):
         return False
@@ -478,7 +478,7 @@ def _is_attr_overridden(
 
 
 def call_torch_function(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     torch_function_var: VariableTracker,
     fn: VariableTracker,
     types: TupleVariable,
@@ -517,7 +517,7 @@ def call_torch_function(
 
 
 def get_torch_function_fn(
-    tx: "InstructionTranslatorBase", vt: VariableTracker
+    tx: InstructionTranslatorBase, vt: VariableTracker
 ) -> VariableTracker:
     # The underlying function could be a classmethod, staticmethod, regular
     # function or a function with C-implementation. It doesn't matter as long as
@@ -529,7 +529,7 @@ def get_torch_function_fn(
 
 
 def can_dispatch_torch_function(
-    tx: "InstructionTranslatorBase", args: Iterable[Any], kwargs: dict[str, Any]
+    tx: InstructionTranslatorBase, args: Iterable[Any], kwargs: dict[str, Any]
 ) -> bool:
     has_overridden_args = any(
         has_torch_function(arg) for arg in _get_all_args(args, kwargs)
@@ -541,7 +541,7 @@ def can_dispatch_torch_function(
 
 
 def dispatch_torch_function(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     fn: VariableTracker,
     args: Iterable[Any],
     kwargs: dict[str, Any],
@@ -594,11 +594,11 @@ class TensorWithTFOverrideVariable(TensorVariable):
     @classmethod
     def from_tensor_var(
         cls,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         tensor_var: VariableTracker,
         class_type: type,
         cls_source: Source | None,
-    ) -> "TensorWithTFOverrideVariable":
+    ) -> TensorWithTFOverrideVariable:
         # [Note: __torch_function__] coerce `tensor_var` into a
         # TensorWithTFOverrideVariable. In eager, this is just a type change.
         import torch
@@ -618,7 +618,7 @@ class TensorWithTFOverrideVariable(TensorVariable):
         var.install_global(tx)
         return var
 
-    def install_global(self, tx: "InstructionTranslatorBase") -> None:
+    def install_global(self, tx: InstructionTranslatorBase) -> None:
         # stash the subclass type to rewrap an output tensor if needed
         # this is needed because the actual type needs to be available
         # each time the compiled artifact is run and outputs a wrapped tensor.
@@ -631,18 +631,18 @@ class TensorWithTFOverrideVariable(TensorVariable):
     def python_type(self) -> type:
         return self.class_type
 
-    def class_type_var(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def class_type_var(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return TensorSubclassVariable(
             self.class_type, source=GlobalSource(self.global_mangled_class_name(tx))
         )
 
-    def global_mangled_class_name(self, tx: "InstructionTranslatorBase") -> str:
+    def global_mangled_class_name(self, tx: InstructionTranslatorBase) -> str:
         return get_safe_global_name(
             tx, f"__subclass_{self.class_type.__name__}", self.class_type
         )
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         # [Note: __torch_function__] We currently only support attributes that are defined on
         # base tensors, custom attribute accesses will graph break.
@@ -728,7 +728,7 @@ class TensorWithTFOverrideVariable(TensorVariable):
 
     def call_torch_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         fn: VariableTracker,
         types: TupleVariable,
         args: Iterable[Any],
@@ -750,11 +750,11 @@ class TensorWithTFOverrideVariable(TensorVariable):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
-        kwargs: "dict[str, VariableTracker]",
-    ) -> "VariableTracker":
+        kwargs: dict[str, VariableTracker],
+    ) -> VariableTracker:
         # This code block implements inlining the __torch_function__ override
         # of `call_method`.
         tf_args = [self] + list(args)

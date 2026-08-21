@@ -9,7 +9,6 @@ compile-time configuration, runtime shapes/dtypes, GPU architecture,
 and CUDA toolkit version to prevent stale artifact reuse.
 """
 
-from __future__ import annotations
 
 import hashlib
 import logging

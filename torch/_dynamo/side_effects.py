@@ -83,7 +83,7 @@ side_effects_log = torch._logging.getArtifactLogger(__name__, "side_effects")
 
 @dataclasses.dataclass(frozen=True)
 class SideEffectReplayContext:
-    side_effects: "SideEffects"
+    side_effects: SideEffects
     codegen: PyCodegen
     var: VariableTracker
     suffixes: list[list[Instruction]]
@@ -221,7 +221,7 @@ class SideEffects:
 
     def __init__(
         self,
-        output_graph: "OutputGraph",
+        output_graph: OutputGraph,
         id_to_variable: dict[int, VariableTracker] | None = None,
         store_attr_mutations: dict[VariableTracker, dict[str, VariableTracker]]
         | None = None,
@@ -237,9 +237,9 @@ class SideEffects:
         tensor_hooks: dict[
             int,
             tuple[
-                "variables.TensorVariable",
+                variables.TensorVariable,
                 VariableTracker,
-                "variables.RemovableHandleVariable",
+                variables.RemovableHandleVariable,
                 str,
             ],
         ]
@@ -289,7 +289,7 @@ class SideEffects:
             self.ignore_mutation_on_these_variables.remove(var)
 
     @contextlib.contextmanager
-    def defer_side_effect_checks(self) -> Generator[None, None, None]:
+    def defer_side_effect_checks(self) -> Generator[None]:
         """Defer outer-scope attribute mutation checks until tracing completes.
 
         Context managers that flip-flop a flag (set on enter, restore on exit)
@@ -381,7 +381,7 @@ class SideEffects:
             and self.tensor_hooks == other.tensor_hooks
         )
 
-    def diff(self, other: "SideEffects") -> str | None:
+    def diff(self, other: SideEffects) -> str | None:
         if self.id_to_variable != other.id_to_variable:
             sk_itv = self.id_to_variable.keys()
             ok_itv = other.id_to_variable.keys()
@@ -405,7 +405,7 @@ class SideEffects:
         else:
             return None
 
-    def clone(self) -> "SideEffects":
+    def clone(self) -> SideEffects:
         """Create a shallow copy"""
         ref = self.output_graph_weakref()
         if ref is None:
@@ -923,7 +923,7 @@ class SideEffects:
         cls_vt: VariableTracker,
         init_args: list[VariableTracker],
         *,
-        tx: "InstructionTranslatorBase | None" = None,
+        tx: InstructionTranslatorBase | None = None,
     ) -> VariableTracker:
         """
         Creates a UserDefinedObjectVariable (or its subclass) variable tracker
@@ -997,7 +997,7 @@ class SideEffects:
         self.save_for_backward.append((ctx, args))
 
     def track_runahead_tensor_and_symvar_side_effects(
-        self, other: "SideEffects"
+        self, other: SideEffects
     ) -> None:
         # In higher order ops we want to keep track of tensors seen in the
         # speculate_subgraph so that we don't lift them again as a new input in
@@ -1010,7 +1010,7 @@ class SideEffects:
             ):
                 self.track_object_existing(other_item, other_variable)
 
-    def prune_dead_object_new(self, tx: "InstructionTranslatorBase") -> None:
+    def prune_dead_object_new(self, tx: InstructionTranslatorBase) -> None:
         # Avoid VT cycles from e.g., recursive function.
         visited: set[VariableTracker] = set()
         live_new_objects: set[VariableTracker] = set()
@@ -1317,9 +1317,9 @@ class SideEffects:
 
     def register_hook(
         self,
-        tensor: "variables.TensorVariable",
+        tensor: variables.TensorVariable,
         hook: VariableTracker,
-        handle: "variables.RemovableHandleVariable",
+        handle: variables.RemovableHandleVariable,
         name: str,
     ) -> None:
         if not tensor.is_tensor():
@@ -1405,7 +1405,7 @@ class SideEffects:
             # be associated with the return value of register_hook().  This consumes the top of stack.
             cg.add_cache(handle)
 
-    def get_ca_final_callbacks_var(self) -> "variables.ListVariable":
+    def get_ca_final_callbacks_var(self) -> variables.ListVariable:
         from .variables.base import ValueMutationNew
 
         if self.ca_final_callbacks_var is None:
@@ -2111,8 +2111,8 @@ def _codegen_random_mutation(ctx: SideEffectReplayContext) -> None:
 
 @contextlib.contextmanager
 def allow_side_effects_in_hop(
-    tx: "InstructionTranslatorBase",
-) -> Generator[None, None, None]:
+    tx: InstructionTranslatorBase,
+) -> Generator[None]:
     """Context manager to temporarily allow side effects with extra outputs.
 
     This is used for special cases (like FSDP functions) that need to perform
@@ -2128,8 +2128,8 @@ def allow_side_effects_in_hop(
 
 @contextlib.contextmanager
 def allow_externally_visible_side_effects_in_subtracer(
-    tx: "InstructionTranslatorBase",
-) -> Generator[None, None, None]:
+    tx: InstructionTranslatorBase,
+) -> Generator[None]:
     orig_val = tx.output.current_tracer.unsafe_allow_externally_visible_side_effects
     try:
         tx.output.current_tracer.unsafe_allow_externally_visible_side_effects = True
@@ -2141,8 +2141,8 @@ def allow_externally_visible_side_effects_in_subtracer(
 
 @contextlib.contextmanager
 def disallow_side_effects_in_generator(
-    tx: "InstructionTranslatorBase",
-) -> Generator[None, None, None]:
+    tx: InstructionTranslatorBase,
+) -> Generator[None]:
     orig_val = tx.output.current_tracer.is_reconstructing_generator
     try:
         tx.output.current_tracer.is_reconstructing_generator = True

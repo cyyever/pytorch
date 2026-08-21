@@ -73,7 +73,7 @@ class GraphInfoProvider:
         all_recomputable_banned_nodes: list[Node],
         recorded_knapsack_input_memories: list[float],
         recorded_knapsack_input_runtimes: list[float],
-    ) -> "GraphInfoProvider":
+    ) -> GraphInfoProvider:
         """
         Enables initialization from a joint graph.
         """

@@ -1,6 +1,5 @@
 # This is not a feature-complete compiler backend
 # Just an early prototype that shows that one can compile elementwise ops into a Metal shader
-from __future__ import annotations
 
 import functools
 import itertools

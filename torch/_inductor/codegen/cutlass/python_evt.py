@@ -41,7 +41,7 @@ def _mult_factors(node: ast.expr) -> list[ast.expr]:
     return [node]
 
 
-def _match_call(node: ast.expr, name: str) -> "ast.Call | None":
+def _match_call(node: ast.expr, name: str) -> ast.Call | None:
     if (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)
@@ -56,7 +56,7 @@ def _same(a: ast.expr, b: ast.expr) -> bool:
     return ast.dump(a) == ast.dump(b)
 
 
-def _match_gelu_erf(node: ast.expr) -> "ast.expr | None":
+def _match_gelu_erf(node: ast.expr) -> ast.expr | None:
     """Match gelu's erf decomposition ``x * 0.5 * (1 + erf(x / sqrt(2)))`` and
     return the inner argument ``x``. Matching is commutativity-aware for the
     multiplications and the addition.
@@ -69,7 +69,7 @@ def _match_gelu_erf(node: ast.expr) -> "ast.expr | None":
         return None
     rest = [f for f in factors if f is not half]
 
-    def match_one_plus_erf(f: ast.expr) -> "ast.expr | None":
+    def match_one_plus_erf(f: ast.expr) -> ast.expr | None:
         # Match ``1 + erf(x / sqrt(2))`` and return ``x``.
         if not (isinstance(f, ast.BinOp) and isinstance(f.op, ast.Add)):
             return None
@@ -100,7 +100,7 @@ def _match_gelu_erf(node: ast.expr) -> "ast.expr | None":
     return None
 
 
-def _match_silu(node: ast.expr) -> "ast.expr | None":
+def _match_silu(node: ast.expr) -> ast.expr | None:
     """Match SiLU decomposition ``x / (1 + exp(0.0 - x))`` and return ``x``.
 
     Inductor decomposes silu(x) as x / (1 + exp(-x)). With our neg() op
@@ -155,7 +155,7 @@ class _ActivationPattern:
     # Cheap substring guard so we only parse epilogues that may contain the
     # decomposition (a primitive that the activation expands into).
     trigger: str
-    match: Callable[[ast.expr], "ast.expr | None"]
+    match: Callable[[ast.expr], ast.expr | None]
 
 
 # Activations that Inductor decomposes but CUTLASS can emit as a single functor.
@@ -391,7 +391,7 @@ class MockCutlassHandler(CutlassEVTOpsMixIn, WrapperHandler):
 
 
 class _AssignmentFormatter(DefaultHandler):
-    def __init__(self, parent_handler: "CutlassEVTCodegen"):
+    def __init__(self, parent_handler: CutlassEVTCodegen):
         self.parent_handler = parent_handler
 
     def _default(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:

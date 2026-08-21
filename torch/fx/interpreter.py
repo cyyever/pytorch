@@ -296,7 +296,7 @@ class Interpreter:
     # Main Node running APIs
     @compatibility(is_backward_compatible=True)
     def placeholder(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         """
         Execute a ``placeholder`` node. Note that this is stateful:
@@ -333,7 +333,7 @@ class Interpreter:
 
     @compatibility(is_backward_compatible=True)
     def get_attr(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         """
         Execute a ``get_attr`` node. Will retrieve an attribute
@@ -355,7 +355,7 @@ class Interpreter:
 
     @compatibility(is_backward_compatible=True)
     def call_function(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         """
         Execute a ``call_function`` node and return the result.
@@ -378,7 +378,7 @@ class Interpreter:
 
     @compatibility(is_backward_compatible=True)
     def call_method(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         """
         Execute a ``call_method`` node and return the result.
@@ -403,7 +403,7 @@ class Interpreter:
 
     @compatibility(is_backward_compatible=True)
     def call_module(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         """
         Execute a ``call_module`` node and return the result.
@@ -429,7 +429,7 @@ class Interpreter:
 
     @compatibility(is_backward_compatible=True)
     def output(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         """
         Execute an ``output`` node. This really just retrieves
@@ -586,7 +586,7 @@ class Transformer(Interpreter):
 
     @compatibility(is_backward_compatible=True)
     def placeholder(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Proxy:
         """
         Execute a ``placeholder`` node. In ``Transformer``, this is
@@ -609,7 +609,7 @@ class Transformer(Interpreter):
 
     @compatibility(is_backward_compatible=True)
     def get_attr(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Proxy:
         """
         Execute a ``get_attr`` node. In ``Transformer``, this is
@@ -629,7 +629,7 @@ class Transformer(Interpreter):
 
     @compatibility(is_backward_compatible=True)
     def call_module(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         # Override so that the leaf module policy from `self.tracer` is respected.
         if not isinstance(target, str):
@@ -639,7 +639,7 @@ class Transformer(Interpreter):
 
     @compatibility(is_backward_compatible=True)
     def call_function(
-        self, target: "Target", args: tuple[Argument, ...], kwargs: dict[str, Any]
+        self, target: Target, args: tuple[Argument, ...], kwargs: dict[str, Any]
     ) -> Any:
         # Override so that functions that were wrapped are still wrapped.
         return self.tracer.create_proxy("call_function", target, args, kwargs)

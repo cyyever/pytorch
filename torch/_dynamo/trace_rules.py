@@ -32,7 +32,6 @@ import operator
 import os
 import random
 import re
-import sys
 import types
 import typing
 import unittest
@@ -2190,12 +2189,10 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
 )
 
 
-if sys.version_info >= (3, 11):
-    torch_c_binding_in_graph_functions["math.exp2"] = TorchInGraphFunctionVariable
-    torch_c_binding_in_graph_functions["math.cbrt"] = TorchInGraphFunctionVariable
+torch_c_binding_in_graph_functions["math.exp2"] = TorchInGraphFunctionVariable
+torch_c_binding_in_graph_functions["math.cbrt"] = TorchInGraphFunctionVariable
 
-if sys.version_info >= (3, 13):
-    torch_c_binding_in_graph_functions["math.fma"] = TorchInGraphFunctionVariable
+torch_c_binding_in_graph_functions["math.fma"] = TorchInGraphFunctionVariable
 
 # In graph functions (including constant folding) that are not C bindings
 # NOTE: [Cacheability of in-graph torch functions]
@@ -2850,7 +2847,7 @@ Generate the torch object - Dynamo tracing rule (the wrapping variable) map.
 
 
 @functools.cache
-def get_torch_obj_rule_map() -> dict[Any, type["VariableTracker"]]:
+def get_torch_obj_rule_map() -> dict[Any, type[VariableTracker]]:
     d: dict[Any, type[VariableTracker]] = {}
     for m in torch_name_rule_map:
         for k, v in m.items():  # type: ignore[attr-defined]

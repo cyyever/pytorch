@@ -547,7 +547,7 @@ class FullyShardedDataParallel(nn.Module, _FSDPState):
     def fsdp_modules(
         module: nn.Module,
         root_only: bool = False,
-    ) -> list["FullyShardedDataParallel"]:
+    ) -> list[FullyShardedDataParallel]:
         """Return all nested FSDP instances.
 
         This possibly includes ``module`` itself and only includes FSDP root modules if ``root_only=True``.
@@ -566,7 +566,7 @@ class FullyShardedDataParallel(nn.Module, _FSDPState):
             return _get_fsdp_root_states(module)
         return traversal_utils._get_fsdp_states(module)
 
-    def apply(self, fn: Callable[[nn.Module], None]) -> "FullyShardedDataParallel":
+    def apply(self, fn: Callable[[nn.Module], None]) -> FullyShardedDataParallel:
         r"""Apply ``fn`` recursively to every submodule (as returned by ``.children()``) as well as self.
 
         Typical use includes initializing the parameters of a model (see also :ref:`nn-init-doc`).

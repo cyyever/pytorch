@@ -34,14 +34,9 @@ from typing import (
     TypeGuard as _TypeGuard,
     TypeVar as _TypeVar,
 )
-from typing_extensions import (
-    deprecated as _deprecated,
-    LiteralString as _LiteralString,
-    Never as _Never,
-    ParamSpec as _ParamSpec,
-    Self as _Self,
-    TypeIs as _TypeIs,
-)
+from typing import ParamSpec as _ParamSpec, TypeIs as _TypeIs
+from warnings import deprecated as _deprecated
+from typing import LiteralString as _LiteralString, Never as _Never, Self as _Self
 
 
 # As a bunch of torch.packages internally still have this check
@@ -387,21 +382,21 @@ class _SymTypingMagicAlsoBool(
     _BecomesIntLikeType: _TypeAlias = _BecomesIntPrimType | _BecomesIntSymType
 
     @_overload
-    def __eq__(self, other: __LikeType) -> "SymBool": ...
+    def __eq__(self, other: __LikeType) -> SymBool: ...
 
     @_overload
     def __eq__(self, other: object) -> builtins.bool: ...
 
-    def __eq__(self, other: object) -> "builtins.bool | SymBool":
+    def __eq__(self, other: object) -> builtins.bool | SymBool:
         raise TypeError("type stub not overridden")
 
     @_overload
-    def __ne__(self, other: __LikeType) -> "SymBool": ...
+    def __ne__(self, other: __LikeType) -> SymBool: ...
 
     @_overload
     def __ne__(self, other: object) -> builtins.bool: ...
 
-    def __ne__(self, other: object) -> "builtins.bool | SymBool":
+    def __ne__(self, other: object) -> builtins.bool | SymBool:
         raise TypeError("type stub not overridden")
 
     # bool_becomes_int_magic_methods
@@ -410,7 +405,7 @@ class _SymTypingMagicAlsoBool(
     def __add__(self, other: __LikeType) -> _BecomesIntSymType: ...
 
     @_overload
-    def __add__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __add__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __add__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -418,7 +413,7 @@ class _SymTypingMagicAlsoBool(
     # Tensor + SymT -> Tensor
     # prim|SymT + SymT -> SymT
     @_overload
-    def __radd__(self, other: "torch.Tensor") -> "torch.Tensor": ...
+    def __radd__(self, other: torch.Tensor) -> torch.Tensor: ...
 
     @_overload
     def __radd__(
@@ -426,7 +421,7 @@ class _SymTypingMagicAlsoBool(
     ) -> _BecomesIntSymType: ...
 
     @_overload
-    def __radd__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __radd__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __radd__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -435,7 +430,7 @@ class _SymTypingMagicAlsoBool(
     def __sub__(self, other: __LikeType) -> _BecomesIntSymType: ...
 
     @_overload
-    def __sub__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __sub__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __sub__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -443,7 +438,7 @@ class _SymTypingMagicAlsoBool(
     # Tensor - SymT = Tensor
     # prim|SymT - SymT = SymT
     @_overload
-    def __rsub__(self, other: "torch.Tensor") -> "torch.Tensor": ...
+    def __rsub__(self, other: torch.Tensor) -> torch.Tensor: ...
 
     @_overload
     def __rsub__(
@@ -451,7 +446,7 @@ class _SymTypingMagicAlsoBool(
     ) -> _BecomesIntSymType: ...
 
     @_overload
-    def __rsub__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __rsub__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __rsub__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -460,7 +455,7 @@ class _SymTypingMagicAlsoBool(
     def __mul__(self, other: __LikeType) -> _BecomesIntSymType: ...
 
     @_overload
-    def __mul__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __mul__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __mul__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -469,7 +464,7 @@ class _SymTypingMagicAlsoBool(
     def __rmul__(self, other: __LikeType) -> _BecomesIntSymType: ...
 
     @_overload
-    def __rmul__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __rmul__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __rmul__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -492,85 +487,85 @@ class _SymTypingMagic(
 
     # Ordering comparisons: only on ordered types (SymInt/SymFloat), not SymBool.
     @_overload
-    def __ge__(self, other: __LikeType) -> "SymBool": ...
+    def __ge__(self, other: __LikeType) -> SymBool: ...
 
     @_overload
     def __ge__(self, other: object) -> builtins.bool: ...
 
-    def __ge__(self, other: object) -> "builtins.bool | SymBool":
+    def __ge__(self, other: object) -> builtins.bool | SymBool:
         raise TypeError("type stub not overridden")
 
     @_overload
-    def __gt__(self, other: __LikeType) -> "SymBool": ...
+    def __gt__(self, other: __LikeType) -> SymBool: ...
 
     @_overload
     def __gt__(self, other: object) -> builtins.bool: ...
 
-    def __gt__(self, other: object) -> "builtins.bool | SymBool":
+    def __gt__(self, other: object) -> builtins.bool | SymBool:
         raise TypeError("type stub not overridden")
 
     @_overload
-    def __le__(self, other: __LikeType) -> "SymBool": ...
+    def __le__(self, other: __LikeType) -> SymBool: ...
 
     @_overload
     def __le__(self, other: object) -> builtins.bool: ...
 
-    def __le__(self, other: object) -> "builtins.bool | SymBool":
+    def __le__(self, other: object) -> builtins.bool | SymBool:
         raise TypeError("type stub not overridden")
 
     @_overload
-    def __lt__(self, other: __LikeType) -> "SymBool": ...
+    def __lt__(self, other: __LikeType) -> SymBool: ...
 
     @_overload
     def __lt__(self, other: object) -> builtins.bool: ...
 
-    def __lt__(self, other: object) -> "builtins.bool | SymBool":
+    def __lt__(self, other: object) -> builtins.bool | SymBool:
         raise TypeError("type stub not overridden")
 
     def __abs__(self) -> _Self:
         raise TypeError("type stub not overridden")
 
-    def __ceil__(self) -> "SymInt":
+    def __ceil__(self) -> SymInt:
         raise TypeError("type stub not overridden")
 
-    def __float_pow__(self, other: _LikeNumber) -> "SymFloat":
+    def __float_pow__(self, other: _LikeNumber) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __rfloat_pow__(self, other: _LikeNumber) -> "SymFloat":
+    def __rfloat_pow__(self, other: _LikeNumber) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __float_truediv__(self, other: _LikeNumber) -> "SymFloat":
+    def __float_truediv__(self, other: _LikeNumber) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __rfloat_truediv__(self, other: _LikeNumber) -> "SymFloat":
+    def __rfloat_truediv__(self, other: _LikeNumber) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __floor__(self) -> "SymInt":
+    def __floor__(self) -> SymInt:
         raise TypeError("type stub not overridden")
 
-    def __int_floordiv__(self, other: _LikeNumber) -> "SymInt":
+    def __int_floordiv__(self, other: _LikeNumber) -> SymInt:
         raise TypeError("type stub not overridden")
 
-    def __rint_floordiv__(self, other: _LikeNumber) -> "SymInt":
+    def __rint_floordiv__(self, other: _LikeNumber) -> SymInt:
         raise TypeError("type stub not overridden")
 
-    def __int_truediv__(self, other: _LikeNumber) -> "SymFloat":
+    def __int_truediv__(self, other: _LikeNumber) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __rint_truediv__(self, other: _LikeNumber) -> "SymFloat":
+    def __rint_truediv__(self, other: _LikeNumber) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __lshift__(self, other: "IntLikeType") -> _Self:
+    def __lshift__(self, other: IntLikeType) -> _Self:
         raise TypeError("type stub not overridden")
 
-    def __rlshift__(self, other: "IntLikeType") -> _Self:
+    def __rlshift__(self, other: IntLikeType) -> _Self:
         raise TypeError("type stub not overridden")
 
     @_overload
     def __mod__(self, other: __LikeType) -> _SymType: ...
 
     @_overload
-    def __mod__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __mod__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __mod__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -579,7 +574,7 @@ class _SymTypingMagic(
     def __rmod__(self, other: __LikeType) -> _SymType: ...
 
     @_overload
-    def __rmod__(self, other: _FloatPromotionType) -> "SymFloat": ...
+    def __rmod__(self, other: _FloatPromotionType) -> SymFloat: ...
 
     def __rmod__(self, other: object) -> object:
         raise TypeError("type stub not overridden")
@@ -590,34 +585,34 @@ class _SymTypingMagic(
     def __pos__(self) -> _Self:
         raise TypeError("type stub not overridden")
 
-    def __pow_by_natural__(self, other: "IntLikeType") -> "SymInt":
+    def __pow_by_natural__(self, other: IntLikeType) -> SymInt:
         raise TypeError("type stub not overridden")
 
-    def __rpow_by_natural__(self, other: "IntLikeType") -> "SymInt":
+    def __rpow_by_natural__(self, other: IntLikeType) -> SymInt:
         raise TypeError("type stub not overridden")
 
-    def __rshift__(self, other: "IntLikeType") -> _Self:
+    def __rshift__(self, other: IntLikeType) -> _Self:
         raise TypeError("type stub not overridden")
 
-    def __rrshift__(self, other: "IntLikeType") -> _Self:
+    def __rrshift__(self, other: IntLikeType) -> _Self:
         raise TypeError("type stub not overridden")
 
-    def __sym_acos__(self) -> "SymFloat":
+    def __sym_acos__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_asin__(self) -> "SymFloat":
+    def __sym_asin__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_atan__(self) -> "SymFloat":
+    def __sym_atan__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_cos__(self) -> "SymFloat":
+    def __sym_cos__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_cosh__(self) -> "SymFloat":
+    def __sym_cosh__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_float__(self) -> "SymFloat":
+    def __sym_float__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
     def __sym_max__(self, other: _LikeNumber) -> _LikeNumber:
@@ -626,22 +621,22 @@ class _SymTypingMagic(
     def __sym_min__(self, other: _LikeNumber) -> _LikeNumber:
         raise TypeError("type stub not overridden")
 
-    def __sym_sin__(self) -> "SymFloat":
+    def __sym_sin__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_sinh__(self) -> "SymFloat":
+    def __sym_sinh__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_sqrt__(self) -> "SymFloat":
+    def __sym_sqrt__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_tan__(self) -> "SymFloat":
+    def __sym_tan__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __sym_tanh__(self) -> "SymFloat":
+    def __sym_tanh__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
-    def __trunc__(self) -> "SymInt":
+    def __trunc__(self) -> SymInt:
         raise TypeError("type stub not overridden")
 
 
@@ -678,7 +673,7 @@ class SymInt(
     in the symbolic shape workflow.
     """
 
-    def __init__(self, node: "_SymNodeLike") -> None:
+    def __init__(self, node: _SymNodeLike) -> None:
         # This field MUST be named node; C++ binding code assumes that this
         # class has a field named node that stores SymNode
         self.node = typing.cast("SymNode", node)
@@ -696,17 +691,17 @@ class SymInt(
 
     # Magic methods installed by torch.fx.experimental.sym_node
 
-    def __round__(self, ndigits: builtins.int | None = None) -> "SymInt":
+    def __round__(self, ndigits: builtins.int | None = None) -> SymInt:
         return self
 
-    def __truediv__(self, other: object) -> "SymFloat":
+    def __truediv__(self, other: object) -> SymFloat:
         if isinstance(other, (builtins.float, SymFloat)):
             return sym_float(self).__float_truediv__(other)
         if not isinstance(other, (builtins.int, SymInt)):
             return NotImplemented  # type: ignore[return-value]
         return self.__int_truediv__(other)
 
-    def __rtruediv__(self, other: object) -> "SymFloat":
+    def __rtruediv__(self, other: object) -> SymFloat:
         if isinstance(other, (builtins.float, SymFloat)):
             return sym_float(self).__rfloat_truediv__(other)
         if not isinstance(other, (builtins.int, SymInt)):
@@ -714,12 +709,12 @@ class SymInt(
         return self.__rint_truediv__(other)
 
     @_overload
-    def __floordiv__(self, other: "builtins.int | SymInt") -> "SymInt": ...
+    def __floordiv__(self, other: builtins.int | SymInt) -> SymInt: ...
 
     @_overload
-    def __floordiv__(self, other: "builtins.float | SymFloat") -> "SymFloat": ...
+    def __floordiv__(self, other: builtins.float | SymFloat) -> SymFloat: ...
 
-    def __floordiv__(self, other: object) -> "SymInt | SymFloat":
+    def __floordiv__(self, other: object) -> SymInt | SymFloat:
         if isinstance(other, (builtins.float, SymFloat)):
             return sym_float(math.floor(sym_float(self) / other))
         if not isinstance(other, (builtins.int, SymInt)):
@@ -727,12 +722,12 @@ class SymInt(
         return self.__int_floordiv__(other)
 
     @_overload
-    def __rfloordiv__(self, other: "builtins.int | SymInt") -> "SymInt": ...
+    def __rfloordiv__(self, other: builtins.int | SymInt) -> SymInt: ...
 
     @_overload
-    def __rfloordiv__(self, other: "builtins.float | SymFloat") -> "SymFloat": ...
+    def __rfloordiv__(self, other: builtins.float | SymFloat) -> SymFloat: ...
 
-    def __rfloordiv__(self, other: object) -> "SymInt | SymFloat":
+    def __rfloordiv__(self, other: object) -> SymInt | SymFloat:
         if isinstance(other, (builtins.float, SymFloat)):
             return sym_float(math.floor(other / sym_float(self)))
         if not isinstance(other, (builtins.int, SymInt)):
@@ -743,7 +738,7 @@ class SymInt(
     # negative base and integral float need to diverge semantics and
     # just always return complex.  Neener neener pretend this problem
     # doesn't exist
-    def __pow__(self, other: object) -> "SymInt | SymFloat":
+    def __pow__(self, other: object) -> SymInt | SymFloat:
         if isinstance(other, (builtins.float, SymFloat)):
             return sym_float(self).__pow__(other)
         if not isinstance(other, (builtins.int, SymInt)):
@@ -767,7 +762,7 @@ class SymInt(
             #   }
             return sym_float(self).__pow__(sym_float(other))
 
-    def __rpow__(self, other: object) -> "SymInt | SymFloat":
+    def __rpow__(self, other: object) -> SymInt | SymFloat:
         if isinstance(other, (builtins.float, SymFloat)):
             return sym_float(self).__rpow__(other)
         if not isinstance(other, (builtins.int, SymInt)):
@@ -780,7 +775,7 @@ class SymInt(
     def __repr__(self) -> str:
         return self.node._graph_repr()
 
-    def _sympy_(self) -> "sympy.Basic":
+    def _sympy_(self) -> sympy.Basic:
         # pyrefly: ignore[missing-attribute]  # duck-typed: not on NestedIntNode/ConstantIntNode/LocalIntNode
         return self.node.expr
 
@@ -797,7 +792,7 @@ class SymInt(
             # https://github.com/arogozhnikov/einops/blob/6181e1e95dc58c00a3143c1726da1c6ee0463164/einops/einops.py#L237
             # return hash(builtins.int(self))
 
-    def as_integer_ratio(self) -> tuple["SymInt", builtins.int]:
+    def as_integer_ratio(self) -> tuple[SymInt, builtins.int]:
         """Represent this int as an exact integer ratio"""
         return self, 1
 
@@ -808,7 +803,7 @@ class SymInt(
         # computing this quantity and represent it symbolically.
         return builtins.int(self).bit_length()
 
-    def conjugate(self) -> "SymInt":
+    def conjugate(self) -> SymInt:
         return self
 
     def has_hint(self) -> builtins.bool:
@@ -830,27 +825,27 @@ class SymFloat(_SymTypingMagic[builtins.float, "SymFloat", _Never]):
     in the symbolic shape workflow.
     """
 
-    def __init__(self, node: "SymNode") -> None:
+    def __init__(self, node: SymNode) -> None:
         # This field MUST be named node; C++ binding code assumes that this
         # class has a field named node that stores SymNode
         self.node = node
 
-    def __truediv__(self, other: object) -> "SymFloat":
+    def __truediv__(self, other: object) -> SymFloat:
         if not isinstance(other, (builtins.int, builtins.float, SymInt, SymFloat)):
             return NotImplemented  # type: ignore[return-value]
         return self.__float_truediv__(sym_float(other))
 
-    def __rtruediv__(self, other: object) -> "SymFloat":
+    def __rtruediv__(self, other: object) -> SymFloat:
         if not isinstance(other, (builtins.int, builtins.float, SymInt, SymFloat)):
             return NotImplemented  # type: ignore[return-value]
         return self.__rfloat_truediv__(sym_float(other))
 
-    def __floordiv__(self, other: object) -> "SymFloat":
+    def __floordiv__(self, other: object) -> SymFloat:
         if not isinstance(other, (builtins.int, builtins.float, SymInt, SymFloat)):
             return NotImplemented  # type: ignore[return-value]
         return sym_float(math.floor(self / sym_float(other)))
 
-    def __rfloordiv__(self, other: object) -> "SymFloat":
+    def __rfloordiv__(self, other: object) -> SymFloat:
         if not isinstance(other, (builtins.int, builtins.float, SymInt, SymFloat)):
             return NotImplemented  # type: ignore[return-value]
         return sym_float(math.floor(sym_float(other) / self))
@@ -866,13 +861,13 @@ class SymFloat(_SymTypingMagic[builtins.float, "SymFloat", _Never]):
 
     # Symbolic power does NOT work with negative base, this is to avoid
     # potential complex outputs
-    def __pow__(self, other: object) -> "SymFloat":
+    def __pow__(self, other: object) -> SymFloat:
         if not isinstance(other, (builtins.int, builtins.float, SymInt, SymFloat)):
             return NotImplemented  # type: ignore[return-value]
         torch._check(self >= 0)
         return self.__float_pow__(other)
 
-    def __rpow__(self, other: object) -> "SymFloat":
+    def __rpow__(self, other: object) -> SymFloat:
         if not isinstance(other, (builtins.int, builtins.float, SymInt, SymFloat)):
             return NotImplemented  # type: ignore[return-value]
         torch._check(other >= 0)
@@ -881,18 +876,18 @@ class SymFloat(_SymTypingMagic[builtins.float, "SymFloat", _Never]):
     # Magic methods installed by torch.fx.experimental.sym_node
 
     @_overload
-    def __round__(self) -> "SymInt": ...
+    def __round__(self) -> SymInt: ...
 
     @_overload
-    def __round__(self, ndigits: "IntLikeType") -> "SymFloat": ...
+    def __round__(self, ndigits: IntLikeType) -> SymFloat: ...
 
-    def __round__(self, ndigits: "IntLikeType | None" = None) -> "SymFloat | SymInt":
+    def __round__(self, ndigits: IntLikeType | None = None) -> SymFloat | SymInt:
         raise TypeError("type stub not overridden")
 
     # def __sym_int__(self) -> "SymInt":
     #     raise TypeError("type stub not overridden")
 
-    def __sym_log2__(self) -> "SymFloat":
+    def __sym_log2__(self) -> SymFloat:
         raise TypeError("type stub not overridden")
 
     def is_integer(self) -> builtins.bool:
@@ -906,13 +901,13 @@ class SymFloat(_SymTypingMagic[builtins.float, "SymFloat", _Never]):
     def __repr__(self) -> str:
         return self.node._graph_repr()
 
-    def _sympy_(self) -> "sympy.Basic":
+    def _sympy_(self) -> sympy.Basic:
         return self.node.expr
 
     def __hash__(self) -> builtins.int:
         return hash(builtins.float(self))
 
-    def conjugate(self) -> "SymFloat":
+    def conjugate(self) -> SymFloat:
         """Returns the complex conjugate of the float."""
         return self
 
@@ -945,7 +940,7 @@ class SymBool(
     of symbolically evaluate.  Use the bitwise operators instead to handle this.
     """
 
-    def __init__(self, node: "SymNode") -> None:
+    def __init__(self, node: SymNode) -> None:
         # This field MUST be named node; C++ binding code assumes that this
         # class has a field named node that stores SymNode
         self.node = node
@@ -975,7 +970,7 @@ class SymBool(
     #     our own operator.  Note that bitwise and/or do the right thing,
     #     so we reuse the conventional operators there for readability.
     #
-    def __sym_not__(self) -> "SymBool":
+    def __sym_not__(self) -> SymBool:
         raise TypeError("type stub not overridden")
 
     def __sym_ite__(self, then_val: _SymIteT, else_val: _SymIteT) -> _SymIteT:
@@ -984,7 +979,7 @@ class SymBool(
     def __repr__(self) -> str:
         return self.node._graph_repr()
 
-    def _sympy_(self) -> "sympy.Basic":
+    def _sympy_(self) -> sympy.Basic:
         return self.node.expr
 
     def __hash__(self) -> builtins.int:
@@ -994,7 +989,7 @@ class SymBool(
             # Force specialization
             return hash(builtins.bool(self))
 
-    def __sym_float__(self) -> "SymFloat":
+    def __sym_float__(self) -> SymFloat:
         """
         Provides a SymFloat representation (0.0 or 1.0) for this SymBool.
         Called by torch.sym_float() when casting SymBool to float.
@@ -1014,7 +1009,7 @@ class SymBool(
 
 
 @_overload
-def sym_not(a: "BoolLikeType") -> "BoolLikeType": ...
+def sym_not(a: BoolLikeType) -> BoolLikeType: ...
 
 
 @_overload
@@ -1040,14 +1035,14 @@ def sym_not(a: object) -> object:
 
 
 @_overload
-def sym_float(a: "PySymType") -> "SymFloat": ...
+def sym_float(a: PySymType) -> SymFloat: ...
 
 
 @_overload
-def sym_float(a: object) -> "FloatLikeType": ...
+def sym_float(a: object) -> FloatLikeType: ...
 
 
-def sym_float(a: object) -> "FloatLikeType":
+def sym_float(a: object) -> FloatLikeType:
     r"""SymInt-aware utility for float casting.
 
     Args:
@@ -1064,14 +1059,14 @@ def sym_float(a: object) -> "FloatLikeType":
 
 
 @_overload
-def sym_int(a: "PySymType") -> "IntLikeType": ...
+def sym_int(a: PySymType) -> IntLikeType: ...
 
 
 @_overload
 def sym_int(a: object) -> builtins.int: ...
 
 
-def sym_int(a: object) -> "IntLikeType":
+def sym_int(a: object) -> IntLikeType:
     r"""SymInt-aware utility for int casting.
 
     Args:
@@ -1088,18 +1083,18 @@ def sym_int(a: object) -> "IntLikeType":
 
 
 @_overload
-def sym_max(a: "IntLikeType", b: "IntLikeType") -> "IntLikeType": ...
+def sym_max(a: IntLikeType, b: IntLikeType) -> IntLikeType: ...
 
 
 @_overload
 def sym_max(
-    a: "IntLikeType | FloatLikeType", b: "IntLikeType | FloatLikeType"
-) -> "FloatLikeType": ...
+    a: IntLikeType | FloatLikeType, b: IntLikeType | FloatLikeType
+) -> FloatLikeType: ...
 
 
 def sym_max(
-    a: "IntLikeType | FloatLikeType", b: "IntLikeType | FloatLikeType"
-) -> "IntLikeType | FloatLikeType":
+    a: IntLikeType | FloatLikeType, b: IntLikeType | FloatLikeType
+) -> IntLikeType | FloatLikeType:
     """
     SymInt-aware utility for max which avoids branching on a < b.
     Unlike builtins.max(), this only works for int/float, and it always
@@ -1148,18 +1143,18 @@ def __all_and_float_types() -> tuple[tuple[type, ...], tuple[type, ...]]:
 
 
 @_overload
-def sym_min(a: "IntLikeType", b: "IntLikeType") -> "IntLikeType": ...
+def sym_min(a: IntLikeType, b: IntLikeType) -> IntLikeType: ...
 
 
 @_overload
 def sym_min(
-    a: "IntLikeType | FloatLikeType", b: "IntLikeType | FloatLikeType"
-) -> "FloatLikeType": ...
+    a: IntLikeType | FloatLikeType, b: IntLikeType | FloatLikeType
+) -> FloatLikeType: ...
 
 
 def sym_min(
-    a: "IntLikeType | FloatLikeType", b: "IntLikeType | FloatLikeType"
-) -> "IntLikeType | FloatLikeType":
+    a: IntLikeType | FloatLikeType, b: IntLikeType | FloatLikeType
+) -> IntLikeType | FloatLikeType:
     """SymInt-aware utility for min()."""
     if overrides.has_torch_function((a, b)):
         # pyrefly: ignore[bad-argument-type]
@@ -1182,8 +1177,8 @@ def sym_min(
 
 
 def sym_sum(
-    *args: "IntLikeType | _Sequence[IntLikeType]",
-) -> "IntLikeType":
+    *args: IntLikeType | _Sequence[IntLikeType],
+) -> IntLikeType:
     """
     N-ary add which is faster to compute for long lists than iterated binary
     addition.  Only does something special for integers.
@@ -1254,7 +1249,7 @@ sym_sqrt = globals()["_sym_sqrt"]
 __all__.append("sym_sqrt")
 
 
-def sym_ite(b: "BoolLikeType", t: _SymIteT, f: _SymIteT) -> _SymIteT:
+def sym_ite(b: BoolLikeType, t: _SymIteT, f: _SymIteT) -> _SymIteT:
     """SymInt-aware utility for ternary operator (``t if b else f``.)"""
     if overrides.has_torch_function((b, t, f)):
         return overrides.handle_torch_function(sym_ite, (b, t, f), b, t, f)
@@ -1268,7 +1263,7 @@ def sym_ite(b: "BoolLikeType", t: _SymIteT, f: _SymIteT) -> _SymIteT:
 
 
 # Create a fresh unbacked int, from an (possibly unbacked int) expression.
-def sym_fresh_size(expr: "IntLikeType") -> "IntLikeType":
+def sym_fresh_size(expr: IntLikeType) -> IntLikeType:
     return typing.cast("IntLikeType", torch.tensor(expr).item())
 
 
@@ -1387,7 +1382,7 @@ def typename(obj: object, /) -> str:
     return f"{module}.{qualname}"
 
 
-def is_tensor(obj: object, /) -> _TypeIs["torch.Tensor"]:
+def is_tensor(obj: object, /) -> _TypeIs[torch.Tensor]:
     r"""Returns True if `obj` is a PyTorch tensor.
 
     Args:
@@ -1402,7 +1397,7 @@ def is_tensor(obj: object, /) -> _TypeIs["torch.Tensor"]:
     return isinstance(obj, torch.Tensor)
 
 
-def is_storage(obj: object, /) -> _TypeGuard["TypedStorage | UntypedStorage"]:
+def is_storage(obj: object, /) -> _TypeGuard[TypedStorage | UntypedStorage]:
     r"""Returns True if `obj` is a PyTorch storage object.
 
     Args:
@@ -1436,14 +1431,14 @@ def is_storage(obj: object, /) -> _TypeGuard["TypedStorage | UntypedStorage"]:
 _GLOBAL_DEVICE_CONTEXT = threading.local()
 
 
-def get_default_device() -> "torch.device":
+def get_default_device() -> torch.device:
     r"""Gets the default ``torch.Tensor`` to be allocated on ``device``"""
     global _GLOBAL_DEVICE_CONTEXT
 
     from torch.overrides import _get_current_function_mode_stack
     from torch.utils._device import DeviceContext
 
-    def _get_device_with_index(device: "torch.device") -> "torch.device":
+    def _get_device_with_index(device: torch.device) -> torch.device:
         if device.index is not None:
             return device
         else:
@@ -1469,7 +1464,7 @@ def get_default_device() -> "torch.device":
     return torch.device("cpu")
 
 
-def set_default_device(device: "Device") -> None:
+def set_default_device(device: Device) -> None:
     """Sets the default ``torch.Tensor`` to be allocated on ``device``.  This
     does not affect factory function calls which are called with an explicit
     ``device`` argument.  Factory calls will be performed as if they
@@ -1533,7 +1528,7 @@ def set_default_device(device: "Device") -> None:
     _GLOBAL_DEVICE_CONTEXT.device_context = device_context
 
 
-def set_default_tensor_type(t: type["torch.Tensor"] | str, /) -> None:
+def set_default_tensor_type(t: type[torch.Tensor] | str, /) -> None:
     r"""
     .. warning::
 
@@ -1564,7 +1559,7 @@ def set_default_tensor_type(t: type["torch.Tensor"] | str, /) -> None:
     _C._set_default_tensor_type(t)
 
 
-def set_default_dtype(d: "torch.dtype", /) -> None:
+def set_default_dtype(d: torch.dtype, /) -> None:
     r"""
 
     Sets the default floating point dtype to :attr:`d`. Supports floating point dtype
@@ -2010,10 +2005,10 @@ def _check(
     category=FutureWarning,
 )
 def _check_is_size(
-    i: "IntLikeType",
+    i: IntLikeType,
     message: _LiteralString | _Callable[[], object] | None = None,
     *,
-    max: "IntLikeType | None" = None,
+    max: IntLikeType | None = None,
 ) -> None:
     """Checks that a given integer is a valid size (i.e., is non-negative).
     You should use this over ``_check(i >= 0)`` because it can prevent
@@ -2135,7 +2130,7 @@ def _check_not_implemented(
 
 def _check_tensor_all_with(
     error_type: type[BaseException],
-    cond: "torch.Tensor",
+    cond: torch.Tensor,
     message: _LiteralString | _Callable[[], object] | None = None,
 ) -> None:
     if not is_tensor(cond):
@@ -2149,7 +2144,7 @@ def _check_tensor_all_with(
 
 # C++ equivalent: `TORCH_CHECK_TENSOR_ALL`
 def _check_tensor_all(
-    cond: "torch.Tensor",
+    cond: torch.Tensor,
     message: _LiteralString | _Callable[[], object] | None = None,
 ) -> None:
     r"""Throws error containing an optional message if the specified condition
@@ -2205,188 +2200,188 @@ from torch.storage import (
 # dtype, use torch.storage.TypedStorage directly.
 class ByteStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.uint8
 
 
 class DoubleStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.double
 
 
 class FloatStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.float
 
 
 class HalfStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.half
 
 
 class LongStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.long
 
 
 class IntStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.int
 
 
 class ShortStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.short
 
 
 class CharStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.int8
 
 
 class BoolStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.bool
 
 
 class BFloat16Storage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.bfloat16
 
 
 class ComplexDoubleStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.cdouble
 
 
 class ComplexFloatStorage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.cfloat
 
 
 class QUInt8Storage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.quint8
 
 
 class QInt8Storage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.qint8
 
 
 class QInt32Storage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.qint32
 
 
 class QUInt4x2Storage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.quint4x2
 
 
 class QUInt2x4Storage(_LegacyStorage):
     @classproperty
-    def dtype(self) -> "torch.dtype":
+    def dtype(self) -> torch.dtype:
         _warn_typed_storage_removal(stacklevel=3)
         return self._dtype
 
     @classproperty
-    def _dtype(self) -> "torch.dtype":
+    def _dtype(self) -> torch.dtype:
         return torch.quint2x4
 
 
@@ -2413,7 +2408,7 @@ _storage_classes: set[type[TypedStorage | UntypedStorage]] = {
 }
 
 # The _tensor_classes set is initialized by the call to initialize_python_bindings.
-_tensor_classes: set[type["torch.Tensor"]] = set()
+_tensor_classes: set[type[torch.Tensor]] = set()
 
 # If you edit these imports, please update torch/__init__.py.in as well
 from torch import amp as amp, random as random, serialization as serialization
@@ -3263,7 +3258,7 @@ else:
 
 
 @functools.cache
-def get_device_module(device: "torch.device | str | None" = None) -> _ModuleType:
+def get_device_module(device: torch.device | str | None = None) -> _ModuleType:
     """
     Returns the module associated with a given device(e.g., torch.device('cuda'), "mtia:0", "xpu", ...).
     If no device is given, return the module for the current accelerator or CPU if none is present.
@@ -3289,7 +3284,7 @@ def get_device_module(device: "torch.device | str | None" = None) -> _ModuleType
 
 
 def _constrain_as_size(
-    symbol: "IntLikeType",
+    symbol: IntLikeType,
     min: builtins.int | None = None,
     max: builtins.int | None = None,
 ) -> None:
@@ -3355,7 +3350,7 @@ def _is_device_backend_autoload_enabled() -> builtins.bool:
     return os.getenv("TORCH_DEVICE_BACKEND_AUTOLOAD", "1") == "1"
 
 
-def _as_tensor_fullprec(t: object) -> "torch.Tensor":
+def _as_tensor_fullprec(t: object) -> torch.Tensor:
     """
     Like torch.as_tensor, but when given Python data types it will keep
     them in full precision.  Used for calling convention for Dynamo.

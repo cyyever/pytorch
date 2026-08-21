@@ -32,16 +32,12 @@ TERMINAL_OPCODES = {
     # TODO(jansel): double check exception handling
 }
 TERMINAL_OPCODES.add(dis.opmap["RERAISE"])
-if sys.version_info >= (3, 11):
-    TERMINAL_OPCODES.add(dis.opmap["JUMP_BACKWARD"])
-    TERMINAL_OPCODES.add(dis.opmap["JUMP_FORWARD"])
-else:
-    TERMINAL_OPCODES.add(dis.opmap["JUMP_ABSOLUTE"])
+TERMINAL_OPCODES.add(dis.opmap["JUMP_BACKWARD"])
+TERMINAL_OPCODES.add(dis.opmap["JUMP_FORWARD"])
 
 if (3, 12) <= sys.version_info < (3, 14):
     TERMINAL_OPCODES.add(dis.opmap["RETURN_CONST"])
-if sys.version_info >= (3, 13):
-    TERMINAL_OPCODES.add(dis.opmap["JUMP_BACKWARD_NO_INTERRUPT"])
+TERMINAL_OPCODES.add(dis.opmap["JUMP_BACKWARD_NO_INTERRUPT"])
 JUMP_OPCODES = set(dis.hasjrel + dis.hasjabs)
 JUMP_OPNAMES = {dis.opname[opcode] for opcode in JUMP_OPCODES}
 HASLOCAL = set(dis.haslocal)
@@ -50,7 +46,7 @@ HASFREE = set(dis.hasfree)
 stack_effect = dis.stack_effect
 
 
-def get_indexof(insts: list["Instruction"]) -> dict["Instruction", int]:
+def get_indexof(insts: list[Instruction]) -> dict[Instruction, int]:
     """
     Get a mapping from instruction memory address to index in instruction list.
     Additionally checks that each instruction only appears once in the list.
@@ -66,7 +62,7 @@ def get_indexof(insts: list["Instruction"]) -> dict["Instruction", int]:
     return indexof
 
 
-def remove_dead_code(instructions: list["Instruction"]) -> list["Instruction"]:
+def remove_dead_code(instructions: list[Instruction]) -> list[Instruction]:
     """Dead code elimination"""
     indexof = get_indexof(instructions)
     live_code = set()
@@ -94,38 +90,37 @@ def remove_dead_code(instructions: list["Instruction"]) -> list["Instruction"]:
     # assumes that exception table entries have been propagated,
     # e.g. with bytecode_transformation.propagate_inst_exn_table_entries,
     # and that instructions with an exn_tab_entry lies within its start/end.
-    if sys.version_info >= (3, 11):
-        live_idx = sorted(live_code)
-        for i, inst in enumerate(instructions):
-            if i in live_code and inst.exn_tab_entry:
-                # find leftmost live instruction >= start
-                start_idx = bisect.bisect_left(
-                    live_idx, indexof[inst.exn_tab_entry.start]
+    live_idx = sorted(live_code)
+    for i, inst in enumerate(instructions):
+        if i in live_code and inst.exn_tab_entry:
+            # find leftmost live instruction >= start
+            start_idx = bisect.bisect_left(
+                live_idx, indexof[inst.exn_tab_entry.start]
+            )
+            if start_idx >= len(live_idx):
+                raise AssertionError(
+                    "no live instruction found at or after exn_tab_entry start"
                 )
-                if start_idx >= len(live_idx):
-                    raise AssertionError(
-                        "no live instruction found at or after exn_tab_entry start"
-                    )
-                # find rightmost live instruction <= end
-                end_idx = (
-                    bisect.bisect_right(live_idx, indexof[inst.exn_tab_entry.end]) - 1
+            # find rightmost live instruction <= end
+            end_idx = (
+                bisect.bisect_right(live_idx, indexof[inst.exn_tab_entry.end]) - 1
+            )
+            if end_idx < 0:
+                raise AssertionError(
+                    "no live instruction found at or before exn_tab_entry end"
                 )
-                if end_idx < 0:
-                    raise AssertionError(
-                        "no live instruction found at or before exn_tab_entry end"
-                    )
-                if not (live_idx[start_idx] <= i <= live_idx[end_idx]):
-                    raise AssertionError(
-                        f"instruction {i} not within live range "
-                        f"[{live_idx[start_idx]}, {live_idx[end_idx]}]"
-                    )
-                inst.exn_tab_entry.start = instructions[live_idx[start_idx]]
-                inst.exn_tab_entry.end = instructions[live_idx[end_idx]]
+            if not (live_idx[start_idx] <= i <= live_idx[end_idx]):
+                raise AssertionError(
+                    f"instruction {i} not within live range "
+                    f"[{live_idx[start_idx]}, {live_idx[end_idx]}]"
+                )
+            inst.exn_tab_entry.start = instructions[live_idx[start_idx]]
+            inst.exn_tab_entry.end = instructions[live_idx[end_idx]]
 
     return [inst for i, inst in enumerate(instructions) if i in live_code]
 
 
-def remove_pointless_jumps(instructions: list["Instruction"]) -> list["Instruction"]:
+def remove_pointless_jumps(instructions: list[Instruction]) -> list[Instruction]:
     """Eliminate jumps to the next instruction"""
     pointless_jumps = {
         id(a)
@@ -135,11 +130,11 @@ def remove_pointless_jumps(instructions: list["Instruction"]) -> list["Instructi
     return [inst for inst in instructions if id(inst) not in pointless_jumps]
 
 
-def propagate_line_nums(instructions: list["Instruction"]) -> None:
+def propagate_line_nums(instructions: list[Instruction]) -> None:
     """Ensure every instruction has line number set in case some are removed"""
     cur_line_no = None
 
-    def populate_line_num(inst: "Instruction") -> None:
+    def populate_line_num(inst: Instruction) -> None:
         nonlocal cur_line_no
         if inst.starts_line:
             cur_line_no = inst.starts_line
@@ -150,12 +145,12 @@ def propagate_line_nums(instructions: list["Instruction"]) -> None:
         populate_line_num(inst)
 
 
-def remove_extra_line_nums(instructions: list["Instruction"]) -> None:
+def remove_extra_line_nums(instructions: list[Instruction]) -> None:
     """Remove extra starts line properties before packing bytecode"""
 
     cur_line_no = None
 
-    def remove_line_num(inst: "Instruction") -> None:
+    def remove_line_num(inst: Instruction) -> None:
         nonlocal cur_line_no
         if inst.starts_line is None:
             return
@@ -176,7 +171,7 @@ class ReadsWrites:
 
 
 def livevars_analysis(
-    instructions: list["Instruction"], instruction: "Instruction"
+    instructions: list[Instruction], instruction: Instruction
 ) -> set[Any]:
     indexof = get_indexof(instructions)
     must = ReadsWrites(set(), set(), set())
@@ -231,7 +226,7 @@ class StackSize:
         self.high = 0
         self.fixed_point.value = False
 
-    def offset_of(self, other: "StackSize", n: int) -> None:
+    def offset_of(self, other: StackSize, n: int) -> None:
         prior = (self.low, self.high)
         self.low = min(self.low, other.low + n)
         self.high = max(self.high, other.high + n)
@@ -246,7 +241,7 @@ class StackSize:
             self.fixed_point.value = False
 
 
-def stacksize_analysis(instructions: list["Instruction"]) -> int | float:
+def stacksize_analysis(instructions: list[Instruction]) -> int | float:
     if not instructions:
         raise AssertionError("instructions list must not be empty")
     fixed_point = FixedPointBox()

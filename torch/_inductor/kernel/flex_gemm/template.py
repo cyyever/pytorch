@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 import dataclasses
 import logging
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch._dynamo.utils import counters
@@ -48,7 +48,7 @@ class FlexGemmEpilogueLocalReduceConfig:
         *,
         output_layout: FlexGemmOutputStorageLayout | None = None,
         swap_ab: bool = False,
-    ) -> "FlexGemmEpilogueLocalReduceConfig | None":
+    ) -> FlexGemmEpilogueLocalReduceConfig | None:
         """Bind analyzed local-reduction consumers to FlexGEMM's runtime ABI."""
         if local_reduce is None:
             return None

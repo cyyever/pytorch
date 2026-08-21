@@ -202,7 +202,6 @@ it.
 # front-end that analyzes Python rather than specializing to one traced path) and
 # currently raises NotImplementedError.
 
-from __future__ import annotations
 
 import hashlib
 import io

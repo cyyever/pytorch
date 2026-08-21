@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 """Exception handling and error reporting for TorchDynamo.
 
 This module provides a comprehensive set of exception classes and utilities for error

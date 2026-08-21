@@ -256,7 +256,7 @@ def signature_to_meta(
     }
 
 
-def _get_buffer_layout(buf_name: str) -> "torch._inductor.ir.Layout":
+def _get_buffer_layout(buf_name: str) -> torch._inductor.ir.Layout:
     """Get the layout for a buffer, handling both scheduler buffers and graph inputs."""
     if V.graph.scheduler:
         layout = V.graph.scheduler.get_buffer_layout(buf_name)

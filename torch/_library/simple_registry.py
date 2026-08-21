@@ -35,13 +35,13 @@ class SimpleLibraryRegistry:
     def __init__(self) -> None:
         self._data: dict[str, SimpleOperatorEntry] = {}
 
-    def find(self, qualname: str) -> "SimpleOperatorEntry":
+    def find(self, qualname: str) -> SimpleOperatorEntry:
         res = self._data.get(qualname, None)
         if res is None:
             self._data[qualname] = res = SimpleOperatorEntry(qualname)
         return res
 
-    def get(self, qualname: str) -> "SimpleOperatorEntry | None":
+    def get(self, qualname: str) -> SimpleOperatorEntry | None:
         return self._data.get(qualname, None)
 
 

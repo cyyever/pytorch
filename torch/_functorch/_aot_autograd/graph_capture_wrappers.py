@@ -140,7 +140,7 @@ def fn_input_mutations_to_outputs(
 
 
 @contextmanager
-def disable_autocast() -> Generator[None, None, None]:
+def disable_autocast() -> Generator[None]:
     with ExitStack() as stack:
         autocast_enabled_devices = torch._C._autocast_supported_devices()
         for device_type in autocast_enabled_devices:
@@ -620,7 +620,7 @@ def create_functionalized_rng_ops_wrapper(
 
 
 @contextmanager
-def set_partitioner_tag(tag: str) -> Generator[None, None, None]:
+def set_partitioner_tag(tag: str) -> Generator[None]:
     meta_key = "partitioner_tag"
     if not fx_traceback.has_preserved_node_meta():
         raise AssertionError("expected preserved node meta")

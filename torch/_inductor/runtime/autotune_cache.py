@@ -22,7 +22,6 @@ This caching system is critical for performance as it eliminates the need to re-
 expensive autotuning operations when the same kernels are compiled multiple times.
 """
 
-from __future__ import annotations
 
 import dataclasses
 import logging
@@ -32,7 +31,7 @@ import re
 import threading
 import weakref
 from typing import Any
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch._guards import CompileContext

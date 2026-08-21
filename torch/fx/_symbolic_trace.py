@@ -389,7 +389,7 @@ class Tracer(TracerBase):
         return qualname
 
     @compatibility(is_backward_compatible=True)
-    def create_arg(self, a: Any) -> "Argument":
+    def create_arg(self, a: Any) -> Argument:
         """
         A method to specify the behavior of tracing when preparing values to
         be used as arguments to nodes in the ``Graph``.
@@ -949,7 +949,7 @@ class Tracer(TracerBase):
             _set_is_fx_tracing(old_is_fx_tracing_flag)
         return self.graph
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> "Tracer":
+    def __deepcopy__(self, memo: dict[int, Any]) -> Tracer:
         # _autowrap_search contains modules, which cannot be deepcopied.
         new_tracer = Tracer.__new__(Tracer)
 
@@ -1215,7 +1215,7 @@ class _Patcher:
             patch.patch()
         return self.patches_made
 
-    def __enter__(self) -> "_Patcher":
+    def __enter__(self) -> _Patcher:
         return self
 
     def __exit__(

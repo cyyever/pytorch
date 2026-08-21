@@ -23,7 +23,6 @@ import warnings
 import weakref
 from typing import (  # noqa: UP035, F401  # (Dict, List, Tuple) imported by torch.jit.annotations
     Any,
-    Callable,
     Dict,
     Final,
     ForwardRef,
@@ -36,7 +35,8 @@ from typing import (  # noqa: UP035, F401  # (Dict, List, Tuple) imported by tor
     TypeVar,
     Union,
 )
-from typing_extensions import ParamSpec
+from collections.abc import Callable
+from typing import ParamSpec
 
 import torch
 import torch.package._mangling as package_mangling
@@ -67,7 +67,7 @@ except ImportError:
 
 # Wrapper functions that can call either of 2 functions depending on a boolean
 # argument
-boolean_dispatched: "weakref.WeakKeyDictionary[Callable, dict[str, Callable]]" = (
+boolean_dispatched: weakref.WeakKeyDictionary[Callable, dict[str, Callable]] = (
     weakref.WeakKeyDictionary()
 )  # noqa: T484
 
@@ -1161,7 +1161,7 @@ def _get_overloaded_methods(method, mod_class):
 
 def is_tuple(ann) -> bool:
     # Check for typing.Tuple missing args (but `tuple` is fine)
-    if ann is typing.Tuple:  # noqa: UP006
+    if ann is tuple:  # noqa: UP006
         raise_error_container_parameter_missing("Tuple")
 
     # For some reason Python 3.7 violates the Type[A, B].__origin__ == Type rule
@@ -1174,7 +1174,7 @@ def is_tuple(ann) -> bool:
 
 def is_list(ann) -> bool:
     # Check for typing.List missing args (but `list` is fine)
-    if ann is typing.List:  # noqa: UP006
+    if ann is list:  # noqa: UP006
         raise_error_container_parameter_missing("List")
 
     if not hasattr(ann, "__module__"):
@@ -1186,7 +1186,7 @@ def is_list(ann) -> bool:
 
 def is_dict(ann) -> bool:
     # Check for typing.Dict missing args (but `dict` is fine)
-    if ann is typing.Dict:  # noqa: UP006
+    if ann is dict:  # noqa: UP006
         raise_error_container_parameter_missing("Dict")
 
     if not hasattr(ann, "__module__"):
@@ -1392,10 +1392,10 @@ _RAW_TYPE_NAME_MAPPING = {
     dict: "dict",
     list: "list",
     tuple: "tuple",
-    typing.Dict: "Dict",  # noqa: UP006
-    typing.List: "List",  # noqa: UP006
+    dict: "Dict",  # noqa: UP006
+    list: "List",  # noqa: UP006
     typing.Optional: "Optional",
-    typing.Tuple: "Tuple",  # noqa: UP006
+    tuple: "Tuple",  # noqa: UP006
 }
 
 
@@ -1423,7 +1423,7 @@ def container_checker(obj, target_type) -> bool:
     check_args_exist(target_type)
     if origin_type is None:
         return False
-    elif origin_type is list or origin_type is typing.List:  # noqa: UP006
+    elif origin_type is list or origin_type is list:  # noqa: UP006
         check_empty_containers(obj)
         if not isinstance(obj, list):
             return False
@@ -1437,7 +1437,7 @@ def container_checker(obj, target_type) -> bool:
             elif not isinstance(el, arg_type):
                 return False
         return True
-    elif origin_type is typing.Dict or origin_type is dict:  # noqa: UP006
+    elif origin_type is dict or origin_type is dict:  # noqa: UP006
         check_empty_containers(obj)
         if not isinstance(obj, dict):
             return False
@@ -1454,7 +1454,7 @@ def container_checker(obj, target_type) -> bool:
             elif not isinstance(val, val_type):
                 return False
         return True
-    elif origin_type is typing.Tuple or origin_type is tuple:  # noqa: UP006
+    elif origin_type is tuple or origin_type is tuple:  # noqa: UP006
         check_empty_containers(obj)
         if not isinstance(obj, tuple):
             return False
@@ -1561,8 +1561,7 @@ def _get_model_id(obj) -> str | None:
 # In Python-3.11+ typed enums (i.e. IntEnum for example) retain number of base class methods in subclass
 # that were previously dropped. To preserve the behavior, explicitly drop them there
 
-if sys.version_info >= (3, 11):
-    _drop(enum.Enum.__new__)
-    _drop(enum.Enum.__format__)
-    _drop(enum.Enum.__repr__)
-    _drop(enum.Enum.__str__)
+_drop(enum.Enum.__new__)
+_drop(enum.Enum.__format__)
+_drop(enum.Enum.__repr__)
+_drop(enum.Enum.__str__)

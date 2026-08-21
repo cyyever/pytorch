@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import atexit
 import functools
 import os
 from typing import TYPE_CHECKING
-from typing_extensions import final, override
+from typing import final, override
 
 import torch._inductor.async_compile
 import torch.fx

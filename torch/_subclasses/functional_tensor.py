@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import functools
 import warnings
@@ -7,7 +5,7 @@ import weakref
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from typing import Any, cast, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 
 if TYPE_CHECKING:
@@ -785,7 +783,7 @@ class FunctionalTensorMode(TorchDispatchMode):
 
 
 @contextlib.contextmanager
-def disable_functional_mode() -> Generator[None, None, None]:
+def disable_functional_mode() -> Generator[None]:
     return _disable_infra_mode(torch._C._TorchDispatchModeKey.FUNCTIONAL)
 
 

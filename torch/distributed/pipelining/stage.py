@@ -137,7 +137,7 @@ class _RecvInfo:
 # The key is a weakref, so entries are
 # dropped automatically once the parent group is destroyed (e.g. via
 # destroy_process_group / reinitialization), avoiding stale dead communicators.
-_PP_DIRECTION_GROUP_CACHE: "weakref.WeakKeyDictionary[dist.ProcessGroup, tuple[dist.ProcessGroup, dist.ProcessGroup]]" = weakref.WeakKeyDictionary()
+_PP_DIRECTION_GROUP_CACHE: weakref.WeakKeyDictionary[dist.ProcessGroup, tuple[dist.ProcessGroup, dist.ProcessGroup]] = weakref.WeakKeyDictionary()
 
 
 def _build_p2p_direction_groups(
@@ -2264,9 +2264,9 @@ class PipelineStage(_PipelineStageBase):
         num_microbatches: int,
         loss_fn: Callable[..., torch.Tensor] | None = None,
         target: torch.Tensor | None = None,
-        received_grad_meta: "_StageBackwardMeta | None" = None,
+        received_grad_meta: _StageBackwardMeta | None = None,
         loss_kwargs: dict[str, Any] | None = None,
-    ) -> "_StageBackwardMeta | None":
+    ) -> _StageBackwardMeta | None:
         """Run backward metadata inference and prepare backward infrastructure.
 
         Returns:

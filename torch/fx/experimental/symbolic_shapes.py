@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sympy
 from sympy import S
 
@@ -47,7 +45,8 @@ from typing import (
     TypeGuard,
     TypeVar,
 )
-from typing_extensions import deprecated, ParamSpec
+from typing import ParamSpec
+from warnings import deprecated
 
 import torch
 import torch.fx
@@ -3820,7 +3819,7 @@ def _ignore_fresh_unbacked_symbols_set(b: bool) -> bool:
 
 
 @contextmanager
-def _ignore_fresh_unbacked_symbols_tls_context() -> Generator[None, None, None]:
+def _ignore_fresh_unbacked_symbols_tls_context() -> Generator[None]:
     """
     Indicates that newly allocated unbacked SymInts are intentionally discarded.
 
@@ -3862,7 +3861,7 @@ class ValueRangesSLoc:
 
 
 @contextmanager
-def _suppress_guards(shape_env: ShapeEnv) -> Generator[None, None, None]:
+def _suppress_guards(shape_env: ShapeEnv) -> Generator[None]:
     shape_env._suppress_guards_enter()
     try:
         yield
@@ -4293,7 +4292,7 @@ class ShapeEnv:
     @contextmanager
     def patch_source_specialization(
         self, source: Source, check_fn: Callable[[sympy.Symbol], sympy.Expr]
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         """
         Temporarily add symbol-level axioms to the ShapeEnv. This is useful when you want to "fork"
         and have parallel universes of ShapeEnvs. For example, we use this when doing multi-graph
@@ -4427,7 +4426,7 @@ class ShapeEnv:
         return len(self.events) - 1
 
     @contextmanager
-    def _recording(self) -> Generator[None, None, None]:
+    def _recording(self) -> Generator[None]:
         self.is_recording = True
         try:
             yield
@@ -4620,7 +4619,7 @@ class ShapeEnv:
         return _ignore_fresh_unbacked_symbols_set(b)
 
     @contextmanager
-    def ignore_fresh_unbacked_symbols(self) -> Generator[None, None, None]:
+    def ignore_fresh_unbacked_symbols(self) -> Generator[None]:
         """
         Indicates that the newly allocated unbacked SymInts are being
         discarded
@@ -4772,7 +4771,7 @@ class ShapeEnv:
         return _suppress_guards(self)
 
     @contextmanager
-    def error_on_new_guards(self) -> Generator[None, None, None]:
+    def error_on_new_guards(self) -> Generator[None]:
         """Context manager that raises _ShapeEnvGuardError if a guard is attempted.
 
         Temporarily freezes the ShapeEnv and makes _check_frozen raise
@@ -8560,19 +8559,14 @@ class ShapeEnv:
             raise AssertionError("frame must not be None")
 
         insts = list(dis.get_instructions(frame.f_code))
-        if sys.version_info >= (3, 11):
-            # For Python >= 3.11, instructions can be 2-4 bytes long.
-            from bisect import bisect_left
+        # For Python >= 3.11, instructions can be 2-4 bytes long.
+        from bisect import bisect_left
 
-            cur = bisect_left(insts, frame.f_lasti, key=lambda x: x.offset)
-        else:
-            # For Python <= 3.10, instructions are always 2 bytes.
-            cur = frame.f_lasti // 2
+        cur = bisect_left(insts, frame.f_lasti, key=lambda x: x.offset)
 
-        if sys.version_info >= (3, 13):
-            if insts[cur].opname in ("TO_BOOL", "COMPARE_OP"):
-                # Peek 1 instruction further.
-                cur += 1
+        if insts[cur].opname in ("TO_BOOL", "COMPARE_OP"):
+            # Peek 1 instruction further.
+            cur += 1
 
         assert_insts = torch._dynamo.symbolic_convert.get_assert_bytecode_sequence(
             False
@@ -9368,7 +9362,7 @@ def _suggest_fixes_for_data_dependent_error_non_strict(
 @contextmanager
 def _remove_effect_token_unbacked_bindings(
     node: torch.fx.Node,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Temporarily modifies unbacked_bindings in a node's metadata by removing the first element
     of each path, which corresponds to an effect token.

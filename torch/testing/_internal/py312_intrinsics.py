@@ -8,13 +8,13 @@ import torch
 class Foo:
     @classmethod
     def _default_update(cls):
-        def f[T](a: "This is a new annotation"):  # noqa: F722
+        def f[T](a: This is a new annotation):  # noqa: F722
             """This is a test"""
 
         f.attr = "This is also a test"
         f.__wrapped__ = "This is a bald faced lie"
 
-        def wrapper(b: "This is the prior annotation"):  # noqa: F722
+        def wrapper(b: This is the prior annotation):  # noqa: F722
             pass
 
         return wrapper, f

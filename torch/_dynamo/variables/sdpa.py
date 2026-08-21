@@ -32,7 +32,7 @@ class SDPAParamsVariable(VariableTracker):
 
     @staticmethod
     def create(
-        tx: "InstructionTranslatorBase", value: Any, source: Source
+        tx: InstructionTranslatorBase, value: Any, source: Source
     ) -> VariableTracker:
         from .torch import TorchInGraphFunctionVariable
 
@@ -52,7 +52,7 @@ class SDPAParamsVariable(VariableTracker):
     def python_type(self) -> type:
         return SDPAParams
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         if self.source is not None:
             raise AssertionError(
                 "SDPAParamsVariable should not have a source during reconstruct"
@@ -69,7 +69,7 @@ class SDPAParamsVariable(VariableTracker):
         return self.proxy
 
     def tp_getattro_impl(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> VariableTracker:
         import torch._C
 
@@ -99,5 +99,5 @@ class SDPAParamsVariable(VariableTracker):
             return wrap_fx_proxy(tx=tx, proxy=proxy)
 
     @staticmethod
-    def is_sdpa_params(value: Any) -> TypeGuard["SDPAParams"]:
+    def is_sdpa_params(value: Any) -> TypeGuard[SDPAParams]:
         return value is SDPAParams

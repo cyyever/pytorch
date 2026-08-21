@@ -33,7 +33,7 @@ class Rot13Example(StreamTransformExtension):
         self._chunk_size = chunk_size
 
     @staticmethod
-    def from_descriptor(version: str) -> "Rot13Example":
+    def from_descriptor(version: str) -> Rot13Example:
         if version.partition(".")[0] != "1":
             raise ValueError(f"Unknown extension {version=}")
         return Rot13Example()

@@ -13,7 +13,6 @@ The structure separates concerns:
     dispatches by target, and runs final cleanup.
 """
 
-from __future__ import annotations
 
 import operator
 from collections.abc import Callable

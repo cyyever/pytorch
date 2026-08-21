@@ -272,7 +272,7 @@ class HopSchema(torch._C.FunctionSchema):
             self.is_varret,
         )
 
-    def __deepcopy__(self, memo: Any) -> "HopSchema":
+    def __deepcopy__(self, memo: Any) -> HopSchema:
         # Need to additionally copy the tree_spec since
         # it's not a member of torch._C.FunctionSchema
         return HopSchema(

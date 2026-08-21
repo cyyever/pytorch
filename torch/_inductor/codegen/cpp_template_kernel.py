@@ -615,7 +615,7 @@ class CppTemplateCaller(ir.ChoiceCaller):
             str,
         ],
         bmreq: CppBenchmarkRequest,
-        template: "CppTemplate",  # type: ignore[name-defined]  # noqa: F821
+        template: CppTemplate,  # type: ignore[name-defined]  # noqa: F821
         info_kwargs: dict[str, ir.PrimitiveInfoType | list[ir.PrimitiveInfoType]]
         | None = None,
     ):

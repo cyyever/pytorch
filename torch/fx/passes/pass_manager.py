@@ -213,7 +213,7 @@ class PassManager:
         self.constraints = constraints or []
 
     @classmethod
-    def build_from_passlist(cls, passes: list[Callable[..., Any]]) -> "PassManager":
+    def build_from_passlist(cls, passes: list[Callable[..., Any]]) -> PassManager:
         pm = PassManager(passes)
         # TODO(alexbeloi): add constraint management/validation
         return pm

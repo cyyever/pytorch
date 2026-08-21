@@ -672,7 +672,7 @@ class CppGemmTemplate(CppTemplate):
         self.cache_blocking = self.make_cache_blocking_cache()
 
     def make_thread_blocking_cache(self):
-        cache = lru_cache()(self._thread_blocking)
+        cache = lru_cache(self._thread_blocking)
 
         def thread_blocking(num_threads: int) -> GemmBlocking:
             return cache(num_threads)
@@ -789,7 +789,7 @@ class CppGemmTemplate(CppTemplate):
         return best_blocking
 
     def make_cache_blocking_cache(self):
-        cache = lru_cache()(self._cache_blocking)
+        cache = lru_cache(self._cache_blocking)
 
         def cache_blocking(num_threads: int) -> GemmBlocking:
             return cache(num_threads)

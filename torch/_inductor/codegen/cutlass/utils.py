@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import sympy
 
@@ -395,7 +395,7 @@ else:
 @functools.lru_cache(32)
 def torch_dtype_to_cutlass_type(
     torch_dtype: torch.dtype,
-) -> "cutlass_library.library.DataType":  # type: ignore[name-defined] # noqa: F821
+) -> cutlass_library.library.DataType:  # type: ignore[name-defined] # noqa: F821
     # Import cutlass python scripts.
     if not try_import_cutlass():
         raise AssertionError("Failed to import CUTLASS library")
@@ -418,7 +418,7 @@ def torch_dtype_to_cutlass_type(
 @functools.lru_cache(32)
 def dtype_match(
     torch_dtype: torch.dtype | None,
-    cutlass_dtype: "cutlass_library.library.DataType",  # type: ignore[name-defined]  # noqa: F821
+    cutlass_dtype: cutlass_library.library.DataType,  # type: ignore[name-defined]  # noqa: F821
 ) -> bool:
     # Import cutlass python scripts.
     if not try_import_cutlass():

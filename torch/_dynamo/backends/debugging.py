@@ -594,7 +594,7 @@ class ExplainOutput:
     graph_break_count: int
     break_reasons: list[GraphCompileReason]
     op_count: int
-    ops_per_graph: list[list["Target"]] | None = None
+    ops_per_graph: list[list[Target]] | None = None
     out_guards: list[_guards.Guard] | None = None
     compile_times: str | None = None
 
@@ -633,13 +633,13 @@ def _explain_graph_detail(
     gm: torch.fx.GraphModule,
     graphs: list[torch.fx.GraphModule],
     op_count: int,
-    ops_per_graph: list[list["Target"]],
+    ops_per_graph: list[list[Target]],
     break_reasons: list[GraphCompileReason],
 ) -> tuple[
     torch.fx.GraphModule,
     list[torch.fx.GraphModule],
     int,
-    list[list["Target"]],
+    list[list[Target]],
     list[GraphCompileReason],
 ]:
     """

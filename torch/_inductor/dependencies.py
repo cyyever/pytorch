@@ -5,7 +5,7 @@ import logging
 import re
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, TypeVar
-from typing_extensions import Self
+from typing import Self
 from unittest.mock import patch
 
 import sympy
@@ -105,7 +105,7 @@ class MemoryDep(Dep):
     def num_vars(self) -> int:
         return len(self.var_names)
 
-    def decide_loop_order_to_match(self, other: "MemoryDep") -> list[int] | None:
+    def decide_loop_order_to_match(self, other: MemoryDep) -> list[int] | None:
         """
         Can return None if not able to decide loop orders.
         """
@@ -174,7 +174,7 @@ class MemoryDep(Dep):
         """
         return sympy_subs(self.index, dict.fromkeys(self.var_names, 0))
 
-    def normalize(self) -> "MemoryDep":
+    def normalize(self) -> MemoryDep:
         """
         Normalize by merging loops. The difference from normalize_with_stride_order is,
         this method does not reorder loops while normalize_with_stride_order reorders
@@ -190,7 +190,7 @@ class MemoryDep(Dep):
         self,
         var_names: tuple[sympy.Symbol, ...],
         sizes: tuple[sympy.Expr, ...],
-    ) -> "MemoryDep | None":
+    ) -> MemoryDep | None:
         """Reindex this access over a new iteration domain.
 
         Both domains list dimensions outermost-first and correspond by linearized
@@ -234,7 +234,7 @@ class MemoryDep(Dep):
         )
         return MemoryDep(self.name, index, var_names, sizes, self.mode)
 
-    def normalize_with_stride_order(self, prefix: str = "t") -> "MemoryDep":
+    def normalize_with_stride_order(self, prefix: str = "t") -> MemoryDep:
         r"""
         Used to decide if two MemoryDep does not equal due to different loop orders.
         More specifically, when dep1 and dep2 are not equal, we can normalize
@@ -283,7 +283,7 @@ class MemoryDep(Dep):
         """{c0: 128, c1: 512, ...}"""
         return dict(zip(self.var_names, self.size))
 
-    def simplify_with_ranges(self) -> "MemoryDep":
+    def simplify_with_ranges(self) -> MemoryDep:
         return MemoryDep(
             name=self.name,
             index=V.graph.sizevars.simplify_with_ranges(self.index, self.ranges),
@@ -303,7 +303,7 @@ class MemoryDep(Dep):
                     numel = numel * size
         return numel  # type: ignore[return-value]
 
-    def rename(self, renames: dict[str, str]) -> "MemoryDep":
+    def rename(self, renames: dict[str, str]) -> MemoryDep:
         if self.name in renames:
             return MemoryDep(
                 renames[self.name],
@@ -389,7 +389,7 @@ class StarDep(Dep):
     def get_numel(self) -> sympy.Expr:
         return V.graph.get_numel(self.name)  # type: ignore[return-value]
 
-    def rename(self, renames: dict[str, str]) -> "StarDep":
+    def rename(self, renames: dict[str, str]) -> StarDep:
         if self.name in renames:
             return StarDep(renames[self.name], self.mode)
         return self
@@ -461,7 +461,7 @@ class WeakDep(Dep):
     def get_numel(self) -> sympy.Expr:
         return sympy.S.One
 
-    def rename(self, renames: dict[str, str]) -> "WeakDep":
+    def rename(self, renames: dict[str, str]) -> WeakDep:
         if self.name in renames:
             return WeakDep(renames[self.name], self.mutating_buf, self.is_fake)
         return self
@@ -494,7 +494,7 @@ class ReadWrites:
     range_vars: list[sympy.Expr] | None = None
     var_ranges: VarRanges | None = None
 
-    def rename(self, renames: dict[str, str]) -> "ReadWrites":
+    def rename(self, renames: dict[str, str]) -> ReadWrites:
         return ReadWrites(
             OrderedSet(dep.rename(renames) for dep in self.reads),
             OrderedSet(dep.rename(renames) for dep in self.writes),
@@ -503,7 +503,7 @@ class ReadWrites:
             self.var_ranges,
         )
 
-    def with_read(self, dep: Dep | OrderedSet[Dep]) -> "ReadWrites":
+    def with_read(self, dep: Dep | OrderedSet[Dep]) -> ReadWrites:
         if not isinstance(dep, (WeakDep, StarDep, OrderedSet)):
             raise AssertionError(
                 f"expected WeakDep, StarDep, or OrderedSet, got {type(dep)}"
@@ -518,20 +518,20 @@ class ReadWrites:
             self.var_ranges,
         )
 
-    def merge(self, other: "ReadWrites") -> "ReadWrites":
+    def merge(self, other: ReadWrites) -> ReadWrites:
         reads = OrderedSet.union(self.reads, other.reads)
         writes = OrderedSet.union(self.writes, other.writes)
         index_exprs = OrderedSet.union(self.index_exprs, other.index_exprs)
         return ReadWrites(reads - writes, writes, index_exprs)
 
     @staticmethod
-    def merge_list(read_writes: list["ReadWrites"]) -> "ReadWrites":
+    def merge_list(read_writes: list[ReadWrites]) -> ReadWrites:
         all_writes = OrderedSet.union(*[rw.writes for rw in read_writes])
         all_reads = OrderedSet.union(*[rw.reads for rw in read_writes]) - all_writes
         all_index_exprs = OrderedSet.union(*[rw.index_exprs for rw in read_writes])
         return ReadWrites(all_reads, all_writes, all_index_exprs)
 
-    def remove_reads(self, rem_reads: OrderedSet[Dep]) -> "ReadWrites":
+    def remove_reads(self, rem_reads: OrderedSet[Dep]) -> ReadWrites:
         return ReadWrites(
             self.reads - rem_reads,
             self.writes,
@@ -810,7 +810,7 @@ def extract_loop_body_with_args(
 
 
 def extract_input_node_reduction_ranges(
-    input_node: "torch._inductor.ir.IRNode",
+    input_node: torch._inductor.ir.IRNode,
 ) -> tuple[list[sympy.Expr] | None, list[sympy.Expr] | None]:
     """
     Returns the size and reduction size of all inputs, if the sizes and reduction_sizes (if exist) are all the same.

@@ -118,8 +118,8 @@ class _AOTCompiledFunction(Protocol):
     _lazy_backward_info: (
         AutogradLazyBackwardCompileInfo | CachedAutogradLazyBackwardCompileInfo | None
     )
-    metadata: "ViewAndMutationMeta"
-    maybe_subclass_metadata: "SubclassMeta | None"
+    metadata: ViewAndMutationMeta
+    maybe_subclass_metadata: SubclassMeta | None
     _aot_id: int
     _bw_prologue_fn: Callable[..., Any]
     _bw_epilogue_fn: Callable[..., Any]
@@ -498,7 +498,7 @@ class AutogradCompilerInstance:
         pinputs: Sequence[Any],
         psaved_tensors: Sequence[torch.Tensor],
         saved_tensors: Sequence[torch.Tensor],
-        pctx: "Proxy",
+        pctx: Proxy,
         ctx: torch.autograd.function.BackwardCFunction,
         maybe_backward_state_idx: int | None,
         opaque_object_indices: list[int],
@@ -1629,7 +1629,7 @@ def _enable(
     compiler_fn: Callable[..., Any],
     dynamic: bool = True,
     ignore_active_disable_ctx: bool = True,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     # The entrypoint to enable CA.
     # It is recommended to enable via `torch._dynamo.config.compiled_autograd = True` rather
     # than using this context manager directly. If you are torch.compiling the corresponding
@@ -1706,7 +1706,7 @@ def _enable(
 
 
 @contextlib.contextmanager
-def _disable() -> Generator[None, None, None]:
+def _disable() -> Generator[None]:
     (
         prior_compiler,
         prior_dynamic,

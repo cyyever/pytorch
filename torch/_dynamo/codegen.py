@@ -860,6 +860,18 @@ class PyCodegen:
         output.insert(-1, self.create_load_const(kw_names))
         output[-1] = create_instruction("CALL_KW", arg=nargs)
         return output
+            if output[idx].opname != expected_inst:
+                raise AssertionError(
+                    f"expected instruction at index {idx} to be {expected_inst}, "
+                    f"got {output[idx].opname}"
+                )
+            kw_names_inst = create_instruction("KW_NAMES", argval=kw_names)
+            output.insert(idx, kw_names_inst)
+            return output
+        return [
+            self.create_load_const(kw_names),
+            create_instruction("CALL_FUNCTION_KW", arg=nargs),
+        ]
 
     def create_delete(self, value: object) -> Instruction:
         return create_instruction("DELETE_FAST", argval=value)

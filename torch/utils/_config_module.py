@@ -16,7 +16,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from types import FunctionType, ModuleType
 from typing import Any, Generic, NoReturn, Optional, TYPE_CHECKING, TypeVar
-from typing_extensions import deprecated
+from warnings import deprecated
 
 from torch._utils_internal import justknobs_check
 
@@ -889,7 +889,7 @@ class ConfigModule(ModuleType):
         arg1: str | dict[str, Any] | None = None,
         arg2: Any = None,
         **kwargs: dict[str, Any],
-    ) -> "ContextDecorator":
+    ) -> ContextDecorator:
         """
         Decorator and/or context manager to make temporary changes to a config.  Note that patched settings are thread-local.
 

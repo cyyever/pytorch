@@ -157,7 +157,7 @@ try:
         bitwise_func: Callable[..., Any], bool_func: Callable[..., Any] | None
     ) -> Callable[..., Any]:
         @functools.wraps(bitwise_func)
-        def wrapper(self: "_Z3Ops", *args: z3.ExprRef) -> Any:
+        def wrapper(self: _Z3Ops, *args: z3.ExprRef) -> Any:
             if bool_func is not None and all(
                 isinstance(arg, z3.BoolRef) for arg in args
             ):
@@ -177,7 +177,7 @@ try:
     class _Z3Ops:
         # Validator used for adding assertions as needed.
         # e.g. div(a, b) requires b != 0.
-        validator: "TranslationValidator"
+        validator: TranslationValidator
 
         # The 2 functions below are used for conditionally casting between
         # integer and reals.
@@ -278,7 +278,7 @@ try:
     #   2. Calls an operation that corresponds to 'op', but works with Z3
     #      inhabitants (left as is if it works as is)
     def z3op(
-        op: Callable[..., Any], validator: "TranslationValidator"
+        op: Callable[..., Any], validator: TranslationValidator
     ) -> Callable[..., Any]:
         # Operations that have booleans as their argument.
         # This is needed because the argument of some FX nodes were
@@ -357,7 +357,7 @@ try:
     # input.
     class PopulateValidator(torch.fx.Interpreter):
         def __init__(
-            self, graph: torch.fx.Graph, validator: "TranslationValidator"
+            self, graph: torch.fx.Graph, validator: TranslationValidator
         ) -> None:
             # Reference to the translation validator.
             self.validator = validator
@@ -397,7 +397,7 @@ try:
 
         def __init__(
             self,
-            validator: "TranslationValidator",
+            validator: TranslationValidator,
         ) -> None:
             self._validator = validator
             self._ops = _Z3Ops(self._validator)
@@ -568,7 +568,7 @@ try:
                 log.debug("add source guard: %s", z3str(e))
             self._source_exprs.add(e)
 
-        def add_target_expr(self, e: "sympy.logic.boolalg.Boolean") -> None:
+        def add_target_expr(self, e: sympy.logic.boolalg.Boolean) -> None:
             self._check_freesymbols(e)
             z3expr = self.to_z3_boolean_expr(e)
             if e not in self._target_exprs:
@@ -762,7 +762,7 @@ _assert_z3_installed_if_tv_set()
 # As guards are added by ShapeEnv.evaluate_expr calls, some simplification errors
 # might be silently happening. This function tries to nail down exactly at which
 # point things went wrong from a validation perspective.
-def bisect(shape_env: "ShapeEnv") -> None:
+def bisect(shape_env: ShapeEnv) -> None:
     from torch.fx.experimental.recording import (
         FakeTensorMeta,
         replay_shape_env_events,
@@ -770,7 +770,6 @@ def bisect(shape_env: "ShapeEnv") -> None:
     )
     from torch.fx.experimental.symbolic_shapes import (
         CURRENT_NODE_KEY,
-        ShapeEnv,
         SHAPEENV_EVENT_KEY,
     )
 
@@ -823,7 +822,7 @@ def bisect(shape_env: "ShapeEnv") -> None:
 
     # Checks whether the given shape_env fails when produce_guards is called.
     def check_shapeenv_fails(
-        shape_env: ShapeEnv, tracked_fakes: list["TrackedFake"] | None
+        shape_env: ShapeEnv, tracked_fakes: list[TrackedFake] | None
     ) -> ValidationException | None:
         if tracked_fakes is None:
             raise AssertionError("tracked_fakes is None")

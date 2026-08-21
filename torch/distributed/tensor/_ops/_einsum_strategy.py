@@ -38,7 +38,7 @@ class EinsumDims:
         return input_dims, output_dim
 
     @classmethod
-    def parse_dims(cls, input_dims: list[str], output_dim: str) -> "EinsumDims":
+    def parse_dims(cls, input_dims: list[str], output_dim: str) -> EinsumDims:
         """
         Parse the dims and extract the contracting, batch, and free dimensions
         for the left and right hand sides.

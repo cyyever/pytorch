@@ -94,7 +94,7 @@ class GraphModuleSerializableCallable(SerializableCallable):
 
     @classmethod
     def serialize_compile_artifacts(
-        cls, fn: "GraphModuleSerializableCallable"
+        cls, fn: GraphModuleSerializableCallable
     ) -> bytes:
         from torch.fx._graph_pickler import GraphPickler, Options
 
@@ -160,7 +160,7 @@ class BundledAOTAutogradSerializableCallable(SerializableCallable):
 
     @classmethod
     def serialize_compile_artifacts(
-        cls, fn: "BundledAOTAutogradSerializableCallable"
+        cls, fn: BundledAOTAutogradSerializableCallable
     ) -> bytes:
         from torch._higher_order_ops.triton_kernel_wrap import kernel_side_table
 

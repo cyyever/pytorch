@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, TYPE_CHECKING
 
 from ...kernel.mm_common import addmm_epilogue

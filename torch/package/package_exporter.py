@@ -812,9 +812,9 @@ class PackageExporter:
 
     def intern(
         self,
-        include: "GlobPattern",
+        include: GlobPattern,
         *,
-        exclude: "GlobPattern" = (),
+        exclude: GlobPattern = (),
         allow_empty: bool = True,
     ):
         """Specify modules that should be packaged. A module must match some ``intern`` pattern in order to be
@@ -838,9 +838,9 @@ class PackageExporter:
 
     def mock(
         self,
-        include: "GlobPattern",
+        include: GlobPattern,
         *,
-        exclude: "GlobPattern" = (),
+        exclude: GlobPattern = (),
         allow_empty: bool = True,
     ):
         """Replace some required modules with a mock implementation.  Mocked modules will return a fake
@@ -879,9 +879,9 @@ class PackageExporter:
 
     def extern(
         self,
-        include: "GlobPattern",
+        include: GlobPattern,
         *,
-        exclude: "GlobPattern" = (),
+        exclude: GlobPattern = (),
         allow_empty: bool = True,
     ):
         """Include ``module`` in the list of external modules the package can import.
@@ -908,7 +908,7 @@ class PackageExporter:
             _ModuleProviderAction.EXTERN, allow_empty
         )
 
-    def deny(self, include: "GlobPattern", *, exclude: "GlobPattern" = ()):
+    def deny(self, include: GlobPattern, *, exclude: GlobPattern = ()):
         """Blocklist modules whose names match the given glob patterns from the list of modules the package can import.
         If a dependency on any matching packages is found, a :class:`PackagingError` is raised.
 

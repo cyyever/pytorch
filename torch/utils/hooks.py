@@ -62,7 +62,7 @@ class RemovableHandle:
         else:
             self.extra_dict_ref = tuple(weakref.ref(d) for d in state[2])
 
-    def __enter__(self) -> "RemovableHandle":
+    def __enter__(self) -> RemovableHandle:
         return self
 
     def __exit__(self, type: Any, value: Any, tb: Any) -> None:

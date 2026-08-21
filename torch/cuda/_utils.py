@@ -358,7 +358,7 @@ class _CudaModule:
         self._module = module
         self._kernels: dict[str, _CudaKernel] = {}
 
-    def __getattr__(self, name: str) -> "_CudaKernel":
+    def __getattr__(self, name: str) -> _CudaKernel:
         if name in self._kernels:
             return self._kernels[name]
 
@@ -539,7 +539,7 @@ class _CudaKernel:
 
 def _cuda_load_module(
     ptx: str | bytes, kernel_names: list[str] | None = None
-) -> _CudaModule | dict[str, "_CudaKernel"]:
+) -> _CudaModule | dict[str, _CudaKernel]:
     """
     Loads a CUDA module from PTX code and returns a module object that can access kernels.
 

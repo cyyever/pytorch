@@ -1,6 +1,6 @@
 # Copyright (c) 2025, Tri Dao.
 
-from typing import Tuple, get_origin
+from typing import get_origin
 from functools import lru_cache
 from dataclasses import dataclass, fields
 
@@ -83,7 +83,7 @@ def get_device_multiprocessor_count(device_id: int = 0) -> int:
 @lru_cache
 def get_max_active_clusters(
     cluster_size: int,
-    device_capacity: Tuple[int, int] | None = None,
+    device_capacity: tuple[int, int] | None = None,
     device_id: int = 0,
 ) -> int:
     if device_capacity is None:
@@ -95,7 +95,7 @@ def get_max_active_clusters(
     return cutlass.utils.HardwareInfo(device_id).get_max_active_clusters(cluster_size=cluster_size)
 
 
-def _parse_arch_str(arch_str: str) -> Tuple[int, int]:
+def _parse_arch_str(arch_str: str) -> tuple[int, int]:
     """Parse arch string (e.g. 'sm_90', 'sm90', '90', 'sm_100a') to (major, minor) tuple."""
     match = re.match(r"^(?:sm_?)?(\d+)(\d)([af]?)$", arch_str.strip(), re.IGNORECASE)
     if not match:
@@ -105,7 +105,7 @@ def _parse_arch_str(arch_str: str) -> Tuple[int, int]:
 
 
 @lru_cache
-def _get_device_capacity_cached(device: torch.device = None) -> Tuple[int, int]:
+def _get_device_capacity_cached(device: torch.device = None) -> tuple[int, int]:
     """Return (major, minor) device capability.
 
     Override with QUACK_ARCH (e.g. 'sm_90' or '90') for CPU-only compilation
@@ -119,7 +119,7 @@ def _get_device_capacity_cached(device: torch.device = None) -> Tuple[int, int]:
 
 def get_device_capacity(
     device: torch.device | torch.Tensor | None = None,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Return (major, minor) device capability.
 
     Override with QUACK_ARCH (e.g. 'sm_90' or '90') for CPU-only compilation

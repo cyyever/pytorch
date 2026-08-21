@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import contextlib
 import functools
@@ -10,7 +9,7 @@ import warnings
 import weakref
 from collections import defaultdict
 from typing import *  # noqa: F403
-from typing_extensions import Self
+from typing import Self
 import enum
 from weakref import ReferenceType
 

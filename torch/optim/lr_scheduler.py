@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 r"""Learning Rate Scheduler."""
 
-from __future__ import annotations
 
 import math
 import types
@@ -10,7 +9,7 @@ from bisect import bisect_right
 from collections import Counter
 from functools import partial, wraps
 from typing import Any, cast, Literal, SupportsFloat, TYPE_CHECKING, TypedDict
-from typing_extensions import override, Self
+from typing import override, Self
 from weakref import ref
 
 from torch import inf, Tensor

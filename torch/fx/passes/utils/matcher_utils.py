@@ -50,7 +50,7 @@ class InternalMatch:
     # only available if the matcher is `SubgraphMatcherWithNameNodesMap`
     name_node_map: dict[str, Node] = field(default_factory=dict)
 
-    def __copy__(self) -> "InternalMatch":
+    def __copy__(self) -> InternalMatch:
         return InternalMatch(
             anchors=self.anchors,
             nodes_map=self.nodes_map.copy(),

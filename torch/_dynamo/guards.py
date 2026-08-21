@@ -15,7 +15,6 @@ maintaining correctness by detecting when recompilation is necessary due to chan
 program state, tensor properties, or control flow.
 """
 
-from __future__ import annotations
 
 import ast
 import builtins
@@ -40,7 +39,8 @@ from contextlib import contextmanager
 from copy import deepcopy
 from inspect import currentframe
 from typing import Any, cast, NamedTuple, NoReturn, TYPE_CHECKING
-from typing_extensions import LiteralString, TypeAliasType, TypeVar
+from typing import TypeAliasType, TypeVar
+from typing import LiteralString
 from weakref import ReferenceType
 
 import torch
@@ -334,7 +334,7 @@ class GuardManagerWrapper:
         self.diff_guard_sources: OrderedSet[str] = OrderedSet()
 
     @contextmanager
-    def _preserve_printed_relational_guards(self) -> Generator[None, None, None]:
+    def _preserve_printed_relational_guards(self) -> Generator[None]:
         self.printed_relational_guards = set()
         try:
             yield
@@ -4027,7 +4027,7 @@ class PyExprCSEPass:
     def __init__(self) -> None:
         self._counter = 0
         self._config = self.Config(
-            expr_count=collections.defaultdict(lambda: 0), expr_to_name={}
+            expr_count=collections.defaultdict(int), expr_to_name={}
         )
 
     def _new_var(self, prefix: str = "_var") -> str:
@@ -5698,7 +5698,7 @@ def guard_error_hook(
 set_guard_error_hook(guard_error_hook)
 
 
-def unique(seq: Sequence[T]) -> Generator[T, None, None]:
+def unique(seq: Sequence[T]) -> Generator[T]:
     seen = set()
     for x in seq:
         if x not in seen:

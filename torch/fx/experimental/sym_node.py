@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 """
 This file does three things:
 - Contains the definition of SymNode

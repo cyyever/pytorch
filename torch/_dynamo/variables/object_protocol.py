@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 def vt_identity_compare(
     left: VariableTracker,
     right: VariableTracker,
-) -> "VariableTracker | None":
+) -> VariableTracker | None:
     """Try to determine Python identity (left is right) at trace time.
 
     Returns ConstantVariable(True/False) if determinable, else None.
@@ -111,7 +111,7 @@ def vt_identity_compare(
 
 
 def binop_type_error(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     op_symbol: str,
@@ -342,7 +342,7 @@ def pycallable_check(obj_type: type) -> bool:
 
 
 def pyiter_send(
-    tx: "InstructionTranslatorBase", iter_: VariableTracker, arg: VariableTracker
+    tx: InstructionTranslatorBase, iter_: VariableTracker, arg: VariableTracker
 ) -> VariableTracker:
     """Implements PyIter_Send semantics for VariableTracker objects.
 
@@ -357,8 +357,8 @@ def pyiter_send(
 
 
 def pymapping_size(
-    tx: "InstructionTranslatorBase", obj: "VariableTracker"
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker
+) -> VariableTracker:
     # ref: https://github.com/python/cpython/blob/v3.13.3/Objects/abstract.c#L2308-L2330
     if obj.tp_as_mapping.mp_length:
         return obj.mp_length_impl(tx)
@@ -370,8 +370,8 @@ def pymapping_size(
 
 
 def generic_size(
-    tx: "InstructionTranslatorBase", obj: "VariableTracker"
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker
+) -> VariableTracker:
     # ref: https://github.com/python/cpython/blob/v3.13.3/Objects/abstract.c#L53-L69
     """
     Implements PyObject_Size/PyObject_Length semantics for VariableTracker objects.
@@ -384,7 +384,7 @@ def generic_size(
 
 
 def generic_is_true(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyObject_IsTrue.
 
@@ -425,7 +425,7 @@ _repr_running: set[int] = set()
 
 
 def generic_repr(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyObject_Repr with Py_ReprEnter/Py_ReprLeave cycle detection.
 
@@ -459,8 +459,8 @@ def generic_repr(
 
 
 def generic_str(
-    tx: "InstructionTranslatorBase", obj: "VariableTracker"
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker
+) -> VariableTracker:
     """Mirrors PyObject_Str semantics in Dynamo.
 
     https://github.com/python/cpython/blob/v3.13.3/Objects/object.c#L781-L829
@@ -493,7 +493,7 @@ def generic_str(
 
 
 def generic_getitem(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     obj: VariableTracker,
     key: VariableTracker,
 ) -> VariableTracker:
@@ -536,7 +536,7 @@ def generic_getitem(
 
 
 def pysequence_getitem(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     obj: VariableTracker,
     index: VariableTracker,
 ) -> VariableTracker:
@@ -568,7 +568,7 @@ def pysequence_getitem(
 
 
 def pysequence_setitem(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     s: VariableTracker,
     i: VariableTracker,
     o: VariableTracker,
@@ -594,7 +594,7 @@ def pysequence_setitem(
 
 
 def generic_setitem(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     o: VariableTracker,
     key: VariableTracker,
     value: VariableTracker,
@@ -618,7 +618,7 @@ def generic_setitem(
 
 
 def pysequence_delitem(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     s: VariableTracker,
     i: VariableTracker,
 ) -> VariableTracker:
@@ -643,7 +643,7 @@ def pysequence_delitem(
 
 
 def generic_delitem(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     o: VariableTracker,
     key: VariableTracker,
 ) -> VariableTracker:
@@ -666,7 +666,7 @@ def generic_delitem(
 
 
 def pynumber_int(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyNumber_Long (int(x) dispatch).
 
@@ -712,7 +712,7 @@ def pynumber_int(
 
 
 def pylong_from_base(
-    tx: "InstructionTranslatorBase", x: VariableTracker, obase: VariableTracker
+    tx: InstructionTranslatorBase, x: VariableTracker, obase: VariableTracker
 ) -> VariableTracker | None:
     """Mirrors the explicit-base path of long_new_impl (int(x, base)).
 
@@ -751,7 +751,7 @@ def pylong_from_base(
 
 
 def pynumber_float(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyNumber_Float (float(x) dispatch).
 
@@ -796,7 +796,7 @@ def pynumber_float(
 
 
 def getindex(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     obj: VariableTracker,
     arg: VariableTracker,
 ) -> VariableTracker:
@@ -811,7 +811,7 @@ def getindex(
     return i
 
 
-def pylong_as_ssize_t(tx: "InstructionTranslatorBase", obj: VariableTracker) -> int:
+def pylong_as_ssize_t(tx: InstructionTranslatorBase, obj: VariableTracker) -> int:
     """Mirrors PyLong_AsSsize_t: requires an int (or subclass).
     values outside the Py_ssize_t range raise OverflowError.
 
@@ -832,7 +832,7 @@ def pylong_as_ssize_t(tx: "InstructionTranslatorBase", obj: VariableTracker) -> 
 
 
 def pynumber_as_ssize_t(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     item: VariableTracker,
     err: type[Exception] | None = IndexError,
 ) -> VariableTracker:
@@ -870,8 +870,8 @@ def pynumber_as_ssize_t(
 
 
 def pynumber_index(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker
+) -> VariableTracker:
     """Mirrors PyNumber_Index (index(x) dispatch)."""
 
     if obj.tp_as_number.nb_index is None:
@@ -892,7 +892,7 @@ def pynumber_index(
 
 
 def pynumber_tobase(
-    tx: "InstructionTranslatorBase", obj: VariableTracker, base: int
+    tx: InstructionTranslatorBase, obj: VariableTracker, base: int
 ) -> VariableTracker | None:
     """Mirrors PyNumber_ToBase (bin/oct/hex dispatch).
 
@@ -908,8 +908,8 @@ def pynumber_tobase(
 
 
 def pyiter_next(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker
+) -> VariableTracker:
     """
     Implements PyIter_Next / tp_iternext semantics for VariableTracker objects.
 
@@ -927,7 +927,7 @@ def pyiter_next(
 
 
 def pynumber_negative(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyNumber_Negative.
 
@@ -949,7 +949,7 @@ def pynumber_negative(
 
 
 def pynumber_positive(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyNumber_Positive.
 
@@ -971,7 +971,7 @@ def pynumber_positive(
 
 
 def pynumber_absolute(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyNumber_Absolute.
 
@@ -999,7 +999,7 @@ def vt_is_iterable(obj: VariableTracker) -> bool:
 
 
 def pynumber_invert(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """Mirrors PyNumber_Invert.
 
@@ -1021,8 +1021,8 @@ def pynumber_invert(
 
 
 def generic_getiter(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker
+) -> VariableTracker:
     """
     Implements PyObject_GetIter semantics for VariableTracker objects.
     Routes to obj.tp_iter_impl(tx), the tp_iter slot on the object's type.
@@ -1118,7 +1118,7 @@ def is_python_subtype(w: VariableTracker, v: VariableTracker) -> bool:
 
 
 def binary_op1(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     op_slot: str,
@@ -1191,7 +1191,7 @@ def binary_op1(
 
 
 def binary_op(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     op_slot: str,
@@ -1208,7 +1208,7 @@ def binary_op(
 
 
 def ternary_op(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     z: VariableTracker | None,
@@ -1273,7 +1273,7 @@ def ternary_op(
 
 
 def ternary_iop(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     z: VariableTracker | None,
@@ -1308,7 +1308,7 @@ def ternary_iop(
 
 
 def binary_iop1(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     iop_slot: str,
@@ -1327,7 +1327,7 @@ def binary_iop1(
 
 
 def binary_iop(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     iop_slot: str,
@@ -1347,7 +1347,7 @@ def binary_iop(
 
 # add / inplace add needs special handling
 def pynumber_add(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
 ) -> VariableTracker:
@@ -1364,7 +1364,7 @@ def pynumber_add(
 
 
 def pynumber_inplace_add(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
 ) -> VariableTracker:
@@ -1396,7 +1396,7 @@ def pynumber_inplace_add(
 
 
 def pysequence_repeat(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     seq: VariableTracker,
     n: VariableTracker,
 ) -> VariableTracker:
@@ -1419,7 +1419,7 @@ def pysequence_repeat(
 
 
 def pysequence_inplace_repeat(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     seq: VariableTracker,
     n: VariableTracker,
 ) -> VariableTracker:
@@ -1440,7 +1440,7 @@ def pysequence_inplace_repeat(
 
 
 def validate_sequence_repeat_count(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     count: VariableTracker,
 ) -> None:
     n = count.as_python_constant()
@@ -1453,7 +1453,7 @@ def validate_sequence_repeat_count(
 
 
 def pynumber_multiply(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
 ) -> VariableTracker:
@@ -1481,7 +1481,7 @@ def pynumber_multiply(
 
 
 def pynumber_inplace_multiply(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
 ) -> VariableTracker:
@@ -1513,7 +1513,7 @@ def pynumber_inplace_multiply(
 
 
 def pynumber_matrix_multiply(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
 ) -> VariableTracker:
@@ -1522,7 +1522,7 @@ def pynumber_matrix_multiply(
 
 
 def pynumber_inplace_matrix_multiply(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
 ) -> VariableTracker:
@@ -1573,7 +1573,7 @@ def pynumber_inplace_matrix_multiply(
 
 
 def slot_wrapper_mul(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     self: VariableTracker,
     other: VariableTracker,
     reverse: bool = False,
@@ -1595,7 +1595,7 @@ def slot_wrapper_mul(
 
 
 def slot_wrapper_imul(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     self: VariableTracker,
     other: VariableTracker,
 ) -> VariableTracker:
@@ -1631,7 +1631,7 @@ def slot_wrapper_imul(
 
 
 def slot_wrapper_add(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     self: VariableTracker,
     other: VariableTracker,
     reverse: bool = False,
@@ -1652,7 +1652,7 @@ def slot_wrapper_add(
 
 
 def slot_wrapper_iadd(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     self: VariableTracker,
     other: VariableTracker,
 ) -> VariableTracker:
@@ -1728,7 +1728,7 @@ is_richcompare_not_implemented = is_nb_not_implemented
 
 def object_richcompare(
     self: VariableTracker,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     other: VariableTracker,
     op: str,
 ) -> VariableTracker:
@@ -1758,7 +1758,7 @@ def object_richcompare(
 
 def python_constant_richcompare_impl(
     self: VariableTracker,
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     other: VariableTracker,
     op: str,
 ) -> VariableTracker:
@@ -1795,7 +1795,7 @@ _OP_STR: dict[str, str] = {
 
 
 def generic_richcompare(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     op: str,
@@ -1867,7 +1867,7 @@ def generic_richcompare(
 
 
 def generic_richcompare_bool(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     v: VariableTracker,
     w: VariableTracker,
     op: str,
@@ -1891,7 +1891,7 @@ def generic_richcompare_bool(
 
 
 def generic_hash_impl(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> tuple[int, bool]:
     """Internal API: compute hash as (value, is_fake).
 
@@ -1903,7 +1903,7 @@ def generic_hash_impl(
 
 
 def generic_hash(
-    tx: "InstructionTranslatorBase", obj: VariableTracker
+    tx: InstructionTranslatorBase, obj: VariableTracker
 ) -> VariableTracker:
     """User-facing API: mirrors PyObject_Hash, returns a VariableTracker.
 
@@ -1921,8 +1921,8 @@ def generic_hash(
 
 
 def pysequence_contains(
-    tx: "InstructionTranslatorBase", obj: "VariableTracker", item: "VariableTracker"
-) -> "VariableTracker":
+    tx: InstructionTranslatorBase, obj: VariableTracker, item: VariableTracker
+) -> VariableTracker:
     """
     Implements PySequence_Contains semantics for VariableTracker objects.
 
@@ -1953,7 +1953,7 @@ _CONSTANT_FOLD_SUBCLASSCHECK_METACLASSES: tuple[type, ...] = (
 
 
 def generic_issubclass(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     derived: VariableTracker,
     cls: VariableTracker,
 ) -> VariableTracker:
@@ -2100,12 +2100,12 @@ def mro_lookup(py_type: type, name: str) -> object:
 
 
 def _resolve_descriptor_get(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     type_attr: object,
     obj: VariableTracker,
     class_vt: VariableTracker,
-    source: "Source | None",
-) -> "VariableTracker | None":
+    source: Source | None,
+) -> VariableTracker | None:
     """Invoke tp_descr_get on a type attribute if it's a descriptor.
 
     Handles all descriptor types that have dedicated VTs with
@@ -2176,7 +2176,7 @@ def _has_custom_call_method(obj: VariableTracker) -> bool:
 
 
 def object_generic_getattr(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     obj: VariableTracker,
     name: str,
 ) -> VariableTracker:
@@ -2260,10 +2260,10 @@ def object_generic_getattr(
 
 
 def generic_getattr(
-    tx: "InstructionTranslatorBase",
+    tx: InstructionTranslatorBase,
     obj: VariableTracker,
     name: str,
-    default: "VariableTracker | object" = _NO_DEFAULT,
+    default: VariableTracker | object = _NO_DEFAULT,
 ) -> VariableTracker:
     """Dynamo's PyObject_GetAttr: attribute access dispatch.
 

@@ -221,7 +221,7 @@ class NumpyCompatNormalization:
         "other": ("x2",),
     }
     inverse_mapping: dict[str, str]
-    cache: dict["torch.fx.graph.Target", OrderedSet[str]]
+    cache: dict[torch.fx.graph.Target, OrderedSet[str]]
 
     def __init__(self) -> None:
         self.cache = {}  # callable -> tuple of replaceable args e.g. ["axis"]

@@ -938,7 +938,7 @@ class MLPStack(nn.Sequential):
         dp_mesh: DeviceMesh,
         use_activation_checkpointing: bool,
         **fsdp_kwargs,
-    ) -> "MLPStack":
+    ) -> MLPStack:
         parallelize_plan = {
             # Pass `use_local_output=False` to keep as DTensor to preserve
             # uneven activation dims

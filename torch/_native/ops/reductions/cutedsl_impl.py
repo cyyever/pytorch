@@ -37,7 +37,6 @@ disabled, no dispatcher override is installed. When enabled, accepted calls
 run the CuTeDSL kernel and rejected calls fall through to unchanged ATen.
 """
 
-from __future__ import annotations
 
 import os
 

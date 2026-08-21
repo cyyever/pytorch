@@ -101,7 +101,7 @@ class CustomDecompTable(dict[torch._ops.OperatorBase, Callable]):
         self._materialize_if_needed()
         return self.decomp_table.__reversed__()
 
-    def copy(self) -> "CustomDecompTable":
+    def copy(self) -> CustomDecompTable:
         new_dict = CustomDecompTable()
         new_dict.decomp_table = self.decomp_table.copy()
         new_dict.deleted_custom_ops = self.deleted_custom_ops.copy()

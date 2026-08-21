@@ -22,7 +22,6 @@ a custom frame evaluation function that gets called for every Python frame, allo
 us to detect PyTorch operations and trigger compilation as needed.
 """
 
-from __future__ import annotations
 
 import atexit
 import contextlib
@@ -209,7 +208,7 @@ _force_eager_nested_compile = threading.local()
 
 
 @contextlib.contextmanager
-def _use_eager_on_nested_compile() -> Generator[None, None, None]:
+def _use_eager_on_nested_compile() -> Generator[None]:
     """Run torch.compile wrappers eagerly inside compiler-internal tracing."""
     prior = getattr(_force_eager_nested_compile, "depth", 0)
     _force_eager_nested_compile.depth = prior + 1
@@ -255,7 +254,7 @@ def get_example_inputs(key: str) -> list[Any]:
 
 
 @contextlib.contextmanager
-def _set_in_optimized_module() -> Generator[None, None, None]:
+def _set_in_optimized_module() -> Generator[None]:
     # Set in dynamo's OptimizedModule forward, to have better coverage than is_compiling().
     # Prevents graph-breaking forward hooks from being registered & traced.
     # TODO(pianpwk): subsume this flag with better is_compiling() coverage
@@ -778,7 +777,7 @@ def make_set_enable_dynamic(enable: bool) -> Any:
 
 
 @contextlib.contextmanager
-def set_enable_dynamic(enable: bool) -> Generator[None, None, None]:
+def set_enable_dynamic(enable: bool) -> Generator[None]:
     cleanup = make_set_enable_dynamic(enable)()
     try:
         yield

@@ -97,7 +97,7 @@ for k in dir(typing):
     _type_eval_globals[k] = getattr(typing, k)
 
 
-def _torchscript_type_to_python_type(ts_type: "torch._C.JitType") -> Any:
+def _torchscript_type_to_python_type(ts_type: torch._C.JitType) -> Any:
     """
     Convert a TorchScript type to a Python type (including subtypes) via
     eval'ing the annotation_str. _type_eval_globals sets up expressions
@@ -183,8 +183,8 @@ def _torchscript_schema_to_signature(
 @compatibility(is_backward_compatible=False)
 def check_for_mutable_operation(
     target: Callable[..., Any],
-    args: tuple["Argument", ...],
-    kwargs: dict[str, "Argument"],
+    args: tuple[Argument, ...],
+    kwargs: dict[str, Argument],
 ) -> None:
     signatures, schemas = get_signature_for_torch_op(target, return_schemas=True)
 

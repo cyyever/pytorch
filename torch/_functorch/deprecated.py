@@ -7,7 +7,6 @@ NB: We don't use *args, **kwargs in the signatures because that changes the
 documentation.
 """
 
-from __future__ import annotations
 
 import textwrap
 import warnings

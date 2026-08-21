@@ -66,7 +66,7 @@ class _ExportPassBaseDeprecatedDoNotUse(PassBase):
 
     class ExportTracer(PythonKeyTracer):
         def __init__(
-            self, callback: "_ExportPassBaseDeprecatedDoNotUse", codegen: CodeGen
+            self, callback: _ExportPassBaseDeprecatedDoNotUse, codegen: CodeGen
         ) -> None:
             super().__init__()
             self.callback = callback
@@ -188,7 +188,7 @@ class _ExportPassBaseDeprecatedDoNotUse(PassBase):
 
     class ExportInterpreter(fx.Interpreter):
         def __init__(
-            self, callback: "_ExportPassBaseDeprecatedDoNotUse", gm: fx.GraphModule
+            self, callback: _ExportPassBaseDeprecatedDoNotUse, gm: fx.GraphModule
         ) -> None:
             super().__init__(gm)
             self.callback = callback

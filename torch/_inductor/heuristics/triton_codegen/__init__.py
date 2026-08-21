@@ -8,7 +8,6 @@ Device dispatch uses the shared registry in heuristics/registry.py
 with name-based keys (e.g., "pointwise").
 """
 
-from __future__ import annotations
 
 from torch._inductor.heuristics.registry import (
     CodegenConfigHeuristics,

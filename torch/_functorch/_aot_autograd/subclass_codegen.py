@@ -68,7 +68,7 @@ class _OutputWrapState:
 
 def _maybe_wait_async_collective_tensor(
     x: object,
-    AsyncCollectiveTensor: type["AsyncCollectiveTensor"],
+    AsyncCollectiveTensor: type[AsyncCollectiveTensor],
 ) -> object:
     """Wait on ACT values and leave all other runtime inputs unchanged."""
     if isinstance(x, AsyncCollectiveTensor):

@@ -22,7 +22,7 @@ class JobConfig:
     A helper class to manage the script configuration.
     """
 
-    def __init__(self: "JobConfig"):
+    def __init__(self: JobConfig):
         self.parser = argparse.ArgumentParser(
             description="PyTorch Flight recorder analyzing script."
         )
@@ -88,7 +88,7 @@ class JobConfig:
             help="The number of ranks in 1 torchft replica group. Must be specified if --transform-ft is True",
         )
 
-    def parse_args(self: "JobConfig", args: Sequence[str] | None) -> argparse.Namespace:
+    def parse_args(self: JobConfig, args: Sequence[str] | None) -> argparse.Namespace:
         # pyrefly: ignore [bad-assignment]
         args = self.parser.parse_args(args)
         # pyrefly: ignore [missing-attribute]

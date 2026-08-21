@@ -456,7 +456,7 @@ class OuterLoopFusedSchedulerNode(FusedSchedulerNode):
 
     def __init__(
         self,
-        scheduler: "Scheduler",
+        scheduler: Scheduler,
         outer_fused_nodes: list[FusedSchedulerNode | SchedulerNode],
         outer_loop_fusion_depth,
     ):
@@ -4972,7 +4972,7 @@ class CppKernelProxy(CppKernel):
                     code.splice(kernel.gen_body())
 
     def aggregate_reduction_buffers(
-        self, inner_loop_reduction_outer_not: bool, outer_loop: Optional["LoopLevel"]
+        self, inner_loop_reduction_outer_not: bool, outer_loop: Optional[LoopLevel]
     ):
         """
         CppKernel/CppVecKernel/CppTile2dKernel have reduction buffers themselves.
@@ -4980,7 +4980,7 @@ class CppKernelProxy(CppKernel):
         under CppKernelProxy.
         """
 
-        def aggregate_reduction_prefix_suffix(outer_loop: "LoopLevel"):
+        def aggregate_reduction_prefix_suffix(outer_loop: LoopLevel):
             if len(self.kernels) < 2:
                 raise AssertionError("expected len(self.kernels) >= 2")
             main_loop_kernel = self.kernels[0]

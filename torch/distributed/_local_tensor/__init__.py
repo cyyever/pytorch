@@ -188,7 +188,7 @@ def _is_inplace_op(op: OpOverload | Callable[..., Any]) -> bool:
     )
 
 
-def _int_on_rank(i: "int | LocalIntNode | ConstantIntNode", r: int) -> int:
+def _int_on_rank(i: int | LocalIntNode | ConstantIntNode, r: int) -> int:
     if isinstance(i, LocalIntNode):
         return i._local_ints[r]
     elif isinstance(i, ConstantIntNode):
@@ -426,7 +426,7 @@ class LocalIntNode:
     because often only a SymInt is accepted where we wish to use this.
     """
 
-    def __new__(cls, local_ints: dict[int, int]) -> "ConstantIntNode | LocalIntNode":  # type: ignore[misc]
+    def __new__(cls, local_ints: dict[int, int]) -> ConstantIntNode | LocalIntNode:  # type: ignore[misc]
         if len(set(local_ints.values())) == 1:
             return ConstantIntNode(next(iter(local_ints.values())))
         return super().__new__(cls)
@@ -449,7 +449,7 @@ class LocalIntNode:
     def is_nested_int(self) -> bool:
         return False
 
-    def clone(self) -> "LocalIntNode":
+    def clone(self) -> LocalIntNode:
         return self
 
     def _str(self) -> str:
@@ -471,8 +471,8 @@ class LocalIntNode:
         return False
 
     def sym_max(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {
                 r: max(self._local_ints[r], _int_on_rank(other, r))
@@ -481,8 +481,8 @@ class LocalIntNode:
         )
 
     def sym_min(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {
                 r: min(self._local_ints[r], _int_on_rank(other, r))
@@ -490,90 +490,90 @@ class LocalIntNode:
             }
         )
 
-    def sym_sum(self, other: Sequence[Any]) -> "LocalIntNode | ConstantIntNode":
+    def sym_sum(self, other: Sequence[Any]) -> LocalIntNode | ConstantIntNode:
         t = LocalIntNode(dict.fromkeys(self._local_ints, 0))
         for o in other:
             t = t.add(o)
         return t
 
-    def neg(self) -> "LocalIntNode | ConstantIntNode":
+    def neg(self) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode({r: -self._local_ints[r] for r in self._local_ints})
 
     def add(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {r: self._local_ints[r] + _int_on_rank(other, r) for r in self._local_ints}
         )
 
     def sub(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {r: self._local_ints[r] - _int_on_rank(other, r) for r in self._local_ints}
         )
 
     def mul(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {r: self._local_ints[r] * _int_on_rank(other, r) for r in self._local_ints}
         )
 
     def floordiv(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {r: self._local_ints[r] // _int_on_rank(other, r) for r in self._local_ints}
         )
 
     def mod(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {r: self._local_ints[r] % _int_on_rank(other, r) for r in self._local_ints}
         )
 
     def int_floordiv(
-        self, other: "int | LocalIntNode | ConstantIntNode"
-    ) -> "LocalIntNode | ConstantIntNode":
+        self, other: int | LocalIntNode | ConstantIntNode
+    ) -> LocalIntNode | ConstantIntNode:
         return LocalIntNode(
             {r: self._local_ints[r] // _int_on_rank(other, r) for r in self._local_ints}
         )
 
-    def eq(self, other: "int | LocalIntNode | ConstantIntNode") -> bool | SymBool:
+    def eq(self, other: int | LocalIntNode | ConstantIntNode) -> bool | SymBool:
         r = {self._local_ints[r] == _int_on_rank(other, r) for r in self._local_ints}
         return torch._C._get_constant_bool_symnode(len(r) == 1 and next(iter(r)))
 
-    def ne(self, other: "int | LocalIntNode | ConstantIntNode") -> bool | SymBool:
+    def ne(self, other: int | LocalIntNode | ConstantIntNode) -> bool | SymBool:
         r = {self._local_ints[r] != _int_on_rank(other, r) for r in self._local_ints}
         return torch._C._get_constant_bool_symnode(len(r) > 1 or next(iter(r)))
 
-    def ge(self, other: "int | LocalIntNode | ConstantIntNode") -> bool | SymBool:
+    def ge(self, other: int | LocalIntNode | ConstantIntNode) -> bool | SymBool:
         r = {self._local_ints[r] >= _int_on_rank(other, r) for r in self._local_ints}
         if len(r) != 1:
             raise AssertionError((self, other))
         return torch._C._get_constant_bool_symnode(next(iter(r)))
 
-    def le(self, other: "int | LocalIntNode | ConstantIntNode") -> bool | SymBool:
+    def le(self, other: int | LocalIntNode | ConstantIntNode) -> bool | SymBool:
         r = {self._local_ints[r] <= _int_on_rank(other, r) for r in self._local_ints}
         if len(r) != 1:
             raise AssertionError((self, other))
         return torch._C._get_constant_bool_symnode(next(iter(r)))
 
-    def gt(self, other: "int | LocalIntNode | ConstantIntNode") -> bool | SymBool:
+    def gt(self, other: int | LocalIntNode | ConstantIntNode) -> bool | SymBool:
         r = {self._local_ints[r] > _int_on_rank(other, r) for r in self._local_ints}
         if len(r) != 1:
             raise AssertionError((self, other))
         return torch._C._get_constant_bool_symnode(next(iter(r)))
 
-    def lt(self, other: "int | LocalIntNode | ConstantIntNode") -> bool | SymBool:
+    def lt(self, other: int | LocalIntNode | ConstantIntNode) -> bool | SymBool:
         r = {self._local_ints[r] < _int_on_rank(other, r) for r in self._local_ints}
         if len(r) != 1:
             raise AssertionError((self, other))
         return torch._C._get_constant_bool_symnode(next(iter(r)))
 
-    def wrap_int(self, num: int) -> "LocalIntNode | ConstantIntNode":
+    def wrap_int(self, num: int) -> LocalIntNode | ConstantIntNode:
         return ConstantIntNode(num)
 
 
@@ -946,7 +946,7 @@ class LocalTensor(torch.Tensor):
         cls,
         local_tensors: dict[int, torch.Tensor],
         requires_grad: bool = False,
-    ) -> "LocalTensor":
+    ) -> LocalTensor:
         if any(t.requires_grad for t in local_tensors.values()):
             raise AssertionError(
                 "Internal local_tensors require grad, but we will ignore those autograd graph. "
@@ -995,7 +995,7 @@ class LocalTensor(torch.Tensor):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__()
 
-    def __deepcopy__(self, memo: dict[Any, Any] | None) -> "LocalTensor":
+    def __deepcopy__(self, memo: dict[Any, Any] | None) -> LocalTensor:
         local_tensors_copy = {
             r: copy.deepcopy(t, memo) for r, t in self._local_tensors.items()
         }
@@ -1031,7 +1031,7 @@ class LocalTensor(torch.Tensor):
         flatten_spec: tuple[Any, ...],
         outer_size: torch.Size,
         outer_stride: tuple[int, ...],
-    ) -> "LocalTensor":
+    ) -> LocalTensor:
         if flatten_spec is None:
             raise AssertionError(
                 "Expecting spec to be not None from `__tensor_flatten__` return value!"
@@ -1187,13 +1187,13 @@ class _LocalContiguous(torch.autograd.Function):
 # If set to `True` the LocalTensorMode stack will be created for the whole process,
 # otherwise it will be created for each thread.
 _PROCESS_MODE: bool = True
-_PROCESS_LOCAL_TENSOR_MODE: list["LocalTensorMode"] = []
+_PROCESS_LOCAL_TENSOR_MODE: list[LocalTensorMode] = []
 # When running under local runner each thread must create its own local tensor mode
 # so that they do not interfere with each other.
 _THREAD_LOCAL_TENSOR_MODE: threading.local = threading.local()
 
 
-def get_local_tensor_mode_list() -> list["LocalTensorMode"]:
+def get_local_tensor_mode_list() -> list[LocalTensorMode]:
     global _PROCESS_MODE
     if _PROCESS_MODE:
         global _PROCESS_LOCAL_TENSOR_MODE
@@ -1273,7 +1273,7 @@ class LocalTensorMode(TorchDispatchMode):
         ] = {}
         self._coordinate_cache_lock = threading.Lock()
 
-    def __enter__(self) -> "LocalTensorMode":
+    def __enter__(self) -> LocalTensorMode:
         get_local_tensor_mode_list().append(self)
         self.enable_()
 
@@ -1474,7 +1474,7 @@ class LocalTensorMode(TorchDispatchMode):
         self._disable = False
 
     @contextlib.contextmanager
-    def disable(self) -> Generator[None, None, None]:
+    def disable(self) -> Generator[None]:
         """
         Disables LocalTensorMode temporarily. Primarily is intended to be used to perform
         rank specific computations and merge results back before enabling LocalTensorMode back.
@@ -1746,7 +1746,7 @@ class _LocalDist:
     """
 
     @staticmethod
-    def get_rank(group: "ProcessGroup | None" = None) -> "int | SymInt":
+    def get_rank(group: ProcessGroup | None = None) -> int | SymInt:
         import torch.distributed as dist
 
         lm = enabled_local_tensor_mode()
@@ -1974,7 +1974,7 @@ import threading
 from queue import Queue
 
 
-_LOCAL_RUNNER_MODE: "LocalRunnerMode | None" = None
+_LOCAL_RUNNER_MODE: LocalRunnerMode | None = None
 
 
 class _ExceptionRaisingThread(threading.Thread):
@@ -2028,7 +2028,7 @@ class LocalRunnerMode:
         ]
         self._process_mode = True
 
-    def __enter__(self) -> "LocalRunnerMode":
+    def __enter__(self) -> LocalRunnerMode:
         global _LOCAL_RUNNER_MODE
         if _LOCAL_RUNNER_MODE is not None:
             raise AssertionError("LocalRunnerMode is already running")
@@ -2108,7 +2108,7 @@ class LocalRunnerMode:
             self._run_cond.wait()
 
     @staticmethod
-    def current() -> "LocalRunnerMode":
+    def current() -> LocalRunnerMode:
         global _LOCAL_RUNNER_MODE
         if _LOCAL_RUNNER_MODE is None:
             raise AssertionError("LocalRunnerMode is not enabled")

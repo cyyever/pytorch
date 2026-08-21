@@ -8,7 +8,7 @@ import weakref
 from collections import namedtuple, OrderedDict
 from collections.abc import Callable, Iterator, Mapping
 from typing import Any, Optional, overload, TypeVar, Union
-from typing_extensions import Self
+from typing import Self
 
 import torch
 from torch import device, dtype, memory_format, Tensor
@@ -72,7 +72,7 @@ _global_parameter_registration_hooks: dict[int, Callable] = OrderedDict()
 
 
 class _WrappedHook:
-    def __init__(self, hook: Callable, module: Optional["Module"] = None) -> None:
+    def __init__(self, hook: Callable, module: Optional[Module] = None) -> None:
         self.hook: Callable = hook
         functools.update_wrapper(self, hook)
 
@@ -294,7 +294,7 @@ def register_module_forward_hook(
 
 
 def register_module_backward_hook(
-    hook: Callable[["Module", _grad_t, _grad_t], _grad_t | None],
+    hook: Callable[[Module, _grad_t, _grad_t], _grad_t | None],
 ) -> RemovableHandle:
     r"""Register a backward hook common to all the modules.
 
@@ -323,7 +323,7 @@ def register_module_backward_hook(
 
 
 def register_module_full_backward_pre_hook(
-    hook: Callable[["Module", _grad_t], _grad_t | None],
+    hook: Callable[[Module, _grad_t], _grad_t | None],
 ) -> RemovableHandle:
     r"""Register a backward pre-hook common to all the modules.
 
@@ -350,7 +350,7 @@ def register_module_full_backward_pre_hook(
 
 
 def register_module_full_backward_hook(
-    hook: Callable[["Module", _grad_t, _grad_t], _grad_t | None],
+    hook: Callable[[Module, _grad_t, _grad_t], _grad_t | None],
 ) -> RemovableHandle:
     r"""Register a backward hook common to all the modules.
 
@@ -475,7 +475,7 @@ class Module:
     _load_state_dict_pre_hooks: dict[int, Callable]
     _state_dict_pre_hooks: dict[int, Callable]
     _load_state_dict_post_hooks: dict[int, Callable]
-    _modules: dict[str, Optional["Module"]]
+    _modules: dict[str, Optional[Module]]
     call_super_init: bool = False
     _compiled_call_impl: Callable | None = None
 
@@ -636,7 +636,7 @@ class Module:
                     param = output
             self._parameters[name] = param
 
-    def add_module(self, name: str, module: Optional["Module"]) -> None:
+    def add_module(self, name: str, module: Optional[Module]) -> None:
         r"""Add a child module to the current module.
 
         The module can be accessed as an attribute using the given name.
@@ -664,11 +664,11 @@ class Module:
                 module = output
         self._modules[name] = module
 
-    def register_module(self, name: str, module: Optional["Module"]) -> None:
+    def register_module(self, name: str, module: Optional[Module]) -> None:
         r"""Alias for :func:`add_module`."""
         self.add_module(name, module)
 
-    def get_submodule(self, target: str) -> "Module":
+    def get_submodule(self, target: str) -> Module:
         """Return the submodule given by ``target`` if it exists, otherwise throw an error.
 
         For example, let's say you have an ``nn.Module`` ``A`` that
@@ -734,7 +734,7 @@ class Module:
         return mod
 
     def set_submodule(
-        self, target: str, module: "Module", strict: bool = False
+        self, target: str, module: Module, strict: bool = False
     ) -> None:
         """
         Set the submodule given by ``target`` if it exists, otherwise throw an error.
@@ -1034,7 +1034,7 @@ class Module:
 
         return self
 
-    def apply(self, fn: Callable[["Module"], None]) -> Self:
+    def apply(self, fn: Callable[[Module], None]) -> Self:
         r"""Apply ``fn`` recursively to every submodule (as returned by ``.children()``) as well as self.
 
         Typical use includes initializing the parameters of a model
@@ -1390,7 +1390,7 @@ class Module:
 
     def register_full_backward_pre_hook(
         self,
-        hook: Callable[["Module", _grad_t], _grad_t | None],
+        hook: Callable[[Module, _grad_t], _grad_t | None],
         prepend: bool = False,
     ) -> RemovableHandle:
         r"""Register a backward pre-hook on the module.
@@ -1438,7 +1438,7 @@ class Module:
         return handle
 
     def register_backward_hook(
-        self, hook: Callable[["Module", _grad_t, _grad_t], _grad_t | None]
+        self, hook: Callable[[Module, _grad_t, _grad_t], _grad_t | None]
     ) -> RemovableHandle:
         r"""Register a backward hook on the module.
 
@@ -1465,7 +1465,7 @@ class Module:
 
     def register_full_backward_hook(
         self,
-        hook: Callable[["Module", _grad_t, _grad_t], _grad_t | None],
+        hook: Callable[[Module, _grad_t, _grad_t], _grad_t | None],
         prepend: bool = False,
     ) -> RemovableHandle:
         r"""Register a backward hook on the module.
@@ -1937,7 +1937,7 @@ class Module:
     # It is crucial that the return type is not annotated as `Any`, otherwise type checking
     # on `torch.nn.Module` and all its subclasses is largely disabled as a result. See:
     # https://github.com/pytorch/pytorch/pull/115074
-    def __getattr__(self, name: str) -> Union[Tensor, "Module"]:
+    def __getattr__(self, name: str) -> Union[Tensor, Module]:
         if "_parameters" in self.__dict__:
             _parameters = self.__dict__["_parameters"]
             if name in _parameters:
@@ -1954,7 +1954,7 @@ class Module:
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
 
-    def __setattr__(self, name: str, value: Union[Tensor, "Module"]) -> None:
+    def __setattr__(self, name: str, value: Union[Tensor, Module]) -> None:
         def remove_from(*dicts_or_sets) -> None:
             for d in dicts_or_sets:
                 if name in d:
@@ -2763,7 +2763,7 @@ class Module:
         )
         yield from gen
 
-    def children(self) -> Iterator["Module"]:
+    def children(self) -> Iterator[Module]:
         r"""Return an iterator over immediate children modules.
 
         Yields:
@@ -2772,7 +2772,7 @@ class Module:
         for _name, module in self.named_children():
             yield module
 
-    def named_children(self) -> Iterator[tuple[str, "Module"]]:
+    def named_children(self) -> Iterator[tuple[str, Module]]:
         r"""Return an iterator over immediate children modules, yielding both the name of the module as well as the module itself.
 
         Yields:
@@ -2792,7 +2792,7 @@ class Module:
                 memo.add(module)
                 yield name, module
 
-    def modules(self, remove_duplicate: bool = True) -> Iterator["Module"]:
+    def modules(self, remove_duplicate: bool = True) -> Iterator[Module]:
         r"""Return an iterator over all modules in the network.
 
         Args:
@@ -2825,7 +2825,7 @@ class Module:
 
     def named_modules(
         self,
-        memo: set["Module"] | None = None,
+        memo: set[Module] | None = None,
         prefix: str = "",
         remove_duplicate: bool = True,
     ):

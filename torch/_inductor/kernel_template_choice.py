@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, TYPE_CHECKING
 
 from .heuristics.template.params import DictKernelTemplateParams
@@ -66,12 +64,12 @@ class KernelTemplateChoice:
 
 def make_ktc_generator(
     template: KernelTemplate | ExternKernelChoice,
-    cs: Generator[KernelTemplateParams, None, None],
+    cs: Generator[KernelTemplateParams],
     extra_kwargs: dict[str, Any],
     overrides: dict[str, Any],
     layout: Layout,
     inputs: KernelInputs,
-) -> Generator[KernelTemplateChoice, None, None]:
+) -> Generator[KernelTemplateChoice]:
     """
     Create a generator of KernelTemplateChoice objects for a given template.
 

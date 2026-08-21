@@ -77,7 +77,7 @@ class ShardingSpec(ABC):
     @abstractmethod
     def shard(
         self, tensor: torch.Tensor, src_rank: int = 0, process_group=None
-    ) -> "ShardedTensor":
+    ) -> ShardedTensor:
         """
         Given a global tensor on src_rank, shard this tensor
         across ranks within the process group, return a ShardedTensor.
@@ -179,7 +179,7 @@ class EnumerableShardingSpec(ShardingSpec):
 
     def shard(
         self, tensor: torch.Tensor, src_rank: int = 0, process_group=None
-    ) -> "ShardedTensor":
+    ) -> ShardedTensor:
         # TODO: figure out a generic and efficient way to scatter the shards for EnumerableShardingSpec
         raise NotImplementedError("EnumerableShardingSpec.shard not implemented yet!")
 

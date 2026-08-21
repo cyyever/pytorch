@@ -3,32 +3,32 @@ from collections.abc import Callable
 from torch._utils import CallbackRegistry
 
 
-EventCreationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+EventCreationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA event creation"
 )
-EventDeletionCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+EventDeletionCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA event deletion"
 )
-EventRecordCallbacks: "CallbackRegistry[int, int]" = CallbackRegistry(
+EventRecordCallbacks: CallbackRegistry[int, int] = CallbackRegistry(
     "CUDA event record"
 )
-EventWaitCallbacks: "CallbackRegistry[int, int]" = CallbackRegistry("CUDA event wait")
-MemoryAllocationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+EventWaitCallbacks: CallbackRegistry[int, int] = CallbackRegistry("CUDA event wait")
+MemoryAllocationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA memory allocation"
 )
-MemoryDeallocationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+MemoryDeallocationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA memory deallocation"
 )
-StreamCreationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+StreamCreationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA stream creation"
 )
-DeviceSynchronizationCallbacks: "CallbackRegistry[[]]" = CallbackRegistry(
+DeviceSynchronizationCallbacks: CallbackRegistry[[]] = CallbackRegistry(
     "CUDA device synchronization"
 )
-StreamSynchronizationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+StreamSynchronizationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA stream synchronization"
 )
-EventSynchronizationCallbacks: "CallbackRegistry[int]" = CallbackRegistry(
+EventSynchronizationCallbacks: CallbackRegistry[int] = CallbackRegistry(
     "CUDA event synchronization"
 )
 

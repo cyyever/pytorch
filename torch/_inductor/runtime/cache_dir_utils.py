@@ -45,7 +45,7 @@ def triton_cache_dir(device: int) -> str:
 
 
 @contextmanager
-def temporary_cache_dir(directory: str) -> Generator[None, None, None]:
+def temporary_cache_dir(directory: str) -> Generator[None]:
     from torch._inductor.utils import clear_caches
 
     original = os.environ.get("TORCHINDUCTOR_CACHE_DIR")

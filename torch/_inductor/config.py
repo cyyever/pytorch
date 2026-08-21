@@ -437,8 +437,8 @@ decompose_shard_dim_alltoall = (
 reorder_for_compute_comm_overlap_passes: list[
     str
     | Callable[
-        [list["torch._inductor.scheduler.BaseSchedulerNode"]],
-        list["torch._inductor.scheduler.BaseSchedulerNode"],
+        [list[torch._inductor.scheduler.BaseSchedulerNode]],
+        list[torch._inductor.scheduler.BaseSchedulerNode],
     ]
 ] = []
 
@@ -607,7 +607,7 @@ graph_partition: bool = (
 # regional compilation, and shared memory pool management.
 #
 # See ``torch._inductor.cudagraph_utils.CUDAGraphPolicy`` for the base class.
-cudagraph_policy: "CUDAGraphPolicy | None" = None
+cudagraph_policy: CUDAGraphPolicy | None = None
 
 # register ops upon which inductor should partition the graph. name format should be
 # "namespace::kernel_name" (e.g., aten::mm) for op overload packet, or
@@ -959,7 +959,7 @@ assume_unaligned_fallback_output = (
 #     config.inductor_choices_class = _custom_choices_factory
 #
 # The returned instance must implement uuid() for cache key serialization.
-inductor_choices_class: Callable[[], "InductorChoices"] | None = None
+inductor_choices_class: Callable[[], InductorChoices] | None = None
 
 # fuse even in cases without common reads
 aggressive_fusion = False

@@ -31,7 +31,8 @@ from typing import (
     TypeAlias,
     TypeVar,
 )
-from typing_extensions import deprecated, NotRequired, TypedDict, TypeIs
+from typing import NotRequired, TypedDict, TypeIs
+from warnings import deprecated
 
 import torch
 from torch._C import _DistStoreError as DistStoreError
@@ -722,7 +723,7 @@ def _create_nccl_process_group(
 
 def _nccl2_options(
     backend_options: object | None,
-) -> "ProcessGroupNCCL.Options":
+) -> ProcessGroupNCCL.Options:
     if backend_options is None:
         return ProcessGroupNCCL.Options()
     if not isinstance(backend_options, ProcessGroupNCCL.Options):
@@ -1225,7 +1226,7 @@ class P2POp:
         group: ProcessGroup | None = None,
         tag: int = 0,
         group_peer: int | None = None,
-    ) -> "P2POp":
+    ) -> P2POp:
         """Create and return a new instance of the class."""
         _check_op(op)
         _check_single_tensor(tensor, "tensor")

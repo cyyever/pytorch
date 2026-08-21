@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import warnings
 from contextlib import contextmanager
 from typing import Any, cast, TYPE_CHECKING
@@ -336,7 +334,7 @@ def _try_get_metadata_from_dynamo(
 
 
 @contextmanager
-def _detect_attribute_assignment(mod: torch.nn.Module) -> Generator[None, None, None]:
+def _detect_attribute_assignment(mod: torch.nn.Module) -> Generator[None]:
     # Do not allow assignment of tensor attributes during export unless
     # the attribute is registered as a buffer.
 

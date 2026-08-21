@@ -86,7 +86,7 @@ class _DimHint:
     def STATIC():
         return _DimHint(_DimHintType.STATIC)
 
-    def __call__(self, min=None, max=None) -> "_DimHint":
+    def __call__(self, min=None, max=None) -> _DimHint:
         if not self._factory:
             raise TypeError(f"'{type(self)}' object is not callable")
         if min is not None and min < 0:
@@ -189,7 +189,7 @@ class Dim:
         self.min = _min
         self.max = _max
 
-    def __add__(self, other) -> "Dim":
+    def __add__(self, other) -> Dim:
         # e.g., dim + 1
         if type(other) is not int:
             raise NotImplementedError(
@@ -198,10 +198,10 @@ class Dim:
             )
         return self._derive(lambda x: x + other)
 
-    def __radd__(self, other) -> "Dim":
+    def __radd__(self, other) -> Dim:
         return self + other
 
-    def __sub__(self, other) -> "Dim":
+    def __sub__(self, other) -> Dim:
         # e.g., dim - 1
         if type(other) is not int:
             raise NotImplementedError(
@@ -210,13 +210,13 @@ class Dim:
             )
         return self._derive(lambda x: x - other)
 
-    def __rsub__(self, other) -> "Dim":
+    def __rsub__(self, other) -> Dim:
         raise NotImplementedError(
             f"Attempted to negate {self.__name__}. "
             "(Only increasing linear operations with integer coefficients are supported.)"
         )
 
-    def __mul__(self, other) -> "Dim":
+    def __mul__(self, other) -> Dim:
         # e.g., dim * 2
         if type(other) is not int or other <= 0:
             raise NotImplementedError(
@@ -225,7 +225,7 @@ class Dim:
             )
         return self._derive(lambda x: x * other)
 
-    def __rmul__(self, other) -> "Dim":
+    def __rmul__(self, other) -> Dim:
         return self * other
 
     def _derived_name(self, fn) -> str:
@@ -233,7 +233,7 @@ class Dim:
 
         return str(fn(sympify(self.__name__)))
 
-    def _derive(self, fn) -> "Dim":
+    def _derive(self, fn) -> Dim:
         return _DerivedDim(self._derived_name(fn), self, fn)
 
     @staticmethod
@@ -389,7 +389,7 @@ class _Constraint(_ConstraintTarget):
     """
 
     name: str
-    constraint_range: "StrictMinMaxConstraint"
+    constraint_range: StrictMinMaxConstraint
 
     def _clone_with_range(self, lower=0, upper=None):
         # Import sympy locally
@@ -465,7 +465,7 @@ class _PhantomRoot:
     """
 
     name: str
-    constraint_range: "StrictMinMaxConstraint"
+    constraint_range: StrictMinMaxConstraint
     val: int
 
 
@@ -481,7 +481,7 @@ class _DerivedConstraint(_ConstraintTarget):
     """
 
     name: str
-    constraint_range: "StrictMinMaxConstraint"
+    constraint_range: StrictMinMaxConstraint
     root: _ConstraintTarget | _PhantomRoot
     fn: Callable
 
@@ -531,13 +531,13 @@ class _IntWrapper:
 
 def _process_equalities(
     constraint: Constraint,
-    get_sources: Callable[[int, int], list["Source"]],
-    shape_env: "ShapeEnv",
+    get_sources: Callable[[int, int], list[Source]],
+    shape_env: ShapeEnv,
     names: dict[str, tuple[int, int]],
-    source_pairs: list[tuple["Source", "Source"]],
-    derived_equalities: list[tuple["Source", Union["Source", "Symbol"], Callable]],
-    phantom_symbols: dict[str, "Symbol"],
-    relaxed_sources: set["Source"],
+    source_pairs: list[tuple[Source, Source]],
+    derived_equalities: list[tuple[Source, Union[Source, Symbol], Callable]],
+    phantom_symbols: dict[str, Symbol],
+    relaxed_sources: set[Source],
 ):
     """
     Updates `source_pairs`, `derived_equalities`, and `phantom_symbols` (which become
@@ -1103,13 +1103,13 @@ class AdditionalInputs:
         args and kwargs.
         """
 
-        dynamic_shapes, *other_dynamic_shapes = [
+        dynamic_shapes, *other_dynamic_shapes = (
             _tree_map_with_path(
                 lambda path, t: tuple(t.shape) if isinstance(t, torch.Tensor) else t,
                 _combine_args(m, args, kwargs),
             )
             for args, kwargs in [(args, kwargs), *self._examples]
-        ]
+        )
 
         def _mark_dynamism(v, *other_vs):
             if not all(type(v) is type(other) for other in other_vs):

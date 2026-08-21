@@ -129,7 +129,7 @@ class BaseSetVariable(VariableTracker):
         )
 
     @property
-    def set_items(self) -> set["HashableTracker"]:
+    def set_items(self) -> set[HashableTracker]:
         return set(self.items.keys())
 
     @staticmethod
@@ -172,7 +172,7 @@ class BaseSetVariable(VariableTracker):
         return id(value) != id(other)
 
     def unpack_var_sequence(
-        self, tx: "InstructionTranslatorBase"
+        self, tx: InstructionTranslatorBase
     ) -> list[VariableTracker]:
         return [x.vt for x in self.items]
 
@@ -186,12 +186,12 @@ class BaseSetVariable(VariableTracker):
         return super().clone(**kwargs)
 
     def call_obj_hasattr(
-        self, tx: "InstructionTranslatorBase", name: str
+        self, tx: InstructionTranslatorBase, name: str
     ) -> ConstantVariable:
         return VariableTracker.build(tx, hasattr(self.python_type(), name))
 
     def install_set_contains_guard(
-        self, tx: "InstructionTranslatorBase", args: list[VariableTracker]
+        self, tx: InstructionTranslatorBase, args: list[VariableTracker]
     ) -> None:
         if not self.source:
             return
@@ -215,7 +215,7 @@ class BaseSetVariable(VariableTracker):
 
     def _fast_set_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         fn: Any,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -230,8 +230,8 @@ class BaseSetVariable(VariableTracker):
         return VariableTracker.build(tx, res)
 
     def _iter_operand_keys(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
-    ) -> "Iterator[HashableTracker]":
+        self, tx: InstructionTranslatorBase, other: VariableTracker
+    ) -> Iterator[HashableTracker]:
         # Lazily yield HashableTracker keys for a set-operation operand, one
         # element at a time so callers that short-circuit (isdisjoint) observe
         # the same generator side effects as CPython. A set or dict operand's
@@ -248,7 +248,7 @@ class BaseSetVariable(VariableTracker):
         yield from (HashableTracker(item) for item in lazily_unpack(tx, other))
 
     def _operand_keys(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> list[HashableTracker]:
         # Eager variant: unpack_iterable takes the fast unpack_var_sequence
         # path for builtin iterables instead of the per-element iterator
@@ -259,14 +259,14 @@ class BaseSetVariable(VariableTracker):
             return list(other.items.keys())
         return [HashableTracker(x) for x in unpack_iterable(tx, other)]
 
-    def _new_set(self, items: "Iterable[HashableTracker]") -> "BaseSetVariable":
+    def _new_set(self, items: Iterable[HashableTracker]) -> BaseSetVariable:
         # Build a fresh set of the same concrete type (set / frozenset /
         # OrderedSet). list() preserves insertion order, which matters for
         # OrderedSet.
         return type(self)(list(items), mutation_type=ValueMutationNew())
 
     def sq_contains_impl(
-        self, tx: "InstructionTranslatorBase", item: VariableTracker
+        self, tx: InstructionTranslatorBase, item: VariableTracker
     ) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.0/Objects/setobject.c#L2131-L2149
         if not is_hashable(item):
@@ -286,11 +286,11 @@ class BaseSetVariable(VariableTracker):
 
     def _try_fast_set_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
-    ) -> "VariableTracker | None":
+    ) -> VariableTracker | None:
         from ..utils import check_constant_args
         from .dicts import ConstDictVariable
 
@@ -310,7 +310,7 @@ class BaseSetVariable(VariableTracker):
 
     def isdisjoint(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -324,7 +324,7 @@ class BaseSetVariable(VariableTracker):
 
     def intersection(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -339,7 +339,7 @@ class BaseSetVariable(VariableTracker):
 
     def union(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -354,7 +354,7 @@ class BaseSetVariable(VariableTracker):
 
     def difference(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -369,7 +369,7 @@ class BaseSetVariable(VariableTracker):
 
     def symmetric_difference(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -393,7 +393,7 @@ class BaseSetVariable(VariableTracker):
 
     def issubset(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -401,7 +401,7 @@ class BaseSetVariable(VariableTracker):
 
     def issuperset(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -409,18 +409,18 @@ class BaseSetVariable(VariableTracker):
 
     def copy(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
         return set_copy(self)
 
     def getitem_const(
-        self, tx: "InstructionTranslatorBase", arg: VariableTracker
+        self, tx: InstructionTranslatorBase, arg: VariableTracker
     ) -> VariableTracker:
         raise RuntimeError("Illegal to getitem on a set")
 
-    def tp_iter_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def tp_iter_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         from .iter import SetIterator
 
         if self.source and not is_constant_source(self.source):
@@ -429,7 +429,7 @@ class BaseSetVariable(VariableTracker):
 
     def nb_or_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -447,7 +447,7 @@ class BaseSetVariable(VariableTracker):
 
     def nb_subtract_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -464,7 +464,7 @@ class BaseSetVariable(VariableTracker):
 
     def nb_and_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -478,7 +478,7 @@ class BaseSetVariable(VariableTracker):
 
     def nb_xor_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -490,12 +490,12 @@ class BaseSetVariable(VariableTracker):
 
         return self_.call_method(tx, "symmetric_difference", [other_], {})
 
-    def sq_length_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def sq_length_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         return VariableTracker.build(tx, len(self.set_items))
 
     def tp_richcompare_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         op: str,
     ) -> VariableTracker:
@@ -568,28 +568,28 @@ class SetVariable(BaseSetVariable):
     def as_python_constant(self) -> Any:
         return {k.vt.as_python_constant() for k in self.set_items}
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # https://github.com/python/cpython/blob/3.13/Objects/setobject.c#L763-L822
         if not self.items:
             return VariableTracker.build(tx, f"{self.python_type_name()}()")
         items = ", ".join(tracked_repr(tx, item.vt) for item in self.set_items)
         return VariableTracker.build(tx, "{" + items + "}")
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.foreach([x.vt for x in self.set_items])
         codegen.append_output(create_instruction("BUILD_SET", arg=len(self.set_items)))
 
     def is_hashable(self) -> bool:
         return False
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         from ..exc import raise_type_error
 
         raise_type_error(tx, f"unhashable type: '{self.python_type_name()}'")
 
     def add(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -600,7 +600,7 @@ class SetVariable(BaseSetVariable):
 
     def pop(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -616,7 +616,7 @@ class SetVariable(BaseSetVariable):
 
     def intersection_update(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -632,7 +632,7 @@ class SetVariable(BaseSetVariable):
 
     def difference_update(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -645,7 +645,7 @@ class SetVariable(BaseSetVariable):
 
     def symmetric_difference_update(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -662,7 +662,7 @@ class SetVariable(BaseSetVariable):
 
     def update(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
@@ -676,7 +676,7 @@ class SetVariable(BaseSetVariable):
 
     def remove(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -692,7 +692,7 @@ class SetVariable(BaseSetVariable):
 
     def discard(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -709,7 +709,7 @@ class SetVariable(BaseSetVariable):
 
     def clear(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -720,7 +720,7 @@ class SetVariable(BaseSetVariable):
 
     def tp_init_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -733,7 +733,7 @@ class SetVariable(BaseSetVariable):
         return ConstantVariable.create(None)
 
     def nb_inplace_or_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Objects/setobject.c#L1340-L1350
         if not pyanyset_check(other):
@@ -744,7 +744,7 @@ class SetVariable(BaseSetVariable):
         return self
 
     def nb_inplace_subtract_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/v3.13.0/Objects/setobject.c#L1814-L1828
         if not pyanyset_check(other):
@@ -756,7 +756,7 @@ class SetVariable(BaseSetVariable):
         return self
 
     def nb_inplace_and_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Objects/setobject.c#L1520-L1536 (set_iand)
         if not pyanyset_check(other):
@@ -766,7 +766,7 @@ class SetVariable(BaseSetVariable):
         return self
 
     def nb_inplace_xor_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> VariableTracker:
         # ref: https://github.com/python/cpython/blob/3.13/Objects/setobject.c#L1992-L2004 (set_ixor)
         if not pyanyset_check(other):
@@ -797,7 +797,7 @@ class OrderedSetClassVariable(VariableTracker):
 
     def call_method(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         name: str,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
@@ -821,10 +821,10 @@ class OrderedSetClassVariable(VariableTracker):
 
     def call_function(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
-    ) -> "OrderedSetVariable":
+    ) -> OrderedSetVariable:
         if len(args) > 1 or kwargs:
             raise_args_mismatch(
                 tx,
@@ -849,7 +849,7 @@ class OrderedSetVariable(SetVariable):
         # set's arities, so derive MethodFlags from set to enforce them.
         return set
 
-    def _get_internal_dict(self, tx: "InstructionTranslatorBase") -> VariableTracker:
+    def _get_internal_dict(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # OrderedSet is backed by a dict (self._dict). Expose it so inlined
         # OrderedSet methods (e.g. __contains__ -> `elem in self._dict`) trace
         # natively instead of graph-breaking on an unmodeled attribute.
@@ -869,7 +869,7 @@ class OrderedSetVariable(SetVariable):
                 items.append(key_str)
             return "OrderedSet([" + ", ".join(items) + "])"
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         items = ", ".join(tracked_repr(tx, item.vt) for item in self.set_items)
         return VariableTracker.build(tx, f"{self.python_type_name()}([{items}])")
 
@@ -879,7 +879,7 @@ class OrderedSetVariable(SetVariable):
     def python_type(self) -> type[OrderedSet[Any]]:
         return OrderedSet
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.load_import_from("torch.utils._ordered_set", "OrderedSet")
         )
@@ -889,7 +889,7 @@ class OrderedSetVariable(SetVariable):
 
     def nb_or_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -899,7 +899,7 @@ class OrderedSetVariable(SetVariable):
 
     def nb_and_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -909,7 +909,7 @@ class OrderedSetVariable(SetVariable):
 
     def nb_xor_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -919,7 +919,7 @@ class OrderedSetVariable(SetVariable):
 
     def nb_subtract_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         other: VariableTracker,
         reverse: bool = False,
     ) -> VariableTracker:
@@ -927,7 +927,7 @@ class OrderedSetVariable(SetVariable):
         return self_.call_method(tx, "difference", [other_], {})
 
     def nb_inplace_subtract_impl(
-        self, tx: "InstructionTranslatorBase", other: VariableTracker
+        self, tx: InstructionTranslatorBase, other: VariableTracker
     ) -> VariableTracker:
         tx.output.side_effects.mutation(self)
         self.call_method(tx, "difference_update", [other], {})
@@ -954,14 +954,14 @@ class FrozensetVariable(BaseSetVariable):
     def as_python_constant(self) -> Any:
         return frozenset({k.vt.as_python_constant() for k in self.set_items})
 
-    def tp_repr_impl(self, tx: "InstructionTranslatorBase") -> "VariableTracker":
+    def tp_repr_impl(self, tx: InstructionTranslatorBase) -> VariableTracker:
         # https://github.com/python/cpython/blob/3.13/Objects/setobject.c#L763-L822
         if not self.items:
             return VariableTracker.build(tx, f"{self.python_type_name()}()")
         items = ", ".join(tracked_repr(tx, item.vt) for item in self.set_items)
         return VariableTracker.build(tx, f"{self.python_type_name()}({{{items}}})")
 
-    def reconstruct(self, codegen: "PyCodegen") -> None:
+    def reconstruct(self, codegen: PyCodegen) -> None:
         codegen.add_push_null(
             lambda: codegen.extend_output(
                 [
@@ -979,7 +979,7 @@ class FrozensetVariable(BaseSetVariable):
 
     def copy(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -989,7 +989,7 @@ class FrozensetVariable(BaseSetVariable):
 
     def difference(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -998,7 +998,7 @@ class FrozensetVariable(BaseSetVariable):
 
     def intersection(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1007,7 +1007,7 @@ class FrozensetVariable(BaseSetVariable):
 
     def symmetric_difference(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1023,7 +1023,7 @@ class FrozensetVariable(BaseSetVariable):
 
     def tp_init_impl(
         self,
-        tx: "InstructionTranslatorBase",
+        tx: InstructionTranslatorBase,
         args: list[VariableTracker],
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
@@ -1033,7 +1033,7 @@ class FrozensetVariable(BaseSetVariable):
     def is_hashable(self) -> bool:
         return True
 
-    def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
+    def hash_impl(self, tx: InstructionTranslatorBase) -> tuple[int, bool]:
         # frozenset is hashable, unlike set (SetVariable.hash_impl raises TypeError).
         # CPython frozenset_hash: https://github.com/python/cpython/blob/e76aa128fe/Objects/setobject.c#L769
         from .hashable import RawHash
@@ -1062,7 +1062,7 @@ class DictKeySetVariable(SetVariable):
             return "dict_keys([" + ", ".join(items) + "])"
 
     def install_set_contains_guard(
-        self, tx: "InstructionTranslatorBase", args: list[VariableTracker]
+        self, tx: InstructionTranslatorBase, args: list[VariableTracker]
     ) -> None:
         # Already EQUALS_MATCH guarded
         pass

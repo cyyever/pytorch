@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dataclasses
 import itertools
 from typing import Any, TYPE_CHECKING

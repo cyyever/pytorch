@@ -89,7 +89,7 @@ def hoist_submodules(gm: GraphModule, subgraph: GraphModule) -> dict[str, str]:
     return name_map
 
 
-def inline_invoke_subgraph_nodes(gm: GraphModule, invoke_nodes: list["Node"]) -> None:
+def inline_invoke_subgraph_nodes(gm: GraphModule, invoke_nodes: list[Node]) -> None:
     """Shared helper that inlines a list of invoke_subgraph nodes."""
     for node in invoke_nodes:
         get_attr_node: torch.fx.Node = node.args[0]  # pyrefly: ignore[bad-assignment]

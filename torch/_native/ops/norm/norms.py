@@ -5,7 +5,6 @@ compiled kernels directly (bypassing the ``@torch.library.custom_op`` wrapper
 to avoid dispatcher overhead).
 """
 
-from __future__ import annotations
 
 import functools
 import math

@@ -69,7 +69,7 @@ class BarrierConfig:
 
 def create_barrier_from_config(
     barrier_config: BarrierConfig,
-) -> Optional["Barrier"]:
+) -> Optional[Barrier]:
     """
     Create a barrier instance from BarrierConfig.
 

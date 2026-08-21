@@ -18,7 +18,7 @@ __all__ = [
 
 
 @contextlib.contextmanager
-def enable_single_level_autograd_function() -> Generator[None, None, None]:
+def enable_single_level_autograd_function() -> Generator[None]:
     try:
         prev_state = get_single_level_autograd_function_allowed()
         set_single_level_autograd_function_allowed(True)

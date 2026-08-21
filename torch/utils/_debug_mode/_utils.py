@@ -220,7 +220,7 @@ def _run_hook(hook, *args):
     return out
 
 
-def _run_dispatch_pre_log_hooks(call: "_DebugCall", func, types, args, kwargs) -> None:
+def _run_dispatch_pre_log_hooks(call: _DebugCall, func, types, args, kwargs) -> None:
     if _DISPATCH_PRE_LOG_HOOKS:
         for hook in _DISPATCH_PRE_LOG_HOOKS:
             hook_out = _run_hook(hook, func, types, args, kwargs, call)
@@ -231,7 +231,7 @@ def _run_dispatch_pre_log_hooks(call: "_DebugCall", func, types, args, kwargs) -
                 call.log.update(hook_out)
 
 
-def _run_dispatch_hooks(call: "_DebugCall", func, types, args, kwargs, result) -> None:
+def _run_dispatch_hooks(call: _DebugCall, func, types, args, kwargs, result) -> None:
     if _DISPATCH_RECORD_HOOKS:
         record = {}
         for hook in _DISPATCH_RECORD_HOOKS:

@@ -642,14 +642,14 @@ def _optimize_transform_infos(
 # Global cache for DTensorRedistributePlanner instances
 _planner_cache: dict[
     tuple[weakref.ReferenceType[DeviceMesh], TensorMeta],
-    "DTensorRedistributePlanner",
+    DTensorRedistributePlanner,
 ] = {}
 
 
 def get_redistribute_planner(
     device_mesh: DeviceMesh,
     dtensor_meta: TensorMeta,
-) -> "DTensorRedistributePlanner":
+) -> DTensorRedistributePlanner:
     """
     Factory function to get or create a DTensorRedistributePlanner instance.
     This function provides transparent caching of planner instances based on
@@ -887,7 +887,7 @@ class DTensorRedistributePlanner:
         self,
         placements: tuple[Placement, ...],
         tensor_mesh_dim_tuple: ShardOrder,
-    ) -> dict["DTensorRedistributePlanner.DistState", float]:
+    ) -> dict[DTensorRedistributePlanner.DistState, float]:
         # We map tensor dimensions to device mesh axes, similar to JAX-style
         # sharding representation. Notation:
         # S(<tensor_dim>)[<list_of_device_dims>] means tensor dimension
@@ -1214,7 +1214,7 @@ class DTensorRedistributePlanner:
     # `_MaskPartial`, we will never reach that state. Need to support this case.
     def find_min_cost_path(
         self, src_state: DistState, dst_state: DistState
-    ) -> list["DTensorRedistributePlanner.DistState"]:
+    ) -> list[DTensorRedistributePlanner.DistState]:
         """
         Find the min cost path from src_state to dst_state using Dijkstra's
         algorithm.
@@ -1280,7 +1280,7 @@ class DTensorRedistributePlanner:
 
     def get_logical_shape(
         self,
-        src_state: "DTensorRedistributePlanner.DistState",
+        src_state: DTensorRedistributePlanner.DistState,
         mesh_dim: int,
         full_tensor_shape: tuple[int, ...],
     ) -> list[IntLikeType]:
@@ -1844,7 +1844,7 @@ def redistribute_local_tensor(
 
 
 def _redistribute_backward(
-    grad_output: "dtensor.DTensor",
+    grad_output: dtensor.DTensor,
     previous_spec: DTensorSpec,
     *,
     out_dtype: torch.dtype,
@@ -1953,7 +1953,7 @@ class Redistribute(torch.autograd.Function):
     def forward(  # type: ignore[override]
         # pyre-fixme[2]: Parameter must be annotated.
         ctx,
-        input: "dtensor.DTensor",
+        input: dtensor.DTensor,
         device_mesh: DeviceMesh,
         placements: tuple[Placement, ...],
         async_op: bool,
@@ -2025,7 +2025,7 @@ class Redistribute(torch.autograd.Function):
         )
 
     @staticmethod
-    def backward(ctx, grad_output: "dtensor.DTensor"):  # type: ignore[override]
+    def backward(ctx, grad_output: dtensor.DTensor):  # type: ignore[override]
         output_dtensor = NestedRedistribute.apply(
             grad_output,
             ctx.current_spec,
@@ -2057,7 +2057,7 @@ class NestedRedistribute(torch.autograd.Function):
     def forward(  # type: ignore[override]
         # pyre-fixme[2]: Parameter must be annotated.
         ctx,
-        grad_output: "dtensor.DTensor",
+        grad_output: dtensor.DTensor,
         previous_spec: DTensorSpec,
         async_op: bool,
         op_dtype: torch.dtype,
@@ -2089,7 +2089,7 @@ class NestedRedistribute(torch.autograd.Function):
         )
 
     @staticmethod
-    def backward(ctx, grad2_output: "dtensor.DTensor"):  # type: ignore[override]
+    def backward(ctx, grad2_output: dtensor.DTensor):  # type: ignore[override]
         previous_spec = ctx.current_spec
         # Reuse the same op_dtype one level down; pin out_dtype to the dtype
         # of the grad we received at this level, since that's what the node

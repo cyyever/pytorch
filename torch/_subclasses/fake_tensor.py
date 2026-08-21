@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import atexit
 import contextlib
 import dataclasses
@@ -15,7 +13,7 @@ import weakref
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, cast, Literal, TYPE_CHECKING, TypeGuard, TypeVar, Union
-from typing_extensions import Self, TypedDict, Unpack
+from typing import Self, TypedDict, Unpack
 from weakref import ReferenceType
 
 import torch
@@ -211,7 +209,7 @@ def ordered_set(*items: T) -> dict[T, Literal[True]]:
 
 
 @contextlib.contextmanager
-def unset_fake_temporarily() -> Generator[TorchDispatchMode | None, None, None]:
+def unset_fake_temporarily() -> Generator[TorchDispatchMode | None]:
     old = torch._C._unset_dispatch_mode(torch._C._TorchDispatchModeKey.FAKE)
     try:
         yield old
@@ -221,7 +219,7 @@ def unset_fake_temporarily() -> Generator[TorchDispatchMode | None, None, None]:
 
 
 @contextlib.contextmanager
-def disable_fake_tensor_cache(fake_mode: FakeTensorMode) -> Generator[None, None, None]:
+def disable_fake_tensor_cache(fake_mode: FakeTensorMode) -> Generator[None]:
     old_value: bool = fake_mode.cache_enabled
     try:
         fake_mode.cache_enabled = False
@@ -716,7 +714,7 @@ def init_gpu_context(device: torch.device) -> None:
 @contextlib.contextmanager
 def in_kernel_invocation_manager(
     fake_mode: FakeTensorMode,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     # See: note [Fake Tensor Dispatch Keys]
     prev_in_kernel = fake_mode.in_kernel_invocation
     meta_in_tls = torch._C._meta_in_tls_dispatch_include()

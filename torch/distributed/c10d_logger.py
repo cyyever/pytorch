@@ -11,7 +11,7 @@ import functools
 import logging
 from collections.abc import Callable
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.distributed as dist

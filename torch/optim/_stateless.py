@@ -46,7 +46,7 @@ def _validate_state_field(state: Any) -> dict[Any, Any]:
 
 
 def _validate_param_groups_field(
-    optimizer: "torch.optim.Optimizer", param_groups: Any
+    optimizer: torch.optim.Optimizer, param_groups: Any
 ) -> list[dict[str, Any]]:
     """``param_groups`` must be a list whose length matches the live optimizer's param groups."""
     if not isinstance(param_groups, list):
@@ -106,7 +106,7 @@ def _validate_group_against_live(
 
 
 def _prepare_swap_in(
-    optimizer: "torch.optim.Optimizer",
+    optimizer: torch.optim.Optimizer,
     swapin_parameters: dict[str, Tensor],
     swapin_optim_state: dict[str, Any],
 ) -> tuple[dict[Any, Any], list[_GroupSwapinInfo]]:
@@ -191,7 +191,7 @@ def _prepare_swap_in(
 
 @contextlib.contextmanager
 def swap_in_optimizer_params_and_state(
-    optimizer: "torch.optim.Optimizer",
+    optimizer: torch.optim.Optimizer,
     swapin_parameters: dict[str, Tensor],
     swapin_optim_state: dict[str, Any],
 ):

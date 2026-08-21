@@ -228,7 +228,7 @@ class Measurement:
         return "\n".join(l for l in repr_str.splitlines(keepends=False) if skip_line not in l)
 
     @staticmethod
-    def merge(measurements: Iterable["Measurement"]) -> list["Measurement"]:
+    def merge(measurements: Iterable[Measurement]) -> list[Measurement]:
         """Convenience method for merging replicates.
 
         Merge will extrapolate times to `number_per_run=1` and will not
@@ -238,7 +238,7 @@ class Measurement:
         for m in measurements:
             grouped_measurements[m.task_spec].append(m)
 
-        def merge_group(task_spec: TaskSpec, group: list["Measurement"]) -> "Measurement":
+        def merge_group(task_spec: TaskSpec, group: list[Measurement]) -> Measurement:
             times: list[float] = []
             for m in group:
                 # Different measurements could have different `number_per_run`,

@@ -85,7 +85,7 @@ class ScatterPassContext:
     candidates: dict[fx.Node, ScatterCandidate] = field(default_factory=dict)
 
     # Built lazily, only when at least one candidate survives the pre-scan.
-    memory: "ScatterMemoryState | None" = None
+    memory: ScatterMemoryState | None = None
 
     n_candidates: int = 0
     n_applied: int = 0
@@ -107,7 +107,7 @@ def _record_skip(
 
 def _evaluate_candidate(
     output_node: fx.Node, force: bool, ctx: ScatterPassContext
-) -> "ScatterCandidate | None":
+) -> ScatterCandidate | None:
     """
     Cheap (non-memory) gates, in order:
       1. Single non-None index (multi-axis not supported)
@@ -229,7 +229,7 @@ def _scan_candidates(graph: fx.Graph, ctx: ScatterPassContext) -> None:
             ctx.candidates[node] = candidate
 
 
-def _build_scatter_memory_state(graph: fx.Graph) -> "ScatterMemoryState | None":
+def _build_scatter_memory_state(graph: fx.Graph) -> ScatterMemoryState | None:
     """
     Build a per-node peak-memory profile of the original graph.
     Returns None when CUDA is unavailable or the profile can't be built; the

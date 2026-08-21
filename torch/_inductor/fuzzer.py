@@ -381,7 +381,7 @@ class SamplingMethod(Enum):
             raise ValueError(f"Unable to process type {type_hint}. PRs welcome :)")
 
     @staticmethod
-    def dispatch(sm: "SamplingMethod") -> SamplingType:
+    def dispatch(sm: SamplingMethod) -> SamplingType:
         """
         Returns a function that will generate values from a type, based on the SamplingMethod passed in.
         """

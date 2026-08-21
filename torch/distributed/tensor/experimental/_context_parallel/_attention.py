@@ -1546,7 +1546,7 @@ def context_parallel(
     buffers: list[torch.Tensor] | None = None,
     buffer_seq_dims: list[int] | None = None,
     no_restore_buffers: set[torch.Tensor] | None = None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
 
     ``context_parallel`` is an experimental API to enable context

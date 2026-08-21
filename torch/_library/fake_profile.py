@@ -29,7 +29,7 @@ class TensorMetadata:
     layout: torch.layout
 
     @staticmethod
-    def maybe_from_tensor(t: Any) -> Optional["TensorMetadata"]:
+    def maybe_from_tensor(t: Any) -> Optional[TensorMetadata]:
         if not isinstance(t, torch.Tensor):
             return None
         return TensorMetadata(t.dim(), t.dtype, t.device, t.layout)

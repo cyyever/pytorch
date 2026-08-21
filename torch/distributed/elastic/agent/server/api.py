@@ -253,7 +253,7 @@ class WorkerState(str, Enum):
     FAILED = "FAILED"
 
     @staticmethod
-    def is_running(state: "WorkerState") -> bool:
+    def is_running(state: WorkerState) -> bool:
         """Return the state of the Worker.
 
         Returns:
@@ -640,14 +640,14 @@ class SimpleElasticAgent(ElasticAgent):
                     for info_bytes in role_infos_bytes
                 ]
 
-                role_sizes = defaultdict(lambda: 0)
+                role_sizes = defaultdict(int)
                 global_size = 0
                 for role_info in role_infos:
                     role_sizes[role_info.role] += role_info.local_world_size
                     global_size += role_info.local_world_size
 
                 base_global_rank = 0
-                role_ranks = defaultdict(lambda: 0)
+                role_ranks = defaultdict(int)
 
                 keys = []
                 values = []

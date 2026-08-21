@@ -48,7 +48,7 @@ class Event:
         return self.serialize()
 
     @staticmethod
-    def deserialize(data: Union[str, "Event"]) -> "Event":
+    def deserialize(data: Union[str, Event]) -> Event:
         if isinstance(data, Event):
             return data
         if isinstance(data, str):
@@ -103,7 +103,7 @@ class RdzvEvent:
         return self.serialize()
 
     @staticmethod
-    def deserialize(data: Union[str, "RdzvEvent"]) -> "RdzvEvent":
+    def deserialize(data: Union[str, RdzvEvent]) -> RdzvEvent:
         if isinstance(data, RdzvEvent):
             return data
         if isinstance(data, str):

@@ -7,7 +7,8 @@ import sys
 import weakref
 from collections.abc import Callable, Sequence
 from typing import Any, overload, TYPE_CHECKING, TypeVar, Union
-from typing_extensions import deprecated, ParamSpec
+from typing import ParamSpec
+from warnings import deprecated
 
 import torch
 import torch._library as _library
@@ -64,7 +65,7 @@ def fallthrough_kernel():
     raise NotImplementedError("fallthrough_kernel() should never be called.")
 
 
-def _validate_out_schema(schema: "str | torch._C.FunctionSchema") -> None:
+def _validate_out_schema(schema: str | torch._C.FunctionSchema) -> None:
     """Validate that a schema has valid out semantics, i.e., it can be tagged with torch.Tag.out.
 
     Requirements:
@@ -135,7 +136,7 @@ def _validate_out_schema(schema: "str | torch._C.FunctionSchema") -> None:
             )
 
 
-def _validate_inplace_schema(schema: "str | torch._C.FunctionSchema") -> None:
+def _validate_inplace_schema(schema: str | torch._C.FunctionSchema) -> None:
     """Validate that a schema has valid inplace semantics, i.e., it can be tagged with torch.Tag.inplace.
 
     Requirements:
@@ -1693,7 +1694,7 @@ def _check_pystubs_once(func, qualname, actual_module_name):
 #
 # This is done via us setting the global_ctx_getter function every time a fake
 # implementation is invoked.
-def get_ctx() -> "torch._library.fake_impl.FakeImplCtx":
+def get_ctx() -> torch._library.fake_impl.FakeImplCtx:
     """get_ctx() returns the current AbstractImplCtx object.
 
     Calling ``get_ctx()`` is only valid inside of a fake impl

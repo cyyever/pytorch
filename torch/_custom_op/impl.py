@@ -123,7 +123,7 @@ def custom_op(qualname: str, manual_schema: str | None = None) -> typing.Callabl
 # An example usage is FakeTensor: FakeTensor checks if a specific operator
 # has an implementation registered via the CustomOp API.
 # Indexed by qualname (e.g. aten::foo)
-global_registry: dict[str, "CustomOp"] = {}
+global_registry: dict[str, CustomOp] = {}
 
 
 class CustomOp:

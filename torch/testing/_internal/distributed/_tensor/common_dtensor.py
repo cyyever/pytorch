@@ -492,7 +492,7 @@ class Transformer(nn.Module):
 
     @staticmethod
     def parallelize(
-        module: "Transformer",
+        module: Transformer,
         tp_mesh: DeviceMesh | None,
         use_seq_parallel: bool,
         local_output_for_attn: bool = False,
@@ -1029,7 +1029,7 @@ class DTensorConverter:
         # )
         return sharding_choices
 
-    def __iter__(self) -> "DTensorConverter":
+    def __iter__(self) -> DTensorConverter:
         return self
 
     def __next__(self) -> tuple[tuple[object, ...], dict[str, object]]:

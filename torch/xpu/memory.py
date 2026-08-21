@@ -598,7 +598,7 @@ class MemPool(torch._C._XPUMemPool):
 
 
 @contextlib.contextmanager
-def use_mem_pool(pool: MemPool, device: "Device" = None):
+def use_mem_pool(pool: MemPool, device: Device = None):
     r"""A context manager that routes allocations to a given pool.
 
     Args:
@@ -625,7 +625,7 @@ def use_mem_pool(pool: MemPool, device: "Device" = None):
         torch._C._xpu_releasePool(device_index, pool.id)
 
 
-def list_gpu_processes(device: "Device" = None) -> str:
+def list_gpu_processes(device: Device = None) -> str:
     r"""Return a printout of running processes and their GPU memory usage on a given device.
 
     Args:

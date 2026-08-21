@@ -2,7 +2,7 @@
 
 import math
 import operator
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import cutlass
 import cutlass.cute as cute
@@ -35,7 +35,7 @@ def cluster_reduce(
     reduction_buffer: cute.Tensor,
     mbar_ptr: cute.Pointer,
     init_val: cute.Numeric = 0.0,
-    phase: Optional[Int32] = None,
+    phase: Int32 | None = None,
 ) -> cute.Numeric:
     """reduction_buffer has shape (num_warps / warps_per_row, (warps_per_row, cluster_n))"""
     cta_rank_in_cluster = cute.arch.block_idx_in_cluster()
@@ -71,8 +71,8 @@ def block_or_cluster_reduce(
     val: cute.Numeric,
     op: Callable,
     reduction_buffer: cute.Tensor,
-    mbar_ptr: Optional[cute.Pointer],
-    phase: Optional[Int32] = None,
+    mbar_ptr: cute.Pointer | None,
+    phase: Int32 | None = None,
     init_val: cute.Numeric = 0.0,
 ) -> cute.Numeric:
     """Perform either block or cluster reduction based on whether mbar_ptr is provided."""
@@ -87,11 +87,11 @@ def row_reduce(
     x: cute.TensorSSA | cute.Numeric,
     op: cute.ReductionOp,
     threads_per_row: cutlass.Constexpr[int],
-    reduction_buffer: Optional[cute.Tensor] = None,
-    mbar_ptr: Optional[cute.Pointer] = None,
-    phase: Optional[Int32] = None,
+    reduction_buffer: cute.Tensor | None = None,
+    mbar_ptr: cute.Pointer | None = None,
+    phase: Int32 | None = None,
     init_val: cute.Numeric = 0.0,
-    hook_fn: Optional[Callable] = None,
+    hook_fn: Callable | None = None,
 ) -> cute.Numeric:
     """reduction_buffer must have shape (num_warps / warps_per_row, (warps_per_row, cluster_n))"""
     if const_expr(isinstance(x, cute.TensorSSA)):
@@ -127,12 +127,12 @@ def row_reduce(
 def online_softmax_reduce(
     x: cute.TensorSSA,
     threads_per_row: cutlass.Constexpr[int],
-    reduction_buffer: Optional[cute.Tensor] = None,
-    mbar_ptr: Optional[cute.Pointer] = None,
-    hook_fn: Optional[Callable] = None,
-    phase: Optional[Int32] = None,
+    reduction_buffer: cute.Tensor | None = None,
+    mbar_ptr: cute.Pointer | None = None,
+    hook_fn: Callable | None = None,
+    phase: Int32 | None = None,
     return_exp_x: bool = False,
-) -> [Float32, Float32, Optional[cute.TensorSSA]]:
+) -> [Float32, Float32, cute.TensorSSA | None]:
     assert x.dtype == Float32, "x must be of type Float32"
     """reduction_buffer must have shape (num_warps / warps_per_row, (warps_per_row, cluster_n), 2)"""
     max_x = cute.arch.warp_reduction(

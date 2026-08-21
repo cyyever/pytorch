@@ -30,7 +30,7 @@ class PadMMH200(LearnedHeuristicDecision):
     def get_confidence_threshold(self) -> float:
         return 0.7710651828298887
 
-    def get_choice(self, idx: int) -> Optional[str]:
+    def get_choice(self, idx: int) -> str | None:
         if idx < len(self.choices):
             return self.choices[idx]
         return None
@@ -42,7 +42,7 @@ class PadMMH200(LearnedHeuristicDecision):
     def get_name(self) -> str:
         return 'pad_mm'
 
-    def get_best_choices(self, context: AHContext) -> Optional[list[tuple[float, int]]]:
+    def get_best_choices(self, context: AHContext) -> list[tuple[float, int]] | None:
         if str(context.get_value('mat1_innermost_needs_padding')) != 'True':
             if str(context.get_value('mat2_innermost_needs_padding')) != 'True':
                 if context.get_value('n_padded_length') <= 0.5:

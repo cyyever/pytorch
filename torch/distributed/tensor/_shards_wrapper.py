@@ -38,7 +38,7 @@ class LocalShardsWrapper(torch.Tensor):
     @staticmethod
     def __new__(
         cls, local_shards: list[torch.Tensor], local_offsets: list[tuple[int, ...]]
-    ) -> "LocalShardsWrapper":
+    ) -> LocalShardsWrapper:
         if not all(
             tensor.device == local_shards[0].device for tensor in local_shards[1:]
         ):
@@ -142,7 +142,7 @@ class LocalShardsWrapper(torch.Tensor):
         return LocalShardsWrapper(res_shards_list, args[0].local_offsets())
 
     @staticmethod
-    def handle_view(args, kwargs) -> "LocalShardsWrapper":
+    def handle_view(args, kwargs) -> LocalShardsWrapper:
         view_shape = args[1]
         res_shards_list = []
         if len(args[0].local_shards()) > 1:
@@ -195,7 +195,7 @@ class LocalShardsWrapper(torch.Tensor):
         return True
 
     @staticmethod
-    def handle_detach(args, kwargs) -> "LocalShardsWrapper":
+    def handle_detach(args, kwargs) -> LocalShardsWrapper:
         self_ls = args[0]
         deatched_local_shards = [
             aten.detach.default(shard) for shard in self_ls.local_shards()
@@ -205,7 +205,7 @@ class LocalShardsWrapper(torch.Tensor):
         return self_ls
 
     @staticmethod
-    def handle_clone(args, kwargs) -> "LocalShardsWrapper":
+    def handle_clone(args, kwargs) -> LocalShardsWrapper:
         self_ls = args[0]
         desired_memory_format = kwargs.get("memory_format", None)
         if desired_memory_format and desired_memory_format != torch.preserve_format:
@@ -219,7 +219,7 @@ class LocalShardsWrapper(torch.Tensor):
         return LocalShardsWrapper(cloned_local_shards, self_ls.local_offsets())
 
     @staticmethod
-    def handle_new_empty(args, kwargs) -> "LocalShardsWrapper":
+    def handle_new_empty(args, kwargs) -> LocalShardsWrapper:
         self_ls = args[0]
         return LocalShardsWrapper(
             [torch.empty_like(shard) for shard in self_ls._local_shards],
@@ -239,7 +239,7 @@ class LocalShardsWrapper(torch.Tensor):
     def is_pinned(self) -> bool:  # type: ignore[override]
         return self._storage_meta.properties.pin_memory
 
-    def requires_grad_(self, requires_grad: bool = True) -> "LocalShardsWrapper":
+    def requires_grad_(self, requires_grad: bool = True) -> LocalShardsWrapper:
         self._storage_meta.properties.requires_grad = requires_grad
         [shard.requires_grad_(requires_grad) for shard in self._local_shards]
         return self

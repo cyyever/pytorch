@@ -1,5 +1,4 @@
 # pylint: disable=useless-parent-delegation
-from __future__ import annotations
 
 import ctypes
 import gc
@@ -9,7 +8,7 @@ import weakref
 from collections import OrderedDict
 from collections.abc import Callable
 from typing import overload, TYPE_CHECKING, TypeAlias, TypeGuard, Union
-from typing_extensions import ParamSpec, Self, TypeVar
+from typing import ParamSpec, Self, TypeVar
 
 import torch
 from torch import Tensor

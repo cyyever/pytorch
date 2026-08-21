@@ -12,7 +12,6 @@ The compile-only state is read here via :func:`quack.cache.is_compile_only`
 rationale.
 """
 
-from __future__ import annotations
 
 import fcntl
 import functools
@@ -101,7 +100,7 @@ class FileLock:
         self.timeout = timeout
         self._fd: int = -1
 
-    def __enter__(self) -> "FileLock":
+    def __enter__(self) -> FileLock:
         flags = os.O_WRONLY | os.O_CREAT if self.exclusive else os.O_RDONLY | os.O_CREAT
         lock_type = fcntl.LOCK_EX if self.exclusive else fcntl.LOCK_SH
         self._fd = os.open(str(self.lock_path), flags)

@@ -16,7 +16,6 @@ The main result types are:
 - BundledAOTAutogradResult: Result that bundles the entire compiled code directly
 """
 
-from __future__ import annotations
 
 import json
 import logging

@@ -4,7 +4,6 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import annotations
 
 import contextvars
 import functools
@@ -30,7 +29,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import ParamSpec, Self, TypeVarTuple, Unpack
+from typing import ParamSpec, Self, TypeVarTuple, Unpack
 from weakref import WeakKeyDictionary
 
 import torch
@@ -173,7 +172,7 @@ def fake_signature(fn: Callable[_P, R], nargs: int) -> Callable[_P, R]:
 @contextmanager
 def decompose(
     decomposition_table: Mapping[OpOverload, Callable[..., Any]] | None,
-) -> Generator[Mapping[OpOverload, Callable[..., Any]], None, None]:
+) -> Generator[Mapping[OpOverload, Callable[..., Any]]]:
     mode = get_proxy_mode()
     if mode is None:
         raise AssertionError("Expected proxy mode to be set")
@@ -222,7 +221,7 @@ def _is_proxy_tensor_update_tensor_tracker_disabled() -> bool:
 
 
 @contextmanager
-def _proxy_tensor_disable_update_tensor_tracker() -> Generator[None, None, None]:
+def _proxy_tensor_disable_update_tensor_tracker() -> Generator[None]:
     """
     NOTE "Do not clobber inplace ops"
     By default tensor_tracker is updated every time.
@@ -773,7 +772,7 @@ def extract_val(val: _ExtractValType, include_real: bool = False) -> _ExtractVal
 @contextmanager
 def _enable_thunkify(
     tracer: _ProxyTracer, *, enable: bool = True
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Enable thunkification inside the context manager.  Thunkification prevents
     SymNode computation from directly being traced into an FX graph; instead,
@@ -790,7 +789,7 @@ def _enable_thunkify(
 
 
 @contextmanager
-def maybe_disable_thunkify() -> Generator[None, None, None]:
+def maybe_disable_thunkify() -> Generator[None]:
     """Within a context, disable thunkification.  See :func:`maybe_enable_thunkify`
     for more details.  This is helpful if you have a wrapper function which
     you want to enable thunkification on, but in some segment on the inside (say,
@@ -806,7 +805,7 @@ def maybe_disable_thunkify() -> Generator[None, None, None]:
 
 
 @contextmanager
-def maybe_enable_thunkify() -> Generator[None, None, None]:
+def maybe_enable_thunkify() -> Generator[None]:
     """Within this context manager, if you are doing make_fx tracing, we will thunkify
     all SymNode compute and avoid tracing it into the graph unless it is actually needed.
     You should prefer to avoid using this as much as possible, as lazy evaluation of
@@ -1828,7 +1827,7 @@ def _make_temp_remove_mode_context_manager(
     mode_ty: type[TorchFunctionMode],
 ) -> Callable[[], _GeneratorContextManager[TorchFunctionMode | None]]:
     @contextmanager
-    def context_manager_fn() -> Generator[TorchFunctionMode | None, None, None]:
+    def context_manager_fn() -> Generator[TorchFunctionMode | None]:
         from torch.overrides import _len_torch_function_stack, _pop_mode, _push_mode
 
         temp_elements = []
@@ -1910,7 +1909,7 @@ def dispatch_trace(
 
 def wrap_key(
     f: Callable[[Unpack[_Ts]], R],
-    tensors: tuple[Unpack[_Ts]],
+    tensors: tuple[*_Ts],
     tracer: _ProxyTracer,
     pre_dispatch: bool,
 ) -> Callable[_P, R]:
@@ -1985,7 +1984,7 @@ ORIGINAL_ATEN: contextvars.ContextVar[object | None] = contextvars.ContextVar(
 @contextmanager
 def set_original_aten_op(
     func: OpOverload | torch._ops.HigherOrderOperator,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     if ORIGINAL_ATEN.get() is None and fx_traceback.has_preserved_node_meta():
         token = ORIGINAL_ATEN.set(func)
         fx_traceback.current_meta["original_aten"] = func
@@ -2235,7 +2234,7 @@ class ProxyTorchDispatchMode(TorchDispatchMode):
     def enable_decompositions(
         self,
         decomposition_table: Mapping[OpOverload, Callable[..., Any]] | None,
-    ) -> Generator[Mapping[OpOverload, Callable[..., Any]], None, None]:
+    ) -> Generator[Mapping[OpOverload, Callable[..., Any]]]:
         table = decomposition_table or {}
         self._decomposition_table_stack.append(self.decomposition_table)
         self.decomposition_table = table
@@ -2519,7 +2518,7 @@ def wrapper_and_args_for_make_fx(
 
 
 @contextmanager
-def disable_autocast_cache() -> Generator[None, None, None]:
+def disable_autocast_cache() -> Generator[None]:
     old_value = torch.is_autocast_cache_enabled()
     torch.set_autocast_cache_enabled(False)
     try:
@@ -2954,7 +2953,7 @@ class _MakefxTracer:
     @contextmanager
     def _init_modes_from_inputs(
         self, f: Callable[..., Any], args: tuple[object, ...]
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         prev_modes = self._checkpoint_modes()
         try:
             # Avoid importing sympy at a module level
@@ -3056,7 +3055,7 @@ class _MakefxTracer:
     @contextmanager
     def _init_modes_from_parent(
         self, parent_tracer: _MakefxTracer
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         # By default, subtracer creates new modes based on parent tracer's config.
         # However, there are cases where we want to share the same modes with parent tracer
         # For example, fake_tensor_mode, we want the example value's fake_mode of parent graph and subgraphs to be the same.
@@ -3347,7 +3346,7 @@ _CURRENT_MAKE_FX_TRACER: _MakefxTracer | None = None
 
 
 @contextmanager
-def _set_make_fx_tracer(tracer: _MakefxTracer) -> Generator[None, None, None]:
+def _set_make_fx_tracer(tracer: _MakefxTracer) -> Generator[None]:
     global _CURRENT_MAKE_FX_TRACER
     prev_tracer = _CURRENT_MAKE_FX_TRACER
     try:
@@ -3480,7 +3479,7 @@ def handle_sym_dispatch(
 
 
 @contextmanager
-def disable_proxy_modes_tracing() -> Generator[ProxyTorchDispatchMode, None, None]:
+def disable_proxy_modes_tracing() -> Generator[ProxyTorchDispatchMode]:
     return _disable_infra_mode(torch._C._TorchDispatchModeKey.PROXY)
 
 

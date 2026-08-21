@@ -66,7 +66,6 @@ Recommended access patterns:
   ...     run_kernels()
 """
 
-from __future__ import annotations
 
 import contextvars
 import os
@@ -74,7 +73,8 @@ import sys
 import types
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, List, Optional
+from typing import List, Optional
+from collections.abc import Iterator
 
 # ---------------------------------------------------------------------------
 # Runtime flags. Source of truth.
@@ -93,14 +93,14 @@ from typing import Iterator, List, Optional
 # ---------------------------------------------------------------------------
 
 CACHE_ENABLED: bool = os.getenv("QUACK_CACHE_ENABLED", "1") == "1"
-CACHE_DIR: Optional[str] = os.getenv("QUACK_CACHE_DIR", None)
-_CACHE_DIR_OVERRIDE: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
+CACHE_DIR: str | None = os.getenv("QUACK_CACHE_DIR", None)
+_CACHE_DIR_OVERRIDE: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "quack_cache_dir_override", default=None
 )
 
 
 @contextmanager
-def cache_dir_override(cache_dir: Optional[str]) -> Iterator[None]:
+def cache_dir_override(cache_dir: str | None) -> Iterator[None]:
     token = _CACHE_DIR_OVERRIDE.set(cache_dir)
     try:
         yield
@@ -108,7 +108,7 @@ def cache_dir_override(cache_dir: Optional[str]) -> Iterator[None]:
         _CACHE_DIR_OVERRIDE.reset(token)
 
 
-def get_cache_dir() -> Optional[str]:
+def get_cache_dir() -> str | None:
     override = _CACHE_DIR_OVERRIDE.get()
     return CACHE_DIR if override is None else override
 
@@ -127,7 +127,7 @@ _COMPILE_ONLY_DEPTH: contextvars.ContextVar[int] = contextvars.ContextVar(
 
 #: Downstream projects can append directories here to include their sources
 #: in the cache fingerprint. Must be set before the first jit_cache call.
-EXTRA_SOURCE_DIRS: List[Path] = []
+EXTRA_SOURCE_DIRS: list[Path] = []
 
 
 # ---------------------------------------------------------------------------

@@ -107,7 +107,7 @@ class ChunkShardingSpec(ShardingSpec):
 
     def shard(
         self, tensor: torch.Tensor, src_rank: int = 0, process_group=None
-    ) -> "ShardedTensor":
+    ) -> ShardedTensor:
         """
         Args:
             src_rank: group rank relative to ``process_group``

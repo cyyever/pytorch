@@ -1,6 +1,5 @@
 """Shared helpers for triton perf_report-based benchmarks."""
 
-from __future__ import annotations
 
 import os
 from typing import TYPE_CHECKING

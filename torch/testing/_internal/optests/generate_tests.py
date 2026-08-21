@@ -385,7 +385,7 @@ def validate_failures_dict_formatting(failures_dict_path: str) -> None:
 
 
 def validate_failures_dict_structure(
-    failure_dict: "FailuresDict", test_utils: list[str], testcase: Any
+    failure_dict: FailuresDict, test_utils: list[str], testcase: Any
 ) -> None:
     """Validates the failures dict.
 
@@ -474,7 +474,7 @@ class OpCheckMode(TorchFunctionMode):
         namespaces: list[str],
         test_util_name: str,
         test_util: Callable,
-        failures_dict: "FailuresDict",
+        failures_dict: FailuresDict,
         test_name: str,
         failures_dict_path: str,
     ):
@@ -795,7 +795,7 @@ class FailuresDict:
         self.data = data
 
     @staticmethod
-    def load(path, *, create_file=False) -> "FailuresDict":
+    def load(path, *, create_file=False) -> FailuresDict:
         if create_file and not os.path.exists(path):
             result = FailuresDict(path, {})
             FailuresDict.save()

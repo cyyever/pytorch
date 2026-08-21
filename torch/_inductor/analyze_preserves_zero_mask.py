@@ -40,7 +40,7 @@ class PreservesZeros(SymPyOps, DefaultHandler):
         )
 
     def store(
-        self, name: str, index: sympy.Expr, value: TypedExpr, mode: "StoreMode" = None
+        self, name: str, index: sympy.Expr, value: TypedExpr, mode: StoreMode = None
     ) -> None:
         if not isinstance(self, PreservesZeros):
             raise AssertionError(f"expected PreservesZeros, got {type(self)}")
@@ -62,7 +62,7 @@ class PreservesZeros(SymPyOps, DefaultHandler):
         return TypedExpr(construct_symbol(next(self.count), dtype), dtype)
 
 
-def prologue_preserves_zero_mask(prologue: "SchedulerNode") -> bool:
+def prologue_preserves_zero_mask(prologue: SchedulerNode) -> bool:
     """
     Does this prologue preserve zero masks
     """
@@ -101,7 +101,7 @@ class RecordLowPrecisionOps(DefaultHandler):
 
     @staticmethod
     def store(
-        name: str, index: sympy.Expr, value: TypedExpr, mode: "StoreMode" = None
+        name: str, index: sympy.Expr, value: TypedExpr, mode: StoreMode = None
     ) -> None:
         pass
 
@@ -146,7 +146,7 @@ def low_prec_float(dtype: torch.dtype) -> bool:
 
 
 def can_codegen_without_upcasts(
-    prologue: "SchedulerNode",
+    prologue: SchedulerNode,
     disallow_fp32_ops: bool = False,
 ) -> bool:
     """

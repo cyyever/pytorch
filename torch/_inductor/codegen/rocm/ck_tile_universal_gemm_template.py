@@ -433,10 +433,10 @@ class CKTileGemmTemplate(CKTileTemplate):
         )
         return res
 
-    def check_dtypes(self, op: "CKTileGemmOperation"):
-        X_dtype, W_dtype, out_dtype = [
+    def check_dtypes(self, op: CKTileGemmOperation):
+        X_dtype, W_dtype, out_dtype = (
             T.get_layout().dtype for T in [*self.input_nodes, self.output_node]
-        ]
+        )
         if op.datatype_a != self._TORCH_DTYPE_TO_CK[X_dtype]:
             return False
         if op.datatype_b != self._TORCH_DTYPE_TO_CK[W_dtype]:
@@ -445,11 +445,11 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         return True
 
-    def check_layouts(self, op: "CKTileGemmOperation"):
-        X_layout, W_layout, out_layout = [
+    def check_layouts(self, op: CKTileGemmOperation):
+        X_layout, W_layout, out_layout = (
             torch_layout_to_ck_layout(T.get_layout())
             for T in [*self.input_nodes, self.output_node]
-        ]
+        )
         if op.layout_a != X_layout:
             return False
         if op.layout_b != W_layout:
@@ -459,14 +459,14 @@ class CKTileGemmTemplate(CKTileTemplate):
         return True
 
     def get_gemm_problem_size(self):
-        X_size, W_size = [T.get_layout().size for T in [*self.input_nodes]]
+        X_size, W_size = (T.get_layout().size for T in [*self.input_nodes])
 
         M, K = X_size
         _, N = W_size
 
         return M, N, K
 
-    def check_block_tiles(self, op: "CKTileGemmOperation"):
+    def check_block_tiles(self, op: CKTileGemmOperation):
         """
         The contiguous dimension of a tensor must be divisible by the block tile size
         This helper function enforces it for the inputs and the output.
@@ -511,7 +511,7 @@ class CKTileGemmTemplate(CKTileTemplate):
 
         return True
 
-    def check_alignments(self, op: "CKTileGemmOperation"):
+    def check_alignments(self, op: CKTileGemmOperation):
         """
         The contiguous dimension of a tensor must be divisible by the vector load size.
         """
@@ -581,7 +581,7 @@ class CKTileGemmTemplate(CKTileTemplate):
 
         return True
 
-    def check_warp_tiles(self, op: "CKTileGemmOperation"):
+    def check_warp_tiles(self, op: CKTileGemmOperation):
         if op.tile_m % (op.warp_m * op.warp_tile_m) != 0:
             return False
         if op.tile_n % (op.warp_n * op.warp_tile_n) != 0:
@@ -590,7 +590,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         return True
 
-    def check_block_tile_size(self, op: "CKTileGemmOperation"):
+    def check_block_tile_size(self, op: CKTileGemmOperation):
         # assuming LDS size is 64KB
         if op.pipeline == "CompV4":
             max_block_tile_size = 2**15
@@ -605,7 +605,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         return True
 
-    def check_epilogue(self, op: "CKTileGemmOperation"):
+    def check_epilogue(self, op: CKTileGemmOperation):
         """
         Pre-v2 CShuffleEpilogueProblem takes a memory_operation_enum argument
         with no default, which we don't emit, so those instances don't compile.
@@ -620,7 +620,7 @@ class CKTileGemmTemplate(CKTileTemplate):
             return False
         return True
 
-    def filter_op(self, op: "CKTileGemmOperation"):
+    def filter_op(self, op: CKTileGemmOperation):
         """
         Determines whether a given op definition is suitable for the current
         input / output of the operation that this template implements.
@@ -642,7 +642,7 @@ class CKTileGemmTemplate(CKTileTemplate):
 
         return op
 
-    def emit_ck_instance(self, op: "CKTileGemmOperation", *, use_v2_api: bool):
+    def emit_ck_instance(self, op: CKTileGemmOperation, *, use_v2_api: bool):
         """
         This method is used to generate code which defines the type alias for the generated kernel class
         """
@@ -840,7 +840,7 @@ class CKTileGemmTemplate(CKTileTemplate):
         return rendered_definition
 
     def render(  # type: ignore[override]
-        self, kernel: ROCmTemplateKernel, op: "CKTileGemmOperation", **kwargs
+        self, kernel: ROCmTemplateKernel, op: CKTileGemmOperation, **kwargs
     ) -> str:
         """
         The primary entry point for the code rendering process used in this template.
@@ -974,7 +974,7 @@ class CKTileGemmTemplate(CKTileTemplate):
                     kBatch=k_batch,
                 )
 
-    def k_batch_choices(self, op: "CKTileGemmOperation") -> tuple[int, ...]:
+    def k_batch_choices(self, op: CKTileGemmOperation) -> tuple[int, ...]:
         """
         Returns a list of k_batch choices for the template.
         """

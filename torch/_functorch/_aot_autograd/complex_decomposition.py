@@ -9,7 +9,6 @@ aten.real/aten.imag at the top, and complex outputs get repacked via aten.comple
 at the bottom.
 """
 
-from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 

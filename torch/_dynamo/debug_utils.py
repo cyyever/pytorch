@@ -14,7 +14,6 @@ Key classes:
 - NNModuleToString: Converts nn.Modules to string representations
 """
 
-from __future__ import annotations
 
 import atexit
 import copy

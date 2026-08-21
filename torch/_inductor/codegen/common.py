@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import atexit
 import contextlib
 import dataclasses
@@ -17,7 +15,8 @@ from abc import ABC, abstractmethod
 from enum import auto, Enum
 from itertools import chain
 from typing import Any, cast, ClassVar, Generic, NamedTuple, TYPE_CHECKING
-from typing_extensions import Self, TypeVar
+from typing import TypeVar
+from typing import Self
 
 import sympy
 

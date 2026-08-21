@@ -33,7 +33,6 @@ implements a `_match` method which returns either a `Match` object for a
 successful match or a `FailedMatch` object for a failure to match.
 """
 
-from __future__ import annotations
 
 import contextlib
 import dataclasses
@@ -53,7 +52,7 @@ from collections import defaultdict
 from collections.abc import Callable, Collection, Generator, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, NoReturn, Protocol, TypeVar
-from typing_extensions import Self, TypeIs
+from typing import Self, TypeIs
 
 import torch
 import torch._guards
@@ -545,7 +544,7 @@ class PatternExpr(ABC):
 
     def find_anchor_nodes(
         self, ctx: MatchContext, searched: OrderedSet[torch.fx.Node]
-    ) -> Generator[torch.fx.Node | None, None, None]:
+    ) -> Generator[torch.fx.Node | None]:
         if self in ctx.pattern_to_node:
             yield ctx.pattern_to_node[self]
 
@@ -843,7 +842,7 @@ class _TargetExpr(PatternExpr):
 
     def find_anchor_nodes(
         self, ctx: MatchContext, searched: OrderedSet[torch.fx.Node]
-    ) -> Generator[torch.fx.Node | None, None, None]:
+    ) -> Generator[torch.fx.Node | None]:
         raise NotImplementedError
 
     def _match_fns(self, node: torch.fx.Node) -> bool:
@@ -1020,7 +1019,7 @@ class _TargetArgsExpr(_TargetExpr):
 
     def find_anchor_nodes(
         self, ctx: MatchContext, searched: OrderedSet[torch.fx.Node]
-    ) -> Generator[torch.fx.Node | None, None, None]:
+    ) -> Generator[torch.fx.Node | None]:
         """
         This is used when we are matching a pattern with multiple outputs.
         There is a partial match (stored in ctx) and we want to walk
@@ -2446,7 +2445,7 @@ class _GraphMutationTracker:
 def _track_graph_mutation_ops(
     graph: torch.fx.Graph,
     custom_context: dict[str, Any] | None = None,
-) -> Generator[_GraphMutationTracker, None, None]:
+) -> Generator[_GraphMutationTracker]:
     custom_context = custom_context or {}
     tracker = _GraphMutationTracker()
     create_node = graph.create_node

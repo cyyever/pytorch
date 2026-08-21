@@ -2,7 +2,6 @@
 Utils for caching the outputs of AOTAutograd
 """
 
-from __future__ import annotations
 
 import base64
 import contextlib
@@ -19,7 +18,7 @@ import traceback
 import uuid
 from copy import copy
 from typing import Any, TYPE_CHECKING
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch._dynamo.precompile_context import PrecompileContext
@@ -343,7 +342,7 @@ def _get_context_fn_cache_hash(context_fn: Callable[..., Any]) -> str | None:
 
 def _iter_graph_modules(
     gm: torch.fx.GraphModule,
-) -> Generator[torch.fx.GraphModule, None, None]:
+) -> Generator[torch.fx.GraphModule]:
     for module in gm.modules():
         if isinstance(module, torch.fx.GraphModule):
             yield module
@@ -459,7 +458,7 @@ class AOTAutogradCacheDetails(FxGraphHashDetails):
     a safe and stable cache key for AOTAutograd.
     """
 
-    def _iter_triton_kernels_from_node(self, node: Node) -> Generator[Any, None, None]:
+    def _iter_triton_kernels_from_node(self, node: Node) -> Generator[Any]:
         if isinstance(node.target, torch._ops.OpOverloadPacket):
             for attr in node.target._dir:
                 custom_op = getattr(node.target, attr, None)
@@ -786,7 +785,7 @@ class AOTAutogradCachePickler(FxGraphCachePickler):
 @contextlib.contextmanager
 def normalize_placeholder_names(
     gm: torch.fx.GraphModule,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Context manager that normalizes the placeholder names in the graph module.
     This is used while generating a cache key for AOTAutogradCache, so that two graphs
@@ -972,7 +971,7 @@ def autograd_cache_key(
 @contextlib.contextmanager
 def sanitize_gm_for_cache(
     gm: torch.fx.GraphModule,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Clears a few fields in a dynamo supplied Graph Module that are not stable between graph inputs, but don't
     affect inductor or aotdispatch correctness.

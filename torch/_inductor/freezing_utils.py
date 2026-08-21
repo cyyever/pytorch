@@ -14,7 +14,7 @@ def _freezing_active() -> bool:
 
 
 @contextlib.contextmanager
-def enter_freezing() -> Generator[Any, None, None]:
+def enter_freezing() -> Generator[Any]:
     """
     Context manager to designate when freezing is active.
     """

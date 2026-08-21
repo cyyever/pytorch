@@ -315,7 +315,7 @@ def derived_types(
     def derived_seq_types(typ: type | typing._SpecialForm):
         return (
             typing.Sequence[typ],  # type: ignore[valid-type]
-            typing.List[typ],  # type: ignore[valid-type]  # noqa: UP006
+            list[typ],  # type: ignore[valid-type]  # noqa: UP006
             GenericAlias(collections.abc.Sequence, (typ,)),
             GenericAlias(list, (typ,)),
         )
@@ -364,7 +364,7 @@ def get_supported_param_types():
 
 SUPPORTED_RETURN_TYPES = {
     Tensor: "Tensor",
-    typing.List[Tensor]: "Tensor[]",  # noqa: UP006
+    list[Tensor]: "Tensor[]",  # noqa: UP006
     list[Tensor]: "Tensor[]",
     int: "SymInt",
     float: "float",
@@ -456,7 +456,7 @@ def tuple_to_list(tuple_type: type[tuple]) -> type[list]:
     """
     type_args = typing.get_args(tuple_type)
     if (
-        tuple_type is typing.Tuple  # noqa: UP006
+        tuple_type is tuple  # noqa: UP006
         or tuple_type is tuple
         or not type_args
     ):

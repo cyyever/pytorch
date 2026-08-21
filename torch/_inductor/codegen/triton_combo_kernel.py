@@ -455,7 +455,7 @@ class ComboKernel(Kernel):
 
         @classmethod
         def codegen_pid_range(
-            cls, kernel: "ComboKernel", num: int, code: IndentedBuffer
+            cls, kernel: ComboKernel, num: int, code: IndentedBuffer
         ) -> None:
             if num == 0:
                 cls._calculate_xblocks(kernel, code)
@@ -469,7 +469,7 @@ class ComboKernel(Kernel):
 
         @classmethod
         def _calculate_xblocks(
-            cls, kernel: "ComboKernel", code: IndentedBuffer
+            cls, kernel: ComboKernel, code: IndentedBuffer
         ) -> None:
             x_numels_list = kernel.x_numels_list
             for i in range(len(x_numels_list)):
@@ -502,7 +502,7 @@ class ComboKernel(Kernel):
 
         @classmethod
         def codegen_pid_range(
-            cls, kernel: "ComboKernel", num: int, code: IndentedBuffer
+            cls, kernel: ComboKernel, num: int, code: IndentedBuffer
         ) -> None:
             if num == 0:
                 cls._calculate_total_blocks(kernel, code)
@@ -526,7 +526,7 @@ class ComboKernel(Kernel):
 
         @classmethod
         def _calculate_total_blocks(
-            cls, kernel: "ComboKernel", code: IndentedBuffer
+            cls, kernel: ComboKernel, code: IndentedBuffer
         ) -> None:
             """
             Calculate total blocks for each subkernel (x_blocks * y_blocks)
@@ -577,7 +577,7 @@ class ComboKernel(Kernel):
 
         @classmethod
         def codegen_pid_range(
-            cls, kernel: "ComboKernel", num: int, code: IndentedBuffer
+            cls, kernel: ComboKernel, num: int, code: IndentedBuffer
         ) -> None:
             num_kernels = len(kernel.sub_kernels)
             if num == 0:

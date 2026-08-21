@@ -6,7 +6,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, cast, Protocol
-from typing_extensions import NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 import torch
 from torch._dynamo.utils import counters

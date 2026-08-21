@@ -73,7 +73,7 @@ class ReadOnlyTensorWrapper(torch.Tensor):
     )
 
     @staticmethod
-    def __new__(cls, tensor: torch.Tensor) -> "ReadOnlyTensorWrapper":
+    def __new__(cls, tensor: torch.Tensor) -> ReadOnlyTensorWrapper:
         return tensor.as_subclass(cls)
 
     @classmethod
@@ -126,7 +126,7 @@ def from_dlpack(
     *,
     device: _Device | None = None,
     copy: bool | None = None
-) -> 'torch.Tensor':
+) -> torch.Tensor:
     """from_dlpack(ext_tensor) -> Tensor
 
     Converts a tensor from an external library into a ``torch.Tensor``.

@@ -74,7 +74,7 @@ else:
     BackendConfig = tuple[str | None, C10dBackend.Options | None]
     torch.serialization.add_safe_globals([_FlatLayout, _MeshLayout])
 
-    def _get_pg_from_name(mesh: "DeviceMesh", name: str) -> ProcessGroup:
+    def _get_pg_from_name(mesh: DeviceMesh, name: str) -> ProcessGroup:
         """
         This method allows us to torch.compile through DeviceMesh and lift its
         PGs as inputs to the graph since all PGs will have a source from the
@@ -94,7 +94,7 @@ else:
         else:
             return _resolve_process_group(name)  # pyrefly: ignore[bad-argument-type]
 
-    def _maybe_traced_group(mesh: "DeviceMesh", mesh_dim: int) -> ProcessGroup | None:
+    def _maybe_traced_group(mesh: DeviceMesh, mesh_dim: int) -> ProcessGroup | None:
         """Resolve the group via an in-graph op when tracing under CooR.
 
         Under compile_on_one_rank and an active make_fx/proxy trace, return the
@@ -132,13 +132,13 @@ else:
         def __init__(self) -> None:
             self.mesh_stack: list[DeviceMesh] = []
 
-        def get_current_mesh(self) -> "DeviceMesh":
+        def get_current_mesh(self) -> DeviceMesh:
             if len(self.mesh_stack) == 0:
                 raise RuntimeError("No device mesh is currently active!")
             return self.mesh_stack[-1]
 
         # TODO: to remove it once we move all use cases into new API.
-        def get_root_mesh(self, device_mesh: "DeviceMesh") -> "DeviceMesh":
+        def get_root_mesh(self, device_mesh: DeviceMesh) -> DeviceMesh:
             # If a mesh could not be found in the child_to_root_mapping, it is a root mesh itself.
             # A root mesh is not created through slicing.
             # We considers the root mesh of a root mesh is itself.
@@ -165,8 +165,8 @@ else:
         # TODO: to remove it once we move all use cases into new API.
         # We keep this API for backward compatibility.
         def _get_all_submeshes(
-            self, device_mesh: "DeviceMesh", mesh_dim_name: str
-        ) -> list["DeviceMesh"]:
+            self, device_mesh: DeviceMesh, mesh_dim_name: str
+        ) -> list[DeviceMesh]:
             warnings.warn(
                 "This _get_all_submeshes API will be deprecated soon."
                 "Please use `_get_all_submeshes` inside DeviceMesh instead.",
@@ -238,17 +238,17 @@ else:
         _rank_map: torch.Tensor
         _mesh_dim_names: tuple[str, ...] | None
         _layout: _MeshLayout
-        _root_mesh: "DeviceMesh | None" = None
+        _root_mesh: DeviceMesh | None = None
         _thread_id: int | None
         # Record flatten mesh name to its flattened mesh in root mesh.
-        _flatten_mapping: dict[str, "DeviceMesh"]
+        _flatten_mapping: dict[str, DeviceMesh]
         # Registry mapping group names to ProcessGroup objects (to avoid C++ lookup)
         _pg_registry: dict[str, ProcessGroup]
 
         def __init__(
             self,
             device_type: str,
-            mesh: "torch.Tensor | ArrayLike | None" = None,
+            mesh: torch.Tensor | ArrayLike | None = None,
             *,
             mesh_dim_names: tuple[str, ...] | None = None,
             backend_override: tuple[BackendConfig, ...] | None = None,
@@ -256,7 +256,7 @@ else:
             _rank: int | None = None,
             _layout: _MeshLayout | None = None,
             _rank_map: torch.Tensor | None = None,
-            _root_mesh: "DeviceMesh | None" = None,
+            _root_mesh: DeviceMesh | None = None,
         ) -> None:
             # no-op in OSS, logs API usage metrics in meta-internal runs
             torch._C._log_api_usage_once(
@@ -671,10 +671,10 @@ else:
                 raise AssertionError
             return dim_non_none_group_names
 
-        def _get_root_mesh(self) -> "DeviceMesh":
+        def _get_root_mesh(self) -> DeviceMesh:
             return self._root_mesh if self._root_mesh else self
 
-        def __enter__(self) -> "DeviceMesh":
+        def __enter__(self) -> DeviceMesh:
             # set this mesh as the current mesh in mesh env
             _mesh_resources.mesh_stack.append(self)
             return self
@@ -743,7 +743,7 @@ else:
                 repr(self._hash_key()).encode(), digest_size=16
             ).hexdigest()
 
-        def __getitem__(self, mesh_dim_names: str | tuple[str, ...]) -> "DeviceMesh":
+        def __getitem__(self, mesh_dim_names: str | tuple[str, ...]) -> DeviceMesh:
             """
             Slice the current DeviceMesh based on the mesh_dim_names given to create a submesh.
             The submesh created consists of the dimensions and the communicators indicated by
@@ -887,7 +887,7 @@ else:
             self,
             layout: _MeshLayout,
             submesh_dim_names: tuple[str, ...],
-        ) -> "DeviceMesh":
+        ) -> DeviceMesh:
             with torch._dynamo.disable_nested_graph_breaks():
                 root_mesh = self._get_root_mesh()
                 slice_dim_group_name = []
@@ -1070,7 +1070,7 @@ else:
             return result_layout
 
         # TODO: to make this use case by other components public API in the future.
-        def _get_all_submeshes(self, mesh_dim_name: str) -> list["DeviceMesh"]:
+        def _get_all_submeshes(self, mesh_dim_name: str) -> list[DeviceMesh]:
             """
             Return all the submeshes of a given mesh dimension of the device mesh.
             """
@@ -1099,10 +1099,10 @@ else:
         def from_group(
             group: ProcessGroup | list[ProcessGroup],
             device_type: str,
-            mesh: "torch.Tensor | ArrayLike | None" = None,
+            mesh: torch.Tensor | ArrayLike | None = None,
             *,
             mesh_dim_names: tuple[str, ...] | None = None,
-        ) -> "DeviceMesh":
+        ) -> DeviceMesh:
             """
             Constructs a :class:`DeviceMesh` with ``device_type`` from an
             existing :class:`ProcessGroup` or a list of existing :class:`ProcessGroup`.
@@ -1318,7 +1318,7 @@ else:
             | C10dBackend.Options
             | tuple[str, C10dBackend.Options]
             | None = None,
-        ) -> "DeviceMesh":
+        ) -> DeviceMesh:
             """
             Returns a 1D DeviceMesh by flattening the current DeviceMesh.
 
@@ -1363,7 +1363,7 @@ else:
             backend_override: tuple[
                 tuple[str | None, C10dBackend.Options | None], ...
             ] = ((None, None),),
-        ) -> "DeviceMesh":
+        ) -> DeviceMesh:
             inner_layout = _MeshLayout.from_sizes_strides(tuple(mesh_sizes))
 
             if inner_layout.numel() != self._layout[dim].numel():
@@ -1419,7 +1419,7 @@ else:
                 str, str | C10dBackend.Options | tuple[str, C10dBackend.Options]
             ]
             | None = None,
-        ) -> "DeviceMesh":
+        ) -> DeviceMesh:
             """
             Returns a DeviceMesh by unflatten the current DeviceMesh.
 
@@ -1473,7 +1473,7 @@ else:
             )
 
         @staticmethod
-        def _concatenate(device_mesh_list: list["DeviceMesh"]) -> "DeviceMesh":
+        def _concatenate(device_mesh_list: list[DeviceMesh]) -> DeviceMesh:
             concat_dim_names: list[str] = []
             concat_axes: list[_FlatLayout] = []
             concat_dim_group_name: list[GroupName] = []
@@ -1641,10 +1641,10 @@ _distributed_opaque_types_registered = False
 
 
 def _device_mesh_reconstruct_fn(
-    mesh: "CustomClassBase",
-    get_tracked_proxy: Callable[["CustomClassBase"], "torch.fx.Proxy | None"],
+    mesh: CustomClassBase,
+    get_tracked_proxy: Callable[[CustomClassBase], torch.fx.Proxy | None],
     tracer: Any,
-) -> "torch.fx.Proxy | None":
+) -> torch.fx.Proxy | None:
     """Reconstruct a DeviceMesh submesh from a tracked ancestor mesh.
 
     Called by PythonKeyTracer when make_fx encounters a DeviceMesh that isn't

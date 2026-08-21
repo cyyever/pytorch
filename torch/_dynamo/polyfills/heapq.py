@@ -2,7 +2,6 @@
 Python polyfills for heapq
 """
 
-from __future__ import annotations
 
 import heapq
 from typing import TypeVar

@@ -7,7 +7,6 @@ The runtime helpers (_nvgemm_run, _nvgemm_precompile, etc.) are imported by the
 generated wrapper at runtime, keeping the generated code thin.
 """
 
-from __future__ import annotations
 
 import hashlib
 import importlib

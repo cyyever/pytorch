@@ -6,7 +6,6 @@ and are imported by make_fx, strict export, and non-strict export alike (instead
 of make_fx depending on the dynamo export module).
 """
 
-from __future__ import annotations
 
 import inspect
 from itertools import zip_longest

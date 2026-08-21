@@ -7,7 +7,7 @@ import dataclasses
 import types
 from collections.abc import Callable, Collection, Sequence
 from typing import Any, NoReturn
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 

@@ -837,9 +837,9 @@ class StreamContext:
     .. note:: Streams are per-device.
     """
 
-    cur_stream: Optional["torch.cuda.Stream"]
+    cur_stream: Optional[torch.cuda.Stream]
 
-    def __init__(self, stream: Optional["torch.cuda.Stream"]):
+    def __init__(self, stream: Optional[torch.cuda.Stream]):
         self.stream = stream
         self.idx = _get_device_index(None, True)
         if not torch.jit.is_scripting():
@@ -883,7 +883,7 @@ class StreamContext:
         torch.cuda.set_stream(self.src_prev_stream)  # type: ignore[arg-type]
 
 
-def stream(stream: Optional["torch.cuda.Stream"]) -> StreamContext:
+def stream(stream: Optional[torch.cuda.Stream]) -> StreamContext:
     r"""Wrap around the Context-manager StreamContext that selects a given stream.
 
     Arguments:

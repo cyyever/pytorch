@@ -1686,7 +1686,7 @@ class _StridedShard(torch._C._distributed.StridedShard):
         return new_tensor
 
 
-def _is_shard_like(p: "Placement") -> TypeGuard[Shard | _StridedShard]:
+def _is_shard_like(p: Placement) -> TypeGuard[Shard | _StridedShard]:
     """Check if a placement is Shard or _StridedShard.
 
     Use this instead of ``isinstance(p, Shard)`` to avoid silently missing

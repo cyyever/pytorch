@@ -103,7 +103,7 @@ class CustomSchedulerPass(CustomPassBase):
     """
 
     @abstractmethod
-    def __call__(self, nodes: list["BaseSchedulerNode"]) -> list["BaseSchedulerNode"]:
+    def __call__(self, nodes: list[BaseSchedulerNode]) -> list[BaseSchedulerNode]:
         """
         Implementation of the custom pass.
         """
@@ -226,7 +226,7 @@ class CustomRuntimeEstimator(CustomPassBase):
     """
 
     @abstractmethod
-    def __call__(self, node: "torch.fx.Node") -> float:
+    def __call__(self, node: torch.fx.Node) -> float:
         """
         Implementation of the custom runtime estimator.
 
@@ -268,10 +268,10 @@ class CustomKnapsackSolver(CustomPassBase):
     def __call__(
         self,
         memory: list[float],
-        joint_graph: "torch.fx.Graph",
+        joint_graph: torch.fx.Graph,
         max_memory: float,
-        node_info: "NodeInfo",
-        all_recomputable_banned_nodes: list["torch.fx.Node"],
+        node_info: NodeInfo,
+        all_recomputable_banned_nodes: list[torch.fx.Node],
     ) -> tuple[list[int], list[int]]:
         """
         Implementation of the custom knapsack solver.

@@ -1,6 +1,7 @@
 from collections import OrderedDict
-from collections.abc import Sequence
-from typing import cast, TypeVar
+from collections.abc import Iterator, Sequence
+from typing import cast, TYPE_CHECKING, TypeVar
+from typing import TypeIs
 
 import torch
 from torch._utils import _get_device_index
@@ -8,7 +9,75 @@ from torch.nn.modules import Module
 from torch.nn.parallel import comm
 
 
+if TYPE_CHECKING:
+    from torch._C import ScriptMethod
+    from torch.jit import ScriptModule
+    from torch.jit._state import EnabledProxy
+
+
 __all__ = ["replicate"]
+
+
+def _is_script_module(module: Module) -> TypeIs[ScriptModule]:
+    import torch.jit
+
+    return isinstance(module, torch.jit.ScriptModule)
+
+
+def _is_script_method(module: object) -> TypeIs[ScriptMethod]:
+    import torch.jit
+
+    return isinstance(module, torch._C.ScriptMethod)
+
+
+def _init_script_module() -> ScriptModule:
+    import torch.jit
+
+    return torch.jit.ScriptModule()
+
+
+def _is_jit_enabled() -> EnabledProxy:
+    import torch.jit._state
+
+    return torch.jit._state._enabled
+
+
+# Check if we can safely replicate the module.
+# there are two types of module:
+# 1. python modules
+# 2. ScriptModule
+#
+# currently a module cannot be replicated properly if the descendants of
+# any ScriptModule contains python module (type 1 above)
+def _replicatable_module(module: Module, memo: set[Module] | None = None) -> bool:
+    # module.modules() contains module itself as the first element
+    def descendant_modules(module: Module) -> Iterator[Module]:
+        gen = module.modules()
+        next(gen)
+        return gen
+
+    if not _is_jit_enabled():
+        return True
+    if memo is None:
+        memo = set()
+
+    # memoize visited modules
+    memo.add(module)
+    if _is_script_module(module):
+        memo.update(descendant_modules(module))
+        return all(
+            _is_script_module(descendant) for descendant in descendant_modules(module)
+        )
+
+    for child in module.children():
+        # since any unreplicatable module will cause the check to return
+        # False early, visited modules here can be safely ignored.
+        if child in memo:
+            continue
+        if not _replicatable_module(child, memo):
+            return False
+
+    return True
 
 
 def _broadcast_coalesced_reshape(
@@ -51,6 +120,11 @@ def replicate(
     devices: Sequence[int | torch.device],
     detach: bool = False,
 ) -> list[T]:
+    if not _replicatable_module(network):
+        raise RuntimeError(
+            "Cannot replicate network where python modules are children of ScriptModule"
+        )
+
     if not devices:
         return []
 

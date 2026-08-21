@@ -1,10 +1,9 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
 
 import contextlib
 import logging
 from typing import Any, cast, Literal, NamedTuple, TYPE_CHECKING
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple
 
 import torch
 import torch.distributed as dist
@@ -1162,8 +1161,8 @@ class RegisterPostBackwardFunction(torch.autograd.Function):
     def jvp(
         ctx: Any,
         param_group_tangent: object,
-        *grad_inputs: Unpack[_GradInputs],
-    ) -> tuple[Unpack[_GradInputs]]:
+        *grad_inputs: *_GradInputs,
+    ) -> tuple[*_GradInputs]:
         # Drop the non-tensor param_group tangent. The output pre-backward hook
         # queues final post-backward after all primal/tangent paths finish.
         return grad_inputs

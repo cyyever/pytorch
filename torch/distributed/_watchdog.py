@@ -41,7 +41,6 @@ Usage:
         some_operation()
 """
 
-from __future__ import annotations
 
 import asyncio
 import faulthandler
@@ -452,7 +451,7 @@ def cpu_timeout(
 @contextmanager
 def op_timeout(
     timeout: float | timedelta, callback: Callable[[], None] | None = None
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """CPU timeout guards the block; stream timeout monitors GPU work after exit.
 
     Example::

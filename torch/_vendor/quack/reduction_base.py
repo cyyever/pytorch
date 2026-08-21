@@ -1,6 +1,5 @@
 # Copyright (c) 2025, Wentao Guo, Ted Zadouri, Tri Dao.
 
-from typing import Type, Tuple, Optional
 
 import cutlass
 import cutlass.cute as cute
@@ -10,7 +9,7 @@ from . import copy_utils
 
 
 class ReductionBase:
-    def __init__(self, dtype: Type[cutlass.Numeric], N: int, stage: int, reduction_dtype=Float32):
+    def __init__(self, dtype: type[cutlass.Numeric], N: int, stage: int, reduction_dtype=Float32):
         self.dtype = dtype
         self.N = N
         self.stage = stage
@@ -63,7 +62,7 @@ class ReductionBase:
 
     def _allocate_reduction_buffer_and_mbar(
         self, smem: cutlass.utils.SmemAllocator, tv_layout: cute.Layout, is_persistent: bool = False
-    ) -> Tuple[cute.Tensor, Optional[cute.Pointer]]:
+    ) -> tuple[cute.Tensor, cute.Pointer | None]:
         reduction_buffer = smem.allocate_tensor(
             self.reduction_dtype,
             self._get_reduction_buffer_layout(tv_layout, self.cluster_n),

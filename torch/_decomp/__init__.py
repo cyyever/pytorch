@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 from functools import lru_cache, partial, wraps
 from itertools import chain
 from typing import Optional, TYPE_CHECKING, TypeVar, Union
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 
 if TYPE_CHECKING:
@@ -302,7 +302,7 @@ import torch._decomp.decompositions
 import torch._refs
 
 
-def core_aten_decompositions() -> "CustomDecompTable":
+def core_aten_decompositions() -> CustomDecompTable:
     from torch.export.exported_program import default_decompositions
 
     return default_decompositions()
