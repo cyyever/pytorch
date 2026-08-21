@@ -611,12 +611,7 @@ const ExecutionPlan& ProfilingGraphExecutorImpl::getOptimizedPlanFor(
     return *fallback_plan_;
   }
 
-  // if tensorExprFuserEnabled() returns true we need to persist the very first
-  // time ProfilingGraphExecutorImpl is called, so we can update it correctly
-  // for fallback functions in ProfilingGraphExecutorImpl Else,
-  // getPlanFor(remaining_bailout_depth) is corrected and persisted by the Code
-  // object in interpreter.
-  if (!remaining_bailout_depth_.has_value() || !tensorExprFuserEnabled()) {
+  if (!remaining_bailout_depth_.has_value()) {
     if (remaining_bailout_depth.has_value()) {
       remaining_bailout_depth_ = *remaining_bailout_depth;
     } else {
