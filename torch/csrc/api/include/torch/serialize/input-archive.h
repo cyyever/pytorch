@@ -105,7 +105,7 @@ class TORCH_API InputArchive final {
   }
 
  private:
-  c10::Dict<std::string, c10::IValue> dict_;
+  c10::impl::GenericDict dict_;
   std::string hierarchy_prefix_;
 };
 } // namespace torch::serialize

@@ -18,7 +18,9 @@
 namespace torch::serialize {
 
 InputArchive::InputArchive()
-    : dict_(c10::DictType::create(c10::StringType::get(), c10::AnyType::get())) {}
+    : dict_(c10::impl::GenericDict(
+          c10::StringType::get(),
+          c10::AnyType::get())) {}
 
 void InputArchive::read(const std::string& key, c10::IValue& ivalue) {
   TORCH_CHECK(
@@ -98,7 +100,7 @@ void InputArchive::read(const std::string& key, InputArchive& archive) {
 
 namespace {
 
-c10::Dict<std::string, c10::IValue> readDataArchive(
+c10::impl::GenericDict readDataArchive(
     const std::shared_ptr<caffe2::serialize::ReadAdapterInterface>& rai,
     std::optional<torch::Device> device) {
   caffe2::serialize::PyTorchStreamReader reader(rai);
@@ -195,8 +197,8 @@ void InputArchive::load_from(
 std::vector<std::string> InputArchive::keys() {
   std::vector<std::string> all_keys;
   all_keys.reserve(dict_.size());
-  for (const auto& key : dict_.keys()) {
-    all_keys.push_back(key);
+  for (const auto& entry : dict_) {
+    all_keys.push_back(entry.key().toStringRef());
   }
   return all_keys;
 }

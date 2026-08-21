@@ -2,7 +2,6 @@
 
 #include <ATen/core/ivalue.h>
 #include <torch/csrc/Export.h>
-#include <torch/csrc/jit/api/module.h>
 #include <torch/types.h>
 
 #include <functional>
@@ -17,16 +16,12 @@ class Tensor;
 
 namespace torch {
 using at::Tensor;
-namespace jit {
-struct Module;
-} // namespace torch::jit
 } // namespace torch
 
 namespace torch::serialize {
 class TORCH_API OutputArchive final {
  public:
-  explicit OutputArchive(std::shared_ptr<jit::CompilationUnit> cu);
-  explicit OutputArchive();
+  OutputArchive();
 
   // Move is allowed.
   OutputArchive(OutputArchive&&) = default;
@@ -35,10 +30,6 @@ class TORCH_API OutputArchive final {
   // Copy is disallowed.
   OutputArchive(OutputArchive&) = delete;
   OutputArchive& operator=(OutputArchive&) = delete;
-
-  std::shared_ptr<jit::CompilationUnit> compilation_unit() const {
-    return cu_;
-  }
 
   /// Writes an `IValue` to the `OutputArchive`.
   void write(const std::string& key, const c10::IValue& ivalue);
@@ -75,9 +66,6 @@ class TORCH_API OutputArchive final {
   }
 
  private:
-  // Kept for API compatibility; serialization no longer goes through a
-  // ScriptModule.
-  std::shared_ptr<jit::CompilationUnit> cu_;
-  c10::Dict<std::string, c10::IValue> dict_;
+  c10::impl::GenericDict dict_;
 };
 } // namespace torch::serialize

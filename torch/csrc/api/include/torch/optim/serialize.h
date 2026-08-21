@@ -68,8 +68,7 @@ void serialize(
     const DerivedOptimizerParamOptions& param_group_options =
         static_cast<const DerivedOptimizerParamOptions&>(
             param_groups[i].options());
-    serialize::OutputArchive param_group_options_archive(
-        param_group_archive);
+    serialize::OutputArchive param_group_options_archive;
     param_group_options.serialize(param_group_options_archive);
     param_group_archive.write("options", param_group_options_archive);
     archive.write("param_groups/" + std::to_string(i), param_group_archive);

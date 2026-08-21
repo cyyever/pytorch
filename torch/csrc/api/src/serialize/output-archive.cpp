@@ -16,9 +16,9 @@ namespace torch::serialize {
 
 namespace {
 
-c10::Dict<std::string, c10::IValue> newDict() {
-  return c10::Dict<std::string, c10::IValue>(
-      c10::DictType::create(c10::StringType::get(), c10::AnyType::get()));
+c10::impl::GenericDict newDict() {
+  return c10::impl::GenericDict(
+      c10::StringType::get(), c10::AnyType::get());
 }
 
 void writeArchive(
@@ -40,7 +40,7 @@ void writeArchive(
   pickler.stop();
 
   for (const auto [i, td] : c10::enumerate(pickler.tensorData())) {
-    WriteableTensorData writable_td = getWriteableTensorData(td);
+    jit::WriteableTensorData writable_td = jit::getWriteableTensorData(td, /*to_cpu=*/false);
     writer.writeRecord(
         "data/" + tensor_names[i],
         writable_td.data(),
@@ -58,20 +58,20 @@ OutputArchive::OutputArchive(std::shared_ptr<jit::CompilationUnit> cu)
     : cu_(std::move(cu)), dict_(newDict()) {}
 
 void OutputArchive::write(const std::string& key, const c10::IValue& ivalue) {
-  dict_.insert_or_assign(key, ivalue);
+  dict_.insert_or_assign(c10::IValue(key), ivalue);
 }
 
 void OutputArchive::write(
     const std::string& key,
     const Tensor& tensor,
     bool /*is_buffer*/) {
-  dict_.insert_or_assign(key, tensor);
+  dict_.insert_or_assign(c10::IValue(key), c10::IValue(tensor));
 }
 
 void OutputArchive::write(
     const std::string& key,
     OutputArchive& nested_archive) {
-  dict_.insert_or_assign(key, nested_archive.dict_);
+  dict_.insert_or_assign(c10::IValue(key), c10::IValue(nested_archive.dict_));
 }
 
 void OutputArchive::save_to(const std::string& filename) {
