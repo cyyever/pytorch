@@ -393,10 +393,6 @@ AOTI_TORCH_EXPORT AOTITorchError aoti_torch__mm_plus_mm_out(
 
 // This will soon be deprecated after ao_quantization is complete.
 // Please refrain from using this or increasing callsites.
-AOTI_TORCH_EXPORT AOTITorchError
-aoti_torch_cpu_wrapped_fbgemm_pack_gemm_matrix_fp16(
-    AtenTensorHandle weight,
-    AtenTensorHandle* out);
 
 // This will soon be deprecated after ao_quantization is complete.
 // Please refrain from using this or increasing callsites.
@@ -409,13 +405,6 @@ AOTI_TORCH_EXPORT AOTITorchError aoti_torch_cpu__wrapped_linear_prepack(
 
 // This will soon be deprecated after ao_quantization is complete.
 // Please refrain from using this or increasing callsites.
-AOTI_TORCH_EXPORT AOTITorchError
-aoti_torch_cpu_wrapped_fbgemm_linear_fp16_weight(
-    AtenTensorHandle input,
-    AtenTensorHandle weight,
-    AtenTensorHandle bias, // optional argument
-    int64_t out_channel,
-    AtenTensorHandle* out);
 
 // This will soon be deprecated after ao_quantization is complete.
 // Please refrain from using this or increasing callsites.

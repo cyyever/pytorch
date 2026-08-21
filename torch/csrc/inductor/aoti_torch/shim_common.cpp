@@ -48,8 +48,6 @@
 #include <ATen/ops/bmm.h>
 #include <ATen/ops/convolution.h>
 #include <ATen/ops/empty_strided.h>
-#include <ATen/ops/fbgemm_linear_fp16_weight_fp32_activation.h>
-#include <ATen/ops/fbgemm_pack_gemm_matrix_fp16.h>
 #include <ATen/ops/from_blob.h>
 #include <ATen/ops/index_put.h>
 #include <ATen/ops/mm.h>
@@ -1004,15 +1002,6 @@ AOTITorchError aoti_torch__mm_plus_mm_out(
   });
 }
 
-AOTITorchError aoti_torch_cpu_wrapped_fbgemm_pack_gemm_matrix_fp16(
-    AtenTensorHandle weight,
-    AtenTensorHandle* out) {
-  AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE({
-    at::Tensor* weight_tensor = tensor_handle_to_tensor_pointer(weight);
-
-    *out = new_tensor_handle(at::fbgemm_pack_gemm_matrix_fp16(*weight_tensor));
-  });
-}
 
 AOTITorchError aoti_torch_cpu__wrapped_linear_prepack(
     AtenTensorHandle weight,
@@ -1036,22 +1025,6 @@ AOTITorchError aoti_torch_cpu__wrapped_linear_prepack(
   });
 }
 
-AOTITorchError aoti_torch_cpu_wrapped_fbgemm_linear_fp16_weight(
-    AtenTensorHandle input,
-    AtenTensorHandle weight,
-    AtenTensorHandle bias, // optional argument
-    int64_t out_channel,
-    AtenTensorHandle* out) {
-  AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE({
-    at::Tensor* input_tensor = tensor_handle_to_tensor_pointer(input);
-    at::Tensor* weight_tensor = tensor_handle_to_tensor_pointer(weight);
-    auto optional_bias_tensor =
-        pointer_to_optional(tensor_handle_to_tensor_pointer(bias));
-
-    *out = new_tensor_handle(at::fbgemm_linear_fp16_weight_fp32_activation(
-        *input_tensor, *weight_tensor, optional_bias_tensor));
-  });
-}
 
 
 AOTITorchError aoti_torch_nonzero(

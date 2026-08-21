@@ -3399,21 +3399,6 @@
 
 
 
-- func: fbgemm_pack_gemm_matrix_fp16(Tensor input) -> Tensor
-
-- func: _wrapped_linear_prepack(Tensor weight, Tensor weight_scale, Tensor weight_zero_point, Tensor bias) -> Tensor
-
-
-- func: fbgemm_linear_fp16_weight_fp32_activation(Tensor input, Tensor packed_weight, Tensor? bias) -> Tensor
-
-- func: fbgemm_linear_fp16_weight_fp32_activation.out(Tensor input, Tensor packed_weight, Tensor? bias, Tensor(a!) output) -> Tensor
-
-- func: fbgemm_linear_fp16_weight(Tensor input, Tensor packed_weight, Tensor bias) -> Tensor
-
-- func: fbgemm_linear_fp16_weight.out(Tensor input, Tensor packed_weight, Tensor bias, Tensor(a!) output) -> Tensor
-
-
-
 - func: ldexp.Tensor(Tensor self, Tensor other) -> Tensor
   variants: function, method
   tags: pointwise
