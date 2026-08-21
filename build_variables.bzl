@@ -97,8 +97,6 @@ torch_unpickler_common = [
     "torch/csrc/jit/serialization/unpickler.cpp",
 ]
 
-libtorch_sources_common = sorted(core_sources_common + torch_unpickler_common)
-
 # The profilers are not needed in the lite interpreter build.
 libtorch_profiler_sources = [
     "torch/csrc/autograd/profiler_legacy.cpp",
@@ -401,7 +399,6 @@ jit_sources_full = [
 
 libtorch_core_jit_sources = sorted(jit_sources_full)
 
-
 libtorch_nativert_sources = [
     "torch/nativert/ModelRunner.cpp",
     "torch/nativert/graph/Graph.cpp",
@@ -545,86 +542,7 @@ libtorch_cuda_distributed_extra_sources = [
     "torch/csrc/distributed/c10d/symm_mem/cuda_mem_pool.cpp",
 ]
 
-libtorch_nvshmem_sources = [
-    "torch/csrc/distributed/c10d/cuda/utils.cpp",
-    "torch/csrc/distributed/c10d/symm_mem/CUDASymmetricMemoryUtils.cpp",
-    "torch/csrc/distributed/c10d/symm_mem/nvshmem_extension.cu",
-    "torch/csrc/distributed/c10d/symm_mem/NVSHMEMSymmetricMemory.cpp",
-    "torch/csrc/distributed/c10d/symm_mem/NVSHMEMSymmetricMemoryKernels.cu",
-]
-
 libtorch_cuda_distributed_sources = libtorch_cuda_distributed_base_sources + libtorch_cuda_distributed_extra_sources
-
-libtorch_cuda_sources = libtorch_cuda_core_sources + libtorch_cuda_distributed_sources + [
-    "torch/csrc/cuda/nccl.cpp",
-] + libtorch_nativert_cuda_sources
-
-libtorch_mtia_sources = libtorch_nativert_mtia_sources
-
-torch_cpp_srcs = [
-    "torch/csrc/api/src/cuda.cpp",  # this just forwards stuff, no real CUDA
-    "torch/csrc/api/src/data/datasets/mnist.cpp",
-    "torch/csrc/api/src/data/samplers/distributed.cpp",
-    "torch/csrc/api/src/data/samplers/random.cpp",
-    "torch/csrc/api/src/data/samplers/sequential.cpp",
-    "torch/csrc/api/src/data/samplers/stream.cpp",
-    "torch/csrc/api/src/enum.cpp",
-    "torch/csrc/api/src/imethod.cpp",
-    "torch/csrc/api/src/jit.cpp",
-    "torch/csrc/api/src/mps.cpp",
-    "torch/csrc/api/src/print.cpp",
-    "torch/csrc/api/src/serialize.cpp",
-    "torch/csrc/api/src/nn/init.cpp",
-    "torch/csrc/api/src/nn/module.cpp",
-    "torch/csrc/api/src/nn/modules/_functions.cpp",
-    "torch/csrc/api/src/nn/modules/activation.cpp",
-    "torch/csrc/api/src/nn/modules/adaptive.cpp",
-    "torch/csrc/api/src/nn/modules/batchnorm.cpp",
-    "torch/csrc/api/src/nn/modules/normalization.cpp",
-    "torch/csrc/api/src/nn/modules/instancenorm.cpp",
-    "torch/csrc/api/src/nn/modules/conv.cpp",
-    "torch/csrc/api/src/nn/modules/dropout.cpp",
-    "torch/csrc/api/src/nn/modules/distance.cpp",
-    "torch/csrc/api/src/nn/modules/embedding.cpp",
-    "torch/csrc/api/src/nn/modules/fold.cpp",
-    "torch/csrc/api/src/nn/modules/linear.cpp",
-    "torch/csrc/api/src/nn/modules/loss.cpp",
-    "torch/csrc/api/src/nn/modules/padding.cpp",
-    "torch/csrc/api/src/nn/modules/pixelshuffle.cpp",
-    "torch/csrc/api/src/nn/modules/pooling.cpp",
-    "torch/csrc/api/src/nn/modules/rnn.cpp",
-    "torch/csrc/api/src/nn/modules/upsampling.cpp",
-    "torch/csrc/api/src/nn/modules/transformer.cpp",
-    "torch/csrc/api/src/nn/modules/container/functional.cpp",
-    "torch/csrc/api/src/nn/options/activation.cpp",
-    "torch/csrc/api/src/nn/options/adaptive.cpp",
-    "torch/csrc/api/src/nn/options/batchnorm.cpp",
-    "torch/csrc/api/src/nn/options/conv.cpp",
-    "torch/csrc/api/src/nn/options/dropout.cpp",
-    "torch/csrc/api/src/nn/options/instancenorm.cpp",
-    "torch/csrc/api/src/nn/options/linear.cpp",
-    "torch/csrc/api/src/nn/options/normalization.cpp",
-    "torch/csrc/api/src/nn/options/embedding.cpp",
-    "torch/csrc/api/src/nn/options/padding.cpp",
-    "torch/csrc/api/src/nn/options/pooling.cpp",
-    "torch/csrc/api/src/nn/options/rnn.cpp",
-    "torch/csrc/api/src/nn/options/vision.cpp",
-    "torch/csrc/api/src/nn/options/transformer.cpp",
-    "torch/csrc/api/src/optim/adagrad.cpp",
-    "torch/csrc/api/src/optim/adam.cpp",
-    "torch/csrc/api/src/optim/adamw.cpp",
-    "torch/csrc/api/src/optim/lbfgs.cpp",
-    "torch/csrc/api/src/optim/optimizer.cpp",
-    "torch/csrc/api/src/optim/rmsprop.cpp",
-    "torch/csrc/api/src/optim/serialize.cpp",
-    "torch/csrc/api/src/optim/sgd.cpp",
-    "torch/csrc/api/src/optim/schedulers/lr_scheduler.cpp",
-    "torch/csrc/api/src/optim/schedulers/reduce_on_plateau_scheduler.cpp",
-    "torch/csrc/api/src/optim/schedulers/step_lr.cpp",
-    "torch/csrc/api/src/serialize/input-archive.cpp",
-    "torch/csrc/api/src/serialize/output-archive.cpp",
-    "torch/csrc/api/src/xpu.cpp",
-]
 
 libtorch_python_cuda_core_sources = [
     "torch/csrc/cuda/Event.cpp",
@@ -639,12 +557,6 @@ libtorch_python_cuda_core_sources = [
     "torch/csrc/cuda/GdsFile.cpp",
 ]
 
-libtorch_python_cuda_sources = libtorch_python_cuda_core_sources + [
-    "torch/csrc/cuda/python_nccl.cpp",
-    "torch/csrc/cuda/shared/cudnn.cpp",
-    "torch/csrc/cuda/shared/cusparselt.cpp",
-]
-
 libtorch_python_xpu_sources = [
     "torch/csrc/xpu/Event.cpp",
     "torch/csrc/xpu/Module.cpp",
@@ -656,8 +568,6 @@ libtorch_python_xpu_sources = [
     "torch/csrc/inductor/aoti_runner/model_container_runner_xpu.cpp",
     "torch/csrc/inductor/aoti_torch/shim_xpu.cpp",
 ]
-
-libtorch_xpu_sources = libtorch_python_xpu_sources
 
 libtorch_python_core_sources = [
     "torch/csrc/DataLoader.cpp",
@@ -834,22 +744,6 @@ aten_cpu_non_globed_sources = [
     "aten/src/ATen/SequenceNumber.cpp",
 ]
 
-aten_cpu_non_globed_headers = [
-    "aten/src/ATen/CPUGeneratorImpl.h",
-    "aten/src/ATen/NumericUtils.h",
-    "aten/src/ATen/detail/AcceleratorHooksInterface.h",
-    "aten/src/ATen/detail/CUDAHooksInterface.h",
-    "aten/src/ATen/detail/MPSHooksInterface.h",
-    "aten/src/ATen/detail/HIPHooksInterface.h",
-    "aten/src/ATen/detail/HPUHooksInterface.h",
-    "aten/src/ATen/detail/MAIAHooksInterface.h",
-    "aten/src/ATen/detail/PrivateUse1HooksInterface.h",
-    "aten/src/ATen/detail/XLAHooksInterface.h",
-    "aten/src/ATen/detail/XPUHooksInterface.h",
-    "aten/src/ATen/detail/MTIAHooksInterface.h",
-    "aten/src/ATen/detail/IPUHooksInterface.h",
-]
-
 aten_cpu_source_non_codegen_list = [
     "aten/src/ATen/AccumulateType.cpp",
     "aten/src/ATen/LegacyBatchedTensorImpl.cpp",
@@ -968,15 +862,10 @@ aten_cpu_source_codegen_list = [
     "aten/src/ATen/native/cpu/AdaptiveMaxPoolKernel.cpp",
 ]
 
-aten_ufunc_headers = [
-    "aten/src/ATen/native/ufunc/add.h",
-]
-
 # When building lite interpreter in OSS, "aten/src/ATen/native/cpu/AdaptiveAvgPoolKernel.cpp" will go through
 # codegen process. The codegen version of this file, like Activation.cpp.DEFAULT.cpp, will be included
 # in ${cpu_kernel_cpp} in aten/src/ATen/CMakeLists.txt. As a result, in aten/src/ATen/CMakeLists.txt,
 # only aten_cpu_source_non_codegen_list need to be added to ${all_cpu_cpp}.
-aten_cpu_source_list = sorted(aten_cpu_source_non_codegen_list + aten_cpu_source_codegen_list)
 
 # Same as ${aten_cpu_source_codegen_list}, this list will go through aten codegen, and be included in
 # ${cpu_kernel_cpp} in aten/src/ATen/CMakeLists.txt.
@@ -1291,7 +1180,6 @@ aten_native_source_non_codegen_list = [
 # 1. Files in ATen/native with a few exceptions
 # TODO: move the exceptions to proper locations
 # 2. The whole aten native source list includes the list with and without aten codegen process.
-aten_native_source_list = sorted(aten_native_source_non_codegen_list + aten_native_source_codegen_list)
 
 # These are cpp files which need to go in the torch_cuda_cu library
 # .cu files can be found via glob
@@ -1336,21 +1224,3 @@ aten_cuda_cu_with_sort_by_key_source_list = [
 ]
 
 # Following are source code for xnnpack delegate
-
-xnnpack_delegate_serializer_header = [
-]
-
-xnnpack_delegate_serializer_source_list = [
-]
-
-xnnpack_delegate_core_source_list = [
-]
-
-xnnpack_delegate_core_header = [
-]
-
-xnnpack_backend_header = [
-] + xnnpack_delegate_core_header
-
-xnnpack_backend_source_list = [
-] + xnnpack_delegate_core_source_list
