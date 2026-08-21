@@ -548,13 +548,8 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
         }
       });
 
-  m.def("_enable_profiler_legacy", enableProfilerLegacy);
   py::class_<ProfilerDisableOptions>(m, "_ProfilerDisableOptions")
       .def(py::init<bool, bool>());
-  m.def(
-      "_disable_profiler_legacy",
-      disableProfilerLegacy,
-      py::arg("profiler_disable_options") = ProfilerDisableOptions());
   m.def("_profiler_enabled", profilerEnabled);
   m.def("_profiler_type", torch::profiler::impl::profilerType);
   m.def("_enable_record_function", [](bool enable) {

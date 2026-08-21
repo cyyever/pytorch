@@ -90,7 +90,6 @@ torch_unpickler_common = [
 
 # The profilers are not needed in the lite interpreter build.
 libtorch_profiler_sources = [
-    "torch/csrc/autograd/profiler_legacy.cpp",
     "torch/csrc/autograd/profiler_kineto.cpp",
     "torch/csrc/profiler/collection.cpp",
     "torch/csrc/profiler/cupti/monitor_native.cpp",

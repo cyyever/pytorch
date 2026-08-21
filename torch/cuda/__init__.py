@@ -658,7 +658,6 @@ def cudart():
         >>> torch.cuda.synchronize()
         >>> print("====== Start nsys profiling ======")
         >>> check_error(cudart().cudaProfilerStart())
-        >>> with torch.autograd.profiler.emit_nvtx():
         >>>     result = perform_cuda_operations_with_streams()
         >>>     print("CUDA operations completed.")
         >>> check_error(torch.cuda.cudart().cudaProfilerStop())
