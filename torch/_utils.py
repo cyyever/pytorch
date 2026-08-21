@@ -841,8 +841,6 @@ def _get_device_attr(get_member):
         return get_member(torch.mps)
     if device_type and device_type.lower() == "xpu":
         return get_member(torch.xpu)  # type: ignore[attr-defined]
-    if device_type and device_type.lower() == "mtia":
-        return get_member(torch.mtia)
     if device_type == torch._C._get_privateuse1_backend_name():
         return get_member(getattr(torch, device_type))
     # add more available device types here

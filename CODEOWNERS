@@ -581,8 +581,6 @@
 #
 # [backend_device_runtime]
 # /torch/backends/
-/aten/src/ATen/detail/MTIAHooksInterface.h @egienvalue
-/torch/csrc/mtia/ @egienvalue
 #
 # [backend_cuda]
 /aten/src/ATen/cuda/ @eqy @syed-ahmed @Aidyn-A

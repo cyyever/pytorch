@@ -107,7 +107,6 @@ libtorch_profiler_sources = [
     "torch/csrc/profiler/data_flow.cpp",
     "torch/csrc/profiler/kineto_metadata.cpp",
     "torch/csrc/profiler/kineto_shim.cpp",
-    "torch/csrc/mtia/profiler/MTIAMemoryProfiler.cpp",
     "torch/csrc/profiler/kineto_client_interface.cpp",
     "torch/csrc/profiler/orchestration/observer.cpp",
     "torch/csrc/profiler/orchestration/python_tracer.cpp",
@@ -449,10 +448,6 @@ libtorch_nativert_sources = [
     "torch/nativert/kernels/ETCallDelegateKernel.cpp",
 ]
 
-libtorch_nativert_mtia_sources = [
-    "torch/nativert/executor/triton/fb/MtiaTritonKernelManager.cpp",
-]
-
 libtorch_nativert_cuda_sources = [
     "torch/nativert/executor/triton/CudaTritonKernelManager.cpp",
     "torch/nativert/executor/AOTInductorModelContainerCudaShim.cpp",
@@ -626,7 +621,6 @@ libtorch_python_core_sources = [
     "torch/csrc/fx/node.cpp",
     "torch/csrc/mps/Module.cpp",
     "torch/csrc/mps/Stream.cpp",
-    "torch/csrc/mtia/Module.cpp",
     "torch/csrc/export/pybind.cpp",
     "torch/csrc/export/upgrader.cpp",
     "torch/csrc/export/example_upgraders.cpp",
@@ -737,7 +731,6 @@ aten_cpu_non_globed_sources = [
     "aten/src/ATen/detail/PrivateUse1HooksInterface.cpp",
     "aten/src/ATen/detail/XLAHooksInterface.cpp",
     "aten/src/ATen/detail/XPUHooksInterface.cpp",
-    "aten/src/ATen/detail/MTIAHooksInterface.cpp",
     "aten/src/ATen/detail/IPUHooksInterface.cpp",
     "aten/src/ATen/record_function.cpp",
     "aten/src/ATen/Dispatch.cpp",

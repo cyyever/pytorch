@@ -547,7 +547,6 @@ def init_backend_registration() -> None:
     from .halide import HalideScheduling
     from .mps import MetalScheduling
     from .pallas import PallasScheduling
-    from .python_wrapper_mtia import PythonWrapperMtia
     from .triton import TritonScheduling
     from .wrapper import PythonWrapperCodegen
     from .wrapper_fxir import WrapperFxCodegen
@@ -624,15 +623,6 @@ def init_backend_registration() -> None:
             WrapperFxCodegen,
         )
 
-    if get_scheduling_for_device("mtia") is None:
-        register_backend_for_device(
-            "mtia",
-            TritonScheduling,
-            PythonWrapperMtia,
-            CppWrapperGpu,
-            WrapperFxCodegen,
-        )
-
     private_backend = torch._C._get_privateuse1_backend_name()
     if (
         private_backend != "privateuseone"
@@ -689,7 +679,6 @@ def _initialize_device_op_overrides():
         from . import mps_device_op_overrides  # noqa: F401
         from .cpu_device_op_overrides import CpuDeviceOpOverrides
         from .cuda import device_op_overrides  # noqa: F401
-        from .mtia import device_op_overrides as mtia_op_overrides  # noqa: F401
         from .xpu import device_op_overrides as xpu_op_overrides  # noqa: F401
 
         # TPU uses Pallas for codegen and only needs no-op overrides

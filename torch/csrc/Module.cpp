@@ -89,7 +89,6 @@
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/monitor/python_init.h>
 #include <torch/csrc/mps/Module.h>
-#include <torch/csrc/mtia/Module.h>
 #include <torch/csrc/multiprocessing/init.h>
 #include <torch/csrc/profiler/python/init.h>
 #include <torch/csrc/tensor/python_tensor.h>
@@ -2611,7 +2610,6 @@ PyObject* initModule() {
 #ifdef USE_XPU
   torch::xpu::initModule(module);
 #endif
-  torch::mtia::initModule(module);
   torch::cpu::initModule(module);
   torch::accelerator::initModule(module);
   torch::instruction_counter::initModule(module);

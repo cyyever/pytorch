@@ -243,8 +243,6 @@ class _FSDPDeviceHandle:
         """
         if device.type == "cuda":
             return cast(_FSDPDeviceHandle, torch.cuda)
-        elif device.type == "mtia":
-            return cast(_FSDPDeviceHandle, torch.mtia)
         return cls(device)
 
     def __getattr__(self, name: str, /) -> Any:

@@ -2709,7 +2709,6 @@ from torch import (
     jit as jit,
     linalg as linalg,
     mps as mps,
-    mtia as mtia,
     multiprocessing as multiprocessing,
     nested as nested,
     nn as nn,

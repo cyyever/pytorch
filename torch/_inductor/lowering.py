@@ -3734,10 +3734,6 @@ if torch.xpu._is_compiled():
         aten.embedding_dense_backward, warn=False
     )  # (XPU-only and faster than decomp)
 
-if torch.mtia._is_compiled():
-    make_fallback(
-        aten.native_layer_norm, warn=False
-    )  # (MTIA-only and faster than decomp)
 
 # 1.5) Easy or Impossible
 make_fallback(aten._cdist_forward)  # p=2 should be feasible

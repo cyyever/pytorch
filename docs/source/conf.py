@@ -260,8 +260,6 @@ autosummary_filename_map = {
     "torch.optim.adam.Adam": "torch.optim.adam.Adam_class",
     "torch.optim.adamax.adamax": "torch.optim.adamax.adamax_function",
     "torch.optim.adamax.Adamax": "torch.optim.adamax.Adamax_class",
-    "torch.mtia.stream": "torch.mtia.stream_function",
-    "torch.mtia.Stream": "torch.mtia.Stream_class",
     "torch.cpu.stream": "torch.cpu.stream_function",
     "torch.cpu.Stream": "torch.cpu.Stream_class",
     "torch.cuda.stream": "torch.cuda.stream_function",
