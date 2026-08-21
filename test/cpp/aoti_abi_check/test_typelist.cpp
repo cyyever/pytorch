@@ -63,6 +63,8 @@ static_assert(
     "");
 } // namespace test_concat
 
+
+
 namespace test_true_for_each_type {
 template <class>
 class Test;
@@ -99,6 +101,7 @@ static_assert(
 static_assert(!true_for_any_type<std::is_reference, typelist<>>::value, "");
 } // namespace test_true_for_any_type
 
+
 namespace test_head {
 class MyClass {};
 static_assert(std::is_same_v<int, head_t<typelist<int, double>>>, "");
@@ -132,6 +135,9 @@ static_assert(
 static_assert(std::is_same_v<bool, head_with_default_t<bool, typelist<>>>, "");
 } // namespace test_head_with_default
 
+
+
+
 namespace test_contains {
 static_assert(contains<typelist<double>, double>::value, "");
 static_assert(contains<typelist<int, double>, double>::value, "");
@@ -139,43 +145,7 @@ static_assert(!contains<typelist<int, double>, float>::value, "");
 static_assert(!contains<typelist<>, double>::value, "");
 } // namespace test_contains
 
-namespace test_take {
-static_assert(std::is_same_v<typelist<>, take_t<typelist<>, 0>>, "");
-static_assert(std::is_same_v<typelist<>, take_t<typelist<int64_t>, 0>>, "");
-static_assert(
-    std::is_same_v<typelist<int64_t>, take_t<typelist<int64_t>, 1>>,
-    "");
-static_assert(
-    std::is_same_v<typelist<>, take_t<typelist<int64_t, int32_t>, 0>>,
-    "");
-static_assert(
-    std::is_same_v<typelist<int64_t>, take_t<typelist<int64_t, int32_t>, 1>>,
-    "");
-static_assert(
-    std::is_same_v<
-        typelist<int64_t, int32_t>,
-        take_t<typelist<int64_t, int32_t>, 2>>,
-    "");
-} // namespace test_take
 
-namespace test_drop {
-static_assert(std::is_same_v<typelist<>, drop_t<typelist<>, 0>>, "");
-static_assert(
-    std::is_same_v<typelist<int64_t>, drop_t<typelist<int64_t>, 0>>,
-    "");
-static_assert(std::is_same_v<typelist<>, drop_t<typelist<int64_t>, 1>>, "");
-static_assert(
-    std::is_same_v<
-        typelist<int64_t, int32_t>,
-        drop_t<typelist<int64_t, int32_t>, 0>>,
-    "");
-static_assert(
-    std::is_same_v<typelist<int32_t>, drop_t<typelist<int64_t, int32_t>, 1>>,
-    "");
-static_assert(
-    std::is_same_v<typelist<>, drop_t<typelist<int64_t, int32_t>, 2>>,
-    "");
-} // namespace test_drop
 
 namespace test_drop_if_nonempty {
 static_assert(

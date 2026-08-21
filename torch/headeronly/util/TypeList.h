@@ -237,12 +237,6 @@ struct element<Index, typelist<Head, Tail...>>
 template <size_t Index, class TypeList>
 using element_t = typename element<Index, TypeList>::type;
 
-/**
- * Take/drop a number of arguments from a typelist.
- * Example:
- *   typelist<int, string> == take_t<typelist<int, string, bool>, 2>
- *   typelist<bool> == drop_t<typelist<int, string, bool>, 2>
- */
 namespace detail {
 template <class TypeList, size_t offset, class IndexSequence>
 struct take_elements final {};
@@ -253,39 +247,9 @@ struct take_elements<TypeList, offset, std::index_sequence<Indices...>> final {
 };
 } // namespace detail
 
-template <class TypeList, size_t num>
-struct take final {
-  static_assert(
-      is_instantiation_of<typelist, TypeList>::value,
-      "In typelist::take<T, num>, the T argument must be typelist<...>.");
-  static_assert(
-      num <= size<TypeList>::value,
-      "Tried to typelist::take more elements than there are in the list");
-  using type = typename detail::
-      take_elements<TypeList, 0, std::make_index_sequence<num>>::type;
-};
-template <class TypeList, size_t num>
-using take_t = typename take<TypeList, num>::type;
-
-template <class TypeList, size_t num>
-struct drop final {
-  static_assert(
-      is_instantiation_of<typelist, TypeList>::value,
-      "In typelist::drop<T, num>, the T argument must be typelist<...>.");
-  static_assert(
-      num <= size<TypeList>::value,
-      "Tried to typelist::drop more elements than there are in the list");
-  using type = typename detail::take_elements<
-      TypeList,
-      num,
-      std::make_index_sequence<size<TypeList>::value - num>>::type;
-};
-template <class TypeList, size_t num>
-using drop_t = typename drop<TypeList, num>::type;
-
 /**
- * Like drop, but returns an empty list rather than an assertion error if `num`
- * is larger than the size of the TypeList.
+ * Drops the first `num` elements of a typelist, returning an empty list rather
+ * than an assertion error if `num` is larger than the size of the TypeList.
  * Example:
  *   typelist<> == drop_if_nonempty_t<typelist<string, bool>, 2>
  *   typelist<> == drop_if_nonempty_t<typelist<int, string, bool>, 3>
@@ -294,7 +258,7 @@ template <class TypeList, size_t num>
 struct drop_if_nonempty final {
   static_assert(
       is_instantiation_of<typelist, TypeList>::value,
-      "In typelist::drop<T, num>, the T argument must be typelist<...>.");
+      "In typelist::drop_if_nonempty<T, num>, the T argument must be typelist<...>.");
   using type = typename detail::take_elements<
       TypeList,
       std::min(num, size<TypeList>::value),
@@ -317,12 +281,10 @@ using c10::guts::typelist::all;
 using c10::guts::typelist::concat_t;
 using c10::guts::typelist::contains;
 using c10::guts::typelist::drop_if_nonempty_t;
-using c10::guts::typelist::drop_t;
 using c10::guts::typelist::from_tuple_t;
 using c10::guts::typelist::head_t;
 using c10::guts::typelist::head_with_default_t;
 using c10::guts::typelist::size;
-using c10::guts::typelist::take_t;
 using c10::guts::typelist::to_tuple_t;
 using c10::guts::typelist::true_for_any_type;
 using c10::guts::typelist::typelist;
