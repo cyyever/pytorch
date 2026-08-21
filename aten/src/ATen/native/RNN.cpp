@@ -145,6 +145,7 @@ struct PackedSequence {
 // Element 3 is the longs (if any) contained within the CellParams instance
 // Base class so we can polymorphically handle these
 struct CellParamsBase {
+  virtual ~CellParamsBase() = default;
   virtual Tensor matmul_ih(const Tensor& input) const = 0;
   virtual Tensor matmul_hh(const Tensor& h) const = 0;
   // by default doing nothing. CellParams will override this
@@ -817,7 +818,6 @@ std::tuple<io_type, Tensor, Tensor> _lstm_impl(
   return std::make_tuple(std::move(result.outputs), at::stack(hy, 0), at::stack(cy, 0));
 }
 
-} // anonymous namespace
 
 bool _use_cudnn_rnn_flatten_weight() {
   return detail::getCUDAHooks().compiledWithCuDNN();
