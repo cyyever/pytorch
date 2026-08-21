@@ -28,9 +28,6 @@ std::shared_ptr<CapturedTraceback> CapturedTraceback::gather(
       }
     }
   }
-  if (script) {
-    r->script_frames_ = torch::jit::currentCallstack();
-  }
   if (cpp) {
     r->cpp_frames_ = unwind::unwind();
   }

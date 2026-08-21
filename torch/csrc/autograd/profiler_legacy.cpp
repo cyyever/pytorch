@@ -253,12 +253,8 @@ void ProfilerLegacyThreadLocalState::pushRange(
     // TODO: consider using C++ stack trace
     if (config_.with_stack &&
         fn.scope() != at::RecordScope::BACKWARD_FUNCTION) {
-      auto cs =
-          torch::profiler::impl::prepareCallstack(jit::currentCallstack());
-      if (cs.empty()) {
-        cs = torch::profiler::impl::prepareCallstack(
-            jit::tracer::pythonCallstack());
-      }
+      auto cs = torch::profiler::impl::prepareCallstack(
+          jit::tracer::pythonCallstack());
       evt.setStack(callstackStr(cs));
     }
 #endif
