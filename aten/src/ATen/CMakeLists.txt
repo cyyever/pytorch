@@ -125,9 +125,6 @@ file(GLOB native_nested_cpp CONFIGURE_DEPENDS "native/nested/*.cpp")
 file(GLOB native_transformers_cpp CONFIGURE_DEPENDS "native/transformers/*.cpp")
 
 file(GLOB native_h CONFIGURE_DEPENDS "native/*.h")
-file(GLOB native_quantized_h CONFIGURE_DEPENDS "native/quantized/*.h" "native/quantized/cpu/*.h" "native/quantized/cudnn/*.h")
-file(GLOB native_cpu_h CONFIGURE_DEPENDS "native/cpu/*.h")
-file(GLOB native_utils_h CONFIGURE_DEPENDS "native/utils/*.h")
 
 file(GLOB native_cuda_cu CONFIGURE_DEPENDS "native/cuda/*.cu")
 file(GLOB native_cuda_cpp CONFIGURE_DEPENDS "native/cuda/*.cpp")
@@ -469,17 +466,21 @@ IF(USE_MSLK)
   endif()
 endif()
 
+# XNNPACK
+file(GLOB native_xnnpack CONFIGURE_DEPENDS "native/xnnpack/*.cpp")
+
 # Add files needed from jit folders
 append_filelist("jit_core_headers" ATen_CORE_HEADERS)
 append_filelist("jit_core_sources" ATen_CORE_SRCS)
 
+add_subdirectory(quantized)
 
 set(
   all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
   ${native_sparse_cpp} ${native_nested_cpp}
   ${native_quantized_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
   ${native_transformers_cpp}
-  ${native_utils_cpp} ${generated_sources} ${core_generated_sources}
+  ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
   ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
 )
 
@@ -649,6 +650,18 @@ endif(BLAS_FOUND)
 
 if(LAPACK_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
+  if(USE_CUDA AND MSVC)
+    # Although Lapack provides CPU (and thus, one might expect that ATen_cuda
+    # would not need this at all), some of our libraries backend to CPU
+    # BLAS/LAPACK implementations, and so it is very important we get the
+    # *right* implementation, because even if the symbols are the same, LAPACK
+    # implementations may have different calling conventions.
+    # This caused https://github.com/pytorch/pytorch/issues/7353
+    #
+    # We do NOT do this on Linux, since we just rely on torch_cpu to
+    # provide all of the symbols we need
+    list(APPEND ATen_CUDA_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
+  endif()
 endif(LAPACK_FOUND)
 
 if(UNIX AND NOT APPLE)
@@ -695,6 +708,11 @@ if(NOT MSVC)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS m)
 endif()
 
+if(AT_NNPACK_ENABLED)
+  include_directories(${NNPACK_INCLUDE_DIRS})
+  list(APPEND ATen_CPU_DEPENDENCY_LIBS nnpack) # cpuinfo is added below
+endif()
+
 if(MKLDNN_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${MKLDNN_LIBRARIES})
 endif(MKLDNN_FOUND)
@@ -726,6 +744,9 @@ if(NOT EMSCRIPTEN)
     set(SLEEF_BUILD_TESTS OFF CACHE BOOL "Don't build sleef tests" FORCE)
     set(SLEEF_BUILD_SCALAR_LIB OFF CACHE BOOL "libsleefscalar will be built." FORCE)
     set(SLEEF_DISABLE_OPENMP ON CACHE BOOL "OpenMP only used by sleef DFT and tests, both disabled" FORCE)
+    if(WIN32)
+      set(SLEEF_BUILD_WITH_LIBM OFF CACHE BOOL "Don't build sleef with libm for Windows." FORCE)
+    endif()
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
       if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
         set(DISABLE_SVE ON CACHE BOOL "Xcode's clang-12.5 crashes while trying to compile SVE code" FORCE)
