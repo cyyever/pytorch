@@ -85,7 +85,6 @@
 #include <torch/csrc/inductor/aoti_runner/pybind.h>
 #include <torch/csrc/instruction_counter/Module.h>
 #include <torch/csrc/jit/python/init.h>
-#include <torch/csrc/jit/python/python_ir.h>
 #include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/monitor/python_init.h>
