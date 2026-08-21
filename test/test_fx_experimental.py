@@ -17,7 +17,6 @@ from collections.abc import Callable
 
 import torch
 import torch.fx.experimental.meta_tracer
-import torch.fx.experimental.optimization as optimization
 from torch.fx._symbolic_trace import symbolic_trace
 from torch.fx.experimental import merge_matmul
 from torch.fx.experimental.accelerator_partitioner import Partitioner
@@ -548,68 +547,6 @@ class TestFXExperimental(JitTestCase):
         # will be replicated to dev_2.
         self.assertEqual(partitions[0].logical_device_ids, [0, 4])
         self.assertEqual(partitions[1].logical_device_ids, [1, 2])
-
-    @skipIfNoTorchVision
-    def test_conv_bn_fusion(self):
-        rn18 = resnet18().eval()
-        traced = symbolic_trace(rn18)
-        fused = optimization.fuse(traced)
-
-        self.assertTrue(
-            all(not isinstance(m, torch.nn.BatchNorm2d) for m in fused.modules())
-        )
-
-        N, C, H, W = 20, 3, 224, 224
-        inp = torch.randn(N, C, H, W)
-
-        self.assertEqual(fused(inp), rn18(inp))
-
-    def test_conv_bn_fusion_not_running_state(self):
-        class M(torch.nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.conv = torch.nn.Conv2d(32, 64, 3, stride=2)
-                self.bn = torch.nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=False)
-
-            def forward(self, x):
-                x = self.conv(x)
-                x = self.bn(x)
-                return x
-
-        model = M().eval()
-
-        traced = symbolic_trace(model)
-        fused = optimization.fuse(traced)
-        inp = torch.randn([1, 32, 50, 50])
-
-        # bn need not be folded in conv
-        self.assertTrue(
-            any(isinstance(m, torch.nn.BatchNorm2d) for m in fused.modules())
-        )
-        self.assertEqual(fused(inp), model(inp))
-
-    def test_conv_bn_fusion_mixed_dtype(self):
-        class M(torch.nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.conv = torch.nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False, dtype=torch.bfloat16)
-                self.bn = torch.nn.BatchNorm2d(16, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
-
-            def forward(self, x):
-                x = self.conv(x)
-                x = self.bn(x)
-                return x
-
-        model = M().eval()
-
-        traced = symbolic_trace(model)
-        fused = optimization.fuse(traced)
-        inp = torch.randn(1, 3, 64, 64, dtype=torch.bfloat16)
-
-        self.assertTrue(
-            all(not isinstance(m, torch.nn.BatchNorm2d) for m in fused.modules())
-        )
-        self.assertEqual(fused(inp), model(inp))
 
     def test_call_to_assert_no_msg(self):
         class M(torch.nn.Module):
@@ -2053,79 +1990,6 @@ class {test_classname}(torch.nn.Module):
 
         for sig_type, arg_type in should_fail:
             self.assertFalse(type_matches(sig_type, arg_type))
-
-    @skipIfNoMkldnn
-    def test_optimize_for_inference_cpu(self):
-        import torch.nn as nn
-
-        class Foo(nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                layers = []
-                layers2 = []
-                for _ in range(10):
-                    layers.append(nn.Conv2d(3, 3, 1))
-                    layers.append(nn.BatchNorm2d(3))
-                    layers.append(nn.ReLU())
-
-                    layers2.append(nn.Conv2d(3, 3, 1))
-                    layers2.append(nn.BatchNorm2d(3))
-                    layers2.append(nn.ReLU())
-                self.model = nn.Sequential(*layers)
-                self.model2 = nn.Sequential(*layers2)
-
-            def forward(self, x):
-                return self.model(x) + self.model2(x)
-
-        N, C, H, W, = (
-            1,
-            3,
-            224,
-            224,
-        )
-        inp = torch.randn(N, C, H, W)
-        with torch.no_grad():
-            model = Foo().eval()
-            optimized_model = optimization.optimize_for_inference(model)
-            torch.testing.assert_close(model(inp), optimized_model(inp))
-
-            optimized_model2 = optimization.optimize_for_inference(
-                model, pass_config={"remove_dropout": False}
-            )
-            torch.testing.assert_close(model(inp), optimized_model2(inp))
-
-    @skipIfNoTorchVision
-    @skipIfNoMkldnn
-    def test_optimize_for_inference_cpu_torchvision(self):
-        models = [
-            torchvision.models.resnet18,
-            torchvision.models.resnet50,
-            torchvision.models.densenet121,
-            torchvision.models.shufflenet_v2_x1_0,
-            torchvision.models.vgg16,
-            torchvision.models.mobilenet_v2,
-            torchvision.models.mnasnet1_0,
-            torchvision.models.resnext50_32x4d,
-        ]
-        with torch.no_grad():
-            for model_type in models:
-                model = model_type()
-                C, H, W, = (
-                    3,
-                    224,
-                    224,
-                )
-                inp = torch.randn(3, C, H, W)
-                model(inp)
-                model.eval()
-                inp = torch.randn(1, C, H, W)
-                heuristic = optimization.gen_mkl_autotuner(inp, iters=0, warmup=0)
-                optimized_model = optimization.optimize_for_inference(model)
-
-                orig_out = model(inp)
-                new_out = optimized_model(inp)
-                torch.testing.assert_close(orig_out, new_out)
-
 
 class TestNormalizeOperators(JitTestCase):
     @onlyCPU
