@@ -24,16 +24,6 @@ namespace {
 // out = val * a + b
 // is_b_stride_zero: If the stride of b is 0 (mask broadcasting case),
 //                take b as a scalar pointer.
-#if __GNUC__ == 11 && defined(__ARM_FEATURE_SVE)
-template <typename T1, typename T2>
-inline void _scale_attn_mask_fusion_kernel(
-    T1* a,
-    T2* b,
-    const int& size,
-    T1* out,
-    T1& val,
-    bool is_b_stride_zero) {
-#else
 template <bool is_b_stride_zero, typename T1, typename T2>
 inline void _scale_attn_mask_fusion_kernel(
     T1* a,
@@ -41,7 +31,6 @@ inline void _scale_attn_mask_fusion_kernel(
     const int& size,
     T1* out,
     T1& val) {
-#endif
   const auto vec_size1 = at::vec::Vectorized<T1>::size();
   const auto vec_size2 = at::vec::Vectorized<T2>::size();
   constexpr int64_t T1_n =
@@ -52,11 +41,7 @@ inline void _scale_attn_mask_fusion_kernel(
   for (; i < size - (size % vec_size2); i += vec_size2) {
     auto a_n = at::vec::VectorizedN<T1, T1_n>::loadu(a + i);
     at::vec::VectorizedN<T2, T2_n> b_n;
-#if __GNUC__ == 11 && defined(__ARM_FEATURE_SVE)
-    if (is_b_stride_zero) {
-#else
     if constexpr(is_b_stride_zero) {
-#endif
       b_n = at::vec::VectorizedN<T2, T2_n>((T1)b[0]);
     } else {
       b_n = at::vec::VectorizedN<T2, T2_n>::loadu(b + i);
@@ -68,11 +53,7 @@ inline void _scale_attn_mask_fusion_kernel(
   for (; i < size; i++) {
     auto tmp0 = a[i];
     T1 tmp1;
-#if __GNUC__ == 11 && defined(__ARM_FEATURE_SVE)
-    if (is_b_stride_zero) {
-#else
     if constexpr(is_b_stride_zero) {
-#endif
       tmp1 = (T1)b[0];
     } else {
       tmp1 = (T1)b[i];
@@ -645,16 +626,6 @@ void cpu_flash_attention(
         // qk <- qk * scaling + attn_mask
         if (has_attn_mask) {
           for (int64_t row = 0; row < qBlockSize; ++row) {
-#if __GNUC__ == 11 && defined(__ARM_FEATURE_SVE)
-              _scale_attn_mask_fusion_kernel(
-                qk_data + row * kvBlockSize,
-                mask_data + i * mStrideB + j * mStrideH +
-                    (m + row) * mStrideM + (mStrideN == 0 ? 0 : n),
-                kvBlockSize,
-                qk_data + row * kvBlockSize,
-                scaling_factor,
-                mStrideN == 0);
-#else
               if (mStrideN == 0) {
                 _scale_attn_mask_fusion_kernel</*is_stride_0*/ true>(
                   qk_data + row * kvBlockSize,
@@ -672,7 +643,6 @@ void cpu_flash_attention(
                   qk_data + row * kvBlockSize,
                   scaling_factor);
               }
-#endif
           }
         }
         // Update coefficients with Softmax
@@ -972,16 +942,6 @@ void cpu_flash_attention_backward(
             if (has_attn_mask) {
               accum_t one = accum_t(1);
               for (const auto row : c10::irange(qBlockSize)) {
-  #if __GNUC__ == 11 && defined(__ARM_FEATURE_SVE)
-                  _scale_attn_mask_fusion_kernel(
-                    attn_data + row * kvBlockSize,
-                    mask_data + i * mStrideB + j * mStrideH +
-                        (m + row) * mStrideM + (mStrideN == 0 ? 0 : n),
-                    kvBlockSize,
-                    attn_data + row * kvBlockSize,
-                    one,
-                    mStrideN == 0);
-  #else
                   if (mStrideN == 0) {
                     _scale_attn_mask_fusion_kernel</*is_stride_0*/ true>(
                       attn_data + row * kvBlockSize,
@@ -999,7 +959,6 @@ void cpu_flash_attention_backward(
                       attn_data + row * kvBlockSize,
                       one);
                   }
-  #endif
               }
             }
             // restore self attention after softmax from logsumexp

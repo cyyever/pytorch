@@ -702,13 +702,6 @@ def _get_linux_aarch64_cpu_flags() -> OrderedSet[str]:
     if not sys.platform.startswith("linux"):
         return flags
 
-    capabilities = torch.cpu.get_capabilities()
-    flags.update(
-        capability
-        for capability in ("bf16", "sve", "sve2")
-        if capabilities.get(capability, False)
-    )
-
     return flags
 
 
@@ -717,11 +710,8 @@ def _get_linux_aarch64_arch_flag(cpp_compiler: str) -> str:
     flags = _get_linux_aarch64_cpu_flags()
 
     if _is_gcc(cpp_compiler) and _is_gcc_version_less_than(cpp_compiler, 13):
-        if OrderedSet(["bf16", "sve", "sve2"]).issubset(flags):
-            return "march=armv8.6-a+sve+sve2+bf16"
-
-        if OrderedSet(["bf16", "sve"]).issubset(flags):
-            return "march=armv8.6-a+sve+bf16"
+        if OrderedSet(["bf16"]).issubset(flags):
+            return "march=armv8.6-a+bf16"
 
     return "march=native"
 

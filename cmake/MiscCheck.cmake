@@ -29,21 +29,6 @@ check_cxx_compiler_flag("-rdynamic" COMPILER_SUPPORTS_RDYNAMIC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
   endif()
 
-# ---[ If we are building on ios, or building with opengl support, we will
-# enable -mfpu=neon-fp16 for iOS Metal build. For Android, this fpu setting
-# is going to be done with android-cmake by setting
-#     -DANDROID_ABI="armeabi-v7a with NEON FP16"
-# in the build command.
-# ---[ Check if the compiler has SVE support.
-find_package(ARM) # checks SVE
-if(CXX_SVE_FOUND)
-  message(STATUS "Compiler supports SVE extension. Will build perfkernels.")
-  # Also see CMakeLists.txt under caffe2/perfkernels.
-  add_compile_definitions(CAFFE2_PERF_WITH_SVE=1)
-else()
-  message(STATUS "Compiler does not support SVE extension. Will not build perfkernels.")
-endif()
-
 if(IOS AND (${IOS_ARCH} MATCHES "armv7*"))
   add_definitions("-mfpu=neon-fp16")
   add_definitions("-arch" ${IOS_ARCH})

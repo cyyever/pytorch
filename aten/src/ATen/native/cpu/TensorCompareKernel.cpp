@@ -34,8 +34,7 @@ namespace at::native { namespace {
 // The barebones unsigned types have no SVE specialization, so they are the ones that land on that path.
 // Not every 13.x build is affected, so the bound covers the series rather than a point release.
 // Remove once the aarch64 wheels require gcc-14 or newer.
-#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 14 && \
-    (defined(CPU_CAPABILITY_SVE256) || defined(CPU_CAPABILITY_SVE128))
+#if 0
 template <typename scalar_t>
 constexpr bool use_vectorized_clamp =
     !isBarebonesUnsignedType(c10::CppTypeToScalarType<scalar_t>::value);

@@ -5,17 +5,9 @@
 #elif defined(__clang__) && (defined(__ARM_NEON__) || defined(__aarch64__))
 /* Clang-compatible compiler, targeting arm neon */
 #include <arm_neon.h>
-#if defined(__ARM_FEATURE_SVE)
-/* CLANG-compatible compiler, targeting ARM with SVE */
-#include <arm_sve.h>
-#endif
 #elif defined(__GNUC__) && (defined(__ARM_NEON__) || defined(__aarch64__))
 /* GCC-compatible compiler, targeting ARM with NEON */
 #include <arm_neon.h>
-#if defined(__ARM_FEATURE_SVE)
-/* GCC-compatible compiler, targeting ARM with SVE */
-#include <arm_sve.h>
-#endif
 #elif defined(__GNUC__) && defined(__IWMMXT__)
 /* GCC-compatible compiler, targeting ARM with WMMX */
 #include <mmintrin.h>

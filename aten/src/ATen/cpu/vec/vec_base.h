@@ -1,10 +1,4 @@
 #pragma once
-#if defined(__GNUC__) && __GNUC__ == 10 && __GNUC_MINOR__ <= 2 && \
-    defined(__ARM_FEATURE_SVE)
-// Workaround for https: //gcc.gnu.org/bugzilla/show_bug.cgi?id=117161
-#pragma GCC optimize("no-tree-vectorize")
-#endif
-
 // DO NOT DEFINE STATIC DATA IN THIS HEADER!
 // See Note [Do not compile initializers with AVX]
 //
@@ -65,9 +59,7 @@ Windows llvm will not have this definition.
 #endif
 #define VECTOR_WIDTH 64
 #define int_vector __m512i
-#elif defined(__aarch64__) && \
-    !defined(CPU_CAPABILITY_SVE256) // CPU_CAPABILITY_AVX512
-// SVE code expects 256-vectors; leave that set for SVE?
+#elif defined(__aarch64__)
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(16)))
 #else
@@ -219,7 +211,7 @@ struct Vectorized {
     return vector;
   }
 // Workaround for https: //gcc.gnu.org/bugzilla/show_bug.cgi?id=117001
-#if __GNUC__ <= 12 && !defined(__clang__) && defined(__ARM_FEATURE_SVE)
+#if __GNUC__ <= 12 && !defined(__clang__)
   static Vectorized<T> __attribute__((optimize("-fno-tree-loop-vectorize")))
   blendv(
       const Vectorized<T>& a,

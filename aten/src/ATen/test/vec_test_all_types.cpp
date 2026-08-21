@@ -381,21 +381,11 @@ namespace {
     TYPED_TEST(Hyperbolic, Tanh) {
         using vec = TypeParam;
 // NOTE: Because SVE uses ACL logic, the precision changes, hence the adjusted tolerance.
-#if defined(CPU_CAPABILITY_SVE256)
-        using UVT = UvalueType<vec>;
-        UVT tolerance = getDefaultTolerance<UVT>();
-        test_unary<vec>(
-            NAME_INFO(tanH),
-            RESOLVE_OVERLOAD(std::tanh),
-            [](vec v) { return v.tanh(); },
-            createDefaultUnaryTestCase<vec>(TestSeed(), tolerance));
-#else
         test_unary<vec>(
             NAME_INFO(tanH),
             RESOLVE_OVERLOAD(std::tanh),
             [](vec v) { return v.tanh(); },
             createDefaultUnaryTestCase<vec>(TestSeed()));
-#endif
     }
     TYPED_TEST(Hyperbolic, Sinh) {
         using vec = TypeParam;
@@ -621,7 +611,7 @@ namespace {
         }
       }
     }
-#if defined(CPU_CAPABILITY_SVE256) && defined(__ARM_FEATURE_BF16)
+#if defined(__ARM_FEATURE_BF16)
     TEST(NanBfloat16, IsNan) {
       for (unsigned int ii = 0; ii < 0xFFFF; ++ii) {
         c10::BFloat16 val(ii, c10::BFloat16::from_bits());
@@ -2199,86 +2189,6 @@ namespace {
 // In member function ‘virtual void {anonymous}::VecConvertBFloat16_ExhaustiveToFloat_Test::TestBody()’:
 // vec_test_all_types.cpp:2265:10: internal compiler error: Segmentation fault
 // 2265 |     TEST(VecConvertBFloat16, ExhaustiveToFloat) {
-#if !defined(CPU_CAPABILITY_SVE256) && !defined(CPU_CAPABILITY_SVE128)
-    template <typename vec, typename dst_t>
-    void test_convert_to(const char* dst_t_name) {
-      using src_t = ValueType<vec>;
-      constexpr auto N = vec::size();
-      CACHE_ALIGN src_t x[N];
-      CACHE_ALIGN dst_t y[N];
-      CACHE_ALIGN dst_t ref[N];
-      auto seed = TestSeed();
-      auto low = std::is_signed_v<dst_t> ? src_t(-100) : src_t(0);
-      ValueGen<src_t> generator(low, src_t(100), seed);
-      for (const auto i : c10::irange(N)) {
-        x[i] = generator.get();
-      }
-      for (const auto i : c10::irange(N)) {
-        ref[i] = static_cast<dst_t>(x[i]);
-      }
-      auto x_vec = vec::loadu(x);
-      auto y_vec = at::vec::convert<dst_t>(x_vec);
-      constexpr int num_dst_elements =
-        std::min(N, at::vec::Vectorized<dst_t>::size());
-      y_vec.store(y, num_dst_elements);
-      for (const auto i : c10::irange(num_dst_elements)) {
-        if (check_both_nan(y[i], ref[i])) {
-          continue;
-        }
-        ASSERT_EQ(y[i], ref[i])
-          << "Failure Details:nTest Seed to reproduce: " << seed
-          << " x[" << i << "]=" << x[i] << " dst_t=" << dst_t_name;
-      }
-      constexpr int dst_n = N / num_dst_elements;
-      auto y_vec_n = at::vec::convert<dst_t, dst_n, src_t, 1>(
-          at::vec::VectorizedN<src_t, 1>(x_vec));
-      y_vec_n.store(y, N);
-      for (const auto i : c10::irange(N)) {
-        if (check_both_nan(y[i], ref[i])) {
-          continue;
-        }
-        ASSERT_EQ(y[i], ref[i])
-          << "Failure Details:nTest Seed to reproduce: " << seed
-          << " x[" << i << "]=" << x[i] << " dst_t=" << dst_t_name;
-      }
-    }
-    TYPED_TEST(VecConvertTests, Convert) {
-      using vec = TypeParam;
-      #define TEST_CONVERT_TO(dst_t) test_convert_to<vec, dst_t>(#dst_t)
-      TEST_CONVERT_TO(int8_t);
-      TEST_CONVERT_TO(uint8_t);
-      TEST_CONVERT_TO(int16_t);
-      TEST_CONVERT_TO(uint16_t);
-      TEST_CONVERT_TO(int32_t);
-      TEST_CONVERT_TO(uint32_t);
-      TEST_CONVERT_TO(int64_t);
-      TEST_CONVERT_TO(uint64_t);
-      TEST_CONVERT_TO(c10::BFloat16);
-      TEST_CONVERT_TO(c10::Half);
-      TEST_CONVERT_TO(float);
-      TEST_CONVERT_TO(double);
-    }
-    TYPED_TEST(VecConvertTestsReducedFloat, ConvertReduced) {
-      using vec = TypeParam;
-      TEST_CONVERT_TO(int8_t);
-      TEST_CONVERT_TO(uint8_t);
-      TEST_CONVERT_TO(float);
-      #undef TEST_CONVERT_TO
-    }
-    TEST(VecConvertBFloat16, ExhaustiveToFloat) {
-      for (unsigned int ii = 0; ii < 0xFFFF; ++ii) {
-        c10::BFloat16 val(ii, c10::BFloat16::from_bits());
-        const auto expected = static_cast<float>(val);
-        CACHE_ALIGN float actual_vals[vfloat::size()];
-        at::vec::convert<float>(vBFloat16(val)).store(actual_vals);
-        for (auto actual_val : actual_vals) {
-          EXPECT_EQ(c10::bit_cast<uint32_t>(expected), c10::bit_cast<uint32_t>(actual_val))
-            << "convert-to-float failure for bf16 bit pattern "
-            << std::hex << ii << std::dec;
-        }
-      }
-    }
-#endif
     TYPED_TEST(VecMaskTests, MaskedLoad) {
       using vec = TypeParam;
       using src_t = ValueType<TypeParam>;
@@ -2338,7 +2248,6 @@ namespace {
     #undef TEST_MASK_LOAD
     #undef TEST_MASK_LOAD_N
     }
-#if !defined(CPU_CAPABILITY_SVE256)
     TYPED_TEST(VecMaskTests, MaskedCheck) {
       using VT = ValueType<TypeParam>;
       using vec = TypeParam;
@@ -2362,8 +2271,6 @@ namespace {
 
     #undef TEST_MASK_CHECK_N
     }
-#endif
-#if !defined(CPU_CAPABILITY_SVE256)
     TYPED_TEST(VecMaskTests, ToFrom) {
       using vec = TypeParam;
       using VT = ValueType<TypeParam>;
@@ -2389,8 +2296,6 @@ namespace {
             << "Failure Details:\nTest Seed to reproduce: " << seed;
       }
     }
-#endif
-#if !defined(CPU_CAPABILITY_SVE256)
     TYPED_TEST(VecMaskTests, Cast) {
       using vec = TypeParam;
       using src_t = ValueType<TypeParam>;
@@ -2435,7 +2340,6 @@ namespace {
     #undef TEST_MASK_CAST
     #undef TEST_MASK_CAST_N
     }
-#endif
 #else
 #error GTEST does not have TYPED_TEST
 #endif

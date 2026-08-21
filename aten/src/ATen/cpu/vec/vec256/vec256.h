@@ -7,16 +7,12 @@
 
 #include <ATen/cpu/vec/vec_base.h>
 #if !defined(CPU_CAPABILITY_ZVECTOR)
-#if defined(CPU_CAPABILITY_SVE256)
-#include <ATen/cpu/vec/sve/vec_common_sve.h>
-#else
 // clang-format off
 #include <ATen/cpu/vec/vec256/vec256_float.h>
 #include <ATen/cpu/vec/vec256/vec256_double.h>
 #include <ATen/cpu/vec/vec256/vec256_int.h>
 #include <ATen/cpu/vec/vec256/vec256_qint.h>
-#endif
-#if !defined(CPU_CAPABILITY_SVE256) || !defined(__ARM_FEATURE_BF16)
+#if !!defined(__ARM_FEATURE_BF16)
 #include <ATen/cpu/vec/vec256/vec256_bfloat16.h>
 #endif
 #include <ATen/cpu/vec/vec256/vec256_half.h>
