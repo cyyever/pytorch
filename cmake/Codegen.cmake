@@ -360,7 +360,7 @@ if(INTERN_BUILD_ATEN_OPS)
   endif()
   # Handle source files that need to be compiled multiple times for
   # different vectorization options
-  file(GLOB cpu_kernel_cpp_in "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/cpu/*.cpp" "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/quantized/cpu/kernels/*.cpp")
+  file(GLOB cpu_kernel_cpp_in "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/cpu/*.cpp")
 
   list(APPEND CPU_CAPABILITY_NAMES "DEFAULT")
   list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}")
@@ -462,10 +462,6 @@ if(INTERN_BUILD_ATEN_OPS)
         if(("${NAME}" STREQUAL "native/cpu/GridSamplerKernel.cpp") AND ("${CPU_CAPABILITY}" STREQUAL "DEFAULT"))
           # See https://github.com/pytorch/pytorch/issues/38855
           set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-uninitialized")
-        endif()
-        if("${NAME}" STREQUAL "native/quantized/cpu/kernels/QuantizedOpKernels.cpp")
-          # See https://github.com/pytorch/pytorch/issues/38854
-          set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-deprecated-copy")
         endif()
       endif()
       set_source_files_properties(${NEW_IMPL} PROPERTIES COMPILE_FLAGS "${FLAGS} ${EXTRA_FLAGS}")

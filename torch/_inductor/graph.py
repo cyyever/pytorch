@@ -2175,18 +2175,12 @@ class GraphLowering(torch.fx.Interpreter):
                                 torch.ops.mkldnn._linear_pointwise.default,
                                 torch.ops.mkldnn._linear_pointwise.binary,
                                 torch.ops.aten.mkldnn_rnn_layer.default,
-                                torch.ops.onednn.qlinear_pointwise.default,
-                                torch.ops.onednn.qlinear_pointwise.tensor,
-                                torch.ops.onednn.qlinear_pointwise.binary,
-                                torch.ops.onednn.qlinear_pointwise.binary_tensor,
                             ]
                             need_fixed_channels_last_layout += [
                                 torch.ops.mkldnn._convolution_pointwise.default,
                                 torch.ops.mkldnn._convolution_pointwise.binary,
                                 torch.ops.mkldnn._convolution_pointwise_.binary,
                                 torch.ops.mkldnn._convolution_transpose_pointwise.default,
-                                torch.ops.onednn.qconv_pointwise.default,
-                                torch.ops.onednn.qconv2d_pointwise.binary,
                             ]
                             if torch._C.has_mkl:
                                 need_fixed_layout += [torch.ops.mkl._mkl_linear.default]

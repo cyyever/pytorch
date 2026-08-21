@@ -106,11 +106,6 @@ file(GLOB native_mkldnn_cpp CONFIGURE_DEPENDS "native/mkldnn/*.cpp")
 
 file(GLOB native_eigen_cpp CONFIGURE_DEPENDS "native/sparse/eigen/*.cpp")
 
-file(GLOB native_ao_sparse_cpp CONFIGURE_DEPENDS
-            "native/ao_sparse/*.cpp"
-            "native/ao_sparse/cpu/*.cpp"
-            "native/ao_sparse/quantized/*.cpp"
-            "native/ao_sparse/quantized/cpu/*.cpp")
 # MPS
 file(GLOB mps_cpp CONFIGURE_DEPENDS "mps/*.cpp")
 file(GLOB mps_mm CONFIGURE_DEPENDS "mps/*.mm")
@@ -130,11 +125,6 @@ file(GLOB native_nested_cpp CONFIGURE_DEPENDS "native/nested/*.cpp")
 file(GLOB native_transformers_cpp CONFIGURE_DEPENDS "native/transformers/*.cpp")
 
 file(GLOB native_h CONFIGURE_DEPENDS "native/*.h")
-file(GLOB native_ao_sparse_h CONFIGURE_DEPENDS
-            "native/ao_sparse/*.h"
-            "native/ao_sparse/cpu/*.h"
-            "native/ao_sparse/quantized/*.h"
-            "native/ao_sparse/quantized/cpu/*.h")
 file(GLOB native_quantized_h CONFIGURE_DEPENDS "native/quantized/*.h" "native/quantized/cpu/*.h" "native/quantized/cudnn/*.h")
 file(GLOB native_cpu_h CONFIGURE_DEPENDS "native/cpu/*.h")
 file(GLOB native_utils_h CONFIGURE_DEPENDS "native/utils/*.h")
@@ -490,7 +480,7 @@ add_subdirectory(quantized)
 
 set(
   all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
-  ${native_ao_sparse_cpp} ${native_sparse_cpp} ${native_nested_cpp}
+  ${native_sparse_cpp} ${native_nested_cpp}
   ${native_quantized_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
   ${native_transformers_cpp}
   ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
@@ -899,7 +889,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake-exports/ATenConfig.cmake"
   DESTINATION "${AT_INSTALL_SHARE_DIR}/cmake/ATen")
 
 set(INSTALL_HEADERS ${base_h} ${ATen_CORE_HEADERS} ${native_nested_h} ${ATen_TRANSFORMER_HEADERS})
-list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_ao_sparse_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
+list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
 
 # https://stackoverflow.com/questions/11096471/how-can-i-install-a-hierarchy-of-files-using-cmake
 foreach(HEADER  ${INSTALL_HEADERS})
