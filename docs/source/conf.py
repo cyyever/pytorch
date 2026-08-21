@@ -1354,9 +1354,6 @@ coverage_ignore_classes = [
     # torch.fx.experimental.normalize
     "NormalizeArgs",
     "NormalizeOperators",
-    # torch.fx.experimental.optimization
-    "MklSubgraph",
-    "UnionFind",
     # torch.fx.experimental.partitioner_utils
     "Device",
     "Partition",
