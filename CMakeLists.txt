@@ -273,7 +273,7 @@ endif()
 
 # For non-supported platforms, turn USE_DISTRIBUTED off by default. It is not
 # tested and likely won't work without additional changes.
-if(NOT LINUX)
+if(NOT LINUX AND NOT WIN32)
   set(USE_DISTRIBUTED
       OFF
       CACHE STRING "Use distributed")
@@ -294,6 +294,9 @@ option(ATEN_NO_TEST "Do not build ATen test binaries" OFF)
 option(BUILD_BINARY "Build C++ binaries" OFF)
 option(BUILD_PYTHON "Build Python binaries" ON)
 option(BUILD_SHARED_LIBS "Build libcaffe2.so" ON)
+cmake_dependent_option(
+  CAFFE2_USE_MSVC_STATIC_RUNTIME "Using MSVC static runtime libraries" ON
+  "NOT BUILD_SHARED_LIBS" OFF)
 option(BUILD_TEST "Build C++ test binaries (need gtest and gbenchmark)" ON)
 option(BUILD_AOT_INDUCTOR_TEST "Build C++ test binaries for aot-inductor" OFF)
 option(
@@ -336,9 +339,9 @@ option(USE_MTIA "Use MTIA" OFF)
 cmake_dependent_option(
   BUILD_LAZY_CUDA_LINALG "Build cuda linalg ops as separate library" ON
   "USE_CUDA AND LINUX AND BUILD_PYTHON" OFF)
-cmake_dependent_option(USE_ROCM "Use ROCm" ON "LINUX" OFF)
-cmake_dependent_option(USE_ROCM_CK_GEMM "Use ROCm Composable Kernel for GEMMs" ON "USE_ROCM" OFF)
-cmake_dependent_option(USE_ROCM_CK_SDPA "Use ROCm Composable Kernel for SDPA" ON "USE_ROCM" OFF)
+cmake_dependent_option(USE_ROCM "Use ROCm" ON "LINUX OR WIN32" OFF)
+cmake_dependent_option(USE_ROCM_CK_GEMM "Use ROCm Composable Kernel for GEMMs" ON "USE_ROCM;NOT WIN32" OFF)
+cmake_dependent_option(USE_ROCM_CK_SDPA "Use ROCm Composable Kernel for SDPA" ON "USE_ROCM;NOT WIN32" OFF)
 option(CAFFE2_STATIC_LINK_CUDA "Statically link CUDA libraries" OFF)
 cmake_dependent_option(USE_CUDNN "Use cuDNN" ON "USE_CUDA" OFF)
 cmake_dependent_option(USE_STATIC_CUDNN "Use cuDNN static libraries" OFF
@@ -346,7 +349,7 @@ cmake_dependent_option(USE_STATIC_CUDNN "Use cuDNN static libraries" OFF
 cmake_dependent_option(USE_CUSPARSELT "Use cuSPARSELt" ON "USE_CUDA" OFF)
 cmake_dependent_option(USE_HIPSPARSELT "Use hipSPARSELt" ON "USE_ROCM" OFF)
 cmake_dependent_option(USE_CUDSS "Use cuDSS" ON "USE_CUDA" OFF)
-cmake_dependent_option(USE_CUFILE "Use cuFile" ON "USE_CUDA OR USE_ROCM" OFF)
+cmake_dependent_option(USE_CUFILE "Use cuFile" ON "USE_CUDA OR USE_ROCM;NOT WIN32" OFF)
 option(USE_FBGEMM "Use FBGEMM (quantized 8-bit server operators)" ON)
 option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
@@ -359,7 +362,7 @@ cmake_dependent_option(USE_NCCL "Use NCCL" ON
                        "USE_DISTRIBUTED;USE_CUDA OR USE_ROCM;UNIX;NOT APPLE" OFF)
 cmake_dependent_option(USE_XCCL "Use XCCL" ON
                        "USE_XPU;UNIX;NOT APPLE" OFF)
-cmake_dependent_option(USE_RCCL "Use RCCL" ON "USE_NCCL" OFF)
+cmake_dependent_option(USE_RCCL "Use RCCL" ON "USE_NCCL;NOT WIN32" OFF)
 cmake_dependent_option(USE_STATIC_NCCL "Use static NCCL" OFF "USE_NCCL" OFF)
 cmake_dependent_option(USE_SYSTEM_NCCL "Use system-wide NCCL" OFF "USE_NCCL"
                        OFF)
@@ -438,6 +441,8 @@ option(USE_PER_OPERATOR_HEADERS
 cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)
+cmake_dependent_option(USE_KLEIDIAI "Use KleidiAI for the ARM CPU & AARCH64 architecture." ON
+                        "CPU_AARCH64" OFF)
 # prioritized text linker, ON by default for AArch64+Linux, option visible to all AArch64, x86 and ppc64le.
 set(USE_PRIORITIZED_TEXT_DEFAULT OFF)
 if(LINUX AND CPU_AARCH64)
@@ -468,9 +473,9 @@ cmake_dependent_option(USE_LLVM_BOLT "Optimize libraries with LLVM BOLT."
 
 option(USE_MIMALLOC "Use mimalloc" OFF)
 # Enable third party mimalloc library to improve memory allocation performance
-# on AArch64 Linux.
+# on Windows and AArch64.
 option(USE_MIMALLOC_ON_MKL "Use mimalloc on MKL" OFF)
-if(CPU_AARCH64 AND NOT APPLE)
+if(WIN32 OR (CPU_AARCH64 AND NOT APPLE))
   set(USE_MIMALLOC ON)
   # Disable OPT flags for mimalloc on aarch64 as it breaks ARMv8.0
   # See https://github.com/pytorch/pytorch/issues/174344
@@ -505,6 +510,33 @@ if(USE_CCACHE)
       STATUS
         "Could not find neither ccache nor sccache. Consider installing ccache to speed up compilation."
     )
+  endif()
+endif()
+
+# On Windows platform, if user does not install libuv in build conda env and
+# does not set libuv_ROOT environment variable. Set USE_DISTRIBUTED to OFF.
+if(WIN32)
+  set(USE_KLEIDIAI OFF)
+  message(WARNING "KleidiAI cannot be used on Windows. Set it to OFF")
+
+  if(USE_DISTRIBUTED AND NOT DEFINED ENV{libuv_ROOT})
+    find_library(
+      libuv_tmp_LIBRARY
+      NAMES uv libuv
+      HINTS $ENV{CONDA_PREFIX}\\Library $ENV{PREFIX}\\Library
+      PATH_SUFFIXES lib
+      NO_DEFAULT_PATH)
+    if(NOT libuv_tmp_LIBRARY)
+      set(USE_DISTRIBUTED OFF)
+      set(USE_GLOO OFF)
+      message(
+        WARNING
+          "Libuv is not installed in current conda env. Set USE_DISTRIBUTED to OFF. "
+          "Please run command 'conda install -c conda-forge libuv=1.51' to install libuv."
+      )
+    else()
+      set(ENV{libuv_ROOT} ${libuv_tmp_LIBRARY}/../../)
+    endif()
   endif()
 endif()
 
@@ -543,7 +575,13 @@ endif()
 # /Z7 override option When generating debug symbols, CMake default to use the
 # flag /Zi. However, it is not compatible with sccache. So we rewrite it off.
 # But some users don't use sccache; this override is for them.
-cmake_dependent_
+cmake_dependent_option(
+  MSVC_Z7_OVERRIDE
+  "Work around sccache bug by replacing /Zi and /ZI with /Z7 when using MSVC (if you are not using sccache, you can turn this OFF)"
+  ON
+  "MSVC"
+  OFF)
+
 set(SELECTED_OP_LIST
     ""
     CACHE
@@ -582,6 +620,108 @@ if(LINUX)
   endif()
 endif()
 
+if(MSVC)
+  # MSVC by default does not apply the correct __cplusplus version as specified
+  # by the C++ standard because MSVC is not a completely compliant
+  # implementation. This option forces MSVC to use the appropriate value given
+  # the requested --std option. This fixes a compilation issue mismatch between
+  # GCC/Clang and MSVC.
+  #
+  # See: *
+  # https://learn.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170
+  # * https://en.cppreference.com/w/cpp/preprocessor/replace#Predefined_macros
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler /Zc:__cplusplus -Xcompiler /Zc:preprocessor")
+
+  set(CMAKE_NINJA_CMCLDEPS_RC OFF)
+  if(MSVC_Z7_OVERRIDE)
+    # CMake set debug flags to use /Z7
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+  endif()
+  foreach(
+    flag_var
+    CMAKE_C_FLAGS
+    CMAKE_C_FLAGS_DEBUG
+    CMAKE_C_FLAGS_RELEASE
+    CMAKE_C_FLAGS_MINSIZEREL
+    CMAKE_C_FLAGS_RELWITHDEBINFO
+    CMAKE_CXX_FLAGS
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_CXX_FLAGS_MINSIZEREL
+    CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+
+    if(${CAFFE2_USE_MSVC_STATIC_RUNTIME})
+      if(${flag_var} MATCHES "/MD")
+        string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+      endif(${flag_var} MATCHES "/MD")
+    else()
+      if(${flag_var} MATCHES "/MT")
+        string(REGEX REPLACE "/MT" "/MD" ${flag_var} "${${flag_var}}")
+      endif()
+    endif()
+
+    # /bigobj increases number of sections in .obj file, which is needed to link
+    # against libraries in Python 2.7 under Windows For Visual Studio
+    # generators, if /MP is not added, then we may need to add /MP to the flags.
+    # For other generators like ninja, we don't need to add /MP because it is
+    # already handled by the generator itself.
+    if(CMAKE_GENERATOR MATCHES "Visual Studio" AND NOT ${flag_var} MATCHES
+                                                   "/MP")
+      set(${flag_var} "${${flag_var}} /MP /bigobj")
+    else()
+      set(${flag_var} "${${flag_var}} /bigobj")
+    endif()
+  endforeach(flag_var)
+
+  foreach(flag_var
+          CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL
+          CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL)
+    if(${flag_var} MATCHES "/Z[iI7]")
+      string(REGEX REPLACE "/Z[iI7]" "" ${flag_var} "${${flag_var}}")
+    endif()
+  endforeach(flag_var)
+
+  foreach(
+    flag_var
+    CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO
+    CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO
+    CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO
+    CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO
+    CMAKE_SHARED_LINKER_FLAGS_DEBUG
+    CMAKE_STATIC_LINKER_FLAGS_DEBUG
+    CMAKE_EXE_LINKER_FLAGS_DEBUG
+    CMAKE_MODULE_LINKER_FLAGS_DEBUG)
+    # Switch off incremental linking in debug/relwithdebinfo builds
+    if(${flag_var} MATCHES "/INCREMENTAL" AND NOT ${flag_var} MATCHES
+                                              "/INCREMENTAL:NO")
+      string(REGEX REPLACE "/INCREMENTAL" "/INCREMENTAL:NO" ${flag_var}
+                           "${${flag_var}}")
+    endif()
+  endforeach(flag_var)
+
+  foreach(flag_var CMAKE_SHARED_LINKER_FLAGS CMAKE_STATIC_LINKER_FLAGS
+                   CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS)
+    string(APPEND ${flag_var} " /ignore:4049 /ignore:4217 /ignore:4099")
+  endforeach(flag_var)
+
+  foreach(flag_var CMAKE_SHARED_LINKER_FLAGS)
+    # https://github.com/pytorch/pytorch/issues/91933: Don't set the manifest
+    # filename explicitly helps fix the linker error when linking
+    # torch_python.dll. The manifest file would still be there in the correct
+    # format torch_python.dll.manifest
+    if(${flag_var} MATCHES "/MANIFESTFILE:.*\\.manifest")
+      string(REGEX REPLACE "/MANIFESTFILE:.*\\.manifest" "" ${flag_var}
+                           "${${flag_var}}")
+    endif()
+  endforeach(flag_var)
+
+  # Try harder
+  string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler /w -w")
+
+  string(APPEND CMAKE_CXX_FLAGS " /FS")
+  string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler /FS")
+endif(MSVC)
 
 string(APPEND CMAKE_CUDA_FLAGS " -Xfatbin -compress-all")
 
@@ -718,6 +858,11 @@ if(USE_FBGEMM AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
 endif()
 
 
+if(MSVC)
+  # The source code is in utf-8 encoding
+  append_cxx_flag_if_supported("/utf-8" CMAKE_CXX_FLAGS)
+endif()
+
 # Note for ROCM platform: 1. USE_ROCM is always ON until
 # include(cmake/Dependencies.cmake) 2. USE_CUDA will become OFF during
 # re-configuration Truth Table: CUDA 1st pass: USE_CUDA=True;USE_ROCM=True,
@@ -739,14 +884,14 @@ cmake_dependent_option(
   "Whether to build the flash_attention kernel for scaled dot product attention.\
   Will be disabled if not supported by the platform"
   ON
-  "USE_CUDA OR USE_ROCM"
+  "(USE_CUDA AND NOT MSVC) OR USE_ROCM"
   OFF)
 
 
 IF(USE_ROCM AND ("gfx942" IN_LIST PYTORCH_ROCM_ARCH OR "gfx950" IN_LIST PYTORCH_ROCM_ARCH))
   message(WARNING "Setting USE_MSLK for gfx942/gfx950 to ON by default, doing ROCM build")
   set(USE_MSLK_DEFAULT ON)
-elseif(USE_CUDA AND "$ENV{TORCH_CUDA_ARCH_LIST}" MATCHES "10.0" AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.8)
+elseif(USE_CUDA AND "$ENV{TORCH_CUDA_ARCH_LIST}" MATCHES "10.0" AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.8 AND NOT WIN32)
   message(STATUS "Setting USE_MSLK to ON by default , doing CUDA build for SM100a")
   set(USE_MSLK_DEFAULT ON)
 else()
@@ -758,7 +903,7 @@ cmake_dependent_option(
   "Whether to build MSLK quantized GEMM kernels.\
   Will be disabled if not supported by the platform"
   ${USE_MSLK_DEFAULT}
-  "USE_CUDA OR USE_ROCM"
+  "(USE_CUDA AND NOT MSVC) OR USE_ROCM"
   OFF)
 
 
@@ -810,6 +955,8 @@ if(USE_MSLK)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_MSLK")
 endif()
 
+endif()
+
 # Enable sleef on macOS with Apple silicon by default
 if((${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64"))
   message(STATUS "Running on macOS with Apple silicon")
@@ -822,6 +969,9 @@ if((NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
   AND("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64"))
   string(APPEND CMAKE_CXX_FLAGS " -DAT_BUILD_ARM_VEC256_WITH_SLEEF")
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
+endif()
+
+
 endif()
 
 if(TRACING_BASED)
@@ -846,114 +996,146 @@ include(cmake/public/utils.cmake)
 if(USE_COLORIZE_OUTPUT)
   set(CMAKE_COLOR_DIAGNOSTICS ON)
 endif()
-string(APPEND CMAKE_CXX_FLAGS " -O2 -fPIC")
+if(NOT MSVC)
+  string(APPEND CMAKE_CXX_FLAGS " -O2 -fPIC")
 
-# This prevents use of `c10::optional`, `c10::nullopt` etc within the codebase
-string(APPEND CMAKE_CXX_FLAGS " -DC10_NODEPRECATED")
-string(APPEND CMAKE_CUDA_FLAGS " -DC10_NODEPRECATED")
-string(APPEND CMAKE_OBJCXX_FLAGS " -DC10_NODEPRECATED")
+  # This prevents use of `c10::optional`, `c10::nullopt` etc within the codebase
+  string(APPEND CMAKE_CXX_FLAGS " -DC10_NODEPRECATED")
+  string(APPEND CMAKE_CUDA_FLAGS " -DC10_NODEPRECATED")
+  string(APPEND CMAKE_OBJCXX_FLAGS " -DC10_NODEPRECATED")
 
-# Eigen fails to build with some versions, so convert this to a warning
-# Details at http://eigen.tuxfamily.org/bz/show_bug.cgi?id=1459
-string(APPEND CMAKE_CXX_FLAGS " -Wall")
-string(APPEND CMAKE_CXX_FLAGS " -Wextra")
-append_cxx_flag_if_supported("-Werror=return-type" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Werror=non-virtual-dtor" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Werror=braced-scalar-init" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Werror=range-loop-construct" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Werror=bool-operation" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wnarrowing" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-missing-field-initializers"
-                             CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-unknown-pragmas" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-unused-parameter" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-strict-overflow" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-strict-aliasing" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wvla-extension" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wsuggest-override" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wnewline-eof" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Winconsistent-missing-override"
-                             CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Winconsistent-missing-destructor-override"
-                             CMAKE_CXX_FLAGS)
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  string(APPEND CMAKE_CXX_FLAGS " -Wno-pass-failed")
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX)
-  # Suppress "The ABI for passing parameters with 64-byte alignment has
-  # changed in GCC 4.6"
-  string(APPEND CMAKE_CXX_FLAGS " -Wno-psabi")
-endif()
+  # Eigen fails to build with some versions, so convert this to a warning
+  # Details at http://eigen.tuxfamily.org/bz/show_bug.cgi?id=1459
+  string(APPEND CMAKE_CXX_FLAGS " -Wall")
+  string(APPEND CMAKE_CXX_FLAGS " -Wextra")
+  append_cxx_flag_if_supported("-Werror=return-type" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Werror=non-virtual-dtor" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Werror=braced-scalar-init" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Werror=range-loop-construct" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Werror=bool-operation" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wnarrowing" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-missing-field-initializers"
+                               CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-unknown-pragmas" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-unused-parameter" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-strict-overflow" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-strict-aliasing" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wvla-extension" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wsuggest-override" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wnewline-eof" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Winconsistent-missing-override"
+                               CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Winconsistent-missing-destructor-override"
+                               CMAKE_CXX_FLAGS)
+  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    string(APPEND CMAKE_CXX_FLAGS " -Wno-pass-failed")
+  endif()
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    # Suppress "The ABI for passing parameters with 64-byte alignment has
+    # changed in GCC 4.6"
+    string(APPEND CMAKE_CXX_FLAGS " -Wno-psabi")
+  endif()
 
-# Use ld.gold if available, fall back to ld.bfd (the default ld) if not
-if(USE_GOLD_LINKER)
-  if(USE_DISTRIBUTED AND USE_MPI)
-    # Same issue as here with default MPI on Ubuntu
-    # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577
-    message(WARNING "Refusing to use gold when USE_MPI=1")
-  else()
-    execute_process(
-      COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
-      ERROR_QUIET
-      OUTPUT_VARIABLE LD_VERSION)
-    if(NOT "${LD_VERSION}" MATCHES "GNU gold")
-      message(
-        WARNING
-          "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
-      )
-      set(USE_GOLD_LINKER OFF)
+  # Use ld.gold if available, fall back to ld.bfd (the default ld) if not
+  if(USE_GOLD_LINKER)
+    if(USE_DISTRIBUTED AND USE_MPI)
+      # Same issue as here with default MPI on Ubuntu
+      # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577
+      message(WARNING "Refusing to use gold when USE_MPI=1")
     else()
-      message(STATUS "ld.gold is available, using it to link")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
-      set(CMAKE_SHARED_LINKER_FLAGS
-          "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
-      set(CMAKE_MODULE_LINKER_FLAGS
-          "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
+      execute_process(
+        COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
+        ERROR_QUIET
+        OUTPUT_VARIABLE LD_VERSION)
+      if(NOT "${LD_VERSION}" MATCHES "GNU gold")
+        message(
+          WARNING
+            "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
+        )
+        set(USE_GOLD_LINKER OFF)
+      else()
+        message(STATUS "ld.gold is available, using it to link")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+        set(CMAKE_SHARED_LINKER_FLAGS
+            "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
+        set(CMAKE_MODULE_LINKER_FLAGS
+            "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
+      endif()
     endif()
   endif()
-endif()
 
-append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wconstant-conversion" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-aligned-allocation-unavailable"
-                             CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Qunused-arguments" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wconstant-conversion" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Wno-aligned-allocation-unavailable"
+                               CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Qunused-arguments" CMAKE_CXX_FLAGS)
 
-append_cxx_flag_if_supported("-faligned-new" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-faligned-new" CMAKE_CXX_FLAGS)
 
-if(WERROR)
-  append_cxx_flag_if_supported("-Werror" CMAKE_CXX_FLAGS)
-  if(NOT COMPILER_SUPPORT_WERROR)
-    set(WERROR FALSE)
+  if(WERROR)
+    append_cxx_flag_if_supported("-Werror" CMAKE_CXX_FLAGS)
+    if(NOT COMPILER_SUPPORT_WERROR)
+      set(WERROR FALSE)
+    endif()
   endif()
-endif()
-append_cxx_flag_if_supported("-Wno-maybe-uninitialized" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-fstandalone-debug" CMAKE_CXX_FLAGS_DEBUG)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-  if(CMAKE_BUILD_TYPE MATCHES Debug)
-    message(WARNING "Applying -Og optimization for aarch64 GCC debug build to workaround ICE")
+  append_cxx_flag_if_supported("-Wno-maybe-uninitialized" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-fstandalone-debug" CMAKE_CXX_FLAGS_DEBUG)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+      message(WARNING "Applying -Og optimization for aarch64 GCC debug build to workaround ICE")
+    endif()
+    string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -Og")
+  else()
+    string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -O0")
   endif()
-  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -Og")
+  # aarch64 C++ stack unwinding uses frame-pointer chain walking, so frame
+  # pointers must be present in all build types.  The cost is negligible on
+  # aarch64 (31 GPRs vs x86-64's 16, so dedicating x29 rarely spills).
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    append_cxx_flag_if_supported("-fno-omit-frame-pointer" CMAKE_CXX_FLAGS)
+  endif()
+  append_cxx_flag_if_supported("-fno-math-errno" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-fno-trapping-math" CMAKE_CXX_FLAGS)
+  append_cxx_flag_if_supported("-Werror=format" CMAKE_CXX_FLAGS)
+  if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+    append_cxx_flag_if_supported("-Wno-dangling-reference" CMAKE_CXX_FLAGS)
+    append_cxx_flag_if_supported("-Wno-error=dangling-reference" CMAKE_CXX_FLAGS)
+  endif()
+  # needed for compat with newer versions of clang that use C++20 mangling rules
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 18)
+    append_cxx_flag_if_supported("-fclang-abi-compat=17" CMAKE_CXX_FLAGS)
+  endif()
 else()
-  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -O0")
-endif()
-# aarch64 C++ stack unwinding uses frame-pointer chain walking, so frame
-# pointers must be present in all build types.  The cost is negligible on
-# aarch64 (31 GPRs vs x86-64's 16, so dedicating x29 rarely spills).
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  append_cxx_flag_if_supported("-fno-omit-frame-pointer" CMAKE_CXX_FLAGS)
-endif()
-append_cxx_flag_if_supported("-fno-math-errno" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-fno-trapping-math" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Werror=format" CMAKE_CXX_FLAGS)
-if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
-  append_cxx_flag_if_supported("-Wno-dangling-reference" CMAKE_CXX_FLAGS)
-  append_cxx_flag_if_supported("-Wno-error=dangling-reference" CMAKE_CXX_FLAGS)
-endif()
-# needed for compat with newer versions of clang that use C++20 mangling rules
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 18)
-  append_cxx_flag_if_supported("-fclang-abi-compat=17" CMAKE_CXX_FLAGS)
+  # Define export functions for AOTI.
+  add_compile_definitions(EXPORT_AOTI_FUNCTIONS)
+
+  # skip unwanted includes from windows.h
+  add_compile_definitions(WIN32_LEAN_AND_MEAN)
+  # Windows SDK broke compatibility since version 25131, but introduced this
+  # define for backward compatibility.
+  add_compile_definitions(_UCRT_LEGACY_INFINITY)
+  # disable min/max macros
+  add_compile_definitions(NOMINMAX)
+  # Turn off these warnings on Windows. destructor was implicitly defined as
+  # delete
+  append_cxx_flag_if_supported("/wd4624" CMAKE_CXX_FLAGS)
+  # unknown pragma
+  append_cxx_flag_if_supported("/wd4068" CMAKE_CXX_FLAGS)
+  # unexpected tokens following preprocessor directive - expected a newline
+  append_cxx_flag_if_supported("/wd4067" CMAKE_CXX_FLAGS)
+  # conversion from 'size_t' to 'unsigned int', possible loss of data
+  append_cxx_flag_if_supported("/wd4267" CMAKE_CXX_FLAGS)
+  # no suitable definition provided for explicit template instantiation request
+  append_cxx_flag_if_supported("/wd4661" CMAKE_CXX_FLAGS)
+  # recursive on all control paths, function will cause runtime stack overflow
+  append_cxx_flag_if_supported("/wd4717" CMAKE_CXX_FLAGS)
+  # conversion from '_Ty' to '_Ty', possible loss of data
+  append_cxx_flag_if_supported("/wd4244" CMAKE_CXX_FLAGS)
+  # unsafe use of type 'bool' in operation
+  append_cxx_flag_if_supported("/wd4804" CMAKE_CXX_FLAGS)
+  # inconsistent dll linkage
+  append_cxx_flag_if_supported("/wd4273" CMAKE_CXX_FLAGS)
 endif()
 
 # Add code coverage flags to supported compilers
