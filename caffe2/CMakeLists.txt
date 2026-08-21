@@ -453,10 +453,7 @@ if(${USE_ITT})
 endif()
 
 list(APPEND TORCH_SRCS
-  ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
   ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
-  ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
-  ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
   ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp
 )
 
@@ -523,7 +520,6 @@ if(USE_CUDA)
     ${TORCH_ROOT}/aten/src/ATen/cuda/detail/LazyNVRTC.cpp
     PROPERTIES COMPILE_DEFINITIONS "NVRTC_SHORTHASH=${CUDA_NVRTC_SHORTHASH}"
   )
-  set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/passes/frozen_conv_add_relu_fusion.cpp PROPERTIES COMPILE_FLAGS "-DUSE_CUDA=1")
 endif()
 
 if(USE_ROCM)
@@ -559,7 +555,6 @@ if(NOT NO_API)
     ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/imethod.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/serialize.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/nn/init.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/nn/module.cpp
