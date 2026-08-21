@@ -69,7 +69,6 @@ from torch._dynamo.debug_utils import (
     _cuda_system_info_comment,
     AccuracyError,
     backend_accuracy_fails,
-    BuckTargetWriter,
     cast_to_fp64,
     extra_deps,
     extra_imports,
@@ -940,8 +939,6 @@ def dump_compiler_graph_state(
     try:
         shutil.copyfile(file_name, repro_path)
         log.warning("Copying repro file for convenience to %s", repro_path)
-        if use_buck:
-            BuckTargetWriter(file_name).write()
     except OSError:
         log.warning("No write permissions for %s", repro_path)
 
@@ -995,10 +992,7 @@ def isolate_fails(
     #     print(fd.read())
     new_env = os.environ.copy()
     new_env = {**new_env, **env}
-    if use_buck:
-        cmd = BuckTargetWriter(file_name).write(print_msg=False)
-    else:
-        cmd = [sys.executable, file_name]
+    cmd = [sys.executable, file_name]
     with (
         TemporaryFile() as stdout,
         TemporaryFile() as stderr,

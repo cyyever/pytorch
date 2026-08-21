@@ -8,12 +8,10 @@ This module provides various debugging tools and utilities for TorchDynamo, incl
 - Accuracy checking between original and compiled models
 - Neural network module string conversion via NNModuleToString
 - Profiling tools and system information collection
-- Buck build system integration for Meta-internal testing
 
 Key classes:
 - InputReader/InputWriter: Handle serialization of model inputs/outputs
 - NNModuleToString: Converts nn.Modules to string representations
-- BuckTargetWriter: Manages Buck build system integration
 """
 
 from __future__ import annotations
@@ -67,91 +65,11 @@ inductor_config = import_module("torch._inductor.config")
 use_buck = inductor_config.is_fbcode()
 
 if use_buck:
-    import libfb.py.build_info
+    pass
 
 
 # pyrefly: ignore [implicit-any]
-extra_deps = []
 extra_imports = ""
-cur_target = ""
-if use_buck:
-    extra_deps = [
-        "//caffe2/torch/fb/sparsenn:sparsenn_operators_gpu",
-        "//caffe2/torch/fb/sparsenn:sparsenn_operators",
-        "//deeplearning/fbgemm/fbgemm_gpu:sparse_ops_cpu",
-        "//deeplearning/fbgemm/fbgemm_gpu:sparse_ops",
-    ]
-    cur_target = libfb.py.build_info.BuildInfo.get_build_rule().replace("fbcode:", "//")  # type: ignore[possibly-undefined]
-    # Preload common fbcode custom-op libraries so repros that use those ops
-    # work out of the box. Best-effort: a repro whose graph doesn't use these
-    # ops (or that is run outside a buck target linking them) must not fail
-    # just because the library isn't present.
-    _extra_deps_list = "\n".join(f'    "{x}",' for x in extra_deps)
-    extra_imports = (
-        f"for _extra_dep in [\n{_extra_deps_list}\n]:\n"
-        "    try:\n"
-        "        torch.ops.load_library(_extra_dep)\n"
-        "    except OSError:\n"
-        "        pass\n"
-    )
-
-
-BUCK_CMD_PREFIX = ["buck2", "run", "@mode/dev-nosan"]
-
-
-class BuckTargetWriter:
-    def __init__(self, filename: str) -> None:
-        self.subdir, self.py_file = os.path.split(os.path.abspath(filename))
-        self.target = self.py_file.replace(".py", "")
-
-        # Get main_module path from fbcode
-        self.path = f"{self.subdir.replace('/', '.')}.{self.target}"
-        self.path = self.path[self.path.find("fbcode.") :]
-        self.path = self.path[7:]
-
-        # Get cmd line path
-        tmp = self.subdir
-        tmp = tmp[tmp.find("fbcode/") :][7:]
-        self.cmd_line_path = f"//{tmp}:{self.target}"
-
-    def build(self) -> str:
-        extra_cpp_deps = "\n".join([f'        "{x}",' for x in extra_deps])
-        return textwrap.dedent(
-            f"""
-load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
-
-python_binary(
-    name="{self.target}",
-    srcs = ["{self.py_file}"],
-    compile = False,
-    deps = [
-        "//caffe2:torch",
-        "//caffe2:libtorch",
-        "//caffe2/functorch:functorch",
-        "//triton:triton",
-        "{cur_target}",
-    ],
-    cpp_deps = [
-{extra_cpp_deps}
-    ],
-    main_module = "{self.path}",
-    par_style = "xar",
-)
-"""
-        )
-
-    def write(self, print_msg: bool = True) -> list[str]:
-        target_file = os.path.join(self.subdir, "TARGETS")
-        with open(target_file, "w") as fd:
-            fd.write(self.build())
-        # log.warning("Wrote isolation TARGETS file at %s", target_file)
-        cmd_split = BUCK_CMD_PREFIX + [self.cmd_line_path]
-        if print_msg:
-            log.warning(
-                "Found an example that reproduces the error. Run this cmd to repro - %s",
-                " ".join(cmd_split),
-            )
-        return cmd_split
 
 
 def minifier_dir() -> str:
@@ -568,8 +486,6 @@ def helper_for_dump_minify(contents: str) -> None:
     minified_repro_path = get_minifier_repro_path()
     log.warning("Writing minified repro to:\n%s", minified_repro_path)
 
-    if use_buck:
-        BuckTargetWriter(minified_repro_path).write()
     try:
         with open(minified_repro_path, "w") as fd:
             fd.write(contents)
