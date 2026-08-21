@@ -1,7 +1,6 @@
 #include <ATen/ATen.h>
 #include <ATen/core/jit_type.h>
 
-#include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/serialization/pickler_helper.h>
 
 namespace torch::jit {

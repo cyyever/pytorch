@@ -7,7 +7,6 @@
 #include <ATen/quantized/Quantizer.h>
 
 #include <c10/util/irange.h>
-#include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/utils/byte_order.h>
 

@@ -13,10 +13,9 @@
 #include <torch/csrc/Layout.h>
 #include <torch/csrc/QScheme.h>
 #include <torch/csrc/Stream.h>
-#include <torch/csrc/jit/api/module.h>
+#include <torch/csrc/jit/api/method.h>
 #include <torch/csrc/jit/frontend/schema_matching.h>
 #include <torch/csrc/jit/frontend/tracer.h>
-#include <torch/csrc/jit/python/module_python.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
 #include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/jit/resource_guard.h>
@@ -431,11 +430,6 @@ inline InferredType tryToInferType(py::handle input) {
     return InferredType("Enums cannot be inferred without TorchScript");
   }
 
-  if (py::isinstance<Object>(input)) {
-    auto object = py::cast<Object>(input);
-    return InferredType(object.type());
-  }
-
   auto module_type = py::module::import("torch.nn").attr("Module");
   py::bool_ is_module = py::isinstance(input, module_type);
   if (py::cast<bool>(is_module)) {
@@ -622,12 +616,6 @@ inline IValue toTypeInferredIValue(py::handle input) {
   auto match = tryToInferType(input);
   if (!match.success()) {
     auto object = py::cast<py::object>(input);
-    // Check if the obj is a ScriptObject.
-    if (auto script_obj = as_object(object)) {
-      auto ptr = script_obj.value()._ivalue();
-      return c10::intrusive_ptr<c10::ivalue::Object>::reclaim_copy(
-          ptr.release());
-    }
     TORCH_CHECK(
         false,
         "Tracer cannot infer type of ",
@@ -1160,12 +1148,7 @@ inline py::object invokeScriptMethodFromPython(
     Method& callee,
     const tuple_slice& args,
     const py::kwargs& kwargs) {
-  auto self = callee.owner()._ivalue();
-
-  if (auto torch_fn_result = maybeTorchFunctionDispatch(
-          py::cast(callee), args, kwargs, callee.name())) {
-    return *torch_fn_result;
-  }
+  auto self = callee.raw_owner();
 
   return runAndInsertCall(
       callee.function(),

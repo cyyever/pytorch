@@ -3,52 +3,26 @@
 #include <ATen/core/function.h>
 #include <ATen/core/ivalue.h>
 #include <ATen/core/stack.h>
-#include <torch/csrc/api/include/torch/imethod.h>
-#include <torch/csrc/jit/api/function_impl.h>
+#include <torch/csrc/jit/api/object.h>
 
 namespace torch::jit {
 
-using ObjectPtr = c10::intrusive_ptr<c10::ivalue::Object>;
-
-// A method in a module, e.g. f in:
-//
-// class M(ScriptModule):
-//   @script_method
-//   def f(self, x):
-//     ...
-// Note: because Method/Module are exposed to python these
-// classes use python method naming conventions
-struct TORCH_API Method : public torch::IMethod {
-  Method(ObjectPtr owner, Function* function);
-
-  // the module that contains this method.
-  Module owner() const;
-  // the raw objectptr that owns this method, for when the method is owned by a
-  // torchbind object.
-  ObjectPtr raw_owner() const;
-  void run(Stack& stack);
-  void run(Stack&& stack) {
-    run(stack);
+// A bound method of a torchbind (torch::class_) object: the owning object
+// plus the unbound Function. Execution goes through Function::run, which for
+// torchbind methods is a BuiltinOpFunction that directly invokes the
+// registered C++ callable.
+struct TORCH_API Method {
+  Method(ObjectPtr owner, Function* function)
+      : owner_(std::move(owner)), function_(function) {
+    TORCH_INTERNAL_ASSERT(function_);
   }
 
-  c10::IValue operator()(
-      std::vector<c10::IValue> stack,
-      const Kwargs& kwargs = Kwargs()) const override;
-
-  // Run method async. Invocation on this function would invokes a JIT
-  // interpreter that executes ops inline, one by one, on caller's thread. A
-  // model can utilize async op, i.e. `fork`, to launch an asynchronous task
-  // which will be launched on provided `taskLauncher`.
-  c10::intrusive_ptr<c10::ivalue::Future> run_async(
-      std::vector<c10::IValue> stack,
-      const Kwargs& kwargs = Kwargs(),
-      TaskLauncher taskLauncher = at::launch);
-
-  std::shared_ptr<Graph> graph() const {
-    return toGraphFunction(*function_).graph();
+  // The object that owns this method.
+  ObjectPtr raw_owner() const {
+    return owner_;
   }
 
-  const std::string& name() const override {
+  const std::string& name() const {
     return function_->name();
   }
 
@@ -61,22 +35,8 @@ struct TORCH_API Method : public torch::IMethod {
   }
 
  private:
-  void setArgumentNames(
-      std::vector<std::string>& /*argumentNames*/ /*argumentNamesOut*/)
-      const override;
-
-  // Methods are uniqued owned by a single module. This raw pointer allows
-  // looking up the module.
   ObjectPtr owner_;
-
-  // Underlying unbound function
   Function* function_;
 };
-
-namespace script {
-// We once had a `script::` namespace that was deleted. This is for backcompat
-// of the public API; new code should not use this type alias.
-using Method = ::torch::jit::Method;
-} // namespace script
 
 } // namespace torch::jit

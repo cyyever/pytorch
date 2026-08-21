@@ -22,7 +22,6 @@ void initThroughputBenchmarkBindings(PyObject* module) {
       .def_readonly("num_iters", &BenchmarkExecutionStats::num_iters);
 
   py::class_<ThroughputBenchmark>(m, "ThroughputBenchmark", py::dynamic_attr())
-      .def(py::init<jit::Module>())
       .def(py::init<py::object>())
       .def(
           "add_input",
@@ -34,8 +33,6 @@ void initThroughputBenchmarkBindings(PyObject* module) {
           [](ThroughputBenchmark& self,
              const py::args& args,
              const py::kwargs& kwargs) {
-            // Depending on this being ScriptModule of nn.Module we will release
-            // the GIL or not further down in the stack
             return self.runOnce(args, kwargs);
           })
       .def(

@@ -1,4 +1,3 @@
-#include <torch/csrc/jit/python/module_python.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/jit/python/python_ivalue.h>
 #include <torch/csrc/jit/python/utf8_decoding_ignore.h>
@@ -385,10 +384,6 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
     case TypeKind::ClassType: {
       auto classType = type->expect<ClassType>();
       auto object = py::cast<py::object>(obj);
-      if (auto script_obj = as_object(object)) {
-        return script_obj.value()._ivalue();
-      }
-
       // otherwise is a normal class object, we create a fresh
       // ivalue::Object to use from the py object.
       // 1. create a bare ivalue
@@ -427,32 +422,12 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
       return userObj;
     }
     case TypeKind::InterfaceType: {
-      auto interfaceType = type->expect<InterfaceType>();
-      // When converting a pyobj to an interface, we require rhs to be a
-      // ScriptObject and take the type and ivalue from it.
-      c10::ClassTypePtr classType = nullptr;
-      IValue res;
-      if (auto object = as_object(py::cast<py::object>(obj))) {
-        classType = object.value().type();
-        res = object.value()._ivalue();
-      } else {
-        throw py::cast_error(c10::str(
-            "Object of type ",
-            py::str(py::type::handle_of(obj)),
-            " is not a TorchScript compatible type"));
-      }
-      // check if the classType conform with the interface or not
-      std::stringstream why_not;
-      if (!classType->isSubtypeOfExt(*interfaceType, &why_not)) {
-        throw py::cast_error(c10::str(
-            "Object of type ",
-            classType->repr_str(),
-            " is not compatible with interface ",
-            interfaceType->repr_str(),
-            "\n",
-            std::move(why_not).str()));
-      }
-      return res;
+      // ScriptObject instances no longer exist, so interfaces cannot be
+      // satisfied from Python.
+      throw py::cast_error(c10::str(
+          "Object of type ",
+          py::str(py::type::handle_of(obj)),
+          " is not a TorchScript compatible type"));
     }
     case TypeKind::NumberType: {
       if (THPDtype_Check(obj.ptr())) {

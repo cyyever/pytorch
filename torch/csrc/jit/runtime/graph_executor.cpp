@@ -1,4 +1,3 @@
-#include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/runtime/graph_executor.h>
 
 #include <atomic>

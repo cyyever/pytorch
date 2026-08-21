@@ -139,9 +139,6 @@ core_trainer_sources = [
 ]
 
 core_sources_full_mobile_no_backend_interface_xplat = [
-    "torch/csrc/jit/api/function_impl.cpp",
-    "torch/csrc/jit/api/module.cpp",
-    "torch/csrc/jit/api/object.cpp",
     "torch/csrc/jit/frontend/parser.cpp",
     "torch/csrc/jit/frontend/schema_matching.cpp",
     "torch/csrc/jit/frontend/script_type_parser.cpp",

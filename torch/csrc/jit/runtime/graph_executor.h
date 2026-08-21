@@ -3,6 +3,8 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <torch/csrc/jit/ir/ir.h>
 
@@ -11,6 +13,17 @@ TORCH_DECLARE_bool(torch_jit_enable_new_executor);
 TORCH_DECLARE_bool(torch_jit_execution_plan_reuse_code_graph);
 
 namespace torch::jit {
+
+// Controls the behavior of ProfilingGraphExecutor. Kept for the
+// torch._C._jit_set_fusion_strategy / _jit_get_fusion_strategy bindings.
+enum FusionBehavior { STATIC, DYNAMIC };
+
+using FusionStrategy = std::vector<std::pair<FusionBehavior, size_t>>;
+
+TORCH_API FusionStrategy getFusionStrategy();
+TORCH_API FusionStrategy setFusionStrategy(FusionStrategy& fusion_strategy);
+
+TORCH_API bool& getInlineEverythingMode();
 
 enum ExecutorExecutionMode {
   SIMPLE,

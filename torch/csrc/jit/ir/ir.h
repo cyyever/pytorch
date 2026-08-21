@@ -74,7 +74,6 @@ namespace aten = ::c10::aten;
 namespace cuda = ::c10::cuda;
 
 struct Function;
-struct GraphFunction;
 struct MatchedSchema;
 
 // A Graph represents one "function" of computation.
@@ -1628,21 +1627,6 @@ TORCH_API std::vector<Value*> insertGraph(
     Graph& callee,
     ArrayRef<Value*> inputs,
     std::unordered_map<Value*, Value*>& value_map);
-
-/** Insert function \p CALLEE after node \p TO_REPLACE, remove the node and
- * replace all its uses with corresponding outputs of the inserted function.
- * This asserts that the number of outputs of the original node and the
- * graph are the same.
- */
-TORCH_API std::vector<Value*> inlineCallTo(
-    Node* to_replace,
-    GraphFunction* callee,
-    bool use_graph = true);
-
-TORCH_API std::vector<Value*> inlineCallTo(
-    Node* to_replace,
-    GraphFunction* callee,
-    Graph* callee_graph);
 
 /** If there is only one value in \p OUTPUTS and its kind is Tuple, insert a
  * tuple unpack node and return the resulting values.

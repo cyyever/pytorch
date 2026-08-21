@@ -19,7 +19,7 @@ void serialize(
     const ska::flat_hash_map<void*, std::unique_ptr<OptimizerParamState>>&
         state) {
   for (const auto& item : state) {
-    serialize::OutputArchive param_state_archive(archive.compilation_unit());
+    serialize::OutputArchive param_state_archive;
     std::string tensorimpl_key =
         std::to_string(reinterpret_cast<size_t>(item.first));
     const DerivedOptimizerParamState& curr_state =
@@ -55,7 +55,7 @@ void serialize(
       "param_groups/size",
       torch::tensor(static_cast<int64_t>(param_groups.size())));
   for (const auto i : c10::irange(param_groups.size())) {
-    serialize::OutputArchive param_group_archive(archive.compilation_unit());
+    serialize::OutputArchive param_group_archive;
     std::vector<Tensor> params = param_groups[i].params();
     param_group_archive.write(
         "params/size", torch::tensor(static_cast<int64_t>(params.size())));
@@ -69,7 +69,7 @@ void serialize(
         static_cast<const DerivedOptimizerParamOptions&>(
             param_groups[i].options());
     serialize::OutputArchive param_group_options_archive(
-        param_group_archive.compilation_unit());
+        param_group_archive);
     param_group_options.serialize(param_group_options_archive);
     param_group_archive.write("options", param_group_options_archive);
     archive.write("param_groups/" + std::to_string(i), param_group_archive);
@@ -148,12 +148,12 @@ template <
     typename DerivedOptimizerParamOptions>
 void serialize(serialize::OutputArchive& archive, const Optimizer& optimizer) {
   archive.write("pytorch_version", IValue("1.5.0"));
-  serialize::OutputArchive state_archive(archive.compilation_unit());
+  serialize::OutputArchive state_archive;
   detail::serialize<DerivedOptimizerParamState>(
       state_archive, optimizer.state());
   archive.write("state", state_archive);
 
-  serialize::OutputArchive param_groups_archive(archive.compilation_unit());
+  serialize::OutputArchive param_groups_archive;
   detail::serialize<DerivedOptimizerParamOptions>(
       param_groups_archive, optimizer.param_groups());
   archive.write("param_groups", param_groups_archive);

@@ -6,7 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <torch/csrc/inductor/aoti_torch/c/shim.h>
 #include <torch/csrc/inductor/aoti_torch/proxy_executor.h>
-#include <torch/csrc/jit/api/function_impl.h> // @manual
+#include <ATen/core/function.h>
 #include <iostream>
 #include <utility>
 
