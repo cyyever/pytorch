@@ -17,11 +17,6 @@ endif()
 # (1) MSVC - unsupported
 ##############################################################################
 
-if(MSVC)
-  message(WARNING "NNPACK not supported on MSVC yet. Turn this warning off by USE_NNPACK=OFF.")
-  set(USE_NNPACK OFF)
-  return()
-endif()
 
 ##############################################################################
 # (2) Anything but x86, x86-64, ARM, ARM64 - unsupported

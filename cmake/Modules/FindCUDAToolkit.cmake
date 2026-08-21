@@ -1049,9 +1049,6 @@ if(CUDAToolkit_FOUND)
   # nvtools can be installed outside the CUDA toolkit directory,
   # so search the NVTOOLSEXT_PATH windows only environment variable
   set(nvToolsExt_EXTRA_PATH)
-  if(WIN32)
-     set(nvToolsExt_EXTRA_PATH "C:\\Program Files\\NVIDIA Corporation\\NvToolsExt")
-  endif()
 
   find_path(CUDAToolkit_nvToolsExt_INCLUDE_DIR nvToolsExt.h
       PATHS "${CUDAToolkit_INCLUDE_DIR}"
