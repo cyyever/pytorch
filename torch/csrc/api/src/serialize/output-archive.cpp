@@ -51,7 +51,11 @@ void writeArchive(
 
 } // namespace
 
-OutputArchive::OutputArchive() : dict_(newDict()) {}
+OutputArchive::OutputArchive()
+    : cu_(std::make_shared<jit::CompilationUnit>()), dict_(newDict()) {}
+
+OutputArchive::OutputArchive(std::shared_ptr<jit::CompilationUnit> cu)
+    : cu_(std::move(cu)), dict_(newDict()) {}
 
 void OutputArchive::write(const std::string& key, const c10::IValue& ivalue) {
   dict_.insert_or_assign(key, ivalue);

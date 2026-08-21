@@ -1,15 +1,17 @@
 #pragma once
 
+#include <ATen/core/ivalue.h>
 #include <c10/core/Device.h>
 #include <torch/csrc/Export.h>
-#include <torch/csrc/jit/api/module.h>
 #include <torch/types.h>
-#include <optional>
 
+#include <functional>
 #include <iosfwd>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace at {
 class Tensor;
@@ -17,9 +19,6 @@ class Tensor;
 
 namespace torch {
 using at::Tensor;
-namespace jit {
-struct Module;
-} // namespace jit
 } // namespace torch
 
 namespace torch::serialize {
@@ -60,44 +59,41 @@ class TORCH_API InputArchive final {
   /// must be `true`.
   void read(const std::string& key, Tensor& tensor, bool is_buffer = false);
 
-  /// Reads a `InputArchive` associated with a given `key`. If there is no
+  /// Reads an `InputArchive` associated with a given `key`. If there is no
   /// `InputArchive` associated with the `key`, this returns false, otherwise
   /// it returns true.
   bool try_read(const std::string& key, InputArchive& archive);
 
   /// Reads an `InputArchive` associated with a given `key`.
-  /// The archive can thereafter be used for further deserialization of the
-  /// nested data.
   void read(const std::string& key, InputArchive& archive);
 
-  /// Loads the `InputArchive` from a serialized representation stored in the
-  /// file at `filename`. Storage are remapped using device option. If device
-  /// is not specified, the module is loaded to the original device.
+  /// Loads the `InputArchive` from a serialized representation in a file at
+  /// `filename`.
   void load_from(
       const std::string& filename,
       std::optional<torch::Device> device = std::nullopt);
 
-  /// Loads the `InputArchive` from a serialized representation stored in the
-  /// given `stream`. Storage are remapped using device option. If device
-  /// is not specified, the module is loaded to the original device.
+  /// Loads the `InputArchive` from a serialized representation in the given
+  /// `stream`.
   void load_from(
       std::istream& stream,
       std::optional<torch::Device> device = std::nullopt);
 
-  // Loads given the specified flat array.
+  /// Loads the `InputArchive` from a serialized representation at the given
+  /// memory location.
   void load_from(
       const char* data,
       size_t size,
       std::optional<torch::Device> device = std::nullopt);
 
-  // Loads given the specified read and size functions.
+  /// Loads the `InputArchive` from a serialized representation read with the
+  /// given read function.
   void load_from(
-      const std::function<size_t(uint64_t pos, void* buf, size_t nbytes)>&
-          read_func,
+      const std::function<size_t(uint64_t, void*, size_t)>& read_func,
       const std::function<size_t(void)>& size_func,
       std::optional<torch::Device> device = std::nullopt);
 
-  // Returns the vector of keys in the input archive.
+  /// Returns the keys of the current level of the hierarchy.
   std::vector<std::string> keys();
 
   /// Forwards all arguments to `read()`.
@@ -109,7 +105,7 @@ class TORCH_API InputArchive final {
   }
 
  private:
-  jit::Module module_;
+  c10::Dict<std::string, c10::IValue> dict_;
   std::string hierarchy_prefix_;
 };
 } // namespace torch::serialize
