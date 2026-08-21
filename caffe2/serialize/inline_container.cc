@@ -27,9 +27,6 @@
 #include "caffe2/serialize/versions.h"
 #include "miniz.h"
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif // _WIN32
 
 namespace caffe2 {
 namespace serialize {
@@ -99,13 +96,6 @@ static std::string parentdir(const std::string& name) {
     end = name.find_last_of('\\');
   }
 
-#ifdef WIN32
-  if (end != std::string::npos && end > 1 && name[end - 1] == ':') {
-    // This is a Windows root directory, so include the slash in
-    // the parent directory
-    end++;
-  }
-#endif
 
   if (end == std::string::npos) {
     return "";
@@ -739,13 +729,7 @@ void PyTorchStreamWriter::setup(const string& file_name) {
           std::ofstream::out | std::ofstream::trunc | std::ofstream::binary
         );
     } catch (const std::ios_base::failure&) {
-#ifdef _WIN32
-      // Windows have verbose error code, we prefer to use it than std errno.
-      uint32_t error_code = GetLastError();
-      CAFFE_THROW("open file failed with error code: ", error_code);
-#else // !_WIN32
       CAFFE_THROW("open file failed with strerror: ", strerror(errno));
-#endif // _WIN32
     }
 
     writer_func_ = [this](const void* buf, size_t nbytes) -> size_t {

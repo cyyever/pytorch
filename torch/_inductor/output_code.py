@@ -1074,11 +1074,7 @@ class CompiledAOTI(OutputCode):
 
         if (
             torch._inductor.cpp_builder._IS_MACOS
-            or torch._inductor.cpp_builder._IS_WINDOWS
         ):
-            return
-
-        if config.aot_inductor.cross_target_platform == "windows":
             return
 
         if config.aot_inductor.package_cpp_only:

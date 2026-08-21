@@ -15,7 +15,6 @@ from torch._inductor import config
 from torch._inductor.utils import python_subprocess_env
 
 
-_IS_WINDOWS = sys.platform == "win32"
 
 
 def _get_isa_dry_compile_fingerprint(isa_flags: str) -> str:
@@ -314,11 +313,7 @@ class VecSVE(VecISA):
 class VecAVX512(VecISA):
     _bit_width = 512
     _macro = ["CPU_CAPABILITY_AVX512"]
-    _arch_flags = (
-        "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma"
-        if not _IS_WINDOWS
-        else "/arch:AVX512"
-    )  # TODO: use cflags
+    _arch_flags = "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma"  # TODO: use cflags
     _dtype_nelements = {torch.float: 16, torch.bfloat16: 32, torch.float16: 32}
     _is_avx512_bf16_supported = False
 
@@ -343,7 +338,7 @@ extern "C" __m512bh __avx512_bf16_chk_kernel(__m512 a, __m512 b) {
             if config.is_fbcode():
                 return False
             # check avx512_bf16
-            if torch.cpu._is_avx512_bf16_supported() and not _IS_WINDOWS:
+            if torch.cpu._is_avx512_bf16_supported():
                 # save _arch_flags
                 base_flags = self._arch_flags
                 # temporarily change _arch_flags for avx512_bf16 check_build
@@ -404,7 +399,6 @@ extern "C" __m512i __avx512_vnni_chk_kernel_2(__m512i src, __m512i a, __m512i b)
                 return False
             if (
                 torch.cpu._is_vnni_supported()
-                and not _IS_WINDOWS
                 and self.check_build(self._avx512_vnni_code)
             ):
                 return True
@@ -489,7 +483,7 @@ class VecAVX2(VecISA):
     _bit_width = 256
     _macro = ["CPU_CAPABILITY_AVX2"]
     _arch_flags = (
-        "-mavx2 -mfma -mf16c" if not _IS_WINDOWS else "/arch:AVX2"
+        "-mavx2 -mfma -mf16c"
     )  # TODO: use cflags
     _dtype_nelements = {torch.float: 8, torch.bfloat16: 16, torch.float16: 16}
 
@@ -623,7 +617,7 @@ def valid_vec_isa_list() -> list[VecISA]:
     if sys.platform == "darwin" and platform.processor() == "arm":
         isa_list.append(VecNEON())
 
-    if sys.platform not in ["linux", "win32"]:
+    if sys.platform != "linux":
         return isa_list
 
     arch = platform.machine()

@@ -10,9 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#ifndef _WIN32
 #include <dlfcn.h>
-#endif
 
 namespace c10::monitor {
 
@@ -64,13 +62,9 @@ class DynamicBackendWrapper : public WaitCounterBackendIf {
 std::unique_ptr<WaitCounterBackendIf> getDynamicBackend(std::string_view key) {
   static auto dynamicBackendInit =
       reinterpret_cast<WaitCounterDynamicBackendInit>([]() -> void* {
-#ifndef _WIN32
         return dlsym(
             RTLD_DEFAULT,
             std::string(kWaitCounterDynamicBackendInitFn).c_str());
-#else
-        return nullptr;
-#endif
       }());
   if (!dynamicBackendInit) {
     return nullptr;

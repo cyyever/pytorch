@@ -37,7 +37,6 @@
 #include <time_since_epoch.h>
 #include <torch/csrc/profiler/standalone/privateuse1_profiler.h>
 
-#ifndef _MSC_VER
 // TODO: TO be removed, once this properly works from libkineto
 // Literal copy-n-paste from third_party/kineto/libkineto/src/WeakSymbols.cpp
 extern "C" {
@@ -51,7 +50,6 @@ __attribute__((weak)) int acc_get_device_type() {
       "Dummy implementation of acc_get_device_type is not supposed to be called!");
 }
 } // extern "C"
-#endif // _MSC_VER
 #endif // USE_KINETO
 
 namespace torch {
@@ -697,11 +695,7 @@ static void toggleTorchOpCollectionDynamic(bool enable) {
 
 // Set this function to be unused as profiler implementation needs more
 // refactoring to support Python ops collection dynamic toggling
-#ifdef _MSC_VER
-#define UNUSED
-#else
 #define UNUSED __attribute__((unused))
-#endif
 static UNUSED void togglePythonCollectionDynamic(bool enable) {
   std::shared_ptr<KinetoThreadLocalState> global_state =
       KinetoThreadLocalState::getGlobal();

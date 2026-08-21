@@ -218,14 +218,10 @@ using namespace c10::xpu;
 /// be inlined.
 #ifdef __GNUC__
 #define C10_NOINLINE __attribute__((noinline))
-#elif _MSC_VER
-#define C10_NOINLINE __declspec(noinline)
 #else
 #define C10_NOINLINE
 #endif
 
-#if defined(_MSC_VER)
-#define C10_ALWAYS_INLINE __forceinline
 #elif __has_attribute(always_inline) || defined(__GNUC__)
 #define C10_ALWAYS_INLINE __attribute__((__always_inline__)) inline
 #else
@@ -234,18 +230,12 @@ using namespace c10::xpu;
 
 // Unlike C10_ALWAYS_INLINE, C10_ALWAYS_INLINE_ATTRIBUTE can be used
 // on a lambda.
-#if defined(_MSC_VER)
-// MSVC 14.39 is reasonably recent and doesn't like
-// [[msvc::forceinline]] on a lambda, so don't try to use it.
-#define C10_ALWAYS_INLINE_ATTRIBUTE
 #elif __has_attribute(always_inline) || defined(__GNUC__)
 #define C10_ALWAYS_INLINE_ATTRIBUTE __attribute__((__always_inline__))
 #else
 #define C10_ALWAYS_INLINE_ATTRIBUTE
 #endif
 
-#if defined(_MSC_VER)
-#define C10_ATTR_VISIBILITY_HIDDEN
 #elif defined(__GNUC__)
 #define C10_ATTR_VISIBILITY_HIDDEN __attribute__((__visibility__("hidden")))
 #else
@@ -417,9 +407,6 @@ static inline int C10_WARP_SIZE_INTERNAL() {
 #define C10_WARP_SIZE_UPPER_BOUND 32
 #endif // USE_ROCM
 
-#if defined(_MSC_VER) && _MSC_VER <= 1900
-#define __func__ __FUNCTION__
-#endif
 
 // CUDA_KERNEL_ASSERT checks the assertion
 // even when NDEBUG is defined. This is useful for important assertions in CUDA
@@ -430,70 +417,6 @@ static inline int C10_WARP_SIZE_INTERNAL() {
 #define CUDA_KERNEL_ASSERT_MSG(cond, msg)
 #define CUDA_KERNEL_ASSERT_PRINTF(cond, msg, ...)
 #define SYCL_KERNEL_ASSERT(cond)
-#elif defined(_MSC_VER)
-#if defined(NDEBUG)
-extern "C" {
-C10_IMPORT
-#if defined(__SYCL_DEVICE_ONLY__)
-extern SYCL_EXTERNAL void _wassert(
-    const wchar_t* wexpr,
-    const wchar_t* wfile,
-    unsigned line);
-#else
-#if defined(__CUDA_ARCH__)
-__host__ __device__
-#endif // __CUDA_ARCH__
-    void
-    _wassert(wchar_t const* _Message, wchar_t const* _File, unsigned _Line);
-#endif // __SYCL_DEVICE_ONLY__
-}
-#endif // NDEBUG
-#define CUDA_KERNEL_ASSERT(cond)                 \
-  if (C10_UNLIKELY(!(cond))) {                   \
-    (void)(_wassert(                             \
-               _CRT_WIDE(#cond),                 \
-               _CRT_WIDE(__FILE__),              \
-               static_cast<unsigned>(__LINE__)), \
-           0);                                   \
-  }
-// TODO: This doesn't assert the message because I (chilli) couldn't figure out
-// a nice way to convert a char* to a wchar_t*
-#define CUDA_KERNEL_ASSERT_MSG(cond, msg)        \
-  if (C10_UNLIKELY(!(cond))) {                   \
-    (void)(_wassert(                             \
-               _CRT_WIDE(#cond),                 \
-               _CRT_WIDE(__FILE__),              \
-               static_cast<unsigned>(__LINE__)), \
-           0);                                   \
-  }
-#define CUDA_KERNEL_ASSERT_PRINTF(cond, msg, ...)                     \
-  if (C10_UNLIKELY(!(cond))) {                                        \
-    (void)(printf(                                                    \
-        "[CUDA_KERNEL_ASSERT] " __FILE__ ":" C10_STRINGIZE(           \
-            __LINE__) ": %s: block: [%d,%d,%d], thread: [%d,%d,%d]: " \
-                      "Assertion failed: `" #cond "`: " msg "\n",     \
-        __func__,                                                     \
-        blockIdx.x,                                                   \
-        blockIdx.y,                                                   \
-        blockIdx.z,                                                   \
-        threadIdx.x,                                                  \
-        threadIdx.y,                                                  \
-        threadIdx.z,                                                  \
-        ##__VA_ARGS__));                                              \
-    (void)(_wassert(                                                  \
-               _CRT_WIDE(#cond),                                      \
-               _CRT_WIDE(__FILE__),                                   \
-               static_cast<unsigned>(__LINE__)),                      \
-           0);                                                        \
-  }
-#define SYCL_KERNEL_ASSERT(cond)                 \
-  if (C10_UNLIKELY(!(cond))) {                   \
-    (void)(_wassert(                             \
-               _CRT_WIDE(#cond),                 \
-               _CRT_WIDE(__FILE__),              \
-               static_cast<unsigned>(__LINE__)), \
-           0);                                   \
-  }
 #else // __APPLE__, _MSC_VER
 #if defined(NDEBUG)
 extern "C" {

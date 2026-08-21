@@ -31,10 +31,7 @@ def _get_hip_runtime_library() -> ctypes.CDLL:
 
         lib = ctypes.CDLL(str(rocm_sdk.find_libraries("amdhip64")[0]))
     except (ImportError, IndexError):
-        if sys.platform == "win32":
-            lib = ctypes.CDLL(f"amdhip64_{torch.version.hip[0]}.dll")
-        else:  # Unix-based systems
-            lib = ctypes.CDLL("libamdhip64.so")
+        lib = ctypes.CDLL("libamdhip64.so")
 
     lib.cuGetErrorString = lib.hipGetErrorString  # type: ignore[attr-defined]
     lib.cuModuleLoadData = lib.hipModuleLoadData  # type: ignore[attr-defined]
@@ -45,10 +42,7 @@ def _get_hip_runtime_library() -> ctypes.CDLL:
 
 
 def _get_cuda_library() -> ctypes.CDLL:
-    if sys.platform == "win32":
-        return ctypes.CDLL("nvcuda.dll")
-    else:  # Unix-based systems
-        return ctypes.CDLL("libcuda.so.1")
+    return ctypes.CDLL("libcuda.so.1")
 
 
 # Load GPU driver runtime
@@ -150,13 +144,7 @@ def _get_hiprtc_library() -> ctypes.CDLL:
 
         lib = ctypes.CDLL(str(rocm_sdk.find_libraries("hiprtc")[0]))
     except (ImportError, IndexError):
-        if sys.platform == "win32":
-            version_str = "".join(
-                ["0", torch.version.hip[0], "0", torch.version.hip[2]]
-            )
-            lib = ctypes.CDLL(f"hiprtc{version_str}.dll")
-        else:
-            lib = ctypes.CDLL("libhiprtc.so")
+        lib = ctypes.CDLL("libhiprtc.so")
 
     # Provide aliases for HIP RTC functions to match NVRTC API
     lib.nvrtcGetErrorString = lib.hiprtcGetErrorString  # type: ignore[attr-defined]
@@ -174,15 +162,10 @@ def _get_hiprtc_library() -> ctypes.CDLL:
 
 def _get_nvrtc_library() -> ctypes.CDLL:
     major_version = int(torch.version.cuda.split(".")[0])  # type: ignore[union-attr]
-    if sys.platform == "win32":
-        nvrtc_libs = [
-            f"nvrtc64_{major_version}0_0.dll",
-        ]
-    else:
-        nvrtc_libs = [
-            f"libnvrtc.so.{major_version}",
-            "libnvrtc.so",  # Fallback to unversioned
-        ]
+    nvrtc_libs = [
+        f"libnvrtc.so.{major_version}",
+        "libnvrtc.so",  # Fallback to unversioned
+    ]
     for lib_name in nvrtc_libs:
         try:
             return ctypes.CDLL(lib_name)

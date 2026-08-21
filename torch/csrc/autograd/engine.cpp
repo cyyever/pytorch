@@ -59,10 +59,8 @@ static void forked_autograd_child() {
 
 // Should be called before unsafe for forks (thread pool) calls
 static void track_bad_autograd_forks() {
-#if !defined(WIN32)
   static auto result [[maybe_unused]] =
       pthread_atfork(nullptr, nullptr, forked_autograd_child);
-#endif
 }
 
 inline bool should_run_in_cpu_ready_queue(c10::DeviceType device) {

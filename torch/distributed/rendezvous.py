@@ -64,9 +64,6 @@ def _query_to_dict(query: str) -> dict[str, str]:
 def _get_use_libuv_from_query_dict(query_dict: dict[str, str]) -> bool:
     # libuv is the default backend for TCPStore. To enable the non-libuv backend,
     # user can explicitly specify ``use_libuv=0`` in the URL parameter.
-    if sys.platform == "win32":
-        #  PyTorch is built without libuv support on windows, so default to 0
-        return query_dict.get("use_libuv", os.environ.get("USE_LIBUV", "0")) == "1"
     return query_dict.get("use_libuv", os.environ.get("USE_LIBUV", "1")) == "1"
 
 
@@ -129,14 +126,9 @@ def _file_rendezvous_handler(url: str, **kwargs):
 
     result = urlparse(url)
     path = result.path
-    if sys.platform == "win32":
-        import urllib.request
-
-        full_path = result.netloc + result.path
-        path = urllib.request.url2pathname(full_path)
-        if path:
-            # Normalizing an empty string produces ".", which is not expected.
-            path = os.path.normpath(path)
+    if path:
+        # Normalizing an empty string produces ".", which is not expected.
+        path = os.path.normpath(path)
 
     if not path:
         raise _error("path missing")

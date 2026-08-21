@@ -53,9 +53,6 @@ aspects of contributing to PyTorch.
   - [GDB integration](#gdb-integration)
   - [C++ stacktraces](#c-stacktraces)
 - [CUDA development tips](#cuda-development-tips)
-- [Windows development tips](#windows-development-tips)
-  - [Known MSVC (and MSVC with NVCC) bugs](#known-msvc-and-msvc-with-nvcc-bugs)
-  - [Building on legacy code and CUDA](#building-on-legacy-code-and-cuda)
 - [Linting before committing](#linting-before-committing)
 - [Building PyTorch with ASAN](#building-pytorch-with-asan)
   - [Getting `ccache` to work](#getting-ccache-to-work)
@@ -172,7 +169,6 @@ Follow the instructions for [installing PyTorch from source](https://github.com/
     Could not find .../pytorch/third_party/pybind11/CMakeLists.txt
     ```
     remove any `submodule.*` settings in your local git config (`.git/config` of your pytorch repo) and try again.
-* If you're a Windows contributor, please check out [Best Practices](https://github.com/pytorch/pytorch/wiki/Best-Practices-to-Edit-and-Compile-Pytorch-Source-Code-On-Windows).
 * For help with any part of the contributing process, please don’t hesitate to utilize our Zoom office hours! See details [here](https://github.com/pytorch/pytorch/wiki/Dev-Infra-Office-Hours)
 
 ## Nightly Checkout & Pull
@@ -187,28 +183,28 @@ You can use this script to check out a new nightly branch with the following:
 
 ```bash
 ./tools/nightly.py checkout -b my-nightly-branch
-source venv/bin/activate  # or `. .\venv\Scripts\activate` on Windows
+source venv/bin/activate
 ```
 
 To install the nightly binaries built with CUDA, you can pass in the flag `--cuda`:
 
 ```bash
 ./tools/nightly.py checkout -b my-nightly-branch --cuda
-source venv/bin/activate  # or `. .\venv\Scripts\activate` on Windows
+source venv/bin/activate
 ```
 
 To install the nightly binaries built with ROCm, you can pass in the flag `--rocm`:
 
 ```bash
 ./tools/nightly.py checkout -b my-nightly-branch --rocm
-source venv/bin/activate  # or `. .\venv\Scripts\activate` on Windows
+source venv/bin/activate
 ```
 
 You can also use this tool to pull the nightly commits into the current branch:
 
 ```bash
 ./tools/nightly.py pull
-source venv/bin/activate  # or `. .\venv\Scripts\activate` on Windows
+source venv/bin/activate
 ```
 
 To create the virtual environment with a specific Python interpreter, you can
@@ -216,7 +212,7 @@ pass in the `--python` argument:
 
 ```bash
 ./tools/nightly.py --python /path/to/python3.12
-source venv/bin/activate  # or `. .\venv\Scripts\activate` on Windows
+source venv/bin/activate
 ```
 
 Pulling will recreate a fresh virtual environment and reinstall the development
@@ -762,7 +758,7 @@ specific build of PyTorch. To set one up:
 
 ```bash
 python -m venv pytorch-myfeature
-source pytorch-myfeature/bin/activate  # or `& .\pytorch-myfeature\Scripts\Activate.ps1` on Windows
+source pytorch-myfeature/bin/activate
 # if you run python now, torch will NOT be installed
 python -m pip install --no-build-isolation -v -e .
 ```
@@ -1096,7 +1092,7 @@ If you are working on the CUDA code, here are some useful CUDA debugging tips:
     This will be particularly helpful in debugging device code. However, it will
     slow down the build process for about 50% (compared to only `DEBUG=1`), so use wisely.
     Unlike `DEBUG`, it is read as a CMake variable rather than forwarded from the environment, so
-    pass it at install time (it has no effect on MSVC builds):
+    pass it at install time:
       ```bash
       python -m pip install -e . -v --no-build-isolation -C cmake.define.CUDA_DEVICE_DEBUG=1
       ```
@@ -1132,122 +1128,6 @@ If you are working on the CUDA code, here are some useful CUDA debugging tips:
    ```
 
   See more cuda development tips [here](https://github.com/pytorch/pytorch/wiki/CUDA-basics)
-
-## Windows development tips
-
-For building from source on Windows, consult
-[our documentation](https://pytorch.org/docs/stable/notes/windows.html) on it.
-
-Occasionally, you will write a patch which works on Linux, but fails CI on Windows.
-There are a few aspects in which MSVC (the Windows compiler toolchain we use) is stricter
-than Linux, which are worth keeping in mind when fixing these problems.
-
-1. Symbols are NOT exported by default on Windows; instead, you have to explicitly
-   mark a symbol as exported/imported in a header file with `__declspec(dllexport)` /
-   `__declspec(dllimport)`. We have codified this pattern into a set of macros
-   which follow the convention `*_API`, e.g., `TORCH_API` inside Caffe2, Aten and Torch.
-   (Every separate shared library needs a unique macro name, because symbol visibility
-   is on a per shared library basis. See c10/macros/Macros.h for more details.)
-
-   The upshot is if you see an "unresolved external" error in your Windows build, this
-   is probably because you forgot to mark a function with `*_API`. However, there is
-   one important counterexample to this principle: if you want a *templated* function
-   to be instantiated at the call site, do NOT mark it with `*_API` (if you do mark it,
-   you'll have to explicitly instantiate all of the specializations used by the call
-   sites.)
-
-2. If you link against a library, this does not make its dependencies transitively
-   visible. You must explicitly specify a link dependency against every library whose
-   symbols you use. (This is different from Linux where in most environments,
-   transitive dependencies can be used to fulfill unresolved symbols.)
-
-3. If you have a Windows box (we have a few on EC2 which you can request access to) and
-   you want to run the build, the easiest way is to just run `.ci/pytorch/win-build.sh`.
-   If you need to rebuild, run `REBUILD=1 .ci/pytorch/win-build.sh`.
-
-Even if you don't know anything about MSVC, you can use cmake to build simple programs on
-Windows; this can be helpful if you want to learn more about some peculiar linking behavior
-by reproducing it on a small example. Here's a simple example cmake file that defines
-two dynamic libraries, one linking with the other:
-
-```CMake
-project(myproject CXX)
-set(CMAKE_CXX_STANDARD 20)
-add_library(foo SHARED foo.cpp)
-add_library(bar SHARED bar.cpp)
-# NB: don't forget to __declspec(dllexport) at least one symbol from foo,
-# otherwise foo.lib will not be created.
-target_link_libraries(bar PUBLIC foo)
-```
-
-You can build it with:
-
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
-
-### Known MSVC (and MSVC with NVCC) bugs
-
-The PyTorch codebase sometimes likes to use exciting C++ features, and
-these exciting features lead to exciting bugs in Windows compilers.
-To add insult to injury, the error messages will often not tell you
-which line of code actually induced the erroring template instantiation.
-
-We've found the most effective way to debug these problems is to
-carefully read over diffs, keeping in mind known bugs in MSVC/NVCC.
-Here are a few well known pitfalls and workarounds:
-
-* This is not actually a bug per se, but in general, code generated by MSVC
-  is more sensitive to memory errors; you may have written some code
-  that does a use-after-free or stack overflows; on Linux the code
-  might work, but on Windows your program will crash. ASAN may not
-  catch all of these problems: stay vigilant to the possibility that
-  your crash is due to a real memory problem.
-
-* `constexpr` generally works less well on MSVC.
-
-  * The idiom `static_assert(f() == f())` to test if `f` is constexpr
-    does not work; you'll get "error C2131: expression did not evaluate
-    to a constant". Don't use these asserts on Windows.
-    (Example: `c10/util/intrusive_ptr.h`)
-
-* (NVCC) Code you access inside a `static_assert` will eagerly be
-  evaluated as if it were device code, and so you might get an error
-  that the code is "not accessible".
-
-```cpp
-class A {
-  static A singleton_;
-  static constexpr inline A* singleton() {
-    return &singleton_;
-  }
-};
-static_assert(std::is_same(A*, decltype(A::singleton()))::value, "hmm");
-```
-
-* The compiler will run out of heap space if you attempt to compile files that
-  are too large. Splitting such files into separate files helps. This is why
-  the codegen shards large generated files (e.g. `VariableType.cpp` and
-  `RegisterCPU.cpp`); see Note [Sharded File] for details.
-
-* MSVC's preprocessor (but not the standard compiler) has a bug
-  where it incorrectly tokenizes raw string literals, ending when it sees a `"`.
-  This causes preprocessor tokens inside the literal like an`#endif`  to be incorrectly
-  treated as preprocessor directives. See https://godbolt.org/z/eVTIJq as an example.
-
-* Either MSVC or the Windows headers have a PURE macro defined and will replace
-  any occurrences of the PURE token in code with an empty string. This is why
-  we have AliasAnalysisKind::PURE_FUNCTION and not AliasAnalysisKind::PURE.
-  The same is likely true for other identifiers that we just didn't try to use yet.
-
-### Building on legacy code and CUDA
-
-CUDA, MSVC, and PyTorch versions are interdependent; please install matching versions. Current
-PyTorch requires CUDA 12.8+ and Visual Studio 2022 (17.X). Building PyTorch requires a C++20
-capable toolchain (GCC 11.3+, Clang 16+, or MSVC 2022).
 
 ## Linting before committing
 

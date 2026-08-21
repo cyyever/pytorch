@@ -53,7 +53,7 @@
 #   USE_ROCM_CK_GEMM=1       builds the CK GEMM backend on ROCm
 #   USE_ROCM_CK_SDPA=1       builds the CK SDPA backend on ROCm
 #   USE_LAYERNORM_FAST_RECIPROCAL  fast reciprocals for layer norm (default on)
-#   USE_MIMALLOC             static-link mimalloc into c10 (default: Windows/AArch64)
+#   USE_MIMALLOC             static-link mimalloc into c10 (default: AArch64)
 #   USE_CUSTOM_DEBINFO="a.cpp;b.cpp"  build debug info only for the listed files
 #   USE_SYSTEM_LIBS          use system-provided third-party libraries; expands
 #                            to the individual USE_SYSTEM_* toggles in CMake
@@ -78,7 +78,7 @@
 #                            the environment in cmake/Codegen.cmake)
 #
 # Library location hints (passthrough, alias, read from env, or CMake-native):
-#   CUDA_HOME (Linux/macOS) / CUDA_PATH (Windows)  CUDA install location
+#   CUDA_HOME                CUDA install location
 #   CUDAHOSTCXX              host compiler for nvcc (alias)
 #   CUDA_NVCC_EXECUTABLE     nvcc to use (passthrough; CI points this at a cache)
 #   CUDNN_LIBRARY / CUDNN_INCLUDE_DIR / CUDNN_LIB_DIR   cuDNN location (CUDNN_LIB_DIR
@@ -103,7 +103,6 @@
 #                            option; the setup.py comment that listed it as an env
 #                            var was inaccurate -- it was never forwarded.
 #   CUDA_DEVICE_DEBUG        build CUDA device code with -g -G (read in
-#                            cmake/public/cuda.cmake; no effect on MSVC)
 #
 # Removed with setup.py (no longer available):
 #   CMAKE_FRESH              force a fresh configure. Delete the build/ directory
@@ -137,8 +136,6 @@ set(_ENV_PASSTHROUGH
   INTEL_OMP_DIR
   MKL_THREADING
   MKLDNN_CPU_RUNTIME
-  MSVC_Z7_OVERRIDE
-  CAFFE2_USE_MSVC_STATIC_RUNTIME
   Numa_INCLUDE_DIR
   Numa_LIBRARIES
   ATEN_THREADING
@@ -247,15 +244,14 @@ endforeach()
 # CMAKE_PREFIX_PATH so CMake can find packages installed there.
 #
 # - sys.prefix is needed because conda-style envs put libraries under
-#   <prefix>/lib (Linux) or <prefix>/Library/lib (Windows). CMake 3.28
+#   <prefix>/lib. CMake 3.28
 #   removed the find_library() heuristic that derived <prefix>/lib from
 #   <prefix>/bin entries on PATH, so without sys.prefix on the prefix
 #   path, find_package(MKL) and similar fail to locate conda-provided
-#   libraries (e.g. mkl_intel_lp64, libiomp5md). The Linux CI scripts
+#   libraries (e.g. mkl_intel_lp64, . The Linux CI scripts
 #   used to set CMAKE_PREFIX_PATH=$CONDA_PREFIX explicitly as a
 #   workaround for the same issue (see gh-119557); having it here makes
-#   that redundant and gives the same coverage to Windows pull-CI and
-#   to local builds outside of CI.
+#   that redundant and gives the same coverage to local builds.
 # - purelib is needed for python-package CMake configs (e.g., pybind11,
 #   numpy headers).
 if(Python_EXECUTABLE)
@@ -268,24 +264,13 @@ if(Python_EXECUTABLE)
   )
   if(_py_paths AND NOT "${_py_paths}" STREQUAL "")
     string(REPLACE "\n" ";" _py_paths "${_py_paths}")
-    # On Windows, conda envs lay out installed libraries under
-    # <prefix>/Library/{lib,include,bin}, which CMake's find_library does
-    # not search by default. Prepend <prefix>/Library so the standard
-    # <prefix>/lib heuristic resolves <prefix>/Library/lib (where MKL,
-    # OpenSSL, libiomp5md, etc. live in conda-on-Windows installs).
     list(GET _py_paths 0 _py_prefix)
     list(PREPEND CMAKE_PREFIX_PATH ${_py_paths})
     # Preserve paths from the CMAKE_PREFIX_PATH environment variable.
     # Setting the cmake variable shadows the env var, so we must merge it in
     # explicitly.
     if(DEFINED ENV{CMAKE_PREFIX_PATH} AND NOT "$ENV{CMAKE_PREFIX_PATH}" STREQUAL "")
-      if(WIN32)
-        # On Windows the env var is already ;-separated and : appears in drive
-        # letters (e.g. C:\conda\envs\py310), so use it as-is.
-        set(_env_prefix "$ENV{CMAKE_PREFIX_PATH}")
-      else()
-        string(REPLACE ":" ";" _env_prefix "$ENV{CMAKE_PREFIX_PATH}")
-      endif()
+      string(REPLACE ":" ";" _env_prefix "$ENV{CMAKE_PREFIX_PATH}")
       list(APPEND CMAKE_PREFIX_PATH ${_env_prefix})
     endif()
     list(REMOVE_DUPLICATES CMAKE_PREFIX_PATH)

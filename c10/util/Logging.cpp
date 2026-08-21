@@ -8,9 +8,7 @@
 #include <folly/synchronization/SanitizeThread.h>
 #endif
 
-#ifndef _WIN32
 #include <sys/time.h>
-#endif
 
 #include <algorithm>
 #include <iostream>
@@ -399,16 +397,12 @@ namespace c10 {
 namespace {
 
 void initGoogleLogging(char const* name) {
-#if !defined(_MSC_VER)
   // This trick can only be used on UNIX platforms
   if (!::google::glog_internal_namespace_::IsGoogleLoggingInitialized())
-#endif
   {
     ::google::InitGoogleLogging(name);
-#if !defined(_MSC_VER)
     // This is never defined on Windows
     ::google::InstallFailureSignalHandler();
-#endif
   }
 }
 
@@ -514,23 +508,14 @@ MessageLogger::MessageLogger(
   time_t rawtime = 0;
   time(&rawtime);
 
-#ifndef _WIN32
   struct tm raw_timeinfo = {};
   struct tm* timeinfo = &raw_timeinfo;
   localtime_r(&rawtime, timeinfo);
-#else
-  // is thread safe on Windows
-  struct tm* timeinfo = localtime(&rawtime);
-#endif
 
-#ifndef _WIN32
   // Get the current nanoseconds since epoch
   struct timespec ts = {};
   clock_gettime(CLOCK_MONOTONIC, &ts);
   long ns = ts.tv_nsec;
-#else
-  long ns = 0;
-#endif
 
   if (GLOBAL_RANK != -1) {
     stream_ << "[rank" << GLOBAL_RANK << "]:";

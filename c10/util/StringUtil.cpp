@@ -4,20 +4,13 @@
 #include <stdexcept>
 #include <string>
 
-#ifdef _WIN32
-#include <c10/util/Unicode.h>
-#endif
 
 namespace c10 {
 
 namespace detail {
 
 std::string StripBasename(const std::string& full_path) {
-#ifdef _WIN32
-  const std::string separators("/\\");
-#else
   const std::string separators("/");
-#endif
   size_t pos = full_path.find_last_of(separators);
   if (pos != std::string::npos) {
     return full_path.substr(pos + 1, std::string::npos);
@@ -40,7 +33,6 @@ static std::ostream& _strFromWide(
     std::ostream& ss,
     const std::wstring& wString);
 
-#ifndef _WIN32
 
 // Decodes one code point from a UTF-16 sequence, advancing `it` past the
 // consumed code unit(s) and combining a surrogate pair when present. Each
@@ -104,17 +96,6 @@ static std::ostream& _strFromWide(
   return _str(ss, result);
 }
 
-#else // #ifndef _WIN32
-// The WIN32 implementation of wstring_convert leaks memory; see
-// https://github.com/microsoft/STL/issues/443
-
-static std::ostream& _strFromWide(
-    std::ostream& ss,
-    const std::wstring& wString) {
-  return _str(ss, u16u8(wString));
-}
-
-#endif // _WIN32
 
 std::ostream& _str(std::ostream& ss, const wchar_t* wCStr) {
   return _strFromWide(ss, std::wstring(wCStr));

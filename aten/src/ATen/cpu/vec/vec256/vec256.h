@@ -77,7 +77,6 @@ inline Vectorized<double> cast<double, int64_t>(
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GATHER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ifndef _MSC_VER
 // MSVC is not working well on complex function overload.
 template <int64_t scale = 1>
 std::enable_if_t<
@@ -94,9 +93,7 @@ std::enable_if_t<
         float>> inline gather(const float* base_addr, const Vectorized<int32_t>& vindex) {
   return _mm256_i32gather_ps(base_addr, vindex, scale);
 }
-#endif
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ MASK GATHER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ifndef _MSC_VER
 // MSVC is not working well on complex function overload.
 template <int64_t scale = 1>
 std::
@@ -117,7 +114,6 @@ std::
         Vectorized<float>& mask) {
   return _mm256_mask_i32gather_ps(src, base_addr, vindex, mask, scale);
 }
-#endif
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CONVERT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 // Only works for inputs in the range: [-2^51, 2^51]

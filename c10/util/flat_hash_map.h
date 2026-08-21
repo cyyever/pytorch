@@ -37,11 +37,7 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 #pragma warning(disable : 4624) // destructor was implicitly defined as deleted
 #endif
 
-#ifdef _MSC_VER
-#define SKA_NOINLINE(...) __declspec(noinline) __VA_ARGS__
-#else
 #define SKA_NOINLINE(...) __VA_ARGS__ __attribute__((noinline))
-#endif
 
 namespace ska {
 struct prime_number_hash_policy;

@@ -22,15 +22,10 @@
 #else
 #define CACHE_LINE 32
 #endif
-#ifndef _WIN32
 #include <ATen/native/cpu/utils.h>
-#endif
 #if defined(__GNUC__)
 #define CACHE_ALIGN __attribute__((aligned(CACHE_LINE)))
 #define not_inline __attribute__((noinline))
-#elif defined(_WIN32)
-#define CACHE_ALIGN __declspec(align(CACHE_LINE))
-#define not_inline __declspec(noinline)
 #else
 CACHE_ALIGN #define
 #define not_inline

@@ -22,21 +22,9 @@
 #include <string>
 
 // TODO: C++17 has the filesystem header, which may replace these
-#ifdef _WIN32
-  // On Windows, the POSIX implementations are considered deprecated. We simply map to the newer variant.
-  #include <process.h>
-  #include <direct.h>
-  #include <io.h>
-  #define access _access
-  #define getpid _getpid
-  #define R_OK    4
-  #define W_OK    2
-  #define F_OK    0
-#else
   #include <sys/types.h>
   #include <sys/stat.h> // mkdir
   #include <unistd.h>
-#endif
 
 
 namespace at::cuda::jit {
@@ -1303,11 +1291,7 @@ bool _r_mkdir(const std::string& dir) {
   }
 
   // Try to create current directory
-#ifdef _WIN32
-  int ret = _mkdir(dir.c_str());
-#else
   int ret = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-#endif
   // Success
   if (ret == 0) {
     return true;
@@ -1325,11 +1309,7 @@ bool _r_mkdir(const std::string& dir) {
   }
 
   // Try to create complete path again
-#ifdef _WIN32
-  ret = _mkdir(dir.c_str());
-#else
   ret = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-#endif
   return ret == 0;
 }
 
@@ -1472,12 +1452,8 @@ std::optional<std::string> get_cache_dir() {
   if (ptkcp != nullptr) {
     cache_dir = std::string(ptkcp);
   } else {
-#ifdef _WIN32
-    ptkcp = std::getenv("TEMP");
-#else
     // USES XDG_CACHE_HOME if it's set
     ptkcp = std::getenv("XDG_CACHE_HOME");
-#endif
     if (ptkcp != nullptr) {
       kernels_cache_dir = "/torch/kernels";
       cache_dir = std::string(ptkcp) + kernels_cache_dir;

@@ -13,15 +13,9 @@
 #include <chrono>
 #include <exception>
 
-#ifdef _WIN32
-#include <gloo/common/win.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
 #include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#endif
 
 #include <utility>
 
@@ -445,9 +439,6 @@ ProcessGroupGloo::Options::Options(std::chrono::milliseconds timeout)
 namespace {
 
 void socketInitialize() {
-#ifdef _WIN32
-  ::gloo::init_winsock();
-#endif
 }
 
 // Gloo assumes that this machine's hostname can always be resolved
@@ -472,11 +463,7 @@ bool doesHostnameResolveToUsableAddress(const std::string& hostname) {
       continue;
     }
     rv = bind(fd, rp->ai_addr, rp->ai_addrlen);
-#ifdef _WIN32
-    closesocket(fd);
-#else
     close(fd);
-#endif
     if (rv == -1) {
       continue;
     }

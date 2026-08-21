@@ -6,9 +6,7 @@
 #include <csignal>
 #include <optional>
 
-#ifndef _MSC_VER
 #include <sys/socket.h>
-#endif
 
 #include <ATen/ATen.h>
 #include <ATen/BlasBackend.h>
@@ -127,9 +125,7 @@
 
 #ifdef USE_XPU
 #include <ATen/native/transformers/xpu/sdp_utils.h>
-#ifndef _WIN32
 #include <torch/csrc/inductor/static_launcher/xpu.h>
-#endif
 #endif
 
 #ifdef USE_DISTRIBUTED
@@ -2435,11 +2431,7 @@ extern "C" void _signalHandler(int signum) {
   // If we hit another signal don't run this handler again.
   std::signal(signum, oldAction);
 
-#ifdef _WIN32
-  const char* signame = "<unknown>";
-#else
   const char* signame = strsignal(signum);
-#endif
 
   fprintf(
       stderr,

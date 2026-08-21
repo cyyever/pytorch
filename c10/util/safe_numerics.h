@@ -6,13 +6,7 @@
 #include <type_traits>
 
 // GCC has __builtin_mul_overflow from before it supported __has_builtin
-#ifdef _MSC_VER
-#define C10_HAS_BUILTIN_OVERFLOW() (0)
-#include <c10/util/llvmMathExtras.h>
-#include <intrin.h>
-#else
 #define C10_HAS_BUILTIN_OVERFLOW() (1)
-#endif
 
 namespace c10 {
 

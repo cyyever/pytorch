@@ -2,9 +2,7 @@
 
 #include <c10/util/Exception.h>
 
-#ifndef _WIN32
 #include <dlfcn.h>
-#endif // _WIN32
 
 namespace torch::nativert {
 
@@ -26,27 +24,15 @@ class CpuLaunchParams : public LaunchParams {
 
 namespace {
 void* _dlopen(const char* filename) {
-#if defined(_WIN32)
-  return nullptr;
-#else
   return dlopen(filename, RTLD_NOW | RTLD_LOCAL);
-#endif
 }
 
 void* _dlsym(void* handle, const char* name) {
-#if defined(_WIN32)
-  return nullptr;
-#else
   return dlsym(handle, name);
-#endif
 }
 
 char* _dlerror() {
-#if defined(_WIN32)
-  TORCH_CHECK(false, "dlerror not supported on Windows");
-#else
   return dlerror();
-#endif
 }
 
 } // namespace
@@ -58,11 +44,7 @@ typedef void (
 struct DlcloseDeleter {
   void operator()(void* p) const {
     if (p) {
-#if defined(_WIN32)
-      TORCH_CHECK(false, "Windows is not supported");
-#else
       dlclose(p);
-#endif
     }
   }
 };

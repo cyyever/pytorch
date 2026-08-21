@@ -6,16 +6,7 @@
 // applies to other files under torch/csrc/inductor/aoti_runtime/.
 #include <torch/csrc/inductor/aoti_runtime/utils.h>
 
-#ifdef _WIN32
-/*
-On Windows, we need to explicit declaration for export APIs. And because the
-package loader call these API via GetProcAddress(ldsym on Linux), we can ignore
-the import case.
-*/
-#define AOTI_API __declspec(dllexport)
-#else
 #define AOTI_API __attribute__((__visibility__("default")))
-#endif
 
 extern "C" {
 struct AOTInductorModelOpaque;

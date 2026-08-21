@@ -156,7 +156,6 @@ RegisterHandler waitCounterHandler{
 }();
 #endif
 
-#ifndef _WIN32
 RegisterHandler pyspyHandler{
     "pyspy_dump",
     [](const Request& req, Response& res) {
@@ -192,7 +191,6 @@ RegisterHandler pyspyHandler{
         res.setStatus(200);
       }
     }};
-#endif
 
 } // namespace
 

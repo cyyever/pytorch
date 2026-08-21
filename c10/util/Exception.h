@@ -16,9 +16,6 @@
 #include <variant>
 #include <vector>
 
-#if defined(_MSC_VER) && _MSC_VER <= 1900
-#define __func__ __FUNCTION__
-#endif
 
 namespace c10 {
 

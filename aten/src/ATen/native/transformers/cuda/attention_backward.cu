@@ -942,13 +942,6 @@ _efficient_attention_backward(
     // error C3495: 'kernel_fn': a simple capture must be a variable
     // with automatic storage duration declared
     // in the reaching scope of the lambda
-#ifdef _WIN32
-    cudaFuncAttributes attr;
-    AT_CUDA_CHECK(cudaFuncGetAttributes(&attr, kernel_fn));
-    TORCH_INTERNAL_ASSERT(
-        attr.binaryVersion >= Kernel::ArchTag::kMinComputeCapability,
-        "Something went wrong in the build process");
-#else
     auto checkBinaryArchMatches = [&]() {
       cudaFuncAttributes attr;
       AT_CUDA_CHECK(cudaFuncGetAttributes(&attr, kernel_fn));
@@ -956,7 +949,6 @@ _efficient_attention_backward(
     };
     TORCH_INTERNAL_ASSERT(
         checkBinaryArchMatches(), "Something went wrong in the build process");
-#endif
 
     kernel_fn<<<p.getBlocksGrid(), p.getThreadsGrid(), smem_bytes, stream>>>(p);
   };

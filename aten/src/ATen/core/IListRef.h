@@ -487,10 +487,6 @@ class IListRefIterator {
     materialized_iterator_type materialized_iterator;
     void* _init_ptr;
     Payload() : _init_ptr(nullptr) {}
-#if defined(_MSC_VER)
-    // See [Note: MSVC Iterator Debug]
-    ~Payload() {}
-#endif
   };
 
   Payload payload_;

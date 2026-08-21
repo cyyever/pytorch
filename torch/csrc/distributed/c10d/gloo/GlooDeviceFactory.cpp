@@ -206,10 +206,6 @@ std::shared_ptr<::gloo::transport::Device> makeGlooDevice(
   return GlooDeviceRegistry()->Create(
       "APPLE", interfaceName, hostName, lazyInit);
 
-#elif defined(_WIN32)
-
-  return GlooDeviceRegistry()->Create(
-      "WIN32", interfaceName, hostName, lazyInit);
 #else
 
   return nullptr;

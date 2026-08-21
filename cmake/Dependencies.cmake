@@ -330,13 +330,6 @@ if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(s390x|ppc64le)$")
     set(CPUINFO_BUILD_BENCHMARKS OFF CACHE BOOL "")
     set(CPUINFO_LIBRARY_TYPE "static" CACHE STRING "")
     set(CPUINFO_LOG_LEVEL "error" CACHE STRING "")
-    if(MSVC)
-      if(CAFFE2_USE_MSVC_STATIC_RUNTIME)
-        set(CPUINFO_RUNTIME_TYPE "static" CACHE STRING "")
-      else()
-        set(CPUINFO_RUNTIME_TYPE "shared" CACHE STRING "")
-      endif()
-    endif()
     add_subdirectory(
       "${CPUINFO_SOURCE_DIR}"
       "${CONFU_DEPENDENCIES_BINARY_DIR}/cpuinfo")
@@ -501,9 +494,7 @@ if(NOT Python_EXECUTABLE)
   execute_process(
     COMMAND "which" "python3" RESULT_VARIABLE _exitcode OUTPUT_VARIABLE _py_exe)
   if(${_exitcode} EQUAL 0)
-    if(NOT MSVC)
-      string(STRIP ${_py_exe} Python_EXECUTABLE)
-    endif()
+    string(STRIP ${_py_exe} Python_EXECUTABLE)
     message(STATUS "Setting Python to ${Python_EXECUTABLE}")
   endif()
 endif()
@@ -533,20 +524,6 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
 
 if(BUILD_PYTHON)
-  # On Windows venvs, the Python import library (pythonXX.lib) lives in the
-  # base installation's libs/ directory, not in the venv.  Help FindPython
-  # locate it by adding sys.base_prefix/libs to the library search path.
-  if(WIN32 AND Python_EXECUTABLE)
-    execute_process(
-      COMMAND "${Python_EXECUTABLE}" -c "import sys; print(sys.base_prefix)"
-      OUTPUT_VARIABLE _py_base_prefix
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      ERROR_QUIET
-    )
-    if(_py_base_prefix AND IS_DIRECTORY "${_py_base_prefix}/libs")
-      list(APPEND CMAKE_LIBRARY_PATH "${_py_base_prefix}/libs")
-    endif()
-  endif()
 
   set(PYTHON_COMPONENTS Development.Module)
   if(USE_NUMPY)
@@ -700,11 +677,7 @@ if(USE_ROCM)
 
     # HIP_CXX_FLAGS: applied to targets via target_compile_options (definitions, warnings).
     # These are used for both HIP device code and C++ code that needs HIP defines.
-    # MSVC runtime library flags for HIP are handled via CMAKE_HIP_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_*
-    # mappings in LoadHIP.cmake (Windows) or -fPIC (Linux).
-    if(NOT WIN32)
-      string(APPEND CMAKE_HIP_FLAGS " -fPIC")
-    endif()
+    string(APPEND CMAKE_HIP_FLAGS " -fPIC")
     list(APPEND HIP_CXX_FLAGS -D__HIP_PLATFORM_AMD__=1)
     list(APPEND HIP_CXX_FLAGS -DCUDA_HAS_FP16=1)
     list(APPEND HIP_CXX_FLAGS -DUSE_ROCM)
@@ -887,9 +860,9 @@ list(APPEND Caffe2_DEPENDENCY_LIBS moodycamel)
 
 # TCPStore's libuv backend used to compile and link against the libuv copy
 # vendored by TensorPipe. TensorPipe is gone, so look for libuv on the system;
-# without it TCPStore falls back to its legacy backend (USE_LIBUV=0). Windows
+# without it TCPStore falls back to its legacy backend (USE_LIBUV=0).
 # never had the libuv backend (TensorPipe was unavailable there), so keep it off.
-if(USE_DISTRIBUTED AND NOT WIN32)
+if(USE_DISTRIBUTED)
   find_path(libuv_INCLUDE_DIR NAMES uv.h HINTS $ENV{libuv_ROOT}/include)
   find_library(libuv_LIBRARY NAMES uv libuv HINTS $ENV{libuv_ROOT}/lib)
   if(libuv_INCLUDE_DIR AND libuv_LIBRARY)
@@ -1027,7 +1000,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 # Top-level build config
 ############################################
 # Flags
-# When using MSVC
 # Detect CUDA architecture and get best NVCC flags
 # finding cuda must be first because other things depend on the result
 #
@@ -1037,22 +1009,16 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 # this, but since FindCUDA upstream is subsumed by first-class support
 # for CUDA language, it seemed not worth fixing.
 
-if(MSVC)
-  # we want to respect the standard, and we are bored of those **** .
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE=1)
-  string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler=/wd4819,/wd4503,/wd4190,/wd4244,/wd4251,/wd4275,/wd4522")
-else()
-  if(WERROR)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL 13)
-      string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-dangling-reference ")
-    endif()
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-extra-semi ")
-      string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-error=pass-failed ")
-    endif()
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL 13))
-      string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Werror -Xcompiler -Wno-error=sign-compare ")
-    endif()
+if(WERROR)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL 13)
+    string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-dangling-reference ")
+  endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-extra-semi ")
+    string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-error=pass-failed ")
+  endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL 13))
+    string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Werror -Xcompiler -Wno-error=sign-compare ")
   endif()
 endif()
 
@@ -1217,11 +1183,7 @@ set_target_properties(fmt-header-only PROPERTIES INTERFACE_COMPILE_FEATURES "")
 
 # Keep fmt's header-only type layout stable across mixed C++ modes by forcing
 # one no_unique_address spelling for all translation units.
-if(MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(_fmt_no_unique_address "[[msvc::no_unique_address]]")
-else()
-  set(_fmt_no_unique_address "[[no_unique_address]]")
-endif()
+set(_fmt_no_unique_address "[[no_unique_address]]")
 target_compile_definitions(fmt PUBLIC "FMT_NO_UNIQUE_ADDRESS=${_fmt_no_unique_address}")
 target_compile_definitions(fmt-header-only INTERFACE "FMT_NO_UNIQUE_ADDRESS=${_fmt_no_unique_address}")
 unset(_fmt_no_unique_address)

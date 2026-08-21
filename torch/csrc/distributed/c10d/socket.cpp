@@ -12,12 +12,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef _WIN32
-#include <mutex>
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -25,7 +19,6 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#endif
 
 #include <fmt/chrono.h>
 #include <fmt/format.h>
@@ -38,45 +31,6 @@
 
 namespace c10d::detail {
 namespace {
-#ifdef _WIN32
-
-// Since Winsock uses the name `WSAPoll` instead of `poll`, we alias it here
-// to avoid #ifdefs in the source code.
-const auto pollFd = ::WSAPoll;
-
-// Winsock's `getsockopt()` and `setsockopt()` functions expect option values to
-// be passed as `char*` instead of `void*`. We wrap them here to avoid redundant
-// casts in the source code.
-int getSocketOption(
-    SOCKET s,
-    int level,
-    int optname,
-    void* optval,
-    int* optlen) {
-  return ::getsockopt(s, level, optname, static_cast<char*>(optval), optlen);
-}
-
-int setSocketOption(
-    SOCKET s,
-    int level,
-    int optname,
-    const void* optval,
-    int optlen) {
-  return ::setsockopt(
-      s, level, optname, static_cast<const char*>(optval), optlen);
-}
-
-// Winsock has its own error codes which differ from Berkeley's. Fortunately the
-// C++ Standard Library on Windows can map them to standard error codes.
-inline std::error_code getSocketError() noexcept {
-  return std::error_code{::WSAGetLastError(), std::system_category()};
-}
-
-inline void setSocketError(int val) noexcept {
-  ::WSASetLastError(val);
-}
-
-#else
 
 const auto pollFd = ::poll;
 
@@ -91,13 +45,9 @@ inline void setSocketError(int val) noexcept {
   errno = val;
 }
 
-#endif
 
 // Suspends the current thread for the specified duration.
 void delay(std::chrono::milliseconds d) {
-#ifdef _WIN32
-  std::this_thread::sleep_for(d);
-#else
   ::timespec req{};
   auto ms = d.count();
   req.tv_sec = ms / 1000;
@@ -113,7 +63,6 @@ void delay(std::chrono::milliseconds d) {
       C10_THROW_ERROR(DistNetworkError, c10::utils::str_error(err.value()));
     }
   }
-#endif
 }
 
 class SocketListenOp;
@@ -125,17 +74,9 @@ class SocketImpl {
   friend class SocketConnectOp;
 
  public:
-#ifdef _WIN32
-  using Handle = SOCKET;
-#else
   using Handle = int;
-#endif
 
-#ifdef _WIN32
-  static constexpr Handle invalid_socket = INVALID_SOCKET;
-#else
   static constexpr Handle invalid_socket = -1;
-#endif
 
   explicit SocketImpl(Handle hnd) noexcept : hnd_{hnd} {}
 
@@ -163,13 +104,8 @@ class SocketImpl {
 
   bool enableDualStack() noexcept;
 
-#ifndef _WIN32
   bool enableAddressReuse() noexcept;
-#endif
 
-#ifdef _WIN32
-  bool enableExclusiveAddressUse() noexcept;
-#endif
 
   std::uint16_t getPort() const;
 
@@ -303,11 +239,7 @@ SocketImpl::SocketImpl(Handle hnd, const ::addrinfo& remote)
     : hnd_{hnd}, remote_{fmt::format("{}", remote)} {}
 
 SocketImpl::~SocketImpl() {
-#ifdef _WIN32
-  ::closesocket(hnd_);
-#else
   ::close(hnd_);
-#endif
 }
 
 std::unique_ptr<SocketImpl> SocketImpl::accept() const {
@@ -364,44 +296,28 @@ std::unique_ptr<SocketImpl> SocketImpl::accept() const {
 }
 
 void SocketImpl::closeOnExec() noexcept {
-#ifndef _WIN32
   ::fcntl(hnd_, F_SETFD, FD_CLOEXEC);
-#endif
 }
 
 void SocketImpl::enableNonBlocking() {
-#ifdef _WIN32
-  unsigned long value = 1;
-  if (::ioctlsocket(hnd_, FIONBIO, &value) == 0) {
-    return;
-  }
-#else
   int flg = ::fcntl(hnd_, F_GETFL);
   if (flg != -1) {
     if (::fcntl(hnd_, F_SETFL, flg | O_NONBLOCK) == 0) {
       return;
     }
   }
-#endif
   C10D_THROW_ERROR(
       SocketError, "The socket cannot be switched to non-blocking mode.");
 }
 
 // TODO: Remove once we migrate everything to non-blocking mode.
 void SocketImpl::disableNonBlocking() {
-#ifdef _WIN32
-  unsigned long value = 0;
-  if (::ioctlsocket(hnd_, FIONBIO, &value) == 0) {
-    return;
-  }
-#else
   int flg = ::fcntl(hnd_, F_GETFL);
   if (flg != -1) {
     if (::fcntl(hnd_, F_SETFL, flg & ~O_NONBLOCK) == 0) {
       return;
     }
   }
-#endif
   C10D_THROW_ERROR(
       SocketError, "The socket cannot be switched to blocking mode.");
 }
@@ -414,17 +330,10 @@ bool SocketImpl::enableDualStack() noexcept {
   return setSocketFlag(IPPROTO_IPV6, IPV6_V6ONLY, false);
 }
 
-#ifndef _WIN32
 bool SocketImpl::enableAddressReuse() noexcept {
   return setSocketFlag(SOL_SOCKET, SO_REUSEADDR, true);
 }
-#endif
 
-#ifdef _WIN32
-bool SocketImpl::enableExclusiveAddressUse() noexcept {
-  return setSocketFlag(SOL_SOCKET, SO_EXCLUSIVEADDRUSE, true);
-}
-#endif
 
 std::uint16_t SocketImpl::getPort() const {
   ::sockaddr_storage addr_s{};
@@ -445,11 +354,7 @@ std::uint16_t SocketImpl::getPort() const {
 }
 
 bool SocketImpl::setSocketFlag(int level, int optname, bool value) noexcept {
-#ifdef _WIN32
-  auto buf = value ? TRUE : FALSE;
-#else
   auto buf = value ? 1 : 0;
-#endif
   return setSocketOption(hnd_, level, optname, &buf, sizeof(buf)) == 0;
 }
 
@@ -617,27 +522,12 @@ bool SocketListenOp::tryListen(const ::addrinfo& addr) {
 
   socket_ = std::make_unique<SocketImpl>(hnd);
 
-#ifndef _WIN32
   if (!socket_->enableAddressReuse()) {
     C10D_WARNING(
         "The address reuse option cannot be enabled for the server socket on {}.",
         addr);
   }
-#endif
 
-#ifdef _WIN32
-  // The SO_REUSEADDR flag has a significantly different behavior on Windows
-  // compared to Unix-like systems. It allows two or more processes to share
-  // the same port simultaneously, which is totally unsafe.
-  //
-  // Here we follow the recommendation of Microsoft and use the non-standard
-  // SO_EXCLUSIVEADDRUSE flag instead.
-  if (!socket_->enableExclusiveAddressUse()) {
-    C10D_WARNING(
-        "The exclusive address use option cannot be enabled for the server socket on {}.",
-        addr);
-  }
-#endif
 
   // Not all operating systems support dual-stack sockets by default. Since we
   // wish to use our IPv6 socket for IPv4 communication as well, we explicitly
@@ -1033,18 +923,6 @@ void SocketConnectOp::throwTimeoutError() const {
 } // namespace
 
 void Socket::initialize() {
-#ifdef _WIN32
-  // All processes that call socket functions on Windows must first initialize
-  // the Winsock library.
-  static bool init_flag [[maybe_unused]] = []() {
-    WSADATA data{};
-    if (::WSAStartup(MAKEWORD(2, 2), &data) != 0) {
-      C10D_THROW_ERROR(
-          SocketError, "The initialization of Winsock has failed.");
-    }
-    return true;
-  }();
-#endif
 }
 
 Socket Socket::listen(std::uint16_t port, const SocketOptions& opts) {

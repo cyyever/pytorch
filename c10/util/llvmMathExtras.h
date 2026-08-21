@@ -44,17 +44,6 @@
 #endif
 #endif
 
-#ifdef _MSC_VER
-// Declare these intrinsics manually rather including intrin.h. It's very
-// expensive, and MathExtras.h is popular.
-// #include <intrin.h>
-extern "C" {
-unsigned char _BitScanForward(unsigned long* _Index, unsigned long _Mask);
-unsigned char _BitScanForward64(unsigned long* _Index, unsigned __int64 _Mask);
-unsigned char _BitScanReverse(unsigned long* _Index, unsigned long _Mask);
-unsigned char _BitScanReverse64(unsigned long* _Index, unsigned __int64 _Mask);
-}
-#endif
 
 namespace c10::llvm {
 /// The behavior an operation has on an input of 0.
@@ -101,10 +90,6 @@ struct TrailingZerosCounter<T, 4> {
 
 #if __has_builtin(__builtin_ctz) || LLVM_GNUC_PREREQ(4, 0, 0)
     return __builtin_ctz(Val);
-#elif defined(_MSC_VER)
-    unsigned long Index;
-    _BitScanForward(&Index, Val);
-    return Index;
 #endif
   }
 };
@@ -118,10 +103,6 @@ struct TrailingZerosCounter<T, 8> {
 
 #if __has_builtin(__builtin_ctzll) || LLVM_GNUC_PREREQ(4, 0, 0)
     return __builtin_ctzll(Val);
-#elif defined(_MSC_VER)
-    unsigned long Index;
-    _BitScanForward64(&Index, Val);
-    return Index;
 #endif
   }
 };
@@ -173,10 +154,6 @@ struct LeadingZerosCounter<T, 4> {
 
 #if __has_builtin(__builtin_clz) || LLVM_GNUC_PREREQ(4, 0, 0)
     return __builtin_clz(Val);
-#elif defined(_MSC_VER)
-    unsigned long Index;
-    _BitScanReverse(&Index, Val);
-    return Index ^ 31;
 #endif
   }
 };
@@ -190,10 +167,6 @@ struct LeadingZerosCounter<T, 8> {
 
 #if __has_builtin(__builtin_clzll) || LLVM_GNUC_PREREQ(4, 0, 0)
     return __builtin_clzll(Val);
-#elif defined(_MSC_VER)
-    unsigned long Index;
-    _BitScanReverse64(&Index, Val);
-    return Index ^ 63;
 #endif
   }
 };
@@ -416,10 +389,6 @@ inline uint64_t maxUIntN(uint64_t N) {
 }
 
 // Ignore the false warning "Arithmetic overflow" for MSVC
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4146)
-#endif
 
 /// Gets the minimum value for a N-bit signed integer.
 inline int64_t minIntN(int64_t N) {
@@ -428,9 +397,6 @@ inline int64_t minIntN(int64_t N) {
   return -(UINT64_C(1) << (N - 1));
 }
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 /// Gets the maximum value for a N-bit signed integer.
 inline int64_t maxIntN(int64_t N) {

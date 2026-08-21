@@ -39,11 +39,7 @@ class TORCH_API MapAllocator {
     return filename_.c_str();
   }
   int fd() const {
-#ifdef _WIN32
-    TORCH_CHECK(false, "MapAllocator::fd() is unsupported on Windows");
-#else
     return fd_;
-#endif
   }
   ptrdiff_t size() const {
     return size_;
@@ -85,13 +81,7 @@ class TORCH_API MapAllocator {
   std::string filename_;
   int flags_ = 0;
   ptrdiff_t size_; /* mapped size */
-#ifdef _WIN32
-  void* handle_;
-  void* event_;
-  std::string eventname_;
-#else
   int fd_ = -1;
-#endif
   void* base_ptr_ = nullptr;
 };
 

@@ -54,9 +54,7 @@ struct VecMaskLoad<
       const T* ptr,
       const VecMask<mask_t, dst_n>& vec_mask) {
     VectorizedN<T, dst_n> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < dst_n; i++) {
       auto tmp_mask = VecMask<mask_t, 1>(vec_mask[i]);
       auto int_mask = tmp_mask.template cast<int, 1>()[0];
@@ -107,9 +105,7 @@ template <int N>
 struct VecMaskCast<float, N, int, N> {
   static inline VecMask<float, N> apply(const VecMask<int, N>& vec_mask) {
     VectorizedN<float, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm256_castsi256_ps(vec_mask[i]);
     }
@@ -121,9 +117,7 @@ template <int N>
 struct VecMaskCast<int, N, float, N> {
   static inline VecMask<int, N> apply(const VecMask<float, N>& vec_mask) {
     VectorizedN<int, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm256_castps_si256(vec_mask[i]);
     }
@@ -135,9 +129,7 @@ template <int N>
 struct VecMaskCast<int64_t, N, double, N> {
   static inline VecMask<int64_t, N> apply(const VecMask<double, N>& vec_mask) {
     VectorizedN<int64_t, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm256_castpd_si256(vec_mask[i]);
     }
@@ -149,9 +141,7 @@ template <int N>
 struct VecMaskCast<double, N, int64_t, N> {
   static inline VecMask<double, N> apply(const VecMask<int64_t, N>& vec_mask) {
     VectorizedN<double, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm256_castsi256_pd(vec_mask[i]);
     }
@@ -173,9 +163,7 @@ struct VecMaskCast<
       const VecMask<mask_t, mask_n>& vec_mask) {
     VectorizedN<int64_t, dst_n> result;
     auto int_mask = vec_mask.template cast<int, mask_n>();
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < mask_n; ++i) {
       auto int64_vec =
           convert<int64_t, 2, int, 1>(VectorizedN<int, 1>(int_mask[i]));

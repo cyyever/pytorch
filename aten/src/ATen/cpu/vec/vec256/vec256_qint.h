@@ -43,15 +43,9 @@ inline namespace CPU_CAPABILITY {
 
 #if defined(CPU_CAPABILITY_AVX2)
 
-#ifdef _MSC_VER
-__declspec(align(64)) struct Vectorizedqi {
- protected:
-  __m256i vals;
-#else
 struct Vectorizedqi {
  protected:
   __m256i vals __attribute__((aligned(64)));
-#endif
 
  public:
   Vectorizedqi() {

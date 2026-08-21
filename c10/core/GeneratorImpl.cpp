@@ -5,12 +5,8 @@
 #include <sgx_trts.h>
 #endif
 
-#ifndef _WIN32
 #include <fcntl.h>
 #include <unistd.h>
-#else
-#include <chrono>
-#endif
 
 namespace c10 {
 
@@ -66,7 +62,6 @@ namespace detail {
  * Note this is a legacy method (from THRandom.cpp)
  * FIXME: use std::random_device with entropy information
  */
-#if !defined(_WIN32)
 static uint64_t readURandomLong() {
   int randDev = open("/dev/urandom", O_RDONLY);
   TORCH_CHECK(randDev >= 0, "Unable to open /dev/urandom");
@@ -78,7 +73,6 @@ static uint64_t readURandomLong() {
       "Unable to read from /dev/urandom");
   return randValue;
 }
-#endif // _WIN32
 
 /**
  * Gets a non deterministic random number number from either the
@@ -99,8 +93,6 @@ static uint64_t readURandomLong() {
 uint64_t getNonDeterministicRandom(bool is_cuda) {
   uint64_t s = 0;
   if (!is_cuda) {
-#ifdef _WIN32
-    s = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
 #elif defined(__SGX_ENABLED__)
     TORCH_CHECK(
         sgx_read_rand(reinterpret_cast<uint8_t*>(&s), sizeof(s)) == SGX_SUCCESS,

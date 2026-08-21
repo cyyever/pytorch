@@ -16,15 +16,11 @@ from torch.numa.binding import _maybe_wrap_command_args_with_numa_binding, NumaO
 
 __all__ = ["SubprocessHandler"]
 
-IS_WINDOWS = sys.platform == "win32"
 
 
 def _get_default_signal() -> signal.Signals:
     """Get the default termination signal. SIGTERM for unix, CTRL_C_EVENT for windows."""
-    if IS_WINDOWS:
-        return signal.CTRL_C_EVENT  # type: ignore[attr-defined]
-    else:
-        return signal.SIGTERM
+    return signal.SIGTERM
 
 
 class SubprocessHandler:
@@ -62,8 +58,7 @@ class SubprocessHandler:
 
     def _popen(self, args: tuple, env: dict[str, str]) -> Popen:
         kwargs: dict[str, Any] = {}
-        if not IS_WINDOWS:
-            kwargs["start_new_session"] = True
+        kwargs["start_new_session"] = True
 
         return Popen(
             # pyre-fixme[6]: Expected `Union[typing.Sequence[Union[_PathLike[bytes],
@@ -79,10 +74,7 @@ class SubprocessHandler:
     def close(self, death_sig: signal.Signals | None = None) -> None:
         if not death_sig:
             death_sig = _get_default_signal()
-        if IS_WINDOWS:
-            self.proc.send_signal(death_sig)
-        else:
-            os.killpg(self.proc.pid, death_sig)
+        os.killpg(self.proc.pid, death_sig)
         if self._stdout:
             self._stdout.close()
         if self._stderr:

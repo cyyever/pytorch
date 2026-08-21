@@ -37,10 +37,8 @@ else()
 
   include(FindPackageHandleStandardArgs)
   set(GLOG_ROOT_DIR "" CACHE PATH "Folder contains Google glog")
-  if(NOT WIN32)
-      find_path(GLOG_INCLUDE_DIR glog/logging.h
-          PATHS ${GLOG_ROOT_DIR})
-  endif()
+  find_path(GLOG_INCLUDE_DIR glog/logging.h
+      PATHS ${GLOG_ROOT_DIR})
 
   find_library(GLOG_LIBRARY glog
       PATHS ${GLOG_ROOT_DIR}

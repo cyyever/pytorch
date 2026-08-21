@@ -71,8 +71,6 @@ MAP_LOCATION: TypeAlias = (
 )
 STORAGE: TypeAlias = Storage | torch.storage.TypedStorage | torch.UntypedStorage
 
-IS_WINDOWS = sys.platform == "win32"
-
 UNSAFE_MESSAGE = (
     "In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` "
     "from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, "
@@ -80,10 +78,7 @@ UNSAFE_MESSAGE = (
     "trusted source."
 )
 
-if not IS_WINDOWS:
-    from mmap import MAP_PRIVATE, MAP_SHARED
-else:
-    MAP_SHARED, MAP_PRIVATE = None, None  # type: ignore[assignment]
+from mmap import MAP_PRIVATE, MAP_SHARED
 
 
 def _default_to_weights_only(pickle_module):
@@ -241,10 +236,6 @@ class set_default_mmap_options:
     """
 
     def __init__(self, flags: int) -> None:
-        if IS_WINDOWS:
-            raise RuntimeError(
-                "Changing the default mmap options is currently not supported for Windows"
-            )
         if flags != MAP_PRIVATE and flags != MAP_SHARED:
             raise ValueError(
                 "Invalid argument in function set_default_mmap_options, "
@@ -1576,10 +1567,7 @@ def load(
                             "f must be a file path in order to use the mmap argument"
                         )
                     size = os.path.getsize(f)
-                    if not IS_WINDOWS:
-                        shared = get_default_mmap_options() == MAP_SHARED
-                    else:
-                        shared = False
+                    shared = get_default_mmap_options() == MAP_SHARED
                     overall_storage = torch.UntypedStorage.from_file(
                         os.fspath(f),
                         shared,

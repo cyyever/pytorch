@@ -152,11 +152,6 @@ std::string show_config() {
   }
 #endif
 
-#if defined(_MSC_VER)
-  {
-    ss << "  - MSVC " << _MSC_FULL_VER << '\n';
-  }
-#endif
 
 #if AT_MKL_ENABLED()
   ss << "  - " << get_mkl_version() << '\n';

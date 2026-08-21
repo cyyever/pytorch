@@ -13,7 +13,6 @@
 /*
    Tests related to tensor indexing and applying operations.
 */
-#ifndef _WIN32
 
 // CATCH_TEST_CASE("2D Contiguous", "Collapses a 2D contiguous tensor to 1D
 // contiguous") {
@@ -143,4 +142,3 @@ TEST(ApplyTest, InvalidExclusion) {
   ::at::cuda::detail::TensorInfo<void, int> ti{nullptr, 3, sizes, strides};
   ASSERT_ANY_THROW(ti.collapseDims(5));
 }
-#endif

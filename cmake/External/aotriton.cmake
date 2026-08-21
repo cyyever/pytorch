@@ -89,75 +89,7 @@ if(NOT __AOTRITON_INCLUDED)
   endif()
   set(__AOTRITON_Z "gz")
   # Set the default __AOTRITON_LIB path
-  if(NOT WIN32)
-    set(__AOTRITON_LIB "lib/libaotriton_v2.so")
-  else()
-    set(__AOTRITON_LIB "lib/aotriton_v2.lib")
-  endif()
-
-  function(aotriton_build_windows_dependencies dlfcn-win32_external xz_external dlfcn-win32_DIR liblzma_DIR)
-    # Windows-specific dependencies - build these first
-    if(NOT noimage)
-      message(FATAL_ERROR "noimage must be ON for Windows builds")
-    endif()
-    # Build dlfcn-win32
-    set(__DLFCN_WIN32_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dlfcn-win32")
-    set(__DLFCN_WIN32_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/dlfcn-win32-install")
-
-    ExternalProject_Add(${dlfcn-win32_external}
-      GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-      GIT_TAG v1.4.2
-      PREFIX ${__DLFCN_WIN32_PREFIX}
-      INSTALL_DIR ${__DLFCN_WIN32_INSTALL_DIR}
-      CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${__DLFCN_WIN32_INSTALL_DIR}
-        -DCMAKE_BUILD_TYPE=Release
-        -DCMAKE_C_COMPILER=cl
-        -DCMAKE_CXX_COMPILER=cl
-        -DBUILD_SHARED_LIBS=ON
-        -DBUILD_TESTS=OFF
-      BUILD_BYPRODUCTS
-        "${__DLFCN_WIN32_INSTALL_DIR}/lib/dl.lib"
-        "${__DLFCN_WIN32_INSTALL_DIR}/bin/dl.dll"
-    )
-    ExternalProject_Add_Step(${dlfcn-win32_external} copy_to_aotriton
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${__DLFCN_WIN32_INSTALL_DIR}/bin/dl.dll"
-        "${__AOTRITON_INSTALL_DIR}/lib/"
-      DEPENDEES install
-    )
-    set(${dlfcn-win32_DIR} "${__DLFCN_WIN32_INSTALL_DIR}/share/dlfcn-win32" CACHE PATH "Path to dlfcn-win32 CMake config" FORCE)
-
-    # Build xz/liblzma
-    set(__XZ_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/xz")
-    set(__XZ_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/xz-install")
-
-    ExternalProject_Add(${xz_external}
-      GIT_REPOSITORY https://github.com/tukaani-project/xz.git
-      GIT_TAG v5.8.1
-      PREFIX ${__XZ_PREFIX}
-      INSTALL_DIR ${__XZ_INSTALL_DIR}
-      CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${__XZ_INSTALL_DIR}
-        -DCMAKE_BUILD_TYPE=Release
-        -DBUILD_SHARED_LIBS=ON
-        -DENABLE_NLS=OFF
-        -DXZ_TOOL_LZMAINFO=OFF
-        -DXZ_TOOL_XZ=OFF
-        -DXZ_TOOL_XZDEC=OFF
-        -DXZ_TOOL_LZMADEC=OFF
-      BUILD_BYPRODUCTS
-        "${__XZ_INSTALL_DIR}/lib/lzma.lib"
-        "${__XZ_INSTALL_DIR}/bin/liblzma.dll"
-    )
-    ExternalProject_Add_Step(${xz_external} copy_to_aotriton
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${__XZ_INSTALL_DIR}/bin/liblzma.dll"
-        "${__AOTRITON_INSTALL_DIR}/lib/"
-      DEPENDEES install
-    )
-    set(${liblzma_DIR} "${__XZ_INSTALL_DIR}/lib/cmake/liblzma" CACHE PATH "Path to xz/liblzma CMake config" FORCE)
-  endfunction()
+  set(__AOTRITON_LIB "lib/libaotriton_v2.so")
 
   function(aotriton_build_from_source noimage project)
     if(noimage)
@@ -181,8 +113,6 @@ if(NOT __AOTRITON_INCLUDED)
       -DAOTRITON_NO_PYTHON=ON
       -DAOTRITON_NOIMAGE_MODE=${noimage}
       -DHIP_PLATFORM=amd
-      $<$<BOOL:${WIN32}>:-Ddlfcn-win32_DIR=${dlfcn-win32_DIR}>
-      $<$<BOOL:${WIN32}>:-Dliblzma_DIR=${liblzma_DIR}>
       BUILD_BYPRODUCTS "${__AOTRITON_INSTALL_DIR}/${__AOTRITON_LIB}"
       USES_TERMINAL_DOWNLOAD TRUE
       USES_TERMINAL_CONFIGURE TRUE
@@ -274,8 +204,7 @@ if(NOT __AOTRITON_INCLUDED)
   else()
     set(__AOTRITON_SYSTEM_ROCM "${HIP_VERSION_MAJOR}.${HIP_VERSION_MINOR}")
     list(FIND __AOTRITON_ROCM_LIST "rocm${__AOTRITON_SYSTEM_ROCM}" __AOTRITON_RUNTIME_INDEX)
-    # Always build aotriton runtime from source on Windows due to lack of pre-built binaries
-    if(${__AOTRITON_RUNTIME_INDEX} LESS 0 OR WIN32)
+    if(${__AOTRITON_RUNTIME_INDEX} LESS 0)
       message(STATUS "Cannot find AOTriton runtime for ROCM ${__AOTRITON_SYSTEM_ROCM}. \
       Build runtime from source")
       aotriton_build_from_source(ON aotriton_runtime)

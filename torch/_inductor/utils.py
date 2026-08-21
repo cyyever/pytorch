@@ -142,7 +142,6 @@ from . import config
 from .runtime.runtime_utils import ceildiv as runtime_ceildiv
 
 
-_IS_WINDOWS = sys.platform == "win32"
 
 log = logging.getLogger(__name__)
 
@@ -155,7 +154,7 @@ VarRanges = dict[sympy.Expr, sympy.Expr]
 InputType = torch.Tensor | int | torch.SymInt | None
 
 XPU_KERNEL_FORMAT = (
-    "spv" if _IS_WINDOWS else os.getenv("TORCHINDUCTOR_XPU_KERNEL_FORMAT", "zebin")
+    os.getenv("TORCHINDUCTOR_XPU_KERNEL_FORMAT", "zebin")
 )
 
 GPU_KERNEL_BIN_EXTS = {
@@ -4449,22 +4448,6 @@ def maybe_aoti_standalone_config(config_patches: dict[str, Any]) -> dict[str, An
         )
         force_patch_config(config_patches, "aot_inductor.dynamic_linkage", False)
 
-    cross_target_platform = config_patches.get(
-        "aot_inductor.cross_target_platform",
-        config.aot_inductor.cross_target_platform,
-    )
-
-    package_constants_in_so = config_patches.get(
-        "aot_inductor.package_constants_in_so",
-        config.aot_inductor.package_constants_in_so,
-    )
-
-    if cross_target_platform == "windows" and package_constants_in_so:
-        raise RuntimeError(
-            "config.aot_inductor.package_constants_in_so is not supported for windows cross-compilation. "
-            "Please use config.aot_inductor.package_constants_on_disk_format = binary_blob."
-        )
-
     return config_patches
 
 
@@ -4487,10 +4470,6 @@ def determine_aoti_mmap_flags(consts_size: int) -> tuple[bool, bool]:
         )
 
     if config.aot_inductor.force_mmap_weights:
-        if config.aot_inductor.cross_target_platform == "windows":
-            raise RuntimeError(
-                "when cross_target_platform is windows, use_mmap_weights should not be true."
-            )
         use_mmap_weights = True
         use_external_weights = False
         return use_external_weights, use_mmap_weights

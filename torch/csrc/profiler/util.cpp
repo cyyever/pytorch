@@ -162,10 +162,6 @@ std::string joinStacks(
       stacks.end(),
       std::ostream_iterator<std::string>(oss, delim),
       [](std::string s) -> std::string {
-#ifdef _WIN32
-        // replace the windows backslash with forward slash
-        std::replace(s.begin(), s.end(), '\\', '/');
-#endif
         return s;
       });
   return std::move(oss).str();

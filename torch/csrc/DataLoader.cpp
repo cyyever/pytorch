@@ -11,7 +11,6 @@
 // calls, and SIGCHLD handler. Currently, dummy implementations are provided
 // for Windows.
 
-#ifndef _WIN32
 
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/utils/python_numbers.h>
@@ -223,32 +222,6 @@ static PyObject* THPModule_removeWorkerPIDs(
 
 #undef SIGNAL_HANDLER
 
-#else
-// dummy implementations for windows
-
-static PyObject* THPModule_setWorkerSignalHandlers(
-    PyObject* module,
-    PyObject* _ignored) {
-  Py_RETURN_NONE;
-}
-
-static PyObject* THPModule_setWorkerPIDs(PyObject* module, PyObject* _ignored) {
-  Py_RETURN_NONE;
-}
-
-static PyObject* THPModule_removeWorkerPIDs(
-    PyObject* module,
-    PyObject* _ignored) {
-  Py_RETURN_NONE;
-}
-
-static PyObject* THPModule_errorIfAnyWorkerFails(
-    PyObject* module,
-    PyObject* _ignored) {
-  Py_RETURN_NONE;
-}
-
-#endif
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-non-const-global-variables,modernize-avoid-c-arrays)
 PyMethodDef DataLoaderMethods[] = {

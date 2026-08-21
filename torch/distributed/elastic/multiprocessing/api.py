@@ -41,7 +41,6 @@ from torch.distributed.elastic.multiprocessing.tail_log import TailLog
 from torch.numa.binding import _maybe_wrap_with_numa_binding, NumaOptions
 
 
-IS_WINDOWS = sys.platform == "win32"
 IS_MACOS = sys.platform == "darwin"
 
 
@@ -88,18 +87,12 @@ def _terminate_process_handler(signum: int, frame: FrameType | None) -> None:
 
 def _get_kill_signal() -> signal.Signals:
     """Get the kill signal. SIGKILL for unix, CTRL_C_EVENT for windows."""
-    if IS_WINDOWS:
-        return signal.CTRL_C_EVENT  # type: ignore[attr-defined]
-    else:
-        return signal.SIGKILL
+    return signal.SIGKILL
 
 
 def _get_default_signal() -> signal.Signals:
     """Get the default termination signal. SIGTERM for unix, CTRL_C_EVENT for windows."""
-    if IS_WINDOWS:
-        return signal.CTRL_C_EVENT  # type: ignore[attr-defined]
-    else:
-        return signal.SIGTERM
+    return signal.SIGTERM
 
 
 def _validate_full_rank(d: dict[int, Any], nprocs: int, what: str):
@@ -552,21 +545,11 @@ class PContext(abc.ABC):
                         exc_info=True,
                     )
                 except RuntimeError:
-                    if IS_WINDOWS and sig_name.strip() in [
-                        "SIGHUP",
-                        "SIGQUIT",
-                        "SIGUSR1",
-                        "SIGUSR2",
-                    ]:
-                        logger.info(
-                            "Signal %s is not supported on Windows, skipping", sig_name
-                        )
-                    else:
-                        logger.warning(
-                            "Failed to register signal handler for %s",
-                            sig_name,
-                            exc_info=True,
-                        )
+                    logger.warning(
+                        "Failed to register signal handler for %s",
+                        sig_name,
+                        exc_info=True,
+                    )
         else:
             logger.warning(
                 "Failed to register signal handlers since torchelastic is running on a child thread. "
@@ -668,7 +651,7 @@ class PContext(abc.ABC):
 
 
 def get_std_cm(std_rd: str, redirect_fn):
-    if IS_WINDOWS or IS_MACOS or not std_rd:
+    if IS_MACOS or not std_rd:
         return nullcontext()
     else:
         return redirect_fn(std_rd)

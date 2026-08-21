@@ -16,40 +16,6 @@
 #include <gloo/reduce.h>
 #include <gloo/scatter.h>
 
-#ifdef _WIN32
-#define GENERATE_ALL_TYPES(type, func, ...)      \
-  switch (type) {                                \
-    case ::at::ScalarType::Float:                \
-      func<float>(__VA_ARGS__);                  \
-      break;                                     \
-    case ::at::ScalarType::Double:               \
-      func<double>(__VA_ARGS__);                 \
-      break;                                     \
-    case ::at::ScalarType::Half:                 \
-      func<c10::Half>(__VA_ARGS__);              \
-      break;                                     \
-    case ::at::ScalarType::BFloat16:             \
-      func<c10::BFloat16>(__VA_ARGS__);          \
-      break;                                     \
-    case ::at::ScalarType::Char:                 \
-      func<int8_t>(__VA_ARGS__);                 \
-      break;                                     \
-    case ::at::ScalarType::Byte:                 \
-    case ::at::ScalarType::Bool:                 \
-      func<uint8_t>(__VA_ARGS__);                \
-      break;                                     \
-    case ::at::ScalarType::Int:                  \
-      func<int32_t>(__VA_ARGS__);                \
-      break;                                     \
-    case ::at::ScalarType::Long:                 \
-      func<int64_t>(__VA_ARGS__);                \
-      break;                                     \
-    default:                                     \
-      TORCH_CHECK(false, "Invalid scalar type"); \
-  }
-
-#define HOST_NAME_MAX 256
-#else
 #define GENERATE_ALL_TYPES(type, func, args...)  \
   switch (type) {                                \
     case ::at::ScalarType::Float:                \
@@ -80,7 +46,6 @@
     default:                                     \
       TORCH_CHECK(false, "Invalid scalar type"); \
   }
-#endif
 
 namespace c10d {
 

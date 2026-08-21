@@ -177,137 +177,6 @@ else:
     del _rocm_init
 
 
-if sys.platform == "win32":
-
-    def _load_dll_libraries() -> None:
-        import importlib.util
-        import sysconfig
-
-        from torch.version import cuda as cuda_version
-
-        pfiles_path = os.getenv("ProgramFiles", r"C:\Program Files")
-        py_dll_path = os.path.join(sys.exec_prefix, "Library", "bin")
-        th_dll_path = os.path.join(os.path.dirname(__file__), "lib")
-        # Anchor the DLL dir on the compiled _C extension rather than __file__:
-        # editable installs (e.g. scikit-build-core) run this __init__ from the
-        # source tree, whose lib/ is empty, while _C and its dependent DLLs live
-        # in the installed tree. In a wheel install both resolve to the same dir.
-        _spec = importlib.util.find_spec("torch._C")
-        if _spec is not None and _spec.origin:
-            th_dll_path = os.path.join(os.path.dirname(_spec.origin), "lib")
-        usebase_path = os.path.join(
-            sysconfig.get_config_var("userbase"), "Library", "bin"
-        )
-        py_root_bin_path = os.path.join(sys.exec_prefix, "bin")
-
-        # When users create a virtualenv that inherits the base environment,
-        # we will need to add the corresponding library directory into
-        # DLL search directories. Otherwise, it will rely on `PATH` which
-        # is dependent on user settings.
-        if sys.exec_prefix != sys.base_exec_prefix:
-            base_py_dll_path = os.path.join(sys.base_exec_prefix, "Library", "bin")
-        else:
-            base_py_dll_path = ""
-
-        dll_paths = [
-            p
-            for p in (
-                th_dll_path,
-                py_dll_path,
-                base_py_dll_path,
-                usebase_path,
-                py_root_bin_path,
-            )
-            if os.path.exists(p)
-        ]
-
-        if not builtins.any(
-            os.path.exists(os.path.join(p, "nvToolsExt64_1.dll")) for p in dll_paths
-        ):
-            nvtoolsext_dll_path = os.path.join(
-                os.getenv(
-                    "NVTOOLSEXT_PATH",
-                    os.path.join(pfiles_path, "NVIDIA Corporation", "NvToolsExt"),
-                ),
-                "bin",
-                "x64",
-            )
-        else:
-            nvtoolsext_dll_path = ""
-
-        if cuda_version and builtins.all(
-            not glob.glob(os.path.join(p, "cudart64*.dll")) for p in dll_paths
-        ):
-            cuda_version_1 = cuda_version.replace(".", "_")
-            cuda_path_var = "CUDA_PATH_V" + cuda_version_1
-            default_path = os.path.join(
-                pfiles_path, "NVIDIA GPU Computing Toolkit", "CUDA", f"v{cuda_version}"
-            )
-            cuda_path = os.path.join(os.getenv(cuda_path_var, default_path), "bin")
-        else:
-            cuda_path = ""
-
-        dll_paths.extend(
-            p for p in (nvtoolsext_dll_path, cuda_path) if os.path.exists(p)
-        )
-
-        kernel32 = ctypes.WinDLL("kernel32.dll", use_last_error=True)
-        with_load_library_flags = hasattr(kernel32, "AddDllDirectory")
-        prev_error_mode = kernel32.SetErrorMode(0x0001)
-
-        kernel32.LoadLibraryW.restype = ctypes.c_void_p
-        if with_load_library_flags:
-            kernel32.LoadLibraryExW.restype = ctypes.c_void_p
-
-        for dll_path in dll_paths:
-            os.add_dll_directory(dll_path)
-
-        try:
-            ctypes.CDLL("vcruntime140.dll")
-            ctypes.CDLL("msvcp140.dll")
-            if platform.machine() != "ARM64":
-                ctypes.CDLL("vcruntime140_1.dll")
-        except OSError:
-            print(
-                textwrap.dedent(
-                    """
-                    Microsoft Visual C++ Redistributable is not installed, this may lead to the DLL load failure.
-                    It can be downloaded at https://aka.ms/vs/17/release/vc_redist.x64.exe
-                    """
-                ).strip()
-            )
-
-        dlls = glob.glob(os.path.join(th_dll_path, "*.dll"))
-        path_patched = False
-        for dll in dlls:
-            is_loaded = False
-            if with_load_library_flags:
-                res = kernel32.LoadLibraryExW(dll, None, 0x00001100)
-                last_error = ctypes.get_last_error()
-                if res is None and last_error != 126:
-                    err = ctypes.WinError(last_error)
-                    err.strerror += (
-                        f' Error loading "{dll}" or one of its dependencies.'
-                    )
-                    raise err
-                elif res is not None:
-                    is_loaded = True
-            if not is_loaded:
-                if not path_patched:
-                    os.environ["PATH"] = ";".join(dll_paths + [os.environ["PATH"]])
-                    path_patched = True
-                res = kernel32.LoadLibraryW(dll)
-                if res is None:
-                    err = ctypes.WinError(ctypes.get_last_error())
-                    err.strerror += (
-                        f' Error loading "{dll}" or one of its dependencies.'
-                    )
-                    raise err
-
-        kernel32.SetErrorMode(prev_error_mode)
-
-    _load_dll_libraries()
-    del _load_dll_libraries
 
 
 def _get_cuda_dep_paths(path: str, lib_folder: str, lib_name: str) -> list[str]:
@@ -391,9 +260,6 @@ def _preload_cuda_deps(err: OSError | None = None, required: bool = True) -> Non
 
 # See Note [Global dependencies]
 def _load_global_deps() -> None:
-    if platform.system() == "Windows":
-        return
-
     # Determine the file extension based on the platform
     lib_ext = ".dylib" if platform.system() == "Darwin" else ".so"
     lib_name = f"libtorch_global_deps{lib_ext}"
@@ -454,9 +320,7 @@ def _load_global_deps() -> None:
         ctypes.CDLL(global_deps_lib_path, mode=ctypes.RTLD_GLOBAL)
 
 
-if (USE_RTLD_GLOBAL_WITH_LIBTORCH or os.getenv("TORCH_USE_RTLD_GLOBAL")) and (
-    platform.system() != "Windows"
-):
+if USE_RTLD_GLOBAL_WITH_LIBTORCH or os.getenv("TORCH_USE_RTLD_GLOBAL"):
     # Do it the hard way.  You might want to load libtorch with RTLD_GLOBAL in a
     # few circumstances:
     #
@@ -2573,8 +2437,6 @@ from torch.serialization import load, save
 
 # Shared memory manager needs to know the exact location of manager executable
 def _manager_path() -> bytes:
-    if platform.system() == "Windows":
-        return b""
     path = get_file_path("torch", "bin", "torch_shm_manager")
     prepare_multiprocessing_environment(get_file_path("torch"))
     if not os.path.exists(path):

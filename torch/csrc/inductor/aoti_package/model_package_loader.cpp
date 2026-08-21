@@ -17,9 +17,6 @@
 #include <regex>
 #include <utility>
 
-#ifdef _WIN32
-#include <torch/headeronly/util/win32-headers.h>
-#endif
 
 namespace fs = c10::filesystem;
 
@@ -81,9 +78,6 @@ std::string normalize_path_separator(const std::string& orig_path) {
   "C:/Users/Test/file.txt". And then, we can process the output like on Linux.
   */
   std::string normalized_path = orig_path;
-#ifdef _WIN32
-  std::replace(normalized_path.begin(), normalized_path.end(), '\\', '/');
-#endif
   normalized_path = remove_duplicate_separator_of_path(normalized_path);
   return normalized_path;
 }
@@ -143,19 +137,11 @@ std::string detect_file_prefix(
 }
 
 const char* object_file_ext() {
-#ifdef _WIN32
-  return ".obj";
-#else
   return ".o";
-#endif
 }
 
 const char* extension_file_ext() {
-#ifdef _WIN32
-  return ".pyd";
-#else
   return ".so";
-#endif
 }
 
 bool is_wrapper_library(const std::string& path) {
@@ -211,26 +197,14 @@ void categorize_model_file(
 
 const char* get_output_flags(bool compile_only) {
   if (compile_only) {
-#ifdef _WIN32
-    return "/c /Fo"; // codespell:ignore
-#else
     return "-c -o";
-#endif
   }
 
-#ifdef _WIN32
-  return "/Fe";
-#else
   return "-o";
-#endif
 }
 
 bool _is_windows_os() {
-#ifdef _WIN32
-  return true;
-#else
   return false;
-#endif
 }
 } // namespace
 
@@ -546,19 +520,6 @@ class RAIIMinizArchive {
             zip_filename.c_str(),
             path_dest_filename.c_str(),
             0)) {
-#ifdef _WIN32
-      DWORD dwErrCode = GetLastError();
-      TORCH_CHECK(
-          false,
-          "Failed to extract zip file ",
-          zip_filename,
-          " to destination file ",
-          path_dest_filename,
-          ", error code: ",
-          dwErrCode,
-          " mz_zip error string: ",
-          mz_zip_get_error_string(mz_zip_get_last_error(&_zip_archive)));
-#else
       TORCH_CHECK(
           false,
           "Failed to extract zip file ",
@@ -567,7 +528,6 @@ class RAIIMinizArchive {
           path_dest_filename,
           ", mz_zip error string: ",
           mz_zip_get_error_string(mz_zip_get_last_error(&_zip_archive)));
-#endif
     }
   }
 

@@ -13,14 +13,7 @@ as it exposes the underlying platform specific socket headers.
 
 #include <string>
 
-#ifdef _WIN32
-#include <mutex>
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
 #include <netinet/in.h>
-#endif
 
 namespace c10d::detail {
 

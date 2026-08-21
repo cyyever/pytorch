@@ -9,9 +9,6 @@
 
 
 #include <c10/util/error.h>
-#ifdef _WIN32
-#include <c10/util/Unicode.h>
-#endif
 
 #if defined(HAVE_MMAP)
 #include <fcntl.h>
@@ -22,8 +19,6 @@
 #if !defined(_MSC_VER) || defined(HAVE_MMAP)
 #include <sys/types.h>
 #include <unistd.h>
-#elif defined(_MSC_VER)
-#include <c10/util/win32-headers.h>
 #endif
 #include <fmt/format.h>
 
@@ -34,19 +29,11 @@ static constexpr int64_t map_alloc_alignment = 64;
 std::string NewProcessWideShmHandle() {
   static std::atomic<uint64_t> counter{0};
   static std::random_device rd;
-#ifdef _MSC_VER
-  return fmt::format(
-      "/torch_{}_{}_{}",
-      GetCurrentProcessId(),
-      rd(),
-      counter.fetch_add(1, std::memory_order_relaxed));
-#else
   return fmt::format(
       "/torch_{}_{}_{}",
       getpid(),
       rd(),
       counter.fetch_add(1, std::memory_order_relaxed));
-#endif
 }
 #if defined(_WIN32) || defined(HAVE_MMAP)
 
@@ -56,21 +43,12 @@ struct MapInfo {
 };
 
 constexpr const char* unknown_filename = "filename not specified";
-#ifdef _WIN32
-constexpr const char* unknown_eventname = "eventname not specified";
-#endif
 }  // namespace (anonymous)
 
 MapAllocator::MapAllocator(WithFd /*unused*/, std::string_view filename, int fd, int flags, size_t size)
   : filename_(filename.empty() ? unknown_filename : filename)
   , size_(0) // to be filled later
-#ifdef _WIN32
-  , handle_(INVALID_HANDLE_VALUE) // to be filled later
-  , event_(INVALID_HANDLE_VALUE) // to be filled later
-  , eventname_(filename.empty() ? unknown_eventname : (std::string(filename) + "_event"))
-#else
   , fd_(fd)
-#endif
 {
 
   if (!(flags & ALLOCATOR_MAPPED_SHARED) && !(flags & ALLOCATOR_MAPPED_SHAREDMEM)) {
@@ -79,11 +57,6 @@ MapAllocator::MapAllocator(WithFd /*unused*/, std::string_view filename, int fd,
   if ((flags ^ ALLOCATOR_MAPPED_EXCLUSIVE) == 0) {
     TORCH_CHECK(false, "ALLOCATOR_MAPPED_EXCLUSIVE flag requires opening the file in shared mode");
   }
-#ifdef _WIN32
-  if (fd != -1) {
-    TORCH_CHECK(false, "MapAllocator_newWithFd is unsupported on Windows");
-  }
-#endif
   flags_ = flags;
 
   // OK, now do the allocation
@@ -92,144 +65,6 @@ MapAllocator::MapAllocator(WithFd /*unused*/, std::string_view filename, int fd,
     return;
   }
 
-#ifdef _WIN32
-  if (flags_ & ALLOCATOR_MAPPED_SHAREDMEM) {
-    // Shadowing
-    const wchar_t *filename;
-    const wchar_t *eventname;
-    const std::wstring wFilename = c10::u8u16(filename_);
-    const std::wstring wEventname = c10::u8u16(eventname_);
-    LARGE_INTEGER hfilesz;
-
-    if (filename_[0] == '/') {
-      filename = wFilename.c_str() + 1;
-      eventname = wEventname.c_str() + 1;
-    } else {
-      filename = wFilename.c_str();
-      eventname = wEventname.c_str();
-    }
-
-    hfilesz.QuadPart = size;
-
-    if (flags_ & ALLOCATOR_MAPPED_EXCLUSIVE) {
-      event_ = CreateEventW(nullptr, FALSE, FALSE, eventname);
-    } else if (flags_ & ALLOCATOR_MAPPED_NOCREATE) {
-      event_ = OpenEventW(EVENT_ALL_ACCESS, FALSE, eventname);
-    } else {
-      TORCH_CHECK(false, "Expected either ALLOCATOR_MAPPED_EXCLUSIVE or ALLOCATOR_MAPPED_NOCREATE");
-    }
-
-    if (event_ == nullptr) {
-      TORCH_CHECK(false, "Couldn't open shared event: <", eventname, ">, error code: <", GetLastError(), ">");
-    }
-
-    if (flags_ & ALLOCATOR_MAPPED_EXCLUSIVE) {
-      handle_ = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, hfilesz.HighPart, hfilesz.LowPart, filename);
-    } else if (flags_ & ALLOCATOR_MAPPED_NOCREATE) {
-      handle_ = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, filename);
-    } else {
-      TORCH_CHECK(false, "Expected either ALLOCATOR_MAPPED_EXCLUSIVE or ALLOCATOR_MAPPED_NOCREATE");
-    }
-
-    if (handle_ == nullptr) {
-      TORCH_CHECK(false, "Couldn't open shared file mapping: <", filename, ">, error code: <", GetLastError(), ">");
-    }
-
-    size_ = size;
-    base_ptr_ = MapViewOfFile(handle_, FILE_MAP_ALL_ACCESS, 0, 0, size);
-    if (!base_ptr_) {
-      TORCH_CHECK(false, "Couldn't map view of shared file <", filename, ">, error code: <", GetLastError(), ">");
-    }
-  } else {
-
-    HANDLE hfile;
-    HANDLE hmfile;
-    LARGE_INTEGER hfilesz;
-
-    if (flags_ & ALLOCATOR_MAPPED_EXCLUSIVE) {
-      TORCH_CHECK(false, "exclusive file mapping is not supported on Windows");
-    }
-    if (flags_ & ALLOCATOR_MAPPED_NOCREATE) {
-      TORCH_CHECK(false, "file mapping without creation is not supported on Windows");
-    }
-    if (flags_ & ALLOCATOR_MAPPED_KEEPFD) {
-      TORCH_CHECK(false, "ALLOCATOR_MAPPED_KEEPFD not supported on Windows");
-    }
-    if (flags_ & ALLOCATOR_MAPPED_FROMFD) {
-      TORCH_CHECK(false, "ALLOCATOR_MAPPED_FROMFD not supported on Windows");
-    }
-
-    // Shadowing
-    const wchar_t *filename;
-    const std::wstring wFilename = c10::u8u16(filename_);
-
-    filename = wFilename.c_str();
-
-    /* open file */
-    /* FILE_FLAG_RANDOM_ACCESS ? */
-    if (flags_) {
-      hfile = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_WRITE|FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-      if (hfile == INVALID_HANDLE_VALUE) {
-        TORCH_CHECK(false, "could not open file <", filename_, "> in read-write mode; error code: <", GetLastError(), ">");
-      }
-    } else {
-      hfile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_WRITE|FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-      if (hfile == INVALID_HANDLE_VALUE) {
-        TORCH_CHECK(false, "could not open file <", filename_, "> in read-only mode; error code: <", GetLastError(), ">");
-      }
-    }
-
-    if (GetFileSizeEx(hfile, &hfilesz) == 0) {
-      TORCH_CHECK(false, "could not get file size: <", filename_, ">; error code: <", GetLastError(), ">");
-    }
-
-    if (size > 0) {
-      if (size > hfilesz.QuadPart) {
-        if (flags_) {
-          hfilesz.QuadPart = size;
-          if (SetFilePointerEx(hfile, hfilesz, NULL, FILE_BEGIN) == 0) {
-            CloseHandle(hfile);
-            TORCH_CHECK(false, "unable to stretch file <", filename_, "> to the right size; error code: <", GetLastError(), ">", filename_);
-          }
-          if (SetEndOfFile(hfile) == 0) {
-            CloseHandle(hfile);
-            TORCH_CHECK(false, "unable to write to file <", filename_, ">; error code: <", GetLastError(), ">");
-          }
-        } else {
-          CloseHandle(hfile);
-          TORCH_CHECK(false, "file <", filename_, "> size <", hfilesz.QuadPart, "> is smaller than the required mapping size <", size, ">; error code: <", GetLastError(), ">");
-        }
-      }
-    } else {
-      size = hfilesz.QuadPart;
-    }
-
-    size_ = size; /* if we are here, it must be the right size */
-
-    hfilesz.QuadPart = size_;
-
-    /* get map handle */
-    if (flags_) {
-      if ( (hmfile = CreateFileMappingW(hfile, NULL, PAGE_READWRITE, hfilesz.HighPart, hfilesz.LowPart, NULL)) == NULL ) {
-        TORCH_CHECK(false, "could not create a map on file <", filename_, ">; error code: <", GetLastError(), ">");
-      }
-    } else {
-      if ( (hmfile = CreateFileMappingW(hfile, NULL, PAGE_WRITECOPY, hfilesz.HighPart, hfilesz.LowPart, NULL)) == NULL ) {
-        TORCH_CHECK(false, "could not create a map on file <", filename_, ">; error code: <", GetLastError(), ">");
-      }
-    }
-
-    /* map the stuff */
-    if(flags_) {
-      base_ptr_ = MapViewOfFile(hmfile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-    } else {
-      base_ptr_ = MapViewOfFile(hmfile, FILE_MAP_COPY, 0, 0, 0);
-    }
-
-    CloseHandle(hfile);
-    CloseHandle(hmfile);
-  }
-#else /* _WIN32 */
   {
     /* open file */
     int fd{-1};
@@ -389,7 +224,6 @@ MapAllocator::MapAllocator(WithFd /*unused*/, std::string_view filename, int fd,
       TORCH_CHECK(false, "$ Torch: unable to mmap memory: you tried to mmap ", size_/1073741824, " GB.");
     }
   }
-#endif
   c10::reportMemoryUsageToProfiler(base_ptr_, size_, 0, size_, c10::Device(c10::DeviceType::CPU));
 }
 
@@ -397,27 +231,6 @@ MapAllocator::MapAllocator(std::string_view filename, int flags, size_t size)
   : MapAllocator(WITH_FD, filename, -1, flags, size)
 {}
 
-#ifdef _WIN32
-struct ReleaseContext {
-  HANDLE event;
-  HANDLE handle;
-  HANDLE wait;
-};
-static void CALLBACK WaitForReleaseHandle(PVOID lpParam, BOOLEAN TimerOrWaitFired)
-{
-  if (lpParam) {
-    ReleaseContext *ctx = (ReleaseContext *)lpParam;
-
-    SetEvent(ctx->event);
-    CloseHandle(ctx->event);
-    CloseHandle(ctx->handle);
-
-    UnregisterWait(ctx->wait);
-
-    delete ctx;
-  }
-}
-#endif
 
 void MapAllocator::close() {
   if (closed_) {
@@ -427,12 +240,6 @@ void MapAllocator::close() {
   if (base_ptr_ == nullptr) {
     return;
   }
-#ifdef _WIN32
-  if ((flags_ & ALLOCATOR_MAPPED_KEEPFD) || (flags_ & ALLOCATOR_MAPPED_SHAREDMEM))
-    CloseHandle(handle_);
-  if(UnmapViewOfFile(base_ptr_) == 0)
-    TORCH_CHECK(false, "could not unmap the shared memory file");
-#else /* _WIN32 */
   if (flags_ & ALLOCATOR_MAPPED_KEEPFD) {
     if (::close(fd_) == -1) {
       TORCH_CHECK(false, "could not close file descriptor ", fd_, " :", c10::utils::str_error(errno), " (", errno, ")" );
@@ -454,7 +261,6 @@ void MapAllocator::close() {
 #endif
     }
   }
-#endif /* _WIN32 */
 }
 
 #else /* defined(_WIN32) || defined(HAVE_MMAP) */
@@ -505,14 +311,6 @@ void RefcountedMapAllocator::initializeAlloc() {
   TORCH_CHECK(base_ptr_, "base_ptr_ is null");
   MapInfo *map_info = static_cast<MapInfo*>(base_ptr_);
 
-#ifdef _WIN32
-  ReleaseContext* r_ctx = new ReleaseContext;
-  r_ctx->handle = handle_;
-  r_ctx->event = event_;
-  r_ctx->wait = NULL;
-  BOOL can_wait = RegisterWaitForSingleObject(&r_ctx->wait, event_, WaitForReleaseHandle, (PVOID)r_ctx, INFINITE, WT_EXECUTEONLYONCE);
-  TORCH_CHECK(can_wait, "Couldn't register wait on event, error code: <", GetLastError(), ">");
-#endif
 
   if (flags_ & ALLOCATOR_MAPPED_EXCLUSIVE) {
     new (&map_info->refcount) std::atomic<int>(1);
@@ -529,15 +327,6 @@ void RefcountedMapAllocator::close() {
 
   void* data = base_ptr_;
 
-#ifdef _WIN32
-  MapInfo *info = (MapInfo*)data;
-  if (--info->refcount == 0) {
-    SetEvent(event_);
-  }
-  if(UnmapViewOfFile(data) == 0) {
-    TORCH_CHECK(false, "could not unmap the shared memory file");
-  }
-#else /* _WIN32 */
 
   MapInfo *info = static_cast<MapInfo*>(data);
   if (--info->refcount == 0) {
@@ -552,7 +341,6 @@ void RefcountedMapAllocator::close() {
   if (munmap(info, size_)) {
     TORCH_CHECK(false, "could not unmap the shared memory file ", filename_);
   }
-#endif /* _WIN32 */
 }
 
 void RefcountedMapAllocator::incref()

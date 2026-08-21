@@ -872,13 +872,11 @@ Value* Value::setDebugName(const std::string& name) {
     std::string replacement_name;
     do {
       std::stringstream ss;
-#ifndef _WIN32
       // Protect 12345 integer from becoming "1,2345" if some other process sets
       // global locale For more details see
       // https://github.com/pytorch/pytorch/issues/79583#issuecomment-1161260061
       static std::locale c_locale("C");
       ss.imbue(c_locale);
-#endif
       ss << name_base << '.' << suffix++;
       replacement_name = std::move(ss).str();
     } while (names.contains(replacement_name));

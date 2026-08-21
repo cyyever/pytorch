@@ -126,8 +126,6 @@ class GdsFile:
     """
 
     def __init__(self, filename: str, flags: int):
-        if sys.platform == "win32":
-            raise RuntimeError("GdsFile is not supported on this platform.")
         self.filename = filename
         self.flags = flags
         self.fd = os.open(filename, flags | os.O_DIRECT)  # type: ignore[attr-defined]

@@ -2,9 +2,7 @@
 
 #include <c10/macros/Export.h>
 
-#ifndef _WIN32
 #include <level_zero/ze_api.h>
-#endif
 
 namespace at::xpu {
 
@@ -43,11 +41,9 @@ namespace at::xpu {
 
 extern "C" typedef struct LevelZero {
 // Intel level zero is not defaultly available on Windows.
-#ifndef _WIN32
 #define CREATE_MEMBER(name) decltype(&name) name;
   AT_FORALL_ZE(CREATE_MEMBER)
 #undef CREATE_MEMBER
-#endif // _WIN32
 } LevelZero;
 
 } // namespace at::xpu

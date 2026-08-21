@@ -13,7 +13,7 @@ import generate_binary_build_matrix  # type: ignore[import]
 import jinja2
 
 
-Arch = Literal["windows", "linux", "macos"]
+Arch = Literal["linux", "macos"]
 
 GITHUB_DIR = Path(__file__).resolve().parent.parent
 
@@ -80,8 +80,6 @@ class BinaryBuildWorkflow:
             self.owners = ["oncall: releng"]
             if self.os in (OperatingSystem.MACOS, OperatingSystem.MACOS_ARM64):
                 self.owners.append("module: macos")
-            elif self.os in (OperatingSystem.WINDOWS, OperatingSystem.WINDOWS_ARM64):
-                self.owners.append("module: windows")
             # A single binary workflow bundles configs for every gpu_arch_type, so
             # add the accelerator-team owners for whichever ones the matrix includes.
             arches = {config.get("gpu_arch_type") for config in self.build_configs}
@@ -116,8 +114,6 @@ class BinaryBuildWorkflow:
 
 class OperatingSystem:
     LINUX = "linux"
-    WINDOWS = "windows"
-    WINDOWS_ARM64 = "windows-arm64"
     MACOS = "macos"
     MACOS_ARM64 = "macos-arm64"
     LINUX_AARCH64 = "linux-aarch64"
@@ -144,52 +140,6 @@ LINUX_BINARY_BUILD_WORFKLOWS = [
         libtorch_extraction_configs=generate_binary_build_matrix.generate_libtorch_extraction_configs(
             OperatingSystem.LINUX,
             _LINUX_WHEEL_CONFIGS,
-        ),
-    ),
-]
-
-_WINDOWS_WHEEL_CONFIGS = generate_binary_build_matrix.generate_wheels_matrix(
-    OperatingSystem.WINDOWS
-)
-_WINDOWS_ARM64_WHEEL_CONFIGS = generate_binary_build_matrix.generate_wheels_matrix(
-    OperatingSystem.WINDOWS_ARM64,
-    arches=["cpu"],
-    python_versions=["3.11", "3.12", "3.13"],
-)
-
-WINDOWS_BINARY_BUILD_WORKFLOWS = [
-    BinaryBuildWorkflow(
-        os=OperatingSystem.WINDOWS,
-        package_type="wheel",
-        build_configs=_WINDOWS_WHEEL_CONFIGS,
-        ciflow_config=CIFlowConfig(
-            labels={
-                LABEL_CIFLOW_BINARIES,
-                LABEL_CIFLOW_BINARIES_WHEEL,
-                LABEL_CIFLOW_BINARIES_LIBTORCH,
-            },
-            isolated_workflow=True,
-        ),
-        libtorch_extraction_configs=generate_binary_build_matrix.generate_libtorch_extraction_configs(
-            OperatingSystem.WINDOWS,
-            _WINDOWS_WHEEL_CONFIGS,
-        ),
-    ),
-    BinaryBuildWorkflow(
-        os=OperatingSystem.WINDOWS_ARM64,
-        package_type="wheel",
-        build_configs=_WINDOWS_ARM64_WHEEL_CONFIGS,
-        ciflow_config=CIFlowConfig(
-            labels={
-                LABEL_CIFLOW_BINARIES,
-                LABEL_CIFLOW_BINARIES_WHEEL,
-                LABEL_CIFLOW_BINARIES_LIBTORCH,
-            },
-            isolated_workflow=True,
-        ),
-        libtorch_extraction_configs=generate_binary_build_matrix.generate_libtorch_extraction_configs(
-            OperatingSystem.WINDOWS_ARM64,
-            _WINDOWS_ARM64_WHEEL_CONFIGS,
         ),
     ),
 ]
@@ -272,10 +222,6 @@ def main() -> None:
         (
             jinja_env.get_template("linux_binary_build_workflow.yml.j2"),
             S390X_BINARY_BUILD_WORKFLOWS,
-        ),
-        (
-            jinja_env.get_template("windows_binary_build_workflow.yml.j2"),
-            WINDOWS_BINARY_BUILD_WORKFLOWS,
         ),
         (
             jinja_env.get_template("macos_binary_build_workflow.yml.j2"),

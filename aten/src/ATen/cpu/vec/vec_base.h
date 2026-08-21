@@ -45,8 +45,6 @@
 
 #if defined(__GNUC__)
 #define __FORCE_INLINE __attribute__((always_inline)) inline
-#elif defined(_MSC_VER)
-#define __FORCE_INLINE __forceinline
 #endif
 
 #if defined(_MSC_FULL_VER)
@@ -62,8 +60,6 @@ Windows llvm will not have this definition.
 #ifdef CPU_CAPABILITY_AVX512
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(64)))
-#elif defined(_WIN32)
-#define __at_align__ __declspec(align(64))
 #else
 #define __at_align__
 #endif
@@ -74,8 +70,6 @@ Windows llvm will not have this definition.
 // SVE code expects 256-vectors; leave that set for SVE?
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(16)))
-#elif defined(_WIN32)
-#define __at_align__ __declspec(align(16))
 #else
 #define __at_align__
 #endif
@@ -83,8 +77,6 @@ Windows llvm will not have this definition.
 #else // CPU_CAPABILITY_AVX512
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(32)))
-#elif defined(_WIN32)
-#define __at_align__ __declspec(align(32))
 #else
 #define __at_align__
 #endif
@@ -1478,9 +1470,7 @@ VECTORIZED_SUPPORT_SCALARS_FOR_BINARY_FUNC(interleave2)
 
 template <typename src_T, typename dst_T>
 inline void convert(const src_T* src, dst_T* dst, int64_t n) {
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for ([[maybe_unused]] const auto i : c10::irange(n)) {
     *dst = c10::convert<dst_T>(c10::load(src));
     src++;

@@ -7,7 +7,6 @@
 
 #if defined(USE_XPU)
 // TODO: enable on Windows.
-#ifndef _WIN32
 #include <fmt/format.h>
 #include <filesystem>
 #include <fstream>
@@ -586,5 +585,4 @@ bool StaticXpuLauncher_init(PyObject* module) {
   }
   return true;
 }
-#endif
 #endif

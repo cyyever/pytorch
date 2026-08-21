@@ -485,9 +485,7 @@ inline at::vec::VectorizedN<scalar_t, N> div_floor_floating_vec(
     const at::vec::VectorizedN<scalar_t, N>& a,
     const at::vec::VectorizedN<scalar_t, N>& b) {
   at::vec::VectorizedN<scalar_t, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for (int i = 0; i < N; ++i) {
     result[i] = div_floor_floating_vec(a[i], b[i]);
   }

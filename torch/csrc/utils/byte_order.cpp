@@ -7,9 +7,6 @@
 #include <cstring>
 #include <vector>
 
-#if defined(_MSC_VER)
-#include <stdlib.h>
-#endif
 namespace {
 
 static void swapBytes16(void* ptr) {
@@ -47,8 +44,6 @@ static void swapBytes32(void* ptr) {
 static void swapBytes64(void* ptr) {
   uint64_t output = 0;
   memcpy(&output, ptr, sizeof(uint64_t));
-#if defined(_MSC_VER)
-  output = _byteswap_uint64(output);
 #elif defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
   output = __builtin_bswap64(output);
 #else

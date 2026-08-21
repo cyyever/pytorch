@@ -340,14 +340,12 @@ class intrusive_ptr final {
 //      std::is_base_of_v<intrusive_ptr_target, TTarget>,
 //      "intrusive_ptr can only be used for classes that inherit from
 //      intrusive_ptr_target.");
-#ifndef _WIN32
   // This static_assert triggers on MSVC
   //  error C2131: expression did not evaluate to a constant
   static_assert(
       // NOLINTNEXTLINE(misc-redundant-expression)
       NullType::singleton() == NullType::singleton(),
       "NullType must have a constexpr singleton() method");
-#endif
   static_assert(
       std::is_base_of_v<
           TTarget,
@@ -832,13 +830,11 @@ class weak_intrusive_ptr final {
   static_assert(
       std::is_base_of_v<intrusive_ptr_target, TTarget>,
       "intrusive_ptr can only be used for classes that inherit from intrusive_ptr_target.");
-#ifndef _WIN32
   // This static_assert triggers on MSVC
   //  error C2131: expression did not evaluate to a constant
   static_assert(
       NullType::singleton() == NullType::singleton(),
       "NullType must have a constexpr singleton() method");
-#endif
   static_assert(
       std::is_base_of_v<
           TTarget,
