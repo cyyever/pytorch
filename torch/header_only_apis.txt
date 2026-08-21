@@ -79,12 +79,10 @@ all
 concat_t
 contains
 drop_if_nonempty_t
-drop_t
 from_tuple_t
 head_t
 head_with_default_t
 size
-take_t
 to_tuple_t
 true_for_any_type
 typelist
