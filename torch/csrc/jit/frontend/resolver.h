@@ -20,7 +20,7 @@ struct Resolver {
   virtual ~Resolver() = default;
 
   // Resolve `name` to a TypePtr.
-  virtual TypePtr resolveType(const std::string& name, const SourceRange& loc) {
+  virtual at::TypePtr resolveType(const std::string& name, const SourceRange& loc) {
     return nullptr;
   }
 };

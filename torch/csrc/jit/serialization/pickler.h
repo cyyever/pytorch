@@ -7,6 +7,7 @@
 
 #include <ATen/Utils.h>
 #include <ATen/core/ivalue.h>
+#include <ATen/core/stack.h>
 #include <ATen/core/jit_type.h>
 #include <ATen/core/qualified_name.h>
 #include <c10/util/ArrayRef.h>

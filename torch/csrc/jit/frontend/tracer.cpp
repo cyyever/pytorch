@@ -178,24 +178,6 @@ Value* TracingState::getValue(const IValue& var) {
       return it->second;
     }
 
-    // Find torchbind classes
-    if (isCustomClass(var)) {
-      auto obj = Object(var.toObject());
-      auto qualname = obj.type()->name();
-      auto custom_class_type = getCustomClass(qualname->qualifiedName());
-      if (custom_class_type) {
-        auto capsule = var.toObject()->getAttr("capsule");
-        for (const auto i : c10::irange(env_stack.size())) {
-          auto& value_map = env_stack.at(env_stack.size() - 1 - i);
-          auto it = value_map.find(capsule);
-          if (it == value_map.end()) {
-            continue;
-          }
-          return it->second;
-        }
-      }
-    }
-
     if (var.isFuture()) {
       TORCH_CHECK(
           false,

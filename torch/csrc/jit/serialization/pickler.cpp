@@ -1,4 +1,7 @@
 #include <string>
+#include <ATen/core/class_type.h>
+#include <ATen/core/enum_type.h>
+#include <ATen/core/function.h>
 #include <type_traits>
 #include <utility>
 

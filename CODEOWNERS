@@ -816,14 +816,11 @@
 # /test/test_throughput_benchmark.py
 /torch/autograd/profiler* @scotts @ryanzhang22
 # /torch/autograd/profiler.py
-# /torch/autograd/profiler_legacy.py
 # /torch/autograd/profiler_util.py
 /torch/csrc/autograd/profiler* @scotts @ryanzhang22
 # /torch/csrc/autograd/profiler.h
 # /torch/csrc/autograd/profiler_kineto.cpp
 # /torch/csrc/autograd/profiler_kineto.h
-# /torch/csrc/autograd/profiler_legacy.cpp
-# /torch/csrc/autograd/profiler_legacy.h
 # /torch/csrc/autograd/profiler_python.cpp
 # /torch/csrc/autograd/profiler_python.h
 /torch/csrc/profiler/ @scotts @ryanzhang22

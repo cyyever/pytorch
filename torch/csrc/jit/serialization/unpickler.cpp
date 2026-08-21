@@ -6,6 +6,7 @@
 #include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/serialization/type_parser.h>
 #include <torch/csrc/jit/serialization/storage_context.h>
+#include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/jit/serialization/unpickler.h>
 #include <torch/csrc/utils/byte_order.h>
 #include <string>

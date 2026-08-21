@@ -1,4 +1,6 @@
 #include <ATen/ATen.h>
+#include <ATen/core/class_type.h>
+#include <ATen/core/function.h>
 #include <ATen/core/jit_type.h>
 
 #include <torch/csrc/jit/serialization/pickler_helper.h>
@@ -73,7 +75,7 @@ bool checkHasValidSetGetState(const c10::ClassType& cls) {
       set_schema.returns().size(),
       " return values");
   TORCH_CHECK(
-      set_schema.returns().at(0).type()->isSubtypeOf(*NoneType::get()),
+      set_schema.returns().at(0).type()->isSubtypeOf(*c10::NoneType::get()),
       "'__setstate__' must return None, but found value of type",
       set_schema.returns().at(0).type()->annotation_str());
 
