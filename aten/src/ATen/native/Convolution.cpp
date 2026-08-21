@@ -46,8 +46,6 @@
 #include <ATen/ops/_convolution_native.h>
 #include <ATen/ops/_mps_convolution.h>
 #include <ATen/ops/_mps_convolution_transpose.h>
-#include <ATen/ops/_nnpack_available.h>
-#include <ATen/ops/_nnpack_spatial_convolution.h>
 #include <ATen/ops/_slow_conv2d_backward.h>
 #include <ATen/ops/_unsafe_view.h>
 #include <ATen/ops/cat.h>
@@ -551,25 +549,7 @@ struct ConvParams {
 #endif
     return false;
   }
-  bool use_nnpack(const at::Tensor& input, const at::Tensor& weight) const  {
-#if AT_NNPACK_ENABLED()
-    return at::globalContext().userEnabledNNPACK() &&
-           at::_nnpack_available() &&
-           input.device().is_cpu() &&
-           input.scalar_type() == kFloat && // only on CPU Float Tensors
-           !is_dilated() && // or dilation
-           !transposed &&   // or transposed tensors
-           input.ndimension() == 4 && // must be in NCHW format
-           weight.ndimension() == 4 &&
-           (at::symint::size<T>(weight, 2) < 17) && (at::symint::size<T>(weight, 3) < 17) && // NNPACK only supports kernels up to 16x16
-           (padding[0] < at::symint::size<T>(weight, 2)) && (padding[1] < at::symint::size<T>(weight, 3)) // NNPACK only supports padding < kernel_size. See https://github.com/pytorch/pytorch/issues/90142.
-#if !defined(C10_MOBILE)
-           && at::symint::size<T>(input, 0) >= 16 // ensure large enough batch size to ensure perf, tuneable
-#endif
-       ;
-#endif
-    return false;
-  }
+  bool use_nnpack(const at::Tensor& /*input*/, const at::Tensor& /*weight*/) const { return false; }
   bool use_xnnpack(const at::Tensor& input, const at::Tensor& weight,
                    const at::OptionalArrayRef<T> bias_sizes_opt) const {
 #if defined(C10_MOBILE)
@@ -1441,11 +1421,7 @@ static at::Tensor _convolution_nogroup_backend(
   auto kernel_size = weight.sizes().slice(2);
   switch(backend) {
     case ConvBackend::NnpackSpatial:
-#if AT_NNPACK_ENABLED()
-      return at::_nnpack_spatial_convolution(input, weight, bias, params.padding, params.stride);
-#else
-      TORCH_INTERNAL_ASSERT(false, "NnpackSpatial backend was selected in PyTorch compiled without nnpack support");
-#endif
+      TORCH_INTERNAL_ASSERT(false, "NnpackSpatial backend was selected in a build without nnpack support");
     case ConvBackend::Slow2d:
       return at::thnn_conv2d(input, weight, kernel_size, bias, params.stride, params.padding);
     case ConvBackend::SlowDilated2d:

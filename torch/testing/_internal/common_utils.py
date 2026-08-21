@@ -64,7 +64,6 @@ import torch
 import torch.backends.cudnn
 import torch.backends.mkl
 import torch.backends.mps
-import torch.backends.xnnpack
 import torch.cuda
 from torch import Tensor
 from torch._C import ScriptDict, ScriptList  # type: ignore[attr-defined]
@@ -2825,7 +2824,6 @@ def _test_function(fn, device):
 
 def skipIfNoXNNPACK(fn):
     return lazy_skip_if(
-        lambda: not torch.backends.xnnpack.enabled,  # type: ignore[attr-defined]
         "XNNPACK must be enabled for these tests. Please build with USE_XNNPACK=1.",
     )(fn)
 

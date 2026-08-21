@@ -374,7 +374,6 @@ cmake_dependent_option(USE_NCCL_EP "Build NCCL EP contrib library" OFF
                        "USE_NCCL;USE_CUDA" OFF)
 cmake_dependent_option(USE_NVSHMEM "Use NVSHMEM" ON
                        "USE_DISTRIBUTED;USE_CUDA OR USE_ROCM;UNIX;NOT APPLE" OFF)
-option(USE_NNPACK "Use NNPACK" ON)
 cmake_dependent_option(USE_NUMA "Use NUMA. Only available on Linux." ON "LINUX"
                        OFF)
 cmake_dependent_option(USE_NVRTC "Use NVRTC. Only available if USE_CUDA is on."
@@ -384,7 +383,6 @@ option(USE_OPENMP "Use OpenMP for parallel code" ON)
 option(USE_PRECOMPILED_HEADERS "Use pre-compiled headers to accelerate build."
        OFF)
 
-option(USE_PYTORCH_QNNPACK "Use ATen/QNNPACK (quantized 8-bit operators)" ON)
 option(USE_EIGEN_SPARSE "Use Eigen Sparse Matrices" OFF)
 option(USE_SYSTEM_EIGEN_INSTALL
     "Use system Eigen instead of the one under third_party" OFF)
@@ -392,8 +390,6 @@ cmake_dependent_option(
     USE_VALGRIND "Use Valgrind. Only available on Linux." ON
     "LINUX" OFF)
 
-# option USE_XNNPACK: try to enable xnnpack by default.
-option(USE_XNNPACK "Use XNNPACK" OFF)
 option(USE_ROCM_KERNEL_ASSERT "Use Kernel Assert for ROCm" OFF)
 # Ensure that an ITT build is the default for x86 CPUs
 cmake_dependent_option(USE_ITT "Use Intel(R) VTune Profiler ITT functionality"
@@ -534,13 +530,8 @@ option(USE_SYSTEM_LIBS "Use all available system-provided libraries." OFF)
 option(USE_SYSTEM_CPUINFO "Use system-provided cpuinfo." OFF)
 option(USE_SYSTEM_SLEEF "Use system-provided sleef." OFF)
 option(USE_SYSTEM_GLOO "Use system-provided gloo." OFF)
-option(USE_SYSTEM_FP16 "Use system-provided fp16." OFF)
 option(USE_SYSTEM_PYBIND11 "Use system-provided PyBind11." OFF)
-option(USE_SYSTEM_PTHREADPOOL "Use system-provided pthreadpool." OFF)
-option(USE_SYSTEM_PSIMD "Use system-provided psimd." OFF)
-option(USE_SYSTEM_FXDIV "Use system-provided fxdiv." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
-option(USE_SYSTEM_XNNPACK "Use system-provided xnnpack." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
 option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
 if(USE_SYSTEM_LIBS)
@@ -548,12 +539,7 @@ if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_SLEEF ON)
   set(USE_SYSTEM_GLOO ON)
   set(USE_SYSTEM_EIGEN_INSTALL ON)
-  set(USE_SYSTEM_FP16 ON)
-  set(USE_SYSTEM_PTHREADPOOL ON)
-  set(USE_SYSTEM_PSIMD ON)
-  set(USE_SYSTEM_FXDIV ON)
   set(USE_SYSTEM_BENCHMARK ON)
-  set(USE_SYSTEM_XNNPACK ON)
   set(USE_SYSTEM_PYBIND11 ON)
   if(USE_NCCL)
     set(USE_SYSTEM_NCCL ON)
@@ -936,10 +922,6 @@ if(USE_MSLK)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_MSLK")
 endif()
 
-if(USE_PYTORCH_QNNPACK)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_QNNPACK")
-endif()
-
 # Enable sleef on macOS with Apple silicon by default
 if((${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64"))
   message(STATUS "Running on macOS with Apple silicon")
@@ -954,10 +936,6 @@ if((NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
 endif()
 
-
-if(USE_XNNPACK)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_XNNPACK")
-endif()
 
 if(TRACING_BASED)
   string(APPEND CMAKE_CXX_FLAGS " -DTRACING_BASED")

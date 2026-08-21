@@ -469,9 +469,6 @@ IF(USE_MSLK)
   endif()
 endif()
 
-# XNNPACK
-file(GLOB native_xnnpack CONFIGURE_DEPENDS "native/xnnpack/*.cpp")
-
 # Add files needed from jit folders
 append_filelist("jit_core_headers" ATen_CORE_HEADERS)
 append_filelist("jit_core_sources" ATen_CORE_SRCS)
@@ -483,7 +480,7 @@ set(
   ${native_sparse_cpp} ${native_nested_cpp}
   ${native_quantized_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
   ${native_transformers_cpp}
-  ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
+  ${native_utils_cpp} ${generated_sources} ${core_generated_sources}
   ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
 )
 
@@ -697,11 +694,6 @@ ADD_DEFINITIONS(-DUSE_EXTERNAL_MZCRC)
 
 if(NOT MSVC)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS m)
-endif()
-
-if(AT_NNPACK_ENABLED)
-  include_directories(${NNPACK_INCLUDE_DIRS})
-  list(APPEND ATen_CPU_DEPENDENCY_LIBS nnpack) # cpuinfo is added below
 endif()
 
 if(MKLDNN_FOUND)

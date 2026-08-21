@@ -1315,29 +1315,6 @@ static PyObject* THPModule_deterministicFillUninitializedMemory(
     Py_RETURN_FALSE;
 }
 
-static PyObject* THPModule_setUserEnabledNNPACK(
-    PyObject* _unused,
-    PyObject* arg) {
-  HANDLE_TH_ERRORS
-  TORCH_CHECK(
-      PyBool_Check(arg),
-      "set_enabled_NNPACK expects a bool, "
-      "but got ",
-      THPUtils_typename(arg));
-  at::globalContext().setUserEnabledNNPACK(Py_IsTrue(arg));
-  Py_RETURN_NONE;
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPModule_userEnabledNNPACK(
-    PyObject* _unused,
-    PyObject* noargs) {
-  if (at::globalContext().userEnabledNNPACK())
-    Py_RETURN_TRUE;
-  else
-    Py_RETURN_FALSE;
-}
-
 static PyObject* THPModule_setWarnAlways(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(
@@ -1735,15 +1712,6 @@ static PyObject* THPModule_supportedQEngines(
     PyList_SET_ITEM(list.get(), i, i64);
   }
   return list.release();
-}
-
-static PyObject* THPModule_isEnabledXNNPACK(
-    PyObject* _unused,
-    PyObject* noargs) {
-  if (at::globalContext().isXNNPACKAvailable())
-    Py_RETURN_TRUE;
-  else
-    Py_RETURN_FALSE;
 }
 
 static PyObject* THPModule_setCheckSparseTensorInvariants(
@@ -2190,8 +2158,6 @@ static std::initializer_list<PyMethodDef> TorchMethods = {
      THPModule_setDeterministicFillUninitializedMemory,
      METH_O,
      nullptr},
-    {"_get_nnpack_enabled", THPModule_userEnabledNNPACK, METH_NOARGS, nullptr},
-    {"_set_nnpack_enabled", THPModule_setUserEnabledNNPACK, METH_O, nullptr},
     {"_get_warnAlways", THPModule_warnAlways, METH_NOARGS, nullptr},
     {"_set_warnAlways", THPModule_setWarnAlways, METH_O, nullptr},
     {"_warn", THPModule_warn, METH_NOARGS, nullptr},
@@ -2312,7 +2278,6 @@ static std::initializer_list<PyMethodDef> TorchMethods = {
     {"_get_qengine", THPModule_qEngine, METH_NOARGS, nullptr},
     {"_set_qengine", THPModule_setQEngine, METH_O, nullptr},
     {"_supported_qengines", THPModule_supportedQEngines, METH_NOARGS, nullptr},
-    {"_is_xnnpack_enabled", THPModule_isEnabledXNNPACK, METH_NOARGS, nullptr},
     {"_set_check_sparse_tensor_invariants",
      THPModule_setCheckSparseTensorInvariants,
      METH_O,
