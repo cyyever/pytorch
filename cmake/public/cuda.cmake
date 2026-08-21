@@ -304,9 +304,6 @@ set_property(
 
 # Don't activate VC env again for Ninja generators with MSVC on Windows if CUDAHOSTCXX is not defined
 # by adding --use-local-env.
-if(MSVC AND CMAKE_GENERATOR STREQUAL "Ninja" AND NOT DEFINED ENV{CUDAHOSTCXX})
-  list(APPEND CUDA_NVCC_FLAGS "--use-local-env")
-endif()
 
 # setting nvcc arch flags
 torch_cuda_get_nvcc_gencode_flag(NVCC_FLAGS_EXTRA)
@@ -334,10 +331,6 @@ string(REPLACE ";" "," SUPPRESS_WARNING_FLAGS "${SUPPRESS_WARNING_FLAGS}")
 list(APPEND CUDA_NVCC_FLAGS -Xcudafe ${SUPPRESS_WARNING_FLAGS})
 
 set(CUDA_PROPAGATE_HOST_FLAGS_BLOCKLIST "-Werror")
-if(MSVC)
-  list(APPEND CUDA_NVCC_FLAGS "--Werror" "cross-execution-space-call")
-  list(APPEND CUDA_NVCC_FLAGS "--no-host-device-move-forward")
-endif()
 
 # Debug and Release symbol support
 if(MSVC)

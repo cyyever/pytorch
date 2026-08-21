@@ -354,10 +354,6 @@ if(USE_NNPACK OR USE_PYTORCH_QNNPACK OR USE_XNNPACK)
     caffe2_update_option(USE_XNNPACK OFF)
   else()
     # Disable unsupported NNPack combinations with MSVC
-    if(MSVC)
-      caffe2_update_option(USE_NNPACK OFF)
-      caffe2_update_option(USE_PYTORCH_QNNPACK OFF)
-    endif()
 
     set(CAFFE2_THIRD_PARTY_ROOT "${PROJECT_SOURCE_DIR}/third_party")
 
@@ -545,11 +541,6 @@ if(USE_XNNPACK AND NOT USE_SYSTEM_XNNPACK)
     set(__caffe2_CMAKE_POSITION_INDEPENDENT_CODE_FLAG ${CMAKE_POSITION_INDEPENDENT_CODE})
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-    if(WIN32)
-      # Disable libm dependency explicitly to avoid symbol conflict for XNNPACK as
-      # Windows runtime has provided the math functions - #134989
-      set(XNNPACK_BUILD_WITH_LIBM OFF CACHE BOOL "")
-    endif()
 
     add_subdirectory(
       "${XNNPACK_SOURCE_DIR}"
@@ -909,10 +900,6 @@ if(USE_OPENMP AND NOT TARGET caffe2::openmp)
     add_library(caffe2::openmp INTERFACE IMPORTED)
     target_link_libraries(caffe2::openmp INTERFACE OpenMP::OpenMP_CXX)
     list(APPEND Caffe2_DEPENDENCY_LIBS caffe2::openmp)
-    if(MSVC AND OpenMP_CXX_LIBRARIES MATCHES ".*libiomp5md\\.lib.*")
-      target_compile_definitions(caffe2::openmp INTERFACE _OPENMP_NOFORCE_MANIFEST)
-      target_link_options(caffe2::openmp INTERFACE "/NODEFAULTLIB:vcomp")
-    endif()
   else()
     message(WARNING "Not compiling with OpenMP. Suppress this warning with -DUSE_OPENMP=OFF")
     caffe2_update_option(USE_OPENMP OFF)
@@ -1010,12 +997,6 @@ if(USE_ROCM)
     elseif(EXISTS "${ROCM_PATH}/lib/llvm/amdgcn/bitcode")
       file(TO_CMAKE_PATH "${ROCM_PATH}/lib/llvm/amdgcn/bitcode" _rocm_device_lib_path)
       string(APPEND CMAKE_HIP_FLAGS " --rocm-device-lib-path=${_rocm_device_lib_path}")
-    endif()
-    if(WIN32)
-      add_definitions(-DROCM_ON_WINDOWS)
-      list(APPEND HIP_CXX_FLAGS -fms-extensions)
-      # Suppress warnings about dllexport.
-      list(APPEND HIP_CXX_FLAGS -Wno-ignored-attributes)
     endif()
     add_definitions(-DROCM_VERSION=${ROCM_VERSION_DEV_INT})
     add_definitions(-DTORCH_HIP_VERSION=${TORCH_HIP_VERSION})

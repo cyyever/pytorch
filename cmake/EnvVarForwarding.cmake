@@ -275,9 +275,6 @@ if(Python_EXECUTABLE)
     # <prefix>/lib heuristic resolves <prefix>/Library/lib (where MKL,
     # OpenSSL, libiomp5md, etc. live in conda-on-Windows installs).
     list(GET _py_paths 0 _py_prefix)
-    if(WIN32 AND EXISTS "${_py_prefix}/Library")
-      list(PREPEND _py_paths "${_py_prefix}/Library")
-    endif()
     list(PREPEND CMAKE_PREFIX_PATH ${_py_paths})
     # Preserve paths from the CMAKE_PREFIX_PATH environment variable.
     # Setting the cmake variable shadows the env var, so we must merge it in

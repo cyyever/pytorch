@@ -165,10 +165,6 @@ if(NOT __AOTRITON_INCLUDED)
     else()
       SET(RECURSIVE "ON")
     endif()
-    if(WIN32)
-      message(STATUS "Building AOTriton Windows dependencies")
-      aotriton_build_windows_dependencies(dlfcn-win32_external xz_external dlfcn-win32_DIR liblzma_DIR)
-    endif()
     message(STATUS "PYTORCH_ROCM_ARCH ${PYTORCH_ROCM_ARCH}")
 
     ExternalProject_Add(${project}
@@ -193,9 +189,6 @@ if(NOT __AOTRITON_INCLUDED)
       USES_TERMINAL_BUILD TRUE
       USES_TERMINAL_INSTALL TRUE
     )
-    if(WIN32)
-      add_dependencies(${project} dlfcn-win32_external xz_external)
-    endif()
   endfunction()
 
   set(__AOTRITON_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
@@ -247,14 +240,6 @@ if(NOT __AOTRITON_INCLUDED)
     set(__BUILD_COMMANDS "")
 
     # On Windows, we need custom tar extraction with UTF-8 support
-    if(WIN32)
-      set(__DOWNLOAD_NO_EXTRACT "DOWNLOAD_NO_EXTRACT;TRUE")
-      set(__BUILD_COMMANDS
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${__AOTRITON_EXTRACT_DIR}"
-        COMMAND tar --options hdrcharset=UTF-8 -xf "${__AOTRITON_DOWNLOAD_DIR}/${__AOTRITON_FILE}" -C "${__AOTRITON_EXTRACT_DIR}"
-      )
-      set(__AOTRITON_INSTALL_SOURCE_DIR ${__AOTRITON_EXTRACT_DIR}/aotriton)
-    endif()
 
     ExternalProject_Add(${project}
       URL "${__AOTRITON_URL}"

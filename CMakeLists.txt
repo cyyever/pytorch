@@ -518,29 +518,6 @@ if(USE_CCACHE)
   endif()
 endif()
 
-# On Windows platform, if user does not install libuv in build conda env and
-# does not set libuv_ROOT environment variable. Set USE_DISTRIBUTED to OFF.
-if(WIN32)
-  if(USE_DISTRIBUTED AND NOT DEFINED ENV{libuv_ROOT})
-    find_library(
-      libuv_tmp_LIBRARY
-      NAMES uv libuv
-      HINTS $ENV{CONDA_PREFIX}\\Library $ENV{PREFIX}\\Library
-      PATH_SUFFIXES lib
-      NO_DEFAULT_PATH)
-    if(NOT libuv_tmp_LIBRARY)
-      set(USE_DISTRIBUTED OFF)
-      set(USE_GLOO OFF)
-      message(
-        WARNING
-          "Libuv is not installed in current conda env. Set USE_DISTRIBUTED to OFF. "
-          "Please run command 'conda install -c conda-forge libuv=1.51' to install libuv."
-      )
-    else()
-      set(ENV{libuv_ROOT} ${libuv_tmp_LIBRARY}/../../)
-    endif()
-  endif()
-endif()
 
 if(USE_GLOO_WITH_OPENSSL)
   set(USE_TCP_OPENSSL_LOAD
@@ -646,10 +623,6 @@ if(MSVC)
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler /Zc:__cplusplus -Xcompiler /Zc:preprocessor")
 
   set(CMAKE_NINJA_CMCLDEPS_RC OFF)
-  if(MSVC_Z7_OVERRIDE)
-    # CMake set debug flags to use /Z7
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
-  endif()
   foreach(
     flag_var
     CMAKE_C_FLAGS
@@ -870,10 +843,6 @@ if(USE_FBGEMM AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
 endif()
 
 
-if(MSVC)
-  # The source code is in utf-8 encoding
-  append_cxx_flag_if_supported("/utf-8" CMAKE_CXX_FLAGS)
-endif()
 
 # Note for ROCM platform: 1. USE_ROCM is always ON until
 # include(cmake/Dependencies.cmake) 2. USE_CUDA will become OFF during
