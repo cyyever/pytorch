@@ -565,6 +565,7 @@ DEFINE_DISPATCH(index_fill_stub);
 DEFINE_DISPATCH(index_copy_stub);
 DEFINE_DISPATCH(index_put_stub);
 DEFINE_DISPATCH(index_put_with_sort_stub);
+DEFINE_DISPATCH(index_put_with_sort_quantized_stub);
 DEFINE_DISPATCH(put_stub);
 DEFINE_DISPATCH(take_stub);
 DEFINE_DISPATCH(masked_fill_stub);
