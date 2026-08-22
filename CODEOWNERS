@@ -376,10 +376,6 @@
 # /torch/csrc/functionalization/
 # /torch/csrc/fx/
 # /torch/csrc/instruction_counter/
-# /torch/csrc/itt.cpp
-# /torch/csrc/itt.h
-# /torch/csrc/itt_wrapper.cpp
-# /torch/csrc/itt_wrapper.h
 # /torch/csrc/monitor/
 # /torch/csrc/multiprocessing/
 # /torch/csrc/python_headers.h
@@ -513,7 +509,6 @@
 # /test/test_import_stats.py
 # /test/test_indexing.py
 # /test/test_inspect_utils.py
-# /test/test_itt.py
 # /test/test_kernel_launch_checks.py
 # /test/test_legacy_vmap.py
 # /test/test_license.py

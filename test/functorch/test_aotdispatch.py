@@ -4261,11 +4261,11 @@ def forward(self, tangents_1):
             torch.rand((1, 256), dtype=torch.float32, device="cuda"),
             torch.rand((30, 256), dtype=torch.float16, device="cuda"),
         ]
-        with torch.cuda.amp.autocast(enabled=True):
+        with torch.amp.autocast("cuda", enabled=True):
             self.verify_aot_autograd(f, args)
 
         args = [e.requires_grad_(True) for e in args]
-        with torch.cuda.amp.autocast(enabled=True):
+        with torch.amp.autocast("cuda", enabled=True):
             self.verify_aot_autograd(f, args)
 
     @unittest.skipIf(not torch.cuda.is_available(), "CUDA is unavailable")
@@ -6957,7 +6957,7 @@ def forward(self, primals_1, tangents_1):
         aot_mod = memory_efficient_fusion(mod)
 
         # Ensure that AOT Autograd works with AMP
-        with torch.cuda.amp.autocast(True):
+        with torch.amp.autocast("cuda", True):
             res = aot_mod(x)
         res.sum().backward()
 

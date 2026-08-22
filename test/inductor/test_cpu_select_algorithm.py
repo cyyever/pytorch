@@ -472,7 +472,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
         ).to(memory_format=torch.channels_last)
 
         mod = M(bias=bias, has_non_epilogue_users=has_non_epilogue_users).eval()
-        with verify(dtype) as (atol, rtol), torch.cpu.amp.autocast():
+        with verify(dtype) as (atol, rtol), torch.amp.autocast("cpu"):
             self.common(
                 mod,
                 (
@@ -670,7 +670,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
         mod = M(bias=bias).eval()
         with (
             verify(dtype) as (atol, rtol),
-            torch.cpu.amp.autocast(enabled=dtype == torch.bfloat16),
+            torch.amp.autocast("cpu", enabled=dtype == torch.bfloat16),
         ):
             self.common(
                 mod,
@@ -1044,7 +1044,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
         input_ids = torch.randint(0, 128, (batch_size, in_features))
         view_9 = torch.randn(batch_size, in_features, seq_lens)
         mod = M(bias=bias).eval()
-        with verify(dtype) as (atol, rtol), torch.cpu.amp.autocast():
+        with verify(dtype) as (atol, rtol), torch.amp.autocast("cpu"):
             self.common(
                 mod,
                 (

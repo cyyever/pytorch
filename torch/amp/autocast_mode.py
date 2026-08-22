@@ -255,7 +255,7 @@ class autocast:
         if enabled:
             # Special case for CUDA AMP and bfloat16 support
             if self.device == "cuda":
-                if torch.cuda.amp.common.amp_definitely_not_available():
+                if torch.amp.common.amp_definitely_not_available():
                     warnings.warn(
                         "CUDA is not available or torch_xla is imported. Disabling autocast.",
                         stacklevel=2,

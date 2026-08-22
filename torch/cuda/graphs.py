@@ -1424,7 +1424,7 @@ def make_graphed_callables(
 
     .. warning::
         The automatic mixed precision is supported in :func:`~torch.cuda.make_graphed_callables` only with disabled
-        caching. The context manager `torch.cuda.amp.autocast()` must have `cache_enabled=False`.
+        caching. The context manager `torch.amp.autocast("cuda")` must have `cache_enabled=False`.
     """
     if torch.is_autocast_enabled() and torch.is_autocast_cache_enabled():
         raise RuntimeError(

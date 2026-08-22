@@ -5549,7 +5549,7 @@ class TestTorchDeviceType(TestCase):
         for lazy_init_scale in try_lazy_inits:
             a = GradScaler(init_scale=3., growth_factor=4., backoff_factor=.5, growth_interval=2)
             if device.type == "cuda":
-                self.assertTrue(not a.is_enabled() if torch.cuda.amp.common.amp_definitely_not_available() else a.is_enabled())
+                self.assertTrue(not a.is_enabled() if torch.amp.common.amp_definitely_not_available() else a.is_enabled())
             else:
                 self.assertTrue(a.is_enabled())
             if lazy_init_scale:
@@ -6159,7 +6159,7 @@ class TestTorchDeviceType(TestCase):
     @onlyNativeDeviceTypes
     def test_grad_scaler_deprecated_warning(self, device):
         device = torch.device(device)
-        GradScaler = torch.cuda.amp.GradScaler if "cuda" == device.type else torch.cpu.amp.GradScaler
+        GradScaler = torch.amp.GradScaler("cuda") if "cuda" == device.type else torch.amp.GradScaler("cpu")
 
         with self.assertWarnsRegex(
             FutureWarning,

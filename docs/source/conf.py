@@ -435,11 +435,6 @@ coverage_ignore_functions = [
     # torch.backends.cudnn.rnn
     "get_cudnn_mode",
     "init_dropout_state",
-    # torch.cuda.amp.autocast_mode
-    "custom_bwd",
-    "custom_fwd",
-    # torch.cuda.amp.common
-    "amp_definitely_not_available",
     # torch.cuda.nccl
     "all_gather",
     "all_reduce",

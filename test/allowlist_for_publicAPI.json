@@ -618,10 +618,6 @@
     "defaultdict",
     "overload"
   ],
-  "torch.distributed.launch": [
-    "get_args_parser",
-    "run"
-  ],
   "torch.distributed.logging_handlers": [
     "C10D_CATEGORY",
     "Dict",

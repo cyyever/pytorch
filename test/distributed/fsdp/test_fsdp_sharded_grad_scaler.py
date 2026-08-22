@@ -8,7 +8,7 @@ import unittest
 
 import torch
 from torch import distributed as dist
-from torch.cuda.amp.common import amp_definitely_not_available
+from torch.amp.common import amp_definitely_not_available
 from torch.distributed.fsdp import CPUOffload, MixedPrecision
 from torch.distributed.fsdp.fully_sharded_data_parallel import (
     FullyShardedDataParallel as FSDP,

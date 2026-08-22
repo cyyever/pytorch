@@ -485,7 +485,7 @@ class DistributedDataParallel(Module, Joinable):
         >>> torch.distributed.init_process_group(device_id=i)
 
     In order to spawn up multiple processes per node, you can use either
-    ``torch.distributed.launch`` or ``torch.multiprocessing.spawn``.
+    ``torchrun`` or ``torch.multiprocessing.spawn``.
 
     .. note::
         Please refer to `PyTorch Distributed Overview <https://pytorch.org/tutorials/beginner/dist_overview.html>`__

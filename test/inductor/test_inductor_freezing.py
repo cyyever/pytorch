@@ -1030,7 +1030,7 @@ if HAS_CPU and not torch.backends.mps.is_available():
     class FreezingCpuTests(TestCase):
         common = check_model
         device = "cpu"
-        autocast = torch.cpu.amp.autocast
+        autocast = functools.partial(torch.amp.autocast, "cpu")
 
     copy_tests(OptimizeForInferenceTemplate, FreezingCpuTests, "cpu")
 

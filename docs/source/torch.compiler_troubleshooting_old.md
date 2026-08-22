@@ -426,7 +426,7 @@ args = [((200, 200), (200, 1), torch.float32, 'cpu', False)]
 args = [rand_strided(sh, st, dt, dev).requires_grad_(rg) for (sh, st, dt, dev, rg) in args]
 
 
-with torch.cuda.amp.autocast(enabled=False):
+with torch.amp.autocast("cuda", enabled=False):
     ref = run_fwd_maybe_bwd(mod, args)
     res = run_fwd_maybe_bwd(opt_mod, args)
 ```

@@ -9887,11 +9887,11 @@ class TestCudaOptims(TestCase):
                     grads_graphed = [[g.clone() for g in gs] for gs in grads]
 
                 # Gradient Scaler
-                scaler_for_control = torch.cuda.amp.GradScaler(init_scale=128.0)
+                scaler_for_control = torch.amp.GradScaler("cuda", init_scale=128.0)
                 with torch.no_grad():
                     scaler_for_control._lazy_init_scale_growth_tracker(device)
 
-                scaler_for_graphed = torch.cuda.amp.GradScaler()
+                scaler_for_graphed = torch.amp.GradScaler("cuda")
                 scaler_for_graphed.load_state_dict(scaler_for_control.state_dict())
                 with torch.no_grad():
                     scaler_for_graphed._lazy_init_scale_growth_tracker(device)
@@ -10540,39 +10540,6 @@ class TestCudaAutocast(TestAutocast):
         loss = output.sum()
         loss.backward()
 
-    def test_autocast_custom_deprecated_warning(self):
-        with warnings.catch_warnings(record=True) as w:
-
-            class MyMM(torch.autograd.Function):
-                @staticmethod
-                @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-                def forward(ctx, x, y):
-                    ctx.save_for_backward(x, y)
-                    self.assertFalse(torch.is_autocast_enabled())
-                    return x + y
-
-                @staticmethod
-                @torch.cuda.amp.custom_bwd
-                def backward(ctx, grad):
-                    _, _ = ctx.saved_tensors
-                    self.assertFalse(torch.is_autocast_enabled())
-                    return grad, grad
-
-        self.assertRegex(
-            str(w[0].message), r"`torch.cuda.amp.custom_fwd\(args...\)` is deprecated."
-        )
-        self.assertRegex(
-            str(w[1].message), r"`torch.cuda.amp.custom_bwd\(args...\)` is deprecated."
-        )
-
-        mymm = MyMM.apply
-        x = torch.randn(3, 3, requires_grad=True)
-        y = torch.randn(3, 3, requires_grad=True)
-        with torch.amp.autocast("cuda"):
-            output = mymm(x, y)
-            loss = output.sum()
-        loss.backward()
-
     def test_autocast_cat_jit(self):
         # Reported at https://github.com/pytorch/pytorch/issues/38958
 
@@ -10774,14 +10741,6 @@ class TestCudaAutocast(TestAutocast):
             self.assertTrue(output.requires_grad)
             self.assertTrue(output.dtype is torch.float16)
             output.sum().backward()
-
-    def test_cuda_autocast_deprecated_warning(self):
-        with self.assertWarnsRegex(
-            FutureWarning,
-            r"`torch.cuda.amp.autocast\(args...\)` is deprecated. Please use `torch.amp.autocast\('cuda', args...\)` instead.",
-        ):
-            with torch.cuda.amp.autocast():
-                _ = torch.ones(10)
 
 
 class TestCompileKernel(TestCase):
