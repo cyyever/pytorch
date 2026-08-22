@@ -761,6 +761,7 @@ aten_native_source_non_codegen_list = [
     "aten/src/ATen/native/quantized/cpu/fused_obs_fake_quant.cpp",
     "aten/src/ATen/native/quantized/cpu/IntReprQuant.cpp",
     "aten/src/ATen/native/quantized/cpu/MakePerTensorQuantizedTensor.cpp",
+    "aten/src/ATen/native/quantized/cpu/kernels/QuantizedOpKernels.cpp",
     "aten/src/ATen/native/quantized/Copy.cpp",
     "aten/src/ATen/native/quantized/QTensor.cpp",
     "aten/src/ATen/native/quantized/TensorFactories.cpp",
