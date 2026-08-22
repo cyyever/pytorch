@@ -871,11 +871,11 @@ endif()
 
 # Use ld.gold if available, fall back to ld.bfd (the default ld) if not
 if(USE_GOLD_LINKER)
-    execute_process(
+  execute_process(
       COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
       ERROR_QUIET
       OUTPUT_VARIABLE LD_VERSION)
-    if(NOT "${LD_VERSION}" MATCHES "GNU gold")
+  if(NOT "${LD_VERSION}" MATCHES "GNU gold")
       message(
         WARNING
           "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
@@ -889,7 +889,6 @@ if(USE_GOLD_LINKER)
       set(CMAKE_MODULE_LINKER_FLAGS
           "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
     endif()
-  endif()
 endif()
 
 append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
