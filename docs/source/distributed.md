@@ -58,9 +58,6 @@ for a brief introduction to all features related to distributed training.
 .. autofunction:: register_rendezvous_handler
 ```
 
-```{eval-rst}
-.. currentmodule:: torch.distributed.algorithms.model_averaging.utils
-```
 
 ```{eval-rst}
 .. autofunction:: average_parameters
@@ -1794,9 +1791,6 @@ This module is experimental and subject to change.
 .. py:module:: torch.distributed.algorithms.ddp_comm_hooks
 ```
 
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.model_averaging
-```
 
 ```{eval-rst}
 .. py:module:: torch.distributed.elastic
@@ -1838,33 +1832,18 @@ This module is experimental and subject to change.
 .. py:module:: torch.distributed.algorithms.ddp_comm_hooks.optimizer_overlap_hooks
 ```
 
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.ddp_comm_hooks.post_localSGD_hook
-```
 
 ```{eval-rst}
 .. py:module:: torch.distributed.algorithms.ddp_comm_hooks.powerSGD_hook
 ```
 
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.ddp_comm_hooks.quantization_hooks
-```
 
 ```{eval-rst}
 .. py:module:: torch.distributed.algorithms.join
 ```
 
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.model_averaging.averagers
-```
 
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.model_averaging.hierarchical_model_averager
-```
 
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.model_averaging.utils
-```
 
 ```{eval-rst}
 .. py:module:: torch.distributed.argparse_util
@@ -2142,9 +2121,6 @@ This module is experimental and subject to change.
 .. py:module:: torch.distributed.optim.optimizer
 ```
 
-```{eval-rst}
-.. py:module:: torch.distributed.optim.post_localSGD_optimizer
-```
 
 ```{eval-rst}
 .. py:module:: torch.distributed.optim.utils

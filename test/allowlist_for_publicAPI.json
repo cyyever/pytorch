@@ -323,12 +323,6 @@
     "dataclass",
     "no_type_check"
   ],
-  "torch.distributed.algorithms.model_averaging.hierarchical_model_averager": [
-    "Dict",
-    "Iterable",
-    "OrderedDict",
-    "Union"
-  ],
   "torch.distributed.argparse_util": [
     "Action"
   ],
@@ -1925,9 +1919,7 @@
     "argument_validation",
     "default_collate",
     "default_convert",
-    "functional_datapipe",
     "get_worker_info",
-    "guaranteed_datapipes_determinism",
     "non_deterministic",
     "runtime_validation",
     "runtime_validation_disabled"
@@ -1936,17 +1928,6 @@
     "default_collate",
     "default_convert",
     "get_worker_info"
-  ],
-  "torch.utils.data.datapipes.dataframe": [
-    "DFIterDataPipe"
-  ],
-  "torch.utils.data.datapipes.dataframe.dataframe_wrapper": [
-    "Any",
-    "Optional"
-  ],
-  "torch.utils.data.datapipes.utils.snapshot": [
-    "IterDataPipe",
-    "apply_random_seed"
   ],
   "torch.utils.dlpack": [
     "Any",

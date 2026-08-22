@@ -7,8 +7,6 @@ from typing import Any, overload
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.distributed._shard.sharded_tensor import ShardedTensor
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 
 
 __all__: list[str] = []
@@ -26,7 +24,7 @@ class _NamedOptimizer(optim.Optimizer):
     pass in the FQN of each parameters.
 
     Args:
-        named_parameters (Mapping[str, Union[torch.Tensor, ShardedTensor]]):
+        named_parameters (Mapping[str, torch.Tensor]):
             Mapping from FQN to parameter.
         optimizer_class (optim.Optimizer):
             The class of optimizer to instantiate.
@@ -62,7 +60,7 @@ class _NamedOptimizer(optim.Optimizer):
 
     def __init__(
         self,
-        named_parameters: Mapping[str, torch.Tensor | ShardedTensor],
+        named_parameters: Mapping[str, torch.Tensor],
         optimizer_class: optim.Optimizer,
         param_groups: Collection[Mapping[str, Any]] | None = None,
         module: nn.Module | None = None,
@@ -219,20 +217,7 @@ class _NamedOptimizer(optim.Optimizer):
                     )
 
                 src_state_val = state[param_key][state_key]
-                if isinstance(state_val, ShardedTensor):
-                    if not isinstance(src_state_val, ShardedTensor):
-                        raise AssertionError
-                    num_shards = len(state_val.local_shards())
-                    num_new_shards = len(src_state_val.local_shards())
-                    if num_shards != num_new_shards:
-                        raise ValueError(
-                            f"Expects equal number of shards as {num_new_shards} but found {num_shards} for {param_key}/{state_key}"
-                        )
-                    for shard, src_shard in zip(
-                        state_val.local_shards(), src_state_val.local_shards()
-                    ):
-                        shard.tensor.detach().copy_(src_shard.tensor)
-                elif isinstance(state_val, torch.Tensor):
+                if isinstance(state_val, torch.Tensor):
                     if not isinstance(src_state_val, torch.Tensor):
                         raise AssertionError
                     state_val.detach().copy_(src_state_val)
@@ -312,12 +297,6 @@ class _NamedOptimizer(optim.Optimizer):
         self.step(closure=None)
 
     def _pre_load_state_dict(self, state_dict: dict[str, Any]) -> dict[str, Any]:
-        # TODO(chienchin): This API should be FSDP agnostic and should support
-        # general user hooks.
-        if isinstance(self.module, FSDP):
-            return FSDP.optim_state_dict_to_load(
-                self.module, self._optimizer, state_dict, is_named_optimizer=True
-            )
         return state_dict
 
     def _post_state_dict(self, state_dict: dict[str, Any]) -> dict[str, Any]:
