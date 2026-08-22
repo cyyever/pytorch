@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ATen/core/class_type.h>
 #include <ATen/core/functional.h>
 #include <ATen/core/ivalue.h>
 #include <sstream>
