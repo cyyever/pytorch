@@ -75,8 +75,8 @@ def load(
     costs).
 
     Each rank will try to read the least amount of data necessary
-    to fulfill the requested `state_dict`. When loading :class:`ShardedTensor`
-    or :class:`DTensor` instances, each rank only reads data for their local shards.
+    to fulfill the requested `state_dict`. When loading :class:`DTensor`
+    instances, each rank only reads data for their local shards.
 
     For each ``Stateful`` object (having both a ``state_dict`` and a ``load_state_dict``),
     load will first call ``state_dict`` before attempting deserialization, followed by
@@ -98,8 +98,7 @@ def load(
     .. note:
         If no process group is initialized, this function will assume the intent
         is to load a checkpoint into the local process. This can be useful in the
-        case of local inference, and when using regular Tensors (as opposed to DTensor
-         or ShardedTensor)
+        case of local inference, and when using regular Tensors (as opposed to DTensor)
 
     .. note:
         Rank 0 is assumed to be the coordinator rank.
@@ -344,8 +343,7 @@ def _load_state_dict_from_keys(
     .. note:
         If no process group is initialized, this function will assume the intent
         is to load a checkpoint into the local process. This can be useful in the
-        case of local inference, and when using regular Tensors (as opposed to DTensor
-         or ShardedTensor)
+        case of local inference, and when using regular Tensors (as opposed to DTensor)
 
     .. note:
         Rank 0 is assumed to be the coordinator rank.

@@ -54,4 +54,3 @@ reveal_type(torch.randn_like(c))  # E: {Tensor}
 
 # randperm
 reveal_type(torch.randperm(4))  # E: {Tensor}
-

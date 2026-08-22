@@ -54,7 +54,6 @@ fx
 fx.experimental
 torch.hub <hub>
 torch.linalg <linalg>
-torch.monitor <monitor>
 torch.signal <signal>
 torch.special <special>
 torch.overrides

@@ -6,11 +6,6 @@ from typing import Any, cast
 
 import torch
 import torch.distributed as dist
-import torch.futures
-import torch.nn
-from torch.distributed._shard import sharded_tensor
-from torch.distributed._shard.sharded_tensor import ShardedTensor, state_dict_hook
-from torch.distributed._shard.sharding_spec import ChunkShardingSpec
 from torch.distributed.checkpoint import (
     CheckpointException,
     load_state_dict,
@@ -31,14 +26,17 @@ from torch.distributed.checkpoint.planner import (
     SavePlanner,
 )
 from torch.distributed.checkpoint.storage import WriteResult
+from torch.distributed.device_mesh import init_device_mesh
+from torch.distributed.tensor import distribute_tensor
+from torch.distributed.tensor.placement_types import Shard
 from torch.futures import Future
 from torch.testing._internal.common_distributed import (
     requires_accelerator_dist_backend,
     skip_if_lt_x_gpu,
 )
 from torch.testing._internal.common_utils import run_tests, TEST_WITH_DEV_DBG_ASAN
-from torch.testing._internal.distributed._shard.sharded_tensor import (
-    ShardedTensorTestBase,
+from torch.testing._internal.distributed._tensor.common_dtensor import (
+    DTensorTestBase,
     with_comms,
 )
 
@@ -55,27 +53,7 @@ if TEST_WITH_DEV_DBG_ASAN:
     sys.exit(0)
 
 
-class TestModule(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.sharded: ShardedTensor = sharded_tensor.zeros(self.spec(), 4, 4)
-        self.regular = torch.nn.Parameter(torch.ones(4, 4))
-        self.extra_sharded: ShardedTensor | None = None
-        self.extra_param: torch.nn.Parameter | None = None
-        self._register_state_dict_hook(state_dict_hook)
-
-    def spec(self) -> ChunkShardingSpec:
-        # pyre-fixme [28]: Unexpected keyword argument `dim` to call `dist._sharding_spec.api.ChunkShardingSpec.__init__`.
-        return ChunkShardingSpec(
-            dim=0,
-            placements=[
-                f"rank:0/{device_type}:0",
-                f"rank:1/{device_type}:1",
-            ],
-        )
-
-
-class TestDistributedCheckpointing(ShardedTensorTestBase):
+class TestDistributedCheckpointing(DTensorTestBase):
     @property
     def world_size(self) -> int:
         return 2
@@ -83,40 +61,13 @@ class TestDistributedCheckpointing(ShardedTensorTestBase):
     @with_comms(backend=backend)
     @skip_if_lt_x_gpu(2)
     @requires_accelerator_dist_backend()
-    def test_tensor_metadata_with_missing_rank_spec(self) -> None:
-        spec = ChunkShardingSpec(
-            dim=0,
-            placements=[
-                f"rank:1/{device_type}:1",
-            ],
-        )
-
-        st = sharded_tensor.zeros(spec, 4, 4, dtype=torch.float64)
-        md = _create_default_local_metadata({"st": st})
-        st_md = md.state_dict_metadata["st"]
-
-        self.assertEqual(1, len(st_md.chunks))
-
-    @with_comms(backend=backend)
-    @skip_if_lt_x_gpu(2)
-    @requires_accelerator_dist_backend()
     def test_default_metadata(self) -> None:
         device = f"{device_type}:{dist.get_rank()}"
-        spec = ChunkShardingSpec(
-            dim=0,
-            placements=[
-                f"rank:0/{device_type}:0",
-                f"rank:1/{device_type}:1",
-            ],
-        )
+        device_mesh = init_device_mesh(device_type, (dist.get_world_size(),))
 
         state_dict = {
-            "sharded": sharded_tensor.rand(
-                spec,
-                (
-                    10,
-                    10,
-                ),
+            "sharded": distribute_tensor(
+                torch.rand(10, 10, device=device), device_mesh, [Shard(0)]
             ),
             "replicated": torch.rand(4, device=device),
             "bytes": [1, 2, 3, 4],
@@ -236,13 +187,11 @@ class FaultyStorageReader(TestStorageBase, StorageReader):
         return True
 
 
-class TestDistributedFailure(ShardedTensorTestBase):
-    def get_spec(self):
-        return ChunkShardingSpec(
-            dim=0,
-            placements=[
-                f"rank:{r}/{device_type}:{r}" for r in range(dist.get_world_size())
-            ],
+class TestDistributedFailure(DTensorTestBase):
+    def get_sharded_tensor(self, *size):
+        device_mesh = init_device_mesh(device_type, (dist.get_world_size(),))
+        return distribute_tensor(
+            torch.rand(*size, device=device_type), device_mesh, [Shard(0)]
         )
 
     @with_comms(backend=backend)
@@ -250,7 +199,7 @@ class TestDistributedFailure(ShardedTensorTestBase):
     @requires_accelerator_dist_backend()
     def test_dummy_writer_works(self) -> None:
         state_dict = {
-            "sharded": sharded_tensor.rand(self.get_spec(), 20, 20),
+            "sharded": self.get_sharded_tensor(20, 20),
             "replicated": torch.rand(10, 10),
             "bytes": [1, 2, 3, 4],
         }
@@ -262,7 +211,7 @@ class TestDistributedFailure(ShardedTensorTestBase):
     @requires_accelerator_dist_backend()
     def test_dummy_reader_works(self) -> None:
         state_dict = {
-            "sharded": sharded_tensor.rand(self.get_spec(), 20, 20),
+            "sharded": self.get_sharded_tensor(20, 20),
             "replicated": torch.rand(10, 10),
             "bytes": [1, 2, 3, 4],
         }
@@ -327,7 +276,7 @@ class TestDistributedFailure(ShardedTensorTestBase):
     @requires_accelerator_dist_backend()
     def test_save_error_handling(self) -> None:
         state_dict = {
-            "sharded": sharded_tensor.rand(self.get_spec(), 20, 20),
+            "sharded": self.get_sharded_tensor(20, 20),
             "replicated": torch.rand(10, 10),
             "bytes": [1, 2, 3, 4],
         }
@@ -361,7 +310,7 @@ class TestDistributedFailure(ShardedTensorTestBase):
     @requires_accelerator_dist_backend()
     def test_load_error_handling(self) -> None:
         state_dict = {
-            "sharded": sharded_tensor.rand(self.get_spec(), 20, 20),
+            "sharded": self.get_sharded_tensor(20, 20),
             "replicated": torch.rand(10, 10),
             "bytes": [1, 2, 3, 4],
         }

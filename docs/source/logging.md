@@ -67,7 +67,7 @@ component defaults to `logging.WARN` unless configured.
 * `dynamo`: The log level for the TorchDynamo component.
 * `export`: The log level for export.
 * `fake_tensor`: The log level for FakeTensor.
-* `fsdp`: The log level for `FullyShardedDataParallel` components.
+* `fsdp`: The log level for FSDP components.
 * `inductor`: The log level for the TorchInductor component.
 * `native_dsl`: The log level for the native DSL component.
 * `pp`: The log level for distributed pipelining.

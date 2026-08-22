@@ -7613,25 +7613,6 @@ class TestTorch(TestCase):
                 torch.testing.assert_close(generator.get_state(), reserialized.get_state())
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def test_parsing_int64(self):
         # accepts integer arguments
         x = torch.cumsum(torch.ones(5, 5), 0)

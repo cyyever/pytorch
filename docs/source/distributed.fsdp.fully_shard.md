@@ -132,7 +132,7 @@ wrapping more fine-grained modules produces smaller, more overlappable groups
 groups. There is no automatic bucketing — the grouping is explicit and
 determined by the module structure.
 
-Compared to PyTorch FSDP1 (`FullyShardedDataParallel`):
+Compared to legacy FSDP1:
 
 - FSDP2 uses `DTensor`-based dim-0 per-parameter sharding for a simpler
   sharding representation compared to FSDP1's flat-parameter sharding, while

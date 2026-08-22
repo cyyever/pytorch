@@ -301,16 +301,6 @@ There are a few more in-place random sampling functions defined on Tensors as we
 - {func}`torch.Tensor.random_` - numbers sampled from the discrete uniform distribution
 - {func}`torch.Tensor.uniform_` - numbers sampled from the continuous uniform distribution
 
-### Quasi-random sampling
-
-```{eval-rst}
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-    :template: sobolengine.rst
-
-```
-
 ## Serialization
 
 ```{eval-rst}

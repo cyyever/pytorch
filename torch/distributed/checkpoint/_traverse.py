@@ -6,7 +6,6 @@ from typing import cast, TypeVar
 from typing import TypeIs
 
 import torch
-from torch.distributed._shard.sharded_tensor.api import ShardedTensor
 from torch.distributed.checkpoint.metadata import STATE_DICT_TYPE
 from torch.distributed.tensor import DTensor
 
@@ -173,15 +172,7 @@ def _print_nested(
     prefix: str = "",
     print_fun: Callable[[str], None] = print,
 ) -> None:
-    if type(value) is ShardedTensor:
-        print_fun(f"{prefix} ShardedTensor size: {value.size()}")
-        for shard in value.local_shards():
-            _print_nested(
-                shard.tensor,
-                f"{shard.metadata.shard_offsets} ",
-                print_fun=print_fun,
-            )
-    elif type(value) is (DTensor):
+    if type(value) is (DTensor):
         print_fun(f"{prefix} DistributedTensor size: {value.size()}")
         # TODO: add local offset for _local_tensor in print_nested.
         _print_nested(

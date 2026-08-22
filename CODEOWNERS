@@ -376,7 +376,6 @@
 # /torch/csrc/functionalization/
 # /torch/csrc/fx/
 # /torch/csrc/instruction_counter/
-# /torch/csrc/monitor/
 # /torch/csrc/multiprocessing/
 # /torch/csrc/python_headers.h
 # /torch/csrc/serialization.cpp
@@ -519,7 +518,6 @@
 # /test/test_mkldnn_verbose.py
 # /test/test_model_exports_to_core_aten.py
 # /test/test_module_tracker.py
-# /test/test_monitor.py
 # /test/test_multiprocessing.py
 # /test/test_multiprocessing_spawn.py
 # /test/test_namedtuple_return_api.py
@@ -683,13 +681,11 @@
 # /torch/hub.py
 # /torch/legacy/
 # /torch/lib/
-# /torch/monitor/
 # /torch/multiprocessing/
 # /torch/nested/
 # /torch/numa/
 # /torch/overrides.py
 # /torch/py.typed
-# /torch/quasirandom.py
 # /torch/random.py
 # /torch/return_types.py
 # /torch/script.h
@@ -950,6 +946,7 @@
 # /tools/test/
 # /tools/testing/
 # /torch/_logging/
+# /torch/_monitor.py
 # /torch/testing/
 # /torch/utils/benchmark/
 /torch/testing/_internal/common_utils.py @pytorch/pytorch-dev-infra

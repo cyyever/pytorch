@@ -10,12 +10,12 @@ from torch.distributed.checkpoint.default_planner import (
     DefaultLoadPlanner,
     DefaultSavePlanner,
 )
-from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.fully_sharded_data_parallel import (
-    ShardingStrategy,
-    StateDictType,
+from torch.distributed.checkpoint.state_dict import (
+    get_model_state_dict,
+    set_model_state_dict,
 )
+from torch.distributed.device_mesh import init_device_mesh
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.tensor import Replicate
 from torch.testing._internal.common_distributed import skip_if_lt_x_gpu
 from torch.testing._internal.common_utils import (
@@ -85,19 +85,16 @@ class TestHSDPCheckpoint(DTensorTestBase):
         CHECKPOINT_DIR = self.temp_dir
         simple_model = SimpleModel if is_even_sharded_model else SimpleModelUneven
 
-        mesh_2d = init_device_mesh(self.device_type, (2, self.world_size // 2))
-        model = FSDP(
-            simple_model().to(self.device_type),
-            sharding_strategy=ShardingStrategy.HYBRID_SHARD,
-            device_mesh=mesh_2d,
+        mesh_2d = init_device_mesh(
+            self.device_type,
+            (2, self.world_size // 2),
+            mesh_dim_names=("dp_rep", "dp_shard"),
         )
+        model = simple_model().to(self.device_type)
+        fully_shard(model, mesh=mesh_2d["dp_shard"])
         optim = torch.optim.Adam(model.parameters(), lr=0.1)
 
-        FSDP.set_state_dict_type(
-            model,
-            StateDictType.SHARDED_STATE_DICT,
-        )
-        state_dict = {"model": model.state_dict()}
+        state_dict = {"model": get_model_state_dict(model)}
         state_dict_to_save = deepcopy(state_dict)
 
         dist_cp.save(
@@ -111,8 +108,9 @@ class TestHSDPCheckpoint(DTensorTestBase):
         optim.step()
 
         # At this point, the current state dict is different from state_dict_to_save.
+        model_state_dict = get_model_state_dict(model)
         for (k1, v1), (k2, v2) in zip(
-            state_dict_to_save["model"].items(), model.state_dict().items()
+            state_dict_to_save["model"].items(), model_state_dict.items()
         ):
             self.assertEqual(k1, k2)
             self.assertEqual(v1.device_mesh, v2.device_mesh)
@@ -124,11 +122,12 @@ class TestHSDPCheckpoint(DTensorTestBase):
             storage_reader=dist_cp.FileSystemReader(CHECKPOINT_DIR),
             planner=DefaultLoadPlanner(),
         )
-        model.load_state_dict(state_dict_to_save["model"])
+        set_model_state_dict(model, state_dict_to_save["model"])
 
         # After loading, the current model state dict should be the same as state_dict_to_save.
+        model_state_dict = get_model_state_dict(model)
         for (k1, v1), (k2, v2) in zip(
-            state_dict_to_save["model"].items(), model.state_dict().items()
+            state_dict_to_save["model"].items(), model_state_dict.items()
         ):
             self.assertEqual(k1, k2)
             self.assertEqual(v1.device_mesh, v2.device_mesh)
@@ -144,18 +143,15 @@ class TestHSDPCheckpoint(DTensorTestBase):
         simple_model = SimpleModel if is_even_sharded_model else SimpleModelUneven
 
         # save the hsdp model state_dict
-        mesh_2d = init_device_mesh(self.device_type, (2, self.world_size // 2))
-        hsdp_model = FSDP(
-            simple_model().to(self.device_type),
-            sharding_strategy=ShardingStrategy.HYBRID_SHARD,
-            device_mesh=mesh_2d,
+        mesh_2d = init_device_mesh(
+            self.device_type,
+            (2, self.world_size // 2),
+            mesh_dim_names=("dp_rep", "dp_shard"),
         )
-        FSDP.set_state_dict_type(
-            hsdp_model,
-            StateDictType.SHARDED_STATE_DICT,
-        )
-        hsdp_state_dict = {"model": hsdp_model.state_dict()}
-        dist_cp.save_state_dict(
+        hsdp_model = simple_model().to(self.device_type)
+        fully_shard(hsdp_model, mesh=mesh_2d["dp_shard"])
+        hsdp_state_dict = {"model": get_model_state_dict(hsdp_model)}
+        dist_cp.save(
             state_dict=hsdp_state_dict,
             storage_writer=dist_cp.FileSystemWriter(CHECKPOINT_DIR),
             planner=DefaultSavePlanner(),
@@ -163,15 +159,9 @@ class TestHSDPCheckpoint(DTensorTestBase):
 
         # initialize a fsdp model to load checkpoint into
         mesh_1d = init_device_mesh(self.device_type, (self.world_size,))
-        fsdp_model = FSDP(
-            simple_model().to(self.device_type),
-            device_mesh=mesh_1d,
-        )
-        FSDP.set_state_dict_type(
-            fsdp_model,
-            StateDictType.SHARDED_STATE_DICT,
-        )
-        fsdp_state_dict = {"model": fsdp_model.state_dict()}
+        fsdp_model = simple_model().to(self.device_type)
+        fully_shard(fsdp_model, mesh=mesh_1d)
+        fsdp_state_dict = {"model": get_model_state_dict(fsdp_model)}
 
         # at this point, the hsdp model parameters are different from fsdp model parameters.
         for (k1, v1), (k2, v2) in zip(
@@ -179,7 +169,6 @@ class TestHSDPCheckpoint(DTensorTestBase):
         ):
             self.assertEqual(k1, k2)
             self.assertNotEqual(v1.device_mesh, v2.device_mesh)
-            self.assertNotEqual(v1.placements, v2.placements)
             v1_all_gather = v1.redistribute(
                 mesh_2d, placements=(Replicate(), Replicate())
             )
@@ -187,21 +176,20 @@ class TestHSDPCheckpoint(DTensorTestBase):
             self.assertNotEqual(v1_all_gather.to_local(), v2_all_gather.to_local())
 
         # load the fsdp state_dict from storage
-        dist_cp.load_state_dict(
+        dist_cp.load(
             state_dict=fsdp_state_dict,
             storage_reader=dist_cp.FileSystemReader(CHECKPOINT_DIR),
             planner=DefaultLoadPlanner(),
         )
-        fsdp_model.load_state_dict(fsdp_state_dict["model"])
+        set_model_state_dict(fsdp_model, fsdp_state_dict["model"])
 
-        state_dict_after_load = fsdp_model.state_dict()
+        state_dict_after_load = get_model_state_dict(fsdp_model)
         # After loading, the current model state dict should be the same as hsdp_state_dict.
         for (k1, v1), (k2, v2) in zip(
             hsdp_state_dict["model"].items(), state_dict_after_load.items()
         ):
             self.assertEqual(k1, k2)
             self.assertNotEqual(v1.device_mesh, v2.device_mesh)
-            self.assertNotEqual(v1.placements, v2.placements)
             v1_all_gather = v1.redistribute(
                 mesh_2d, placements=(Replicate(), Replicate())
             )

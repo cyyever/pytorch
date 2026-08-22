@@ -514,7 +514,6 @@ coverage_ignore_functions = [
     "get_all",
     "synchronize",
     "store_timeout",
-    # torch.distributed.fsdp.wrap
     # torch.distributed.nn.functional
     "all_to_all",
     "all_to_all_single",
@@ -1219,23 +1218,11 @@ coverage_ignore_classes = [
     "CyclingIterator",
     # torch.distributed.elastic.utils.data.elastic_distributed_sampler
     "ElasticDistributedSampler",
-    # torch.distributed.fsdp.api
-    "StateDictType",
-    # torch.distributed.fsdp.fully_sharded_data_parallel
-    "FullyShardedDataParallel",
-    "OptimStateKeyType",
-    # torch.distributed.fsdp.sharded_grad_scaler
-    "ShardedGradScaler",
-    # torch.distributed.fsdp.wrap
-    "CustomPolicy",
-    "ModuleWrapPolicy",
     # torch.distributed.launcher.api
     "LaunchConfig",
     "elastic_launch",
     # torch.distributed.optim.zero_redundancy_optimizer
     "ZeroRedundancyOptimizer",
-    # torch.distributed.tensor.parallel.fsdp
-    "DTensorExtensions",
     # torch.distributed.tensor.parallel.style
     "ParallelStyle",
     # torch.distributions.logistic_normal

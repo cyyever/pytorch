@@ -10,7 +10,7 @@ import torch.distributed._functional_collectives as funcol
 import torch.nn as nn
 from torch._C._distributed_c10d import FakeProcessGroup
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.tensor import Shard
 from torch.distributed.tensor.parallel import (
     ColwiseParallel,
@@ -119,7 +119,7 @@ class TestFakePG(TestCase):
     def test_construct_fsdp(self):
         store = FakeStore()
         dist.init_process_group(backend="fake", rank=0, world_size=2, store=store)
-        FSDP(nn.Linear(2, 3, device=device_type))
+        fully_shard(nn.Linear(2, 3, device=device_type))
 
     @skipIfHpu
     @unittest.skipIf(not HAS_ACCELERATOR, "No accelerator")
@@ -131,7 +131,8 @@ class TestFakePG(TestCase):
             nn.ReLU(),
             nn.Linear(3, 2, device=device_type),
         )
-        sharded_module = FSDP(my_module, use_orig_params=True)
+        sharded_module = my_module
+        fully_shard(sharded_module)
         optim = torch.optim.Adam(sharded_module.parameters(), lr=0.0001)
         input = torch.randn(2, 2)
         x = sharded_module(input)
@@ -249,9 +250,8 @@ class TestFakePG(TestCase):
                 parallel_plan,
             )
 
-            sharded_module = FSDP(
-                my_module, use_orig_params=True, device_mesh=device_mesh["dp"]
-            )
+            sharded_module = my_module
+            fully_shard(sharded_module, mesh=device_mesh["dp"])
             optim = torch.optim.Adam(sharded_module.parameters(), lr=0.0001)
 
             for i in range(10):

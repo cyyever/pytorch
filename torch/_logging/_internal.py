@@ -332,7 +332,7 @@ def set_logs(
             Default: ``logging.WARN``
 
         fsdp (:class:`Optional[int]`):
-            Whether to log debug info related to ``FullyShardedDataParallel``(FSDP) in PyTorch Distributed components.
+            Whether to log debug info related to FSDP in PyTorch Distributed components.
             Default: ``logging.WARN``
 
         dtensor (:class:`Optional[int]`):

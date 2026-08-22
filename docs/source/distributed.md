@@ -2048,22 +2048,6 @@ This module is experimental and subject to change.
 ```
 
 ```{eval-rst}
-.. py:module:: torch.distributed.fsdp.api
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.fsdp.fully_sharded_data_parallel
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.fsdp.sharded_grad_scaler
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.fsdp.wrap
-```
-
-```{eval-rst}
 .. py:module:: torch.distributed.launcher.api
 
 .. autofunction:: torch.distributed.launcher.api.launch_agent
@@ -2144,10 +2128,6 @@ This module is experimental and subject to change.
 
 ```{eval-rst}
 .. py:module:: torch.distributed.tensor.parallel.ddp
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.tensor.parallel.fsdp
 ```
 
 ```{eval-rst}

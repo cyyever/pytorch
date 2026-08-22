@@ -6,13 +6,6 @@ import traceback
 
 import torch
 import torch.distributed as dist
-from torch.distributed._shard.sharded_tensor import (
-    Shard,
-    ShardedTensor,
-    ShardedTensorMetadata,
-    ShardMetadata,
-)
-from torch.distributed._shard.sharded_tensor.metadata import TensorProperties
 from torch.distributed.c10d_logger import _c10d_logger
 from torch.distributed.checkpoint.api import _wrap_exception
 from torch.distributed.checkpoint.logger import _dcp_logger
@@ -33,7 +26,6 @@ from torch.testing._internal.distributed._tensor.common_dtensor import (
     skip_if_lt_x_gpu,
     with_comms,
 )
-from torch.testing._internal.distributed.distributed_utils import with_fake_comms
 
 
 if TEST_WITH_DEV_DBG_ASAN:
@@ -42,34 +34,6 @@ if TEST_WITH_DEV_DBG_ASAN:
         file=sys.stderr,
     )
     sys.exit(0)
-
-
-def create_sharded_tensor(rank, world_size, shards_per_rank):
-    shards_metadata = []
-    local_shards = []
-    for idx in range(world_size * shards_per_rank):
-        shard_rank = idx // shards_per_rank
-        shard_md = ShardMetadata(
-            shard_offsets=[idx * 8], shard_sizes=[8], placement=f"rank:{shard_rank}/cpu"
-        )
-        shards_metadata.append(shard_md)
-        if shard_rank == rank:
-            shard = Shard.from_tensor_and_offsets(
-                torch.rand(*shard_md.shard_sizes),
-                shard_offsets=shard_md.shard_offsets,
-                rank=rank,
-            )
-            local_shards.append(shard)
-
-    sharded_tensor_md = ShardedTensorMetadata(
-        shards_metadata=shards_metadata,
-        size=torch.Size([8 * len(shards_metadata)]),
-        tensor_properties=TensorProperties.create_from_tensor(torch.zeros(1)),
-    )
-
-    return ShardedTensor._init_from_local_shards_and_global_metadata(
-        local_shards=local_shards, sharded_tensor_metadata=sharded_tensor_md
-    )
 
 
 class TestMedatadaIndex(TestCase):
@@ -108,34 +72,8 @@ class TestMedatadaIndex(TestCase):
 
         with self.assertRaisesRegex(ValueError, "FQN"):
             find_state_dict_object(state_dict, MetadataIndex("c"))
-        with self.assertRaisesRegex(ValueError, "ShardedTensor"):
+        with self.assertRaisesRegex(ValueError, "no shard lookup support"):
             find_state_dict_object(state_dict, MetadataIndex("b", [1]))
-
-    @with_fake_comms(rank=0, world_size=2)
-    def test_sharded_tensor_lookup(self):
-        st = create_sharded_tensor(rank=0, world_size=2, shards_per_rank=3)
-        state_dict = {"st": st}
-
-        obj = find_state_dict_object(state_dict, MetadataIndex("st", [8]))
-        self.assertEqual(obj, st.local_shards()[1].tensor)
-
-        # good hint
-        obj = find_state_dict_object(state_dict, MetadataIndex("st", [8], index=1))
-        self.assertEqual(obj, st.local_shards()[1].tensor)
-
-        # bad hint
-        obj = find_state_dict_object(state_dict, MetadataIndex("st", [8], index=2))
-        self.assertEqual(obj, st.local_shards()[1].tensor)
-
-        # broken hint
-        obj = find_state_dict_object(state_dict, MetadataIndex("st", [8], index=99))
-        self.assertEqual(obj, st.local_shards()[1].tensor)
-
-        with self.assertRaisesRegex(ValueError, "no offset was provided"):
-            find_state_dict_object(state_dict, MetadataIndex("st"))
-
-        with self.assertRaisesRegex(ValueError, "Could not find shard"):
-            find_state_dict_object(state_dict, MetadataIndex("st", [1]))
 
     def test_dcp_logger(self):
         self.assertTrue(_c10d_logger is not _dcp_logger)
