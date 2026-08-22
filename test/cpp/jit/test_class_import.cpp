@@ -4,7 +4,7 @@
 #include <test/cpp/jit/test_utils.h>
 #include <torch/csrc/jit/frontend/resolver.h>
 #include <torch/csrc/jit/serialization/import_source.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 namespace torch {
 namespace jit {

@@ -4,7 +4,7 @@
 #include <c10/util/irange.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 // Snippets for checking assembly.
 c10::IValue inspectTupleConstruction() {

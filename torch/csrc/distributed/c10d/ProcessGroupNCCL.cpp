@@ -35,7 +35,7 @@
 #include <torch/csrc/distributed/c10d/Utils.hpp>
 #include <torch/csrc/distributed/c10d/cuda/utils.hpp>
 #include <torch/csrc/distributed/c10d/symm_mem/nccl_devcomm_manager.hpp>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <optional>
 
 namespace c10d {

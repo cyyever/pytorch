@@ -1,5 +1,5 @@
 
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <ATen/record_function.h>
 
 #include "c10/util/Flags.h"

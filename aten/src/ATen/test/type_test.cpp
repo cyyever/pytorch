@@ -1,6 +1,6 @@
 #include <ATen/ATen.h>
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <ATen/core/jit_type.h>
 #include <torch/csrc/jit/frontend/resolver.h>
 #include <torch/csrc/jit/serialization/import_source.h>

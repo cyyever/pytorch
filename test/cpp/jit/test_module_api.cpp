@@ -10,7 +10,7 @@
 #include <torch/csrc/jit/serialization/import.h>
 #include <torch/csrc/jit/serialization/import_source.h>
 #include <torch/csrc/jit/testing/file_check.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 namespace torch {
 namespace jit {

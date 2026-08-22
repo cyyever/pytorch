@@ -24,7 +24,7 @@
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cuda.h>
 #endif
 #include <torch/script.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 #define STR_VALUE(x) #x
 #define STRINGIZE(x) STR_VALUE(x)

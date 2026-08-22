@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <ATen/mps/MPSAllocatorInterface.h>
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>

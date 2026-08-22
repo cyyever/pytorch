@@ -4,7 +4,7 @@
 
 #include <torch/csrc/distributed/c10d/ProcessGroup.hpp>
 #include <torch/csrc/distributed/c10d/comm.hpp>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 namespace c10d {
 

@@ -14,7 +14,7 @@
 #include "torch/csrc/jit/runtime/autodiff.h"
 #include "torch/csrc/jit/runtime/graph_iterator.h"
 #include "torch/csrc/jit/runtime/profiling_graph_executor_impl.h"
-#include "torch/torch.h"
+#include <torch/all.h>
 
 #include <ATen/ATen.h>
 #include "torch/csrc/autograd/engine.h"

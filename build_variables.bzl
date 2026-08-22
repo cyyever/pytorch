@@ -429,7 +429,6 @@ libtorch_python_core_sources = [
     "torch/csrc/TensorIterator.cpp",
     "torch/csrc/TypeInfo.cpp",
     "torch/csrc/acc/Module.cpp",
-    "torch/csrc/api/src/python/init.cpp",
     "torch/csrc/autograd/functions/init.cpp",
     "torch/csrc/autograd/init.cpp",
     "torch/csrc/autograd/profiler_python.cpp",

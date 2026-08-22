@@ -540,63 +540,8 @@ endif()
 if(NOT NO_API)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/datasets/mnist.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/distributed.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/random.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/sequential.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/stream.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/serialize.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/init.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/module.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/_functions.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/activation.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/adaptive.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/batchnorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/normalization.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/instancenorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/conv.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/dropout.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/distance.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/embedding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/fold.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/linear.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/loss.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/padding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/pixelshuffle.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/pooling.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/rnn.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/upsampling.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/transformer.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/container/functional.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/activation.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/adaptive.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/batchnorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/embedding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/instancenorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/normalization.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/conv.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/dropout.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/linear.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/padding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/pooling.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/rnn.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/vision.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/transformer.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/adagrad.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/adam.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/adamw.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/lbfgs.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/optimizer.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/rmsprop.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/serialize.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/sgd.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/schedulers/lr_scheduler.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/schedulers/step_lr.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/schedulers/reduce_on_plateau_scheduler.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/serialize/input-archive.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/serialize/output-archive.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/print.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/xpu.cpp
   )
@@ -1199,9 +1144,6 @@ if(BUILD_TEST)
 
   if(USE_DISTRIBUTED)
     add_subdirectory(${TORCH_ROOT}/test/cpp/c10d ${CMAKE_BINARY_DIR}/test_cpp_c10d)
-  endif()
-  if(NOT NO_API)
-    add_subdirectory(${TORCH_ROOT}/test/cpp/api ${CMAKE_BINARY_DIR}/test_api)
   endif()
 endif()
 

@@ -788,7 +788,7 @@ class TestStandaloneCPPJIT(TestCase):
             src = textwrap.dedent(
                 """\
                 #include <iostream>
-                #include <torch/torch.h>
+                #include <torch/all.h>
                 int main() {
                     auto x = torch::eye(3);
                     std::cout << x << std::endl;

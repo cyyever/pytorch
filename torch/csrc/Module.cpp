@@ -59,7 +59,6 @@
 #include <torch/csrc/TensorIterator.h>
 #include <torch/csrc/TypeInfo.h>
 #include <torch/csrc/acc/Module.h>
-#include <torch/csrc/api/include/torch/python/init.h>
 #include <torch/csrc/autograd/generated/python_return_types.h>
 #include <torch/csrc/autograd/python_cpp_function.h>
 #include <torch/csrc/autograd/python_enum_tag.h>
@@ -2533,7 +2532,6 @@ PyObject* initModule() {
   torch::autograd::initSpecialFunctions(module);
   torch::autograd::init_legacy_variable(module);
   torch::profiler::initPythonBindings(module);
-  torch::python::init_bindings(module);
   torch::_export::initExportBindings(module);
   torch::inductor::initAOTIRunnerBindings(module);
   torch::inductor::initAOTIPackageBindings(module);

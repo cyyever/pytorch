@@ -3,7 +3,7 @@
 
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
 #include <torch/script.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {

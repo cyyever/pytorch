@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include <torch/torch.h>
+#include <torch/all.h>
 
 namespace torch::inductor {
 

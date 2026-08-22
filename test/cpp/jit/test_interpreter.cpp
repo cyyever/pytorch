@@ -9,7 +9,7 @@
 #include <torch/csrc/jit/runtime/instruction.h>
 #include <torch/jit.h>
 #include <torch/script.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 namespace torch {
 namespace jit {
