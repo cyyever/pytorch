@@ -21,11 +21,6 @@
 #include <torch/csrc/distributed/c10d/python_callback_work.hpp>
 #include <torch/csrc/utils/pyobject_preservation.h>
 
-#ifdef USE_C10D_GLOO
-#include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
-#include <torch/csrc/distributed/c10d/ProcessGroupWrapper.hpp>
-#endif
-
 #ifdef USE_C10D_XCCL
 #include <torch/csrc/distributed/c10d/ProcessGroupXCCL.hpp>
 #endif
@@ -3040,7 +3035,6 @@ Arguments:
       "BackendType",
       R"(The type of the backend used for the process group.)")
       .value("UNDEFINED", ::c10d::ProcessGroup::BackendType::UNDEFINED)
-      .value("GLOO", ::c10d::ProcessGroup::BackendType::GLOO)
       .value("NCCL", ::c10d::ProcessGroup::BackendType::NCCL)
       .value("XCCL", ::c10d::ProcessGroup::BackendType::XCCL)
       .value("CUSTOM", ::c10d::ProcessGroup::BackendType::CUSTOM)
@@ -3671,138 +3665,6 @@ options :class:`~torch.distributed.ProcessGroupNCCL.Options`).
           .def_readwrite(
               "enable_reconfigure",
               &::c10d::Backend::Options::enable_reconfigure);
-
-#ifdef USE_C10D_GLOO
-  auto processGroupGloo =
-      intrusive_ptr_no_gil_destructor_class_<::c10d::ProcessGroupGloo>(
-          module, "ProcessGroupGloo", backend);
-
-  // NOLINTNEXTLINE(bugprone-unused-raii)
-  shared_ptr_class_<::gloo::transport::Device>(processGroupGloo, "Device");
-
-  intrusive_ptr_class_<::c10d::ProcessGroupGloo::Options>(
-      processGroupGloo, "_Options", backendOptions)
-      .def(py::init<>())
-      .def_readwrite("_devices", &::c10d::ProcessGroupGloo::Options::devices)
-      .def_readwrite("_threads", &::c10d::ProcessGroupGloo::Options::threads);
-
-  processGroupGloo
-      .def_static(
-          "create_device",
-          [](const std::string& hostname,
-             const std::string& interface,
-             std::optional<bool> lazyInit_)
-              -> std::shared_ptr<::gloo::transport::Device> {
-            bool lazyInit =
-                lazyInit_.value_or(::c10d::getDefaultGlooLazyInit());
-
-            if (!hostname.empty()) {
-              return ::c10d::ProcessGroupGloo::createDeviceForHostname(
-                  hostname, lazyInit);
-            }
-            if (!interface.empty()) {
-              return ::c10d::ProcessGroupGloo::createDeviceForInterface(
-                  interface, lazyInit);
-            }
-            throw std::invalid_argument(
-                "Specify either `hostname` or `interface` argument.");
-          },
-          py::arg("hostname") = "",
-          py::arg("interface") = "",
-          py::arg("lazy_init") = std::nullopt)
-      .def_static(
-          "create_default_device",
-          [](std::optional<bool> lazyInit_) {
-            bool lazyInit =
-                lazyInit_.value_or(::c10d::getDefaultGlooLazyInit());
-
-            return ::c10d::ProcessGroupGloo::createDefaultDevice(lazyInit);
-          },
-          py::arg("lazy_init") = std::nullopt);
-
-  processGroupGloo
-      .def(
-          py::init(
-              [](const c10::intrusive_ptr<::c10d::Store>& store,
-                 int rank,
-                 int size,
-                 const c10::intrusive_ptr<::c10d::ProcessGroupGloo::Options>&
-                     options) {
-                // gil_scoped_release is not safe as a call_guard in init.
-                // https://github.com/pybind/pybind11/issues/5473
-                py::gil_scoped_release nogil{};
-
-                return c10::make_intrusive<::c10d::ProcessGroupGloo>(
-                    store, rank, size, options);
-              }),
-          py::arg("store"),
-          py::arg("rank"),
-          py::arg("size"),
-          py::arg("options"),
-          R"(Create a new ProcessGroupGloo instance.)")
-      .def(
-          py::init([](const c10::intrusive_ptr<::c10d::Store>& store,
-                      int rank,
-                      int size,
-                      std::chrono::milliseconds timeout,
-                      bool enable_reconfigure) {
-            // gil_scoped_release is not safe as a call_guard in init.
-            // https://github.com/pybind/pybind11/issues/5473
-            py::gil_scoped_release nogil{};
-
-            auto options =
-                ::c10d::ProcessGroupGloo::Options::create_default(timeout);
-            options->enable_reconfigure = enable_reconfigure;
-            return c10::make_intrusive<::c10d::ProcessGroupGloo>(
-                store, rank, size, options);
-          }),
-          py::arg("store"),
-          py::arg("rank"),
-          py::arg("size"),
-          py::arg("timeout") = kProcessGroupDefaultTimeout,
-          py::arg("enable_reconfigure") = false,
-          R"(Create a new ProcessGroupGloo instance.)")
-      .def(
-          "_set_default_timeout",
-          &::c10d::ProcessGroupGloo::setTimeout,
-          py::arg("timeout"),
-          py::call_guard<py::gil_scoped_release>())
-      .def(
-          "get_error",
-          &::c10d::ProcessGroupGloo::getError,
-          py::call_guard<py::gil_scoped_release>())
-      .def_property_readonly(
-          "options",
-          &::c10d::ProcessGroupGloo::getOptions,
-          R"(Return the options used to create this ProcessGroupGloo instance.)");
-
-  // ProcessGroupWrapper is a wrapper pg that includes a helper gloo process
-  // group. It can be used to validate collective calls across processes by
-  // checking the op type and input tensor shapes.
-  auto processGroupWrapper =
-      intrusive_ptr_no_gil_destructor_class_<::c10d::ProcessGroupWrapper>(
-          module, "_ProcessGroupWrapper", backend)
-          .def(
-              py::init(
-                  [](const c10::intrusive_ptr<::c10d::Backend>& backend,
-                     const c10::intrusive_ptr<::c10d::Backend>& gloo_backend) {
-                    // gil_scoped_release is not safe as a call_guard in init.
-                    // https://github.com/pybind/pybind11/issues/5473
-                    py::gil_scoped_release nogil{};
-                    return c10::make_intrusive<::c10d::ProcessGroupWrapper>(
-                        backend, gloo_backend);
-                  }),
-              py::arg("backend"),
-              py::arg("gloo_backend"))
-          .def_property_readonly(
-              "wrapped_pg", &::c10d::ProcessGroupWrapper::getWrappedPg)
-          .def_property_readonly(
-              "options", &::c10d::ProcessGroupWrapper::getBackendOptions)
-          .def(
-              "get_error",
-              &::c10d::ProcessGroupWrapper::getError,
-              py::call_guard<py::gil_scoped_release>());
-#endif
 
 #ifdef USE_C10D_NCCL
   auto processGroupNCCL =
@@ -4449,7 +4311,7 @@ such as `dist.all_reduce(tensor, async_op=True)`.
               R"(
               Blocks the currently active GPU stream on the operation to
               complete. For GPU based collectives this is equivalent to
-              synchronize. For CPU initiated collectives such as with Gloo this
+              synchronize. For CPU initiated collectives this
               will block the CUDA stream until the operation is complete.
 
               This returns immediately in all cases.
@@ -4504,7 +4366,7 @@ such as `dist.all_reduce(tensor, async_op=True)`.
                 >>> ddp_model.register_comm_hook(state=None, hook=allreduce)
 
             .. warning ::
-                ``get_future`` API supports NCCL, and partially GLOO backends
+                ``get_future`` API supports NCCL backends
                 (no support for peer-to-peer operations like send/recv) and will return a ``torch.futures.Future``.
 
                 In the example above, ``allreduce`` work will be done on GPU using NCCL backend,
@@ -4521,7 +4383,7 @@ such as `dist.all_reduce(tensor, async_op=True)`.
                     1. For CPU work, ``fut.done()`` returns true when work has been completed and value()
                        tensors are ready.
                     2. For GPU work, ``fut.done()`` returns true only whether the operation has been enqueued.
-                    3. For mixed CPU-GPU work (e.g. sending GPU tensors with GLOO), ``fut.done()`` returns
+                    3. For mixed CPU-GPU work, ``fut.done()`` returns
                        true when tensors have arrived on respective nodes, but not yet necessarily synched on
                        respective GPUs (similarly to GPU work).
            )")
@@ -4948,7 +4810,7 @@ be removed again via remove().)")
         Arguments:
                 includeCollectives(bool, optional): Whether to include collective work traces. Default is True.
                 onlyActive (bool, optional): Whether to only include active collective work traces. Default is False.
-                backend (str, optional): Name of the backend whose recorder instance to dump. Default is "gloo", the instance ProcessGroupGloo records into.
+                backend (str, optional): Name of the backend whose recorder instance to dump. Default is "nccl", the instance ProcessGroupNCCL records into.
         Returns:
                 Stringified json work traces.
                 Default settings return everything.
@@ -4974,7 +4836,7 @@ be removed again via remove().)")
                 includeCollectives(bool, optional): Whether to include collective work traces. Default is True.
                 includeStackTraces(bool, optional): Whether to include stacktraces in the collective work traces. Default is True.
                 onlyActive (bool, optional): Whether to only include active collective work traces. Default is False.
-                backend (str, optional): Name of the backend whose recorder instance to dump. Each hooked backend has its own, so there is one dump per backend and no merging. Default is "gloo", the instance ProcessGroupGloo records into.
+                backend (str, optional): Name of the backend whose recorder instance to dump. Each hooked backend has its own, so there is one dump per backend and no merging. Default is "nccl", the instance ProcessGroupNCCL records into.
             Returns:
                 Stringified pickle work traces.
                 Default settings return everything.
@@ -5009,7 +4871,7 @@ be removed again via remove().)")
                 includeCollectives(bool, optional): Whether to include collective work traces. Default is True.
                 includeStackTraces(bool, optional): Whether to include stacktraces in the collective work traces. Default is False.
                 onlyActive (bool, optional): Whether to only include active collective work traces. Default is False.
-                backend (str, optional): Name of the backend whose recorder instance to dump. Default is "gloo".
+                backend (str, optional): Name of the backend whose recorder instance to dump. Default is "nccl".
         )");
   module.def(
       "_reset_fr_trace",
@@ -5021,7 +4883,7 @@ be removed again via remove().)")
             counterpart of _reset_fr_recording_nccl.
 
             Arguments:
-                backend (str, optional): Name of the backend whose recorder instance to reset. Default is "gloo".
+                backend (str, optional): Name of the backend whose recorder instance to reset. Default is "nccl".
         )");
 
   Py_RETURN_TRUE;

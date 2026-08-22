@@ -13,7 +13,7 @@ namespace c10d {
 // Backend.register_backend() with extended_api=True, which means
 // _new_process_group_helper may leave the wrapper ProcessGroup's
 // backendType_ as UNDEFINED when used in a multi-backend config like
-// "cpu:gloo,cuda:ncclx_stub".
+// "cuda:ncclx_stub".
 class NCCLXStub : public Backend {
  public:
   NCCLXStub(

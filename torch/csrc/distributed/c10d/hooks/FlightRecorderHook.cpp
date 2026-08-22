@@ -24,7 +24,7 @@ std::atomic<int64_t> next_hook_id{0x46524543 /* 'FREC' */};
 // These must be spelled the way the trace analyzer spells them, i.e. match
 // COLLECTIVES / P2P in torch/distributed/flight_recorder/components/types.py
 // and the profiling titles the native backends use ("nccl:all_reduce",
-// "gloo:all_gather", ...). Anything else makes Op() reject the entry.
+// "nccl:all_gather", ...). Anything else makes Op() reject the entry.
 std::string_view hookOpName(HookOpName name) {
   switch (name) {
     case HookOpName::SEND:
@@ -145,7 +145,7 @@ std::optional<c10::Device> opDevice(const PreHookArgs& args) {
 }
 
 // FlightRecorder keys pg_id by a per-recorder monotonic id in the built-in
-// backends (ProcessGroupGloo's local_id_, ProcessGroupNCCL's local_id_). One
+// backends (ProcessGroupNCCL's local_id_). One
 // process-wide counter for every hooked group: hooked groups never share a
 // recorder with a natively recording backend (their ops are skipped), and two
 // hooked groups get distinct ids from here whether or not they share one.
@@ -228,8 +228,8 @@ std::shared_ptr<FlightRecorderHook> FlightRecorderHook::attach(
         });
     hook->push_completion_ = true;
   }
-  // The dump-on-failure trigger. Abort hooks are optional -- gloo has none and
-  // Backend's default implementation throws -- and recording is useful either
+  // The dump-on-failure trigger. Abort hooks are optional -- Backend's
+  // default implementation throws -- and recording is useful either
   // way, so ask before registering rather than swallowing the exception, which
   // would also hide a registration that failed for a real reason.
   if (hook->pg_->supportsAbortHooks()) {
@@ -259,10 +259,9 @@ FlightRecorderHook::FlightRecorderHook(
       target.name = std::move(name);
     }
     // Backends that write to a FlightRecorder themselves keep their entries:
-    // ProcessGroupGloo records in enqueue(), so recording its ops here too
+    // ProcessGroupNCCL records in enqueue(), so recording its ops here too
     // would put a second, independently sequenced entry in the trace for every
-    // gloo collective. Resolved per device rather than per group so a mixed
-    // "cpu:gloo,cuda:nccl2" group still gets its CUDA half recorded.
+    // nccl collective. Resolved per device rather than per group.
     if (!recordsFlightRecorderNatively(target.name)) {
       target.recorder = getFlightRecorder(target.name);
     }
@@ -298,8 +297,8 @@ FlightRecorderHook::FlightRecorderHook(
   // other processes: record_pg_ranks then reports a membership that never
   // existed, and setRank makes several ranks write to the same
   // <prefix><rank> dump file, so all but one post-mortem is lost. Backends
-  // that fill in Options::global_ranks_in_group (gloo, nccl, nccl2,
-  // nccl-lazy, xccl) never get here; fake and out-of-tree plugins do
+  // that fill in Options::global_ranks_in_group (nccl, nccl2, nccl-lazy,
+  // xccl) never get here; fake and out-of-tree plugins do
   // unless the caller supplied the mapping.
   const bool ranks_known = local_rank < global_ranks.size();
   if (!ranks_known && !recorders.empty()) {

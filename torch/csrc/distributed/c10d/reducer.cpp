@@ -1189,8 +1189,8 @@ void Reducer::initialize_buckets(
       try {
         backend = process_group_->getDefaultBackend();
       } catch (...) {
-        // Sometimes the backend type can be `UNDEFINED` rather than `NCCL` or
-        // `GLOO`. In this case, we just fall back to the regular way of
+        // Sometimes the backend type can be `UNDEFINED` rather than `NCCL`.
+        // In this case, we just fall back to the regular way of
         // creating tensor
         LOG(INFO)
             << "Reducer: default comm backend not found, skipping bucket memory optimization";

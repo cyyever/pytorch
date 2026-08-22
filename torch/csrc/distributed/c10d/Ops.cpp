@@ -753,7 +753,7 @@ TORCH_LIBRARY_IMPL(c10d, CPU, m) {
 }
 
 // TODO: The SparseCPU/SparseCUDA dispatched methods are only used to support
-// sparse all_reduce in the Gloo backend
+// sparse all_reduce
 TORCH_LIBRARY_IMPL(c10d, SparseCPU, m) {
   m.impl("allreduce_", allreduce_CPU);
 }

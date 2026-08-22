@@ -575,12 +575,11 @@ inline std::vector<int> getDevices(const std::vector<at::Tensor>& tensors) {
 
 template <typename T>
 inline T* getDataPointer(const at::Tensor& tensor) {
-  // This method is only used in ProcessGroupGloo for now. Call sites must make
+  // Call sites must make
   // sure that the input tensor is contiguous. It is OK if the tensor does not
   // start from the beginning of the storage. For example, it could come from
   // chunk(..., dim=0)[1]. Hence, we need to use data_ptr() instead of
   // tensor.storage().data()
-  // NB: not using tensor.data<T>() because tensor is not aware of gloo::TYPE
   return static_cast<T*>(tensor.data_ptr());
 }
 

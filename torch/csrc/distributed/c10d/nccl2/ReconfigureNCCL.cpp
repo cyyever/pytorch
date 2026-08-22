@@ -5,7 +5,7 @@
 // encoding and the reconfigure() entry point so the membership-change logic is
 // isolated from the collective implementations. The handle format and the
 // rank-assignment contract (ordered handles assign ranks by position) match
-// ProcessGroupGloo's reconfigure; the communicator teardown/bootstrap steps
+// the old reconfigure flow; the communicator teardown/bootstrap steps
 // are a port of torchcomms' TorchCommNCCLReconfigure fresh-init path. The
 // torchcomms quorum shrink/grow fast path is intentionally not ported: it
 // assigns ranks by NCCL's shrink ordering, which conflicts with c10d's

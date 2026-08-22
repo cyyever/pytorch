@@ -602,7 +602,7 @@ class TORCH_API Backend : public torch::CustomClassHolder {
         c10::str(
             "Backend ",
             backendName,
-            " does not support monitoredBarrier, only GLOO supports monitored barrier."));
+            " does not support monitoredBarrier, no built-in backend supports monitored barrier."));
   }
 
   // Deprecated no-op: sequence numbers now always start at 0 on every rank, so

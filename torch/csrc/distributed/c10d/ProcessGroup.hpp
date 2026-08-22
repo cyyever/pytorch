@@ -104,8 +104,6 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
 
   static std::string backendTypeToString(const BackendType& type) {
     switch (type) {
-      case BackendType::GLOO:
-        return "gloo";
       case BackendType::NCCL:
         return "nccl";
       case BackendType::XCCL:
@@ -116,6 +114,8 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
         return "mpi";
       case BackendType::UNDEFINED:
         return "undefined";
+      case BackendType::GLOO:
+        return "gloo";
       case BackendType::CUSTOM:
         return "custom";
       default:
@@ -795,7 +795,6 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
                              const std::vector<int64_t>&,
                              int64_t,
                              bool)>();
-    // Default to using cpu implementation, monitored barrier is only for GLOO
     at::Tensor tensor = at::empty({0}, at::TensorOptions().device(at::kCPU));
     op.call(
         tensor,

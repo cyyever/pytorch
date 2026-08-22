@@ -102,7 +102,7 @@ class TORCH_API FlightRecorderHook
 
  private:
   // The backend serving one device type of the group. A group can mix
-  // backends ("cpu:gloo,cuda:nccl2"), so the recorder instance, the comm_lib
+  // backends, so the recorder instance, the comm_lib
   // field of profiling_name and the timeout are all per device, resolved once
   // at attach. A null recorder means the backend records into a FlightRecorder
   // itself and the hook must leave its ops alone.
@@ -157,7 +157,7 @@ class TORCH_API FlightRecorderHook
   std::map<c10::DeviceType, BackendTarget> targets_;
   BackendTarget default_target_;
   // Whether attach() got an abort hook registered; false for backends that
-  // have none (gloo), whose unregister call would throw just as loudly.
+  // have none, whose unregister call would throw just as loudly.
   bool abort_hook_registered_{false};
   // Whether the backend pushes completion. When false the post-hook retires the
   // entry at issue, since nothing else ever will. Asked of the default backend,

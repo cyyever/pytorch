@@ -59,8 +59,8 @@ class FakeProcessGroup : public Backend {
   }
 
   // Nullable accessor exposed as the Python `.options` property, mirroring the
-  // getOptions()/getBackendOptions() split on ProcessGroupNCCL and
-  // ProcessGroupGloo. Returns null when the user constructed the group without
+  // getOptions()/getBackendOptions() split on ProcessGroupNCCL.
+  // Returns null when the user constructed the group without
   // options, which callers (and test_device_mesh) rely on to tell whether an
   // options override was supplied.
   c10::intrusive_ptr<Options> getOptions() {
@@ -70,7 +70,7 @@ class FakeProcessGroup : public Backend {
   // options_ may be null when the user passed no options. splitGroup and
   // mergeRemoteGroup unconditionally dereference the result, so coalesce to a
   // fresh default Options rather than returning null. The child of a
-  // no-options parent thus carries a real Options, matching NCCL/Gloo.
+  // no-options parent thus carries a real Options, matching NCCL.
   c10::intrusive_ptr<Backend::Options> getBackendOptions() override {
     auto opts = options_ ? options_ : c10::make_intrusive<Options>();
     return c10::static_intrusive_pointer_cast<Backend::Options>(opts);

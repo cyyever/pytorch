@@ -4,7 +4,7 @@
 // pre/post collective hooks (Hooks.hpp). ProcessGroupNCCL has a native NaN
 // checker (TORCH_NCCL_NAN_CHECK); because the hooks fire from the dispatcher
 // kernels in Ops.cpp, this hook brings the same debug feature to any backend
-// routed through the c10d ops -- nccl2, nccl-lazy, gloo, custom backends.
+// routed through the c10d ops -- nccl2, nccl-lazy, custom backends.
 
 #pragma once
 

@@ -234,7 +234,7 @@ inline std::string retrieveDesyncReport(
 
   TORCH_INTERNAL_ASSERT(
       !missingRanks.empty() || !traceMap.empty(),
-      "Trace shouldn't be empty while enabled GLOO_ASYNC_TIMEOUT_DEBUG");
+      "Trace shouldn't be empty while enabled the async timeout debug env");
   TORCH_INTERNAL_ASSERT(
       !thisCol.empty(),
       "Timeout rank [",

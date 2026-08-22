@@ -18,8 +18,7 @@ namespace {
 // Options handed to a child backend must never alias the parent's (or the
 // caller's) object: Backend::getBackendOptions() returns the backend's live
 // options_, and split()/merge() implementations write into what they are given
-// (ProcessGroupGloo::split overwrites global_ranks_in_group,
-// ProcessGroupNCCL::split also sets split_from/split_color). Sharing one object
+// (ProcessGroupNCCL::split sets split_from/split_color). Sharing one object
 // leaves the parent describing its child's ranks, which the parent's next split
 // then indexes out of bounds.
 c10::intrusive_ptr<Backend::Options> cloneOptions(
@@ -242,9 +241,8 @@ c10::intrusive_ptr<ProcessGroup> ProcessGroup::splitGroup(
       continue;
     }
 
-    // One backend instance can serve several device types -- a gloo world maps
-    // both cpu and cuda to the same ProcessGroupGloo, and setBackend() reuses
-    // whatever is already registered for a backend type. Split it once: the
+    // One backend instance can serve several device types, and setBackend()
+    // reuses whatever is already registered for a backend type. Split it once: the
     // second child would be thrown away by setBackend() below, but only after
     // rendezvousing on the same store prefix as the real child, which races
     // with it and hangs.
