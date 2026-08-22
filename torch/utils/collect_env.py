@@ -421,30 +421,6 @@ def get_intel_gpu_detected(run_lambda):
 #      Spectre v2:            Mitigation; Enhanced IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
 #      Srbds:                 Not affected
 #      Tsx async abort:       Not affected
-#  * win32
-#    Architecture=9
-#    CurrentClockSpeed=2900
-#    DeviceID=CPU0
-#    Family=179
-#    L2CacheSize=40960
-#    L2CacheSpeed=
-#    Manufacturer=GenuineIntel
-#    MaxClockSpeed=2900
-#    Name=Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz
-#    ProcessorType=3
-#    Revision=27142
-#
-#    Architecture=9
-#    CurrentClockSpeed=2900
-#    DeviceID=CPU1
-#    Family=179
-#    L2CacheSize=40960
-#    L2CacheSpeed=
-#    Manufacturer=GenuineIntel
-#    MaxClockSpeed=2900
-#    Name=Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz
-#    ProcessorType=3
-#    Revision=27142
 
 
 def get_cpu_info(run_lambda):

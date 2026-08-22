@@ -102,7 +102,6 @@ from torch._inductor.utils import (
     clear_on_fresh_cache,
     determine_aoti_mmap_flags,
     is_linux,
-    is_windows,
     parallel_num_threads,
     XPU_KERNEL_FORMAT,
 )
@@ -672,7 +671,7 @@ def _get_stable_obj_key(obj: object) -> str | None:
 class FxGraphCachePickler(pickle.Pickler):
     """
     Custom pickler to customize the pickling of some objects (Tensors), only for the
-    purpose of computing a hash for keying into the FxGraphCache. Tensors contain
+    purpose of computing a hash for keying into the "FxGraphCache". Tensors contain
     objects that don't pickle and/or vary between runs, and we want to capture the
     data that allow us to compute a stable, but safe hash.
     """
@@ -920,7 +919,7 @@ class FxGraphCachePickler(pickle.Pickler):
         serialized_data = self.dumps(obj)
         return FX_GRAPH_CACHE_KEY_STRATEGY.key(serialized_data)
 
-    def debug_lines(self, inp: FxGraphHashDetails) -> list[str]:
+    def debug_lines(self, inp: "FxGraphHashDetails") -> list[str]:
         """
         Get a printable string describing in more detail all the attributes
         comprising an object. Useful for debugging when one graph hashes
@@ -1015,7 +1014,7 @@ def get_inductor_root() -> str:
 @dataclasses.dataclass
 class OrderedSetHolder:
     """
-    See FxGraphHashDetails. Holds a sorted list to support stable hashing
+    See "FxGraphHashDetails". Holds a sorted list to support stable hashing
     of set kwargs.
     """
 
@@ -1024,7 +1023,7 @@ class OrderedSetHolder:
 
 class BypassFxGraphCache(Exception):
     """
-    Exception to indicate that the FxGraphCache should be bypassed.
+    Exception to indicate that the "FxGraphCache" should be bypassed.
     """
 
 
@@ -1695,7 +1694,7 @@ class FxGraphHashDetails:
         # Include hint overrides in the cache key because _reduce_symint
         # only hashes symbol names, not hint values.
         self.var_to_hint_override: dict[str, int] = {}
-        shape_env = FxGraphCache._get_shape_env()
+        shape_env = "FxGraphCache"._get_shape_env()
         if shape_env is not None and shape_env.var_to_hint_override:
             self.var_to_hint_override = {
                 str(sym): val
@@ -1818,12 +1817,12 @@ class GuardedCache(Generic[T]):
     """
 
     @classmethod
-    def _get_tmp_dir_for_key(cls: type[GuardedCache[T]], _key: str) -> str:
+    def _get_tmp_dir_for_key(cls: type["GuardedCache"[T]], _key: str) -> str:
         raise NotImplementedError("Implement _get_tmp_dir_for_key on parent class")
 
     @classmethod
     def _record_result(
-        cls: type[GuardedCache[T]],
+        cls: type["GuardedCache"[T]],
         key: str,
         local_hit: bool,
         local_miss: bool,
@@ -1834,7 +1833,7 @@ class GuardedCache(Generic[T]):
 
     @classmethod
     def iterate_over_candidates(
-        cls: type[GuardedCache[T]],
+        cls: type["GuardedCache"[T]],
         local: bool,
         remote_cache: RemoteCache[JsonDataTy] | None,
         key: str,
@@ -1876,7 +1875,7 @@ class GuardedCache(Generic[T]):
 
     @classmethod
     def find_guarded_entry(
-        cls: type[GuardedCache[T]],
+        cls: type["GuardedCache"[T]],
         key: str,
         local: bool,
         remote_cache: RemoteCache[JsonDataTy] | None,
@@ -1958,7 +1957,7 @@ class GuardedCache(Generic[T]):
 
     @classmethod
     def _filter_backed_symints(
-        cls: type[GuardedCache[T]], inputs: Sequence[InputType]
+        cls: type["GuardedCache"[T]], inputs: Sequence[InputType]
     ) -> list[torch.SymInt]:
         """
         Get the backed SymInt objects from the input list. Note that we can never
@@ -1969,7 +1968,7 @@ class GuardedCache(Generic[T]):
         ]
 
     @classmethod
-    def _get_shape_env(cls: type[GuardedCache[T]]) -> ShapeEnv | None:
+    def _get_shape_env(cls: type["GuardedCache"[T]]) -> ShapeEnv | None:
         """
         Helper to get the shape env from the tracing context.
         """
@@ -1983,7 +1982,7 @@ class GuardedCache(Generic[T]):
 class InductorCacheArtifact(CacheArtifact):
     @override
     def populate_cache(self) -> None:
-        FxGraphCache._write_to_local_cache(self.key, self.content)
+        "FxGraphCache"._write_to_local_cache(self.key, self.content)
 
     @override
     @staticmethod
@@ -2029,15 +2028,15 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         return os.path.join(cache_dir(), "fxgraph")
 
     @classmethod
-    def _get_tmp_dir_for_key(cls: type[FxGraphCache], key: str) -> str:
+    def _get_tmp_dir_for_key(cls: type["FxGraphCache"], key: str) -> str:
         """
         Return the disk location for a given cache key.
         """
-        return os.path.join(FxGraphCache._get_tmp_dir(), key[1:3], key)
+        return os.path.join("FxGraphCache"._get_tmp_dir(), key[1:3], key)
 
     @classmethod
     def _record_result(
-        cls: type[FxGraphCache],
+        cls: type["FxGraphCache"],
         key: str,
         local_hit: bool,
         local_miss: bool,
@@ -2045,7 +2044,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         remote_miss: bool,
     ) -> None:
         """
-        Called by GuardedCache to record hit/miss statistics.
+        Called by "GuardedCache" to record hit/miss statistics.
         """
         if local_hit:
             cache_stats.hit("LocalFxGraphCache")
@@ -2202,11 +2201,11 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         what constitutes a guard success. Normally, a guard hit happens if
         `shape_env.evaluate_guards_expression` returns True.
         """
-        shape_env = FxGraphCache._get_shape_env()
+        shape_env = "FxGraphCache"._get_shape_env()
         if shape_env is None:
             raise AssertionError("ShapeEnv is not set for guard evaluation")
 
-        symints = FxGraphCache._filter_backed_symints(example_inputs)
+        symints = "FxGraphCache"._filter_backed_symints(example_inputs)
         hints = [guarding_hint_or_throw(s) for s in symints]
 
         # If this config is turned on, everything is a guard hit and we check nothing
@@ -2221,7 +2220,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         cache_info: CacheInfo = {}
 
         # Use the find_graph_for_key method to find a graph for the given key
-        graph, pickled_content, guard_info = FxGraphCache.find_guarded_entry(
+        graph, pickled_content, guard_info = "FxGraphCache".find_guarded_entry(
             key, local, remote_cache, evaluate_guards, hints
         )
         cache_info.update(guard_info)
@@ -2252,11 +2251,11 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
                 "fx graph cache key %s post-load guards: %s", key, shape_env.guards
             )
 
-        return FxGraphCache.cache_hit_post_compile(graph, cache_info, constants)
+        return "FxGraphCache".cache_hit_post_compile(graph, cache_info, constants)
 
     @staticmethod
     def _write_to_local_cache(key: str, content: bytes) -> None:
-        subdir = FxGraphCache._get_tmp_dir_for_key(key)
+        subdir = "FxGraphCache"._get_tmp_dir_for_key(key)
         if not os.path.exists(subdir):
             os.makedirs(subdir, exist_ok=True)
 
@@ -2287,10 +2286,10 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         # sufficient to consider only the SymInt args to the fx graph since the
         # Tensor shapes are already captured in the hash for the cache key. Any
         # Tensor arg with a symbolic shape will have a SymInt arg for the graph.
-        shape_env = FxGraphCache._get_shape_env()
+        shape_env = "FxGraphCache"._get_shape_env()
         if shape_env is None:
             raise AssertionError("ShapeEnv is not set for cache serialization")
-        symints = FxGraphCache._filter_backed_symints(example_inputs)
+        symints = "FxGraphCache"._filter_backed_symints(example_inputs)
         guards = shape_env.get_pruned_guards(symints)
         compiled_graph.guards_expr = shape_env.produce_guards_expression(
             placeholders=symints, guards=guards
@@ -2317,7 +2316,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         try:
             CacheArtifactRecorder(InductorCacheArtifact.type(), key).record(content)
             if local:
-                FxGraphCache._write_to_local_cache(key, content)
+                "FxGraphCache"._write_to_local_cache(key, content)
                 cache_stats.put("LocalFxGraphCache")
 
             if remote_cache:
@@ -2348,7 +2347,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         Check some conditions that would preclude caching and raise BypassFxGraphCache
         to bypass in case caching is not possible.
         """
-        shape_env = FxGraphCache._get_shape_env() if require_shape_env else None
+        shape_env = "FxGraphCache"._get_shape_env() if require_shape_env else None
         CacheabilityValidator(
             gm,
             example_inputs=example_inputs,
@@ -2376,7 +2375,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         I personally believe it is more annoying/difficult to read in that format.
         """
         try:
-            FxGraphCache._check_can_cache(gm, example_inputs, fx_kwargs)
+            "FxGraphCache"._check_can_cache(gm, example_inputs, fx_kwargs)
             key, debug_lines = compiled_fx_graph_hash(
                 gm, example_inputs, fx_kwargs, inputs_to_check
             )
@@ -2424,7 +2423,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         Doesn't do any logging on its own, because AOTAutograd handles a cache miss
         differently from FXGraphCache.
         """
-        compiled_graph, cache_info = FxGraphCache._lookup_graph(
+        compiled_graph, cache_info = "FxGraphCache"._lookup_graph(
             key, example_inputs, local, remote_cache, constants, evaluate_guards
         )
         cache_info: CacheInfo = {
@@ -2463,7 +2462,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         Clear out the on-disk cache.
         """
         try:
-            shutil.rmtree(FxGraphCache._get_tmp_dir())
+            shutil.rmtree("FxGraphCache"._get_tmp_dir())
         except FileNotFoundError:
             pass
 
@@ -2815,10 +2814,6 @@ class AotCodeCompiler:
             elif platform == "darwin":
                 section_attr = "__DATA,__data"
                 symbol_prefix = "_"
-            elif platform == "win32":
-                symbol_prefix = ""
-                # ASM build is not supported on Windows, force use CPP build.
-                use_asm_build = False
             else:
                 raise RuntimeError(f"Unsupported platform: {platform}")
 
@@ -4896,24 +4891,12 @@ class DLLWrapper:
 
             if hasattr(syms, "dlclose"):
                 f_dlclose = syms.dlclose
-        elif is_windows():
-            import ctypes
-
-            kernel32 = ctypes.CDLL("kernel32", use_last_error=True)
-
-            f_dlclose = kernel32.FreeLibrary
         else:
             raise NotImplementedError("Unsupported env, failed to do dlclose!")
 
         if f_dlclose is not None:
             if is_linux():
                 f_dlclose.argtypes = [c_void_p]
-                f_dlclose(self.DLL._handle)
-            elif is_windows():
-                import ctypes
-                from ctypes import wintypes
-
-                f_dlclose.argtypes = [wintypes.HMODULE]
                 f_dlclose(self.DLL._handle)
         else:
             log.warning(

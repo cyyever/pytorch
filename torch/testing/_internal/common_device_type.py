@@ -38,7 +38,6 @@ from torch.testing._internal.common_utils import (
     IS_REMOTE_GPU,
     IS_S390X,
     IS_SANDCASTLE,
-    IS_WINDOWS,
     NATIVE_DEVICES,
     PRINT_REPRO_ON_FAILURE,
     skipIfTorchDynamo,
@@ -2245,7 +2244,7 @@ def skipCPUIfNoMkl(fn):
 # Skips a test on CPU if MKL Sparse is not available (it's not linked on Windows).
 def skipCPUIfNoMklSparse(fn):
     return skipCPUIf(
-        IS_WINDOWS or not TEST_MKL, "PyTorch is built without MKL support"
+        not TEST_MKL, "PyTorch is built without MKL support"
     )(fn)
 
 

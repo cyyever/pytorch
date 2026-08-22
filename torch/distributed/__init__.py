@@ -161,8 +161,7 @@ if is_available():
             torch._C._set_meta_in_tls_dispatch_include(meta_in_tls)
             del guard
 
-    if sys.platform != "win32":
-        from torch._C._distributed_c10d import HashStore
+    from torch._C._distributed_c10d import HashStore
 
     from .device_mesh import DeviceMesh, init_device_mesh
 

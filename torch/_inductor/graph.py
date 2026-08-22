@@ -411,7 +411,7 @@ class GraphLowering(torch.fx.Interpreter):
         const_output_index: dict[str, int] | None = None,
         const_wrapper_code: str | None = None,
         const_kernel_code: str | None = None,
-        const_module: GraphLowering | None = None,
+        const_module: "GraphLowering" | None = None,
         name: str | None = None,
         inputs_to_check: Sequence[int] | None = None,
         fx_wrapper: bool = False,
@@ -951,7 +951,7 @@ class GraphLowering(torch.fx.Interpreter):
         gm: torch.fx.GraphModule,
         example_inputs: list[torch.Tensor],
         subgraph_name: str,
-    ) -> SubgraphLowering:
+    ) -> "SubgraphLowering":
         """
         Make a subgraph of the current graph with all inherited parts, except
         the graph module (`gm`) and `example_inputs`.  The subgraphs are lowered
@@ -2429,7 +2429,7 @@ class GraphLowering(torch.fx.Interpreter):
         if config.disable_cpp_codegen:
             raise CppWrapperCodegenError("C++ codegen is disabled")
 
-        if sys.platform not in ("linux", "darwin", "win32"):
+        if sys.platform not in ("linux", "darwin"):
             raise CppWrapperCodegenError(f"Unsupported platform {sys.platform}")
 
         graph_module = cast(torch.fx.GraphModule, self.module)
@@ -3002,7 +3002,7 @@ class GraphLowering(torch.fx.Interpreter):
             self.wrapper_code.pop_codegened_graph()
             return result
 
-    def codegen_subgraph(self, parent_graph: GraphLowering) -> None:
+    def codegen_subgraph(self, parent_graph: "GraphLowering") -> None:
         """
         This is a more compact version of the `codegen()` above
         where we codegen this graph as a subgraph of some parent
@@ -3101,8 +3101,8 @@ class GraphLowering(torch.fx.Interpreter):
                 + '"""\n'
             )
             wrapper_code.value = tuning_code + wrapper_code.value
-        if GraphLowering.save_output_code is not None:
-            GraphLowering.save_output_code(wrapper_code.value)
+        if "GraphLowering".save_output_code is not None:
+            "GraphLowering".save_output_code(wrapper_code.value)
         output_code_log.debug("Output code: \n%s", wrapper_code.value)
 
         inductor_meta = autotune_cache.inductor_meta_from_config()
@@ -3189,7 +3189,7 @@ class SubgraphLowering(GraphLowering):
     init_wrapper_code with the subgraph related arguments.
     """
 
-    def __init__(self, parent: GraphLowering, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, parent: "GraphLowering", *args: Any, **kwargs: Any) -> None:
         self.parent = parent
         super().__init__(*args, **kwargs)
         # Donation indices use the parent graph's placeholder ordering, not ours.
@@ -3201,7 +3201,7 @@ class SubgraphLowering(GraphLowering):
         # constants are attached to the module from the root graph's constants
         # dict at load time. Propagate the value up so it is not left as None.
         root = self.parent
-        while isinstance(root, SubgraphLowering):
+        while isinstance(root, "SubgraphLowering"):
             root = root.parent
         root.constants[name] = data
         return name

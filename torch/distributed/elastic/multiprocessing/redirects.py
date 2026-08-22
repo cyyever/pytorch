@@ -23,12 +23,6 @@ IS_MACOS = sys.platform == "darwin"
 logger = logging.getLogger(__name__)
 
 
-_WIN32_STD_HANDLE = {
-    "stdout": -11,  # STD_OUTPUT_HANDLE
-    "stderr": -12,  # STD_ERROR_HANDLE
-}
-
-
 def get_libc():
     if IS_MACOS:
         logger.warning("NOTE: Redirects are currently not supported in MacOs.")

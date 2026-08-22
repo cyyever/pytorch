@@ -6,7 +6,7 @@ import functools
 import threading
 import torch
 import torch.cuda
-from torch.testing._internal.common_utils import LazyVal, TEST_NUMBA, TEST_WITH_ROCM, TEST_CUDA, IS_WINDOWS, IS_MACOS, TEST_XPU
+from torch.testing._internal.common_utils import LazyVal, TEST_NUMBA, TEST_WITH_ROCM, TEST_CUDA, IS_MACOS, TEST_XPU
 from torch.utils._import_utils import _check_module_exists
 import inspect
 import contextlib
@@ -166,7 +166,7 @@ def evaluate_platform_supports_flash_attention():
             arch_list += ["gfx1101", "gfx1102", "gfx1150", "gfx1151", "gfx1200"]
         return evaluate_gfx_arch_within(arch_list)
     if TEST_CUDA:
-        return not IS_WINDOWS and SM80OrLater
+        return SM80OrLater
     if TEST_XPU:
         return True
     return False
@@ -615,35 +615,8 @@ def xfailIfSM12X(func):
 def xfailIfDistributedNotSupported(func):
     return func if not (IS_MACOS or IS_JETSON) else unittest.expectedFailure(func)
 
-def _xfail_cuda_on_windows_wrapper(test_fn):
-    """Wraps a test to xfail when running on a CUDA device.
-
-    Works for both device-parameterized tests (device_type == "cuda") and plain
-    TestCase CUDA tests (device_type is None). Only passes through for tests
-    explicitly running on a non-CUDA device type (e.g. "cpu", "xpu").
-    """
-    @functools.wraps(test_fn)
-    def wrapper(slf, *args, **kwargs):
-        import pytest
-        device_type = getattr(slf, "device_type", None)
-        if device_type is not None and device_type != "cuda":
-            return test_fn(slf, *args, **kwargs)
-        try:
-            test_fn(slf, *args, **kwargs)
-        except Exception as e:
-            pytest.xfail(f"Expected failure for {test_fn.__name__}: {e}")
-
-        raise AssertionError(f"Test {test_fn.__name__} was expected to fail but succeeded.")
-    return wrapper
-
-
 def xfailCUDAIfSM89OrLaterOnWindows(test_fn):
-    """Mark a CUDA test as expected failure on Windows with SM >= 8.9.
-
-    Works for both device-parameterized tests and plain TestCase CUDA tests.
-    CPU/XPU variants of device-parameterized tests are unaffected.
-    """
-    return _xfail_cuda_on_windows_wrapper(test_fn) if IS_WINDOWS and SM89OrLater else test_fn
+    return test_fn
 
 
 # When using nvcc from the CUDA toolkit its version must be at least the one from ptxas bundled with Triton

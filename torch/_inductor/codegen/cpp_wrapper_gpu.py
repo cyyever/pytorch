@@ -226,7 +226,7 @@ class _LazyTritonCompileKickoffLine(DeferredLineBase):
     def __call__(self) -> str | None:
         return self.line if self.lazy_kernel_names else None
 
-    def _new_line(self, line: str) -> _LazyTritonCompileKickoffLine:
+    def _new_line(self, line: str) -> "_LazyTritonCompileKickoffLine":
         return _LazyTritonCompileKickoffLine(self.lazy_kernel_names, line)
 
 
@@ -285,7 +285,7 @@ class DeferredTritonCallWrapper:
     def _write_wrapper_signature(
         self,
         prefix: IndentedBuffer,
-        wrapper: CppWrapperGpu,
+        wrapper: "CppWrapperGpu",
         arg_names: list[str],
         arg_types: list[Any] | None = None,
         signature: dict[str, str] | None = None,
@@ -330,7 +330,7 @@ class DeferredTritonCallWrapper:
             emit(prefix.writeline_aot, [*shared_params, kernels_param, cubin_dir_param])
         prefix.writeline("){")
 
-    def generate(self, wrapper: CppWrapperGpu):
+    def generate(self, wrapper: "CppWrapperGpu"):
         """
         Generate the GPU kernel definition, as well as load and launch code.
         """
@@ -534,7 +534,7 @@ class DeferredTritonCallWrapper:
     def _generate_lazy_scratch(
         self,
         prefix: IndentedBuffer,
-        wrapper: CppWrapperGpu,
+        wrapper: "CppWrapperGpu",
         call_args_str: str,
     ) -> str:
         """Generate scratch space allocations with runtime-known sizes."""
@@ -567,7 +567,7 @@ class DeferredTritonCallWrapper:
     def _generate_lazy_launch(
         self,
         prefix: IndentedBuffer,
-        wrapper: CppWrapperGpu,
+        wrapper: "CppWrapperGpu",
         wrapper_arg_names: list[str],
         kernel_arg_names: list[str],
     ) -> None:
@@ -628,10 +628,7 @@ class DeferredTritonCallWrapper:
 
         # kernel_args_ is consumed by both JIT and AOT launchKernel calls.
         prefix.writeline(f"void* kernel_args_[] = {{{call_args_str}}};")
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform in [
-            "linux",
-            "win32",
-        ]
+        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
         prefix.writeline_jit(f"launchKernel({kernel_name}, {common_launch_args});")
         if enable_kernel_profile:
             profile_arg_types = [arg_type_lookup.get(n) for n in kernel_arg_names]
@@ -658,7 +655,7 @@ class DeferredTritonCallWrapper:
                 f"launchKernel(kernels_.{kernel_name}, {common_launch_args});"
             )
 
-    def generate_lazy(self, wrapper: CppWrapperGpu):
+    def generate_lazy(self, wrapper: "CppWrapperGpu"):
         """
         Generate dual-wrapper-mode C++ code for lazy Triton kernel compilation.
 
@@ -919,10 +916,7 @@ class DeferredTritonCallWrapper:
             "stream_",
         ]
 
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform in [
-            "linux",
-            "win32",
-        ]
+        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
         if enable_kernel_profile:
             self.generate_profiled_launch_kernel(
                 prefix,
@@ -1718,7 +1712,7 @@ static inline void ensure_triton_kernel_compiles_started() {{
         """
         device = device or V.graph.get_current_device_or_throw()
         if device.type == "cpu":
-            # Even in CppWrapperGpu, we may see cpp kernels
+            # Even in "CppWrapperGpu", we may see cpp kernels
             return CppWrapperCpu._generate_kernel_call_helper(
                 self,
                 kernel_name,

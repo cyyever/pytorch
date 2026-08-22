@@ -3,7 +3,6 @@ import contextlib
 import dataclasses
 import enum
 import functools
-import hashlib
 import importlib
 import inspect
 import io
@@ -971,13 +970,6 @@ def get_fused_kernel_name(
     else:
         raise NotImplementedError
     name = "_".join(["fused"] + sources)
-    # On Windows the default MAX_PATH (260) limit means a long descriptive
-    # kernel name can push the Triton cache path past the limit, making the
-    # generated .ttir unopenable. Cap the name and append a hash to keep it
-    # both short and unique.
-    if is_windows() and len(name) > 50:
-        h = hashlib.sha256(name.encode("utf-8")).hexdigest()[:8]
-        name = f"{name[:41].rstrip('_')}_{h}"
     return name
 
 
@@ -1390,45 +1382,6 @@ def get_all_devices(gm: torch.fx.GraphModule) -> OrderedSet[torch.device]:
     return input_devices | out_devices
 
 
-import gc
-
-
-def unload_xpu_triton_pyds() -> None:
-    # unload __triton_launcher.pyd
-    for module_name in list(sys.modules.keys()):
-        if not module_name.startswith("torch._inductor.runtime.compile_tasks."):
-            continue
-        m = sys.modules[module_name]
-        for attr_name in m.__dict__:
-            if attr_name.startswith("triton_"):
-                kernel = getattr(m, attr_name)
-                if isinstance(
-                    kernel, torch._inductor.runtime.triton_heuristics.CachingAutotuner
-                ):
-                    for result in kernel.compile_results:
-                        if isinstance(
-                            result,
-                            torch._inductor.runtime.triton_heuristics.TritonCompileResult,
-                        ):
-                            # pyrefly: ignore [missing-attribute]
-                            run = result.kernel.run
-                            if hasattr(run, "mod"):
-                                run.mod.__del__()
-        del sys.modules[module_name]
-
-    # unload spirv_utils.pyd
-    if "triton.runtime.driver" in sys.modules:
-        driver_mod = sys.modules["triton.runtime.driver"]
-        if hasattr(driver_mod.driver.active, "utils"):
-            utils_cls = type(driver_mod.driver.active.utils)
-            if hasattr(utils_cls, "instance"):
-                del utils_cls.instance
-            elif hasattr(utils_cls, "_instance"):
-                utils_cls._instance = None
-            del driver_mod.driver.active.utils
-
-    gc.collect()
-
 
 _registered_caches: list[Any] = []
 
@@ -1512,15 +1465,9 @@ def fresh_cache(
                             }
                         )
         if delete:
-            if is_windows() and torch.xpu.is_available():
-                unload_xpu_triton_pyds()
-
             shutil.rmtree(
                 inductor_cache_dir,
-                # Let's not fail if we can't clean up the temp dir. Also note that for
-                # Windows, we can't delete the loaded modules because the module binaries
-                # are open.
-                ignore_errors=is_windows(),
+                # Let's not fail if we can't clean up the temp dir.
                 onerror=lambda func, path, exc_info: log.warning(
                     "Failed to remove temporary cache dir at %s",
                     inductor_cache_dir,
@@ -1775,7 +1722,7 @@ class DelayReplaceLine(DeferredLineBase):
     def __call__(self) -> str:
         return self.line.replace(self.key, self.value_fn())
 
-    def _new_line(self, line: str) -> DelayReplaceLine:
+    def _new_line(self, line: str) -> "DelayReplaceLine":
         return DelayReplaceLine(self.key, self.value_fn, line)
 
 
@@ -1996,7 +1943,7 @@ def can_use_tma(
 
     def _is_tma_compatible(
         sizes: Sequence[sympy.Expr],
-        strides: Sequence[_IntLike],
+        strides: Sequence["_IntLike"],
         dtype: torch.dtype,
     ) -> bool:
         rank = len(sizes)
@@ -2049,7 +1996,7 @@ def can_use_tma(
 
     def _is_tma_compatible_xpu(
         sizes: Sequence[sympy.Expr],
-        strides: Sequence[_IntLike],
+        strides: Sequence["_IntLike"],
         dtype: torch.dtype,
     ) -> bool:
         # Make sure the last dimension is contiguous
@@ -2341,13 +2288,13 @@ def use_cutlass_template(layout: Layout, m: int, n: int, k: int) -> bool:
 
 def use_nv_universal_gemm_template(
     layout: Layout,
-    m: _IntLike,
-    n: _IntLike,
-    k: _IntLike,
+    m: "_IntLike",
+    n: "_IntLike",
+    k: "_IntLike",
     mat_a: IRNode,
     mat_b: IRNode,
     offs: IRNode | None = None,
-    g: _IntLike | None = None,
+    g: "_IntLike" | None = None,
 ) -> bool:
     """
     Return True if we can use the NVIDIA Universal GEMM Template.
@@ -2424,7 +2371,7 @@ _IntLike: TypeAlias = int | sympy.Expr
 
 @functools.cache
 def use_decompose_k_choice(
-    m: _IntLike, n: _IntLike, k: _IntLike, threshold_multiple: int = 1
+    m: "_IntLike", n: "_IntLike", k: "_IntLike", threshold_multiple: int = 1
 ) -> bool:
     from torch._inductor.virtualized import V
 
@@ -2444,7 +2391,7 @@ def use_decompose_k_choice(
 
 
 @functools.cache
-def use_contiguous(m: _IntLike, n: _IntLike, k: _IntLike) -> bool:
+def use_contiguous(m: "_IntLike", n: "_IntLike", k: "_IntLike") -> bool:
     """
     Check if we should use the contiguous subgraph transform.
     This transform makes the second matrix contiguous before the matmul.
@@ -2468,7 +2415,7 @@ def use_contiguous(m: _IntLike, n: _IntLike, k: _IntLike) -> bool:
 
 
 @functools.cache
-def get_k_splits(m: _IntLike, n: _IntLike, k: _IntLike) -> list[int]:
+def get_k_splits(m: "_IntLike", n: "_IntLike", k: "_IntLike") -> list[int]:
     # To limit compile time
     k_splits_limit = config.triton.num_decompose_k_splits
 
@@ -3127,10 +3074,6 @@ def is_linux() -> bool:
     return platform.system() == "Linux"
 
 
-def is_windows() -> bool:
-    return sys.platform == "win32"
-
-
 def has_free_symbols(itr: Iterable[Any]) -> bool:
     return any(isinstance(x, sympy.Expr) and not x.is_number for x in itr)
 
@@ -3427,8 +3370,8 @@ class BoxedBool:
         return self.value
 
     @staticmethod
-    def disable(obj: Any) -> BoxedBool | bool:
-        if isinstance(obj, BoxedBool):
+    def disable(obj: Any) -> "BoxedBool" | bool:
+        if isinstance(obj, "BoxedBool"):
             obj.value = False
             return obj
         return False

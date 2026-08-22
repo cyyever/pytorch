@@ -15,60 +15,21 @@ from typing import TYPE_CHECKING
 import torch
 from torch._utils import ExceptionWrapper
 
-from . import HAS_NUMPY, IS_WINDOWS, MP_STATUS_CHECK_INTERVAL, signal_handling
+from . import HAS_NUMPY, MP_STATUS_CHECK_INTERVAL, signal_handling
 
 
 if TYPE_CHECKING:
     from torch.utils.data import Dataset
 
-if IS_WINDOWS:
-    import ctypes
-    from ctypes.wintypes import BOOL, DWORD, HANDLE
+class ManagerWatchdog:
+    def __init__(self) -> None:
+        self.manager_pid = os.getppid()
+        self.manager_dead = False
 
-    # On Windows, the parent ID of the worker process remains unchanged when the manager process
-    # is gone, and the only way to check it through OS is to let the worker have a process handle
-    # of the manager and ask if the process status has changed.
-    class ManagerWatchdog:
-        def __init__(self) -> None:
-            self.manager_pid = os.getppid()
-
-            # mypy cannot detect this code is windows only
-            self.kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)  # type: ignore[attr-defined]
-            self.kernel32.OpenProcess.argtypes = (DWORD, BOOL, DWORD)
-            self.kernel32.OpenProcess.restype = HANDLE
-            self.kernel32.WaitForSingleObject.argtypes = (HANDLE, DWORD)
-            self.kernel32.WaitForSingleObject.restype = DWORD
-
-            # Value obtained from https://msdn.microsoft.com/en-us/library/ms684880.aspx
-            SYNCHRONIZE = 0x00100000
-            self.manager_handle = self.kernel32.OpenProcess(
-                SYNCHRONIZE, 0, self.manager_pid
-            )
-
-            if not self.manager_handle:
-                raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]
-
-            self.manager_dead = False
-
-        def is_alive(self) -> bool:
-            if not self.manager_dead:
-                # Value obtained from https://msdn.microsoft.com/en-us/library/windows/desktop/ms687032.aspx
-                self.manager_dead = (
-                    self.kernel32.WaitForSingleObject(self.manager_handle, 0) == 0
-                )
-            return not self.manager_dead
-
-else:
-
-    class ManagerWatchdog:  # type: ignore[no-redef]
-        def __init__(self) -> None:
-            self.manager_pid = os.getppid()
-            self.manager_dead = False
-
-        def is_alive(self) -> bool:
-            if not self.manager_dead:
-                self.manager_dead = os.getppid() != self.manager_pid
-            return not self.manager_dead
+    def is_alive(self) -> bool:
+        if not self.manager_dead:
+            self.manager_dead = os.getppid() != self.manager_pid
+        return not self.manager_dead
 
 
 @dataclass(frozen=True, slots=True)

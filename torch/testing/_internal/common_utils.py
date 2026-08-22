@@ -30,7 +30,6 @@ import re
 import shutil
 import signal
 import socket
-import stat
 import subprocess
 import sys
 import tempfile
@@ -359,8 +358,6 @@ log = logging.getLogger(__name__)
 torch.backends.disable_global_flags()
 
 FILE_SCHEMA = "file://"
-if sys.platform == 'win32':
-    FILE_SCHEMA = "file:///"
 
 # NB: This flag differs semantically from others in that setting the env var to any
 # non-empty value will cause it to be true:
@@ -1633,7 +1630,8 @@ def run_tests(argv=None):
         unittest.main(argv=argv, testLoader=testLoader)
 
 IS_LINUX = sys.platform == "linux"
-IS_WINDOWS = sys.platform == "win32"
+# Windows support has been removed; kept (always False) for API compatibility
+IS_WINDOWS = False
 IS_MACOS = sys.platform == "darwin"
 IS_PPC = platform.machine() == "ppc64le"
 IS_X86 = platform.machine() in ('x86_64', 'i386')
@@ -1644,44 +1642,15 @@ IS_CPU_EXT_SVE_SUPPORTED = torch.cpu.get_capabilities().get("sve", False)
 IS_CPU_CAPABILITY_SVE = torch._C._get_cpu_capability() in ("SVE128", "SVE256")
 IS_CPU_CAPABILITY_SVE256 = torch._C._get_cpu_capability() == "SVE256"
 
-if IS_WINDOWS:
-    @contextmanager
-    def TemporaryFileName(*args, **kwargs):
-        # Ideally we would like to not have to manually delete the file, but NamedTemporaryFile
-        # opens the file, and it cannot be opened multiple times in Windows. To support Windows,
-        # close the file after creation and try to remove it manually
-        if 'delete' in kwargs:
-            if kwargs['delete'] is not False:
-                raise UserWarning("only TemporaryFileName with delete=False is supported on Windows.")
-        else:
-            kwargs['delete'] = False
-        f = tempfile.NamedTemporaryFile(*args, **kwargs)  # noqa:SIM115
-        try:
-            f.close()
-            yield f.name
-        finally:
-            os.unlink(f.name)
-else:
-    @contextmanager  # noqa: T484
-    def TemporaryFileName(*args, **kwargs):
-        with tempfile.NamedTemporaryFile(*args, **kwargs) as f:
-            yield f.name
+@contextmanager  # noqa: T484
+def TemporaryFileName(*args, **kwargs):
+    with tempfile.NamedTemporaryFile(*args, **kwargs) as f:
+        yield f.name
 
-if IS_WINDOWS:
-    @contextmanager
-    def TemporaryDirectoryName(suffix=None):
-        # On Windows the directory created by TemporaryDirectory is likely to be removed prematurely,
-        # so we first create the directory using mkdtemp and then remove it manually
-        try:
-            dir_name = tempfile.mkdtemp(suffix=suffix)
-            yield dir_name
-        finally:
-            shutil.rmtree(dir_name)
-else:
-    @contextmanager  # noqa: T484
-    def TemporaryDirectoryName(suffix=None):
-        with tempfile.TemporaryDirectory(suffix=suffix) as d:
-            yield d
+@contextmanager  # noqa: T484
+def TemporaryDirectoryName(suffix=None):
+    with tempfile.TemporaryDirectory(suffix=suffix) as d:
+        yield d
 
 
 def make_lazy_class(cls):
@@ -2053,7 +2022,7 @@ def xfailIfLinux(func):
 
 
 def xfailIfWindows(func):
-    return unittest.expectedFailure(func) if IS_WINDOWS else func
+    return func
 
 
 def xfailIfROCm(func):
@@ -2371,13 +2340,6 @@ def has_corresponding_torch_dtype(np_dtype):
     except KeyError:
         return False
 
-
-if IS_WINDOWS:
-    # Size of `np.intc` is platform defined.
-    # It is returned by functions like `bitwise_not`.
-    # On Windows `int` is 32-bit
-    # https://docs.microsoft.com/en-us/cpp/cpp/data-type-ranges?view=msvc-160
-    numpy_to_torch_dtype_dict[np.intc] = torch.int
 
 # Dict of torch dtype -> NumPy dtype
 torch_to_numpy_dtype_dict = {value : key for (key, value) in numpy_to_torch_dtype_dict.items()}
@@ -3319,8 +3281,6 @@ def check_if_enable(test: unittest.TestCase):
                 platform_to_conditional: dict = {
                     "mac": IS_MACOS,
                     "macos": IS_MACOS,
-                    "win": IS_WINDOWS,
-                    "windows": IS_WINDOWS,
                     "linux": IS_LINUX,
                     "rocm": TEST_WITH_ROCM,
                     "xpu": TEST_XPU,
@@ -3669,13 +3629,12 @@ class TestCase(expecttest.TestCase):
             # Wraps the tested method if we should do CUDA memory check.
             if TEST_CUDA_MEM_LEAK_CHECK:
                 self._do_cuda_memory_leak_check &= getattr(test_method, '_do_cuda_memory_leak_check', True)
-                # FIXME: figure out the flaky -1024 anti-leaks on windows. See #8044
-                if self._do_cuda_memory_leak_check and not IS_WINDOWS:
+                if self._do_cuda_memory_leak_check:
                     self.wrap_with_cuda_policy(method_name, self.assertLeaksNoCudaTensors)
 
             # Wraps the tested method if we should enforce non default CUDA stream.
             self._do_cuda_non_default_stream &= getattr(test_method, '_do_cuda_non_default_stream', True)
-            if self._do_cuda_non_default_stream and not IS_WINDOWS:
+            if self._do_cuda_non_default_stream:
                 self.wrap_with_cuda_policy(method_name, self.enforceNonDefaultStream)
 
             if self._ignore_not_implemented_error:
@@ -5064,11 +5023,6 @@ class TestCase(expecttest.TestCase):
                       "No expect file exists; to accept the current output, run:\n"
                       f"python {__main__.__file__} {munged_id} --accept") from None
 
-        # a hack for JIT tests
-        if IS_WINDOWS:
-            expected = re.sub(r'CppOp\[(.+?)\]', 'CppOp[]', expected)
-            s = re.sub(r'CppOp\[(.+?)\]', 'CppOp[]', s)
-
         if expecttest.ACCEPT:
             if expected != s:
                 return accept_output("updated output")
@@ -6435,15 +6389,6 @@ def check_leaked_tensors(limit=1, matched_type=torch.Tensor):
         gc.set_debug(0)
 
 
-def _win_rmtree_onerror(func, path, exc_info):
-    # Retry after clearing the read-only attribute (WinError 5); ignore
-    # anything else so cleanup stays best-effort.
-    try:
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
-    except OSError:
-        pass
-
 
 def remove_cpp_extensions_build_root():
     """
@@ -6451,10 +6396,7 @@ def remove_cpp_extensions_build_root():
     """
     default_build_root = cpp_extension.get_default_build_root()
     if os.path.exists(default_build_root):
-        if IS_WINDOWS:
-            shutil.rmtree(default_build_root, onerror=_win_rmtree_onerror)
-        else:
-            shutil.rmtree(default_build_root, ignore_errors=True)
+        shutil.rmtree(default_build_root, ignore_errors=True)
 
 
 def install_cpp_extension(extension_root):
@@ -6491,10 +6433,6 @@ def scoped_load_inline(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         def load_inline(*args, **kwargs):
-            if IS_WINDOWS:
-                # TODO(xmfan): even using TemporaryDirectoryName will result in permission error
-                return cpp_extension.load_inline(*args, **kwargs)
-
             if "build_directory" in kwargs:
                 raise AssertionError("build_directory should not be specified when using scoped_load_inline")
             with TemporaryDirectoryName() as temp_dir_name:
