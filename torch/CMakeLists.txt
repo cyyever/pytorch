@@ -290,10 +290,6 @@ endif()
 # in case of the split build we need to add compile definitions
 if(BUILD_LIBTORCHLESS)
 
-  if(USE_UCC AND USE_C10D_UCC)
-    target_compile_definitions(torch_python PRIVATE USE_C10D_UCC)
-  endif()
-
   if(USE_NCCL AND USE_C10D_NCCL)
     target_compile_definitions(torch_python PRIVATE USE_C10D_NCCL)
   endif()
@@ -364,11 +360,6 @@ target_compile_definitions(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_DEFINITIO
 target_compile_options(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_OPTIONS})
 
 target_include_directories(torch_python PUBLIC ${TORCH_PYTHON_INCLUDE_DIRECTORIES})
-
-if(USE_UCC)
-  target_link_libraries(torch_python PRIVATE __caffe2_ucc)
-  target_compile_definitions(torch_python PRIVATE USE_UCC)
-endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithAssert")
    # Workaround numerous decret-without-a-gil warnings from JIT

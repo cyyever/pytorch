@@ -783,16 +783,6 @@ if(USE_XCCL)
   endif()
 endif()
 
-# ---[ UCC
-if(USE_UCC)
-  if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(WARNING "UCC is currently only supported under Linux.")
-    caffe2_update_option(USE_UCC OFF)
-  else()
-    include(${CMAKE_CURRENT_LIST_DIR}/External/ucc.cmake)
-  endif()
-endif()
-
 if(USE_CUDA AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # NVCC inserts whitespace into literal operators, triggering a spurious Clang warning.
   string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-deprecated-literal-operator")

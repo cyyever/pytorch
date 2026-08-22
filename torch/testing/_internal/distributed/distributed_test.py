@@ -165,25 +165,22 @@ def create_collectives_object_test_list():
 PROFILING_SUPPORTED_BACKENDS = [
     dist.Backend.NCCL,
     dist.Backend.GLOO,
-    dist.Backend.UCC,
 ]
 
 # Allowlist of distributed backends where profiling collectives with a CUDA
 # device is supported. This filters nothing today. The one branch that consults
 # it is reachable only from the three CUDA all_reduce tests, and all three skip
-# unless the backend is Gloo or NCCL, so the MPI and UCC entries below are
+# unless the backend is Gloo or NCCL, so the MPI entries below are
 # unreachable and the membership test always passes.
 CUDA_PROFILING_SUPPORTED_BACKENDS = [
     dist.Backend.GLOO,
     dist.Backend.NCCL,
-    dist.Backend.UCC,
 ]
 
 # Allowlist of distributed backends where profiling is supported for p2p ops
 SEND_RECV_PROFILING_SUPPORTED_BACKENDS = [
     dist.Backend.GLOO,
     dist.Backend.NCCL,
-    dist.Backend.UCC,
 ]
 
 # Dummy NamedTuple data structures to test DDP support for NamedTuple types.
@@ -425,8 +422,6 @@ def require_backend_is_available(backends):
             return dist.is_gloo_available()
         if backend == dist.Backend.NCCL:
             return dist.is_nccl_available()
-        if backend == dist.Backend.UCC:
-            return dist.is_ucc_available()
         if backend in DistTestCases.backend_feature["plugin"]:
             return True
         return False
@@ -3249,9 +3244,6 @@ class DistributedTest:
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
         )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         def test_scatter_checks(self):
             group, _group_id, rank = self._init_global_test()
             one = torch.ones([1])
@@ -3277,9 +3269,6 @@ class DistributedTest:
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
         )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         def test_scatter(self):
             group, group_id, rank = self._init_global_test()
             self._test_scatter_helper(group, group_id, rank)
@@ -3295,9 +3284,6 @@ class DistributedTest:
 
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
-        )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
         )
         def test_scatter_complex(self):
             group, group_id, rank = self._init_global_test()
@@ -3317,9 +3303,6 @@ class DistributedTest:
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
         )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         @skip_if_small_worldsize
         def test_scatter_group(self):
             group, group_id, rank = self._init_group_test()
@@ -3327,9 +3310,6 @@ class DistributedTest:
 
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
-        )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
         )
         def test_scatter_full_group(self):
             group, group_id, rank = self._init_full_group_test()
@@ -3368,9 +3348,6 @@ class DistributedTest:
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
         )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         def test_gather_checks(self):
             group, _group_id, rank = self._init_global_test()
             one = torch.ones([1])
@@ -3396,9 +3373,6 @@ class DistributedTest:
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
         )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         def test_gather(self):
             group, group_id, rank = self._init_global_test()
             self._test_gather_helper(group, group_id, rank)
@@ -3415,9 +3389,6 @@ class DistributedTest:
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
         )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         @skip_if_small_worldsize
         def test_gather_group(self):
             group, group_id, rank = self._init_group_test()
@@ -3425,9 +3396,6 @@ class DistributedTest:
 
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "nccl", "Nccl does not support CPU tensors"
-        )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
         )
         def test_gather_full_group(self):
             group, group_id, rank = self._init_full_group_test()
@@ -4138,9 +4106,6 @@ class DistributedTest:
         @skip_if_no_gpu
         @skip_but_pass_in_sandcastle_if(
             BACKEND == "mpi", "MPI doesn't support GPU barrier"
-        )
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc" and IS_SANDCASTLE, "Skipped internally"
         )
         def test_barrier_cuda(self):
             group, group_id, rank = self._init_global_test()
@@ -6633,18 +6598,12 @@ class DistributedTest:
                     group=pg,
                 )
 
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         @require_backend_is_available(DistTestCases.backend_feature["gpu"])
         @with_dist_debug_levels(levels=["DETAIL", "OFF", "INFO"])
         @require_exact_world_size(4)
         def test_gather_object(self):
             return self._test_gather_object()
 
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc", "CPU tensor ops not supported by UCP TL"
-        )
         @require_backend_is_available(DistTestCases.backend_feature["gpu"])
         @with_dist_debug_levels(levels=["DETAIL", "OFF", "INFO"])
         @require_exact_world_size(4)
@@ -8325,17 +8284,11 @@ class DistributedTest:
             self.assertGreater(t, 0)
 
         @require_backend_is_available(DistTestCases.backend_feature["gpu"])
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc" and IS_SANDCASTLE, "Skipped internally"
-        )
         @skip_if_lt_x_gpu(2)
         def test_verify_model_across_rank_with_logger(self):
             self._test_verify_model_across_rank(use_logger=True)
 
         @require_backend_is_available(DistTestCases.backend_feature["gpu"])
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc" and IS_SANDCASTLE, "Skipped internally"
-        )
         @skip_if_lt_x_gpu(2)
         def test_verify_model_across_rank_without_logger(self):
             self._test_verify_model_across_rank(use_logger=False)
@@ -8356,9 +8309,6 @@ class DistributedTest:
 
         @unittest.skipIf(IS_LINUX, "https://github.com/pytorch/pytorch/issues/162676")
         @require_backend_is_available(DistTestCases.backend_feature["gpu"])
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc" and IS_SANDCASTLE, "Skipped internally"
-        )
         @skip_if_lt_x_gpu(2)
         def test_ddp_model_diff_shape_across_ranks(self):
             group_gloo = dist.new_group(
@@ -8374,9 +8324,6 @@ class DistributedTest:
             self._run_test_ddp_model_with_diff_params(net, group_to_use, group_gloo)
 
         @require_backend_is_available(DistTestCases.backend_feature["gpu"])
-        @skip_but_pass_in_sandcastle_if(
-            BACKEND == "ucc" and IS_SANDCASTLE, "Skipped internally"
-        )
         @skip_if_lt_x_gpu(2)
         def test_ddp_model_diff_num_params_across_ranks(self):
             group_gloo = dist.new_group(

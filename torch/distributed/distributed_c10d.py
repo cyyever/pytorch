@@ -136,11 +136,9 @@ __all__ = [
     "irecv",
     "is_gloo_available",
     "is_initialized",
-    "is_mpi_available",
     "is_backend_available",
     "is_nccl_available",
     "is_torchelastic_launched",
-    "is_ucc_available",
     "is_xccl_available",
     "isend",
     "monitored_barrier",
@@ -189,7 +187,6 @@ __all__ = [
 
 _NCCL_AVAILABLE = True
 _GLOO_AVAILABLE = True
-_UCC_AVAILABLE = True
 _XCCL_AVAILABLE = True
 
 try:
@@ -241,7 +238,7 @@ def _torchcomms_handles_backend(backend) -> bool:
     """True if TorchComms can create a comm for *backend*.
 
     Backends TorchComms doesn't own -- custom c10d plugins such as ``mooncake``
-    or ``ucc`` -- must fall through to the normal ProcessGroup path even when
+    -- must fall through to the normal ProcessGroup path even when
     TorchComms is enabled, rather than being routed through ``new_comm`` /
     ``split_group`` (which cannot construct them).
 
@@ -383,14 +380,6 @@ except ImportError:
     _GLOO_AVAILABLE = False
 
 try:
-    from torch._C._distributed_c10d import ProcessGroupUCC
-
-    ProcessGroupUCC.__module__ = "torch.distributed.distributed_c10d"
-    __all__ += ["ProcessGroupUCC"]
-except ImportError:
-    _UCC_AVAILABLE = False
-
-try:
     from torch._C._distributed_c10d import ProcessGroupXCCL
 
     ProcessGroupXCCL.__module__ = "torch.distributed.distributed_c10d"
@@ -405,7 +394,6 @@ if TYPE_CHECKING:
         ProcessGroupGloo,
         ProcessGroupNCCL,
         ProcessGroupNCCL2,
-        ProcessGroupUCC,
         ProcessGroupXCCL,
     )
 
@@ -465,7 +453,7 @@ class Backend(str):  # noqa: SLOT000
     """
     An enum-like class for backends.
 
-    Available backends: GLOO, NCCL, UCC, XCCL, FAKE, and other registered backends.
+    Available backends: GLOO, NCCL, XCCL, FAKE, and other registered backends.
 
     The values of this class are lowercase strings, e.g., ``"gloo"``. They can
     be accessed as attributes, e.g., ``Backend.NCCL``.
@@ -483,7 +471,6 @@ class Backend(str):  # noqa: SLOT000
     UNDEFINED = "undefined"
     GLOO = "gloo"
     NCCL = "nccl"
-    UCC = "ucc"
     XCCL = "xccl"
     FAKE = "fake"
 
@@ -493,7 +480,7 @@ class Backend(str):  # noqa: SLOT000
 
     _plugins: dict[str, _BackendPlugin] = {}
 
-    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, UCC, FAKE]
+    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, FAKE]
 
     # 3rd-party devices can register the default backend support here
     default_device_backend_map: dict[str, str] = {
@@ -507,7 +494,6 @@ class Backend(str):  # noqa: SLOT000
         GLOO: ["cpu", "cuda"],
         NCCL: ["cuda"],
         XCCL: ["xpu"],
-        UCC: ["cpu", "cuda"],
         FAKE: ["cpu", "cuda", "hpu", "xpu"],
     }
 
@@ -516,7 +502,6 @@ class Backend(str):  # noqa: SLOT000
         GLOO: ProcessGroup.BackendType.GLOO,
         NCCL: ProcessGroup.BackendType.NCCL,
         XCCL: ProcessGroup.BackendType.XCCL,
-        UCC: ProcessGroup.BackendType.UCC,
         FAKE: ProcessGroup.BackendType.CUSTOM,
     }
 
@@ -798,21 +783,6 @@ def _create_nccl_lazy_process_group(
     return backend
 
 
-def _create_ucc_process_group(
-    opts: _DistributedBackendOptions, backend_options: object | None
-) -> C10DBackend:
-    if not is_ucc_available():
-        raise RuntimeError("Distributed package doesn't have UCC built in")
-    backend_class = ProcessGroupUCC(
-        opts.store,
-        opts.group_rank,
-        opts.group_size,
-        # pyrefly: ignore [bad-argument-type]
-        timeout=opts.timeout,
-    )
-    return backend_class
-
-
 def _create_xccl_process_group(
     opts: _DistributedBackendOptions, backend_options: object | None
 ) -> C10DBackend:
@@ -907,16 +877,6 @@ def _register_builtin_nccl_lazy_backend() -> None:
     )
 
 
-def _register_builtin_ucc_backend() -> None:
-    Backend.register_backend(
-        Backend.UCC,
-        _create_ucc_process_group,
-        extended_api=True,
-        devices=Backend.backend_capability[Backend.UCC],
-        _backend_type=ProcessGroup.BackendType.UCC,
-    )
-
-
 def _register_builtin_xccl_backend() -> None:
     Backend.register_backend(
         Backend.XCCL,
@@ -963,7 +923,7 @@ class BackendConfig:
             pass
         elif normalized_backend in Backend.backend_list:
             # Cases for when backend is a single string (without device types)
-            # e.g. "nccl", "gloo", "ucc", "mpi"
+            # e.g. "nccl", "gloo", "xccl"
             supported_devices = Backend.backend_capability[normalized_backend]
             backend_val = Backend(backend)
 
@@ -1943,11 +1903,6 @@ def is_gloo_available() -> bool:
     return _GLOO_AVAILABLE
 
 
-def is_ucc_available() -> bool:
-    """Check if the UCC backend is available."""
-    return _UCC_AVAILABLE
-
-
 def is_xccl_available() -> bool:
     """Check if the XCCL backend is available."""
     return _XCCL_AVAILABLE
@@ -2278,7 +2233,7 @@ def set_timeout(timeout: timedelta, group: ProcessGroup | None = None) -> None:
     :func:`init_process_group` or :func:`new_group`). The new timeout is
     forwarded to every backend registered with :attr:`group` -- for example both
     the Gloo and NCCL backends of a group spanning CPU and CUDA devices. Backends
-    that do not support changing their timeout (such as UCC) emit a
+    that do not support changing their timeout emit a
     warning and leave their timeout unchanged.
 
     Args:
@@ -2358,8 +2313,8 @@ def init_process_group(
 
     Args:
         backend (str or Backend, optional): The backend to use. Depending on
-            build-time configurations, valid values include ``mpi``, ``gloo``,
-            ``nccl``, ``ucc``, ``xccl`` or one that is registered by a third-party
+            build-time configurations, valid values include ``gloo``,
+            ``nccl``, ``xccl`` or one that is registered by a third-party
             plugin.
             Since 2.6, if ``backend`` is not provided, c10d will use a backend
             registered for the device type indicated by the `device_id` kwarg
@@ -2374,7 +2329,6 @@ def init_process_group(
             If using multiple processes per machine with ``nccl`` backend, each
             process must have exclusive access to every GPU it uses, as sharing
             GPUs between processes can result in deadlock or NCCL invalid usage.
-            ``ucc`` backend is experimental.
             Default backend for the device can be queried with
             :func:`get_default_backend_for_device`.
         init_method (str, optional): URL specifying how to initialize the
@@ -2660,7 +2614,7 @@ def _get_split_source(pg: ProcessGroup) -> C10DBackend | None:
 # Backends that feed a FlightRecorder without any help: ProcessGroupGloo
 # unconditionally, ProcessGroupNCCL and ProcessGroupXCCL through their own
 # integrations. "fake" and "undefined" never communicate, so recording them is
-# pure noise. Everything else -- nccl2, nccl-lazy, mpi, ucc, out-of-tree
+# pure noise. Everything else -- nccl2, nccl-lazy, out-of-tree
 # plugins -- is invisible to the flight recorder unless a hook is attached.
 #
 # Backend.NCCL is not in here by construction: which implementation the name
@@ -2960,7 +2914,7 @@ def _new_process_group_helper(
 
         # Process group wrapper initialization for supported PGs when TORCH_DISTRIBUTED_DEBUG is set
         if (
-            backend_str in [Backend.GLOO, Backend.NCCL, Backend.XCCL, Backend.UCC]
+            backend_str in [Backend.GLOO, Backend.NCCL, Backend.XCCL]
             or backend_str.upper() in Backend._plugins
         ):
             # In debug mode and if GLOO is available, wrap in a wrapper PG that
@@ -3719,7 +3673,7 @@ def batch_isend_irecv(p2p_op_list: list[P2POp]) -> list[Work]:
     Send or Receive a batch of tensors asynchronously and return a list of requests.
 
     Process each of the operations in ``p2p_op_list`` and return the corresponding
-    requests. NCCL, Gloo, and UCC backend are currently supported.
+    requests. NCCL and Gloo backends are currently supported.
 
     Args:
         p2p_op_list: A list of point-to-point operations(type of each operator is

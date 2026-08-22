@@ -354,16 +354,6 @@ if dist.is_available():
             "WORLD_SIZE": f"{num_gpus if num_gpus > 0 else 3}",
         }
     del num_gpus
-    # Test with UCC backend is deprecated.
-    # See https://github.com/pytorch/pytorch/pull/137161
-    # if dist.is_ucc_available():
-    #     DISTRIBUTED_TESTS_CONFIG["ucc"] = {
-    #         "WORLD_SIZE": f"{torch.cuda.device_count()}",
-    #         "UCX_TLS": "tcp,cuda",
-    #         "UCC_TLS": "nccl,ucp,cuda",
-    #         "UCC_TL_UCP_TUNE": "cuda:0",  # don't use UCP TL on CUDA as it is not well supported
-    #         "UCC_EC_CUDA_USE_COOPERATIVE_LAUNCH": "n",  # CI nodes (M60) fail if it is on
-    #     }
 
 # https://stackoverflow.com/questions/2549939/get-signal-names-from-numbers-in-python
 SIGNALS_TO_NAMES_DICT = {
@@ -1308,11 +1298,9 @@ CUSTOM_HANDLERS = {
     "distributed/algorithms/quantization/test_quantization": test_distributed,
     "distributed/test_c10d_nccl": run_test_with_subprocess,
     "distributed/test_c10d_gloo": run_test_with_subprocess,
-    "distributed/test_c10d_ucc": run_test_with_subprocess,
     "distributed/test_c10d_common": run_test_with_subprocess,
     "distributed/test_c10d_spawn_gloo": run_test_with_subprocess,
     "distributed/test_c10d_spawn_nccl": run_test_with_subprocess,
-    "distributed/test_c10d_spawn_ucc": run_test_with_subprocess,
     "distributed/test_store": run_test_with_subprocess,
     "distributed/test_pg_wrapper": run_test_with_subprocess,
     "functorch/test_control_flow_cuda_initialization": run_test_with_subprocess,

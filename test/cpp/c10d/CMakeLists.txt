@@ -94,18 +94,6 @@ if(USE_CUDA)
       install(TARGETS c10d_cuda_test DESTINATION lib)
     endif()
   endif()
-  if(USE_UCC AND USE_C10D_UCC)
-    # UCC is a private dependency of libtorch, but the tests include some
-    # private headers of libtorch, which in turn include UCC. As a hacky
-    # alternative to making UCC a public dependency of libtorch, we make it
-    # a private dependency of the tests as well.
-    c10d_add_test(
-      ProcessGroupUCCTest.cpp
-      LINK_LIBRARIES torch_cpu c10d_cuda_test gtest_main __caffe2_ucc INSTALL_TEST ${INSTALL_TEST})
-    if(INSTALL_TEST)
-      install(TARGETS c10d_cuda_test DESTINATION lib)
-    endif()
-  endif()
 elseif(USE_ROCM)
   if(USE_GLOO AND USE_C10D_GLOO)
     c10d_add_test(hip/ProcessGroupGlooTest.cpp LINK_LIBRARIES torch_cpu c10d_hip_test gtest_main INSTALL_TEST ${INSTALL_TEST})
@@ -118,14 +106,6 @@ elseif(USE_ROCM)
     c10d_add_test(
       hip/ProcessGroupNCCLErrorsTest.cpp
       LINK_LIBRARIES torch_cpu c10d_hip_test gtest_main __caffe2_nccl INSTALL_TEST ${INSTALL_TEST})
-    if(INSTALL_TEST)
-      install(TARGETS c10d_hip_test DESTINATION lib)
-    endif()
-  endif()
-  if(USE_UCC AND USE_C10D_UCC)
-    c10d_add_test(
-      hip/ProcessGroupUCCTest.cpp
-      LINK_LIBRARIES torch_cpu c10d_hip_test gtest_main __caffe2_ucc INSTALL_TEST ${INSTALL_TEST})
     if(INSTALL_TEST)
       install(TARGETS c10d_hip_test DESTINATION lib)
     endif()

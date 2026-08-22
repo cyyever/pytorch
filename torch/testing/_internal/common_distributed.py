@@ -186,17 +186,17 @@ TEST_SKIPS = {
 class DistTestCases:
     # Backends that do not support a specific collective
     skip_collective = {}
-    skip_collective["allgather_coalesced"] = {"nccl", "mpi", "ucc", "xccl"}
+    skip_collective["allgather_coalesced"] = {"nccl", "mpi", "xccl"}
     skip_collective["reduce"] = set()
-    skip_collective["sendrecv anysource"] = {"nccl", "ucc", "xccl"}
-    skip_collective["cpu barrier"] = {"nccl", "ucc", "xccl"}
+    skip_collective["sendrecv anysource"] = {"nccl", "xccl"}
+    skip_collective["cpu barrier"] = {"nccl", "xccl"}
 
     # Sets showing that something is implemented
     backend_feature = {}
-    backend_feature["gpu"] = {"nccl", "gloo", "ucc", "xccl"}
-    backend_feature["cuda"] = {"nccl", "gloo", "ucc"}
-    backend_feature["ddp"] = {"nccl", "gloo", "ucc", "xccl"}
-    backend_feature["subgroup"] = {"nccl", "gloo", "ucc", "xccl"}
+    backend_feature["gpu"] = {"nccl", "gloo", "xccl"}
+    backend_feature["cuda"] = {"nccl", "gloo"}
+    backend_feature["ddp"] = {"nccl", "gloo", "xccl"}
+    backend_feature["subgroup"] = {"nccl", "gloo", "xccl"}
     backend_feature["plugin"] = set()
     if TEST_HPU:
         backend_feature["hpu"] = {"hccl"}
@@ -514,13 +514,6 @@ def requires_xccl():
     return skip_but_pass_in_sandcastle_if(
         not c10d.is_xccl_available(),
         "c10d was not compiled with the XCCL backend",
-    )
-
-
-def requires_ucc():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_ucc_available(),
-        "c10d was not compiled with the UCC backend",
     )
 
 

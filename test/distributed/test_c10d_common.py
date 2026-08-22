@@ -426,8 +426,6 @@ class DefaultBackendTypeTest(TestCase):
             "cpu:gloo,xpu:xccl",
             "cuda:nccl",
             "xpu:xccl",
-            "cuda:ucc",
-            "cpu:gloo,cuda:ucc",
         ],
     )
     @parametrize("accelerator", [None, "cuda", "xpu"])
@@ -456,7 +454,6 @@ class DefaultBackendTypeTest(TestCase):
             # Accelerator-only groups must not fall back to a gloo backend that
             # was never registered.
             ("xpu:xccl", "xpu", "XCCL"),
-            ("cuda:ucc", "cuda", "UCC"),
             # No device for the reported accelerator: any non-host device still
             # outranks cpu.
             ("cpu:gloo,xpu:xccl", "cuda", "XCCL"),
@@ -2244,7 +2241,6 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
         )
 
     def test_is_backend_available(self):
-        self.assertEqual(dist.is_ucc_available(), dist.is_backend_available("ucc"))
         self.assertFalse(dist.is_backend_available("dummy"))
         dist.Backend.register_backend(
             "dummy", PythonProcessGroupExtensionTest.create_dummy
@@ -2263,7 +2259,6 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
         backend_config_strings_and_expected_values = [
             (dist.Backend.GLOO, "cpu:gloo,cuda:gloo"),
             (dist.Backend.NCCL, "cuda:nccl"),
-            (dist.Backend.UCC, "cpu:ucc,cuda:ucc"),
             (dist.Backend.DUMMY, dummy_backend_config),
             ("DUMMY", dummy_backend_config),
             ("dummy", dummy_backend_config),
@@ -2715,9 +2710,6 @@ class ProcessGroupWithDispatchedCollectivesTests(MultiProcessTestCase):
                     continue
             elif backend == dist.Backend.GLOO:
                 if not dist.is_gloo_available():
-                    continue
-            elif backend == dist.Backend.UCC:
-                if not dist.is_ucc_available():
                     continue
             elif backend == dist.Backend.XCCL:
                 if not dist.is_xccl_available():
