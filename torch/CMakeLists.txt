@@ -247,8 +247,6 @@ if(USE_DISTRIBUTED)
     if(USE_NCCL)
       list(APPEND TORCH_PYTHON_LINK_LIBRARIES __caffe2_nccl)
     endif()
-    # Same for MPI.
-    endif()
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_C10D)
 
 endif()
@@ -316,7 +314,6 @@ if(BUILD_LIBTORCHLESS)
     target_compile_definitions(torch_python PRIVATE "-DAT_EXPERIMENTAL_SINGLE_THREAD_POOL=1")
   endif()
 
-endif()
 
 add_dependencies(torch_python torch_python_stubs)
 
