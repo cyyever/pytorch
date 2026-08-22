@@ -79,7 +79,7 @@ if TEST_CUDA or TEST_XPU or TEST_HPU or TEST_PRIVATEUSE1:
     PG_BACKEND = dist.Backend.default_device_backend_map[DEVICE_TYPE]
 else:
     DEVICE_TYPE = "cpu"
-    PG_BACKEND = "gloo"
+    PG_BACKEND = "nccl"
 
 if TEST_WITH_ROCM:
     NUM_DEVICES = min(4, max(2, torch.cuda.device_count()))
@@ -808,15 +808,10 @@ class DTensorTestBase(DTensorTestMixin, MultiProcessTestCase):
 
         if backend not in [
             "nccl",
-            "gloo",
-            "mpi",
-            f"cpu:gloo,{self.device_type}:{curr_backend}",
-            "cpu:gloo,cuda:ncclx",
             "cuda:ncclx",
             "hccl",
             "xccl",
             "fake",
-            "cpu:gloo,xpu:xccl",
         ]:
             raise RuntimeError(f"Backend {backend} not supported!")
 

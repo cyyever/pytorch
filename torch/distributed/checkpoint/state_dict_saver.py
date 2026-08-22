@@ -13,9 +13,6 @@ from warnings import deprecated
 import torch
 import torch.distributed as dist
 from torch.distributed._state_dict_utils import STATE_DICT_TYPE
-from torch.distributed.checkpoint._async_process_executor import (
-    _ProcessBasedAsyncCheckpointExecutor,
-)
 from torch.distributed.checkpoint._async_thread_executor import (
     _ThreadBasedAsyncCheckpointExecutor,
 )
@@ -53,7 +50,6 @@ class AsyncCheckpointerType(Enum):
     """Enum for async checkpointer type."""
 
     THREAD = "thread"
-    PROCESS = "process"
 
 
 @deprecated(
@@ -258,7 +254,7 @@ def async_save(
             ProcessGroup to be used for cross-rank synchronization.
             (Default: ``None``)
         async_checkpointer_type (AsyncCheckpointerType):
-            whether to do checkpoint in separate thread or process
+            whether to do checkpoint in a separate thread
             (Default: ``AsyncCheckpointerType.THREAD``)
         async_stager (AsyncStager):
             provides staging implementation. If ``storage_writer`` implements
@@ -301,7 +297,7 @@ def async_save(
         pg = process_group or _get_default_group()
         if torch.device("cpu") not in pg._device_types:
             raise AssertionError(
-                "A CPU backend must be enabled for async save; try initializing process group with 'cpu:gloo,cuda:nccl'"
+                "A CPU backend must be enabled for async save"
             )
 
     owned_async_stager: AsyncStager | None = None
@@ -340,11 +336,7 @@ def async_save(
 
         staging_future_or_state_dict = stage_state_dict()
 
-        upload_executor: _AsyncCheckpointExecutor = (
-            _ProcessBasedAsyncCheckpointExecutor()
-            if async_checkpointer_type == AsyncCheckpointerType.PROCESS
-            else _ThreadBasedAsyncCheckpointExecutor()
-        )
+        upload_executor: _AsyncCheckpointExecutor = _ThreadBasedAsyncCheckpointExecutor()
 
         upload_future: Future = upload_executor.execute_save(
             staging_future_or_state_dict,

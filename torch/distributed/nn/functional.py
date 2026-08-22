@@ -462,19 +462,11 @@ class _AlltoAll(Function):
         ]
         my_rank = dist.get_rank(group=group)
         tensors = tuple(t.contiguous() for t in tensors)
-        # Implement it on means of scatter/gather, send/recv async operations have issues
-        if dist.get_backend(group=group) is dist.Backend.GLOO:
-            for i in range(dist.get_world_size(group=group)):
-                to_send = None
-                if i == my_rank:
-                    to_send = list(tensors)
-                dist.scatter(out_tensor_list[i], to_send, i, group=group)
-        else:
-            dist.all_to_all(
-                out_tensor_list,
-                list(tensors),
-                group=group,
-            )
+        dist.all_to_all(
+            out_tensor_list,
+            list(tensors),
+            group=group,
+        )
         return tuple(out_tensor_list)
 
     @staticmethod

@@ -22,7 +22,7 @@ compile_on_one_rank: bool = Config(
 )
 
 # When enabled, uses TorchComms for communication backend instead of the
-# traditional ProcessGroup backends (NCCL, Gloo, etc.).
+# traditional ProcessGroup backends (NCCL, etc.).
 use_torchcomms: bool = Config(
     default=False,
     env_name_default="TORCH_DISTRIBUTED_USE_TORCHCOMMS",

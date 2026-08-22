@@ -354,7 +354,7 @@ Important Notices
 
     >>> # xdoctest: +SKIP("stub")
     >>> import torch.distributed as dist
-    >>> dist.init_process_group(backend="gloo|nccl")
+    >>> dist.init_process_group(backend="nccl")
 
 3. In your training program, you can either use regular distributed functions
    or use :func:`torch.nn.parallel.DistributedDataParallel` module. If your

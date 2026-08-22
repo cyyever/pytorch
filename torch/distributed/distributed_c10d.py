@@ -134,7 +134,6 @@ __all__ = [
     "group",
     "init_process_group",
     "irecv",
-    "is_gloo_available",
     "is_initialized",
     "is_backend_available",
     "is_nccl_available",
@@ -186,7 +185,6 @@ __all__ = [
 ]
 
 _NCCL_AVAILABLE = True
-_GLOO_AVAILABLE = True
 _XCCL_AVAILABLE = True
 
 try:
@@ -372,14 +370,6 @@ except ImportError:
     pass
 
 try:
-    from torch._C._distributed_c10d import _ProcessGroupWrapper, ProcessGroupGloo
-
-    ProcessGroupGloo.__module__ = "torch.distributed.distributed_c10d"
-    __all__ += ["ProcessGroupGloo"]
-except ImportError:
-    _GLOO_AVAILABLE = False
-
-try:
     from torch._C._distributed_c10d import ProcessGroupXCCL
 
     ProcessGroupXCCL.__module__ = "torch.distributed.distributed_c10d"
@@ -390,16 +380,12 @@ except ImportError:
 
 if TYPE_CHECKING:
     from torch._C._distributed_c10d import (  # noqa: TC004
-        _ProcessGroupWrapper,
-        ProcessGroupGloo,
         ProcessGroupNCCL,
         ProcessGroupNCCL2,
         ProcessGroupXCCL,
     )
 
 logger = logging.getLogger(__name__)
-
-PG_WRAPPER_STORE_PREFIX = "pg_wrapper"
 
 
 # Some reduce ops are not supported by complex numbers and will result in an error.
@@ -453,15 +439,15 @@ class Backend(str):  # noqa: SLOT000
     """
     An enum-like class for backends.
 
-    Available backends: GLOO, NCCL, XCCL, FAKE, and other registered backends.
+    Available backends: NCCL, XCCL, FAKE, and other registered backends.
 
-    The values of this class are lowercase strings, e.g., ``"gloo"``. They can
+    The values of this class are lowercase strings, e.g., ``"nccl"``. They can
     be accessed as attributes, e.g., ``Backend.NCCL``.
 
     This class can be directly called to parse the string, e.g.,
     ``Backend(backend_str)`` will check if ``backend_str`` is valid, and
     return the parsed lowercase string if so. It also accepts uppercase strings,
-    e.g., ``Backend("GLOO")`` returns ``"gloo"``.
+    e.g., ``Backend("NCCL")`` returns ``"nccl"``.
 
     .. note:: The entry ``Backend.UNDEFINED`` is present but only used as
               initial value of some fields. Users should neither use it directly
@@ -469,7 +455,6 @@ class Backend(str):  # noqa: SLOT000
     """
 
     UNDEFINED = "undefined"
-    GLOO = "gloo"
     NCCL = "nccl"
     XCCL = "xccl"
     FAKE = "fake"
@@ -480,18 +465,15 @@ class Backend(str):  # noqa: SLOT000
 
     _plugins: dict[str, _BackendPlugin] = {}
 
-    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, FAKE]
+    backend_list = [UNDEFINED, NCCL, XCCL, FAKE]
 
     # 3rd-party devices can register the default backend support here
     default_device_backend_map: dict[str, str] = {
-        "cpu": GLOO,
         "cuda": NCCL,
         "xpu": XCCL,
-        "mps": GLOO,
     }
 
     backend_capability: dict[str, list[str]] = {
-        GLOO: ["cpu", "cuda"],
         NCCL: ["cuda"],
         XCCL: ["xpu"],
         FAKE: ["cpu", "cuda", "hpu", "xpu"],
@@ -499,7 +481,6 @@ class Backend(str):  # noqa: SLOT000
 
     backend_type_map: dict[str, ProcessGroup.BackendType] = {
         UNDEFINED: ProcessGroup.BackendType.UNDEFINED,
-        GLOO: ProcessGroup.BackendType.GLOO,
         NCCL: ProcessGroup.BackendType.NCCL,
         XCCL: ProcessGroup.BackendType.XCCL,
         FAKE: ProcessGroup.BackendType.CUSTOM,
@@ -624,24 +605,6 @@ class Backend(str):  # noqa: SLOT000
             func,
             extended_api,
         )
-
-
-def _create_gloo_process_group(
-    opts: _DistributedBackendOptions, backend_options: object | None
-) -> C10DBackend:
-    if not is_gloo_available():
-        raise RuntimeError("Distributed package doesn't have Gloo built in")
-    backend_class = ProcessGroupGloo(
-        opts.store,
-        opts.group_rank,
-        opts.group_size,
-        # pyrefly: ignore [bad-argument-type]
-        timeout=opts.timeout,
-        enable_reconfigure=opts.enable_reconfigure,
-    )
-    backend_class.options.global_ranks_in_group = opts.global_ranks_in_group
-    backend_class.options.group_name = opts.group_id
-    return backend_class
 
 
 def _create_nccl_process_group(
@@ -799,16 +762,6 @@ def _create_xccl_process_group(
         opts.store, opts.group_rank, opts.group_size, backend_options
     )
     return backend_class
-
-
-def _register_builtin_gloo_backend() -> None:
-    Backend.register_backend(
-        Backend.GLOO,
-        _create_gloo_process_group,
-        extended_api=True,
-        devices=Backend.backend_capability[Backend.GLOO],
-        _backend_type=ProcessGroup.BackendType.GLOO,
-    )
 
 
 def _register_builtin_nccl_backend() -> None:
@@ -1051,11 +1004,11 @@ def _get_default_backend_type_for_backend_config(
         if _is_torchcomms_backend(backend):
             return ProcessGroup.BackendType.CUSTOM
         # Unreachable for a group that actually gets built
-        return ProcessGroup.BackendType.GLOO
+        return ProcessGroup.BackendType.UNDEFINED
 
     device_backend_map = backend_config.device_backend_map
     if not device_backend_map:
-        return ProcessGroup.BackendType.GLOO
+        return ProcessGroup.BackendType.UNDEFINED
 
     accelerator = torch.accelerator.current_accelerator()
 
@@ -1452,14 +1405,7 @@ def _get_object_coll_device(group: ProcessGroup | None = None) -> str:
             "of PyTorch Distributed instead.",
             stacklevel=2,
         )
-        # Provide backward compatibility to cases where `group` passed in is
-        # actually a Backend (like `ProcessGroupGloo`) rather than a
-        # `ProcessGroup` in PT 2.0 sense
-        if isinstance(group, ProcessGroupGloo):
-            # RPC uses Gloo for object collectives
-            return "cpu"
-        else:
-            raise ValueError(f"Expecting a ProcessGroup, but got a {type(group)}.")
+        raise ValueError(f"Expecting a ProcessGroup, but got a {type(group)}.")
 
     """
     ``group._device_types`` is a property pybind that returns the devices
@@ -1523,18 +1469,7 @@ def _get_pg_default_device(group: ProcessGroup | None = None) -> torch.device:
     group = group or _get_default_group()
 
     if not isinstance(group, ProcessGroup):
-        # Provide backward compatibility to cases where `group` passed in is
-        # actually a Backend (like `ProcessGroupGloo`) rather than a
-        # `ProcessGroup` in PT 2.0 sense
-        warnings.warn(
-            f"You are using a Backend {type(group)} as a ProcessGroup. "
-            "This usage is deprecated since PyTorch 2.0. Please use a public API "
-            "of PyTorch Distributed instead.",
-            FutureWarning,
-            stacklevel=3,
-        )
-        # Most users create Gloo with private API for object collectives
-        return torch.device("cpu")
+        raise ValueError(f"Expecting a ProcessGroup, but got a {type(group)}.")
 
     """
     ``group._device_types`` is a property pybind that returns the devices
@@ -1896,11 +1831,6 @@ def _check_p2p_op_list(p2p_op_list: list[P2POp]) -> None:
 def is_nccl_available() -> bool:
     """Check if the NCCL backend is available."""
     return _NCCL_AVAILABLE
-
-
-def is_gloo_available() -> bool:
-    """Check if the Gloo backend is available."""
-    return _GLOO_AVAILABLE
 
 
 def is_xccl_available() -> bool:
@@ -2313,19 +2243,19 @@ def init_process_group(
 
     Args:
         backend (str or Backend, optional): The backend to use. Depending on
-            build-time configurations, valid values include ``gloo``,
+            build-time configurations, valid values include ``nccl2``,
             ``nccl``, ``xccl`` or one that is registered by a third-party
             plugin.
             Since 2.6, if ``backend`` is not provided, c10d will use a backend
             registered for the device type indicated by the `device_id` kwarg
             (if provided). The known default registrations today are: ``nccl``
-            for ``cuda``, ``gloo`` for ``cpu``, ``xccl`` for ``xpu``.
+            for ``cuda``, ``xccl`` for ``xpu``.
             If neither ``backend`` nor ``device_id`` is provided, c10d will
             detect the accelerator on the run-time machine and use a backend
             registered for that detected accelerator (or ``cpu``).
-            This field can be given as a lowercase string (e.g., ``"gloo"``),
+            This field can be given as a lowercase string (e.g., ``"nccl"``),
             which can also be accessed via :class:`Backend` attributes (e.g.,
-            ``Backend.GLOO``).
+            ``Backend.NCCL``).
             If using multiple processes per machine with ``nccl`` backend, each
             process must have exclusive access to every GPU it uses, as sharing
             GPUs between processes can result in deadlock or NCCL invalid usage.
@@ -2603,16 +2533,11 @@ def _get_split_source(pg: ProcessGroup) -> C10DBackend | None:
     if not split_from or not split_from.supports_splitting:
         return None
 
-    # If necessary, find a backend to split from by peeling process
-    # group wrappers from our potentially wrapped process group.
-    while is_gloo_available() and isinstance(split_from, _ProcessGroupWrapper):
-        split_from = split_from.wrapped_pg
-
     return split_from
 
 
-# Backends that feed a FlightRecorder without any help: ProcessGroupGloo
-# unconditionally, ProcessGroupNCCL and ProcessGroupXCCL through their own
+# Backends that feed a FlightRecorder without any help: ProcessGroupNCCL
+# and ProcessGroupXCCL through their own
 # integrations. "fake" and "undefined" never communicate, so recording them is
 # pure noise. Everything else -- nccl2, nccl-lazy, out-of-tree
 # plugins -- is invisible to the flight recorder unless a hook is attached.
@@ -2622,7 +2547,6 @@ def _get_split_source(pg: ProcessGroup) -> C10DBackend | None:
 # it makes that choice, and this stays the single answer to "does this backend
 # record itself".
 _FR_SELF_RECORDING_BACKENDS = {
-    Backend.GLOO,
     "nccl-legacy",
     Backend.XCCL,
     Backend.FAKE,
@@ -2912,31 +2836,6 @@ def _new_process_group_helper(
             pg = backend_class  # type: ignore[assignment]
             break
 
-        # Process group wrapper initialization for supported PGs when TORCH_DISTRIBUTED_DEBUG is set
-        if (
-            backend_str in [Backend.GLOO, Backend.NCCL, Backend.XCCL]
-            or backend_str.upper() in Backend._plugins
-        ):
-            # In debug mode and if GLOO is available, wrap in a wrapper PG that
-            # enables enhanced collective checking for debuggability.
-            if get_debug_level() == DebugLevel.DETAIL:
-                if not is_gloo_available():
-                    logger.info(
-                        """TORCH_DISTRIBUTED_DEBUG was set to DETAIL, but
-                                GLOO is not available. Build with Gloo to
-                                create a wrapper process group in debug mode
-                                to aid collective desynchronization debugging."""
-                    )
-                else:
-                    backend_class = _create_process_group_wrapper(
-                        wrapped_pg=backend_class,
-                        store_prefix=group_name,
-                        store=backend_prefix_store,
-                        rank=group_rank,
-                        world_size=group_size,
-                        # pyrefly: ignore [bad-argument-type]
-                        timeout=timeout,
-                    )
         elif (
             get_debug_level() == DebugLevel.DETAIL
             or os.environ.get("TORCH_DISTRIBUTED_DEBUG", "") == "DETAIL"
@@ -3673,7 +3572,7 @@ def batch_isend_irecv(p2p_op_list: list[P2POp]) -> list[Work]:
     Send or Receive a batch of tensors asynchronously and return a list of requests.
 
     Process each of the operations in ``p2p_op_list`` and return the corresponding
-    requests. NCCL and Gloo backends are currently supported.
+    requests. NCCL backends are currently supported.
 
     Args:
         p2p_op_list: A list of point-to-point operations(type of each operator is
@@ -6489,28 +6388,6 @@ def monitored_barrier(
     )
 
 
-def _create_process_group_wrapper(
-    wrapped_pg: C10DBackend,
-    store_prefix: str,
-    store: Store,
-    rank: int,
-    world_size: int,
-    timeout: timedelta = default_pg_timeout,
-) -> C10DBackend:
-    if not is_gloo_available():
-        raise AssertionError("ProcessGroupWrapper unsupported without GLOO backend.")
-
-    # (whc) this appears to be just for the gloo backend? if so, `default_pg_timeout` is appropriate...
-
-    # Create a separate prefix store for the helper process group.
-    prefix = f"{PG_WRAPPER_STORE_PREFIX}:{store_prefix}"
-    store = PrefixStore(prefix, store)
-    helper_pg = ProcessGroupGloo(store, rank, world_size, timeout=timeout)
-    # Wrap the underlying pg with ProcessGroupWrapper.
-    wrapped_pg = _ProcessGroupWrapper(wrapped_pg, helper_pg)
-    return wrapped_pg
-
-
 # helper function for hashing a list of ranks to a unique string
 def _hash_ranks_to_str(ranks: Sequence[int]) -> str:
     rank_join: str = "_".join(map(str, ranks))
@@ -6883,11 +6760,11 @@ def new_group(
             set to all ranks. Default is ``None``.
         timeout (timedelta, optional): see `init_process_group` for details and default value.
         backend (str or Backend, optional): The backend to use. Depending on
-            build-time configurations, valid values are ``gloo`` and ``nccl``.
+            build-time configurations, valid values are ``nccl`` and ``xccl``.
             By default uses the same backend as the global group. This field
             should be given as a lowercase string (e.g., ``"gloo"``), which can
             also be accessed via :class:`Backend` attributes (e.g.,
-            ``Backend.GLOO``). If ``None`` is passed in, the backend
+            ``Backend.NCCL``). If ``None`` is passed in, the backend
             corresponding to the default process group will be used. Default is
             ``None``.
         pg_options (ProcessGroupOptions, optional): process group options
@@ -7148,11 +7025,11 @@ def new_subgroups(
             ``None``, the default process group will be used. Default is ``None``.
         timeout (timedelta, optional): see `init_process_group` for details and default value.
         backend (str or Backend, optional): The backend to use. Depending on
-            build-time configurations, valid values are ``gloo`` and ``nccl``.
+            build-time configurations, valid values are ``nccl`` and ``xccl``.
             By default uses the same backend as the global group. This field
             should be given as a lowercase string (e.g., ``"gloo"``), which can
             also be accessed via :class:`Backend` attributes (e.g.,
-            ``Backend.GLOO``). If ``None`` is passed in, the backend
+            ``Backend.NCCL``). If ``None`` is passed in, the backend
             corresponding to the default process group will be used. Default is
             ``None``.
         pg_options (ProcessGroupOptions, optional): process group options
@@ -7248,11 +7125,11 @@ def new_subgroups_by_enumeration(
             group members.
         timeout (timedelta, optional): see `init_process_group` for details and default value.
         backend (str or Backend, optional): The backend to use. Depending on
-             build-time configurations, valid values are ``gloo`` and ``nccl``.
+             build-time configurations, valid values are ``nccl`` and ``xccl``.
              By default uses the same backend as the global group. This field
              should be given as a lowercase string (e.g., ``"gloo"``), which can
              also be accessed via :class:`Backend` attributes (e.g.,
-             ``Backend.GLOO``). If ``None`` is passed in, the backend
+             ``Backend.NCCL``). If ``None`` is passed in, the backend
              corresponding to the default process group will be used. Default is
              ``None``.
         pg_options (ProcessGroupOptions, optional): process group options
@@ -7737,7 +7614,7 @@ def _create_shrunk_process_group(
     elif backend_device.type == "xpu":
         backend_type = ProcessGroup.BackendType.XCCL
     else:
-        backend_type = ProcessGroup.BackendType.GLOO
+        backend_type = ProcessGroup.BackendType.UNDEFINED
 
     new_pg._register_backend(backend_device, backend_type, new_backend)
     new_pg._set_default_backend(backend_type)
@@ -8025,7 +7902,7 @@ def _reconfigure(
 
     Example::
         >>> # xdoctest: +SKIP("requires out-of-band rendezvous")
-        >>> dist.init_process_group("gloo", enable_reconfigure=True)
+        >>> dist.init_process_group("nccl2", enable_reconfigure=True)
         >>> # Every peer receives the same fresh UUID and rank-ordered handles.
         >>> uuid, handles = rendezvous_reconfigure(dist._get_reconfigure_handle())
         >>> dist._reconfigure(uuid=uuid, handles=handles).wait()

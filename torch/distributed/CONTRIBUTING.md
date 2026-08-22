@@ -66,14 +66,10 @@ All the unit tests can be found under the [test/distributed](../../test/distribu
 ```
 # Run the c10d unit tests.
 python test/distributed/test_c10d_common.py
-python test/distributed/test_c10d_gloo.py
 python test/distributed/test_c10d_nccl.py
 
 # Run the Store tests.
 python test/distributed/test_store.py
-
-# Run Process Group Wrapper tests.
-python test/distributed/test_pg_wrapper.py
 
 # Run distributed tests, including tests for Distributed Data Parallel.
 python test/run_test.py --verbose -i distributed/test_distributed_spawn
@@ -82,6 +78,6 @@ python test/run_test.py --verbose -i distributed/test_distributed_spawn
 touch /tmp/barrier && TEMP_DIR="/tmp" BACKEND="nccl" WORLD_SIZE="2" python test/distributed/test_distributed_spawn.py -v TestDistBackendWithSpawn.test_ddp_profiling_torch_profiler
 
 # Run a specific test method. Uses pytest (pip install pytest).
-# ProcessGroup gloo/nccl test
+# ProcessGroup nccl test
 pytest -vs test/distributed/test_c10d_common.py -k test_multi_limit_single_dtype
 ```

@@ -60,31 +60,20 @@ class SyncBatchNorm(Function):
         # ranks, simple all reduce op can not give correct results.
         # batch_norm_gather_stats_with_counts calculates global mean & invstd based on
         # all gathered mean, invstd and count.
-        # for nccl backend, use the optimized version of all gather.
-        # The Gloo backend does not support `all_gather_into_tensor`.
-        if process_group._get_backend_name() != "gloo":
-            # world_size * (2C + 1)
-            combined_size = combined.numel()
-            combined_flat = torch.empty(
-                1,
-                combined_size * world_size,
-                dtype=combined.dtype,
-                device=combined.device,
-            )
-            dist.all_gather_single(
-                combined_flat, combined, process_group, async_op=False
-            )
-            combined = torch.reshape(combined_flat, (world_size, combined_size))
-            # world_size * (2C + 1) -> world_size * C, world_size * C, world_size * 1
-            mean_all, invstd_all, count_all = torch.split(combined, num_channels, dim=1)
-        else:
-            # world_size * (2C + 1)
-            combined_list = [torch.empty_like(combined) for _ in range(world_size)]
-            dist.all_gather(combined_list, combined, process_group, async_op=False)
-            combined = torch.stack(combined_list, dim=0)
-            # world_size * (2C + 1) -> world_size * C, world_size * C, world_size * 1
-            mean_all, invstd_all, count_all = torch.split(combined, num_channels, dim=1)
-
+        # world_size * (2C + 1)
+        combined_size = combined.numel()
+        combined_flat = torch.empty(
+            1,
+            combined_size * world_size,
+            dtype=combined.dtype,
+            device=combined.device,
+        )
+        dist.all_gather_single(
+            combined_flat, combined, process_group, async_op=False
+        )
+        combined = torch.reshape(combined_flat, (world_size, combined_size))
+        # world_size * (2C + 1) -> world_size * C, world_size * C, world_size * 1
+        mean_all, invstd_all, count_all = torch.split(combined, num_channels, dim=1)
         if not (torch.cuda.is_available() and torch.cuda.is_current_stream_capturing()):
             # The lines below force a synchronization between CUDA and CPU, because
             # the shape of the result count_all depends on the values in mask tensor.

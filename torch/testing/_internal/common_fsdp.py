@@ -66,7 +66,7 @@ elif TEST_XPU:
     DEVICE_COUNT = torch.xpu.device_count()
 else:
     DEVICE_TYPE = "cpu"
-    DISTRIBUTED_BACKEND = "gloo"
+    DISTRIBUTED_BACKEND = "nccl"
     DEVICE_COUNT = 1
 
 

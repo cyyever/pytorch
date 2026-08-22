@@ -57,7 +57,6 @@ from torch.testing._internal.distributed.multi_threaded_pg import (
 )
 
 
-TORCHCOMM_HAS_GLOO = False
 TORCHCOMM_HAS_XCCL = False
 TORCHCOMM_HAS_NCCL = False
 TORCHCOMM_HAS_RCCL = False
@@ -67,7 +66,6 @@ if _TORCHCOMM_AVAILABLE:
     import torchcomms
 
     for _backend, _flag in [
-        ("gloo", "TORCHCOMM_HAS_GLOO"),
         ("xccl", "TORCHCOMM_HAS_XCCL"),
         ("nccl", "TORCHCOMM_HAS_NCCL"),
         ("rcclx", "TORCHCOMM_HAS_RCCLX"),
@@ -193,10 +191,10 @@ class DistTestCases:
 
     # Sets showing that something is implemented
     backend_feature = {}
-    backend_feature["gpu"] = {"nccl", "gloo", "xccl"}
-    backend_feature["cuda"] = {"nccl", "gloo"}
-    backend_feature["ddp"] = {"nccl", "gloo", "xccl"}
-    backend_feature["subgroup"] = {"nccl", "gloo", "xccl"}
+    backend_feature["gpu"] = {"nccl", "xccl"}
+    backend_feature["cuda"] = {"nccl"}
+    backend_feature["ddp"] = {"nccl", "xccl"}
+    backend_feature["subgroup"] = {"nccl", "xccl"}
     backend_feature["plugin"] = set()
     if TEST_HPU:
         backend_feature["hpu"] = {"hccl"}
@@ -475,13 +473,6 @@ def with_dist_debug_levels(levels):
     return decorator
 
 
-def requires_gloo():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_gloo_available(),
-        "c10d was not compiled with the Gloo backend",
-    )
-
-
 def requires_nccl_version(version, msg):
     if not TEST_CUDA:
         return lambda f: f
@@ -702,17 +693,6 @@ TIMEOUT_OVERRIDE = {
 # https://github.com/pytorch/pytorch/issues/75665
 if TEST_WITH_ROCM:
     TIMEOUT_OVERRIDE["test_join_kwargs"] = 200
-
-
-def create_device(interface=None, lazy_init: bool = False):
-    if sys.platform == "win32" or interface is None:
-        return c10d.ProcessGroupGloo.create_device(
-            hostname="127.0.0.1", lazy_init=lazy_init
-        )
-    else:
-        return c10d.ProcessGroupGloo.create_device(
-            interface=interface, lazy_init=lazy_init
-        )
 
 
 def get_timeout(test_id) -> int:
@@ -1279,7 +1259,7 @@ class DistributedTestBase(MultiProcessTestCase):
         elif "xpu" in device:
             return "xccl"
         else:
-            return "gloo"
+            return "nccl"
 
     def create_pg(self, device, world_size=None):
         if world_size is None:
@@ -2041,7 +2021,6 @@ class MultiProcContinuousTest(TestCase):
         if backend is not None:
             backend_checks = {
                 "nccl": c10d.is_nccl_available,
-                "gloo": c10d.is_gloo_available,
                 "mpi": c10d.is_mpi_available,
                 "xccl": c10d.is_xccl_available,
             }
@@ -2190,7 +2169,7 @@ class C10dTorchCommsTestBase(MultiProcContinuousTest):
         elif "xpu" in device:
             return "xccl"
         else:
-            return "gloo"
+            return "nccl"
 
     @classmethod
     def backend_str(cls) -> str:
@@ -2201,7 +2180,6 @@ class C10dTorchCommsTestBase(MultiProcContinuousTest):
 
     def _skip_if_backend_unavailable(self, device: str) -> None:
         backend_flags = {
-            "gloo": TORCHCOMM_HAS_GLOO,
             "xccl": TORCHCOMM_HAS_XCCL,
             "nccl": TORCHCOMM_HAS_NCCL,
             "rccl": TORCHCOMM_HAS_RCCL,
