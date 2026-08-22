@@ -37,8 +37,7 @@
 #   USE_MSLK=0                disables the MSLK build
 #   USE_KINETO=0              disables libkineto profiling
 #   USE_NUMPY=0               disables the NumPy build
-#   USE_DISTRIBUTED=0         disables distributed (c10d, gloo, mpi, etc.) build
-#   USE_GLOO=0                disables the gloo backend
+#   USE_DISTRIBUTED=0         disables the distributed (c10d) build
 #   USE_SYSTEM_NCCL=0         use the submoduled nccl instead of system nccl
 #   USE_OPENMP=0              disables OpenMP parallelization
 #   USE_MKLDNN=0              disables MKLDNN

@@ -22,7 +22,6 @@ if(NOT DEFINED USE_SYSTEM_LIBS OR NOT USE_SYSTEM_LIBS)
     endforeach()
   else()
     set(_submodule_folders
-      "${PROJECT_SOURCE_DIR}/third_party/gloo"
       "${PROJECT_SOURCE_DIR}/third_party/cpuinfo"
       "${PROJECT_SOURCE_DIR}/third_party/fbgemm"
       "${PROJECT_SOURCE_DIR}/third_party/cutlass"

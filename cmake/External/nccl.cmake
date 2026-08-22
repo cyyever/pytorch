@@ -60,8 +60,6 @@ if(NOT __NCCL_INCLUDED)
 
     set(NCCL_FOUND TRUE)
     add_library(__caffe2_nccl INTERFACE)
-    # The following old-style variables are set so that other libs, such as Gloo,
-    # can still use it.
     set(NCCL_INCLUDE_DIRS ${__NCCL_BUILD_DIR}/include)
     add_dependencies(__caffe2_nccl ${__NCCL_LIBRARY_DEP})
     target_link_libraries(__caffe2_nccl INTERFACE ${NCCL_LIBRARIES})

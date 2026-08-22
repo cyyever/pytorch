@@ -58,7 +58,6 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}/caffe2/aten/src
     ${CMAKE_BINARY_DIR}/third_party
 
-    ${TORCH_ROOT}/third_party/gloo
     ${TORCH_ROOT}/third_party/kineto/libkineto/include
     ${TORCH_ROOT}/third_party/nlohmann/include
 
@@ -298,10 +297,6 @@ if(BUILD_LIBTORCHLESS)
     target_compile_definitions(torch_python PRIVATE USE_DISTRIBUTED)
   endif()
 
-  endif()
-
-  if(USE_GLOO AND USE_C10D_GLOO)
-    target_compile_definitions(torch_python PRIVATE USE_C10D_GLOO)
   endif()
 
   set(EXPERIMENTAL_SINGLE_THREAD_POOL "0" CACHE STRING

@@ -278,7 +278,7 @@ if(NOT LINUX)
       OFF
       CACHE STRING "Use distributed")
   # On macOS, if USE_DISTRIBUTED is enabled (specified by the user), then make
-  # Gloo build with the libuv transport.
+  # TCPStore build with the libuv transport.
   if(APPLE AND USE_DISTRIBUTED)
     set(USE_LIBUV
         ON
@@ -390,17 +390,6 @@ cmake_dependent_option(
   "USE_MKLDNN AND CPU_AARCH64" OFF)
 option(USE_STATIC_MKL "Prefer to link with MKL statically (Unix only)" OFF)
 cmake_dependent_option(
-    USE_GLOO "Use Gloo. Only available if USE_DISTRIBUTED is on." ON
-    "USE_DISTRIBUTED" OFF)
-cmake_dependent_option(
-  USE_GLOO_WITH_OPENSSL "Use Gloo with OpenSSL. Only available if USE_GLOO is on." OFF
-    "USE_GLOO AND LINUX" OFF)
-cmake_dependent_option(
-  USE_GLOO_IBVERBS "Use Gloo with ibverbs backend. Only available if USE_GLOO is on." OFF
-    "USE_GLOO AND LINUX" OFF)
-cmake_dependent_option(
-    USE_C10D_GLOO "USE C10D GLOO" ON "USE_DISTRIBUTED;USE_GLOO" OFF)
-cmake_dependent_option(
     USE_C10D_NCCL "USE C10D NCCL" ON "USE_DISTRIBUTED;USE_NCCL" OFF)
 cmake_dependent_option(
     USE_C10D_XCCL "USE C10D XCCL" ON "USE_DISTRIBUTED;USE_XCCL" OFF)
@@ -489,12 +478,6 @@ if(USE_CCACHE)
   endif()
 endif()
 
-if(USE_GLOO_WITH_OPENSSL)
-  set(USE_TCP_OPENSSL_LOAD
-      ON
-      CACHE STRING "")
-endif()
-
 # Linux distributions do not want too many embedded sources, in that sense we
 # need to be able to build pytorch with an (almost) empty third_party directory.
 # USE_SYSTEM_LIBS is a shortcut variable to toggle all the # USE_SYSTEM_*
@@ -503,7 +486,6 @@ endif()
 option(USE_SYSTEM_LIBS "Use all available system-provided libraries." OFF)
 option(USE_SYSTEM_CPUINFO "Use system-provided cpuinfo." OFF)
 option(USE_SYSTEM_SLEEF "Use system-provided sleef." OFF)
-option(USE_SYSTEM_GLOO "Use system-provided gloo." OFF)
 option(USE_SYSTEM_PYBIND11 "Use system-provided PyBind11." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
@@ -511,7 +493,6 @@ option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
 if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_CPUINFO ON)
   set(USE_SYSTEM_SLEEF ON)
-  set(USE_SYSTEM_GLOO ON)
   set(USE_SYSTEM_EIGEN_INSTALL ON)
   set(USE_SYSTEM_BENCHMARK ON)
   set(USE_SYSTEM_PYBIND11 ON)
