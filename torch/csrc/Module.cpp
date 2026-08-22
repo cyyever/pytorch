@@ -133,8 +133,6 @@
 #endif
 #endif
 
-#endif
-
 #include <torch/nativert/python/Bindings.h>
 
 namespace py = pybind11;
