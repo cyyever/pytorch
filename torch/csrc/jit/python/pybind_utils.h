@@ -375,11 +375,6 @@ inline InferredType tryToInferType(py::handle input) {
     return InferredType(NoneType::get());
   }
 
-  if (py::isinstance<StrongFunctionPtr>(input)) {
-    auto fn = py::cast<StrongFunctionPtr>(input).function_;
-    return InferredType(FunctionType::create(fn));
-  }
-
   // Try basic types first
   if (py::isinstance<py::bool_>(input)) {
     return InferredType(BoolType::get());
