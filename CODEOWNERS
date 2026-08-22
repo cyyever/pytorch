@@ -935,7 +935,6 @@
 # /torchgen/
 #
 # [infra_test]
-# /test/benchmark_utils/
 # /test/scripts/
 # /test/spincli/
 /test/test_public_bindings.py @albanD

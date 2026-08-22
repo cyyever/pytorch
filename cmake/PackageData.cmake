@@ -22,13 +22,6 @@ install(DIRECTORY "${TORCH_SRC_DIR}/"
   PATTERN "py.typed"
 )
 
-# Benchmark utilities — matches setup.py package_data patterns:
-#   utils/benchmark/utils/*.cpp
-install(DIRECTORY "${TORCH_SRC_DIR}/utils/benchmark/utils/"
-  DESTINATION "utils/benchmark/utils"
-  FILES_MATCHING PATTERN "*.cpp" PATTERN "*.h"
-)
-
 # Model dump utilities
 install(FILES
   "${TORCH_SRC_DIR}/utils/model_dump/skeleton.html"
