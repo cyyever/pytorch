@@ -56,7 +56,7 @@ inline time_t getTime(bool allow_monotonic = false) {
   gettimeofday(&now, NULL);
   return static_cast<time_t>(now.tv_sec) * 1000000000 +
       static_cast<time_t>(now.tv_usec) * 1000;
-#elif defined(_WIN32) || defined(__MACH__)
+#elif defined(__MACH__)
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
              steady_clock_t::now().time_since_epoch())
       .count();

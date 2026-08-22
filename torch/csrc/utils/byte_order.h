@@ -26,10 +26,6 @@
 #define thp_bswap16(x) bswap_16(x)
 #define thp_bswap32(x) bswap_32(x)
 #define thp_bswap64(x) bswap_64(x)
-#elif defined _WIN32 || defined _WIN64
-#define thp_bswap16(x) _byteswap_ushort(x)
-#define thp_bswap32(x) _byteswap_ulong(x)
-#define thp_bswap64(x) _byteswap_uint64(x)
 #endif
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__

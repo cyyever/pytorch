@@ -50,7 +50,7 @@ static std::string getLibName() {
 }
 
 static std::string getAltLibName() {
-#if !defined(_WIN32) && defined(NVRTC_SHORTHASH)
+#ifdef NVRTC_SHORTHASH
   return std::string("libnvrtc-") + C10_STRINGIZE(NVRTC_SHORTHASH) + ".so." + getLibVersion();
 #else
   return {};

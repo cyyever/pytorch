@@ -560,7 +560,7 @@ __host__ __device__
 #endif // !defined(FBCODE_CAFFE2) && !defined(C10_NODEPRECATED)
 
 #ifndef HAS_DEMANGLE
-#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
 #define HAS_DEMANGLE 0
 #elif defined(__APPLE__) && \
     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE)
@@ -654,7 +654,7 @@ __host__ __device__
 #define _JOIN_NS3(a, b, c) a::b::c
 
 #if !defined(HIDDEN_NAMESPACE_BEGIN)
-#if defined(__GNUG__) && !defined(_WIN32)
+#if defined(__GNUG__)
 #define HIDDEN_NAMESPACE_BEGIN(...) \
   _HIDDEN_NS_GET_MACRO(             \
       __VA_ARGS__, _HIDDEN_NS_3, _HIDDEN_NS_2, _HIDDEN_NS_1)(__VA_ARGS__)
@@ -666,7 +666,7 @@ __host__ __device__
 #endif
 
 #if !defined(HIDDEN_NAMESPACE_END)
-#if defined(__GNUG__) && !defined(_WIN32)
+#if defined(__GNUG__)
 #define HIDDEN_NAMESPACE_END(...)                                         \
   _HIDDEN_NS_GET_MACRO(                                                   \
       __VA_ARGS__, _HIDDEN_NS_END_N, _HIDDEN_NS_END_N, _HIDDEN_NS_END_1)( \

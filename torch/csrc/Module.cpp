@@ -2546,7 +2546,7 @@ PyObject* initModule() {
   ASSERT_TRUE(StaticCudaLauncher_init(module));
   ASSERT_TRUE(FastCudaLauncher_init(module));
 #endif
-#if defined(USE_XPU) && !defined(_WIN32)
+#if defined(USE_XPU)
   ASSERT_TRUE(StaticXpuLauncher_init(module));
 #endif
 #ifdef USE_MPS

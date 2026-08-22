@@ -1086,7 +1086,7 @@ _scaled_mxfp4_mxfp4(
           const std::optional<Tensor>& bias,
           const c10::ScalarType out_dtype,
           Tensor& out) {
-#if defined(_WIN32) || (!defined(USE_ROCM) && !defined(USE_MSLK))
+#if !defined(USE_ROCM) && !defined(USE_MSLK)
   TORCH_CHECK_NOT_IMPLEMENTED(false, "MXFP4 scaling supported on ROCM and CUDA+FBGEMM_GENAI only");
 #else
   _check_mxfp4_support();

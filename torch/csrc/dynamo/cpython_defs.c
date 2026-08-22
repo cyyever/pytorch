@@ -2,16 +2,6 @@
 #include <torch/csrc/dynamo/cpython_includes.h>
 #include <torch/csrc/dynamo/debug_macros.h>
 
-// Include CPython header files here (.c file) as MSVC C++ compiler cannot
-// compile pycore_stackref.h. See PyTorch issue #160647
-#if IS_PYTHON_3_14_PLUS && defined(_WIN32)
-#define Py_BUILD_CORE
-#include <internal/pycore_stackref.h>
-#include <internal/pycore_genobject.h>
-#include <internal/pycore_interpframe.h>
-#undef Py_BUILD_CORE
-#endif
-
 #if IS_PYTHON_3_16_PLUS
 
 const uint8_t* THP_PyOpcode_Caches = NULL;

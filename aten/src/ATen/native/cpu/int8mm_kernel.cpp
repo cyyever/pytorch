@@ -10,11 +10,7 @@
 #include <c10/util/irange.h>
 #include <c10/util/Unroll.h>
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define RESTRICT __restrict
-#else
 #define RESTRICT __restrict__
-#endif
 
 namespace at::native {
 

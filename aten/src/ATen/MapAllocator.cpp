@@ -35,7 +35,7 @@ std::string NewProcessWideShmHandle() {
       rd(),
       counter.fetch_add(1, std::memory_order_relaxed));
 }
-#if defined(_WIN32) || defined(HAVE_MMAP)
+#ifdef HAVE_MMAP
 
 namespace {
 struct MapInfo {
@@ -263,7 +263,7 @@ void MapAllocator::close() {
   }
 }
 
-#else /* defined(_WIN32) || defined(HAVE_MMAP) */
+#else /* defined(HAVE_MMAP) */
 
 MapAllocator::MapAllocator(std::string_view filename, int flags, size_t size) {
   TORCH_CHECK(false, "file mapping not supported on your system");
@@ -277,7 +277,7 @@ void MapAllocator::close() { }
 
 #endif
 
-#if (defined(_WIN32) || defined(HAVE_MMAP)) && defined(AT_ATOMIC_IPC_REFCOUNT)
+#if defined(HAVE_MMAP) && defined(AT_ATOMIC_IPC_REFCOUNT)
 
 RefcountedMapAllocatorArgCheck::RefcountedMapAllocatorArgCheck(int flags) {
   if (flags & ALLOCATOR_MAPPED_FROMFD) {
