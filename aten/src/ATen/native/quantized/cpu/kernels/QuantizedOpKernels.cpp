@@ -20,6 +20,7 @@
 // NOLINTBEGIN(*-c-arrays)
 
 namespace at::native {
+
 namespace {
 
 void check_tensor_memory_format(const Tensor& ref, const Tensor& other) {

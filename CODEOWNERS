@@ -735,8 +735,6 @@
 #
 # [cpp_runtime_tests]
 # /test/cpp/
-# /test/cpp_api_parity/
-# /test/test_cpp_api_parity.py
 #
 # [jit_torchscript]
 # /test/cpp/jit/test_jit_logging_levels.cpp
