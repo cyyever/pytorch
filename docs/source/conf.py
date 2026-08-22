@@ -1152,7 +1152,6 @@ coverage_ignore_classes = [
     "GatherOptions",
     "GroupMember",
     "ProcessGroup",
-    "ProcessGroupGloo",
     "ProcessGroupNCCL",
     "ReduceOptions",
     "ReduceScatterOptions",

@@ -449,7 +449,7 @@ class TestPyProcessGroup(TestCase):
 
     def test_reconfigure_rejects_multiple_backends(self) -> None:
         pg = dist.ProcessGroup(0, 1)
-        pg._register_backend(torch.device("cpu"), dist.ProcessGroup.BackendType.GLOO)
+        pg._register_backend(torch.device("cpu"), dist.ProcessGroup.BackendType.CUSTOM)
         pg._register_backend(torch.device("cuda"), dist.ProcessGroup.BackendType.NCCL)
 
         msg = "multiple backends"

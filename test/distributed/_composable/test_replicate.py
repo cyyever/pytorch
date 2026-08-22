@@ -86,7 +86,7 @@ class ReplicateTest(MultiProcContinuousTest):
 
     @classmethod
     def backend_str(cls) -> str:
-        return "gloo"
+        return "nccl"
 
     @classmethod
     def device_type(cls) -> str:

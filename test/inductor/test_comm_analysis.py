@@ -96,10 +96,10 @@ class TestNcclEstimateDeviceResolution(TestCase):
     @unittest.skipUnless(TEST_CUDA, "requires CUDA")
     def test_multi_backend_pg_resolves_to_nccl(self):
         """
-        Multi-backend PG ("cpu:gloo,cuda:nccl"): We should resolve to the cuda device's backend.
+        Multi-backend PG ("cpu:fake,cuda:nccl"): We should resolve to the cuda device's backend.
         """
         torch.cuda.set_device(0)
-        pg, group_name, group_size = self._init_pg_real_store("cpu:gloo,cuda:nccl")
+        pg, group_name, group_size = self._init_pg_real_store("cpu:fake,cuda:nccl")
         try:
             from torch.distributed.distributed_c10d import _get_pg_default_device
 
@@ -111,8 +111,8 @@ class TestNcclEstimateDeviceResolution(TestCase):
             nccl_backend = pg._get_backend(torch.device("cuda"))
             self.assertTrue(nccl_backend._supports_time_estimate)
 
-            gloo_backend = pg._get_backend(torch.device("cpu"))
-            self.assertFalse(gloo_backend._supports_time_estimate)
+            cpu_backend = pg._get_backend(torch.device("cpu"))
+            self.assertFalse(cpu_backend._supports_time_estimate)
         finally:
             self._destroy_pg()
 

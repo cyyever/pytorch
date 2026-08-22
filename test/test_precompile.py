@@ -227,8 +227,8 @@ class TestPrecompile(TestCase):
     def test_dtensor_subclass(self):
         import torch.distributed as dist
 
-        if not dist.is_available() or not dist.is_gloo_available():
-            self.skipTest("gloo not available")
+        if not dist.is_available():
+            self.skipTest("distributed not available")
 
         from torch.distributed.tensor import DeviceMesh, distribute_tensor, Replicate
         from torch.testing._internal.common_utils import find_free_port
@@ -238,7 +238,7 @@ class TestPrecompile(TestCase):
         saved_env = {k: os.environ.get(k) for k in ("MASTER_ADDR", "MASTER_PORT")}
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = str(find_free_port())
-        dist.init_process_group("gloo", rank=0, world_size=1)
+        dist.init_process_group("fake", rank=0, world_size=1)
         try:
             mesh = DeviceMesh("cpu", list(range(1)))
             m = torch.nn.Linear(4, 3).eval()
@@ -1301,8 +1301,8 @@ class TestPrecompile(TestCase):
         # subclass-stripped tensor (invariant 3).
         import torch.distributed as dist
 
-        if not dist.is_available() or not dist.is_gloo_available():
-            self.skipTest("gloo not available")
+        if not dist.is_available():
+            self.skipTest("distributed not available")
 
         from torch.distributed.tensor import DeviceMesh, distribute_tensor, Replicate
         from torch.testing._internal.common_utils import find_free_port
@@ -1310,7 +1310,7 @@ class TestPrecompile(TestCase):
         saved_env = {k: os.environ.get(k) for k in ("MASTER_ADDR", "MASTER_PORT")}
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = str(find_free_port())
-        dist.init_process_group("gloo", rank=0, world_size=1)
+        dist.init_process_group("fake", rank=0, world_size=1)
         try:
             mesh = DeviceMesh("cpu", list(range(1)))
             m = torch.nn.Linear(4, 3).eval()

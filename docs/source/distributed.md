@@ -77,7 +77,7 @@ for a brief introduction to all features related to distributed training.
 
 ## Backends
 
-`torch.distributed` supports four built-in backends, each with
+`torch.distributed` supports three built-in backends, each with
 different capabilities. The table below shows which functions are available
 for use with a CPU or GPU for each backend. For NCCL, GPU refers to CUDA GPU
 while for XCCL to XPU GPU.
@@ -85,40 +85,40 @@ while for XCCL to XPU GPU.
 MPI supports CUDA only if the implementation used to build PyTorch supports it.
 
 ```{eval-rst}
-+----------------+-----------+-----------+-----------+-----------+
-| Backend        | ``gloo``  | ``mpi``   | ``nccl``  | ``xccl``  |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| Device         | CPU | GPU | CPU | GPU | CPU | GPU | CPU | GPU |
-+================+=====+=====+=====+=====+=====+=====+=====+=====+
-| send           | ✓   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| recv           | ✓   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| broadcast      | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| all_reduce     | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| reduce         | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| all_gather     | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| gather         | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| scatter        | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| reduce_scatter | ✓   | ✓   | ✘   | ✘   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| all_to_all     | ✘   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| barrier        | ✓   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
++----------------+-----------+-----------+-----------+
+| Backend        | ``mpi``   | ``nccl``  | ``xccl``  |
++----------------+-----+-----+-----+-----+-----+-----+
+| Device         | CPU | GPU | CPU | GPU | CPU | GPU |
++================+=====+=====+=====+=====+=====+=====+
+| send           | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| recv           | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| broadcast      | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| all_reduce     | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| reduce         | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| all_gather     | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| gather         | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| scatter        | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| reduce_scatter | ✘   | ✘   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| all_to_all     | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| barrier        | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
 ```
 
 ### Backends that come with PyTorch
 
 PyTorch distributed package supports Linux (stable), macOS (stable), and Windows (prototype).
-By default for Linux, the Gloo and NCCL backends are built and included in PyTorch
-distributed (NCCL only when building with CUDA). MPI is an optional backend that can only be
+By default for Linux, the NCCL backend is built and included in PyTorch
+distributed (only when building with CUDA). MPI is an optional backend that can only be
 included if you build PyTorch from source. (e.g. building PyTorch on a host that has MPI
 installed.)
 
@@ -142,7 +142,6 @@ In the past, we were often asked: "which backend should I use?".
 
   - Use the NCCL backend for distributed training with CUDA **GPU**.
   - Use the XCCL backend for distributed training with XPU **GPU**.
-  - Use the Gloo backend for distributed training with **CPU**.
 
 - GPU hosts with InfiniBand interconnect
 
@@ -153,35 +152,21 @@ In the past, we were often asked: "which backend should I use?".
 
   - Use NCCL, since it currently provides the best distributed GPU
     training performance, especially for multiprocess single-node or
-    multi-node distributed training. If you encounter any problem with
-    NCCL, use Gloo as the fallback option. (Note that Gloo currently
-    runs slower than NCCL for GPUs.)
+    multi-node distributed training.
 
-- CPU hosts with InfiniBand interconnect
+- CPU hosts
 
-  - If your InfiniBand has enabled IP over IB, use Gloo, otherwise,
-    use MPI instead. We are planning on adding InfiniBand support for
-    Gloo in the upcoming releases.
-
-- CPU hosts with Ethernet interconnect
-
-  - Use Gloo, unless you have specific reasons to use MPI.
+  - Use MPI, unless you have specific reasons not to.
 
 ### Common environment variables
 
 #### Choosing the network interface to use
 
-By default, both the NCCL and Gloo backends will try to find the right network interface to use.
+By default, the NCCL backend will try to find the right network interface to use.
 If the automatically detected interface is not correct, you can override it using the following
-environment variables (applicable to the respective backend):
+environment variable:
 
 - **NCCL_SOCKET_IFNAME**, for example `export NCCL_SOCKET_IFNAME=eth0`
-- **GLOO_SOCKET_IFNAME**, for example `export GLOO_SOCKET_IFNAME=eth0`
-
-If you're using the Gloo backend, you can specify multiple interfaces by separating
-them by a comma, like this: `export GLOO_SOCKET_IFNAME=eth0,eth1,eth2,eth3`.
-The backend will dispatch operations in a round-robin fashion across these interfaces.
-It is imperative that all processes specify the same number of interfaces in this variable.
 
 #### Other NCCL environment variables
 
@@ -273,16 +258,11 @@ inconsistent 'UUID' assignment across ranks, and to prevent races during initial
 ```
 
 ```{eval-rst}
-.. autofunction:: is_gloo_available
-```
-
-```{eval-rst}
 .. autofunction:: torch.distributed.distributed_c10d.is_xccl_available
 .. autofunction:: torch.distributed.distributed_c10d.batch_isend_irecv
 .. autofunction:: torch.distributed.distributed_c10d.destroy_process_group
 .. autofunction:: torch.distributed.distributed_c10d.is_backend_available
 .. autofunction:: torch.distributed.distributed_c10d.irecv
-.. autofunction:: torch.distributed.distributed_c10d.is_gloo_available
 .. autofunction:: torch.distributed.distributed_c10d.is_initialized
 .. autofunction:: torch.distributed.distributed_c10d.is_mpi_available
 .. autofunction:: torch.distributed.distributed_c10d.is_nccl_available
@@ -377,12 +357,6 @@ The machine with rank 0 will be used to set up all connections.
 
 This is the default method, meaning that `init_method` does not have to be specified (or
 can be `env://`).
-
-### Improving initialization time
-
-- `TORCH_GLOO_LAZY_INIT` - establishes connections on demand rather than
-  using a full mesh which can greatly improve initialization time for non all2all
-  operations.
 
 ## Post-Initialization
 
@@ -595,8 +569,8 @@ is guaranteed to support two methods:
   default stream without further synchronization.
 - `wait()` - in the case of CPU collectives, will block the process until the operation is completed. In the case
   of CUDA collectives, will block the currently active CUDA stream until the operation is completed (but will not block the CPU).
-- `get_future()` - returns `torch._C.Future` object. Supported for NCCL, also supported for most operations on GLOO
-  and MPI, except for peer to peer operations.
+- `get_future()` - returns `torch._C.Future` object. Supported for NCCL and MPI, except for
+  peer to peer operations.
   Note: as we continue adopting Futures and merging APIs, `get_future()` call might become redundant.
 
 **Example**
@@ -768,8 +742,8 @@ Key-Value Stores: {class}`~torch.distributed.TCPStore`,
 
 ## Profiling Collective Communication
 
-Note that you can use `torch.profiler` (recommended, only available after 1.8.1) or `torch.autograd.profiler` to profile collective communication and point-to-point communication APIs mentioned here. All out-of-the-box backends (`gloo`,
-`nccl`, `mpi`) are supported and collective communication usage will be rendered as expected in profiling output/traces. Profiling your code is the same as any regular torch operator:
+Note that you can use `torch.profiler` (recommended, only available after 1.8.1) or `torch.autograd.profiler` to profile collective communication and point-to-point communication APIs mentioned here. All out-of-the-box backends (`nccl`,
+`mpi`) are supported and collective communication usage will be rendered as expected in profiling output/traces. Profiling your code is the same as any regular torch operator:
 
 ```
 import torch
@@ -875,7 +849,7 @@ moving tensors to CPU before passing them as inputs to an object collective.
 
 ## Third-party backends
 
-Besides the builtin GLOO/MPI/NCCL backends, PyTorch distributed supports
+Besides the builtin MPI/NCCL backends, PyTorch distributed supports
 third-party backends through a run-time register mechanism.
 For references on how to develop a third-party backend through C++ Extension,
 please refer to [Tutorials - Custom C++ and CUDA Extensions](https://pytorch.org/tutorials/advanced/cpp_extension.html) and
@@ -925,8 +899,8 @@ import torch.distributed.config as dist_config
 dist_config.use_torchcomms = True
 ```
 
-The ``backend`` argument to {func}`init_process_group` (e.g. ``"nccl"``,
-``"gloo"``) is still respected -- it is forwarded to TorchComms, which
+The ``backend`` argument to {func}`init_process_group` (e.g. ``"nccl"``) is
+still respected -- it is forwarded to TorchComms, which
 selects the corresponding vendor plugin. No other application code
 changes are required; all ``torch.distributed`` collective APIs continue
 to work as before.
@@ -1030,45 +1004,6 @@ PyTorch offers a customized wrapper around pdb that streamlines the process.
 3. Reroutes stdin from the child process such that it connects to your terminal.
 
 To use it, simply issue `torch.distributed.breakpoint(rank)` on all ranks, using the same value for `rank` in each case.
-
-### Monitored Barrier
-
-As of v1.10, {func}`torch.distributed.monitored_barrier` exists as an alternative to {func}`torch.distributed.barrier` which fails with helpful information about which rank may be faulty
-when crashing, i.e. not all ranks calling into {func}`torch.distributed.monitored_barrier` within the provided timeout. {func}`torch.distributed.monitored_barrier` implements a host-side
-barrier using `send`/`recv` communication primitives in a process similar to acknowledgements, allowing rank 0 to report which rank(s) failed to acknowledge
-the barrier in time. As an example, consider the following function where rank 1 fails to call into {func}`torch.distributed.monitored_barrier` (in practice this could be due
-to an application bug or hang in a previous collective):
-
-```
-import os
-from datetime import timedelta
-
-import torch
-import torch.distributed as dist
-import torch.multiprocessing as mp
-
-
-def worker(rank):
-    dist.init_process_group("nccl", rank=rank, world_size=2)
-    # monitored barrier requires gloo process group to perform host-side sync.
-    group_gloo = dist.new_group(backend="gloo")
-    if rank not in [1]:
-        dist.monitored_barrier(group=group_gloo, timeout=timedelta(seconds=2))
-
-
-if __name__ == "__main__":
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "29501"
-    mp.spawn(worker, nprocs=2, args=())
-```
-
-The following error message is produced on rank 0, allowing the user to determine which rank(s) may be faulty and investigate further:
-
-```
-RuntimeError: Rank 1 failed to pass monitoredBarrier in 2000 ms
- Original exception:
-[gloo/transport/tcp/pair.cc:598] Connection closed by peer [2401:db00:eef0:1100:3560:0:1c05:25d]:8594
-```
 
 ### `TORCH_DISTRIBUTED_DEBUG`
 
@@ -1809,10 +1744,6 @@ This module is experimental and subject to change.
 
 ```{eval-rst}
 .. py:module:: torch.distributed.nn
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.ddp_comm_hooks.ddp_zero_hook
 ```
 
 ```{eval-rst}

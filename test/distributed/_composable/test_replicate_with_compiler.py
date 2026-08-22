@@ -256,7 +256,7 @@ class ReplicateTest(MultiProcessInductorTestCase):
         if self.world_size < 2:
             self.skipTest("DDP bucketing requires world_size >= 2")
         dist.init_process_group(
-            backend="gloo",
+            backend="nccl",
             rank=self.rank,
             world_size=self.world_size,
             store=dist.FileStore(self.file_name, self.world_size),
@@ -279,7 +279,7 @@ class ReplicateTest(MultiProcessInductorTestCase):
     def _test_bucketing(self, init_process_group=True, loop=1):
         if init_process_group:
             dist.init_process_group(
-                backend="gloo",
+                backend="nccl",
                 rank=self.rank,
                 world_size=self.world_size,
                 store=dist.FileStore(self.file_name, self.world_size),

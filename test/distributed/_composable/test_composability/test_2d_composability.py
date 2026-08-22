@@ -416,7 +416,7 @@ class TestFullyShard2DStateDict(DTensorContinuousTestBase):
     @property
     def backend(self):
         # need to specify gloo backend for testing cpu offload
-        return f"cpu:gloo,{device_type}:{curr_backend}"
+        return f"cpu:fake,{device_type}:{curr_backend}"
 
     @skip_if_lt_x_gpu(4)
     def test_fully_shard_tp_2d_set_full_state_dict(self):

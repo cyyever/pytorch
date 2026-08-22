@@ -40,7 +40,7 @@ def _scoped_env(key: str, value: str):
 class P2PIpcTest(MultiProcContinuousTest):
     @classmethod
     def backend_str(cls):
-        return "gloo"
+        return "nccl"
 
     def _init_device(self, *, allocate: bool = True) -> None:
         # init and pin the process to the device. When `allocate` is False, we

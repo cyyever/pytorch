@@ -17,10 +17,6 @@ popd
 export TORCH_SERIALIZATION_DEBUG=1
 
 setup_test_python() {
-  # The CircleCI worker hostname doesn't resolve to an address.
-  # This environment variable makes ProcessGroupGloo default to
-  # using the address associated with the loopback interface.
-  export GLOO_SOCKET_IFNAME=lo0
   echo "Ninja version: $(ninja --version)"
   echo "Python version: $(which python) ($(python --version))"
 

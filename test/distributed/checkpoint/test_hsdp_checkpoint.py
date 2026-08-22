@@ -75,7 +75,7 @@ class TestHSDPCheckpoint(DTensorTestBase):
     @property
     def backend(self):
         curr_backend = dist.get_default_backend_for_device(self.device_type)
-        return f"cpu:gloo,{self.device_type}:{curr_backend}"
+        return f"cpu:fake,{self.device_type}:{curr_backend}"
 
     @skip_if_lt_x_gpu(4)
     @with_comms

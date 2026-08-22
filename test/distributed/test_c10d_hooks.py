@@ -16,7 +16,7 @@ class TestProcessGroupHooks(MultiProcessTestCase):
     every collective issued through it. The hooks are wired into the c10d
     dispatcher kernels (Ops.cpp), so they fire wherever a c10d op is dispatched
     -- including replay of a captured graph that re-dispatches the raw op (see
-    test_hooks_fire_on_captured_graph_replay). Uses a real gloo backend; a
+    test_hooks_fire_on_captured_graph_replay). Uses a fake backend; a
     pure-Python or fake ProcessGroup overrides the collective methods and
     dispatches without going through the c10d ops, so it bypasses these hooks.
     """
@@ -39,7 +39,7 @@ class TestProcessGroupHooks(MultiProcessTestCase):
     def test_hooks_fire_for_all_collectives(self):
         store = dist.FileStore(self.file_name, self.world_size)
         dist.init_process_group(
-            backend="gloo",
+            backend="fake",
             store=store,
             rank=self.rank,
             world_size=self.world_size,
@@ -142,7 +142,7 @@ class TestProcessGroupHooks(MultiProcessTestCase):
 
         store = dist.FileStore(self.file_name, self.world_size)
         dist.init_process_group(
-            backend="gloo",
+            backend="fake",
             store=store,
             rank=self.rank,
             world_size=self.world_size,

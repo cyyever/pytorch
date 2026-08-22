@@ -26,7 +26,7 @@ class FsdpModelStateCheckpoint(DTensorTestBase):
     @property
     def backend(self):
         curr_backend = dist.get_default_backend_for_device(self.device_type)
-        return f"cpu:gloo,{self.device_type}:{curr_backend}"
+        return f"cpu:fake,{self.device_type}:{curr_backend}"
 
     def _test_fsdp_model_state(self, reshard: bool) -> None:
         CHECKPOINT_DIR = self.temp_dir

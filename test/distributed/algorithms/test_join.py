@@ -28,7 +28,7 @@ if TEST_WITH_DEV_DBG_ASAN:
     )
     sys.exit(0)
 
-BACKEND = dist.Backend.NCCL if torch.cuda.is_available() else dist.Backend.GLOO
+BACKEND = dist.Backend.NCCL
 WORLD_SIZE = min(4, max(2, torch.cuda.device_count()))
 
 # Constants used for testing post-hooks

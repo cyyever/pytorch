@@ -92,7 +92,7 @@ def _with_torchcomm_env(func):
 class DeviceMeshTestGlooBackend(DTensorTestBase):
     @property
     def backend(self):
-        return "gloo"
+        return "nccl"
 
     @with_comms
     def test_device_mesh_reuse_default_group(self):
@@ -1510,20 +1510,14 @@ class DeviceMeshCollectiveTest(DTensorTestBase):
     @unittest.skipIf(not _TORCHCOMM_AVAILABLE, "TorchComms is not installed")
     @dist_config.patch(use_torchcomms=True)
     @_with_torchcomm_env
-    @with_comms(backend="cpu:gloo,cuda:nccl")
+    @with_comms(backend="cpu:fake,cuda:nccl")
     def test_pg_api_w_torchcomms(self) -> None:
         ranks = list(range(self.world_size))
         pg = new_group(
-            backend="cpu:gloo,cuda:nccl",
+            backend="cpu:fake,cuda:nccl",
             ranks=ranks,
             group_desc="new_pg",
         )
-
-        # Test CPU tensor
-        cpu_tensor = torch.ones(3, 3)
-        dist.all_reduce(cpu_tensor, group=pg)
-        expected_cpu_tensor = torch.ones(3, 3) * self.world_size
-        self.assertEqual(cpu_tensor, expected_cpu_tensor)
 
         # Test GPU tensor
         gpu_tensor = torch.ones(3, 3, device=self.device_type)
@@ -1533,26 +1527,18 @@ class DeviceMeshCollectiveTest(DTensorTestBase):
         )
         self.assertEqual(gpu_tensor, expected_gpu_tensor)
 
-        # No-op split should preserve both backends and produce identical
+        # No-op split should preserve the backends and produce identical
         # results to the parent.
         split_group_no_op = dist.split_group(pg, [ranks])
-        cpu_tensor = torch.ones(3, 3)
-        dist.all_reduce(cpu_tensor, group=split_group_no_op)
-        self.assertEqual(cpu_tensor, expected_cpu_tensor)
         gpu_tensor = torch.ones(3, 3, device=self.device_type)
         dist.all_reduce(gpu_tensor, group=split_group_no_op)
         self.assertEqual(gpu_tensor, expected_gpu_tensor)
 
-        # Real split with multiple sub-groups; each sub-group must keep both
-        # cpu:gloo and cuda:nccl backends and dispatch to the right one based
-        # on tensor device.
+        # Real split with multiple sub-groups; each sub-group must keep the
+        # cuda:nccl backend.
         pg_ranks_by_dim = torch.arange(self.world_size).view(2, 4)
         split_pg = dist.split_group(pg, pg_ranks_by_dim.tolist())
         expected_split_size = self.world_size // 2
-
-        cpu_tensor = torch.ones(3, 3)
-        dist.all_reduce(cpu_tensor, group=split_pg)
-        self.assertEqual(cpu_tensor, torch.ones(3, 3) * expected_split_size)
 
         gpu_tensor = torch.ones(3, 3, device=self.device_type)
         dist.all_reduce(gpu_tensor, group=split_pg)
@@ -1613,7 +1599,7 @@ class DeviceMeshCollectiveTest(DTensorTestBase):
     @unittest.skipIf(not _TORCHCOMM_AVAILABLE, "TorchComms is not installed")
     @dist_config.patch(use_torchcomms=True)
     @_with_torchcomm_env
-    @with_comms(eager_init=True, backend="cpu:gloo,cuda:nccl")
+    @with_comms(eager_init=True, backend="cpu:fake,cuda:nccl")
     def test_split_group_backend_filter_w_torchcomms(self) -> None:
         # Hybrid parent (cpu:gloo + cuda:nccl); request only cuda:nccl in the
         # child via the `backend` arg. eager_init=True binds device_id=cuda so
@@ -1647,7 +1633,7 @@ class DeviceMeshCollectiveTest(DTensorTestBase):
     @unittest.skipIf(not _TORCHCOMM_AVAILABLE, "TorchComms is not installed")
     @dist_config.patch(use_torchcomms=True)
     @_with_torchcomm_env
-    @with_comms(backend="cpu:gloo,cuda:nccl")
+    @with_comms(backend="cpu:fake,cuda:nccl")
     def test_device_mesh_w_torchcomms(self) -> None:
         mesh_shape = (2, 2, self.world_size // 4)
         mesh_3d = init_device_mesh(
@@ -1677,7 +1663,7 @@ class DeviceMeshCollectiveTest(DTensorTestBase):
     @unittest.skipIf(not _TORCHCOMM_AVAILABLE, "TorchComms is not installed")
     @dist_config.patch(use_torchcomms=True)
     @_with_torchcomm_env
-    @with_comms(backend="cpu:gloo,cuda:nccl")
+    @with_comms(backend="cpu:fake,cuda:nccl")
     def test_fake_backend_pg_names_w_torchcomms(self) -> None:
         """Fake-backend PG names must be hash-based when torchcomms is enabled.
 

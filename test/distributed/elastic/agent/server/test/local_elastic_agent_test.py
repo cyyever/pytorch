@@ -116,21 +116,6 @@ def _bipolar_sleep_function(sleep_sec):
         _sad_function()
 
 
-def _dist_sum(wait=0):
-    rank = int(os.environ["RANK"])
-    world_size = int(os.environ["WORLD_SIZE"])
-    dist.init_process_group(backend="gloo")
-    t = torch.tensor(rank)
-
-    time.sleep(wait)
-    dist.all_reduce(t, op=dist.reduce_op.SUM)
-
-    expected_sum = sum(range(world_size))
-    actual = t.item()
-    if expected_sum != actual:
-        raise RuntimeError(f"Expected rank sum {expected_sum}, got {actual}")
-
-
 def _sleep(sleep_sec) -> int:
     time.sleep(sleep_sec)
     return int(os.environ["RANK"])
@@ -735,29 +720,15 @@ class LocalElasticAgentTest(unittest.TestCase):
             backend="etcd-v2", test_to_run=self.run_function_with_return_value
         )
 
-    def simple_dist_sum(self):
-        res = self.run_agent(Conf(entrypoint=_dist_sum, local_world_size=2))
-        self.assertFalse(res.is_failed())
-        # _dist_sum internally checks that the sum computed is valid
-
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )
-    def test_simple_dist_sum_c10d(self):
-        self.run_test_with_backend(backend="c10d", test_to_run=self.simple_dist_sum)
-
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )
-    def test_simple_dist_sum_etcd(self):
-        self.run_test_with_backend(backend="etcd", test_to_run=self.simple_dist_sum)
-
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )
-    def test_simple_dist_sum_etcd_v2(self):
-        self.run_test_with_backend(backend="etcd-v2", test_to_run=self.simple_dist_sum)
-
     def run_distributed_sum_homogeneous(
         self, log_line_prefix_template: str | None = None
     ):

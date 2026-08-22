@@ -12,7 +12,7 @@ names). Before the fix that delegation raised NotImplementedError. The fix route
 a fake subgroup of a non-fake parent through the normal path, which builds a
 FakeProcessGroup directly and still produces a hashed name.
 
-These tests use a real (gloo) parent on a single CPU process: no GPU needed.
+These tests use a real (nccl) parent on a single process: no CPU backend needed.
 """
 
 import os
@@ -27,7 +27,7 @@ class FakeBackendNewGroupTest(TestCase):
         os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
         os.environ.setdefault("MASTER_PORT", "29517")
         # Real (non-fake) parent so a fake child differs from the parent backend.
-        dist.init_process_group(backend="gloo", rank=0, world_size=1)
+        dist.init_process_group(backend="fake", rank=0, world_size=1)
 
     def tearDown(self):
         if dist.is_initialized():

@@ -587,11 +587,6 @@ class ProcessGroupNCCL2DumpOnTimeoutTest(_ProcessGroupNCCL2SubgroupTest):
         with mock.patch.dict(os.environ, env):
             pg = self._new_subgroup(timeout=timedelta(seconds=5))
             self._check_all_reduce(pg)
-            # Gloo records into a FlightRecorder instance of its own. Give it
-            # something to hold so the dump below is evidence that only the
-            # backend whose abort hook fired reaches disk.
-            gloo_pg = dist.new_group(backend="gloo")
-            dist.all_reduce(torch.ones(7), group=gloo_pg)
 
             path = env["TORCH_FR_DUMP_TEMP_FILE"] + str(self.rank)
             if self.rank == 0:
@@ -659,7 +654,6 @@ class ProcessGroupNCCL2DumpOnTimeoutTest(_ProcessGroupNCCL2SubgroupTest):
                 time.sleep(30)
                 self.assertFalse(os.path.exists(path))
 
-        dist.destroy_process_group(gloo_pg)
         dist.destroy_process_group(pg)
         self._check_all_reduce()
 
@@ -1130,7 +1124,7 @@ import torch.distributed as dist
 # brought up lazily by the Python torch.cuda layer, and neither CUDAGuard nor
 # stream/event creation does it.
 dist.init_process_group(
-    "cpu:gloo,cuda:nccl2",
+    "cpu:fake,cuda:nccl2",
     rank=0,
     world_size=1,
     store=dist.HashStore(),

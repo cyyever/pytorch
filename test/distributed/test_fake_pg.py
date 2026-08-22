@@ -921,9 +921,9 @@ class TestFakePG(TestCase):
         with self.assertRaisesRegex(ValueError, "is not present in the parent"):
             dist.split_group(split_ranks=[[0, 1]], backend="mps:fake")
         with self.assertRaisesRegex(ValueError, "Backend mismatch"):
-            dist.split_group(split_ranks=[[0, 1]], backend="cpu:gloo")
+            dist.split_group(split_ranks=[[0, 1]], backend="cpu:nccl")
         with self.assertRaisesRegex(ValueError, "is not present in the parent"):
-            dist.split_group(split_ranks=[[0, 1]], backend="gloo")
+            dist.split_group(split_ranks=[[0, 1]], backend="nccl")
 
     @skipIfHpu
     @unittest.skipIf(not HAS_ACCELERATOR, "No accelerator")

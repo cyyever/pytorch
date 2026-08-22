@@ -533,8 +533,8 @@ class TestFullyShard1DTrainingCore(FSDPTest):
                 device_ids=_get_device_ids(self.rank),
             )
         else:
-            gloo_pg = dist.new_group(backend="gloo")
-            replicate(ref_model, process_group=gloo_pg)
+            cpu_pg = dist.new_group(backend="fake")
+            replicate(ref_model, process_group=cpu_pg)
         ref_optim = torch.optim.Adam(ref_model.parameters(), lr=1e-2)
         mesh = init_device_mesh(test_device_type, (self.world_size,))
         fully_shard_fn = functools.partial(

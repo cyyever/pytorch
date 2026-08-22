@@ -1280,7 +1280,7 @@ class ProcessGroupNCCLGroupTest(MultiProcessTestCase):
         # pg = self._create_process_group_nccl(store, self.opts(), device_id=device)
         # create nccl processgroup with opts
         c10d.init_process_group(
-            "cpu:gloo,cuda:nccl",
+            "cpu:fake,cuda:nccl",
             world_size=self.world_size,
             rank=self.rank,
             store=store,
@@ -1352,13 +1352,13 @@ class ProcessGroupNCCLGroupTest(MultiProcessTestCase):
     @requires_nccl_version((2, 18), "Need NCCL 2.18+ for ncclCommSplit")
     @skip_but_pass_in_sandcastle_if(not TEST_MULTIGPU, "NCCL test requires 2+ GPUs")
     def test_comm_split_group_backend_filter(self):
-        # Hybrid parent (cpu:gloo + cuda:nccl); request only cuda:nccl in the
+        # Hybrid parent (cpu:fake + cuda:nccl); request only cuda:nccl in the
         # child via the new `backend` arg. The child should only have the cuda
-        # backend, and the gloo backend should not be split.
+        # backend, and the cpu backend should not be split.
         store = c10d.FileStore(self.file_name, self.world_size)
         device = torch.device(f"cuda:{self.rank}")
         c10d.init_process_group(
-            "cpu:gloo,cuda:nccl",
+            "cpu:fake,cuda:nccl",
             world_size=self.world_size,
             rank=self.rank,
             store=store,
@@ -1396,7 +1396,7 @@ class ProcessGroupNCCLGroupTest(MultiProcessTestCase):
         store = c10d.FileStore(self.file_name, self.world_size)
         device = torch.device(f"cuda:{self.rank}")
         c10d.init_process_group(
-            "cpu:gloo,cuda:nccl",
+            "cpu:fake,cuda:nccl",
             world_size=self.world_size,
             rank=self.rank,
             store=store,
@@ -1413,8 +1413,8 @@ class ProcessGroupNCCLGroupTest(MultiProcessTestCase):
         with self.assertRaisesRegex(ValueError, "is not present in the parent"):
             c10d.split_group(pg, [[0, 1]], backend="xpu:xccl")
 
-        # Filtering out the parent's default backend (cuda) must raise from C++.
-        with self.assertRaises(RuntimeError):
+        # Requesting a backend name that differs from the parent's cpu backend.
+        with self.assertRaisesRegex(ValueError, "Backend mismatch"):
             c10d.split_group(pg, [[0, 1]], backend="cpu:gloo")
 
         dist.destroy_process_group()
@@ -2481,11 +2481,10 @@ class DistributedDataParallelTest(
         pg = c10d.ProcessGroupNCCL(
             store, self.rank, self.world_size, timeout=timedelta(seconds=15)
         )
-        pg_gloo = c10d.ProcessGroupGloo(store, self.rank, self.world_size)
         pg.barrier().wait(timedelta(seconds=5))
         # Simulate stuckness in rank 0.
         if self.rank == 0:
-            pg_gloo.barrier().wait()
+            time.sleep(10)
         inp = torch.ones(1).cuda(self.rank)
 
         if self.rank != 0:
@@ -2501,8 +2500,7 @@ class DistributedDataParallelTest(
             else:
                 self.fail("Expected error to be raised!")
 
-            # Unblock rank 0
-            pg_gloo.barrier().wait()
+            time.sleep(10)
 
         # TODO: We can also test that if rank 0 attempts to use the communicator,
         # then we should error out with the info that it was aborted due to

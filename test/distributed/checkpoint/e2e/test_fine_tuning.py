@@ -87,7 +87,7 @@ class TestFineTuning(DTensorTestBase):
     @property
     def backend(self):
         curr_backend = dist.get_default_backend_for_device(self.device_type)
-        return f"cpu:gloo,{self.device_type}:{curr_backend}"
+        return f"cpu:fake,{self.device_type}:{curr_backend}"
 
     def pretrain(self, pretrain_dir: str) -> None:
         device_mesh = init_device_mesh(self.device_type, (self.world_size,))

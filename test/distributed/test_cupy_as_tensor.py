@@ -56,7 +56,7 @@ def from_buffer(
 class CupyAsTensorTest(MultiProcContinuousTest):
     @classmethod
     def backend_str(cls):
-        return "gloo"
+        return "nccl"
 
     def _init_device(self) -> None:
         # need to use vmm api to test it,

@@ -510,7 +510,7 @@ class TestAllGatherViewOptimization(TestCase):
         self.assertNotIsInstance(res, ft_c.AsyncCollectiveTensor)
 
 
-BACKEND = dist.Backend.NCCL if torch.cuda.is_available() else dist.Backend.GLOO
+BACKEND = dist.Backend.NCCL
 
 # Adding support for HCCL backend
 # To add a different backend

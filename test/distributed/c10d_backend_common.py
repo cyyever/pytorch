@@ -58,7 +58,6 @@ class BackendConfig:
 
 C10D_BACKENDS = (
     BackendConfig(
-        "gloo",
         "cpu",
         supports_bitwise_reductions=True,
         supports_work_sequence_number=True,

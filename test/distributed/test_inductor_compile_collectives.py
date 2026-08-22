@@ -43,7 +43,7 @@ class TestInductorCompileCollectives(TestCase):
         ) as fd:
             self._store_path = fd.name
         dist.init_process_group(
-            backend="gloo",
+            backend="fake",
             rank=0,
             world_size=1,
             store=dist.FileStore(self._store_path, 1),

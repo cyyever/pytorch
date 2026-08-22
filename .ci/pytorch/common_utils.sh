@@ -332,7 +332,6 @@ function install_torchao() {
 function install_torchcomms() {
   local commit
   commit=$(get_pinned_commit torchcomms)
-  export USE_GLOO=1
   export USE_NCCLX=0
   export USE_TRANSPORT=0
   if [[ "${BUILD_ENVIRONMENT}" == *cuda* ]]; then

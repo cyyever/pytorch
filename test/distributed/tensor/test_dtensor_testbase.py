@@ -19,7 +19,7 @@ class DTensorTestBaseUtilCPUTest(DTensorTestBase):
 
     @property
     def backend(self):
-        return "gloo"
+        return "nccl"
 
     @property
     def device_type(self) -> str:

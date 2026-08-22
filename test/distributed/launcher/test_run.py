@@ -623,41 +623,9 @@ class ElasticLaunchTest(TestCase):
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )
-    def test_init_method_tcp_with_torchelastic(self):
-        port = get_free_port()
-        launch.main(
-            [
-                "--run-path",
-                "--nnodes=1",
-                "--nproc-per-node=4",
-                "--master-addr=localhost",
-                f"--master-port={port}",
-                "--monitor-interval=1",
-                path("bin/test_script_init_method.py"),
-                f"--init-method=tcp://localhost:{port}",
-            ]
-        )
-        # nothing to validate, just make sure it runs
-
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )
-    def test_init_method_env_with_torchelastic(self):
-        port = get_free_port()
-        launch.main(
-            [
-                "--run-path",
-                "--nnodes=1",
-                "--nproc-per-node=4",
-                "--master-addr=localhost",
-                f"--master-port={port}",
-                "--monitor-interval=1",
-                path("bin/test_script_init_method.py"),
-                "--init-method=env://",
-            ]
-        )
-        # nothing to validate, just make sure it runs
-
     def test_capture_logs_using_default_logs_specs(self):
         run_id = str(uuid.uuid4().int)
         nnodes = 1

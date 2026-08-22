@@ -72,7 +72,6 @@ RUN apt-get update && apt-get -y install \
         python3-numpy \
         libopenblas-dev \
         liblapack-dev \
-        libgloo-dev \
         python3-yaml \
         python3-scipy \
         virtualenv

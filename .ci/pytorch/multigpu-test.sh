@@ -25,9 +25,7 @@ if [[ "${SHARD_NUMBER:-2}" == "2" ]]; then
     time python test/run_test.py --verbose -i distributed/test_c10d_cuda_graphs
     time python test/run_test.py --verbose -i distributed/test_c10d_p2p
     time python test/run_test.py --verbose -i distributed/test_c10d_process_group
-    time python test/run_test.py --verbose -i distributed/test_c10d_gloo
     time python test/run_test.py --verbose -i distributed/test_c10d_nccl
-    time python test/run_test.py --verbose -i distributed/test_c10d_spawn_gloo
     time python test/run_test.py --verbose -i distributed/test_c10d_spawn_nccl
     time python test/run_test.py --verbose -i distributed/test_compute_comm_reordering
     time python test/run_test.py --verbose -i distributed/test_aten_comm_compute_reordering

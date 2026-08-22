@@ -92,7 +92,7 @@ class MultiProcContinuousSkipTest(MultiProcContinuousTest):
 
     @classmethod
     def backend_str(cls) -> str:
-        return "gloo"
+        return "fake"
 
     @classmethod
     def device_type(cls) -> str:
@@ -352,12 +352,12 @@ class BackendEntryPointTest(TestCase):
         with unittest.mock.patch.object(
             dist.Backend, "_ensure_backend_registered", classmethod(spy)
         ):
-            backend_config = dist.BackendConfig("cpu:gloo,cuda:nccl")
+            backend_config = dist.BackendConfig("cpu:fake,cuda:nccl")
 
-        self.assertNotIn("cpu:gloo,cuda:nccl", looked_up)
-        self.assertIn("gloo", looked_up)
+        self.assertNotIn("cpu:fake,cuda:nccl", looked_up)
+        self.assertIn("fake", looked_up)
         self.assertIn("nccl", looked_up)
-        self.assertEqual(str(backend_config), "cpu:gloo,cuda:nccl")
+        self.assertEqual(str(backend_config), "cpu:fake,cuda:nccl")
 
     @parametrize("use_nccl2", [False, True])
     def test_nccl_backend_registration(self, use_nccl2):
@@ -421,9 +421,9 @@ class DefaultBackendTypeTest(TestCase):
     @parametrize(
         "backend_str",
         [
-            "cpu:gloo",
-            "cpu:gloo,cuda:nccl",
-            "cpu:gloo,xpu:xccl",
+            "cpu:fake",
+            "cpu:fake,cuda:nccl",
+            "cpu:fake,xpu:xccl",
             "cuda:nccl",
             "xpu:xccl",
         ],
@@ -449,17 +449,17 @@ class DefaultBackendTypeTest(TestCase):
         [
             # A mixed host+accelerator group defaults to the accelerator
             # backend so ProcessGroup::barrier() stays on the accelerator.
-            ("cpu:gloo,xpu:xccl", "xpu", "XCCL"),
-            ("cpu:gloo,cuda:nccl", "cuda", "NCCL"),
-            # Accelerator-only groups must not fall back to a gloo backend that
+            ("cpu:fake,xpu:xccl", "xpu", "XCCL"),
+            ("cpu:fake,cuda:nccl", "cuda", "NCCL"),
+            # Accelerator-only groups must not fall back to a backend that
             # was never registered.
             ("xpu:xccl", "xpu", "XCCL"),
             # No device for the reported accelerator: any non-host device still
             # outranks cpu.
-            ("cpu:gloo,xpu:xccl", "cuda", "XCCL"),
-            ("cpu:gloo,xpu:xccl", None, "XCCL"),
+            ("cpu:fake,xpu:xccl", "cuda", "XCCL"),
+            ("cpu:fake,xpu:xccl", None, "XCCL"),
             # Host-only groups are unambiguous.
-            ("cpu:gloo", "cuda", "GLOO"),
+            ("cpu:fake", "cuda", "CUSTOM"),
         ],
     )
     def test_default_backend_type_prefers_accelerator_backend(
@@ -481,7 +481,7 @@ class DefaultBackendTypeTest(TestCase):
             "torch.accelerator.current_accelerator",
             return_value=torch.device("cuda"),
         ):
-            backend_config = dist.BackendConfig("cpu:gloo,xpu:xccl,cuda:nccl")
+            backend_config = dist.BackendConfig("cpu:fake,xpu:xccl,cuda:nccl")
             self.assertEqual(
                 c10d._get_default_backend_type_for_backend_config(
                     backend_config, torch.device("xpu:0")
@@ -492,7 +492,7 @@ class DefaultBackendTypeTest(TestCase):
                 c10d._get_default_backend_type_for_backend_config(
                     backend_config, torch.device("cpu")
                 ),
-                dist.ProcessGroup.BackendType.GLOO,
+                dist.ProcessGroup.BackendType.CUSTOM,
             )
 
 
@@ -1470,7 +1470,6 @@ class AbstractCommTest:
         # verification to keep counts as expected with respect to process_group.
         verify_pg = dist.new_group(
             ranks=ranks,
-            backend="gloo",
         )
         if dist.get_world_size(process_group) != dist.get_world_size(verify_pg):
             raise AssertionError(
@@ -2257,15 +2256,12 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
 
         # Ensure backend config can be created with the following arguments
         backend_config_strings_and_expected_values = [
-            (dist.Backend.GLOO, "cpu:gloo,cuda:gloo"),
             (dist.Backend.NCCL, "cuda:nccl"),
             (dist.Backend.DUMMY, dummy_backend_config),
             ("DUMMY", dummy_backend_config),
             ("dummy", dummy_backend_config),
             ("cpu:dummy,cuda:dummy", "cpu:dummy,cuda:dummy"),
             ("cpu:dummy,cuda:nccl", "cpu:dummy,cuda:nccl"),
-            ("cpu:gloo,cuda:dummy", "cpu:gloo,cuda:dummy"),
-            ("cpu:gloo,cuda:nccl", "cpu:gloo,cuda:nccl"),
         ]
 
         if TEST_XPU:
@@ -2276,8 +2272,6 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
                 ("dummy", dummy_backend_config),
                 ("cpu:dummy,xpu:dummy", "cpu:dummy,xpu:dummy"),
                 ("cpu:dummy,xpu:xccl", "cpu:dummy,xpu:xccl"),
-                ("cpu:gloo,xpu:dummy", "cpu:gloo,xpu:dummy"),
-                ("cpu:gloo,xpu:xccl", "cpu:gloo,xpu:xccl"),
             ]
 
         for config_str, expected_value in backend_config_strings_and_expected_values:
@@ -2288,10 +2282,10 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
 
         # Ensure backend config will raise ValueError with the following arguments
         invalid_backend_config_strings = [
-            "cpu:gloo,cuda:nccl,",  # trailing comma
-            "cpu:gloo,cuda:nccl,cpu:dummy",  # duplicate device
-            "cpu:gloo,xpu:xccl,",  # trailing comma
-            "cpu:gloo,xpu:xccl,cpu:dummy",  # duplicate device
+            "cpu:fake,cuda:nccl,",  # trailing comma
+            "cpu:fake,cuda:nccl,cpu:dummy",  # duplicate device
+            "cpu:fake,xpu:xccl,",  # trailing comma
+            "cpu:fake,xpu:xccl,cpu:dummy",  # duplicate device
         ]
         for config_str in invalid_backend_config_strings:
             with self.subTest(config_str):
@@ -2312,22 +2306,16 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
             _parse_backend_string("NCCL", available_devices=all_devices),
             {"cuda": "nccl"},
         )
-        # gloo is the default for both cpu and mps in default_device_backend_map.
-        self.assertEqual(
-            _parse_backend_string("gloo", available_devices=all_devices),
-            {"cpu": "gloo", "mps": "gloo"},
-        )
-
         # Merged form returns exactly what was named, filtered by available_devices.
         self.assertEqual(
-            _parse_backend_string("cpu:gloo,cuda:nccl", available_devices=all_devices),
-            {"cpu": "gloo", "cuda": "nccl"},
+            _parse_backend_string("cpu:fake,cuda:nccl", available_devices=all_devices),
+            {"cpu": "fake", "cuda": "nccl"},
         )
         self.assertEqual(
             _parse_backend_string(
-                "CPU:GLOO , CUDA:NCCL", available_devices=all_devices
+                "CPU:FAKE , CUDA:NCCL", available_devices=all_devices
             ),
-            {"cpu": "gloo", "cuda": "nccl"},
+            {"cpu": "fake", "cuda": "nccl"},
         )
         # Unknown device types in merged form are accepted (no validation here).
         self.assertEqual(
@@ -2341,11 +2329,11 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
                 "definitely_not_a_backend", available_devices=all_devices
             )
         with self.assertRaisesRegex(ValueError, "Invalid device:backend pairing"):
-            _parse_backend_string("cpu:gloo:extra", available_devices=all_devices)
+            _parse_backend_string("cpu:fake:extra", available_devices=all_devices)
         with self.assertRaisesRegex(ValueError, "Invalid device:backend pairing"):
-            _parse_backend_string("cpu:gloo,bare", available_devices=all_devices)
+            _parse_backend_string("cpu:fake,bare", available_devices=all_devices)
         with self.assertRaisesRegex(ValueError, "Duplicate device type"):
-            _parse_backend_string("cpu:gloo,cpu:dummy", available_devices=all_devices)
+            _parse_backend_string("cpu:fake,cpu:dummy", available_devices=all_devices)
 
     def test_init_process_group_with_multiple_backends(self):
         dist.Backend.register_backend(
@@ -2624,14 +2612,14 @@ class SplitGroupOptionsTest(TestCase):
             )
 
     def _make_group(self):
-        # Shaped like a "cpu:gloo,cuda:nccl" group: two distinct backends, the
+        # Shaped like a "cpu:fake,cuda:nccl" group: two distinct backends, the
         # accelerator one being the group's default. The backend type tags are
         # just map keys here, the backends themselves are Python ones.
         cpu_backend = self._SplittingBackend(0, 1, "cpu-backend")
         default_backend = self._SplittingBackend(0, 1, "default-backend")
         pg = dist.ProcessGroup(dist.HashStore(), 0, 1)
         pg._register_backend(
-            torch.device("cpu"), dist.ProcessGroup.BackendType.GLOO, cpu_backend
+            torch.device("cpu"), dist.ProcessGroup.BackendType.CUSTOM, cpu_backend
         )
         pg._register_backend(
             torch.device("cuda"), dist.ProcessGroup.BackendType.NCCL, default_backend
@@ -2690,8 +2678,7 @@ class ProcessGroupWithDispatchedCollectivesTests(MultiProcessTestCase):
 
     def test_init_process_group_optional_backend(self):
         store = dist.FileStore(self.file_name, self.world_size)
-        # creates both gloo and nccl backend
-        if dist.is_gloo_available() and dist.is_nccl_available():
+        if dist.is_nccl_available() and torch.cuda.is_available():
             dist.init_process_group(
                 store=store,
                 rank=self.rank,
@@ -2707,9 +2694,6 @@ class ProcessGroupWithDispatchedCollectivesTests(MultiProcessTestCase):
                 continue
             elif backend == dist.Backend.NCCL:
                 if not dist.is_nccl_available() or not torch.cuda.is_available():
-                    continue
-            elif backend == dist.Backend.GLOO:
-                if not dist.is_gloo_available():
                     continue
             elif backend == dist.Backend.XCCL:
                 if not dist.is_xccl_available():
@@ -2781,12 +2765,10 @@ dist.init_process_group(rank=0, world_size=1, store=dist.HashStore())
         elif collective is dist.scatter:
             collective(tensor, [tensor], *args)
         elif collective in (dist.reduce_scatter, dist.all_to_all):
-            # gloo does not support reduce_scatter or all_to_all
-            if backend != "gloo":
-                if collective is dist.reduce_scatter:
-                    collective(tensor, [tensor], *args)
-                else:
-                    collective([tensor], [tensor], *args)
+            if collective is dist.reduce_scatter:
+                collective(tensor, [tensor], *args)
+            else:
+                collective([tensor], [tensor], *args)
         else:
             collective(tensor, *args)
 

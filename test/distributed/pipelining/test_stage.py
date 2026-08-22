@@ -67,7 +67,7 @@ class PipelineStageMetadataInferenceTest(TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             if init_pg:
                 dist.init_process_group(
-                    "gloo",
+                    "fake",
                     init_method=f"file://{os.path.join(tmpdir, 'pg')}",
                     rank=0,
                     world_size=1,

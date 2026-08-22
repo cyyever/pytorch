@@ -408,7 +408,7 @@ class SymmetricMemoryTest(MultiProcContinuousTest):
     def test_rendezvous_custom_backend(self) -> None:
         # Simulate the ncclx multi-backend setup.  NCCLXStub wraps NCCL
         # (CUDA-only, like ncclx) and registers via extended_api=True.
-        # When new_group() is called with "cpu:gloo,cuda:ncclx_stub",
+        # When new_group() is called with "cpu:fake,cuda:ncclx_stub",
         # _new_process_group_helper can leave the wrapper ProcessGroup's
         # backendType_ as UNDEFINED.  This used to crash
         # getUsePgForSymmMemRendezvous() because getDefaultBackend() fails
@@ -437,7 +437,7 @@ class SymmetricMemoryTest(MultiProcContinuousTest):
         )
 
         pg = dist.new_group(
-            list(range(self.world_size)), backend="cpu:gloo,cuda:ncclx_stub"
+            list(range(self.world_size)), backend="cpu:fake,cuda:ncclx_stub"
         )
 
         torch._C._distributed_c10d._reset_fr_recording_nccl()

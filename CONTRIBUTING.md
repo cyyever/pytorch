@@ -784,7 +784,7 @@ On the initial build, you can also speed things up by disabling the features you
 
 - `DEBUG=1` will enable debug builds (this should rarely be used) (-g -O0)
 - `REL_WITH_DEB_INFO=1` will enable debug symbols with optimizations (-g -O3)
-- `USE_DISTRIBUTED=0` will disable distributed (c10d, gloo, mpi, etc.) build.
+- `USE_DISTRIBUTED=0` will disable distributed (c10d, mpi, etc.) build.
 - `USE_MKLDNN=0` will disable using MKL-DNN.
 - `USE_CUDA=0` will disable compiling CUDA.
 - `BUILD_TEST=0` will disable building C++ test binaries.

@@ -79,7 +79,6 @@ includes = [
     "caffe2/core/*",
     "caffe2/db/*",
     "caffe2/utils/*",
-    "caffe2/contrib/gloo/*",
     "caffe2/contrib/nccl/*",
     "c10/cuda/*",
     "c10/cuda/test/CMakeLists.txt",
@@ -172,8 +171,6 @@ hip_platform_files = [
     "third_party/fbgemm/fbgemm_gpu/src/split_embeddings_cache_cuda.cu",
     "third_party/fbgemm/fbgemm_gpu/src/topology_utils.cpp",
     "third_party/fbgemm/src/EmbeddingSpMDM.cc",
-    "third_party/gloo/cmake/Dependencies.cmake",
-    "third_party/gloo/gloo/cuda.cu",
     "third_party/kineto/libkineto/CMakeLists.txt",
     "third_party/nvfuser/CMakeLists.txt",
 ]

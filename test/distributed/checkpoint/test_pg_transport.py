@@ -119,7 +119,7 @@ class PgTransportCPU(MultiProcContinuousTest):
 
     @classmethod
     def backend_str(cls) -> str | None:
-        return "gloo"
+        return "nccl"
 
     @classmethod
     def device_type(cls) -> str:

@@ -347,11 +347,6 @@ if dist.is_available():
         DISTRIBUTED_TESTS_CONFIG["nccl"] = {
             "WORLD_SIZE": f"{num_gpus}",
         }
-    if dist.is_gloo_available():
-        DISTRIBUTED_TESTS_CONFIG["gloo"] = {
-            # TODO: retire testing gloo with CUDA
-            "WORLD_SIZE": f"{num_gpus if num_gpus > 0 else 3}",
-        }
     del num_gpus
 
 # https://stackoverflow.com/questions/2549939/get-signal-names-from-numbers-in-python
@@ -1024,8 +1019,6 @@ def test_openreg(test_module, test_directory, options):
 def test_distributed(test_module, test_directory, options):
     config = DISTRIBUTED_TESTS_CONFIG
     for backend, env_vars in config.items():
-        if sys.platform == "win32" and backend != "gloo":
-            continue
         for with_init_file in {True, False}:
             if sys.platform == "win32" and not with_init_file:
                 continue
@@ -1296,12 +1289,9 @@ CUSTOM_HANDLERS = {
     "distributed/test_distributed_spawn": test_distributed,
     "distributed/algorithms/quantization/test_quantization": test_distributed,
     "distributed/test_c10d_nccl": run_test_with_subprocess,
-    "distributed/test_c10d_gloo": run_test_with_subprocess,
     "distributed/test_c10d_common": run_test_with_subprocess,
-    "distributed/test_c10d_spawn_gloo": run_test_with_subprocess,
     "distributed/test_c10d_spawn_nccl": run_test_with_subprocess,
     "distributed/test_store": run_test_with_subprocess,
-    "distributed/test_pg_wrapper": run_test_with_subprocess,
     "functorch/test_control_flow_cuda_initialization": run_test_with_subprocess,
     "doctests": run_doctests,
     "test_ci_sanity_check_fail": run_ci_sanity_check,

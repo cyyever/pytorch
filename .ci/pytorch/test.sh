@@ -1686,7 +1686,6 @@ test_distributed() {
         eval "$MPICMD"
       fi
 
-      python test/run_test.py --cpp --verbose -i cpp/ProcessGroupGlooTest
       python test/run_test.py --cpp --verbose -i cpp/ProcessGroupNCCLTest
       python test/run_test.py --cpp --verbose -i cpp/ProcessGroupNCCLErrorsTest
     fi

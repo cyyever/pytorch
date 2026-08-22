@@ -2,7 +2,7 @@
 
 ## Background
 
-Distributed training allows accelerators to scale workloads across multiple devices and nodes by coordinating collective communication (e.g., allreduce, broadcast, allgather) through a [ProcessGroup](https://github.com/pytorch/pytorch/blob/main/torch/csrc/distributed/c10d/ProcessGroup.hpp) backend. PyTorch ships built-in backends such as [NCCL](https://developer.nvidia.com/nccl) for CUDA and [Gloo](https://github.com/facebookincubator/gloo) for CPU, but the framework exposes a registration mechanism that allows out-of-tree accelerator vendors to plug in their own collective communication library without modifying upstream code.
+Distributed training allows accelerators to scale workloads across multiple devices and nodes by coordinating collective communication (e.g., allreduce, broadcast, allgather) through a [ProcessGroup](https://github.com/pytorch/pytorch/blob/main/torch/csrc/distributed/c10d/ProcessGroup.hpp) backend. PyTorch ships built-in backends such as [NCCL](https://developer.nvidia.com/nccl) for CUDA, but the framework exposes a registration mechanism that allows out-of-tree accelerator vendors to plug in their own collective communication library without modifying upstream code.
 
 The integration surface can be broken down into three layers:
 
@@ -207,7 +207,7 @@ PyTorch supports specifying different backends for different device types in a s
 
 ```python
 dist.init_process_group(
-    backend="cpu:gloo,openreg:occl",
+    backend="openreg:occl",
     init_method="env://",
     world_size=2,
     rank=0,

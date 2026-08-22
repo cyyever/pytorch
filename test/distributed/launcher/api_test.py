@@ -95,23 +95,6 @@ def elastic_launch_wrapper(
     )("-u", path("bin/test_script.py"), f"--touch-file-dir={test_dir}")
 
 
-def _dist_sum(wait=0):
-    rank = int(os.environ["RANK"])
-    dist.init_process_group(backend="gloo")
-    t = torch.tensor(rank)
-
-    time.sleep(wait)
-    dist.all_reduce(t, op=dist.reduce_op.SUM)
-    return t.item()
-
-
-ELASTIC_AGENT_RUN = "torch.distributed.launcher.api.LocalElasticAgent.run"
-EVENTS_RECORD = "torch.distributed.launcher.api.events.record"
-GET_RDZV_HANDLER = (
-    "torch.distributed.elastic.rendezvous.registry.get_rendezvous_handler"
-)
-
-
 class MockException(Exception):
     pass
 
@@ -224,34 +207,6 @@ class ElasticLaunchTest(unittest.TestCase):
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )
-    def test_launch_dist_sum_with_static_rdzv(self):
-        nnodes = 1
-        nproc_per_node = 4
-        sock = get_socket_with_port()
-        with closing(sock):
-            master_port = sock.getsockname()[1]
-        rdzv_endpoint = f"127.0.0.1:{master_port}"
-        rank = 0
-        rdzv_config = {
-            "rank": rank,
-        }
-
-        res = elastic_launch(
-            get_test_launch_config(
-                rdzv_endpoint,
-                nnodes,
-                nnodes,
-                nproc_per_node,
-                rdzv_backend="static",
-                config=rdzv_config,
-            ),
-            _dist_sum,
-        )()
-
-        expected_res = [sum(range(nproc_per_node))] * nproc_per_node
-        actual_res = sorted(value for value in res.values())
-        self.assertEqual(expected_res, actual_res)
-
     @skip_but_pass_in_sandcastle_if(
         TEST_WITH_DEV_DBG_ASAN, "test incompatible with dev/dbg asan"
     )

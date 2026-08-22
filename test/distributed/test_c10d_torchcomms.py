@@ -222,21 +222,6 @@ class TestC10dTorchCommsBasic(C10dTorchCommsTestBase):
         # If we reach this point, the barrier succeeded without deadlock
         self.assertTrue(True)
 
-    def test_monitored_barrier(self):
-        # monitored_barrier is gloo-only; the default PG is gloo only on the
-        # cpu variant (nccl on cuda/xpu), so run there. This drives the full
-        # dist.monitored_barrier dispatch onto BackendWrapper::monitoredBarrier
-        # (the torchcomms reimplementation of ProcessGroupGloo::monitoredBarrier).
-        if self.device_type != "cpu":
-            return
-        self.assertEqual(dist.get_backend(self.pg), dist.Backend.GLOO)
-        # All ranks check in -> the health-checking barrier returns cleanly.
-        dist.monitored_barrier(
-            group=self.pg,
-            timeout=datetime.timedelta(seconds=30),
-            wait_all_ranks=True,
-        )
-
     def test_new_group_delegates_to_split_group(self):
         # Under torchcomms, `new_group` routes through `split_group`. The
         # resulting subgroup must contain the requested ranks and be usable
@@ -314,7 +299,7 @@ class TestC10dTorchCommsInitAutoQualify(C10dTorchCommsTestBase):
 
     Overrides ``_init_pg`` to pass ``device_id`` with bare ``"nccl"`` —
     the auto-qualify logic in ``init_process_group`` should expand it to
-    ``"cpu:gloo,cuda:nccl"`` so both CPU and CUDA backends are available.
+    ``"cpu:fake,cuda:nccl"`` so both CPU and CUDA backends are available.
     """
 
     @classmethod
@@ -372,24 +357,6 @@ class TestC10dTorchCommsInitAutoQualify(C10dTorchCommsTestBase):
         self.assertIsNotNone(default_pg.bound_device_id)
         self.assertEqual(default_pg.bound_device_id.type, "cuda")
 
-    def test_monitored_barrier_on_multi_backend_group(self):
-        # A device-bound world reports a multi-backend string from get_backend
-        # (e.g. "cpu:gloo,cuda:nccl"), which is NOT equal to Backend.GLOO. The
-        # relaxed monitored_barrier guard must still accept it under torchcomms
-        # (because it has a CPU-capable backend) and dispatch to the gloo CPU
-        # backend's BackendWrapper::monitoredBarrier, rather than rejecting it
-        # for not being a plain gloo group.
-        backend = dist.get_backend(self.pg)
-        self.assertNotEqual(backend, dist.Backend.GLOO)
-        self.assertIn("gloo", str(backend))
-        # All ranks check in -> the barrier returns cleanly. Reaching past this
-        # call proves the guard accepted the group and the barrier ran.
-        dist.monitored_barrier(
-            group=self.pg,
-            timeout=datetime.timedelta(seconds=30),
-            wait_all_ranks=True,
-        )
-
     def test_new_group_nccl_lazy_builds_per_peer_group(self):
         # Passing backend="nccl-lazy" builds a per-peer, lazily-initialized
         # group (a dedicated comm + stream per send/recv peer) usable for P2P.
@@ -421,9 +388,9 @@ class TestC10dTorchCommsInitAutoQualify(C10dTorchCommsTestBase):
     def test_non_torchcomms_backend_falls_through_to_c10d(self):
         # Under torchcomms, a backend TorchComms does not own (registered the way
         # mooncake registers a custom c10d backend) must route through the normal
-        # ProcessGroup path, not new_comm. Use a gloo-backed stand-in.
+        # ProcessGroup path, not new_comm. Use a fake-backed stand-in.
         def _creator(store, grank, gsize, timeout):
-            return dist.ProcessGroupGloo(store, grank, gsize, timeout)
+            return dist.init_process_group(backend="fake", store=store, rank=grank, world_size=gsize)
 
         name = "tc_gate_stub"
         if name not in dist.Backend.backend_list:
@@ -432,7 +399,7 @@ class TestC10dTorchCommsInitAutoQualify(C10dTorchCommsTestBase):
         ranks = list(range(self.world_size))
         g = dist.new_group(ranks=ranks, backend=name)
         be = g._get_backend(torch.device("cpu"))
-        # The c10d creator ran (real ProcessGroupGloo), not a TorchComms wrapper.
+        # The c10d creator ran (a fake ProcessGroup), not a TorchComms wrapper.
         self.assertNotIn("BackendWrapper", type(be).__name__)
         t = torch.tensor([self._rank_value], dtype=torch.float32)
         dist.all_reduce(t, group=g)
@@ -558,12 +525,12 @@ class TestTorchCommsHandlesBackend(TestCase):
             self.assertFalse(c10d._torchcomms_handles_backend("nccl-lazy"))
 
     def test_qualified_all_handled(self):
-        with self._patch(built=["gloo", "nccl"]):
-            self.assertTrue(c10d._torchcomms_handles_backend("cpu:gloo,cuda:nccl"))
+        with self._patch(built=["xccl", "nccl"]):
+            self.assertTrue(c10d._torchcomms_handles_backend("xpu:xccl,cuda:nccl"))
 
     def test_qualified_one_unhandled_falls_through(self):
-        with self._patch(built=["gloo"]):
-            self.assertFalse(c10d._torchcomms_handles_backend("cpu:gloo,cuda:mooncake"))
+        with self._patch(built=["xccl"]):
+            self.assertFalse(c10d._torchcomms_handles_backend("xpu:xccl,cuda:mooncake"))
 
     def test_empty_parts_are_skipped(self):
         with self._patch(built=["nccl"]):
@@ -635,15 +602,15 @@ class TestC10dTorchCommsNewGroupHelper(TestCase):
         self.assertEqual(cap["device"], torch.device("cuda:3"))
 
     def test_new_comm_device_type_mismatch_not_overridden(self):
-        # gloo maps to the cpu device; device_id is a cuda device, so the type
-        # guard must leave cpu alone rather than substituting cuda:3.
+        # xccl maps to the xpu device; device_id is a cuda device, so the type
+        # guard must leave xpu alone rather than substituting cuda:3.
         cap = self._drive_member(
-            backend="gloo",
+            backend="xccl",
             device_id=torch.device("cuda:3"),
             group_rank=1,
             group_size=4,
         )
-        self.assertEqual(cap["device"], torch.device("cpu"))
+        self.assertEqual(cap["device"], torch.device("xpu"))
 
     def test_new_comm_without_device_id_keeps_type_only_device(self):
         # World-group path: no device_id bound, so the guard must not fire and
@@ -868,7 +835,7 @@ class _FakeOtherBackend:
 class TestC10dTorchCommsDestroyDedup(TestCase):
     """Unit-test the comm-deduplication in ``destroy_process_group``.
 
-    A gloo subgroup reports both ``cuda`` and ``cpu`` device types backed by the
+    A mixed-backend subgroup reports both ``cuda`` and ``cpu`` device types backed by the
     same _BackendWrapper/comm; the destroy loop must finalize each comm exactly
     once because ``finalize()`` is not idempotent. Everything TorchComms-specific
     is patched (``create=True``), so these run even when TorchComms is not
@@ -1027,7 +994,7 @@ class TestC10dTorchCommsBackendConfig(TestCase):
             c10d._torchcomms_is_backend_registered = orig_registered
             c10d._torchcomms_is_backend_built = orig_built
 
-    def test_unregistered_device_qualified_backend_with_torchcomms_keeps_gloo_type(
+    def test_unregistered_device_qualified_backend_with_torchcomms_keeps_undefined_type(
         self,
     ):
         backend_name = "tc_test_backend"
@@ -1043,14 +1010,14 @@ class TestC10dTorchCommsBackendConfig(TestCase):
             backend_config = dist.BackendConfig(f"cuda:{backend_name}")
             self.assertEqual(
                 c10d._get_default_backend_type_for_backend_config(backend_config),
-                dist.ProcessGroup.BackendType.GLOO,
+                dist.ProcessGroup.BackendType.UNDEFINED,
             )
         finally:
             c10d._use_torchcomms_enabled = orig_use
             c10d._torchcomms_is_backend_registered = orig_registered
             c10d._torchcomms_is_backend_built = orig_built
 
-    def test_registered_device_qualified_backend_without_torchcomms_keeps_gloo_type(
+    def test_registered_device_qualified_backend_without_torchcomms_keeps_undefined_type(
         self,
     ):
         backend_name = "tc_test_backend"
@@ -1066,7 +1033,7 @@ class TestC10dTorchCommsBackendConfig(TestCase):
             backend_config = dist.BackendConfig(f"cuda:{backend_name}")
             self.assertEqual(
                 c10d._get_default_backend_type_for_backend_config(backend_config),
-                dist.ProcessGroup.BackendType.GLOO,
+                dist.ProcessGroup.BackendType.UNDEFINED,
             )
         finally:
             c10d._use_torchcomms_enabled = orig_use

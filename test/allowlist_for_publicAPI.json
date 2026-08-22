@@ -300,7 +300,6 @@
     "Optional",
     "PrefixStore",
     "ProcessGroup",
-    "ProcessGroupGloo",
     "ReduceOp",
     "ReduceOptions",
     "ReduceScatterOptions",

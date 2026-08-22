@@ -110,7 +110,7 @@ class TestSerialization(TestCase):
 
     def test_dtensor(self) -> None:
         dist.init_process_group(
-            backend="gloo", rank=0, world_size=1, store=dist.HashStore()
+            backend="fake", rank=0, world_size=1, store=dist.HashStore()
         )
 
         device_mesh = DeviceMesh("cpu", 1)

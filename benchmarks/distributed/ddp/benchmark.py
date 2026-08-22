@@ -217,7 +217,7 @@ def main():
     # The global process group used only for communicating benchmark
     # metadata, like measurements. Not for benchmarking itself.
     dist.init_process_group(
-        backend="gloo",
+        backend="nccl",
         init_method=f"tcp://{args.master_addr}:{args.master_port}",
         rank=args.rank,
         world_size=args.world_size,

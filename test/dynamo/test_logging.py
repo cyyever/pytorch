@@ -445,7 +445,7 @@ Found from :
 
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = str(find_free_port())
-        dist.init_process_group("gloo", rank=0, world_size=1)
+        dist.init_process_group("fake", rank=0, world_size=1)
 
         model = DDP(ToyModel().to("cuda:0"), device_ids=[0], bucket_cap_mb=4)
         ddp_model = torch.compile(model, backend="inductor")

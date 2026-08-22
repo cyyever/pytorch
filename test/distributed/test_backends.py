@@ -22,16 +22,10 @@ class TestMiscCollectiveUtils(TestCase):
                 raise AssertionError(
                     f"Expected nccl, got {dist.get_default_backend_for_device(device)}"
                 )
-        elif "cpu" in device:
-            if dist.get_default_backend_for_device(device) != "gloo":
-                raise AssertionError(
-                    f"Expected gloo, got {dist.get_default_backend_for_device(device)}"
-                )
-        elif "mps" in device:
-            if dist.get_default_backend_for_device(device) != "gloo":
-                raise AssertionError(
-                    f"Expected gloo, got {dist.get_default_backend_for_device(device)}"
-                )
+        elif "cpu" in device or "mps" in device:
+            # No CPU/MPS backend is available now that gloo is gone.
+            with self.assertRaises(ValueError):
+                dist.get_default_backend_for_device(device)
         elif "xpu" in device:
             if dist.get_default_backend_for_device(device) != "xccl":
                 raise AssertionError(
@@ -45,6 +39,8 @@ class TestMiscCollectiveUtils(TestCase):
         """
         Test create process group
         """
+        if "cpu" in device or "mps" in device:
+            self.skipTest("no CPU/MPS backend available")
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = "29500"
 

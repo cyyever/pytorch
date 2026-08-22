@@ -1590,7 +1590,7 @@ class TestGuardSerialization(TestGuardSerializationBase):
 
         tmpfile = tempfile.NamedTemporaryFile()  # noqa: SIM115
         dist.init_process_group(
-            backend="gloo", rank=0, world_size=1, init_method=f"file://{tmpfile.name}"
+            backend="fake", rank=0, world_size=1, init_method=f"file://{tmpfile.name}"
         )
         try:
             ddp_model = DDP(GlobalNestedModule())
@@ -1721,7 +1721,7 @@ class TestGuardSerialization(TestGuardSerializationBase):
 
         tmpfile = tempfile.NamedTemporaryFile()  # noqa: SIM115
         dist.init_process_group(
-            backend="gloo",
+            backend="fake",
             init_method=f"file://{tmpfile.name}",
             rank=0,
             world_size=1,

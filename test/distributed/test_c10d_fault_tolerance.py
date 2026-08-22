@@ -35,7 +35,6 @@ class FaultToleranceBackend:
 
 
 FAULT_TOLERANCE_BACKENDS = [
-    FaultToleranceBackend("gloo", "cpu"),
     FaultToleranceBackend("nccl2", "cuda", supports_work_result=True),
 ]
 
@@ -408,7 +407,7 @@ for backend in FAULT_TOLERANCE_BACKENDS:
 class ReconfigureContractTest(TestCase):
     def test_reconfigure_rejects_multiple_backends(self) -> None:
         pg = dist.ProcessGroup(0, 1)
-        pg._register_backend(torch.device("cpu"), dist.ProcessGroup.BackendType.GLOO)
+        pg._register_backend(torch.device("cpu"), dist.ProcessGroup.BackendType.CUSTOM)
         pg._register_backend(torch.device("cuda"), dist.ProcessGroup.BackendType.NCCL)
 
         msg = "multiple backends"

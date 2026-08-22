@@ -32,7 +32,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 def example(rank, world_size):
     # create default process group
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
     # create local model
     model = nn.Linear(10, 10).to(rank)
     # construct DDP model
@@ -157,8 +157,8 @@ the structure of the code.
 
 - [ProcessGroup.hpp](https://github.com/pytorch/pytorch/blob/v1.7.0/torch/lib/c10d/ProcessGroup.hpp):
   contains the abstract API of all process group implementations. The `c10d`
-  library provides 2 implementations out of the box, namely,
-  `ProcessGroupGloo`, and `ProcessGroupNCCL`.
+  library provides implementations out of the box, such as
+  `ProcessGroupNCCL`.
   `DistributedDataParallel` uses `ProcessGroup::broadcast()` to send
   model states from the process with rank 0 to others during initialization
   and `ProcessGroup::allreduce()` to sum gradients.

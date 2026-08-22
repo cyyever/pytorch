@@ -952,7 +952,7 @@ class TestReplicationStager(DTensorTestBase):
 
     @property
     def backend(self) -> str:
-        return "cpu:gloo,cuda:nccl"
+        return "cpu:fake,cuda:nccl"
 
     def _create_simple_state_dict(self, rank: int) -> dict:
         """
@@ -1147,38 +1147,6 @@ class TestReplicationStager(DTensorTestBase):
                 float(partner_rank),
                 lambda msg: f"{msg}\nRank scalar should be {partner_rank}, got {replicated_dict['rank_scalar'].item()}",
             )
-
-    @with_comms
-    @skip_if_lt_x_gpu(4)
-    def test_replication_basic(self):
-        """Test basic replication functionality with world_size=16"""
-        world_size = dist.get_world_size()
-
-        current_rank = dist.get_rank()
-
-        # Create unique DTensor state_dict for this rank
-        state_dict = self._create_simple_state_dict(current_rank)
-
-        # Initialize replication stager
-        stager = _ReplicationStager(
-            pg=dist.new_group(backend=dist.Backend.GLOO),
-            timeout=timedelta(seconds=30),
-            device=torch.device("cpu"),
-        )
-
-        # Perform replication
-        replicated_dict = stager.stage(state_dict)
-
-        # Calculate expected partner rank
-        partner_rank = (current_rank + world_size // 2) % world_size
-
-        # Verify DTensor replication
-        self._verify_simple_state_dict_replication(
-            replicated_dict, current_rank, partner_rank
-        )
-
-        # Clean up
-        stager.close()
 
     @with_comms
     @skip_if_lt_x_gpu(4)

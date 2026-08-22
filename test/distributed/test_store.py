@@ -1141,7 +1141,7 @@ class InitPgWithNonUvStore(TestCase):
     def test_with_url_param(self):
         port = common.find_free_port()
         dist.init_process_group(
-            "gloo",
+            "fake",
             rank=0,
             world_size=1,
             init_method=f"tcp://{DEFAULT_HOSTNAME}:{port}?use_libuv=0",
@@ -1153,7 +1153,7 @@ class InitPgWithNonUvStore(TestCase):
         os.environ["USE_LIBUV"] = "0"
         os.environ["MASTER_ADDR"] = DEFAULT_HOSTNAME
         os.environ["MASTER_PORT"] = str(port)
-        dist.init_process_group("gloo", rank=0, world_size=1, init_method="env://")
+        dist.init_process_group("fake", rank=0, world_size=1, init_method="env://")
         self._run_test()
 
     def _run_test(self):
