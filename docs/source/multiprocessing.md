@@ -202,20 +202,6 @@ terminate processes upon detecting an error in one of them.
 
 ```
 
-% This module needs to be documented. Adding here in the meantime
-
-% for tracking purposes
-
-## torch.multiprocessing.pool
-
-```{eval-rst}
-.. currentmodule:: torch.multiprocessing.pool
-```
-
-```{eval-rst}
-.. py:module:: torch.multiprocessing.pool
-```
-
 ```{eval-rst}
 .. py:module:: torch.multiprocessing.queue
 ```

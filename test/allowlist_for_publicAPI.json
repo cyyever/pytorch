@@ -2126,9 +2126,6 @@
     "register_event_handler",
     "unregister_event_handler"
   ],
-  "torch.multiprocessing.pool": [
-    "SimpleQueue"
-  ],
   "torch.multiprocessing.queue": [
     "ForkingPickler"
   ],
