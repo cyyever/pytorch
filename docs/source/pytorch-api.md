@@ -52,7 +52,6 @@ torch.func <func>
 futures
 fx
 fx.experimental
-torch.hub <hub>
 torch.linalg <linalg>
 torch.signal <signal>
 torch.special <special>
