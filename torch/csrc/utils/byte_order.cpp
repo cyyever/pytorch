@@ -44,7 +44,7 @@ static void swapBytes32(void* ptr) {
 static void swapBytes64(void* ptr) {
   uint64_t output = 0;
   memcpy(&output, ptr, sizeof(uint64_t));
-#elif defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
+#if defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
   output = __builtin_bswap64(output);
 #else
   uint64_t Byte0 = output & 0x00000000000000FF;

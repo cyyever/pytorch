@@ -222,6 +222,8 @@ using namespace c10::xpu;
 #define C10_NOINLINE
 #endif
 
+#if defined(_MSC_VER)
+#error "Windows support has been removed"
 #elif __has_attribute(always_inline) || defined(__GNUC__)
 #define C10_ALWAYS_INLINE __attribute__((__always_inline__)) inline
 #else
@@ -230,12 +232,16 @@ using namespace c10::xpu;
 
 // Unlike C10_ALWAYS_INLINE, C10_ALWAYS_INLINE_ATTRIBUTE can be used
 // on a lambda.
+#if defined(_MSC_VER)
+#error "Windows support has been removed"
 #elif __has_attribute(always_inline) || defined(__GNUC__)
 #define C10_ALWAYS_INLINE_ATTRIBUTE __attribute__((__always_inline__))
 #else
 #define C10_ALWAYS_INLINE_ATTRIBUTE
 #endif
 
+#if defined(_MSC_VER)
+#error "Windows support has been removed"
 #elif defined(__GNUC__)
 #define C10_ATTR_VISIBILITY_HIDDEN __attribute__((__visibility__("hidden")))
 #else

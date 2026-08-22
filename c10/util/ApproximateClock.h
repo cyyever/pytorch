@@ -17,7 +17,7 @@
 
 #if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define C10_RDTSC
-#elif defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #undef C10_RDTSC
 #elif defined(__clang__)
 // `__rdtsc` is available by default.

@@ -93,7 +93,7 @@ static uint64_t readURandomLong() {
 uint64_t getNonDeterministicRandom(bool is_cuda) {
   uint64_t s = 0;
   if (!is_cuda) {
-#elif defined(__SGX_ENABLED__)
+#if defined(__SGX_ENABLED__)
     TORCH_CHECK(
         sgx_read_rand(reinterpret_cast<uint8_t*>(&s), sizeof(s)) == SGX_SUCCESS,
         "Could not generate random number with sgx_read_rand.");
