@@ -392,7 +392,6 @@
 # /test/HowToWriteTestsUsingFileCheck.md
 /test/allowlist_for_publicAPI.json @albanD
 # /test/backends/
-# /test/bench_mps_ops.py
 # /test/complex_tensor/
 # /test/conftest.py
 # /test/create_dummy_torchscript_model.py
@@ -483,7 +482,6 @@
 # /test/test_bundled_inputs.py
 # /test/test_ci_sanity_check_fail.py
 # /test/test_comparison_utils.py
-# /test/test_compile_benchmark_util.py
 # /test/test_complex.py
 # /test/test_content_store.py
 # /test/test_dataloader.py
@@ -502,7 +500,6 @@
 # /test/test_functionalization.py
 # /test/test_futures.py
 /test/test_hop_infra.py @zou3519 @aorenste @bohnstingl
-# /test/test_hub.py
 # /test/test_img/
 # /test/test_import_stats.py
 # /test/test_indexing.py
@@ -947,7 +944,6 @@
 # /torch/_logging/
 # /torch/_monitor.py
 # /torch/testing/
-# /torch/utils/benchmark/
 /torch/testing/_internal/common_utils.py @pytorch/pytorch-dev-infra
 # /torch/testing/_internal/common_methods_invocations.py
 # /torch/testing/_internal/common_device_type.py
