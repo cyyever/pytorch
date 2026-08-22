@@ -41,7 +41,6 @@
 #include <ATen/ops/_scaled_dot_product_efficient_attention.h>
 #include <ATen/ops/_scaled_dot_product_flash_attention.h>
 #include <ATen/ops/_scaled_mm.h>
-#include <ATen/ops/_wrapped_linear_prepack.h>
 #include <ATen/ops/addmm.h>
 #include <ATen/ops/aminmax.h>
 #include <ATen/ops/as_strided.h>
@@ -999,29 +998,6 @@ AOTITorchError aoti_torch__mm_plus_mm_out(
     at::Tensor* d_tensor = tensor_handle_to_tensor_pointer(d);
     torch::inductor::_mm_plus_mm_out(
         *out_tensor, *a_tensor, *b_tensor, *c_tensor, *d_tensor);
-  });
-}
-
-
-AOTITorchError aoti_torch_cpu__wrapped_linear_prepack(
-    AtenTensorHandle weight,
-    AtenTensorHandle weight_scale,
-    AtenTensorHandle weight_zero_point,
-    AtenTensorHandle bias,
-    AtenTensorHandle* out) {
-  AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE({
-    at::Tensor* weight_tensor = tensor_handle_to_tensor_pointer(weight);
-    at::Tensor* weight_scale_tensor =
-        tensor_handle_to_tensor_pointer(weight_scale);
-    at::Tensor* weight_zero_point_tensor =
-        tensor_handle_to_tensor_pointer(weight_zero_point);
-    at::Tensor* bias_tensor = tensor_handle_to_tensor_pointer(bias);
-
-    *out = new_tensor_handle(at::_wrapped_linear_prepack(
-        *weight_tensor,
-        *weight_scale_tensor,
-        *weight_zero_point_tensor,
-        *bias_tensor));
   });
 }
 

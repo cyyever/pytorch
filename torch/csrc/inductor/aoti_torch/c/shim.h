@@ -391,17 +391,6 @@ AOTI_TORCH_EXPORT AOTITorchError aoti_torch__mm_plus_mm_out(
     AtenTensorHandle c,
     AtenTensorHandle d);
 
-// This will soon be deprecated after ao_quantization is complete.
-// Please refrain from using this or increasing callsites.
-
-// This will soon be deprecated after ao_quantization is complete.
-// Please refrain from using this or increasing callsites.
-AOTI_TORCH_EXPORT AOTITorchError aoti_torch_cpu__wrapped_linear_prepack(
-    AtenTensorHandle weight,
-    AtenTensorHandle weight_scale,
-    AtenTensorHandle weight_zero_point,
-    AtenTensorHandle bias,
-    AtenTensorHandle* out);
 
 // This will soon be deprecated after ao_quantization is complete.
 // Please refrain from using this or increasing callsites.

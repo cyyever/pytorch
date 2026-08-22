@@ -487,6 +487,7 @@ libtorch_python_core_sources = [
     "torch/csrc/serialization.cpp",
     "torch/csrc/tensor/python_tensor.cpp",
     "torch/csrc/utils/init.cpp",
+    "torch/csrc/utils/throughput_benchmark.cpp",
     "torch/csrc/utils.cpp",
     "torch/csrc/utils/device_lazy_init.cpp",
     "torch/csrc/utils/invalid_arguments.cpp",

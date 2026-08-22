@@ -6,6 +6,7 @@
 #include <ATen/Context.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/mps/MPSDevice.h>
+#include <ATen/native/quantized/cpu/QuantUtils.h>
 #include <c10/core/GradMode.h>
 #include <c10/macros/Macros.h>
 #include <c10/util/irange.h>
@@ -20,6 +21,7 @@
 #include <ATen/NativeFunctions.h>
 #else
 #include <ATen/ops/_lstm_mps.h>
+#include <ATen/ops/_saturate_weight_to_fp16_native.h>
 #include <ATen/ops/_thnn_differentiable_gru_cell_backward_native.h>
 #include <ATen/ops/_thnn_differentiable_lstm_cell_backward_native.h>
 #include <ATen/ops/_thnn_fused_gru_cell.h>
@@ -819,6 +821,8 @@ std::tuple<io_type, Tensor, Tensor> _lstm_impl(
 }
 
 
+} // anonymous namespace
+
 bool _use_cudnn_rnn_flatten_weight() {
   return detail::getCUDAHooks().compiledWithCuDNN();
 }
@@ -971,5 +975,310 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _thnn_fused_lstm_cell_backwar
         std::move(packed_output.data), std::move(std::get<1>(result)));     \
   }
 
-} // namespace
+ONE_HIDDEN_RNN(gru, GRUCell<CellParams>)
+
+using tanf_cell_type = SimpleCell<tanh_f, CellParams>;
+ONE_HIDDEN_RNN(rnn_tanh, tanf_cell_type)
+using relu_cell_type = SimpleCell<relu_f, CellParams>;
+ONE_HIDDEN_RNN(rnn_relu, relu_cell_type)
+
+DEFINE_DISPATCH(lstm_cudnn_stub);
+DEFINE_DISPATCH(lstm_packed_cudnn_stub);
+DEFINE_DISPATCH(lstm_miopen_stub);
+DEFINE_DISPATCH(lstm_packed_miopen_stub);
+DEFINE_DISPATCH(lstm_mkldnn_stub);
+REGISTER_NO_CPU_DISPATCH(lstm_cudnn_stub)
+REGISTER_NO_CPU_DISPATCH(lstm_packed_cudnn_stub)
+REGISTER_NO_CPU_DISPATCH(lstm_miopen_stub)
+REGISTER_NO_CPU_DISPATCH(lstm_packed_miopen_stub)
+
+std::tuple<Tensor, Tensor, Tensor> lstm(
+      const Tensor& _input, TensorList hx,
+      TensorList _params, bool has_biases,
+      int64_t num_layers, double dropout_p, bool train, bool bidirectional, bool batch_first) {
+  TORCH_CHECK(hx.size() == 2, "lstm expects two hidden states");
+  if (use_cudnn(_input)) {
+    Tensor output, hy, cy;
+    lstm_cudnn_stub(_input.device().type(), output, hy, cy, _input, hx, _params, has_biases,
+            num_layers, dropout_p, train, bidirectional, batch_first);
+    return std::make_tuple(std::move(output), std::move(hy), std::move(cy));
+  }
+#ifdef USE_MPS
+  if (_input.is_mps()) {
+    std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor, Tensor> output = at::_lstm_mps(_input, hx, _params, has_biases,
+            num_layers, dropout_p, train, bidirectional, batch_first);
+    std::tuple<Tensor, Tensor, Tensor> return_values = std::make_tuple(
+        std::move(std::get<0>(output)),
+        std::move(std::get<1>(output)),
+        std::move(std::get<2>(output)));
+    return return_values;
+  }
+#endif
+  // if cells are of different size, that means projections are used
+  bool has_projections = (hx[0].sym_size(2) != hx[1].sym_size(2));
+  if (use_miopen(_input, dropout_p)) {
+    if (!has_projections) {
+      Tensor output, hy, cy;
+      lstm_miopen_stub(_input.device().type(), output, hy, cy, _input, hx, _params, has_biases,
+                num_layers, dropout_p, train, bidirectional, batch_first);
+      return std::make_tuple(std::move(output), std::move(hy), std::move(cy));
+    } else {
+      TORCH_WARN_ONCE(
+          "LSTM with projections is not supported with MIOpen. Using default implementation.");
+    }
+  }
+
+  if (use_mkldnn(_input, _params, hx)) {
+    if (!has_projections) {
+      if (hx[0].unsafeGetTensorImpl()->has_symbolic_sizes_strides()) {
+        TORCH_WARN_ONCE(
+          "LSTM with symbolic sizes and strides is not supported with oneDNN. Using default implementation.");
+      } else {
+        Tensor output, hy, cy;
+        lstm_mkldnn_stub(_input.device().type(), output, hy, cy,_input, hx, _params, has_biases,
+            num_layers, dropout_p, train, bidirectional, batch_first);
+        return std::make_tuple(std::move(output), std::move(hy), std::move(cy));
+      }
+    } else {
+      TORCH_WARN_ONCE(
+          "LSTM with projections is not supported with oneDNN. Using default implementation.");
+    }
+  }
+
+  check_attributes(_input, _params, hx);
+  auto input = batch_first ? _input.transpose(0, 1) : _input;
+  auto params = gather_params(_params, has_biases, has_projections);
+  auto results = _lstm_impl<FullLayer, FullBidirectionalLayer>(
+      input, params, hx[0], hx[1], num_layers, dropout_p, train, bidirectional);
+  if (batch_first) {
+    std::get<0>(results) = std::get<0>(results).transpose(0, 1);
+  }
+  return results;
+}
+
+std::tuple<Tensor, Tensor, Tensor> lstm(
+      const Tensor& data, const Tensor& batch_sizes, TensorList hx,
+      TensorList _params, bool has_biases,
+      int64_t num_layers, double dropout_p, bool train, bool bidirectional) {
+  TORCH_CHECK(hx.size() == 2, "lstm expects two hidden states");
+  if (use_cudnn(data)) {
+    Tensor output, hy, cy;
+    lstm_packed_cudnn_stub(data.device().type(), output, hy, cy, data, batch_sizes, hx,
+            _params, has_biases, num_layers, dropout_p, train, bidirectional);
+    return std::make_tuple(std::move(output), std::move(hy), std::move(cy));
+  }
+  // if cells are of different size, that means projections are used
+  bool has_projections = (hx[0].size(2) != hx[1].size(2));
+  if (use_miopen(data, dropout_p)) {
+    if (!has_projections) {
+      Tensor output, hy, cy;
+      lstm_packed_miopen_stub(data.device().type(), output, hy, cy, data, batch_sizes, hx,
+              _params, has_biases, num_layers, dropout_p, train, bidirectional);
+      return std::make_tuple(std::move(output), std::move(hy), std::move(cy));
+    } else {
+      TORCH_WARN_ONCE(
+          "LSTM with projections is not supported with MIOpen. Using default implementation.");
+    }
+  }
+
+  // If packed sequence has uniform batch size, unwrap to regular tensor
+  // and dispatch to the standard lstm (enables oneDNN path for CPU/XPU)
+  if (!has_projections && use_mkldnn(data, _params, hx) && batch_sizes.size(0) > 0) {
+    const int64_t* bs_ptr = batch_sizes.const_data_ptr<int64_t>();
+    int64_t first_batch = bs_ptr[0];
+    bool uniform = true;
+    for (int64_t i = 1; i < batch_sizes.size(0); i++) {
+      if (bs_ptr[i] != first_batch) {
+        uniform = false;
+        break;
+      }
+    }
+    if (uniform) {
+      int64_t seq_len = batch_sizes.size(0);
+      auto input_3d = data.reshape({seq_len, first_batch, data.size(-1)});
+      auto result = at::native::lstm(input_3d, hx, _params, has_biases,
+          num_layers, dropout_p, train, bidirectional, /*batch_first=*/false);
+      std::get<0>(result) = std::get<0>(result).reshape(
+          {seq_len * first_batch, std::get<0>(result).size(-1)});
+      return result;
+    }
+  }
+
+  PackedSequence input { data, batch_sizes };
+  auto params = gather_params(_params, has_biases, has_projections);
+  auto result = _lstm_impl<PackedLayer, PackedBidirectionalLayer>(
+      input, params, hx[0], hx[1], num_layers, dropout_p, train, bidirectional);
+  auto & packed_output = std::get<0>(result);
+  return std::make_tuple(std::move(packed_output.data),
+                         std::move(std::get<1>(result)),
+                         std::move(std::get<2>(result)));
+}
+
+std::tuple<Tensor, Tensor> lstm_cell(
+    const Tensor& input, TensorList hx,
+    const Tensor& w_ih, const Tensor& w_hh, const std::optional<Tensor>& b_ih_opt, const std::optional<Tensor>& b_hh_opt) {
+  // See [Note: hacky wrapper removal for optional tensor]
+  c10::MaybeOwned<Tensor> b_ih_maybe_owned = at::borrow_from_optional_tensor(b_ih_opt);
+  const Tensor& b_ih = *b_ih_maybe_owned;
+  const Tensor& b_hh = b_hh_opt.value_or(Tensor());
+
+  TORCH_CHECK(hx.size() == 2, "lstm_cell expects two hidden states");
+  auto hidden_size = w_hh.sym_size(1);
+  check_rnn_cell_forward_input(input, w_ih.sym_size(1));
+  check_rnn_cell_forward_weights<4>(w_ih, w_hh, hidden_size);
+  check_rnn_cell_forward_hidden(input, hx[0], hidden_size, 0);
+  check_rnn_cell_forward_hidden(input, hx[1], std::move(hidden_size), 1);
+  static at::Tensor undefined;
+  return LSTMCell<CellParams>{}(input, std::make_tuple(hx[0], hx[1]), CellParams{w_ih, w_hh, b_ih, b_hh, undefined});
+}
+
+std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor>
+_thnn_differentiable_lstm_cell_backward( const std::optional<Tensor>& grad_hy_opt, const std::optional<Tensor>& grad_cy_opt,
+    const Tensor& input_gates,
+    const Tensor& hidden_gates, const std::optional<Tensor>& input_bias_opt, const std::optional<Tensor>& hidden_bias_opt,
+    const Tensor& cx,
+    const Tensor& cy) {
+  // See [Note: hacky wrapper removal for optional tensor]
+  c10::MaybeOwned<Tensor> grad_hy_maybe_owned = at::borrow_from_optional_tensor(grad_hy_opt);
+  const Tensor& grad_hy = *grad_hy_maybe_owned;
+  const Tensor& grad_cy = grad_cy_opt.value_or(Tensor());
+  const Tensor& input_bias = input_bias_opt.value_or(Tensor());
+  const Tensor& hidden_bias = hidden_bias_opt.value_or(Tensor());
+
+  if (!grad_hy.defined() && !grad_cy.defined()) {
+    return std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor>();
+  }
+  Tensor gates = input_gates + hidden_gates;
+  if (input_bias.defined()) {
+    gates = gates + input_bias;
+  }
+  if (hidden_bias.defined()) {
+    gates = gates + hidden_bias;
+  }
+  auto chunked_gates = gates.unsafe_chunk(4, 1);
+  Tensor i = chunked_gates[0].sigmoid();
+  Tensor f = chunked_gates[1].sigmoid();
+  Tensor c = chunked_gates[2].tanh();
+  Tensor o = chunked_gates[3].sigmoid();
+
+  Tensor gcx = cy.tanh();
+  Tensor gog;
+  TORCH_INTERNAL_ASSERT((grad_hy.defined() || grad_cy.defined()),"either gradient with respect to hy or cy should be defined");
+  if (grad_hy.defined()) {
+    gog = grad_hy * gcx;
+    gog = at::sigmoid_backward(gog, o);
+    gcx = at::tanh_backward(grad_hy * o, gcx);
+    if (grad_cy.defined()) {
+      gcx = gcx + grad_cy;
+    }
+  } else if (grad_cy.defined()) {
+    gog = at::zeros_like(cx, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
+    gcx = grad_cy;
+  }
+  Tensor gig = gcx * c;
+  Tensor gfg = gcx * cx;
+  Tensor gcg = gcx * i;
+  gcx = gcx * f;
+  gig = at::sigmoid_backward(gig, i);
+  gfg = at::sigmoid_backward(gfg, f);
+  gcg = at::tanh_backward(gcg, c);
+  Tensor grad_gates = at::cat({std::move(gig), std::move(gfg), std::move(gcg), std::move(gog)}, 1);
+  Tensor grad_bias = input_bias.defined() ? grad_gates.sum(0, /*keepdim=*/false) : at::Tensor{};
+  return std::make_tuple(grad_gates, grad_gates, std::move(gcx), grad_bias, grad_bias);
+}
+
+std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _thnn_differentiable_gru_cell_backward(
+    const Tensor& grad_hy,
+    const Tensor& input_gates,
+    const Tensor& hidden_gates,
+    const Tensor& hx, const std::optional<Tensor>& input_bias_opt, const std::optional<Tensor>& hidden_bias_opt){
+  // See [Note: hacky wrapper removal for optional tensor]
+  c10::MaybeOwned<Tensor> input_bias_maybe_owned = at::borrow_from_optional_tensor(input_bias_opt);
+  const Tensor& input_bias = *input_bias_maybe_owned;
+  const Tensor& hidden_bias = hidden_bias_opt.value_or(Tensor());
+
+  Tensor in_g = input_gates;
+  Tensor h_g = hidden_gates;
+  if (input_bias.defined()){
+    in_g = in_g+input_bias;
+  }
+  if (hidden_bias.defined()){
+    h_g = h_g + hidden_bias;
+  }
+  auto chunked_input_gates = in_g.unsafe_chunk(3, 1);
+  Tensor ir = chunked_input_gates[0];
+  Tensor ii = chunked_input_gates[1];
+  Tensor in = chunked_input_gates[2];
+  auto chunked_hidden_gates = h_g.unsafe_chunk(3, 1);
+  Tensor hr = chunked_hidden_gates[0];
+  Tensor hi = chunked_hidden_gates[1];
+  Tensor hn = chunked_hidden_gates[2];
+  Tensor rg = (ir + hr).sigmoid();
+  Tensor ig = (ii + hi).sigmoid();
+  Tensor grad_hx = grad_hy * ig;
+  Tensor ng = (in+rg*hn).tanh();
+  Tensor gig = at::sigmoid_backward(grad_hy * (hx - ng), ig);
+  Tensor gin = at::tanh_backward(grad_hy * (1 - ig), ng);
+  Tensor ghn = gin * rg;
+  Tensor grg = at::sigmoid_backward(gin * hn, rg);
+  Tensor grad_input_gates = at::cat({grg,gig,std::move(gin)}, 1);
+  Tensor grad_hidden_gates = at::cat({std::move(grg),std::move(gig),std::move(ghn)}, 1);
+  Tensor grad_input_bias = input_bias.defined() ? grad_input_gates.sum(0, /*keepdim=*/false) : at::Tensor{};
+  Tensor grad_hidden_bias = input_bias.defined() ? grad_hidden_gates.sum(0, /*keepdim=*/false) : at::Tensor{};
+  return std::make_tuple(std::move(grad_input_gates), std::move(grad_hidden_gates),
+                         std::move(grad_hx), std::move(grad_input_bias), std::move(grad_hidden_bias));
+}
+
+Tensor gru_cell(
+    const Tensor& input, const Tensor& hx,
+    const Tensor& w_ih, const Tensor& w_hh, const std::optional<Tensor>& b_ih_opt, const std::optional<Tensor>& b_hh_opt) {
+  // See [Note: hacky wrapper removal for optional tensor]
+  c10::MaybeOwned<Tensor> b_ih_maybe_owned = at::borrow_from_optional_tensor(b_ih_opt);
+  const Tensor& b_ih = *b_ih_maybe_owned;
+  const Tensor& b_hh = b_hh_opt.value_or(Tensor());
+
+  check_rnn_cell_forward_input(input, w_ih.size(1));
+  check_rnn_cell_forward_hidden(input, hx, w_hh.size(1), 0);
+  check_rnn_cell_forward_weights<3>(w_ih, w_hh, w_hh.size(1));
+  static at::Tensor undefined;
+  return GRUCell<CellParams>{}(input, hx, CellParams{w_ih, w_hh, b_ih, b_hh, undefined});
+}
+
+Tensor rnn_tanh_cell(
+    const Tensor& input, const Tensor& hx,
+    const Tensor& w_ih, const Tensor& w_hh, const std::optional<Tensor>& b_ih_opt, const std::optional<Tensor>& b_hh_opt) {
+  // See [Note: hacky wrapper removal for optional tensor]
+  c10::MaybeOwned<Tensor> b_ih_maybe_owned = at::borrow_from_optional_tensor(b_ih_opt);
+  const Tensor& b_ih = *b_ih_maybe_owned;
+  const Tensor& b_hh = b_hh_opt.value_or(Tensor());
+
+  static at::Tensor undefined;
+  check_rnn_cell_forward_weights<1>(w_ih, w_hh, w_hh.size(1));
+  check_rnn_cell_forward_input(input, w_ih.size(1));
+  check_rnn_cell_forward_hidden(input, hx, w_hh.size(1), 0);
+  return SimpleCell<tanh_f, CellParams>{}(input, hx, CellParams{w_ih, w_hh, b_ih, b_hh, undefined});
+}
+
+Tensor rnn_relu_cell(
+    const Tensor& input, const Tensor& hx,
+    const Tensor& w_ih, const Tensor& w_hh, const std::optional<Tensor>& b_ih_opt, const std::optional<Tensor>& b_hh_opt) {
+  // See [Note: hacky wrapper removal for optional tensor]
+  c10::MaybeOwned<Tensor> b_ih_maybe_owned = at::borrow_from_optional_tensor(b_ih_opt);
+  const Tensor& b_ih = *b_ih_maybe_owned;
+  const Tensor& b_hh = b_hh_opt.value_or(Tensor());
+
+  static at::Tensor undefined;
+  check_rnn_cell_forward_weights<1>(w_ih, w_hh, w_hh.size(1));
+  check_rnn_cell_forward_input(input, w_ih.size(1));
+  check_rnn_cell_forward_hidden(input, hx, w_hh.size(1), 0);
+  return SimpleCell<relu_f, CellParams>{}(input, hx, CellParams{w_ih, w_hh, b_ih, b_hh, undefined});
+}
+
+at::Tensor _saturate_weight_to_fp16(const Tensor& weight) {
+  Tensor weight_contig = weight.contiguous();
+  float* weight_contig_ptr = weight_contig.data_ptr<float>();
+  quant_utils::HandleWeightsSaturation(weight.size(0) * weight.size(1), weight_contig_ptr);
+  return weight;
+}
+
 }  // namespace at::native
