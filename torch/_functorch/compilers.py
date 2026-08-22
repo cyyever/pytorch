@@ -3,10 +3,8 @@ import logging
 import os
 import pickle
 import random
-from contextlib import contextmanager
 from functools import partial
 from typing import Any, TYPE_CHECKING
-from typing import ParamSpec, TypeVar
 
 import sympy
 
@@ -18,100 +16,18 @@ from torch import SymInt
 from torch._decomp import get_decompositions
 from torch.fx.experimental.symbolic_shapes import bind_symbols
 
-from .aot_autograd import aot_function, aot_module, make_boxed_compiler
-from .compile_utils import strip_overloads
-from .partitioners import (
-    default_partition,
-    draw_graph,
-    min_cut_rematerialization_partition,
-)
+from .aot_autograd import make_boxed_compiler
+from .partitioners import default_partition, draw_graph
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Sequence
+    from collections.abc import Callable
 
     from torch.fx.node import Node
     from torch.types import IntLikeType
 
 
-_P = ParamSpec("_P")
-_R = TypeVar("_R")
-
 log = logging.getLogger(__name__)
-
-
-# These canonicalizations are needed here (and not decompositions), as the ops
-# we're trying to canonicalize to CompositeImplicitAutograd.
-def _canonicalize(fx_g: fx.GraphModule) -> fx.GraphModule:
-    for node in fx_g.graph.find_nodes(
-        op="call_function", target=torch.ops.aten._to_copy
-    ):
-        node.target = torch.ops.aten.to
-    fx_g.recompile()
-    return fx_g
-
-
-@contextmanager
-def _disable_jit_autocast() -> Generator[None]:
-    # pyrefly: ignore [missing-attribute]
-    old_jit_autocast_flag = torch._C._jit_set_autocast_mode(False)
-    try:
-        yield
-    finally:
-        # pyrefly: ignore [missing-attribute]
-        torch._C._jit_set_autocast_mode(old_jit_autocast_flag)
-
-
-@make_boxed_compiler
-def ts_compile(fx_g: fx.GraphModule, inps: Sequence[Any]) -> torch.jit.ScriptModule:
-    """
-    Compiles the :attr:`fx_g` with Torchscript compiler.
-
-    .. warning::
-        This API is experimental and likely to change.
-
-    Args:
-        fx_g(fx.GraphModule): The input Fx graph module to be compiled.
-
-    Returns:
-        Torch scripted model.
-    """
-
-    from torch.fx._lazy_graph_module import _unwrap_lazy_graph_module
-
-    fx_g = _unwrap_lazy_graph_module(fx_g)
-
-    with _disable_jit_autocast():
-        strip_overloads(fx_g)
-
-        for node in fx_g.graph.find_nodes(
-            op="call_function", target=torch.ops.aten._to_copy
-        ):
-            if len(node.args) == 1 and len(node.kwargs) == 1 and "dtype" in node.kwargs:
-                node.target = torch.ops.aten.to
-
-        for node in fx_g.graph.nodes:
-            new_kwargs = {}
-            for k, v in node.kwargs.items():
-                if isinstance(v, torch.device):
-                    v = v.type
-                new_kwargs[k] = v
-            node.kwargs = new_kwargs
-
-        fx_g.graph.lint()
-
-        fx_g.recompile()
-
-        f = torch.jit.script(fx_g)
-
-        # pyrefly: ignore [missing-attribute]
-        torch._C._jit_pass_remove_mutation(f.graph)
-
-        f = torch.jit.freeze(f.eval())
-        f = torch.jit.optimize_for_inference(f)
-        if not any(torch._subclasses.fake_tensor.is_fake_tensor(t) for t in inps):
-            f(*inps)
-    return f
 
 
 def _draw_graph_compile(
@@ -225,18 +141,6 @@ def debug_nop(
     return DebugInterpreter(fx_g).run
 
 
-@make_boxed_compiler
-def simple_ts_compile(fx_g: fx.GraphModule, _: Any) -> torch.jit.ScriptModule:
-    strip_overloads(fx_g)
-    f = torch.jit.script(fx_g)
-    f = torch.jit.freeze(f.eval())
-    return f
-
-
-def nnc_jit(f: Callable[..., Any]) -> Callable[..., Any]:
-    return aot_function(f, simple_ts_compile)
-
-
 aten = torch.ops.aten
 default_decompositions = {
     aten.detach,
@@ -271,75 +175,6 @@ default_decompositions = get_decompositions(default_decompositions)
 def print_compile(fx_g: fx.GraphModule, _: Any) -> fx.GraphModule:
     print(fx_g.code)
     return fx_g
-
-
-def memory_efficient_fusion(
-    fn: Callable[_P, _R] | nn.Module,
-    **kwargs: Any,
-) -> Callable[_P, _R] | nn.Module:
-    """
-    Wrapper function over :func:`aot_function` and :func:`aot_module` to perform
-    memory efficient fusion. It uses the
-    :func:`min_cut_rematerialization_partition` partitioner to perform efficient
-    recomputation. It uses NVFuser to compile the generated forward and backward
-    graphs.
-
-    .. warning::
-        This API is experimental and likely to change.
-
-    Args:
-        fn (Union[Callable, nn.Module]): A Python function or a ``nn.Module``
-            that takes one or more arguments. Must return one or more Tensors.
-        **kwargs: Any other overrides you want to make to the settings
-
-    Returns:
-        Returns a ``Callable``  or ``nn.Module`` that retains the eager behavior
-        of the original :attr:`fn`, but whose forward and backward graphs have
-        gone through recomputation optimizations, and the graphs have been
-        compiled with nvfuser.
-
-    """
-    config = {
-        "fw_compiler": ts_compile,
-        "bw_compiler": ts_compile,
-        "partition_fn": min_cut_rematerialization_partition,
-        "decompositions": default_decompositions,
-    }
-    config.update(kwargs)
-    if isinstance(fn, torch.nn.Module):
-        return aot_module(fn, **config)  # pyrefly: ignore[bad-argument-type]
-    else:
-        return aot_function(fn, **config)  # pyrefly: ignore[bad-argument-type]
-
-
-def debug_compile(
-    fx_g: fx.GraphModule, inps: Sequence[torch.Tensor]
-) -> torch.jit.ScriptModule:
-    fx_g.to_folder("foo")
-    print(
-        f"""
-##############################################################
-# To minimize FX graph, copy and paste the below and run it  #
-##############################################################
-
-import torch
-import torch.fx as fx
-from functorch.compile import minifier, check_nvfuser_subprocess, check_nvfuser_correctness_subprocess
-
-inps = {[(i.shape, i.dtype) for i in inps]}
-inps = [torch.ones(shape, dtype=dtype, device='cuda') for (shape, dtype) in inps]
-from foo import FxModule
-mod = FxModule().cuda()
-
-minifier(fx.symbolic_trace(mod), inps, check_nvfuser_subprocess)
-"""
-    )
-    # pyrefly: ignore[missing-import, missing-module-attribute]
-    from foo import FxModule
-
-    FxModule().cuda()(*inps)
-
-    return ts_compile(fx_g, inps)
 
 
 graph_index: int = 0

@@ -49,7 +49,6 @@ SystemEnv = namedtuple(
         "hip_runtime_version",
         "miopen_runtime_version",
         "caching_allocator_config",
-        "is_xnnpack_available",
         "cpu_info",
     ],
 )
@@ -123,10 +122,7 @@ def run(command):
     )
     raw_output, raw_err = p.communicate()
     rc = p.returncode
-    if get_platform() == "win32":
-        enc = "oem"
-    else:
-        enc = locale.getpreferredencoding()
+    enc = locale.getpreferredencoding()
     output = raw_output.decode(enc)
     err = raw_err.decode(enc)
     return rc, output.strip(), err.strip()
@@ -230,12 +226,7 @@ def get_running_cuda_version(run_lambda):
 
 def get_cudnn_version(run_lambda):
     """Return a list of libcudnn.so; it's hard to tell which one is being used."""
-    if get_platform() == "win32":
-        system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
-        cuda_path = os.environ.get("CUDA_PATH", "%CUDA_PATH%")
-        where_cmd = os.path.join(system_root, "System32", "where")
-        cudnn_cmd = f'{where_cmd} /R "{cuda_path}\\bin" cudnn*.dll'
-    elif get_platform() == "darwin":
+    if get_platform() == "darwin":
         # CUDA libraries and drivers can be found in /usr/local/cuda/. See
         # https://docs.nvidia.com/cuda/archive/9.0/cuda-installation-guide-mac-os-x/index.html#installation
         # https://docs.nvidia.com/deeplearning/cudnn/installation/latest/
@@ -266,21 +257,7 @@ def get_cudnn_version(run_lambda):
 
 
 def get_nvidia_smi():
-    # Note: nvidia-smi is currently available only on Windows and Linux
-    smi = "nvidia-smi"
-    if get_platform() == "win32":
-        system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
-        program_files_root = os.environ.get("PROGRAMFILES", "C:\\Program Files")
-        legacy_path = os.path.join(
-            program_files_root, "NVIDIA Corporation", "NVSMI", smi
-        )
-        new_path = os.path.join(system_root, "System32", smi)
-        smis = [new_path, legacy_path]
-        for candidate_smi in smis:
-            if os.path.exists(candidate_smi):
-                smi = f'"{candidate_smi}"'
-                break
-    return smi
+    return "nvidia-smi"
 
 
 def _detect_linux_pkg_manager():
@@ -356,25 +333,6 @@ def get_intel_gpu_driver_version(run_lambda):
             ver = get_linux_pkg_version(run_lambda, pkg)
             if ver != "N/A":
                 lst.append(f"* {pkg}:\t{ver}")
-    if platform in ["win32", "cygwin"]:
-        txt = run_and_read_all(
-            run_lambda,
-            'powershell.exe "gwmi -Class Win32_PnpSignedDriver | where{$_.DeviceClass -eq \\"DISPLAY\\"\
-            -and $_.Manufacturer -match \\"Intel\\"} | Select-Object -Property DeviceName,DriverVersion,DriverDate\
-            | ConvertTo-Json"',
-        )
-        try:
-            obj = json.loads(txt)
-            if type(obj) is list:
-                for o in obj:
-                    lst.append(
-                        f'* {o["DeviceName"]}: {o["DriverVersion"]} ({o["DriverDate"]})'
-                    )
-            else:
-                lst.append(f'* {obj["DriverVersion"]} ({obj["DriverDate"]})')
-        except ValueError as e:
-            lst.append(txt)
-            lst.append(str(e))
     return "\n".join(lst)
 
 
@@ -392,24 +350,6 @@ def get_intel_gpu_onboard(run_lambda):
                 else:
                     lst.append("N/A")
             except (ValueError, TypeError) as e:
-                lst.append(txt)
-                lst.append(str(e))
-        else:
-            lst.append("N/A")
-    if platform in ["win32", "cygwin"]:
-        txt = run_and_read_all(
-            run_lambda,
-            'powershell.exe "gwmi -Class Win32_PnpSignedDriver | where{$_.DeviceClass -eq \\"DISPLAY\\"\
-            -and $_.Manufacturer -match \\"Intel\\"} | Select-Object -Property DeviceName | ConvertTo-Json"',
-        )
-        if txt:
-            try:
-                obj = json.loads(txt)
-                if isinstance(obj, list) and obj:
-                    lst.extend(f'* {device["DeviceName"]}' for device in obj)
-                else:
-                    lst.append(f'* {obj.get("DeviceName", "N/A")}')
-            except ValueError as e:
                 lst.append(txt)
                 lst.append(str(e))
         else:
@@ -511,26 +451,6 @@ def get_cpu_info(run_lambda):
     rc, out, err = 0, "", ""
     if get_platform() == "linux":
         rc, out, err = run_lambda("lscpu")
-    elif get_platform() == "win32":
-        rc, out, err = run_lambda(
-            'powershell.exe "gwmi -Class Win32_Processor | Select-Object -Property Name,Manufacturer,Family,\
-            Architecture,ProcessorType,DeviceID,CurrentClockSpeed,MaxClockSpeed,L2CacheSize,L2CacheSpeed,Revision\
-            | ConvertTo-Json"'
-        )
-        if rc == 0:
-            lst = []
-            try:
-                obj = json.loads(out)
-                if type(obj) is list:
-                    for o in obj:
-                        lst.append("----------------------")
-                        lst.extend([f"{k}: {v}" for (k, v) in o.items()])
-                else:
-                    lst.extend([f"{k}: {v}" for (k, v) in obj.items()])
-            except ValueError as e:
-                lst.append(out)
-                lst.append(str(e))
-            out = "\n".join(lst)
     elif get_platform() == "darwin":
         rc, out, err = run_lambda("sysctl -n machdep.cpu.brand_string")
     cpu_info = "None"
@@ -544,10 +464,6 @@ def get_cpu_info(run_lambda):
 def get_platform():
     if sys.platform.startswith("linux"):
         return "linux"
-    elif sys.platform.startswith("win32"):
-        return "win32"
-    elif sys.platform.startswith("cygwin"):
-        return "cygwin"
     elif sys.platform.startswith("darwin"):
         return "darwin"
     else:
@@ -556,20 +472,6 @@ def get_platform():
 
 def get_mac_version(run_lambda):
     return run_and_parse_first_match(run_lambda, "sw_vers -productVersion", r"(.*)")
-
-
-def get_windows_version(run_lambda):
-    ret = run_and_read_all(
-        run_lambda,
-        'powershell.exe "gwmi -Class Win32_OperatingSystem | Select-Object -Property Caption,\
-        OSArchitecture,Version | ConvertTo-Json"',
-    )
-    try:
-        obj = json.loads(ret)
-        ret = f'{obj["Caption"]} ({obj["Version"]} {obj["OSArchitecture"]})'
-    except ValueError as e:
-        ret += f"\n{str(e)}"
-    return ret
 
 
 def get_lsb_version(run_lambda):
@@ -588,9 +490,6 @@ def get_os(run_lambda):
     from platform import machine
 
     platform = get_platform()
-
-    if platform in ["win32", "cygwin"]:
-        return get_windows_version(run_lambda)
 
     if platform == "darwin":
         version = get_mac_version(run_lambda)
@@ -676,15 +575,6 @@ def get_cuda_module_loading_config():
         return "N/A"
 
 
-def is_xnnpack_available():
-    if TORCH_AVAILABLE:
-        import torch.backends.xnnpack
-
-        return str(torch.backends.xnnpack.enabled)  # type: ignore[attr-defined]
-    else:
-        return "N/A"
-
-
 def get_env_info():
     """
     Collects environment information to aid in debugging.
@@ -695,7 +585,7 @@ def get_env_info():
     runtime version, CUDA module loading config, GPU model and configuration, Nvidia
     driver version, cuDNN version, pip version and versions of relevant pip and
     conda packages, HIP runtime version, MIOpen runtime version,
-    Caching allocator config, XNNPACK availability and CPU information.
+    Caching allocator config, CPU information.
 
     Returns:
         SystemEnv (namedtuple): A tuple containing various environment details
@@ -768,7 +658,6 @@ def get_env_info():
         clang_version=get_clang_version(run_lambda),
         cmake_version=get_cmake_version(run_lambda),
         caching_allocator_config=get_cachingallocator_config(),
-        is_xnnpack_available=is_xnnpack_available(),
         cpu_info=get_cpu_info(run_lambda),
     )
 
@@ -796,7 +685,6 @@ cuDNN version: {cudnn_version}
 Is XPU available: {is_xpu_available}
 HIP runtime version: {hip_runtime_version}
 MIOpen runtime version: {miopen_runtime_version}
-Is XNNPACK available: {is_xnnpack_available}
 Caching allocator config: {caching_allocator_config}
 
 CPU:

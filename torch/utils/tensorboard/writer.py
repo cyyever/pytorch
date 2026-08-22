@@ -17,7 +17,6 @@ from tensorboard.summary.writer.event_file_writer import EventFileWriter
 
 from ._convert_np import make_np
 from ._embedding import get_embedding_info, make_mat, make_sprite, make_tsv, write_pbtxt
-from ._pytorch_graph import graph
 from ._utils import figure_to_image
 from .summary import (
     audio,
@@ -808,26 +807,6 @@ class SummaryWriter:
         torch._C._log_api_usage_once("tensorboard.logging.add_text")
         self._get_file_writer().add_summary(
             text(tag, text_string), global_step, walltime
-        )
-
-    def add_graph(
-        self, model, input_to_model=None, verbose=False, use_strict_trace=True
-    ) -> None:
-        """Add graph data to summary.
-
-        Args:
-            model (torch.nn.Module): Model to draw.
-            input_to_model (torch.Tensor or list of torch.Tensor): A variable or a tuple of
-                variables to be fed.
-            verbose (bool): Whether to print graph structure in console.
-            use_strict_trace (bool): Whether to pass keyword argument `strict` to
-                `torch.jit.trace`. Pass False when you want the tracer to
-                record your mutable container types (list, dict)
-        """
-        torch._C._log_api_usage_once("tensorboard.logging.add_graph")
-        # A valid PyTorch model should have a 'forward' method
-        self._get_file_writer().add_graph(
-            graph(model, input_to_model, verbose, use_strict_trace)
         )
 
     @staticmethod

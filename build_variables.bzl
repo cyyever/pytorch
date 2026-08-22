@@ -76,6 +76,7 @@ core_sources_common = [
     "torch/csrc/autograd/forward_grad.cpp",
     "torch/csrc/jit/frontend/edit_distance.cpp",
     "torch/csrc/jit/serialization/type_parser.cpp",
+    "torch/csrc/jit/runtime/graph_executor.cpp",
     "torch/csrc/jit/runtime/jit_exception.cpp",
     "torch/csrc/jit/runtime/operator.cpp",
     "torch/csrc/profiler/util.cpp",
@@ -89,7 +90,6 @@ torch_unpickler_common = [
 
 # The profilers are not needed in the lite interpreter build.
 libtorch_profiler_sources = [
-    "torch/csrc/autograd/profiler_legacy.cpp",
     "torch/csrc/autograd/profiler_kineto.cpp",
     "torch/csrc/profiler/collection.cpp",
     "torch/csrc/profiler/cupti/monitor_native.cpp",
@@ -97,7 +97,6 @@ libtorch_profiler_sources = [
     "torch/csrc/profiler/data_flow.cpp",
     "torch/csrc/profiler/kineto_metadata.cpp",
     "torch/csrc/profiler/kineto_shim.cpp",
-    "torch/csrc/mtia/profiler/MTIAMemoryProfiler.cpp",
     "torch/csrc/profiler/kineto_client_interface.cpp",
     "torch/csrc/profiler/orchestration/observer.cpp",
     "torch/csrc/profiler/orchestration/python_tracer.cpp",
@@ -138,7 +137,6 @@ core_trainer_sources = [
 ]
 
 core_sources_full_mobile_no_backend_interface_xplat = [
-    "torch/csrc/jit/api/object.cpp",
     "torch/csrc/jit/frontend/parser.cpp",
     "torch/csrc/jit/frontend/schema_matching.cpp",
     "torch/csrc/jit/frontend/script_type_parser.cpp",
@@ -251,16 +249,7 @@ libtorch_distributed_extra_sources = [
 
 libtorch_distributed_sources = libtorch_distributed_base_sources + libtorch_distributed_extra_sources
 
-jit_sources_full = [
-    "torch/csrc/jit/passes/lower_graph.cpp",
-    "torch/csrc/jit/runtime/register_c10_ops.cpp",
-    "torch/csrc/jit/runtime/register_prim_ops.cpp",
-    "torch/csrc/jit/runtime/register_prim_ops_fulljit.cpp",
-    "torch/csrc/jit/runtime/register_special_ops.cpp",
-    "torch/csrc/jit/passes/remove_inplace_ops.cpp",
-    "torch/csrc/jit/passes/utils/check_alias_annotation.cpp",
-    "torch/csrc/jit/passes/autocast.cpp",
-]
+jit_sources_full = []
 
 libtorch_core_jit_sources = sorted(jit_sources_full)
 
@@ -314,9 +303,6 @@ libtorch_nativert_sources = [
     "torch/nativert/kernels/ETCallDelegateKernel.cpp",
 ]
 
-libtorch_nativert_mtia_sources = [
-    "torch/nativert/executor/triton/fb/MtiaTritonKernelManager.cpp",
-]
 
 libtorch_nativert_cuda_sources = [
     "torch/nativert/executor/triton/CudaTritonKernelManager.cpp",
@@ -329,11 +315,9 @@ libtorch_extra_sources = libtorch_core_jit_sources + [
     "torch/csrc/autograd/TraceTypeManual.cpp",
     "torch/csrc/autograd/VariableTypeManual.cpp",
     "torch/csrc/autograd/FunctionsManual.cpp",
-    "torch/csrc/jit/api/module_save.cpp",
     # To be included for eager symbolication in lite interpreter
     # when it is built in libtorch
     "torch/csrc/jit/serialization/export.cpp",
-    "torch/csrc/jit/serialization/export_module.cpp",
     "torch/csrc/utils/byte_order.cpp",
     "torch/csrc/utils/out_types.cpp",
 ]
@@ -354,8 +338,6 @@ libtorch_cuda_core_sources = [
     "torch/csrc/inductor/inductor_ops_gpu.cpp",
     "torch/csrc/profiler/stubs/cuda.cpp",
     "torch/csrc/autograd/functions/comm.cpp",
-    "torch/csrc/jit/passes/frozen_conv_add_relu_fusion_cuda.cpp",
-    "torch/csrc/jit/runtime/register_cuda_ops.cpp",
 ]
 
 # These files are the only ones that are supported on Windows.
@@ -491,7 +473,6 @@ libtorch_python_core_sources = [
     "torch/csrc/fx/node.cpp",
     "torch/csrc/mps/Module.cpp",
     "torch/csrc/mps/Stream.cpp",
-    "torch/csrc/mtia/Module.cpp",
     "torch/csrc/export/pybind.cpp",
     "torch/csrc/export/upgrader.cpp",
     "torch/csrc/export/example_upgraders.cpp",
@@ -589,7 +570,6 @@ aten_cpu_non_globed_sources = [
     "aten/src/ATen/detail/PrivateUse1HooksInterface.cpp",
     "aten/src/ATen/detail/XLAHooksInterface.cpp",
     "aten/src/ATen/detail/XPUHooksInterface.cpp",
-    "aten/src/ATen/detail/MTIAHooksInterface.cpp",
     "aten/src/ATen/detail/IPUHooksInterface.cpp",
     "aten/src/ATen/record_function.cpp",
     "aten/src/ATen/Dispatch.cpp",
@@ -929,7 +909,6 @@ aten_native_source_non_codegen_list = [
     "aten/src/ATen/native/PointwiseOps.cpp",
     "aten/src/ATen/native/Pooling.cpp",
     "aten/src/ATen/native/Pow.cpp",
-    "aten/src/ATen/native/QuantizedLinear.cpp",
     "aten/src/ATen/native/RNN.cpp",
     "aten/src/ATen/native/RangeFactories.cpp",
     "aten/src/ATen/native/ReduceAllOps.cpp",

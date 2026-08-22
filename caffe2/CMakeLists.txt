@@ -553,7 +553,6 @@ if(NOT NO_API)
     ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/sequential.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/stream.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/imethod.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/serialize.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/nn/init.cpp
@@ -1111,6 +1110,11 @@ if(NOT NO_API)
     ${TORCH_SRC_DIR}/csrc/api/include)
 endif()
 
+if(USE_CUDA AND MSVC)
+  # -INCLUDE is used to ensure torch_cuda is linked against in a project that relies on them.
+  # Related issue: https://github.com/pytorch/pytorch/issues/31611
+  target_link_libraries(torch_cuda INTERFACE "-INCLUDE:?warp_size@cuda@at@@YAHXZ")
+endif()
 
 set(TH_CPU_INCLUDE
   # dense
@@ -1703,6 +1707,9 @@ if(BUILD_TEST)
       set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
       install(TARGETS ${test_name} DESTINATION test)
       # Install PDB files for MSVC builds
+      if(MSVC AND BUILD_SHARED_LIBS)
+        install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
+      endif()
     endif()
   endforeach()
 
@@ -1721,6 +1728,9 @@ if(BUILD_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
         # Install PDB files for MSVC builds
+        if(MSVC AND BUILD_SHARED_LIBS)
+          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
+        endif()
       endif()
     endforeach()
   endif()
@@ -1740,6 +1750,9 @@ if(BUILD_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
         # Install PDB files for MSVC builds
+        if(MSVC AND BUILD_SHARED_LIBS)
+          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
+        endif()
       endif()
     endforeach()
   endif()
@@ -1785,4 +1798,17 @@ if(BUILD_TEST)
   endif()
 endif()
 
+if(MSVC)
+  # This is used to enable the conforming lambda processor in MSVC
+  # Which allows us to capture constexpr in lambdas
+  # Note that this will be turned on by default for std=c++20 and above
+  # This should be applied globally when https://github.com/pytorch/pytorch/issues/92600 is fixed
+  foreach(tmp ${MEM_EFF_ATTENTION_CUDA_SOURCES})
+    # MEM_EFF_ATTENTION_CUDA is populated in pytorch/aten/src/ATen/CMakeLists.txt
+    # We iterate over these files, updating paths and adding the compile flag
+    FILE(RELATIVE_PATH tmp_path "${PROJECT_SOURCE_DIR}" "${tmp}")
+    SET(tmp_path "../${tmp_path}")
+    set_source_files_properties(${tmp_path} PROPERTIES COMPILE_FLAGS "-Xcompiler /Zc:lambda")
+  endforeach()
+endif()
 endif()
