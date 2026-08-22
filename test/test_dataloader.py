@@ -19,7 +19,6 @@ import warnings
 from unittest import mock
 
 import torch
-import torch.utils.data.datapipes as dp
 from torch import multiprocessing as mp
 from torch._utils import ExceptionWrapper
 from torch.testing._internal.common_device_type import (
@@ -55,13 +54,11 @@ from torch.utils.data import (
     dataloader,
     Dataset,
     IterableDataset,
-    IterDataPipe,
     StackDataset,
     Subset,
     TensorDataset,
 )
 from torch.utils.data._utils import MP_STATUS_CHECK_INTERVAL
-from torch.utils.data.datapipes.iter import IterableWrapper
 from torch.utils.data.dataset import random_split
 
 
@@ -1207,14 +1204,6 @@ class CustomDict(dict):
     pass
 
 
-def row_processor(row):
-    return np.add(row, 1)
-
-
-def filter_len(row):
-    return len(row) == 4
-
-
 @unittest.skipIf(
     TEST_WITH_TSAN,
     "Fails with TSAN with the following error: starting new threads after multi-threaded "
@@ -1950,60 +1939,6 @@ except RuntimeError as e:
                         )
                     ),
                 )
-
-    def _test_multiprocessing_iterdatapipe(self, with_dill):
-        # Testing to make sure that function from global scope (e.g. imported from library) can be serialized
-        # and used with multiprocess DataLoader
-
-        reference = [
-            torch.as_tensor([[2, 3, 4, 5]], dtype=torch.int64),
-            torch.as_tensor([[2, 3, 4, 5]], dtype=torch.int64),
-        ]
-        datapipe: IterDataPipe = IterableWrapper([[1, 2, 3, 4], [1, 2, 3, 4, 5, 6]])
-        datapipe = datapipe.map(row_processor)
-        datapipe = (
-            datapipe.filter(lambda row: len(row) == 4)
-            if with_dill
-            else datapipe.filter(filter_len)
-        )
-
-        dl_common_args = dict(
-            num_workers=2, batch_size=2, shuffle=True, pin_memory=False
-        )
-        for ctx in supported_multiprocessing_contexts:
-            self.assertEqual(
-                reference,
-                [
-                    t.type(torch.int64)
-                    for t in self._get_data_loader(
-                        datapipe, multiprocessing_context=ctx, **dl_common_args
-                    )
-                ],
-            )
-            if ctx is not None:
-                # test ctx object
-                ctx = mp.get_context(ctx)
-                self.assertEqual(
-                    reference,
-                    [
-                        t.type(torch.int64)
-                        for t in self._get_data_loader(
-                            datapipe, multiprocessing_context=ctx, **dl_common_args
-                        )
-                    ],
-                )
-
-    @skipIfNoNumpy
-    @unittest.skipIf(not TEST_CUDA_IPC, "CUDA IPC not available")
-    def test_multiprocessing_iterdatapipe(self):
-        self._test_multiprocessing_iterdatapipe(with_dill=False)
-
-    @unittest.expectedFailure
-    @skipIfNoNumpy
-    @unittest.skipIf(not TEST_CUDA_IPC, "CUDA IPC not available")
-    @skipIfNoDill
-    def test_multiprocessing_iterdatapipe_with_dill(self):
-        self._test_multiprocessing_iterdatapipe(with_dill=True)
 
     def test_worker_seed(self):
         num_workers = 6
@@ -3159,65 +3094,6 @@ class TestDataLoaderDeviceType(TestCase):
         loader = DataLoader(dataset, batch_size=2, pin_memory=True)
         for batch in loader:
             self.assertTrue(batch[0].is_pinned())
-
-
-class IntegrationTestDataLoaderDataPipe(TestCase):
-    r"""
-    Verify the behavior of a certain ``DataPipes`` with ``DataLoader``
-    """
-
-    def test_shuffler_iterdatapipe(self):
-        r"""
-        Verify ``IterDataPipe.shuffle`` is controlled by ``DataLoader``
-        to generate different seeds deterministically per epoch.
-        """
-        exp = list(range(100))
-
-        def _create_dp(buffer_size):
-            input_ds = dp.iter.IterableWrapper(exp)
-            return input_ds.shuffle(buffer_size=buffer_size).sharding_filter()
-
-        for bs in (5, 20, 33):
-            # Test Deterministic
-            for num_workers, pw in itertools.product((0, 1, 2), (True, False)):
-                if num_workers == 0 and pw:
-                    continue
-
-                shuffle_dp = _create_dp(bs)
-
-                mp_ctx = "spawn" if num_workers > 0 else None
-                dl = DataLoader(
-                    shuffle_dp,
-                    num_workers=num_workers,
-                    shuffle=True,
-                    multiprocessing_context=mp_ctx,
-                    persistent_workers=pw,
-                )
-
-                # No seed
-                dl_res_ns = list(dl)
-                self.assertEqual(sorted(dl_res_ns), exp)
-
-                # Same seeds
-                dl_res = []
-                for _epoch in range(2):
-                    torch.manual_seed(123)
-                    dl_res.append(list(dl))
-                self.assertEqual(dl_res[0], dl_res[1])
-                self.assertEqual(sorted(dl_res[0]), exp)
-
-                # Different seeds
-                torch.manual_seed(321)
-                dl_res.append(list(dl))
-
-                self.assertEqual(len(dl_res[0]), len(dl_res[2]))
-                self.assertNotEqual(dl_res[0], dl_res[2])
-                self.assertEqual(sorted(dl_res[0]), sorted(dl_res[2]))
-
-                if dl._iterator is not None:
-                    dl._iterator._shutdown_workers()
-                    dl._iterator = None
-                del dl
 
 
 class StringDataset(Dataset):
