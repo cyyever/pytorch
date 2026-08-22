@@ -136,14 +136,6 @@ else()
   endif()
 endif()
 
-if(USE_MPI AND USE_C10D_MPI)
-  add_definitions(-DMPIEXEC=${MPIEXEC})
-  # MPI is a private dependency of libtorch, but the tests include some
-  # private headers of libtorch, which in turn include MPI. As a hacky
-  # alternative to making MPI a public dependency of libtorch, we make it
-  # a private dependency of the tests as well.
-  c10d_add_test(ProcessGroupMPITest.cpp LINK_LIBRARIES torch_cpu MPI::MPI_CXX INSTALL_TEST ${INSTALL_TEST})
-endif()
 
 if(LINUX AND USE_GLOO AND USE_C10D_GLOO)
   add_executable(example_allreduce example/allreduce.cpp)

@@ -158,7 +158,7 @@ the structure of the code.
 - [ProcessGroup.hpp](https://github.com/pytorch/pytorch/blob/v1.7.0/torch/lib/c10d/ProcessGroup.hpp):
   contains the abstract API of all process group implementations. The `c10d`
   library provides 3 implementations out of the box, namely,
-  `ProcessGroupGloo`, `ProcessGroupNCCL`, and `ProcessGroupMPI`.
+  `ProcessGroupGloo`, `ProcessGroupNCCL`, and `ProcessGroupUCC`.
   `DistributedDataParallel` uses `ProcessGroup::broadcast()` to send
   model states from the process with rank 0 to others during initialization
   and `ProcessGroup::allreduce()` to sum gradients.

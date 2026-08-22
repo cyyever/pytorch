@@ -391,9 +391,6 @@ cmake_dependent_option(
   "USE_MKLDNN AND CPU_AARCH64" OFF)
 option(USE_STATIC_MKL "Prefer to link with MKL statically (Unix only)" OFF)
 cmake_dependent_option(
-  USE_MPI "Use MPI for Caffe2. Only available if USE_DISTRIBUTED is on." ON
-  "USE_DISTRIBUTED" OFF)
-cmake_dependent_option(
   USE_UCC "Use UCC. Only available if USE_DISTRIBUTED is on." OFF
   "USE_DISTRIBUTED" OFF)
 cmake_dependent_option(USE_SYSTEM_UCC "Use system-wide UCC" OFF "USE_UCC" OFF)
@@ -414,8 +411,6 @@ cmake_dependent_option(
     USE_C10D_NCCL "USE C10D NCCL" ON "USE_DISTRIBUTED;USE_NCCL" OFF)
 cmake_dependent_option(
     USE_C10D_XCCL "USE C10D XCCL" ON "USE_DISTRIBUTED;USE_XCCL" OFF)
-cmake_dependent_option(
-    USE_C10D_MPI "USE C10D MPI" ON "USE_DISTRIBUTED;USE_MPI" OFF)
 option(HAVE_SOVERSION "Whether to add SOVERSION to the shared objects" OFF)
 option(BUILD_LIBTORCH_CPU_WITH_DEBUG
        "Enable RelWithDebInfo for libtorch_cpu target only" OFF)
@@ -877,11 +872,6 @@ endif()
 
 # Use ld.gold if available, fall back to ld.bfd (the default ld) if not
 if(USE_GOLD_LINKER)
-  if(USE_DISTRIBUTED AND USE_MPI)
-    # Same issue as here with default MPI on Ubuntu
-    # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577
-    message(WARNING "Refusing to use gold when USE_MPI=1")
-  else()
     execute_process(
       COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
       ERROR_QUIET

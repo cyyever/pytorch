@@ -187,7 +187,6 @@ __all__ = [
     "record_comm",
 ]
 
-_MPI_AVAILABLE = True
 _NCCL_AVAILABLE = True
 _GLOO_AVAILABLE = True
 _UCC_AVAILABLE = True
@@ -347,14 +346,6 @@ def _export_c_types() -> None:
 _export_c_types()
 
 try:
-    from torch._C._distributed_c10d import ProcessGroupMPI
-
-    ProcessGroupMPI.__module__ = "torch.distributed.distributed_c10d"
-    __all__ += ["ProcessGroupMPI"]
-except ImportError:
-    _MPI_AVAILABLE = False
-
-try:
     from torch._C._distributed_c10d import ProcessGroupNCCL
 
     ProcessGroupNCCL.__module__ = "torch.distributed.distributed_c10d"
@@ -412,7 +403,6 @@ if TYPE_CHECKING:
     from torch._C._distributed_c10d import (  # noqa: TC004
         _ProcessGroupWrapper,
         ProcessGroupGloo,
-        ProcessGroupMPI,
         ProcessGroupNCCL,
         ProcessGroupNCCL2,
         ProcessGroupUCC,
@@ -475,7 +465,7 @@ class Backend(str):  # noqa: SLOT000
     """
     An enum-like class for backends.
 
-    Available backends: GLOO, NCCL, UCC, MPI, XCCL, FAKE, and other registered backends.
+    Available backends: GLOO, NCCL, UCC, XCCL, FAKE, and other registered backends.
 
     The values of this class are lowercase strings, e.g., ``"gloo"``. They can
     be accessed as attributes, e.g., ``Backend.NCCL``.
@@ -494,7 +484,6 @@ class Backend(str):  # noqa: SLOT000
     GLOO = "gloo"
     NCCL = "nccl"
     UCC = "ucc"
-    MPI = "mpi"
     XCCL = "xccl"
     FAKE = "fake"
 
@@ -504,7 +493,7 @@ class Backend(str):  # noqa: SLOT000
 
     _plugins: dict[str, _BackendPlugin] = {}
 
-    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, UCC, MPI, FAKE]
+    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, UCC, FAKE]
 
     # 3rd-party devices can register the default backend support here
     default_device_backend_map: dict[str, str] = {
@@ -519,7 +508,6 @@ class Backend(str):  # noqa: SLOT000
         NCCL: ["cuda"],
         XCCL: ["xpu"],
         UCC: ["cpu", "cuda"],
-        MPI: ["cpu", "cuda"],
         FAKE: ["cpu", "cuda", "hpu", "xpu"],
     }
 
@@ -529,7 +517,6 @@ class Backend(str):  # noqa: SLOT000
         NCCL: ProcessGroup.BackendType.NCCL,
         XCCL: ProcessGroup.BackendType.XCCL,
         UCC: ProcessGroup.BackendType.UCC,
-        MPI: ProcessGroup.BackendType.MPI,
         FAKE: ProcessGroup.BackendType.CUSTOM,
     }
 
@@ -652,17 +639,6 @@ class Backend(str):  # noqa: SLOT000
             func,
             extended_api,
         )
-
-
-def _create_mpi_process_group(
-    opts: _DistributedBackendOptions, backend_options: object | None
-) -> C10DBackend | None:
-    if not is_mpi_available():
-        raise RuntimeError(
-            "Distributed package doesn't have MPI built in. MPI is only included "
-            "if you build PyTorch from source on a host that has MPI installed."
-        )
-    return ProcessGroupMPI.create(opts.global_ranks_in_group)
 
 
 def _create_gloo_process_group(
@@ -853,16 +829,6 @@ def _create_xccl_process_group(
         opts.store, opts.group_rank, opts.group_size, backend_options
     )
     return backend_class
-
-
-def _register_builtin_mpi_backend() -> None:
-    Backend.register_backend(
-        Backend.MPI,
-        _create_mpi_process_group,
-        extended_api=True,
-        devices=Backend.backend_capability[Backend.MPI],
-        _backend_type=ProcessGroup.BackendType.MPI,
-    )
 
 
 def _register_builtin_gloo_backend() -> None:
@@ -1325,7 +1291,6 @@ class _World:
         Provide Mapping from ProcessGroup to backend name and store.
 
         For NCCL and GLOO pg, it is a map from ProcessGroup to (Backend, Store)
-        For MPI pg, it is a map from ProcessGroup to (Backend, None)
 
         TODO don't expose the map, expose fine grained ops
         """
@@ -1968,11 +1933,6 @@ def _check_p2p_op_list(p2p_op_list: list[P2POp]) -> None:
         raise ValueError("All ops need to use the same group.")
 
 
-def is_mpi_available() -> bool:
-    """Check if the MPI backend is available."""
-    return _MPI_AVAILABLE
-
-
 def is_nccl_available() -> bool:
     """Check if the NCCL backend is available."""
     return _NCCL_AVAILABLE
@@ -2318,7 +2278,7 @@ def set_timeout(timeout: timedelta, group: ProcessGroup | None = None) -> None:
     :func:`init_process_group` or :func:`new_group`). The new timeout is
     forwarded to every backend registered with :attr:`group` -- for example both
     the Gloo and NCCL backends of a group spanning CPU and CUDA devices. Backends
-    that do not support changing their timeout (such as MPI and UCC) emit a
+    that do not support changing their timeout (such as UCC) emit a
     warning and leave their timeout unchanged.
 
     Args:
@@ -2463,9 +2423,6 @@ def init_process_group(
             Backends that do not support reconfigure ignore this flag. Default
             is ``False``.
 
-    .. note:: To enable ``backend == Backend.MPI``, PyTorch needs to be built from source
-        on a system that supports MPI.
-
     .. note:: Support for multiple backends is experimental. Currently when no backend is
         specified, both ``gloo`` and ``nccl`` backends will be created. The ``gloo`` backend
         will be used for collectives with CPU tensors and the ``nccl`` backend will be used
@@ -2561,7 +2518,7 @@ def init_process_group(
         _use_torchcomms_enabled()
         and device_id is not None
         and ":" not in backend
-        and backend not in (Backend.UNDEFINED, Backend.MPI, Backend.FAKE)
+        and backend not in (Backend.UNDEFINED, Backend.FAKE)
         and _torchcomms_handles_backend(backend)
     ):
         bare = backend.lower()
@@ -2594,28 +2551,7 @@ def init_process_group(
         group_name = _process_group_name([], use_hashed_name=False)
     else:
         group_name = _process_group_name(_ranks, use_hashed_name=True)
-    if backend == Backend.MPI:
-        if world_size != -1 or rank != -1:
-            warnings.warn(
-                f"For MPI backend, world_size ({world_size}) and rank ({rank}) "
-                "are ignored since they are assigned by the "
-                "MPI runtime.",
-                stacklevel=2,
-            )
-
-        default_pg, _ = _new_process_group_helper(
-            -1,
-            -1,
-            [],
-            backend,
-            Store(),  # Placeholder value since store cannot be None
-            group_name,
-            timeout=timeout,
-            group_desc="default_pg",
-            enable_reconfigure=enable_reconfigure,
-        )
-    else:
-        # backward compatible API
+    # backward compatible API
         if store is None:
             if backend == Backend.FAKE:
                 from torch.testing._internal.distributed.fake_pg import FakeStore
@@ -2690,14 +2626,10 @@ def init_process_group(
             "Performing barrier after ProcessGroup initialization since "
             "TORCH_DIST_INIT_BARRIER = 1"
         )
-        if backend == Backend.MPI:
-            # MPI backend doesn't use store.
-            barrier()
-        else:
-            if store is None:
-                raise AssertionError("Default process group store is not initialized")
-            # Use store based barrier here since barrier() used a bunch of
-            # default devices and messes up NCCL internal state.
+        if store is None:
+            raise AssertionError("Default process group store is not initialized")
+        # Use store based barrier here since barrier() used a bunch of
+        # default devices and messes up NCCL internal state.
             _store_based_barrier(rank, store, group_name, world_size, timeout)
 
 
@@ -7027,7 +6959,6 @@ def new_group(
         A handle of distributed group that can be given to collective calls or
         GroupMember.NON_GROUP_MEMBER if the rank is not part of ``ranks``.
 
-    N.B. use_local_synchronization doesn't work with MPI.
 
     N.B. While use_local_synchronization=True can be significantly faster with larger
     clusters and small process groups, care must be taken since it changes cluster behavior
@@ -7108,11 +7039,6 @@ def _new_group_with_tag(
             raise TypeError("ranks must be a sequence of integers") from error
 
     if use_local_synchronization:
-        # MPI backend doesn't have a way for us to perform a partial sync
-        if backend == Backend.MPI:
-            raise ValueError(
-                "MPI backend doesn't support use_local_synchronization=True"
-            )
         if ranks is not None and get_rank() not in ranks:
             return GroupMember.NON_GROUP_MEMBER
 
@@ -7210,22 +7136,18 @@ def _new_group_with_tag(
             "Performing barrier after ProcessGroup initialization since "
             "TORCH_DIST_INIT_BARRIER = 1"
         )
-        if backend == Backend.MPI:
-            # MPI doesn't have store.
-            barrier()
+        if use_local_synchronization:
+            if pg_store is None:
+                raise AssertionError("Local process group store is not initialized")
+            barrier_store = pg_store
         else:
-            if use_local_synchronization:
-                if pg_store is None:
-                    raise AssertionError("Local process group store is not initialized")
-                barrier_store = pg_store
-            else:
-                barrier_store = default_store
-            world_size = len(ranks) if use_local_synchronization else get_world_size()
-            # Use store based barrier here since barrier() used a bunch of
-            # default devices and messes up NCCL internal state.
-            _store_based_barrier(
-                global_rank, barrier_store, group_name, world_size, timeout
-            )
+            barrier_store = default_store
+        world_size = len(ranks) if use_local_synchronization else get_world_size()
+        # Use store based barrier here since barrier() used a bunch of
+        # default devices and messes up NCCL internal state.
+        _store_based_barrier(
+            global_rank, barrier_store, group_name, world_size, timeout
+        )
 
     return pg_or_nonmember
 

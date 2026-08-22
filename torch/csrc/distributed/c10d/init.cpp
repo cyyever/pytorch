@@ -41,10 +41,6 @@
 #include <torch/csrc/distributed/c10d/symm_mem/nccl_devcomm_manager.hpp>
 #endif
 
-#ifdef USE_C10D_MPI
-#include <torch/csrc/distributed/c10d/ProcessGroupMPI.hpp>
-#endif
-
 #ifdef USE_C10D_UCC
 #include <torch/csrc/distributed/c10d/ProcessGroupUCC.hpp>
 #endif
@@ -3052,7 +3048,6 @@ Arguments:
       .value("NCCL", ::c10d::ProcessGroup::BackendType::NCCL)
       .value("XCCL", ::c10d::ProcessGroup::BackendType::XCCL)
       .value("UCC", ::c10d::ProcessGroup::BackendType::UCC)
-      .value("MPI", ::c10d::ProcessGroup::BackendType::MPI)
       .value("CUSTOM", ::c10d::ProcessGroup::BackendType::CUSTOM)
       .export_values();
 
@@ -4077,21 +4072,6 @@ Example::
 
 #endif
 
-#ifdef USE_C10D_MPI
-  auto processGroupMPI =
-      intrusive_ptr_no_gil_destructor_class_<::c10d::ProcessGroupMPI>(
-          module, "ProcessGroupMPI", backend);
-
-  // Define static create function instead of a constructor, because
-  // this function may return null. This happens if this process is not
-  // part of a sub group that is to be created.
-  processGroupMPI.def_static(
-      "create",
-      [](std::vector<int> ranks) {
-        return ::c10d::ProcessGroupMPI::createProcessGroupMPI(std::move(ranks));
-      },
-      py::call_guard<py::gil_scoped_release>());
-#endif
 
 #ifdef USE_C10D_XCCL
   auto processGroupXCCL =
@@ -4551,7 +4531,7 @@ such as `dist.all_reduce(tensor, async_op=True)`.
                 >>> ddp_model.register_comm_hook(state=None, hook=allreduce)
 
             .. warning ::
-                ``get_future`` API supports NCCL, and partially GLOO and MPI backends
+                ``get_future`` API supports NCCL, and partially GLOO backends
                 (no support for peer-to-peer operations like send/recv) and will return a ``torch.futures.Future``.
 
                 In the example above, ``allreduce`` work will be done on GPU using NCCL backend,

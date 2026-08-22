@@ -524,13 +524,6 @@ def requires_ucc():
     )
 
 
-def requires_mpi():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_mpi_available(),
-        "c10d was not compiled with the MPI backend",
-    )
-
-
 def requires_accelerator_dist_backend(backends=None):
     """
     Decorator to skip tests if no accelerator communication backend (NCCL, XCCL, HCCL) is available.

@@ -344,10 +344,6 @@ DISTRIBUTED_TESTS_CONFIG = {}
 if dist.is_available():
     num_gpus = torch.cuda.device_count()
     DISTRIBUTED_TESTS_CONFIG["test"] = {"WORLD_SIZE": "1"}
-    if not TEST_WITH_ROCM and dist.is_mpi_available():
-        DISTRIBUTED_TESTS_CONFIG["mpi"] = {
-            "WORLD_SIZE": "3",
-        }
     if dist.is_nccl_available() and num_gpus > 0:
         DISTRIBUTED_TESTS_CONFIG["nccl"] = {
             "WORLD_SIZE": f"{num_gpus}",
@@ -1037,15 +1033,9 @@ def test_openreg(test_module, test_directory, options):
 
 
 def test_distributed(test_module, test_directory, options):
-    mpi_available = shutil.which("mpiexec")
-    if options.verbose and not mpi_available:
-        print_to_stderr("MPI not available -- MPI backend tests will be skipped")
-
     config = DISTRIBUTED_TESTS_CONFIG
     for backend, env_vars in config.items():
         if sys.platform == "win32" and backend != "gloo":
-            continue
-        if backend == "mpi" and not mpi_available:
             continue
         for with_init_file in {True, False}:
             if sys.platform == "win32" and not with_init_file:
@@ -1067,44 +1057,12 @@ def test_distributed(test_module, test_directory, options):
             try:
                 os.mkdir(os.path.join(tmp_dir, "barrier"))
                 os.mkdir(os.path.join(tmp_dir, "test_dir"))
-                if backend == "mpi":
-                    # test mpiexec for --noprefix option
-                    with open(os.devnull, "w") as devnull:
-                        allowrunasroot_opt = (
-                            "--allow-run-as-root"
-                            if subprocess.call(
-                                'mpiexec --allow-run-as-root -n 1 bash -c ""',
-                                shell=True,
-                                stdout=devnull,
-                                stderr=subprocess.STDOUT,
-                            )
-                            == 0
-                            else ""
-                        )
-                        noprefix_opt = (
-                            "--noprefix"
-                            if subprocess.call(
-                                f'mpiexec {allowrunasroot_opt} -n 1 --noprefix bash -c ""',
-                                shell=True,
-                                stdout=devnull,
-                                stderr=subprocess.STDOUT,
-                            )
-                            == 0
-                            else ""
-                        )
-
-                    mpiexec = ["mpiexec", "-n", "3", noprefix_opt, allowrunasroot_opt]
-
-                    return_code = run_test(
-                        test_module, test_directory, options, launcher_cmd=mpiexec
-                    )
-                else:
-                    return_code = run_test(
-                        test_module,
-                        test_directory,
-                        options,
-                        extra_unittest_args=["--subprocess"],
-                    )
+                return_code = run_test(
+                    test_module,
+                    test_directory,
+                    options,
+                    extra_unittest_args=["--subprocess"],
+                )
                 if return_code != 0:
                     return return_code
             finally:

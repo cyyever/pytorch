@@ -563,34 +563,6 @@ add_library(pybind::pybind11 INTERFACE IMPORTED)
 target_include_directories(pybind::pybind11 SYSTEM INTERFACE ${pybind11_INCLUDE_DIRS})
 target_link_libraries(pybind::pybind11 INTERFACE Python::Module)
 
-# ---[ MPI
-if(USE_MPI)
-  find_package(MPI)
-  if(MPI_CXX_FOUND)
-    message(STATUS "MPI support found")
-    message(STATUS "MPI compile flags: " ${MPI_CXX_COMPILE_FLAGS})
-    message(STATUS "MPI include path: " ${MPI_CXX_INCLUDE_PATH})
-    message(STATUS "MPI LINK flags path: " ${MPI_CXX_LINK_FLAGS})
-    message(STATUS "MPI libraries: " ${MPI_CXX_LIBRARIES})
-    find_program(OMPI_INFO
-      NAMES ompi_info
-      HINTS ${MPI_CXX_LIBRARIES}/../bin)
-    if(OMPI_INFO)
-      execute_process(COMMAND ${OMPI_INFO}
-                      OUTPUT_VARIABLE _output)
-      if(_output MATCHES "smcuda")
-        message(STATUS "Found OpenMPI with CUDA support built.")
-      else()
-        message(WARNING "OpenMPI found, but it is not built with CUDA support.")
-        set(CAFFE2_FORCE_FALLBACK_CUDA_MPI 1)
-      endif()
-    endif()
-  else()
-    message(WARNING "Not compiling with MPI. Suppress this warning with -DUSE_MPI=OFF")
-    caffe2_update_option(USE_MPI OFF)
-  endif()
-endif()
-
 # ---[ OpenMP
 if(USE_OPENMP AND NOT TARGET caffe2::openmp)
   include(${CMAKE_CURRENT_LIST_DIR}/Modules/FindOpenMP.cmake)

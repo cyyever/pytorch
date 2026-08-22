@@ -2263,7 +2263,6 @@ class PythonProcessGroupExtensionTest(MultiProcessTestCase):
         backend_config_strings_and_expected_values = [
             (dist.Backend.GLOO, "cpu:gloo,cuda:gloo"),
             (dist.Backend.NCCL, "cuda:nccl"),
-            (dist.Backend.MPI, "cpu:mpi,cuda:mpi"),
             (dist.Backend.UCC, "cpu:ucc,cuda:ucc"),
             (dist.Backend.DUMMY, dummy_backend_config),
             ("DUMMY", dummy_backend_config),
@@ -2711,9 +2710,6 @@ class ProcessGroupWithDispatchedCollectivesTests(MultiProcessTestCase):
             # skip if the backend is not available on the system
             if backend == dist.Backend.UNDEFINED:
                 continue
-            elif backend == dist.Backend.MPI:
-                if not dist.is_mpi_available():
-                    continue
             elif backend == dist.Backend.NCCL:
                 if not dist.is_nccl_available() or not torch.cuda.is_available():
                     continue
