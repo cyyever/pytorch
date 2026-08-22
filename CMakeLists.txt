@@ -380,14 +380,7 @@ option(USE_PRECOMPILED_HEADERS "Use pre-compiled headers to accelerate build."
 option(USE_EIGEN_SPARSE "Use Eigen Sparse Matrices" OFF)
 option(USE_SYSTEM_EIGEN_INSTALL
     "Use system Eigen instead of the one under third_party" OFF)
-cmake_dependent_option(
-    USE_VALGRIND "Use Valgrind. Only available on Linux." ON
-    "LINUX" OFF)
-
 option(USE_ROCM_KERNEL_ASSERT "Use Kernel Assert for ROCm" OFF)
-# Ensure that an ITT build is the default for x86 CPUs
-cmake_dependent_option(USE_ITT "Use Intel(R) VTune Profiler ITT functionality"
-                       ON "CPU_INTEL" OFF)
 # Ensure that an MKLDNN build is the default for x86 CPUs but optional for
 # AArch64 (dependent on -DUSE_MKLDNN).
 cmake_dependent_option(

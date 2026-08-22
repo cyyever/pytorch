@@ -8,7 +8,7 @@ import threading
 from typing import Any
 
 import torch
-from torch.utils.benchmark.utils._stubs import CallgrindModuleType, TimeitModuleType
+from torch.utils.benchmark.utils._stubs import TimeitModuleType
 from torch.utils.benchmark.utils.common import _make_temp_dir
 from torch.utils import cpp_extension
 
@@ -82,29 +82,11 @@ else:
     # FIXME: Remove when back testing is no longer required.
     CXX_FLAGS = ["-O2", "-fPIC", "-g"]
 
-EXTRA_INCLUDE_PATHS: list[str] = [os.path.join(SOURCE_ROOT, "valgrind_wrapper")]
+EXTRA_INCLUDE_PATHS: list[str] = []
 CONDA_PREFIX = os.getenv("CONDA_PREFIX")
 if CONDA_PREFIX is not None:
     # Load will automatically search /usr/include, but not conda include.
     EXTRA_INCLUDE_PATHS.append(os.path.join(CONDA_PREFIX, "include"))
-
-
-COMPAT_CALLGRIND_BINDINGS: CallgrindModuleType | None = None
-def get_compat_bindings() -> CallgrindModuleType:
-    with LOCK:
-        global COMPAT_CALLGRIND_BINDINGS
-        if COMPAT_CALLGRIND_BINDINGS is None:
-            COMPAT_CALLGRIND_BINDINGS = cpp_extension.load(
-                name="callgrind_bindings",
-                sources=[os.path.join(
-                    SOURCE_ROOT,
-                    "valgrind_wrapper",
-                    "compat_bindings.cpp"
-                )],
-                extra_cflags=CXX_FLAGS,
-                extra_include_paths=EXTRA_INCLUDE_PATHS,
-            )
-    return COMPAT_CALLGRIND_BINDINGS
 
 
 def _compile_template(
@@ -162,14 +144,3 @@ def compile_timeit_template(*, stmt: str, setup: str, global_setup: str) -> Time
     if not isinstance(module, TimeitModuleType):
         raise AssertionError("compiled module is not a TimeitModuleType")
     return module
-
-
-def compile_callgrind_template(*, stmt: str, setup: str, global_setup: str) -> str:
-    template_path: str = os.path.join(SOURCE_ROOT, "valgrind_wrapper", "timer_callgrind_template.cpp")
-    with open(template_path) as f:
-        src: str = f.read()
-
-    target = _compile_template(stmt=stmt, setup=setup, global_setup=global_setup, src=src, is_standalone=True)
-    if not isinstance(target, str):
-        raise AssertionError("compiled target path is not a string")
-    return target

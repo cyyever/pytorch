@@ -445,13 +445,6 @@ if(NOT INTERN_DISABLE_AUTOGRAD)
   )
 endif()
 
-if(${USE_ITT})
-  list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/itt_wrapper.cpp
-    ${TORCH_SRC_DIR}/csrc/profiler/stubs/itt.cpp
-  )
-endif()
-
 list(APPEND TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
   ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp

@@ -6,9 +6,7 @@
 # Destinations are relative to CMAKE_INSTALL_PREFIX which maps to torch/ in
 # the wheel (via wheel.install-dir = "torch") or <root>/torch for setuptools.
 #
-# Must be included after FileMirroring.cmake: the valgrind headers picked up
-# by the benchmark utilities rule below are copied into the source tree by
-# that module.
+#
 
 if(NOT DEFINED TORCH_SRC_DIR)
   set(TORCH_SRC_DIR "${PROJECT_SOURCE_DIR}/torch")
@@ -26,10 +24,6 @@ install(DIRECTORY "${TORCH_SRC_DIR}/"
 
 # Benchmark utilities — matches setup.py package_data patterns:
 #   utils/benchmark/utils/*.cpp
-#   utils/benchmark/utils/valgrind_wrapper/*.cpp
-#   utils/benchmark/utils/valgrind_wrapper/*.h
-# (*.h files are copied from third_party/ by FileMirroring.cmake; the pattern
-# here picks them up if already present.)
 install(DIRECTORY "${TORCH_SRC_DIR}/utils/benchmark/utils/"
   DESTINATION "utils/benchmark/utils"
   FILES_MATCHING PATTERN "*.cpp" PATTERN "*.h"

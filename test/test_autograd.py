@@ -41,7 +41,7 @@ from torch.autograd import (
 )
 from torch.autograd.function import InplaceFunction, once_differentiable
 from torch.autograd.graph import GradientEdge
-from torch.autograd.profiler import emit_itt, emit_nvtx, profile, record_function
+from torch.autograd.profiler import emit_nvtx, profile, record_function
 from torch.autograd.profiler_util import (
     _format_time,
     EventList,
@@ -14151,16 +14151,6 @@ class TestAutogradDeviceType(TestCase):
         out, _ = l(s)
         out.sum().backward()
         self.assertFalse(s.grad is None or s.grad.abs().sum().item() == 0)
-
-    @unittest.skipIf(not torch.profiler.itt.is_available(), "ITT is required")
-    def test_profiler_emit_itt(self, device):
-        # This test is not intended to ensure correctness of itt ranges.
-        # That would require something a great deal more complex (you'd have to create a
-        # profile in a subprocess, open it, and parse the sql somehow).
-        # This test is merely intended to catch if emit_itt breaks on construction.
-        a = torch.tensor([1, 2, 3], dtype=torch.float32, device=device)
-        with emit_itt():
-            a.add(1.0)
 
     @deviceCountAtLeast(1)
     def test_grad_assignment(self, devices):

@@ -58,8 +58,6 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}/caffe2/aten/src
     ${CMAKE_BINARY_DIR}/third_party
 
-    ${TORCH_ROOT}/third_party/valgrind-headers
-
     ${TORCH_ROOT}/third_party/gloo
     ${TORCH_ROOT}/third_party/kineto/libkineto/include
     ${TORCH_ROOT}/third_party/nlohmann/include
@@ -124,13 +122,6 @@ else()
     list(APPEND TORCH_PYTHON_COMPILE_OPTIONS
       -fno-strict-aliasing
       -Wno-strict-aliasing)
-endif()
-
-if(USE_ITT)
-  list(APPEND TORCH_PYTHON_SRCS
-    ${TORCH_SRC_DIR}/csrc/itt.cpp
-  )
-  list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_ITT)
 endif()
 
 if(USE_CUDA)
@@ -203,10 +194,6 @@ endif()
 
 if(USE_MPS)
     list(APPEND TORCH_PYTHON_SRCS ${MPS_PYTHON_SRCS})
-endif()
-
-if(USE_VALGRIND AND NOT WIN32)
-    list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_VALGRIND)
 endif()
 
 add_custom_target(torch_python_stubs DEPENDS

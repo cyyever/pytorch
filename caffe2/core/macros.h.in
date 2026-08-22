@@ -21,7 +21,6 @@
 #cmakedefine CAFFE2_USE_MKL
 #cmakedefine USE_MKLDNN
 #cmakedefine CAFFE2_USE_NVTX
-#cmakedefine CAFFE2_USE_ITT
 
 #ifndef EIGEN_MPL2_ONLY
 #cmakedefine EIGEN_MPL2_ONLY
@@ -61,7 +60,6 @@
   {"USE_MKL", "${CAFFE2_USE_MKL}"}, \
   {"USE_MKLDNN", "${USE_MKLDNN}"}, \
   {"USE_NVTX", "${CAFFE2_USE_NVTX}"}, \
-  {"USE_ITT", "${CAFFE2_USE_ITT}"}, \
   {"USE_ROCM_KERNEL_ASSERT", "${USE_ROCM_KERNEL_ASSERT}"}, \
   {"USE_CUSPARSELT", "${USE_CUSPARSELT}"}, \
   {"USE_HIPSPARSELT", "${USE_HIPSPARSELT}"}, \

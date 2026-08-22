@@ -412,34 +412,6 @@ with profile(activities=[ProfilerActivity.CUDA]):
         self.assertGreater(len(p.events()), 0)
 
 
-@unittest.skipIf(not torch.profiler.itt.is_available(), "ITT is required")
-class TestProfilerITT(TestCase):
-    def test_custom_module_input_op_ids(self):
-        class MyFunc(torch.autograd.Function):
-            @staticmethod
-            def forward(ctx, x):
-                ctx.save_for_backward(x)
-                return x
-
-            @staticmethod
-            def backward(ctx, gO):
-                (x,) = ctx.saved_tensors
-                return x
-
-        def custom_layer(input_ten):
-            return MyFunc.apply(input_ten)
-
-        # Only testing that emit_itt runs when
-        # record_shapes option is enabled.
-        with torch.autograd.profiler.emit_itt(record_shapes=True) as prof:
-            x = torch.randn(10, 10, requires_grad=True)
-            y = torch.randn(10, 10, requires_grad=True)
-            z = x + y
-            s = custom_layer(z)
-            q = s.sum()
-            q.backward()
-
-
 @instantiate_parametrized_tests
 class TestProfiler(TestCase):
     @unittest.skipIf(

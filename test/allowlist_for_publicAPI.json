@@ -1906,11 +1906,6 @@
     "CPPTimer",
     "timer"
   ],
-  "torch.utils.benchmark.utils.valgrind_wrapper.timer_interface": [
-    "GlobalsBridge",
-    "Serialization",
-    "wrapper_singleton"
-  ],
   "torch.utils.bundled_inputs": [
     "Any",
     "Callable",

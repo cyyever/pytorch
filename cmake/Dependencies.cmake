@@ -469,19 +469,6 @@ if(USE_NUMA)
   endif()
 endif()
 
-if(USE_ITT)
-  find_package(ITT)
-  if(ITT_FOUND)
-    include_directories(SYSTEM ${ITT_INCLUDE_DIR})
-    list(APPEND Caffe2_DEPENDENCY_LIBS ${ITT_LIBRARIES})
-    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${ITT_LIBRARIES})
-  else()
-    message(WARNING "Not compiling with ITT. Suppress this warning with -DUSE_ITT=OFF")
-    set(USE_ITT OFF CACHE BOOL "" FORCE)
-    caffe2_update_option(USE_ITT OFF)
-  endif()
-endif()
-
 
 # ---[ Python Interpreter
 # If not given a Python installation, then use the current active Python

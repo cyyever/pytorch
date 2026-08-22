@@ -24,7 +24,6 @@
 ```
 
 ```{eval-rst}
-.. autoclass:: CallgrindStats
     :members:
 ```
 
@@ -99,5 +98,4 @@
 ```
 
 ```{eval-rst}
-.. py:module:: torch.utils.benchmark.utils.valgrind_wrapper
 ```

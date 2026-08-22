@@ -303,7 +303,7 @@ def _make_temp_dir(prefix: str | None = None, gc_dev_shm: bool = False) -> str:
     This function is conceptually similar to `tempfile.mkdtemp`, but with
     the key additional feature that it will use shared memory if the
     `BENCHMARK_USE_DEV_SHM` environment variable is set. This is an
-    implementation detail, but an important one for cases where many Callgrind
+    implementation detail, but an important one for cases where many
     measurements are collected at once. (Such as when collecting
     microbenchmarks.)
 
