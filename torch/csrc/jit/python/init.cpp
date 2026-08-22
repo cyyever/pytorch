@@ -105,7 +105,7 @@ void initJITBindings(PyObject* module) {
           })
       .def(
           "_jit_get_tracer_state_warn",
-          []() { return jit::tracer::getTracerStateWarnMode(); })
+          []() { return jit::tracer::getTracerStateWarnMode().load(); })
       .def(
           "_jit_set_profiling_mode",
           [](bool profiling_flag) {
