@@ -12,9 +12,7 @@
 #include <ATen/cpu/vec/vec256/vec256_double.h>
 #include <ATen/cpu/vec/vec256/vec256_int.h>
 #include <ATen/cpu/vec/vec256/vec256_qint.h>
-#if !!defined(__ARM_FEATURE_BF16)
 #include <ATen/cpu/vec/vec256/vec256_bfloat16.h>
-#endif
 #include <ATen/cpu/vec/vec256/vec256_half.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_float.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_double.h>
