@@ -879,7 +879,6 @@
 # /third_party/cutlass
 # /third_party/fbgemm
 # /third_party/flash-attention
-# /third_party/gemmlowp/
 # /third_party/ideep
 /third_party/xpu.txt @EikanWang @gujinghui
 #

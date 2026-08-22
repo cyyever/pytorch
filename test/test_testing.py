@@ -2650,7 +2650,6 @@ class TestImports(TestCase):
                            "torch._inductor.codegen.cuda",  # depends on cutlass
                            "torch._inductor.codegen.cutedsl",  # depends on cutlass
                            "torch._inductor.kernel.flex_gemm.output_layout_cutedsl",  # depends on cutlass
-                           "torch.distributed.debug._frontend",  # depends on tabulate
                            "torch.distributed.examples",  # requires CUDA and torchvision
                            "torch.distributed.tensor.examples",  # example scripts
                            "torch.distributed._tools.sac_ilp",  # depends on pulp

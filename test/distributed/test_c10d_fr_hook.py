@@ -428,10 +428,6 @@ class AbstractFlightRecorderHookTest:
         # file and all but one post-mortem was lost.
         import ast
 
-        import requests
-
-        from torch._C._distributed_c10d import _WorkerServer
-
         last = self.world_size - 1
         if last == 0:
             self.skipTest("needs a subgroup that excludes rank 0")
@@ -452,22 +448,6 @@ class AbstractFlightRecorderHookTest:
         ranks = ast.literal_eval(trace["pg_config"][sub.group_name]["ranks"])
         self.assertEqual(ranks, [last])
 
-        # The handler names the file from the rank the recorder was told, so
-        # this is what catches setRank being overwritten with a group-local one.
-        server = _WorkerServer("", 0)
-        self.addCleanup(server.shutdown)
-        res = requests.post(
-            f"http://localhost:{server.port}/handler/fr_dump_file"
-            f"?backend={self.backend_name}",
-            timeout=60,
-        )
-        self.assertEqual(res.status_code, 200)
-        path = self._dump_file_name()
-        deadline = time.time() + 60
-        while not os.path.exists(path) and time.time() < deadline:
-            time.sleep(0.1)
-        self.assertTrue(os.path.exists(path), msg=f"no dump written to {path}")
-        self.assertFalse(os.path.exists(os.environ["TORCH_FR_DUMP_TEMP_FILE"] + "0"))
         hook.remove()
 
     def test_attach_without_rank_mapping_publishes_nothing(self):
@@ -686,52 +666,6 @@ class AbstractFlightRecorderHookTest:
         )
         with open(self._dump_file_name(), "rb") as f:
             dump = pickle.load(f)
-        self.assertIn("version", dump)
-        self.assertIn("entries", dump)
-        self.assertIn("pg_config", dump)
-        names = [e["profiling_name"] for e in dump["entries"]]
-        self.assertIn(self._name("all_reduce"), names)
-        hook.remove()
-
-    def test_control_plane_dump_file(self):
-        # Over the real control plane rather than _get_handler, because the
-        # backend to dump arrives as a query parameter and Python cannot
-        # implement Request::params().
-        import requests
-
-        from torch._C._distributed_c10d import _WorkerServer
-
-        pg = self._init_pg()
-        # attach() is what tells the recorder which rank it is running on,
-        # which is how the handler names the file.
-        hook = self._fr_hook(pg)
-
-        t = torch.ones(4, device=self.device)
-        dist.all_reduce(t)
-        if self.device_type == "cuda":
-            torch.cuda.synchronize()
-
-        server = _WorkerServer("", 0)
-        self.addCleanup(server.shutdown)
-        res = requests.post(
-            f"http://localhost:{server.port}/handler/fr_dump_file"
-            f"?backend={self.backend_name}",
-            timeout=60,
-        )
-        self.assertEqual(res.status_code, 200)
-
-        # The handler dumps on a worker thread, so poll until the file is
-        # there and complete -- it appears empty before the write lands.
-        path = self._dump_file_name()
-        dump = None
-        deadline = time.time() + 60
-        while dump is None and time.time() < deadline:
-            try:
-                with open(path, "rb") as f:
-                    dump = pickle.load(f)
-            except (OSError, EOFError, pickle.UnpicklingError):
-                time.sleep(0.1)
-        self.assertIsNotNone(dump, msg=f"no dump written to {path}")
         self.assertIn("version", dump)
         self.assertIn("entries", dump)
         self.assertIn("pg_config", dump)

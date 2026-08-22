@@ -1160,9 +1160,6 @@ if(USE_KINETO)
 endif()
 
 target_include_directories(torch_cpu PRIVATE
-  ${TORCH_ROOT}/third_party/cpp-httplib)
-
-target_include_directories(torch_cpu PRIVATE
   ${TORCH_ROOT}/third_party/nlohmann/include)
 
 # The native .pftrace encoder's only extra build dep (perfetto) is pulled in

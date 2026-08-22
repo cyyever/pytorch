@@ -1214,10 +1214,6 @@ if(USE_KINETO)
 endif()
 
 
-# Include cpp-httplib
-add_library(httplib INTERFACE IMPORTED)
-target_include_directories(httplib SYSTEM INTERFACE ${PROJECT_SOURCE_DIR}/third_party/cpp-httplib)
-
 # Include nlohmann-json
 add_library(nlohmann INTERFACE IMPORTED)
 include_directories(nlohmann SYSTEM INTERFACE ${PROJECT_SOURCE_DIR}/third_party/nlohmann/include)
