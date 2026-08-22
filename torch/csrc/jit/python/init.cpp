@@ -10,7 +10,6 @@
 #include <torch/csrc/jit/python/opaque_obj.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
-#include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/jit/python/utf8_decoding_ignore.h>
 #include <torch/csrc/jit/runtime/graph_executor.h>
 #include <torch/csrc/jit/runtime/jit_exception.h>
@@ -98,6 +97,9 @@ void initJITBindings(PyObject* module) {
       JITException::getCaughtOriginalMsg);
 
   m.def("_jit_init", []() { return true; })
+      // Tracing is always off; kept as a None shim because Python code
+      // (e.g. torch.distributions) calls torch._C._get_tracing_state().
+      .def("_get_tracing_state", []() { return py::none(); })
       .def(
           "_jit_set_tracer_state_warn",
           [](bool new_warn) {
@@ -171,8 +173,7 @@ void initJITBindings(PyObject* module) {
           })
       .def(
           "_jit_set_utf8_decoding_ignore",
-          &setUTF8DecodingIgnore)
-      .def("_is_tracing", []() { return jit::tracer::isTracing(); });
+          &setUTF8DecodingIgnore);
 
   py::class_<PyTorchStreamWriter>(m, "PyTorchFileWriter")
       .def(
@@ -1037,7 +1038,6 @@ void initJITBindings(PyObject* module) {
 #endif // defined(C10_SUPPORTS_SIGNAL_HANDLER)
 
   initPythonCustomClassBindings(module);
-  tracer::initPythonTracerBindings(module);
 }
 
 } // namespace torch::jit

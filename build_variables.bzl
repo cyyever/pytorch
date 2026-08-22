@@ -470,7 +470,6 @@ libtorch_python_core_sources = [
     "torch/csrc/jit/python/init.cpp",
     "torch/csrc/jit/python/pybind_utils.cpp",
     "torch/csrc/jit/python/python_custom_class.cpp",
-    "torch/csrc/jit/python/python_tracer.cpp",
     "torch/csrc/multiprocessing/init.cpp",
     "torch/csrc/profiler/cupti/monitor_python.cpp",
     "torch/csrc/profiler/python/init.cpp",

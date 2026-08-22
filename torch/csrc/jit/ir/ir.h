@@ -1365,11 +1365,6 @@ struct Graph : std::enable_shared_from_this<Graph> {
       std::string method_name,
       const MatchedSchema& matched);
 
-  // Note: defined in python_ir.cpp and can be used only in python extension
-  Node* createPythonOp(
-      THPObjectPtr&& pyobj,
-      const std::string& cconv,
-      pyobj_list&& scalar_args);
   // clone n, making a new node in _this_ graph.
   // use value_map to translate inputs of n to inputs of the cloned node
   // if copy_blocks is false, it will not recursively clone the nested blocks
