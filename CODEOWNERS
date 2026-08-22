@@ -659,7 +659,6 @@
 # /torch/_sources.py
 # /torch/_storage_docs.py
 # /torch/_streambase.py
-# /torch/_strobelight/
 # /torch/_subclasses/
 # /torch/_tensor.py
 # /torch/_tensor_docs.py
@@ -944,7 +943,6 @@
 # /test/benchmark_utils/
 # /test/scripts/
 # /test/spincli/
-# /test/strobelight/
 /test/test_public_bindings.py @albanD
 # /test/test_testing.py
 # /test/test_utils.py

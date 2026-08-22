@@ -3392,7 +3392,6 @@ MOD_SKIPLIST = [
     "torch._prims_common",
     "torch._python_dispatcher",
     "torch._refs",
-    "torch._strobelight",
     "torch._subclasses",
     "torch._tensor",
     "torch._tensor_str",

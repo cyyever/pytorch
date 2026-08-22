@@ -64,7 +64,6 @@ from torch._guards import compile_context, CompileContext, CompileId, tracing
 from torch._higher_order_ops.utils import _in_hop_compile
 from torch._logging import structured
 from torch._utils_internal import (
-    compile_time_strobelight_meta,
     maybe_upload_prof_stats_to_manifold,
     signpost_event,
 )
@@ -1717,7 +1716,6 @@ def _compile(
     # Time spent compiling this frame before restarting or failing analysis
     dynamo_time_before_restart: float = 0.0
 
-    @compile_time_strobelight_meta(phase_name="compile_inner")
     def compile_inner(
         code: CodeType, one_graph: bool, hooks: Hooks
     ) -> tuple[ConvertFrameReturn, DynamoTracerOutput | None]:
