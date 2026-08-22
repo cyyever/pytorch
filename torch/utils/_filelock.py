@@ -3,7 +3,7 @@ from typing import Self
 
 from filelock import FileLock as base_FileLock
 
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 
 
 class FileLock(base_FileLock):

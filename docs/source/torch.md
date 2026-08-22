@@ -309,7 +309,6 @@ There are a few more in-place random sampling functions defined on Tensors as we
     :nosignatures:
     :template: sobolengine.rst
 
-    quasirandom.SobolEngine
 ```
 
 ## Serialization
@@ -1120,7 +1119,6 @@ This feature is a prototype and may have compatibility breaking changes in the f
 ```
 
 ```{eval-rst}
-.. py:module:: torch.quasirandom
 ```
 
 ```{eval-rst}

@@ -154,8 +154,6 @@ class TestChoices(list):
         return list.__contains__(self, parse_test_module(item))
 
 
-FSDP_TEST = [test for test in TESTS if test.startswith("distributed/fsdp")]
-
 WINDOWS_BLOCKLIST = [
     "distributed/pipeline/sync/skip/test_api",
     "distributed/pipeline/sync/skip/test_gpipe",
@@ -181,18 +179,7 @@ WINDOWS_BLOCKLIST = [
     "distributed/pipeline/sync/test_worker",
     "distributed/elastic/agent/server/test/api_test",
     "distributed/elastic/multiprocessing/api_test",
-    "distributed/_shard/checkpoint/test_checkpoint"
-    "distributed/_shard/checkpoint/test_file_system_checkpoint"
-    "distributed/_shard/sharding_spec/test_sharding_spec",
-    "distributed/_shard/sharding_plan/test_sharding_plan",
-    "distributed/_shard/sharded_tensor/test_sharded_tensor",
-    "distributed/_shard/sharded_tensor/test_sharded_tensor_reshard",
-    "distributed/_shard/sharded_tensor/ops/test_embedding",
-    "distributed/_shard/sharded_tensor/ops/test_embedding_bag",
-    "distributed/_shard/sharded_tensor/ops/test_binary_cmp",
-    "distributed/_shard/sharded_tensor/ops/test_init",
-    "distributed/_shard/sharded_optim/test_sharded_optim",
-] + FSDP_TEST
+]
 
 ROCM_BLOCKLIST = [
     "test_determination",
@@ -299,7 +286,7 @@ RUN_PARALLEL_BLOCKLIST = [
     "inductor/test_compiler_bisector",
     "test_privateuseone_python_backend",
     "functorch/test_control_flow_cuda_initialization",
-] + FSDP_TEST
+]
 
 # Test files that should always be run serially with other test files,
 # but it's okay if the tests inside them are run in parallel with each other.
@@ -1150,7 +1137,6 @@ def run_doctests(test_module, test_directory, options):
         "qengine": 0,
         "autograd_profiler": 0,
         "cpp_ext": 0,
-        "monitor": 0,
     }
 
     # Resolve "auto" based on a test to determine if the feature is available.
@@ -1198,8 +1184,6 @@ def run_doctests(test_module, test_directory, options):
     if enabled["cpp_ext"]:
         os.environ["TORCH_DOCTEST_CPP_EXT"] = "1"
 
-    if enabled["monitor"]:
-        os.environ["TORCH_DOCTEST_MONITOR"] = "1"
 
     if torch.mps.is_available():
         os.environ["TORCH_DOCTEST_MPS"] = "1"

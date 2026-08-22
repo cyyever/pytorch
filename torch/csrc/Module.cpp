@@ -85,7 +85,6 @@
 #include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/jit/serialization/pickler.h>
-#include <torch/csrc/monitor/python_init.h>
 #include <torch/csrc/mps/Module.h>
 #include <torch/csrc/multiprocessing/init.h>
 #include <torch/csrc/profiler/python/init.h>
@@ -2523,7 +2522,6 @@ PyObject* initModule() {
   ASSERT_TRUE(THPEngine_initModule(module));
   torch::autograd::initEnumTag(module);
   torch::jit::initJITBindings(module);
-  torch::monitor::initMonitorBindings(module);
   torch::impl::dispatch::initDispatchBindings(module);
   torch::dynamo::initDynamoBindings(module);
   torch::functorch::impl::initFuncTorchBindings(module);

@@ -7612,183 +7612,25 @@ class TestTorch(TestCase):
                     self.assertEqual(generator.get_offset(), reserialized.get_offset())
                 torch.testing.assert_close(generator.get_state(), reserialized.get_state())
 
-    def _sobol_reference_samples(self, scramble: bool) -> torch.Tensor:
-        if not scramble:
-            # theoretical values from Joe Kuo 2010
-            return torch.tensor(
-                [
-                    [0., 0.],
-                    [0.5, 0.5],
-                    [0.75, 0.25],
-                    [0.25, 0.75],
-                    [0.375, 0.375],
-                    [0.875, 0.875],
-                    [0.625, 0.125],
-                    [0.125, 0.625],
-                ],
-            )
-        else:
-            # theoretical values unknown: convergence properties checked
-            return torch.tensor(
-                [
-                    [0.50860737, 0.29320504],
-                    [0.07116939, 0.89594537],
-                    [0.49354145, 0.11524881],
-                    [0.93097717, 0.70244044],
-                    [0.87266153, 0.23887917],
-                    [0.31021884, 0.57600391],
-                    [0.13687253, 0.42054182],
-                    [0.69931293, 0.77336788],
-                ],
-            )
 
-    def test_sobolengine_bounds(self, scramble: bool = False):
-        engine = torch.quasirandom.SobolEngine(100, scramble=scramble, seed=123456)
-        sample = engine.draw(512)
-        self.assertTrue(torch.all(sample >= 0))
-        self.assertTrue(torch.all(sample <= 1))
 
-    def test_sobolengine_bounds_scrambled(self):
-        self.test_sobolengine_bounds(scramble=True)
 
-    def test_sobolengine_draw(self, scramble: bool = False):
-        ref_sample = self._sobol_reference_samples(scramble=scramble)
-        engine = torch.quasirandom.SobolEngine(2, scramble=scramble, seed=123456)
-        sample = engine.draw(n=len(ref_sample))
-        self.assertEqual(sample, ref_sample)
-        self.assertEqual(engine.num_generated, len(ref_sample))
 
-    def test_sobolengine_draw_scrambled(self):
-        self.test_sobolengine_draw(scramble=True)
 
-    def test_sobolengine_first_point(self):
-        for dtype in (torch.float, torch.double):
-            engine = torch.quasirandom.SobolEngine(2, scramble=False)
-            sample = engine.draw(1, dtype=dtype)
-            self.assertTrue(torch.all(sample == 0))
-            self.assertEqual(sample.dtype, dtype)
-        for dtype in (torch.float, torch.double):
-            engine = torch.quasirandom.SobolEngine(2, scramble=True, seed=123456)
-            sample = engine.draw(1, dtype=dtype)
-            self.assertTrue(torch.all(sample != 0))
-            self.assertEqual(sample.dtype, dtype)
 
-    def test_sobolengine_continuing(self, scramble: bool = False):
-        ref_sample = self._sobol_reference_samples(scramble=scramble)
-        engine = torch.quasirandom.SobolEngine(2, scramble=scramble, seed=123456)
-        n_half = len(ref_sample) // 2
-        _ = engine.draw(n=n_half)
-        sample = engine.draw(n=n_half)
-        torch.testing.assert_close(sample, ref_sample[n_half:])
 
-    def test_sobolengine_continuing_scrambled(self):
-        self.test_sobolengine_continuing(scramble=True)
 
-    def test_sobolengine_reset(self, scramble: bool = False):
-        ref_sample = self._sobol_reference_samples(scramble=scramble)
-        engine = torch.quasirandom.SobolEngine(2, scramble=scramble, seed=123456)
-        _ = engine.draw(n=len(ref_sample) // 2)
-        engine.reset()
-        self.assertEqual(engine.num_generated, 0)
-        sample = engine.draw(n=len(ref_sample))
-        torch.testing.assert_close(sample, ref_sample)
 
-    def test_sobolengine_reset_scrambled(self):
-        self.test_sobolengine_reset(scramble=True)
 
-    def test_sobolengine_fast_forward(self, scramble: bool = False):
-        ref_sample = self._sobol_reference_samples(scramble=scramble)
-        engine = torch.quasirandom.SobolEngine(2, scramble=scramble, seed=123456)
-        engine.fast_forward(4)
-        sample = engine.draw(n=4)
-        torch.testing.assert_close(sample, ref_sample[4:])
-        # alternate fast forwarding with sampling
-        engine.reset()
-        even_draws = []
-        for i in range(8):
-            if i % 2 == 0:
-                even_draws.append(engine.draw())
-            else:
-                engine.fast_forward(1)
-        torch.testing.assert_close(
-            ref_sample[[i for i in range(8) if i % 2 == 0]],
-            torch.from_numpy(np.concatenate(even_draws)),
-        )
 
-    def test_sobolengine_fast_forward_scrambled(self):
-        self.test_sobolengine_fast_forward(scramble=True)
 
-    def test_sobolengine_default_dtype(self):
-        engine = torch.quasirandom.SobolEngine(dimension=3, scramble=True, seed=123456)
-        # Check that default dtype is correctly handled
-        self.assertEqual(engine.draw(n=5).dtype, torch.float32)
-        with set_default_dtype(torch.float64):
-            engine = torch.quasirandom.SobolEngine(dimension=3, scramble=True, seed=123456)
-            # Check that default dtype is correctly handled (when set to float64)
-            self.assertEqual(engine.draw(n=5).dtype, torch.float64)
-            # Check that explicitly passed dtype is adhered to
-            self.assertEqual(engine.draw(n=5, dtype=torch.float32).dtype, torch.float32)
-            # Reinitialize the engine and check that first draw dtype is correctly handled
-            engine = torch.quasirandom.SobolEngine(dimension=3, scramble=True, seed=123456)
-            self.assertEqual(engine.draw(n=5, dtype=torch.float32).dtype, torch.float32)
 
-    @skipIfTorchDynamo("np.float64 restored as float32 after graph break.")
-    def test_sobolengine_distribution(self, scramble=False):
-        d = 50
-        engine = torch.quasirandom.SobolEngine(d, scramble=scramble, seed=123456)
-        sample = engine.draw(1024)
-        torch.testing.assert_close(
-            torch.mean(sample, dim=0), torch.full((d,), 0.5), atol=2, rtol=2
-        )
-        torch.testing.assert_close(
-            np.percentile(sample, 25, axis=0).astype(np.float64), np.repeat(0.25, d), atol=2, rtol=2
-        )
-        torch.testing.assert_close(
-            np.percentile(sample, 75, axis=0).astype(np.float64), np.repeat(0.75, d), atol=2, rtol=2
-        )
 
-    @skipIfTorchDynamo("np.float64 restored as float32 after graph break.")
-    def test_sobolengine_distribution_scrambled(self):
-        self.test_sobolengine_distribution(scramble=True)
 
-    def test_sobolengine_draw_base2(self, scramble=False):
-        ref_sample = self._sobol_reference_samples(scramble=scramble)
-        engine = torch.quasirandom.SobolEngine(2, scramble=scramble, seed=123456)
-        sample = engine.draw_base2(2)
-        self.assertEqual(ref_sample[:4], sample)
-        # resampling still having N=2**n
-        sample = engine.draw_base2(2)
-        self.assertEqual(ref_sample[4:8], sample)
 
-    def test_sobolengine_draw_base2_scrambled(self):
-        self.test_sobolengine_draw_base2(scramble=True)
 
-    def test_sobolengine_raise(self):
-        maxdim = torch.quasirandom.SobolEngine.MAXDIM
-        with self.assertRaises(ValueError):
-            torch.quasirandom.SobolEngine(maxdim + 1)
 
-    def test_sobol_invalid_inputs(self):
-        quasi = torch.ones(2, dtype=torch.long)
-        sobolstate = torch.ones(2, 30, dtype=torch.long)
 
-        with self.assertRaisesRegex(ValueError, "dimension must match"):
-            torch._sobol_engine_ff_(quasi, 1, sobolstate, 1250999896764, 0)
-        with self.assertRaisesRegex(ValueError, "at most"):
-            torch._sobol_engine_ff_(quasi, 1, sobolstate, 2, 2**30 - 1)
-        with self.assertRaisesRegex(ValueError, "dimension must be between"):
-            torch._sobol_engine_initialize_state_(sobolstate, 1250999896764)
-
-    def test_sobolengine_high_dim(self):
-        engine = torch.quasirandom.SobolEngine(1111, scramble=False, seed=123456)
-        samples1 = engine.draw()
-        vals1, counts1 = torch.unique(samples1, return_counts=True)
-        samples2 = engine.draw()
-        vals2, counts2 = torch.unique(samples2, return_counts=True)
-        self.assertEqual(vals1.item(), 0.0)
-        self.assertEqual(counts1.item(), 1111)
-        self.assertEqual(vals2.item(), 0.5)
-        self.assertEqual(counts1.item(), 1111)
 
     def test_parsing_int64(self):
         # accepts integer arguments

@@ -2613,8 +2613,6 @@ if hasattr(torch._C, "_c10d_init"):
     _register_process_group_opaque_type()
     del _register_process_group_opaque_type
 
-# Import the quasi random sampler
-from torch import quasirandom as quasirandom  # usort: skip
 
 # If you are seeing this, it means that this call site was not checked if
 # the memory format could be preserved, and it was switched to old default

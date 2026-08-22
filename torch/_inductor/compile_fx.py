@@ -104,7 +104,7 @@ from torch._logging import trace_structured
 from torch.fx import GraphModule
 from torch.fx.experimental.symbolic_shapes import free_unbacked_symbols, SymExprPrinter
 from torch.fx.passes.fake_tensor_prop import FakeTensorProp
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 from torch.utils._ordered_set import OrderedSet
 
 from .._dynamo.exc import ShortenTraceback, SkipFrame

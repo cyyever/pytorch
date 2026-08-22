@@ -66,7 +66,7 @@ from torch._C._distributed_c10d import (
     Work,
 )
 from torch._utils_internal import set_pytorch_distributed_envs_from_justknobs
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 from torch.overrides import handle_torch_function, has_torch_function
 from torch.utils._typing_utils import not_none
 
@@ -1226,7 +1226,7 @@ class P2POp:
         group: ProcessGroup | None = None,
         tag: int = 0,
         group_peer: int | None = None,
-    ) -> P2POp:
+    ) -> "P2POp":
         """Create and return a new instance of the class."""
         _check_op(op)
         _check_single_tensor(tensor, "tensor")

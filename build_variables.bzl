@@ -107,8 +107,6 @@ libtorch_profiler_sources = [
     "torch/csrc/profiler/standalone/privateuse1_profiler.cpp",
     "torch/csrc/profiler/stubs/base.cpp",
     "torch/csrc/profiler/perf.cpp",
-    "torch/csrc/monitor/counters.cpp",
-    "torch/csrc/monitor/events.cpp",
 ]
 
 core_trainer_sources = [
@@ -487,7 +485,6 @@ libtorch_python_core_sources = [
     "torch/csrc/jit/python/pybind_utils.cpp",
     "torch/csrc/jit/python/python_custom_class.cpp",
     "torch/csrc/jit/python/python_tracer.cpp",
-    "torch/csrc/monitor/python_init.cpp",
     "torch/csrc/multiprocessing/init.cpp",
     "torch/csrc/profiler/cupti/monitor_python.cpp",
     "torch/csrc/profiler/python/init.cpp",

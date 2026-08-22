@@ -360,7 +360,6 @@
     "Set",
     "ShardedOptimStateDictConfig",
     "ShardedStateDictConfig",
-    "ShardedTensor",
     "StateDictConfig",
     "StateDictType",
     "Tuple",
@@ -596,21 +595,6 @@
   "torch.distributed.elastic.utils.store": [
     "List",
     "timedelta"
-  ],
-  "torch.distributed.fsdp.sharded_grad_scaler": [
-    "Any",
-    "Dict",
-    "GradScaler",
-    "Iterable",
-    "List",
-    "OptState",
-    "Optional",
-    "ProcessGroup",
-    "Sequence",
-    "Tuple",
-    "Union",
-    "defaultdict",
-    "overload"
   ],
   "torch.distributed.logging_handlers": [
     "C10D_CATEGORY",
@@ -1401,16 +1385,6 @@
     "sum",
     "var"
   ],
-  "torch.monitor": [
-    "Aggregation",
-    "Event",
-    "EventHandlerHandle",
-    "Stat",
-    "data_value_t",
-    "log_event",
-    "register_event_handler",
-    "unregister_event_handler"
-  ],
   "torch.mtia": [
     "DeferredMtiaCallError",
     "StreamContext"
@@ -1671,9 +1645,6 @@
     "ProfilerActivity",
     "kineto_available",
     "record_function"
-  ],
-  "torch.quasirandom": [
-    "Optional"
   ],
   "torch.random": [
     "Generator"
