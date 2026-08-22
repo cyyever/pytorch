@@ -332,7 +332,6 @@ else()
 endif()
 
 option(USE_XPU "Use XPU" ON)
-option(USE_MTIA "Use MTIA" OFF)
 cmake_dependent_option(
   BUILD_LAZY_CUDA_LINALG "Build cuda linalg ops as separate library" ON
   "USE_CUDA AND LINUX AND BUILD_PYTHON" OFF)

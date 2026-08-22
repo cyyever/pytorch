@@ -164,11 +164,6 @@ if(INTERN_BUILD_ATEN_OPS)
     set(GEN_XPU_FLAG --xpu)
   endif()
 
-  set(GEN_MTIA_FLAG)
-  if(USE_MTIA)
-    set(GEN_MTIA_FLAG --mtia)
-  endif()
-
   set(CUSTOM_BUILD_FLAGS)
 
   if(SELECTED_OP_LIST)
@@ -249,7 +244,6 @@ if(INTERN_BUILD_ATEN_OPS)
       ${GEN_ROCM_FLAG}
       ${GEN_MPS_FLAG}
       ${GEN_XPU_FLAG}
-      ${GEN_MTIA_FLAG}
       ${CUSTOM_BUILD_FLAGS}
   )
 
