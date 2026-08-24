@@ -189,7 +189,7 @@ static std::pair<std::unique_ptr<at::DynamicLibrary>, at::cuda::NVRTC*> load_nvr
 }
 #else
 static std::pair<std::unique_ptr<at::DynamicLibrary>, at::cuda::NVRTC*> load_nvrtc() {
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
   std::string libcaffe2_nvrtc = "libcaffe2_nvrtc.dylib";
 #else
   std::string libcaffe2_nvrtc = "libcaffe2_nvrtc.so";

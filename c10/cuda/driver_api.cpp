@@ -63,23 +63,11 @@ void* get_symbol(const char* name, int version) {
   void* out = nullptr;
   cudaDriverEntryPointQueryResult qres{};
 
-  // CUDA 12.5+ supports version-based lookup
-#if defined(CUDA_VERSION) && (CUDA_VERSION >= 12050)
   if (auto st = cudaGetDriverEntryPointByVersion(
           name, &out, version, cudaEnableDefault, &qres);
       st == cudaSuccess && qres == cudaDriverEntryPointSuccess && out) {
     return out;
   }
-#endif
-
-  // As of CUDA 13, this API is deprecated.
-#if defined(CUDA_VERSION) && (CUDA_VERSION < 13000)
-  // This fallback to the old API to try getting the symbol again.
-  if (auto st = cudaGetDriverEntryPoint(name, &out, cudaEnableDefault, &qres);
-      st == cudaSuccess && qres == cudaDriverEntryPointSuccess && out) {
-    return out;
-  }
-#endif
 
   // If the symbol cannot be resolved, report and return nullptr;
   // the caller is responsible for checking the pointer.

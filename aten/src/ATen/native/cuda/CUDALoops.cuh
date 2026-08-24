@@ -360,11 +360,6 @@ static inline void launch_vectorized_kernel(
   if (p->major != 9 && p->major != 10) {
     vec_size = std::min<uint16_t>(vec_size, 4);
   }
-#if !defined(CUDA_VERSION) || CUDA_VERSION < 12080
-  if constexpr (sizeof(cpp_type) < 2) {
-    vec_size = std::min<uint16_t>(vec_size, 4);
-  }
-#endif
   int tws = elems_per_thread<io_size>();
   constexpr auto input_size = io_size - sizeof(cpp_type);
   constexpr auto tws_128b = elems_per_thread_128b<input_size>(sizeof(cpp_type));
