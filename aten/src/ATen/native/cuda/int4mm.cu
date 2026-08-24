@@ -581,11 +581,7 @@ struct BLayout_TC_int4 {
           // On Windows with ROCm, std::memcpy resolves to a __host__-only
           // function and cannot be called from __device__ code. Use the raw
           // memcpy which the HIP compiler provides as a __device__ builtin.
-#if defined(_WIN32) && defined(USE_ROCM)
-          memcpy(&out[i][j], &v, sizeof(bf16x2x4_u32));
-#else
           std::memcpy(&out[i][j], &v, sizeof(bf16x2x4_u32));
-#endif
         }
       }
     }

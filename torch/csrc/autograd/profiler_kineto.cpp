@@ -18,7 +18,6 @@
 #include <torch/csrc/profiler/kineto_metadata.h>
 #include <torch/csrc/profiler/kineto_shim.h>
 #include <torch/csrc/profiler/orchestration/observer.h>
-#include <torch/csrc/profiler/standalone/itt_observer.h>
 #include <torch/csrc/profiler/standalone/nvtx_observer.h>
 #include <torch/csrc/profiler/standalone/privateuse1_observer.h>
 #include <torch/csrc/profiler/util.h>
@@ -35,7 +34,6 @@
 #include <time_since_epoch.h>
 #include <torch/csrc/profiler/standalone/privateuse1_profiler.h>
 
-#ifndef _MSC_VER
 // TODO: TO be removed, once this properly works from libkineto
 // Literal copy-n-paste from third_party/kineto/libkineto/src/WeakSymbols.cpp
 extern "C" {
@@ -49,7 +47,6 @@ __attribute__((weak)) int acc_get_device_type() {
       "Dummy implementation of acc_get_device_type is not supposed to be called!");
 }
 } // extern "C"
-#endif // _MSC_VER
 #endif // USE_KINETO
 
 namespace torch {
@@ -85,13 +82,13 @@ inline bool isKinetoCompatibleState(ProfilerState state) {
 inline bool isValidDisableState(ProfilerState state) {
   return isKinetoCompatibleState(state) ||
       state == ProfilerState::KINETO_ONDEMAND || state == ProfilerState::NVTX ||
-      state == ProfilerState::ITT || state == ProfilerState::PRIVATEUSE1;
+      state == ProfilerState::PRIVATEUSE1;
 }
 
 // Helper function to check if ProfilerState uses an external tracer
-// (NVTX/ITT/PRIVATEUSE1 - these use their own tracing callbacks, not Kineto)
+// (NVTX/PRIVATEUSE1 - these use their own tracing callbacks, not Kineto)
 inline bool isExternalTracerState(ProfilerState state) {
-  return state == ProfilerState::NVTX || state == ProfilerState::ITT ||
+  return state == ProfilerState::NVTX ||
       state == ProfilerState::PRIVATEUSE1;
 }
 
@@ -617,8 +614,7 @@ void prepareProfiler(
     const torch::profiler::impl::ProfilerConfig& config,
     const std::set<torch::profiler::impl::ActivityType>& activities,
     const ActivityFilter& activity_filter) {
-  if (config.state == ProfilerState::NVTX ||
-      config.state == ProfilerState::ITT) {
+  if (config.state == ProfilerState::NVTX) {
     return;
   }
 
@@ -695,11 +691,7 @@ static void toggleTorchOpCollectionDynamic(bool enable) {
 
 // Set this function to be unused as profiler implementation needs more
 // refactoring to support Python ops collection dynamic toggling
-#ifdef _MSC_VER
-#define UNUSED
-#else
 #define UNUSED __attribute__((unused))
-#endif
 static UNUSED void togglePythonCollectionDynamic(bool enable) {
   std::shared_ptr<KinetoThreadLocalState> global_state =
       KinetoThreadLocalState::getGlobal();
@@ -767,9 +759,6 @@ void enableProfilerWithEventPostProcess(
   TORCH_CHECK(
       config.state != ProfilerState::NVTX,
       "NVTX does not support post processing callback.");
-  TORCH_CHECK(
-      config.state != ProfilerState::ITT,
-      "ITT does not support post processing callback.");
   TORCH_INTERNAL_ASSERT(
       KinetoThreadLocalState::getGlobal() == nullptr,
       "On-demand profiling does not support post processing callback");
@@ -803,9 +792,6 @@ void enableProfiler(
     switch (config.state) {
       case ProfilerState::NVTX:
         torch::profiler::impl::pushNVTXCallbacks(config, scopes);
-        break;
-      case ProfilerState::ITT:
-        torch::profiler::impl::pushITTCallbacks(config, scopes);
         break;
       case ProfilerState::PRIVATEUSE1:
         torch::profiler::impl::pushPRIVATEUSE1CallbacksStub(config, scopes);

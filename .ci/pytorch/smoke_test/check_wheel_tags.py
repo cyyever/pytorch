@@ -18,9 +18,6 @@ from pathlib import Path
 EXPECTED_PLATFORM_TAGS: dict[str, str] = {
     "linux": r"_x86_64$",
     "linux-aarch64": r"_aarch64$",
-    "windows": r"^win_amd64$",
-    "win32": r"^win_amd64$",
-    "windows-arm64": r"^win_arm64$",
     "macos-arm64": r"^macosx_\d+_\d+_arm64$",
     "darwin": r"^macosx_\d+_\d+_(arm64|x86_64)$",
 }

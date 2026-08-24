@@ -30,9 +30,6 @@ find_path(CUDSS_INCLUDE_PATH cudss.h
 set(CUDSS_LIBRARY $ENV{CUDSS_LIBRARY} CACHE PATH "Path to the CUDSS library file (e.g., libcudss.so)")
 
 set(CUDSS_LIBRARY_NAME "libcudss.so")
-if(MSVC)
-  set(CUDSS_LIBRARY_NAME "cudss.lib")
-endif()
 
 find_library(CUDSS_LIBRARY_PATH ${CUDSS_LIBRARY_NAME}
   PATHS ${CUDSS_LIBRARY}

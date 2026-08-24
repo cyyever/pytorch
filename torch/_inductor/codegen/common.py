@@ -594,7 +594,6 @@ def _init_builtin_backend_registration() -> None:
     from .halide import HalideScheduling
     from .mps import MetalScheduling
     from .pallas import PallasScheduling
-    from .python_wrapper_mtia import PythonWrapperMtia
     from .triton import TritonScheduling
     from .wrapper import PythonWrapperCodegen
     from .wrapper_fxir import WrapperFxCodegen
@@ -668,15 +667,6 @@ def _init_builtin_backend_registration() -> None:
             MetalScheduling,
             PythonWrapperCodegen,
             CppWrapperMps,
-            WrapperFxCodegen,
-        )
-
-    if get_scheduling_for_device("mtia") is None:
-        register_backend_for_device(
-            "mtia",
-            TritonScheduling,
-            PythonWrapperMtia,
-            CppWrapperGpu,
             WrapperFxCodegen,
         )
 
@@ -766,7 +756,6 @@ def _initialize_device_op_overrides():
             mps_device_op_overrides,  # noqa: F401
         )
         from .cuda import device_op_overrides  # noqa: F401
-        from .mtia import device_op_overrides as mtia_op_overrides  # noqa: F401
         from .xpu import device_op_overrides as xpu_op_overrides  # noqa: F401
 
         # TPU uses Pallas for codegen and only needs no-op overrides

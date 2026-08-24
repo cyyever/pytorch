@@ -12,12 +12,10 @@ using c10::intrusive_ptr_target;
 using c10::make_intrusive;
 using c10::weak_intrusive_ptr;
 
-#ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wself-move"
 #pragma GCC diagnostic ignored "-Wfree-nonheap-object"
-#endif
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wself-assign-overloaded"

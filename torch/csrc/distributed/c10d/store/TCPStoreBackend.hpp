@@ -5,13 +5,8 @@
 #include <torch/csrc/distributed/c10d/TCPStore.hpp>
 #include <torch/csrc/distributed/c10d/socket.h>
 
-#ifdef _WIN32
-#include <io.h>
-#include <winsock2.h>
-#else
 #include <poll.h>
 #include <unistd.h>
-#endif
 
 namespace c10d::detail {
 

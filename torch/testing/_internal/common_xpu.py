@@ -3,7 +3,7 @@ import functools
 
 import torch
 import torch.xpu
-from torch.testing._internal.common_utils import IS_WINDOWS, LazyVal, TEST_XPU
+from torch.testing._internal.common_utils import LazyVal, TEST_XPU
 
 
 XPU_ALREADY_INITIALIZED_ON_IMPORT = torch.xpu.is_initialized()
@@ -75,7 +75,7 @@ Xe2_Or_Later = LazyVal(
 
 def evaluate_platform_supports_flash_attention():
     if TEST_XPU:
-        return not IS_WINDOWS and Xe2_Or_Later
+        return Xe2_Or_Later
     return False
 
 

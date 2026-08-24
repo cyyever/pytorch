@@ -13,12 +13,6 @@ namespace c10 {
 // C4146: unary minus operator applied to unsigned type, result still unsigned
 // C4804: unsafe use of type 'bool' in operation
 // It can be addressed by disabling the following warning.
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4146)
-#pragma warning(disable : 4804)
-#pragma warning(disable : 4018)
-#endif
 
 // The overflow checks may involve float to int conversion which may
 // trigger precision loss warning. Re-enable the warning once the code
@@ -88,9 +82,6 @@ std::enable_if_t<std::is_floating_point_v<From>, bool> overflows(
 
 C10_CLANG_DIAGNOSTIC_POP()
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 template <typename To, typename From>
 std::enable_if_t<is_complex<From>::value, bool> overflows(

@@ -300,11 +300,7 @@ class CUTLASSTemplate(KernelTemplate):
                 #ifdef __GNUC__ // Applies to any compiler with GNU extensions (clang and g++)
                 #define PT_EXPORT __attribute__((__visibility__("default")))
                 #else
-                #ifdef _WIN32
-                #define PT_EXPORT __declspec(dllexport)
-                #else
                 #define PT_EXPORT
-                #endif
                 #endif
             """
         )

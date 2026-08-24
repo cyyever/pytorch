@@ -168,14 +168,8 @@ They require JetPack 4.2 and above, and [@dusty-nv](https://github.com/dusty-nv)
 If you are installing from source, you will need:
 - Python 3.10 or later
 - A compiler that fully supports C++20, such as clang or gcc (gcc 11.3.0 or newer is required, on Linux)
-- Visual Studio or Visual Studio Build Tool (Windows only)
 - At least 10 GB of free disk space
 - 30-60 minutes for the initial build (subsequent rebuilds are much faster)
-
-\* PyTorch CI uses Visual C++ BuildTools, which come with Visual Studio Enterprise,
-Professional, or Community Editions. You can also install the build tools from
-https://visualstudio.microsoft.com/visual-cpp-build-tools/. The build tools *do not*
-come with Visual Studio Code by default.
 
 An example of environment setup is shown below:
 
@@ -185,14 +179,6 @@ An example of environment setup is shown below:
 $ source <CONDA_INSTALL_DIR>/bin/activate
 $ conda create -y -n <CONDA_NAME>
 $ conda activate <CONDA_NAME>
-```
-* Windows:
-
-```bash
-$ source <CONDA_INSTALL_DIR>\Scripts\activate.bat
-$ conda create -y -n <CONDA_NAME>
-$ conda activate <CONDA_NAME>
-$ call "C:\Program Files\Microsoft Visual Studio\<VERSION>\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 ```
 
 A conda environment is not required.  You can also do a PyTorch build in a
@@ -228,7 +214,7 @@ Other potentially useful environment variables are documented in [`cmake/EnvVarF
 ##### Intel GPU Support
 If you want to compile with Intel GPU support, follow these
 - [PyTorch Prerequisites for Intel GPUs](https://www.intel.com/content/www/us/en/developer/articles/tool/pytorch-prerequisites-for-intel-gpu.html) instructions.
-- Intel GPU is supported for Linux and Windows.
+- Intel GPU is supported on Linux.
 
 If you want to disable Intel GPU support, export the environment variable `USE_XPU=0`.
 Other potentially useful environment variables are documented in [`cmake/EnvVarForwarding.cmake`](./cmake/EnvVarForwarding.cmake).
@@ -256,23 +242,11 @@ pip install --group dev
 
 ```bash
 pip install mkl-static mkl-include
-# CUDA only: Add LAPACK support for the GPU if needed
-# magma installation: run with active conda environment. specify CUDA version to install
-.ci/docker/common/install_magma_conda.sh 12.4
 
 # (optional) If using torch.compile with inductor/triton, install the matching version of triton
 # Run from the pytorch directory after cloning
 # For Intel GPU support, please explicitly `export USE_XPU=1` before running command.
 make triton
-```
-
-**On Windows**
-
-```bash
-pip install mkl-static mkl-include
-# Add these packages if torch.distributed is needed.
-# Distributed package support on Windows is a prototype feature and is subject to changes.
-conda install -c conda-forge libuv=1.51
 ```
 
 #### Install PyTorch
@@ -304,10 +278,6 @@ export CMAKE_PREFIX_PATH="${VIRTUAL_ENV}:${CMAKE_PREFIX_PATH}"
 python -m pip install --no-build-isolation -v -e .
 ```
 
-**On Windows**
-
-If you want to build legacy python code, please refer to [Building on legacy code and CUDA](https://github.com/pytorch/pytorch/blob/main/CONTRIBUTING.md#building-on-legacy-code-and-cuda)
-
 **CPU-only builds**
 
 In this mode PyTorch computations will run on your CPU, not your GPU.
@@ -316,43 +286,11 @@ In this mode PyTorch computations will run on your CPU, not your GPU.
 python -m pip install --no-build-isolation -v -e .
 ```
 
-Note on OpenMP: The desired OpenMP implementation is Intel OpenMP (iomp). In order to link against iomp, you'll need to manually download the library and set up the building environment by tweaking `CMAKE_INCLUDE_PATH` and `LIB`. The instruction [here](https://docs.pytorch.org/docs/main/notes/windows.html#building-from-source) is an example for setting up both MKL and Intel OpenMP. Without these configurations for CMake, Microsoft Visual C OpenMP runtime (vcomp) will be used.
-
 **CUDA based build**
 
-In this mode PyTorch computations will leverage your GPU via CUDA for faster number crunching
+In this mode PyTorch computations will leverage your GPU via CUDA for faster number crunching.
 
-[NVTX](https://docs.nvidia.com/gameworks/content/gameworkslibrary/nvtx/nvidia_tools_extension_library_nvtx.htm) is needed to build PyTorch with CUDA.
-NVTX is a part of CUDA distributive, where it is called "Nsight Compute". To install it onto an already installed CUDA run CUDA installation once again and check the corresponding checkbox.
-Make sure that CUDA with Nsight Compute is installed after Visual Studio.
-
-Currently, VS 2017 / 2019, and Ninja are supported as the generator of CMake. If `ninja.exe` is detected in `PATH`, then Ninja will be used as the default generator, otherwise, it will use VS 2017 / 2019.
-<br/> If Ninja is selected as the generator, the latest MSVC will get selected as the underlying toolchain.
-
-Additional libraries such as
-[Magma](https://developer.nvidia.com/magma), [oneDNN, a.k.a. MKLDNN or DNNL](https://github.com/oneapi-src/oneDNN), and [Sccache](https://github.com/mozilla/sccache) are often needed. Please refer to the [installation-helper](https://github.com/pytorch/pytorch/tree/main/.ci/pytorch/win-test-helpers/installation-helpers) to install them.
-
-You can refer to the [build_pytorch.bat](https://github.com/pytorch/pytorch/blob/main/.ci/pytorch/win-test-helpers/build_pytorch.bat) script for some other environment variables configurations
-
-```cmd
-cmd
-
-:: Set the environment variables after you have downloaded and unzipped the mkl package,
-:: else CMake would throw an error as `Could NOT find OpenMP`.
-set CMAKE_INCLUDE_PATH={Your directory}\mkl\include
-set LIB={Your directory}\mkl\lib;%LIB%
-
-:: Read the content in the previous section carefully before you proceed.
-:: [Optional] If you want to override the underlying toolset used by Ninja and Visual Studio with CUDA, please run the following script block.
-:: "Visual Studio 2019 Developer Command Prompt" will be run automatically.
-:: Make sure you have CMake >= 3.12 before you do this when you use the Visual Studio generator.
-set CMAKE_GENERATOR_TOOLSET_VERSION=14.27
-set DISTUTILS_USE_SDK=1
-for /f "usebackq tokens=*" %i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -version [15^,17^) -products * -latest -property installationPath`) do call "%i\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=%CMAKE_GENERATOR_TOOLSET_VERSION%
-
-:: [Optional] If you want to override the CUDA host compiler
-set CUDAHOSTCXX=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\cl.exe
-
+```bash
 python -m pip install --no-build-isolation -v -e .
 ```
 
@@ -360,7 +298,7 @@ python -m pip install --no-build-isolation -v -e .
 
 In this mode PyTorch with Intel GPU support will be built.
 
-Please make sure [the common prerequisites](#prerequisites) as well as [the prerequisites for Intel GPU](#intel-gpu-support) are properly installed and the environment variables are configured prior to starting the build. For build tool support, `Visual Studio 2022` is required.
+Please make sure [the common prerequisites](#prerequisites) as well as [the prerequisites for Intel GPU](#intel-gpu-support) are properly installed and the environment variables are configured prior to starting the build.
 
 Then PyTorch can be built with the command:
 

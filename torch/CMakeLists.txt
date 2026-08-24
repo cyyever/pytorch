@@ -20,11 +20,7 @@ if(NOT TORCH_INSTALL_LIB_DIR)
   set(TORCH_INSTALL_LIB_DIR lib)
 endif()
 
-if(MSVC)
-    set(LIBSHM_SUBDIR libshm_windows)
-else()
-    set(LIBSHM_SUBDIR libshm)
-endif()
+set(LIBSHM_SUBDIR libshm)
 
 set(LIBSHM_SRCDIR ${TORCH_SRC_DIR}/lib/${LIBSHM_SUBDIR})
 add_subdirectory(${LIBSHM_SRCDIR})
@@ -53,11 +49,8 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}/caffe2/aten/src
     ${CMAKE_BINARY_DIR}/third_party
 
-    ${TORCH_ROOT}/third_party/valgrind-headers
-
     ${TORCH_ROOT}/third_party/gloo
     ${TORCH_ROOT}/third_party/kineto/libkineto/include
-    ${TORCH_ROOT}/third_party/cpp-httplib
     ${TORCH_ROOT}/third_party/nlohmann/include
 
     ${TORCH_SRC_DIR}/csrc
@@ -71,7 +64,6 @@ list(APPEND TORCH_PYTHON_INCLUDE_DIRECTORIES ${LIBSHM_SRCDIR})
 set(TORCH_PYTHON_LINK_LIBRARIES
     Python::Module
     pybind::pybind11
-    httplib
     nlohmann
     moodycamel
     shm
@@ -100,34 +92,12 @@ set(TORCH_PYTHON_COMPILE_OPTIONS)
 
 set(TORCH_PYTHON_LINK_FLAGS "")
 
-if(MSVC)
-    string(APPEND TORCH_PYTHON_LINK_FLAGS " /NODEFAULTLIB:LIBCMT.LIB")
-    # Python headers use #pragma comment(lib, "pythonXX") which makes MSVC search
-    # for the library by bare name.  Add the directory so the linker can find it.
-    foreach(_pylib IN LISTS Python_LIBRARIES)
-      if(_pylib MATCHES "python[0-9].*\\.lib$")
-        get_filename_component(_pylib_dir "${_pylib}" DIRECTORY)
-        string(APPEND TORCH_PYTHON_LINK_FLAGS " /LIBPATH:\"${_pylib_dir}\"")
-        break()
-      endif()
-    endforeach()
-    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${Python_LIBRARIES})
-    if(NOT CMAKE_BUILD_TYPE MATCHES "Release")
-      string(APPEND TORCH_PYTHON_LINK_FLAGS " /DEBUG:FULL")
-    endif()
-elseif(APPLE)
+if(APPLE)
     string(APPEND TORCH_PYTHON_LINK_FLAGS " -undefined dynamic_lookup")
 else()
     list(APPEND TORCH_PYTHON_COMPILE_OPTIONS
       -fno-strict-aliasing
       -Wno-strict-aliasing)
-endif()
-
-if(USE_ITT)
-  list(APPEND TORCH_PYTHON_SRCS
-    ${TORCH_SRC_DIR}/csrc/itt.cpp
-  )
-  list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_ITT)
 endif()
 
 if(USE_CUDA)
@@ -164,9 +134,7 @@ if(USE_ROCM)
       USE_ROCM
       __HIP_PLATFORM_AMD__
       )
-    if(NOT WIN32)
-      list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${ROCM_ROCTX_LIB})
-    endif()
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${ROCM_ROCTX_LIB})
     if(USE_HIPSPARSELT)
         list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_HIPSPARSELT)
     endif()
@@ -200,10 +168,6 @@ endif()
 
 if(USE_MPS)
     list(APPEND TORCH_PYTHON_SRCS ${MPS_PYTHON_SRCS})
-endif()
-
-if(USE_VALGRIND AND NOT WIN32)
-    list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_VALGRIND)
 endif()
 
 add_custom_target(torch_python_stubs DEPENDS
@@ -255,11 +219,7 @@ add_custom_command(
     "${TORCH_ROOT}"
 )
 if(USE_DISTRIBUTED)
-    if(WIN32)
-      append_filelist("libtorch_python_distributed_core_sources" TORCH_PYTHON_SRCS)
-    else()
-      append_filelist("libtorch_python_distributed_sources" TORCH_PYTHON_SRCS)
-    endif()
+    append_filelist("libtorch_python_distributed_sources" TORCH_PYTHON_SRCS)
     # Disable certain warnings for GCC-9.X
     if(CMAKE_COMPILER_IS_GNUCXX)
       set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/c10d/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
@@ -279,7 +239,7 @@ if(USE_DISTRIBUTED)
 
 endif()
 
-if(USE_NCCL AND NOT WIN32)
+if(USE_NCCL)
     list(APPEND TORCH_PYTHON_SRCS
       ${TORCH_SRC_DIR}/csrc/cuda/python_nccl.cpp)
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_NCCL)
@@ -428,11 +388,9 @@ if(BUILD_PYTHON AND NOT BUILD_LIBTORCH_WHL)
     # $ORIGIN/lib as the install RPATH (the global default is just $ORIGIN).
     INSTALL_RPATH "${_rpath_portable_origin}/lib"
   )
-  if(NOT WIN32)
-    set_target_properties(_C PROPERTIES
-      C_VISIBILITY_PRESET "default"
-    )
-  endif()
+  set_target_properties(_C PROPERTIES
+    C_VISIBILITY_PRESET "default"
+  )
   # The extension module belongs to the Python package.
   if(SKBUILD)
     install(TARGETS _C
@@ -476,9 +434,7 @@ if(BUILD_PYTHON AND NOT BUILD_LIBTORCH_WHL)
       set_target_properties(_nccl_ep PROPERTIES
         INSTALL_RPATH "${_rpath_portable_origin}/lib")
     endif()
-    if(NOT WIN32)
-      set_target_properties(_nccl_ep PROPERTIES C_VISIBILITY_PRESET "default")
-    endif()
+    set_target_properties(_nccl_ep PROPERTIES C_VISIBILITY_PRESET "default")
     if(SKBUILD)
       install(TARGETS _nccl_ep
         RUNTIME DESTINATION "${SKBUILD_PLATLIB_DIR}/torch"

@@ -61,16 +61,12 @@ install(FILES ${CMAKE_BINARY_DIR}/caffe2/core/macros.h
 
 # ---[ ATen specific
 if(INTERN_BUILD_ATEN_OPS)
-  if(MSVC)
-    set(OPT_FLAG "/fp:strict ")
-  else(MSVC)
-    set(OPT_FLAG "-O3 ")
-    if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      set(OPT_FLAG " ")
-    endif()
-  endif(MSVC)
+  set(OPT_FLAG "-O3 ")
+  if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+    set(OPT_FLAG " ")
+  endif()
 
-  if(NOT MSVC AND NOT "${CMAKE_C_COMPILER_ID}" MATCHES "Clang")
+  if(NOT "${CMAKE_C_COMPILER_ID}" MATCHES "Clang")
     set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/../aten/src/ATen/MapAllocator.cpp PROPERTIES COMPILE_FLAGS "-fno-openmp")
   endif()
 
@@ -168,11 +164,6 @@ if(INTERN_BUILD_ATEN_OPS)
     set(GEN_XPU_FLAG --xpu)
   endif()
 
-  set(GEN_MTIA_FLAG)
-  if(USE_MTIA)
-    set(GEN_MTIA_FLAG --mtia)
-  endif()
-
   set(CUSTOM_BUILD_FLAGS)
 
   if(SELECTED_OP_LIST)
@@ -253,7 +244,6 @@ if(INTERN_BUILD_ATEN_OPS)
       ${GEN_ROCM_FLAG}
       ${GEN_MPS_FLAG}
       ${GEN_XPU_FLAG}
-      ${GEN_MTIA_FLAG}
       ${CUSTOM_BUILD_FLAGS}
   )
 
@@ -386,11 +376,7 @@ if(INTERN_BUILD_ATEN_OPS)
       string(APPEND CMAKE_HIP_FLAGS " -DHAVE_AVX512_CPU_DEFINITION")
     endif()
     list(APPEND CPU_CAPABILITY_NAMES "AVX512")
-    if(MSVC)
-      list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}/arch:AVX512")
-    else(MSVC)
-      list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma")
-    endif(MSVC)
+    list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma")
   endif(CXX_AVX512_FOUND)
 
   if(CXX_AVX2_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
@@ -413,27 +399,13 @@ if(INTERN_BUILD_ATEN_OPS)
       if($ENV{ATEN_AVX512_256} MATCHES "TRUE")
         if(CXX_AVX512_FOUND)
           message("-- ATen AVX2 kernels will use 32 ymm registers")
-          if(MSVC)
-            list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}/arch:AVX512")
-          else(MSVC)
-            list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -march=native ${CPU_NO_AVX256_SPLIT_FLAGS}")
-          endif(MSVC)
+          list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -march=native ${CPU_NO_AVX256_SPLIT_FLAGS}")
         endif(CXX_AVX512_FOUND)
       endif()
     else()
-      if(MSVC)
-        list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}/arch:AVX2")
-      else(MSVC)
-        list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx2 -mfma -mf16c ${CPU_NO_AVX256_SPLIT_FLAGS}")
-      endif(MSVC)
+      list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx2 -mfma -mf16c ${CPU_NO_AVX256_SPLIT_FLAGS}")
     endif()
   endif(CXX_AVX2_FOUND)
-
-  if(CXX_VSX_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
-    add_compile_definitions("HAVE_VSX_CPU_DEFINITION")
-    LIST(APPEND CPU_CAPABILITY_NAMES "VSX")
-    LIST(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}  ${CXX_VSX_FLAGS}")
-  endif(CXX_VSX_FOUND)
 
   if(CXX_ZVECTOR_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
     add_compile_definitions("HAVE_ZVECTOR_CPU_DEFINITION")
@@ -441,13 +413,6 @@ if(INTERN_BUILD_ATEN_OPS)
     LIST(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}  ${CXX_ZVECTOR_FLAGS}")
   endif(CXX_ZVECTOR_FOUND)
 
-  if(CXX_SVE256_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
-    add_compile_definitions("HAVE_SVE_CPU_DEFINITION")
-    list(APPEND CPU_CAPABILITY_NAMES "SVE256")
-    list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -march=armv8-a+sve+bf16 -D__ARM_FEATURE_BF16 -msve-vector-bits=256")
-    list(APPEND CPU_CAPABILITY_NAMES "SVE128")
-    list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -march=armv8-a+sve+bf16 -D__ARM_FEATURE_BF16 -msve-vector-bits=128")
-  endif()
 
   list(LENGTH CPU_CAPABILITY_NAMES NUM_CPU_CAPABILITY_NAMES)
   math(EXPR NUM_CPU_CAPABILITY_NAMES "${NUM_CPU_CAPABILITY_NAMES}-1")
@@ -466,14 +431,10 @@ if(INTERN_BUILD_ATEN_OPS)
       configure_file("${PROJECT_SOURCE_DIR}/cmake/IncludeSource.cpp.in" ${NEW_IMPL})
       set(cpu_kernel_cpp ${NEW_IMPL} ${cpu_kernel_cpp} PARENT_SCOPE) # Create list of copies
       list(GET CPU_CAPABILITY_FLAGS ${i} FLAGS)
-      if(MSVC)
-        set(EXTRA_FLAGS "/DCPU_CAPABILITY=${CPU_CAPABILITY} /DCPU_CAPABILITY_${CPU_CAPABILITY}")
-      else(MSVC)
-        set(EXTRA_FLAGS "-DCPU_CAPABILITY=${CPU_CAPABILITY} -DCPU_CAPABILITY_${CPU_CAPABILITY}")
-      endif(MSVC)
+      set(EXTRA_FLAGS "-DCPU_CAPABILITY=${CPU_CAPABILITY} -DCPU_CAPABILITY_${CPU_CAPABILITY}")
 
       # Only parallelize the SortingKernel for now to avoid side effects
-      if(${NAME} STREQUAL "native/cpu/SortingKernel.cpp" AND NOT MSVC AND USE_OMP)
+      if(${NAME} STREQUAL "native/cpu/SortingKernel.cpp" AND USE_OMP)
         string(APPEND EXTRA_FLAGS " -D_GLIBCXX_PARALLEL")
       endif()
 

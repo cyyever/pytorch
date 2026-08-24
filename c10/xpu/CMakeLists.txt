@@ -62,7 +62,3 @@ foreach(file ${C10_XPU_HEADERS})
 endforeach()
 install(FILES ${CMAKE_BINARY_DIR}/c10/xpu/impl/xpu_cmake_macros.h
   DESTINATION include/c10/xpu/impl)
-
-if(MSVC AND C10_XPU_BUILD_SHARED_LIBS)
-  install(FILES $<TARGET_PDB_FILE:c10_xpu> DESTINATION lib OPTIONAL)
-endif()

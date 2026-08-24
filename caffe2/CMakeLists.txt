@@ -84,16 +84,6 @@ endif()
 # Note: the folders that are being commented out have not been properly
 # addressed yet.
 
-if(NOT MSVC AND USE_XNNPACK)
-  if(NOT TARGET fxdiv)
-    set(FXDIV_BUILD_TESTS OFF CACHE BOOL "")
-    set(FXDIV_BUILD_BENCHMARKS OFF CACHE BOOL "")
-    add_subdirectory(
-      "${FXDIV_SOURCE_DIR}"
-      "${CMAKE_BINARY_DIR}/FXdiv")
-  endif()
-endif()
-
 add_subdirectory(core)
 add_subdirectory(serialize)
 add_subdirectory(utils)
@@ -441,13 +431,6 @@ if(NOT INTERN_DISABLE_AUTOGRAD)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/autograd/TraceTypeManual.cpp
     ${TORCH_SRC_DIR}/csrc/autograd/VariableTypeManual.cpp
-  )
-endif()
-
-if(${USE_ITT})
-  list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/itt_wrapper.cpp
-    ${TORCH_SRC_DIR}/csrc/profiler/stubs/itt.cpp
   )
 endif()
 
@@ -997,17 +980,6 @@ elseif(USE_CUDA)
   if(BUILD_LAZY_CUDA_LINALG)
     add_library(torch_cuda_linalg ${ATen_CUDA_LINALG_SRCS})
     target_compile_definitions(torch_cuda_linalg PRIVATE USE_CUDA BUILD_LAZY_CUDA_LINALG)
-    # Library order is important during static linking
-    # `torch::magma` should be mentioned before other CUDA
-    # to transitively include all symbols present in torch_cuda/torch_cpu
-    if(USE_MAGMA)
-      target_link_libraries(torch_cuda_linalg PRIVATE torch::magma)
-      # CUDAHooks reports version of MAGMA PyTorch was compiled against, i.e. needs to be able to include magma headers
-      get_target_property(HOOKS_INCLUDE_DIRECTORIES torch_cuda INCLUDE_DIRECTORIES)
-      if(NOT "${MAGMA_INCLUDE_DIR}" IN_LIST HOOKS_INCLUDE_DIRECTORIES)
-        set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/cuda/detail/CUDAHooks.cpp PROPERTIES INCLUDE_DIRECTORIES  "${MAGMA_INCLUDE_DIR}")
-      endif()
-    endif()
     target_link_libraries(torch_cuda_linalg PRIVATE
         torch_cpu
         torch_cuda
@@ -1021,11 +993,6 @@ elseif(USE_CUDA)
       target_link_libraries(torch_cuda_linalg PRIVATE
           CUDA::cusolver
       )
-    endif()
-    # NS: TODO, is this really necessary?
-    if(USE_MAGMA AND CAFFE2_STATIC_LINK_CUDA)
-      target_link_libraries(torch_cuda_linalg PRIVATE
-          CUDA::culibos ${CMAKE_DL_LIBS})
     endif()
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/native/cuda/LinearAlgebraStubs.cpp PROPERTIES COMPILE_FLAGS "-DBUILD_LAZY_CUDA_LINALG")
     install(TARGETS torch_cuda_linalg DESTINATION "${TORCH_INSTALL_LIB_DIR}")
@@ -1120,10 +1087,6 @@ if(USE_XPU)
   endif()
 endif()
 
-if(NOT MSVC AND USE_XNNPACK)
-  TARGET_LINK_LIBRARIES(torch_cpu PRIVATE fxdiv)
-endif()
-
 # ==========================================================
 # formerly-libtorch flags
 # ==========================================================
@@ -1136,11 +1099,6 @@ if(NOT NO_API)
     ${TORCH_SRC_DIR}/csrc/api/include)
 endif()
 
-if(USE_CUDA AND MSVC)
-  # -INCLUDE is used to ensure torch_cuda is linked against in a project that relies on them.
-  # Related issue: https://github.com/pytorch/pytorch/issues/31611
-  target_link_libraries(torch_cuda INTERFACE "-INCLUDE:?warp_size@cuda@at@@YAHXZ")
-endif()
 
 set(TH_CPU_INCLUDE
   # dense
@@ -1184,9 +1142,6 @@ if(USE_KINETO)
   target_include_directories(torch_cpu PRIVATE
     ${TORCH_ROOT}/third_party/kineto/libkineto/src)
 endif()
-
-target_include_directories(torch_cpu PRIVATE
-  ${TORCH_ROOT}/third_party/cpp-httplib)
 
 target_include_directories(torch_cpu PRIVATE
   ${TORCH_ROOT}/third_party/nlohmann/include)
@@ -1409,35 +1364,6 @@ if(USE_DISTRIBUTED)
         PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
     endif()
     target_compile_definitions(torch_cpu PUBLIC USE_C10D_MPI)
-  endif()
-endif()
-
-if($ENV{TH_BINARY_BUILD})
-  if(NOT MSVC AND USE_CUDA AND NOT APPLE)
-    # Note [Extra MKL symbols for MAGMA in torch_cpu]
-    #
-    # When we build CUDA libraries and link against MAGMA, MAGMA makes use of
-    # some BLAS symbols in its CPU fallbacks when it has no GPU versions
-    # of kernels.  Previously, we ensured the BLAS symbols were filled in by
-    # MKL by linking torch_cuda with BLAS, but when we are statically linking
-    # against MKL (when we do wheel builds), this actually ends up pulling in a
-    # decent chunk of MKL into torch_cuda, inflating our torch_cuda binary
-    # size by 8M.  torch_cpu exposes most of the MKL symbols we need, but
-    # empirically we determined that there are four which it doesn't provide.  If
-    # we link torch_cpu with these --undefined symbols, we can ensure they
-    # do get pulled in, and then we can avoid statically linking in MKL to
-    # torch_cuda at all!
-    #
-    # We aren't really optimizing for binary size on Windows (and this link
-    # line doesn't work on Windows), so don't do it there.
-    #
-    # These linker commands do not work on OS X, do not attempt this there.
-    # (It shouldn't matter anyway, though, because OS X has dropped CUDA support)
-    foreach(_symb  slaed0 daled0 dormql sormql zheevd cheevd)
-    STRING(APPEND _undefined_link_flags " -Wl,--undefined=mkl_lapack_${_symb}")
-    endforeach(_symb)
-    set_target_properties(torch_cpu PROPERTIES LINK_FLAGS  ${_undefined_link_flags})
-
   endif()
 endif()
 
@@ -1754,9 +1680,6 @@ if(BUILD_TEST)
       set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
       install(TARGETS ${test_name} DESTINATION test)
       # Install PDB files for MSVC builds
-      if(MSVC AND BUILD_SHARED_LIBS)
-        install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
-      endif()
     endif()
   endforeach()
 
@@ -1775,9 +1698,6 @@ if(BUILD_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
         # Install PDB files for MSVC builds
-        if(MSVC AND BUILD_SHARED_LIBS)
-          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
-        endif()
       endif()
     endforeach()
   endif()
@@ -1797,9 +1717,6 @@ if(BUILD_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
         # Install PDB files for MSVC builds
-        if(MSVC AND BUILD_SHARED_LIBS)
-          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
-        endif()
       endif()
     endforeach()
   endif()

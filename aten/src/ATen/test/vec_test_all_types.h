@@ -22,20 +22,15 @@
 #else
 #define CACHE_LINE 32
 #endif
-#ifndef _WIN32
 #include <ATen/native/cpu/utils.h>
-#endif
 #if defined(__GNUC__)
 #define CACHE_ALIGN __attribute__((aligned(CACHE_LINE)))
 #define not_inline __attribute__((noinline))
-#elif defined(_WIN32)
-#define CACHE_ALIGN __declspec(align(CACHE_LINE))
-#define not_inline __declspec(noinline)
 #else
 CACHE_ALIGN #define
 #define not_inline
 #endif
-#if defined(CPU_CAPABILITY_DEFAULT) || defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_DEFAULT)
 #define TEST_AGAINST_DEFAULT 1
 #elif !defined(CPU_CAPABILITY_AVX512) && !defined(CPU_CAPABILITY_AVX2) && !defined(CPU_CAPABILITY_VSX) && !defined(CPU_CAPABILITY_ZVECTOR)
 #define TEST_AGAINST_DEFAULT 1
@@ -55,9 +50,6 @@ CACHE_ALIGN #define
 #if defined(CPU_CAPABILITY_ZVECTOR) || defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_AVX2) || \
   defined(CPU_CAPABILITY_AVX512) && (defined(__GNUC__) || defined(__GNUG__))
 #undef CHECK_DEQUANT_WITH_LOW_PRECISION
-#define CHECK_WITH_FMA 1
-#elif defined(CPU_CAPABILITY_SVE256)
-#define CHECK_DEQUANT_WITH_LOW_PRECISION 1
 #define CHECK_WITH_FMA 1
 #elif !defined(CPU_CAPABILITY_VSX) && !defined(CPU_CAPABILITY_AVX2)
 #undef CHECK_DEQUANT_WITH_LOW_PRECISION
@@ -1098,7 +1090,7 @@ void test_binary_fp8(
     Op1 ScalarFunction,
     Op2 VecFunction,
     bool is_bit_wise = false) {
-    #if defined(CPU_CAPABILITY_AVX512) && !defined(__APPLE__) && !defined(_MSC_VER)
+    #if defined(CPU_CAPABILITY_AVX512) && !defined(__APPLE__)
     for (const auto i : c10::irange(10)) {
         float f_val0 = static_cast<float>(i + 0.2);
         float f_val1 = static_cast<float>(i + 0.3);

@@ -1,4 +1,4 @@
-#if !defined(C10_MOBILE) && !defined(ANDROID)
+#if !defined(C10_MOBILE)
 #include <torch/csrc/inductor/aoti_eager/kernel_holder.h>
 
 #include <ATen/core/dispatch/Dispatcher.h>
@@ -7,10 +7,10 @@
 #include <torch/csrc/PyInterpreter.h>
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cuda.h>
 #endif
-#ifdef USE_XPU
+#if defined(USE_XPU)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_xpu.h>
 #endif
 
@@ -496,13 +496,13 @@ std::shared_ptr<AOTIModelContainerRunner> AOTIPythonKernelHolder::
       " now.");
   // NOLINTNEXTLINE(bugprone-branch-clone)
   if (device_.type() == c10::DeviceType::CUDA) {
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
     return std::make_shared<AOTIModelContainerRunnerCuda>(so_path);
 #else
     return nullptr;
 #endif
   } else if (device_.type() == c10::DeviceType::XPU) {
-#ifdef USE_XPU
+#if defined(USE_XPU)
     return std::make_shared<AOTIModelContainerRunnerXpu>(so_path);
 #else
     return nullptr;

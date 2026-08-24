@@ -192,7 +192,6 @@ else:
 
 
 has_half: bool = True
-has_magma: bool = torch._C._has_magma
 
 default_generators: tuple[torch._C.Generator] = ()  # type: ignore[assignment]
 
@@ -659,7 +658,6 @@ def cudart():
         >>> torch.cuda.synchronize()
         >>> print("====== Start nsys profiling ======")
         >>> check_error(cudart().cudaProfilerStart())
-        >>> with torch.autograd.profiler.emit_nvtx():
         >>>     result = perform_cuda_operations_with_streams()
         >>>     print("CUDA operations completed.")
         >>> check_error(torch.cuda.cudart().cudaProfilerStop())
@@ -2197,7 +2195,6 @@ __all__ = [
     "graph_pool_handle",
     "graphs",
     "has_half",
-    "has_magma",
     "host_memory_stats",
     "host_memory_stats_as_nested_dict",
     "init",

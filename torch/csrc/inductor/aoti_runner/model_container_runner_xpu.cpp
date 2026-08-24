@@ -1,4 +1,4 @@
-#if !defined(C10_MOBILE) && !defined(ANDROID)
+#if !defined(C10_MOBILE)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_xpu.h>
 
 namespace torch::inductor {

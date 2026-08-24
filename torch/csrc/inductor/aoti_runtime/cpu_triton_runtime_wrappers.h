@@ -9,9 +9,6 @@
 
 #pragma once
 
-#ifdef _WIN32
-#error "CPU AOTI Triton runtime helpers are not supported on Windows"
-#endif
 
 #include <c10/util/Exception.h>
 #include <dlfcn.h>

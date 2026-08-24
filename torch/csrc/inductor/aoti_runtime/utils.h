@@ -16,8 +16,6 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 #define AOTI_NOINLINE __attribute__((noinline))
-#elif _MSC_VER
-#define AOTI_NOINLINE __declspec(noinline)
 #else
 #define AOTI_NOINLINE
 #endif

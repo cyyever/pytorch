@@ -340,86 +340,62 @@ function(torch_compile_options libname)
   set_property(TARGET ${libname} PROPERTY CXX_STANDARD 20)
 
   # until they can be unified, keep these lists synced with setup.py
-  if(MSVC)
-
-    if(MSVC_Z7_OVERRIDE)
-      set(MSVC_DEBINFO_OPTION "/Z7")
-    else()
-      set(MSVC_DEBINFO_OPTION "/Zi")
+  set(private_compile_options
+    -Wall
+    -Wextra
+    -Wdeprecated
+    -Wunused
+    -Wno-unused-parameter
+    -Wno-missing-field-initializers
+    -Wno-array-bounds
+    -Wno-unknown-pragmas
+    -Wno-strict-overflow
+    -Wno-strict-aliasing
+    )
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    list(APPEND private_compile_options -Wredundant-move)
+    # -Wno-interference-size only exists in GCC 12+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
+      list(APPEND private_compile_options -Wno-interference-size)
     endif()
-
-    # Add /permissive- flag for conformance mode to the compiler.
-    # This will force more strict check to the code standard.
-    # For MS official doc: https://learn.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance?view=msvc-170#remarks
-    target_compile_options(${libname} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:/permissive->)
-    # This option enables a token-based preprocessor that conforms to C99 and C++11 and later standards.
-    # For MS official doc: https://learn.microsoft.com/en-us/cpp/build/reference/zc-preprocessor
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor" PARENT_SCOPE)
-
-    target_compile_options(${libname} PUBLIC
-      $<$<COMPILE_LANGUAGE:CXX>:
-        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:${MSVC_DEBINFO_OPTION}>
-        /EHsc
-        /bigobj>
-      )
+  endif()
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(NOT USE_CUDA)
+      # NS: One can not compile CUDA code with extra-semi flag as nvcc generates code like
+      # namespace MemoryOps_cu_d8602b38_109889 __attribute__((visibility("hidden")))  { };
+      list(APPEND private_compile_options -Wextra-semi)
+    else()
+      # NVCC + clang15  reports deprecated copies from GPU lambda instantiations
+      list(APPEND private_compile_options -Wno-deprecated-copy)
+      # NVCC inserts whitespace into literal operators, triggering a spurious Clang warning.
+      list(APPEND private_compile_options -Wno-deprecated-literal-operator)
+    endif()
+    list(APPEND private_compile_options -Wmove)
   else()
-    set(private_compile_options
-      -Wall
-      -Wextra
-      -Wdeprecated
-      -Wunused
-      -Wno-unused-parameter
-      -Wno-missing-field-initializers
-      -Wno-array-bounds
-      -Wno-unknown-pragmas
-      -Wno-strict-overflow
-      -Wno-strict-aliasing
-      )
+    list(APPEND private_compile_options
+      # Considered to be flaky.  See the discussion at
+      # https://github.com/pytorch/pytorch/pull/9608
+      -Wno-maybe-uninitialized)
+  endif()
+
+  if(WERROR)
+    list(APPEND private_compile_options
+      -Werror
+      -Werror=ignored-attributes
+      -Werror=inconsistent-missing-override
+      -Werror=inconsistent-missing-destructor-override
+      -Werror=pedantic
+      -Werror=unused
+      -Wno-error=unused-parameter
+      # Deprecated APIs (e.g. c10::checked_convert) must warn, not break the
+      # build, so they can be retired while external/BC callers migrate.
+      -Wno-error=deprecated-declarations
+    )
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      list(APPEND private_compile_options -Wredundant-move)
-      # -Wno-interference-size only exists in GCC 12+
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
-        list(APPEND private_compile_options -Wno-interference-size)
-      endif()
+      list(APPEND private_compile_options -Werror=unused-but-set-variable -Werror=cpp)
     endif()
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      if(NOT USE_CUDA)
-        # NS: One can not compile CUDA code with extra-semi flag as nvcc generates code like
-        # namespace MemoryOps_cu_d8602b38_109889 __attribute__((visibility("hidden")))  { };
-        list(APPEND private_compile_options -Wextra-semi)
-      else()
-        # NVCC + clang15  reports deprecated copies from GPU lambda instantiations
-        list(APPEND private_compile_options -Wno-deprecated-copy)
-        # NVCC inserts whitespace into literal operators, triggering a spurious Clang warning.
-        list(APPEND private_compile_options -Wno-deprecated-literal-operator)
-      endif()
-      list(APPEND private_compile_options -Wmove)
-    else()
-      list(APPEND private_compile_options
-        # Considered to be flaky.  See the discussion at
-        # https://github.com/pytorch/pytorch/pull/9608
-        -Wno-maybe-uninitialized)
-    endif()
-
-    if(WERROR)
-      list(APPEND private_compile_options
-        -Werror
-        -Werror=ignored-attributes
-        -Werror=inconsistent-missing-override
-        -Werror=inconsistent-missing-destructor-override
-        -Werror=pedantic
-        -Werror=unused
-        -Wno-error=unused-parameter
-        # Deprecated APIs (e.g. c10::checked_convert) must warn, not break the
-        # build, so they can be retired while external/BC callers migrate.
-        -Wno-error=deprecated-declarations
-      )
-      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        list(APPEND private_compile_options -Werror=unused-but-set-variable -Werror=cpp)
-      endif()
-      if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        list(APPEND private_compile_options -Werror=macro-redefined -Werror=deprecated-copy-with-dtor)
-      endif()
+      list(APPEND private_compile_options -Werror=macro-redefined -Werror=deprecated-copy-with-dtor)
     endif()
   endif()
 
@@ -437,7 +413,7 @@ function(torch_compile_options libname)
     endforeach()
   endif()
 
-  if(NOT WIN32 AND NOT USE_ASAN)
+  if(NOT USE_ASAN)
     # Enable hidden visibility by default to make it easier to debug issues with
     # TORCH_API annotations. Hidden visibility with selective default visibility
     # behaves close enough to Windows' dllimport/dllexport.

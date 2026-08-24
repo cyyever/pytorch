@@ -3633,11 +3633,7 @@ class GuardBuilder(GuardBuilderBase):
                 #include <cmath>
                 #include <c10/util/generic_math.h>
 
-                #if defined(_MSC_VER)
-                #  define EXTERN_DLL_EXPORT extern "C" __declspec(dllexport)
-                #else
                 #  define EXTERN_DLL_EXPORT extern "C"
-                #endif
 
                 EXTERN_DLL_EXPORT int8_t guard(int64_t *int_values, double *float_values) {{
                   {int_symbols_str}

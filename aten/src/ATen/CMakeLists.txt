@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 
-if(NOT MSVC)
-  string(APPEND CMAKE_CXX_FLAGS " -Wno-ignored-qualifiers")
-  string(APPEND CMAKE_C_FLAGS " -Wno-ignored-qualifiers")
-  string(APPEND CMAKE_CXX_FLAGS " -Wno-absolute-value")
-  string(APPEND CMAKE_C_FLAGS " -Wno-absolute-value")
-endif(NOT MSVC)
+string(APPEND CMAKE_CXX_FLAGS " -Wno-ignored-qualifiers")
+string(APPEND CMAKE_C_FLAGS " -Wno-ignored-qualifiers")
+string(APPEND CMAKE_CXX_FLAGS " -Wno-absolute-value")
+string(APPEND CMAKE_C_FLAGS " -Wno-absolute-value")
 
 # Can be compiled standalone
 if(NOT AT_INSTALL_BIN_DIR OR NOT AT_INSTALL_LIB_DIR OR NOT AT_INSTALL_INCLUDE_DIR OR NOT AT_INSTALL_SHARE_DIR)
@@ -49,7 +47,6 @@ set_bool(AT_BUILD_WITH_BLAS USE_BLAS)
 set_bool(AT_BUILD_WITH_LAPACK USE_LAPACK)
 set_bool(AT_BLAS_F2C BLAS_F2C)
 set_bool(AT_BLAS_USE_CBLAS_DOT BLAS_USE_CBLAS_DOT)
-set_bool(AT_MAGMA_ENABLED USE_MAGMA)
 set_bool(CAFFE2_STATIC_LINK_CUDA_INT CAFFE2_STATIC_LINK_CUDA)
 set_bool(AT_CUDNN_ENABLED CAFFE2_USE_CUDNN)
 set_bool(AT_CUSPARSELT_ENABLED CAFFE2_USE_CUSPARSELT)
@@ -97,7 +94,7 @@ file(GLOB_RECURSE ATen_TRANSFORMER_HEADERS CONFIGURE_DEPENDS "native/transformer
 file(GLOB_RECURSE ATen_CORE_TEST_SRCS CONFIGURE_DEPENDS "core/*_test.cpp")
 EXCLUDE(ATen_CORE_SRCS "${ATen_CORE_SRCS}" ${ATen_CORE_TEST_SRCS})
 
-file(GLOB base_h CONFIGURE_DEPENDS "*.h" "detail/*.h" "cpu/*.h" "cpu/vec/vec512/*.h" "cpu/vec/vec128/*.h" "cpu/vec/vec256/*.h" "cpu/vec/vec256/vsx/*.h" "cpu/vec/vec256/zarch/*.h" "cpu/vec/sve/*.h" "cpu/vec/*.h" "quantized/*.h" "functorch/*.h" "accelerator/*.h")
+file(GLOB base_h CONFIGURE_DEPENDS "*.h" "detail/*.h" "cpu/*.h" "cpu/vec/vec512/*.h" "cpu/vec/vec128/*.h" "cpu/vec/vec256/*.h" "cpu/vec/vec256/zarch/*.h" "cpu/vec/*.h" "quantized/*.h" "functorch/*.h" "accelerator/*.h")
 file(GLOB base_cpp CONFIGURE_DEPENDS "*.cpp" "detail/*.cpp" "cpu/*.cpp" "functorch/*.cpp" "accelerator/*.cpp")
 file(GLOB cuda_h CONFIGURE_DEPENDS "cuda/*.h" "cuda/detail/*.h" "cuda/*.cuh" "cuda/detail/*.cuh" "cuda/tunable/*.cuh" "cuda/tunable/*.h")
 file(GLOB cuda_cpp CONFIGURE_DEPENDS "cuda/*.cpp" "cuda/detail/*.cpp" "cuda/tunable/*.cpp")
@@ -666,18 +663,6 @@ endif(BLAS_FOUND)
 
 if(LAPACK_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
-  if(USE_CUDA AND MSVC)
-    # Although Lapack provides CPU (and thus, one might expect that ATen_cuda
-    # would not need this at all), some of our libraries backend to CPU
-    # BLAS/LAPACK implementations, and so it is very important we get the
-    # *right* implementation, because even if the symbols are the same, LAPACK
-    # implementations may have different calling conventions.
-    # This caused https://github.com/pytorch/pytorch/issues/7353
-    #
-    # We do NOT do this on Linux, since we just rely on torch_cpu to
-    # provide all of the symbols we need
-    list(APPEND ATen_CUDA_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
-  endif()
 endif(LAPACK_FOUND)
 
 if(UNIX AND NOT APPLE)
@@ -720,14 +705,7 @@ endif(UNIX)
 
 ADD_DEFINITIONS(-DUSE_EXTERNAL_MZCRC)
 
-if(NOT MSVC)
-  list(APPEND ATen_CPU_DEPENDENCY_LIBS m)
-endif()
-
-if(AT_NNPACK_ENABLED)
-  include_directories(${NNPACK_INCLUDE_DIRS})
-  list(APPEND ATen_CPU_DEPENDENCY_LIBS nnpack) # cpuinfo is added below
-endif()
+list(APPEND ATen_CPU_DEPENDENCY_LIBS m)
 
 if(MKLDNN_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${MKLDNN_LIBRARIES})
@@ -739,18 +717,14 @@ if(USE_MKLDNN_ACL)
 endif()
 
 if(NOT EMSCRIPTEN)
-  if(NOT MSVC)
-    # Bump up optimization level for sleef to -O1, since at -O0 the compiler
-    # excessively spills intermediate vector registers to the stack
-    # and makes things run impossibly slowly
-    set(OLD_CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-    if(${CMAKE_C_FLAGS_DEBUG} MATCHES "-O0")
-      string(REGEX REPLACE "-O0" "-O1" CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
-    else()
-      set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O1")
-    endif()
-  elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
-    set(SLEEF_ARCH_AARCH64 ON)
+  # Bump up optimization level for sleef to -O1, since at -O0 the compiler
+  # excessively spills intermediate vector registers to the stack
+  # and makes things run impossibly slowly
+  set(OLD_CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
+  if(${CMAKE_C_FLAGS_DEBUG} MATCHES "-O0")
+    string(REGEX REPLACE "-O0" "-O1" CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
+  else()
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O1")
   endif()
 
   if(NOT USE_SYSTEM_SLEEF)
@@ -760,9 +734,6 @@ if(NOT EMSCRIPTEN)
     set(SLEEF_BUILD_TESTS OFF CACHE BOOL "Don't build sleef tests" FORCE)
     set(SLEEF_BUILD_SCALAR_LIB OFF CACHE BOOL "libsleefscalar will be built." FORCE)
     set(SLEEF_DISABLE_OPENMP ON CACHE BOOL "OpenMP only used by sleef DFT and tests, both disabled" FORCE)
-    if(WIN32)
-      set(SLEEF_BUILD_WITH_LIBM OFF CACHE BOOL "Don't build sleef with libm for Windows." FORCE)
-    endif()
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
       if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
         set(DISABLE_SVE ON CACHE BOOL "Xcode's clang-12.5 crashes while trying to compile SVE code" FORCE)
@@ -783,9 +754,7 @@ if(NOT EMSCRIPTEN)
   endif()
   list(APPEND ATen_CPU_DEPENDENCY_LIBS sleef)
 
-  if(NOT MSVC)
-    set(CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
-  endif()
+  set(CMAKE_C_FLAGS_DEBUG ${OLD_CMAKE_C_FLAGS_DEBUG})
 endif()
 
 if(USE_CUDA AND NOT USE_ROCM)
@@ -838,22 +807,6 @@ if(USE_CUDA AND NOT USE_ROCM)
   endif($ENV{ATEN_STATIC_CUDA})
 endif()
 
-
-  if(USE_MAGMA)
-    if(USE_CUDA AND NOT BUILD_LAZY_CUDA_LINALG)
-      list(APPEND ATen_CUDA_DEPENDENCY_LIBS torch::magma)
-    endif(USE_CUDA AND NOT BUILD_LAZY_CUDA_LINALG)
-    if(USE_ROCM)
-      list(APPEND ATen_HIP_DEPENDENCY_LIBS torch::magma)
-    endif(USE_ROCM)
-    if(MSVC)
-      if($ENV{TH_BINARY_BUILD})
-        # Do not do this on Linux: see Note [Extra MKL symbols for MAGMA in torch_cpu]
-        # in caffe2/CMakeLists.txt
-        list(APPEND ATen_CUDA_DEPENDENCY_LIBS ${BLAS_LIBRARIES})
-      endif($ENV{TH_BINARY_BUILD})
-    endif(MSVC)
-  endif(USE_MAGMA)
 
 # Include CPU paths for CUDA/HIP as well
 list(APPEND ATen_CUDA_INCLUDE ${ATen_CPU_INCLUDE})

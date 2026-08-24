@@ -23,7 +23,6 @@ from typing import Any, BinaryIO
 
 LINTER_CODE = "RUFF"
 SYNTAX_ERROR = "E999"
-IS_WINDOWS: bool = os.name == "nt"
 
 
 class LintSeverity(str, enum.Enum):
@@ -58,7 +57,7 @@ class LintMessage:
 
 
 def as_posix(name: str) -> str:
-    return name.replace("\\", "/") if IS_WINDOWS else name
+    return name
 
 
 def _run_command(

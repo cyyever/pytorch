@@ -18,14 +18,6 @@
 #include <iostream>
 #include <mutex>
 
-#ifdef C10_ANDROID
-#ifndef SYS_gettid
-#define SYS_gettid __NR_gettid
-#endif
-#ifndef SYS_tgkill
-#define SYS_tgkill __NR_tgkill
-#endif
-#endif
 
 namespace {
 
@@ -340,7 +332,7 @@ void FatalSignalHandler::uninstallFatalSignalHandlers() {
     previousSigusr2 = {};
   }
 }
-#endif // defined(C10_SUPPORTS_FATAL_SIGNAL_HANDLERS)
+#endif
 
 SignalHandler::SignalHandler(
     SignalHandler::Action SIGINT_action,
@@ -395,10 +387,10 @@ bool FatalSignalHandler::printStackTracesOnFatalSignal() {
   return fatalSignalHandlersInstalled;
 }
 
-#endif // defined(C10_SUPPORTS_FATAL_SIGNAL_HANDLERS)
+#endif
 } // namespace c10
 
-#else // defined(C10_SUPPORTS_SIGNAL_HANDLER)
+#else
 
 // TODO: Currently we do not support signal handling in non-Linux yet - below is
 // a minimal implementation that makes things compile.
@@ -423,4 +415,4 @@ SignalHandler::Action SignalHandler::CheckForSignals() {
 }
 } // namespace c10
 
-#endif // defined(C10_SUPPORTS_SIGNAL_HANDLER)
+#endif

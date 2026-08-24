@@ -103,7 +103,7 @@ inline void copy_stub(scalar_t* out, const scalar_t* in, int64_t size) {
     Vec in_vec = Vec::loadu(in + d);
     in_vec.store(out + d);
   }
-  #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+  #if !defined(COMPILING_FOR_MIN_SIZE)
   # pragma unroll
   #endif
   for (; d < size; d++) {
@@ -119,7 +119,7 @@ inline void add_stub(scalar_t* grad_in, const scalar_t* grad_out, int64_t size) 
     Vec grad_vec = Vec::loadu(grad_in + d) + Vec::loadu(grad_out + d);
     grad_vec.store(grad_in + d);
   }
-  #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+  #if !defined(COMPILING_FOR_MIN_SIZE)
   # pragma unroll
   #endif
   for (; d < size; d++) {

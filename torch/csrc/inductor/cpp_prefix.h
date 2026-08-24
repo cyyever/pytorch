@@ -40,8 +40,7 @@
 
 #if defined(CPU_CAPABILITY_AVX512) || defined(CPU_CAPABILITY_AVX2) ||  \
     defined(CPU_CAPABILITY_ZVECTOR) || defined(CPU_CAPABILITY_NEON) || \
-    defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_SVE256) ||   \
-    defined(CPU_CAPABILITY_SVE128)
+    defined(CPU_CAPABILITY_VSX)
 #define INDUCTOR_USE_VECTOR_TYPES() 1
 #else
 #define INDUCTOR_USE_VECTOR_TYPES() 0
@@ -504,9 +503,7 @@ inline at::vec::VectorizedN<scalar_t, N> div_floor_floating_vec(
     const at::vec::VectorizedN<scalar_t, N>& a,
     const at::vec::VectorizedN<scalar_t, N>& b) {
   at::vec::VectorizedN<scalar_t, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for (int i = 0; i < N; ++i) {
     result[i] = div_floor_floating_vec(a[i], b[i]);
   }

@@ -1,4 +1,4 @@
-#ifndef C10_UTIL_LOGGING_COMMON_H_
+#if !defined(C10_UTIL_LOGGING_COMMON_H_)
 #define C10_UTIL_LOGGING_COMMON_H_
 
 #include <c10/macros/Export.h>
@@ -25,9 +25,6 @@ class C10_API MessageLogger {
   // otherwise, we throw.
   void DealWithFatal();
 
-#if defined(ANDROID) && !defined(C10_USE_GLOG)
-  const char* tag_{"native"};
-#endif
   std::stringstream stream_;
   int severity_;
   bool exit_on_fatal_;
@@ -72,4 +69,4 @@ T& CheckNotNull(
 
 } // namespace c10
 
-#endif // C10_UTIL_LOGGING_COMMON_H_
+#endif

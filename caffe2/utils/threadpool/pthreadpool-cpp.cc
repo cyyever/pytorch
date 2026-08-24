@@ -84,12 +84,10 @@ void PThreadPool::run(
 PThreadPool* pthreadpool(size_t thread_count) {
   static auto threadpool =
     std::make_unique<PThreadPool>(thread_count);
-#if !(defined(WIN32))
   static std::once_flag flag;
   std::call_once(flag, []() {
     pthread_atfork(nullptr, nullptr, child_atfork);
   });
-#endif
   if (C10_UNLIKELY(leak_corrupted_threadpool)) {
     leak_corrupted_threadpool = false;
     if (auto leaked = threadpool.release()) {

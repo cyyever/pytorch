@@ -31,14 +31,13 @@ from torch.torch_version import TorchVersion, Version
 from torch._utils_internal import get_file_path
 
 
-IS_WINDOWS = sys.platform == 'win32'
 IS_MACOS = sys.platform.startswith('darwin')
 IS_LINUX = sys.platform.startswith('linux')
-LIB_EXT = '.pyd' if IS_WINDOWS else '.so'
-EXEC_EXT = '.exe' if IS_WINDOWS else ''
-CLIB_PREFIX = '' if IS_WINDOWS else 'lib'
-CLIB_EXT = '.dll' if IS_WINDOWS else '.so'
-SHARED_FLAG = '/DLL' if IS_WINDOWS else '-shared'
+LIB_EXT = '.so'
+EXEC_EXT = ''
+CLIB_PREFIX = 'lib'
+CLIB_EXT = '.so'
+SHARED_FLAG = '-shared'
 
 # Torch root used below to locate compiled artifacts (lib/, include/, bin/).
 # Editable installs using scikit-build-core redirect mode place these in the
@@ -49,9 +48,8 @@ _TORCH_PATH = get_file_path("torch")
 TORCH_LIB_PATH = os.path.join(_TORCH_PATH, 'lib')
 
 
-SUBPROCESS_DECODE_ARGS = ('oem',) if IS_WINDOWS else ()
+SUBPROCESS_DECODE_ARGS = ()
 MINIMUM_GCC_VERSION = (5, 0, 0)
-MINIMUM_MSVC_VERSION = (19, 20, 0)
 
 VersionRange = tuple[tuple[int, ...], tuple[int, ...]]
 VersionMap = dict[str, VersionRange]
@@ -144,19 +142,6 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-# Taken directly from python stdlib < 3.9
-# See https://github.com/pytorch/pytorch/issues/48617
-def _nt_quote_args(args: list[str] | None) -> list[str]:
-    """Quote command-line arguments for DOS/Windows conventions.
-
-    Just wraps every argument which contains blanks in double quotes, and
-    returns a new argument list.
-    """
-    # Cover None-type
-    if not args:
-        return []
-    return [f'"{arg}"' if ' ' in arg else arg for arg in args]
-
 def _find_cuda_home() -> str | None:
     """Find the CUDA install path."""
     # Guess #1
@@ -168,15 +153,7 @@ def _find_cuda_home() -> str | None:
             cuda_home = os.path.dirname(os.path.dirname(nvcc_path))
         else:
             # Guess #3
-            if IS_WINDOWS:
-                cuda_homes = glob.glob(
-                    'C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*.*')
-                if len(cuda_homes) == 0:
-                    cuda_home = ''
-                else:
-                    cuda_home = cuda_homes[0]
-            else:
-                cuda_home = '/usr/local/cuda'
+            cuda_home = '/usr/local/cuda'
             if not os.path.exists(cuda_home):
                 cuda_home = None
     if cuda_home and not torch.cuda.is_available():
@@ -300,7 +277,7 @@ def _wrap_compiler(compiler: str | list[str]) -> list[str]:
     #  sccache: caused by: Compiler not supported: "sh: 1: /usr/local/cuda/bin/nvcc: not found\n
     # sh: 1: nvcc: not found\nDevice not supported - Defaulting to AMD\n
     # failed to execute:/opt/rocm/lib/llvm/bin/clang++  -O3  -E -x c /tmp/sccachei1cosZ/testfile.c\n"
-    if os.environ.get('TORCH_NO_COMPILER_WRAPPER') or IS_WINDOWS or torch.version.hip is not None:
+    if os.environ.get('TORCH_NO_COMPILER_WRAPPER') or torch.version.hip is not None:
         return compiler
     for wrapper in ('ccache', 'sccache'):
         if shutil.which(wrapper):
@@ -308,36 +285,7 @@ def _wrap_compiler(compiler: str | list[str]) -> list[str]:
     return compiler
 
 
-def _windows_quote(arg: str) -> str:
-    """Quote a single argument per the MSVC ``CommandLineToArgvW`` rules."""
-    if arg and not any(c in arg for c in ' \t\n\v"'):
-        return arg
-    out = ['"']
-    backslashes = 0
-    for c in arg:
-        if c == '\\':
-            backslashes += 1
-            continue
-        if c == '"':
-            out.append('\\' * (2 * backslashes + 1))
-            out.append('"')
-        else:
-            out.append('\\' * backslashes)
-            out.append(c)
-        backslashes = 0
-    out.append('\\' * (2 * backslashes))
-    out.append('"')
-    return ''.join(out)
-
-
 def _shell_join(cmd: list[str]) -> str:
-    """Quote and join ``cmd`` for the current platform's shell.
-
-    ``shlex.join`` produces POSIX-style quoting which ninja does not parse
-    correctly on Windows for paths like ``C:\\Program Files\\...``.
-    """
-    if IS_WINDOWS:
-        return ' '.join(_windows_quote(a) for a in cmd)
     return shlex.join(cmd)
 
 
@@ -388,21 +336,10 @@ if torch.version.hip is not None:
 CUDA_HOME = _find_cuda_home() if (torch.cuda._is_compiled() and torch.version.cuda) else None
 CUDNN_HOME = os.environ.get('CUDNN_HOME') or os.environ.get('CUDNN_PATH')
 SYCL_HOME = _find_sycl_home() if torch.xpu._is_compiled() else None
-WINDOWS_CUDA_HOME = os.environ.get('WINDOWS_CUDA_HOME')  # used for AOTI cross-compilation
-
 # PyTorch releases have the version pattern major.minor.patch, whereas when
 # PyTorch is built from source, we append the git commit hash, which gives
 # it the below pattern.
 BUILT_FROM_SOURCE_VERSION_PATTERN = re.compile(r'\d+\.\d+\.\d+\w+\+\w+')
-
-COMMON_MSVC_FLAGS = ['/MD', '/wd4819', '/wd4251', '/wd4244', '/wd4267', '/wd4275', '/wd4018', '/wd4190', '/wd4624', '/wd4067', '/wd4068', '/EHsc']
-
-MSVC_IGNORE_CUDAFE_WARNINGS = [
-    'base_class_has_different_dll_interface',
-    'field_without_dll_interface',
-    'dll_interface_conflict_none_assumed',
-    'dll_interface_conflict_dllexport_assumed'
-]
 
 COMMON_NVCC_FLAGS = [
     '-D__CUDA_NO_HALF_OPERATORS__',
@@ -418,8 +355,7 @@ COMMON_HIP_FLAGS = [
     '-DHIPBLAS_V2',
 ]
 
-if not IS_WINDOWS:
-    COMMON_HIP_FLAGS.append('-fPIC')
+COMMON_HIP_FLAGS.append('-fPIC')
 
 COMMON_HIPCC_FLAGS = [
     '-DCUDA_HAS_FP16=1',
@@ -428,15 +364,8 @@ COMMON_HIPCC_FLAGS = [
     '-DHIP_ENABLE_WARP_SYNC_BUILTINS=1'
 ]
 
-if IS_WINDOWS:
-    # Compatibility flags, similar to those set in cmake/Dependencies.cmake.
-    COMMON_HIPCC_FLAGS.append('-fms-extensions')
-    # Suppress warnings about dllexport.
-    COMMON_HIPCC_FLAGS.append('-Wno-ignored-attributes')
-
-
 def _get_icpx_version() -> str:
-    icpx = 'icx' if IS_WINDOWS else 'icpx'
+    icpx = 'icpx'
     compiler_info = subprocess.check_output([icpx, '--version'])
     match = re.search(r'(\d+)\.(\d+)\.(\d+)', compiler_info.decode().strip())
     version = ['0', '0', '0'] if match is None else list(match.groups())
@@ -496,23 +425,10 @@ _SYCL_DLINK_FLAGS = [
 
 JIT_EXTENSION_VERSIONER = ExtensionVersioner()
 
-PLAT_TO_VCVARS = {
-    'win32' : 'x86',
-    'win-amd64' : 'x86_amd64',
-    'win-arm64' : 'arm64',
-}
-
 min_supported_cpython = "0x030A0000"  # Python 3.10 hexcode
 
-def _windows_cuda_lib_dir() -> str:
-    return os.path.join('lib', 'arm64' if sysconfig.get_platform().lower() == 'win-arm64' else 'x64')
-
-
 def get_cxx_compiler():
-    if IS_WINDOWS:
-        compiler = os.environ.get('CXX', 'cl')
-    else:
-        compiler = os.environ.get('CXX', 'c++')
+    compiler = os.environ.get('CXX', 'c++')
     return compiler
 
 def _is_binary_build() -> bool:
@@ -565,8 +481,6 @@ def check_compiler_ok_for_platform(compiler: str) -> bool:
         True if the compiler is gcc/g++ on Linux or clang/clang++ on macOS,
         and always True for Windows.
     """
-    if IS_WINDOWS:
-        return True
     compiler_path = shutil.which(compiler)
     if compiler_path is None:
         return False
@@ -628,12 +542,8 @@ def get_compiler_abi_compatibility_and_version(compiler) -> tuple[bool, TorchVer
         # There is no particular minimum version we need for clang, so we're good here.
         return (True, TorchVersion('0.0.0'))
     try:
-        if IS_LINUX:
-            minimum_required_version = MINIMUM_GCC_VERSION
-            compiler_info = subprocess.check_output([compiler, '-dumpfullversion', '-dumpversion'])
-        else:
-            minimum_required_version = MINIMUM_MSVC_VERSION
-            compiler_info = subprocess.check_output(compiler, stderr=subprocess.STDOUT)
+        minimum_required_version = MINIMUM_GCC_VERSION
+        compiler_info = subprocess.check_output([compiler, '-dumpfullversion', '-dumpversion'])
         match = re.search(r'(\d+)\.(\d+)\.(\d+)', compiler_info.decode(*SUBPROCESS_DECODE_ARGS).strip())
         version = ['0', '0', '0'] if match is None else list(match.groups())
     except (subprocess.CalledProcessError, OSError):
@@ -657,7 +567,7 @@ def _check_cuda_version(compiler_name: str, compiler_version: TorchVersion) -> N
     if not CUDA_HOME:
         raise RuntimeError(CUDA_NOT_FOUND_MESSAGE)
 
-    nvcc = os.path.join(CUDA_HOME, 'bin', 'nvcc.exe' if IS_WINDOWS else 'nvcc')
+    nvcc = os.path.join(CUDA_HOME, 'bin', 'nvcc')
     if not os.path.exists(nvcc):
         raise FileNotFoundError(f"nvcc not found at '{nvcc}'. Ensure CUDA path '{CUDA_HOME}' is correct.")
 
@@ -732,36 +642,12 @@ def _append_sycl_std_if_no_std_present(cflags) -> None:
 
 
 def _wrap_sycl_host_flags(cflags):
-    host_cflags = []
     host_cxx = get_cxx_compiler()
-    if IS_WINDOWS:
-        for flag in cflags:
-            if flag.startswith("-I"):
-                flag = flag.replace("\\", "\\\\").replace("-I", "/I")
-            else:
-                flag = flag.replace("-D", "/D")
-            flag = flag.replace('"', '\\"')
-            host_cflags.append(flag)
-        joined_host_cflags = ' '.join(host_cflags)
-
-        external_include = _join_sycl_home("include").replace("\\", "\\\\")
-
-        # Some versions of DPC++ compiler pass paths to SYCL headers as user include paths (`-I`) rather
-        # than system paths (`-isystem`). This makes host compiler to report warnings encountered in the
-        # SYCL headers, such as deprecated warnings, even if warned API is not actually used in the program.
-        # We expect that this issue will be addressed in the later version of DPC++ compiler. To workaround the
-        # issue now we wrap paths to SYCL headers in `/external:I`. Warning free compilation is especially important
-        # for Windows build as `/sdl` compilation flag assumes that and we will fail compilation otherwise.
-        wrapped_host_cflags = [
-            f"-fsycl-host-compiler={host_cxx}",
-            f'-fsycl-host-compiler-options="\\"/external:I{external_include}\\" /external:W0 {joined_host_cflags}"',
-        ]
-    else:
-        joined_host_cflags = ' '.join(cflags)
-        wrapped_host_cflags = [
-            f"-fsycl-host-compiler={host_cxx}",
-            shlex.quote(f"-fsycl-host-compiler-options={joined_host_cflags}"),
-        ]
+    joined_host_cflags = ' '.join(cflags)
+    wrapped_host_cflags = [
+        f"-fsycl-host-compiler={host_cxx}",
+        shlex.quote(f"-fsycl-host-compiler-options={joined_host_cflags}"),
+    ]
     return wrapped_host_cflags
 
 
@@ -890,17 +776,12 @@ class BuildExtension(_LazyBuildExt):
         if torch.backends.mps.is_built():
             self.compiler.src_extensions += ['.mm']
         # Save the original _compile method for later.
-        if self.compiler.compiler_type == 'msvc':
-            self.compiler._cpp_extensions += ['.cu', '.cuh', '.hip']
-            original_compile = self.compiler.compile
-            original_spawn = self.compiler.spawn
-        else:
-            original_compile = self.compiler._compile
+        original_compile = self.compiler._compile
 
         def append_std17_if_no_std_present(cflags) -> None:
             # NVCC does not allow multiple -std to be passed, so we avoid
             # overriding the option if the user explicitly passed it.
-            cpp_format_prefix = '/{}:' if self.compiler.compiler_type == 'msvc' else '-{}='
+            cpp_format_prefix = '-{}='
             cpp_flag_prefix = cpp_format_prefix.format('std')
             cpp_flag = cpp_flag_prefix + 'c++20'
             if not any(flag.startswith(cpp_flag_prefix) for flag in cflags):
@@ -1076,249 +957,11 @@ class BuildExtension(_LazyBuildExt):
 
             # Return *all* object filenames, not just the ones we just built.
             return objects
-
-        def win_cuda_flags(cflags):
-            return (COMMON_NVCC_FLAGS +
-                    cflags + _get_cuda_arch_flags(cflags))
-
-        def win_hip_flags(cflags):
-            return (COMMON_HIPCC_FLAGS + COMMON_HIP_FLAGS + cflags + _get_rocm_arch_flags(cflags))
-
-        def win_filter_msvc_include_dirs(pp_opts) -> list[str]:
-            """Filter out MSVC include dirs from pp_opts for oneAPI 2025.3+."""
-            # oneAPI 2025.3+ changed include path ordering to match MSVC behavior.
-            # Filter out MSVC headers to avoid conflicting declarations with oneAPI's std headers.
-            icpx_version = int(_get_icpx_version())
-            if icpx_version >= 20250300:
-                vc_tools_dir = os.path.normcase(os.environ.get('VCToolsInstallDir', ''))
-                if vc_tools_dir:
-                    pp_opts = [
-                        path for path in pp_opts
-                        if vc_tools_dir not in os.path.normcase(path)
-                    ]
-            return pp_opts
-
-        def win_wrap_single_compile(sources,
-                                    output_dir=None,
-                                    macros=None,
-                                    include_dirs=None,
-                                    debug=0,
-                                    extra_preargs=None,
-                                    extra_postargs=None,
-                                    depends=None):
-
-            self.cflags = copy.deepcopy(extra_postargs)
-            extra_postargs = None
-
-            def spawn(cmd):
-                # Using regex to match src, obj and include files
-                src_regex = re.compile('/T(p|c)(.*)')
-                src_list = [
-                    m.group(2) for m in (src_regex.match(elem) for elem in cmd)
-                    if m
-                ]
-
-                obj_regex = re.compile('/Fo(.*)')  # codespell:ignore
-                obj_list = [
-                    m.group(1) for m in (obj_regex.match(elem) for elem in cmd)
-                    if m
-                ]
-
-                include_regex = re.compile(r'((\-|\/)I.*)')
-                include_list = [
-                    m.group(1)
-                    for m in (include_regex.match(elem) for elem in cmd) if m
-                ]
-
-                if len(src_list) >= 1 and len(obj_list) >= 1:
-                    src = src_list[0]
-                    obj = obj_list[0]
-                    if _is_cuda_file(src):
-                        if IS_HIP_EXTENSION:
-                            nvcc = _get_hipcc_path()
-                        else:
-                            nvcc = _join_cuda_home('bin', 'nvcc')
-                        if isinstance(self.cflags, dict):
-                            cflags = self.cflags['nvcc']
-                        elif isinstance(self.cflags, list):
-                            cflags = self.cflags
-                        else:
-                            cflags = []
-
-                        if IS_HIP_EXTENSION:
-                            cflags = win_hip_flags(cflags)
-                        else:
-                            cflags = win_cuda_flags(cflags) + ['-std=c++20', '--use-local-env']
-                            for ignore_warning in MSVC_IGNORE_CUDAFE_WARNINGS:
-                                cflags = ['-Xcudafe', '--diag_suppress=' + ignore_warning] + cflags
-                        for flag in COMMON_MSVC_FLAGS:
-                            cflags = ['-Xcompiler', flag] + cflags
-                        cmd = _wrap_compiler([nvcc, '-c', src, '-o', obj] + include_list + cflags)
-                    else:
-                        if isinstance(self.cflags, dict):
-                            cflags = COMMON_MSVC_FLAGS + self.cflags['cxx']
-                            append_std17_if_no_std_present(cflags)
-                            cmd += cflags
-                        elif isinstance(self.cflags, list):
-                            cflags = COMMON_MSVC_FLAGS + self.cflags
-                            append_std17_if_no_std_present(cflags)
-                            cmd += cflags
-                        cmd = _wrap_compiler(cmd)
-
-                return original_spawn(cmd)
-
-            try:
-                self.compiler.spawn = spawn
-                return original_compile(sources, output_dir, macros,
-                                        include_dirs, debug, extra_preargs,
-                                        extra_postargs, depends)
-            finally:
-                self.compiler.spawn = original_spawn
-
-        def win_wrap_ninja_compile(sources,
-                                   output_dir=None,
-                                   macros=None,
-                                   include_dirs=None,
-                                   debug=0,
-                                   extra_preargs=None,
-                                   extra_postargs=None,
-                                   depends=None,
-                                   is_standalone=False):
-            if not self.compiler.initialized:
-                self.compiler.initialize()
-            # pyrefly: ignore [no-matching-overload]
-            output_dir = os.path.abspath(output_dir)
-
-            # Note [Absolute include_dirs]
-            # Convert relative path in self.compiler.include_dirs to absolute path if any.
-            # For ninja build, the build location is not local, but instead, the build happens
-            # in a script-created build folder. Thus, relative paths lose their correctness.
-            # To be consistent with jit extension, we allow user to enter relative include_dirs
-            # in setuptools.setup, and we convert the relative path to absolute path here.
-            convert_to_absolute_paths_inplace(self.compiler.include_dirs)
-
-            _, objects, extra_postargs, pp_opts, _ = \
-                self.compiler._setup_compile(output_dir, macros,
-                                             include_dirs, sources,
-                                             depends, extra_postargs)
-            # Replace space with \ when using hipcc (hipcc passes includes to clang without ""s so clang sees space in include paths as new argument)
-            if IS_HIP_EXTENSION:
-                pp_opts = ["-I{}".format(s[2:].replace(" ", "\\")) if s.startswith('-I') else s for s in pp_opts]
-            common_cflags = extra_preargs or []
-            cflags = []
-            if debug:
-                cflags.extend(self.compiler.compile_options_debug)
-            else:
-                cflags.extend(self.compiler.compile_options)
-            cflags = cflags + common_cflags + pp_opts + COMMON_MSVC_FLAGS
-            if IS_HIP_EXTENSION:
-                _set_hipcc_runtime_lib(is_standalone, debug)
-                common_cflags.extend(COMMON_HIP_FLAGS)
-            else:
-                common_cflags.extend(COMMON_MSVC_FLAGS)
-            with_cuda = any(map(_is_cuda_file, sources))
-            with_sycl = any(map(_is_sycl_file, sources))
-            if with_sycl and with_cuda:
-                raise AssertionError(
-                    "cannot have both SYCL and CUDA files in the same extension"
-                )
-
-            # extra_postargs can be either:
-            # - a dict mapping cxx/nvcc to extra flags
-            # - a list of extra flags.
-            if isinstance(extra_postargs, dict):
-                post_cflags = extra_postargs['cxx']
-            else:
-                post_cflags = list(extra_postargs)
-            if IS_HIP_EXTENSION:
-                post_cflags = COMMON_HIP_FLAGS + post_cflags
-            append_std17_if_no_std_present(post_cflags)
-
-            cuda_post_cflags = None
-            cuda_cflags = None
-            if with_cuda:
-                cuda_cflags = ['-std=c++20']
-                for common_cflag in common_cflags:
-                    cuda_cflags.append('-Xcompiler')
-                    cuda_cflags.append(common_cflag)
-                if not IS_HIP_EXTENSION:
-                    cuda_cflags.append('--use-local-env')
-                    for ignore_warning in MSVC_IGNORE_CUDAFE_WARNINGS:
-                        cuda_cflags.append('-Xcudafe')
-                        cuda_cflags.append('--diag_suppress=' + ignore_warning)
-                cuda_cflags.extend(pp_opts)
-                if isinstance(extra_postargs, dict):
-                    cuda_post_cflags = extra_postargs['nvcc']
-                else:
-                    cuda_post_cflags = list(extra_postargs)
-                if IS_HIP_EXTENSION:
-                    cuda_post_cflags = win_hip_flags(cuda_post_cflags)
-                else:
-                    cuda_post_cflags = win_cuda_flags(cuda_post_cflags)
-            cflags = _nt_quote_args(cflags)
-            post_cflags = _nt_quote_args(post_cflags)
-            if with_cuda:
-                cuda_cflags = _nt_quote_args(cuda_cflags)
-                cuda_post_cflags = _nt_quote_args(cuda_post_cflags)
-            if isinstance(extra_postargs, dict) and 'nvcc_dlink' in extra_postargs:
-                cuda_dlink_post_cflags = win_cuda_flags(extra_postargs['nvcc_dlink'])
-            else:
-                cuda_dlink_post_cflags = None
-
-            sycl_cflags = None
-            sycl_post_cflags = None
-            sycl_dlink_post_cflags = None
-            if with_sycl:
-                sycl_cflags = common_cflags + win_filter_msvc_include_dirs(pp_opts) + _COMMON_SYCL_FLAGS
-                if isinstance(extra_postargs, dict):
-                    sycl_post_cflags = extra_postargs['sycl']
-                else:
-                    sycl_post_cflags = list(extra_postargs)
-                _append_sycl_targets_if_missing(sycl_post_cflags)
-                append_std17_if_no_std_present(sycl_cflags)
-                _append_sycl_std_if_no_std_present(sycl_cflags)
-                host_cflags = common_cflags + pp_opts + post_cflags
-                append_std17_if_no_std_present(host_cflags)
-
-                sycl_cflags = _nt_quote_args(sycl_cflags)
-                host_cflags = _nt_quote_args(host_cflags)
-
-                sycl_cflags += _wrap_sycl_host_flags(host_cflags)
-                sycl_dlink_post_cflags = _SYCL_DLINK_FLAGS.copy()
-                sycl_dlink_post_cflags += _get_sycl_device_flags(sycl_post_cflags)
-                sycl_post_cflags = _nt_quote_args(sycl_post_cflags)
-
-
-            _write_ninja_file_and_compile_objects(
-                sources=sources,
-                objects=objects,
-                cflags=cflags,
-                post_cflags=post_cflags,
-                cuda_cflags=cuda_cflags,
-                cuda_post_cflags=cuda_post_cflags,
-                cuda_dlink_post_cflags=cuda_dlink_post_cflags,
-                sycl_cflags=sycl_cflags,
-                sycl_post_cflags=sycl_post_cflags,
-                sycl_dlink_post_cflags=sycl_dlink_post_cflags,
-                build_directory=output_dir,
-                verbose=True,
-                with_cuda=with_cuda,
-                with_sycl=with_sycl)
-
-            # Return *all* object filenames, not just the ones we just built.
-            return objects
-        # Monkey-patch the _compile or compile method.
-        # https://github.com/python/cpython/blob/dc0284ee8f7a270b6005467f26d8e5773d76e959/Lib/distutils/ccompiler.py#L511  # codespell:ignore
-        if self.compiler.compiler_type == 'msvc':
-            if self.use_ninja:
-                self.compiler.compile = win_wrap_ninja_compile
-            else:
-                self.compiler.compile = win_wrap_single_compile
+        # Monkey-patch the _compile method.
+        if self.use_ninja:
+            self.compiler.compile = unix_wrap_ninja_compile
         else:
-            if self.use_ninja:
-                self.compiler.compile = unix_wrap_ninja_compile
-            else:
-                self.compiler._compile = unix_wrap_single_compile
+            self.compiler._compile = unix_wrap_single_compile
 
         super().build_extensions()
 
@@ -1341,11 +984,6 @@ class BuildExtension(_LazyBuildExt):
         return ext_filename
 
     def get_export_symbols(self, ext):
-        if IS_WINDOWS:
-            # Skips exporting the module "PyInit_" function that the
-            # distutils Extension.get_export_symbols would add to
-            # ext.export_symbols. Only relevant for Windows builds.
-            return ext.export_symbols
         return super().get_export_symbols(ext)
 
     def _check_abi(self) -> tuple[str, TorchVersion]:
@@ -1355,12 +993,6 @@ class BuildExtension(_LazyBuildExt):
         else:
             compiler = get_cxx_compiler()
         _, version = get_compiler_abi_compatibility_and_version(compiler)
-        # Warn user if VC env is activated but `DISTUILS_USE_SDK` is not set.
-        if IS_WINDOWS and 'VSCMD_ARG_TGT_ARCH' in os.environ and 'DISTUTILS_USE_SDK' not in os.environ:
-            msg = ('It seems that the VC environment is activated but DISTUTILS_USE_SDK is not set.'
-                   'This may lead to multiple activations of the VC env.'
-                   'Please set `DISTUTILS_USE_SDK=1` and try again.')
-            raise UserWarning(msg)
         return compiler, version
 
     def _add_compile_flag(self, extension, flag) -> None:
@@ -1470,9 +1102,6 @@ def CppExtension(name, sources, *args, **kwargs):
     if not kwargs.get('py_limited_api', False):
         # torch_python uses more than the python limited api
         libraries.append('torch_python')
-    if IS_WINDOWS:
-        libraries.append("sleef")
-
     kwargs['libraries'] = libraries
 
     kwargs['language'] = 'c++'
@@ -1820,34 +1449,22 @@ def library_paths(device_type: str = "cpu", torch_include_dirs: bool = True, cro
         if HIP_HOME is not None:
             paths.append(os.path.join(HIP_HOME, 'lib'))
     elif device_type == "cuda":
-        if cross_target_platform == "windows":
-            lib_dir = os.path.join('lib', 'x64')
-            if WINDOWS_CUDA_HOME is None:
-                raise RuntimeError("Need to set WINDOWS_CUDA_HOME for windows cross-compilation")
-            paths.append(os.path.join(WINDOWS_CUDA_HOME, lib_dir))
-        else:
-            if IS_WINDOWS:
-                lib_dir = _windows_cuda_lib_dir()
-            else:
-                lib_dir = 'lib64'
-                if (not os.path.exists(_join_cuda_home(lib_dir)) and
-                        os.path.exists(_join_cuda_home('lib'))):
-                    # 64-bit CUDA may be installed in 'lib' (see e.g. gh-16955)
-                    # Note that it's also possible both don't exist (see
-                    # _find_cuda_home) - in that case we stay with 'lib64'.
-                    lib_dir = 'lib'
+        lib_dir = 'lib64'
+        if (not os.path.exists(_join_cuda_home(lib_dir)) and
+                os.path.exists(_join_cuda_home('lib'))):
+            # 64-bit CUDA may be installed in 'lib' (see e.g. gh-16955)
+            # Note that it's also possible both don't exist (see
+            # _find_cuda_home) - in that case we stay with 'lib64'.
+            lib_dir = 'lib'
 
-            paths.append(_join_cuda_home(lib_dir))
-            if CUDNN_HOME is not None:
-                paths.append(os.path.join(CUDNN_HOME, lib_dir))
+        paths.append(_join_cuda_home(lib_dir))
+        if CUDNN_HOME is not None:
+            paths.append(os.path.join(CUDNN_HOME, lib_dir))
     elif device_type == "xpu":
-        if IS_WINDOWS:
-            lib_dir = os.path.join('lib', 'x64')
-        else:
-            lib_dir = 'lib64'
-            if (not os.path.exists(_join_sycl_home(lib_dir)) and
-                    os.path.exists(_join_sycl_home('lib'))):
-                lib_dir = 'lib'
+        lib_dir = 'lib64'
+        if (not os.path.exists(_join_sycl_home(lib_dir)) and
+                os.path.exists(_join_sycl_home('lib'))):
+            lib_dir = 'lib'
 
         paths.append(_join_sycl_home(lib_dir))
 
@@ -2449,14 +2066,7 @@ def _jit_compile(name,
     return _import_module_from_library(name, build_directory, is_python_module)
 
 def _get_hipcc_path():
-    if IS_WINDOWS:
-        # This selects a HIP SDK layout, so it gates on the HIP version rather
-        # than the ROCm release version. Never None here: callers are behind
-        # IS_HIP_EXTENSION, which implies torch.version.hip is set.
-        hipcc_exe = 'hipcc.exe' if HIP_VERSION >= (6, 4) else 'hipcc.bat'  # type: ignore[operator]
-        return _join_rocm_home('bin', hipcc_exe)
-    else:
-        return _join_rocm_home('bin', 'hipcc')
+    return _join_rocm_home('bin', 'hipcc')
 
 def _write_ninja_file_and_compile_objects(
         sources: list[str],
@@ -2606,57 +2216,28 @@ def verify_ninja_availability() -> None:
 
 
 def _prepare_ldflags(extra_ldflags, with_cuda, with_sycl, verbose, is_standalone):
-    if IS_WINDOWS:
-        python_lib_path = os.path.join(sys.base_exec_prefix, 'libs')
+    extra_ldflags.append(f'-L{TORCH_LIB_PATH}')
+    extra_ldflags.append('-lc10')
+    if with_cuda:
+        extra_ldflags.append('-lc10_hip' if IS_HIP_EXTENSION else '-lc10_cuda')
+    if with_sycl:
+        extra_ldflags.append('-lc10_xpu')
+    extra_ldflags.append('-ltorch_cpu')
+    if with_cuda:
+        extra_ldflags.append('-ltorch_hip' if IS_HIP_EXTENSION else '-ltorch_cuda')
+    if with_sycl:
+        extra_ldflags.append('-ltorch_xpu')
+    extra_ldflags.append('-ltorch')
+    if not is_standalone:
+        extra_ldflags.append('-ltorch_python')
 
-        extra_ldflags.append('c10.lib')
-        if with_cuda:
-            extra_ldflags.append('c10_hip.lib' if IS_HIP_EXTENSION else 'c10_cuda.lib')
-        if with_sycl:
-            extra_ldflags.append('c10_xpu.lib')
-        extra_ldflags.append('torch_cpu.lib')
-        if with_cuda:
-            extra_ldflags.append('torch_hip.lib' if IS_HIP_EXTENSION else 'torch_cuda.lib')
-            # /INCLUDE is used to ensure torch_cuda is linked against in a project that relies on it.
-            # Related issue: https://github.com/pytorch/pytorch/issues/31611
-            extra_ldflags.append('-INCLUDE:?warp_size@cuda@at@@YAHXZ')
-        if with_sycl:
-            extra_ldflags.append('torch_xpu.lib')
-        extra_ldflags.append('torch.lib')
-        extra_ldflags.append(f'/LIBPATH:{TORCH_LIB_PATH}')
-        if not is_standalone:
-            extra_ldflags.append('torch_python.lib')
-            extra_ldflags.append(f'/LIBPATH:{python_lib_path}')
-
-    else:
-        extra_ldflags.append(f'-L{TORCH_LIB_PATH}')
-        extra_ldflags.append('-lc10')
-        if with_cuda:
-            extra_ldflags.append('-lc10_hip' if IS_HIP_EXTENSION else '-lc10_cuda')
-        if with_sycl:
-            extra_ldflags.append('-lc10_xpu')
-        extra_ldflags.append('-ltorch_cpu')
-        if with_cuda:
-            extra_ldflags.append('-ltorch_hip' if IS_HIP_EXTENSION else '-ltorch_cuda')
-        if with_sycl:
-            extra_ldflags.append('-ltorch_xpu')
-        extra_ldflags.append('-ltorch')
-        if not is_standalone:
-            extra_ldflags.append('-ltorch_python')
-
-        if is_standalone:
-            extra_ldflags.append(f"-Wl,-rpath,{TORCH_LIB_PATH}")
+    if is_standalone:
+        extra_ldflags.append(f"-Wl,-rpath,{TORCH_LIB_PATH}")
 
     if with_cuda:
         if verbose:
             logger.info('Detected CUDA files, patching ldflags')
-        if IS_WINDOWS and not IS_HIP_EXTENSION:
-            cuda_lib_dir = _windows_cuda_lib_dir()
-            extra_ldflags.append(f'/LIBPATH:{_join_cuda_home(cuda_lib_dir)}')
-            extra_ldflags.append('cudart.lib')
-            if CUDNN_HOME is not None:
-                extra_ldflags.append(f'/LIBPATH:{os.path.join(CUDNN_HOME, _windows_cuda_lib_dir())}')
-        elif not IS_HIP_EXTENSION:
+        if not IS_HIP_EXTENSION:
             extra_lib_dir = "lib64"
             if (not os.path.exists(_join_cuda_home(extra_lib_dir)) and
                     os.path.exists(_join_cuda_home("lib"))):
@@ -2667,20 +2248,12 @@ def _prepare_ldflags(extra_ldflags, with_cuda, with_sycl, verbose, is_standalone
             extra_ldflags.append('-lcudart')
             if CUDNN_HOME is not None:
                 extra_ldflags.append(f'-L{os.path.join(CUDNN_HOME, "lib64")}')
-        elif IS_HIP_EXTENSION:
-            if IS_WINDOWS:
-                extra_ldflags.append(f'/LIBPATH:{_join_rocm_home("lib")}')
-                extra_ldflags.append('amdhip64.lib')
-            else:
-                extra_ldflags.append(f'-L{_join_rocm_home("lib")}')
-                extra_ldflags.append('-lamdhip64')
-    if with_sycl:
-        if IS_WINDOWS:
-            extra_ldflags.append(f'/LIBPATH:{_join_sycl_home("lib")}')
-            extra_ldflags.append('sycl.lib')
         else:
-            extra_ldflags.append(f'-L{_join_sycl_home("lib")}')
-            extra_ldflags.append('-lsycl')
+            extra_ldflags.append(f'-L{_join_rocm_home("lib")}')
+            extra_ldflags.append('-lamdhip64')
+    if with_sycl:
+        extra_ldflags.append(f'-L{_join_sycl_home("lib")}')
+        extra_ldflags.append('-lsycl')
     return extra_ldflags
 
 
@@ -2888,37 +2461,11 @@ def _get_num_workers(verbose: bool) -> int | None:
     return None
 
 
-def _get_vc_env(vc_arch: str) -> dict[str, str]:
-    try:
-        from setuptools import distutils  # type: ignore[attr-defined]
-
-        return distutils._msvccompiler._get_vc_env(vc_arch)
-    except AttributeError:
-        try:
-            from setuptools._distutils import _msvccompiler
-            return _msvccompiler._get_vc_env(vc_arch)  # type: ignore[attr-defined]
-        except AttributeError:
-            from setuptools._distutils.compilers.C import msvc
-            return msvc._get_vc_env(vc_arch)  # type: ignore[attr-defined]
-
 def _run_ninja_build(build_directory: str, verbose: bool, error_prefix: str) -> None:
     command = ['ninja', '-v']
     num_workers = _get_num_workers(verbose)
     if num_workers is not None:
         command.extend(['-j', str(num_workers)])
-    env = os.environ.copy()
-    # Try to activate the vc env for the users
-    if IS_WINDOWS and 'VSCMD_ARG_TGT_ARCH' not in env:
-        from setuptools import distutils  # type: ignore[attr-defined]
-
-        plat_name = distutils.util.get_platform()
-        plat_spec = PLAT_TO_VCVARS[plat_name]
-        vc_env = {k.upper(): v for k, v in _get_vc_env(plat_spec).items()}
-        for k, v in env.items():
-            uk = k.upper()
-            if uk not in vc_env:
-                vc_env[uk] = v
-        env = vc_env
     try:
         sys.stdout.flush()
         sys.stderr.flush()
@@ -2937,12 +2484,11 @@ def _run_ninja_build(build_directory: str, verbose: bool, error_prefix: str) -> 
         stdout_fileno = 1
         subprocess.run(
             command,
-            shell=IS_WINDOWS and IS_HIP_EXTENSION,
+            shell=False,
             stdout=stdout_fileno if verbose else subprocess.PIPE,
             stderr=subprocess.STDOUT,
             cwd=build_directory,
-            check=True,
-            env=env)
+            check=True)
     except subprocess.CalledProcessError as e:
         # Python 2 and 3 compatible way of getting the error object.
         _, error, _ = sys.exc_info()
@@ -2956,13 +2502,6 @@ def _run_ninja_build(build_directory: str, verbose: bool, error_prefix: str) -> 
 
 
 def _get_exec_path(module_name, path):
-    if IS_WINDOWS and TORCH_LIB_PATH not in os.getenv('PATH', '').split(';'):
-        torch_lib_in_path = any(
-            os.path.exists(p) and os.path.samefile(p, TORCH_LIB_PATH)
-            for p in os.getenv('PATH', '').split(';')
-        )
-        if not torch_lib_in_path:
-            os.environ['PATH'] = f"{TORCH_LIB_PATH};{os.getenv('PATH', '')}"
     return os.path.join(path, f'{module_name}{EXEC_EXT}')
 
 
@@ -3015,7 +2554,7 @@ def _write_ninja_file_to_build_library(path,
     # sysconfig.get_path('include') gives us the location of Python.h
     # Explicitly specify 'posix_prefix' scheme on non-Windows platforms to workaround error on some MacOS
     # installations where default `get_path` points to non-existing `/Library/Python/M.m/include` folder
-    python_include_path = sysconfig.get_path('include', scheme='nt' if IS_WINDOWS else 'posix_prefix')
+    python_include_path = sysconfig.get_path('include', scheme='posix_prefix')
     if python_include_path is not None:
         system_includes.append(python_include_path)
 
@@ -3025,45 +2564,25 @@ def _write_ninja_file_to_build_library(path,
         common_cflags.append('-DTORCH_API_INCLUDE_EXTENSION_H')
 
     # Windows does not understand `-isystem` and quotes flags later.
-    if IS_WINDOWS:
-        common_cflags += [f'-I{include}' for include in user_includes + system_includes]
-    else:
-        common_cflags += [f'-I{shlex.quote(include)}' for include in user_includes]
-        common_cflags += [f'-isystem {shlex.quote(include)}' for include in system_includes]
+    common_cflags += [f'-I{shlex.quote(include)}' for include in user_includes]
+    common_cflags += [f'-isystem {shlex.quote(include)}' for include in system_includes]
 
-    if IS_WINDOWS:
-        COMMON_HIP_FLAGS.extend(['-fms-runtime-lib=dll'])
-        cflags = common_cflags + ['/std:c++20'] + extra_cflags
-        cflags += COMMON_MSVC_FLAGS + (COMMON_HIP_FLAGS if IS_HIP_EXTENSION else [])
-        cflags = _nt_quote_args(cflags)
-    else:
-        cflags = common_cflags + ['-fPIC', '-std=c++20'] + extra_cflags
+    cflags = common_cflags + ['-fPIC', '-std=c++20'] + extra_cflags
 
     if with_cuda and IS_HIP_EXTENSION:
         cuda_flags = ['-DWITH_HIP'] + common_cflags + extra_cflags + COMMON_HIP_FLAGS + COMMON_HIPCC_FLAGS
         cuda_flags = cuda_flags + ['-std=c++20']
         cuda_flags += _get_rocm_arch_flags(cuda_flags)
         cuda_flags += extra_cuda_cflags
-        if IS_WINDOWS:
-            cuda_flags = _nt_quote_args(cuda_flags)
     elif with_cuda:
         cuda_flags = common_cflags + COMMON_NVCC_FLAGS + _get_cuda_arch_flags(extra_cuda_cflags)
-        if IS_WINDOWS:
-            for flag in COMMON_MSVC_FLAGS:
-                cuda_flags = ['-Xcompiler', flag] + cuda_flags
-            for ignore_warning in MSVC_IGNORE_CUDAFE_WARNINGS:
-                cuda_flags = ['-Xcudafe', '--diag_suppress=' + ignore_warning] + cuda_flags
-            cuda_flags = cuda_flags + ['-std=c++20']
-            cuda_flags = _nt_quote_args(cuda_flags)
-            cuda_flags += _nt_quote_args(extra_cuda_cflags)
-        else:
-            cuda_flags += ['--compiler-options', "'-fPIC'"]
-            cuda_flags += extra_cuda_cflags
-            if not any(flag.startswith('-std=') for flag in cuda_flags):
-                cuda_flags.append('-std=c++20')
-            cc_env = os.getenv("CC")
-            if cc_env is not None:
-                cuda_flags = ['-ccbin', cc_env] + cuda_flags
+        cuda_flags += ['--compiler-options', "'-fPIC'"]
+        cuda_flags += extra_cuda_cflags
+        if not any(flag.startswith('-std=') for flag in cuda_flags):
+            cuda_flags.append('-std=c++20')
+        cc_env = os.getenv("CC")
+        if cc_env is not None:
+            cuda_flags = ['-ccbin', cc_env] + cuda_flags
     else:
         cuda_flags = None
 
@@ -3104,9 +2623,6 @@ def _write_ninja_file_to_build_library(path,
     # The darwin linker needs explicit consent to ignore unresolved symbols.
     if IS_MACOS:
         ldflags.append('-undefined dynamic_lookup')
-    elif IS_WINDOWS:
-        ldflags = _nt_quote_args(ldflags)
-
     ext = EXEC_EXT if is_standalone else LIB_EXT
     library_target = f'{name}{ext}'
 
@@ -3200,7 +2716,7 @@ e.
             nvcc = _shell_join(_wrap_compiler(nvcc))
         config.append(f'nvcc = {nvcc}')
     if with_sycl or sycl_dlink_post_cflags:
-        sycl = 'icx' if IS_WINDOWS else 'icpx'
+        sycl = 'icpx'
         config.append(f'sycl = {sycl}')
 
     if IS_HIP_EXTENSION:
@@ -3223,19 +2739,10 @@ e.
 
     # See https://ninja-build.org/build.ninja.html for reference.
     compile_rule = ['rule compile']
-    if IS_WINDOWS:
-        compiler_name = "$cxx" if IS_HIP_EXTENSION else "cl"
-        compile_rule.append(
-            f'  command = {compiler_name} '
-            '/showIncludes $cflags -c $in /Fo$out $post_cflags'  # codespell:ignore
-        )
-        if not IS_HIP_EXTENSION:
-            compile_rule.append('  deps = msvc')
-    else:
-        compile_rule.append(
-            '  command = $cxx -MMD -MF $out.d $cflags -c $in -o $out $post_cflags')
-        compile_rule.append('  depfile = $out.d')
-        compile_rule.append('  deps = gcc')
+    compile_rule.append(
+        '  command = $cxx -MMD -MF $out.d $cflags -c $in -o $out $post_cflags')
+    compile_rule.append('  depfile = $out.d')
+    compile_rule.append('  deps = gcc')
 
     if with_cuda:
         cuda_compile_rule = ['rule cuda_compile']
@@ -3270,9 +2777,6 @@ e.
             rule = 'sycl_compile'
         else:
             rule = 'compile'
-        if IS_WINDOWS:
-            source_file = source_file.replace(':', '$:')
-            object_file = object_file.replace(':', '$:')
         source_file = source_file.replace(" ", "$ ")
         object_file = object_file.replace(" ", "$ ")
         build.append(f'build {object_file}: {rule} {source_file}')
@@ -3288,13 +2792,8 @@ e.
 
     if sycl_dlink_post_cflags:
         sycl_devlink_out = os.path.join(os.path.dirname(objects[0]), "sycl_dlink.o")
-        if IS_WINDOWS:
-            sycl_devlink_objects = [obj.replace(":", "$:") for obj in objects]
-            objects += [sycl_devlink_out]
-            sycl_devlink_out = sycl_devlink_out.replace(":", "$:")
-        else:
-            sycl_devlink_objects = list(objects)
-            objects += [sycl_devlink_out]
+        sycl_devlink_objects = list(objects)
+        objects += [sycl_devlink_out]
         sycl_devlink_rule = ["rule sycl_devlink"]
         sycl_devlink_rule.append(
             "  command = $sycl $in -o $out $sycl_dlink_post_cflags"
@@ -3307,16 +2806,7 @@ e.
 
     if library_target is not None:
         link_rule = ['rule link']
-        if IS_WINDOWS:
-            cl_paths = subprocess.check_output(['where',
-                                                'cl']).decode(*SUBPROCESS_DECODE_ARGS).split('\r\n')
-            if len(cl_paths) >= 1:
-                cl_path = os.path.dirname(cl_paths[0]).replace(':', '$:')
-            else:
-                raise RuntimeError("MSVC is required to load C++ extensions")
-            link_rule.append(f'  command = "{cl_path}/link.exe" $in /nologo $ldflags /out:$out')
-        else:
-            link_rule.append('  command = $cxx $in $ldflags -o $out')
+        link_rule.append('  command = $cxx $in $ldflags -o $out')
 
         link = [f'build {library_target}: link {" ".join(objects)}']
 

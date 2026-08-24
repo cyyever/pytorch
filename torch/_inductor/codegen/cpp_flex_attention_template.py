@@ -111,7 +111,7 @@ inline void {{kernel_name}}_fill_stub(scalar_t* data, scalar_t val, int64_t size
   for (; d < size - (size % Vec::size()); d += Vec::size()) {
     data_vec.store(data + d);
   }
-  #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+  #if !defined(COMPILING_FOR_MIN_SIZE)
   # pragma unroll
   #endif
   for (; d < size; d++) {

@@ -243,7 +243,7 @@ class DeferredCpuTritonCallWrapper:
                 {kernel_member});
             """)
 
-    def generate(self, wrapper: CppWrapperCpu) -> None:
+    def generate(self, wrapper: "CppWrapperCpu") -> None:
         from torch._inductor.codecache import CpuTritonKernelCache
 
         info = CpuTritonKernelCache.get(self.kernel_name)
@@ -398,7 +398,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         partition_signatures: ir.GraphPartitionSignature | None = None,
     ):
         # TODO - support subgraph codegen by lifting functions. Check the
-        # comment at CppWrapperCpu `codegen_subgraph` function.
+        # comment at "CppWrapperCpu" `codegen_subgraph` function.
         return CppWrapperCpu()
 
     @contextlib.contextmanager
@@ -1550,11 +1550,6 @@ class CppWrapperCpu(PythonWrapperCodegen):
     def _write_cpu_triton_runtime_includes(prefix: IndentedBuffer) -> None:
         """One-time includes/guards needed by emitted CPU Triton wrappers."""
         prefix.writeline("// CPU AOTI Triton kernel wrappers")
-        prefix.writeline("#ifdef _WIN32")
-        prefix.writeline(
-            '#error "CPU AOTI Triton kernels are not supported on Windows"'
-        )
-        prefix.writeline("#endif")
         prefix.writeline("#include <mutex>")
         prefix.writeline(
             "#include <torch/csrc/inductor/aoti_runtime/cpu_triton_runtime_wrappers.h>"
@@ -2306,10 +2301,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
     def _generate_symbolic_call_arg_helper(
         self, arg: SymbolicCallArg, graph: GraphLowering
     ) -> None:
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform in [
-            "linux",
-            "win32",
-        ]
+        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
         if enable_kernel_profile or (arg.inner, graph) not in self.kernel_numel_expr:
             # When enable_kernel_profile is on, each kernel call is wrapped in
             # its own {} scope block, so we must redeclare the variable each
@@ -4361,8 +4353,8 @@ if (!custom_op_wrapper) {
         if isinstance(val, bool):
             return "1" if val else "0"
         elif isinstance(val, int):
-            # uint64_t is long on Linux, but long long on MacOS and Windows
-            return f"{val}LL" if sys.platform in ["darwin", "win32"] else f"{val}L"
+            # uint64_t is long on Linux, but long long on MacOS
+            return f"{val}LL" if sys.platform == "darwin" else f"{val}L"
         elif isinstance(val, complex):
             return f"c10::complex<double>{{ {self.generate_float_value(val.real)}, {self.generate_float_value(val.imag)} }}"
         elif isinstance(val, str):

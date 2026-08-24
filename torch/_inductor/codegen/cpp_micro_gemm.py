@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 import dataclasses
 import operator
-import sys
 from collections.abc import Callable
 from enum import Enum
 
@@ -16,7 +15,6 @@ from ..cpu_vec_isa import (
     VecAVX512VNNI,
     VecISA,
     VecNEON,
-    VecSVE,
 )
 from ..utils import IndentedBuffer, parallel_num_threads
 from ..virtualized import V
@@ -31,15 +29,10 @@ class LayoutType(Enum):
     VNNI4 = 2
 
 
-_IS_WINDOWS = sys.platform == "win32"
 
 
 def get_restrict_keyword() -> str:
-    if _IS_WINDOWS:
-        # https://learn.microsoft.com/en-us/cpp/cpp/extension-restrict?view=msvc-170
-        return "__restrict"
-    else:
-        return "__restrict__"
+    return "__restrict__"
 
 
 class CppMicroGemm:
@@ -429,14 +422,6 @@ def do_not_use_with_small_m_for_int8_woq(config, m, n, k, alpha, num_threads, **
     ),
     *generate_gemm_config(
         VecNEON,
-        [(4, 24, 1), (4, 16, 1), (8, 8, 1)],
-        input_dtype=torch.float,
-        input2_dtype=torch.float,
-        output_dtype=torch.float,
-        compute_dtype=torch.float,
-    ),
-    *generate_gemm_config(
-        VecSVE,
         [(4, 24, 1), (4, 16, 1), (8, 8, 1)],
         input_dtype=torch.float,
         input2_dtype=torch.float,

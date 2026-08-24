@@ -578,8 +578,6 @@
 #
 # [backend_device_runtime]
 # /torch/backends/
-/aten/src/ATen/detail/MTIAHooksInterface.h @egienvalue
-/torch/csrc/mtia/ @egienvalue
 #
 # [backend_cuda]
 /aten/src/ATen/cuda/ @eqy @syed-ahmed @Aidyn-A
@@ -768,7 +766,6 @@
 # /test/custom_operator/
 # /test/test_cpp_extensions_aot.py
 # /test/test_cpp_extensions_jit.py
-# /test/test_cpp_extensions_mtia_backend.py
 # /test/test_cpp_extensions_stream_and_event.py
 # /test/test_custom_ops.py
 # /torch/_classes.py
@@ -869,7 +866,6 @@
 # /third_party/cutlass
 # /third_party/fbgemm
 # /third_party/flash-attention
-# /third_party/gemmlowp/
 # /third_party/ideep
 /third_party/xpu.txt @EikanWang @gujinghui
 #
@@ -900,7 +896,6 @@
 #
 # [infra_developer_tools]
 # /.devcontainer/
-# /.vscode/
 # /benchmarks/README.md
 # /binaries/
 # /scripts/

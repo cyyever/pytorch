@@ -33,8 +33,6 @@ from torch.testing._internal.common_device_type import (
     get_desired_device_type_test_bases,
 )
 from torch.testing._internal.common_utils import (
-    IS_CI,
-    IS_WINDOWS,
     LazyVal,
     TestCase,
 )
@@ -71,13 +69,11 @@ HAS_HELION = has_helion()
 
 HAS_CUDA_AND_TRITON = torch.cuda.is_available() and HAS_TRITON
 
-HAS_MTIA_AND_TRITON = torch.mtia.is_available() and HAS_TRITON
-
 HAS_XPU_AND_TRITON = torch.xpu.is_available() and HAS_TRITON
 
 HAS_MPS = torch.mps.is_available()
 
-HAS_GPU = HAS_CUDA_AND_TRITON or HAS_XPU_AND_TRITON or HAS_MTIA_AND_TRITON
+HAS_GPU = HAS_CUDA_AND_TRITON or HAS_XPU_AND_TRITON
 HAS_GPU_AND_TRITON = HAS_GPU
 
 GPU_TYPE = get_gpu_type()
@@ -156,17 +152,6 @@ def skipDeviceIf(cond, msg, *, device):
             return fn
 
     return decorate_fn
-
-
-def skip_windows_ci(name: str, file: str) -> None:
-    if IS_WINDOWS and IS_CI:
-        module = os.path.basename(file).strip(".py")
-        sys.stderr.write(
-            f"Windows CI does not have necessary dependencies for {module} tests yet\n"
-        )
-        if name == "__main__":
-            sys.exit(0)
-        raise unittest.SkipTest("requires sympy/functorch/filelock")
 
 
 # TODO: Remove HAS_MPS condition  when `HAS_GPU` includes HAS_MPS

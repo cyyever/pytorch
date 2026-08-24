@@ -1,8 +1,6 @@
-#ifndef _WIN32
 #include <sys/wait.h>
 #include <unistd.h>
 #include <csignal>
-#endif
 
 #include <sys/types.h>
 
@@ -10,7 +8,6 @@
 #include <thread>
 
 #include <gtest/gtest.h>
-#include <torch/csrc/autograd/profiler.h>
 #include <torch/cuda.h>
 
 #include <c10/util/irange.h>
@@ -19,12 +16,10 @@
 #include "TestUtils.hpp"
 
 using namespace c10d::test;
-using namespace torch::autograd::profiler;
 
 constexpr auto kSendDelay = std::chrono::milliseconds(100);
 constexpr auto kWaitTimeout = std::chrono::milliseconds(1);
 
-#ifndef _WIN32
 class SignalTest {
  public:
   SignalTest(std::string path) : path_(std::move(path)) {}
@@ -96,7 +91,6 @@ c10::intrusive_ptr<::c10d::Work> testSignal(
   test.arm(fork.pid, signal);
   return test.run(0, 2);
 }
-#endif
 
 class ProcessGroupGlooDelayed : public ::c10d::ProcessGroupGloo {
  public:
@@ -221,37 +215,6 @@ std::vector<std::vector<at::Tensor>> waitFuture(
   return copyTensors(outputTensors);
 }
 
-void checkProfiledEvents(
-    const thread_event_lists& event_lists,
-    const char* expected_profile_str,
-    int expected_count,
-    std::vector<std::vector<int64_t>> expected_shapes,
-    bool verify_shapes = true) {
-  if (verify_shapes) {
-    EXPECT_EQ(expected_count, expected_shapes.size());
-  }
-  std::vector<bool> matched_shapes(expected_count);
-  for (const auto& li : event_lists) {
-    for (const auto& evt : li) {
-      auto match = !strcmp(evt.name(), expected_profile_str);
-      if (verify_shapes && match) {
-        auto shapesVec = evt.shapes();
-        for (const auto i : c10::irange(expected_count)) {
-          // Assumptions: no two expected shapes are the same
-          if (shapesVec[0] == expected_shapes[i]) {
-            matched_shapes[i] = true;
-          }
-        }
-      }
-    }
-  }
-  if (verify_shapes) {
-    for (bool match : matched_shapes) {
-      EXPECT_TRUE(match);
-    }
-  }
-}
-
 void testAllreduce(
     const std::string& path,
     const at::DeviceType b,
@@ -261,28 +224,19 @@ void testAllreduce(
 
   // Generate inputs
   std::vector<std::vector<at::Tensor>> inputs(size);
-  std::vector<std::vector<int64_t>> allShapes;
   std::vector<int64_t> shapes = {16, 16};
   for (const auto i : c10::irange(size)) {
     auto tensor = at::ones(shapes, at::dtype(dtype).device(b)) * i;
-    std::vector<int64_t> shapesVec = shapes;
-    allShapes.emplace_back(std::move(shapesVec));
     inputs[i] = std::vector<at::Tensor>({tensor});
   }
 
   // Kick off work
   std::vector<c10::intrusive_ptr<::c10d::Work>> work(size);
-  const char* GLOO_ALLREDUCE_STR = "gloo:all_reduce";
-  enableProfilerLegacy(ProfilerConfig(
-      ProfilerState::CPU, /* report_input_shapes */ true, false));
   for (const auto i : c10::irange(size)) {
     work[i] = tests[i].getProcessGroup().allreduce(inputs[i]);
   }
   // Wait for work to complete
   auto outputs = waitFuture(work);
-
-  auto event_lists = disableProfilerLegacy();
-  checkProfiledEvents(event_lists, GLOO_ALLREDUCE_STR, size, allShapes);
 
   // Verify outputs
   const auto expected = (size * (size - 1)) / 2;
@@ -306,28 +260,19 @@ void testAllreduceUsingWorkAPI(
 
   // Generate inputs
   std::vector<std::vector<at::Tensor>> inputs(size);
-  std::vector<std::vector<int64_t>> allShapes;
   std::vector<int64_t> shapes = {16, 16};
   for (const auto i : c10::irange(size)) {
     auto tensor = at::ones(shapes, at::dtype(dtype).device(b)) * i;
-    std::vector<int64_t> shapesVec = shapes;
-    allShapes.emplace_back(std::move(shapesVec));
     inputs[i] = std::vector<at::Tensor>({tensor});
   }
 
   // Kick off work
   std::vector<c10::intrusive_ptr<::c10d::Work>> work(size);
-  const char* GLOO_ALLREDUCE_STR = "gloo:all_reduce";
-  enableProfilerLegacy(ProfilerConfig(
-      ProfilerState::CPU, /* report_input_shapes */ true, false));
   for (const auto i : c10::irange(size)) {
     work[i] = tests[i].getProcessGroup().allreduce(inputs[i]);
   }
   // Wait for work to complete
   auto outputs = waitWork(work);
-
-  auto event_lists = disableProfilerLegacy();
-  checkProfiledEvents(event_lists, GLOO_ALLREDUCE_STR, size, allShapes);
 
   // Verify outputs
   const auto expected = (size * (size - 1)) / 2;
@@ -353,11 +298,8 @@ void testBroadcast(
   // Try every permutation of root rank and root tensor
   for (const auto i : c10::irange(size)) {
     for (const auto j : c10::irange(stride)) {
-      std::vector<std::vector<int64_t>> allShapes;
       // Initialize inputs
       for (const auto k : c10::irange(size)) {
-        std::vector<int64_t> shapesVec = shapes;
-        allShapes.emplace_back(std::move(shapesVec));
         inputs[k].resize(stride);
         // This won't work if we ever support sparse CUDA
         at::OptionalDeviceGuard deviceGuard;
@@ -376,9 +318,6 @@ void testBroadcast(
       options.rootTensor = j;
 
       // Kick off work
-      const char* GLOO_BROADCAST_STR = "gloo:broadcast";
-      enableProfilerLegacy(ProfilerConfig(
-          ProfilerState::CPU, /* report_input_shapes */ true, false));
       std::vector<c10::intrusive_ptr<::c10d::Work>> work(size);
 
       for (const auto i : c10::irange(size)) {
@@ -387,9 +326,6 @@ void testBroadcast(
 
       // Wait for work to complete
       auto outputs = waitFuture(work);
-
-      auto event_lists = disableProfilerLegacy();
-      checkProfiledEvents(event_lists, GLOO_BROADCAST_STR, size, allShapes);
 
       // Verify outputs
       const auto expected = (i * stride + j);
@@ -448,18 +384,6 @@ void testAlltoall(const std::string& path, const at::DeviceType b) {
 
   // Kick off work
   std::vector<c10::intrusive_ptr<::c10d::Work>> work(size);
-  const char* GLOO_A2A_STR = "gloo:all_to_all";
-  std::vector<std::vector<int64_t>> allShapes;
-  for (const auto& vec : inputSplits) {
-    // Due to concatenation of tensors, shape will actually be the sum
-    int64_t sum = 0;
-    for (const auto& s : vec) {
-      sum += s;
-    }
-    allShapes.push_back({sum});
-  }
-  enableProfilerLegacy(ProfilerConfig(
-      ProfilerState::CPU, /* report_input_shapes */ true, false));
   for (const auto rank : c10::irange(size)) {
     work[rank] = tests[rank].getProcessGroup().all_to_all_single(
         outputs[rank], inputs[rank], outputSplits[rank], inputSplits[rank]);
@@ -470,8 +394,6 @@ void testAlltoall(const std::string& path, const at::DeviceType b) {
     work[i]->wait();
   }
 
-  auto event_lists = disableProfilerLegacy();
-  checkProfiledEvents(event_lists, GLOO_A2A_STR, size, allShapes);
   // Verify outputs
   std::vector<std::vector<int32_t>> expected = {
       {0, 1, 10, 11, 12, 20, 21, 30, 31},
@@ -494,8 +416,6 @@ void testBarrier(const std::string& path) {
   auto tests = CollectiveTest::initialize(path, size);
 
   // Kick off work
-  enableProfilerLegacy(ProfilerConfig(
-      ProfilerState::CPU, /* report_input_shapes */ true, false));
   std::vector<c10::intrusive_ptr<::c10d::Work>> work(size);
   for (const auto i : c10::irange(size)) {
     work[i] = tests[i].getProcessGroup().barrier();
@@ -504,16 +424,6 @@ void testBarrier(const std::string& path) {
   // Wait for work to complete
   waitFuture(work);
 
-  auto event_lists = disableProfilerLegacy();
-  const char* GLOO_STR = "gloo:barrier";
-  std::vector<std::vector<int64_t>> allShapes;
-  // Barrier does not use tensors, so skip shape checking.
-  checkProfiledEvents(
-      event_lists,
-      GLOO_STR,
-      size,
-      allShapes,
-      /* verify_shapes */ false);
 }
 
 void testMonitoredBarrier(const std::string& path) {
@@ -580,15 +490,10 @@ void testSend(const std::string& path) {
   auto selfRank = 0;
   auto dstRank = 1;
   std::vector<int64_t> shapes{16, 16};
-  std::vector<std::vector<int64_t>> allShapes;
-  allShapes.push_back(shapes);
   std::vector<at::Tensor> tensors = {
       at::ones(shapes),
   };
   auto& pg = tests[selfRank].getProcessGroup();
-  const char* GLOO_SEND_STR = "gloo:send";
-  enableProfilerLegacy(ProfilerConfig(
-      ProfilerState::CPU, /* report_input_shapes */ true, false));
   auto sendWork = pg.send(tensors, dstRank, tag);
   bool sendCompleted = false;
   std::thread waitSendThreadAbort([&]() { sendCompleted = sendWork->wait(); });
@@ -596,8 +501,6 @@ void testSend(const std::string& path) {
   // Block until the sendWork gets successfully aborted
   waitSendThreadAbort.join();
   EXPECT_FALSE(sendCompleted);
-  auto event_lists = disableProfilerLegacy();
-  checkProfiledEvents(event_lists, GLOO_SEND_STR, 1, allShapes);
 
   // Now create a separate sender thread to ensure that future waitsends can
   // complete successfully.
@@ -630,15 +533,10 @@ void testRecv(const std::string& path) {
   auto selfRank = 0;
   auto srcRank = 1;
   std::vector<int64_t> shapes = {16, 16};
-  std::vector<std::vector<int64_t>> allShapes;
-  allShapes.push_back(shapes);
   std::vector<at::Tensor> tensors = {
       at::ones(shapes),
   };
-  const char* GLOO_RECV_STR = "gloo:recv";
   auto& pg = tests[selfRank].getProcessGroup();
-  enableProfilerLegacy(ProfilerConfig(
-      ProfilerState::CPU, /* report_input_shapes */ true, false));
   auto recvWork = pg.recv(tensors, srcRank, tag);
   bool recvCompleted = false;
   std::thread waitRecvThreadAbort([&]() { recvCompleted = recvWork->wait(); });
@@ -646,8 +544,6 @@ void testRecv(const std::string& path) {
   // Block until the first recv gets successfully aborted
   waitRecvThreadAbort.join();
   EXPECT_FALSE(recvCompleted);
-  auto event_lists = disableProfilerLegacy();
-  checkProfiledEvents(event_lists, GLOO_RECV_STR, 1, allShapes);
 
   // Now create a separate receiver thread to ensure that future waits can
   // complete successfully.
@@ -688,7 +584,6 @@ void testStoreSetGet(const std::string& path) {
   EXPECT_TRUE(value == testVector);
 }
 
-#ifndef _WIN32
 TEST(ProcessGroupGlooTest, testSIGSTOPException) {
   // test SIGSTOP
   // Fork() and TSAN don't play well together, so skip the test if we're testing
@@ -718,7 +613,6 @@ TEST(ProcessGroupGlooTest, testSIGKILLException) {
   EXPECT_FALSE(work->isSuccess());
   EXPECT_THROW(std::rethrow_exception(work->exception()), std::exception);
 }
-#endif
 
 TEST(ProcessGroupGlooTest, testAllReduceCPU) {
   {

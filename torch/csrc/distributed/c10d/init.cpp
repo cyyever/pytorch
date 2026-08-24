@@ -8,15 +8,12 @@
 #include <torch/csrc/distributed/c10d/GroupRegistry.hpp>
 #include <torch/csrc/distributed/c10d/TCPStore.hpp>
 #include <torch/csrc/distributed/c10d/Utils.hpp>
-#include <torch/csrc/distributed/c10d/control_plane/WorkerServer.hpp>
 #include <torch/csrc/distributed/c10d/hooks/FlightRecorderHook.hpp>
 #include <torch/csrc/distributed/c10d/hooks/NanCheckHook.hpp>
 #include <string_view>
 #include <utility>
 #include <vector>
-#ifndef _WIN32
 #include <torch/csrc/distributed/c10d/HashStore.hpp>
-#endif
 #include <torch/csrc/distributed/c10d/FakeProcessGroup.hpp>
 #include <torch/csrc/distributed/c10d/ProcessGroup.hpp>
 #include <torch/csrc/distributed/c10d/py/PyBackend.hpp>
@@ -425,37 +422,6 @@ class PythonStore : public ::c10d::Store {
   bool hasExtendedApi() const override {
     PYBIND11_OVERRIDE_NAME(
         bool, ::c10d::Store, "has_extended_api", hasExtendedApi);
-  }
-};
-
-class PythonRequest : public ::c10d::control_plane::Request {
- public:
-  const std::string& body() const override {
-    PYBIND11_OVERRIDE_PURE(
-        const std::string&, ::c10d::control_plane::Request, body);
-  }
-
-  const std::multimap<std::string, std::string>& params() const override {
-    using MultiMap = const std::multimap<std::string, std::string>&;
-    PYBIND11_OVERRIDE_PURE(MultiMap, ::c10d::control_plane::Request, params);
-  }
-};
-class PythonResponse : public ::c10d::control_plane::Response {
- public:
-  // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
-  void setContent(std::string&& content, const std::string& content_type)
-      override {
-    PYBIND11_OVERRIDE_PURE_NAME(
-        void,
-        ::c10d::control_plane::Response,
-        "set_content",
-        setContent,
-        content,
-        content_type);
-  }
-  void setStatus(int status) override {
-    PYBIND11_OVERRIDE_PURE_NAME(
-        void, ::c10d::control_plane::Response, "set_status", setStatus, status);
   }
 };
 
@@ -2089,7 +2055,6 @@ Example::
           &::c10d::FileStore::getPath,
           R"(Gets the path of the file used by FileStore to store key-value pairs.)");
 
-#ifndef _WIN32
   intrusive_ptr_class_<::c10d::HashStore>(
       module,
       "HashStore",
@@ -2106,7 +2071,6 @@ Example::
     >>> store.set("first_key", "first_value")
       )")
       .def(py::init<>(), R"(Creates a new HashStore.)");
-#endif
 
   intrusive_ptr_class_<::c10d::FakeStore>(
       module,
@@ -5147,90 +5111,6 @@ be removed again via remove().)")
             Arguments:
                 backend (str, optional): Name of the backend whose recorder instance to reset. Default is "gloo".
         )");
-
-  intrusive_ptr_class_<::c10d::control_plane::WorkerServer>(
-      module, "_WorkerServer", R"(
-)")
-      .def(
-          py::init([](const std::string& hostOrFile, int port) {
-            return c10::make_intrusive<::c10d::control_plane::WorkerServer>(
-                hostOrFile, port);
-          }),
-          py::arg("host_or_file"),
-          py::arg("port") = -1)
-      .def("shutdown", &::c10d::control_plane::WorkerServer::shutdown)
-      .def_property_readonly(
-          "port", &::c10d::control_plane::WorkerServer::port);
-
-  module.def(
-      "_get_handler",
-      [](const std::string& name) -> py::cpp_function {
-        return py::cpp_function(
-            ::c10d::control_plane::getHandler(name),
-            py::arg("request"),
-            py::arg("response"),
-            py::call_guard<py::gil_scoped_release>());
-      },
-      py::arg("name"),
-      R"(
-      Returns the handler with the specified name.
-    )");
-
-  module.def(
-      "_register_handler",
-      [](const std::string& name, const py::function& handler) {
-        ::c10d::control_plane::registerHandler(
-            name,
-            [handler](
-                const ::c10d::control_plane::Request& req,
-                ::c10d::control_plane::Response& res) {
-              py::gil_scoped_acquire acquire;
-              handler(std::ref(req), std::ref(res));
-            });
-      },
-
-      py::arg("name"),
-      py::arg("handler"),
-      R"(
-    Registers a handler by name.
-  )");
-
-  module.def(
-      "_get_handler_names",
-      &::c10d::control_plane::getHandlerNames,
-      R"(
-      Returns the names of all handlers.
-    )",
-      py::call_guard<py::gil_scoped_release>());
-
-  py::class_<::c10d::control_plane::Request, PythonRequest>(
-      module,
-      "_Request",
-      R"(
-      See c10d::control_plane::Request for docs.
-)")
-      // Default constructor.
-      .def(py::init<>())
-      .def("body", &::c10d::control_plane::Request::body)
-      .def("get_param", &::c10d::control_plane::Request::getParam);
-
-  py::class_<::c10d::control_plane::Response, PythonResponse>(
-      module,
-      "_Response",
-      R"(
-      See c10d::control_plane::Response for docs.
-)")
-      // Default constructor.
-      .def(py::init<>())
-      .def(
-          "set_content",
-          &::c10d::control_plane::Response::setContent,
-          py::arg("content"),
-          py::arg("content_type"))
-      .def(
-          "set_status",
-          &::c10d::control_plane::Response::setStatus,
-          py::arg("status"));
 
   Py_RETURN_TRUE;
 }

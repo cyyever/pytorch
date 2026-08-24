@@ -53,12 +53,7 @@ if TYPE_CHECKING:
 
 FUNCTION_DECLARATION = CodeTemplate(
     """\
-#ifdef _WIN32
-struct ${op} : public ${superclass} {
-  TORCH_API ${op}() = default;
-#else
 struct TORCH_API ${op} : public ${superclass} {
-#endif
   using ${superclass}::${superclass};
   variable_list apply(variable_list&& grads) override;
   std::string name() const override { return "${op}"; }

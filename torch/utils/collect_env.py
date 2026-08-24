@@ -106,7 +106,6 @@ CONDA_PATTERNS = [
     "cudatoolkit",
     "soumith",
     "mkl",
-    "magma",
 ]
 
 PIP_PATTERNS = [
@@ -123,10 +122,7 @@ def run(command):
     )
     raw_output, raw_err = p.communicate()
     rc = p.returncode
-    if get_platform() == "win32":
-        enc = "oem"
-    else:
-        enc = locale.getpreferredencoding()
+    enc = locale.getpreferredencoding()
     output = raw_output.decode(enc)
     err = raw_err.decode(enc)
     return rc, output.strip(), err.strip()
@@ -163,7 +159,7 @@ def get_conda_packages(run_lambda, patterns=None):
     if patterns is None:
         patterns = CONDA_PATTERNS + COMMON_PATTERNS + NVIDIA_PATTERNS + ONEAPI_PATTERNS
     conda = os.environ.get("CONDA_EXE", "conda")
-    out = run_and_read_all(run_lambda, "{} list".format(conda))
+    out = run_and_read_all(run_lambda, f"{conda} list")
     if out is None:
         return out
 
@@ -208,7 +204,7 @@ def get_gpu_info(run_lambda):
             if torch.version.hip is not None:
                 prop = torch.cuda.get_device_properties(0)
                 if hasattr(prop, "gcnArchName"):
-                    gcnArch = " ({})".format(prop.gcnArchName)
+                    gcnArch = f" ({prop.gcnArchName})"
                 else:
                     gcnArch = "NoGCNArchNameOnOldPyTorch"
             else:
@@ -230,12 +226,7 @@ def get_running_cuda_version(run_lambda):
 
 def get_cudnn_version(run_lambda):
     """Return a list of libcudnn.so; it's hard to tell which one is being used."""
-    if get_platform() == "win32":
-        system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
-        cuda_path = os.environ.get("CUDA_PATH", "%CUDA_PATH%")
-        where_cmd = os.path.join(system_root, "System32", "where")
-        cudnn_cmd = '{} /R "{}\\bin" cudnn*.dll'.format(where_cmd, cuda_path)
-    elif get_platform() == "darwin":
+    if get_platform() == "darwin":
         # CUDA libraries and drivers can be found in /usr/local/cuda/. See
         # https://docs.nvidia.com/cuda/archive/9.0/cuda-installation-guide-mac-os-x/index.html#installation
         # https://docs.nvidia.com/deeplearning/cudnn/installation/latest/
@@ -262,25 +253,11 @@ def get_cudnn_version(run_lambda):
     if len(files) == 1:
         return files[0]
     result = "\n".join(files)
-    return "Probably one of the following:\n{}".format(result)
+    return f"Probably one of the following:\n{result}"
 
 
 def get_nvidia_smi():
-    # Note: nvidia-smi is currently available only on Windows and Linux
-    smi = "nvidia-smi"
-    if get_platform() == "win32":
-        system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
-        program_files_root = os.environ.get("PROGRAMFILES", "C:\\Program Files")
-        legacy_path = os.path.join(
-            program_files_root, "NVIDIA Corporation", "NVSMI", smi
-        )
-        new_path = os.path.join(system_root, "System32", smi)
-        smis = [new_path, legacy_path]
-        for candidate_smi in smis:
-            if os.path.exists(candidate_smi):
-                smi = '"{}"'.format(candidate_smi)
-                break
-    return smi
+    return "nvidia-smi"
 
 
 def _detect_linux_pkg_manager():
@@ -356,25 +333,6 @@ def get_intel_gpu_driver_version(run_lambda):
             ver = get_linux_pkg_version(run_lambda, pkg)
             if ver != "N/A":
                 lst.append(f"* {pkg}:\t{ver}")
-    if platform in ["win32", "cygwin"]:
-        txt = run_and_read_all(
-            run_lambda,
-            'powershell.exe "gwmi -Class Win32_PnpSignedDriver | where{$_.DeviceClass -eq \\"DISPLAY\\"\
-            -and $_.Manufacturer -match \\"Intel\\"} | Select-Object -Property DeviceName,DriverVersion,DriverDate\
-            | ConvertTo-Json"',
-        )
-        try:
-            obj = json.loads(txt)
-            if type(obj) is list:
-                for o in obj:
-                    lst.append(
-                        f'* {o["DeviceName"]}: {o["DriverVersion"]} ({o["DriverDate"]})'
-                    )
-            else:
-                lst.append(f'* {obj["DriverVersion"]} ({obj["DriverDate"]})')
-        except ValueError as e:
-            lst.append(txt)
-            lst.append(str(e))
     return "\n".join(lst)
 
 
@@ -392,24 +350,6 @@ def get_intel_gpu_onboard(run_lambda):
                 else:
                     lst.append("N/A")
             except (ValueError, TypeError) as e:
-                lst.append(txt)
-                lst.append(str(e))
-        else:
-            lst.append("N/A")
-    if platform in ["win32", "cygwin"]:
-        txt = run_and_read_all(
-            run_lambda,
-            'powershell.exe "gwmi -Class Win32_PnpSignedDriver | where{$_.DeviceClass -eq \\"DISPLAY\\"\
-            -and $_.Manufacturer -match \\"Intel\\"} | Select-Object -Property DeviceName | ConvertTo-Json"',
-        )
-        if txt:
-            try:
-                obj = json.loads(txt)
-                if isinstance(obj, list) and obj:
-                    lst.extend(f'* {device["DeviceName"]}' for device in obj)
-                else:
-                    lst.append(f'* {obj.get("DeviceName", "N/A")}')
-            except ValueError as e:
                 lst.append(txt)
                 lst.append(str(e))
         else:
@@ -481,56 +421,12 @@ def get_intel_gpu_detected(run_lambda):
 #      Spectre v2:            Mitigation; Enhanced IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
 #      Srbds:                 Not affected
 #      Tsx async abort:       Not affected
-#  * win32
-#    Architecture=9
-#    CurrentClockSpeed=2900
-#    DeviceID=CPU0
-#    Family=179
-#    L2CacheSize=40960
-#    L2CacheSpeed=
-#    Manufacturer=GenuineIntel
-#    MaxClockSpeed=2900
-#    Name=Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz
-#    ProcessorType=3
-#    Revision=27142
-#
-#    Architecture=9
-#    CurrentClockSpeed=2900
-#    DeviceID=CPU1
-#    Family=179
-#    L2CacheSize=40960
-#    L2CacheSpeed=
-#    Manufacturer=GenuineIntel
-#    MaxClockSpeed=2900
-#    Name=Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz
-#    ProcessorType=3
-#    Revision=27142
 
 
 def get_cpu_info(run_lambda):
     rc, out, err = 0, "", ""
     if get_platform() == "linux":
         rc, out, err = run_lambda("lscpu")
-    elif get_platform() == "win32":
-        rc, out, err = run_lambda(
-            'powershell.exe "gwmi -Class Win32_Processor | Select-Object -Property Name,Manufacturer,Family,\
-            Architecture,ProcessorType,DeviceID,CurrentClockSpeed,MaxClockSpeed,L2CacheSize,L2CacheSpeed,Revision\
-            | ConvertTo-Json"'
-        )
-        if rc == 0:
-            lst = []
-            try:
-                obj = json.loads(out)
-                if type(obj) is list:
-                    for o in obj:
-                        lst.append("----------------------")
-                        lst.extend([f"{k}: {v}" for (k, v) in o.items()])
-                else:
-                    lst.extend([f"{k}: {v}" for (k, v) in obj.items()])
-            except ValueError as e:
-                lst.append(out)
-                lst.append(str(e))
-            out = "\n".join(lst)
     elif get_platform() == "darwin":
         rc, out, err = run_lambda("sysctl -n machdep.cpu.brand_string")
     cpu_info = "None"
@@ -544,10 +440,6 @@ def get_cpu_info(run_lambda):
 def get_platform():
     if sys.platform.startswith("linux"):
         return "linux"
-    elif sys.platform.startswith("win32"):
-        return "win32"
-    elif sys.platform.startswith("cygwin"):
-        return "cygwin"
     elif sys.platform.startswith("darwin"):
         return "darwin"
     else:
@@ -556,20 +448,6 @@ def get_platform():
 
 def get_mac_version(run_lambda):
     return run_and_parse_first_match(run_lambda, "sw_vers -productVersion", r"(.*)")
-
-
-def get_windows_version(run_lambda):
-    ret = run_and_read_all(
-        run_lambda,
-        'powershell.exe "gwmi -Class Win32_OperatingSystem | Select-Object -Property Caption,\
-        OSArchitecture,Version | ConvertTo-Json"',
-    )
-    try:
-        obj = json.loads(ret)
-        ret = f'{obj["Caption"]} ({obj["Version"]} {obj["OSArchitecture"]})'
-    except ValueError as e:
-        ret += f"\n{str(e)}"
-    return ret
 
 
 def get_lsb_version(run_lambda):
@@ -589,27 +467,24 @@ def get_os(run_lambda):
 
     platform = get_platform()
 
-    if platform in ["win32", "cygwin"]:
-        return get_windows_version(run_lambda)
-
     if platform == "darwin":
         version = get_mac_version(run_lambda)
         if version is None:
             return None
-        return "macOS {} ({})".format(version, machine())
+        return f"macOS {version} ({machine()})"
 
     if platform == "linux":
         # Ubuntu/Debian based
         desc = get_lsb_version(run_lambda)
         if desc is not None:
-            return "{} ({})".format(desc, machine())
+            return f"{desc} ({machine()})"
 
         # Try reading /etc/*-release
         desc = check_release_file(run_lambda)
         if desc is not None:
-            return "{} ({})".format(desc, machine())
+            return f"{desc} ({machine()})"
 
-        return "{} ({})".format(platform, machine())
+        return f"{platform} ({machine()})"
 
     # Unknown platform
     return platform
@@ -826,7 +701,7 @@ def pretty_str(envinfo):
     def maybe_start_on_next_line(string):
         # If `string` is multiline, prepend a \n to it.
         if string is not None and len(string.split("\n")) > 1:
-            return "\n{}\n".format(string)
+            return f"\n{string}\n"
         return string
 
     mutable_dict = envinfo._asdict()
@@ -870,7 +745,7 @@ def pretty_str(envinfo):
     # If they were previously None, they'll show up as ie '[conda] Could not collect'
     if mutable_dict["pip_packages"]:
         mutable_dict["pip_packages"] = prepend(
-            mutable_dict["pip_packages"], "[{}] ".format(envinfo.pip_version)
+            mutable_dict["pip_packages"], f"[{envinfo.pip_version}] "
         )
     if mutable_dict["conda_packages"]:
         mutable_dict["conda_packages"] = prepend(

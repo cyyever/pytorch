@@ -97,27 +97,7 @@ uint32_t crc32_16bytes_prefetch(const void* data, size_t length, uint32_t previo
 #endif
 
 // define endianness and some integer data types
-#if defined(_MSC_VER) || defined(__MINGW32__)
-  // Windows always little endian
-  #define __BYTE_ORDER __LITTLE_ENDIAN
-
-  // intrinsics / prefetching
-  #if defined(_M_ARM64)
-    #include <intrin.h>
-  #else
-    #include <xmmintrin.h>
-  #endif
-
-  #ifdef __MINGW32__
-    #define PREFETCH(location) __builtin_prefetch(location)
-  #else
-    #if defined(_M_ARM64)
-      #define PREFETCH(location) __prefetch(location)
-    #else
-      #define PREFETCH(location) _mm_prefetch(location, _MM_HINT_T0)
-    #endif
-  #endif
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
   #include <TargetConditionals.h>
     #if TARGET_IPHONE_SIMULATOR
       #define __BYTE_ORDER __LITTLE_ENDIAN

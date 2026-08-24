@@ -18,9 +18,7 @@
 #include <c10/cuda/CUDAGraphsC10Utils.h>
 #endif
 
-#ifndef _WIN32
 #include <cxxabi.h>
-#endif
 
 #ifndef USE_ROCM
 #include <mutex>
@@ -463,7 +461,6 @@ class TunableOp {
 
   private:
     std::string CreateSignature() {
-#ifndef _WIN32
       const auto* name = typeid(*this).name();
       // NOLINTNEXTLINE(*array*)
       char buf[256];
@@ -471,9 +468,6 @@ class TunableOp {
       abi::__cxa_demangle(name, buf, &buf_len, nullptr);
       buf[255] = '\0';
       return buf;
-#else
-      return typeid(*this).name();
-#endif
     }
 
     mutable c10::once_flag signature_init_once_;

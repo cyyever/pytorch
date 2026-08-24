@@ -445,7 +445,7 @@ inline void
 mask_scatter_add(const scalar_t *src, scalar_t* base_addr,
                  const int_same_size_t<scalar_t> *offsets,
                  const int_same_size_t<scalar_t> *mask, int64_t len) {
-  #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+  #if !defined(COMPILING_FOR_MIN_SIZE)
   # pragma unroll
   #endif
   for (const auto i : c10::irange(len)) {
@@ -570,7 +570,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Bilinear,
     auto i_sw_offset = i_nw_offset + iVec(inp_sH);
     auto i_se_offset = i_sw_offset + iVec(inp_sW);
 
-    #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+    #if !defined(COMPILING_FOR_MIN_SIZE)
     # pragma unroll
     #endif
     for (const auto c : c10::irange(C)) {
@@ -656,7 +656,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Bilinear,
     scalar_t gInp_corner_arr[Vec::size()];
 
     auto gx = Vec(0), gy = Vec(0);
-    #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+    #if !defined(COMPILING_FOR_MIN_SIZE)
     # pragma unroll
     #endif
     for (const auto c : c10::irange(C)) {
@@ -754,7 +754,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Nearest,
     auto out_ptr = out_slice.data() + offset;
     auto out_sC = out_slice.stride(0);
     auto inp_slice_ptr = inp_slice.data();
-    #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+    #if !defined(COMPILING_FOR_MIN_SIZE)
     # pragma unroll
     #endif
     for (int64_t c = 0; c < C; ++c, out_ptr += out_sC, inp_slice_ptr += inp_sC) {
@@ -795,7 +795,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Nearest,
       integer_t gInp_offset_arr[iVec::size()];
       i_gInp_offset.store(gInp_offset_arr);
 
-      #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+      #if !defined(COMPILING_FOR_MIN_SIZE)
       # pragma unroll
       #endif
       for (const auto c : c10::irange(C)) {
@@ -929,7 +929,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Bicubic,
     get_cubic_coefficients(coeff_x, x - ix);
     get_cubic_coefficients(coeff_y, y - iy);
 
-    #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+    #if !defined(COMPILING_FOR_MIN_SIZE)
     # pragma unroll
     #endif
     for (const auto c : c10::irange(C)) {
@@ -983,7 +983,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Bicubic,
     get_cubic_coefficients_grad(coeff_y_grad, y - iy);
 
     auto gx = Vec(0), gy = Vec(0);
-    #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+    #if !defined(COMPILING_FOR_MIN_SIZE)
     # pragma unroll
     #endif
     for (const auto c : c10::irange(C)) {
@@ -1115,14 +1115,14 @@ inline void grid_sample_2d_grid_slice_iterator(
     int64_t spatial_offset = 0;
     const int64_t i_offset_delta = grid_sW * step;
 
-    #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+    #if !defined(COMPILING_FOR_MIN_SIZE)
     # pragma unroll
     #endif
     for (const auto h : c10::irange(out_H)) {
       auto grid_ptr_x = grid_ptr + h * grid_sH;
       auto grid_ptr_y = grid_ptr_x + grid_sCoor;
       auto i_offsets = iVec::arange(0, grid_sW);
-      #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+      #if !defined(COMPILING_FOR_MIN_SIZE)
       # pragma unroll
       #endif
       for (int64_t w = 0; w < out_W; w += step) {

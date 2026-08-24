@@ -130,10 +130,7 @@ class CppTemplate(KernelTemplate):
         # TODO: add c10::ForcedUnroll test to test_aoti_abi_check
         res.splice("""#include <c10/util/Unroll.h>""")
         res.splice("""#include <torch/csrc/inductor/aoti_torch/c/shim.h>""")
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform in [
-            "linux",
-            "win32",
-        ]
+        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
         if enable_kernel_profile:
             res.writelines(["#include <torch/csrc/inductor/aoti_runtime/utils.h>"])
         return res

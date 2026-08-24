@@ -13,15 +13,9 @@
 #include <chrono>
 #include <exception>
 
-#ifdef _WIN32
-#include <gloo/common/win.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
 #include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#endif
 
 #include <utility>
 
@@ -444,19 +438,12 @@ ProcessGroupGloo::Options::Options(std::chrono::milliseconds timeout)
 
 namespace {
 
-void socketInitialize() {
-#ifdef _WIN32
-  ::gloo::init_winsock();
-#endif
-}
-
 // Gloo assumes that this machine's hostname can always be resolved
 // to an address. If it doesn't it throws a runtime error saying
 // that it can't be resolved. Instead of catching it, we choose
 // to proactively check if an address can be resolved, so we can
 // gracefully fall back to an alternative if it doesn't.
 bool doesHostnameResolveToUsableAddress(const std::string& hostname) {
-  socketInitialize();
   struct addrinfo hints{};
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
@@ -472,11 +459,7 @@ bool doesHostnameResolveToUsableAddress(const std::string& hostname) {
       continue;
     }
     rv = bind(fd, rp->ai_addr, rp->ai_addrlen);
-#ifdef _WIN32
-    closesocket(fd);
-#else
     close(fd);
-#endif
     if (rv == -1) {
       continue;
     }
@@ -504,13 +487,12 @@ std::shared_ptr<::gloo::transport::Device> ProcessGroupGloo::
   return ::c10d::GlooDeviceFactory::makeDeviceForHostname(hostname, lazyInit);
 }
 
-#if defined(__linux__) || defined(_WIN32)
+#ifdef __linux__
 std::shared_ptr<::gloo::transport::Device> ProcessGroupGloo::
     createDefaultDevice(bool lazyInit) {
   // Use the hostname to resolve the network address to
   // use. Note: if the hostname does not resolve to an address (e.g.
   // because of misconfigured /etc/hosts file), this will not work.
-  socketInitialize();
   std::array<char, HOST_NAME_MAX> hostname{};
   auto rv = gethostname(hostname.data(), HOST_NAME_MAX);
   if (rv != 0) {

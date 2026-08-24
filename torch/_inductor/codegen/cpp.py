@@ -85,12 +85,11 @@ from .cpp_utils import (
 )
 
 
-_IS_WINDOWS = sys.platform == "win32"
 
 
 @functools.cache
 def get_export_declaration():
-    return "__declspec(dllexport)" if _IS_WINDOWS else ""
+    return ""
 
 
 schedule_log = torch._logging.getArtifactLogger(__name__, "schedule")
@@ -831,11 +830,7 @@ class CppOverrides(OpOverrides):
         On windows std::signbit only support float type.
         Ref: https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/signbit?view=msvc-170
         """
-        return (
-            f"std::signbit(static_cast<float>({x}))"
-            if _IS_WINDOWS
-            else f"std::signbit({x})"
-        )
+        return f"std::signbit({x})"
 
     @staticmethod
     def pow(a, b):
@@ -6046,9 +6041,6 @@ class CppScheduling(BaseScheduling):
             # excluding the first line including cpp_prefix.h.
             first_char = src_code.rfind('extern "C"')
             last_char = src_code.find(")", first_char)
-            if _IS_WINDOWS:
-                # get_export_declaration introduced one more ')' in Windows
-                last_char = src_code.find(")", last_char + 1)
             kernel_definition = f"{src_code[first_char : last_char + 1]};\n"
 
             compile_wrapper = IndentedBuffer()
@@ -6135,10 +6127,7 @@ class KernelGroup:
         code = BracesBuffer()
         # 1. Include header files
         # TODO: support kernel profile on other platforms
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform in [
-            "linux",
-            "win32",
-        ]
+        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
         if enable_kernel_profile:
             code.writelines(["#include <torch/csrc/inductor/aoti_runtime/utils.h>"])
         code.writeline("#include <torch/csrc/inductor/cpp_prefix.h>")

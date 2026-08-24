@@ -5,22 +5,14 @@
 #include <c10/core/SymInt.h>
 #include <c10/util/Exception.h>
 // define constants like M_PI and C keywords for MSVC
-#ifdef _MSC_VER
-#ifndef _USE_MATH_DEFINES
-#define _USE_MATH_DEFINES
-#endif
-#include <math.h>
-#endif
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 
 // We intentionally test self assignment/move in this file, suppress warnings
 // on them
-#ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wself-move"
-#endif
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wself-assign-overloaded"

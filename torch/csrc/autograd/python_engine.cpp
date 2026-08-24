@@ -19,9 +19,7 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 
-#ifndef _WIN32
 #include <pthread.h>
-#endif
 
 #include <memory> // for unique_ptr
 #include <utility>
@@ -486,11 +484,9 @@ static void child_atfork() {
 }
 
 bool THPEngine_initModule(PyObject* module) {
-#ifndef _WIN32
   TORCH_CHECK(
       pthread_atfork(nullptr, nullptr, child_atfork) == 0,
       "unable to set pthread_atfork handler");
-#endif
   if (PyType_Ready(&THPEngineType) < 0)
     return false;
   Py_INCREF(&THPEngineType);

@@ -172,11 +172,7 @@ TEST(ITensorListRefIteratorTest, CtorEmpty_ThrowsError) {
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto,hicpp-avoid-goto)
   EXPECT_THROW(**it, c10::Error);
 
-#if defined(_MSC_VER) && _ITERATOR_DEBUG_LEVEL == 2
-  EXPECT_THROW({ delete it; }, c10::Error);
-#else
   delete it;
-#endif
 }
 
 TEST(ITensorListRefIteratorTest, Boxed_GetFirstElement) {

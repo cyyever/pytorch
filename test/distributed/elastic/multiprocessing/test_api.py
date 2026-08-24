@@ -173,65 +173,6 @@ class SignalHandlingTest(TestCase):
         mock_pcontext._start.assert_called_once()
 
     @patch("torch.distributed.elastic.multiprocessing.api.threading")
-    @patch("torch.distributed.elastic.multiprocessing.api.signal")
-    @patch("torch.distributed.elastic.multiprocessing.api.logger")
-    def test_start_handles_windows_signals(
-        self, mock_logger, mock_signal, mock_threading
-    ):
-        """Test that the start method handles Windows-specific signal behavior."""
-        # Setup
-        mock_threading.current_thread.return_value = (
-            mock_threading.main_thread.return_value
-        )
-        mock_pcontext = MagicMock(spec=PContext)
-        # Mock the stdout_tail and stderr_tail
-        mock_stdout_tail = MagicMock()
-        mock_stderr_tail = MagicMock()
-        mock_pcontext._tail_logs = [mock_stdout_tail, mock_stderr_tail]
-
-        # Set signals including ones not supported on Windows
-        os.environ["TORCHELASTIC_SIGNALS_TO_HANDLE"] = "SIGTERM,SIGHUP,SIGUSR1"
-
-        # Mock signal attributes
-        mock_signal.SIGTERM = signal.SIGTERM
-        mock_signal.SIGHUP = signal.SIGHUP
-        mock_signal.SIGUSR1 = signal.SIGUSR1
-
-        # Mock IS_WINDOWS to be True
-        with patch("torch.distributed.elastic.multiprocessing.api.IS_WINDOWS", True):
-            # Mock signal.signal to raise RuntimeError for Windows-unsupported signals
-            def signal_side_effect(sig, handler):
-                if sig in [signal.SIGHUP, signal.SIGUSR1]:
-                    raise RuntimeError("Signal not supported on Windows")
-
-            mock_signal.signal.side_effect = signal_side_effect
-
-            # Call the start method
-            PContext.start(mock_pcontext)
-
-            # Verify that the info was logged for the unsupported signals
-            # Check if any info calls contain the expected messages
-            info_calls = [str(call) for call in mock_logger.info.call_args_list]
-            sighup_logged = any(
-                "SIGHUP" in call and "Windows" in call for call in info_calls
-            )
-            sigusr1_logged = any(
-                "SIGUSR1" in call and "Windows" in call for call in info_calls
-            )
-
-            self.assertTrue(
-                sighup_logged,
-                lambda msg: f"{msg}\nExpected SIGHUP Windows message in info calls: {info_calls}",
-            )
-            self.assertTrue(
-                sigusr1_logged,
-                lambda msg: f"{msg}\nExpected SIGUSR1 Windows message in info calls: {info_calls}",
-            )
-
-            # Verify _start was called
-            mock_pcontext._start.assert_called_once()
-
-    @patch("torch.distributed.elastic.multiprocessing.api.threading")
     @patch("torch.distributed.elastic.multiprocessing.api.logger")
     def test_start_not_main_thread(self, mock_logger, mock_threading):
         """Test that the start method warns when not called from the main thread."""

@@ -64,12 +64,6 @@ def ensure_uv() -> None:
     )
 
 
-if sys.platform.startswith("win"):
-    print(
-        "\n⚠️  Lintrunner is not supported on Windows, so there are no pre-push hooks to add. Exiting setup.\n"
-    )
-    sys.exit(0)
-
 # ───────────────────────────────────────────
 # 1. Setup isolated hook environment
 # ───────────────────────────────────────────

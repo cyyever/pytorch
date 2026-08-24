@@ -32,11 +32,7 @@
 #include <type_traits>
 #include <utility>
 
-#ifdef _MSC_VER
-#define SKA_NOINLINE(...) __declspec(noinline) __VA_ARGS__
-#else
 #define SKA_NOINLINE(...) __VA_ARGS__ __attribute__((noinline))
-#endif
 
 namespace ska_ordered {
 

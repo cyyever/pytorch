@@ -535,7 +535,7 @@ class CompiledFxGraph(OutputCode):
     mutated_input_idxs: OrderedSet[int]
     constants: dict[str, torch.Tensor] | None
     frozen_param_names: dict[str, str]
-    torchbind_constants: dict[str, torch._C.ScriptObject | FakeScriptObject]
+    torchbind_constants: dict[str, torch.ScriptObject | FakeScriptObject]
     opaque_value_type_classes: dict[str, type]
     output_strides: list[tuple[_StrideExprStr, ...] | None] | None
     disabled_cudagraphs_reason: str | None
@@ -1074,11 +1074,7 @@ class CompiledAOTI(OutputCode):
 
         if (
             torch._inductor.cpp_builder._IS_MACOS
-            or torch._inductor.cpp_builder._IS_WINDOWS
         ):
-            return
-
-        if config.aot_inductor.cross_target_platform == "windows":
             return
 
         if config.aot_inductor.package_cpp_only:

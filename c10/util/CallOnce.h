@@ -22,7 +22,6 @@ inline void call_once(Flag& flag, F&& f, Args&&... args) {
 
 class once_flag {
  public:
-#ifndef _WIN32
   // running into build error on MSVC. Can't seem to get a repro locally so I'm
   // just avoiding constexpr
   //
@@ -32,7 +31,6 @@ class once_flag {
   //   constexpr 1 error detected in the compilation of
   //   "C:/actions-runner/_work/pytorch/pytorch/aten/src/ATen/cuda/cub.cu".
   constexpr
-#endif
       once_flag() noexcept = default;
   once_flag(const once_flag&) = delete;
   once_flag& operator=(const once_flag&) = delete;

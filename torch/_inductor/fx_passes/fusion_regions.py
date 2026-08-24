@@ -1,5 +1,7 @@
 """Detect fusion regions for overlap scheduling."""
 
+from typing import cast
+
 import torch
 import torch.fx as fx
 from torch.utils._ordered_set import OrderedSet
@@ -94,7 +96,32 @@ def _find_connected_components(span: list[fx.Node]) -> list[list[fx.Node]]:
     if not span:
         return []
 
-    from torch.fx.experimental.optimization import UnionFind
+    class UnionFind:
+        def __init__(self, n: int) -> None:
+            self.parent: list[int | None] = [None] * n
+            self.size: list[int] = [0] * n
+
+        def make_set(self, v: int) -> None:
+            self.parent[v] = v
+            self.size[v] = 1
+
+        def find(self, v: int) -> int:
+            par = self.parent[v]
+            if v == par:
+                return v
+            if par is None:
+                raise AssertionError("Parent is None")
+            self.parent[v] = self.find(par)
+            return cast(int, self.parent[v])
+
+        def join(self, a: int, b: int) -> int | None:
+            a, b = self.find(a), self.find(b)
+            if a == b:
+                return a
+            if self.size[a] < self.size[b]:
+                a, b = b, a
+            self.parent[b] = a
+            self.size[a] += self.size[b]
 
     span_set = OrderedSet(span)
     node_to_idx = {n: i for i, n in enumerate(span)}

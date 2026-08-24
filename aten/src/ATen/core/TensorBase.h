@@ -216,19 +216,8 @@ class TORCH_API TensorBase {
     impl_.reset();
   }
 
-#if defined (_MSC_VER)
-  TensorBase& operator=(const TensorBase& x) & {
-    impl_ = x.impl_;
-    return *this;
-  };
-  TensorBase& operator=(TensorBase&& x) & noexcept {
-    impl_ = std::move(x.impl_);
-    return *this;
-  }
-#else
   TensorBase& operator=(const TensorBase& x) & = default;
   TensorBase& operator=(TensorBase&& x) & noexcept = default;
-#endif
 
   // Ban assignment to rvalues, since at::Tensor (weirdly) performs a deep copy here
   TensorBase& operator=(const TensorBase&) && = delete;

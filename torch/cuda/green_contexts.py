@@ -54,8 +54,6 @@ def _ensure_driver_version(version: int, message: str) -> None:
 def _ensure_supported() -> None:
     if torch.version.cuda is None or torch.version.hip is not None:
         raise RuntimeError("Green Context is only supported on Nvidia CUDA")
-    if sys.platform == "win32":
-        raise RuntimeError("Green Context is not supported on Windows")
     if not _HAS_CUDA_BINDINGS:
         raise RuntimeError("GreenContext requires the cuda.bindings package")
     _ensure_driver_version(12080, "Green Context requires user mode driver 12.8+")

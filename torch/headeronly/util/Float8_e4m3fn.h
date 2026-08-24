@@ -25,9 +25,6 @@
 #include <stdint.h>
 #endif
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
 
 #include <climits>
 #include <iostream>
@@ -113,10 +110,6 @@ inline C10_HOST_DEVICE float fp8e4m3fn_to_fp32_value(uint8_t input) {
   // Note: zero is not a supported input into `__builtin_clz`
   uint32_t renorm_shift =
       nonsign != 0 ? __builtin_clz(nonsign) : sizeof(uint32_t) * CHAR_BIT;
-#elif defined(_MSC_VER) && !defined(__clang__)
-  unsigned long nonsign_bsr;
-  _BitScanReverse(&nonsign_bsr, (unsigned long)nonsign);
-  uint32_t renorm_shift = (uint32_t)nonsign_bsr ^ 31;
 #else
   // Note: zero is not a supported input into `__builtin_clz`
   uint32_t renorm_shift =

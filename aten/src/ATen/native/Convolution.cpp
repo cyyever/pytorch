@@ -25,10 +25,6 @@
 #include <ATen/ops/permute.h>
 #endif
 
-#if AT_NNPACK_ENABLED()
-#include <nnpack.h>
-#endif
-
 #if AT_MKLDNN_ENABLED()
 #include <ATen/native/mkldnn/Utils.h>
 #endif

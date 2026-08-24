@@ -24,9 +24,6 @@ install(DIRECTORY "${TORCH_SRC_DIR}/"
 
 # Benchmark utilities — matches setup.py package_data patterns:
 #   utils/benchmark/utils/*.cpp
-#   utils/benchmark/utils/valgrind_wrapper/*.cpp
-# The valgrind headers that complete that set are installed straight from
-# third_party/ by cmake/FileMirroring.cmake; they never exist in the source tree.
 install(DIRECTORY "${TORCH_SRC_DIR}/utils/benchmark/utils/"
   DESTINATION "${_torch_pkg}/utils/benchmark/utils"
   FILES_MATCHING PATTERN "*.cpp"

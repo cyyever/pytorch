@@ -100,8 +100,6 @@ inline C10_HOST_DEVICE uint16_t bits_from_f32(float src) {
 inline C10_HOST_DEVICE uint16_t round_to_nearest_even(float src) {
 #if defined(USE_ROCM) && defined(__HIPCC__)
   if (src != src) {
-#elif defined(_MSC_VER)
-  if (isnan(src)) {
 #else
   if (std::isnan(src)) {
 #endif

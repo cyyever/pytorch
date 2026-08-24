@@ -46,11 +46,7 @@ from torch.futures import Future
 __all__ = [
     "profile",
     "record_function",
-    "emit_itt",
-    "emit_nvtx",
-    "load_nvprof",
     "EnforceUnique",
-    "parse_nvprof_trace",
     "KinetoStepTracker",
     "EventList",
     "FunctionEvent",
@@ -1023,75 +1019,6 @@ class record_function(_ContextDecorator):  # pyrefly: ignore [invalid-inheritanc
         return profiled_future
 
 
-class emit_itt:
-    """Context manager that makes every autograd operation emit an ITT range.
-
-    It is useful when running the program under Intel(R) VTune Profiler::
-
-        vtune <--vtune-flags> <regular command here>
-
-    The Instrumentation and Tracing Technology (ITT) API enables your application to generate and
-    control the collection of trace data during its execution across different Intel tools.
-    This context manager is to annotate Intel(R) VTune Profiling trace. With help of this context manager,
-    you will be able to see labeled ranges in Intel(R) VTune Profiler GUI.
-
-    .. warning:
-        This context manager should not be called recursively, i.e. at most one
-        instance should be enabled at any given time.
-
-    Args:
-        enabled (bool, optional): Setting ``enabled=False`` makes this context manager a no-op.
-            Default: ``True``.
-        record_shapes (bool, optional): If ``record_shapes=True``, the itt range wrapping
-            each autograd op will append information about the sizes of Tensor arguments received
-            by that op, in the following format:
-            ``[[arg0.size(0), arg0.size(1), ...], [arg1.size(0), arg1.size(1), ...], ...]``
-            Non-tensor arguments will be represented by ``[]``.
-            Arguments will be listed in the order they are received by the backend op.
-            Please note that this order may not match the order in which those arguments were passed
-            on the Python side.  Also note that shape recording may increase the overhead of itt range creation.
-            Default: ``False``
-
-    Example:
-        >>> # xdoctest: +SKIP("Undefined variables")
-        >>> # xdoctest: +REQUIRES(env:TORCH_DOCTEST_AUTOGRAD_PROFILER)
-        >>> with torch.autograd.profiler.emit_itt():
-        ...     model(x)
-
-    """
-
-    def __init__(self, enabled=True, record_shapes=False):
-        self.enabled = enabled
-        self.entered = False
-        self.record_shapes = record_shapes
-
-    def __enter__(self):
-        if not self.enabled:
-            return
-        if self.entered:
-            raise RuntimeError("ITT annotation context manager is not reentrant")
-        self.entered = True
-        _run_on_profiler_start()
-        _enable_profiler(
-            ProfilerConfig(
-                ProfilerState.ITT,
-                self.record_shapes,
-                False,
-                False,
-                False,
-                False,
-                _ExperimentalConfig(),
-            ),
-            set(),
-        )
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.enabled:
-            return
-        _disable_profiler()
-        _run_on_profiler_stop()
-        return False
 
 
 class emit_nvtx:
@@ -1104,9 +1031,7 @@ class emit_nvtx:
     Unfortunately, there's no way to force nvprof to flush the data it collected
     to disk, so for CUDA profiling one has to use this context manager to annotate
     nvprof traces and wait for the process to exit before inspecting them.
-    Then, either NVIDIA Visual Profiler (nvvp) can be used to visualize the timeline, or
-    :func:`torch.autograd.profiler.load_nvprof` can load the results for inspection
-    e.g. in Python REPL.
+    NVIDIA Visual Profiler (nvvp) can then be used to visualize the timeline.
 
     .. warning:
         This context manager should not be called recursively, i.e. at most one
@@ -1215,15 +1140,6 @@ class emit_nvtx:
         return False
 
 
-def load_nvprof(path):
-    """Open an nvprof trace file and parse autograd annotations.
-
-    Args:
-        path (str): path to nvprof trace
-    """
-    return EventList(parse_nvprof_trace(path))
-
-
 class EnforceUnique:
     """Raises an error if a key is seen more than once."""
 
@@ -1237,74 +1153,6 @@ class EnforceUnique:
         if key in self.seen:
             raise RuntimeError("duplicate key: " + str(key))
         self.seen.add(key)
-
-
-def parse_nvprof_trace(path):
-    import sqlite3
-
-    conn = sqlite3.connect(path)
-    conn.row_factory = sqlite3.Row
-
-    # Parse strings table
-    strings = {}
-    for r in conn.execute("SELECT _id_ as id, value FROM StringTable"):
-        strings[r["id"]] = torch._C._demangle(r["value"])
-
-    # First, find all functions and create FunctionEvents for them
-    marker_query = """
-    SELECT
-        start.id AS marker_id, start.name, start.timestamp AS start_time, end.timestamp AS end_time
-    FROM
-        CUPTI_ACTIVITY_KIND_MARKER AS start INNER JOIN CUPTI_ACTIVITY_KIND_MARKER AS end
-        ON start.id = end.id
-    WHERE
-        start.name != 0 AND end.name = 0
-    """
-    functions = []
-    functions_map = {}
-    unique = EnforceUnique()
-    for row in conn.execute(marker_query):
-        unique.see(row["marker_id"])
-        evt = FunctionEvent(
-            id=row["marker_id"],
-            node_id=0,  # missing a node_id when calling FunctionEvent. This is just to ensure
-            # that pytorch doesn't crash when creating a FunctionEvent() object
-            name=strings[row["name"]],
-            start_us=row["start_time"],
-            end_us=row["end_time"],
-            thread=0,
-        )  # TODO: find in sqlite database
-        functions.append(evt)
-        functions_map[evt.id] = evt
-
-    # Now, correlate all kernels with FunctionEvents
-    kernel_query = """
-    SELECT
-        start.id AS marker_id, start.name, start.timestamp, end.timestamp,
-        runtime._id_ AS runtime_id, runtime.cbid, runtime.start AS runtime_start, runtime.end AS runtime_end,
-        kernel.start AS kernel_start, kernel.end AS kernel_end, kernel.name AS kernel_name
-    FROM
-        CUPTI_ACTIVITY_KIND_MARKER AS start
-        INNER JOIN CUPTI_ACTIVITY_KIND_MARKER AS end
-            ON start.id = end.id
-        INNER JOIN CUPTI_ACTIVITY_KIND_RUNTIME as runtime
-            ON (start.timestamp < runtime.start AND runtime.end < end.timestamp)
-        INNER JOIN CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL AS kernel
-            ON kernel.correlationId = runtime.correlationId
-    """
-    unique = EnforceUnique()
-    for row in conn.execute(kernel_query):
-        unique.see(row["marker_id"], row["runtime_id"])
-        # 211 is cudaKernelLaunch for cuda >= 9.2
-        if row["cbid"] != 211:
-            raise AssertionError(f"Expected cbid to be 211, but got {row['cbid']}")
-        evt = functions_map[row["marker_id"]]
-        evt.append_kernel(
-            row["kernel_name"], 0, row["kernel_end"] - row["kernel_start"]
-        )
-
-    functions.sort(key=lambda evt: evt.time_range.start)
-    return functions
 
 
 class KinetoStepTracker:

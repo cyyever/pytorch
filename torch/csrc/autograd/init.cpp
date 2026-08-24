@@ -152,29 +152,6 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
       .def("strides", &at::TensorGeometry::strides)
       .def("storage_offset", &at::TensorGeometry::storage_offset);
 
-  py::class_<LegacyEvent>(m, "ProfilerEvent")
-      .def("kind", &LegacyEvent::kindStr)
-      .def("name", [](const LegacyEvent& e) { return e.name(); })
-      .def("thread_id", &LegacyEvent::threadId)
-      .def("fwd_thread_id", &LegacyEvent::fwdThreadId)
-      .def("device", &LegacyEvent::device)
-      .def("cpu_elapsed_us", &LegacyEvent::cpuElapsedUs)
-      .def("cuda_elapsed_us", &LegacyEvent::cudaElapsedUs)
-      .def("has_cuda", &LegacyEvent::hasCuda)
-      .def("shapes", &LegacyEvent::shapes)
-      .def("cpu_memory_usage", &LegacyEvent::cpuMemoryUsage)
-      .def("cuda_memory_usage", &LegacyEvent::cudaMemoryUsage)
-      .def("handle", &LegacyEvent::handle)
-      .def("node_id", &LegacyEvent::nodeId)
-      .def("is_remote", &LegacyEvent::isRemote)
-      .def("sequence_nr", &LegacyEvent::sequenceNr)
-      .def("stack", &LegacyEvent::stack)
-      .def("scope", &LegacyEvent::scope)
-      .def("correlation_id", &LegacyEvent::correlationId)
-      .def("start_us", &LegacyEvent::cpuUs)
-      .def("flops", &LegacyEvent::flops)
-      .def("is_async", &LegacyEvent::isAsync);
-
   py::enum_<c10::DeviceType>(m, "DeviceType")
       .value("CPU", c10::DeviceType::CPU)
       .value("CUDA", c10::DeviceType::CUDA)
@@ -512,9 +489,6 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
     if (at::hasXPU()) {
       activities.insert(torch::profiler::impl::ActivityType::XPU);
     }
-    if (at::hasMTIA()) {
-      activities.insert(torch::profiler::impl::ActivityType::MTIA);
-    }
     if (at::hasHPU()) {
       activities.insert(torch::profiler::impl::ActivityType::HPU);
     }
@@ -543,13 +517,6 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
         }
       });
 
-  m.def("_enable_profiler_legacy", enableProfilerLegacy);
-  py::class_<ProfilerDisableOptions>(m, "_ProfilerDisableOptions")
-      .def(py::init<bool, bool>());
-  m.def(
-      "_disable_profiler_legacy",
-      disableProfilerLegacy,
-      py::arg("profiler_disable_options") = ProfilerDisableOptions());
   m.def("_profiler_enabled", profilerEnabled);
   m.def("_profiler_type", torch::profiler::impl::profilerType);
   m.def("_enable_record_function", [](bool enable) {

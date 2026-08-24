@@ -260,8 +260,6 @@ autosummary_filename_map = {
     "torch.optim.adam.Adam": "torch.optim.adam.Adam_class",
     "torch.optim.adamax.adamax": "torch.optim.adamax.adamax_function",
     "torch.optim.adamax.Adamax": "torch.optim.adamax.Adamax_class",
-    "torch.mtia.stream": "torch.mtia.stream_function",
-    "torch.mtia.Stream": "torch.mtia.Stream_class",
     "torch.cpu.stream": "torch.cpu.stream_function",
     "torch.cpu.Stream": "torch.cpu.Stream_class",
     "torch.cuda.stream": "torch.cuda.stream_function",
@@ -712,14 +710,12 @@ coverage_ignore_functions = [
     # torch.utils.benchmark.utils.compile
     "bench_loop",
     # torch.utils.benchmark.utils.cpp_jit
-    "compile_callgrind_template",
     "compile_timeit_template",
     "get_compat_bindings",
     # torch.utils.benchmark.utils.fuzzer
     "dtype_size",
     # torch.utils.benchmark.utils.timer
     "timer",
-    # torch.utils.benchmark.utils.valgrind_wrapper.timer_interface
     "wrapper_singleton",
     # torch.utils.bundled_inputs
     "augment_many_model_functions_with_bundled_inputs",
@@ -1348,9 +1344,6 @@ coverage_ignore_classes = [
     # torch.fx.experimental.normalize
     "NormalizeArgs",
     "NormalizeOperators",
-    # torch.fx.experimental.optimization
-    "MklSubgraph",
-    "UnionFind",
     # torch.fx.experimental.partitioner_utils
     "Device",
     "Partition",
@@ -1682,9 +1675,6 @@ coverage_ignore_classes = [
     "CPPTimer",
     "Language",
     "Timer",
-    # torch.utils.benchmark.utils.valgrind_wrapper.timer_interface
-    "CallgrindStats",
-    "CopyIfCallgrind",
     "FunctionCount",
     "FunctionCounts",
     "GlobalsBridge",

@@ -515,19 +515,7 @@ void Context::setFloat32Precision(Float32Backend backend, Float32Op op, Float32P
   it->second = p;
 }
 
-static void _warn_once_magma_deprecation() {
-  TORCH_WARN_ONCE(
-    "The usage of MAGMA backend for linear algebra operations is deprecated "
-    "and will be removed in future releases. cuSOLVER stays as the default backend."
-    "If you see any error messages with cuSOLVER but not MAGMA, please, "
-    "file an issue on GitHub."
-  );
-}
-
 at::LinalgBackend Context::linalgPreferredBackend() const {
-  if (linalg_preferred_backend == at::LinalgBackend::Magma) {
-    _warn_once_magma_deprecation();
-  }
   return linalg_preferred_backend;
 }
 
@@ -535,17 +523,12 @@ void Context::setLinalgPreferredBackend(at::LinalgBackend b) {
   linalg_preferred_backend = b;
   TORCH_CHECK((b != at::LinalgBackend::Cusolver) || hasCuSOLVER(),
       "Cannot set preferred backend to cuSOLVER if PyTorch has not been compiled with cuSOLVER.");
-  TORCH_CHECK((b != at::LinalgBackend::Magma) || hasMAGMA(),
-      "Cannot set preferred backend to MAGMA if PyTorch has not been compiled with MAGMA.");
   if (b != at::LinalgBackend::Default) {
     TORCH_WARN_ONCE(
       "torch.backends.cuda.preferred_linalg_library is an experimental feature. "
       "If you see any error or unexpected behavior when this flag is set "
       "please file an issue on GitHub."
     );
-  }
-  if (b == at::LinalgBackend::Magma) {
-    _warn_once_magma_deprecation();
   }
 }
 
@@ -657,12 +640,6 @@ bool Context::ckGemmSupported() {
 }
 
 void Context::setBlasPreferredBackend(at::BlasBackend b) {
-#ifdef _MSC_VER
-  TORCH_WARN_ONCE(
-    "torch.backends.cuda.preferred_blas_library is an experimental feature. "
-    "It is not supported on Windows."
-  );
-#else
   TORCH_CHECK((b != at::BlasBackend::Cublaslt) || hasCuBLASLt(),
       "Cannot set preferred backend to cuBLASLt if PyTorch has not been compiled with cuBLASLt.");
 #ifdef USE_ROCM
@@ -681,7 +658,6 @@ void Context::setBlasPreferredBackend(at::BlasBackend b) {
     );
   }
   blas_preferred_backend = b;
-#endif
 }
 
 at::ROCmFABackend Context::getROCmFAPreferredBackend() {
@@ -804,21 +780,9 @@ bool Context::hasLAPACK() {
 #endif
 }
 
-bool Context::hasEigenSparse() {
-#if AT_USE_EIGEN_SPARSE()
-  return true;
-#else
-  return false;
-#endif
-}
-
 at::QEngine Context::qEngine() const {
   static auto _quantized_engine = []() {
     at::QEngine qengine = at::kNoQEngine;
-#if defined(C10_MOBILE) && defined(USE_PYTORCH_QNNPACK)
-    qengine = at::kQNNPACK;
-#endif
-
 #if AT_MKLDNN_ENABLED()
     qengine = at::kONEDNN;
 #endif
@@ -853,11 +817,6 @@ const std::vector<at::QEngine>& Context::supportedQEngines() {
     std::vector<at::QEngine> engines = {};
     // Engines are listed in priority order: later one wins
     // By default we prefer FBGEMM if we're running on server side
-    // QNNPACK on server side has some issue, so we disable it by default.
-#ifdef USE_PYTORCH_QNNPACK
-    engines.push_back(at::kQNNPACK);
-#endif
-
 #if AT_MKLDNN_ENABLED()
     engines.push_back(at::kONEDNN);
 #endif

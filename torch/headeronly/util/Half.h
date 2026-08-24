@@ -19,9 +19,6 @@
 #include <math.h>
 #endif
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
 
 #include <cstdint>
 #include <cstring>
@@ -187,11 +184,7 @@ C10_HOST_DEVICE inline float fp16_ieee_to_fp32_value(uint16_t h) {
   // const float exp_scale = 0x1.0p-112f;
   constexpr uint32_t scale_bits = (uint32_t)15 << 23;
   float exp_scale_val = 0;
-#if defined(_MSC_VER) && defined(__clang__)
-  __builtin_memcpy(&exp_scale_val, &scale_bits, sizeof(exp_scale_val));
-#else
   std::memcpy(&exp_scale_val, &scale_bits, sizeof(exp_scale_val));
-#endif
 
   const float exp_scale = exp_scale_val;
   const float normalized_value =
@@ -273,11 +266,7 @@ inline uint16_t fp16_ieee_from_fp32_value(float f) {
   const float scale_to_inf = scale_to_inf_val;
   const float scale_to_zero = scale_to_zero_val;
 
-#if defined(_MSC_VER) && _MSC_VER == 1916
-  float base = ((signbit(f) != 0 ? -f : f) * scale_to_inf) * scale_to_zero;
-#else
   float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
-#endif
 
   const uint32_t w = fp32_to_bits(f);
   const uint32_t shl1_w = w + w;
@@ -346,13 +335,7 @@ inline uint32_t fp16_ieee_to_fp32_bits(uint16_t h) {
    * mantissa will shift into exponent, turning the biased exponent into 1, and
    * making mantissa normalized (i.e. without leading 1).
    */
-#ifdef _MSC_VER
-  unsigned long nonsign_bsr;
-  _BitScanReverse(&nonsign_bsr, (unsigned long)nonsign);
-  uint32_t renorm_shift = (uint32_t)nonsign_bsr ^ 31;
-#else
   uint32_t renorm_shift = __builtin_clz(nonsign);
-#endif
   renorm_shift = renorm_shift > 5 ? renorm_shift - 5 : 0;
   /*
    * Iff half-precision number has exponent of 15, the addition overflows

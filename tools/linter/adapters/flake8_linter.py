@@ -1,5 +1,5 @@
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.11"
 # dependencies = [
 #   "flake8==7.3.0",
 #   "flake8-bugbear==24.12.12",
@@ -28,7 +28,6 @@ from enum import Enum
 from typing import NamedTuple
 
 
-IS_WINDOWS: bool = os.name == "nt"
 
 
 class LintSeverity(str, Enum):
@@ -51,7 +50,7 @@ class LintMessage(NamedTuple):
 
 
 def as_posix(name: str) -> str:
-    return name.replace("\\", "/") if IS_WINDOWS else name
+    return name
 
 
 # fmt: off

@@ -106,7 +106,6 @@ from torch._inductor.utils import (
     clear_on_fresh_cache,
     determine_aoti_mmap_flags,
     is_linux,
-    is_windows,
     parallel_num_threads,
     XPU_KERNEL_FORMAT,
 )
@@ -204,7 +203,6 @@ if TYPE_CHECKING:
     from .utils import InputType
 
 
-_IS_WINDOWS = sys.platform == "win32"
 LOCK_TIMEOUT = config.file_lock_timeout
 
 output_code_log = torch._logging.getArtifactLogger(__name__, "output_code")
@@ -572,14 +570,7 @@ class WritableTempFile:
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.temp_file.close()
-        try:
-            os.unlink(self.temp_file.name)
-        except OSError as e:
-            if _IS_WINDOWS:
-                # On Windows, some case temp file is opened and fail to unlink. Need to ignore it.
-                pass
-            else:
-                raise e
+        os.unlink(self.temp_file.name)
 
 
 def write(
@@ -625,17 +616,7 @@ def write_atomic(
     write_mode = "w" if isinstance(content, str) else "wb"
     with tmp_path.open(write_mode, encoding="utf-8" if encode_utf_8 else None) as f:
         f.write(content)
-    try:
-        tmp_path.rename(target=path)
-    except FileExistsError:
-        if not _IS_WINDOWS:
-            raise
-        # On Windows file exist is expected: https://docs.python.org/3/library/pathlib.html#pathlib.Path.rename
-        # Below two lines code is equal to `tmp_path.rename(path)` on non-Windows OS.
-        # 1. Copy tmp_file to Target(Dst) file.
-        shutil.copy2(src=tmp_path, dst=path)
-        # 2. Delete tmp_file.
-        os.remove(tmp_path)
+    tmp_path.rename(target=path)
 
 
 @dataclasses.dataclass
@@ -967,7 +948,7 @@ class FxGraphCachePickler(pickle.Pickler):
         serialized_data = self.dumps(obj)
         return FX_GRAPH_CACHE_KEY_STRATEGY.key(serialized_data)
 
-    def debug_lines(self, inp: FxGraphHashDetails) -> list[str]:
+    def debug_lines(self, inp: "FxGraphHashDetails") -> list[str]:
         """
         Get a printable string describing in more detail all the attributes
         comprising an object. Useful for debugging when one graph hashes
@@ -1062,7 +1043,7 @@ def get_inductor_root() -> str:
 @dataclasses.dataclass
 class OrderedSetHolder:
     """
-    See FxGraphHashDetails. Holds a sorted list to support stable hashing
+    See "FxGraphHashDetails". Holds a sorted list to support stable hashing
     of set kwargs.
     """
 
@@ -1071,7 +1052,7 @@ class OrderedSetHolder:
 
 class BypassFxGraphCache(Exception):
     """
-    Exception to indicate that the FxGraphCache should be bypassed.
+    Exception to indicate that the "FxGraphCache" should be bypassed.
     """
 
 
@@ -1120,7 +1101,7 @@ class CacheabilityValidator:
                 # Fixing it would also bypass AOTAutogradCache (which calls
                 # _check_can_cache), so we'd need to decouple the two first.
                 if node.op == "getattr" and isinstance(
-                    getattr(self.gm, node.target), torch._C.ScriptObject
+                    getattr(self.gm, node.target), torch.ScriptObject
                 ):
                     self.bypass("Can't cache torchbind objects")
                 if include_constants and node.op == "get_attr":
@@ -1865,12 +1846,12 @@ class GuardedCache(Generic[T]):
     """
 
     @classmethod
-    def _get_tmp_dir_for_key(cls: type[GuardedCache[T]], _key: str) -> str:
+    def _get_tmp_dir_for_key(cls: type["GuardedCache"[T]], _key: str) -> str:
         raise NotImplementedError("Implement _get_tmp_dir_for_key on parent class")
 
     @classmethod
     def _record_result(
-        cls: type[GuardedCache[T]],
+        cls: type["GuardedCache"[T]],
         key: str,
         local_hit: bool,
         local_miss: bool,
@@ -1881,7 +1862,7 @@ class GuardedCache(Generic[T]):
 
     @classmethod
     def iterate_over_candidates(
-        cls: type[GuardedCache[T]],
+        cls: type["GuardedCache"[T]],
         local: bool,
         remote_cache: RemoteCache[JsonDataTy] | None,
         key: str,
@@ -1923,7 +1904,7 @@ class GuardedCache(Generic[T]):
 
     @classmethod
     def find_guarded_entry(
-        cls: type[GuardedCache[T]],
+        cls: type["GuardedCache"[T]],
         key: str,
         local: bool,
         remote_cache: RemoteCache[JsonDataTy] | None,
@@ -2005,7 +1986,7 @@ class GuardedCache(Generic[T]):
 
     @classmethod
     def _filter_backed_symints(
-        cls: type[GuardedCache[T]], inputs: Sequence[InputType]
+        cls: type["GuardedCache"[T]], inputs: Sequence[InputType]
     ) -> list[torch.SymInt]:
         """
         Get the backed SymInt objects from the input list. Note that we can never
@@ -2016,7 +1997,7 @@ class GuardedCache(Generic[T]):
         ]
 
     @classmethod
-    def _get_shape_env(cls: type[GuardedCache[T]]) -> ShapeEnv | None:
+    def _get_shape_env(cls: type["GuardedCache"[T]]) -> ShapeEnv | None:
         """
         Helper to get the shape env from the tracing context.
         """
@@ -2076,7 +2057,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         return os.path.join(cache_dir(), "fxgraph")
 
     @classmethod
-    def _get_tmp_dir_for_key(cls: type[FxGraphCache], key: str) -> str:
+    def _get_tmp_dir_for_key(cls: type["FxGraphCache"], key: str) -> str:
         """
         Return the disk location for a given cache key.
         """
@@ -2084,7 +2065,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
 
     @classmethod
     def _record_result(
-        cls: type[FxGraphCache],
+        cls: type["FxGraphCache"],
         key: str,
         local_hit: bool,
         local_miss: bool,
@@ -2092,7 +2073,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         remote_miss: bool,
     ) -> None:
         """
-        Called by GuardedCache to record hit/miss statistics.
+        Called by "GuardedCache" to record hit/miss statistics.
         """
         if local_hit:
             cache_stats.hit("LocalFxGraphCache")
@@ -2518,10 +2499,7 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
 @functools.cache
 def split_aot_inductor_output_path(path: str) -> tuple[str, str]:
     def get_module_ext_type() -> str:
-        if _IS_WINDOWS:
-            return ".pyd"
-        else:
-            return ".so"
+        return ".so"
 
     """Returns the path where the AOT Inductor compiled kernels are stored."""
     if path.endswith(get_module_ext_type()):
@@ -2865,10 +2843,6 @@ class AotCodeCompiler:
             elif platform == "darwin":
                 section_attr = "__DATA,__data"
                 symbol_prefix = "_"
-            elif platform == "win32":
-                symbol_prefix = ""
-                # ASM build is not supported on Windows, force use CPP build.
-                use_asm_build = False
             else:
                 raise RuntimeError(f"Unsupported platform: {platform}")
 
@@ -2949,31 +2923,15 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                     Linux: Added '-pedantic' to disable zero-sized arrays in C++ compiler
                     Windows: MSVC naturally rejects zero-sized arrays by default
                 """
-                if _IS_WINDOWS:
-                    # Windows ml64 is max support align to 16, but it is no effect to zero size data.
-                    asm_code = """
-option casemap:none
-.data
-?_binary_constants_bin_start@@3PAEA:
-align 16
-?_binary_constants_bin_end@@3PAEA:
-align 16
-public ?_binary_constants_bin_start@@3PAEA
-public ?_binary_constants_bin_end@@3PAEA
-end
-"""
-                    asm_ext = "asm"
-                else:
-                    asm_code = f"\t.section\t{section_attr}\n"
-                    asm_code += f"\t.balign {align_bytes}\n"
-                    asm_code += (
-                        f"\t.globl\t{symbol_prefix}_binary_constants_bin_start\n"
-                    )
-                    asm_code += f"{symbol_prefix}_binary_constants_bin_start:\n"
-                    asm_code += f".globl\t{symbol_prefix}_binary_constants_bin_end\n"
-                    asm_code += f"{symbol_prefix}_binary_constants_bin_end:\n"
-                    asm_ext = "S"
-                return asm_code, asm_ext
+                asm_code = f"\t.section\t{section_attr}\n"
+                asm_code += f"\t.balign {align_bytes}\n"
+                asm_code += (
+                    f"\t.globl\t{symbol_prefix}_binary_constants_bin_start\n"
+                )
+                asm_code += f"{symbol_prefix}_binary_constants_bin_start:\n"
+                asm_code += f".globl\t{symbol_prefix}_binary_constants_bin_end\n"
+                asm_code += f"{symbol_prefix}_binary_constants_bin_end:\n"
+                return asm_code, "S"
 
             if use_asm_build:
                 consts_code, code_ext = format_consts_to_gnu_asm(
@@ -3231,7 +3189,7 @@ end
             )
 
             # potentially, precompile the AOT header for this device
-            if config.aot_inductor.precompile_headers and not _IS_WINDOWS:
+            if config.aot_inductor.precompile_headers:
                 with dynamo_timed("aoti_precompile_header", log_pt2_compile_event=True):
                     header_file = _get_cpp_wrapper_header(
                         device_type, aot_mode=graph.aot_mode
@@ -3370,7 +3328,7 @@ end
                     constant, torch._library.fake_class_registry.FakeScriptObject
                 ):
                     constant = constant.real_obj
-                if not isinstance(constant, torch._C.ScriptObject):
+                if not isinstance(constant, torch.ScriptObject):
                     raise AssertionError(f"Expected ScriptObject, got {type(constant)}")
                 custom_obj_name = f"{CUSTOM_OBJ_FILENAME_PREFIX}{custom_obj_idx}"
 
@@ -3413,125 +3371,124 @@ end
             cubins_o = []
             asm_files = []
             fatbin_cmds: list[tuple[str, str, str | None, str | None]] = []
-            if not _IS_WINDOWS:
-                cubins_to_embed: list[tuple[str, str]] = []
-                ld, objcopy = get_ld_and_objcopy(use_relative_path)
-                kernels = getattr(V.graph.wrapper_code, "_kernel_name_to_body", {})
-                for kernel_name, value in CudaKernelParamCache.cache.items():
-                    if kernel_name not in kernels:
-                        # It is possible that CudaKernelParamCache contains more Triton kernels
-                        # than what the current graph uses
-                        continue
+            cubins_to_embed: list[tuple[str, str]] = []
+            ld, objcopy = get_ld_and_objcopy(use_relative_path)
+            kernels = getattr(V.graph.wrapper_code, "_kernel_name_to_body", {})
+            for kernel_name, value in CudaKernelParamCache.cache.items():
+                if kernel_name not in kernels:
+                    # It is possible that CudaKernelParamCache contains more Triton kernels
+                    # than what the current graph uses
+                    continue
 
-                    if asm_file := value["asm"]:
-                        asm_files.append(asm_file)
+                if asm_file := value["asm"]:
+                    asm_files.append(asm_file)
 
-                    cubin_file = value[get_cpp_wrapper_cubin_path_name()]
-                    if (
-                        config.aot_inductor.emit_multi_arch_kernel
-                        and device_type == "cuda"
-                    ):
-                        if torch.version.hip is None:
-                            fatbin_cmds.append(
-                                (
-                                    asm_file,
-                                    cubin_file,
-                                    value.get("runtime_bin_path"),
-                                    value.get("cuda_arch"),
-                                )
+                cubin_file = value[get_cpp_wrapper_cubin_path_name()]
+                if (
+                    config.aot_inductor.emit_multi_arch_kernel
+                    and device_type == "cuda"
+                ):
+                    if torch.version.hip is None:
+                        fatbin_cmds.append(
+                            (
+                                asm_file,
+                                cubin_file,
+                                value.get("runtime_bin_path"),
+                                value.get("cuda_arch"),
                             )
+                        )
 
-                        else:
-                            # ROCm multi-arch: compile LLVM IR to multi-arch bundle
-                            from torch._inductor.rocm_multiarch_utils import (
-                                compile_multiarch_bundle_from_llvm_ir,
-                            )
+                    else:
+                        # ROCm multi-arch: compile LLVM IR to multi-arch bundle
+                        from torch._inductor.rocm_multiarch_utils import (
+                            compile_multiarch_bundle_from_llvm_ir,
+                        )
 
-                            # pyrefly: ignore [unbound-name]
-                            if not os.path.exists(asm_file):
-                                raise RuntimeError(
-                                    f"Multi-arch ROCm compilation requires LLVM IR file, "
-                                    # pyrefly: ignore [unbound-name]
-                                    f"but {asm_file} not found. "
-                                    f"Ensure asm_type='ll' is captured in triton_heuristics.py"
-                                )
-
-                            # Compile for multiple archs and bundle them
-                            success = compile_multiarch_bundle_from_llvm_ir(
+                        # pyrefly: ignore [unbound-name]
+                        if not os.path.exists(asm_file):
+                            raise RuntimeError(
+                                f"Multi-arch ROCm compilation requires LLVM IR file, "
                                 # pyrefly: ignore [unbound-name]
-                                llvm_ir_path=asm_file,
-                                output_bundle_path=cubin_file,
-                                target_archs=None,
+                                f"but {asm_file} not found. "
+                                f"Ensure asm_type='ll' is captured in triton_heuristics.py"
                             )
 
-                            if not success:
-                                raise RuntimeError(
-                                    f"Failed to compile multi-arch bundle for kernel {kernel_name}. "
-                                    f"Check that ROCm toolchain is available and LLVM IR is valid."
-                                )
-
-                            log.info("Created multi-arch bundle: %s", cubin_file)
-
-                    if config.aot_inductor.embed_kernel_binary:
-                        cubins_to_embed.append((cubin_file, kernel_name))
-
-                # Build CUDA fatbins in parallel before cubin embedding below.
-                if fatbin_cmds:
-                    from concurrent.futures import ThreadPoolExecutor
-
-                    nvcc = cuda_compile_utils._cuda_compiler()
-                    fatbinary = shutil.which("fatbinary")
-                    if nvcc is not None and (nvcc_dir := os.path.dirname(nvcc)):
-                        candidate = os.path.join(nvcc_dir, "fatbinary")
-                        if os.path.exists(candidate):
-                            fatbinary = candidate
-
-                    def _compile_fatbin(
-                        asm_cubin_and_raw: tuple[str, str, str | None, str | None],
-                    ) -> None:
-                        asm_f, cubin_f, raw_cubin_f, cuda_arch = asm_cubin_and_raw
-                        cmd = _cuda_fatbin_command(
-                            asm_f, cubin_f, raw_cubin_f, nvcc, fatbinary, cuda_arch
+                        # Compile for multiple archs and bundle them
+                        success = compile_multiarch_bundle_from_llvm_ir(
+                            # pyrefly: ignore [unbound-name]
+                            llvm_ir_path=asm_file,
+                            output_bundle_path=cubin_file,
+                            target_archs=None,
                         )
-                        try:
-                            subprocess.run(
-                                cmd, capture_output=True, text=True, check=True
-                            )
-                        except subprocess.CalledProcessError as e:
-                            print(
-                                f"{shlex.join(cmd)} failed with:\nstdout:\n{e.stdout}\nstderr:\n{e.stderr}",
-                                file=sys.stderr,
-                            )
-                            raise
 
-                    with (
-                        dynamo_timed("aoti_compile_fatbin", log_pt2_compile_event=True),
-                        ThreadPoolExecutor() as pool,
-                    ):
-                        list(pool.map(_compile_fatbin, fatbin_cmds))
+                        if not success:
+                            raise RuntimeError(
+                                f"Failed to compile multi-arch bundle for kernel {kernel_name}. "
+                                f"Check that ROCm toolchain is available and LLVM IR is valid."
+                            )
 
-                if cubins_to_embed:
-                    # Batch all cubins into a single .o using .incbin assembly.
-                    # This replaces N * 3 subprocess calls (ld + 2x objcopy per
-                    # cubin) with a single compiler invocation.
+                        log.info("Created multi-arch bundle: %s", cubin_file)
+
+                if config.aot_inductor.embed_kernel_binary:
+                    cubins_to_embed.append((cubin_file, kernel_name))
+
+            # Build CUDA fatbins in parallel before cubin embedding below.
+            if fatbin_cmds:
+                from concurrent.futures import ThreadPoolExecutor
+
+                nvcc = cuda_compile_utils._cuda_compiler()
+                fatbinary = shutil.which("fatbinary")
+                if nvcc is not None and (nvcc_dir := os.path.dirname(nvcc)):
+                    candidate = os.path.join(nvcc_dir, "fatbinary")
+                    if os.path.exists(candidate):
+                        fatbinary = candidate
+
+                def _compile_fatbin(
+                    asm_cubin_and_raw: tuple[str, str, str | None, str | None],
+                ) -> None:
+                    asm_f, cubin_f, raw_cubin_f, cuda_arch = asm_cubin_and_raw
+                    cmd = _cuda_fatbin_command(
+                        asm_f, cubin_f, raw_cubin_f, nvcc, fatbinary, cuda_arch
+                    )
                     try:
-                        combined_obj = batch_convert_cubins_to_obj(
-                            cubins_to_embed,
-                            os.path.dirname(output_so),
-                            cpp_compiler=get_cpp_compiler(),
+                        subprocess.run(
+                            cmd, capture_output=True, text=True, check=True
                         )
-                        cubins_o.append(combined_obj)
-                    except subprocess.CalledProcessError:
-                        log.warning(
-                            "Batched cubin embedding failed, "
-                            "falling back to per-cubin objcopy"
+                    except subprocess.CalledProcessError as e:
+                        print(
+                            f"{shlex.join(cmd)} failed with:\nstdout:\n{e.stdout}\nstderr:\n{e.stderr}",
+                            file=sys.stderr,
                         )
-                        for cubin_file, kernel_name in cubins_to_embed:
-                            cubins_o.append(
-                                convert_cubin_to_obj(
-                                    cubin_file, kernel_name, ld, objcopy
-                                )
+                        raise
+
+                with (
+                    dynamo_timed("aoti_compile_fatbin", log_pt2_compile_event=True),
+                    ThreadPoolExecutor() as pool,
+                ):
+                    list(pool.map(_compile_fatbin, fatbin_cmds))
+
+            if cubins_to_embed:
+                # Batch all cubins into a single .o using .incbin assembly.
+                # This replaces N * 3 subprocess calls (ld + 2x objcopy per
+                # cubin) with a single compiler invocation.
+                try:
+                    combined_obj = batch_convert_cubins_to_obj(
+                        cubins_to_embed,
+                        os.path.dirname(output_so),
+                        cpp_compiler=get_cpp_compiler(),
+                    )
+                    cubins_o.append(combined_obj)
+                except subprocess.CalledProcessError:
+                    log.warning(
+                        "Batched cubin embedding failed, "
+                        "falling back to per-cubin objcopy"
+                    )
+                    for cubin_file, kernel_name in cubins_to_embed:
+                        cubins_o.append(
+                            convert_cubin_to_obj(
+                                cubin_file, kernel_name, ld, objcopy
                             )
+                        )
 
             output_name, output_dir = get_name_and_dir_from_output_file_path(output_so)
             so_build_options = CppTorchDeviceOptions(
@@ -3689,36 +3646,9 @@ end
                     def get_page_size() -> int:
                         # Don't use resource.getpagesize() on Windows, as it is a Unix specific package
                         # as seen in https://docs.python.org/2/library/resource.html
-                        if _IS_WINDOWS:
-                            from ctypes import (
-                                byref,
-                                Structure,
-                                windll,  # pyrefly: ignore [missing-module-attribute]
-                            )
-                            from ctypes.wintypes import DWORD, LPVOID, WORD
+                        import resource
 
-                            class SYSTEM_INFO(Structure):
-                                _fields_ = [
-                                    ("wProcessorArchitecture", WORD),
-                                    ("wReserved", WORD),
-                                    ("dwPageSize", DWORD),
-                                    ("lpMinimumApplicationAddress", LPVOID),
-                                    ("lpMaximumApplicationAddress", LPVOID),
-                                    ("dwActiveProcessorMask", DWORD),
-                                    ("dwNumberOfProcessors", DWORD),
-                                    ("dwProcessorType", DWORD),
-                                    ("dwAllocationGranularity", DWORD),
-                                    ("wProcessorLevel", WORD),
-                                    ("wProcessorRevision", WORD),
-                                ]
-
-                            si = SYSTEM_INFO()
-                            windll.kernel32.GetSystemInfo(byref(si))
-                            sys_page_size = si.dwPageSize
-                        else:
-                            import resource
-
-                            sys_page_size = resource.getpagesize()
+                        sys_page_size = resource.getpagesize()
 
                         return sys_page_size
 
@@ -3822,11 +3752,6 @@ def _precompile_header(
     hashable_cmd_line: str,
     **compile_command: Any,
 ) -> str:
-    if _IS_WINDOWS:
-        raise AssertionError(
-            "CppBuilder does not currently support precompiling on Windows!"
-        )
-
     # extra_flags carries link-time inputs (e.g. precompiled kernel .so paths
     # for CUTLASS/ROCm CK under JIT cpp_wrapper). Preprocessing and PCH
     # compilation don't link, so g++ rejects .so paths as unused linker
@@ -4054,7 +3979,7 @@ class CppCodeCache:
             lib = None
 
             # if requested, pre-compile any headers
-            if config.cpp_cache_precompile_headers and not _IS_WINDOWS:
+            if config.cpp_cache_precompile_headers:
                 if header := cls._get_uncompiled_header(device_type):
                     main_build_option.precompiled_header = _precompile_header(
                         header,
@@ -5087,24 +5012,12 @@ class DLLWrapper:
 
             if hasattr(syms, "dlclose"):
                 f_dlclose = syms.dlclose
-        elif is_windows():
-            import ctypes
-
-            kernel32 = ctypes.CDLL("kernel32", use_last_error=True)
-
-            f_dlclose = kernel32.FreeLibrary
         else:
             raise NotImplementedError("Unsupported env, failed to do dlclose!")
 
         if f_dlclose is not None:
             if is_linux():
                 f_dlclose.argtypes = [c_void_p]
-                f_dlclose(self.DLL._handle)
-            elif is_windows():
-                import ctypes
-                from ctypes import wintypes
-
-                f_dlclose.argtypes = [wintypes.HMODULE]
                 f_dlclose(self.DLL._handle)
         else:
             log.warning(

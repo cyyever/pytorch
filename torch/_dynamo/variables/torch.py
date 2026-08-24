@@ -244,7 +244,6 @@ constant_fold_functions = [
     torch._C._get_privateuse1_backend_name,
     torch.autograd._is_checkpoint_valid,
     torch.mps.is_available,
-    torch.mtia.is_available,
     torch.xpu.get_device_properties,
     torch.xpu.is_available,
 ] + constant_fold_functions_need_guards

@@ -6,27 +6,19 @@
 #include <ATen/cpu/vec/intrinsics.h>
 
 #include <ATen/cpu/vec/vec_base.h>
-#if !(                                                 \
-    defined(__VSX__) || defined(CPU_CAPABILITY_VSX) || \
-    defined(CPU_CAPABILITY_ZVECTOR))
-#if defined(CPU_CAPABILITY_SVE256)
-#include <ATen/cpu/vec/sve/vec_common_sve.h>
-#else
+#if !defined(CPU_CAPABILITY_ZVECTOR)
 // clang-format off
 #include <ATen/cpu/vec/vec256/vec256_float.h>
 #include <ATen/cpu/vec/vec256/vec256_double.h>
 #include <ATen/cpu/vec/vec256/vec256_int.h>
 #include <ATen/cpu/vec/vec256/vec256_qint.h>
-#endif
-#if !defined(CPU_CAPABILITY_SVE256) || !defined(__ARM_FEATURE_BF16)
+#if !!defined(__ARM_FEATURE_BF16)
 #include <ATen/cpu/vec/vec256/vec256_bfloat16.h>
 #endif
 #include <ATen/cpu/vec/vec256/vec256_half.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_float.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_double.h>
 // clang-format on
-#elif defined(__VSX__) || defined(CPU_CAPABILITY_VSX)
-#include <ATen/cpu/vec/vec256/vsx/vec256_common_vsx.h>
 #else
 // clang-format off
 #include <ATen/cpu/vec/vec256/zarch/vec256_zarch.h>
@@ -81,7 +73,6 @@ inline Vectorized<double> cast<double, int64_t>(
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GATHER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ifndef _MSC_VER
 // MSVC is not working well on complex function overload.
 template <int64_t scale = 1>
 std::enable_if_t<
@@ -98,9 +89,7 @@ std::enable_if_t<
         float>> inline gather(const float* base_addr, const Vectorized<int32_t>& vindex) {
   return _mm256_i32gather_ps(base_addr, vindex, scale);
 }
-#endif
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ MASK GATHER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ifndef _MSC_VER
 // MSVC is not working well on complex function overload.
 template <int64_t scale = 1>
 std::
@@ -121,7 +110,6 @@ std::
         Vectorized<float>& mask) {
   return _mm256_mask_i32gather_ps(src, base_addr, vindex, mask, scale);
 }
-#endif
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CONVERT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 // Only works for inputs in the range: [-2^51, 2^51]

@@ -389,44 +389,7 @@ class IListRefIterator {
 
   IListRefIterator() : tag_(IListRefTag::None) {}
 
-#if defined(_MSC_VER) && _ITERATOR_DEBUG_LEVEL != 0
-  // See [Note: MSVC Iterator Debug]
-  IListRefIterator(const IListRefIterator& iterator)
-      : tag_(iterator.tag_) {
-    switch (tag_) {
-      case IListRefTag::Boxed:
-        payload_.boxed_iterator = iterator.payload_.boxed_iterator;
-        break;
-      case IListRefTag::Unboxed:
-        payload_.unboxed_iterator = iterator.payload_.unboxed_iterator;
-        break;
-      case IListRefTag::Materialized:
-        payload_.materialized_iterator = iterator.payload_.materialized_iterator;
-        break;
-      default:
-        TORCH_INTERNAL_ASSERT(false, "invalid IListRef tag.");
-    }
-  }
-#endif
 
-#if defined(_MSC_VER) && _ITERATOR_DEBUG_LEVEL == 2
-  // See [Note: MSVC Iterator Debug]
-  ~IListRefIterator() noexcept(false) {
-    switch (tag_) {
-      case IListRefTag::Boxed:
-        payload_.boxed_iterator.~boxed_iterator_type();
-        break;
-      case IListRefTag::Unboxed:
-        payload_.unboxed_iterator.~unboxed_iterator_type();
-        break;
-      case IListRefTag::Materialized:
-        payload_.materialized_iterator.~materialized_iterator_type();
-        break;
-      default:
-        TORCH_INTERNAL_ASSERT(false, "invalid IListRef tag.");
-    }
-  }
-#endif
 
   IListRefIterator(boxed_iterator_type boxed) : tag_(IListRefTag::Boxed) {
     payload_.boxed_iterator = boxed;
@@ -487,10 +450,6 @@ class IListRefIterator {
     materialized_iterator_type materialized_iterator;
     void* _init_ptr;
     Payload() : _init_ptr(nullptr) {}
-#if defined(_MSC_VER)
-    // See [Note: MSVC Iterator Debug]
-    ~Payload() {}
-#endif
   };
 
   Payload payload_;

@@ -1,4 +1,4 @@
-#if !defined(C10_MOBILE) && !defined(ANDROID)
+#if !defined(C10_MOBILE)
 #include <ATen/DynamicLibrary.h>
 #include <ATen/record_function.h>
 #include <c10/util/ScopeExit.h>
@@ -13,16 +13,8 @@
 #include <exception>
 
 #include <fcntl.h>
-#ifdef _WIN32
-#include <errno.h>
-#include <io.h>
-#include <sys/stat.h>
-#include <torch/headeronly/util/win32-headers.h>
-#include <functional> // std::function
-#else // !_WIN32
 #include <sys/mman.h>
 #include <unistd.h>
-#endif // _WIN32
 
 namespace torch::inductor {
 
@@ -474,50 +466,6 @@ void AOTIModelContainerRunner::update_constant_buffer_from_blob(
   AOTI_RUNTIME_ERROR_CODE_CHECK(
       get_constants_blob_size_func_(container_handle_, &weights_size));
 
-#ifdef _WIN32
-  // Proper Windows file mapping implementation
-
-  HANDLE hFile = CreateFileA(
-      weights_path.c_str(),
-      GENERIC_READ,
-      FILE_SHARE_READ,
-      NULL,
-      OPEN_EXISTING,
-      FILE_ATTRIBUTE_NORMAL,
-      NULL);
-
-  if (hFile == INVALID_HANDLE_VALUE) {
-    TORCH_CHECK(false, "Failed to open external weights file: ", weights_path);
-  }
-
-  // Get actual file size for validation
-  LARGE_INTEGER fileSize;
-  if (!GetFileSizeEx(hFile, &fileSize)) {
-    CloseHandle(hFile);
-    TORCH_CHECK(false, "Failed to get file size");
-  }
-
-  if (static_cast<uint64_t>(fileSize.QuadPart) < weights_size) {
-    CloseHandle(hFile);
-    TORCH_CHECK(false, "File size smaller than expected weights size");
-  }
-
-  HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-  CloseHandle(hFile); // Close file handle, keep mapping handle
-
-  if (hMapping == NULL) {
-    TORCH_CHECK(false, "CreateFileMapping failed");
-  }
-  auto mapping_guard =
-      c10::make_scope_exit([hMapping]() { CloseHandle(hMapping); });
-
-  uint8_t* ptr = static_cast<uint8_t*>(
-      MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, weights_size));
-
-  TORCH_CHECK(ptr != NULL, "MapViewOfFile failed");
-  auto view_guard = c10::make_scope_exit([ptr]() { UnmapViewOfFile(ptr); });
-
-#else
   // Unix/Linux implementation
   int fd = open(weights_path.c_str(), O_RDONLY);
   TORCH_CHECK(fd >= 0, "Failed to open external weights file: " + weights_path);
@@ -529,7 +477,6 @@ void AOTIModelContainerRunner::update_constant_buffer_from_blob(
   TORCH_CHECK(ptr != MAP_FAILED, "mmap() failed");
   auto mmap_guard = c10::make_scope_exit(
       [ptr, weights_size]() { munmap(ptr, weights_size); });
-#endif
   AOTI_RUNTIME_ERROR_CODE_CHECK(
       update_constants_from_blob_func_(container_handle_, ptr));
 }

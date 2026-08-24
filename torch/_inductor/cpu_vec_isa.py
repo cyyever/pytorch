@@ -15,7 +15,6 @@ from torch._inductor import config
 from torch._inductor.utils import python_subprocess_env
 
 
-_IS_WINDOWS = sys.platform == "win32"
 
 
 def _get_isa_dry_compile_fingerprint(isa_flags: str) -> str:
@@ -34,7 +33,7 @@ def _get_isa_dry_compile_fingerprint(isa_flags: str) -> str:
 
 
 class VecISA:
-    """Describes a CPU SIMD ISA (AVX2, AVX512, NEON, SVE, VSX, ZVECTOR) for
+    """Describes a CPU SIMD ISA (AVX2, AVX512, NEON, VSX, ZVECTOR) for
     inductor's CPU vectorization.
 
     Carries the bit width, ``CPU_CAPABILITY_*`` build macros, compiler arch
@@ -67,7 +66,7 @@ class VecISA:
     # In fbcode however, we are using the same compiler for pytorch and for inductor codegen,
     # making the runtime check unnecessary.
     _avx_code = """
-#if defined(CPU_CAPABILITY_AVX512) || defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_ZVECTOR) || defined(CPU_CAPABILITY_NEON) || defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_SVE)
+#if defined(CPU_CAPABILITY_AVX512) || defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_ZVECTOR) || defined(CPU_CAPABILITY_NEON) || defined(CPU_CAPABILITY_VSX)
 #include <ATen/cpu/vec/functional.h>
 #include <ATen/cpu/vec/vec.h>
 #endif
@@ -257,68 +256,13 @@ class VecNEON(VecISA):
     __hash__: Callable[[VecISA], Any] = VecISA.__hash__  # type: ignore[assignment]
 
 
-@dataclasses.dataclass
-class VecSVE(VecISA):
-    _bit_width: int = 256
-    _armv9a_supported: bool | None = dataclasses.field(
-        default=None, init=False, compare=False
-    )
-
-    def __post_init__(self) -> None:
-        if self._bit_width not in (128, 256):
-            raise AssertionError(f"unsupported SVE bit width: {self._bit_width}")
-        nelements = self._bit_width // 32
-        self._macro = [
-            "CPU_CAPABILITY_SVE",
-            f"CPU_CAPABILITY_SVE{self._bit_width}",
-            "AT_BUILD_ARM_VEC256_WITH_SLEEF",
-            "__ARM_FEATURE_BF16",
-        ]
-        self._arch_flags = (
-            f"-march=armv8-a+sve+bf16 -msve-vector-bits={self._bit_width}"
-        )
-        self._armv9a_arch_flags = (
-            "-march=armv9-a+sve2+fp16fml+sha3+bf16+i8mm "
-            f"-msve-vector-bits={self._bit_width}"
-        )
-        self._dtype_nelements = {
-            torch.float: nelements,
-            torch.bfloat16: nelements * 2,
-            torch.float16: nelements * 2,
-        }
-
-    def __str__(self) -> str:
-        if config.is_fbcode():
-            return "neon"
-        return "asimd"
-
-    def _has_armv9a(self) -> bool:
-        if self._armv9a_supported is None:
-            try:
-                self._armv9a_supported = bool(
-                    torch.cpu.get_capabilities().get("sve2", False)
-                )
-            except Exception:
-                self._armv9a_supported = False
-        return self._armv9a_supported
-
-    def build_arch_flags(self) -> str:
-        if self._has_armv9a():
-            return self._armv9a_arch_flags
-        return self._arch_flags
-
-    __hash__: Callable[[VecISA], Any] = VecISA.__hash__  # type: ignore[assignment]
 
 
 @dataclasses.dataclass
 class VecAVX512(VecISA):
     _bit_width = 512
     _macro = ["CPU_CAPABILITY_AVX512"]
-    _arch_flags = (
-        "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma"
-        if not _IS_WINDOWS
-        else "/arch:AVX512"
-    )  # TODO: use cflags
+    _arch_flags = "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma"  # TODO: use cflags
     _dtype_nelements = {torch.float: 16, torch.bfloat16: 32, torch.float16: 32}
     _is_avx512_bf16_supported = False
 
@@ -343,7 +287,7 @@ extern "C" __m512bh __avx512_bf16_chk_kernel(__m512 a, __m512 b) {
             if config.is_fbcode():
                 return False
             # check avx512_bf16
-            if torch.cpu._is_avx512_bf16_supported() and not _IS_WINDOWS:
+            if torch.cpu._is_avx512_bf16_supported():
                 # save _arch_flags
                 base_flags = self._arch_flags
                 # temporarily change _arch_flags for avx512_bf16 check_build
@@ -404,7 +348,6 @@ extern "C" __m512i __avx512_vnni_chk_kernel_2(__m512i src, __m512i a, __m512i b)
                 return False
             if (
                 torch.cpu._is_vnni_supported()
-                and not _IS_WINDOWS
                 and self.check_build(self._avx512_vnni_code)
             ):
                 return True
@@ -489,7 +432,7 @@ class VecAVX2(VecISA):
     _bit_width = 256
     _macro = ["CPU_CAPABILITY_AVX2"]
     _arch_flags = (
-        "-mavx2 -mfma -mf16c" if not _IS_WINDOWS else "/arch:AVX2"
+        "-mavx2 -mfma -mf16c"
     )  # TODO: use cflags
     _dtype_nelements = {torch.float: 8, torch.bfloat16: 16, torch.float16: 16}
 
@@ -580,7 +523,6 @@ supported_vec_isa_list = [
     VecAVX512(),
     VecAVX2(),
     VecNEON(),
-    VecSVE(256),
 ]
 
 
@@ -623,7 +565,7 @@ def valid_vec_isa_list() -> list[VecISA]:
     if sys.platform == "darwin" and platform.processor() == "arm":
         isa_list.append(VecNEON())
 
-    if sys.platform not in ["linux", "win32"]:
+    if sys.platform != "linux":
         return isa_list
 
     arch = platform.machine()
@@ -643,15 +585,7 @@ def valid_vec_isa_list() -> list[VecISA]:
     elif arch == "ppc64le":
         isa_list.append(VecVSX())
     elif arch == "aarch64":
-        caps = torch.cpu.get_capabilities()
-        if (caps.get("sve2", False) or caps.get("sve", False)) and caps.get(
-            "bf16", False
-        ):
-            isa = VecSVE(128 if caps.get("sve_max_length") == 128 else 256)
-            if isa:
-                isa_list.append(isa)
-        else:
-            isa_list.append(VecNEON())
+        isa_list.append(VecNEON())
 
     elif arch in ["x86_64", "AMD64"]:
         """
