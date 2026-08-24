@@ -481,16 +481,10 @@ at::MemoryFormat padding_memory_format_3d(const Tensor& input) {
 // reflection padding
 void reflection_pad1d_kernel_impl(const Tensor& output, const Tensor& input, IntArrayRef padding) {
   PaddingParams param{input, output, padding};
-  if (input.is_quantized()) {
-    AT_DISPATCH_QINT_TYPES(input.scalar_type(), "qreflection_pad1d", [&] {
-      cpu_padding<scalar_t, ReflectionPad>(output, input, param);
-    });
-  } else {
-    AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, input.scalar_type(),
-        "reflection_pad1d", [&] {
-      cpu_padding<scalar_t, ReflectionPad>(output, input, param);
-    });
-  }
+  AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, input.scalar_type(),
+      "reflection_pad1d", [&] {
+    cpu_padding<scalar_t, ReflectionPad>(output, input, param);
+  });
 }
 
 void reflection_pad1d_backward_kernel_impl(
@@ -504,31 +498,23 @@ void reflection_pad1d_backward_kernel_impl(
 
 void reflection_pad2d_kernel_impl(const Tensor& output, const Tensor& input, IntArrayRef padding) {
   PaddingParams param{input, output, padding};
-  if (input.is_quantized()) {
-    // original quantized impl doesn't have channels last support,
-    // if this is intended, make a switch here.
-    AT_DISPATCH_QINT_TYPES(input.scalar_type(), "qreflection_pad2d", [&] {
-      cpu_padding<scalar_t, ReflectionPad>(output, input, param);
-    });
-  } else {
-    switch (input.suggest_memory_format()) {
-      case at::MemoryFormat::Contiguous: {
-        AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, input.scalar_type(),
-            "reflection_pad2d", [&] {
-          cpu_padding<scalar_t, ReflectionPad>(output, input, param);
-        });
-        break;
-      }
-      case at::MemoryFormat::ChannelsLast: {
-        AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, input.scalar_type(),
-            "reflection_pad2d_channels_last", [&]{
-          cpu_padding_channels_last<scalar_t, ReflectionPad>(output, input, param);
-        });
-        break;
-      }
-      default:
-        TORCH_CHECK(false, "Unsupported memory format. Supports only ChannelsLast, Contiguous");
+  switch (input.suggest_memory_format()) {
+    case at::MemoryFormat::Contiguous: {
+      AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, input.scalar_type(),
+          "reflection_pad2d", [&] {
+        cpu_padding<scalar_t, ReflectionPad>(output, input, param);
+      });
+      break;
     }
+    case at::MemoryFormat::ChannelsLast: {
+      AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, input.scalar_type(),
+          "reflection_pad2d_channels_last", [&]{
+        cpu_padding_channels_last<scalar_t, ReflectionPad>(output, input, param);
+      });
+      break;
+    }
+    default:
+      TORCH_CHECK(false, "Unsupported memory format. Supports only ChannelsLast, Contiguous");
   }
 }
 

@@ -1194,34 +1194,17 @@ class TestOldViewOpsDeviceType(TestCase):
         self.assertTrue(flat1.is_contiguous())
         self.assertTrue(flat2.is_contiguous())
 
-        # Test both float tensor and quantized tensor
-        tensors = [
-            torch.randn(5, 5, 5, 5, device=device),
-            torch._empty_affine_quantized(
-                [5, 5, 5, 5], scale=2, zero_point=3, dtype=torch.quint8, device=device
-            ),
-        ]
-        _test_ravel(tensors, 625)
+        _test_ravel([torch.randn(5, 5, 5, 5, device=device)], 625)
 
-        tensors = [
-            torch.randn(0, 2, 3, device=device),
-            torch.randn(3, 0, 2, device=device),
-            torch._empty_affine_quantized(
-                [0, 2, 3], scale=2, zero_point=3, dtype=torch.quint8, device=device
-            ),
-            torch._empty_affine_quantized(
-                [3, 0, 2], scale=2, zero_point=3, dtype=torch.quint8, device=device
-            ),
-        ]
-        _test_ravel(tensors, 0)
+        _test_ravel(
+            [
+                torch.randn(0, 2, 3, device=device),
+                torch.randn(3, 0, 2, device=device),
+            ],
+            0,
+        )
 
-        tensors = [
-            torch.randn(5, 5, device=device),
-            torch._empty_affine_quantized(
-                [5, 5], scale=2, zero_point=3, dtype=torch.quint8, device=device
-            ),
-        ]
-        _test_ravel(tensors, 25, True)
+        _test_ravel([torch.randn(5, 5, device=device)], 25, True)
 
     # TODO: this should be refactored into the view ops test suite
     def test_empty_reshape(self, device):
@@ -1332,14 +1315,7 @@ class TestOldViewOpsDeviceType(TestCase):
         self.assertEqual(flat0, flat1)
         self.assertEqual(flat0.shape, flat1.shape)
 
-        # Test both float tensor and quantized tensor
-        tensors = [
-            torch.randn(5, 5, 5, 5, device=device),
-            torch._empty_affine_quantized(
-                [5, 5, 5, 5], scale=2, zero_point=3, dtype=torch.quint8, device=device
-            ),
-        ]
-        for src in tensors:
+        for src in [torch.randn(5, 5, 5, 5, device=device)]:
             flat = src.flatten(0, -1)
             self.assertEqual(flat.shape, torch.Size([625]))
             self.assertEqual(src.view(-1), flat.view(-1))

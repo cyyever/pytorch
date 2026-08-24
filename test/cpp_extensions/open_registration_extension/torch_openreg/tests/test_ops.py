@@ -2,7 +2,6 @@
 
 import collections
 import functools
-import unittest
 
 import torch
 from torch.nn.attention import SDPBackend
@@ -121,15 +120,6 @@ class TestSTUB(TestCase):
         torch.abs(x_cpu, out=o_cpu[:, :, 0:6:3])
         torch.abs(x_openreg, out=o_openreg[:, :, 0:6:3])
         self.assertEqual(o_cpu, o_openreg.cpu())
-
-
-class TestQuantization(TestCase):
-    def test_quantize(self):
-        """Test quantization per tensor"""
-        x = torch.randn(3, 4, 5, dtype=torch.float32, device="openreg")
-        quantized_tensor = torch.quantize_per_tensor(x, 0.1, 10, torch.qint8)
-        self.assertEqual(quantized_tensor.device, torch.device("openreg:0"))
-        self.assertEqual(quantized_tensor.dtype, torch.qint8)
 
 
 class TestAutogradFunction(TestCase):
@@ -452,36 +442,6 @@ class TestSTUBExtended(TestCase):
         self.assertEqual(out.device.type, "openreg")
         self.assertTrue(torch.all(out >= 0))
         self.assertEqual(out, torch.abs(x))
-
-
-@unittest.skip("Skipping all quantization tests for openreg backend")
-class TestQuantizationExtended(TestCase):
-    def test_quantize_per_tensor_different_scales(self):
-        """Test quantization with different scales"""
-        x = torch.randn(3, 4, 5, dtype=torch.float32, device="openreg")
-
-        scale = 0.1
-        zero_point = 10
-        quantized = torch.quantize_per_tensor(x, scale, zero_point, torch.qint8)
-        self.assertEqual(quantized.device.type, "openreg")
-        self.assertEqual(quantized.dtype, torch.qint8)
-        self.assertEqual(quantized.q_scale(), scale)
-        self.assertEqual(quantized.q_zero_point(), zero_point)
-
-    def test_quantize_per_tensor_quint8(self):
-        """Test quantization with quint8 dtype"""
-        x = torch.randn(3, 4, dtype=torch.float32, device="openreg")
-        quantized = torch.quantize_per_tensor(x, 0.1, 128, torch.quint8)
-        self.assertEqual(quantized.device.type, "openreg")
-        self.assertEqual(quantized.dtype, torch.quint8)
-
-    def test_dequantize(self):
-        """Test dequantization"""
-        x = torch.randn(3, 4, dtype=torch.float32, device="openreg")
-        quantized = torch.quantize_per_tensor(x, 0.1, 10, torch.qint8)
-        dequantized = quantized.dequantize()
-        self.assertEqual(dequantized.device.type, "openreg")
-        self.assertEqual(dequantized.dtype, torch.float32)
 
 
 class TestFallbackExtended(TestCase):

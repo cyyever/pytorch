@@ -165,7 +165,6 @@ Available type group macros (use with `AT_EXPAND()`):
 AT_INTEGRAL_TYPES      // kByte, kChar, kInt, kLong, kShort
 AT_FLOATING_TYPES      // kDouble, kFloat
 AT_COMPLEX_TYPES       // kComplexDouble, kComplexFloat
-AT_QINT_TYPES         // kQInt8, kQUInt8, kQInt32
 AT_ALL_TYPES          // INTEGRAL_TYPES + FLOATING_TYPES
 AT_ALL_TYPES_AND_COMPLEX  // ALL_TYPES + COMPLEX_TYPES
 AT_INTEGRAL_TYPES_V2  // INTEGRAL_TYPES + unsigned types

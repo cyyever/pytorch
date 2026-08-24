@@ -74,10 +74,6 @@ dnnl::memory::data_type get_onednn_dtype(
       return dnnl::memory::data_type::u8;
     case at::ScalarType::Char:
       return dnnl::memory::data_type::s8;
-    case at::ScalarType::QInt8:
-      return dnnl::memory::data_type::s8;
-    case at::ScalarType::QUInt8:
-      return dnnl::memory::data_type::u8;
     case at::ScalarType::Int:
       return dnnl::memory::data_type::s32;
     case at::ScalarType::Half:

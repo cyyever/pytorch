@@ -3157,7 +3157,7 @@ class ForeachFuncInfo(OpInfo):
     """Early version of a specialized OpInfo for foreach functions
 
     The main differences from the parent class are (a) `dtypes`, `dtypesIfCUDA`, and `dtypesIfROCM`
-    are set to `get_all_dtypes(include_qint=False)`, and (b) the following arguments.
+    are set to `get_all_dtypes()`, and (b) the following arguments.
 
     ``supports_alpha_param=True`` means that the function supports a python scalar (``numbers.Number``)
     as the last keyword argument such as ``torch.foreach.add``.
@@ -3190,7 +3190,7 @@ class ForeachFuncInfo(OpInfo):
 
         # We disable all complex128 tests internally for foreach due to reported flakiness
         # tracked in #139648
-        supported_dtypes = get_all_dtypes(include_qint=False)
+        supported_dtypes = get_all_dtypes()
         if IS_FBCODE:
             supported_dtypes = [
                 x for x in supported_dtypes if x is not torch.complex128

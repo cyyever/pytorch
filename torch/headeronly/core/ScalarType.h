@@ -11,11 +11,6 @@
 #include <torch/headeronly/util/Half.h>
 #include <torch/headeronly/util/bits.h>
 #include <torch/headeronly/util/complex.h>
-#include <torch/headeronly/util/qint32.h>
-#include <torch/headeronly/util/qint8.h>
-#include <torch/headeronly/util/quint2x4.h>
-#include <torch/headeronly/util/quint4x2.h>
-#include <torch/headeronly/util/quint8.h>
 
 #include <cstdint>
 
@@ -32,6 +27,12 @@ struct dummy_uint1_7_t {};
 // of these dtypes will be implemented in python with Tensor subclass
 template <unsigned int N>
 struct dummy_int1_7_t {};
+
+// dummy struct standing in for the five quantized dtypes. This build has no
+// quantization support, but ScalarType values are a serialization format and
+// are used as array indices, so the enumerators have to keep their numbers.
+template <unsigned int N>
+struct dummy_qint_t {};
 
 // [dtype Macros note] For the macros below:
 //
@@ -113,12 +114,12 @@ struct dummy_int1_7_t {};
   _(c10::complex<float>, ComplexFloat) /* 9 */           \
   _(c10::complex<double>, ComplexDouble) /* 10 */        \
   _(bool, Bool) /* 11 */                                 \
-  _(c10::qint8, QInt8) /* 12 */                          \
-  _(c10::quint8, QUInt8) /* 13 */                        \
-  _(c10::qint32, QInt32) /* 14 */                        \
+  _(c10::dummy_qint_t<1>, QInt8) /* 12 */                \
+  _(c10::dummy_qint_t<2>, QUInt8) /* 13 */               \
+  _(c10::dummy_qint_t<3>, QInt32) /* 14 */               \
   _(c10::BFloat16, BFloat16) /* 15 */                    \
-  _(c10::quint4x2, QUInt4x2) /* 16 */                    \
-  _(c10::quint2x4, QUInt2x4) /* 17 */                    \
+  _(c10::dummy_qint_t<4>, QUInt4x2) /* 16 */             \
+  _(c10::dummy_qint_t<5>, QUInt2x4) /* 17 */             \
   _(c10::bits1x8, Bits1x8) /* 18 */                      \
   _(c10::bits2x4, Bits2x4) /* 19 */                      \
   _(c10::bits4x2, Bits4x2) /* 20 */                      \
@@ -238,13 +239,6 @@ struct dummy_int1_7_t {};
     SCALARTYPE6)                                                   \
   _(c10::impl::ScalarTypeToCPPTypeT<c10::ScalarType::SCALARTYPE7>, SCALARTYPE7)
 
-#define AT_FORALL_QINT_TYPES(_) \
-  _(c10::qint8, QInt8)          \
-  _(c10::quint8, QUInt8)        \
-  _(c10::qint32, QInt32)        \
-  _(c10::quint4x2, QUInt4x2)    \
-  _(c10::quint2x4, QUInt2x4)
-
 #define AT_FORALL_FLOAT8_TYPES(_)          \
   _(c10::Float8_e5m2, Float8_e5m2)         \
   _(c10::Float8_e4m3fn, Float8_e4m3fn)     \
@@ -337,41 +331,17 @@ inline std::ostream& operator<<(
   return stream << toString(scalar_type);
 }
 
-inline bool isQIntType(ScalarType t) {
-  // Don't forget to extend this when adding new QInt types
-  return t == ScalarType::QInt8 || t == ScalarType::QUInt8 ||
-      t == ScalarType::QInt32 || t == ScalarType::QUInt4x2 ||
-      t == ScalarType::QUInt2x4;
-}
-
-inline ScalarType toUnderlying(ScalarType t) {
-  switch (t) {
-    case ScalarType::QUInt8:
-    case ScalarType::QUInt4x2:
-      [[fallthrough]];
-    case ScalarType::QUInt2x4:
-      return ScalarType::Byte;
-    case ScalarType::QInt8:
-      return ScalarType::Char;
-    case ScalarType::QInt32:
-      return ScalarType::Int;
-    default:
-      return t;
-  }
-}
-
 } // namespace c10
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 using c10::CppTypeToScalarType;
 using c10::dummy_int1_7_t;
+using c10::dummy_qint_t;
 using c10::dummy_uint1_7_t;
 using c10::NumScalarTypes;
 using c10::ScalarType;
 using c10::toString;
 using c10::operator<<;
-using c10::isQIntType;
-using c10::toUnderlying;
 
 namespace impl {
 using c10::impl::ScalarTypeToCPPTypeT;

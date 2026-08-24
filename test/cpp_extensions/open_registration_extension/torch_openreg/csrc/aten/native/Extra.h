@@ -2,11 +2,6 @@
 
 namespace at::native::openreg {
 
-at::Tensor quantize_per_tensor(
-    const at::Tensor& self,
-    double scale,
-    int64_t zero_point,
-    at::ScalarType dtype);
 int64_t _fused_sdp_choice(
     const at::Tensor& query,
     const at::Tensor& key,
@@ -16,11 +11,6 @@ int64_t _fused_sdp_choice(
     bool is_causal,
     std::optional<double> scale,
     bool enable_gqa);
-void quantize_tensor_per_tensor_affine_stub(
-    const at::Tensor& rtensor,
-    at::Tensor& qtensor,
-    double scale,
-    int64_t zero_point);
 std::tuple<
     at::Tensor,
     at::Tensor,

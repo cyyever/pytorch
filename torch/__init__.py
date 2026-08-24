@@ -2356,61 +2356,6 @@ class ComplexFloatStorage(_LegacyStorage):
         return torch.cfloat
 
 
-class QUInt8Storage(_LegacyStorage):
-    @classproperty
-    def dtype(self) -> "torch.dtype":
-        _warn_typed_storage_removal(stacklevel=3)
-        return self._dtype
-
-    @classproperty
-    def _dtype(self) -> "torch.dtype":
-        return torch.quint8
-
-
-class QInt8Storage(_LegacyStorage):
-    @classproperty
-    def dtype(self) -> "torch.dtype":
-        _warn_typed_storage_removal(stacklevel=3)
-        return self._dtype
-
-    @classproperty
-    def _dtype(self) -> "torch.dtype":
-        return torch.qint8
-
-
-class QInt32Storage(_LegacyStorage):
-    @classproperty
-    def dtype(self) -> "torch.dtype":
-        _warn_typed_storage_removal(stacklevel=3)
-        return self._dtype
-
-    @classproperty
-    def _dtype(self) -> "torch.dtype":
-        return torch.qint32
-
-
-class QUInt4x2Storage(_LegacyStorage):
-    @classproperty
-    def dtype(self) -> "torch.dtype":
-        _warn_typed_storage_removal(stacklevel=3)
-        return self._dtype
-
-    @classproperty
-    def _dtype(self) -> "torch.dtype":
-        return torch.quint4x2
-
-
-class QUInt2x4Storage(_LegacyStorage):
-    @classproperty
-    def dtype(self) -> "torch.dtype":
-        _warn_typed_storage_removal(stacklevel=3)
-        return self._dtype
-
-    @classproperty
-    def _dtype(self) -> "torch.dtype":
-        return torch.quint2x4
-
-
 _storage_classes: set[type[TypedStorage | UntypedStorage]] = {
     UntypedStorage,
     DoubleStorage,
@@ -2422,14 +2367,9 @@ _storage_classes: set[type[TypedStorage | UntypedStorage]] = {
     ByteStorage,
     HalfStorage,
     BoolStorage,
-    QUInt8Storage,
-    QInt8Storage,
-    QInt32Storage,
     BFloat16Storage,
     ComplexFloatStorage,
     ComplexDoubleStorage,
-    QUInt4x2Storage,
-    QUInt2x4Storage,
     TypedStorage,
 }
 

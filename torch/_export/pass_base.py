@@ -122,10 +122,6 @@ class _ExportPassBaseDeprecatedDoNotUse(PassBase):
                 if isinstance(x, FakeTensor):  # noqa: ISINSTANCE_FAKE_TENSOR
                     return x
                 elif isinstance(x, torch.Tensor):
-                    if x.is_quantized:
-                        # TODO (tmanlaibaatar) properly support Quantized FakeTensor
-                        x = torch.dequantize(x)
-
                     try:
                         if self.fake_tensor_mode is None:
                             raise AssertionError("fake_tensor_mode must not be None")
@@ -167,10 +163,6 @@ class _ExportPassBaseDeprecatedDoNotUse(PassBase):
             # Set the tensor_metadata for values that do not have a corresponding FakeTensor
             def make_tensor_meta(x: Argument) -> TensorMetadata | None:
                 if not is_fake_tensor(x) and isinstance(x, torch.Tensor):
-                    if x.is_quantized:
-                        # TODO (tmanlaibaatar) properly support Quantized FakeTensor
-                        x = torch.dequantize(x)
-
                     try:
                         if self.fake_tensor_mode is None:
                             raise AssertionError("fake_tensor_mode must not be None")

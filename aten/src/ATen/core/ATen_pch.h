@@ -133,11 +133,6 @@
 #include <c10/util/irange.h>
 #include <c10/util/llvmMathExtras.h>
 #include <c10/util/python_stub.h>
-#include <c10/util/qint32.h>
-#include <c10/util/qint8.h>
-#include <c10/util/quint2x4.h>
-#include <c10/util/quint4x2.h>
-#include <c10/util/quint8.h>
 #include <c10/util/safe_numerics.h>
 #include <c10/util/string_view.h>
 #include <c10/util/typeid.h>
@@ -148,7 +143,6 @@
 #include <ATen/core/DeprecatedTypePropertiesRegistry.h>
 #include <ATen/core/DimVector.h>
 #include <ATen/core/Generator.h>
-#include <ATen/core/QuantizerBase.h>
 #include <ATen/core/TensorAccessor.h>
 #include <ATen/core/TensorBase.h>
 #include <ATen/core/symbol.h>

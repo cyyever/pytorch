@@ -92,7 +92,6 @@
 #include <ATen/ops/count_nonzero.h>
 #include <ATen/ops/count_nonzero_native.h>
 #include <ATen/ops/empty.h>
-#include <ATen/ops/empty_quantized.h>
 #include <ATen/ops/gather.h>
 #include <ATen/ops/gather_backward_native.h>
 #include <ATen/ops/gather_meta.h>
@@ -119,7 +118,6 @@
 #include <ATen/ops/nonzero_static_native.h>
 #include <ATen/ops/ones_like.h>
 #include <ATen/ops/put_native.h>
-#include <ATen/ops/quantize_per_tensor.h>
 #include <ATen/ops/scatter_add_meta.h>
 #include <ATen/ops/scatter_add_native.h>
 #include <ATen/ops/scatter_meta.h>
@@ -568,7 +566,6 @@ DEFINE_DISPATCH(put_stub);
 DEFINE_DISPATCH(take_stub);
 DEFINE_DISPATCH(masked_fill_stub);
 REGISTER_NO_CPU_DISPATCH(index_put_with_sort_stub)
-REGISTER_NO_CPU_DISPATCH(index_put_with_sort_quantized_stub)
 DEFINE_DISPATCH(masked_select_serial_stub);
 DEFINE_DISPATCH(masked_select_stub);
 DEFINE_DISPATCH(masked_scatter_stub);
@@ -723,22 +720,6 @@ static TensorIterator make_index_put_iterator(
 TORCH_IMPL_FUNC(index_out)
 (const Tensor& self, DimVector sizes, DimVector strides, const Tensor& result) {
   index_stub(device_type(), *this, sizes, strides);
-}
-
-Tensor quantized_index(
-    const Tensor& self,
-    const torch::List<std::optional<Tensor>>& indices) {
-  TORCH_INTERNAL_ASSERT(
-      self.qscheme() == c10::kPerTensorAffine ||
-          self.qscheme() == c10::kPerTensorSymmetric,
-      "Indexing is only supported for per-Tensor quantized Tensors.");
-
-  // For now, this is a naive implementation which does dq -> index -> q.
-  // TODO(future PR): improve performance by removing the copies.
-  const auto& self_dq = self.dequantize();
-  auto result = at::index(self_dq, indices);
-  return at::quantize_per_tensor(
-      result, self.q_scale(), self.q_zero_point(), self.scalar_type());
 }
 
 Tensor _unsafe_index(
@@ -1623,11 +1604,6 @@ Tensor& index_select_out_cpu_(
     int64_t dim,
     const Tensor& index,
     Tensor& result) {
-  if (self.is_quantized()) {
-    TORCH_CHECK(
-        self.qscheme() == kPerTensorAffine,
-        "Only per_tensor quantized quantized tensors are supported by index_select.")
-  }
   dim = maybe_wrap_dim(dim, self.dim());
   auto numel = index.numel();
   TORCH_CHECK_INDEX(
@@ -1806,79 +1782,45 @@ Tensor& index_select_out_cpu_(
     // explicitly capture all required variables to work around windows build
     // TODO: fix this when windows can correctly capture variables in nested
     // lambda
-    if (self.is_quantized()) {
-      AT_DISPATCH_QINT_TYPES(
-          self.scalar_type(),
-          "index_select_quant",
-          [&index_contig, &self, &result, &dim, &numel] {
-            auto self_stride = self.dim() == 0 ? 1 : self.stride(dim);
-            auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
-            auto self_data_ptr = self.const_data_ptr<scalar_t>();
-            auto result_data_ptr = result.data_ptr<scalar_t>();
-            auto self_numel = self.numel();
-            AT_DISPATCH_INDEX_TYPES(
-                index_contig.scalar_type(),
-                "index_select_out_cpu_quant_",
-                [&index_contig,
-                 &numel,
-                 &self_numel,
-                 &self_data_ptr,
-                 &self_stride,
-                 &result_data_ptr,
-                 &result_stride] {
-                  auto index_data = index_contig.const_data_ptr<index_t>();
-                  for (const auto i : c10::irange(numel)) {
-                    auto self_i = index_data[i];
-                    TORCH_CHECK_INDEX(
-                        (self_i >= 0) && (self_i < self_numel),
-                        "index out of range in self");
-                    const scalar_t* self_ip =
-                        self_data_ptr + self_i * self_stride;
-                    *(result_data_ptr + i * result_stride) = *self_ip;
-                  }
-                });
-          });
-    } else {
-      AT_DISPATCH_V2(
-          self.scalar_type(),
-          "index_select",
-          AT_WRAP([&index_contig, &self, &result, &dim, &numel] {
-            auto self_stride = self.dim() == 0 ? 1 : self.stride(dim);
-            auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
+    AT_DISPATCH_V2(
+        self.scalar_type(),
+        "index_select",
+        AT_WRAP([&index_contig, &self, &result, &dim, &numel] {
+          auto self_stride = self.dim() == 0 ? 1 : self.stride(dim);
+          auto result_stride = result.dim() == 0 ? 1 : result.stride(dim);
 
-            auto self_data_ptr = self.const_data_ptr<scalar_t>();
-            auto result_data_ptr = result.data_ptr<scalar_t>();
-            auto self_numel = self.numel();
-            AT_DISPATCH_INDEX_TYPES(
-                index_contig.scalar_type(),
-                "index_select_out_cpu_",
-                [&index_contig,
-                 &numel,
-                 &self_numel,
-                 &self_data_ptr,
-                 &self_stride,
-                 &result_data_ptr,
-                 &result_stride] {
-                  auto index_data = index_contig.const_data_ptr<index_t>();
-                  for (const auto i : c10::irange(numel)) {
-                    auto self_i = index_data[i];
-                    TORCH_CHECK_INDEX(
-                        (self_i >= 0) && (self_i < self_numel),
-                        "index out of range in self");
-                    const scalar_t* self_ip =
-                        self_data_ptr + self_i * self_stride;
-                    *(result_data_ptr + i * result_stride) = *self_ip;
-                  }
-                });
-          }),
-          AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
-          ScalarType::ComplexHalf,
-          ScalarType::Half,
-          ScalarType::Bool,
-          ScalarType::BFloat16,
-          AT_EXPAND(AT_FLOAT8_TYPES),
-          AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES));
-    }
+          auto self_data_ptr = self.const_data_ptr<scalar_t>();
+          auto result_data_ptr = result.data_ptr<scalar_t>();
+          auto self_numel = self.numel();
+          AT_DISPATCH_INDEX_TYPES(
+              index_contig.scalar_type(),
+              "index_select_out_cpu_",
+              [&index_contig,
+               &numel,
+               &self_numel,
+               &self_data_ptr,
+               &self_stride,
+               &result_data_ptr,
+               &result_stride] {
+                auto index_data = index_contig.const_data_ptr<index_t>();
+                for (const auto i : c10::irange(numel)) {
+                  auto self_i = index_data[i];
+                  TORCH_CHECK_INDEX(
+                      (self_i >= 0) && (self_i < self_numel),
+                      "index out of range in self");
+                  const scalar_t* self_ip =
+                      self_data_ptr + self_i * self_stride;
+                  *(result_data_ptr + i * result_stride) = *self_ip;
+                }
+              });
+        }),
+        AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
+        ScalarType::ComplexHalf,
+        ScalarType::Half,
+        ScalarType::Bool,
+        ScalarType::BFloat16,
+        AT_EXPAND(AT_FLOAT8_TYPES),
+        AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES));
   }
 
   return result;
@@ -1889,16 +1831,6 @@ Tensor index_select_cpu_(const Tensor& self, int64_t dim, const Tensor& index) {
   return at::native::index_select_out_cpu_(self, dim, index, result);
 }
 
-Tensor index_select_quantized_cpu_(
-    const Tensor& self,
-    int64_t dim,
-    const Tensor& index) {
-  TORCH_CHECK(
-      self.qscheme() == kPerTensorAffine,
-      "Only per_tensor quantized quantized tensors are supported by index_select.")
-  Tensor result = at::empty_quantized({0}, self);
-  return at::native::index_select_out_cpu_(self, dim, index, result);
-}
 
 Tensor index_select_backward_symint(
     const Tensor& grad,

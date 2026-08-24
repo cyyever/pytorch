@@ -1040,9 +1040,7 @@ class TestNNParametrization(NNTestCase):
         parametrize.register_parametrization(model, "weight", MinusOne())
         hold_weight = model.weight
 
-        to_model = torch.ao.nn.qat.Linear(
-            5, 5, qconfig=torch.ao.quantization.get_default_qconfig()
-        )
+        to_model = nn.Linear(5, 5)
         parametrize.transfer_parametrizations_and_params(model, to_model)
 
         # checks that final and original value are correct and the to_model is parametrized
@@ -1098,9 +1096,7 @@ class TestNNParametrization(NNTestCase):
         parametrize.register_parametrization(model, "weight", Double())
         hold_weight = model.weight
 
-        to_model = torch.ao.nn.qat.Linear(
-            5, 5, qconfig=torch.ao.quantization.get_default_qconfig()
-        )
+        to_model = nn.Linear(5, 5)
         parametrize.transfer_parametrizations_and_params(model, to_model)
 
         # check that transfer occurs successfully
@@ -1137,9 +1133,7 @@ class TestNNParametrization(NNTestCase):
         parametrize.register_parametrization(model, "bias", Double())
         parametrize.register_parametrization(model, "bias", MinusOne())
 
-        to_model = torch.ao.nn.qat.Linear(
-            5, 5, bias=True, qconfig=torch.ao.quantization.get_default_qconfig()
-        )
+        to_model = nn.Linear(5, 5, bias=True)
         parametrize.transfer_parametrizations_and_params(model, to_model, "weight")
 
         # check that weight and only weight was transferred
@@ -1177,9 +1171,7 @@ class TestNNParametrization(NNTestCase):
         parametrize.register_parametrization(model, "weight", Double())
         hold_weight = model.weight
 
-        to_model = torch.ao.nn.qat.Linear(
-            3, 3, qconfig=torch.ao.quantization.get_default_qconfig()
-        )
+        to_model = nn.Linear(3, 3)
 
         parametrize.transfer_parametrizations_and_params(model, to_model)
 

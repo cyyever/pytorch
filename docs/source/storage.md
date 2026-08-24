@@ -206,24 +206,4 @@ which stores all of the data that the {class}`torch.Tensor` views.
 .. autoclass:: torch.ComplexFloatStorage
    :members:
    :undoc-members:
-
-.. autoclass:: torch.QUInt8Storage
-   :members:
-   :undoc-members:
-
-.. autoclass:: torch.QInt8Storage
-   :members:
-   :undoc-members:
-
-.. autoclass:: torch.QInt32Storage
-   :members:
-   :undoc-members:
-
-.. autoclass:: torch.QUInt4x2Storage
-   :members:
-   :undoc-members:
-
-.. autoclass:: torch.QUInt2x4Storage
-   :members:
-   :undoc-members:
 ```

@@ -8,7 +8,6 @@
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #else
-#include <ATen/ops/_empty_affine_quantized.h>
 #include <ATen/ops/_pad_circular.h>
 #include <ATen/ops/_pad_circular_native.h>
 #include <ATen/ops/_pad_enum_native.h>
@@ -81,16 +80,7 @@ Tensor constant_pad_nd(const Tensor& self, IntArrayRef pad, const Scalar& value)
 
     at::Tensor output;
     const auto memory_format = self.suggest_memory_format();
-    if (self.is_quantized()) {
-        const auto qscheme = self.qscheme();
-        TORCH_CHECK(qscheme == kPerTensorAffine || qscheme == kPerTensorSymmetric,
-                    "Only per-tensor padding is supported.");
-        output = at::_empty_affine_quantized(
-            new_shape, self.options().memory_format(memory_format),
-            self.q_scale(), self.q_zero_point(), std::nullopt);
-    } else {
-        output = at::empty(new_shape, self.options().memory_format(memory_format));
-    }
+    output = at::empty(new_shape, self.options().memory_format(memory_format));
     output.fill_(value);
 
     auto c_output = output;

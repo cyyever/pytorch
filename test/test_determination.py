@@ -24,7 +24,6 @@ class DeterminationTest(TestCase):
         "test_cpp_extensions_aot_no_ninja",
         "test_utils",
         "test_determination",
-        "test_quantization",
     ]
 
     @classmethod
@@ -114,13 +113,6 @@ class DeterminationTest(TestCase):
             self.determined_tests(["test/jit/test_custom_operators.py"]),
             ["test_jit_profiling", "test_jit"],
         )
-        self.assertEqual(
-            self.determined_tests(
-                ["test/quantization/eager/test_quantize_eager_ptq.py"]
-            ),
-            ["test_quantization"],
-        )
-
     def test_test_internal_file(self):
         """testing/_internal files trigger dependent tests"""
         self.assertEqual(

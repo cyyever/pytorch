@@ -102,15 +102,6 @@ _DTYPE_PRECISIONS = {
     torch.complex64: (1.3e-6, 1e-5),
     torch.complex128: (1e-7, 1e-7),
 }
-# The default tolerances of torch.float32 are used for quantized dtypes, because quantized tensors are compared in
-# their dequantized and floating point representation. For more details see `TensorLikePair._compare_quantized_values`
-_DTYPE_PRECISIONS.update(
-    dict.fromkeys(
-        (torch.quint8, torch.quint2x4, torch.quint4x2, torch.qint8, torch.qint32),
-        _DTYPE_PRECISIONS[torch.float32],
-    )
-)
-
 
 def default_tolerances(
     *inputs: torch.Tensor | torch.dtype,
@@ -822,13 +813,6 @@ class TensorLikePair(Pair):
         if actual.shape != expected.shape:
             raise_mismatch_error("shape", actual.shape, expected.shape)
 
-        if actual.is_quantized != expected.is_quantized:
-            raise_mismatch_error(
-                "is_quantized", actual.is_quantized, expected.is_quantized
-            )
-        elif actual.is_quantized and actual.qscheme() != expected.qscheme():
-            raise_mismatch_error("qscheme()", actual.qscheme(), expected.qscheme())
-
         if actual.layout != expected.layout:
             if self.check_layout:
                 raise_mismatch_error("layout", actual.layout, expected.layout)
@@ -899,9 +883,7 @@ class TensorLikePair(Pair):
         return actual, expected
 
     def _compare_values(self, actual: torch.Tensor, expected: torch.Tensor) -> None:
-        if actual.is_quantized:
-            compare_fn = self._compare_quantized_values
-        elif actual.is_sparse:
+        if actual.is_sparse:
             compare_fn = self._compare_sparse_coo_values
         elif actual.layout in {
             torch.sparse_csr,
@@ -946,32 +928,6 @@ class TensorLikePair(Pair):
 
         compare_fn(
             actual, expected, rtol=self.rtol, atol=self.atol, equal_nan=self.equal_nan
-        )
-
-    def _compare_quantized_values(
-        self,
-        actual: torch.Tensor,
-        expected: torch.Tensor,
-        *,
-        rtol: float,
-        atol: float,
-        equal_nan: bool,
-    ) -> None:
-        """Compares quantized tensors by comparing the :meth:`~torch.Tensor.dequantize`'d variants for closeness.
-
-        .. note::
-
-            A detailed discussion about why only the dequantized variant is checked for closeness rather than checking
-            the individual quantization parameters for closeness and the integer representation for equality can be
-            found in https://github.com/pytorch/pytorch/issues/68548.
-        """
-        return self._compare_regular_values_close(
-            actual.dequantize(),
-            expected.dequantize(),
-            rtol=rtol,
-            atol=atol,
-            equal_nan=equal_nan,
-            identifier=lambda default_identifier: f"Quantized {default_identifier.lower()}",
         )
 
     def _compare_sparse_coo_values(
@@ -1451,10 +1407,6 @@ def assert_close(
     or ``ccol_indices``  and ``row_indices`` for CSC and BSC layouts, respectively,
     are always checked for equality whereas the values are checked for closeness according to the definition above.
 
-    If ``actual`` and ``expected`` are quantized, they are considered close if they have the same
-    :meth:`~torch.Tensor.qscheme` and the result of :meth:`~torch.Tensor.dequantize` is close according to the
-    definition above.
-
     ``actual`` and ``expected`` can be :class:`~torch.Tensor`'s or any tensor-or-scalar-likes from which
     :class:`torch.Tensor`'s can be constructed with :func:`torch.as_tensor`. Except for Python scalars the input types
     have to be directly related. In addition, ``actual`` and ``expected`` can be :class:`~collections.abc.Sequence`'s
@@ -1502,8 +1454,6 @@ def assert_close(
         AssertionError: If corresponding tensors do not have the same :attr:`~torch.Tensor.shape`.
         AssertionError: If ``check_layout`` is ``True``, but corresponding tensors do not have the same
             :attr:`~torch.Tensor.layout`.
-        AssertionError: If only one of corresponding tensors is quantized.
-        AssertionError: If corresponding tensors are quantized, but have different :meth:`~torch.Tensor.qscheme`'s.
         AssertionError: If ``check_device`` is ``True``, but corresponding tensors are not on the same
             :attr:`~torch.Tensor.device`.
         AssertionError: If ``check_dtype`` is ``True``, but corresponding tensors do not have the same ``dtype``.
@@ -1530,15 +1480,10 @@ def assert_close(
     +---------------------------+------------+----------+
     | :attr:`~torch.complex128` | ``1e-7``   | ``1e-7`` |
     +---------------------------+------------+----------+
-    | :attr:`~torch.quint8`     | ``1.3e-6`` | ``1e-5`` |
     +---------------------------+------------+----------+
-    | :attr:`~torch.quint2x4`   | ``1.3e-6`` | ``1e-5`` |
     +---------------------------+------------+----------+
-    | :attr:`~torch.quint4x2`   | ``1.3e-6`` | ``1e-5`` |
     +---------------------------+------------+----------+
-    | :attr:`~torch.qint8`      | ``1.3e-6`` | ``1e-5`` |
     +---------------------------+------------+----------+
-    | :attr:`~torch.qint32`     | ``1.3e-6`` | ``1e-5`` |
     +---------------------------+------------+----------+
     | other                     | ``0.0``    | ``0.0``  |
     +---------------------------+------------+----------+

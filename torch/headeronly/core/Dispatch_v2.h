@@ -64,9 +64,6 @@
 #define AT_COMPLEX_TYPES                        \
   torch::headeronly::ScalarType::ComplexDouble, \
       torch::headeronly::ScalarType::ComplexFloat
-#define AT_QINT_TYPES                                                          \
-  torch::headeronly::ScalarType::QInt8, torch::headeronly::ScalarType::QUInt8, \
-      torch::headeronly::ScalarType::QInt32
 // NB: not *actually* all types
 #define AT_ALL_TYPES AT_EXPAND(AT_INTEGRAL_TYPES), AT_EXPAND(AT_FLOATING_TYPES)
 #define AT_ALL_TYPES_AND_COMPLEX \

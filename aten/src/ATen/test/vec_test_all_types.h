@@ -1,7 +1,6 @@
 #pragma once
 #include <ATen/cpu/vec/functional.h>
 #include <ATen/cpu/vec/vec.h>
-#include <ATen/cpu/vec/vec_quant.h>
 #include <c10/util/bit_cast.h>
 #include <c10/util/irange.h>
 #include <gtest/gtest.h>
@@ -47,18 +46,6 @@ CACHE_ALIGN #define
     return __VA_ARGS__(std::forward<decltype(args)>(args)...); \
   }
 
-#if defined(CPU_CAPABILITY_AVX2) || \
-  defined(CPU_CAPABILITY_AVX512) && (defined(__GNUC__) || defined(__GNUG__))
-#undef CHECK_DEQUANT_WITH_LOW_PRECISION
-#define CHECK_WITH_FMA 1
-#elif !defined(CPU_CAPABILITY_AVX2)
-#undef CHECK_DEQUANT_WITH_LOW_PRECISION
-#undef CHECK_WITH_FMA
-#else
-#define CHECK_DEQUANT_WITH_LOW_PRECISION 1
-#undef CHECK_WITH_FMA
-#endif
-
 template <typename scalar_t>
 struct OpMathType {
   using type = scalar_t;
@@ -82,9 +69,6 @@ using vcomplexDbl = VecType<Complex<double>>;
 using vlong = VecType<int64_t>;
 using vint = VecType<int32_t>;
 using vshort = VecType<int16_t>;
-using vqint8 = VecType<c10::qint8>;
-using vquint8 = VecType<c10::quint8>;
-using vqint = VecType<c10::qint32>;
 using vBFloat16 = VecType<c10::BFloat16>;
 using vHalf = VecType<c10::Half>;
 
@@ -146,30 +130,6 @@ struct VecTypeHelper<vcomplexDbl> {
     using memStorageType = double;
     static constexpr int holdCount = vcomplexDbl::size();
     static constexpr int unitStorageCount = 2;
-};
-
-template<>
-struct VecTypeHelper<vqint8> {
-    using holdType = c10::qint8;
-    using memStorageType = typename c10::qint8::underlying;
-    static constexpr int holdCount = vqint8::size();
-    static constexpr int unitStorageCount = 1;
-};
-
-template<>
-struct VecTypeHelper<vquint8> {
-    using holdType = c10::quint8;
-    using memStorageType = typename c10::quint8::underlying;
-    static constexpr int holdCount = vquint8::size();
-    static constexpr int unitStorageCount = 1;
-};
-
-template<>
-struct VecTypeHelper<vqint> {
-    using holdType = c10::qint32;
-    using memStorageType = typename c10::qint32::underlying;
-    static constexpr int holdCount = vqint::size();
-    static constexpr int unitStorageCount = 1;
 };
 
 template<>
@@ -1438,62 +1398,6 @@ local_xor(const Complex<T>& val0, const Complex<T>& val1) {
     bit_rep real_ret = c10::bit_cast<bit_rep>(real1) ^ c10::bit_cast<bit_rep>(real2);
     bit_rep imag_ret = c10::bit_cast<bit_rep>(imag1) ^ c10::bit_cast<bit_rep>(imag2);
     return Complex<T>(c10::bit_cast<T> (real_ret), c10::bit_cast<T>(imag_ret));
-}
-
-template <typename T>
-T quantize_val(float scale, int64_t zero_point, float value) {
-    int64_t qvalue;
-    constexpr int64_t qmin = std::numeric_limits<T>::min();
-    constexpr int64_t qmax = std::numeric_limits<T>::max();
-    float inv_scale = 1.0f / scale;
-    qvalue = static_cast<int64_t>(zero_point + at::native::round_impl<float>(value * inv_scale));
-    qvalue = std::max<int64_t>(qvalue, qmin);
-    qvalue = std::min<int64_t>(qvalue, qmax);
-    return static_cast<T>(qvalue);
-}
-
-template <typename T>
-#if defined(TEST_AGAINST_DEFAULT)
-T requantize_from_int(float multiplier, int32_t zero_point, int32_t src) {
-    auto xx = static_cast<float>(src) * multiplier;
-    double xx2 = nearbyint(xx);
-    int32_t quantize_down = xx2 + zero_point;
-#else
-T requantize_from_int(float multiplier, int64_t zero_point, int64_t src) {
-    int64_t quantize_down = static_cast<int64_t>(zero_point + std::lrintf(src * multiplier));
-#endif
-    constexpr int64_t min = std::numeric_limits<T>::min();
-    constexpr int64_t max = std::numeric_limits<T>::max();
-    auto ret = static_cast<T>(std::min<int64_t>(std::max<int64_t>(quantize_down, min), max));
-    return ret;
-}
-
-template <typename T>
-float dequantize_val(float scale, int64_t zero_point, T value) {
-    //when negated scale is used as addition
-#if defined(CHECK_WITH_FMA)
-    float neg_p = -(zero_point * scale);
-    float v = static_cast<float>(value);
-    float ret = fma(v, scale, neg_p);
-#else
-    float ret = (static_cast<float>(value) - zero_point) * scale;
-#endif
-    return ret;
-}
-
-template<typename T>
-T relu(const T & val, const T & zero_point) {
-    return std::max(val, zero_point);
-}
-
-template<typename T>
-T relu6(T val, T zero_point, T q_six) {
-    return std::min<T>(std::max<T>(val, zero_point), q_six);
-}
-
-template<typename T>
-int32_t widening_subtract(T val, T b) {
-    return static_cast<int32_t>(val) - static_cast<int32_t>(b);
 }
 
 //default testing case

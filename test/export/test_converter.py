@@ -1406,61 +1406,6 @@ class TestConverter(TestCase):
         # Trace unrolls the loop.
         # self._check_equal_ts_ep_converter(func3, inp, ["script"])
 
-    @unittest.skipIf(
-        IS_WINDOWS,
-        "Windows does not support qnnpack",
-    )
-    # qnnpack not supported on s390x
-    @xfailIfS390X
-    def test_ts2ep_convert_quantized_model1(self):
-        class Standalone(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.quant = torch.ao.quantization.QuantStub()
-                self.conv1 = torch.nn.Conv2d(1, 1, 1)
-                self.conv2 = torch.nn.Conv2d(1, 1, 1)
-                self.relu = torch.nn.ReLU()
-                self.dequant = torch.ao.quantization.DeQuantStub()
-
-            def forward(self, x):
-                x = self.quant(x)
-                x = self.conv1(x)
-                x = self.conv2(x)
-                x = self.relu(x)
-                x = self.dequant(x)
-                return x
-
-            def fuse_model(self):
-                torch.ao.quantization.fuse_modules(
-                    self, [["conv2", "relu"]], inplace=True
-                )
-
-        with override_quantized_engine("qnnpack"):
-            model = Standalone()
-            model.qconfig = torch.ao.quantization.get_default_qconfig("qnnpack")
-            model.fuse_model()
-            torch.ao.quantization.prepare(model, inplace=True)
-            model(torch.randn(4, 1, 4, 4))
-            torch.ao.quantization.convert(model, inplace=True)
-
-            # Use customized checking here, because state_dict of quantization will be
-            # modified by the quantization pass.
-            inp = (torch.randn(4, 1, 4, 4),)
-            original_ts_model = torch.jit.script(model)
-            ts_model = torch.jit.script(model)
-            converter = TS2EPConverter(ts_model, inp)
-            ep = converter.convert()
-
-            orig_out, _ = pytree.tree_flatten(original_ts_model(*inp))
-            ep_out, _ = pytree.tree_flatten(ep.module()(*inp))
-            self._check_tensor_list_equal(orig_out, ep_out)
-
-    # qnnpack/xnnpack not supported on s390x.
-    # it is required by
-    # torch.ops.prepacked.linear_clamp_prepack
-    # and
-    # torch.ops.prepacked.linear_clamp_run
-    @xfailIfS390X
     @requires_prepacked_linear
     def test_ts2ep_convert_quantized_model_with_opcontext(self):
         class M(torch.nn.Module):

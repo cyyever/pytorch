@@ -128,14 +128,6 @@ inline c10::intrusive_ptr<c10::RRefInterface> IValue::toRRef() const& {
   AT_ASSERT(isRRef(), "Expected RRef but got ", tagKind());
   return toIntrusivePtr<c10::RRefInterface>();
 }
-inline c10::intrusive_ptr<at::Quantizer> IValue::toQuantizer() && {
-  AT_ASSERT(isQuantizer(), "Expected Quantizer but got ", tagKind());
-  return moveToIntrusivePtr<at::Quantizer>();
-}
-inline c10::intrusive_ptr<at::Quantizer> IValue::toQuantizer() const& {
-  AT_ASSERT(isQuantizer(), "Expected Quantizer but got ", tagKind());
-  return toIntrusivePtr<at::Quantizer>();
-}
 inline c10::intrusive_ptr<ivalue::ConstantString> IValue::toString() && {
   AT_ASSERT(isString(), "Expected String but got ", tagKind());
   return moveToIntrusivePtr<ivalue::ConstantString>();
@@ -1915,7 +1907,6 @@ std::tuple<Args...> generic_to(const IValue& ivalue, _fake_type<std::tuple<Args.
   _(c10::intrusive_ptr<ivalue::Future>, toFuture)                              \
   _(c10::intrusive_ptr<ivalue::Await>, toAwait)                                \
   _(c10::intrusive_ptr<c10::RRefInterface>, toRRef)                            \
-  _(c10::intrusive_ptr<at::Quantizer>, toQuantizer)                            \
   _(IValue, toIValue)                                                          \
   _(c10::Device, toDevice)                                                     \
   _(at::ScalarType, toScalarType)                                              \
@@ -2346,10 +2337,6 @@ inline IValue::IValue(c10::intrusive_ptr<c10::RRefInterface> v)
   payload.u.as_intrusive_ptr = null_to_undefined_tensor(v.release());
 }
 
-inline IValue::IValue(c10::intrusive_ptr<at::Quantizer> v)
-    : tag(Tag::Quantizer) {
-  payload.u.as_intrusive_ptr = null_to_undefined_tensor(v.release());
-}
 
 template <typename T>
 inline IValue::IValue(c10::complex<T> c)

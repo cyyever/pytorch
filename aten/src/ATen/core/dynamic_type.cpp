@@ -297,8 +297,6 @@ TypePtr DynamicType::fallback() const {
       return AnyClassType::get();
     case Tag::QScheme:
       return QSchemeType::get();
-    case Tag::Quantizer:
-      return QuantizerType::get();
     case Tag::AnyEnum:
       return AnyEnumType::get();
     case Tag::RRef:

@@ -9,15 +9,6 @@
 namespace at::openreg {
 
 namespace {
-at::Tensor wrapper_quantize_per_tensor(
-    const at::Tensor& self,
-    double scale,
-    int64_t zero_point,
-    at::ScalarType dtype) {
-  return at::native::openreg::quantize_per_tensor(
-      self, scale, zero_point, dtype);
-}
-
 int64_t wrapper__fused_sdp_choice(
     const at::Tensor& query,
     const at::Tensor& key,
@@ -29,15 +20,6 @@ int64_t wrapper__fused_sdp_choice(
     bool enable_gqa) {
   return at::native::openreg::_fused_sdp_choice(
       query, key, value, attn_mask, dropout_p, is_causal, scale, enable_gqa);
-}
-
-void wrapper_quantize_tensor_per_tensor_affine_stub(
-    const at::Tensor& rtensor,
-    at::Tensor& qtensor,
-    double scale,
-    int64_t zero_point) {
-  at::native::openreg::quantize_tensor_per_tensor_affine_stub(
-      rtensor, qtensor, scale, zero_point);
 }
 
 std::tuple<
@@ -136,9 +118,6 @@ using namespace at::native;
 // LITERALINCLUDE START: STUB DEFAULT
 REGISTER_PRIVATEUSE1_DISPATCH(abs_stub, &wrapper_abs_stub);
 REGISTER_PRIVATEUSE1_DISPATCH(
-    quantize_tensor_per_tensor_affine_stub,
-    &wrapper_quantize_tensor_per_tensor_affine_stub);
-REGISTER_PRIVATEUSE1_DISPATCH(
     _fused_sdp_choice_stub,
     &wrapper__fused_sdp_choice);
 // LITERALINCLUDE END: STUB DEFAULT
@@ -164,7 +143,6 @@ TORCH_LIBRARY_IMPL(aten, PrivateUse1, m) {
    abs_stub.
   */
   m.impl("abs.out", &wrapper_abs_out);
-  m.impl("quantize_per_tensor", &wrapper_quantize_per_tensor);
   m.impl("_fused_sdp_choice", &wrapper__fused_sdp_choice);
   m.impl(
       "_scaled_dot_product_fused_attention_overrideable",

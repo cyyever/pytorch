@@ -72,16 +72,6 @@ class ConstantFolder(torch.fx.Interpreter):
         ):
             # For int8_weight -> dq -> bf16_weight
             return True
-        if node.target in [
-            torch.ops.quantized_decomposed.dequantize_per_channel.default,
-            torch.ops.quantized_decomposed.dequantize_per_tensor.default,
-            torch.ops.quantized_decomposed.dequantize_per_tensor.tensor,
-            torch.ops.pt2e_quant.dequantize_affine,
-        ]:
-            # For the pattern fp32_weight -> q -> dq
-            # We only folding fp32_weight -> q
-            # int8_weight and leave dq in graph to be fused
-            return True
         return False
 
     def node_to_last_non_output_use(self):

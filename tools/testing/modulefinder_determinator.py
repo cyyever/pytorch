@@ -39,7 +39,6 @@ TARGET_DET_LIST = [
     "test_optim",
     "test_overrides",
     "test_pruning_op",
-    "test_quantization",
     "test_reductions",
     "test_serialization",
     "test_shape_ops",
