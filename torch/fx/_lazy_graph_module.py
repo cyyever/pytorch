@@ -6,9 +6,8 @@ from torch.fx.graph_module import (
     _format_import_block,
     GraphModule,
     reduce_graph_module,
-    reduce_package_graph_module,
 )
-from torch.package import PackageExporter, sys_importer
+from torch._importer import sys_importer
 
 from ._compatibility import compatibility
 
@@ -142,28 +141,6 @@ class _LazyGraphModule(GraphModule):
         return self(*args, **kwargs)
 
     forward = _lazy_forward
-
-    def __reduce_package__(
-        self, exporter: PackageExporter
-    ) -> tuple[Any, tuple[Any, str]]:
-        """
-        Follow GraphModule.__reduce__ but call 'self._real_recompile' rather
-        than 'self.recompile' since for a _LazyGraphModule, self.recompile just
-        mark the need of recompilation and does not return the PythonCode object.
-        """
-        python_code = self._real_recompile()
-        dict_without_graph = self.__dict__.copy()
-        dict_without_graph["_graphmodule_cls_name"] = self.__class__.__name__
-        del dict_without_graph["_graph"]
-
-        generated_module_name = f"fx-generated._{exporter.get_unique_id()}"
-        import_block = _format_import_block(python_code.globals, exporter.importer)
-        module_code = import_block + self.code
-        exporter.save_source_string(generated_module_name, module_code)
-        return (
-            reduce_package_graph_module,
-            (dict_without_graph, generated_module_name),
-        )
 
     def __reduce__(self) -> tuple[Any, tuple[Any, str]]:
         """

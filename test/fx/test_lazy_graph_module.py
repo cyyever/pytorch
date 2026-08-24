@@ -3,7 +3,6 @@
 import contextlib
 import importlib.util
 import pickle
-from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -17,7 +16,6 @@ from torch.fx._lazy_graph_module import (
     _use_lazy_graph_module,
 )
 from torch.fx.experimental.proxy_tensor import make_fx
-from torch.package import PackageExporter, PackageImporter
 from torch.testing._internal.common_utils import TestCase
 
 
@@ -232,29 +230,6 @@ class TestLazyGraphModule(TestCase):
         gm2 = _make_graph_module(gm, gm.graph)
         self.assertTrue(isinstance(gm2, _LazyGraphModule))
         self.assertTrue(gm2.__class__.__name__ == "GraphModule")
-
-    def test_package_fx_simple(self):
-        """
-        Copied from test/package/test_package_fx.py to make sure LazyGraphModule
-        works with torch.package.
-        """
-
-        class SimpleTest(torch.nn.Module):
-            def forward(self, x):
-                return torch.relu(x + 3.0)
-
-        st = SimpleTest()
-        traced = fx.symbolic_trace(st)
-
-        f = BytesIO()
-        with PackageExporter(f) as pe:
-            pe.save_pickle("model", "model.pkl", traced)
-
-        f.seek(0)
-        pi = PackageImporter(f)
-        loaded_traced = pi.load_pickle("model", "model.pkl")
-        input = torch.rand(2, 3)
-        self.assertEqual(loaded_traced(input), traced(input))
 
     def test_dynamo_innermost_fn(self):
         """

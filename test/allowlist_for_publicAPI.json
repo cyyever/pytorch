@@ -619,21 +619,6 @@
     "get_default_nowrap_functions",
     "has_torch_function"
   ],
-  "torch.package.analyze.is_from_package": [
-    "Any",
-    "ModuleType",
-    "is_mangled"
-  ],
-  "torch.package.find_file_dependencies": [
-    "List",
-    "Optional",
-    "Tuple"
-  ],
-  "torch.package.glob_group": [
-    "GlobPattern",
-    "Iterable",
-    "Union"
-  ],
   "torch.profiler": [
     "DeviceType",
     "ProfilerActivity",

@@ -28,7 +28,7 @@ import torch
 import torch.nn as nn
 import torch.overrides
 from torch.nn.modules.module import _addindent
-from torch.package import Importer, PackageExporter, PackageImporter, sys_importer
+from torch._importer import Importer, sys_importer
 
 from ._compatibility import compatibility
 from .experimental import _config as fx_experimental_config
@@ -45,7 +45,6 @@ from .graph import (
 
 __all__ = [
     "reduce_graph_module",
-    "reduce_package_graph_module",
     "GraphModule",
 ]
 
@@ -195,14 +194,6 @@ def reduce_graph_module(body: dict[str, Any], import_block: str) -> torch.nn.Mod
     # making `code` into a property and adding a docstring to it
     fn_src = body.get("_code") or body["code"]
     forward = _forward_from_src(import_block + fn_src, {})
-    return _deserialize_graph_module(forward, body)
-
-
-@compatibility(is_backward_compatible=True)
-def reduce_package_graph_module(
-    importer: PackageImporter, body: dict[str, Any], generated_module_name: str
-) -> torch.nn.Module:
-    forward = importer.import_module(generated_module_name).forward
     return _deserialize_graph_module(forward, body)
 
 
@@ -1024,31 +1015,6 @@ class {module_name}(torch.nn.Module):
 
     # Passing Tracer as argument allows subclasses extending fx.GraphModule
     # define their own Tracer (extending fx.Tracer).
-
-    def __reduce_package__(self, exporter: PackageExporter) -> tuple[Any, ...]:
-        dict_without_graph = self.__dict__.copy()
-        dict_without_graph["_graphmodule_cls_name"] = self.__class__.__name__
-        del dict_without_graph["_graph"]
-
-        # Store node.meta["stack_trace"] so we can recover them after re-tracing during deserialization
-        node_meta_stack_trace = {
-            node.name: node.meta["stack_trace"]
-            for node in self.graph.nodes
-            if "stack_trace" in node.meta
-        }
-        dict_without_graph["_graphmodule_graph_node_meta_stack_trace"] = (
-            node_meta_stack_trace
-        )
-
-        generated_module_name = f"fx-generated._{exporter.get_unique_id()}"
-        python_code = self.recompile()
-        import_block = _format_import_block(python_code.globals, exporter.importer)
-        module_code = import_block + self.code
-        exporter.save_source_string(generated_module_name, module_code)
-        return (
-            reduce_package_graph_module,
-            (dict_without_graph, generated_module_name),
-        )
 
     def __reduce__(self) -> tuple[Any, ...]:
         """
