@@ -600,7 +600,7 @@ _scaled_mm_out_cuda(const Tensor& mat1, const Tensor& mat2,
   if (scaling_choice_a == ScalingType::RowWise && scaling_choice_b == ScalingType::RowWise) {
 #ifndef USE_ROCM
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    if ((dprops->major < 9 || CUBLAS_VERSION < 120900 || cublasLtGetVersion() < 120900)
+    if ((dprops->major < 9 || cublasLtGetVersion() < 120900)
         // cuBLAS only supports tiled 1D factor layout for 1D block scaling, no 2D block scales
         ||  (dprops->major >= 10 && (!scale_a.sizes().empty() || !scale_b.sizes().empty()))) {
       TORCH_CHECK_VALUE(
@@ -749,7 +749,7 @@ _scaled_rowwise_rowwise(
 #ifndef USE_ROCM
   // We are doing row-wise scaling
   auto dprops = at::cuda::getCurrentDeviceProperties();
-  if (((dprops->major < 9 || CUBLAS_VERSION < 120900 || cublasLtGetVersion() < 120900)
+  if (((dprops->major < 9 || cublasLtGetVersion() < 120900)
       // cuBLAS only supports tiled 1D factor layout for 1D block scaling, no 2D block scales
       ||  (dprops->major >= 10 && (!scale_a.sizes().empty() || !scale_b.sizes().empty())))) {
     TORCH_CHECK_VALUE(
@@ -798,7 +798,7 @@ _check_deepseek_support() {
   }
   // Only in cublasLt >= 12.9
   TORCH_CHECK_NOT_IMPLEMENTED(
-    CUBLAS_VERSION >= 120900 && cublasLtGetVersion() >= 120900,
+    cublasLtGetVersion() >= 120900,
     "DeepSeek style (1x128, 128x128) scaling requires cublasLt >= 12.9"
   );
 #endif

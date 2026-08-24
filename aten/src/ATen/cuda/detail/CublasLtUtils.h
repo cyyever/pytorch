@@ -182,20 +182,13 @@ inline int cublasLtMatmulScaleMode(
   switch (scaling_type) {
     case at::blas::ScalingType::BlockWise1x32:
       TORCH_CHECK(scale_dtype == kFloat8_e8m0fnu);
-#if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && ROCM_VERSION >= 70000)
       return CUBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0;
-#else
-      TORCH_CHECK(
-          false,
-          "scaled_gemm with `torch.float8_e8m0fnu` scales of 1x32 blocks "
-          "is only supported for CUDA 12.8 and above");
-#endif
     case at::blas::ScalingType::BlockWise1x16:
       TORCH_CHECK(scale_dtype == kFloat8_e4m3fn);
       return CUBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3;
     case at::blas::ScalingType::RowWise:
       TORCH_CHECK(scale_dtype == kFloat);
-#if CUDA_VERSION >= 12090 || (defined(USE_ROCM) && defined(HIPBLASLT_OUTER_VEC))
+#if !defined(USE_ROCM) || defined(HIPBLASLT_OUTER_VEC)
       return CUBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;
 #elif defined(USE_ROCM) && defined(HIPBLASLT_VEC_EXT)
       // Old hipBLASLt rowwise mode is activated through SCALE_POINTER_VEC_EXT.
@@ -203,8 +196,8 @@ inline int cublasLtMatmulScaleMode(
 #else
       TORCH_CHECK(
           false,
-          "scaled_gemm with rowwise scaling is only supported for CUDA 12.9 "
-          "and above");
+          "scaled_gemm with rowwise scaling requires hipBLASLt with outer-vec "
+          "or vec-ext support");
 #endif
     case at::blas::ScalingType::BlockWise1x128:
       TORCH_CHECK(scale_dtype == kFloat);

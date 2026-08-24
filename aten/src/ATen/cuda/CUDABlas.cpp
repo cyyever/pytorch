@@ -120,7 +120,7 @@ void _cublasAdjustLdLevel2(int64_t m, int64_t n, int64_t* lda) {
     *lda = std::max<int64_t>(m, 1);
 }
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12000
+#if !defined(USE_ROCM)
 class CuBlasSMCarveoutGuard {
  public:
   explicit CuBlasSMCarveoutGuard(cublasHandle_t handle) : handle_(handle) {
@@ -1962,13 +1962,6 @@ void scaled_gemm(
             }
   #endif
   }
-#elif (CUDA_VERSION < 12090) && !defined(USE_ROCM)
-  // hipblaslt supported row-wise before cublas, and did so their own way (via
-  // the SCALE_POINTERSs), but then migrated to match how cublas does it (via
-  // the SCALE_MODEs). Here we check for this early custom mode.
-  bool use_rowwise = (mat1_scaling_type == ScalingType::RowWise && mat2_scaling_type == ScalingType::RowWise);
-  // rowwise isn't supported using older cublaslt or older hipblaslt
-  TORCH_INTERNAL_ASSERT(use_rowwise == false, "rowwise scaled_gemm not supported with blaslt");
 #endif  // if defined(USE_ROCM) && !defined(HIPBLASLT_OUTER_VEC) && defined(HIPBLASLT_VEC_EXT)
   computeDesc.setAttribute(matmulDescA, mat1_scale_ptr);
   computeDesc.setAttribute(matmulDescB, mat2_scale_ptr);
@@ -2033,10 +2026,10 @@ void scaled_gemm(
     // Note that AMD/ROCm follows OCP Spec 1.0, which is different from NVIDIA's implementation. See get_scale_mode() for details.
     [[maybe_unused]] int a_scale_mode = detail::cublasLtMatmulScaleMode(mat1_scaling_type, mat1_scale_dtype, use_fast_accum);
     [[maybe_unused]] int b_scale_mode = detail::cublasLtMatmulScaleMode(mat2_scaling_type, mat2_scale_dtype, use_fast_accum);
-#if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && defined(HIPBLASLT_OUTER_VEC))
+#if !defined(USE_ROCM) || defined(HIPBLASLT_OUTER_VEC)
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_A_SCALE_MODE, a_scale_mode);
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_B_SCALE_MODE, b_scale_mode);
-#endif // if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && defined(HIPBLASLT_OUTER_VEC))
+#endif // if !defined(USE_ROCM) || defined(HIPBLASLT_OUTER_VEC)
 
   CuBlasLtMatmulPreference preference;
   auto ltworkspace = CublasLtWorkspace();
