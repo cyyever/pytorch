@@ -10,7 +10,7 @@ from pickle import (
 from types import ModuleType
 from typing import Any
 
-from ._mangling import demangle, get_mangle_prefix, is_mangled
+from torch._mangling import demangle, get_mangle_prefix, is_mangled
 
 
 __all__ = ["ObjNotFoundError", "ObjMismatchError", "Importer", "OrderedImporter"]

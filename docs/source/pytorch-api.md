@@ -54,7 +54,6 @@ torch.signal <signal>
 torch.special <special>
 torch.overrides
 torch.nativert <nativert>
-torch.package <package>
 profiler
 nn.init
 nn.attention
