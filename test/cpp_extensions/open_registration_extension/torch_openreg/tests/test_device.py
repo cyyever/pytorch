@@ -40,7 +40,7 @@ class TestDevice(TestCase):
     def test_device_capability(self):
         capability = torch.accelerator.get_device_capability("openreg:0")
         supported_dtypes = capability["supported_dtypes"]
-        expected_dtypes = get_all_dtypes(include_complex32=True, include_qint=True)
+        expected_dtypes = get_all_dtypes(include_complex32=True)
 
         self.assertTrue(all(dtype in supported_dtypes for dtype in expected_dtypes))
 

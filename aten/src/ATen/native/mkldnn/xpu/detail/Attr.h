@@ -3,7 +3,7 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/native/mkldnn/xpu/detail/Utils.h>
 #include <ATen/native/mkldnn/xpu/detail/oneDNNContext.h>
-#include <ATen/ops/dequantize.h>
+#include <c10/core/Scalar.h>
 #include <oneapi/dnnl/dnnl.hpp>
 #include <oneapi/dnnl/dnnl_types.h>
 
@@ -196,7 +196,7 @@ class Attr {
   // append binary post op
   template <bool is_matmul = false>
   Attr& append_post_binary(dnnl::algorithm algo, const at::Tensor& binary) {
-    auto binary_ = binary.is_quantized() ? at::dequantize(binary) : binary;
+    auto binary_ = binary;
     bool binary_is_channels_last =
         (binary_.suggest_memory_format() == at::MemoryFormat::ChannelsLast ||
          binary_.suggest_memory_format() == at::MemoryFormat::ChannelsLast3d);

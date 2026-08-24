@@ -1,12 +1,15 @@
 # Owner(s): ["module: unknown"]
 
 import hypothesis.strategies as st
-from hypothesis import given
+from hypothesis import given, settings
 import numpy as np
 import torch
 from torch.testing._internal.common_utils import TestCase, run_tests, skipIfTorchDynamo
-import torch.testing._internal.hypothesis_utils as hu
-hu.assert_deadline_disabled()
+
+# Generating a tensor and running an operator on it is routinely slower than
+# hypothesis' default deadline.
+settings.register_profile("no_deadline", deadline=None)
+settings.load_profile("no_deadline")
 
 
 class PruningOpTest(TestCase):

@@ -37,7 +37,6 @@ namespace c10 {
   _(NoneType)               \
   _(StringType)             \
   _(GeneratorType)          \
-  _(QuantizerType)          \
   _(BoolType)               \
   _(OptionalType)           \
   _(VarType)                \
@@ -98,7 +97,6 @@ TORCH_DECLARE_SINGLETON(StringType)
 TORCH_DECLARE_SINGLETON(StorageType)
 TORCH_DECLARE_SINGLETON(NoneType)
 TORCH_DECLARE_SINGLETON(GeneratorType)
-TORCH_DECLARE_SINGLETON(QuantizerType)
 TORCH_DECLARE_SINGLETON(QSchemeType)
 TORCH_DECLARE_SINGLETON(DeviceObjType)
 TORCH_DECLARE_SINGLETON(StreamObjType)

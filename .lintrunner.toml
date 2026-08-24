@@ -1352,7 +1352,6 @@ exclude_patterns = [
     'torch/testing/_internal/data/network1.py',
     'torch/testing/_internal/data/network2.py',
     'torch/testing/_internal/generated/__init__.py',
-    'torch/testing/_internal/hypothesis_utils.py',
     'torch/testing/_internal/inductor_utils.py',
     'torch/testing/_internal/jit_metaprogramming_utils.py',
     'torch/testing/_internal/jit_utils.py',

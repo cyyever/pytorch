@@ -17,7 +17,6 @@ def _device_constructors():
         torch.empty,
         torch.empty_permuted,
         torch.empty_strided,
-        torch.empty_quantized,
         torch.ones,
         torch.arange,
         torch.bartlett_window,

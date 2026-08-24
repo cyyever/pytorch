@@ -219,7 +219,6 @@ collections of types to be header-only and thus have no dependency on libtorch:
 - `AT_ALL_TYPES_AND_COMPLEX`
 - `AT_FLOAT8_TYPES`
 - `AT_BAREBONES_UNSIGNED_TYPES`
-- `AT_QINT_TYPES`
 
 If your extension uses our older AT_DISPATCH version 1 infrastructure,
 you can also migrate to a header-only libtorch-free world without upgrading

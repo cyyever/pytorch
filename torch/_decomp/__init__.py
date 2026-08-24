@@ -371,7 +371,6 @@ def _core_aten_decompositions_post_autograd() -> dict[
             aten.floor_divide,
             aten.frac,
             aten.frac_,
-            aten._fused_moving_avg_obs_fq_helper,
             aten.gelu_,
             aten.gelu_backward,
             aten.glu,

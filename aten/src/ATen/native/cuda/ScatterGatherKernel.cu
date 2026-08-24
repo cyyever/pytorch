@@ -321,41 +321,26 @@ struct cuda_scatter_gather_base_kernel {
     auto index_size = is_scatter_like ? self_dim_size : src_dim_size;
     auto index_stride = is_scatter_like ? self_dim_stride : src_dim_stride;
 
-    if (self.is_quantized()) {
-      TORCH_CHECK(
-          self.qscheme() == kPerTensorAffine,
-          "Only per_tensor quantized quantized tensors are supported by gather.")
-      AT_DISPATCH_QINT_TYPES(iter.dtype(), "gather_quant_cuda", [&] {
-        using dtype = std::conditional_t<cast_to_opaque,
-            OpaqueType<sizeof(scalar_t)>, scalar_t>;
-        AT_DISPATCH_INDEX_TYPES(index.scalar_type(), "cuda_scatter_gather_base_kernel_func", [&] () {
-          _cuda_scatter_gather_internal_kernel<is_scatter_like, dtype, index_t>()(
-            iter, index_size, index_stride, self.numel(), f
-          );
-        });
-      });
-    } else {
-      AT_DISPATCH_V2(
-          iter.dtype(),
-          "gather_cuda",
-          AT_WRAP([&] {
-            using dtype = std::conditional_t<cast_to_opaque,
-                OpaqueType<sizeof(scalar_t)>, scalar_t>;
-            AT_DISPATCH_INDEX_TYPES(index.scalar_type(), "cuda_scatter_gather_base_kernel_func", [&] () {
-              _cuda_scatter_gather_internal_kernel<is_scatter_like, dtype, index_t>()(
-                iter, index_size, index_stride, self.numel(), f
-              );
-            });
-          }),
-          AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
-          AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
-          AT_EXPAND(AT_FLOAT8_TYPES),
-          kComplexHalf,
-          kBComplex32,
-          kHalf,
-          kBool,
-          kBFloat16);
-    }
+    AT_DISPATCH_V2(
+        iter.dtype(),
+        "gather_cuda",
+        AT_WRAP([&] {
+          using dtype = std::conditional_t<cast_to_opaque,
+              OpaqueType<sizeof(scalar_t)>, scalar_t>;
+          AT_DISPATCH_INDEX_TYPES(index.scalar_type(), "cuda_scatter_gather_base_kernel_func", [&] () {
+            _cuda_scatter_gather_internal_kernel<is_scatter_like, dtype, index_t>()(
+              iter, index_size, index_stride, self.numel(), f
+            );
+          });
+        }),
+        AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
+        AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
+        AT_EXPAND(AT_FLOAT8_TYPES),
+        kComplexHalf,
+        kBComplex32,
+        kHalf,
+        kBool,
+        kBFloat16);
   }
 
   template <typename func_t>

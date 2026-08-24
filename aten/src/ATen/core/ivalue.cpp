@@ -140,8 +140,6 @@ c10::TypePtr IValue::TagType<c10::Type>::get(const IValue& v) {
         return v.toTupleRef().type();
       case Tag::Generator:
         return GeneratorType::get();
-      case Tag::Quantizer:
-        return QuantizerType::get();
       case Tag::Enum:
         return v.toEnumHolder()->type();
   }
@@ -353,7 +351,6 @@ IValue IValue::equals(const IValue& rhs) const {
     case Tag::PyObject:
     case Tag::Capsule:
     case Tag::Generator:
-    case Tag::Quantizer:
       return ptrEqual(lhs, rhs);
     case Tag::Enum:
       return lhs.toEnumHolder()->is(*rhs.toEnumHolder());
@@ -408,7 +405,6 @@ size_t IValue::hash(const IValue& v) {
     case Tag::PyObject:
     case Tag::Capsule:
     case Tag::Generator:
-    case Tag::Quantizer:
     case Tag::ComplexDouble:
     case Tag::Enum:
     case Tag::Stream:
@@ -856,8 +852,6 @@ std::ostream& operator<<(std::ostream & out, const IValue & v) {
     }
     case IValue::Tag::Generator:
       return out << "Generator";
-    case IValue::Tag::Quantizer:
-      return out << "Quantizer";
     case IValue::Tag::Object: {
       // TODO we should attempt to call __str__ if the object defines it.
       auto obj = v.toObject();

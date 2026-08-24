@@ -597,16 +597,6 @@ class TestTorchDlPack(TestCase):
         ):
             inp.__dlpack__(max_version=(1, 0), dl_device=(dl_device_type, 0))
 
-    @skipMeta
-    @onlyCPU
-    def test_dlpack_unsupported_dtype_error(self, device):
-        inp = torch.quantize_per_tensor(torch.randn(()), 0.1, 10, torch.qint8)
-
-        with self.assertRaisesRegex(
-            BufferError, ".* types are not supported by dlpack"
-        ):
-            from_dlpack(inp)
-
     @xfailCUDAIfSM89OrLaterOnWindows
     @skipMeta
     @onlyNativeDeviceTypes

@@ -2,14 +2,6 @@
 
 namespace at::native::openreg {
 
-at::Tensor quantize_per_tensor(
-    const at::Tensor& self,
-    double scale,
-    int64_t zero_point,
-    at::ScalarType dtype) {
-  return at::native::quantize_per_tensor(self, scale, zero_point, dtype);
-}
-
 int64_t _fused_sdp_choice(
     const at::Tensor& query,
     const at::Tensor& key,
@@ -22,12 +14,6 @@ int64_t _fused_sdp_choice(
   auto backend = sdp::SDPBackend::overrideable;
   return static_cast<int64_t>(backend);
 }
-
-void quantize_tensor_per_tensor_affine_stub(
-    const at::Tensor& rtensor,
-    at::Tensor& qtensor,
-    double scale,
-    int64_t zero_point) {}
 
 std::tuple<
     at::Tensor,

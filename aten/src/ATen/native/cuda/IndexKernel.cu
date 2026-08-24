@@ -13,7 +13,6 @@
 #include <ATen/cuda/detail/OffsetCalculator.cuh>
 #include <ATen/native/cuda/Loops.cuh>
 #include <ATen/native/cuda/KernelUtils.cuh>
-#include <ATen/native/quantized/IndexKernel.h>
 #include <ATen/native/cuda/MemoryAccess.cuh>
 #include <ATen/native/cuda/IndexKernelUtils.h>
 
@@ -284,28 +283,6 @@ static void index_put_kernel(TensorIterator& iter, const IntArrayRef index_size,
     kBFloat16);
 }
 
-void index_put_kernel_quantized_cuda(TensorIterator& iter, const IntArrayRef index_size, const IntArrayRef index_stride, const bool accumulate, const double scale, const int zero_point) {
-  TORCH_CHECK(!accumulate, "index_put does not support accumulate=true");
-  AT_DISPATCH_QINT_AND_SUB_BYTE_TYPES(iter.dtype(), "index_put", [&] {
-    constexpr int64_t qmin = std::numeric_limits<typename scalar_t::underlying>::min();
-    constexpr int64_t qmax = std::numeric_limits<typename scalar_t::underlying>::max();
-    const float inv_scale = 1.0f / static_cast<float>(scale);
-
-    gpu_index_kernel(iter, index_size, index_stride, [inv_scale, zero_point, qmin, qmax]C10_DEVICE(char* const out_data, const char* const in_data, const int64_t offset) {
-      int64_t qvalue = static_cast<int64_t>(zero_point + nearbyintf(*(float*)in_data * inv_scale));
-      // See https://github.com/pytorch/pytorch/issues/127666
-      // and https://github.com/pytorch/pytorch/issues/128253.
-      // hip-clang std::clamp __glibcxx_assert_fail host function when building on Fedora40/gcc14.
-      // The following replaces std::clamp(qvalue, qmin, qmax) and is a viable solution for
-      // both CUDA and ROCm since std::clamp and this replacement generates the same PTX.
-      // Using #ifdef USE_ROCM to differentiate caused Windows build failures.
-      // The replacement should generate the same PTX as std::clamp. See https://godbolt.org/z/Wde9KW3v4
-      qvalue = (qvalue < qmin) ? qmin : (qmax < qvalue) ? qmax : qvalue;
-      *(scalar_t*)(out_data + offset) = static_cast<scalar_t>(qvalue);
-    }, false);
-  });
-}
-
 template <typename scalar_t, typename index_t, typename func_t>
 void cuda_take_put_kernel(
   TensorIterator& iter,
@@ -483,30 +460,22 @@ void flip_kernel_impl(TensorIterator& iter) {
   launch_kernel<launch_size_nd, launch_bound2>(iter.numel(), loop);
 }
 
-void flip_kernel(TensorIterator& iter, const bool quantized) {
-  if (quantized) {
-    AT_DISPATCH_QINT_AND_SUB_BYTE_TYPES(iter.dtype(), "flip_quantized_cuda",
-    [&] {
+void flip_kernel(TensorIterator& iter) {
+  AT_DISPATCH_V2(
+    iter.dtype(),
+    "flip_cuda",
+    AT_WRAP([&] {
       using dtype = OpaqueType<sizeof(scalar_t)>;
       flip_kernel_impl<dtype>(iter);
-    });
-  } else {
-    AT_DISPATCH_V2(
-      iter.dtype(),
-      "flip_cuda",
-      AT_WRAP([&] {
-        using dtype = OpaqueType<sizeof(scalar_t)>;
-        flip_kernel_impl<dtype>(iter);
-      }),
-      AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
-      AT_EXPAND(AT_FLOAT8_TYPES),
-      AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
-      kComplexHalf,
-      kBComplex32,
-      kHalf,
-      kBool,
-      kBFloat16);
-  }
+    }),
+    AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
+    AT_EXPAND(AT_FLOAT8_TYPES),
+    AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
+    kComplexHalf,
+    kBComplex32,
+    kHalf,
+    kBool,
+    kBFloat16);
 }
 
 
@@ -518,6 +487,5 @@ REGISTER_DISPATCH(put_stub, &put_kernel)
 REGISTER_DISPATCH(take_stub, &take_kernel)
 REGISTER_DISPATCH(flip_stub, &flip_kernel)
 
-REGISTER_CUDA_DISPATCH(index_put_kernel_quantized_stub, &index_put_kernel_quantized_cuda)
 
 } // namespace at::native

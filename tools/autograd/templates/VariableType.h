@@ -16,10 +16,6 @@
 #include <string>
 #include <vector>
 
-namespace at {
-  struct Quantizer;
-}
-
 namespace torch { namespace autograd {
 
 using Variable = at::Tensor;
@@ -35,7 +31,6 @@ using at::Storage;
 using at::Tensor;
 using at::TensorList;
 using at::TensorOptions;
-using at::Quantizer;
 using std::optional;
 
 namespace VariableType {

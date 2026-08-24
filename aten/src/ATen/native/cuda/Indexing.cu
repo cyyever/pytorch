@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/TensorAdvancedIndexing.h>
 #include <ATen/native/IndexingUtils.h>
-#include <ATen/native/quantized/IndexKernel.h>
 #include <ATen/native/cuda/KernelUtils.cuh>
 
 #include <ATen/core/Tensor.h>
@@ -30,7 +29,6 @@
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/zeros_like.h>
 #include <ATen/ops/ones_like.h>
-#include <ATen/ops/empty_quantized.h>
 #include <ATen/ops/gather.h>
 #include <ATen/ops/index_add_native.h>
 #include <ATen/ops/index_reduce_native.h>
@@ -42,8 +40,6 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/cub.h>
 #include <c10/util/irange.h>
-#include <c10/core/QScheme.h>
-#include <ATen/native/quantized/AffineQuantizerBase.h>
 
 #include <limits>
 
@@ -438,68 +434,7 @@ __global__ void indexing_backward_kernel_small_stride(
   }
 }
 
-template <typename scalar_t, int SZ>
-__global__ void indexing_backward_kernel_quantized(
-  const int64_t* sorted_indices, const int64_t* indices, const float* grad_output, scalar_t* grad_weight,
-  int64_t numel, int64_t stride, int64_t stride_before, int64_t outer_dim,
-  float inv_scale, int zero_point, int64_t qmin, int64_t qmax) {
-
-  // This implementation is adopted from indexing_backward_kernel above.
-  using opmath_t = at::opmath_type<float>;
-  for (int64_t z = blockIdx.z; z < outer_dim; z += gridDim.z){
-    int64_t idx = blockIdx.x * blockDim.y + threadIdx.y;
-    if (idx < numel
-        && (idx == 0 || sorted_indices[idx] != sorted_indices[idx - 1])){
-      do {
-        int64_t start_feature = threadIdx.x + blockIdx.y * blockDim.x * SZ;
-        // we only keep the last duplicate index so skip those before it
-        if ((idx < numel - 1) && sorted_indices[idx] == sorted_indices[idx + 1]) {
-          idx++;
-          continue;
-        }
-        const int64_t weight_row = ((int64_t) sorted_indices[idx]) * stride + z * stride_before;
-        const int64_t grad_row = ((int64_t) indices[idx]) * stride + z * numel * stride;
-        const opmath_t scale = (opmath_t)1.0;
-
-        opmath_t gradient[SZ];
-        opmath_t weight[SZ];
-
-        while (start_feature < stride) {
-          #pragma unroll
-          for (int ii = 0; ii < SZ; ii++) {
-            int64_t feature_dim = start_feature + ii * C10_WARP_SIZE;
-            if (feature_dim < stride) {
-              gradient[ii] = static_cast<opmath_t>(grad_output[grad_row + feature_dim]);
-            }
-          }
-
-          #pragma unroll
-          for (int ii = 0; ii < SZ; ii++) {
-            weight[ii] = gradient[ii] * scale;
-          }
-
-          #pragma unroll
-          for (int ii = 0; ii < SZ; ii++) {
-            int64_t feature_dim = start_feature + ii * C10_WARP_SIZE;
-            if (feature_dim < stride) {
-                // we do quantization here
-                int64_t qvalue = static_cast<int64_t>(zero_point + nearbyintf(weight[ii]* inv_scale));
-                qvalue = min(max(qvalue, qmin), qmax);
-                grad_weight[weight_row + feature_dim] = static_cast<scalar_t>(qvalue);
-            }
-          }
-          start_feature += gridDim.y * blockDim.x * SZ;
-        }
-
-        idx++;
-      } while (idx < numel && sorted_indices[idx] == sorted_indices[idx - 1]);
-    }
-  }
 }
-
-
-}
-
 
 namespace at::native {
 
@@ -874,85 +809,6 @@ void index_put_with_sort_kernel(Tensor & self, const c10::List<std::optional<Ten
 
 REGISTER_CUDA_DISPATCH(index_put_with_sort_stub, &index_put_with_sort_kernel)
 
-void index_put_with_sort_quantized(Tensor & self, const c10::List<std::optional<Tensor>>& indices, const Tensor & value, double scale, int zero_point, bool unsafe) {
-  if (indices.size() > (size_t)self.dim()) {
-    TORCH_CHECK_INDEX(false, "too many indices for tensor of dimension ", self.dim(), " (got ", indices.size(), ")");
-  }
-  bool self_contiguous = self.is_contiguous();
-  auto self_ = self_contiguous ? self : self.contiguous();
-  Tensor linearIndex, src, expandedValue = value;
-  int64_t nElemBefore, strideBefore, sliceSize, dims_before, dims_indexed;
-  std::vector<int64_t> inversePerm;
-  std::tie(linearIndex, src, nElemBefore, strideBefore, sliceSize, inversePerm,
-  dims_before, dims_indexed) = makeLinearIndex(self_, indices, !unsafe);
-  auto vals_shape = valsShape(src.sizes(), dims_before, dims_indexed, linearIndex.sizes());
-  int64_t num_indices = linearIndex.numel();
-  expandedValue = expandedValue.expand(vals_shape).contiguous();
-
-  if (num_indices > 0 && sliceSize > 0) {
-      const bool permuted = !src.is_contiguous();
-      auto src_ = permuted ? src.contiguous() : src;
-      linearIndex = linearIndex.reshape(-1);
-      auto sorted_indices = at::empty_like(linearIndex, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
-      auto orig_indices = at::empty_like(linearIndex, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
-      const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-
-      linearIndex.divide_(sliceSize, "trunc");
-
-      // Sort the inputs into sorted with the corresponding indices
-      auto range = at::arange(num_indices, linearIndex.options());
-      // linearIndex can not be negative, and we take advantage of this
-      // fact to sort on less bits for better performance.
-      int64_t nbits = cuda::cub::get_num_bits(largestIndex(self_) / sliceSize);
-      cuda::cub::radix_sort_pairs(
-        linearIndex.const_data_ptr<int64_t>(), sorted_indices.mutable_data_ptr<int64_t>(),
-        range.const_data_ptr<int64_t>(), orig_indices.mutable_data_ptr<int64_t>(),
-        num_indices, false, 0, nbits);
-
-
-      TORCH_INTERNAL_ASSERT(
-          linearIndex.numel()*sliceSize*nElemBefore == expandedValue.numel(),
-          "number of flattened indices did not match number of elements in the value tensor: ",
-          linearIndex.numel()*sliceSize*nElemBefore, " vs ", expandedValue.numel());
-      const int UNROLL = 4;
-      const int indices_per_block = 4;
-      const int warp_size = at::cuda::warp_size();
-      dim3 grid(ceil_div(num_indices, (int64_t) indices_per_block),
-           std::min<int>(at::cuda::getCurrentDeviceProperties()->maxGridSize[1], ceil_div(sliceSize, (int64_t) (warp_size*UNROLL))),
-           std::clamp<int>(nElemBefore, 1, at::cuda::getCurrentDeviceProperties()->maxGridSize[2]));
-      dim3 block(warp_size, indices_per_block);
-
-      AT_DISPATCH_QINT_TYPES(
-        src.scalar_type(), "indexing_backward_quantized", [&] {
-        constexpr int64_t qmin = std::numeric_limits<typename scalar_t::underlying>::min();
-        constexpr int64_t qmax = std::numeric_limits<typename scalar_t::underlying>::max();
-        float inv_scale = 1.0f / static_cast<float>(scale);
-
-        indexing_backward_kernel_quantized<scalar_t, UNROLL><<<grid, block, 0, stream>>>(
-          sorted_indices.const_data_ptr<int64_t>(),
-          orig_indices.const_data_ptr<int64_t>(),
-          expandedValue.const_data_ptr<float>(),
-          src_.mutable_data_ptr<scalar_t>(),
-          num_indices,
-          sliceSize,
-          strideBefore,
-          nElemBefore,
-          inv_scale,
-          zero_point,
-          qmin,
-          qmax);
-        C10_CUDA_KERNEL_LAUNCH_CHECK();
-      });
-
-      if (permuted) {
-        self.copy_(src_.permute(inversePerm));
-      } else if (!self_contiguous) {
-        self.copy_(self_);
-      }
-  }
-}
-
-REGISTER_CUDA_DISPATCH(index_put_with_sort_quantized_stub, &index_put_with_sort_quantized)
 } //anonymous
 
 
@@ -1614,11 +1470,7 @@ void index_select_out_cuda_impl(
     newSize[dim] = numIndices;
   }
 
-  if (self.is_quantized()){
-      out = at::empty_quantized(newSize, out);
-  } else {
-    at::native::resize_output(out, newSize);
-  }
+  at::native::resize_output(out, newSize);
 
   uint64_t outTotalSize = out.numel();
   if (outTotalSize == 0) {
@@ -1710,44 +1562,26 @@ Tensor& index_select_out_cuda(
   dim = at::maybe_wrap_dim(dim, self);
   TORCH_CHECK(self.dim() <= MAX_TENSORINFO_DIMS, DIM_WARNING);
   TORCH_CHECK(index.dim() <= MAX_TENSORINFO_DIMS, DIM_WARNING);
-  if (self.is_quantized()) {
-    TORCH_CHECK(
-        self.qscheme() == kPerTensorAffine,
-        "Only per_tensor quantized quantized tensors are supported by index_select.")
-    AT_DISPATCH_QINT_TYPES(out.scalar_type(), "index_select_quant_cuda", [&] {
-      index_select_out_cuda_impl<scalar_t>(out, self, dim, index);
-    });
-  } else {
-    AT_DISPATCH_V2(
-        out.scalar_type(),
-        "index_select_cuda",
-        AT_WRAP([&] {
-          index_select_out_cuda_impl<scalar_t>(out, self, dim, index);
-        }),
-        AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
-        AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
-        AT_EXPAND(AT_FLOAT8_TYPES),
-        kComplexHalf,
-        kBComplex32,
-        kHalf,
-        kBool,
-        kBFloat16);
-  }
+  AT_DISPATCH_V2(
+      out.scalar_type(),
+      "index_select_cuda",
+      AT_WRAP([&] {
+        index_select_out_cuda_impl<scalar_t>(out, self, dim, index);
+      }),
+      AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
+      AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
+      AT_EXPAND(AT_FLOAT8_TYPES),
+      kComplexHalf,
+      kBComplex32,
+      kHalf,
+      kBool,
+      kBFloat16);
 
   return out;
 }
 
 Tensor index_select_cuda(const Tensor& self, int64_t dim, const Tensor& index) {
   Tensor out = at::empty({0}, self.options());
-  at::native::index_select_out_cuda(self, dim, index, out);
-  return out;
-}
-
-Tensor index_select_quantized_cuda(const Tensor& self, int64_t dim, const Tensor& index) {
-  TORCH_CHECK(
-    self.qscheme() == kPerTensorAffine,
-    "Only per_tensor quantized quantized tensors are supported by index_select.")
-  Tensor out = at::empty_quantized({0}, self);
   at::native::index_select_out_cuda(self, dim, index, out);
   return out;
 }
@@ -1768,30 +1602,6 @@ void masked_fill_kernel(TensorIterator& iter, const Scalar& value) {
       });
 }
 
-template <typename scalar_t>
-void cuda_masked_fill_kernel_quantized(TensorIterator& iter, scalar_t quantized_val) {
-    gpu_kernel(
-        iter, [quantized_val] GPU_LAMBDA(scalar_t self, bool mask) -> scalar_t {
-          if (mask) {
-            return quantized_val;
-          }
-          return self;
-    });
-}
-
-void masked_fill_kernel_quantized(TensorIterator& iter, const Scalar& value, double scale, int zero_point) {
-  TORCH_CHECK(iter.input_dtype(1) == at::ScalarType::Bool, "masked_fill only supports boolean masks, ",
-    "but got dtype ", iter.input_dtype(1));
-  AT_DISPATCH_QINT_TYPES(
-      iter.common_dtype(), "masked_fill_", [&]() {
-        float float_val = value.to<float>();
-        const auto quantized_val = quantize_val<scalar_t>(scale, zero_point, float_val);
-
-        cuda_masked_fill_kernel_quantized<scalar_t>(iter, quantized_val);
-    });
-}
-
-REGISTER_CUDA_DISPATCH(masked_fill_kernel_quantized_stub, &masked_fill_kernel_quantized)
 
 } // anonymous namespace
 

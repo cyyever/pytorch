@@ -22,8 +22,6 @@ inline cudnnDataType_t getDataType(const at::Tensor& t) {
   }
     else if (scalar_type == at::kBFloat16) {
     return CUDNN_DATA_BFLOAT16;
-  } else if (scalar_type == at::kQInt8) {
-    return CUDNN_DATA_INT8;
   }
   TORCH_CHECK(false, "TensorDescriptor does not support ", scalar_type);
 }

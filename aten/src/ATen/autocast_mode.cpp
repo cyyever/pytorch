@@ -446,7 +446,6 @@ TORCH_LIBRARY_IMPL(aten, AutocastCPU, m) {
   KERNEL_CPU(linalg_householder_product, fp32)
   KERNEL_CPU(linalg_tensorinv, fp32)
   KERNEL_CPU(linalg_tensorsolve, fp32)
-  KERNEL_CPU(fake_quantize_per_tensor_affine, fp32)
   KERNEL_CPU(geqrf, fp32)
   KERNEL_CPU(_lu_with_info, fp32)
   KERNEL_CPU(svd, fp32)

@@ -1,14 +1,12 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 #include <ATen/TensorMeta.h>
-#include <ATen/quantized/Quantizer.h>
 #include <ATen/native/Padding.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #else
-#include <ATen/ops/_empty_affine_quantized.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/reflection_pad1d_backward_native.h>
 #include <ATen/ops/reflection_pad1d_native.h>
@@ -69,8 +67,7 @@ void reflection_pad2d_out_template(
       input, padding, /*dim=*/2, /*is_reflection=*/true);
 
   /* resize output */
-  if (input.dim() == 3 || input.is_quantized()) {
-    // quantized tensor can not be resized with argument `memory_format`
+  if (input.dim() == 3) {
     output.resize_(output_size);
   } else {
     output.resize_(output_size, input.suggest_memory_format());
@@ -87,13 +84,6 @@ void reflection_pad2d_backward_out_template(
 
 } // namespace
 
-Tensor& reflection_pad1d_out_quantized_cpu(const Tensor& input, IntArrayRef padding,
-    Tensor& output) {
-  TORCH_CHECK(input.qscheme() == kPerTensorAffine, "Only per tensor quantization is supported");
-  set_quantizer_(output, make_per_tensor_affine_quantizer(input.q_scale(), input.q_zero_point(), input.scalar_type()));
-  reflection_pad1d_kernel(kCPU, output, input, padding);
-  return output;
-}
 
 TORCH_IMPL_FUNC(reflection_pad1d_out_cpu)
 (const Tensor& input, IntArrayRef padding, const Tensor& output) {
@@ -124,14 +114,6 @@ Tensor reflection_pad2d_cpu(const Tensor& input, IntArrayRef padding) {
   return output;
 }
 
-Tensor reflection_pad2d_quantized_cpu(const Tensor& input, IntArrayRef padding) {
-  TORCH_CHECK(input.qscheme() == kPerTensorAffine, "Only per tensor quantization is supported");
-  Tensor output = at::_empty_affine_quantized({0}, input.options(),
-                                           input.q_scale(),
-                                           input.q_zero_point());
-  reflection_pad2d_out_template(output, input, padding);
-  return output;
-}
 
 Tensor& reflection_pad2d_backward_out_cpu(const Tensor& grad_output,
     const Tensor& input,

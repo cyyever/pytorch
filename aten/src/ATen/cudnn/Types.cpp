@@ -6,7 +6,7 @@
 namespace at::native {
 
 cudnnDataType_t getCudnnDataTypeFromScalarType(const at::ScalarType dtype) {
-  if (dtype == c10::kQInt8 || dtype == at::kChar) {
+  if (dtype == at::kChar) {
     return CUDNN_DATA_INT8;
   } else if (dtype == at::kFloat) {
     return CUDNN_DATA_FLOAT;
