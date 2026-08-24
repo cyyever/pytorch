@@ -373,8 +373,7 @@ def get_ignored_functions() -> set[Callable]:
         Tensor._philox_uniform_,
     }
 
-    if sys.version_info >= (3, 14):
-        functions.add(Tensor.__annotate__)
+    functions.add(Tensor.__annotate__)
 
     return functions
 

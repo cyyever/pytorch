@@ -1,6 +1,5 @@
 import importlib
 import logging
-import sys
 from abc import ABC, abstractmethod
 from pickle import (
     _getattribute,  # pyrefly: ignore [missing-module-attribute]
@@ -100,12 +99,7 @@ class Importer(ABC):
         # Check that this name will indeed return the correct object
         try:
             module = self.import_module(module_name)
-            if sys.version_info >= (3, 14):
-                # pickle._getattribute signature changes in 3.14
-                # to take iterable and return just one object
-                obj2 = _getattribute(module, name.split("."))
-            else:
-                obj2, _ = _getattribute(module, name)
+            obj2 = _getattribute(module, name.split("."))
         except (ImportError, KeyError, AttributeError):
             raise ObjNotFoundError(
                 f"{obj} was not found as {module_name}.{name}"

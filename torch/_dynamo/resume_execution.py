@@ -66,8 +66,6 @@ IS_TRACING_RESUME_PROLOGUE_VARNAME = "__is_tracing_resume_prologue"
 def _initial_push_null(insts: list[Instruction]) -> None:
     if sys.version_info >= (3, 11):
         insts.append(create_instruction("PUSH_NULL"))
-        if sys.version_info < (3, 13):
-            insts.append(create_instruction("SWAP", arg=2))
 
 
 # Generates bytecode from template and splits the code where LOAD_FAST dummy is present.
@@ -211,8 +209,6 @@ class ReenterWith:
 
         create_ctx: list[Instruction] = []
         # Do not push NULL in Python 3.14+ since the NULL should be on the symbolic stack.
-        if sys.version_info < (3, 14):
-            _initial_push_null(create_ctx)
         create_ctx.extend(
             [
                 *load_args,

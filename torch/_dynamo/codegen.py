@@ -174,11 +174,6 @@ class PyCodegen:
         with such bits (LOAD_GLOBAL 3.11+, LOAD_ATTR 3.12+, LOAD_SUPER_ATTR).
         """
         old_len = len(self._output)
-        if sys.version_info < (3, 13):
-            # gen_fn may DUP_TOP instead if TOS is not cleared.
-            # Will cause problems since NULL will be pushed right
-            # before the generated instructions in <= 3.12
-            self.clear_tos()
         gen_fn()
         # inplace modify self._output
         added_insts = self._output[old_len:]
@@ -524,7 +519,7 @@ class PyCodegen:
     def create_load_closure(self, name: str) -> Instruction:
         if name not in self.cell_and_freevars():
             raise AssertionError(f"{name!r} not in cell_and_freevars")
-        inst_name = "LOAD_FAST" if sys.version_info >= (3, 13) else "LOAD_CLOSURE"
+        inst_name = 'LOAD_FAST'
         return create_instruction(inst_name, argval=name)
 
     def create_load_deref(self, name: str) -> Instruction:
@@ -639,9 +634,7 @@ class PyCodegen:
             self.create_load_const_unchecked(lambda: None),
             # 3.13 swapped NULL and callable
             *(
-                (create_instruction("SWAP", arg=2),)
-                if sys.version_info >= (3, 13)
-                else ()
+                (create_instruction('SWAP', arg=2),)
             ),
             *create_call_function(0, False),
             create_instruction("POP_TOP"),
