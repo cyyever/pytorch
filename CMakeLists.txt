@@ -595,7 +595,11 @@ if(LINUX)
 endif()
 
 
-string(APPEND CMAKE_CUDA_FLAGS " -Xfatbin -compress-all")
+string(APPEND CMAKE_CUDA_FLAGS " -compress-mode=size")
+
+# Let nvcc split device codegen across threads. Two keeps the product with
+# MAX_JOBS within the core count on the machines this fork is built on.
+string(APPEND CMAKE_CUDA_FLAGS " --split-compile=2")
 
 # Set linker max-page-size to 64KiB on AArch64 Linux
 # And stub group size to 32MiB to workaround R_AARCH64_CALL26

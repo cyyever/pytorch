@@ -948,7 +948,6 @@ if(WERROR)
   endif()
 endif()
 
-string(APPEND CMAKE_CUDA_FLAGS " -Wno-deprecated-gpu-targets --expt-extended-lambda")
 
 # use cub in a safe manner, see:
 # https://github.com/pytorch/pytorch/pull/55292
