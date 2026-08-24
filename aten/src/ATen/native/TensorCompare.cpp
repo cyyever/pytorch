@@ -21,7 +21,6 @@
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #else
-#include <ATen/ops/_aminmax_native.h>
 #include <ATen/ops/_assert_async_native.h>
 #include <ATen/ops/_assert_scalar_native.h>
 #include <ATen/ops/_functional_assert_async_native.h>
@@ -845,17 +844,6 @@ TORCH_IMPL_FUNC(min_out)
  const Tensor& values,
  const Tensor& indices) {
   minmax_out_impl(self, dim, keepdim, values, indices, min_stub);
-}
-
-// DEPRECATED: Use at::aminmax instead
-std::tuple<Tensor, Tensor> _aminmax(
-    const Tensor& self,
-    int64_t dim,
-    bool keepdim) {
-  TORCH_WARN_ONCE(
-      "_aminmax is deprecated as of PyTorch 1.11 and will be removed in a future release. Use aminmax instead."
-      " This warning will only appear once per process.");
-  return at::aminmax(self, dim, keepdim);
 }
 
 TORCH_IMPL_FUNC(clamp_out)
