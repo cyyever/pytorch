@@ -300,12 +300,8 @@ endif()
 list(APPEND CUDA_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
 message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA}")
 
-# disable some nvcc diagnostic that appears in boost, glog, glags, opencv, etc.
+# disable some nvcc diagnostic that appears in third-party headers
 foreach(diag cc_clobber_ignored
-             field_without_dll_interface
-             base_class_has_different_dll_interface
-             dll_interface_conflict_none_assumed
-             dll_interface_conflict_dllexport_assumed
              bad_friend_decl)
   list(APPEND SUPPRESS_WARNING_FLAGS --diag_suppress=${diag})
 endforeach()
@@ -322,7 +318,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   list(APPEND CUDA_NVCC_FLAGS "-Xcompiler=-fclang-abi-compat=17")
 endif()
 
-# Set expt-relaxed-constexpr to suppress Eigen warnings
+# Required by headers that call constexpr host functions from device code.
 list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
 
 # Set expt-extended-lambda to support lambda on device
