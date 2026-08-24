@@ -1080,11 +1080,7 @@ class AutocastModeVariable(ContextWrappingVariable):
         args: Sequence[Any],
         kwargs: dict[str, Any],
     ) -> "AutocastModeVariable":
-        if func not in [
-            torch.amp.autocast_mode.autocast,
-            torch.cuda.amp.autocast,
-            torch.cpu.amp.autocast,
-        ]:
+        if func is not torch.amp.autocast_mode.autocast:
             raise AssertionError(f"unexpected autocast function: {func}")
         # device_type : str,
         # dtype : Optional[_dtype] = None,
@@ -1096,12 +1092,8 @@ class AutocastModeVariable(ContextWrappingVariable):
         kwargs.clear()
 
         for key in ["device_type", "dtype", "enabled", "cache_enabled"]:
-            if key == "device_type" and func in [
-                torch.cuda.amp.autocast,
-                torch.cpu.amp.autocast,
-            ]:
-                # pyrefly: ignore [unnecessary-comparison]
-                arg = "cuda" if func is torch.cuda.amp.autocast else "cpu"
+            if key == "device_type":
+                arg = bound_args.arguments[key]
             else:
                 arg = bound_args.arguments[key]
             if isinstance(arg, VariableTracker):

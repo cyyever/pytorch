@@ -799,7 +799,7 @@ class CudaReproTests(TestCase):
             rand_strided(sh, st, dt, dev).requires_grad_(rg)
             for (sh, st, dt, dev, rg) in args
         ]
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast("cuda", enabled=False):
             if not same_two_models(mod, opt_mod, args):
                 raise AssertionError("Dynamo failed")
 

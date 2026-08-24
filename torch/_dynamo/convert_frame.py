@@ -65,7 +65,6 @@ from torch._guards import compile_context, CompileContext, CompileId, tracing
 from torch._higher_order_ops.utils import _in_hop_compile
 from torch._logging import structured
 from torch._utils_internal import (
-    compile_time_strobelight_meta,
     maybe_upload_prof_stats_to_manifold,
     signpost_event,
 )
@@ -75,7 +74,7 @@ from torch.fx.experimental.symbolic_shapes import (
     GuardOnDataDependentSymNode,
 )
 from torch.fx.graph_module import _forward_from_src as original_forward_from_src
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 from torch.nn.parallel.distributed import DistributedDataParallel
 from torch.utils._python_dispatch import (
     _disable_current_modes,
@@ -1719,7 +1718,6 @@ def _compile(
     # Time spent compiling this frame before restarting or failing analysis
     dynamo_time_before_restart: float = 0.0
 
-    @compile_time_strobelight_meta(phase_name="compile_inner")
     def compile_inner(
         code: CodeType, one_graph: bool, hooks: Hooks
     ) -> tuple[ConvertFrameReturn, DynamoTracerOutput | None]:

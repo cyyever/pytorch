@@ -435,11 +435,6 @@ coverage_ignore_functions = [
     # torch.backends.cudnn.rnn
     "get_cudnn_mode",
     "init_dropout_state",
-    # torch.cuda.amp.autocast_mode
-    "custom_bwd",
-    "custom_fwd",
-    # torch.cuda.amp.common
-    "amp_definitely_not_available",
     # torch.cuda.nccl
     "all_gather",
     "all_reduce",
@@ -519,7 +514,6 @@ coverage_ignore_functions = [
     "get_all",
     "synchronize",
     "store_timeout",
-    # torch.distributed.fsdp.wrap
     # torch.distributed.nn.functional
     "all_to_all",
     "all_to_all_single",
@@ -737,50 +731,6 @@ coverage_ignore_functions = [
     "remove_extension_h_precompiler_headers",
     # torch.utils.data.backward_compatibility
     "worker_init_fn",
-    # torch.utils.data.datapipes.dataframe.dataframe_wrapper
-    "concat",
-    "create_dataframe",
-    "get_columns",
-    "get_df_wrapper",
-    "get_item",
-    "get_len",
-    "is_column",
-    "is_dataframe",
-    "iterate",
-    "set_df_wrapper",
-    # torch.utils.data.datapipes.dataframe.dataframes
-    "disable_capture",
-    "get_val",
-    # torch.utils.data.datapipes.gen_pyi
-    "extract_class_name",
-    "extract_method_name",
-    "find_file_paths",
-    "gen_from_template",
-    "get_method_definitions",
-    "materialize_lines",
-    "parse_datapipe_file",
-    "parse_datapipe_files",
-    "process_signature",
-    "split_outside_bracket",
-    # torch.utils.data.datapipes.map.callable
-    "default_fn",
-    # torch.utils.data.datapipes.utils.common
-    "get_file_binaries_from_pathnames",
-    "get_file_pathnames_from_root",
-    "match_masks",
-    "validate_pathname_binary_tuple",
-    # torch.utils.data.datapipes.utils.decoder
-    "audiohandler",
-    "extension_extract_fn",
-    "imagehandler",
-    "mathandler",
-    "videohandler",
-    # torch.utils.data.graph_settings
-    "apply_random_seed",
-    "apply_sharding",
-    "apply_shuffle_seed",
-    "apply_shuffle_settings",
-    "get_all_graph_pipes",
     # torch.utils.hooks
     "warn_if_has_hooks",
     # torch.utils.mkldnn
@@ -1144,19 +1094,12 @@ coverage_ignore_classes = [
     # torch.amp.grad_scaler
     "GradScaler",
     "OptState",
-    # torch.distributed.algorithms.ddp_comm_hooks.post_localSGD_hook
-    "PostLocalSGDState",
     # torch.distributed.algorithms.ddp_comm_hooks.powerSGD_hook
     "PowerSGDState",
     # torch.distributed.algorithms.join
     "Join",
     "JoinHook",
     "Joinable",
-    # torch.distributed.algorithms.model_averaging.averagers
-    "ModelAverager",
-    "PeriodicModelAverager",
-    # torch.distributed.algorithms.model_averaging.hierarchical_model_averager
-    "HierarchicalModelAverager",
     # torch.distributed.argparse_util
     "check_env",
     "env",
@@ -1267,25 +1210,11 @@ coverage_ignore_classes = [
     "CyclingIterator",
     # torch.distributed.elastic.utils.data.elastic_distributed_sampler
     "ElasticDistributedSampler",
-    # torch.distributed.fsdp.api
-    "StateDictType",
-    # torch.distributed.fsdp.fully_sharded_data_parallel
-    "FullyShardedDataParallel",
-    "OptimStateKeyType",
-    # torch.distributed.fsdp.sharded_grad_scaler
-    "ShardedGradScaler",
-    # torch.distributed.fsdp.wrap
-    "CustomPolicy",
-    "ModuleWrapPolicy",
     # torch.distributed.launcher.api
     "LaunchConfig",
     "elastic_launch",
-    # torch.distributed.optim.post_localSGD_optimizer
-    "PostLocalSGDOptimizer",
     # torch.distributed.optim.zero_redundancy_optimizer
     "ZeroRedundancyOptimizer",
-    # torch.distributed.tensor.parallel.fsdp
-    "DTensorExtensions",
     # torch.distributed.tensor.parallel.style
     "ParallelStyle",
     # torch.distributions.logistic_normal
@@ -1691,87 +1620,6 @@ coverage_ignore_classes = [
     "BuildExtension",
     # torch.utils.data.dataloader
     "DataLoader",
-    # torch.utils.data.datapipes.dataframe.dataframe_wrapper
-    "PandasWrapper",
-    "default_wrapper",
-    # torch.utils.data.datapipes.dataframe.dataframes
-    "Capture",
-    "CaptureA",
-    "CaptureAdd",
-    "CaptureCall",
-    "CaptureControl",
-    "CaptureDataFrame",
-    "CaptureDataFrameWithDataPipeOps",
-    "CaptureF",
-    "CaptureGetAttr",
-    "CaptureGetItem",
-    "CaptureInitial",
-    "CaptureLikeMock",
-    "CaptureMul",
-    "CaptureSetItem",
-    "CaptureSub",
-    "CaptureVariable",
-    "CaptureVariableAssign",
-    "DataFrameTracedOps",
-    "DataFrameTracer",
-    # torch.utils.data.datapipes.dataframe.datapipes
-    "ConcatDataFramesPipe",
-    "DataFramesAsTuplesPipe",
-    "ExampleAggregateAsDataFrames",
-    "FilterDataFramesPipe",
-    "PerRowDataFramesPipe",
-    "ShuffleDataFramesPipe",
-    # torch.utils.data.datapipes.dataframe.structures
-    "DataChunkDF",
-    # torch.utils.data.datapipes.datapipe
-    "DFIterDataPipe",
-    "DataChunk",
-    "IterDataPipe",
-    "MapDataPipe",
-    # torch.utils.data.datapipes.iter.callable
-    "CollatorIterDataPipe",
-    "MapperIterDataPipe",
-    # torch.utils.data.datapipes.iter.combinatorics
-    "SamplerIterDataPipe",
-    "ShufflerIterDataPipe",
-    # torch.utils.data.datapipes.iter.combining
-    "ConcaterIterDataPipe",
-    "DemultiplexerIterDataPipe",
-    "ForkerIterDataPipe",
-    "MultiplexerIterDataPipe",
-    "ZipperIterDataPipe",
-    # torch.utils.data.datapipes.iter.filelister
-    "FileListerIterDataPipe",
-    # torch.utils.data.datapipes.iter.fileopener
-    "FileOpenerIterDataPipe",
-    # torch.utils.data.datapipes.iter.grouping
-    "BatcherIterDataPipe",
-    "GrouperIterDataPipe",
-    "UnBatcherIterDataPipe",
-    # torch.utils.data.datapipes.iter.routeddecoder
-    "RoutedDecoderIterDataPipe",
-    # torch.utils.data.datapipes.iter.selecting
-    "FilterIterDataPipe",
-    # torch.utils.data.datapipes.iter.sharding
-    "SHARDING_PRIORITIES",
-    "ShardingFilterIterDataPipe",
-    # torch.utils.data.datapipes.iter.utils
-    "IterableWrapperIterDataPipe",
-    # torch.utils.data.datapipes.map.callable
-    "MapperMapDataPipe",
-    # torch.utils.data.datapipes.map.combinatorics
-    "ShufflerIterDataPipe",
-    # torch.utils.data.datapipes.map.combining
-    "ConcaterMapDataPipe",
-    "ZipperMapDataPipe",
-    # torch.utils.data.datapipes.map.grouping
-    "BatcherMapDataPipe",
-    # torch.utils.data.datapipes.map.utils
-    "SequenceWrapperMapDataPipe",
-    # torch.utils.data.datapipes.utils.decoder
-    "Decoder",
-    "ImageHandler",
-    "MatHandler",
     # torch.utils.data.dataset
     "ConcatDataset",
     # torch.utils.data.distributed

@@ -15,7 +15,7 @@ from torch.distributed.checkpoint.state_dict import (
     StateDictOptions,
 )
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.testing._internal.common_distributed import skip_if_lt_x_gpu
 from torch.testing._internal.common_utils import run_tests, TEST_WITH_DEV_DBG_ASAN
 from torch.testing._internal.distributed._tensor.common_dtensor import (
@@ -93,7 +93,7 @@ class TestFineTuning(DTensorTestBase):
         device_mesh = init_device_mesh(self.device_type, (self.world_size,))
 
         model = PreTrainedModel().to(self.device_type)
-        model = FSDP(model, device_mesh=device_mesh)
+        fully_shard(model, mesh=device_mesh)
         optim = torch.optim.Adam(model.parameters(), lr=1e-3)
 
         # Training
@@ -117,7 +117,7 @@ class TestFineTuning(DTensorTestBase):
 
         model = FineTuningModel().to(self.device_type)
         # TODO: make the parallelism more complicated, e.g., using 2D + DDP.
-        model = FSDP(model, use_orig_params=True, device_mesh=device_mesh)
+        fully_shard(model, mesh=device_mesh)
         optim = torch.optim.Adam(model.parameters(), lr=1e-3)
 
         # Simulate that the fine tuning restart after 3 iterations

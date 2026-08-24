@@ -2614,10 +2614,8 @@ from torch.signal import windows as windows
 _C._init_names(list(_storage_classes))
 
 # attach docstrings to torch and tensor functions
-from torch import _size_docs, _storage_docs, _tensor_docs, _torch_docs
 
 
-del _torch_docs, _tensor_docs, _storage_docs, _size_docs
 
 
 def compiled_with_cxx11_abi() -> builtins.bool:
@@ -2632,6 +2630,12 @@ from torch import _library as _library, _ops as _ops
 from torch._ops import ops as ops  # usort: skip
 from torch._classes import classes as classes  # usort: skip
 
+# torch._C.ScriptObject went away with TorchScript. CustomClassBase is its
+# replacement: its metaclass __instancecheck__ matches real custom class
+# instances and FakeScriptObject wrappers alike, which is what the surviving
+# isinstance(x, torch.ScriptObject) checks across export/functorch mean.
+from torch._custom_class_base import CustomClassBase as ScriptObject  # usort: skip
+
 sys.modules.setdefault(f"{__name__}.ops", ops)
 sys.modules.setdefault(f"{__name__}.classes", classes)
 
@@ -2641,8 +2645,6 @@ if hasattr(torch._C, "_c10d_init"):
     _register_process_group_opaque_type()
     del _register_process_group_opaque_type
 
-# Import the quasi random sampler
-from torch import quasirandom as quasirandom  # usort: skip
 
 # If you are seeing this, it means that this call site was not checked if
 # the memory format could be preserved, and it was switched to old default
@@ -2658,12 +2660,6 @@ del register_after_fork
 
 from torch._lobpcg import lobpcg as lobpcg
 
-
-# These were previously defined in native_functions.yaml and appeared on the
-# `torch` namespace, but we moved them to c10 dispatch to facilitate custom
-# class usage. We add these lines here to preserve backward compatibility.
-quantized_lstm = ops.aten.quantized_lstm
-quantized_gru = ops.aten.quantized_gru
 
 # Import experimental masked operations support. See
 # [RFC-0016](https://github.com/pytorch/rfcs/pull/27) for more

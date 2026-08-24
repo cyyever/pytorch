@@ -103,11 +103,10 @@ from torch._inductor.utils import (
 from torch._library.fake_class_registry import FakeScriptObject
 from torch._library.opaque_object import is_custom_class
 from torch._logging import trace_structured
-from torch._utils_internal import compile_time_strobelight_meta
 from torch.fx import GraphModule
 from torch.fx.experimental.symbolic_shapes import free_unbacked_symbols, SymExprPrinter
 from torch.fx.passes.fake_tensor_prop import FakeTensorProp
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 from torch.utils._ordered_set import OrderedSet
 
 from .._dynamo.exc import ShortenTraceback, SkipFrame
@@ -3383,7 +3382,6 @@ def _compile_fx_main(
                 OutputCode, inference_compiler
             )
 
-        @compile_time_strobelight_meta(phase_name="backward")
         def bw_compiler(
             gm: GraphModule, example_inputs: Sequence[InputType]
         ) -> OutputCode:

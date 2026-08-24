@@ -2381,12 +2381,12 @@ class aot_inductor:
     debug_compile = os.environ.get("AOT_INDUCTOR_DEBUG_COMPILE", "0") == "1"
     debug_symbols = os.environ.get("AOT_INDUCTOR_DEBUG_SYMBOLS", "0") == "1"
 
-    # Enable frame pointers for profiling tools (e.g. strobelight)
+    # Enable frame pointers for profiling tools
     enable_frame_pointer = (
         os.environ.get("AOT_INDUCTOR_ENABLE_FRAME_POINTER", "1") == "1"
     )
 
-    # Enable lightweight line tables for profiling tools (e.g. strobelight)
+    # Enable lightweight line tables for profiling tools
     enable_line_tables = os.environ.get("AOT_INDUCTOR_ENABLE_LINE_TABLES", "1") == "1"
 
     # Annotate generated main wrapper function, i.e. AOTInductorModel::run_impl,

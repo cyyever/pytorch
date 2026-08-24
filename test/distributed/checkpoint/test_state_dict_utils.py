@@ -5,12 +5,6 @@ import io
 import torch
 import torch.distributed as dist
 import torch.distributed._functional_collectives as funcol
-from torch.distributed._shard.sharded_tensor import (
-    init_from_local_shards,
-    Shard as ShardedTensorShard,
-    ShardedTensor,
-    ShardMetadata,
-)
 from torch.distributed._state_dict_utils import (
     _check_state_dict_similarity,
     _copy_state_dict,
@@ -142,21 +136,6 @@ class TestStateDictUtils(DTensorTestBase):
         state_dict = {
             "tensor1": torch.arange(10, device=device),
             "tensor2": torch.ones(10, device=device),
-            "sharded_tensor": init_from_local_shards(
-                [
-                    ShardedTensorShard(
-                        tensor=torch.arange(
-                            50 * rank, 50 + 50 * rank, device=device
-                        ).reshape(5, 10),
-                        metadata=ShardMetadata(
-                            shard_offsets=[5 * rank, 0],
-                            shard_sizes=[5, 10],
-                            placement=f"rank:{rank}/{self.device_type}:{rank}",
-                        ),
-                    )
-                ],
-                torch.Size([5 * scale_factor, 10]),
-            ),
             "dtensor": distribute_tensor(
                 torch.arange(50 * scale_factor, device=device).reshape(
                     5 * scale_factor, 10
@@ -183,14 +162,10 @@ class TestStateDictUtils(DTensorTestBase):
 
             # Verify if _copy_state_dict works
             for v in cpu_state_dict.values():
-                if isinstance(v, (torch.Tensor, DTensor, ShardedTensor)):
+                if isinstance(v, (torch.Tensor, DTensor)):
                     self.assertTrue(v.device == torch.device("cpu"))
             self.assertEqual(cpu_state_dict["tensor1"], torch.arange(10))
             self.assertEqual(cpu_state_dict["tensor2"], torch.ones(10))
-            self.assertEqual(
-                cpu_state_dict["sharded_tensor"].local_tensor(),
-                torch.arange(50 * rank, 50 + 50 * rank).reshape(5, 10),
-            )
             self.assertEqual(
                 cpu_state_dict["dtensor"].to_local(),
                 torch.arange(50 * rank, 50 + 50 * rank).reshape(5, 10),
@@ -202,10 +177,6 @@ class TestStateDictUtils(DTensorTestBase):
             self.assertNotEqual(
                 cpu_state_dict["tensor2"].storage().data_ptr(),
                 state_dict["tensor2"].storage().data_ptr(),
-            )
-            self.assertNotEqual(
-                cpu_state_dict["sharded_tensor"].local_tensor().storage().data_ptr(),
-                state_dict["sharded_tensor"].local_tensor().storage().data_ptr(),
             )
             self.assertNotEqual(
                 cpu_state_dict["dtensor"].to_local().storage().data_ptr(),

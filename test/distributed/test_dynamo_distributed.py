@@ -8,7 +8,6 @@ import re
 import unittest
 from contextlib import contextmanager
 from datetime import timedelta
-from io import StringIO
 from unittest.mock import patch
 
 import numpy as np
@@ -21,21 +20,15 @@ import torch._inductor.test_case
 import torch.distributed as dist
 import torch.optim as optim
 from torch import nn
-from torch._C import FileCheck
 from torch._dynamo import config
 from torch._dynamo.backends.distributed import DDPOptimizer
-from torch._dynamo.comptime import comptime
 from torch._dynamo.device_interface import CudaInterface, DeviceGuard
 from torch._dynamo.testing import collect_results, CompileCounter
 from torch._dynamo.utils import same
 from torch._higher_order_ops.wrap import tag_activation_checkpoint
 from torch.compiler import set_enable_guard_collectives
 from torch.distributed._functional_collectives import _maybe_wrap_tensor
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.wrap import (
-    lambda_auto_wrap_policy,
-    transformer_auto_wrap_policy,
-)
+from torch.distributed.fsdp import fully_shard
 from torch.nn.attention.flex_attention import flex_attention
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.testing._internal.common_cuda import (
@@ -227,7 +220,7 @@ def find_first_node(gm, func):
 
 
 def apply_fsdp_with_checkpointing(
-    model, wrap_policy, checkpoint_policy, use_activation_checkpointing=True
+    model, module_check_fn, use_activation_checkpointing=True
 ):
     from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
         apply_activation_checkpointing,
@@ -235,9 +228,11 @@ def apply_fsdp_with_checkpointing(
         CheckpointImpl,
     )
 
-    model = FSDP(
-        copy.deepcopy(model), auto_wrap_policy=wrap_policy, use_orig_params=True
-    )
+    model = copy.deepcopy(model)
+    for submodule in model.modules():
+        if module_check_fn(submodule):
+            fully_shard(submodule)
+    fully_shard(model)
     if use_activation_checkpointing:
         checkpoint_wrapper_fn = functools.partial(
             checkpoint_wrapper,
@@ -246,7 +241,7 @@ def apply_fsdp_with_checkpointing(
         apply_activation_checkpointing(
             model,
             checkpoint_wrapper_fn=checkpoint_wrapper_fn,
-            check_fn=checkpoint_policy,
+            check_fn=module_check_fn,
         )
     return model
 
@@ -988,20 +983,17 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
         with _dynamo_dist_per_rank_init(self.rank, self.world_size):
             # Test with basic FSDP wrapping (outer wrap around whole model)
             m, inputs, correct_outputs = get_model(f"{self.device_type}:{self.rank}")
-            fsdp_m = FSDP(m, use_orig_params=True)
+            fsdp_m = fully_shard(m)
             fsdp_m = torch.compile(fsdp_m, backend="aot_eager")
             outputs = fsdp_m(inputs)
             self.assertTrue(same(correct_outputs, outputs))
 
-            # Test with recursive wrapping, nested FSDP around each Linear
+            # Test with recursive wrapping, nested fully_shard around each Linear
             m, inputs, correct_outputs = get_model(f"{self.device_type}:{self.rank}")
-            fsdp_m = FSDP(
-                m,
-                auto_wrap_policy=functools.partial(
-                    transformer_auto_wrap_policy, transformer_layer_cls=(nn.Linear,)
-                ),
-                use_orig_params=True,
-            )
+            for lin in m.modules():
+                if isinstance(lin, nn.Linear):
+                    fully_shard(lin)
+            fsdp_m = fully_shard(m)
             fsdp_m = torch.compile(fsdp_m, backend="aot_eager")
             outputs = fsdp_m(inputs)
             self.assertTrue(same(correct_outputs, outputs))
@@ -1062,7 +1054,7 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
             m, inputs, correct_outputs = get_mutating_model(
                 f"{self.device_type}:{self.rank}"
             )
-            fsdp_m = FSDP(m, use_orig_params=True)
+            fsdp_m = fully_shard(m)
             fsdp_m = torch.compile(fsdp_m, backend="eager", fullgraph=False)
             outputs = fsdp_m(inputs)
             self.assertTrue(same(correct_outputs, outputs))
@@ -1081,7 +1073,7 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
             m, inputs, correct_outputs = get_forced_getattr_module(
                 f"{self.device_type}:{self.rank}"
             )
-            fsdp_m = FSDP(m, use_orig_params=True)
+            fsdp_m = fully_shard(m)
             fsdp_m = torch.compile(fsdp_m, backend="eager", fullgraph=False)
             outputs = fsdp_m(inputs)
             self.assertTrue(same(correct_outputs, outputs))
@@ -1094,20 +1086,17 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
         with _dynamo_dist_per_rank_init(self.rank, self.world_size):
             # Test with basic FSDP wrapping (outer wrap around whole model)
             m, inputs, correct_outputs = get_model(f"{self.device_type}:{self.rank}")
-            fsdp_m = FSDP(m, use_orig_params=True)
+            fsdp_m = fully_shard(m)
             fsdp_m = torch.compile(fsdp_m, backend="inductor")
             outputs = fsdp_m(inputs)
             self.assertTrue(same(correct_outputs, outputs))
 
-            # Test with recursive wrapping, nested FSDP around each Linear
+            # Test with recursive wrapping, nested fully_shard around each Linear
             m, inputs, correct_outputs = get_model(f"{self.device_type}:{self.rank}")
-            fsdp_m = FSDP(
-                m,
-                auto_wrap_policy=functools.partial(
-                    transformer_auto_wrap_policy, transformer_layer_cls=(nn.Linear,)
-                ),
-                use_orig_params=True,
-            )
+            for lin in m.modules():
+                if isinstance(lin, nn.Linear):
+                    fully_shard(lin)
+            fsdp_m = fully_shard(m)
             fsdp_m = torch.compile(fsdp_m, backend="inductor")
             outputs = fsdp_m(inputs)
             self.assertTrue(same(correct_outputs, outputs))
@@ -1121,8 +1110,7 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
                 f"{self.device_type}:{self.rank}"
             )
             is_inner = lambda module: isinstance(module, ToyInnerModel)  # noqa: E731
-            wrap_policy = functools.partial(lambda_auto_wrap_policy, lambda_fn=is_inner)
-            model = apply_fsdp_with_checkpointing(model, wrap_policy, is_inner)
+            model = apply_fsdp_with_checkpointing(model, is_inner)
             correct_outputs = model(inputs)
             cnt = torch._dynamo.testing.CompileCounterWithBackend("inductor")
             opt_model = torch.compile(model, backend=cnt)
@@ -1146,39 +1134,35 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
         "Inaccurate results with fused SDPA kernels",
     )
     def test_hf_bert_fsdp(self):
-        def apply_fsdp(model, wrap_policy):
-            model = FSDP(
-                copy.deepcopy(model), auto_wrap_policy=wrap_policy, use_orig_params=True
-            )
+        def apply_fsdp(model):
+            model = copy.deepcopy(model)
+            fully_shard(model)
             return model
 
         with _dynamo_dist_per_rank_init(self.rank, self.world_size):
-            for wrap_policy, test_instance in (
-                (None, "FSDP without recursive wrapping"),
-            ):
-                print(f"Running hf_bert test for {test_instance}")
-                model, inputs = get_hf_bert(self.rank)
-                reset_rng_state()
-                eager_model = apply_fsdp(model, wrap_policy)
-                correct_outputs = eager_model(**inputs)
-                correct_loss = correct_outputs.loss
-                correct_loss.backward()
+            print("Running hf_bert test for FSDP without recursive wrapping")
+            model, inputs = get_hf_bert(self.rank)
+            reset_rng_state()
+            eager_model = apply_fsdp(model)
+            correct_outputs = eager_model(**inputs)
+            correct_loss = correct_outputs.loss
+            correct_loss.backward()
 
-                reset_rng_state()
-                opt_model = apply_fsdp(model, wrap_policy)
-                opt_model = torch.compile(opt_model, backend="inductor")
-                opt_outputs = opt_model(**inputs)
-                opt_loss = opt_outputs.loss
-                opt_loss.backward()
+            reset_rng_state()
+            opt_model = apply_fsdp(model)
+            opt_model = torch.compile(opt_model, backend="inductor")
+            opt_outputs = opt_model(**inputs)
+            opt_loss = opt_outputs.loss
+            opt_loss.backward()
 
-                inputs_flat = [inputs[k] for k in inputs]
-                correct_results = collect_results(
-                    eager_model, correct_outputs.logits, correct_loss, inputs_flat
-                )
-                opt_results = collect_results(
-                    opt_model, opt_outputs.logits, opt_loss, inputs_flat
-                )
-                self.assertTrue(same(correct_results, opt_results))
+            inputs_flat = [inputs[k] for k in inputs]
+            correct_results = collect_results(
+                eager_model, correct_outputs.logits, correct_loss, inputs_flat
+            )
+            opt_results = collect_results(
+                opt_model, opt_outputs.logits, opt_loss, inputs_flat
+            )
+            self.assertTrue(same(correct_results, opt_results))
 
     @_expectedFailureIf_transformers_ge_5_2
     @import_transformers_or_skip()
@@ -1191,44 +1175,34 @@ class TestMultiProc(DynamoDistributedMultiProcTestCase):
         from transformers.models.bert.modeling_bert import BertLayer
 
         with _dynamo_dist_per_rank_init(self.rank, self.world_size):
-            for wrap_policy, test_instance in (
-                (
-                    functools.partial(
-                        transformer_auto_wrap_policy, transformer_layer_cls=(BertLayer,)
-                    ),
-                    "FSDP with recursive wrapping BertLayer instances",
-                ),
-            ):
-                print(
-                    f"Running hf_bert_activation_checkpointing test for {test_instance}"
-                )
-                model, inputs = get_hf_bert(self.rank)
-                check_fn = lambda submodule: isinstance(  # noqa: E731
-                    submodule, BertLayer
-                )
-                reset_rng_state()
-                eager_model = apply_fsdp_with_checkpointing(
-                    model, wrap_policy, check_fn
-                )
-                correct_outputs = eager_model(**inputs)
-                correct_loss = correct_outputs.loss
-                correct_loss.backward()
+            print(
+                "Running hf_bert_activation_checkpointing test for recursive wrapping BertLayer instances"
+            )
+            model, inputs = get_hf_bert(self.rank)
+            check_fn = lambda submodule: isinstance(  # noqa: E731
+                submodule, BertLayer
+            )
+            reset_rng_state()
+            eager_model = apply_fsdp_with_checkpointing(model, check_fn)
+            correct_outputs = eager_model(**inputs)
+            correct_loss = correct_outputs.loss
+            correct_loss.backward()
 
-                reset_rng_state()
-                opt_model = apply_fsdp_with_checkpointing(model, wrap_policy, check_fn)
-                opt_model = torch.compile(opt_model, backend="inductor")
-                opt_outputs = opt_model(**inputs)
-                opt_loss = opt_outputs.loss
-                opt_loss.backward()
+            reset_rng_state()
+            opt_model = apply_fsdp_with_checkpointing(model, check_fn)
+            opt_model = torch.compile(opt_model, backend="inductor")
+            opt_outputs = opt_model(**inputs)
+            opt_loss = opt_outputs.loss
+            opt_loss.backward()
 
-                inputs_flat = [inputs[k] for k in inputs]
-                correct_results = collect_results(
-                    eager_model, correct_outputs.logits, correct_loss, inputs_flat
-                )
-                opt_results = collect_results(
-                    opt_model, opt_outputs.logits, opt_loss, inputs_flat
-                )
-                self.assertTrue(same(correct_results, opt_results))
+            inputs_flat = [inputs[k] for k in inputs]
+            correct_results = collect_results(
+                eager_model, correct_outputs.logits, correct_loss, inputs_flat
+            )
+            opt_results = collect_results(
+                opt_model, opt_outputs.logits, opt_loss, inputs_flat
+            )
+            self.assertTrue(same(correct_results, opt_results))
 
     @skipIfTorchInductor(msg="https://github.com/pytorch/pytorch/issues/152944")
     @unittest.skipIf(not HAS_GPU, "Inductor+gpu needs triton and recent GPU arch")
@@ -2361,132 +2335,6 @@ class TestSingleProc(DynamoDistributedSingleProcTestCase):
         compiled(x).sum().backward()
         self.assertGreater(policy_call_count, 0)
 
-    def test_fsdp_orig_params_assert(self):
-        # Test with basic FSDP wrapping (outer wrap around whole model)
-        m, inputs, _ = get_model(f"{self.device_type}:{self.rank}")
-        fsdp_m = FSDP(m, use_orig_params=False)
-        # Test is that this function call does not throw an exception.
-        fsdp_m = torch.compile(fsdp_m)
-
-    def test_fsdp_skip_guards(self):
-        """
-        It's currently difficult to test dynamo guards.  Most guards tests are indirect- modify something and
-        observe that the guard in question failed. In this case, since the FSDP guards were already deemed
-        useless and skipping them is expected to have no practical effect, it's pretty contrived to even try to
-        make those guards fail.  Instead, we observe the 'guard source' printed by dynamo's comptime print_guards
-        function.
-
-        Note: comptime prints the guards before the time they get installed or not installed, so in both cases
-        (skip or no skip) the same guards get printed.  The difference is that in the skip case, they show up
-        with a special 'guard source' which will cause them to not be installed.  So all we check for is the expected
-        guard source 'local_fsdp_module'.
-        """
-        global GUARDS_FILE
-        GUARDS_FILE = StringIO()
-
-        for skip_guards, expected_guard_source in (
-            (True, "local_fsdp_module"),
-            (False, "local_unspecialized_nn_module"),
-        ):
-            torch._dynamo.reset()
-
-            class ToyModel(nn.Module):
-                def __init__(self, in_feat=10, hidden_feat=5000, out_feat=5):
-                    super().__init__()
-                    self.net = nn.Sequential(
-                        *[nn.Linear(in_feat, hidden_feat), nn.ReLU()]
-                        + [nn.Linear(hidden_feat, hidden_feat), nn.ReLU()]
-                        + [nn.Linear(hidden_feat, hidden_feat), nn.ReLU()]
-                        + [nn.Linear(hidden_feat, out_feat), nn.ReLU()]
-                    )
-
-                def forward(self, inputs):
-                    out = self.net(inputs)
-
-                    @comptime
-                    def _(ctx):
-                        ctx.print_guards(file=GUARDS_FILE)
-
-                    return out
-
-            device = f"{self.device_type}:{self.rank}"
-            m = ToyModel(
-                in_feat=10,
-                hidden_feat=5000,
-                out_feat=5,
-            ).to(device)
-            inputs = torch.rand(20, 10).to(device)
-            m.apply(init_weights)
-            correct_outputs = m(inputs)
-            fsdp_m = FSDP(m, use_orig_params=True)
-
-            with torch._dynamo.config.patch(skip_fsdp_guards=skip_guards):
-                opt_m = torch.compile(fsdp_m, backend="aot_eager")
-                outputs = opt_m(inputs)
-
-            # far from an exhaustive check of all the expected guards, just check a couple of them.
-            FileCheck().check("""local "L['self']" TYPE_MATCH""").check(
-                f"""{expected_guard_source} "L['self']._modules['net']" TYPE_MATCH"""
-            ).check(
-                f"""{expected_guard_source} "L['self']._modules['net']._modules['0']" TYPE_MATCH"""
-            ).run(GUARDS_FILE.getvalue())
-
-            self.assertTrue(same(correct_outputs, outputs))
-
-    def test_fsdp_skip_register_attr_or_module(self):
-        """
-        ensure FSDP module is not registered as attributes
-        in the fx graph
-        see `not source.guard_source().is_fsdp_module()`
-        before calling `register_attr_or_module`
-        in variables/builder.py
-        """
-
-        class ToyModel(nn.Module):
-            def __init__(self, in_feat=10, hidden_feat=5000, out_feat=5):
-                super().__init__()
-                self.net = nn.Sequential(
-                    *[nn.Linear(in_feat, hidden_feat), nn.ReLU()]
-                    + [nn.Linear(hidden_feat, hidden_feat), nn.ReLU()]
-                )
-
-            def forward(self, inputs):
-                out = self.net(inputs)
-                return out
-
-        torch._dynamo.reset()
-
-        device = f"{self.device_type}:{self.rank}"
-        m = ToyModel(
-            in_feat=10,
-            hidden_feat=5000,
-            out_feat=5,
-        ).to(device)
-        inputs = torch.rand(20, 10).to(device)
-        m.apply(init_weights)
-        correct_outputs = m(inputs)
-        fsdp_m = FSDP(m, use_orig_params=True)
-
-        def debug_compiler(gm, _):
-            for node in gm.graph.nodes:
-                if node.op == "get_attr":
-                    for name in [
-                        "l__self___net_0_weight",
-                        "l__self___net_0_bias",
-                        "l__self___net_2_weight",
-                        "l__self___net_2_bias",
-                    ]:
-                        self.assertFalse(
-                            name in node.name,
-                            lambda msg: f"{msg}\nFSDP module {name} should not be registered as attributes",
-                        )
-            return gm
-
-        opt_m = torch.compile(fsdp_m, backend=debug_compiler)
-        outputs = opt_m(inputs)
-
-        self.assertTrue(same(correct_outputs, outputs))
-
     def test_fsdp_dup_tensors_same_source(self):
         """
         Tests that FSDP-managed modules' parameters and buffers with the same
@@ -2515,7 +2363,8 @@ class TestSingleProc(DynamoDistributedSingleProcTestCase):
                 return z
 
         model = DuplicateModule()
-        fsdp_model = FSDP(copy.deepcopy(model), use_orig_params=True)
+        fsdp_model = copy.deepcopy(model)
+        fully_shard(fsdp_model)
         fsdp_model = torch.compile(fsdp_model, backend="aot_eager")
         inp = torch.randn((2, 3), device=self.device_type)
         local_out = model(inp)
@@ -2568,7 +2417,8 @@ class TestSingleProc(DynamoDistributedSingleProcTestCase):
                 z += self._param
                 return z
 
-        fsdp_model = FSDP(Model(), use_orig_params=True)
+        fsdp_model = Model()
+        fully_shard(fsdp_model)
         cnt = torch._dynamo.testing.CompileCounterWithBackend("aot_eager")
         fsdp_model = torch.compile(fsdp_model, backend=cnt)
         inp = torch.randn((2, 3), device=self.device_type)
@@ -2616,7 +2466,7 @@ class TestSingleProc(DynamoDistributedSingleProcTestCase):
 
         for use_self in (False, True):
             model = ModuleWithStaticMethod(use_self)
-            fsdp_model = FSDP(model, use_orig_params=True)
+            fsdp_model = fully_shard(model)
             cnt = torch._dynamo.testing.CompileCounterWithBackend("aot_eager")
             fsdp_model = torch.compile(fsdp_model, backend=cnt)
             test_outs.append(fsdp_model(x))

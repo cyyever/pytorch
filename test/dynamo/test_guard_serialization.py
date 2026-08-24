@@ -1656,46 +1656,6 @@ class TestGuardSerialization(TestGuardSerializationBase):
             True,
         )
 
-    def test_unserializable_sharded_tensor(self):
-        import torch.distributed as dist
-
-        if not dist.is_available():
-            self.skipTest("Torch distributed is not available")
-
-        tmpfile = tempfile.NamedTemporaryFile()  # noqa:SIM115
-        dist.init_process_group(
-            backend="gloo", rank=0, world_size=1, init_method=f"file://{tmpfile.name}"
-        )
-        try:
-            ChunkShardingSpec = dist._shard.sharding_spec.ChunkShardingSpec
-            ShardedTensor = dist._shard.sharded_tensor.ShardedTensor
-            tensor = torch.arange(2, dtype=torch.int64)
-            local_tensor = torch.unsqueeze(torch.cat([tensor, tensor + 2]), 0)
-
-            sharding_dim = 0
-            sharding_spec = ChunkShardingSpec(
-                dim=sharding_dim,
-                placements=[
-                    "rank:0/cpu",
-                ],
-            )
-            st = ShardedTensor._init_from_local_tensor(
-                local_tensor, sharding_spec, [1, 4]
-            )
-
-            def foo(inputs):
-                return inputs.x + 1
-
-            ref, loaded = self._test_serialization(
-                "TENSOR_MATCH", foo, Inputs(torch.randn(3, 2), st)
-            )
-            self._test_check_fn(
-                ref, loaded, {"inputs": Inputs(torch.randn(3, 2), st)}, True
-            )
-        finally:
-            dist.destroy_process_group()
-            tmpfile.close()
-
     def test_function_with_wrong_fqn(self):
         def foo(inputs):
             return inputs.x + 1

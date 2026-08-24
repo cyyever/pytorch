@@ -565,7 +565,6 @@ def _uses_custom_classinfo_check(
         ) in {
             ("torch.nn.parameter", "_ParameterMeta"),
             ("torch.nn.parameter", "_BufferMeta"),
-            ("torch.distributed.fsdp._flat_param", "_FlatParameterMeta"),
         }:
             return False
 

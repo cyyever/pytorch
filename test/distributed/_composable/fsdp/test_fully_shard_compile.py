@@ -13,9 +13,7 @@ from torch._dynamo.utils import counters
 from torch.distributed.device_mesh import init_device_mesh
 from torch.distributed.fsdp import (
     fully_shard,
-    FullyShardedDataParallel as FSDP,
     MixedPrecisionPolicy,
-    ShardingStrategy,
 )
 from torch.distributed.fsdp._fully_shard._fsdp_common import TrainingState
 from torch.distributed.fsdp._fully_shard._fsdp_param_group import FSDPParamGroup
@@ -284,7 +282,7 @@ class TestFullyShardCompile(FSDPTest):
             if isinstance(child, torch.nn.Linear):
                 new_child = torch.compile(child)
                 setattr(m.encoder, name, new_child)
-        m = FSDP(m, sharding_strategy=ShardingStrategy.FULL_SHARD, use_orig_params=True)
+        fully_shard(m)
         inp = torch.randn(32, 784, device=device_type)
         m(inp)
 

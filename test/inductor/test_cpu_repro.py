@@ -435,7 +435,7 @@ class CPUReproTests(TestCase):
     def test_conv2d_autocast(self):
         v = torch.randn(1, 3, 28, 18, dtype=torch.float32)
         mod = torch.nn.Sequential(torch.nn.Conv2d(3, 64, 3, 3)).eval()
-        with torch.no_grad(), torch.cpu.amp.autocast():
+        with torch.no_grad(), torch.amp.autocast("cpu"):
             self.common(
                 mod,
                 (v,),
@@ -740,7 +740,7 @@ class CPUReproTests(TestCase):
         for amp_enabled in amp_enabled_configs:
             mod = M(in_channel, out_channel).eval()
             v = torch.randn(5, in_channel, 15, 15)
-            with torch.no_grad(), torch.cpu.amp.autocast(enabled=amp_enabled):
+            with torch.no_grad(), torch.amp.autocast("cpu", enabled=amp_enabled):
                 self.common(
                     mod,
                     (v,),
@@ -802,7 +802,7 @@ class CPUReproTests(TestCase):
                 batch_first,
             ).eval()
             maybe_autocast = (
-                torch.cpu.amp.autocast()
+                torch.amp.autocast("cpu")
                 if dtype == torch.bfloat16
                 else contextlib.nullcontext()
             )
@@ -6595,7 +6595,7 @@ class CPUReproTests(TestCase):
         context = contextlib.nullcontext if not is_inference else torch.no_grad
         with (
             config.patch({"fallback_random": True}),
-            torch.cpu.amp.autocast(),
+            torch.amp.autocast("cpu"),
             context(),
             sdpa_kernel(SDPBackend.MATH),
         ):
@@ -6824,7 +6824,7 @@ class CPUReproTests(TestCase):
             convert_element_type_default_14,
         )
 
-        with torch.cpu.amp.autocast():
+        with torch.amp.autocast("cpu"):
             mod = M().to(torch.bfloat16).eval()
             self.common(mod, inputs, atol=1e-3, rtol=1e-3)
 

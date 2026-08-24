@@ -37,7 +37,7 @@ from torch._inductor.compile_worker.utils import _async_compile_initializer
 from torch._inductor.utils import get_ld_library_path, python_subprocess_env
 from torch._logging import trace_structured
 from torch._utils_internal import find_compile_subproc_binary
-from torch.monitor import _WaitCounter, _WaitCounterTracker
+from torch._monitor import _WaitCounter, _WaitCounterTracker
 
 
 log = logging.getLogger(__name__)

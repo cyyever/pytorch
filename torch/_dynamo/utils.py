@@ -86,7 +86,7 @@ from torch._utils_internal import (
     signpost_event,
 )
 from torch.fx._utils import _format_graph_code, lazy_format_graph_code
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 from torch.nn.modules.lazy import LazyModuleMixin
 from torch.utils._ordered_set import OrderedSet
 from torch.utils._python_dispatch import is_traceable_wrapper_subclass

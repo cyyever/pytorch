@@ -376,11 +376,6 @@
 # /torch/csrc/functionalization/
 # /torch/csrc/fx/
 # /torch/csrc/instruction_counter/
-# /torch/csrc/itt.cpp
-# /torch/csrc/itt.h
-# /torch/csrc/itt_wrapper.cpp
-# /torch/csrc/itt_wrapper.h
-# /torch/csrc/monitor/
 # /torch/csrc/multiprocessing/
 # /torch/csrc/python_headers.h
 # /torch/csrc/serialization.cpp
@@ -397,7 +392,6 @@
 # /test/HowToWriteTestsUsingFileCheck.md
 /test/allowlist_for_publicAPI.json @albanD
 # /test/backends/
-# /test/bench_mps_ops.py
 # /test/complex_tensor/
 # /test/conftest.py
 # /test/create_dummy_torchscript_model.py
@@ -488,11 +482,9 @@
 # /test/test_bundled_inputs.py
 # /test/test_ci_sanity_check_fail.py
 # /test/test_comparison_utils.py
-# /test/test_compile_benchmark_util.py
 # /test/test_complex.py
 # /test/test_content_store.py
 # /test/test_dataloader.py
-# /test/test_datapipe.py
 # /test/test_decomp.py
 # /test/test_determination.py
 # /test/test_dispatch.py
@@ -508,12 +500,10 @@
 # /test/test_functionalization.py
 # /test/test_futures.py
 /test/test_hop_infra.py @zou3519 @aorenste @bohnstingl
-# /test/test_hub.py
 # /test/test_img/
 # /test/test_import_stats.py
 # /test/test_indexing.py
 # /test/test_inspect_utils.py
-# /test/test_itt.py
 # /test/test_kernel_launch_checks.py
 # /test/test_legacy_vmap.py
 # /test/test_license.py
@@ -525,7 +515,6 @@
 # /test/test_mkldnn_verbose.py
 # /test/test_model_exports_to_core_aten.py
 # /test/test_module_tracker.py
-# /test/test_monitor.py
 # /test/test_multiprocessing.py
 # /test/test_multiprocessing_spawn.py
 # /test/test_namedtuple_return_api.py
@@ -663,7 +652,6 @@
 # /torch/_sources.py
 # /torch/_storage_docs.py
 # /torch/_streambase.py
-# /torch/_strobelight/
 # /torch/_subclasses/
 # /torch/_tensor.py
 # /torch/_tensor_docs.py
@@ -690,13 +678,11 @@
 # /torch/hub.py
 # /torch/legacy/
 # /torch/lib/
-# /torch/monitor/
 # /torch/multiprocessing/
 # /torch/nested/
 # /torch/numa/
 # /torch/overrides.py
 # /torch/py.typed
-# /torch/quasirandom.py
 # /torch/random.py
 # /torch/return_types.py
 # /torch/script.h
@@ -931,10 +917,8 @@
 # /torchgen/
 #
 # [infra_test]
-# /test/benchmark_utils/
 # /test/scripts/
 # /test/spincli/
-# /test/strobelight/
 /test/test_public_bindings.py @albanD
 # /test/test_testing.py
 # /test/test_utils.py
@@ -943,8 +927,8 @@
 # /tools/test/
 # /tools/testing/
 # /torch/_logging/
+# /torch/_monitor.py
 # /torch/testing/
-# /torch/utils/benchmark/
 /torch/testing/_internal/common_utils.py @pytorch/pytorch-dev-infra
 # /torch/testing/_internal/common_methods_invocations.py
 # /torch/testing/_internal/common_device_type.py

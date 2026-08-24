@@ -52,9 +52,7 @@ torch.func <func>
 futures
 fx
 fx.experimental
-torch.hub <hub>
 torch.linalg <linalg>
-torch.monitor <monitor>
 torch.signal <signal>
 torch.special <special>
 torch.overrides
@@ -75,7 +73,6 @@ sparse
 storage
 torch.testing <testing>
 torch.utils <utils>
-torch.utils.benchmark <benchmark_utils>
 torch.utils.checkpoint <checkpoint>
 torch.utils.cpp_extension <cpp_extension>
 torch.utils.data <data>

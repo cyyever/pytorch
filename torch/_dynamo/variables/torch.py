@@ -183,8 +183,6 @@ supported_ctx_manager_classes = dict.fromkeys(
         torch.autograd.grad_mode.no_grad,
         torch.autograd.grad_mode.set_grad_enabled,
         torch.autograd.graph.disable_saved_tensors_hooks,
-        torch.cpu.amp.autocast_mode.autocast,
-        torch.cuda.amp.autocast_mode.autocast,
         torch.cuda.use_mem_pool,
         torch.cuda.use_mem_pool.__wrapped__,  # type: ignore[attr-defined]
         torch.fx.traceback.annotate,
@@ -829,11 +827,7 @@ class TorchCtxManagerClassVariable(BaseTorchVariable):
                     {},
                 ),
             )
-        elif self.value in (
-            torch.amp.autocast_mode.autocast,
-            torch.cuda.amp.autocast,
-            torch.cpu.amp.autocast,
-        ):
+        elif self.value is torch.amp.autocast_mode.autocast:
             # pyrefly: ignore [bad-argument-type]
             return AutocastModeVariable.create(self.value, args, kwargs)
         elif self.value in (

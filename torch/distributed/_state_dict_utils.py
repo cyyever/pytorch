@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 import copy
 import io
-import math
 import weakref
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import Any, cast, NamedTuple, TYPE_CHECKING
@@ -9,13 +8,10 @@ from typing import Any, cast, NamedTuple, TYPE_CHECKING
 import torch
 import torch.cuda._pin_memory_utils as pin_memory_utils
 import torch.distributed as dist
-import torch.nn.functional as F
 from torch.distributed._functional_collectives import AsyncCollectiveTensor
 
 
 if dist.is_available() or TYPE_CHECKING:
-    from torch.distributed import distributed_c10d
-    from torch.distributed._shard.sharded_tensor import ShardedTensor
     from torch.distributed.tensor import distribute_tensor, DTensor, Replicate
     from torch.distributed.tensor._utils import compute_local_shape_and_global_offset
 
@@ -29,51 +25,12 @@ def _identity_func(
     return obj
 
 
-def _all_gather_sharded_tensor(
-    sharded_tensor: "ShardedTensor",
-    pg: dist.ProcessGroup | None = None,
-    device: torch.device | None = None,
-) -> torch.Tensor:
-    if pg is None:
-        pg = distributed_c10d._get_default_group()
-    world_size = dist.get_world_size(pg)
-    shards = sharded_tensor.local_shards()
-    dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
-    tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
-    chunk_size = math.ceil(dim_0_size / world_size) * tensor_numel // dim_0_size
-    pg_device = (
-        distributed_c10d._get_pg_default_device(pg) if device is None else device
-    )
-    if shards:
-        local_tensor = shards[0].tensor.flatten()
-        if local_tensor.device.type != pg_device.type:
-            local_tensor = local_tensor.to(pg_device)
-        num_padding = chunk_size - local_tensor.numel()
-        if num_padding > 0:
-            local_tensor = F.pad(local_tensor, [0, num_padding])
-    else:
-        local_tensor = torch.zeros(
-            chunk_size, dtype=sharded_tensor.dtype, device=pg_device
-        )
-
-    tensor = torch.empty(
-        chunk_size * world_size,
-        dtype=local_tensor.dtype,
-        device=pg_device,
-    )
-    dist.all_gather_single(tensor, local_tensor, group=pg)
-
-    tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
-    return tensor
-
-
 class CompanionMismatch(Exception):
     pass
 
 
 def _iterate_state_dict(
     iter_object: Any,
-    sharded_tensor_func: Callable,
     dtensor_func: Callable,
     tensor_func: Callable,
     *,
@@ -89,7 +46,6 @@ def _iterate_state_dict(
 
     Args:
         iter_object (Any): the target state_dict.
-        sharded_tensor_func (Callable): the function to apply to ShardedTensor
         dtensor_func (Callable): the function to apply to DTensor
         tensor_func (Callable): the function to apply to Tensor
         pg (Optional[dist.ProcessGroup]): process group passed to tensor functions
@@ -108,9 +64,7 @@ def _iterate_state_dict(
     """
     # TODO: should we use pytree?
     cpu_device = torch.device("cpu")
-    if isinstance(iter_object, ShardedTensor):
-        ret = sharded_tensor_func(iter_object, pg, device, companion_obj)
-    elif isinstance(iter_object, DTensor):
+    if isinstance(iter_object, DTensor):
         ret = dtensor_func(iter_object, pg, device, companion_obj)
     elif isinstance(iter_object, torch.Tensor):
         ret = tensor_func(iter_object, pg, device, companion_obj)
@@ -134,7 +88,6 @@ def _iterate_state_dict(
         ret = {
             key: _iterate_state_dict(
                 value,
-                sharded_tensor_func,
                 dtensor_func,
                 tensor_func,
                 pg=pg,
@@ -157,7 +110,6 @@ def _iterate_state_dict(
         ret = [
             _iterate_state_dict(
                 v,
-                sharded_tensor_func,
                 dtensor_func,
                 tensor_func,
                 pg=pg,
@@ -191,15 +143,6 @@ def _iterate_state_dict(
                     companion_obj._local_tensor.copy_(
                         ret._local_tensor, non_blocking=non_blocking
                     )
-                elif isinstance(companion_obj, ShardedTensor):
-                    if not isinstance(ret, ShardedTensor):
-                        raise AssertionError(
-                            "ret must be a ShardedTensor when companion_obj is a ShardedTensor"
-                        )
-                    for idx, shard in enumerate(companion_obj.local_shards()):
-                        shard.tensor.copy_(
-                            ret.local_shards()[idx].tensor, non_blocking=non_blocking
-                        )
                 else:
                     companion_obj.copy_(ret, non_blocking=non_blocking)
                 ret = companion_obj
@@ -220,18 +163,18 @@ def _gather_state_dict(
     type_check: bool = True,
 ) -> dict[str, Any]:
     """
-    Given a state_dict, this API gathers all the ShardedTensors or DTensors in
+    Given a state_dict, this API gathers all the DTensors in
     the state_dict.
 
 
     Args:
         state_dict (Dict[str, Any]): the target sharded state_dict.
         pg (Optional[dist.ProcessGroup]): the process group that is used to
-            gather ShardedTensor. Note that gathering a DTensor will use
+            gather tensors. Note that gathering a DTensor will use
             the DeviceMesh. So this argument will be ignored when gathering a
             DTensor.
         device: (Optional[torch.device]): the device that is used to
-            perform allgather for ShardedTensor. Note that gathering a DTensor
+            perform allgather. Note that gathering a DTensor
             will use the DeviceMesh. So this argument will be ignored when
             gathering a DTensor.
         cpu_offload (bool): whether to offload the tensors to CPU memory. The
@@ -246,23 +189,6 @@ def _gather_state_dict(
     Returns:
         The gathered state dictionary.
     """
-
-    def sharded_tensor_func(value, pg, device, companion_obj):
-        # ShardedTensor does not seem to record the original device type.
-        # So if the tensor is moved to CPU, we won't know the original type.
-        # As a result, we have to rely on the user to tell us the correct one.
-        cpu_device = torch.device("cpu")
-        output_tensor = _all_gather_sharded_tensor(value, pg, device)
-        local_shard_device = (
-            value.local_shards()[0].tensor.device
-            if value.local_shards()
-            else cpu_device
-        )
-        if output_tensor.device != local_shard_device:
-            value = output_tensor.to(local_shard_device)
-        else:
-            value = output_tensor
-        return value
 
     def dtensor_func(value, pg, device, companion_obj):
         if value.device != value.device_mesh.device_type:
@@ -287,7 +213,6 @@ def _gather_state_dict(
 
     return _iterate_state_dict(
         state_dict,
-        sharded_tensor_func,
         dtensor_func,
         _identity_func,
         pg=pg,
@@ -310,7 +235,7 @@ def _offload_state_dict_to_cpu(
     Args:
         state_dict (Dict[str, Any]): the target state_dict.
         pg (Optional[dist.ProcessGroup]): the process group that is used to
-            gather ShardedTensor. Note that gathering a DTensor will use
+            gather tensors. Note that gathering a DTensor will use
             the DeviceMesh. So this argument will be ignored when gathering a
             DTensor.
         ranks_only: (Tuple[int, ...]): if this tuple is empty, all ranks will
@@ -326,7 +251,6 @@ def _offload_state_dict_to_cpu(
 
     ret = _iterate_state_dict(
         state_dict,
-        _identity_func,
         _identity_func,
         _identity_func,
         pg=None,
@@ -375,7 +299,6 @@ def _copy_state_dict(
 
     return _iterate_state_dict(
         state_dict,
-        _identity_func,
         _identity_func,
         _identity_func,
         pg=None,
@@ -454,28 +377,8 @@ def _create_cpu_state_dict(
         ret._local_tensor = tensor_func(ret._local_tensor, pg, device, None)
         return ret
 
-    def sharded_tensor_func(
-        obj: ShardedTensor,
-        pg: dist.ProcessGroup | None,
-        device: torch.device | None,
-        _: Any,
-    ) -> ShardedTensor:
-        if not obj.local_shards():
-            return obj
-
-        if obj.device != torch.device("cpu"):
-            ret = obj.to(device="cpu")
-        else:
-            ret = copy.deepcopy(obj)
-
-        for shards in ret.local_shards():
-            shards.tensor = tensor_func(shards.tensor, pg, device, None)
-
-        return ret
-
     ret = _iterate_state_dict(
         state_dict,
-        sharded_tensor_func,
         dtensor_func,
         tensor_func,
         pg=None,

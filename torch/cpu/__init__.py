@@ -13,7 +13,6 @@ from typing import Any
 import torch
 
 from .. import device as _device
-from . import amp
 
 
 __all__ = [

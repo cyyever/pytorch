@@ -7,15 +7,6 @@ import torch
 import torch.distributed as dist
 import torch.distributed.checkpoint as dcp
 import torch.nn as nn
-from torch.distributed._shard.sharded_tensor import (
-    Shard,
-    ShardedTensor,
-    ShardedTensorMetadata,
-    ShardMetadata,
-)
-from torch.distributed._shard.sharded_tensor.metadata import (
-    TensorProperties as TensorProperties_Shard,
-)
 from torch.distributed.checkpoint import CheckpointableTensor
 from torch.distributed.checkpoint._dedup_save_plans import dedup_save_plans
 from torch.distributed.checkpoint.api import CheckpointException
@@ -73,33 +64,34 @@ if TEST_WITH_DEV_DBG_ASAN:
 
 
 def create_sharded_tensor(rank, world_size, shards_per_rank, shard_size=8):
-    shards_metadata = []
-    local_shards = []
-    for idx in range(world_size * shards_per_rank):
-        shard_rank = idx // shards_per_rank
-        shard_md = ShardMetadata(
-            shard_offsets=[idx * shard_size],
-            shard_sizes=[shard_size],
-            placement=f"rank:{shard_rank}/cpu",
-        )
-        shards_metadata.append(shard_md)
-        if shard_rank == rank:
-            shard = Shard.from_tensor_and_offsets(
-                torch.rand(*shard_md.shard_sizes),
-                shard_offsets=shard_md.shard_offsets,
-                rank=rank,
-            )
-            local_shards.append(shard)
-
-    sharded_tensor_md = ShardedTensorMetadata(
-        shards_metadata=shards_metadata,
-        size=torch.Size([shard_size * len(shards_metadata)]),
-        tensor_properties=TensorProperties_Shard.create_from_tensor(torch.zeros(1)),
+    # Build a local tensor annotated with CheckpointableTensor fields so that DCP
+    # treats it as one shard (or several) of a global tensor.
+    tensor = torch.rand(shards_per_rank * shard_size)
+    tensor.global_shape = (world_size * shards_per_rank * shard_size,)
+    tensor.global_offsets = tuple(
+        (idx * shard_size,)
+        for idx in range(rank * shards_per_rank, (rank + 1) * shards_per_rank)
     )
-
-    return ShardedTensor._init_from_local_shards_and_global_metadata(
-        local_shards=local_shards, sharded_tensor_metadata=sharded_tensor_md
+    tensor.local_offsets = tuple(
+        (i * shard_size,) for i in range(shards_per_rank)
     )
+    tensor.local_sizes = tuple((shard_size,) for _ in range(shards_per_rank))
+    return tensor
+
+
+def create_full_sharded_tensor(world_size, shard_size=8):
+    # Metadata-only view listing every rank's shard of the global tensor, matching
+    # the global metadata ShardedTensor used to carry for all ranks.
+    tensor = torch.zeros(world_size * shard_size)
+    tensor.global_shape = (world_size * shard_size,)
+    tensor.global_offsets = tuple(
+        (idx * shard_size,) for idx in range(world_size)
+    )
+    tensor.local_offsets = tuple(
+        (idx * shard_size,) for idx in range(world_size)
+    )
+    tensor.local_sizes = tuple((shard_size,) for _ in range(world_size))
+    return tensor
 
 
 class TestCheckpointableTensorDistributed(DTensorTestBase):
@@ -215,7 +207,7 @@ class TestSavePlan(TestCase):
         st_wi = plan.items[2]
         self.assertEqual(st_wi.index, MetadataIndex("st", [8]))
         self.assertEqual(st_wi.type, WriteItemType.SHARD)
-        self.assertEqual(st_wi.tensor_data.size, st.size())
+        self.assertEqual(st_wi.tensor_data.size, torch.Size(st.global_shape))
         self.assertEqual(
             st_wi.tensor_data.properties,
             TensorProperties.create_from_tensor(torch.zeros(1)),
@@ -563,11 +555,15 @@ class TestSavePlan(TestCase):
 
         # Rank 1 has a 16 bytes shard from [16, 32[
         world8_state_dict = create_state_dict(rank=1, world_size=8)
-        world8_metadata = _create_default_local_metadata(world8_state_dict)
+        world8_metadata = _create_default_local_metadata(
+            {"st": create_full_sharded_tensor(world_size=8, shard_size=128 // 8)}
+        )
 
         # Rank 1 has a 32 bytes shard from [32, 64[
         world4_state_dict = create_state_dict(rank=1, world_size=4)
-        world4_metadata = _create_default_local_metadata(world4_state_dict)
+        world4_metadata = _create_default_local_metadata(
+            {"st": create_full_sharded_tensor(world_size=4, shard_size=128 // 4)}
+        )
 
         # First scenario, going from world=8 to world=4, need to load 2 shards
         # Each 4-world shard has 32 elements, so it needs to load 2 shards
@@ -616,8 +612,9 @@ class TestSavePlan(TestCase):
                 }
 
         # rank 1 has a 30 bytes shard from [30, 60[
-        world4_state_dict = create_state_dict(rank=1, world_size=4)
-        world4_metadata = _create_default_local_metadata(world4_state_dict)
+        world4_metadata = _create_default_local_metadata(
+            {"st": create_full_sharded_tensor(world_size=4, shard_size=120 // 4)}
+        )
 
         # rank 1 has a 40 bytes shard from [40, 80[
         world3_state_dict = create_state_dict(rank=1, world_size=3)

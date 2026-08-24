@@ -100,7 +100,7 @@ def save(
     Save a distributed model in SPMD style.
 
     This function is different from ``torch.save()`` as it handles
-    ``ShardedTensor`` , and ``DTensor`` by having each rank only save their local shards.
+    ``DTensor`` by having each rank only save their local shards.
 
     For each ``Stateful`` object (having both a ``state_dict`` and a ``load_state_dict``),
     save will call ``state_dict`` before serialization.

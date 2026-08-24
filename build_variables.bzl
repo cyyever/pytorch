@@ -106,8 +106,6 @@ libtorch_profiler_sources = [
     "torch/csrc/profiler/standalone/privateuse1_profiler.cpp",
     "torch/csrc/profiler/stubs/base.cpp",
     "torch/csrc/profiler/perf.cpp",
-    "torch/csrc/monitor/counters.cpp",
-    "torch/csrc/monitor/events.cpp",
 ]
 
 core_trainer_sources = [

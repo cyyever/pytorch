@@ -19,10 +19,6 @@ from torch.distributed.fsdp._fully_shard._fsdp_param_group import (
     _get_param_module_infos,
 )
 from torch.distributed.fsdp._fully_shard._fully_shard import FSDPModule
-from torch.distributed.fsdp._init_utils import (
-    _init_inter_node_process_group,
-    _init_intra_node_process_group,
-)
 from torch.distributed.tensor import (
     DeviceMesh,
     distribute_tensor,
@@ -54,6 +50,15 @@ from torch.testing._internal.distributed._tensor.common_dtensor import (
 
 
 device_type = torch.device(get_devtype())
+
+
+def _init_intra_node_process_group(group_size: int):
+    return dist.new_group(ranks=list(range(group_size)))
+
+
+def _init_inter_node_process_group(world_pg, group_size: int):
+    world_ranks = dist.get_process_group_ranks(world_pg)
+    return dist.new_group(ranks=world_ranks[::group_size])
 
 
 class TestFullyShardDeviceTensor(FSDPTestMultiThread):
