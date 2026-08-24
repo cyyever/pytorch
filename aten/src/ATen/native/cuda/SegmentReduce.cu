@@ -14,10 +14,6 @@
 #include <ATen/ops/cat.h>
 #include <ATen/ops/cumsum.h>
 
-// SegmentReduce compilation with CUDA-12.9 causes  NVCC crash on Windows
-// See https://github.com/pytorch/pytorch/issues/156181
-#if !(defined(_WIN32) && CUDART_VERSION == 12090)
-
 namespace at::native {
 
 namespace {
@@ -601,5 +597,3 @@ REGISTER_DISPATCH(
   &_segment_reduce_offsets_backward_cuda_kernel);
 
 } // namespace at::native
-
-#endif
