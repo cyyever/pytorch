@@ -6,8 +6,6 @@
 
 namespace torch::jit {
 
-struct Graph;
-
 namespace testing {
 
 struct FileCheckImpl;
@@ -20,16 +18,10 @@ struct FileCheck {
   // Run FileCheck against test string
   TORCH_API void run(const std::string& test_string);
 
-  // Run FileCheck against dump of graph IR
-  TORCH_API void run(const Graph& graph);
-
-  // Parsing input checks string and run against test string / dump of graph IR
+  // Parsing input checks string and run against test string
   TORCH_API void run(
       const std::string& input_checks_string,
       const std::string& test_string);
-  TORCH_API void run(
-      const std::string& input_checks_string,
-      const Graph& graph);
 
   // Checks that the string occurs, starting at the end of the most recent match
   TORCH_API FileCheck* check(const std::string& str);

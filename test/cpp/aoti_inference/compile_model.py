@@ -7,13 +7,6 @@ AOTI_CUSTOM_OP_LIB = "libaoti_custom_class.so"
 torch.classes.load_library(AOTI_CUSTOM_OP_LIB)
 
 
-class TensorSerializer(torch.nn.Module):
-    def __init__(self, data):
-        super().__init__()
-        for key in data:
-            setattr(self, key, data[key])
-
-
 class SimpleModule(torch.nn.Module):
     """
     a simple module to be compiled
@@ -48,13 +41,6 @@ class MyAOTIModule(torch.nn.Module):
         return tuple(outputs)
 
 
-def make_script_module(lib_path, device, *inputs):
-    m = MyAOTIModule(lib_path, device)
-    # sanity check
-    m(*inputs)
-    return torch.jit.trace(m, inputs)
-
-
 def compile_model(device, data):
     module = SimpleModule().to(device)
     x = torch.randn((4, 4), device=device)
@@ -69,15 +55,16 @@ def compile_model(device, data):
         lib_path = torch._export.aot_compile(
             module, inputs, dynamic_shapes=dynamic_shapes
         )
-    script_module = make_script_module(lib_path, device, *inputs)
-    aoti_script_model = f"script_model_{device}.pt"
-    script_module.save(aoti_script_model)
+    # sanity check that the custom class can drive the compiled .so
+    MyAOTIModule(lib_path, device)(*inputs)
 
-    # save sample inputs and ref output
+    # save sample inputs and ref output; the cpp side builds MyAOTIClass from
+    # lib_path itself, so nothing has to serialize a callable module
     with torch.no_grad():
         ref_output = module(*inputs)
     data.update(
         {
+            f"lib_path_{device}": lib_path,
             f"inputs_{device}": list(inputs),
             f"outputs_{device}": [ref_output],
         }
@@ -88,7 +75,7 @@ def main():
     data = {}
     for device in ["cpu", "cuda"] if torch.cuda.is_available() else ["cpu"]:
         compile_model(device, data)
-    torch.jit.script(TensorSerializer(data)).save("script_data.pt")
+    torch.save(data, "script_data.pt")
 
 
 if __name__ == "__main__":

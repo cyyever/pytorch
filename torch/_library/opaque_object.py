@@ -84,7 +84,7 @@ class FakeOpaqueObject:
 
 OpaqueTypeStr = "__torch__.torch.classes.aten.OpaqueObject"
 
-OpaqueType = NewType("OpaqueType", torch._C.ScriptObject)
+OpaqueType = NewType("OpaqueType", CustomClassBase)
 
 # Type for reconstruct_fn: called by PythonKeyTracer.create_arg when make_fx
 # encounters an untracked opaque reference (e.g. a backward closure capture).

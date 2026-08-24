@@ -208,7 +208,6 @@ for tracking purposes -->
 .. py:module:: torch.utils.hipify.version
 .. py:module:: torch.utils.hooks
 .. py:module:: torch.utils.mkldnn
-.. py:module:: torch.utils.mobile_optimizer
 .. py:module:: torch.utils.show_pickle
 .. py:module:: torch.utils.tensorboard.summary
 .. py:module:: torch.utils.tensorboard.writer

@@ -20,14 +20,13 @@
 #
 # Review-surface hierarchy:
 # - Compiler: compiler_dynamo, compiler_inductor, compiler_export_fx, compiler_autograd, functorch
-# - Core operators and runtime: core_aten_native_ops, core_aten_linalg, sparse, core_aten_optimizers, core_aten_runtime, core_c10_dispatch, autograd, core_csrc_misc, core_lazy_runtime, core_tests
+# - Core operators and runtime: core_aten_native_ops, core_aten_linalg, sparse, core_aten_optimizers, core_aten_runtime, core_c10_dispatch, autograd, core_csrc_misc, core_tests
 # - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm, backend_vulkan
 # - Public APIs and extensions: python_core_api, python_nn_api, python_data_api, python_specialized_api, python_api_tests, cpp_api_custom_ops, cpp_runtime_tests, nativert
 # - Distributed: distributed
-# - Serialization and export: jit_torchscript, onnx_export, serialization_package
+# - Serialization and export: jit_torchscript, serialization_package
 # - Quantization: quantization
 # - Profiling: profiler
-# - Mobile: mobile_runtime, mobile_android, mobile_delegates
 # - Build and developer infrastructure: infra_ci, infra_github_automation, infra_build_packaging, infra_linting, infra_codegen, infra_developer_tools, infra_test
 # - Third-party dependencies: third_party_backend_deps, third_party_core_build_deps, third_party_serialization_schema
 # - Benchmarks: benchmark_compiler, benchmark_operator_runtime, benchmark_models
@@ -133,7 +132,6 @@
 /test/test_sparse_csr.py @amjames @pearu @nikitaved
 # /test/test_sparse_semi_structured.py
 /torch/sparse/ @amjames @pearu @nikitaved
-/aten/src/ATen/native/ao_sparse/ @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/SparseCsrTensorImpl.cpp @amjames @pearu @nikitaved
 # /aten/src/ATen/SparseCsrTensorImpl.h
 # /aten/src/ATen/SparseCsrTensorUtils.h
@@ -299,14 +297,12 @@
 # /aten/src/ATen/jit_macros.h
 # /aten/src/ATen/jiterator_macros.h
 # /aten/src/ATen/mkl/
-# /aten/src/ATen/nnapi/
 # /aten/src/ATen/ops/
 # /aten/src/ATen/quantized/
 # /aten/src/ATen/record_function.cpp
 # /aten/src/ATen/record_function.h
 # /aten/src/ATen/templates/
 # /aten/src/ATen/test/
-# /aten/src/ATen/vulkan/
 # /aten/src/README.md
 # /aten/src/THC/
 # /aten/tools/
@@ -386,7 +382,6 @@
 # /torch/csrc/itt_wrapper.h
 # /torch/csrc/monitor/
 # /torch/csrc/multiprocessing/
-# /torch/csrc/onnx/
 # /torch/csrc/python_headers.h
 # /torch/csrc/serialization.cpp
 # /torch/csrc/serialization.h
@@ -397,9 +392,6 @@
 # /torch/csrc/utils.cpp
 # /torch/csrc/utils.h
 # /torch/csrc/utils/
-#
-# [core_lazy_runtime]
-# /torch/csrc/lazy/
 #
 # [core_tests]
 # /test/HowToWriteTestsUsingFileCheck.md
@@ -428,8 +420,6 @@
 # /test/expect/TestJit.test_pretty_printer-python_op_name_test.expect
 # /test/expect/TestJit.test_pretty_printer-while_if_test.expect
 # /test/expect/TestJit.test_pretty_printer-while_test.expect
-# /test/expect/TestPytorchExportModes.test_aten_fallback.expect
-# /test/expect/TestPytorchExportModes.test_onnx_aten.expect
 # /test/expect/TestScript.test_annot_ast_mypy_fn.expect
 # /test/expect/TestScript.test_annot_ast_mypy_method.expect
 # /test/expect/TestScript.test_annot_ast_py3_fn.expect
@@ -441,7 +431,6 @@
 # /test/expect/TestScript.test_annotated_script_fn.expect
 # /test/expect/TestScript.test_annotated_script_method.expect
 # /test/expect/TestScript.test_format-stdout.expect
-# /test/expect/TestScript.test_listconstruct_erasure.expect
 # /test/expect/TestScript.test_parser_type_annotations.expect
 # /test/expect/TestScript.test_parser_type_annotations_comment.expect
 # /test/expect/TestScript.test_print-stdout.expect
@@ -477,7 +466,6 @@
 # /test/expect/TestTorch.test_print-non_contiguous.expect
 # /test/expect/__init__.py
 # /test/forward_backward_compatibility/
-# /test/lazy/
 # /test/linear.py
 # /test/load_torchscript_model.py
 # /test/minioptest_failures_dict.json
@@ -551,7 +539,6 @@
 # /test/test_ops.py
 /test/test_ops_fwd_gradients.py @soulitzer
 /test/test_ops_gradients.py @soulitzer
-# /test/test_ops_jit.py
 # /test/test_ops_unbacked.py
 # /test/test_out_dtype_op.py
 # /test/test_overrides.py
@@ -573,7 +560,6 @@
 # /test/test_sort_and_select.py
 # /test/test_stateless.py
 # /test/test_stateless_rng.py
-# /test/test_static_runtime.py
 # /test/test_subclass.py
 # /test/test_sympy_utils.py
 # /test/test_tensor_creation_ops.py
@@ -591,7 +577,6 @@
 /test/forward_backward_compatibility/check_forward_backward_compatibility.py @larryliu0820
 #
 # [backend_device_runtime]
-# /test/custom_backend/
 # /torch/backends/
 /aten/src/ATen/detail/MTIAHooksInterface.h @egienvalue
 /torch/csrc/mtia/ @egienvalue
@@ -624,12 +609,10 @@
 /aten/src/ATen/cudnn/ @eqy @syed-ahmed @Aidyn-A
 #
 # [backend_mps]
-# /aten/src/ATen/metal/
 /aten/src/ATen/mps/ @malfet
 /aten/src/ATen/native/mps/ @malfet
 /c10/metal/ @malfet
 # /test/metal/
-# /test/test_metal.py
 /test/test_mps.py @malfet
 # /torch/backends/mps/
 # /torch/csrc/mps/
@@ -652,13 +635,9 @@
 /aten/src/ATen/native/miopen/ @jeffdaily @jithunnair-amd
 /aten/src/ATen/miopen/ @jeffdaily @jithunnair-amd
 #
-# [backend_vulkan]
-# /aten/src/ATen/native/vulkan/
-#
 # [python_core_api]
 # /torch/CMakeLists.txt
 # /torch/_C/
-# /torch/_C_flatbuffer/
 # /torch/_VF.py
 # /torch/__config__.py
 # /torch/__future__.py
@@ -671,7 +650,6 @@
 # /torch/_environment.py
 # /torch/_guards.py
 # /torch/_jit_internal.py
-# /torch/_lazy/
 # /torch/_linalg_utils.py
 # /torch/_lobpcg.py
 # /torch/_lowrank.py
@@ -715,7 +693,6 @@
 # /torch/legacy/
 # /torch/lib/
 # /torch/monitor/
-# /torch/mtia/
 # /torch/multiprocessing/
 # /torch/nested/
 # /torch/numa/
@@ -762,7 +739,6 @@
 /test/test_autograd_fallback.py @soulitzer
 # /test/test_modules.py
 # /test/test_nn.py
-# /test/test_nnapi.py
 # /test/test_numpy_interop.py
 /test/test_optim.py @janeyx99
 # /test/test_transformers.py
@@ -779,25 +755,7 @@
 # /test/test_cpp_api_parity.py
 #
 # [jit_torchscript]
-# /test/cpp/jit/test_jit_logging_levels.cpp
-# /test/cpp/jit/test_jit_type.cpp
-# /test/cpp/jit/test_save_load.cpp
-# /test/jit/
-# /test/jit_hooks/
-# /test/test_jit.py
-# /test/test_jit_autocast.py
-# /test/test_jit_disabled.py
-# /test/test_jit_fuser.py
-# /test/test_jit_fuser_legacy.py
-# /test/test_jit_fuser_te.py
-# /test/test_jit_legacy.py
-# /test/test_jit_llga_fuser.py
-# /test/test_jit_profiling.py
-# /test/test_jit_simple.py
-# /test/test_jit_string.py
 # /test/test_jiterator.py
-# /test/test_tensorexpr.py
-# /test/test_tensorexpr_pybind.py
 # /torch/csrc/jit/
 # /torch/jit/
 # /torch/csrc/jit/python/init.cpp
@@ -806,11 +764,8 @@
 # /aten/src/ATen/native/native_functions.yaml
 # /aten/src/ATen/native/prim_native_functions.cpp
 /aten/src/ATen/native/tags.yaml @ezyang
-# /aten/src/ATen/native/ts_native_functions.yaml
-# /test/cpp/jit/test_custom_operators.cpp
 # /test/cpp_extensions/
 # /test/custom_operator/
-# /test/jit/test_custom_operators.py
 # /test/test_cpp_extensions_aot.py
 # /test/test_cpp_extensions_jit.py
 # /test/test_cpp_extensions_mtia_backend.py
@@ -837,29 +792,11 @@
 # /torch/utils/_cpp_extension_versioner.py
 /torch/utils/cpp_extension.py @fmassa @ezyang @malfet
 #
-# [onnx_export]
-/test/onnx/ @titaiwangms @xadupre @justinchuby
-/torch/onnx/ @titaiwangms @xadupre @justinchuby
-/torch/csrc/jit/passes/onnx.h @titaiwangms @xadupre
-/torch/csrc/jit/passes/onnx.cpp @titaiwangms @xadupre
-/torch/csrc/jit/passes/onnx/ @titaiwangms @xadupre
-#
 # [quantization]
-/test/ao/ @jerryzh168
-# /test/onnx/test_models_quantized_onnxruntime.py
-/test/quantization/ @jerryzh168
 /test/test_quantization.py @jerryzh168
-# /torch/ao/
-/torch/ao/quantization/ @jerryzh168
-/torch/ao/nn/intrinsic/ @jerryzh168
-/torch/ao/nn/quantized/ @jerryzh168
-/torch/ao/nn/quantizable/ @jerryzh168
-/torch/ao/nn/qat/ @jerryzh168
-/torch/quantization/ @jerryzh168
 /aten/src/ATen/native/quantized/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/native/quantized/cpu/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
 /aten/src/ATen/native/quantized/cuda/ @jerryzh168
-/aten/src/ATen/native/quantized/cudnn/ @jerryzh168
 #
 # [profiler]
 # /test/cpp/profiler/test_profiler_collection.cpp
@@ -880,24 +817,6 @@
 /torch/csrc/profiler/ @scotts @ryanzhang22
 /torch/profiler/ @scotts @ryanzhang22
 #
-# [mobile_runtime]
-# /test/cpp/jit/test_mobile_type_parser.cpp
-# /test/cpp/lite_interpreter_runtime/test_mobile_profiler.cpp
-# /test/mobile/
-# /test/test_mobile_optimizer.py
-# /torch/csrc/jit/mobile/
-#
-# [mobile_android]
-# /android/
-# /test/mobile/custom_build/
-#
-# [mobile_delegates]
-# /test/test_vulkan.py
-# /test/test_xnnpack_integration.py
-# /torch/backends/_coreml/
-# /torch/backends/_nnapi/
-# /torch/backends/xnnpack/
-# /torch/csrc/jit/backends/
 #
 # [infra_ci]
 /.ci/ @pytorch/pytorch-dev-infra
@@ -923,24 +842,17 @@
 # /.gitignore
 # /.lldbinit
 # /.spin/
-# /BUCK.oss
 # /CMakeLists.txt
 # /Dockerfile
 # /Makefile
-# /buckbuild.bzl
-# /build.bzl
 # /build_variables.bzl
 # /cmake/
 # /codex_setup.sh
-# /defs.bzl
 # /docker.Makefile
-# /pt_ops.bzl
-# /pt_template_srcs.bzl
 # /pyproject.toml
 # /pytest.ini
 # /setup.py
 # /ubsan.supp
-# /ufunc_defs.bzl
 # /version.txt
 #
 # [third_party_core_build_deps]
@@ -950,9 +862,6 @@
 # /third_party/
 #
 # [third_party_backend_deps]
-# /third_party/NNPACK
-# /third_party/VulkanMemoryAllocator
-# /third_party/XNNPACK
 # /third_party/aiter
 # /third_party/composable_kernel
 # /third_party/cpuinfo
@@ -962,19 +871,10 @@
 # /third_party/flash-attention
 # /third_party/gemmlowp/
 # /third_party/ideep
-# /third_party/kleidiai
-# /third_party/pthreadpool
-# /third_party/xnnpack.buck.bzl
-# /third_party/xnnpack_buck_shim.bzl
-# /third_party/xnnpack_src_defs.bzl
-# /third_party/xnnpack_wrapper_defs.bzl
 /third_party/xpu.txt @EikanWang @gujinghui
 #
 # [third_party_serialization_schema]
-# /third_party/flatbuffers
 # /third_party/miniz-3.0.2/
-# /third_party/onnx
-# /third_party/protobuf
 #
 # [benchmark_compiler]
 # /benchmarks/
@@ -984,8 +884,6 @@
 # /test/distributed/
 # /torch/csrc/distributed/
 # /torch/distributed/
-/torch/csrc/distributed/rpc/tensorpipe_agent.cpp @jiayisuse @lw
-/torch/csrc/distributed/rpc/tensorpipe_agent.h @jiayisuse @lw
 /torch/csrc/distributed/c10d/ @d4l3k @fduwjj @kapilsh
 /torch/csrc/distributed/c10d/Backend.* @kwen2501
 /torch/csrc/distributed/c10d/Ops.* @kwen2501
@@ -1004,8 +902,6 @@
 # /.devcontainer/
 # /.vscode/
 # /benchmarks/README.md
-# /benchmarks/compare.sh
-# /benchmarks/upload_scribe.py
 # /binaries/
 # /scripts/
 # /tools/
@@ -1067,16 +963,12 @@
 # /benchmarks/operator_benchmark/
 # /benchmarks/overrides_benchmark/
 # /benchmarks/profiler_benchmark/
-# /benchmarks/record_function_benchmark/
 # /benchmarks/sparse/
-# /benchmarks/static_runtime/
 # /test/test_functional_autograd_benchmark.py
 #
 # [benchmark_models]
-# /benchmarks/compare-fastrnn-results.py
 # /benchmarks/data/
 # /benchmarks/diffusion/
-# /benchmarks/fastrnns/
 # /benchmarks/gpt_fast/
 # /benchmarks/inference/
 # /benchmarks/nested/
@@ -1098,8 +990,6 @@
 # /test/export/
 # /test/fx/
 # /test/higher_order_ops/
-# /test/onnx/exporter/test_exportable_module.py
-# /test/onnx/test_fx_type_promotion.py
 # /test/package/package_bc/test_fx_module.pt
 # /test/test_dynamic_spec_make_fx.py
 # /test/test_fx.py
@@ -1124,12 +1014,10 @@
 # /test/dynamo_expected_failures/
 # /test/dynamo_skips/
 # /test/export/test_dynamic_shapes.py
-# /test/onnx/exporter/test_dynamic_shapes.py
 # /test/test_cpython_diff_sync.py
 # /torch/_dynamo/
 # /torch/csrc/dynamo/
 /torch/_dynamo/backends/tvm.py @guan404ming
-/torch/_dynamo/backends/onnxrt.py @titaiwangms @xadupre @justinchuby
 /torch/_dynamo/variables/higher_order_ops.py @zou3519 @aorenste @bohnstingl
 /torch/_dynamo/polyfills/pytree.py @XuehaiPan
 #

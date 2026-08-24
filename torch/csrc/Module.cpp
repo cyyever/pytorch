@@ -82,15 +82,11 @@
 #include <torch/csrc/inductor/aoti_runner/pybind.h>
 #include <torch/csrc/instruction_counter/Module.h>
 #include <torch/csrc/jit/python/init.h>
-#include <torch/csrc/jit/python/python_ir.h>
-#include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/jit/serialization/pickler.h>
-#include <torch/csrc/lazy/python/init.h>
 #include <torch/csrc/monitor/python_init.h>
 #include <torch/csrc/mps/Module.h>
 #include <torch/csrc/mtia/Module.h>
 #include <torch/csrc/multiprocessing/init.h>
-#include <torch/csrc/onnx/init.h>
 #include <torch/csrc/profiler/python/init.h>
 #include <torch/csrc/tensor/python_tensor.h>
 #include <torch/csrc/utils/cpp_stacktraces.h>
@@ -133,10 +129,7 @@
 
 #ifdef USE_DISTRIBUTED
 #ifdef USE_C10D
-#include <torch/csrc/distributed/autograd/python_autograd.h>
 #include <torch/csrc/distributed/c10d/c10d.h>
-#include <torch/csrc/distributed/rpc/rpc.h>
-#include <torch/csrc/distributed/rpc/testing/testing.h>
 #endif
 #endif
 
@@ -1332,29 +1325,6 @@ static PyObject* THPModule_deterministicFillUninitializedMemory(
     Py_RETURN_FALSE;
 }
 
-static PyObject* THPModule_setUserEnabledNNPACK(
-    PyObject* _unused,
-    PyObject* arg) {
-  HANDLE_TH_ERRORS
-  TORCH_CHECK(
-      PyBool_Check(arg),
-      "set_enabled_NNPACK expects a bool, "
-      "but got ",
-      THPUtils_typename(arg));
-  at::globalContext().setUserEnabledNNPACK(Py_IsTrue(arg));
-  Py_RETURN_NONE;
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPModule_userEnabledNNPACK(
-    PyObject* _unused,
-    PyObject* noargs) {
-  if (at::globalContext().userEnabledNNPACK())
-    Py_RETURN_TRUE;
-  else
-    Py_RETURN_FALSE;
-}
-
 static PyObject* THPModule_setWarnAlways(PyObject* _unused, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(
@@ -1752,15 +1722,6 @@ static PyObject* THPModule_supportedQEngines(
     PyList_SET_ITEM(list.get(), i, i64);
   }
   return list.release();
-}
-
-static PyObject* THPModule_isEnabledXNNPACK(
-    PyObject* _unused,
-    PyObject* noargs) {
-  if (at::globalContext().isXNNPACKAvailable())
-    Py_RETURN_TRUE;
-  else
-    Py_RETURN_FALSE;
 }
 
 static PyObject* THPModule_setCheckSparseTensorInvariants(
@@ -2207,8 +2168,6 @@ static std::initializer_list<PyMethodDef> TorchMethods = {
      THPModule_setDeterministicFillUninitializedMemory,
      METH_O,
      nullptr},
-    {"_get_nnpack_enabled", THPModule_userEnabledNNPACK, METH_NOARGS, nullptr},
-    {"_set_nnpack_enabled", THPModule_setUserEnabledNNPACK, METH_O, nullptr},
     {"_get_warnAlways", THPModule_warnAlways, METH_NOARGS, nullptr},
     {"_set_warnAlways", THPModule_setWarnAlways, METH_O, nullptr},
     {"_warn", THPModule_warn, METH_NOARGS, nullptr},
@@ -2330,7 +2289,6 @@ static std::initializer_list<PyMethodDef> TorchMethods = {
     {"_get_qengine", THPModule_qEngine, METH_NOARGS, nullptr},
     {"_set_qengine", THPModule_setQEngine, METH_O, nullptr},
     {"_supported_qengines", THPModule_supportedQEngines, METH_NOARGS, nullptr},
-    {"_is_xnnpack_enabled", THPModule_isEnabledXNNPACK, METH_NOARGS, nullptr},
     {"_set_check_sparse_tensor_invariants",
      THPModule_setCheckSparseTensorInvariants,
      METH_O,
@@ -2549,14 +2507,6 @@ PyObject* initModule() {
 #if defined(USE_DISTRIBUTED) && defined(USE_C10D)
   THPUtils_addPyMethodDefs(
       methods, torch::distributed::c10d::python_functions());
-#ifndef _WIN32
-  THPUtils_addPyMethodDefs(
-      methods, torch::distributed::rpc::python_functions());
-  THPUtils_addPyMethodDefs(
-      methods, torch::distributed::autograd::python_functions());
-  THPUtils_addPyMethodDefs(
-      methods, torch::distributed::rpc::testing::python_functions());
-#endif
 #endif
 
   static struct PyModuleDef torchmodule = {
@@ -2596,10 +2546,6 @@ PyObject* initModule() {
   ASSERT_TRUE(THPVariable_initModule(module));
   ASSERT_TRUE(THPFunction_initModule(module));
   ASSERT_TRUE(THPEngine_initModule(module));
-  // NOTE: We need to be able to access OperatorExportTypes from ONNX for use in
-  // the export side of JIT, so this ONNX init needs to appear before the JIT
-  // init.
-  torch::onnx::initONNXBindings(module);
   torch::autograd::initEnumTag(module);
   torch::jit::initJITBindings(module);
   torch::monitor::initMonitorBindings(module);
@@ -2617,7 +2563,6 @@ PyObject* initModule() {
   torch::autograd::init_legacy_variable(module);
   torch::profiler::initPythonBindings(module);
   torch::python::init_bindings(module);
-  torch::lazy::initLazyBindings(module);
   torch::_export::initExportBindings(module);
   torch::inductor::initAOTIRunnerBindings(module);
   torch::inductor::initAOTIPackageBindings(module);
@@ -2872,7 +2817,6 @@ Call this whenever a new thread is created in order to propagate values from
       set_module_attr("has_openmp", at::hasOpenMP() ? Py_True : Py_False));
   ASSERT_TRUE(set_module_attr("has_mkl", at::hasMKL() ? Py_True : Py_False));
   ASSERT_TRUE(
-      set_module_attr("_has_kleidiai", at::hasKleidiAI() ? Py_True : Py_False));
   ASSERT_TRUE(
       set_module_attr("has_lapack", at::hasLAPACK() ? Py_True : Py_False));
   ASSERT_TRUE(set_module_attr(
@@ -2923,7 +2867,6 @@ Call this whenever a new thread is created in order to propagate values from
       .value("MiopenTranspose", at::native::ConvBackend::MiopenTranspose)
       .value("Mkldnn", at::native::ConvBackend::Mkldnn)
       .value("MkldnnEmpty", at::native::ConvBackend::MkldnnEmpty)
-      .value("NnpackSpatial", at::native::ConvBackend::NnpackSpatial)
       .value("Overrideable", at::native::ConvBackend::Overrideable)
       .value("Slow2d", at::native::ConvBackend::Slow2d)
       .value("Slow3d", at::native::ConvBackend::Slow3d)

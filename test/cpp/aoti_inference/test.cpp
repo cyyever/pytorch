@@ -26,22 +26,55 @@
 #include <c10/cuda/CUDAStream.h>
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cuda.h>
 #endif
-#include <torch/script.h>
 #include <torch/torch.h>
+#include <torch/csrc/jit/serialization/pickle.h>
+
+#include "aoti_custom_class.h"
 
 #define STR_VALUE(x) #x
 #define STRINGIZE(x) STR_VALUE(x)
 
 namespace {
 
+// The fixtures are plain dicts written by test.py and compile_model.py with
+// torch.save; torch::pickle_load reads that format directly.
+c10::Dict<c10::IValue, c10::IValue> loadFixture(const std::string& path) {
+  std::ifstream in(path, std::ios::binary);
+  TORCH_CHECK(in.good(), "cannot open fixture: ", path);
+  std::vector<char> bytes(
+      (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  return torch::jit::pickle_load(bytes).toGenericDict();
+}
+
+c10::IValue fixtureAt(
+    const c10::Dict<c10::IValue, c10::IValue>& fixture,
+    const std::string& key) {
+  auto it = fixture.find(key);
+  TORCH_CHECK(it != fixture.end(), "fixture has no key: ", key);
+  return it->value();
+}
+
+// torch.save writes a plain Python list, which unpickles as a GenericList; the
+// element type only came back as TensorList when a scripted module attribute
+// carried the List[Tensor] annotation.
+std::vector<at::Tensor> fixtureTensors(
+    const c10::Dict<c10::IValue, c10::IValue>& fixture,
+    const std::string& key) {
+  auto value = fixtureAt(fixture, key);
+  if (value.isTensorList()) {
+    return value.toTensorVector();
+  }
+  std::vector<at::Tensor> tensors;
+  for (const auto& element : value.toListRef()) {
+    tensors.push_back(element.toTensor());
+  }
+  return tensors;
+}
+
 // Function to check if test data files exist and are valid
 bool testDataFilesExist() {
   std::string bindir = STRINGIZE(CMAKE_CURRENT_BINARY_DIR);
-  std::array<std::string, 4> required_files = {
-      "data.pt",
-      "script_data.pt",
-      "script_model_cpu.pt",
-      "script_model_cuda.pt"};
+  std::array<std::string, 2> required_files = {"data.pt", "script_data.pt"};
 
   for (const auto& filename : required_files) {
     std::string filepath = bindir + "/" + filename;
@@ -123,16 +156,16 @@ void test_aoti(const std::string& device, bool use_runtime_constant_folding) {
   std::string data_path =
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string suffix = use_runtime_constant_folding
       ? device + "_use_runtime_constant_folding"
       : device;
   std::string path_attr = "model_so_path_" + suffix;
   std::string inputs_attr = "inputs_" + suffix;
   std::string outputs_attr = "outputs_" + suffix;
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   std::unique_ptr<torch::inductor::AOTIModelContainerRunner> runner;
   if (device == "cpu") {
@@ -147,34 +180,33 @@ void test_aoti(const std::string& device, bool use_runtime_constant_folding) {
     FAIL() << "unsupported device: " << device;
   }
   auto actual_output_tensors =
-      runner->run(data_loader.attr(inputs_attr.c_str()).toTensorList().vec());
+      runner->run(fixtureTensors(data_loader, inputs_attr));
   ASSERT_TRUE(torch::allclose(ref_output_tensors[0], actual_output_tensors[0]));
 }
 
-void test_aoti_script(const std::string& device) {
+// Drives the AOTI model through the torch::class_ custom class that
+// compile_model.py registers, rather than through the runner directly.
+void test_aoti_custom_class(const std::string& device) {
   torch::NoGradGuard no_grad;
 
-  std::string script_model = "script_model_" + device + ".pt";
-  std::string model_path =
-      (std::filesystem::path(
-           STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / script_model.c_str())
-           .string();
-  torch::jit::script::Module model = torch::jit::load(model_path);
-
-  std::string sample_data_path =
+  std::string data_path =
       (std::filesystem::path(
            STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "script_data.pt")
            .string();
-  torch::jit::script::Module sample_data = torch::jit::load(sample_data_path);
-  std::string inputs_attr = "inputs_" + device;
-  std::string outputs_attr = "outputs_" + device;
-  const auto& inputs = sample_data.attr(inputs_attr.c_str()).toList().vec();
+  auto sample_data = loadFixture(data_path);
+  const auto& lib_path =
+      fixtureAt(sample_data, "lib_path_" + device).toStringRef();
+  const auto& inputs =
+      fixtureTensors(sample_data, "inputs_" + device);
   const auto& ref_output_tensors =
-      sample_data.attr(outputs_attr.c_str()).toTensorVector();
-  auto outputs = model.forward(inputs).toTuple()->elements();
+      fixtureTensors(sample_data, "outputs_" + device);
+
+  auto model = c10::make_intrusive<torch::aot_inductor::MyAOTIClass>(
+      lib_path, device);
+  auto outputs = model->forward(inputs);
   ASSERT_EQ(outputs.size(), ref_output_tensors.size());
   for (size_t i = 0; i < ref_output_tensors.size(); i++) {
-    ASSERT_TRUE(torch::allclose(outputs[i].toTensor(), ref_output_tensors[i]));
+    ASSERT_TRUE(torch::allclose(outputs[i], ref_output_tensors[i]));
   }
 }
 
@@ -186,7 +218,7 @@ void test_aoti_package_loader(
   std::string data_path =
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string suffix = use_runtime_constant_folding
       ? device + "_use_runtime_constant_folding"
       : device;
@@ -194,13 +226,13 @@ void test_aoti_package_loader(
   std::string inputs_attr = "inputs_" + suffix;
   std::string outputs_attr = "outputs_" + suffix;
   const auto& pt2_package_path =
-      data_loader.attr(path_attr.c_str()).toStringRef();
+      fixtureAt(data_loader, path_attr).toStringRef();
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   torch::inductor::AOTIModelPackageLoader runner(pt2_package_path);
   auto actual_output_tensors =
-      runner.run(data_loader.attr(inputs_attr.c_str()).toTensorList().vec());
+      runner.run(fixtureTensors(data_loader, inputs_attr));
   ASSERT_TRUE(torch::allclose(ref_output_tensors[0], actual_output_tensors[0]));
 }
 
@@ -214,7 +246,7 @@ void test_aoti_package_loader_multi_gpu(
   std::string data_path =
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string suffix = use_runtime_constant_folding
       ? device + "_use_runtime_constant_folding"
       : device;
@@ -222,14 +254,14 @@ void test_aoti_package_loader_multi_gpu(
   std::string inputs_attr = "inputs_" + suffix;
   std::string outputs_attr = "outputs_" + suffix;
   const auto& pt2_package_path =
-      data_loader.attr(path_attr.c_str()).toStringRef();
+      fixtureAt(data_loader, path_attr).toStringRef();
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   // For all available CUDA devices: Load PT2 package on this device, run
   // inference, and validate results
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   for (int i = 0; i < torch::cuda::device_count(); i++) {
     auto options = torch::TensorOptions().device(torch::kCUDA, i);
     torch::inductor::AOTIModelPackageLoader runner(
@@ -254,7 +286,7 @@ void test_aoti_constants_update(
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string suffix = use_runtime_constant_folding
       ? device + "_use_runtime_constant_folding"
       : device;
@@ -263,20 +295,25 @@ void test_aoti_constants_update(
   std::string outputs_attr = "outputs_" + suffix;
   std::string weights_attr = "w_pre_" + suffix;
   std::string add_attr = "w_add_" + suffix;
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   const auto& weight_tensors =
-      data_loader.attr(weights_attr.c_str()).toTensor();
-  const auto& add_tensors = data_loader.attr(add_attr.c_str()).toTensor();
+      fixtureAt(data_loader, weights_attr).toTensor();
+  const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
+  // The container rejects constants that are not on its own device.
+  at::DeviceType device_type = device == "cuda" ? at::kCUDA : at::kCPU;
   torch::inductor::TensorConstantMap missing_map, rand_map, real_map;
-  missing_map.emplace("L__self___w_pre", new at::Tensor(at::randn({4, 4})));
-  rand_map.emplace("L__self___w_pre", new at::Tensor(at::randn({10})));
-  rand_map.emplace("L__self___w_add", new at::Tensor(at::randn({10})));
+  missing_map.emplace(
+      "L__self___w_pre", new at::Tensor(at::randn({4, 4}).to(device_type)));
+  rand_map.emplace(
+      "L__self___w_pre", new at::Tensor(at::randn({10}).to(device_type)));
+  rand_map.emplace(
+      "L__self___w_add", new at::Tensor(at::randn({10}).to(device_type)));
   real_map.emplace("L__self___w_pre", new at::Tensor(weight_tensors));
   real_map.emplace("L__self___w_add", new at::Tensor(add_tensors));
 
@@ -347,21 +384,21 @@ void test_aoti_extract_constants_map(const std::string& device) {
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string path_attr = "model_so_path_" + device;
   std::string inputs_attr = "inputs_" + device;
   std::string outputs_attr = "outputs_" + device;
   std::string weights_attr = "w_pre_" + device;
   std::string add_attr = "w_add_" + device;
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   const auto& weight_tensors =
-      data_loader.attr(weights_attr.c_str()).toTensor();
-  const auto& add_tensors = data_loader.attr(add_attr.c_str()).toTensor();
+      fixtureAt(data_loader, weights_attr).toTensor();
+  const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
   torch::inductor::TensorConstantMap rand_map, real_map;
   at::Tensor rand_pre, rand_add;
@@ -433,7 +470,7 @@ void test_aoti_double_buffering(
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string suffix = use_runtime_constant_folding
       ? device + "_use_runtime_constant_folding"
       : device;
@@ -442,19 +479,23 @@ void test_aoti_double_buffering(
   std::string outputs_attr = "outputs_" + suffix;
   std::string weights_attr = "w_pre_" + suffix;
   std::string add_attr = "w_add_" + suffix;
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   const auto& weight_tensors =
-      data_loader.attr(weights_attr.c_str()).toTensor();
-  const auto& add_tensors = data_loader.attr(add_attr.c_str()).toTensor();
+      fixtureAt(data_loader, weights_attr).toTensor();
+  const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
+  // The container rejects constants that are not on its own device.
+  at::DeviceType device_type = device == "cuda" ? at::kCUDA : at::kCPU;
   torch::inductor::TensorConstantMap rand_map, real_map;
-  rand_map.emplace("L__self___w_pre", new at::Tensor(at::randn({4, 4})));
-  rand_map.emplace("L__self___w_add", new at::Tensor(at::randn({4, 4})));
+  rand_map.emplace(
+      "L__self___w_pre", new at::Tensor(at::randn({4, 4}).to(device_type)));
+  rand_map.emplace(
+      "L__self___w_add", new at::Tensor(at::randn({4, 4}).to(device_type)));
   real_map.emplace("L__self___w_pre", new at::Tensor(weight_tensors));
   real_map.emplace("L__self___w_add", new at::Tensor(add_tensors));
 
@@ -521,17 +562,17 @@ void test_aoti_double_buffering_with_tensor_constants() {
                                "data_with_tensor_constants.pt")
                                .string();
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string path_attr = "model_so_path";
   std::string inputs_attr = "inputs";
   std::string w_attr = "w";
   std::string outputs_attr = "outputs";
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
-  const auto& w_tensors = data_loader.attr(w_attr.c_str()).toTensor();
+      fixtureTensors(data_loader, inputs_attr);
+  const auto& w_tensors = fixtureAt(data_loader, w_attr).toTensor();
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   torch::inductor::TensorConstantMap real_map;
   real_map.emplace("L__self___w", new at::Tensor(w_tensors));
@@ -567,21 +608,21 @@ void test_aoti_user_managed_buffer() {
   // Memory information variable
   size_t DATASIZE = 128 * 1024 * 1024; // We have 128MB of weight data.
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string path_attr = "model_so_path";
   std::string inputs_attr = "inputs";
   std::string outputs_attr = "outputs";
   std::string weights_attr = "w_pre";
   std::string add_attr = "w_add";
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   const auto& weight_tensors =
-      data_loader.attr(weights_attr.c_str()).toTensor();
-  const auto& add_tensors = data_loader.attr(add_attr.c_str()).toTensor();
+      fixtureAt(data_loader, weights_attr).toTensor();
+  const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
   torch::inductor::TensorConstantMap rand_map, real_map;
   at::Tensor rand_pre, rand_add;
@@ -745,7 +786,7 @@ void test_aoti_free_buffer(bool use_runtime_constant_folding) {
       ? 64 * 1024 * 1024
       : 0; // We have 64MB of folded data.
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string path_attr = "model_so_path";
   if (use_runtime_constant_folding) {
     path_attr += std::string("_use_runtime_constant_folding");
@@ -754,15 +795,15 @@ void test_aoti_free_buffer(bool use_runtime_constant_folding) {
   std::string outputs_attr = "outputs";
   std::string weights_attr = "w_pre";
   std::string add_attr = "w_add";
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   const auto& weight_tensors =
-      data_loader.attr(weights_attr.c_str()).toTensor();
-  const auto& add_tensors = data_loader.attr(add_attr.c_str()).toTensor();
+      fixtureAt(data_loader, weights_attr).toTensor();
+  const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
   torch::inductor::TensorConstantMap rand_map, real_map;
   rand_map.emplace("L__self___w_pre", new at::Tensor(at::randn({4096, 4096})));
@@ -926,13 +967,13 @@ void test_cuda_alloc_test() {
       (std::filesystem::path(
            STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "cuda_alloc_data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string path_attr = "model_so_path";
   std::string inputs_attr = "inputs";
   std::string outputs_attr = "outputs";
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
 
   size_t DATASIZE = 128 * 1024 * 1024; // We have 128MB of weight data.
 
@@ -955,7 +996,7 @@ void test_cuda_alloc_test() {
   ASSERT_EQ(initTorchActive + DATASIZE, torchActive);
 
   auto actual_output_tensors =
-      runner->run(data_loader.attr(inputs_attr.c_str()).toTensorList().vec());
+      runner->run(fixtureTensors(data_loader, inputs_attr));
   ASSERT_TRUE(torch::allclose(ref_output_tensors[0], actual_output_tensors[0]));
 }
 
@@ -1058,15 +1099,15 @@ void test_multi_cuda_streams(const std::string& device) {
   std::string data_path =
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string path_attr = "pt2_package_path_" + device;
   std::string inputs_attr = "inputs_" + device;
   std::string outputs_attr = "outputs_" + device;
   const auto& pt2_package_path =
-      data_loader.attr(path_attr.c_str()).toStringRef();
+      fixtureAt(data_loader, path_attr).toStringRef();
   const auto& ref_output_tensors =
-      data_loader.attr(outputs_attr.c_str()).toTensorList().vec();
-  auto inputs = data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, outputs_attr);
+  auto inputs = fixtureTensors(data_loader, inputs_attr);
 
   constexpr int N = 16;
   constexpr int num_threads = 4;
@@ -1109,14 +1150,14 @@ void test_concurrent_run_with_const_fold(const std::string& device) {
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
 
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   std::string suffix = device + "_use_runtime_constant_folding";
   const auto& model_so_path =
-      data_loader.attr(("model_so_path_" + suffix).c_str()).toStringRef();
+      fixtureAt(data_loader, "model_so_path_" + suffix).toStringRef();
   auto input_tensors =
-      data_loader.attr(("inputs_" + suffix).c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, "inputs_" + suffix);
   const auto& ref_output_tensors =
-      data_loader.attr(("outputs_" + suffix).c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, "outputs_" + suffix);
 
   // num_models=1 forces all threads to contend for the single model instance.
   std::unique_ptr<torch::inductor::AOTIModelContainerRunner> runner;
@@ -1177,11 +1218,11 @@ void test_aoti_const_fold_separate_stream() {
       (std::filesystem::path(
            STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "large_data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
   const auto& model_so_path =
-      data_loader.attr("model_so_path_use_runtime_constant_folding")
+      fixtureAt(data_loader, "model_so_path_use_runtime_constant_folding")
           .toStringRef();
-  auto input_tensors = data_loader.attr("inputs").toTensorList().vec();
+  auto input_tensors = fixtureTensors(data_loader, "inputs");
   const auto& x = input_tensors[0];
   const int64_t size = x.size(1);
 
@@ -1271,18 +1312,18 @@ void test_aoti_observer(const std::string& device) {
   std::string data_path =
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
 
   std::string path_attr = "model_so_path_" + device;
   std::string inputs_attr = "inputs_" + device;
   std::string weights_attr = "w_pre_" + device;
   std::string add_attr = "w_add_" + device;
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
   const auto& weight_tensors =
-      data_loader.attr(weights_attr.c_str()).toTensor();
-  const auto& add_tensors = data_loader.attr(add_attr.c_str()).toTensor();
+      fixtureAt(data_loader, weights_attr).toTensor();
+  const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
   std::unique_ptr<torch::inductor::AOTIModelContainerRunner> runner;
   if (device == "cpu") {
@@ -1340,7 +1381,10 @@ void test_aoti_observer(const std::string& device) {
   // as if it had completed normally.
   const size_t ends_before = observer->ends.size();
   torch::inductor::TensorConstantMap missing_map;
-  missing_map.emplace("L__self___w_pre", new at::Tensor(at::randn({4, 4})));
+  missing_map.emplace(
+      "L__self___w_pre",
+      new at::Tensor(at::randn({4, 4}).to(
+          device == "cuda" ? at::kCUDA : at::kCPU)));
   try {
     runner->update_constant_buffer(
         missing_map,
@@ -1376,13 +1420,13 @@ void test_aoti_record_function(const std::string& device) {
   std::string data_path =
       (std::filesystem::path(STRINGIZE(CMAKE_CURRENT_BINARY_DIR)) / "data.pt")
            .string();
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
+  auto data_loader = loadFixture(data_path);
 
   std::string path_attr = "model_so_path_" + device;
   std::string inputs_attr = "inputs_" + device;
-  const auto& model_so_path = data_loader.attr(path_attr.c_str()).toStringRef();
+  const auto& model_so_path = fixtureAt(data_loader, path_attr).toStringRef();
   auto input_tensors =
-      data_loader.attr(inputs_attr.c_str()).toTensorList().vec();
+      fixtureTensors(data_loader, inputs_attr);
 
   std::unique_ptr<torch::inductor::AOTIModelContainerRunner> runner;
   if (device == "cpu") {
@@ -1446,8 +1490,8 @@ TEST_F(AotInductorTest, BasicTestCpu) {
   test_aoti("cpu", false);
 }
 
-TEST_F(AotInductorTest, BasicScriptTestCpu) {
-  test_aoti_script("cpu");
+TEST_F(AotInductorTest, CustomClassTestCpu) {
+  test_aoti_custom_class("cpu");
 }
 
 TEST_F(AotInductorTest, BasicPackageLoaderTestCpu) {
@@ -1464,8 +1508,8 @@ TEST_F(AotInductorTest, BasicTestCuda) {
   test_aoti("cuda", false);
 }
 
-TEST_F(AotInductorTest, BasicScriptTestCuda) {
-  test_aoti_script("cuda");
+TEST_F(AotInductorTest, CustomClassTestCuda) {
+  test_aoti_custom_class("cuda");
 }
 
 TEST_F(AotInductorTest, BasicPackageLoaderTestCuda) {

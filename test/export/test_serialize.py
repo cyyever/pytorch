@@ -52,7 +52,6 @@ from torch._export.serde.serialize import (
     serialize,
     SerializeError,
 )
-from torch._higher_order_ops.torchbind import enable_torchbind_tracing
 from torch._library.opaque_object import get_opaque_type_name, register_custom_class
 from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
 from torch.export import Dim, export, load, save, unflatten
@@ -2634,8 +2633,7 @@ class TestSerializeCustomClass(TestCase):
             f = Foo()
 
         inputs = (torch.zeros(2, 3),)
-        with enable_torchbind_tracing():
-            ep = export(f, inputs, strict=False)
+        ep = export(f, inputs, strict=False)
 
         serialized_vals = serialize(ep)
         ep = deserialize(serialized_vals)
@@ -2654,8 +2652,7 @@ class TestSerializeCustomClass(TestCase):
             f = Foo()
 
         inputs = (torch.zeros(2, 3),)
-        with enable_torchbind_tracing():
-            ep = export(f, inputs, strict=False)
+        ep = export(f, inputs, strict=False)
 
         serialized_vals = serialize(ep)
         ep = deserialize(serialized_vals)

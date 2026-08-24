@@ -61,20 +61,6 @@ struct BuiltinOpFunction : public Function {
     return *this;
   }
 
-  bool call(
-      Stack& stack,
-      std::optional<size_t> /*unused*/,
-      c10::function_ref<void(const Code&)> /*unused*/) override {
-    run(stack);
-    return false;
-  }
-
-  bool call(Stack& stack, c10::function_ref<void(const mobile::Code&)> /*unused*/)
-      override {
-    run(stack);
-    return false;
-  }
-
   ~BuiltinOpFunction() override = default;
 
  private:

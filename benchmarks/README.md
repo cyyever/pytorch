@@ -23,7 +23,6 @@ python -c "import torch; print(torch.__version__)"
 
 Please refer to each subfolder to discover each benchmark suite. Links are provided where descriptions exist:
 
-* [Fast RNNs](fastrnns/README.md)
 * [Dynamo](dynamo/README.md)
 * [Functional autograd](functional_autograd_benchmark/README.md)
 * [Instruction counts](instruction_counts/README.md)

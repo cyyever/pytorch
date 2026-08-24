@@ -7,6 +7,7 @@
 
 #include <ATen/Utils.h>
 #include <ATen/core/ivalue.h>
+#include <ATen/core/stack.h>
 #include <ATen/core/jit_type.h>
 #include <ATen/core/qualified_name.h>
 #include <c10/util/ArrayRef.h>
@@ -80,7 +81,6 @@ class TORCH_API Pickler {
   void pushString(const std::string& string);
   void pushDevice(const IValue& ivalue);
 #ifdef USE_DISTRIBUTED
-  void pushRRef(const IValue& ivalue);
 #endif
   // unmemoized version
   void pushStringImpl(const std::string& string);

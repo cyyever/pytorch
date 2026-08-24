@@ -21,7 +21,6 @@ These backends include:
 - `torch.backends.mps`
 - `torch.backends.mkl`
 - `torch.backends.mkldnn`
-- `torch.backends.nnpack`
 - `torch.backends.openmp`
 - `torch.backends.opt_einsum`
 - `torch.backends.python_native`
@@ -389,24 +388,6 @@ These backends include:
 .. autoclass::  torch.backends.mkldnn.verbose
 ```
 
-## torch.backends.nnpack
-
-```{eval-rst}
-.. automodule:: torch.backends.nnpack
-```
-
-```{eval-rst}
-.. autofunction::  torch.backends.nnpack.is_available
-```
-
-```{eval-rst}
-.. autofunction::  torch.backends.nnpack.flags
-```
-
-```{eval-rst}
-.. autofunction::  torch.backends.nnpack.set_flags
-```
-
 ## torch.backends.openmp
 
 ```{eval-rst}
@@ -429,11 +410,6 @@ These backends include:
 .. py:module:: torch.backends.xnnpack
 ```
 
-```{eval-rst}
-.. py:module:: torch.backends.kleidiai
-
-.. autofunction:: torch.backends.kleidiai.is_available
-```
 
 ## torch.backends.opt_einsum
 

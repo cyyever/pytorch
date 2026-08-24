@@ -38,13 +38,8 @@ set(TORCH_PYTHON_SRCS
     )
 append_filelist("libtorch_python_core_sources" TORCH_PYTHON_SRCS)
 
-# NB: This has to match the condition under which the JIT test directory
-#     is included (at the time of writing that's in caffe2/CMakeLists.txt).
 if(BUILD_TEST)
     add_definitions(-DBUILDING_TESTS)
-    list(APPEND TORCH_PYTHON_SRCS
-      ${TORCH_ROOT}/test/cpp/jit/torch_python_test.cpp
-      )
 endif()
 
 set(TORCH_PYTHON_INCLUDE_DIRECTORIES
@@ -57,13 +52,10 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}/aten/src
     ${CMAKE_BINARY_DIR}/caffe2/aten/src
     ${CMAKE_BINARY_DIR}/third_party
-    ${CMAKE_BINARY_DIR}/third_party/onnx
 
     ${TORCH_ROOT}/third_party/valgrind-headers
 
     ${TORCH_ROOT}/third_party/gloo
-    ${TORCH_ROOT}/third_party/onnx
-    ${TORCH_ROOT}/third_party/flatbuffers/include
     ${TORCH_ROOT}/third_party/kineto/libkineto/include
     ${TORCH_ROOT}/third_party/cpp-httplib
     ${TORCH_ROOT}/third_party/nlohmann/include
@@ -119,7 +111,7 @@ if(MSVC)
         break()
       endif()
     endforeach()
-    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${Python_LIBRARIES} onnx_library)
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${Python_LIBRARIES})
     if(NOT CMAKE_BUILD_TYPE MATCHES "Release")
       string(APPEND TORCH_PYTHON_LINK_FLAGS " /DEBUG:FULL")
     endif()
@@ -270,8 +262,6 @@ if(USE_DISTRIBUTED)
     endif()
     # Disable certain warnings for GCC-9.X
     if(CMAKE_COMPILER_IS_GNUCXX)
-      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/autograd/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
-      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/rpc/testing/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
       set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/c10d/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
     endif()
     # NCCL is a private dependency of libtorch, but libtorch_python includes
@@ -295,12 +285,6 @@ if(USE_NCCL AND NOT WIN32)
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_NCCL)
 endif()
 
-# coreml
-if(USE_COREML_DELEGATE)
-  list(APPEND TORCH_PYTHON_SRCS ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/cpp/backend.cpp)
-  list(APPEND TORCH_PYTHON_SRCS ${TORCH_SRC_DIR}/csrc/jit/backends/coreml/cpp/preprocess.cpp)
-endif()
-
 
 add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})
 torch_compile_options(torch_python)  # see cmake/public/utils.cmake
@@ -321,16 +305,12 @@ if(CAFFE2_USE_MKL AND BUILD_LIBTORCHLESS)
   target_link_libraries(torch_python PRIVATE caffe2::mkl)
 endif()
 
-add_dependencies(torch_python onnx_proto)
 # Avoid numpy for the DEPLOY build
 if(USE_NUMPY)
   target_link_libraries(torch_python PRIVATE Python::NumPy)
   target_compile_definitions(torch_python PRIVATE USE_NUMPY)
 endif()
 
-if(BUILD_LAZY_TS_BACKEND)
-  target_compile_definitions(torch_python PRIVATE BUILD_LAZY_TS_BACKEND)
-endif()
 
 if(HAVE_SOVERSION)
   set_target_properties(torch_python PROPERTIES
@@ -360,14 +340,6 @@ if(BUILD_LIBTORCHLESS)
     target_compile_definitions(torch_python PRIVATE USE_C10D_GLOO)
   endif()
 
-  if(NOT WIN32)
-    target_compile_definitions(torch_python PRIVATE USE_RPC)
-  endif()
-
-  if(USE_TENSORPIPE)
-    target_compile_definitions(torch_python PRIVATE USE_TENSORPIPE)
-  endif()
-
   set(EXPERIMENTAL_SINGLE_THREAD_POOL "0" CACHE STRING
   "Experimental option to use a single thread pool for inter- and intra-op parallelism")
   if("${EXPERIMENTAL_SINGLE_THREAD_POOL}")
@@ -377,7 +349,6 @@ if(BUILD_LIBTORCHLESS)
 endif()
 
 add_dependencies(torch_python torch_python_stubs)
-add_dependencies(torch_python flatbuffers)
 
 
 if(USE_PRECOMPILED_HEADERS)
@@ -430,13 +401,6 @@ target_include_directories(torch_python PUBLIC ${TORCH_PYTHON_INCLUDE_DIRECTORIE
 if(USE_UCC)
   target_link_libraries(torch_python PRIVATE __caffe2_ucc)
   target_compile_definitions(torch_python PRIVATE USE_UCC)
-endif()
-
-if(BUILD_ONEDNN_GRAPH)
-  target_compile_definitions(torch_python PRIVATE "-DBUILD_ONEDNN_GRAPH")
-  if(NOT BUILD_LIBTORCHLESS)
-    target_compile_definitions(torch_cpu PRIVATE "-DBUILD_ONEDNN_GRAPH")
-  endif()
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithAssert")
@@ -562,26 +526,6 @@ endif()
 if(SKBUILD AND USE_ROCM AND EXISTS "${TORCH_SRC_DIR}/_rocm_init.py")
   install(FILES "${TORCH_SRC_DIR}/_rocm_init.py"
           DESTINATION "${SKBUILD_PLATLIB_DIR}/torch")
-endif()
-
-# Skip building this library under MacOS, since it is currently failing to build on Mac
-# Github issue #61930
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # Add Android Nnapi delegate library
-  add_library(nnapi_backend SHARED
-          ${TORCH_SRC_DIR}/csrc/jit/backends/nnapi/nnapi_backend_lib.cpp
-          ${TORCH_SRC_DIR}/csrc/jit/backends/nnapi/nnapi_backend_preprocess.cpp
-          )
-  # Pybind11 requires explicit linking of the torch_python library
-  if(BUILD_LIBTORCHLESS)
-    target_link_libraries(nnapi_backend PRIVATE ${TORCH_LIB})
-  else()
-    target_link_libraries(nnapi_backend PRIVATE torch)
-  endif()
-  target_link_libraries(nnapi_backend PRIVATE torch_python pybind::pybind11 fmt::fmt-header-only)
-  if(MSVC AND TORCH_PYTHON_LINK_FLAGS)
-    set_target_properties(nnapi_backend PROPERTIES LINK_FLAGS "${TORCH_PYTHON_LINK_FLAGS}")
-  endif()
 endif()
 
 set(TORCH_PYTHON_COMPILE_OPTIONS ${TORCH_PYTHON_COMPILE_OPTIONS} PARENT_SCOPE)

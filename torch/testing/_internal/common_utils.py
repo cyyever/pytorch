@@ -64,7 +64,6 @@ import torch
 import torch.backends.cudnn
 import torch.backends.mkl
 import torch.backends.mps
-import torch.backends.xnnpack
 import torch.cuda
 from torch import Tensor
 from torch._C import ScriptDict, ScriptList  # type: ignore[attr-defined]
@@ -76,10 +75,6 @@ from torch.nn import (
     ParameterDict,
     ParameterList,
     Sequential,
-)
-from torch.onnx import (
-    register_custom_op_symbolic,
-    unregister_custom_op_symbolic,
 )
 from torch.testing import make_tensor
 from torch.testing._comparison import (
@@ -2853,7 +2848,6 @@ def _test_function(fn, device):
 
 def skipIfNoXNNPACK(fn):
     return lazy_skip_if(
-        lambda: not torch.backends.xnnpack.enabled,  # type: ignore[attr-defined]
         "XNNPACK must be enabled for these tests. Please build with USE_XNNPACK=1.",
     )(fn)
 
@@ -5091,7 +5085,7 @@ class TestCase(expecttest.TestCase):
         # class, so we place the expect directory where the test script
         # lives, NOT where test/common_utils.py lives.  This doesn't matter in
         # PyTorch where all test scripts are in the same directory as
-        # test/common_utils.py, but it matters in onnx-pytorch
+        # test/common_utils.py.
         module_id = self.__class__.__module__
         munged_id = remove_prefix(self.id(), module_id + ".")
         test_file = os.path.realpath(sys.modules[module_id].__file__)  # type: ignore[type-var]
@@ -5109,10 +5103,7 @@ class TestCase(expecttest.TestCase):
         def accept_output(update_type):
             print(f"Accepting {update_type} for {munged_id}{subname_output}:\n\n{s}")
             with open(expected_file, 'w') as f:
-                # Adjust for producer_version, leave s unmodified
-                s_tag = re.sub(r'(producer_version): "[0-9.]*"',
-                               r'\1: "CURRENT_VERSION"', s)
-                f.write(s_tag)
+                f.write(s)
 
         try:
             with open(expected_file) as f:
@@ -5133,11 +5124,6 @@ class TestCase(expecttest.TestCase):
             expected = re.sub(r'CppOp\[(.+?)\]', 'CppOp[]', expected)
             s = re.sub(r'CppOp\[(.+?)\]', 'CppOp[]', s)
 
-        # Adjust for producer_version
-        expected = expected.replace(
-            'producer_version: "CURRENT_VERSION"',
-            f'producer_version: "{torch.onnx.producer_version}"'
-        )
         if expecttest.ACCEPT:
             if expected != s:
                 return accept_output("updated output")
@@ -5182,19 +5168,6 @@ class TestCase(expecttest.TestCase):
 
         msg = self._formatMessage(msg, standardMsg)
         raise self.failureException(msg)
-
-    def assertAtenOp(self, onnx_model, operator, overload_name=""):
-        all_aten_nodes = [p for p in onnx_model.graph.node
-                          if p.op_type == "ATen" and p.domain == "org.pytorch.aten"]
-        self.assertTrue(all_aten_nodes)
-
-        for op in all_aten_nodes:
-            attrs = {attr.name: attr.s.decode() for attr in op.attribute}
-            if attrs.get("operator") == operator:
-                break
-
-        self.assertEqual(attrs["operator"], operator)  # type: ignore[possibly-undefined]
-        self.assertEqual(attrs.get("overload_name", ""), overload_name)
 
     def check_nondeterministic_alert(self, fn, caller_name, should_alert=True):
         '''Checks that an operation produces a nondeterministic alert when
@@ -6209,15 +6182,6 @@ def clone_input_helper(input):
         return tuple(map(clone_input_helper, input))
 
     return input
-
-@contextmanager
-def custom_op(opname, symbolic_fn, opset_version):
-    """Context manager/decorator to test ONNX export with custom operator"""
-    try:
-        register_custom_op_symbolic(opname, symbolic_fn, opset_version)
-        yield
-    finally:
-        unregister_custom_op_symbolic(opname, opset_version)
 
 
 def outs_and_grads(fn, graph_inps, inps):

@@ -3,7 +3,6 @@
 #include <ATen/core/function.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
-#include <torch/csrc/jit/api/function_impl.h>
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/frontend/schema_matching.h>
 #include <torch/csrc/jit/ir/constants.h>
@@ -340,11 +339,6 @@ std::ostream& Node::print(
   // In debug print, append file:line:col as a comment after each node
   if (print_source_locations) {
     SourceRange r = sourceRange();
-    if (sourceRange().source()) {
-      if (auto orig = sourceRange().source()->findSourceRangeThatGenerated(r)) {
-        r = *orig;
-      }
-    }
     if (auto file_line_col = r.file_line_col()) {
       auto [filename, line, col] = *file_line_col;
       out << " # " << filename << ':' << line << ':' << col;
@@ -2018,143 +2012,6 @@ at::ArrayRef<Value*> createTupleUnpack(Value* v) {
   }
   auto& g = *v->owningGraph();
   return g.insertNode(g.createTupleUnpack(v))->outputs();
-}
-
-static void inlineCallStackOfNode(
-    Node* n,
-    std::unordered_map<InlinedCallStack*, InlinedCallStackPtr>& new_cs_entries,
-    Function* callee,
-    Node* to_replace,
-    const std::optional<ModuleInstanceInfo>& m_info);
-
-static void inlineCallStackOfBlock(
-    Block* b,
-    std::unordered_map<InlinedCallStack*, InlinedCallStackPtr>& new_cs_entries,
-    Function* callee,
-    Node* to_replace,
-    const std::optional<ModuleInstanceInfo>& m_info) {
-  for (auto n : b->nodes()) {
-    inlineCallStackOfNode(n, new_cs_entries, callee, to_replace, m_info);
-  }
-}
-
-void inlineCallStackOfNode(
-    Node* new_node,
-    std::unordered_map<InlinedCallStack*, InlinedCallStackPtr>& new_cs_entries,
-    Function* callee,
-    Node* to_replace,
-    const std::optional<ModuleInstanceInfo>& m_info) {
-  auto new_node_cs = new_node->callstack();
-
-  InlinedCallStack* raw_callstack_ptr =
-      new_node_cs ? new_node_cs->get() : nullptr;
-
-  if (!new_cs_entries.contains(raw_callstack_ptr)) {
-    if (new_node_cs) {
-      new_cs_entries[raw_callstack_ptr] = c10::make_intrusive<InlinedCallStack>(
-          *new_node_cs, callee, to_replace->sourceRange(), m_info);
-    } else {
-      new_cs_entries[raw_callstack_ptr] = c10::make_intrusive<InlinedCallStack>(
-          callee, to_replace->sourceRange(), m_info);
-    }
-  }
-  new_node->setCallStack(new_cs_entries.at(raw_callstack_ptr));
-  // We updated the inlined callstack of new_node.
-  // Same must be done for the nodes of the blocks of new_node.
-  // For example If node's block otherwise is not annotated appropriately.
-  for (auto block : new_node->blocks()) {
-    inlineCallStackOfBlock(block, new_cs_entries, callee, to_replace, m_info);
-  }
-}
-
-std::vector<Value*> inlineCallTo(
-    Node* to_replace,
-    GraphFunction* callee,
-    Graph* callee_graph) {
-  WithInsertPoint guard(to_replace);
-  std::unordered_map<Value*, Value*> value_map;
-  std::vector<torch::jit::Value*> new_outputs = insertGraph(
-      *to_replace->owningGraph(),
-      *callee_graph,
-      to_replace->inputs(),
-      value_map);
-
-  std::unordered_map<InlinedCallStack*, InlinedCallStackPtr>
-      new_callstack_entries;
-
-  std::optional<ModuleInstanceInfo> module_instance_info = std::nullopt;
-  if (to_replace->kind() == prim::CallMethod) {
-    auto class_type_ptr = to_replace->input(0)->type()->cast<c10::ClassType>();
-    if (to_replace->input(0)->node()->kind() == prim::GetAttr) {
-      module_instance_info = ModuleInstanceInfo(
-          class_type_ptr, to_replace->input(0)->node()->s(attr::name));
-    } else if (
-        !to_replace->owningGraph()->inputs().empty() &&
-        to_replace->input(0) == to_replace->owningGraph()->inputs()[0]) {
-      // This CallMethod must correspond to method of the same object
-      // to which this graph belongs.
-      module_instance_info = ModuleInstanceInfo(class_type_ptr, "SELF");
-    } else {
-      // Not sure if it is possible to come here ever.
-      // TODO: Remove this else. Or add assert
-      module_instance_info =
-          ModuleInstanceInfo(class_type_ptr, "INSTANCE_NAME_UNKNOWN");
-    }
-  }
-
-  // TODO: We might need to use nodes_map instead of value_map. Otherwise, we
-  // are missing nodes without outputs (e.g. prim::Print).
-  std::unordered_set<Node*> updated_nodes;
-  for (const auto& kv : value_map) {
-    /* Skip the old value if it is the graph input.
-     * The reason is that, value_map contains values not all for the nodes of
-     * the graph but primary inputs as well, and it will create duplicates when
-     * the first inlined graph is input to the next one. To avoid this issue,
-     * skip the old value when it is one of the
-     * callee->optimized_graph()->inputs() or callee->graph()->inputs(), depends
-     * on if it is inlined_optimized_graph
-     */
-    auto is_graph_input = std::find(
-        callee_graph->inputs().begin(), callee_graph->inputs().end(), kv.first);
-    if (is_graph_input != callee_graph->inputs().end()) {
-      continue;
-    }
-
-    Node* new_node = kv.second->node();
-    if (!updated_nodes.insert(new_node).second) {
-      continue;
-    }
-
-    inlineCallStackOfNode(
-        new_node,
-        new_callstack_entries,
-        callee,
-        to_replace,
-        module_instance_info);
-  }
-  const auto& old_outputs = to_replace->outputs();
-
-  AT_ASSERT(new_outputs.size() == old_outputs.size());
-  for (const auto i : c10::irange(old_outputs.size())) {
-    if (old_outputs[i]->hasDebugName()) {
-      new_outputs[i]->setDebugName(old_outputs[i]->debugName());
-    }
-    old_outputs[i]->replaceAllUsesWith(new_outputs[i]);
-  }
-  to_replace->destroy();
-
-  return new_outputs;
-}
-
-// inline_optimized_graph argument is used in substitute function call for
-// ONNX conversion
-std::vector<Value*> inlineCallTo(
-    Node* to_replace,
-    GraphFunction* callee,
-    bool inline_optimized_graph /*=true*/) {
-  auto graph =
-      inline_optimized_graph ? callee->optimized_graph() : callee->graph();
-  return inlineCallTo(to_replace, callee, graph.get());
 }
 
 std::vector<Value*> unpackOutputs(const std::vector<Value*>& outputs) {

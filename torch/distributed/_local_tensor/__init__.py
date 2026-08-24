@@ -64,7 +64,8 @@ except ModuleNotFoundError:
 import torch
 import torch.distributed as dist
 from torch import Size, SymBool, SymInt, Tensor
-from torch._C import DispatchKey, DispatchKeySet, ScriptObject
+from torch._C import DispatchKey, DispatchKeySet
+from torch._custom_class_base import CustomClassBase as ScriptObject
 from torch._export.wrappers import mark_subclass_constructor_exportable_experimental
 from torch._ops import OpOverload
 from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode

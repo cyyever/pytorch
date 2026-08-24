@@ -88,7 +88,7 @@ class TestFSSpec(ShardedTensorTestBase):
     def world_size(self) -> int:
         return 2
 
-    @with_comms(backend=BACKEND, init_rpc=False)
+    @with_comms(backend=BACKEND)
     @requires_accelerator_dist_backend()
     @skip_if_lt_x_gpu(2)
     @with_temp_dir
@@ -162,7 +162,7 @@ class TestFSSpec(ShardedTensorTestBase):
             opt_at(optim, 0)["exp_avg_sq"], opt_at(optim_2, 0)["exp_avg_sq"]
         )
 
-    @with_comms(backend=BACKEND, init_rpc=False)
+    @with_comms(backend=BACKEND)
     @requires_accelerator_dist_backend()
     @skip_if_lt_x_gpu(2)
     @with_temp_dir

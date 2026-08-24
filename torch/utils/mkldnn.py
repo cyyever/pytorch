@@ -4,13 +4,11 @@ import functools
 import torch
 
 
-# The Mkldnn* classes subclass torch.jit.ScriptModule, whose metaclass compiles
-# @torch.jit.script_method members at class-definition time. Building them lazily
-# keeps `import torch.utils.mkldnn` (and its transitive importers) free of any
-# TorchScript compilation until MKLDNN conversion is actually used.
+# The Mkldnn* classes are built lazily and exposed as module attributes by
+# __getattr__ below.
 @functools.lru_cache(None)
 def _get_mkldnn_classes():
-    class MkldnnLinear(torch.jit.ScriptModule):
+    class MkldnnLinear(torch.nn.Module):
         def __init__(self, dense_module, dtype) -> None:
             super().__init__()
             self.register_buffer('weight', dense_module.weight.to_mkldnn(dtype))
@@ -24,27 +22,26 @@ def _get_mkldnn_classes():
                     'bias',
                     torch.zeros([dense_module.weight.size(0)], dtype=torch.float).to_mkldnn())
 
-        @torch.jit.script_method
         def __getstate__(self):
             return (self.weight.to_dense(), self.bias.to_dense(), self.training)
 
-        @torch.jit.script_method
         def __setstate__(self, state):
             self.weight = state[0].to_mkldnn()
             self.bias = state[1].to_mkldnn()
             self.training = state[2]
 
-        @torch.jit.script_method
         def forward(self, x):
             x_mkldnn = x if x.is_mkldnn else x.to_mkldnn()
             y_mkldnn = torch._C._nn.mkldnn_linear(x_mkldnn, self.weight, self.bias)
             y = y_mkldnn if x.is_mkldnn else y_mkldnn.to_dense()
             return y
 
-    class _MkldnnConvNd(torch.jit.ScriptModule):
+    class _MkldnnConvNd(torch.nn.Module):
         """Common base of MkldnnConv1d and MkldnnConv2d."""
 
         __constants__ = ['stride', 'padding', 'dilation', 'groups']
+        weight: torch.Tensor
+        bias: torch.Tensor
 
         def __init__(self, dense_module) -> None:
             super().__init__()
@@ -64,11 +61,9 @@ def _get_mkldnn_classes():
                     'bias',
                     torch.zeros([dense_module.weight.size(0)], dtype=torch.float).to_mkldnn())
 
-        @torch.jit.script_method
         def __getstate__(self):
             return (self.weight.to_dense(), self.bias.to_dense(), self.training)
 
-        @torch.jit.script_method
         def forward(self, x):
             return torch.mkldnn_convolution(
                 x,
@@ -85,7 +80,6 @@ def _get_mkldnn_classes():
 
             self.register_buffer('weight', dense_module.weight.to_mkldnn(dtype))
 
-        @torch.jit.script_method
         def __setstate__(self, state):
             self.weight = state[0].to_mkldnn()
             self.bias = state[1].to_mkldnn()
@@ -102,7 +96,6 @@ def _get_mkldnn_classes():
                 self.dilation,
                 self.groups))
 
-        @torch.jit.script_method
         def __setstate__(self, state):
             self.weight = torch._C._nn.mkldnn_reorder_conv2d_weight(
                 state[0].to_mkldnn(),
@@ -124,7 +117,6 @@ def _get_mkldnn_classes():
                 self.dilation,
                 self.groups))
 
-        @torch.jit.script_method
         def __setstate__(self, state):
             self.weight = torch._C._nn.mkldnn_reorder_conv3d_weight(
                 state[0].to_mkldnn(),
@@ -135,7 +127,7 @@ def _get_mkldnn_classes():
             self.bias = state[1].to_mkldnn()
             self.training = state[2]
 
-    class MkldnnBatchNorm(torch.jit.ScriptModule):
+    class MkldnnBatchNorm(torch.nn.Module):
         __constants__ = ['exponential_average_factor', 'eps']
 
         def __init__(self, dense_module) -> None:
@@ -159,7 +151,6 @@ def _get_mkldnn_classes():
             self.register_buffer('running_mean', dense_module.running_mean.to_mkldnn())
             self.register_buffer('running_var', dense_module.running_var.to_mkldnn())
 
-        @torch.jit.script_method
         def __getstate__(self):
             weight = self.weight.to_dense()
             bias = self.bias.to_dense()
@@ -167,7 +158,6 @@ def _get_mkldnn_classes():
             running_var = self.running_var.to_dense()
             return (weight, bias, running_mean, running_var, self.training)
 
-        @torch.jit.script_method
         def __setstate__(self, state):
             self.weight = state[0].to_mkldnn()
             self.bias = state[1].to_mkldnn()
@@ -175,7 +165,6 @@ def _get_mkldnn_classes():
             self.running_var = state[3].to_mkldnn()
             self.training = state[4]
 
-        @torch.jit.script_method
         def forward(self, x):
             return torch.batch_norm(
                 x,
@@ -189,21 +178,18 @@ def _get_mkldnn_classes():
                 False,  # cuda_enabled
             )
 
-    class MkldnnPrelu(torch.jit.ScriptModule):
+    class MkldnnPrelu(torch.nn.Module):
         def __init__(self, dense_module, dtype) -> None:
             super().__init__()
             self.register_buffer('weight', dense_module.weight.to_mkldnn(dtype))
 
-        @torch.jit.script_method
         def __getstate__(self):
             return (self.weight.to_dense(), self.training)
 
-        @torch.jit.script_method
         def __setstate__(self, state):
             self.weight = state[0].to_mkldnn()
             self.training = state[1]
 
-        @torch.jit.script_method
         def forward(self, x):
             x_mkldnn = x if x.is_mkldnn else x.to_mkldnn()
             y_mkldnn = torch.prelu(x_mkldnn, self.weight)

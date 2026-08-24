@@ -4,7 +4,6 @@ from collections import OrderedDict
 
 import torch
 from torch import nn
-from torch.jit.annotations import Dict
 from torch.nn import functional as F
 
 
@@ -329,7 +328,7 @@ class IntermediateLayerGetter(nn.ModuleDict):
 
     _version = 2
     __annotations__ = {
-        "return_layers": Dict[str, str],
+        "return_layers": dict[str, str],
     }
 
     def __init__(self, model, return_layers):

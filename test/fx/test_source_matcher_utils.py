@@ -22,14 +22,14 @@ from torch.testing._internal.common_utils import (
     raise_on_run_directly,
     skipIfTorchDynamo,
 )
-from torch.testing._internal.jit_utils import JitTestCase
+from torch.testing._internal.common_utils import TestCase
 
 
 def _get_node_names(nodes: list[torch.fx.Node]) -> list[str]:
     return [n.name for n in nodes]
 
 
-class TestSourceMatcher(JitTestCase):
+class TestSourceMatcher(TestCase):
     hw_classification = HardwareClassification.GENERIC
 
     @unittest.skipIf(not is_dynamo_supported(), "Dynamo not supported")

@@ -71,9 +71,8 @@ _Value = TimerArgs | GroupedBenchmark | dict[_Label, "_Value"]
 
 Definition = dict[_Label, _Value]
 
-# We initially have to parse (flatten) to an intermediate state in order to
-# build TorchScript models since multiple entries will share the same model
-# artifact.
+# We initially have to parse (flatten) to an intermediate state, since
+# multiple entries will share the same benchmark definition.
 FlatIntermediateDefinition = dict[Label, TimerArgs | GroupedBenchmark]
 
 # Final parsed schema.

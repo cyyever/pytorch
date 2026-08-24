@@ -6,12 +6,8 @@
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/autograd/variable.h>
-#include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/jit/ir/constants.h>
 #include <torch/csrc/jit/ir/ir.h>
-#include <torch/csrc/jit/passes/fixup_trace_scope_blocks.h>
-#include <torch/csrc/jit/passes/inliner.h>
-#include <torch/csrc/jit/passes/normalize_ops.h>
 #include <torch/custom_class.h>
 
 #include <memory>
@@ -180,24 +176,6 @@ Value* TracingState::getValue(const IValue& var) {
         continue;
       }
       return it->second;
-    }
-
-    // Find torchbind classes
-    if (isCustomClass(var)) {
-      auto obj = Object(var.toObject());
-      auto qualname = obj.type()->name();
-      auto custom_class_type = getCustomClass(qualname->qualifiedName());
-      if (custom_class_type) {
-        auto capsule = var.toObject()->getAttr("capsule");
-        for (const auto i : c10::irange(env_stack.size())) {
-          auto& value_map = env_stack.at(env_stack.size() - 1 - i);
-          auto it = value_map.find(capsule);
-          if (it == value_map.end()) {
-            continue;
-          }
-          return it->second;
-        }
-      }
     }
 
     if (var.isFuture()) {
@@ -417,122 +395,6 @@ static IValue addInput(
         "Only tensors or (possibly nested) dict or tuples of tensors can be "
         "inputs to traced functions. Got ",
         type->repr_str());
-  }
-}
-
-static void gatherParametersAndBuffers(
-    const std::shared_ptr<TracingState>& state,
-    Value* self_value,
-    const Module& self,
-    const std::string& prefix) {
-  Graph& g = *self_value->owningGraph();
-
-  state->setValue(self._ivalue(), self_value);
-
-  auto self_ty = self.type();
-  for (const NameValue& s : self.named_attributes(/*recurse=*/false)) {
-    auto qualname = prefix + "." + s.name;
-    Value* trace_get_attr = g.insertNode(g.create(prim::TracedAttr))
-                                ->s_(attr::scope, qualname)
-                                ->output()
-                                ->setType(s.value.type());
-    if (s.value.type()->isSubtypeOf(*TensorType::get())) {
-      addInput(state, s.value, s.value.type(), trace_get_attr);
-    }
-    if (isCustomClass(s.value)) {
-      tracer::setValueTrace(s.value, trace_get_attr);
-    }
-
-    auto attr_type = self_ty->getAttribute(s.name);
-    // Skipping Parameters and Buffers that are behind an `InterfaceType`
-    // because it is illegal for InterfaceType to expose any attribute.
-    // And these attributes should never be used/exposed outside of
-    // InterfaceType'd module anyway.
-    if (attr_type->is_module() &&
-        attr_type->kind() != TypeKind::InterfaceType) {
-      gatherParametersAndBuffers(
-          state, trace_get_attr, Module(s.value.toObject()), qualname);
-    }
-  }
-}
-
-std::pair<std::shared_ptr<TracingState>, Stack> trace(
-    Stack inputs,
-    const std::function<Stack(Stack)>& traced_fn,
-    std::function<std::string(const Variable&)> var_name_lookup_fn,
-    bool strict,
-    bool force_outplace,
-    Module* self,
-    const std::vector<std::string>& argument_names) {
-  try {
-    // Start tracing, treating 'inputs' as inputs to the trace, which can be
-    // varied on subsequent invocations of the trace.  Any other variables
-    // will be treated as constants.
-    if (isTracing()) {
-      TORCH_CHECK(false, "Tracing can't be nested");
-    }
-    auto state = std::make_shared<TracingState>();
-    setTracingState(state);
-
-    // if we are a module, then make sure the modules parameters are in the map
-    // and mapped to accesses to the self object
-    if (self) {
-      Value* self_value = state->graph->insertInput(0, "self")->setType(
-          self->_ivalue()->type());
-      gatherParametersAndBuffers(state, self_value, *self, {"__module"});
-    }
-
-    // When enough argument name hints are provided, use them as debug names
-    // for traced function/modules.
-    // Here argument_names is allowed to have more names than needed because
-    // some arguments may have valid default values, therefore they don't need
-    // example inputs.
-    if (argument_names.size() >= inputs.size()) {
-      for (size_t i = 0, e = inputs.size(); i < e; ++i) {
-        IValue& input = inputs[i];
-        input = addInput(
-            state,
-            input,
-            input.type(),
-            state->graph->addInput(argument_names[i]));
-      }
-    } else {
-      for (IValue& input : inputs) {
-        input = addInput(state, input, input.type(), state->graph->addInput());
-      }
-    }
-
-    auto graph = state->graph;
-
-    getTracingState()->lookup_var_name_fn = std::move(var_name_lookup_fn);
-    getTracingState()->strict = strict;
-    getTracingState()->force_outplace = force_outplace;
-
-    // Invoke the traced function
-    auto out_stack = traced_fn(inputs);
-
-    // Exit a trace, treating 'out_stack' as the outputs of the trace.  These
-    // are the variables whose values will be computed upon subsequent
-    // invocations of the trace.
-    size_t i = 0;
-    for (auto& output : out_stack) {
-      // NB: The stack is in "reverse" order, so when we pass the diagnostic
-      // number we need to flip it based on size.
-      state->graph->registerOutput(
-          state->getOutput(output, out_stack.size() - i));
-      i++;
-    }
-    setTracingState(nullptr);
-
-    if (getInlineEverythingMode()) {
-      Inline(*graph);
-    }
-    FixupTraceScopeBlocks(graph, self);
-    NormalizeOps(graph);
-    return {std::move(state), std::move(out_stack)};
-  } catch (...) {
-    tracer::abandon();
-    throw;
   }
 }
 

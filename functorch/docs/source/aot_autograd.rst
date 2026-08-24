@@ -22,7 +22,6 @@ Compilation APIs (experimental)
 
     aot_function
     aot_module
-    memory_efficient_fusion
 
 Partitioners (experimental)
 ---------------------------
@@ -40,4 +39,3 @@ Compilers (experimental)
     :nosignatures:
 
     nop
-    ts_compile

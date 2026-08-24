@@ -637,7 +637,7 @@ class NNModuleVariable(VariableTracker):
             # "torch.nn.utils.parametrize".
             if (
                 tx.output.is_root_tracer()
-                and mod.__module__.startswith(("torch.nn.", "torch.ao."))
+                and mod.__module__.startswith("torch.nn.")
                 and mod.__module__ != "torch.nn.utils.parametrize"
             ):
                 if nnmodule_has_hooks(
@@ -1412,7 +1412,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
             else nullcontext()
         )
         with ctx:
-            if not isinstance(fn, (types.FunctionType, torch.jit.ScriptFunction)):
+            if not isinstance(fn, types.FunctionType):
                 fn_vt = VariableTracker.build(tx, fn, source=source, realize=True)
                 return fn_vt.call_function(tx, [self] + list(args), kwargs)
             else:

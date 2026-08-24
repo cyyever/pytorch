@@ -25,7 +25,6 @@ from torch._higher_order_ops.effects import (
     _register_effectful_op,
     with_effects,
 )
-from torch._higher_order_ops.torchbind import enable_torchbind_tracing
 from torch.fx.experimental.proxy_tensor import make_fx
 from torch.fx.node import has_side_effect
 from torch.testing import FileCheck
@@ -151,8 +150,7 @@ def forward(self, arg1_1):
             def forward(self, x):
                 return (x + torch.ops._TorchScriptTesting.takes_foo(self.attr, x),)
 
-        with enable_torchbind_tracing():
-            gm, gs = aot_export_module(M(), (torch.ones(2, 3),), trace_joint=False)
+        gm, gs = aot_export_module(M(), (torch.ones(2, 3),), trace_joint=False)
 
         self.assertExpectedInline(
             str(gm.code).strip(),

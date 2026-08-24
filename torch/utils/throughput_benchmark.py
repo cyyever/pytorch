@@ -94,10 +94,7 @@ class ThroughputBenchmark:
     """
 
     def __init__(self, module) -> None:
-        if isinstance(module, torch.jit.ScriptModule):
-            self._benchmark = torch._C.ThroughputBenchmark(module._c)
-        else:
-            self._benchmark = torch._C.ThroughputBenchmark(module)
+        self._benchmark = torch._C.ThroughputBenchmark(module)
 
     def run_once(self, *args, **kwargs):
         """

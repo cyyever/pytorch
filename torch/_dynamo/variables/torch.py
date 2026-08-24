@@ -323,14 +323,13 @@ methods_consuming_unbacked_scalars: frozenset[str] = frozenset(
 
 @functools.cache
 def tracing_state_functions() -> dict[Callable[[], Any], bool | None]:
-    # Defined as a function to avoid circular import like torch.onnx
+    # Defined as a function to avoid circular imports
     return {
         torch.jit.is_scripting: False,
         torch.jit.is_tracing: False,
         torch._C._get_tracing_state: None,
         torch.fx._symbolic_trace.is_fx_tracing: False,
         torch.fx._symbolic_trace.is_fx_symbolic_tracing: False,
-        torch.onnx.is_in_onnx_export: False,
         # pyrefly: ignore [deprecated]
         torch._dynamo.external_utils.is_compiling: True,
         # pyrefly: ignore [deprecated]
@@ -1784,12 +1783,6 @@ class TorchInGraphFunctionVariable(BaseTorchVariable):
                 ),
                 example_value=None,
             )
-
-        @register(torch.jit.annotate)
-        def handle_jit_annotate(
-            self, tx: "InstructionTranslatorBase", the_type: Any, the_value: V
-        ) -> V:
-            return the_value
 
         @register(torch.backends.cudnn.is_acceptable)
         def handle_cudnn_is_acceptable(

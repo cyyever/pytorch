@@ -7,7 +7,6 @@ import torch
 import torch.utils._pytree as pytree
 from torch._dynamo.testing import EagerAndRecordGraphs
 from torch._functorch.aot_autograd import aot_export_module
-from torch._higher_order_ops.torchbind import enable_torchbind_tracing
 from torch._higher_order_ops.wrap import wrap
 from torch._library.fake_class_registry import FakeScriptObject
 from torch.export._trace import _export
@@ -141,15 +140,14 @@ class TestExportTorchbind(TestCase):
         kwargs = kwargs or {}
 
         def export_wrapper(f, args, kwargs, strict, pre_dispatch):
-            with enable_torchbind_tracing():
-                if pre_dispatch:
-                    exported_program = torch.export.export(
-                        f, args, kwargs, strict=strict
-                    ).run_decompositions({})
-                else:
-                    exported_program = _export(
-                        f, args, kwargs, strict=strict, pre_dispatch=False
-                    )
+            if pre_dispatch:
+                exported_program = torch.export.export(
+                    f, args, kwargs, strict=strict
+                ).run_decompositions({})
+            else:
+                exported_program = _export(
+                    f, args, kwargs, strict=strict, pre_dispatch=False
+                )
             return exported_program
 
         exported_program = export_wrapper(f, args, kwargs, strict, pre_dispatch)
@@ -811,20 +809,19 @@ def forward(self, L_safe_obj_ : torch.ScriptObject):
     return (sin,)""",
         )
 
-        with enable_torchbind_tracing():
-            ep = torch.export.export(mod, (safe_obj,), strict=False).run_decompositions(
-                {}
-            )
-            self.assertExpectedInline(
-                ep.graph_module.code.strip(),
-                """\
+        ep = torch.export.export(mod, (safe_obj,), strict=False).run_decompositions(
+            {}
+        )
+        self.assertExpectedInline(
+            ep.graph_module.code.strip(),
+            """\
 def forward(self, token, safe_obj):
     with_effects = torch.ops.higher_order.with_effects(token, torch.ops.higher_order.call_torchbind, safe_obj, 'get');  token = safe_obj = None
     getitem = with_effects[0]
     getitem_1 = with_effects[1];  with_effects = None
     sin = torch.ops.aten.sin.default(getitem_1);  getitem_1 = None
     return (getitem, sin)""",
-            )
+        )
 
     def test_identifying_torchbind_ops(self):
         for op in self.torch_bind_ops:

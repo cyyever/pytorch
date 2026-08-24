@@ -7,7 +7,6 @@ from typing import Any, List, Optional
 
 import torch
 import torch._dynamo as torchdynamo
-from torch._higher_order_ops.torchbind import enable_torchbind_tracing
 from torch.export import export, FlatArgsAdapter, unflatten
 from torch.export.unflatten import _assign_attr, _AttrKind, _disable_interpreter
 from torch.testing._internal.common_utils import (
@@ -724,10 +723,9 @@ class TestUnflatten(TestCase):
             def forward(self, x):
                 return x + self.submod(x)
 
-        with enable_torchbind_tracing():
-            export_module = torch.export.export(
-                Mod(), (torch.randn((2, 3)),), strict=False
-            )
+        export_module = torch.export.export(
+            Mod(), (torch.randn((2, 3)),), strict=False
+        )
         unflattened = unflatten(export_module)
 
         self.compare_outputs(

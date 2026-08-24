@@ -24,7 +24,6 @@ from . import (
     default_hooks as default,
     optimizer_overlap_hooks as optimizer_overlap,
     powerSGD_hook as powerSGD,
-    quantization_hooks as quantization,
 )
 
 
@@ -74,16 +73,6 @@ class DDPCommHookType(Enum):
     )
     BF16_COMPRESS = _enum_member(
         partial(_ddp_comm_hook_wrapper, comm_hook=default.bf16_compress_hook)
-    )
-    QUANTIZE_PER_TENSOR = _enum_member(
-        partial(
-            _ddp_comm_hook_wrapper, comm_hook=quantization.quantization_pertensor_hook
-        )
-    )
-    QUANTIZE_PER_CHANNEL = _enum_member(
-        partial(
-            _ddp_comm_hook_wrapper, comm_hook=quantization.quantization_perchannel_hook
-        )
     )
     POWER_SGD = _enum_member(
         partial(

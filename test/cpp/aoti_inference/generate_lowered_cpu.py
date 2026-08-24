@@ -1,15 +1,6 @@
-import copy
-
 import click
 
 import torch
-
-
-class Serializer(torch.nn.Module):
-    def __init__(self, data):
-        super().__init__()
-        for key in data:
-            setattr(self, key, data[key])
 
 
 @click.command()
@@ -34,9 +25,6 @@ def main(
     ep = torch.export.load(input_path)
     with torch.no_grad():
         example_inputs = ep.example_inputs[0]
-        # Get scripted original module.
-        module = torch.jit.trace(copy.deepcopy(ep.module()), example_inputs)
-
         # Get aot compiled module.
         so_path = torch._inductor.aot_compile(ep.module(), example_inputs)
         runner = torch.fx.Interpreter(ep.module())
@@ -48,14 +36,13 @@ def main(
 
         data.update(
             {
-                "script_module": module,
                 "model_so_path": so_path,
                 "inputs": list(example_inputs),
                 "outputs": output,
             }
         )
 
-    torch.jit.script(Serializer(data)).save(output_path)
+    torch.save(data, output_path)
 
 
 if __name__ == "__main__":

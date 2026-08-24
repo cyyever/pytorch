@@ -974,7 +974,6 @@ class VariableBuilder:
             ((re.Pattern, re.Match), cls.wrap_regex_pattern),
             (weakref.ReferenceType, cls.wrap_weakref),
             (torch.utils.hooks.RemovableHandle, cls.wrap_removable_handle),
-            (torch.jit.ScriptFunction, cls.wrap_jit_function),
             (types.MappingProxyType, cls.wrap_mapping_proxy),
         ]
 
@@ -1016,23 +1015,6 @@ class VariableBuilder:
             explanation="Dynamo attempted to build a representation of a torch.utils.hooks.RemovableHandle, "
             "which is not supported. This happens because the RemovableHandle was created in another frame.",
             hints=[],
-        )
-
-    def wrap_jit_function(self, value: Any) -> WrapperUserFunctionVariable:
-        if not hasattr(value, "_torchdynamo_inline"):
-            unimplemented(
-                gb_type="wrap_jit_function: missing _torchdynamo_inline",
-                context=f"type: {type(value).__name__}",
-                explanation="Dynamo expected a JIT function with a _torchdynamo_inline attribute, "
-                "but the object does not have one.",
-                hints=[*graph_break_hints.SUPPORTABLE],
-            )
-        self.install_guards(GuardBuilder.TYPE_MATCH)
-        return WrapperUserFunctionVariable(
-            value,
-            "_torchdynamo_inline",
-            source=self.source,
-            mutation_type=AttributeMutationExisting(),
         )
 
     def wrap_mapping_proxy(self, value: Any) -> VariableTracker:
@@ -2666,19 +2648,6 @@ class VariableBuilder:
             self.source = AttrSource(self.source, "_orig_mod")
             return self.wrap_module(value._orig_mod)
 
-        if type(value) is torch.jit._script.RecursiveScriptModule:
-            unimplemented(
-                gb_type="torch.jit.script/freeze modules unsupported",
-                context=str(value),
-                explanation="Dynamo does not support tracing into torch.jit.script or "
-                "torch.jit.freeze modules because they execute in the TorchScript "
-                "runtime, not Python. Replace the ScriptModule submodule with the "
-                "original eager nn.Module.",
-                hints=[
-                    *graph_break_hints.FUNDAMENTAL,
-                ],
-            )
-
         if (
             isinstance(value, (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM))
             and not config.allow_rnn
@@ -2774,7 +2743,7 @@ class VariableBuilder:
                 self.tx.output.nn_modules[self.name] = value
 
             if (
-                value.__module__.startswith(("torch.nn.modules", "torch.ao."))
+                value.__module__.startswith("torch.nn.modules")
                 and not value.__module__.startswith("torch.nn.modules.container")
             ) or getattr(value.__class__, "_dynamo_marked_static", False):
                 new_source = self.source

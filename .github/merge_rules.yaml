@@ -1,43 +1,3 @@
-- name: ONNX exporter
-  patterns:
-  - .ci/caffe2/*
-  - .ci/onnx/*
-  - .ci/docker/common/install_onnx.sh
-  - aten/src/ATen/core/interned_strings.h
-  - benchmarks/dynamo/**
-  - docs/source/onnx.rst
-  - docs/source/onnx*
-  - docs/source/scripts/onnx/**
-  - docs/source/_static/img/onnx/**
-  - scripts/onnx/**
-  - test/onnx/**
-  - test/onnx_caffe2/**
-  - tools/onnx/**
-  - torch/_dynamo/backends/onnxrt.py
-  - torch/_C/__init__.pyi.in
-  - torch/_C/_onnx.pyi
-  - torch/_logging/**
-  - torch/csrc/jit/passes/onnx.*
-  - torch/csrc/jit/passes/onnx/**
-  - torch/csrc/jit/serialization/export.*
-  - torch/csrc/jit/serialization/onnx.*
-  - torch/csrc/onnx/**
-  - torch/onnx/**
-  - torch/testing/_internal/common_methods_invocations.py
-  - third_party/onnx
-  - caffe2/python/onnx/**
-  approved_by:
-  - justinchuby
-  - liqunfu
-  - shubhambhokare1
-  - titaiwangms
-  - wschin
-  - xadupre
-  mandatory_checks_name:
-  - EasyCLA
-  - Lint
-  - pull
-
 - name: OSS CI
   patterns:
   - .github/**
@@ -230,9 +190,6 @@
   patterns:
   - docs/source/pipeline.rst
   - docs/source/distributed*
-  - docs/source/rpc.rst
-  - docs/source/rpc/**
-  - docs/source/_static/img/rpc*
   - docs/source/_static/img/*distributed*
   - docs/source/elastic/**
   - benchmarks/distributed/**
@@ -243,8 +200,6 @@
   - torch/testing/_internal/distributed/**
   - torch/multiprocessing/**
   - test/distributed/**
-  - test/cpp/dist_autograd/**
-  - test/cpp/rpc/**
   - test/*multiprocessing*
   approved_by:
   - wconstab
@@ -418,25 +373,6 @@
   approved_by:
   - EikanWang
   - jgong5
-  mandatory_checks_name:
-  - EasyCLA
-  - Lint
-  - pull
-
-- name: Lazy Tensor
-  patterns:
-  - torch/csrc/lazy/**
-  - test/cpp/lazy/**
-  - test/lazy/**
-  - torchgen/api/lazy.py
-  - torchgen/dest/lazy_ir.py
-  - torchgen/dest/lazy_ts_lowering.py
-  - torchgen/gen_lazy_tensor.py
-  - aten/src/ATen/native/ts_native_functions.yaml
-  - .github/ci_commit_pins/xla.txt
-  approved_by:
-  - alanwaketan
-  - JackCaoG
   mandatory_checks_name:
   - EasyCLA
   - Lint

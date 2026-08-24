@@ -82,7 +82,7 @@ from torch.testing._internal.common_utils import (
     xfailIf,
     xfailIfNoAcceleratorTriton,
 )
-from torch.testing._internal.jit_utils import JitTestCase
+from torch.testing._internal.common_utils import TestCase
 
 import json
 import tempfile
@@ -265,7 +265,7 @@ def _parse_profiler_trace_lines(traces: str) -> list[tuple[str, str, str]]:
     return lines
 
 
-class TestFX(JitTestCase):
+class TestFX(TestCase):
     def setUp(self):
         super().setUp()
         # Checking for mutable operations while tracing is feature flagged
@@ -1136,16 +1136,6 @@ class TestFX(JitTestCase):
         ref_out = msm(x)
         test_out = lowered(x)
         torch.testing.assert_close(test_out, ref_out)
-
-        # Test TorchScript compilation
-        scripted_lowered = torch.jit.script(lowered)
-        script_out = scripted_lowered(x)
-        torch.testing.assert_close(script_out, ref_out)
-
-        # Test TorchScript Ser/De
-        import_copy = self.getExportImportCopy(scripted_lowered)
-        imported_out = import_copy(x)
-        torch.testing.assert_close(imported_out, ref_out)
 
     def test_reserved_getattr(self):
         """Ensure that we do not name any nodes with a reserved builtin like `getattr`"""
@@ -3544,12 +3534,13 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
 
         traced.recompile()
 
-        with self.capture_stderr() as captured:
+        captured = io.StringIO()
+        with contextlib.redirect_stderr(captured):
             with self.assertRaises(TypeError):
                 traced(5)
 
         self.assertRegex(
-            captured[0],
+            captured.getvalue(),
             r"Call using an FX-traced Module, line .* of the "
             r"traced Module's generated forward function:",
         )
@@ -5176,13 +5167,9 @@ def run_getitem_target():
         _wrapped_methods_to_patch.pop()
 
 
-class TestOperatorSignatures(JitTestCase):
+class TestOperatorSignatures(TestCase):
     def setUp(self):
-        # Don't call super().setUp() — JitTestCase.setUp installs JIT emit
-        # hooks that cause segfaults during process cleanup. Record state
-        # baselines that tearDown checks for.
-        self._prev_torch_function_mode_stack_len = torch._C._len_torch_function_stack()
-        self._prev_torch_function_state = torch._C._get_torch_function_state()
+        super().setUp()
         # Checking for mutable operations while tracing is feature flagged
         # Enable it in testing but not by default
         self.orig_tracer_mutable_flag = (
@@ -5221,7 +5208,7 @@ class TestOperatorSignatures(JitTestCase):
                 raise RuntimeError(f"Did not match any schemas for op {op.name}!")
 
 
-class TestFXAPIBackwardCompatibility(JitTestCase):
+class TestFXAPIBackwardCompatibility(TestCase):
     def setUp(self):
         super().setUp()
         self.maxDiff = None
@@ -5585,7 +5572,7 @@ class TestFXAPIBackwardCompatibility(JitTestCase):
 
 # This is failing on Python 3.12 : https://github.com/pytorch/pytorch/issues/119454
 @unittest.skipIf(sys.version_info >= (3, 12), "Failing on python 3.12+")
-class TestFunctionalTracing(JitTestCase):
+class TestFunctionalTracing(TestCase):
     def setUp(self):
         super().setUp()
         # Checking for mutable operations while tracing is feature flagged

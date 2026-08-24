@@ -2750,17 +2750,6 @@ from torch import (  # usort: skip
 from torch.signal import windows as windows
 
 
-# Quantized, sparse, AO, etc. should be last to get imported, as nothing
-# is expected to depend on them.
-from torch import ao as ao  # usort: skip
-
-# nn.quant* depends on ao -- so should be after those.
-import torch.nn.intrinsic
-import torch.nn.qat
-import torch.nn.quantizable
-import torch.nn.quantized
-
-
 _C._init_names(list(_storage_classes))
 
 # attach docstrings to torch and tensor functions
@@ -2791,10 +2780,6 @@ if hasattr(torch._C, "_c10d_init"):
     _register_process_group_opaque_type()
     del _register_process_group_opaque_type
 
-# quantization depends on torch.fx and torch.ops
-# Import quantization
-from torch import quantization as quantization  # usort: skip
-
 # Import the quasi random sampler
 from torch import quasirandom as quasirandom  # usort: skip
 
@@ -2810,8 +2795,6 @@ from torch.multiprocessing._atfork import register_after_fork
 register_after_fork(torch.get_num_threads)
 del register_after_fork
 
-# Import tools that require fully imported torch (for applying
-# torch.jit.script as a decorator, for instance):
 from torch._lobpcg import lobpcg as lobpcg
 
 
@@ -3406,7 +3389,6 @@ if TYPE_CHECKING:
         _dynamo as _dynamo,
         _inductor as _inductor,
         _subclasses as _subclasses,
-        onnx as onnx,
     )
 
 else:
@@ -3414,8 +3396,6 @@ else:
         "_dynamo",
         "_inductor",
         "_export",
-        # ONNX must be imported after _dynamo, _ops, _subclasses, fx, func and jit
-        "onnx",
     }
 
     def __getattr__(name: str) -> _Any:

@@ -447,7 +447,6 @@ void initPythonBindings(PyObject* module) {
           "    record_python_gc_info (bool) : adds python gc events to profile\n"
           "    expose_kineto_event_metadata (bool) : whether to expose KinetoEvent metadata in the PyTorch Profiler\n"
           "    custom_profiler_config (string) : Used to pass some configurations to the custom profiler backend.\n"
-          "    adjust_timestamps (bool) : whether to adjust timestamps for Vulkan events\n"
           "    trace_only (bool) : when True, skip building Python event objects during __exit__.\n"
           "       Only export_chrome_trace() / save() will work; accessing events() raises an error.\n",
           py::arg("profiler_metrics") = std::vector<std::string>(),
@@ -564,7 +563,6 @@ void initPythonBindings(PyObject* module) {
   py::enum_<EventType>(m, "_EventType")
       .value("TorchOp", EventType::TorchOp)
       .value("Backend", EventType::Backend)
-      .value("Vulkan", EventType::Vulkan)
       .value("Allocation", EventType::Allocation)
       .value("PyCall", EventType::PyCall)
       .value("PyCCall", EventType::PyCCall)
@@ -617,8 +615,6 @@ void initPythonBindings(PyObject* module) {
 
   // NOLINTNEXTLINE(bugprone-unused-raii)
   py::class_<ExtraFields<EventType::Backend>>(m, "_ExtraFields_Backend");
-  // NOLINTNEXTLINE(bugprone-unused-raii)
-  py::class_<ExtraFields<EventType::Vulkan>>(m, "_ExtraFields_Vulkan");
 
   using allocation_t = ExtraFields<EventType::Allocation>;
   py::class_<allocation_t>(m, "_ExtraFields_Allocation")

@@ -33,7 +33,6 @@
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
-#include <torch/csrc/jit/python/python_tracer.h>
 #include <torch/csrc/profiler/api.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 #include <torch/csrc/utils/pyobject_preservation.h>
@@ -1105,167 +1104,6 @@ std::pair<UnpackedInput, InputFlags> unpack_input(
   return std::make_pair(std::move(unpacked), std::move(flags));
 }
 
-// Given a prim::PythonOp node, _append_subgraph creates a subgraph such that:
-// (1) It has the same inputs as the prim::PythonOp node
-// (2) The intermediate nodes used in the PythonOp are cloned and stored in the
-// subgraph (3) trace_outputs stores the Value* objects, before a new trace
-// value is assigned by the prim::PythonOp node and helps to eventually route
-// the outputs of the subgraph correctly This newly created subgraph is then
-// added to the prim::PythonOp node as a subgraph attribute
-void _append_subgraph(
-    torch::jit::Node* node,
-    torch::jit::Graph* graph,
-    std::vector<torch::jit::Value*> trace_outputs,
-    bool unpack_output) {
-  using Value = torch::jit::Value;
-  node->g_(
-      torch::jit::attr::Subgraph,
-      std::make_shared<torch::jit::Graph>(graph->current_scope()));
-  auto subgraph = node->g(torch::jit::attr::Subgraph);
-
-  std::unordered_map<Value*, Value*> value_map;
-  auto value_map_func = [&](Value* v) { return value_map.at(v); };
-  for (size_t i = 0; i < node->inputs().size(); ++i) {
-    auto subgraph_input = subgraph->addInput();
-    subgraph_input->copyMetadata(node->inputs().at(i));
-    value_map[node->inputs().at(i)] = subgraph_input;
-  }
-  // Find node position in owning block, all subsequent nodes after are added to
-  // subgraph
-  auto owning_block = node->owningBlock();
-  auto it = std::find(
-      owning_block->nodes().begin(), owning_block->nodes().end(), node);
-  // Skip TupleUnpack node if created
-  if (!unpack_output) {
-    it++;
-  }
-  for (it++; it != owning_block->nodes().end(); ++it) {
-    torch::jit::Node* node = *it;
-    auto* clone_node =
-        subgraph->insertNode(subgraph->createClone(node, value_map_func));
-    for (size_t i = 0; i < node->outputs().size(); ++i) {
-      value_map[node->outputs()[i]] = clone_node->outputs()[i];
-      auto trace_it = std::find(
-          trace_outputs.begin(), trace_outputs.end(), node->outputs()[i]);
-      if (trace_it != trace_outputs.end()) {
-        subgraph->registerOutput(clone_node->outputs()[i]);
-      }
-    }
-  }
-}
-
-torch::jit::Node* _trace_pre_record(
-    PyObject* op_obj,
-    PyObject* input_objects,
-    at::ArrayRef<const Variable*> input_vars) {
-  if (!jit::tracer::isTracing()) {
-    return nullptr;
-  }
-
-  // Save scalar args and the calling convention
-  auto num_args = PyTuple_GET_SIZE(input_objects);
-  pyobj_list scalar_args;
-  std::string arg_types;
-  arg_types.reserve(num_args);
-  scalar_args.reserve(num_args);
-  for (const auto i : c10::irange(num_args)) {
-    PyObject* arg_object = PyTuple_GET_ITEM(input_objects, i);
-    if (THPVariable_Check(arg_object)) {
-      arg_types.push_back('d');
-    } else {
-      arg_types.push_back('c');
-      Py_INCREF(arg_object);
-      scalar_args.emplace_back(arg_object);
-    }
-  }
-
-  Py_INCREF(op_obj);
-  auto pyobj = THPObjectPtr(op_obj);
-  variable_list owned;
-  owned.reserve(input_vars.size());
-  for (const auto* input_var : input_vars) {
-    owned.emplace_back(*input_var);
-  }
-  return jit::tracer::preRecordPythonTrace(
-      std::move(pyobj), arg_types, owned, std::move(scalar_args));
-}
-
-void _trace_post_record(
-    torch::jit::Node* node,
-    PyObject* op_obj,
-    at::ArrayRef<const Variable*> /* input_vars */,
-    PyObject* output_objects,
-    bool is_inplace,
-    bool unpack_output) {
-  if (!jit::tracer::isTracing()) {
-    return;
-  }
-
-  node->i_(jit::attr::inplace, is_inplace);
-  if (PyObject* module_name = PyDict_GetItemString(
-          ((PyTypeObject*)op_obj)->tp_dict, "__module__")) {
-    if (auto ptr = PyUnicode_AsUTF8(module_name)) {
-      node->s_(jit::attr::module, std::string(ptr));
-    }
-  }
-
-  // Isolate C variable ptrs in a vector
-  int num_outputs = PyTuple_GET_SIZE(output_objects);
-  auto graph = node->owningGraph();
-  node->addOutput();
-  auto old_node = node;
-  if (!unpack_output) {
-    std::vector<at::TypePtr> tuple_values(num_outputs, at::TensorType::get());
-    auto tuple_type = at::TupleType::create(std::move(tuple_values));
-    // Original type is tuple of tensors "without" element type and shape.
-    // The missed parts will be added below.
-    node->output()->setType(std::move(tuple_type));
-    auto unpacked = graph->createTupleUnpack(node->output())->insertAfter(node);
-    node = unpacked;
-  }
-
-  std::vector<torch::jit::Value*> trace_outputs;
-  trace_outputs.reserve(static_cast<size_t>(std::max(0, num_outputs)));
-  for (const auto i : c10::irange(num_outputs)) {
-    PyObject* obj = PyTuple_GET_ITEM(output_objects, i);
-    if (THPVariable_Check(obj)) {
-      auto value = node->outputs()[i];
-      const auto& tensor = THPVariable_Unpack(obj);
-      if (tensor.defined()) {
-        value->inferTypeFrom(tensor);
-        trace_outputs.push_back(jit::tracer::getValueTrace(tensor));
-        jit::tracer::setValueTrace(tensor, value);
-      }
-    }
-  }
-  py::object onnx_globals =
-      py::module::import("torch.onnx._internal.torchscript_exporter._globals");
-  py::bool_ is_in_onnx_export =
-      py::module::import("torch.onnx.__init__").attr("is_in_onnx_export");
-  py::bool_ is_autograd_inlining_enabled =
-      py::cast<bool>(onnx_globals.attr("GLOBALS").attr("autograd_inlining"));
-
-  if (py::cast<bool>(is_in_onnx_export) &&
-      py::cast<bool>(is_autograd_inlining_enabled)) {
-    _append_subgraph(old_node, graph, std::move(trace_outputs), unpack_output);
-  }
-
-  // If TupleUnpack operator is created, we copy its output type back
-  // to the original tuple type.
-  if (!unpack_output) {
-    std::vector<at::TypePtr> new_tuple_values;
-    new_tuple_values.reserve(num_outputs);
-    for (const auto i : c10::irange(num_outputs)) {
-      auto ptr = node->outputs()[i]->type();
-      new_tuple_values.push_back(std::move(ptr));
-    }
-    auto tuple_type = at::TupleType::create(std::move(new_tuple_values));
-    // The i-th tuple element receives a new tensor type with element type and
-    // shape.
-    old_node->output()->setType(std::move(tuple_type));
-  }
-}
-
 PyObject* process_outputs(
     PyObject* op_obj,
     THPFunction* grad_fn,
@@ -1274,7 +1112,6 @@ PyObject* process_outputs(
     // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     THPObjectPtr&& raw_output,
     bool is_executable,
-    torch::jit::Node* node,
     bool overridden_setup_context) {
   bool unpack_output = ensure_tuple(raw_output);
 
@@ -1304,7 +1141,6 @@ PyObject* process_outputs(
       overridden_setup_context,
       is_executable);
 
-  bool is_inplace = static_cast<bool>(grad_fn->dirty_tensors);
   c10::intrusive_ptr<Node> attached_node;
   _wrap_outputs(
       grad_fn,
@@ -1314,9 +1150,6 @@ PyObject* process_outputs(
       is_executable,
       to_save_if_setup_context,
       attached_node);
-  _trace_post_record(
-      node, op_obj, unpacked.input_vars, outputs, is_inplace, unpack_output);
-
   // It is important that creating the SavedVariables happen after the output
   // wrapping as the outputs must have their grad_fn/fw_grad properly set before
   // we save them.
@@ -1806,9 +1639,6 @@ PyObject* THPFunction_apply(
   auto* ctx = reinterpret_cast<THPFunction*>(ctx_obj.get());
   auto& cdata = ctx->cdata;
 
-  // Record input nodes if tracing
-  auto* node = _trace_pre_record(cls, inputs, unpacked_input.input_vars);
-
   // Initialize backward function (and ctx)
   bool is_executable = input_info.is_executable;
   cdata->set_next_edges(std::move(input_info.next_edges));
@@ -1882,7 +1712,6 @@ PyObject* THPFunction_apply(
       inputs,
       std::move(output),
       is_executable,
-      node,
       is_setup_ctx_defined);
   END_HANDLE_TH_ERRORS
 }

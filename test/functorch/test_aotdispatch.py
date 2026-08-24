@@ -48,9 +48,7 @@ from functorch.compile import (
     get_aot_compilation_context,
     make_boxed_compiler,
     make_boxed_func,
-    memory_efficient_fusion,
     min_cut_rematerialization_partition,
-    nnc_jit,
     nop,
 )
 from functorch.experimental import control_flow
@@ -375,57 +373,6 @@ class TestPythonKey(AOTTestCase):
         fx_f = make_fx(grad(f), decomposition_table)(torch.randn(5))
         ops = {i.target for i in fx_f.graph.nodes}
         self.assertEqual(torch.ops.aten.tanh_backward in ops, False)
-
-    def test_nnc_jit(self, device):
-        def f(x):
-            return torch.sin(x)
-
-        jit_f = nnc_jit(f)
-
-        inp = torch.randn(3)
-        self.assertEqual(jit_f(inp), f(inp))
-
-    def test_nnc_scalar(self, device):
-        def f(x):
-            return torch.sin(x)
-
-        jit_f = nnc_jit(f)
-
-        inp = torch.randn(())
-        self.assertEqual(jit_f(inp), f(inp))
-
-    def test_nnc_pytrees(self, device):
-        def f(x):
-            return [torch.sin(x[0])]
-
-        jit_f = nnc_jit(f)
-
-        inp = [torch.randn(3)]
-        self.assertEqual(jit_f(inp), f(inp))
-
-    def test_external_calls(self, device):
-        def f(a, b):
-            return torch.mv(a, b)
-
-        jit_f = nnc_jit(f)
-        inp = [torch.randn(3, 3), torch.randn(3)]
-        self.assertEqual(jit_f(*inp), f(*inp))
-
-    def test_nnc_passthrough(self, device):
-        def f(x, y):
-            return x + y, y
-
-        inp = (torch.randn(3), torch.randn(3))
-        jit_f = nnc_jit(f)
-        self.assertEqual(jit_f(*inp), f(*inp))
-
-        def f(x):
-            x["a"] = x["a"] * 2
-            return x
-
-        inp = ({"a": torch.randn(3), "b": torch.randn(3)},)
-        jit_f = nnc_jit(f)
-        self.assertEqual(jit_f(*inp), f(*inp))
 
     @unittest.skipIf(not USE_TORCHVISION, "test requires torchvision")
     def test_resnet18_backward_trace(self, device):
@@ -7138,20 +7085,6 @@ def forward(self, primals_1, tangents_1):
         x = torch.randn(4, requires_grad=True)
         aot_fn(x)
         self.assertTrue(inference_graph_cell[0] is not None)
-
-    @unittest.skipIf(not torch.cuda.is_available(), "CUDA is unavailable")
-    @unittest.skipIf(not USE_TORCHVISION, "test requires torchvision")
-    def test_autocast(self):
-        mod = torchvision.models.resnet18().cuda()
-        mod.train()
-
-        x = torch.randn(16, 3, 32, 32, device="cuda")
-        aot_mod = memory_efficient_fusion(mod)
-
-        # Ensure that AOT Autograd works with AMP
-        with torch.cuda.amp.autocast(True):
-            res = aot_mod(x)
-        res.sum().backward()
 
     def test_quantize_activation_duplicate_nodes(self):
         """Test both quantize_activation_fw and quantize_activation_bw handle duplicate nodes correctly"""

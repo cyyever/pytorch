@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 #include <ATen/TensorUtils.h>
-#include <ATen/native/xnnpack/Engine.h>
 #include <c10/util/Exception.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
@@ -21,8 +20,6 @@
 #include <ATen/ops/max_pool3d_with_indices.h>
 #include <ATen/ops/mkldnn_max_pool2d.h>
 #include <ATen/ops/mkldnn_max_pool3d.h>
-#include <ATen/ops/quantized_max_pool2d.h>
-#include <ATen/ops/quantized_max_pool3d.h>
 #endif
 
 #include <tuple>
@@ -139,21 +136,10 @@ Tensor max_pool2d(
     IntArrayRef padding,
     IntArrayRef dilation,
     bool ceil_mode) {
-  if (self.is_quantized()) {
-    return at::quantized_max_pool2d(self, kernel_size, stride, padding,
-                                    dilation, ceil_mode);
-  }
   if (self.is_mkldnn()) {
     return at::mkldnn_max_pool2d(
         self, kernel_size, stride, padding, dilation, ceil_mode);
   }
-#if defined(C10_MOBILE)
-  if(xnnpack::use_max_pool2d(self, kernel_size, padding, stride,
-                             dilation, ceil_mode)) {
-    return xnnpack::max_pool2d(
-        self, kernel_size, padding, stride, dilation, ceil_mode);
-  }
-#endif
   auto output_and_indices = at::max_pool2d_with_indices(
       self, kernel_size, stride, padding, dilation, ceil_mode);
   return std::get<0>(std::move(output_and_indices));
@@ -166,10 +152,6 @@ Tensor max_pool3d(
     IntArrayRef padding,
     IntArrayRef dilation,
     bool ceil_mode) {
-  if (self.is_quantized()) {
-    return at::quantized_max_pool3d(self, kernel_size, stride, padding,
-                                    dilation, ceil_mode);
-  }
   if (self.is_mkldnn()) {
     return at::mkldnn_max_pool3d(
         self, kernel_size, stride, padding, dilation, ceil_mode);

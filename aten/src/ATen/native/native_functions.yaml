@@ -1,11 +1,3 @@
-# See README.md in this directory for more guidance
-
-# *********NB: _cast_* operators are DEPRECATED and will be removed
-# eventually. These were previously used before TorchScript IR supported
-# representing ScalarType's. They are now superseded by usage of
-# `aten::to()`. The ops remain here for backward compatibility purposes.
-
-# DEPRECATED. DO NOT USE
 - func: _cast_Byte(Tensor self, bool non_blocking=False) -> Tensor
   variants: function
 
@@ -1081,11 +1073,6 @@
 - func: batch_norm(Tensor input, Tensor? weight, Tensor? bias, Tensor? running_mean, Tensor? running_var, bool training, float momentum, float eps, bool cudnn_enabled) -> Tensor
   tags: maybe_aliasing_or_mutating
 
-- func: quantized_batch_norm(Tensor input, Tensor? weight, Tensor? bias, Tensor mean, Tensor var, float eps, float output_scale, int output_zero_point) -> Tensor
-  dispatch:
-    QuantizedCPU: quantized_batch_norm
-  autogen: quantized_batch_norm.out
-
 - func: _batch_norm_impl_index(Tensor input, Tensor? weight, Tensor? bias, Tensor? running_mean, Tensor? running_var, bool training, float momentum, float eps, bool cudnn_enabled) -> (Tensor, Tensor, Tensor, Tensor, int)
   tags: maybe_aliasing_or_mutating
 
@@ -1404,7 +1391,6 @@
   structured_delegate: cat.out
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: cat_sparse
-    QuantizedCPU: cat_quantized_cpu
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: cat_nested
   tags: core
 
@@ -1417,7 +1403,6 @@
     CUDA: cat_out_cuda
     MPS: cat_out_mps
     XPU: cat_out_xpu
-    QuantizedCPU: cat_out_quantized_cpu
 
 - func: concat(Tensor[] tensors, int dim=0) -> Tensor
 
@@ -1501,7 +1486,6 @@
   cpp_no_default_args: ['min']
   structured_delegate: clamp.out
   dispatch:
-    QuantizedCPU: clamp_quantized_cpu
   tags: [core, pointwise]
 
 - func: clamp.Tensor(Tensor self, Tensor? min=None, Tensor? max=None) -> Tensor
@@ -2435,7 +2419,6 @@
     CUDA: resize_cuda_
     MPS: resize_mps_
     XPU: resize_xpu_
-    QuantizedCPU: quantized_resize_cpu_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: resize_sparse_csr_
   autogen: resize, resize.out
 
@@ -3100,8 +3083,6 @@
   variants: function
   dispatch:
     CPU, CUDA, MPS, XPU: _index_put_impl_
-    QuantizedCPU: _index_put_impl_quantized_cpu_
-    QuantizedCUDA: _index_put_impl_quantized_cuda_
   autogen: _index_put_impl, _index_put_impl.out
 
 - func: instance_norm(Tensor input, Tensor? weight, Tensor? bias, Tensor? running_mean, Tensor? running_var, bool use_input_stats, float momentum, float eps, bool cudnn_enabled) -> Tensor
@@ -3411,29 +3392,8 @@
   dispatch:
     CUDA: _mixed_dtypes_linear
 
-- func: fbgemm_linear_int8_weight_fp32_activation(Tensor input, Tensor weight, Tensor packed, Tensor col_offsets, Scalar weight_scale, Scalar weight_zero_point, Tensor bias) -> Tensor
 
-- func: fbgemm_linear_int8_weight(Tensor input, Tensor weight, Tensor packed, Tensor col_offsets, Scalar weight_scale, Scalar weight_zero_point, Tensor bias) -> Tensor
 
-- func: fbgemm_linear_quantize_weight(Tensor input) -> (Tensor, Tensor, float, int)
-
-- func: fbgemm_pack_gemm_matrix_fp16(Tensor input) -> Tensor
-
-- func: _wrapped_linear_prepack(Tensor weight, Tensor weight_scale, Tensor weight_zero_point, Tensor bias) -> Tensor
-
-- func: _wrapped_quantized_linear_prepacked(Tensor input, Tensor input_scale, Tensor input_zero_point, Tensor packed_weight, Tensor output_scale, Tensor output_zero_point, int out_channel) -> Tensor
-
-- func: fbgemm_linear_fp16_weight_fp32_activation(Tensor input, Tensor packed_weight, Tensor? bias) -> Tensor
-
-- func: fbgemm_linear_fp16_weight_fp32_activation.out(Tensor input, Tensor packed_weight, Tensor? bias, Tensor(a!) output) -> Tensor
-
-- func: fbgemm_linear_fp16_weight(Tensor input, Tensor packed_weight, Tensor bias) -> Tensor
-
-- func: fbgemm_linear_fp16_weight.out(Tensor input, Tensor packed_weight, Tensor bias, Tensor(a!) output) -> Tensor
-
-- func: fbgemm_pack_quantized_matrix(Tensor input) -> Tensor
-
-- func: fbgemm_pack_quantized_matrix.KN(Tensor input, int K, int N) -> Tensor
 
 - func: ldexp.Tensor(Tensor self, Tensor other) -> Tensor
   variants: function, method
@@ -3911,22 +3871,6 @@
     MkldnnCPU: mkldnn_max_pool3d_backward
   autogen: mkldnn_max_pool3d_backward.out
 
-- func: quantized_max_pool1d(Tensor self, int[1] kernel_size, int[1] stride=[], int[1] padding=0, int[1] dilation=1, bool ceil_mode=False) -> Tensor
-  dispatch:
-    QuantizedCPU: quantized_max_pool1d
-  autogen: quantized_max_pool1d.out
-
-- func: quantized_max_pool2d(Tensor self, int[2] kernel_size, int[2] stride=[], int[2] padding=0, int[2] dilation=1, bool ceil_mode=False) -> Tensor
-  dispatch:
-    QuantizedCPU: quantized_max_pool2d
-    QuantizedCUDA: quantized_max_pool2d_cudnn
-  autogen: quantized_max_pool2d.out
-
-- func: quantized_max_pool3d(Tensor self, int[3] kernel_size, int[3] stride=[], int[3] padding=0, int[3] dilation=1, bool ceil_mode=False) -> Tensor
-  dispatch:
-    QuantizedCPU: quantized_max_pool3d
-  autogen: quantized_max_pool3d.out
-
 - func: max_pool3d(Tensor self, int[3] kernel_size, int[3] stride=[], int[3] padding=0, int[3] dilation=1, bool ceil_mode=False) -> Tensor
 
 # The CPU and GPU dispatch variants are named weirdly here because otherwise there
@@ -3950,7 +3894,6 @@
   device_check: NoCheck   # TensorIterator
   variants: function, method
   dispatch:
-    QuantizedCPU: mean_quantized_cpu
   tags: [core, reduction]
 
 - func: mean.out(Tensor self, int[1]? dim, bool keepdim=False, *, ScalarType? dtype=None, Tensor(a!) out) -> Tensor(a!)
@@ -3958,7 +3901,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, XPU: mean_out
-    QuantizedCPU: mean_out_quantized_cpu
   tags: reduction
 
 - func: nanmean(Tensor self, int[1]? dim=None, bool keepdim=False, *, ScalarType? dtype=None) -> Tensor
@@ -4483,16 +4425,6 @@
     XPU: batch_norm_update_stats_xpu
   autogen: batch_norm_update_stats.out
 
-- func: is_vulkan_available() -> bool
-
-- func: _nnpack_available() -> bool
-
-- func: _nnpack_spatial_convolution(Tensor input, Tensor weight, Tensor? bias, SymInt[2] padding, SymInt[2] stride=1) -> Tensor
-  variants: function
-  dispatch:
-    CompositeExplicitAutograd: _nnpack_spatial_convolution
-  autogen: _nnpack_spatial_convolution.out
-
 - func: ones(SymInt[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
   dispatch:
     CompositeExplicitAutograd: ones
@@ -4610,7 +4542,6 @@
 - func: channel_shuffle(Tensor self, SymInt groups) -> Tensor
   dispatch:
     CPU, CUDA, XPU: channel_shuffle
-    QuantizedCPU: channel_shuffle_quantized_cpu
   autogen: channel_shuffle.out
 
 - func: native_channel_shuffle(Tensor self, SymInt groups) -> Tensor
@@ -5088,8 +5019,6 @@
     MPS: relu_mps
     MTIA: relu_mtia
     MkldnnCPU: mkldnn_relu
-    QuantizedCPU: relu_quantized_cpu
-    QuantizedCUDA: relu_quantized_cuda
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_relu
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: relu_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: relu_sparse_csr
@@ -5103,8 +5032,6 @@
     MPS: relu_mps_
     MTIA: relu_mtia_
     MkldnnCPU: mkldnn_relu_
-    QuantizedCPU: relu_quantized_cpu_
-    QuantizedCUDA: relu_quantized_cuda_
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_relu_
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: relu_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: relu_sparse_csr_
@@ -5125,7 +5052,6 @@
 - func: _prelu_kernel(Tensor self, Tensor weight) -> Tensor
   dispatch:
     CPU, CUDA, XPU: _prelu_kernel
-    QuantizedCPU: _prelu_kernel_quantized_cpu
     MkldnnCPU: mkldnn_prelu
     MPS: prelu_mps
 
@@ -5151,7 +5077,6 @@
   device_check: NoCheck   # TensorIterator
   python_module: nn
   dispatch:
-    QuantizedCPU: gelu_quantized_cpu_
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_gelu_
 
 - func: gelu(Tensor self, *, str approximate='none') -> Tensor
@@ -5160,8 +5085,6 @@
   python_module: nn
   dispatch:
     MkldnnCPU: mkldnn_gelu
-    QuantizedCPU: gelu_quantized_cpu
-    QuantizedCUDA: gelu_quantized_cuda
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_gelu
   tags: [core, pointwise]
 
@@ -5343,7 +5266,6 @@
   structured_delegate: sigmoid.out
   variants: function, method
   dispatch:
-    QuantizedCPU: sigmoid_quantized_cpu
     MkldnnCPU: mkldnn_sigmoid
   tags: [core, pointwise]
 
@@ -5929,7 +5851,6 @@
   dispatch:
     CPU, CUDA, XPU: std
     MPS: std_mps
-    QuantizedCPU: std_quantized_cpu
   tags: reduction
 
 - func: std_mean(Tensor self, bool unbiased=True) -> (Tensor, Tensor)
@@ -5962,7 +5883,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, XPU: std_out
-    QuantizedCPU: std_out_quantized_cpu
   tags: reduction
 
 - func: prod(Tensor self, *, ScalarType? dtype=None) -> Tensor
@@ -6036,7 +5956,6 @@
   structured_delegate: tanh.out
   variants: function, method
   dispatch:
-    QuantizedCPU: tanh_quantized_cpu
     MkldnnCPU: mkldnn_tanh
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: tanh_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: tanh_sparse_csr
@@ -6076,7 +5995,6 @@
   variants: function
   structured_delegate: threshold.out
   dispatch:
-    QuantizedCPU: threshold_quantized_cpu
   tags: pointwise
 
 - func: threshold_(Tensor(a!) self, Scalar threshold, Scalar value) -> Tensor(a!)
@@ -7994,30 +7912,6 @@
 
 - func: rnn_relu_cell(Tensor input, Tensor hx, Tensor w_ih, Tensor w_hh, Tensor? b_ih=None, Tensor? b_hh=None) -> Tensor
 
-# Quantized RNN layer registration has been moved to C10 dispatch in `RNN.cpp`
-
-# Quantized RNN layers
-# - func: quantized_lstm(Tensor input, Tensor[] hx, Tensor[] params, bool has_biases, int num_layers, float dropout, bool train, bool bidirectional, bool batch_first, *, ScalarType? dtype=None, bool use_dynamic=False) -> (Tensor, Tensor, Tensor)
-
-# - func: quantized_lstm.data(Tensor data, Tensor batch_sizes, Tensor[] hx, Tensor[] params, bool has_biases, int num_layers, float dropout, bool train, bool bidirectional, *, ScalarType? dtype=None, bool use_dynamic=False) -> (Tensor, Tensor, Tensor)
-
-# Quantized GRU layers
-
-# - func: quantized_gru.input(Tensor input, Tensor hx, Tensor[] params, bool has_biases, int num_layers, float dropout, bool train, bool bidirectional, bool batch_first) -> (Tensor, Tensor)
-#
-
-# - func: quantized_gru.data(Tensor data, Tensor batch_sizes, Tensor hx, Tensor[] params, bool has_biases, int num_layers, float dropout, bool train, bool bidirectional) -> (Tensor, Tensor)
-#
-
-# Quantized RNN cells
-- func: quantized_lstm_cell(Tensor input, Tensor[] hx, Tensor w_ih, Tensor w_hh, Tensor b_ih, Tensor b_hh, Tensor packed_ih, Tensor packed_hh, Tensor col_offsets_ih, Tensor col_offsets_hh, Scalar scale_ih, Scalar scale_hh, Scalar zero_point_ih, Scalar zero_point_hh) -> (Tensor, Tensor)
-
-- func: quantized_gru_cell(Tensor input, Tensor hx, Tensor w_ih, Tensor w_hh, Tensor b_ih, Tensor b_hh, Tensor packed_ih, Tensor packed_hh, Tensor col_offsets_ih, Tensor col_offsets_hh, Scalar scale_ih, Scalar scale_hh, Scalar zero_point_ih, Scalar zero_point_hh) -> Tensor
-
-- func: quantized_rnn_relu_cell(Tensor input, Tensor hx, Tensor w_ih, Tensor w_hh, Tensor b_ih, Tensor b_hh, Tensor packed_ih, Tensor packed_hh, Tensor col_offsets_ih, Tensor col_offsets_hh, Scalar scale_ih, Scalar scale_hh, Scalar zero_point_ih, Scalar zero_point_hh) -> Tensor
-
-- func: quantized_rnn_tanh_cell(Tensor input, Tensor hx, Tensor w_ih, Tensor w_hh, Tensor b_ih, Tensor b_hh, Tensor packed_ih, Tensor packed_hh, Tensor col_offsets_ih, Tensor col_offsets_hh, Scalar scale_ih, Scalar scale_hh, Scalar zero_point_ih, Scalar zero_point_hh) -> Tensor
-
 # PackedSequence utilities
 - func: _pack_padded_sequence(Tensor input, Tensor lengths, bool batch_first) -> (Tensor, Tensor)
   dispatch:
@@ -8122,8 +8016,6 @@
   dispatch:
     CPU: masked_fill__cpu
     CUDA: masked_fill__cuda
-    QuantizedCPU: masked_fill__quantized_cpu
-    QuantizedCUDA: masked_fill__quantized_cuda
     MPS: masked_fill__mps
     XPU: masked_fill__xpu
   autogen: masked_fill.Scalar_out
@@ -8142,8 +8034,6 @@
   dispatch:
     CPU: masked_fill__cpu
     CUDA: masked_fill__cuda
-    QuantizedCPU: masked_fill__quantized_cpu
-    QuantizedCUDA: masked_fill__quantized_cuda
     MPS: masked_fill__mps
     XPU: masked_fill__xpu
   autogen: masked_fill.Tensor_out
@@ -8927,7 +8817,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: ne_Scalar_out
-    QuantizedCPU: ne_out_quantized_cpu
   tags: pointwise
 
 - func: ne.Scalar(Tensor self, Scalar other) -> Tensor
@@ -8935,7 +8824,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: ne_quantized_cpu
   tags: [core, pointwise]
 
 - func: ne.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -8944,7 +8832,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: ne_Tensor_out
-    QuantizedCPU: ne_out_quantized_cpu
   tags: pointwise
 
 - func: ne.Tensor(Tensor self, Tensor other) -> Tensor
@@ -8952,7 +8839,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: ne_quantized_cpu
   tags: [core, pointwise]
 
 - func: ne_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -8988,7 +8874,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: eq_Scalar_out
-    QuantizedCPU: eq_out_quantized_cpu
   tags: pointwise
 
 - func: eq.Scalar(Tensor self, Scalar other) -> Tensor
@@ -8996,7 +8881,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: eq_quantized_cpu
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: eq_scalar_nested
   tags: [core, pointwise]
 
@@ -9006,7 +8890,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: eq_Tensor_out
-    QuantizedCPU: eq_out_quantized_cpu
   tags: pointwise
 
 - func: eq.Tensor(Tensor self, Tensor other) -> Tensor
@@ -9014,7 +8897,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: eq_quantized_cpu
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: eq_tensor_nested
   tags: [core, pointwise]
 
@@ -9024,7 +8906,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: ge_Scalar_out
-    QuantizedCPU: ge_out_quantized_cpu
   tags: pointwise
 
 - func: ge.Scalar(Tensor self, Scalar other) -> Tensor
@@ -9032,7 +8913,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: ge_quantized_cpu
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: ge_scalar_nested
   tags: [core, pointwise]
 
@@ -9042,7 +8922,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: ge_Tensor_out
-    QuantizedCPU: ge_out_quantized_cpu
   tags: pointwise
 
 - func: ge.Tensor(Tensor self, Tensor other) -> Tensor
@@ -9050,7 +8929,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: ge_quantized_cpu
   tags: [core, pointwise]
 
 - func: ge_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -9086,7 +8964,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: le_Scalar_out
-    QuantizedCPU: le_out_quantized_cpu
   tags: pointwise
 
 - func: le.Scalar(Tensor self, Scalar other) -> Tensor
@@ -9094,7 +8971,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: le_quantized_cpu
   tags: [core, pointwise]
 
 - func: le.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -9103,7 +8979,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: le_Tensor_out
-    QuantizedCPU: le_out_quantized_cpu
   tags: pointwise
 
 - func: le.Tensor(Tensor self, Tensor other) -> Tensor
@@ -9111,7 +8986,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: le_quantized_cpu
   tags: [core, pointwise]
 
 - func: le_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -9147,7 +9021,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: gt_Scalar_out
-    QuantizedCPU: gt_out_quantized_cpu
   tags: pointwise
 
 - func: gt.Scalar(Tensor self, Scalar other) -> Tensor
@@ -9155,7 +9028,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: gt_quantized_cpu
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: gt_scalar_nested
   tags: [core, pointwise]
 
@@ -9165,7 +9037,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: gt_Tensor_out
-    QuantizedCPU: gt_out_quantized_cpu
   tags: pointwise
 
 - func: gt.Tensor(Tensor self, Tensor other) -> Tensor
@@ -9173,7 +9044,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: gt_quantized_cpu
   tags: [core, pointwise]
 
 - func: gt_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -9209,7 +9079,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: lt_Scalar_out
-    QuantizedCPU: lt_out_quantized_cpu
   tags: pointwise
 
 - func: lt.Scalar(Tensor self, Scalar other) -> Tensor
@@ -9217,7 +9086,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: lt_quantized_cpu
   tags: [core, pointwise]
 
 - func: lt.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -9226,7 +9094,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, MTIA, XPU: lt_Tensor_out
-    QuantizedCPU: lt_out_quantized_cpu
   tags: pointwise
 
 - func: lt.Tensor(Tensor self, Tensor other) -> Tensor
@@ -9234,7 +9101,6 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    QuantizedCPU: lt_quantized_cpu
   tags: [core, pointwise]
 
 - func: lt_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -10003,14 +9869,12 @@
   dispatch:
     CPU, CUDA, XPU: min
     MPS: min_mps
-    QuantizedCPU: min_quantized_cpu
   tags: [reduction]
 
 - func: min.unary_out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, XPU: min_unary_out
-    QuantizedCPU: min_quantized_unary_out
   tags: [reduction]
 
 - func: fmin(Tensor self, Tensor other) -> Tensor
@@ -10033,7 +9897,6 @@
   dispatch:
     CPU, CUDA, XPU: max
     MPS: max_mps
-    QuantizedCPU: max_quantized_cpu
   tags: [reduction]
 
 - func: fmax(Tensor self, Tensor other) -> Tensor
@@ -10079,7 +9942,6 @@
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, XPU: max_unary_out
-    QuantizedCPU: max_quantized_unary_out
   tags: [reduction]
 
 - func: minimum(Tensor self, Tensor other) -> Tensor
@@ -10148,8 +10010,6 @@
 - func: sort.stable(Tensor self, *, bool? stable, int dim=-1, bool descending=False) -> (Tensor values, Tensor indices)
   structured_delegate: sort.values_stable
   variants: method, function
-  dispatch:
-    QuantizedCPU: sort_quantized_cpu_stable
 
 - func: msort.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
 
@@ -10180,7 +10040,6 @@
   variants: method, function
   structured_delegate: topk.values
   dispatch:
-    QuantizedCPU: topk_quantized_cpu
   tags: core
 
 - func: all(Tensor self) -> Tensor
@@ -12102,14 +11961,12 @@
   python_module: nn
   dispatch:
     CPU, CUDA, MPS, XPU: hardsigmoid_out
-    QuantizedCPU: hardsigmoid_out_quantized_cpu
 
 - func: hardsigmoid(Tensor self) -> Tensor
   structured_delegate: hardsigmoid.out
   device_check: NoCheck   # TensorIterator
   python_module: nn
   dispatch:
-    QuantizedCPU: hardsigmoid_quantized_cpu
   tags: pointwise
 
 - func: hardsigmoid_(Tensor(a!) self) -> Tensor(a!)
@@ -12134,14 +11991,12 @@
   python_module: nn
   dispatch:
     CPU, CUDA, MPS, XPU: hardtanh_out
-    QuantizedCPU: hardtanh_out_quantized_cpu
 
 - func: hardtanh(Tensor self, Scalar min_val=-1, Scalar max_val=1) -> Tensor
   device_check: NoCheck   # TensorIterator
   python_module: nn
   dispatch:
     CPU, CUDA, MPS, XPU: hardtanh
-    QuantizedCPU: hardtanh_quantized_cpu
   tags: [pointwise, core]
 
 - func: hardtanh_backward.grad_input(Tensor grad_output, Tensor self, Scalar min_val, Scalar max_val, *, Tensor(a!) grad_input) -> Tensor(a!)
@@ -12161,7 +12016,6 @@
   python_module: nn
   dispatch:
     CPU, CUDA, MPS, XPU: hardtanh_
-    QuantizedCPU: hardtanh_quantized_cpu_
   tags: pointwise
 
 - func: hardswish.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -12195,14 +12049,12 @@
   python_module: nn
   dispatch:
     CPU, CUDA, MPS, XPU: leaky_relu_out
-    QuantizedCPU: leaky_relu_out_quantized_cpu
 
 - func: leaky_relu(Tensor self, Scalar negative_slope=0.01) -> Tensor
   structured_delegate: leaky_relu.out
   device_check: NoCheck   # TensorIterator
   python_module: nn
   dispatch:
-    QuantizedCPU: leaky_relu_quantized_cpu
   tags: [core, pointwise]
 
 - func: leaky_relu_backward.grad_input(Tensor grad_output, Tensor self, Scalar negative_slope, bool self_is_result, *, Tensor(a!) grad_input) -> Tensor(a!)
@@ -12221,7 +12073,6 @@
   device_check: NoCheck   # TensorIterator
   python_module: nn
   dispatch:
-    QuantizedCPU: leaky_relu_quantized_cpu_
   tags: pointwise
 
 - func: log_sigmoid.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -12382,8 +12233,6 @@
     CUDA: adaptive_avg_pool2d_cuda
     MPS: adaptive_avg_pool2d_mps
     XPU: adaptive_avg_pool2d_xpu
-    QuantizedCPU: adaptive_avg_pool2d_quantized_cpu
-    QuantizedCUDA: adaptive_avg_pool2d_quantized_cuda
   autogen: _adaptive_avg_pool2d.out
   tags: core
 
@@ -12403,7 +12252,6 @@
     CPU: adaptive_avg_pool3d_out_cpu
     CUDA: adaptive_avg_pool3d_out_cuda
     XPU: adaptive_avg_pool3d_out_xpu
-    QuantizedCPU: adaptive_avg_pool3d_out_quantized_cpu
 
 - func: adaptive_avg_pool3d(Tensor self, SymInt[3] output_size) -> Tensor
   python_module: nn
@@ -12415,7 +12263,6 @@
     CPU: adaptive_avg_pool3d_cpu
     CUDA: adaptive_avg_pool3d_cuda
     XPU: adaptive_avg_pool3d_xpu
-    QuantizedCPU: adaptive_avg_pool3d_quantized_cpu
   autogen: _adaptive_avg_pool3d.out
   tags: core
 
@@ -12507,7 +12354,6 @@
   structured_delegate: avg_pool2d.out
   dispatch:
     MkldnnCPU: mkldnn_avg_pool2d
-    QuantizedCPU: avg_pool2d_quantized_cpu
   tags: core
 
 - func: avg_pool2d_backward.grad_input(Tensor grad_output, Tensor self, int[2] kernel_size, int[2] stride, int[2] padding, bool ceil_mode, bool count_include_pad, int? divisor_override, *, Tensor(a!) grad_input) -> Tensor(a!)
@@ -12542,7 +12388,6 @@
   structured_delegate: avg_pool3d.out
   dispatch:
     MkldnnCPU: mkldnn_avg_pool3d
-    QuantizedCPU: avg_pool3d_quantized_cpu
   tags: core
 
 - func: avg_pool3d_backward.grad_input(Tensor grad_output, Tensor self, int[3] kernel_size, int[3] stride, int[3] padding, bool ceil_mode, bool count_include_pad, int? divisor_override, *, Tensor(a!) grad_input) -> Tensor(a!)
@@ -12999,8 +12844,6 @@
 - func: upsample_bilinear2d(Tensor self, SymInt[2] output_size, bool align_corners, float? scales_h=None, float? scales_w=None) -> Tensor
   python_module: nn
   structured_delegate: upsample_bilinear2d.out
-  dispatch:
-    QuantizedCPU: upsample_bilinear2d_quantized_cpu
 
 - func: upsample_bilinear2d_backward.grad_input(Tensor grad_output, SymInt[2] output_size, SymInt[4] input_size, bool align_corners, float? scales_h=None, float? scales_w=None, *, Tensor(a!) grad_input) -> Tensor(a!)
   python_module: nn
@@ -13212,14 +13055,10 @@
 - func: upsample_nearest2d(Tensor self, SymInt[2] output_size, float? scales_h=None, float? scales_w=None) -> Tensor
   python_module: nn
   structured_delegate: upsample_nearest2d.out
-  dispatch:
-    QuantizedCPU: upsample_nearest2d_quantized_cpu
 
 - func: _upsample_nearest_exact2d(Tensor self, SymInt[2] output_size, float? scales_h=None, float? scales_w=None) -> Tensor
   python_module: nn
   structured_delegate: _upsample_nearest_exact2d.out
-  dispatch:
-    QuantizedCPU: _upsample_nearest_exact2d_quantized_cpu
 
 - func: upsample_nearest2d_backward.grad_input(Tensor grad_output, SymInt[2] output_size, SymInt[4] input_size, float? scales_h=None, float? scales_w=None, *, Tensor(a!) grad_input) -> Tensor(a!)
   python_module: nn
@@ -13268,14 +13107,10 @@
 - func: upsample_nearest3d(Tensor self, SymInt[3] output_size, float? scales_d=None, float? scales_h=None, float? scales_w=None) -> Tensor
   python_module: nn
   structured_delegate: upsample_nearest3d.out
-  dispatch:
-    QuantizedCPU: upsample_nearest3d_quantized_cpu
 
 - func: _upsample_nearest_exact3d(Tensor self, SymInt[3] output_size, float? scales_d=None, float? scales_h=None, float? scales_w=None) -> Tensor
   python_module: nn
   structured_delegate: _upsample_nearest_exact3d.out
-  dispatch:
-    QuantizedCPU: _upsample_nearest_exact3d_quantized_cpu
 
 - func: upsample_nearest3d_backward.grad_input(Tensor grad_output, SymInt[3] output_size, SymInt[5] input_size, float? scales_d=None, float? scales_h=None, float? scales_w=None, *, Tensor(a!) grad_input) -> Tensor(a!)
   python_module: nn

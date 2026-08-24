@@ -74,5 +74,4 @@ Check out our `whirlwind tour <whirlwind_tour>`_ or some of our tutorials mentio
    tutorials/ensembling.ipynb
    tutorials/per_sample_grads.ipynb
    tutorials/neural_tangent_kernels.ipynb
-   tutorials/aot_autograd_optimizations.ipynb
    tutorials/minifier.ipynb

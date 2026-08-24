@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from time import perf_counter_ns
-from typing import Any, Optional
+from typing import Any
 from warnings import warn
 
 
@@ -935,13 +935,9 @@ class record_function(_ContextDecorator):  # pyrefly: ignore [invalid-inheritanc
         self.args: str | None = args
         # Whether or not we should run record function's end callbacks when exiting.
         self.run_callbacks_on_exit: bool = True
-        # TODO: TorchScript ignores standard type annotation here
-        # self.record: Optional["torch.classes.profiler._RecordFunction"] = None
-        self.record = torch.jit.annotate(
-            # pyrefly: ignore [not-a-type]
-            Optional["torch.classes.profiler._RecordFunction"],
-            None,
-        )
+        # Quoted so the torchbind class is not looked up at runtime.
+        # pyrefly: ignore [missing-attribute]
+        self.record: "torch.classes.profiler._RecordFunction | None" = None
         self._cuspy_external_id: int | None = None
 
     def __enter__(self):

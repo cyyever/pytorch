@@ -137,7 +137,7 @@ class DeterminationTest(TestCase):
         self.assertEqual(
             # Many files are force-imported to all tests,
             # due to the layout of the project.
-            self.determined_tests(["torch/onnx/utils.py"]),
+            self.determined_tests(["torch/jit/_trace.py"]),
             self.TESTS,
         )
         self.assertEqual(

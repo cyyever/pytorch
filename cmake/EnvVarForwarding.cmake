@@ -43,9 +43,7 @@
 #   USE_KINETO=0              disables libkineto profiling
 #   USE_NUMPY=0               disables the NumPy build
 #   USE_ITT=0                 disables Intel(R) VTune ITT functionality
-#   USE_NNPACK=0              disables NNPACK build
 #   USE_DISTRIBUTED=0         disables distributed (c10d, gloo, mpi, etc.) build
-#   USE_TENSORPIPE=0          disables the Tensorpipe backend
 #   USE_GLOO=0                disables the gloo backend
 #   USE_MPI=0                 disables the MPI backend
 #   USE_SYSTEM_NCCL=0         use the submoduled nccl instead of system nccl
@@ -82,7 +80,6 @@
 #   MKL_THREADING            MKL threading mode: SEQ, TBB, or OMP (default)
 #   MKLDNN_CPU_RUNTIME       MKL-DNN threading mode: TBB or OMP (default)
 #   ATEN_THREADING           OMP or NATIVE intra-/inter-op parallel backend
-#   ONNX_NAMESPACE           namespace for the ONNX built here
 #   ATEN_AVX512_256=TRUE     let ATen AVX2 kernels use 32 ymm registers (read from
 #                            the environment in cmake/Codegen.cmake)
 #
@@ -150,8 +147,6 @@ set(_ENV_PASSTHROUGH
   CAFFE2_USE_MSVC_STATIC_RUNTIME
   Numa_INCLUDE_DIR
   Numa_LIBRARIES
-  ONNX_ML
-  ONNX_NAMESPACE
   ATEN_THREADING
   WERROR
   OPENSSL_ROOT_DIR

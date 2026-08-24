@@ -4,7 +4,6 @@
 #include <thread>
 
 #include <torch/csrc/autograd/profiler.h>
-#include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/pybind.h>
 
 #include <ATen/Parallel.h>
@@ -117,21 +116,27 @@ BenchmarkExecutionStats BenchmarkHelper<Input, Output, Model>::benchmark(
   }
 
   using Clock = std::chrono::high_resolution_clock;
-  using RecordProfile = torch::autograd::profiler::RecordProfile;
   using TimePoint = std::chrono::time_point<Clock>;
   TimePoint start_time;
 
-  std::unique_ptr<RecordProfile> profiler_guard;
+  const bool profile_run = !config.profiler_output_path.empty();
   {
     std::unique_lock<std::mutex> lock(m);
     while (initialized != config.num_calling_threads) {
       worker_main_cv.wait(lock);
     }
-    if (!config.profiler_output_path.empty()) {
+    if (profile_run) {
       LOG(INFO) << "Using Autograd profiler. Trace will be saved to "
                 << config.profiler_output_path;
-      profiler_guard =
-          std::make_unique<RecordProfile>(config.profiler_output_path);
+      std::set<torch::profiler::impl::ActivityType> activities{
+          torch::profiler::impl::ActivityType::CPU,
+          torch::profiler::impl::ActivityType::CUDA};
+      const torch::profiler::impl::ProfilerConfig profiler_config(
+          torch::profiler::impl::ProfilerState::KINETO);
+      // enableProfiler goes straight to kineto's startTrace, which faults
+      // unless prepareProfiler has run prepareTrace first.
+      torch::autograd::profiler::prepareProfiler(profiler_config, activities);
+      torch::autograd::profiler::enableProfiler(profiler_config, activities);
     }
     LOG(INFO) << "Starting threads";
     start = true;
@@ -145,7 +150,10 @@ BenchmarkExecutionStats BenchmarkHelper<Input, Output, Model>::benchmark(
         lock, [&]() { return finished == config.num_calling_threads; });
   }
   auto end_time = std::chrono::high_resolution_clock::now();
-  profiler_guard.reset();
+  if (profile_run) {
+    torch::autograd::profiler::disableProfiler()->save(
+        config.profiler_output_path);
+  }
   LOG(INFO) << "Finished benchmark";
 
   BenchmarkExecutionStats stats;

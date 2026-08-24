@@ -20,9 +20,6 @@
 #include <torch/csrc/distributed/c10d/debug.h>
 #include <torch/csrc/distributed/c10d/default_comm_hooks.hpp>
 #include <torch/csrc/distributed/c10d/reducer_timer.hpp>
-#ifndef _WIN32
-#include <torch/csrc/distributed/autograd/context/context.h>
-#endif
 
 namespace c10d {
 
@@ -302,17 +299,7 @@ class TORCH_API Reducer {
   // the buckets
   void sync_bucket_indices(std::vector<std::vector<size_t>>& bucket_indices);
 
-  // We'd like to use DistAutogradContext::GradCallback here but dist autograd
-  // doesn't exist under Windows. So we just directly use the concrete type but
-  // to preserve and enforce our original intent we do a static assert when dist
-  // autograd is available.
   using GradCallback = std::function<bool(at::Tensor&)>;
-#ifndef _WIN32
-  static_assert(
-      std::is_same_v<
-          GradCallback,
-          torch::distributed::autograd::DistAutogradContext::GradCallback>);
-#endif
   void runGradCallbackForVariable(at::Tensor& variable, const GradCallback& cb);
 
   // Flushes deferred grad-to-bucket copies for a single bucket when
@@ -480,18 +467,6 @@ class TORCH_API Reducer {
   std::vector<at::Tensor> rebuilt_params_;
   std::vector<int64_t> rebuilt_param_indices_;
   const int64_t bucket_bytes_cap_;
-
-#ifndef _WIN32
-  struct RpcContext {
-    using ContextPtr = torch::distributed::autograd::ContextPtr;
-    // The shared_ptr is to hold the context instance.
-    ContextPtr context_ptr_holder;
-    std::atomic<ContextPtr::element_type*> context_ptr{nullptr};
-
-    void set(ContextPtr&& new_context_ptr);
-  };
-  RpcContext rpc_context_;
-#endif
 
   // A struct containing work handle and tensor for allreduce scheduled in
   // forward pass, if applicable.

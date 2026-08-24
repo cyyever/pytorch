@@ -69,9 +69,7 @@ from torch._dynamo.debug_utils import (
     _cuda_system_info_comment,
     AccuracyError,
     backend_accuracy_fails,
-    BuckTargetWriter,
     cast_to_fp64,
-    extra_deps,
     extra_imports,
     generate_config_string,
     generate_env_vars_string,
@@ -85,7 +83,6 @@ from torch._dynamo.debug_utils import (
     same_two_models,
 )
 from torch._dynamo.utils import clone_inputs, counters, same
-from torch._environment import is_fbcode
 from torch._higher_order_ops.triton_kernel_wrap import kernel_side_table
 from torch._inductor.cpp_builder import normalize_path_separator
 from torch._library.fake_class_registry import FakeScriptObject
@@ -277,8 +274,6 @@ def generate_standalone_repro(
     return repro
 
 
-use_buck = is_fbcode()
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 #                           MAIN ENTRY POINT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -459,38 +454,6 @@ def wrap_compiler_debug(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def maybe_fbcode_instructions() -> str:
-    if is_fbcode():
-        extra_deps_formatted = "\n".join([f'        "{dep}",' for dep in extra_deps])
-        if len(extra_deps_formatted) > 0:
-            extra_deps_formatted = "\n" + extra_deps_formatted
-        return f"""\
-\"\"\"
-To run this script in fbcode:
-- Create a directory (//scripts/{{your_unixname}}/repro)
-- Put this file in scripts/{{your_unixname}}/repro/fx_graph_runnable.py
-- Add a TARGETS file that looks like the following
-- `buck2 run //scripts/{{your_unixname}}/repro:repro`
-
-NOTE: you may need additional deps to actually be able to run the script.
-```
-# Contents of TARGETS file
-load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
-
-python_binary(
-    name = "repro",
-    main_src = "fx_graph_runnable.py",
-    deps = [
-        "//caffe2:torch",{extra_deps_formatted}
-    ],
-)
-```
-\"\"\"
-"""
-    else:
-        return ""
-
-
 def generate_custom_triton_kernel(kernel: Any) -> str:
     res = ""
     if isinstance(kernel, Autotuner):
@@ -578,7 +541,6 @@ isolate_fails_code_str = None
 
 {extra_imports}
 
-{maybe_fbcode_instructions()}
      """
     )
     model_str += textwrap.dedent(
@@ -941,8 +903,6 @@ def dump_compiler_graph_state(
     try:
         shutil.copyfile(file_name, repro_path)
         log.warning("Copying repro file for convenience to %s", repro_path)
-        if use_buck:
-            BuckTargetWriter(file_name).write()
     except OSError:
         log.warning("No write permissions for %s", repro_path)
 
@@ -996,10 +956,7 @@ def isolate_fails(
     #     print(fd.read())
     new_env = os.environ.copy()
     new_env = {**new_env, **env}
-    if use_buck:
-        cmd = BuckTargetWriter(file_name).write(print_msg=False)
-    else:
-        cmd = [sys.executable, file_name]
+    cmd = [sys.executable, file_name]
     with (
         TemporaryFile() as stdout,
         TemporaryFile() as stderr,

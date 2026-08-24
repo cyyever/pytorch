@@ -556,9 +556,6 @@ class Module:
             >>> self.register_buffer('running_mean', torch.zeros(num_features))
 
         """
-        if persistent is False and isinstance(self, torch.jit.ScriptModule):
-            raise RuntimeError("ScriptModule does not support non-persistent buffers")
-
         if "_buffers" not in self.__dict__:
             raise AttributeError("cannot assign buffer before Module.__init__() call")
         elif not isinstance(name, str):
@@ -1760,26 +1757,6 @@ class Module:
             self._forward_hooks.move_to_end(handle.id, last=False)  # type: ignore[attr-defined]
         return handle
 
-    def _slow_forward(self, *input, **kwargs):
-        tracing_state = torch._C._get_tracing_state()
-        if not tracing_state or isinstance(self.forward, torch._C.ScriptMethod):
-            return self.forward(*input, **kwargs)
-        recording_scopes = torch.jit._trace._trace_module_map is not None
-        if recording_scopes:
-            # type ignore was added because at this point one knows that
-            # torch.jit._trace._trace_module_map is not Optional and has type Dict[Any, Any]
-            name = torch.jit._trace._trace_module_map.get(self, None)  # type: ignore[operator, union-attr]
-            if name:
-                tracing_state.push_scope(name)
-            else:
-                recording_scopes = False
-        try:
-            result = self.forward(*input, **kwargs)
-        finally:
-            if recording_scopes:
-                tracing_state.pop_scope()
-        return result
-
     def _wrapped_call_impl(self, *args, **kwargs):
         if self._compiled_call_impl is not None:
             return self._compiled_call_impl(*args, **kwargs)  # type: ignore[misc]
@@ -1789,7 +1766,7 @@ class Module:
     # torchrec tests the code consistency with the following code
     # fmt: off
     def _call_impl(self, *args, **kwargs):
-        forward_call = (self._slow_forward if torch._C._get_tracing_state() else self.forward)
+        forward_call = self.forward
         # If we don't have any hooks, we want to skip the rest of the logic in
         # this function, and just call forward.
         if not (self._backward_hooks or self._backward_pre_hooks or self._forward_hooks or self._forward_pre_hooks

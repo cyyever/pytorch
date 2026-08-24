@@ -184,7 +184,7 @@ TORCH_API void enableProfiler(
  * LITE_INTERPRETER. In this case lite interpreter runtime, records debug
  * handles in RecordFunction, along with other information. Debug handles are
  * eventually passed down to KinetoEvent and recorded as part of the event.
- * KinetoEdgeCPUProfiler, in torch/csrc/jit/mobile/profiler_edge.cpp, enables
+ * The edge CPU profiler, now removed, enabled
  * profiler using post-processing callback, via
  * enableProfilerWithEventPostProcess, that takes these debug handles and
  * generates stack trace and module hierarchy information, once profiling is
@@ -241,12 +241,5 @@ TORCH_API void enableProfilerInChildThread();
 TORCH_API void disableProfilerInChildThread();
 
 } // namespace autograd::profiler
-
-namespace profiler::impl {
-
-// Experimental.
-TORCH_API void _reportVulkanEventToProfiler(vulkan_id_t id);
-
-} // namespace profiler::impl
 
 } // namespace torch

@@ -24,30 +24,13 @@ aten__weight_int8pack_mm = ExternKernelChoice(
 )
 
 aten__weight_int4pack_mm_cpu = ExternKernelChoice(
-    torch.ops.quantized.int4mm_packed_weight_cpu,
-    "at::native::_weight_int4pack_mm_cpu_tensor",
+    torch._weight_int4pack_mm_for_cpu,
+    "at::_weight_int4pack_mm_for_cpu",
     has_out_variant=False,
     kernel_creator=WeightInt4PackMatmul.create,
 )
 
-quantized = torch.ops.quantized
-_quantized = torch.ops._quantized
 aten = torch.ops.aten
-
-
-def register_quantized_ops() -> None:
-    from . import lowering
-
-    lowering.add_needs_realized_inputs(
-        [
-            quantized.max_pool2d,
-            _quantized.wrapped_fbgemm_pack_gemm_matrix_fp16,
-            _quantized.wrapped_fbgemm_linear_fp16_weight,
-        ]
-    )
-    lowering.make_fallback(quantized.max_pool2d)
-    lowering.make_fallback(_quantized.wrapped_fbgemm_pack_gemm_matrix_fp16)
-    lowering.make_fallback(_quantized.wrapped_fbgemm_linear_fp16_weight)
 
 
 def register_woq_mm_ops() -> None:

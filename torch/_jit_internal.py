@@ -21,33 +21,25 @@ import types
 import typing
 import warnings
 import weakref
-from typing import (  # noqa: UP035, F401  # (Dict, List, Tuple) imported by torch.jit.annotations
+from typing import (
     Any,
     Callable,
-    Dict,
     Final,
     ForwardRef,
     get_args,
     get_origin,
-    List,
     Optional,
     Protocol,
-    Tuple,
     TypeVar,
     Union,
 )
 from typing_extensions import ParamSpec
 
 import torch
-
-# This is needed. `torch._jit_internal` is imported before `torch.distributed.__init__`.
-# Explicitly ask to import `torch.distributed.__init__` first.
-# Otherwise, "AttributeError: module 'torch' has no attribute 'distributed'" is raised.
-import torch.distributed.rpc
 import torch.package._mangling as package_mangling
 from torch._awaits import _Await
 from torch._C import _Await as CAwait, Future as CFuture
-from torch._sources import fake_range, get_source_lines_and_file, parse_def
+from torch._sources import get_source_lines_and_file, normalize_source_lines
 from torch.futures import Future
 
 
@@ -1013,7 +1005,9 @@ def get_overload_no_implementation_error_message(kind, obj):
 
 def _check_overload_body(func):
     try:
-        parsed_def = parse_def(func)
+        sourcelines, _, _ = get_source_lines_and_file(func)
+        source = "".join(normalize_source_lines(sourcelines))
+        py_ast = ast.parse(textwrap.dedent(source))
     except OSError:
         # Parsing the function definition can raise an OSError if source is unavailable.
         # Since this is just an initial check, just raise a warning if this is the case.
@@ -1023,7 +1017,11 @@ def _check_overload_body(func):
         )
         return
 
-    body = parsed_def.ast.body[0].body
+    if len(py_ast.body) != 1 or not isinstance(py_ast.body[0], ast.FunctionDef):
+        raise RuntimeError(
+            f"Expected a single top-level function for overload: {func}"
+        )
+    body = py_ast.body[0].body
 
     def is_pass(x):
         return isinstance(x, ast.Pass)
@@ -1039,7 +1037,7 @@ def _check_overload_body(func):
         msg = (
             "Only `pass` statement or `...` can be the body of overload declaration:\n"
         )
-        msg += "\n".join(parsed_def.source.split("\n")[:3])
+        msg += "\n".join(source.split("\n")[:3])
         msg += " <- Expecting `pass` or `...` here!\n" + _OVERLOAD_EXAMPLE
         raise RuntimeError(msg)
 
@@ -1246,117 +1244,15 @@ def is_await(ann) -> bool:
     return get_origin(ann) is _Await
 
 
-if torch.distributed.rpc.is_available():
-    from torch._C._distributed_rpc import PyRRef
-    from torch.distributed.rpc import RRef
-
-    def is_rref(ann) -> bool:
-        if ann is RRef:
-            raise RuntimeError(
-                "Attempted to use RRef without a "
-                "contained type. Please add a contained type, e.g. "
-                "RRef[int]"
-            )
-        return get_origin(ann) is RRef
-
-    def is_rref_instance(obj) -> bool:
-        return isinstance(obj, PyRRef)
-
-else:
-
-    def is_rref_instance(obj) -> bool:
-        # If the RPC module doesn't exist then RRefs don't exist either.
-        return False
+def is_rref_instance(obj) -> bool:
+    # The RPC module has been removed, so RRefs don't exist either.
+    return False
 
 
 def _try_get_dispatched_fn(fn):
     if not callable(fn):
         return None
     return boolean_dispatched.get(fn)
-
-
-def _get_named_tuple_properties(
-    obj,
-    loc: torch._C._jit_tree_views.SourceRange | None = None,
-    rcb=None,
-):
-    if loc is None:
-        loc = fake_range()
-
-    if not issubclass(obj, tuple) or not hasattr(obj, "_fields"):
-        raise AssertionError(
-            f"expected namedtuple (tuple subclass with _fields), got {obj}"
-        )
-    if hasattr(obj, "_field_defaults"):
-        defaults = [
-            obj._field_defaults[field]
-            for field in obj._fields
-            if field in obj._field_defaults
-        ]
-    else:
-        defaults = []
-
-    obj_annotations = inspect.get_annotations(obj)
-    if len(obj_annotations) == 0 and hasattr(obj, "__base__"):
-        obj_annotations = inspect.get_annotations(
-            # pyrefly: ignore [bad-argument-type]
-            obj.__base__
-        )
-
-    annotations = []
-    for field in obj._fields:
-        if field in obj_annotations:
-            field_type = obj_annotations[field]
-            # [Note: ForwardRef annotations in NamedTuple attributes]
-            # NamedTuple types are slightly different from normal types.
-            #
-            # Normally, annotations are evaluated like this (during jit.script):
-            # 1. Load strings of python code into c++ and parse.
-            # 2. Get annotations as strings
-            # 3. Use the PythonResolver's resolution callback (rcb) to convert
-            #    the string into a python object
-            # 4. We call into annotations.py:ann_to_type to convert python obj
-            #    from step 3 into a type that torchscript understands.
-            #
-            # NamedTuples are more complicated, because it has sub-types.
-            # Normally, once we have the NamedTuple type object from #3,
-            # we can just look at the annotation literal values and use
-            # ann_to_type directly on them.
-            #
-            # But sometimes, users will annotate with string literals, e.g.
-            #    x: 'int'
-            # This also happens with PEP563 (from __forward__ import annotations)
-            #
-            # These annotations appear in the annotation dict as ForwardRef('int').
-            #
-            # Then, we need to convert the string into a python object. This
-            # requires having local context for custom objects or imported types.
-            # rcb() is what gives us this. So, we plumb rcb through the stack so
-            # it can be used in this context for the if block below.
-            #
-            # FAQ:
-            # - Why do we need this special handling for NamedTuple but string
-            #   annotations work fine for normal types? Normally, we parse the
-            #   string directly and then call rcb() directly from C++.
-            # - Why not use ForwardRef._evaluate? For that, we need globals()
-            #   and locals() for the local context where the NamedTuple was defined.
-            #   rcb is what lets us look up into these. So, basically rcb does the
-            #   hard work for us.
-            if isinstance(field_type, ForwardRef) and rcb is not None:
-                rcb_type = rcb(field_type.__forward_arg__)
-                # rcb returns None if it can't find anything.
-                if rcb_type is None:
-                    raise ValueError(
-                        f"Unknown type annotation: '{field_type}' in NamedTuple {obj.__name__}."
-                        f" Likely due to partial support for ForwardRef parameters in NamedTuples, see #95858."
-                        f" Issue occurred at {loc.highlight()}"
-                    )
-                field_type = rcb_type
-            the_type = torch.jit.annotations.ann_to_type(field_type, loc, rcb)
-            annotations.append(the_type)
-        else:
-            annotations.append(torch._C.TensorType.getInferred())
-    return type(obj).__name__, obj._fields, annotations, defaults
 
 
 def _create_named_tuple(
@@ -1574,12 +1470,8 @@ def _extract_tensors(obj):
 
 
 def _get_model_id(obj) -> str | None:
-    if isinstance(obj, torch.jit.ScriptModule):
-        return str(obj._c._type())
-    elif isinstance(obj, torch.jit.ScriptFunction):
-        return obj.qualified_name
-    else:
-        return None
+    # ScriptModules and ScriptFunctions no longer exist.
+    return None
 
 
 # In Python-3.11+ typed enums (i.e. IntEnum for example) retain number of base class methods in subclass

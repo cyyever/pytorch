@@ -43,7 +43,6 @@ import weakref
 from collections.abc import Generator, Sized
 from dataclasses import dataclass
 from enum import Enum
-from os.path import dirname, join
 from typing import Any, cast, Literal, NamedTuple, TYPE_CHECKING
 from unittest.mock import patch
 
@@ -417,7 +416,6 @@ def _reset_guarded_backend_cache() -> None:
 DONT_WRAP_FILES = {
     # For tracing into fx modules
     inspect.getsourcefile(GraphModule),
-    join(dirname(dirname(__file__)), "onnx/_internal/fx/dynamo_graph_extractor.py"),
 }
 
 
@@ -1045,16 +1043,6 @@ class _TorchDynamoContext:
 
         # Optimize the forward method of torch.nn.Module object
         if isinstance(fn, torch.nn.Module):
-            if type(fn) is torch.jit._script.RecursiveScriptModule:
-                raise RuntimeError(
-                    "torch.compile does not support compiling torch.jit.script or "
-                    "torch.jit.freeze models directly.\n\n"
-                    "Workaround: compile the original eager module instead:\n"
-                    "  model = torch.nn.Linear(3, 3)\n"
-                    "  compiled_model = torch.compile(model)  # compile the eager module\n\n"
-                    "torch.jit.script and torch.jit.freeze are deprecated in favor of "
-                    "torch.compile. See https://pytorch.org/docs/main/jit.html for details."
-                )
             mod = fn
             new_mod = OptimizedModule(mod, self)
             # Save the function pointer to find the original callable while nesting
@@ -1140,7 +1128,6 @@ class _TorchDynamoContext:
         if hasattr(self, "callback"):
             callback = self.callback  # type: ignore[assignment]
 
-        is_jit_tracing = torch._C._is_tracing
         is_fx_symbolic_tracing = torch.fx._symbolic_trace.is_fx_symbolic_tracing
 
         @functools.wraps(fn)
@@ -1212,12 +1199,6 @@ class _TorchDynamoContext:
                         )
                     else:
                         return fn(*args, **kwargs)
-
-                if is_jit_tracing():
-                    raise RuntimeError(
-                        "Detected that you are using FX to torch.jit.trace "
-                        "a dynamo-optimized function. This is not supported at the moment."
-                    )
 
                 cleanups = [enter() for enter in self.enter_exit_hooks]
                 prior_skip_guard_eval_unsafe = set_skip_guard_eval_unsafe(
@@ -2194,7 +2175,7 @@ def check_user_input_output(flat_values: list[Any], error_type: UserErrorType) -
         torch.SymInt,
         torch.SymFloat,
         torch.SymBool,
-        torch._C.ScriptObject,
+        torch.ScriptObject,
         _IntWrapper,
     ] + list(common_constant_types)
 
@@ -2874,17 +2855,6 @@ class TorchPatcher:
         # with torch.deploy internally.
         from .decorators import disable
 
-        torch.jit.trace = disable(
-            torch.jit.trace, reason="tracing into TorchScript not fully supported"
-        )
-        torch.jit.trace_module = disable(
-            torch.jit.trace_module,
-            reason="tracing into TorchScript not fully supported",
-        )
-        torch.jit._get_trace_graph = disable(
-            torch.jit._get_trace_graph,
-            reason="tracing into TorchScript not fully supported",
-        )
         torch.fx._symbolic_trace.Tracer.trace = disable(
             torch.fx._symbolic_trace.Tracer.trace,
             reason="tracing into FX not fully supported",

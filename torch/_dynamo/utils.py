@@ -2780,43 +2780,6 @@ def preserve_rng_state() -> Generator[None, None, None]:
                 torch.xpu.set_rng_state(xpu_rng_state)  # type: ignore[possibly-undefined]
 
 
-def is_jit_model(
-    model0: Any,
-) -> TypeIs[
-    torch.jit._trace.TopLevelTracedModule
-    | torch.jit._script.RecursiveScriptModule
-    | torch.jit.ScriptFunction[Any, Any]
-    | torch.jit.ScriptModule
-]:
-    return isinstance(
-        model0,
-        (
-            torch.jit._trace.TopLevelTracedModule,
-            torch.jit._script.RecursiveScriptModule,
-            torch.jit.ScriptFunction,
-            torch.jit.ScriptModule,
-        ),
-    )
-
-
-def torchscript(model: Any, example_inputs: Any, verbose: bool = False) -> Any:
-    if is_jit_model(model):
-        # already done?
-        return model
-
-    try:
-        return torch.jit.trace(model, example_inputs)
-    except Exception:
-        try:
-            return torch.jit.script(model)
-        except Exception:
-            if verbose:
-                log.exception("jit error")
-            else:
-                log.error("Both torch.jit.trace and torch.jit.script failed")
-    return None
-
-
 def getfile(obj: object) -> str | None:
     try:
         # inspect.getfile is typed to accept only a narrow union of callable

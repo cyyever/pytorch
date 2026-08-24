@@ -93,7 +93,7 @@ void initPythonCustomClassBindings(PyObject* module) {
                 qualname));
         c10::ClassTypePtr class_type = named_type->cast<ClassType>();
         return ScriptClass(c10::StrongTypePtr(
-            std::shared_ptr<CompilationUnit>(), std::move(class_type)));
+            nullptr, std::move(class_type)));
       });
 }
 

@@ -49,7 +49,6 @@ SystemEnv = namedtuple(
         "hip_runtime_version",
         "miopen_runtime_version",
         "caching_allocator_config",
-        "is_xnnpack_available",
         "cpu_info",
     ],
 )
@@ -113,7 +112,6 @@ CONDA_PATTERNS = [
 PIP_PATTERNS = [
     "mypy",
     "flake8",
-    "onnx",
 ]
 
 
@@ -678,15 +676,6 @@ def get_cuda_module_loading_config():
         return "N/A"
 
 
-def is_xnnpack_available():
-    if TORCH_AVAILABLE:
-        import torch.backends.xnnpack
-
-        return str(torch.backends.xnnpack.enabled)  # type: ignore[attr-defined]
-    else:
-        return "N/A"
-
-
 def get_env_info():
     """
     Collects environment information to aid in debugging.
@@ -697,7 +686,7 @@ def get_env_info():
     runtime version, CUDA module loading config, GPU model and configuration, Nvidia
     driver version, cuDNN version, pip version and versions of relevant pip and
     conda packages, HIP runtime version, MIOpen runtime version,
-    Caching allocator config, XNNPACK availability and CPU information.
+    Caching allocator config, CPU information.
 
     Returns:
         SystemEnv (namedtuple): A tuple containing various environment details
@@ -770,7 +759,6 @@ def get_env_info():
         clang_version=get_clang_version(run_lambda),
         cmake_version=get_cmake_version(run_lambda),
         caching_allocator_config=get_cachingallocator_config(),
-        is_xnnpack_available=is_xnnpack_available(),
         cpu_info=get_cpu_info(run_lambda),
     )
 
@@ -798,7 +786,6 @@ cuDNN version: {cudnn_version}
 Is XPU available: {is_xpu_available}
 HIP runtime version: {hip_runtime_version}
 MIOpen runtime version: {miopen_runtime_version}
-Is XNNPACK available: {is_xnnpack_available}
 Caching allocator config: {caching_allocator_config}
 
 CPU:

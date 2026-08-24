@@ -79,16 +79,6 @@ class InPlaceCompilationTests(TestCase):
             )
             loaded_model(torch.randn(1, 10))
 
-    def test_jit_save(self):
-        torch._dynamo.reset()
-        model = ToyModel()
-        model.compile()
-        model(torch.randn(1, 10))
-        scripted_model = torch.jit.script(model)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            torch.jit.save(scripted_model, os.path.join(tmpdirname, "model.pt"))
-            loaded_model = torch.jit.load(os.path.join(tmpdirname, "model.pt"))
-            loaded_model(torch.randn(1, 10))
 
     def test_compilation_callback(self):
         torch._dynamo.reset()
@@ -201,65 +191,10 @@ class InPlaceCompilationTests(TestCase):
         with self.assertRaises(AttributeError):
             fn(x)
 
-    def test_torch_script_compilation(self):
-        @torch.jit.script
-        def fn(x: torch.Tensor) -> torch.Tensor:
-            return x
 
-        a = torch.randn(1, 1)
-        out = torch.compile(fn, backend="eager")(a)
-        self.assertEqual(out, a)
 
-    def test_compile_script_module_error(self):
-        model = torch.nn.Sequential(torch.nn.Linear(3, 3))
-        model.eval()
-        scripted = torch.jit.script(model)
-        with self.assertRaisesRegex(
-            RuntimeError, "torch.compile does not support compiling torch.jit.script"
-        ):
-            torch.compile(scripted, backend="eager")
 
-    def test_compile_frozen_module_error(self):
-        model = torch.nn.Sequential(torch.nn.Linear(3, 3))
-        model.eval()
-        scripted = torch.jit.script(model)
-        with self.assertWarns(FutureWarning):
-            frozen = torch.jit.freeze(scripted)
-        with self.assertRaisesRegex(
-            RuntimeError, "torch.compile does not support compiling torch.jit.script"
-        ):
-            torch.compile(frozen, backend="eager")
 
-    def test_compile_frozen_module_inductor_error(self):
-        model = torch.nn.Sequential(torch.nn.Linear(3, 3))
-        model.eval()
-        scripted = torch.jit.script(model)
-        with self.assertWarns(FutureWarning):
-            frozen = torch.jit.freeze(scripted)
-        with self.assertRaisesRegex(
-            RuntimeError, "torch.compile does not support compiling torch.jit.script"
-        ):
-            torch.compile(frozen, backend="inductor")
-
-    def test_inline_script_module_graph_break(self):
-        class OuterModule(torch.nn.Module):
-            def __init__(self, sub):
-                super().__init__()
-                self.sub = sub
-
-            def forward(self, x):
-                return self.sub(x)
-
-        inner = torch.nn.Linear(3, 3)
-        scripted_inner = torch.jit.script(inner)
-        outer = OuterModule(scripted_inner)
-
-        cnt = torch._dynamo.testing.CompileCounter()
-        compiled = torch.compile(outer, backend=cnt)
-        inputs = torch.randn(2, 3)
-        compiled(inputs)
-        # ScriptModule submodule causes a graph break
-        self.assertEqual(cnt.frame_count, 0)
 
     def test_to_sparse_to_dense_with_graph_break(self):
         def fn(x):

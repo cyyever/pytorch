@@ -9,7 +9,6 @@
 #include <ATen/native/Pool.h>
 #include <ATen/native/cpu/DepthwiseConvKernel.h>
 #include <ATen/native/utils/ParamUtils.h>
-#include <ATen/native/xnnpack/Engine.h>
 #include <c10/core/GradMode.h>
 #include <c10/core/SymBool.h>
 #include <c10/util/accumulate.h>
@@ -46,8 +45,6 @@
 #include <ATen/ops/_convolution_native.h>
 #include <ATen/ops/_mps_convolution.h>
 #include <ATen/ops/_mps_convolution_transpose.h>
-#include <ATen/ops/_nnpack_available.h>
-#include <ATen/ops/_nnpack_spatial_convolution.h>
 #include <ATen/ops/_slow_conv2d_backward.h>
 #include <ATen/ops/_unsafe_view.h>
 #include <ATen/ops/cat.h>
@@ -254,32 +251,6 @@ static bool check_cudnn_depthwise_workload_with_filter(const at::Tensor& input, 
 }
 
 
-#if defined(C10_MOBILE)
-static bool xnnpack_use_convolution2d(
-    const Tensor& input,
-    const Tensor& weight,
-    const at::OptionalIntArrayRef bias_sizes_opt,
-    const IntArrayRef padding,
-    const IntArrayRef stride,
-    const IntArrayRef dilation,
-    const int64_t groups,
-    const bool transposed) {
-  return xnnpack::use_convolution2d(input, weight, bias_sizes_opt, padding, stride, dilation, groups, transposed);
-}
-
-static bool xnnpack_use_convolution2d(
-    const Tensor& input,
-    const Tensor& weight,
-    const at::OptionalSymIntArrayRef bias_sizes_opt,
-    const SymIntArrayRef padding,
-    const SymIntArrayRef stride,
-    const SymIntArrayRef dilation,
-    const c10::SymInt groups,
-    const bool transposed) {
-  // Never use xnnpack for symbolic tracing
-  return false;
-}
-#endif
 
 // This struct is templated so that we can run backend selection in a dynamic
 // shapes context; all of the real kernel selection in eager mode runs with
@@ -550,44 +521,8 @@ struct ConvParams {
 #endif
     return false;
   }
-  bool use_nnpack(const at::Tensor& input, const at::Tensor& weight) const  {
-#if AT_NNPACK_ENABLED()
-    return at::globalContext().userEnabledNNPACK() &&
-           at::_nnpack_available() &&
-           input.device().is_cpu() &&
-           input.scalar_type() == kFloat && // only on CPU Float Tensors
-           !is_dilated() && // or dilation
-           !transposed &&   // or transposed tensors
-           input.ndimension() == 4 && // must be in NCHW format
-           weight.ndimension() == 4 &&
-           (at::symint::size<T>(weight, 2) < 17) && (at::symint::size<T>(weight, 3) < 17) && // NNPACK only supports kernels up to 16x16
-           (padding[0] < at::symint::size<T>(weight, 2)) && (padding[1] < at::symint::size<T>(weight, 3)) // NNPACK only supports padding < kernel_size. See https://github.com/pytorch/pytorch/issues/90142.
-#if !defined(C10_MOBILE)
-           && at::symint::size<T>(input, 0) >= 16 // ensure large enough batch size to ensure perf, tuneable
-#endif
-       ;
-#endif
-    return false;
-  }
-  bool use_xnnpack(const at::Tensor& input, const at::Tensor& weight,
-                   const at::OptionalArrayRef<T> bias_sizes_opt) const {
-#if defined(C10_MOBILE)
-    if (!transposed) {
-      // NB: for the call here, it MATTERS that we are templated. If you
-      // untemplate this to always use SymInt, the function
-      // xnnpack_use_convolution2d will always return false
-      return (at::symint::size<T>(input, 1) == groups) &&
-              xnnpack_use_convolution2d(
-                  input,
-                  weight,
-                  bias_sizes_opt,
-                  padding,
-                  stride,
-                  dilation,
-                  groups,
-                  transposed);
-    }
-#endif
+  bool use_xnnpack(const at::Tensor& /*input*/, const at::Tensor& /*weight*/,
+                   const at::OptionalArrayRef<T> /*bias_sizes_opt*/) const {
     return false;
   }
 
@@ -1345,13 +1280,9 @@ static ConvBackend _select_conv_backend(
         if (params.is_dilated()) {
           return ConvBackend::SlowDilated2d;
         } else {  /* dim == 4, non-dilated */
-          if (params.use_nnpack(input, weight)) {
-            return ConvBackend::NnpackSpatial;
-          } else {
-            /* CPU implementation has specialized MM kernels
-               for non-dilated case here */
-            return ConvBackend::Slow2d;
-          }
+          /* CPU implementation has specialized MM kernels
+             for non-dilated case here */
+          return ConvBackend::Slow2d;
         }
       } else if (input.ndimension() == 5 && (input.is_cuda() || params.is_dilated())) {
         return ConvBackend::SlowDilated3d;
@@ -1439,12 +1370,6 @@ static at::Tensor _convolution_nogroup_backend(
     const ConvParams<int64_t>& params) {
   auto kernel_size = weight.sizes().slice(2);
   switch(backend) {
-    case ConvBackend::NnpackSpatial:
-#if AT_NNPACK_ENABLED()
-      return at::_nnpack_spatial_convolution(input, weight, bias, params.padding, params.stride);
-#else
-      TORCH_INTERNAL_ASSERT(false, "NnpackSpatial backend was selected in PyTorch compiled without nnpack support");
-#endif
     case ConvBackend::Slow2d:
       return at::thnn_conv2d(input, weight, kernel_size, bias, params.stride, params.padding);
     case ConvBackend::SlowDilated2d:
@@ -1711,11 +1636,9 @@ at::Tensor _convolution(
           input.device().type(), input, weight, bias, params.stride, params.padding, params.groups);
       break;
     case ConvBackend::Xnnpack2d:
-      output = xnnpack::convolution2d(
-          input, weight, bias, params.padding, params.stride, params.dilation, params.groups);
+      TORCH_INTERNAL_ASSERT(false, "Xnnpack2d backend was selected in a build without xnnpack support");
       break;
     // Handle backends that don't natively support groups > 1.
-    case ConvBackend::NnpackSpatial:
     case ConvBackend::Slow2d:
     case ConvBackend::SlowDilated2d:
     case ConvBackend::SlowDilated3d:
@@ -2006,8 +1929,6 @@ static std::tuple<at::Tensor, at::Tensor, at::Tensor> _convolution_backward_nogr
     case ConvBackend::Slow2d:
       return at::_slow_conv2d_backward(
         grad_output, input, weight, kernel_size, params.stride, params.padding, output_mask);
-    // NB: nnpack backward does not support strided convolutions; use slow impl instead
-    case ConvBackend::NnpackSpatial:
     case ConvBackend::SlowDilated2d:
       return slow_conv_dilated2d_backward_stub(
         input.device().type(),
@@ -2287,7 +2208,6 @@ std::tuple<Tensor, Tensor, Tensor> convolution_backward(
             params.stride, params.padding, output_mask);
       break;
     // Handle backends that don't natively support groups > 1.
-    case ConvBackend::NnpackSpatial:
     case ConvBackend::Slow2d:
     case ConvBackend::SlowDilated2d:
     case ConvBackend::SlowDilated3d:

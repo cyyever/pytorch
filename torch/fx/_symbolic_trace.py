@@ -16,7 +16,8 @@ from typing import Any, get_args, NamedTuple, overload, ParamSpec, TypeAlias, Ty
 
 import torch
 import torch.utils._pytree as pytree
-from torch._C import ScriptObject  # type: ignore[attr-defined]
+from torch._C import ScriptObject as _CScriptObject  # type: ignore[attr-defined]
+from torch._custom_class_base import CustomClassBase as ScriptObject
 from torch._library.fake_class_registry import FakeScriptObject
 from torch._library.opaque_object import is_custom_class, is_opaque_symbolic_type
 
@@ -44,8 +45,11 @@ _proxyable_classes: dict[type, None] = {}
 
 _is_fx_tracing_tls = threading.local()
 
+# ScriptObject means a registered torchbind class; _CScriptObject is the bare
+# C++ object underneath it, which also carries unregistered things like a
+# record_function handle. Both have to be internable as constants.
 _ConstantAttributeType: TypeAlias = (
-    torch.Tensor | torch.ScriptObject | FakeScriptObject | pytree.TreeSpec
+    torch.Tensor | _CScriptObject | FakeScriptObject | pytree.TreeSpec
 )
 
 _constant_attribute_types = get_args(_ConstantAttributeType)
@@ -467,7 +471,7 @@ class Tracer(TracerBase):
             if not qualname:
                 if isinstance(a, torch.Tensor):
                     base_name = "_tensor_constant"
-                elif isinstance(a, (FakeScriptObject, ScriptObject)):
+                elif isinstance(a, (FakeScriptObject, ScriptObject, _CScriptObject)):
                     base_name = "_torchbind_obj"
                 elif isinstance(a, pytree.TreeSpec):
                     base_name = "_tree_spec_constant"
@@ -524,7 +528,7 @@ class Tracer(TracerBase):
         """
         return (
             m.__module__.startswith("torch.nn")
-            or m.__module__.startswith("torch.ao.nn")
+
         ) and not isinstance(m, torch.nn.Sequential)
 
     @compatibility(is_backward_compatible=True)

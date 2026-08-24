@@ -3317,7 +3317,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                     fill_args(arg, arg_type)
 
         def fill_output_arg(
-            arg: str, return_type: torch.JitType, is_mutated_output: bool
+            arg: str, return_type: torch._C.Type, is_mutated_output: bool
         ) -> None:
             if isinstance(return_type, torch.TensorType):
                 if not is_mutated_output:
@@ -3395,17 +3395,17 @@ class CppWrapperCpu(PythonWrapperCodegen):
             torch.DeviceObjType,
             torch.FloatType,
             # ScalarTypeType, LayoutType, and MemoryFormatType are seen as IntType
-            # when queried via torch.JitType.type.
+            # when queried via torch._C.Type.type.
             torch.IntType,
             torch.TensorType,
         )
 
-        def type_supported(t: torch.JitType) -> bool:
+        def type_supported(t: torch._C.Type) -> bool:
             if isinstance(t, torch.OptionalType):
                 return type_supported(t.getElementType())
             return isinstance(t, supported_types)
 
-        def uses_symint(t: torch.JitType) -> bool:
+        def uses_symint(t: torch._C.Type) -> bool:
             # SymInt/SymBool/SymFloat are reported as Int/Bool/Float by
             # JitType.type, so they pass type_supported above.  But the
             # StableIValue codegen below emits no symbolic-int-aware conversion,
@@ -3432,7 +3432,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         we can include ATen/c10 headers and call the dispatcher directly.
         """
 
-        def arg_supported(t: torch.JitType) -> bool:
+        def arg_supported(t: torch._C.Type) -> bool:
             if isinstance(t, torch.OptionalType):
                 return arg_supported(t.getElementType())
             if isinstance(t, torch.ListType):
@@ -3454,7 +3454,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                 ),
             ) or repr(t) in ("Layout", "MemoryFormat", "ScalarType", "SymFloat")
 
-        def return_supported(t: torch.JitType) -> bool:
+        def return_supported(t: torch._C.Type) -> bool:
             if isinstance(t, torch.OptionalType):
                 return isinstance(t.getElementType(), torch.TensorType)
             return isinstance(t, (torch.NoneType, torch.TensorType))
@@ -3832,7 +3832,7 @@ if (!custom_op_wrapper) {
         with dispatch_lines.indent():
             tmp_var_number = count()
 
-            def parse_arg(arg_type: torch.JitType, codegen_arg: str) -> str:
+            def parse_arg(arg_type: torch._C.Type, codegen_arg: str) -> str:
                 # Strip off any temporary references; we're in an indented context, so
                 # any saved-off variables will be auto-destroyed.
                 new_codegen_arg = codegen_arg.removeprefix("&temporary_reference(")
@@ -3968,7 +3968,7 @@ if (!custom_op_wrapper) {
             def next_tmp(prefix: str) -> str:
                 return f"{prefix}_{next(tmp_var_number)}"
 
-            def type_expr(t: torch.JitType) -> str:
+            def type_expr(t: torch._C.Type) -> str:
                 if isinstance(t, torch.OptionalType):
                     return f"c10::OptionalType::create({type_expr(t.getElementType())})"
                 if isinstance(t, torch.ListType):
@@ -4017,7 +4017,7 @@ if (!custom_op_wrapper) {
                     torch.preserve_format: "c10::MemoryFormat::Preserve",
                 }[memory_format]
 
-            def codegen_tensor_ivalue(raw_arg: Any, arg_type: torch.JitType) -> str:
+            def codegen_tensor_ivalue(raw_arg: Any, arg_type: torch._C.Type) -> str:
                 if hasattr(raw_arg, "codegen_reference"):
                     codegen_arg = raw_arg.codegen_reference()
                 else:
@@ -4031,7 +4031,7 @@ if (!custom_op_wrapper) {
                     f"tensor_handle_to_tensor_pointer({raii_var}))"
                 )
 
-            def codegen_ivalue(raw_arg: Any, arg_type: torch.JitType) -> str:
+            def codegen_ivalue(raw_arg: Any, arg_type: torch._C.Type) -> str:
                 if raw_arg is None:
                     # A None at a non-optional Tensor arg means an absent tensor.
                     # Box it as an undefined at::Tensor (ATen's absent-tensor
@@ -4331,9 +4331,11 @@ if (!custom_op_wrapper) {
             return "AtenTensorHandle"
         elif isinstance(type_, (torch.IntType, torch.SymIntType)):
             return "int64_t"
-        elif isinstance(
-            type_, (torch.BoolType, torch.SymBoolType, torch.EnumType)
-        ) or repr(type_) in ("Layout", "MemoryFormat", "ScalarType"):
+        elif isinstance(type_, (torch.BoolType, torch.SymBoolType)) or repr(type_) in (
+            "Layout",
+            "MemoryFormat",
+            "ScalarType",
+        ):
             return "int32_t"
         elif isinstance(type_, torch.FloatType):
             return "double"

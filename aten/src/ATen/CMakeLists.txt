@@ -94,9 +94,7 @@ endif()
 file(GLOB_RECURSE ATen_CORE_HEADERS CONFIGURE_DEPENDS  "core/*.h")
 file(GLOB_RECURSE ATen_CORE_SRCS CONFIGURE_DEPENDS "core/*.cpp")
 file(GLOB_RECURSE ATen_TRANSFORMER_HEADERS CONFIGURE_DEPENDS "native/transformers/*.h")
-if(NOT BUILD_LITE_INTERPRETER)
-  file(GLOB_RECURSE ATen_CORE_TEST_SRCS CONFIGURE_DEPENDS "core/*_test.cpp")
-endif()
+file(GLOB_RECURSE ATen_CORE_TEST_SRCS CONFIGURE_DEPENDS "core/*_test.cpp")
 EXCLUDE(ATen_CORE_SRCS "${ATen_CORE_SRCS}" ${ATen_CORE_TEST_SRCS})
 
 file(GLOB base_h CONFIGURE_DEPENDS "*.h" "detail/*.h" "cpu/*.h" "cpu/vec/vec512/*.h" "cpu/vec/vec128/*.h" "cpu/vec/vec256/*.h" "cpu/vec/vec256/vsx/*.h" "cpu/vec/vec256/zarch/*.h" "cpu/vec/sve/*.h" "cpu/vec/*.h" "quantized/*.h" "functorch/*.h" "accelerator/*.h")
@@ -131,26 +129,9 @@ file(GLOB mkldnn_xpu_cpp CONFIGURE_DEPENDS "native/mkldnn/xpu/*.cpp" "native/mkl
 file(GLOB native_cpp CONFIGURE_DEPENDS "native/*.cpp")
 file(GLOB native_mkl_cpp CONFIGURE_DEPENDS "native/mkl/*.cpp")
 file(GLOB native_mkldnn_cpp CONFIGURE_DEPENDS "native/mkldnn/*.cpp")
-file(GLOB vulkan_cpp CONFIGURE_DEPENDS "vulkan/*.cpp")
-file(GLOB native_vulkan_cpp CONFIGURE_DEPENDS "native/vulkan/*.cpp" "native/vulkan/api/*.cpp" "native/vulkan/impl/*.cpp" "native/vulkan/ops/*.cpp")
 
 file(GLOB native_eigen_cpp CONFIGURE_DEPENDS "native/sparse/eigen/*.cpp")
 
-# Metal
-file(GLOB metal_h CONFIGURE_DEPENDS "metal/*.h")
-file(GLOB metal_cpp CONFIGURE_DEPENDS "metal/*.cpp")
-file(GLOB_RECURSE native_metal_h CONFIGURE_DEPENDS "native/metal/*.h")
-file(GLOB metal_test_srcs CONFIGURE_DEPENDS "native/metal/mpscnn/tests/*.mm")
-file(GLOB_RECURSE native_metal_srcs CONFIGURE_DEPENDS "native/metal/*.mm" "native/metal/*.cpp")
-EXCLUDE(native_metal_srcs "${native_metal_srcs}" ${metal_test_srcs})
-file(GLOB metal_prepack_h CONFIGURE_DEPENDS "native/metal/MetalPrepackOpContext.h")
-file(GLOB metal_prepack_cpp CONFIGURE_DEPENDS "native/metal/MetalPrepackOpRegister.cpp")
-
-file(GLOB native_ao_sparse_cpp CONFIGURE_DEPENDS
-            "native/ao_sparse/*.cpp"
-            "native/ao_sparse/cpu/*.cpp"
-            "native/ao_sparse/quantized/*.cpp"
-            "native/ao_sparse/quantized/cpu/*.cpp")
 # MPS
 file(GLOB mps_cpp CONFIGURE_DEPENDS "mps/*.cpp")
 file(GLOB mps_mm CONFIGURE_DEPENDS "mps/*.mm")
@@ -170,14 +151,6 @@ file(GLOB native_nested_cpp CONFIGURE_DEPENDS "native/nested/*.cpp")
 file(GLOB native_transformers_cpp CONFIGURE_DEPENDS "native/transformers/*.cpp")
 
 file(GLOB native_h CONFIGURE_DEPENDS "native/*.h")
-file(GLOB native_ao_sparse_h CONFIGURE_DEPENDS
-            "native/ao_sparse/*.h"
-            "native/ao_sparse/cpu/*.h"
-            "native/ao_sparse/quantized/*.h"
-            "native/ao_sparse/quantized/cpu/*.h")
-file(GLOB native_quantized_h CONFIGURE_DEPENDS "native/quantized/*.h" "native/quantized/cpu/*.h" "native/quantized/cudnn/*.h")
-file(GLOB native_cpu_h CONFIGURE_DEPENDS "native/cpu/*.h")
-file(GLOB native_utils_h CONFIGURE_DEPENDS "native/utils/*.h")
 
 file(GLOB native_cuda_cu CONFIGURE_DEPENDS "native/cuda/*.cu")
 file(GLOB native_cuda_cpp CONFIGURE_DEPENDS "native/cuda/*.cpp")
@@ -512,32 +485,20 @@ endif()
 # XNNPACK
 file(GLOB native_xnnpack CONFIGURE_DEPENDS "native/xnnpack/*.cpp")
 
-# KLEIDIAI
-file(GLOB native_kleidiai CONFIGURE_DEPENDS "native/kleidiai/*.cpp")
-file(GLOB native_kleidiai_h CONFIGURE_DEPENDS "native/kleidiai/*.h")
-
 # Add files needed from jit folders
 append_filelist("jit_core_headers" ATen_CORE_HEADERS)
 append_filelist("jit_core_sources" ATen_CORE_SRCS)
 
 add_subdirectory(quantized)
-add_subdirectory(nnapi)
 
-if(BUILD_LITE_INTERPRETER)
-  set(all_cpu_cpp ${generated_sources} ${core_generated_sources} ${cpu_kernel_cpp})
-  append_filelist("jit_core_sources" all_cpu_cpp)
-  append_filelist("aten_cpu_source_non_codegen_list" all_cpu_cpp)
-  append_filelist("aten_native_source_non_codegen_list" all_cpu_cpp)
-else()
-  set(
-    all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
-    ${native_ao_sparse_cpp} ${native_sparse_cpp} ${native_nested_cpp}
-    ${native_quantized_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
-    ${native_transformers_cpp}
-    ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
-    ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${ATen_NNAPI_SRCS} ${cpu_kernel_cpp}
-  )
-endif()
+set(
+  all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
+  ${native_sparse_cpp} ${native_nested_cpp}
+  ${native_quantized_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
+  ${native_transformers_cpp}
+  ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
+  ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
+)
 
 if(USE_LIGHTWEIGHT_DISPATCH)
   set(all_cpu_cpp ${all_cpu_cpp} ${generated_unboxing_sources})
@@ -545,16 +506,8 @@ endif()
 if(AT_MKL_ENABLED)
   set(all_cpu_cpp ${all_cpu_cpp} ${mkl_cpp})
 endif()
-if(AT_KLEIDIAI_ENABLED)
-  set(all_cpu_cpp ${all_cpu_cpp} ${native_kleidiai})
-endif()
 if(AT_MKLDNN_ENABLED)
   set(all_cpu_cpp ${all_cpu_cpp} ${mkldnn_cpp})
-endif()
-if(USE_VULKAN)
-  set(all_cpu_cpp ${all_cpu_cpp} ${vulkan_cpp} ${native_vulkan_cpp} ${vulkan_generated_cpp})
-else()
-  set(all_cpu_cpp ${all_cpu_cpp} ${vulkan_cpp})
 endif()
 if(USE_EIGEN_SPARSE)
   set(all_cpu_cpp ${all_cpu_cpp} ${native_eigen_cpp})
@@ -571,17 +524,6 @@ if(USE_XPU)
 
   list(APPEND ATen_XPU_INCLUDE ${SYCL_INCLUDE_DIR})
   list(APPEND ATen_XPU_DEPENDENCY_LIBS ${SYCL_LIBRARY})
-endif()
-
-# Metal
-if(USE_PYTORCH_METAL_EXPORT)
-  # Add files needed from exporting metal models(optimized_for_mobile)
-  set(all_cpu_cpp ${all_cpu_cpp} ${metal_cpp} ${metal_prepack_cpp})
-elseif(APPLE AND USE_PYTORCH_METAL)
-  # Compile Metal kernels
-  set(all_cpu_cpp ${all_cpu_cpp} ${metal_cpp} ${native_metal_srcs})
-else()
-  set(all_cpu_cpp ${all_cpu_cpp} ${metal_cpp})
 endif()
 
 if(USE_CUDA)
@@ -726,10 +668,10 @@ if(LAPACK_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
   if(USE_CUDA AND MSVC)
     # Although Lapack provides CPU (and thus, one might expect that ATen_cuda
-    # would not need this at all), some of our libraries (magma in particular)
-    # backend to CPU BLAS/LAPACK implementations, and so it is very important
-    # we get the *right* implementation, because even if the symbols are the
-    # same, LAPACK implementations may have different calling conventions.
+    # would not need this at all), some of our libraries backend to CPU
+    # BLAS/LAPACK implementations, and so it is very important we get the
+    # *right* implementation, because even if the symbols are the same, LAPACK
+    # implementations may have different calling conventions.
     # This caused https://github.com/pytorch/pytorch/issues/7353
     #
     # We do NOT do this on Linux, since we just rely on torch_cpu to
@@ -796,7 +738,7 @@ if(USE_MKLDNN_ACL)
     list(APPEND ATen_CPU_DEPENDENCY_LIBS ${ACL_LIBRARIES})
 endif()
 
-if(NOT EMSCRIPTEN AND NOT INTERN_BUILD_MOBILE)
+if(NOT EMSCRIPTEN)
   if(NOT MSVC)
     # Bump up optimization level for sleef to -O1, since at -O0 the compiler
     # excessively spills intermediate vector registers to the stack
@@ -916,7 +858,6 @@ endif()
 # Include CPU paths for CUDA/HIP as well
 list(APPEND ATen_CUDA_INCLUDE ${ATen_CPU_INCLUDE})
 list(APPEND ATen_HIP_INCLUDE ${ATen_CPU_INCLUDE})
-list(APPEND ATen_VULKAN_INCLUDE ${ATen_CPU_INCLUDE})
 
 # We have two libraries: libATen_cpu.so and libATen_cuda.so,
 # with libATen_cuda.so depending on libATen_cpu.so.  The CPU library
@@ -996,25 +937,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake-exports/ATenConfig.cmake"
   DESTINATION "${AT_INSTALL_SHARE_DIR}/cmake/ATen")
 
 set(INSTALL_HEADERS ${base_h} ${ATen_CORE_HEADERS} ${native_nested_h} ${ATen_TRANSFORMER_HEADERS})
-if(NOT INTERN_BUILD_MOBILE)
-  list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_ao_sparse_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_kleidiai_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
-  # Metal
-  if(USE_PYTORCH_METAL_EXPORT)
-    # Add files needed from exporting metal models(optimized_for_mobile)
-    list(APPEND INSTALL_HEADERS ${metal_h} ${metal_prepack_h})
-  elseif(APPLE AND USE_PYTORCH_METAL)
-    # Needed by Metal kernels
-    list(APPEND INSTALL_HEADERS ${metal_h} ${native_metal_h})
-  else()
-    list(APPEND INSTALL_HEADERS ${metal_h})
-  endif()
-else()
-  if(IOS AND USE_PYTORCH_METAL)
-      list(APPEND INSTALL_HEADERS ${metal_h} ${native_metal_h})
-  else()
-      list(APPEND INSTALL_HEADERS ${metal_h} ${metal_prepack_h})
-  endif()
-endif()
+list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
 
 # https://stackoverflow.com/questions/11096471/how-can-i-install-a-hierarchy-of-files-using-cmake
 foreach(HEADER  ${INSTALL_HEADERS})
@@ -1049,8 +972,6 @@ install(FILES ${CMAKE_BINARY_DIR}/aten/src/ATen/Declarations.yaml
 
 if(ATEN_NO_TEST)
   message("disable test because ATEN_NO_TEST is set")
-elseif(BUILD_LITE_INTERPRETER)
-  message("disable aten test when BUILD_LITE_INTERPRETER is enabled")
 else()
   add_subdirectory(test)
 endif()
@@ -1059,8 +980,6 @@ list(APPEND ATen_MOBILE_BENCHMARK_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/tensor_add.cpp)
 list(APPEND ATen_MOBILE_BENCHMARK_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/quantize_per_channel.cpp)
-list(APPEND ATen_MOBILE_BENCHMARK_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/stateful_conv1d.cpp)
 
 # Pass source, includes, and libs to parent
 set(ATen_CORE_SRCS ${ATen_CORE_SRCS} PARENT_SCOPE)
@@ -1081,9 +1000,8 @@ set(ATen_CUDA_TEST_SRCS ${ATen_CUDA_TEST_SRCS} PARENT_SCOPE)
 set(ATen_XPU_TEST_SRCS ${ATen_XPU_TEST_SRCS} PARENT_SCOPE)
 set(ATen_CORE_TEST_SRCS ${ATen_CORE_TEST_SRCS} PARENT_SCOPE)
 set(ATen_HIP_TEST_SRCS ${ATen_HIP_TEST_SRCS} PARENT_SCOPE)
-set(ATen_VULKAN_TEST_SRCS ${ATen_VULKAN_TEST_SRCS} PARENT_SCOPE)
 set(ATen_MOBILE_BENCHMARK_SRCS ${ATen_MOBILE_BENCHMARK_SRCS} PARENT_SCOPE)
-set(ATen_MOBILE_TEST_SRCS ${ATen_MOBILE_TEST_SRCS} ${ATen_VULKAN_TEST_SRCS} PARENT_SCOPE)
+set(ATen_MOBILE_TEST_SRCS ${ATen_MOBILE_TEST_SRCS} PARENT_SCOPE)
 set(ATen_VEC_TEST_SRCS  ${ATen_VEC_TEST_SRCS} PARENT_SCOPE)
 set(ATen_QUANTIZED_TEST_SRCS ${ATen_QUANTIZED_TEST_SRCS} PARENT_SCOPE)
 set(ATen_MPS_TEST_SRCS ${ATen_MPS_TEST_SRCS} PARENT_SCOPE)
@@ -1092,7 +1010,6 @@ set(ATen_THIRD_PARTY_INCLUDE ${ATen_THIRD_PARTY_INCLUDE} PARENT_SCOPE)
 set(ATen_CUDA_INCLUDE ${ATen_CUDA_INCLUDE} PARENT_SCOPE)
 set(ATen_HIP_INCLUDE ${ATen_HIP_INCLUDE} PARENT_SCOPE)
 set(ATen_XPU_INCLUDE ${ATen_XPU_INCLUDE} PARENT_SCOPE)
-set(ATen_VULKAN_INCLUDE ${ATen_VULKAN_INCLUDE} PARENT_SCOPE)
 set(ATen_CPU_DEPENDENCY_LIBS ${ATen_CPU_DEPENDENCY_LIBS} PARENT_SCOPE)
 set(ATen_CUDA_DEPENDENCY_LIBS ${ATen_CUDA_DEPENDENCY_LIBS} PARENT_SCOPE)
 set(ATen_XPU_DEPENDENCY_LIBS ${ATen_XPU_DEPENDENCY_LIBS} PARENT_SCOPE)

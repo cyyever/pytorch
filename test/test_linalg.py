@@ -7047,13 +7047,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
                 c = torch._weight_int4pack_mm_for_cpu(
                     a, b_int4pack, q_group, b_scales_and_zeros
                 )
-                # test wrapper
-                q_group_t = torch.tensor(q_group, dtype=torch.int64, device=device)
-                c_2 = torch.ops.quantized.int4mm_packed_weight_cpu(
-                    a, b_int4pack, q_group_t, b_scales_and_zeros
-                )
-                if not torch.equal(c, c_2):
-                    raise AssertionError("c and c_2 should be equal")
                 return c
             else:
                 self.assertTrue(b_int4pack.dtype is torch.int32)

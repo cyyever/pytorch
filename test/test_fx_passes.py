@@ -15,7 +15,7 @@ from torch.fx.passes.utils.fuser_utils import fuse_by_partitions, topo_sort
 from torch.fx.passes.utils.matcher_utils import SubgraphMatcher
 
 from torch.testing._internal.common_utils import run_tests, parametrize, instantiate_parametrized_tests
-from torch.testing._internal.jit_utils import JitTestCase
+from torch.testing._internal.common_utils import TestCase
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -296,7 +296,7 @@ class MockOperatorSupport(OperatorSupport):
                                 _nested_tuple_producer})
 
 @instantiate_parametrized_tests
-class TestFXGraphPasses(JitTestCase):
+class TestFXGraphPasses(TestCase):
 
     @parametrize("fn, expected_partition, bookend_non_compute_pass", [
         (TestPartitionFunctions.forward1, [["add_7", "add_6"], ["add_5", "add_4", "add_3"], ["add_2", "add_1", "add"]], False),
@@ -1142,7 +1142,7 @@ class NoAnchorFound:
     ]
 
 @instantiate_parametrized_tests
-class TestFXMatcherUtils(JitTestCase):
+class TestFXMatcherUtils(TestCase):
 
     @parametrize("test_model", [
         SingleNodePattern,

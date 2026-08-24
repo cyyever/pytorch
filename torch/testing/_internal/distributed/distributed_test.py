@@ -44,7 +44,6 @@ from torch.distributed.algorithms.ddp_comm_hooks import (
     default_hooks as default,
     post_localSGD_hook as post_localSGD,
     powerSGD_hook as powerSGD,
-    quantization as quantization_hooks,
 )
 from torch.distributed.distributed_c10d import (
     _get_default_group,
@@ -4503,8 +4502,6 @@ class DistributedTest:
                 default.fp16_compress_hook,
                 powerSGD.powerSGD_hook,
                 powerSGD.batched_powerSGD_hook,
-                quantization_hooks.quantization_pertensor_hook,
-                quantization_hooks.quantization_perchannel_hook,
             ]
 
             cpp_builtin_hooks = [
