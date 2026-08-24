@@ -707,7 +707,7 @@ class AOTAutogradCachePickler(FxGraphCachePickler):
             return f"# cache_key_numpy_wrapper {name}: {numpy_key!r}"
 
         from torch.fx.graph_module import _format_import_statement
-        from torch.package import sys_importer
+        from torch._importer import sys_importer
 
         return _format_import_statement(name, obj, sys_importer)
 

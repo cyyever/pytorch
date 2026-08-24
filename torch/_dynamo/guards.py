@@ -1354,15 +1354,6 @@ class GuardBuilder(GuardBuilderBase):
         self.src_get_value_cache: dict[Source, object] = {}
         self.runtime_global_scope = runtime_global_scope or global_scope
         self.scope["__builtins__"] = builtins.__dict__.copy()
-        for (
-            name,
-            package_module,
-        ) in torch.package.package_importer._package_imported_modules.items():
-            name = name.replace(">", "_").replace("<", "_").replace(".", "_dot_")
-            # Write the package module into the scope so that we can import it
-            self.scope["__builtins__"][name] = package_module
-            # Write the demangled name to the scope so that we can use it
-            self.scope[name] = package_module
         self.guard_manager = guard_manager
 
         self.argnames: list[str] = []

@@ -36,7 +36,7 @@ from typing import (
 from typing_extensions import ParamSpec
 
 import torch
-import torch.package._mangling as package_mangling
+import torch._mangling as package_mangling
 from torch._awaits import _Await
 from torch._C import _Await as CAwait, Future as CFuture
 from torch._sources import get_source_lines_and_file, normalize_source_lines

@@ -1399,20 +1399,11 @@ coverage_ignore_classes = [
     # torch.overrides
     "BaseTorchFunctionMode",
     "TorchFunctionMode",
-    # torch.package.file_structure_representation
-    "Directory",
-    # torch.package.glob_group
-    "GlobGroup",
-    # torch.package.importer
+    # torch._importer
     "Importer",
     "ObjMismatchError",
     "ObjNotFoundError",
     "OrderedImporter",
-    # torch.package.package_exporter
-    "PackageExporter",
-    "PackagingErrorReason",
-    # torch.package.package_importer
-    "PackageImporter",
     # torch.autograd.profiler_util
     "EventMetadata",
     # torch.profiler.profiler

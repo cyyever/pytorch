@@ -633,8 +633,10 @@
 # /torch/_dispatch/
 # /torch/_environment.py
 # /torch/_guards.py
+# /torch/_importer.py
 # /torch/_jit_internal.py
 # /torch/_linalg_utils.py
+# /torch/_mangling.py
 # /torch/_lobpcg.py
 # /torch/_lowrank.py
 # /torch/_meta_registrations.py
@@ -940,17 +942,13 @@
 # [serialization_package]
 # /benchmarks/serialization/
 # /caffe2/serialize/
-# /test/package/
-# /test/test_package.py
 # /test/test_serialization.py
-# /torch/package/
 # /torch/serialization.py
 #
 # [compiler_export_fx]
 # /test/export/
 # /test/fx/
 # /test/higher_order_ops/
-# /test/package/package_bc/test_fx_module.pt
 # /test/test_dynamic_spec_make_fx.py
 # /test/test_fx.py
 # /test/test_fx_experimental.py

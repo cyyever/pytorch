@@ -9899,32 +9899,6 @@ not ___dict_contains('cccccccc', G['sys'].modules)""",
         opt = torch.compile(fn, fullgraph=True, backend="eager")
         self.assertEqual(fn(tensor, mapping), opt(tensor, mapping))
 
-    def test_torch_package_working_with_trace(self):
-        # from torch._dynamo.test_case import run_tests
-
-        inputs = [torch.randn([2, 2]), torch.randn([2, 2])]
-
-        optimized_model = torch.compile(
-            MyPickledModule(torch.randn([2, 2])), backend="eager"
-        )
-        from torch import package
-
-        tmp_root = tempfile.gettempdir()
-        path = os.path.join(tmp_root, "MyPickledModule.pt")
-        package_name = "MyPickledModule"
-        resource_name = "MyPickledModule.pkl"
-
-        model = MyPickledModule(torch.randn([2, 2]))
-
-        with package.PackageExporter(path) as exp:
-            exp.extern("**")
-            exp.save_pickle(package_name, resource_name, model)
-
-        imp = package.PackageImporter(path)
-        loaded_model = imp.load_pickle(package_name, resource_name)
-
-        optimized_loaded_model = torch.compile(loaded_model, backend="eager")(*inputs)
-
     def test_precompile_entry_hit(self):
         from torch._C._dynamo.eval_frame import (
             _load_precompile_entry,
