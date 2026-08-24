@@ -341,7 +341,7 @@ if HAS_CPU and not torch.backends.mps.is_available():
     class FreezingCpuTests(TestCase):
         common = check_model
         device = "cpu"
-        autocast = torch.cpu.amp.autocast
+        autocast = functools.partial(torch.amp.autocast, "cpu")
 
         @torch.no_grad()
         def test_conv_binary_folding_rejects_dynamic_bias(self):
@@ -382,7 +382,7 @@ if HAS_GPU:
     class FreezingGpuTests(TestCase):
         common = check_model_gpu
         device = GPU_TYPE
-        autocast = torch.amp.autocast(device_type=GPU_TYPE)
+        autocast = functools.partial(torch.amp.autocast, "cpu")(device_type=GPU_TYPE)
 
     copy_tests(BinaryFoldingTemplate, FreezingGpuTests, GPU_TYPE)
 

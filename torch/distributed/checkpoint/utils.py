@@ -13,8 +13,6 @@ from typing import Any, cast, TypeVar
 
 import torch
 import torch.distributed as dist
-from torch.distributed._shard.sharded_tensor import ShardedTensor
-from torch.distributed._shard.sharded_tensor.shard import Shard
 
 from .api import (
     _is_wrapped_exception,
@@ -326,41 +324,18 @@ class _DistWrapper:
         dist.barrier(group=self.group)
 
 
-def _find_shard(tensor: ShardedTensor, index: MetadataIndex) -> Shard:
-    if index.offset is None:
-        raise ValueError(
-            f"Cannot lookup {index.fqn} since its a ShardedTensor and no offset was provided"
-        )
-
-    shards = tensor.local_shards()
-    # index fast path
-    if index.index is not None:
-        if (
-            len(shards) > index.index
-            and torch.Size(shards[index.index].metadata.shard_offsets) == index.offset
-        ):
-            return shards[index.index]
-
-    for shard in shards:
-        if torch.Size(shard.metadata.shard_offsets) == index.offset:
-            return shard
-    raise ValueError(f"Could not find shard at '{index.offset}' for FQN: '{index.fqn}'")
-
-
 def find_tensor_shard(tensor: torch.Tensor, index: MetadataIndex) -> torch.Tensor:
     if hasattr(tensor, "__get_tensor_shard__"):
         # DTensor implements _Checkpointable
         return tensor.__get_tensor_shard__(index)  # type: ignore[attr-defined]
     if _is_checkpointable_tensor(tensor):
         return _get_checkpointable_tensor_shard(tensor, index)
-    if isinstance(tensor, ShardedTensor):
-        return _find_shard(tensor, index).tensor
     if index.offset is not None:
         # special case looking up a tensor by origin
         if index.offset == torch.Size([0] * len(tensor.size())):
             return tensor
         raise ValueError(
-            f"FQN: '{index.fqn}' is not a ShardedTensor, can't find by offset: '{index.offset}'"
+            f"FQN: '{index.fqn}' has no shard lookup support, can't find by offset: '{index.offset}'"
         )
     return tensor
 
@@ -374,7 +349,7 @@ def find_state_dict_object(state_dict: STATE_DICT_TYPE, index: MetadataIndex) ->
         return find_tensor_shard(obj, index)
     elif index.offset is not None:
         raise ValueError(
-            f"FQN: '{index.fqn}' is not a ShardedTensor, can't find by offset: '{index.offset}'"
+            f"FQN: '{index.fqn}' has no shard lookup support, can't find by offset: '{index.offset}'"
         )
     return obj
 

@@ -1467,7 +1467,7 @@ print(static_output)  # full of 4 * 2 = 8
 
 See
 {ref}`Whole-network capture<whole-network-capture>`,
-{ref}`Usage with torch.cuda.amp<graphs-with-amp>`, and
+{ref}`Usage with torch.amp<graphs-with-amp>`, and
 {ref}`Usage with multiple streams<multistream-capture>`
 for realistic and advanced patterns.
 
@@ -1645,9 +1645,9 @@ for data, target in zip(real_inputs, real_targets):
 
 (graphs-with-amp)=
 
-### Usage with torch.cuda.amp
+### Usage with torch.amp
 
-For typical optimizers, {meth}`GradScaler.step<torch.cuda.amp.GradScaler.step>` syncs
+For typical optimizers, {meth}`GradScaler.step<torch.amp.GradScaler.step>` syncs
 the CPU with the GPU, which is prohibited during capture. To avoid errors, either use
 {ref}`partial-network capture<partial-network-capture>`, or (if forward, loss,
 and backward are capture-safe) capture forward, loss, and backward but not the
@@ -1661,7 +1661,7 @@ s.wait_stream(torch.cuda.current_stream())
 with torch.cuda.stream(s):
     for i in range(3):
         optimizer.zero_grad(set_to_none=True)
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             y_pred = model(static_input)
             loss = loss_fn(y_pred, static_target)
         scaler.scale(loss).backward()
@@ -1673,7 +1673,7 @@ torch.cuda.current_stream().wait_stream(s)
 g = torch.cuda.CUDAGraph()
 optimizer.zero_grad(set_to_none=True)
 with torch.cuda.graph(g):
-    with torch.cuda.amp.autocast():
+    with torch.amp.autocast("cuda"):
         static_y_pred = model(static_input)
         static_loss = loss_fn(static_y_pred, static_target)
     scaler.scale(static_loss).backward()

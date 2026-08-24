@@ -10,7 +10,6 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 from torch.distributed._composable import replicate
-from torch.distributed._shard.sharded_tensor import ShardedTensor
 from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
     apply_activation_checkpointing,
 )
@@ -26,13 +25,7 @@ from torch.distributed.checkpoint.state_dict import (
     StateDictOptions,
 )
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import (
-    fully_shard,
-    FullyShardedDataParallel as FSDP,
-    ShardingStrategy,
-    StateDictType,
-)
-from torch.distributed.fsdp.wrap import ModuleWrapPolicy
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.optim import _apply_optimizer_in_backward
 from torch.distributed.tensor import DTensor
 from torch.distributed.tensor.parallel import (
@@ -173,85 +166,6 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
         if not flatten_optimizer:
             self._verify_osd(model, optim, osd, dist_osd)
 
-    def _test_fsdp(
-        self,
-        *,
-        use_orig_params: bool,
-        use_dtensor: bool,
-        wrapping: tuple[nn.Module] = (),
-        compile_model: bool = False,
-        optimizer_class: type[Optimizer],
-    ) -> None:
-        if not use_orig_params:
-            return
-
-        # TODO: remove this return after we complete the composable API side change for device_mesh
-        if use_dtensor:
-            return
-
-        def init_model_optim():
-            if use_dtensor:
-                device_mesh = init_device_mesh(device_type, (self.world_size,))
-
-            orig_model = CompositeParamModel(device=torch.device(device_type))
-            orig_optim = optimizer_class(orig_model.parameters(), lr=1e-4, foreach=True)
-            copy_optim = optimizer_class(orig_model.parameters(), lr=1e-4, foreach=True)
-            if wrapping:
-                strategy = set(wrapping)
-            else:
-                strategy = {UnitModule}
-            if use_dtensor:
-                device_mesh = init_device_mesh(device_type, (self.world_size,))
-                dist_model = FSDP(
-                    copy.deepcopy(orig_model),
-                    auto_wrap_policy=ModuleWrapPolicy(strategy),
-                    use_orig_params=use_orig_params,
-                    device_mesh=device_mesh,
-                )
-            else:
-                dist_model = FSDP(
-                    copy.deepcopy(orig_model),
-                    auto_wrap_policy=ModuleWrapPolicy(strategy),
-                    use_orig_params=use_orig_params,
-                )
-
-            if compile_model:
-                dist_model = torch.compile(dist_model)
-            dist_optim = optimizer_class(dist_model.parameters(), lr=1e-4, foreach=True)
-            return orig_model, orig_optim, copy_optim, dist_model, dist_optim
-
-        self._test_save_load(init_model_optim)
-
-    @with_comms
-    @skip_if_lt_x_gpu(2)
-    def test_fsdp(self) -> None:
-        self.run_subtests(
-            {
-                "use_orig_params": [True, False],
-                "use_dtensor": [True, False],
-                "wrapping": [(), (nn.Linear, UnitModule)],
-                "optimizer_class": [
-                    torch.optim.Adam,
-                    torch.optim.AdamW,
-                    torch.optim.SGD,
-                ],
-            },
-            self._test_fsdp,
-        )
-
-    @with_comms
-    @skip_if_lt_x_gpu(2)
-    def test_compiled_fsdp(self) -> None:
-        self.run_subtests(
-            {
-                "use_orig_params": [True],
-                "use_dtensor": [False],
-                "wrapping": [()],
-                "optimizer_class": [torch.optim.Adam, torch.optim.AdamW],
-            },
-            self._test_fsdp,
-        )
-
     def _test_fsdp2(
         self,
         *,
@@ -342,12 +256,10 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
             copy_optim = optimizer_class(orig_model.parameters(), lr=1e-4)
             dist_model = copy.deepcopy(orig_model)
             dist_model.l = DDP(dist_model.l)
-            dist_model = FSDP(
-                copy.deepcopy(orig_model),
-                auto_wrap_policy=ModuleWrapPolicy({UnitModule}),
-                use_orig_params=optim_in_backward,
-                ignored_modules=[dist_model.l],
-            )
+            for submodule in dist_model.modules():
+                if isinstance(submodule, UnitModule):
+                    fully_shard(submodule)
+            fully_shard(dist_model)
             if optim_in_backward:
                 _apply_optimizer_in_backward(
                     optimizer_class, dist_model.parameters(), {"lr": 1e-4}
@@ -426,13 +338,11 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
         self, optimizer_class: type[Optimizer]
     ) -> None:
         orig_model = CompositeParamModel(device=torch.device(device_type))
-        device_mesh = init_device_mesh(device_type, (self.world_size,))
-        dist_model = FSDP(
-            copy.deepcopy(orig_model),
-            auto_wrap_policy=ModuleWrapPolicy({UnitModule}),
-            use_orig_params=True,
-            device_mesh=device_mesh,
-        )
+        dist_model = copy.deepcopy(orig_model)
+        for submodule in dist_model.modules():
+            if isinstance(submodule, UnitModule):
+                fully_shard(submodule)
+        fully_shard(dist_model)
 
         dist_optim = optimizer_class(dist_model.parameters(), lr=1e-4)
 
@@ -445,33 +355,21 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
         cpu_device = torch.device("cpu")
 
         def is_cpu(v):
-            if isinstance(v, DTensor):
-                return v.device == cpu_device
-            elif isinstance(v, ShardedTensor):
-                shards = v.local_shards()
-                if not shards:
-                    return True
-                return shards[0].tensor.device == cpu_device
-            else:
-                return v.device == cpu_device
+            return v.device == cpu_device
 
         self.assertTrue(
-            tree_all_only((torch.Tensor, DTensor, ShardedTensor), is_cpu, mst)
+            tree_all_only((torch.Tensor, DTensor), is_cpu, mst)
         )
         self.assertTrue(
-            tree_all_only((torch.Tensor, DTensor, ShardedTensor), is_cpu, ost)
+            tree_all_only((torch.Tensor, DTensor), is_cpu, ost)
         )
 
         mst, ost = get_state_dict(
             dist_model, dist_optim, options=StateDictOptions(full_state_dict=True)
         )
 
-        self.assertTrue(
-            tree_all(lambda v: not isinstance(v, (DTensor, ShardedTensor)), mst)
-        )
-        self.assertTrue(
-            tree_all(lambda v: not isinstance(v, (DTensor, ShardedTensor)), ost)
-        )
+        self.assertTrue(tree_all(lambda v: not isinstance(v, DTensor), mst))
+        self.assertTrue(tree_all(lambda v: not isinstance(v, DTensor), ost))
 
         mst, ost = get_state_dict(
             dist_model,
@@ -481,10 +379,10 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
 
         if self.rank == 0:
             self.assertTrue(
-                tree_all_only((torch.Tensor, DTensor, ShardedTensor), is_cpu, mst)
+                tree_all_only((torch.Tensor, DTensor), is_cpu, mst)
             )
             self.assertTrue(
-                tree_all_only((torch.Tensor, DTensor, ShardedTensor), is_cpu, ost)
+                tree_all_only((torch.Tensor, DTensor), is_cpu, ost)
             )
         else:
             self.assertEqual(mst, {})
@@ -513,19 +411,13 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
 
     @with_comms
     @skip_if_lt_x_gpu(1)
-    def test_activation_ckpt_fqns_fsdp1(self) -> None:
-        self.run_subtests(
-            {"use_orig_params": [True, False]},
-            self._test_activation_ckpt_fqns_fsdp1,
-        )
-
-    def _test_activation_ckpt_fqns_fsdp1(self, use_orig_params: bool) -> None:
+    def test_activation_ckpt_fqns_fsdp2(self) -> None:
         """Tests that activation checkpointing prefixes are removed from module names"""
         model = CompositeParamModel(device=torch.device(device_type))
         original_keys = get_model_state_dict(model).keys()
 
         apply_activation_checkpointing(model)
-        model = FSDP(model, use_orig_params=use_orig_params)
+        fully_shard(model)
         new_keys = get_model_state_dict(model).keys()
 
         self.assertEqual(original_keys, new_keys)
@@ -640,29 +532,11 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
             {
                 "wrapper": [
                     functools.partial(fully_shard, mesh=device_mesh),
-                    functools.partial(FSDP, device_mesh=device_mesh),
-                    functools.partial(
-                        FSDP,
-                        device_mesh=hsdp_device_mesh,
-                        sharding_strategy=ShardingStrategy.HYBRID_SHARD,
-                    ),
+                    functools.partial(fully_shard, mesh=hsdp_device_mesh[1]),
                 ]
             },
             self._test_broadcast_from_rank0,
         )
-
-    @with_comms
-    @skip_if_lt_x_gpu(2)
-    def test_fsdp_root_not_initialized(self) -> None:
-        # This test verifies that FSDP root is not initialized but we should
-        # still be able to  get the state_dict without errors because
-        # fsdp_model.state_dict() will trigger the FSDP initialization.
-        device_mesh = init_device_mesh(device_type, (self.world_size,))
-        model = CompositeParamModel(device=torch.device(device_type))
-        fsdp_model = FSDP(copy.deepcopy(model), device_mesh=device_mesh)
-        fsdp_optim = torch.optim.Adam(fsdp_model.parameters())
-        get_model_state_dict(fsdp_model)
-        get_optimizer_state_dict(fsdp_model, fsdp_optim)
 
     @with_comms
     @skip_if_lt_x_gpu(2)
@@ -798,29 +672,10 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
         self.assertEqual(model.l.weight, model_state_dict1["l.weight"])
         self.assertEqual(model.l.bias, model_state_dict1["l.bias"])
 
-    def _test_deprecate_fsdp_api(self) -> None:
-        device_mesh = init_device_mesh(device_type, (self.world_size,))
-        model = CompositeParamModel(device=torch.device(device_type))
-        fsdp_model = FSDP(copy.deepcopy(model), device_mesh=device_mesh)
-        with self.assertWarnsRegex(
-            FutureWarning,
-            r"FSDP.state_dict_type\(\) and FSDP.set_state_dict_type\(\) are being deprecated",
-        ):
-            with FSDP.state_dict_type(fsdp_model, StateDictType.FULL_STATE_DICT):
-                fsdp_model.state_dict()
-
-        with self.assertRaisesRegex(AssertionError, "FutureWarning not triggered"):
-            with self.assertWarnsRegex(
-                FutureWarning,
-                r"FSDP.state_dict_type\(\) and FSDP.set_state_dict_type\(\) are being deprecated",
-            ):
-                get_model_state_dict(model)
-
     @with_comms
     @skip_if_lt_x_gpu(1)
     def test_deprecate_api(self) -> None:
         self._test_deprecate_partial()
-        self._test_deprecate_fsdp_api()
 
     @with_comms
     @skip_if_lt_x_gpu(2)
@@ -843,7 +698,7 @@ class TestStateDict(DTensorTestBase, VerifyStateDictMixin):
             orig_model = TiedEmbeddingModel(10000, 300).to(torch.device(device_type))
             orig_optim = torch.optim.AdamW(orig_model.parameters(), lr=1e-4)
             copy_optim = torch.optim.AdamW(orig_model.parameters(), lr=1e-4)
-            dist_model = FSDP(copy.deepcopy(orig_model), device_mesh=device_mesh)
+            dist_model = fully_shard(copy.deepcopy(orig_model), mesh=device_mesh)
             dist_optim = torch.optim.AdamW(dist_model.parameters(), lr=1e-4)
             return orig_model, orig_optim, copy_optim, dist_model, dist_optim
 

@@ -550,16 +550,6 @@ class FakeTensorTest(TestCase):
         self.assertNotIn("fake_device", reconstructed.__dict__)
         self.assertEqual(reconstructed.to("meta").fake_device, torch.device("meta"))
 
-    @unittest.skipIf(not dist.is_available(), "requires distributed")
-    def test_fsdp_flat_param(self):
-        from torch.distributed.fsdp._flat_param import FlatParameter
-
-        with FakeTensorMode() as m:
-            data = torch.randn(2, 2)
-            param = FlatParameter(data, requires_grad=True)
-        self.assertIsInstance(param, FlatParameter)
-        self.assertIsInstance(param, torch.nn.Parameter)
-        self.assertIsInstance(param, FakeTensor)
 
     def test_non_parameter_grad(self):
         mode = FakeTensorMode()

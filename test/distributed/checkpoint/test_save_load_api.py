@@ -6,7 +6,7 @@ import torch
 import torch.distributed.checkpoint as dcp
 import torch.nn as nn
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.testing._internal.common_utils import run_tests
 from torch.testing._internal.distributed._tensor.common_dtensor import (
     DTensorTestBase,
@@ -37,9 +37,9 @@ class TestSaveAndLoadAPI(DTensorTestBase):
     @skip_if_lt_x_gpu(4)
     @with_temp_dir
     def test_auto_detect(self):
-        model = FSDP(MyTestModule().to(self.device_type))
+        model = MyTestModule().to(self.device_type)
         device_mesh = init_device_mesh(self.device_type, (self.world_size,))
-        model = FSDP(model, device_mesh=device_mesh)
+        fully_shard(model, mesh=device_mesh)
         dcp.save(model.state_dict(), checkpoint_id=os.path.join(self.temp_dir, "first"))
         dcp.load(model.state_dict(), checkpoint_id=os.path.join(self.temp_dir, "first"))
 

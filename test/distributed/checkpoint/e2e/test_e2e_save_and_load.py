@@ -32,8 +32,7 @@ from torch.distributed.checkpoint.stateful import Stateful
 from torch.distributed.checkpoint.utils import CheckpointException
 from torch.distributed.device_mesh import init_device_mesh
 from torch.distributed.distributed_c10d import ReduceOp
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.api import ShardingStrategy
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.tensor.parallel import (
     ColwiseParallel,
     parallelize_module,
@@ -164,19 +163,12 @@ class TestE2ESaveAndLoad(DTensorTestBase, VerifyStateDictMixin):
             raise AssertionError(f"{model_type} is not supported.")
         if model_type == ModelType.FSDP:
             device_mesh = init_device_mesh(self.device_type, (self.world_size,))
-            model = FSDP(
-                dummy_model,
-                device_mesh=device_mesh,
-                use_orig_params=True,
-            )
+            model = fully_shard(dummy_model, mesh=device_mesh)
         elif model_type == ModelType.HSDP:
-            device_mesh = init_device_mesh(self.device_type, (2, self.world_size // 2))
-            model = FSDP(
-                dummy_model,
-                device_mesh=device_mesh,
-                use_orig_params=True,
-                sharding_strategy=ShardingStrategy.HYBRID_SHARD,
+            device_mesh = init_device_mesh(
+                self.device_type, (2, self.world_size // 2), mesh_dim_names=("dp_rep", "dp_shard")
             )
+            model = fully_shard(dummy_model, mesh=device_mesh)
         elif model_type == ModelType.FSDP_TP:
             mesh_2d = init_device_mesh(
                 self.device_type, (2, self.world_size // 2), mesh_dim_names=("dp", "tp")
@@ -188,7 +180,7 @@ class TestE2ESaveAndLoad(DTensorTestBase, VerifyStateDictMixin):
                 "net2": RowwiseParallel(),
             }
             model = parallelize_module(dummy_model, tp_mesh, parallelize_plan)
-            model = FSDP(model, device_mesh=dp_mesh, use_orig_params=True)
+            fully_shard(model, mesh=dp_mesh)
         elif model_type == ModelType.DDP:
             model = DistributedDataParallel(dummy_model)
             model.get_input = partial(TestDummyModel.get_input, model)

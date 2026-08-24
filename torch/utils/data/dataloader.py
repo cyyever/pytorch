@@ -9,7 +9,6 @@ in `./_utils/worker.py`.
 from __future__ import annotations
 
 import contextlib
-import functools
 import itertools
 import logging
 import multiprocessing as python_multiprocessing
@@ -24,15 +23,8 @@ from typing_extensions import Self
 
 import torch
 import torch.distributed as dist
-import torch.utils.data.graph_settings
 from torch._utils import ExceptionWrapper
 from torch.utils.data import _utils
-from torch.utils.data.datapipes.datapipe import (
-    _IterDataPipeSerializationWrapper,
-    _MapDataPipeSerializationWrapper,
-    IterDataPipe,
-    MapDataPipe,
-)
 from torch.utils.data.dataset import Dataset, IterableDataset
 from torch.utils.data.sampler import (
     BatchSampler,
@@ -77,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 _persistent_workers_atexit_lock = threading.Lock()
 _persistent_workers_atexit_registered = False
-_persistent_workers_atexit: weakref.WeakSet[_MultiProcessingDataLoaderIter] = (
+_persistent_workers_atexit: "weakref.WeakSet[_MultiProcessingDataLoaderIter]" = (
     weakref.WeakSet()
 )
 
@@ -114,29 +106,6 @@ def _get_distributed_settings():
         return dist.get_world_size(), dist.get_rank()
     else:
         return 1, 0
-
-
-def _sharding_worker_init_fn(worker_init_fn, world_size, rank_id, worker_id) -> None:
-    global_worker_id = worker_id
-    info = torch.utils.data.get_worker_info()
-    if info is None:
-        raise AssertionError("Worker info is None in sharding worker init function")
-    total_workers = info.num_workers
-    datapipe = info.dataset
-    if not isinstance(datapipe, (IterDataPipe, MapDataPipe)):
-        raise AssertionError(
-            "datapipe must be an instance of IterDataPipe or MapDataPipe"
-        )
-    # To distribute elements across distributed process evenly, we should shard data on distributed
-    # processes first then shard on worker processes
-    total_workers *= world_size
-    global_worker_id = global_worker_id * world_size + rank_id
-    # For BC, use default SHARDING_PRIORITIES
-    torch.utils.data.graph_settings.apply_sharding(
-        datapipe, total_workers, global_worker_id
-    )
-    if worker_init_fn is not None:
-        worker_init_fn(worker_id)
 
 
 def _share_dist_seed(generator, pg):
@@ -249,7 +218,7 @@ class DataLoader(Generic[_T_co]):
     sampler: Sampler | Iterable
     pin_memory_device: str
     prefetch_factor: int | None
-    _iterator: _BaseDataLoaderIter | None
+    _iterator: "_BaseDataLoaderIter | None"
     __initialized = False
 
     def __init__(
@@ -307,13 +276,6 @@ class DataLoader(Generic[_T_co]):
         self.multiprocessing_context = multiprocessing_context
         self.in_order = in_order
 
-        # Adds forward compatibilities so classic DataLoader can work with DataPipes:
-        #   _DataPipeSerializationWrapper container makes it easier to serialize without redefining pickler
-        if isinstance(self.dataset, IterDataPipe):
-            self.dataset = _IterDataPipeSerializationWrapper(self.dataset)
-        elif isinstance(self.dataset, MapDataPipe):
-            self.dataset = _MapDataPipeSerializationWrapper(self.dataset)
-
         # Arg-check dataset related before checking samplers because we want to
         # tell users that iterable-style datasets are incompatible with custom
         # samplers first, so that they don't learn that this combo doesn't work
@@ -345,13 +307,7 @@ class DataLoader(Generic[_T_co]):
             # option. If this turns out to be useful in future, we can re-enable
             # this, and support custom samplers that specify the assignments to
             # specific workers.
-            if isinstance(dataset, IterDataPipe):
-                if shuffle is not None:
-                    dataset = torch.utils.data.graph_settings.apply_shuffle_settings(
-                        dataset, shuffle=shuffle
-                    )
-            # We cannot check `shuffle is not None` here, since previously `shuffle=False` was the default.
-            elif shuffle not in {False, None}:
+            if shuffle not in {False, None}:
                 raise ValueError(
                     f"DataLoader with IterableDataset: expected unspecified shuffle option, but got shuffle={shuffle}"
                 )
@@ -430,7 +386,7 @@ class DataLoader(Generic[_T_co]):
 
         self.check_worker_number_rationality()
 
-    def _get_iterator(self) -> _BaseDataLoaderIter:
+    def _get_iterator(self) -> "_BaseDataLoaderIter":
         if self.num_workers == 0:
             return _SingleProcessDataLoaderIter(self)
         else:
@@ -489,7 +445,7 @@ class DataLoader(Generic[_T_co]):
 
         super().__setattr__(attr, val)
 
-    def __iter__(self) -> _BaseDataLoaderIter:
+    def __iter__(self) -> "_BaseDataLoaderIter":
         # When using a single worker the returned iterator should be
         # created every time to avoid resetting its state
         # However, in the case of a multiple workers iterator
@@ -628,15 +584,6 @@ class _BaseDataLoaderIter:
         self._dataset = loader.dataset
         self._shared_seed = None
         self._pg = None
-        if isinstance(self._dataset, IterDataPipe):
-            if dist.is_available() and dist.is_initialized():
-                self._pg = dist.new_group(backend="gloo")
-            self._shared_seed = _share_dist_seed(loader.generator, self._pg)
-            shared_rng = torch.Generator()
-            shared_rng.manual_seed(self._shared_seed)
-            self._dataset = torch.utils.data.graph_settings.apply_random_seed(
-                self._dataset, shared_rng
-            )
         self._dataset_kind = loader._dataset_kind
         self._IterableDataset_len_called = loader._IterableDataset_len_called
         self._auto_collation = loader._auto_collation
@@ -703,13 +650,6 @@ class _BaseDataLoaderIter:
         self._sampler_iter = iter(self._index_sampler)
         self._num_yielded = 0
         self._IterableDataset_len_called = loader._IterableDataset_len_called
-        if isinstance(self._dataset, IterDataPipe):
-            self._shared_seed = _share_dist_seed(loader.generator, self._pg)
-            shared_rng = torch.Generator()
-            shared_rng.manual_seed(self._shared_seed)
-            self._dataset = torch.utils.data.graph_settings.apply_random_seed(
-                self._dataset, shared_rng
-            )
 
     def _next_index(self):
         return next(self._sampler_iter)  # may raise StopIteration
@@ -762,14 +702,6 @@ class _SingleProcessDataLoaderIter(_BaseDataLoaderIter):
         if self._num_workers != 0:
             raise AssertionError(
                 "_SingleProcessDataLoaderIter requires num_workers == 0"
-            )
-
-        # Adds forward compatibilities so classic DataLoader can work with DataPipes:
-        #   Taking care of distributed sharding
-        if isinstance(self._dataset, (IterDataPipe, MapDataPipe)):
-            # For BC, use default SHARDING_PRIORITIES
-            torch.utils.data.graph_settings.apply_sharding(
-                self._dataset, self._world_size, self._rank
             )
 
         self._dataset_fetcher = _DatasetKind.create_fetcher(
@@ -1119,16 +1051,6 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
             multiprocessing_context = loader.multiprocessing_context
 
         self._worker_init_fn = loader.worker_init_fn
-
-        # Adds forward compatibilities so classic DataLoader can work with DataPipes:
-        #   Additional worker init function will take care of sharding in MP and Distributed
-        if isinstance(self._dataset, (IterDataPipe, MapDataPipe)):
-            self._worker_init_fn = functools.partial(
-                _sharding_worker_init_fn,
-                self._worker_init_fn,
-                self._world_size,
-                self._rank,
-            )
 
         # No certainty which module multiprocessing_context is
         self._worker_result_queue = multiprocessing_context.Queue()  # type: ignore[var-annotated]

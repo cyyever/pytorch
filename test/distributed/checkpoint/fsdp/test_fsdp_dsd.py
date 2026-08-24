@@ -12,12 +12,7 @@ from torch.distributed.checkpoint.state_dict import (
     StateDictOptions,
 )
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import (
-    fully_shard,
-    FullyShardedDataParallel as FSDP,
-    StateDictType,
-)
-from torch.distributed.fsdp.wrap import always_wrap_policy
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.tensor import DTensor
 from torch.distributed.tensor.experimental import implicit_replication
 from torch.distributed.tensor.parallel import (
@@ -113,94 +108,11 @@ class TestFullyShardWithDistributedStateDict(FSDPTest):
         else:
             self.assertEqual(dsd, {})
 
-    @skip_if_lt_x_gpu(2)
-    def test_save_with_fsdp1_and_load_with_fsdp2(self):
-        self.run_subtests(
-            {
-                "state_dict_type": [
-                    StateDictType.FULL_STATE_DICT,
-                    StateDictType.SHARDED_STATE_DICT,
-                ]
-            },
-            self._test_save_with_fsdp1_and_load_with_fsdp2,
-        )
-
-    @skip_if_lt_x_gpu(2)
-    @with_temp_dir
-    def _test_save_with_fsdp1_and_load_with_fsdp2(self, state_dict_type: StateDictType):
-        """
-        Test that we can save a model with FSDP1 and load it with FSDP2.
-        """
-
-        # Save state dict with model wrapped with FSDP1
-        fsdp1_model = FSDP(
-            self._get_base_model().to(device_type),
-            use_orig_params=True,
-            auto_wrap_policy=always_wrap_policy,
-        )
-
-        fsdp1_optim = torch.optim.AdamW(fsdp1_model.parameters(), lr=0.1)
-
-        fsdp1_model(torch.randn((2,), device=self.rank)).sum().backward()
-        fsdp1_optim.step()
-
-        with FSDP.state_dict_type(fsdp1_model, state_dict_type):
-            fsdp1_state_dict = {
-                "model": fsdp1_model.state_dict(),
-                "optim": FSDP.sharded_optim_state_dict(fsdp1_model, fsdp1_optim),
-            }
-            dcp.save(
-                fsdp1_state_dict,
-                checkpoint_id=self.temp_dir,
-            )
-
-        fsdp1_full_msd = get_model_state_dict(
-            fsdp1_model,
-            options=StateDictOptions(full_state_dict=True, cpu_offload=True),
-        )
-        fsdp1_full_osd = get_optimizer_state_dict(
-            fsdp1_model,
-            fsdp1_optim,
-            options=StateDictOptions(full_state_dict=True, cpu_offload=True),
-        )
-
-        # Load state dict into model with FSDP2 applied
-        fsdp2_model = self._get_base_model()
-        for module in fsdp2_model:
-            fully_shard(module)
-        fully_shard(fsdp2_model)
-        fsdp2_optim = torch.optim.AdamW(fsdp2_model.parameters(), lr=0.1)
-
-        fsdp2_state_dict = {
-            "model": get_model_state_dict(fsdp2_model),
-            "optim": get_optimizer_state_dict(fsdp2_model, fsdp2_optim),
-        }
-        dcp.load(
-            fsdp2_state_dict,
-            checkpoint_id=self.temp_dir,
-        )
-        fsdp2_model.load_state_dict(fsdp2_state_dict["model"])
-        fsdp2_optim.load_state_dict(fsdp2_state_dict["optim"])
-
-        fsdp2_full_msd = get_model_state_dict(
-            fsdp2_model,
-            options=StateDictOptions(full_state_dict=True, cpu_offload=True),
-        )
-        fsdp2_full_osd = get_optimizer_state_dict(
-            fsdp2_model,
-            fsdp2_optim,
-            options=StateDictOptions(full_state_dict=True, cpu_offload=True),
-        )
-
-        # Compare full state dict to make sure they are the same.
-        self.assertEqual(fsdp2_full_msd, fsdp1_full_msd)
-        self.assertEqual(fsdp1_full_osd, fsdp2_full_osd)
-
     @skip_if_lt_x_gpu(4)
     @with_temp_dir
-    def test_save_with_fsdp1_and_load_with_fsdp2_tp(self):
+    def test_save_with_fsdp2_and_load_with_fsdp2_tp(self):
         """
-        Test that we can save a model with FSDP1 and load it with FSDP2 + TP on 2d mesh.
+        Test that we can save a model with FSDP2 and load it with FSDP2 + TP on 2d mesh.
         """
 
         def _get_base_model(mlp_dim: int = 2):
@@ -220,22 +132,21 @@ class TestFullyShardWithDistributedStateDict(FSDPTest):
         base_model = _get_base_model().to(device_type)
         base_optim = torch.optim.AdamW(base_model.parameters(), lr=0.1)
 
-        # Save state dict with model wrapped with FSDP1
-        fsdp1_model = FSDP(
-            copy.deepcopy(base_model),
-            device_mesh=global_mesh,
-            use_orig_params=True,
-            auto_wrap_policy=always_wrap_policy,
-        )
+        # Save state dict with model sharded by FSDP2 over a 1-D mesh (DP only, no TP)
+        fsdp_dp_model = copy.deepcopy(base_model)
+        dp_only_mesh = init_device_mesh(device_type, (self.world_size,))
+        for module in fsdp_dp_model:
+            fully_shard(module, mesh=dp_only_mesh)
+        fully_shard(fsdp_dp_model, mesh=dp_only_mesh)
 
-        fsdp1_optim = torch.optim.AdamW(fsdp1_model.parameters(), lr=0.1)
+        fsdp_dp_optim = torch.optim.AdamW(fsdp_dp_model.parameters(), lr=0.1)
 
         # one-step training to modify state dict
         inp = torch.randn((2,), device=self.rank)
         base_model(inp).sum().backward()
         base_optim.step()
-        fsdp1_model(inp).sum().backward()
-        fsdp1_optim.step()
+        fsdp_dp_model(inp).sum().backward()
+        fsdp_dp_optim.step()
 
         # obtain the full state dict
         base_msd = get_model_state_dict(
@@ -249,13 +160,13 @@ class TestFullyShardWithDistributedStateDict(FSDPTest):
         )
 
         # obtain the sharded state dict
-        fsdp1_msd = get_model_state_dict(
-            fsdp1_model,
+        fsdp_dp_msd = get_model_state_dict(
+            fsdp_dp_model,
             options=StateDictOptions(full_state_dict=False),
         )
-        fsdp1_osd = get_optimizer_state_dict(
-            fsdp1_model,
-            fsdp1_optim,
+        fsdp_dp_osd = get_optimizer_state_dict(
+            fsdp_dp_model,
+            fsdp_dp_optim,
             options=StateDictOptions(full_state_dict=False),
         )
 
@@ -263,8 +174,8 @@ class TestFullyShardWithDistributedStateDict(FSDPTest):
         source_state_dict = {
             "model_full": base_msd,
             "optim_full": base_osd,
-            "model_sharded": fsdp1_msd,
-            "optim_sharded": fsdp1_osd,
+            "model_sharded": fsdp_dp_msd,
+            "optim_sharded": fsdp_dp_osd,
         }
         dcp.save(
             source_state_dict,

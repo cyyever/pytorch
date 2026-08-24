@@ -1,29 +1,20 @@
 # mypy: allow-untyped-defs
+"""
+Minimal ShardedTensor-era data structures retained for DCP wire compatibility.
+Not part of the public API; new code should use DTensor.
+"""
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import reduce
 
+import torch
 from torch.distributed.remote_device import _remote_device
+
+__all__ = ["Shard", "ShardMetadata", "narrow_tensor_by_index"]
 
 
 @dataclass
 class ShardMetadata:
-    """
-    Represents a shard of the overall Tensor including its
-    offsets, lengths and device placement.
-
-    Args:
-        shard_offsets(List[int]): Offsets in the original tensor indicating
-            the start offsets for this shard. Should have the same rank as
-            the original tensor.
-        shard_sizes(List[int]): Integers indicating the size of each
-            dimension for this shard. Should have the same rank as the
-            original tensor.
-        placement(:class:`torch.distributed._remote_device`):
-            Specifies the placement of this shard.
-    """
-
-    __slots__ = ["shard_offsets", "shard_sizes", "placement"]
-
     shard_offsets: list[int]
     shard_sizes: list[int]
     placement: _remote_device | None
@@ -46,7 +37,6 @@ class ShardMetadata:
                 f"the same number of elements, found {len(self.shard_offsets)} "
                 f"and {self.shard_sizes} respectively"
             )
-
         for i in range(len(self.shard_offsets)):
             if self.shard_offsets[i] < 0:
                 raise ValueError("shard_offsets should be >=0")
@@ -61,3 +51,24 @@ class ShardMetadata:
         res = reduce(_hash_reduce, self.shard_sizes, res)
         res = _hash_reduce(res, self.placement)
         return res
+
+
+@dataclass
+class Shard:
+    metadata: ShardMetadata
+    tensor: torch.Tensor
+
+
+def narrow_tensor_by_index(
+    tensor: torch.Tensor,
+    offsets: Sequence[int],
+    sizes: Sequence[int],
+) -> torch.Tensor:
+    """
+    Narrow the tensor according to ``offsets`` and ``sizes``.
+    """
+    narrowed_tensor = tensor
+    for idx, (offset, size) in enumerate(zip(offsets, sizes)):
+        if size < tensor.size(idx):
+            narrowed_tensor = narrowed_tensor.narrow(idx, offset, size)
+    return narrowed_tensor

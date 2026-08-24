@@ -275,39 +275,17 @@ def apply_activation_checkpointing(
             submodules with AC. Note that if this is specified, it takes precedence over ``check_fn``.
     Returns: None (`model` is modified inplace)
     """
-    # TODO: Importing inside function to avoid circular import issue between FSDP and
-    # checkpoint_wrapper. This can be resolved once wrap() APIs are decoupled from FSDP code.
-    from torch.distributed.fsdp._wrap_utils import _construct_wrap_fn, _post_order_apply
-    from torch.distributed.fsdp.wrap import (
-        _Policy,
-        _recursive_wrap,
-        lambda_auto_wrap_policy,
-    )
-
-    policy = (
-        auto_wrap_policy
-        if auto_wrap_policy is not None
-        else partial(lambda_auto_wrap_policy, lambda_fn=check_fn)
-    )
-    if not callable(policy):
-        if not isinstance(policy, _Policy):
-            raise ValueError(
-                f"Expected {policy} to be callable or be a pre-defined wrap policy"
-            )
-        target_module_to_kwargs = policy._run_policy(
-            model, ignored_modules=set(), root_kwargs={}
+    if auto_wrap_policy is not None:
+        raise NotImplementedError(
+            "auto_wrap_policy is no longer supported; pass check_fn instead."
         )
-        wrap_fn = _construct_wrap_fn(
-            model, target_module_to_kwargs, checkpoint_wrapper_fn
-        )
-        _post_order_apply(model, wrap_fn)
-        return
-
-    _recursive_wrap(
-        module=model,
-        auto_wrap_policy=policy,  # type: ignore[arg-type]
-        wrapper_cls=checkpoint_wrapper_fn,
-        ignored_modules=set(),
-        ignored_params=set(),
-        only_wrap_children=True,
-    )
+    # Wrap children before parents so parents see wrapped children.
+    named_modules = list(model.named_modules())
+    named_modules.sort(key=lambda kv: -kv[0].count("."))
+    module_by_name = dict(named_modules)
+    for name, submodule in named_modules:
+        if not name or not check_fn(submodule):
+            continue
+        parent_name, _, child_name = name.rpartition(".")
+        parent = module_by_name.get(parent_name, model)
+        setattr(parent, child_name, checkpoint_wrapper_fn(submodule))

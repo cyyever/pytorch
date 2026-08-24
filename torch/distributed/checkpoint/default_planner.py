@@ -11,13 +11,12 @@ from collections import ChainMap
 from typing import Any, cast
 
 import torch
-from torch.distributed._shard._utils import narrow_tensor_by_index
+from torch.distributed.checkpoint._shard_compat import narrow_tensor_by_index
 from torch.distributed.checkpoint._dedup_save_plans import dedup_save_plans
 from torch.distributed.checkpoint._nested_dict import (
     FLATTEN_MAPPING,
     flatten_state_dict,
 )
-from torch.distributed.checkpoint._sharded_tensor_utils import _flatten_sharded_tensors
 from torch.distributed.checkpoint._traverse import set_element
 from torch.distributed.checkpoint.metadata import (
     BytesStorageMetadata,
@@ -74,13 +73,11 @@ class DefaultSavePlanner(SavePlanner):
     def __init__(
         self,
         flatten_state_dict: bool = True,
-        flatten_sharded_tensors: bool = True,
         dedup_replicated_tensors: bool | None = None,
         dedup_save_to_lowest_rank: bool = False,
         enable_plan_caching: bool = False,
     ) -> None:
         self.flatten_state_dict = flatten_state_dict
-        self.flatten_sharded_tensors = flatten_sharded_tensors
         self.mappings = {}
         self.dedup_save_to_lowest_rank = dedup_save_to_lowest_rank
         if dedup_replicated_tensors is not None:
@@ -100,8 +97,6 @@ class DefaultSavePlanner(SavePlanner):
     ) -> None:
         if self.flatten_state_dict:
             state_dict, self.mappings = flatten_state_dict(state_dict)
-        if self.flatten_sharded_tensors:
-            state_dict = _flatten_sharded_tensors(state_dict)
         self.state_dict = state_dict
         self.is_coordinator = is_coordinator
 
@@ -296,7 +291,6 @@ class DefaultLoadPlanner(LoadPlanner):
     In particular it adds the following:
 
     flatten_state_dict: Handle state_dict with nested dicts
-    flatten_sharded_tensors: For FSDP in 2D parallel mode
     allow_partial_load: If False, will raise a runtime error if a key is present in state_dict, but not in the checkpoint.
     """
 
@@ -306,11 +300,9 @@ class DefaultLoadPlanner(LoadPlanner):
     def __init__(
         self,
         flatten_state_dict: bool = True,
-        flatten_sharded_tensors: bool = True,
         allow_partial_load: bool = False,
     ) -> None:
         self.flatten_state_dict = flatten_state_dict
-        self.flatten_sharded_tensors = flatten_sharded_tensors
         self.original_state_dict = {}
         self.mappings = {}
         self.allow_partial_load = allow_partial_load
@@ -324,8 +316,6 @@ class DefaultLoadPlanner(LoadPlanner):
         _init_state_dict(state_dict)
         self.original_state_dict = state_dict
 
-        if self.flatten_sharded_tensors:
-            state_dict = _flatten_sharded_tensors(state_dict)
 
         if self.flatten_state_dict:
             state_dict, self.mappings = flatten_state_dict(state_dict)
@@ -541,7 +531,7 @@ def create_default_local_save_plan(
     Create the ``SavePlan`` used by DefaultSavePlanner.
 
     On non-coordinator ranks, this function ignores tensors and non-tensor objects,
-    only producing writes for ShardedTensor objects.
+    only producing writes for sharded tensor objects.
 
     On the coordinator rank, produce writes for all values.
     """

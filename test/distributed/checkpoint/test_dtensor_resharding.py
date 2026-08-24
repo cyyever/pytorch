@@ -18,7 +18,6 @@ from torch.distributed.checkpoint.planner import (
 )
 from torch.distributed.device_mesh import init_device_mesh
 from torch.distributed.tensor import distribute_tensor, DTensor, Replicate, Shard, zeros
-from torch.distributed.tensor._shards_wrapper import LocalShardsWrapper
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
     parametrize,
@@ -503,101 +502,6 @@ class TestCheckpointableReshard(DTensorTestBase):
             raise AssertionError(
                 "Expected loading_local_tensor to equal expected_loaded_local_val_tensor"
             )
-
-    @with_comms
-    @with_temp_dir
-    @skip_if_lt_x_gpu(4)
-    def test_uneven_reshard_with_dtensor_shards_wrapper_api(self) -> None:
-        """
-        Saves a 1d distributed tensor that has shards with uneven sizes using Checkpointable API.
-        Loads them back with a different shard plan (resharding). By default this UT runs with
-        NUM_DEVICES = 4.
-        """
-        # NB: saving shardin plan and loading sharding plans are different and their
-        #     shard lengths are uneven.
-        saving_1d_shard_plan = [
-            (0, 4),
-            (4, 3),
-            (7, 4),
-            (11, 5),
-        ]  # offset, length tuples.
-        loading_1d_shard_plan = [(0, 6), (6, 2), (8, 1), (9, 7)]
-        cp_path = self.temp_dir
-        my_rank = dist.get_rank()
-
-        # 1d device mesh on CPU device
-        mesh_shape = (self.world_size,)
-        device_mesh = init_device_mesh("cpu", mesh_shape)
-
-        saving_shard_offset, saving_shard_length = saving_1d_shard_plan[my_rank]
-        saving_local_tensor = torch.arange(
-            start=saving_shard_offset,
-            end=saving_shard_offset + saving_shard_length,
-            dtype=torch.float,
-        ).view(saving_shard_length, 1)
-
-        # In order to support uneven shards we have to wrap the original shards in LocalShardsWrapper.
-        saving_local_shard_wrapper = LocalShardsWrapper(
-            local_shards=[saving_local_tensor], local_offsets=[(saving_shard_offset, 0)]
-        )
-
-        logger.info(
-            f"[{my_rank}] saving_local_shard_warpper : {saving_local_shard_wrapper}"  # noqa: G004
-        )
-
-        saving_cp_dist_tensor = DTensor.from_local(
-            local_tensor=saving_local_shard_wrapper,
-            device_mesh=device_mesh,
-            placements=[Shard(0)],
-            shape=torch.Size([16, 1]),
-            stride=torch.Size([1, 1]),
-        )
-
-        # put the DTensor in a state dict and call DCP save.
-        state_dict_to_save = {"checkpointable_tensor": saving_cp_dist_tensor}
-        dist_cp.save(
-            state_dict=state_dict_to_save,
-            storage_writer=dist_cp.FileSystemWriter(path=cp_path),
-            planner=dist_cp.DefaultSavePlanner(),
-        )
-
-        loading_shard_offset, loading_shard_length = loading_1d_shard_plan[my_rank]
-        loading_local_tensor = torch.rand(
-            [loading_shard_length, 1], dtype=torch.float, device="cpu"
-        )
-        loading_local_shard_wrapper = LocalShardsWrapper(
-            local_shards=[loading_local_tensor],
-            local_offsets=[(loading_shard_offset, 0)],
-        )
-
-        expected_loaded_local_val_tensor = torch.arange(
-            start=loading_shard_offset,
-            end=loading_shard_offset + loading_shard_length,
-            dtype=torch.float,
-        ).view(loading_shard_length, 1)
-
-        loading_cp_dist_tensor = DTensor.from_local(
-            local_tensor=loading_local_shard_wrapper,
-            device_mesh=device_mesh,
-            placements=[Shard(0)],
-            shape=torch.Size([16, 1]),
-            stride=torch.Size([1, 1]),
-        )
-        state_dict_to_load = {"checkpointable_tensor": loading_cp_dist_tensor}
-
-        dist_cp.load(
-            state_dict=state_dict_to_load,
-            storage_reader=dist_cp.FileSystemReader(path=cp_path),
-        )
-        logger.info(
-            f"[{my_rank}] loaded_shards_wrapper : {loading_local_shard_wrapper}"  # noqa: G004
-        )
-        if not torch.equal(loading_local_tensor, expected_loaded_local_val_tensor):
-            raise AssertionError(
-                "Expected loading_local_tensor to equal expected_loaded_local_val_tensor"
-            )
-        dist.barrier()
-
 
 # TODO: Add dtensor resharding test when world size changes.
 if __name__ == "__main__":

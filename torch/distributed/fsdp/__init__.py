@@ -1,4 +1,3 @@
-from ._flat_param import FlatParameter as FlatParameter
 from ._fully_shard import (
     CPUOffloadPolicy,
     DataParallelMeshDims,
@@ -10,45 +9,24 @@ from ._fully_shard import (
     share_comm_ctx,
     UnshardHandle,
 )
-from .fully_sharded_data_parallel import (
-    BackwardPrefetch,
-    CPUOffload,
-    FullOptimStateDictConfig,
-    FullStateDictConfig,
-    FullyShardedDataParallel,
-    LocalOptimStateDictConfig,
-    LocalStateDictConfig,
-    MixedPrecision,
-    OptimStateDictConfig,
-    OptimStateKeyType,
-    ShardedOptimStateDictConfig,
-    ShardedStateDictConfig,
-    ShardingStrategy,
-    StateDictConfig,
-    StateDictSettings,
-    StateDictType,
-)
+
+
+class FullyShardedDataParallel:
+    """FSDP1 is gone; only fully_shard (FSDP2) remains.
+
+    Kept as a name so that third-party isinstance() checks for an
+    FSDP1-wrapped module resolve, and correctly answer False.
+    """
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        raise RuntimeError(
+            "FullyShardedDataParallel (FSDP1) was removed; use "
+            "torch.distributed.fsdp.fully_shard instead."
+        )
 
 
 __all__ = [
-    # FSDP1
-    "BackwardPrefetch",
-    "CPUOffload",
-    "FullOptimStateDictConfig",
-    "FullStateDictConfig",
     "FullyShardedDataParallel",
-    "LocalOptimStateDictConfig",
-    "LocalStateDictConfig",
-    "MixedPrecision",
-    "OptimStateDictConfig",
-    "OptimStateKeyType",
-    "ShardedOptimStateDictConfig",
-    "ShardedStateDictConfig",
-    "ShardingStrategy",
-    "StateDictConfig",
-    "StateDictSettings",
-    "StateDictType",
-    # FSDP2
     "CPUOffloadPolicy",
     "DataParallelMeshDims",
     "FSDPModule",
@@ -70,3 +48,4 @@ OffloadPolicy.__module__ = "torch.distributed.fsdp"
 register_fsdp_forward_method.__module__ = "torch.distributed.fsdp"
 UnshardHandle.__module__ = "torch.distributed.fsdp"
 share_comm_ctx.__module__ = "torch.distributed.fsdp"
+FullyShardedDataParallel.__module__ = "torch.distributed.fsdp"

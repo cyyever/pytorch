@@ -13,23 +13,19 @@ import fsspec.implementations.memory
 import torch
 import torch.distributed as dist
 import torch.distributed.checkpoint as dcp
-import torch.nn as nn
 from torch.distributed.checkpoint._fsspec_filesystem import (
     FileSystem,
     FsspecReader,
     FsspecWriter,
 )
-from torch.distributed.checkpoint.optimizer import load_sharded_optimizer_state_dict
 from torch.distributed.checkpoint.utils import CheckpointException
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.fully_sharded_data_parallel import StateDictType
 from torch.testing._internal.common_distributed import (
     requires_accelerator_dist_backend,
     skip_if_lt_x_gpu,
 )
 from torch.testing._internal.common_utils import run_tests, TestCase
-from torch.testing._internal.distributed._shard.sharded_tensor import (
-    ShardedTensorTestBase,
+from torch.testing._internal.distributed._tensor.common_dtensor import (
+    DTensorTestBase,
     with_comms,
 )
 
@@ -71,96 +67,10 @@ def with_temp_dir(
     return wrapper
 
 
-class MyTestModule(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.net1 = nn.Sequential(nn.Linear(8, 16), nn.ReLU())
-        self.net2 = nn.Sequential(nn.Linear(16, 32), nn.ReLU())
-        self.net3 = nn.Linear(32, 64)
-        self.net4 = nn.Sequential(nn.ReLU(), nn.Linear(64, 8))
-
-    def forward(self, x):
-        return self.net4(self.net3(self.net2(self.net1(x))))
-
-
-class TestFSSpec(ShardedTensorTestBase):
+class TestFSSpec(DTensorTestBase):
     @property
     def world_size(self) -> int:
         return 2
-
-    @with_comms(backend=BACKEND)
-    @requires_accelerator_dist_backend()
-    @skip_if_lt_x_gpu(2)
-    @with_temp_dir
-    def test_fsspec(self):
-        CHECKPOINT_DIR = self.temp_dir
-
-        model = FSDP(MyTestModule().to(device_type))
-        optim = torch.optim.Adam(model.parameters(), lr=0.1)
-        model(torch.rand(8, 8, device=dist.get_rank())).sum().backward()
-        optim.step()
-
-        with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
-            state_dict = {
-                "model": model.state_dict(),
-                "optim": FSDP.optim_state_dict(model, optim),
-            }
-
-            dcp.save(
-                state_dict=state_dict,
-                storage_writer=FsspecWriter(CHECKPOINT_DIR),
-                planner=dcp.DefaultSavePlanner(),
-            )
-
-        model_2 = FSDP(MyTestModule().to(device_type))
-        optim_2 = torch.optim.Adam(model_2.parameters(), lr=0.1)
-
-        with FSDP.summon_full_params(model):
-            with FSDP.summon_full_params(model_2):
-                for n_p1, n_p2 in zip(
-                    model.named_parameters(), model_2.named_parameters()
-                ):
-                    self.assertNotEqual(n_p1[1], n_p2[1])
-
-        # now load the model and ensure the values are the same
-        with FSDP.state_dict_type(model_2, StateDictType.SHARDED_STATE_DICT):
-            state_dict = {
-                "model": model_2.state_dict(),
-            }
-
-            dcp.load(
-                state_dict=state_dict,
-                storage_reader=FsspecReader(CHECKPOINT_DIR),
-                planner=dcp.DefaultLoadPlanner(),
-            )
-            model_2.load_state_dict(state_dict["model"])
-
-            optim_state = load_sharded_optimizer_state_dict(
-                model_state_dict=state_dict["model"],
-                optimizer_key="optim",
-                storage_reader=FsspecReader(CHECKPOINT_DIR),
-            )
-
-            flattened_osd = FSDP.optim_state_dict_to_load(
-                model_2, optim_2, optim_state["optim"]
-            )
-            optim_2.load_state_dict(flattened_osd)
-
-        with FSDP.summon_full_params(model):
-            with FSDP.summon_full_params(model_2):
-                for n_p1, n_p2 in zip(
-                    model.named_parameters(), model_2.named_parameters()
-                ):
-                    self.assertEqual(n_p1[1], n_p2[1])
-
-        def opt_at(opt, idx):
-            return list(iter(opt.state.values()))[idx]
-
-        # Adam lazily creates its state
-        self.assertEqual(opt_at(optim, 0)["exp_avg"], opt_at(optim_2, 0)["exp_avg"])
-        self.assertEqual(
-            opt_at(optim, 0)["exp_avg_sq"], opt_at(optim_2, 0)["exp_avg_sq"]
-        )
 
     @with_comms(backend=BACKEND)
     @requires_accelerator_dist_backend()

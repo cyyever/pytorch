@@ -7,8 +7,12 @@ from torch.distributed.checkpoint.default_planner import (
     DefaultLoadPlanner,
     DefaultSavePlanner,
 )
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.fully_sharded_data_parallel import StateDictType
+from torch.distributed.checkpoint.state_dict import (
+    get_model_state_dict,
+    set_model_state_dict,
+)
+from torch.distributed.device_mesh import init_device_mesh
+from torch.distributed.fsdp import fully_shard
 from torch.testing._internal.common_distributed import skip_if_lt_x_gpu
 from torch.testing._internal.common_utils import run_tests
 from torch.testing._internal.distributed._tensor.common_dtensor import (
@@ -24,76 +28,53 @@ class FsdpModelStateCheckpoint(DTensorTestBase):
         curr_backend = dist.get_default_backend_for_device(self.device_type)
         return f"cpu:gloo,{self.device_type}:{curr_backend}"
 
-    def _test_fsdp_model_state(self, process_group) -> None:
+    def _test_fsdp_model_state(self, reshard: bool) -> None:
         CHECKPOINT_DIR = self.temp_dir
 
-        model = FSDP(torch.nn.Linear(8, 8, device="meta"))
-        model(torch.rand(8, 8, device=dist.get_rank())).sum().backward()
+        def make_model(subgroup_sharding: bool):
+            model = torch.nn.Linear(8, 8, device=self.device_type)
+            if subgroup_sharding:
+                mesh_2d = init_device_mesh(
+                    self.device_type,
+                    (2, self.world_size // 2),
+                    mesh_dim_names=("dp_rep", "dp_shard"),
+                )
+                fully_shard(model, mesh=mesh_2d["dp_shard"])
+            else:
+                fully_shard(model)
+            return model
 
-        with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
-            state_dict = {
-                "model": model.state_dict(),
-            }
-
-            dist_cp.save(
-                state_dict=state_dict,
-                storage_writer=dist_cp.FileSystemWriter(CHECKPOINT_DIR),
-                planner=DefaultSavePlanner(),
-            )
-
-        model_2 = FSDP(
-            torch.nn.Linear(8, 8, device="meta"), process_group=process_group
+        model = make_model(subgroup_sharding=reshard)
+        msd = get_model_state_dict(model)
+        dist_cp.save(
+            state_dict={"model": msd},
+            storage_writer=dist_cp.FileSystemWriter(CHECKPOINT_DIR),
+            planner=DefaultSavePlanner(),
         )
 
-        with FSDP.summon_full_params(model):
-            with FSDP.summon_full_params(model_2):
-                self.assertNotEqual(model.weight, model_2.weight)
-                self.assertNotEqual(model.bias, model_2.bias)
+        # Load the checkpoint into a model sharded differently from the saver.
+        model_2 = make_model(subgroup_sharding=not reshard)
+        msd_2 = get_model_state_dict(model_2)
+        dist_cp.load(
+            state_dict={"model": msd_2},
+            storage_reader=dist_cp.FileSystemReader(CHECKPOINT_DIR),
+            planner=DefaultLoadPlanner(),
+        )
+        set_model_state_dict(model_2, msd_2)
 
-        # now load the model and ensure the values are the same
-        with FSDP.state_dict_type(model_2, StateDictType.SHARDED_STATE_DICT):
-            state_dict = {
-                "model": model_2.state_dict(),
-            }
-
-            dist_cp.load(
-                state_dict=state_dict,
-                storage_reader=dist_cp.FileSystemReader(CHECKPOINT_DIR),
-                planner=DefaultLoadPlanner(),
-            )
-            model_2.load_state_dict(state_dict["model"])
-
-        with FSDP.summon_full_params(model):
-            with FSDP.summon_full_params(model_2):
-                self.assertEqual(model.weight, model_2.weight)
-                self.assertEqual(model.bias, model_2.bias)
+        self.assertEqual(get_model_state_dict(model), get_model_state_dict(model_2))
 
     @skip_if_lt_x_gpu(2)
     @with_comms
     @with_temp_dir
     def test_fsdp_model_state_no_resharding(self):
-        self._test_fsdp_model_state(process_group=None)
-
-    def _create_new_dist_group(self):
-        world_size = dist.get_world_size()
-        group1 = [i for i in range(world_size) if i % 2 == 0]
-        group2 = [i for i in range(world_size) if i % 2 != 0]
-
-        # create new fsdp group for resharding
-        fsdp_0 = dist.new_group(ranks=group1)
-        fsdp_1 = dist.new_group(ranks=group2)
-        if dist.get_rank() % 2 == 0:
-            my_fsdp = fsdp_0
-        else:
-            my_fsdp = fsdp_1
-
-        return my_fsdp
+        self._test_fsdp_model_state(reshard=False)
 
     @skip_if_lt_x_gpu(4)
     @with_comms
     @with_temp_dir
     def test_fsdp_model_state_with_resharding(self):
-        self._test_fsdp_model_state(process_group=self._create_new_dist_group())
+        self._test_fsdp_model_state(reshard=True)
 
 
 if __name__ == "__main__":

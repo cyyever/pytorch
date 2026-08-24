@@ -12,8 +12,6 @@ from importlib import import_module
 
 
 submodules = [
-    # TODO: _shards_wrapper/_utils here mainly for checkpoint BC, remove them
-    "_shards_wrapper",
     "_utils",
     "experimental",
     "device_mesh",

@@ -10,11 +10,9 @@
 % This does not add anything to the rendered page
 
 ```{eval-rst}
-.. py:module:: torch.cpu.amp
 ```
 
 ```{eval-rst}
-.. py:module:: torch.cuda.amp
 ```
 
 ```{eval-rst}
@@ -39,8 +37,6 @@ As shown in the CPU example section of {class}`torch.autocast`, "automatic mixed
 datatype of `torch.bfloat16` only uses {class}`torch.autocast`.
 
 :::{warning}
-`torch.cuda.amp.autocast(args...)` and `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast("cuda", args...)` or `torch.amp.autocast("cpu", args...)` instead.
-`torch.cuda.amp.GradScaler(args...)` and `torch.cpu.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler("cuda", args...)` or `torch.amp.GradScaler("cpu", args...)` instead.
 :::
 
 :::{warning}
@@ -53,7 +49,7 @@ training pattern and run backward outside autocast, set
 compiled region. See {ref}`compiler_backward` for details.
 :::
 
-{class}`torch.autocast` and {class}`torch.cpu.amp.autocast` are new in version `1.10`.
+{class}`torch.autocast` is available since version `1.10`.
 
 ```{contents}
 :local: true
@@ -93,7 +89,7 @@ compiled region. See {ref}`compiler_backward` for details.
 ```
 
 ```{eval-rst}
-.. currentmodule:: torch.cuda.amp
+.. currentmodule:: torch.amp
 ```
 
 ```{eval-rst}
@@ -110,7 +106,7 @@ compiled region. See {ref}`compiler_backward` for details.
 ```
 
 ```{eval-rst}
-.. currentmodule:: torch.cpu.amp
+.. currentmodule:: torch.amp
 ```
 
 ```{eval-rst}
@@ -145,7 +141,7 @@ or gradients when running with AMP/fp16, verify your model is compatible.
 :::
 
 ```{eval-rst}
-.. currentmodule:: torch.cuda.amp
+.. currentmodule:: torch.amp
 ```
 
 ```{eval-rst}
@@ -154,7 +150,7 @@ or gradients when running with AMP/fp16, verify your model is compatible.
 ```
 
 ```{eval-rst}
-.. currentmodule:: torch.cpu.amp
+.. currentmodule:: torch.amp
 ```
 
 ```{eval-rst}
@@ -566,15 +562,12 @@ regardless of whether autocast is enabled.
 ```
 
 ```{eval-rst}
-.. py:module:: torch.cpu.amp.autocast_mode
 ```
 
 ```{eval-rst}
-.. py:module:: torch.cuda.amp.autocast_mode
 ```
 
 ```{eval-rst}
-.. py:module:: torch.cuda.amp.common
 ```
 
 ```{eval-rst}
@@ -582,9 +575,7 @@ regardless of whether autocast is enabled.
 ```
 
 ```{eval-rst}
-.. py:module:: torch.cpu.amp.grad_scaler
 ```
 
 ```{eval-rst}
-.. py:module:: torch.cuda.amp.grad_scaler
 ```

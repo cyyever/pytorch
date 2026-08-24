@@ -10,12 +10,6 @@ import psutil
 
 import torch
 import torch.distributed as dist
-from torch.distributed._shard.sharded_tensor import (
-    init_from_local_shards,
-    Shard as ShardedTensorShard,
-    ShardedTensor,
-    ShardMetadata,
-)
 from torch.distributed._tensor import DTensor
 from torch.distributed._tensor.placement_types import Replicate, Shard
 from torch.distributed.checkpoint._state_dict_stager import StateDictStager
@@ -1154,117 +1148,6 @@ class TestReplicationStager(DTensorTestBase):
                 lambda msg: f"{msg}\nRank scalar should be {partner_rank}, got {replicated_dict['rank_scalar'].item()}",
             )
 
-    def _create_sharded_tensor_state_dict(self, rank: int, world_size: int) -> dict:
-        """
-        Create state_dict with ShardedTensor for deterministic testing.
-
-        Args:
-            rank: Current rank
-            world_size: Total world size
-
-        Returns:
-            dict: State dictionary with ShardedTensor
-        """
-        # Create deterministic local shard for this rank
-        global_size = 64
-        shard_size = global_size // world_size
-        start_idx = rank * shard_size
-        end_idx = (rank + 1) * shard_size
-
-        # Create local tensor with deterministic values
-        local_tensor = torch.arange(
-            start_idx * 8, end_idx * 8, dtype=torch.float32, device="cpu"
-        ).reshape(shard_size, 8)
-
-        # Create ShardedTensor using init_from_local_shards
-        sharded_tensor = init_from_local_shards(
-            [
-                ShardedTensorShard(
-                    tensor=local_tensor,
-                    metadata=ShardMetadata(
-                        shard_offsets=[start_idx, 0],
-                        shard_sizes=[shard_size, 8],
-                        placement=f"rank:{rank}/cpu",
-                    ),
-                )
-            ],
-            global_size,
-            8,
-        )
-
-        return {
-            "sharded_tensor": sharded_tensor,
-            "rank_scalar": torch.tensor(float(rank), device="cpu"),
-        }
-
-    def _verify_sharded_tensor_replication(
-        self, replicated_dict: dict, rank: int, partner_rank: int
-    ):
-        """
-        Verify ShardedTensor replication accuracy by checking local shards and metadata.
-
-        Args:
-            replicated_dict: Replicated state_dict received from partner
-            rank: Current rank
-            partner_rank: Partner rank we should have received from
-        """
-        # Verify sharded tensor
-        if "sharded_tensor" in replicated_dict:
-            replicated_sharded = replicated_dict["sharded_tensor"]
-            self.assertIsInstance(
-                replicated_sharded, ShardedTensor, "Should receive ShardedTensor"
-            )
-
-            # Get local shard from replicated ShardedTensor
-            local_shards = replicated_sharded.local_shards()
-            self.assertEqual(
-                len(local_shards), 1, "Should have exactly one local shard"
-            )
-
-            local_shard = local_shards[0]
-            replicated_local = local_shard.tensor
-
-            # Create expected local shard (what partner rank would have)
-            world_size = dist.get_world_size()
-            global_size = 64
-            shard_size = global_size // world_size
-            start_idx = partner_rank * shard_size
-            end_idx = (partner_rank + 1) * shard_size
-
-            expected_local = torch.arange(
-                start_idx * 8, end_idx * 8, dtype=torch.float32, device="cpu"
-            ).reshape(shard_size, 8)
-
-            self.assertTrue(
-                torch.equal(replicated_local, expected_local),
-                "Sharded tensor value mismatch",
-            )
-
-            # Verify shard metadata is preserved
-            expected_metadata = ShardMetadata(
-                shard_offsets=[start_idx, 0],
-                shard_sizes=[shard_size, 8],
-                placement=f"rank:{partner_rank}/cpu",
-            )
-            self.assertEqual(
-                local_shard.metadata.shard_offsets,
-                expected_metadata.shard_offsets,
-                "Shard offsets should match",
-            )
-            self.assertEqual(
-                local_shard.metadata.shard_sizes,
-                expected_metadata.shard_sizes,
-                "Shard sizes should match",
-            )
-
-        # Verify regular tensors
-        if "rank_scalar" in replicated_dict:
-            self.assertEqual(
-                replicated_dict["rank_scalar"].item(),
-                float(partner_rank),
-                lambda msg: f"{msg}\nRank scalar should be {partner_rank}, got {replicated_dict['rank_scalar'].item()}",
-            )
-
     @with_comms
     @skip_if_lt_x_gpu(4)
     def test_replication_basic(self):
@@ -1334,46 +1217,6 @@ class TestReplicationStager(DTensorTestBase):
 
         # Verify all DTensor types are correctly replicated
         self._verify_dtensor_replication(replicated_dict, current_rank, partner_rank)
-
-        # Clean up
-        stager.close()
-
-    @with_comms
-    @skip_if_lt_x_gpu(4)
-    def test_replication_sharded_tensors(self):
-        """Test replication with ShardedTensor and mixed tensor types"""
-        world_size = dist.get_world_size()
-
-        current_rank = dist.get_rank()
-
-        # Create ShardedTensor state_dict for this rank
-        state_dict = self._create_sharded_tensor_state_dict(current_rank, world_size)
-
-        # Initialize replication stager
-        stager = _ReplicationStager(
-            pg=dist.group.WORLD,
-            timeout=timedelta(seconds=30),
-            device=torch.device("cpu"),
-        )
-
-        # Perform replication
-        result = stager.stage(state_dict)
-
-        # Wait for completion
-        from concurrent.futures import Future
-
-        if isinstance(result, Future):
-            replicated_dict = result.result()
-        else:
-            replicated_dict = result
-
-        # Calculate expected partner
-        partner_rank = (current_rank + world_size // 2) % world_size
-
-        # Verify all ShardedTensor types are correctly replicated
-        self._verify_sharded_tensor_replication(
-            replicated_dict, current_rank, partner_rank
-        )
 
         # Clean up
         stager.close()

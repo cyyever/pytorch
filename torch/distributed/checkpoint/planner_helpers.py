@@ -8,8 +8,6 @@ from typing import Any, cast
 import torch
 import torch.distributed as dist
 from torch._utils import _get_device_module
-from torch.distributed._shard.metadata import ShardMetadata
-from torch.distributed._shard.sharded_tensor import ShardedTensor
 from torch.distributed.tensor import DTensor
 from torch.distributed.tensor._utils import compute_local_shape_and_global_offset
 
@@ -153,34 +151,6 @@ def _create_chunk_from_tensor(tensor: torch.Tensor) -> ChunkStorageMetadata:
     )
 
 
-def _chunk_for_shard(shard_md: ShardMetadata) -> ChunkStorageMetadata:
-    return ChunkStorageMetadata(
-        offsets=torch.Size(shard_md.shard_offsets),
-        sizes=torch.Size(shard_md.shard_sizes),
-    )
-
-
-def _sharded_tensor_metadata(
-    sharded_tensor: ShardedTensor, shard_md: ShardMetadata
-) -> TensorWriteData:
-    shard_properties = sharded_tensor.metadata().tensor_properties
-
-    properties = TensorProperties(
-        dtype=shard_properties.dtype,
-        layout=shard_properties.layout,
-        requires_grad=shard_properties.requires_grad,
-        memory_format=shard_properties.memory_format,
-        pin_memory=shard_properties.pin_memory,
-        strides=shard_properties.strides,
-    )
-
-    return TensorWriteData(
-        chunk=_chunk_for_shard(shard_md),
-        properties=properties,
-        size=sharded_tensor.metadata().size,
-    )
-
-
 def _create_write_items_for_dtensor(fqn: str, tensor: DTensor) -> WriteItem:
     sizes, offsets = compute_local_shape_and_global_offset(
         tensor.shape, tensor.device_mesh, tensor.placements
@@ -198,17 +168,6 @@ def _create_write_items_for_dtensor(fqn: str, tensor: DTensor) -> WriteItem:
             properties=TensorProperties.create_from_tensor(tensor.to_local()),
             size=tensor.size(),
         ),
-    )
-
-
-def _create_write_item_for_shard(
-    fqn: str, sharded_tensor: ShardedTensor, shard_md: ShardMetadata
-) -> WriteItem:
-    offsets = torch.Size(shard_md.shard_offsets)
-    return WriteItem(
-        index=MetadataIndex(fqn, offsets),
-        type=WriteItemType.SHARD,
-        tensor_data=_sharded_tensor_metadata(sharded_tensor, shard_md),
     )
 
 
@@ -406,11 +365,6 @@ def _create_default_metadata_only_plan(state_dict: STATE_DICT_TYPE) -> SavePlan:
     for fqn, obj in state_dict.items():
         if isinstance(obj, DTensor):
             requests.append(_create_write_items_for_dtensor(fqn, obj))
-        elif isinstance(obj, ShardedTensor):
-            requests.extend(
-                _create_write_item_for_shard(fqn, obj, shard_md)
-                for shard_md in obj.metadata().shards_metadata
-            )
         elif _is_checkpointable_tensor(obj):
             # Avoid treating a local shard as a plain Tensor: the WriteItems
             # carry both local chunk metadata and the global tensor size.
@@ -426,11 +380,6 @@ def _create_write_items(fqn: str, object: Any) -> list[WriteItem]:
     if hasattr(object, "__create_write_items__"):
         # DTensor implements _Checkpointable
         return object.__create_write_items__(fqn, object)  # type: ignore[attr-defined]
-    elif isinstance(object, ShardedTensor):
-        return [
-            _create_write_item_for_shard(fqn, object, shard.metadata)
-            for shard in object.local_shards()
-        ]
     elif _is_checkpointable_tensor(object):
         return _get_checkpointable_tensor_write_items(fqn, object)
     elif isinstance(object, torch.Tensor):
@@ -456,15 +405,11 @@ def _create_chunk_list(tensor: torch.Tensor) -> list[ChunkStorageMetadata]:
         local_chunks = tensor.__create_chunk_list__()  # type: ignore[attr-defined]
     elif _is_checkpointable_tensor(tensor):
         local_chunks = _get_checkpointable_tensor_chunks(tensor)
-    elif isinstance(tensor, ShardedTensor):
-        local_chunks = [
-            _chunk_for_shard(shard.metadata) for shard in tensor.local_shards()
-        ]
     elif isinstance(tensor, torch.Tensor):
         local_chunks = [_create_chunk_from_tensor(tensor)]
     else:
         raise ValueError(
-            "Unsupported Type, expecting one of [Tensor, DTensor, ShardedTensor] "
+            "Unsupported Type, expecting one of [Tensor, DTensor] "
             f",but got {type(tensor)}"
         )
 
@@ -520,15 +465,6 @@ def _init_state_dict(state_dict: dict[str, Any]) -> Any:
         else:
             return value
 
-    def sharded_tensor_func(value: Any):
-        device = getattr(value, "device", None)
-        if device == torch.device("meta"):
-            raise RuntimeError(
-                f"Found unsupported type {type(value)} for meta device loading."
-            )
-        else:
-            return value
-
     def tensor_func(value: torch.Tensor):
         device = getattr(value, "device", None)
         if device == torch.device("meta"):
@@ -546,7 +482,6 @@ def _init_state_dict(state_dict: dict[str, Any]) -> Any:
     _iterate_state_dict(
         state_dict,
         dtensor_func,
-        sharded_tensor_func,
         tensor_func,
     )
 
@@ -554,7 +489,6 @@ def _init_state_dict(state_dict: dict[str, Any]) -> Any:
 def _iterate_state_dict(
     iter_object: Any,
     dtensor_func: Callable,
-    sharded_tensor_func: Callable,
     tensor_func: Callable,
 ):
     """
@@ -563,7 +497,6 @@ def _iterate_state_dict(
 
     Args:
         iter_object (Any): the target state_dict.
-        sharded_tensor_func (Callable): the function to apply to ShardedTensor
         dtensor_func (Callable): the function to apply to DTensor
         tensor_func (Callable): the function to apply to Tensor
 
@@ -573,8 +506,6 @@ def _iterate_state_dict(
 
     if isinstance(iter_object, DTensor):
         return dtensor_func(iter_object)
-    elif isinstance(iter_object, ShardedTensor):
-        return sharded_tensor_func(iter_object)
     elif isinstance(iter_object, torch.Tensor):
         return tensor_func(iter_object)
     elif (
@@ -585,12 +516,12 @@ def _iterate_state_dict(
     elif isinstance(iter_object, dict):
         for key, value in iter_object.items():
             iter_object[key] = _iterate_state_dict(
-                value, dtensor_func, sharded_tensor_func, tensor_func
+                value, dtensor_func, tensor_func
             )
         return iter_object
     elif isinstance(iter_object, (list, tuple)):
         ret = [
-            _iterate_state_dict(v, dtensor_func, sharded_tensor_func, tensor_func)
+            _iterate_state_dict(v, dtensor_func, tensor_func)
             for v in iter_object
         ]
         if isinstance(iter_object, tuple):
