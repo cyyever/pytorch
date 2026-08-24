@@ -2,11 +2,7 @@
 #include <cuda_runtime.h>
 
 #ifndef ROCM_ON_WINDOWS
-#if CUDART_VERSION >= 13000 || defined(TORCH_CUDA_USE_NVTX3)
 #include <nvtx3/nvtx3.hpp>
-#else // CUDART_VERSION >= 13000 || defined(TORCH_CUDA_USE_NVTX3)
-#include <nvToolsExt.h>
-#endif // CUDART_VERSION >= 13000 || defined(TORCH_CUDA_USE_NVTX3)
 #else // ROCM_ON_WINDOWS
 #include <c10/util/Exception.h>
 #endif // ROCM_ON_WINDOWS

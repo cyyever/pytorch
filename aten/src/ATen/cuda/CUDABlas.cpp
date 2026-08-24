@@ -2021,15 +2021,15 @@ void scaled_gemm(
     }
   }
     // For other data types, use the get_scale_mode function based on scaling type
-    // The SCALE_MODE attrs only exist in cuBLAS 12.8+/ROCm 7.0 or in recent hipblaslt,
+    // The SCALE_MODE attrs only exist in cuBLAS 12.8+ or in recent hipblaslt,
     // but we must invoke get_scale_mode anyways to trigger the version checks.
     // Note that AMD/ROCm follows OCP Spec 1.0, which is different from NVIDIA's implementation. See get_scale_mode() for details.
     [[maybe_unused]] int a_scale_mode = detail::cublasLtMatmulScaleMode(mat1_scaling_type, mat1_scale_dtype, use_fast_accum);
     [[maybe_unused]] int b_scale_mode = detail::cublasLtMatmulScaleMode(mat2_scaling_type, mat2_scale_dtype, use_fast_accum);
-#if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && ROCM_VERSION >= 70000 && defined(HIPBLASLT_OUTER_VEC))
+#if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && defined(HIPBLASLT_OUTER_VEC))
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_A_SCALE_MODE, a_scale_mode);
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_B_SCALE_MODE, b_scale_mode);
-#endif // if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && ROCM_VERSION >= 70000 && defined(HIPBLASLT_OUTER_VEC))
+#endif // if CUDA_VERSION >= 12080 || (defined(USE_ROCM) && defined(HIPBLASLT_OUTER_VEC))
 
   CuBlasLtMatmulPreference preference;
   auto ltworkspace = CublasLtWorkspace();

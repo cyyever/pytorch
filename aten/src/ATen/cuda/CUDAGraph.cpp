@@ -505,7 +505,6 @@ void CUDAGraph::begin_capture_to_conditional_node(
   const cudaGraphNode_t* dependencies{};
   const cudaGraphEdgeData* dependency_edges{};
   size_t num_dependencies = 0;
-#if CUDA_VERSION >= 13000
   AT_CUDA_CHECK(cudaStreamGetCaptureInfo(
       getCurrentCUDAStream(),
       &status,
@@ -514,17 +513,6 @@ void CUDAGraph::begin_capture_to_conditional_node(
       &dependencies,
       &dependency_edges,
       &num_dependencies));
-#else
-  AT_CUDA_CHECK(cudaStreamGetCaptureInfo_v3(
-      getCurrentCUDAStream(),
-      &status,
-      nullptr,
-      &currently_capturing_graph,
-      &dependencies,
-      &dependency_edges,
-      &num_dependencies
-  ));
-#endif
   TORCH_CHECK(status == cudaStreamCaptureStatusActive);
 
   cudaGraphNodeParams params{};
@@ -534,7 +522,6 @@ void CUDAGraph::begin_capture_to_conditional_node(
   params.conditional.size = 1;
 
   cudaGraphNode_t cond_node{};
-#if CUDA_VERSION >= 13000
   AT_CUDA_CHECK(cudaGraphAddNode(
       &cond_node,
       currently_capturing_graph,
@@ -542,24 +529,10 @@ void CUDAGraph::begin_capture_to_conditional_node(
       dependency_edges,
       num_dependencies,
       &params));
-#else
-  AT_CUDA_CHECK(cudaGraphAddNode_v2(
-      &cond_node,
-      currently_capturing_graph,
-      dependencies,
-      dependency_edges,
-      num_dependencies,
-      &params));
-#endif
   cudaGraph_t conditional_node_child_graph = params.conditional.phGraph_out[0];
 
-#if CUDA_VERSION >= 13000
   AT_CUDA_CHECK(cudaStreamUpdateCaptureDependencies(
 getCurrentCUDAStream(), &cond_node, nullptr, 1, cudaStreamSetCaptureDependencies));
-#else
-  AT_CUDA_CHECK(cudaStreamUpdateCaptureDependencies_v2(
-getCurrentCUDAStream(), &cond_node, nullptr, 1, cudaStreamSetCaptureDependencies));
-#endif
 
   cudaStream_t raw_child_stream{};
   AT_CUDA_CHECK(cudaStreamCreateWithFlags(

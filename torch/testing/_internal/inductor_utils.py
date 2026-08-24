@@ -22,7 +22,11 @@ from torch._inductor.utils import (
     OrderedSet,
 )
 from torch.utils._helion import has_helion
-from torch.utils._triton import has_triton, has_triton_block_ptr
+from torch.utils._triton import (
+    has_triton,
+    has_triton_block_ptr,
+    has_triton_cpu_backend,
+)
 from torch.utils._config_module import ConfigModule
 from torch.testing._internal.common_device_type import (
     get_desired_device_type_test_bases,

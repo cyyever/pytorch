@@ -192,14 +192,7 @@ inline int cublasLtMatmulScaleMode(
 #endif
     case at::blas::ScalingType::BlockWise1x16:
       TORCH_CHECK(scale_dtype == kFloat8_e4m3fn);
-#if CUDA_VERSION >= 12080
       return CUBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3;
-#else
-      TORCH_CHECK(
-          false,
-          "scaled_gemm with `torch.float8_e4m3fn` scales of 1x16 blocks "
-          "is only supported for CUDA 12.8 and above");
-#endif
     case at::blas::ScalingType::RowWise:
       TORCH_CHECK(scale_dtype == kFloat);
 #if CUDA_VERSION >= 12090 || (defined(USE_ROCM) && defined(HIPBLASLT_OUTER_VEC))
@@ -218,34 +211,16 @@ inline int cublasLtMatmulScaleMode(
       TORCH_CHECK(
           !use_fast_accum,
           "scaled_gemm doesn't support fast accum with 1x128 blockwise scaling");
-#if CUDA_VERSION >= 12090
       return CUBLASLT_MATMUL_MATRIX_SCALE_VEC128_32F;
-#else
-      TORCH_CHECK(
-          false,
-          "scaled_gemm with 1x128 blockwise scaling is only supported for "
-          "CUDA 12.9 and above");
-#endif
     case at::blas::ScalingType::BlockWise128x128:
       TORCH_CHECK(scale_dtype == kFloat);
       TORCH_CHECK(
           !use_fast_accum,
           "scaled_gemm doesn't support fast accum with 128x128 blockwise scaling");
-#if CUDA_VERSION >= 12090
       return CUBLASLT_MATMUL_MATRIX_SCALE_BLK128x128_32F;
-#else
-      TORCH_CHECK(
-          false,
-          "scaled_gemm with 128x128 blockwise scaling is only supported for "
-          "CUDA 12.9 and above");
-#endif
     case at::blas::ScalingType::TensorWise:
       TORCH_CHECK(scale_dtype == kFloat);
-#if CUDA_VERSION >= 12080
       return CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
-#else
-      return 0;
-#endif
     default:
       TORCH_CHECK(false);
   }

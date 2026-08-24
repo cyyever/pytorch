@@ -63,8 +63,6 @@ constexpr hipDataType HipDataTypeFor<c10::Float8_e5m2fnuz>() {
   return HIP_R_8F_E5M2_FNUZ;
 }
 
-// This code is instantiated regardless of ROCm version.
-// Prior to ROCm 6.3, we hard-code the known enum values.
 template <>
 constexpr hipDataType HipDataTypeFor<c10::Float8_e4m3fn>() {
 #if ROCM_VERSION >= 60300

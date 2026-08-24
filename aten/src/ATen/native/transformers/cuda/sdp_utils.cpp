@@ -100,12 +100,7 @@ bool check_prefer_cudnn_attention() {
   try {
     auto dprops = at::cuda::getCurrentDeviceProperties();
     auto major = dprops->major;
-#if defined(CUDA_VERSION) && (CUDA_VERSION < 13000)
-    auto minor = dprops->minor;
-    return cudnn_version > 91500 && (major == 9 || major == 10) && (!minor || minor == 3);
-#else
     return cudnn_version > 91500 && (major == 9 || major == 10);
-#endif
   } catch ([[maybe_unused]] c10::Error const& e) {
 #ifdef DEBUG
     TORCH_WARN("check_prefer_cudnn_attention() caught exception ", e.what());
@@ -1038,12 +1033,6 @@ bool can_use_cudnn_attention(const sdp_params& params, bool debug) {
 #if defined(USE_ROCM) || !AT_CUDNN_ENABLED() || !defined(CUDNN_VERSION)
   if (debug) {
     TORCH_WARN("Torch was not compiled with cuDNN attention.");
-  }
-  return false;
-#endif
-#if defined(CUDNN_VERSION) && CUDNN_VERSION < 90000
-  if (debug) {
-    TORCH_WARN(CUDNN_VERSION, " cuDNN version too old to use cuDNN Attention (< v9.0.0)");
   }
   return false;
 #endif
