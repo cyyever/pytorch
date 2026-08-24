@@ -26,7 +26,6 @@ from unittest.mock import Mock, patch
 import torch
 import torch.distributed as dist
 import torch.distributed.elastic.rendezvous.registry as rdzv_registry
-import torch.distributed.rpc as rpc
 from torch.distributed.elastic.agent.server.api import (
     RunResult,
     WorkerGroup,
@@ -45,7 +44,6 @@ from torch.distributed.elastic.multiprocessing.errors import ChildFailedError, r
 from torch.distributed.elastic.rendezvous import RendezvousParameters
 from torch.distributed.elastic.rendezvous.etcd_server import EtcdServer
 from torch.distributed.elastic.utils.process_state import read_proc_state
-from torch.distributed.rpc.backend_registry import BackendType
 from torch.testing._internal.common_utils import (
     skip_but_pass_in_sandcastle_if,
     TEST_WITH_DEV_DBG_ASAN,
@@ -55,29 +53,6 @@ from torch.testing._internal.common_utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-
-def init_rpc(name, backend):
-    rank = int(os.environ["RANK"])
-    world_size = int(os.environ["WORLD_SIZE"])
-    rpc.init_rpc(
-        name=name,
-        backend=backend,
-        rank=rank,
-        world_size=world_size,
-    )
-
-
-def rpc_master(msg):
-    init_rpc("master", BackendType.TENSORPIPE)
-    ret = rpc.rpc_sync(to="worker", func=_echo, args=(msg,))
-    rpc.shutdown()
-    return f"{ret} from worker"
-
-
-def rpc_worker():
-    init_rpc("worker", BackendType.TENSORPIPE)
-    rpc.shutdown()
 
 
 def _happy_function():
@@ -1277,58 +1252,6 @@ class LocalElasticAgentTest(unittest.TestCase):
         self.run_test_with_backend(
             backend="etcd-v2", test_to_run=self.double_agent_elastic
         )
-
-    def torch_rpc(self):
-        """
-        Simple torch rpc example with torchelastic.
-        Creates two agents (to simulate two node job),
-        each agent runs a single worker. worker0 calls an rpc_sync on
-        worker1.
-        """
-        msg = "hello world"
-        node_configs = [
-            Conf(
-                role="master",
-                entrypoint=rpc_master,
-                args=(msg,),
-                local_world_size=1,
-                tee=Std.ALL,
-            ),
-            Conf(
-                role="worker",
-                entrypoint=rpc_worker,
-                args=(),
-                local_world_size=1,
-                tee=Std.ALL,
-            ),
-        ]
-
-        results = self.run_job(node_configs)
-        master_retvals = results["master"][0].return_values
-        # there is only one master but the global rank is not stable
-        # so compare the master return value as a collection
-        self.assertEqual([f"{msg} from worker"], list(master_retvals.values()))
-
-    @unittest.skipIf(
-        TEST_WITH_DEV_DBG_ASAN or TEST_WITH_TSAN,
-        "test incompatible with dev/dbg asan or tsan",
-    )
-    def test_torch_rpc_c10d(self):
-        self.run_test_with_backend(backend="c10d", test_to_run=self.torch_rpc)
-
-    @unittest.skipIf(
-        TEST_WITH_DEV_DBG_ASAN or TEST_WITH_TSAN,
-        "test incompatible with dev/dbg asan or tsan",
-    )
-    def test_torch_rpc_etcd(self):
-        self.run_test_with_backend(backend="etcd", test_to_run=self.torch_rpc)
-
-    @unittest.skipIf(
-        TEST_WITH_DEV_DBG_ASAN or TEST_WITH_TSAN,
-        "test incompatible with dev/dbg asan or tsan",
-    )
-    def test_torch_rpc_etcd_v2(self):
-        self.run_test_with_backend(backend="etcd-v2", test_to_run=self.torch_rpc)
 
     def workers_drift_success(self):
         """

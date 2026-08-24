@@ -12,14 +12,10 @@ from torch._functorch.aot_autograd import (
     make_boxed_func,
 )
 from torch._functorch.compilers import (
-    debug_compile,
     default_decompositions,
     draw_graph_compile,
-    memory_efficient_fusion,
-    nnc_jit,
     nop,
     print_compile,
-    ts_compile,
 )
 from torch._functorch.fx_minifier import minifier
 from torch._functorch.partitioners import (

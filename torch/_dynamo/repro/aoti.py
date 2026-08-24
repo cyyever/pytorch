@@ -31,7 +31,6 @@ from typing import Any, IO
 import torch
 from torch._dynamo.debug_utils import (
     _cuda_system_info_comment,
-    BuckTargetWriter,
     extra_imports,
     generate_config_string,
     generate_env_vars_string,
@@ -107,8 +106,6 @@ def dump_to_minify(
                     module_in_comment=True,
                 )
             log.warning("Writing repro file to %s", file_name)
-            if use_buck:
-                BuckTargetWriter(file_name).write()
         except OSError:
             log.warning("No write permissions for %s", file_name)
 
@@ -226,8 +223,6 @@ def dump_compiler_graph_state(
     try:
         shutil.copyfile(file_name, repro_path)
         log.warning("Copying repro file for convenience to %s", repro_path)
-        if use_buck:
-            BuckTargetWriter(file_name).write()
     except OSError:
         log.warning("No write permissions for %s", repro_path)
 

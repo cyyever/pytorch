@@ -19,7 +19,6 @@ from torch.testing._internal.common_device_type import (
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
     parametrize,
-    skipIfHpu,
 )
 from torch.testing._internal.triton_utils import requires_cuda_and_triton
 
@@ -145,19 +144,11 @@ class TestOptimizations(torch._dynamo.test_case.TestCase):
     def test_eager_noexcept(self, device):
         self._check_backend_works("eager_noexcept", device, boxed=False)
 
-    @skipIfHpu
-    def test_torchscript(self, device):
-        self._check_backend_works("ts", device, boxed=False)
-
     def test_aot_eager(self, device):
         self._check_backend_works("aot_eager", device)
 
     def test_aot_eager_decomp_partition(self, device):
         self._check_backend_works("aot_eager_decomp_partition", device)
-
-    @skipIfHpu
-    def test_aot_ts(self, device):
-        self._check_backend_works("aot_ts", device)
 
     @requires_cuda_and_triton
     def test_aot_cudagraphs(self, device):

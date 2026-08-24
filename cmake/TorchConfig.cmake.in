@@ -78,25 +78,6 @@ else()
   # TODO: this list might be incomplete.
   append_torchlib_if_found(c10)
 
-  if(@USE_NNPACK@)
-    append_torchlib_if_found(nnpack)
-  endif()
-
-  if(@USE_PYTORCH_QNNPACK@)
-    append_torchlib_if_found(pytorch_qnnpack)
-  endif()
-
-  if(@USE_XNNPACK@)
-    append_torchlib_if_found(XNNPACK)
-    append_torchlib_if_found(microkernels-prod)
-  endif()
-
-  if(@USE_KLEIDIAI@)
-    append_torchlib_if_found(kleidiai)
-  endif()
-
-  append_torchlib_if_found(caffe2_protos protobuf-lite protobuf protoc)
-  append_torchlib_if_found(onnx onnx_proto)
 
   append_torchlib_if_found(fmt)
   append_torchlib_if_found(cpuinfo clog)

@@ -272,19 +272,6 @@ TEST(IValueTest, Tuple) {
       std::get<1>(t_).item().to<float>(), std::get<1>(t).item().to<float>());
 }
 
-TEST(IValueTest, unsafeRemoveAttr) {
-  auto cu = std::make_shared<CompilationUnit>();
-  auto cls = ClassType::create("foo.bar", cu);
-  cls->addAttribute("attr1", TensorType::get());
-  cls->addAttribute("attr2", TensorType::get());
-  auto obj = c10::ivalue::Object::create(
-      c10::StrongTypePtr(cu, cls), cls->numAttributes());
-  obj->unsafeRemoveAttr("attr1");
-  // attr1 is not removed in the type
-  ASSERT_TRUE(cls->hasAttribute("attr1"));
-  ASSERT_TRUE(cls->hasAttribute("attr2"));
-  ASSERT_TRUE(obj->slots().size() == 1);
-}
 
 TEST(IValueTest, TuplePrint) {
   {
@@ -537,52 +524,6 @@ TEST(IValueTest, StreamEquality) {
   EXPECT_TRUE(lhs.equals(rhs_same).toBool());
 }
 
-TEST(IValueTest, EnumEquality) {
-  auto cu = std::make_shared<CompilationUnit>();
-  IValue int_ivalue_1(1);
-  IValue int_ivalue_2(2);
-  IValue str_ivalue_1("1");
-  auto int_enum_type1 = EnumType::create(
-      "enum_class_1",
-      IntType::get(),
-      {{"enum_name_1", int_ivalue_1}, {"enum_name_2", int_ivalue_2}},
-      cu);
-  auto int_enum_type2 = EnumType::create(
-      "enum_class_2",
-      IntType::get(),
-      {{"enum_name_1", int_ivalue_1}, {"enum_name_2", int_ivalue_2}},
-      cu);
-  auto string_enum_type = EnumType::create(
-      "enum_class_3", StringType::get(), {{"enum_name_1", str_ivalue_1}}, cu);
-
-  EXPECT_EQ(
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type1, "enum_name_1", int_ivalue_1)),
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type1, "enum_name_1", int_ivalue_1))
-  );
-
-  EXPECT_NE(
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type1, "enum_name_1", int_ivalue_1)),
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type2, "enum_name_1", int_ivalue_1))
-  );
-
-  EXPECT_NE(
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type1, "enum_name_1", int_ivalue_1)),
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type1, "enum_name_2", int_ivalue_2))
-  );
-
-  EXPECT_NE(
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          int_enum_type1, "enum_name_1", int_ivalue_1)),
-      IValue(c10::make_intrusive<ivalue::EnumHolder>(
-          string_enum_type, "enum_name_1", str_ivalue_1))
-  );
-}
 
 TEST(IValueTest, isPtrType) {
   IValue tensor(at::rand({3, 4}));

@@ -326,55 +326,13 @@ std::vector<IValue> ScriptTypeParser::evaluateDefaults(
     const SourceRange& r,
     const std::vector<Expr>& default_types,
     const std::vector<Expr>& default_exprs) {
-  std::vector<IValue> default_values;
-  if (default_exprs.empty())
-    return default_values;
-  // To evaluate the default expressions, we create a graph with no inputs,
-  // and whose returns are the default values we need.
-  // We then run constant prop on this graph and check the results are
-  // constant. This approach avoids having to have separate handling of
-  // default arguments from standard expressions by piecing together existing
-  // machinery for graph generation, constant propagation, and constant
-  // extraction.
-  auto tuple_type = Subscript::create(
-      r,
-      Var::create(r, Ident::create(r, "Tuple")),
-      List<Expr>::create(r, default_types));
-  auto blank_decl = Decl::create(
-      r, List<Param>::create(r, {}), Maybe<Expr>::create(r, tuple_type));
-
-  auto tuple_expr =
-      TupleLiteral::create(r, List<Expr>::create(r, default_exprs));
-  auto ret = Return::create(r, tuple_expr);
-  auto def = Def::create(
-      r,
-      Ident::create(r, "defaults"),
-      blank_decl,
-      List<Stmt>::create(r, {ret}));
-
-  CompilationUnit cu;
-  cu.define(
-      std::nullopt,
-      /*properties=*/{},
-      /*propResolvers=*/{},
-      {def},
-      {resolver_},
-      nullptr);
-  Stack stack;
-  // XXX: We need to turn optimization off here because otherwise we try to
-  // recursively initialize stuff in DecomposeOps.
-  GraphOptimizerEnabledGuard guard(false);
-  auto& f = cu.get_function(def.name().name());
-  auto* gf = dynamic_cast<GraphFunction*>(&f);
-  TORCH_INTERNAL_ASSERT(gf);
-  // 2024.08.14: Since we are starting to deprecate Torchscript usages,
-  // we are going to log all the calls for GraphFunction::run. The logging was
-  // noisy we also call GraphFunction::run for the default value evaluation
-  // which generates a lot of useless log samples. Therefore as a workaround we
-  // just directly use the executor API which avoids producing
-  // unnecessary log entries.
-  gf->get_executor().run(stack);
-  return stack.at(0).toTupleRef().elements().vec();
+  // Default value expressions were evaluated by compiling a small graph and
+  // running it through the TorchScript interpreter, which no longer exists.
+  if (!default_exprs.empty()) {
+    throw ErrorReport(r)
+        << "Evaluating schema default value expressions is no longer supported";
+  }
+  return {};
 }
 
 std::vector<Argument> ScriptTypeParser::parseArgsFromDecl(

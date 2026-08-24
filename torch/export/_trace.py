@@ -197,14 +197,12 @@ DEFAULT_EXPORT_DYNAMO_CONFIG.reorderable_logging_functions = {
 @contextmanager
 def _ignore_backend_decomps():
     orig_mkldnn_flag = torch.backends.mkldnn.set_flags(False)
-    orig_nnpack_flag = torch.backends.nnpack.set_flags(False)
     orig_cudnn_flag = torch.backends.cudnn.set_flags(False)
 
     try:
         yield
     finally:
         torch.backends.mkldnn.set_flags(*orig_mkldnn_flag)
-        torch.backends.nnpack.set_flags(*orig_nnpack_flag)
         torch.backends.cudnn.set_flags(*orig_cudnn_flag)
 
 
@@ -1737,16 +1735,6 @@ def patch_forward(obj: torch.nn.Module, new_method):
     finally:
         # Restore the original method
         obj.forward = original_method
-
-
-@contextmanager
-def _temp_disable_texpr_fuser():
-    original_state = torch._C._jit_texpr_fuser_enabled()
-    torch._C._jit_set_texpr_fuser_enabled(False)
-    try:
-        yield
-    finally:
-        torch._C._jit_set_texpr_fuser_enabled(original_state)
 
 
 def _strict_export(

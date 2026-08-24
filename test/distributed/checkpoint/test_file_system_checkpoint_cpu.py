@@ -230,7 +230,7 @@ class TestDistributedStateDictSaveLoadWithSharedTensor(ShardedTensorTestBase):
     def world_size(self) -> int:
         return 2
 
-    @with_comms(init_rpc=False, backend="gloo")
+    @with_comms(backend="gloo")
     @parametrize("thread_count", _THREAD_COUNTS)
     def test_read_write_shard_tensor(self, thread_count) -> None:
         paths = [tempfile.mkdtemp()]
@@ -293,7 +293,7 @@ class TestDistributedReshardOnLoad(ShardedTensorTestBase):
         tensor.gather(out=res)
         return res
 
-    @with_comms(init_rpc=False, backend="gloo")
+    @with_comms(backend="gloo")
     @parametrize("thread_count", _THREAD_COUNTS)
     def test_load_with_different_shard_plan(self, thread_count) -> None:
         path = self.get_file_path()
@@ -404,7 +404,7 @@ class TestDistributedReshardOnLoad(ShardedTensorTestBase):
                         msg=lambda msg: f"{msg}\n{s0} vs {s1}",
                     )
 
-    @with_comms(init_rpc=False, backend="gloo")
+    @with_comms(backend="gloo")
     @parametrize("thread_count", _THREAD_COUNTS)
     def test_load_rowwise_to_colwise(self, thread_count) -> None:
         path = self.get_file_path()
@@ -450,7 +450,7 @@ class TestDistributedReshardOnLoad(ShardedTensorTestBase):
         if dist.get_rank() == 0:
             self.assertTrue(torch.allclose(store_tensor, load_tensor))
 
-    @with_comms(init_rpc=False, backend="gloo")
+    @with_comms(backend="gloo")
     @parametrize("thread_count", _THREAD_COUNTS)
     def test_save_load_bytes(self, thread_count) -> None:
         path = self.get_file_path()
@@ -468,7 +468,7 @@ class TestDistributedReshardOnLoad(ShardedTensorTestBase):
         self.assertEqual([1], state_dict_to_load["bytes0"])
         self.assertEqual("string", state_dict_to_load["bytes1"])
 
-    @with_comms(init_rpc=False, backend="gloo")
+    @with_comms(backend="gloo")
     @parametrize("thread_count", _THREAD_COUNTS)
     def test_switch_between_sharded_tensor_to_tensor(self, thread_count) -> None:
         path = self.get_file_path()

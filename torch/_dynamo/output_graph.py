@@ -4143,7 +4143,7 @@ class SubgraphTracer(fx.Tracer):
                     1
                 ]
                 if current_nn_module.__module__.startswith(
-                    ("torch.nn.modules", "torch.ao.")
+                    ("torch.nn.modules",)
                 ) and not current_nn_module.__module__.startswith(
                     "torch.nn.modules.container"
                 ):

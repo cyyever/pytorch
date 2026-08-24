@@ -1,12 +1,7 @@
 # mypy: allow-untyped-defs
-import ast
-import functools
 import inspect
-from textwrap import dedent
-from typing import Any, NamedTuple
+from typing import Any
 
-from torch._C import ErrorReport
-from torch._C._jit_tree_views import SourceRangeFactory
 
 
 def get_source_lines_and_file(
@@ -80,59 +75,3 @@ def normalize_source_lines(sourcelines: list[str]) -> list[str]:
     # Put it together again
     aligned_prefix.append(fn_def)
     return aligned_prefix + aligned_suffix
-
-
-# Thin wrapper around SourceRangeFactory to store extra metadata
-# about the function-to-be-compiled.
-class SourceContext(SourceRangeFactory):
-    def __init__(
-        self,
-        source,
-        filename,
-        file_lineno,
-        leading_whitespace_len,
-        uses_true_division=True,
-        funcname=None,
-    ):
-        super().__init__(source, filename, file_lineno, leading_whitespace_len)
-        self.uses_true_division = uses_true_division
-        self.filename = filename
-        self.funcname = funcname
-
-
-@functools.cache
-def make_source_context(*args):
-    return SourceContext(*args)
-
-
-def fake_range():
-    return SourceContext("", None, 0, 0).make_raw_range(0, 1)
-
-
-class ParsedDef(NamedTuple):
-    ast: ast.Module
-    ctx: SourceContext
-    source: str
-    filename: str | None
-    file_lineno: int
-
-
-def parse_def(fn):
-    sourcelines, file_lineno, filename = get_source_lines_and_file(
-        fn, ErrorReport.call_stack()
-    )
-    sourcelines = normalize_source_lines(sourcelines)
-    source = "".join(sourcelines)
-    dedent_src = dedent(source)
-    py_ast = ast.parse(dedent_src)
-    if len(py_ast.body) != 1 or not isinstance(py_ast.body[0], ast.FunctionDef):
-        raise RuntimeError(
-            f"Expected a single top-level function: {filename}:{file_lineno}"
-        )
-    leading_whitespace_len = len(source.split("\n", 1)[0]) - len(
-        dedent_src.split("\n", 1)[0]
-    )
-    ctx = make_source_context(
-        source, filename, file_lineno, leading_whitespace_len, True, fn.__name__
-    )
-    return ParsedDef(py_ast, ctx, source, filename, file_lineno)

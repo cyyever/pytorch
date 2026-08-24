@@ -8,7 +8,7 @@
 
 namespace torch::jit {
 
-Decl mergeTypesFromTypeComment(
+static Decl mergeTypesFromTypeComment(
     const Decl& decl,
     const Decl& type_annotation_decl,
     bool is_method) {

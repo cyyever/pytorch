@@ -150,7 +150,7 @@ struct dummy_int1_7_t {};
   _(c10::complex<c10::BFloat16>, BComplex32) /* 46 */
 
 // NB: despite its generic sounding name, the macros that don't take _AND
-// are mostly only used by tensorexpr
+// are mostly only used by the removed NNC fuser
 #define AT_FORALL_INT_TYPES(_) \
   _(uint8_t, Byte)             \
   _(int8_t, Char)              \

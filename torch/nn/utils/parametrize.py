@@ -406,7 +406,6 @@ def _inject_property(module: Module, tensor_name: str) -> None:
     if hasattr(module, tensor_name):
         raise AssertionError(f"Module already has an attribute named '{tensor_name}'")
 
-    @torch.jit.unused
     def get_cached_parametrization(parametrization) -> Tensor:
         global _cache
         key = (id(module), tensor_name)

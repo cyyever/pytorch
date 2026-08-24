@@ -28,7 +28,7 @@ This guide aims to provide a **comprehensive overview of the modern integration 
 * **Runtime**: Covers core components such as Event, Stream, Memory, Generator, Guard, Hooks, as well as the supporting C++ scaffolding.
 * **Operators**: Involve the minimum necessary set of operators, forward and backward operators, fallback operators, fallthroughs, STUBs, etc. in both C++ and Python implementations.
 * **Python Frontend**: Focuses on Python bindings for modules and device-agnostic APIs.
-* **High-level Modules**: Explores integration with major subsystems such as `AMP`, `Compiler`, `ONNX`, and `Distributed` and so on.
+* **High-level Modules**: Explores integration with major subsystems such as `AMP`, `Compiler`, and `Distributed` and so on.
 
 The goal is to help developers:
 

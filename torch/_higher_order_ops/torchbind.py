@@ -1,13 +1,10 @@
 # mypy: allow-untyped-defs
 import logging
-from contextlib import contextmanager
 
 import torch
 from torch._C import DispatchKey  # @manual
-from torch._functorch._aot_autograd.utils import KNOWN_TYPES
 from torch._higher_order_ops.utils import autograd_not_implemented
 from torch._library.fake_class_registry import (
-    _is_script_object,
     _ns_and_class_name,
     FakeScriptObject,
 )
@@ -63,37 +60,10 @@ call_torchbind = CallTorchBind()
 # ops that mutate torchbind object state.
 has_side_effect(call_torchbind)
 
-_orig_scriptmethod_call = torch.ScriptMethod.__call__
-
-
-def torchbind_method_redispatch(self, *args, **kwargs):
-    if _is_script_object(self.raw_owner):
-        return call_torchbind(self.raw_owner, self.name, *args, **kwargs)
-    return _orig_scriptmethod_call(self, *args, **kwargs)
-
-
-@contextmanager
-def enable_torchbind_tracing():
-    """Context manager that acts as a feature flag to enable torchbind tracing
-    behavior. Once torchbind tracing has been stabilized, we can remove this and
-    turn it always on.
-    """
-    try:
-        KNOWN_TYPES.append(torch.ScriptObject)
-        torch.ScriptMethod.__call__ = torchbind_method_redispatch  # type: ignore[method-assign]
-        yield
-    finally:
-        if KNOWN_TYPES.pop() is not torch.ScriptObject:
-            raise AssertionError(
-                "Someone else messed with KNOWN_TYPES during tracing, exploding."
-            )
-        torch.ScriptMethod.__call__ = _orig_scriptmethod_call  # type: ignore[method-assign]
-
-
 @call_torchbind.py_impl(DispatchKey.CompositeExplicitAutograd)
 def call_torchbind_impl(obj, method, *args, **kwargs):
     if isinstance(obj, torch.ScriptObject):
-        return _orig_scriptmethod_call(getattr(obj, method), *args, **kwargs)
+        return getattr(obj, method)(*args, **kwargs)
     elif isinstance(obj, FakeScriptObject):
         return getattr(obj.wrapped_obj, method)(*args, **kwargs)
     else:

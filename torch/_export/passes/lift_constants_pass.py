@@ -337,7 +337,7 @@ def lift_constants_pass(
                     else:
                         const_placeholder_node.meta["val"] = constant_val
                     input_spec_arg = TensorArgument(name=const_placeholder_node.name)
-                elif isinstance(constant_val, torch._C.ScriptObject):
+                elif isinstance(constant_val, torch.ScriptObject):
                     class_fqn = constant_val._type().qualified_name()  # type: ignore[attr-defined]
                     const_placeholder_node.meta["val"] = CustomObjArgument(
                         constant_fqn, class_fqn

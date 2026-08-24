@@ -1580,7 +1580,7 @@ class GraphModuleSerializer(metaclass=Final):
             )
         elif isinstance(arg, torch.layout):
             return Argument.create(as_layout=_TORCH_TO_SERIALIZE_LAYOUT[arg])
-        elif isinstance(arg, torch._C.ScriptObject):
+        elif isinstance(arg, torch.ScriptObject):
             if not (
                 arg._has_method("__getstate__")  # type: ignore[attr-defined]
                 and arg._has_method("__setstate__")  # type: ignore[attr-defined]

@@ -63,12 +63,10 @@ torch.package <package>
 profiler
 nn.init
 nn.attention
-onnx
 optim
 complex_numbers
 ddp_comm_hooks
 quantization
-rpc
 torch.random <random>
 masked
 torch.nested <nested>
@@ -82,9 +80,7 @@ torch.utils.checkpoint <checkpoint>
 torch.utils.cpp_extension <cpp_extension>
 torch.utils.data <data>
 torch.utils.deterministic <deterministic>
-torch.utils.jit <jit_utils>
 torch.utils.dlpack <dlpack>
-torch.utils.mobile_optimizer <mobile_optimizer>
 torch.utils.model_zoo <model_zoo>
 torch.utils.tensorboard <tensorboard>
 torch.utils.module_tracker <module_tracker>

@@ -1,8 +1,11 @@
 #pragma once
 
-#include <torch/csrc/jit/runtime/interpreter.h>
+#include <c10/core/Allocator.h>
+#include <c10/util/Exception.h>
+#include <torch/csrc/jit/frontend/source_range.h>
 #include <torch/csrc/profiler/unwind/unwind.h>
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>

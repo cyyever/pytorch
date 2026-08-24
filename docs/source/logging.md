@@ -70,7 +70,6 @@ component defaults to `logging.WARN` unless configured.
 * `fsdp`: The log level for `FullyShardedDataParallel` components.
 * `inductor`: The log level for the TorchInductor component.
 * `native_dsl`: The log level for the native DSL component.
-* `onnx`: The log level for the ONNX exporter component.
 * `pp`: The log level for distributed pipelining.
 * `torch`: The log level for the top-level `torch` component.
 * `your.custom.module`: The log level for an arbitrary unregistered module.
@@ -137,7 +136,6 @@ Internal test-only artifacts are omitted.
   optimization decisions. Off by default.
 * `not_implemented`: Prints log messages whenever a multi-dispatch returns
   `NotImplemented`.
-* `onnx_diagnostics`: Logs ONNX exporter diagnostics. Off by default.
 * `output_code`: Prints the code that Inductor generates, either Triton or C++.
   Off by default.
 * `overlap`: Logs detailed Inductor compute/communication overlap decisions.

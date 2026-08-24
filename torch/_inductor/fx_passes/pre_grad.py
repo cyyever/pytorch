@@ -426,10 +426,6 @@ def pre_grad_passes(
 
     stable_topological_sort(gm.graph)
 
-    from .quantization import quant_lift_up
-
-    quant_lift_up(gm)
-
     gm.graph.lint()
     gm.recompile()
 

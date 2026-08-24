@@ -255,7 +255,7 @@ class ConstantFolder(torch.fx.Interpreter):
         if isinstance(
             out,
             (
-                torch._C.ScriptObject,
+                torch.ScriptObject,
                 torch._library.fake_class_registry.FakeScriptObject,
             ),
         ):

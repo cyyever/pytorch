@@ -9,7 +9,7 @@ from torch._dynamo.utils import counters
 from torch.fx.experimental.symbolic_shapes import has_free_symbols, optimization_hint
 from torch.utils._ordered_set import OrderedSet
 
-from .. import ir, mkldnn_ir
+from .. import ir
 from ..lowering import lowerings as L
 from ..pattern_matcher import (
     Arg,
@@ -29,7 +29,6 @@ from .freezing_patterns import register_freezing_graph_pattern
 from .post_grad import register_lowering_pattern
 from .quantization import (
     _register_int8_woq_concat_linear_pattern,
-    _register_quantization_lowerings,
     _register_woq_lowerings,
 )
 
@@ -801,39 +800,6 @@ if torch._C._has_mkldnn:
             isinstance(_other.data, ir.BaseView)
             or len(_other.get_inputs_that_alias_output()) > 0
         )
-
-    def _qlinear_binary_can_be_inplace(_other):
-        if isinstance(_other.data, ir.BaseView):
-
-            def unwrap_buffer(data):
-                if isinstance(data, ir.StorageBox):
-                    return data.data
-                return data
-
-            data = _other.data.unwrap_view()
-            if isinstance(unwrap_buffer(data), ir.CppTemplateBuffer):
-                # It can be inplaced when _other is the 2D to 3D view of
-                # a CppTemplateBuffer because if there is a view of CppTemplateBuffer,
-                # CppTemplateBuffer will not be used directly but the view.
-                return True
-            else:
-                # The case of QLinearPointwiseBinaryPT2E(sum) -> QLinearPointwiseBinaryPT2E(sum)
-                # is similar to CppTemplateBuffer above.
-                # The output of previous QLinearPointwiseBinaryPT2E is
-                # the input x2 of current QLinearPointwiseBinaryPT2E.
-                # Use V.graph.operations to check if _other is a view of the output
-                # of previous QLinearPointwiseBinaryPT2E (the inputs[6]).
-                for op in V.graph.operations:
-                    if (
-                        isinstance(op, mkldnn_ir.QLinearPointwiseBinaryPT2E)
-                        and unwrap_buffer(data) == op.inputs[6]  # type: ignore[attr-defined]
-                    ):
-                        return True
-            return False
-        elif len(_other.get_inputs_that_alias_output()) > 0:
-            return False
-        else:
-            return True
 
     def _register_binary_unary_maybe_inplace_fusion_lowering(
         pattern,
@@ -1625,8 +1591,6 @@ if torch._C._has_mkldnn:
             _register_inplace_fusion()
             _register_binary_unary_fusion()
             _register_binary_fusion()
-            _register_quantization_lowerings()
-
         _register_woq_lowerings()
 
     @functools.cache

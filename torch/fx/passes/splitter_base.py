@@ -468,8 +468,7 @@ def generate_inputs_for_submodules(
 
     for name, mod in model.named_modules():
         if name in target_submodules:
-            if not isinstance(mod, torch.jit.ScriptModule):
-                handles.append(mod.register_forward_pre_hook(pre_forward))
+            handles.append(mod.register_forward_pre_hook(pre_forward))
 
     def clean_up_handles() -> None:
         for h in handles:

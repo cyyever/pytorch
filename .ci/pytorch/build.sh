@@ -130,12 +130,6 @@ fi
 
 # Use special scripts for Android builds
 
-if [[ "$BUILD_ENVIRONMENT" == *vulkan* ]]; then
-  export USE_VULKAN=1
-  # shellcheck disable=SC1091
-  source /var/lib/jenkins/vulkansdk/setup-env.sh
-fi
-
 if [[ "$BUILD_ENVIRONMENT" == *rocm* ]]; then
   # hcc used to run out of memory, silently exiting without stopping
   # the build process, leaving undefined symbols in the shared lib,
@@ -228,10 +222,6 @@ fi
 
 if [[ "${BUILD_ENVIRONMENT}" == *no-ops* ]]; then
   export USE_PER_OPERATOR_HEADERS=0
-fi
-
-if [[ "${BUILD_ENVIRONMENT}" != *cuda* && "${BUILD_ENVIRONMENT}" != *-tsan* ]]; then
-  export BUILD_STATIC_RUNTIME_BENCHMARK=ON
 fi
 
 if [[ "$BUILD_ENVIRONMENT" == *-full-debug* ]]; then
@@ -412,17 +402,6 @@ if [[ "$BUILD_ENVIRONMENT" != *libtorch* ]]; then
     popd
     assert_git_not_dirty
 
-    # Build custom backend tests.
-    CUSTOM_BACKEND_BUILD="${CUSTOM_TEST_ARTIFACT_BUILD_DIR}/custom-backend-build"
-    CUSTOM_BACKEND_TEST="$PWD/test/custom_backend"
-    python --version
-    mkdir -p "$CUSTOM_BACKEND_BUILD"
-    pushd "$CUSTOM_BACKEND_BUILD"
-    cmake "$CUSTOM_BACKEND_TEST" -DCMAKE_PREFIX_PATH="$SITE_PACKAGES" -DPython_EXECUTABLE="$(which python)" \
-          -DCMAKE_MODULE_PATH="$CUSTOM_TEST_MODULE_PATH" -DUSE_ROCM="$CUSTOM_TEST_USE_ROCM"
-    make VERBOSE=1
-    popd
-    assert_git_not_dirty
   fi
 else
   # Test no-Python build

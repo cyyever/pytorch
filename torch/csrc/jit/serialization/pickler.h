@@ -7,6 +7,7 @@
 
 #include <ATen/Utils.h>
 #include <ATen/core/ivalue.h>
+#include <ATen/core/stack.h>
 #include <ATen/core/jit_type.h>
 #include <ATen/core/qualified_name.h>
 #include <c10/util/ArrayRef.h>
@@ -50,14 +51,10 @@ class TORCH_API Pickler {
 
   void pushIValue(const IValue& ivalue);
 
-  void startTuple();
-  void endTuple();
-
   const std::vector<at::Tensor>& tensorData() {
     return tensor_data_;
   }
 
-  void pushEmptyDict();
   void pushDict(const IValue& ivalue);
   void pushInt(int64_t value);
   void pushLong(const std::string& data);
@@ -79,9 +76,6 @@ class TORCH_API Pickler {
   void pushTuple(const IValue& ivalue);
   void pushString(const std::string& string);
   void pushDevice(const IValue& ivalue);
-#ifdef USE_DISTRIBUTED
-  void pushRRef(const IValue& ivalue);
-#endif
   // unmemoized version
   void pushStringImpl(const std::string& string);
   void pushStorageOfTensor(const at::Tensor& tensor);

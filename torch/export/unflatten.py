@@ -477,7 +477,7 @@ class UnflattenedModule(_SubmoduleBase, torch.nn.Module):
                 )
 
         # use id map so we don't double-clone aliased constants
-        id_to_const: dict[int | _TensorID, torch.Tensor | torch._C.ScriptObject] = {}
+        id_to_const: dict[int | _TensorID, torch.Tensor | torch.ScriptObject] = {}
         for fqn, constant in export_module.constants.items():
             if _id(constant) not in id_to_const:
                 if isinstance(constant, torch.Tensor):

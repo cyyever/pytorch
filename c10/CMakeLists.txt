@@ -8,9 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #
 # Note that the C10 library should maintain minimal dependencies - especially,
 # it should not depend on any library that is implementation specific or
-# backend specific. It should in particular NOT be dependent on any generated
-# protobuf header files, because protobuf header files will transitively force
-# one to link against a specific protobuf version.
+# backend specific.
 
 if(BUILD_LIBTORCHLESS)
   find_library(C10_LIB c10 PATHS $ENV{LIBTORCH_LIB_PATH} NO_DEFAULT_PATH)

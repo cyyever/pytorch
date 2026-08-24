@@ -75,9 +75,7 @@ TESTS = discover_tests(
         "ao",
         "custom_backend",
         "fx",  # executed by test_fx.py
-        "jit",  # executed by test_jit.py
         "mobile",
-        "onnx_caffe2",
         "package",  # executed by test_package.py
         "quantization",  # executed by test_quantization.py
         "autograd",  # executed by test_autograd.py
@@ -93,7 +91,6 @@ TESTS = discover_tests(
         "test_jit_string",
         "test_kernel_launch_checks",
         "test_nnapi",
-        "test_static_runtime",
         "test_throughput_benchmark",
         "distributed/bin/test_script",
         "distributed/elastic/multiprocessing/bin/test_script",
@@ -104,13 +101,8 @@ TESTS = discover_tests(
         "distributed/test_c10d_spawn",
         "distributions/test_transforms",
         "distributions/test_utils",
-        "lazy/test_meta_kernel",
-        "lazy/test_extract_compiled_graph",
         "test/inductor/test_aot_inductor_utils",
         "inductor/test_aoti_cross_compile_windows",
-        "onnx/test_onnxscript_no_runtime",
-        "onnx/test_pytorch_onnx_onnxruntime_cuda",
-        "onnx/test_models",
         # These are not C++ tests
         f"{CPP_TEST_PREFIX}/CMakeFiles",
         f"{CPP_TEST_PREFIX}/CTestTestfile.cmake",
@@ -119,10 +111,7 @@ TESTS = discover_tests(
         f"{CPP_TEST_PREFIX}/c10_intrusive_ptr_benchmark",
         f"{CPP_TEST_PREFIX}/example_allreduce",
         f"{CPP_TEST_PREFIX}/parallel_benchmark",
-        f"{CPP_TEST_PREFIX}/protoc",
-        f"{CPP_TEST_PREFIX}/protoc-3.13.0.0",
         f"{CPP_TEST_PREFIX}/torch_shm_manager",
-        f"{CPP_TEST_PREFIX}/tutorial_tensorexpr",
     ],
     extra_tests=[
         "test_cpp_extensions_aot_ninja",

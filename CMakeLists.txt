@@ -242,53 +242,51 @@ if(APPLE)
                        CLANG_VERSION_STRING ${clang_full_version_string})
   message(STATUS "CLANG_VERSION_STRING:         " ${CLANG_VERSION_STRING})
 
-  if(NOT IOS)
-    # Determine if we can link against MPSGraph
-    set(MPS_FOUND OFF)
+  # Determine if we can link against MPSGraph
+  set(MPS_FOUND OFF)
+  execute_process(
+    COMMAND bash -c "xcrun --sdk macosx --show-sdk-version"
+    RESULT_VARIABLE _exit_code
+    OUTPUT_VARIABLE _macosx_sdk_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(_exit_code EQUAL 0)
+    set(_MPS_supported_os_version OFF)
+    if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
+      set(_MPS_supported_os_version ON)
+    endif()
+    message(
+      STATUS
+        "sdk version: ${_macosx_sdk_version}, mps supported: ${_MPS_supported_os_version}"
+    )
     execute_process(
-      COMMAND bash -c "xcrun --sdk macosx --show-sdk-version"
-      RESULT_VARIABLE _exit_code
-      OUTPUT_VARIABLE _macosx_sdk_version
+      COMMAND bash -c "xcrun --sdk macosx --show-sdk-path"
+      OUTPUT_VARIABLE _macosx_sdk_path
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(_exit_code EQUAL 0)
-      set(_MPS_supported_os_version OFF)
-      if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
-        set(_MPS_supported_os_version ON)
-      endif()
-      message(
-        STATUS
-          "sdk version: ${_macosx_sdk_version}, mps supported: ${_MPS_supported_os_version}"
-      )
-      execute_process(
-        COMMAND bash -c "xcrun --sdk macosx --show-sdk-path"
-        OUTPUT_VARIABLE _macosx_sdk_path
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-      set(_SDK_SEARCH_PATH "${_macosx_sdk_path}/System/Library/Frameworks/")
-      set(_FRAMEWORK_SEARCH_PATH "/System/Library/Frameworks/")
+    set(_SDK_SEARCH_PATH "${_macosx_sdk_path}/System/Library/Frameworks/")
+    set(_FRAMEWORK_SEARCH_PATH "/System/Library/Frameworks/")
 
-      find_library(
-        _MPS_fwrk_path_
-        NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
-        PATHS ${_FRAMEWORK_SEARCH_PATH}
-        NO_DEFAULT_PATH)
-      find_library(
-        _MPS_sdk_path_
-        NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
-        PATHS ${_SDK_SEARCH_PATH}
-        NO_DEFAULT_PATH)
+    find_library(
+      _MPS_fwrk_path_
+      NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
+      PATHS ${_FRAMEWORK_SEARCH_PATH}
+      NO_DEFAULT_PATH)
+    find_library(
+      _MPS_sdk_path_
+      NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
+      PATHS ${_SDK_SEARCH_PATH}
+      NO_DEFAULT_PATH)
 
-      if(_MPS_supported_os_version
-         AND _MPS_fwrk_path_
-         AND _MPS_sdk_path_)
-        set(MPS_FOUND ON)
-        message(STATUS "MPSGraph framework found")
-      else()
-        message(STATUS "MPSGraph framework not found")
-      endif()
+    if(_MPS_supported_os_version
+       AND _MPS_fwrk_path_
+       AND _MPS_sdk_path_)
+      set(MPS_FOUND ON)
+      message(STATUS "MPSGraph framework found")
     else()
-      message(STATUS "MPS: unable to get MacOS sdk version")
       message(STATUS "MPSGraph framework not found")
     endif()
+  else()
+    message(STATUS "MPS: unable to get MacOS sdk version")
+    message(STATUS "MPSGraph framework not found")
   endif()
 endif()
 
@@ -330,21 +328,13 @@ endif()
 include(CMakeDependentOption)
 option(ATEN_NO_TEST "Do not build ATen test binaries" OFF)
 option(BUILD_BINARY "Build C++ binaries" OFF)
-option(BUILD_CUSTOM_PROTOBUF
-       "Build and use Caffe2's own protobuf under third_party" ON)
 option(BUILD_PYTHON "Build Python binaries" ON)
-option(BUILD_LITE_INTERPRETER "Master flag to build Lite Interpreter" OFF)
 option(BUILD_SHARED_LIBS "Build libcaffe2.so" ON)
-cmake_dependent_option(
-  CAFFE2_LINK_LOCAL_PROTOBUF "If set, build protobuf inside libcaffe2.so." ON
-  "BUILD_SHARED_LIBS AND BUILD_CUSTOM_PROTOBUF" OFF)
 cmake_dependent_option(
   CAFFE2_USE_MSVC_STATIC_RUNTIME "Using MSVC static runtime libraries" ON
   "NOT BUILD_SHARED_LIBS" OFF)
 option(BUILD_TEST "Build C++ test binaries (need gtest and gbenchmark)" ON)
 option(BUILD_AOT_INDUCTOR_TEST "Build C++ test binaries for aot-inductor" OFF)
-option(BUILD_STATIC_RUNTIME_BENCHMARK
-       "Build C++ binaries for static runtime benchmarks (need gbenchmark)" OFF)
 option(
   BUILD_MOBILE_BENCHMARK
   "Build C++ test binaries for mobile (ARM) targets(need gtest and gbenchmark)"
@@ -353,9 +343,6 @@ option(
   BUILD_MOBILE_TEST
   "Build C++ test binaries for mobile (ARM) targets(need gtest and gbenchmark)"
   OFF)
-option(BUILD_JNI "Build JNI bindings" OFF)
-option(BUILD_MOBILE_AUTOGRAD
-       "Build autograd function in mobile build (in development)" OFF)
 cmake_dependent_option(INSTALL_TEST "Install test binaries if BUILD_TEST is on"
                        ON "BUILD_TEST" OFF)
 option(USE_RELATIVE_PATHS "Use relative paths in generated files for ccache friendliness" OFF)
@@ -407,10 +394,7 @@ option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_GFLAGS "Use GFLAGS" OFF)
 option(USE_GLOG "Use GLOG" OFF)
-option(USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(USE_MAGMA "Use MAGMA" ON)
-option(USE_PYTORCH_METAL "Use Metal for PyTorch iOS build" OFF)
-option(USE_PYTORCH_METAL_EXPORT "Export Metal models on MacOSX desktop" OFF)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
 cmake_dependent_option(USE_MPS "Use MPS for macOS build" ON "MPS_FOUND" OFF)
 option(USE_DISTRIBUTED "Use distributed" ON)
@@ -427,7 +411,6 @@ cmake_dependent_option(USE_NCCL_EP "Build NCCL EP contrib library" OFF
                        "USE_NCCL;USE_CUDA" OFF)
 cmake_dependent_option(USE_NVSHMEM "Use NVSHMEM" ON
                        "USE_DISTRIBUTED;USE_CUDA OR USE_ROCM;UNIX;NOT APPLE" OFF)
-option(USE_NNPACK "Use NNPACK" ON)
 cmake_dependent_option(USE_NUMA "Use NUMA. Only available on Linux." ON "LINUX"
                        OFF)
 cmake_dependent_option(USE_NVRTC "Use NVRTC. Only available if USE_CUDA is on."
@@ -437,7 +420,6 @@ option(USE_OPENMP "Use OpenMP for parallel code" ON)
 option(USE_PRECOMPILED_HEADERS "Use pre-compiled headers to accelerate build."
        OFF)
 
-option(USE_PYTORCH_QNNPACK "Use ATen/QNNPACK (quantized 8-bit operators)" ON)
 option(USE_EIGEN_SPARSE "Use Eigen Sparse Matrices" OFF)
 option(USE_SYSTEM_EIGEN_INSTALL
     "Use system Eigen instead of the one under third_party" OFF)
@@ -445,20 +427,6 @@ cmake_dependent_option(
     USE_VALGRIND "Use Valgrind. Only available on Linux." ON
     "LINUX" OFF)
 
-if(NOT DEFINED USE_VULKAN)
-  cmake_dependent_option(USE_VULKAN "Use Vulkan GPU backend" ON "ANDROID" OFF)
-endif()
-
-option(USE_SOURCE_DEBUG_ON_MOBILE "Enable" ON)
-option(USE_LITE_INTERPRETER_PROFILER "Enable" ON)
-cmake_dependent_option(
-  USE_LITE_AOTI "Include AOTI sources" OFF
-  "BUILD_LITE_INTERPRETER" OFF)
-option(USE_VULKAN_FP16_INFERENCE "Vulkan - Use fp16 inference" OFF)
-option(USE_VULKAN_RELAXED_PRECISION
-       "Vulkan - Use relaxed precision math in the kernels (mediump)" OFF)
-# option USE_XNNPACK: try to enable xnnpack by default.
-option(USE_XNNPACK "Use XNNPACK" OFF)
 option(USE_ROCM_KERNEL_ASSERT "Use Kernel Assert for ROCm" OFF)
 # Ensure that an ITT build is the default for x86 CPUs
 cmake_dependent_option(USE_ITT "Use Intel(R) VTune Profiler ITT functionality"
@@ -486,10 +454,10 @@ cmake_dependent_option(
     "USE_DISTRIBUTED" OFF)
 cmake_dependent_option(
   USE_GLOO_WITH_OPENSSL "Use Gloo with OpenSSL. Only available if USE_GLOO is on." OFF
-    "USE_GLOO AND LINUX AND NOT INTERN_BUILD_MOBILE" OFF)
+    "USE_GLOO AND LINUX" OFF)
 cmake_dependent_option(
   USE_GLOO_IBVERBS "Use Gloo with ibverbs backend. Only available if USE_GLOO is on." OFF
-    "USE_GLOO AND LINUX AND NOT INTERN_BUILD_MOBILE" OFF)
+    "USE_GLOO AND LINUX" OFF)
 cmake_dependent_option(
     USE_C10D_GLOO "USE C10D GLOO" ON "USE_DISTRIBUTED;USE_GLOO" OFF)
 cmake_dependent_option(
@@ -498,9 +466,6 @@ cmake_dependent_option(
     USE_C10D_XCCL "USE C10D XCCL" ON "USE_DISTRIBUTED;USE_XCCL" OFF)
 cmake_dependent_option(
     USE_C10D_MPI "USE C10D MPI" ON "USE_DISTRIBUTED;USE_MPI" OFF)
-cmake_dependent_option(
-    USE_TENSORPIPE "Use TensorPipe. Only available if USE_DISTRIBUTED is on." ON
-    "USE_DISTRIBUTED AND NOT WIN32" OFF)
 option(ONNX_ML "Enable traditional ONNX ML API." ON)
 option(HAVE_SOVERSION "Whether to add SOVERSION to the shared objects" OFF)
 option(BUILD_LIBTORCH_CPU_WITH_DEBUG
@@ -512,7 +477,6 @@ option(
   DEBUG_CUDA
   "When compiling DEBUG, also attempt to compile CUDA with debug flags (may cause nvcc to OOM)"
   OFF)
-option(USE_COREML_DELEGATE "Use the CoreML backend through delegate APIs" OFF)
 option(USE_PER_OPERATOR_HEADERS
        "Whether ATen should generate separate headers for each operator" ON)
 cmake_dependent_option(
@@ -538,8 +502,6 @@ if(USE_CMAKE_INSTRUMENTATION)
     CALLBACK "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/build_trace_summary.py" --root "${CMAKE_CURRENT_SOURCE_DIR}" --index
   )
 endif()
-cmake_dependent_option(USE_KLEIDIAI "Use KleidiAI for the ARM CPU & AARCH64 architecture." ON
-                        "CPU_AARCH64" OFF)
 # prioritized text linker, ON by default for AArch64+Linux, option visible to all AArch64, x86 and ppc64le.
 set(USE_PRIORITIZED_TEXT_DEFAULT OFF)
 if(LINUX AND CPU_AARCH64)
@@ -610,15 +572,9 @@ if(USE_CCACHE)
   endif()
 endif()
 
-# Since TensorPipe does not support Windows, set it to OFF when WIN32 detected
 # On Windows platform, if user does not install libuv in build conda env and
 # does not set libuv_ROOT environment variable. Set USE_DISTRIBUTED to OFF.
 if(WIN32)
-  set(USE_TENSORPIPE OFF)
-  message(WARNING "TensorPipe cannot be used on Windows. Set it to OFF")
-  set(USE_KLEIDIAI OFF)
-  message(WARNING "KleidiAI cannot be used on Windows. Set it to OFF")
-
   if(USE_DISTRIBUTED AND NOT DEFINED ENV{libuv_ROOT})
     find_library(
       libuv_tmp_LIBRARY
@@ -655,29 +611,16 @@ option(USE_SYSTEM_LIBS "Use all available system-provided libraries." OFF)
 option(USE_SYSTEM_CPUINFO "Use system-provided cpuinfo." OFF)
 option(USE_SYSTEM_SLEEF "Use system-provided sleef." OFF)
 option(USE_SYSTEM_GLOO "Use system-provided gloo." OFF)
-option(USE_SYSTEM_FP16 "Use system-provided fp16." OFF)
 option(USE_SYSTEM_PYBIND11 "Use system-provided PyBind11." OFF)
-option(USE_SYSTEM_PTHREADPOOL "Use system-provided pthreadpool." OFF)
-option(USE_SYSTEM_PSIMD "Use system-provided psimd." OFF)
-option(USE_SYSTEM_FXDIV "Use system-provided fxdiv." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
-option(USE_SYSTEM_ONNX "Use system-provided onnx." OFF)
-option(USE_SYSTEM_XNNPACK "Use system-provided xnnpack." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
 option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
 if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_CPUINFO ON)
   set(USE_SYSTEM_SLEEF ON)
   set(USE_SYSTEM_GLOO ON)
-  set(BUILD_CUSTOM_PROTOBUF OFF)
   set(USE_SYSTEM_EIGEN_INSTALL ON)
-  set(USE_SYSTEM_FP16 ON)
-  set(USE_SYSTEM_PTHREADPOOL ON)
-  set(USE_SYSTEM_PSIMD ON)
-  set(USE_SYSTEM_FXDIV ON)
   set(USE_SYSTEM_BENCHMARK ON)
-  set(USE_SYSTEM_ONNX ON)
-  set(USE_SYSTEM_XNNPACK ON)
   set(USE_SYSTEM_PYBIND11 ON)
   if(USE_NCCL)
     set(USE_SYSTEM_NCCL ON)
@@ -861,50 +804,6 @@ if(LINUX AND CPU_AARCH64)
   add_link_options_if_supported("--stub-group-size=0x2000000")
 endif()
 
-# Set INTERN_BUILD_MOBILE for all mobile builds. Components that are not
-# applicable to mobile are disabled by this variable. Setting
-# `BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN` environment variable can force it
-# to do mobile build with host toolchain - which is useful for testing purpose.
-if(ANDROID
-   OR IOS
-   OR DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
-  set(INTERN_BUILD_MOBILE ON)
-  message(WARNING "INTERN_BUILD_MOBILE is on, disabling BUILD_LAZY_TS_BACKEND")
-  set(BUILD_LAZY_TS_BACKEND OFF)
-
-  set(USE_KLEIDIAI OFF)
-  message(WARNING "KleidiAI cannot be used on Mobile builds. Set it to OFF")
-
-  # Set -ffunction-sections and -fdata-sections so that each method has its own
-  # text section. This allows the linker to remove unused section when the flag
-  # -Wl,-gc-sections is provided at link time.
-  string(APPEND CMAKE_CXX_FLAGS " -ffunction-sections")
-  string(APPEND CMAKE_C_FLAGS " -ffunction-sections")
-  string(APPEND CMAKE_CXX_FLAGS " -fdata-sections")
-  string(APPEND CMAKE_C_FLAGS " -fdata-sections")
-
-  # Please note that the use of the following flags is required when linking
-  # against libtorch_cpu.a for mobile builds. -Wl,--whole-archive -ltorch_cpu
-  # -Wl,--no-whole-archive
-  #
-  # This allows global constructors to be included and run. Global constructors
-  # are used for operator/kernel registration with the PyTorch Dispatcher.
-
-  if(DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
-    # C10_MOBILE is derived from Android/iOS toolchain macros in
-    # c10/macros/Macros.h, so it needs to be explicitly set here.
-    string(APPEND CMAKE_CXX_FLAGS " -DC10_MOBILE")
-  endif()
-
-  if(DEFINED ENV{PYTORCH_MOBILE_TRIM_DISPATCH_KEY_SET})
-    # If PYTORCH_MOBILE_TRIM_DISPATCH_KEY_SET is defined (env var), then define
-    # C10_MOBILE_TRIM_DISPATCH_KEYS, which limits the number of dispatch keys in
-    # OperatorEntry::dispatchTable_ to reduce peak memory during library
-    # initialization.
-    string(APPEND CMAKE_CXX_FLAGS " -DC10_MOBILE_TRIM_DISPATCH_KEYS")
-  endif()
-endif()
-
 # INTERN_BUILD_ATEN_OPS is used to control whether to build ATen/TH operators.
 set(INTERN_BUILD_ATEN_OPS ON)
 
@@ -962,33 +861,6 @@ if(USE_LLVM_BOLT)
        DESTINATION "${LLVM_BOLT_PROFILES_DIR}")
 endif()
 
-# Build libtorch mobile library, which contains ATen/TH ops and native support
-# for TorchScript model, but doesn't contain not-yet-unified caffe2 ops;
-if(INTERN_BUILD_MOBILE)
-  if(NOT BUILD_SHARED_LIBS AND NOT "${SELECTED_OP_LIST}" STREQUAL "")
-    string(APPEND CMAKE_CXX_FLAGS " -DNO_EXPORT")
-  endif()
-  if(BUILD_MOBILE_AUTOGRAD)
-    set(INTERN_DISABLE_AUTOGRAD OFF)
-  else()
-    set(INTERN_DISABLE_AUTOGRAD ON)
-  endif()
-  set(BUILD_PYTHON OFF)
-  set(BUILD_FUNCTORCH OFF)
-  set(USE_DISTRIBUTED OFF)
-  set(NO_API ON)
-  set(USE_FBGEMM OFF)
-  set(INTERN_DISABLE_ONNX ON)
-  if(USE_BLAS)
-    set(INTERN_USE_EIGEN_BLAS ON)
-  else()
-    set(INTERN_USE_EIGEN_BLAS OFF)
-  endif()
-  # Disable developing mobile interpreter for actual mobile build. Enable it
-  # elsewhere to capture build error.
-  set(INTERN_DISABLE_MOBILE_INTERP ON)
-endif()
-
 # ---[ Version numbers for generated libraries
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS version.txt)
 file(READ version.txt TORCH_DEFAULT_VERSION)
@@ -1039,37 +911,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # The below means we are cross compiling for arm64 or x86_64 on MacOSX
-if(NOT IOS
-   AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin"
    AND CMAKE_OSX_ARCHITECTURES MATCHES "^(x86_64|arm64)$")
   set(CROSS_COMPILING_MACOSX TRUE)
-  # We need to compile a universal protoc to not fail protobuf build We set
-  # CMAKE_TRY_COMPILE_TARGET_TYPE to STATIC_LIBRARY (vs executable) to succeed
-  # the cmake compiler check for cross-compiling
-  set(protoc_build_command
-      "./scripts/build_host_protoc.sh --other-flags -DCMAKE_OSX_ARCHITECTURES=\"x86_64;arm64\" -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY -DCMAKE_C_COMPILER_WORKS=1 -DCMAKE_CXX_COMPILER_WORKS=1 -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
-  )
-  # We write to a temp scriptfile because CMake COMMAND dislikes double quotes
-  # in commands
-  file(WRITE ${PROJECT_SOURCE_DIR}/tmp_protoc_script.sh
-       "#!/bin/bash\n${protoc_build_command}")
-  file(
-    COPY ${PROJECT_SOURCE_DIR}/tmp_protoc_script.sh
-    DESTINATION ${PROJECT_SOURCE_DIR}/scripts/
-    FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
-  execute_process(
-    COMMAND ./scripts/tmp_protoc_script.sh
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    RESULT_VARIABLE BUILD_HOST_PROTOC_RESULT)
-  file(REMOVE ${PROJECT_SOURCE_DIR}/tmp_protoc_script.sh
-       ${PROJECT_SOURCE_DIR}/scripts/tmp_protoc_script.sh)
-  if(NOT BUILD_HOST_PROTOC_RESULT EQUAL "0")
-    message(FATAL_ERROR "Could not compile universal protoc.")
-  endif()
-  set(PROTOBUF_PROTOC_EXECUTABLE
-      "${PROJECT_SOURCE_DIR}/build_host_protoc/bin/protoc")
-  set(CAFFE2_CUSTOM_PROTOC_EXECUTABLE
-      "${PROJECT_SOURCE_DIR}/build_host_protoc/bin/protoc")
 endif()
 
 # ---[ Misc checks to cope with various compiler modes
@@ -1186,10 +1030,6 @@ if(USE_MSLK)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_MSLK")
 endif()
 
-if(USE_PYTORCH_QNNPACK)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_QNNPACK")
-endif()
-
 # Enable sleef on macOS with Apple silicon by default
 if((${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64"))
   message(STATUS "Running on macOS with Apple silicon")
@@ -1204,51 +1044,8 @@ if((NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
 endif()
 
-
-if(USE_XNNPACK)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_XNNPACK")
-endif()
-
-if(USE_VULKAN)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN")
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_API")
-
-  if(USE_VULKAN_FP16_INFERENCE)
-    string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_FP16_INFERENCE")
-  endif()
-
-  if(USE_VULKAN_RELAXED_PRECISION)
-    string(APPEND CMAKE_CXX_FLAGS " -DUSE_VULKAN_RELAXED_PRECISION")
-  endif()
-
-endif()
-
-if(BUILD_LITE_INTERPRETER)
-  string(APPEND CMAKE_CXX_FLAGS " -DBUILD_LITE_INTERPRETER")
-endif()
-
 if(TRACING_BASED)
   string(APPEND CMAKE_CXX_FLAGS " -DTRACING_BASED")
-endif()
-
-if(USE_PYTORCH_METAL)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL")
-endif()
-
-if(USE_PYTORCH_METAL_EXPORT)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL_EXPORT")
-endif()
-
-if(USE_SOURCE_DEBUG_ON_MOBILE)
-  string(APPEND CMAKE_CXX_FLAGS " -DSYMBOLICATE_MOBILE_DEBUG_HANDLE")
-endif()
-
-if(BUILD_LITE_INTERPRETER AND USE_LITE_INTERPRETER_PROFILER)
-  string(APPEND CMAKE_CXX_FLAGS " -DEDGE_PROFILER_USE_KINETO")
-endif()
-
-if(USE_COREML_DELEGATE)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_COREML_DELEGATE")
 endif()
 
 # ---[ Allowlist file if allowlist is specified
@@ -1446,16 +1243,6 @@ endif()
 
 append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
 
-if(ANDROID AND (NOT ANDROID_DEBUG_SYMBOLS))
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    string(APPEND CMAKE_CXX_FLAGS " -s")
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    string(APPEND CMAKE_CXX_FLAGS " -g0")
-  else()
-    string(APPEND CMAKE_EXE_LINKER_FLAGS " -s")
-  endif()
-endif()
-
 if(NOT APPLE AND UNIX)
   list(APPEND Caffe2_DEPENDENCY_LIBS dl)
 endif()
@@ -1505,11 +1292,9 @@ endif()
 # ---[ Make configuration files for cmake to allow dependent libraries easier
 # access to Caffe2.
 
-if((NOT USE_GLOG)
-   OR(NOT USE_GFLAGS)
-   OR BUILD_CUSTOM_PROTOBUF)
+if((NOT USE_GLOG) OR (NOT USE_GFLAGS))
   message(WARNING "Generated cmake files are only fully tested if one builds "
-                  "with system glog, gflags, and protobuf. Other settings may "
+                  "with system glog and gflags. Other settings may "
                   "generate files that are not well tested.")
 endif()
 
@@ -1534,7 +1319,6 @@ if(BUILD_SHARED_LIBS)
           ${PROJECT_SOURCE_DIR}/cmake/public/gflags.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkl.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkldnn.cmake
-          ${PROJECT_SOURCE_DIR}/cmake/public/protobuf.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/utils.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/LoadHIP.cmake
     DESTINATION share/cmake/Caffe2/public
@@ -1577,16 +1361,6 @@ endif()
 # built in the previous Modules section above).
 if(BUILD_BINARY)
   add_subdirectory(binaries)
-endif()
-
-# ---[ JNI
-if(BUILD_JNI)
-  if(NOT MSVC)
-    string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-variable")
-  endif()
-  set(BUILD_LIBTORCH_WITH_JNI 1)
-  set(FBJNI_SKIP_TESTS 1)
-  add_subdirectory(android/pytorch_android)
 endif()
 
 # Parse custom debug info

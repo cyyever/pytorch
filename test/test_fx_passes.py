@@ -19,8 +19,8 @@ from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
     parametrize,
     run_tests,
+    TestCase as CommonTestCase,
 )
-from torch.testing._internal.jit_utils import JitTestCase
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -301,7 +301,7 @@ class MockOperatorSupport(OperatorSupport):
                                 _nested_tuple_producer})
 
 @instantiate_parametrized_tests
-class TestFXGraphPasses(JitTestCase):
+class TestFXGraphPasses(CommonTestCase):
     hw_classification = HardwareClassification.GENERIC
 
     @parametrize("fn, expected_partition, bookend_non_compute_pass", [
@@ -1148,7 +1148,7 @@ class NoAnchorFound:
     ]
 
 @instantiate_parametrized_tests
-class TestFXMatcherUtils(JitTestCase):
+class TestFXMatcherUtils(CommonTestCase):
     hw_classification = HardwareClassification.GENERIC
 
     @parametrize("test_model", [

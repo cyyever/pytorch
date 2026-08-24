@@ -18,7 +18,7 @@ from torch.fx.operator_schemas import normalize_function
 from torch._subclasses.schema_check_mode import SchemaCheckMode
 from torch.utils._python_dispatch import TorchDispatchMode
 from torch.testing._internal.common_methods_invocations import op_db
-from torch.testing._internal.jit_utils import JitTestCase
+from torch.testing._internal.common_utils import TestCase
 from torch.testing._internal.common_device_type import ops, OpDTypes, instantiate_device_type_tests
 pytorch_test_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(pytorch_test_dir)
@@ -102,7 +102,7 @@ class IncorrectAliasTensor(torch.Tensor):
         return tree_map(wrap, out)
 
 # Tests various schema checking functionalities.
-class TestSchemaCheck(JitTestCase):
+class TestSchemaCheck(TestCase):
     hw_classification = HardwareClassification.GENERIC
 
     def setUp(self):
@@ -503,7 +503,7 @@ class TestSchemaCheck(JitTestCase):
         with SchemaInfoBindTestMode(self) as schemaInfoCheck:
             x.add(x)
 
-class TestSchemaCheckModeOpInfo(JitTestCase):
+class TestSchemaCheckModeOpInfo(TestCase):
     hw_classification = HardwareClassification.ACCELERATOR
 
     @ops(op_db, dtypes=OpDTypes.supported)

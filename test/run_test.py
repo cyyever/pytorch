@@ -161,11 +161,6 @@ class TestChoices(list):
 FSDP_TEST = [test for test in TESTS if test.startswith("distributed/fsdp")]
 
 WINDOWS_BLOCKLIST = [
-    "distributed/nn/jit/test_instantiator",
-    "distributed/rpc/test_faulty_agent",
-    "distributed/rpc/test_tensorpipe_agent",
-    "distributed/rpc/test_share_memory",
-    "distributed/rpc/cuda/test_tensorpipe_agent",
     "distributed/pipeline/sync/skip/test_api",
     "distributed/pipeline/sync/skip/test_gpipe",
     "distributed/pipeline/sync/skip/test_inspect_skip_layout",
@@ -204,10 +199,6 @@ WINDOWS_BLOCKLIST = [
 ] + FSDP_TEST
 
 ROCM_BLOCKLIST = [
-    "distributed/rpc/test_faulty_agent",
-    "distributed/rpc/test_tensorpipe_agent",
-    "distributed/rpc/test_share_memory",
-    "distributed/rpc/cuda/test_tensorpipe_agent",
     "test_determination",
     "test_jit_legacy",
     "test_cuda_nvml_based_avail",
@@ -231,10 +222,7 @@ S390X_BLOCKLIST = [
     "inductor/test_cpu_repro",
     "inductor/test_cpu_select_algorithm",
     "inductor/test_torchinductor_codegen_dynamic_shapes",
-    "lazy/test_meta_kernel",
-    "onnx/test_utility_funs",
     "profiler/test_profiler",
-    "test_jit",
     "dynamo/test_utils",
     "test_nn",
     # these tests run long and fail in addition to that
@@ -306,13 +294,11 @@ RUN_PARALLEL_BLOCKLIST = [
     "test_cpp_extensions_stream_and_event",
     "test_cpp_extensions_mtia_backend",
     "test_jit_disabled",
-    "test_mobile_optimizer",
     "test_multiprocessing",
     "test_multiprocessing_spawn",
     "test_namedtuple_return_api",
     "test_overrides",
     "test_show_pickle",
-    "test_tensorexpr",
     "test_cuda_primary_ctx",
     "test_cuda_trace",
     "inductor/test_benchmark_fusion",
@@ -1421,10 +1407,6 @@ CUSTOM_HANDLERS = {
     "distributed/test_c10d_spawn_ucc": run_test_with_subprocess,
     "distributed/test_store": run_test_with_subprocess,
     "distributed/test_pg_wrapper": run_test_with_subprocess,
-    "distributed/rpc/test_faulty_agent": run_test_with_subprocess,
-    "distributed/rpc/test_tensorpipe_agent": run_test_with_subprocess,
-    "distributed/rpc/test_share_memory": run_test_with_subprocess,
-    "distributed/rpc/cuda/test_tensorpipe_agent": run_test_with_subprocess,
     "functorch/test_control_flow_cuda_initialization": run_test_with_subprocess,
     "doctests": run_doctests,
     "test_ci_sanity_check_fail": run_ci_sanity_check,
@@ -1936,8 +1918,7 @@ def get_selected_tests(options) -> list[str]:
                     "profiler/test_profiler",
                     "test_modules",
                     "test_expanded_weights",
-                    "test_jit",
-                    "test_nested_tensor",
+                                    "test_nested_tensor",
                     "test_nestedtensor",
                     "test_nn",
                     # DLL load failed errors, missing dependencies

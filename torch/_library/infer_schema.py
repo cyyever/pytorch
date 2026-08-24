@@ -163,7 +163,7 @@ def infer_schema(
         if annotation_type not in SUPPORTED_PARAM_TYPES:
             if is_custom_class(annotation_type):
                 schema_type = _resolve_opaque_type_info(annotation_type).class_name  # type: ignore[union-attr]
-            elif annotation_type == torch._C.ScriptObject:
+            elif annotation_type == torch.ScriptObject:
                 error_fn(
                     f"Parameter {name}'s type cannot be inferred from the schema "
                     "as it is a ScriptObject. Please manually specify the schema "

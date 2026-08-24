@@ -8,12 +8,10 @@ This module provides various debugging tools and utilities for TorchDynamo, incl
 - Accuracy checking between original and compiled models
 - Neural network module string conversion via NNModuleToString
 - Profiling tools and system information collection
-- Buck build system integration for Meta-internal testing
 
 Key classes:
 - InputReader/InputWriter: Handle serialization of model inputs/outputs
 - NNModuleToString: Converts nn.Modules to string representations
-- BuckTargetWriter: Manages Buck build system integration
 """
 
 from __future__ import annotations
@@ -34,7 +32,7 @@ import tempfile
 import textwrap
 from collections import Counter
 from importlib import import_module
-from typing import Any, cast, TYPE_CHECKING, TypeVar
+from typing import Any, TYPE_CHECKING, TypeVar
 
 import torch
 import torch._prims_common as utils
@@ -67,91 +65,11 @@ inductor_config = import_module("torch._inductor.config")
 use_buck = inductor_config.is_fbcode()
 
 if use_buck:
-    import libfb.py.build_info
+    pass
 
 
 # pyrefly: ignore [implicit-any]
-extra_deps = []
 extra_imports = ""
-cur_target = ""
-if use_buck:
-    extra_deps = [
-        "//caffe2/torch/fb/sparsenn:sparsenn_operators_gpu",
-        "//caffe2/torch/fb/sparsenn:sparsenn_operators",
-        "//deeplearning/fbgemm/fbgemm_gpu:sparse_ops_cpu",
-        "//deeplearning/fbgemm/fbgemm_gpu:sparse_ops",
-    ]
-    cur_target = libfb.py.build_info.BuildInfo.get_build_rule().replace("fbcode:", "//")  # type: ignore[possibly-undefined]
-    # Preload common fbcode custom-op libraries so repros that use those ops
-    # work out of the box. Best-effort: a repro whose graph doesn't use these
-    # ops (or that is run outside a buck target linking them) must not fail
-    # just because the library isn't present.
-    _extra_deps_list = "\n".join(f'    "{x}",' for x in extra_deps)
-    extra_imports = (
-        f"for _extra_dep in [\n{_extra_deps_list}\n]:\n"
-        "    try:\n"
-        "        torch.ops.load_library(_extra_dep)\n"
-        "    except OSError:\n"
-        "        pass\n"
-    )
-
-
-BUCK_CMD_PREFIX = ["buck2", "run", "@mode/dev-nosan"]
-
-
-class BuckTargetWriter:
-    def __init__(self, filename: str) -> None:
-        self.subdir, self.py_file = os.path.split(os.path.abspath(filename))
-        self.target = self.py_file.replace(".py", "")
-
-        # Get main_module path from fbcode
-        self.path = f"{self.subdir.replace('/', '.')}.{self.target}"
-        self.path = self.path[self.path.find("fbcode.") :]
-        self.path = self.path[7:]
-
-        # Get cmd line path
-        tmp = self.subdir
-        tmp = tmp[tmp.find("fbcode/") :][7:]
-        self.cmd_line_path = f"//{tmp}:{self.target}"
-
-    def build(self) -> str:
-        extra_cpp_deps = "\n".join([f'        "{x}",' for x in extra_deps])
-        return textwrap.dedent(
-            f"""
-load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
-
-python_binary(
-    name="{self.target}",
-    srcs = ["{self.py_file}"],
-    compile = False,
-    deps = [
-        "//caffe2:torch",
-        "//caffe2:libtorch",
-        "//caffe2/functorch:functorch",
-        "//triton:triton",
-        "{cur_target}",
-    ],
-    cpp_deps = [
-{extra_cpp_deps}
-    ],
-    main_module = "{self.path}",
-    par_style = "xar",
-)
-"""
-        )
-
-    def write(self, print_msg: bool = True) -> list[str]:
-        target_file = os.path.join(self.subdir, "TARGETS")
-        with open(target_file, "w") as fd:
-            fd.write(self.build())
-        # log.warning("Wrote isolation TARGETS file at %s", target_file)
-        cmd_split = BUCK_CMD_PREFIX + [self.cmd_line_path]
-        if print_msg:
-            log.warning(
-                "Found an example that reproduces the error. Run this cmd to repro - %s",
-                " ".join(cmd_split),
-            )
-        return cmd_split
 
 
 def minifier_dir() -> str:
@@ -171,35 +89,6 @@ class UnsupportedNNModuleError(AssertionError):
 
 
 class NNModuleToString:
-    fake_quant_modules = {
-        "torch.ao.quantization.fake_quantize.FakeQuantize",
-        "torch.ao.quantization.fake_quantize.FusedMovingAvgObsFakeQuantize",
-    }
-
-    qat_conv_modules = {
-        "torch.ao.nn.qat.modules.conv.Conv1d",
-        "torch.ao.nn.qat.modules.conv.Conv2d",
-        "torch.ao.nn.qat.modules.conv.Conv3d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvBn1d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvBn2d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvBn3d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvBnReLU1d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvBnReLU2d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvBnReLU3d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvReLU1d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvReLU2d",
-        "torch.ao.nn.intrinsic.qat.modules.conv_fused.ConvReLU3d",
-    }
-
-    qat_linear_modules = {
-        "torch.ao.nn.qat.modules.linear.Linear",
-        "torch.ao.nn.intrinsic.qat.modules.linear_relu.LinearReLU",
-    }
-
-    # x86 currently aliases fbgemm in repr, so emit fbgemm as the canonical
-    # constructor for both until those default qconfigs diverge.
-    default_qat_qconfig_backends = ("fbgemm", "x86", "qnnpack", "onednn")
-
     safe_reprs = [
         torch.nn.Linear,
         torch.nn.Conv1d,
@@ -251,95 +140,9 @@ class NNModuleToString:
         return f"{type_.__module__}.{type_.__name__}"
 
     @staticmethod
-    def _fake_quant_constructor(module: torch.nn.Module) -> str | None:
-        module_type = NNModuleToString._module_type_name(module)
-        if module_type not in NNModuleToString.fake_quant_modules:
-            return None
-
-        observer = module.activation_post_process  # type: ignore[attr-defined]
-        quant_min = cast(int, module.quant_min)  # type: ignore[attr-defined]
-        quant_max = cast(int, module.quant_max)  # type: ignore[attr-defined]
-        if getattr(observer, "reduce_range", False):
-            quant_min *= 2
-            quant_max = quant_max * 2 + 1
-        args = [
-            f"observer={NNModuleToString._type_name(type(observer))}",
-            f"quant_min={quant_min!r}",
-            f"quant_max={quant_max!r}",
-            f"dtype={module.dtype!r}",  # type: ignore[attr-defined]
-            f"qscheme={module.qscheme!r}",  # type: ignore[attr-defined]
-            f"is_dynamic={module.is_dynamic!r}",  # type: ignore[attr-defined]
-        ]
-        if hasattr(observer, "reduce_range"):
-            args.append(f"reduce_range={observer.reduce_range!r}")
-        if hasattr(observer, "ch_axis"):
-            args.append(f"ch_axis={observer.ch_axis!r}")
-        return f"{module_type}({', '.join(args)})"
-
     @staticmethod
-    def _qat_qconfig_constructor(module: torch.nn.Module) -> str | None:
-        qconfig = getattr(module, "qconfig", None)
-        for backend in NNModuleToString.default_qat_qconfig_backends:
-            try:
-                default_qconfig = torch.ao.quantization.get_default_qat_qconfig(backend)
-            except AssertionError:
-                continue
-            if repr(qconfig) == repr(default_qconfig):
-                return (
-                    "qconfig=torch.ao.quantization.get_default_qat_qconfig"
-                    f"({backend!r})"
-                )
-        return None
-
     @staticmethod
-    def _qat_conv_constructor(module: torch.nn.Module) -> str | None:
-        module_type = NNModuleToString._module_type_name(module)
-        if module_type not in NNModuleToString.qat_conv_modules:
-            return None
-        qconfig = NNModuleToString._qat_qconfig_constructor(module)
-        if qconfig is None:
-            return None
-
-        args = [
-            repr(module.in_channels),  # type: ignore[attr-defined]
-            repr(module.out_channels),  # type: ignore[attr-defined]
-            f"kernel_size={module.kernel_size!r}",  # type: ignore[attr-defined]
-            f"stride={module.stride!r}",  # type: ignore[attr-defined]
-            f"padding={module.padding!r}",  # type: ignore[attr-defined]
-            f"dilation={module.dilation!r}",  # type: ignore[attr-defined]
-            f"groups={module.groups!r}",  # type: ignore[attr-defined]
-            f"bias={module.bias is not None}",  # type: ignore[attr-defined]
-            f"padding_mode={module.padding_mode!r}",  # type: ignore[attr-defined]
-        ]
-        bn = getattr(module, "bn", None)
-        if bn is not None:
-            args.extend(
-                [
-                    f"eps={bn.eps!r}",
-                    f"momentum={bn.momentum!r}",
-                    f"freeze_bn={module.freeze_bn!r}",  # type: ignore[attr-defined]
-                ]
-            )
-        args.append(qconfig)
-        return f"{module_type}({', '.join(args)})"
-
     @staticmethod
-    def _qat_linear_constructor(module: torch.nn.Module) -> str | None:
-        module_type = NNModuleToString._module_type_name(module)
-        if module_type not in NNModuleToString.qat_linear_modules:
-            return None
-        qconfig = NNModuleToString._qat_qconfig_constructor(module)
-        if qconfig is None:
-            return None
-
-        args = [
-            repr(module.in_features),  # type: ignore[attr-defined]
-            repr(module.out_features),  # type: ignore[attr-defined]
-            f"bias={module.bias is not None}",  # type: ignore[attr-defined]
-            qconfig,
-        ]
-        return f"{module_type}({', '.join(args)})"
-
     @staticmethod
     def _can_emit_module_constructor(module: torch.nn.Module, module_str: str) -> bool:
         if type(module) not in NNModuleToString.safe_reprs:
@@ -358,13 +161,6 @@ class NNModuleToString:
         module_str = repr(module)
         if NNModuleToString._can_emit_module_constructor(module, module_str):
             return module_str
-        constructor_str = (
-            NNModuleToString._fake_quant_constructor(module)
-            or NNModuleToString._qat_conv_constructor(module)
-            or NNModuleToString._qat_linear_constructor(module)
-        )
-        if constructor_str is not None:
-            return constructor_str
         if allow_unsafe_repr:
             return module_str
         return None
@@ -568,8 +364,6 @@ def helper_for_dump_minify(contents: str) -> None:
     minified_repro_path = get_minifier_repro_path()
     log.warning("Writing minified repro to:\n%s", minified_repro_path)
 
-    if use_buck:
-        BuckTargetWriter(minified_repro_path).write()
     try:
         with open(minified_repro_path, "w") as fd:
             fd.write(contents)

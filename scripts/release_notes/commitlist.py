@@ -272,11 +272,10 @@ class CommitList:
             if CommitList.keywordInFile(file, ["torch/ao", "test/ao"]):
                 category = common.quantization.name
                 break
-            # torch/quantization, test/quantization, aten/src/ATen/native/quantized, torch/nn/{quantized, quantizable}
+            # test/quantization, aten/src/ATen/native/quantized, torch/nn/{quantized, quantizable}
             if CommitList.keywordInFile(
                 file,
                 [
-                    "torch/quantization",
                     "test/quantization",
                     "aten/src/ATen/native/quantized",
                     "torch/nn/quantiz",
@@ -293,7 +292,6 @@ class CommitList:
                     "torch/csrc/jit/mobile",
                     "aten/src/ATen/native/metal",
                     "test/mobile",
-                    "torch/backends/_nnapi/",
                     "test/test_nnapi.py",
                 ],
             ):
