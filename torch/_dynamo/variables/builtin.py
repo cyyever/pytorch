@@ -185,9 +185,8 @@ _BUILTIN_CONSTANT_FOLDABLE_METHODS: dict[type, frozenset[str]] = {
     bool: frozenset({"__new__", "from_bytes"}),
     float: frozenset({"fromhex", "hex"}),
 }
-if sys.version_info >= (3, 14):
-    _BUILTIN_CONSTANT_FOLDABLE_METHODS[float] |= frozenset({"from_number"})
-    _BUILTIN_CONSTANT_FOLDABLE_METHODS[complex] = frozenset({"from_number"})
+_BUILTIN_CONSTANT_FOLDABLE_METHODS[float] |= frozenset({"from_number"})
+_BUILTIN_CONSTANT_FOLDABLE_METHODS[complex] = frozenset({"from_number"})
 
 
 _HandlerCallback = Callable[
@@ -2752,22 +2751,14 @@ class BuiltinVariable(BaseBuiltinVariable):
 
         strict = ConstantVariable.create(False)
         if kwargs:
-            if sys.version_info >= (3, 14):
-                if not (len(kwargs) == 1 and "strict" in kwargs):
-                    raise_args_mismatch(
-                        tx,
-                        "map",
-                        "1 kwargs (`strict`)",
-                        f"{len(kwargs)} kwargs",
-                    )
-                strict = kwargs.pop("strict", ConstantVariable.create(False))
-            else:
+            if not (len(kwargs) == 1 and "strict" in kwargs):
                 raise_args_mismatch(
                     tx,
                     "map",
-                    "0 kwargs",
+                    "1 kwargs (`strict`)",
                     f"{len(kwargs)} kwargs",
                 )
+            strict = kwargs.pop("strict", ConstantVariable.create(False))
 
         iterables = [generic_getiter(tx, seq) for seq in seqs]
         iter_args = TupleVariable(iterables, mutation_type=ValueMutationNew())

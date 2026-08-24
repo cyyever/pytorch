@@ -65,7 +65,6 @@ import torch.backends.mkl
 import torch.backends.mps
 import torch.cuda
 from torch import Tensor
-from torch._C import ScriptDict, ScriptList  # type: ignore[attr-defined]
 from torch._utils_internal import get_writable_path
 from torch._logging.scribe import open_source_signpost
 from torch.nn import (
@@ -1035,18 +1034,9 @@ class decorateIf(_TestParametrizer):
 
 
 def cppProfilingFlagsToProfilingMode():
-    old_prof_exec_state = torch._C._jit_set_profiling_executor(True)
-    old_prof_mode_state = torch._C._get_graph_executor_optimize(True)
-    torch._C._jit_set_profiling_executor(old_prof_exec_state)
-    torch._C._get_graph_executor_optimize(old_prof_mode_state)
-
-    if old_prof_exec_state:
-        if old_prof_mode_state:
-            return ProfilingMode.PROFILING
-        else:
-            return ProfilingMode.SIMPLE
-    else:
-        return ProfilingMode.LEGACY
+    # The TorchScript graph executor is gone, so there is no profiling
+    # executor state left to query.
+    return ProfilingMode.LEGACY
 
 @contextmanager
 def enable_profiling_mode_for_profiling_tests():
@@ -1082,8 +1072,6 @@ def num_profiled_runs(num_runs):
     finally:
         torch._C._jit_set_num_profiled_runs(old_num_runs)
 
-func_call = torch._C.ScriptFunction.__call__
-meth_call = torch._C.ScriptMethod.__call__
 
 def prof_callable(callable, *args, **kwargs):
     if 'profile_and_replay' in kwargs:
@@ -1102,14 +1090,6 @@ def raise_on_run_directly(file_to_call):
                        f"use:\n\n\tpython {file_to_call} TESTNAME\n\n"
                        "instead.")
 
-def prof_func_call(*args, **kwargs):
-    return prof_callable(func_call, *args, **kwargs)
-
-def prof_meth_call(*args, **kwargs):
-    return prof_callable(meth_call, *args, **kwargs)
-
-torch._C.ScriptFunction.__call__ = prof_func_call  # type: ignore[method-assign]
-torch._C.ScriptMethod.__call__ = prof_meth_call  # type: ignore[method-assign]
 
 def _get_test_report_path():
     # allow users to override the test file location. We need this
@@ -2021,15 +2001,16 @@ def xfailIfTorchDynamo(func):
 
 
 def xfailIfPy312Plus(func):
-    return unittest.expectedFailure(func) if sys.version_info >= (3, 12) else func
+    # The minimum supported Python is 3.13, so this always applies.
+    return unittest.expectedFailure(func)
 
 
 def xfailIfPy314Plus(func):
-    return unittest.expectedFailure(func) if sys.version_info >= (3, 14) else func
+    return unittest.expectedFailure(func)
 
 
 def xfailIfPy313AndEarlier(func):
-    return unittest.expectedFailure(func) if sys.version_info < (3, 14) else func
+    return func
 
 
 def xfailIfLinux(func):
@@ -4849,10 +4830,9 @@ class TestCase(expecttest.TestCase):
                 Sequential,
                 ModuleList,
                 ParameterList,
-                ScriptList,
                 torch.utils.data.dataset.Subset,
             ),
-            mapping_types=(Mapping, ModuleDict, ParameterDict, ScriptDict),
+            mapping_types=(Mapping, ModuleDict, ParameterDict),
             rtol=rtol,
             rtol_override=self.rel_tol,
             atol=atol,

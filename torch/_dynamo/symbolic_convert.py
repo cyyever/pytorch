@@ -843,9 +843,7 @@ def generic_jump(
             all_stack_locals_metadata,
         )
 
-        if sys.version_info >= (3, 13):
-            # 3.13 requires stack[-1] to be bool type
-            self.output.add_output_instructions([create_instruction("TO_BOOL")])
+        self.output.add_output_instructions([create_instruction("TO_BOOL")])
 
         jump_inst = create_instruction(inst.opname, target=if_jump[0])
         # For inlined frames, use the root frame's current instruction
@@ -1200,12 +1198,8 @@ def break_graph_if_unsupported(
                 )
                 if len(kw_names) > 0:
                     # KW_NAMES no longer used in 3.13
-                    if not (sys.version_info < (3, 13)):
-                        raise AssertionError(
-                            "expected sys.version_info < (3, 13) to be true"
-                        )
-                    self.output.add_output_instructions(
-                        [create_instruction("KW_NAMES", argval=kw_names)]
+                    raise AssertionError(
+                        "expected sys.version_info < (3, 13) to be true"
                     )
                 if inst.arg is None:
                     raise AssertionError("expected inst.arg is not None to be true")
@@ -2383,10 +2377,8 @@ class InstructionTranslatorBase(
     def LOAD_GLOBAL(self, inst: Instruction) -> None:
         if inst.arg is None:
             raise AssertionError("expected inst.arg is not None to be true")
-        if sys.version_info >= (3, 11) and sys.version_info < (3, 13) and inst.arg % 2:
-            self.PUSH_NULL(inst)
         self._load_global(inst)
-        if sys.version_info >= (3, 13) and inst.arg % 2:
+        if inst.arg % 2:
             self.PUSH_NULL(inst)
 
     def STORE_GLOBAL(self, inst: Instruction) -> None:
@@ -2849,7 +2841,7 @@ class InstructionTranslatorBase(
     def WITH_EXCEPT_START(self, inst: Instruction) -> None:
         args: list[VariableTracker] = []
         if sys.version_info >= (3, 11):
-            fn_loc = 4 if sys.version_info < (3, 14) else 5
+            fn_loc = 5
             # At the top of the stack are 4 values:
             #    - TOP = exc_info()
             #    - SECOND = previous exception
@@ -2873,9 +2865,8 @@ class InstructionTranslatorBase(
                 self,
                 "__traceback__",
             )
-            if sys.version_info >= (3, 14):
-                if not isinstance(self.stack[-4], NullVariable):
-                    args.append(self.stack[-4])
+            if not isinstance(self.stack[-4], NullVariable):
+                args.append(self.stack[-4])
         else:
             if not (len(self.stack) >= 7):
                 raise AssertionError("expected len(self.stack) >= 7 to be true")
@@ -3228,36 +3219,20 @@ class InstructionTranslatorBase(
         if inst.argval == 0:
             kwargsvars = ConstDictVariable({})
             argsvars = self.pop()
-        elif inst.argval == 1 or sys.version_info >= (3, 14):
-            # Python 3.14+ removed the argval and replaced it with a possibly NULL kwargs
+        else:
             kwargsvars = self.pop()
             if isinstance(kwargsvars, NullVariable):
                 kwargsvars = ConstDictVariable({})
             argsvars = self.pop()
-        else:
-            unimplemented(
-                gb_type="Variadic function call with bad flags",
-                context=f"flags: {inst.argval}",
-                explanation=f"Attempted to call a variadic function (CALL_FUNCTION_EX) with bad flags {inst.argval}",
-                hints=[*graph_break_hints.DYNAMO_BUG],
-            )
 
-        if sys.version_info >= (3, 13):
-            # 3.13 swapped null and callable
-            null = self.pop()
-            if not isinstance(null, NullVariable):
-                raise AssertionError(
-                    "expected isinstance(null, NullVariable) to be true"
-                )
+        null = self.pop()
+        if not isinstance(null, NullVariable):
+            raise AssertionError(
+                "expected isinstance(null, NullVariable) to be true"
+            )
 
         fn = self.pop()
 
-        if sys.version_info >= (3, 11) and sys.version_info < (3, 13):
-            null = self.pop()
-            if not isinstance(null, NullVariable):
-                raise AssertionError(
-                    "expected isinstance(null, NullVariable) to be true"
-                )
 
         if not isinstance(
             argsvars,
@@ -3329,19 +3304,8 @@ class InstructionTranslatorBase(
     def LOAD_METHOD(self, inst: Instruction) -> None:
         self._load_attr(inst.argval)
         obj = self.pop()
-        if sys.version_info >= (3, 13):
-            self.push(obj)
-            self.PUSH_NULL(inst)
-        elif sys.version_info >= (3, 11):
-            # always follow the NULL + fn convention, since if obj
-            # is actually a method, self is already bound to it, so it
-            # doesn't need to be passed in as an arg.
-            self.PUSH_NULL(inst)
-            self.push(obj)
-        else:
-            raise AssertionError(
-                "LOAD_METHOD should have been rewritten to LOAD_ATTR. We should never reach here."
-            )
+        self.push(obj)
+        self.PUSH_NULL(inst)
 
     def CALL_METHOD(self, inst: Instruction) -> None:
         raise AssertionError(
@@ -4220,17 +4184,6 @@ class InstructionTranslatorBase(
         annotations = None
         kwdefaults = None
 
-        if sys.version_info < (3, 13):
-            # in 3.13, this is handled in SET_FUNCTION_ATTRIBUTE
-            if flags is not None:
-                if flags & 0x08:
-                    closure = self.pop()
-                if flags & 0x04:
-                    annotations = self.pop()
-                if flags & 0x02:
-                    kwdefaults = self.pop()
-                if flags & 0x01:
-                    defaults = self.pop()
 
         fn = NestedUserFunctionVariable(
             fn_name,
@@ -4706,8 +4659,6 @@ class InstructionTranslatorBase(
         # for convention
         if call_kw:
             # TOS is kw_names for CALL_KW instruction
-            if not (sys.version_info >= (3, 13)):
-                raise AssertionError("expected sys.version_info >= (3, 13) to be true")
             kw_names = self.pop()
             if not isinstance(kw_names, TupleVariable):
                 raise AssertionError(
@@ -4724,18 +4675,8 @@ class InstructionTranslatorBase(
         if inst.arg is None:
             raise AssertionError("expected inst.arg is not None to be true")
         contents = self.popn(inst.arg + 2)
-        if sys.version_info >= (3, 13):
-            # NULL and callable swapped
-            fn = contents[0]
-            args = [] if isinstance(contents[1], NullVariable) else [contents[1]]
-        else:
-            if isinstance(contents[0], NullVariable):
-                fn = contents[1]
-                # pyrefly: ignore [implicit-any]
-                args = []
-            else:
-                fn = contents[0]
-                args = [contents[1]]
+        fn = contents[0]
+        args = [] if isinstance(contents[1], NullVariable) else [contents[1]]
 
         if kw_names:
             args = args + contents[2 : -len(kw_names)]
@@ -4913,10 +4854,7 @@ class InstructionTranslatorBase(
     # BUILD_SLICE 2 and BINARY/STORE_SUBSCR
 
     def END_FOR(self, inst: Instruction) -> None:
-        if sys.version_info >= (3, 13):
-            self.pop()
-        else:
-            self.popn(2)
+        self.pop()
 
         # Decrement comprehension depth if exiting a comprehension layer
         if sys.version_info >= (3, 12):
@@ -5043,8 +4981,6 @@ class InstructionTranslatorBase(
         attr = self.pop()
 
         if flags & 0x10:
-            if not (sys.version_info >= (3, 14)):
-                raise AssertionError("expected sys.version_info >= (3, 14) to be true")
 
             # maybe use Format.VALUE_WITH_FAKE_GLOBALS instead?
             # https://docs.python.org/3/library/annotationlib.html#annotationlib.Format.VALUE_WITH_FAKE_GLOBALS

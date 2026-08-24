@@ -104,9 +104,6 @@ def _qualified_name(obj, mangle_name=True) -> str:
     # qualified name, which is picked up here
     if hasattr(obj, "_jit_override_qualname"):
         return obj._jit_override_qualname
-    # short-circuit in cases where the object already has a known qualified name
-    if isinstance(obj, torch._C.ScriptFunction):
-        return obj.qualified_name
 
     if getattr(obj, "__name__", None):
         name = obj.__name__
@@ -1071,24 +1068,7 @@ _overloaded_method_class_fileno: dict[tuple[str, str], int] = {}
 
 
 def _overload_method(func: Callable[_P, _R]) -> Callable[_P, _R]:
-    try:
-        _check_overload_body(func)
-    except IndentationError:
-        # CPython 3.13.8 has a bug (https://github.com/python/cpython/issues/139783)
-        # where inspect.getsourcelines() returns truncated source when a decorator
-        # is followed by a comment, causing ast.parse() to fail with IndentationError.
-        # Fixed in 3.13.9. Swallow the error on affected versions; re-raise otherwise.
-        if sys.version_info[:3] == (3, 13, 8):
-            import warnings
-
-            warnings.warn(
-                "Skipping overload body check due to a known CPython 3.13.8 bug "
-                "(https://github.com/python/cpython/issues/139783). "
-                "Consider upgrading to Python 3.13.9+.",
-                stacklevel=2,
-            )
-        else:
-            raise
+    _check_overload_body(func)
     qual_name = _qualified_name(func)
     global _overloaded_methods
     class_name_map = _overloaded_methods.get(qual_name)
@@ -1449,11 +1429,10 @@ def _get_model_id(obj) -> str | None:
     return None
 
 
-# In Python-3.11+ typed enums (i.e. IntEnum for example) retain number of base class methods in subclass
-# that were previously dropped. To preserve the behavior, explicitly drop them there
+# Typed enums (IntEnum, for example) retain base class methods in the subclass,
+# so drop them explicitly to preserve the previous behavior.
 
-if sys.version_info >= (3, 11):
-    _drop(enum.Enum.__new__)
-    _drop(enum.Enum.__format__)
-    _drop(enum.Enum.__repr__)
-    _drop(enum.Enum.__str__)
+_drop(enum.Enum.__new__)
+_drop(enum.Enum.__format__)
+_drop(enum.Enum.__repr__)
+_drop(enum.Enum.__str__)

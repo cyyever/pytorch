@@ -1995,10 +1995,6 @@ def generic_issubclass(
 
     # Step 2: PEP 604 Union (e.g. ``int | str``) — abstract.c L2779-2781.
     union_types = {types.UnionType}
-    if sys.version_info < (3, 14):
-        union_types.add(
-            typing._UnionGenericAlias  # pyrefly: ignore [missing-attribute]
-        )
     if cls_type in union_types:
         # TODO can trace this once TypingVariable is removed
         args = typing.get_args(cls_py)

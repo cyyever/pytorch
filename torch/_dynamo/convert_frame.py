@@ -2585,10 +2585,7 @@ class CatchErrorsWrapper:
         input_codes.add(frame.f_code)
 
         is_skipfile = trace_rules.check(frame.f_code, frame=frame)
-        if sys.version_info >= (3, 13):
-            has_started_execution = frame.f_lasti > first_real_inst_idx(frame.f_code)
-        else:
-            has_started_execution = frame.f_lasti >= first_real_inst_idx(frame.f_code)
+        has_started_execution = frame.f_lasti > first_real_inst_idx(frame.f_code)
 
         # Check if we should skip due to torch dispatch mode.
         # When inline_torch_dispatch_torch_compile is True (new behavior), we walk

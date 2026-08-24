@@ -337,22 +337,12 @@ class _LoggerState:
             return True
 
         root = logging.getLogger("torch._inductor")
-        if sys.version_info < (3, 12):
-            # logging.getChildren() doesn't exist until 3.12
-            logging._acquireLock()  # type: ignore[attr-defined]
-            try:
-                for logger in root.manager.loggerDict.values():
-                    if filter(logger):
-                        self.loggers[logger.name] = logger.level
-            finally:
-                logging._releaseLock()  # type: ignore[attr-defined]
-        else:
-            q = [root]
-            while q:
-                logger = q.pop()
-                if filter(logger):
-                    self.loggers[logger.name] = logger.level
-                q.extend(logger.getChildren())
+        q = [root]
+        while q:
+            logger = q.pop()
+            if filter(logger):
+                self.loggers[logger.name] = logger.level
+            q.extend(logger.getChildren())
 
     def __enter__(self) -> _CapturedLogs:
         if self.captured_logs is not None:

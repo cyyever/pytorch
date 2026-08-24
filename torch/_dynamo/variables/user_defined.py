@@ -191,12 +191,6 @@ if TYPE_CHECKING:
 
 _STANDARD_SETATTRS: tuple[Any, ...] = (object.__setattr__, BaseException.__setattr__)
 _STANDARD_DELATTRS: tuple[Any, ...] = (object.__delattr__, BaseException.__delattr__)
-if sys.version_info < (3, 13):
-    # Types that name tp_setattro in their static struct get their own
-    # __setattr__/__delattr__ wrappers from PyType_Ready before 3.13, even when
-    # the slot is PyObject_GenericSetAttr. BaseException above is the same case.
-    _STANDARD_SETATTRS += (types.SimpleNamespace.__setattr__,)
-    _STANDARD_DELATTRS += (types.SimpleNamespace.__delattr__,)
 
 
 def is_standard_setattr(val: object) -> bool:
@@ -5684,8 +5678,6 @@ class SimpleNamespaceVariable(UserDefinedObjectVariable):
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker | None:
         # __replace__ landed in 3.13 (gh-108751).
-        if sys.version_info < (3, 13):
-            return None
         replace = types.SimpleNamespace.__replace__  # type: ignore[missing-attribute]
         if self._maybe_get_baseclass_method("__replace__") is not replace:
             return None
@@ -5720,11 +5712,7 @@ class SimpleNamespaceVariable(UserDefinedObjectVariable):
         kwargs: dict[str, Any],
     ) -> VariableTracker:
         # namespace_init grew its optional positional argument in 3.13 (gh-108191).
-        if sys.version_info >= (3, 13):
-            # PyArg_UnpackTuple, whose message matches _PyArg_CheckPositional's.
-            check_positional(tx, type(self.value).__name__, len(args), 0, 1)
-        elif args:
-            raise_type_error(tx, "no positional arguments expected")
+        check_positional(tx, type(self.value).__name__, len(args), 0, 1)
         for attr, value in self._merge_args(tx, args, kwargs).items():
             tx.output.side_effects.store_instance_dict_attr(self, attr, value)
         return variables.ConstantVariable.create(None)

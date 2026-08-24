@@ -16,7 +16,6 @@ handling of iterator operations during code transformation and optimization.
 import inspect
 import itertools
 import operator
-import sys
 from typing import Any, TYPE_CHECKING
 
 from .. import graph_break_hints, polyfills, variables
@@ -807,10 +806,6 @@ class MapVariable(IteratorVariable):
         )
         codegen(variables.TupleVariable([self.fn, *self.iterable.items]))
         if self.strict:
-            if sys.version_info < (3, 14):
-                raise AssertionError(
-                    "Unexpected bug: map(strict=True) requires Python 3.14+"
-                )
             codegen.extend_output(
                 [
                     codegen.create_load_const("strict"),

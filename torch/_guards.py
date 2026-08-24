@@ -1201,7 +1201,7 @@ class TracingContext:
         filename, lineno, frame_name = self.loc_in_frame
         # colno/end_colno kwargs were added to FrameSummary in 3.11
         kwargs: dict[str, Any] = {}
-        if sys.version_info >= (3, 11) and self.loc_in_frame_positions is not None:
+        if self.loc_in_frame_positions is not None:
             kwargs["colno"] = self.loc_in_frame_positions.col_offset
             kwargs["end_colno"] = self.loc_in_frame_positions.end_col_offset
         return traceback.FrameSummary(
