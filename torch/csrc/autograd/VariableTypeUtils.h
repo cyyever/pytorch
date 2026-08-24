@@ -22,11 +22,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef _MSC_VER
-#ifdef Type
-#undef Type
-#endif
-#endif
 
 namespace torch::autograd {
 enum class can_mutate_inplace_result {

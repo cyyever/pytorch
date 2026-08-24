@@ -13,10 +13,8 @@
 #include <torch/csrc/Layout.h>
 #include <torch/csrc/QScheme.h>
 #include <torch/csrc/Stream.h>
-#include <torch/csrc/jit/api/module.h>
+#include <torch/csrc/jit/api/method.h>
 #include <torch/csrc/jit/frontend/schema_matching.h>
-#include <torch/csrc/jit/frontend/tracer.h>
-#include <torch/csrc/jit/python/module_python.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/utils/pybind.h>
@@ -35,11 +33,7 @@
 
 // The visibility attribute is to avoid a warning about storing a field in the
 // struct that has a different visibility (from pybind) than the struct.
-#ifdef _WIN32
-#define VISIBILITY_HIDDEN
-#else
 #define VISIBILITY_HIDDEN __attribute__((visibility("hidden")))
-#endif
 
 namespace torch::jit {
 
@@ -346,11 +340,6 @@ inline InferredType tryToInferType(py::handle input) {
     return InferredType(NoneType::get());
   }
 
-  if (py::isinstance<StrongFunctionPtr>(input)) {
-    auto fn = py::cast<StrongFunctionPtr>(input).function_;
-    return InferredType(FunctionType::create(fn));
-  }
-
   // Try basic types first
   if (py::isinstance<py::bool_>(input)) {
     return InferredType(BoolType::get());
@@ -394,79 +383,7 @@ inline InferredType tryToInferType(py::handle input) {
   auto enum_type = py::module::import("enum").attr("Enum");
   py::bool_ isEnumValue = py::isinstance(input, enum_type);
   if (py::cast<bool>(isEnumValue)) {
-    auto enum_class = input.attr("__class__");
-    auto enum_type = py::cast<TypePtr>(
-        py::module::import("torch.jit.annotations")
-            .attr("try_ann_to_type")(enum_class, SourceRange()));
-    return InferredType(std::move(enum_type));
-  }
-
-  py::bool_ isClass =
-      py::module::import("inspect").attr("isclass")(py::type::handle_of(input));
-  if (py::cast<bool>(isClass)) {
-    // Assume that the class is compiled already or will compile. Invalidate
-    // this later if needed.
-    bool class_compiled = true;
-
-    // Check if the type is already compiled.
-    py::object existing_ty =
-        py::module::import("torch.jit._state")
-            .attr("_get_script_class")(py::type::handle_of(input));
-
-    if (existing_ty.is_none()) {
-      // If not, try to compile it.
-      py::bool_ can_compile =
-          py::module::import("torch._jit_internal")
-              .attr("can_compile_class")(py::type::handle_of(input));
-
-      if (py::cast<bool>(can_compile)) {
-        // Try to compile the class. This is wrapped in a try-catch because
-        // compilation of class types can raise an Exception and in that case,
-        // we want to defer to other attempts at type inference below rather
-        // than fail compilation altogether.
-        try {
-          py::module::import("torch.jit._script")
-              .attr("_recursive_compile_class")(
-                  py::type::handle_of(input), SourceRange());
-        } catch (...) {
-          // Invalidate the assumption that the class compiled so that we don't
-          // look up and return its JIT type as the type for the input.
-          class_compiled = false;
-        }
-      }
-    }
-
-    // If the class compiled successfully, look up the existing JIT type by
-    // qualified name and return it.
-    if (class_compiled) {
-      auto script_class =
-          py::module::import("torch.jit._state")
-              .attr("_get_script_class")(py::type::handle_of(input));
-
-      if (!script_class.is_none()) {
-        auto class_type = py::cast<ClassTypePtr>(script_class);
-
-        if (class_type && !class_type->is_module()) {
-          return InferredType(std::move(class_type));
-        }
-      }
-    }
-  }
-
-  if (py::isinstance<Object>(input)) {
-    auto object = py::cast<Object>(input);
-    return InferredType(object.type());
-  }
-
-  auto await_type = py::module::import("torch._awaits").attr("_Await");
-  py::bool_ is_await = py::isinstance(input, await_type);
-  if (py::cast<bool>(is_await)) {
-    auto awptr = input.cast<std::shared_ptr<PythonAwaitWrapper>>();
-    return InferredType(AwaitType::create(awptr->aw_->elementType()));
-  }
-
-  if (as_module(py::cast<py::object>(input))) {
-    return InferredType("Cannot infer type of ScriptModule");
+    return InferredType("Enums cannot be inferred without TorchScript");
   }
 
   auto module_type = py::module::import("torch.nn").attr("Module");
@@ -655,20 +572,6 @@ inline IValue toTypeInferredIValue(py::handle input) {
   auto match = tryToInferType(input);
   if (!match.success()) {
     auto object = py::cast<py::object>(input);
-    if (auto mod = as_module(object)) {
-      // if obj is already a ScriptModule, just return its ivalue
-      auto ptr = mod.value()._ivalue();
-      // explicit copy semantics for strong ownership of the resource.
-      return c10::intrusive_ptr<c10::ivalue::Object>::reclaim_copy(
-          ptr.release());
-    }
-
-    // Check if the obj is a ScriptObject.
-    if (auto script_obj = as_object(object)) {
-      auto ptr = script_obj.value()._ivalue();
-      return c10::intrusive_ptr<c10::ivalue::Object>::reclaim_copy(
-          ptr.release());
-    }
     TORCH_CHECK(
         false,
         "Tracer cannot infer type of ",
@@ -807,20 +710,6 @@ inline IValue returnToIValue(const TypePtr& type, py::handle object) {
         "\nCast error details: ",
         error.what()));
   }
-}
-
-inline py::object getScriptedClassOrError(const c10::NamedTypePtr& classType) {
-  auto py_class =
-      py::module::import("torch.jit._state")
-          .attr("_get_python_class")(classType->name()->qualifiedName());
-  if (py_class.is_none()) {
-    std::stringstream err;
-    err << "Unknown reference to ScriptClass ";
-    err << classType->name()->qualifiedName();
-    err << ". (Did you forget to import it?)";
-    throw std::runtime_error(std::move(err).str());
-  }
-  return py_class;
 }
 
 struct VISIBILITY_HIDDEN tuple_slice {
@@ -1165,12 +1054,7 @@ inline py::object invokeScriptMethodFromPython(
     Method& callee,
     const tuple_slice& args,
     const py::kwargs& kwargs) {
-  auto self = callee.owner()._ivalue();
-
-  if (auto torch_fn_result = maybeTorchFunctionDispatch(
-          py::cast(callee), args, kwargs, callee.name())) {
-    return *torch_fn_result;
-  }
+  auto self = callee.raw_owner();
 
   return runAndInsertCall(callee.function(), args, kwargs, self);
 }

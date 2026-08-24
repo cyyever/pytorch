@@ -72,11 +72,7 @@ if(NOT BUILD_LIBTORCHLESS)
   # ---[ Dependency of c10_cuda
   target_link_libraries(c10_cuda PUBLIC ${C10_LIB} torch::cudart)
 
-  if(NOT WIN32)
   target_link_libraries(c10_cuda PRIVATE dl)
-  else()
-  target_link_libraries(c10_cuda PRIVATE fmt::fmt)
-  endif()
   target_compile_definitions(c10_cuda PRIVATE PYTORCH_C10_DRIVER_API_SUPPORTED)
 
   target_include_directories(
@@ -101,7 +97,3 @@ foreach(file ${C10_CUDA_HEADERS})
 endforeach()
 install(FILES ${CMAKE_BINARY_DIR}/c10/cuda/impl/cuda_cmake_macros.h
   DESTINATION include/c10/cuda/impl)
-
-if(MSVC AND C10_CUDA_BUILD_SHARED_LIBS)
-  install(FILES $<TARGET_PDB_FILE:c10_cuda> DESTINATION lib OPTIONAL)
-endif()

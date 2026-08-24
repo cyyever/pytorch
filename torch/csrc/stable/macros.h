@@ -7,11 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#if defined(_WIN32)
-#include <torch/headeronly/util/win32-headers.h>
-#else
 #include <dlfcn.h>
-#endif
 
 #if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
@@ -50,22 +46,6 @@ HIDDEN_NAMESPACE_BEGIN(torch, stable, detail)
 [[maybe_unused]] static void* lookup_stable_symbol(const char* name) {
 #if defined(C10_MOBILE)
   (void)name;
-  return nullptr;
-#elif defined(_WIN32)
-  // Windows has no RTLD_DEFAULT equivalent, so resolve against the modules that
-  // export the stable shims. Today these live in torch_cpu.dll and
-  // torch_cuda.dll, so try each in turn. GetModuleHandleW does not take a
-  // reference on the returned handle.
-  const wchar_t* dlls[] = {L"torch_cpu.dll", L"torch_cuda.dll"};
-  for (const wchar_t* dll : dlls) {
-    HMODULE handle = GetModuleHandleW(dll);
-    if (handle != nullptr) {
-      void* sym = reinterpret_cast<void*>(GetProcAddress(handle, name));
-      if (sym != nullptr) {
-        return sym;
-      }
-    }
-  }
   return nullptr;
 #else
   return dlsym(RTLD_DEFAULT, name);

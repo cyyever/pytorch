@@ -127,7 +127,6 @@ def _is_indexed_device_type(device_type: str) -> bool:
         "hpu",
         "xpu",
         "mps",
-        "mtia",
         torch._C._get_privateuse1_backend_name(),
     ]
 

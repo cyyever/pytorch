@@ -44,12 +44,8 @@ DebugInfoWriter& DebugInfoWriter::getWriter(int rank) {
   if (writer_ == nullptr) {
 // Attempt to write to running user's HOME directory cache folder - if it
 // exists.
-#ifdef _WIN32
-    const char* cacheHome = nullptr;
-#else
     // Uses XDG_CACHE_HOME if it's set
     const char* cacheHome = std::getenv("XDG_CACHE_HOME");
-#endif
     std::string cacheRoot;
     if (cacheHome) {
       cacheRoot = cacheHome;

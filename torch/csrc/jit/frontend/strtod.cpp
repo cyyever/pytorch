@@ -25,17 +25,10 @@
 
 namespace torch::jit {
 
-#ifdef _MSC_VER
-double strtod_c(const char* nptr, char** endptr) {
-  static _locale_t loc = _create_locale(LC_ALL, "C");
-  return _strtod_l(nptr, endptr, loc);
-}
-#else
 double strtod_c(const char* nptr, char** endptr) {
   /// NOLINTNEXTLINE(hicpp-signed-bitwise)
   static locale_t loc = newlocale(LC_ALL_MASK, "C", nullptr);
   return strtod_l(nptr, endptr, loc);
 }
-#endif
 
 } // namespace torch::jit

@@ -39,7 +39,6 @@ from torch.testing._internal.inductor_utils import (
     HAS_GPU,
     requires_block_ptr,
     requires_gpu,
-    skip_windows_ci,
     TRITON_HAS_CPU,
 )
 
@@ -50,7 +49,6 @@ except ImportError:
     import test_torchinductor
 
 
-skip_windows_ci(__name__, __file__)
 
 importlib.import_module("filelock")
 

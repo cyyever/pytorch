@@ -23,9 +23,6 @@ struct XPUEvent {
       DeviceIndex device_index,
       const sycl::ext::oneapi::experimental::ipc::handle_data_t& handle_data)
       : device_index_(device_index) {
-#ifdef _WIN32
-    TORCH_CHECK(false, "XPU IPC events are not supported on Windows.");
-#endif
     // Events reconstructed from an IPC handle cannot be re-exported via
     // ipc_handle(). So keep `enable_ipc_` false to avoid confusion.
     auto& device = c10::xpu::get_raw_device(device_index);
@@ -234,9 +231,6 @@ struct XPUEvent {
     TORCH_CHECK(
         !enable_ipc_ || !enable_timing_,
         "XPUEvent cannot have both IPC and timing enabled.");
-#ifdef _WIN32
-    TORCH_CHECK(!enable_ipc_, "XPU IPC events are not supported on Windows.");
-#endif
 #if SYCL_COMPILER_VERSION >= 20260200
     namespace syclex = sycl::ext::oneapi::experimental;
 

@@ -37,8 +37,6 @@
 
 #if defined(__GNUC__)
 # define ALIGN32_BEG __attribute__((aligned(32)))
-#elif defined(_WIN32)
-# define ALIGN32_BEG __declspec(align(32))
 #endif
 
 typedef __m256  v8sf; // vector of 8 float (avx2)

@@ -175,7 +175,7 @@ class LayoutManager {
 //      - if the value is an alias, ensure the alias is within the bounds
 //        of the source value
 // 3. ensures that all planned value data-ptrs are non-overlapping
-#ifndef NDEBUG
+#if !defined(NDEBUG)
   void assert_no_overlapping_storages(
       size_t
           graph_node_idx /* the graph node that is currently being computed */)
@@ -188,12 +188,12 @@ class LayoutManager {
   void allocate();
   void deallocate_and_plan();
 
-#ifdef LayoutPlannerTests_TEST_FRIENDS
+#if defined(LayoutPlannerTests_TEST_FRIENDS)
   LayoutPlannerTests_TEST_FRIENDS;
 #endif
 
   static size_t get_aligned_nbytes(size_t nbytes) {
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(__linux__)
     auto alignment = c10::c10_compute_alignment(nbytes);
 #else
     auto alignment = c10::gAlignment;
@@ -214,7 +214,7 @@ class LayoutManager {
 
   std::vector<const at::Tensor*> planned_tensors_;
   std::vector<size_t> planned_tensors_max_nbytes_local_;
-#ifndef NDEBUG
+#if !defined(NDEBUG)
   c10::FastMap<ValueId, size_t> value_to_vector_idx_map_;
 #endif
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
 
 #include <unistd.h>
 
@@ -9,7 +9,7 @@
 
 #include <linux/perf_event.h>
 
-#endif /* __ANDROID__ || __linux__ */
+#endif
 
 #include <torch/csrc/profiler/perf.h>
 
@@ -23,21 +23,21 @@ namespace torch::profiler::impl::linux_perf {
  */
 
 inline void PerfEvent::Disable() const {
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   ioctl(fd_, PERF_EVENT_IOC_DISABLE, 0);
-#endif /* __ANDROID__ || __linux__ */
+#endif
 }
 
 inline void PerfEvent::Enable() const {
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   ioctl(fd_, PERF_EVENT_IOC_ENABLE, 0);
-#endif /* __ANDROID__ || __linux__ */
+#endif
 }
 
 inline void PerfEvent::Reset() const {
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   ioctl(fd_, PERF_EVENT_IOC_RESET, 0);
-#endif /* __ANDROID__ || __linux__ */
+#endif
 }
 
 /*

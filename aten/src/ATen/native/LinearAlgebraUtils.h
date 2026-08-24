@@ -442,9 +442,7 @@ inline std::tuple<DimVector, DimVector, int64_t> _compute_geometry_for_Q(
 
 inline bool svd_uses_cusolver(const Tensor& A) {
   // if cusolver is available, it is used unconditionally
-  return A.is_cuda()
-         && at::globalContext().hasCuSOLVER()
-         && at::globalContext().linalgPreferredBackend() != at::LinalgBackend::Magma;
+  return A.is_cuda() && at::globalContext().hasCuSOLVER();
 }
 
 

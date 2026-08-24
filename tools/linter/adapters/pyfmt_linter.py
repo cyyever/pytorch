@@ -24,7 +24,6 @@ import isort
 import usort
 
 
-IS_WINDOWS: bool = os.name == "nt"
 REPO_ROOT = Path(__file__).absolute().parents[3]
 
 
@@ -48,7 +47,7 @@ class LintMessage(NamedTuple):
 
 
 def as_posix(name: str) -> str:
-    return name.replace("\\", "/") if IS_WINDOWS else name
+    return name
 
 
 def format_error_message(filename: str, err: Exception) -> LintMessage:

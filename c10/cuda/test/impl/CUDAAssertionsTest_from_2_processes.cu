@@ -37,7 +37,6 @@ __global__ void cuda_always_succeed_assertion_kernel(
 }
 
 // Windows doesn't like `fork`
-#ifndef _MSC_VER
 /**
  * TEST: Triggering device side assertion from 2 different processes from CPU.
  * The following code is testing if two processes from CPU that are running
@@ -100,7 +99,3 @@ TEST(CUDATest, cuda_device_assertions_from_2_processes) {
   GTEST_SKIP() << "CUDA device-side assertions (DSA) was not enabled at compile time.";
 #endif
 }
-
-#else
-
-#endif

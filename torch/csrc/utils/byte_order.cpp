@@ -7,17 +7,12 @@
 #include <cstring>
 #include <vector>
 
-#if defined(_MSC_VER)
-#include <stdlib.h>
-#endif
 namespace {
 
 static void swapBytes16(void* ptr) {
   uint16_t output = 0;
   memcpy(&output, ptr, sizeof(uint16_t));
-#if defined(_MSC_VER) && !defined(_DEBUG)
-  output = _byteswap_ushort(output);
-#elif defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
+#if defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
   output = __builtin_bswap16(output);
 #else
   uint16_t Hi = output >> 8;
@@ -30,9 +25,7 @@ static void swapBytes16(void* ptr) {
 static void swapBytes32(void* ptr) {
   uint32_t output = 0;
   memcpy(&output, ptr, sizeof(uint32_t));
-#if defined(_MSC_VER) && !defined(_DEBUG)
-  output = _byteswap_ulong(output);
-#elif defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
+#if defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
   output = __builtin_bswap32(output);
 #else
   uint32_t Byte0 = output & 0x000000FF;
@@ -47,9 +40,7 @@ static void swapBytes32(void* ptr) {
 static void swapBytes64(void* ptr) {
   uint64_t output = 0;
   memcpy(&output, ptr, sizeof(uint64_t));
-#if defined(_MSC_VER)
-  output = _byteswap_uint64(output);
-#elif defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
+#if defined(__llvm__) || defined(__GNUC__) && !defined(__ICC)
   output = __builtin_bswap64(output);
 #else
   uint64_t Byte0 = output & 0x00000000000000FF;

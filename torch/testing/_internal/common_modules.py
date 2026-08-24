@@ -24,7 +24,7 @@ from torch.testing._internal.common_nn import (
     marginrankingloss_reference, multimarginloss_reference, multilabelmarginloss_reference,
     nllloss_reference, nlllossNd_reference, smoothl1loss_reference, softmarginloss_reference, get_reduction)
 from torch.testing._internal.common_utils import (
-    freeze_rng_state, skipIfMPS, GRADCHECK_NONDET_TOL, TEST_WITH_ROCM, IS_WINDOWS,
+    freeze_rng_state, skipIfMPS, GRADCHECK_NONDET_TOL, TEST_WITH_ROCM,
     skipIfTorchDynamo, skipIfXpu, isRocmArchAnyOf, MI200_ARCH)
 from types import ModuleType
 import operator
@@ -4863,9 +4863,6 @@ module_db: list[ModuleInfo] = [
                train_and_eval_differ=True,
                module_inputs_func=module_inputs_torch_nn_TransformerEncoderLayer,
                decorators=[
-                   DecorateInfo(toleranceOverride({torch.float32: tol(atol=1e-4, rtol=1e-4)}),
-                                'TestModule', 'test_non_contiguous_tensors',
-                                device_type='cpu', active_if=IS_WINDOWS),
                    DecorateInfo(toleranceOverride({torch.float16: tol(atol=1e-4, rtol=2e-3)}),
                                 'TestModule', 'test_forward',
                                 device_type='mps'),

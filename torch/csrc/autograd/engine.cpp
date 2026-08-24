@@ -53,10 +53,8 @@ static void forked_autograd_child() {
 
 // Should be called before unsafe for forks (thread pool) calls
 static void track_bad_autograd_forks() {
-#if !defined(WIN32)
   static auto result [[maybe_unused]] =
       pthread_atfork(nullptr, nullptr, forked_autograd_child);
-#endif
 }
 
 inline bool should_run_in_cpu_ready_queue(c10::DeviceType device) {
@@ -298,11 +296,6 @@ void Engine::stop() {
     for (auto& queue : device_ready_queues_) {
       queue->pushShutdownTask();
     }
-    // Do not wait for termination of global threads on Windows
-    // Because CRT terminates DLL threads before calling
-    // global object destructors
-#if !defined(_WIN32) || defined(C10_USE_MSVC_STATIC_RUNTIME)
-
     using namespace std::chrono_literals;
     // Set a deadline for how long it is OK to wait device threads to shutdown
     auto wait_deadline =
@@ -314,7 +307,6 @@ void Engine::stop() {
         break;
       }
     }
-#endif
   }
   // Otherwise threads are leaked
 }

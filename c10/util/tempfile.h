@@ -22,9 +22,6 @@ struct C10_API TempFile {
     other.fd = -1;
     return *this;
   }
-#if defined(_WIN32)
-  bool open();
-#endif
 
   ~TempFile();
 

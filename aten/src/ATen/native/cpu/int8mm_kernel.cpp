@@ -10,17 +10,13 @@
 #include <c10/util/irange.h>
 #include <c10/util/Unroll.h>
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define RESTRICT __restrict
-#else
 #define RESTRICT __restrict__
-#endif
 
 namespace at::native {
 
 namespace {
 
-#if defined(CPU_CAPABILITY_AVX512) && !defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_AVX512)
 
 // A block : {BLOCK_M, BLOCK_K}, lda = K
 // B block : {BLOCK_K, BLOCK_N}, ldb = K
@@ -98,7 +94,7 @@ inline void tinygemm_kernel(
   c10::ForcedUnroll<ROWS * COLS>{}(storec);
 }
 
-#elif defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER)
+#elif defined(CPU_CAPABILITY_AVX2)
 
 inline float _mm256_reduce_add_ps(__m256& v) {
   __m256 v1 = _mm256_permute2f128_ps(v, v, 0x1);

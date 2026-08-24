@@ -28,18 +28,7 @@ namespace detail {
 
 template <typename T>
 inline constexpr c10::c10_string_view fully_qualified_type_name_impl() {
-#if defined(_MSC_VER) && !defined(__clang__)
-  constexpr std::string_view fun_sig = __FUNCSIG__;
-#if defined(__NVCC__)
-  constexpr std::string_view prefix =
-      "c10::basic_string_view<char> c10::util::detail::fully_qualified_type_name_impl<";
-  constexpr std::string_view suffix = ">()";
-#else
-  constexpr std::string_view prefix =
-      "class c10::basic_string_view<char> __cdecl c10::util::detail::fully_qualified_type_name_impl<";
-  constexpr std::string_view suffix = ">(void)";
-#endif
-#elif defined(__clang__)
+#if defined(__clang__)
   constexpr std::string_view fun_sig = __PRETTY_FUNCTION__;
   constexpr std::string_view prefix =
       "c10::c10_string_view c10::util::detail::fully_qualified_type_name_impl() [T = ";
@@ -66,9 +55,7 @@ inline constexpr uint64_t type_index_impl() {
 // of this function, including its template parameter, i.e. including the
 // type we want an id for. We use this name and run crc64 on it to get a type
 // id.
-#if defined(_MSC_VER) && !defined(__clang__)
-  return crc64(__FUNCSIG__, sizeof(__FUNCSIG__)).checksum();
-#elif defined(__clang__)
+#if defined(__clang__)
   return crc64(__PRETTY_FUNCTION__, sizeof(__PRETTY_FUNCTION__)).checksum();
 #elif defined(__GNUC__)
   return crc64(__PRETTY_FUNCTION__, sizeof(__PRETTY_FUNCTION__)).checksum();

@@ -17,7 +17,6 @@
 #include <ATen/detail/IPUHooksInterface.h>
 #include <ATen/detail/MAIAHooksInterface.h>
 #include <ATen/detail/MPSHooksInterface.h>
-#include <ATen/detail/MTIAHooksInterface.h>
 #include <ATen/detail/PrivateUse1HooksInterface.h>
 #include <ATen/detail/XLAHooksInterface.h>
 #include <ATen/detail/XPUHooksInterface.h>
@@ -97,9 +96,7 @@ class TORCH_API Context {
       return at::detail::getMPSHooks();
     } else if (opt_device_type == at::kPrivateUse1) {
       return at::detail::getPrivateUse1Hooks();
-    } else if (opt_device_type == at::kMTIA) {
-      return at::detail::getMTIAHooks();
-    } else if (opt_device_type == at::kHIP) {
+        } else if (opt_device_type == at::kHIP) {
       return at::detail::getHIPHooks();
     } else if (opt_device_type == at::kHPU) {
       return at::detail::getHPUHooks();
@@ -166,15 +163,8 @@ class TORCH_API Context {
   static bool hasMKLDNN();
   static bool ckSDPASupported();
   static bool ckGemmSupported();
-  static bool hasEigenSparse();
-  static bool hasMAGMA() {
-    return detail::getCUDAHooks().hasMAGMA();
-  }
   static bool hasCUDA() {
     return detail::getCUDAHooks().hasCUDA();
-  }
-  static bool hasMTIA() {
-    return detail::getMTIAHooks().hasMTIA();
   }
   static bool hasCUDART() {
     return detail::getCUDAHooks().hasCUDART();
@@ -479,11 +469,6 @@ class TORCH_API Context {
         "lazyInitXPU is deprecated. Please use lazyInitDevice(at::kXPU) instead.")
     lazyInitDevice(at::kXPU);
   }
-  void lazyInitMTIA() {
-    TORCH_WARN_DEPRECATION(
-        "lazyInitMTIA is deprecated. Please use lazyInitDevice(at::kMTIA) instead.")
-    lazyInitDevice(at::kMTIA);
-  }
   void lazyInitPrivateUse1() {
     TORCH_WARN_DEPRECATION(
         "lazyInitPrivateUse1 is deprecated. Please use lazyInitDevice(at::kPrivateUse1) instead.")
@@ -620,10 +605,6 @@ inline bool hasCUDA() {
   return globalContext().hasCUDA();
 }
 
-inline bool hasMTIA() {
-  return globalContext().hasMTIA();
-}
-
 inline bool hasHIP() {
   return globalContext().hasHIP();
 }
@@ -683,14 +664,6 @@ inline bool hasMKL() {
 
 inline bool hasLAPACK() {
   return globalContext().hasLAPACK();
-}
-
-inline bool hasEigenSparse() {
-  return globalContext().hasEigenSparse();
-}
-
-inline bool hasMAGMA() {
-  return globalContext().hasMAGMA();
 }
 
 inline bool hasMKLDNN() {

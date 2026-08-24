@@ -1,11 +1,8 @@
 #include "caffe2/utils/threadpool/ThreadPool.h"
 #include "WorkersPool.h"
 
-#if !defined(__s390x__) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#else
 #include <thread>
-#endif
 
 C10_DEFINE_bool(
     caffe2_threadpool_force_inline,
@@ -44,7 +41,6 @@ namespace {
 }
 
 size_t getDefaultNumThreads() {
-#if !defined(__s390x__) && !defined(__powerpc__)
   auto numThreads = 1U;
   if (cpuinfo_initialize()) {
     numThreads = std::max(cpuinfo_get_processors_count(), 1U);
@@ -54,9 +50,7 @@ size_t getDefaultNumThreads() {
   }
 
   bool applyCap = false;
-#if defined(C10_ANDROID)
-  applyCap = FLAGS_caffe2_threadpool_android_cap;
-#elif defined(C10_IOS)
+#if defined(C10_IOS)
   applyCap = FLAGS_caffe2_threadpool_ios_cap;
 #elif defined(TARGET_OS_MAC)
   applyCap = FLAGS_caffe2_threadpool_macos_cap;
@@ -64,22 +58,6 @@ size_t getDefaultNumThreads() {
 
   if (applyCap) {
     switch (numThreads) {
-#if defined(C10_ANDROID) && (CPUINFO_ARCH_ARM || CPUINFO_ARCH_ARM64)
-      case 4:
-        switch (cpuinfo_get_core(0)->midr & UINT32_C(0xFF00FFF0)) {
-          case UINT32_C(0x51002110): /* Snapdragon 820 Kryo Silver */
-          case UINT32_C(0x51002010): /* Snapdragon 821 Kryo Silver */
-          case UINT32_C(0x51002050): /* Snapdragon 820/821 Kryo Gold */
-            /* Kryo: 2+2 big.LITTLE */
-            numThreads = 2;
-            break;
-          default:
-            /* Anything else: assume homogeneous architecture */
-            numThreads = 4;
-            break;
-        }
-        break;
-#endif
       case 5:
         /* 4+1 big.LITTLE */
         numThreads = 4;
@@ -104,9 +82,6 @@ size_t getDefaultNumThreads() {
         break;
     }
   }
-#else
-  auto numThreads = std::max(std::thread::hardware_concurrency(), 1U);
-#endif
 
   if (FLAGS_pthreadpool_size) {
     // Always give precedence to explicit setting.

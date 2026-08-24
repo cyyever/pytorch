@@ -139,7 +139,6 @@ static std::shared_ptr<::gloo::transport::Device> makeUVDevice(
 // the flexibility of other application to override by priority. Register
 // UV to `UV` for env "GLOO_DEVICE_TRANSPORT" override.
 C10_REGISTER_CREATOR(GlooDeviceRegistry, APPLE, makeUVDevice)
-C10_REGISTER_CREATOR(GlooDeviceRegistry, WIN32, makeUVDevice)
 C10_REGISTER_CREATOR(GlooDeviceRegistry, UV, makeUVDevice)
 #endif
 
@@ -206,10 +205,6 @@ std::shared_ptr<::gloo::transport::Device> makeGlooDevice(
   return GlooDeviceRegistry()->Create(
       "APPLE", interfaceName, hostName, lazyInit);
 
-#elif defined(_WIN32)
-
-  return GlooDeviceRegistry()->Create(
-      "WIN32", interfaceName, hostName, lazyInit);
 #else
 
   return nullptr;

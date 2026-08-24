@@ -8,11 +8,7 @@ namespace at::xpu::detail {
 namespace _stubs {
 
 at::DynamicLibrary& getZELibrary() {
-#if defined(_WIN32)
-  static at::DynamicLibrary lib("ze_loader.dll");
-#else
   static at::DynamicLibrary lib("libze_loader.so");
-#endif
   return lib;
 }
 
@@ -71,7 +67,6 @@ at::DynamicLibrary& getZELibrary() {
   _STUB_5(ZE, NAME, ze_result_t ZE_APICALL, A1, A2, A3, A4, A5)
 
 // Intel level zero is not defaultly available on Windows.
-#ifndef _WIN32
 ZE_STUB5(
     zeModuleCreate,
     ze_context_handle_t,
@@ -98,16 +93,13 @@ ZE_STUB3(
     char*)
 ZE_STUB1(zeModuleBuildLogDestroy, ze_module_build_log_handle_t)
 
-#endif
 
 } // namespace _stubs
 
 LevelZero lazyLevelZero = {
 // Intel level zero is not defaultly available on Windows.
-#ifndef _WIN32
 #define _REFERENCE_MEMBER(name) _stubs::name,
     AT_FORALL_ZE(_REFERENCE_MEMBER)
 #undef _REFERENCE_MEMBER
-#endif
 };
 } // namespace at::xpu::detail

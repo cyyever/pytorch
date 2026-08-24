@@ -1,6 +1,3 @@
-#ifdef _WIN32
-#include <wchar.h> // _wgetenv for nvtx
-#endif
 
 #include <cuda_runtime.h>
 

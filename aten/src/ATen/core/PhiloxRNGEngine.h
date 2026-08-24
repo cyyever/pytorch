@@ -1,10 +1,6 @@
 #pragma once
 
 // define constants like M_PI and C keywords for MSVC
-#ifdef _MSC_VER
-#define _USE_MATH_DEFINES
-#include <math.h>
-#endif
 
 
 #ifdef __CUDACC__

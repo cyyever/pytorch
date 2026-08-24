@@ -27,16 +27,12 @@ REPO_ROOT = SCRIPT_DIR.parent.parent
 CUDA_ARCHES = ["13.0", "13.2", "13.4"]
 CUDA_STABLE = "13.0"
 
-# CUDA versions without a Windows installer on the ossci-windows bucket yet.
-CUDA_ARCHES_NO_WINDOWS = ["13.4"]
-
 ROCM_ARCHES = ["7.14", "10.0"]
 
 XPU_ARCHES = ["xpu"]
 
 CPU_AARCH64_ARCH = ["cpu-aarch64"]
 
-CPU_S390X_ARCH = ["cpu-s390x"]
 
 CUDA_AARCH64_ARCHES = [
     "13.0-aarch64",
@@ -167,67 +163,6 @@ def validate_nccl_dep_consistency(arch_version: str) -> None:
         )
 
 
-def _parse_linux_cudnn_versions() -> dict[str, str]:
-    """Return {cuda_short_version: cudnn_version} from install_cuda.sh."""
-    text = (REPO_ROOT / ".ci" / "scripts" / "install_cuda.sh").read_text()
-    results: dict[str, str] = {}
-    func_re = re.compile(r"^function install_(\d+)\s*\{")
-    cudnn_re = re.compile(r"^\s*CUDNN_VERSION=(\S+)")
-    current_func: str | None = None
-    for line in text.splitlines():
-        m = func_re.match(line)
-        if m:
-            digits = m.group(1)
-            current_func = digits[:-1] + "." + digits[-1]
-            continue
-        if current_func is not None:
-            m = cudnn_re.match(line)
-            if m:
-                results[current_func] = m.group(1)
-                current_func = None
-    return results
-
-
-def _parse_windows_cudnn_versions() -> dict[str, str]:
-    """Return {cuda_short_version: cudnn_version} from cuda_install.bat."""
-    text = (
-        REPO_ROOT / ".ci" / "pytorch" / "windows" / "internal" / "cuda_install.bat"
-    ).read_text()
-    results: dict[str, str] = {}
-    label_re = re.compile(r"^:cuda(\d+)\s*$")
-    cudnn_re = re.compile(
-        r"^set CUDNN_FOLDER=cudnn-windows-x86_64-([0-9.]+)_cuda\d+-archive"
-    )
-    current_label: str | None = None
-    for line in text.splitlines():
-        m = label_re.match(line)
-        if m:
-            digits = m.group(1)
-            current_label = digits[:-1] + "." + digits[-1]
-            continue
-        if current_label is not None:
-            m = cudnn_re.match(line)
-            if m:
-                results[current_label] = m.group(1)
-                current_label = None
-    return results
-
-
-def validate_cudnn_version_consistency(arch_version: str) -> None:
-    linux_versions = _parse_linux_cudnn_versions()
-    windows_versions = _parse_windows_cudnn_versions()
-    linux_ver = linux_versions.get(arch_version)
-    windows_ver = windows_versions.get(arch_version)
-    if linux_ver is None or windows_ver is None:
-        return
-    if linux_ver != windows_ver:
-        raise RuntimeError(
-            f"cuDNN version mismatch for CUDA {arch_version}: "
-            f"Linux has {linux_ver} (.ci/scripts/install_cuda.sh) "
-            f"but Windows has {windows_ver} (.ci/pytorch/windows/internal/cuda_install.bat)"
-        )
-
-
 _BUILD_ENV_SETUP = REPO_ROOT / ".ci" / "manywheel" / "build_env_setup.py"
 _RUNTIME_CUDA_INIT = REPO_ROOT / "torch" / "cuda" / "__init__.py"
 
@@ -272,8 +207,6 @@ def arch_type(arch_version: str) -> str:
         return "xpu"
     elif arch_version in CPU_AARCH64_ARCH:
         return "cpu-aarch64"
-    elif arch_version in CPU_S390X_ARCH:
-        return "cpu-s390x"
     elif arch_version in CUDA_AARCH64_ARCHES:
         return "cuda-aarch64"
     else:  # arch_version should always be "cpu" in this case
@@ -292,7 +225,6 @@ WHEEL_CONTAINER_IMAGES = {
     "xpu": "manylinux2_28-builder:xpu",
     "cpu": "manylinux2_28-builder:cpu",
     "cpu-aarch64": "manylinux2_28_aarch64-builder:cpu-aarch64",
-    "cpu-s390x": "manylinuxs390x-builder:cpu-s390x",
 }
 
 RELEASE = "release"
@@ -314,16 +246,11 @@ def translate_desired_cuda(gpu_arch_type: str, gpu_arch_version: str) -> str:
     return {
         "cpu": "cpu",
         "cpu-aarch64": "cpu",
-        "cpu-s390x": "cpu",
         "cuda": f"cu{gpu_arch_version.replace('.', '')}",
         "cuda-aarch64": f"cu{gpu_arch_version.replace('-aarch64', '').replace('.', '')}",
         "rocm": f"rocm{gpu_arch_version}",
         "xpu": "xpu",
     }.get(gpu_arch_type, gpu_arch_version)
-
-
-def list_without(in_list: list[str], without: list[str]) -> list[str]:
-    return [item for item in in_list if item not in without]
 
 
 def generate_libtorch_matrix(
@@ -334,8 +261,6 @@ def generate_libtorch_matrix(
 ) -> list[dict[str, str]]:
     if arches is None:
         arches = ["cpu"]
-        if os == "windows":
-            arches += list_without(CUDA_ARCHES, CUDA_ARCHES_NO_WINDOWS)
     if libtorch_variants is None:
         libtorch_variants = [
             "shared-with-deps",
@@ -375,8 +300,8 @@ def generate_wheels_matrix(
     python_versions: list[str] | None = None,
 ) -> list[dict[str, str]]:
     package_type = "wheel"
-    if os == "linux" or os == "linux-aarch64" or os == "linux-s390x":
-        # NOTE: We only build manywheel packages for x86_64 and aarch64 and s390x linux
+    if os == "linux" or os == "linux-aarch64":
+        # NOTE: We only build manywheel packages for x86_64 and aarch64 linux
         package_type = "manywheel"
 
     if python_versions is None:
@@ -387,16 +312,10 @@ def generate_wheels_matrix(
         arches = ["cpu"]
         if os == "linux":
             arches += CUDA_ARCHES + ROCM_ARCHES + XPU_ARCHES
-        elif os == "windows":
-            arches += list_without(CUDA_ARCHES, CUDA_ARCHES_NO_WINDOWS) + XPU_ARCHES
         elif os == "linux-aarch64":
             # Separate new if as the CPU type is different and
             # uses different build/test scripts
             arches = CPU_AARCH64_ARCH + CUDA_AARCH64_ARCHES
-        elif os == "linux-s390x":
-            # Only want the one arch as the CPU type is different and
-            # uses different build/test scripts
-            arches = ["cpu-s390x"]
 
     ret: list[dict[str, str]] = []
     for python_version in python_versions:
@@ -406,7 +325,6 @@ def generate_wheels_matrix(
                 ""
                 if arch_version == "cpu"
                 or arch_version == "cpu-aarch64"
-                or arch_version == "cpu-s390x"
                 or arch_version == "xpu"
                 else arch_version
             )
@@ -415,14 +333,12 @@ def generate_wheels_matrix(
             if os not in [
                 "linux",
                 "linux-aarch64",
-                "linux-s390x",
                 "macos-arm64",
-                "windows",
             ] and (python_version == "3.14" or python_version == "3.14t"):
                 continue
 
             # TODO: Enable python 3.15 on non linux OSes
-            if os not in ["linux", "linux-aarch64", "windows", "macos-arm64"] and (
+            if os not in ["linux", "linux-aarch64", "macos-arm64"] and (
                 python_version == "3.15" or python_version == "3.15t"
             ):
                 continue
@@ -490,8 +406,7 @@ def generate_wheels_matrix(
                             )
                             if gpu_arch_type == "rocm"
                             else PYTORCH_EXTRA_INSTALL_REQUIREMENTS[CUDA_STABLE]
-                            if gpu_arch_type == "cpu"
-                            and os in ("windows", "macos-arm64")
+                            if gpu_arch_type == "cpu" and os == "macos-arm64"
                             else ""
                         ),
                     }
@@ -507,11 +422,11 @@ def generate_libtorch_extraction_configs(
     """Generate libtorch extraction configs from existing wheel build configs.
 
     For each unique arch variant in wheel_configs, find the py3.10 config
-    (py3.11 for windows-arm64) and produce a config that the CI template
+    and produce a config that the CI template
     uses to add an extraction job that depends on that wheel's build job.
     """
-    preferred_python = "3.11" if os == "windows-arm64" else "3.10"
-    arch = "arm64" if os == "windows-arm64" else "x86_64"
+    preferred_python = "3.10"
+    arch = "x86_64"
 
     # Group wheel configs by (gpu_arch_type, gpu_arch_version)
     arch_to_config: dict[tuple[str, str], dict[str, str]] = {}
@@ -528,10 +443,7 @@ def generate_libtorch_extraction_configs(
 
         desired_cuda = source_config["desired_cuda"]
         libtorch_variant = "shared-with-deps"
-        # Include arch in the build name so windows x86_64 and arm64 libtorch
-        # packages don't share a name and overwrite each other on upload.
-        arch_tag = f"{arch}-" if os == "windows-arm64" else ""
-        build_name = f"libtorch-{arch_tag}{gpu_arch_type}{gpu_arch_version}-{libtorch_variant}-release".replace(
+        build_name = f"libtorch-{arch}{gpu_arch_type}{gpu_arch_version}-{libtorch_variant}-release".replace(
             ".", "_"
         )
 
@@ -559,7 +471,6 @@ def generate_libtorch_extraction_configs(
 arch_version = ""
 for arch_version in CUDA_ARCHES:
     validate_nccl_dep_consistency(arch_version)
-    validate_cudnn_version_consistency(arch_version)
 del arch_version
 validate_runtime_release_table_consistency()
 

@@ -131,16 +131,6 @@ inline Tensor new_qtensor(
     TORCH_INTERNAL_ASSERT(0, "unrecognized device for new_qtensor: ", device);
   }
 
-#ifdef USE_PYTORCH_QNNPACK
-  if (at::globalContext().qEngine() == at::QEngine::QNNPACK) {
-    TORCH_CHECK(!device.is_cuda(), "It looks like you are trying to quantize a CUDA tensor ",
-                "while QNNPACK backend is enabled. Although not expected to happen in ",
-                "practice, you might have done it for testing purposes. ",
-                "Please, either change the quantization engine or move the tensor to a CPU.");
-    allocator = c10::GetDefaultMobileCPUAllocator();
-  }
-#endif
-
   at::DispatchKey tensorDispatchKey = options.computeDispatchKey();
   native::check_size_nonnegative(sizes);
   auto dtype = options.dtype();

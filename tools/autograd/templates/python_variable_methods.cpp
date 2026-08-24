@@ -5,9 +5,6 @@
 
 // Undefine the copysign macro so that at::copysign works as intended with MSVC
 // https://github.com/python/cpython/blob/c60394c7fc9cc09b16e9675a3eeb5844b6d8523f/PC/pyconfig.h#L196
-#ifdef _MSC_VER
-#undef copysign
-#endif // _MSC_VER
 
 #include "torch/csrc/DynamicTypes.h"
 #include "torch/csrc/Exceptions.h"
@@ -489,29 +486,6 @@ static PyObject * THPVariable_cuda(PyObject* self, PyObject* args, PyObject* kwa
   auto opt_memory_format = r.memoryformatOptional(2);
   TORCH_CHECK(device.is_cuda(), "Invalid device, must be cuda device");
   torch::utils::device_lazy_init(at::kCUDA);
-  return THPVariable_Wrap(dispatch_to(self_, device, r.toBool(1), false, opt_memory_format));
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject * THPVariable_mtia(PyObject* self, PyObject* args, PyObject* kwargs)
-{
-  HANDLE_TH_ERRORS
-  static PythonArgParser parser({
-    "mtia(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)",
-    "mtia(Device? device=None, bool async=False, *, MemoryFormat? memory_format=None)|deprecated"
-  });
-  auto& self_ = THPVariable_Unpack(self);
-  ParsedArgs<3> parsed_args;
-  auto r = parser.parse(self, args, kwargs, parsed_args);
-
-  if (r.has_torch_function()) {
-    return handle_torch_function(r, self, args, kwargs, THPVariableClass, "torch.Tensor");
-  }
-
-  auto device = r.isNone(0) ? at::Device(at::DeviceType::MTIA) : r.device(0);
-  auto opt_memory_format = r.memoryformatOptional(2);
-  TORCH_CHECK(device.is_mtia(), "Invalid device, must be MTIA device");
-  torch::utils::device_lazy_init(at::kMTIA);
   return THPVariable_Wrap(dispatch_to(self_, device, r.toBool(1), false, opt_memory_format));
   END_HANDLE_TH_ERRORS
 }
@@ -1277,7 +1251,6 @@ PyMethodDef variable_methods[] = {
   {"copy_", castPyCFunctionWithKeywords(THPVariable_copy_), METH_VARARGS | METH_KEYWORDS, nullptr},
   {"cpu", castPyCFunctionWithKeywords(THPVariable_cpu), METH_VARARGS | METH_KEYWORDS, nullptr},
   {"cuda", castPyCFunctionWithKeywords(THPVariable_cuda), METH_VARARGS | METH_KEYWORDS, nullptr},
-  {"mtia", castPyCFunctionWithKeywords(THPVariable_mtia), METH_VARARGS | METH_KEYWORDS, nullptr},
   {"xpu", castPyCFunctionWithKeywords(THPVariable_xpu), METH_VARARGS | METH_KEYWORDS, nullptr},
   {"ipu", castPyCFunctionWithKeywords(THPVariable_ipu), METH_VARARGS | METH_KEYWORDS, nullptr},
   {"const_data_ptr", THPVariable_const_data_ptr, METH_NOARGS, nullptr},

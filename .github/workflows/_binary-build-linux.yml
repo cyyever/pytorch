@@ -8,8 +8,7 @@ name: linux-binary-build
 #   directive — checkout, env-setup, and the .ci/* build scripts all run
 #   directly inside it. Used by x86 / aarch64 / cuda runners.
 # - false: run on the bare runner and spawn the build container with
-#   `docker run` from a step. Used by s390x self-hosted runners, which
-#   register only with the bare `linux.s390x` label and lack a host-level
+#   `docker run` from a step. Used by self-hosted runners that lack a host-level
 #   docker CLI compatible with GHA's container directive.
 
 on:
@@ -41,7 +40,7 @@ on:
           When true, use GHA's native `container:` directive. When false,
           run on the bare runner and spawn the build container via
           `docker run`. Set to false on runners that lack a docker CLI
-          compatible with the container directive (e.g. s390x).
+          compatible with the container directive.
       ALPINE_IMAGE:
         required: false
         type: string

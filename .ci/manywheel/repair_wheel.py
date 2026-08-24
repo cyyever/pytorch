@@ -171,7 +171,6 @@ ROCM_SO_FILES: list[str] = [
     "libhipsparse.so",
     "libhsa-runtime64.so",
     "libamd_comgr.so",
-    "libmagma.so",
     "librccl.so",
     "librocblas.so",
     "librocfft.so",

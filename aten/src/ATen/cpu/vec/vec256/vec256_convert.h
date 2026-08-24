@@ -8,7 +8,7 @@
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_AVX2)
 
 template <>
 struct VecConvert<float, 1, BFloat16, 1> {
@@ -278,9 +278,9 @@ struct VecConvert<
   }
 };
 
-#endif /* defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER) */
+#endif /* defined(CPU_CAPABILITY_AVX2) */
 
-#if (defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER))
+#if defined(CPU_CAPABILITY_AVX2)
 template <typename src_t>
 struct VecConvert<
     float,
@@ -294,22 +294,14 @@ struct VecConvert<
 };
 #endif
 
-#if defined(CPU_CAPABILITY_SVE256) && defined(__ARM_FEATURE_BF16)
+#if defined(__ARM_FEATURE_BF16)
 
 template <>
 struct VecConvert<float, 1, BFloat16, 1> {
   static inline VectorizedN<float, 1> apply(
       const VectorizedN<BFloat16, 1>& src) {
     VectorizedN<float, 1> res;
-    // Load 16-bit unsigned integers from src into an SVE vector
-    svuint16_t u16x4 =
-        svld1_u16(svptrue_b16(), reinterpret_cast<const uint16_t*>(&src[0]));
-    // Zero-extend to 32-bit SVE does not have direct vmovl_u16 equivalent.
-    vls_uint32_t u32x4 =
-        svreinterpret_u32_u16(svzip1_u16(svdup_n_u16(0), u16x4));
-    // Reinterpret as float32
-    vls_float32_t f32x4 = svreinterpret_f32_u32(u32x4);
-    res[0] = Vectorized<float>(f32x4);
+    std::tie(res[0], std::ignore) = convert_bfloat16_float(src[0]);
     return res;
   }
 };
@@ -334,7 +326,7 @@ struct VecConvert<BFloat16, 1, float, 2> {
   }
 };
 
-#endif // defined(CPU_CAPABILITY_SVE256) && defined(__ARM_FEATURE_BF16)
+#endif // defined(__ARM_FEATURE_BF16)
 
 template <typename src_t>
 struct VecConvert<

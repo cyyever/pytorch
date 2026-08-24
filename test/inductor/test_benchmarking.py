@@ -245,11 +245,6 @@ class TestBenchmarker(TestCase):
                 "is_available",
                 side_effect=AssertionError("should not query XPU availability"),
             ),
-            patch.object(
-                _bench.torch.mtia,
-                "is_available",
-                side_effect=AssertionError("should not query MTIA availability"),
-            ),
         ):
             self.assertIsInstance(
                 _bench._make_default_benchmarker(), TorchProfilerBenchmarker

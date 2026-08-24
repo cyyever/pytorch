@@ -2,7 +2,6 @@
 #include <ATen/Context.h>
 #include <libkineto.h>
 #include <torch/csrc/autograd/profiler_kineto.h>
-#include <torch/csrc/mtia/profiler/MTIAMemoryProfiler.h>
 #include <torch/csrc/profiler/kineto_client_interface.h>
 
 // Ondemand tracing is not supported on Apple or edge platform
@@ -22,10 +21,6 @@ using namespace torch::autograd::profiler;
 
 class LibKinetoClient : public libkineto::ClientInterface {
  public:
-  void init() override {
-    ::torch::mtia::initMemoryProfiler();
-  }
-
   void prepare(
       bool report_input_shapes = false,
       bool profile_memory = false,
@@ -54,6 +49,8 @@ class LibKinetoClient : public libkineto::ClientInterface {
     scopes.insert(at::RecordScope::BACKWARD_FUNCTION);
     enableProfiler(cfg, activities, scopes);
   }
+
+  void init() override {}
 
   void stop() override {
     (void)disableProfiler();
@@ -91,7 +88,7 @@ void global_kineto_init() {
   if constexpr (kEnableGlobalObserver) {
     if (c10::utils::get_env("KINETO_USE_DAEMON").has_value()) {
       libkineto_init(
-          /*cpuOnly=*/!(at::hasCUDA() || at::hasXPU() || at::hasMTIA()),
+          /*cpuOnly=*/!(at::hasCUDA() || at::hasXPU()),
           /*logOnError=*/true);
       libkineto::api().suppressLogMessages();
     }

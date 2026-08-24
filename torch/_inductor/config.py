@@ -1484,7 +1484,7 @@ def decide_compile_threads() -> int:
     Here are the precedence to decide compile_threads
     1. User can override it by TORCHINDUCTOR_COMPILE_THREADS.  One may want to disable async compiling by
        setting this to 1 to make pdb happy.
-    2. Set to 1 if it's win32 platform
+    2. Set to 1 in fbcode without internal parallel compile support
     3. decide by the number of CPU cores
     """
     import logging
@@ -1496,9 +1496,6 @@ def decide_compile_threads() -> int:
     if "TORCHINDUCTOR_COMPILE_THREADS" in os.environ:
         compile_threads = int(os.environ["TORCHINDUCTOR_COMPILE_THREADS"])
         log.info("compile_threads set to %d via env", compile_threads)
-    elif sys.platform == "win32":
-        compile_threads = 1
-        log.info("compile_threads set to 1 for win32")
     elif is_fbcode() and not parallel_compile_enabled_internally():
         compile_threads = 1
         log.info("compile_threads set to 1 in fbcode")
@@ -2234,8 +2231,8 @@ class triton:
     # emits a one-time FutureWarning before falling back to masked indexing.
     #
     # TODO(#191012): remove use_block_ptr entirely (this flag + the block-pointer
-    # codegen path in codegen/triton.py) once downstream backends still on block
-    # pointers (e.g. MTIA) migrate.
+    # codegen path in codegen/triton.py) once the backends still on block
+    # pointers migrate.
     use_block_ptr = False
 
     # (Experimental)
@@ -2514,7 +2511,6 @@ class aot_inductor:
     )
 
     # Experimental. Flag to control whether to include weight in .so
-    # Not supported for cross_target_platform="windows".
     package_constants_in_so: bool = True
 
     # Experimental. Flag to control whether to package weight separately on disk and which
@@ -2568,18 +2564,7 @@ class aot_inductor:
     # Whether the compiled .so should link to libtorch
     link_libtorch: bool = True
 
-    # Currently the only valid option is "windows".
-    # We'll use x86_64-w64-mingw32-gcc to cross-compile a .dll file
-    # If using cuda, you also need to set WINDOWS_CUDA_HOME env var
-    # to point to windows CUDA toolkit.
-    # Example: WINDOWS_CUDA_HOME=cuda-windows-base/cuda_cudart/cudart/
-    # The path should contain lib cuda and lib cudart
     cross_target_platform: str | None = None
-
-    # If link_libtorch is False and cross_target_platform is windows,
-    # a library needs to be provided to provide the shim implementations.
-    aoti_shim_library: str | list[str] | None = None
-    aoti_shim_library_path: str | None = None
 
 
 # a convenient class that automatically sets a group of the configs in aot_inductor
@@ -2885,11 +2870,6 @@ tpu_backend: Literal["pallas"] = "pallas"
 
 # Backend to use for XPU codegen either "triton"
 xpu_backend: Literal["triton"] = "triton"
-
-
-class mtia:
-    # Configuration to force inductor to never use welford reductions for MTIA backend
-    disable_welford_reduction = False
 
 
 class halide:

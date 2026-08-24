@@ -17,9 +17,7 @@
 
 #if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define C10_RDTSC
-#if defined(_MSC_VER)
-#include <intrin.h>
-#elif defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #undef C10_RDTSC
 #elif defined(__clang__)
 // `__rdtsc` is available by default.
@@ -58,7 +56,7 @@ inline time_t getTime(bool allow_monotonic = false) {
   gettimeofday(&now, NULL);
   return static_cast<time_t>(now.tv_sec) * 1000000000 +
       static_cast<time_t>(now.tv_usec) * 1000;
-#elif defined(_WIN32) || defined(__MACH__)
+#elif defined(__MACH__)
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
              steady_clock_t::now().time_since_epoch())
       .count();

@@ -16,15 +16,9 @@ struct C10_API UndefinedTensorImpl final : public TensorImpl {
   //  device code
   // (ostensibly because the constexpr tricks MSVC into trying to compile this
   // function for device as well).
-#ifdef _WIN32
-  static inline TensorImpl* singleton() {
-    return &getInstance();
-  }
-#else
   static constexpr inline TensorImpl* singleton() {
     return &_singleton;
   }
-#endif
 
 #ifdef DEBUG
   bool has_storage() const override;
@@ -38,11 +32,7 @@ struct C10_API UndefinedTensorImpl final : public TensorImpl {
 
  private:
   UndefinedTensorImpl();
-#ifdef _WIN32
-  static UndefinedTensorImpl& getInstance();
-#else
   static UndefinedTensorImpl _singleton;
-#endif
   const char* tensorimpl_type_name() const override;
 };
 

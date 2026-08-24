@@ -19,7 +19,7 @@ namespace at::accelerator {
 // - It provides a set of common APIs as defined by AcceleratorHooksInterface
 //
 // As of today, accelerator devices are (in no particular order):
-// CUDA, MTIA, XPU, HIP, MPS, PrivateUse1
+// CUDA, XPU, HIP, MPS, PrivateUse1
 
 // Ensures that only one accelerator is available (at
 // compile time if possible) and return it.

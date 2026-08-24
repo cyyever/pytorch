@@ -6,9 +6,7 @@
 #include <c10/util/ArrayRef.h>
 #include <c10/util/strides.h>
 #include <unordered_map>
-#if !defined(__s390x__) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#endif
 #include <vector>
 
 #if AT_MKLDNN_ENABLED()

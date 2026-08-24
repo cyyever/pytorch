@@ -38,17 +38,14 @@ from torch.testing._internal.common_utils import (
     IS_REMOTE_GPU,
     IS_S390X,
     IS_SANDCASTLE,
-    IS_WINDOWS,
     NATIVE_DEVICES,
     PRINT_REPRO_ON_FAILURE,
-    skipCUDANonDefaultStreamIf,
     skipIfTorchDynamo,
     TEST_HPU,
     TEST_MKL,
     TEST_MPS,
     TEST_WITH_ASAN,
     TEST_WITH_MIOPEN_SUGGEST_NHWC,
-    TEST_WITH_MTIA,
     TEST_WITH_ROCM,
     TEST_WITH_TORCHINDUCTOR,
     TEST_WITH_TSAN,
@@ -262,8 +259,6 @@ log = logging.getLogger(__name__)
 #         Skips the test if the device is a CPU device and LAPACK is not installed
 #     - @skipCPUIfNoMkl
 #         Skips the test if the device is a CPU device and MKL is not installed
-#     - @skipCUDAIfNoMagma
-#         Skips the test if the device is a CUDA device and MAGMA is not installed
 #     - @skipCUDAIfRocm
 #         Skips the test if the device is a CUDA device and ROCm is being used
 
@@ -280,7 +275,7 @@ log = logging.getLogger(__name__)
 #   (3) Add logic to this file that appends your base class to
 #       device_type_test_bases when your device type is available.
 #   (4) (Optional) Write setUpClass/tearDownClass class methods that
-#       instantiate dependencies (see MAGMA in CUDATestBase).
+#       instantiate dependencies (see cuDNN in CUDATestBase).
 #   (5) (Optional) Override the "instantiate_test" method for total
 #       control over how your class creates tests.
 #
@@ -802,7 +797,6 @@ class CUDATestBase(DeviceTypeTestBase):
     _do_cuda_non_default_stream = True
     primary_device: ClassVar[str]
     cudnn_version: ClassVar[Any]
-    no_magma: ClassVar[bool]
     no_cudnn: ClassVar[bool]
 
     def has_cudnn(self):
@@ -844,9 +838,7 @@ class CUDATestBase(DeviceTypeTestBase):
 
     @classmethod
     def setUpClass(cls):
-        # has_magma shows up after cuda is initialized
         t = torch.ones(1).cuda()
-        cls.no_magma = not torch.cuda.has_magma
 
         # Determines if cuDNN is available and its version
         cls.no_cudnn = not torch.backends.cudnn.is_acceptable(t)
@@ -987,13 +979,8 @@ def get_device_type_test_bases():
 
     if IS_SANDCASTLE or IS_FBCODE:
         if IS_REMOTE_GPU:
-            # Skip if sanitizer is enabled or we're on MTIA machines
-            if (
-                not TEST_WITH_ASAN
-                and not TEST_WITH_TSAN
-                and not TEST_WITH_UBSAN
-                and not TEST_WITH_MTIA
-            ):
+            # Skip if sanitizer is enabled
+            if not TEST_WITH_ASAN and not TEST_WITH_TSAN and not TEST_WITH_UBSAN:
                 test_bases.append(CUDATestBase)
         else:
             test_bases.append(CPUTestBase)
@@ -1692,7 +1679,7 @@ class skipPRIVATEUSE1If(skipIf):
 def _has_sufficient_memory(device, size):
     device_ = torch.device(device)
     device_type = device_.type
-    if device_type in ["cuda", "xpu", "mtia"]:
+    if device_type in ["cuda", "xpu"]:
         acc = torch.accelerator.current_accelerator()
         # Case 1: no accelerator found
         if not acc:
@@ -1718,11 +1705,6 @@ def _has_sufficient_memory(device, size):
 
         if device_type == "xpu":
             return torch.xpu.memory.mem_get_info(device_)[0] >= size
-
-        if device_type == "mtia":
-            # MTIA has no mem_get_info; the dram stats dict exposes free_bytes
-            # (see torch/csrc bindings / mtia_hooks.cpp).
-            return torch.mtia.memory_stats(device_)["dram"]["free_bytes"] >= size
 
     if device_type == "xla":
         raise unittest.SkipTest("TODO: Memory availability checks for XLA?")
@@ -2262,7 +2244,7 @@ def skipCPUIfNoMkl(fn):
 # Skips a test on CPU if MKL Sparse is not available (it's not linked on Windows).
 def skipCPUIfNoMklSparse(fn):
     return skipCPUIf(
-        IS_WINDOWS or not TEST_MKL, "PyTorch is built without MKL support"
+        not TEST_MKL, "PyTorch is built without MKL support"
     )(fn)
 
 
@@ -2274,28 +2256,12 @@ def skipCPUIfNoMkldnn(fn):
     )(fn)
 
 
-# Skips a test on CUDA if MAGMA is not available.
-def skipCUDAIfNoMagma(fn):
-    return skipCUDAIf("no_magma", "no MAGMA library detected")(
-        skipCUDANonDefaultStreamIf(True)(fn)
-    )
-
-
 def has_cusolver():
     return not TEST_WITH_ROCM
 
 
 def has_hipsolver():
     return TEST_WITH_ROCM
-
-
-# Skips a test on CUDA if cuSOLVER is not available,
-# and on ROCm if MAGMA is not available.
-def skipCUDAIfNoCusolverROCMIfNoMagma(fn):
-    if TEST_WITH_ROCM:
-        return skipCUDAIfNoMagma(fn)
-    else:
-        return skipCUDAIfNoCusolver(fn)
 
 
 # Skips a test on CUDA/ROCM if cuSOLVER/hipSOLVER is not available
@@ -2305,22 +2271,11 @@ def skipCUDAIfNoCusolver(fn):
     )(fn)
 
 
-# Skips a test if both cuSOLVER and MAGMA are not available
-def skipCUDAIfNoMagmaAndNoCusolver(fn):
-    if has_cusolver():
-        return fn
-    else:
-        # cuSolver is disabled on cuda < 10.1.243, tests depend on MAGMA
-        return skipCUDAIfNoMagma(fn)
-
-
-# Skips a test if both cuSOLVER/hipSOLVER and MAGMA are not available
-def skipCUDAIfNoMagmaAndNoLinalgsolver(fn):
-    if has_cusolver() or has_hipsolver():
-        return fn
-    else:
-        # cuSolver is disabled on cuda < 10.1.243, tests depend on MAGMA
-        return skipCUDAIfNoMagma(fn)
+# Skips a test if neither cuSOLVER nor hipSOLVER is available
+def skipCUDAIfNoLinalgsolver(fn):
+    return skipCUDAIf(
+        not has_cusolver() and not has_hipsolver(), "cuSOLVER/hipSOLVER not available"
+    )(fn)
 
 
 # Skips a test on CUDA when using ROCm.

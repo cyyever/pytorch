@@ -11,10 +11,6 @@ namespace c10::utils {
 std::string str_error(int errnum) {
   auto old_errno = errno;
   std::string buf(256, '\0');
-#if defined(_WIN32)
-  auto res [[maybe_unused]] = strerror_s(buf.data(), buf.size(), errnum);
-  buf.resize(strlen(buf.c_str()));
-#else
   auto res [[maybe_unused]] = strerror_r(errnum, buf.data(), buf.size());
   if constexpr (std::is_same_v<decltype(res), int>) {
     buf.resize(strlen(buf.c_str()));
@@ -23,7 +19,6 @@ std::string str_error(int errnum) {
       buf = res;
     }
   }
-#endif
   errno = old_errno;
   return buf;
 }

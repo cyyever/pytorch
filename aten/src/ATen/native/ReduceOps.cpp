@@ -824,21 +824,10 @@ Tensor cumprod_backward(const Tensor& grad, const Tensor& input, int64_t dim, co
 
 // Implement std::is_nan<IntegralType> for MSVC.
 namespace {
-#ifdef _MSC_VER
-template<typename T>
-inline std::enable_if_t<std::is_integral_v<T>, bool> isnan_(T x) {
-  return false;
-}
-template<typename T>
-inline std::enable_if_t<!std::is_integral_v<T>, bool> isnan_(T x) {
-  return std::isnan(x);
-}
-#else
 template<typename T>
 inline bool isnan_(T x) {
   return std::isnan(x);
 }
-#endif
 }
 
 template<typename T1, typename T2, typename Operation>

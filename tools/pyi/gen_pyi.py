@@ -1744,7 +1744,6 @@ def gen_pyi(
             "is_quantized": ["is_quantized: _bool"],
             "is_meta": ["is_meta: _bool"],
             "is_mps": ["is_mps: _bool"],
-            "is_mtia": ["is_mtia: _bool"],
             "is_maia": ["is_maia: _bool"],
             "is_mkldnn": ["is_mkldnn: _bool"],
             "is_vulkan": ["is_vulkan: _bool"],

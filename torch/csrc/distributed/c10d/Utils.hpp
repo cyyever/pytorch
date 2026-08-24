@@ -8,18 +8,11 @@
 #include <c10/util/irange.h>
 #include <torch/csrc/distributed/c10d/Types.hpp>
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-typedef SSIZE_T ssize_t;
-#pragma comment(lib, "Ws2_32.lib")
-#else
 #include <fcntl.h>
 #include <netdb.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#endif
 
 #include <sys/types.h>
 
@@ -684,26 +677,6 @@ using SizeType = uint64_t;
 // `success_cond` is an expression used to check if an error has happened. So
 // for `fork()`, we can use `SYSCHECK(pid = fork(), pid != -1)`. The function
 // output is stored in variable `__output` and may be used in `success_cond`.
-#ifdef _WIN32
-#define SYSCHECK(expr, success_cond)                                           \
-  while (true) {                                                               \
-    auto __output = (expr);                                                    \
-    auto errno_local = WSAGetLastError();                                      \
-    (void)__output;                                                            \
-    if (!(success_cond)) {                                                     \
-      if (errno == EINTR) {                                                    \
-        continue;                                                              \
-      } else if (                                                              \
-          errno_local == WSAETIMEDOUT || errno_local == WSAEWOULDBLOCK) {      \
-        C10_THROW_ERROR(DistNetworkError, "Socket Timeout");                   \
-      } else {                                                                 \
-        C10_THROW_ERROR(DistNetworkError, c10::utils::str_error(errno_local)); \
-      }                                                                        \
-    } else {                                                                   \
-      break;                                                                   \
-    }                                                                          \
-  }
-#else
 #define SYSCHECK(expr, success_cond)                                     \
   while (true) {                                                         \
     auto __output = (expr);                                              \
@@ -720,7 +693,6 @@ using SizeType = uint64_t;
       break;                                                             \
     }                                                                    \
   }
-#endif
 
 // Most functions indicate error by returning `-1`. This is a helper macro for
 // this common case with `SYSCHECK`.

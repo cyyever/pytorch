@@ -7,10 +7,6 @@
 #include <iterator>
 #include <memory>
 
-#ifdef _WIN32
-#include <basetsd.h> // @manual
-using ssize_t = SSIZE_T;
-#endif
 
 #include <c10/macros/Macros.h>
 

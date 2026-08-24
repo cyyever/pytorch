@@ -48,7 +48,6 @@ __all__ = [
     "ExecutionTraceObserver",
 ]
 
-from . import itt
 
 
 _Ts = TypeVarTuple("_Ts")

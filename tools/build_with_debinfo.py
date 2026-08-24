@@ -151,9 +151,6 @@ def create_build_plan(
 
 
 def main() -> None:
-    if sys.platform == "win32":
-        print("Not supported on Windows yet")
-        sys.exit(-95)
     args = parse_args()
     if not has_build_ninja():
         print("Only ninja build system is supported at the moment")

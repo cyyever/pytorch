@@ -1,4 +1,4 @@
-#if !defined(C10_MOBILE) && !defined(ANDROID)
+#if !defined(C10_MOBILE)
 #pragma once
 
 #include <ATen/Tensor.h>

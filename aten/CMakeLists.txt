@@ -71,7 +71,6 @@ else()
   message("disabling CUDA because USE_CUDA is set false")
 endif()
 
-set(AT_NNPACK_ENABLED 0)
 
 list(APPEND ATen_CPU_INCLUDE
   ${CMAKE_CURRENT_SOURCE_DIR}/src)

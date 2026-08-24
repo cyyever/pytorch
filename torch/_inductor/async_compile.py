@@ -174,7 +174,6 @@ def _emit_triton_kernel_compile_metric(
     )
 
 
-_IS_WINDOWS = sys.platform == "win32"
 
 log = logging.getLogger(__name__)
 

@@ -1,13 +1,4 @@
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-
-#include <processthreadsapi.h>
-#else
 #include <unistd.h>
-#endif // _WIN32
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -88,11 +79,7 @@ static std::string getScalarValue(const c10::IValue& val) {
 }
 
 static int32_t processId() {
-#ifndef _WIN32
   return static_cast<int32_t>(getpid());
-#else
-  return static_cast<int32_t>(GetCurrentProcessId());
-#endif
 }
 
 //******************************************************************************

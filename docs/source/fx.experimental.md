@@ -172,32 +172,6 @@ These APIs are experimental and subject to change without notice.
     snapshot_fake
 ```
 
-## torch.fx.experimental.optimization
-
-```{eval-rst}
-.. currentmodule:: torch.fx.experimental.optimization
-```
-
-```{eval-rst}
-.. automodule:: torch.fx.experimental.optimization
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    extract_subgraph
-    gen_mkl_autotuner
-    matches_module_pattern
-    modules_to_mkldnn
-    optimize_for_inference
-    remove_dropout
-    replace_node_module
-    reset_modules
-    use_mkl_length
-```
-
 ## torch.fx.experimental.recording
 
 ```{eval-rst}

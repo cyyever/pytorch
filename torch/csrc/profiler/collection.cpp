@@ -430,14 +430,6 @@ std::unique_ptr<KinetoObserverContext> ThreadLocalSubqueue::begin_op(
 #if !defined BUILD_LITE_INTERPRETER && !defined C10_MOBILE
   // backward nodes source range corresponds to the forward node
   // TODO: consider using C++ stack trace
-  if (config_.with_stack && fn.scope() != at::RecordScope::BACKWARD_FUNCTION) {
-    auto cs = torch::profiler::impl::prepareCallstack(jit::currentCallstack());
-    torch_ops_.jit_stack_.emplace_back(callstackStr(cs));
-  }
-  if (config_.with_modules &&
-      fn.scope() != at::RecordScope::BACKWARD_FUNCTION) {
-    torch_ops_.jit_modules_.emplace_back(jit::currentModuleHierarchy());
-  }
 #endif
   if (config_.with_flops) {
     torch_ops_.extra_args_.emplace_back(

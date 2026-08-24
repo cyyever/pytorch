@@ -174,7 +174,6 @@ def load_torchbind_test_lib():
         IS_FBCODE,
         IS_MACOS,
         IS_SANDCASTLE,
-        IS_WINDOWS,
     )
 
     if IS_MACOS:
@@ -182,10 +181,7 @@ def load_torchbind_test_lib():
     elif IS_SANDCASTLE or IS_FBCODE:
         lib_file_path = Path("//caffe2/test/cpp/jit:test_custom_class_registrations")
     else:
-        if IS_WINDOWS:
-            lib_file_path = find_library_location("torchbind_test.dll")
-        else:
-            lib_file_path = find_library_location("libtorchbind_test.so")
+        lib_file_path = find_library_location("libtorchbind_test.so")
 
         if not lib_file_path.exists():
             raise unittest.SkipTest(

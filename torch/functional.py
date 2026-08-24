@@ -2144,8 +2144,7 @@ def _lu_impl(A, pivot=True, get_infos=False, out=None):
           factorization is present in the third element of the return tuple.
         * In the case of batches of square matrices with size less or equal
           to 32 on a CUDA device, the LU factorization is repeated for
-          singular matrices due to the bug in the MAGMA library
-          (see magma issue 13).
+          singular matrices.
         * ``L``, ``U``, and ``P`` can be derived using :func:`torch.lu_unpack`.
 
     .. warning::

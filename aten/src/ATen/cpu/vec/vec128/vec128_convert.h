@@ -5,7 +5,7 @@
 
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
-#if (defined(__aarch64__) && !defined(CPU_CAPABILITY_SVE256))
+#if defined(__aarch64__)
 
 // Enable auto-vectorization for clang-17+
 // GCC-12 has a bug: gcc.gnu.org/bugzilla/show_bug.cgi?id=117001
@@ -395,6 +395,6 @@ struct VecConvert<Half, 1, float, 2> {
 
 #endif // !defined(C10_MOBILE)
 
-#endif // defined(__aarch64__) && !defined(CPU_CAPABILITY_SVE256)
+#endif // defined(__aarch64__)
 } // namespace CPU_CAPABILITY
 } // namespace at::vec

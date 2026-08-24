@@ -166,7 +166,6 @@ for tracking purposes -->
 .. py:module:: torch.utils.benchmark.utils.fuzzer
 .. py:module:: torch.utils.benchmark.utils.sparse_fuzzer
 .. py:module:: torch.utils.benchmark.utils.timer
-.. py:module:: torch.utils.benchmark.utils.valgrind_wrapper.timer_interface
 .. py:module:: torch.utils.bundled_inputs
 .. py:module:: torch.utils.checkpoint
 .. py:module:: torch.utils.cpp_backtrace

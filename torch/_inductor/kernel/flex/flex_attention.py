@@ -144,7 +144,7 @@ def set_float32_precision(kernel_options: dict[str, Any], dtype: torch.dtype) ->
         return
     precision = (
         "ieee"
-        if precision == "ieee" or torch.version.hip or torch.mtia.is_available()
+        if precision == "ieee" or torch.version.hip
         else "tf32"
     )
     kernel_options.setdefault("FLOAT32_PRECISION", repr(precision))

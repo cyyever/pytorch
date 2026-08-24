@@ -1,9 +1,3 @@
-if(MSVC)
-  if(MSVC_VERSION LESS 1911)
-    return()
-  endif()
-endif(MSVC)
-
 list(APPEND ATen_CPU_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Dict_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/MaybeOwned_test.cpp

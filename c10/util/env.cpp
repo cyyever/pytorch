@@ -15,26 +15,6 @@ static std::shared_mutex& get_env_mutex() {
 // Set an environment variable.
 void set_env(const char* name, const char* value, bool overwrite) {
   std::lock_guard lk(get_env_mutex());
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996)
-  if (!overwrite) {
-    // NOLINTNEXTLINE(concurrency-mt-unsafe)
-    if (std::getenv(name) != nullptr) {
-      return;
-    }
-  }
-  auto full_env_variable = fmt::format("{}={}", name, value);
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  auto err = putenv(full_env_variable.c_str());
-  TORCH_INTERNAL_ASSERT(
-      err == 0,
-      "putenv failed for environment \"",
-      name,
-      "\", the error is: ",
-      err);
-#pragma warning(pop)
-#else
   // NOLINTNEXTLINE(concurrency-mt-unsafe)
   auto err = setenv(name, value, static_cast<int>(overwrite));
   TORCH_INTERNAL_ASSERT(
@@ -43,25 +23,14 @@ void set_env(const char* name, const char* value, bool overwrite) {
       name,
       "\", the error is: ",
       err);
-#endif
   return;
 }
 
 // Remove an environment variable.
 void unset_env(const char* name) {
   std::lock_guard lk(get_env_mutex());
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996)
-  // On Windows an assignment with an empty value removes the variable.
-  auto full_env_variable = fmt::format("{}=", name);
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  auto err = putenv(full_env_variable.c_str());
-#pragma warning(pop)
-#else
   // NOLINTNEXTLINE(concurrency-mt-unsafe)
   auto err = unsetenv(name);
-#endif
   TORCH_INTERNAL_ASSERT(
       err == 0,
       "unsetenv failed for environment \"",
@@ -73,15 +42,8 @@ void unset_env(const char* name) {
 // Reads an environment variable and returns the content if it is set
 std::optional<std::string> get_env(const char* name) noexcept {
   std::shared_lock lk(get_env_mutex());
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996)
-#endif
   // NOLINTNEXTLINE(concurrency-mt-unsafe)
   auto envar = std::getenv(name);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
   if (envar != nullptr) {
     return std::string(envar);
   }

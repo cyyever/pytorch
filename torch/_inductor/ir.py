@@ -2774,11 +2774,6 @@ class WelfordReduction(MultiOutputReduction):
             raise AssertionError(
                 'Expected reduction_type in ("welford_reduce", "welford_combine")'
             )
-        if config.mtia.disable_welford_reduction:
-            raise AssertionError(
-                "welford reduction usage is explicitly disabled, please check you config"
-            )
-
         reduction_numel = V.graph.sizevars.simplify(sympy_product(reduction_ranges))
 
         def const(val: int) -> TensorBox:

@@ -7,11 +7,7 @@
 #include <ATen/native/cpu/Loops.h>
 #include <c10/util/irange.h>
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define RESTRICT __restrict
-#else
 #define RESTRICT __restrict__
-#endif
 
 // Note on naming: it is unconventional.
 // grad_in does not mean that it is a gradient wrt to input,

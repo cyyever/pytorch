@@ -9,11 +9,11 @@
 #include <c10/util/numa.h>
 #include <cstring>
 
-#ifdef USE_MIMALLOC
+#if defined(USE_MIMALLOC)
 #include <mimalloc.h>
 #endif
 
-#ifdef __linux__
+#if defined(__linux__)
 #include <sys/mman.h>
 #include <unistd.h>
 #endif
@@ -55,7 +55,7 @@ void memset_junk(void* data, size_t num) {
   }
 }
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(__linux__)
 inline bool is_thp_alloc_enabled() {
   static bool value = [&] {
     auto env = c10::utils::check_env("THP_MEM_ALLOC_ENABLE");
@@ -69,7 +69,7 @@ inline bool is_thp_alloc(size_t nbytes) {
   return (is_thp_alloc_enabled() && (nbytes >= gAlloc_threshold_thp));
 }
 
-#elif !defined(__ANDROID__) && !defined(_MSC_VER)
+#else
 constexpr size_t c10_compute_alignment(size_t /*nbytes*/) {
   return gAlignment;
 }
@@ -80,7 +80,7 @@ constexpr bool is_thp_alloc([[maybe_unused]] size_t nbytes) {
 #endif
 } // namespace
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(__linux__)
 size_t c10_compute_alignment(size_t nbytes) {
   static const auto pagesize = sysconf(_SC_PAGESIZE);
   // for kernels that don't provide page size, default it to 4K
@@ -101,22 +101,8 @@ void* alloc_cpu(size_t nbytes) {
       nbytes);
 
   void* data = nullptr;
-#ifdef __ANDROID__
-  data = memalign(gAlignment, nbytes);
-  CAFFE_ENFORCE(
-      data,
-      "DefaultCPUAllocator: not enough memory: you tried to allocate ",
-      nbytes,
-      " bytes.");
-#elif defined(USE_MIMALLOC)
+#if defined(USE_MIMALLOC)
   data = mi_malloc_aligned(nbytes, gAlignment);
-  CAFFE_ENFORCE(
-      data,
-      "DefaultCPUAllocator: not enough memory: you tried to allocate ",
-      nbytes,
-      " bytes.");
-#elif defined(_MSC_VER)
-  data = _aligned_malloc(nbytes, gAlignment);
   CAFFE_ENFORCE(
       data,
       "DefaultCPUAllocator: not enough memory: you tried to allocate ",
@@ -134,7 +120,7 @@ void* alloc_cpu(size_t nbytes) {
       c10::utils::str_error(err),
       ")");
   if (is_thp_alloc(nbytes)) {
-#ifdef __linux__
+#if defined(__linux__)
     // MADV_HUGEPAGE advise is available only for linux.
     // general posix compliant systems can check POSIX_MADV_SEQUENTIAL advise.
     int ret = madvise(data, nbytes, MADV_HUGEPAGE);
@@ -163,17 +149,15 @@ void* alloc_cpu(size_t nbytes) {
 }
 
 void free_cpu(void* data) {
-#ifdef USE_MIMALLOC
+#if defined(USE_MIMALLOC)
   mi_free(data);
-#elif defined(_MSC_VER)
-  _aligned_free(data);
 #else
   // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
   free(data);
 #endif
 }
 
-#ifdef USE_MIMALLOC_ON_MKL
+#if defined(USE_MIMALLOC_ON_MKL)
 namespace mi_malloc_wrapper {
 void* c10_mi_malloc(size_t size) {
   return mi_malloc(size);

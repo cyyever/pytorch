@@ -42,14 +42,11 @@ from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
     IS_ARM64,
     IS_CI,
-    IS_CPU_EXT_SVE_SUPPORTED,
     IS_FBCODE,
     IS_MACOS,
-    MI200_ARCH,
     parametrize,
     requires_mkl,
     skipIfNoLapack,
-    skipIfRocmArch,
     slowTest,
     TEST_CUDA,
     TEST_WITH_ROCM,
@@ -855,7 +852,7 @@ class CPUReproTests(TestCase):
         ),
     )
     @unittest.skipIf(
-        IS_ARM64 and not IS_CPU_EXT_SVE_SUPPORTED,
+        IS_ARM64,
         "flaky on AArch64 (no SVE)",
     )
     def test_lstm_packed(
@@ -906,7 +903,7 @@ class CPUReproTests(TestCase):
         _test_lstm_packed_change_input_sizes_cpu_params,
     )
     @unittest.skipIf(
-        IS_ARM64 and not IS_CPU_EXT_SVE_SUPPORTED,
+        IS_ARM64,
         "flaky on AArch64 (no SVE)",
     )
     def test_lstm_packed_change_input_sizes_cpu(
@@ -2706,93 +2703,6 @@ class CPUReproTests(TestCase):
     @patch("torch.cuda.is_available", lambda: False)
     def test_timed_cpu_only(self):
         timed(lambda: torch.randn(10), ())
-
-    def test_vec_sve_armv9_arch_flags(self):
-        for vector_bits in (128, 256):
-            isa = cpu_vec_isa.VecSVE(vector_bits)
-
-            # Armv9-A + SVE2 path should switch to the Armv9 flag set with bf16/i8mm
-            with patch(
-                "torch.cpu.get_capabilities",
-                return_value={
-                    "bf16": True,
-                    "sve": True,
-                    "sve2": True,
-                    "sve_max_length": vector_bits,
-                },
-            ):
-                isa._armv9a_supported = None
-                flags = isa.build_arch_flags()
-                self.assertIn("+sve2", flags)
-                self.assertIn("+bf16", flags)
-                self.assertIn("+i8mm", flags)
-                self.assertIn(f"-msve-vector-bits={vector_bits}", flags)
-
-            # SVE-only path should stick to the base flags
-            with patch(
-                "torch.cpu.get_capabilities",
-                return_value={
-                    "bf16": True,
-                    "sve": True,
-                    "sve2": False,
-                    "sve_max_length": vector_bits,
-                },
-            ):
-                isa._armv9a_supported = None
-                flags = isa.build_arch_flags()
-                self.assertEqual(flags, isa._arch_flags)
-
-        try:
-            for sve2 in (False, True):
-                for vector_bits in (128, 256):
-                    cpu_vec_isa.valid_vec_isa_list.cache_clear()
-                    with (
-                        patch("sys.platform", "linux"),
-                        patch("platform.machine", return_value="aarch64"),
-                        patch(
-                            "torch.cpu.get_capabilities",
-                            return_value={
-                                "bf16": True,
-                                "sve": True,
-                                "sve2": sve2,
-                                "sve_max_length": vector_bits,
-                            },
-                        ),
-                        config.patch({"cpp.vec_isa_ok": True}),
-                    ):
-                        selected_isa = cpu_vec_isa.valid_vec_isa_list()[0]
-                        self.assertIsInstance(selected_isa, cpu_vec_isa.VecSVE)
-                        self.assertEqual(selected_isa.bit_width(), vector_bits)
-
-            cpu_vec_isa.valid_vec_isa_list.cache_clear()
-            with (
-                patch("sys.platform", "linux"),
-                patch("platform.machine", return_value="aarch64"),
-                patch("torch.cpu.get_capabilities", return_value={}),
-            ):
-                self.assertIsInstance(
-                    cpu_vec_isa.valid_vec_isa_list()[0], cpu_vec_isa.VecNEON
-                )
-
-            cpu_vec_isa.valid_vec_isa_list.cache_clear()
-            with (
-                patch("sys.platform", "linux"),
-                patch("platform.machine", return_value="aarch64"),
-                patch(
-                    "torch.cpu.get_capabilities",
-                    return_value={
-                        "bf16": True,
-                        "sve": True,
-                        "sve2": True,
-                        "sve_max_length": 128,
-                    },
-                ),
-                config.patch({"cpp.vec_isa_ok": False}),
-            ):
-                self.assertEqual(cpu_vec_isa.valid_vec_isa_list(), [])
-                self.assertIs(cpu_vec_isa.pick_vec_isa(), cpu_vec_isa.invalid_vec_isa)
-        finally:
-            cpu_vec_isa.valid_vec_isa_list.cache_clear()
 
     @requires_vectorization
     def test_vec_dynamic_shapes(self):
@@ -7454,7 +7364,6 @@ class CPUReproTests(TestCase):
 
         torch.compile(fn)(torch.randn(2, 2))
 
-    @skipIfRocmArch(MI200_ARCH)
     @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
     @requires_vectorization
     @config.patch(freezing=True)

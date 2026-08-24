@@ -11,9 +11,6 @@ namespace c10 {
 class AbortHandlerHelper {
  public:
   static AbortHandlerHelper& getInstance() {
-#ifdef _WIN32
-    thread_local
-#endif // _WIN32
         static AbortHandlerHelper instance;
     return instance;
   }
@@ -69,9 +66,6 @@ C10_ALWAYS_INLINE void set_terminate_handler() {
   bool use_custom_terminate = false;
   // On Windows it is enabled by default based on
   // https://github.com/pytorch/pytorch/pull/50320#issuecomment-763147062
-#ifdef _WIN32
-  use_custom_terminate = true;
-#endif // _WIN32
   auto result = c10::utils::check_env("TORCH_CUSTOM_TERMINATE");
   if (result != std::nullopt) {
     use_custom_terminate = result.value();

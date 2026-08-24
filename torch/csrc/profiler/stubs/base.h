@@ -37,8 +37,6 @@ struct TORCH_API ProfilerStubs {
 
 TORCH_API void registerCUDAMethods(ProfilerStubs* stubs);
 TORCH_API const ProfilerStubs* cudaStubs();
-TORCH_API void registerITTMethods(ProfilerStubs* stubs);
-TORCH_API const ProfilerStubs* ittStubs();
 TORCH_API void registerPrivateUse1Methods(ProfilerStubs* stubs);
 TORCH_API const ProfilerStubs* privateuse1Stubs();
 

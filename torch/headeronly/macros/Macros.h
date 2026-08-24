@@ -1,7 +1,7 @@
-#ifndef C10_MACROS_MACROS_H_
+#if !defined(C10_MACROS_MACROS_H_)
 #define C10_MACROS_MACROS_H_
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 #include <cassert>
 #else
 #include <assert.h>
@@ -23,9 +23,9 @@
 // to inform this header that it does not need to include the cmake_macros.h
 // file.
 
-#ifndef C10_USING_CUSTOM_GENERATED_MACROS
+#if !defined(C10_USING_CUSTOM_GENERATED_MACROS)
 #include <torch/headeronly/macros/cmake_macros.h>
-#endif // C10_USING_CUSTOM_GENERATED_MACROS
+#endif
 
 #include <torch/headeronly/macros/Export.h>
 
@@ -109,7 +109,7 @@
  * C10_ANONYMOUS_VARIABLE(str) introduces a new identifier which starts with
  * str and ends with a unique number.
  */
-#ifdef __COUNTER__
+#if defined(__COUNTER__)
 #define C10_UID __COUNTER__
 #define C10_ANONYMOUS_VARIABLE(str) C10_CONCATENATE(str, __COUNTER__)
 #else
@@ -117,7 +117,7 @@
 #define C10_ANONYMOUS_VARIABLE(str) C10_CONCATENATE(str, __LINE__)
 #endif
 
-#ifdef __has_cpp_attribute
+#if defined(__has_cpp_attribute)
 #define C10_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
 #else
 #define C10_HAS_CPP_ATTRIBUTE(x) (0)
@@ -132,7 +132,7 @@
 #define C10_LIFETIMEBOUND
 #endif
 
-#ifndef FBCODE_CAFFE2
+#if !defined(FBCODE_CAFFE2)
 /// DEPRECATED: Warn if a type or return value is discarded.
 #define C10_NODISCARD [[nodiscard]]
 
@@ -153,7 +153,7 @@
 
 #define C10_RESTRICT __restrict
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 
 // Simply define the namespace, in case a dependent library want to refer to
 // the c10 namespace but not any nontrivial files.
@@ -192,7 +192,7 @@ namespace at::xpu {
 using namespace c10::xpu;
 } // namespace at::xpu
 
-#endif // __cplusplus
+#endif
 
 // C10_LIKELY/C10_UNLIKELY
 //
@@ -216,17 +216,13 @@ using namespace c10::xpu;
 
 /// C10_NOINLINE - Functions whose declaration is annotated with this will not
 /// be inlined.
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #define C10_NOINLINE __attribute__((noinline))
-#elif _MSC_VER
-#define C10_NOINLINE __declspec(noinline)
 #else
 #define C10_NOINLINE
 #endif
 
-#if defined(_MSC_VER)
-#define C10_ALWAYS_INLINE __forceinline
-#elif __has_attribute(always_inline) || defined(__GNUC__)
+#if __has_attribute(always_inline) || defined(__GNUC__)
 #define C10_ALWAYS_INLINE __attribute__((__always_inline__)) inline
 #else
 #define C10_ALWAYS_INLINE inline
@@ -234,19 +230,13 @@ using namespace c10::xpu;
 
 // Unlike C10_ALWAYS_INLINE, C10_ALWAYS_INLINE_ATTRIBUTE can be used
 // on a lambda.
-#if defined(_MSC_VER)
-// MSVC 14.39 is reasonably recent and doesn't like
-// [[msvc::forceinline]] on a lambda, so don't try to use it.
-#define C10_ALWAYS_INLINE_ATTRIBUTE
-#elif __has_attribute(always_inline) || defined(__GNUC__)
+#if __has_attribute(always_inline) || defined(__GNUC__)
 #define C10_ALWAYS_INLINE_ATTRIBUTE __attribute__((__always_inline__))
 #else
 #define C10_ALWAYS_INLINE_ATTRIBUTE
 #endif
 
-#if defined(_MSC_VER)
-#define C10_ATTR_VISIBILITY_HIDDEN
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 #define C10_ATTR_VISIBILITY_HIDDEN __attribute__((__visibility__("hidden")))
 #else
 #define C10_ATTR_VISIBILITY_HIDDEN
@@ -254,13 +244,13 @@ using namespace c10::xpu;
 
 #define C10_ERASE C10_ALWAYS_INLINE C10_ATTR_VISIBILITY_HIDDEN
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 #include <cstdint>
 #else
 #include <stdint.h>
 #endif
 
-#ifdef __HIPCC__
+#if defined(__HIPCC__)
 // Unlike CUDA, HIP requires a HIP header to be included for __host__ to work.
 // We do this #include here so that C10_HOST_DEVICE and friends will Just Work.
 // See https://github.com/ROCm/hip/issues/441
@@ -384,15 +374,15 @@ static __host__ inline int C10_WARP_SIZE_INTERNAL() {
 static __device__ inline int C10_WARP_SIZE_INTERNAL() {
   return warpSize;
 }
-#else // __SPIRV__
+#else
 static __device__ inline constexpr int C10_WARP_SIZE_INTERNAL() {
 #if defined(__GFX9__)
   return 64;
-#else // __GFX9__
+#else
   return 32;
-#endif // __GFX9__
+#endif
 }
-#endif // __SPIRV__
+#endif
 #if defined(__SPIRV__)
 #define C10_WARP_SIZE_LOWER_BOUND 32
 #define C10_WARP_SIZE_UPPER_BOUND 64
@@ -403,98 +393,31 @@ static __device__ inline constexpr int C10_WARP_SIZE_INTERNAL() {
 #define C10_WARP_SIZE_LOWER_BOUND 32
 #define C10_WARP_SIZE_UPPER_BOUND 32
 #endif
-#else // !__HIPCC__
+#else
 static inline int C10_WARP_SIZE_INTERNAL() {
   return at::cuda::warp_size();
 }
 #define C10_WARP_SIZE_LOWER_BOUND 32
 #define C10_WARP_SIZE_UPPER_BOUND 64
-#endif // __HIPCC__
+#endif
 #define C10_WARP_SIZE (C10_WARP_SIZE_INTERNAL())
-#else // !USE_ROCM
+#else
 #define C10_WARP_SIZE 32
 #define C10_WARP_SIZE_LOWER_BOUND 32
 #define C10_WARP_SIZE_UPPER_BOUND 32
-#endif // USE_ROCM
-
-#if defined(_MSC_VER) && _MSC_VER <= 1900
-#define __func__ __FUNCTION__
 #endif
+
 
 // CUDA_KERNEL_ASSERT checks the assertion
 // even when NDEBUG is defined. This is useful for important assertions in CUDA
 // code that would otherwise be suppressed when building Release.
-#if defined(__ANDROID__) || defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 // Those platforms do not support assert()
 #define CUDA_KERNEL_ASSERT(cond)
 #define CUDA_KERNEL_ASSERT_MSG(cond, msg)
 #define CUDA_KERNEL_ASSERT_PRINTF(cond, msg, ...)
 #define SYCL_KERNEL_ASSERT(cond)
-#elif defined(_MSC_VER)
-#if defined(NDEBUG)
-extern "C" {
-C10_IMPORT
-#if defined(__SYCL_DEVICE_ONLY__)
-extern SYCL_EXTERNAL void _wassert(
-    const wchar_t* wexpr,
-    const wchar_t* wfile,
-    unsigned line);
 #else
-#if defined(__CUDA_ARCH__)
-__host__ __device__
-#endif // __CUDA_ARCH__
-    void
-    _wassert(wchar_t const* _Message, wchar_t const* _File, unsigned _Line);
-#endif // __SYCL_DEVICE_ONLY__
-}
-#endif // NDEBUG
-#define CUDA_KERNEL_ASSERT(cond)                 \
-  if (C10_UNLIKELY(!(cond))) {                   \
-    (void)(_wassert(                             \
-               _CRT_WIDE(#cond),                 \
-               _CRT_WIDE(__FILE__),              \
-               static_cast<unsigned>(__LINE__)), \
-           0);                                   \
-  }
-// TODO: This doesn't assert the message because I (chilli) couldn't figure out
-// a nice way to convert a char* to a wchar_t*
-#define CUDA_KERNEL_ASSERT_MSG(cond, msg)        \
-  if (C10_UNLIKELY(!(cond))) {                   \
-    (void)(_wassert(                             \
-               _CRT_WIDE(#cond),                 \
-               _CRT_WIDE(__FILE__),              \
-               static_cast<unsigned>(__LINE__)), \
-           0);                                   \
-  }
-#define CUDA_KERNEL_ASSERT_PRINTF(cond, msg, ...)                     \
-  if (C10_UNLIKELY(!(cond))) {                                        \
-    (void)(printf(                                                    \
-        "[CUDA_KERNEL_ASSERT] " __FILE__ ":" C10_STRINGIZE(           \
-            __LINE__) ": %s: block: [%d,%d,%d], thread: [%d,%d,%d]: " \
-                      "Assertion failed: `" #cond "`: " msg "\n",     \
-        __func__,                                                     \
-        blockIdx.x,                                                   \
-        blockIdx.y,                                                   \
-        blockIdx.z,                                                   \
-        threadIdx.x,                                                  \
-        threadIdx.y,                                                  \
-        threadIdx.z,                                                  \
-        ##__VA_ARGS__));                                              \
-    (void)(_wassert(                                                  \
-               _CRT_WIDE(#cond),                                      \
-               _CRT_WIDE(__FILE__),                                   \
-               static_cast<unsigned>(__LINE__)),                      \
-           0);                                                        \
-  }
-#define SYCL_KERNEL_ASSERT(cond)                 \
-  if (C10_UNLIKELY(!(cond))) {                   \
-    (void)(_wassert(                             \
-               _CRT_WIDE(#cond),                 \
-               _CRT_WIDE(__FILE__),              \
-               static_cast<unsigned>(__LINE__)), \
-           0);                                   \
-  }
-#else // __APPLE__, _MSC_VER
 #if defined(NDEBUG)
 extern "C" {
 #if defined(__SYCL_DEVICE_ONLY__)
@@ -510,7 +433,7 @@ _Noreturn void __assert_fail(
     const char* file,
     int line,
     const char* func);
-#else // __SYCL_DEVICE_ONLY__
+#else
 #if (defined(__CUDA_ARCH__) && !(defined(__clang__) && defined(__CUDA__)))
 // CUDA supports __assert_fail function which are common for both device
 // and host side code.
@@ -528,9 +451,9 @@ __host__ __device__
         unsigned int line,
         const char* function) noexcept __attribute__((__noreturn__));
 
-#endif // __SYCL_DEVICE_ONLY__
+#endif
 }
-#endif // NDEBUG
+#endif
 // ROCm disables kernel assert by default for performance considerations.
 // Though ROCm supports __assert_fail, it uses kernel printf which has
 // a non-negligible performance impact even if the assert condition is
@@ -586,34 +509,31 @@ __host__ __device__
     __assert_fail(                                                       \
         #cond, __FILE__, static_cast<unsigned int>(__LINE__), __func__); \
   }
-#endif //  C10_USE_ROCM_KERNEL_ASSERT && USE_ROCM
-#endif // __APPLE__
+#endif
+#endif
 
 // Compile-time switch to control how assertions are logged inside CUDA kernels.
 // If C10_CUDA_VERBOSE_ASSERT is defined,  CUDA_KERNEL_ASSERT_VERBOSE will
 // take addition information passed to the macro and forward them to
 // CUDA_KERNEL_ASSERT_PRINTF If C10_CUDA_VERBOSE_ASSERT is not defined,
 // CUDA_KERNEL_ASSERT_VERBOSE will behave the same as CUDA_KERNEL_ASSERT.
-#ifdef C10_ENABLE_VERBOSE_ASSERT
+#if defined(C10_ENABLE_VERBOSE_ASSERT)
 #define CUDA_KERNEL_ASSERT_VERBOSE(cond, ...) \
   CUDA_KERNEL_ASSERT_PRINTF(cond, __VA_ARGS__)
 #else
 #define CUDA_KERNEL_ASSERT_VERBOSE(cond, ...) CUDA_KERNEL_ASSERT(cond)
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
 
-#if defined(__ANDROID__)
-#define C10_ANDROID 1
-#define C10_MOBILE 1
-#elif (                   \
+#if (                   \
     defined(__APPLE__) && \
     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
 #define C10_IOS 1
 #define C10_MOBILE 1
-#endif // ANDROID / IOS
+#endif
 
 #if defined(C10_MOBILE) && C10_MOBILE
 #define C10_ALWAYS_INLINE_UNLESS_MOBILE inline
@@ -628,10 +548,10 @@ __host__ __device__
 #define STATIC_CONSTEXPR_STR_INL_EXCEPT_WIN_CUDA(field, val) \
   static constexpr const char field[] = val;
 #define STATIC_CONST_STR_OUT_OF_LINE_FOR_WIN_CUDA(cls, field, val)
-#endif // !defined(FBCODE_CAFFE2) && !defined(C10_NODEPRECATED)
+#endif
 
-#ifndef HAS_DEMANGLE
-#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
+#if !defined(HAS_DEMANGLE)
+#if defined(__EMSCRIPTEN__)
 #define HAS_DEMANGLE 0
 #elif defined(__APPLE__) && \
     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE)
@@ -639,12 +559,12 @@ __host__ __device__
 #else
 #define HAS_DEMANGLE 1
 #endif
-#endif // HAS_DEMANGLE
+#endif
 
 #define _C10_PRAGMA__(string) _Pragma(#string)
 #define _C10_PRAGMA_(string) _C10_PRAGMA__(string)
 
-#ifdef __clang__
+#if defined(__clang__)
 #define C10_CLANG_DIAGNOSTIC_PUSH() _Pragma("clang diagnostic push")
 #define C10_CLANG_DIAGNOSTIC_POP() _Pragma("clang diagnostic pop")
 #define C10_CLANG_DIAGNOSTIC_IGNORE(flag) \
@@ -657,7 +577,7 @@ __host__ __device__
 #define C10_CLANG_HAS_WARNING(flag) 0
 #endif
 
-#ifdef __clang__
+#if defined(__clang__)
 
 #define C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED(warning)         \
   _C10_PRAGMA_(clang diagnostic push)                               \
@@ -725,7 +645,7 @@ __host__ __device__
 #define _JOIN_NS3(a, b, c) a::b::c
 
 #if !defined(HIDDEN_NAMESPACE_BEGIN)
-#if defined(__GNUG__) && !defined(_WIN32)
+#if defined(__GNUG__)
 #define HIDDEN_NAMESPACE_BEGIN(...) \
   _HIDDEN_NS_GET_MACRO(             \
       __VA_ARGS__, _HIDDEN_NS_3, _HIDDEN_NS_2, _HIDDEN_NS_1)(__VA_ARGS__)
@@ -737,7 +657,7 @@ __host__ __device__
 #endif
 
 #if !defined(HIDDEN_NAMESPACE_END)
-#if defined(__GNUG__) && !defined(_WIN32)
+#if defined(__GNUG__)
 #define HIDDEN_NAMESPACE_END(...)                                         \
   _HIDDEN_NS_GET_MACRO(                                                   \
       __VA_ARGS__, _HIDDEN_NS_END_N, _HIDDEN_NS_END_N, _HIDDEN_NS_END_1)( \
@@ -747,4 +667,4 @@ __host__ __device__
 #endif
 #endif
 
-#endif // C10_MACROS_MACROS_H_
+#endif

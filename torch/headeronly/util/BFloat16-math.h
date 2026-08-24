@@ -222,15 +222,6 @@ template <
 inline T abs(T a) {
   return std::abs(float(a));
 }
-#if defined(_MSC_VER) && defined(__CUDACC__)
-template <
-    typename T,
-    typename std::
-        enable_if_t<torch::headeronly::is_reduced_floating_point_v<T>, int> = 0>
-inline T pow(T a, double b) {
-  return std::pow(float(a), float(b));
-}
-#else
 template <
     typename T,
     typename std::
@@ -238,7 +229,6 @@ template <
 inline T pow(T a, double b) {
   return std::pow(float(a), b);
 }
-#endif
 template <
     typename T,
     typename std::
