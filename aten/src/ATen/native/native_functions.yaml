@@ -267,13 +267,13 @@
     CUDA: native_dropout_cuda
     MPS: native_dropout_mps
     XPU: native_dropout_xpu
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: native_dropout_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: native_dropout_nested
   tags: [nondeterministic_seeded, core]
   autogen: native_dropout.out
 
 - func: native_dropout_backward(Tensor grad_output, Tensor mask, float scale) -> Tensor
   dispatch:
-    CPU, NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: native_dropout_backward
+    CPU, NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: native_dropout_backward
     CUDA: native_dropout_backward_cuda
     MPS: native_dropout_backward_mps
     XPU: native_dropout_backward_xpu
@@ -323,7 +323,7 @@
     CompositeExplicitAutograd: abs
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: abs_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMPS, SparseCsrMeta, SparseCsrXPU: abs_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_abs
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_abs
   tags: [core, pointwise]
 
 - func: abs_(Tensor(a!) self) -> Tensor(a!)
@@ -333,7 +333,7 @@
     CompositeExplicitAutograd: abs_
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: abs_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMPS, SparseCsrMeta, SparseCsrXPU: abs_sparse_csr_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_abs_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_abs_
 
 - func: abs.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
   device_check: NoCheck   # TensorIterator
@@ -411,7 +411,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: sgn_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: sgn_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sgn
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sgn
   tags: pointwise
 
 - func: sgn_(Tensor(a!) self) -> Tensor(a!)
@@ -420,7 +420,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: sgn_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: sgn_sparse_csr_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sgn_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sgn_
   tags: pointwise
 
 - func: sgn.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -539,7 +539,7 @@
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: add_sparse_csr
     MkldnnCPU: mkldnn_add
     ZeroTensor: add_zerotensor
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_add_Tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_add_Tensor
   tags: [core, pointwise]
 
 - func: add_.Tensor(Tensor(a!) self, Tensor other, *, Scalar alpha=1) -> Tensor(a!)
@@ -550,7 +550,7 @@
     SparseCPU, SparseCUDA, SparseMPS, SparseMeta, SparseXPU: add_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: add_sparse_csr_
     MkldnnCPU: mkldnn_add_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_add__Tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_add__Tensor
   tags: pointwise
 
 - func: add.out(Tensor self, Tensor other, *, Scalar alpha=1, Tensor(a!) out) -> Tensor(a!)
@@ -687,7 +687,7 @@
   structured_delegate: all.out
   variants: function, method
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_all
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_all
   tags: reduction
 
 - func: all.dims(Tensor self, int[]? dim=None, bool keepdim=False) -> Tensor
@@ -1240,7 +1240,7 @@
   variants: function, method
   dispatch:
     CompositeExplicitAutograd: logical_not
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_logical_not
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_logical_not
   tags: [core, pointwise]
 
 - func: logical_not_(Tensor(a!) self) -> Tensor(a!)
@@ -1248,7 +1248,7 @@
   variants: method
   dispatch:
     CompositeExplicitAutograd: logical_not_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_logical_not_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_logical_not_
   tags: pointwise
 
 - func: logical_not.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -1385,7 +1385,7 @@
   structured_delegate: cat.out
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: cat_sparse
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: cat_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: cat_nested
   tags: core
 
 - func: cat.out(Tensor[] tensors, int dim=0, *, Tensor(a!) out) -> Tensor(a!)
@@ -1453,7 +1453,7 @@
   device_guard: False
   dispatch:
     CompositeImplicitAutograd: chunk
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: chunk_nested_tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: chunk_nested_tensor
 
 - func: tensor_split.sections(Tensor(a -> *) self, SymInt sections, int dim=0) -> Tensor(a)[]
   variants: function, method
@@ -1742,7 +1742,7 @@
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: copy_sparse_wrapper_
     CompositeExplicitAutograd: copy_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: copy_sparse_compressed_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: copy_nested_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: copy_nested_
   autogen: copy.out
 
 - func: _copy_from(Tensor self, Tensor dst, bool non_blocking=False) -> Tensor
@@ -1762,7 +1762,7 @@
   variants: function, method
   structured_delegate: cos.out
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_cos
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_cos
   tags: [core, pointwise]
 
 - func: cos_(Tensor(a!) self) -> Tensor(a!)
@@ -2075,7 +2075,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: div_sparse
     ZeroTensor: div_zerotensor
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_div_Tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_div_Tensor
   tags: [core, pointwise]
 
 - func: div_.Tensor(Tensor(a!) self, Tensor other) -> Tensor(a!)
@@ -2126,7 +2126,7 @@
   variants: function, method
   dispatch:
     CompositeExplicitAutograd: div
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_div_Scalar
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_div_Scalar
   tags: [core, pointwise]
 
 - func: div_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -2229,7 +2229,7 @@
 - func: embedding(Tensor weight, Tensor indices, SymInt padding_idx=-1, bool scale_grad_by_freq=False, bool sparse=False) -> Tensor
   dispatch:
     CompositeExplicitAutograd: embedding_symint
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_embedding
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_embedding
   autogen: embedding.out
   tags: core
 
@@ -2414,7 +2414,7 @@
     CompositeExplicitAutograd: empty_like
     SparseCPU, SparseCUDA, SparseMPS, SparseMeta, SparseXPU: empty_like_sparse_coo
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: empty_like_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: empty_like_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: empty_like_nested
   autogen: empty_like.out
 
 - func: empty_strided(SymInt[] size, SymInt[] stride, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
@@ -2602,7 +2602,7 @@
     CPU, CUDA, MPS, XPU: fill_
     Meta: fill_meta_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: fill_sparse_csr_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: fill_nested_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: fill_nested_
   autogen: fill.Scalar_out
 
 - func: fill_.Tensor(Tensor(a!) self, Tensor value) -> Tensor(a!)
@@ -2611,7 +2611,7 @@
   dispatch:
     CPU, CUDA, MPS, XPU: fill_
     Meta: fill_meta_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: fill_nested_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: fill_nested_
   autogen: fill.Tensor_out
 
 - func: floor(Tensor self) -> Tensor
@@ -3087,7 +3087,7 @@
   device_guard: False
   dispatch:
     CPU, CUDA, MPS, XPU: isnan
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isnan
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isnan
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: isnan_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: isnan_sparse_csr
   autogen: isnan.out
@@ -3138,7 +3138,7 @@
   device_check: NoCheck
   device_guard: False
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: nested_is_same_size
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: nested_is_same_size
     CompositeExplicitAutograd: is_same_size
 
 - func: is_signed(Tensor self) -> bool
@@ -3219,7 +3219,7 @@
     MPS: layer_norm_mps
     XPU: layer_norm_xpu
     CompositeExplicitAutograd: math_native_layer_norm
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: nested_layer_norm
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: nested_layer_norm
   autogen: native_layer_norm.out
   tags: core
 
@@ -3229,7 +3229,7 @@
     CUDA: layer_norm_backward_cuda
     MPS: layer_norm_backward_mps
     XPU: layer_norm_backward_xpu
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: layer_norm_backward_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: layer_norm_backward_nested
   autogen: native_layer_norm_backward.out
   tags: core
 
@@ -3273,12 +3273,12 @@
   python_module: nn
   dispatch:
     CompositeImplicitAutograd: linear
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: nested_linear
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: nested_linear
     MPS: _mps_linear
 
 - func: linear_backward(Tensor self, Tensor grad_output, Tensor weight, bool[3] output_mask) -> (Tensor, Tensor, Tensor)
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: nested_linear_backward
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: nested_linear_backward
     MPS: mps_linear_backward
   autogen: linear_backward.out
 
@@ -3694,17 +3694,17 @@
   variants: function, method
   dispatch:
     CompositeImplicitAutograd: matmul
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: matmul_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: matmul_nested
 
 - func: matmul_backward(Tensor grad, Tensor self, Tensor other, bool[2] mask) -> (Tensor, Tensor)
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: matmul_backward_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: matmul_backward_nested
   autogen: matmul_backward.out
 
 - func: matmul.out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
   dispatch:
     CompositeImplicitAutograd: matmul_out
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: matmul_out_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: matmul_out_nested
 
 # Alias to linalg.matrix_power
 - func: matrix_power(Tensor self, int n) -> Tensor
@@ -4127,7 +4127,7 @@
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: mul_sparse_csr
     MkldnnCPU: mkldnn_mul
     ZeroTensor: mul_zerotensor
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul_Tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul_Tensor
   tags: [core, pointwise]
 
 - func: mul_.Tensor(Tensor(a!) self, Tensor other) -> Tensor(a!)
@@ -4138,7 +4138,7 @@
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: mul_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: mul_sparse_csr_
     MkldnnCPU: mkldnn_mul_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul__Tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul__Tensor
   tags: pointwise
 
 - func: mul.out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -4162,7 +4162,7 @@
   dispatch:
     CompositeExplicitAutograd: mul
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: mul_scalar_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul_Scalar
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul_Scalar
   tags: [core, pointwise]
 
 - func: mul_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -4171,7 +4171,7 @@
   dispatch:
     CompositeExplicitAutograd: mul_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: mul__scalar_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul__Scalar
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_mul__Scalar
   autogen: mul.Scalar_out
   tags: pointwise
 # multiply, alias for mul
@@ -4237,7 +4237,7 @@
   device_guard: False
   dispatch:
     CompositeImplicitAutograd: narrow_symint
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: narrow_nested_symint
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: narrow_nested_symint
 
 - func: narrow.Tensor(Tensor(a) self, int dim, Tensor start, SymInt length) -> Tensor(a)
   variants: function, method
@@ -4375,7 +4375,7 @@
     # NB: Although this composite mutates on the inside, it is
     # non-differentiable so NonFunctional doesn't apply
     CompositeExplicitAutograd: ones_like
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: ones_like
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: ones_like
   autogen: ones_like.out
 
 - func: pairwise_distance(Tensor x1, Tensor x2, float p=2, float eps=1e-06, bool keepdim=False) -> Tensor
@@ -4790,7 +4790,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: neg_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: neg_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_neg
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_neg
   tags: [core, pointwise]
 
 - func: neg_(Tensor(a!) self) -> Tensor(a!)
@@ -4800,7 +4800,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: neg_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: neg_sparse_csr_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_neg_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_neg_
   tags: pointwise
 
 - func: neg.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -4953,7 +4953,7 @@
     CPU, CUDA, XPU: relu
     MPS: relu_mps
     MkldnnCPU: mkldnn_relu
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_relu
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_relu
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: relu_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: relu_sparse_csr
   tags: [core, pointwise]
@@ -4965,7 +4965,7 @@
     CPU, CUDA, XPU: relu_
     MPS: relu_mps_
     MkldnnCPU: mkldnn_relu_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_relu_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_relu_
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: relu_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: relu_sparse_csr_
   autogen: relu.out
@@ -5010,7 +5010,7 @@
   device_check: NoCheck   # TensorIterator
   python_module: nn
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_gelu_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_gelu_
 
 - func: gelu(Tensor self, *, str approximate='none') -> Tensor
   structured_delegate: gelu.out
@@ -5018,7 +5018,7 @@
   python_module: nn
   dispatch:
     MkldnnCPU: mkldnn_gelu
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_gelu
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_gelu
   tags: [core, pointwise]
 
 - func: gelu_backward.grad_input(Tensor grad_output, Tensor self, *, str approximate='none', Tensor(a!) grad_input) -> Tensor(a!)
@@ -5036,7 +5036,7 @@
   python_module: nn
   dispatch:
     MkldnnCPU: mkldnn_gelu_backward
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: gelu_backwards_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: gelu_backwards_nested
   tags: pointwise
 
 - func: infinitely_differentiable_gelu_backward(Tensor grad, Tensor self) -> Tensor
@@ -5095,7 +5095,7 @@
   dispatch:
     CompositeExplicitAutograd: select_symint
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: select_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: select_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: select_nested
   tags: core
 
 - func: select_backward(Tensor grad_output, SymInt[] input_sizes, int dim, SymInt index) -> Tensor
@@ -5111,7 +5111,7 @@
   device_check: NoCheck
   device_guard: False
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _nested_select_backward_symint
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _nested_select_backward_symint
 
 - func: selu(Tensor self) -> Tensor
   device_check: NoCheck   # TensorIterator
@@ -5138,14 +5138,14 @@
   structured_delegate: silu.out
   python_module: nn
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_silu
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_silu
   tags: pointwise
 
 - func: silu_(Tensor(a!) self) -> Tensor(a!)
   structured_delegate: silu.out
   python_module: nn
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_silu_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_silu_
   tags: pointwise
 
 - func: silu.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -5169,7 +5169,7 @@
   python_module: nn
   dispatch:
     CompositeImplicitAutograd: math_silu_backward
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: silu_backward_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: silu_backward_nested
   tags: pointwise
 
 - func: mish(Tensor self) -> Tensor
@@ -5244,7 +5244,7 @@
   dispatch:
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: sin_sparse_csr
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: sin_sparse
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sin
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sin
   tags: [core, pointwise]
 
 - func: sin_(Tensor(a!) self) -> Tensor(a!)
@@ -5326,7 +5326,7 @@
   variants: function, method
   dispatch:
     CompositeExplicitAutograd: detach
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: detach
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: detach
 
 # Like `detach()`, but modifies this `Variable` in-place. This method may
 # only be called on non-view `Variable`s. You can use `is_view()` to check
@@ -5455,7 +5455,7 @@
   structured_delegate: _softmax.out
   dispatch:
     MkldnnCPU: mkldnn_softmax
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: softmax_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: softmax_nested
   tags: core
 
 - func: _softmax.out(Tensor self, int dim, bool half_to_float, *, Tensor(a!) out) -> Tensor(a!)
@@ -5469,7 +5469,7 @@
 - func: _softmax_backward_data(Tensor grad_output, Tensor output, int dim, ScalarType input_dtype) -> Tensor
   structured_delegate: _softmax_backward_data.out
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: nested_softmax_backward
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: nested_softmax_backward
 
 - func: _softmax_backward_data.out(Tensor grad_output, Tensor output, int dim, ScalarType input_dtype, *, Tensor(a!) grad_input) -> Tensor(a!)
   structured: True
@@ -5514,7 +5514,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: split_with_sizes
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: split_with_sizes_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: split_with_sizes_nested
   tags: core
 
 - func: hsplit.int(Tensor(a -> *) self, int sections) -> Tensor(a)[]
@@ -5541,7 +5541,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: squeeze
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: squeeze_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: squeeze_nested
 
 - func: squeeze.dim(Tensor(a) self, int dim) -> Tensor(a)
   variants: function, method
@@ -5549,7 +5549,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: squeeze
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: squeeze_dim_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: squeeze_dim_nested
   tags: core
 
 - func: squeeze.dims(Tensor(a) self, int[] dim) -> Tensor(a)
@@ -5558,7 +5558,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: squeeze
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: squeeze_dim_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: squeeze_dim_nested
   tags: core
 
 - func: squeeze_(Tensor(a!) self) -> Tensor(a!)
@@ -5726,7 +5726,7 @@
   structured_delegate: sqrt.out
   variants: function, method
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sqrt
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sqrt
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: sqrt_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: sqrt_sparse_csr
   tags: [core, pointwise]
@@ -5889,7 +5889,7 @@
     MkldnnCPU: mkldnn_tanh
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: tanh_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: tanh_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_tanh
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_tanh
   tags: [core, pointwise]
 
 - func: tanh_(Tensor(a!) self) -> Tensor(a!)
@@ -5900,7 +5900,7 @@
     MkldnnCPU: mkldnn_tanh_
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: tanh_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: tanh_sparse_csr_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_tanh_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_tanh_
   tags: pointwise
 
 - func: tanh.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -5955,7 +5955,7 @@
     MkldnnCPU: mkldnn_relu_backward
     SparseCPU, SparseCUDA, SparseXPU: threshold_backward_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: threshold_backward_sparse_compressed
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: threshold_backwards_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: threshold_backwards_nested
   tags: pointwise
 
 - func: tile(Tensor self, SymInt[] dims) -> Tensor
@@ -5969,7 +5969,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: transpose
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: transpose_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: transpose_nested
 
 - func: _mkldnn_transpose(Tensor self, int dim0, int dim1) -> Tensor
   device_check: NoCheck
@@ -6063,13 +6063,13 @@
 - func: _nested_tensor_size(Tensor self) -> Tensor
   variants: method
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _nested_tensor_size
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _nested_tensor_size
   autogen: _nested_tensor_size.out
 
 - func: _nested_tensor_strides(Tensor self) -> Tensor
   variants: method
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _nested_tensor_strides
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _nested_tensor_strides
   autogen: _nested_tensor_strides.out
 
 - func: _nested_tensor_storage_offsets(Tensor self) -> Tensor
@@ -6082,7 +6082,7 @@
 # _nested_from_padded_and_nested_example is available for testing.
 - func: _nested_from_padded_and_nested_example(Tensor padded, Tensor nt_example) -> Tensor
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_from_padded_and_nested_example
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_from_padded_and_nested_example
   autogen: _nested_from_padded_and_nested_example.out
 
 # The input arguments' types to this functions are temporary. When nested tensors switch to using SymInts for their metadata representation
@@ -6280,7 +6280,7 @@
   dispatch:
     CompositeExplicitAutograd: unsqueeze
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: unsqueeze_sparse
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: unsqueeze_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: unsqueeze_nested
   tags: core
 
 - func: unsqueeze_(Tensor(a!) self, int dim) -> Tensor(a!)
@@ -6355,14 +6355,14 @@
   variants: function, method
   dispatch:
     CPU, CUDA, MPS, XPU: where
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_where
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_where
   tags: [core, pointwise]
 
 - func: where.self_out(Tensor condition, Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
   device_check: NoCheck   # TensorIterator
   dispatch:
     CPU, CUDA, MPS, XPU: where_self_out
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_where_out
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_where_out
 
 - func: where.ScalarSelf(Tensor condition, Scalar self, Tensor other) -> Tensor
   variants: function
@@ -6740,7 +6740,7 @@
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: clone_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: clone_sparse_compressed
     MkldnnCPU: mkldnn_clone
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: clone_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: clone_nested
   autogen: clone.out
   tags: [core, pointwise]
 
@@ -6774,7 +6774,7 @@
     SparseCPU, SparseCUDA, SparseMPS, SparseMeta, SparseXPU: zero_sparse_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: zero_sparse_csr_
     MkldnnCPU: mkldnn_zero_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: zero_nested_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: zero_nested_
   autogen: zero, zero.out
 
 - func: sub.out(Tensor self, Tensor other, *, Scalar alpha=1, Tensor(a!) out) -> Tensor(a!)
@@ -6794,7 +6794,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: sub_sparse
     ZeroTensor: sub_zerotensor
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sub_Tensor
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_sub_Tensor
   tags: [core, pointwise]
 
 - func: sub_.Tensor(Tensor(a!) self, Tensor other, *, Scalar alpha=1) -> Tensor(a!)
@@ -7336,7 +7336,7 @@
   dispatch:
     SparseCPU, SparseCUDA, SparseMPS, SparseMeta, SparseXPU: values_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: values_sparse_csr
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: values_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: values_nested
     CompositeExplicitAutograd: values_default
   device_check: NoCheck
   device_guard: False
@@ -7397,7 +7397,7 @@
   variants: function, method
   dispatch:
     CompositeExplicitAutograd: unbind
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_unbind
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_unbind
 
 - func: to_sparse.sparse_dim(Tensor self, int sparse_dim) -> Tensor
   variants: method
@@ -7511,7 +7511,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: _to_copy
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _to_copy_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _to_copy_nested
   autogen: _to_copy.out
   tags: core
 
@@ -7775,7 +7775,7 @@
   variants: function, method
   dispatch:
     CompositeExplicitAutograd: masked_fill
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_masked_fill
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_masked_fill
   tags: pointwise
 
 - func: masked_fill_.Tensor(Tensor(a!) self, Tensor mask, Tensor value) -> Tensor(a!)
@@ -7835,7 +7835,7 @@
     CPU, CUDA, MPS, XPU: view
     Meta, ZeroTensor: view_symint
     MkldnnCPU: mkldnn_view
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: view_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: view_nested
   tags: core
 
 # Warning: If you want to change the name or overload name of this
@@ -8629,7 +8629,7 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: eq_scalar_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: eq_scalar_nested
   tags: [core, pointwise]
 
 - func: eq.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -8645,7 +8645,7 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: eq_tensor_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: eq_tensor_nested
   tags: [core, pointwise]
 
 - func: ge.Scalar_out(Tensor self, Scalar other, *, Tensor(a!) out) -> Tensor(a!)
@@ -8661,7 +8661,7 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: ge_scalar_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: ge_scalar_nested
   tags: [core, pointwise]
 
 - func: ge.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -8773,7 +8773,7 @@
   device_check: NoCheck   # TensorIterator
   variants: method, function
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: gt_scalar_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: gt_scalar_nested
   tags: [core, pointwise]
 
 - func: gt.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -9940,7 +9940,7 @@
     CPU, CUDA, MPS, XPU: normal_
     Meta: normal_meta_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: normal_sparse_csr_
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: normal_nested_
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: normal_nested_
   autogen: normal.out
 
 # Only used by the functionalization pass.
@@ -10002,7 +10002,7 @@
   variants: method, function
   dispatch:
     CompositeExplicitAutograd: alias
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: alias_nested
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: alias_nested
   tags: core
 
 - func: _amp_foreach_non_finite_check_and_unscale_(Tensor(a!)[] self, Tensor(b!) found_inf, Tensor inv_scale) -> ()
@@ -13051,7 +13051,7 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: isinf
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isinf
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isinf
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: isinf_sparse
     SparseMeta: isinf_sparse_meta
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: isinf_sparse_csr
@@ -13068,7 +13068,7 @@
   variants: function, method
   structured_delegate: isposinf.out
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isposinf
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isposinf
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: isposinf_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: isposinf_sparse_csr
   tags: pointwise
@@ -13086,7 +13086,7 @@
   variants: function, method
   structured_delegate: isneginf.out
   dispatch:
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isneginf
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: NestedTensor_isneginf
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: isneginf_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: isneginf_sparse_csr
   tags: pointwise
@@ -14388,13 +14388,13 @@
   dispatch:
     # the NestedTensor keys are necessary because NestedTensor has been removed
     # from the CompositeExplicitAutograd keyset see Note [NestedTensor Not Included in Backend Keys]
-    CompositeExplicitAutograd, NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _test_autograd_multiple_dispatch_fullcoverage
+    CompositeExplicitAutograd, NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _test_autograd_multiple_dispatch_fullcoverage
   autogen: _test_autograd_multiple_dispatch.fullcoverage_out
 
 # Note: this function is only for testing.
 - func: _test_autograd_multiple_dispatch.ntonly(Tensor self, bool b) -> Tensor
   dispatch:
-    CompositeImplicitAutograd, NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _test_autograd_multiple_dispatch_ntonly
+    CompositeImplicitAutograd, NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _test_autograd_multiple_dispatch_ntonly
 
 # Note: this function is only for testing.
 - func: _test_autograd_multiple_dispatch_view(Tensor(a) self) -> Tensor(a)
@@ -14744,13 +14744,13 @@
   dispatch:
     CompositeExplicitAutograd: _safe_softmax
     XPU: _safe_softmax_xpu
-    NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: _safe_softmax
+    NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: _safe_softmax
 
 # Apparently, putting "forward" in the name will cause Python bindings to be skipped, so "fwd" it is.
 - func: _transformer_encoder_layer_fwd(Tensor src, int embed_dim, int num_heads, Tensor qkv_weight, Tensor qkv_bias, Tensor proj_weight, Tensor proj_bias, bool use_gelu, bool norm_first, float eps, Tensor norm_weight_1, Tensor norm_bias_1, Tensor norm_weight_2, Tensor norm_bias_2, Tensor ffn_weight_1, Tensor ffn_bias_1, Tensor ffn_weight_2, Tensor ffn_bias_2, Tensor? mask=None, int? mask_type=None) -> Tensor
   variants: function
   dispatch:
-    CPU, CUDA, XPU, NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: transformer_encoder_layer_forward
+    CPU, CUDA, XPU, NestedTensorCPU, NestedTensorCUDA, NestedTensorXPU: transformer_encoder_layer_forward
   autogen: _transformer_encoder_layer_fwd.out
 
 - func: _native_multi_head_attention(Tensor query, Tensor key, Tensor value, int embed_dim, int num_head, Tensor qkv_weight, Tensor qkv_bias, Tensor proj_weight, Tensor proj_bias, Tensor? mask=None, bool need_weights=True, bool average_attn_weights=True, int? mask_type=None) -> (Tensor, Tensor)
