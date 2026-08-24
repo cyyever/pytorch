@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.distributed.checkpoint.state_dict import get_state_dict
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.tensor import DTensor
 from torch.testing._internal.common_utils import run_tests
 from torch.testing._internal.distributed._tensor.common_dtensor import (
@@ -77,12 +77,10 @@ class TestFSDPWithEP(DTensorTestBase, VerifyStateDictMixin):
         mesh_fsdp_ep._root_mesh = None
 
         mesh_fsdp = init_device_mesh(self.device_type, (8,))
-        for i, l in enumerate(model.second.ep_layers):
-            model.second.ep_layers[i] = FSDP(
-                l, use_orig_params=True, device_mesh=mesh_fsdp_ep
-            )
-        model.second = FSDP(model.second, use_orig_params=True, device_mesh=mesh_fsdp)
-        model = FSDP(model, use_orig_params=True, device_mesh=mesh_fsdp)
+        for l in model.second.ep_layers:
+            fully_shard(l, mesh=mesh_fsdp_ep)
+        fully_shard(model.second, mesh=mesh_fsdp)
+        fully_shard(model, mesh=mesh_fsdp)
         optim = torch.optim.Adam(model.parameters(), lr=0.1)
         msd, osd = get_state_dict(model, optim)
 

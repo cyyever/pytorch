@@ -54,8 +54,3 @@ reveal_type(torch.randn_like(c))  # E: {Tensor}
 
 # randperm
 reveal_type(torch.randperm(4))  # E: {Tensor}
-
-# soboleng
-d = torch.quasirandom.SobolEngine(dimension=5)
-reveal_type(d)  # E: torch.quasirandom.SobolEngine
-reveal_type(d.draw())  # E: {Tensor}

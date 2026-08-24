@@ -190,13 +190,17 @@ class TestAutocastCPU(TestAutocast):
                 cpu_autocast_output = getattr(torch, op)(*args, **maybe_kwargs)
             self.assertEqual(generic_autocast_output, cpu_autocast_output)
 
-    def test_cpu_autocast_deprecated_warning(self):
-        with self.assertWarnsRegex(
-            FutureWarning,
-            r"`torch.cpu.amp.autocast\(args...\)` is deprecated. Please use `torch.amp.autocast\('cpu', args...\)` instead.",
-        ):
-            with torch.cpu.amp.autocast():
-                _ = torch.ones(10)
+    def forward(ctx, x, w_t):
+        ctx.save_for_backward(x, w_t)
+        return torch.nn.functional.linear(x, w_t)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, w_t = ctx.saved_tensors
+        with torch.autocast(device_type=x.device.type):
+            dL_dX = torch.matmul(grad_output, w_t)
+            dL_dW = torch.matmul(x.transpose(0, 1), grad_output).transpose(0, 1)
+        return dL_dX, dL_dW
 
 
 class CustomLinear(torch.autograd.Function):

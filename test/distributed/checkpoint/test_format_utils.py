@@ -11,8 +11,9 @@ from torch.distributed.checkpoint.format_utils import (
     DynamicMetaLoadPlanner,
     torch_save_to_dcp,
 )
+from torch.distributed.checkpoint.state_dict import get_model_state_dict
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.testing._internal.common_distributed import skip_if_lt_x_gpu
 from torch.testing._internal.common_utils import run_tests
 from torch.testing._internal.distributed._tensor.common_dtensor import (
@@ -91,11 +92,7 @@ class TestFormatUtils(DTensorTestBase):
         # Load into a sharded model
         device_mesh = init_device_mesh(self.device_type, (self.world_size,))
         model = SimpleModelUneven().to(self.device_type)
-        model = FSDP(
-            model,
-            device_mesh=device_mesh,
-            use_orig_params=True,
-        )
+        fully_shard(model, mesh=device_mesh)
         dcp.load(
             {"model": model},
             planner=DynamicMetaLoadPlanner(),
@@ -103,7 +100,7 @@ class TestFormatUtils(DTensorTestBase):
             checkpoint_id=torch_fn,
         )
 
-        self.assertEqual(sd["model"], model.state_dict())
+        self.assertEqual(sd["model"], get_model_state_dict(model))
 
 
 if __name__ == "__main__":

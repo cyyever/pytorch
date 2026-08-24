@@ -25,7 +25,7 @@ from typing_extensions import Buffer
 import torch
 from torch import Tensor
 from torch._utils import _get_available_device_type, _get_device_module
-from torch.distributed._shard._utils import narrow_tensor_by_index
+from torch.distributed.checkpoint._shard_compat import narrow_tensor_by_index
 from torch.distributed.checkpoint._extension import (
     ExtensionRegistry,
     StreamTransformExtension,

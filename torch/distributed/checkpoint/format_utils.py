@@ -6,7 +6,7 @@ from typing import cast
 
 import torch
 import torch.distributed as dist
-from torch.distributed._shard._utils import narrow_tensor_by_index
+from torch.distributed.checkpoint._shard_compat import narrow_tensor_by_index
 from torch.distributed.checkpoint import FileSystemReader, FileSystemWriter
 from torch.distributed.checkpoint._nested_dict import flatten_state_dict
 from torch.distributed.checkpoint.default_planner import (

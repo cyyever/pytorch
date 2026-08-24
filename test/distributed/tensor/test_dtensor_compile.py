@@ -27,7 +27,7 @@ from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
     CheckpointImpl,
 )
 from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 from torch.distributed.tensor import (
     DeviceMesh,
     distribute_module,
@@ -51,7 +51,6 @@ from torch.distributed.tensor.placement_types import _StridedShard, Placement
 from torch.fx.experimental.proxy_tensor import make_fx
 from torch.testing._internal.common_device_type import skipXPUIf
 from torch.testing._internal.common_distributed import skip_if_lt_x_gpu
-from torch.testing._internal.common_fsdp import get_devtype
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
     IS_LINUX,
@@ -74,7 +73,6 @@ from torch.testing._internal.two_tensor import TwoTensor
 from torch.utils.checkpoint import checkpoint
 
 
-dev_type = torch.device(get_devtype())
 
 
 class PytreeTuple(torch._custom_class_base.CustomClassBase):
@@ -2899,24 +2897,14 @@ class TestDTensorCompileE2E(DTensorTestBase):
             "mlp_1.net2": RowwiseParallel(),
         }
         tp_model = parallelize_module(model, twod_mesh["tp"], parallelize_plan)
-        eager_2d = FSDP(
-            tp_model,
-            device_id=dev_type.type,
-            use_orig_params=True,
-            device_mesh=twod_mesh["dp"],
-        )
+        eager_2d = fully_shard(tp_model, mesh=twod_mesh["dp"])
         out = eager_2d(inp)
         tp_model2 = parallelize_module(
             model_copy,
             twod_mesh["tp"],
             parallelize_plan,
         )
-        fsdp_2d = FSDP(
-            tp_model2,
-            device_id=dev_type.type,
-            use_orig_params=True,
-            device_mesh=twod_mesh["dp"],
-        )
+        fsdp_2d = fully_shard(tp_model2, mesh=twod_mesh["dp"])
 
         # TODO: once aot autograd support is ready we can just use default backend
         cnt = torch._dynamo.testing.CompileCounterWithBackend("aot_eager")
@@ -2958,14 +2946,10 @@ class TestDTensorCompileE2E(DTensorTestBase):
             checkpoint_fn=checkpoint,
             use_reentrant=False,
         )
-        eager_2d = FSDP(tp_model, device_mesh=mesh_2d["dp"], use_orig_params=True)
+        eager_2d = fully_shard(tp_model, mesh=mesh_2d["dp"])
 
         tp_model2 = parallelize_module(model_copy, mesh_2d["tp"], parallelize_plan)
-        fsdp_2d = FSDP(
-            tp_model2,
-            device_mesh=mesh_2d["dp"],
-            use_orig_params=True,
-        )
+        fsdp_2d = fully_shard(tp_model2, mesh=mesh_2d["dp"])
         # TODO: once aot autograd support is ready we can just use default backend
         compiled_2d = torch.compile(fsdp_2d, backend="aot_eager")
 

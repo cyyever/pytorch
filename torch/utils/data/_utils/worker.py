@@ -33,9 +33,6 @@ class ManagerWatchdog:
         return not self.manager_dead
 
 
-_worker_info: WorkerInfo | None = None
-
-
 @dataclass(frozen=True, slots=True)
 class WorkerInfo:
     """Information about the current DataLoader worker process or thread.
@@ -53,8 +50,11 @@ class WorkerInfo:
     num_workers: int
     seed: int
     dataset: Dataset
-    rng: _RNG | None = None
+    rng: "_RNG | None" = None
     worker_method: str | None = "multiprocessing"
+
+
+_worker_info: WorkerInfo | None = None
 
 
 def get_worker_info() -> WorkerInfo | None:
@@ -242,18 +242,6 @@ def _worker_loop(
 
             np.random.seed(np_seed)
 
-        from torch.utils.data import IterDataPipe
-        from torch.utils.data.graph_settings import apply_random_seed
-
-        shared_rng = torch.Generator()
-        if isinstance(dataset, IterDataPipe):
-            if shared_seed is None:
-                raise AssertionError(
-                    "shared_seed must be provided for IterDataPipe workers"
-                )
-            shared_rng.manual_seed(shared_seed)
-            dataset = apply_random_seed(dataset, shared_rng)
-
         global _worker_info
         _worker_info = WorkerInfo(
             id=worker_id, num_workers=num_workers, seed=seed, dataset=dataset
@@ -300,14 +288,6 @@ def _worker_loop(
                 # Acknowledge the main process
                 data_queue.put((r, None))
                 iteration_end = False
-
-                if isinstance(dataset, IterDataPipe):
-                    if r.seed is None:
-                        raise AssertionError(
-                            "resume iteration seed is None for IterDataPipe"
-                        )
-                    shared_rng.manual_seed(r.seed)
-                    dataset = apply_random_seed(dataset, shared_rng)
 
                 # Recreate the fetcher for worker-reuse policy
                 fetcher = _DatasetKind.create_fetcher(

@@ -13,13 +13,11 @@ from .functional_rmsprop import _FunctionalRMSprop
 from .functional_rprop import _FunctionalRprop
 from .functional_sgd import _FunctionalSGD
 from .named_optimizer import _NamedOptimizer
-from .post_localSGD_optimizer import PostLocalSGDOptimizer
 from .utils import as_functional_optim
 from .zero_redundancy_optimizer import ZeroRedundancyOptimizer
 
 
 __all__ = [
     "as_functional_optim",
-    "PostLocalSGDOptimizer",
     "ZeroRedundancyOptimizer",
 ]

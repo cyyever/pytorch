@@ -76,7 +76,7 @@ from torch._library.fake_class_registry import FakeScriptObject, maybe_to_fake_o
 from torch._library.opaque_object import is_custom_class
 from torch._logging import dtrace_structured
 from torch._subclasses.fake_tensor import FakeTensorMode
-from torch._utils_internal import compile_time_strobelight_meta, log_export_usage
+from torch._utils_internal import log_export_usage
 from torch.export._leakage_detection_utils import find_legit_leaks_from_referrers
 from torch.export._unlift import _check_input_constraints_pre_hook
 from torch.export.dynamic_shapes import (
@@ -2601,7 +2601,6 @@ def _export_for_training(
 
 @_log_export_wrapper
 @_disable_prexisiting_fake_mode
-@compile_time_strobelight_meta(phase_name="export")
 def _export(
     mod: torch.nn.Module,
     args: tuple[Any, ...],

@@ -185,7 +185,6 @@ class SavePlanner(abc.ABC):
     >>> from dataclasses import replace
     >>> class DDPLoadBalancingPlanner(DefaultSavePlanner):
     >>> # This uses the default local plan behavior of having all non-sharded writes in rank 0
-    >>> # This sample doesn't handle ShardedTensors
     >>>     def create_global_plan(self, all_plans):
     >>>         iters = [iter(all_plans[0].items)] * len(all_plans)
     >>>         items_per_rank = [
@@ -347,9 +346,6 @@ class LoadPlanner:
     >>>     ) -> None:
     >>>         self.original_state_dict = state_dict
     >>>         state_dict = {"foo_" + k: v for k, v in state_dict.items()}
-    >>>
-    >>>         if self.flatten_sharded_tensors:
-    >>>             state_dict = _flatten_sharded_tensors(state_dict)
     >>>
     >>>         if self.flatten_state_dict:
     >>>             state_dict, self.mappings = flatten_state_dict(state_dict)

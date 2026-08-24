@@ -16,8 +16,7 @@ from torch.distributed.checkpoint.state_dict import (
     _patch_model_state_dict,
     _patch_optimizer_state_dict,
 )
-from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import fully_shard
 
 
 CHECKPOINT_DIR = f"~/{os.environ.get('LOGNAME', '')}/checkpoint"
@@ -56,14 +55,9 @@ def _train(model, optim, train_steps=1):
     return loss
 
 
-def _init_model(device, world_size):
-    device_mesh = init_device_mesh(device, (world_size,))
+def _init_model(device):
     model = Model().cuda()
-    model = FSDP(
-        model,
-        device_mesh=device_mesh,
-        use_orig_params=True,
-    )
+    fully_shard(model)
     optim = torch.optim.Adam(model.parameters(), lr=0.1)
     _make_stateful(model, optim)
 
@@ -78,7 +72,7 @@ def run(rank, world_size, device="cuda"):
     dist.init_process_group("cpu:gloo,cuda:nccl", rank=rank, world_size=world_size)
     torch.cuda.set_device(rank)
 
-    model, optim = _init_model(device, world_size)
+    model, optim = _init_model(device)
     _train(model, optim, train_steps=2)
 
     dcp.save(
@@ -87,7 +81,7 @@ def run(rank, world_size, device="cuda"):
     )
 
     # presumably do something else
-    model, optim = _init_model(device, world_size)
+    model, optim = _init_model(device)
     dcp.load(
         state_dict={"model": model, "optimizer": optim},
         checkpoint_id=CHECKPOINT_DIR,

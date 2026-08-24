@@ -16,8 +16,7 @@ from torch.distributed.checkpoint.state_dict import (
     _patch_model_state_dict,
     _patch_optimizer_state_dict,
 )
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.tensor.device_mesh import init_device_mesh
+from torch.distributed.fsdp import fully_shard
 
 
 DEVICE = "cuda"
@@ -49,13 +48,11 @@ class Model(torch.nn.Module):
         return x
 
 
-def _init_model(rank, world_size):
-    device_mesh = init_device_mesh(DEVICE, (world_size,))
+def _init_model(rank):
 
-    # Create a dummy model and wrap it in FSDP
+    # Create a dummy model and wrap it in FSDP2
     model = Model().cuda()
-    device_mesh = init_device_mesh(DEVICE, (world_size,))
-    model = FSDP(model, device_mesh=device_mesh, use_orig_params=True)
+    fully_shard(model)
 
     optim = torch.optim.Adam(model.parameters(), lr=0.0001)
 
@@ -88,7 +85,7 @@ def run(rank, world_size):
     dist.init_process_group("cpu:gloo,cuda:nccl", rank=rank, world_size=world_size)
     torch.cuda.set_device(rank)
 
-    model, optim = _init_model(rank, world_size)
+    model, optim = _init_model(rank)
     state_dict = {"model": model, "optim": optim}
     loss_calc = torch.nn.BCELoss()
 

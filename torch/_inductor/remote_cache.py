@@ -15,7 +15,7 @@ from typing_extensions import override
 
 from torch._dynamo.utils import dynamo_timed
 from torch._inductor import config
-from torch.monitor import _WaitCounter
+from torch._monitor import _WaitCounter
 
 
 if typing.TYPE_CHECKING:
