@@ -1961,12 +1961,6 @@ partial_fn = functools.partial(fn, scale=2)
             return tmp["c"] - tmp["a"] + len(tmp)
 
     @make_test
-    def test_inline_jit__unwrap_optional(x):
-        if torch.jit._unwrap_optional(x) is None:
-            return torch.ones(2, 2)
-        return x.sin()
-
-    @make_test
     def test_zip_longest(x):
         list1 = [1, 2, 3]
         list2 = ["a", "b"]
@@ -2941,11 +2935,6 @@ partial_fn = functools.partial(fn, scale=2)
         assert z.size() == y.size()  # noqa: S101
 
     @make_test
-    def test_jit_annotate(x):
-        y = torch.jit.annotate(Any, x + 1)
-        return y + 2
-
-    @make_test
     def test_is_contiguous_memory_format(tensor):
         if torch.jit.is_scripting():
             return None
@@ -3015,16 +3004,11 @@ partial_fn = functools.partial(fn, scale=2)
                 and torch.backends.mps.is_built()
             )
 
-        def is_mtia_available():
-            return hasattr(torch, "mtia") and torch.mtia.is_available()
-
         def clear_device_cache_like(x):
             if is_mps_available():
                 return x + 1
             elif torch.mps.is_available():
                 return x + 2
-            elif is_mtia_available():
-                return x + 3
             elif torch.cuda.is_available():
                 return x + 4
             elif torch.xpu.is_available():
@@ -3042,10 +3026,6 @@ partial_fn = functools.partial(fn, scale=2)
                 x = x + 7
             else:
                 x = x - 7
-            if torch.mtia.is_available():
-                x = x + 11
-            else:
-                x = x - 11
             return x
 
         opt_fn = torch.compile(top_level_predicates, backend="eager", fullgraph=True)

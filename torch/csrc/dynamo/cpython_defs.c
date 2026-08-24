@@ -11,43 +11,33 @@ void init_THPCaches() {}
 
 #else
 
-#if IS_PYTHON_3_11_PLUS
-
 // Rename opcode table/metadata symbols to avoid multiple definition conflict
 // with the identical definitions in libpython at link time.
 #define _PyOpcode_Caches _torch_PyOpcode_Caches
 #define _PyOpcode_Jump _torch_PyOpcode_Jump
 #define _PyOpcode_Deopt _torch_PyOpcode_Deopt
-#if IS_PYTHON_3_13_PLUS
 #define _PyOpcode_num_popped _torch_PyOpcode_num_popped
 #define _PyOpcode_num_pushed _torch_PyOpcode_num_pushed
 #define _PyOpcode_opcode_metadata _torch_PyOpcode_opcode_metadata
 #define _PyOpcode_macro_expansion _torch_PyOpcode_macro_expansion
 #define _PyOpcode_OpName _torch_PyOpcode_OpName
 #define _PyOpcode_PseudoTargets _torch_PyOpcode_PseudoTargets
-#endif
 
 #define Py_BUILD_CORE
 #define NEED_OPCODE_TABLES // To get _PyOpcode_Deopt, _PyOpcode_Caches
 
-#if IS_PYTHON_3_13_PLUS
 #define NEED_OPCODE_METADATA
 #include <internal/pycore_opcode_metadata.h>
 #undef NEED_OPCODE_METADATA
-#else
-#include <internal/pycore_opcode.h>
-#endif
 
 #undef NEED_OPCODE_TABLES
 #undef Py_BUILD_CORE
-#if IS_PYTHON_3_13_PLUS
 #undef _PyOpcode_PseudoTargets
 #undef _PyOpcode_OpName
 #undef _PyOpcode_macro_expansion
 #undef _PyOpcode_opcode_metadata
 #undef _PyOpcode_num_pushed
 #undef _PyOpcode_num_popped
-#endif
 #undef _PyOpcode_Deopt
 #undef _PyOpcode_Jump
 #undef _PyOpcode_Caches
@@ -97,173 +87,13 @@ PyFunctionObject* _PyFunction_CopyWithNewCode(
   op->func_weakreflist = NULL;
   COPY_FIELD(op, o, module);
   COPY_FIELD(op, o, annotations);
-#if IS_PYTHON_3_14_PLUS
   COPY_FIELD(op, o, annotate);
-#endif
-#if IS_PYTHON_3_12_PLUS
   COPY_FIELD(op, o, typeparams);
-#endif
   op->vectorcall = o->vectorcall;
   op->func_version = o->func_version;
   PyObject_GC_Track(op);
   return op;
 }
-
-#if !IS_PYTHON_3_13_PLUS
-
-// From
-// https://github.com/python/cpython/blob/e715da6db1d1d70cd779dc48e1ba8110c51cc1bf/Objects/frameobject.c#L1020
-PyFrameObject* THP_PyFrame_New_NoTrack(const PyCodeObject* code) {
-  // DYNAMO: commented out
-  // CALL_STAT_INC(frame_objects_created);
-  int slots = code->co_nlocalsplus + code->co_stacksize;
-  PyFrameObject* f = PyObject_GC_NewVar(PyFrameObject, &PyFrame_Type, slots);
-  if (f == NULL) {
-    return NULL;
-  }
-  f->f_back = NULL;
-  f->f_trace = NULL;
-  f->f_trace_lines = 1;
-  f->f_trace_opcodes = 0;
-  f->f_fast_as_locals = 0;
-  f->f_lineno = 0;
-  return f;
-}
-
-// From
-// https://github.com/python/cpython/blob/e715da6db1d1d70cd779dc48e1ba8110c51cc1bf/Python/frame.c#L27
-PyFrameObject* THP_PyFrame_MakeAndSetFrameObject(_PyInterpreterFrame* frame) {
-  CHECK(frame->frame_obj == NULL);
-  PyObject *error_type = NULL, *error_value = NULL, *error_traceback = NULL;
-  PyErr_Fetch(&error_type, &error_value, &error_traceback);
-
-  PyFrameObject* f = THP_PyFrame_New_NoTrack(F_CODE(frame));
-  if (f == NULL) {
-    Py_XDECREF(error_type);
-    Py_XDECREF(error_value);
-    Py_XDECREF(error_traceback);
-    return NULL;
-  }
-  PyErr_Restore(error_type, error_value, error_traceback);
-  if (frame->frame_obj) {
-    // GH-97002: How did we get into this horrible situation? Most likely,
-    // allocating f triggered a GC collection, which ran some code that
-    // *also* created the same frame... while we were in the middle of
-    // creating it! See test_sneaky_frame_object in test_frame.py for a
-    // concrete example.
-    //
-    // Regardless, just throw f away and use that frame instead, since it's
-    // already been exposed to user code. It's actually a bit tricky to do
-    // this, since we aren't backed by a real _PyInterpreterFrame anymore.
-    // Just pretend that we have an owned, cleared frame so frame_dealloc
-    // doesn't make the situation worse:
-    f->f_frame = (_PyInterpreterFrame*)f->_f_frame_data;
-    f->f_frame->owner = FRAME_CLEARED;
-    f->f_frame->frame_obj = f;
-    Py_DECREF(f);
-    return frame->frame_obj;
-  }
-  CHECK(frame->owner != FRAME_OWNED_BY_FRAME_OBJECT);
-  CHECK(frame->owner != FRAME_CLEARED);
-  f->f_frame = frame;
-  frame->frame_obj = f;
-  return f;
-}
-
-// From
-// https://github.com/python/cpython/blob/e715da6db1d1d70cd779dc48e1ba8110c51cc1bf/Include/internal/pycore_frame.h#L163
-static inline PyFrameObject* THP_PyFrame_GetFrameObject(
-    _PyInterpreterFrame* frame) {
-  CHECK(!_PyFrame_IsIncomplete(frame));
-  PyFrameObject* res = frame->frame_obj;
-  if (res != NULL) {
-    return res;
-  }
-  return THP_PyFrame_MakeAndSetFrameObject(frame);
-}
-
-// From
-// https://github.com/python/cpython/blob/e715da6db1d1d70cd779dc48e1ba8110c51cc1bf/Python/frame.c#L79
-static void THP_take_ownership(PyFrameObject* f, _PyInterpreterFrame* frame) {
-  CHECK(frame->owner != FRAME_OWNED_BY_FRAME_OBJECT);
-  CHECK(frame->owner != FRAME_CLEARED);
-  Py_ssize_t size = ((char*)&frame->localsplus[frame->stacktop]) - (char*)frame;
-  memcpy((_PyInterpreterFrame*)f->_f_frame_data, frame, size);
-  frame = (_PyInterpreterFrame*)f->_f_frame_data;
-  f->f_frame = frame;
-  frame->owner = FRAME_OWNED_BY_FRAME_OBJECT;
-  if (_PyFrame_IsIncomplete(frame)) {
-    // This may be a newly-created generator or coroutine frame. Since it's
-    // dead anyways, just pretend that the first RESUME ran:
-    PyCodeObject* code = F_CODE(frame);
-    PREV_INSTR(frame) = _PyCode_CODE(code) + code->_co_firsttraceable;
-  }
-  CHECK(!_PyFrame_IsIncomplete(frame));
-  CHECK(f->f_back == NULL);
-  _PyInterpreterFrame* prev = frame->previous;
-  while (prev && _PyFrame_IsIncomplete(prev)) {
-    prev = prev->previous;
-  }
-  if (prev) {
-    /* Link PyFrameObjects.f_back and remove link through
-     * _PyInterpreterFrame.previous */
-    PyFrameObject* back = THP_PyFrame_GetFrameObject(prev);
-    if (back == NULL) {
-      /* Memory error here. */
-      CHECK(PyErr_ExceptionMatches(PyExc_MemoryError));
-      /* Nothing we can do about it */
-      PyErr_Clear();
-    } else {
-      f->f_back = (PyFrameObject*)Py_NewRef(back);
-    }
-    frame->previous = NULL;
-  }
-  // DYNAMO: use public GC functions instead of internal ones
-  if (!PyObject_GC_IsTracked((PyObject*)f)) {
-    PyObject_GC_Track((PyObject*)f);
-  }
-}
-
-#endif
-
-#if IS_PYTHON_3_11_PLUS && !IS_PYTHON_3_13_PLUS
-// From
-// https://github.com/python/cpython/blob/e715da6db1d1d70cd779dc48e1ba8110c51cc1bf/Python/frame.c#L120
-void THP_PyFrame_Clear(_PyInterpreterFrame* frame) {
-  /* It is the responsibility of the owning generator/coroutine
-   * to have cleared the enclosing generator, if any. */
-  CHECK(
-      frame->owner != FRAME_OWNED_BY_GENERATOR ||
-      _PyFrame_GetGenerator(frame)->gi_frame_state == FRAME_CLEARED);
-  // GH-99729: Clearing this frame can expose the stack (via finalizers). It's
-  // crucial that this frame has been unlinked, and is no longer visible:
-  CHECK(_PyThreadState_GET()->cframe->current_frame != frame);
-  if (frame->frame_obj) {
-    PyFrameObject* f = frame->frame_obj;
-    frame->frame_obj = NULL;
-    if (Py_REFCNT(f) > 1) {
-      THP_take_ownership(f, frame);
-      Py_DECREF(f);
-      return;
-    }
-    Py_DECREF(f);
-  }
-  CHECK(frame->stacktop >= 0);
-  for (int i = 0; i < frame->stacktop; i++) {
-    Py_XDECREF(frame->localsplus[i]);
-  }
-  Py_XDECREF(frame->frame_obj);
-  Py_XDECREF(frame->f_locals);
-// DYNAMO: additional field for 3.12
-#if IS_PYTHON_3_12_PLUS
-  Py_DECREF(frame->f_funcobj);
-#else
-  Py_DECREF(frame->f_func);
-#endif
-  Py_DECREF(F_CODE(frame));
-}
-
-#endif
 
 #if !IS_PYTHON_3_15_PLUS
 // https://github.com/python/cpython/blob/fad48ea1816be3125ea51edcdfe2f999d6ade796/Objects/obmalloc.c#L635
@@ -343,46 +173,11 @@ _PyInterpreterFrame* THP_PyThreadState_BumpFramePointerSlow(
 }
 #endif // !IS_PYTHON_3_15_PLUS
 
-#if !IS_PYTHON_3_13_PLUS
-// https://github.com/python/cpython/blob/fad48ea1816be3125ea51edcdfe2f999d6ade796/Objects/obmalloc.c#L641
-void THP_PyObject_VirtualFree(void* obj, size_t size) {
-  PyObjectArenaAllocator arena;
-  PyObject_GetArenaAllocator(&arena);
-  arena.free(arena.ctx, obj, size);
-}
-
-// https://github.com/python/cpython/blob/051b8a2589ff28f0194c3701b21f729444691752/Python/pystate.c#L2222
-void THP_PyThreadState_PopFrame(
-    PyThreadState* tstate,
-    _PyInterpreterFrame* frame) {
-  CHECK(tstate->datastack_chunk);
-  PyObject** base = (PyObject**)frame;
-  if (base == &tstate->datastack_chunk->data[0]) {
-    _PyStackChunk* chunk = tstate->datastack_chunk;
-    _PyStackChunk* previous = chunk->previous;
-    // push_chunk ensures that the root chunk is never popped:
-    CHECK(previous);
-    tstate->datastack_top = &previous->data[previous->top];
-    tstate->datastack_chunk = previous;
-    THP_PyObject_VirtualFree(chunk, chunk->size);
-    tstate->datastack_limit = (PyObject**)(((char*)previous) + previous->size);
-  } else {
-    CHECK(tstate->datastack_top);
-    CHECK(tstate->datastack_top >= base);
-    tstate->datastack_top = base;
-  }
-}
-#endif // !IS_PYTHON_3_13_PLUS
-
-#endif
-
 const uint8_t* THP_PyOpcode_Caches = NULL;
 int THP_PyOpcode_Caches_size = 0;
 void init_THPCaches() {
-#if IS_PYTHON_3_11_PLUS
   THP_PyOpcode_Caches = _torch_PyOpcode_Caches;
   THP_PyOpcode_Caches_size = sizeof(_torch_PyOpcode_Caches) / sizeof(uint8_t);
-#endif
 }
 
 #endif // IS_PYTHON_3_15_PLUS

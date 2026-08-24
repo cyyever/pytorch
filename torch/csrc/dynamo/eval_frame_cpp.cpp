@@ -52,7 +52,6 @@ struct DebugContextGuard {
   DebugContextGuard(const DebugContextGuard&) = delete;
   DebugContextGuard& operator=(const DebugContextGuard&) = delete;
 };
-
 } // namespace
 
 void set_bytecode_debugger_callback(py::object callback) {
@@ -103,7 +102,6 @@ py::list _get_frame_value_stack_with_depth(
     return result;
   }
 
-#if IS_PYTHON_3_11_PLUS
   PyFrameObject* frame = (PyFrameObject*)frame_obj.ptr();
   _PyInterpreterFrame* iframe = frame->f_frame;
   if (iframe == nullptr) {
@@ -127,7 +125,6 @@ py::list _get_frame_value_stack_with_depth(
   // depth. The caller's tracked depth can lag behind (e.g. after a CALL
   // instruction pops arguments but the effect hasn't been applied to the
   // Python-side tracker yet).
-#if IS_PYTHON_3_14_PLUS
   if (iframe->stackpointer != nullptr) {
     int actual_depth =
         (int)(iframe->stackpointer - (iframe->localsplus + nlocalsplus));
@@ -135,18 +132,7 @@ py::list _get_frame_value_stack_with_depth(
       depth = std::min(actual_depth, depth);
     }
   }
-#else
-  bool have_stack_pointer = false;
-  if (iframe->stacktop > 0) {
-    int actual_depth = iframe->stacktop - nlocalsplus;
-    if (actual_depth >= 0) {
-      depth = std::min(actual_depth, depth);
-      have_stack_pointer = true;
-    }
-  }
-#endif
 
-#if IS_PYTHON_3_14_PLUS
   if (iframe->stackpointer == nullptr) {
     return result;
   }
@@ -159,49 +145,6 @@ py::list _get_frame_value_stack_with_depth(
       result.append(py::reinterpret_borrow<py::object>(py::handle(obj)));
     }
   }
-#else
-  int stack_start = nlocalsplus;
-  for (int i = 0; i < depth; i++) {
-    PyObject* obj = iframe->localsplus[stack_start + i];
-    if (obj == nullptr) {
-      result.append(get_null_stack_value());
-    } else if (!have_stack_pointer && Py_REFCNT(obj) <= 0) {
-      // Without a reliable stack pointer (current frame, stacktop == -1),
-      // the caller's tracked depth may overestimate. Stop at entries that
-      // look like freed objects to avoid dereferencing stale pointers.
-      break;
-    } else {
-      result.append(py::reinterpret_borrow<py::object>(py::handle(obj)));
-    }
-  }
-#endif
-
-#else
-  // Python 3.10 and earlier - use f_valuestack
-  PyFrameObject* frame = (PyFrameObject*)frame_obj.ptr();
-  if (frame->f_valuestack == nullptr) {
-    return result;
-  }
-
-  PyCodeObject* code = frame->f_code;
-  if (code == nullptr) {
-    return result;
-  }
-
-  int stacksize = code->co_stacksize;
-  if (depth > stacksize) {
-    depth = stacksize;
-  }
-
-  for (int i = 0; i < depth; i++) {
-    PyObject* obj = frame->f_valuestack[i];
-    if (obj == nullptr) {
-      result.append(get_null_stack_value());
-    } else {
-      result.append(py::reinterpret_borrow<py::object>(py::handle(obj)));
-    }
-  }
-#endif // IS_PYTHON_3_11_PLUS
 
   return result;
 }
@@ -302,40 +245,11 @@ int32_t dynamo_get_c_recursion_limit() {
   return c_recursion_limit;
 }
 
-#if IS_PYTHON_3_12_PLUS && !IS_PYTHON_3_14_PLUS
-
-struct CRecursionLimitRAII {
-  PyThreadState* tstate;
-  int32_t old_recursion_remaining;
-  CRecursionLimitRAII(PyThreadState* tstate) : tstate{tstate} {
-    auto limit = dynamo_get_c_recursion_limit();
-    auto& remaining = tstate->c_recursion_remaining;
-    this->old_recursion_remaining = remaining;
-    if (limit < 0) {
-      // no change to limit
-      return;
-    }
-    if (limit < remaining) {
-      std::stringstream ss;
-      ss << "new c_recursion limit (" << limit
-         << ") is lower than thread's current c_recursion_remaining ("
-         << remaining << ").";
-      PyErr_WarnEx(PyExc_RuntimeWarning, std::move(ss).str().c_str(), 1);
-    }
-    remaining = limit;
-  }
-  ~CRecursionLimitRAII() {
-    this->tstate->c_recursion_remaining = this->old_recursion_remaining;
-  }
-};
-
-#else
 
 struct CRecursionLimitRAII {
   CRecursionLimitRAII(PyThreadState* tstate) {}
 };
 
-#endif
 
 // frame and callback are borrowed references.
 // Returns new reference.
@@ -344,22 +258,12 @@ PyObject* dynamo__custom_eval_frame(
     THP_EVAL_API_FRAME_OBJECT* frame,
     int throw_flag,
     PyObject* callback_py) {
-#if IS_PYTHON_3_11_PLUS
   DEBUG_TRACE(
       "begin %s %s %i %i",
       get_frame_name(frame),
       PyUnicode_AsUTF8(F_CODE(frame)->co_filename),
       F_CODE(frame)->co_firstlineno,
       _PyInterpreterFrame_LASTI(frame));
-#else
-  DEBUG_TRACE(
-      "begin %s %s %i %i %i",
-      get_frame_name(frame),
-      PyUnicode_AsUTF8(F_CODE(frame)->co_filename),
-      frame->f_lineno,
-      frame->f_lasti,
-      frame->f_iblock);
-#endif
 
   if (throw_flag) {
     // When unwinding generators, eval frame is called with throw_flag ==
@@ -424,10 +328,10 @@ PyObject* dynamo__custom_eval_frame(
   static std::optional<py::object> convert_frame_get_fail_callback =
       std::nullopt;
 
-  // NOTE: In 3.12+, the frame evaluation function (callee) is responsible for
+  // NOTE: the frame evaluation function (callee) is responsible for
   // clearing/popping the frame, meaning that unless we default evaluate the
   // original frame, we are responsible for clearing it - via
-  // clear_old_frame_if_python_312_plus.
+  // _PyEval_FrameClearAndPop.
   auto eval_custom = [&]() {
     if (fullgraph_compiled_frame_count >= 0) {
       fullgraph_compiled_frame_count++;
@@ -477,19 +381,17 @@ PyObject* dynamo__custom_eval_frame(
     if (!callback.is(recursive_callback)) {
       eval_frame_callback_set(callback.ptr());
     }
-    clear_old_frame_if_python_312_plus(tstate, frame);
+    _PyEval_FrameClearAndPop(tstate, frame);
   };
 
-  auto fail = [&]() { clear_old_frame_if_python_312_plus(tstate, frame); };
+  auto fail = [&]() { _PyEval_FrameClearAndPop(tstate, frame); };
 
-#if IS_PYTHON_3_12_PLUS
   // skip tracing the frame if CPython is in a tracing state (e.g.
   // sys.monitoring call)
   if (tstate->tracing > 0) {
     eval_default();
     return eval_result;
   }
-#endif
 
   ExtraState* extra = get_extra_state(F_CODE(frame));
 

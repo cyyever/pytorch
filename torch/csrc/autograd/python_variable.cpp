@@ -944,14 +944,7 @@ static bool arg_type_tensor_or_tensor_list_like(py::handle arg) {
   return true;
 }
 
-#if IS_PYTHON_3_11_PLUS
-#define MAYBE_FOR_EACH_PYTHON_3_10_MINUS_DTENSOR_INTERNED_STRING(_)
-#else
-#define MAYBE_FOR_EACH_PYTHON_3_10_MINUS_DTENSOR_INTERNED_STRING(_) _(__name__)
-#endif
-
 #define FOR_EACH_DTENSOR_INTERNED_STRING(_)                   \
-  MAYBE_FOR_EACH_PYTHON_3_10_MINUS_DTENSOR_INTERNED_STRING(_) \
   _(_comparison_key)                                          \
   _(_custom_op_handlers)                                      \
   _(_local_tensor)                                            \
@@ -1990,15 +1983,9 @@ static PyObject* DTensor_compute_global_tensor_info_impl(
         }
       }
     } else if (!cpp_placement.is_replicate() && !cpp_placement.is_partial()) {
-#if IS_PYTHON_3_11_PLUS
       const auto placement_type_name =
           py::str(py::reinterpret_steal<py::object>(
               PyType_GetName(Py_TYPE(placement.ptr()))));
-#else
-      const auto placement_type_name =
-          py::str(py::handle((PyObject*)Py_TYPE(placement.ptr()))
-                      .attr(dtensor_interned_strings.__name__));
-#endif
       return PyErr_Format(
           PyExc_RuntimeError,
           "placement type %s not supported!",
