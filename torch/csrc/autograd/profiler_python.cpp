@@ -606,7 +606,6 @@ static PyTypeObject TraceContextType = {
     nullptr /* tp_free */
 };
 
-#if IS_PYTHON_3_14_PLUS
 extern "C" void _PyEval_StopTheWorld(PyInterpreterState*);
 extern "C" void _PyEval_StartTheWorld(PyInterpreterState*);
 
@@ -624,14 +623,6 @@ class StopTheWorldGuard {
  private:
   PyInterpreterState* interp_;
 };
-#else
-class StopTheWorldGuard {
- public:
-  explicit StopTheWorldGuard(PyInterpreterState*) {}
-  StopTheWorldGuard(const StopTheWorldGuard&) = delete;
-  StopTheWorldGuard& operator=(const StopTheWorldGuard&) = delete;
-};
-#endif
 
 // ============================================================================
 // == Thread local cache ======================================================
@@ -676,16 +667,6 @@ struct ThreadLocalResults {
 // ============================================================================
 // == Tracing implementation ==================================================
 // ============================================================================
-#define IS_PYTHON_3_12 (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION == 12)
-#if IS_PYTHON_3_12
-// forward declarations
-struct _PyEventHandler;
-static PyObject* c_call_callback(
-    _PyEventHandler* self,
-    PyObject* const* args,
-    size_t nargsf,
-    PyObject* kwnames);
-#endif
 
 class PythonTracer final : public python_tracer::PythonTracerBase {
  public:
@@ -745,223 +726,8 @@ class PythonTracer final : public python_tracer::PythonTracerBase {
   std::unordered_map<PyThreadState*, ThreadLocalResults*>
       thread_local_results_map_;
 
-#if IS_PYTHON_3_12
-  friend PyObject* c_call_callback(
-      _PyEventHandler* self,
-      PyObject* const* args,
-      size_t nargsf,
-      PyObject* kwnames);
-#endif
 };
 
-#if IS_PYTHON_3_12
-#define PROFILER_ID 2
-#define PY_MONITORING_EVENT_CALL 4
-
-static bool should_compensate_c_call_events() {
-  static const bool result = []() {
-    const char* version = Py_GetVersion();
-    const char micro = version[5];
-    return micro == '0' || (micro <= '4' && version[6] == ' ');
-  }();
-  return result;
-}
-
-struct _PyEventHandler {
-  PyObject_HEAD
-  vectorcallfunc vectorcall;
-};
-
-static PyTypeObject _PyEventHandler_Type = {
-    PyVarObject_HEAD_INIT(&PyType_Type, 0) /* ob_base */
-    "torch.profiler.python_tracer_event_handler", /* tp_name */
-    sizeof(_PyEventHandler), /* tp_basicsize */
-    0, /* tp_itemsize */
-    (destructor)PyObject_Free, /* tp_dealloc */
-    offsetof(_PyEventHandler, vectorcall), /* tp_vectorcall_offset */
-    nullptr, /* tp_getattr */
-    nullptr, /* tp_setattr */
-    nullptr, /* tp_reserved */
-    nullptr, /* tp_repr */
-    nullptr, /* tp_as_number */
-    nullptr, /* tp_as_sequence */
-    nullptr, /* tp_as_mapping */
-    nullptr, /* tp_hash */
-    PyVectorcall_Call, /* tp_call */
-    nullptr, /* tp_str */
-    nullptr, /* tp_getattro */
-    nullptr, /* tp_setattro */
-    nullptr, /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_VECTORCALL |
-        Py_TPFLAGS_DISALLOW_INSTANTIATION, /* tp_flags */
-};
-
-static PyObject* c_call_callback(
-    _PyEventHandler* self,
-    PyObject* const* args,
-    size_t nargsf,
-    PyObject* kwnames) {
-  // The logic of this function is based on sys_profile_call_or_return defined
-  // in https://github.com/python/cpython/blob/v3.12.5/Python/legacy_tracing.c
-
-  PyThreadState* tstate = PyThreadState_GET();
-  if (tstate->c_profilefunc != PythonTracer::pyProfileFn) {
-    // We don't care this case if tstate->c_profilefunc is not pyProfileFn,
-    // just return normally.
-    Py_RETURN_NONE;
-  }
-
-  PyObject* callable = args[2];
-  if (Py_TYPE(callable) == &PyMethod_Type) {
-    // The call event of a method with c function is missing on 3.12.0-3.12.4.
-    // See
-    // https://github.com/python/cpython/commit/257c413cd16ddabcedde413288d0bb93bf872da7
-    // Other cases have already be handled by the legacy_tracing, so we only
-    // need to handle this case.
-    // The exception branches keep the same behavior as CPython.
-    PyObject* func = PyMethod_GET_FUNCTION(callable);
-    if (!func) {
-      return NULL;
-    }
-    if (PyCFunction_Check(func)) {
-      PyFrameObject* frame = PyEval_GetFrame();
-      if (!frame) {
-        PyErr_SetString(
-            PyExc_SystemError, "Missing frame when calling profile function.");
-        return NULL;
-      }
-      auto* tracer =
-          reinterpret_cast<TraceContext*>(tstate->c_profileobj)->tracer_;
-      auto* local_results = tracer->findThreadLocalResults(tstate);
-      if (local_results) {
-        Py_INCREF(frame);
-        local_results->active_tracer_->recordCCall(*local_results, frame, func);
-        Py_DECREF(frame);
-      }
-    }
-  }
-  Py_RETURN_NONE;
-}
-
-static void registerMonitoringCallback() {
-  if (!should_compensate_c_call_events()) {
-    return;
-  }
-
-  auto sys_module = THPObjectPtr(PyImport_ImportModule("sys"));
-  if (!sys_module) {
-    TORCH_WARN("Failed to import sys module.");
-    PyErr_Clear();
-    return;
-  }
-  auto monitoring =
-      THPObjectPtr(PyObject_GetAttrString(sys_module, "monitoring"));
-  if (!monitoring) {
-    TORCH_WARN("Failed to get monitoring from sys module.");
-    PyErr_Clear();
-    return;
-  }
-  auto result = THPObjectPtr(PyObject_CallMethod(
-      monitoring, "use_tool_id", "is", PROFILER_ID, "PyTorch Profiler"));
-  if (!result) {
-    TORCH_WARN("Failed to call sys.monitoring.use_tool_id");
-    PyErr_Clear();
-    return;
-  }
-  auto handler = THPObjectPtr(PyObject_NEW(PyObject, &_PyEventHandler_Type));
-  if (!handler) {
-    TORCH_WARN("Failed to create _PyEventHandler object.");
-    PyErr_Clear();
-    return;
-  }
-  reinterpret_cast<_PyEventHandler*>(handler.get())->vectorcall =
-      (vectorcallfunc)c_call_callback;
-  result = THPObjectPtr(PyObject_CallMethod(
-      monitoring,
-      "register_callback",
-      "iiO",
-      PROFILER_ID,
-      1 << PY_MONITORING_EVENT_CALL,
-      handler.get()));
-  if (!result) {
-    TORCH_WARN("Failed to call sys.monitoring.register_callback.");
-    PyErr_Clear();
-    return;
-  }
-  result = THPObjectPtr(PyObject_CallMethod(
-      monitoring,
-      "set_events",
-      "ii",
-      PROFILER_ID,
-      1 << PY_MONITORING_EVENT_CALL));
-  if (!result) {
-    TORCH_WARN("Failed to call sys.monitoring.set_events.");
-    PyErr_Clear();
-    return;
-  }
-}
-
-static void unregisterMonitoringCallback() {
-  if (!should_compensate_c_call_events()) {
-    return;
-  }
-
-  auto sys_module = THPObjectPtr(PyImport_ImportModule("sys"));
-  if (!sys_module) {
-    TORCH_WARN("Failed to import sys module.");
-    PyErr_Clear();
-    return;
-  }
-  auto monitoring =
-      THPObjectPtr(PyObject_GetAttrString(sys_module, "monitoring"));
-  if (!monitoring) {
-    TORCH_WARN("Failed to get monitoring from sys module.");
-    PyErr_Clear();
-    return;
-  }
-  auto tool_name = THPObjectPtr(
-      PyObject_CallMethod(monitoring, "get_tool", "i", PROFILER_ID));
-  if (!tool_name) {
-    TORCH_WARN("Failed to call sys.monitoring.use_tool_id");
-    PyErr_Clear();
-    return;
-  }
-  if (!THPUtils_checkString(tool_name)) {
-    return;
-  }
-  const char* str = THPUtils_unpackStringView(tool_name).data();
-  if (strcmp(str, "PyTorch Profiler") != 0) {
-    return;
-  }
-  auto none = THPObjectPtr(Py_NewRef(Py_None));
-  auto result = THPObjectPtr(PyObject_CallMethod(
-      monitoring,
-      "register_callback",
-      "iiO",
-      PROFILER_ID,
-      1 << PY_MONITORING_EVENT_CALL,
-      none.get()));
-  if (!result) {
-    TORCH_WARN("Failed to call sys.monitoring.register_callback.");
-    PyErr_Clear();
-    return;
-  }
-  result = THPObjectPtr(
-      PyObject_CallMethod(monitoring, "set_events", "ii", PROFILER_ID, 0));
-  if (!result) {
-    TORCH_WARN("Failed to call sys.monitoring.set_events.");
-    PyErr_Clear();
-    return;
-  }
-  result = THPObjectPtr(
-      PyObject_CallMethod(monitoring, "free_tool_id", "i", PROFILER_ID));
-  if (!result) {
-    TORCH_WARN("Failed to call sys.monitoring.free_tool_id.");
-    PyErr_Clear();
-    return;
-  }
-}
-#endif
 
 ThreadLocalResults* PythonTracer::findThreadLocalResults(
     PyThreadState* tstate) const {
@@ -984,15 +750,7 @@ const std::vector<PyThreadState*> PythonTracer::interpreterThreads() const {
 
 void PythonTracer::setprofileAllThreads(Py_tracefunc func, PyObject* arg)
     const {
-#if IS_PYTHON_3_13_PLUS
   PyEval_SetProfileAllThreads(func, arg);
-#else
-  for (const auto thread_state : interpreterThreads()) {
-    if (_PyEval_SetProfile(thread_state, func, arg) < 0) {
-      PyErr_WriteUnraisable(nullptr);
-    }
-  }
-#endif
 }
 
 // we are only registering on main thread while holding GIL so this should be
@@ -1032,11 +790,6 @@ PythonTracer::PythonTracer(torch::profiler::impl::RecordQueue* queue)
     return;
   }
 
-#if defined(Py_GIL_DISABLED) && !IS_PYTHON_3_14_PLUS
-  TORCH_WARN(
-      "The PyTorch profiler is not thread-safe on Python 3.13t. "
-      "Please use Python 3.14t or later.");
-#endif
 
   pybind11::gil_scoped_acquire gil;
   interpreter_ = PyInterpreterState_Get();
@@ -1092,9 +845,6 @@ PythonTracer::PythonTracer(torch::profiler::impl::RecordQueue* queue)
       tls.remaining_start_frames_ = tls.active_frames_;
     }
   }
-#if IS_PYTHON_3_12
-  registerMonitoringCallback();
-#endif
 }
 
 void unregister_gc_callback() {
@@ -1187,9 +937,6 @@ void PythonTracer::stop() {
       }
     }
 
-#if IS_PYTHON_3_12
-    unregisterMonitoringCallback();
-#endif
 
     auto lock_returned = active_lock_.compare_exchange_strong(active_, false);
     active_ = false;
@@ -1207,9 +954,6 @@ void PythonTracer::restart() {
     return;
   }
   setprofileAllThreads(PythonTracer::pyProfileFn, (PyObject*)shared_ctx_);
-#if IS_PYTHON_3_12
-  registerMonitoringCallback();
-#endif
 }
 
 // NOLINTNEXTLINE(bugprone-exception-escape)
@@ -1243,26 +987,14 @@ void PythonTracer::recordPyCall(
       // the full dict of locals.
       auto locals = THPObjectPtr(PyFrame_GetLocals(frame));
 
-#if PY_MAJOR_VERSION < 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13)
-      auto self =
-          THPObjectPtr(Py_XNewRef(PyDict_GetItemString(locals, "self")));
-#else
-      // In Python-3.13+ `PyFrame_GetLocals()` returns instance of
-      // PyFrameLocalsProxy_Type See PEP 667 for more info
       auto self = THPObjectPtr(PyMapping_GetItemString(locals, "self"));
-#endif
       auto back = THPFrameObjectPtr(PyFrame_GetBack(frame));
       TORCH_INTERNAL_ASSERT(back != nullptr);
       return tls.intern<CallType::PyModuleCall, E>(
           frame, self.get(), back.get());
     } else if (code.get() == optimizer_hook_) {
       auto locals = THPObjectPtr(PyFrame_GetLocals(frame));
-#if PY_MAJOR_VERSION < 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13)
-      auto self =
-          THPObjectPtr(Py_XNewRef(PyDict_GetItemString(locals, "self")));
-#else
       auto self = THPObjectPtr(PyMapping_GetItemString(locals, "self"));
-#endif
       auto back = THPFrameObjectPtr(PyFrame_GetBack(frame));
       TORCH_INTERNAL_ASSERT(back != nullptr);
       return tls.intern<CallType::PyOptimizerCall, E>(

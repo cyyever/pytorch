@@ -13,10 +13,6 @@ inline PyCFunction castPyCFunctionWithKeywords(PyCFunctionWithKeywords func) {
   C10_DIAGNOSTIC_POP()
 }
 
-#if !IS_PYTHON_3_13_PLUS
-using PyCFunctionFast = _PyCFunctionFast;
-#endif
-
 inline PyCFunction castPyCFunctionFast(PyCFunctionFast func) {
   C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wcast-function-type")
   C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wcast-function-type-strict")
