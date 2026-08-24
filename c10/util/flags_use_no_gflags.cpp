@@ -1,6 +1,8 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/Flags.h>
 
+#include <cerrno>
+#include <charconv>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -133,48 +135,48 @@ C10_EXPORT bool C10FlagParser::Parse<string>(
 
 template <>
 C10_EXPORT bool C10FlagParser::Parse<int>(const string& content, int* value) {
-  try {
-    *value = std::atoi(content.c_str());
-    return true;
-  } catch (...) {
+  const char* end = content.data() + content.size();
+  auto [ptr, ec] = std::from_chars(content.data(), end, *value);
+  if (ec != std::errc() || ptr != end) {
     GlobalInitStream() << "C10 flag error: Cannot convert argument to int: "
                        << content << '\n';
     return false;
   }
+  return true;
 }
 
 template <>
 C10_EXPORT bool C10FlagParser::Parse<int64_t>(
     const string& content,
     int64_t* value) {
-  try {
-    static_assert(sizeof(long long) == sizeof(int64_t));
-#ifdef __ANDROID__
-    // Android does not have std::atoll.
-    *value = atoll(content.c_str());
-#else
-    *value = std::atoll(content.c_str());
-#endif
-    return true;
-  } catch (...) {
-    GlobalInitStream() << "C10 flag error: Cannot convert argument to int: "
+  const char* end = content.data() + content.size();
+  auto [ptr, ec] = std::from_chars(content.data(), end, *value);
+  if (ec != std::errc() || ptr != end) {
+    GlobalInitStream() << "C10 flag error: Cannot convert argument to int64_t: "
                        << content << '\n';
     return false;
   }
+  return true;
 }
 
 template <>
 C10_EXPORT bool C10FlagParser::Parse<double>(
     const string& content,
     double* value) {
-  try {
-    *value = std::atof(content.c_str());
-    return true;
-  } catch (...) {
+  // std::from_chars for floating point is not available in every standard
+  // library this builds against, so parse with strtod and check it consumed
+  // the whole argument.
+  const char* begin = content.c_str();
+  char* parse_end = nullptr;
+  errno = 0;
+  const double parsed = std::strtod(begin, &parse_end);
+  if (parse_end != begin + content.size() || parse_end == begin || errno != 0) {
     GlobalInitStream() << "C10 flag error: Cannot convert argument to double: "
                        << content << '\n';
     return false;
   }
+  *value = parsed;
+  return true;
 }
 
 template <>
