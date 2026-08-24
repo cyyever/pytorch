@@ -193,8 +193,6 @@ def _analyze_comprehension(tx: InstructionTranslatorBase) -> ComprehensionAnalys
     # In 3.13 END_FOR is followed by POP_TOP to pop the iter.  In 3.12, END_FOR is responsible for doing the pop, and in
     # 3.14+ POP_ITER is used instead.  We skip over the mandatory POP_TOP in 3.13 to avoid confusing the analysis below
     # (which looks for an additional POP_TOP if the result is discarded).
-    if sys.version_info[:2] == (3, 13):
-        scan_ip += 1
     while (
         scan_ip < len(tx.instructions)
         and tx.instructions[scan_ip].opname != "STORE_FAST"

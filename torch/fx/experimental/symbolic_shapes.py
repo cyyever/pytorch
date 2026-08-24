@@ -8643,19 +8643,14 @@ class ShapeEnv:
             raise AssertionError("frame must not be None")
 
         insts = list(dis.get_instructions(frame.f_code))
-        if sys.version_info >= (3, 11):
-            # For Python >= 3.11, instructions can be 2-4 bytes long.
-            from bisect import bisect_left
+        # Instructions can be 2-4 bytes long.
+        from bisect import bisect_left
 
-            cur = bisect_left(insts, frame.f_lasti, key=lambda x: x.offset)
-        else:
-            # For Python <= 3.10, instructions are always 2 bytes.
-            cur = frame.f_lasti // 2
+        cur = bisect_left(insts, frame.f_lasti, key=lambda x: x.offset)
 
-        if sys.version_info >= (3, 13):
-            if insts[cur].opname in ("TO_BOOL", "COMPARE_OP"):
-                # Peek 1 instruction further.
-                cur += 1
+        if insts[cur].opname in ("TO_BOOL", "COMPARE_OP"):
+            # Peek 1 instruction further.
+            cur += 1
 
         assert_insts = torch._dynamo.symbolic_convert.get_assert_bytecode_sequence(
             False

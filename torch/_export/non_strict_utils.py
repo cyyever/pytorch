@@ -4,7 +4,6 @@ import functools
 import inspect
 import logging
 import math
-import sys
 from collections import defaultdict
 from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager
@@ -617,9 +616,7 @@ def make_fake_inputs(
             # functools handles nesting by itself, no need to recurse
             code = nn_module.forward.func.__code__
         elif (
-            sys.version_info >= (3, 14)
-            and (fwd := getattr(nn_module.forward, "__func__", None))
-            and isinstance(fwd, functools.partial)
+            (fwd := getattr(nn_module.forward, '__func__', None)) and isinstance(fwd, functools.partial)
         ):
             # functools.partial is now a method descriptor:
             # https://docs.python.org/3/whatsnew/3.14.html#changes-in-the-python-api

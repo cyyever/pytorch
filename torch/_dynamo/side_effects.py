@@ -27,12 +27,11 @@ import dataclasses
 import enum
 import inspect
 import logging
-import sys
 import textwrap
 import traceback
 import weakref
 from collections.abc import Callable, Generator, MutableMapping
-from types import CellType, SimpleNamespace
+from types import CellType
 from typing import Any, TYPE_CHECKING
 
 import torch
@@ -208,11 +207,6 @@ _MUTABLE_GETATTRIBUTES: tuple[Any, ...] = (
     collections.deque.__getattribute__,
     BaseException.__getattribute__,
 )
-if sys.version_info < (3, 13):
-    # SimpleNamespace names tp_getattro in its static struct before 3.13, so
-    # PyType_Ready publishes its own __getattribute__ wrapper even though the
-    # slot is PyObject_GenericGetAttr. BaseException above is the same case.
-    _MUTABLE_GETATTRIBUTES += (SimpleNamespace.__getattribute__,)
 
 
 class SideEffects:
