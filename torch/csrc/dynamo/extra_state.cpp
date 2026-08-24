@@ -10,11 +10,6 @@
 #include <torch/csrc/dynamo/framelocals_mapping.h>
 #include <torch/csrc/dynamo/guards.h>
 
-#if IS_PYTHON_3_12_PLUS
-#define _PyCode_GetExtra PyUnstable_Code_GetExtra
-#define _PyCode_SetExtra PyUnstable_Code_SetExtra
-#endif
-
 namespace {
 // Short-term fix for: https://github.com/pytorch/pytorch/issues/166926
 bool use_lru = true;
@@ -145,7 +140,7 @@ void extra_state_set_region_exec_strategy(
 
 ExtraState* get_extra_state(PyCodeObject* code) {
   ExtraState* extra = nullptr;
-  _PyCode_GetExtra((PyObject*)code, extra_index, (void**)&extra);
+  PyUnstable_Code_GetExtra((PyObject*)code, extra_index, (void**)&extra);
   return extra;
 }
 
@@ -157,7 +152,7 @@ void destroy_extra_state(void* obj) {
 void set_extra_state(PyCodeObject* code, ExtraState* extra_state) {
   ExtraState* old_extra_state = get_extra_state(code);
   CHECK(extra_state == nullptr || old_extra_state != extra_state);
-  _PyCode_SetExtra((PyObject*)code, extra_index, extra_state);
+  PyUnstable_Code_SetExtra((PyObject*)code, extra_index, extra_state);
 }
 
 ExtraState* init_and_set_extra_state(PyCodeObject* code) {

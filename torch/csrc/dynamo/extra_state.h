@@ -142,9 +142,9 @@ void extra_state_set_region_exec_strategy(
 //  - extra_state: Borrowed.
 ExtraState* get_extra_state(PyCodeObject* code);
 
-// This is passed as freefunc to _PyEval_RequestCodeExtraIndex. This acts as a
+// This is passed as freefunc to PyUnstable_Eval_RequestCodeExtraIndex. This acts as a
 // deleter for the object on extra scratch space. This function is called
-// internally in _PyCode_SetExtra and also during the code deallocation.
+// internally in PyUnstable_Code_SetExtra and also during the code deallocation.
 
 // Destroys the extra state by deleting cache_entry, frame state and finally
 // freeing the constructed extra state.
@@ -155,7 +155,7 @@ ExtraState* get_extra_state(PyCodeObject* code);
 void destroy_extra_state(void* obj);
 
 // Clears the existing object sitting on the extra scratch spance and sets it
-// up with the new state. Note that _PyCode_SetExtra calls the
+// up with the new state. Note that PyUnstable_Code_SetExtra calls the
 // destroy_extra_state deleter internally, and therefore we don't call it
 // explicitly here.
 

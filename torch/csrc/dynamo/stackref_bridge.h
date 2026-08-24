@@ -2,7 +2,6 @@
 
 #include <torch/csrc/utils/python_compat.h>
 
-#if IS_PYTHON_3_14_PLUS
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,4 +14,3 @@ PyObject* THP_PyStackRef_AsPyObjectBorrow(void* stackref);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // IS_PYTHON_3_14_PLUS

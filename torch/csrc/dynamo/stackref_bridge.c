@@ -8,7 +8,6 @@
 
 #include <torch/csrc/utils/python_compat.h>
 
-#if IS_PYTHON_3_14_PLUS
 
 #define Py_BUILD_CORE
 #include <Python.h>
@@ -21,4 +20,3 @@ PyObject* THP_PyStackRef_AsPyObjectBorrow(void* stackref) {
   return PyStackRef_AsPyObjectBorrow(*sr);
 }
 
-#endif

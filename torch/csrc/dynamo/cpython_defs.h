@@ -6,17 +6,11 @@
 // should go in cpython_defs.c. Copying is required when, e.g.,
 // we need to call internal CPython functions that are not exposed.
 
-#if IS_PYTHON_3_11_PLUS
-
 typedef struct _PyInterpreterFrame _PyInterpreterFrame;
 
 PyFunctionObject* _PyFunction_CopyWithNewCode(
     PyFunctionObject* o,
     PyCodeObject* code);
-
-#if !IS_PYTHON_3_13_PLUS
-void THP_PyFrame_Clear(_PyInterpreterFrame* frame);
-#endif
 
 #if IS_PYTHON_3_15_PLUS
 #define THP_PyThreadState_BumpFramePointerSlow \
@@ -25,14 +19,6 @@ void THP_PyFrame_Clear(_PyInterpreterFrame* frame);
 _PyInterpreterFrame* THP_PyThreadState_BumpFramePointerSlow(
     PyThreadState* tstate,
     size_t size);
-#endif
-
-#if !IS_PYTHON_3_13_PLUS
-void THP_PyThreadState_PopFrame(
-    PyThreadState* tstate,
-    _PyInterpreterFrame* frame);
-#endif
-
 #endif
 
 // pointers to _PyOpcode_Caches for C++

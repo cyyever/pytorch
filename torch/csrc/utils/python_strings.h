@@ -104,37 +104,10 @@ inline void THPUtils_internStringInPlace(PyObject** obj) {
  */
 
 inline py::object PyObject_FastGetAttrString(PyObject* obj, const char* name) {
-#if IS_PYTHON_3_13_PLUS
   PyObject* res = (PyObject*)nullptr;
   int result_code = PyObject_GetOptionalAttrString(obj, name, &res);
   if (result_code == -1) {
     PyErr_Clear();
   }
   return py::reinterpret_steal<py::object>(res);
-#else
-  PyTypeObject* tp = Py_TYPE(obj);
-  PyObject* res = (PyObject*)nullptr;
-
-  /* Attribute referenced by (char *)name */
-  if (tp->tp_getattr != nullptr) {
-    // This is OK per https://bugs.python.org/issue39620
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-    res = (*tp->tp_getattr)(obj, const_cast<char*>(name));
-    if (res == nullptr) {
-      PyErr_Clear();
-    }
-  }
-  /* Attribute referenced by (PyObject *)name */
-  else if (tp->tp_getattro != nullptr) {
-    auto w = py::reinterpret_steal<py::object>(PyUnicode_FromString(name));
-    if (w.ptr() == nullptr) {
-      return py::object();
-    }
-    res = (*tp->tp_getattro)(obj, w.ptr());
-    if (res == nullptr) {
-      PyErr_Clear();
-    }
-  }
-  return py::reinterpret_steal<py::object>(res);
-#endif
 }

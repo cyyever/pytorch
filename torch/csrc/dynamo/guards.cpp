@@ -86,48 +86,16 @@ uint64_t count_instructions(const std::function<void()>& fn) {
 }
 #endif
 
-// Certain CPython data structures are defined in `.c` files in earlier Python
-// versions, e.g., for TupleIteratorGetItemAccessor, we need a fast way to
-// retrieve the underlying tuple and access the item. Before Python 3.12
-// version, the data structure is in tupleobject.c file -
-// https://github.com/python/cpython/blob/9afc6d102d16080535325f645849cd84eb04d57d/Objects/tupleobject.c#L1058-L1062
-//
-// To handle the older python versions, we manually copy the struct here and
-// manually cast it to this new struct. For newer versions, the struct is
-// included in the header file.
-#if IS_PYTHON_3_12_PLUS
+// _PyTupleIterObject / _PyRangeIterObject live in internal headers; pull them
+// in under Py_BUILD_CORE so accessors like TupleIteratorGetItemAccessor can
+// reach the underlying tuple directly.
 
 #define Py_BUILD_CORE
 #include <internal/pycore_range.h> // _PyRangeIterObject
 #include <internal/pycore_tuple.h> // _PyTupleIterObject
 #undef Py_BUILD_CORE
 
-#else
-
-// Manually create _PyTupleIterObject struct
-typedef struct {
-  PyObject_HEAD
-  Py_ssize_t it_index;
-  PyTupleObject* it_seq; /* Set to NULL when iterator is exhausted */
-} _PyTupleIterObject;
-
-// Copied from CPython, and given a unified name for different Python versions.
-// https://github.com/python/cpython/blob/7f71003b222ad398713514c2b55d34dc05dba6bc/Objects/rangeobject.c#L765-L771
-typedef struct {
-  PyObject_HEAD
-  // NOTE for Python 3.12+, `index` is removed, and `start` is updated in place
-  // instead, upon each `next(...)` call. See
-  // https://github.com/python/cpython/pull/27986
-  long index;
-  long start;
-  long step;
-  long len;
-} _PyRangeIterObject;
-
-#endif // IS_PYTHON_3_12_PLUS
-
 namespace torch::dynamo {
-
 thread_local bool tls_is_in_mode_without_ignore_compile_internals = false;
 
 void set_is_in_mode_without_ignore_compile_internals(bool value) {
@@ -336,7 +304,6 @@ std::string TensorCheck::check_verbose(
 }
 
 namespace {
-
 typedef std::vector<TensorCheck> ChecksList;
 
 typedef struct {
@@ -921,8 +888,6 @@ static PyObject* check_obj_id(PyObject* dummy, PyObject* args) {
   }
 }
 
-#if IS_PYTHON_3_12_PLUS
-
 struct DictVersionState {
   std::unordered_map<PyObject*, uint64_t> map;
   uint64_t next_id = 1;
@@ -946,11 +911,7 @@ static int dict_version_watch_callback(
   return 0;
 }
 
-#endif
-
 static uint64_t get_dict_version_unchecked(PyObject* dict) {
-#if IS_PYTHON_3_12_PLUS
-
   TORCH_CHECK(
       !PyDict_Watch(dict_version_watcher_id, dict),
       "failed to add version watcher to dict!");
@@ -961,12 +922,6 @@ static uint64_t get_dict_version_unchecked(PyObject* dict) {
     }
     return it->second;
   });
-
-#else
-
-  return ((PyDictObject*)dict)->ma_version_tag;
-
-#endif
 }
 
 static PyObject* dict_version(PyObject* dummy, PyObject* obj) {
@@ -2182,11 +2137,7 @@ class RANGE_ITERATOR_MATCH : public LeafGuard {
     }
     _PyRangeIterObject* iter = (_PyRangeIterObject*)value;
 
-#if IS_PYTHON_3_12_PLUS
     long start = iter->start;
-#else
-    long start = iter->start + iter->index * iter->step;
-#endif // IS_PYTHON_3_12_PLUS
 
     long stop = iter->start + iter->len * iter->step;
     return start == _start && stop == _stop && iter->step == _step;
@@ -3849,11 +3800,9 @@ class GuardManager {
         TORCH_CHECK(
             register_weakref_callback(value),
             "Could not register a callback for recursive dict tag optimization");
-#if IS_PYTHON_3_12_PLUS
         // Ideally we don't need to even register a weakref callback for value.
         // But it does not hurt to be more cautious
         _dict_callback_installed = watch_dict_pointers(value);
-#endif
       }
     }
     if (!result) {
@@ -3925,7 +3874,6 @@ class GuardManager {
   }
 
   bool watch_dict_pointers(PyObject* value) {
-#if IS_PYTHON_3_12_PLUS
     // -----------------------------------------------------------------------------
     // CPython 3.12 dict-watcher integration
     // -----------------------------------------------------------------------------
@@ -3954,7 +3902,6 @@ class GuardManager {
         map[dict_pointer].push_back(this);
       });
     }
-#endif
     return true;
   }
 
@@ -3978,7 +3925,6 @@ class GuardManager {
   //    will tear down the watch automatically; skipping PyDict_Unwatch
   //    here only loses an early-cleanup optimisation.
   void unwatch_all_saved_dict_pointers(DictToGuardManagersMap& map) {
-#if IS_PYTHON_3_12_PLUS
     for (auto& value_stashed_pointers : _dict_pointers) {
       auto stashed_pointers = value_stashed_pointers.second;
 
@@ -4001,7 +3947,6 @@ class GuardManager {
         }
       }
     }
-#endif
   }
 
   virtual bool check_nopybind(FrameLocalsMapping* value) {
@@ -5010,7 +4955,6 @@ void add_relational_guard_resetter_to_cloned_root(
   root->add_relational_guard_resetter(std::move(guard));
 }
 
-#if IS_PYTHON_3_12_PLUS
 static int dict_recursive_tag_watch_callback(
     PyDict_WatchEvent event,
     PyObject* dict,
@@ -5032,7 +4976,6 @@ static int dict_recursive_tag_watch_callback(
   }
   return 0; // keep watching
 }
-#endif
 
 std::unique_ptr<GuardManager> make_guard_manager(
     RootGuardManager* root,
@@ -7503,7 +7446,6 @@ double profile_guard_manager(
   // Calculate the average time per iteration in microseconds
   return (total_elapsed.count() * 1e6) / n_iters;
 }
-
 } // namespace
 
 // These helpers are exported to Python as raw function pointers on the
@@ -8951,8 +8893,7 @@ PyObject* torch_c_dynamo_guards_init() {
   py_m.def("install_symbolic_shape_guard", install_symbolic_shape_guard);
   py_m.def("profile_guard_manager", profile_guard_manager);
 
-// initialize dict version watcher for 3.12
-#if IS_PYTHON_3_12_PLUS
+  // initialize dict version watchers
 
   dict_version_watcher_id = PyDict_AddWatcher(dict_version_watch_callback);
   TORCH_CHECK(
@@ -8965,8 +8906,6 @@ PyObject* torch_c_dynamo_guards_init() {
       dict_recursive_tag_watcher_id != -1,
       "Failed to install dict_recursive_tag_watch_callback");
 
-#endif
-
   py_m.def(
       "set_is_in_mode_without_ignore_compile_internals",
       &set_is_in_mode_without_ignore_compile_internals,
@@ -8974,5 +8913,4 @@ PyObject* torch_c_dynamo_guards_init() {
 
   return m;
 }
-
 } // namespace torch::dynamo
