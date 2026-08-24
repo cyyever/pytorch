@@ -19,11 +19,7 @@
 #include <ATen/ops/cat.h>
 #endif
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define RESTRICT __restrict
-#else
 #define RESTRICT __restrict__
-#endif
 
 namespace at::native {
 
@@ -33,7 +29,7 @@ inline bool is_block_start(int index, int BLOCK_SIZE) {
   return !(index & (BLOCK_SIZE -1));
 }
 
-#if (defined(CPU_CAPABILITY_AVX512) || defined(CPU_CAPABILITY_AVX2)) && !defined(_MSC_VER)
+#if (defined(CPU_CAPABILITY_AVX512) || defined(CPU_CAPABILITY_AVX2))
 // convert 16x int4 to int8, handle 64 bits at a time
 // used in avx2 and avx512
 inline __m128i convert_int4_to_int8(const uint8_t* data) {
@@ -48,7 +44,7 @@ inline __m128i convert_int4_to_int8(const uint8_t* data) {
 }
 #endif
 
-#if defined(CPU_CAPABILITY_AVX512) && !defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_AVX512)
 
 // A block : {BLOCK_M, BLOCK_K}, lda = K
 // B block : {BLOCK_K, BLOCK_N / 2}, ldb = BLOCK_N / 2
@@ -204,7 +200,7 @@ inline void tinygemm_kernel(
   c10::ForcedUnroll<ROWS * COLS>{}(storec);
 }
 
-#elif defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER)
+#elif defined(CPU_CAPABILITY_AVX2)
 
 template <int BLOCK_M, int BLOCK_N>
 inline void tinygemm_kernel(
@@ -483,7 +479,7 @@ inline float convert_int4_to_float(const uint8_t* b, int n) {
     4.0f, 5.0f, 6.0f, 7.0f
   };
   int index;
-#if defined(CPU_CAPABILITY_AVX512) && !defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_AVX512)
   if constexpr (BLOCK_N == 64) {
     const int nb = n/BLOCK_N;
     n -= nb*BLOCK_N;
@@ -495,7 +491,7 @@ inline float convert_int4_to_float(const uint8_t* b, int n) {
       index = val >> 4;
     }
   } else
-#elif defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER)
+#elif defined(CPU_CAPABILITY_AVX2)
   if constexpr (BLOCK_N == 32) {
     const int nb = n/BLOCK_N;
     n -= nb*BLOCK_N;
@@ -632,7 +628,7 @@ void weight_to_int4pack_kernel(
       const int32_t* src = weight_data + i * BLOCK_N * K;
       uint8_t* dst = weight_packed_data + i * K * BLOCK_N / 2;
       for (const auto k : c10::irange(K)) {
-#if defined(CPU_CAPABILITY_AVX512) && !defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_AVX512)
         if (nb_size == BLOCK_N) {
           for (const auto d : c10::irange(16)) {
             int32_t val0 = src[(d +  0) * K + k];
@@ -656,7 +652,7 @@ void weight_to_int4pack_kernel(
             dst[k * nb_size / 2 + n / 2] = packed;
           }
         }
-#elif defined(CPU_CAPABILITY_AVX2) && !defined(_MSC_VER)
+#elif defined(CPU_CAPABILITY_AVX2)
         if (nb_size == BLOCK_N) {
           // for nb_size 32
           for (const auto d : c10::irange(16)) {

@@ -370,7 +370,7 @@ class PythonPrinter(ExprPrinter):
 
 class CppPrinter(ExprPrinter):
     def _print_Integer(self, expr: sympy.Expr) -> str:
-        suffix = "LL" if sys.platform in ["darwin", "win32"] else "L"
+        suffix = "LL" if sys.platform == "darwin" else "L"
         i = int(expr)
         if i > INDEX_TYPE_MAX or i < INDEX_TYPE_MIN:
             raise OverflowError(f"{i} too big to convert to {INDEX_TYPE}")

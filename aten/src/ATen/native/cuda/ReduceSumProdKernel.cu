@@ -35,7 +35,7 @@ template <>
 struct sum_functor<c10::complex<at::Half>> {
 // jiterator reduction fails on windows
 // Ref: https://github.com/pytorch/pytorch/issues/77305
-#if AT_USE_JITERATOR() && !defined(_MSC_VER)
+#if AT_USE_JITERATOR()
   void operator()(TensorIterator& iter) {
     using scalar_t = c10::complex<at::Half>;
     std::string func = jiterator_stringify(
@@ -93,7 +93,7 @@ template <typename scalar_t, typename acc_t = scalar_t, typename out_t = scalar_
 struct prod_functor {
   // jiterator reduction fails on windows
   // Ref: https://github.com/pytorch/pytorch/issues/77305
-  #if AT_USE_JITERATOR() && !defined(_MSC_VER)
+  #if AT_USE_JITERATOR()
   void operator()(TensorIterator& iter) {
     std::string func = jiterator_stringify(
     arg_t combine(arg_t a, arg_t b) {
@@ -129,7 +129,7 @@ template <>
 struct prod_functor<c10::complex<at::Half>> {
 // jiterator reduction fails on windows
 // Ref: https://github.com/pytorch/pytorch/issues/77305
-#if AT_USE_JITERATOR() && !defined(_MSC_VER)
+#if AT_USE_JITERATOR()
   void operator()(TensorIterator& iter) {
     using scalar_t = c10::complex<at::Half>;
     std::string func =

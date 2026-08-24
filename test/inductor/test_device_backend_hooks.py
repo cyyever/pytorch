@@ -2,7 +2,7 @@
 from types import SimpleNamespace
 from unittest import mock
 
-from torch._dynamo.device_interface import DeviceInterface, MtiaInterface, XpuInterface
+from torch._dynamo.device_interface import DeviceInterface, XpuInterface
 from torch._inductor import config, ir
 from torch._inductor.codegen.common import (
     _initialize_device_op_overrides,
@@ -46,18 +46,6 @@ class TestMultiProcessorCount(TestCase):
         ):
             self.assertEqual(XpuInterface.get_multi_processor_count(), 16)
             self.assertEqual(XpuInterface.get_multi_processor_count(), 32)
-
-    def test_mtia_override(self):
-        with mock.patch.object(
-            MtiaInterface,
-            "get_device_properties",
-            side_effect=[
-                SimpleNamespace(multi_processor_count=16),
-                SimpleNamespace(),
-            ],
-        ):
-            self.assertEqual(MtiaInterface.get_multi_processor_count(), 16)
-            self.assertEqual(MtiaInterface.get_multi_processor_count(), 64)
 
 
 class TestDevicePropertiesCreate(TestCase):

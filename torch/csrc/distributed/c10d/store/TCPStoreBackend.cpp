@@ -10,11 +10,7 @@
 #include <torch/csrc/distributed/c10d/logging.h>
 #include <torch/csrc/distributed/c10d/store/TCPStoreBackend.hpp>
 
-#ifdef _WIN32
-#include <torch/csrc/distributed/c10d/WinSockUtils.hpp>
-#else
 #include <torch/csrc/distributed/c10d/UnixSockUtils.hpp>
-#endif
 
 #include <torch/csrc/distributed/c10d/socket.h>
 
@@ -100,12 +96,7 @@ class TCPStoreMasterDaemon : public BackgroundThread {
 
   Socket storeListenSocket_;
   std::vector<Socket> sockets_;
-#ifdef _WIN32
-  const std::chrono::milliseconds checkTimeout_ = std::chrono::milliseconds{10};
-  HANDLE ghStopEvent_{};
-#else
   std::array<int, 2> controlPipeFd_{-1, -1};
-#endif
 };
 
 // Simply start the daemon thread
@@ -127,26 +118,6 @@ std::uint16_t TCPStoreMasterDaemon::port() const {
   return storeListenSocket_.port();
 }
 
-#ifdef _WIN32
-void TCPStoreMasterDaemon::initStopSignal() {
-  ghStopEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
-  if (ghStopEvent_ == NULL) {
-    TORCH_CHECK(
-        false,
-        "Failed to create the control pipe to start the "
-        "BackgroundThread run");
-  }
-}
-
-void TCPStoreMasterDaemon::closeStopSignal() {
-  CloseHandle(ghStopEvent_);
-}
-
-void TCPStoreMasterDaemon::stop() {
-  SetEvent(ghStopEvent_);
-}
-
-#else
 void TCPStoreMasterDaemon::initStopSignal() {
   if (pipe(controlPipeFd_.data()) == -1) {
     TORCH_CHECK(
@@ -186,7 +157,6 @@ void TCPStoreMasterDaemon::stop() {
     controlPipeFd_[1] = -1;
   }
 }
-#endif
 
 void TCPStoreMasterDaemon::queryFds(std::vector<struct pollfd>& fds) {
   // Skipping the fds[0] and fds[1],
@@ -537,47 +507,6 @@ bool TCPStoreMasterDaemon::isMiscellaneousSocket(int socket) {
   return miscellaneousSockets_.contains(socket);
 }
 
-#ifdef _WIN32
-void TCPStoreMasterDaemon::run() {
-  std::vector<struct pollfd> fds;
-  tcputil::addPollfd(fds, storeListenSocket_.handle(), POLLIN);
-
-  // receive the queries
-  while (true) {
-    for (const auto i : c10::irange(sockets_.size())) {
-      fds[i].revents = 0;
-    }
-
-    int res;
-    SYSCHECK_ERR_RETURN_NEG1(
-        res = WSAPoll(fds.data(), fds.size(), checkTimeout_.count()))
-    if (res == 0) {
-      auto rv = WaitForSingleObject(ghStopEvent_, 0);
-      if (rv != WAIT_TIMEOUT) {
-        break;
-      }
-      continue;
-    }
-
-    // TCPStore's listening socket has an event and it should now be able to
-    // accept new connections.
-    if (fds[0].revents != 0) {
-      if (!(fds[0].revents & POLLIN)) {
-        C10_THROW_ERROR(
-            DistStoreError,
-            "Unexpected poll revent on the master's listening socket: " +
-                std::to_string(fds[0].revents));
-      }
-      Socket socket = storeListenSocket_.accept();
-      int rawSocket = socket.handle();
-      sockets_.emplace_back(std::move(socket));
-      tcputil::addPollfd(fds, rawSocket, POLLIN);
-      addMiscellaneousSocket(rawSocket);
-    }
-    queryFds(fds);
-  }
-}
-#else
 void TCPStoreMasterDaemon::run() {
   try {
     c10::setThreadName("pt_tcpstore");
@@ -643,7 +572,6 @@ void TCPStoreMasterDaemon::run() {
     throw;
   }
 }
-#endif
 
 std::unique_ptr<BackgroundThread> create_tcpstore_backend(
     const TCPStoreOptions& opts) {

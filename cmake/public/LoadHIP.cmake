@@ -32,11 +32,7 @@ else()
 
   # Fall back to default paths if rocm-sdk did not work
   if(NOT DEFINED ROCM_PATH OR NOT EXISTS ${ROCM_PATH})
-    if(UNIX)
-      set(ROCM_PATH /opt/rocm)
-    else() # Win32
-      set(ROCM_PATH C:/opt/rocm)
-    endif()
+    set(ROCM_PATH /opt/rocm)
   endif()
 
   if(NOT EXISTS ${ROCM_PATH})
@@ -44,24 +40,6 @@ else()
         "ROCM_PATH environment variable is not set and ${ROCM_PATH} does not exist.\n"
         "Building without ROCm support.")
     return()
-  endif()
-endif()
-
-# MAGMA_HOME
-if(NOT DEFINED ENV{MAGMA_HOME})
-  set(MAGMA_HOME ${ROCM_PATH}/magma)
-  set(ENV{MAGMA_HOME} ${ROCM_PATH}/magma)
-else()
-  file(TO_CMAKE_PATH "$ENV{MAGMA_HOME}" MAGMA_HOME)
-endif()
-
-# MIOpen isn't a part of HIP-SDK for Windows and hence, may have a different
-# installation directory.
-if(WIN32)
-  if(NOT DEFINED ENV{MIOPEN_PATH})
-    set(miopen_DIR C:/opt/miopen/lib/cmake/miopen)
-  else()
-    set(miopen_DIR $ENV{MIOPEN_PATH}/lib/cmake/miopen)
   endif()
 endif()
 
@@ -94,11 +72,7 @@ if(DEFINED ENV{HIP_CLANG_PATH})
 else()
   set(_hip_clang_dir "${ROCM_PATH}/lib/llvm/bin")
 endif()
-if(WIN32)
-  set(CMAKE_HIP_COMPILER "${_hip_clang_dir}/clang++.exe")
-else()
-  set(CMAKE_HIP_COMPILER "${_hip_clang_dir}/clang++")
-endif()
+set(CMAKE_HIP_COMPILER "${_hip_clang_dir}/clang++")
 if(NOT EXISTS "${CMAKE_HIP_COMPILER}")
   message(FATAL_ERROR "HIP compiler not found at ${CMAKE_HIP_COMPILER}")
 endif()
@@ -106,17 +80,6 @@ endif()
 set(CMAKE_HIP_PLATFORM "amd" CACHE STRING "HIP platform" FORCE)
 set(CMAKE_HIP_ARCHITECTURES ${PYTORCH_ROCM_ARCH})
 
-if(WIN32)
-  # On Windows, C/CXX use clang-cl (MSVC frontend) but HIP must use clang++
-  # (GNU frontend). CMake's Windows-Clang platform module enforces that all
-  # compilers use the same frontend variant, and the ABI detection test
-  # fails because MSVC-style linker flags (/machine:x64) are passed to clang++.
-  # Skip compiler detection to avoid these issues.
-  set(CMAKE_HIP_COMPILER_FORCED TRUE)
-  set(CMAKE_HIP_COMPILER_WORKS TRUE)
-  set(CMAKE_HIP_COMPILER_ID "Clang")
-  set(CMAKE_HIP_COMPILER_FRONTEND_VARIANT "GNU")
-endif()
 
 # CMake populates CMAKE_<LANG>_USING_LINKER_<TYPE> for C/CXX (Clang) but not for
 # HIP, so a global CMAKE_LINKER_TYPE (e.g. LLD) leaks into enable_language(HIP)'s
@@ -140,81 +103,10 @@ enable_language(HIP)
 message(STATUS "HIP language enabled with compiler: ${CMAKE_HIP_COMPILER}")
 message(STATUS "HIP architectures: ${CMAKE_HIP_ARCHITECTURES}")
 
-if(WIN32)
-  # CMake 4.3.0+ regression: the Windows-MSVC platform module seeds
-  # CMAKE_HIP_FLAGS{,_<CONFIG>} with MSVC-style defaults (/DWIN32 /D_WINDOWS,
-  # /O2 /Ob2 /DNDEBUG) when C/CXX use clang-cl. clang++ (GNU frontend) for HIP
-  # rejects them. Strip them out. Not needed on CMake 4.2.x, but safe there.
-  foreach(_cfg "" _DEBUG _RELEASE _MINSIZEREL _RELWITHDEBINFO)
-    if(DEFINED CMAKE_HIP_FLAGS${_cfg})
-      string(REGEX REPLACE "(^| )/[a-zA-Z][a-zA-Z0-9_:=.]*" "" CMAKE_HIP_FLAGS${_cfg} "${CMAKE_HIP_FLAGS${_cfg}}")
-      string(STRIP "${CMAKE_HIP_FLAGS${_cfg}}" CMAKE_HIP_FLAGS${_cfg})
-    endif()
-  endforeach()
-
-  # Reinstate GNU-equivalent optimization flags. The generated HIP compile
-  # rule's <FLAGS> includes CMAKE_HIP_FLAGS but, on this code path, does
-  # not include CMAKE_HIP_FLAGS_<CONFIG> (verified via build.ninja), so
-  # appending to the per-config variables is dead code. Inject the per-config
-  # flags into CMAKE_HIP_FLAGS instead, gated on CMAKE_BUILD_TYPE for
-  # single-config generators (Ninja, Makefiles). Without this, clang++
-  # falls back to -O0 and HIP kernels are unoptimized (~99% conv2d FP16
-  # perf regression on gfx1150; TheRock#5157, #183853).
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" _hip_cfg)
-    if(_hip_cfg STREQUAL "DEBUG")
-      string(APPEND CMAKE_HIP_FLAGS " -O0 -g")
-    elseif(_hip_cfg STREQUAL "RELWITHDEBINFO")
-      string(APPEND CMAKE_HIP_FLAGS " -O2 -DNDEBUG -g")
-    elseif(_hip_cfg STREQUAL "MINSIZEREL")
-      string(APPEND CMAKE_HIP_FLAGS " -Os -DNDEBUG")
-    else()  # Release or unset
-      string(APPEND CMAKE_HIP_FLAGS " -O3 -DNDEBUG")
-    endif()
-    unset(_hip_cfg)
-  endif()
-endif()
-
-if(WIN32)
-  # After enable_language(HIP), the platform module Windows-Clang-HIP.cmake
-  # sets MSVC-style compile/link rules (because C/CXX use MSVC frontend).
-  # Override them all with GNU-style rules for clang++.
-
-  # Compile: use GNU-style flags (-o, -isystem) instead of MSVC-style.
-  set(CMAKE_HIP_COMPILE_OBJECT
-    "<CMAKE_HIP_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -o <OBJECT> -x hip -c <SOURCE>")
-  set(CMAKE_INCLUDE_SYSTEM_FLAG_HIP "-isystem ")
-  set(CMAKE_HIP_DEPFILE_FORMAT gcc)
-  set(CMAKE_DEPFILE_FLAGS_HIP "-MD -MT <DEP_TARGET> -MF <DEP_FILE>")
-
-  # Link: use GNU-style clang++ syntax with -Xlinker for MSVC flags.
-  # Set the wrapper flag so CMake passes MSVC linker flags via -Xlinker.
-  set(CMAKE_HIP_LINKER_WRAPPER_FLAG "-Xlinker" " ")
-  set(CMAKE_HIP_LINKER_WRAPPER_FLAG_SEP)
-  set(CMAKE_HIP_USING_LINKER_DEFAULT "-fuse-ld=lld-link")
-
-  set(CMAKE_HIP_LINK_EXECUTABLE
-    "<CMAKE_HIP_COMPILER> -nostartfiles -nostdlib -fuse-ld=lld-link <FLAGS> <CMAKE_HIP_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> -Xlinker /MANIFEST:EMBED -Xlinker /implib:<TARGET_IMPLIB> -Xlinker /pdb:<TARGET_PDB> -Xlinker /version:<TARGET_VERSION_MAJOR>.<TARGET_VERSION_MINOR> <LINK_LIBRARIES>")
-  set(CMAKE_HIP_CREATE_SHARED_LIBRARY
-    "<CMAKE_HIP_COMPILER> -nostartfiles -nostdlib -fuse-ld=lld-link -shared <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> -o <TARGET> -Xlinker /MANIFEST:EMBED -Xlinker /implib:<TARGET_IMPLIB> -Xlinker /pdb:<TARGET_PDB> -Xlinker /version:<TARGET_VERSION_MAJOR>.<TARGET_VERSION_MINOR> <OBJECTS> <LINK_LIBRARIES>")
-  set(CMAKE_HIP_CREATE_SHARED_MODULE ${CMAKE_HIP_CREATE_SHARED_LIBRARY})
-
-  # Standard libraries for Windows linking
-  set(CMAKE_HIP_STANDARD_LIBRARIES_INIT "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -loldnames")
-
-  # Tell CMake how to handle MSVC_RUNTIME_LIBRARY for the HIP compiler.
-  set(CMAKE_HIP_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded -fms-runtime-lib=static)
-  set(CMAKE_HIP_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL -fms-runtime-lib=dll)
-  set(CMAKE_HIP_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug -fms-runtime-lib=static_dbg)
-  set(CMAKE_HIP_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL -fms-runtime-lib=dll_dbg)
-
-  # Disable MSVC-specific debug info flags for HIP
-  set(CMAKE_HIP_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_Embedded "")
-endif()
 
 # Remove any FindHIP.cmake module paths to prevent downstream contamination.
 # FindHIP.cmake overrides global variables like CMAKE_HIP_LINK_EXECUTABLE
-# (pointing to hipcc_linker_cmake_helper, a bash script that doesn't exist on Windows).
+# (pointing to hipcc_linker_cmake_helper, a bash script that doesn't exist here).
 list(FILTER CMAKE_MODULE_PATH EXCLUDE REGEX ".*/cmake/hip$")
 
 set(PYTORCH_FOUND_HIP TRUE)

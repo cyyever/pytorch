@@ -76,7 +76,6 @@ struct DefaultStubs : public ProfilerStubs {
   }
 
 REGISTER_DEFAULT(cuda, CUDA)
-REGISTER_DEFAULT(itt, ITT)
 REGISTER_DEFAULT(privateuse1, PrivateUse1)
 #undef REGISTER_DEFAULT
 

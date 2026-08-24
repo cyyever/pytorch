@@ -3,7 +3,6 @@ import contextlib
 import dataclasses
 import functools
 import math
-import sys
 from collections import namedtuple
 from collections.abc import Callable, Sequence
 from typing import Any
@@ -130,8 +129,6 @@ def device_to_aten(device_type: str) -> str:
 
     return aten_device_type
 
-
-_IS_WINDOWS = sys.platform == "win32"
 
 INDEX_TYPE = "int64_t"
 

@@ -2,17 +2,15 @@ import copy
 import dataclasses
 import logging
 import os
-import shutil
 import uuid
 from pathlib import Path
 
 from torch._dynamo.utils import counters, dynamo_timed, set_feature_use
 from torch._utils_internal import justknobs_check
-from torch.utils._filelock import FileLock
 from torch.utils._ordered_set import OrderedSet
 
 from .runtime.runtime_utils import triton_cache_dir
-from .utils import _IS_WINDOWS, GPU_KERNEL_BIN_EXTS
+from .utils import GPU_KERNEL_BIN_EXTS
 
 
 log = logging.getLogger(__name__)
@@ -413,17 +411,11 @@ class TritonBundler:
                         # Just append one of them without the extension
                         kernel_names.append(Path(artifact.filename).stem)
 
-                if _IS_WINDOWS:
-                    with FileLock(directory + ".lock"):
-                        if os.path.exists(directory):
-                            shutil.rmtree(directory)
-                        os.replace(tmp_dir, directory)
-                else:
-                    # Atomic on POSIX systems
-                    try:
-                        os.replace(tmp_dir, directory)
-                    except OSError:
-                        log.warning("Directory %s is not empty - skipping!", tmp_dir)
+                # Atomic on POSIX systems
+                try:
+                    os.replace(tmp_dir, directory)
+                except OSError:
+                    log.warning("Directory %s is not empty - skipping!", tmp_dir)
 
             if config.use_static_triton_launcher:
                 static_kernel_names = TritonBundler.load_autotuners(

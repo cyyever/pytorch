@@ -9,11 +9,7 @@ namespace at::cuda::detail {
 namespace _stubs {
 
 at::DynamicLibrary& getCUDALibrary() {
-#if defined(_WIN32)
-  static at::DynamicLibrary lib("nvcuda.dll");
-#else
   static at::DynamicLibrary lib("libcuda.so.1");
-#endif
   return lib;
 }
 
@@ -39,15 +35,6 @@ static std::string getLibVersion() {
   // library in CUDA 11.3 and later 11.x releases will have the same soname (Linux) or DLL name (Windows) as the NVRTC library in CUDA 11.2.
   constexpr auto major = CUDA_VERSION / 1000;
   constexpr auto minor = ( CUDA_VERSION / 10 ) % 10;
-#if defined(_WIN32)
-  if (major < 11 || (major == 11 && minor < 3)) {
-    return std::to_string(major) + std::to_string(minor);
-  } else if (major == 11) {
-    return "112";
-  } else {
-    return std::to_string(major) + "0";
-  }
-#else
   if (major < 11 || (major == 11 && minor < 3)) {
     return std::to_string(major) + "." + std::to_string(minor);
   } else if (major == 11) {
@@ -55,19 +42,14 @@ static std::string getLibVersion() {
   } else {
     return std::to_string(major);
   }
-#endif
 }
 
 static std::string getLibName() {
-#if defined(_WIN32)
-  return std::string("nvrtc64_") + getLibVersion() + "_0.dll";
-#else
   return std::string("libnvrtc.so.") + getLibVersion();
-#endif
 }
 
 static std::string getAltLibName() {
-#if !defined(_WIN32) && defined(NVRTC_SHORTHASH)
+#ifdef NVRTC_SHORTHASH
   return std::string("libnvrtc-") + C10_STRINGIZE(NVRTC_SHORTHASH) + ".so." + getLibVersion();
 #else
   return {};

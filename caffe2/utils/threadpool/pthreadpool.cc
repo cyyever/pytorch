@@ -6,13 +6,8 @@
 #include <assert.h>
 #include <limits>
 
-#ifdef _MSC_VER
-#include <cstdio>
-#undef min
-#else
 /* POSIX headers */
 #include <unistd.h>
-#endif
 
 /* Library header */
 #include "caffe2/utils/fixed_divisor.h"

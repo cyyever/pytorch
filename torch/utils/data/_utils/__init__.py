@@ -13,7 +13,6 @@ import sys
 from torch._utils import ExceptionWrapper
 
 
-IS_WINDOWS = sys.platform == "win32"
 
 
 MP_STATUS_CHECK_INTERVAL = 5.0

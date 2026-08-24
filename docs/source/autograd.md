@@ -300,8 +300,6 @@ operators inside your model - both on the CPU and GPU. There are three modes
 implemented at the moment - CPU-only using {class}`~torch.autograd.profiler.profile`.
 nvprof based (registers both CPU and GPU activity) using
 {class}`~torch.autograd.profiler.emit_nvtx`.
-and vtune profiler based using
-{class}`~torch.autograd.profiler.emit_itt`.
 
 ```{eval-rst}
 .. autoclass:: torch.autograd.profiler.profile
@@ -332,11 +330,6 @@ and vtune profiler based using
 
 ```{eval-rst}
 .. autoclass:: torch.autograd.profiler.emit_nvtx
-```
-
-```{eval-rst}
-.. autoclass:: torch.autograd.profiler.emit_itt
-
 ```
 
 ```{eval-rst}

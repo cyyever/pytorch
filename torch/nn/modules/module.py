@@ -1132,25 +1132,6 @@ class Module:
         """
         return self._apply(lambda t: t.xpu(device))
 
-    def mtia(self, device: int | device | None = None) -> Self:
-        r"""Move all model parameters and buffers to the MTIA.
-
-        This also makes associated parameters and buffers different objects. So
-        it should be called before constructing the optimizer if the module will
-        live on MTIA while being optimized.
-
-        .. note::
-            This method modifies the module in-place.
-
-        Arguments:
-            device (int, optional): if specified, all parameters will be
-                copied to that device
-
-        Returns:
-            Module: self
-        """
-        return self._apply(lambda t: t.mtia(device))
-
     def cpu(self) -> Self:
         r"""Move all model parameters and buffers to the CPU.
 

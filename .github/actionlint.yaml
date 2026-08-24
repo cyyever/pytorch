@@ -38,21 +38,8 @@ self-hosted-runner:
     - lf.linux.arm64.2xlarge
     - lf.linux.g5.4xlarge.nvidia.gpu
     - lf.linux.c7i.2xlarge
-    # Repo-specific IBM hosted S390x runner
-    - linux.s390x
     # Organization wide AWS Windows runners
-    - windows.g4dn.xlarge
-    - windows.g4dn.xlarge.nonephemeral
-    - windows.12xlarge
-    - windows.12xlarge.nonephemeral
-    - windows.4xlarge
-    - windows.4xlarge.nonephemeral
-    - windows.8xlarge.nvidia.gpu
-    - windows.8xlarge.nvidia.gpu.nonephemeral
-    - windows.g5.4xlarge.nvidia.gpu
     # Windows ARM64 runners
-    - windows-11-arm64
-    - windows-11-arm64-preview
     # Organization-wide AMD-hosted runners
     # MI2xx runners
     - linux.rocm.gpu

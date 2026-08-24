@@ -77,11 +77,6 @@ inline std::ostream& _str(std::ostream& ss, const std::optional<T>& t) {
   ss << "std::nullopt";
   return ss;
 }
-// Overloads of _str for wide types; forces narrowing.
-C10_API std::ostream& _str(std::ostream& ss, const wchar_t* wCStr);
-C10_API std::ostream& _str(std::ostream& ss, const wchar_t& wChar);
-C10_API std::ostream& _str(std::ostream& ss, const std::wstring& wString);
-
 template <>
 inline std::ostream& _str<CompileTimeEmptyString>(
     std::ostream& ss,

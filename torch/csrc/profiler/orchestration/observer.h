@@ -33,7 +33,6 @@ enum class C10_API_ENUM ProfilerState {
   CPU, // CPU-only profiling
   CUDA, // CPU + CUDA events
   NVTX, // only emit NVTX markers
-  ITT, // only emit ITT markers
   PRIVATEUSE1, // only emit PRIVATEUSE1 markers
   KINETO, // use libkineto
   KINETO_GPU_FALLBACK, // use CUDA events when CUPTI is not available
@@ -48,7 +47,6 @@ enum class C10_API_ENUM ActiveProfilerType {
   LEGACY,
   KINETO,
   NVTX,
-  ITT,
   PRIVATEUSE1
 };
 

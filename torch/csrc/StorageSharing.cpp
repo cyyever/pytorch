@@ -1,7 +1,4 @@
 #include <torch/csrc/python_headers.h>
-#ifdef _MSC_VER
-#include <c10/util/win32-headers.h>
-#endif
 #include <structmember.h>
 
 #include <libshm.h>

@@ -96,23 +96,10 @@ std::string get_cpu_capability() {
   switch (capability) {
     case native::CPUCapability::DEFAULT:
       return "DEFAULT";
-#if defined(HAVE_VSX_CPU_DEFINITION)
-    case native::CPUCapability::VSX:
-      return "VSX";
-#elif defined(HAVE_ZVECTOR_CPU_DEFINITION)
-    case native::CPUCapability::ZVECTOR:
-      return "Z VECTOR";
-#elif defined(HAVE_SVE_CPU_DEFINITION)
-    case native::CPUCapability::SVE128:
-      return "SVE128";
-    case native::CPUCapability::SVE256:
-      return "SVE256";
-#else
     case native::CPUCapability::AVX2:
       return "AVX2";
     case native::CPUCapability::AVX512:
       return "AVX512";
-#endif
     default:
       break;
   }
@@ -152,11 +139,6 @@ std::string show_config() {
   }
 #endif
 
-#if defined(_MSC_VER)
-  {
-    ss << "  - MSVC " << _MSC_FULL_VER << '\n';
-  }
-#endif
 
 #if AT_MKL_ENABLED()
   ss << "  - " << get_mkl_version() << '\n';

@@ -141,7 +141,7 @@ def is_acceptable(tensor):
     if not _init():
         warnings.warn(
             "cuDNN/MIOpen library not found. Check your {libpath}".format(
-                libpath={"darwin": "DYLD_LIBRARY_PATH", "win32": "PATH"}.get(
+                libpath={"darwin": "DYLD_LIBRARY_PATH"}.get(
                     sys.platform, "LD_LIBRARY_PATH"
                 )
             ),

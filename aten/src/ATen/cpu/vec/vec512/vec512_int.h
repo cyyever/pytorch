@@ -404,9 +404,7 @@ template <>
 inline void convert(const int32_t* src, float* dst, int64_t n) {
   int64_t i;
   // int32_t and float have same size
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for (i = 0; i <= (n - Vectorized<int32_t>::size());
        i += Vectorized<int32_t>::size()) {
     auto input_vec =
@@ -414,9 +412,7 @@ inline void convert(const int32_t* src, float* dst, int64_t n) {
     auto output_vec = _mm512_cvtepi32_ps(input_vec);
     _mm512_storeu_ps(reinterpret_cast<float*>(dst + i), output_vec);
   }
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for (; i < n; i++) {
     dst[i] = static_cast<float>(src[i]);
   }
@@ -426,9 +422,7 @@ template <>
 inline void convert(const int32_t* src, double* dst, int64_t n) {
   int64_t i;
   // int32_t has half the size of double
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for (i = 0; i <= (n - Vectorized<double>::size());
        i += Vectorized<double>::size()) {
     auto input_256_vec =
@@ -436,9 +430,7 @@ inline void convert(const int32_t* src, double* dst, int64_t n) {
     auto output_vec = _mm512_cvtepi32_pd(input_256_vec);
     _mm512_storeu_pd(reinterpret_cast<double*>(dst + i), output_vec);
   }
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for (; i < n; i++) {
     dst[i] = static_cast<double>(src[i]);
   }

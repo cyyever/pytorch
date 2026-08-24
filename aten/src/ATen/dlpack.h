@@ -22,15 +22,7 @@
 #define DLPACK_MINOR_VERSION 3
 
 /*! \brief DLPACK_DLL prefix for windows */
-#ifdef _WIN32
-#ifdef DLPACK_EXPORTS
-#define DLPACK_DLL __declspec(dllexport)
-#else
-#define DLPACK_DLL __declspec(dllimport)
-#endif
-#else
 #define DLPACK_DLL
-#endif
 
 #include <stdint.h>
 #include <stddef.h>

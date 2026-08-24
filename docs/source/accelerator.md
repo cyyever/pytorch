@@ -23,7 +23,7 @@ per-backend modules, the following APIs are delegated to each backend:
 - **`_lazy_call()`** is used for deferred RNG management. Calling
   `manual_seed()` before forking should not force runtime initialization.
   `torch.accelerator` wraps the seeding callback via `_lazy_call()`, which
-  forwards to the backend's own callback queue (CUDA, XPU, MTIA, ...).
+  forwards to the backend's own callback queue (CUDA, XPU, ...).
   Each backend owns its init flag and callback queue. If a backend does not
   provide `_lazy_call` (e.g., MPS), the callback executes immediately.
 

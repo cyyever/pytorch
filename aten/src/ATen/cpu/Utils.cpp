@@ -1,7 +1,5 @@
 #include <ATen/cpu/Utils.h>
-#if !defined(__s390x__ ) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#endif
 #if defined(__linux__)
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -14,10 +12,6 @@ static constexpr const char* get_cpu_architecture() {
   return "x86_64";
 #elif defined(__aarch64__) || defined(_M_ARM64)
   return "arm64";
-#elif defined(__powerpc64__) || defined(__PPC64__)
-  return "ppc64";
-#elif defined(__s390x__)
-  return "s390x";
 #elif defined(__riscv) && (__riscv_xlen == 64)
   return "riscv64";
 #else
@@ -30,7 +24,6 @@ std::unordered_map<std::string, c10::IValue> get_cpu_capabilities() {
 
   capabilities["architecture"] = std::string(get_cpu_architecture());
 
-#if !defined(__s390x__) && !defined(__powerpc__)
   if (!cpuinfo_initialize()) {
     return capabilities;
   }
@@ -164,25 +157,15 @@ std::unordered_map<std::string, c10::IValue> get_cpu_capabilities() {
   }
 #endif
 
-#endif // !defined(__s390x__) && !defined(__powerpc__)
-
   return capabilities;
 }
 
 bool is_avx512_vnni_supported() {
-#if !defined(__s390x__) && !defined(__powerpc__)
   return cpuinfo_initialize() && cpuinfo_has_x86_avx512vnni();
-#else
-  return false;
-#endif
 }
 
 static bool is_amx_tile_supported() {
-#if !defined(__s390x__) && !defined(__powerpc__)
   return cpuinfo_initialize() && cpuinfo_has_x86_amx_tile();
-#else
-  return false;
-#endif
 }
 
 bool init_amx() {
@@ -190,7 +173,7 @@ bool init_amx() {
     return false;
   }
 
-#if defined(__linux__) && !defined(__ANDROID__) && defined(__x86_64__)
+#if defined(__linux__) && defined(__x86_64__)
 #define XFEATURE_XTILECFG 17
 #define XFEATURE_XTILEDATA 18
 #define XFEATURE_MASK_XTILECFG (1 << XFEATURE_XTILECFG)

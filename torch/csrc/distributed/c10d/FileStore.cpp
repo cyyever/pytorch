@@ -5,15 +5,8 @@
 #include <cassert>
 #include <cstdint>
 
-#ifdef _WIN32
-#include <c10/util/FileSystem.h>
-#include <c10/util/win32-headers.h>
-#include <fileapi.h>
-#include <io.h>
-#else
 #include <sys/file.h>
 #include <unistd.h>
-#endif
 
 #include <chrono>
 #include <cstdio>
@@ -27,43 +20,6 @@
     C10_THROW_ERROR(DistStoreError, c10::utils::str_error(errno)); \
   }
 
-#ifdef _WIN32
-#define LOCK_EX 0x00000001
-#define LOCK_SH 0x00000010
-#define LOCK_UN 0x00000100
-
-#if defined(_WIN32) && defined(USE_ROCM)
-static
-#endif
-    int
-    flock_(int fd, int op) {
-  HANDLE hdl = (HANDLE)_get_osfhandle(fd);
-  DWORD low = 1, high = 0;
-  OVERLAPPED offset = {0, 0, 0, 0, NULL};
-
-  if ((intptr_t)hdl < 0)
-    return -1;
-
-  switch (op) {
-    case LOCK_EX:
-      if (LockFileEx(hdl, LOCKFILE_EXCLUSIVE_LOCK, 0, low, high, &offset))
-        return 0;
-      break;
-    case LOCK_SH:
-      if (LockFileEx(hdl, 0, 0, low, high, &offset))
-        return 0;
-      break;
-    case LOCK_UN:
-      if (UnlockFileEx(hdl, 0, low, high, &offset) != 0)
-        return 0;
-      break;
-    default:
-      break;
-  }
-  errno = EINVAL;
-  return -1;
-}
-#endif
 
 namespace c10d {
 
@@ -126,11 +82,7 @@ class Lock {
   int fd_{-1};
 
   void flock(int operation) {
-#ifdef _WIN32
-    auto rv = syscall(std::bind(::flock_, fd_, operation));
-#else
     auto rv = syscall([this, operation] { return ::flock(fd_, operation); });
-#endif
     SYSASSERT(rv, "flock");
   }
 };
@@ -143,27 +95,15 @@ class File {
       std::chrono::milliseconds timeout) {
     const auto start = std::chrono::steady_clock::now();
     while (true) {
-#ifdef _WIN32
-      fd_ = syscall(std::bind(
-          ::open, path.c_str(), flags | _O_BINARY, _S_IREAD | _S_IWRITE));
-#else
       fd_ = syscall([capture0 = path.c_str(), flags] {
         return ::open(capture0, flags, 0644);
       });
-#endif
       // Only retry when the file doesn't exist, since we are waiting for the
       // file to be created in this case to address the following issue:
       // https://github.com/pytorch/pytorch/issues/13750
       if (fd_ >= 0 || errno != ENOENT) {
         break;
       }
-#ifdef _WIN32
-      // if the parent folder doesn't exist it will never be able to create the
-      // file so we can skip the retry
-      if (!c10::filesystem::exists(c10::filesystem::path(path).parent_path())) {
-        break;
-      }
-#endif
       const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
           std::chrono::steady_clock::now() - start);
       if (timeout != c10d::Store::kNoTimeout && elapsed > timeout) {
@@ -311,12 +251,8 @@ FileStore::~FileStore() {
   // GC. If python code has directory cleanup procedure, the race condition may
   // occur between that code and this destructor. As a result, we check for
   // file existence before cleanup
-#ifdef _WIN32
-  int res = syscall(std::bind(::_access, path_.c_str(), 0));
-#else
   int res =
       syscall([filepath = path_.c_str()] { return ::access(filepath, F_OK); });
-#endif
   if (res == -1) {
     return;
   }

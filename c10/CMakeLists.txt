@@ -20,7 +20,6 @@ set(C10_USE_GFLAGS ${USE_GFLAGS})  # also used in torch/headeronly
 set(C10_USE_GLOG ${USE_GLOG})  # also used in torch/headeronly
 set(C10_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})  # also used in torch/headeronly
 set(C10_USE_NUMA ${USE_NUMA})  # also used in torch/headeronly
-set(C10_USE_MSVC_STATIC_RUNTIME ${CAFFE2_USE_MSVC_STATIC_RUNTIME})  # also used in torch/headeronly
 set(C10_USE_ROCM_KERNEL_ASSERT ${USE_ROCM_KERNEL_ASSERT})  # also used in torch/headeronly
 
   # Note: if you want to add ANY dependency to the c10 library, make sure you
@@ -122,7 +121,7 @@ if(NOT BUILD_LIBTORCHLESS)
     # SDK's own copy when resolving libamdhip64.so's DT_NEEDED, breaking every
     # HIP-linking target with undefined hsa_* references. Only the conda-style
     # narrow-sysroot case (libnuma outside the implicit dirs) needs the flag.
-    if(NOT WIN32 AND NOT APPLE)
+    if(NOT APPLE)
       get_filename_component(_numa_dir "${Numa_LIBRARIES}" DIRECTORY)
       get_filename_component(_numa_dir "${_numa_dir}" REALPATH)
       set(_numa_dir_is_implicit FALSE)
@@ -171,10 +170,6 @@ if(NOT BUILD_LIBTORCHLESS)
     target_link_libraries(c10 PRIVATE dl)
   endif()
 
-  if(ANDROID)
-    target_link_libraries(c10 PRIVATE log)
-  endif()
-
   target_include_directories(
       c10 PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
@@ -210,7 +205,3 @@ endif()
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         DESTINATION include
         FILES_MATCHING PATTERN "*.h")
-
-if(MSVC AND C10_BUILD_SHARED_LIBS)
-  install(FILES $<TARGET_PDB_FILE:c10> DESTINATION lib OPTIONAL)
-endif()

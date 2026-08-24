@@ -27,9 +27,6 @@
 // TODO Is there some way to implement this?
 #define C10_DEPRECATED_MESSAGE(message) __attribute__((deprecated))
 
-#elif defined(_MSC_VER)
-#define C10_DEPRECATED __declspec(deprecated)
-#define C10_DEPRECATED_MESSAGE(message) __declspec(deprecated(message))
 #else
 #warning "You need to implement C10_DEPRECATED for this compiler"
 #define C10_DEPRECATED
@@ -52,34 +49,6 @@
 #endif
 #endif
 
-#if defined(_MSC_VER)
-#if defined(__CUDACC__)
-// neither [[deprecated]] nor __declspec(deprecated) work on nvcc on Windows;
-// you get the error:
-//
-//    error: attribute does not apply to any entity
-//
-// So we just turn the macro off in this case.
-#if defined(C10_DEFINE_DEPRECATED_USING)
-#undef C10_DEFINE_DEPRECATED_USING
-#endif
-#define C10_DEFINE_DEPRECATED_USING(TypeName, TypeThingy) \
-  using TypeName = TypeThingy;
-#else
-// [[deprecated]] does work in windows without nvcc, though msc doesn't support
-// `__has_cpp_attribute` when c++14 is supported, otherwise
-// __declspec(deprecated) is used as the alternative.
-#ifndef C10_DEFINE_DEPRECATED_USING
-#if defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
-#define C10_DEFINE_DEPRECATED_USING(TypeName, TypeThingy) \
-  using TypeName [[deprecated]] = TypeThingy;
-#else
-#define C10_DEFINE_DEPRECATED_USING(TypeName, TypeThingy) \
-  using TypeName = __declspec(deprecated) TypeThingy;
-#endif
-#endif
-#endif
-#endif
 
 #if !defined(C10_DEFINE_DEPRECATED_USING) && defined(__GNUC__)
 // nvcc has a bug where it doesn't understand __attribute__((deprecated))

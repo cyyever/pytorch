@@ -14,11 +14,11 @@ inline void addPollfd(
     std::vector<struct pollfd>& fds,
     int socket,
     short events) {
-  fds.push_back({.fd = socket, .events = events});
+  fds.push_back({.fd = socket, .events = events, .revents = 0});
 }
 
 inline struct ::pollfd getPollfd(int socket, short events) {
-  struct ::pollfd res = {.fd = socket, .events = events};
+  struct ::pollfd res = {.fd = socket, .events = events, .revents = 0};
   return res;
 }
 

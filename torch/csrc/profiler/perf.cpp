@@ -7,7 +7,7 @@
 
 namespace torch::profiler::impl::linux_perf {
 
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
 
 /*
  * PerfEvent
@@ -115,7 +115,7 @@ uint64_t PerfEvent::ReadCounter() const {
   return counter.value;
 }
 
-#else /* __ANDROID__ || __linux__ */
+#else
 /*
  * Shim class for unsupported platforms - this will always return 0 counter
  * value
@@ -129,7 +129,7 @@ uint64_t PerfEvent::ReadCounter() const {
   return 0;
 }
 
-#endif /* __ANDROID__ || __linux__ */
+#endif
 
 /*
  * PerfProfiler

@@ -819,7 +819,7 @@ void bgemm_internal<at::Half, float>(CUDABLAS_BGEMM_ARGTYPES_AND_C_DTYPE(at::Hal
       bgemm_internal_cublas<at::Half, float>(CUDABLAS_BGEMM_ARGS(at::Half));
     }
   }
-#if defined(USE_ROCM) && !defined(_MSC_VER)
+#if defined(USE_ROCM)
   else if (preferred == BlasBackend::Ck) {
     TORCH_CHECK(false, "gemm input type at::Half and output type float is not supported for ROCm");
   }
@@ -837,7 +837,7 @@ void bgemm_internal<at::BFloat16, float>(CUDABLAS_BGEMM_ARGTYPES_AND_C_DTYPE(at:
       bgemm_internal_cublas<at::BFloat16, float>(CUDABLAS_BGEMM_ARGS(at::BFloat16));
     }
   }
-#if defined(USE_ROCM) && !defined(_MSC_VER)
+#if defined(USE_ROCM)
   else if (at::globalContext().blasPreferredBackend() == BlasBackend::Ck) {
     TORCH_CHECK(false, "gemm input type at::BFloat16 and output type float is not supported for ROCm");
   }
@@ -1397,7 +1397,7 @@ void gemm_internal<at::Half, float>(CUDABLAS_GEMM_ARGTYPES_AND_C_DTYPE(at::Half,
   if (preferred == BlasBackend::Cublaslt) {
     gemm_internal_cublaslt<at::Half, float>(CUDABLAS_GEMM_ARGS(at::Half));
   }
-#if defined(USE_ROCM) && !defined(_MSC_VER)
+#if defined(USE_ROCM)
   else if (preferred == BlasBackend::Ck) {
     TORCH_CHECK(false, "gemm input type at::Half and output type float is not supported for ROCm");
   }
@@ -1413,7 +1413,7 @@ void gemm_internal<at::BFloat16, float>(CUDABLAS_GEMM_ARGTYPES_AND_C_DTYPE(at::B
   if (at::globalContext().blasPreferredBackend() == BlasBackend::Cublaslt) {
     gemm_internal_cublaslt<at::BFloat16, float>(CUDABLAS_GEMM_ARGS(at::BFloat16));
   }
-#if defined(USE_ROCM) && !defined(_MSC_VER)
+#if defined(USE_ROCM)
   else if (at::globalContext().blasPreferredBackend() == BlasBackend::Ck) {
     TORCH_CHECK(false, "gemm input type at::Half and output type float is not supported for ROCm");
   }

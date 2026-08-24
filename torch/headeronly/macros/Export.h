@@ -46,16 +46,6 @@
 // to inform this header that it does not need to include the cmake_macros.h
 // file.
 
-#ifdef _WIN32
-#define C10_HIDDEN
-#if defined(C10_BUILD_SHARED_LIBS)
-#define C10_EXPORT __declspec(dllexport)
-#define C10_IMPORT __declspec(dllimport)
-#else
-#define C10_EXPORT
-#define C10_IMPORT
-#endif
-#else // _WIN32
 #if defined(__GNUC__)
 #define C10_EXPORT __attribute__((__visibility__("default")))
 #define C10_HIDDEN __attribute__((__visibility__("hidden")))
@@ -64,7 +54,6 @@
 #define C10_HIDDEN
 #endif // defined(__GNUC__)
 #define C10_IMPORT C10_EXPORT
-#endif // _WIN32
 
 #ifdef NO_EXPORT
 #undef C10_EXPORT
@@ -136,10 +125,5 @@
 #define TORCH_XPU_API C10_IMPORT
 #endif
 
-// Enums only need to be exported on windows for non-CUDA files
-#if defined(_WIN32) && defined(__CUDACC__)
-#define C10_API_ENUM C10_API
-#else
 #define C10_API_ENUM
-#endif
 #endif // C10_MACROS_EXPORT_H_

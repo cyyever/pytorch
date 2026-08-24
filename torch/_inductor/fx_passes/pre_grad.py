@@ -4,16 +4,51 @@ import functools
 import itertools
 import logging
 import types
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 import torch
+import torch.fx as fx
 import torch.nn as nn
 from torch._dynamo.utils import counters, detect_fake_mode
 from torch._logging import trace_structured
-from torch.fx.experimental.optimization import (
-    matches_module_pattern,
-    replace_node_module,
-)
+from torch.fx.node import Argument
+
+
+def _parent_name(target: str) -> tuple[str, str]:
+    *parent, name = target.rsplit(".", 1)
+    return parent[0] if parent else "", name
+
+
+def matches_module_pattern(
+    pattern: Iterable[type], node: fx.Node, modules: dict[str, torch.nn.Module]
+) -> bool:
+    if len(node.args) == 0:
+        return False
+    nodes: tuple[Argument, fx.Node] = (node.args[0], node)
+    for expected_type, current_node in zip(pattern, nodes):
+        if not isinstance(current_node, fx.Node):
+            return False
+        if current_node.op != "call_module":
+            return False
+        if not isinstance(current_node.target, str):
+            return False
+        if current_node.target not in modules:
+            return False
+        if type(modules[current_node.target]) is not expected_type:
+            return False
+    return True
+
+
+def replace_node_module(
+    node: fx.Node, modules: dict[str, torch.nn.Module], new_module: torch.nn.Module
+) -> None:
+    if not isinstance(node.target, str):
+        raise AssertionError(f"Expected str target, got {type(node.target)}")
+    parent_name, name = _parent_name(node.target)
+    modules[node.target] = new_module
+    setattr(modules[parent_name], name, new_module)
+
+
 from torch.fx.passes.graph_transform_observer import (
     GraphTransformObserver as GraphTransformObserverBase,
 )

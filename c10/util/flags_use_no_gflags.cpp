@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#ifndef C10_USE_GFLAGS
+#if !defined(C10_USE_GFLAGS)
 
 namespace c10 {
 
@@ -149,12 +149,7 @@ C10_EXPORT bool C10FlagParser::Parse<int64_t>(
     int64_t* value) {
   try {
     static_assert(sizeof(long long) == sizeof(int64_t));
-#ifdef __ANDROID__
-    // Android does not have std::atoll.
-    *value = atoll(content.c_str());
-#else
     *value = std::atoll(content.c_str());
-#endif
     return true;
   } catch (...) {
     GlobalInitStream() << "C10 flag error: Cannot convert argument to int: "
@@ -203,4 +198,4 @@ C10_EXPORT bool C10FlagParser::Parse<bool>(const string& content, bool* value) {
 
 } // namespace c10
 
-#endif // C10_USE_GFLAGS
+#endif

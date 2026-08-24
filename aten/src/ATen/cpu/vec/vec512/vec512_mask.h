@@ -7,7 +7,7 @@
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX512) && !defined(_MSC_VER)
+#if defined(CPU_CAPABILITY_AVX512)
 
 template <typename T, int dst_n, typename mask_t, int mask_n>
 struct VecMaskLoad<
@@ -59,9 +59,7 @@ struct VecMaskLoad<
     at::vec::Vectorized<T> zero_vec(0);
     auto all_ones = _mm512_set1_epi32(0xFFFFFFFF);
     VectorizedN<T, dst_n> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < dst_n; i++) {
       auto tmp_mask = VecMask<mask_t, 1>(vec_mask[i]);
       auto int_mask = tmp_mask.template cast<int, 1>()[0];
@@ -91,9 +89,7 @@ struct VecMaskLoad<
       const VecMask<mask_t, dst_n>& vec_mask) {
     auto all_ones = _mm512_set1_epi32(0xFFFFFFFF);
     VectorizedN<data_t, dst_n> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < dst_n; i++) {
       auto tmp_mask = VecMask<mask_t, 1>(vec_mask[i]);
       auto int_mask = tmp_mask.template cast<int, 2>();
@@ -198,9 +194,7 @@ template <int N>
 struct VecMaskCast<float, N, int, N> {
   static inline VecMask<float, N> apply(const VecMask<int, N>& vec_mask) {
     VectorizedN<float, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm512_castsi512_ps(vec_mask[i]);
     }
@@ -212,9 +206,7 @@ template <int N>
 struct VecMaskCast<int, N, float, N> {
   static inline VecMask<int, N> apply(const VecMask<float, N>& vec_mask) {
     VectorizedN<int, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm512_castps_si512(vec_mask[i]);
     }
@@ -226,9 +218,7 @@ template <int N>
 struct VecMaskCast<int64_t, N, double, N> {
   static inline VecMask<int64_t, N> apply(const VecMask<double, N>& vec_mask) {
     VectorizedN<int64_t, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm512_castpd_si512(vec_mask[i]);
     }
@@ -240,9 +230,7 @@ template <int N>
 struct VecMaskCast<double, N, int64_t, N> {
   static inline VecMask<double, N> apply(const VecMask<int64_t, N>& vec_mask) {
     VectorizedN<double, N> result;
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < N; ++i) {
       result[i] = _mm512_castsi512_pd(vec_mask[i]);
     }
@@ -264,9 +252,7 @@ struct VecMaskCast<
       const VecMask<mask_t, mask_n>& vec_mask) {
     VectorizedN<int64_t, dst_n> result;
     auto int_mask = vec_mask.template cast<int, mask_n>();
-#ifndef _MSC_VER
 #pragma unroll
-#endif
     for (int i = 0; i < mask_n; ++i) {
       auto int64_vec =
           convert<int64_t, 2, int, 1>(VectorizedN<int, 1>(int_mask[i]));

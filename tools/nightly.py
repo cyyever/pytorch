@@ -118,7 +118,6 @@ LOG_DIRNAME_RE = re.compile(
 PLATFORM = platform_system().replace("Darwin", "macOS")
 LINUX = PLATFORM == "Linux"
 MACOS = PLATFORM == "macOS"
-WINDOWS = PLATFORM == "Windows"
 POSIX = LINUX or MACOS
 
 
@@ -260,10 +259,7 @@ class Venv:
         if not self.is_venv():
             raise AssertionError("Not a virtual environment")
         if self._bindir is None:
-            if WINDOWS:
-                self._bindir = self.prefix / "Scripts"
-            else:
-                self._bindir = self.prefix / "bin"
+            self._bindir = self.prefix / "bin"
         return self._bindir
 
     @property
@@ -272,7 +268,7 @@ class Venv:
         if not self.is_venv():
             raise AssertionError("Not a virtual environment")
         if self._executable is None:
-            executable = self.bindir / ("python.exe" if WINDOWS else "python")
+            executable = self.bindir / "python"
             if not (executable.is_file() or executable.is_symlink()):
                 raise AssertionError(f"{executable} is not a file or symlink")
             if not os.access(executable, os.X_OK):
@@ -300,19 +296,12 @@ class Venv:
     @property
     def activate_script(self) -> Path:
         """Get the activation script for the virtual environment."""
-        if WINDOWS:
-            # Assume PowerShell
-            return self.prefix / "Scripts" / "activate"
         # Assume POSIX-compliant shell: Bash, Zsh, etc.
         return self.prefix / "bin" / "activate"
 
     @property
     def activate_command(self) -> str:
         """Get the command to activate the virtual environment."""
-        if WINDOWS:
-            # Assume PowerShell
-            return f'. "{self.activate_script}"'
-        # Assume Bash, Zsh, etc.
         # POSIX standard should use dot `. venv/bin/activate` rather than `source`
         return f"source {shlex.quote(str(self.activate_script))}"
 
@@ -842,16 +831,6 @@ def _get_listing_macos(source_dir: Path) -> list[Path]:
     )
 
 
-def _get_listing_windows(source_dir: Path) -> list[Path]:
-    return list(
-        itertools.chain(
-            source_dir.glob("*.pyd"),
-            (source_dir / "lib").glob("*.lib"),
-            (source_dir / "lib").glob(".dll"),
-        )
-    )
-
-
 def _glob_pyis(d: Path) -> set[str]:
     return {p.relative_to(d).as_posix() for p in d.rglob("*.pyi")}
 
@@ -868,8 +847,6 @@ def _get_listing(source_dir: Path, target_dir: Path) -> list[Path]:
         listing = _get_listing_linux(source_dir)
     elif MACOS:
         listing = _get_listing_macos(source_dir)
-    elif WINDOWS:
-        listing = _get_listing_windows(source_dir)
     else:
         raise RuntimeError(f"Platform {platform_system()!r} not recognized")
     listing.extend(_find_missing_pyi(source_dir, target_dir))
@@ -937,13 +914,10 @@ def move_nightly_files(site_dir: Path) -> None:
     target_dir = REPO_ROOT / "torch"
     listing = _get_listing(source_dir, target_dir)
     # copy / link files
-    if WINDOWS:
+    try:
+        _link_files(listing, source_dir, target_dir)
+    except Exception:
         _copy_files(listing, source_dir, target_dir)
-    else:
-        try:
-            _link_files(listing, source_dir, target_dir)
-        except Exception:
-            _copy_files(listing, source_dir, target_dir)
 
 
 @timed("Writing pytorch-nightly.pth")

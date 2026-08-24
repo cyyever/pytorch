@@ -1,7 +1,4 @@
 #include <torch/csrc/python_headers.h>
-#ifdef _MSC_VER
-#include <c10/util/win32-headers.h>
-#endif
 #include <structmember.h>
 
 #include <c10/core/CPUAllocator.h>
@@ -34,11 +31,7 @@
 
 #include <ATen/native/Resize.h>
 
-#ifdef _MSC_VER
-#define LSEEK _lseeki64
-#else
 #define LSEEK lseek
-#endif
 
 static PyObject* THPStorage_nbytes(PyObject* self, PyObject* noargs) {
   HANDLE_TH_ERRORS

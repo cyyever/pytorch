@@ -141,7 +141,6 @@ Tensor& cholesky_inverse_kernel_impl(Tensor& result, Tensor& infos, bool upper) 
 }
 
 // This function returns complex-valued eigenvectors that is obtained from LAPACK GEEV's real-valued output
-// This function is also used for the MAGMA path because intermediate MAGMA's results live on CPU
 template <typename scalar_t>
 static void linalg_eig_make_complex_eigenvectors_cpu_impl(const Tensor& result, const Tensor& complex_values, const Tensor& real_vectors) {
   // From GEEV documentation:

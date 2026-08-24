@@ -40,8 +40,6 @@ from torch.profiler import kineto_available
 from torch.testing import FileCheck
 from torch.testing._internal.common_utils import (
     IS_LINUX,
-    MI300_ARCH,
-    skipIfRocmArch,
     TEST_XPU,
 )
 from torch.testing._internal.inductor_utils import (

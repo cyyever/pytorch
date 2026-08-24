@@ -1,15 +1,6 @@
 #include <torch/nativert/common/FileUtil.h>
 
-#ifdef _WIN32
-#include <io.h>
-#define open _open
-#define read _read
-#define write _write
-#define fileno _fileno
-#define dup _dup
-#else
 #include <unistd.h>
-#endif
 #include <cerrno>
 
 #include <c10/util/Exception.h>
@@ -20,11 +11,7 @@ namespace torch::nativert {
 namespace {
 
 int unistd_close(int fh) {
-#ifdef _WIN32
-  return ::_close(fh);
-#else
   return ::close(fh);
-#endif
 }
 
 inline void incr(ssize_t /*unused*/) {}

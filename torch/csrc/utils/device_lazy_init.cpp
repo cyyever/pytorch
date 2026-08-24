@@ -5,9 +5,7 @@
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/utils/object_ptr.h>
 
-#ifndef WIN32
 #include <pthread.h>
-#endif
 
 namespace torch::utils {
 namespace {
@@ -74,7 +72,6 @@ void set_device_in_bad_fork(at::DeviceType device_type, bool value) {
 
 // Should be called before the first device runtime call.
 void register_fork_handler_for_device_init(at::DeviceType device_type) {
-#ifndef WIN32
   at_fork_registered[static_cast<int>(device_type)] = true;
   c10::call_once(at_fork_register_once, []() {
     pthread_atfork(nullptr, nullptr, []() {
@@ -91,7 +88,6 @@ void register_fork_handler_for_device_init(at::DeviceType device_type) {
       }
     });
   });
-#endif
 }
 
 } // namespace torch::utils

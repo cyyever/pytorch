@@ -129,7 +129,6 @@ AT_FORALL_DEPRECATED_AUTOCAST_BACKENDS(DECLARE_DEPRECATED_AUTOCAST_APIS)
 const std::array<at::DeviceType, 10> _AUTOCAST_SUPPORTED_DEVICES{
     at::kCPU,
     at::kCUDA,
-    at::kMTIA,
     at::kMAIA,
     at::kXPU,
     at::kIPU,
@@ -149,8 +148,6 @@ inline bool is_autocast_eligible(
     case c10::DeviceType::CPU:
       return (tensor.is_cpu() || tensor.is_mkldnn()) &&
           tensor.is_floating_point();
-    case c10::DeviceType::MTIA:
-      return tensor.is_mtia() && tensor.is_floating_point();
     case c10::DeviceType::MAIA:
       return tensor.is_maia() && tensor.is_floating_point();
     case c10::DeviceType::XPU:
@@ -178,8 +175,6 @@ inline DispatchKey get_autocast_dispatch_key_from_device_type(
       return DispatchKey::Autocast;
     case c10::DeviceType::CPU:
       return DispatchKey::AutocastCPU;
-    case c10::DeviceType::MTIA:
-      return DispatchKey::AutocastMTIA;
     case c10::DeviceType::MAIA:
       return DispatchKey::AutocastMAIA;
     case c10::DeviceType::XPU:
@@ -731,24 +726,6 @@ copy pasted in from VariableTypeEverything.cpp with appropriate substitutions.
     POLICY)                                         \
   KERNEL_DIFFERENT_REDISPATCH_SIGNATURE(            \
       c10::DeviceType::CUDA,                        \
-      REDISPATCH_FUNC,                              \
-      REGISTER_NAME,                                \
-      REGISTER_SIGNATURE,                           \
-      REDISPATCH_SIGNATURE,                         \
-      POLICY)
-
-// KERNEL_MTIA/KERNEL_DIFFERENT_REDISPATCH_SIGNATURE_MTIA
-// registration (OP, POLICY) or (OP, OVERLOAD, POLICY) for AutocastMTIA
-#define KERNEL_MTIA(...) KERNEL(c10::DeviceType::MTIA, __VA_ARGS__)
-
-#define KERNEL_DIFFERENT_REDISPATCH_SIGNATURE_MTIA( \
-    REDISPATCH_FUNC,                                \
-    REGISTER_NAME,                                  \
-    REGISTER_SIGNATURE,                             \
-    REDISPATCH_SIGNATURE,                           \
-    POLICY)                                         \
-  KERNEL_DIFFERENT_REDISPATCH_SIGNATURE(            \
-      c10::DeviceType::MTIA,                        \
       REDISPATCH_FUNC,                              \
       REGISTER_NAME,                                \
       REGISTER_SIGNATURE,                           \

@@ -43,7 +43,6 @@ from torch._C import (  # noqa: F401
     _set_worker_signal_handlers,
 )
 
-from . import IS_WINDOWS
 
 
 _SIGCHLD_handler_set = False
@@ -52,9 +51,6 @@ handler needs to be set for all DataLoaders in a process."""
 
 
 def _set_SIGCHLD_handler() -> None:
-    # Windows doesn't support SIGCHLD handler
-    if IS_WINDOWS:
-        return
     # can't set signal in child threads
     if not isinstance(threading.current_thread(), threading._MainThread):  # type: ignore[attr-defined]
         return

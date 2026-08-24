@@ -16,7 +16,6 @@ from enum import Enum
 from typing import NamedTuple
 
 
-IS_WINDOWS: bool = os.name == "nt"
 MAX_FILE_SIZE: int = 1024 * 1024 * 1024  # 1GB in bytes
 MAX_MATCHES_PER_FILE: int = 100  # Maximum number of matches to report per file
 MAX_ORIGINAL_SIZE: int = (
@@ -48,7 +47,7 @@ class LintMessage(NamedTuple):
 
 
 def as_posix(name: str) -> str:
-    return name.replace("\\", "/") if IS_WINDOWS else name
+    return name
 
 
 def run_command(

@@ -20,11 +20,9 @@ TEST(DeadlockDetection, basic) {
   SetPythonGILHooks(nullptr);
 }
 
-#ifndef _WIN32
 TEST(DeadlockDetection, disable) {
   c10::utils::set_env("TORCH_DISABLE_DEADLOCK_DETECTION", "1");
   DummyPythonGILHooks hooks;
   SetPythonGILHooks(&hooks);
   SetPythonGILHooks(&hooks);
 }
-#endif

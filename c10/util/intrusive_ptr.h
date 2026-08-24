@@ -218,17 +218,11 @@ class C10_API intrusive_ptr_target {
 // We also have to disable -Wunknown-warning-option and -Wpragmas, because
 // some other compilers don't know about -Wterminate or -Wexceptions and
 // will show a warning about unknown warning options otherwise.
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma warning(push)
-#pragma warning( \
-    disable : 4297) // function assumed not to throw an exception but does
-#else
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wterminate"
 #pragma GCC diagnostic ignored "-Wexceptions"
-#endif
     TORCH_INTERNAL_ASSERT_DEBUG_ONLY(
         // Second condition is there to accommodate
         // unsafe_adapt_non_heap_allocated: since we are doing our own
@@ -251,11 +245,7 @@ class C10_API intrusive_ptr_target {
             weakcount() == detail::kImpracticallyHugeReferenceCount - 1 ||
             weakcount() == detail::kImpracticallyHugeReferenceCount,
         "Tried to destruct an intrusive_ptr_target that still has weak_intrusive_ptr to it");
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma warning(pop)
-#else
 #pragma GCC diagnostic pop
-#endif
   }
 
   constexpr intrusive_ptr_target() noexcept : combined_refcount_(0) {}
@@ -340,14 +330,12 @@ class intrusive_ptr final {
 //      std::is_base_of_v<intrusive_ptr_target, TTarget>,
 //      "intrusive_ptr can only be used for classes that inherit from
 //      intrusive_ptr_target.");
-#ifndef _WIN32
   // This static_assert triggers on MSVC
   //  error C2131: expression did not evaluate to a constant
   static_assert(
       // NOLINTNEXTLINE(misc-redundant-expression)
       NullType::singleton() == NullType::singleton(),
       "NullType must have a constexpr singleton() method");
-#endif
   static_assert(
       std::is_base_of_v<
           TTarget,
@@ -832,13 +820,11 @@ class weak_intrusive_ptr final {
   static_assert(
       std::is_base_of_v<intrusive_ptr_target, TTarget>,
       "intrusive_ptr can only be used for classes that inherit from intrusive_ptr_target.");
-#ifndef _WIN32
   // This static_assert triggers on MSVC
   //  error C2131: expression did not evaluate to a constant
   static_assert(
       NullType::singleton() == NullType::singleton(),
       "NullType must have a constexpr singleton() method");
-#endif
   static_assert(
       std::is_base_of_v<
           TTarget,

@@ -1,10 +1,4 @@
 #pragma once
-#if defined(__GNUC__) && __GNUC__ == 10 && __GNUC_MINOR__ <= 2 && \
-    defined(__ARM_FEATURE_SVE)
-// Workaround for https: //gcc.gnu.org/bugzilla/show_bug.cgi?id=117161
-#pragma GCC optimize("no-tree-vectorize")
-#endif
-
 // DO NOT DEFINE STATIC DATA IN THIS HEADER!
 // See Note [Do not compile initializers with AVX]
 //
@@ -45,28 +39,20 @@
 
 #if defined(__GNUC__)
 #define __FORCE_INLINE __attribute__((always_inline)) inline
-#elif defined(_MSC_VER)
-#define __FORCE_INLINE __forceinline
 #endif
 
 // These macros helped us unify vec_base.h
 #ifdef CPU_CAPABILITY_AVX512
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(64)))
-#elif defined(_WIN32)
-#define __at_align__ __declspec(align(64))
 #else
 #define __at_align__
 #endif
 #define VECTOR_WIDTH 64
 #define int_vector __m512i
-#elif defined(__aarch64__) && \
-    !defined(CPU_CAPABILITY_SVE256) // CPU_CAPABILITY_AVX512
-// SVE code expects 256-vectors; leave that set for SVE?
+#elif defined(__aarch64__)
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(16)))
-#elif defined(_WIN32)
-#define __at_align__ __declspec(align(16))
 #else
 #define __at_align__
 #endif
@@ -74,8 +60,6 @@
 #else // CPU_CAPABILITY_AVX512
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(32)))
-#elif defined(_WIN32)
-#define __at_align__ __declspec(align(32))
 #else
 #define __at_align__
 #endif
@@ -147,11 +131,7 @@ using int_same_size_t = typename int_of_size<sizeof(T)>::type;
  * point types directly if they're supported, or convert through float
  * if not.
  */
-#if defined(__s390x__)
-template <class T, class TEMP = void>
-#else
 template <typename T>
-#endif
 struct is_vec_specialized_for : std::bool_constant<false> {
 };
 
@@ -163,11 +143,7 @@ constexpr bool is_vec_specialized_for_v = is_vec_specialized_for<T>::value;
 // that type.
 
 // emulates Vectorized types
-#if defined(__s390x__)
-template <class T, class TEMP = void>
-#else
 template <class T>
-#endif
 struct Vectorized {
  private:
   __at_align__ std::array<T, VECTOR_WIDTH / sizeof(T)> values{};
@@ -218,7 +194,7 @@ struct Vectorized {
     return vector;
   }
 // Workaround for https: //gcc.gnu.org/bugzilla/show_bug.cgi?id=117001
-#if __GNUC__ <= 12 && !defined(__clang__) && defined(__ARM_FEATURE_SVE)
+#if __GNUC__ <= 12 && !defined(__clang__)
   static Vectorized<T> __attribute__((optimize("-fno-tree-loop-vectorize")))
   blendv(
       const Vectorized<T>& a,
@@ -323,42 +299,20 @@ struct Vectorized {
 // Arm64
 //       See
 //       https://developercommunity.visualstudio.com/t/MSVC-loop-unrolling-problem-194033813-/10720692
-#if defined(_WIN32) && defined(__aarch64__) && \
-    ((_MSVC_VER >= 1936) && (_MSVC_VER <= 1942))
-  Vectorized<T> map(T (*const f)(T)) const {
-    Vectorized<T> ret;
-    for (int64_t i = 0; i < size(); i++) {
-      ret[i] = f(values[i]);
-      if (++i < size())
-        ret[i] = f(values[i]);
-    }
-    return ret;
+Vectorized<T> map(T (*const f)(T)) const {
+  Vectorized<T> ret;
+  for (int64_t i = 0; i != size(); i++) {
+    ret[i] = f(values[i]);
   }
-  T reduce(T (*const f)(T)) const {
-    T ret = 0;
-    for (int64_t i = 0; i < size(); i++) {
-      ret = f(ret, values[i]);
-      if (++i < size())
-        ret = f(ret, values[i]);
-    }
-    return ret;
+  return ret;
+}
+T reduce(T (*const f)(T)) const {
+  T ret = 0;
+  for (int64_t i = 0; i != size(); i++) {
+    ret = f(ret, values[i]);
   }
-#else
-  Vectorized<T> map(T (*const f)(T)) const {
-    Vectorized<T> ret;
-    for (int64_t i = 0; i != size(); i++) {
-      ret[i] = f(values[i]);
-    }
-    return ret;
-  }
-  T reduce(T (*const f)(T)) const {
-    T ret = 0;
-    for (int64_t i = 0; i != size(); i++) {
-      ret = f(ret, values[i]);
-    }
-    return ret;
-  }
-#endif
+  return ret;
+}
   Vectorized<T> map(T (*const f)(const T&)) const {
     Vectorized<T> ret;
     for (int64_t i = 0; i != size(); i++) {
@@ -1469,9 +1423,7 @@ VECTORIZED_SUPPORT_SCALARS_FOR_BINARY_FUNC(interleave2)
 
 template <typename src_T, typename dst_T>
 inline void convert(const src_T* src, dst_T* dst, int64_t n) {
-#ifndef _MSC_VER
 #pragma unroll
-#endif
   for ([[maybe_unused]] const auto i : c10::irange(n)) {
     *dst = c10::convert<dst_T>(c10::load(src));
     src++;

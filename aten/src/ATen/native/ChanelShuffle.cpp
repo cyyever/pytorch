@@ -1,7 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#if defined(C10_MOBILE) && defined(USE_XNNPACK)
-#include <ATen/native/xnnpack/Engine.h>
-#endif
 #include <c10/util/Exception.h>
 
 #include <ATen/native/cpu/ChannelShuffleKernel.h>
@@ -54,14 +51,6 @@ Tensor channel_shuffle(const Tensor& self, int64_t groups) {
   TORCH_CHECK((c % groups) == 0,
               "Number of channels must be divisible by groups. Got ",
               c, " channels and ", groups, " groups.");
-
-#if defined(C10_MOBILE) && defined(USE_XNNPACK)
-  if (self.is_contiguous(MemoryFormat::ChannelsLast) &&
-      xnnpack::use_channel_shuffle(self, groups)) {
-    auto output = self.numel() == 0 ? self.alias() : xnnpack::channel_shuffle(self, groups);
-    return output;
-  }
-#endif
 
   auto output = self.numel() == 0 ? self.alias() : at::native_channel_shuffle(self, groups);
   return output;

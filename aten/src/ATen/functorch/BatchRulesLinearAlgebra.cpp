@@ -776,21 +776,12 @@ _scaled_dot_product_cudnn_attention_batch_rule(
 // - clang-5 seems to require the constexpr
 // - windows compiles with or without the constexpr, but the constexpr causes test problems
 // - as a result we have some macro guards.
-#if defined(_MSC_VER)
-#define LINALG_STRING_CONST(fn, op_name) \
-  const char func_string_##fn[] = #op_name;\
-
-#define LINALG_STRING_CONST2(fn, overload, op_name) \
-  const char func_string_##fn_##overload[] = #op_name;\
-
-#else
 #define LINALG_STRING_CONST(fn, op_name) \
   constexpr const char func_string_##fn[] = #op_name;\
 
 #define LINALG_STRING_CONST2(fn, overload, op_name) \
   constexpr const char func_string_##fn_##overload[] = #op_name;\
 
-#endif
 
 #define LINALG_CHECK_MATRIX_UNARY_ONE_OUT(fn, op_name) \
   LINALG_STRING_CONST(fn, op_name)\

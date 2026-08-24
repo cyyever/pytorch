@@ -79,7 +79,6 @@ T quantize_val_arm(
   constexpr int32_t qmin = std::numeric_limits<T>::min();
   constexpr int32_t qmax = std::numeric_limits<T>::max();
   float inv_scale = 1.0f / scale;
-#ifndef _MSC_VER
   auto r = static_cast<int32_t>(std::nearbyint(value * inv_scale));
   // builtin_add_overflow() returns true in case of overflow
   if (__builtin_add_overflow(zero_point, r, &r)) {
@@ -87,9 +86,6 @@ T quantize_val_arm(
     // i.e. only overflow can happen.
     r = qmax;
   }
-#else
-  auto r = zero_point + static_cast<int32_t>(std::nearbyint(value * inv_scale));
-#endif
   r = std::max(r, qmin);
   r = std::min(r, qmax);
   return static_cast<T>(r);
@@ -141,7 +137,6 @@ T quantize_val_arm(
   constexpr int32_t qmin = std::numeric_limits<T>::min();
   constexpr int32_t qmax = std::numeric_limits<T>::max();
   float inv_scale = 1.0f / scale;
-#ifndef _MSC_VER
   auto r = static_cast<int32_t>(std::nearbyint(value * inv_scale));
   // builtin_add_overflow() returns true in case of overflow
   if (__builtin_add_overflow(zero_point, r, &r)) {
@@ -149,9 +144,6 @@ T quantize_val_arm(
     // i.e. only overflow can happen.
     r = qmax;
   }
-#else
-  auto r = zero_point + static_cast<int32_t>(std::nearbyint(value * inv_scale));
-#endif
   r = std::max(r, qmin);
   r = std::min(r, qmax);
   return static_cast<T>(r);

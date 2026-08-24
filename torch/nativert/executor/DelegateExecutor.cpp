@@ -1,8 +1,6 @@
 #include <torch/nativert/executor/DelegateExecutor.h>
 
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 
 #include <sys/stat.h>
 
@@ -16,11 +14,7 @@ namespace torch::nativert {
 namespace {
 char* _mkdtemp(char* outputDir) {
   // mkdtemp is not available on Windows
-#ifdef _WIN32
-  return nullptr;
-#else
   return mkdtemp(outputDir);
-#endif
 }
 
 } // namespace

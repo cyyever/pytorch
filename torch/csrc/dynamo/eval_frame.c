@@ -8,14 +8,6 @@
 #include <torch/csrc/dynamo/eval_frame_cpp.h>
 #include <torch/csrc/utils/python_compat.h>
 
-#if IS_PYTHON_3_14_PLUS && defined(_WIN32)
-#define Py_BUILD_CORE
-#include <internal/pycore_code.h>
-#include <internal/pycore_interpframe.h>
-#include <internal/pycore_stackref.h>
-#undef Py_BUILD_CORE
-#endif
-
 PyObject* guard_error_hook = NULL;
 PyObject* guard_complete_hook = NULL;
 

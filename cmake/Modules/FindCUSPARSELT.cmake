@@ -30,9 +30,6 @@ find_path(CUSPARSELT_INCLUDE_PATH cusparseLt.h
 set(CUSPARSELT_LIBRARY $ENV{CUSPARSELT_LIBRARY} CACHE PATH "Path to the cusparselt library file (e.g., libcusparseLt.so)")
 
 set(CUSPARSELT_LIBRARY_NAME "libcusparseLt.so")
-if(MSVC)
-  set(CUSPARSELT_LIBRARY_NAME "cusparseLt.lib")
-endif()
 
 find_library(CUSPARSELT_LIBRARY_PATH ${CUSPARSELT_LIBRARY_NAME}
   PATHS ${CUSPARSELT_LIBRARY}

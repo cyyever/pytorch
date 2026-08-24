@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import NamedTuple
 
 
-IS_WINDOWS: bool = os.name == "nt"
 
 
 def _default_num_workers() -> int | None:
@@ -44,7 +43,7 @@ class LintMessage(NamedTuple):
 
 
 def as_posix(name: str) -> str:
-    return name.replace("\\", "/") if IS_WINDOWS else name
+    return name
 
 
 def _run_command(
@@ -58,7 +57,6 @@ def _run_command(
         return subprocess.run(
             args,
             capture_output=True,
-            shell=IS_WINDOWS,  # So batch scripts are found.
             timeout=timeout,
             check=True,
         )
@@ -226,7 +224,7 @@ def main() -> None:
         stream=sys.stderr,
     )
 
-    binary = os.path.normpath(args.binary) if IS_WINDOWS else args.binary
+    binary = args.binary
     if not Path(binary).exists():
         lint_message = LintMessage(
             path=None,

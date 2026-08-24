@@ -187,7 +187,7 @@ def may_get_constant_buffer_dtype(constant_buffer: sympy.Expr) -> torch.dtype | 
 
 def getattr_recursive(
     obj: GraphModule, target: str
-) -> Tensor | torch._C.ScriptObject | GraphModule:
+) -> Tensor | torch.ScriptObject | GraphModule:
     target_atoms = target.split(".")
     attr_itr = obj
     for i, atom in enumerate(target_atoms):
@@ -415,7 +415,7 @@ class GraphLowering(torch.fx.Interpreter):
         const_output_index: dict[str, int] | None = None,
         const_wrapper_code: str | None = None,
         const_kernel_code: str | None = None,
-        const_module: GraphLowering | None = None,
+        const_module: "GraphLowering" | None = None,
         name: str | None = None,
         inputs_to_check: Sequence[int] | None = None,
         fx_wrapper: bool = False,
@@ -506,10 +506,10 @@ class GraphLowering(torch.fx.Interpreter):
             const_module.named_parameters if const_module else {}
         )
         self.torchbind_constants: dict[
-            str, torch._C.ScriptObject | FakeScriptObject
+            str, torch.ScriptObject | FakeScriptObject
         ] = {}
         self.torchbind_replay_objects: dict[
-            str, torch._C.ScriptObject | FakeScriptObject
+            str, torch.ScriptObject | FakeScriptObject
         ] = {}
         self.opaque_value_type_classes: dict[str, type] = {}
         self.seen_subgraphs: dict[str, ir.Subgraph] = {}
@@ -960,7 +960,7 @@ class GraphLowering(torch.fx.Interpreter):
         gm: torch.fx.GraphModule,
         example_inputs: list[torch.Tensor],
         subgraph_name: str,
-    ) -> SubgraphLowering:
+    ) -> "SubgraphLowering":
         """
         Make a subgraph of the current graph with all inherited parts, except
         the graph module (`gm`) and `example_inputs`.  The subgraphs are lowered
@@ -1609,7 +1609,7 @@ class GraphLowering(torch.fx.Interpreter):
             self.seen_subgraphs[target] = out
             return out
 
-        if isinstance(value, torch._C.ScriptObject):
+        if isinstance(value, torch.ScriptObject):
             self.torchbind_constants[target] = value
             self.constant_reprs[target] = ""
             return TorchBindObject(name=target, value=value)
@@ -2450,7 +2450,7 @@ class GraphLowering(torch.fx.Interpreter):
         if config.disable_cpp_codegen:
             raise CppWrapperCodegenError("C++ codegen is disabled")
 
-        if sys.platform not in ("linux", "darwin", "win32"):
+        if sys.platform not in ("linux", "darwin"):
             raise CppWrapperCodegenError(f"Unsupported platform {sys.platform}")
 
         graph_module = cast(torch.fx.GraphModule, self.module)
@@ -3023,7 +3023,7 @@ class GraphLowering(torch.fx.Interpreter):
             self.wrapper_code.pop_codegened_graph()
             return result
 
-    def codegen_subgraph(self, parent_graph: GraphLowering) -> None:
+    def codegen_subgraph(self, parent_graph: "GraphLowering") -> None:
         """
         This is a more compact version of the `codegen()` above
         where we codegen this graph as a subgraph of some parent
@@ -3210,7 +3210,7 @@ class SubgraphLowering(GraphLowering):
     init_wrapper_code with the subgraph related arguments.
     """
 
-    def __init__(self, parent: GraphLowering, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, parent: "GraphLowering", *args: Any, **kwargs: Any) -> None:
         self.parent = parent
         super().__init__(*args, **kwargs)
         # Donation indices use the parent graph's placeholder ordering, not ours.

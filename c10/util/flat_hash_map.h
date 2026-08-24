@@ -32,16 +32,8 @@ C10_CLANG_DIAGNOSTIC_PUSH()
 C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 #endif
 
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma warning(push)
-#pragma warning(disable : 4624) // destructor was implicitly defined as deleted
-#endif
 
-#ifdef _MSC_VER
-#define SKA_NOINLINE(...) __declspec(noinline) __VA_ARGS__
-#else
 #define SKA_NOINLINE(...) __VA_ARGS__ __attribute__((noinline))
-#endif
 
 namespace ska {
 struct prime_number_hash_policy;
@@ -2105,7 +2097,3 @@ struct power_of_two_std_hash : std::hash<T> {
 } // end namespace ska
 
 C10_CLANG_DIAGNOSTIC_POP()
-
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma warning(pop)
-#endif

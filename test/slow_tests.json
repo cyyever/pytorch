@@ -34,7 +34,6 @@
   "test_cat_2k_args (__main__.TestTEFuserDynamic)": 131.654914483428,
   "test_checkpointing_without_reentrant_input_requires_grad_False (__main__.TestAutogradWithCompiledAutograd)": 347.29089016384546,
   "test_checkpointing_without_reentrant_input_requires_grad_True (__main__.TestAutogradWithCompiledAutograd)": 448.10833062065973,
-  "test_collect_callgrind (__main__.TestBenchmarkUtils)": 285.1102227105035,
   "test_compiled_dtensor_op_db_nn_functional_max_pool2d_cpu_float32 (__main__.TestCompiledDTensorOpsCPU)": 92.9769999186198,
   "test_compiled_dtensor_op_db_nn_functional_poisson_nll_loss_cpu_float32 (__main__.TestCompiledDTensorOpsCPU)": 64.3003323872884,
   "test_comprehensive_diff_cuda_complex128 (__main__.TestDecompCUDA)": 100.02783330281575,

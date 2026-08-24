@@ -126,7 +126,7 @@ class FileTimerClient(TimerClient):
     def __init__(
         self,
         file_path: str,
-        signal=(signal.SIGKILL if sys.platform != "win32" else signal.CTRL_C_EVENT),  # type: ignore[attr-defined]
+        signal=signal.SIGKILL,
     ) -> None:
         super().__init__()
         self._file_path = file_path

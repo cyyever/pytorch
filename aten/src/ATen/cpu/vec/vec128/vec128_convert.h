@@ -7,20 +7,6 @@ namespace at::vec {
 inline namespace CPU_CAPABILITY {
 #if defined(__aarch64__)
 
-// Define this specialization to match c10::convert, as defined in TypeCast.h
-template <>
-inline void convert(
-    const float* __restrict src,
-    uint8_t* __restrict dst,
-    int64_t n) {
-  uint64_t len = static_cast<uint64_t>(n);
-  for (uint64_t i = 0; i < len; i++) {
-    dst[i] = static_cast<uint8_t>(static_cast<int64_t>(src[i]));
-  }
-}
-
-#if !defined(CPU_CAPABILITY_SVE256)
-
 // Enable auto-vectorization for clang-17+
 // GCC-12 has a bug: gcc.gnu.org/bugzilla/show_bug.cgi?id=117001
 #if defined(__clang__) && (__clang_major__ >= 17)
@@ -497,7 +483,7 @@ struct VecConvert<Half, 1, float, 2> {
 };
 
 #endif // !defined(C10_MOBILE)
-#endif // !defined(CPU_CAPABILITY_SVE256)
+
 #endif // defined(__aarch64__)
 } // namespace CPU_CAPABILITY
 } // namespace at::vec

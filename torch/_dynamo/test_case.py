@@ -26,7 +26,6 @@ from torch._dynamo import polyfills
 from torch._logging._internal import trace_log
 from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
     HardwareClassification,
-    IS_WINDOWS,
     TEST_WITH_CROSSREF,
     TEST_WITH_TORCHDYNAMO,
     TestCase as TorchTestCase,
@@ -103,13 +102,6 @@ def run_tests(needs: str | tuple[str, ...] = ()) -> None:
 
     if TEST_WITH_TORCHDYNAMO or TEST_WITH_CROSSREF:
         return  # skip testing
-
-    if (
-        not torch.xpu.is_available()
-        and IS_WINDOWS
-        and os.environ.get("TORCHINDUCTOR_WINDOWS_TESTS", "0") == "0"
-    ):
-        return
 
     if isinstance(needs, str):
         needs = (needs,)

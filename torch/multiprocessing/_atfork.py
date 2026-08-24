@@ -1,23 +1,13 @@
 # mypy: allow-untyped-defs
-import sys
 
 
 __all__ = ["register_after_fork"]
 
-if sys.platform == "win32":
-    import multiprocessing.util as _util
+import os
 
-    def _register(func):
-        def wrapper(arg):
-            func()
 
-        _util.register_after_fork(_register, wrapper)
-
-else:
-    import os
-
-    def _register(func):
-        os.register_at_fork(after_in_child=func)
+def _register(func):
+    os.register_at_fork(after_in_child=func)
 
 
 def register_after_fork(func):

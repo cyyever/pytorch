@@ -12,11 +12,7 @@
 extern "C" {
 #endif
 
-#ifdef _WIN32
-#define unlikely(x) (x)
-#else
 #define unlikely(x) __builtin_expect((x), 0)
-#endif
 
 #define NULL_CHECK(val)                                         \
   if (unlikely((val) == NULL)) {                                \

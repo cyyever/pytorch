@@ -27,11 +27,8 @@
  */
 #if !defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
 
-#if defined(C10_ANDROID) && defined(__GLIBCXX__) && __GLIBCXX__ < 20180604
-#define C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE
-#endif // defined(C10_ANDROID) && defined(__GLIBCXX__) && __GLIBCXX__ < 20180604
 
-#endif // !defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
+#endif
 
 #if defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
 #include <c10/util/Exception.h>
@@ -100,7 +97,7 @@ class ThreadLocal {
 #define C10_DEFINE_TLS_class_static(Class, Type, Name) \
   ::c10::ThreadLocal<Type> Class::Name
 
-#else // defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
+#else
 
 namespace c10 {
 
@@ -153,4 +150,4 @@ class ThreadLocal {
     return &var;                                       \
   })
 
-#endif // defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
+#endif

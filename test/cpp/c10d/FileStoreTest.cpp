@@ -2,9 +2,7 @@
 #include <c10/util/irange.h>
 #include "StoreTestCommon.hpp"
 
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 
 #include <iostream>
 #include <thread>
@@ -14,11 +12,6 @@
 #include <torch/csrc/distributed/c10d/FileStore.hpp>
 #include <torch/csrc/distributed/c10d/PrefixStore.hpp>
 
-#ifdef _WIN32
-std::string tmppath() {
-  return c10d::test::autoGenerateTmpFilePath();
-}
-#else
 std::string tmppath() {
   const char* tmpdir = getenv("TMPDIR");
   if (tmpdir == nullptr) {
@@ -40,7 +33,6 @@ std::string tmppath() {
   close(fd);
   return std::string(tmp.data(), tmp.size());
 }
-#endif
 
 void testGetSet(const std::string& path, const std::string& prefix = "") {
   // Basic Set/Get on File Store

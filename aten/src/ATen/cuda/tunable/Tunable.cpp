@@ -35,11 +35,7 @@
 
 // for validators
 #ifdef USE_ROCM
-#ifdef _WIN32
-#include <hip/hip_version.h>
-#else
 #include <rocm-core/rocm_version.h>
-#endif
 #define ROCBLAS_BETA_FEATURES_API
 #include <rocblas/rocblas.h>
 #include <hipblaslt/hipblaslt.h>

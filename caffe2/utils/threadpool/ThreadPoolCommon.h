@@ -1,7 +1,7 @@
-#ifndef CAFFE2_UTILS_THREADPOOL_COMMON_H_
+#if !defined(CAFFE2_UTILS_THREADPOOL_COMMON_H_)
 #define CAFFE2_UTILS_THREADPOOL_COMMON_H_
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
 
@@ -10,11 +10,9 @@
 
 // This is copied from core/common.h's definition of C10_MOBILE
 // Define enabled when building for iOS or Android devices
-#if defined(__ANDROID__)
-#define C10_ANDROID 1
-#elif (defined(__APPLE__) &&                                            \
+#if (defined(__APPLE__) &&                                            \
        (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
 #define C10_IOS 1
-#endif // ANDROID / IOS
+#endif
 
-#endif  // CAFFE2_UTILS_THREADPOOL_COMMON_H_
+#endif

@@ -1,121 +1,20 @@
 #include <c10/util/StringUtil.h>
 
 #include <cstdint>
-#include <stdexcept>
 #include <string>
-
-#ifdef _WIN32
-#include <c10/util/Unicode.h>
-#endif
 
 namespace c10 {
 
 namespace detail {
 
 std::string StripBasename(const std::string& full_path) {
-#ifdef _WIN32
-  const std::string separators("/\\");
-#else
   const std::string separators("/");
-#endif
   size_t pos = full_path.find_last_of(separators);
   if (pos != std::string::npos) {
     return full_path.substr(pos + 1, std::string::npos);
   } else {
     return full_path;
   }
-}
-
-// Narrows the wstr argument and then passes it to _str.
-// Assumes that the input (wide) text is encoded as UTF-16.
-static std::ostream& _strFromWide(
-    std::ostream& ss,
-    const std::wstring& wString);
-
-#ifndef _WIN32
-
-// Decodes one code point from a UTF-16 sequence, advancing `it` past the
-// consumed code unit(s) and combining a surrogate pair when present. Each
-// wchar_t is treated as a single UTF-16 code unit: on platforms where wchar_t
-// is 32-bit, values above 0xFFFF are truncated to 16 bits, matching the old
-// std::codecvt_utf8_utf16 behavior this replaced. An unpaired surrogate is
-// malformed UTF-16 and throws, as the old codecvt path did.
-static uint32_t decode_utf16_char(
-    std::wstring::const_iterator& it,
-    std::wstring::const_iterator end) {
-  const char16_t high = static_cast<char16_t>(*it++);
-  if (high < 0xD800 || high > 0xDFFF) {
-    return high;
-  }
-  if (high > 0xDBFF) {
-    throw std::range_error("invalid UTF-16: unpaired low surrogate");
-  }
-  if (it == end) {
-    throw std::range_error("invalid UTF-16: truncated surrogate pair");
-  }
-  const char16_t low = static_cast<char16_t>(*it++);
-  if (low < 0xDC00 || low > 0xDFFF) {
-    throw std::range_error("invalid UTF-16: unpaired high surrogate");
-  }
-  return 0x10000 + ((static_cast<uint32_t>(high) - 0xD800) << 10) +
-      (static_cast<uint32_t>(low) - 0xDC00);
-}
-
-// Appends the UTF-8 encoding of a single code point to `out`. decode_utf16_char
-// truncates each code unit to 16 bits and caps surrogate pairs at U+10FFFF, so
-// cp can never exceed U+10FFFF here; the clamp below is purely defensive and in
-// practice never fires.
-static void encode_utf8_char(std::string& out, uint32_t cp) {
-  if (cp > 0x10FFFF) {
-    cp = 0xFFFD;
-  }
-  if (cp < 0x80) {
-    out.push_back(static_cast<char>(cp));
-    return;
-  }
-  // Number of continuation bytes; the leading byte has `trailing + 1` high
-  // bits set (0xC0, 0xE0, 0xF0 for 1, 2, 3 continuation bytes).
-  int trailing = cp < 0x800 ? 1 : (cp < 0x10000 ? 2 : 3);
-  const uint32_t lead_mask = (0xFF << (7 - trailing)) & 0xFF;
-  out.push_back(static_cast<char>(lead_mask | (cp >> (6 * trailing))));
-  for (int shift = 6 * (trailing - 1); shift >= 0; shift -= 6) {
-    out.push_back(static_cast<char>(0x80 | ((cp >> shift) & 0x3F)));
-  }
-}
-
-static std::ostream& _strFromWide(
-    std::ostream& ss,
-    const std::wstring& wString) {
-  std::string result;
-  result.reserve(wString.size());
-  auto it = wString.begin();
-  const auto end = wString.end();
-  while (it != end) {
-    encode_utf8_char(result, decode_utf16_char(it, end));
-  }
-  return _str(ss, result);
-}
-
-#else // #ifndef _WIN32
-// The WIN32 implementation of wstring_convert leaks memory; see
-// https://github.com/microsoft/STL/issues/443
-
-static std::ostream& _strFromWide(
-    std::ostream& ss,
-    const std::wstring& wString) {
-  return _str(ss, u16u8(wString));
-}
-
-#endif // _WIN32
-
-std::ostream& _str(std::ostream& ss, const wchar_t* wCStr) {
-  return _strFromWide(ss, std::wstring(wCStr));
-}
-std::ostream& _str(std::ostream& ss, const wchar_t& wChar) {
-  return _strFromWide(ss, std::wstring(1, wChar));
-}
-std::ostream& _str(std::ostream& ss, const std::wstring& wString) {
-  return _strFromWide(ss, wString);
 }
 
 } // namespace detail

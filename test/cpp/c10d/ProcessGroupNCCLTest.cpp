@@ -1,3 +1,4 @@
+#include <set>
 #include <chrono>
 #include <iostream>
 #include <vector>
@@ -14,7 +15,7 @@
 #include <c10/util/irange.h>
 
 #include <gtest/gtest.h>
-#include <torch/csrc/autograd/profiler.h>
+#include <torch/csrc/autograd/profiler_kineto.h>
 
 using namespace c10d::test;
 
@@ -250,12 +251,22 @@ class AllreduceNCCLTest : public NCCLTest {
     valueInitialization();
 
     using namespace torch::autograd::profiler;
-    // Make sure enabling profile does not make any issue. Note, in single
-    // process multi-device mode we do not expect any events be populated for
-    // collective operations, since profiling for that mode is not supported.
-    enableProfilerLegacy(ProfilerConfig(ProfilerState::CPU));
+    using torch::profiler::impl::ActivityType;
+    using torch::profiler::impl::ProfilerConfig;
+    using torch::profiler::impl::ProfilerState;
+    // Check that running a collective with the profiler enabled does not
+    // disturb it. The events themselves are not inspected here; this only
+    // guards the interaction between the profiler and NCCL.
+    //
+    // prepareProfiler is what registers and initializes kineto; calling
+    // enableProfiler on its own leaves activityProfiler() unregistered and
+    // startTrace dereferences it.
+    const ProfilerConfig config(ProfilerState::KINETO);
+    const std::set<ActivityType> activities{ActivityType::CPU};
+    prepareProfiler(config, activities);
+    enableProfiler(config, activities);
     auto results = pg_->allreduce(tensors_);
-    disableProfilerLegacy();
+    disableProfiler();
     return results;
   }
 };

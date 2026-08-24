@@ -1075,7 +1075,7 @@ void cpu_gather_expanded_index_kernel(const Tensor& result, const Tensor& _index
         Vec out_vec = Vec::loadu(self_ptr + d);
         out_vec.store(result_ptr + d);
       }
-      #if !defined(_MSC_VER) && !defined(COMPILING_FOR_MIN_SIZE)
+      #if !defined(COMPILING_FOR_MIN_SIZE)
       # pragma unroll
       #endif
       for (; d < K; d++) {

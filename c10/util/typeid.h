@@ -448,16 +448,12 @@ class C10_API TypeMeta final {
     // variable template. '-Wpragmas' and '-Wunknown-warning-option' has to be
     // disabled for compilers that don't know '-Wundefined-var-template' and
     // would error at our attempt to disable it.
-#ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wundefined-var-template"
-#endif
     return TypeMeta(_typeMetaData<T>());
-#ifndef _MSC_VER
 #pragma GCC diagnostic pop
-#endif
   }
 
   /**
@@ -627,7 +623,7 @@ inline std::ostream& operator<<(
 //   http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0537r0.html
 //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51930
 // and as a result, we define these two macros slightly differently.
-#if defined(_MSC_VER) || defined(__clang__)
+#if defined(__clang__)
 #define EXPORT_IF_NOT_GCC C10_EXPORT
 #else
 #define EXPORT_IF_NOT_GCC
