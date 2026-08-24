@@ -25,7 +25,6 @@
 # - Public APIs and extensions: python_core_api, python_nn_api, python_data_api, python_specialized_api, python_api_tests, cpp_api_custom_ops, cpp_runtime_tests, nativert
 # - Distributed: distributed
 # - Serialization and export: jit_torchscript, serialization_package
-# - Quantization: quantization
 # - Profiling: profiler
 # - Build and developer infrastructure: infra_ci, infra_github_automation, infra_build_packaging, infra_linting, infra_codegen, infra_developer_tools, infra_test
 # - Third-party dependencies: third_party_backend_deps, third_party_core_build_deps, third_party_serialization_schema
@@ -298,7 +297,6 @@
 # /aten/src/ATen/jiterator_macros.h
 # /aten/src/ATen/mkl/
 # /aten/src/ATen/ops/
-# /aten/src/ATen/quantized/
 # /aten/src/ATen/record_function.cpp
 # /aten/src/ATen/record_function.h
 # /aten/src/ATen/templates/
@@ -766,12 +764,6 @@
 # /torch/library.py
 # /torch/utils/_cpp_extension_versioner.py
 /torch/utils/cpp_extension.py @fmassa @ezyang @malfet
-#
-# [quantization]
-/test/test_quantization.py @jerryzh168
-/aten/src/ATen/native/quantized/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
-/aten/src/ATen/native/quantized/cpu/ @jerryzh168 @salilsdesai @digantdesai @jianyuh
-/aten/src/ATen/native/quantized/cuda/ @jerryzh168
 #
 # [profiler]
 # /test/cpp/profiler/test_profiler_collection.cpp

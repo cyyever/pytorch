@@ -1552,23 +1552,6 @@ struct TORCH_API GeneratorType : public Type {
   GeneratorType() : Type(TypeKind::GeneratorType) {}
 };
 
-struct QuantizerType;
-using QuantizerTypePtr = SingletonTypePtr<QuantizerType>;
-// This type represents a Quantizer
-struct TORCH_API QuantizerType : public Type {
-  bool equals(const Type& rhs) const override {
-    return rhs.kind() == kind();
-  }
-  std::string str() const override {
-    return "Quantizer";
-  }
-  static const TypeKind Kind = TypeKind::QuantizerType;
-  // global singleton
-  static QuantizerTypePtr get();
-
- private:
-  QuantizerType() : Type(TypeKind::QuantizerType) {}
-};
 
 struct QSchemeType;
 using QSchemeTypePtr = SingletonTypePtr<QSchemeType>;

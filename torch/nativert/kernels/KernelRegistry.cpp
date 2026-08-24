@@ -22,8 +22,6 @@
 #include <ATen/native/TensorConversions.h>
 #include <ATen/native/cpu/SerialStackImpl.h>
 #include <ATen/native/layer_norm.h>
-#include <ATen/quantized/QTensorImpl.h>
-#include <ATen/quantized/Quantizer.h>
 
 #include <c10/core/ScalarType.h>
 #include <c10/util/Enumerate.h>

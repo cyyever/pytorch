@@ -2679,15 +2679,12 @@ def clone_input(x: torch.Tensor, *, dtype: torch.dtype | None = None) -> torch.T
         needed_size = sum(
             (shape - 1) * stride for shape, stride in zip(x.size(), x.stride())
         )
-        if x.is_quantized:
-            result = torch.empty_quantized((needed_size + 32,), x)
-        else:
-            result = torch.empty(
-                needed_size + 32,
-                dtype=dtype or x.dtype,
-                device=x.device,
-                pin_memory=is_pinned_cpu_tensor(x),
-            )
+        result = torch.empty(
+            needed_size + 32,
+            dtype=dtype or x.dtype,
+            device=x.device,
+            pin_memory=is_pinned_cpu_tensor(x),
+        )
         cache_line_offset = (
             (x.data_ptr() - result.data_ptr()) % 32
         ) // x.element_size()

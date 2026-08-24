@@ -291,23 +291,17 @@ coverage_ignore_functions = [
     "hierarchical_pickle",
     # torch.amp.autocast_mode
     "autocast_decorator",
-    # torch.ao.nn.quantized.dynamic.modules.rnn
     "apply_permutation",
     "pack_weight_bias",
-    # torch.ao.nn.quantized.reference.modules.rnn
     "get_quantized_weight",
-    # torch.ao.ns.fx.graph_matcher
     "get_matching_subgraph_pairs",
-    # torch.ao.ns.fx.graph_passes
     "add_loggers_to_model",
     "create_a_shadows_b",
-    # torch.ao.ns.fx.mappings
     "add_op_to_sets_of_related_ops",
     "get_base_name_for_op",
     "get_base_name_to_sets_of_related_ops",
     "get_node_type_to_io_type_map",
     "get_unmatchable_types_map",
-    # torch.ao.ns.fx.n_shadows_utils
     "create_add_loggers_graph",
     "create_n_transformed_and_logged_copies_of_subgraph",
     "create_one_transformed_and_logged_copy_of_subgraph",
@@ -316,11 +310,9 @@ coverage_ignore_functions = [
     "extract_weight_comparison",
     "group_results_by_subgraph",
     "print_n_shadows_summary",
-    # torch.ao.ns.fx.pattern_utils
     "end_node_matches_reversed_fusion",
     "get_reversed_fusions",
     "get_type_a_related_to_b",
-    # torch.ao.ns.fx.utils
     "get_arg_indices_of_inputs_to_log",
     "get_node_first_input_and_output_type",
     "get_node_input_qparams",
@@ -332,7 +324,6 @@ coverage_ignore_functions = [
     "op_type_supports_shadowing",
     "rekey_logger_info_on_node_name_of_model",
     "return_first_non_observer_node",
-    # torch.ao.ns.fx.weight_utils
     "extract_weight_from_node",
     "get_conv_fun_weight",
     "get_conv_mod_weight",
@@ -347,49 +338,37 @@ coverage_ignore_functions = [
     "mod_0_weight_detach",
     "mod_weight_bias_0",
     "mod_weight_detach",
-    # torch.ao.pruning.sparsifier.utils
     "fqn_to_module",
     "get_arg_info_from_tensor_fqn",
     "module_contains_param",
     "module_to_fqn",
     "swap_module",
-    # torch.ao.quantization.backend_config.native
     "get_native_backend_config",
     "get_native_backend_config_dict",
     "get_test_only_legacy_native_backend_config",
     "get_test_only_legacy_native_backend_config_dict",
-    # torch.ao.quantization.backend_config.qnnpack
     "get_qnnpack_backend_config",
-    # torch.ao.quantization.backend_config.tensorrt
     "get_tensorrt_backend_config",
     "get_tensorrt_backend_config_dict",
     "get_x86_backend_config",
-    # torch.ao.quantization.fuse_modules
     "fuse_known_modules",
     "fuse_modules_qat",
-    # torch.ao.quantization.fuser_method_mappings
     "fuse_conv_bn",
     "fuse_conv_bn_relu",
     "fuse_convtranspose_bn",
     "fuse_linear_bn",
     "get_fuser_method",
     "get_fuser_method_new",
-    # torch.ao.quantization.fx.convert
     "convert",
     "convert_custom_module",
     "convert_standalone_module",
     "convert_weighted_module",
-    # torch.ao.quantization.fx.fuse
     "fuse",
-    # torch.ao.quantization.fx.lower_to_fbgemm
     "lower_to_fbgemm",
-    # torch.ao.quantization.fx.lower_to_qnnpack
     "lower_to_qnnpack",
-    # torch.ao.quantization.fx.pattern_utils
     "get_default_fusion_patterns",
     "get_default_output_activation_post_process_map",
     "get_default_quant_patterns",
-    # torch.ao.quantization.fx.prepare
     "insert_observers_for_model",
     "prepare",
     "propagate_dtypes_for_known_nodes",
@@ -397,25 +376,17 @@ coverage_ignore_functions = [
     "find_sequential_partitions",
     "get_equivalent_types",
     "update_equivalent_types_dict",
-    # torch.ao.quantization.pt2e.prepare
     "prepare",
-    # torch.ao.quantization.pt2e.representation.rewrite
     "reference_representation_rewrite",
-    # torch.ao.quantization.pt2e.utils
     "fold_bn_weights_into_conv_node",
     "remove_tensor_overload_for_qdq_ops",
-    # torch.ao.quantization.qconfig
     "get_default_qat_qconfig_dict",
     "get_default_qconfig_dict",
-    # torch.ao.quantization.quantize
     "get_default_custom_config_dict",
-    # torch.ao.quantization.quantize_pt2e
     "convert_pt2e",
     "prepare_pt2e",
     "prepare_qat_pt2e",
-    # torch.ao.quantization.quantizer.embedding_quantizer
     "get_embedding_operators_config",
-    # torch.ao.quantization.quantizer.xnnpack_quantizer_utils
     "get_bias_qspec",
     "get_input_act_qspec",
     "get_output_act_qspec",
@@ -928,12 +899,10 @@ coverage_ignore_classes = [
     # torch.distributed.algorithms.ddp_comm_hooks
     "DDPCommHookType",
     # torch.jit.mobile
-    # torch.ao.nn.quantized.modules
     "DeQuantize",
     "Quantize",
     # torch.utils.backcompat
     "Warning",
-    # torch.ao.nn.quantized.modules.activation
     "ELU",
     "Hardswish",
     "LeakyReLU",
@@ -942,49 +911,37 @@ coverage_ignore_classes = [
     "ReLU6",
     "Sigmoid",
     "Softmax",
-    # torch.ao.nn.quantized.modules.batchnorm
     "BatchNorm2d",
     "BatchNorm3d",
-    # torch.ao.nn.quantized.modules.conv
     "Conv1d",
     "Conv2d",
     "Conv3d",
     "ConvTranspose1d",
     "ConvTranspose2d",
     "ConvTranspose3d",
-    # torch.ao.nn.quantized.modules.dropout
     "Dropout",
-    # torch.ao.nn.quantized.modules.embedding_ops
     "Embedding",
     "EmbeddingBag",
     "EmbeddingPackedParams",
-    # torch.ao.nn.quantized.modules.functional_modules
     "FXFloatFunctional",
     "FloatFunctional",
     "QFunctional",
-    # torch.ao.nn.quantized.modules.linear
     "Linear",
     "LinearPackedParams",
-    # torch.ao.nn.quantized.modules.normalization
     "GroupNorm",
     "InstanceNorm1d",
     "InstanceNorm2d",
     "InstanceNorm3d",
     "LayerNorm",
-    # torch.ao.nn.quantized.modules.rnn
     "LSTM",
-    # torch.ao.nn.quantized.modules.utils
     "WeightedQuantizedModule",
-    # torch.ao.nn.quantized.reference.modules.conv
     "Conv1d",
     "Conv2d",
     "Conv3d",
     "ConvTranspose1d",
     "ConvTranspose2d",
     "ConvTranspose3d",
-    # torch.ao.nn.quantized.reference.modules.linear
     "Linear",
-    # torch.ao.nn.quantized.reference.modules.rnn
     "GRU",
     "GRUCell",
     "LSTM",
@@ -992,58 +949,37 @@ coverage_ignore_classes = [
     "RNNBase",
     "RNNCell",
     "RNNCellBase",
-    # torch.ao.nn.quantized.reference.modules.sparse
     "Embedding",
     "EmbeddingBag",
-    # torch.ao.nn.quantized.reference.modules.utils
     "ReferenceQuantizedModule",
-    # torch.ao.nn.sparse.quantized.dynamic.linear
     "Linear",
-    # torch.ao.nn.sparse.quantized.linear
     "Linear",
     "LinearPackedParams",
-    # torch.ao.nn.sparse.quantized.utils
     "LinearBlockSparsePattern",
-    # torch.ao.ns.fx.graph_matcher
     "SubgraphTypeRelationship",
-    # torch.ao.ns.fx.n_shadows_utils
     "OutputProp",
-    # torch.ao.ns.fx.ns_types
     "NSSingleResultValuesType",
     "NSSubgraph",
-    # torch.ao.ns.fx.qconfig_multi_mapping
     "QConfigMultiMapping",
-    # torch.ao.pruning.scheduler.base_scheduler
     "BaseScheduler",
-    # torch.ao.pruning.scheduler.cubic_scheduler
     "CubicSL",
-    # torch.ao.pruning.scheduler.lambda_scheduler
     "LambdaSL",
-    # torch.ao.pruning.sparsifier.base_sparsifier
     "BaseSparsifier",
-    # torch.ao.pruning.sparsifier.nearly_diagonal_sparsifier
     "NearlyDiagonalSparsifier",
-    # torch.ao.pruning.sparsifier.utils
     "FakeSparsity",
-    # torch.ao.pruning.sparsifier.weight_norm_sparsifier
     "WeightNormSparsifier",
-    # torch.ao.quantization.backend_config.backend_config
     "BackendConfig",
     "BackendPatternConfig",
     "DTypeConfig",
-    # torch.ao.quantization.fake_quantize
     "FakeQuantize",
     "FakeQuantizeBase",
     "FixedQParamsFakeQuantize",
     "FusedMovingAvgObsFakeQuantize",
-    # torch.ao.quantization.fx.fuse_handler
     "DefaultFuseHandler",
     "FuseHandler",
-    # torch.ao.quantization.fx.graph_module
     "FusedGraphModule",
     "ObservedGraphModule",
     "ObservedStandaloneGraphModule",
-    # torch.ao.quantization.fx.quantize_handler
     "BatchNormQuantizeHandler",
     "BinaryOpQuantizeHandler",
     "CatQuantizeHandler",
@@ -1057,12 +993,9 @@ coverage_ignore_classes = [
     "LinearReLUQuantizeHandler",
     "RNNDynamicQuantizeHandler",
     "StandaloneModuleQuantizeHandler",
-    # torch.ao.quantization.fx.tracer
     "QuantizationTracer",
     "ScopeContextManager",
-    # torch.ao.quantization.fx.utils
     "ObservedGraphModuleAttrs",
-    # torch.ao.quantization.observer
     "FixedQParamsObserver",
     "HistogramObserver",
     "MinMaxObserver",
@@ -1078,15 +1011,11 @@ coverage_ignore_classes = [
     "default_debug_observer",
     "default_placeholder_observer",
     "default_reuse_input_observer",
-    # torch.ao.quantization.qconfig
     "QConfigDynamic",
-    # torch.ao.quantization.quant_type
     "QuantType",
-    # torch.ao.quantization.stubs
     "DeQuantStub",
     "QuantStub",
     "QuantWrapper",
-    # torch.ao.quantization.utils
     "MatchAllNode",
     # torch.backends.cudnn.rnn
     "Unserializable",
@@ -1836,7 +1765,6 @@ ignore_duplicated_modules = {
     "torch.nn.utils.weight_norm",
     "torch.nn.utils.spectral_norm",
     "torch.nn.parallel.data_parallel",
-    "torch.ao.quantization.quantize",
 }
 
 

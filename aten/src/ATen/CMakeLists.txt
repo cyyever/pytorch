@@ -139,9 +139,6 @@ file(GLOB_RECURSE native_sparse_mps_mm CONFIGURE_DEPENDS "native/sparse/mps/*.mm
 file(GLOB_RECURSE native_mps_sparse_metal CONFIGURE_DEPENDS "native/sparse/mps/*.metal")
 
 file(GLOB native_sparse_cpp CONFIGURE_DEPENDS "native/sparse/*.cpp")
-file(GLOB native_quantized_cpp CONFIGURE_DEPENDS
-            "native/quantized/*.cpp"
-            "native/quantized/cpu/*.cpp")
 file(GLOB native_nested_cpp CONFIGURE_DEPENDS "native/nested/*.cpp")
 file(GLOB native_transformers_cpp CONFIGURE_DEPENDS "native/transformers/*.cpp")
 
@@ -155,9 +152,6 @@ file(GLOB native_hip_h CONFIGURE_DEPENDS "native/hip/*.h" "native/hip/*.cuh" "na
 file(GLOB native_cudnn_cpp CONFIGURE_DEPENDS "native/cudnn/*.cpp")
 file(GLOB native_sparse_cuda_cu CONFIGURE_DEPENDS "native/sparse/cuda/*.cu")
 file(GLOB native_sparse_cuda_cpp CONFIGURE_DEPENDS "native/sparse/cuda/*.cpp")
-file(GLOB native_quantized_cuda_cu CONFIGURE_DEPENDS "native/quantized/cuda/*.cu")
-file(GLOB native_quantized_cuda_cpp CONFIGURE_DEPENDS "native/quantized/cuda/*.cpp")
-file(GLOB native_quantized_cudnn_cpp CONFIGURE_DEPENDS "native/quantized/cudnn/*.cpp")
 file(GLOB native_nested_h CONFIGURE_DEPENDS "native/nested/*.h")
 file(GLOB native_nested_cuda_cu CONFIGURE_DEPENDS "native/nested/cuda/*.cu")
 file(GLOB native_nested_cuda_cpp CONFIGURE_DEPENDS "native/nested/cuda/*.cpp")
@@ -171,14 +165,11 @@ file(GLOB native_nested_hip_hip CONFIGURE_DEPENDS "native/nested/hip/*.hip")
 file(GLOB native_nested_hip_cpp CONFIGURE_DEPENDS "native/nested/hip/*.cpp")
 file(GLOB native_sparse_hip_hip CONFIGURE_DEPENDS "native/sparse/hip/*.hip")
 file(GLOB native_sparse_hip_cpp CONFIGURE_DEPENDS "native/sparse/hip/*.cpp")
-file(GLOB native_quantized_hip_hip CONFIGURE_DEPENDS "native/quantized/hip/*.hip")
-file(GLOB native_quantized_hip_cpp CONFIGURE_DEPENDS "native/quantized/hip/*.cpp")
 file(GLOB native_transformers_cuda_cu CONFIGURE_DEPENDS "native/transformers/cuda/*.cu")
 file(GLOB native_transformers_cuda_cpp CONFIGURE_DEPENDS "native/transformers/cuda/*.cpp")
 file(GLOB native_transformers_hip_hip CONFIGURE_DEPENDS "native/transformers/hip/*.hip")
 file(GLOB native_transformers_hip_cpp CONFIGURE_DEPENDS "native/transformers/hip/*.cpp")
 file(GLOB native_transformers_xpu_cpp CONFIGURE_DEPENDS "native/transformers/xpu/*.cpp")
-file(GLOB native_quantized_cudnn_hip_cpp CONFIGURE_DEPENDS "native/quantized/cudnn/hip/*.cpp")
 file(GLOB native_utils_cpp CONFIGURE_DEPENDS "native/utils/*.cpp")
 file(GLOB flash_attention_cuda_kernels_cu CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/third_party/flash-attention/csrc/flash_attn/src/*.cu)
 file(GLOB flash_attention_cuda_cpp CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/third_party/flash-attention/csrc/flash_attn/src/*.cpp)
@@ -484,12 +475,10 @@ file(GLOB native_xnnpack CONFIGURE_DEPENDS "native/xnnpack/*.cpp")
 append_filelist("jit_core_headers" ATen_CORE_HEADERS)
 append_filelist("jit_core_sources" ATen_CORE_SRCS)
 
-add_subdirectory(quantized)
 
 set(
   all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
-  ${native_sparse_cpp} ${native_nested_cpp}
-  ${native_quantized_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
+  ${native_sparse_cpp} ${native_nested_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
   ${native_transformers_cpp}
   ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
   ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
@@ -528,7 +517,6 @@ if(USE_CUDA)
     ${native_cuda_cu}
     ${native_nested_cuda_cu}
     ${native_sparse_cuda_cu}
-    ${native_quantized_cuda_cu}
     ${native_transformers_cuda_cu}
     ${cuda_generated_sources}
   )
@@ -538,8 +526,6 @@ if(USE_CUDA)
     ${native_cudnn_cpp}
     ${native_miopen_cpp}
     ${native_nested_cuda_cpp}
-    ${native_quantized_cuda_cpp}
-    ${native_quantized_cudnn_cpp}
     ${native_sparse_cuda_cpp}
     ${native_transformers_cuda_cpp}
   )
@@ -593,7 +579,6 @@ if(USE_ROCM)
     ${native_hip_hip}
     ${native_nested_hip_hip}
     ${native_sparse_hip_hip}
-    ${native_quantized_hip_hip}
     ${native_transformers_hip_hip} ${native_transformers_src_hip_hip}
   )
   file(GLOB native_hip_bgemm CONFIGURE_DEPENDS "native/hip/bgemm_kernels/*.hip")
@@ -629,9 +614,7 @@ if(USE_ROCM)
   list(APPEND all_hip_cpp
     ${native_nested_hip_cpp}
     ${native_sparse_hip_cpp}
-    ${native_quantized_hip_cpp}
     ${native_transformers_hip_cpp}
-    ${native_quantized_cudnn_hip_cpp}
     ${hip_cpp}
     ${native_hip_cpp}
     ${native_hip_linalg_cpp}
@@ -880,7 +863,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake-exports/ATenConfig.cmake"
   DESTINATION "${AT_INSTALL_SHARE_DIR}/cmake/ATen")
 
 set(INSTALL_HEADERS ${base_h} ${ATen_CORE_HEADERS} ${native_nested_h} ${ATen_TRANSFORMER_HEADERS})
-list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${native_quantized_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
+list(APPEND INSTALL_HEADERS ${native_h} ${native_cpu_h} ${cuda_h} ${native_cuda_h} ${native_hip_h} ${cudnn_h} ${hip_h} ${xpu_h} ${mps_h} ${native_mps_h} ${native_utils_h} ${miopen_h})
 
 # https://stackoverflow.com/questions/11096471/how-can-i-install-a-hierarchy-of-files-using-cmake
 foreach(HEADER  ${INSTALL_HEADERS})

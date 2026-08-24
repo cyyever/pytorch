@@ -25,7 +25,6 @@ list(APPEND ATen_CPU_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/operators_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/packedtensoraccessor_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/pow_test.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/quantized_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/reduce_ops_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/reportMemoryUsage_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/scalar_tensor_test.cpp
@@ -44,7 +43,6 @@ list(APPEND ATen_CPU_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/wrapdim_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/xla_tensor_test.cpp
   # Fix this.
-  # ${CMAKE_CURRENT_SOURCE_DIR}/xnnpack_test.cpp
   )
 
 list(APPEND ATen_CUDA_TEST_SRCS
@@ -95,7 +93,6 @@ list(APPEND ATen_HIP_TEST_SRCS
 list(APPEND ATen_MOBILE_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_caching_allocator_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_profiling_allocator_test.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/quantized_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/vec_test_all_types.cpp)
 
 list(APPEND ATen_VEC_TEST_SRCS

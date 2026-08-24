@@ -537,34 +537,6 @@ def forward(self, arg0_1):
     """,
         )
 
-    # Some ops that are mutable are neither inplace nor out= ops.
-    # They also need special handling.
-    def test_mutable_op_not_inplace_or_other(self):
-        def f(x):
-            return torch._fused_moving_avg_obs_fq_helper(
-                x, x, x, x, x, x, x, 1.0, 0, 1, 0
-            )
-
-        logs = self.get_logs(f, torch.ones(1))
-        self.assertExpectedInline(
-            logs,
-            """\
-
-
-
-def forward(self, arg0_1):
-    _fused_moving_avg_obs_fq_helper_functional = torch.ops.aten._fused_moving_avg_obs_fq_helper_functional.default(arg0_1, arg0_1, arg0_1, arg0_1, arg0_1, arg0_1, arg0_1, 1.0, 0, 1, 0)
-    getitem = _fused_moving_avg_obs_fq_helper_functional[0]
-    getitem_1 = _fused_moving_avg_obs_fq_helper_functional[1]
-    getitem_2 = _fused_moving_avg_obs_fq_helper_functional[2];  getitem_2 = None
-    getitem_3 = _fused_moving_avg_obs_fq_helper_functional[3];  getitem_3 = None
-    getitem_4 = _fused_moving_avg_obs_fq_helper_functional[4];  getitem_4 = None
-    getitem_5 = _fused_moving_avg_obs_fq_helper_functional[5];  _fused_moving_avg_obs_fq_helper_functional = None
-    copy_ = torch.ops.aten.copy_.default(arg0_1, getitem_5);  arg0_1 = getitem_5 = copy_ = None
-    return (getitem, getitem_1)
-    """,
-        )
-
     def test_as_strided(self):
         def f(x):
             y = x.as_strided((2,), (2,), 1)

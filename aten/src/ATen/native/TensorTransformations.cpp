@@ -100,7 +100,7 @@ Tensor flip(const Tensor& self, IntArrayRef dims) {
   iter._unsafe_set_arg_strides(0, strides_bytes);
   iter._unsafe_set_arg_data(0, reinterpret_cast<void*>(data));
 
-  flip_stub(iter.device_type(), iter, self.is_quantized());
+  flip_stub(iter.device_type(), iter);
 
   return out_tensor;
 }

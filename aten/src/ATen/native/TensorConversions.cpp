@@ -4,7 +4,6 @@
 #include <ATen/Parallel.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/core/Tensor.h>
-#include <ATen/quantized/Quantizer.h>
 #include <optional>
 
 #ifndef AT_PER_OPERATOR_HEADERS
@@ -32,7 +31,6 @@
 #include <ATen/ops/arange_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
-#include <ATen/ops/empty_quantized.h>
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/empty_strided_native.h>
 #include <ATen/ops/to_dense_backward_native.h>
@@ -346,19 +344,11 @@ Tensor _to_copy(
   if (memory_format == MemoryFormat::Preserve) {
     if (options.device().supports_as_strided()) {
       if (self.is_non_overlapping_and_dense()) {
-        Tensor r;
-        if (self.is_quantized()) {
-          r = at::empty_quantized(self.sizes(), self, options);
-          at::QuantizerPtr quantizer = r.quantizer();
-          r.copy_(self, non_blocking);
-          set_quantizer_(r, quantizer);
-        } else {
-          r = at::empty_strided(
-              self.sizes(), self.strides(), options.pinned_memory(pin_out));
-          r.copy_(self, non_blocking);
-        }
+        Tensor r = at::empty_strided(
+            self.sizes(), self.strides(), options.pinned_memory(pin_out));
+        r.copy_(self, non_blocking);
         return r;
-      } else if (!self.is_quantized() && self.layout() == kStrided) {
+      } else if (self.layout() == kStrided) {
         Tensor r;
         auto strides = infer_dense_strides(self.sizes(), self.strides());
         r = at::empty_strided(
@@ -373,18 +363,10 @@ Tensor _to_copy(
     }
   }
   // See Note [Explicit nullopt MemoryFormat argument]
-  // TODO: empty_quantized does not work here. It raises an exception in
-  // CheckMemoryFormat.h prior to
-  // empty_affine_quantized/_empty_per_channel_affine_quantized calls
-  // at::empty also does not work here because there is no proper at::empty
-  // support for quantized tensors as it would return a quantized tensor with an
-  // UnknownQuantizer
-  auto r = self.is_quantized()
-      ? at::empty_like(self, memory_format)
-      : at::empty_symint(
-            self.sym_sizes(),
-            options.memory_format(memory_format).pinned_memory(pin_out),
-            std::nullopt);
+  auto r = at::empty_symint(
+      self.sym_sizes(),
+      options.memory_format(memory_format).pinned_memory(pin_out),
+      std::nullopt);
   r.copy_(self, non_blocking);
   return r;
 }

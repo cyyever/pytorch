@@ -1936,14 +1936,12 @@ class CPUReproTests(TestCase):
             x, scale, zero_point, use_dequant, use_quant, quant_min, quant_max, dtype
         ):
             # For quantized_decomposed.dequantize_per_tensor
-            # Refer to torch/ao/quantization/fx/_decomposed.py
             if use_dequant:
                 x = (x.to(torch.float32) - zero_point) * scale
 
             x = torch.relu(x)
 
             # For quantized_decomposed.quantize_per_tensor
-            # Refer to torch/ao/quantization/fx/_decomposed.py
             if use_quant:
                 inv_scale = 1.0 / scale
                 x = torch.clamp(

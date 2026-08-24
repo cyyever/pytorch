@@ -1828,51 +1828,6 @@ class TestAssertCloseSparseBSC(TestCase):
                 fn()
 
 
-class TestAssertCloseQuantized(TestCase):
-    def test_mismatching_is_quantized(self):
-        actual = torch.tensor(1.0)
-        expected = torch.quantize_per_tensor(actual, scale=1.0, zero_point=0, dtype=torch.qint32)
-
-        for fn in assert_close_with_inputs(actual, expected):
-            with self.assertRaisesRegex(AssertionError, "is_quantized"):
-                fn()
-
-    def test_mismatching_qscheme(self):
-        t = torch.tensor((1.0,))
-        actual = torch.quantize_per_tensor(t, scale=1.0, zero_point=0, dtype=torch.qint32)
-        expected = torch.quantize_per_channel(
-            t,
-            scales=torch.tensor((1.0,)),
-            zero_points=torch.tensor((0,)),
-            axis=0,
-            dtype=torch.qint32,
-        )
-
-        for fn in assert_close_with_inputs(actual, expected):
-            with self.assertRaisesRegex(AssertionError, "qscheme"):
-                fn()
-
-    def test_matching_per_tensor(self):
-        actual = torch.quantize_per_tensor(torch.tensor(1.0), scale=1.0, zero_point=0, dtype=torch.qint32)
-        expected = actual.clone()
-
-        for fn in assert_close_with_inputs(actual, expected):
-            fn()
-
-    def test_matching_per_channel(self):
-        actual = torch.quantize_per_channel(
-            torch.tensor((1.0,)),
-            scales=torch.tensor((1.0,)),
-            zero_points=torch.tensor((0,)),
-            axis=0,
-            dtype=torch.qint32,
-        )
-        expected = actual.clone()
-
-        for fn in assert_close_with_inputs(actual, expected):
-            fn()
-
-
 class TestMakeTensor(TestCase):
     supported_dtypes = dtypes(
         torch.bool,
@@ -2807,7 +2762,6 @@ class TestImports(TestCase):
                            "torch.distributed.elastic.rendezvous",  # depps on etcd
                            "torch.contrib.",  # something weird
                            "torch.testing._internal.distributed.",  # just fails
-                           "torch.ao.pruning._experimental.",  # depends on pytorch_lightning, not user-facing
                            "torch._inductor.runtime.triton_helpers",  # depends on triton
                            "torch._native.flydsl.intrinsics",  # depends on flydsl
                            "torch._native.ops.bmm_outer_product.triton_kernels",  # depends on triton

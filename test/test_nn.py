@@ -52,8 +52,8 @@ from torch.testing._internal.common_device_type import dtypesIfMPS, instantiate_
     expectedFailureMPSPre27, skipMeta, get_all_device_types
 from torch.testing._internal.common_modules import module_inputs_torch_nn_LinearCrossEntropyLoss
 
-from hypothesis import given
-import torch.testing._internal.hypothesis_utils as hu
+from hypothesis import assume, given, settings, strategies as st
+from hypothesis.extra import numpy as stnp
 from torch.testing._internal.common_utils import _assertGradAndGradgradChecks, gradcheck, gradgradcheck, \
     GRADCHECK_NONDET_TOL
 from torch.testing._internal.common_utils import dtype2prec_DONTUSE
@@ -6562,22 +6562,32 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
             weights_channels_last,
             msg="Conv3d initialization is inconsistent between memory formats"
         )
+@st.composite
+def _finite_array(draw, shape, dtype=np.float32):
+    """A numpy array of the given shape holding no NaN or inf."""
+    elements = st.floats(-1e6, 1e6, allow_nan=False, width=32)
+    X = draw(stnp.arrays(dtype=dtype, elements=elements, shape=shape))
+    assume(not (np.isnan(X).any() or np.isinf(X).any()))
+    return X
+
+
 class TestFusionEval(TestCase):
     @set_default_dtype(torch.double)
-    @given(X=hu.tensor(shapes=((5, 3, 5, 5),), dtype=np.double),
-           running_mean=hu.tensor(shapes=(6,), dtype=np.double),
-           running_var=hu.tensor(shapes=(6,), dtype=np.double))
+    @settings(deadline=None)
+    @given(X=_finite_array((5, 3, 5, 5), dtype=np.double),
+           running_mean=_finite_array((6,), dtype=np.double),
+           running_var=_finite_array((6,), dtype=np.double))
     def test_fuse_module_eval_numerics(self, X, running_mean, running_var):
-        inputs, _ = X
+        inputs = X
 
-        iC, oC = inputs.shape[1], len(running_mean[0])
+        iC, oC = inputs.shape[1], len(running_mean)
         inputs = torch.from_numpy(inputs)
         kernel_size = (3, 3)
 
         conv_ref = torch.nn.Conv2d(iC, oC, bias=True, kernel_size=kernel_size)
         bn_ref = torch.nn.BatchNorm2d(oC)
-        bn_ref.running_mean = torch.from_numpy(running_mean[0])
-        bn_ref.running_var = torch.from_numpy(running_var[0])
+        bn_ref.running_mean = torch.from_numpy(running_mean)
+        bn_ref.running_var = torch.from_numpy(running_var)
 
         conv_ref.eval()
         bn_ref.eval()
@@ -6590,8 +6600,8 @@ class TestFusionEval(TestCase):
         self.assertEqual(Y_ref, Y_hat, msg="Conv+BN fusion results are off")
 
         na_bn_ref = torch.nn.BatchNorm2d(oC, affine=False)
-        na_bn_ref.running_mean = torch.from_numpy(running_mean[0])
-        na_bn_ref.running_var = torch.from_numpy(running_var[0])
+        na_bn_ref.running_mean = torch.from_numpy(running_mean)
+        na_bn_ref.running_var = torch.from_numpy(running_var)
         na_bn_ref.eval()
 
         Y_ref = na_bn_ref(conv_ref(inputs))

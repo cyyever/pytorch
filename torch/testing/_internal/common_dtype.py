@@ -198,14 +198,13 @@ def custom_types(*dtypes):
 # The functions below are used for convenience in our test suite and thus have no corresponding C++ dispatch macro
 
 
-# See AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS.
+# See AT_FORALL_SCALAR_TYPES_WITH_COMPLEX.
 def get_all_dtypes(
     include_half=True,
     include_bfloat16=True,
     include_bool=True,
     include_complex=True,
     include_complex32=False,
-    include_qint=False,
     include_bcomplex32=False,
 ) -> list[torch.dtype]:
     dtypes = get_all_int_dtypes() + get_all_fp_dtypes(
@@ -217,8 +216,6 @@ def get_all_dtypes(
         dtypes += get_all_complex_dtypes(
             include_complex32=include_complex32, include_bcomplex32=include_bcomplex32
         )
-    if include_qint:
-        dtypes += get_all_qint_dtypes()
     return dtypes
 
 
@@ -254,10 +251,6 @@ def get_all_fp_dtypes(include_half=True, include_bfloat16=True) -> list[torch.dt
     if include_bfloat16:
         dtypes.append(torch.bfloat16)
     return dtypes
-
-
-def get_all_qint_dtypes() -> list[torch.dtype]:
-    return [torch.qint8, torch.quint8, torch.qint32, torch.quint4x2, torch.quint2x4]
 
 
 def highest_precision_float(device):

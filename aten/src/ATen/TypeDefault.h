@@ -20,6 +20,5 @@ using TensorList = ArrayRef<Tensor>;
 class Context;
 struct Generator;
 
-struct Quantizer;
 
 } // namespace at

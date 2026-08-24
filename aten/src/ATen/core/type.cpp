@@ -183,10 +183,6 @@ GeneratorTypePtr GeneratorType::get() {
   static GeneratorTypePtr value(new GeneratorType());
   return value;
 }
-QuantizerTypePtr QuantizerType::get() {
-  static QuantizerTypePtr value(new QuantizerType());
-  return value;
-}
 QSchemeTypePtr QSchemeType::get() {
   static QSchemeTypePtr value(new QSchemeType());
   return value;

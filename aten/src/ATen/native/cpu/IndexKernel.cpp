@@ -720,97 +720,88 @@ void cpu_hflip_channels_last_vec(at::TensorIterator& iter) {
   iter.cast_outputs();
 }
 
-void flip_kernel(TensorIterator& iter, const bool quantized) {
-  if (quantized) {
-    AT_DISPATCH_QINT_AND_SUB_BYTE_TYPES(iter.dtype(), "flip_quantized_cpu",
-        [&iter] { cpu_kernel(iter,
-          [](scalar_t a, scalar_t /*dummy input*/) -> scalar_t {
-            return a;
-        });
-    });
-  } else {
-    auto output_strides = iter.strides(0);
-    auto input_strides = iter.strides(1);
-    if (iter.ndim() > 0 && output_strides[0] == -iter.element_size(0) && input_strides[0] == iter.element_size(1)) {
-      // Special case: horizontal flip with vectorization and input is contiguous
-      // Context: horizontal flip leads to strides[0] < 0 and
-      // thus is_contiguous condition is not satisfied and non-vectorized code path is taken.
-      auto iter_dtype = iter.dtype();
-      // Ignoring half and bfloat16 as cpu_hflip_vec is slower than cpu_kernel_vec
-      if (isIntegralType(iter_dtype, true) || iter_dtype == kDouble || iter_dtype == kFloat) {
-        // Replace AT_DISPATCH_ALL_TYPES_AND by manual if/else due to internal test failures:
-        // - "dtype 'Float' not selected for kernel tag hflip_cpu"
-        // - "dtype 'Long' not selected for kernel tag hflip_cpu"
-        //
-        // AT_DISPATCH_ALL_TYPES_AND(kBool,
-        //     iter_dtype, "hflip_cpu", [&iter] {
-        //       cpu_hflip_vec<scalar_t>(iter);
-        // });
+void flip_kernel(TensorIterator& iter) {
+  auto output_strides = iter.strides(0);
+  auto input_strides = iter.strides(1);
+  if (iter.ndim() > 0 && output_strides[0] == -iter.element_size(0) && input_strides[0] == iter.element_size(1)) {
+    // Special case: horizontal flip with vectorization and input is contiguous
+    // Context: horizontal flip leads to strides[0] < 0 and
+    // thus is_contiguous condition is not satisfied and non-vectorized code path is taken.
+    auto iter_dtype = iter.dtype();
+    // Ignoring half and bfloat16 as cpu_hflip_vec is slower than cpu_kernel_vec
+    if (isIntegralType(iter_dtype, true) || iter_dtype == kDouble || iter_dtype == kFloat) {
+      // Replace AT_DISPATCH_ALL_TYPES_AND by manual if/else due to internal test failures:
+      // - "dtype 'Float' not selected for kernel tag hflip_cpu"
+      // - "dtype 'Long' not selected for kernel tag hflip_cpu"
+      //
+      // AT_DISPATCH_ALL_TYPES_AND(kBool,
+      //     iter_dtype, "hflip_cpu", [&iter] {
+      //       cpu_hflip_vec<scalar_t>(iter);
+      // });
 
-        if (iter_dtype == kByte) {
-          cpu_hflip_vec<uint8_t>(iter);
-          return;
-        } else if (iter_dtype == kChar) {
-          cpu_hflip_vec<int8_t>(iter);
-          return;
-        } else if (iter_dtype == kInt) {
-          cpu_hflip_vec<int32_t>(iter);
-          return;
-        } else if (iter_dtype == kLong) {
-          cpu_hflip_vec<int64_t>(iter);
-          return;
-        } else if (iter_dtype == kShort) {
-          cpu_hflip_vec<int16_t>(iter);
-          return;
-        } else if (iter_dtype == kBool) {
-          cpu_hflip_vec<bool>(iter);
-          return;
-        } else if (iter_dtype == kFloat) {
-          cpu_hflip_vec<float>(iter);
-          return;
-        } else if (iter_dtype == kDouble) {
-          cpu_hflip_vec<double>(iter);
-          return;
-        }
-      }
-      // other dtypes (float16, bfloat16, complex) are handled by cpu_kernel_vec (see below)
-    } else if (iter.has_contiguous_first_dim()) {
-      // Special cases:
-      // a) channels last hflip on (N, C, H, W) and outer_stride(=dtype_size * C) in [2, 16]
-      // b) flip dim=-2 on (N, ..., M, C) and outer_stride(=dtype_size * C) in [2, 16]
-      auto output_strides_2 = iter.strides(0);
-      auto input_strides_2 = iter.strides(1);
-      auto c = -output_strides_2[1];
-      if (c >= 2 && c <= 16 &&
-          c == input_strides_2[1] &&
-          c == iter.element_size(0) * iter.shape()[0]  // checks if dim=1 is contiguous as well
-      ) {
-        cpu_hflip_channels_last_vec(iter);
+      if (iter_dtype == kByte) {
+        cpu_hflip_vec<uint8_t>(iter);
+        return;
+      } else if (iter_dtype == kChar) {
+        cpu_hflip_vec<int8_t>(iter);
+        return;
+      } else if (iter_dtype == kInt) {
+        cpu_hflip_vec<int32_t>(iter);
+        return;
+      } else if (iter_dtype == kLong) {
+        cpu_hflip_vec<int64_t>(iter);
+        return;
+      } else if (iter_dtype == kShort) {
+        cpu_hflip_vec<int16_t>(iter);
+        return;
+      } else if (iter_dtype == kBool) {
+        cpu_hflip_vec<bool>(iter);
+        return;
+      } else if (iter_dtype == kFloat) {
+        cpu_hflip_vec<float>(iter);
+        return;
+      } else if (iter_dtype == kDouble) {
+        cpu_hflip_vec<double>(iter);
         return;
       }
-      // Special case: vertical flip using memcpy (faster than generic cpu_kernel_vec)
-      cpu_vflip_memcpy(iter);
+    }
+    // other dtypes (float16, bfloat16, complex) are handled by cpu_kernel_vec (see below)
+  } else if (iter.has_contiguous_first_dim()) {
+    // Special cases:
+    // a) channels last hflip on (N, C, H, W) and outer_stride(=dtype_size * C) in [2, 16]
+    // b) flip dim=-2 on (N, ..., M, C) and outer_stride(=dtype_size * C) in [2, 16]
+    auto output_strides_2 = iter.strides(0);
+    auto input_strides_2 = iter.strides(1);
+    auto c = -output_strides_2[1];
+    if (c >= 2 && c <= 16 &&
+        c == input_strides_2[1] &&
+        c == iter.element_size(0) * iter.shape()[0]  // checks if dim=1 is contiguous as well
+    ) {
+      cpu_hflip_channels_last_vec(iter);
       return;
     }
-
-    AT_DISPATCH_V2(
-        iter.dtype(),
-        "flip_cpu",
-        AT_WRAP([&iter] {
-          cpu_kernel_vec(iter,
-            [](scalar_t a, scalar_t /*dummy input*/) -> scalar_t {
-              return a;
-            },
-            [](Vectorized<scalar_t> a, Vectorized<scalar_t> /*dummy input*/) -> Vectorized<scalar_t> {
-              return a;
-            });
-        }),
-        AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
-        AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
-        kBool,
-        kHalf,
-        kBFloat16);
+    // Special case: vertical flip using memcpy (faster than generic cpu_kernel_vec)
+    cpu_vflip_memcpy(iter);
+    return;
   }
+
+  AT_DISPATCH_V2(
+      iter.dtype(),
+      "flip_cpu",
+      AT_WRAP([&iter] {
+        cpu_kernel_vec(iter,
+          [](scalar_t a, scalar_t /*dummy input*/) -> scalar_t {
+            return a;
+          },
+          [](Vectorized<scalar_t> a, Vectorized<scalar_t> /*dummy input*/) -> Vectorized<scalar_t> {
+            return a;
+          });
+      }),
+      AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
+      AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES),
+      kBool,
+      kHalf,
+      kBFloat16);
 }
 
 } // anonymous namespace

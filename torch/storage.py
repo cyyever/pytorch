@@ -588,11 +588,6 @@ def _dtype_to_storage_type_map():
         torch.bfloat16: "BFloat16Storage",
         torch.cdouble: "ComplexDoubleStorage",
         torch.cfloat: "ComplexFloatStorage",
-        torch.qint8: "QInt8Storage",
-        torch.qint32: "QInt32Storage",
-        torch.quint8: "QUInt8Storage",
-        torch.quint4x2: "QUInt4x2Storage",
-        torch.quint2x4: "QUInt2x4Storage",
     }
 
 
@@ -600,31 +595,6 @@ def _dtype_to_storage_type_map():
 def _storage_type_to_dtype_map():
     dtype_map = {val: key for key, val in _dtype_to_storage_type_map().items()}
     return dtype_map
-
-
-def _get_storage_from_sequence(sequence, dtype, device):
-    if dtype in [
-        torch.quint8,
-        torch.quint4x2,
-        torch.quint2x4,
-        torch.qint32,
-        torch.qint8,
-    ]:
-        interpret_dtypes = {
-            torch.quint8: torch.uint8,
-            torch.quint4x2: torch.uint8,
-            torch.quint2x4: torch.uint8,
-            torch.qint32: torch.int32,
-            torch.qint8: torch.int8,
-        }
-        tmp_tensor = torch.tensor(
-            sequence, dtype=interpret_dtypes[dtype], device=device
-        )
-
-    else:
-        tmp_tensor = torch.tensor(sequence, dtype=dtype, device=device)
-
-    return tmp_tensor._typed_storage()._untyped_storage
 
 
 def _isint(x):
@@ -854,18 +824,6 @@ class TypedStorage:
             self.dtype = torch.get_default_dtype() if dtype is None else dtype
             device = torch.device("cpu" if device is None else device)
 
-            if self.dtype in [
-                torch.quint8,
-                torch.quint4x2,
-                torch.quint2x4,
-                torch.qint32,
-                torch.qint8,
-            ]:
-                if device.type == "cuda":
-                    raise RuntimeError(
-                        "Cannot create CUDA storage with quantized dtype"
-                    )
-
             if len(args) == 0:
                 self._untyped_storage = torch.UntypedStorage(device=device)
 
@@ -875,8 +833,10 @@ class TypedStorage:
                         int(args[0]) * self._element_size(), device=device
                     )
                 elif isinstance(args[0], collections.abc.Sequence):
-                    self._untyped_storage = _get_storage_from_sequence(
-                        args[0], self.dtype, device
+                    self._untyped_storage = (
+                        torch.tensor(args[0], dtype=self.dtype, device=device)
+                        ._typed_storage()
+                        ._untyped_storage
                     )
                 else:
                     raise TypeError(
@@ -957,33 +917,9 @@ class TypedStorage:
             raise RuntimeError(f"can't index a {type(self)} with {type(idx)}")
         if torch.is_storage(value):
             raise RuntimeError(f"cannot set item with value type {type(value)}")
-        if self.dtype in [
-            torch.quint8,
-            torch.quint4x2,
-            torch.quint2x4,
-            torch.qint32,
-            torch.qint8,
-        ]:
-            interpret_dtypes = {
-                torch.quint8: torch.uint8,
-                torch.quint4x2: torch.uint8,
-                torch.quint2x4: torch.uint8,
-                torch.qint32: torch.int32,
-                torch.qint8: torch.int8,
-            }
-            tmp_dtype = interpret_dtypes[self.dtype]
-            tmp_tensor = torch.tensor(
-                [], dtype=tmp_dtype, device=self._untyped_storage.device
-            )
-            tmp_tensor.set_(
-                TypedStorage(
-                    wrap_storage=self._untyped_storage, dtype=tmp_dtype, _internal=True
-                )
-            )
-        else:
-            tmp_tensor = torch.tensor(
-                [], dtype=self.dtype, device=self._untyped_storage.device
-            ).set_(self)
+        tmp_tensor = torch.tensor(
+            [], dtype=self.dtype, device=self._untyped_storage.device
+        ).set_(self)
 
         tmp_tensor[idx] = value
 
@@ -1005,26 +941,6 @@ class TypedStorage:
             )
         elif not isinstance(idx, int):
             raise RuntimeError(f"can't index a {type(self)} with {type(idx)}")
-
-        if self.dtype in [
-            torch.quint8,
-            torch.quint4x2,
-            torch.quint2x4,
-            torch.qint32,
-            torch.qint8,
-        ]:
-            interpret_dtypes = {
-                torch.quint8: torch.uint8,
-                torch.quint4x2: torch.uint8,
-                torch.quint2x4: torch.uint8,
-                torch.qint32: torch.int32,
-                torch.qint8: torch.int8,
-            }
-            return TypedStorage(
-                wrap_storage=self._untyped_storage,
-                dtype=interpret_dtypes[self.dtype],
-                _internal=True,
-            )._getitem(idx)
 
         idx_wrapped = self._maybe_wrap_index(idx)
         from torch._subclasses.fake_tensor import unset_fake_temporarily
@@ -1070,27 +986,11 @@ class TypedStorage:
 
     def cuda(self, device=None, non_blocking=False) -> Self:
         _warn_typed_storage_removal()
-        if self.dtype in [
-            torch.quint8,
-            torch.quint4x2,
-            torch.quint2x4,
-            torch.qint32,
-            torch.qint8,
-        ]:
-            raise RuntimeError("Cannot create CUDA storage with quantized dtype")
         cuda_storage = self._untyped_storage.cuda(device, non_blocking)
         return self._new_wrapped_storage(cuda_storage)
 
     def hpu(self, device=None, non_blocking=False) -> Self:
         _warn_typed_storage_removal()
-        if self.dtype in [
-            torch.quint8,
-            torch.quint4x2,
-            torch.quint2x4,
-            torch.qint32,
-            torch.qint8,
-        ]:
-            raise RuntimeError("Cannot create HPU storage with quantized dtype")
         hpu_storage = self._untyped_storage.hpu(device, non_blocking)
         return self._new_wrapped_storage(hpu_storage)
 
@@ -1098,16 +998,6 @@ class TypedStorage:
         _warn_typed_storage_removal()
         if not isinstance(device, torch.device):
             device = torch.device(device)
-        if self.dtype in [
-            torch.quint8,
-            torch.quint4x2,
-            torch.quint2x4,
-            torch.qint32,
-            torch.qint8,
-        ]:
-            raise RuntimeError(
-                f"Cannot create {device.type.upper()} storage with quantized dtype"
-            )
         to_storage = self._untyped_storage.to(device=device, non_blocking=non_blocking)
         return self._new_wrapped_storage(to_storage)
 

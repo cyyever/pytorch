@@ -2612,28 +2612,6 @@ def meta_poisson(self, generator=None):
     return torch.empty_like(self)
 
 
-@register_meta(aten._fused_moving_avg_obs_fq_helper.default)
-def meta__fused_moving_avg_obs_fq_helper(
-    self,
-    observer_on,
-    fake_quant_on,
-    running_min,
-    running_max,
-    scale,
-    zero_point,
-    averaging_const,
-    quant_min,
-    quant_max,
-    ch_axis,
-    per_row_fake_quant=False,
-    symmetric_quant=False,
-):
-    torch._check(
-        ch_axis < self.dim(),
-        lambda: "Error in fused_moving_avg_obs_fake_quant_cpu: ch_axis must be < self.dim()",
-    )
-    mask = torch.empty_like(self, dtype=torch.bool)
-    return (torch.empty_like(self), mask)
 
 
 @register_meta(aten.mm)
@@ -3020,13 +2998,6 @@ def check_dim_size(tensor, dim, dim_size, size):
         lambda: f"Expected a tensor of dimension {dim} and tensor.size[{dim_size}] == {size}, "
         + f"but got : dimension {tensor.dim()} and tensor.size[{dim_size}] = {tensor.shape[dim_size]}",
     )
-
-
-@register_meta(aten.quantize_per_tensor)
-def meta_quantize_per_tensor(
-    input: torch.Tensor, scale: float, zero_point: int, dtype: torch.dtype
-) -> torch.Tensor:
-    return torch.empty_like(input)
 
 
 @register_meta(aten.avg_pool2d.default)

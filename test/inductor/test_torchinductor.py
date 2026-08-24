@@ -10527,22 +10527,6 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
             ),
         )
 
-    @lowering.force_fallback(aten.quantize_per_tensor.default)
-    def test_quantize_per_tensor_fallback_output_dtype(self):
-        if self.device != "cpu":
-            raise unittest.SkipTest("quantized tensor kernels are CPU-only")
-
-        def fn(x):
-            return torch.quantize_per_tensor(x, 0.1, 5, torch.quint8)
-
-        x = torch.randn(16, dtype=torch.float32, device=self.device)
-        ref = fn(x)
-        out = torch.compile(fn)(x)
-        self.assertEqual(out.dtype, torch.quint8)
-        self.assertEqual(out.q_scale(), ref.q_scale())
-        self.assertEqual(out.q_zero_point(), ref.q_zero_point())
-        self.assertEqual(out.int_repr(), ref.int_repr())
-
     def test_unique(self):
         # aten._unique2: torch.unique() backend; multi-output with data-dependent size.
         def fn(x):

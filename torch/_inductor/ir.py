@@ -8126,20 +8126,8 @@ class ExternKernel(InputsKernel):
             and torch.Tag.inplace_view in self.op_overload.tags
         )
 
-    def should_assert_dtype(self, op_name: str) -> bool:
-        # FakeTensor does not support quantized meta tensors today, so
-        # quantize_per_tensor's fake dtype intentionally remains non-quantized.
-        return (
-            not self.is_inplace_view()
-            and not op_name.startswith("torch.ops.aten.quantize_per_tensor.")
-            and (
-                self.op_overload
-                not in (
-                    torch.ops.aten.quantize_per_tensor.default,
-                    torch.ops.aten.quantize_per_tensor.tensor_qparams,
-                )
-            )
-        )
+    def should_assert_dtype(self) -> bool:
+        return not self.is_inplace_view()
 
     def get_assert_name(self) -> str:
         name = self.get_name()
@@ -8160,7 +8148,7 @@ class ExternKernel(InputsKernel):
         name = self.get_assert_name()
         size = V.graph.wrapper_code.codegen_shape_tuple(self.get_size())
         stride = V.graph.wrapper_code.codegen_shape_tuple(self.get_stride())
-        dtype = self.get_dtype() if self.should_assert_dtype(op_name) else None
+        dtype = self.get_dtype() if self.should_assert_dtype() else None
         wrapper.write_assert_size_stride(name, size, stride, op_name, dtype)
 
     def codegen_alignment_asserts(self, wrapper: PythonWrapperCodegen) -> None:
@@ -10295,11 +10283,7 @@ class FallbackKernel(ExternKernelAlloc):
         args, kwargs, materialized = cls._materialize_scalar_tensor_args(
             kernel, args, kwargs
         )
-        fake_incorrect_kernels = (aten._fused_moving_avg_obs_fq_helper_functional,)
-        if kernel not in fake_incorrect_kernels:
-            context = cast(AbstractContextManager[None], V.graph.fake_mode)
-        else:
-            context = nullcontext()
+        context = cast(AbstractContextManager[None], V.graph.fake_mode)
 
         with context, cls._allow_non_fake_constant_args(materialized):
             result = cls.process_kernel(kernel, *args, **kwargs)

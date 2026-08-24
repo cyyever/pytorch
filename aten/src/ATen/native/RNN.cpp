@@ -7,7 +7,6 @@
 #include <ATen/Context.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/mps/MPSDevice.h>
-#include <ATen/native/quantized/cpu/QuantUtils.h>
 #include <c10/core/GradMode.h>
 #include <c10/macros/Macros.h>
 
@@ -24,7 +23,6 @@
 #include <ATen/NativeFunctions.h>
 #else
 #include <ATen/ops/_lstm_mps.h>
-#include <ATen/ops/_saturate_weight_to_fp16_native.h>
 #include <ATen/ops/_thnn_differentiable_gru_cell_backward_native.h>
 #include <ATen/ops/_thnn_differentiable_lstm_cell_backward_native.h>
 #include <ATen/ops/_thnn_fused_gru_cell.h>
@@ -1356,13 +1354,6 @@ Tensor rnn_relu_cell(
   check_rnn_cell_forward_input(input, w_ih.size(1));
   check_rnn_cell_forward_hidden(input, hx, w_hh.size(1), 0);
   return SimpleCell<relu_f, CellParams>{}(input, hx, CellParams{w_ih, w_hh, b_ih, b_hh, undefined});
-}
-
-at::Tensor _saturate_weight_to_fp16(const Tensor& weight) {
-  Tensor weight_contig = weight.contiguous();
-  float* weight_contig_ptr = weight_contig.data_ptr<float>();
-  quant_utils::HandleWeightsSaturation(weight.size(0) * weight.size(1), weight_contig_ptr);
-  return weight;
 }
 
 }  // namespace at::native

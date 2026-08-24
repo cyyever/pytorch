@@ -988,6 +988,31 @@ if(USE_XPU)
     message(FATAL_ERROR "Fail to checkout ${TORCH_XPU_OPS_REPO_URL} to ${TORCH_XPU_OPS_COMMIT}")
   endif()
 
+  # torch-xpu-ops is fetched at a pinned commit and still calls ATen
+  # quantization APIs that this tree no longer has. Re-apply the fixups after
+  # every checkout, since the checkout above resets the tree.
+  file(GLOB TORCH_XPU_OPS_PATCHES
+       "${TORCH_ROOT}/third_party/xpu_patches/*.patch")
+  list(SORT TORCH_XPU_OPS_PATCHES)
+  foreach(_patch ${TORCH_XPU_OPS_PATCHES})
+    # A patch that is already applied makes --check fail; that is the signal to
+    # skip it, not an error worth printing.
+    execute_process(
+      COMMAND git apply --check ${_patch}
+      WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
+      RESULT_VARIABLE _applies
+      ERROR_QUIET)
+    if(_applies EQUAL 0)
+      execute_process(
+        COMMAND git apply ${_patch}
+        WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
+        RESULT_VARIABLE _exitcode)
+      if(NOT _exitcode EQUAL 0)
+        message(FATAL_ERROR "Fail to apply ${_patch} to torch-xpu-ops")
+      endif()
+    endif()
+  endforeach()
+
   set(TORCH_XPU_OPS_INCLUDE_DIRS
       ${TORCH_SRC_DIR}/csrc/api
       ${TORCH_SRC_DIR}/csrc/api/include
@@ -1057,8 +1082,6 @@ set(ATen_CPU_INCLUDE
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/native/RNN.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/native/quantized/cpu/qlinear_prepack.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/native/quantized/qlinear_unpack.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 
 
@@ -1541,7 +1564,7 @@ if(BUILD_TEST)
         separate_arguments(FLAGS UNIX_COMMAND "${FLAGS}")
         # Build vec with minimal dependencies on all platforms but Windows
         if(NOT MSVC)
-          add_executable(${test_name}_${CPU_CAPABILITY} "${test_src}" ../aten/src/ATen/native/quantized/AffineQuantizerBase.cpp)
+          add_executable(${test_name}_${CPU_CAPABILITY} "${test_src}")
           # TODO: Get rid of c10 dependency (which is only needed for the implementation of AT_ERROR)
           target_link_libraries(${test_name}_${CPU_CAPABILITY} c10 sleef gtest_main nlohmann)
           if(USE_FBGEMM)

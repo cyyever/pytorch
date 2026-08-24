@@ -31,7 +31,6 @@
 #include <optional>
 #include <c10/util/intrusive_ptr.h>
 
-#include <ATen/core/QuantizerBase.h>
 #include <ATen/core/TensorAccessor.h>
 #include <ATen/StorageUtils.h>
 
@@ -566,7 +565,6 @@ class TORCH_API TensorBase {
 
   /// If a tensor is a quantized tensor, returns its quantizer
   /// TODO: it's not in native_functions.yaml yet as it's not exposed to python
-  QuantizerPtr quantizer() const;
 
   /// Returns the `TensorOptions` corresponding to this `Tensor`. Defined in
   /// TensorOptions.h.

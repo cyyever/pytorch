@@ -12,7 +12,6 @@
 #include <ATen/cpu/vec/vec512/vec512_float8.h>
 #include <ATen/cpu/vec/vec512/vec512_double.h>
 #include <ATen/cpu/vec/vec512/vec512_int.h>
-#include <ATen/cpu/vec/vec512/vec512_qint.h>
 #include <ATen/cpu/vec/vec512/vec512_complex_float.h>
 #include <ATen/cpu/vec/vec512/vec512_complex_double.h>
 #include <ATen/cpu/vec/vec512/vec512_convert.h>

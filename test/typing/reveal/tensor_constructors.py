@@ -96,23 +96,6 @@ reveal_type(torch.empty_strided((2, 3), (1, 2)))  # E: {Tensor}
 reveal_type(torch.full((2, 3), 3.141592))  # E: {Tensor}
 reveal_type(torch.full_like(torch.full((2, 3), 3.141592), 2.71828))  # E: {Tensor}
 
-# torch.quantize_per_tensor
-reveal_type(
-    torch.quantize_per_tensor(
-        torch.tensor([-1.0, 0.0, 1.0, 2.0]), 0.1, 10, torch.quint8
-    )
-)  # E: {Tensor}
-
-# torch.quantize_per_channel
-x = torch.tensor([[-1.0, 0.0], [1.0, 2.0]])
-quant = torch.quantize_per_channel(
-    x, torch.tensor([0.1, 0.01]), torch.tensor([10, 0]), 0, torch.quint8
-)
-reveal_type(x)  # E: {Tensor}
-
-# torch.dequantize
-reveal_type(torch.dequantize(x))  # E: {Tensor}
-
 # torch.complex
 real = torch.tensor([1, 2], dtype=torch.float32)
 imag = torch.tensor([3, 4], dtype=torch.float32)

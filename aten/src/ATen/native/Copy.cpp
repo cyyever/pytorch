@@ -7,10 +7,8 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/FunctionalTensorWrapper.h>
 #include <ATen/TensorIterator.h>
-#include <ATen/native/quantized/Copy.h>
 #include <ATen/native/mps/Copy.h>
 #include <ATen/native/TensorShape.h>
-#include <ATen/quantized/Quantizer.h>
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
 
@@ -224,19 +222,8 @@ static Tensor & copy_impl(Tensor & self, const Tensor & src, bool non_blocking) 
     return self;
   }
 
-  if (self.is_quantized() && !src.is_quantized()) {
-    return quantized_copy_from_float_(self, src);
-  }
-
-  if (self.is_quantized() && src.is_quantized()) {
-    TORCH_CHECK(self.qscheme() == src.qscheme(),
-                "Quantized Copy only works with same qscheme");
-    TORCH_CHECK(self.scalar_type() == src.scalar_type());
-    set_quantizer_(self, src.quantizer());
-  }
-
-  if (!self.is_quantized() && src.is_quantized()) {
-    TORCH_CHECK(false, "Copying from quantized Tensor to non-quantized Tensor is not allowed, please use dequantize to get a float Tensor from a quantized Tensor");
+  if (self.is_quantized() || src.is_quantized()) {
+    TORCH_CHECK(false, "Quantized tensors are not supported in this build.");
   }
 
   // Exit early if self and src are views of the same data
@@ -277,8 +264,7 @@ static Tensor & copy_impl(Tensor & self, const Tensor & src, bool non_blocking) 
     device_type = kXPU;
   }
 
-  // TODO: if we need to, we can also enable this path for quantized tensor
-  if (device_type == kCPU && copy_transpose_valid(self, src) && !self.is_quantized()) {
+  if (device_type == kCPU && copy_transpose_valid(self, src)) {
     copy_same_type_transpose_(self, src);
     return self;
   }

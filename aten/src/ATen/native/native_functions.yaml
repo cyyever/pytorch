@@ -917,7 +917,6 @@
   dispatch:
     ZeroTensor, CPU, CUDA, MPS, XPU: as_strided_tensorimpl
     Meta: as_strided_tensorimpl_meta_symint
-    QuantizedCPU, QuantizedCUDA: as_strided_qtensorimpl
   device_check: NoCheck
   device_guard: False
   tags: core
@@ -1480,7 +1479,6 @@
   variants: function, method
   cpp_no_default_args: ['min']
   structured_delegate: clamp.out
-  dispatch:
   tags: [core, pointwise]
 
 - func: clamp.Tensor(Tensor self, Tensor? min=None, Tensor? max=None) -> Tensor
@@ -2340,7 +2338,6 @@
     SparseMeta: empty_sparse_symint
     SparseCsrCPU, SparseCsrCUDA, SparseCsrXPU: empty_sparse_compressed
     SparseCsrMeta: empty_sparse_compressed_symint
-    QuantizedCPU, QuantizedCUDA, QuantizedMeta: empty_unknown_quantized
   tags: core
 
 - func: empty_permuted(SymInt[] size, int[] physical_layout, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
@@ -2387,21 +2384,6 @@
   autogen: new_ones.out
 
 # other overrides are to provide a more helpful error message that dtype is required
-- func: _empty_affine_quantized(SymInt[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, float scale=1, int zero_point=0, MemoryFormat? memory_format=contiguous_format) -> Tensor
-  dispatch:
-    CPU: empty_affine_quantized_other_backends_stub
-    QuantizedCPU, QuantizedCUDA: empty_affine_quantized
-  autogen: _empty_affine_quantized.out
-
-# it's a factory function receiving a tensor argument, thus overriding explicitly
-# other overrides are to provide a more helpful error message that dtype is required
-- func: _empty_per_channel_affine_quantized(SymInt[] size, *, Tensor scales, Tensor zero_points, int axis, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, MemoryFormat? memory_format=contiguous_format) -> Tensor
-  category_override: factory
-  dispatch:
-    CPU: empty_per_channel_affine_quantized_other_backends_stub
-    QuantizedCPU, QuantizedCUDA: empty_per_channel_affine_quantized
-  autogen: _empty_per_channel_affine_quantized.out
-
 - func: resize_(Tensor(a!) self, SymInt[] size, *, MemoryFormat? memory_format=None) -> Tensor(a!)
   use_const_ref_for_mutable_tensors: True
   variants: method
@@ -2427,13 +2409,6 @@
     Meta: _resize_output_
   autogen: _resize_output, _resize_output.out
 
-- func: empty_quantized(int[] size, Tensor qtensor, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, MemoryFormat? memory_format=None) -> Tensor
-  category_override: factory
-  variants: function
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: empty_quantized
-  autogen: empty_quantized.out
-
 - func: empty.out(SymInt[] size, *, MemoryFormat? memory_format=None, Tensor(a!) out) -> Tensor(a!)
   device_check: NoCheck
   device_guard: False
@@ -2443,7 +2418,6 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: empty_like
-    QuantizedCPU, QuantizedCUDA: empty_like_quantized
     SparseCPU, SparseCUDA, SparseMPS, SparseMeta, SparseXPU: empty_like_sparse_coo
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: empty_like_sparse_csr
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: empty_like_nested
@@ -2456,7 +2430,6 @@
     MPS: empty_strided_mps
     XPU: empty_strided_xpu
     Meta: empty_strided_meta_symint
-    QuantizedCPU, QuantizedCUDA: empty_strided_unknown_quantized
   autogen: empty_strided.out
   tags: core
 
@@ -2633,7 +2606,6 @@
   variants: function, method
   dispatch:
     CPU, CUDA, MPS, XPU: fill_
-    QuantizedCPU, QuantizedCUDA: fill_quantized_
     Meta: fill_meta_
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: fill_sparse_csr_
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: fill_nested_
@@ -2644,7 +2616,6 @@
   variants: function, method
   dispatch:
     CPU, CUDA, MPS, XPU: fill_
-    QuantizedCPU, QuantizedCUDA: fill_quantized_
     Meta: fill_meta_
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: fill_nested_
   autogen: fill.Tensor_out
@@ -2814,7 +2785,7 @@
 
 - func: grid_sampler_2d(Tensor input, Tensor grid, int interpolation_mode, int padding_mode, bool align_corners) -> Tensor
   dispatch:
-    CPU, QuantizedCPU: grid_sampler_2d_cpu
+    CPU: grid_sampler_2d_cpu
     CUDA: grid_sampler_2d_cuda
     MPS: grid_sampler_2d_mps
     XPU: grid_sampler_2d_xpu
@@ -2995,8 +2966,6 @@
   device_check: NoCheck   # TensorIterator
   structured_delegate: index.Tensor_out
   variants: function, method
-  dispatch:
-    QuantizedCPU: quantized_index
   tags: [core, dynamic_output_shape]
   # NB: This function is special-cased in tools/autograd/gen_variable_type.py
   # NB: The following functions are declared in aten/src/ATen/templates/TensorBody.h and defined in aten/src/ATen/TensorIndexing.cpp:
@@ -3386,8 +3355,6 @@
 - func: _mixed_dtypes_linear(Tensor input, Tensor weight, Tensor scale, *, Tensor? bias=None, str? activation=None) -> Tensor
   dispatch:
     CUDA: _mixed_dtypes_linear
-
-
 
 
 - func: ldexp.Tensor(Tensor self, Tensor other) -> Tensor
@@ -3796,8 +3763,6 @@
   device_check: NoCheck   # TensorIterator
   structured_delegate: max.dim_max
   variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: qmax
   tags: [core, reduction]
 
 - func: max.dim_max(Tensor self, int dim, bool keepdim=False, *, Tensor(a!) max, Tensor(b!) max_values) -> (Tensor(a!) values, Tensor(b!) indices)
@@ -3886,7 +3851,6 @@
   structured_delegate: mean.out
   device_check: NoCheck   # TensorIterator
   variants: function, method
-  dispatch:
   tags: [core, reduction]
 
 - func: mean.out(Tensor self, int[1]? dim, bool keepdim=False, *, ScalarType? dtype=None, Tensor(a!) out) -> Tensor(a!)
@@ -3949,8 +3913,6 @@
   device_check: NoCheck   # TensorIterator
   structured_delegate: min.dim_min
   variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: qmin
   tags: [core, reduction]
 
 - func: min.dim_min(Tensor self, int dim, bool keepdim=False, *, Tensor(a!) min, Tensor(b!) min_indices) -> (Tensor(a!) values, Tensor(b!) indices)
@@ -4927,7 +4889,7 @@
   device_check: NoCheck
   device_guard: False
   dispatch:
-    CPU, CUDA, Meta, QuantizedCPU, QuantizedCUDA, MPS, XPU: _reshape_alias
+    CPU, CUDA, Meta, MPS, XPU: _reshape_alias
     ZeroTensor: _reshape_alias_symint
     # We don't need to support mkldnn since this is handled explicitly by the reshape operator.
 
@@ -5597,7 +5559,6 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: squeeze
-    QuantizedCPU, QuantizedCUDA: squeeze_quantized
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: squeeze_nested
 
 - func: squeeze.dim(Tensor(a) self, int dim) -> Tensor(a)
@@ -5606,7 +5567,6 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: squeeze
-    QuantizedCPU, QuantizedCUDA: squeeze_quantized
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: squeeze_dim_nested
   tags: core
 
@@ -5616,7 +5576,6 @@
   device_guard: False
   dispatch:
     CompositeExplicitAutograd: squeeze
-    QuantizedCPU, QuantizedCUDA: squeeze_quantized
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: squeeze_dim_nested
   tags: core
 
@@ -5983,7 +5942,6 @@
   device_check: NoCheck   # TensorIterator
   variants: function
   structured_delegate: threshold.out
-  dispatch:
   tags: pointwise
 
 - func: threshold_(Tensor(a!) self, Scalar threshold, Scalar value) -> Tensor(a!)
@@ -6060,7 +6018,7 @@
 - func: flip(Tensor self, int[] dims) -> Tensor
   variants: function, method
   dispatch:
-    CPU, QuantizedCPU, CUDA, QuantizedCUDA, XPU, MPS: flip
+    CPU, CUDA, XPU, MPS: flip
   autogen: flip.out
   tags: core
 
@@ -6340,7 +6298,6 @@
   dispatch:
     CompositeExplicitAutograd: unsqueeze
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: unsqueeze_sparse
-    QuantizedCPU, QuantizedCUDA: unsqueeze_quantized
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: unsqueeze_nested
   tags: core
 
@@ -6801,7 +6758,6 @@
     SparseCPU, SparseCUDA, SparseMPS, SparseXPU: clone_sparse
     SparseCsrCPU, SparseCsrCUDA, SparseCsrMeta, SparseCsrXPU: clone_sparse_compressed
     MkldnnCPU: mkldnn_clone
-    QuantizedCPU, QuantizedCUDA: quantized_clone
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: clone_nested
   autogen: clone.out
   tags: [core, pointwise]
@@ -7560,180 +7516,6 @@
 
 - func: to_mkldnn_backward(Tensor grad, Tensor input) -> Tensor
 
-- func: quantize_per_tensor_dynamic(Tensor self, ScalarType dtype, bool reduce_range) -> Tensor
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: quantize_per_tensor_dynamic
-  autogen: quantize_per_tensor_dynamic.out
-
-- func: quantize_per_tensor(Tensor self, float scale, int zero_point, ScalarType dtype) -> Tensor
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: quantize_per_tensor
-  autogen: quantize_per_tensor.out
-
-- func: quantize_per_tensor.tensor_qparams(Tensor self, Tensor scale, Tensor zero_point, ScalarType dtype) -> Tensor
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: quantize_per_tensor_tensor_qparams
-  autogen: quantize_per_tensor.tensor_qparams_out
-
-- func: quantize_per_tensor.tensors(Tensor[] tensors, Tensor scales, Tensor zero_points, ScalarType dtype) -> Tensor[]
-  variants: function
-  dispatch:
-    CPU: quantize_per_tensor_list_cpu
-  autogen: quantize_per_tensor.tensors_out
-
-- func: quantize_per_channel(Tensor self, Tensor scales, Tensor zero_points, int axis, ScalarType dtype) -> Tensor
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: quantize_per_channel
-  autogen: quantize_per_channel.out
-
-- func: dequantize.self(Tensor self) -> Tensor
-  variants: function, method
-  dispatch:
-    CPU, CUDA, XPU: dequantize_cpu_or_cuda
-    QuantizedCPU, QuantizedCUDA: dequantize_quantized
-  autogen: dequantize.self_out
-
-- func: dequantize.tensors(Tensor[] tensors) -> Tensor[]
-  variants: function
-  dispatch:
-    QuantizedCPU: dequantize_tensors_quantized_cpu
-  autogen: dequantize.tensors_out
-
-- func: q_scale(Tensor self) -> float
-  variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: q_scale_quant
-
-- func: q_zero_point(Tensor self) -> int
-  variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: q_zero_point_quant
-
-- func: q_per_channel_scales(Tensor self) -> Tensor
-  variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: q_per_channel_scales
-  autogen: q_per_channel_scales.out
-
-- func: q_per_channel_zero_points(Tensor self) -> Tensor
-  variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: q_per_channel_zero_points
-  autogen: q_per_channel_zero_points.out
-
-- func: q_per_channel_axis(Tensor self) -> int
-  variants: function, method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: q_per_channel_axis
-
-- func: int_repr(Tensor self) -> Tensor
-  device_check: NoCheck   # TensorIterator
-  variants: function, method
-  dispatch:
-    QuantizedCPU: int_repr_quantized_cpu
-    QuantizedCUDA: int_repr_quantized_cuda
-  autogen: int_repr.out
-
-- func: _make_per_tensor_quantized_tensor(Tensor self, float scale, int zero_point) -> Tensor
-  dispatch:
-    CPU: make_per_tensor_quantized_tensor_cpu
-    CUDA: make_per_tensor_quantized_tensor_cuda
-    XPU: make_per_tensor_quantized_tensor_xpu
-  autogen: _make_per_tensor_quantized_tensor.out
-
-- func: _make_per_channel_quantized_tensor(Tensor self, Tensor scale, Tensor zero_point, int axis) -> Tensor
-  dispatch:
-    CPU: make_per_channel_quantized_tensor_cpu
-    CUDA: make_per_channel_quantized_tensor_cuda
-    XPU: make_per_channel_quantized_tensor_xpu
-  autogen: _make_per_channel_quantized_tensor.out
-
-- func: qscheme(Tensor self) -> QScheme
-  variants: method
-  dispatch:
-    QuantizedCPU, QuantizedCUDA: qscheme_quant
-
-- func: fake_quantize_per_tensor_affine(Tensor self, float scale, int zero_point, int quant_min, int quant_max) -> Tensor
-  device_check: NoCheck   # TensorIterator
-  variants: function
-
-- func: fake_quantize_per_tensor_affine.tensor_qparams(Tensor self, Tensor scale, Tensor zero_point, int quant_min, int quant_max) -> Tensor
-  device_check: NoCheck   # TensorIterator
-  variants: function
-
-- func: fake_quantize_per_tensor_affine_cachemask(Tensor self, float scale, int zero_point, int quant_min, int quant_max) -> (Tensor output, Tensor mask)
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: fake_quantize_per_tensor_affine_cachemask
-  autogen: fake_quantize_per_tensor_affine_cachemask.out
-
-- func: _fake_quantize_per_tensor_affine_cachemask_tensor_qparams(Tensor self, Tensor scale, Tensor zero_point, Tensor fake_quant_enabled, int quant_min, int quant_max) -> (Tensor output, Tensor mask)
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: _fake_quantize_per_tensor_affine_cachemask_tensor_qparams
-  autogen: _fake_quantize_per_tensor_affine_cachemask_tensor_qparams.out
-
-- func: fake_quantize_per_tensor_affine_cachemask_backward(Tensor grad, Tensor mask) -> Tensor
-  variants: function
-
-- func: _fake_quantize_learnable_per_tensor_affine(Tensor self, Tensor scale, Tensor zero_point, int quant_min, int quant_max, float grad_factor=1.0) -> Tensor
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: _fake_quantize_learnable_per_tensor_affine
-  autogen: _fake_quantize_learnable_per_tensor_affine.out
-
-- func: _fake_quantize_learnable_per_tensor_affine_backward(Tensor grad, Tensor self, Tensor scale, Tensor zero_point, int quant_min, int quant_max, float grad_factor=1.0) -> (Tensor, Tensor, Tensor)
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: _fake_quantize_learnable_per_tensor_affine_backward
-
-- func: fake_quantize_per_channel_affine(Tensor self, Tensor scale, Tensor zero_point, int axis, int quant_min, int quant_max) -> Tensor
-  device_check: NoCheck   # TensorIterator
-  variants: function
-
-- func: fake_quantize_per_channel_affine_cachemask(Tensor self, Tensor scale, Tensor zero_point, int axis, int quant_min, int quant_max) -> (Tensor output, Tensor mask)
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: fake_quantize_per_channel_affine_cachemask
-  autogen: fake_quantize_per_channel_affine_cachemask.out
-
-- func: fake_quantize_per_channel_affine_cachemask_backward(Tensor grad, Tensor mask) -> Tensor
-  variants: function
-
-- func: _fake_quantize_learnable_per_channel_affine(Tensor self, Tensor scale, Tensor zero_point, int axis, int quant_min, int quant_max, float grad_factor=1.0) -> Tensor
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: _fake_quantize_learnable_per_channel_affine
-  autogen: _fake_quantize_learnable_per_channel_affine.out
-
-- func: _fake_quantize_learnable_per_channel_affine_backward(Tensor grad, Tensor self, Tensor scale, Tensor zero_point, int axis, int quant_min, int quant_max, float grad_factor=1.0) -> (Tensor, Tensor, Tensor)
-  variants: function
-  dispatch:
-    CPU, CUDA, XPU: _fake_quantize_learnable_per_channel_affine_backward
-
-- func: fused_moving_avg_obs_fake_quant(Tensor self, Tensor observer_on, Tensor fake_quant_on, Tensor(a!) running_min, Tensor(b!) running_max, Tensor(c!) scale, Tensor(d!) zero_point, float averaging_const, int quant_min, int quant_max, int ch_axis, bool per_row_fake_quant=False, bool symmetric_quant=False) -> Tensor
-  variants: function
-
-- func: _fused_moving_avg_obs_fq_helper(Tensor self, Tensor observer_on, Tensor fake_quant_on, Tensor(a!) running_min, Tensor(b!) running_max, Tensor(c!) scale, Tensor(d!) zero_point, float averaging_const, int quant_min, int quant_max, int ch_axis, bool per_row_fake_quant=False, bool symmetric_quant=False) -> (Tensor output, Tensor mask)
-  dispatch:
-    CPU: fused_moving_avg_obs_fake_quant_cpu
-    CUDA: fused_moving_avg_obs_fake_quant_cuda
-    XPU: fused_moving_avg_obs_fake_quant_xpu
-  autogen: _fused_moving_avg_obs_fq_helper_functional, _fused_moving_avg_obs_fq_helper.out
-
-- func: _choose_qparams_per_tensor(Tensor self, bool reduce_range=False) -> (float, int)
-  variants: function
-
-- func: _saturate_weight_to_fp16(Tensor weight) -> Tensor
-  variants: function
-
-- func: choose_qparams_optimized(Tensor input, int numel, int n_bins, float ratio, int bit_width) -> (Tensor, Tensor)
-  variants: function
-
 - func: _autocast_to_reduced_precision(Tensor(a) self, bool cuda_enabled, bool cpu_enabled, ScalarType cuda_dtype, ScalarType cpu_dtype) -> Tensor(a)
   variants: method
   device_guard: False
@@ -7932,7 +7714,6 @@
     CUDA: set_storage_cuda_
     MPS: set_storage_mps_
     XPU: set_storage_xpu_
-    QuantizedCPU, QuantizedCUDA: set_storage_quantized_
   autogen: set.source_Storage_storage_offset, set.source_Storage_storage_offset_out
   tags: inplace_view
 
@@ -8069,7 +7850,7 @@
   device_check: NoCheck
   device_guard: False
   dispatch:
-    CPU, CUDA, QuantizedCPU, QuantizedCUDA, MPS, XPU: view
+    CPU, CUDA, MPS, XPU: view
     Meta, ZeroTensor: view_symint
     MkldnnCPU: mkldnn_view
     NestedTensorCPU, NestedTensorHPU, NestedTensorCUDA, NestedTensorXPU: view_nested
@@ -8810,7 +8591,6 @@
   structured_delegate: ne.Scalar_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: ne.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -8825,7 +8605,6 @@
   structured_delegate: ne.Tensor_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: ne_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -8915,7 +8694,6 @@
   structured_delegate: ge.Tensor_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: ge_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -8957,7 +8735,6 @@
   structured_delegate: le.Scalar_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: le.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -8972,7 +8749,6 @@
   structured_delegate: le.Tensor_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: le_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -9030,7 +8806,6 @@
   structured_delegate: gt.Tensor_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: gt_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -9072,7 +8847,6 @@
   structured_delegate: lt.Scalar_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: lt.Tensor_out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
@@ -9087,7 +8861,6 @@
   structured_delegate: lt.Tensor_out
   device_check: NoCheck   # TensorIterator
   variants: method, function
-  dispatch:
   tags: [core, pointwise]
 
 - func: lt_.Scalar(Tensor(a!) self, Scalar other) -> Tensor(a!)
@@ -9133,8 +8906,8 @@
 
 - func: index_select.out(Tensor self, int dim, Tensor index, *, Tensor(a!) out) -> Tensor(a!)
   dispatch:
-    CPU, QuantizedCPU: index_select_out_cpu_
-    CUDA, QuantizedCUDA: index_select_out_cuda
+    CPU: index_select_out_cpu_
+    CUDA: index_select_out_cuda
     MPS: index_select_out_mps
     XPU: index_select_out_xpu
 
@@ -9142,9 +8915,7 @@
   variants: method, function
   dispatch:
     CPU: index_select_cpu_
-    QuantizedCPU: index_select_quantized_cpu_
     CUDA: index_select_cuda
-    QuantizedCUDA: index_select_quantized_cuda
     SparseCPU: index_select_sparse_cpu
     SparseCUDA: index_select_sparse_cuda
     SparseMPS: index_select_sparse_mps
@@ -10026,7 +9797,6 @@
 - func: topk(Tensor self, SymInt k, int dim=-1, bool largest=True, bool sorted=True) -> (Tensor values, Tensor indices)
   variants: method, function
   structured_delegate: topk.values
-  dispatch:
   tags: core
 
 - func: all(Tensor self) -> Tensor
@@ -10080,7 +9850,6 @@
   device_guard: False
   dispatch:
     CPU, CUDA, Meta, MPS, XPU: unfold
-    QuantizedCPU, QuantizedCUDA: unfold
 
 - func: unfold_backward(Tensor grad_in, SymInt[] input_sizes, int dim, int size, int step) -> Tensor
   variants: function
@@ -10096,7 +9865,6 @@
     CUDA: cuda_equal
     MPS: mps_equal
     XPU: xpu_equal
-    QuantizedCPU: equal_quantized_cpu
 
 - func: pow.Tensor_Tensor_out(Tensor self, Tensor exponent, *, Tensor(a!) out) -> Tensor(a!)
   device_check: NoCheck   # TensorIterator
@@ -10278,13 +10046,11 @@
     #CPU: _cat_cpu
     #CUDA: cat_cuda
     #MPS: cat_mps
-    #QuantizedCPU: cat_quantized_cpu
 
     #- func: _cat.out(Tensor[] tensors, int dim=0, *, Tensor(a!) out) -> Tensor(a!)
     #dispatch:
     #CPU: _cat_out_cpu
   #CUDA: cat_out_cuda
-  #QuantizedCPU: cat_out_quantized_cpu
 
 - func: _foreach_add.Scalar(Tensor[] self, Scalar scalar) -> Tensor[]
   device_check: NoCheck   # foreach kernels fall back to slow path when tensor are on different devices
@@ -11930,7 +11696,6 @@
   structured_delegate: hardsigmoid.out
   device_check: NoCheck   # TensorIterator
   python_module: nn
-  dispatch:
   tags: pointwise
 
 - func: hardsigmoid_(Tensor(a!) self) -> Tensor(a!)
@@ -12018,7 +11783,6 @@
   structured_delegate: leaky_relu.out
   device_check: NoCheck   # TensorIterator
   python_module: nn
-  dispatch:
   tags: [core, pointwise]
 
 - func: leaky_relu_backward.grad_input(Tensor grad_output, Tensor self, Scalar negative_slope, bool self_is_result, *, Tensor(a!) grad_input) -> Tensor(a!)
@@ -12036,7 +11800,6 @@
   structured_delegate: leaky_relu.out
   device_check: NoCheck   # TensorIterator
   python_module: nn
-  dispatch:
   tags: pointwise
 
 - func: log_sigmoid.out(Tensor self, *, Tensor(a!) out) -> Tensor(a!)
@@ -12530,7 +12293,6 @@
   structured: True
   dispatch:
     CPU: reflection_pad1d_out_cpu
-    QuantizedCPU: reflection_pad1d_out_quantized_cpu
     CUDA: reflection_pad1d_out_cuda
     MPS: reflection_pad1d_out_mps
     XPU: reflection_pad1d_out_xpu
@@ -12556,7 +12318,7 @@
 - func: reflection_pad2d.out(Tensor self, SymInt[4] padding, *, Tensor(a!) out) -> Tensor(a!)
   python_module: nn
   dispatch:
-    CPU, QuantizedCPU: reflection_pad2d_out_cpu
+    CPU: reflection_pad2d_out_cpu
     CUDA: reflection_pad2d_out_cuda
     MPS: reflection_pad2d_out_mps
     XPU: reflection_pad2d_out_xpu
@@ -12565,7 +12327,6 @@
   python_module: nn
   dispatch:
     CPU: reflection_pad2d_cpu
-    QuantizedCPU: reflection_pad2d_quantized_cpu
     CUDA: reflection_pad2d_cuda
     MPS: reflection_pad2d_mps
     XPU: reflection_pad2d_xpu

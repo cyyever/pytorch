@@ -64,7 +64,7 @@ from torch.testing._internal.common_mkldnn import reduced_f32_on_and_off
 from torch.testing._internal.common_dtype import (
     floating_types_and, get_all_math_dtypes, all_types_and_complex_and, complex_types,
     all_types_and, floating_types, floating_and_complex_types, integral_types_and,
-    get_all_qint_dtypes, all_types_complex_float8_and, all_passthru_types_and,
+    all_types_complex_float8_and, all_passthru_types_and,
 )
 from torch.testing._internal.two_tensor import TwoTensor
 from torch.profiler import kineto_available
@@ -241,15 +241,9 @@ class TestTorchDeviceType(TestCase):
     @onlyNativeDeviceTypes
     @dtypes(torch.int8, torch.uint8, torch.int16, torch.int32, torch.int64,
             torch.bool, torch.float32, torch.complex64, torch.float64,
-            torch.complex128, torch.quint8, torch.qint8, torch.qint32,
-            torch.quint4x2)
+            torch.complex128)
     @slowTestIf(IS_WINDOWS)
     def test_storage_setitem(self, device, dtype):
-        # Skip quantized dtypes for CUDA, since they're not supported
-        if torch.device(device).type == 'cuda':
-            if dtype in [torch.quint8, torch.qint8, torch.qint32, torch.quint4x2]:
-                return
-
         storage_type_name = torch.storage._dtype_to_storage_type_map()[dtype]
         if torch.device(device).type == 'cuda':
             storage_type = eval('torch.cuda.' + storage_type_name)
@@ -1300,16 +1294,6 @@ class TestTorchDeviceType(TestCase):
         else:
             _test_in_place_broadcastable(small2, small_expanded, large_expanded)
             _test_in_place_broadcastable(small2, small, large)
-
-    @onlyCPU
-    @skipIfTorchInductor("https://github.com/pytorch/pytorch/issues/113707")
-    @dtypes(*get_all_qint_dtypes())
-    def test_nondeterministic_resize_quantized(self, device, dtype):
-        a = torch.tensor([-1, 0, 1, 2, 3], dtype=torch.float, device=device)
-        b = torch.quantize_per_tensor(a, 0.1, 10, dtype)
-        self.check_nondeterministic_alert(
-            lambda: b.resize_((10,)),
-            'quantized_resize_cpu_')
 
     @skipXLA
     @skipIfTorchInductor("https://github.com/pytorch/pytorch/issues/113707")
@@ -7813,14 +7797,6 @@ class TestTorch(TestCase):
         self.assertTrue(isinstance(bytes, torch.ByteStorage))
 
     def test_storage_error(self):
-        quantized_storages = [
-            torch.QInt32Storage,
-            torch.QInt8Storage,
-            torch.QUInt2x4Storage,
-            torch.QUInt4x2Storage,
-            torch.QUInt8Storage,
-        ]
-
         with self.assertRaisesRegex(RuntimeError, r"Only child classes of _LegacyStorage can be instantiated"):
             torch.storage._LegacyStorage()
 
@@ -7862,19 +7838,13 @@ class TestTorch(TestCase):
                 storage_class(wrap_storage=s)
 
             if torch.cuda.is_available():
-                if storage_class in quantized_storages:
-                    with self.assertRaisesRegex(RuntimeError, r"Cannot create CUDA storage with quantized dtype"):
-                        s.cuda()
-
+                if s.is_cuda:
+                    s_other_device = s.cpu()
                 else:
+                    s_other_device = s.cuda()
 
-                    if s.is_cuda:
-                        s_other_device = s.cpu()
-                    else:
-                        s_other_device = s.cuda()
-
-                    with self.assertRaisesRegex(RuntimeError, r"Device of 'wrap_storage' must be"):
-                        storage_class(wrap_storage=s_other_device.untyped())
+                with self.assertRaisesRegex(RuntimeError, r"Device of 'wrap_storage' must be"):
+                    storage_class(wrap_storage=s_other_device.untyped())
 
             # TypedStorage constructor errors
             with self.assertRaisesRegex(RuntimeError, r"No positional arguments"):
@@ -7894,11 +7864,6 @@ class TestTorch(TestCase):
 
             with self.assertRaisesRegex(RuntimeError, r"Storage device not recognized"):
                 torch.TypedStorage(dtype=dtype, device='xla')
-
-            if torch.cuda.is_available():
-                if storage_class in quantized_storages:
-                    with self.assertRaisesRegex(RuntimeError, r"Cannot create CUDA storage with quantized dtype"):
-                        torch.TypedStorage(dtype=dtype, device='cuda')
 
             with self.assertRaisesRegex(TypeError, r"Argument type not recognized"):
                 torch.TypedStorage(torch.tensor([]), dtype=dtype, device=device)
@@ -9215,7 +9180,7 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
     @unittest.skipIf(IS_MACOS, "https://github.com/pytorch/pytorch/issues/157246")
     def test_tensoriterator_output_setup(self):
         # Test whether the output's memory layout is correct
-        def test_memory_layout(x, y, scale, zero_point, out):
+        def test_memory_layout(x, y, out):
             self.assertEqual(x.dim(), 4)
             self.assertEqual(x.size(), y.size())
             self.assertEqual(y.size(), out.size())
@@ -9225,37 +9190,22 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
                 for c in range(shape[1]):
                     for h in range(shape[2]):
                         for w in range(shape[3]):
-                            if scale is not None and zero_point is not None:
-                                self.assertEqual(
-                                    out[n][c][h][w],
-                                    torch.ops.quantized.add(x[n][c][h][w], y[n][c][h][w], scale, zero_point))
-                            else:
-                                self.assertEqual(out[n][c][h][w], x[n][c][h][w] + y[n][c][h][w])
+                            self.assertEqual(out[n][c][h][w], x[n][c][h][w] + y[n][c][h][w])
 
         xraw = torch.rand(2, 3, 4, 4)
         yraw = torch.rand(2, 3, 4, 4)
-        qxraw = torch.quantize_per_tensor(xraw, 0.1, 5, torch.quint8)
-        qyraw = torch.quantize_per_tensor(yraw, 0.1, 5, torch.quint8)
-
         # contiguous case fast setup
-        test_memory_layout(xraw, yraw, None, None, xraw + yraw)
-        test_memory_layout(qxraw, qyraw, 0.1, 5, torch.ops.quantized.add(qxraw, qyraw, 0.1, 5))
+        test_memory_layout(xraw, yraw, xraw + yraw)
 
         # channels last case fast setup
         x = xraw.contiguous(memory_format=torch.channels_last)
         y = yraw.contiguous(memory_format=torch.channels_last)
-        test_memory_layout(x, y, None, None, x + y)
-        qx = qxraw.contiguous(memory_format=torch.channels_last)
-        qy = qyraw.contiguous(memory_format=torch.channels_last)
-        test_memory_layout(qx, qy, 0.1, 5, torch.ops.quantized.add(qx, qy, 0.1, 5))
+        test_memory_layout(x, y, x + y)
 
         # non contiguous case fast setup (dense, non-overlapping, same shape and strides)
         x = xraw.permute(0, 2, 3, 1)
         y = yraw.permute(0, 2, 3, 1)
-        test_memory_layout(x, y, None, None, x + y)
-        qx = qxraw.permute(0, 2, 3, 1)
-        qy = qyraw.permute(0, 2, 3, 1)
-        test_memory_layout(qx, qy, 0.1, 5, torch.ops.quantized.add(qx, qy, 0.1, 5))
+        test_memory_layout(x, y, x + y)
 
         # non contiguous case fast setup (dense, non-overlapping)
         # input tensors have same shape and strides
@@ -9266,16 +9216,13 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
         out = torch.empty_like(xraw)
         out = out.permute(0, 3, 2, 1)
         expected_stride = out.stride()
-        test_memory_layout(x, y, None, None, torch.add(x, y, out=out))
+        test_memory_layout(x, y, torch.add(x, y, out=out))
         self.assertEqual(expected_stride, out.stride())
 
         # non contiguous case non fast setup
         x = xraw.permute(0, 2, 3, 1)
         y = yraw.permute(0, 3, 2, 1)
-        test_memory_layout(x, y, None, None, x + y)
-        qx = qxraw.permute(0, 2, 3, 1)
-        qy = qyraw.permute(0, 3, 2, 1)
-        test_memory_layout(qx, qy, 0.1, 5, torch.ops.quantized.add(qx, qy, 0.1, 5))
+        test_memory_layout(x, y, x + y)
 
     def test_conj_physical_meta_stride(self):
         a = torch.zeros((5, 3, 6), dtype=torch.complex128, device='meta')
@@ -9328,10 +9275,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
     def test_dtype_is_signed(self):
         for dtype in all_types_and_complex_and(torch.half, torch.bfloat16, torch.half):
             self.assertEqual(dtype.is_signed, torch.is_signed(torch.tensor(0, dtype=dtype)))
-
-        self.assertRaisesRegex(RuntimeError, 'not supported for quantized', lambda: torch.quint8.is_signed)
-        self.assertRaisesRegex(RuntimeError, 'not supported for quantized', lambda: torch.qint8.is_signed)
-        self.assertRaisesRegex(RuntimeError, 'not supported for quantized', lambda: torch.qint32.is_signed)
 
     def test_dtype_abbr(self):
         expected = {

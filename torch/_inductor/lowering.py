@@ -3501,8 +3501,6 @@ make_fallback(aten._embedding_bag_forward_only, require_contiguous)
 make_fallback(aten._embedding_bag_backward)
 make_fallback(aten._embedding_bag_per_sample_weights_backward)
 make_fallback(aten._embedding_bag_per_sample_weights_backward)
-make_fallback(aten._fused_moving_avg_obs_fq_helper)
-make_fallback(aten._fused_moving_avg_obs_fq_helper_functional)
 
 
 # 4) Backwards (try py_impl'ing them) when fwd is written as a decomp

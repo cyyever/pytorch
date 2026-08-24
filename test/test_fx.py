@@ -3290,26 +3290,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
 
         self.assertTrue(any(n.op == "call_method" for n in traced.graph.nodes))
 
-    def test_script_method_trace(self):
-        class Scripted(torch.nn.Module):
-            def forward(self, x):
-                return torch.relu(x)
-
-        class Holder(torch.nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.s = torch.jit.script(Scripted())
-
-            def forward(self, x):
-                return self.s(x)
-
-        h = Holder()
-        traced = symbolic_trace(h)
-        input = torch.randn(3, 4)
-        self.assertEqual(traced(input), h(input))
-
-        self.assertTrue(any(n.op == "call_method" for n in traced.graph.nodes))
-
     def test_namedtuple_return_trace(self):
         class NamedTupReturn(torch.nn.Module):
             def forward(self, x):
@@ -3363,8 +3343,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
 
         traced = symbolic_trace(ReturnTypeModule())
         self.assertIn("-> list[str]", traced._code)
-        scripted = torch.jit.script(traced)
-        self.assertIn("-> List[str]", scripted.code)
 
     def test_return_type_exists_pre_pep585(self):
         class ReturnTypeModule(torch.nn.Module):
@@ -3376,8 +3354,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
 
         traced = symbolic_trace(ReturnTypeModule())
         self.assertIn("-> typing_List[str]", traced._code)
-        scripted = torch.jit.script(traced)
-        self.assertIn("-> List[str]", scripted.code)
 
     def getitem_inner(self):
         class GetItemBase(torch.nn.Module):
@@ -3415,33 +3391,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
         proc.start()
         proc.join()
         self.assertEqual(proc.exitcode, 0)
-
-    def test_user_friendly_call_provenance_with_function(self):
-        def fn(x):
-            return wrapper_fn(x)
-
-        traced = torch.fx.symbolic_trace(fn)
-
-        with self.assertRaisesRegex(
-            RuntimeError,
-            "'wrapper_fn' is "
-            "being compiled since it was called"
-            " from 'fn.forward'",
-        ):
-            scripted = torch.jit.script(traced)
-
-    def test_user_friendly_call_provenance_with_module(self):
-        class M(torch.nn.Module):
-            def forward(self, x):
-                return wrapper_fn(x)
-
-        traced = torch.fx.symbolic_trace(M())
-
-        with self.assertRaisesRegex(
-            RuntimeError,
-            "'wrapper_fn' is " "being compiled since it was called" " from 'M.forward'",
-        ):
-            scripted = torch.jit.script(traced)
 
     def test_snake_case(self):
         class M(torch.nn.Module):
@@ -5844,152 +5793,6 @@ TestFunctionalTracing.generate_tests()
 
 instantiate_device_type_tests(TestOperatorSignatures, globals())
 
-
-@skipIfTorchDynamo("too slow")
-@skipIfNoTorchVision
-class TestVisionTracing(JitTestCase):
-    def setUp(self):
-        # Don't call super().setUp() — JitTestCase.setUp installs JIT emit
-        # hooks that cause segfaults during process cleanup. Record state
-        # baselines that tearDown checks for.
-        self._prev_torch_function_mode_stack_len = torch._C._len_torch_function_stack()
-        self._prev_torch_function_state = torch._C._get_torch_function_state()
-        # Checking for mutable operations while tracing is feature flagged
-        # Enable it in testing but not by default
-        self.orig_tracer_mutable_flag = (
-            torch.fx.proxy.TracerBase.check_mutable_operations
-        )
-        torch.fx.proxy.TracerBase.check_mutable_operations = True
-
-    def tearDown(self):
-        torch.fx.proxy.TracerBase.check_mutable_operations = (
-            self.orig_tracer_mutable_flag
-        )
-
-    PROXY_ITERATED = (TraceError, r"Proxy object cannot be iterated")
-    INCONSISTENT_TYPE = (
-        RuntimeError,
-        r"Return value was annotated as having type __torch__.torchvision.models[.\w]+ but is actually of type Tensor",
-    )
-
-    UNTRACEABLE_MODELS = {
-        "fasterrcnn_resnet50_fpn": PROXY_ITERATED,
-        "fasterrcnn_resnet50_fpn_v2": PROXY_ITERATED,
-        "fasterrcnn_mobilenet_v3_large_320_fpn": PROXY_ITERATED,
-        "fasterrcnn_mobilenet_v3_large_fpn": PROXY_ITERATED,
-        "maskrcnn_resnet50_fpn": PROXY_ITERATED,
-        "maskrcnn_resnet50_fpn_v2": PROXY_ITERATED,
-        "keypointrcnn_resnet50_fpn": PROXY_ITERATED,
-        "retinanet_resnet50_fpn": PROXY_ITERATED,
-        "retinanet_resnet50_fpn_v2": PROXY_ITERATED,
-        "ssd300_vgg16": PROXY_ITERATED,
-        "fcos_resnet50_fpn": PROXY_ITERATED,
-        "ssdlite320_mobilenet_v3_large": PROXY_ITERATED,
-    }
-    UNSCRIPTABLE_MODELS = {
-        "googlenet": INCONSISTENT_TYPE,
-        "inception_v3": INCONSISTENT_TYPE,
-    }
-
-    output_transform = {
-        "fcn_resnet50": lambda x: x["out"],
-        "fcn_resnet101": lambda x: x["out"],
-        "deeplabv3_resnet50": lambda x: x["out"],
-        "deeplabv3_resnet101": lambda x: x["out"],
-        "deeplabv3_mobilenet_v3_large": lambda x: x["out"],
-        "lraspp_mobilenet_v3_large": lambda x: x["out"],
-        "fasterrcnn_resnet50_fpn": lambda x: x[1],
-        "fasterrcnn_mobilenet_v3_large_fpn": lambda x: x[1],
-        "fasterrcnn_mobilenet_v3_large_320_fpn": lambda x: x[1],
-        "maskrcnn_resnet50_fpn": lambda x: x[1],
-        "keypointrcnn_resnet50_fpn": lambda x: x[1],
-        "retinanet_resnet50_fpn": lambda x: x[1],
-    }
-
-    @classmethod
-    def generate_test_fn(cls, name, x, kwargs):
-        def run_test(self):
-            model = torchvision_models.get_model(name, **kwargs)
-            model = model.eval()
-            if name in self.UNTRACEABLE_MODELS:
-                err, exc = self.UNTRACEABLE_MODELS[name]
-                with self.assertRaisesRegex(err, exc):
-                    graph = symbolic_trace(model)
-            else:
-                out_transform = self.output_transform.get(name, lambda x: x)
-                graph: torch.fx.GraphModule = symbolic_trace(model)
-                a = out_transform(model(x))
-                b = out_transform(graph(x))
-                self.assertEqual(a, b)
-
-                if name in self.UNSCRIPTABLE_MODELS:
-                    err, exc = self.UNSCRIPTABLE_MODELS[name]
-                    with self.assertRaisesRegex(err, exc):
-                        script = torch.jit.script(graph)
-                else:
-                    script = torch.jit.script(graph)
-                    c = out_transform(script(x))
-                    self.assertEqual(a, c)
-
-        return run_test
-
-    @classmethod
-    def generate_classification_tests(cls):
-        for k in torchvision_models.list_models(module=torchvision_models):
-            test_name = "test_torchvision_models_" + k
-            x = (
-                torch.rand(1, 3, 299, 299)
-                if k == "inception_v3"
-                else torch.rand(1, 3, 224, 224)
-            )
-            kwargs = dict(num_classes=50)
-            model_test = cls.generate_test_fn(k, x, kwargs)
-            model_test = unittest.skipIf(
-                TEST_WITH_ROCM, "Skipped on ROCm"
-            )(model_test)
-            setattr(cls, test_name, model_test)
-
-    @classmethod
-    def generate_segmentation_tests(cls):
-        for k in torchvision_models.list_models(module=torchvision_models.segmentation):
-            test_name = "test_torchvision_models_segmentation_" + k
-            x = torch.rand(1, 3, 32, 32)
-            kwargs = dict(num_classes=10, pretrained_backbone=False)
-            model_test = cls.generate_test_fn(k, x, kwargs)
-            setattr(cls, test_name, model_test)
-
-    @classmethod
-    def generate_detection_tests(cls):
-        for k in torchvision_models.list_models(module=torchvision_models.detection):
-            test_name = "test_torchvision_models_detection_" + k
-            x = [torch.rand(3, 300, 300)]
-            kwargs = dict(num_classes=10, pretrained_backbone=False)
-            model_test = cls.generate_test_fn(k, x, kwargs)
-            setattr(cls, test_name, model_test)
-
-    @classmethod
-    def generate_video_tests(cls):
-        for k in torchvision_models.list_models(module=torchvision_models.video):
-            test_name = "test_torchvision_models_video_" + k
-            x = (
-                torch.rand(1, 3, 4, 112, 112)
-                if k not in {"mvit_v1_b", "mvit_v2_s", "s3d"}
-                else torch.rand(1, 3, 16, 224, 224)
-            )
-            kwargs = dict(num_classes=50)
-            model_test = cls.generate_test_fn(k, x, kwargs)
-            setattr(cls, test_name, model_test)
-
-    @classmethod
-    def generate_tests(cls):
-        cls.generate_classification_tests()
-        cls.generate_detection_tests()
-        cls.generate_segmentation_tests()
-        cls.generate_video_tests()
-
-
-if HAS_TORCHVISION:
-    TestVisionTracing.generate_tests()
 
 if __name__ == "__main__":
     run_tests()

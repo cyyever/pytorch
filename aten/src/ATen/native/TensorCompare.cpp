@@ -26,7 +26,6 @@
 #include <ATen/ops/_assert_scalar_native.h>
 #include <ATen/ops/_functional_assert_async_native.h>
 #include <ATen/ops/_functional_assert_scalar_native.h>
-#include <ATen/ops/_make_per_tensor_quantized_tensor.h>
 #include <ATen/ops/_print_native.h>
 #include <ATen/ops/_unique.h>
 #include <ATen/ops/allclose_native.h>
@@ -846,37 +845,6 @@ TORCH_IMPL_FUNC(min_out)
  const Tensor& values,
  const Tensor& indices) {
   minmax_out_impl(self, dim, keepdim, values, indices, min_stub);
-}
-
-std::tuple<Tensor, Tensor> qmax(const Tensor& self, int64_t dim, bool keepdim) {
-  TORCH_CHECK(
-      self.qscheme() == at::kPerTensorAffine,
-      "Max operator for quantized tensors only works for per tensor quantized tensors. "
-      "Please open an issue on https://github.com/pytorch/pytorch/issues if you need per channel quantized tensor support.");
-  Tensor max_indices = at::empty({0}, self.options().dtype(kLong));
-  Tensor max =
-      at::empty({0}, self.options().dtype(toUnderlying(self.scalar_type())));
-  at::max_outf(self.int_repr(), dim, keepdim, max, max_indices);
-  // TODO: qscheme
-  return std::tuple<Tensor, Tensor>(
-      at::_make_per_tensor_quantized_tensor(
-          max, self.q_scale(), self.q_zero_point()),
-      max_indices);
-}
-
-std::tuple<Tensor, Tensor> qmin(const Tensor& self, int64_t dim, bool keepdim) {
-  TORCH_CHECK(
-      self.qscheme() == at::kPerTensorAffine,
-      "Min operator for quantized tensors only works for per tensor quantized tensors. "
-      "Please open an issue on https://github.com/pytorch/pytorch/issues if you need per channel quantized tensor support.");
-  Tensor min_indices = at::empty({0}, self.options().dtype(kLong));
-  Tensor min =
-      at::empty({0}, self.options().dtype(toUnderlying(self.scalar_type())));
-  at::min_outf(self.int_repr(), dim, keepdim, min, min_indices);
-  return std::tuple<Tensor, Tensor>(
-      at::_make_per_tensor_quantized_tensor(
-          min, self.q_scale(), self.q_zero_point()),
-      min_indices);
 }
 
 // DEPRECATED: Use at::aminmax instead

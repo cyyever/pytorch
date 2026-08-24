@@ -25,7 +25,6 @@
 #include <ATen/native/cpu/CatKernel.h>
 #include <ATen/native/cpu/SerialStackImpl.h>
 #include <ATen/native/cpu/StackKernel.h>
-#include <ATen/quantized/QTensorImpl.h>
 #include <c10/core/Contiguity.h>
 #include <c10/core/GradMode.h>
 #include <c10/util/Exception.h>
@@ -94,7 +93,6 @@
 #include <ATen/ops/dstack_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
-#include <ATen/ops/empty_quantized.h>
 #include <ATen/ops/expand_as_native.h>
 #include <ATen/ops/expand_native.h>
 #include <ATen/ops/flatten_dense_tensors_native.h>
@@ -1308,23 +1306,6 @@ Tensor sum_to_size_symint(const Tensor& self, SymIntArrayRef size) {
 
 // We currently do not support per-channel quant for unfold, diagonal, expand,
 // permute.
-// TODO: Make this an aten function and replace as_strided_qtensorimpl once that
-// is done.
-static Tensor make_qtensor(
-    const Tensor& self,
-    IntArrayRef size,
-    IntArrayRef stride,
-    QuantizerPtr quantizer) {
-  auto result = at::detail::make_tensor<QTensorImpl>(
-      c10::TensorImpl::VIEW,
-      Storage(self.storage()),
-      self.key_set(),
-      self.dtype(),
-      quantizer);
-  setStrided(result, size, stride, self.storage_offset());
-  return result;
-}
-
 Tensor as_strided_tensorimpl(
     const Tensor& self,
     IntArrayRef size,
@@ -1371,53 +1352,6 @@ Tensor as_strided_tensorimpl_meta_symint(
   // bases / storage size.
   setStridedUnchecked(
       result, sym_size, sym_stride, std::move(sym_storage_offset));
-  return result;
-}
-
-Tensor as_strided_qtensorimpl(
-    const Tensor& self,
-    IntArrayRef size,
-    IntArrayRef stride,
-    std::optional<int64_t> storage_offset_) {
-  auto storage_offset = storage_offset_.value_or(self.storage_offset());
-  auto quantizer = get_qtensorimpl(self)->quantizer();
-  TORCH_CHECK(
-      quantizer->qscheme() == QScheme::PER_TENSOR_AFFINE,
-      "Setting strides is possible only on uniformly quantized tensor");
-  auto result = at::detail::make_tensor<QTensorImpl>(
-      c10::TensorImpl::VIEW,
-      Storage(self.storage()),
-      self.key_set(),
-      self.dtype(),
-      quantizer);
-  setStrided(result, size, stride, storage_offset);
-  return result;
-}
-
-// This is an overloaded function similar to
-// Tensor as_strided_qtensorimpl(const Tensor& self, IntArrayRef size,
-// IntArrayRef stride, std::optional<int64_t> storage_offset_) and is currently
-// not available through the dispatcher. The additional input, quantizer, is
-// called by the select & slice methods.
-// TODO: Make this function compatible with the dispatcher
-static Tensor as_strided_qtensorimpl(
-    const Tensor& self,
-    IntArrayRef size,
-    IntArrayRef stride,
-    std::optional<int64_t> storage_offset_,
-    QuantizerPtr quantizer) {
-  auto storage_offset = storage_offset_.value_or(self.storage_offset());
-  TORCH_CHECK(
-      (quantizer->qscheme() == QScheme::PER_TENSOR_AFFINE) ||
-          (quantizer->qscheme() == QScheme::PER_CHANNEL_AFFINE),
-      "Setting strides is possible only on uniformly or per channel quantized tensors");
-  auto result = at::detail::make_tensor<QTensorImpl>(
-      c10::TensorImpl::VIEW,
-      Storage(self.storage()),
-      self.key_set(),
-      self.dtype(),
-      quantizer);
-  setStrided(result, size, stride, storage_offset);
   return result;
 }
 
@@ -1850,11 +1784,7 @@ Tensor repeat(const Tensor& self, IntArrayRef repeats) {
   Tensor xtensor = self.expand(padded_size);
 
   Tensor urtensor;
-  if (self.is_quantized()) {
-    urtensor = at::empty_quantized(target_size, self);
-  } else {
-    urtensor = at::empty(target_size, self.options());
-  }
+  urtensor = at::empty(target_size, self.options());
 
   // return an empty tensor if one of the repeat dimensions is zero
   if (zero_tensor) {
@@ -1917,20 +1847,11 @@ static Tensor alias_with_sizes_and_strides(
   //(storage is sufficient, strides are non-negative, strides and sizes array
   // size is the same)
   Tensor self_;
-  if (self.is_quantized()) {
-    self_ = at::detail::make_tensor<QTensorImpl>(
-        c10::TensorImpl::VIEW,
-        Storage(self.storage()),
-        self.key_set(),
-        self.dtype(),
-        get_qtensorimpl(self)->quantizer());
-  } else {
-    self_ = at::detail::make_tensor<TensorImpl>(
-        c10::TensorImpl::VIEW,
-        Storage(self.storage()),
-        self.key_set(),
-        self.dtype());
-  }
+  self_ = at::detail::make_tensor<TensorImpl>(
+      c10::TensorImpl::VIEW,
+      Storage(self.storage()),
+      self.key_set(),
+      self.dtype());
   auto* self_tmp_ = self_.unsafeGetTensorImpl();
   if constexpr (std::is_same_v<typename Vec::value_type, c10::SymInt>) {
     self_tmp_->set_sizes_and_strides(sizes, strides, self.sym_storage_offset());
@@ -2126,52 +2047,6 @@ static Tensor select_sparse(const Tensor& self, int64_t dim, int64_t index) {
   }
 }
 
-// this is an auxiliary function, called by the select&slice methods, that
-// creates a new quantizer from the given input
-// is_select is true if calling function is select()
-static QuantizerPtr create_subtensor_quantizer(
-    const Tensor& self,
-    bool is_select,
-    int64_t start,
-    int64_t end,
-    int64_t dim,
-    int64_t step) {
-  auto quantizer_prev = get_qtensorimpl(self)->quantizer();
-  if (quantizer_prev->qscheme() == QScheme::PER_TENSOR_AFFINE) {
-    return quantizer_prev;
-  }
-  QuantizerPtr quantizer;
-  auto temp = static_cast<PerChannelAffineQuantizer*>(quantizer_prev.get());
-  auto axis = temp->axis();
-  auto scales = temp->scales();
-  auto zero_points = temp->zero_points();
-  if (dim == axis) {
-    // Compute scales&zps for sub-tensor
-    // *.select(0, start) could alternatively be replaced with *.slice(0, start,
-    // end, step), but select has less overhead
-    scales =
-        is_select ? scales.select(0, start) : scales.slice(0, start, end, step);
-    zero_points = is_select ? zero_points.select(0, start)
-                            : zero_points.slice(0, start, end, step);
-  }
-  if (scales.numel() > 1) {
-    // Axis only needs to be adjusted if the calling function is select(), since
-    // select() reduces the number of dimensions of the tensor by 1, and remains
-    // unchanged if calling function is slice()
-    quantizer = make_per_channel_affine_quantizer(
-        scales,
-        zero_points,
-        (is_select ? axis - 1 : axis),
-        quantizer_prev->scalar_type());
-  } else {
-    quantizer = make_per_tensor_affine_quantizer(
-        scales.item().to<double>(),
-        zero_points.item().to<int64_t>(),
-        quantizer_prev->scalar_type());
-  }
-  return quantizer;
-}
-
 Tensor select(const Tensor& self, int64_t dim, int64_t index) {
   return at::select_symint(self, dim, c10::SymInt{index});
 }
@@ -2206,28 +2081,13 @@ Tensor select_symint(const Tensor& self, int64_t dim, c10::SymInt index) {
   }
 
   Tensor result;
-  if (self.is_quantized()) {
-    auto local_index = index.guard_int(__FILE__, __LINE__);
+  SymDimVector sizes(self.sym_sizes().begin(), self.sym_sizes().end());
+  SymDimVector strides(self.sym_strides().begin(), self.sym_strides().end());
+  auto storage_offset = self.sym_storage_offset() + index * strides[dim];
+  sizes.erase(sizes.begin() + dim);
+  strides.erase(strides.begin() + dim);
 
-    DimVector sizes(self.sizes().begin(), self.sizes().end());
-    DimVector strides(self.strides().begin(), self.strides().end());
-    auto storage_offset = self.storage_offset() + local_index * strides[dim];
-    sizes.erase(sizes.begin() + dim);
-    strides.erase(strides.begin() + dim);
-
-    auto quantizer = create_subtensor_quantizer(
-        self, true, local_index, local_index + 1, dim, 1);
-    result = as_strided_qtensorimpl(
-        self, sizes, strides, storage_offset, std::move(quantizer));
-  } else {
-    SymDimVector sizes(self.sym_sizes().begin(), self.sym_sizes().end());
-    SymDimVector strides(self.sym_strides().begin(), self.sym_strides().end());
-    auto storage_offset = self.sym_storage_offset() + index * strides[dim];
-    sizes.erase(sizes.begin() + dim);
-    strides.erase(strides.begin() + dim);
-
-    result = self.as_strided_symint(sizes, strides, storage_offset);
-  }
+  result = self.as_strided_symint(sizes, strides, storage_offset);
   return result;
 }
 
@@ -3013,18 +2873,11 @@ Tensor slice(
   strides[dim] *= step;
 
   Tensor result;
-  if (self.is_quantized()) {
-    auto quantizer =
-        create_subtensor_quantizer(self, false, start_val, end_val, dim, step);
-    result = as_strided_qtensorimpl(
-        self, sizes, strides, storage_offset, std::move(quantizer));
-  } else {
-    // NB: it is extremely important to perform a redispatch here for
-    // the MPS backend; if you call directly to as_strided_tensorimpl,
-    // the necessary metadata for MPS will not get setup and you will
-    // get silently wrong results
-    result = self.as_strided(sizes, strides, storage_offset);
-  }
+  // NB: it is extremely important to perform a redispatch here for
+  // the MPS backend; if you call directly to as_strided_tensorimpl,
+  // the necessary metadata for MPS will not get setup and you will
+  // get silently wrong results
+  result = self.as_strided(sizes, strides, storage_offset);
   return result;
 }
 
@@ -3855,69 +3708,14 @@ InferUnsqueezeGeometryResult<c10::SymInt> inferUnsqueezeGeometry_symint(
   return result;
 }
 
-InferUnsqueezeGeometryResult<int64_t> inferUnsqueezeGeometry(
-    const Tensor& tensor,
-    int64_t dim) {
-  InferUnsqueezeGeometryResult<int64_t> result(
-      tensor.sizes(), tensor.strides());
-  int64_t new_stride =
-      dim >= tensor.dim() ? 1 : result.sizes[dim] * result.strides[dim];
-  result.sizes.insert(result.sizes.begin() + dim, 1);
-  result.strides.insert(result.strides.begin() + dim, new_stride);
-
-  return result;
-}
-
 // dim is present if squeezing a single dimension and absent if squeezing all
 // dimensions
-Tensor squeeze_qtensor(const Tensor& self, c10::OptionalIntArrayRef dims) {
-  auto quantizer = get_qtensorimpl(self)->quantizer();
-  const auto ndim = self.dim();
-  auto mask = dims.has_value()
-      ? dim_list_to_bitset(dims, self.dim())
-      : std::bitset<dim_bitset_size>((1ull << self.dim()) - 1);
-  auto [sizes, strides] = inferSqueezeGeometry(self, mask);
-  if (quantizer->qscheme() == QScheme::PER_CHANNEL_AFFINE) {
-    const auto* per_channel_quantizer =
-        static_cast<at::PerChannelAffineQuantizer*>(quantizer.get());
-    auto axis = per_channel_quantizer->axis();
-    int64_t shift = 0;
-    for (const auto d : c10::irange(ndim)) {
-      if (mask.test(d) && self.sizes()[d] == 1) {
-        TORCH_CHECK(
-            axis != d,
-            "Squeeze is only possible on non-axis dimension for Per-Channel Quantized Tensors.");
-        if (d < axis) {
-          ++shift;
-        }
-      }
-    }
-    axis -= shift;
-    quantizer = make_per_channel_affine_quantizer(
-        per_channel_quantizer->scales(),
-        per_channel_quantizer->zero_points(),
-        axis,
-        quantizer->scalar_type());
-  }
-  // TODO: quantized Tensor support for SymInt needs to be added but basic
-  // building blocks are missing for now.
-  auto result = make_qtensor(
-      self,
-      C10_AS_INTARRAYREF_SLOW(sizes),
-      C10_AS_INTARRAYREF_SLOW(strides),
-      std::move(quantizer));
-  return result;
-}
 } // namespace
 
 Tensor squeeze(const Tensor& self) {
   auto g = inferSqueezeGeometry(self);
   at::Tensor result = self.as_strided_symint(std::get<0>(g), std::get<1>(g));
   return result;
-}
-
-Tensor squeeze_quantized(const Tensor& self) {
-  return squeeze_qtensor(self, std::nullopt);
 }
 
 Tensor squeeze(const Tensor& self, int64_t dim) {
@@ -3931,19 +3729,11 @@ Tensor squeeze(const Tensor& self, int64_t dim) {
   return result;
 }
 
-Tensor squeeze_quantized(const Tensor& self, int64_t dim) {
-  return squeeze_qtensor(self, dim);
-}
-
 Tensor squeeze(const Tensor& self, IntArrayRef dims) {
   auto mask = dim_list_to_bitset(dims, self.dim());
   auto g = inferSqueezeGeometry(self, mask);
   at::Tensor result = self.as_strided_symint(std::get<0>(g), std::get<1>(g));
   return result;
-}
-
-Tensor squeeze_quantized(const Tensor& self, IntArrayRef dim) {
-  return squeeze_qtensor(self, dim);
 }
 
 Tensor& squeeze_(Tensor& self) {
@@ -4053,26 +3843,6 @@ Tensor unsqueeze_sparse(Tensor const& self, int64_t dim) {
         self._values().unsqueeze(dim - sparse_dim + 1),
         self.options());
   }
-}
-
-Tensor unsqueeze_quantized(const Tensor& self, int64_t dim) {
-  dim = maybe_wrap_dim(dim, self.dim() + 1);
-  auto g = inferUnsqueezeGeometry(self, dim);
-  auto quantizer = get_qtensorimpl(self)->quantizer();
-  if (quantizer->qscheme() == QScheme::PER_CHANNEL_AFFINE) {
-    const auto* per_channel_quantizer =
-        static_cast<at::PerChannelAffineQuantizer*>(quantizer.get());
-    auto axis = per_channel_quantizer->axis();
-    if (axis >= dim) {
-      axis += 1;
-    }
-    quantizer = make_per_channel_affine_quantizer(
-        per_channel_quantizer->scales(),
-        per_channel_quantizer->zero_points(),
-        axis,
-        quantizer->scalar_type());
-  }
-  return make_qtensor(self, g.sizes, g.strides, std::move(quantizer));
 }
 
 Tensor& unsqueeze_(Tensor& self, int64_t dim) {

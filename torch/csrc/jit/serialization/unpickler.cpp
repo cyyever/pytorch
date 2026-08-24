@@ -64,7 +64,6 @@ void restoreAccurateTypeTags(const IValue& root, const TypePtr& type_tag) {
       case IntType::Kind:
       case NoneType::Kind:
       case GeneratorType::Kind:
-      case QuantizerType::Kind:
       case BoolType::Kind:
       case VarType::Kind:
       case CapsuleType::Kind:
@@ -601,13 +600,11 @@ PickleOpCode Unpickler::readInstruction() {
         device = storage.device();
       }
 
-      at::Tensor tensor;
-      if (options.backend() == c10::Backend::QuantizedCPU) {
-        tensor = at::_empty_affine_quantized({}, options, 0, 0)
-                     .set_(storage, 0, {}, {});
-      } else {
-        tensor = at::empty({0}, options).set_(storage);
-      }
+      TORCH_CHECK(
+          options.backend() != c10::Backend::QuantizedCPU,
+          "Quantized tensors are not supported in this build and cannot be "
+          "deserialized.");
+      at::Tensor tensor = at::empty({0}, options).set_(storage);
 
       if (device.is_cuda() || device.is_xpu() || device.is_meta() ||
           device.is_mtia() || device.is_hpu() || device.is_mps() ||
@@ -945,36 +942,11 @@ void Unpickler::rebuildTensor(bool quantized) {
     int64_t storage_offset = elements.at(idx++).toInt();
     std::vector<int64_t> size = tupleToIntList(elements.at(idx++));
     std::vector<int64_t> stride = tupleToIntList(elements.at(idx++));
-    at::Tensor result;
-    if (quantized) {
-      auto qparams_tuple = elements.at(idx++).toTuple();
-      const auto& qparams = qparams_tuple->elements();
-      auto qscheme = static_cast<at::QScheme>(qparams.at(0).toInt());
-      switch (qscheme) {
-        case at::kPerTensorAffine: {
-          double q_scale = qparams.at(1).toDouble();
-          int64_t q_zero_point = qparams.at(2).toInt();
-          result = at::_empty_affine_quantized(
-              {0}, storage_tensor.options(), q_scale, q_zero_point);
-        } break;
-        case at::kPerChannelAffineFloatQParams:
-        case at::kPerChannelAffine: {
-          const auto& scales = qparams.at(1).toTensor();
-          const auto& zero_points = qparams.at(2).toTensor();
-          int64_t axis = qparams.at(3).toInt();
-          result = at::_empty_per_channel_affine_quantized(
-              {0}, scales, zero_points, axis, storage_tensor.options());
-        } break;
-        default:
-          TORCH_CHECK(
-              false,
-              "Unsupported tensor quantization type in serialization ",
-              toString(qscheme));
-          break;
-      }
-    } else {
-      result = at::empty({0}, storage_tensor.options());
-    }
+    TORCH_CHECK(
+        !quantized,
+        "Quantized tensors are not supported in this build and cannot be "
+        "deserialized.");
+    at::Tensor result = at::empty({0}, storage_tensor.options());
     bool requires_grad = elements.at(idx++).toBool();
     idx++; // backwards hooks is empty
     // Validate size/stride/storage_offset against the storage extent before

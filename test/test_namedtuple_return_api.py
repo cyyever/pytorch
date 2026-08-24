@@ -16,11 +16,9 @@ all_operators_with_namedtuple_return = {
     'max', 'min', 'aminmax', 'median', 'nanmedian', 'mode', 'kthvalue', 'svd',
     'geqrf', 'slogdet', 'sort', 'topk', 'linalg_inv_ex',
     'triangular_solve', 'cummax', 'cummin', 'linalg_eigh', "_linalg_eigh", "_unpack_dual", 'linalg_qr',
-    'linalg_svd', '_linalg_svd', 'linalg_slogdet', '_linalg_slogdet', 'fake_quantize_per_tensor_affine_cachemask',
-    'fake_quantize_per_channel_affine_cachemask', 'linalg_lstsq', 'linalg_eig', 'linalg_cholesky_ex',
+    'linalg_svd', '_linalg_svd', 'linalg_slogdet', '_linalg_slogdet', 'linalg_lstsq', 'linalg_eig', 'linalg_cholesky_ex',
     'frexp', 'lu_unpack', 'histogram', 'histogramdd',
-    '_fake_quantize_per_tensor_affine_cachemask_tensor_qparams',
-    '_fused_moving_avg_obs_fq_helper', 'linalg_lu_factor', 'linalg_lu_factor_ex', 'linalg_lu',
+    'linalg_lu_factor', 'linalg_lu_factor_ex', 'linalg_lu',
     '_linalg_det', '_lu_with_info', 'linalg_ldl_factor_ex', 'linalg_ldl_factor', 'linalg_solve_ex', '_linalg_solve_ex',
     'linalg_polar'
 }
@@ -74,8 +72,6 @@ class TestNamedTupleAPI(TestCase):
 
     def test_namedtuple_return(self):
         a = torch.randn(5, 5)
-        per_channel_scale = torch.randn(5)
-        per_channel_zp = torch.zeros(5, dtype=torch.int64)
 
         op = namedtuple('op', ['operators', 'input', 'names', 'hasout'])
         operators = [
@@ -103,11 +99,6 @@ class TestNamedTupleAPI(TestCase):
             op(operators=['linalg_ldl_factor'], input=(), names=('LD', 'pivots'), hasout=True),
             op(operators=['linalg_ldl_factor_ex'], input=(), names=('LD', 'pivots', 'info'), hasout=True),
             op(operators=['linalg_lu'], input=(), names=('P', 'L', 'U'), hasout=True),
-            op(operators=['fake_quantize_per_tensor_affine_cachemask'],
-               input=(0.1, 0, 0, 255), names=('output', 'mask',), hasout=False),
-            op(operators=['fake_quantize_per_channel_affine_cachemask'],
-               input=(per_channel_scale, per_channel_zp, 1, 0, 255),
-               names=('output', 'mask',), hasout=False),
             op(operators=['_unpack_dual'], input=(0,), names=('primal', 'tangent'), hasout=False),
             op(operators=['linalg_lstsq'], input=(a,), names=('solution', 'residuals', 'rank', 'singular_values'), hasout=False),
             op(operators=['frexp'], input=(), names=('mantissa', 'exponent'), hasout=True),
@@ -116,12 +107,6 @@ class TestNamedTupleAPI(TestCase):
                names=('P', 'L', 'U'), hasout=True),
             op(operators=['histogram'], input=(1,), names=('hist', 'bin_edges'), hasout=True),
             op(operators=['histogramdd'], input=(1,), names=('hist', 'bin_edges'), hasout=False),
-            op(operators=['_fake_quantize_per_tensor_affine_cachemask_tensor_qparams'],
-               input=(torch.tensor([1.0]), torch.tensor([0], dtype=torch.int), torch.tensor([1]), 0, 255),
-               names=('output', 'mask',), hasout=False),
-            op(operators=['_fused_moving_avg_obs_fq_helper'],
-               input=(torch.tensor([1]), torch.tensor([1]), torch.tensor([0.1]), torch.tensor([0.1]),
-               torch.tensor([0.1]), torch.tensor([1]), 0.01, 0, 255, 0), names=('output', 'mask',), hasout=False),
             op(operators=['_linalg_det'],
                input=(), names=('result', 'LU', 'pivots'), hasout=True),
             op(operators=['aminmax'], input=(), names=('min', 'max'), hasout=True),

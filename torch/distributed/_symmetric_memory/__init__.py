@@ -1716,14 +1716,21 @@ def _maybe_convert_scalar_types_to_dtypes(
         9: torch.complex64,
         10: torch.complex128,
         11: torch.bool,
-        12: torch.qint8,
-        13: torch.quint8,
-        14: torch.qint32,
+        # 12, 13, 14, 16 and 17 are the quantized types, which this build does
+        # not bind to Python. Their enumerator values stay reserved.
         15: torch.bfloat16,
-        16: torch.float8_e5m2,
-        17: torch.float8_e4m3fn,
-        18: torch.float8_e5m2fnuz,
-        19: torch.float8_e4m3fnuz,
+        18: torch.bits1x8,
+        19: torch.bits2x4,
+        20: torch.bits4x2,
+        21: torch.bits8,
+        22: torch.bits16,
+        23: torch.float8_e5m2,
+        24: torch.float8_e4m3fn,
+        25: torch.float8_e5m2fnuz,
+        26: torch.float8_e4m3fnuz,
+        27: torch.uint16,
+        28: torch.uint32,
+        29: torch.uint64,
     }
     if any(not isinstance(x, (type(None), int)) for x in scalar_types):
         return scalar_types

@@ -444,8 +444,6 @@ def _rebuild_wrapper_subclass(
     )
 
 
-# TODO: Once we decide to break serialization FC, `storage` no longer needs to
-# be a TypedStorage
 def _rebuild_qtensor(
     storage,
     storage_offset,
@@ -455,64 +453,10 @@ def _rebuild_qtensor(
     requires_grad,
     backward_hooks,
 ):
-    qscheme = quantizer_params[0]
-    if qscheme == torch.per_tensor_affine:
-        _, scale, zero_point = quantizer_params
-        tensor = torch._empty_affine_quantized(
-            size,
-            scale=scale,
-            zero_point=zero_point,
-            dtype=storage.dtype,
-            device=storage.device,
-        )
-    elif qscheme in (torch.per_channel_affine, torch.per_channel_affine_float_qparams):
-        _, scales, zero_points, axis = quantizer_params
-        # The C++ constructor does not bound-check axis or the
-        # scales/zero_points length against size; values arriving from an
-        # untrusted weights_only checkpoint can otherwise be arbitrary.
-        if not 0 <= axis < len(size):
-            raise ValueError(
-                f"_rebuild_qtensor: per_channel axis {axis} out of range for size {tuple(size)}"
-            )
-        expected_len = int(size[axis])
-        scales_len = len(scales) if isinstance(scales, list) else scales.numel()
-        zero_points_len = (
-            len(zero_points) if isinstance(zero_points, list) else zero_points.numel()
-        )
-        if scales_len != expected_len or zero_points_len != expected_len:
-            raise ValueError(
-                "_rebuild_qtensor: per_channel scales/zero_points length must equal "
-                f"size[axis]={expected_len}, got scales={scales_len}, "
-                f"zero_points={zero_points_len}"
-            )
-        if type(scales) is list and type(zero_points) is list:
-            if qscheme == torch.per_channel_affine:
-                scales = torch.tensor(scales, dtype=torch.double, device=storage.device)
-                zero_points = torch.tensor(
-                    zero_points, dtype=torch.long, device=storage.device
-                )
-            else:
-                scales = torch.tensor(scales, dtype=torch.float, device=storage.device)
-                zero_points = torch.tensor(
-                    zero_points, dtype=torch.float, device=storage.device
-                )
-        tensor = torch._empty_per_channel_affine_quantized(
-            size,
-            scales=scales,
-            zero_points=zero_points,
-            axis=axis,
-            dtype=storage.dtype,
-            device=storage.device,
-        )
-    else:
-        raise RuntimeError(f"Can't deserialize quantized tensor with qscheme {qscheme}")
-    tensor.set_(storage, storage_offset, size, stride)
-    tensor.requires_grad = requires_grad
-    # NB: This line exists only for backwards compatibility; the
-    # general expectation is that backward_hooks is an empty
-    # OrderedDict.  See Note [Don't serialize hooks]
-    tensor._backward_hooks = backward_hooks
-    return tensor
+    raise RuntimeError(
+        "Quantized tensors are not supported in this build and cannot be "
+        "deserialized."
+    )
 
 
 def _rebuild_parameter(data, requires_grad, backward_hooks):

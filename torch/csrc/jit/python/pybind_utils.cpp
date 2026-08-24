@@ -511,7 +511,6 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
       return py::cast<at::Generator>(obj);
     case TypeKind::DynamicType:
     case TypeKind::FunctionType:
-    case TypeKind::QuantizerType:
     case TypeKind::VarType:
     case TypeKind::AnyListType:
     case TypeKind::AnyTupleType:

@@ -755,20 +755,6 @@ aten_native_source_codegen_list = [
 
 # This aten native source file list will not go through aten codegen process
 aten_native_source_non_codegen_list = [
-    "aten/src/ATen/native/quantized/cpu/fused_obs_fake_quant.cpp",
-    "aten/src/ATen/native/quantized/cpu/IntReprQuant.cpp",
-    "aten/src/ATen/native/quantized/cpu/MakePerTensorQuantizedTensor.cpp",
-    "aten/src/ATen/native/quantized/cpu/kernels/QuantizedOpKernels.cpp",
-    "aten/src/ATen/native/quantized/Copy.cpp",
-    "aten/src/ATen/native/quantized/IndexKernel.cpp",
-    "aten/src/ATen/native/quantized/QTensor.cpp",
-    "aten/src/ATen/native/quantized/TensorFactories.cpp",
-    "aten/src/ATen/native/quantized/AffineQuantizer.cpp",
-    "aten/src/ATen/native/quantized/AffineQuantizerBase.cpp",
-    "aten/src/ATen/native/quantized/FakeQuantPerChannelAffine.cpp",
-    "aten/src/ATen/native/quantized/FakeQuantPerTensorAffine.cpp",
-    "aten/src/ATen/quantized/QTensorImpl.cpp",
-    "aten/src/ATen/quantized/Quantizer.cpp",
     "aten/src/ATen/native/Activation.cpp",
     "aten/src/ATen/native/AdaptiveAveragePooling.cpp",
     "aten/src/ATen/native/AdaptiveAveragePooling3d.cpp",

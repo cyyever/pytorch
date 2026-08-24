@@ -7,7 +7,6 @@
 
 #include <ATen/ATen.h>
 #include <ATen/core/Dict.h>
-#include <ATen/quantized/Quantizer.h>
 
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/serialization/pickler.h>
@@ -397,11 +396,14 @@ void Pickler::pushLiteralTensor(const IValue& ivalue) {
     return;
   }
 
-  bool quantized = tensor.is_quantized();
+  TORCH_CHECK(
+      !tensor.is_quantized(),
+      "Quantized tensors are not supported in this build and cannot be "
+      "serialized.");
+
   // The arguments to this function are:
   //    storage, storage_offset, size, stride, requires_grad, backward_hooks
-  pushGlobal(
-      "torch._utils", quantized ? "_rebuild_qtensor" : "_rebuild_tensor_v2");
+  pushGlobal("torch._utils", "_rebuild_tensor_v2");
 
   push<PickleOpCode>(PickleOpCode::MARK);
   pushStorageOfTensor(tensor);
@@ -423,31 +425,6 @@ void Pickler::pushLiteralTensor(const IValue& ivalue) {
   }
   push<PickleOpCode>(PickleOpCode::TUPLE);
 
-  if (quantized) {
-    push<PickleOpCode>(PickleOpCode::MARK);
-    pushGlobal("torch", toString(tensor.qscheme()));
-    // tuple of (qscheme, scale, zp) or (qscheme, scales, zps, axis)
-    switch (tensor.qscheme()) {
-      case at::kPerTensorAffine:
-        pushDouble(tensor.q_scale());
-        pushInt(tensor.q_zero_point());
-        break;
-      case at::kPerChannelAffineFloatQParams:
-      case at::kPerChannelAffine: {
-        pushTensor(tensor.q_per_channel_scales());
-        pushTensor(tensor.q_per_channel_zero_points());
-        pushInt(tensor.q_per_channel_axis());
-      } break;
-      default:
-        TORCH_CHECK(
-            false,
-            "Unsupported tensor quantization type in serialization ",
-            toString(tensor.qscheme()));
-        break;
-    }
-    push<PickleOpCode>(PickleOpCode::TUPLE);
-  }
-
   // requires_grad
   pushIValue(tensor.requires_grad());
 
@@ -457,8 +434,8 @@ void Pickler::pushLiteralTensor(const IValue& ivalue) {
   // Construct the collections.OrderedDict for the backward_hooks
   push<PickleOpCode>(PickleOpCode::REDUCE);
 
-  if (!quantized) {
-    // Only push it for regular tensor if the dictionary is not empty.
+  {
+    // Only push it if the dictionary is not empty.
     auto metadata = torch::jit::getTensorMetadata(tensor);
     if (!metadata.empty()) {
       // IValues based on std::unordered_map<K, V> are slow and deprecated.
