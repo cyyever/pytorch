@@ -60,7 +60,7 @@ For an example of using the MultiProcessTestCase to run a test on multiple GPUs,
 
 ## Testing Your Changes
 
-All the unit tests can be found under the [test/distributed](../../test/distributed) directory and RPC tests in particular are under [test/distributed/rpc](../../test/distributed/rpc). A few examples on how to run unit tests:
+All the unit tests can be found under the [test/distributed](../../test/distributed) directory. A few examples on how to run unit tests:
 
 
 ```

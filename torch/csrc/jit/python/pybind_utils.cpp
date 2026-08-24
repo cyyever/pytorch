@@ -1,8 +1,5 @@
-#include <torch/csrc/jit/python/module_python.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
-#include <torch/csrc/jit/python/python_dict.h>
 #include <torch/csrc/jit/python/python_ivalue.h>
-#include <torch/csrc/jit/python/python_list.h>
 #include <torch/csrc/jit/python/utf8_decoding_ignore.h>
 
 #ifdef USE_DISTRIBUTED
@@ -288,14 +285,6 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
       return stream;
     }
     case TypeKind::ListType: {
-      // If the object is a ScriptList, retrieve the c10::List
-      // instance inside it.
-      if (py::isinstance<ScriptList>(obj)) {
-        return py::cast<ScriptList>(obj).list_;
-      }
-
-      // If not (i.e. it is a regular Python list), make a new
-      // c10::List.
       const auto& elem_type = type->expectRef<ListType>().getElementType();
       switch (elem_type->kind()) {
         // allows single int/float to be broadcasted to a fixed size list
@@ -379,17 +368,6 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
     }
     case TypeKind::DictType: {
       const auto& dict_type = type->expect<DictType>();
-
-      // If the object is a ScriptDict, retrieve the c10::Dict
-      // instance inside it.
-      try {
-        auto script_dict = py::cast<ScriptDict>(obj);
-        return script_dict.dict_;
-      } catch (py::cast_error&) {
-      }
-
-      // If not (i.e. it is a regular Python dictionary), make a new
-      // c10::Dict.
       return createGenericDict(
           py::cast<py::dict>(obj),
           dict_type->getKeyType(),
@@ -407,16 +385,6 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
     case TypeKind::ClassType: {
       auto classType = type->expect<ClassType>();
       auto object = py::cast<py::object>(obj);
-      if (auto mod = as_module(object)) {
-        // if obj is already a ScriptModule, just return its ivalue
-        return mod.value()._ivalue();
-      }
-
-      // Check if the obj is a ScriptObject.
-      if (auto script_obj = as_object(object)) {
-        return script_obj.value()._ivalue();
-      }
-
       // otherwise is a normal class object, we create a fresh
       // ivalue::Object to use from the py object.
       // 1. create a bare ivalue
@@ -455,48 +423,12 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
       return userObj;
     }
     case TypeKind::InterfaceType: {
-      auto interfaceType = type->expect<InterfaceType>();
-      // When converting a pyobj to an interface, we check if rhs
-      // is module or normal torchscript class, get the type and ivalue
-      // from them correspondingly.
-      c10::ClassTypePtr classType = nullptr;
-      IValue res;
-      if (auto mod = as_module(py::cast<py::object>(obj))) {
-        classType = mod.value().type();
-        res = mod.value()._ivalue();
-      } else if (auto object = as_object(py::cast<py::object>(obj))) {
-        classType = object.value().type();
-        res = object.value()._ivalue();
-      } else {
-        // We inspect the value to found the compiled TorchScript class
-        // and then create a ivalue::Object from that class type.
-        py::str qualified_name =
-            py::module::import("torch._jit_internal")
-                .attr("_qualified_name")(py::type::handle_of(obj));
-        auto pyCu = get_python_cu();
-        classType = pyCu->get_class(c10::QualifiedName(qualified_name));
-        if (!classType) {
-          throw std::runtime_error(c10::str(
-              "Assigning the object ",
-              py::str(obj),
-              " to an interface fails because the value is not "
-              "a TorchScript compatible type, did you forget to",
-              "turn it into a user defined TorchScript class?"));
-        }
-        res = toIValue(obj, classType);
-      }
-      // check if the classType conform with the interface or not
-      std::stringstream why_not;
-      if (!classType->isSubtypeOfExt(*interfaceType, &why_not)) {
-        throw py::cast_error(c10::str(
-            "Object of type ",
-            classType->repr_str(),
-            " is not compatible with interface ",
-            interfaceType->repr_str(),
-            "\n",
-            std::move(why_not).str()));
-      }
-      return res;
+      // ScriptObject instances no longer exist, so interfaces cannot be
+      // satisfied from Python.
+      throw py::cast_error(c10::str(
+          "Object of type ",
+          py::str(py::type::handle_of(obj)),
+          " is not a TorchScript compatible type"));
     }
     case TypeKind::NumberType: {
       if (THPDtype_Check(obj.ptr())) {
@@ -532,11 +464,7 @@ IValue toIValue(py::handle obj, const TypePtr& type, std::optional<int32_t> N) {
       }
     }
     case TypeKind::RRefType: {
-#ifdef USE_RPC
-      return obj.cast<torch::distributed::rpc::PyRRef>().toIValue();
-#else
-      TORCH_CHECK(false, "RRef is only supported with the distributed package");
-#endif
+      TORCH_CHECK(false, "RRef is not supported in this build");
     } break;
     case TypeKind::PyObjectType: {
       return c10::ivalue::ConcretePyObjectHolder::create(obj);
@@ -740,37 +668,11 @@ py::object toPyObject(IValue ivalue) {
     return py_dict;
 #endif
   } else if (ivalue.isRRef()) {
-#ifdef USE_RPC
-    auto RRefPtr =
-        c10::dynamic_intrusive_pointer_cast<torch::distributed::rpc::RRef>(
-            std::move(ivalue).toRRef());
-    return py::cast(torch::distributed::rpc::PyRRef(RRefPtr));
-#else
-    TORCH_CHECK(false, "RRef is only supported with the distributed package");
-#endif
+    TORCH_CHECK(false, "RRef is not supported in this build");
   } else if (ivalue.isObject()) {
     const auto obj = std::move(ivalue).toObject();
-    if (obj->type()->is_module()) {
-      return py::cast(Module(obj));
-    }
-
-    auto pyCu = get_python_cu();
-    if (obj->name().starts_with("__torch__.torch.classes")) {
-      return py::cast(Object(obj));
-    }
-    const auto classType = pyCu->get_class(c10::QualifiedName(obj->name()));
-    AT_ASSERT(classType, c10::str(obj->name(), " is not found."));
-    auto pyClass = getScriptedClassOrError(obj->type());
-    auto pyObj = pyClass.attr("__new__")(pyClass);
-
-    const auto numAttrs = classType->numAttributes();
-
-    for (const auto slot : c10::irange(numAttrs)) {
-      const auto& attrName = classType->getAttributeName(slot);
-      IValue v = obj->getSlot(slot);
-      py::setattr(pyObj, attrName.c_str(), toPyObject(std::move(v)));
-    }
-    return pyObj;
+    TORCH_CHECK(!obj->type()->is_module(), "TorchScript modules are no longer supported");
+    return py::cast(Object(obj));
   } else if (ivalue.isPyObject()) {
     // return borrowed reference to ensure it correctly incref the underlying
     // PyObject
@@ -798,16 +700,9 @@ py::object toPyObject(IValue ivalue) {
     return py::cast(std::make_shared<PythonAwaitWrapper>(ivalue.toAwait()));
   } else if (ivalue.isEnum()) {
     auto enum_holder = ivalue.toEnumHolder();
-    auto py_class = getScriptedClassOrError(enum_holder->type());
-    return py_class.attr(enum_holder->name().c_str());
+    return py::str(enum_holder->qualifiedClassName());
   } else if (ivalue.isRRef()) {
-#ifdef USE_RPC
-    return py::cast(torch::distributed::rpc::PyRRef(
-        c10::static_intrusive_pointer_cast<distributed::rpc::RRef>(
-            ivalue.toRRef())));
-#else
-    TORCH_CHECK(false, "RRef is only supported with the distributed package");
-#endif
+    TORCH_CHECK(false, "RRef is not supported in this build");
   } else if (ivalue.isSymInt()) {
     return py::cast(std::move(ivalue).toSymInt());
   } else if (ivalue.isSymFloat()) {

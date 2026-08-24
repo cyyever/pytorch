@@ -16,7 +16,6 @@ from unittest import mock
 import torch
 import torch.distributed as dist
 import torch.distributed.distributed_c10d as c10d
-import torch.distributed.rpc as rpc
 from torch.distributed import DistError, DistNetworkError, DistStoreError
 from torch.testing._internal.common_distributed import MultiThreadedTestCase
 from torch.testing._internal.common_utils import instantiate_parametrized_tests
@@ -27,11 +26,7 @@ if not dist.is_available():
     sys.exit(0)
 
 import torch.testing._internal.common_utils as common
-from torch.testing._internal.common_distributed import (
-    create_tcp_store,
-    skip_if_win32,
-    tp_transports,
-)
+from torch.testing._internal.common_distributed import create_tcp_store, skip_if_win32
 from torch.testing._internal.common_utils import (
     _restore_fp32_precision,
     _snapshot_fp32_precision,
@@ -297,27 +292,6 @@ class FileStoreTest(TestCase, StoreTestBase):
         store.set_timeout(timedelta(seconds=300))
         return store
 
-    def test_init_pg_and_rpc_with_same_file(self):
-        with tempfile.NamedTemporaryFile(delete=False) as file:
-            # Init RPC using file
-            rpc_backend_options = rpc.TensorPipeRpcBackendOptions()
-            rpc_backend_options.init_method = f"file://{file.name}"
-            rpc_backend_options._transports = tp_transports()
-            rpc.init_rpc(
-                "worker", rank=0, world_size=1, rpc_backend_options=rpc_backend_options
-            )
-
-            # Init PG using file
-            dist.init_process_group(
-                "gloo", rank=0, world_size=1, init_method=f"file://{file.name}"
-            )
-            dist.destroy_process_group()
-            if not os.path.exists(file.name):
-                raise AssertionError(f"Expected file {file.name} to exist")
-
-            rpc.shutdown()
-            os.remove(file.name)
-
     def test_refcount(self):
         with tempfile.NamedTemporaryFile(delete=False) as file:
             store = dist.FileStore(file.name, 1)
@@ -458,56 +432,6 @@ class TCPStoreTest(TestCase, StoreTestBase):
             r"client=TCPClient\(SocketImpl\(fd=\d+, addr=\[?localhost\]?:\d+, remote=\[?localhost\]?:\d+\)\), "
             r"server=<nullptr>\)",
         )
-
-    @skip_if_win32()
-    @retry_on_connect_failures
-    def test_init_pg_and_rpc_with_same_socket(self):
-        addr = DEFAULT_HOSTNAME
-        port = common.find_free_port()
-
-        # retry_on_connect_failures re-runs this whole body on a RuntimeError,
-        # so every mutation below has to be undone before the next attempt.
-        try:
-            os.environ["MASTER_ADDR"] = addr
-            os.environ["MASTER_PORT"] = str(port)
-
-            # We internally use a multi-tenant TCP store. Both PG and RPC should successfully
-            # initialize even when using the same socket address.
-
-            os.environ["USE_LIBUV"] = "1" if self._use_libuv else "0"
-            dist.init_process_group(
-                backend="gloo",
-                init_method="env://",
-                rank=0,
-                world_size=1,
-            )
-
-            backend_opts = rpc.TensorPipeRpcBackendOptions(
-                init_method=f"tcp://{addr}:{port}", _transports=tp_transports()
-            )
-            rpc.init_rpc(
-                name="worker0",
-                rank=0,
-                world_size=1,
-                rpc_backend_options=backend_opts,
-            )
-
-            del os.environ["USE_LIBUV"]
-            if "USE_LIBUV" in os.environ:
-                raise AssertionError("Expected USE_LIBUV to not be in os.environ")
-            rpc.shutdown()
-            dist.destroy_process_group()
-        finally:
-            # A failure can land inside init_rpc, so do not wait on a possibly
-            # half-initialized agent, and tear the group down even if this raises.
-            try:
-                if rpc.api._is_current_rpc_agent_set():
-                    rpc.shutdown(graceful=False)
-            finally:
-                if dist.is_initialized():
-                    dist.destroy_process_group()
-                for var in ("USE_LIBUV", "MASTER_ADDR", "MASTER_PORT"):
-                    os.environ.pop(var, None)
 
     @skip_if_win32()
     def test_take_over_listen_socket(self):
@@ -673,17 +597,15 @@ class TCPStoreTest(TestCase, StoreTestBase):
 
         os.environ[USE_AGENT_STORE] = "1"
         os.environ[MASTER_PORT] = str(store.port)
-        try:
-            second_server = dist.TCPStore(
-                host_name="localhost",
-                port=store.port,
-                world_size=1,
-                is_master=True,
-                use_libuv=self._use_libuv,
-            )
-        finally:
-            os.environ.pop(USE_AGENT_STORE, None)
-            os.environ.pop(MASTER_PORT, None)
+        second_server = dist.TCPStore(
+            host_name="localhost",
+            port=store.port,
+            world_size=1,
+            is_master=True,
+            use_libuv=self._use_libuv,
+        )
+        del os.environ[USE_AGENT_STORE]
+        del os.environ[MASTER_PORT]
 
         self.assertEqual(second_server.port, store.port)
 
@@ -837,27 +759,21 @@ class RendezvousEnvTest(TestCase):
 
     @retry_on_connect_failures
     def test_nominal(self):
-        # retry_on_connect_failures re-runs this whole body on a RuntimeError,
-        # so every mutation below has to be undone before the next attempt.
-        try:
-            os.environ["WORLD_SIZE"] = "1"
-            os.environ["MASTER_ADDR"] = "127.0.0.1"
-            os.environ["MASTER_PORT"] = str(common.find_free_port())
+        os.environ["WORLD_SIZE"] = "1"
+        os.environ["MASTER_ADDR"] = "127.0.0.1"
+        os.environ["MASTER_PORT"] = str(common.find_free_port())
 
-            # Single rank
-            os.environ["RANK"] = "0"
-            gen0 = dist.rendezvous("env://")
-            store0, rank0, size0 = next(gen0)
-            self.assertEqual(0, rank0)
-            self.assertEqual(1, size0)
+        # Single rank
+        os.environ["RANK"] = "0"
+        gen0 = dist.rendezvous("env://")
+        store0, rank0, size0 = next(gen0)
+        self.assertEqual(0, rank0)
+        self.assertEqual(1, size0)
 
-            store0.set("key0", "value0")
+        store0.set("key0", "value0")
 
-            # check with get
-            self.assertEqual(b"value0", store0.get("key0"))
-        finally:
-            for var in ("WORLD_SIZE", "MASTER_ADDR", "MASTER_PORT", "RANK"):
-                os.environ.pop(var, None)
+        # check with get
+        self.assertEqual(b"value0", store0.get("key0"))
 
 
 class RendezvousFileTest(TestCase):

@@ -4,15 +4,27 @@
 #include <ATen/core/jit_type.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
-#include <torch/csrc/jit/frontend/builtin_functions.h>
 #include <torch/csrc/jit/frontend/error_report.h>
 #include <torch/csrc/jit/ir/ir.h>
-#include <torch/csrc/jit/operator_upgraders/utils.h>
-#include <torch/csrc/jit/operator_upgraders/version_map.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <optional>
 
 namespace torch::jit {
+
+// Declared here rather than in the header: nothing outside this file uses them.
+static std::pair<size_t, MatchedSchema> matchSchemas(
+    const std::vector<const ::c10::FunctionSchema*>& schemas,
+    const SourceRange& loc,
+    Graph& graph,
+    at::ArrayRef<NamedValue> args,
+    at::ArrayRef<NamedValue> kwargs,
+    const std::optional<NamedValue>& self = std::nullopt,
+    bool render_errors = false);
+static std::optional<size_t> findInputWithName(
+    const std::string& name,
+    at::ArrayRef<NamedValue> kwargs,
+    bool is_aten = false);
+static std::string getFullSchemaName(const ::c10::FunctionSchema& schema);
 
 static TypePtr unwrapOptional(TypePtr opt_type) {
   if (auto dyn = opt_type->castRaw<c10::DynamicType>()) {
@@ -36,7 +48,7 @@ static bool isIntOrFloatUsedAsList(const Value* value, const Argument& arg) {
 
 /// Returns true if `type` is a Tuple in which all the elements have the
 /// same type or if it's a subtype of `list_type_`.
-bool convertibleToList(const TypePtr& type, const TypePtr& list_type_) {
+static bool convertibleToList(const TypePtr& type, const TypePtr& list_type_) {
   auto list_type = list_type_->castRaw<ListType>();
   if (!list_type) {
     return false;
@@ -58,7 +70,7 @@ bool convertibleToList(const TypePtr& type, const TypePtr& list_type_) {
 
 // Applies implicit conversion from value trying to turn it into type
 // concrete_type. It succeeds if `return_value->isSubtypeOf(concrete_type)`
-Value* tryConvertToType(
+static Value* tryConvertToType(
     const SourceRange& loc,
     Graph& graph,
     const TypePtr& concrete_type,
@@ -241,7 +253,7 @@ static Value* tryMatchArgument(
   return value;
 }
 
-std::optional<size_t> findInputWithName(
+static std::optional<size_t> findInputWithName(
     const std::string& name,
     at::ArrayRef<NamedValue> kwargs,
     bool is_aten) {
@@ -528,7 +540,7 @@ static std::optional<MatchedSchema> tryMatchSchema(
       schema_name};
 }
 
-MatchedSchema matchSchema(
+static MatchedSchema matchSchema(
     const ::c10::FunctionSchema& schema,
     const SourceRange& loc,
     Graph& graph,
@@ -564,7 +576,7 @@ static std::string prefixLine(
   return std::move(ss).str();
 }
 
-std::pair<size_t, MatchedSchema> matchSchemas(
+static std::pair<size_t, MatchedSchema> matchSchemas(
     const std::vector<const FunctionSchema*>& schemas,
     const SourceRange& loc,
     Graph& graph,
@@ -639,8 +651,7 @@ static Value* emitBuiltinNode(
     const MatchedSchema& matched_schema,
     const SourceRange& loc,
     Graph& graph,
-    Symbol name,
-    std::optional<size_t> version) {
+    Symbol name) {
   auto n = graph.insertNode(graph.create(name, matched_schema.inputs, 0))
                ->setSourceRange(loc);
 
@@ -649,19 +660,13 @@ static Value* emitBuiltinNode(
   }
 
   // assert that we did indeed create an op that has implementation
-  // otherwise schema and dispatch are not in sync ONLY if the op is up
-  // to date with the server version
-  if (!version.has_value() ||
-      isOpSymbolCurrent(matched_schema.schema_name, version.value())) {
-    n->getOperation();
-  } else {
-    n->setHistoricSchemaName(matched_schema.schema_name);
-  }
+  // otherwise schema and dispatch are not in sync
+  n->getOperation();
 
   return packOutputs(graph, n->outputs(), matched_schema.return_field_names);
 }
 
-std::string getFullSchemaName(const ::c10::FunctionSchema& schema) {
+static std::string getFullSchemaName(const ::c10::FunctionSchema& schema) {
   if (!schema.overload_name().empty()) {
     return schema.operator_name().name + "." + schema.overload_name();
   }
@@ -678,62 +683,11 @@ Value* emitBuiltinCall(
     at::ArrayRef<NamedValue> kwargs,
     const std::optional<NamedValue>& self) {
   const auto& variants = getAllOperatorsFor(name);
-  const auto& builtin_functions = getAllBuiltinFunctionsFor(name);
-
-  // first let's set the graph's version
-  auto graph_version = graph.get_op_version();
 
   std::vector<const FunctionSchema*> schemas;
-  // we append them later to schemas because
-  // parseSchema returns rvalue which can not
-  // be casted to const pointer.
-  std::vector<FunctionSchema> upgrader_schemas;
   schemas.reserve(variants.size());
   for (const std::shared_ptr<Operator>& op : variants) {
-    bool found_upgrader = false;
-    auto op_name = getFullSchemaName(op->schema());
-    if (graph_version.has_value()) {
-      auto version_entry = get_operator_version_map().find(op_name);
-      if (version_entry != get_operator_version_map().end()) {
-        auto old_schema_entry =
-            findUpgrader(version_entry->second, graph_version.value());
-        if (old_schema_entry.has_value()) {
-          FunctionSchema old_schema =
-              parseSchema(old_schema_entry.value().old_schema);
-          upgrader_schemas.push_back(old_schema);
-          found_upgrader = true;
-        } else {
-          if (!isOpCurrentBasedOnUpgraderEntries(
-                  version_entry->second, graph_version.value())) {
-            TORCH_INTERNAL_ASSERT(false, "Valid upgrader must be present");
-          }
-        }
-      }
-    }
-    if (!found_upgrader)
-      schemas.push_back(&op->schema());
-  }
-
-  // we might have seen old historic
-  // ops that are deprecated
-  if (variants.empty()) {
-    auto oldSchemas =
-        loadPossibleHistoricOps(name.toQualString(), graph_version);
-    upgrader_schemas.reserve(oldSchemas.size());
-    for (const auto& old_schema_entry : oldSchemas) {
-      FunctionSchema old_schema = parseSchema(old_schema_entry);
-      upgrader_schemas.emplace_back(old_schema);
-    }
-  }
-
-  // TODO (tugsuu): make sure this is optimized later
-  for (const auto& schema : upgrader_schemas) {
-    schemas.push_back(&schema);
-  }
-
-  for (const auto method : builtin_functions) {
-    method->ensure_defined();
-    schemas.push_back(&method->getSchema());
+    schemas.push_back(&op->schema());
   }
 
   // no operators found with the same name, print out similarly named operators
@@ -745,7 +699,7 @@ Value* emitBuiltinCall(
     if (close_symbols.empty()) {
       error
           << "Could not find any similar ops to " << user_function_name
-          << ". This op may not exist or may not be currently supported in TorchScript.\n";
+          << ". This op may not exist or may not be currently supported.\n";
     } else {
       error << "Here are some suggestions: \n";
       for (const auto& sym : close_symbols) {
@@ -757,17 +711,7 @@ Value* emitBuiltinCall(
   }
 
   auto matched = matchSchemas(schemas, loc, graph, args, kwargs, self);
-
-  if (matched.first < variants.size() + upgrader_schemas.size()) {
-    return emitBuiltinNode(matched.second, loc, graph, name, graph_version);
-  } else {
-    auto& fn = *builtin_functions[matched.first - variants.size()];
-    // we inline builtin calls because they are normally very small
-    // wrappers and are not useful for keeping around to debug
-    return insertGraph(
-               graph, *toGraphFunction(fn).graph(), matched.second.inputs)
-        .at(0);
-  }
+  return emitBuiltinNode(matched.second, loc, graph, name);
 }
 
 } // namespace torch::jit

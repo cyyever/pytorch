@@ -19,8 +19,8 @@ from torch.fx.passes.utils.matcher_utils import SubgraphMatcher
 from torch.fx.passes.utils.matcher_with_name_node_map_utils import (
     SubgraphMatcherWithNameNodeMap,
 )
-from torch.testing._internal.common_utils import HardwareClassification, IS_WINDOWS
-from torch.testing._internal.jit_utils import JitTestCase
+from torch.testing._internal.common_utils import IS_WINDOWS
+from torch.testing._internal.common_utils import TestCase
 
 
 class WrapperModule(torch.nn.Module):
@@ -32,9 +32,7 @@ class WrapperModule(torch.nn.Module):
         return self.fn(*args, **kwargs)
 
 
-class TestMatcher(JitTestCase):
-    hw_classification = HardwareClassification.GENERIC
-
+class TestMatcher(TestCase):
     def test_subgraph_matcher_with_attributes(self):
         class LargeModel(torch.nn.Module):
             def __init__(self) -> None:

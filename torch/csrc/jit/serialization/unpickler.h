@@ -1,10 +1,12 @@
 #pragma once
 
 #include <ATen/core/ivalue.h>
+#include <ATen/core/stack.h>
 #include <c10/util/ArrayRef.h>
 #include <caffe2/serialize/inline_container.h>
 
 #include <torch/csrc/Export.h>
+#include <torch/csrc/jit/frontend/schema_type_parser.h>
 #include <torch/csrc/jit/frontend/script_type_parser.h>
 #include <torch/csrc/jit/serialization/pickler_helper.h>
 
@@ -141,7 +143,6 @@ class TORCH_API Unpickler {
   void rebuildTensorFromTypeV2();
   void rebuildSparseTensor();
 #ifdef USE_DISTRIBUTED
-  void rebuildRRef();
 #endif
   PickleOpCode readInstruction();
   PickleOpCode readOpCode() {

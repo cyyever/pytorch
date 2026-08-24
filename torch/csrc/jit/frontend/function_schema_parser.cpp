@@ -28,7 +28,6 @@ struct SchemaParser {
             std::string_view(str),
             std::nullopt,
             0,
-            nullptr,
             Source::DONT_COPY)),
         type_parser(L, /*parse_complete_tensor_types*/ false, allow_typevars) {}
 

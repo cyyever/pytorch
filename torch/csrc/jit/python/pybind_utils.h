@@ -18,16 +18,9 @@
 #include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/python/module_python.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
-#include <torch/csrc/jit/python/python_tracer.h>
-#include <torch/csrc/jit/resource_guard.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_arg_parser.h>
-#ifdef USE_DISTRIBUTED
-#include <torch/csrc/distributed/rpc/py_rref.h>
-#include <torch/csrc/distributed/rpc/rref_impl.h>
-#endif
-
 #include <ATen/core/function_schema.h>
 #include <c10/core/Stream.h>
 #include <c10/util/Exception.h>
@@ -139,13 +132,6 @@ struct VISIBILITY_HIDDEN PythonFutureWrapper
 
   py::object wait() {
     fut->wait();
-    if (jit::tracer::isTracing()) {
-      auto graph = jit::tracer::getTracingState()->graph;
-
-      Value* fut_val = jit::tracer::getValueTrace(fut);
-      auto output = graph->insert(aten::wait, {fut_val});
-      jit::tracer::setValueTrace(fut->value(), output);
-    }
     return value();
   }
 
@@ -325,37 +311,6 @@ struct VISIBILITY_HIDDEN PythonAwaitWrapper
 // that is confusing to display to the end user since it always reports
 // locations in libtorch code rather than user code.
 
-inline std::shared_ptr<CompilationUnit> get_python_cu() {
-  return py::module::import("torch.jit._state")
-      .attr("_python_cu")
-      .cast<std::shared_ptr<CompilationUnit>>();
-}
-
-struct TypedIValue : public std::pair<IValue, TypePtr> {
-  using pair::pair;
-
-  IValue& ivalue() {
-    return this->first;
-  }
-  TypePtr& type() {
-    return this->second;
-  }
-};
-
-inline TypedIValue toDictKeyIValue(py::handle key) {
-  if (py::isinstance<py::str>(key)) {
-    return TypedIValue(
-        ConstantString::create(py::cast<std::string>(key)), StringType::get());
-  } else if (py::isinstance<py::int_>(key)) {
-    return TypedIValue(py::cast<int64_t>(key), IntType::get());
-  } else if (py::isinstance<py::float_>(key)) {
-    return TypedIValue(py::cast<double>(key), FloatType::get());
-  } else {
-    TORCH_CHECK(
-        false, "Dictionary inputs may only have string, int, or float keys");
-  }
-}
-
 inline std::optional<TypePtr> unifyOrInitializeType(
     const TypePtr& accum,
     const TypePtr& unify) {
@@ -501,11 +456,6 @@ inline InferredType tryToInferType(py::handle input) {
   if (py::isinstance<Object>(input)) {
     auto object = py::cast<Object>(input);
     return InferredType(object.type());
-#ifdef USE_RPC
-  } else if (py::isinstance<torch::distributed::rpc::PyRRef>(input)) {
-    auto rref_ivalue = input.cast<torch::distributed::rpc::PyRRef>().toIValue();
-    return InferredType(rref_ivalue.type());
-#endif
   }
 
   auto await_type = py::module::import("torch._awaits").attr("_Await");
@@ -1128,60 +1078,17 @@ inline Stack evilDeprecatedBadCreateStackDoNotUse(
   return result;
 }
 
-// Run `callee`, potentially inserting a CallFunction/CallMethod node into the
-// tracing graph.
 inline py::object runAndInsertCall(
     Function& callee,
     const tuple_slice& args,
     const py::kwargs& kwargs,
-    std::optional<IValue> self,
-    // Lambda that tells this function how to insert `callee` into the graph if
-    // we're tracing.
-    const std::function<Value*(Graph&, const MatchedSchema& match)>&
-        callInserter) {
+    std::optional<IValue> self) {
   auto stack =
       createStackForSchema(callee.getSchema(), args, kwargs, std::move(self));
-  const auto& tracing_state = tracer::getTracingState();
-  if (!tracing_state) {
+  {
+    // Scoped: toPyObject below allocates Python objects and needs the GIL.
     pybind11::gil_scoped_release no_gil_guard;
-    // If we're not tracing, just run the callee as normal.
     callee.run(stack);
-  } else {
-    // If we are tracing, insert the appropriate CallFunction or CallMethod node
-    // and then run the callee with tracing disabled.
-
-    // Get the graph `Value`s that represent the input IValues
-    auto inputs = last(stack, callee.num_inputs());
-    auto input_values =
-        fmap(inputs, [](const IValue& v) { return tracer::getValueTrace(v); });
-    TORCH_INTERNAL_ASSERT(callee.getSchema().returns().size() == 1)
-    auto return_type = callee.getSchema().returns().at(0).type();
-    auto graph = tracing_state->graph;
-    std::vector<NamedValue> named_values;
-    named_values.reserve(input_values.size());
-    for (Value* v : input_values) {
-      named_values.emplace_back(v);
-    }
-
-    // Add a call node.
-    MatchedSchema match = matchSchema(
-        callee.getSchema(),
-        tracer::getPythonInterpreterSourceRange(),
-        *graph,
-        named_values,
-        {});
-    auto output_value = callInserter(*graph, match);
-
-    // Actually run the callee. Pause the tracer so that we don't double-add the
-    // callee nodes.
-    {
-      pybind11::gil_scoped_release no_gil_guard;
-      ResourceGuard guard(tracer::pauseTracing());
-      callee.run(stack);
-    }
-
-    // Associate the output IValues with the output `Value`s in the graph
-    tracer::setValueTrace(stack.back(), output_value);
   }
 
   TORCH_CHECK(
@@ -1251,14 +1158,7 @@ inline py::object invokeScriptFunctionFromPython(
   // TODO: we could add __torch_function__ dispatch here but I don't know
   // the implications of doing so
 
-  return runAndInsertCall(
-      callee,
-      args,
-      kwargs,
-      /*self=*/std::nullopt,
-      [&](Graph& graph, const MatchedSchema& match) {
-        return graph.insertFunctionCall(&callee, match);
-      });
+  return runAndInsertCall(callee, args, kwargs, /*self=*/std::nullopt);
 }
 
 inline py::object invokeScriptMethodFromPython(
@@ -1272,14 +1172,7 @@ inline py::object invokeScriptMethodFromPython(
     return *torch_fn_result;
   }
 
-  return runAndInsertCall(
-      callee.function(),
-      args,
-      kwargs,
-      self,
-      [&](Graph& graph, const MatchedSchema& match) {
-        return graph.insertMethodCall(callee.name(), match);
-      });
+  return runAndInsertCall(callee.function(), args, kwargs, self);
 }
 
 TORCH_PYTHON_API std::pair<std::shared_ptr<Operator>, Stack> getOpWithStack(

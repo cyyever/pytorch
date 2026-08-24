@@ -1,4 +1,3 @@
-import ast
 import copy
 import dataclasses
 import functools
@@ -10,7 +9,7 @@ import re
 from collections import defaultdict
 from collections.abc import Callable, Collection, Generator, Iterable, Sequence
 from contextlib import contextmanager
-from inspect import ismethod, Parameter
+from inspect import ismethod
 from typing import Any, TYPE_CHECKING
 
 import torch
@@ -934,45 +933,10 @@ def node_inline_(call_mod_node: torch.fx.Node) -> torch.fx.GraphModule | None:
     return gm
 
 
-def _get_torch_jit_trace_forward_signature(mod: torch.nn.Module) -> inspect.Signature:
-    """
-    Get source code and parse argument names using AST. The function returns
-    a signature of the forward() function.
-
-    # TODO: Directly provide inspect.signature compatible TS-d module.
-    """
-    ast_mod = ast.parse(mod.code)  # type: ignore[call-overload]
-    ast_func_def: ast.FunctionDef = ast_mod.body[0]
-
-    # FIXME(jiashenc): TorchScript should only allow positional or keywords arguments.
-    arg_type_map = {"args": Parameter.POSITIONAL_OR_KEYWORD}
-
-    # Traverse all argument types in AST tree and create associated parameters.
-    param_list = []
-    for arg_type, param_type in arg_type_map.items():
-        arg_name_list = [a.arg for a in getattr(ast_func_def.args, arg_type)]
-        for arg_name in arg_name_list:
-            if arg_name == "self":
-                continue  # Skip self argument.
-            param_list.append(inspect.Parameter(arg_name, param_type))
-
-    return inspect.Signature(parameters=param_list)
-
-
 def _bind_signature_to_inputs(
     mod: torch.nn.Module, fake_args: tuple[Any, ...], fake_kwargs: dict[str, Any]
 ) -> dict[str, Any]:
-    if isinstance(mod, (torch.jit.ScriptModule, torch.jit.TracedModule)):
-        sig = _get_torch_jit_trace_forward_signature(mod)
-
-        # Sanity check for placeholder names coming from TorchScript.
-        if len(sig.parameters) != len(fake_args) + len(fake_kwargs):
-            raise AssertionError(
-                "Arguments other than POSITIONAL_OR_KEYWORD kinds in forward() "
-                "are not supported in _get_torch_jit_trace_forward_signature"
-            )
-    else:
-        sig = inspect.signature(mod.forward)
+    sig = inspect.signature(mod.forward)
 
     # Rather than binding both fake_args and fake_kwargs to sig names, we
     # (partially) bind only fake_args, while reusing fake_kwarg names. This

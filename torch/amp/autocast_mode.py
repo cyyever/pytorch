@@ -148,32 +148,6 @@ class autocast:
                 # Runs the forward pass with autocasting.
                 output = model(input)
 
-    CPU Inference Example with Jit Trace::
-
-        class TestModel(nn.Module):
-            def __init__(self, input_size, num_classes):
-                super().__init__()
-                self.fc1 = nn.Linear(input_size, num_classes)
-
-            def forward(self, x):
-                return self.fc1(x)
-
-
-        input_size = 2
-        num_classes = 2
-        model = TestModel(input_size, num_classes).eval()
-
-        # For now, we suggest to disable the Jit Autocast Pass,
-        # As the issue: https://github.com/pytorch/pytorch/issues/75956
-        torch._C._jit_set_autocast_mode(False)
-
-        with torch.cpu.amp.autocast(cache_enabled=False):
-            model = torch.jit.trace(model, torch.randn(1, input_size))
-        model = torch.jit.freeze(model)
-        # Models Run
-        for _ in range(3):
-            model(torch.randn(1, input_size))
-
     Type mismatch errors *in* an autocast-enabled region are a bug; if this is what you observe,
     please file an issue.
 

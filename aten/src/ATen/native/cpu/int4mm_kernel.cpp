@@ -19,11 +19,6 @@
 #include <ATen/ops/cat.h>
 #endif
 
-#if AT_KLEIDIAI_ENABLED()
-#include <ATen/native/kleidiai/kai_kernels.h>
-#include <cpuinfo.h>
-#endif
-
 #if (defined(_WIN32) || defined(_WIN64))
 #define RESTRICT __restrict
 #else
@@ -774,26 +769,6 @@ void int4pack_mm_kernel(
   }
 }
 
-#if AT_KLEIDIAI_ENABLED()
-bool can_use_kleidiai(
-    const at::Tensor& scales_zeros,
-    const int64_t K,
-    const int64_t block_size) {
-  bool ret = false;
-  if (cpuinfo_has_arm_neon_dot()) {
-    // The Groupwise kernel requires BFloat16 Scales and Channelwise kernel
-    // requires Float32 Scales. If not provided, we will use fallback
-    // implementation.
-    if ((block_size == K && scales_zeros.dtype() == at::kFloat) ||
-        ((block_size < K && !(block_size % 32) && !(K % block_size)) &&
-         scales_zeros.dtype() == at::kBFloat16)) {
-      ret = true;
-    }
-  }
-  return ret;
-}
-#endif
-
 static void ref_dyn_quant_matmul_4bit_channelwise_kernel_bf16(
     size_t m,
     size_t n,
@@ -928,15 +903,8 @@ static void ref_dyn_quant_matmul_4bit_channelwise_kernel_bf16(
  * For matrix multiplication with a weight shape of (N x K)
  * the shape of the 4-bit quantized weights is [N, K/groupsize, groupsize/2].
  *
- * For KleidiAI weight packing, the scales, biases, and Int4 quantized
- * weights are packed into a single `packed_weights` structure, optimized for
- * Arm instructions.
- *
  * In the fallback reference kernel, no special packing is required for
  * Int4 quantized weights.
- *
- * The Groupwise kernel requires BFloat16 Scales and Channelwise kernel requires
- * Float32 Scales. If not provided, we will use fallback implementation.
  */
 void dyn_quant_pack_4bit_weight_kernel(
     Tensor& packed_weights,
@@ -946,15 +914,6 @@ void dyn_quant_pack_4bit_weight_kernel(
     const int64_t N,
     const int64_t K,
     const int64_t block_size) {
-#if AT_KLEIDIAI_ENABLED()
-  if (can_use_kleidiai(scales_zeros, K, block_size)) {
-    const int64_t weight_packed_size =
-        kleidiai::kai_pack_rhs_int4_size(N, K, block_size, weights.scalar_type());
-    packed_weights.resize_({weight_packed_size});
-    kleidiai::kai_pack_int4_rhs(
-        packed_weights, weights, scales_zeros, bias, N, K, block_size);
-  } else
-#endif
   {
     packed_weights = packed_weights.to(kFloat);
     auto weight_reshaped = weights.reshape({-1}).to(kFloat);
@@ -1304,15 +1263,6 @@ void dyn_quant_matmul_4bit_kernel(
     const int64_t N,
     const int64_t K,
     const int64_t block_size) {
-#if AT_KLEIDIAI_ENABLED()
-  const int64_t weight_packed_size =
-      kleidiai::kai_pack_rhs_int4_size(N, K, block_size, inp.scalar_type());
-  if (weight_packed_size == packed_weights.numel()) {
-    // KleidiAI interface internally handles the Channelwise and groupwise
-    // distinction
-    kleidiai::kai_quant_pack_lhs_int4_mm(output, inp, packed_weights, M, N, K, block_size);
-  } else
-#endif
   {
     {
     void* input = inp.data_ptr();

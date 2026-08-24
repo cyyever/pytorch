@@ -75,7 +75,6 @@ xfail_not_implemented = {
     "aten::frobenius_norm",
     "aten::fused_moving_avg_obs_fake_quant",
     "aten::get_device",
-    "aten::get_gradients",
     "aten::greater_.Scalar",
     "aten::greater_.Tensor",
     "aten::greater_equal_.Scalar",

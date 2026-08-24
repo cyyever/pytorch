@@ -846,7 +846,6 @@ class LOBPCG:
             if not torch.jit.is_scripting() and self.tracker is not None:
                 self.call_tracker()
 
-    @torch.jit.unused
     def call_tracker(self):
         """Interface for tracking iteration process in Python mode.
 

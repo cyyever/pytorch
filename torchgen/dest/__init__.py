@@ -1,9 +1,3 @@
-from torchgen.dest.lazy_ir import (
-    generate_non_native_lazy_ir_nodes as generate_non_native_lazy_ir_nodes,
-    GenLazyIR as GenLazyIR,
-    GenLazyNativeFuncDefinition as GenLazyNativeFuncDefinition,
-    GenLazyShapeInferenceDefinition as GenLazyShapeInferenceDefinition,
-)
 from torchgen.dest.native_functions import (
     compute_native_function_declaration as compute_native_function_declaration,
 )

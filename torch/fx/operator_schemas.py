@@ -60,6 +60,17 @@ def _nonzero_schemas() -> list[inspect.Signature]:
 
 _manual_overrides[torch.nonzero] = _nonzero_schemas()
 
+# Builtin functions from these modules map to an aten:: op of the same name.
+_aten_builtin_modules = (
+    "torch",
+    "torch._C._nn",
+    "torch._C._fft",
+    "torch._C._linalg",
+    "torch._C._nested",
+    "torch._C._sparse",
+    "torch._C._special",
+)
+
 
 class _FakeGlobalNamespace:
     def __getattr__(self, name: str) -> types.ModuleType:
@@ -73,7 +84,7 @@ _type_eval_globals = {
     "Device": torch.device,
     "Layout": torch.layout,
     "number": numbers.Number,
-    "Future": torch.jit.Future,
+    "Future": torch.futures.Future,
     "AnyEnumType": enum.Enum,
     "QScheme": torch.qscheme,
     "__torch__": _FakeGlobalNamespace(),
@@ -254,11 +265,14 @@ def get_signature_for_torch_op(
         if override:
             return (override, None) if return_schemas else None
 
-        aten_fn = torch.jit._builtins._find_builtin(op)
-
-        if aten_fn is None:
+        # Builtins from the torch namespaces resolve to an aten:: schema with the
+        # same name. Everything else (e.g. user functions) has no schema.
+        if not (
+            isinstance(op, types.BuiltinFunctionType)
+            and op.__module__ in _aten_builtin_modules
+        ):
             return (None, None) if return_schemas else None
-        schemas = torch._C._jit_get_schemas_for_operator(aten_fn)
+        schemas = torch._C._jit_get_schemas_for_operator(f"aten::{op.__name__}")
 
     signatures = [_torchscript_schema_to_signature(schema) for schema in schemas]
     return (signatures, schemas) if return_schemas else signatures

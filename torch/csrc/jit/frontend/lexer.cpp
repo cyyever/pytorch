@@ -90,27 +90,6 @@ bool SharedParserData::isBinary(int kind, int* prec) {
   return false;
 }
 
-C10_EXPORT int stringToKind(const std::string& str) {
-  static std::unordered_map<std::string, int> str_to_kind = []() {
-    std::unordered_map<std::string, int> ret_str_to_kind;
-    ret_str_to_kind.reserve(std::strlen(valid_single_char_tokens));
-    for (const char* tok = valid_single_char_tokens; *tok; tok++) {
-      ret_str_to_kind[std::string(1, *tok)] = static_cast<unsigned char>(*tok);
-    }
-#define DEFINE_CASE(tok, _, str) \
-  if (!std::string(str).empty()) \
-    ret_str_to_kind[str] = tok;
-    TC_FORALL_TOKEN_KINDS(DEFINE_CASE)
-#undef DEFINE_CASE
-    return ret_str_to_kind;
-  }();
-  try {
-    return str_to_kind.at(str);
-  } catch (std::out_of_range&) {
-    throw std::out_of_range("unknown token in stringToKind");
-  }
-}
-
 C10_EXPORT std::string kindToString(int kind) {
   if (kind < 256) {
     return std::string(1, static_cast<char>(kind));

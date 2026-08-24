@@ -53,8 +53,4 @@ Registerer& registerer() {
 
 } // namespace
 
-void ensure_c10_registerer_defined() {
-  registerer();
-}
-
 } // namespace torch::jit

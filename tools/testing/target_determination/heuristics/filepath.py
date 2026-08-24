@@ -36,7 +36,7 @@ keyword_synonyms: dict[str, list[str]] = {
 
 
 custom_matchers: dict[str, Callable[[str], bool]] = {
-    "nn": lambda x: "nn" in x.replace("onnx", "_"),
+    "nn": lambda x: "nn" in x,
     "c10": lambda x: "c10" in x.replace("c10d", "_"),
 }
 

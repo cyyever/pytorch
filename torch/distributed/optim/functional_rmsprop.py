@@ -53,7 +53,7 @@ class _FunctionalRMSprop:
         # param group as it's not a common use case.
         self.param_group = {"params": params}
 
-        self.state = torch.jit.annotate(dict[torch.Tensor, dict[str, torch.Tensor]], {})
+        self.state = {}
 
     def step(self, gradients: list[Tensor | None]):
         params = self.param_group["params"]

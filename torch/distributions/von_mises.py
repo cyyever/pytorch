@@ -2,7 +2,6 @@
 import math
 
 import torch
-import torch.jit
 from torch import Tensor
 from torch.distributions import constraints
 from torch.distributions.distribution import Distribution
@@ -89,7 +88,6 @@ def _log_modified_bessel_fn(x, order=0):
     return result
 
 
-@torch.jit.script_if_tracing
 def _rejection_sample(loc, concentration, proposal_r, x):
     done = torch.zeros(x.shape, dtype=torch.bool, device=loc.device)
     # pyrefly: ignore [bad-assignment, missing-attribute]

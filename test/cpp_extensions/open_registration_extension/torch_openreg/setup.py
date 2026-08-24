@@ -92,12 +92,10 @@ def main():
 
     if IS_WINDOWS:
         # /NODEFAULTLIB makes sure we only link to DLL runtime
-        # and matches the flags set for protobuf and ONNX
         extra_link_args: list[str] = ["/NODEFAULTLIB:LIBCMT.LIB"] + [
             *make_relative_rpath_args("lib")
         ]
         # /MD links against DLL runtime
-        # and matches the flags set for protobuf and ONNX
         # /EHsc is about standard C++ exception handling
         extra_compile_args: list[str] = ["/MD", "/FS", "/EHsc"]
     else:

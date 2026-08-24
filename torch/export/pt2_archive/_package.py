@@ -499,7 +499,7 @@ def _package_constants(
             else:
                 raw_constants[constant_fqn] = (constant, TensorProperties(constant))
 
-        elif isinstance(constant, torch._C.ScriptObject) or is_custom_class_obj(
+        elif isinstance(constant, torch.ScriptObject) or is_custom_class_obj(
             constant
         ):
             custom_objects.append((constant_fqn, constant))
@@ -544,7 +544,7 @@ def _package_constants(
     # pickle. Distinct filename prefixes act as the format discriminator
     # for the reader.
     for constant_fqn, constant in custom_objects:
-        if isinstance(constant, torch._C.ScriptObject):
+        if isinstance(constant, torch.ScriptObject):
             path_name = f"{CUSTOM_OBJ_FILENAME_PREFIX}{custom_obj_idx}"
             obj_bytes = torch._C._pickle_save(constant)
             custom_obj_idx += 1

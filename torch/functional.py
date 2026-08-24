@@ -1384,8 +1384,8 @@ def tensordot(
                 raise AssertionError(
                     f"dims tensor must have size 2 in first dimension, got {dims.size()[0]}"
                 )
-            dims_a = torch.jit.annotate(list[int], dims[0].tolist())
-            dims_b = torch.jit.annotate(list[int], dims[1].tolist())
+            dims_a = dims[0].tolist()
+            dims_b = dims[1].tolist()
         else:
             dims_val = int(dims.item())
             if dims_val < 0:

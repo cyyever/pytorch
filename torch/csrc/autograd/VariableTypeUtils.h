@@ -14,7 +14,6 @@
 #include <torch/csrc/autograd/variable.h>
 
 #include <torch/csrc/autograd/functions/utils.h>
-#include <torch/csrc/autograd/jit_decomp_interface.h>
 #include <torch/csrc/utils/variadic.h>
 
 #include <cstddef>
@@ -396,54 +395,5 @@ inline std::vector<c10::ScalarType> to_args_scalartypes(
   return args_scalartypes;
 }
 
-namespace impl {
-
-namespace {
-
-// If run_jit_decomposition were not a member function, we would be able
-// to pass this as a template parameter to c10::BoxedKernel::makeFromFunction.
-// However, member functions cannot be passed this way - instead we wrap our
-// call in this functor so it can be passed to c10::BoxedKernel::makeFromFunctor
-class WrapperFunctor final : public c10::OperatorKernel {
- public:
-  WrapperFunctor(JitDecompInterface* impl) : impl_(impl) {}
-
-  void operator()(
-      const c10::OperatorHandle& op,
-      c10::DispatchKeySet ks,
-      torch::jit::Stack* stack) {
-    impl_->run_jit_decomposition(op, stack);
-  }
-  JitDecompInterface* impl_;
-};
-
-} // namespace
-
-template <class Return, class... Args>
-Return run_jit_decomposition_with_args_for_jvp(
-    std::string_view name,
-    const c10::OperatorHandle& opHandle,
-    c10::DispatchKeySet dispatchKeySet,
-    Args&&... args) {
-  // see NOTE: [Jit Decomposition Interface]
-  JitDecompInterface* impl = getJitDecompImpl();
-
-  TORCH_CHECK_NOT_IMPLEMENTED(
-      impl && impl->has_jit_decomposition(opHandle.schema()),
-      "Trying to use forward AD with ",
-      name,
-      " that does not support it because it has not been implemented yet.\nPlease file an issue "
-      "to PyTorch at https://github.com/pytorch/pytorch/issues/new?template=feature-request.yml "
-      "so that we can prioritize its implementation or submit a PR adding the implementation to "
-      "derivatives.yaml");
-
-  return c10::KernelFunction::makeFromBoxedKernel(
-             c10::BoxedKernel::makeFromFunctor(
-                 std::make_unique<WrapperFunctor>(impl)))
-      .call<Return, Args...>(
-          opHandle, dispatchKeySet, std::forward<Args>(args)...);
-}
-
-} // namespace impl
 
 } // namespace torch::autograd

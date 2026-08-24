@@ -3,7 +3,6 @@ import csv
 import itertools
 import sys
 import time
-import warnings
 from contextlib import nullcontext
 
 import click
@@ -12,7 +11,6 @@ from operator_inp_utils import OperatorInputsLoader
 from tqdm import tqdm
 
 import torch
-from torch._dynamo.backends.cudagraphs import cudagraphs_inner
 from torch._dynamo.testing import same
 from torch._inductor.compile_fx import compile_fx
 from torch._inductor.decomposition import decompositions
@@ -75,27 +73,6 @@ def compute_speedups(
     return np.median(timings, axis=0)
 
 
-def strip_overloads(gm):
-    """
-    Modifies the target of graph nodes in :attr:`gm` to strip overloads.
-    Args:
-        gm(fx.GraphModule): The input Fx graph module to be modified
-    """
-    for node in gm.graph.nodes:
-        if isinstance(node.target, torch._ops.OpOverload):
-            node.target = node.target.overloadpacket
-    gm.recompile()
-
-
-def convert_to_jit(gm, gm_args):
-    strip_overloads(gm)
-    try:
-        return torch.jit.script(gm)
-    except Exception:
-        pass
-    return torch.jit.trace(gm, gm_args)
-
-
 def to_channels_last(ten):
     return ten if ten.ndim != 4 else ten.to(memory_format=torch.channels_last)
 
@@ -107,13 +84,9 @@ def microbenchmark(
     accuracy_checking,
     repeats,
     inductor_configs,
-    measure_nvfuser,
     device,
 ):
     gm, gm_args = gen_gm_and_inputs(operator, args, kwargs)
-    torch.jit._builtins._register_builtin(
-        torch.ops.aten.convolution_backward.default, "aten::convolution_backward"
-    )
     compiled = [gm]
     for config in inductor_configs:
         t = -time.perf_counter()
@@ -122,12 +95,6 @@ def microbenchmark(
         if t > 10:
             print(f"slow compile inductor {t:.1f}s {config}")
 
-    if measure_nvfuser:
-        g = convert_to_jit(gm, gm_args)
-        cudagraphs_jit = cudagraphs_inner(
-            g, gm_args, copy_outputs=False, copy_inputs=False
-        )
-        compiled += [cudagraphs_jit]
     if accuracy_checking:
         repeats = 1
 
@@ -200,11 +167,6 @@ def skip_operator(operator):
     multiple=True,
     help="Custom inductor config, options: " + ", ".join(inductor_config_options),
 )
-@click.option(
-    "--measure-nvfuser/--no-measure-nvfuser",
-    help="default we only measure inductor",
-    default=False,
-)
 @click.option("--device", help="cpu or cuda", default="cuda")
 @click.option("--inp-file", help="use custom input file instead of suite", default=None)
 @click.option("--start-idx", help="specify start index of samples", default=0)
@@ -220,14 +182,12 @@ def benchmark(
     accuracy_checking,
     repeats,
     inductor_config,
-    measure_nvfuser,
     device,
     inp_file,
     start_idx,
     channels_last,
     profile,
 ):
-    warnings.filterwarnings("ignore", module="torch.jit._check")
     torch.set_float32_matmul_precision("high")
     global profile_enabled
 
@@ -253,9 +213,6 @@ def benchmark(
     for name in inductor_config or ():
         backend_names.append(name)
         inductor_configs.append(inductor_config_options[name])
-    if measure_nvfuser:
-        backend_names.append("nvfuser")
-
     compare2 = len(backend_names) == 2
     if compare2:
         a, b = backend_names
@@ -332,7 +289,7 @@ def benchmark(
                     )
                 try:
                     with maybe_record_function(f"iter_{i}"):
-                        # aten, nvfuser, inductor
+                        # aten, inductor
                         timings.append(
                             microbenchmark(
                                 operator,
@@ -341,7 +298,6 @@ def benchmark(
                                 accuracy_checking,
                                 repeats,
                                 inductor_configs,
-                                measure_nvfuser,
                                 device,
                             )
                         )

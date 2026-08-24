@@ -1,9 +1,6 @@
 import warnings
 
-import torch
 
-
-@torch.jit.ignore  # type: ignore[misc]
 def _scripted_functional_optimizer_deprecation_warning(stacklevel: int = 0) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("always")

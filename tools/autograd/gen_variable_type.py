@@ -670,14 +670,13 @@ at::redispatch::${api_name}(${unpacked_args})"""
 DISPATCH_TO_NON_VAR_TYPE_WITH_TMP_RETURN_VALUES_JVP_DECOMP = CodeTemplate(
     """\
 auto ${tmp_var} = ([&]() {
-  if (${any_has_forward_grad}) {
-    static c10::OperatorName full_name("aten::${op_name}", "${op_overload}");
-    static ::std::optional<c10::OperatorHandle> opt_op = c10::Dispatcher::singleton().findSchema(full_name);
-    return impl::run_jit_decomposition_with_args_for_jvp<${return_types}>("${op_name}", *opt_op, ks, ${arg_names});
-  } else {
-    ${guard}
-    return ${base_type_call};
-  }
+  TORCH_CHECK_NOT_IMPLEMENTED(
+      !(${any_has_forward_grad}),
+      "Trying to use forward AD with ${op_name} that does not support it because it has not been implemented yet.\\n"
+      "Please file an issue to PyTorch at https://github.com/pytorch/pytorch/issues/new?template=feature-request.yml "
+      "so that we can prioritize its implementation or submit a PR adding the implementation to derivatives.yaml");
+  ${guard}
+  return ${base_type_call};
 })();
 """
 )

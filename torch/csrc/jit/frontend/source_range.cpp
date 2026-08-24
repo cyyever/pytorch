@@ -1,6 +1,5 @@
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/frontend/source_range.h>
-#include <torch/csrc/jit/serialization/source_range_serialization.h>
 #include <functional>
 #include <iostream>
 #include <regex>
@@ -184,63 +183,8 @@ StringCordView::IteratorImpl& StringCordView::IteratorImpl::operator+=(
   return *this;
 }
 
-size_t SourceRangeHasher::operator()(const torch::jit::SourceRange& key) const {
-  return (
-      std::hash<const void*>()(key.source().get()) ^
-      std::hash<size_t>()(key.start()) ^ std::hash<size_t>()(key.end()));
-}
-
-std::optional<SourceRange> Source::findSourceRangeThatGenerated(
-    const SourceRange& range) {
-  if (!gen_ranges_) {
-    return std::nullopt;
-  }
-  return gen_ranges_->findSourceRangeThatGenerated(range);
-}
-
 void SourceRange::highlight(std::ostream& out) const {
-  // Retrieve original SourceRange, if present.
-  if (auto orig_source_range = findSourceRangeThatGenerated()) {
-    orig_source_range->highlight(out);
-    out << "Serialized ";
-  }
   print_with_context(out, CONTEXT, true, "");
-}
-
-void format_stack_trace(
-    std::ostream& out,
-    const std::vector<StackEntry>& entries) {
-  bool has_orig_ranges = false;
-  std::vector<SourceRange> orig_ranges;
-  // gather original ranges. if we have a situation where we do not have orig
-  // ranges for some frames, we still want to report them for the frames we do
-  // have,
-  //  so substitute the current range for that frame
-  for (const StackEntry& entry : entries) {
-    if (auto orig_source_range = entry.range.findSourceRangeThatGenerated()) {
-      orig_ranges.emplace_back(std::move(orig_source_range.value()));
-      has_orig_ranges = true;
-    } else {
-      orig_ranges.emplace_back(entry.range);
-    }
-  }
-  out << "Traceback of TorchScript";
-  if (has_orig_ranges) {
-    out << ", serialized code";
-  }
-  out << " (most recent call last):\n";
-  for (const StackEntry& entry : entries) {
-    entry.range.print_with_context(
-        out, SourceRange::CONTEXT, true, entry.filename);
-  }
-  if (has_orig_ranges) {
-    out << "\nTraceback of TorchScript, original code (most recent call last):\n";
-    auto it = entries.begin();
-    for (const SourceRange& range : orig_ranges) {
-      range.print_with_context(
-          out, SourceRange::CONTEXT, true, (*it++).filename);
-    }
-  }
 }
 
 void SourceRange::print_with_context(

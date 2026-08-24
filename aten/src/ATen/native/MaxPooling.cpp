@@ -12,7 +12,6 @@
 #include <ATen/ops/empty.h>
 #include <ATen/ops/max_pool1d_native.h>
 #include <ATen/ops/max_pool1d_with_indices.h>
-#include <ATen/ops/quantized_max_pool1d.h>
 #endif
 
 namespace at::native {
@@ -71,11 +70,6 @@ Tensor max_pool1d(
            (ndim == 3 && self.sym_size(1) != 0 && self.sym_size(2) != 0),
        "max_pool1d: Expected 2D or 3D (batch mode) tensor with optional 0 dim batch size for input, but got:",
        self.sym_sizes());
-
-  if (self.is_quantized()) {
-    return at::quantized_max_pool1d(
-        self, kernel_size, stride, padding, dilation, ceil_mode);
-  }
 
   check_max_pool1d(self, kernel_size, stride, padding, dilation, ceil_mode);
   if ((self.requires_grad() && at::GradMode::is_enabled()) ||

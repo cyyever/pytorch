@@ -83,7 +83,6 @@ def parse_backend_yaml(
     if cpp_namespace is None:
         raise AssertionError('You must provide a value for "cpp_namespace"')
 
-    # Mostly just defaulting to false to stick with LazyTensor convention.
     use_out_as_primary = yaml_values.pop("use_out_as_primary", False)
     if not isinstance(use_out_as_primary, bool):
         raise AssertionError(
@@ -119,14 +118,14 @@ def parse_backend_yaml(
             f'expected "autograd" to be a list, but got: {supported_autograd}'
         )
 
-    # full_codegen is ignored by parse_backend_yaml, and re-parsed in gen_lazy_tensor.py
+    # full_codegen is ignored here; out-of-tree lazy tensor backends re-parse it
     full_codegen = yaml_values.pop("full_codegen", [])
     supported.extend(full_codegen)
 
-    # non_native is ignored by parse_backend_yaml, and re-parsed in gen_lazy_tensor.py
+    # non_native is ignored here; out-of-tree lazy tensor backends re-parse it
     yaml_values.pop("non_native", {})
 
-    # ir_gen is ignored by parse_backend_yaml, and re-parsed in gen_lazy_tensor.py
+    # ir_gen is ignored here; out-of-tree lazy tensor backends re-parse it
     yaml_values.pop("ir_gen", {})
 
     if len(yaml_values.keys()) != 0:
@@ -440,7 +439,7 @@ def gen_dispatcher_registrations(
     backend_dispatch_key: DispatchKey,
     dispatch_key: DispatchKey,
     selector: SelectiveBuilder,
-    # build_in_tree is true for lazy TS backend and affects include paths, not used for external backends
+    # build_in_tree affects include paths; not used for external backends
     build_in_tree: bool = False,
     per_operator_headers: bool = False,
     backend_name: str = "",

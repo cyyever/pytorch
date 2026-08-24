@@ -2890,7 +2890,7 @@ class FakeTensorMode(TorchDispatchMode):
 
         def maybe_to_real_tensor(
             t: T,
-        ) -> T | Tensor | torch._C.ScriptObject | None:
+        ) -> T | Tensor | torch.ScriptObject | None:
             if isinstance(t, FakeTensor):  # noqa: ISINSTANCE_FAKE_TENSOR
                 return t.real_tensor
             elif isinstance(t, py_sym_types):

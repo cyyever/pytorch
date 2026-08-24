@@ -259,7 +259,6 @@ void CUDAGeneratorState::replay_prologue(CaptureId_t capture_id, uint64_t wholeg
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Curand philox does allow offsets that aren't a multiple of 4.
  * But jit kernels don't use curand, they use a custom "Philox" class (see
- * torch/csrc/jit/tensorexpr/cuda_random.h or
  * torch/csrc/jit/codegen/cuda/runtime/random_numbers.cu).
  * The "Philox" constructor computes offset/4 (a uint64_t division) to locate its
  * internal start in its virtual bitstream viewed as 128-bit chunks, then, when called

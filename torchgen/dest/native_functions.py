@@ -26,8 +26,6 @@ _CPU_DLL_CUDA_KERNELS = frozenset(
         "log_sigmoid_backward_cuda_out",
         "triton_multi_head_attention",
         "NestedTensor_softmax_dropout_cuda",
-        "masked_fill__quantized_cuda",
-        "_index_put_impl_quantized_cuda_",
     }
 )
 

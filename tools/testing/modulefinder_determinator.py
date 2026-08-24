@@ -30,7 +30,6 @@ TARGET_DET_LIST = [
     "test_dataloader",
     "test_determination",
     "test_futures",
-    "test_jit",
     "test_jit_legacy",
     "test_jit_profiling",
     "test_linalg",

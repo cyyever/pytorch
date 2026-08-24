@@ -31,29 +31,8 @@ class InteropTests(torch._dynamo.test_case.TestCase):
         fx_fn = torch.fx.symbolic_trace(fn)
         self._common(lambda a, b: fx_fn(a, b) + 1)
 
-    def test_script_fn(self):
-        script_fn = torch.jit.script(fn)
-        self._common(lambda a, b: script_fn(a, b) + 1)
 
-    def test_trace_fn(self):
-        trace_fn = torch.jit.trace(
-            fn,
-            [torch.zeros(10, device=device_type), torch.zeros(10, device=device_type)],
-        )
-        self._common(lambda a, b: trace_fn(a, b) + 1)
 
-    def test_staticmethod_script_fn(self):
-        class Foo:
-            @staticmethod
-            @torch.jit.script
-            def _g(a):
-                return a**2
-
-            def g(self, a, b):
-                return self._g(a) + b
-
-        foo = Foo()
-        self._common(lambda a, b: foo.g(a, b) + 1)
 
     def test_vmap_in_graph(self):
         def traceable(f):

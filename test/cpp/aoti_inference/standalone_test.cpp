@@ -1,9 +1,12 @@
 #include <chrono>
+#include <fstream>
+#include <iterator>
 #include <string>
+#include <vector>
 
-#include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
-#include <torch/script.h>
 #include <torch/torch.h>
+#include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
+#include <torch/csrc/jit/serialization/pickle.h>
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {
@@ -23,13 +26,19 @@ int main(int argc, char* argv[]) {
   }
 
   std::string data_path = argv[1];
-  torch::jit::script::Module data_loader = torch::jit::load(data_path);
-  torch::jit::script::Module model =
-      data_loader.attr("script_module").toModule();
-  const auto& model_so_path = data_loader.attr("model_so_path").toStringRef();
-  const auto& script_input_tensors = data_loader.attr("inputs").toList().vec();
-  const auto& input_tensors = data_loader.attr("inputs").toTensorList().vec();
-  const auto& output_tensors = data_loader.attr("outputs").toTensorList().vec();
+  std::ifstream in(data_path, std::ios::binary);
+  TORCH_CHECK(in.good(), "cannot open fixture: ", data_path);
+  std::vector<char> bytes(
+      (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  auto data_loader = torch::jit::pickle_load(bytes).toGenericDict();
+  auto at = [&](const std::string& key) {
+    auto it = data_loader.find(key);
+    TORCH_CHECK(it != data_loader.end(), "fixture has no key: ", key);
+    return it->value();
+  };
+  const auto& model_so_path = at("model_so_path").toStringRef();
+  const auto& input_tensors = at("inputs").toTensorList().vec();
+  const auto& output_tensors = at("outputs").toTensorList().vec();
 
   std::unique_ptr<torch::inductor::AOTIModelContainerRunner> runner;
   runner = std::make_unique<torch::inductor::AOTIModelContainerRunnerCpu>(
@@ -42,20 +51,6 @@ int main(int argc, char* argv[]) {
     assert(torch::allclose(output_tensors[i], actual_output_tensors[i]));
   }
 
-  // Start benchmarking for scripted module.
-  // Warm up
-  for (size_t i = 0; i < warmup_iter; i++) {
-    model.forward(script_input_tensors);
-  }
-
-  // Benchmark
-  auto start = std::chrono::high_resolution_clock::now();
-  for (size_t i = 0; i < benchmark_iter; i++) {
-    model.forward(script_input_tensors);
-  }
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> non_lowered_duration = end - start;
-
   // Start benchmarking for lowered module.
   // Warm up
   for (size_t i = 0; i < warmup_iter; i++) {
@@ -63,16 +58,13 @@ int main(int argc, char* argv[]) {
   }
 
   // Benchmark
-  start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < benchmark_iter; i++) {
     runner->run(input_tensors);
   }
-  end = std::chrono::high_resolution_clock::now();
+  auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> lowered_duration = end - start;
 
-  std::cout << "[Non-lowered] Time for " << benchmark_iter
-            << "iter(s): " << non_lowered_duration.count() << " sec(s)"
-            << std::endl;
   std::cout << "[Lowered] Time for " << benchmark_iter
             << "iter(s): " << lowered_duration.count() << " sec(s)"
             << std::endl;

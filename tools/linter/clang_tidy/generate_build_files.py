@@ -63,7 +63,6 @@ def run_autogen() -> None:
             "aten/src/ATen/native/native_functions.yaml",
             "--tags-path",
             "aten/src/ATen/native/tags.yaml",
-            "--gen-lazy-ts-backend",
         ]
     )
 

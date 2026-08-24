@@ -13,11 +13,11 @@
 #include <c10/util/StringUtil.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/frontend/source_range.h>
-#include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/testing/file_check.h>
 #include <optional>
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -557,24 +557,10 @@ void FileCheck::run(const std::string& test_file) {
   fcImpl->run(test_file);
 }
 
-void FileCheck::run(const Graph& graph) {
-  std::stringstream graph_str;
-  graph_str << graph;
-  fcImpl->run(std::move(graph_str).str());
-}
-
 void FileCheck::run(
     const std::string& input_checks_string,
     const std::string& test_string) {
   fcImpl->run(input_checks_string, test_string);
-}
-
-void FileCheck::run(
-    const std::string& input_checks_string,
-    const Graph& graph) {
-  std::stringstream graph_str;
-  graph_str << graph;
-  fcImpl->run(input_checks_string, std::move(graph_str).str());
 }
 
 FileCheck* FileCheck::check(const std::string& str) {

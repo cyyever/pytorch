@@ -6,7 +6,6 @@ import torch._dynamo
 import torch._dynamo.config as config
 import torch._dynamo.test_case
 from torch._dynamo.testing import same
-from torch.fx._lazy_graph_module import _force_skip_lazy_graph_module
 
 
 class Seq(torch.nn.Module):
@@ -86,14 +85,6 @@ class TestVerifyCorrectness(torch._dynamo.test_case.TestCase):
         self.assertEqual(r1.device, r2.device)
         self.assertEqual(r1.device, r3.device)
 
-    @_force_skip_lazy_graph_module()
-    def test_torchscript(self):
-        s = Seq()
-        i = torch.randn(10)
-        r1 = s(i)
-        opt_s = torch.compile(s, backend="ts")
-        r2 = opt_s(i)
-        self.assertTrue(same(r1, r2))
 
     def test_incorrect_verify_true(self):
         """

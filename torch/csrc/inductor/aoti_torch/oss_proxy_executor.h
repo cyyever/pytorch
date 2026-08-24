@@ -6,7 +6,6 @@
 #include <nlohmann/json.hpp>
 #include <torch/csrc/inductor/aoti_torch/c/shim.h>
 #include <torch/csrc/inductor/aoti_torch/proxy_executor.h>
-#include <torch/csrc/jit/api/function_impl.h> // @manual
 #include <iostream>
 #include <utility>
 
@@ -96,19 +95,6 @@ struct OSSOpKernelOperator : public OSSOpKernel {
   }
 };
 
-struct OSSCallTorchBindKernel : public OSSOpKernel {
-  OSSCallTorchBindKernel(std::string target, torch::jit::Function* method)
-      : OSSOpKernel(std::move(target)), method_(method) {}
-  torch::jit::Function* method_;
-  void run(std::vector<c10::IValue>& stack) override {
-    method_->run(stack);
-  }
-
-  c10::FunctionSchema schema() const override {
-    return method_->getSchema();
-  }
-};
-
 class OSSProxyExecutor : public ProxyExecutor {
  public:
   explicit OSSProxyExecutor(
@@ -151,9 +137,6 @@ class OSSProxyExecutor : public ProxyExecutor {
       const std::vector<c10::Argument>& schema_returns,
       const nlohmann::json& serialized_node,
       OSSOpKernel& op_kernel);
-
-  std::unique_ptr<OSSCallTorchBindKernel> get_call_torch_bind_kernel(
-      const nlohmann::json& serialized_node);
 
   std::vector<std::unique_ptr<OSSOpKernel>> op_kernels_;
   std::unique_ptr<c10::Device> device_;

@@ -22,9 +22,6 @@
 #include <ATen/native/TensorConversions.h>
 #include <ATen/native/cpu/SerialStackImpl.h>
 #include <ATen/native/layer_norm.h>
-#include <ATen/native/quantized/cpu/fbgemm_utils.h>
-#include <ATen/native/quantized/cpu/qembeddingbag.h>
-#include <ATen/native/quantized/cpu/qembeddingbag_prepack.h>
 #include <ATen/quantized/QTensorImpl.h>
 #include <ATen/quantized/Quantizer.h>
 
@@ -32,7 +29,6 @@
 #include <c10/util/Enumerate.h>
 #include <c10/util/irange.h>
 
-#include <torch/csrc/jit/runtime/static/ops.h>
 
 namespace at::native {
 
@@ -1073,146 +1069,6 @@ REGISTER_CPU_KERNEL("torch.ops.fb.scale_gradient.default", fb_scale_gradient, {
   out.copy_(in_0);
 })
 
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.embedding_bag_byte_rowwise_offsets.default",
-    quantized_embedding_bag_byte_rowwise_offsets,
-    {
-      const auto& weight = KernelInput(0).toTensor();
-      const auto& indices = KernelInput(1).toTensor();
-      const auto offsets = KernelInput(2).toOptional<at::Tensor>();
-      const auto pruned_weights = KernelInput(5).toBool();
-      const auto per_sample_weights = KernelInput(6).toOptional<at::Tensor>();
-      const auto compressed_indices_mapping =
-          KernelInput(7).toOptional<at::Tensor>();
-      const auto include_last_offset = KernelInput(8).toBool();
-      if (KernelOutput(0).isNone()) {
-        KernelOutput(0) = create_empty_from(weight, at::kFloat);
-      }
-      auto& out_t = KernelOutput(0).toTensor();
-      fastResizeToZero(out_t);
-      at::native::embedding_bag_byte_rowwise_offsets_out(
-          out_t,
-          weight,
-          indices,
-          offsets,
-          false, // unused scale_grad_by_freq
-          0, // unused mode
-          pruned_weights,
-          per_sample_weights,
-          compressed_indices_mapping,
-          include_last_offset);
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.embedding_bag_4bit_rowwise_offsets.default",
-    quantized_embedding_bag_4bit_rowwise_offsets,
-    {
-      const auto& weight = KernelInput(0).toTensor();
-      const auto& indices = KernelInput(1).toTensor();
-      const auto offsets = KernelInput(2).toOptional<at::Tensor>();
-      const auto pruned_weights = KernelInput(5).toBool();
-      const auto per_sample_weights = KernelInput(6).toOptional<at::Tensor>();
-      const auto compressed_indices_mapping =
-          KernelInput(7).toOptional<at::Tensor>();
-      const auto include_last_offset = KernelInput(8).toBool();
-      if (KernelOutput(0).isNone()) {
-        KernelOutput(0) = create_empty_from(weight, at::kFloat);
-      }
-      auto& out_t = KernelOutput(0).toTensor();
-      fastResizeToZero(out_t);
-      at::native::embedding_bag_4bit_rowwise_offsets_out(
-          out_t,
-          weight,
-          indices,
-          offsets,
-          false, // unused scale_grad_by_freq
-          0, // unused mode
-          pruned_weights,
-          per_sample_weights,
-          compressed_indices_mapping,
-          include_last_offset);
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.linear_dynamic_fp16.default",
-    quantized_linear_dynamic_fp16,
-    {
-      const auto& in_0 = KernelInput(0).toTensor();
-
-      if (auto& out_0 = KernelOutput(0); out_0.isNone()) {
-        out_0 = create_empty_from(in_0, at::kFloat);
-      }
-
-      auto& out_0 = KernelOutput(0).toTensor();
-      fastResizeToZero(out_0);
-
-      KernelInput(1).toCustomClass<LinearPackedParamsBase>()->apply_dynamic_out(
-          in_0, out_0, /* reduce_range= */ false);
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops._quantized.wrapped_fbgemm_linear_fp16_weight.default",
-    _quantized_wrapped_fbgemm_linear_fp16_weight,
-    {
-      const auto& in_0 = KernelInput(0).toTensor();
-      const auto& weight = KernelInput(1).toTensor();
-      auto bias = KernelInput(2).toOptional<at::Tensor>();
-
-      if (auto& out_0 = KernelOutput(0); out_0.isNone()) {
-        out_0 = create_empty_from(in_0, at::kFloat);
-      }
-
-      auto& out_0 = KernelOutput(0).toTensor();
-      fastResizeToZero(out_0);
-
-      at::native::fbgemm_linear_fp16_weight(
-          in_0, weight, bias.value_or(at::Tensor()), out_0);
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.linear_relu_dynamic_fp16.default",
-    quantized_linear_relu_dynamic_fp16,
-    {
-      const auto& in_0 = KernelInput(0).toTensor();
-
-      if (auto& out_0 = KernelOutput(0); out_0.isNone()) {
-        out_0 = create_empty_from(in_0, at::kFloat);
-      }
-
-      auto& out_0 = KernelOutput(0).toTensor();
-      fastResizeToZero(out_0);
-
-      KernelInput(1)
-          .toCustomClass<LinearPackedParamsBase>()
-          ->apply_dynamic_out(in_0, out_0, /* reduce_range= */ false)
-          .relu_();
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.linear.default",
-    quantized_linear_default,
-    {
-      const auto& in_0 = KernelInput(0).toTensor();
-      const auto w_prepack =
-          KernelInput(1).toCustomClass<LinearPackedParamsBase>();
-      const auto output_scale = KernelInput(2).toDouble();
-      const auto output_zero_point = KernelInput(3).toInt();
-      if (auto& out_t = KernelOutput(0); out_t.isNone()) {
-        out_t = at::native::empty_affine_quantized(
-            {0},
-            c10::kQUInt8,
-            std::nullopt,
-            c10::kCPU,
-            false,
-            output_scale,
-            output_zero_point,
-            std::nullopt);
-      }
-      auto& out_tensor = KernelOutput(0).toTensor();
-      fastResizeToZero(out_tensor);
-      w_prepack->apply_out(in_0, output_scale, output_zero_point, out_tensor);
-    })
-
 REGISTER_CPU_KERNEL("torch.ops.aten.logit.default", aten_logit, {
   const auto& in0_t = KernelInput(0).toTensor();
   const auto& in1_d = KernelInput(1).toOptional<double>();
@@ -1240,36 +1096,6 @@ REGISTER_CPU_KERNEL(
       auto& out = KernelOutput(0).toTensor();
       fastResizeToZero(out);
       at::slice_scatter_out(out, self, src, dim, start, end, step);
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.embedding_bag_byte_unpack.default",
-    quantized_embedding_bag_byte_unpack_default,
-    {
-      const auto& weight = KernelInput(0).toTensor();
-      if (auto& out = KernelOutput(0); out.isNone()) {
-        out = at::empty(
-            {},
-            weight.options().dtype(at::kFloat),
-            weight.suggest_memory_format());
-      }
-      auto& out_tensor = KernelOutput(0).toTensor();
-      fastResizeToZero(out_tensor);
-      at::native::qembeddingbag_byte_unpack_out(out_tensor, weight);
-    })
-
-REGISTER_CPU_KERNEL(
-    "torch.ops.quantized.embedding_bag_byte_prepack.default",
-    embedding_bag_byte_prepack_default,
-    {
-      const auto& weight = KernelInput(0).toTensor();
-      if (auto& out_t = KernelOutput(0); out_t.isNone()) {
-        KernelOutput(0) = at::native::qembeddingbag_byte_prepack(weight);
-        return;
-      }
-      auto& out_tensor = KernelOutput(0).toTensor();
-      fastResizeToZero(out_tensor);
-      at::native::qembeddingbag_byte_prepack_out(out_tensor, weight);
     })
 
 REGISTER_CPU_KERNEL("torch.ops.aten.stack.default", aten_stack, {

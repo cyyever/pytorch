@@ -37,7 +37,6 @@ __all__ = [
     "PackageExporter",
 ]
 
-_gate_torchscript_serialization = True
 
 ActionHook = Callable[["PackageExporter", str], None]
 
@@ -958,14 +957,6 @@ class PackageExporter:
             return ("storage", storage_type, storage_id, location, storage_numel)
 
         if hasattr(obj, "__reduce_package__"):
-            if _gate_torchscript_serialization and isinstance(
-                obj, torch.jit.RecursiveScriptModule
-            ):
-                raise Exception(  # noqa: TRY002
-                    "Serializing ScriptModules directly into a package is a beta feature. "
-                    "To use, set global "
-                    "`torch.package.package_exporter._gate_torchscript_serialization` to `False`."
-                )
             if self.serialized_reduces.get(id(obj)) is None:
                 self.serialized_reduces[id(obj)] = (
                     "reduce_package",

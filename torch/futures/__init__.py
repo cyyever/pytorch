@@ -21,8 +21,8 @@ S = TypeVar("S")
 class Future(torch._C.Future, Generic[T]):
     r"""
     Wrapper around a ``torch._C.Future`` which encapsulates an asynchronous
-    execution of a callable, e.g. :meth:`~torch.distributed.rpc.rpc_async`. It
-    also exposes a set of APIs to add callback functions and set results.
+    execution of a callable. It also exposes a set of APIs to add callback
+    functions and set results.
 
     .. warning:: GPU support is a beta feature, subject to changes.
     """

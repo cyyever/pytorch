@@ -25,8 +25,6 @@ namespace detail {
 // Obtains the base name from a full path.
 C10_API std::string StripBasename(const std::string& full_path);
 
-C10_API std::string ExcludeFileExtension(const std::string& full_path);
-
 struct CompileTimeEmptyString {
   operator const std::string&() const {
     static const std::string empty_string_literal;

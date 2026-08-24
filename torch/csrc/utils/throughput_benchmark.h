@@ -1,11 +1,7 @@
 #pragma once
 
-#include <ATen/core/ivalue.h>
 #include <pybind11/pybind11.h>
-#include <torch/csrc/jit/api/module.h>
 #include <torch/csrc/utils/pybind.h>
-
-#include <torch/csrc/jit/python/pybind_utils.h>
 
 #include <iosfwd>
 #include <memory>
@@ -112,31 +108,14 @@ struct C10_HIDDEN ModuleInput {
   py::kwargs kwargs;
 };
 typedef py::object ModuleOutput;
-typedef std::vector<at::IValue> ScriptModuleInput;
-typedef at::IValue ScriptModuleOutput;
 
 template <class Input>
 Input cloneInput(const Input& input);
 
-typedef BenchmarkHelper<ScriptModuleInput, at::IValue, jit::Module>
-    ScriptModuleBenchmark;
-template <>
-inline BenchmarkHelper<ScriptModuleInput, at::IValue, jit::Module>::
-    BenchmarkHelper()
-    : model_("Module", std::make_shared<jit::CompilationUnit>()),
-      initialized_(false) {}
 typedef BenchmarkHelper<ModuleInput, py::object, py::object> ModuleBenchmark;
 template <>
 inline BenchmarkHelper<ModuleInput, py::object, py::object>::BenchmarkHelper()
     : initialized_(false) {}
-
-template <>
-void ScriptModuleBenchmark::runOnce(ScriptModuleInput&& input) const;
-
-template <>
-ScriptModuleOutput ScriptModuleBenchmark::runOnce(
-    const py::args& args,
-    const py::kwargs& kwargs) const;
 
 template <>
 void ModuleBenchmark::runOnce(ModuleInput&& input) const;
@@ -145,11 +124,6 @@ template <>
 ModuleOutput ModuleBenchmark::runOnce(
     const py::args& args,
     const py::kwargs& kwargs) const;
-
-template <>
-void ScriptModuleBenchmark::addInput(py::args&& args, py::kwargs&& kwargs);
-template <>
-void ScriptModuleBenchmark::addInput(ScriptModuleInput&& input);
 
 template <>
 void ModuleBenchmark::addInput(py::args&& args, py::kwargs&& kwargs);
@@ -166,13 +140,11 @@ void ModuleBenchmark::addInput(py::args&& args, py::kwargs&& kwargs);
  * For current available configurations refer to the BenchmarkConfig
  * documentation
  *
- * The class supports working with either nn.Module or ScriptModule.
- * Under the hood it just dispatches to corresponding specialization of
- * class BenchmarkHelper<Input, Output, Model>
+ * The class supports working with nn.Module. Under the hood it just uses
+ * the ModuleBenchmark specialization of BenchmarkHelper<Input, Output, Model>
  */
 class C10_HIDDEN ThroughputBenchmark {
  public:
-  explicit ThroughputBenchmark(const jit::Module& module);
   explicit ThroughputBenchmark(py::object module);
 
   // Add one more input example. This input example should be in the exact
@@ -191,7 +163,6 @@ class C10_HIDDEN ThroughputBenchmark {
   BenchmarkExecutionStats benchmark(const BenchmarkConfig& config) const;
 
  private:
-  detail::ScriptModuleBenchmark script_module_;
   detail::ModuleBenchmark module_;
 };
 } // namespace torch::throughput_benchmark

@@ -203,17 +203,9 @@ generate_test_with_additional_tensors()
 generate_cuda_alloc_test()
 
 
-# Use this to communicate tensors to the cpp code
-class Serializer(torch.nn.Module):
-    def __init__(self, data):
-        super().__init__()
-        for key in data:
-            setattr(self, key, data[key])
-
-
-torch.jit.script(Serializer(data)).save("data.pt")
-torch.jit.script(Serializer(large_data)).save("large_data.pt")
-torch.jit.script(Serializer(data_with_tensor_constants)).save(
-    "data_with_tensor_constants.pt"
-)
-torch.jit.script(Serializer(cuda_alloc_data)).save("cuda_alloc_data.pt")
+# Use this to communicate tensors to the cpp code, which reads the archives back
+# with torch::pickle_load.
+torch.save(data, "data.pt")
+torch.save(large_data, "large_data.pt")
+torch.save(data_with_tensor_constants, "data_with_tensor_constants.pt")
+torch.save(cuda_alloc_data, "cuda_alloc_data.pt")

@@ -1,41 +1,21 @@
 # mypy: allow-untyped-decorators
 # mypy: allow-untyped-defs
-import inspect
 from collections.abc import Callable
 
 import torch
 import torch._decomp
 from torch import Tensor
-from torch._prims_common.wrappers import _maybe_remove_out_wrapper
 
 
-decomposition_table = torch._decomp.decomposition_table
 decomposition_table_for_jvp: dict[torch._ops.OperatorBase, Callable] = {}
 register_decomposition = torch._decomp.register_decomposition
 aten = torch.ops.aten
 
 # NOTE: [forward-mode AD decompositions mechanism]
 #
-# The mechanism is in VariableType,
-#   IF any inputs have forward grad
-#      AND there is no forward AD formula implemented
-#      AND the functions are actually differentiable
-#   run the decomposition
-#      See run_jit_decomposition_with_args_for_jvp
-#      We currently use python decompositions that we torchscript.
-#
-# Note that we would be building the backward graph at the decomposed level
-# too, but that is OK, because we would've errored out otherwise anyway.
-#
-# TODO: The mechanism we are using to register decompositions doesn't
-# seem to be exclusively used for jvp. So open question here is whether
-# torch/csrc/jit/runtime/decomposition_registry.cpp is being used for other things.
-# If that is the case, we may go down the decomposition path unexpectedly
-# (and possibly produce an unintelligible error) vs erroring out earlier and
-# printing that the forward AD formula is not implemented.
-#
-# The solution to this may be to have an explicit whitelist to control when
-# to enable the decomposition.
+# The decomposition registry in VariableType relied on TorchScript, which has
+# been removed, so these decompositions are no longer registered as jit graphs
+# and ops without a forward AD formula will error out directly.
 
 
 def maybe_register_decomposition(op):
@@ -56,42 +36,6 @@ decomposition_table_for_jvp = {}
 
 def register_decomposition_for_jvp(fn):
     return register_decomposition(fn, registry=decomposition_table_for_jvp)
-
-
-def _register_jit_decomposition_for_jvp(decomp, use_python=False):
-    if decomp in decomposition_table_for_jvp:
-        decomposition_table_used = decomposition_table_for_jvp
-    elif decomp in decomposition_table:
-        decomposition_table_used = decomposition_table
-    else:
-        raise RuntimeError(f"could not find decomposition for {decomp}")
-    decomp_fn = decomposition_table_used[decomp]
-
-    # `out_wrapper` extends a decompositions signature with
-    # an `out` parameter. However jit will use the unwrapped function's
-    # signature instead so we need to unwrap here to prevent an error
-    decomp_fn = _maybe_remove_out_wrapper(decomp_fn)
-
-    if use_python:
-        decomp_fn = torch.jit.ignore(decomp_fn)
-        sig = inspect.signature(decomp_fn)
-
-        # Create a string wrapping the function from the signature
-        # example output:
-        # def wrapped_decomp(x: torch.Tensor, y: int, z: int):
-        #   return decomp_fn(x, y, z)
-        # Thanks copilot!
-        def get_function_def(sig):
-            param_def = [f"{param_str}" for param_str in sig.parameters.values()]
-            param_use = [f"{param_str}" for param_str in sig.parameters]
-
-            return f"def wrapped_decomp({', '.join(param_def)}):\n  return decomp_fn({', '.join(param_use)})\n"
-
-        f_str = get_function_def(sig)
-        graph = torch.jit.CompilationUnit(f_str).wrapped_decomp.graph
-    else:
-        graph = torch.jit.script(decomp_fn).graph
-    torch.jit._register_decomposition(decomp, graph)
 
 
 # The only decompositions here are temporary or hacks for the purposes of jvp
@@ -330,16 +274,3 @@ def batch_norm_backward(
         eps,
         output_mask,
     )
-
-
-_register_jit_decomposition_for_jvp(torch.ops.aten.trace.default, use_python=True)
-_register_jit_decomposition_for_jvp(torch.ops.aten.nll_loss_backward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.nll_loss2d_backward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten._log_softmax_backward_data.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten._softmax_backward_data.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.log_sigmoid_forward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.native_layer_norm_backward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.native_batch_norm_backward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.cudnn_batch_norm_backward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.batch_norm_backward.default)
-_register_jit_decomposition_for_jvp(torch.ops.aten.miopen_batch_norm_backward.default)

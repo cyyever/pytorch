@@ -20,11 +20,8 @@ struct InputMeta {
       : data_ptr(t.data_ptr()), inner_size(t.sizes()[dim] * inner) {}
 };
 
-// This kernel is used by two TensorList types:
-// 1. stack_serial_kernel uses at::ArrayRef<Tensor>
-// 2. Static runtime calls this kernel directly (csrc/jit/runtime/static/ops.cpp) with
-//    ProcessedNodeInputWrapper.
-// When making changes, make sure that they are compatible with both types!
+// This kernel is templated on TensorListType; stack_serial_kernel uses
+// at::ArrayRef<Tensor>.
 template <typename scalar_t, typename TensorListType>
 void stack_serial_kernel_impl(Tensor& result, TensorListType tensors, int64_t dim) {
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(

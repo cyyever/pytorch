@@ -33,8 +33,6 @@ import torch.fx as fx
 from torch._dynamo.debug_utils import (
     AccuracyError,
     backend_accuracy_fails,
-    BUCK_CMD_PREFIX,
-    BuckTargetWriter,
     extra_imports,
     generate_config_string,
     generate_env_vars_string,
@@ -111,11 +109,6 @@ class WrapBackendDebug:
 
             def add_paths(exc: Exception) -> None:
                 exc.minifier_path = os.path.join(minifier_dir(), "minifier_launcher.py")  # type: ignore[attr-defined]
-                if use_buck:
-                    exc.buck_command = " ".join(  # type: ignore[attr-defined]
-                        BUCK_CMD_PREFIX
-                        + [BuckTargetWriter(exc.minifier_path).cmd_line_path]  # type: ignore[attr-defined]
-                    )
 
             if config.repro_level == 3:
                 dump_to_minify_after_dynamo(gm, example_inputs, self._compiler_name)
@@ -267,9 +260,6 @@ def dump_backend_repro_as_file(
         )
     latest_repro = os.path.join(curdir, "repro.py")
     log.warning("Copying %s to %s for convenience", file_name, latest_repro)
-
-    if use_buck:
-        BuckTargetWriter(latest_repro).write()
 
     shutil.copyfile(file_name, latest_repro)
 

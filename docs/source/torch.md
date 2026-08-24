@@ -888,7 +888,6 @@ False
     addr
     baddbmm
     bmm
-    chain_matmul
     cholesky_inverse
     cholesky_solve
     dot
@@ -960,7 +959,6 @@ during migration, we recommend using the public APIs.
     is_autocast_ipu_enabled
     is_autocast_xla_enabled
     is_distributed
-    is_vulkan_available
     merge_type_from_type_comment
     parse_ir
     parse_schema
@@ -1097,23 +1095,6 @@ This feature is a prototype and may have compatibility breaking changes in the f
 
 ```{eval-rst}
 .. py:module:: torch.utils.hipify
-```
-
-```{eval-rst}
-.. py:module:: torch.utils.model_dump
-```
-
-```{eval-rst}
-.. currentmodule:: torch.utils.model_dump
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    get_inline_skeleton
-    get_model_info
 ```
 
 ```{eval-rst}

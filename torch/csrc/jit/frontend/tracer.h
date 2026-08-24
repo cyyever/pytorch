@@ -215,15 +215,6 @@ TORCH_API std::function<void()> pauseTracing();
 
 TORCH_API Value* getValueTrace(const IValue& var);
 
-TORCH_API std::pair<std::shared_ptr<TracingState>, Stack> trace(
-    Stack inputs,
-    const std::function<Stack(Stack)>& traced_fn,
-    std::function<std::string(const Variable&)> var_name_lookup_fn,
-    bool strict = true,
-    bool force_outplace = false,
-    Module* self = nullptr,
-    const std::vector<std::string>& argument_names = {});
-
 TORCH_API void abandon();
 
 // NB: those serve both as an intermediate steps in addInputs below,
