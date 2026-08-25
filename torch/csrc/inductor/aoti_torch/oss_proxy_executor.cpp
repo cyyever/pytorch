@@ -570,50 +570,6 @@ void OSSProxyExecutor::get_output_info_from_serialized(
   }
 }
 
-std::unique_ptr<OSSCallTorchBindKernel> OSSProxyExecutor::
-    get_call_torch_bind_kernel(const nlohmann::json& serialized_node) {
-  // const std::string& target = serialized_node["target"].get<std::string>();
-  TORCH_CHECK(
-      serialized_node["inputs"].size() > 1,
-      "Expects higher_order.call_torchbind to only have at least 2 attributes, object and methodName");
-
-  const auto first_input = serialized_node["inputs"][0]["arg"]["as_custom_obj"];
-  const std::string torchbind_obj_name = first_input["name"].get<std::string>();
-  const std::string class_fqn = first_input["class_fqn"].get<std::string>();
-  const std::string method_name =
-      serialized_node["inputs"][1]["arg"]["as_string"].get<std::string>();
-
-  auto customClassType_ = torch::jit::getCustomClass(class_fqn);
-  auto method = customClassType_->findMethod(method_name);
-
-  CHECK(method != nullptr) << "method not found: " << method_name;
-
-  TORCH_CHECK(
-      has_key(custom_objs_, torchbind_obj_name),
-      "ProxyExecutor does not have a custom object named ",
-      torchbind_obj_name,
-      " from call_torchbind ");
-
-  const c10::FunctionSchema& schema = method->getSchema();
-
-  const auto& schema_args = schema.arguments();
-  const auto& schema_returns = schema.returns();
-
-  std::unique_ptr<OSSCallTorchBindKernel> op_kernel =
-      std::make_unique<OSSCallTorchBindKernel>("call_torchbind", method);
-  auto modified_serialized_node = serialized_node;
-  // Remove the second elements (the method string) from inputs because they
-  // are only for HOP
-  auto& inputs = modified_serialized_node["inputs"];
-  // Erase the second element (index 1)
-  inputs.erase(inputs.begin() + 1);
-
-  get_input_info_from_serialized(
-      schema_args, modified_serialized_node, *op_kernel);
-  get_output_info_from_serialized(schema_returns, serialized_node, *op_kernel);
-  return op_kernel;
-}
-
 OSSProxyExecutor::OSSProxyExecutor(
     const std::string& json_path,
     const std::string& device_str,
@@ -696,10 +652,9 @@ OSSProxyExecutor::OSSProxyExecutor(
     }
 
     if (target == "call_torchbind") {
-      // Special handling for CallTorchBind HOP
-      std::unique_ptr<OSSCallTorchBindKernel> op_kernel =
-          get_call_torch_bind_kernel(serialized_node);
-      op_kernels_.emplace_back(std::move(op_kernel));
+      // CallTorchBind HOP relies on TorchScript custom classes, which are gone.
+      TORCH_CHECK(
+          false, "higher_order.call_torchbind is not supported by this build");
     } else {
       c10::OperatorHandle op_handle = [&]() {
         try {

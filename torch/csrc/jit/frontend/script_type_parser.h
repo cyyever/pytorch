@@ -1,4 +1,5 @@
 #pragma once
+#include <ATen/core/function_schema.h>
 #include <ATen/core/jit_type.h>
 #include <torch/csrc/Export.h>
 #include <torch/csrc/jit/frontend/resolver.h>
@@ -25,7 +26,7 @@ class TORCH_API ScriptTypeParser {
 
   c10::TypePtr parseType(const std::string& str);
 
-  FunctionSchema parseSchemaFromDef(const Def& def, bool skip_self);
+  c10::FunctionSchema parseSchemaFromDef(const Def& def, bool skip_self);
 
   c10::IValue parseClassConstant(const Assign& assign);
 
@@ -36,13 +37,13 @@ class TORCH_API ScriptTypeParser {
   at::TypePtr subscriptToType(
       const std::string& typeName,
       const Subscript& subscript) const;
-  std::vector<IValue> evaluateDefaults(
+  std::vector<c10::IValue> evaluateDefaults(
       const SourceRange& r,
       const std::vector<Expr>& default_types,
       const std::vector<Expr>& default_exprs);
-  std::vector<Argument> parseArgsFromDecl(const Decl& decl, bool skip_self);
+  std::vector<c10::Argument> parseArgsFromDecl(const Decl& decl, bool skip_self);
 
-  std::vector<Argument> parseReturnFromDecl(const Decl& decl);
+  std::vector<c10::Argument> parseReturnFromDecl(const Decl& decl);
 
   ResolverPtr resolver_ = nullptr;
 
