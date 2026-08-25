@@ -21,6 +21,15 @@ namespace {
     }                                                      \
   } while (0)
 
+// The packed bfloat16 path in fastAtomicAdd needs sm_80; below that it falls
+// back to a scalar add, which by design leaves the paired neighbour alone.
+inline bool packedBF16Supported() {
+  cudaDeviceProp prop{};
+  int dev = 0;
+  return cudaGetDevice(&dev) == cudaSuccess &&
+      cudaGetDeviceProperties(&prop, dev) == cudaSuccess && prop.major >= 8;
+}
+
 #define CUDA_ASSERT_OK(expr)                                            \
   do {                                                                  \
     cudaError_t err_ = (expr);                                          \
@@ -166,7 +175,9 @@ TEST(TestFastAtomicAdd, ScatterAdd) {
 TEST(TestFastAtomicAdd, VectorizedBounds) {
   SKIP_IF_NO_CUDA();
   testVectorizedBounds<torch::headeronly::Half>();
-  testVectorizedBounds<torch::headeronly::BFloat16>();
+  if (packedBF16Supported()) {
+    testVectorizedBounds<torch::headeronly::BFloat16>();
+  }
 }
 
 TEST(TestFastAtomicAdd, FastSpecializedAtomicAdd) {
