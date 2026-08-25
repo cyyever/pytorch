@@ -366,9 +366,7 @@ c10::intrusive_ptr<::c10d::Backend> ProcessGroupNCCL::split(
   const std::string& name = ncclOpts->group_name;
   ncclConfig_t config =
       newRank == -1 ? ncclOpts->config : cloneNcclConfig(ncclOpts->config);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
   config.commName = name.c_str();
-#endif
 
   // Collective on the parent comm: every parent rank calls commSplit exactly
   // once, members with their color and non-members with NCCL_SPLIT_NOCOLOR.
@@ -400,14 +398,12 @@ c10::intrusive_ptr<::c10d::Backend> ProcessGroupNCCL::split(
   auto childOpts = Options::create(ncclOpts->is_high_priority_stream);
   childOpts->timeout = ncclOpts->timeout;
   childOpts->config = config;
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
   // commName above borrows `name`, which belongs to the Options handed to
   // split() -- a clone that dies with the caller's frame. Every consumer of a
   // stored config assigns commName from a live string before passing it to
   // NCCL (createNcclComm, reconfigure(), this function), so store no pointer
   // rather than one that outlives its string.
   childOpts->config.commName = nullptr;
-#endif
   childOpts->group_name = ncclOpts->group_name;
   childOpts->group_desc = ncclOpts->group_desc;
 
@@ -1403,7 +1399,6 @@ c10::intrusive_ptr<WorkNCCL> ProcessGroupNCCL::allToAllSingleImpl(
   size_t chunk_size = input.numel() / comm_size_;
   const auto data_type = getNcclDataType(input);
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 28, 0)
   waitForNcclOperation(
       nccl_api_->allToAll(
           input.data_ptr(),
@@ -1414,38 +1409,6 @@ c10::intrusive_ptr<WorkNCCL> ProcessGroupNCCL::allToAllSingleImpl(
           stream),
       timeout,
       "NCCL AllToAll failed");
-#else
-  size_t offset = chunk_size * wordSize(data_type);
-  char* sptr = static_cast<char*>(input.data_ptr());
-  char* rptr = static_cast<char*>(output.data_ptr());
-  NCCL_CHECK(
-      nccl_api_, nccl_comm_, nccl_api_->groupStart(), "NCCL GroupStart failed");
-
-  try {
-    for (int i = 0; i < comm_size_; ++i) {
-      // Send to rank i
-      NCCL_CHECK_NONBLOCKING(
-          nccl_api_,
-          nccl_comm_,
-          nccl_api_->send(
-              sptr + i * offset, chunk_size, data_type, i, nccl_comm_, stream),
-          "NCCL Send failed in allToAllSingleImpl");
-
-      // Receive from rank i
-      NCCL_CHECK_NONBLOCKING(
-          nccl_api_,
-          nccl_comm_,
-          nccl_api_->recv(
-              rptr + i * offset, chunk_size, data_type, i, nccl_comm_, stream),
-          "NCCL Recv failed in allToAllSingleImpl");
-    }
-  } catch (...) {
-    NCCL_CHECK_IGNORE(nccl_api_, nccl_api_->groupEnd(), "NCCL GroupEnd failed");
-    throw;
-  }
-
-  waitForNcclOperation(nccl_api_->groupEnd(), timeout, "NCCL GroupEnd failed");
-#endif
 
   // Record end event after NCCL operation
   work->recordEnd();
