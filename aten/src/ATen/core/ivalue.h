@@ -2,7 +2,6 @@
 
 #include <ATen/core/DimVector.h>
 #include <ATen/core/TensorBody.h>
-#include <ATen/core/blob.h>
 #include <ATen/core/custom_class.h>
 #include <ATen/core/ivalue_to.h>
 #include <ATen/core/jit_type_base.h>
@@ -171,7 +170,6 @@ struct Capsule {
   _(Bool)                    \
   _(Tuple)                   \
   _(String)                  \
-  _(Blob)                    \
   _(GenericList)             \
   _(GenericDict)             \
   _(Future)                  \
@@ -464,22 +462,12 @@ struct TORCH_API IValue final {
   }
 
   /// @private [doxygen private]
-  IValue(intrusive_ptr<caffe2::Blob> blob) : tag(Tag::Blob) {
-    // TODO (after Tensor merge) If we pass in a Blob holding a Tensor, extract
-    // and store it as a Tensor instead.
-    payload.u.as_intrusive_ptr = null_to_undefined_tensor(blob.release());
-  }
 
   /// @private [doxygen private]
-  bool isBlob() const {
-    return Tag::Blob == tag;
-  }
 
   /// @private [doxygen private]
-  c10::intrusive_ptr<caffe2::Blob> toBlob() &&;
 
   /// @private [doxygen private]
-  c10::intrusive_ptr<caffe2::Blob> toBlob() const&;
 
   // Capsule. No new callsites of these APIs should
   // be introduced.
@@ -1287,8 +1275,6 @@ struct TORCH_API IValue final {
       case Tag::Tuple:
         return true;
       case Tag::String:
-        return true;
-      case Tag::Blob:
         return true;
       case Tag::GenericList:
         return true;
