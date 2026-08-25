@@ -16,10 +16,6 @@
 #include <ATen/Parallel.h>
 #endif
 
-#if AT_USE_EIGEN_SPARSE()
-#include <ATen/native/sparse/eigen/SparseBlasImpl.h>
-#endif
-
 namespace at::native::sparse::impl {
 
 namespace {
@@ -437,8 +433,6 @@ void add_out_sparse_csr(
     const Tensor& result) {
 #if AT_USE_MKL_SPARSE()
   sparse::impl::mkl::add_out_sparse_csr(mat1, mat2, alpha, result);
-#elif AT_USE_EIGEN_SPARSE()
-  sparse::impl::eigen::add_out_sparse(mat1, mat2, alpha, result);
 #else
   TORCH_CHECK(
     false,

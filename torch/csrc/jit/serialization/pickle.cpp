@@ -12,20 +12,11 @@ namespace {
 
 c10::StrongTypePtr customClassResolver(const c10::QualifiedName& qn) {
   at::TypePtr type = nullptr;
-  if (c10::QualifiedName("__torch__").isPrefixOf(qn)) {
-    type = torch::getCustomClass(qn.qualifiedName());
-  } else {
-    // This is a regular type, fall back to the default type parser
+  {
+    // Fall back to the default type parser
     torch::jit::ScriptTypeParser parser;
     type = parser.parseType(qn.qualifiedName());
     return c10::StrongTypePtr(nullptr, std::move(type));
-  }
-  if (type == nullptr) {
-    TORCH_CHECK(
-        false,
-        "Couldn't resolve type '",
-        qn.qualifiedName(),
-        "', did you forget to add its build dependency?");
   }
   // Passing nullptr is a little bit sus, but should be fine:
   // 1. The lifetime of the class type is not tied to a specific
