@@ -4,16 +4,10 @@
 
 #include <c10/macros/Export.h>
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <ctime>
 #include <functional>
 #include <type_traits>
-
-#if defined(C10_IOS) && defined(C10_MOBILE)
-#include <sys/time.h> // for gettimeofday()
-#endif
 
 #if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define C10_RDTSC
@@ -39,41 +33,10 @@
 namespace c10 {
 
 using time_t = int64_t;
-using steady_clock_t = std::conditional_t<
-    std::chrono::high_resolution_clock::is_steady,
-    std::chrono::high_resolution_clock,
-    std::chrono::steady_clock>;
+C10_API time_t getTimeSinceEpoch();
 
-inline time_t getTimeSinceEpoch() {
-  auto now = std::chrono::system_clock::now().time_since_epoch();
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
-}
+C10_API time_t getTime(bool allow_monotonic = false);
 
-inline time_t getTime(bool allow_monotonic = false) {
-#if defined(C10_IOS) && defined(C10_MOBILE)
-  // clock_gettime is only available on iOS 10.0 or newer. Unlike OS X, iOS
-  // can't rely on CLOCK_REALTIME, as it is defined no matter if clock_gettime
-  // is implemented or not
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  return static_cast<time_t>(now.tv_sec) * 1000000000 +
-      static_cast<time_t>(now.tv_usec) * 1000;
-#elif defined(_WIN32) || defined(__MACH__)
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(
-             steady_clock_t::now().time_since_epoch())
-      .count();
-#else
-  // clock_gettime is *much* faster than std::chrono implementation on Linux
-  struct timespec t{};
-  auto mode = CLOCK_REALTIME;
-  if (allow_monotonic) {
-    mode = CLOCK_MONOTONIC;
-  }
-  clock_gettime(mode, &t);
-  return static_cast<time_t>(t.tv_sec) * 1000000000 +
-      static_cast<time_t>(t.tv_nsec);
-#endif
-}
 
 #if defined(C10_ARMTSC)
 inline uint64_t getArmApproximateTime() {
