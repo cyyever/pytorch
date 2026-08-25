@@ -1849,7 +1849,7 @@ class VariableBuilder:
                 mutation_type=AttributeMutationExisting(),
             )
         elif value is sys.exc_info or (
-            sys.version_info >= (3, 11) and value is sys.exception
+            value is sys.exception
         ):
             return SysFunctionVariable(value, source=self.source)
         elif is_function_or_wrapper(value) and inspect.getattr_static(

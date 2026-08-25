@@ -2378,16 +2378,6 @@ class NullVariable(VariableTracker):
         return "NullVariable"
 
     def reconstruct(self, codegen: "PyCodegen") -> None:
-        if sys.version_info < (3, 11):
-            unimplemented(
-                gb_type="cannot reconstruct NullVariable in Python < 3.11",
-                context="",
-                explanation="Attempted to generate PUSH_NULL instruction in Python < 3.11; "
-                "where this instruction does not exist.",
-                hints=[
-                    *graph_break_hints.DYNAMO_BUG,
-                ],
-            )
         codegen.append_output(create_instruction("PUSH_NULL"))
 
     def reconstruct_pycode(self, codegen: "PyCodegen") -> str:

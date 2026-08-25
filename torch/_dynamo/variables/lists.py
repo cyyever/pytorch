@@ -1419,13 +1419,6 @@ class DequeVariable(BaseListVariable):
     ) -> VariableTracker:
         return self._seq_richcompare(tx, other, op, collections.deque)
 
-    if sys.version_info < (3, 11):
-
-        def nb_bool_impl(self, tx: "InstructionTranslatorBase") -> VariableTracker:
-            # deque fills nb_bool (deque_bool: Py_SIZE(deque) != 0) up to Python
-            # 3.10; CPython GH-32397 dropped the slot in 3.11, so newer versions
-            # fall through to sq_length in generic_is_true and never reach here.
-            return ConstantVariable.create(len(self.items) > 0)
 
     def is_hashable(self) -> bool:
         return False
@@ -2327,11 +2320,9 @@ class SliceVariable(VariableTracker):
 
     def is_hashable(self) -> bool:
         # Slices became hashable in Python 3.12 (CPython slicehash).
-        return sys.version_info >= (3, 12)
+        return True
 
     def hash_impl(self, tx: "InstructionTranslatorBase") -> tuple[int, bool]:
-        if sys.version_info < (3, 12):
-            raise_type_error(tx, "unhashable type: 'slice'")
         # CPython slicehash: https://github.com/python/cpython/blob/e76aa128fe/Objects/sliceobject.c#L667
         s = self.as_python_constant()
         try:

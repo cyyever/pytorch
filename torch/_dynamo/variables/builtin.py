@@ -29,7 +29,6 @@ import itertools
 import logging
 import math
 import operator
-import sys
 import types
 import typing
 from collections import defaultdict, OrderedDict
@@ -536,7 +535,7 @@ def _uses_custom_classinfo_check(
             _uses_custom_classinfo_check(item) for item in typing.get_args(type_info)
         )
     if typing.get_origin(type_info) is typing.Union:
-        typing_union_uses_instancecheck = sys.version_info >= (3, 12)
+        typing_union_uses_instancecheck = True
         return any(
             _uses_custom_classinfo_check(
                 item,
@@ -1578,10 +1577,7 @@ class BuiltinVariable(BaseBuiltinVariable):
         # the same name shadows the cell, matching CPython (except for 3.12, which is backwards): the two share a name
         # but not a localsplus slot, and the fast slot wins while it holds a value (an empty one is skipped below,
         # leaving the cell contents visible).
-        if sys.version_info[:2] == (3, 12):
-            its = (tx.symbolic_locals.items(), tx.symbolic_cellvars.items())
-        else:
-            its = (tx.symbolic_cellvars.items(), tx.symbolic_locals.items())
+        its = (tx.symbolic_cellvars.items(), tx.symbolic_locals.items())
 
         for name, value in itertools.chain(*its):
             if name not in frame_local_names:

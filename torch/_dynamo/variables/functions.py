@@ -465,10 +465,7 @@ class BaseUserFunctionVariable(VariableTracker):
         return self.get_code().co_name
 
     def get_qualname(self) -> str:
-        if sys.version_info >= (3, 11):
-            return self.get_code().co_qualname
-        else:
-            return self.get_name()
+        return self.get_code().co_qualname
 
     def get_doc(self) -> str | None:
         # stored in code.co_consts[0]
@@ -1409,35 +1406,9 @@ class LocalGeneratorObjectVariable(VariableTracker):
                     self.throw_pending()
                 return tracer.inline_call_()
         except ObservedUserStopIteration:
-            # PEP 479: pre-3.12 has no STOPITERATION_ERROR opcode, so convert a
-            # StopIteration that escapes the generator body to RuntimeError here
-            # at the frame boundary. https://github.com/python/cpython/pull/99006
             # A normal return sets FRAME_CLEARED and raises a synthetic
-            # StopIteration to signal exhaustion; that one must stay a
-            # StopIteration, so only convert when the body was still executing.
-            was_executing = tracer.frame_state == FrameState.FRAME_EXECUTING
+            # StopIteration to signal exhaustion.
             tracer.frame_state = FrameState.FRAME_COMPLETED
-            if sys.version_info < (3, 12) and was_executing:
-                # Match CPython's _PyErr_FormatFromCause: set __context__ and
-                # __cause__ directly rather than pushing onto the exception
-                # stack (which must stay balanced -- genobject.c pops the
-                # generator's gi_exc_state before the conversion runs, so the
-                # caller's stack is left unchanged). do_raise sets __cause__;
-                # set __context__ first so set_exception_obj's implicit chaining
-                # leaves it untouched.
-                prev = tracer.exn_vt_stack.get_raised_exception()
-                rt = VariableTracker.build(tx, RuntimeError).call_function(
-                    tx,
-                    [VariableTracker.build(tx, "generator raised StopIteration")],
-                    {},
-                )
-                rt.call_method(
-                    tx,
-                    "__setattr__",
-                    [ConstantVariable.create("__context__"), prev],
-                    {},
-                )
-                tx.do_raise(rt, prev)
             raise
         except ObservedException:
             # An exception propagating out of the generator frame finishes it,
@@ -1764,8 +1735,7 @@ class LocalGeneratorFunctionVariable(BaseUserFunctionVariable):
         code = self.vt.get_code()
         f_globals = self.vt.get_globals()
 
-        if sys.version_info >= (3, 11):
-            inline_tracer.inline_call_()
+        inline_tracer.inline_call_()
         # calling a generator returns a generator object
         return self.generator_cls(
             code,

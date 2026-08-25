@@ -1243,19 +1243,14 @@ def istype(obj: object, allowed_types: Any) -> bool:
 
 
 _builtin_final_typing_classes: tuple[Any, ...] = tuple()
-if sys.version_info >= (3, 12):
-    # Some typing classes moved to C in 3.12,
-    # which no longer have the _Final mixin.
-    # Check for consistency e.g. here:
-    # https://github.com/python/cpython/blob/f2b82b3b3b1f8c7a81e84df35ee921e44517cf32/Lib/typing.py#L32
-    _builtin_final_typing_classes = (
-        typing.ParamSpecArgs,
-        typing.ParamSpecKwargs,
-        typing.ParamSpec,
-        typing.TypeVar,
-        typing.TypeVarTuple,
-        typing.TypeAliasType,
-    )
+_builtin_final_typing_classes = (
+    typing.ParamSpecArgs,
+    typing.ParamSpecKwargs,
+    typing.ParamSpec,
+    typing.TypeVar,
+    typing.TypeVarTuple,
+    typing.TypeAliasType,
+)
 
 
 def get_inputs_devices(
@@ -1285,7 +1280,7 @@ def is_typing(value: object) -> bool:
     #
     # NB: we intentionally ignore classes that inherit from Generic, since they
     # can be used as both TypingVariable as well as UserDefinedClassVariable.
-    if sys.version_info >= (3, 12) and isinstance(value, _builtin_final_typing_classes):
+    if isinstance(value, _builtin_final_typing_classes):
         return True
     return (
         isinstance(value, (types.UnionType, typing._Final))  # type: ignore[attr-defined]
@@ -5090,8 +5085,6 @@ def _extract_anchors_from_expr(segment: str) -> _Anchors | None:
         - for indexing, the location of the brackets.
     `segment` is expected to be a valid Python expression
     """
-    if sys.version_info < (3, 11):
-        raise AssertionError(f"Python >= 3.11 required, got {sys.version_info}")
 
     import ast
 

@@ -5,7 +5,6 @@ import dataclasses
 import dis
 import functools
 import logging
-import sys
 from collections import Counter
 from typing import Any, TYPE_CHECKING
 
@@ -37,10 +36,6 @@ log = logging.getLogger(__name__)
 def _get_comprehension_bytecode_prefix() -> list[str]:
     """Get the bytecode instructions that precede BUILD_LIST in a list comprehension."""
 
-    if sys.version_info < (3, 12):
-        raise AssertionError(
-            f"comprehension bytecode prefix requires Python 3.12+, got {sys.version_info}"
-        )
 
     def fn() -> list[int]:
         return [i for i in range(1)]  # noqa: C416
@@ -80,10 +75,6 @@ def _is_comprehension_start(tx: InstructionTranslatorBase) -> bool:
     In Python 3.12+, comprehensions are inlined with a bytecode pattern that
     precedes BUILD_LIST/BUILD_MAP.
     """
-    if sys.version_info < (3, 12):
-        raise AssertionError(
-            f"comprehension start detection requires Python 3.12+, got {sys.version_info}"
-        )
 
     if tx.instruction_pointer is None:
         raise AssertionError("instruction_pointer must not be None")
@@ -97,10 +88,6 @@ def _is_comprehension_start(tx: InstructionTranslatorBase) -> bool:
 
 def _find_comprehension_end_for_ip(tx: InstructionTranslatorBase) -> int:
     """Find the instruction pointer of the outermost END_FOR for current comprehension."""
-    if sys.version_info < (3, 12):
-        raise AssertionError(
-            f"comprehension END_FOR search requires Python 3.12+, got {sys.version_info}"
-        )
     if tx.instruction_pointer is None:
         raise AssertionError("instruction_pointer must not be None")
 
@@ -118,10 +105,6 @@ def _find_comprehension_end_for_ip(tx: InstructionTranslatorBase) -> int:
 
 def _analyze_comprehension(tx: InstructionTranslatorBase) -> ComprehensionAnalysis:
     """Analyze comprehension bytecode to determine result handling pattern."""
-    if sys.version_info < (3, 12):
-        raise AssertionError(
-            f"comprehension analysis requires Python 3.12+, got {sys.version_info}"
-        )
     if tx.instruction_pointer is None:
         raise AssertionError("instruction_pointer must not be None")
 
@@ -272,10 +255,6 @@ def _handle_comprehension_graph_break(
     calls it via codegen_call_resume, then chains into the resume
     function for the post-comprehension code.
     """
-    if sys.version_info < (3, 12):
-        raise AssertionError(
-            f"comprehension graph break requires Python 3.12+, got {sys.version_info}"
-        )
     if tx.instruction_pointer is None:
         raise AssertionError("instruction_pointer must not be None")
 
@@ -542,8 +521,7 @@ def _build_comprehension_fn(
 
     def update(instructions: list[Instruction], code_options: dict[str, Any]) -> None:
         code_options["co_name"] = fn_name
-        if sys.version_info >= (3, 11):
-            code_options["co_qualname"] = fn_name
+        code_options["co_qualname"] = fn_name
         code_options["co_firstlineno"] = lineno
         code_options["co_cellvars"] = ()
         code_options["co_freevars"] = freevars
@@ -638,7 +616,7 @@ def maybe_setup_comprehension_speculation(
     Handle comprehension start for Python 3.12+ BUILD_LIST/BUILD_MAP with argval 0.
     Returns True if a graph break was triggered and the caller should return early.
     """
-    if not (sys.version_info >= (3, 12) and inst.argval == 0):
+    if inst.argval != 0:
         return False
 
     if not _is_comprehension_start(tx):

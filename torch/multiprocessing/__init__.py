@@ -111,9 +111,7 @@ from multiprocessing.resource_tracker import ResourceTracker as _RT
 
 
 if (
-    sys.platform == "darwin"
-    and sys.version_info >= (3, 12, 2)
-    and hasattr(_RT, "__del__")
+    sys.platform == 'darwin' and hasattr(_RT, '__del__')
 ):
     import atexit
 

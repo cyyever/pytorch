@@ -5175,7 +5175,7 @@ class UserDefinedListVariable(UserDefinedObjectVariable):
         # https://github.com/python/cpython/blob/v3.13.0/Objects/clinic/listobject.c.h
         # 3.10 predates that comparison and only rejects keyword args for exact
         # list, so every subclass tolerates them there.
-        if sys.version_info >= (3, 11) and type(self.value).__new__ is list.__new__:
+        if type(self.value).__new__ is list.__new__:
             no_keywords(tx, "list", kwargs)
         # Delegate to the underlying list VT explicitly. Routing through
         # call_method("__init__") instead would re-enter this override, since

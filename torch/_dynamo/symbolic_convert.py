@@ -1152,17 +1152,7 @@ def break_graph_if_unsupported(
             inst: Instruction,
             reason: GraphCompileReason,
         ) -> None:
-            if (
-                sys.version_info >= (3, 11)
-                and sys.version_info < (3, 12)
-                and inst.opname == "CALL"
-            ):
-                # stack effect for PRECALL + CALL is split between the two instructions
-                stack_effect = dis.stack_effect(
-                    dis.opmap["PRECALL"], inst.arg
-                ) + dis.stack_effect(dis.opmap["CALL"], inst.arg)
-            else:
-                stack_effect = dis.stack_effect(inst.opcode, inst.arg)
+            stack_effect = dis.stack_effect(inst.opcode, inst.arg)
 
             # When warnings.warn is called from an inlined frame, replace
             # it on the symbolic stack before compile_subgraph so the codegen
@@ -1190,7 +1180,7 @@ def break_graph_if_unsupported(
                 else inst
             )
 
-            if sys.version_info >= (3, 11) and inst.opname == "CALL":
+            if inst.opname == 'CALL':
                 kw_names = (
                     self.kw_names.as_python_constant()
                     if self.kw_names is not None
@@ -1806,59 +1796,52 @@ class InstructionTranslatorBase(
         self.current_speculation.fail_and_restart_analysis(self.error_on_graph_break)
         return False
 
-    if sys.version_info >= (3, 11):
-
-        def update_block_stack(self, inst: Instruction) -> None:
-            # 3.11+ no longer uses a block stack, but we still keep track of one
-            # so that we know which contexts are currently active.
-            # For our purposes, all exception table entries with the same target
-            # are considered to be part of the same "block".
-            # NOTE: we only keep track of with blocks that are not contained in try blocks.
-            # This is because we will not create continuation functions on graph breaks in try blocks,
-            # but we may for with blocks. We do not push blocks here since
-            # with blocks are pushed when handling BEFORE_WITH.
-            entry = inst.exn_tab_entry
-            if entry:
-                # Detect when we have exited the top with block.
-                # The with blocks on the block stack are not enclosed in try
-                # blocks, so a with block's cleanup code should be in the
-                # previous with block (if any).
-                if (
-                    len(self.block_stack) >= 2
-                    and entry.target is not self.block_stack[-1].target
-                    and entry.target is self.block_stack[-2].target
-                ):
-                    # exit the current block
-                    self.block_stack.pop()
-            else:
-                # no longer in any block
-                # It is possible for NOPs to be between two instructions
-                # in the same block, but the NOPs are not covered by an
-                # exception table entry. In this case, assume that we
-                # are still in the same block.
-                # In 3.12+, JUMP_BACKWARD might also not be covered by
-                # an exception table entry, so we also assume that we
-                # are still in the same block. It is probably safe to do
-                # this in 3.11, even though we haven't encountered this case before.
-                # In 3.14+, NOT_TAKEN might also not be covered by an exn table entry.
-                if self.block_stack and inst.opname not in (
-                    "NOP",
-                    "JUMP_BACKWARD",
-                    "NOT_TAKEN",
-                ):
-                    # If we really escape from a block and the current
-                    # instruction is not in another block, then there
-                    # should be no other nested blocks that we are in.
-                    if len(self.block_stack) != 1:
-                        raise AssertionError(
-                            "expected len(self.block_stack) == 1 to be true"
-                        )
-                    self.block_stack.pop()
-
-    else:
-
-        def update_block_stack(self, inst: Instruction) -> None:
-            pass
+    def update_block_stack(self, inst: Instruction) -> None:
+        # 3.11+ no longer uses a block stack, but we still keep track of one
+        # so that we know which contexts are currently active.
+        # For our purposes, all exception table entries with the same target
+        # are considered to be part of the same "block".
+        # NOTE: we only keep track of with blocks that are not contained in try blocks.
+        # This is because we will not create continuation functions on graph breaks in try blocks,
+        # but we may for with blocks. We do not push blocks here since
+        # with blocks are pushed when handling BEFORE_WITH.
+        entry = inst.exn_tab_entry
+        if entry:
+            # Detect when we have exited the top with block.
+            # The with blocks on the block stack are not enclosed in try
+            # blocks, so a with block's cleanup code should be in the
+            # previous with block (if any).
+            if (
+                len(self.block_stack) >= 2
+                and entry.target is not self.block_stack[-1].target
+                and entry.target is self.block_stack[-2].target
+            ):
+                # exit the current block
+                self.block_stack.pop()
+        else:
+            # no longer in any block
+            # It is possible for NOPs to be between two instructions
+            # in the same block, but the NOPs are not covered by an
+            # exception table entry. In this case, assume that we
+            # are still in the same block.
+            # In 3.12+, JUMP_BACKWARD might also not be covered by
+            # an exception table entry, so we also assume that we
+            # are still in the same block. It is probably safe to do
+            # this in 3.11, even though we haven't encountered this case before.
+            # In 3.14+, NOT_TAKEN might also not be covered by an exn table entry.
+            if self.block_stack and inst.opname not in (
+                "NOP",
+                "JUMP_BACKWARD",
+                "NOT_TAKEN",
+            ):
+                # If we really escape from a block and the current
+                # instruction is not in another block, then there
+                # should be no other nested blocks that we are in.
+                if len(self.block_stack) != 1:
+                    raise AssertionError(
+                        "expected len(self.block_stack) == 1 to be true"
+                    )
+                self.block_stack.pop()
 
     @property
     def next_instruction(self) -> Instruction:
@@ -2622,15 +2605,7 @@ class InstructionTranslatorBase(
             if isinstance(e, (exc.ObservedUserStopIteration, exc.ObservedIndexError)):
                 exc.handle_observed_exception(self)
 
-            if sys.version_info >= (3, 12):
-                # CPython 3.12 actually jumps to the instruction after the END_FOR
-                # and performs the action of END_FOR as part of FOR_ITER. We jump
-                # to the END_FOR and run it, so we need to make sure 2 values are
-                # on the stack for it to pop.
-                self.push(ConstantVariable.create(None))
-            else:
-                # pop the iterator in Python < 3.12
-                self.pop()
+            self.push(ConstantVariable.create(None))
             self.jump(inst)
 
     def _create_exception_instance(
@@ -2811,74 +2786,49 @@ class InstructionTranslatorBase(
         #   non-zero, pops an additional value from the stack which is used to
         #   set f_lasti of the current frame.
 
-        if sys.version_info >= (3, 11):
-            # Re-raise the exception on top of the stack.
-            val = self.pop()
-            if not pyexception_instance_check(val):
-                raise AssertionError(
-                    "expected _exception_instance_check(val) to be true"
-                )
-            if inst.argval:
-                # RERAISE 1
-                _ = self.pop()
-                self.exn_vt_stack.set_raised_exception(val)
-            else:
-                # RERAISE 0
-                self.push(val)
-                self.exn_vt_stack.set_raised_exception(val)
-            self._raise_observed_exception(val)
-        else:
-            _exc = self.pop()
-            val = self.pop()
-            _tb = self.pop()
-            if not pyexception_instance_check(val):
-                raise AssertionError(
-                    "expected _exception_instance_check(val) to be true"
-                )
+        val = self.pop()
+        if not pyexception_instance_check(val):
+            raise AssertionError(
+                "expected _exception_instance_check(val) to be true"
+            )
+        if inst.argval:
+            # RERAISE 1
+            _ = self.pop()
             self.exn_vt_stack.set_raised_exception(val)
-            self._raise_observed_exception(val)
+        else:
+            # RERAISE 0
+            self.push(val)
+            self.exn_vt_stack.set_raised_exception(val)
+        self._raise_observed_exception(val)
 
     def WITH_EXCEPT_START(self, inst: Instruction) -> None:
         args: list[VariableTracker] = []
-        if sys.version_info >= (3, 11):
-            fn_loc = 5
-            # At the top of the stack are 4 values:
-            #    - TOP = exc_info()
-            #    - SECOND = previous exception
-            #    - THIRD: lasti of exception in exc_info()
-            #    - FOURTH: the context.__exit__ bound method
-            #    We call FOURTH(type(TOP), TOP, GetTraceback(TOP)).
-            #    Then we push the __exit__ return value.
-            # In Python 3.14+, there is a NULL placed between the context.__exit__ bound method and the lasti,
-            # that is, fn is now the 5th from TOS.
-            if not (len(self.stack) >= fn_loc):
-                raise AssertionError("expected len(self.stack) >= fn_loc to be true")
-            fn = self.stack[-fn_loc]
-            val = self.stack[-1]
-            if not pyexception_instance_check(val):
-                raise AssertionError(
-                    "expected _exception_instance_check(val) to be true"
-                )
-            typ = BuiltinVariable(val.exc_type)  # type: ignore[attr-defined, union-attr]
-            tb = val.tp_getattro_impl(
-                # pyrefly: ignore[bad-argument-type]
-                self,
-                "__traceback__",
+        fn_loc = 5
+        # At the top of the stack are 4 values:
+        #    - TOP = exc_info()
+        #    - SECOND = previous exception
+        #    - THIRD: lasti of exception in exc_info()
+        #    - FOURTH: the context.__exit__ bound method
+        #    We call FOURTH(type(TOP), TOP, GetTraceback(TOP)).
+        #    Then we push the __exit__ return value.
+        # In Python 3.14+, there is a NULL placed between the context.__exit__ bound method and the lasti,
+        # that is, fn is now the 5th from TOS.
+        if not (len(self.stack) >= fn_loc):
+            raise AssertionError("expected len(self.stack) >= fn_loc to be true")
+        fn = self.stack[-fn_loc]
+        val = self.stack[-1]
+        if not pyexception_instance_check(val):
+            raise AssertionError(
+                "expected _exception_instance_check(val) to be true"
             )
-            if not isinstance(self.stack[-4], NullVariable):
-                args.append(self.stack[-4])
-        else:
-            if not (len(self.stack) >= 7):
-                raise AssertionError("expected len(self.stack) >= 7 to be true")
-            fn = self.stack[-7]
-            val = self.stack[-2]
-            if not pyexception_instance_check(val):
-                raise AssertionError(
-                    "expected _exception_instance_check(val) to be true"
-                )
-            typ = BuiltinVariable(val.exc_type)  # type: ignore[attr-defined]
-
-            tb = val.tp_getattro_impl(self, "__traceback__")
+        typ = BuiltinVariable(val.exc_type)  # type: ignore[attr-defined, union-attr]
+        tb = val.tp_getattro_impl(
+            # pyrefly: ignore[bad-argument-type]
+            self,
+            "__traceback__",
+        )
+        if not isinstance(self.stack[-4], NullVariable):
+            args.append(self.stack[-4])
 
         args += [typ, val, tb]
         self.call_function(fn, args, {})
@@ -2935,106 +2885,38 @@ class InstructionTranslatorBase(
                 from_exc=raised_exception,
             )
 
-        if sys.version_info >= (3, 11):
-            exn_tab_entry = self.current_instruction.exn_tab_entry
-            if exn_tab_entry:
-                # Implementation is based on https://github.com/python/cpython/blob/3.11/Objects/exception_handling_notes.txt
+        exn_tab_entry = self.current_instruction.exn_tab_entry
+        if exn_tab_entry:
+            # Implementation is based on https://github.com/python/cpython/blob/3.11/Objects/exception_handling_notes.txt
 
-                # 1) pop values from the stack until it matches the stack depth
-                # for the handler
-                while len(self.stack) > exn_tab_entry.depth:
-                    self.pop()
+            # 1) pop values from the stack until it matches the stack depth
+            # for the handler
+            while len(self.stack) > exn_tab_entry.depth:
+                self.pop()
 
-                # 2) if 'lasti' is true, then push the offset that the exception was raised at
-                if exn_tab_entry.lasti:
-                    self.push(
-                        VariableTracker.build(self, self.current_instruction.offset)
-                    )
-
-                # 3) push the exception to the stack
-                self.push(self.exn_vt_stack.get_raised_exception())
-
-                # 4) jump to the handler
-                self.jump(exn_tab_entry)  # type: ignore[arg-type]
-            else:
-                # No handler found. Bubble the exception to the parent
-                # instruction translator. We use special exception for this.
-                self.stack.clear()
-
-                # attach traceback to the exception and set it as current exception
-                curr_exc = self.exn_vt_stack.get_raised_exception()
-                self._attach_traceback_to_exception(curr_exc)
-
-                if type(self) is InstructionTranslator:
-                    bubble_exception_to_interpreter()
-                raise raised_exception
-        else:
-            if len(self.block_stack):
-                # base implementation - https://github.com/python/cpython/blob/3.10/Python/ceval.c#L4455
-
-                block_stack_entry = self.block_stack.pop()
-
-                while block_stack_entry.inst.opname == "EXCEPT_HANDLER":
-                    # https://github.com/python/cpython/blob/3.10/Python/ceval.c#L1456
-                    self.popn(3)
-                    self.exn_vt_stack.pop()
-                    if len(self.block_stack) == 0:
-                        # No handler found in this frame. Bubble the exception to the parent
-                        # instruction translator.
-                        self.stack.clear()
-                        if type(self) is InstructionTranslator:
-                            bubble_exception_to_interpreter()
-
-                        raise raised_exception
-                    block_stack_entry = self.block_stack.pop()
-
-                exception_var = self.exn_vt_stack.get_raised_exception()
-                self.exn_vt_stack.move_current_exception_to_stack()
-
-                # 1) pop values from the stack until it matches the stack depth
-                # for the handler
-                while len(self.stack) > block_stack_entry.stack_index:
-                    self.pop()
-
-                # Push a dummy block stack entry of EXCEPT_HANDLER
-                # https://github.com/python/cpython/blob/3.10/Python/ceval.c#L1456
-                except_handler_inst = Instruction(int(1e6), "EXCEPT_HANDLER", None, 0)
-                self.block_stack.append(
-                    BlockStackEntry(except_handler_inst, None, len(self.stack))
+            # 2) if 'lasti' is true, then push the offset that the exception was raised at
+            if exn_tab_entry.lasti:
+                self.push(
+                    VariableTracker.build(self, self.current_instruction.offset)
                 )
 
-                # Push old exception
-                if len(self.exn_vt_stack) >= 2:
-                    old_exception = self.exn_vt_stack[-2]
+            # 3) push the exception to the stack
+            self.push(self.exn_vt_stack.get_raised_exception())
 
-                    # Push the old exception on to stack - tb, value, type
-                    # Traceback is currently mapped to UnknownVariable
-                    self.push(variables.UnknownVariable())
-                    self.push(old_exception)
+            # 4) jump to the handler
+            self.jump(exn_tab_entry)  # type: ignore[arg-type]
+        else:
+            # No handler found. Bubble the exception to the parent
+            # instruction translator. We use special exception for this.
+            self.stack.clear()
 
-                    self.push(variables.BuiltinVariable(old_exception.exc_type))
-                else:
-                    # Push empty exception tb, value, type
-                    self.push(ConstantVariable.create(None))
-                    self.push(ConstantVariable.create(None))
-                    self.push(ConstantVariable.create(None))
+            # attach traceback to the exception and set it as current exception
+            curr_exc = self.exn_vt_stack.get_raised_exception()
+            self._attach_traceback_to_exception(curr_exc)
 
-                # Push new exception - tb, val, type
-                # Traceback is currently mapped to UnknownVariable
-                self.push(variables.UnknownVariable())
-                self.push(exception_var)
-
-                self.push(variables.BuiltinVariable(exception_var.exc_type))
-
-                # Jump to target
-                self.jump(block_stack_entry)
-            else:
-                # No handler found. Bubble the exception to the parent
-                # instruction translator. We use special exception for this.
-                self.stack.clear()
-                if type(self) is InstructionTranslator:
-                    bubble_exception_to_interpreter()
-                raise raised_exception
+            if type(self) is InstructionTranslator:
+                bubble_exception_to_interpreter()
+            raise raised_exception
 
     def PUSH_EXC_INFO(self, inst: Instruction) -> None:
         # https://docs.python.org/3/library/dis.html#opcode-PUSH_EXC_INFO
@@ -3066,46 +2948,17 @@ class InstructionTranslatorBase(
         self.exn_vt_stack.move_current_exception_to_stack()
 
     def POP_EXCEPT(self, inst: Instruction) -> None:
-        if sys.version_info >= (3, 11):
-            _ = self.pop()
-            # This exception is handled and therefore we can clear the error indicator
-            if not len(self.exn_vt_stack):
-                raise AssertionError("expected len(self.exn_vt_stack) to be true")
-            self.exn_vt_stack.pop()
-        else:
-            if not (len(self.block_stack) > 0):
-                raise AssertionError("expected len(self.block_stack) > 0 to be true")
-            if self.block_stack[-1].inst.opname != "EXCEPT_HANDLER":
-                raise AssertionError(
-                    "Bug in Dynamo tracing of exception handling."
-                    "Top of the block stack is not EXCEPT_HANDLER."
-                )
-            self.block_stack.pop()
-
-            self.popn(3)
-
-            # This exception is handled and therefore we can clear the error indicator
-            if not len(self.exn_vt_stack):
-                raise AssertionError("expected len(self.exn_vt_stack) to be true")
-            self.exn_vt_stack.pop()
+        _ = self.pop()
+        # This exception is handled and therefore we can clear the error indicator
+        if not len(self.exn_vt_stack):
+            raise AssertionError("expected len(self.exn_vt_stack) to be true")
+        self.exn_vt_stack.pop()
 
     def check_if_exc_matches(self) -> bool:
         if not (len(self.stack) >= 2):
             raise AssertionError("expected len(self.stack) >= 2 to be true")
         expected_exc_types = self.pop()
-        if sys.version_info >= (3, 11):
-            # CHECK_EXC_MATCH (which is used from 3.11 onwards) does not pop.
-            # This is the description from the disassembly doc
-            #
-            # Performs exception matching for ``except``. Tests whether the ``STACK[-2]``
-            # is an exception matching ``STACK[-1]``. Pops ``STACK[-1]`` and pushes the boolean
-            # result of the test.
-            exc_instance = self.stack[-1]
-        else:
-            # This is used prior to 3.11 via opcode JUMP_IF_NOT_EXC_MATCH
-            # There is no documentation but here is the code pointer that does 2 pops
-            # https://github.com/python/cpython/blob/3.10/Python/ceval.c#L3650-L3665
-            exc_instance = self.stack.pop()
+        exc_instance = self.stack[-1]
 
         # Users can check exception in 3 ways
         # 1) except NotImplementedError --> BuiltinVariable
@@ -3128,14 +2981,13 @@ class InstructionTranslatorBase(
                 hints=[*graph_break_hints.USER_ERROR],
             )
 
-        if sys.version_info >= (3, 11):
-            if not pyexception_instance_check(exc_instance):
-                unimplemented(
-                    gb_type="Caught non-Exception value",
-                    context=str(exc_instance),
-                    explanation=f"Except expects to receive an object of Exception type but received {exc_instance}.",
-                    hints=[*graph_break_hints.USER_ERROR],
-                )
+        if not pyexception_instance_check(exc_instance):
+            unimplemented(
+                gb_type="Caught non-Exception value",
+                context=str(exc_instance),
+                explanation=f"Except expects to receive an object of Exception type but received {exc_instance}.",
+                hints=[*graph_break_hints.USER_ERROR],
+            )
 
         if isinstance(expected_exc_types, TupleVariable):
             expected_types = expected_exc_types.items
@@ -3290,10 +3142,7 @@ class InstructionTranslatorBase(
         self.CALL_FUNCTION(dataclasses.replace(inst, argval=2))
         arg = inst.argval[0]
         argval = self.code_options["co_names"][arg]
-        if sys.version_info < (3, 11):
-            self._load_attr(argval)
-        else:
-            self.LOAD_METHOD(dataclasses.replace(inst, argval=argval))
+        self.LOAD_METHOD(dataclasses.replace(inst, argval=argval))
 
     def LOAD_ATTR_SUPER(self, inst: Instruction) -> None:
         self.CALL_FUNCTION(dataclasses.replace(inst, argval=2))
@@ -3326,12 +3175,11 @@ class InstructionTranslatorBase(
         self.push(result)
 
     def LOAD_ATTR(self, inst: Instruction) -> None:
-        if sys.version_info >= (3, 12):
-            if inst.arg is None or inst.arg % 2 != 0:
-                raise AssertionError(
-                    "LOAD_ATTR method variant should have been normalized by "
-                    "remove_load_attr_method_variant in cleaned_instructions"
-                )
+        if inst.arg is None or inst.arg % 2 != 0:
+            raise AssertionError(
+                "LOAD_ATTR method variant should have been normalized by "
+                "remove_load_attr_method_variant in cleaned_instructions"
+            )
         self._load_attr(inst.argval)
 
     @break_graph_if_unsupported(
@@ -3557,9 +3405,6 @@ class InstructionTranslatorBase(
             argnames = tuple(meta.locals_names.keys())
             argnames_null = tuple(meta.locals_null_keys)
 
-        if sys.version_info < (3, 12):
-            if len(argnames_null) != 0:
-                raise AssertionError("variables should not be NULL in < 3.12")
 
         # compile_subgraph did not codegen any NULLs,
         # so we should not count NullVariables
@@ -3951,13 +3796,11 @@ class InstructionTranslatorBase(
         cg.extend_output(create_call_function_ex(False, True))
 
     def should_compile_partial_graph(self) -> bool:
-        if sys.version_info >= (3, 11):
-            # Do not compile if current instruction's block is not the top with block
-            entry = self.current_instruction.exn_tab_entry
-            if entry and (
-                not self.block_stack or entry.target is not self.block_stack[-1].target
-            ):
-                return False
+        entry = self.current_instruction.exn_tab_entry
+        if entry and (
+            not self.block_stack or entry.target is not self.block_stack[-1].target
+        ):
+            return False
         return (
             all(b.can_restore() for b in self.block_stack)
             and not self.one_graph
@@ -4167,18 +4010,12 @@ class InstructionTranslatorBase(
         obj.items.append(v)
 
     def MAKE_FUNCTION(self, inst: Instruction) -> None:
-        flags = inst.arg
-        if sys.version_info < (3, 11):
-            fn_name = self.pop()
         code = self.pop()
-        if sys.version_info >= (3, 11):
-            # MAKE_FUNCTION behavior actually changed in 3.11, see
-            # https://github.com/python/cpython/pull/93189/
-            if not hasattr(code.value, "co_qualname"):  # type: ignore[attr-defined]
-                raise AssertionError(
-                    'expected hasattr(code.value, "co_qualname") to be true'
-                )
-            fn_name = VariableTracker.build(self, code.value.co_qualname)  # type: ignore[attr-defined]
+        if not hasattr(code.value, "co_qualname"):  # type: ignore[attr-defined]
+            raise AssertionError(
+                'expected hasattr(code.value, "co_qualname") to be true'
+            )
+        fn_name = VariableTracker.build(self, code.value.co_qualname)  # type: ignore[attr-defined]
         defaults = None
         closure = None
         annotations = None
@@ -4547,10 +4384,6 @@ class InstructionTranslatorBase(
             )
         )
 
-        if sys.version_info < (3, 11):
-            # for versions < 3.11, also push the boolean result
-            tos = self.stack[-1]
-            self.push(VariableTracker.build(self, not istype(tos, ConstantVariable)))
 
     def MATCH_KEYS(self, inst: Instruction) -> None:
         keys = self.stack[-1]
@@ -4565,10 +4398,6 @@ class InstructionTranslatorBase(
             )
         )
 
-        if sys.version_info < (3, 11):
-            # for versions < 3.11, also push the boolean result
-            tos = self.stack[-1]
-            self.push(VariableTracker.build(self, not istype(tos, ConstantVariable)))
 
     def LOAD_ASSERTION_ERROR(self, inst: Instruction) -> None:
         self.push(self.load_builtin_from_argval("AssertionError"))
@@ -4628,12 +4457,10 @@ class InstructionTranslatorBase(
             if self.accept_prefix_inst:
                 raise AssertionError("expected not self.accept_prefix_inst to be true")
 
-    if sys.version_info >= (3, 11):
-
-        def BINARY_OP(self, inst: Instruction) -> None:
-            if inst.arg is None:
-                raise AssertionError("expected inst.arg is not None to be true")
-            return _binary_op_lookup[inst.arg](self, inst)
+    def BINARY_OP(self, inst: Instruction) -> None:
+        if inst.arg is None:
+            raise AssertionError("expected inst.arg is not None to be true")
+        return _binary_op_lookup[inst.arg](self, inst)
 
     def PRECALL(self, inst: Instruction) -> None:
         pass
@@ -4741,24 +4568,17 @@ class InstructionTranslatorBase(
         ):
             self.active_generic_context_managers.append(ctx)
 
-        if sys.version_info >= (3, 11):
-            # See update_block_stack/create_resume for block stack details.
-            # Only push a block if the current instruction's block is a
-            # with block that is not nested in a try block - that is, the current
-            # instruction's block target is the same as the top block's target.
-            if inst.exn_tab_entry and (
-                not self.block_stack
-                or inst.exn_tab_entry.target is not self.block_stack[-1].target
-            ):
-                target = None
-            else:
-                if self.next_instruction.exn_tab_entry is None:
-                    raise AssertionError(
-                        "expected self.next_instruction.exn_tab_entry is not None to be true"
-                    )
-                target = self.next_instruction.exn_tab_entry.target
+        if inst.exn_tab_entry and (
+            not self.block_stack
+            or inst.exn_tab_entry.target is not self.block_stack[-1].target
+        ):
+            target = None
         else:
-            target = inst.target
+            if self.next_instruction.exn_tab_entry is None:
+                raise AssertionError(
+                    "expected self.next_instruction.exn_tab_entry is not None to be true"
+                )
+            target = self.next_instruction.exn_tab_entry.target
 
         if target:
             if isinstance(self, InstructionTranslator) or config.nested_graph_breaks:
@@ -4811,7 +4631,7 @@ class InstructionTranslatorBase(
         self.prefix_insts.append(inst)
 
     def MAKE_CELL(self, inst: Instruction) -> None:
-        if sys.version_info >= (3, 12) and not self.accept_prefix_inst:
+        if not self.accept_prefix_inst:
             # In 3.12+, MAKE_CELL is no longer necessarily a prefix instruction.
             # It can be generated by inlined comprehensions.
             # A mid-function MAKE_CELL replaces the slot's contents with a
@@ -4857,11 +4677,10 @@ class InstructionTranslatorBase(
         self.pop()
 
         # Decrement comprehension depth if exiting a comprehension layer
-        if sys.version_info >= (3, 12):
-            current_ip = self.indexof[inst]
-            if current_ip in self._comprehension_end_for_ips:
-                self._comprehension_end_for_ips.discard(current_ip)
-                self._comprehension_depth -= 1
+        current_ip = self.indexof[inst]
+        if current_ip in self._comprehension_end_for_ips:
+            self._comprehension_end_for_ips.discard(current_ip)
+            self._comprehension_depth -= 1
 
     def LOAD_FAST_CHECK(self, inst: Instruction) -> None:
         if istype(self.symbolic_locals.get(inst.argval, None), NullVariable):
@@ -5130,7 +4949,7 @@ class InstructionTranslatorBase(
         positions = self.current_instruction.positions
         # colno/end_colno kwargs were added to FrameSummary in 3.11
         kwargs: dict[str, Any] = {}
-        if sys.version_info >= (3, 11) and positions is not None:
+        if positions is not None:
             kwargs["colno"] = positions.col_offset
             kwargs["end_colno"] = positions.end_col_offset
         return traceback.FrameSummary(
@@ -5488,8 +5307,6 @@ class InstructionTranslatorBase(
         # non-generator frames, there needs to be something on the stack since the first instruction will be POP_TOP,
         # which would error out with an empty stack
         push_types = CO_COROUTINE | CO_ITERABLE_COROUTINE | CO_ASYNC_GENERATOR
-        if sys.version_info < (3, 11):
-            push_types |= CO_GENERATOR
         if f_code.co_flags & (push_types):
             self.push(BuiltinVariable(None))
 
@@ -5858,14 +5675,13 @@ class InstructionTranslator(InstructionTranslatorBase):
         self._return(inst)
 
 
-if sys.version_info >= (3, 11):
-    _binary_op_lookup = [
-        getattr(
-            InstructionTranslator,
-            opname[3:] if "INPLACE" in opname else f"BINARY_{opname[3:]}",
-        )
-        for opname, _ in dis._nb_ops  # type: ignore[attr-defined]
-    ]
+_binary_op_lookup = [
+    getattr(
+        InstructionTranslator,
+        opname[3:] if "INPLACE" in opname else f"BINARY_{opname[3:]}",
+    )
+    for opname, _ in dis._nb_ops  # type: ignore[attr-defined]
+]
 
 
 @contextlib.contextmanager
@@ -6110,18 +5926,17 @@ class InliningInstructionTranslator(InstructionTranslatorBase):
         # with a single alias
         if torch._logging._internal.log_state.is_artifact_enabled("bytecode"):
             suffix = f"\n{dis.Bytecode(code).dis()}"
-        if sys.version_info >= (3, 11):
-            cur_inst = parent.current_instruction
-            parent_code = parent.f_code
+        cur_inst = parent.current_instruction
+        parent_code = parent.f_code
 
-            def get_trace_call_log_str() -> str:
-                header = parent.get_line_of_code_header(
-                    lineno=cur_inst.positions.lineno
-                )
-                line = get_instruction_source_311(parent_code, cur_inst).rstrip()
-                return f"TRACE inlined call {code.co_name} from {header}\n{line}"
+        def get_trace_call_log_str() -> str:
+            header = parent.get_line_of_code_header(
+                lineno=cur_inst.positions.lineno
+            )
+            line = get_instruction_source_311(parent_code, cur_inst).rstrip()
+            return f"TRACE inlined call {code.co_name} from {header}\n{line}"
 
-            trace_call_log.debug("%s", LazyString(get_trace_call_log_str))
+        trace_call_log.debug("%s", LazyString(get_trace_call_log_str))
         log.debug("INLINING %s%s, %s", code, suffix, result.reason)
 
         # Detect inline GraphModule calls in order to propagate node metadata,
@@ -6523,49 +6338,8 @@ class InliningGeneratorInstructionTranslator(InliningInstructionTranslator):
 
     def YIELD_FROM(self, inst: Instruction) -> None:
         # https://github.com/python/cpython/blob/1790e584142b5db070b74bc64777ad14e26608c2/Python/ceval.c#L2581
-        if not sys.version_info[:2] == (3, 10):
-            raise AssertionError("Python 3.10 specific")
+        raise AssertionError("Python 3.10 specific")
 
-        if not (len(self.stack) >= 2):
-            raise AssertionError("expected len(self.stack) >= 2 to be true")
-        val = self.pop()
-        receiver = self.stack[-1]
-
-        gen_status = None
-        try:
-            result = pyiter_send(self, receiver, val)
-        except exc.ObservedUserStopIteration:
-            gen_status = PySendResult.PYGEN_RETURN
-            raised = self.exn_vt_stack.get_raised_exception()
-            result = pygen_fetch_stopiteration_value(raised)
-            exc.handle_observed_exception(self)
-        except exc.ObservedException:
-            # PYGEN_ERROR
-            gen_status = PySendResult.PYGEN_ERROR
-            raise
-        else:
-            # PYGEN_NEXT
-            gen_status = PySendResult.PYGEN_NEXT
-
-        if gen_status == PySendResult.PYGEN_RETURN:
-            self.pop()
-            self.push(result)
-        else:
-            # gen_status == PYGEN_NEXT
-            # Repeat the YIELD_FROM instruction in the next eval loop
-            if isinstance(self.instruction_pointer, int):
-                if not (self.instruction_pointer > 0):
-                    raise AssertionError(
-                        "expected self.instruction_pointer > 0 to be true"
-                    )
-                self.instruction_pointer -= 1
-            else:
-                raise AssertionError(
-                    "expected isinstance(self.instruction_pointer, int) to be true"
-                )
-            self.push(result)
-            # Add the value to yield into generated_items and replace the top of the stack with None
-            self.YIELD_VALUE(inst)
 
     def SEND(self, inst: Instruction) -> None:
         if not (len(self.stack) >= 2):
@@ -6589,8 +6363,6 @@ class InliningGeneratorInstructionTranslator(InliningInstructionTranslator):
             ex = self.exn_vt_stack.get_raised_exception()
             val = pygen_fetch_stopiteration_value(ex)
             self.exn_vt_stack.clear_current_exception()
-            if sys.version_info < (3, 12):
-                self.pop()  # Python 3.12 uses new opcode END_SEND
             self.push(val)
             self.jump(inst)
         else:
