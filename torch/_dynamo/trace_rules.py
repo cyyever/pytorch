@@ -2180,9 +2180,8 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
 )
 
 
-if sys.version_info >= (3, 11):
-    torch_c_binding_in_graph_functions["math.exp2"] = TorchInGraphFunctionVariable
-    torch_c_binding_in_graph_functions["math.cbrt"] = TorchInGraphFunctionVariable
+torch_c_binding_in_graph_functions["math.exp2"] = TorchInGraphFunctionVariable
+torch_c_binding_in_graph_functions["math.cbrt"] = TorchInGraphFunctionVariable
 
 torch_c_binding_in_graph_functions["math.sumprod"] = TorchInGraphFunctionVariable
 torch_c_binding_in_graph_functions["math.fma"] = TorchInGraphFunctionVariable
