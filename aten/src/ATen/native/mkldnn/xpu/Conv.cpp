@@ -8,6 +8,7 @@
 #include <c10/util/Exception.h>
 #include <torch/library.h>
 #include <optional>
+#include <ATen/ops/empty.h>
 
 using namespace dnnl;
 using namespace at::native;
