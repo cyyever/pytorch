@@ -128,30 +128,6 @@ NCCLAllocMap::iterator find_allocation_covering(
 } // namespace
 
 // Before NCCL 2.29, we can use device-side APIs to get peer pointers.
-#if NCCL_VERSION_CODE < NCCL_VERSION(2, 29, 0)
-#ifdef NCCL_HAS_SYMMEM_DEVICE_SUPPORT
-// Fill both peer pointer arrays in a single kernel launch. For each peer,
-// NCCL returns the window base (== signal pad base); the data buffer pointer
-// is derived as `base + buffer_offset`, mirroring the host-side layout.
-static __global__ void build_ptr_dev(
-  ncclWindow_t  handle,
-  size_t  buffer_offset,  // data buffer offset; signal pad occupies [0, buffer_offset)
-  void**  buffers,        // out: peer buffer pointers
-  void**  signal_pads,    // out: peer signal pad pointers
-  int  world_size)
-{
-  int tid = blockIdx.x * blockDim.x + threadIdx.x;
-  int stride = blockDim.x * gridDim.x;
-  for (int peer = tid; peer < world_size; peer += stride) {
-      void* buf = ncclGetLsaPointer(handle, 0, peer);
-      signal_pads[peer] = buf;
-      buffers[peer] = buf == nullptr
-          ? nullptr
-          : static_cast<char*>(buf) + buffer_offset;
-  }
-}
-#endif // NCCL_HAS_SYMMEM_DEVICE_SUPPORT
-#endif // NCCL_VERSION_CODE < NCCL_VERSION(2, 29, 0)
 
 class NCCLPeerAllocInfo : public c10::intrusive_ptr_target {
  public:
@@ -217,26 +193,6 @@ class NCCLPeerAllocInfo : public c10::intrusive_ptr_target {
     buffers_.resize(world_size_);
     signal_pads_.resize(world_size_);
 
-#if NCCL_VERSION_CODE < NCCL_VERSION(2, 29, 0)
-    // Lack of host-side API to get peer pointers, so a kernel writes both
-    // peer arrays at once and copies the results to host.
-    int threads = std::min(128, world_size_);
-    auto stream = at::cuda::getCurrentCUDAStream();
-    build_ptr_dev<<<1, threads, 0, stream>>>(
-        combined_win_, buffer_offset_, buffers_dev_, signal_pads_dev_, world_size_);
-    C10_CUDA_KERNEL_LAUNCH_CHECK();
-    C10_CUDA_CHECK(cudaStreamSynchronize(stream));
-    C10_CUDA_CHECK(cudaMemcpy(
-      buffers_.data(),  // dst (host)
-      buffers_dev_,  // src (device)
-      arr_size,
-      cudaMemcpyDeviceToHost));
-    C10_CUDA_CHECK(cudaMemcpy(
-      signal_pads_.data(),  // dst (host)
-      signal_pads_dev_,  // src (device)
-      arr_size,
-      cudaMemcpyDeviceToHost));
-#else
   // Starting from NCCL 2.29, we can use host-side APIs to get peer pointers.
   // ncclGetPeerDevicePointer returns each peer's window base, which is the
   // signal pad base (the signal pad is at the front of the window).
@@ -277,7 +233,6 @@ class NCCLPeerAllocInfo : public c10::intrusive_ptr_target {
       mc_addr != nullptr) {
     mc_addr_ = mc_addr;
   }
-#endif // NCCL_VERSION_CODE < NCCL_VERSION(2, 29, 0)
 #endif // NCCL_HAS_SYMMEM_DEVICE_SUPPORT
   }
 

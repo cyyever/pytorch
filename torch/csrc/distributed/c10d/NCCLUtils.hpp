@@ -19,48 +19,28 @@
 constexpr int64_t kCommInitBusyWaitMillis = 2;
 
 static_assert(
-    NCCL_VERSION_CODE >= NCCL_VERSION(2, 23, 0),
-    "NCCL version must be 2.23 or later");
+    NCCL_VERSION_CODE >= NCCL_VERSION(2, 30, 0),
+    "NCCL version must be 2.30 or later");
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 24, 0)
 #define NCCL_SUPPORTS_FP8
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 26, 0)
 #define NCCL_HAS_QOS
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
 #define NCCL_HAS_COMM_WINDOW_REGISTER
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
 #define NCCL_HAS_COLLNET
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 3)
 #define NCCL_HAS_COMM_NAME
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
 #define NCCL_HAS_CTA_POLICY
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
 #define NCCL_HAS_NVLS_CTAS
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
 #define NCCL_HAS_COMM_SHRINK
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 7)
 #define NCCL_HAS_COMM_OFFLOAD
-#endif
 
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 30, 0)
 #define NCCL_HAS_MAX_P2P_PEERS
-#endif
 
 // `ncclConfig_t::hostCftMode` asks NCCL to create the communicator's CFT
 // (Compute Fabric Transport) logical endpoints during the first

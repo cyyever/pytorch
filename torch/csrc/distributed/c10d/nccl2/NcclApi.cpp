@@ -17,13 +17,8 @@ std::string_view DefaultNcclApi::getErrorString(ncclResult_t result) {
 
 std::string DefaultNcclApi::getLastError(ncclComm_t comm) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 18, 0)
   const char* lastError = ncclGetLastError(comm);
   return lastError ? std::string(lastError) : std::string();
-#else
-  std::ignore = comm;
-  return std::string();
-#endif
 }
 
 ncclResult_t DefaultNcclApi::getUniqueId(ncclUniqueId* uniqueId) {
@@ -101,30 +96,15 @@ ncclResult_t DefaultNcclApi::commShrink(
     ncclConfig_t* config,
     int shrinkFlags) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
   return ncclCommShrink(
       comm, excludeRanksList, excludeRanksCount, newcomm, config, shrinkFlags);
-#else
-  std::ignore = std::tie(
-      comm, excludeRanksList, excludeRanksCount, newcomm, config, shrinkFlags);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommShrink API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commGetUniqueId(
     ncclComm_t comm,
     ncclUniqueId* uniqueId) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclCommGetUniqueId(comm, uniqueId);
-#else
-  std::ignore = std::tie(comm, uniqueId);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommGetUniqueId API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commGrow(
@@ -135,14 +115,7 @@ ncclResult_t DefaultNcclApi::commGrow(
     ncclComm_t* newcomm,
     ncclConfig_t* config) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclCommGrow(comm, nRanks, uniqueId, rank, newcomm, config);
-#else
-  std::ignore = std::tie(comm, nRanks, uniqueId, rank, newcomm, config);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommGrow API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commRegister(
@@ -151,28 +124,12 @@ ncclResult_t DefaultNcclApi::commRegister(
     size_t size,
     void** handle) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 19, 0)
   return ncclCommRegister(comm, buffer, size, handle);
-#else
-  TORCH_CHECK(
-      false,
-      fmt::format(
-          "NCCL version {} does not support ncclCommRegister API",
-          NCCL_VERSION_CODE));
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commDeregister(ncclComm_t comm, void* handle) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 19, 0)
   return ncclCommDeregister(comm, handle);
-#else
-  TORCH_CHECK(
-      false,
-      fmt::format(
-          "NCCL version {} does not support ncclCommDeregister API",
-          NCCL_VERSION_CODE));
-#endif
 }
 
 ncclResult_t DefaultNcclApi::send(
@@ -278,14 +235,7 @@ ncclResult_t DefaultNcclApi::allToAll(
     ncclComm_t comm,
     cudaStream_t stream) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 28, 0)
   return ncclAlltoAll(sendbuff, recvbuff, count, datatype, comm, stream);
-#else
-  std::ignore = std::tie(sendbuff, recvbuff, count, datatype, comm, stream);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclAlltoAll API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::groupStart() {
@@ -332,52 +282,22 @@ ncclResult_t DefaultNcclApi::redOpDestroy(ncclRedOp_t op, ncclComm_t comm) {
 
 ncclResult_t DefaultNcclApi::memAlloc(void** buff, size_t size) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 19, 0)
   return ncclMemAlloc(buff, size);
-#else
-  TORCH_CHECK(
-      false,
-      fmt::format(
-          "NCCL version {} does not support ncclMemAlloc API",
-          NCCL_VERSION_CODE));
-#endif
 }
 
 ncclResult_t DefaultNcclApi::memFree(void* buff) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 19, 0)
   return ncclMemFree(buff);
-#else
-  TORCH_CHECK(
-      false,
-      fmt::format(
-          "NCCL version {} does not support ncclMemFree API",
-          NCCL_VERSION_CODE));
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commSuspend(ncclComm_t comm, int flags) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 7)
   return ncclCommSuspend(comm, flags);
-#else
-  std::ignore = std::tie(comm, flags);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommSuspend API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commResume(ncclComm_t comm) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 7)
   return ncclCommResume(comm);
-#else
-  std::ignore = comm;
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommResume API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commMemStats(
@@ -385,14 +305,7 @@ ncclResult_t DefaultNcclApi::commMemStats(
     int stat,
     uint64_t* value) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 7)
   return ncclCommMemStats(comm, static_cast<ncclCommMemStat_t>(stat), value);
-#else
-  std::ignore = std::tie(comm, stat, value);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommMemStats API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commWindowRegister(
@@ -402,28 +315,14 @@ ncclResult_t DefaultNcclApi::commWindowRegister(
     ncclWindow_t* win,
     int winFlags) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclCommWindowRegister(comm, buffer, size, win, winFlags);
-#else
-  std::ignore = std::tie(comm, buffer, size, win, winFlags);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommWindowRegister API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::commWindowDeregister(
     ncclComm_t comm,
     ncclWindow_t win) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclCommWindowDeregister(comm, win);
-#else
-  std::ignore = std::tie(comm, win);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclCommWindowDeregister API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::winGetUserPtr(
@@ -431,14 +330,7 @@ ncclResult_t DefaultNcclApi::winGetUserPtr(
     ncclWindow_t win,
     void** outUserPtr) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclWinGetUserPtr(comm, win, outUserPtr);
-#else
-  std::ignore = std::tie(comm, win, outUserPtr);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclWinGetUserPtr API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::putSignal(
@@ -454,7 +346,6 @@ ncclResult_t DefaultNcclApi::putSignal(
     ncclComm_t comm,
     cudaStream_t stream) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclPutSignal(
       localbuff,
       count,
@@ -467,23 +358,6 @@ ncclResult_t DefaultNcclApi::putSignal(
       flags,
       comm,
       stream);
-#else
-  std::ignore = std::tie(
-      localbuff,
-      count,
-      datatype,
-      peer,
-      peerWin,
-      peerWinOffset,
-      sigIdx,
-      ctx,
-      flags,
-      comm,
-      stream);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclPutSignal API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::signal(
@@ -494,14 +368,7 @@ ncclResult_t DefaultNcclApi::signal(
     ncclComm_t comm,
     cudaStream_t stream) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   return ncclSignal(peer, sigIdx, ctx, flags, comm, stream);
-#else
-  std::ignore = std::tie(peer, sigIdx, ctx, flags, comm, stream);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclSignal API";
-  return ncclInvalidUsage;
-#endif
 }
 
 ncclResult_t DefaultNcclApi::waitSignal(
@@ -512,19 +379,12 @@ ncclResult_t DefaultNcclApi::waitSignal(
     ncclComm_t comm,
     cudaStream_t stream) {
   std::lock_guard<std::mutex> lock(api_mutex_);
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
   ncclWaitSignalDesc_t desc;
   desc.opCnt = opCnt;
   desc.peer = peer;
   desc.sigIdx = sigIdx;
   desc.ctx = ctx;
   return ncclWaitSignal(1, &desc, comm, stream);
-#else
-  std::ignore = std::tie(peer, sigIdx, ctx, opCnt, comm, stream);
-  TC_LOG(ERROR) << "NCCL version " << NCCL_VERSION_CODE
-                << " does not support ncclWaitSignal API";
-  return ncclInvalidUsage;
-#endif
 }
 
 } // namespace c10d::nccl2

@@ -244,11 +244,7 @@ class TORCH_API ProcessGroupNCCL : public ::c10d::Backend {
   }
   bool isInitialized() override;
   bool supportsShrinking() const override {
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
     return true;
-#else
-    return false;
-#endif
   }
   void startCoalescing() override;
   c10::intrusive_ptr<::c10d::Work> endCoalescing() override;
