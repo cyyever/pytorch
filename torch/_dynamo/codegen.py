@@ -13,7 +13,6 @@ It includes functionality for:
 import collections
 import dataclasses
 import re
-import sys
 import types
 from collections import Counter, deque
 from collections.abc import Callable, Iterable
@@ -594,7 +593,7 @@ class PyCodegen:
     ) -> list[Instruction]:
         """Load the global fn_name on the stack num_on_stack down"""
         output = []
-        if push_null and sys.version_info >= (3, 11):
+        if push_null:
             output.extend(add_push_null(self.create_load_global(fn_name, add=True)))
             if num_on_stack > 0:
                 output.extend(
@@ -628,8 +627,6 @@ class PyCodegen:
     def pop_null(self) -> list[Instruction]:
         # POP_TOP doesn't work for null, so we pop nulls by pushing in a
         # nop function, calling it (which consumes the null), and popping the result.
-        if sys.version_info < (3, 11):
-            raise AssertionError("pop_null requires Python 3.11+")
         return [
             self.create_load_const_unchecked(lambda: None),
             # 3.13 swapped NULL and callable
@@ -672,8 +669,6 @@ class PyCodegen:
         output = self._output
 
         output.append(self.create_load_const(code))
-        if sys.version_info < (3, 11):
-            output.append(self.create_load_const(fn_name))
         output.extend(
             [
                 create_instruction("MAKE_FUNCTION"),

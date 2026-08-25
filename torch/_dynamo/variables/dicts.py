@@ -19,7 +19,6 @@ in sets.py.
 
 import collections
 import functools
-import sys
 import types
 import weakref
 from collections.abc import Callable, Iterator
@@ -932,16 +931,10 @@ class OrderedDictVariable(ConstDictVariable):
     def _ordered_dict_repr(items: list[tuple[str, str]]) -> str:
         if not items:
             return "OrderedDict()"
-        if sys.version_info >= (3, 12):
-            return (
-                "OrderedDict({"
-                + ", ".join(f"{key}: {value}" for key, value in items)
-                + "})"
-            )
         return (
-            "OrderedDict(["
-            + ", ".join(f"({key}, {value})" for key, value in items)
-            + "])"
+            "OrderedDict({"
+            + ", ".join(f"{key}: {value}" for key, value in items)
+            + "})"
         )
 
     def debug_repr(self) -> str:
