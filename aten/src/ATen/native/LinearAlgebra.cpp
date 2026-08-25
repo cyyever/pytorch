@@ -17,8 +17,6 @@
 #include <ATen/native/ReduceOps.h>
 #include <ATen/native/ReduceOpsUtils.h>
 #include <ATen/native/Resize.h>
-#include <ATen/native/mkldnn/Matmul.h>
-#include <ATen/native/mkldnn/Utils.h>
 #include <ATen/cpu/Utils.h>
 #include <c10/core/GradMode.h>
 #include <c10/core/SymBool.h>
@@ -1306,42 +1304,6 @@ Tensor outer(const Tensor& self, const Tensor& vec2) {
 #endif
 
 
-#if !defined(__aarch64__)
-// Used by default on x86 platforms
-static inline int64_t get_mkldnn_matmul_min_dim() {
-  static auto value = [&] {
-    const int64_t default_min_dim = [&] {
-      // Minimum dimension requirement for MKLDNN; derived based on experiments.
-      //it's enabled on all Neoverse cpus.
-      return is_arm_neoverse() ? 8 : 0;
-    }();
-    const auto value = c10::utils::get_env("TORCH_MKLDNN_MATMUL_MIN_DIM");
-    return value.has_value() ? std::stoi(value.value()) : default_min_dim;
-  }();
-  return value;
-}
-
-
-static inline int64_t get_mkldnn_matmul_min_size() {
-  static auto value = [&] {
-    const int64_t default_min_size = [&] {
-      // Minimum size requirement for MKLDNN; derived based on experiments.
-      // it's enabled on all Neoverse cpus.
-      return is_arm_neoverse() ? 8 * 1024 : 0;
-    }();
-    const auto value = c10::utils::get_env("TORCH_MKLDNN_MATMUL_MIN_SIZE");
-    return value.has_value() ? std::stoi(value.value()) : default_min_size;
-  }();
-  return value;
-}
-
-
-static inline bool apply_mkldnn_matmul_heur(int64_t m, int64_t k, int64_t n) {
-  const int64_t min_dim = get_mkldnn_matmul_min_dim();
-  const int64_t min_size = get_mkldnn_matmul_min_size();
-  return at::globalContext().userEnabledMkldnn() && m > min_dim && k > min_dim && n > min_dim && m * k * n > min_size;
-}
-#endif
 static void addmm_impl_cpu_(
     Tensor &result, const Tensor &self, Tensor m1, Tensor m2, const Scalar& beta, const Scalar& alpha) {
   TORCH_INTERNAL_ASSERT(self.dim() == 2 && m1.dim() == 2 && m2.dim() == 2);
@@ -1687,19 +1649,6 @@ static inline void bmm_out_or_baddbmm_(const Tensor& self_or_result_, const Tens
     return (strides[2] == 1 && (sizes[1] == 1 || strides[1] >= sizes[2])) ||
         (strides[1] == 1 && (sizes[2] == 1 || strides[2] >= sizes[1]));
   };
-#if !defined(__aarch64__)
-  // Apply the mkldnn heuristic on x86 only
-  bool apply_heur = apply_mkldnn_matmul_heur(batch1.sizes()[1], batch1.sizes()[2], batch2.sizes()[2]);
-  if (apply_heur && use_mkldnn_matmul(batch1, batch2, self_or_result)) {
-    try {
-      mkldnn_matmul(batch1, batch2, self_or_result, beta.to<float>(), alpha.to<float>());
-      return;
-    } catch ([[maybe_unused]]const std::exception& e) {
-      TORCH_WARN("mkldnn_matmul failed, switching to baddbmm:", e.what());
-      at::globalContext().setUserEnabledMkldnn(false);
-    }
-  }
-#endif
   if (contraction_size * res_rows * res_cols < 400) {
     if (is_bmm_out) {
       AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, batch1.scalar_type(), "bmm", [&] {
@@ -3681,16 +3630,7 @@ Tensor& _int_mm_out_cpu(const Tensor& self, const Tensor& mat2, Tensor& result) 
     return result.zero_();
   }
 
-  bool dispatched = false;
-  if (at::globalContext().userEnabledMkldnn() && at::cpu::is_avx512_vnni_supported()) {
-    try {
-      mkldnn_matmul_i8i8i32(self, mat2, result);
-      dispatched = true;
-    } catch ([[maybe_unused]] const std::exception& e) {
-      TORCH_WARN(func_name, " failed, switching to BLAS gemm: ", e.what());
-    }
-  }
-  if (!dispatched) {
+  {
     auto b = reinterpret_cast<int8_t*>(mat2.data_ptr());
     auto c = reinterpret_cast<int32_t*>(result.data_ptr());
     const int64_t m = result.size(0);

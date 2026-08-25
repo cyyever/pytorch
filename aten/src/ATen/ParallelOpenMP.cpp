@@ -10,9 +10,6 @@
 #include <mkl.h>
 #endif
 
-#if AT_MKLDNN_ENABLED()
-#include <ATen/native/mkldnn/IDeepRegistration.h>
-#endif
 
 #include <caffe2/utils/threadpool/pthreadpool-cpp.h>
 
@@ -62,9 +59,6 @@ void set_num_threads(int nthreads) {
   // because PyTorch uses caffe2::pthreadpool() in QNNPACK
   caffe2::PThreadPool* const pool = caffe2::pthreadpool(nthreads);
   TORCH_INTERNAL_ASSERT(pool, "Invalid thread pool!");
-#endif
-#if AT_MKLDNN_ENABLED()
-  at::native::mkldnn::clear_computation_cache();
 #endif
 }
 

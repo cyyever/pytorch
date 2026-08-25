@@ -56,8 +56,6 @@ using miopen_convolution_transpose_backward_fn = std::tuple<at::Tensor,at::Tenso
     at::IntArrayRef, at::IntArrayRef, int64_t, bool, bool, std::array<bool,3>);
 
 // MKLDNN forward transpose (not a backward).
-using mkldnn_convolution_transpose_fn = Tensor(*)(const Tensor&, const Tensor&, const std::optional<Tensor>&,
-    IntArrayRef, IntArrayRef, IntArrayRef, IntArrayRef, int64_t);
 
 // Depthwise.
 DECLARE_DISPATCH(conv_depthwise2d_backward_fn, conv_depthwise2d_backward_stub)
@@ -76,9 +74,6 @@ DECLARE_DISPATCH(miopen_convolution_transpose_backward_fn, miopen_convolution_tr
 DECLARE_DISPATCH(miopen_convolution_backward_fn, miopen_depthwise_convolution_backward_stub)
 
 // MKLDNN.
-DECLARE_DISPATCH(conv_backward_fn, mkldnn_convolution_backward_stub)
-DECLARE_DISPATCH(mkldnn_convolution_transpose_fn, mkldnn_convolution_transpose_stub)
-DECLARE_DISPATCH(conv_transpose_backward_fn, mkldnn_convolution_transpose_backward_stub)
 
 // Slow conv (CPU reference).
 DECLARE_DISPATCH(conv_dilated_backward_fn, slow_conv_dilated2d_backward_stub)

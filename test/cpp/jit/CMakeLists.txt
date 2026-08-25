@@ -42,10 +42,6 @@ endif()
 # TODO temporary until we can delete the old gtest polyfills.
 target_compile_definitions(test_jit PRIVATE USE_GTEST)
 
-if(USE_MKLDNN)
-  target_link_libraries(test_jit PRIVATE caffe2::mkldnn)
-endif()
-
 set(JIT_TEST_DEPENDENCIES torch gtest_main gmock)
 
 target_link_libraries(test_jit PRIVATE ${JIT_TEST_DEPENDENCIES})

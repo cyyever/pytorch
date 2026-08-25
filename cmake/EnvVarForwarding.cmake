@@ -46,8 +46,6 @@
 #   USE_GLOO=0                disables the gloo backend
 #   USE_SYSTEM_NCCL=0         use the submoduled nccl instead of system nccl
 #   USE_OPENMP=0              disables OpenMP parallelization
-#   USE_MKLDNN=0              disables MKLDNN
-#                            (USE_MKLDNN must be explicitly enabled)
 #   USE_STATIC_MKL           prefer to link MKL statically (Unix only)
 #   USE_FLASH_ATTENTION=0    disables flash attention for scaled dot product attn
 #   USE_MEM_EFF_ATTENTION=0  disables memory efficient attention for SDPA
@@ -75,7 +73,6 @@
 #   BLAS                     MKL, Eigen, ATLAS, FlexiBLAS, or OpenBLAS; fails the
 #                            build if the requested BLAS is not found (passthrough)
 #   MKL_THREADING            MKL threading mode: SEQ, TBB, or OMP (default)
-#   MKLDNN_CPU_RUNTIME       MKL-DNN threading mode: TBB or OMP (default)
 #   ATEN_THREADING           OMP or NATIVE intra-/inter-op parallel backend
 #   ATEN_AVX512_256=TRUE     let ATen AVX2 kernels use 32 ymm registers (read from
 #                            the environment in cmake/Codegen.cmake)
@@ -133,7 +130,6 @@ set(_ENV_PASSTHROUGH
   INTEL_MKL_DIR
   INTEL_OMP_DIR
   MKL_THREADING
-  MKLDNN_CPU_RUNTIME
   Numa_INCLUDE_DIR
   Numa_LIBRARIES
   ATEN_THREADING

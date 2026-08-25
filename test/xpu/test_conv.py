@@ -1409,13 +1409,9 @@ class TestConvolutionNNDeviceType(NNTestCase):
 
     @onlyXPU
     def test_onednn_allow_tf32_get_set(self):
-        with torch.backends.mkldnn.flags(
-            enabled=None, deterministic=None, allow_tf32=False
-        ):
+        with torch.backends.mkldnn.flags(deterministic=None, allow_tf32=False):
             self.assertFalse(torch.backends.mkldnn.allow_tf32)
-        with torch.backends.mkldnn.flags(
-            enabled=None, deterministic=None, allow_tf32=True
-        ):
+        with torch.backends.mkldnn.flags(deterministic=None, allow_tf32=True):
             self.assertTrue(torch.backends.mkldnn.allow_tf32)
 
 

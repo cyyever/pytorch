@@ -18,14 +18,12 @@ from ..kernel.mm_common import mm_args
 from ..select_algorithm import DataProcessorTemplateWrapper
 from ..utils import (
     has_free_symbols,
-    is_same_mkldnn_tensor,
     is_same_tensor,
     parallel_num_threads,
 )
 from ..virtualized import ops, V
 from .cpp import get_export_declaration
 from .cpp_micro_gemm import (
-    CppMicroBrgemm,
     CppMicroGemm,
     CppMicroGemmAMX,
     CppMicroGemmFP32Vec,
@@ -475,10 +473,7 @@ def prune_tensors(input_nodes: list[ir.IRNode], new_input_nodes: list[ir.IRNode]
     """
 
     def share_storage(base_tensor: torch.Tensor, comp_tensor: torch.Tensor):
-        return base_tensor.is_mkldnn == comp_tensor.is_mkldnn and (
-            is_same_tensor(base_tensor, comp_tensor)
-            or is_same_mkldnn_tensor(base_tensor, comp_tensor)
-        )
+        return is_same_tensor(base_tensor, comp_tensor)
 
     def get_candidates(input_nodes, new_input_nodes):
         # Only Constant Buffer like weight and bias might be changed in GEMM Template.
@@ -1687,8 +1682,6 @@ class CppGemmTemplate(CppTemplate):
         self.log_blockings()
         if isinstance(micro_gemm, CppMicroGemmAMX):
             counters["inductor"]["cpp_micro_gemm_amx_counter"] += 1
-        if isinstance(micro_gemm, CppMicroBrgemm):
-            counters["inductor"]["cpp_micro_brgemm_counter"] += 1
 
         L1_cache_size = torch.cpu.get_capabilities().get(
             "l1d_cache_size", 0

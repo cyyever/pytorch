@@ -249,22 +249,6 @@
   - pull
 
 
-- name: IDEEP
-  patterns:
-  - third_party/ideep
-  - caffe2/ideep/**
-  - caffe2/python/ideep/**
-  - cmake/Modules/FindMKLDNN.cmake
-  - third_party/mkl-dnn.BUILD
-  approved_by:
-  - XiaobingSuper
-  - jgong5
-  - mingfeima
-  - EikanWang
-  mandatory_checks_name:
-  - EasyCLA
-  - Lint
-  - pull
 
 - name: oneDNN graph
   patterns:
@@ -285,7 +269,6 @@
   - aten/src/ATen/native/cpu/**
   - aten/src/ATen/native/quantized/cpu/**
   - aten/src/ATen/native/Convolution*.cpp
-  - aten/src/ATen/native/mkldnn/**
   - test/test_mkl*.py
   approved_by:
   - mingfeima
@@ -302,8 +285,6 @@
 - name: CPU frontend
   patterns:
   - torch/cpu/**
-  - torch/utils/mkldnn.py
-  - test/test_mkldnn.py
   approved_by:
   - leslie-fang-intel
   - jgong5
@@ -316,9 +297,6 @@
 
 - name: CPU inductor
   patterns:
-  - torch/_inductor/mkldnn_ir.py
-  - torch/_inductor/mkldnn_lowerings.py
-  - torch/_inductor/fx_passes/mkldnn_fusion.py
   - torch/_inductor/fx_passes/quantization.py
   - torch/_inductor/codegen/cpp.py
   - torch/_inductor/codegen/cpp_utils.py
@@ -330,7 +308,6 @@
   - torch/_inductor/codegen/cpp_grouped_gemm_template.py
   - torch/_inductor/codegen/cpp_flex_attention_template.py
   - torch/csrc/inductor/cpp_prefix.h
-  - test/inductor/test_mkldnn_pattern_matcher.py
   - test/inductor/test_cpu_repro.py
   - test/inductor/test_cpu_cpp_wrapper.py
   - test/inductor/test_cpu_select_algorithm.py

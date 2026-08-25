@@ -15,7 +15,6 @@ from torch.testing import make_tensor
 from torch.testing._internal.common_cuda import TEST_CUDA, tf32_on_and_off
 from torch.testing._internal.common_device_type import (
     disablecuDNN,
-    disableMkldnn,
     dtypes,
     dtypesIfCUDA,
     dtypesIfMPS,
@@ -30,7 +29,6 @@ from torch.testing._internal.common_device_type import (
     onlyCUDA,
     onlyNativeDeviceTypes,
     precisionOverride,
-    skipCPUIfNoMkldnn,
     skipCUDAIfMiopen,
     skipCUDAIfNoCudnn,
     skipCUDAIfNoMiopen,
@@ -206,11 +204,6 @@ class TestConvolutionNN(NNTestCase):
             )
             self.assertFalse(weight.is_contiguous())
             y = torch.nn.functional.conv2d(x, weight, None)
-            if torch.backends.mkldnn.is_available():
-                # Disable MKLDNN explicitly, so that either NNPACK or THCNN will be used
-                with torch.backends.mkldnn.flags(enabled=False):
-                    y_ = torch.nn.functional.conv2d(x, weight, None)
-                    self.assertEqual(y, y_)
             self.assertEqual(y.sum(), 4186112.0)
 
     def test_invalid_conv2d(self):
@@ -625,41 +618,7 @@ class TestConvolutionNN(NNTestCase):
         input = torch.randn(
             1, in_channels, 5, 5, requires_grad=True, dtype=torch.double
         )
-        for enabled in (False, True):
-            with torch.backends.mkldnn.flags(enabled=enabled):
-                gradcheck(F.conv2d, (input, mod.weight))
-
-    def test_Conv2d_OneDNN(self):
-        def run_once(group_val=24, dilation=1):
-            ifm = torch.ones([1, group_val, 6, 6], dtype=torch.float32)
-            weights = torch.ones([group_val, 1, 3, 3], dtype=torch.float32)
-            op = torch.nn.Conv2d(
-                in_channels=group_val,
-                out_channels=group_val,
-                kernel_size=[3, 3],
-                stride=[2, 2],
-                padding=[1, 1],
-                dilation=[dilation, dilation],
-                groups=group_val,
-                bias=False,
-                padding_mode="zeros",
-            )
-
-            op.weight.data = weights
-            res = op(ifm)
-            grad_in = torch.ones(res.shape, dtype=torch.float32)
-            res.backward(grad_in)
-            return op.weight.grad
-
-        for gorup_val in (24, 48, 23, 25):
-            for dilation in (1, 2):
-                with torch.backends.mkldnn.flags(enabled=False):
-                    without_onednn = run_once(gorup_val, dilation)
-
-                with torch.backends.mkldnn.flags(enabled=True):
-                    with_onednn = run_once(gorup_val, dilation)
-
-                self.assertEqual(without_onednn, with_onednn)
+        gradcheck(F.conv2d, (input, mod.weight))
 
     def test_Conv2d_missing_argument(self):
         c = nn.Conv2d(3, 3, 3)
@@ -2345,7 +2304,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Slow2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow1d",
             ),
             subtest(
@@ -2357,7 +2316,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowTranspose2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow1d_transposed",
             ),
             subtest(
@@ -2369,7 +2328,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowDilated2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow1d_dilated",
             ),
             subtest(
@@ -2381,7 +2340,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowTranspose2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow1d_dilated_transposed",
             ),
             subtest(
@@ -2393,7 +2352,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Slow2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow2d",
             ),
             subtest(
@@ -2405,7 +2364,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowTranspose2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow2d_transposed",
             ),
             subtest(
@@ -2417,7 +2376,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowDilated2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow2d_dilated",
             ),
             subtest(
@@ -2429,7 +2388,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowTranspose2d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow2d_dilated_transposed",
             ),
             subtest(
@@ -2441,7 +2400,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Slow3d,
                 ),
-                decorators=[onlyCPU, disableMkldnn],
+                decorators=[onlyCPU],
                 name="slow3d_cpu",
             ),
             # CUDA doesn't have a slow 3D implementation, so it goes to the dilated 3D implementation instead
@@ -2459,7 +2418,7 @@ class TestConvolutionNNDevice(NNTestCase):
             ),
             # FIXME: RuntimeError: CUDA out of memory.
             # subtest(((2, 6, 7, 8, 9), True, False, 3, torch.strided, torch._C._ConvBackend.SlowTranspose3d),
-            #         decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN], name='slow3d_transposed'),
+            #         decorators=[onlyNativeDeviceTypes, disablecuDNN], name='slow3d_transposed'),
             subtest(
                 (
                     (2, 6, 7, 8, 9),
@@ -2469,12 +2428,12 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.SlowDilated3d,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
+                decorators=[onlyNativeDeviceTypes, disablecuDNN],
                 name="slow3d_dilated",
             ),
             # FIXME: RuntimeError: CUDA out of memory.
             # subtest(((2, 6, 7, 8, 9), True, True, 3, torch.strided, torch._C._ConvBackend.SlowTranspose3d),
-            #         decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN], name='slow3d_dilated_transposed'),
+            #         decorators=[onlyNativeDeviceTypes, disablecuDNN], name='slow3d_dilated_transposed'),
             subtest(
                 (
                     (0, 6, 7),
@@ -2484,7 +2443,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_batch1d",
             ),
             subtest(
@@ -2496,7 +2455,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_channel1d",
             ),
             subtest(
@@ -2508,7 +2467,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_batch_channel1d",
             ),
             subtest(
@@ -2520,7 +2479,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_batch2d",
             ),
             subtest(
@@ -2532,7 +2491,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_channel2d",
             ),
             subtest(
@@ -2544,7 +2503,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_batch_channel2d",
             ),
             subtest(
@@ -2556,7 +2515,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_batch3d",
             ),
             subtest(
@@ -2568,7 +2527,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_channel3d",
             ),
             subtest(
@@ -2580,7 +2539,7 @@ class TestConvolutionNNDevice(NNTestCase):
                     torch.strided,
                     torch._C._ConvBackend.Empty,
                 ),
-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
+                decorators=[onlyNativeDeviceTypes],
                 name="empty_batch_channel3d",
             ),
             # === cuda ===
@@ -2793,224 +2752,6 @@ class TestConvolutionNNDevice(NNTestCase):
                 ),
                 decorators=[onlyCUDA, skipCUDAIfNoMiopen],
                 name="miopen_depthwise3d",
-            ),
-            # === mkldnn ===
-            subtest(
-                (
-                    (2, 6, 7),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn1d",
-            ),
-            subtest(
-                (
-                    (2, 6, 7, 8),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn2d",
-            ),
-            subtest(
-                (
-                    (2, 6, 7, 8, 9),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn3d",
-            ),
-            # Transposed convolution is broken for mkldnn. See https://github.com/pytorch/pytorch/issues/68775.
-            subtest(
-                (
-                    (2, 6, 7),
-                    True,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn, unittest.expectedFailure],
-                name="mkldnn1d_transposed",
-            ),
-            subtest(
-                (
-                    (2, 6, 7, 8),
-                    True,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn, unittest.expectedFailure],
-                name="mkldnn2d_transposed",
-            ),
-            subtest(
-                (
-                    (2, 6, 7, 8, 9),
-                    True,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn, unittest.expectedFailure],
-                name="mkldnn3d_transposed",
-            ),
-            subtest(
-                (
-                    (2, 6, 7),
-                    False,
-                    True,
-                    3,
-                    torch.strided,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn1d_cpu_input",
-            ),
-            subtest(
-                (
-                    (2, 6, 7, 8),
-                    False,
-                    True,
-                    3,
-                    torch.strided,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn2d_cpu_input",
-            ),
-            subtest(
-                (
-                    (2, 6, 7, 8, 9),
-                    False,
-                    True,
-                    3,
-                    torch.strided,
-                    torch._C._ConvBackend.Mkldnn,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn3d_cpu_input",
-            ),
-            subtest(
-                (
-                    (0, 6, 7),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_batch1d",
-            ),
-            subtest(
-                (
-                    (2, 0, 7),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_channel1d",
-            ),
-            subtest(
-                (
-                    (0, 0, 7),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_batch_channel1d",
-            ),
-            subtest(
-                (
-                    (0, 6, 7, 8),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_batch2d",
-            ),
-            subtest(
-                (
-                    (2, 0, 7, 8),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_channel2d",
-            ),
-            subtest(
-                (
-                    (0, 0, 7, 8),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_batch_channel2d",
-            ),
-            subtest(
-                (
-                    (0, 6, 7, 8, 9),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_batch3d",
-            ),
-            subtest(
-                (
-                    (2, 0, 7, 8, 9),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_channel3d",
-            ),
-            subtest(
-                (
-                    (0, 0, 7, 8, 9),
-                    False,
-                    False,
-                    3,
-                    torch._mkldnn,
-                    torch._C._ConvBackend.MkldnnEmpty,
-                ),
-                decorators=[onlyCPU, skipCPUIfNoMkldnn],
-                name="mkldnn_empty_batch_channel3d",
             ),
             # Note: Tests for mobile backends are not currently supported. This comprises
             # Winograd3x3Depthwise and Xnnpack2d backends. Testing these
@@ -3948,162 +3689,161 @@ class TestConvolutionNNCPU(NNTestCase):
             self.assertEqual(conv.bias.grad, ref_conv.bias.grad, exact_dtype=False)
             self.assertEqual(input.grad, ref_input.grad, exact_dtype=False)
 
-        with torch.backends.mkldnn.flags(enabled=False):
-            formats = [
-                [torch.channels_last, torch.channels_last],
-                [torch.channels_last, torch.contiguous_format],
-                [torch.contiguous_format, torch.channels_last],
-            ]
-            for input_format, weight_format in formats:
-                # non-dilated conv: thnn_conv2d normal path (with im2col)
-                helper(
-                    nn.Conv2d,
-                    2,
-                    8,
-                    4,
-                    4,
-                    out_channels=4,
-                    kernel_size=3,
-                    dilation=1,
-                    groups=1,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                helper(
-                    nn.Conv2d,
-                    2,
-                    8,
-                    4,
-                    4,
-                    out_channels=8,
-                    kernel_size=3,
-                    dilation=1,
-                    groups=8,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                # test when input channels is 1 and not converted to channels last
-                helper(
-                    nn.Conv2d,
-                    2,
-                    1,
-                    10,
-                    10,
-                    out_channels=8,
-                    kernel_size=3,
-                    dilation=1,
-                    groups=1,
-                    input_format=torch.contiguous_format,
-                    weight_format=torch.channels_last,
-                )
-                # non-dilated conv: thnn_conv2d fast path (skip im2col)
-                helper(
-                    nn.Conv2d,
-                    1,
-                    16,
-                    56,
-                    56,
-                    out_channels=16,
-                    kernel_size=1,
-                    dilation=1,
-                    groups=1,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                # ic == oc == 1 here, so need to stick input to CL to activate channels last
-                helper(
-                    nn.Conv2d,
-                    1,
-                    16,
-                    56,
-                    56,
-                    out_channels=16,
-                    kernel_size=1,
-                    dilation=1,
-                    groups=16,
-                    input_format=torch.channels_last,
-                    weight_format=weight_format,
-                )
-                # dilated conv: slow_conv_dilated2d
-                helper(
-                    nn.Conv2d,
-                    2,
-                    8,
-                    11,
-                    13,
-                    out_channels=16,
-                    kernel_size=3,
-                    dilation=2,
-                    groups=1,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                helper(
-                    nn.Conv2d,
-                    2,
-                    16,
-                    11,
-                    13,
-                    out_channels=32,
-                    kernel_size=3,
-                    dilation=2,
-                    groups=16,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                # transposed-conv: slow_conv_transpose2d
-                helper(
-                    nn.ConvTranspose2d,
-                    2,
-                    8,
-                    4,
-                    4,
-                    out_channels=4,
-                    kernel_size=3,
-                    dilation=1,
-                    groups=1,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                helper(
-                    nn.ConvTranspose2d,
-                    2,
-                    8,
-                    4,
-                    4,
-                    out_channels=8,
-                    kernel_size=3,
-                    dilation=1,
-                    groups=8,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                helper(
-                    nn.ConvTranspose2d,
-                    1,
-                    16,
-                    56,
-                    56,
-                    out_channels=16,
-                    kernel_size=1,
-                    dilation=1,
-                    groups=1,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
-                helper(
-                    nn.ConvTranspose2d,
-                    1,
-                    16,
-                    56,
-                    56,
-                    out_channels=32,
-                    kernel_size=1,
-                    dilation=1,
-                    groups=16,
-                    input_format=input_format,
-                    weight_format=weight_format,
-                )
+        formats = [
+            [torch.channels_last, torch.channels_last],
+            [torch.channels_last, torch.contiguous_format],
+            [torch.contiguous_format, torch.channels_last],
+        ]
+        for input_format, weight_format in formats:
+            # non-dilated conv: thnn_conv2d normal path (with im2col)
+            helper(
+                nn.Conv2d,
+                2,
+                8,
+                4,
+                4,
+                out_channels=4,
+                kernel_size=3,
+                dilation=1,
+                groups=1,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            helper(
+                nn.Conv2d,
+                2,
+                8,
+                4,
+                4,
+                out_channels=8,
+                kernel_size=3,
+                dilation=1,
+                groups=8,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            # test when input channels is 1 and not converted to channels last
+            helper(
+                nn.Conv2d,
+                2,
+                1,
+                10,
+                10,
+                out_channels=8,
+                kernel_size=3,
+                dilation=1,
+                groups=1,
+                input_format=torch.contiguous_format,
+                weight_format=torch.channels_last,
+            )
+            # non-dilated conv: thnn_conv2d fast path (skip im2col)
+            helper(
+                nn.Conv2d,
+                1,
+                16,
+                56,
+                56,
+                out_channels=16,
+                kernel_size=1,
+                dilation=1,
+                groups=1,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            # ic == oc == 1 here, so need to stick input to CL to activate channels last
+            helper(
+                nn.Conv2d,
+                1,
+                16,
+                56,
+                56,
+                out_channels=16,
+                kernel_size=1,
+                dilation=1,
+                groups=16,
+                input_format=torch.channels_last,
+                weight_format=weight_format,
+            )
+            # dilated conv: slow_conv_dilated2d
+            helper(
+                nn.Conv2d,
+                2,
+                8,
+                11,
+                13,
+                out_channels=16,
+                kernel_size=3,
+                dilation=2,
+                groups=1,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            helper(
+                nn.Conv2d,
+                2,
+                16,
+                11,
+                13,
+                out_channels=32,
+                kernel_size=3,
+                dilation=2,
+                groups=16,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            # transposed-conv: slow_conv_transpose2d
+            helper(
+                nn.ConvTranspose2d,
+                2,
+                8,
+                4,
+                4,
+                out_channels=4,
+                kernel_size=3,
+                dilation=1,
+                groups=1,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            helper(
+                nn.ConvTranspose2d,
+                2,
+                8,
+                4,
+                4,
+                out_channels=8,
+                kernel_size=3,
+                dilation=1,
+                groups=8,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            helper(
+                nn.ConvTranspose2d,
+                1,
+                16,
+                56,
+                56,
+                out_channels=16,
+                kernel_size=1,
+                dilation=1,
+                groups=1,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
+            helper(
+                nn.ConvTranspose2d,
+                1,
+                16,
+                56,
+                56,
+                out_channels=32,
+                kernel_size=1,
+                dilation=1,
+                groups=16,
+                input_format=input_format,
+                weight_format=weight_format,
+            )
 
     # Test that faster algorithms used for inference produce the same results
     # Validates depthwise3x3 bug reported in https://github.com/pytorch/pytorch/issues/60176
