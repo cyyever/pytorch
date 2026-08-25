@@ -110,8 +110,6 @@ c10::TypePtr IValue::TagType<c10::Type>::get(const IValue& v) {
         return BoolType::get();
       case Tag::String:
         return StringType::get();
-      case Tag::Blob:
-        return AnyType::get();
       case Tag::GenericDict: {
         auto d = v.toGenericDict();
         return DictType::create(d.keyType(), d.valueType());
@@ -343,7 +341,6 @@ IValue IValue::equals(const IValue& rhs) const {
       return rhs.isDevice() && lhs.toDevice() == rhs.toDevice();
     case Tag::GenericList:
       return rhs.isList() && lhs.toList() == rhs.toList();
-    case Tag::Blob:
     case Tag::Future:
     case Tag::Await:
     case Tag::RRef:
@@ -397,7 +394,6 @@ size_t IValue::hash(const IValue& v) {
       return c10::get_hash(v.toDevice());
     case Tag::GenericDict:
     case Tag::GenericList:
-    case Tag::Blob:
     case Tag::Future:
     case Tag::Await:
     case Tag::RRef:
@@ -826,8 +822,6 @@ std::ostream& operator<<(std::ostream & out, const IValue & v) {
     }
     case IValue::Tag::String:
       return out << v.toStringRef();
-    case IValue::Tag::Blob:
-      return out << *v.toBlob();
     case IValue::Tag::Capsule:
       return out << "Capsule";
     case IValue::Tag::GenericList:
