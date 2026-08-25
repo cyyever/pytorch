@@ -5,7 +5,7 @@
 
 namespace torch::jit {
 
-IValue readArchiveAndTensors(
+c10::IValue readArchiveAndTensors(
     const std::string& archive_name,
     const std::string& pickle_prefix,
     const std::string& tensor_prefix,
