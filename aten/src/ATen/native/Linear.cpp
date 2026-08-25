@@ -23,7 +23,6 @@
 #include <ATen/ops/einsum_native.h>
 #include <ATen/ops/linear_native.h>
 #include <ATen/ops/matmul.h>
-#include <ATen/ops/mkldnn_linear.h>
 #include <ATen/ops/mm.h>
 #include <ATen/ops/mul.h>
 #include <ATen/ops/tensordot_native.h>
@@ -93,9 +92,6 @@ Tensor linear(const Tensor& input, const Tensor& weight, const std::optional<Ten
   auto bias = bias_opt.has_value()
     ? c10::MaybeOwned<Tensor>::borrowed(*bias_opt)
     : c10::MaybeOwned<Tensor>::owned(std::in_place);
-  if (input.is_mkldnn()) {
-    return at::mkldnn_linear(input, weight, *bias);
-  }
   if (input_dim == 2 && bias->defined()) {
     // Fused op is marginally faster.
     return at::addmm(*bias, input, weight.t());

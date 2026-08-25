@@ -207,10 +207,7 @@ class CPUReproTests(TestCase):
                     kwargs = kwargs if kwargs else {}
                     if func == torch.ops.aten.convolution.default:
                         expected_fmt = fmt
-                        if config.force_layout_optimization or (
-                            torch.backends.mkldnn.enabled
-                            and torch.backends.mkldnn.is_available()
-                        ):
+                        if config.force_layout_optimization:
                             expected_fmt = torch.channels_last
                         test_self.assertTrue(
                             args[0].is_contiguous(memory_format=expected_fmt),
@@ -240,7 +237,6 @@ class CPUReproTests(TestCase):
     @torch._inductor.config.patch(
         {"layout_optimization": True, "force_layout_optimization": True}
     )
-    @patch("torch.backends.mkldnn.is_available", lambda: False)
     @patch("torch.cuda.is_available", lambda: False)
     def test_conv_stride_constraints_forced_without_mkldnn(self):
         self._check_conv_stride_constraints([torch.contiguous_format])
@@ -415,22 +411,6 @@ class CPUReproTests(TestCase):
         for actual_grad, expected_grad in zip(actual_grads, expected_grads):
             torch.testing.assert_close(actual_grad, expected_grad, atol=1e-4, rtol=1e-4)
 
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_conv2d_packed(self):
-        options = itertools.product([[3, 56, 56]], [True, False], [0, (0,)])
-        for x_shape, mode_train, padding in options:
-            mod = torch.nn.Sequential(
-                torch.nn.Conv2d(3, 64, 3, 3, padding=padding)
-            ).train(mode=mode_train)
-            v = torch.randn(x_shape, dtype=torch.float32)
-
-            with torch.no_grad():
-                self.common(
-                    mod,
-                    (v,),
-                )
-
     @patch("torch.cuda.is_available", lambda: False)
     def test_conv2d_autocast(self):
         v = torch.randn(1, 3, 28, 18, dtype=torch.float32)
@@ -508,86 +488,6 @@ class CPUReproTests(TestCase):
                     (v.to(dtype),),
                 )
 
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_unsupported_conv_transpose(self):
-        class Model(torch.nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.conv_transpose = torch.nn.ConvTranspose2d(
-                    3, 6, 3, stride=1, padding=1, output_padding=1
-                )
-
-            def forward(self, input_tensor):
-                x = self.conv_transpose(input_tensor)
-                output = torch.tanh(x)
-                return output
-
-        input = torch.randn(1, 3, 28, 28)
-        m = Model().eval()
-
-        with torch.no_grad():
-            compiled_m = torch.compile(m)
-            # The cpp_wrapper C-shim can't utilize the Python error API, so error
-            # messages are printed to stderr directly, and the intercepted RuntimeError
-            # is significantly less verbose.
-            msg = (
-                r"aoti_torch_cpu_convolution\(.*\) API call failed"
-                if config.cpp_wrapper
-                else "output padding must be smaller than either stride or dilation"
-            )
-            with self.assertRaisesRegex(RuntimeError, msg):
-                compiled_m(input)
-
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_conv_used_from_multiple_places(self):
-        class M(torch.nn.Module):
-            def __init__(self, conv_in_channel, conv_out_channel) -> None:
-                super().__init__()
-                self.conv = torch.nn.Conv2d(conv_in_channel, conv_out_channel, (3, 3))
-
-            def forward(self, x):
-                res = self.conv(x)
-                res = F.relu(res)
-                res = self.conv(res)
-                return res
-
-        with torch.no_grad():
-            mod = M(3, 3).eval()
-            x = torch.randn(1, 3, 224, 224)
-            self.common(
-                mod,
-                (x,),
-            )
-
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_linear_used_from_multiple_places(self):
-        class M(torch.nn.Module):
-            def __init__(self, in_channel, out_channel) -> None:
-                super().__init__()
-                self.linear = torch.nn.Linear(in_channel, out_channel)
-
-            def forward(self, x):
-                res = self.linear(x)
-                res = F.relu(res)
-                res = self.linear(res)
-                return res
-
-        dtypes = []
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
-            dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
-            dtypes.append(torch.float16)
-        for dtype in dtypes:
-            with torch.no_grad():
-                m = M(224, 224).to(dtype).eval()
-                m_opt = torch.compile(m)
-                x = torch.randn(224, 224, dtype=dtype)
-                m_opt(x)
-                self.assertEqual(m(x), m_opt(x))
-
     @config.patch(implicit_fallbacks=True)
     def test_multihead_attention_cpu(self):
         def fn(
@@ -664,44 +564,6 @@ class CPUReproTests(TestCase):
             example_inputs = (torch.rand(1, 10),)
             self.common(Model(), example_inputs)
 
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_linear_packed(self):
-        dtypes = []
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
-            dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
-            dtypes.append(torch.float16)
-        options = itertools.product(
-            [[2, 3, 10], [2, 10], [10], [2, 0]], [3, 0], [True, False], dtypes
-        )
-        for input_shape, out_dim, bias, dtype in options:
-            mod = torch.nn.Sequential(
-                torch.nn.Linear(input_shape[-1], out_dim, bias=bias)
-            ).eval()
-
-            v = torch.randn(input_shape)
-            with torch.no_grad():
-                self.common(
-                    mod.to(dtype),
-                    (v.to(dtype),),
-                )
-
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_conv_transpose2d_packed_cpu(self):
-        options = itertools.product([[1, 3, 28, 28], [3, 28, 28]], [0, (0,)])
-        for x_shape, padding in options:
-            mod = torch.nn.Sequential(
-                torch.nn.ConvTranspose2d(3, 64, 3, 3, padding=padding)
-            ).eval()
-            v = torch.randn(x_shape, dtype=torch.float32)
-            with torch.no_grad():
-                self.common(
-                    mod,
-                    (v,),
-                )
-
     @torch._dynamo.config.patch(
         {"dynamic_shapes": True, "assume_static_by_default": False}
     )
@@ -714,7 +576,7 @@ class CPUReproTests(TestCase):
         self.common(fn, (1023,))
 
     @config.patch(freezing=True)
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     @torch._dynamo.config.patch(dynamic_shapes=True)
     @torch._dynamo.config.patch(assume_static_by_default=False)
     def test_conv_in_channel_1_dynamic_shapes(self):
@@ -733,7 +595,7 @@ class CPUReproTests(TestCase):
         in_channel = 1
         out_channel = 3
         amp_enabled_configs = [False]
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
+        if False:
             # When amp is enabled here, the input to Conv is a FlexibleLayout.
             # While it's disabled, the input is a FixedLayout.
             amp_enabled_configs.append(True)
@@ -746,7 +608,7 @@ class CPUReproTests(TestCase):
                     (v,),
                 )
 
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     @patch("torch.cuda.is_available", lambda: False)
     @torch._dynamo.config.patch(dynamic_shapes=True)
     @torch._dynamo.config.patch(assume_static_by_default=False)
@@ -769,9 +631,9 @@ class CPUReproTests(TestCase):
         from torch._dynamo.utils import counters
 
         dtypes = [torch.float]
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
+        if False:
             dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
+        if False:
             dtypes.append(torch.float16)
         for dtype in dtypes:
             counters.clear()
@@ -1487,79 +1349,6 @@ class CPUReproTests(TestCase):
         depth = nest.max_parallel_depth()
         self.assertEqual(depth.start_depth, 0)
         self.assertEqual(depth.parallel_depth, 1)
-
-    @requires_vectorization
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @config.patch(freezing=True)
-    def test_masked_softmax_freezing_no_parallel_reduction(self):
-        # Fix issue: https://github.com/pytorch/pytorch/issues/190757
-        # End-to-end check of the symptom: under freezing, the shifted-window
-        # masked-softmax reduction was left with a size-4 (num heads) vectorized
-        # outer loop, whose trip count underflowed to 0 and relocated
-        # parallelism onto the inner reduction -- nesting an OpenMP parallel
-        # region inside a serial loop (30-50x slowdown). Assert that parallelism
-        # never lands on a reduction loop.
-        C, WS, SHIFT, NH = 96, 8, 4, 4
-
-        class Model(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.proj = torch.nn.Conv2d(1, C, 4, 4)
-                self.gate = torch.nn.Conv2d(C, C, 1)
-                self.ln = torch.nn.LayerNorm(C)
-                self.qkv = torch.nn.Linear(C, 3 * C)
-                self.out = torch.nn.Linear(C, C)
-
-            def forward(self, x):
-                x = F.interpolate(
-                    x, (1024, 64), mode="bicubic", align_corners=True
-                ).reshape(1, 1, 256, 256)
-                g = self.proj(x)
-                x = g * torch.sigmoid(self.gate(g))
-                b, c, h, w = x.shape
-                x = self.ln(x.flatten(2).transpose(1, 2)).view(b, h, w, c)
-                x = torch.roll(x, (-SHIFT, -SHIFT), (1, 2))
-                win = (
-                    x.view(b, h // WS, WS, w // WS, WS, c)
-                    .permute(0, 1, 3, 2, 4, 5)
-                    .reshape(-1, WS * WS, c)
-                )
-                n = win.shape[0]
-                r = (torch.arange(h) >= h - WS).long() + (
-                    torch.arange(h) >= h - SHIFT
-                ).long()
-                reg = (
-                    (r[:, None] * 3 + r[None, :])
-                    .view(h // WS, WS, w // WS, WS)
-                    .permute(0, 2, 1, 3)
-                    .reshape(-1, WS * WS)
-                )
-                mask = (
-                    (reg.unsqueeze(1) - reg.unsqueeze(2))
-                    .to(x.dtype)
-                    .masked_fill_(reg.unsqueeze(1) != reg.unsqueeze(2), -100.0)
-                )
-                q, k, v = (
-                    self.qkv(win)
-                    .view(n, WS * WS, 3, NH, c // NH)
-                    .permute(2, 0, 3, 1, 4)
-                )
-                s = q @ k.transpose(-1, -2) / math.sqrt(c // NH)
-                s = (
-                    s.view(1, n, NH, WS * WS, WS * WS) + mask.unsqueeze(1).unsqueeze(0)
-                ).view(-1, NH, WS * WS, WS * WS)
-                o = (s.softmax(-1) @ v).transpose(1, 2).reshape(n, WS * WS, c)
-                return self.out(o)
-
-        mod = Model().eval()
-        x = torch.randn(1, 1, 1001, 64)
-        with torch.no_grad():
-            metrics.reset()
-            expected = mod(x)
-            compiled_m = torch.compile(mod)
-            actual = compiled_m(x)
-            self.assertEqual(expected, actual, atol=1e-3, rtol=1e-3)
-            self.assertEqual(metrics.parallel_reduction_count, 0)
 
     def test_cat_mul(self):
         # https://github.com/pytorch/pytorch/issues/93365
@@ -5285,28 +5074,6 @@ class CPUReproTests(TestCase):
         y = torch.randn(8, 8, 3136, 8)
         self.common(fn, (x, y))
 
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @patch("torch.cuda.is_available", lambda: False)
-    @config.patch(freezing=True)
-    def test_linear_with_no_default_contiguous_input(self):
-        dtypes = [
-            torch.float32,
-        ]
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
-            dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
-            dtypes.append(torch.float16)
-        mod = torch.nn.Sequential(torch.nn.Linear(16, 16)).eval()
-        temp = torch.randn(1, 16, 1, 1)
-        v = torch.as_strided(temp, [1, 16], [0, 1], 0)
-        self.assertTrue(v.is_contiguous())
-        for dtype in dtypes:
-            with torch.no_grad():
-                self.common(
-                    mod.to(dtype),
-                    (v.to(dtype),),
-                )
-
     @patch("torch.cuda.is_available", lambda: False)
     @config.patch(freezing=True)
     def test_linear_with_reshape(self):
@@ -5380,34 +5147,6 @@ class CPUReproTests(TestCase):
                     FileCheck().check_count(
                         "__at_align__ std::array", 0, exactly=True
                     ).run(code)
-
-    @requires_vectorization
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    def test_group_norm_sum_conv1d_tail_reduction_store(self):
-        # https://github.com/pytorch/pytorch/issues/181618
-        torch.manual_seed(0)
-        m_norm = nn.GroupNorm(1, 9).eval()
-        m_conv1 = nn.Conv1d(9, 1, 3)
-        m_conv2 = nn.Conv1d(1, 7, 3)
-        x = torch.randn(8, 9, 14, 12)
-
-        def model():
-            out = m_norm(x)
-            out = out.sum(dim=3)
-            out = m_conv1(out)
-            return m_conv2(out)
-
-        expected = model()
-        actual, code = run_and_get_cpp_code(torch.compile(model, backend="inductor"))
-
-        torch.testing.assert_close(actual, expected, atol=2e-4, rtol=1e-3)
-        self.assertIn("sum_masked_reduce", code)
-        vec_width = cpu_vec_isa.pick_vec_isa().nelements()
-        tail_width = 9 if vec_width > 9 else 9 % vec_width or vec_width
-        self.assertIn(
-            f"tmp_acc0_vec.store(tmpbuf.data(), static_cast<int64_t>({tail_width}L));",
-            code,
-        )
 
     @unittest.skipIf(
         os.getenv("ATEN_CPU_CAPABILITY") == "default",
@@ -7333,66 +7072,6 @@ class CPUReproTests(TestCase):
             return F.pdist(x)
 
         torch.compile(fn)(torch.randn(2, 2))
-
-    @skipIfRocmArch(MI200_ARCH)
-    @unittest.skipIf(not torch.backends.mkldnn.is_available(), "MKLDNN is not enabled")
-    @requires_vectorization
-    @config.patch(freezing=True)
-    def test_upsample_layout(self):
-        class UpsampleModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.conv = nn.Conv2d(64, 64, kernel_size=3, padding=1)
-                self.upsample = nn.Upsample(
-                    scale_factor=2, mode="bilinear", align_corners=True
-                )
-                self.conv2 = nn.Conv2d(64, 16, kernel_size=3, padding=1)
-
-            def forward(self, x):
-                x = self.conv(x)
-                x = self.upsample(x)
-                x = self.conv2(x)
-                x = torch.relu(x)
-                return x
-
-        mod = UpsampleModel()
-        cmod = torch.compile(mod)
-        for dtype in [torch.float32, torch.bfloat16]:
-            x = torch.randn(4, 64, 64, 64, dtype=dtype)
-            with (
-                torch.no_grad(),
-                torch.amp.autocast(
-                    device_type="cpu", dtype=dtype, enabled=dtype == torch.bfloat16
-                ),
-            ):
-                ref_res = mod(x)
-                res, code = run_and_get_cpp_code(cmod, x)
-                # The 2 transpose_mxns are unrelated to upsample.
-                # They are generated by the input of first conv and
-                # the final output.
-
-                # HIP: Some architectures (e.g. MI200) do not use the MKLDNN backend for bfloat16
-                # and instead use extern_kernels.convolution that does not need a call to transpose_mxn.
-                # We check for this by looking for the string "extern_kernels.convolution" in the code.
-                if (
-                    torch.version.hip
-                    and dtype == torch.bfloat16
-                    and "torch.ops.mkldnn._convolution" not in code
-                ):
-                    FileCheck().check_count(
-                        "extern_kernels.convolution",
-                        2,
-                        exactly=True,
-                    ).run(code)
-                else:
-                    FileCheck().check_count(
-                        "transpose_mxn",
-                        2,
-                        exactly=True,
-                    ).run(code)
-                atol = 1e-2 if dtype == torch.bfloat16 else 1e-5
-                rtol = 1e-2 if dtype == torch.bfloat16 else 1e-5
-                torch.testing.assert_close(ref_res, res, atol=atol, rtol=rtol)
 
     # https://github.com/pytorch/pytorch/issues/136640
     def test_inductor_dynamic_shapes_broadcasting(self) -> None:

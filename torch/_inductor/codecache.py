@@ -3061,8 +3061,6 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
             def _constant_nbytes(t: torch.Tensor) -> int:
                 if t.numel() == 0:
                     return 0
-                if t.is_mkldnn:
-                    return torch.ops.mkldnn._nbytes(t)
                 return t.untyped_storage().nbytes()
 
             if (
@@ -3109,16 +3107,10 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                             if n == 0:
                                 return
                             t = graph.get_original_value_of_constant(constant_names[i])
-                            if t.is_mkldnn:
-                                data_ptr = torch.ops.mkldnn.data_ptr(t)
-                                ctypes.memmove(base_addr + offsets[i], data_ptr, n)
-                            else:
-                                # Hold the CPU storage until memmove finishes —
-                                # otherwise it may be freed and data_ptr dangles.
-                                t_cpu = t.untyped_storage().cpu()
-                                ctypes.memmove(
-                                    base_addr + offsets[i], t_cpu.data_ptr(), n
-                                )
+                            # Hold the CPU storage until memmove finishes —
+                            # otherwise it may be freed and data_ptr dangles.
+                            t_cpu = t.untyped_storage().cpu()
+                            ctypes.memmove(base_addr + offsets[i], t_cpu.data_ptr(), n)
 
                         with ThreadPoolExecutor() as pool:
                             # Consume iterator to surface any worker exceptions.

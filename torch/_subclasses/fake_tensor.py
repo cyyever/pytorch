@@ -1991,9 +1991,6 @@ class FakeTensorMode(TorchDispatchMode):
         if func in self.lift_fns:
             raise _BypassDispatchCache("lift")
 
-        if func is aten.to_mkldnn.default:
-            raise _BypassDispatchCache("mkldnn tensor")
-
         if func.name() == "inductor::resize_storage_bytes_":
             raise _BypassDispatchCache("inductor::resize_storage_bytes_")
 
@@ -3062,19 +3059,6 @@ class FakeTensorMode(TorchDispatchMode):
             if fast_impl is not None:
                 return maybe_propagate_real_tensors(fast_impl(self, *args, **kwargs))
 
-        if func is torch.ops.aten.to_dense.default:
-            # The registered fake op impl handles the usual path, but symbolic
-            # shapes can still reach generic decomposition below. The native
-            # composite sees a fake MKLDNN tensor's strided meta backing, so
-            # handle this before generic decomposition.
-            dtype = args[1] if len(args) > 1 else kwargs.get("dtype")
-            masked_grad = kwargs.get("masked_grad")
-            op_impl_out = maybe_to_dense_mkldnn(
-                self, args[0], dtype=dtype, masked_grad=masked_grad
-            )
-            if op_impl_out is not NotImplemented:
-                return maybe_propagate_real_tensors(cast(FakeTensor, op_impl_out))
-
         # If there's a Python meta, prefer that over the decomposition
         from torch._decomp import meta_table
 
@@ -3777,7 +3761,6 @@ from torch._subclasses.fake_impls import (  # noqa: F401
     contains_tensor_types,
     get_fast_op_impls,
     has_meta,
-    maybe_to_dense_mkldnn,
     op_implementations_checks,
     stride_incorrect_op,
 )

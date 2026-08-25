@@ -2320,9 +2320,6 @@ class TestProfilerDevice(TestCase):
         def create_device_tensor():
             return torch.rand(10, 10).to(device)
 
-        def create_mkldnn_tensor():
-            return torch.rand(10, 10, dtype=torch.float32).to_mkldnn()
-
         stats = run_profiler(create_cpu_tensor)
         check_metrics(
             stats,
@@ -2400,23 +2397,6 @@ class TestProfilerDevice(TestCase):
                 allocs=[
                     "aten::rand",
                     "aten::empty",
-                ],
-            )
-
-        if torch.backends.mkldnn.is_available():
-            create_mkldnn_tensor()
-            stats = run_profiler(create_mkldnn_tensor)
-            check_metrics(
-                stats,
-                "cpu_memory_usage",
-                allocs=[
-                    "test_user_scope_alloc",
-                    "aten::rand",
-                    "aten::empty",
-                    "aten::to_mkldnn",
-                ],
-                deallocs=[
-                    "test_user_scope_dealloc",
                 ],
             )
 

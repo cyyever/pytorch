@@ -1311,11 +1311,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
                 # If constants to serialize contain cpu tensors, we always align data_size it to 64.
                 # When loading the constants, the valid data will depends on the size
                 # not the data_size so there won't be correctness issue.
-                data_size = (
-                    torch.ops.mkldnn._nbytes(tensor)
-                    if tensor.is_mkldnn
-                    else tensor.untyped_storage().nbytes()
-                )
+                data_size = tensor.untyped_storage().nbytes()
                 self.prefix.writeline(
                     f"constants_info_[{idx}].data_size = {data_size if all_cuda else _align(data_size)};"
                 )
@@ -1356,18 +1352,6 @@ class CppWrapperCpu(PythonWrapperCodegen):
                     f"constants_info_[{idx}].layout = static_cast<int32_t>({self.codegen_layout(tensor.layout)});"
                 )
 
-                if tensor.is_mkldnn:
-                    opaque_metadata_tensor = torch.ops.mkldnn._get_mkldnn_serialized_md(
-                        tensor
-                    )
-                    if opaque_metadata_tensor.dim() != 1:
-                        raise AssertionError("Expect opaque_metadata_tensor to be 1-D")
-
-                    opaque_metadata_list = opaque_metadata_tensor.tolist()
-                    opaque_metadata_str = self.codegen_shape_tuple(opaque_metadata_list)
-                    self.prefix.writeline(
-                        f"constants_info_[{idx}].opaque_metadata = {opaque_metadata_str};"
-                    )
                 if name in V.graph.dynamo_flat_name_to_original_fqn:
                     original_fqn = V.graph.dynamo_flat_name_to_original_fqn.get(
                         name, name

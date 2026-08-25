@@ -160,7 +160,6 @@ class TORCH_API Context {
   static bool hasOpenMP();
   static bool hasMKL();
   static bool hasLAPACK();
-  static bool hasMKLDNN();
   static bool ckSDPASupported();
   static bool ckGemmSupported();
   static bool hasCUDA() {
@@ -240,8 +239,6 @@ class TORCH_API Context {
   // to test this instead
   bool userEnabledCuDNN() const;
   void setUserEnabledCuDNN(bool e);
-  bool userEnabledMkldnn() const;
-  void setUserEnabledMkldnn(bool e);
   bool benchmarkCuDNN() const;
   void setBenchmarkCuDNN(bool /*b*/);
   int benchmarkLimitCuDNN() const;
@@ -512,7 +509,6 @@ class TORCH_API Context {
   bool allow_fp16_accumulation_cublas = false;
   bool prefer_cublaslt_grouped_gemm = false;
   std::optional<int32_t> sm_carveout = std::nullopt;
-  bool enabled_mkldnn = true;
   bool allow_tf32_onednn = false;
   CuDNNDepthwiseKernel depthwise_kernel_cudnn = CuDNNDepthwiseKernel::AUTO;
   at::LinalgBackend linalg_preferred_backend =
@@ -664,10 +660,6 @@ inline bool hasMKL() {
 
 inline bool hasLAPACK() {
   return globalContext().hasLAPACK();
-}
-
-inline bool hasMKLDNN() {
-  return globalContext().hasMKLDNN();
 }
 
 inline void manual_seed(uint64_t seed) {

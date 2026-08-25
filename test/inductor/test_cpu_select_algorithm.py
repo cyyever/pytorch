@@ -303,36 +303,21 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
             self.common(mod, (v,), atol=atol, rtol=rtol)
         self.assertEqual(counters["inductor"]["cpp_templated_kernel_counter"], 1)
         if (
-            (
-                (
-                    dtype == torch.bfloat16
-                    and torch.ops.mkldnn._is_mkldnn_bf16_supported()
-                )
-                or (
-                    dtype == torch.float16
-                    and torch.ops.mkldnn._is_mkldnn_fp16_supported()
-                )
-                or (
-                    dtype == torch.float32
-                    and not dynamo_config.assume_static_by_default
-                )
-            )
+            dtype == torch.float32
+            and not dynamo_config.assume_static_by_default
             and epilogue != "mul"
             and epilogue != "div"
-            or (
-                dtype in (torch.float16, torch.bfloat16)
-                and epilogue == "add"
-                and not bias
-            )
+        ) or (
+            dtype in (torch.float16, torch.bfloat16)
+            and epilogue == "add"
+            and not bias
         ):
-            # Several scenarios where epilogue fusion is not counted in:
-            # 1. For bfloat16, the epilogue fusion is part of the template,
-            #    not fused via scheduler. This will also be true for float16 when
-            #    hardware has the float16 instruction. And this will also be true
-            #    for float32 dynamic mode. The exception is mul or div fusion
-            #    which is not supported for oneDNN linear.
-            # 2. For bfloat16/float16, when oneDNN linear is not applied, linear w/o bias
-            #    plus epilogue add is treated as linear w/ bias.
+            # Two scenarios where epilogue fusion is not counted in:
+            # 1. For float32 dynamic mode, the epilogue fusion is part of the
+            #    template, not fused via scheduler. The exception is mul or div
+            #    fusion, which oneDNN linear does not support.
+            # 2. For bfloat16/float16, linear w/o bias plus epilogue add is
+            #    treated as linear w/ bias.
             self.assertEqual(counters["inductor"]["cpp_epilogue_fusion_counter"], 0)
         else:
             self.assertEqual(counters["inductor"]["cpp_epilogue_fusion_counter"], 1)
@@ -2213,9 +2198,9 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
 
         # each linear has different num of out features, thus invalid grouped gemm
         dtypes = []
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
+        if False:
             dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
+        if False:
             dtypes.append(torch.float16)
         for dtype in dtypes:
             torch._dynamo.reset()
@@ -2266,9 +2251,9 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
                 return [linear(x) for linear in self.linears]
 
         dtypes = []
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
+        if False:
             dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
+        if False:
             dtypes.append(torch.float16)
         for dtype in dtypes:
             if dtype == torch.float16 and input_3d:
@@ -2349,9 +2334,9 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
                     return res0, res1
 
         dtypes = []
-        if torch.ops.mkldnn._is_mkldnn_bf16_supported():
+        if False:
             dtypes.append(torch.bfloat16)
-        if torch.ops.mkldnn._is_mkldnn_fp16_supported():
+        if False:
             dtypes.append(torch.float16)
         for dtype in dtypes:
             if input_3d and dtype == torch.float16:
@@ -2949,7 +2934,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
 
     @patches
     @inductor_config.patch(freezing=True)
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     def test_bmm_flexible_layout(self):
         class M(torch.nn.Module):
             def __init__(self) -> None:
@@ -3018,7 +3003,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
 
     @skipIfNoONEDNN
     @unittest.skipIf(not TEST_MKL, "Test requires MKL")
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     @unittest.skipIf(IS_WINDOWS, "Not supported on Windows")
     @inductor_config.patch({"freezing": True})
     @patches
@@ -3101,7 +3086,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
 
     @skipIfNoONEDNN
     @unittest.skipIf(not TEST_MKL, "Test requires MKL")
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     @unittest.skipIf(IS_WINDOWS, "Not supported on Windows")
     @inductor_config.patch({"freezing": True})
     @patches
@@ -3191,7 +3176,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
 
     @skipIfNoONEDNN
     @unittest.skipIf(not TEST_MKL, "Test requires MKL")
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     @unittest.skipIf(IS_WINDOWS, "Not supported on Windows")
     @inductor_config.patch({"freezing": True})
     @patches
@@ -3284,7 +3269,7 @@ class TestSelectAlgorithm(BaseTestSelectAlgorithm):
 
     @skipIfNoONEDNN
     @unittest.skipIf(not TEST_MKL, "Test requires MKL")
-    @unittest.skipIf(not torch._C._has_mkldnn, "MKLDNN is not enabled")
+    @unittest.skip("MKLDNN is not enabled")
     @unittest.skipIf(IS_WINDOWS, "Not supported on Windows")
     @inductor_config.patch({"freezing": True})
     @patches

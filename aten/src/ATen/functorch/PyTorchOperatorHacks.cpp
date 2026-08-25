@@ -41,9 +41,6 @@ Tensor linear_hack(const Tensor& input, const Tensor& weight, const std::optiona
     ? c10::MaybeOwned<Tensor>::borrowed(*bias_opt)
     : c10::MaybeOwned<Tensor>::owned(std::in_place);
 
-  if (input.is_mkldnn()) {
-    return at::mkldnn_linear(input, weight, *bias);
-  }
   if (input.dim() == 2 && bias->defined()) {
     // Fused op is marginally faster.
     return at::addmm(*bias, input, weight.t());

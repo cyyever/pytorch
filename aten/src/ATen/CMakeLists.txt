@@ -118,14 +118,12 @@ file(GLOB miopen_h CONFIGURE_DEPENDS "miopen/*.h")
 file(GLOB miopen_cpp CONFIGURE_DEPENDS "miopen/*.cpp")
 
 file(GLOB mkl_cpp CONFIGURE_DEPENDS "mkl/*.cpp")
-file(GLOB mkldnn_cpp CONFIGURE_DEPENDS "mkldnn/*.cpp")
 
 file(GLOB mkldnn_xpu_h CONFIGURE_DEPENDS "native/mkldnn/xpu/*.h" "native/mkldnn/xpu/detail/*.h")
 file(GLOB mkldnn_xpu_cpp CONFIGURE_DEPENDS "native/mkldnn/xpu/*.cpp" "native/mkldnn/xpu/detail/*.cpp")
 
 file(GLOB native_cpp CONFIGURE_DEPENDS "native/*.cpp")
 file(GLOB native_mkl_cpp CONFIGURE_DEPENDS "native/mkl/*.cpp")
-file(GLOB native_mkldnn_cpp CONFIGURE_DEPENDS "native/mkldnn/*.cpp")
 
 # MPS
 file(GLOB mps_cpp CONFIGURE_DEPENDS "mps/*.cpp")
@@ -478,7 +476,7 @@ append_filelist("jit_core_sources" ATen_CORE_SRCS)
 
 set(
   all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
-  ${native_sparse_cpp} ${native_nested_cpp} ${native_mkl_cpp} ${native_mkldnn_cpp}
+  ${native_sparse_cpp} ${native_nested_cpp} ${native_mkl_cpp}
   ${native_transformers_cpp}
   ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
   ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
@@ -490,10 +488,6 @@ endif()
 if(AT_MKL_ENABLED)
   set(all_cpu_cpp ${all_cpu_cpp} ${mkl_cpp})
 endif()
-if(AT_MKLDNN_ENABLED)
-  set(all_cpu_cpp ${all_cpu_cpp} ${mkldnn_cpp})
-endif()
-
 if(USE_XPU)
   list(APPEND ATen_XPU_SRCS ${mkldnn_xpu_cpp})
   list(APPEND ATen_XPU_SRCS ${native_transformers_xpu_cpp})
@@ -684,10 +678,6 @@ endif(UNIX)
 ADD_DEFINITIONS(-DUSE_EXTERNAL_MZCRC)
 
 list(APPEND ATen_CPU_DEPENDENCY_LIBS m)
-
-if(MKLDNN_FOUND)
-  list(APPEND ATen_CPU_DEPENDENCY_LIBS ${MKLDNN_LIBRARIES})
-endif(MKLDNN_FOUND)
 
 if(NOT EMSCRIPTEN)
   # Bump up optimization level for sleef to -O1, since at -O0 the compiler

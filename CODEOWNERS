@@ -462,7 +462,6 @@
 # /test/load_torchscript_model.py
 # /test/minioptest_failures_dict.json
 # /test/mkl_verbose.py
-# /test/mkldnn_verbose.py
 # /test/pytest_shard_custom.py
 # /test/python_native/
 # /test/run_doctests.sh
@@ -508,9 +507,6 @@
 # /test/test_logging.py
 # /test/test_meta.py
 # /test/test_mkl_verbose.py
-# /test/test_mkldnn.py
-# /test/test_mkldnn_fusion.py
-# /test/test_mkldnn_verbose.py
 # /test/test_model_exports_to_core_aten.py
 # /test/test_module_tracker.py
 # /test/test_multiprocessing.py
@@ -835,7 +831,6 @@
 # /third_party/cutlass
 # /third_party/fbgemm
 # /third_party/flash-attention
-# /third_party/ideep
 /third_party/xpu.txt @EikanWang @gujinghui
 #
 # [third_party_serialization_schema]

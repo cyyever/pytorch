@@ -2114,8 +2114,6 @@ def forward(self, x_1):
             torch._C.DispatchKeySet(torch._C.DispatchKey.Functionalize)
         )
         inputs = [torch.randn(2, 3).to_sparse()]
-        if torch.backends.mkldnn.is_available():
-            inputs.append(torch.randn(2, 3).to_mkldnn())
 
         for x in inputs:
             for use_op in (False, True):

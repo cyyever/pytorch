@@ -2,8 +2,6 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/ExpandUtils.h>
 
-#include <ATen/native/mkldnn/Matmul.h>
-#include <ATen/native/mkldnn/Linear.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/GroupedMMUtils.h>
 #include <ATen/BlasBackend.h>
@@ -411,24 +409,6 @@ _scaled_mm_out_cpu(const Tensor& mat1, const Tensor& mat2,
           std::optional<c10::ScalarType> out_dtype,
           bool use_fast_accum,
           Tensor& out) {
-#if AT_MKLDNN_ENABLED() && !defined(__powerpc__)
-  if (at::globalContext().userEnabledMkldnn() && scale_a.numel() == 1 && scale_b.numel() == 1) {
-    bool mixed_dtype = mat1.scalar_type() != mat2.scalar_type();
-    if ((!mixed_dtype && cpuinfo_has_x86_amx_int8()) ||
-        (mixed_dtype && cpuinfo_has_x86_amx_fp16())) {
-      return mkldnn_scaled_mm(
-          mat1,
-          mat2,
-          scale_a,
-          scale_b,
-          bias,
-          scale_result,
-          out_dtype,
-          use_fast_accum,
-          out);
-    }
-  }
-#endif
   {
     TORCH_CHECK_VALUE(
       !out_dtype || *out_dtype == out.scalar_type(),

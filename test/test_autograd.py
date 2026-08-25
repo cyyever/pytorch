@@ -7012,49 +7012,6 @@ Done""",
         check(fast_mode=True)
         check(fast_mode=False)
 
-    @unittest.skipIf(
-        not torch.backends.mkldnn.is_available(), "MKL-DNN build is disabled"
-    )
-    def test_gradcheck_validates_input_mkldnn(self):
-        # when mkldnn inputs, forward mode testing is not allowed
-        # Update tolerances below to make sure the gradient match even in single precision floats
-        # Use the warning assert to hide the float32 warning
-        x = torch.ones(1).to_mkldnn().requires_grad_()
-        with self.assertWarnsRegex(
-            UserWarning, "Input #0 requires gradient and is not a double precision"
-        ):
-            with self.assertRaisesRegex(
-                ValueError, "MKLDNN inputs are not supported for forward AD gradcheck."
-            ):
-                gradcheck(
-                    lambda x: x.to_dense(),
-                    (x,),
-                    raise_exception=False,
-                    fast_mode=False,
-                    check_forward_ad=True,
-                    atol=1e-1,
-                    rtol=1e-1,
-                )
-
-        with self.assertWarnsRegex(
-            UserWarning, "Input #0 requires gradient and is not a double precision"
-        ):
-            with self.assertRaisesRegex(
-                ValueError, "MKLDNN inputs are not supported for forward AD gradcheck."
-            ):
-                gradcheck(
-                    lambda x: x.to_dense(),
-                    (x,),
-                    raise_exception=False,
-                    fast_mode=True,
-                    check_forward_ad=True,
-                    atol=1e-1,
-                    rtol=1e-1,
-                )
-
-    @unittest.skipIf(
-        not torch.backends.mkldnn.is_available(), "MKL-DNN build is disabled"
-    )
     def test_gradcheck_test_outputs(self):
         def check(fast_mode):
             # when sparse outputs (always raise even if raise_exception=False)
@@ -7066,19 +7023,6 @@ Done""",
                     lambda x: x,
                     (x,),
                     masked=True,
-                    check_batched_grad=False,
-                    raise_exception=False,
-                    fast_mode=fast_mode,
-                )
-
-            # when mkldnn outputs (always raise even if raise_exception=False)
-            root = torch.randn(4, 5, dtype=torch.float32, requires_grad=True)
-            with self.assertRaisesRegex(
-                ValueError, "MKLDNN output is not supported at gradcheck yet"
-            ):
-                gradcheck(
-                    lambda x: x.to_mkldnn(),
-                    (root,),
                     check_batched_grad=False,
                     raise_exception=False,
                     fast_mode=fast_mode,
@@ -7364,35 +7308,6 @@ Done""",
                     masked=True,
                     check_batched_grad=False,
                     fast_mode=fast_mode,
-                )
-            )
-
-        check(fast_mode=True)
-        check(fast_mode=False)
-
-    @unittest.skipIf(
-        not torch.backends.mkldnn.is_available(), "MKL-DNN build is disabled"
-    )
-    def test_gradcheck_multiple_mkldnn_inputs(self):
-        def check(fast_mode):
-            def fn(x, y):
-                return x + y.to_dense()
-
-            a = torch.rand(10, requires_grad=True)
-            b = torch.rand(10, dtype=torch.float32).to_mkldnn().requires_grad_(True)
-            self.assertTrue(
-                gradcheck(
-                    fn, (a, b), atol=1e-1, check_batched_grad=False, fast_mode=fast_mode
-                )
-            )
-
-            def fn2(x, y):
-                return x.to_dense() + y.to_dense()
-
-            c = torch.rand(10, dtype=torch.float32).to_mkldnn().requires_grad_(True)
-            self.assertTrue(
-                gradcheck(
-                    fn, (a, c), atol=1e-1, check_batched_grad=False, fast_mode=fast_mode
                 )
             )
 

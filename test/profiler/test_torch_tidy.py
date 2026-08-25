@@ -643,36 +643,6 @@ class TestTorchTidyProfiler(TestCase):
             [torch.device("cpu"), torch.device("cpu"), None],
         )
 
-    @unittest.skipIf(
-        not torch.backends.mkldnn.is_available(), "MKL-DNN build is disabled"
-    )
-    def test_mkldnn_tensors(self):
-        x = torch.ones(4, 3).to_mkldnn()
-
-        with profile(with_stack=True, profile_memory=True, record_shapes=True) as p:
-            _ = x + x
-
-        nodes = p.profiler.kineto_results.experimental_event_tree()
-        node = find_node_with_name(nodes, "aten::add")
-        self.assertIsNotNone(node)
-
-        self.assertIsInstance(
-            node.extra_fields, torch._C._profiler._ExtraFields_TorchOp
-        )
-
-        def getattr_inputs(name, default):
-            return [getattr(i, name, default) for i in node.extra_fields.inputs]
-
-        self.assertEqual(getattr_inputs("sizes", []), [[4, 3], [4, 3], []])
-        self.assertEqual(getattr_inputs("strides", []), [[], [], []])
-        self.assertEqual(
-            getattr_inputs("layout", None), [torch._mkldnn, torch._mkldnn, None]
-        )
-        self.assertEqual(
-            getattr_inputs("device", None),
-            [torch.device("cpu"), torch.device("cpu"), None],
-        )
-
     def test_scalar_ins(self):
         x = torch.ones(5, 5)
         alpha = 0.9

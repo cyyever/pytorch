@@ -14,9 +14,7 @@
 #include <atomic>
 #include <c10/util/irange.h>
 #include <torch/library.h>
-#if AT_MKLDNN_ENABLED()
-#include <ATen/native/mkldnn/Utils.h>
-#endif
+#include <ATen/Config.h>
 
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/Functions.h>
@@ -122,38 +120,9 @@ bool use_miopen(const at::Tensor& input, const double dropout_state) {
 }
 
 bool use_mkldnn(const Tensor& input, TensorList params, TensorList hx) {
-#if AT_MKLDNN_ENABLED()
-  if (!at::globalContext().userEnabledMkldnn()) {
-    return false;
-  }
-  // XPU: oneDNN LSTM for inference (GPU primitive supports f32 and f16)
-  if (input.is_xpu()) {
-    return !at::GradMode::is_enabled() &&
-        (input.scalar_type() == kFloat || input.scalar_type() == kHalf) &&
-        input.numel() != 0;
-  }
-  auto is_cpu_backend = [&](const TensorList tensors) {
-    bool backend_cpu = true;
-    for (const auto& t : tensors) {
-      if (!(t.options().backend() == at::Backend::CPU)) {
-        backend_cpu = false;
-        break;
-      }
-    }
-    return backend_cpu;
-  };
-  return input.options().backend() == at::Backend::CPU &&
-      is_cpu_backend(params) && is_cpu_backend(hx) &&
-      (input.scalar_type() == kFloat ||
-       (input.scalar_type() == kBFloat16 && mkldnn_bf16_device_check()) ||
-       (input.scalar_type() == kHalf && !at::GradMode::is_enabled() &&
-        mkldnn_fp16_device_check())) &&
-      input.numel() != 0;
-#else
   (void)params;
   (void)hx;
   return false;
-#endif
 }
 
 bool use_cudnn(const Tensor& t) {

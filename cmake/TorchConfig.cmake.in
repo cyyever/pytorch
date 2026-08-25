@@ -86,10 +86,6 @@ else()
     append_torchlib_if_found(fbgemm)
   endif()
 
-  if(@USE_MKLDNN@)
-    append_torchlib_if_found(dnnl mkldnn)
-  endif()
-
   append_torchlib_if_found(sleef asmjit)
 endif()
 

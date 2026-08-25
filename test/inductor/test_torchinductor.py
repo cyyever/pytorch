@@ -12366,22 +12366,6 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
         self.assertTrue(result.is_pinned())
         self.assertEqual(result, torch.tensor([1, 2, 3], device=self.device))
 
-    def test_mkldnn_constant_buffer_is_not_checked_for_pin_memory(self):
-        if self.device != "cpu":
-            raise unittest.SkipTest("MKLDNN constants are CPU-only")
-        if not torch.backends.mkldnn.is_available():
-            raise unittest.SkipTest("MKLDNN is not available")
-
-        from torch._inductor.graph import GraphLowering
-
-        graph = torch.fx.Graph()
-        graph.output(())
-        graph_lowering = GraphLowering(torch.fx.GraphModule(torch.nn.Module(), graph))
-        constant = graph_lowering.add_tensor_constant(
-            torch.randn(1, 3, 3, 3).to_mkldnn()
-        )
-        self.assertFalse(constant.get_layout().is_pinned)
-
     def test_new_empty(self):
         def fn(a):
             return aten.new_empty(a, [1, 128, 128])

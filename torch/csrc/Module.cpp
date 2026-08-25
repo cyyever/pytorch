@@ -1161,29 +1161,6 @@ static PyObject* THPModule_userEnabledCuDNN(
     Py_RETURN_FALSE;
 }
 
-static PyObject* THPModule_setUserEnabledMkldnn(
-    PyObject* _unused,
-    PyObject* arg) {
-  HANDLE_TH_ERRORS
-  TORCH_CHECK(
-      PyBool_Check(arg),
-      "set_enabled_mkldnn expects a bool, "
-      "but got ",
-      THPUtils_typename(arg));
-  at::globalContext().setUserEnabledMkldnn(Py_IsTrue(arg));
-  Py_RETURN_NONE;
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPModule_userEnabledMkldnn(
-    PyObject* _unused,
-    PyObject* noargs) {
-  if (at::globalContext().userEnabledMkldnn())
-    Py_RETURN_TRUE;
-  else
-    Py_RETURN_FALSE;
-}
-
 static PyObject* THPModule_setDeterministicCuDNN(
     PyObject* _unused,
     PyObject* arg) {
@@ -2100,8 +2077,6 @@ static std::initializer_list<PyMethodDef> TorchMethods = {
     {"_set_sdp_use_cudnn", THPModule_setSDPUseCuDNN, METH_O, nullptr},
     {"_get_cudnn_enabled", THPModule_userEnabledCuDNN, METH_NOARGS, nullptr},
     {"_set_cudnn_enabled", THPModule_setUserEnabledCuDNN, METH_O, nullptr},
-    {"_get_mkldnn_enabled", THPModule_userEnabledMkldnn, METH_NOARGS, nullptr},
-    {"_set_mkldnn_enabled", THPModule_setUserEnabledMkldnn, METH_O, nullptr},
     {"_get_cudnn_allow_tf32", THPModule_allowTF32CuDNN, METH_NOARGS, nullptr},
     {"_set_cudnn_allow_tf32", THPModule_setAllowTF32CuDNN, METH_O, nullptr},
     {"_get_onednn_allow_tf32", THPModule_allowTF32OneDNN, METH_NOARGS, nullptr},
@@ -3212,8 +3187,6 @@ Call this whenever a new thread is created in order to propagate values from
   ASSERT_TRUE(set_module_attr("_has_cuda", has_cuda));
   ASSERT_TRUE(set_module_attr("_has_mps", has_mps));
   ASSERT_TRUE(set_module_attr("_has_xpu", has_xpu));
-  ASSERT_TRUE(
-      set_module_attr("_has_mkldnn", at::hasMKLDNN() ? Py_True : Py_False));
   ASSERT_TRUE(set_module_attr("_GLIBCXX_USE_CXX11_ABI", Py_True));
 
   py_module.def(

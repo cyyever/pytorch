@@ -4210,16 +4210,6 @@ def is_same_tensor(data: torch.Tensor, value: torch.Tensor) -> bool:
     )
 
 
-def is_same_mkldnn_tensor(data: torch.Tensor, value: torch.Tensor) -> bool:
-    return (
-        data.is_mkldnn
-        and data.size() == value.size()
-        and data.dtype == value.dtype
-        and data.device == value.device
-        and torch.ops.mkldnn.data_ptr(data) == torch.ops.mkldnn.data_ptr(value)
-    )
-
-
 @functools.cache
 def boolean_ops() -> tuple[str, ...]:
     return (
@@ -4559,16 +4549,11 @@ def dtype_from_size(size: int) -> torch.dtype:
         return torch.int64
 
 
-SUPPORTED_MKLDNN_DEVICES = ("cpu", "xpu")
-
-
 def is_mkldnn_bf16_supported(device_type: str) -> bool:
     """
     Returns True if the device supports MKL-DNN BF16.
     """
-    if device_type == "cpu":
-        return torch.ops.mkldnn._is_mkldnn_bf16_supported()
-    elif "xpu" in device_type:
+    if "xpu" in device_type:
         # match "xpu", "xpu:0", "xpu:1", etc.
         return True
     return False
@@ -4578,9 +4563,7 @@ def is_mkldnn_fp16_supported(device_type: str) -> bool:
     """
     Returns True if the device supports MKL-DNN FP16.
     """
-    if device_type == "cpu":
-        return torch.ops.mkldnn._is_mkldnn_fp16_supported()
-    elif "xpu" in device_type:
+    if "xpu" in device_type:
         # match "xpu", "xpu:0", "xpu:1", etc.
         return True
     return False

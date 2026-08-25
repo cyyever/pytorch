@@ -87,6 +87,7 @@ if(USE_XPU)
   foreach(flag ${XPU_HOST_CXX_FLAGS})
     add_definitions(${flag})
   endforeach()
+  include(${CMAKE_CURRENT_LIST_DIR}/Modules/FindMKLDNN.cmake)
 endif()
 
 if(USE_ASAN OR USE_LSAN OR USE_TSAN)
@@ -150,7 +151,6 @@ endif()
 
 # ---[ BLAS
 
-set(AT_MKLDNN_ENABLED 0)
 set(AT_MKL_ENABLED 0)
 # setting default preferred BLAS options if not already present.
 set(BLAS "OpenBLAS" CACHE STRING "Selected BLAS library")
@@ -1008,27 +1008,6 @@ else()
   set(AT_ROCM_ENABLED 1)
 endif()
 
-if(USE_MKLDNN)
-  if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(WARNING
-      "x64 operating system is required for MKLDNN. "
-      "Not compiling with MKLDNN. "
-      "Turn this warning off by USE_MKLDNN=OFF.")
-    set(USE_MKLDNN OFF)
-  endif()
-endif()
-if(USE_MKLDNN)
-  include(${CMAKE_CURRENT_LIST_DIR}/public/mkldnn.cmake)
-  if(MKLDNN_FOUND)
-    set(AT_MKLDNN_ENABLED 1)
-    include_directories(AFTER SYSTEM ${MKLDNN_INCLUDE_DIR})
-  else()
-    message(WARNING "MKLDNN could not be found.")
-    caffe2_update_option(USE_MKLDNN OFF)
-  endif()
-else()
-  message("disabling MKLDNN because USE_MKLDNN is not set")
-endif()
 
 
 if(UNIX AND NOT APPLE)

@@ -8,19 +8,13 @@ import torch
 
 
 def bf32_is_not_fp32():
-    if not torch.backends.mkldnn.is_available():
-        return False
-    if not torch.ops.mkldnn._is_mkldnn_bf16_supported():
-        return False
-    return True
+    # oneDNN BF32 came from the CPU backend, which went away with USE_MKLDNN.
+    return False
 
 
 def tf32_is_not_fp32():
-    if not torch.backends.mkldnn.is_available():
-        return False
-    if not torch.cpu._is_amx_fp16_supported():
-        return False
-    return True
+    # oneDNN TF32 came from the CPU backend, which went away with USE_MKLDNN.
+    return False
 
 
 @contextlib.contextmanager

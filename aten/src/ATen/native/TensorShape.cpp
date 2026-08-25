@@ -42,8 +42,9 @@
 #include <ATen/ops/_convert_indices_from_csr_to_coo.h>
 #include <ATen/ops/_foreach_copy.h>
 #include <ATen/ops/_make_dual.h>
-#include <ATen/ops/_mkldnn_reshape.h>
-#include <ATen/ops/_mkldnn_transpose.h>
+#include <ATen/ops/_make_dual_copy_native.h>
+#include <ATen/ops/_neg_view_copy_native.h>
+#include <ATen/ops/_reshape_alias_copy_native.h>
 #include <ATen/ops/_reshape_alias_native.h>
 #include <ATen/ops/_reshape_copy_native.h>
 #include <ATen/ops/_reshape_from_tensor_native.h>
@@ -1873,9 +1874,6 @@ Tensor reshape_symint(const Tensor& self, c10::SymIntArrayRef proposed_shape) {
   auto sym_numel = self.sym_numel();
   c10::SymDimVector shape = infer_size_dv(proposed_shape, sym_numel);
 
-  if (self.is_mkldnn()) {
-    return at::_mkldnn_reshape(self, C10_AS_INTARRAYREF_SLOW(shape));
-  }
   auto sym_sizes = self.sym_sizes();
   auto sym_strides = self.sym_strides();
 
@@ -1938,9 +1936,6 @@ Tensor reshape(const Tensor& self, IntArrayRef proposed_shape) {
   }
   DimVector shape = infer_size_dv(proposed_shape, self.numel());
 
-  if (self.is_mkldnn()) {
-    return at::_mkldnn_reshape(self, shape);
-  }
 
   // `computeStride` returns the proper strides to use if this
   // `reshape` can be just a view.
@@ -3431,9 +3426,6 @@ Tensor& transpose_(Tensor& self, int64_t dim0, int64_t dim1) {
     return sparse_transpose_(self, dim0, dim1);
   }
 
-  if (self.is_mkldnn()) {
-    return at::_mkldnn_transpose_(self, dim0, dim1);
-  }
 
   SymDimVector sizes(self.sym_sizes().begin(), self.sym_sizes().end());
   std::swap(sizes[dim0], sizes[dim1]);
@@ -3586,9 +3578,6 @@ Tensor transpose(const Tensor& self, int64_t dim0, int64_t dim1) {
     return sparse_compressed_transpose(self, dim0, dim1);
   }
 
-  if (self.is_mkldnn()) {
-    return at::_mkldnn_transpose(self, dim0, dim1);
-  }
 
   // Transpose of a tensor is a view operation.
   if (dim0 == dim1) {

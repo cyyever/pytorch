@@ -2945,50 +2945,6 @@ def meta__conv(
     )
 
 
-if torch._C._has_mkldnn:
-    _meta_lib_dont_use_me_use_register_meta_for_mkldnn = torch.library.Library(
-        "mkldnn", "IMPL", "Meta"
-    )
-
-    @register_meta(torch.ops.mkldnn._convolution_pointwise.default)
-    def meta_mkldnn_convolution_default(
-        input_tensor,
-        weight,
-        bias,
-        padding,
-        stride,
-        dilation,
-        groups,
-        attr,
-        scalars,
-        algorithm,
-    ):
-        shape_out = calc_conv_nd_return_shape(
-            input_tensor, weight, stride, padding, dilation, False, groups, []
-        )
-        out = input_tensor.new_empty(shape_out)
-        out_memory_format = torch.channels_last
-        if input_tensor.dim() == 5:
-            out_memory_format = torch.channels_last_3d
-        out = out.to(memory_format=out_memory_format)  # type: ignore[call-overload]
-        return out
-
-    @register_meta(torch.ops.mkldnn._linear_pointwise.default)
-    def meta_linear_pointwise_default(
-        input_tensor, weight, bias, attr, scalars, algorithm
-    ):
-        return input_tensor.new_empty((*input_tensor.shape[:-1], weight.shape[0]))
-
-    if torch._C.has_mkl:
-        _meta_lib_dont_use_me_use_register_meta_for_mkl = torch.library.Library(
-            "mkl", "IMPL", "Meta"
-        )
-
-        @register_meta(torch.ops.mkl._mkl_linear)
-        def meta_mkl_linear(input_tensor, packed_weight, orig_weight, bias, batch_size):
-            return input_tensor.new_empty(
-                (*input_tensor.shape[:-1], orig_weight.shape[0])
-            )
 
 
 # from check_dim_size() in aten/src/ATen/TensorUtils.cpp.
@@ -7392,44 +7348,6 @@ def miopen_rnn(
     )
 
 
-@register_meta(aten.mkldnn_rnn_layer.default)
-def mkldnn_rnn_layer(
-    input,
-    w0,
-    w1,
-    w2,
-    w3,
-    hx_,
-    cx_,
-    reverse,
-    batch_sizes,
-    mode,
-    hidden_size,
-    num_layers,
-    has_biases,
-    bidirectional,
-    batch_first,
-    train,
-):
-    seq_length = input.shape[1] if batch_first else input.shape[0]
-    mini_batch = input.shape[0] if batch_first else input.shape[1]
-    output_chanels = hidden_size
-    out_shape = (
-        [mini_batch, seq_length, output_chanels]
-        if batch_first
-        else [seq_length, mini_batch, output_chanels]
-    )
-    output = input.new_empty(out_shape)
-    if hx_ is None:
-        hy = torch.empty(0, device=input.device)
-    else:
-        hy = hx_.new_empty(hx_.shape)
-    if cx_ is None:
-        cy = torch.empty(0, device=input.device)
-    else:
-        cy = cx_.new_empty(cx_.shape)
-    workspace = torch.empty(0, device=input.device, dtype=torch.uint8)
-    return output, hy, cy, workspace
 
 
 def zero_numel_check_dims(self, dim, fn_name):
@@ -7666,49 +7584,6 @@ def meta_pixel_shuffle(self, upscale_factor):
     )
 
 
-@register_meta(aten.mkldnn_rnn_layer_backward.default)
-def mkldnn_rnn_layer_backward(
-    input,
-    weight0,
-    weight1,
-    weight2,
-    weight3,
-    hx_,
-    cx_tmp,
-    output,
-    hy_,
-    cy_,
-    grad_output_r_opt,
-    grad_hy_r_opt,
-    grad_cy_r_opt,
-    reverse,
-    mode,
-    hidden_size,
-    num_layers,
-    has_biases,
-    train,
-    bidirectional,
-    batch_sizes,
-    batch_first,
-    workspace,
-):
-    diff_x = input.new_empty(input.shape, dtype=torch.float)
-    diff_hx = hx_.new_empty(hx_.shape, dtype=torch.float)
-    diff_cx = cx_tmp.new_empty(cx_tmp.shape, dtype=torch.float)
-    diff_w1 = weight0.new_empty(weight0.shape, dtype=torch.float)
-    diff_w2 = weight1.new_empty(weight1.shape, dtype=torch.float)
-    # C++ computes bias = _shuffle_bias(weight2, weight3, mode) before
-    # creating diff_b. num_bias_gates: LSTM=4, GRU=4, RNN_RELU/TANH=1.
-    # GRU _shuffle_bias produces [4*hidden] from two [3*hidden] inputs.
-    # LSTM: bias_ih + bias_hh preserves [4*hidden].
-    # RNN: bias_ih + bias_hh preserves [hidden].
-    _GRU_MODE = 3
-    if mode == _GRU_MODE:
-        bias_size = 4 * hidden_size
-    else:
-        bias_size = weight2.shape[0]
-    diff_b = weight2.new_empty([bias_size], dtype=torch.float)
-    return diff_x, diff_w1, diff_w2, diff_b, diff_b, diff_hx, diff_cx
 
 
 @register_meta([aten.bucketize.Tensor, aten.bucketize.Tensor_out])
@@ -8838,12 +8713,7 @@ def activate_meta():
         ):
             pass
         else:
-            if "mkldnn::" in op_overload.name():
-                _meta_lib_dont_use_me_use_register_meta_for_mkldnn.impl(op_overload, fn)
-            elif "mkl::" in op_overload.name():
-                _meta_lib_dont_use_me_use_register_meta_for_mkl.impl(op_overload, fn)
-            else:
-                _meta_lib_dont_use_me_use_register_meta.impl(op_overload, fn)
+            _meta_lib_dont_use_me_use_register_meta.impl(op_overload, fn)
 
 
 activate_meta()

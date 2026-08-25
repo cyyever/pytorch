@@ -5,9 +5,6 @@
 #include <mkl.h>
 #endif
 
-#if AT_MKLDNN_ENABLED()
-#include <dnnl.hpp>
-#endif
 
 #include <caffe2/core/common.h>
 
@@ -31,24 +28,6 @@ std::string get_mkl_version() {
     version = "MKL not found";
   #endif
   return version;
-}
-
-std::string get_mkldnn_version() {
-  std::ostringstream ss;
-  #if AT_MKLDNN_ENABLED()
-    // Cribbed from mkl-dnn/src/common/verbose.cpp
-    // Too bad: can't get ISA info conveniently :(
-    // Apparently no way to get ideep version?
-    // https://github.com/intel/ideep/issues/29
-    {
-      const dnnl_version_t* ver = dnnl_version();
-      ss << "Intel(R) MKL-DNN v" << ver->major << '.' << ver->minor << '.' << ver->patch
-         << " (Git Hash " << ver->hash << ')';
-    }
-  #else
-    ss << "MKLDNN not found";
-  #endif
-  return std::move(ss).str();
 }
 
 std::string get_openmp_version() {
@@ -144,9 +123,6 @@ std::string show_config() {
   ss << "  - " << get_mkl_version() << '\n';
 #endif
 
-#if AT_MKLDNN_ENABLED()
-  ss << "  - " << get_mkldnn_version() << '\n';
-#endif
 
 #ifdef _OPENMP
   ss << "  - " << get_openmp_version() << '\n';
