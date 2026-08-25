@@ -132,7 +132,6 @@ void populateNcclConfigFromHints(
       TC_LOG(INFO) << "[comm=" << name
                    << "] Setting config.splitShare=" << config.splitShare;
     }
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
     else if (key == "trafficClass" || key == "traffic_class") {
       config.trafficClass = std::stoi(val);
       TC_LOG(INFO) << "[comm=" << name
@@ -158,8 +157,6 @@ void populateNcclConfigFromHints(
       TC_LOG(INFO) << "[comm=" << name
                    << "] Setting config.nvlsCTAs=" << config.nvlsCTAs;
     }
-#endif
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 28, 0)
     else if (key == "nChannelsPerNetPeer" || key == "n_channels_per_net_peer") {
       config.nChannelsPerNetPeer = std::stoi(val);
       TC_LOG(INFO) << "[comm=" << name
@@ -170,7 +167,6 @@ void populateNcclConfigFromHints(
       TC_LOG(INFO) << "[comm=" << name << "] Setting config.nvlinkCentricSched="
                    << config.nvlinkCentricSched;
     }
-#endif
 #ifdef NCCL_HAS_HOST_CFT_MODE
     else if (key == "hostCftMode" || key == "host_cft_mode") {
       config.hostCftMode = std::stoi(val);
@@ -196,9 +192,7 @@ ncclComm_t NCCLBootstrap::createNcclComm(
   // TODO: add logging on failures and successes
   // TODO: get the local rank
   ncclConfig_t config = base_config;
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 27, 0)
   config.commName = name.c_str();
-#endif
 
   constexpr int kDefaultRanksPerRoot = 128;
   const int ranksPerRoot =

@@ -14,9 +14,6 @@
 // Define a fallback so dependents compile against older NCCL headers; the
 // commShrink wrapper in NcclApi.cpp is itself version-guarded and returns
 // ncclInvalidUsage on older NCCL, so the value is never read at runtime.
-#if NCCL_VERSION_CODE < NCCL_VERSION(2, 27, 0) && !defined(NCCL_SHRINK_ABORT)
-#define NCCL_SHRINK_ABORT 0x01
-#endif
 
 // ncclCommSuspend/ncclCommResume/ncclCommMemStats (memory offload) landed in
 // NCCL 2.29.7. NCCL_SUSPEND_MEM is the only suspend flag; define a fallback so
@@ -32,9 +29,6 @@
 // headers so the NcclApi interface can be declared unconditionally -- the
 // wrapper implementations return ncclInvalidUsage on older NCCL and
 // TorchCommNCCLWindow throws at construction.
-#if NCCL_VERSION_CODE < NCCL_VERSION(2, 27, 0)
-typedef struct ncclWindow_vidmem* ncclWindow_t;
-#endif
 
 #ifndef NCCL_WIN_COLL_SYMMETRIC
 #define NCCL_WIN_COLL_SYMMETRIC 0x01
