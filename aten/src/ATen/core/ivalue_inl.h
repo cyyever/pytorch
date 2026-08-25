@@ -219,15 +219,6 @@ inline c10::Stream IValue::toStream() const& {
                               (*ptr).val.device_index,
                               (*ptr).val.device_type);
 }
-inline c10::intrusive_ptr<caffe2::Blob> IValue::toBlob() && {
-  AT_ASSERT(isBlob(), "Expected Blob but got ", tagKind());
-  return moveToIntrusivePtr<caffe2::Blob>();
-}
-inline c10::intrusive_ptr<caffe2::Blob> IValue::toBlob() const& {
-  AT_ASSERT(isBlob(), "Expected Blob but got ", tagKind());
-  return toIntrusivePtr<caffe2::Blob>();
-  ;
-}
 inline c10::intrusive_ptr<torch::CustomClassHolder> IValue::toCapsule() && {
   TORCH_INTERNAL_ASSERT(isCapsule());
   return moveToIntrusivePtr<torch::CustomClassHolder>();
@@ -1888,7 +1879,6 @@ std::tuple<Args...> generic_to(const IValue& ivalue, _fake_type<std::tuple<Args.
   _(unsigned long, toInt)                                                      \
   _(int64_t, toInt)                                                            \
   _(bool, toBool)                                                              \
-  _(c10::intrusive_ptr<caffe2::Blob>, toBlob)                                  \
   _(c10::intrusive_ptr<ivalue::ConstantString>, toString)                      \
   _(c10::intrusive_ptr<ivalue::Object>, toObject)                              \
   _(at::Scalar, toScalar)                                                      \

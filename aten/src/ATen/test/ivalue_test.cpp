@@ -129,7 +129,7 @@ TEST(IValueTest, ComplexDict) {
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-static std::array<IValue, 16> makeSampleIValues() {
+static std::array<IValue, 15> makeSampleIValues() {
   return {
     IValue(),
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
@@ -146,7 +146,6 @@ static std::array<IValue, 16> makeSampleIValues() {
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
     std::make_tuple(23, "hello"),
     "hello",
-    c10::make_intrusive<caffe2::Blob>(),
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
     c10::List<int64_t>({1, 2, 3}),
     c10::Dict<std::string, std::string>(),
@@ -158,7 +157,7 @@ static std::array<IValue, 16> makeSampleIValues() {
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-static std::array<IValue, 16> makeMoreSampleIValues() {
+static std::array<IValue, 15> makeMoreSampleIValues() {
   return {
     IValue(),
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
@@ -174,7 +173,6 @@ static std::array<IValue, 16> makeMoreSampleIValues() {
     false,
     std::make_tuple(1, "goodbye"),
     "goodbye",
-    c10::make_intrusive<caffe2::Blob>(),
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
     c10::List<int64_t>({4, 5, 6}),
     c10::Dict<std::string, std::string>(),
@@ -622,7 +620,6 @@ TEST(IValueTest, IdentityComparisonAndHashing) {
   ASSERT_EQ(sampleIValues.size(), moreSampleIValues.size());
   for (const auto ii : c10::irange(sampleIValues.size())) {
     if (sampleIValues[ii].isComplexDouble() ||
-        sampleIValues[ii].isBlob() ||
         sampleIValues[ii].isList() ||
         sampleIValues[ii].isFuture() ||
         sampleIValues[ii].isStream() ||
