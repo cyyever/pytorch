@@ -7,7 +7,6 @@ from torch._inductor.kernel.mm_common import mm_args
 from . import config
 from .codegen.cpp_gemm_template import CppGemmTemplate, CppWoqInt4GemmTemplate
 from .codegen.cpp_utils import create_epilogue_with_attr
-from .mkldnn_ir import WeightInt4PackMatmul
 from .select_algorithm import (
     autotune_select_algorithm,
     ExternKernelChoice,
@@ -27,7 +26,6 @@ aten__weight_int4pack_mm_cpu = ExternKernelChoice(
     torch._weight_int4pack_mm_for_cpu,
     "at::_weight_int4pack_mm_for_cpu",
     has_out_variant=False,
-    kernel_creator=WeightInt4PackMatmul.create,
 )
 
 aten = torch.ops.aten

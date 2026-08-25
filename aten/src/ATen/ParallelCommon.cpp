@@ -69,7 +69,6 @@ std::string get_parallel_info() {
   ss << "\tmkl_get_max_threads() : " << mkl_get_max_threads() << '\n';
 #endif
 
-  ss << at::get_mkldnn_version() << '\n';
 
   ss << "std::thread::hardware_concurrency() : "
      << std::thread::hardware_concurrency() << '\n';

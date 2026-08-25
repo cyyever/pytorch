@@ -12,17 +12,6 @@ myst:
 MKLDNN is an open-source cross-platform performance library of basic building blocks
 for deep learning applications.
 
-```python
-# The flag below controls whether enable MKLDNN backend in PyTorch.
-torch.backends.mkldnn.enabled = True
-```
-
-Users can disable MKLDNN backend by:
-
-```python
-torch.backends.mkldnn.enabled = False
-```
-
 (bf16_on_mkldnn)=
 
 ## Bfloat16 (BF16) on MKLDNN backend

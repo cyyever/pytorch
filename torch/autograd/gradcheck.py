@@ -441,13 +441,7 @@ def _prepare_input(
 ) -> torch.Tensor:
     # Prepares the inputs to be passed into the function while including the new
     # modified input.
-    if input.layout == torch._mkldnn:  # type: ignore[attr-defined] # no attr _mkldnn
-        # Convert back to mkldnn
-        if maybe_perturbed_input is not None:
-            return maybe_perturbed_input.to_mkldnn()
-        else:
-            return input
-    elif _is_sparse_any_tensor(input):
+    if _is_sparse_any_tensor(input):
         if fast_mode and maybe_perturbed_input is not None:
             # entry is already a "cloned" version of the original tensor
             # thus changes to entry are not reflected in the input

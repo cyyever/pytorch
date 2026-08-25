@@ -72,17 +72,6 @@ def freezing_passes(gm: torch.fx.GraphModule, aot_example_inputs):
     for pattern in pass_patterns:
         pattern.apply(gm.graph)  # type: ignore[arg-type]
 
-    # The CPU weight packing always assume the conv's weight is channels last,
-    # So make sure the layout_optimization is on when doing it.
-    if (
-        torch._C._has_mkldnn
-        and config.cpp.weight_prepack
-        and config.layout_optimization
-    ):
-        from .mkldnn_fusion import _eliminate_duplicate_packed_nodes
-
-        _eliminate_duplicate_packed_nodes(gm)
-
     stable_topological_sort(gm.graph)
     gm.recompile()
     gm.graph.lint()
@@ -90,11 +79,6 @@ def freezing_passes(gm: torch.fx.GraphModule, aot_example_inputs):
 
 @init_once_fakemode
 def lazy_init(input_device: torch.device | None = None):
-    if torch._C._has_mkldnn and config.cpp.weight_prepack:
-        from .mkldnn_fusion import _mkldnn_weight_pack_init
-
-        _mkldnn_weight_pack_init()
-
     from .binary_folding import binary_folding_init
 
     addmm_patterns_init()

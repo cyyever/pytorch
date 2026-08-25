@@ -211,22 +211,6 @@ def post_grad_passes(gm: torch.fx.GraphModule, is_inference: bool):
             post_grad_custom_pre_pass
         )
 
-    if torch._C._has_mkldnn:
-        if (
-            config.cpp.enable_grouped_gemm_template
-            and config.max_autotune
-            and "CPP" in config.max_autotune_gemm_backends
-        ):
-            from .mkldnn_fusion import grouped_gemm_pass
-
-            grouped_gemm_pass(gm.graph)
-
-        if config.cpp.enable_concat_linear:
-            from .quantization import concat_linear_woq_int4
-
-            # Concat linear optimization for WOQ int4
-            concat_linear_woq_int4(gm)
-
     # Remove profiler ops (record_function) to prevent them blocking fusion
     GraphTransformObserver(gm, "remove_profiler_ops").apply_graph_pass(
         _remove_profiler_ops
@@ -858,15 +842,9 @@ def decompose_scan_to_while_loop(gm: torch.fx.GraphModule):
 
 @init_once_fakemode
 def lazy_init(input_device: torch.device | None = None):
-    if torch._C._has_mkldnn:
-        from . import decompose_mem_bound_mm  # noqa: F401
-        from .mkldnn_fusion import _mkldnn_fusion_init
+    from .quantization import _register_woq_lowerings
 
-        _mkldnn_fusion_init()
-    else:
-        from .quantization import _register_woq_lowerings
-
-        _register_woq_lowerings()
+    _register_woq_lowerings()
 
     # Put this patterns in post-grad pass rather than joint-graph
     # pass since otherwise there will be perf/peak-memory regression:

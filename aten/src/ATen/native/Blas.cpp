@@ -3,8 +3,6 @@
 #include <ATen/Dispatch.h>
 #include <ATen/ExpandUtils.h>
 
-#include <ATen/native/mkldnn/Matmul.h>
-#include <ATen/native/mkldnn/Linear.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/GroupedMMUtils.h>
 #include <ATen/BlasBackend.h>
@@ -84,11 +82,6 @@ TORCH_IMPL_FUNC(addmv_out_cpu)(const Tensor &self, const Tensor &mat, const Tens
       at::native::copy_(const_cast<Tensor&>(result), *self_);
     }
     if (result.numel() != 0) {
-
-      if (use_mkldnn_matmul(mat, vec, /*result=*/Tensor())){
-        mkldnn_matmul(mat, vec, result, beta_.to<float>(), alpha_.to<float>());
-        return;
-      }
 
       auto r_stride = result.stride(0);
       AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kBFloat16, kHalf, mat.scalar_type(), "addmv_impl_cpu", [&] {
@@ -177,13 +170,6 @@ Tensor dot(const Tensor &self, const Tensor &other){
 
   if (self._is_zerotensor() || other._is_zerotensor()) {
     return at::_efficientzerotensor({}, self.options());
-  }
-
-  if (use_mkldnn_matmul(self, other, /*result=*/Tensor())){
-    // mkldnn matmul expect result have sizes info to create ideep tensor
-    auto r =  at::empty({1, 1}, self.options());
-    mkldnn_matmul(self, other, r, /*beta=*/0);
-    return r;
   }
 
   return AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(at::ScalarType::BFloat16, at::ScalarType::Half, self.scalar_type(), "dot", [&] {

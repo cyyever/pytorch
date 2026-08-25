@@ -327,12 +327,7 @@ device_configs["xpu"] = DeviceConfig(
     dtypes_fast=[torch.float16],
 )
 device_configs["cpu"] = DeviceConfig(
-    dtypes=(
-        [torch.float32, torch.bfloat16, torch.float16]
-        if torch.backends.mkldnn.is_available()
-        and torch.ops.mkldnn._is_mkldnn_bf16_supported()
-        else [torch.float32]
-    ),
+    dtypes=[torch.float32],
     dtypes_fast=[torch.float32],
 )
 device_configs["mps"] = DeviceConfig(

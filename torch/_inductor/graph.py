@@ -119,7 +119,6 @@ from .utils import (
     normalize_name,
     should_assume_input_aligned,
     should_fallback_by_default,
-    SUPPORTED_MKLDNN_DEVICES,
     ValueWithLineMap,
 )
 from .virtualized import NullHandler, V
@@ -341,27 +340,6 @@ def mark_nodes_dislike_padding(
             # the input layout to padded strides.
             if op not in ops_like_padding:
                 cur.meta["dislike_padding"] = True
-
-
-def is_mkldnn_conv(node: Node) -> bool:
-    # When mkldnn_fusion is enabled, conv will be replaced by the lowering pattern function.
-    # See _register_unary_fusion_lowering in torch/_inductor/fx_passes/mkldnn_fusion.py.
-    if (
-        getattr(torch.ops, "mkldnn", None) is not None
-        and getattr(torch.ops.mkldnn, "_convolution_pointwise", None) is not None
-        and isinstance(node.target, functools.partial)
-        and len(node.target.args) > 0
-        and hasattr(node.target.args[0], "targets")
-    ):
-        for target in node.target.args[0].targets:
-            if target.fns[0] in [
-                torch.ops.mkldnn._convolution_pointwise.default,
-                torch.ops.mkldnn._convolution_pointwise.binary,
-                torch.ops.mkldnn._convolution_pointwise_.binary,
-            ]:
-                return True
-
-    return False
 
 
 def _realize_efficient_zerotensor_output(r: ir.IRNode, fx_node: object) -> ir.IRNode:
@@ -803,26 +781,10 @@ class GraphLowering(torch.fx.Interpreter):
             n for n in gm.graph.nodes if n.target is torch.ops.aten.convolution.default
         ]
 
-        for n in gm.graph.nodes:
-            if is_mkldnn_conv(n):
-                conv_nodes.append(n)
-
         nconv = len(conv_nodes)
 
         if nconv == 0:
             return False
-
-        # For cpu backend and mkldnn enabled, we always use channels_last for better performance.
-        if (
-            torch.backends.mkldnn.enabled  # pyrefly: ignore [unbound-name]
-            and torch.backends.mkldnn.is_available()  # pyrefly: ignore [unbound-name]
-            and all(
-                n.args[idx].meta["val"].device.type in SUPPORTED_MKLDNN_DEVICES
-                for n in conv_nodes
-                for idx in [0, 1]
-            )
-        ):
-            return True
 
         # Following models are skipped due to this:
         # jx_nest_base
@@ -1011,9 +973,6 @@ class GraphLowering(torch.fx.Interpreter):
                     last_conv = n
                 continue
             if n.target in nodes_cannot_propagate:
-                continue
-            if is_mkldnn_conv(n):
-                output_set.add(n)
                 continue
             for user in n.users:
                 if user in output_set:
@@ -2189,20 +2148,8 @@ class GraphLowering(torch.fx.Interpreter):
                         need_fixed_channels_last_layout = []
                         if not self.layout_opt:
                             need_fixed_layout.append(torch.ops.aten.convolution.default)
-                        if torch._C._has_mkldnn:
-                            need_fixed_layout += [
-                                torch.ops.mkldnn._linear_pointwise.default,
-                                torch.ops.mkldnn._linear_pointwise.binary,
-                                torch.ops.aten.mkldnn_rnn_layer.default,
-                            ]
-                            need_fixed_channels_last_layout += [
-                                torch.ops.mkldnn._convolution_pointwise.default,
-                                torch.ops.mkldnn._convolution_pointwise.binary,
-                                torch.ops.mkldnn._convolution_pointwise_.binary,
-                                torch.ops.mkldnn._convolution_transpose_pointwise.default,
-                            ]
-                            if torch._C.has_mkl:
-                                need_fixed_layout += [torch.ops.mkl._mkl_linear.default]
+                        if torch._C.has_mkl:
+                            need_fixed_layout += [torch.ops.mkl._mkl_linear.default]
                         if user.target in need_fixed_layout:
                             result = ir.ExternKernel.require_stride_order(
                                 result,

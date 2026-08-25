@@ -380,14 +380,6 @@ These backends include:
 .. automodule:: torch.backends.mkldnn
 ```
 
-```{eval-rst}
-.. autofunction::  torch.backends.mkldnn.is_available
-```
-
-```{eval-rst}
-.. autoclass::  torch.backends.mkldnn.verbose
-```
-
 ## torch.backends.openmp
 
 ```{eval-rst}

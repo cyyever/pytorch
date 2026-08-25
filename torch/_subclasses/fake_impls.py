@@ -660,10 +660,6 @@ def _to_dense(
     dtype: torch.dtype | None = None,
     masked_grad: bool | None = None,
 ) -> FakeTensor:
-    maybe_mkldnn_out = maybe_to_dense_mkldnn(fake_mode, self, dtype, masked_grad)
-    if maybe_mkldnn_out is not NotImplemented:
-        return typing_cast(FakeTensor, maybe_mkldnn_out)
-
     if self.layout is torch.sparse_coo:
         if dtype is not None:
             raise RuntimeError("dtype argument is not supported by sparse_to_dense")
@@ -1702,83 +1698,6 @@ def has_meta(func: OpOverload) -> bool:
     return torch._C._dispatch_has_computed_kernel_for_dispatch_key(func.name(), "Meta")
 
 
-def maybe_to_dense_mkldnn(
-    fake_mode: FakeTensorMode,
-    a: FakeTensor,
-    dtype: torch.dtype | None = None,
-    masked_grad: bool | None = None,
-) -> object:
-    # this function invokes in_kernel_invocation_manager and creates python
-    # FakeTensor, revisit later for C++ behaviour
-    if (
-        not isinstance(a, FakeTensor)  # noqa: ISINSTANCE_FAKE_TENSOR
-        or not a.is_mkldnn
-    ):
-        return NotImplemented
-
-    out_dtype = dtype if dtype is not None else a.dtype
-    if a.dtype not in _MKLDNN_TO_DENSE_DTYPES:
-        raise RuntimeError(
-            "mkldnn_to_dense expects float, bfloat16, half, uint8, int8, "
-            "float8_e4m3fn tensor input"
-        )
-    if out_dtype not in _MKLDNN_TO_DENSE_DTYPES:
-        raise RuntimeError(
-            "mkldnn tensor only can be converted to be a float, bfloat16, Half, "
-            "uint8, int8, float8_e4m3fn cpu tensor"
-        )
-    if a.dtype in _MKLDNN_DTYPE_CHANGE_RESTRICTED_DTYPES and out_dtype != a.dtype:
-        raise RuntimeError(
-            "For int8, uint8, float8 mkldnn_tensor input, we should not change "
-            "the data type."
-        )
-    shape = tuple(a.shape)
-    with in_kernel_invocation_manager(fake_mode):
-        out = torch.empty_strided(
-            shape,
-            make_contiguous_strides_for(shape),
-            dtype=out_dtype,
-            device="meta",
-        )
-    return FakeTensor(fake_mode, out, a.fake_device)
-
-
-class _ToDenseMkldnn(torch.autograd.Function):
-    @staticmethod
-    def forward(
-        self: torch.Tensor,
-        dtype: torch.dtype | None,
-        masked_grad: bool | None,
-    ) -> torch.Tensor:
-        return aten._to_dense.default(self, dtype, masked_grad)
-
-    @staticmethod
-    def setup_context(
-        ctx: Any,
-        inputs: tuple[torch.Tensor, torch.dtype | None, bool | None],
-        output: torch.Tensor,
-    ) -> None:
-        ctx.set_materialize_grads(False)
-        ctx.input_is_mkldnn = inputs[0].is_mkldnn
-        ctx.input_dtype = inputs[0].dtype
-
-    @staticmethod
-    # pyrefly: ignore [bad-override]
-    def backward(
-        ctx: Any, grad: torch.Tensor | None
-    ) -> tuple[torch.Tensor | None, None, None]:
-        if grad is None:
-            return None, None, None
-        if ctx.input_is_mkldnn:
-            return aten.to_mkldnn.default(grad, ctx.input_dtype), None, None
-        # torch.func transforms may replay setup_context on a strided wrapper;
-        # match that expected gradient layout instead of forcing MKLDNN.
-        return grad.to(dtype=ctx.input_dtype), None, None
-
-
-# Fake MKLDNN tensors keep MKLDNN-ness in a side channel because the backing
-# meta tensor is strided.  The native composite reads TensorImpl::layout()
-# directly, so this Python composite consults the layout override instead.
 def to_dense_composite_impl(
     self: torch.Tensor,
     dtype: torch.dtype | None = None,
@@ -1790,8 +1709,6 @@ def to_dense_composite_impl(
     # MKLDNN tensors. Keep the common strided path minimal.
     if layout == torch.strided:
         return self.to(dtype=dtype) if dtype is not None else self
-    if layout == torch._mkldnn:  # type: ignore[attr-defined]
-        return _ToDenseMkldnn.apply(self, dtype, masked_grad)
     if layout in _TO_DENSE_SPARSE_LAYOUTS:
         return aten._to_dense.default(self, dtype, masked_grad)
     torch._check(False, lambda: f"to_dense does not support layout {layout}")
@@ -1826,12 +1743,9 @@ def to_dense_functorch_frontmode_impl(
             ctx.input_is_mkldnn = unwrapped_self.is_mkldnn
             ctx.masked_grad = masked_grad
             with torch.enable_grad(), interpreter.lower():
-                if unwrapped_self.is_mkldnn:
-                    out = _ToDenseMkldnn.apply(unwrapped_self, dtype, masked_grad)
-                else:
-                    out = aten.to_dense.default(
-                        unwrapped_self, dtype=dtype, masked_grad=masked_grad
-                    )
+                out = aten.to_dense.default(
+                    unwrapped_self, dtype=dtype, masked_grad=masked_grad
+                )
             return _wrap_for_grad(out, level)
 
         @staticmethod
@@ -1890,52 +1804,6 @@ aten.to_dense.default.py_impl(torch._C.DispatchKey.CompositeImplicitAutograd)(
 )
 
 
-@register_op_impl(aten.to_mkldnn.default)
-def to_mkldnn(
-    fake_mode: FakeTensorMode,
-    func: OpOverload,
-    a: FakeTensor,
-    dtype: torch.dtype | None = None,
-) -> object:
-    if not isinstance(a, FakeTensor):  # noqa: ISINSTANCE_FAKE_TENSOR
-        return NotImplemented
-
-    out_dtype = dtype if dtype is not None else a.dtype
-    if a.fake_device.type != "cpu":
-        raise RuntimeError("dense_to_mkldnn expects CPU tensor input")
-    if a.layout != torch.strided:
-        raise RuntimeError("dense_to_mkldnn expects strided tensor input")
-    if a.dtype not in _MKLDNN_DTYPES:
-        raise RuntimeError(
-            "dense_to_mkldnn expects float, bfloat16, half, uint8, int8 tensor input"
-        )
-    if a.dim() > 5:
-        raise RuntimeError("Can't convert cpu tensor with the number of dimensions > 5")
-    if a.dtype in (torch.uint8, torch.int8) and out_dtype != a.dtype:
-        raise RuntimeError(
-            "For int8, uint8 cpu_tensor input, we should not change the data type."
-        )
-    if out_dtype not in _MKLDNN_DTYPES:
-        raise RuntimeError(
-            "cpu tensor only can be converted to be a float, bfloat16, half, "
-            "uint8, int8 mkldnn tensor"
-        )
-    shape = tuple(a.shape)
-    with in_kernel_invocation_manager(fake_mode):
-        # Real MKLDNN tensors report opaque strides as (1, 0, ...); mirror that
-        # while carrying the layout bit through dispatch_keys.
-        out = torch.empty_strided(
-            shape,
-            (1,) + (0,) * (len(shape) - 1),
-            dtype=out_dtype,
-            device="meta",
-        )
-    return FakeTensor(
-        fake_mode, out, a.fake_device, dispatch_keys=_MKLDNN_DISPATCH_KEYS
-    )
-
-
-# These are for the `torch._foreach_...` ops like `torch._foreach_add`.
 @register_op_impl(
     lambda func: is_builtin(func)
     and func.name().startswith("aten::_foreach_")

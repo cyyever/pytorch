@@ -25,7 +25,6 @@ import __future__
 import collections
 import contextlib
 import functools
-import sys
 import types
 import warnings
 from collections.abc import Callable, Iterable
@@ -161,7 +160,6 @@ def get_ignored_functions() -> set[Callable]:
         torch.finfo,
         torch.has_mkl,
         torch.has_mps,
-        torch.has_mkldnn,
         torch.has_openmp,
         torch.iinfo,
         torch.memory_format,
@@ -206,12 +204,6 @@ def get_ignored_functions() -> set[Callable]:
         torch.kaiser_window,
         torch.linspace,
         torch.logspace,
-        torch.mkldnn_adaptive_avg_pool2d,
-        torch.mkldnn_convolution,
-        torch.mkldnn_max_pool2d,
-        torch.mkldnn_max_pool3d,
-        torch.mkldnn_linear_backward_weights,
-        torch.mkldnn_rnn_layer,
         torch.normal,
         torch.ones,
         torch.promote_types,
@@ -1445,7 +1437,6 @@ def get_testing_overrides() -> dict[Callable, Callable]:
         Tensor._to_dense: lambda self, dtype=None, masked_grad=None: -1,
         Tensor.to_sparse: lambda self: -1,
         Tensor.tolist: lambda self: -1,
-        Tensor.to_mkldnn: lambda self: -1,
         Tensor.type_as: lambda self, other: -1,
         Tensor.unfold: lambda self, dimension, size, step: -1,
         Tensor.uniform_: lambda self, from_=0, to=1: -1,

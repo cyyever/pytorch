@@ -12,7 +12,6 @@
 #include <ATen/ops/_adaptive_avg_pool2d_native.h>
 #include <ATen/ops/adaptive_avg_pool2d_native.h>
 #include <ATen/ops/empty.h>
-#include <ATen/ops/mkldnn_adaptive_avg_pool2d.h>
 #endif
 
 
@@ -107,10 +106,6 @@ namespace {
         (output_size[0] >= 0 && output_size[1] >= 0),
         "adaptive_avg_pool2d: elements of output_size must be greater than or equal to 0 ",
         "but received {", output_size[0], ", ", output_size[1], "}");
-
-    if (input.is_mkldnn()) {
-      return at::mkldnn_adaptive_avg_pool2d(input, C10_AS_INTARRAYREF_SLOW(output_size));
-    }
 
     if (!input.is_quantized() && output_size[0] == 1 && output_size[1] == 1) {
       // in this case, adaptive pooling is just computing mean over hw

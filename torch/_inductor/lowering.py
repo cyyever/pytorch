@@ -9483,7 +9483,6 @@ import_submodule(kernel)
 
 from . import (
     jagged_lowerings,
-    mkldnn_lowerings,  # noqa: F401  # registers oneDNN fusion ops on import
     quantized_lowerings,
 )
 

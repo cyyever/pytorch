@@ -232,9 +232,6 @@ S390X_BLOCKLIST = [
     "inductor/test_select_algorithm",
     "inductor/test_snode_runtime",
     "inductor/test_triton_wrapper",
-    # these tests fail when mkldnn is not available
-    "inductor/test_custom_post_grad_passes",
-    "inductor/test_mkldnn_pattern_matcher",
     # sysctl -n hw.memsize is not available
     "test_mps",
     # https://github.com/pytorch/pytorch/issues/102078
@@ -436,7 +433,6 @@ TESTS_USING_GRADCHECK = [
     "test_view_ops",
     "test_segment_reductions",
     "test_transformers",
-    "test_mkldnn",
     "distributions/test_distributions",
     "optim/test_optim",
 ]

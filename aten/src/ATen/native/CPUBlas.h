@@ -208,16 +208,6 @@ void copy(int64_t n, const c10::complex<float> *x, int64_t incx, c10::complex<fl
 // C Pointer to a tensor C (accumulation buffer).
 // Note only batch size 1 is used currently
 
-// Define macros for available brgemm APIs
-// so that callers can determine which APIs are available
-#define CPUBLAS_BRGEMM_F16F16F32 // half * half -> float
-#define CPUBLAS_BRGEMM_BF16BF16F32 // bfloat16 * bfloat16 -> float
-#define CPUBLAS_BRGEMM_F32F32F32 // float * float -> float
-#define CPUBLAS_BRGEMM_U8U8I32 // unsigned char * unsigned char -> int32
-#define CPUBLAS_BRGEMM_U8I8I32 // unsigned char * signed char -> int32
-#define CPUBLAS_BRGEMM_I8I8I32 // signed char * signed char -> int32
-#define CPUBLAS_BRGEMM_F8F8F32 // float8 * float8 -> float (e4m3 & e5m2)
-
 TORCH_API void brgemm(
     int64_t M,
     int64_t N,
@@ -257,88 +247,11 @@ TORCH_API void brgemm(
     float* C,
     bool is_vnni = false);
 
-TORCH_API void brgemm(
-    int64_t M,
-    int64_t N,
-    int64_t K,
-    int64_t ld_a,
-    int64_t ld_b,
-    int64_t ld_c,
-    const bool add_C,
-    const unsigned char* A,
-    const unsigned char* B,
-    int32_t* C,
-    bool is_vnni = true);
-
-TORCH_API void brgemm(
-    int64_t M,
-    int64_t N,
-    int64_t K,
-    int64_t ld_a,
-    int64_t ld_b,
-    int64_t ld_c,
-    const bool add_C,
-    const unsigned char* A,
-    const signed char* B,
-    int32_t* C,
-    bool is_vnni = true);
-
-TORCH_API void brgemm(
-    int64_t M,
-    int64_t N,
-    int64_t K,
-    int64_t ld_a,
-    int64_t ld_b,
-    int64_t ld_c,
-    const bool add_C,
-    const signed char* A,
-    const signed char* B,
-    int32_t* C,
-    bool is_vnni = true);
-
-#ifdef CPUBLAS_BRGEMM_F8F8F32
-TORCH_API void brgemm(
-    int64_t M,
-    int64_t N,
-    int64_t K,
-    int64_t ld_a,
-    int64_t ld_b,
-    int64_t ld_c,
-    const bool add_C,
-    const at::Float8_e4m3fn* A,
-    const at::Float8_e4m3fn* B,
-    float* C,
-    bool is_vnni = true);
-
-TORCH_API void brgemm(
-    int64_t M,
-    int64_t N,
-    int64_t K,
-    int64_t ld_a,
-    int64_t ld_b,
-    int64_t ld_c,
-    const bool add_C,
-    const at::Float8_e5m2* A,
-    const at::Float8_e5m2* B,
-    float* C,
-    bool is_vnni = true);
-#endif
-
 // Release brgemm hardware context
 TORCH_API void brgemm_release(bool is_vnni = true);
 
-// Pack B matrix to get better performance if needed
-TORCH_API void pack(
-    int64_t K,
-    int64_t N,
-    int64_t ld_in,
-    int64_t ld_out,
-    ScalarType dt_in,
-    ScalarType dt_out,
-    const void* in,
-    void* out);
-
-// Whether pack is supported in the platform.
+// Always false: this build has no packed brgemm path. It survives so the
+// with_pack template parameter in FlashAttentionKernel still compiles.
 TORCH_API bool could_pack(ScalarType dt_in);
 
 } // namespace at::native::cpublas

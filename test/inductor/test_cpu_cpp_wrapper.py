@@ -24,14 +24,12 @@ try:
         from . import (
             test_cpu_repro,
             test_cpu_select_algorithm,
-            test_mkldnn_pattern_matcher,
             test_torchinductor,
             test_torchinductor_dynamic_shapes,
         )
     except ImportError:
         import test_cpu_repro  # @manual=fbcode//caffe2/test/inductor:test_cpu_repro-library
         import test_cpu_select_algorithm  # @manual=fbcode//caffe2/test/inductor:cpu_select_algorithm_cpu-library
-        import test_mkldnn_pattern_matcher  # @manual
         import test_torchinductor  # @manual=fbcode//caffe2/test/inductor:test_inductor-library
         import test_torchinductor_dynamic_shapes  # @manual=fbcode//caffe2/test/inductor:test_inductor-library_dynamic_shapes
 except unittest.SkipTest:
@@ -180,33 +178,6 @@ if RUN_CPU:
         BaseTest("test_bmm1", test_build_separate=True),
         BaseTest("test_bmm2"),
         BaseTest("test_cat"),  # alias
-        BaseTest(
-            "test_conv2d_binary_inplace_fusion_failed",
-            "cpu",
-            test_mkldnn_pattern_matcher.TestPatternMatcher(),
-            condition=torch.backends.mkldnn.is_available(),
-            func_inputs=[
-                ["aoti_torch_cpu_mkldnn__convolution_pointwise_binary("],
-                ["aoti_torch_cpu_mkldnn__convolution_pointwise_binary_("],
-            ],
-        ),
-        BaseTest(
-            "test_conv2d_binary_inplace_fusion_pass",
-            "cpu",
-            test_mkldnn_pattern_matcher.TestPatternMatcher(),
-            condition=torch.backends.mkldnn.is_available(),
-            func_inputs=[
-                ["aoti_torch_cpu_mkldnn__convolution_pointwise_binary_("],
-                ["aoti_torch_cpu_mkldnn__convolution_pointwise_binary("],
-            ],
-        ),
-        BaseTest(
-            "test_conv2d_unary",
-            "cpu",
-            test_mkldnn_pattern_matcher.TestPatternMatcherGenericCPU(),
-            condition=torch.backends.mkldnn.is_available(),
-            slow=True,
-        ),
         BaseTest("test_conv_transpose2d_packed", "cpu", test_cpu_repro.CPUReproTests()),
         BaseTest("test_cumsum"),
         BaseTest("test_custom_op_1"),
@@ -236,28 +207,17 @@ if RUN_CPU:
         ],
         BaseTest("test_polar"),
         BaseTest(
-            "test_linear_binary",
-            "",
-            test_mkldnn_pattern_matcher.TestPatternMatcher(),
-            torch.backends.mkldnn.is_available()
-            and torch.ops.mkldnn._is_mkldnn_bf16_supported(),
-        ),
-        BaseTest(
             "test_linear_packed",
             "",
             test_cpu_repro.CPUReproTests(),
-            torch.backends.mkldnn.is_available()
-            and (
-                torch.ops.mkldnn._is_mkldnn_bf16_supported()
-                or torch.ops.mkldnn._is_mkldnn_fp16_supported()
-            ),
+            False,
         ),
         *[
             BaseTest(
                 func,
                 "",
                 test_cpu_repro.CPUReproTests(),
-                condition=torch.backends.mkldnn.is_available() and not IS_WINDOWS,
+                condition=False,
             )
             for func in dir(test_cpu_repro.CPUReproTests())
             if func.startswith("test_lstm_packed_change_input_sizes")

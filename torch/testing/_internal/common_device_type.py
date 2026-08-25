@@ -2144,17 +2144,6 @@ def disablecuDNN(fn):
     return disable_cudnn
 
 
-def disableMkldnn(fn):
-    @wraps(fn)
-    def disable_mkldnn(self, *args, **kwargs):
-        if torch.backends.mkldnn.is_available():
-            with torch.backends.mkldnn.flags(enabled=False):
-                return fn(self, *args, **kwargs)
-        return fn(self, *args, **kwargs)
-
-    return disable_mkldnn
-
-
 def expectedFailureCPU(fn):
     return expectedFailure("cpu")(fn)
 
@@ -2245,14 +2234,6 @@ def skipCPUIfNoMkl(fn):
 def skipCPUIfNoMklSparse(fn):
     return skipCPUIf(
         not TEST_MKL, "PyTorch is built without MKL support"
-    )(fn)
-
-
-# Skips a test on CPU if mkldnn is not available.
-def skipCPUIfNoMkldnn(fn):
-    return skipCPUIf(
-        not torch.backends.mkldnn.is_available(),
-        "PyTorch is built without mkldnn support",
     )(fn)
 
 
