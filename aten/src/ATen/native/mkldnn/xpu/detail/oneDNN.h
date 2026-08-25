@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ATen/core/Tensor.h>
+#include <c10/core/Scalar.h>
 #include <ATen/BlasBackend.h>
 #include <ATen/native/mkldnn/xpu/detail/Attr.h>
 #include <ATen/native/mkldnn/xpu/detail/Utils.h>

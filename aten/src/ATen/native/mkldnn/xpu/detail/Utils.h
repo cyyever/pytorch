@@ -1,4 +1,6 @@
 #pragma once
+#include <ATen/core/Tensor.h>
+#include <c10/core/Scalar.h>
 #include <ATen/Tensor.h>
 #include <iostream>
 #include <optional>
