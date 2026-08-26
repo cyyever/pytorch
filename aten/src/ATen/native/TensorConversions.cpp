@@ -4,6 +4,8 @@
 #include <ATen/Parallel.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/core/Tensor.h>
+#include <algorithm>
+#include <numeric>
 #include <optional>
 
 #include <ATen/ops/_autocast_to_full_precision_native.h>
@@ -886,7 +888,7 @@ Tensor view_dtype(const Tensor& self, ScalarType dtype) {
 
     auto old_sizes = self.sym_sizes();
     SymDimVector new_sizes(self.dim());
-    std::copy(old_sizes.begin(), old_sizes.end(), new_sizes.begin());
+    std::ranges::copy(old_sizes, new_sizes.begin());
     new_sizes[self.dim() - 1] *= size_ratio;
 
     auto new_storage_offset = size_ratio * self.sym_storage_offset();
@@ -926,7 +928,7 @@ Tensor view_dtype(const Tensor& self, ScalarType dtype) {
 
     auto old_sizes = self.sym_sizes();
     SymDimVector new_sizes(self.dim());
-    std::copy(old_sizes.begin(), old_sizes.end(), new_sizes.begin());
+    std::ranges::copy(old_sizes, new_sizes.begin());
     new_sizes[self.dim() - 1] /= size_ratio;
 
     auto new_storage_offset = self.sym_storage_offset() / size_ratio;
@@ -1269,7 +1271,7 @@ static Tensor dense_to_sparse_compressed(
       : self_mask;
   if (blocked_layout || dense_dim > 0) {
     std::vector<int64_t> reduce_dim((blocked_layout ? 2 : 0) + dense_dim);
-    std::iota(reduce_dim.begin(), reduce_dim.end(), n_batch_dim + 2);
+    std::ranges::iota(reduce_dim, n_batch_dim + 2);
     not_zero_mask = not_zero_mask.sum(reduce_dim) != 0;
   }
 

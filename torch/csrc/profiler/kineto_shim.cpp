@@ -122,7 +122,7 @@ XpuActivityRequest splitXpuRequest(
   XpuActivityRequest out;
   for (const auto& name : requested) {
     const auto it =
-        std::find_if(defaults.begin(), defaults.end(), [&](const auto& entry) {
+        std::ranges::find_if(defaults, [&](const auto& entry) {
           return entry.second == name;
         });
     if (it != defaults.end()) {

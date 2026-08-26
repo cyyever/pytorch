@@ -13,6 +13,8 @@
 #include <torch/library.h>
 #include <c10/util/Exception.h>
 
+#include <numeric>
+
 
 // NOLINTBEGIN(bugprone-unchecked-optional-access)
 namespace at::functorch {
@@ -166,7 +168,7 @@ bool are_advanced_indices_adjacent(ArrayRef<std::optional<Tensor>> indices) {
 //                     region2  region1
 Tensor swap_regions(const Tensor& tensor, int64_t first_region_size, int64_t second_region_size) {
   VmapDimVector permutation(tensor.dim(), 0);
-  std::iota(permutation.begin(), permutation.end(), 0);
+  std::ranges::iota(permutation, 0);
   std::rotate(
       permutation.begin() + 1,
       permutation.begin() + 1 + first_region_size,

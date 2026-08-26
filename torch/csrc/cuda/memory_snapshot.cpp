@@ -242,7 +242,7 @@ static void checkOptionIn(
     std::initializer_list<std::string> valid,
     const char* error) {
   TORCH_CHECK(
-      valid.end() != std::find(valid.begin(), valid.end(), option), error);
+      valid.end() != std::ranges::find(valid, option), error);
 }
 
 void _record_memory_history(

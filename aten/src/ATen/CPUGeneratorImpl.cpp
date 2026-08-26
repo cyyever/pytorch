@@ -154,7 +154,7 @@ void CPUGeneratorImpl::set_state(const c10::TensorImpl& new_state) {
   // redefined mt19937, we have changed to a state array of 32 bit uints. Hence, we are
   // doing a std::copy.
   at::mt19937_data_pod rng_data{};
-  std::copy(std::begin(legacy_pod->state), std::end(legacy_pod->state), rng_data.state_.begin());
+  std::ranges::copy(legacy_pod->state, rng_data.state_.begin());
   rng_data.seed_ = legacy_pod->the_initial_seed;
   rng_data.left_ = legacy_pod->left;
   rng_data.seeded_ = legacy_pod->seeded;
@@ -190,7 +190,7 @@ c10::intrusive_ptr<c10::TensorImpl> CPUGeneratorImpl::get_state() const {
   accum_state->legacy_pod.left = rng_data.left_;
   accum_state->legacy_pod.seeded = rng_data.seeded_;
   accum_state->legacy_pod.next = rng_data.next_;
-  std::copy(rng_data.state_.begin(), rng_data.state_.end(), std::begin(accum_state->legacy_pod.state));
+  std::ranges::copy(rng_data.state_, std::begin(accum_state->legacy_pod.state));
   accum_state->legacy_pod.normal_x = 0.0; // we don't use it anymore and this is just a dummy
   accum_state->legacy_pod.normal_rho = 0.0; // we don't use it anymore and this is just a dummy
   accum_state->legacy_pod.normal_is_valid = false;

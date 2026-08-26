@@ -9,6 +9,7 @@
 #include <ATen/native/vol2col.h>
 #include <c10/util/accumulate.h>
 #include <c10/util/irange.h>
+#include <numeric>
 #include <tuple>
 
 #include <ATen/ops/empty.h>
@@ -212,7 +213,7 @@ void slow_conv_dilated_all_cpu_template(
   // Helpers
   Tensor grad_output_n;
   std::vector<int64_t> dims(dim);
-  std::iota(dims.begin(), dims.end(), 1);
+  std::ranges::iota(dims, 1);
 
     AT_DISPATCH_FLOATING_TYPES_AND3(
         at::ScalarType::Long, at::ScalarType::BFloat16, at::ScalarType::Half, input.scalar_type(), "slow_conv_dilated<>", [&] {

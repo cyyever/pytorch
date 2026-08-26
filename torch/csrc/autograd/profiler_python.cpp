@@ -1,5 +1,6 @@
 #include <torch/csrc/autograd/profiler_python.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <deque>
@@ -1097,8 +1098,8 @@ class PostProcess {
 
   std::vector<std::shared_ptr<Result>> run(
       std::vector<python_tracer::CompressedEvent>& enters) {
-    std::stable_sort(
-        enters.begin(), enters.end(), [](const auto a, const auto b) {
+    std::ranges::stable_sort(
+        enters, [](const auto a, const auto b) {
           return a.enter_t_ < b.enter_t_;
         });
     std::vector<std::shared_ptr<Result>> out;
@@ -1224,7 +1225,7 @@ std::vector<std::shared_ptr<Result>> PythonTracer::getEvents(
   post_process.set_start_frames(start_frames_, enters);
   auto out = post_process.run(enters);
 
-  std::stable_sort(out.begin(), out.end(), [](const auto& a, const auto& b) {
+  std::ranges::stable_sort(out, [](const auto& a, const auto& b) {
     return a->start_time_ns_ < b->start_time_ns_;
   });
   python_tracer::clampOverrunningPythonEvents(out);

@@ -3,6 +3,7 @@
 #include <torch/csrc/jit/python/utf8_decoding_ignore.h>
 
 #ifdef USE_DISTRIBUTED
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/ProcessGroup.hpp>
 #include <torch/csrc/distributed/c10d/Types.hpp>
 #endif
@@ -622,8 +623,8 @@ py::object toPyObject(IValue ivalue) {
       std::vector<Argument> tuple_args = tuple->type()->schema()->arguments();
 
       std::vector<pybind11::object> defaults;
-      auto it = std::find_if(
-          tuple_args.begin(), tuple_args.end(), [](const Argument& arg) {
+      auto it = std::ranges::find_if(
+          tuple_args, [](const Argument& arg) {
             return arg.default_value().has_value();
           });
       std::transform(

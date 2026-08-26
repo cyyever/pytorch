@@ -7,6 +7,7 @@
 #include <c10/util/Exception.h>
 #include <ATen/native/LinearAlgebraUtils.h>
 
+#include <algorithm>
 #include <utility>
 
 namespace at::functorch {
@@ -54,8 +55,8 @@ Tensor linear_hack(const Tensor& input, const Tensor& weight, const std::optiona
   auto output = at::matmul(input, weight.t());
   if (bias->defined()) {
     const auto& stack = getDynamicLayerStack();
-    bool any_vmap_layers = std::any_of(
-        stack.begin(), stack.end(),
+    bool any_vmap_layers = std::ranges::any_of(
+        stack,
         [](const DynamicLayer& dl){ return dl.key() == TransformType::Vmap; });
     if (any_vmap_layers) {
       return output.add(*bias);

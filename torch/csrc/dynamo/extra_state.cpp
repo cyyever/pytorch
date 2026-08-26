@@ -413,7 +413,7 @@ py::list _debug_get_cache_entry_list(const py::handle& code_obj) {
     for (auto& kv : extra->cache_entry_map) {
       ids.push_back(kv.first);
     }
-    std::sort(ids.begin(), ids.end());
+    std::ranges::sort(ids);
     for (int64_t id : ids) {
       for (CacheEntry& e : extra->cache_entry_map[id]) {
         result.append(py::cast(e, py::return_value_policy::reference));

@@ -15,6 +15,7 @@ struct THFloatTensor;
 #include <limits>
 // NOLINTNEXTLINE(modernize-deprecated-headers)
 #include <string.h>
+#include <numeric>
 #include <sstream>
 #include <thread>
 #include <mutex>
@@ -522,7 +523,7 @@ TEST(BasicTest, BasicStdTestCPU) {
 TEST(BasicTest, TestForBlobResizeCPU) {
   // Checks that for_blob can correctly create tensors with non-empty offset and resize them
   std::array<int32_t, 6> storage;
-  std::iota(storage.begin(), storage.end(), 1);
+  std::ranges::iota(storage, 1);
   auto t = at::for_blob(storage.data(), {3,}).storage_offset(3).options(c10::TensorOptions(kInt)).make_tensor();
   auto te = *at::expand_size(t, {3, 3});
   ASSERT_EQ(te[1][1].item<int32_t>(), 5);
@@ -531,7 +532,7 @@ TEST(BasicTest, TestForBlobResizeCPU) {
 TEST(BasicTest, TestForBlobStridesResizeCPU) {
   // Checks that for_blob can correctly create tensors with non-empty offset and resize them
   std::array<int32_t, 6> storage;
-  std::iota(storage.begin(), storage.end(), 1);
+  std::ranges::iota(storage, 1);
   auto t = at::for_blob(storage.data(), {3,}).strides({1,}).storage_offset(3).options(c10::TensorOptions(kInt)).make_tensor();
   auto te = *at::expand_size(t, {3, 3});
   ASSERT_EQ(te[1][1].item<int32_t>(), 5);

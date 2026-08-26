@@ -12,6 +12,7 @@
 
 #include <c10/util/irange.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -3417,7 +3418,7 @@ static std::string get_default_lstsq_driver(std::optional<std::string_view> driv
   if (driver.has_value()) {
     driver_str = std::string(driver.value());
     // convert `driver_str` to lower case inplace.
-    std::transform(driver_str.begin(), driver_str.end(), driver_str.begin(),
+    std::ranges::transform(driver_str, driver_str.begin(),
       [](unsigned char c) { return std::tolower(c); });
     static std::unordered_set<std::string_view> allowed_drivers = {
       "gels", "gelsy", "gelsd", "gelss"

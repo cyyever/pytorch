@@ -1,6 +1,7 @@
 #include <ATen/TensorUtils.h>
 #include <c10/util/accumulate.h>
 
+#include <algorithm>
 #include <ostream>
 #include <sstream>
 
@@ -183,7 +184,7 @@ void checkScalarType(CheckedFrom c, const TensorArg& t, ScalarType ty) {
 
 void checkScalarTypes(CheckedFrom c, const TensorArg& t,
                       at::ArrayRef<ScalarType> l) {
-    if (std::find(l.begin(), l.end(), t->scalar_type()) == l.end()) {
+    if (std::ranges::find(l, t->scalar_type()) == l.end()) {
       std::ostringstream oss;
       oss << "Expected tensor for " << t << " to have one of the following "
           << "scalar types: ";

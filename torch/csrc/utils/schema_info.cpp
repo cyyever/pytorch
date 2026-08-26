@@ -1,6 +1,8 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <torch/csrc/utils/schema_info.h>
 
+#include <algorithm>
+
 namespace torch::utils {
 void SchemaInfo::addArgumentValue(
     const std::string& name,
@@ -69,9 +71,9 @@ bool SchemaInfo::is_mutable(const c10::SchemaArgument& argument) {
       correct_map[argument.index].begin(),
       correct_map[argument.index].end(),
       [this](size_t aliasing_index) {
-        const auto is_training_op = std::find_if(
-            training_ops.begin(),
-            training_ops.end(),
+        const auto is_training_op = std::ranges::find_if(
+            training_ops,
+
             [this](const auto& training_op) {
               return this->schema_ == training_op.first;
             });

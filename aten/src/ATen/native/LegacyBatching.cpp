@@ -6,6 +6,8 @@
 #include <ATen/ops/_add_batch_dim_native.h>
 #include <ATen/ops/_remove_batch_dim_native.h>
 
+#include <algorithm>
+
 namespace at::native {
 
 // Adds a batch dimension to the tensor `self` out-of-place
@@ -19,7 +21,7 @@ static bool has_level(const Tensor& self, int64_t level) {
     return false;
   }
   auto bdims = batched->bdims();
-  auto* it = std::find_if(bdims.begin(), bdims.end(), [&](const BatchDim& bdim) {
+  auto* it = std::ranges::find_if(bdims, [&](const BatchDim& bdim) {
     return bdim.level() == level;
   });
   return it != bdims.end();

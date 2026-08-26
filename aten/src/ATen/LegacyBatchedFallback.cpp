@@ -7,6 +7,8 @@
 #include <c10/util/irange.h>
 #include <bit>
 
+#include <algorithm>
+
 namespace at {
 
 // Given a linear index, return the actual index.
@@ -21,7 +23,7 @@ computeIndex(int64_t linear_idx, IntArrayRef sizes) {
     linear_idx -= remainder;
     linear_idx /= *it;
   }
-  std::reverse(std::begin(result), std::end(result));
+  std::ranges::reverse(result);
   return result;
 }
 
@@ -210,7 +212,7 @@ static void batchedTensorInplaceForLoopFallback(const c10::OperatorHandle& op, t
 
 static Tensor safeStack(TensorList tensors) {
   auto is_defined = [](const Tensor& t) { return t.defined(); };
-  if (std::all_of(tensors.begin(), tensors.end(), is_defined)) {
+  if (std::ranges::all_of(tensors, is_defined)) {
     return at::stack(tensors);
   }
   // NOTE [vmap through backward and undefined grad]
@@ -225,7 +227,7 @@ static Tensor safeStack(TensorList tensors) {
   // of the correct shape while stacking the tensors together. However I expect
   // this to happen very rarely (I have not been able to find an example in our
   // codebase) so we just error out in this case.
-  if (std::none_of(tensors.begin(), tensors.end(), is_defined)) {
+  if (std::ranges::none_of(tensors, is_defined)) {
     return Tensor();
   }
   TORCH_CHECK(false,

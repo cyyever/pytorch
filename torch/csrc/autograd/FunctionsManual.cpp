@@ -232,7 +232,7 @@ static std::vector<int64_t> _aminmax_dims(
     return {at::maybe_wrap_dim(*dim_opt, self.dim())};
   }
   std::vector<int64_t> dims(self.dim());
-  std::iota(dims.begin(), dims.end(), 0);
+  std::ranges::iota(dims, 0);
   return dims;
 }
 
@@ -1948,7 +1948,7 @@ Tensor renorm_backward(
   auto n = self.dim();
   dim = c10::maybe_wrap_dim(dim, n);
   auto reduce_dims = at::DimVector(n);
-  std::iota(reduce_dims.begin(), reduce_dims.end(), 0);
+  std::ranges::iota(reduce_dims, 0);
   reduce_dims.erase(reduce_dims.begin() + dim);
 
   auto acc_type =
@@ -1982,7 +1982,7 @@ Tensor renorm_jvp(
   dim = at::maybe_wrap_dim(dim, static_cast<int64_t>(self_sizes.size()));
 
   at::DimVector reduce_dims(self_sizes.size());
-  std::iota(reduce_dims.begin(), reduce_dims.end(), 0);
+  std::ranges::iota(reduce_dims, 0);
   reduce_dims.erase(reduce_dims.begin() + dim);
 
   // For cuda half, calculate norm in float precision then cast
@@ -3428,7 +3428,7 @@ static bool _maybe_overlapping_memory(
     c10::SymIntArrayRef strides) {
   if (!sizes.empty()) {
     std::vector<std::size_t> argsort(sizes.size());
-    std::iota(argsort.begin(), argsort.end(), 0);
+    std::ranges::iota(argsort, 0);
     std::sort( // NOLINT(modernize-use-ranges)
         argsort.begin(),
         argsort.end(),

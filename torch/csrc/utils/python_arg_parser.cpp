@@ -16,6 +16,7 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/util/irange.h>
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -1807,8 +1808,8 @@ PythonArgParser::PythonArgParser(
   }
 
   // Check deprecated signatures last
-  std::stable_partition(
-      signatures_.begin(), signatures_.end(), [](const FunctionSignature& sig) {
+  std::ranges::stable_partition(
+      signatures_, [](const FunctionSignature& sig) {
         return !sig.deprecated;
       });
 }

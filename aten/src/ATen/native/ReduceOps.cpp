@@ -1165,7 +1165,7 @@ static std::vector<int64_t> gradient_dim_preprocess(const Tensor& self, std::opt
   }
 
   std::vector<int64_t> axis(self.dim());
-  std::iota(axis.begin(), axis.end(), 0);
+  std::ranges::iota(axis, 0);
   return axis;
 }
 

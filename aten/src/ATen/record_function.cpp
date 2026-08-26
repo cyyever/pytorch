@@ -40,7 +40,7 @@ RecordFunctionCallbacks::iterator findCallback(
     RecordFunctionCallbacks& entries,
     CallbackHandle handle) {
   auto match_handle = [handle](const auto& el) { return el.handle_ == handle; };
-  return std::find_if(entries.begin(), entries.end(), match_handle);
+  return std::ranges::find_if(entries, match_handle);
 }
 
 std::optional<RecordFunctionCallback> extractCallback(
@@ -642,7 +642,7 @@ void set_record_function_tls_(const RecordFunctionTLS& tls) {
 
 namespace {
 bool anyEnabled(const RecordFunctionCallbacks& callbacks) {
-  return std::any_of(callbacks.begin(), callbacks.end(), [](const auto& cb) {
+  return std::ranges::any_of(callbacks, [](const auto& cb) {
     return cb.enabled_;
   });
 }

@@ -22,6 +22,8 @@
 #include <ATen/ops/unique_dim_native.h>
 #include <ATen/ops/zeros.h>
 
+#include <numeric>
+
 namespace at::native {
 
 namespace {
@@ -390,7 +392,7 @@ std::tuple<Tensor, Tensor, Tensor> _unique_dim_cpu_template(
   input_flat = input_flat.contiguous().view({input_flat.size(0), -1});
 
   std::vector<int64_t> indices(input_flat.size(0));
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
   int64_t numel = input_flat.size(1);
   const scalar_t* input_flat_ptr = ((const scalar_t*)input_flat.const_data_ptr());
 

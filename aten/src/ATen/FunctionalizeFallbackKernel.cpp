@@ -18,6 +18,7 @@
 #include <ATen/ops/as_strided_copy.h>
 #include <ATen/ops/_unsafe_view.h>
 
+#include <algorithm>
 #include <utility>
 
 namespace at::functionalization {
@@ -335,8 +336,8 @@ static at::Tensor _unsafe_view_functionalize(const at::Tensor & self, at::SymInt
     tmp_output = at::_unsafe_view_symint(self_, size);
   }
 
-  bool has_symbolic_inputs = std::any_of(
-      size.begin(), size.end(), [=](auto& s) { return s.is_symbolic(); });
+  bool has_symbolic_inputs = std::ranges::any_of(
+      size, [=](auto& s) { return s.is_symbolic(); });
   auto view_meta =
       std::make_shared<at::functionalization::_unsafe_view_ViewMeta>(
           has_symbolic_inputs, size.vec());

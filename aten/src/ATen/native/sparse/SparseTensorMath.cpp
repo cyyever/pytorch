@@ -69,6 +69,7 @@
 #include <ATen/ops/index.h>
 
 #include <algorithm>
+#include <numeric>
 
 namespace at::native {
 
@@ -1832,7 +1833,7 @@ Tensor _sparse_sum_backward_cpu(const Tensor& grad_, const SparseTensor& input_,
 
       // get flatten indices for grad and input
       auto grad_sparse_dim_to_keep_v = std::vector<int64_t>(grad_sparse_dim);
-      std::iota(grad_sparse_dim_to_keep_v.begin(), grad_sparse_dim_to_keep_v.end(), 0);
+      std::ranges::iota(grad_sparse_dim_to_keep_v, 0);
 
       auto grad_indices_1D = flatten_indices_by_dims(grad_indices, grad.sizes(), grad_sparse_dim_to_keep_v); // flatten indices on all sparse_dim of grad, output indices is coalesced and sorted
       auto grad_indices_1D_accessor = grad_indices_1D.accessor<int64_t, 1>();
