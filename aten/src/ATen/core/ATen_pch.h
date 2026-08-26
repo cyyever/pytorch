@@ -112,7 +112,7 @@
 #include <c10/util/Logging.h>
 #include <c10/util/MaybeOwned.h>
 #include <c10/util/Metaprogramming.h>
-#include <c10/util/Optional.h>
+#include <optional>
 #include <c10/util/Registry.h>
 #include <c10/util/SmallVector.h>
 #include <c10/util/StringUtil.h>
@@ -139,7 +139,6 @@
 #include <c10/util/quint4x2.h>
 #include <c10/util/quint8.h>
 #include <c10/util/safe_numerics.h>
-#include <c10/util/string_utils.h>
 #include <c10/util/string_view.h>
 #include <c10/util/typeid.h>
 
