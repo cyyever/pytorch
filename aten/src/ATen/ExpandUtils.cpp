@@ -4,6 +4,8 @@
 
 #include <c10/util/irange.h>
 
+#include <iterator>
+
 namespace at {
 namespace internal {
 TensorBase expand_slow_path(const TensorBase &self, IntArrayRef size) {
@@ -16,8 +18,8 @@ namespace {
 template <typename Container, typename ArrayType>
 Container infer_size_impl(ArrayType a, ArrayType b) {
   // Use ptrdiff_t to ensure signed comparison.
-  auto dimsA = static_cast<ptrdiff_t>(a.size());
-  auto dimsB = static_cast<ptrdiff_t>(b.size());
+  auto dimsA = std::ssize(a);
+  auto dimsB = std::ssize(b);
   auto ndim = dimsA > dimsB ? dimsA : dimsB;
   Container expandedSizes(ndim);
 
@@ -66,8 +68,8 @@ C10_ALWAYS_INLINE static InferExpandGeometryResult<Container> inferExpandGeometr
     IntArrayRef tensor_sizes,
     IntArrayRef tensor_strides,
     IntArrayRef sizes) {
-  int64_t ndim = static_cast<int64_t>(sizes.size());
-  int64_t tensor_dim = static_cast<int64_t>(tensor_sizes.size());
+  int64_t ndim = std::ssize(sizes);
+  int64_t tensor_dim = std::ssize(tensor_sizes);
 
   if (tensor_dim == 0) {
     return InferExpandGeometryResult<Container>(sizes, ndim);

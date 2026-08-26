@@ -3,6 +3,7 @@
 #include <c10/core/impl/TorchDispatchModeTLS.h>
 #include <c10/util/irange.h>
 
+#include <iterator>
 #include <utility>
 
 namespace c10::impl {
@@ -109,7 +110,7 @@ const std::shared_ptr<PyObject_TorchDispatchMode>& TorchDispatchModeTLS::
 }
 
 int64_t TorchDispatchModeTLS::stack_len() {
-  auto stack_len = static_cast<int64_t>(torchDispatchModeState.stack_.size());
+  auto stack_len = std::ssize(torchDispatchModeState.stack_);
   int64_t infra_modes_len = 0;
   for (const auto i :
        c10::irange(static_cast<size_t>(TorchDispatchModeKey::NUM_MODE_KEYS))) {
