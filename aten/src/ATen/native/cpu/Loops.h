@@ -328,15 +328,14 @@ void cpu_kernel_opaque(TensorIteratorBase& iter, func_t&& op, int64_t grain_size
 // It follows the similar structure of cpu_kernel.
 // Instead of `basic_loop` function, a new `multiple_outputs_loop` function is
 // manipulated to handle multiple return values.
-// For now `needs_dynamic_casting` check is not added as the passed lambda (`func_t`)
-// of `multiple_outputs_loop` returns `std::tuple` instead of `scalar_t`.
-// The `gpu_kernel_multiple_outputs` is also implemented without this check,
-// We could extend `needs_dynamic_casting` to support both `std::tuple` and
-// `thrust::tuple` in the future.
 template <typename func_t>
 void cpu_kernel_multiple_outputs(TensorIteratorBase& iter, func_t&& op, int64_t grain_size = at::internal::GRAIN_SIZE) {
   using traits = function_traits<func_t>;
   TORCH_INTERNAL_ASSERT(iter.ninputs() == traits::arity);
+  // dynamic casting not currently supported on CPU. This path never carried the
+  // check, so keep it debug-only: a kernel that trips it should fail in CI
+  // rather than start throwing in a release build.
+  TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!needs_dynamic_casting<func_t>::check(iter));
 
   iter.for_each([&](char** data, const int64_t* strides, int64_t n) {
     multiple_outputs_loop(data, strides, 0, n, op);

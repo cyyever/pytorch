@@ -4,7 +4,9 @@
 #include <ATen/native/TensorIterator.h>
 #include <c10/core/ScalarType.h>
 #include <complex>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 // This file includes utilities for dynamic_casting done by TensorIterator, see
 // CUDALoops.cuh and Loops.h.
@@ -33,6 +35,29 @@ struct needs_dynamic_casting {
   }
 };
 
+namespace dynamic_casting_detail {
+
+// Multiple-output kernels return the outputs packed together: std::tuple on
+// CPU, thrust::tuple on CUDA. Both answer std::tuple_size, which is all this
+// needs to walk the outputs.
+template <typename T, typename = void>
+struct is_tuple_like : std::false_type {};
+
+template <typename T>
+struct is_tuple_like<T, std::void_t<decltype(std::tuple_size<T>::value)>>
+    : std::true_type {};
+
+template <typename tuple_t, size_t... I>
+bool tuple_needs_dynamic_casting(
+    TensorIteratorBase& iter,
+    std::index_sequence<I...>) {
+  return ((iter.dtype(static_cast<int64_t>(I)) !=
+           c10::CppTypeToScalarType<std::tuple_element_t<I, tuple_t>>::value) ||
+          ...);
+}
+
+} // namespace dynamic_casting_detail
+
 template <typename func_t>
 struct needs_dynamic_casting<func_t, 0> {
   static bool check(TensorIteratorBase& iter) {
@@ -43,6 +68,9 @@ struct needs_dynamic_casting<func_t, 0> {
     // (including arity) are currently pushed outside of this struct.
     if constexpr (std::is_void_v<cpp_type>) {
       return false;
+    } else if constexpr (dynamic_casting_detail::is_tuple_like<cpp_type>::value) {
+      return dynamic_casting_detail::tuple_needs_dynamic_casting<cpp_type>(
+          iter, std::make_index_sequence<std::tuple_size_v<cpp_type>>{});
     } else {
       return iter.dtype(0) != c10::CppTypeToScalarType<cpp_type>::value;
     }
