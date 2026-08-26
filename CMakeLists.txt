@@ -542,7 +542,6 @@ option(USE_SYSTEM_GLOO "Use system-provided gloo." OFF)
 option(USE_SYSTEM_PYBIND11 "Use system-provided PyBind11." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
 option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
-option(USE_GOLD_LINKER "Use ld.gold to link" OFF)
 if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_CPUINFO ON)
   set(USE_SYSTEM_SLEEF ON)
@@ -895,28 +894,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   # Suppress "The ABI for passing parameters with 64-byte alignment has
   # changed in GCC 4.6"
   string(APPEND CMAKE_CXX_FLAGS " -Wno-psabi")
-endif()
-
-# Use ld.gold if available, fall back to ld.bfd (the default ld) if not
-if(USE_GOLD_LINKER)
-  execute_process(
-      COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
-      ERROR_QUIET
-      OUTPUT_VARIABLE LD_VERSION)
-  if(NOT "${LD_VERSION}" MATCHES "GNU gold")
-      message(
-        WARNING
-          "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
-      )
-      set(USE_GOLD_LINKER OFF)
-    else()
-      message(STATUS "ld.gold is available, using it to link")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
-      set(CMAKE_SHARED_LINKER_FLAGS
-          "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
-      set(CMAKE_MODULE_LINKER_FLAGS
-          "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
-    endif()
 endif()
 
 append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
