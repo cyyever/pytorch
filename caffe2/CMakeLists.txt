@@ -1680,7 +1680,7 @@ endif()
 if(MSVC)
   # This is used to enable the conforming lambda processor in MSVC
   # Which allows us to capture constexpr in lambdas
-  # Note that this will be turned on by default for std=c++20 and above
+  # Note that this will be turned on by default for std=c++23 and above
   # This should be applied globally when https://github.com/pytorch/pytorch/issues/92600 is fixed
   foreach(tmp ${MEM_EFF_ATTENTION_CUDA_SOURCES})
     # MEM_EFF_ATTENTION_CUDA is populated in pytorch/aten/src/ATen/CMakeLists.txt

@@ -310,7 +310,7 @@ def _nvcc_compiler_options() -> list[str]:
         "-w",
         f"-gencode=arch=compute_{arch},code=[{','.join(code)}]",
         config.cutlass.compile_opt_level,
-        "-std=c++20",
+        "-std=c++23",
         "--expt-relaxed-constexpr",
         "-DNDEBUG",
     ]

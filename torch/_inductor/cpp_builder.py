@@ -5,7 +5,6 @@ import copy
 import errno
 import functools
 import json
-import locale
 import logging
 import os
 import platform
@@ -610,7 +609,7 @@ def _get_warning_all_cflag(warning_all: bool = True) -> list[str]:
     return ["Wall"] if warning_all else []
 
 
-def _get_cpp_std_cflag(std_num: str = "c++20") -> list[str]:
+def _get_cpp_std_cflag(std_num: str = "c++23") -> list[str]:
     return [f"std={std_num}"]
 
 
@@ -2086,7 +2085,7 @@ class CppBuilder:
             f"""
             cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
             project({self._target_name} LANGUAGES CXX)
-            set(CMAKE_CXX_STANDARD 20)
+            set(CMAKE_CXX_STANDARD 23)
 
             # Set a library target
             add_library({self._target_name} {target_library_type})

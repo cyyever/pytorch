@@ -88,7 +88,7 @@ if not IS_WINDOWS:
             cmd = [
                 get_cxx_compiler(),
                 "-c",
-                "-std=c++20",
+                "-std=c++23",
                 f"-DTORCH_TARGET_VERSION={torch_version_2_9}",
                 f"-I{source_file.parent}",  # For includes in same directory
                 *self.pytorch_includes,
@@ -122,7 +122,7 @@ if not IS_WINDOWS:
             cmd = [
                 os.path.join(GPU_HOME, "bin", "nvcc" if CUDA_HOME else "hipcc"),
                 "-c",
-                "-std=c++20",
+                "-std=c++23",
                 f"-DTORCH_TARGET_VERSION={torch_version_2_9}",
                 f"-I{source_file.parent}",  # For includes in same directory
                 *self.pytorch_includes,
