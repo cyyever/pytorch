@@ -5,7 +5,6 @@
 // Do not include this file directly. Instead, include torch/headeronly/macros/Macros.h.
 
 #cmakedefine C10_BUILD_SHARED_LIBS
-#cmakedefine C10_USE_GFLAGS
 #cmakedefine C10_USE_NUMA
 #cmakedefine C10_USE_ROCM_KERNEL_ASSERT
 

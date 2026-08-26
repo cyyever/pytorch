@@ -6,7 +6,6 @@
 #include <sstream>
 #include <string>
 
-#if !defined(C10_USE_GFLAGS)
 
 namespace c10 {
 
@@ -197,5 +196,3 @@ C10_EXPORT bool C10FlagParser::Parse<bool>(const string& content, bool* value) {
 }
 
 } // namespace c10
-
-#endif
