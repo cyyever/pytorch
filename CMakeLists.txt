@@ -385,7 +385,6 @@ cmake_dependent_option(USE_CUFILE "Use cuFile" ON "USE_CUDA OR USE_ROCM" OFF)
 option(USE_FBGEMM "Use FBGEMM (quantized 8-bit server operators)" ON)
 option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
-option(USE_GFLAGS "Use GFLAGS" OFF)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
 cmake_dependent_option(USE_MPS "Use MPS for macOS build" ON "MPS_FOUND" OFF)
 option(USE_DISTRIBUTED "Use distributed" ON)
@@ -1055,11 +1054,6 @@ endif()
 # ---[ Make configuration files for cmake to allow dependent libraries easier
 # access to Caffe2.
 
-if(NOT USE_GFLAGS)
-  message(WARNING "Generated cmake files are only fully tested if one builds "
-                  "with system gflags. Other settings may "
-                  "generate files that are not well tested.")
-endif()
 
 
 # Note(jiayq): when building static libraries, all PRIVATE dependencies will
@@ -1078,7 +1072,6 @@ if(BUILD_SHARED_LIBS)
   install(
     FILES ${PROJECT_SOURCE_DIR}/cmake/public/cuda.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/xpu.cmake
-          ${PROJECT_SOURCE_DIR}/cmake/public/gflags.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkl.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/utils.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/LoadHIP.cmake

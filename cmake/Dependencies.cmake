@@ -329,17 +329,6 @@ endif()
 
 
 
-# ---[ gflags
-if(USE_GFLAGS)
-  include(${CMAKE_CURRENT_LIST_DIR}/public/gflags.cmake)
-  if(NOT TARGET gflags)
-    message(WARNING
-        "gflags is not found. Caffe2 will build without gflags support but "
-        "it is strongly recommended that you install gflags. Suppress this "
-        "warning with -DUSE_GFLAGS=OFF")
-    caffe2_update_option(USE_GFLAGS OFF)
-  endif()
-endif()
 
 
 # ---[ Googletest and benchmark
