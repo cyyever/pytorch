@@ -993,7 +993,7 @@ Tensor multi_dot_impl(TensorList _tensors, std::optional<Tensor> _out) {
   Tensor result;
 
   if (_out.has_value()) {
-    auto out = *_out;
+    const auto& out = *_out;
     TORCH_CHECK(
         dtype == out.dtype(),
         "multi_dot(): expected out tensor to have dtype ",
@@ -1966,7 +1966,7 @@ static Tensor _matmul_impl(
     const auto tensor1_sizes = tensor1.sym_sizes();
     const auto tensor2_sizes = tensor2.sym_sizes();
     const c10::SymInt n = dim_tensor1 > 1 ? tensor1_sizes[dim_tensor1 - 2] : c10::SymInt(1);
-    const c10::SymInt m1 = tensor1_sizes[dim_tensor1 - 1];
+    const c10::SymInt& m1 = tensor1_sizes[dim_tensor1 - 1];
     const c10::SymInt m2 = dim_tensor2 > 1 ? tensor2_sizes[dim_tensor2 - 2] : tensor2_sizes[0];
     const c10::SymInt p = dim_tensor2 > 1 ? tensor2_sizes[dim_tensor2 - 1] : c10::SymInt(1);
     c10::SymDimVector batch_tensor1(

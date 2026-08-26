@@ -46,7 +46,7 @@ static inline Tensor _flatten_nd_linear(const Tensor& input, const Tensor& weigh
   const auto input_sizes = input.sym_sizes();
 
   const auto result_flattened = [&]() -> Tensor {
-    const auto input_ncols = input_sizes.back();
+    const auto& input_ncols = input_sizes.back();
     const auto input_flattened_nrows = [&]() -> c10::SymInt {
       // can't use -1 in reshape because it errors when a dimension is 0
       auto flattened_nrows = c10::SymInt{1};
@@ -370,7 +370,7 @@ Tensor einsum(std::string_view equation, TensorList operands, at::OptionalIntArr
   // to compute the number of dimensions covered by ellipsis.
   for(const auto i : c10::irange(num_ops)) {
     const auto& operand = operands[i];
-    const auto labels = op_labels[i];
+    const auto& labels = op_labels[i];
     const auto ndims = operand.dim();
     int64_t nlabels = static_cast<int64_t>(labels.size());
     bool has_ellipsis = false;
