@@ -174,23 +174,24 @@ set(CMAKE_C_STANDARD
 # ---[ Utils
 include(cmake/public/utils.cmake)
 
-# --- [ Check that minimal gcc version is 11.3+
-if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11.3)
+# --- [ Check that minimal gcc version is 15+
+# libstdc++ 15 is the first with a complete C++23 library. Older GCCs accept
+# -std=c++23 but are missing pieces of it, so they fail deep in the build
+# instead of here.
+if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
   message(
     FATAL_ERROR
-      "GCC-11.3 or newer is required to compile PyTorch, but found ${CMAKE_CXX_COMPILER_VERSION}"
+      "GCC-15 or newer is required to compile PyTorch, but found ${CMAKE_CXX_COMPILER_VERSION}"
   )
 endif()
 
-# --- [ Check that minimal clang version is 16+
-# Older clangs (e.g. clang-14) fail to compile C++20 ranges adaptors such as
-# `std::views::filter` over associative containers when paired with libstdc++,
-# see https://github.com/pytorch/pytorch/issues/184630. AppleClang uses its
-# own versioning scheme and is excluded from this check.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16)
+# --- [ Check that minimal clang version is 20+
+# Matches the clang that ROCm 7.0 ships, the oldest clang this fork targets.
+# AppleClang uses its own versioning scheme and is excluded.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
   message(
     FATAL_ERROR
-      "Clang-16 or newer is required to compile PyTorch, but found ${CMAKE_CXX_COMPILER_VERSION}"
+      "Clang-20 or newer is required to compile PyTorch, but found ${CMAKE_CXX_COMPILER_VERSION}"
   )
 endif()
 
@@ -950,12 +951,12 @@ endif()
 append_cxx_flag_if_supported("-fno-math-errno" CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-fno-trapping-math" CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-Werror=format" CMAKE_CXX_FLAGS)
-if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+if(CMAKE_COMPILER_IS_GNUCXX)
   append_cxx_flag_if_supported("-Wno-dangling-reference" CMAKE_CXX_FLAGS)
   append_cxx_flag_if_supported("-Wno-error=dangling-reference" CMAKE_CXX_FLAGS)
 endif()
 # needed for compat with newer versions of clang that use C++20 mangling rules
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 18)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   append_cxx_flag_if_supported("-fclang-abi-compat=17" CMAKE_CXX_FLAGS)
 endif()
 
