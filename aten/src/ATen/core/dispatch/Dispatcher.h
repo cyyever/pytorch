@@ -258,7 +258,7 @@ class TORCH_API Dispatcher final {
   // NB: steals the inferred function schema, as we may need to hold on to
   // it for a bit until the real schema turns up
   RegistrationHandleRAII registerImpl(
-      OperatorName op_name,
+      const OperatorName& op_name,
       std::optional<DispatchKey> dispatch_key,
       KernelFunction kernel,
       std::optional<impl::CppSignature> cpp_signature,
@@ -277,15 +277,15 @@ class TORCH_API Dispatcher final {
   /**
    * Given an operator, throws if we have a pystub.
    */
-  void throwIfHasPythonModule(OperatorName op_name);
+  void throwIfHasPythonModule(const OperatorName& op_name);
 
   std::optional<std::pair<const char*, const char*>> getPyStub(
-      OperatorName op_name);
+      const OperatorName& op_name);
 
   /**
    * Register a new operator by name.
    */
-  RegistrationHandleRAII registerName(OperatorName op_name);
+  RegistrationHandleRAII registerName(const OperatorName& op_name);
 
   /**
    * Register a fallback kernel for a backend.
@@ -303,7 +303,7 @@ class TORCH_API Dispatcher final {
    * API.  These invocations are only permitted once per program, so we raise
    * an error if this is called again for the same namespace.
    */
-  RegistrationHandleRAII registerLibrary(std::string ns, std::string debug);
+  RegistrationHandleRAII registerLibrary(const std::string& ns, std::string debug);
 
   // ------------------------------------------------------------------------
   //

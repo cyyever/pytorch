@@ -209,7 +209,7 @@ OperatorHandle Dispatcher::findOrRegisterName_(const OperatorName& op_name) {
 // x-ref https://github.com/pytorch/pytorch/issues/70032
 OperatorHandle::~OperatorHandle() = default;
 
-RegistrationHandleRAII Dispatcher::registerLibrary(std::string ns, std::string debug) {
+RegistrationHandleRAII Dispatcher::registerLibrary(const std::string& ns, std::string debug) {
   std::lock_guard<std::mutex> lock(guard_->mutex);
   auto found = libraries_.find(ns);
   TORCH_CHECK(
@@ -300,7 +300,7 @@ PythonModuleMapType& pythonModulesSingleton() {
 
 }
 
-std::optional<std::pair<const char*, const char*>> Dispatcher::getPyStub(OperatorName op_name) {
+std::optional<std::pair<const char*, const char*>> Dispatcher::getPyStub(const OperatorName& op_name) {
   std::lock_guard<std::mutex> lock(guard_->mutex);
   auto found = pythonModulesSingleton().find(op_name);
   if (found == pythonModulesSingleton().end()) {
@@ -336,7 +336,7 @@ RegistrationHandleRAII Dispatcher::registerPythonModule(
   });
 }
 
-void Dispatcher::throwIfHasPythonModule(OperatorName op_name) {
+void Dispatcher::throwIfHasPythonModule(const OperatorName& op_name) {
   std::lock_guard<std::mutex> lock(guard_->mutex);
   auto elt = pythonModulesSingleton().find(op_name);
   if (elt == pythonModulesSingleton().end()) {
@@ -356,7 +356,7 @@ void Dispatcher::throwIfHasPythonModule(OperatorName op_name) {
 }
 
 RegistrationHandleRAII Dispatcher::registerImpl(
-  OperatorName op_name,
+  const OperatorName& op_name,
   std::optional<DispatchKey> dispatch_key,
   KernelFunction kernel,
   std::optional<impl::CppSignature> cpp_signature,
@@ -400,7 +400,7 @@ void Dispatcher::deregisterImpl_(const OperatorHandle& op, const OperatorName& o
   cleanup(op, op_name);
 }
 
-RegistrationHandleRAII Dispatcher::registerName(OperatorName op_name) {
+RegistrationHandleRAII Dispatcher::registerName(const OperatorName& op_name) {
   std::lock_guard<std::mutex> lock(guard_->mutex);
   auto op = findOrRegisterName_(op_name);
   ++op.operatorDef_->def_and_impl_count;

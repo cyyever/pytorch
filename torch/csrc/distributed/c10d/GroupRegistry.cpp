@@ -11,7 +11,7 @@ class GroupRegistry {
  public:
   void register_group(
       const std::string& group_name,
-      c10::intrusive_ptr<c10d::ProcessGroup> group) {
+      const c10::intrusive_ptr<c10d::ProcessGroup>& group) {
     std::unique_lock write_lock(lock_);
     auto [_, inserted] = registry_.try_emplace(group_name, std::move(group));
     TORCH_CHECK(

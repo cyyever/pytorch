@@ -147,7 +147,7 @@ std::vector<std::vector<int64_t>> get_pools(const Tensor& indices, const IntArra
 }
 
 template <typename scalar_t, bool LogSoftMax>
-void cpu_sparse_coo_softmax(Tensor output, const Tensor& input, const int64_t dim) {
+void cpu_sparse_coo_softmax(const Tensor& output, const Tensor& input, const int64_t dim) {
   /*
     See test/test_sparse.py:test_softmax:sparse_softmax for the Python
     prototype of the sparse softmax algorithm that this implementation

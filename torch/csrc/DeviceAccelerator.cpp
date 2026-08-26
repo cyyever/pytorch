@@ -178,7 +178,7 @@ void initModule(PyObject* module) {
     return c10::CachingAllocator::getAllocatorSettings();
   });
 
-  m.def("_accelerator_setAllocatorSettings", [](std::string env) {
+  m.def("_accelerator_setAllocatorSettings", [](const std::string& env) {
     c10::CachingAllocator::setAllocatorSettings(env);
   });
 
