@@ -1,4 +1,5 @@
 #include <ATen/Dispatch.h>
+#include <ATen/NumericUtils.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDAGuard.h>
 #include <stdint.h>
@@ -31,7 +32,7 @@ struct CheckBytePack {
     T* data = (T*)tmp;
 #pragma unroll 8
     for (int i = 0; i < EltPerPack; i++) {
-      CUDA_KERNEL_ASSERT(!isnan(data[i]));
+      CUDA_KERNEL_ASSERT(!at::_isnan(data[i]));
     }
   }
 };
@@ -43,7 +44,7 @@ template <typename T>
 struct CheckBytePack<T, /*EltPerPack*/ 2> {
   static __device__ __forceinline__ void check(BytePack* tmp) {
     T* data = (T*)tmp;
-    CUDA_KERNEL_ASSERT(!isnan(data[0]) && !isnan(data[1]));
+    CUDA_KERNEL_ASSERT(!at::_isnan(data[0]) && !at::_isnan(data[1]));
   }
 };
 
@@ -55,8 +56,8 @@ struct CheckBytePack<T, /*EltPerPack*/ 4> {
   static __device__ __forceinline__ void check(BytePack* tmp) {
     T* data = (T*)tmp;
     CUDA_KERNEL_ASSERT(
-        !isnan(data[0]) && !isnan(data[1]) && !isnan(data[2]) &&
-        !isnan(data[3]));
+        !at::_isnan(data[0]) && !at::_isnan(data[1]) && !at::_isnan(data[2]) &&
+        !at::_isnan(data[3]));
   }
 };
 
@@ -68,9 +69,9 @@ struct CheckBytePack<T, /*EltPerPack*/ 8> {
   static __device__ __forceinline__ void check(BytePack* tmp) {
     T* data = (T*)tmp;
     CUDA_KERNEL_ASSERT(
-        !isnan(data[0]) && !isnan(data[1]) && !isnan(data[2]) &&
-        !isnan(data[3]) && !isnan(data[4]) && !isnan(data[5]) &&
-        !isnan(data[6]) && !isnan(data[7]));
+        !at::_isnan(data[0]) && !at::_isnan(data[1]) && !at::_isnan(data[2]) &&
+        !at::_isnan(data[3]) && !at::_isnan(data[4]) && !at::_isnan(data[5]) &&
+        !at::_isnan(data[6]) && !at::_isnan(data[7]));
   }
 };
 
@@ -185,7 +186,7 @@ __global__ void checkForNaN(T* data, size_t size) {
   // Read memory by T (slow). One iter is enough bc the number of threads would
   // be bigger than `preProcElts`
   if (offset < preProcElts) {
-    CUDA_KERNEL_ASSERT(!isnan(data[offset]));
+    CUDA_KERNEL_ASSERT(!at::_isnan(data[offset]));
   }
   // We have processes this amount of data
   size -= preProcElts;
@@ -214,7 +215,7 @@ __global__ void checkForNaN(T* data, size_t size) {
   // TODO: merge this tail check with head check to make them concurrent
   if (threadIdx.x < size % EltPerPack) {
     T* tailPtr = (T*)(ptr + sizeInBP);
-    CUDA_KERNEL_ASSERT(!isnan(tailPtr[threadIdx.x]));
+    CUDA_KERNEL_ASSERT(!at::_isnan(tailPtr[threadIdx.x]));
   }
 }
 
