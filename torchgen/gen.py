@@ -2113,9 +2113,11 @@ def gen_source_files(
             fn for fn in native_functions if needs_backend_select(fn, selector)
         ]
         return {
-            "ops_headers": [
-                f"#include <ATen/ops/{fn.root_name}_ops.h>" for fn in relevant_fns
-            ],
+            "ops_headers": list(
+                dict.fromkeys(
+                    f"#include <ATen/ops/{fn.root_name}_ops.h>" for fn in relevant_fns
+                )
+            ),
             "backend_select_method_definitions": list(
                 mapMaybe(
                     ComputeBackendSelect(Target.DEFINITION, selector), relevant_fns
@@ -2191,6 +2193,7 @@ def gen_source_files(
             "definitions",
             "static_dispatch_extra_headers",
         },
+        dedup_keys={"operator_headers"},
     )
 
     cpu_fm.write("Functions.cpp", dict)
@@ -2295,6 +2298,7 @@ def gen_source_files(
             "func_add_back_views_definitions",
             "func_add_back_views_registrations",
         },
+        dedup_keys={"ops_headers"},
     )
 
     cpu_fm.write(
@@ -2332,7 +2336,9 @@ def gen_source_files(
                     view_groups,
                 )
             ),
-            "op_headers": list(concatMap(gen_op_headers, view_groups)),
+            "op_headers": list(
+                dict.fromkeys(concatMap(gen_op_headers, view_groups))
+            ),
         },
     )
 
@@ -2355,29 +2361,37 @@ def gen_source_files(
     cpu_fm.write(
         "CompositeViewCopyKernels.cpp",
         lambda: {
-            "ops_headers": [
-                "\n".join(
-                    f"#include <ATen/ops/{f.root_name}_ops.h>\n"
-                    # NB: this include is important as it ensures we
-                    # set the visibility on generated view_copy kernels
-                    # correctly
-                    f"#include <ATen/ops/{f.root_name}_native.h>"
-                    for f in (
-                        [g.view] if g.view_copy is None else [g.view, g.view_copy]
-                    )
+            "ops_headers": list(
+                dict.fromkeys(
+                    line
+                    for block in [
+                        "\n".join(
+                            f"#include <ATen/ops/{f.root_name}_ops.h>\n"
+                            # NB: this include is important as it ensures we
+                            # set the visibility on generated view_copy kernels
+                            # correctly
+                            f"#include <ATen/ops/{f.root_name}_native.h>"
+                            for f in (
+                                [g.view]
+                                if g.view_copy is None
+                                else [g.view, g.view_copy]
+                            )
+                        )
+                        for g in view_groups
+                    ]
+                    + [
+                        "\n".join(
+                            f"#include <ATen/ops/{f.root_name}_ops.h>\n"
+                            # NB: this include is also important for correct visibility
+                            f"#include <ATen/ops/{f.root_name}_native.h>"
+                            for f in [g.inplace, g.mutable, g.functional]
+                            if f is not None and "generated" not in f.tags
+                        )
+                        for g in structured_native_functions
+                    ]
+                    for line in block.split("\n")
                 )
-                for g in view_groups
-            ]
-            + [
-                "\n".join(
-                    f"#include <ATen/ops/{f.root_name}_ops.h>\n"
-                    # NB: this include is also important for correct visibility
-                    f"#include <ATen/ops/{f.root_name}_native.h>"
-                    for f in [g.inplace, g.mutable, g.functional]
-                    if f is not None and "generated" not in f.tags
-                )
-                for g in structured_native_functions
-            ],
+            ),
             "CompositeViewCopyKernel_Definitions": list(
                 mapMaybe(
                     GenCompositeViewCopyKernel(

@@ -539,4 +539,5 @@ def gen_trace_type(
             "trace_method_definitions",
             "trace_wrapper_registrations",
         },
+        dedup_keys={"ops_headers"},
     )
