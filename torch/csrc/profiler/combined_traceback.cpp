@@ -161,7 +161,7 @@ SymbolizedTracebacks symbolize(
     for (void* f : sc->cpp_frames_) {
       uint64_t cpp_frame = ip_to_frame_offset.at(f);
       const unwind::Frame& uf = r.all_frames.at(cpp_frame);
-      if (uf.funcname.find("PyEval_EvalFrame") != std::string::npos) {
+      if (uf.funcname.contains("PyEval_EvalFrame")) {
         if (py_it != py_end) {
           append_python(*py_it++);
         }

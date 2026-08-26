@@ -1673,9 +1673,9 @@ RecordQueue::getRecords(
 
     std::optional<int64_t> pending_start;
     for (auto& e : queue.pythongc_) {
-      if (e.first.find("start") != std::string::npos) {
+      if (e.first.contains("start")) {
         pending_start = e.second;
-      } else if (e.first.find("stop") != std::string::npos) {
+      } else if (e.first.contains("stop")) {
         if (pending_start.has_value()) {
           out.emplace_back(Result::create(
               /*start_time_ns_=*/converter(pending_start.value()),
