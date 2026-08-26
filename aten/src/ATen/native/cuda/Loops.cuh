@@ -324,6 +324,9 @@ void gpu_kernel_multiple_outputs(TensorIteratorBase& iter, const func_t& f) {
   for (int arg = 0; arg < iter.ntensors(); arg++) {
     TORCH_INTERNAL_ASSERT(iter.device(arg).is_cuda());
   }
+  // Unlike the single-output path, this one never casts, so the operand types
+  // have to match what f returns. Debug-only for the same reason as on CPU.
+  TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!needs_dynamic_casting<func_t>::check(iter));
 
   if (iter.numel() == 0) {
     return;
