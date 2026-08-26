@@ -1,3 +1,4 @@
+#include <utility>
 #include <unistd.h>
 
 #include <fmt/format.h>
@@ -344,7 +345,7 @@ static void finalizeExecutionTraceOutput(ExecutionTraceObserver& ob) {
       kRootId, // parent is self
       0, // fw_parent
       -1, // seq_id
-      static_cast<std::underlying_type_t<RecordScope>>(RecordScope::USER_SCOPE),
+      std::to_underlying(RecordScope::USER_SCOPE),
       0, // tid
       0); // fw_tid
 
@@ -699,8 +700,7 @@ static void recordOperatorStart(
             kRootId,
             0, // fw_parent
             -1, // seq_id
-            static_cast<std::underlying_type_t<RecordScope>>(
-                RecordScope::USER_SCOPE),
+            std::to_underlying(RecordScope::USER_SCOPE),
             tid,
             0); // fw_tid
         ob.out << ',';
@@ -861,7 +861,7 @@ static void onFunctionExit(const RecordFunction& fn, ObserverContext* ctx_ptr) {
             fc.parentId,
             fc.fwParentId,
             fn.seqNr(),
-            static_cast<std::underlying_type_t<RecordScope>>(fn.scope()),
+            std::to_underlying(fn.scope()),
             fn.threadId(),
             fn.forwardThreadId(),
             vectorToString(fc.inputValues),

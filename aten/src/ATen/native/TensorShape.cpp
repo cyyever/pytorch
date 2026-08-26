@@ -3481,7 +3481,7 @@ inline Tensor sparse_compressed_transpose(
           TORCH_INTERNAL_ASSERT(
               false,
               "Impossible TransposeDim value: ",
-              static_cast<std::underlying_type_t<TransposeDim>>(dim));
+              std::to_underlying(dim));
       }
     };
 #endif
