@@ -182,9 +182,6 @@ exclude = [
     "functorch/examples/**",
     "functorch/benchmarks/**",
     "functorch/op_analysis/**",
-    # torchgen autoheuristic tuning scripts (used to generate heuristics,
-    # not consumed at runtime).
-    "torchgen/_autoheuristic/**",
     # Third-party cmake configs / docs that subproject installs leak in via
     # GNUInstallDirs share/cmake/ destinations.
     "torch/share/doc/**",
