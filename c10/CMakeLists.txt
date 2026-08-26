@@ -16,7 +16,6 @@ else()
   set(C10_LIB c10)
 endif()
 
-set(C10_USE_GFLAGS ${USE_GFLAGS})  # also used in torch/headeronly
 set(C10_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})  # also used in torch/headeronly
 set(C10_USE_NUMA ${USE_NUMA})  # also used in torch/headeronly
 set(C10_USE_ROCM_KERNEL_ASSERT ${USE_ROCM_KERNEL_ASSERT})  # also used in torch/headeronly
@@ -80,9 +79,6 @@ if(NOT BUILD_LIBTORCHLESS)
   endif()
 
   # ---[ Dependency of c10
-  if(C10_USE_GFLAGS)
-    target_link_libraries(c10 PUBLIC gflags)
-  endif()
 
 
   target_link_libraries(c10 PUBLIC headeronly)
