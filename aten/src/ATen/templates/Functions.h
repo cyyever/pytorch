@@ -10,7 +10,7 @@
   See NOTE: [Tensor vs. TensorBase]
 #endif
 
-#if defined(AT_PER_OPERATOR_HEADERS) && defined(TORCH_ASSERT_ONLY_METHOD_OPERATORS)
+#ifdef TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #error This change adds a dependency on all pytorch operators, meaning the     \
   file will need to be re-compiled every time an operator is changed or added. \
   Consider including a specific operator from <ATen/ops/{my_operator}.h> and   \
@@ -46,15 +46,10 @@
 // to the top of your source file. This way any time the non-specific
 // headers are included, the compiler will error out.
 //
-// Also, be aware that `ops` are not available in all build
-// configurations (namely fb-internal) so you must guard these
-// includes with `#ifdef AT_PER_OPERATOR_HEADERS`. e.g.
+// This build always generates the per-operator headers, so include the one
+// operator you need directly. e.g.
 //
-//   #ifndef AT_PER_OPERATOR_HEADERS
-//   #include <ATen/Functions.h>
-//   #else
 //   #include <ATen/ops/sum.h>
-//   #endif
 
 #include <ATen/Context.h>
 #include <ATen/DeviceGuard.h>

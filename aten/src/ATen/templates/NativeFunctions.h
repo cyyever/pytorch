@@ -10,7 +10,7 @@
   See NOTE: [Tensor vs. TensorBase]
 #endif
 
-#if defined(AT_PER_OPERATOR_HEADERS) && defined(TORCH_ASSERT_ONLY_METHOD_OPERATORS)
+#ifdef TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #error This change adds a dependency on all pytorch operators, meaning the      \
   file will need to be re-compiled every time an operator is changed or added.  \
   Consider including a specific operator from <ATen/ops/{my_operator}_native.h> \
