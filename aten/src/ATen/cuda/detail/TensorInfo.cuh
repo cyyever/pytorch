@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ATen/CollapseDims.h>
+#include <c10/macros/Macros.h>
 
 namespace at::cuda::detail {
 
@@ -25,7 +26,7 @@ struct TensorInfo {
 
   // Contiguous tensors of more than one dimension are collapsed down
   // to one tensor
-  __host__ __device__ inline bool isContiguous() const {
+  C10_HOST_DEVICE inline bool isContiguous() const {
     return (dims == 1 && strides[0] == 1);
   }
 
@@ -75,7 +76,7 @@ TensorInfo<T, IndexType>::collapseDims(const int excludeDim) {
 // specialized on `Dims` to reduce nvcc compilation time
 template <typename T, typename IndexType, int Dims>
 struct IndexToOffset {
-  static __host__ __device__ IndexType get(
+  static C10_HOST_DEVICE IndexType get(
     IndexType linearId,
     const TensorInfo<T, IndexType>& info) {
 
@@ -96,7 +97,7 @@ struct IndexToOffset {
 // Uses dynamic (runtime) instead of static (compile time) dims
 template <typename T, typename IndexType>
 struct IndexToOffset<T, IndexType, -1> {
-  static inline __host__ __device__ IndexType get(
+  static inline C10_HOST_DEVICE IndexType get(
     IndexType linearId,
     const TensorInfo<T, IndexType>& info) {
 
