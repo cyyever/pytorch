@@ -673,4 +673,5 @@ def gen_inplace_or_view_type(
             "inplace_or_view_method_definitions",
             "inplace_or_view_wrapper_registrations",
         },
+        dedup_keys={"ops_headers"},
     )

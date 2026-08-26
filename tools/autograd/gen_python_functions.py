@@ -438,7 +438,7 @@ def create_python_bindings(
         lambda: {
             "generated_comment": "@"
             + f"generated from {fm.template_dir_for_comments()}/{filename}",
-            "ops_headers": ops_headers,
+            "ops_headers": list(dict.fromkeys(ops_headers)),
             "py_forwards": py_forwards,
             "py_methods": py_methods,
             "py_method_defs": py_method_defs,
@@ -560,6 +560,7 @@ def create_python_bindings_sharded(
         env_callable=env_func,
         num_shards=num_shards,
         sharded_keys={"ops_headers", "py_forwards", "py_methods", "py_method_defs"},
+        dedup_keys={"ops_headers"},
     )
 
 

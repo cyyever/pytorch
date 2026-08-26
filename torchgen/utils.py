@@ -231,6 +231,7 @@ class FileManager:
         num_shards: int,
         base_env: dict[str, Any] | None = None,
         sharded_keys: set[str],
+        dedup_keys: set[str] = frozenset(),
     ) -> None:
         self.write_sharded_with_template(
             filename,
@@ -241,6 +242,7 @@ class FileManager:
             num_shards=num_shards,
             base_env=base_env,
             sharded_keys=sharded_keys,
+            dedup_keys=dedup_keys,
         )
 
     def write_sharded_with_template(
@@ -254,6 +256,7 @@ class FileManager:
         num_shards: int,
         base_env: dict[str, Any] | None = None,
         sharded_keys: set[str],
+        dedup_keys: set[str] = frozenset(),
     ) -> None:
         file = Path(filename)
         if file.is_absolute():
@@ -275,6 +278,9 @@ class FileManager:
                 else:
                     shard[key] = []
 
+        if not dedup_keys <= sharded_keys:
+            raise AssertionError(f"undeclared dedup keys: {dedup_keys - sharded_keys}")
+
         def merge_env(into: dict[str, list[str]], from_: dict[str, list[str]]) -> None:
             for k, v in from_.items():
                 if k not in sharded_keys:
@@ -291,6 +297,13 @@ class FileManager:
             env = env_callable(item)
 
             merge_env(shards[sid], env)
+
+        for shard in shards:
+            # A per-operator include is emitted once per NativeFunction, and every
+            # overload of an operator shares its root name, so a shard accumulates
+            # the same #include line many times over.
+            for key in dedup_keys:
+                shard[key] = list(dict.fromkeys(shard[key]))
 
         for shard in shards:
             shard_id = shard["shard_id"]
