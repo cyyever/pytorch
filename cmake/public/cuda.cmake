@@ -312,8 +312,6 @@ endforeach()
 string(REPLACE ";" "," SUPPRESS_WARNING_FLAGS "${SUPPRESS_WARNING_FLAGS}")
 list(APPEND CUDA_NVCC_FLAGS -Xcudafe ${SUPPRESS_WARNING_FLAGS})
 
-set(CUDA_PROPAGATE_HOST_FLAGS_BLOCKLIST "-Werror")
-
 # Debug and Release symbol support
 if(CUDA_DEVICE_DEBUG)
   list(APPEND CUDA_NVCC_FLAGS "-g" "-G")  # -G enables device code debugging symbols
