@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 #include <ATen/native/AdaptivePooling.h>
-#include <c10/util/irange.h>
 
 #include <ATen/ops/_adaptive_avg_pool2d.h>
 #include <ATen/ops/_adaptive_avg_pool2d_backward_native.h>

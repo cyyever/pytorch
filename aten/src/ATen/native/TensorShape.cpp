@@ -38,9 +38,6 @@
 #include <ATen/ops/_convert_indices_from_csr_to_coo.h>
 #include <ATen/ops/_foreach_copy.h>
 #include <ATen/ops/_make_dual.h>
-#include <ATen/ops/_make_dual_copy_native.h>
-#include <ATen/ops/_neg_view_copy_native.h>
-#include <ATen/ops/_reshape_alias_copy_native.h>
 #include <ATen/ops/_reshape_alias_native.h>
 #include <ATen/ops/_reshape_copy_native.h>
 #include <ATen/ops/_reshape_from_tensor_native.h>

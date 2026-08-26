@@ -11,7 +11,6 @@
 #include <ATen/ops/miopen_convolution_transpose_native.h>
 #include <ATen/ops/miopen_depthwise_convolution_native.h>
 #include <ATen/ops/squeeze.h>
-#include <ATen/ops/sum.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
 

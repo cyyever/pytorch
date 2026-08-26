@@ -7,7 +7,6 @@
 #include <pybind11/pybind11.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/pybind.h>
-#include <torch/csrc/utils/tensor_dtypes.h>
 #include <torch/python.h>
 
 #include <sstream>

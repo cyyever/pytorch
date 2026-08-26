@@ -20,7 +20,6 @@
 #include <vector>
 
 #if AT_CUDNN_ENABLED()
-#include <ATen/cudnn/cudnn-wrapper.h>
 #if defined(__has_include) && __has_include(<cudnn_frontend_version.h>)
 #include <cudnn_frontend_version.h>
 #endif
