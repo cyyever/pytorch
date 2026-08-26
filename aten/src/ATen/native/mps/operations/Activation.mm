@@ -9,10 +9,6 @@
 #include <c10/util/accumulate.h>
 #include <bit>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_log_softmax_backward_data_native.h>
 #include <ATen/ops/_log_softmax_native.h>
 #include <ATen/ops/_prelu_kernel_backward_native.h>
@@ -26,7 +22,6 @@
 #include <ATen/ops/softplus_native.h>
 #include <ATen/ops/threshold_backward_native.h>
 #include <ATen/ops/threshold_native.h>
-#endif
 
 using namespace at::mps;
 

@@ -9,12 +9,8 @@
 
 #include <atomic>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/_propagate_xla_data.h>
 #include <ATen/ops/_to_copy.h>
-#endif
 
 namespace at {
 

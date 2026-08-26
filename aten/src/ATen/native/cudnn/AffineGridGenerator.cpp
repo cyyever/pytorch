@@ -2,14 +2,9 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/cuda/CUDAConfig.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cudnn_affine_grid_generator_backward_native.h>
 #include <ATen/ops/cudnn_affine_grid_generator_native.h>
 #include <ATen/ops/empty.h>
-#endif
 
 #if !AT_CUDNN_ENABLED()
 

@@ -18,13 +18,8 @@
 #include <ATen/cuda/Exceptions.h>
 #include <c10/util/StringUtil.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/allclose.h>
 #include <ATen/ops/from_blob.h>
-#endif
 #include <ATen/OpMathType.h>
 #include <fmt/printf.h>
 

@@ -9,14 +9,10 @@
 #include <ATen/cuda/detail/KernelUtils.h>
 #include <ATen/cuda/cub.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/cat.h>
 #include <ATen/ops/cumsum.h>
-#endif
 
 // SegmentReduce compilation with CUDA-12.9 causes  NVCC crash on Windows
 // See https://github.com/pytorch/pytorch/issues/156181

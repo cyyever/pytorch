@@ -2,10 +2,6 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/native/TypeProperties.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_has_compatible_shallow_copy_type_native.h>
 #include <ATen/ops/_is_zerotensor_native.h>
 #include <ATen/ops/can_cast_native.h>
@@ -19,7 +15,6 @@
 #include <ATen/ops/promote_types_native.h>
 #include <ATen/ops/result_type_native.h>
 #include <ATen/ops/type_as_native.h>
-#endif
 
 namespace at::native {
 

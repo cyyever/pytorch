@@ -13,16 +13,11 @@
 #include <ATen/native/LinearAlgebraUtils.h>
 #include <ATen/native/cuda/linalg/BatchLinearAlgebraLib.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cholesky_solve_helper_native.h>
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/linalg_eigh.h>
 #include <ATen/ops/linalg_solve_triangular.h>
-#endif
 
 namespace at::native {
 #if defined(BUILD_LAZY_CUDA_LINALG)

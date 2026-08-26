@@ -21,10 +21,6 @@
 
 #include <numeric>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_sparse_addmm.h>
 #include <ATen/ops/_sparse_addmm_native.h>
 #include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
@@ -71,7 +67,6 @@
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
 #include <ATen/ops/index.h>
-#endif
 
 #include <algorithm>
 

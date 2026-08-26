@@ -2,10 +2,6 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/native/ConvUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/empty_native.h>
@@ -18,7 +14,6 @@
 #include <ATen/ops/sum.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 // TODO: Remove the condition on AT_ROCM_ENABLED entirely,
 // don't build this file as part of CPU build.

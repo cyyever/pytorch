@@ -33,11 +33,7 @@
 
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 $ops_headers
-#endif
 
 #include <functional>
 #include <initializer_list>

@@ -4,14 +4,9 @@
 #include <ATen/native/PixelShuffle.h>
 
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/pixel_shuffle_native.h>
 #include <ATen/ops/pixel_unshuffle_native.h>
-#endif
 
 #include <algorithm>
 #include <numeric>

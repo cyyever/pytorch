@@ -13,13 +13,9 @@
 #include <limits>
 #include <type_traits>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_philox_normal_native.h>
 #include <ATen/ops/_philox_randint_native.h>
 #include <ATen/ops/_philox_uniform_native.h>
-#endif
 
 namespace at::native {
 

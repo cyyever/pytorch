@@ -8,10 +8,6 @@
 #include <ATen/WrapDimUtils.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cufft_clear_plan_cache_native.h>
 #include <ATen/ops/_cufft_get_plan_cache_max_size_native.h>
 #include <ATen/ops/_cufft_get_plan_cache_size_native.h>
@@ -57,7 +53,6 @@
 #include <ATen/ops/view_as_complex.h>
 #include <ATen/ops/view_as_real.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <algorithm>
 

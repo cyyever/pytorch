@@ -29,9 +29,6 @@
 #include <c10/util/FileSystem.h>
 #include <torch/headeronly/version.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 
 #include <ATen/ops/_addmm_activation.h>
 #include <ATen/ops/_embedding_bag.h>
@@ -54,7 +51,6 @@
 #include <ATen/ops/scatter_reduce.h>
 #include <ATen/ops/view_as_real_ops.h>
 #include <ATen/ops/view_ops.h>
-#endif
 
 using namespace torch::aot_inductor;
 

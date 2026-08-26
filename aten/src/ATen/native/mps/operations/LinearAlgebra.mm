@@ -16,10 +16,6 @@
 
 #include <fmt/format.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ScalarOps.h>
 #include <ATen/ops/_cholesky_solve_helper_native.h>
 #include <ATen/ops/_int_mm_native.h>
@@ -57,7 +53,6 @@
 #include <ATen/ops/triangular_solve_native.h>
 #include <ATen/ops/where.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <c10/util/TypeCast.h>
 #include <c10/util/env.h>

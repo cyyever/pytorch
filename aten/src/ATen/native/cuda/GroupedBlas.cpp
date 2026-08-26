@@ -30,10 +30,6 @@
 #include <mslk/gemm/gemm_torch.h>
 #endif
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_addmm_activation_native.h>
 #include <ATen/ops/_efficientzerotensor.h>
 #include <ATen/ops/_grouped_mm_native.h>
@@ -52,7 +48,6 @@
 #include <ATen/ops/mul.h>
 #include <ATen/ops/relu.h>
 #include <ATen/ops/ones.h>
-#endif
 
 using at::blas::ScalingType;
 using at::blas::SwizzleType;

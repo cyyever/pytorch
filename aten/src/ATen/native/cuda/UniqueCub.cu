@@ -10,12 +10,8 @@
 #include <c10/util/Load.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
-#endif
 
 namespace at::native::internal {
 

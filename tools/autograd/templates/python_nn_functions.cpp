@@ -14,11 +14,7 @@
 #include "torch/csrc/utils/structseq.h"
 #include "torch/csrc/utils/tensor_memoryformats.h"
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 $ops_headers
-#endif
 
 using at::Tensor;
 using at::Scalar;

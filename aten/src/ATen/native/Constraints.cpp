@@ -5,17 +5,12 @@
 #include <c10/core/Scalar.h>
 #include <optional>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_functional_sym_constrain_range_native.h>
 #include <ATen/ops/_make_dep_token_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/sym_constrain_range_native.h>
 #include <ATen/ops/sym_constrain_range_for_size_native.h>
 #include <ATen/ops/_functional_sym_constrain_range_for_size_native.h>
-#endif
 
 namespace at::native {
 

@@ -9,10 +9,6 @@
 #include <ATen/Utils.h>
 #include <ATen/cuda/CUDAContext.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/upsample_nearest3d.h>
 #include <ATen/ops/upsample_nearest3d_native.h>
@@ -22,7 +18,6 @@
 #include <ATen/ops/_upsample_nearest_exact3d_native.h>
 #include <ATen/ops/_upsample_nearest_exact3d_backward.h>
 #include <ATen/ops/_upsample_nearest_exact3d_backward_native.h>
-#endif
 
 namespace at::native {
 namespace {

@@ -13,11 +13,7 @@
 #include <c10/util/bit_cast.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/cat.h>
-#endif
 
 #define RESTRICT __restrict__
 

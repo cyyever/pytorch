@@ -13,14 +13,9 @@
 #include <ATen/cuda/detail/KernelUtils.h>
 #include <c10/macros/Macros.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/max_pool3d_with_indices_native.h>
 #include <ATen/ops/max_pool3d_with_indices_backward_native.h>
-#endif
 
 namespace at::native {
 namespace {

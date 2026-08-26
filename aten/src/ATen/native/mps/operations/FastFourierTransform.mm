@@ -5,14 +5,9 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <algorithm>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_fft_c2c_native.h>
 #include <ATen/ops/_fft_c2r_native.h>
 #include <ATen/ops/_fft_r2c_native.h>
-#endif
 
 namespace at::native {
 namespace {

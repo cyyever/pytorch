@@ -5,10 +5,6 @@
 #include <c10/util/accumulate.h>
 #include <fmt/format.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_upsample_bicubic2d_aa_backward_native.h>
 #include <ATen/ops/_upsample_bicubic2d_aa_native.h>
 #include <ATen/ops/_upsample_bilinear2d_aa_backward_native.h>
@@ -45,7 +41,6 @@
 #include <ATen/ops/upsample_nearest3d_native.h>
 #include <ATen/ops/upsample_trilinear3d_backward_native.h>
 #include <ATen/ops/upsample_trilinear3d_native.h>
-#endif
 
 #include <ATen/native/mps/kernels/UpSample.h>
 

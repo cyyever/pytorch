@@ -19,17 +19,9 @@
 #include <limits>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/permute.h>
-#endif
 
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_conv_depthwise2d.h>
 #include <ATen/ops/_convolution.h>
 #include <ATen/ops/_convolution_double_backward_native.h>
@@ -74,7 +66,6 @@
 #include <ATen/ops/view_as_real.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 constexpr int MIOPEN_DIM_MAX = 5;
 

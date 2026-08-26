@@ -1,10 +1,6 @@
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/roll.h>
-#endif
 
 #include <c10/util/Exception.h>
 

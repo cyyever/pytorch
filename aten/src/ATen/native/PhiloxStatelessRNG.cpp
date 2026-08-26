@@ -8,10 +8,6 @@
 #include <ATen/core/TransformationHelper.h>
 #include <ATen/native/PhiloxStatelessRNG.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_philox_key_fold_in_native.h>
 #include <ATen/ops/_philox_key_split_native.h>
 #include <ATen/ops/_philox_normal_native.h>
@@ -19,7 +15,6 @@
 #include <ATen/ops/_philox_uniform_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
-#endif
 
 #include <cmath>
 #include <limits>

@@ -18,11 +18,7 @@
 
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 $ops_headers
-#endif
 
 using at::Tensor;
 using at::Device;

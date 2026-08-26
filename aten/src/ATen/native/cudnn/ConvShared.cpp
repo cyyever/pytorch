@@ -11,10 +11,6 @@
 
 #include <ATen/native/cudnn/ConvShared.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cudnn_convolution_add_relu_native.h>
 #include <ATen/ops/cudnn_convolution_native.h>
 #include <ATen/ops/cudnn_convolution_relu_native.h>
@@ -23,7 +19,6 @@
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 // NOTE [cuDNN API version]
 //

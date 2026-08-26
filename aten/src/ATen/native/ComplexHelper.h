@@ -4,14 +4,10 @@
 #include <c10/core/SymBool.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/view_as_real_native.h>
 #include <ATen/ops/view_as_complex_native.h>
 
 #include <utility>
-#endif
 
 // WARNING: this header contains non-inline functions and should be only
 // included from ONE cpp file

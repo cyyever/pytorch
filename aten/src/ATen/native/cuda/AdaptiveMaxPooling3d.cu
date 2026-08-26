@@ -9,14 +9,9 @@
 #include <ATen/Utils.h>
 #include <c10/util/Exception.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/adaptive_max_pool3d_backward_native.h>
 #include <ATen/ops/adaptive_max_pool3d_native.h>
 #include <ATen/ops/empty.h>
-#endif
 
 #include <algorithm>
 #include <cfloat>

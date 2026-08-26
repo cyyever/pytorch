@@ -5,9 +5,6 @@
 #include <c10/util/TypeSafeSignMath.h>
 #include <ATen/native/cuda/ForeachFunctors.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_foreach_abs_native.h>
 #include <ATen/ops/_foreach_acos_native.h>
 #include <ATen/ops/_foreach_asin_native.h>
@@ -44,7 +41,6 @@
 #include <ATen/ops/_foreach_copy_native.h>
 #include <ATen/ops/empty_like_native.h>
 #include <ATen/ops/empty_strided_native.h>
-#endif
 
 namespace at::native {
 

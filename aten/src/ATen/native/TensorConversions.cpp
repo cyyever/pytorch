@@ -6,10 +6,6 @@
 #include <ATen/core/Tensor.h>
 #include <optional>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_autocast_to_full_precision_native.h>
 #include <ATen/ops/_autocast_to_reduced_precision_native.h>
 #include <ATen/ops/_convert_indices_from_coo_to_csr.h>
@@ -43,7 +39,6 @@
 #include <ATen/ops/to_sparse_native.h>
 #include <ATen/ops/view_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <ATen/SparseCsrTensorUtils.h>
 #include <ATen/core/ATen_fwd.h>

@@ -13,11 +13,7 @@
 #include <ATen/native/cpu/mixed_data_type.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
-#endif
 
 namespace at::native {
 

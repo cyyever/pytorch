@@ -4,12 +4,7 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <fmt/format.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_native.h>
-#endif
 
 namespace at::native {
 

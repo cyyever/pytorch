@@ -74,10 +74,6 @@
 #include <ATen/native/ScatterGatherChecks.h>
 #include <ATen/native/TensorAdvancedIndexingUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_gather_sparse_backward.h>
 #include <ATen/ops/_gather_sparse_backward_native.h>
 #include <ATen/ops/_index_put_impl.h>
@@ -127,7 +123,6 @@
 #include <ATen/ops/take_along_dim_native.h>
 #include <ATen/ops/take_native.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 #ifdef USE_FBGEMM
 #include <fbgemm/Utils.h>

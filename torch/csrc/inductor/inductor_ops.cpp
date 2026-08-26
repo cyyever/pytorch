@@ -1,8 +1,4 @@
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/mm.h>
-#endif
 
 #include <ATen/EmptyTensor.h>
 #include <torch/csrc/autograd/functions/accumulate_grad.h>

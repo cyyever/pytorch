@@ -4,15 +4,10 @@
 #include <ATen/native/Distributions.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/native_dropout_backward_native.h>
 #include <ATen/ops/native_dropout_native.h>
 #include <ATen/ops/ones_like.h>
-#endif
 
 namespace at::native {
 namespace mps {

@@ -11,13 +11,9 @@
 #include <c10/util/irange.h>
 #include <ATen/OpMathType.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

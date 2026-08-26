@@ -14,10 +14,6 @@
 #include <ATen/native/ScaledBlasUtils.h>
 #include <ATen/ceil_div.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_addmm_activation_native.h>
 #include <ATen/ops/addmm_native.h>
 #include <ATen/ops/addmv_native.h>
@@ -25,7 +21,6 @@
 #include <ATen/ops/bmm_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/mm_native.h>
-#endif
 
 using at::blas::ScalingType;
 using at::blas::SwizzleType;

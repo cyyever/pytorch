@@ -9,10 +9,6 @@
 #include <ATen/native/UnaryOps.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_dirichlet_grad_native.h>
 #include <ATen/ops/_sample_dirichlet_native.h>
 #include <ATen/ops/_standard_gamma_grad_native.h>
@@ -29,7 +25,6 @@
 #include <ATen/ops/searchsorted.h>
 #include <ATen/ops/sort.h>
 #include <ATen/ops/topk.h>
-#endif
 
 namespace at::native {
 namespace mps {

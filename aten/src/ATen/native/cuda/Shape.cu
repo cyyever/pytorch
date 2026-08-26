@@ -12,16 +12,11 @@
 #include <ATen/Dispatch_v2.h>
 #include <c10/core/MemoryFormat.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cat_native.h>
 #include <ATen/ops/copy_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/narrow.h>
-#endif
 
 namespace at::native {
 

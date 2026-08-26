@@ -25,10 +25,6 @@
 #include <ATen/native/cuda/block_reduce.cuh>
 #include <optional>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cudnn_attention_forward.h>
 #include <ATen/ops/_cudnn_attention_forward_native.h>
 #include <ATen/ops/_efficient_attention_forward.h>
@@ -57,7 +53,6 @@
 #include <ATen/ops/scaled_dot_product_attention.h>
 #include <ATen/ops/split_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #ifdef __HIP_PLATFORM_AMD__
 #include <ATen/native/cudnn/hip/MHA.h>

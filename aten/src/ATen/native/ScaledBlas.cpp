@@ -8,11 +8,6 @@
 #include <ATen/native/ScaledBlasUtils.h>
 #include <cpuinfo.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/CPUFunctions.h>
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/copy_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/_scaled_mm_native.h>
@@ -20,7 +15,6 @@
 #include <ATen/ops/_scaled_grouped_mm_v2_native.h>
 #include <ATen/ops/mul.h>
 #include <ATen/ops/matmul.h>
-#endif
 
 namespace at::meta {
 

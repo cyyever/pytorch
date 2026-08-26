@@ -13,15 +13,10 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/accumulate.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_coalesce_native.h>
 #include <ATen/ops/_sparse_coo_tensor_unsafe_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>

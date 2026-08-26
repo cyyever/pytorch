@@ -10,13 +10,8 @@
 #include <ATen/native/Resize.h>
 #include <ATen/native/IndexingUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/_conv_depthwise2d_native.h>
-#endif
 
 namespace at::native {
 namespace {

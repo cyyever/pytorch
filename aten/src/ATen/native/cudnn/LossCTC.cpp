@@ -6,10 +6,6 @@
 #include <ATen/cudnn/Descriptors.h>
 #endif
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_assert_async.h>
 #include <ATen/ops/_cudnn_ctc_loss.h>
 #include <ATen/ops/_cudnn_ctc_loss_native.h>
@@ -19,7 +15,6 @@
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/le.h>
 #include <ATen/ops/lt.h>
-#endif
 
 #include <utility>
 

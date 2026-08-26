@@ -4,16 +4,12 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/native/mps/operations/BinaryKernel.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/add_native.h>
 #include <ATen/ops/pow.h>
 #include <ATen/ops/pow_native.h>
 #include <ATen/ops/result_type.h>
 #include <ATen/ops/sub_native.h>
-#endif
+#include <ATen/ops/view_as_real.h>
 
 namespace at::native {
 namespace mps {

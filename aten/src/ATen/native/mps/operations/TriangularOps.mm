@@ -7,15 +7,10 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <fmt/format.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/tril_indices_native.h>
 #include <ATen/ops/tril_native.h>
 #include <ATen/ops/triu_indices_native.h>
 #include <ATen/ops/triu_native.h>
-#endif
 
 #include <MetalPerformanceShaders/MetalPerformanceShaders.h>
 

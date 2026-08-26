@@ -3,12 +3,7 @@
 #include <ATen/native/mps/operations/FusedAdamWAmsgradKernelImpl.h>
 #include <ATen/native/mps/operations/FusedAdamWKernelImpl.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_fused_adamw_native.h>
-#endif
 
 namespace at::native {
 

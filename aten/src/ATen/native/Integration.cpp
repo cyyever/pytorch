@@ -7,15 +7,10 @@
 #include <c10/core/ScalarType.h>
 #include <c10/core/Scalar.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cumulative_trapezoid_native.h>
 #include <ATen/ops/trapezoid_native.h>
 #include <ATen/ops/trapz_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 namespace {

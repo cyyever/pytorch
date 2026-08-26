@@ -6,12 +6,7 @@
 #include <torch/csrc/distributed/c10d/symm_mem/CUDASymmetricMemory-inl.cuh>
 #include <torch/csrc/distributed/c10d/cuda/StreamBlock.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace c10d::cuda::detail {
 

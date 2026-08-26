@@ -4,12 +4,8 @@
 #include <ATen/NestedTensorImpl.h>
 #include <ATen/native/NonSymbolicBC.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_nested_from_padded_native.h>
 #include <ATen/ops/narrow_native.h>
-#endif
 
 #include <ATen/native/nested/NestedTensorTransformerFunctions.h>
 #include <ATen/native/nested/NestedTensorTransformerUtils.h>

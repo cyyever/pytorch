@@ -4,16 +4,12 @@
 #include <ATen/native/ResizeCommon.h>
 #include <ATen/TensorSubclassLikeUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/resize_as_native.h>
 #include <ATen/ops/resize_as_sparse_native.h>
 #include <ATen/ops/resize_native.h>
 #include <ATen/ops/resize.h>
 #include <ATen/ops/_resize_output.h>
 #include <ATen/ops/_resize_output_native.h>
-#endif
 
 #include <c10/util/overflows.h>
 

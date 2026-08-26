@@ -11,10 +11,6 @@
 #include <ATen/native/SortingUtils.h>
 #include <ATen/native/ReduceOpsUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/full.h>
 #include <ATen/ops/kthvalue_native.h>
 #include <ATen/ops/median_native.h>
@@ -23,7 +19,6 @@
 #include <ATen/ops/rsub.h>
 #include <ATen/ops/div.h>
 #include <ATen/ops/index.h>
-#endif
 
 namespace at::native {
 namespace {

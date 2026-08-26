@@ -20,10 +20,6 @@
 #include <ATen/native/transformers/sdp_utils_cpp.h>
 #include <ATen/cuda/CUDAGeneratorImpl.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
 #include <ATen/ops/empty_strided.h>
@@ -38,7 +34,6 @@
 #include <ATen/ops/_efficient_attention_backward.h>
 #include <ATen/ops/_efficient_attention_backward_native.h>
 #include <ATen/ops/_scaled_dot_product_flash_attention_backward_native.h>
-#endif
 
 #ifdef USE_FLASH_ATTENTION
 // FlashAttention Specific Imports

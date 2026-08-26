@@ -4,11 +4,7 @@
 #include <ATen/TensorIterator.h>
 #include <ATen/TensorMeta.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/lerp_native.h>
-#endif
 
 namespace at::meta {
 

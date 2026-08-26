@@ -2,15 +2,10 @@
 #include <ATen/native/SparseTensorUtils.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_coalesce_native.h>
 #include <ATen/ops/_sparse_coo_tensor_unsafe_native.h>
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/zeros_native.h>
-#endif
 
 namespace at::native {
 

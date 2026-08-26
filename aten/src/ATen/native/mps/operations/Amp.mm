@@ -5,13 +5,8 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/native/mps/operations/MultiTensorApply.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_amp_foreach_non_finite_check_and_unscale_native.h>
 #include <ATen/ops/_amp_update_scale_native.h>
-#endif
 
 namespace at::native {
 #ifndef PYTORCH_JIT_COMPILE_SHADERS

@@ -7,14 +7,9 @@
 #include <ATen/MemoryOverlap.h>
 
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cross_native.h>
 #include <ATen/ops/linalg_cross.h>
 #include <ATen/ops/linalg_cross_native.h>
-#endif
 
 namespace at::meta {
 

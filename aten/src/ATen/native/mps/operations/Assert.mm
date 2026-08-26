@@ -2,11 +2,7 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <c10/metal/error.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_assert_async_native.h>
-#endif
 
 namespace at::native {
 namespace mps {

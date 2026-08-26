@@ -4,10 +4,6 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/native/mps/kernels/LossOps.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_ctc_loss_backward_native.h>
 #include <ATen/ops/_ctc_loss_native.h>
 #include <ATen/ops/binary_cross_entropy_backward_native.h>
@@ -24,7 +20,6 @@
 #include <ATen/ops/smooth_l1_loss_backward_native.h>
 #include <ATen/ops/smooth_l1_loss_native.h>
 #include <ATen/ops/tensor.h>
-#endif
 
 namespace at::native {
 namespace mps {

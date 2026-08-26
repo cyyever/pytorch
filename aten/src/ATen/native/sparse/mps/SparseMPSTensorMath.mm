@@ -8,10 +8,6 @@
 #include <ATen/native/sparse/SparseStubs.h>
 #include <ATen/native/sparse/SparseBinaryOpIntersectionCommon.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_coalesce_native.h>
 #include <ATen/ops/repeat_interleave_native.h>
 #include <ATen/ops/cumsum.h>
@@ -40,7 +36,6 @@
 #include <ATen/ops/addmm_native.h>
 #include <ATen/ops/copy_sparse_to_sparse.h>
 #include <ATen/ops/mul.h>
-#endif
 
 namespace at::native {
 

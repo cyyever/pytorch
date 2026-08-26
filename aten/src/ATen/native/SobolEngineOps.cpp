@@ -5,17 +5,12 @@
 #include <ATen/native/SobolEngineOpsUtils.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_sobol_engine_draw_native.h>
 #include <ATen/ops/_sobol_engine_ff_native.h>
 #include <ATen/ops/_sobol_engine_initialize_state_native.h>
 #include <ATen/ops/_sobol_engine_scramble_native.h>
 #include <ATen/ops/arange_native.h>
 #include <ATen/ops/empty.h>
-#endif
 
 namespace at::native {
 

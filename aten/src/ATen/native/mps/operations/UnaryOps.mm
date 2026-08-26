@@ -6,11 +6,6 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/native/mps/operations/ScanKernel.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/MPSFunctions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_copy_from_and_resize.h>
 #include <ATen/ops/acos_native.h>
 #include <ATen/ops/asin_native.h>
@@ -39,7 +34,6 @@
 #include <ATen/ops/sqrt_native.h>
 #include <ATen/ops/tan_native.h>
 #include <ATen/ops/view_as_real.h>
-#endif
 
 namespace at::native {
 

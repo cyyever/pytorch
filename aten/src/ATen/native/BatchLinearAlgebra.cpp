@@ -15,10 +15,6 @@
 #include <utility>
 #include <vector>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_spsolve.h>
 #include <ATen/ops/_cholesky_solve_helper.h>
 #include <ATen/ops/_cholesky_solve_helper_native.h>
@@ -116,7 +112,6 @@
 #include <ATen/ops/triu.h>
 #include <ATen/ops/vdot.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 // First the required LAPACK implementations are registered here.
 // A comment above the registered LAPACK routine suggest which batched

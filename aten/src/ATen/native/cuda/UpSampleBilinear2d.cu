@@ -14,10 +14,6 @@
 #include <ATen/cuda/detail/KernelUtils.h>
 #include <ATen/native/cuda/LaunchUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_upsample_bicubic2d_aa_backward_native.h>
 #include <ATen/ops/_upsample_bicubic2d_aa_native.h>
 #include <ATen/ops/_upsample_bilinear2d_aa_backward_native.h>
@@ -26,7 +22,6 @@
 #include <ATen/ops/upsample_bilinear2d_backward_native.h>
 #include <ATen/ops/upsample_bilinear2d_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 namespace {

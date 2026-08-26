@@ -6,11 +6,7 @@
 #include <torch/csrc/autograd/variable.h>
 #include <c10/core/SymIntArrayRef.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Operators.h>
-#else
 $ops_headers
-#endif
 
 namespace torch::autograd::generated {
 

@@ -3,15 +3,10 @@
 #include <ATen/TensorMeta.h>
 #include <ATen/native/UpSample.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_upsample_lanczos2d_aa.h>
 #include <ATen/ops/_upsample_lanczos2d_aa_backward.h>
 #include <ATen/ops/_upsample_lanczos2d_aa_backward_native.h>
 #include <ATen/ops/_upsample_lanczos2d_aa_native.h>
-#endif
 
 namespace at::meta {
 

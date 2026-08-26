@@ -4,10 +4,6 @@
 #include <ATen/detail/CUDAHooksInterface.h>
 #include <ATen/native/TensorProperties.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_nested_tensor_size_native.h>
 #include <ATen/ops/contiguous_native.h>
 #include <ATen/ops/cudnn_is_acceptable_native.h>
@@ -27,7 +23,6 @@
 #include <ATen/ops/sym_size_native.h>
 #include <ATen/ops/sym_storage_offset_native.h>
 #include <ATen/ops/sym_stride_native.h>
-#endif
 
 #include <c10/util/irange.h>
 

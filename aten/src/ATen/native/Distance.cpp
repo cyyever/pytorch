@@ -6,10 +6,6 @@
 #include <ATen/native/Distance.h>
 #include <c10/util/accumulate.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cdist_backward_native.h>
 #include <ATen/ops/_cdist_forward.h>
 #include <ATen/ops/_cdist_forward_native.h>
@@ -36,7 +32,6 @@
 #include <ATen/ops/zeros_like.h>
 
 #include <utility>
-#endif
 
 namespace at::native {
 

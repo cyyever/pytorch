@@ -11,12 +11,8 @@
 #include <ATen/native/Distance.h>
 #include <ATen/NumericUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/sum.h>
-#endif
 
 #include <c10/macros/Macros.h>
 

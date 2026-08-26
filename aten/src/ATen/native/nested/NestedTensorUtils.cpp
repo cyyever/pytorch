@@ -2,16 +2,12 @@
 #include <ATen/native/nested/NestedTensorUtils.h>
 #include <optional>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_nested_tensor_size_native.h>
 #include <ATen/ops/_nested_tensor_storage_offsets_native.h>
 #include <ATen/ops/_nested_tensor_strides_native.h>
 #include <ATen/ops/chunk_native.h>
 #include <ATen/ops/split_with_sizes_native.h>
 #include <ATen/ops/value_selecting_reduction_backward_native.h>
-#endif
 
 namespace at::native {
 

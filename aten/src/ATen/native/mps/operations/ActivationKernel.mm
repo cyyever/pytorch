@@ -5,9 +5,9 @@
 #include <ATen/native/Activation.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
+#include <ATen/native/BinaryOps.h>
+#include <ATen/native/Gelu.h>
+#include <ATen/native/mps/kernels/Activation.h>
 #include <ATen/ops/add.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
@@ -22,10 +22,6 @@
 #include <ATen/ops/sigmoid.h>
 #include <ATen/ops/sigmoid_backward_native.h>
 #include <ATen/ops/sigmoid_native.h>
-#endif
-#include <ATen/native/BinaryOps.h>
-#include <ATen/native/Gelu.h>
-#include <ATen/native/mps/kernels/Activation.h>
 #include <fmt/format.h>
 
 namespace at::native {

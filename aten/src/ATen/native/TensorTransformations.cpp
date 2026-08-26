@@ -8,10 +8,6 @@
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/atleast_1d_native.h>
 #include <ATen/ops/atleast_2d_native.h>
 #include <ATen/ops/atleast_3d_native.h>
@@ -23,7 +19,6 @@
 #include <ATen/ops/flipud_native.h>
 #include <ATen/ops/roll_native.h>
 #include <ATen/ops/rot90_native.h>
-#endif
 
 #include <algorithm>
 #include <utility>

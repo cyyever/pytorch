@@ -39,10 +39,6 @@
 #include <ATen/hip/HIPContext.h>
 #include <ATen/hip/HIPGraphsUtils.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/reshape.h>
@@ -51,7 +47,6 @@
 #include <ATen/ops/slice.h>
 #include <ATen/ops/narrow.h>
 #include <ATen/ops/pad.h>
-#endif
 
 #include <ATen/native/transformers/hip/aotriton_adapter.h>
 #include <ATen/native/transformers/hip/flash_attn/flash_api.h>

@@ -24,10 +24,6 @@
 #include <c10/util/irange.h>
 #include <fmt/format.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/native/IndexKernel.h>
 #include <ATen/ops/index.h>
 #include <ATen/ops/index_add_native.h>
@@ -42,7 +38,6 @@
 #include <ATen/ops/nonzero_native.h>
 #include <ATen/ops/nonzero_static_native.h>
 #include <ATen/ops/ones_like.h>
-#endif
 
 namespace at::native {
 namespace mps {

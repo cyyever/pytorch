@@ -5,14 +5,9 @@
 #include <ATen/native/Resize.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/bucketize_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/searchsorted_native.h>
-#endif
 
 namespace at::native {
 namespace mps {

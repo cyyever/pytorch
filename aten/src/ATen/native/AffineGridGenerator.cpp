@@ -2,16 +2,11 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/TensorOperators.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/affine_grid_generator_backward_native.h>
 #include <ATen/ops/affine_grid_generator_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/linspace.h>
 #include <ATen/ops/tensor.h>
-#endif
 
 namespace at::native {
 

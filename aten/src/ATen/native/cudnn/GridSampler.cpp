@@ -4,14 +4,9 @@
 #include <ATen/cuda/CUDAConfig.h>
 #include <ATen/native/GridSamplerUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cudnn_grid_sampler_backward_native.h>
 #include <ATen/ops/cudnn_grid_sampler_native.h>
 #include <ATen/ops/empty.h>
-#endif
 
 #if !AT_CUDNN_ENABLED()
 

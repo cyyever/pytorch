@@ -7,15 +7,9 @@
 #include <ATen/WrapDimUtils.h>
 #include <ATen/native/cuda/Sort.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/CUDAFunctions.h>
-#else
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/sort_cuda_dispatch.h>
 #include <ATen/ops/topk_native.h>
-#endif
 
 namespace at::native {
 

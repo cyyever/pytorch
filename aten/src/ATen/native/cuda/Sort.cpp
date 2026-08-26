@@ -6,14 +6,9 @@
 #include <ATen/TensorUtils.h>
 #include <ATen/native/Sorting.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/sort_native.h>
-#endif
 
 #include <limits>
 
