@@ -26,10 +26,6 @@ namespace at::native {
 
 namespace {
 
-#if defined(__GNUC__) && __GNUC__ == 14 && defined(__aarch64__) && !0
-// Workaround for gcc-14.2.0 ICE during RTL pass: expand when compiling for NEON
-__attribute__((optimize("no-tree-vectorize")))
-#endif
 void log_sigmoid_cpu_kernel(TensorBase &output, TensorBase &buffer, const TensorBase &input) {
   if (at::isReducedFloatingType(input.scalar_type())) {
     AT_DISPATCH_REDUCED_FLOATING_TYPES(input.scalar_type(), "log_sigmoid_cpu", [&]() {
