@@ -502,13 +502,13 @@ static bool CheckKeysMatching(
   auto get_keys = [](const auto& it) -> std::string { return it.first; };
   std::vector<std::string> required_keys = c10::fmap(gv_funcs, get_keys);
   std::vector<std::string> provided_keys = c10::fmap(to_check, get_keys);
-  std::sort(required_keys.begin(), required_keys.end());
-  std::sort(provided_keys.begin(), provided_keys.end());
+  std::ranges::sort(required_keys);
+  std::ranges::sort(provided_keys);
 
   std::unordered_set<std::string> intersection;
   intersection.reserve(std::min(required_keys.size(), provided_keys.size()));
-  std::set_intersection(required_keys.cbegin(), required_keys.cend(),
-                        provided_keys.cbegin(), provided_keys.cend(),
+  std::ranges::set_intersection(required_keys,
+                        provided_keys,
                         std::inserter(intersection, intersection.end()));
   bool matched = true;
   if (intersection.size() != required_keys.size()) {

@@ -1,5 +1,6 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/hooks/FlightRecorderHook.hpp>
 
 #include <c10/core/Stream.h>
@@ -129,7 +130,7 @@ std::string profilingName(
 // splitting on ":" into exactly two fields, so a colon inside the name has to
 // go.
 std::string sanitizeBackendName(std::string name) {
-  std::replace(name.begin(), name.end(), ':', '_');
+  std::ranges::replace(name, ':', '_');
   return name;
 }
 

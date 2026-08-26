@@ -432,7 +432,7 @@ void cpu_sparse_coo_softmax_backward(const Tensor& grad_input, const Tensor& gra
       }
     } else {
       for (const auto i : c10::irange(out_nnz)) {
-        auto low = std::lower_bound(grad_offsets.begin(), grad_offsets.end(), out_offsets[i]);
+        auto low = std::ranges::lower_bound(grad_offsets, out_offsets[i]);
         auto j = low - grad_offsets.begin();
         if (j < grad_nnz && out_offsets[i] == grad_offsets[j]) {
           if (LogSoftMax) {
@@ -478,7 +478,7 @@ void cpu_sparse_coo_softmax_backward(const Tensor& grad_input, const Tensor& gra
         /* Compute tmp = - sum_j output_j * grad_j */
         for (int64_t i : pool_indices) {
           auto out_values_row = out_values_accessor[i];
-          auto low = std::lower_bound(grad_offsets.begin(), grad_offsets.end(), out_offsets[i]);
+          auto low = std::ranges::lower_bound(grad_offsets, out_offsets[i]);
           auto j = low - grad_offsets.begin();
 
           if (j < grad_nnz && (out_offsets[i] == grad_offsets[j])) {
@@ -497,7 +497,7 @@ void cpu_sparse_coo_softmax_backward(const Tensor& grad_input, const Tensor& gra
         for (int64_t i : pool_indices) {
           auto out_values_row = out_values_accessor[i];
           auto values_row = values_accessor[i];
-          auto low = std::lower_bound(grad_offsets.begin(), grad_offsets.end(), out_offsets[i]);
+          auto low = std::ranges::lower_bound(grad_offsets, out_offsets[i]);
           auto j = low - grad_offsets.begin();
 
           if (j < grad_nnz && (out_offsets[i] == grad_offsets[j])) {

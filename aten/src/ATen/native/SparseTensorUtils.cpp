@@ -9,6 +9,8 @@
 #include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
 #include <ATen/ops/zeros.h>
 
+#include <algorithm>
+
 namespace at::native {
 
 DEFINE_DISPATCH(flatten_indices_stub);
@@ -120,7 +122,7 @@ Tensor zeros_like_with_indices(const Tensor& t) {
 }
 
 Tensor full_coo_indices(IntArrayRef sizes, TensorOptions options) {
-  const auto max_size = *std::max_element(sizes.begin(), sizes.end());
+  const auto max_size = *std::ranges::max_element(sizes);
   const auto max_size_arange = at::arange(max_size, options);
   std::vector<Tensor> stack;
   stack.reserve(sizes.size());

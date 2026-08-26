@@ -10,6 +10,8 @@
 #include <ATen/ops/alias.h>
 #include <ATen/ops/zeros.h>
 
+#include <algorithm>
+
 namespace at::native {
 
 // We expect this code to only be reached in inference mode and when all inputs are inference tensors
@@ -61,7 +63,7 @@ Tensor _new_zeros_with_same_feature_meta(
 
   auto out_sizes = c10::SmallVector<c10::SymInt, kSmallBufferSizeHint>(other.dim() + self_num_batch_dims);
   std::copy(self_sizes.begin(), self_sizes.begin() + self_num_batch_dims, out_sizes.begin());
-  std::copy(other_sizes.begin(), other_sizes.end(), out_sizes.begin() + self_num_batch_dims);
+  std::ranges::copy(other_sizes, out_sizes.begin() + self_num_batch_dims);
 
   // We use the strides of other, and tack on the strides computed with
   // the batch dims of self, so that the slices are arranged contiguously
@@ -72,7 +74,7 @@ Tensor _new_zeros_with_same_feature_meta(
     out_strides[i] = prod;
     prod *= self_sizes[i];
   }
-  std::copy(other_strides.begin(), other_strides.end(), out_strides.begin() + self_num_batch_dims);
+  std::ranges::copy(other_strides, out_strides.begin() + self_num_batch_dims);
 
   auto storage_numel = prod;
 

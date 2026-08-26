@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const IndexerTestCase& tc) {
 
 std::vector<int64_t> run(IndexerTestCase tc) {
   std::vector<int64_t> source(tc.source_len);
-  std::iota(source.begin(), source.end(), 0);
+  std::ranges::iota(source, 0);
 
   std::vector<char*> index_ptrs;
   std::vector<int64_t> indexer_strides;

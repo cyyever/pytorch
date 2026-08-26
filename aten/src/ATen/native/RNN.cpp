@@ -43,6 +43,7 @@
 #include <ATen/ops/tanh_backward.h>
 #include <ATen/ops/zeros_like.h>
 #include <ATen/ops/zeros_like_ops.h>
+#include <algorithm>
 #include <utility>
 
 namespace at::native {
@@ -582,7 +583,7 @@ struct FullBidirectionalLayer
   }
 
   std::vector<Tensor> reverse(std::vector<Tensor>&& x) const {
-    std::reverse(x.begin(), x.end());
+    std::ranges::reverse(x);
     return std::move(x);
   }
 
@@ -696,7 +697,7 @@ struct ReversedPackedLayer : Layer<PackedSequence, hidden_type, cell_params> {
       hidden = cell_(step_input, hidden, params, pre_compute_input);
       step_outputs.emplace_back(hidden_as_output(hidden));
     }
-    std::reverse(step_outputs.begin(), step_outputs.end());
+    std::ranges::reverse(step_outputs);
     return {PackedSequence{at::cat(step_outputs, 0), input.batch_sizes},
             std::move(hidden)};
   }

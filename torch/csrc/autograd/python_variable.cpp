@@ -1355,8 +1355,8 @@ static bool is_random_op(const c10::OperatorHandle& op) {
         op_name.overload_name == "low_dtype" ||
         op_name.overload_name == "low_dtype_out";
   }
-  const auto it = std::find(
-      random_names.begin(), random_names.end(), name_without_namespace);
+  const auto it = std::ranges::find(
+      random_names, name_without_namespace);
   if (it == random_names.end()) {
     return false;
   }
@@ -1620,9 +1620,9 @@ py::object dispatchDTensorOp(
       !operator_name.name.empty() && operator_name.name.back() == '_';
   const auto& schema_arguments = op.schema().arguments();
   const bool is_out_variant_op = !is_inplace_op &&
-      std::any_of(
-          schema_arguments.begin(),
-          schema_arguments.end(),
+      std::ranges::any_of(
+          schema_arguments,
+         
           [](const c10::Argument& argument) { return argument.is_out(); });
 
   // Fast path for default or view ops.
@@ -2506,9 +2506,9 @@ create_native_op_schema(
       if (tensor_flavor == TensorFlavor::NON_TENSOR) {
         const auto& kwarg_name =
             op.schema().arguments()[underlying_index].name();
-        if (std::find(
-                static_kwarg_names.begin(),
-                static_kwarg_names.end(),
+        if (std::ranges::find(
+                static_kwarg_names,
+               
                 kwarg_name) == static_kwarg_names.end()) {
           continue;
         }

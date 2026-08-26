@@ -2,6 +2,7 @@
 
 #ifdef USE_C10D_NCCL
 
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/nccl2/NCCLCachingAllocatorHook.hpp>
 
 #include <algorithm>
@@ -33,7 +34,7 @@ std::vector<ProcessGroupNCCL*> commsForDevice(
       out.push_back(comm);
     }
   }
-  std::stable_sort(out.begin(), out.end(), [](auto* a, auto* b) {
+  std::ranges::stable_sort(out, [](auto* a, auto* b) {
     return a->getCommName() < b->getCommName();
   });
   return out;

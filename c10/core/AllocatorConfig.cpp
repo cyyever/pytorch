@@ -218,9 +218,9 @@ size_t AcceleratorAllocatorConfig::parseRoundUpPower2Divisions(
     TORCH_CHECK_VALUE(
         std::has_single_bit(value),
         "For roundups, the divisions has to be power of 2 ");
-    std::fill(
-        roundup_power2_divisions_.begin(),
-        roundup_power2_divisions_.end(),
+    std::ranges::fill(
+        roundup_power2_divisions_,
+
         value);
   }
   return i;

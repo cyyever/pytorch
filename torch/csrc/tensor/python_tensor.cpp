@@ -16,6 +16,7 @@
 
 #include <ATen/ATen.h>
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -398,8 +399,8 @@ static void py_bind_tensor_types(
 }
 
 static bool PyTensorType_Check(PyObject* obj) {
-  auto it = std::find_if(
-      tensor_types.begin(), tensor_types.end(), [obj](PyTensorType* x) {
+  auto it = std::ranges::find_if(
+      tensor_types, [obj](PyTensorType* x) {
         return (PyObject*)x == obj;
       });
   return it != tensor_types.end();

@@ -3,6 +3,7 @@
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
+#include <algorithm>
 #include <map>
 #include <set>
 
@@ -99,9 +100,9 @@ std::vector<MemEvent> create_and_sort_mem_events(
     events.emplace_back(
         allocation_lifetimes[i], i, allocation_sizes[i], EventType::Free);
   }
-  std::sort(
-      events.begin(),
-      events.end(),
+  std::ranges::sort(
+      events,
+
       [](const MemEvent& a, const MemEvent& b) -> bool {
         return a.time < b.time;
       });

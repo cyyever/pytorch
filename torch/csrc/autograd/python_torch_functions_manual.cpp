@@ -21,6 +21,7 @@
 #include <ATen/ops/from_blob.h>
 
 #include <pybind11/pybind11.h>
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -554,9 +555,9 @@ static void gatherTorchFunctions(std::vector<PyMethodDef>& torch_functions) {
        {"hspmm", "hsmm"}}};
 
   for (const auto& alias : aliases) {
-    auto it = std::find_if(
-        torch_functions.begin(),
-        torch_functions.end(),
+    auto it = std::ranges::find_if(
+        torch_functions,
+
         [&](const PyMethodDef& def) {
           return strcmp(def.ml_name, alias.first) == 0;
         });

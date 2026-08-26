@@ -15,6 +15,7 @@
 #include <c10/util/accumulate.h>
 #include <c10/util/irange.h>
 
+#include <algorithm>
 #include <atomic>
 #include <bit>
 
@@ -52,7 +53,7 @@ computeIndex(int64_t linear_idx, IntArrayRef sizes) {
     linear_idx -= remainder;
     linear_idx /= *it;
   }
-  std::reverse(std::begin(result), std::end(result));
+  std::ranges::reverse(result);
   return result;
 }
 
@@ -217,7 +218,7 @@ static void batchedTensorInplaceForLoopFallback(const c10::OperatorHandle& op, t
 
 static Tensor safeStack(TensorList tensors) {
   auto is_defined = [](const Tensor& t) { return t.defined(); };
-  if (std::all_of(tensors.begin(), tensors.end(), is_defined)) {
+  if (std::ranges::all_of(tensors, is_defined)) {
     return at::stack(tensors);
   }
   // NOTE [vmap through backward and undefined grad]
@@ -232,7 +233,7 @@ static Tensor safeStack(TensorList tensors) {
   // of the correct shape while stacking the tensors together. However I expect
   // this to happen very rarely (I have not been able to find an example in our
   // codebase) so we just error out in this case.
-  if (std::none_of(tensors.begin(), tensors.end(), is_defined)) {
+  if (std::ranges::none_of(tensors, is_defined)) {
     return Tensor();
   }
   TORCH_CHECK(false,
@@ -267,7 +268,7 @@ void batchedTensorForLoopFallback(const c10::OperatorHandle& op, torch::jit::Sta
               "Batching rule not implemented for ", schema.operator_name(), ". ",
               "We could not generate a fallback.");
 
-  if (std::none_of(arguments.begin(), arguments.end(), ivalueParticipatesInCurrentLevel)) {
+  if (std::ranges::none_of(arguments, ivalueParticipatesInCurrentLevel)) {
     c10::impl::ExcludeDispatchKeyGuard guard(DispatchKey::FuncTorchBatched);
     op.callBoxed(stack);
     return;
@@ -407,7 +408,7 @@ void batchedNestedTensorForLoopFallback(const c10::OperatorHandle& op, torch::ji
               "Nested batching rule not implemented for ", schema.operator_name(), ". ",
               "We could not generate a fallback.");
 
-  if (std::none_of(arguments.begin(), arguments.end(), ivalueParticipatesInCurrentLevel)) {
+  if (std::ranges::none_of(arguments, ivalueParticipatesInCurrentLevel)) {
     c10::impl::ExcludeDispatchKeyGuard guard(DispatchKey::FuncTorchBatched);
     c10::impl::ExcludeDispatchKeyGuard nt_guard(DispatchKey::BatchedNestedTensor);
     op.callBoxed(stack);

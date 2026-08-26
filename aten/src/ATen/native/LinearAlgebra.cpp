@@ -21,6 +21,7 @@
 #include <c10/core/SymBool.h>
 #include <c10/util/accumulate.h>
 #include <c10/util/irange.h>
+#include <numeric>
 #include <variant>
 
 #include <ATen/ops/_addmm_activation_native.h>
@@ -2736,7 +2737,7 @@ TORCH_IMPL_FUNC(linalg_vector_norm_out)(const Tensor& self, const Scalar& scalar
 
   using Int = IntArrayRef::value_type;
   std::vector<Int> all_dim(ndim);
-  std::iota(all_dim.begin(), all_dim.end(), 0);
+  std::ranges::iota(all_dim, 0);
 
   bool is_all_reduce = !opt_dim.has_value() || opt_dim.value().empty();
   auto reduce_dim = is_all_reduce ? all_dim : opt_dim_;
@@ -2808,7 +2809,7 @@ Tensor linalg__powsum(
 
   using Int = IntArrayRef::value_type;
   std::vector<Int> all_dim(ndim);
-  std::iota(all_dim.begin(), all_dim.end(), 0);
+  std::ranges::iota(all_dim, 0);
 
   bool is_all_reduce = !opt_dim.has_value() || opt_dim.value().empty();
   auto reduce_dim = is_all_reduce ? all_dim : opt_dim_;
@@ -3347,7 +3348,7 @@ Tensor linalg_tensorsolve(const Tensor& self, const Tensor& other, OptionalIntAr
   // move dimensions of `self_` from `dims` to the end
   if (dims.has_value()) {
     DimVector dest_axes(dims.value().size());
-    std::iota(dest_axes.begin(), dest_axes.end(), ndim - dest_axes.size());
+    std::ranges::iota(dest_axes, ndim - dest_axes.size());
     self_ = at::movedim(self_, dims.value(), dest_axes);
   }
 

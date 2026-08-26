@@ -185,7 +185,7 @@ Tensor & embedding_renorm_cpu_(
   AT_DISPATCH_INDEX_TYPES(indices.scalar_type(), "embedding_renorm_cpu_", [&]() {
     auto data_ptr = indices_contig.const_data_ptr<index_t>();
     auto sorted_indices = std::vector<index_t>(data_ptr, data_ptr + num_indices);
-    std::sort(sorted_indices.begin(), sorted_indices.end());
+    std::ranges::sort(sorted_indices);
 
     // Note that we cannot use at::parallel_for here because we perform operations on
     // Tensor inside the loop. See github.com/pytorch/pytorch/issues/28370 for more details.

@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <algorithm>
 #include <utility>
 
 #ifdef USE_KINETO
@@ -156,9 +157,9 @@ std::string joinStacks(
     const std::vector<std::string>& stacks,
     const char* delim) {
   std::ostringstream oss;
-  std::transform(
-      stacks.begin(),
-      stacks.end(),
+  std::ranges::transform(
+      stacks,
+     
       std::ostream_iterator<std::string>(oss, delim),
       [](std::string s) -> std::string {
         return s;
@@ -323,9 +324,9 @@ std::string strListToStr(const std::vector<std::string>& types) {
     return "[]";
   } else {
     std::ostringstream oss;
-    std::transform(
-        types.begin(),
-        types.end(),
+    std::ranges::transform(
+        types,
+       
         std::ostream_iterator<std::string>(oss, ", "),
         [](const std::string& s) -> std::string { return "\"" + s + "\""; });
     auto rc = std::move(oss).str();

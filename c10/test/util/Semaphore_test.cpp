@@ -2,6 +2,7 @@
 #include <c10/util/irange.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <thread>
 
 using namespace ::testing;
@@ -28,8 +29,8 @@ TEST(SemaphoreTest, TestConcurrency) {
     });
   }
 
-  std::for_each(
-      threads.begin(), threads.end(), [](std::thread& t) { t.join(); });
+  std::ranges::for_each(
+      threads, [](std::thread& t) { t.join(); });
 
   EXPECT_FALSE(sem.tryAcquire());
 }
