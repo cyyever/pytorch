@@ -28,9 +28,9 @@ DebugLevel loadDebugLevelFromEnvironment() {
 
   std::string level_str = std::move(env_value.value());
 
-  std::transform(
-      level_str.begin(),
-      level_str.end(),
+  std::ranges::transform(
+      level_str,
+
       level_str.begin(),
       [](unsigned char c) { return toupper(c); });
 

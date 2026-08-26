@@ -19,8 +19,11 @@
 #include <c10/util/irange.h>
 #include <c10/util/SmallBuffer.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <numeric>
+#include <ranges>
 
 namespace at {
 
@@ -32,7 +35,7 @@ using StrideVector = TensorIteratorBase::StrideVector;
 namespace {
 
 inline void get_base_ptrs(char** ptrs, ArrayRef<OperandInfo> operands) {
-  std::transform(operands.begin(), operands.end(), ptrs, [](const OperandInfo& op) {
+  std::ranges::transform(operands, ptrs, [](const OperandInfo& op) {
     return static_cast<char*>(op.data);
   });
 }
@@ -232,7 +235,7 @@ void TensorIteratorBase::reorder_dimensions() {
   }
 
   // initialize perm with n-1, n-2, ..., 1, 0
-  std::iota(perm_.rbegin(), perm_.rend(), 0);
+  std::ranges::iota(std::views::reverse(perm_), 0);
 
   // Reordering dimensions changes iteration order
   if (enforce_linear_iteration_) {
@@ -1680,7 +1683,7 @@ DimCounter::DimCounter(IntArrayRef shape, Range range)
   , range(range)
   , values(shape.size())
   , offset(range.begin) {
-  std::fill(values.begin(), values.end(), 0);
+  std::ranges::fill(values, 0);
   if (range.begin == 0) {
     return;
   }

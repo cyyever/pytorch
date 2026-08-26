@@ -121,7 +121,7 @@ Tensor makeBatched(Tensor tensor, BatchDims bdims) {
       "vmap only supports tensors of dimensionality up to ", kVmapMaxTensorDims,
       "; got a tensor with dim ", tensor_dim);
   TORCH_INTERNAL_ASSERT(
-      std::all_of(bdims.begin(), bdims.end(),
+      std::ranges::all_of(bdims,
           [](const BatchDim& bdim) { return bdim.level() < kVmapNumLevels; }),
       "We only support up to ", kVmapNumLevels, " nested vmaps");
   return at::detail::make_tensor<BatchedTensorImpl>(std::move(tensor), std::move(bdims));

@@ -473,7 +473,7 @@ void Context::setFloat32MatmulPrecision(const std::string &s) {
   };
   if (match(s)) { return; }
   std::string sl;
-  std::transform(s.begin(), s.end(), sl.begin(),
+  std::ranges::transform(s, sl.begin(),
                  [](unsigned char c) -> unsigned char { return std::tolower(c); });
   if (match(sl)) { return; }
   TORCH_WARN(s, " is not one of 'highest', 'high', or 'medium'; the current"
@@ -786,7 +786,7 @@ at::QEngine Context::qEngine() const {
 
 void Context::setQEngine(at::QEngine e) {
   const auto& qengines = supportedQEngines();
-  if (std::find(qengines.begin(), qengines.end(), e) != qengines.end()) {
+  if (std::ranges::find(qengines, e) != qengines.end()) {
     quantized_engine.store(e);
     return;
   }

@@ -5,6 +5,7 @@
 #include <torch/csrc/autograd/forward_grad.h>
 #include <torch/csrc/autograd/functions/accumulate_grad.h>
 
+#include <algorithm>
 #include <utility>
 
 namespace torch::autograd {
@@ -686,7 +687,7 @@ bool AutogradContext::needs_input_grad(size_t output_edge_index) const {
 bool AutogradContext::needs_input_grad(
     std::initializer_list<IndexRange> idxs) const {
   if (needs_input_grad_override_.has_value()) {
-    return std::any_of(idxs.begin(), idxs.end(), [this](IndexRange range) {
+    return std::ranges::any_of(idxs, [this](IndexRange range) {
       bool result = false;
       for (const auto i : c10::irange(range.first, range.second)) {
         result |= needs_input_grad_override_.value().at(i);

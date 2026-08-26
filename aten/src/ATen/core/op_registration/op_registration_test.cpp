@@ -14,6 +14,7 @@
 #include <ATen/core/op_registration/op_registration.h>
 #include <torch/library.h>
 #include <ATen/core/Tensor.h>
+#include <algorithm>
 #include <functional>
 
 
@@ -2149,9 +2150,9 @@ TEST(OperatorRegistrationTest, getRegistrationsForDispatchKey) {
       return c10::toString(a) < c10::toString(b);
   };
 
-  std::sort(all_ops.begin(), all_ops.end(), cmp_lambda);
-  std::sort(cpu_ops.begin(), cpu_ops.end(), cmp_lambda);
-  ASSERT_TRUE(std::includes(all_ops.begin(), all_ops.end(), cpu_ops.begin(), cpu_ops.end(), cmp_lambda));
+  std::ranges::sort(all_ops, cmp_lambda);
+  std::ranges::sort(cpu_ops, cmp_lambda);
+  ASSERT_TRUE(std::ranges::includes(all_ops, cpu_ops, cmp_lambda));
 }
 
 Tensor symint_op(const Tensor& self, int64_t length) {

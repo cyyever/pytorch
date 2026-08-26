@@ -10,6 +10,7 @@
 #include <c10/util/flat_hash_map.h>
 #include <c10/util/hash.h>
 #include <c10/util/irange.h>
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <utility>
@@ -801,7 +802,7 @@ TupleType::TupleType(
     std::shared_ptr<FunctionSchema> schema)
     : NamedType(TypeKind::TupleType, std::move(name)),
       elements_(std::move(elements)),
-      has_free_variables_(std::any_of(elements_.begin(), elements_.end(), [](const TypePtr& v) {
+      has_free_variables_(std::ranges::any_of(elements_, [](const TypePtr& v) {
         TORCH_CHECK(v, "Can not create tuple with None type");
         return v->hasFreeVariables();
       })), schema_(std::move(schema)) {

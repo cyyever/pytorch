@@ -3,6 +3,8 @@
 #include <c10/util/overloaded.h>
 #include <torch/csrc/profiler/collection.h>
 
+#include <algorithm>
+
 namespace torch::profiler::impl {
 
 namespace {
@@ -169,7 +171,7 @@ void calculateUniqueTensorIDs(
     for (const auto& i : same_group_set) {
       unique_pairs.push_back(i);
     }
-    std::sort(unique_pairs.begin(), unique_pairs.end());
+    std::ranges::sort(unique_pairs);
 
     size_t current_id{0};
     for (const auto& i : unique_pairs) {

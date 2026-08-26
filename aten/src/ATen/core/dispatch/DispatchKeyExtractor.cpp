@@ -58,7 +58,7 @@ void DispatchKeyExtractor::setOperatorHasFallthroughForKey(DispatchKey k, bool h
 
 std::string DispatchKeyExtractor::dumpState() const {
   std::string bits = dispatch_arg_indices_reverse_.to_string();
-  std::reverse(bits.begin(), bits.end());
+  std::ranges::reverse(bits);
   std::ostringstream oss;
   oss << bits << ' ' << nonFallthroughKeys_ << '\n';
   return std::move(oss).str();

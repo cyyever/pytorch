@@ -59,9 +59,9 @@ int query_pals_size() {
 
 bool string_to_bool(std::string_view str) {
   std::string lowercase_str = trim_whitespace(str);
-  std::transform(
-      lowercase_str.begin(),
-      lowercase_str.end(),
+  std::ranges::transform(
+      lowercase_str,
+
       lowercase_str.begin(),
       [](unsigned char c) { return std::tolower(c); });
 
@@ -145,9 +145,9 @@ std::pair<int, int> query_ranksize() {
   }
 
   // Convert to lowercase for comparison
-  std::transform(
-      ranksize_query_method.begin(),
-      ranksize_query_method.end(),
+  std::ranges::transform(
+      ranksize_query_method,
+
       ranksize_query_method.begin(),
       [](unsigned char c) { return std::tolower(c); });
 

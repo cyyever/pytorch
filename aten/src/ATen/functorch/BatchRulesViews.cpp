@@ -5,6 +5,7 @@
 // LICENSE file in the root directory of this source tree.
 
 #include <ATen/functorch/BatchRulesHelper.h>
+#include <algorithm>
 #include <utility>
 
 #include <ATen/Operators.h>
@@ -308,7 +309,7 @@ std::tuple<Tensor, std::optional<int64_t>> _reshape_alias_batch_rule(const Tenso
   auto self_ = moveBatchDimToFront(self, bdim);
   c10::SymDimVector new_shape(shape.size() + 1);
   new_shape[0] = self_.sym_size(0);
-  std::copy(shape.begin(), shape.end(), new_shape.begin() + 1);
+  std::ranges::copy(shape, new_shape.begin() + 1);
   return std::make_tuple(at::reshape_symint(self_, new_shape), 0);
 }
 
@@ -360,7 +361,7 @@ std::tuple<Tensor, std::optional<int64_t>> diagonal_backward_batch_rule(
   dim2 = maybe_wrap_dim(dim2, logical_rank + 1) + 1;
   c10::SymDimVector input_sizes_(input_sizes.size() + 1);
   input_sizes_[0] = grad_input_.size(0);
-  std::copy(input_sizes.begin(), input_sizes.end(), input_sizes_.begin() + 1);
+  std::ranges::copy(input_sizes, input_sizes_.begin() + 1);
   auto result = at::diagonal_backward_symint(grad_input_, input_sizes_, offset, dim1, dim2);
   return std::make_tuple(std::move(result), 0);
 }
@@ -469,7 +470,7 @@ std::tuple<Tensor, std::optional<int64_t>> select_backward_batch_rule(
   dim = maybe_wrap_dim(dim, logical_rank + 1) + 1;
   c10::SymDimVector input_sizes_(input_sizes.size() + 1);
   input_sizes_[0] = grad_input_.sym_size(0);
-  std::copy(input_sizes.begin(), input_sizes.end(), input_sizes_.begin() + 1);
+  std::ranges::copy(input_sizes, input_sizes_.begin() + 1);
   auto result = at::select_backward_symint(grad_input_, input_sizes_, dim, std::move(index));
   return std::make_tuple(std::move(result), 0);
 }
@@ -482,7 +483,7 @@ std::tuple<Tensor, std::optional<int64_t>> slice_backward_batch_rule(
   dim = maybe_wrap_dim(dim, logical_rank) + 1;
   c10::SymDimVector input_sizes_(input_sizes.size() + 1);
   input_sizes_[0] = grad_input_.size(0);
-  std::copy(input_sizes.begin(), input_sizes.end(), input_sizes_.begin() + 1);
+  std::ranges::copy(input_sizes, input_sizes_.begin() + 1);
   auto result = at::slice_backward_symint(grad_input_, input_sizes_, dim, std::move(start), std::move(end), std::move(step));
   return std::make_tuple(std::move(result), 0);
 }
@@ -495,7 +496,7 @@ std::tuple<Tensor, std::optional<int64_t>> view_batching_rule(
   c10::SmallVector<c10::SymInt> size_(sym_size.size() + 1);
   // copy batch size
   size_[0] = self_.sym_size(0);
-  std::copy(sym_size.cbegin(), sym_size.cend(), size_.begin() + 1);
+  std::ranges::copy(sym_size, size_.begin() + 1);
   return std::make_tuple(self_.view_symint(size_), 0);
 }
 
@@ -519,7 +520,7 @@ std::tuple<Tensor, std::optional<int64_t>> view_copy_batch_rule(
   auto self_ = moveBatchDimToFront(self, self_bdim);
   SymDimVector view_size(size.size() + 1);
   view_size[0] = self_.size(0);
-  std::copy(size.cbegin(), size.cend(), view_size.begin() + 1);
+  std::ranges::copy(size, view_size.begin() + 1);
 
   return std::make_tuple(at::view_copy_symint(self_, view_size), 0);
 }
@@ -540,7 +541,7 @@ std::tuple<Tensor, std::optional<int64_t>> expand_batch_rule(
 
   c10::SmallVector<c10::SymInt> size_(size.size() + 1);
   size_[0] = batch_size;
-  std::copy(size.cbegin(), size.cend(), size_.begin() + 1);
+  std::ranges::copy(size, size_.begin() + 1);
 
   // Here, we know we are expanding a (logical) tensor to a larger number
   // of dimensions. We have to be careful because we can't call expand directly

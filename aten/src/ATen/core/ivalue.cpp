@@ -11,6 +11,7 @@
 #include <c10/util/StringUtil.h>
 #include <c10/util/hash.h>
 #include <c10/util/irange.h>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <utility>
@@ -1173,9 +1174,9 @@ namespace {
 #ifndef STRIP_ERROR_MESSAGES
 std::string formatSetOfDevices(const std::vector<c10::Device>& devices) {
   std::ostringstream oss;
-  std::copy(
-      devices.begin(),
-      devices.end(),
+  std::ranges::copy(
+      devices,
+     
       std::ostream_iterator<c10::Device>(oss, ", "));
   return std::move(oss).str();
 }

@@ -26,6 +26,7 @@
 
 #include <cctype>
 #include <deque>
+#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
@@ -644,7 +645,7 @@ Tensor einsum(std::string_view equation, TensorList operands, at::OptionalIntArr
       return ops[0].view_symint(sizes);
     } else {
       std::vector<int64_t> sum_dims(perm_index - out_num_dim);
-      std::iota(sum_dims.begin(), sum_dims.end(), out_num_dim);
+      std::ranges::iota(sum_dims, out_num_dim);
       return ops[0].sum(sum_dims);
     }
   }

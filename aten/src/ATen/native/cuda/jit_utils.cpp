@@ -2,6 +2,7 @@
 #include <c10/core/ScalarType.h>
 #include <c10/util/irange.h>
 #include <c10/util/hash.h>
+#include <algorithm>
 #include <optional>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/detail/OffsetCalculator.cuh>
@@ -1672,7 +1673,7 @@ NvrtcFunction jit_pwise_function(
                       " File path was ", tmp_file_path, ".",
                       " This warning will only appear once per process.");
     } else {
-      std::copy(ptx.begin(), ptx.end(), std::ostreambuf_iterator<char>(cubin));
+      std::ranges::copy(ptx, std::ostreambuf_iterator<char>(cubin));
       cubin.close();
       if (cubin.fail()) {
         TORCH_WARN_ONCE("Failed to write kernel cache file!",

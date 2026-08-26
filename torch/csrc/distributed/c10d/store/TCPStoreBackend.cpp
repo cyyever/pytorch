@@ -485,7 +485,7 @@ void TCPStoreMasterDaemon::barrierHandler(int socket) {
 
 bool TCPStoreMasterDaemon::checkKeys(
     const std::vector<std::string>& keys) const {
-  return std::all_of(keys.begin(), keys.end(), [this](const std::string& s) {
+  return std::ranges::all_of(keys, [this](const std::string& s) {
     return tcpStore_.contains(s);
   });
 }

@@ -158,9 +158,9 @@ tensor_list2d broadcast_coalesced(
     IntArrayRef devices,
     size_t buffer_size) {
   TORCH_CHECK(
-      std::all_of(
-          tensors.begin(),
-          tensors.end(),
+      std::ranges::all_of(
+          tensors,
+         
           [&](const at::Tensor& t) { return t.get_device() == devices[0]; }),
       "All tensors must be on devices[0]: ",
       devices[0]);

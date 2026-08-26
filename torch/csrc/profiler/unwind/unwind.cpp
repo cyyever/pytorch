@@ -199,9 +199,9 @@ struct UnwindCache {
           return 0;
         },
         this);
-    std::sort(
-        all_libraries_.begin(),
-        all_libraries_.end(),
+    std::ranges::sort(
+        all_libraries_,
+
         [](const LibraryInfo& lhs, const LibraryInfo& rhs) {
           return lhs.first_addr() < rhs.first_addr();
         });

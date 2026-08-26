@@ -1,10 +1,12 @@
 #ifdef USE_C10D_NCCL
 
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <exception>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
@@ -336,7 +338,7 @@ static void cacheAllocatorRegisterHook(
       bool symm = false;
       bool should_register = shouldAllCommunicatorsRegisterAllTensors();
       auto it =
-          std::find_if(memPools.begin(), memPools.end(), [&](const auto& tup) {
+          std::ranges::find_if(memPools, [&](const auto& tup) {
             return std::get<0>(tup) == te.mempool_;
           });
       if (it != memPools.end()) {
@@ -369,7 +371,7 @@ static void cacheAllocatorDeregisterHook(
       bool symm = false;
       bool should_register = shouldAllCommunicatorsRegisterAllTensors();
       auto it =
-          std::find_if(memPools.begin(), memPools.end(), [&](const auto& tup) {
+          std::ranges::find_if(memPools, [&](const auto& tup) {
             return std::get<0>(tup) == te.mempool_;
           });
       if (it != memPools.end()) {
@@ -956,7 +958,7 @@ ProcessGroupNCCL::ProcessGroupNCCL(
   // lazily, so groupRanks() is a pure read and needs no synchronization.
   if (options_->global_ranks_in_group.empty()) {
     defaultRanks_.resize(size_);
-    std::iota(defaultRanks_.begin(), defaultRanks_.end(), 0);
+    std::ranges::iota(defaultRanks_, 0);
   }
 
   // getNcclVersion needs to get called before launching threads which can
@@ -1179,9 +1181,9 @@ void ProcessGroupNCCL::registerMemPool(at::cuda::MemPool* pool, bool symm) {
   // register future segments allocated in this pool (this call is idempotent).
   attachAllocatorHooks();
   auto snapshot = c10::cuda::CUDACachingAllocator::snapshot(pool->id());
-  std::sort(
-      snapshot.segments.begin(),
-      snapshot.segments.end(),
+  std::ranges::sort(
+      snapshot.segments,
+
       [](const SegmentInfo& a, const SegmentInfo& b) {
         return a.registration_counter < b.registration_counter;
       });
@@ -1332,7 +1334,7 @@ c10::intrusive_ptr<Backend> ProcessGroupNCCL::split(
       rank_,
       " has no device is bound to this rank.");
   auto device = at::Device(at::DeviceType::CUDA, deviceIdx);
-  auto it = std::find(ranks.begin(), ranks.end(), rank_);
+  auto it = std::ranges::find(ranks, rank_);
   int groupRank;
   if (it == ranks.end()) {
     // This rank is not in the new group, so no_color split should be called
@@ -1356,7 +1358,7 @@ c10::intrusive_ptr<Backend> ProcessGroupNCCL::split(
   // We use the lowest rank in the group as the split_color as each rank can
   // only participate in one group.
   // This value must be non-negative int32 and all ranks are.
-  ncclOpts->split_color = *std::min_element(ranks.cbegin(), ranks.cend());
+  ncclOpts->split_color = *std::ranges::min_element(ranks);
   auto pg = c10::make_intrusive<ProcessGroupNCCL>(
       store->clone(), groupRank, ranks.size(), ncclOpts);
 #ifdef NCCL_COMM_DESCRIPTION

@@ -1478,7 +1478,7 @@ int64_t LibUVStoreDaemon::add(const std::string& key, int64_t addVal) {
 }
 
 bool LibUVStoreDaemon::checkKeys(const std::vector<std::string>& keys) {
-  return std::all_of(keys.begin(), keys.end(), [&](const std::string& s) {
+  return std::ranges::all_of(keys, [&](const std::string& s) {
     if (tcpStore_.count(s) > 0) {
       return true;
     }

@@ -12,6 +12,8 @@
 
 #include <c10/util/irange.h>
 
+#include <algorithm>
+
 namespace at::native {
 
 static void checkLongTensor(const Tensor& tensor) {
@@ -204,9 +206,9 @@ Tensor pad_sequence(TensorList sequences, bool batch_first, double padding_value
               "Expected padding_side to be one of left or right, but got ", padding_side, ".");
   IntArrayRef max_size = sequences[0].sizes();
   IntArrayRef trailing_dims = max_size.slice(1);
-  int64_t max_len = std::max_element(
-    sequences.begin(),
-    sequences.end(),
+  int64_t max_len = std::ranges::max_element(
+    sequences,
+   
     [](const Tensor &a, const Tensor &b) {
       return a.size(0) < b.size(0);
     }

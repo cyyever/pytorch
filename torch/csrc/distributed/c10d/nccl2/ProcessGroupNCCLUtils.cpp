@@ -2,6 +2,7 @@
 
 #ifdef USE_C10D_NCCL
 
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/nccl2/ProcessGroupNCCL.hpp>
 
 #include <c10/cuda/CUDAGraphsC10Utils.h>
@@ -708,9 +709,9 @@ namespace {
 std::vector<c10::cuda::CUDACachingAllocator::SegmentInfo> poolSegments(
     const c10::cuda::MempoolId_t& id) {
   auto snapshot = c10::cuda::CUDACachingAllocator::snapshot(id);
-  std::sort(
-      snapshot.segments.begin(),
-      snapshot.segments.end(),
+  std::ranges::sort(
+      snapshot.segments,
+
       [](const auto& a, const auto& b) {
         return a.registration_counter < b.registration_counter;
       });

@@ -7,6 +7,8 @@
 #include <ATen/functorch/BatchRulesHelper.h>
 #include <ATen/functorch/PlumbingHelper.h>
 
+#include <numeric>
+
 namespace at::functorch {
 
 // convolution_batch_rule translated from jax with modifications:
@@ -18,7 +20,7 @@ namespace at::functorch {
 static std::tuple<Tensor, std::optional<int64_t>>
 convolution_batch_rule(const Tensor& lhs, std::optional<int64_t> lhs_bdim, const Tensor& rhs, std::optional<int64_t> rhs_bdim, const std::optional<Tensor>& bias, std::optional<int64_t> bias_bdim, c10::SymIntArrayRef stride, c10::SymIntArrayRef padding, c10::SymIntArrayRef dilation, bool transposed, c10::SymIntArrayRef output_padding, c10::SymInt groups) {
   DimVector lhs_spec(stride.size() + 2);
-  std::iota(lhs_spec.begin(), lhs_spec.end(), 0);
+  std::ranges::iota(lhs_spec, 0);
   DimVector rhs_spec = lhs_spec;
   DimVector out_spec = lhs_spec;
   if (transposed) {

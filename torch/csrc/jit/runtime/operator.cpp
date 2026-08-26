@@ -4,6 +4,7 @@
 #include <c10/util/irange.h>
 #include <torch/csrc/jit/frontend/edit_distance.h>
 
+#include <algorithm>
 #include <queue>
 #include <shared_mutex>
 #include <utility>
@@ -431,14 +432,14 @@ std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(Symbol name) {
   // the "first" op may change depending on registration order.
   std::vector<std::shared_ptr<Operator>> sortedOps;
   sortedOps.reserve(unsortedOps.size());
-  std::copy_if(
-      unsortedOps.begin(),
-      unsortedOps.end(),
+  std::ranges::copy_if(
+      unsortedOps,
+     
       std::back_inserter(sortedOps),
       [](const std::shared_ptr<Operator>& op) { return op->isC10Op(); });
-  std::copy_if(
-      unsortedOps.begin(),
-      unsortedOps.end(),
+  std::ranges::copy_if(
+      unsortedOps,
+     
       std::back_inserter(sortedOps),
       [](const std::shared_ptr<Operator>& op) { return !op->isC10Op(); });
   return sortedOps;

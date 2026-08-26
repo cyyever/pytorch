@@ -7,6 +7,8 @@
 #include <c10/util/irange.h>
 #include <ATen/core/function.h>
 
+#include <algorithm>
+
 namespace c10 {
 
 void ClassType::addMethod(torch::jit::Function* method) {
@@ -126,9 +128,9 @@ std::string ClassType::getForwardHookErrorMessage(size_t hook_idx) const {
 }
 
 bool ClassType::isUnresolvedClassAttribute(const std::string& name) const {
-  return std::find(
-      unresolved_class_attributes_.begin(),
-      unresolved_class_attributes_.end(),
+  return std::ranges::find(
+      unresolved_class_attributes_,
+
       name) != unresolved_class_attributes_.end();
 }
 

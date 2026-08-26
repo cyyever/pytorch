@@ -44,9 +44,9 @@ DeviceType parse_type(const std::string& device_string) {
   if (device_string == get_privateuse1_backend()) {
     return DeviceType::PrivateUse1;
   }
-  auto device = std::find_if(
-      types.begin(),
-      types.end(),
+  auto device = std::ranges::find_if(
+      types,
+
       [&device_string](const std::pair<const char*, DeviceType>& p) {
         return p.first && p.first == device_string;
       });

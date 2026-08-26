@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/reducer.hpp>
 
 #include <torch/csrc/distributed/c10d/Utils.hpp>
@@ -1024,9 +1025,9 @@ std::vector<at::Tensor> Reducer::get_variables_for_bucket(
 
 bool Reducer::is_unused_bucket(Bucket& bucket) {
   for (const auto& variable_index : bucket.variable_indices) {
-    if (std::find(
-            unused_parameters_.begin(),
-            unused_parameters_.end(),
+    if (std::ranges::find(
+            unused_parameters_,
+           
             variable_index) == unused_parameters_.end()) {
       return false;
     }
@@ -1982,8 +1983,8 @@ bool Reducer::rebuild_buckets() {
     // first_bucket_bytes_cap} as the bucket order as we would immediately
     // advance to the 2nd element after the first bucket, whereas we only want
     // the last bucket to have a smaller size.
-    std::reverse(rebuilt_params_.begin(), rebuilt_params_.end());
-    std::reverse(rebuilt_param_indices_.begin(), rebuilt_param_indices_.end());
+    std::ranges::reverse(rebuilt_params_);
+    std::ranges::reverse(rebuilt_param_indices_);
   }
   auto [rebuilt_bucket_indices, per_bucket_size_limits] =
       compute_bucket_assignment_by_size(
@@ -1996,8 +1997,8 @@ bool Reducer::rebuild_buckets() {
   if (ddp_set_last_bucket_as_small) {
     // Reverse again because buckets were rebuilt in the opposite of gradient
     // ready order.
-    std::reverse(rebuilt_bucket_indices.begin(), rebuilt_bucket_indices.end());
-    std::reverse(per_bucket_size_limits.begin(), per_bucket_size_limits.end());
+    std::ranges::reverse(rebuilt_bucket_indices);
+    std::ranges::reverse(per_bucket_size_limits);
   }
 
   if (ddp_debug_level_ != c10d::DebugLevel::Off) {
@@ -2340,17 +2341,17 @@ compute_bucket_assignment_by_size(
   // produced). This sorting step ensures that the buckets are ready in
   // consecutive order.
   if (tensor_indices.empty()) {
-    std::sort(
-        result.begin(),
-        result.end(),
+    std::ranges::sort(
+        result,
+       
         [](const std::tuple<std::vector<size_t>, size_t>& a,
            const std::tuple<std::vector<size_t>, size_t>& b) {
           const auto& indices_a = std::get<0>(a);
           const auto& indices_b = std::get<0>(b);
           const auto amin =
-              std::min_element(indices_a.begin(), indices_a.end());
+              std::ranges::min_element(indices_a);
           const auto bmin =
-              std::min_element(indices_b.begin(), indices_b.end());
+              std::ranges::min_element(indices_b);
           return *amin < *bmin;
         });
   }

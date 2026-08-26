@@ -985,9 +985,9 @@ void generateForwardBackwardLinks(
 
   // We need to visit the events in chronological order.
   // So we sort them by end_time_ns_ before processing.
-  std::sort(
-      torch_events.begin(),
-      torch_events.end(),
+  std::ranges::sort(
+      torch_events,
+
       [](const result_activity_t& left, const result_activity_t& right) {
         auto left_end_time =
             std::get<ExtraFields<EventType::TorchOp>>(left.first->extra_fields_)
@@ -1009,7 +1009,7 @@ static constexpr const char* indexKey = "Ev Idx";
 
 static std::string sanitizeNameForKinetoJSON(std::string name) {
   // Kineto's Chrome trace writer quotes names itself but does not escape '"'.
-  std::replace(name.begin(), name.end(), '"', '\'');
+  std::ranges::replace(name, '"', '\'');
   return name;
 }
 
@@ -1720,7 +1720,7 @@ RecordQueue::getRecords(
   }
 
   if (config_.experimental_config.adjust_timestamps) {
-    std::stable_sort(out.begin(), out.end(), [](const auto& a, const auto& b) {
+    std::ranges::stable_sort(out, [](const auto& a, const auto& b) {
       return a->start_time_ns_ < b->start_time_ns_;
     });
     build_tree(out);
@@ -1735,7 +1735,7 @@ RecordQueue::getRecords(
 
   auto trace = addKinetoEvents(out, start_time_ns, end_time_ns, config_);
 
-  std::stable_sort(out.begin(), out.end(), [](const auto& a, const auto& b) {
+  std::ranges::stable_sort(out, [](const auto& a, const auto& b) {
     return a->start_time_ns_ < b->start_time_ns_;
   });
 

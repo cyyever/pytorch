@@ -41,7 +41,7 @@ struct MultiType : public Type {
       : types(accepted_types) {}
 
   bool is_matching(PyObject* object) override {
-    auto it = std::find(types.begin(), types.end(), py_typename(object));
+    auto it = std::ranges::find(types, py_typename(object));
     return it != types.end();
   }
 

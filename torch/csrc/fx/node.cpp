@@ -458,8 +458,8 @@ static PyObject* NodeBase___lt__(PyObject* self, PyObject* other) {
   }
   const NodeSortKey& lhs = reinterpret_cast<NodeBase*>(self)->sort_key();
   const NodeSortKey& rhs = reinterpret_cast<NodeBase*>(other)->sort_key();
-  bool less = std::lexicographical_compare(
-      lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+  bool less = std::ranges::lexicographical_compare(
+      lhs, rhs);
   if (less)
     Py_RETURN_TRUE;
   Py_RETURN_FALSE;
@@ -473,8 +473,8 @@ static PyObject* NodeBase___gt__(PyObject* self, PyObject* other) {
   const NodeSortKey& lhs = reinterpret_cast<NodeBase*>(self)->sort_key();
   const NodeSortKey& rhs = reinterpret_cast<NodeBase*>(other)->sort_key();
   // "a > b" is equivalent to "b < a"
-  bool greater = std::lexicographical_compare(
-      rhs.begin(), rhs.end(), lhs.begin(), lhs.end());
+  bool greater = std::ranges::lexicographical_compare(
+      rhs, lhs);
   if (greater)
     Py_RETURN_TRUE;
   Py_RETURN_FALSE;

@@ -23,6 +23,7 @@ C10_DIAGNOSTIC_POP()
 #include <c10/cuda/CUDAException.h>
 #include <c10/util/env.h>
 
+#include <algorithm>
 #include <list>
 #include <unordered_map>
 
@@ -767,8 +768,8 @@ void generate_and_filter_plans(
       generator.cudnnGetPlan(handle, opGraph, initial_predicate_function);
   int64_t max_block_size = get_available_workspace();
   int64_t max_workspace_size = 0;
-  std::for_each(
-      plans.begin(), plans.end(), [&](cudnn_frontend::ExecutionPlan& plan) {
+  std::ranges::for_each(
+      plans, [&](cudnn_frontend::ExecutionPlan& plan) {
         int64_t curr_workspace_size = plan.getWorkspaceSize();
         if (curr_workspace_size <= max_block_size) {
           if (curr_workspace_size > max_workspace_size) {

@@ -26,6 +26,7 @@
 #include <c10/core/TensorOptions.h>
 #include <c10/util/irange.h>
 
+#include <algorithm>
 #include <utility>
 
 namespace at::meta {
@@ -521,7 +522,7 @@ static Tensor cross_entropy_loss_prob_target(
     Tensor weight_ = weight;
     if (input.dim() > 1) {
         auto weight_broadcast_shape = SmallBuffer<int64_t, 5>(input.dim());
-        std::fill(weight_broadcast_shape.begin(), weight_broadcast_shape.end(), 1);
+        std::ranges::fill(weight_broadcast_shape, 1);
         weight_broadcast_shape[1] = weight.size(0);
         weight_ = weight.view(weight_broadcast_shape);
     }
@@ -575,7 +576,7 @@ static Tensor cross_entropy_loss_label_smoothing(
     if (weight.defined()) {
       // Expand weight to the correct number of dims for broadcasting with input / target
       auto weight_broadcast_shape = SmallBuffer<int64_t, 5>(input.dim());
-      std::fill(weight_broadcast_shape.begin(), weight_broadcast_shape.end(), 1);
+      std::ranges::fill(weight_broadcast_shape, 1);
       weight_broadcast_shape[class_dim] = weight.size(0);
       Tensor weight_ = weight.view(weight_broadcast_shape);
 

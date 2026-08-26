@@ -2,6 +2,7 @@
 
 #ifdef USE_C10D_NCCL
 
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/nccl2/ProcessGroupNCCL.hpp>
 
 #include <algorithm>
@@ -357,9 +358,9 @@ c10::intrusive_ptr<::c10d::Backend> ProcessGroupNCCL::split(
   // A rank not in `ranks` uses NCCL_SPLIT_NOCOLOR and produces no child comm.
   int color = NCCL_SPLIT_NOCOLOR;
   int newRank = -1;
-  auto it = std::find(ranks.begin(), ranks.end(), getRank());
+  auto it = std::ranges::find(ranks, getRank());
   if (it != ranks.end()) {
-    color = *std::min_element(ranks.begin(), ranks.end());
+    color = *std::ranges::min_element(ranks);
     newRank = static_cast<int>(std::distance(ranks.begin(), it));
   }
 
