@@ -22,10 +22,10 @@ endif()
 # ---[ Checks if linker supports -rdynamic. `-rdynamic` tells linker
 # -to add all (including unused) symbols into the dynamic symbol
 # -table. We need this to get symbols when generating backtrace at
-# -runtime.
+# -runtime. It only does anything when linking an executable; a shared
+# -library already exports whatever its visibility settings allow.
 check_cxx_compiler_flag("-rdynamic" COMPILER_SUPPORTS_RDYNAMIC)
   if(${COMPILER_SUPPORTS_RDYNAMIC})
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -rdynamic")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
   endif()
 
