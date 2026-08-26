@@ -193,8 +193,6 @@ Tensor& copy_(
     Tensor& self,
     const Tensor& src,
     bool non_blocking) {
-  // TODO: once copy is exposed in Declarations.yaml we may be able to bind
-  // it automatically
   auto& self_ = unpack(self, "self", 0);
   auto& src_ = unpack(src, "src", 1);
   c10::intrusive_ptr<CopyBackwards> grad_fn;
