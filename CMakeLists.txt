@@ -202,7 +202,6 @@ string(APPEND CMAKE_CUDA_FLAGS
        " -DLIBCUDACXX_ENABLE_SIMPLIFIED_COMPLEX_OPERATIONS")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_LINK_WHAT_YOU_USE TRUE)
 
 # One variable that determines whether the current cmake process is being run
 # with the main Caffe2 library. This is useful for building modules - if modules
@@ -576,14 +575,7 @@ if(USE_LIGHTWEIGHT_DISPATCH AND NOT STATIC_DISPATCH_BACKEND)
 endif()
 option(TRACING_BASED
        "Master flag to build Lite Interpreter with tracing build option" OFF)
-# This is a fix for a rare build issue on Ubuntu: symbol lookup error:
-# miniconda3/envs/pytorch-py3.7/lib/libmkl_intel_lp64.so: undefined symbol:
-# mkl_blas_dsyrk
-# https://software.intel.com/en-us/articles/symbol-lookup-error-when-linking-intel-mkl-with-gcc-on-ubuntu
 if(LINUX)
-  set(CMAKE_SHARED_LINKER_FLAGS
-      "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
-
   set(ENV_LDFLAGS "$ENV{LDFLAGS}")
   string(STRIP "${ENV_LDFLAGS}" ENV_LDFLAGS)
   # Do not append linker flags passed via env var if they already there
@@ -752,6 +744,14 @@ endif()
 # aotriton build decision later.
 
 include(cmake/Dependencies.cmake)
+
+# MKL resolves symbols between its own sub-libraries, so the linker must keep
+# every one of them in DT_NEEDED even though torch references only some. Without
+# this, libmkl_intel_lp64.so fails at run time with undefined symbol mkl_blas_dsyrk.
+# https://software.intel.com/en-us/articles/symbol-lookup-error-when-linking-intel-mkl-with-gcc
+if(LINUX AND CAFFE2_USE_MKL)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
+endif()
 
 cmake_dependent_option(
   USE_FLASH_ATTENTION
