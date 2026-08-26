@@ -93,17 +93,14 @@ class C10_API Scalar {
   // Value* is both implicitly convertible to SymbolicVariable and bool which
   // causes ambiguity error. Specialized constructor for bool resolves this
   // problem.
-  template <
-      typename T,
-      typename std::enable_if_t<std::is_same_v<T, bool>, bool>* = nullptr>
+  template <typename T>
+    requires std::is_same_v<T, bool>
   Scalar(T vv) : tag(Tag::HAS_b) {
     v.i = convert<int64_t, bool>(vv);
   }
 
-  template <
-      typename T,
-      typename std::enable_if_t<std::is_same_v<T, c10::SymBool>, bool>* =
-          nullptr>
+  template <typename T>
+    requires std::is_same_v<T, c10::SymBool>
   Scalar(T vv) : tag(Tag::HAS_sb) {
     v.i = convert<int64_t, c10::SymBool>(vv);
   }
@@ -243,9 +240,8 @@ class C10_API Scalar {
   Scalar conj() const;
   Scalar log() const;
 
-  template <
-      typename T,
-      typename std::enable_if_t<!c10::is_complex<T>::value, int> = 0>
+  template <typename T>
+    requires (!c10::is_complex<T>::value)
   bool equal(T num) const {
     if (isComplex()) {
       TORCH_INTERNAL_ASSERT(!isSymbolic());
@@ -276,9 +272,8 @@ class C10_API Scalar {
     }
   }
 
-  template <
-      typename T,
-      typename std::enable_if_t<c10::is_complex<T>::value, int> = 0>
+  template <typename T>
+    requires c10::is_complex<T>::value
   bool equal(T num) const {
     if (isComplex()) {
       TORCH_INTERNAL_ASSERT(!isSymbolic());
@@ -419,27 +414,20 @@ class C10_API Scalar {
     v_t() {} // default constructor
   } v;
 
-  template <
-      typename T,
-      typename std::enable_if_t<
-          std::is_integral_v<T> && !std::is_same_v<T, bool>,
-          bool>* = nullptr>
+  template <typename T>
+    requires (std::is_integral_v<T> && !std::is_same_v<T, bool>)
   Scalar(T vv, bool /*unused*/) : tag(Tag::HAS_i) {
     v.i = convert<decltype(v.i), T>(vv);
   }
 
-  template <
-      typename T,
-      typename std::enable_if_t<
-          !std::is_integral_v<T> && !c10::is_complex<T>::value,
-          bool>* = nullptr>
+  template <typename T>
+    requires (!std::is_integral_v<T> && !c10::is_complex<T>::value)
   Scalar(T vv, bool /*unused*/) : tag(Tag::HAS_d) {
     v.d = convert<decltype(v.d), T>(vv);
   }
 
-  template <
-      typename T,
-      typename std::enable_if_t<c10::is_complex<T>::value, bool>* = nullptr>
+  template <typename T>
+    requires c10::is_complex<T>::value
   Scalar(T vv, bool /*unused*/) : tag(Tag::HAS_z) {
     v.z = convert<decltype(v.z), T>(vv);
   }
