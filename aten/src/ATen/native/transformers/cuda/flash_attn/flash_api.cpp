@@ -16,10 +16,6 @@
 #include <c10/cuda/CUDAGuard.h>
 #include <ATen/cuda/CUDAGraphsUtils.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/zeros_like.h>
@@ -30,7 +26,6 @@
 #include <ATen/ops/narrow.h>
 #include <ATen/ops/pad.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 
 C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")

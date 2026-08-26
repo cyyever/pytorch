@@ -7,15 +7,10 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/native/SparseTensorUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
 #include <ATen/ops/result_type.h>
-#endif
 
 #ifdef GPUCC
 #define NAME "sparse_binary_op_intersection_cuda"

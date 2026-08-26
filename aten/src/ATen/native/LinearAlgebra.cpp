@@ -25,10 +25,6 @@
 #include <c10/util/irange.h>
 #include <variant>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_addmm_activation_native.h>
 #include <ATen/ops/_compute_linear_combination_native.h>
 #include <ATen/ops/_convert_weight_to_int4pack_for_cpu_native.h>
@@ -147,7 +143,6 @@
 #include <ATen/ops/where.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 #include <limits>
 #include <numeric>

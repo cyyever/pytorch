@@ -4,14 +4,8 @@
 #include <ATen/SparseTensorImpl.h>
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/Operators.h>
-#else
 #include <ATen/ops/_sparse_compressed_tensor_unsafe.h>
 #include <ATen/ops/resize_as_sparse_native.h>
-#endif
 
 #define AT_DISPATCH_ALL_SPARSE_COMPRESSED_LAYOUTS(LAYOUT, NAME, ...) \
   [&] {                                                              \

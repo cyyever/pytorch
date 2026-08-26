@@ -16,11 +16,7 @@
 #include "torch/csrc/utils/structseq.h"
 #include "torch/csrc/utils/device_lazy_init.h"
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 $ops_headers
-#endif
 
 using at::Tensor;
 using at::Device;

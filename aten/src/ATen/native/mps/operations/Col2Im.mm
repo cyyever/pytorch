@@ -2,12 +2,7 @@
 #include <ATen/native/im2col_shape_check.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/col2im_native.h>
-#endif
 
 namespace at::native {
 using namespace mps;

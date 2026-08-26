@@ -28,10 +28,6 @@ C10_DIAGNOSTIC_POP()
 #include <utility>
 #include <vector>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_embedding_bag.h>
 #include <ATen/ops/_embedding_bag_backward_native.h>
 #include <ATen/ops/_embedding_bag_dense_backward.h>
@@ -50,7 +46,6 @@ C10_DIAGNOSTIC_POP()
 #include <ATen/ops/resize_native.h>
 #include <ATen/ops/zero_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

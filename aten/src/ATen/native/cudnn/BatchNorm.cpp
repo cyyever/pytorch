@@ -10,12 +10,8 @@
 
 #if !AT_CUDNN_ENABLED()
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cudnn_batch_norm_backward_native.h>
 #include <ATen/ops/cudnn_batch_norm_native.h>
-#endif
 
 namespace at {
 namespace native {
@@ -82,15 +78,10 @@ size_t _get_cudnn_batch_norm_reserve_space_size(
 #include <ATen/cudnn/Descriptors.h>
 #include <ATen/cudnn/Types.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cudnn_batch_norm_backward_native.h>
 #include <ATen/ops/cudnn_batch_norm_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
-#endif
 
 namespace at::native {
 

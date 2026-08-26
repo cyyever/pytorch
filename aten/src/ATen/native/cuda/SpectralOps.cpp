@@ -12,10 +12,6 @@
 #include <ATen/cuda/nvrtc_stub/ATenNVRTC.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_fft_c2c_native.h>
 #include <ATen/ops/_fft_c2r_native.h>
 #include <ATen/ops/_fft_r2c_native.h>
@@ -23,7 +19,6 @@
 #include <ATen/ops/mul.h>
 #include <ATen/ops/view_as_complex.h>
 #include <ATen/ops/view_as_real.h>
-#endif
 
 #include <cufft.h>
 #include <cufftXt.h>

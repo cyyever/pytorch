@@ -9,16 +9,11 @@
 #include <ATen/cuda/Atomic.cuh>
 #include <ATen/cuda/CUDAApplyUtils.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/aminmax.h>
 #include <ATen/ops/bincount_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/histc_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at {
 namespace cuda {

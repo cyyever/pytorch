@@ -7,13 +7,8 @@
 #include <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #endif
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_softmax_backward_data_native.h>
 #include <ATen/ops/_softmax_native.h>
-#endif
 
 namespace at::native {
 

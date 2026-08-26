@@ -3,15 +3,10 @@
 #include <ATen/native/LinearAlgebraUtils.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/addmv_native.h>
 #include <ATen/ops/dot_native.h>
 #include <ATen/ops/mm.h>
 #include <ATen/ops/vdot_native.h>
-#endif
 
 #ifdef __OBJC__
 #include <MetalPerformanceShaders/MetalPerformanceShaders.h>

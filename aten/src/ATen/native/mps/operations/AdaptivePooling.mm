@@ -3,10 +3,6 @@
 #include <ATen/native/Pool.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_adaptive_avg_pool2d_backward_native.h>
 #include <ATen/ops/_adaptive_avg_pool2d_native.h>
 #include <ATen/ops/adaptive_avg_pool2d.h>
@@ -15,7 +11,6 @@
 #include <ATen/ops/avg_pool2d_backward.h>
 #include <ATen/ops/mul.h>
 #include <ATen/ops/ones_like.h>
-#endif
 namespace at::native {
 namespace mps {
 static void set_kernel_params(int64_t isizeH,

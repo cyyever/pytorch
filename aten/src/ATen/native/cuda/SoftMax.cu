@@ -17,10 +17,6 @@
 #include <ATen/native/IndexingUtils.h>
 #include <ATen/native/cuda/block_reduce.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_masked_softmax_native.h>
 #include <ATen/ops/_log_softmax_native.h>
 #include <ATen/ops/_log_softmax_backward_data_native.h>
@@ -28,7 +24,6 @@
 #include <ATen/ops/_softmax_backward_data_native.h>
 #include <ATen/ops/softmax.h>
 #include <ATen/ops/_softmax_backward_data.h>
-#endif
 
 namespace at::native {
 

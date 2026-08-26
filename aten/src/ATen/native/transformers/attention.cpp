@@ -22,10 +22,6 @@
 #include <limits>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_fused_sdp_choice_native.h>
 #include <ATen/ops/_fused_sdp_choice_ops.h>
 #include <ATen/ops/_masked_softmax.h>
@@ -68,7 +64,6 @@
 #include <ATen/ops/_safe_softmax.h>
 #include <ATen/ops/_safe_softmax_native.h>
 #include <ATen/ops/all.h>
-#endif
 
 #include <ATen/native/nested/NestedTensorTransformerFunctions.h>
 namespace at::native {

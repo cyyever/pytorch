@@ -641,11 +641,6 @@ def gen_aoti_c_shim(
         )
     )
     device = "aten" if dispatch_key is None else dispatch_key.lower()
-    include_device_functions = (
-        "#include <ATen/Functions.h>"
-        if dispatch_key is None
-        else f"#include <ATen/{str(dispatch_key)}Functions.h>"
-    )
     aten_warning = (
         (
             "\n\n// This file corresponds to the aten_shimified_ops list in torchgen/aoti/fallback_ops.py\n"
@@ -690,17 +685,9 @@ def gen_aoti_c_shim(
             #include <torch/csrc/inductor/aoti_torch/generated/{"extend/" if extend_aoti_c_shim else ""}c_shim_{device}.h>
             #include <torch/csrc/inductor/aoti_torch/utils.h>
 
-            #ifndef AT_PER_OPERATOR_HEADERS
-            {include_device_functions}
-            #include <ATen/CompositeExplicitAutogradFunctions.h>
-            #include <ATen/CompositeExplicitAutogradNonFunctionalFunctions.h>
-            #include <ATen/CompositeImplicitAutogradFunctions.h>
-            #else
             """)
             + includes
             + textwrap.dedent("""
-            #endif // AT_PER_OPERATOR_HEADERS
-
             using namespace torch::aot_inductor;
 
             """)

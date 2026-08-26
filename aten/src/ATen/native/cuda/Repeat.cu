@@ -4,11 +4,7 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/native/Repeat.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/repeat_interleave_native.h>
-#endif
 
 template <typename index_t>
 __global__ static void compute_cuda_kernel(

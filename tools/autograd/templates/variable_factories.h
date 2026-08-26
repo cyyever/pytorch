@@ -10,12 +10,8 @@
 #include <torch/csrc/api/include/torch/detail/TensorDataContainer.h>
 #include <torch/csrc/autograd/variable.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/from_blob.h>
 $ops_headers
-#endif
 
 #include <functional>
 #include <initializer_list>

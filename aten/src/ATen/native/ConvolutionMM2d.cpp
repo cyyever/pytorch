@@ -10,17 +10,12 @@
 #include <c10/util/irange.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_slow_conv2d_backward_native.h>
 #include <ATen/ops/_slow_conv2d_forward.h>
 #include <ATen/ops/_slow_conv2d_forward_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/sum.h>
 #include <ATen/ops/thnn_conv2d_native.h>
-#endif
 
 namespace at::native {
 

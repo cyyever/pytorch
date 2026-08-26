@@ -7,10 +7,6 @@
 #include <c10/util/irange.h>
 #include <ATen/OpMathType.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/empty_like_native.h>
@@ -24,7 +20,6 @@
 #include <ATen/ops/rsqrt.h>
 #include <ATen/ops/rms_norm.h>
 #include <ATen/ops/zeros_like_native.h>
-#endif
 
 #ifdef USE_MPS
 #include <c10/core/GradMode.h>

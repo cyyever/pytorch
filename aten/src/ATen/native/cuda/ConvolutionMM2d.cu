@@ -8,15 +8,10 @@
 #include <ATen/native/Resize.h>
 #include <ATen/native/cuda/im2col.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_slow_conv2d_forward_native.h>
 #include <ATen/ops/_slow_conv2d_backward_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/sum.h>
-#endif
 
 namespace at::native {
 namespace {

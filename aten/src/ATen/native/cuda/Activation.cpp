@@ -7,17 +7,12 @@
 #include <ATen/WrapDimUtils.h>
 #include <ATen/native/Resize.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/gelu_backward_native.h>
 #include <ATen/ops/gelu_native.h>
 #include <ATen/ops/glu_backward_native.h>
 #include <ATen/ops/log_sigmoid_forward_native.h>
-#endif
 
 namespace at::native {
 

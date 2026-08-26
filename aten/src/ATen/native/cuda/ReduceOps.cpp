@@ -10,12 +10,7 @@
 #include <ATen/TensorUtils.h>
 #include <ATen/TensorIterator.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/imag.h>
-#endif
 
 namespace at::native {
 namespace {

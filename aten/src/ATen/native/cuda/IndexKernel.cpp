@@ -6,16 +6,10 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/MemoryOverlap.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/CUDAFunctions.h>
-#else
 #include <ATen/ops/index_cuda_dispatch.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/masked_scatter_native.h>
 #include <ATen/ops/masked_select_native.h>
-#endif
 
 
 namespace at::native {

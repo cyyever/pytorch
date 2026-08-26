@@ -4,15 +4,10 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/StatelessPhilox4x32.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_philox_key_fold_in_native.h>
 #include <ATen/ops/_philox_key_split_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
-#endif
 
 namespace at::native {
 

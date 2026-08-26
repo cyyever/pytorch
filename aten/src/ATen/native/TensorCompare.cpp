@@ -17,10 +17,6 @@
 #include <c10/util/Exception.h>
 #include <iostream>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_assert_async_native.h>
 #include <ATen/ops/_assert_scalar_native.h>
 #include <ATen/ops/_functional_assert_async_native.h>
@@ -72,7 +68,6 @@
 #include <ATen/ops/zeros_like.h>
 
 #include <utility>
-#endif
 
 namespace at::meta {
 

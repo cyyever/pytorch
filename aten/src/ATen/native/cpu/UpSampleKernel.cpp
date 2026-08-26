@@ -11,13 +11,9 @@
 #include <ATen/native/cpu/UpSampleKernelAVXAntialias.h>
 #include <ATen/native/cpu/UpSampleKernelNEONAntialias.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/ones.h>
-#endif
 
 namespace at::native {
 namespace {

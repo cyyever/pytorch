@@ -4,15 +4,10 @@
 #include <tuple>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/conv_tbc_backward_native.h>
 #include <ATen/ops/conv_tbc_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 namespace at::native {
 

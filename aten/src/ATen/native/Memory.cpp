@@ -5,18 +5,12 @@
 #include <c10/core/Storage.h>
 #include <ATen/EmptyTensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/CPUFunctions.h>
-#else
 #include <ATen/ops/_debug_has_internal_overlap_native.h>
 #include <ATen/ops/_pin_memory.h>
 #include <ATen/ops/is_pinned_native.h>
 #include <ATen/ops/pin_memory_native.h>
 #include <ATen/ops/_pin_memory_native.h>
 #include <ATen/ops/empty_cpu_dispatch.h>
-#endif
 
 namespace at::native {
 

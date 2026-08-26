@@ -11,10 +11,6 @@
 
 #include <c10/util/MathConstants.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_conj_native.h>
 #include <ATen/ops/_conj_physical.h>
 #include <ATen/ops/_conj_physical_native.h>
@@ -162,7 +158,6 @@
 #include <ATen/ops/trunc.h>
 #include <ATen/ops/trunc_native.h>
 #include <ATen/ops/view_as_real.h>
-#endif
 
 #include <cmath>
 

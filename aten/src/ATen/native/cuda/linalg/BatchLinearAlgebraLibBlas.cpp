@@ -31,9 +31,6 @@
 #include <ATen/native/cuda/linalg/CUDASolver.h>
 #include <ATen/native/cuda/linalg/BatchLinearAlgebraLib.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/nan_to_num.h>
@@ -41,7 +38,6 @@
 #include <ATen/ops/scalar_tensor.h>
 #include <ATen/ops/where.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

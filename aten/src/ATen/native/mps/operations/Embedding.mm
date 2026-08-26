@@ -7,13 +7,8 @@
 
 #include <fmt/format.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/embedding_dense_backward_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

@@ -3,10 +3,6 @@
 #include <ATen/TensorIterator.h>
 #include <ATen/cuda/CUDAGeneratorImpl.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_dirichlet_grad_native.h>
 #include <ATen/ops/_sample_dirichlet_native.h>
 #include <ATen/ops/_standard_gamma_grad_native.h>
@@ -14,7 +10,6 @@
 #include <ATen/ops/binomial_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/poisson_native.h>
-#endif
 
 namespace at::native {
 

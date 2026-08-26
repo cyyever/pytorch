@@ -15,17 +15,12 @@
 #include <ATen/native/cuda/block_reduce.cuh>
 #include <ATen/native/cuda/thread_constants.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/embedding_dense_backward_native.h>
 #include <ATen/ops/embedding_renorm_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

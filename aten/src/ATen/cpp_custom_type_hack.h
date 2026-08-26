@@ -51,11 +51,7 @@
 #include <ATen/TracerMode.h>
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
-#endif
 
 namespace at::cpp_custom_type_hack {
 

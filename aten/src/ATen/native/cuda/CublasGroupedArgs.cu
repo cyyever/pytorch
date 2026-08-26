@@ -5,11 +5,7 @@
 #include <cuda_runtime.h>
 #include <algorithm>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
-#endif
 
 namespace at::native {
 

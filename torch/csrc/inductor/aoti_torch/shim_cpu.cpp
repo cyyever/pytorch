@@ -5,10 +5,6 @@
 #include <torch/csrc/inductor/aoti_torch/c/shim_cpu.h>
 #include <torch/csrc/inductor/aoti_torch/utils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/CPUFunctions.h>
-#else
-#endif
 
 using namespace torch::aot_inductor;
 

@@ -10,11 +10,6 @@
 #include <c10/util/irange.h>
 #include <c10/util/strides.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/ATen.h>
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_to_copy.h>
 #include <ATen/ops/lift.h>
 #include <ATen/ops/lift_fresh.h>
@@ -24,7 +19,6 @@
 #include <ATen/ops/_unsafe_view.h>
 
 #include <utility>
-#endif
 
 namespace at::functionalization {
 

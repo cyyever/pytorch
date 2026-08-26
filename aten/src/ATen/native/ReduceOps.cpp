@@ -16,10 +16,6 @@
 #include <ATen/core/grad_mode.h>
 #include <ATen/TensorSubclassLikeUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cummax_helper.h>
 #include <ATen/ops/_cummax_helper_native.h>
 #include <ATen/ops/_cummin_helper.h>
@@ -121,7 +117,6 @@
 #include <ATen/ops/where.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 #include <c10/util/irange.h>
 #include <c10/util/SmallBuffer.h>

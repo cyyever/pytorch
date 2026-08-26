@@ -8,11 +8,7 @@
 
 // ${generated_comment}
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Operators.h>
-#else
 $ops_headers
-#endif
 
 using namespace at;
 using torch::autograd::CreationMeta;

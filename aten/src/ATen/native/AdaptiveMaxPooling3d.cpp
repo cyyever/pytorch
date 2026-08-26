@@ -6,12 +6,8 @@
 
 #include <ATen/native/AdaptivePooling.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/adaptive_max_pool3d_backward_native.h>
 #include <ATen/ops/adaptive_max_pool3d_native.h>
-#endif
 
 namespace at::meta {
 TORCH_META_FUNC(adaptive_max_pool3d) (const Tensor& input, IntArrayRef output_size) {

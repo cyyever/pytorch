@@ -26,11 +26,7 @@ C10_DIAGNOSTIC_POP()
 #include <list>
 #include <unordered_map>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
-#endif
 
 #ifdef __linux__
 #include <dlfcn.h>

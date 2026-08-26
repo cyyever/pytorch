@@ -4,15 +4,10 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/ScalarOps.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/float_power_native.h>
 #include <ATen/ops/pow.h>
 #include <ATen/ops/pow_native.h>
 #include <ATen/ops/result_type.h>
-#endif
 
 namespace at::meta {
 

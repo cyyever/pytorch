@@ -4,13 +4,8 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/TensorIterator.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_compute_linear_combination_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

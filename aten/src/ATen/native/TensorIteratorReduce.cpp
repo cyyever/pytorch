@@ -3,11 +3,7 @@
 #include <ATen/TensorIterator.h>
 #include <ATen/TensorIteratorInternal.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
-#endif
 
 #include <c10/util/irange.h>
 

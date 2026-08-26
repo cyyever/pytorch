@@ -8,10 +8,6 @@
 #include <ATen/SparseTensorImpl.h>
 #include <ATen/native/LinearAlgebraUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_convert_indices_from_csr_to_coo.h>
 #include <ATen/ops/_nnz_native.h>
 #include <ATen/ops/_pin_memory_native.h>
@@ -52,7 +48,6 @@
 #include <ATen/ops/values_native.h>
 #include <ATen/ops/_validate_compressed_sparse_indices.h>
 #include <ATen/ops/where.h>
-#endif
 
 namespace at::native {
 

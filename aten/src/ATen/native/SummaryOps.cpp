@@ -7,13 +7,8 @@
 
 #include <limits>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/bincount_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

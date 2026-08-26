@@ -6,15 +6,10 @@
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/aminmax.h>
 #include <ATen/ops/sum.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like_ops.h>
-#endif
 
 #include <algorithm>
 #include <numeric>

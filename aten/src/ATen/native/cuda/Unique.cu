@@ -7,9 +7,6 @@
 #include <c10/util/Load.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/_unique2_native.h>
 #include <ATen/ops/_unique_native.h>
 #include <ATen/ops/arange.h>
@@ -17,7 +14,6 @@
 #include <ATen/ops/unique_consecutive_native.h>
 #include <ATen/ops/unique_dim_consecutive_native.h>
 #include <ATen/ops/unique_dim_native.h>
-#endif
 
 #include <tuple>
 #include <iterator>

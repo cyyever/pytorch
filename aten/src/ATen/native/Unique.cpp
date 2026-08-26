@@ -8,10 +8,6 @@
 #include <c10/util/irange.h>
 #include <c10/util/Load.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_unique2_native.h>
 #include <ATen/ops/_unique_native.h>
 #include <ATen/ops/empty.h>
@@ -25,7 +21,6 @@
 #include <ATen/ops/unique_dim_consecutive_native.h>
 #include <ATen/ops/unique_dim_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

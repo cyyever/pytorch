@@ -11,14 +11,9 @@
 #include <c10/util/irange.h>
 #include <tuple>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/slow_conv_dilated2d_native.h>
 #include <ATen/ops/slow_conv_dilated3d_native.h>
-#endif
 
 namespace at::native {
 namespace {

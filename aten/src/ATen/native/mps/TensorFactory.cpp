@@ -12,10 +12,6 @@
 #include <ATen/native/mps/TensorFactory.h>
 #include <ATen/Dispatch.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#endif
 #include <ATen/ops/_efficientzerotensor_native.h>
 
 #include <utility>

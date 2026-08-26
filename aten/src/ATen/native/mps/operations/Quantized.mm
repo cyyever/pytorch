@@ -1,16 +1,11 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
+#include <ATen/mps/MPSProfiler.h>
+#include <ATen/native/mps/OperationUtils.h>
 #include <ATen/ops/_convert_weight_to_int4pack_native.h>
 #include <ATen/ops/_weight_int4pack_mm_native.h>
 #include <ATen/ops/_weight_int8pack_mm_native.h>
 #include <ATen/ops/empty.h>
-#endif
-#include <ATen/mps/MPSProfiler.h>
-#include <ATen/native/mps/OperationUtils.h>
 #include <fmt/format.h>
 
 // #define _CAPTURE_KERNEL 1

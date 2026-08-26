@@ -1,13 +1,8 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
+#include <ATen/native/mps/OperationUtils.h>
 #include <ATen/ops/_fused_rms_norm_native.h>
 #include <ATen/ops/empty_like.h>
-#endif
-#include <ATen/native/mps/OperationUtils.h>
 #include <fmt/format.h>
 
 namespace at::native {

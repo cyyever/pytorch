@@ -11,14 +11,9 @@
 #include <ATen/native/cuda/im2col.cuh>
 #include <ATen/native/im2col_shape_check.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/col2im_native.h>
 #include <ATen/ops/im2col_native.h>
-#endif
 
 namespace at::native {
 namespace {

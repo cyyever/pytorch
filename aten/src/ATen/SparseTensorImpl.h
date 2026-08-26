@@ -6,12 +6,8 @@
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/resize.h>
-#endif
 
 namespace at {
 struct TORCH_API SparseTensorImpl : public TensorImpl {

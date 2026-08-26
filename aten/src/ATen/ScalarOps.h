@@ -3,11 +3,7 @@
 #include <ATen/Tensor.h>
 #include <c10/core/Scalar.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/scalar_tensor.h>
-#endif
 
 namespace at::detail {
 // When filling a number to 1-element CPU tensor, we want to skip

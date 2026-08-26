@@ -12,16 +12,11 @@
 #include <c10/util/safe_numerics.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/slow_conv3d_forward.h>
 #include <ATen/ops/slow_conv3d_forward_native.h>
 #include <ATen/ops/slow_conv3d_native.h>
 #include <ATen/ops/sum.h>
-#endif
 
 constexpr int64_t CONV3D_GRAIN_SALT = 20;
 

@@ -5,11 +5,7 @@
 #include <ATen/native/DispatchStub.h>
 #include <ATen/native/NonEmptyUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/arange.h>
-#endif
 
 namespace at::native {
 

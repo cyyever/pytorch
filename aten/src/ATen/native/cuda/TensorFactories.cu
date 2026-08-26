@@ -12,10 +12,6 @@
 #include <c10/util/Exception.h>
 #include <ATen/native/cuda/Loops.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_efficientzerotensor_native.h>
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/empty_strided_native.h>
@@ -25,7 +21,6 @@
 #include <ATen/ops/triu_indices_native.h>
 #include <ATen/ops/triu_native.h>
 #include <ATen/ops/zero_native.h>
-#endif
 
 #include <algorithm>
 #include <cmath>

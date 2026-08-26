@@ -7,14 +7,9 @@
 #include <c10/cuda/CUDAGraphsC10Utils.h>
 #include <c10/util/TypeCast.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_chunk_cat_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/split_with_sizes_copy_native.h>
-#endif
 
 namespace at::native {
 

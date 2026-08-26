@@ -12,13 +12,9 @@
 #include <ATen/native/Resize.h>
 #include <ATen/TensorIteratorInternal.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/empty_strided.h>
-#endif
 
 #include <c10/util/irange.h>
 #include <c10/util/SmallBuffer.h>

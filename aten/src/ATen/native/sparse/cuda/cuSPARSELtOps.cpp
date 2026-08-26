@@ -4,13 +4,9 @@
 #include <vector>
 #include <c10/util/StringUtil.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cslt_compress_native.h>
 #include <ATen/ops/_cslt_sparse_mm_native.h>
 #include <ATen/ops/_cslt_sparse_mm_search_native.h>
-#endif
 
 #if AT_CUSPARSELT_ENABLED()
 

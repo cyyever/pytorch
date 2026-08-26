@@ -1,11 +1,7 @@
 #pragma once
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/view.h>
 #include <ATen/ops/view_copy.h>
-#endif
 
 #include <ATen/Tensor.h>
 #include <ATen/core/DimVector.h>

@@ -8,15 +8,10 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/DeviceUtils.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/_weight_norm_interface_native.h>
 #include <ATen/ops/_weight_norm_interface_backward_native.h>
-#endif
 
 
 namespace at::native {

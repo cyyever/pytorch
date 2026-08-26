@@ -13,13 +13,9 @@
 #include <c10/macros/Macros.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

@@ -3,15 +3,10 @@
 
 #include <ATen/native/cpu/ChannelShuffleKernel.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/channel_shuffle_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/native_channel_shuffle.h>
 #include <ATen/ops/native_channel_shuffle_native.h>
-#endif
 
 namespace at::native {
 

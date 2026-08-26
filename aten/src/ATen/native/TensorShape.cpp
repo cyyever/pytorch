@@ -33,10 +33,6 @@
 #include <c10/util/irange.h>
 #include <optional>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_chunk_cat_native.h>
 #include <ATen/ops/_convert_indices_from_coo_to_csr.h>
 #include <ATen/ops/_convert_indices_from_csr_to_coo.h>
@@ -177,7 +173,6 @@
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
 #include <ATen/ops/zeros_native.h>
-#endif
 
 #include <algorithm>
 #include <cstdint>

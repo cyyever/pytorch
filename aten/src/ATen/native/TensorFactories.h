@@ -7,11 +7,7 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/native/DispatchStub.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/scalar_tensor.h>
-#endif
 
 namespace at::native {
 // Different combinations of row, col, and offset can lead to two cases:

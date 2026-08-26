@@ -3,16 +3,11 @@
 #include <ATen/TensorUtils.h>
 #include <c10/util/Exception.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/miopen_ctc_loss.h>
 #include <ATen/ops/miopen_ctc_loss_native.h>
 #include <ATen/ops/_use_miopen_ctc_loss_native.h>
-#endif
 
 // TODO: Remove the condition on AT_ROCM_ENABLED entirely,
 // don't build this file as part of CPU build.

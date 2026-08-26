@@ -15,12 +15,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/scalar_tensor.h>
-#endif
 
 #include <c10/util/env.h>
 #include <mach-o/dyld.h>

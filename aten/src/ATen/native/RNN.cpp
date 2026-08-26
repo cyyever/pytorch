@@ -16,10 +16,6 @@
 #include <torch/library.h>
 #include <ATen/Config.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_lstm_mps.h>
 #include <ATen/ops/_thnn_differentiable_gru_cell_backward_native.h>
 #include <ATen/ops/_thnn_differentiable_lstm_cell_backward_native.h>
@@ -50,7 +46,6 @@
 #include <ATen/ops/zeros_like.h>
 #include <ATen/ops/zeros_like_ops.h>
 #include <utility>
-#endif
 
 namespace at::native {
 

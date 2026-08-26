@@ -5,13 +5,8 @@
 #include <ATen/native/Repeat.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/repeat_interleave.h>
 #include <ATen/ops/repeat_interleave_native.h>
-#endif
 
 template <typename index_t>
 static void compute_cpu(

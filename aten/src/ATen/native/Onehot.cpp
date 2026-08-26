@@ -2,17 +2,12 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/DTensorState.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/aminmax.h>
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/eq.h>
 #include <ATen/ops/one_hot_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

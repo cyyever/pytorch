@@ -9,13 +9,8 @@
 #include <ATen/native/cuda/UpSample.cuh>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/upsample_bicubic2d_native.h>
 #include <ATen/ops/upsample_bicubic2d_backward_native.h>
-#endif
 
 namespace at::native {
 namespace {

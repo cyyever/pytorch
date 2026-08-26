@@ -4,10 +4,6 @@
 
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_pad_circular.h>
 #include <ATen/ops/_pad_circular_native.h>
 #include <ATen/ops/_pad_enum_native.h>
@@ -21,7 +17,6 @@
 #include <ATen/ops/replication_pad1d.h>
 #include <ATen/ops/replication_pad2d.h>
 #include <ATen/ops/replication_pad3d.h>
-#endif
 
 namespace at::native {
 

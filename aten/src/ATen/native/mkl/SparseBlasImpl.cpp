@@ -16,13 +16,8 @@
 #include <ATen/mkl/Utils.h>
 #endif
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cat.h>
 #include <ATen/ops/sparse_coo_tensor.h>
-#endif
 
 namespace at::native::sparse::impl::mkl {
 
