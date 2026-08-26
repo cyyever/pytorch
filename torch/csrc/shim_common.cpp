@@ -7,12 +7,8 @@
 #include <torch/csrc/stable/library.h>
 #include <torch/library.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/from_blob.h>
-#endif // AT_PER_OPERATOR_HEADERS
 #include <ATen/Parallel.h>
 #include <c10/util/python_stub.h>
 #include <torch/csrc/PyObjectConversion.h>

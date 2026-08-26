@@ -8,10 +8,6 @@
 #include <ATen/TensorUtils.h>
 #include <ATen/native/BinaryOps.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_sparse_coo_tensor_unsafe.h>
 #include <ATen/ops/embedding_backward_native.h>
 #include <ATen/ops/embedding_dense_backward.h>
@@ -22,7 +18,6 @@
 #include <ATen/ops/embedding_sparse_backward_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <c10/util/irange.h>
 

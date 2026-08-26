@@ -7,17 +7,12 @@
 #include <ATen/cuda/CUDAApplyUtils.cuh>
 #include <c10/macros/Macros.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/_thnn_fused_lstm_cell_native.h>
 #include <ATen/ops/_thnn_fused_lstm_cell_backward_impl_native.h>
 #include <ATen/ops/_thnn_fused_gru_cell_native.h>
 #include <ATen/ops/_thnn_fused_gru_cell_backward_native.h>
-#endif
 
 namespace at::native {
 

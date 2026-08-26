@@ -4,10 +4,6 @@
 #include <ATen/native/group_norm.h>
 #include <c10/util/accumulate.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/full.h>
@@ -18,7 +14,6 @@
 #include <ATen/ops/var_mean.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 #include <array>
 #include <tuple>

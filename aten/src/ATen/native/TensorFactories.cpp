@@ -19,10 +19,6 @@
 #include <c10/util/MathConstants.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_cast_Byte_native.h>
 #include <ATen/ops/_cast_Char_native.h>
 #include <ATen/ops/_cast_Double_native.h>
@@ -92,7 +88,6 @@
 #include <ATen/ops/zeros_like_native.h>
 #include <ATen/ops/zeros_like_ops.h>
 #include <ATen/ops/zeros_native.h>
-#endif
 
 #include <c10/core/SymIntArrayRef.h>
 #include <algorithm>

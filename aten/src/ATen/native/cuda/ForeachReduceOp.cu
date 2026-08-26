@@ -13,10 +13,6 @@
 #include <ATen/native/cuda/MultiTensorApply.cuh>
 #include <ATen/native/cuda/block_reduce.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_foreach_max_native.h>
 #include <ATen/ops/_foreach_norm_native.h>
 #include <ATen/ops/_foreach_powsum_native.h>
@@ -24,7 +20,6 @@
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/full.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

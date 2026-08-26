@@ -18,10 +18,6 @@
 #include <c10/util/irange.h>
 #include <ATen/OpMathType.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_batch_norm_impl_index.h>
 #include <ATen/ops/_batch_norm_impl_index_backward_native.h>
 #include <ATen/ops/_batch_norm_impl_index_native.h>
@@ -54,7 +50,6 @@
 #include <ATen/ops/renorm_native.h>
 #include <ATen/ops/sum.h>
 #include <ATen/ops/sqrt.h>
-#endif
 
 #include <c10/core/SymIntArrayRef.h>
 #include <utility>

@@ -10,10 +10,6 @@
 #include <ATen/TensorUtils.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
@@ -22,7 +18,6 @@
 #include <ATen/ops/_embedding_bag_forward_only_native.h>
 #include <ATen/ops/_embedding_bag_dense_backward_native.h>
 #include <ATen/ops/_embedding_bag_per_sample_weights_backward_native.h>
-#endif
 
 #include <ATen/cuda/cub.cuh>
 #include <ATen/native/cuda/SortingCommon.cuh>

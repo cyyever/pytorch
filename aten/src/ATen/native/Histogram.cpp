@@ -4,10 +4,6 @@
 #include <ATen/native/Histogram.h>
 #include <ATen/native/Resize.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_histogramdd_bin_edges.h>
 #include <ATen/ops/_histogramdd_bin_edges_native.h>
 #include <ATen/ops/_histogramdd_from_bin_cts.h>
@@ -20,7 +16,6 @@
 #include <ATen/ops/histogram_native.h>
 #include <ATen/ops/histogramdd_native.h>
 #include <ATen/ops/linspace.h>
-#endif
 
 #include <cmath>
 #include <numeric>

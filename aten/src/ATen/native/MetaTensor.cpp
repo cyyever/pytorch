@@ -2,12 +2,8 @@
 #include <ATen/EmptyTensor.h>
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/empty_strided_native.h>
-#endif
 
 namespace at::native {
 

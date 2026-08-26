@@ -2,10 +2,6 @@
 #include <ATen/TensorIterator.h>
 #include <ATen/native/sparse/SparseFactories.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_spdiags_native.h>
 #include <ATen/ops/_unique.h>
 #include <ATen/ops/arange.h>
@@ -13,7 +9,6 @@
 #include <ATen/ops/sparse_coo_tensor.h>
 #include <ATen/ops/where.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

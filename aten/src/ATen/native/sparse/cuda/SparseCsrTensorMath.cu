@@ -12,9 +12,6 @@
 #include <algorithm>
 #include <ATen/AccumulateType.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_convert_indices_from_coo_to_csr_native.h>
 #include <ATen/ops/_convert_indices_from_csr_to_coo_native.h>
 #include <ATen/ops/_sparse_csr_tensor_unsafe_native.h>
@@ -23,7 +20,6 @@
 #include <ATen/ops/resize_as_sparse_native.h>
 #include <ATen/ops/tensor.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <cuda_runtime.h>
 #include <type_traits>

@@ -3,13 +3,8 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <c10/metal/common.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/linalg_vector_norm.h>
 #include <ATen/ops/where.h>
-#endif
 
 #include <ATen/native/mps/kernels/Distance.h>
 #include <cmath>

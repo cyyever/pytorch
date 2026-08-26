@@ -3,13 +3,9 @@
 #include <tuple>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/from_blob.h>
 #include <ATen/ops/scalar_tensor.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #if defined(USE_CUDA) || defined(USE_ROCM)
 #include <ATen/cuda/CUDAGeneratorImpl.h>

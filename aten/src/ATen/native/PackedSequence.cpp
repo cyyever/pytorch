@@ -1,10 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_pack_padded_sequence_backward_native.h>
 #include <ATen/ops/_pack_padded_sequence_native.h>
 #include <ATen/ops/_pad_packed_sequence_native.h>
@@ -13,7 +9,6 @@
 #include <ATen/ops/full.h>
 #include <ATen/ops/pad_sequence_native.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <c10/util/irange.h>
 

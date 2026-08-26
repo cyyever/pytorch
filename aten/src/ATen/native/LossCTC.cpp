@@ -16,10 +16,6 @@
 #include <c10/util/irange.h>
 #include <ATen/TensorSubclassLikeUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_ctc_loss.h>
 #include <ATen/ops/_ctc_loss_backward.h>
 #include <ATen/ops/_ctc_loss_backward_native.h>
@@ -35,7 +31,6 @@
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/_use_miopen_ctc_loss.h>
 #include <ATen/ops/miopen_ctc_loss.h>
-#endif
 
 #include <type_traits>
 #include <utility>

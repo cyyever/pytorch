@@ -8,11 +8,6 @@
 #include <ATen/BlasBackend.h>
 #include <cpuinfo.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/CPUFunctions.h>
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_efficientzerotensor.h>
 #include <ATen/ops/addmv.h>
 #include <ATen/ops/addmv_native.h>
@@ -25,7 +20,6 @@
 #include <ATen/ops/scalar_tensor_native.h>
 #include <ATen/ops/vdot_native.h>
 #include <ATen/ops/mul.h>
-#endif
 
 namespace at::meta {
 TORCH_META_FUNC(addmv)(const Tensor &self, const Tensor &mat, const Tensor &vec, const Scalar& beta, const Scalar& alpha) {

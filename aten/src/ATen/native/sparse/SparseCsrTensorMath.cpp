@@ -20,11 +20,6 @@
 #include <c10/util/irange.h>
 #include <ATen/AccumulateType.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/Operators.h>
-#else
 #include <ATen/ops/_conj_physical_native.h>
 #include <ATen/ops/_convert_indices_from_coo_to_csr.h>
 #include <ATen/ops/_convert_indices_from_coo_to_csr_native.h>
@@ -125,7 +120,6 @@
 #include <ATen/ops/zero_native.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 #if AT_USE_EIGEN_SPARSE()
 #include <ATen/native/sparse/eigen/SparseBlasImpl.h>

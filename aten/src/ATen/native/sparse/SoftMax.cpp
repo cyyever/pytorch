@@ -8,11 +8,6 @@
 #include <c10/util/accumulate.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/CPUFunctions.h>
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_log_softmax_backward_data_cpu_dispatch.h>
 #include <ATen/ops/_log_softmax_cpu_dispatch.h>
 #include <ATen/ops/_softmax_backward_data_cpu_dispatch.h>
@@ -23,7 +18,6 @@
 #include <ATen/ops/_sparse_softmax.h>
 #include <ATen/ops/_sparse_softmax_backward_data_native.h>
 #include <ATen/ops/_sparse_softmax_native.h>
-#endif
 
 
 namespace at::native {

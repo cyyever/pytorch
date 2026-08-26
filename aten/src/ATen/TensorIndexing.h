@@ -8,15 +8,10 @@
 #include <c10/util/irange.h>
 #include <optional>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/alias.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/scalar_tensor.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <ATen/core/List.h>
 

@@ -8,16 +8,10 @@
 
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/CUDAFunctions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/sum_cuda_dispatch.h>
 #include <ATen/ops/multilabel_margin_loss.h>
-#endif
 
 
 namespace at::native {

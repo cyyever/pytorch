@@ -17,10 +17,6 @@
 #include <ATen/cuda/Atomic.cuh>
 #include <ATen/cuda/CUDAContext.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_ctc_loss_backward_native.h>
 #include <ATen/ops/_ctc_loss_native.h>
 #include <ATen/ops/empty.h>
@@ -31,7 +27,6 @@
 #include <ATen/ops/tensor.h>
 #include <ATen/ops/where.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #include <type_traits>
 #include <numeric>

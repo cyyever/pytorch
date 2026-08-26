@@ -13,11 +13,7 @@
 #include <c10/util/Exception.h>
 #include <c10/util/SmallVector.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace torch::autograd {
 

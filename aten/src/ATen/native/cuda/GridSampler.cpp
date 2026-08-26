@@ -2,10 +2,6 @@
 #include <ATen/native/cuda/GridSampler.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/grid_sampler_2d_backward_native.h>
@@ -13,7 +9,6 @@
 #include <ATen/ops/grid_sampler_3d_backward_native.h>
 #include <ATen/ops/grid_sampler_3d_native.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 namespace at::native {
 

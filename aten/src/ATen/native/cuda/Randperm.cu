@@ -6,15 +6,10 @@
 #include <ATen/cuda/cub.h>
 #include <ATen/native/cuda/Randperm.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/randperm_native.h>
-#endif
 
 #include <limits>
 

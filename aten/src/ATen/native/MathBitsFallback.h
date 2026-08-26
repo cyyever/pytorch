@@ -6,13 +6,9 @@
 #include <c10/util/irange.h>
 #include <torch/library.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/clone.h>
 
 #include <utility>
-#endif
 
 namespace at::native {
 // This fallback should only be used for operations that are self inverse and have a corresponding tensor

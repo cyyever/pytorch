@@ -12,10 +12,6 @@
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_copy_from.h>
 #include <ATen/ops/_propagate_xla_data.h>
 #include <ATen/ops/_propagate_xla_data_native.h>
@@ -26,7 +22,6 @@
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/expand_copy.h>
-#endif
 
 #ifdef USE_FBGEMM
 C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")

@@ -9,12 +9,8 @@
 #include <ATen/cuda/cub.cuh>
 #include <ATen/cuda/detail/OffsetCalculator.cuh> //for MAX_DIMS
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/nonzero_native.h>
-#endif
 
 namespace at::native {
 

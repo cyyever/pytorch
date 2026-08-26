@@ -10,15 +10,10 @@
 #include <c10/util/Exception.h>
 #include <ATen/native/cuda/LaunchUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_adaptive_avg_pool2d_backward_native.h>
 #include <ATen/ops/_adaptive_avg_pool2d_native.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 #include <ATen/native/AdaptivePooling.h>
 #include <ATen/native/CanUse32BitIndexMath.h>

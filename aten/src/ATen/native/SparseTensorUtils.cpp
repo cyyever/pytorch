@@ -6,12 +6,8 @@
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

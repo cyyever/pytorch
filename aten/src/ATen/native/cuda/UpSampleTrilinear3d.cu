@@ -13,13 +13,8 @@
 #include <ATen/native/cuda/UpSample.cuh>
 #include <ATen/native/cuda/KernelUtils.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/upsample_trilinear3d_native.h>
 #include <ATen/ops/upsample_trilinear3d_backward_native.h>
-#endif
 
 namespace at::native {
 namespace {

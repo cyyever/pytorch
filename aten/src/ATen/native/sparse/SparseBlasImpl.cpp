@@ -7,15 +7,9 @@
 // Required for checking whether Triton kernels are available
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/util/Exception.h>
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/Operators.h>
-#else
 #include <ATen/ops/_convert_indices_from_csr_to_coo.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 #if !AT_USE_MKL_SPARSE()
 #include <ATen/Dispatch.h>

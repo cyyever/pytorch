@@ -5,14 +5,9 @@
 #include <ATen/native/DispatchStub.h>
 #include <ATen/native/MaxPooling.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/max_pool1d_native.h>
 #include <ATen/ops/max_pool1d_with_indices.h>
-#endif
 
 namespace at::native {
 

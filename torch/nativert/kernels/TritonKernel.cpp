@@ -8,10 +8,6 @@
 
 #include <torch/nativert/executor/DelegateExecutor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
-#endif
 
 namespace torch::nativert {
 namespace {

@@ -5,12 +5,8 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/TensorMeta.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/addcdiv_native.h>
 #include <ATen/ops/addcmul_native.h>
-#endif
 
 namespace at::meta {
 

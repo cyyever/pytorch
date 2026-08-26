@@ -11,10 +11,6 @@
 
 #include <type_traits>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/binary_cross_entropy_backward_native.h>
 #include <ATen/ops/binary_cross_entropy_native.h>
 #include <ATen/ops/empty_like.h>
@@ -22,7 +18,6 @@
 #include <ATen/ops/nll_loss_backward_native.h>
 #include <ATen/ops/nll_loss_forward_native.h>
 #include <ATen/ops/squeeze.h>
-#endif
 
 constexpr float EPSILON = 1e-12;
 

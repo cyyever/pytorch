@@ -3,10 +3,6 @@
 #include <ATen/TensorOperators.h>
 #include <ATen/TensorSubclassLikeUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/complex.h>
 #include <ATen/ops/corrcoef_native.h>
 #include <ATen/ops/cov.h>
@@ -18,7 +14,6 @@
 #include <ATen/ops/sqrt.h>
 #include <ATen/ops/true_divide.h>
 #include <ATen/ops/zeros_like.h>
-#endif
 
 namespace at::native {
 

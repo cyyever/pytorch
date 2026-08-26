@@ -5,11 +5,6 @@
 #include <ATen/native/ForeachUtils.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#include <ATen/Operators.h>
-#else
 #include <ATen/ops/_foreach_abs_native.h>
 #include <ATen/ops/_foreach_acos_native.h>
 #include <ATen/ops/_foreach_add_native.h>
@@ -65,7 +60,6 @@
 #include <ATen/ops/maximum.h>
 #include <ATen/ops/mm.h>
 #include <ATen/ops/pow.h>
-#endif
 
 namespace at::native {
 

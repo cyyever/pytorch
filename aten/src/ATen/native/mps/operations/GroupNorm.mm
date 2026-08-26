@@ -6,12 +6,6 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/native/mps/kernels/GroupNorm.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
-#endif
-
 namespace at::native {
 namespace mps {
 

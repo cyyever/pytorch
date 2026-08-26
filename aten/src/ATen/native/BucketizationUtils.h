@@ -4,11 +4,7 @@
 #include <ATen/native/TypeProperties.h>
 #include <ATen/ScalarOps.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/result_type.h>
-#endif
 
 namespace at::native {
 

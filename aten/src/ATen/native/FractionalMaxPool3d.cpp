@@ -7,14 +7,9 @@
 
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/fractional_max_pool3d_backward_native.h>
 #include <ATen/ops/fractional_max_pool3d_native.h>
-#endif
 
 
 namespace at::meta {

@@ -15,11 +15,7 @@
 #include <ATen/native/cpu/Reduce.h>
 #include <ATen/native/cpu/LogAddExp.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/imag.h>
-#endif
 
 #include <c10/util/irange.h>
 #include <ATen/AccumulateType.h>

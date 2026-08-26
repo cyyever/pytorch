@@ -2,13 +2,8 @@
 #include <ATen/native/ForeachUtils.h>
 #include <ATen/native/mps/operations/MultiTensorApply.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_fused_sgd.h>
 #include <ATen/ops/_fused_sgd_native.h>
-#endif
 
 namespace at::native {
 

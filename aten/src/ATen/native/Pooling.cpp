@@ -3,10 +3,6 @@
 #include <ATen/TensorUtils.h>
 #include <c10/util/Exception.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/adaptive_avg_pool1d_native.h>
 #include <ATen/ops/adaptive_avg_pool2d.h>
 #include <ATen/ops/adaptive_max_pool1d_native.h>
@@ -18,7 +14,6 @@
 #include <ATen/ops/max_pool2d_with_indices.h>
 #include <ATen/ops/max_pool3d_native.h>
 #include <ATen/ops/max_pool3d_with_indices.h>
-#endif
 
 #include <tuple>
 #include <utility>

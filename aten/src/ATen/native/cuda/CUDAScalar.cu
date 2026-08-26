@@ -3,11 +3,7 @@
 #include <ATen/Dispatch_v2.h>
 #include <ATen/EmptyTensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_local_scalar_dense_native.h>
-#endif
 
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDACachingAllocator.h>

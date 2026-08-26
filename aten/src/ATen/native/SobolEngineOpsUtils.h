@@ -2,13 +2,9 @@
 /// core functions of the `SobolEngine`
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/arange.h>
 #include <ATen/ops/mul.h>
 #include <ATen/ops/pow.h>
-#endif
 
 namespace at::native::sobol_utils {
 

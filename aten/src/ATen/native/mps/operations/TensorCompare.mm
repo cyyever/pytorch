@@ -8,16 +8,11 @@
 #include <ATen/native/mps/kernels/TensorCompare.h>
 #include <algorithm>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/eq.h>
 #include <ATen/ops/isin_native.h>
 #include <ATen/ops/ones_like_native.h>
 #include <ATen/ops/result_type.h>
 #include <ATen/ops/where_native.h>
-#endif
 
 namespace at::native {
 #ifndef PYTORCH_JIT_COMPILE_SHADERS

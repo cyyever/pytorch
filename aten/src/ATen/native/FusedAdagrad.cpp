@@ -3,12 +3,7 @@
 #include <ATen/native/DispatchStub.h>
 #include <ATen/native/FusedAdagrad.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_fused_adagrad_native.h>
-#endif
 
 namespace at::native {
 

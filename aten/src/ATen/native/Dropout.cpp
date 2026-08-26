@@ -3,10 +3,6 @@
 #include <ATen/TensorOperators.h>
 #include <c10/util/irange.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/alpha_dropout_native.h>
 #include <ATen/ops/dropout_native.h>
 #include <ATen/ops/empty_like.h>
@@ -17,7 +13,6 @@
 #include <ATen/ops/native_dropout_native.h>
 #include <ATen/ops/ones_like.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

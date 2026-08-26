@@ -8,13 +8,9 @@
 #include <torch/nativert/executor/Weights.h>
 #include <unordered_map>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/scalar_tensor.h>
-#endif
 
 #include <caffe2/serialize/inline_container.h>
 

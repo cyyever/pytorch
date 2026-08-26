@@ -2,11 +2,7 @@
 #include <ATen/core/Tensor.h>
 #include <c10/cuda/CUDACachingAllocator.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/record_stream_native.h>
-#endif
 
 namespace at::native {
 void record_stream_cuda(Tensor& self, c10::Stream stream) {

@@ -9,12 +9,8 @@
 #include <vector>
 
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/_copy_from_and_resize.h>
 #include <ATen/ops/_to_cpu.h>
-#endif
 
 
 namespace at::native {

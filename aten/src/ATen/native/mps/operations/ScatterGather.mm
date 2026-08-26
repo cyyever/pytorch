@@ -4,15 +4,10 @@
 #include <ATen/native/mps/OperationUtils.h>
 #include <c10/metal/common.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/gather_native.h>
 #include <ATen/ops/scatter_add_native.h>
 #include <ATen/ops/scatter_native.h>
 #include <ATen/ops/view_as_real.h>
-#endif
 
 namespace at::native {
 

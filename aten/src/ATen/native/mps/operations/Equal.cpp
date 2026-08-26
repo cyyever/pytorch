@@ -1,13 +1,8 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/NativeFunctions.h>
-#include <ATen/MPSFunctions.h>
-#else
 #include <ATen/ops/eq_mps_dispatch.h>
 #include <ATen/ops/equal_native.h>
-#endif
 
 namespace at {
 namespace mps {

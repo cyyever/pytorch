@@ -41,12 +41,8 @@
 #include <optional>
 #include <stdexcept>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 $ops_headers
 #include <ATen/ops/_local_scalar_dense.h>
-#endif
 
 using at::device_of;
 using at::OptionalDeviceGuard;

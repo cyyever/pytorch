@@ -11,10 +11,6 @@
 
 #include <limits>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_grid_sampler_2d_cpu_fallback_backward_native.h>
 #include <ATen/ops/_grid_sampler_2d_cpu_fallback_native.h>
 #include <ATen/ops/cudnn_grid_sampler.h>
@@ -30,7 +26,6 @@
 #include <ATen/ops/zeros_like.h>
 
 #include <algorithm>
-#endif
 
 namespace at::native {
 

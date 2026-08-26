@@ -6,10 +6,6 @@
 #include <c10/util/irange.h>
 #include <ATen/Parallel.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_upsample_bicubic2d_aa.h>
 #include <ATen/ops/_upsample_bicubic2d_aa_backward.h>
 #include <ATen/ops/_upsample_bicubic2d_aa_backward_native.h>
@@ -18,7 +14,6 @@
 #include <ATen/ops/upsample_bicubic2d_backward.h>
 #include <ATen/ops/upsample_bicubic2d_backward_native.h>
 #include <ATen/ops/upsample_bicubic2d_native.h>
-#endif
 
 namespace at::meta {
 

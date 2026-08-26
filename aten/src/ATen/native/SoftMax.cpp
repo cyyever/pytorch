@@ -9,10 +9,6 @@
 #include <ATen/WrapDimUtils.h>
 #include <ATen/native/cpu/SoftmaxKernel.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_log_softmax.h>
 #include <ATen/ops/_log_softmax_backward_data_native.h>
 #include <ATen/ops/_log_softmax_native.h>
@@ -29,7 +25,6 @@
 #include <ATen/ops/softmax_native.h>
 #include <ATen/ops/special_log_softmax_native.h>
 #include <ATen/ops/special_softmax_native.h>
-#endif
 
 #include <c10/core/TensorOptions.h>
 #include <c10/macros/Macros.h>

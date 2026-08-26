@@ -14,15 +14,10 @@
 #include <ATen/native/ConvUtils.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty.h>
 #include <ATen/ops/sum.h>
 #include <ATen/ops/ones.h>
 #include <ATen/ops/slow_conv_transpose2d_native.h>
-#endif
 
 namespace at::native {
 namespace {

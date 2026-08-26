@@ -2,10 +2,6 @@
 #include <ATen/core/Tensor.h>
 #include <c10/core/impl/COW.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_has_same_storage_numel_native.h>
 #include <ATen/ops/_make_dual_native.h>
 #include <ATen/ops/_new_zeros_with_same_feature_meta_native.h>
@@ -13,7 +9,6 @@
 #include <ATen/ops/_lazy_clone_native.h>
 #include <ATen/ops/alias.h>
 #include <ATen/ops/zeros.h>
-#endif
 
 namespace at::native {
 

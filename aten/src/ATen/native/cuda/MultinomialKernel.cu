@@ -12,15 +12,10 @@
 #include <ATen/cuda/CUDAGraphsUtils.cuh>
 #include <ATen/native/cuda/block_reduce.cuh>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/CUDAFunctions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/empty_like_native.h>
 #include <ATen/ops/cumsum_cuda_dispatch.h>
 #include <ATen/ops/uniform_native.h>
-#endif
 
 #include <curand.h>
 #include <curand_kernel.h>

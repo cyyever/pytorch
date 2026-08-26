@@ -4,15 +4,10 @@
 
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/aminmax.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/max_native.h>
 #include <ATen/ops/min_native.h>
-#endif
 
 namespace at::native {
 

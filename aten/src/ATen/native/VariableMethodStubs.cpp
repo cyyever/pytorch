@@ -1,10 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_backward_native.h>
 #include <ATen/ops/_fw_primal_native.h>
 #include <ATen/ops/_version_native.h>
@@ -17,7 +13,6 @@
 #include <ATen/ops/retains_grad_native.h>
 #include <ATen/ops/set_data_native.h>
 #include <ATen/ops/zeros_like_ops.h>
-#endif
 
 // The stubs in here are used by dynamic dispatch. It just redirects everything
 // to the Tensor method we manually bind in TensorBody.h.

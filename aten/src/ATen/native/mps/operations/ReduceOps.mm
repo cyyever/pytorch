@@ -15,10 +15,6 @@
 #include <bit>
 #include <numeric>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/all_native.h>
 #include <ATen/ops/amax.h>
 #include <ATen/ops/amax_native.h>
@@ -40,7 +36,6 @@
 #include <ATen/ops/trace_native.h>
 #include <ATen/ops/var_mean_native.h>
 #include <ATen/ops/var_native.h>
-#endif
 
 namespace at::native {
 using namespace mps;

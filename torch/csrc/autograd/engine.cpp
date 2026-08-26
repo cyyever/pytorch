@@ -11,11 +11,7 @@
 #include <ATen/Parallel.h>
 #include <ATen/SparseCsrTensorUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/isnan.h>
-#endif
 
 #include <c10/core/DeviceGuard.h>
 #include <c10/core/Event.h>

@@ -21,12 +21,8 @@
 #include <ATen/native/Resize.h>
 #include <ATen/native/cpu/Loops.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/result_type.h>
 #include <ATen/ops/result_type_native.h>
-#endif
 
 namespace at::native { namespace {
 

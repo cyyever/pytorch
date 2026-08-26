@@ -6,10 +6,6 @@
 #include <ATen/ScalarOps.h>
 #include <ATen/Parallel.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_test_ambiguous_defaults_native.h>
 #include <ATen/ops/_test_autograd_multiple_dispatch_native.h>
 #include <ATen/ops/_test_autograd_multiple_dispatch_view_native.h>
@@ -21,7 +17,6 @@
 #include <ATen/ops/_test_string_default_native.h>
 #include <ATen/ops/_test_warn_in_autograd_native.h>
 #include <ATen/ops/empty_like.h>
-#endif
 
 #include <c10/util/irange.h>
 

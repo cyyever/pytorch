@@ -16,11 +16,6 @@
 #include <ATen/native/sparse/cuda/SparseCUDABlas.h>
 #include <utility>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/CUDAFunctions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/_masked_softmax_native.h>
 #include <ATen/ops/_log_softmax_cuda_dispatch.h>
 #include <ATen/ops/_log_softmax_backward_data_cuda_dispatch.h>
@@ -29,7 +24,6 @@
 #include <ATen/ops/equal_native.h>
 #include <ATen/ops/full.h>
 #include <ATen/ops/softmax.h>
-#endif
 
 #include <thrust/binary_search.h>
 #include <thrust/device_ptr.h>

@@ -10,18 +10,12 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/cat.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/ones_native.h>
 #include <ATen/ops/prod.h>
 #include <ATen/ops/stack_native.h>
 #include <ATen/ops/tensor.h>
-#endif
 
 #include <cmath>
 #include <limits>

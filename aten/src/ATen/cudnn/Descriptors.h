@@ -12,11 +12,7 @@
 #include <ATen/cuda/ATenCUDAGeneral.h>
 #include <cuda.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#else
 #include <ATen/ops/empty.h>
-#endif
 
 #if defined(CUDNN_VERSION) && CUDNN_VERSION >= 8907
 #define USE_CUDNN_RNN_V8_API

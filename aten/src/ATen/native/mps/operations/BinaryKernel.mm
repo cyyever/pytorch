@@ -10,10 +10,6 @@
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/mps/OperationUtils.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Functions.h>
-#include <ATen/NativeFunctions.h>
-#else
 #include <ATen/ops/complex_native.h>
 #include <ATen/ops/empty_like.h>
 #include <ATen/ops/maximum.h>
@@ -21,7 +17,6 @@
 #include <ATen/ops/nextafter_native.h>
 #include <ATen/ops/polar_native.h>
 #include <ATen/ops/view_as_real.h>
-#endif
 
 namespace at::native {
 #ifndef PYTORCH_JIT_COMPILE_SHADERS
