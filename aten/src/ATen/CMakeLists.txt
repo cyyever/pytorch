@@ -883,8 +883,6 @@ endforeach()
 
 install(FILES ${ops_h} ${ops_generated_headers}
   DESTINATION ${AT_INSTALL_INCLUDE_DIR}/ATen/ops)
-install(FILES ${CMAKE_BINARY_DIR}/aten/src/ATen/Declarations.yaml
-  DESTINATION ${AT_INSTALL_SHARE_DIR}/ATen)
 
 if(ATEN_NO_TEST)
   message("disable test because ATEN_NO_TEST is set")

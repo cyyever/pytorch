@@ -7,7 +7,6 @@ from typing import Any, TYPE_CHECKING, TypeVar
 import torchgen.local as local
 from torchgen.model import (
     BackendIndex,
-    DispatchKey,
     NativeFunction,
     NativeFunctionsGroup,
     NativeFunctionsViewGroup,
@@ -123,12 +122,3 @@ def with_native_function_and_index(
 
 
 # Convenience decorator for functions that explicitly take in a Dict of BackendIndices
-def with_native_function_and_indices(
-    func: Callable[[F, dict[DispatchKey, BackendIndex]], T],
-) -> Callable[[F, dict[DispatchKey, BackendIndex]], T]:
-    @functools.wraps(func)
-    def wrapper(f: F, backend_indices: dict[DispatchKey, BackendIndex]) -> T:
-        with native_function_manager(f):
-            return func(f, backend_indices)
-
-    return wrapper
