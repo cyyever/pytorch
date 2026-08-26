@@ -1,3 +1,4 @@
+#include <utility>
 #include <ATen/ATen.h>
 #include <ATen/xpu/Sleep.h>
 #include <ATen/xpu/XPUContext.h>
@@ -291,8 +292,7 @@ static void registerXpuDeviceProperties(PyObject* module) {
         break;
       default:
         stream << "unknown device type:"
-               << static_cast<typename std::underlying_type_t<device_type>>(
-                      prop.device_type);
+               << std::to_underlying(prop.device_type);
         break;
     }
     return std::move(stream).str();
