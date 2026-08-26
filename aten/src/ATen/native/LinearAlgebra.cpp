@@ -17,11 +17,9 @@
 #include <ATen/native/ReduceOps.h>
 #include <ATen/native/ReduceOpsUtils.h>
 #include <ATen/native/Resize.h>
-#include <ATen/cpu/Utils.h>
 #include <c10/core/GradMode.h>
 #include <c10/core/SymBool.h>
 #include <c10/util/accumulate.h>
-#include <c10/util/env.h>
 #include <c10/util/irange.h>
 #include <variant>
 

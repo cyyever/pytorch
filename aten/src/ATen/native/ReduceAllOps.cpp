@@ -4,7 +4,6 @@
 
 #include <ATen/core/Tensor.h>
 
-#include <ATen/ops/aminmax.h>
 #include <ATen/ops/empty.h>
 #include <ATen/ops/max_native.h>
 #include <ATen/ops/min_native.h>

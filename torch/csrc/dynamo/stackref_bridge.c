@@ -6,7 +6,6 @@
 // initializers that are not supported in older C++ standards, but is supported
 // in C.
 
-#include <torch/csrc/utils/python_compat.h>
 
 
 #define Py_BUILD_CORE

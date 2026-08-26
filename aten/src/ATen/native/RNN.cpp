@@ -3,7 +3,6 @@
 
 #include <ATen/core/Tensor.h>
 #include <ATen/core/List.h>
-#include <ATen/Config.h>
 #include <ATen/Context.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/mps/MPSDevice.h>
@@ -14,7 +13,6 @@
 #include <atomic>
 #include <c10/util/irange.h>
 #include <torch/library.h>
-#include <ATen/Config.h>
 
 #include <ATen/ops/_lstm_mps.h>
 #include <ATen/ops/_thnn_differentiable_gru_cell_backward_native.h>

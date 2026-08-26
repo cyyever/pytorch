@@ -5,7 +5,6 @@
 
 #include <ATen/native/Resize.h>
 #include <ATen/native/GroupedMMUtils.h>
-#include <ATen/BlasBackend.h>
 #include <cpuinfo.h>
 
 #include <ATen/ops/_efficientzerotensor.h>

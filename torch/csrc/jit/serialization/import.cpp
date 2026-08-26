@@ -1,6 +1,5 @@
 #include <ATen/core/ivalue.h>
 #include <ATen/core/class_type.h>
-#include <c10/util/Exception.h>
 #include <torch/csrc/jit/serialization/import.h>
 
 namespace torch::jit {
