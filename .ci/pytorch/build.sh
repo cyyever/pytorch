@@ -220,10 +220,6 @@ if [[ "$BUILD_ENVIRONMENT" == *-tsan* ]]; then
   export BUILD_TEST=0
 fi
 
-if [[ "${BUILD_ENVIRONMENT}" == *no-ops* ]]; then
-  export USE_PER_OPERATOR_HEADERS=0
-fi
-
 if [[ "$BUILD_ENVIRONMENT" == *-full-debug* ]]; then
   export CMAKE_BUILD_TYPE=Debug
 elif [[ "$BUILD_ENVIRONMENT" == *-debug* ]]; then
