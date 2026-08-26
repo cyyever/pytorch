@@ -70,7 +70,6 @@ from torch._utils_internal import (
     get_file_path,
     prepare_multiprocessing_environment,
     profiler_allow_cudagraph_cupti_lazy_reinit_cuda12,
-    USE_GLOBAL_DEPS,
     USE_RTLD_GLOBAL_WITH_LIBTORCH,
 )
 from torch.torch_version import __version__ as __version__
@@ -209,138 +208,11 @@ def _get_cuda_dep_paths(path: str, lib_folder: str, lib_name: str) -> list[str]:
     return nvidia_lib_paths + lib_paths
 
 
-def _preload_cuda_lib(lib_folder: str, lib_name: str, required: bool = True) -> None:  # type: ignore[valid-type]
-    """Preloads cuda library if it could not be found otherwise."""
-    # Should only be called on Linux if default path resolution have failed
-    if platform.system() != "Linux":
-        raise AssertionError(f"Should only be called on Linux, got {platform.system()}")
-
-    lib_path = None
-    for path in sys.path:
-        candidate_lib_paths = _get_cuda_dep_paths(path, lib_folder, lib_name)
-        if candidate_lib_paths:
-            lib_path = candidate_lib_paths[0]
-            break
-    if not lib_path and required:
-        raise ValueError(f"{lib_name} not found in the system path {sys.path}")
-    if lib_path:
-        ctypes.CDLL(lib_path)
-
-
-def _preload_cuda_deps(err: OSError | None = None, required: bool = True) -> None:
-    cuda_libs: list[tuple[str, str]] = [
-        # NOTE: Order matters! We must preload libcublasLt BEFORE libcublas to prevent
-        # libcublas from loading a mismatched system-wide libcublasLt via its RUNPATH.
-        # Without this, if a different CUDA Toolkit version exists in the system PATH,
-        # libcublas may load the wrong libcublasLt, causing symbol errors or runtime failures.
-        ("cublas", "libcublasLt.so.*[0-9]"),
-        ("cublas", "libcublas.so.*[0-9]"),
-        ("cudnn", "libcudnn.so.*[0-9]"),
-        ("cuda_nvrtc", "libnvrtc.so.*[0-9]"),
-        ("cuda_nvrtc", "libnvrtc-builtins.so.*[0-9]"),
-        ("cuda_runtime", "libcudart.so.*[0-9]"),
-        ("cuda_cupti", "libcupti.so.*[0-9]"),
-        ("cufft", "libcufft.so.*[0-9]"),
-        ("nvjitlink", "libnvJitLink.so.*[0-9]"),
-        ("cusparse", "libcusparse.so.*[0-9]"),
-        ("cusparselt", "libcusparseLt.so.*[0-9]"),
-        ("cusolver", "libcusolver.so.*[0-9]"),
-        ("nccl", "libnccl.so.*[0-9]"),
-        ("nvshmem", "libnvshmem_host.so.*[0-9]"),
-        ("cufile", "libcufile.so.*[0-9]"),
-    ]
-    # If error is passed, re-raise it if it's not about one of the abovementioned
-    # libraries
-    if err is not None and not [
-        lib for _, lib in cuda_libs if lib.split(".", 1)[0] in err.args[0]
-    ]:
-        raise err
-
-    # Otherwise, try to preload dependencies from site-packages. With
-    # required=False each lib is best-effort: a partial install that only ships
-    # some of these wheels (e.g. just a cupti wheel alongside a system CUDA)
-    # preloads the ones present instead of aborting on the first missing one.
-    for lib_folder, lib_name in cuda_libs:
-        _preload_cuda_lib(lib_folder, lib_name, required=required)
-
-    # libnvToolsExt is Optional Dependency
-    _preload_cuda_lib("nvtx", "libnvToolsExt.so.*[0-9]", required=False)
-
-
 # See Note [Global dependencies]
-def _load_global_deps() -> None:
-    # Determine the file extension based on the platform
-    lib_ext = ".dylib" if platform.system() == "Darwin" else ".so"
-    lib_name = f"libtorch_global_deps{lib_ext}"
-    here = os.path.abspath(__file__)
-    global_deps_lib_path = os.path.join(os.path.dirname(here), "lib", lib_name)
-
-    # In scikit-build-core editable installs with redirect mode, native libs are
-    # installed to the dist package location rather than relative to __file__.
-    if not os.path.exists(global_deps_lib_path):
-        try:
-            from importlib.metadata import distribution
-
-            installed = distribution("torch").locate_file(
-                os.path.join("torch", "lib", lib_name)
-            )
-            # The importlib metadata SimplePath protocol was missing the exists
-            # method in older versions; however, the actual Path implementation
-            # has it and newer versions of importlib metadata have added it to
-            # the protocol, making the following ignore unnecessary from
-            # importlib_metadata 7.0.1 and Python 3.13 onwards.
-            # pyrefly: ignore[missing-attribute]
-            if installed.exists():
-                global_deps_lib_path = str(installed)
-        except Exception:
-            pass
-
-    try:
-        ctypes.CDLL(global_deps_lib_path, mode=ctypes.RTLD_GLOBAL)
-        # Workaround slim-wheel CUDA dependency bugs in cusparse and cudnn by preloading nvjitlink
-        # and nvrtc. In CUDA-12.4+ cusparse depends on nvjitlink, but does not have rpath when
-        # shipped as wheel, which results in OS picking wrong/older version of nvjitlink library
-        # if `LD_LIBRARY_PATH` is defined, see https://github.com/pytorch/pytorch/issues/138460
-        # Similar issue exist in cudnn that dynamically loads nvrtc, unaware of its relative path.
-        # See https://github.com/pytorch/pytorch/issues/145580
-        try:
-            with open("/proc/self/maps") as f:
-                _maps = f.read()
-
-            # libtorch_global_deps.so always depends in cudart, check if its installed and loaded
-            if "libcudart.so" not in _maps:
-                return
-            # If all above-mentioned conditions are met, preload CUDA dependencies.
-            # Only libtorch_global_deps is loaded so far (it pulls libcudart, not
-            # the rest); libtorch_cpu, which DT_NEEDEDs the other CUDA libs, is
-            # imported below via torch._C. So be best-effort and front-load any
-            # component wheels that ARE present now, before that import, so they
-            # win libtorch_cpu's DT_NEEDED soname lookups (e.g. a newer cupti
-            # wheel over a system copy). A missing wheel must not abort -- rpath
-            # will satisfy libtorch_cpu's DT_NEEDED for whatever isn't preloaded.
-            _preload_cuda_deps(required=False)
-        except Exception:
-            pass
-
-    except OSError as err:
-        # Can happen for wheel with cuda libs as PYPI deps
-        # As PyTorch is not purelib, but nvidia-*-cu12 is
-        _preload_cuda_deps(err)
-        ctypes.CDLL(global_deps_lib_path, mode=ctypes.RTLD_GLOBAL)
-
-
 if USE_RTLD_GLOBAL_WITH_LIBTORCH or os.getenv("TORCH_USE_RTLD_GLOBAL"):
-    # Do it the hard way.  You might want to load libtorch with RTLD_GLOBAL in a
-    # few circumstances:
-    #
-    #   1. You're in a build environment (e.g., fbcode) where
-    #      libtorch_global_deps is not available, but you still need
-    #      to get mkl to link in with RTLD_GLOBAL or it will just
-    #      not work.
-    #
-    #   2. You're trying to run PyTorch under UBSAN and you need
-    #      to ensure that only one copy of libtorch is loaded, so
-    #      vptr checks work properly
+    # Do it the hard way.  You might want to load libtorch with RTLD_GLOBAL if
+    # you're trying to run PyTorch under UBSAN and you need to ensure that only
+    # one copy of libtorch is loaded, so vptr checks work properly.
     #
     # If you're using this setting, you must verify that all the libraries
     # you load consistently use the same libstdc++, or you may have
@@ -359,13 +231,6 @@ else:
     # C++ symbols from libtorch clobbering C++ symbols from other
     # libraries, leading to mysterious segfaults.
     #
-    # If building in an environment where libtorch_global_deps isn't available
-    # like parts of fbsource, but where RTLD_GLOBAL causes segfaults, you will
-    # want USE_RTLD_GLOBAL_WITH_LIBTORCH = False and USE_GLOBAL_DEPS = False
-    #
-    # See Note [Global dependencies]
-    if USE_GLOBAL_DEPS:
-        _load_global_deps()
     from torch._C import *  # noqa: F403
 
 

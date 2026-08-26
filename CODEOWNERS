@@ -369,7 +369,6 @@
 # /torch/csrc/acc/
 # /torch/csrc/copy_utils.h
 # /torch/csrc/cpu/
-# /torch/csrc/empty.c
 # /torch/csrc/export/
 # /torch/csrc/functionalization/
 # /torch/csrc/fx/

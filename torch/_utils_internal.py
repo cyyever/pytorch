@@ -247,9 +247,6 @@ def get_mast_job_name_version() -> tuple[str, int] | None:
 
 TEST_MASTER_ADDR = "127.0.0.1"
 TEST_MASTER_PORT = 29500
-# USE_GLOBAL_DEPS controls whether __init__.py tries to load
-# libtorch_global_deps, see Note [Global dependencies]
-USE_GLOBAL_DEPS = True
 # USE_RTLD_GLOBAL_WITH_LIBTORCH controls whether __init__.py tries to load
 # _C.so with RTLD_GLOBAL during the call to dlopen.
 USE_RTLD_GLOBAL_WITH_LIBTORCH = False
