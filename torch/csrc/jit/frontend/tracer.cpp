@@ -61,7 +61,7 @@ std::atomic<bool>& getTracerStateWarnMode() {
 }
 
 std::function<void()> pauseTracing() {
-  std::shared_ptr<tracer::TracingState> state = getTracingState();
+  const std::shared_ptr<tracer::TracingState>& state = getTracingState();
   tracer::setTracingState(nullptr);
 
   return [state]() { tracer::setTracingState(state); };
