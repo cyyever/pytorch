@@ -166,6 +166,11 @@ set(CMAKE_CXX_STANDARD
     CACHE STRING
           "The C++ standard whose features are requested to build this target.")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# CMake scans every C++ source for module dependencies once the standard is 20
+# or newer. Nothing here declares or imports a module, so the scan is a second
+# front-end pass over each translation unit for no result. Turn this back on
+# before introducing the first module.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(CMAKE_C_STANDARD
     17
     CACHE STRING
