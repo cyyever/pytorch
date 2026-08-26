@@ -1,5 +1,7 @@
 #pragma once
 
+// Device code builds at C++20 while the host is at C++23, and this header is
+// reachable from .cu, so the floor asserted here is the lower of the two.
 #if __cplusplus < 202002L
 #error C++20 or later compatible compiler is required to use PyTorch.
 #endif

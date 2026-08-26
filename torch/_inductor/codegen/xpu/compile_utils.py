@@ -88,7 +88,7 @@ def _sycl_compiler_options() -> list[str]:
         "-DCUTLASS_VERSIONS_GENERATED",
         "-O3",
         "-DNDEBUG",
-        "-std=c++20",
+        "-std=c++23",
         "-fPIC",
         "-fsycl",
         "-fsycl-targets=spir64_gen",
