@@ -16,7 +16,6 @@
 #include <ATen/mkl/Utils.h>
 #endif
 
-#include <ATen/ops/cat.h>
 #include <ATen/ops/sparse_coo_tensor.h>
 
 namespace at::native::sparse::impl::mkl {

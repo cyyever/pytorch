@@ -3,8 +3,6 @@
 // In that case load library is dynamically loaded when first linalg call is made
 // This helps reduce size of GPU memory context if linear algebra functions are not used
 #include <ATen/Context.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/cuda/CUDAConfig.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/Dispatch.h>
 #include <ATen/DynamicLibrary.h>

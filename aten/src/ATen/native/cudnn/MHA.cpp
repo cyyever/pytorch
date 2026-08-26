@@ -4,7 +4,6 @@
 #include <ATen/cuda/CUDAConfig.h>
 
 #if AT_CUDNN_ENABLED()
-#include <ATen/cudnn/cudnn-wrapper.h>
 #if defined(__has_include) && __has_include(<cudnn_frontend_version.h>)
 #include <cudnn_frontend_version.h>
 #endif
@@ -158,8 +157,6 @@ void run_cudnn_SDP_bprop_nestedtensor(
       // 10100
 #include <cudnn_frontend.h>
 
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/cudnn/Handle.h>
 #include <ATen/native/cudnn/MHA.h>
 #include <ATen/native/transformers/cuda/sdp_utils.h>
 #include <ATen/native/transformers/sdp_utils.h>

@@ -4,7 +4,6 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/tensor_new.h>
 #include <torch/all.h>
-#include <stdexcept>
 #include <vector>
 
 namespace torch::utils {

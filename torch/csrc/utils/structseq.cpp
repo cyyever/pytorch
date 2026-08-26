@@ -16,7 +16,6 @@
 #include <torch/csrc/utils/structseq.h>
 #include <sstream>
 
-#include <structmember.h>
 
 namespace torch::utils {
 

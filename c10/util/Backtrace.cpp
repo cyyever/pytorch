@@ -14,7 +14,6 @@
 #if SUPPORTS_BACKTRACE
 C10_CLANG_DIAGNOSTIC_PUSH()
 C10_CLANG_DIAGNOSTIC_IGNORE("-Wdeprecated-dynamic-exception-spec")
-#include <cxxabi.h>
 C10_CLANG_DIAGNOSTIC_POP()
 #include <execinfo.h>
 #endif
