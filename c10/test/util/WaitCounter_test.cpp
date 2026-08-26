@@ -288,6 +288,7 @@ TEST(WaitCounter, StaticHandlePerCallSite) {
   // To test same-location singleton behavior, we call the same macro twice
   // within a loop
   std::vector<c10::monitor::WaitCounterHandle*> handles;
+  handles.reserve(3);
   for (int i = 0; i < 3; ++i) {
     handles.push_back(&STATIC_WAIT_COUNTER(loop_test));
   }

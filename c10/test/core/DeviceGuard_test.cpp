@@ -98,6 +98,7 @@ TEST(EnsureCUDADeviceGuard, NoUseAfterFreeWhenThreadsExit) {
   // and install a FakeGuardImpl in the global registry.
   {
     std::vector<std::thread> threads;
+    threads.reserve(4);
     for (int i = 0; i < 4; i++) {
       threads.emplace_back(ensureCUDADeviceGuardSet);
     }
