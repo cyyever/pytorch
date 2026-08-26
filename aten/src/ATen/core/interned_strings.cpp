@@ -10,7 +10,7 @@
 namespace c10 {
 
 const std::string& domain_prefix() {
-  static const std::string _domain_prefix = "org.pytorch.";
+  static constexpr std::string _domain_prefix = "org.pytorch.";
   return _domain_prefix;
 }
 

@@ -308,7 +308,7 @@ struct FileCheckImpl {
       }
       i++;
     }
-    static const std::string check = "CHECK";
+    static constexpr std::string check = "CHECK";
     if (source->text_str().substr(start + i, check.size()) == check) {
       return start + i + check.size();
     } else {
