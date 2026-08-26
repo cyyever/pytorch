@@ -290,7 +290,7 @@ void TuningResultsManager::InitRealtimeAppend(const std::string& filename, const
 
   if(!file_exists || file_empty) {
     for(const auto& [key, val] : validators) {
-      (*realtime_out_) << "Validator," << key << ',' << val << std::endl;
+      (*realtime_out_) << "Validator," << key << ',' << val << '\n';
       realtime_out_->flush();
     }
     validators_written_ = true;
@@ -308,7 +308,7 @@ void TuningResultsManager::AppendResultLine(const std::string& op_sig, const std
     return;
   }
 
-  (*realtime_out_) << op_sig << ',' << param_sig << ',' << result << std::endl;
+  (*realtime_out_) << op_sig << ',' << param_sig << ',' << result << '\n';
   realtime_out_->flush(); //ensure immediate write to disk
 
   TUNABLE_LOG3("Realtime append: ", op_sig, "(", param_sig, ") -> ", result);
