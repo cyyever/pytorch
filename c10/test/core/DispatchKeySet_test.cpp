@@ -433,11 +433,11 @@ TEST(DispatchKeySet, TestFunctionalityDispatchKeyToString) {
       continue;
     auto res = std::string(toString(k));
     if (i > 0) {
-      ASSERT_TRUE(res.find("Unknown") == std::string::npos)
+      ASSERT_FALSE(res.contains("Unknown"))
           << i << " (before is " << toString(static_cast<DispatchKey>(i - 1))
           << ')';
     } else {
-      ASSERT_TRUE(res.find("Unknown") == std::string::npos) << i;
+      ASSERT_FALSE(res.contains("Unknown")) << i;
     }
     ASSERT_TRUE(!seen_strings.contains(res));
     seen_strings.insert(res);

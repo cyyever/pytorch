@@ -190,9 +190,9 @@ static void check_cudnn_sdpa_execution(fe::error_t err) {
 
   const auto error_message = err.get_message();
   const bool is_cuda_oom =
-      error_message.find("err 2 != CUDA_SUCCESS") != std::string::npos ||
-      error_message.find("CUDA_ERROR_OUT_OF_MEMORY") != std::string::npos ||
-      error_message.find("cudaErrorMemoryAllocation") != std::string::npos;
+      error_message.contains("err 2 != CUDA_SUCCESS") ||
+      error_message.contains("CUDA_ERROR_OUT_OF_MEMORY") ||
+      error_message.contains("cudaErrorMemoryAllocation");
   TORCH_CHECK(
       false,
       "cuDNN SDPA execution failed with error code ",

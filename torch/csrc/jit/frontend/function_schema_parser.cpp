@@ -274,12 +274,12 @@ struct SchemaParser {
         else
           n = L.expect(TK_NUMBER).text();
 
-        if (kind == TypeKind::ComplexType || n.find('j') != std::string::npos) {
+        if (kind == TypeKind::ComplexType || n.contains('j')) {
           auto imag = std::stod(n.substr(0, n.size() - 1));
           return c10::complex<double>(0, imag);
         } else if (
-            kind == TypeKind::FloatType || n.find('.') != std::string::npos ||
-            n.find('e') != std::string::npos) {
+            kind == TypeKind::FloatType || n.contains('.') ||
+            n.contains('e')) {
           return std::stod(n);
         } else {
           int64_t v = std::stoll(n);

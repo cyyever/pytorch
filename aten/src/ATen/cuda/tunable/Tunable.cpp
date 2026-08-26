@@ -53,7 +53,7 @@ namespace {
 bool matches_wildcard_pattern(
     const std::string& pattern,
     const std::string& concrete) {
-  if (pattern.find('*') == std::string::npos) {
+  if (!pattern.contains('*')) {
     // Pattern has no wildcard token -> only exact match counts.
     return pattern == concrete;
   }
@@ -150,7 +150,7 @@ ResultEntry TuningResultsManager::LookupWildcardFallback(
   // First match wins in unspecified order; a rejected candidate falls back to
   // default ATen, not to the next pattern. See the decl in Tunable.h.
   for (const auto& [key, entry] : km) {
-    if (key.find('*') == std::string::npos) {
+    if (!key.contains('*')) {
       continue;
     }
     if (matches_wildcard_pattern(key, concrete_params_signature)) {

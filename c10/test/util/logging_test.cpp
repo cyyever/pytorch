@@ -182,17 +182,17 @@ TEST(LoggingTest, ExceptionWhat) {
   ASSERT_TRUE(error);
   std::string what = error->what();
 
-  EXPECT_TRUE(what.find("c10_test::f1()") != std::string::npos) << what;
-  EXPECT_TRUE(what.find("c10_test::f2()") != std::string::npos) << what;
-  EXPECT_TRUE(what.find("c10_test::f3()") != std::string::npos) << what;
+  EXPECT_TRUE(what.contains("c10_test::f1()")) << what;
+  EXPECT_TRUE(what.contains("c10_test::f2()")) << what;
+  EXPECT_TRUE(what.contains("c10_test::f3()")) << what;
 
   // what() should be recomputed.
   error->add_context("NewContext");
   what = error->what();
-  EXPECT_TRUE(what.find("c10_test::f1()") != std::string::npos) << what;
-  EXPECT_TRUE(what.find("c10_test::f2()") != std::string::npos) << what;
-  EXPECT_TRUE(what.find("c10_test::f3()") != std::string::npos) << what;
-  EXPECT_TRUE(what.find("NewContext") != std::string::npos) << what;
+  EXPECT_TRUE(what.contains("c10_test::f1()")) << what;
+  EXPECT_TRUE(what.contains("c10_test::f2()")) << what;
+  EXPECT_TRUE(what.contains("c10_test::f3()")) << what;
+  EXPECT_TRUE(what.contains("NewContext")) << what;
 }
 #endif
 
