@@ -140,11 +140,11 @@ DEFINE_DISPATCH(random_full_64_bits_range_stub);
 
 template<typename RNG>
 struct BernoulliStub {
-  void operator()(Tensor& self, const Tensor& p_, std::optional<Generator> gen) {
+  void operator()(Tensor& self, const Tensor& p_, const std::optional<Generator>& gen) {
     bernoulli_tensor_stub(self.device().type(), self, p_, gen);
   }
 
-  void operator()(Tensor& self, double p, std::optional<Generator> gen) {
+  void operator()(Tensor& self, double p, const std::optional<Generator>& gen) {
     bernoulli_scalar_stub(self.device().type(), self, p, gen);
   }
 };
@@ -177,7 +177,7 @@ Tensor& bernoulli_(Tensor& self, double p, std::optional<Generator> gen) {
 
 template<typename RNG>
 struct LogNormalStub {
-  void operator()(TensorIteratorBase& iter, double mean, double std, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, double mean, double std, const std::optional<Generator>& gen) {
     log_normal_stub(iter.device_type(), iter, mean, std, gen);
   }
 };
@@ -190,7 +190,7 @@ Tensor& log_normal_(Tensor& self, double mean, double std, std::optional<Generat
 
 template<typename RNG>
 struct CauchyStub {
-  void operator()(TensorIteratorBase& iter, double median, double sigma, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, double median, double sigma, const std::optional<Generator>& gen) {
     cauchy_stub(iter.device_type(), iter, median, sigma, gen);
   }
 };
@@ -203,7 +203,7 @@ Tensor& cauchy_(Tensor& self, double median, double sigma, std::optional<Generat
 
 template<typename RNG>
 struct ExponentialStub {
-  void operator()(TensorIteratorBase& iter, double lambda, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, double lambda, const std::optional<Generator>& gen) {
     exponential_stub(iter.device_type(), iter, lambda, gen);
   }
 };
@@ -216,7 +216,7 @@ Tensor& exponential_(Tensor& self, double lambda, std::optional<Generator> gen) 
 
 template<typename RNG>
 struct GeometricStub {
-  void operator()(TensorIteratorBase& iter, double p, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, double p, const std::optional<Generator>& gen) {
     geometric_stub(iter.device_type(), iter, p, gen);
   }
 };
@@ -229,7 +229,7 @@ Tensor& geometric_(Tensor& self, double p, std::optional<Generator> gen) {
 
 template<typename RNG>
 struct UniformStub {
-  void operator()(TensorIteratorBase& iter, double from, double to, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, double from, double to, const std::optional<Generator>& gen) {
     uniform_stub(iter.device_type(), iter, from, to, gen);
   }
 };
@@ -237,7 +237,7 @@ struct UniformStub {
 template<typename RNG>
 struct UniformMeta {
   // No-op!
-  void operator()(TensorIteratorBase& iter, double from, double to, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, double from, double to, const std::optional<Generator>& gen) {
   }
 };
 
@@ -253,7 +253,7 @@ Tensor& uniform_meta_(Tensor& self, double from, double to, std::optional<Genera
 
 template<typename RNG>
 struct NormalStub {
-  void operator()(Tensor& self, double mean, double std, std::optional<Generator> gen) {
+  void operator()(Tensor& self, double mean, double std, const std::optional<Generator>& gen) {
     normal_stub(self.device().type(), self, mean, std, gen);
   }
 };
@@ -261,7 +261,7 @@ struct NormalStub {
 template<typename RNG>
 struct NormalMeta {
   // No-op!
-  void operator()(Tensor& self, double mean, double std, std::optional<Generator> gen) {
+  void operator()(Tensor& self, double mean, double std, const std::optional<Generator>& gen) {
   }
 };
 
@@ -338,7 +338,7 @@ Tensor normal_functional(const Tensor& self, double mean, double std, std::optio
 
 template<typename RNG>
 struct RandomStub {
-  void operator()(TensorIteratorBase& iter, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, const std::optional<Generator>& gen) {
     random_stub(iter.device_type(), iter, gen);
   }
 };
@@ -349,10 +349,10 @@ Tensor& random_(Tensor& self, std::optional<Generator> gen) {
 
 template<typename RNG>
 struct RandomFromToStub {
-  void operator()(TensorIteratorBase& iter, uint64_t range, int64_t from, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, uint64_t range, int64_t from, const std::optional<Generator>& gen) {
     random_from_to_stub(iter.device_type(), iter, range, from, gen);
   }
-  void operator()(TensorIteratorBase& iter, std::optional<Generator> gen) {
+  void operator()(TensorIteratorBase& iter, const std::optional<Generator>& gen) {
     random_full_64_bits_range_stub(iter.device_type(), iter, gen);
   }
 };
