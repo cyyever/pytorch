@@ -518,8 +518,8 @@ struct GenericViewFunc : public ViewFunc {
   GenericViewFunc(
       torch::jit::Stack non_tensor_stack,
       size_t aliased_input_idx_val,
-      c10::OperatorHandle op)
-      : non_tensor_stack_(non_tensor_stack),
+      const c10::OperatorHandle& op)
+      : non_tensor_stack_(std::move(non_tensor_stack)),
         aliased_input_idx_val_(aliased_input_idx_val),
         op_(op) {
     // This should report saved Tensors and SymInts.
