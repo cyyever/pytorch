@@ -1,11 +1,13 @@
 #include <ATen/LegacyVmapTransforms.h>
 #include <c10/util/irange.h>
 
+#include <iterator>
+
 namespace at {
 
 // Checks if the batch dims in `bdims` appear at the front of the tensor.
 static bool areBdimsAtFrontInOrder(BatchDimsRef bdims) {
-  for (const auto idx : c10::irange(static_cast<int64_t>(bdims.size()))) {
+  for (const auto idx : c10::irange(std::ssize(bdims))) {
     if (bdims[idx].dim() != idx) {
       return false;
     }
