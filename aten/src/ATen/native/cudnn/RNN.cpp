@@ -1813,8 +1813,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_input(
   auto x = input.contiguous();
   auto dy = grad_output.contiguous();
   auto y = output;
-  auto w = weight_buf;
-  auto dx = at::empty(
+   auto dx = at::empty(
       input.sizes(), input.options()); // TODO: more compact way of saying this
   auto dhy = grad_hy.contiguous().view(hidden_size);
   auto dcy =
@@ -2504,7 +2503,7 @@ Tensor try_get_weight_buf(
 #endif
 
   // Try to get parameter storage
-  auto param_storage = any_param.storage();
+  const auto& param_storage = any_param.storage();
   auto weight_buf = at::empty({0}, any_param.options()).set_(param_storage);
   if (weight_buf.size(0) < num_params) {
     return {};

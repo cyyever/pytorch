@@ -1251,13 +1251,13 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _thnn_differentiable_gru_cell
     h_g = h_g + hidden_bias;
   }
   auto chunked_input_gates = in_g.unsafe_chunk(3, 1);
-  Tensor ir = chunked_input_gates[0];
-  Tensor ii = chunked_input_gates[1];
-  Tensor in = chunked_input_gates[2];
+  const Tensor& ir = chunked_input_gates[0];
+  const Tensor& ii = chunked_input_gates[1];
+  const Tensor& in = chunked_input_gates[2];
   auto chunked_hidden_gates = h_g.unsafe_chunk(3, 1);
-  Tensor hr = chunked_hidden_gates[0];
-  Tensor hi = chunked_hidden_gates[1];
-  Tensor hn = chunked_hidden_gates[2];
+  const Tensor& hr = chunked_hidden_gates[0];
+  const Tensor& hi = chunked_hidden_gates[1];
+  const Tensor& hn = chunked_hidden_gates[2];
   Tensor rg = (ir + hr).sigmoid();
   Tensor ig = (ii + hi).sigmoid();
   Tensor grad_hx = grad_hy * ig;
