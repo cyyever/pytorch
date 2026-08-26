@@ -38,12 +38,6 @@ if [[ -z "$DOCKER_IMAGE" ]]; then
   fi
 fi
 
-USE_GOLD_LINKER="OFF"
-# GOLD linker can not be used if CUPTI is statically linked into PyTorch, see https://github.com/pytorch/pytorch/issues/57744
-if [[ ${DESIRED_CUDA} == "cpu" ]]; then
-  USE_GOLD_LINKER="ON"
-fi
-
 
 # Default to nightly, since that's where this normally uploads to
 PIP_UPLOAD_FOLDER='nightly/'
@@ -135,10 +129,6 @@ if [[ "$PACKAGE_TYPE" =~ .*wheel.* && -n "$PYTORCH_BUILD_VERSION" && "$PYTORCH_B
 fi
 
 USE_GLOO_WITH_OPENSSL="OFF"
-if [[ "$GPU_ARCH_TYPE" =~ .*aarch64.* ]]; then
-  USE_GOLD_LINKER="OFF"
-fi
-
 cat >"$envfile" <<EOL
 # =================== The following code will be executed inside Docker container ===================
 export TZ=UTC
@@ -174,7 +164,6 @@ export PIP_UPLOAD_FOLDER="$PIP_UPLOAD_FOLDER"
 export DOCKER_IMAGE="$DOCKER_IMAGE"
 
 
-export USE_GOLD_LINKER="${USE_GOLD_LINKER}"
 export USE_GLOO_WITH_OPENSSL="${USE_GLOO_WITH_OPENSSL}"
 # =================== The above code will be executed inside Docker container ===================
 EOL
