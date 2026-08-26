@@ -187,7 +187,7 @@ int main() { return 0; }
         # checks below stay at C++17 on purpose -- they exercise the stable /
         # header-only / C-shim surface, which must remain buildable under the
         # older standard.
-        "-std=c++20",
+        "-std=c++23",
         f"-I{include_dir}",
         f"-I{include_dir}/torch/csrc/api/include",
         "-c",  # Compile only, don't link

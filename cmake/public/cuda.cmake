@@ -52,8 +52,13 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   set(CMAKE_CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")
 endif()
 enable_language(CUDA)
+# Device code stays at C++20 even when the host is newer. C++23 gives <cmath>
+# overloads for _Float16 and __bf16, and once those are in the overload set a
+# std:: math call on c10::Half or c10::BFloat16 in device code makes nvcc 13.3
+# abort with `Internal Compiler Error (codegen): "unsupported float variant!"`.
+# Raise this once nvcc compiles those kernels.
 if("X${CMAKE_CUDA_STANDARD}" STREQUAL "X" )
-  set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
+  set(CMAKE_CUDA_STANDARD 20)
 endif()
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
