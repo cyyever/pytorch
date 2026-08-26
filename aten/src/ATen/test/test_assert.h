@@ -38,7 +38,7 @@ static inline void barf(const char *fmt, ...) {
   }
 
 #define ASSERT_THROWSM(fn, message)     \
-  TRY_CATCH_ELSE(fn, ASSERT(std::string(e.what()).find(message) != std::string::npos), ASSERT(false))
+  TRY_CATCH_ELSE(fn, ASSERT(std::string(e.what()).contains(message)), ASSERT(false))
 
 #define ASSERT_THROWS(fn)  \
   ASSERT_THROWSM(fn, "");

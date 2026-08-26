@@ -218,7 +218,7 @@ std::pair<Option, std::string> _parseOption(
     arguments.emplace_back(name, _buildType(type_name, is_nullable));
   }
 
-  bool is_variadic = option_str.find("...") != std::string::npos;
+  bool is_variadic = option_str.contains("...");
   return std::pair<Option, std::string>(
       Option(std::move(arguments), is_variadic, has_out),
       std::move(printable_option));
