@@ -189,7 +189,9 @@ def main() -> None:
     options = parser.parse_args()
 
     # Path: aten/src/ATen
-    aten_path = os.path.dirname(os.path.dirname(options.native_functions_path))
+    aten_path = os.path.dirname(
+        os.path.dirname(options.native_functions_path or NATIVE_FUNCTIONS_PATH)
+    )
     operator_selector = get_selector(
         options.selected_op_list_path, options.operators_yaml_path
     )
