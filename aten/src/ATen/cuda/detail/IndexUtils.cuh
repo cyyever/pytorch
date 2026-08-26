@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ATen/core/TensorBase.h>
+#include <c10/macros/Macros.h>
 #include <ATen/cuda/detail/TensorInfo.cuh>
 #include <ATen/native/CanUse32BitIndexMath.h>
 
@@ -35,7 +36,7 @@ getTensorInfo(const at::TensorBase &t) {
 
 // ForwardIt: only legacy random access iterator is supported.
 template<class ForwardIt, class T, bool is_lower = true>
-static __host__ __device__ __forceinline__
+static C10_HOST_DEVICE C10_ALWAYS_INLINE
 ForwardIt find_bound(ForwardIt first, ForwardIt last, const T& value) {
     ForwardIt it;
     typename std::iterator_traits<ForwardIt>::difference_type count, step;
