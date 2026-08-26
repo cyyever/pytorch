@@ -9,10 +9,6 @@
 #include <torch/library.h>
 
 #include <c10/util/env.h>
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Operators.h>
-#include <ATen/NativeFunctions.h>
-#else
 // needed for the meta tensor calls to get stride info in functionalization
 #include <ATen/ops/empty_strided_native.h>
 // needed for special handling of copy_().
@@ -21,7 +17,6 @@
 #include <ATen/ops/expand_copy_ops.h>
 
 $ops_headers
-#endif
 
 namespace at {
 namespace functionalization {

@@ -8,12 +8,8 @@
 #include <ATen/core/dispatch/DispatchKeyExtractor.h>
 #include <torch/library.h>
 
-#ifndef AT_PER_OPERATOR_HEADERS
-#include <ATen/Operators.h>
-#else
 
 ${ops_headers}
-#endif
 
 namespace at {
 

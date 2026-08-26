@@ -230,18 +230,12 @@ if(INTERN_BUILD_ATEN_OPS)
     set(generated_unboxing_sources "")
   endif()
 
-  set(GEN_PER_OPERATOR_FLAG)
-  if(USE_PER_OPERATOR_HEADERS)
-    list(APPEND GEN_PER_OPERATOR_FLAG "--per-operator-headers")
-  endif()
-
   set(GEN_COMMAND
       "${Python_EXECUTABLE}" -m torchgen.gen
       --source-path ${CMAKE_CURRENT_LIST_DIR}/../aten/src/ATen
       --install_dir ${CMAKE_BINARY_DIR}/aten/src/ATen
       --headeronly-install-dir ${CMAKE_BINARY_DIR}/torch/headeronly/core
-      ${GEN_PER_OPERATOR_FLAG}
-      ${GEN_ROCM_FLAG}
+        ${GEN_ROCM_FLAG}
       ${GEN_MPS_FLAG}
       ${GEN_XPU_FLAG}
       ${CUSTOM_BUILD_FLAGS}
@@ -346,10 +340,8 @@ if(INTERN_BUILD_ATEN_OPS)
   add_dependencies(ATEN_CPU_FILES_GEN_LIB ATEN_CPU_FILES_GEN_TARGET)
   add_dependencies(ATEN_CUDA_FILES_GEN_LIB ATEN_CUDA_FILES_GEN_TARGET)
 
-  if(USE_PER_OPERATOR_HEADERS)
-    target_compile_definitions(ATEN_CPU_FILES_GEN_LIB INTERFACE AT_PER_OPERATOR_HEADERS)
-    target_compile_definitions(ATEN_CUDA_FILES_GEN_LIB INTERFACE AT_PER_OPERATOR_HEADERS)
-  endif()
+  target_compile_definitions(ATEN_CPU_FILES_GEN_LIB INTERFACE AT_PER_OPERATOR_HEADERS)
+  target_compile_definitions(ATEN_CUDA_FILES_GEN_LIB INTERFACE AT_PER_OPERATOR_HEADERS)
 
   if(USE_XPU)
     add_custom_target(ATEN_XPU_FILES_GEN_TARGET DEPENDS
@@ -357,9 +349,7 @@ if(INTERN_BUILD_ATEN_OPS)
     add_library(ATEN_XPU_FILES_GEN_LIB INTERFACE)
     add_dependencies(ATEN_XPU_FILES_GEN_LIB ATEN_XPU_FILES_GEN_TARGET)
 
-    if(USE_PER_OPERATOR_HEADERS)
-      target_compile_definitions(ATEN_XPU_FILES_GEN_LIB INTERFACE AT_PER_OPERATOR_HEADERS)
-    endif()
+    target_compile_definitions(ATEN_XPU_FILES_GEN_LIB INTERFACE AT_PER_OPERATOR_HEADERS)
   endif()
   # Handle source files that need to be compiled multiple times for
   # different vectorization options

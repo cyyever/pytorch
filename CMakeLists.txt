@@ -437,8 +437,6 @@ option(
   DEBUG_CUDA
   "When compiling DEBUG, also attempt to compile CUDA with debug flags (may cause nvcc to OOM)"
   OFF)
-option(USE_PER_OPERATOR_HEADERS
-       "Whether ATen should generate separate headers for each operator" ON)
 cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)

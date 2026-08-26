@@ -1569,127 +1569,6 @@ def get_native_function_schema_registrations(
     return (aten_schema_registrations, schema_registrations)
 
 
-def gen_aggregated_headers(
-    *,
-    native_functions: Sequence[NativeFunction],
-    grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
-    structured_native_functions: Sequence[NativeFunctionsGroup],
-    static_dispatch_idx: list[BackendIndex],
-    selector: SelectiveBuilder,
-    backend_indices: dict[DispatchKey, BackendIndex],
-    cpu_fm: FileManager,
-    device_fms: dict[str, FileManager],
-    functions_keys: set[DispatchKey],
-    dispatch_keys: Sequence[DispatchKey],
-    rocm: bool,
-) -> None:
-    # Buck doesn't support dynamic output files, so we aggregate all operator
-    # headers into a single file
-    cpu_fm.write(
-        "NativeMetaFunctions.h",
-        lambda: {
-            "NativeMetaFunctions_includes": [],
-            "NativeMetaFunctions_declarations": list(
-                mapMaybe(compute_meta_function_declaration, structured_native_functions)
-            ),
-        },
-    )
-    method_native_functions = [
-        fn for fn in native_functions if Variant.method in fn.variants
-    ]
-    non_method_native_functions = [
-        fn for fn in native_functions if fn not in method_native_functions
-    ]
-    cpu_fm.write(
-        "MethodOperators.h",
-        lambda: {
-            "MethodOperators_includes": [],
-            "MethodOperators_declarations": list(
-                mapMaybe(
-                    ComputeOperators(
-                        Target.DECLARATION,
-                        static_dispatch_backend_indices=static_dispatch_idx,
-                    ),
-                    method_native_functions,
-                )
-            ),
-        },
-    )
-    cpu_fm.write(
-        "Operators.h",
-        lambda: {
-            "Operators_includes": ["#include <ATen/MethodOperators.h>"],
-            "Operators_declarations": list(
-                mapMaybe(
-                    ComputeOperators(
-                        Target.DECLARATION,
-                        static_dispatch_backend_indices=static_dispatch_idx,
-                    ),
-                    non_method_native_functions,
-                )
-            ),
-        },
-    )
-    cpu_fm.write(
-        "Functions.h",
-        lambda: {
-            "static_dispatch_extra_headers": static_dispatch_extra_headers(
-                static_dispatch_idx
-            ),
-            "Functions_includes": ["#include <ATen/Operators.h>"],
-            "Functions_declarations": list(
-                mapMaybe(
-                    ComputeFunction(),
-                    native_functions,
-                )
-            ),
-        },
-    )
-    declarations = get_native_function_declarations(
-        grouped_native_functions=grouped_native_functions,
-        backend_indices=backend_indices,
-    )
-    cpu_fm.write(
-        "NativeFunctions.h",
-        lambda: {
-            "NativeFunctions_includes": ["#include <ATen/NativeMetaFunctions.h>"],
-            "NativeFunctions_declarations": declarations,
-        },
-    )
-
-    for dispatch_key in dispatch_keys:
-        fm = file_manager_from_dispatch_key(dispatch_key, device_fms, cpu_fm)
-        if dispatch_key in functions_keys:
-            inl_headers = f"#include <ATen/{dispatch_key}Functions_inl.h>"
-
-            fm.write_with_template(
-                f"{dispatch_key}Functions.h",
-                "DispatchKeyFunctions.h",
-                lambda: {
-                    "dispatch_key": str(dispatch_key),
-                    "inline_headers": inl_headers,
-                },
-            )
-            fm.write_with_template(
-                f"{dispatch_key}Functions_inl.h",
-                "DispatchKeyFunctions_inl.h",
-                lambda: {
-                    "DispatchKeyFunctions_inl_includes": [],
-                    "dispatch_namespace": dispatch_key.lower(),
-                    "dispatch_namespaced_declarations": get_namespaced_declaration(
-                        grouped_native_functions=grouped_native_functions,
-                        dispatch_key=dispatch_key,
-                        backend_idx=backend_indices[dispatch_key],
-                        selector=selector,
-                        rocm=rocm,
-                        symint=True,
-                    ),
-                },
-            )
-
-        del fm
-
-
 def gen_per_operator_headers(
     *,
     native_functions: Sequence[NativeFunction],
@@ -1795,7 +1674,6 @@ def gen_per_operator_headers(
     for category, suffix in [
         ("Functions", ""),
         ("Operators", "_ops"),
-        ("NativeMetaFunctions", "_meta"),
         ("NativeFunctions", "_native"),
     ]:
         cpu_fm.write(
@@ -1901,7 +1779,6 @@ def gen_headers(
     dispatch_keys: Sequence[DispatchKey],
     functions_keys: set[DispatchKey],
     rocm: bool,
-    per_operator_headers: bool,
     native_aot_manifests: dict[tuple[DispatchKey, str], NativeAotManifest]
     | None = None,
 ) -> None:
@@ -1916,34 +1793,19 @@ def gen_headers(
         for (_, op), m in native_aot_manifests.items()
         if m.matches_group(g)
     }
-    if per_operator_headers:
-        gen_per_operator_headers(
-            native_functions=native_functions,
-            grouped_native_functions=grouped_native_functions,
-            static_dispatch_idx=static_dispatch_idx,
-            selector=selector,
-            backend_indices=backend_indices,
-            cpu_fm=cpu_fm,
-            device_fms=device_fms,
-            ops_fm=ops_fm,
-            dispatch_keys=dispatch_keys,
-            functions_keys=functions_keys,
-            rocm=rocm,
-        )
-    else:
-        gen_aggregated_headers(
-            native_functions=native_functions,
-            grouped_native_functions=grouped_native_functions,
-            structured_native_functions=structured_native_functions,
-            static_dispatch_idx=static_dispatch_idx,
-            selector=selector,
-            backend_indices=backend_indices,
-            cpu_fm=cpu_fm,
-            device_fms=device_fms,
-            dispatch_keys=dispatch_keys,
-            functions_keys=functions_keys,
-            rocm=rocm,
-        )
+    gen_per_operator_headers(
+        native_functions=native_functions,
+        grouped_native_functions=grouped_native_functions,
+        static_dispatch_idx=static_dispatch_idx,
+        selector=selector,
+        backend_indices=backend_indices,
+        cpu_fm=cpu_fm,
+        device_fms=device_fms,
+        ops_fm=ops_fm,
+        dispatch_keys=dispatch_keys,
+        functions_keys=functions_keys,
+        rocm=rocm,
+    )
 
     core_fm.write(
         "TensorBody.h",
@@ -2054,7 +1916,6 @@ def gen_source_files(
     functions_keys: set[DispatchKey],
     rocm: bool,
     force_schema_registration: bool,
-    per_operator_headers: bool,
     skip_dispatcher_op_registration: bool,
     update_aoti_c_shim: bool,
     aoti_backends: set[DispatchKey | None],
@@ -2077,58 +1938,46 @@ def gen_source_files(
 
     for dispatch_key in dispatch_keys:
         fm = file_manager_from_dispatch_key(dispatch_key, device_fms, cpu_fm)
-        if per_operator_headers:
 
-            def operator_headers() -> list[str]:
-                headers = []
-                for g in grouped_native_functions:
-                    is_registered = False
-                    if backend_index.has_kernel(g):
-                        is_registered = True
-                    # The above has_kernel test on a group will only test for
-                    # the existence of out dispatch, because that's how
-                    # structured kernels work. But sometimes functions can be
-                    # grouped but not be structured, and then you need to check
-                    # each individual piece, as they may have manual dispatch
-                    # entries.
-                    elif isinstance(g, NativeFunctionsGroup) and any(
-                        backend_index.has_kernel(fn) for fn in g.functions()
-                    ):
-                        is_registered = True
-                    # TODO: this condition is a bit questionable
-                    # (It has to do with the fact that structured kernels get generated kernels
-                    # to the Meta + CompositeExplicitAutogradNonFunctional keys).
-                    elif g.structured and dispatch_key in (
-                        DispatchKey.Meta,
-                        DispatchKey.CompositeExplicitAutogradNonFunctional,
-                    ):
-                        is_registered = True
-                    if not is_registered:
-                        continue
+        def operator_headers() -> list[str]:
+            headers = []
+            for g in grouped_native_functions:
+                is_registered = False
+                if backend_index.has_kernel(g):
+                    is_registered = True
+                # The above has_kernel test on a group will only test for
+                # the existence of out dispatch, because that's how
+                # structured kernels work. But sometimes functions can be
+                # grouped but not be structured, and then you need to check
+                # each individual piece, as they may have manual dispatch
+                # entries.
+                elif isinstance(g, NativeFunctionsGroup) and any(
+                    backend_index.has_kernel(fn) for fn in g.functions()
+                ):
+                    is_registered = True
+                # TODO: this condition is a bit questionable
+                # (It has to do with the fact that structured kernels get generated kernels
+                # to the Meta + CompositeExplicitAutogradNonFunctional keys).
+                elif g.structured and dispatch_key in (
+                    DispatchKey.Meta,
+                    DispatchKey.CompositeExplicitAutogradNonFunctional,
+                ):
+                    is_registered = True
+                if not is_registered:
+                    continue
 
-                    headers.append(f"#include <ATen/ops/{g.root_name}_native.h>")
-                    if (
-                        dispatch_key
-                        == DispatchKey.CompositeExplicitAutogradNonFunctional
-                    ):
-                        headers.append(f"#include <ATen/ops/{g.root_name}.h>")
-                    if dispatch_key in functions_keys:
-                        headers.append(
-                            f"#include <ATen/ops/{g.root_name}_{dispatch_namespace}_dispatch.h>"
-                        )
-
-                return sorted(set(headers))
-
-        else:
-
-            def operator_headers() -> list[str]:
-                headers = ["#include <ATen/NativeFunctions.h>"]
-                if dispatch_key == DispatchKey.CompositeExplicitAutogradNonFunctional:
-                    headers.append("#include <ATen/Functions.h>")
+                headers.append(f"#include <ATen/ops/{g.root_name}_native.h>")
+                if (
+                    dispatch_key
+                    == DispatchKey.CompositeExplicitAutogradNonFunctional
+                ):
+                    headers.append(f"#include <ATen/ops/{g.root_name}.h>")
                 if dispatch_key in functions_keys:
-                    headers.append(f"#include <ATen/{dispatch_key!s}Functions.h>")
-                return headers
+                    headers.append(
+                        f"#include <ATen/ops/{g.root_name}_{dispatch_namespace}_dispatch.h>"
+                    )
 
+            return sorted(set(headers))
         backend_index = backend_indices[dispatch_key]
         ns_grouped_native_functions = defaultdict(list)
         for grouped_native_function in grouped_native_functions:
@@ -2153,7 +2002,7 @@ def gen_source_files(
             else "",
             "external_backend_headers": "",
             "dispatch_headers": dest.gen_registration_headers(
-                backend_index, per_operator_headers, rocm
+                backend_index, rocm
             ),
             # ops_headers *could* be sharded, but doesn't seem necessary?
             "ops_headers": operator_headers(),
@@ -2582,11 +2431,6 @@ def main() -> None:
         help="run without writing any files (still updates outputs)",
     )
     parser.add_argument(
-        "--per-operator-headers",
-        action="store_true",
-        help="generate separate headers per operator in ATen/ops",
-    )
-    parser.add_argument(
         "-d",
         "--install-dir",
         "--install_dir",
@@ -2879,7 +2723,6 @@ def main() -> None:
             functions_keys=functions_keys,
             rocm=options.rocm,
             force_schema_registration=options.force_schema_registration,
-            per_operator_headers=options.per_operator_headers,
             skip_dispatcher_op_registration=options.skip_dispatcher_op_registration,
             update_aoti_c_shim=options.update_aoti_c_shim,
             aoti_backends=aoti_backends,
@@ -2904,7 +2747,6 @@ def main() -> None:
             dispatch_keys=dispatch_keys,
             functions_keys=functions_keys,
             rocm=options.rocm,
-            per_operator_headers=options.per_operator_headers,
             native_aot_manifests=native_aot_manifests,
         )
 
