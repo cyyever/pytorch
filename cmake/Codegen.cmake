@@ -256,15 +256,8 @@ if(INTERN_BUILD_ATEN_OPS)
   # source alone is what nvcc was given. This runs after both (caffe2/ is a
   # subdirectory of the top-level list file), so ${TORCH_CUDA_ARCH_LIST} here is it.
   file(WRITE "${CMAKE_BINARY_DIR}/native_aot/arch_list.txt" "${TORCH_CUDA_ARCH_LIST}")
-  # Native-AOT declarations are codegen inputs: they add DispatchStub
-  # declarations and structured-wrapper call sites (torchgen/native_aot.py;
-  # the loader torchgen consumes is torchgen/native_aot_decl.py, already
-  # covered by all_python above).
-  file(GLOB native_aot_manifests CONFIGURE_DEPENDS
-       "${CMAKE_CURRENT_LIST_DIR}/../torch/_native/ops/*/aot.py")
-  set(declarations_yaml_templates "")
 
-  foreach(gen_type "headers" "sources" "declarations_yaml")
+  foreach(gen_type "headers" "sources")
     # The codegen outputs may change dynamically as PyTorch is
     # developed, but add_custom_command only supports dynamic inputs.
     #
@@ -339,7 +332,7 @@ if(INTERN_BUILD_ATEN_OPS)
   add_custom_target(ATEN_CPU_FILES_GEN_TARGET DEPENDS
       ${generated_headers} ${core_generated_headers} ${cpu_vec_generated_headers} ${ops_generated_headers}
       ${generated_sources} ${core_generated_sources} ${cpu_vec_generated_sources} ${ops_generated_sources}
-      ${generated_declarations_yaml} ${generated_unboxing_sources})
+      ${generated_unboxing_sources})
   add_custom_target(ATEN_CUDA_FILES_GEN_TARGET DEPENDS
       ${cuda_generated_headers} ${cuda_generated_sources})
   add_library(ATEN_CPU_FILES_GEN_LIB INTERFACE)

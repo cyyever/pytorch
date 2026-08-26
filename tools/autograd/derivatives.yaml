@@ -85,7 +85,8 @@
 #     function.
 #
 #   - Any of the input arguments, tensor or non-tensor, including
-#     argument names that only appear in Declarations.yaml, e.g. 'output'.
+#     argument names that only appear in the generated declarations,
+#     e.g. 'output'.
 #
 #   - 'result', representing the result of evaluating the forward
 #     expression for ATen native function declarations. If the forward

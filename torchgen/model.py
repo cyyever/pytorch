@@ -597,8 +597,7 @@ class NativeFunction:
     # types.  These are implemented in derived types (with a
     # standard (throwing) definition in Type).  A concrete ATen
     # method is one which has the same dispatch for all types;
-    # we just implement it in the base Type.  This is exposed
-    # in Declarations.yaml via a field named 'abstract'.
+    # we just implement it in the base Type.
     is_abstract: bool
 
     # Whether or not the NativeFunction contains a backend-agnostic kernel
@@ -2012,9 +2011,7 @@ class Type:
         raise NotImplementedError
 
     # WARNING: These concepts are not very well-defined.  For example,
-    # is "int?" nullable? How about "int?[]".  They are defined
-    # so we can conveniently generate legacy Declarations.yaml but
-    # really we should probably just remove these at some point
+    # is "int?" nullable? How about "int?[]".
 
     def is_base_ty_like(self, base_ty: BaseTy) -> bool:
         raise NotImplementedError
