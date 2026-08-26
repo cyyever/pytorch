@@ -48,7 +48,7 @@ if TYPE_CHECKING:
 
 # libcupti soname for the supported CUDA major (Cuspy's floor is 13.3). Loaded
 # by name so dlopen returns the copy already mapped into the process: torch front-loads
-# the nvidia-cuda-cupti wheel (torch._preload_cuda_deps) and cupti-python / kineto load
+# the nvidia-cuda-cupti wheel and cupti-python / kineto load
 # it otherwise, so every consumer shares one CUPTI -- a second instance would collide
 # with the stock profiler's subscriber (CUPTI_ERROR_MULTIPLE_SUBSCRIBERS).
 LIBCUPTI_SONAME = "libcupti.so.13"
