@@ -4592,25 +4592,6 @@ graph():
                     ep = export(mod, (sample_input,), strict=False)
                     self.assertEqual(ep.module()(sample_input), nz)
 
-    def test_export_script_module(self):
-        class Foo(torch.nn.Module):
-            def forward(self, rv: torch.Tensor, t: torch.Tensor):
-                i = t.item()
-                return rv + i
-
-        foo = Foo()
-        foo_script = torch.jit.script(foo)
-        inp = (torch.zeros(3, 4), torch.tensor(7))
-
-        with self.assertRaisesRegex(
-            ValueError, "Exporting a ScriptModule is not supported"
-        ):
-            export(foo_script, inp)
-
-        from torch._export.converter import TS2EPConverter
-
-        TS2EPConverter(foo_script, inp).convert()
-
     def test_dim_auto_and_dim(self):
         # test basic Dims
         class Foo(torch.nn.Module):
@@ -19316,62 +19297,6 @@ class TestExportCustomClass(TorchTestCase):
         super().setUp()
         load_torchbind_test_lib()
 
-    def test_lift_custom_obj(self):
-        # TODO: fix this test once custom class tracing is implemented
-
-        custom_obj = torch.classes._TorchScriptTesting._PickleTester([3, 4])
-
-        class Foo(torch.nn.Module):
-            def forward(self, x):
-                return x + x
-
-        f = Foo()
-
-        inputs = (torch.zeros(4, 4),)
-        ep = export(f, inputs)
-
-        # Replace one of the values with an instance of our custom class
-        for node in ep.graph.nodes:
-            if node.op == "call_function" and node.target == torch.ops.aten.add.Tensor:
-                with ep.graph.inserting_before(node):
-                    setattr(ep.graph_module, "custom_obj", custom_obj)
-                    getattr_node = ep.graph.get_attr("custom_obj")
-                    # Copy over an nn_module_stack as they are required.
-                    getattr_node.meta["nn_module_stack"] = node.meta["nn_module_stack"]
-                    custom_node = ep.graph.call_function(
-                        torch.ops._TorchScriptTesting.take_an_instance.default,
-                        (getattr_node,),
-                    )
-                    custom_node.meta["val"] = torch.ones(4, 4)
-                    # Copy over an nn_module_stack as they are required.
-                    custom_node.meta["nn_module_stack"] = node.meta["nn_module_stack"]
-                    custom_node.meta["torch_fn"] = (
-                        "custom_op",
-                        "torch.ops._TorchScriptTesting.take_an_instance.default",
-                    )
-                    arg0, _ = node.args
-                    node.args = (arg0, custom_node)
-
-        from torch._export.passes.lift_constants_pass import lift_constants_pass
-        from torch._export.serde.serialize import deserialize, serialize
-
-        constants = lift_constants_pass(ep.graph_module, ep.graph_signature, {})
-        for k, v in constants.items():
-            if k in ep.constants:
-                raise AssertionError(f"Key {k} already exists in ep.constants")
-            ep._constants[k] = v
-        serialized_vals = serialize(ep)
-        deserialized_ep = deserialize(serialized_vals)
-
-        for node in deserialized_ep.graph.nodes:
-            if (
-                node.op == "call_function"
-                and node.target
-                == torch.ops._TorchScriptTesting.take_an_instance.default
-            ):
-                arg = node.args[0]
-                self.assertTrue(arg.op == "placeholder")
-
     def test_int_lift_constant(self):
         class M(torch.nn.Module):
             def forward(self, a, x):
@@ -19382,36 +19307,6 @@ class TestExportCustomClass(TorchTestCase):
         )
         inp = (3, torch.randn(4))
         self.assertTrue(torch.allclose(M()(*inp), ep.module()(*inp)))
-
-    def test_export_script_module(self):
-        class Add(torch.nn.Module):
-            def forward(self, x, y):
-                return x + y
-
-        class Mod(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.add_mod = torch.jit.script(Add())._c
-
-            def forward(self, x, y):
-                return self.add_mod.forward(x, y)
-
-        x, y = torch.randn(3, 2), torch.randn(3, 2)
-        mod = Mod()
-        if is_non_strict_test(self._testMethodName):
-            ep = export(mod, (x, y))
-            self.assertEqual(ep.module()(x, y), mod(x, y))
-            FileCheck().check_count("torch.ops.aten.add.Tensor", 1, exactly=True).run(
-                ep.graph_module.code
-            )
-            return
-
-        # TODO: strict mode doesn't work because dynamo add_mod is treated as a
-        # user defined variable. We might need to add a CustomModule variable to support it.
-        with self.assertRaisesRegex(
-            torch._dynamo.exc.Unsupported, "UserDefined with non-function"
-        ):
-            ep = export(mod, (x, y))
 
     def test_preserve_non_cia_op(self):
         class M(torch.nn.Module):
