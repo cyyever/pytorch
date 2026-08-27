@@ -281,7 +281,6 @@ class TensorArg:
     buffer: str
     dtype: torch.dtype
     offset: sympy.Expr = sympy.S.Zero  # c++ only
-    alias_of: str | None = None  # halide only
 
 
 @dataclasses.dataclass
@@ -591,9 +590,7 @@ def _init_builtin_backend_registration() -> None:
     from .cpp_wrapper_gpu import CppWrapperGpu
     from .cpp_wrapper_mps import CppWrapperMps
     from .cuda_combined_scheduling import CUDACombinedScheduling
-    from .halide import HalideScheduling
     from .mps import MetalScheduling
-    from .pallas import PallasScheduling
     from .triton import TritonScheduling
     from .wrapper import PythonWrapperCodegen
     from .wrapper_fxir import WrapperFxCodegen
@@ -602,9 +599,7 @@ def _init_builtin_backend_registration() -> None:
     if get_scheduling_for_device("cpu") is None:
         cpu_backends = {
             "cpp": CppScheduling,
-            "halide": HalideScheduling,
             "triton": TritonScheduling,
-            "pallas": PallasScheduling,
         }
         register_backend_for_device(
             "cpu",
@@ -622,8 +617,6 @@ def _init_builtin_backend_registration() -> None:
         # CUDACombinedScheduling combines Triton and CUDA C++ scheduling for CUDA devices via delegation
         cuda_backends = {
             "triton": CUDACombinedScheduling,
-            "halide": HalideScheduling,
-            "pallas": PallasScheduling,
         }
         register_backend_for_device(
             "cuda",
@@ -633,15 +626,6 @@ def _init_builtin_backend_registration() -> None:
             WrapperFxCodegen,
         )
 
-    if get_scheduling_for_device("tpu") is None:
-        register_backend_for_device(
-            "tpu",
-            PallasScheduling,
-            PythonWrapperCodegen,
-            # CppWrapperGpu,
-            # WrapperFxCodegen,
-        )
-
     if get_scheduling_for_device("xpu") is None:
         register_backend_for_device(
             "xpu",
@@ -649,16 +633,6 @@ def _init_builtin_backend_registration() -> None:
             PythonWrapperCodegen,
             CppWrapperGpu,
             WrapperFxCodegen,
-        )
-
-    if get_scheduling_for_device("tpu") is None:
-        tpu_backends = {
-            "pallas": PallasScheduling,
-        }
-        register_backend_for_device(
-            "tpu",
-            lambda scheduling: tpu_backends[config.tpu_backend](scheduling),
-            PythonWrapperCodegen,
         )
 
     if get_scheduling_for_device("mps") is None:
@@ -757,9 +731,6 @@ def _initialize_device_op_overrides():
         )
         from .cuda import device_op_overrides  # noqa: F401
         from .xpu import device_op_overrides as xpu_op_overrides  # noqa: F401
-
-        # TPU uses Pallas for codegen and only needs no-op overrides
-        register_device_op_overrides("tpu", NoOpDeviceOpOverrides())
 
         _device_op_overrides_initialized = True
 
@@ -1087,7 +1058,6 @@ class OpDecompositions:
 
     @staticmethod
     def fma(x: OpVarT, y: OpVarT, z: OpVarT) -> OpVarT:
-        # for backends that don't override this (halide)
         return ops.add(ops.mul(x, y), z)
 
     @staticmethod
@@ -1297,11 +1267,6 @@ class OpOverrides(BasicMathOpsMixin, OpDecompositions, OpsHandler[Any]):
             f"{type(self).__name__}: bucketize should be handled by CSEProxy"
         )
 
-    def halide_clamp(self, value: OpVarT, size: sympy.Expr, check: bool) -> OpVarT:
-        raise NotImplementedError(
-            f"{type(self).__name__}: halide_clamp only implemented for Halide backend"
-        )
-
     def dot(self, x: OpVarT, y: OpVarT) -> OpVarT:
         raise NotImplementedError(
             f"{type(self).__name__}: dot only implemented for Triton backend"
@@ -1352,7 +1317,7 @@ class OpOverrides(BasicMathOpsMixin, OpDecompositions, OpsHandler[Any]):
 
     @classmethod
     def _initialize_pointwise_overrides(cls, target: str) -> None:
-        if target not in ("triton", "cpp", "cppvec", "halide", "mps"):
+        if target not in ("triton", "cpp", "cppvec", "mps"):
             raise AssertionError(target)
 
         for funcname, data in pointwise_overrides_data.items():
@@ -1380,7 +1345,6 @@ class OverridesData:
     type_promotion_kind: ELEMENTWISE_TYPE_PROMOTION_KIND = (
         ELEMENTWISE_TYPE_PROMOTION_KIND.DEFAULT
     )
-    halide: Callable[..., str] | None = None
     mps: Callable[..., str] | None = None
 
 

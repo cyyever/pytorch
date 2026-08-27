@@ -23,7 +23,6 @@ project-includes = [
 project-excludes = [
   "torch/_inductor/runtime/triton_heuristics.py",
   "torch/_inductor/runtime/triton_helpers.py",
-  "torch/_inductor/runtime/halide_helpers.py",
   "torch/utils/data/typing.ipynb",
   "torch/utils/data/dataframes_pipes.ipynb",
   "torch/utils/data/standard_pipes.ipynb",
