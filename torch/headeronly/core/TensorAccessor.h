@@ -183,13 +183,12 @@ class GenericPackedTensorAccessorBase {
 
   // if index_t is not int64_t, we want to have an int64_t constructor
   template <
-      typename source_index_t,
-      class = std::enable_if_t<std::is_same_v<source_index_t, int64_t>>>
+      typename source_index_t>
   C10_HOST GenericPackedTensorAccessorBase(
       PtrType data_,
       const source_index_t* sizes_,
       const source_index_t* strides_)
-      : data_(data_) {
+      requires (std::is_same_v<source_index_t, int64_t>) : data_(data_) {
     for (size_t i = 0; i < N; ++i) {
       this->sizes_[i] = sizes_[i];
       this->strides_[i] = strides_[i];
@@ -249,13 +248,12 @@ class GenericPackedTensorAccessor : public GenericPackedTensorAccessorBase<
 
   // if index_t is not int64_t, we want to have an int64_t constructor
   template <
-      typename source_index_t,
-      class = std::enable_if_t<std::is_same_v<source_index_t, int64_t>>>
+      typename source_index_t>
   C10_HOST GenericPackedTensorAccessor(
       PtrType data_,
       const source_index_t* sizes_,
       const source_index_t* strides_)
-      : GenericPackedTensorAccessorBase<
+      requires (std::is_same_v<source_index_t, int64_t>) : GenericPackedTensorAccessorBase<
             IndexBoundsCheck,
             T,
             N,
@@ -338,13 +336,12 @@ class GenericPackedTensorAccessor<
 
   // if index_t is not int64_t, we want to have an int64_t constructor
   template <
-      typename source_index_t,
-      class = std::enable_if_t<std::is_same_v<source_index_t, int64_t>>>
+      typename source_index_t>
   C10_HOST GenericPackedTensorAccessor(
       PtrType data_,
       const source_index_t* sizes_,
       const source_index_t* strides_)
-      : GenericPackedTensorAccessorBase<
+      requires (std::is_same_v<source_index_t, int64_t>) : GenericPackedTensorAccessorBase<
             IndexBoundsCheck,
             T,
             1,

@@ -31,12 +31,11 @@ TORCH_API bool isAccelerator(c10::DeviceType device_type);
 
 // Check if the given device type is an accelerator, not the excluded ones.
 template <
-    typename... T,
-    typename = std::enable_if_t<(std::is_same_v<T, c10::DeviceType> && ...)>>
+    typename... T>
 inline bool isAcceleratorExcluded(
     c10::DeviceType device_type,
     c10::DeviceType first_excluded,
-    T... rest_excluded) {
+    T... rest_excluded) requires ((std::is_same_v<T, c10::DeviceType> && ...)) {
   if constexpr (sizeof...(rest_excluded) > 0) {
     return device_type != first_excluded &&
         isAcceleratorExcluded(device_type, rest_excluded...);

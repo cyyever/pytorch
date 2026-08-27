@@ -179,18 +179,16 @@ inline void _PlacementNewNotDefault(void* /*ptr*/, size_t /*n*/) {
 }
 
 template <
-    typename T,
-    std::enable_if_t<std::is_default_constructible_v<T>>* = nullptr>
-inline constexpr TypeMetaData::PlacementNew* _PickPlacementNew() {
+    typename T>
+inline constexpr TypeMetaData::PlacementNew* _PickPlacementNew() requires (std::is_default_constructible_v<T>) {
   return (c10::guts::is_fundamental<T>::value || std::is_pointer_v<T>)
       ? nullptr
       : &_PlacementNew<T>;
 }
 
 template <
-    typename T,
-    std::enable_if_t<!std::is_default_constructible_v<T>>* = nullptr>
-inline constexpr TypeMetaData::PlacementNew* _PickPlacementNew() {
+    typename T>
+inline constexpr TypeMetaData::PlacementNew* _PickPlacementNew() requires (!std::is_default_constructible_v<T>) {
   static_assert(
       !c10::guts::is_fundamental<T>::value && !std::is_pointer_v<T>,
       "this should have picked the other SFINAE case");
@@ -210,16 +208,14 @@ inline void* _NewNotDefault() {
 }
 
 template <
-    typename T,
-    std::enable_if_t<std::is_default_constructible_v<T>>* = nullptr>
-inline constexpr TypeMetaData::New* _PickNew() {
+    typename T>
+inline constexpr TypeMetaData::New* _PickNew() requires (std::is_default_constructible_v<T>) {
   return &_New<T>;
 }
 
 template <
-    typename T,
-    std::enable_if_t<!std::is_default_constructible_v<T>>* = nullptr>
-inline constexpr TypeMetaData::New* _PickNew() {
+    typename T>
+inline constexpr TypeMetaData::New* _PickNew() requires (!std::is_default_constructible_v<T>) {
   return &_NewNotDefault<T>;
 }
 
@@ -245,17 +241,16 @@ inline void _CopyNotAllowed(const void* /*src*/, void* /*dst*/, size_t /*n*/) {
       " does not allow assignment.");
 }
 
-template <typename T, std::enable_if_t<std::is_copy_assignable_v<T>>* = nullptr>
-inline constexpr TypeMetaData::Copy* _PickCopy() {
+template <typename T>
+inline constexpr TypeMetaData::Copy* _PickCopy() requires (std::is_copy_assignable_v<T>) {
   return (c10::guts::is_fundamental<T>::value || std::is_pointer_v<T>)
       ? nullptr
       : &_Copy<T>;
 }
 
 template <
-    typename T,
-    std::enable_if_t<!std::is_copy_assignable_v<T>>* = nullptr>
-inline constexpr TypeMetaData::Copy* _PickCopy() {
+    typename T>
+inline constexpr TypeMetaData::Copy* _PickCopy() requires (!std::is_copy_assignable_v<T>) {
   static_assert(
       !c10::guts::is_fundamental<T>::value && !std::is_pointer_v<T>,
       "this should have picked the other SFINAE case");

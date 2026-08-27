@@ -70,7 +70,7 @@ struct TransparentStringHash {
     const std::string_view s,
     const std::string_view prefix) noexcept {
   return (prefix.size() > s.size()) ? false
-                                    : prefix == s.substr(0, prefix.size());
+                                    : s.starts_with(prefix);
 }
 
 // NOTE: In C++20, this function should be replaced by string_view.starts_with

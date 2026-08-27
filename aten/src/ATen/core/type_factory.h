@@ -54,17 +54,15 @@ using DynamicTypeFactory = TypeFactoryBase<c10::DynamicType>;
 
 // Helper functions for constructing DynamicTypes inline.
 template <
-    typename T,
-    std::enable_if_t<DynamicTypeTrait<T>::isBaseType, int> = 0>
-C10_ERASE DynamicTypePtr dynT() {
+    typename T>
+C10_ERASE DynamicTypePtr dynT() requires DynamicTypeTrait<T>::isBaseType {
   return DynamicTypeFactory::get<T>();
 }
 
 template <
     typename T,
-    typename... Args,
-    std::enable_if_t<!DynamicTypeTrait<T>::isBaseType, int> = 0>
-C10_ERASE DynamicTypePtr dynT(Args&&... args) {
+    typename... Args>
+C10_ERASE DynamicTypePtr dynT(Args&&... args) requires (!DynamicTypeTrait<T>::isBaseType) {
   return DynamicTypeFactory::create<T>(std::forward<Args>(args)...);
 }
 

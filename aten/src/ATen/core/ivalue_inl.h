@@ -1300,8 +1300,8 @@ struct C10_EXPORT ivalue::Future final : c10::intrusive_ptr_target {
   static std::vector<c10::Device> sortAndDeduplicateDevices(
       const c10::impl::VirtualGuardImpl& /*impl*/,
       std::vector<c10::Device> devices) {
-    std::sort(
-      devices.begin(), devices.end(),
+    std::ranges::sort(
+      devices,
       [](const c10::Device& a, const c10::Device& b) { return a.index() < b.index(); });
     // Deduplicate by compacting.
     size_t targetIdx = 0;
@@ -1333,11 +1333,11 @@ struct C10_EXPORT ivalue::Future final : c10::intrusive_ptr_target {
     // their indices are unique and sorted.
     std::vector<c10::Device> excessDevices;
     excessDevices.reserve(subset.size());
-    std::set_difference(
-        subset.begin(),
-        subset.end(),
-        superset.begin(),
-        superset.end(),
+    std::ranges::set_difference(
+        subset,
+       
+        superset,
+       
         std::back_inserter(excessDevices),
         [](const c10::Device& a, const c10::Device& b) { return a.index() < b.index(); });
     TORCH_CHECK_VALUE(
