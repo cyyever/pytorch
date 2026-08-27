@@ -545,16 +545,27 @@ void rsqrt_kernel(TensorIteratorBase& iter) {
 static void entr_kernel(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       kBFloat16, kHalf, iter.common_dtype(), "entr_cpu", [&] {
-        cpu_kernel(iter, [](scalar_t x) -> scalar_t {
-          if (at::_isnan(x)) {
-            return x;
-          } else if (x > 0) {
-            return -x * std::log(x);
-          } else if (x == 0) {
-            return static_cast<scalar_t>(0);
-          }
-          return static_cast<scalar_t>(-INFINITY);
-        });
+        using vec_t = Vectorized<scalar_t>;
+        cpu_kernel_vec(
+            iter,
+            [](scalar_t x) -> scalar_t {
+              if (at::_isnan(x)) {
+                return x;
+              } else if (x > 0) {
+                return -x * std::log(x);
+              } else if (x == 0) {
+                return static_cast<scalar_t>(0);
+              }
+              return static_cast<scalar_t>(-INFINITY);
+            },
+            [](vec_t x) -> vec_t {
+              // The blends replay the scalar branches in reverse order, so a
+              // NaN input still passes through unchanged as it does above.
+              vec_t r = -x * x.log();
+              r = vec_t::blendv(vec_t(-INFINITY), r, x > vec_t(0));
+              r = vec_t::blendv(r, vec_t(0), x == vec_t(0));
+              return vec_t::blendv(r, x, x.isnan());
+            });
       });
 }
 
