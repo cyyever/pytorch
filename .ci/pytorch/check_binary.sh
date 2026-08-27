@@ -189,7 +189,7 @@ fi
 if [[ "$PACKAGE_TYPE" == 'libtorch' ]]; then
   echo "Checking that MKL is available"
   build_and_run_example_cpp check-torch-mkl
-elif [[ "$(uname -m)" != "arm64" && "$(uname -m)" != "s390x" ]]; then
+elif [[ "$(uname -m)" != "arm64" ]]; then
   if [[ "$(uname)" != 'Darwin' || "$PACKAGE_TYPE" != *wheel ]]; then
     echo "Checking that MKL is available"
     pushd /tmp
@@ -222,7 +222,7 @@ fi
 
 # Test that CUDA builds are setup correctly
 # Skip CUDA hardware checks for aarch64 as they run on CPU-only runners
-if [[ "$DESIRED_CUDA" != 'cpu' && "$DESIRED_CUDA" != 'xpu' && "$DESIRED_CUDA" != 'cpu-cxx11-abi' && "$DESIRED_CUDA" != *"rocm"* && "$(uname -m)" != "s390x" && "$(uname -m)" != "aarch64" ]]; then
+if [[ "$DESIRED_CUDA" != 'cpu' && "$DESIRED_CUDA" != 'xpu' && "$DESIRED_CUDA" != 'cpu-cxx11-abi' && "$DESIRED_CUDA" != *"rocm"* && "$(uname -m)" != "aarch64" ]]; then
   if [[ "$PACKAGE_TYPE" == 'libtorch' ]]; then
     build_and_run_example_cpp check-torch-cuda
   else

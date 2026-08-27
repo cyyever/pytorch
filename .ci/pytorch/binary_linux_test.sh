@@ -48,28 +48,23 @@ else
 fi
 
 if [[ "$PACKAGE_TYPE" != libtorch ]]; then
-  if [[ "\$BUILD_ENVIRONMENT" != *s390x* ]]; then
-    pip install "\$pkg" --index-url "https://download.pytorch.org/whl/\${CHANNEL}/${DESIRED_CUDA}"
+  pip install "\$pkg" --index-url "https://download.pytorch.org/whl/\${CHANNEL}/${DESIRED_CUDA}"
 
-    # numpy tests:
-    # We test 1 version no numpy. 1 version with numpy 1.x and rest with numpy 2.x
-    if [[ "${DESIRED_CUDA}" == *rocm* && "\$python_nodot" = *315* ]]; then
-      # cp315 has no numpy wheel on any index, and the ROCm image can't build
-      # numpy from source (pkg-config resolves python3 to the image's system
-      # 3.6), so skip the numpy smoke test for ROCm cp315 / cp315t.
-      retry pip install -q protobuf typing-extensions
-    elif [[ "\$python_nodot" = *311* ]]; then
-      retry pip install -q numpy==1.23.5 protobuf typing-extensions
-    elif [[ "\$python_nodot" = *312* ]]; then
-      retry pip install -q protobuf typing-extensions
-    else
-      retry pip install -q numpy protobuf typing-extensions
-    fi
-
+  # numpy tests:
+  # We test 1 version no numpy. 1 version with numpy 1.x and rest with numpy 2.x
+  if [[ "${DESIRED_CUDA}" == *rocm* && "\$python_nodot" = *315* ]]; then
+    # cp315 has no numpy wheel on any index, and the ROCm image can't build
+    # numpy from source (pkg-config resolves python3 to the image's system
+    # 3.6), so skip the numpy smoke test for ROCm cp315 / cp315t.
+    retry pip install -q protobuf typing-extensions
+  elif [[ "\$python_nodot" = *311* ]]; then
+    retry pip install -q numpy==1.23.5 protobuf typing-extensions
+  elif [[ "\$python_nodot" = *312* ]]; then
+    retry pip install -q protobuf typing-extensions
   else
-    pip install "\$pkg"
     retry pip install -q numpy protobuf typing-extensions
   fi
+
 fi
 
 if [[ "$PACKAGE_TYPE" == libtorch ]]; then
@@ -81,7 +76,7 @@ fi
 # Test the package
 /pytorch/.ci/pytorch/check_binary.sh
 
-if [[ "\$GPU_ARCH_TYPE" != *s390x* && "\$GPU_ARCH_TYPE" != *xpu* && "\$GPU_ARCH_TYPE" != *rocm*  && "$PACKAGE_TYPE" != libtorch ]]; then
+if [[ "\$GPU_ARCH_TYPE" != *xpu* && "\$GPU_ARCH_TYPE" != *rocm*  && "$PACKAGE_TYPE" != libtorch ]]; then
 
   torch_pkg_size="$(ls -1 /final_pkgs/torch-* | sort |tail -1 |xargs wc -c |cut -d ' ' -f1)"
   # todo: implement check for large binaries

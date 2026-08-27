@@ -10,7 +10,7 @@ from torch._dynamo.test_case import TestCase
 from torch._export.converter import TS2EPConverter
 from torch.export import ExportedProgram
 from torch.testing._internal.common_quantized import override_quantized_engine
-from torch.testing._internal.common_utils import IS_WINDOWS, run_tests, xfailIfS390X
+from torch.testing._internal.common_utils import IS_WINDOWS, run_tests
 from torch.testing._internal.torchbind_impls import (
     _empty_tensor_queue,
     init_torchbind_implementations,
@@ -1424,12 +1424,10 @@ class TestConverter(TestCase):
         inp = (torch.randn(1, 10),)
         self._check_equal_ts_ep_converter(m, inp, ["script"])
 
-    # qnnpack/xnnpack not supported on s390x.
     # it is required by
     # torch.ops.prepacked.linear_clamp_prepack
     # and
     # torch.ops.prepacked.linear_clamp_run
-    @xfailIfS390X
     @requires_prepacked_linear
     def test_ts2ep_convert_quantized_model_with_opcontext_and_constant(self):
         class M(torch.nn.Module):

@@ -104,7 +104,6 @@
   "ciflow/periodic-rocm-mi355",
   "ciflow/pull",
   "ciflow/quantization-periodic",
-  "ciflow/riscv64",
   "ciflow/rocm",
   "ciflow/rocm-mi200",
   "ciflow/rocm-mi300",

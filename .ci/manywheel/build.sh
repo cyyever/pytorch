@@ -6,7 +6,7 @@ SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PYTORCH_ROOT="${PYTORCH_ROOT:-$(cd "${SCRIPTPATH}/../.." && pwd)}"
 
 case "${GPU_ARCH_TYPE:-BLANK}" in
-    cuda|cuda-aarch64|cpu|cpu-aarch64|cpu-riscv64|cpu-cxx11-abi|xpu|rocm)
+    cuda|cuda-aarch64|cpu|cpu-aarch64|cpu-cxx11-abi|xpu|rocm)
         # New pipeline: pyproject-driven build via `python -m build`
         # then patchelf-based wheel repair.
         source "${SCRIPTPATH}/set_desired_python.sh"
@@ -58,9 +58,6 @@ case "${GPU_ARCH_TYPE:-BLANK}" in
         fi  # GPU_ARCH_TYPE == cuda*
 
         python3 "${SCRIPTPATH}/repair_wheel.py" "${RAW_WHEEL_DIR}" "${PYTORCH_FINAL_PACKAGE_DIR}"
-        ;;
-    cpu-s390x)
-        bash "${SCRIPTPATH}/build_cpu.sh"
         ;;
     *)
         echo "Un-recognized GPU_ARCH_TYPE '${GPU_ARCH_TYPE}', exiting..."

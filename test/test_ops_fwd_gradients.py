@@ -1,8 +1,6 @@
 # Owner(s): ["module: unknown"]
 
-import platform
 from functools import partial
-from unittest import skipIf as skipif
 
 import torch
 from torch.testing._internal.common_device_type import (
@@ -125,10 +123,6 @@ class TestFwdGradients(TestGradients):
             with self.assertRaisesRegex(NotImplementedError, err_msg, msg=hint_msg):
                 call_grad_test_helper()
 
-    @skipif(
-        platform.machine() == "s390x",
-        reason="Different precision of openblas functions: https://github.com/OpenMathLib/OpenBLAS/issues/4194",
-    )
     @skipOps(
         _fwd_grad_all
         | {
