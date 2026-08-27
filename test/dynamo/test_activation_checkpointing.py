@@ -1992,8 +1992,12 @@ Non-primal fwd outputs from model w/o backward hook: {mod_no_hook_fwd_outputs_no
         prefer_cudnn = cudnn_version > 91500 and dprops.major in (9, 10)
         if prefer_cudnn and torch.version.cuda and TEST_CUDA:
             sdpa_op = torch.ops.aten._scaled_dot_product_cudnn_attention.default
-        else:
+        elif PLATFORM_SUPPORTS_FLASH_ATTENTION:
             sdpa_op = torch.ops.aten._scaled_dot_product_flash_attention.default
+        else:
+            # Flash needs sm80 or newer; below that the dispatcher lands on the
+            # memory-efficient kernel instead.
+            sdpa_op = torch.ops.aten._scaled_dot_product_efficient_attention.default
         self.assertTrue(count_ops(fwd_graph, [], freq=1, op=sdpa_op))
         bwd_graph = aot_graphs[1]
         # Check that sin is not recomputed in the backward graph - checks percolate tags
