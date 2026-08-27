@@ -234,7 +234,8 @@ C10_NOINLINE DynamicTypePtr makeBaseType(DynamicType::Tag tag);
     }                                                      \
     static constexpr bool isBaseType = IS_BASE_TYPE;       \
     template <typename T = const DynamicTypePtr&>          \
-    static std::enable_if_t<isBaseType, T> getBaseType() { \
+      requires isBaseType                                  \
+    static T getBaseType() {                               \
       static auto type = detail::makeBaseType(tagValue()); \
       return type;                                         \
     }                                                      \
