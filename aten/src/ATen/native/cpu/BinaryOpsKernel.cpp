@@ -1301,11 +1301,12 @@ void xlogy_kernel(TensorIteratorBase& iter) {
               return x * std::log(y);
             },
             [](vec_t x, vec_t y) -> vec_t {
-              // The blends replay the scalar branches in reverse, so that a
-              // NaN y wins over a zero x exactly as the early returns do.
-              vec_t r = x * y.log();
-              r = vec_t::blendv(r, vec_t(0), x == vec_t(0));
-              return vec_t::blendv(r, vec_t(NAN), y.isnan());
+              // x * log(NaN) is already NaN, so the zero branch is the only one
+              // that needs a blend, and it must not claim the lanes where the
+              // scalar form would have returned on a NaN y first.
+              const vec_t zero(0);
+              return vec_t::blendv(
+                  x * y.log(), zero, (x == zero) & ~y.isnan());
             });
       });
 }
@@ -1326,11 +1327,12 @@ void xlog1py_kernel(TensorIteratorBase& iter) {
               return x * std::log1p(y);
             },
             [](vec_t x, vec_t y) -> vec_t {
-              // The blends replay the scalar branches in reverse, so that a
-              // NaN y wins over a zero x exactly as the early returns do.
-              vec_t r = x * y.log1p();
-              r = vec_t::blendv(r, vec_t(0), x == vec_t(0));
-              return vec_t::blendv(r, vec_t(NAN), y.isnan());
+              // x * log(NaN) is already NaN, so the zero branch is the only one
+              // that needs a blend, and it must not claim the lanes where the
+              // scalar form would have returned on a NaN y first.
+              const vec_t zero(0);
+              return vec_t::blendv(
+                  x * y.log1p(), zero, (x == zero) & ~y.isnan());
             });
       });
 }
