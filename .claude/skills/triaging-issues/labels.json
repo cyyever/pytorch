@@ -109,7 +109,7 @@
     },
     {
       "name": "module: autograd",
-      "description": "Issues in the eager-mode autograd engine (torch/autograd/, torch/csrc/autograd/). Covers gradient computation, autograd functions, hooks, and the backward pass in eager mode. Do NOT apply when the issue is about torch.compile silently dropping or mishandling an autograd operation — if the bug only reproduces under torch.compile (not in eager), the root cause is likely in Dynamo tracing ('module: dynamo') or AOTAutograd ('module: aotdispatch'), not in the eager autograd engine."
+      "description": "Issues in the eager-mode autograd engine (torch/autograd/, torch/csrc/autograd/). Covers gradient computation, autograd functions, hooks, and the backward pass in eager mode. Do NOT apply when the issue is about torch.compile silently dropping or mishandling an autograd operation \u2014 if the bug only reproduces under torch.compile (not in eager), the root cause is likely in Dynamo tracing ('module: dynamo') or AOTAutograd ('module: aotdispatch'), not in the eager autograd engine."
     },
     {
       "name": "module: backend",
@@ -169,7 +169,7 @@
     },
     {
       "name": "module: compiled autograd",
-      "description": "Issues in the compiled autograd subsystem (torch/csrc/autograd/compiled_autograd.*, torch/_dynamo/compiled_autograd.py). This is the system that compiles the autograd backward graph with Dynamo+Inductor. Do NOT apply just because 'autograd' appears in the issue — use 'module: aotdispatch' for AOTAutograd tracing/partitioning issues, and 'module: autograd' for eager autograd issues."
+      "description": "Issues in the compiled autograd subsystem (torch/csrc/autograd/compiled_autograd.*, torch/_dynamo/compiled_autograd.py). This is the system that compiles the autograd backward graph with Dynamo+Inductor. Do NOT apply just because 'autograd' appears in the issue \u2014 use 'module: aotdispatch' for AOTAutograd tracing/partitioning issues, and 'module: autograd' for eager autograd issues."
     },
     {
       "name": "module: complex",
@@ -357,7 +357,7 @@
     },
     {
       "name": "module: error checking",
-      "description": "Bugs where PyTorch fails to validate inputs or raises a wrong/missing error message at a validation boundary (e.g., shape checks, dtype checks, device checks). Do NOT apply just because the user complains about a bad error message — if the root cause is a bug in a specific feature, use the feature-specific label instead."
+      "description": "Bugs where PyTorch fails to validate inputs or raises a wrong/missing error message at a validation boundary (e.g., shape checks, dtype checks, device checks). Do NOT apply just because the user complains about a bad error message \u2014 if the root cause is a bug in a specific feature, use the feature-specific label instead."
     },
     {
       "name": "module: expecttest",
@@ -409,7 +409,7 @@
     },
     {
       "name": "module: fx",
-      "description": "Issues in torch.fx (torch/fx/) — the graph IR, symbolic tracing, graph transforms, and make_fx. Note: make_fx with symbolic tracing is PT2 infrastructure, so issues involving make_fx should also get 'oncall: pt2'."
+      "description": "Issues in torch.fx (torch/fx/) \u2014 the graph IR, symbolic tracing, graph transforms, and make_fx. Note: make_fx with symbolic tracing is PT2 infrastructure, so issues involving make_fx should also get 'oncall: pt2'."
     },
     {
       "name": "module: fx.passes",
@@ -445,7 +445,7 @@
     },
     {
       "name": "module: inductor",
-      "description": "Issues in the TorchInductor code generation backend (torch/_inductor/). Covers kernel codegen, scheduling, fusion, and inductor-specific caching (TORCHINDUCTOR_* env vars). Do NOT apply just because the user mentions 'inductor cache' or 'torch.compile' — if the traceback points to _aot_autograd/ or _functorch/, use 'module: aotdispatch' instead."
+      "description": "Issues in the TorchInductor code generation backend (torch/_inductor/). Covers kernel codegen, scheduling, fusion, and inductor-specific caching (TORCHINDUCTOR_* env vars). Do NOT apply just because the user mentions 'inductor cache' or 'torch.compile' \u2014 if the traceback points to _aot_autograd/ or _functorch/, use 'module: aotdispatch' instead."
     },
     {
       "name": "module: infallible views",
@@ -700,10 +700,6 @@
       "description": ""
     },
     {
-      "name": "module: pallas",
-      "description": "Pallas backend related issues"
-    },
-    {
       "name": "module: partial aliasing",
       "description": "Related to correctly supporting overlapping storages in operations"
     },
@@ -785,7 +781,7 @@
     },
     {
       "name": "module: python version",
-      "description": "Issues where behavior differs across Python versions or where a specific Python version causes breakage (e.g., 'works on 3.11 but fails on 3.12'). Do NOT apply just because the reporter mentions a Python version in their environment info, test path, or conformance test name — the bug must be specifically about Python version compatibility."
+      "description": "Issues where behavior differs across Python versions or where a specific Python version causes breakage (e.g., 'works on 3.11 but fails on 3.12'). Do NOT apply just because the reporter mentions a Python version in their environment info, test path, or conformance test name \u2014 the bug must be specifically about Python version compatibility."
     },
     {
       "name": "module: pytree",

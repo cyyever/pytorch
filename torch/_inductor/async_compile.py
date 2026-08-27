@@ -35,7 +35,6 @@ from torch._inductor.codecache import (
     CppCodeCache,
     CppPythonBindingsCodeCache,
     CUDACodeCache,
-    HalideCodeCache,
     LambdaFuture,
     ROCmCodeCache,
     StaticAutotunerFuture,
@@ -68,7 +67,6 @@ from torch.utils._triton import has_triton_package
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from torch._inductor.runtime.hints import HalideMeta
     from torch._inductor.runtime.triton_heuristics import CachingAutotuner
 
 # timing metrics for time spent in the compilation
@@ -659,16 +657,6 @@ class AsyncCompile:
 
         return self.submit(task)
 
-    def halide(self, meta: HalideMeta, source_code: str):
-        kernel_code_log.info("Halide Kernel:\n%r\n%s", meta, source_code)
-        if get_compile_threads() <= 1:
-            return HalideCodeCache.generate_halide(meta, source_code)
-        else:
-            get_result = HalideCodeCache.generate_halide_async(
-                meta, source_code, submit_fn=self.submit
-            )
-            return LambdaFuture(get_result)
-
     def _load_kernel_wrapper(self, kernel_name, main_suffix, wrapper_cls, key, path):
         """Reload a kernel module from PyCodeCache and wrap the entry point."""
         mod = torch._inductor.codecache.PyCodeCache.load_by_key_path(key, path)
@@ -804,42 +792,6 @@ class AsyncCompile:
                 key,
                 path,
             )
-
-    def pallas(self, kernel_name: str, source_code: str):
-        """
-        Compile Pallas (JAX experimental) kernels.
-
-        Args:
-            kernel_name: Name of the kernel to be defined
-            source_code: Source code of the Pallas kernel, as a string
-
-        Note:
-            Pallas kernels are Python code that uses JAX and Pallas APIs.
-            We use the PyCodeCache to write the source code to a file and load it.
-        """
-        from torch._inductor.codegen.pallas import MAIN_SUFFIX, PallasKernelWrapper
-
-        kernel_code_log.info("Pallas Kernel:\n%s", source_code)
-
-        def task():
-            key, path = torch._inductor.codecache.PyCodeCache.write(source_code)
-            mod = torch._inductor.codecache.PyCodeCache.load_by_key_path(key, path)
-
-            # Find our special entry point named function
-            main_func_name = f"{kernel_name}_{MAIN_SUFFIX}"
-            if not hasattr(mod, main_func_name):
-                available = [name for name in dir(mod) if callable(getattr(mod, name))]
-                raise RuntimeError(
-                    f"Could not find Pallas main kernel function '{main_func_name}'. Available callables: {available}"
-                )
-
-            return PallasKernelWrapper(getattr(mod, main_func_name), kernel_path=path)
-
-        if get_compile_threads() <= 1:
-            return task()
-        else:
-            future = self.submit(task)
-            return LambdaFuture(lambda: future.result())
 
     def nv_universal_gemm(
         self, kernel_name: str, source_code: str, precompile_metadata=None

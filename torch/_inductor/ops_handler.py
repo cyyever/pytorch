@@ -750,10 +750,6 @@ class OpsHandler(Generic[T]):
     ) -> None:
         raise NotImplementedError
 
-    # halide-only
-    def halide_clamp(self, value: T, size: sympy.Expr, check: bool) -> T:
-        raise NotImplementedError
-
     # triton-only
     def dot(self, x: T, y: T) -> T:
         raise NotImplementedError

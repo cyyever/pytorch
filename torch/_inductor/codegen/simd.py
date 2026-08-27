@@ -520,7 +520,7 @@ class NodeInfo(NamedTuple):
 
 class SIMDKernel(Kernel[CSEVariableType], Generic[CSEVariableType]):
     """
-    Common base class for Triton/Halide codegen which both use flattened indexing rather than loop nests.
+    Common base class for codegen that uses flattened indexing rather than loop nests.
     """
 
     sexpr: Callable[[sympy.Expr], str] = pexpr
