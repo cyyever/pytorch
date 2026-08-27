@@ -274,28 +274,17 @@ def sgd(
     # and pass False to use_fused. This is not a mistake--we want to give the fused impl
     # bake-in time before making it the default, even if it is typically faster.
     if foreach is None and fused is None:
-        # why must we be explicit about an if statement for torch.jit.is_scripting here?
-        # because JIT can't handle Optionals nor fancy conditionals when scripting
-        if not torch.jit.is_scripting():
-            fused, foreach = _default_to_fused_or_foreach(
-                params, differentiable=False, use_fused=False
-            )
-        else:
-            foreach = False
-            fused = False
+        fused, foreach = _default_to_fused_or_foreach(
+            params, differentiable=False, use_fused=False
+        )
     if foreach is None:
         foreach = False
     if fused is None:
         fused = False
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-    if fused and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with fused optimizers")
-
-    if foreach and not torch.jit.is_scripting():
+    if foreach:
         func = _multi_tensor_sgd
-    elif fused and not torch.jit.is_scripting():
+    elif fused:
         func = _fused_sgd
     else:
         func = _single_tensor_sgd
@@ -337,20 +326,15 @@ def _single_tensor_sgd(
     if grad_scale is not None or found_inf is not None:
         raise AssertionError("Expected grad_scale and found_inf to be None")
 
-    if not torch.jit.is_scripting():
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for i, param in enumerate(params):
         grad = grads[i] if not maximize else -grads[i]
 
         if weight_decay != 0:
-            # Nested if is necessary to bypass jitscript rules
-            if isinstance(weight_decay, Tensor):
-                if weight_decay.requires_grad:
-                    # usually this is the differentiable path, which is why the param.clone() is needed
-                    grad = grad.addcmul_(param.clone(), weight_decay)
-                else:
-                    grad = grad.add(param, alpha=weight_decay)
+            if isinstance(weight_decay, Tensor) and weight_decay.requires_grad:
+                # usually this is the differentiable path, which is why the param.clone() is needed
+                grad = grad.addcmul_(param.clone(), weight_decay)
             else:
                 grad = grad.add(param, alpha=weight_decay)
 
@@ -368,14 +352,10 @@ def _single_tensor_sgd(
             else:
                 grad = buf
 
-        # Nested if is necessary to bypass jitscript rules
-        if isinstance(lr, Tensor):
-            if lr.requires_grad:
-                param.addcmul_(grad, lr, value=-1)
-            else:
-                # pyrefly: ignore [bad-argument-type]
-                param.add_(grad, alpha=-lr)
+        if isinstance(lr, Tensor) and lr.requires_grad:
+            param.addcmul_(grad, lr, value=-1)
         else:
+            # pyrefly: ignore [bad-argument-type]
             param.add_(grad, alpha=-lr)
 
 

@@ -891,17 +891,12 @@ class StreamContext:
     def __init__(self, stream: Optional["torch.cuda.Stream"]):
         self.stream = stream
         self.idx = _get_device_index(None, True)
-        if not torch.jit.is_scripting():
-            if self.idx is None:
-                # pyrefly: ignore [bad-assignment]
-                self.idx = -1
+        if self.idx is None:
+            # pyrefly: ignore [bad-assignment]
+            self.idx = -1
 
-        self.src_prev_stream = (
-            None if not torch.jit.is_scripting() else torch.cuda.default_stream(None)
-        )
-        self.dst_prev_stream = (
-            None if not torch.jit.is_scripting() else torch.cuda.default_stream(None)
-        )
+        self.src_prev_stream = None
+        self.dst_prev_stream = None
 
     def __enter__(self):
         # Local cur_stream variable for type refinement

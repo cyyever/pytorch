@@ -241,8 +241,7 @@ def _single_tensor_adamax(
     capturable: bool,
     has_complex: bool,
 ) -> None:
-    if not torch.jit.is_scripting():
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for i, param in enumerate(params):
         grad = grads[i]
@@ -455,10 +454,7 @@ def adamax(
             params, differentiable, use_fused=False
         )
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-
-    if foreach and not torch.jit.is_scripting():
+    if foreach:
         func = _multi_tensor_adamax
     else:
         func = _single_tensor_adamax

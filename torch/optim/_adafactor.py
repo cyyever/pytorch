@@ -354,15 +354,7 @@ def _single_tensor_adafactor(
     if grad_scale is not None or found_inf is not None:
         raise AssertionError("Grad scaling should occur outside of optimizer.step()")
 
-    if torch.jit.is_scripting():
-        # this assert is due to JIT being dumb and not realizing that the ops below
-        # have overloads to handle both float and Tensor lrs, so we just assert it's
-        # a float since most people using JIT are using floats
-        if not isinstance(lr, float):
-            raise AssertionError(f"Expected lr to be a float, but got {type(lr)}")
-
-    else:
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for i, param in enumerate(params):
         grad = grads[i] if not maximize else -grads[i]

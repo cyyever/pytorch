@@ -324,8 +324,6 @@ class ParametrizationList(ModuleList):
                     )
 
     def forward(self) -> Tensor:
-        if torch.jit.is_scripting():
-            raise RuntimeError("Parametrization is not working with scripting.")
         # Unpack the originals for the first parametrization
         if self.is_tensor:
             x = self[0](self.original)
@@ -416,18 +414,10 @@ def _inject_property(module: Module, tensor_name: str) -> None:
         return tensor
 
     def get_parametrized(self) -> Tensor:
-        if torch.jit.is_scripting():
-            raise RuntimeError("Parametrization is not working with scripting.")
         parametrization = self.parametrizations[tensor_name]
         # pyrefly: ignore [redundant-condition]
         if _cache_enabled:
-            if torch.jit.is_scripting():
-                # Scripting
-                raise RuntimeError(
-                    "Caching is not implemented for scripting. "
-                    "Either disable caching or avoid scripting."
-                )
-            elif torch._C._get_tracing_state() is not None:
+            if torch._C._get_tracing_state() is not None:
                 # Tracing
                 raise RuntimeError(
                     "Cannot trace a model while caching parametrizations."
@@ -439,8 +429,6 @@ def _inject_property(module: Module, tensor_name: str) -> None:
             return parametrization()
 
     def set_original(self, value: Tensor) -> None:
-        if torch.jit.is_scripting():
-            raise RuntimeError("Parametrization is not working with scripting.")
         self.parametrizations[tensor_name].right_inverse(value)
 
     setattr(module.__class__, tensor_name, property(get_parametrized, set_original))

@@ -33,7 +33,6 @@ def _get_device_index(
                 raise ValueError(f"Expected a xpu or cpu device, but got: {device}")
         elif device.type != "xpu":
             raise ValueError(f"Expected a xpu device, but got: {device}")
-    if not torch.jit.is_scripting():
-        if isinstance(device, torch.xpu.device):
-            return device.idx
+    if isinstance(device, torch.xpu.device):
+        return device.idx
     return _torch_get_device_index(device, optional, allow_cpu)

@@ -596,10 +596,7 @@ def is_compiling() -> bool:
         >>>
         >>>     # ...rest of the function...
     """
-    if torch.jit.is_scripting():
-        return False
-    else:
-        return _is_compiling_flag
+    return _is_compiling_flag
 
 
 def _is_non_strict_tracing() -> bool:

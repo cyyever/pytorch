@@ -96,7 +96,7 @@ def _get_value(x: float) -> float: ...
 
 def _get_value(x: torch.Tensor | float) -> torch.Tensor | float:
     # item is significantly faster than a cpu tensor in eager mode
-    if not torch.jit.is_scripting() and torch.compiler.is_compiling():
+    if torch.compiler.is_compiling():
         return x
     else:
         return x.item() if isinstance(x, torch.Tensor) else x
@@ -105,7 +105,7 @@ def _get_value(x: torch.Tensor | float) -> torch.Tensor | float:
 def _stack_if_compiling(
     x: Sequence[torch.Tensor | float],
 ) -> torch.Tensor | Sequence[torch.Tensor | float]:
-    if not torch.jit.is_scripting() and torch.compiler.is_compiling():
+    if torch.compiler.is_compiling():
         return torch.stack(cast(list[torch.Tensor], x))
     else:
         return x
@@ -165,12 +165,11 @@ def _disable_dynamo_if_unsupported(
 # fastest + stablest whenever possible. For foreach, the requirements are to have
 # native params all on CUDA. For fused, there's currently the additional requirement
 # that the tensors' dtypes must be floating point. Neither alternative supports
-# torch.jit.script nor differentiable, so we fall back to the single tensor
-# implementation in those cases.
+# differentiable, so we fall back to the single tensor implementation in that case.
 def _default_to_fused_or_foreach(
     params: list[torch.Tensor], differentiable: bool, use_fused: bool = False
 ) -> tuple[bool, bool]:
-    if torch.jit.is_scripting() or differentiable:
+    if differentiable:
         return False, False
 
     fused_supported_devices = _get_fused_kernels_supported_devices()
@@ -229,8 +228,7 @@ def _get_scalar_dtype(is_fused: bool | None = None) -> torch.dtype:
 def _get_capturable_supported_devices(supports_xla: bool = True) -> list[str]:
     r"""Return the device type list that supports capturable optimizer."""
     capturable_supported_devices = ["cuda", "xpu", "hpu"]
-    if not torch.jit.is_scripting():
-        capturable_supported_devices.append(torch._C._get_privateuse1_backend_name())
+    capturable_supported_devices.append(torch._C._get_privateuse1_backend_name())
     if supports_xla:
         capturable_supported_devices.append("xla")
     return capturable_supported_devices

@@ -207,12 +207,6 @@ class autocast:
         self.fast_dtype = (
             torch.get_autocast_dtype(device_type) if dtype is None else dtype
         )
-        if torch._jit_internal.is_scripting():
-            self._enabled = enabled
-            self.device = device_type
-            if self.fast_dtype is None:
-                raise AssertionError("fast_dtype must not be None in scripting mode")
-            return
         self.device = device_type
         if not is_autocast_available(self.device):
             raise RuntimeError(
@@ -280,11 +274,6 @@ class autocast:
         self._enabled = enabled
 
     def __enter__(self):
-        if torch._jit_internal.is_scripting():
-            if self.fast_dtype is None:
-                raise AssertionError("fast_dtype must not be None in scripting mode")
-            return self
-
         self.prev_cache_enabled = torch.is_autocast_cache_enabled()
         self.prev = torch.is_autocast_enabled(self.device)
         self.prev_fastdtype = torch.get_autocast_dtype(self.device)
@@ -315,9 +304,6 @@ class autocast:
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):  # type: ignore[override]
-        if torch._jit_internal.is_scripting():
-            return
-
         # Drop the cache when we exit to a nesting level that's outside any instance of autocast.
         if torch.autocast_decrement_nesting() == 0:
             torch.clear_autocast_cache()
@@ -342,8 +328,6 @@ class autocast:
         return False
 
     def __call__(self, func):
-        if torch._jit_internal.is_scripting():
-            return func
         if not callable(func):
             raise TypeError(
                 f"autocast()(func) requires a callable, but got {type(func).__name__}. "

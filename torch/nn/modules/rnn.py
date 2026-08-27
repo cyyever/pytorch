@@ -311,15 +311,14 @@ class RNNBase(Module):
             init.uniform_(weight, -stdv, stdv)
 
     def check_input(self, input: Tensor, batch_sizes: Tensor | None) -> None:
-        if not torch.jit.is_scripting():
-            if (
-                input.dtype != self._flat_weights[0].dtype  # type: ignore[union-attr]
-                and not torch._C._is_any_autocast_enabled()
-            ):
-                raise ValueError(
-                    f"RNN input dtype ({input.dtype}) does not match weight dtype ({self._flat_weights[0].dtype}). "  # type: ignore[union-attr]
-                    f"Convert input: input.to({self._flat_weights[0].dtype}), or convert model: model.to({input.dtype})"  # type: ignore[union-attr]
-                )
+        if (
+            input.dtype != self._flat_weights[0].dtype  # type: ignore[union-attr]
+            and not torch._C._is_any_autocast_enabled()
+        ):
+            raise ValueError(
+                f"RNN input dtype ({input.dtype}) does not match weight dtype ({self._flat_weights[0].dtype}). "  # type: ignore[union-attr]
+                f"Convert input: input.to({self._flat_weights[0].dtype}), or convert model: model.to({input.dtype})"  # type: ignore[union-attr]
+            )
         expected_input_dim = 2 if batch_sizes is not None else 3
         if input.dim() != expected_input_dim:
             raise RuntimeError(
@@ -404,9 +403,8 @@ class RNNBase(Module):
         return s.format(**self.__dict__)
 
     def _update_flat_weights(self) -> None:
-        if not torch.jit.is_scripting():
-            if self._weights_have_changed():
-                self._init_flat_weights()
+        if self._weights_have_changed():
+            self._init_flat_weights()
 
     def __getstate__(self):
         # If weights have been changed, update the _flat_weights in __getstate__ here.
