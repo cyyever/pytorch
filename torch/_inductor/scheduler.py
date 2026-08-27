@@ -6790,10 +6790,8 @@ class Scheduler:
             # Nested-reduction plans depend on the bodies used during fusion.
             if isinstance(node, FusedNestedReductions):
                 continue
-            # Even for CPU, if we are using the halide backend, we still need
-            # the merge loops steps below
             if not isinstance(node, (SchedulerNode, FusedSchedulerNode)) or (
-                not node.is_gpu() and config.cpu_backend != "halide"
+                not node.is_gpu()
             ):
                 continue
             for snode in node.get_nodes():
@@ -9595,10 +9593,6 @@ class Scheduler:
         if node1.has_aliasing_or_mutation() or node2.has_aliasing_or_mutation():
             return None
 
-        # skip halide which does not support mod for index
-        if config.cpu_backend == "halide":
-            return None
-
         # only support pointwise nodes with the same reduction size
         n1_sizes, n2_sizes = node1._sizes, node2._sizes
         n1_iter_sizes, n1_reduce_sizes = n1_sizes
@@ -10398,15 +10392,6 @@ class Scheduler:
             ]
             if not relevant_reads:
                 continue
-            device = node2.get_device()
-            if device is not None and (
-                (device.type == "cpu" and config.cpu_backend == "halide")
-                or (device.type == "cuda" and config.cuda_backend == "halide")
-            ):
-                # Halide autoschedules may overcompute output tiles via
-                # TailStrategy::ShiftInwards.  That is only semantics-preserving
-                # if the output is not also an input read by the fused producer.
-                return False
             num_concurrent_reads += 1
             if not all(
                 isinstance(read, MemoryDep)

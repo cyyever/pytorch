@@ -1,4 +1,3 @@
-import importlib
 import itertools
 import logging
 import pickle
@@ -108,19 +107,7 @@ class TypeExemplars:
         return t.__name__ in TypeExemplars.TYPE_EXEMPLARS
 
 
-def check_halide_import() -> bool:
-    """checks if we have halide available"""
-    try:
-        importlib.import_module("halide")
-        return True
-    except ModuleNotFoundError:
-        return False
-
-
-if check_halide_import():
-    CUDA_BACKEND = ["triton", "halide"]
-else:
-    CUDA_BACKEND = ["triton"]
+CUDA_BACKEND = ["triton"]
 
 
 class Status(Enum):

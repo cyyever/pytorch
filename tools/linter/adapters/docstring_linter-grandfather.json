@@ -20,7 +20,6 @@
   },
   "torch/_inductor/codecache.py": {
     "class CppPythonBindingsCodeCache": 191,
-    "class HalideCodeCache": 358,
     "class PyCodeCache": 101,
     "def CudaKernelParamCache.set()": 82
   },
@@ -80,12 +79,6 @@
   },
   "torch/_inductor/codegen/debug_utils.py": {
     "class DebugPrinterManager": 232
-  },
-  "torch/_inductor/codegen/halide.py": {
-    "class HalideKernel": 999,
-    "class HalideOverrides": 384,
-    "class HalidePrinter": 128,
-    "def HalideKernel.halide_kernel_meta()": 82
   },
   "torch/_inductor/codegen/rocm/ck_conv_template.py": {
     "class CKGroupedConvFwdTemplate": 547,

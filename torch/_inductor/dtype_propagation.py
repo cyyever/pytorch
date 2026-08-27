@@ -467,11 +467,6 @@ class DtypePropagationOpsHandler:
         return promote_types([x, y])
 
     @staticmethod
-    def halide_clamp(value, size, check):
-        # TODO - way of registering dtype for op in backend
-        return torch.int32
-
-    @staticmethod
     def dot(x: DTypeArg, y: DTypeArg) -> torch.dtype:
         # triton tl.dot out_dtype is tl.float32 by default.
         return torch.float32

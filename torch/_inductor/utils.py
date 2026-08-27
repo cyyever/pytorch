@@ -4267,8 +4267,6 @@ def get_current_backend(device_type: str | None = None) -> str:
         return "mps"
     elif device_type == "xpu":
         return config.xpu_backend
-    elif device_type == "tpu":
-        return config.tpu_backend
     else:
         return config.cuda_backend
 

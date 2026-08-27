@@ -1736,7 +1736,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         # wrapper. The .so files are built without -Wl,-soname, so passing
         # their absolute paths positionally to the linker encodes them as
         # absolute DT_NEEDED entries that resolve at module load (same
-        # mechanism HalideCodeCache uses for its standalone runtime).
+        # mechanism used for a standalone runtime).
         extra_flags_repr = repr(tuple(self.external_kernel_libs))
         # Cpp entry function for JIT with cpp wrapper
         result.splice(f"""

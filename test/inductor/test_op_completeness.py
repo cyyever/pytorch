@@ -2,7 +2,6 @@
 import unittest
 
 from torch._inductor.codegen.cpp import CppOverrides, CppVecOverrides
-from torch._inductor.codegen.halide import HalideOverrides
 from torch._inductor.codegen.mps import MetalOverrides
 from torch._inductor.codegen.triton import TritonKernelOverrides
 from torch._inductor.ops_handler import list_ops, OP_NAMES, OpsHandler
@@ -34,9 +33,6 @@ class TestOpCompleteness(TestCase):
 
     def test_cpp_vec_overrides(self):
         self.verify_ops_handler_completeness(CppVecOverrides)
-
-    def test_halide_overrides(self):
-        self.verify_ops_handler_completeness(HalideOverrides)
 
     @unittest.skip("MPS backend not yet finished")
     def test_metal_overrides(self):

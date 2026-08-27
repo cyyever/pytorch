@@ -2832,15 +2832,11 @@ class rocm:
     origami_topk: int = int(os.environ.get("TORCHINDUCTOR_ORIGAMI_TOPK", "6"))
 
 
-# Backend to use for CPU codegen either "cpp" or "triton" (experimental) or "halide" (experimental) or "pallas" (experimental)
-cpu_backend: Literal["cpp", "triton", "halide", "pallas"] = "cpp"
+# Backend to use for CPU codegen either "cpp" or "triton" (experimental)
+cpu_backend: Literal["cpp", "triton"] = "cpp"
 
-# Backend to use for CUDA codegen either
-# "triton", "halide" (experimental) or "pallas" (experimental)
-cuda_backend: Literal["triton", "halide", "pallas"] = "triton"
-
-# Backend to use for TPU codegen
-tpu_backend: Literal["pallas"] = "pallas"
+# Backend to use for CUDA codegen
+cuda_backend: Literal["triton"] = "triton"
 
 # Backend to use for XPU codegen either "triton"
 xpu_backend: Literal["triton"] = "triton"
@@ -2849,33 +2845,6 @@ xpu_backend: Literal["triton"] = "triton"
 class mtia:
     # Configuration to force inductor to never use welford reductions for MTIA backend
     disable_welford_reduction = False
-
-
-class halide:
-    # Base halide target to use for CPU devices
-    cpu_target = "host"
-
-    # Base halide target to use for CUDA devices
-    gpu_target = "host-cuda"
-
-    # Halide autoscheduler to use, choices are:
-    # "Anderson2021" (gpu-only), "Li2018", "Adams2019" (cpu-only), or "Mullapudi2016" (cpu-only)
-    scheduler_cuda: Literal["Anderson2021", "Li2018", "Adams2019", "Mullapudi2016"] = (
-        "Anderson2021"
-    )
-    scheduler_cpu: Literal["Anderson2021", "Li2018", "Adams2019", "Mullapudi2016"] = (
-        "Adams2019"
-    )
-
-    # Controls `no_asserts` flag passed to Halide target (warning: can false positive)
-    asserts = False
-
-    # Controls `debug` flag passed to Halide target
-    debug = False
-
-    # Enable (or fallback on) scan kernels such as cumsum
-    # Halide autoschedulers struggle with these kernels
-    scan_kernels = False
 
 
 # create a directory containing lots of debug information

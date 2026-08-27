@@ -252,8 +252,6 @@ elif [[ "$BUILD_ENVIRONMENT" == *xpu* ]]; then
   export PYTHON_TEST_EXTRA_OPTION="--xpu"
   # disable timeout due to shard not balance for xpu
   export NO_TEST_TIMEOUT=True
-elif [[ "$BUILD_ENVIRONMENT" == *pallas-tpu* ]]; then
-  export PYTORCH_TESTING_DEVICE_ONLY_FOR="tpu"
 fi
 
 if [[ "$TEST_CONFIG" == *crossref* ]]; then
@@ -1183,16 +1181,6 @@ PY
     --timing auto \
     --ci-json "${test_reports_dir}/inductor_kernel_benchmark.json"
   popd
-}
-
-test_inductor_halide() {
-  python test/run_test.py --include inductor/test_halide.py --verbose
-  assert_git_not_dirty
-}
-
-test_inductor_pallas() {
-  python test/run_test.py --include inductor/test_pallas.py --verbose
-  assert_git_not_dirty
 }
 
 test_inductor_flydsl() {
@@ -2399,12 +2387,8 @@ elif [[ "${TEST_CONFIG}" == *inductor_distributed* ]]; then
   setup_torch_trace
   test_inductor_distributed
   collect_tlparse_output
-elif [[ "${TEST_CONFIG}" == *inductor-halide* ]]; then
-  test_inductor_halide
 elif [[ "${TEST_CONFIG}" == *inductor-flydsl* ]]; then
   test_inductor_flydsl
-elif [[ "${TEST_CONFIG}" == *inductor-pallas* ]]; then
-  test_inductor_pallas
 elif [[ "${TEST_CONFIG}" == *inductor-triton-cpu* ]]; then
   test_inductor_triton_cpu
 elif [[ "${TEST_CONFIG}" == *inductor-micro-benchmark* ]]; then
