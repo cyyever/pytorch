@@ -503,64 +503,55 @@ def lobpcg(
 
     """
 
-    if not torch.jit.is_scripting():
-        tensor_ops = (A, B, X, iK)
-        if not set(map(type, tensor_ops)).issubset(
-            (torch.Tensor, type(None))
-        ) and has_torch_function(tensor_ops):
-            return handle_torch_function(
-                lobpcg,
-                tensor_ops,
-                A,
-                k=k,
-                B=B,
-                X=X,
-                n=n,
-                iK=iK,
-                niter=niter,
-                tol=tol,
-                largest=largest,
-                method=method,
-                tracker=tracker,
-                ortho_iparams=ortho_iparams,
-                ortho_fparams=ortho_fparams,
-                ortho_bparams=ortho_bparams,
-            )
+    tensor_ops = (A, B, X, iK)
+    if not set(map(type, tensor_ops)).issubset(
+        (torch.Tensor, type(None))
+    ) and has_torch_function(tensor_ops):
+        return handle_torch_function(
+            lobpcg,
+            tensor_ops,
+            A,
+            k=k,
+            B=B,
+            X=X,
+            n=n,
+            iK=iK,
+            niter=niter,
+            tol=tol,
+            largest=largest,
+            method=method,
+            tracker=tracker,
+            ortho_iparams=ortho_iparams,
+            ortho_fparams=ortho_fparams,
+            ortho_bparams=ortho_bparams,
+        )
 
-    if not torch._jit_internal.is_scripting():
-        if A.requires_grad or (B is not None and B.requires_grad):
-            # While it is expected that `A` is symmetric,
-            # the `A_grad` might be not. Therefore we perform the trick below,
-            # so that `A_grad` becomes symmetric.
-            # The symmetrization is important for first-order optimization methods,
-            # so that (A - alpha * A_grad) is still a symmetric matrix.
-            # Same holds for `B`.
-            A_sym = (A + A.mT) / 2
-            B_sym = (B + B.mT) / 2 if (B is not None) else None
+    if A.requires_grad or (B is not None and B.requires_grad):
+        # While it is expected that `A` is symmetric,
+        # the `A_grad` might be not. Therefore we perform the trick below,
+        # so that `A_grad` becomes symmetric.
+        # The symmetrization is important for first-order optimization methods,
+        # so that (A - alpha * A_grad) is still a symmetric matrix.
+        # Same holds for `B`.
+        A_sym = (A + A.mT) / 2
+        B_sym = (B + B.mT) / 2 if (B is not None) else None
 
-            return LOBPCGAutogradFunction.apply(
-                A_sym,
-                k,
-                B_sym,
-                X,
-                n,
-                iK,
-                niter,
-                tol,
-                largest,
-                method,
-                tracker,
-                ortho_iparams,
-                ortho_fparams,
-                ortho_bparams,
-            )
-    else:
-        if A.requires_grad or (B is not None and B.requires_grad):
-            raise RuntimeError(
-                "Script and require grads is not supported atm. "
-                "If you just want to do the forward, use .detach() "
-                "on A and B before calling into lobpcg"
-            )
+        return LOBPCGAutogradFunction.apply(
+            A_sym,
+            k,
+            B_sym,
+            X,
+            n,
+            iK,
+            niter,
+            tol,
+            largest,
+            method,
+            tracker,
+            ortho_iparams,
+            ortho_fparams,
+            ortho_bparams,
+        )
 
     return _lobpcg(
         A,
@@ -651,8 +642,7 @@ def _lobpcg(
         fparams["ortho_tol_replace"] = fparams.get("ortho_tol_replace", tol)
         bparams["ortho_use_drop"] = bparams.get("ortho_use_drop", False)
 
-    if not torch.jit.is_scripting():
-        LOBPCG.call_tracker = LOBPCG_call_tracker  # type: ignore[method-assign]
+    LOBPCG.call_tracker = LOBPCG_call_tracker  # type: ignore[method-assign]
 
     if len(A.shape) > 2:
         N = int(torch.prod(torch.tensor(A.shape[:-2])))
@@ -678,8 +668,7 @@ def _lobpcg(
             bE[i] = worker.E[:k]
             bXret[i] = worker.X[:, :k]
 
-        if not torch.jit.is_scripting():
-            LOBPCG.call_tracker = LOBPCG_call_tracker_orig  # type: ignore[method-assign]
+        LOBPCG.call_tracker = LOBPCG_call_tracker_orig  # type: ignore[method-assign]
 
         return bE.reshape(A.shape[:-2] + (k,)), bXret.reshape(A.shape[:-2] + (m, k))
 
@@ -691,8 +680,7 @@ def _lobpcg(
 
     worker.run()
 
-    if not torch.jit.is_scripting():
-        LOBPCG.call_tracker = LOBPCG_call_tracker_orig  # type: ignore[method-assign]
+    LOBPCG.call_tracker = LOBPCG_call_tracker_orig  # type: ignore[method-assign]
 
     return worker.E[:k], worker.X[:, :k]
 
@@ -837,13 +825,13 @@ class LOBPCG:
         """
         self.update()
 
-        if not torch.jit.is_scripting() and self.tracker is not None:
+        if self.tracker is not None:
             self.call_tracker()
 
         while not self.stop_iteration():
             self.update()
 
-            if not torch.jit.is_scripting() and self.tracker is not None:
+            if self.tracker is not None:
                 self.call_tracker()
 
     def call_tracker(self):

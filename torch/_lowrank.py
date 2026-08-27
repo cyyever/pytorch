@@ -135,14 +135,11 @@ def svd_lowrank(
           `arXiv <https://arxiv.org/abs/0909.4061>`_).
 
     """
-    if not torch.jit.is_scripting():
-        tensor_ops = (A, M)
-        if not set(map(type, tensor_ops)).issubset(
-            (torch.Tensor, type(None))
-        ) and has_torch_function(tensor_ops):
-            return handle_torch_function(
-                svd_lowrank, tensor_ops, A, q=q, niter=niter, M=M
-            )
+    tensor_ops = (A, M)
+    if not set(map(type, tensor_ops)).issubset(
+        (torch.Tensor, type(None))
+    ) and has_torch_function(tensor_ops):
+        return handle_torch_function(svd_lowrank, tensor_ops, A, q=q, niter=niter, M=M)
     return _svd_lowrank(A, q=q, niter=niter, M=M)
 
 
@@ -246,11 +243,10 @@ def pca_lowrank(
 
     """
 
-    if not torch.jit.is_scripting():
-        if type(A) is not torch.Tensor and has_torch_function((A,)):
-            return handle_torch_function(
-                pca_lowrank, (A,), A, q=q, center=center, niter=niter
-            )
+    if type(A) is not torch.Tensor and has_torch_function((A,)):
+        return handle_torch_function(
+            pca_lowrank, (A,), A, q=q, center=center, niter=niter
+        )
 
     (m, n) = A.shape[-2:]
 

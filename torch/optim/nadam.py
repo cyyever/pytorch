@@ -299,8 +299,7 @@ def _single_tensor_nadam(
     differentiable: bool,
     has_complex: bool,
 ) -> None:
-    if not torch.jit.is_scripting():
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for i, param in enumerate(params):
         grad = grads[i] if not maximize else -grads[i]
@@ -643,10 +642,7 @@ def nadam(
             params, differentiable, use_fused=False
         )
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-
-    if foreach and not torch.jit.is_scripting():
+    if foreach:
         func = _multi_tensor_nadam
     else:
         func = _single_tensor_nadam

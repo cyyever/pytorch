@@ -370,20 +370,9 @@ def _single_tensor_adam(
     if grad_scale is not None or found_inf is not None:
         raise AssertionError("Expected grad_scale and found_inf to be None")
 
-    if torch.jit.is_scripting():
-        # this assert is due to JIT being dumb and not realizing that the ops below
-        # have overloads to handle both float and Tensor lrs, so we just assert it's
-        # a float since most people using JIT are using floats
-        if not isinstance(lr, float):
-            raise AssertionError(f"Expected lr to be a float, but got {type(lr)}")
-        if not isinstance(beta1, float):
-            raise AssertionError(f"Expected beta1 to be a float, but got {type(beta1)}")
-        if not isinstance(beta2, float):
-            raise AssertionError(f"Expected beta2 to be a float, but got {type(beta2)}")
-    else:
-        lr = _to_scalar(lr)
-        beta1 = _to_scalar(beta1)
-        beta2 = _to_scalar(beta2)
+    lr = _to_scalar(lr)
+    beta1 = _to_scalar(beta1)
+    beta2 = _to_scalar(beta2)
 
     # We only shuffle around the beta when it is a Tensor, otherwise, we prefer
     # treating it as a scalar.
@@ -418,15 +407,14 @@ def _single_tensor_adam(
             if decoupled_weight_decay:
                 # Perform step weight decay
                 param.mul_(1 - lr * weight_decay)
+            elif (
+                differentiable
+                and isinstance(weight_decay, Tensor)
+                and weight_decay.requires_grad
+            ):
+                grad = grad.addcmul_(param.clone(), weight_decay)
             else:
-                # Nested if is necessary to bypass jitscript rules
-                if differentiable and isinstance(weight_decay, Tensor):
-                    if weight_decay.requires_grad:
-                        grad = grad.addcmul_(param.clone(), weight_decay)
-                    else:
-                        grad = grad.add(param, alpha=weight_decay)
-                else:
-                    grad = grad.add(param, alpha=weight_decay)
+                grad = grad.add(param, alpha=weight_decay)
 
         if torch.is_complex(param):
             grad = torch.view_as_real(grad)
@@ -456,43 +444,29 @@ def _single_tensor_adam(
 
         exp_avg.lerp_(grad, 1 - device_beta1)
 
-        # Nested if is necessary to bypass jitscript rules
-        if differentiable and isinstance(beta2, Tensor):
-            if beta2.requires_grad:
-                # Using lerp to only use 2 operations bc addcmul's value cannot be a tensor
-                # Showing equivalence of differentiable path and nondifferentiable path
-                # expavg * b2 + grad^2 * (1-b2)
-                #           add expavg * (1-b2) - expavg * (1-b2) = 0
-                # expavg * b2 + expavg * (1-b2) - expavg * (1-b2) + grad^2 * (1-b2)
-                # expavg - expavg * (1-b2) + grad^2 * (1-b2)
-                # expavg + (grad^2 - expavg) * (1-b2)
-                # expavg.lerp(grad^2, 1-beta2)
-                exp_avg_sq.lerp_(torch.square(grad), weight=1 - beta2)
-            else:
-                exp_avg_sq.mul_(beta2).addcmul_(
-                    grad, grad, value=cast(float, 1 - beta2)
-                )
+        if differentiable and isinstance(beta2, Tensor) and beta2.requires_grad:
+            # Using lerp to only use 2 operations bc addcmul's value cannot be a tensor
+            # Showing equivalence of differentiable path and nondifferentiable path
+            # expavg * b2 + grad^2 * (1-b2)
+            #           add expavg * (1-b2) - expavg * (1-b2) = 0
+            # expavg * b2 + expavg * (1-b2) - expavg * (1-b2) + grad^2 * (1-b2)
+            # expavg - expavg * (1-b2) + grad^2 * (1-b2)
+            # expavg + (grad^2 - expavg) * (1-b2)
+            # expavg.lerp(grad^2, 1-beta2)
+            exp_avg_sq.lerp_(torch.square(grad), weight=1 - beta2)
         else:
             exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)  # type: ignore[arg-type]
 
         if capturable or differentiable:
             step = step_t
 
-            # Nested if is necessary to bypass jitscript rules
-            if differentiable and isinstance(beta1, Tensor):
-                if beta1.requires_grad:
-                    bias_correction1 = 1 - beta1 ** step.clone()
-                else:
-                    bias_correction1 = 1 - beta1**step
+            if differentiable and isinstance(beta1, Tensor) and beta1.requires_grad:
+                bias_correction1 = 1 - beta1 ** step.clone()
             else:
                 bias_correction1 = 1 - beta1**step
 
-            # Nested if is necessary to bypass jitscript rules
-            if differentiable and isinstance(beta2, Tensor):
-                if beta2.requires_grad:
-                    bias_correction2 = 1 - beta2 ** step.clone()
-                else:
-                    bias_correction2 = 1 - beta2**step
+            if differentiable and isinstance(beta2, Tensor) and beta2.requires_grad:
+                bias_correction2 = 1 - beta2 ** step.clone()
             else:
                 bias_correction2 = 1 - beta2**step
 
@@ -952,14 +926,9 @@ def adam(
             "API has changed, `state_steps` argument must contain a list of singleton tensors"
         )
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-    if fused and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with fused optimizers")
-
-    if fused and not torch.jit.is_scripting():
+    if fused:
         func = _fused_adam
-    elif foreach and not torch.jit.is_scripting():
+    elif foreach:
         func = _multi_tensor_adam
     else:
         func = _single_tensor_adam

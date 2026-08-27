@@ -282,8 +282,7 @@ def _single_tensor_rmsprop(
     capturable: bool,
     has_complex: bool,
 ) -> None:
-    if not torch.jit.is_scripting():
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for i, param in enumerate(params):
         step = state_steps[i]
@@ -513,10 +512,7 @@ def rmsprop(
             params, differentiable, use_fused=False
         )
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-
-    if foreach and not torch.jit.is_scripting():
+    if foreach:
         func = _multi_tensor_rmsprop
     else:
         func = _single_tensor_rmsprop

@@ -166,8 +166,6 @@ manual_torch_name_rule_map: dict[
 ] = {
     "torch.overrides.is_tensor_like": TorchInGraphFunctionVariable,
     "torch._C._skip_one_hop_torch_function": TorchInGraphFunctionVariable,
-    "torch.jit.is_scripting": TorchInGraphFunctionVariable,
-    "torch.jit.is_tracing": TorchInGraphFunctionVariable,
     "torch.distributed.is_available": TorchInGraphFunctionVariable,
     "torch.distributed.is_initialized": TorchInGraphFunctionVariable,
     "torch.distributed.get_rank": TorchInGraphFunctionVariable,

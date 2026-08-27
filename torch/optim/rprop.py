@@ -444,10 +444,7 @@ def rprop(
             params, differentiable, use_fused=False
         )
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-
-    if foreach and not torch.jit.is_scripting():
+    if foreach:
         func = _multi_tensor_rprop
     else:
         func = _single_tensor_rprop

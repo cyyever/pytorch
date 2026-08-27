@@ -101,19 +101,10 @@ def broadcast_shapes(*shapes):
         RuntimeError: If shapes are incompatible.
     """
     # This wrapper exists to support variadic args.
-    # TODO Move this to C++ once the jit has better support for torch.Size.
-    if not torch.jit.is_tracing():
-        result = torch._refs._broadcast_shapes(*shapes)
-        if result is None:
-            return torch.Size([])
-        return torch.Size(result)
-    else:
-        # with implementation above, torch.jit.trace hardcodes the sizes which makes subsequent replays fail
-        with torch.no_grad():
-            scalar = torch.zeros((), device="cpu")
-            tensors = [scalar.expand(shape) for shape in shapes]
-            tensors = broadcast_tensors(*tensors)
-            return tensors[0].shape
+    result = torch._refs._broadcast_shapes(*shapes)
+    if result is None:
+        return torch.Size([])
+    return torch.Size(result)
 
 
 def split(
