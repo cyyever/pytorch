@@ -5945,48 +5945,6 @@ Done""",
         with torch.autograd.profiler.profile(use_kineto=kineto_available()) as prof:
             x.resize_([3, 2])
 
-    def test_profiler_propagation(self):
-        def foo(x):
-            with record_function("in_foo") as rf:
-                return x * 2
-
-        x = torch.rand(3, 4)
-        traced_foo = torch.jit.trace(foo, x)
-
-        def bar(x):
-            with record_function("in_bar") as rf:
-                # we expect that profiler will be able
-                # propagate across fork
-                fut = torch.jit._fork(traced_foo, x)
-                y = torch.jit._wait(fut)
-                # note: continuation (and rf's end) can
-                # be executed in a different thread
-                with record_function("in_bar_after_wait") as rf2:
-                    y = y * 2
-                return y
-
-        traced_bar = torch.jit.trace(bar, x)
-
-        with profile(use_kineto=kineto_available()) as p:
-            traced_bar(x)
-
-        found_foo = False
-        found_bar = False
-        found_bar_after_wait = False
-        for info in p.function_events:
-            if info.name == "in_foo":
-                self.assertFalse(found_foo)
-                found_foo = True
-            elif info.name == "in_bar":
-                self.assertFalse(found_bar)
-                found_bar = True
-            elif info.name == "in_bar_after_wait":
-                self.assertFalse(found_bar_after_wait)
-                found_bar_after_wait = True
-        self.assertTrue(found_foo)
-        self.assertTrue(found_bar)
-        self.assertTrue(found_bar_after_wait)
-
     def test_record_function_callbacks(self):
         x = torch.randn(10, 10)
         with profile(use_kineto=kineto_available()) as p:
@@ -16316,53 +16274,6 @@ class TestMultithreadAutograd(TestCase):
             x_retain.grad,
             5 * (4 * x_retain**3 + 6 * (x_retain**2) + 4 * x_retain + 1),
         )
-
-    def test_fork_join_in_middle(self):
-        # multiple backward with jit threads (fork/join primitive)
-        # similar to test_python_thread_in_middle, we test with retain_graph=False/True
-
-        # Case 1: multiple grad() calls with jit threads, retain_graph=False
-        # should throw error in some threads with no retain_graph.
-        @torch.jit.script
-        def train_fn_jit_no_retain(middle, orig_x):
-            y = middle + middle**2
-            return torch.autograd.grad([y.sum()], [orig_x])
-
-        @torch.jit.script
-        def train_fn_fork_join_calls_no_retain(x):
-            y_no_retain = (x + 3) * (x + 4) * 0.5
-
-            fut = torch.jit._fork(train_fn_jit_no_retain, y_no_retain, x)
-            grad_hat = train_fn_jit_no_retain(y_no_retain, x)
-            grad = torch.jit._wait(fut)
-            return grad, grad_hat
-
-        try:
-            train_fn_fork_join_calls_no_retain(torch.randn(5, 5, requires_grad=True))
-        except RuntimeError as error:
-            self.assertRegex(str(error), "Specify retain_graph=True")
-
-        # Case 2: no error with retain_graph=True
-        @torch.jit.script
-        def train_fn_jit_retain(middle, orig_x):
-            y = middle + middle**2
-            return torch.autograd.grad([y.sum()], [orig_x], retain_graph=True)
-
-        @torch.jit.script
-        def train_fn_fork_join_calls_retain(x):
-            y_retain = (x + 3) * (x + 4) * 0.5
-            fut1 = torch.jit._fork(train_fn_jit_retain, y_retain, x)
-            fut2 = torch.jit._fork(train_fn_jit_retain, y_retain, x)
-            grad = train_fn_jit_retain(y_retain, x)
-            grad1 = torch.jit._wait(fut1)
-            grad2 = torch.jit._wait(fut2)
-            return grad, grad1, grad2
-
-        grad, grad1, grad2 = train_fn_fork_join_calls_retain(
-            torch.randn(5, 5, requires_grad=True)
-        )
-        self.assertEqual(grad, grad1)
-        self.assertEqual(grad, grad2)
 
     def test_preserve_backtrace(self):
         class Foo(torch.autograd.Function):

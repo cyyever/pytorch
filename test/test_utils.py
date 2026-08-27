@@ -763,20 +763,18 @@ class TestAssert(TestCase):
         with self.assertRaisesRegex(AssertionError, "bar"):
             torch._assert(torch.tensor([False], dtype=torch.bool), "bar")
 
-    def test_assert_scriptable(self):
+    def test_assert_in_module(self):
         class M(torch.nn.Module):
             def forward(self, x):
                 torch._assert(x.sum() > 0, "foo")
                 return x
 
         m = M()
-        # scriptable
-        ms = torch.jit.script(m)
         # data can be passed without errors
         x = torch.randn(4, 4).fill_(1.0)
-        ms(x)
-        with self.assertRaisesRegex(torch.jit.Error, "foo"):
-            ms(torch.tensor([False], dtype=torch.bool))
+        m(x)
+        with self.assertRaisesRegex(AssertionError, "foo"):
+            m(torch.tensor([False], dtype=torch.bool))
 
 
 @unittest.skipIf(IS_SANDCASTLE, "cpp_extension is OSS only")

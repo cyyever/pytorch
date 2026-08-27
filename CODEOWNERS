@@ -391,7 +391,6 @@
 # /test/backends/
 # /test/complex_tensor/
 # /test/conftest.py
-# /test/create_dummy_torchscript_model.py
 # /test/error_messages/
 # /test/expect/HasDecompTest.test_aten_core_operators.expect
 # /test/expect/HasDecompTest.test_has_decomposition.expect
@@ -457,8 +456,6 @@
 # /test/expect/TestTorch.test_print-non_contiguous.expect
 # /test/expect/__init__.py
 # /test/forward_backward_compatibility/
-# /test/linear.py
-# /test/load_torchscript_model.py
 # /test/minioptest_failures_dict.json
 # /test/mkl_verbose.py
 # /test/pytest_shard_custom.py
@@ -474,8 +471,6 @@
 # /test/test_autoload.py
 # /test/test_binary_ufuncs.py
 # /test/test_bmm_outer_product.py
-# /test/test_bundled_images.py
-# /test/test_bundled_inputs.py
 # /test/test_ci_sanity_check_fail.py
 # /test/test_comparison_utils.py
 # /test/test_complex.py

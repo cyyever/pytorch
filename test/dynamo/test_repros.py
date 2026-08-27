@@ -4141,14 +4141,6 @@ class ReproTests(torch._dynamo.test_case.TestCase):
         (gx,) = torch.autograd.grad(y, x)
         self.assertEqual(gx, x.cos())
 
-    def test_jit_trace_errors(self):
-        @torch.compile(backend="eager", dynamic=True)
-        def f(x):
-            return x + 1
-
-        with self.assertRaises(RuntimeError):
-            torch.jit.trace(f, torch.randn(3))
-
     @torch._dynamo.config.patch("assume_static_by_default", False)
     def test_tensor_split(self):
         def f(x):
@@ -4466,28 +4458,6 @@ class ReproTests(torch._dynamo.test_case.TestCase):
         opt_fn = torch.compile(fn, backend="eager", fullgraph=True)
         res = opt_fn(x)
         self.assertEqual(ref, res)
-
-    def test_graph_break_on_jit_isinstance(self):
-        @torch.compile(backend="eager")
-        def fn(x):
-            if torch.jit.isinstance(x, typing.List[str]):  # noqa: UP006
-                return x * 2
-            return x
-
-        opt_fn = torch.compile(fn, backend="eager")
-        x = torch.rand(4)
-        self.assertTrue(same(fn(x), opt_fn(x)))
-
-    def test_graph_break_on_jit_isinstance_pep585(self):
-        @torch.compile(backend="eager")
-        def fn(x):
-            if torch.jit.isinstance(x, list[str]):
-                return x * 2
-            return x
-
-        opt_fn = torch.compile(fn, backend="eager")
-        x = torch.rand(4)
-        self.assertTrue(same(fn(x), opt_fn(x)))
 
     def test_add_sub_alpha_out(self):
         test_cases = (

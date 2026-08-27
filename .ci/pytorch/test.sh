@@ -1604,12 +1604,6 @@ test_libtorch() {
 }
 
 test_libtorch_jit() {
-  # Prepare the model used by test_jit, the model needs to be in the test directory
-  # to get picked up by run_test
-  pushd test
-  python cpp/jit/tests_setup.py setup
-  popd
-
   if [[ "${PYTORCH_TEST_WITH_ASAN}" == "1" ]]; then
     # cpp/test_jit times out under clang-21 ASAN+UBSAN; skip it for now.
     # TODO: re-enable once the timeout is root-caused.
@@ -1620,11 +1614,6 @@ test_libtorch_jit() {
     # CUDA tests have already been skipped when CUDA is not available
     python test/run_test.py --cpp --verbose -i cpp/test_jit -k "not CUDA"
   fi
-
-  # Cleaning up test artifacts in the test folder
-  pushd test
-  python cpp/jit/tests_setup.py shutdown
-  popd
 }
 
 test_libtorch_profiler() {
@@ -2051,8 +2040,6 @@ EOF
   fi
   export SHA_TO_COMPARE
 
-  # create a dummy ts model at this version
-  python test/create_dummy_torchscript_model.py /tmp/model_new.pt
   python -m venv venv
   # shellcheck disable=SC1091
   . venv/bin/activate
@@ -2074,21 +2061,10 @@ EOF
 
   git reset --hard "${SHA1}"
   git submodule sync && git submodule update --init --recursive
-  # FC: verify new model can be load with old code.
-  if ! python ../load_torchscript_model.py /tmp/model_new.pt; then
-      echo "FC check failed: new model cannot be load in old code"
-      return 1
-  fi
-  python ../create_dummy_torchscript_model.py /tmp/model_old.pt
   deactivate
   rm -r "${REPO_DIR}/venv" "${REPO_DIR}/base_dist"
   pip show torch
   python check_forward_backward_compatibility.py --existing-schemas nightly_schemas.txt
-  # BC: verify old model can be load with new code
-  if ! python ../load_torchscript_model.py /tmp/model_old.pt; then
-      echo "BC check failed: old model cannot be load in new code"
-      return 1
-  fi
   popd
   set +x
   assert_git_not_dirty

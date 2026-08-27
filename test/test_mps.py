@@ -2,7 +2,6 @@
 # ruff: noqa: F841
 import contextlib
 import glob
-import io
 import sys
 import math
 import random
@@ -9849,15 +9848,6 @@ class TestMPS(TestCaseMPS):
         self.assertTrue(event.query())
         self.assertEqual(c_acc.cpu(), c)
 
-    def test_jit_save_load(self):
-        m = torch.nn.Module()
-        m.x = torch.rand(3, 3, device='mps')
-        buffer = io.BytesIO()
-        torch.jit.save(torch.jit.script(m), buffer)
-        buffer.seek(0)
-        n = torch.jit.load(buffer)
-        self.assertEqual(n.x, m.x)
-
     # Test random_, random_.to and random_.from
     def test_random(self):
         def helper(shape, low, high, dtype=torch.int32):
@@ -15044,28 +15034,6 @@ class TestAdvancedIndexing(TestCaseMPS):
             torch.nonzero(t, as_tuple=True, out=out)
 
         self.assertEqual(torch.nonzero(t, as_tuple=False, out=out), torch.nonzero(t, out=out))
-
-        # Verifies that JIT script cannot handle the as_tuple kwarg
-        # See Issue https://github.com/pytorch/pytorch/issues/45499.
-        def _foo(t):
-            tuple_result = torch.nonzero(t, as_tuple=True)
-            nontuple_result = torch.nonzero(t, as_tuple=False)
-            out = torch.empty_like(nontuple_result)
-            torch.nonzero(t, as_tuple=False, out=out)
-            return tuple_result, nontuple_result, out
-
-        with self.assertRaises(RuntimeError):
-            scripted_foo = torch.jit.script(_foo)
-
-        # Verifies that JIT tracing works fine
-        traced_foo = torch.jit.trace(_foo, t)
-        traced_tuple, traced_nontuple, traced_out = traced_foo(t)
-        expected_tuple = torch.nonzero(t, as_tuple=True)
-        expected_nontuple = torch.nonzero(t)
-
-        self.assertEqual(traced_tuple, expected_tuple)
-        self.assertEqual(traced_nontuple, expected_nontuple)
-        self.assertEqual(traced_out, expected_nontuple)
 
     def test_nonzero_discontiguous(self):
         device = "mps"

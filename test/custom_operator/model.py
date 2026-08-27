@@ -1,8 +1,5 @@
-import argparse
 import os.path
 import sys
-
-import torch
 
 
 def get_custom_op_library_path():
@@ -16,30 +13,3 @@ def get_custom_op_library_path():
     if not os.path.exists(path):
         raise AssertionError(f"Library not found: {path}")
     return path
-
-
-class Model(torch.jit.ScriptModule):
-    def __init__(self) -> None:
-        super().__init__()
-        self.p = torch.nn.Parameter(torch.eye(5))
-
-    @torch.jit.script_method
-    def forward(self, input):
-        return torch.ops.custom.op_with_defaults(input)[0] + 1
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Serialize a script module with custom ops"
-    )
-    parser.add_argument("--export-script-module-to", required=True)
-    options = parser.parse_args()
-
-    torch.ops.load_library(get_custom_op_library_path())
-
-    model = Model()
-    model.save(options.export_script_module_to)
-
-
-if __name__ == "__main__":
-    main()

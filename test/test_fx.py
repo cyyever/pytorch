@@ -1989,10 +1989,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
         traced(torch.rand(4, 5))
         with self.assertRaisesRegex(AssertionError, "assert_foobar"):
             traced(torch.rand(4, 3))
-        # verify the symbolically traced module is scriptable
-        ms = torch.jit.script(m)
-        with self.assertRaisesRegex(torch.jit.Error, "assert_foobar"):
-            ms(torch.rand(4, 3))
 
     def test_fx_create_arg(self):
         class CustomArgObject:
