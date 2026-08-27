@@ -34,7 +34,12 @@ Checks: ' bugprone-*, -bugprone-easily-swappable-parameters, -bugprone-forward-d
   readability-misplaced-array-index, readability-redundant*, readability-simplify-subscript-expr,
   readability-static-definition-in-anonymous-namespace readability-string-compare,
   -readability-redundant-access-specifiers, -readability-redundant-control-flow, -readability-redundant-inline-specifier, '
-HeaderFilterRegex: ^(aten/|c10/|torch/).*$
+HeaderFilterRegex: .*/(aten|c10|torch|torchgen)/.*
+# Headers vendored from other projects, which carry their own upstream and are
+# not ours to fix: SmallVector and llvmMathExtras from LLVM, flat_hash_map and
+# order_preserving_flat_hash_map from skarupke, strong_type from rollbear,
+# dlpack from dmlc, pythoncapi_compat from python/pythoncapi-compat.
+ExcludeHeaderFilterRegex: .*/(third_party|build)/.*|.*/c10/util/(SmallVector|flat_hash_map|order_preserving_flat_hash_map|hash|llvmMathExtras|strong_type)\.h|.*/aten/src/ATen/dlpack\.h|.*/torch/csrc/utils/pythoncapi_compat\.h
 WarningsAsErrors: '*'
 CheckOptions:
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
