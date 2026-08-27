@@ -43,7 +43,7 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
     wrapDeterministicFlagAPITest, DeterministicGuard, CudaSyncGuard,
     bytes_to_scalar, parametrize, noncontiguous_like,
     AlwaysWarnTypedStorageRemoval, TEST_WITH_TORCHDYNAMO, xfailIfTorchDynamo,
-    xfailIfS390X, set_warn_always_context, decorateIf, isRocmArchAnyOf,
+    set_warn_always_context, decorateIf, isRocmArchAnyOf,
     IS_MACOS,
 )
 from multiprocessing.reduction import ForkingPickler
@@ -9707,7 +9707,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
 
     # FIXME: port to a quantization test suite
     @unittest.skipIf(IS_MACOS, "https://github.com/pytorch/pytorch/issues/157245")
-    @xfailIfS390X
     def test_qengine(self):
         qengines = torch.backends.quantized.supported_engines
         original_qe = torch.backends.quantized.engine

@@ -717,18 +717,10 @@ def _get_cpu_arch_cflags(cpp_compiler: str) -> list[str]:
 
     machine = platform.machine()
     if march is None:
-        if machine == "ppc64le":
-            return ["mcpu=native"]
-        if machine == "riscv64":
-            return ["march=rv64gc"]
-        if machine == "riscv32":
-            return ["march=rv32gc"]
         if machine in ("aarch64", "arm64"):
             return [_get_linux_aarch64_arch_flag(cpp_compiler)]
         return ["march=native"]
 
-    if machine == "ppc64le":
-        return [f"mcpu={march}"]
     return [f"march={march}"]
 
 

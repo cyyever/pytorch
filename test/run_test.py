@@ -123,7 +123,6 @@ INDUCTOR_TEST_PREFIX = "inductor"
 IS_SLOW = (
     "slow" in TEST_CONFIG or "slow" in BUILD_ENVIRONMENT or TEST_CONFIG == "periodic"
 )
-IS_S390X = platform.machine() == "s390x"
 
 
 # Note [ROCm parallel CI testing]
@@ -202,57 +201,6 @@ if TEST_WITH_ROCM and isRocmArchAnyOf(("gfx1100",)):
     ROCM_BLOCKLIST.append("inductor/test_torchinductor_dynamic_shapes")
     ROCM_BLOCKLIST.append("inductor/test_torchinductor_opinfo")
     ROCM_BLOCKLIST.append("inductor/test_ck_backend")
-
-S390X_BLOCKLIST = [
-    # these tests fail due to various reasons
-    "dynamo/test_misc",
-    "inductor/test_cpu_repro",
-    "inductor/test_cpu_select_algorithm",
-    "inductor/test_torchinductor_codegen_dynamic_shapes",
-    "profiler/test_profiler",
-    "dynamo/test_utils",
-    "test_nn",
-    # these tests run long and fail in addition to that
-    "dynamo/test_dynamic_shapes",
-    "inductor/test_torchinductor",
-    "inductor/test_torchinductor_dynamic_shapes",
-    "inductor/test_torchinductor_opinfo",
-    # these tests fail when cuda is not available
-    "inductor/test_aot_inductor",
-    "inductor/test_best_config",
-    "inductor/test_cudacodecache",
-    "inductor/test_inductor_utils",
-    "inductor/test_inplacing_pass",
-    "inductor/test_kernel_benchmark",
-    "inductor/test_max_autotune",
-    "inductor/test_move_constructors_to_gpu",
-    "inductor/test_multi_kernel",
-    "inductor/test_pattern_matcher",
-    "inductor/test_perf",
-    "inductor/test_select_algorithm",
-    "inductor/test_snode_runtime",
-    "inductor/test_triton_wrapper",
-    # sysctl -n hw.memsize is not available
-    "test_mps",
-    # https://github.com/pytorch/pytorch/issues/102078
-    "test_decomp",
-    # https://github.com/pytorch/pytorch/issues/146698
-    "test_model_exports_to_core_aten",
-    # runs very long, skip for now
-    "inductor/test_layout_optim",
-    "test_fx",
-    # some false errors
-    "doctests",
-    # new failures to investigate and fix
-    "dynamo/test_backends",
-    "dynamo/test_modules",
-    "inductor/test_config",
-    "test_public_bindings",
-    "test_testing",
-    # depend on z3-solver
-    "fx/test_z3_gradual_types",
-    "test_proxy_tensor",
-]
 
 XPU_BLOCKLIST = [
     "test_autograd",
@@ -1814,14 +1762,6 @@ def get_selected_tests(options) -> list[str]:
 
     elif TEST_WITH_ROCM:
         selected_tests = exclude_tests(ROCM_BLOCKLIST, selected_tests, "on ROCm")
-
-    elif IS_S390X:
-        selected_tests = exclude_tests(S390X_BLOCKLIST, selected_tests, "on s390x")
-        selected_tests = exclude_tests(
-            DISTRIBUTED_TESTS,
-            selected_tests,
-            "Skip distributed tests on s390x",
-        )
 
     # skip all distributed tests if distributed package is not available.
     if not dist.is_available():

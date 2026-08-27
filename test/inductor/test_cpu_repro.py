@@ -52,7 +52,6 @@ from torch.testing._internal.common_utils import (
     TEST_CUDA,
     TEST_WITH_ROCM,
     xfailIf,
-    xfailIfS390X,
 )
 from torch.utils._python_dispatch import TorchDispatchMode
 
@@ -2506,74 +2505,6 @@ class CPUReproTests(TestCase):
 
     @unittest.skipIf(IS_FBCODE, "Not yet runnable in fbcode")
     @unittest.skipIf(
-        not cpu_vec_isa.valid_vec_isa_list()
-        or "avx2" in [str(vec_isa) for vec_isa in cpu_vec_isa.valid_vec_isa_list()]
-        or "asimd" in [str(vec_isa) for vec_isa in cpu_vec_isa.valid_vec_isa_list()],
-        "Does not support vectorization or not s390x/ppc64le machine",
-    )
-    @patch("torch.cuda.is_available", lambda: False)
-    def test_auto_zvec_vsx_simd(self):
-        vec_zvec_vsx = cpu_vec_isa.valid_vec_isa_list()[0]
-        self.assertTrue(vec_zvec_vsx.bit_width() == 256)
-
-        with config.patch({"cpp.simdlen": 0}):
-            isa = cpu_vec_isa.pick_vec_isa()
-            self.assertFalse(isa)
-
-        with config.patch({"cpp.simdlen": 1}):
-            isa = cpu_vec_isa.pick_vec_isa()
-            self.assertFalse(isa)
-
-        with config.patch({"cpp.simdlen": 257}):
-            isa = cpu_vec_isa.pick_vec_isa()
-            self.assertFalse(isa)
-
-        with config.patch({"cpp.simdlen": 256}):
-            isa = cpu_vec_isa.pick_vec_isa()
-            self.assertTrue(isa == vec_zvec_vsx)
-
-        pre_var = os.getenv("ATEN_CPU_CAPABILITY")
-        if pre_var:
-            os.environ.pop("ATEN_CPU_CAPABILITY")
-
-        try:
-            with config.patch({"cpp.simdlen": None}):
-                isa = cpu_vec_isa.pick_vec_isa()
-                self.assertTrue(isa == vec_zvec_vsx)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "avx2"
-                isa = cpu_vec_isa.pick_vec_isa()
-                self.assertTrue(isa == vec_zvec_vsx)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "avx512"
-                isa = cpu_vec_isa.pick_vec_isa()
-                self.assertTrue(isa == vec_zvec_vsx)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "default"
-                isa = cpu_vec_isa.pick_vec_isa()
-                self.assertFalse(isa)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "zvector"
-                isa = cpu_vec_isa.pick_vec_isa()
-                self.assertTrue(isa == vec_zvec_vsx)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "vsx"
-                isa = cpu_vec_isa.pick_vec_isa()
-                self.assertTrue(isa == vec_zvec_vsx)
-
-        finally:
-            if pre_var:
-                os.environ["ATEN_CPU_CAPABILITY"] = pre_var
-            elif os.getenv("ATEN_CPU_CAPABILITY"):
-                os.environ.pop("ATEN_CPU_CAPABILITY")
-
-    @unittest.skipIf(IS_FBCODE, "Not yet runnable in fbcode")
-    @unittest.skipIf(
         platform.machine() != "x86_64" or not cpu_vec_isa.valid_vec_isa_list(),
         "Does not support vectorization or not x86_64 machine",
     )
@@ -2673,30 +2604,6 @@ class CPUReproTests(TestCase):
                 os.environ["ATEN_CPU_CAPABILITY"] = "default"
                 isa = cpu_vec_isa.pick_vec_isa()
                 self.assertFalse(isa)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "zvector"
-                isa = cpu_vec_isa.pick_vec_isa()
-                if vec_amx in cpu_vec_isa.valid_vec_isa_list():
-                    self.assertTrue(isa == vec_amx)
-                elif vec_avx512_vnni in cpu_vec_isa.valid_vec_isa_list():
-                    self.assertTrue(isa == vec_avx512_vnni)
-                elif vec_avx512 in cpu_vec_isa.valid_vec_isa_list():
-                    self.assertTrue(isa == vec_avx512)
-                else:
-                    self.assertTrue(isa == vec_avx2)
-
-            with config.patch({"cpp.simdlen": None}):
-                os.environ["ATEN_CPU_CAPABILITY"] = "vsx"
-                isa = cpu_vec_isa.pick_vec_isa()
-                if vec_amx in cpu_vec_isa.valid_vec_isa_list():
-                    self.assertTrue(isa == vec_amx)
-                elif vec_avx512_vnni in cpu_vec_isa.valid_vec_isa_list():
-                    self.assertTrue(isa == vec_avx512_vnni)
-                elif vec_avx512 in cpu_vec_isa.valid_vec_isa_list():
-                    self.assertTrue(isa == vec_avx512)
-                else:
-                    self.assertTrue(isa == vec_avx2)
 
         finally:
             if pre_var:
@@ -4244,7 +4151,6 @@ class CPUReproTests(TestCase):
                 f"Expected kernel_profile_events to be non-empty, got {len(kernel_profile_events)}"
             )
 
-    @xfailIfS390X
     @requires_vectorization
     def test_channel_shuffle_cl_output(self):
         """code and shape extracted from shufflenet_v2_x1_0"""
@@ -5620,7 +5526,6 @@ class CPUReproTests(TestCase):
         self.assertTrue("cvt_lowp_fp_to_fp32" not in code)
         self.assertTrue("cvt_fp32_to_lowp_fp" not in code)
 
-    @xfailIfS390X
     def test_concat_inner_vec(self):
         def fn(x, y):
             return F.relu(torch.cat([x, y], dim=1))

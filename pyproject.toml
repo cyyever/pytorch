@@ -300,7 +300,7 @@ dev = [
     "fsspec>=0.8.5",
     "hypothesis",
     "jinja2",
-    "lintrunner ; platform_machine != \"s390x\"",
+    "lintrunner",
     "networkx>=2.5.1",
     "optree>=0.13.0",
     "psutil",

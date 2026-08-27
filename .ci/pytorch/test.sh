@@ -17,7 +17,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/common-build.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/torch_trace.sh"
 
 # Only change workspace permissions if passwordless sudo is available
-# (e.g. ROCm and s390x CI jobs lack it, and changing permissions
+# (e.g. ROCm CI jobs lack it, and changing permissions
 # can leave the workspace in a bad state for cancelled jobs)
 if sudo -n true 2>/dev/null && [[ -d /var/lib/jenkins/workspace ]]; then
   # Workaround for dind-rootless userid mapping (https://github.com/pytorch/ci-infra/issues/96)
@@ -134,12 +134,6 @@ if [[ "$BUILD_ENVIRONMENT" == *clang9* || "$BUILD_ENVIRONMENT" == *xpu* ]]; then
 fi
 
 detect_cuda_arch
-
-if [[ "$BUILD_ENVIRONMENT" == *s390x* ]]; then
-  # There are additional warnings on s390x, maybe due to newer gcc.
-  # Skip this check for now
-  export VALGRIND=OFF
-fi
 
 if [[ "${PYTORCH_TEST_RERUN_DISABLED_TESTS}" == "1" ]] || [[ "${CONTINUE_THROUGH_ERROR}" == "1" ]]; then
   # When rerunning disable tests, do not generate core dumps as it could consume
@@ -1682,8 +1676,7 @@ test_libtorch_api() {
 
   fi
 
-  # quantization is not fully supported on s390x yet
-  if [[ "${BUILD_ENVIRONMENT}" != *android* && "${BUILD_ENVIRONMENT}" != *cuda* && "${BUILD_ENVIRONMENT}" != *asan* && "${BUILD_ENVIRONMENT}" != *s390x* ]]; then
+  if [[ "${BUILD_ENVIRONMENT}" != *android* && "${BUILD_ENVIRONMENT}" != *cuda* && "${BUILD_ENVIRONMENT}" != *asan* ]]; then
     # NB: This test is not under TORCH_BIN_DIR but under BUILD_BIN_DIR
     export CPP_TESTS_DIR="${BUILD_BIN_DIR}"
     python test/run_test.py --cpp --verbose -i cpp/static_runtime_test
@@ -1776,11 +1769,6 @@ test_quantization() {
 
 test_custom_script_ops() {
   echo "Testing custom script operators"
-
-  if [[ "$BUILD_ENVIRONMENT" == *s390x* ]]; then
-    echo "Skipping custom script operators until it's fixed"
-    return 0
-  fi
 
   CUSTOM_OP_BUILD="${CUSTOM_TEST_ARTIFACT_BUILD_DIR}/custom-op-build"
   pushd test/custom_operator

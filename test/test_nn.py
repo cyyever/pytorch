@@ -37,7 +37,7 @@ from torch.testing._internal.common_dtype import integral_types, get_all_math_dt
 from torch.testing._internal.common_utils import dtype_name, freeze_rng_state, run_tests, TestCase, \
     skipIfNoLapack, skipIfRocm, skipIfRocmVersionLessThan, getRocmVersion, TEST_NUMPY, TEST_SCIPY, TEST_WITH_CROSSREF, TEST_WITH_ROCM, TEST_MULTIACCELERATOR, \
     download_file, get_function_arglist, load_tests, skipIfMPS, MACOS_VERSION, \
-    IS_PPC, IS_ARM64, IS_MACOS, IS_WINDOWS, xfailIf, \
+    IS_ARM64, IS_MACOS, IS_WINDOWS, xfailIf, \
     parametrize as parametrize_test, subtest, instantiate_parametrized_tests, \
     skipIfTorchDynamo, gcIfJetson, set_default_dtype, skipIfNoCuteDSL, isRocmArchAnyOf, MI200_ARCH
 from torch.testing._internal.common_cuda import TEST_CUDA, TEST_CUDNN, \
@@ -5280,18 +5280,6 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""")
               [4.15039, 4.38921, 4.85697, 5.27508],
               [5.08591, 5.32473, 5.79249, 6.21060],
               [5.92213, 6.16095, 6.62871, 7.04682]]]])
-        if IS_PPC:
-            # Both OpenCV and PyTorch give a slightly different result on PPC
-            expected_out_t = torch.tensor(
-                [[[[-0.32725, -0.08843, 0.37933, 0.79744],
-                  [0.15039, 0.38921, 0.85697, 1.27508],
-                  [1.08591, 1.32473, 1.79249, 2.21060],
-                  [1.92212, 2.16094, 2.62870, 3.04681]],
-
-                 [[3.67275, 3.91157, 4.37933, 4.79743],
-                  [4.15039, 4.38921, 4.85697, 5.27508],
-                  [5.08591, 5.32473, 5.79249, 6.21059],
-                  [5.92212, 6.16094, 6.62870, 7.04680]]]])
         out_t = F.interpolate(in_t, scale_factor=2.3, mode='bicubic', align_corners=False, recompute_scale_factor=False)
         torch.set_printoptions(precision=5)
         self.assertEqual(out_t, expected_out_t, atol=1e-4, rtol=0)

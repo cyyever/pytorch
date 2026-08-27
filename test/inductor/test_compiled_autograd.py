@@ -41,7 +41,6 @@ from torch.testing._internal.common_device_type import (
 )
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
-    IS_S390X,
     IS_WINDOWS,
     noncontiguous_like,
     parametrize,
@@ -5656,9 +5655,6 @@ skipped_tests.add("test_graph_queue_callback")
 if not HAS_CUDA_AND_TRITON:
     # Found Tesla M60 which is too old to be supported by the triton GPU compiler
     skipped_tests.add("test_type_conversions")
-
-if IS_S390X:
-    skipped_tests.add("test_deep_reentrant")
 
 # clear_saved_tensors_on_access is incompatible with compiled autograd
 skipped_tests.add("test_clear_saved_tensors_on_access")

@@ -205,8 +205,8 @@ jobs:
         shell: bash
         run: |
           # Run via uv so pyyaml is provisioned regardless of the build image's
-          # Python setup. Build containers like ubuntu-cross-riscv use the
-          # system apt python3, which doesn't include pyyaml. Matches the
+          # Python setup. Some build containers use the system apt python3,
+          # which doesn't include pyyaml. Matches the
           # pattern used by parse_ref.py / filter_test_configs.py in
           # .github/actions/filter-test-configs/action.yml.
           uv run --no-project --with pyyaml==6.0.2 \

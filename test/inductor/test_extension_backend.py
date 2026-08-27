@@ -42,7 +42,6 @@ from torch.testing._internal.common_utils import (
     IS_FBCODE,
     IS_MACOS,
     parametrize,
-    xfailIfS390X,
 )
 
 

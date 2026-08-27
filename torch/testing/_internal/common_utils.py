@@ -1642,10 +1642,8 @@ IS_LINUX = sys.platform == "linux"
 # Windows support has been removed; kept (always False) for API compatibility
 IS_WINDOWS = False
 IS_MACOS = sys.platform == "darwin"
-IS_PPC = platform.machine() == "ppc64le"
 IS_X86 = platform.machine() in ('x86_64', 'i386')
 IS_ARM64 = platform.machine() in ('arm64', 'aarch64', 'ARM64')
-IS_S390X = platform.machine() == "s390x"
 IS_AVX512_VNNI_SUPPORTED = torch.cpu.get_capabilities().get("avx512_vnni", False)
 
 @contextmanager  # noqa: T484
@@ -2449,9 +2447,6 @@ def runOnRocmArch(arch: tuple[str, ...]):
             return fn(self, *args, **kwargs)
         return wrap_fn
     return dec_fn
-
-def xfailIfS390X(func):
-    return unittest.expectedFailure(func) if IS_S390X else func
 
 def xfailIf(condition):
     def wrapper(func):
