@@ -435,52 +435,58 @@ constexpr complex<T> operator/(const T& lhs, const complex<T>& rhs) {
 // not support this when T is a floating-point number. This is useful because it
 // saves a lot of "static_cast" when operate a complex and an integer. This
 // makes the code both less verbose and potentially more efficient.
-#define COMPLEX_INTEGER_OP_TEMPLATE_CONDITION                 \
-  typename std::enable_if_t<                                  \
-      std::is_floating_point_v<fT> && std::is_integral_v<iT>, \
-      int> = 0
+template <typename fT, typename iT>
+concept complex_integer_op =
+    std::is_floating_point_v<fT> && std::is_integral_v<iT>;
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator+(const c10::complex<fT>& a, const iT& b) {
   return a + static_cast<fT>(b);
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator+(const iT& a, const c10::complex<fT>& b) {
   return static_cast<fT>(a) + b;
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator-(const c10::complex<fT>& a, const iT& b) {
   return a - static_cast<fT>(b);
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator-(const iT& a, const c10::complex<fT>& b) {
   return static_cast<fT>(a) - b;
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator*(const c10::complex<fT>& a, const iT& b) {
   return a * static_cast<fT>(b);
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator*(const iT& a, const c10::complex<fT>& b) {
   return static_cast<fT>(a) * b;
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator/(const c10::complex<fT>& a, const iT& b) {
   return a / static_cast<fT>(b);
 }
 
-template <typename fT, typename iT, COMPLEX_INTEGER_OP_TEMPLATE_CONDITION>
+template <typename fT, typename iT>
+  requires complex_integer_op<fT, iT>
 constexpr c10::complex<fT> operator/(const iT& a, const c10::complex<fT>& b) {
   return static_cast<fT>(a) / b;
 }
 
-#undef COMPLEX_INTEGER_OP_TEMPLATE_CONDITION
 
 template <typename T>
 constexpr bool operator==(const complex<T>& lhs, const complex<T>& rhs) {
