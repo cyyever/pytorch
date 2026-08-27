@@ -149,7 +149,7 @@ def _do_paste_mask(masks, boxes, img_h: int, img_w: int, skip_empty: bool = True
 
     device = masks.device
 
-    if skip_empty and not torch.jit.is_scripting():
+    if skip_empty:
         x0_int, y0_int = torch.clamp(boxes.min(dim=0).values.floor()[:2] - 1, min=0).to(
             dtype=torch.int32
         )
@@ -176,12 +176,11 @@ def _do_paste_mask(masks, boxes, img_h: int, img_w: int, skip_empty: bool = True
     gy = img_y[:, :, None].expand(N, img_y.size(1), img_x.size(1))
     grid = torch.stack([gx, gy], dim=3)
 
-    if not torch.jit.is_scripting():
-        if not masks.dtype.is_floating_point:
-            masks = masks.float()
+    if not masks.dtype.is_floating_point:
+        masks = masks.float()
     img_masks = F.grid_sample(masks, grid.to(masks.dtype), align_corners=False)
 
-    if skip_empty and not torch.jit.is_scripting():
+    if skip_empty:
         return img_masks[:, 0], (slice(y0_int, y1_int), slice(x0_int, x1_int))
     else:
         return img_masks[:, 0], ()
@@ -202,16 +201,6 @@ def cat(tensors, dim=0):
 
 def shapes_to_tensor(x, device=None):
     # from detectron2 wrappers.py
-    if torch.jit.is_scripting():
-        return torch.as_tensor(x, device=device)
-    if torch.jit.is_tracing():
-        if not all(isinstance(t, torch.Tensor) for t in x):
-            raise AssertionError("Shape should be tensor during tracing!")
-        # as_tensor should not be used in tracing because it records a constant
-        ret = torch.stack(x)
-        if ret.device != device:  # avoid recording a hard-coded device if not necessary
-            ret = ret.to(device=device)
-        return ret
     return torch.as_tensor(x, device=device)
 
 
@@ -789,10 +778,7 @@ class BatchNormAct2d(torch.nn.BatchNorm2d):
         return super().forward(x)
 
     def forward(self, x):
-        if torch.jit.is_scripting():
-            x = self._forward_jit(x)
-        else:
-            x = self._forward_python(x)
+        x = self._forward_python(x)
         x = self.act(x)
         return x
 

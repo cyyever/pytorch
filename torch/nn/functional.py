@@ -896,13 +896,12 @@ def max_pool3d_with_indices(
         )
     if stride is None:
         stride = []
-    if not torch.jit.is_scripting():
-        if input.is_cuda and torch.are_deterministic_algorithms_enabled():
-            return importlib.import_module(
-                "torch._decomp.decompositions"
-            ).max_pool3d_with_indices(
-                input, kernel_size, stride, padding, dilation, ceil_mode
-            )
+    if input.is_cuda and torch.are_deterministic_algorithms_enabled():
+        return importlib.import_module(
+            "torch._decomp.decompositions"
+        ).max_pool3d_with_indices(
+            input, kernel_size, stride, padding, dilation, ceil_mode
+        )
     return torch._C._nn.max_pool3d_with_indices(
         input, kernel_size, stride, padding, dilation, ceil_mode
     )
@@ -990,16 +989,8 @@ def _unpool_output_size(
                 )
 
         ret = output_size
-    if torch.jit.is_scripting():
-        for d in range(len(kernel_size)):
-            if ret[d] < 0:
-                raise ValueError(
-                    "max_unpooling: output_size must contain non-negative spatial "
-                    f"dimensions, but got output_size[{d}]={ret[d]}"
-                )
-    else:
-        for d in range(len(kernel_size)):
-            _check_unpool_output_size(ret, d)
+    for d in range(len(kernel_size)):
+        _check_unpool_output_size(ret, d)
     return ret
 
 
@@ -2754,7 +2745,7 @@ def embedding_bag(
             f"weight has to be a 2D Tensor, but got Tensor of dimension {weight.dim()}"
         )
 
-    if not torch.jit.is_scripting() and input.dim() == 2 and input.is_nested:
+    if input.dim() == 2 and input.is_nested:
         include_last_offset = True
         # pyrefly: ignore [missing-attribute]
         offsets = input.offsets()
@@ -2767,10 +2758,7 @@ def embedding_bag(
             per_sample_weights = per_sample_weights.values().reshape(-1)
     elif input.dim() == 2:
         if offsets is not None:
-            type_str = "<unknown>"
-            # TODO: Remove this once script supports type() calls
-            if not torch.jit.is_scripting():
-                type_str = str(type(offsets))
+            type_str = str(type(offsets))
             raise ValueError(
                 "if input is 2D, then offsets has to be None"
                 ", as input is treated is a mini-batch of"
@@ -3905,7 +3893,6 @@ def linear_cross_entropy(
         or reduction not in {"mean", "sum", "none"}
         or label_smoothing != 0.0
         or (target.dtype != torch.int64 and not chunkable_prob_target)
-        or torch.jit.is_tracing()
     ):
         warnings.warn(
             "linear_cross_entropy: ``options`` ignored; chunked path needs "
@@ -3914,7 +3901,6 @@ def linear_cross_entropy(
             " requires_grad == False), out_features == (). Got "
             f"reduction={reduction!r}, label_smoothing={label_smoothing}, "
             f"target.dtype={target.dtype}, out_features={tuple(out_features)}"
-            f", tracing={torch.jit.is_tracing()}"
             f", target.requires_grad={target.requires_grad}"
             f", linear_bias.shape="
             f"{tuple(linear_bias.shape) if linear_bias is not None else None}.",
@@ -3927,7 +3913,6 @@ def linear_cross_entropy(
         and label_smoothing == 0.0
         and (target.dtype == torch.int64 or chunkable_prob_target)
         and not out_features
-        and not torch.jit.is_tracing()
     ):
         if input.dim() == 2:
             num_batches = input.shape[0]
@@ -5125,12 +5110,11 @@ def interpolate(  # noqa: F811
                     "Please provide input tensor in (N, C, d1, d2, ...,dK) format and "
                     "output size in (o1, o2, ...,oK) format."
                 )
-            if not torch.jit.is_scripting():
-                if not all(_is_integer(x) for x in size):
-                    raise TypeError(
-                        "expected size to be one of int or Tuple[int] or Tuple[int, int] or "
-                        f"Tuple[int, int, int], but got size with types {[type(x) for x in size]}"
-                    )
+            if not all(_is_integer(x) for x in size):
+                raise TypeError(
+                    "expected size to be one of int or Tuple[int] or Tuple[int, int] or "
+                    f"Tuple[int, int, int], but got size with types {[type(x) for x in size]}"
+                )
             output_size = size
         else:
             output_size = [size for _ in range(dim)]
@@ -5172,7 +5156,7 @@ def interpolate(  # noqa: F811
         # The C++ code will recompute it based on the (integer) output size.
         if scale_factors is None:
             raise AssertionError("scale_factors is unexpectedly None")
-        if not torch.jit.is_scripting() and torch._C._get_tracing_state():
+        if torch._C._get_tracing_state():
             # make scale_factor a tensor in tracing so constant doesn't get baked in
             output_size = [
                 (
@@ -5184,11 +5168,6 @@ def interpolate(  # noqa: F811
                         ).float()
                     )
                 )
-                for i in range(dim)
-            ]
-        elif torch.jit.is_scripting():
-            output_size = [
-                math.floor(float(input.size(i + 2)) * scale_factors[i])
                 for i in range(dim)
             ]
         else:
@@ -5259,16 +5238,12 @@ def interpolate(  # noqa: F811
                 align_corners,
                 scale_factors,
             )
-        # Two levels are necessary to prevent TorchScript from touching
-        # are_deterministic_algorithms_enabled.
-        if not torch.jit.is_scripting():
-            if not input.is_cpu and torch.are_deterministic_algorithms_enabled():
-                # Use slow decomp whose backward will be in terms of index_put
-                # importlib is required because the import cannot be top level
-                # (cycle) and cannot be nested (TS doesn't support)
-                return importlib.import_module(
-                    "torch._decomp.decompositions"
-                )._upsample_linear_vec(input, output_size, align_corners, scale_factors)
+        if not input.is_cpu and torch.are_deterministic_algorithms_enabled():
+            # Use slow decomp whose backward will be in terms of index_put.
+            # importlib is required because the import cannot be top level (cycle).
+            return importlib.import_module(
+                "torch._decomp.decompositions"
+            )._upsample_linear_vec(input, output_size, align_corners, scale_factors)
         return torch._C._nn.upsample_bilinear2d(
             input,
             # pyrefly: ignore [bad-argument-type]
@@ -5279,16 +5254,12 @@ def interpolate(  # noqa: F811
     if input.dim() == 5 and mode == "trilinear":
         if align_corners is None:
             raise AssertionError("align_corners is unexpectedly None")
-        # Two levels are necessary to prevent TorchScript from touching
-        # are_deterministic_algorithms_enabled.
-        if not torch.jit.is_scripting():
-            if not input.is_cpu and torch.are_deterministic_algorithms_enabled():
-                # Use slow decomp whose backward will be in terms of index_put
-                # importlib is required because the import cannot be top level
-                # (cycle) and cannot be nested (TS doesn't support)
-                return importlib.import_module(
-                    "torch._decomp.decompositions"
-                )._upsample_linear_vec(input, output_size, align_corners, scale_factors)
+        if not input.is_cpu and torch.are_deterministic_algorithms_enabled():
+            # Use slow decomp whose backward will be in terms of index_put.
+            # importlib is required because the import cannot be top level (cycle).
+            return importlib.import_module(
+                "torch._decomp.decompositions"
+            )._upsample_linear_vec(input, output_size, align_corners, scale_factors)
         return torch._C._nn.upsample_trilinear3d(
             input,
             # pyrefly: ignore [bad-argument-type]
@@ -5307,20 +5278,14 @@ def interpolate(  # noqa: F811
                 align_corners,
                 scale_factors,
             )
-        # Use two nested guards so TorchScript does not analyze the runtime
-        # deterministic-algorithms query or the dynamic import below.
-        if not torch.jit.is_scripting():
-            # Select the decomposition during forward so autograd records its
-            # deterministic backward. The native CPU backward is deterministic.
-            if not input.is_cpu and torch.are_deterministic_algorithms_enabled():
-                # The decomposition accumulates through deterministic index_put.
-                # Import it lazily: a top-level import creates a cycle, while a
-                # nested import statement is unsupported by TorchScript.
-                return importlib.import_module(
-                    "torch._decomp.decompositions"
-                ).upsample_bicubic2d_vec(
-                    input, output_size, align_corners, scale_factors
-                )
+        # Select the decomposition during forward so autograd records its
+        # deterministic backward. The native CPU backward is deterministic.
+        if not input.is_cpu and torch.are_deterministic_algorithms_enabled():
+            # The decomposition accumulates through deterministic index_put.
+            # Import it lazily: a top-level import creates a cycle.
+            return importlib.import_module(
+                "torch._decomp.decompositions"
+            ).upsample_bicubic2d_vec(input, output_size, align_corners, scale_factors)
         return torch._C._nn.upsample_bicubic2d(
             input,
             # pyrefly: ignore [bad-argument-type]
@@ -5840,24 +5805,20 @@ def pad(
         return handle_torch_function(
             torch.nn.functional.pad, (input,), input, pad, mode=mode, value=value
         )
-    if not torch.jit.is_scripting():
-        if torch.are_deterministic_algorithms_enabled() and (
-            input.is_cuda or input.is_xpu
-        ):
-            if mode == "replicate":
-                # Use slow decomp whose backward will be in terms of index_put.
-                if torch.compiler.is_compiling():
-                    # nonstrict_trace makes Dynamo skip the function body
-                    # (which contains Dynamo-untraceable code) while
-                    # AOTAutograd still traces into it for the backward.
-                    return torch._dynamo.decorators.nonstrict_trace(
-                        torch._decomp.decompositions._replication_pad
-                    )(input, pad)
-                # importlib is required because the import cannot be top level
-                # (cycle) and cannot be nested (TS doesn't support)
-                return importlib.import_module(
-                    "torch._decomp.decompositions"
-                )._replication_pad(input, pad)
+    if torch.are_deterministic_algorithms_enabled() and (input.is_cuda or input.is_xpu):
+        if mode == "replicate":
+            # Use slow decomp whose backward will be in terms of index_put.
+            if torch.compiler.is_compiling():
+                # nonstrict_trace makes Dynamo skip the function body
+                # (which contains Dynamo-untraceable code) while
+                # AOTAutograd still traces into it for the backward.
+                return torch._dynamo.decorators.nonstrict_trace(
+                    torch._decomp.decompositions._replication_pad
+                )(input, pad)
+            # importlib is required because the import cannot be top level (cycle)
+            return importlib.import_module(
+                "torch._decomp.decompositions"
+            )._replication_pad(input, pad)
     return torch._C._nn.pad(input, pad, mode, value)
 
 
@@ -6042,12 +6003,6 @@ def triplet_margin_with_distance_loss(
 
     See :class:`~torch.nn.TripletMarginWithDistanceLoss` for details.
     """
-    if torch.jit.is_scripting():
-        raise NotImplementedError(
-            "F.triplet_margin_with_distance_loss does not support JIT scripting: "
-            "functions requiring Callables cannot be scripted."
-        )
-
     if has_torch_function_variadic(anchor, positive, negative):
         return handle_torch_function(
             triplet_margin_with_distance_loss,
@@ -7038,8 +6993,7 @@ def multi_head_attention_forward(
 
     # merge key padding and attention masks
     if key_padding_mask is not None:
-        if not torch.jit.is_scripting() and not torch.jit.is_tracing():
-            _check_key_padding_mask(key_padding_mask, src_len, bsz)
+        _check_key_padding_mask(key_padding_mask, src_len, bsz)
 
         key_padding_mask = (
             key_padding_mask.view(bsz, 1, 1, src_len)
@@ -7072,15 +7026,13 @@ def multi_head_attention_forward(
             )
         else:
             attn_output_weights = torch.bmm(q_scaled, k.transpose(-2, -1))
-        if not torch.jit.is_scripting():
-            del q_scaled, k
+        del q_scaled, k
         attn_output_weights = softmax(attn_output_weights, dim=-1)
         if dropout_p > 0.0:
             attn_output_weights = dropout(attn_output_weights, p=dropout_p)
 
         attn_output = torch.bmm(attn_output_weights, v)
-        if not torch.jit.is_scripting():
-            del v
+        del v
 
         attn_output = attn_output.transpose(0, 1).reshape(tgt_len * bsz, embed_dim)
         attn_output = linear(attn_output, out_proj_weight, out_proj_bias)
@@ -7120,8 +7072,7 @@ def multi_head_attention_forward(
         # reshape() below allocates.  In self-attention the three tensors are
         # views of a single packed projection, so releasing all references
         # here lets the allocator reclaim that memory immediately.
-        if not torch.jit.is_scripting():
-            del q, k, v
+        del q, k, v
         attn_output = attn_output.permute(2, 0, 1, 3).reshape(bsz * tgt_len, embed_dim)
 
         attn_output = linear(attn_output, out_proj_weight, out_proj_bias)

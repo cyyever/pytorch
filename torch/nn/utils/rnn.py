@@ -443,14 +443,12 @@ def pad_sequence(
         Tensor of size ``T x B x *`` if :attr:`batch_first` is ``False``.
         Tensor of size ``B x T x *`` otherwise
     """
-    if not (torch.jit.is_tracing() or torch.jit.is_scripting()):
-        # JIT doesn't support `Iterable`
-        if not isinstance(sequences, Iterable):
-            msg = (
-                "pad_sequence: Expected iterable for input sequences, but got arg of type: "
-                f"{type(sequences)}"
-            )
-            raise RuntimeError(msg)
+    if not isinstance(sequences, Iterable):
+        msg = (
+            "pad_sequence: Expected iterable for input sequences, but got arg of type: "
+            f"{type(sequences)}"
+        )
+        raise RuntimeError(msg)
 
         # In JIT context this leads to,
         # RuntimeError: cannot statically infer the expected size of a list in this context

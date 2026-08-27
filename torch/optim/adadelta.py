@@ -273,8 +273,7 @@ def _single_tensor_adadelta(
                 f"If capturable=True, params and state_steps must be on supported devices: {capturable_supported_devices}."
             )
 
-    if not torch.jit.is_scripting():
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for param, grad, square_avg, acc_delta, step in zip(
         params, grads, square_avgs, acc_deltas, state_steps, strict=True
@@ -444,10 +443,7 @@ def adadelta(
             params, differentiable, use_fused=False
         )
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-
-    if foreach and not torch.jit.is_scripting():
+    if foreach:
         func = _multi_tensor_adadelta
     else:
         func = _single_tensor_adadelta

@@ -74,8 +74,7 @@ class no_grad(_NoParamDecoratorContextManager):
     """
 
     def __init__(self) -> None:
-        if not torch._jit_internal.is_scripting():
-            super().__init__()
+        super().__init__()
         self.prev = False
 
     def __enter__(self) -> None:
@@ -278,8 +277,7 @@ class inference_mode(_DecoratorContextManager):
     """
 
     def __init__(self, mode: bool = True) -> None:
-        if not torch._jit_internal.is_scripting():
-            super().__init__()
+        super().__init__()
         self.mode = mode
 
     def __new__(cls, mode=True):

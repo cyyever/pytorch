@@ -323,14 +323,9 @@ def adagrad(
     if foreach is None:
         foreach = False
 
-    if foreach and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
-    if fused and torch.jit.is_scripting():
-        raise RuntimeError("torch.jit.script not supported with fused optimizers")
-
-    if fused and not torch.jit.is_scripting():
+    if fused:
         func = _fused_adagrad
-    elif foreach and not torch.jit.is_scripting():
+    elif foreach:
         func = _multi_tensor_adagrad
     else:
         func = _single_tensor_adagrad
@@ -381,8 +376,7 @@ def _single_tensor_adagrad(
     if grad_scale is not None or found_inf is not None:
         raise AssertionError("Expected grad_scale and found_inf to be None")
 
-    if not torch.jit.is_scripting():
-        lr = _to_scalar(lr)
+    lr = _to_scalar(lr)
 
     for param, grad, state_sum, step_t in zip(
         params, grads, state_sums, state_steps, strict=True

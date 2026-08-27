@@ -2936,10 +2936,9 @@ partial_fn = functools.partial(fn, scale=2)
 
     @make_test
     def test_is_contiguous_memory_format(tensor):
-        if torch.jit.is_scripting():
-            return None
-        elif tensor.is_contiguous(memory_format=torch.contiguous_format):
+        if tensor.is_contiguous(memory_format=torch.contiguous_format):
             return tensor + 1
+        return None
 
     def test_is_contiguous_frame_counts(self):
         data = [

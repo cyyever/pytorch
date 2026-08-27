@@ -936,21 +936,18 @@ class record_function(_ContextDecorator):  # pyrefly: ignore [invalid-inheritanc
         )
         # Route the region to the active cuspy observer, if any. The reference is
         # None unless a cuspy profile is running, so a non-cuspy run never touches
-        # the cuspy chain. Guarded by is_scripting() (the global access doesn't compile under
-        # TorchScript), and the global is read inside the guard so it is dead-code-eliminated.
-        if not torch.jit.is_scripting():
-            observer = _active_cuspy_profiler_observer
-            if observer is not None:
-                self._cuspy_external_id = observer.push_annotation(self.name)
+        # the cuspy chain.
+        observer = _active_cuspy_profiler_observer
+        if observer is not None:
+            self._cuspy_external_id = observer.push_annotation(self.name)
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        if not torch.jit.is_scripting():
-            if self._cuspy_external_id is not None:
-                observer = _active_cuspy_profiler_observer
-                if observer is not None:
-                    observer.pop_annotation()
-                self._cuspy_external_id = None
+        if self._cuspy_external_id is not None:
+            observer = _active_cuspy_profiler_observer
+            if observer is not None:
+                observer.pop_annotation()
+            self._cuspy_external_id = None
         if not self.run_callbacks_on_exit:
             return
 
@@ -961,11 +958,8 @@ class record_function(_ContextDecorator):  # pyrefly: ignore [invalid-inheritanc
 
         # TODO: Too slow with __torch_function__ handling enabled
         # See https://github.com/pytorch/pytorch/issues/76410
-        if not torch.jit.is_scripting():
-            with torch._C.DisableTorchFunctionSubclass():
-                torch.ops.profiler._record_function_exit._RecordFunction(record)
-        else:
-            torch.ops.profiler._record_function_exit(record)
+        with torch._C.DisableTorchFunctionSubclass():
+            torch.ops.profiler._record_function_exit._RecordFunction(record)
 
     def _call_end_callbacks_on_future(self, fut: Future[Any]) -> Future[Any]:
         """Use for profiling async calls that return a future.
@@ -999,16 +993,11 @@ class record_function(_ContextDecorator):  # pyrefly: ignore [invalid-inheritanc
 
         # TODO: Too slow with __torch_function__ handling enabled
         # See https://github.com/pytorch/pytorch/issues/76410
-        if not torch.jit.is_scripting():
-            with torch._C.DisableTorchFunctionSubclass():
-                profiled_future = (
-                    torch.ops.profiler._call_end_callbacks_on_jit_fut._RecordFunction(
-                        record, fut
-                    )
+        with torch._C.DisableTorchFunctionSubclass():
+            profiled_future = (
+                torch.ops.profiler._call_end_callbacks_on_jit_fut._RecordFunction(
+                    record, fut
                 )
-        else:
-            profiled_future = torch.ops.profiler._call_end_callbacks_on_jit_fut(
-                record, fut
             )
         return profiled_future
 

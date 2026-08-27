@@ -1,27 +1,16 @@
-from typing import Any, Final as Final, TypeVar
-
-from torch._jit_internal import is_scripting
+from typing import Any, TypeVar
 
 
 __all__ = [
     "annotate",
     "export",
-    "Final",
     "ignore",
-    "interface",
-    "is_scripting",
-    "is_tracing",
     "script",
     "script_if_tracing",
     "unused",
 ]
 
 _T = TypeVar("_T")
-
-
-def is_tracing() -> bool:
-    """TorchScript has been removed, so no trace can ever be active."""
-    return False
 
 
 # TorchScript has been removed, so the decorators below only ever marked code up
@@ -35,10 +24,7 @@ def export(fn: _T) -> _T:
     return fn
 
 
-def interface(obj: _T) -> _T:
-    return obj
-
-
+# torchvision decorates eager forward() overloads with this.
 def _overload_method(fn: _T) -> _T:
     return fn
 
@@ -65,7 +51,3 @@ def script(obj: Any = None, *args: Any, **kwargs: Any) -> Any:
 
 def annotate(the_type: Any, the_value: _T) -> _T:
     return the_value
-
-
-def Attribute(value: _T, type: Any) -> _T:  # noqa: A002
-    return value
