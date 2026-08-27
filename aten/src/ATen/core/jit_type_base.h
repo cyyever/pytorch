@@ -175,9 +175,9 @@ struct TORCH_API Type {
     /* implicit */ SingletonOrSharedTypePtr(std::shared_ptr<T> x)
         : repr_(std::move(x)) {}
 
-    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = true>
+    template <typename U>
     /* implicit */ SingletonOrSharedTypePtr(std::shared_ptr<U> x)
-        : repr_(std::move(x)) {}
+        requires (std::is_convertible_v<U*, T*>) : repr_(std::move(x)) {}
 
     /* implicit */ SingletonOrSharedTypePtr(std::nullptr_t)
         : repr_(nullptr) {}
@@ -185,9 +185,9 @@ struct TORCH_API Type {
     /* implicit */ SingletonOrSharedTypePtr(SingletonTypePtr<T> p)
         : repr_(makeSingletonSharedPtr(p.get())) {}
 
-    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = true>
+    template <typename U>
     /* implicit */ SingletonOrSharedTypePtr(SingletonTypePtr<U> p)
-        : repr_(makeSingletonSharedPtr(static_cast<T*>(p.get()))) {}
+        requires (std::is_convertible_v<U*, T*>) : repr_(makeSingletonSharedPtr(static_cast<T*>(p.get()))) {}
 
 
     // We need to support construction from T* for pybind. The problem
@@ -203,11 +203,11 @@ struct TORCH_API Type {
     // Case 3: Otherwise, T is not a SharedType. Use a singleton
     // pointer.
 
-    template <typename U = T, std::enable_if_t<std::is_base_of_v<SharedType, U>, bool> = true>
-    /* implicit */ SingletonOrSharedTypePtr(T* p) : SingletonOrSharedTypePtr(static_cast<typename detail::as_shared_type<U>::type>(p)->shared_from_this()) {}
+    template <typename U = T>
+    /* implicit */ SingletonOrSharedTypePtr(T* p) requires (std::is_base_of_v<SharedType, U>) : SingletonOrSharedTypePtr(static_cast<typename detail::as_shared_type<U>::type>(p)->shared_from_this()) {}
 
-    template <typename U = T, std::enable_if_t<std::is_same_v<Type, U>, bool> = true>
-    /* implicit */ SingletonOrSharedTypePtr(T* p) {
+    template <typename U = T>
+    /* implicit */ SingletonOrSharedTypePtr(T* p) requires (std::is_same_v<Type, U>) {
       if (auto* shared_p = dynamic_cast<typename detail::as_shared_type<U>::type>(p)) {
         repr_ = shared_p->shared_from_this();
       } else {
@@ -215,9 +215,9 @@ struct TORCH_API Type {
       }
     }
 
-    template <typename U = T, std::enable_if_t<!std::is_same_v<Type, U> && !std::is_base_of_v<SharedType, U>, bool> = true>
+    template <typename U = T>
     /* implicit */ SingletonOrSharedTypePtr(T* p)
-        : repr_(makeSingletonSharedPtr(p)) {
+        requires (!std::is_same_v<Type, U> && !std::is_base_of_v<SharedType, U>) : repr_(makeSingletonSharedPtr(p)) {
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(dynamic_cast<typename detail::as_shared_type<U>::type>(p) == nullptr);
     }
 
@@ -243,8 +243,8 @@ struct TORCH_API Type {
       return repr_ != nullptr;
     }
 
-    template <typename U = T, std::enable_if_t<!std::is_same_v<std::remove_const_t<U>, void>, bool> = true>
-    U& operator*() const {
+    template <typename U = T>
+    U& operator*() const requires (!std::is_same_v<std::remove_const_t<U>, void>) {
       return *get();
     }
 
@@ -284,38 +284,38 @@ struct TORCH_API Type {
   // Compatibility shims to accommodate existing code that passes shared_ptrs
   // around. Ideally, we would just delete this, but it should be harmless.
   template <typename T>
-  std::enable_if_t<std::is_base_of_v<Type, T>, bool>
-  isSubtypeOf(const std::shared_ptr<T>& rhs) const {
+  bool
+  isSubtypeOf(const std::shared_ptr<T>& rhs) const requires (std::is_base_of_v<Type, T>) {
     return isSubtypeOf(*rhs);
   }
 
   template <typename T>
-  std::enable_if_t<std::is_base_of_v<Type, T>, bool>
-  isSubtypeOf(const SingletonOrSharedTypePtr<T>& rhs) const {
+  bool
+  isSubtypeOf(const SingletonOrSharedTypePtr<T>& rhs) const requires (std::is_base_of_v<Type, T>) {
     return isSubtypeOf(*rhs);
   }
 
   template <typename T>
-  std::enable_if_t<std::is_base_of_v<Type, T>, bool>
-  isSubtypeOf(SingletonTypePtr<T> rhs) const {
+  bool
+  isSubtypeOf(SingletonTypePtr<T> rhs) const requires (std::is_base_of_v<Type, T>) {
     return isSubtypeOf(*rhs);
   }
 
   template <typename T>
-  std::enable_if_t<std::is_base_of_v<Type, T>, bool>
-  isSubtypeOfExt(const SingletonOrSharedTypePtr<T>& rhs, std::ostream* why_not) const {
+  bool
+  isSubtypeOfExt(const SingletonOrSharedTypePtr<T>& rhs, std::ostream* why_not) const requires (std::is_base_of_v<Type, T>) {
     return isSubtypeOfExt(*rhs, why_not);
   }
 
   template <typename T>
-  std::enable_if_t<std::is_base_of_v<Type, T>, bool>
-  isSubtypeOfExt(const std::shared_ptr<T>& rhs, std::ostream* why_not) const {
+  bool
+  isSubtypeOfExt(const std::shared_ptr<T>& rhs, std::ostream* why_not) const requires (std::is_base_of_v<Type, T>) {
     return isSubtypeOfExt(*rhs, why_not);
   }
 
   template <typename T>
-  std::enable_if_t<std::is_base_of_v<Type, T>, bool>
-  isSubtypeOfExt(SingletonTypePtr<T> rhs, std::ostream* why_not) const {
+  bool
+  isSubtypeOfExt(SingletonTypePtr<T> rhs, std::ostream* why_not) const requires (std::is_base_of_v<Type, T>) {
     return isSubtypeOfExt(*rhs, why_not);
   }
 
@@ -369,30 +369,30 @@ struct TORCH_API Type {
 
   // Dynamically cast this object to the subclass indicated by the
   // template variable, returning nullptr if the cast is invalid.
-  template <typename T, std::enable_if_t<!detail::IsSingletonType<T>::value, bool> = true>
-  typename detail::CastReturnType<T>::type cast() {
+  template <typename T>
+  typename detail::CastReturnType<T>::type cast() requires (!detail::IsSingletonType<T>::value) {
     if (T::Kind == kind()) {
       return std::static_pointer_cast<T>(static_cast<T*>(this)->shared_from_this());
     }
     return nullptr;
   }
-  template <typename T, std::enable_if_t<detail::IsSingletonType<T>::value, bool> = true>
-  typename detail::CastReturnType<T>::type cast() {
+  template <typename T>
+  typename detail::CastReturnType<T>::type cast() requires detail::IsSingletonType<T>::value {
     if (T::Kind == kind()) {
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(this == T::get().get());
       return typename detail::CastReturnType<T>::type(static_cast<T*>(this));
     }
     return nullptr;
   }
-  template <typename T, std::enable_if_t<!detail::IsSingletonType<T>::value, bool> = true>
-  typename detail::CastConstReturnType<T>::type cast() const {
+  template <typename T>
+  typename detail::CastConstReturnType<T>::type cast() const requires (!detail::IsSingletonType<T>::value) {
     if (T::Kind == kind()) {
       return std::static_pointer_cast<const T>(static_cast<const T*>(this)->shared_from_this());
     }
     return nullptr;
   }
-  template <typename T, std::enable_if_t<detail::IsSingletonType<T>::value, bool> = true>
-  typename detail::CastConstReturnType<T>::type cast() const {
+  template <typename T>
+  typename detail::CastConstReturnType<T>::type cast() const requires detail::IsSingletonType<T>::value {
     if (T::Kind == kind()) {
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(this == T::get().get());
       return typename detail::CastConstReturnType<T>::type(static_cast<const T*>(this));

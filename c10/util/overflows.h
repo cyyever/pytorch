@@ -27,16 +27,16 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-float-conversion")
 // `error: comparison of constant '255' with boolean expression is always false`
 // for `f > limit::max()` below
 template <typename To, typename From>
-std::enable_if_t<std::is_same_v<From, bool>, bool> overflows(
+bool overflows(
     From /*f*/,
-    bool strict_unsigned [[maybe_unused]] = false) {
+    bool strict_unsigned [[maybe_unused]] = false) requires (std::is_same_v<From, bool>) {
   return false;
 }
 
 // skip isnan and isinf check for integral types
 template <typename To, typename From>
-std::enable_if_t<std::is_integral_v<From> && !std::is_same_v<From, bool>, bool>
-overflows(From f, bool strict_unsigned = false) {
+bool
+overflows(From f, bool strict_unsigned = false) requires (std::is_integral_v<From> && !std::is_same_v<From, bool>) {
   using limit = std::numeric_limits<typename scalar_value_type<To>::type>;
   if constexpr (!limit::is_signed && std::numeric_limits<From>::is_signed) {
     // allow for negative numbers to wrap using two's complement arithmetic.
@@ -52,9 +52,9 @@ overflows(From f, bool strict_unsigned = false) {
 }
 
 template <typename To, typename From>
-std::enable_if_t<std::is_floating_point_v<From>, bool> overflows(
+bool overflows(
     From f,
-    bool strict_unsigned [[maybe_unused]] = false) {
+    bool strict_unsigned [[maybe_unused]] = false) requires (std::is_floating_point_v<From>) {
   using ToScalar = typename scalar_value_type<To>::type;
   using limit = std::numeric_limits<ToScalar>;
   if (limit::has_infinity && std::isinf(static_cast<double>(f))) {
@@ -84,9 +84,9 @@ C10_CLANG_DIAGNOSTIC_POP()
 
 
 template <typename To, typename From>
-std::enable_if_t<is_complex<From>::value, bool> overflows(
+bool overflows(
     From f,
-    bool strict_unsigned = false) {
+    bool strict_unsigned = false) requires is_complex<From>::value {
   // casts from complex to real are considered to overflow if the
   // imaginary component is non-zero
   if (!is_complex<To>::value && f.imag() != 0) {

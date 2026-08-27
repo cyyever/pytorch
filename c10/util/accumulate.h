@@ -14,9 +14,8 @@ namespace c10 {
 
 /// Sum of a list of integers; accumulates into the int64_t datatype
 template <
-    typename C,
-    std::enable_if_t<std::is_integral_v<typename C::value_type>, int> = 0>
-inline int64_t sum_integers(const C& container) {
+    typename C>
+inline int64_t sum_integers(const C& container) requires (std::is_integral_v<typename C::value_type>) {
   // std::accumulate infers return type from `init` type, so if the `init` type
   // is not large enough to hold the result, computation can overflow. We use
   // `int64_t` here to avoid this.
@@ -27,11 +26,8 @@ inline int64_t sum_integers(const C& container) {
 /// Sum of integer elements referred to by iterators; accumulates into the
 /// int64_t datatype
 template <
-    typename Iter,
-    std::enable_if_t<
-        std::is_integral_v<typename std::iterator_traits<Iter>::value_type>,
-        int> = 0>
-inline int64_t sum_integers(Iter begin, Iter end) {
+    typename Iter>
+inline int64_t sum_integers(Iter begin, Iter end) requires (std::is_integral_v<typename std::iterator_traits<Iter>::value_type>) {
   // std::accumulate infers return type from `init` type, so if the `init` type
   // is not large enough to hold the result, computation can overflow. We use
   // `int64_t` here to avoid this.
@@ -40,9 +36,8 @@ inline int64_t sum_integers(Iter begin, Iter end) {
 
 /// Product of a list of integers; accumulates into the int64_t datatype
 template <
-    typename C,
-    std::enable_if_t<std::is_integral_v<typename C::value_type>, int> = 0>
-inline int64_t multiply_integers(const C& container) {
+    typename C>
+inline int64_t multiply_integers(const C& container) requires (std::is_integral_v<typename C::value_type>) {
   // std::accumulate infers return type from `init` type, so if the `init` type
   // is not large enough to hold the result, computation can overflow. We use
   // `int64_t` here to avoid this.
@@ -56,11 +51,8 @@ inline int64_t multiply_integers(const C& container) {
 /// Product of integer elements referred to by iterators; accumulates into the
 /// int64_t datatype
 template <
-    typename Iter,
-    std::enable_if_t<
-        std::is_integral_v<typename std::iterator_traits<Iter>::value_type>,
-        int> = 0>
-inline int64_t multiply_integers(Iter begin, Iter end) {
+    typename Iter>
+inline int64_t multiply_integers(Iter begin, Iter end) requires (std::is_integral_v<typename std::iterator_traits<Iter>::value_type>) {
   // std::accumulate infers return type from `init` type, so if the `init` type
   // is not large enough to hold the result, computation can overflow. We use
   // `int64_t` here to avoid this.
@@ -71,9 +63,8 @@ inline int64_t multiply_integers(Iter begin, Iter end) {
 /// Return product of all dimensions starting from k
 /// Returns 1 if k>=dims.size()
 template <
-    typename C,
-    std::enable_if_t<std::is_integral_v<typename C::value_type>, int> = 0>
-inline int64_t numelements_from_dim(const int k, const C& dims) {
+    typename C>
+inline int64_t numelements_from_dim(const int k, const C& dims) requires (std::is_integral_v<typename C::value_type>) {
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(k >= 0);
 
   if (k > static_cast<int>(dims.size())) {
@@ -88,9 +79,8 @@ inline int64_t numelements_from_dim(const int k, const C& dims) {
 /// Product of all dims up to k (not including dims[k])
 /// Throws an error if k>dims.size()
 template <
-    typename C,
-    std::enable_if_t<std::is_integral_v<typename C::value_type>, int> = 0>
-inline int64_t numelements_to_dim(const int k, const C& dims) {
+    typename C>
+inline int64_t numelements_to_dim(const int k, const C& dims) requires (std::is_integral_v<typename C::value_type>) {
   TORCH_INTERNAL_ASSERT(0 <= k);
   TORCH_INTERNAL_ASSERT((unsigned)k <= dims.size());
 
@@ -102,9 +92,8 @@ inline int64_t numelements_to_dim(const int k, const C& dims) {
 /// Product of all dims between k and l (including dims[k] and excluding
 /// dims[l]) k and l may be supplied in either order
 template <
-    typename C,
-    std::enable_if_t<std::is_integral_v<typename C::value_type>, int> = 0>
-inline int64_t numelements_between_dim(int k, int l, const C& dims) {
+    typename C>
+inline int64_t numelements_between_dim(int k, int l, const C& dims) requires (std::is_integral_v<typename C::value_type>) {
   TORCH_INTERNAL_ASSERT(0 <= k);
   TORCH_INTERNAL_ASSERT(0 <= l);
 
