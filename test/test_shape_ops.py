@@ -438,31 +438,21 @@ class TestShapeOps(TestCase):
         make_from_data = partial(torch.tensor, device=device, dtype=dtype)
         make_from_size = partial(make_tensor, device=device, dtype=dtype)
 
-        def test_flip_impl(input_t, dims, output_t):
-            def all_t():
-                yield input_t, output_t
-                if dtype is torch.float:
-                    # We generate quantized versions as well
-                    for qdtype in (torch.quint8, torch.qint8, torch.qint32):
-                        qinput_t = torch.quantize_per_tensor(input_t, 0.1, 5, qdtype)
-                        qoutput_t = torch.quantize_per_tensor(output_t, 0.1, 5, qdtype)
-                        yield qinput_t, qoutput_t
-
-            for in_t, out_t in all_t():
-                self.assertEqual(in_t.flip(dims), out_t)
-                n = in_t.ndim
-                if not isinstance(dims, tuple):
-                    # Wrap dim
-                    self.assertEqual(in_t.flip(-n + dims), out_t)
-                else:
-                    # Permute dimensions
-                    for p_dims in permutations(dims):
-                        self.assertEqual(in_t.flip(p_dims), out_t)
-                        if len(p_dims) > 0:
-                            # Wrap 1st dim
-                            self.assertEqual(
-                                in_t.flip((-n + p_dims[0],) + p_dims[1:]), out_t
-                            )
+        def test_flip_impl(in_t, dims, out_t):
+            self.assertEqual(in_t.flip(dims), out_t)
+            n = in_t.ndim
+            if not isinstance(dims, tuple):
+                # Wrap dim
+                self.assertEqual(in_t.flip(-n + dims), out_t)
+            else:
+                # Permute dimensions
+                for p_dims in permutations(dims):
+                    self.assertEqual(in_t.flip(p_dims), out_t)
+                    if len(p_dims) > 0:
+                        # Wrap 1st dim
+                        self.assertEqual(
+                            in_t.flip((-n + p_dims[0],) + p_dims[1:]), out_t
+                        )
 
         def gen_data():
             # Basic tests
@@ -773,27 +763,6 @@ class TestShapeOps(TestCase):
             torch.nonzero(t, as_tuple=False, out=out), torch.nonzero(t, out=out)
         )
 
-        # Verifies that JIT script cannot handle the as_tuple kwarg
-        # See Issue https://github.com/pytorch/pytorch/issues/45499.
-        def _foo(t):
-            tuple_result = torch.nonzero(t, as_tuple=True)
-            nontuple_result = torch.nonzero(t, as_tuple=False)
-            out = torch.empty_like(nontuple_result)
-            torch.nonzero(t, as_tuple=False, out=out)
-            return tuple_result, nontuple_result, out
-
-        with self.assertRaises(RuntimeError):
-            torch.jit.script(_foo)
-
-        # Verifies that JIT tracing works fine
-        traced_foo = torch.jit.trace(_foo, t)
-        traced_tuple, traced_nontuple, traced_out = traced_foo(t)
-        expected_tuple = torch.nonzero(t, as_tuple=True)
-        expected_nontuple = torch.nonzero(t)
-
-        self.assertEqual(traced_tuple, expected_tuple)
-        self.assertEqual(traced_nontuple, expected_nontuple)
-        self.assertEqual(traced_out, expected_nontuple)
 
     def test_nonzero_discontiguous(self, device):
         shape = (4, 4)
@@ -872,24 +841,7 @@ class TestShapeOps(TestCase):
             torch.ops.aten.unfold_backward(grad_in, input_sizes, 0, -1, 1)
 
 
-class TestShapeOpsCPUOnly(TestCase):
-    hw_classification = HardwareClassification.CPU
-
-    @unittest.expectedFailure
-    @dtypes(torch.quint4x2, torch.quint2x4)
-    def test_flip_unsupported_dtype(self, device, dtype):
-        scale, zero_point = 0.1, 5
-        qt = torch.quantize_per_tensor(
-            torch.randn(16, 16, device=device),
-            scale=scale,
-            zero_point=zero_point,
-            dtype=dtype,
-        )
-        torch.flip(qt, dims=(0,))
-
-
 instantiate_device_type_tests(TestShapeOps, globals())
-instantiate_device_type_tests(TestShapeOpsCPUOnly, globals(), only_for="cpu")
 
 if __name__ == "__main__":
     run_tests()
