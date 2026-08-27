@@ -60,7 +60,6 @@ from torch.testing._internal.common_utils import (
     TemporaryDirectoryName,
     TemporaryFileName,
     TEST_DILL,
-    TEST_WITH_MTIA,
     TestCase,
 )
 from torch.testing._internal.two_tensor import TwoTensor
@@ -72,9 +71,6 @@ if not IS_WINDOWS:
     from mmap import MAP_PRIVATE, MAP_SHARED
 else:
     MAP_SHARED, MAP_PRIVATE = None, None
-
-if TEST_WITH_MTIA:
-    import mtia.host_runtime.torch_mtia.dynamic_library  # noqa: F401
 
 # These tests were all copied from `test/test_torch.py` at some point, so see
 # the actual blame, see this revision

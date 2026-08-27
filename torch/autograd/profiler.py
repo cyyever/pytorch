@@ -122,7 +122,7 @@ class profile:
 
         use_device (str, optional): Enables timing of device events.
             Adds approximately 4us of overhead to each tensor operation when use cuda.
-            The valid devices options are 'cuda', 'xpu', 'mtia' and 'privateuseone'.
+            The valid devices options are 'cuda', 'xpu' and 'privateuseone'.
 
         record_shapes (bool, optional): If shapes recording is set, information
             about input dimensions will be collected. This allows one to see which
@@ -295,7 +295,7 @@ class profile:
                 )
 
         if self.use_device is not None:
-            VALID_DEVICE_OPTIONS = ["cuda", "xpu", "mtia", "hpu"]
+            VALID_DEVICE_OPTIONS = ["cuda", "xpu", "hpu"]
             if _get_privateuse1_backend_name() != "privateuseone":
                 VALID_DEVICE_OPTIONS.append(_get_privateuse1_backend_name())
             if self.use_device not in VALID_DEVICE_OPTIONS:
@@ -336,12 +336,6 @@ class profile:
                     "Legacy XPU profiling is not supported. Requires use_kineto=True on XPU devices."
                 )
             self.kineto_activities.add(ProfilerActivity.XPU)
-        elif self.use_device == "mtia":
-            if not (use_kineto and ProfilerActivity.MTIA in _supported_activities()):
-                raise AssertionError(
-                    "Legacy MTIA profiling is not supported. Requires use_kineto=True on MTIA devices."
-                )
-            self.kineto_activities.add(ProfilerActivity.MTIA)
         elif self.use_device == "hpu":
             if not (use_kineto and ProfilerActivity.HPU in _supported_activities()):
                 raise AssertionError(

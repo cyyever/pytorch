@@ -1659,8 +1659,6 @@ def apply_group_batch_fusion(graph: torch.fx.GraphModule, rule: GroupBatchFusion
         )
 
         name = f"optimus_{str(rule.__class__.__name__)}"
-        if "MTIA" in name:
-            name = f"cff_{str(rule.__class__.__name__)}"
         trace_structured(
             "artifact",
             metadata_fn=lambda: {

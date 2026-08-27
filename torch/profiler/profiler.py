@@ -263,9 +263,6 @@ class _KinetoProfile:
         elif ProfilerActivity.XPU in self.activities:
             # pyrefly: ignore [bad-assignment]
             self.use_device = "xpu"
-        elif ProfilerActivity.MTIA in self.activities:
-            # pyrefly: ignore [bad-assignment]
-            self.use_device = "mtia"
         elif ProfilerActivity.HPU in self.activities:
             # pyrefly: ignore [bad-assignment]
             self.use_device = "hpu"

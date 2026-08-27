@@ -329,8 +329,8 @@ class DeviceOpOverrides:
         """Explicitly opt into the CUDA/XPU-style C++ wrapper two-pass path.
 
         Using, registering, or inheriting from a CppWrapperGpu-style class does
-        not imply this capability. MPS and MTIA use GPU-style wrapper classes
-        but do not require the CUDA/XPU lazy-autotune JIT+AOT path solely for
+        not imply this capability. MPS uses GPU-style wrapper classes but
+        does not require the CUDA/XPU lazy-autotune JIT+AOT path solely for
         that reason.
         """
         return False
@@ -1727,7 +1727,6 @@ class KernelArgs:
 
     @staticmethod
     def _buffer_is_marked_removed(name: object) -> bool:
-        # this function is needed by MTIA
         return isinstance(name, RemovedArg)
 
     def input(self, name: str) -> str:

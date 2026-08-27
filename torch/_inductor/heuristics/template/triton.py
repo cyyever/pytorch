@@ -2180,12 +2180,6 @@ class XPUConfigHeuristic(BaseConfigHeuristic):
         return configs
 
 
-class MTIAConfigHeuristic(BaseConfigHeuristic):
-    """
-    Placeholder child class for MTIA specific overrides.
-    """
-
-
 # Template-specific mixin classes
 class MMTemplateConfigMixin(GemmMaxAutotuneTemplateConfigHeuristics):
     """
@@ -3691,68 +3685,6 @@ class XPUMMPlusMMTemplateConfigHeuristic(
 
     # See MMTemplateConfigMixin.ascending_k.
     ascending_k = True
-
-    def __init__(self) -> None:
-        super().__init__()
-        # Override mm_configs to use mm_plus_mm_configs
-        self.mm_configs = self.mm_plus_mm_configs
-        # NOTE: overriding exhaustive configs here to be the same as mm_configs
-        # as we haven't validated exhaustive support here yet
-        # TODO(coconutruben): remove this once we have validated exhaustive support
-        # for scaled_mm
-        self.exhaustive_configs = self.mm_plus_mm_configs
-
-
-# MTIA template-specific classes
-
-
-@register_template_heuristic(mm_template.uid, "mtia")
-@register_template_heuristic(bmm_template.uid, "mtia")
-class MTIAMMTemplateConfigHeuristic(MMTemplateConfigMixin, MTIAConfigHeuristic):
-    """Standard MM template heuristic for MTIA"""
-
-
-@register_template_heuristic(mm_template.uid, "mtia", op_name="addmm")
-@register_template_heuristic(bmm_template.uid, "mtia", op_name="baddbmm")
-class MTIAAddMMTemplateConfigHeuristic(AddMMConfigMixin, MTIAMMTemplateConfigHeuristic):
-    """Addmm specific mixin for MTIA"""
-
-
-@register_template_heuristic(mm_template.uid, "mtia", op_name="scaled_mm")
-class MTIAScaledMMTemplateConfigHeuristic(ScaledMMConfigMixin, MTIAConfigHeuristic):
-    """Scaled MM template heuristic for MTIA (non-TMA)"""
-
-    def __init__(self) -> None:
-        super().__init__()
-        # Override mm_configs to use scaled_mm_configs
-        self.mm_configs = self.scaled_mm_configs
-        # NOTE: overriding exhaustive configs here to be the same as mm_configs
-        # as we haven't validated exhaustive support here yet
-        # TODO(coconutruben): remove this once we have validated exhaustive support
-        # for scaled_mm
-        self.exhaustive_configs = self.scaled_mm_configs
-
-
-@register_template_heuristic(mm_template.uid, "mtia", op_name="int_mm")
-class MTIAInt8MMTemplateConfigHeuristic(INT8MMTemplateConfigMixin, MTIAConfigHeuristic):
-    """Int8 MM template heuristic for MTIA"""
-
-    def __init__(self) -> None:
-        super().__init__()
-        # Override mm_configs to use int8_mm_configs
-        self.mm_configs = self.int8_mm_configs
-        # NOTE: overriding exhaustive configs here to be the same as mm_configs
-        # as we haven't validated exhaustive support here yet
-        # TODO(coconutruben): remove this once we have validated exhaustive support
-        # for scaled_mm
-        self.exhaustive_configs = self.int8_mm_configs
-
-
-@register_template_heuristic(mm_plus_mm_template.uid, "mtia")
-class MTIAMMPlusMMTemplateConfigHeuristic(
-    MMPlusMMTemplateConfigMixin, MTIAConfigHeuristic
-):
-    """MM Plus MM template heuristic for MTIA"""
 
     def __init__(self) -> None:
         super().__init__()

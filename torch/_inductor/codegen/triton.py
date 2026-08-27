@@ -4489,7 +4489,7 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
                     # a rewind as `outer_step - inner_step * inner_num_iter`;
                     # if a pointer's outer entry is absent, no rewind is
                     # emitted and its SSA value (in scf.for-based backends
-                    # such as Triton-MTIA) retains the accumulated inner
+                    # such as some out-of-tree backends) retains the accumulated inner
                     # advances across outer iterations, silently loading
                     # out-of-bounds. The emit site below drops pure no-op
                     # advances so this does not add codegen noise for

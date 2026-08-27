@@ -2210,8 +2210,8 @@ class triton:
     # emits a one-time FutureWarning before falling back to masked indexing.
     #
     # TODO(#191012): remove use_block_ptr entirely (this flag + the block-pointer
-    # codegen path in codegen/triton.py) once downstream backends still on block
-    # pointers (e.g. MTIA) migrate.
+    # codegen path in codegen/triton.py) once the backends still on block
+    # pointers migrate.
     use_block_ptr = False
 
     # (Experimental)
@@ -2840,11 +2840,6 @@ cuda_backend: Literal["triton"] = "triton"
 
 # Backend to use for XPU codegen either "triton"
 xpu_backend: Literal["triton"] = "triton"
-
-
-class mtia:
-    # Configuration to force inductor to never use welford reductions for MTIA backend
-    disable_welford_reduction = False
 
 
 # create a directory containing lots of debug information

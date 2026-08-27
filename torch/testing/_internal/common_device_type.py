@@ -45,7 +45,6 @@ from torch.testing._internal.common_utils import (
     TEST_MPS,
     TEST_WITH_ASAN,
     TEST_WITH_MIOPEN_SUGGEST_NHWC,
-    TEST_WITH_MTIA,
     TEST_WITH_ROCM,
     TEST_WITH_TORCHINDUCTOR,
     TEST_WITH_TSAN,
@@ -979,13 +978,8 @@ def get_device_type_test_bases():
 
     if IS_SANDCASTLE or IS_FBCODE:
         if IS_REMOTE_GPU:
-            # Skip if sanitizer is enabled or we're on MTIA machines
-            if (
-                not TEST_WITH_ASAN
-                and not TEST_WITH_TSAN
-                and not TEST_WITH_UBSAN
-                and not TEST_WITH_MTIA
-            ):
+            # Skip if sanitizer is enabled
+            if not TEST_WITH_ASAN and not TEST_WITH_TSAN and not TEST_WITH_UBSAN:
                 test_bases.append(CUDATestBase)
         else:
             test_bases.append(CPUTestBase)
@@ -1684,7 +1678,7 @@ class skipPRIVATEUSE1If(skipIf):
 def _has_sufficient_memory(device, size):
     device_ = torch.device(device)
     device_type = device_.type
-    if device_type in ["cuda", "xpu", "mtia"]:
+    if device_type in ["cuda", "xpu"]:
         acc = torch.accelerator.current_accelerator()
         # Case 1: no accelerator found
         if not acc:
@@ -1710,11 +1704,6 @@ def _has_sufficient_memory(device, size):
 
         if device_type == "xpu":
             return torch.xpu.memory.mem_get_info(device_)[0] >= size
-
-        if device_type == "mtia":
-            # MTIA has no mem_get_info; the dram stats dict exposes free_bytes
-            # (see torch/csrc bindings / mtia_hooks.cpp).
-            return torch.mtia.memory_stats(device_)["dram"]["free_bytes"] >= size
 
     if device_type == "xla":
         raise unittest.SkipTest("TODO: Memory availability checks for XLA?")

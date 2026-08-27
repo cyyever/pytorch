@@ -36,7 +36,7 @@ class EmptyDecomposeKConfigHeuristics(TemplateConfigHeuristics):
     "cuda",
     op_name="mm",
 )
-# TODO(coconutruben): enable decompose k on other devices (xpu, cpu, mps, mtia)
+# TODO(coconutruben): enable decompose k on other devices (xpu, cpu, mps)
 # by either adding specific register_template_heuristic tags, or setting the
 # device to None (enabled on all devices)
 class DecomposeKConfigHeuristics(GemmMaxAutotuneTemplateConfigHeuristics):

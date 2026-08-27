@@ -107,7 +107,7 @@ if TYPE_CHECKING:
     from .scheduler import BaseSchedulerNode, SchedulerBuffer
 
 
-GPU_TYPES = ["cuda", "mps", "xpu", "mtia"]
+GPU_TYPES = ["cuda", "mps", "xpu"]
 T = TypeVar("T")
 
 

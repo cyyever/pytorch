@@ -1395,14 +1395,7 @@ class CachingAutotuner(KernelInterface):
             ),
         )
 
-        if self.device_props.type == "mtia":
-            from mtia.host_runtime.torch_mtia.acc_flags import (  # type: ignore[import-not-found]
-                build_codename,
-            )
-
-            arch = build_codename()
-        else:
-            arch = compile_meta["cc"]
+        arch = compile_meta["cc"]
 
         target = GPUTarget(
             compile_meta["device_type"],

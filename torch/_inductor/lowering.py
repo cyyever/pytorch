@@ -7283,11 +7283,8 @@ def var_mean_helper_(x, *, axis, correction, keepdim, return_mean):
     )
     output = (
         var_mean_sum_(**kwargs)
-        if (
-            config.mtia.disable_welford_reduction
-            or use_two_step_variance(
-                x, axis=axis, keepdim=keepdim, input_dtype=out_dtype
-            )
+        if use_two_step_variance(
+            x, axis=axis, keepdim=keepdim, input_dtype=out_dtype
         )
         else var_mean_welford_(**kwargs)
     )
