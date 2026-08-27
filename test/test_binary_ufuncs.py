@@ -356,9 +356,7 @@ class TestBinaryUfuncsDevice(TestCase):
                 # down. numpy-backed references return the dtype they were
                 # given and never land here.
                 # Ref: https://github.com/pytorch/pytorch/blob/master/torch/testing/_internal/common_utils.py#L1149
-                rtol, atol = (
-                    (16e-3, 1e-5) if dtype is torch.bfloat16 else (1.2e-3, 1e-3)
-                )
+                rtol = 16e-3 if dtype is torch.bfloat16 else 1.2e-3
                 self.assertEqualHelper(
                     actual,
                     expected,
@@ -366,7 +364,7 @@ class TestBinaryUfuncsDevice(TestCase):
                     dtype=dtype,
                     exact_dtype=exact_dtype,
                     rtol=rtol,
-                    atol=atol,
+                    atol=1e-5,
                 )
             else:
                 self.assertEqualHelper(
@@ -4769,7 +4767,7 @@ class TestBinaryUfuncsDevice(TestCase):
         # several vector bodies and a scalar tail both run.
         pairs = list(product(special, repeat=2))
         filler = torch.linspace(-2, 2, 101, dtype=torch.float64, device=device)
-        pairs += [(a, b) for a, b in zip(filler.tolist(), filler.flip(0).tolist())]
+        pairs += [(a, b) for a, b in zip(filler.tolist(), filler.roll(37).tolist())]
         xs = [a for a, _ in pairs]
         ys = [b for _, b in pairs]
         x = torch.tensor(xs, dtype=dtype, device=device)
