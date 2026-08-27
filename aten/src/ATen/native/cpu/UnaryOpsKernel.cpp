@@ -559,12 +559,14 @@ static void entr_kernel(TensorIteratorBase& iter) {
               return static_cast<scalar_t>(-INFINITY);
             },
             [](vec_t x) -> vec_t {
-              // The blends replay the scalar branches in reverse order, so a
-              // NaN input still passes through unchanged as it does above.
+              // -x * log(x) is already NaN for a NaN x, so keying the first
+              // blend on x < 0 rather than x > 0 leaves those lanes alone and
+              // saves a third blend. The zero blend then covers -0, where the
+              // product is NaN rather than the zero the scalar form returns.
+              const vec_t zero(0);
               vec_t r = -x * x.log();
-              r = vec_t::blendv(vec_t(-INFINITY), r, x > vec_t(0));
-              r = vec_t::blendv(r, vec_t(0), x == vec_t(0));
-              return vec_t::blendv(r, x, x.isnan());
+              r = vec_t::blendv(r, vec_t(-INFINITY), x < zero);
+              return vec_t::blendv(r, zero, x == zero);
             });
       });
 }
