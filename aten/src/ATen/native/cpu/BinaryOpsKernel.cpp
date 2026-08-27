@@ -1288,30 +1288,50 @@ void copysign_kernel(TensorIteratorBase& iter) {
 void xlogy_kernel(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       kBFloat16, kHalf, iter.common_dtype(), "xlogy_cpu", [&]() {
-        cpu_kernel(iter, [](scalar_t x, scalar_t y) -> scalar_t {
-          if (at::_isnan(y)) {
-            return NAN;
-          }
-          if (x == 0) {
-            return 0;
-          }
-          return x * std::log(y);
-        });
+        using vec_t = Vectorized<scalar_t>;
+        cpu_kernel_vec(
+            iter,
+            [](scalar_t x, scalar_t y) -> scalar_t {
+              if (at::_isnan(y)) {
+                return NAN;
+              }
+              if (x == 0) {
+                return 0;
+              }
+              return x * std::log(y);
+            },
+            [](vec_t x, vec_t y) -> vec_t {
+              // The blends replay the scalar branches in reverse, so that a
+              // NaN y wins over a zero x exactly as the early returns do.
+              vec_t r = x * y.log();
+              r = vec_t::blendv(r, vec_t(0), x == vec_t(0));
+              return vec_t::blendv(r, vec_t(NAN), y.isnan());
+            });
       });
 }
 
 void xlog1py_kernel(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       kBFloat16, kHalf, iter.common_dtype(), "xlog1py_cpu", [&]() {
-        cpu_kernel(iter, [](scalar_t x, scalar_t y) -> scalar_t {
-          if (at::_isnan(y)) {
-            return NAN;
-          }
-          if (x == 0) {
-            return 0;
-          }
-          return x * std::log1p(y);
-        });
+        using vec_t = Vectorized<scalar_t>;
+        cpu_kernel_vec(
+            iter,
+            [](scalar_t x, scalar_t y) -> scalar_t {
+              if (at::_isnan(y)) {
+                return NAN;
+              }
+              if (x == 0) {
+                return 0;
+              }
+              return x * std::log1p(y);
+            },
+            [](vec_t x, vec_t y) -> vec_t {
+              // The blends replay the scalar branches in reverse, so that a
+              // NaN y wins over a zero x exactly as the early returns do.
+              vec_t r = x * y.log1p();
+              r = vec_t::blendv(r, vec_t(0), x == vec_t(0));
+              return vec_t::blendv(r, vec_t(NAN), y.isnan());
+            });
       });
 }
 
