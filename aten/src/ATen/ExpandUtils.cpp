@@ -5,6 +5,8 @@
 #include <c10/util/irange.h>
 
 #include <iterator>
+#include <numeric>
+#include <ranges>
 
 namespace at {
 namespace internal {
@@ -165,7 +167,7 @@ std::vector<int64_t> infer_dense_strides(IntArrayRef tensor_sizes, IntArrayRef t
 
   std::vector<int64_t> perm(ndim);
   // initialize perm with n-1, n-2, ..., 1, 0
-  std::iota(perm.rbegin(), perm.rend(), 0);
+  std::ranges::iota(std::views::reverse(perm), 0);
 
   // The following sorting algorithm has exactly the same behavior as TensorIterator
   // This is to make sure we have the same stride propagation everywhere.

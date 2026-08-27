@@ -20,8 +20,8 @@ class SingletonTypePtr {
 
   using element_type = typename std::shared_ptr<T>::element_type;
 
-  template <typename U = T, std::enable_if_t<!std::is_same_v<std::remove_const_t<U>, void>, bool> = true>
-  T& operator*() const {
+  template <typename U = T>
+  T& operator*() const requires (!std::is_same_v<std::remove_const_t<U>, void>) {
     return *repr_;
   }
 

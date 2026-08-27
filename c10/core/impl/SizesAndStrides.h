@@ -170,12 +170,12 @@ class C10_API SizesAndStrides {
 
   void set_sizes(IntArrayRef newSizes) {
     resize(newSizes.size());
-    std::copy(newSizes.begin(), newSizes.end(), sizes_begin());
+    std::ranges::copy(newSizes, sizes_begin());
   }
 
   void set_strides(IntArrayRef strides) {
     TORCH_INTERNAL_ASSERT(strides.size() == size());
-    std::copy(strides.begin(), strides.end(), strides_begin());
+    std::ranges::copy(strides, strides_begin());
   }
 
   const int64_t* strides_data() const noexcept {
