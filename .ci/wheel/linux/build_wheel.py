@@ -55,16 +55,6 @@ def configure_blas_env() -> None:
             os.environ["BLAS"] = "OpenBLAS"
             os.environ["OpenBLAS_HOME"] = "/opt/OpenBLAS"
 
-    elif arch == "riscv64":
-        os.environ["USE_MKLDNN"] = "0"
-
-        openblas = Path("/opt/OpenBLAS/lib/libopenblas.so.0")
-        if not openblas.is_file():
-            sys.exit(f"ERROR: OpenBLAS not found at {openblas}")
-        print("Using OpenBLAS for MKLDNN on CPU riscv64")
-        os.environ["BLAS"] = "OpenBLAS"
-        os.environ["OpenBLAS_HOME"] = "/opt/OpenBLAS"
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
