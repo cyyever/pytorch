@@ -100,14 +100,10 @@ class C10_API SymInt {
   }
 
   SymNodeImpl* release() && {
-#ifndef C10_MOBILE
     TORCH_INTERNAL_ASSERT(is_heap_allocated());
     auto* r = toSymNodeImplUnowned();
     data_ = 0; // transfer ownership
     return r;
-#else
-    TORCH_INTERNAL_ASSERT(false);
-#endif
   }
 
   // Only valid if is_heap_allocated()
@@ -154,15 +150,8 @@ class C10_API SymInt {
         !toSymNodeImplUnowned()->constant_int().has_value();
   }
 
-  // N.B. It's important to keep this definition in the header
-  // as we expect if checks to be folded for mobile builds
-  // where `is_heap_allocated` is always false and optimize dead code paths
   C10_ALWAYS_INLINE bool is_heap_allocated() const {
-#ifdef C10_MOBILE
-    return false;
-#else
     return !check_range(data_);
-#endif
   }
 
   SymInt operator+(const SymInt& sci) const {

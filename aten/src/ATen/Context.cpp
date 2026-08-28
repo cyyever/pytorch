@@ -30,7 +30,7 @@ C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
 #include <fbgemm/Fbgemm.h>
 C10_DIAGNOSTIC_POP()
 #endif // USE_FBGEMM
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
 #include <cpuinfo.h>
 #endif
 namespace at {
@@ -959,7 +959,7 @@ void Context::setMaskUnconditionalNativeAot(bool b) {
 void Context::setAllowFP16ReductionCPU(bool b) {
   if ( b && !allow_fp16_reduction_cpu) {
     // Check that CPU supports fp16 reductions
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
     if (!cpuinfo_initialize() || !cpuinfo_has_arm_fp16_arith())
 #else
     // NOLINTNEXTLINE(facebook-hte-MissingBraces)

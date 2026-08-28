@@ -339,7 +339,7 @@ inline void tinygemm_kernel(
 
 #endif
 
-#if !defined(C10_MOBILE) && defined(__aarch64__)
+#if defined(__aarch64__)
 #include <arm_neon.h>
 
 inline float32x4x2_t load_as_float32x4x2(const Half* ptr) {

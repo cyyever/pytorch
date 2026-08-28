@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #pragma once
 
 #include <c10/xpu/XPUStream.h>
@@ -41,4 +40,3 @@ class C10_EXPORT AOTIModelContainerRunnerXpu : public AOTIModelContainerRunner {
 };
 
 } // namespace torch::inductor
-#endif

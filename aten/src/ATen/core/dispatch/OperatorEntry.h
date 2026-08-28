@@ -19,10 +19,6 @@
 #include <list>
 #include <optional>
 
-#ifdef C10_MOBILE
-#define C10_DISPATCHER_ONE_KERNEL_PER_DISPATCH_KEY
-#endif
-
 namespace c10 {
 
 class Dispatcher;
@@ -231,9 +227,7 @@ class TORCH_API OperatorEntry final {
  private:
   OperatorName name_;
   std::optional<AnnotatedSchema> schema_;
-#ifndef C10_MOBILE
   std::vector<at::Tag> tags_;
-#endif
   std::array<KernelFunction, c10::num_runtime_entries> dispatchTable_;
   DispatchKeyExtractor dispatchKeyExtractor_;
   // Pointer to the torch.ops.ns.op.overload object for speed

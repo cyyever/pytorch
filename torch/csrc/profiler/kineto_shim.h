@@ -3,15 +3,6 @@
 #include <memory>
 #include <string>
 
-// Skip Kineto dependency on mobile unless explicitly asked for.
-// When is it explicitly asked for?
-//   KinetoEdgeCPUProfiler uses KinetoProfiler for cpu
-//   event profiling. This has a dependency on cpu only libkineto
-#if defined(USE_KINETO) && defined(C10_MOBILE) && \
-    !defined(EDGE_PROFILER_USE_KINETO)
-#undef USE_KINETO
-#endif
-
 #include <ActivityType.h>
 
 #include <torch/csrc/Export.h>

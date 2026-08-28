@@ -4,12 +4,8 @@
 #include <ATen/ParallelFuture.h>
 #include <ATen/PTThreadPool.h>
 
-#ifndef C10_MOBILE
 #include <c10/core/thread_pool.h>
 #include <c10/util/irange.h>
-#else
-#include <caffe2/utils/threadpool/pthreadpool-cpp.h>
-#endif // C10_MOBILE
 
 #include <atomic>
 #include <utility>
@@ -48,8 +44,6 @@ void _unset_thread_num() {
   thread_num_ = 0;
 }
 
-#ifndef C10_MOBILE
-
 const int NOT_SET = -1;
 const int CONSUMED = -2;
 
@@ -83,28 +77,14 @@ TaskThreadPoolBase& _get_intraop_pool() {
   return *pool;
 }
 
-#endif // C10_MOBILE
-
 // Run lambda function `fn` over `task_id` in [0, `range`) with threadpool.
 // `fn` will be called with params: task_id.
 static void _run_with_pool(const std::function<void(size_t)>& fn, size_t range) {
-#ifndef C10_MOBILE
   for (const auto i : c10::irange(1, range)) {
     _get_intraop_pool().run([fn, i]() { fn(i); });
   }
   // Run the first task on the current thread directly.
   fn(0);
-#else
-  caffe2::PThreadPool* const pool = caffe2::pthreadpool();
-  TORCH_INTERNAL_ASSERT(pool, "Invalid thread pool!");
-
-  pool->run(
-    // PThreadPool::run() is blocking.  A std::function [const] reference to
-    // this lambda cannot go out of scope before PThreadPool::run() returns.
-    [&fn](const size_t task_id) {
-      fn(task_id);
-    }, range);
-#endif // C10_MOBILE
 }
 
 // RAII guard helps to support in_parallel_region() and get_thread_num() API.
@@ -206,14 +186,9 @@ void init_num_threads() {
 #if AT_MKL_ENABLED()
   mkl_set_num_threads(1);
 #endif
-
-#ifdef C10_MOBILE
-  caffe2::pthreadpool();
-#endif
 }
 
 void set_num_threads(int nthreads) {
-#ifndef C10_MOBILE
   TORCH_CHECK(nthreads > 0, "Expected positive number of threads");
   int no_value = NOT_SET;
   if (!num_intraop_threads.compare_exchange_strong(no_value, nthreads)) {
@@ -231,16 +206,10 @@ void set_num_threads(int nthreads) {
         "when using native parallel backend");
     }
   }
-#else
-  caffe2::PThreadPool* const pool = caffe2::pthreadpool();
-  TORCH_INTERNAL_ASSERT(pool, "Invalid thread pool!");
-  pool->set_thread_count(nthreads);
-#endif // C10_MOBILE
 }
 
 int get_num_threads() {
   at::internal::lazy_init_num_threads();
-#ifndef C10_MOBILE
   // not initializing pool unnecessarily,
   // because pool cannot be resized after initialization
   int nthreads = num_intraop_threads.load();
@@ -252,11 +221,6 @@ int get_num_threads() {
     TORCH_INTERNAL_ASSERT(nthreads == CONSUMED);
     return static_cast<int>(_get_intraop_pool().size() + 1);
   }
-#else
-  caffe2::PThreadPool* const pool = caffe2::pthreadpool();
-  TORCH_INTERNAL_ASSERT(pool, "Invalid thread pool!")
-  return in_parallel_region() ? 1 /* current thread */ : pool->get_thread_count();
-#endif // C10_MOBILE
 }
 
 int get_thread_num() {
@@ -264,35 +228,24 @@ int get_thread_num() {
 }
 
 bool in_parallel_region() {
-#ifndef C10_MOBILE
   return in_parallel_region_ || (
     num_intraop_threads.load() == CONSUMED &&
     // Needed as intraop_launch() doesn't set in_parallel_region().
     _get_intraop_pool().inThreadPool()
   );
-#else
-  return in_parallel_region_;
-#endif // C10_MOBILE
 }
 
 void intraop_launch(const std::function<void()>& func) {
-#ifndef C10_MOBILE
   if (!in_parallel_region() && get_num_threads() > 1) {
     _get_intraop_pool().run(func);
   } else {
     // execute inline if we're in parallel region
     func();
   }
-#else
-  // TODO: caffe2::PThreadPool only provides a data-parallel API.
-  // Task parallelism is not currently supported.
-  func();
-#endif // C10_MOBILE
 }
 
 c10::intrusive_ptr<c10::ivalue::Future> intraop_launch_future(
     const std::function<void()>& func) {
-#ifndef C10_MOBILE
   auto future = c10::make_intrusive<c10::ivalue::Future>(c10::NoneType::get());
   if (!in_parallel_region() && get_num_threads() > 1) {
     _get_intraop_pool().run(
@@ -306,14 +259,6 @@ c10::intrusive_ptr<c10::ivalue::Future> intraop_launch_future(
     future->markCompleted();
   }
   return future;
-#else
-  // TODO: caffe2::PThreadPool only provides a data-parallel API.
-  // Task parallelism is not currently supported.
-  auto future = c10::make_intrusive<c10::ivalue::Future>(c10::dynT<NoneType>());
-  func();
-  future->markCompleted();
-  return future;
-#endif // C10_MOBILE
 }
 
 } // namespace at

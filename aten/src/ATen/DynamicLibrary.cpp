@@ -6,9 +6,6 @@
 
 namespace at {
 
-
-#ifndef C10_MOBILE
-
 // Unix
 
 static void* checkDL(void* x) {
@@ -42,7 +39,5 @@ DynamicLibrary::~DynamicLibrary() {
   }
   dlclose(handle);
 }
-
-#endif
 
 } // namespace at

@@ -14,7 +14,7 @@ namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
 // Following vec128_half_neon.h, we only support aarch64.
-#if !defined(C10_MOBILE) && defined(__aarch64__)
+#if defined(__aarch64__)
 #ifdef __BIG_ENDIAN__
 #error "Big endian is not supported."
 #endif
@@ -711,7 +711,7 @@ Vectorized<c10::BFloat16> inline fnmsub(
 #endif
 }
 
-#endif // !defined(C10_MOBILE) && defined(__aarch64__)
+#endif // defined(__aarch64__)
 
 } // namespace CPU_CAPABILITY
 } // namespace at::vec
