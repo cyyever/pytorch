@@ -2704,7 +2704,7 @@ class BaseOperatorName:
     # NB: We don't officially support namespace in FunctionSchema, we treat this prefix
     # as part of the base operator name, for __str__() to consume.
     # The canonical input (from the rest of the infra) will not contain namespace, but
-    # we have a usecase in ExecuTorch where we want to support BaseOperatorName with namespace.
+    # out-of-tree codegen consumers may pass a namespaced base operator name.
     namespace: str | None = None
 
     @staticmethod

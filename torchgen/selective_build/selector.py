@@ -46,8 +46,8 @@ class SelectiveBuilder:
     # of the kernel function implementation itself.
     kernel_metadata: dict[str, list[str]]
 
-    # ExecuTorch only. A dictionary of kernel tag -> list of (list of input
-    # dtypes for tensor-like input args).
+    # Out-of-tree selective builds only. A dictionary of kernel tag -> list of
+    # (list of input dtypes for tensor-like input args).
     # This is from selective.yaml
     et_kernel_metadata: dict[str, list[str]]
 

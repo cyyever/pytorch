@@ -29,7 +29,6 @@ import itertools
 import logging
 import operator
 import re
-import sys
 import time
 import traceback
 import types
@@ -1602,7 +1601,8 @@ class OutputGraph(OutputGraphCommon):
         self, attr_prefix: str, attr_value: object
     ) -> fx.Proxy:
         # Check if the module already exists, if it does, return the already
-        # added proxy. This is important for executorch tests.
+        # added proxy. This matters when the same delegate module is registered
+        # more than once.
         if isinstance(attr_value, torch.nn.Module):
             for name, mod in self.nn_modules.items():
                 if mod is attr_value:
