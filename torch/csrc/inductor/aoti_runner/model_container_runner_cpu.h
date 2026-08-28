@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #pragma once
 
 #include <torch/csrc/inductor/aoti_runner/model_container_runner.h>
@@ -23,4 +22,3 @@ class TORCH_API AOTIModelContainerRunnerCpu : public AOTIModelContainerRunner {
 };
 
 } // namespace torch::inductor
-#endif

@@ -1,8 +1,6 @@
 #include <ATen/ThreadLocalState.h>
 
-#if !defined(CAFFE2_IS_XPLAT_BUILD) && !defined(C10_MOBILE) && !defined(BUILD_LITE_INTERPRETER)
 #include <ATen/autocast_mode.h>
-#endif
 
 #include <ATen/record_function.h>
 #include <ATen/SavedTensorHooks.h>
@@ -23,11 +21,9 @@ ThreadLocalState::ThreadLocalState()
       functionalization_reapply_views_state_(at::functionalization::impl::getFunctionalizationReapplyViewsTLS()),
       dtensor_allow_implicit_replication_(at::get_dtensor_allow_implicit_replication()),
       saved_objects_(at::impl::ThreadLocalPythonObjects::get_state()) {
-#if !defined(CAFFE2_IS_XPLAT_BUILD) && !defined(C10_MOBILE) && !defined(BUILD_LITE_INTERPRETER)
   for(size_t i=0; i<autocast_dtypes_.size(); i++) {
      autocast_dtypes_[i] = at::autocast::get_autocast_dtype(static_cast<at::DeviceType>(i));
   }
-#endif
 }
 
 void ThreadLocalState::set_grad_mode(bool enabled) {
@@ -68,11 +64,9 @@ void ThreadLocalState::setThreadLocalState(
   at::functionalization::impl::setFunctionalizationReapplyViewsTLS(state.functionalization_reapply_views_state_);
 
   at::impl::ThreadLocalPythonObjects::set_state(state.saved_objects_);
-#if !defined(CAFFE2_IS_XPLAT_BUILD) && !defined(C10_MOBILE) && !defined(BUILD_LITE_INTERPRETER)
   for(size_t i=0; i<state.autocast_dtypes_.size(); i++) {
      at::autocast::set_autocast_dtype(static_cast<at::DeviceType>(i), state.autocast_dtypes_[i]);
   }
-#endif
 }
 
 } // namespace at

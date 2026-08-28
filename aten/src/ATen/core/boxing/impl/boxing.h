@@ -118,11 +118,11 @@ static inline constexpr size_t boxed_size() {
 }
 
 template <typename T>
-C10_ALWAYS_INLINE_UNLESS_MOBILE void boxToStack(IValue*& dest, T& arg) {
+C10_ALWAYS_INLINE void boxToStack(IValue*& dest, T& arg) {
   new (dest++) IValue(arg);
 }
 
-C10_ALWAYS_INLINE_UNLESS_MOBILE void boxToStack(
+C10_ALWAYS_INLINE void boxToStack(
     IValue*& dest,
     c10::TensorOptions options) {
   new (dest++) IValue(c10::typeMetaToScalarType(options.dtype()));
@@ -134,7 +134,7 @@ C10_ALWAYS_INLINE_UNLESS_MOBILE void boxToStack(
 inline void boxArgsToStack(IValue*& /*unused*/) {}
 
 template <typename T, typename... Args>
-C10_ALWAYS_INLINE_UNLESS_MOBILE void boxArgsToStack(
+C10_ALWAYS_INLINE void boxArgsToStack(
     IValue*& dest,
     T& arg,
     Args&... args) {

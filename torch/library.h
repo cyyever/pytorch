@@ -70,23 +70,6 @@
 
 namespace torch {
 
-#if defined C10_MOBILE
-/**
- * The NoInferSchemaTag is a type name used to indicate that this call to the
- * CppFunction constructor should not trigger schema inference from functor.
- * Schema inference from functor utilizes template meta-programming, and is
- * costly from a size perspective. Ideally, one would expect that the schema
- * inference would require very little binary size since most of the
- * computation can be done by the compiler at build time, but that isn't
- * necessarily the case.
- *
- * Schema inference is elided only for mobile use-cases where we don't need
- * the additional runtime cost or size overhead on client devices.
- *
- */
-struct NoInferSchemaTag {};
-#endif
-
 #define HAS_PT2_COMPLIANT_TAG
 
 // For multipy/torchdeploy use case  // codespell:ignore multipy
@@ -151,58 +134,6 @@ class TORCH_API CppFunction final {
         schema_(c10::detail::inferFunctionSchemaFromFunctor<
                 std::decay_t<Lambda>>())
         {}
-
-#if defined C10_MOBILE
-  /// This overload accepts function pointers, e.g., `CppFunction(&add_impl,
-  /// NoInferSchemaTag())`
-  template <typename Func>
-  explicit CppFunction(
-      Func* f,
-      NoInferSchemaTag,
-      std::enable_if_t<
-          c10::guts::is_function_type<Func>::value,
-          std::nullptr_t> = nullptr)
-      : func_(c10::KernelFunction::makeFromUnboxedRuntimeFunction(f)),
-        cpp_signature_(c10::impl::CppSignature::make<Func>())
-        // TODO: Don't go through WrapRuntimeKernelFunctor
-        ,
-        schema_(nullptr),
-        debug_() {}
-
-  /// This overload accepts compile time function pointers, e.g.,
-  /// `CppFunction(TORCH_FN(add_impl), NoInferSchemaTag())`
-  template <typename FuncPtr>
-  explicit CppFunction(
-      FuncPtr f,
-      NoInferSchemaTag,
-      std::enable_if_t<
-          c10::is_compile_time_function_pointer<FuncPtr>::value,
-          std::nullptr_t> = nullptr)
-      : func_(c10::KernelFunction::makeFromUnboxedFunction(f)),
-        cpp_signature_(
-            c10::impl::CppSignature::make<typename FuncPtr::FuncType>())
-        // TODO: Don't go through WrapRuntimeKernelFunctor
-        ,
-        schema_(nullptr),
-        debug_() {}
-
-  /// This overload accepts lambdas, e.g., `CppFunction([](const Tensor& self) {
-  /// ... }. NoInferSchemaTag())`
-  template <typename Lambda>
-  explicit CppFunction(
-      Lambda&& f,
-      NoInferSchemaTag,
-      std::enable_if_t<
-          c10::guts::is_functor<std::decay_t<Lambda>>::value,
-          std::nullptr_t> = nullptr)
-      : func_(c10::KernelFunction::makeFromUnboxedLambda(
-            std::forward<Lambda>(f))),
-        cpp_signature_(c10::impl::CppSignature::make<Lambda>())
-        // TODO: Don't go through WrapRuntimeKernelFunctor
-        ,
-        schema_(nullptr),
-        debug_() {}
-#endif
 
   ~CppFunction();
 
@@ -688,31 +619,9 @@ class TORCH_API Library final {
       _RegisterOrVerify rv = _RegisterOrVerify::REGISTER) & {
     // TODO: need to raise an error when you impl a function that has a
     // catch all def
-#if defined C10_MOBILE
-    CppFunction f(std::forward<Func>(raw_f), NoInferSchemaTag());
-#else
     CppFunction f(std::forward<Func>(raw_f));
-#endif
     return _impl(name, std::move(f), rv);
   }
-
-#if defined C10_MOBILE
-  // Note: This overload is needed only for C10_MOBILE, since the automatically
-  // defined copy constructor for the CppFunction doesn't have the additional
-  // NoInferSchemaTag argument. We define the overload for the impl() function
-  // to accept a CppFunction&& argument. The already constructed CppFunction
-  // object may or may not have the inferred schema, but it doesn't matter
-  // for our purposes since if it already has the inferred schema, then we
-  // might as well just pass it through directly.
-  //
-  template <typename Name>
-  Library& impl(Name name, CppFunction&& raw_f) & {
-    // TODO: need to raise an error when you impl a function that has a
-    // catch all def
-    CppFunction f(std::forward<CppFunction>(raw_f));
-    return _impl(name, std::move(f));
-  }
-#endif
 
   // Helper for getting an OperatorName for a const char*.  You probably
   // don't need this.
@@ -883,48 +792,8 @@ class TORCH_API Library final {
   at::OperatorName _parseNameForLib(const char* name_str) const;
 };
 
-#if defined(TORCH_LIBRARY_THREAD_UNSAFE_LAZY_INIT) && defined(C10_MOBILE)
-void initialize_torch_libraries();
-#endif
-
 namespace detail {
 
-#if defined(TORCH_LIBRARY_THREAD_UNSAFE_LAZY_INIT) && defined(C10_MOBILE)
-// This is an experimental feature to defer TorchLibraryInit cost to run either
-// at model load time, or when a client application explicitly calls
-// torch::initialize_torch_libraries().
-//
-// This is not thread safe, the client is required to ensure that libraries
-// containing TORCH_LIBRARY initializers are loaded in a thread safe manner.
-extern std::vector<TorchLibraryInit*> torch_library_initializers;
-class TorchLibraryInit final {
-    private:
-      using InitFn = void(Library&);
-      Library::Kind kind;
-      InitFn* init_function;
-      const char* ns;
-      std::optional<c10::DispatchKey> key;
-      const char* file;
-      uint32_t line;
-      std::unique_ptr<Library> lib = nullptr;
-
-    public:
-      TorchLibraryInit(
-            Library::Kind kind,
-            InitFn* fn,
-            const char* ns,
-            std::optional<c10::DispatchKey> k,
-            const char* file,
-            uint32_t line) : kind(kind), init_function(fn), ns(ns), key(k), file(file), line(line) {
-              torch_library_initializers.push_back(this);
-            }
-
-      void initialize() {
-        lib = std::make_unique<Library>(kind, ns, key, file, line);
-        init_function(*lib);
-      }
-};
-#else
 class TorchLibraryInit final {
  private:
   using InitFn = void(Library&);
@@ -942,7 +811,6 @@ class TorchLibraryInit final {
     fn(lib_);
   }
 };
-#endif
 
 } // namespace detail
 

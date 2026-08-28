@@ -268,7 +268,7 @@ LOAD_FP32_VECTORIZED_INIT(BFloat16, bf16)
 
 #else // defined(CPU_CAPABILITY_AVX2)
 
-#if !(defined(__aarch64__) && !defined(C10_MOBILE) && !defined(__CUDACC__))
+#if !(defined(__aarch64__) && !defined(__CUDACC__))
 CONVERT_NON_VECTORIZED_INIT(BFloat16, bfloat16)
 #endif
 

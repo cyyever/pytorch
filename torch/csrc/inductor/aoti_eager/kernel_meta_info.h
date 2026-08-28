@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #pragma once
 
 #include <ATen/ATen.h>
@@ -156,4 +155,3 @@ struct ParameterMetadata {
 };
 
 } // namespace torch::inductor
-#endif

@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #pragma once
 
 #include <ATen/Tensor.h>
@@ -228,4 +227,3 @@ struct TORCH_API RegisterAOTIModelRunner{RegisterAOTIModelRunner(
 ;
 
 } // namespace torch::inductor
-#endif

@@ -142,9 +142,7 @@ void OperatorEntry::registerSchema(FunctionSchema&& schema, std::string&& debug,
   // NB: don't register schema until after we've checked everything!
   dispatchKeyExtractor_.registerSchema(schema);
   schema_ = AnnotatedSchema(std::move(schema), std::move(debug));
-  #ifndef C10_MOBILE
     tags_ = std::move(tags);
-  #endif
 }
 
 void OperatorEntry::deregisterSchema() {
@@ -342,11 +340,7 @@ SafeKernelFunction OperatorEntry::getComputedKernelForDispatchKey(
 }
 
 const std::vector<at::Tag>& OperatorEntry::getTags() const {
-  #if defined C10_MOBILE
-    TORCH_CHECK(false, "tags are not saved for Mobile");
-  #else
     return tags_;
-  #endif
 }
 
 std::pair<const AnnotatedKernel&, const char*> OperatorEntry::computeDispatchTableEntryWithDebug(const c10::Dispatcher& dispatcher, DispatchKey dispatch_key) const {

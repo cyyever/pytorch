@@ -179,16 +179,6 @@ at::Allocator* GetDefaultMobileCPUAllocator() {
   return &g_mobile_cpu_allocator;
 }
 
-#ifdef C10_MOBILE
-
-at::Allocator* GetDefaultCPUAllocator() {
-  return GetDefaultMobileCPUAllocator();
-}
-
-REGISTER_ALLOCATOR(DeviceType::CPU, &g_mobile_cpu_allocator);
-
-#else
-
 // Global default CPU Allocator
 static DefaultCPUAllocator g_cpu_alloc;
 
@@ -197,8 +187,6 @@ at::Allocator* GetDefaultCPUAllocator() {
 }
 
 REGISTER_ALLOCATOR(DeviceType::CPU, &g_cpu_alloc)
-
-#endif /* C10_Mobile */
 
 void ProfiledCPUMemoryReporter::New(void* ptr, size_t nbytes) {
   if (nbytes == 0) {

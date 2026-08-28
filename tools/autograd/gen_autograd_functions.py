@@ -104,14 +104,10 @@ static variable_list ${op}_apply_functional(
 }
 inline variable_list ${op}_apply_functional_ivalue(const variable_list& grads, const ivalue_list& args)
 {
-#ifdef C10_MOBILE
-  TORCH_INTERNAL_ASSERT(false, "compiled autograd doesn't work on mobile");
-#else
   auto packed_args = PackedArgs(args);
   auto needs_input_grad = packed_args.unpack<std::array<bool, ${num_inputs}>>();
   ${unpack_ivalues}
   return ${op}_apply_functional(variable_list(grads), needs_input_grad${,apply_functional_args});
-#endif
 }
 
 variable_list ${op}::apply(variable_list&& grads) {
@@ -126,9 +122,6 @@ void ${op}::compiled_args(CompiledNodeArgs& args) const {
     ${compiled_args}
 }
 variable_list ${op}::apply_with_saved(const variable_list& grads, SwapSavedVariables& saved) {
-#ifdef C10_MOBILE
-  TORCH_INTERNAL_ASSERT(false, "compiled autograd doesn't work on mobile");
-#else
   ${apply_with_saved_before}
 
   static bool called = false;
@@ -152,7 +145,6 @@ variable_list ${op}::apply_with_saved(const variable_list& grads, SwapSavedVaria
 
   ${apply_with_saved_after}
   return output_result;
-#endif
 }
 
 """

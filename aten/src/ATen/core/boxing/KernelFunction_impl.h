@@ -272,7 +272,6 @@ inline KernelFunction KernelFunction::makeFromUnboxedFunction(
       FuncPtr::func_ptr() != nullptr, "Kernel function cannot be nullptr");
 #endif
 
-#if !defined(C10_MOBILE)
   (void)func_ptr; // Suppress unused variable warning
   return makeFromUnboxedFunctor<
       AllowLegacyTypes,
@@ -280,12 +279,6 @@ inline KernelFunction KernelFunction::makeFromUnboxedFunction(
       detail::make_unique_base<
           OperatorKernel,
           typename impl::WrapFunctionIntoFunctor<FuncPtr>::type>());
-#else
-  // On mobile, we rather want to optimize for binary size than for performance,
-  // so let's not inline the kernel into the wrapper but use
-  // makeFromUnboxedRuntimeFunction instead.
-  return makeFromUnboxedRuntimeFunction(func_ptr.func_ptr());
-#endif
 }
 
 template <bool AllowLegacyTypes, class FuncType>
@@ -316,7 +309,6 @@ KernelFunction::makeFromUnboxedLambda(Lambda&& lambda) {
       guts::is_functor<std::decay_t<Lambda>>::value,
       "Tried to call KernelFunction::makeFromUnboxedLambda with a non-lambda type.");
 
-#if !defined(C10_MOBILE)
   return makeFromUnboxedFunctor<
       AllowLegacyTypes,
       impl::WrapFunctionIntoRuntimeFunctor<std::decay_t<Lambda>>>(
@@ -324,14 +316,6 @@ KernelFunction::makeFromUnboxedLambda(Lambda&& lambda) {
           OperatorKernel,
           impl::WrapFunctionIntoRuntimeFunctor<std::decay_t<Lambda>>>(
           std::forward<Lambda>(lambda)));
-#else
-  // On mobile, we rather want to optimize for binary size than for performance,
-  // so let's not inline the kernel into the wrapper but use
-  // makeFromUnboxedRuntimeFunction instead.
-  using FuncType =
-      typename guts::infer_function_traits_t<std::decay_t<Lambda>>::func_type;
-  return makeFromUnboxedRuntimeFunction<AllowLegacyTypes, FuncType>(lambda);
-#endif
 }
 
 template <bool AllowLegacyTypes, class Lambda>

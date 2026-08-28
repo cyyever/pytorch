@@ -59,26 +59,6 @@ void Library::reset() {
 
 #define ERROR_CONTEXT "(Error occurred while processing ", toString(kind_), " block at ", file_, ":", line_, ")"
 
-#if defined(TORCH_LIBRARY_THREAD_UNSAFE_LAZY_INIT) && defined(C10_MOBILE)
-namespace detail {
-  // Insertion of library initializers into torch_library_initializers is not
-  // thread-safe as we expect this to be handled by the applications dynamic
-  // library loader, which would guarantee that only one thread is inserting
-  // libraries into the vector. We do require thread safety when calling
-  // initialize_torch_libraries however, as this can be called from any
-  // thread, and potentially race and corrupt the library initializer vector.
-  std::mutex torch_library_initializer_mutex;
-  std::vector<TorchLibraryInit*> torch_library_initializers;
-} // namespace detail
-void initialize_torch_libraries() {
-  const std::lock_guard<std::mutex> lock(detail::torch_library_initializer_mutex);
-  for (auto* initializer : detail::torch_library_initializers) {
-    initializer->initialize();
-  }
-  detail::torch_library_initializers.clear();
-}
-#endif
-
 Library::Library(Kind kind, std::string ns, std::optional<c10::DispatchKey> k, const char* file, uint32_t line)
   : kind_(kind)
   , ns_(ns == "_" ? std::nullopt : std::make_optional(std::move(ns)))
@@ -155,9 +135,6 @@ Library& Library::_def(c10::FunctionSchema&& schema, c10::OperatorName* out_name
   }
   switch (rv) {
     case _RegisterOrVerify::REGISTER:
-// Workaround for https://github.com/pytorch/pytorch/issues/140272 on mobile.
-// Since Python isn't available at all we can noop registerPythonModule
-#ifndef C10_MOBILE
       if (python_module_.has_value()) {
         registrars_.emplace_back(
           c10::Dispatcher::singleton().registerPythonModule(
@@ -166,7 +143,6 @@ Library& Library::_def(c10::FunctionSchema&& schema, c10::OperatorName* out_name
             python_module_->second)
         );
       }
-#endif
       registrars_.emplace_back(
         c10::Dispatcher::singleton().registerDef(
           std::move(schema),
@@ -313,6 +289,5 @@ Library& Library::_fallback(CppFunction&& f) & {
   }
   return *this;
 }
-
 
 } // namespace torch

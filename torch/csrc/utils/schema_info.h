@@ -83,8 +83,6 @@ struct TORCH_API SchemaInfo {
       const c10::SchemaArgument& lhs,
       const c10::SchemaArgument& rhs);
 
-  static std::vector<c10::FunctionSchema> getNonDeterministicOps();
-
   static std::vector<SchemaSpecialCasePair> getTrainingOps();
 
   const std::unordered_set<c10::SchemaArgument>& wildcardSet();

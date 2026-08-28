@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #include <ATen/DynamicLibrary.h>
 #include <ATen/record_function.h>
 #include <c10/util/ScopeExit.h>
@@ -553,4 +552,3 @@ getAOTIModelRunnerRegistry() {
 }
 
 } // namespace torch::inductor
-#endif

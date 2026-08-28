@@ -528,11 +528,7 @@ class TORCH_API Context {
       c10::utils::check_env("TORCH_ROCM_FA_PREFER_CK") == true
       ? at::ROCmFABackend::Ck
       : at::ROCmFABackend::Default;
-#ifdef C10_MOBILE
-  bool release_original_weights = true;
-#else
   bool release_original_weights = false;
-#endif
   bool display_vmap_fallback_warnings_ = false;
   bool warn_on_accumulate_grad_stream_mismatch_ = true;
   bool override_stale_capture_stream_ = false;

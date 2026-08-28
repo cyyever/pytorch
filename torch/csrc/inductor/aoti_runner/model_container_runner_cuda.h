@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #pragma once
 
 #include <c10/cuda/CUDAStream.h>
@@ -42,4 +41,3 @@ class TORCH_CUDA_CPP_API AOTIModelContainerRunnerCuda
 };
 
 } // namespace torch::inductor
-#endif

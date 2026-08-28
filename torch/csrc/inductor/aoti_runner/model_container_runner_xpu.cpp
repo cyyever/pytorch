@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_xpu.h>
 
 namespace torch::inductor {
@@ -65,4 +64,3 @@ std::unique_ptr<AOTIModelContainerRunner> create_aoti_runner_xpu(
 
 RegisterAOTIModelRunner register_xpu_runner("xpu", &create_aoti_runner_xpu);
 } // namespace torch::inductor
-#endif

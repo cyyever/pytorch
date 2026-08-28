@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
 
 namespace torch::inductor {
@@ -48,4 +47,3 @@ static RegisterAOTIModelRunner register_cpu_runner(
     &create_aoti_runner_cpu);
 
 } // namespace torch::inductor
-#endif

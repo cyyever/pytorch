@@ -372,8 +372,6 @@ struct VecConvert<float, 1, BFloat16, 1> {
   }
 };
 
-// bf16/fp16 vec classes are not available for C10_MOBILE
-#if !defined(C10_MOBILE)
 template <>
 struct VecConvert<BFloat16, 1, float, 2> {
   static inline VectorizedN<BFloat16, 1> apply(
@@ -392,8 +390,6 @@ struct VecConvert<Half, 1, float, 2> {
     return result;
   }
 };
-
-#endif // !defined(C10_MOBILE)
 
 #endif // defined(__aarch64__)
 } // namespace CPU_CAPABILITY

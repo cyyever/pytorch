@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #pragma once
 
 #include <ATen/Tensor.h>
@@ -74,4 +73,3 @@ class TORCH_API AOTIModelPackageLoader {
 };
 
 } // namespace torch::inductor
-#endif

@@ -40,16 +40,9 @@ HIDDEN_NAMESPACE_BEGIN(torch, stable, detail)
 // Look up a symbol already loaded in the current process. Used to reach
 // stable-ABI shims that were added after the extension's TORCH_TARGET_VERSION
 // when the running libtorch is new enough to provide them. Returns nullptr if
-// the symbol is absent or the platform has no in-process dynamic lookup. This
-// is the single place that holds the per-platform lookup; the macros below are
-// platform agnostic.
+// the symbol is absent.
 [[maybe_unused]] static void* lookup_stable_symbol(const char* name) {
-#if defined(C10_MOBILE)
-  (void)name;
-  return nullptr;
-#else
   return dlsym(RTLD_DEFAULT, name);
-#endif
 }
 
 // Fallback for the const char* exception getters, returns a nullptr. A fallback

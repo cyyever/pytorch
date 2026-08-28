@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #include <torch/csrc/inductor/aoti_eager/kernel_holder.h>
 
 #include <ATen/core/dispatch/Dispatcher.h>
@@ -630,4 +629,3 @@ std::string AOTIPythonKernelHolder::produce_aoti_kernel_lib(
 }
 
 } // namespace torch::inductor
-#endif

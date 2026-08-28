@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 
 #include <ATen/detail/CUDAHooksInterface.h>
 #include <c10/util/FileSystem.h>
@@ -1002,4 +1001,3 @@ void AOTIModelPackageLoader::update_constant_buffer(
       tensor_map, use_inactive, validate_full_updates, user_managed);
 }
 } // namespace torch::inductor
-#endif

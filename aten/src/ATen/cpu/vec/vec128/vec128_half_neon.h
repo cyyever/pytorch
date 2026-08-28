@@ -23,7 +23,7 @@ inline namespace CPU_CAPABILITY {
 //    https://github.com/android/ndk/issues/1248
 //    https://bugs.llvm.org/show_bug.cgi?id=45824
 // Most likely we will do aarch32 support with inline asm.
-#if !defined(C10_MOBILE) && defined(__aarch64__)
+#if defined(__aarch64__)
 
 #ifdef __BIG_ENDIAN__
 #error "Big endian is not supported."
@@ -616,7 +616,7 @@ Vectorized<c10::Half> inline fnmsub(
   return -a * b - c;
 #endif
 }
-#endif // !defined(C10_MOBILE) && defined(__aarch64__)
+#endif // defined(__aarch64__)
 
 } // namespace CPU_CAPABILITY
 } // namespace at::vec

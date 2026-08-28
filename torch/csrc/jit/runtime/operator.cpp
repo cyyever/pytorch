@@ -36,14 +36,6 @@ struct OperatorRegistry {
   std::unordered_map<const char*, std::shared_ptr<Operator>>
       operators_by_sig_literal;
 
-  // Remember all registered operator names to check that they aren't
-  // registered a second time. Registering an op multiple times is
-  // fragile because it might depend on static initialization order
-  // which one is picked at runtime.
-#ifdef C10_MOBILE
-  std::unordered_set<c10::OperatorName> registered_operator_names;
-#endif
-
   // XXX - caller must be holding exclusive lock
   void registerPendingOperators() {
     for (const auto& op : to_register) {
@@ -70,14 +62,6 @@ struct OperatorRegistry {
  public:
   void registerOperator(Operator&& op) {
     std::unique_lock<std::shared_mutex> guard(lock);
-#ifdef C10_MOBILE
-    TORCH_INTERNAL_ASSERT(
-        0 == registered_operator_names.count(op.schema().operator_name()),
-        "Tried to register operator \"",
-        op.schema(),
-        "\" to JIT but the operator name was already registered before. Please add or change the overload name.");
-    registered_operator_names.insert(op.schema().operator_name());
-#endif
     to_register.push_back(std::make_shared<Operator>(std::move(op)));
   }
 
@@ -86,14 +70,6 @@ struct OperatorRegistry {
     auto sig = canonicalSchemaString(schema);
 
     std::unique_lock<std::shared_mutex> guard(lock);
-#ifdef C10_MOBILE
-    TORCH_INTERNAL_ASSERT(
-        1 == registered_operator_names.count(schema.operator_name()),
-        "Tried to remove operator ",
-        schema,
-        " from JIT but it wasn't found.");
-    registered_operator_names.erase(schema.operator_name());
-#endif
     // Try removing from pending operators list first
     auto pending_it = to_register.begin();
     while (pending_it != to_register.end() && (*pending_it)->schema() != schema)
@@ -434,12 +410,12 @@ std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(Symbol name) {
   sortedOps.reserve(unsortedOps.size());
   std::ranges::copy_if(
       unsortedOps,
-     
+
       std::back_inserter(sortedOps),
       [](const std::shared_ptr<Operator>& op) { return op->isC10Op(); });
   std::ranges::copy_if(
       unsortedOps,
-     
+
       std::back_inserter(sortedOps),
       [](const std::shared_ptr<Operator>& op) { return !op->isC10Op(); });
   return sortedOps;

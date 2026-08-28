@@ -354,10 +354,6 @@ struct ConvParams {
   }
 
   bool use_cudnn(const at::Tensor& input, const at::Tensor& weight) const {
-  // Note [Mobile check segfaults]
-  // cudnn and miopen are guaranteed not to be on mobile, and T102591915 / T110194934 suggest
-  // that maybe the compiledWithCuDNN() check sometimes segfaults (though I can't imagine how)
-#if !defined(C10_MOBILE)
     if (!detail::getCUDAHooks().compiledWithCuDNN() || !input.is_cuda() || !cudnn_enabled) {
       return false;
     }
@@ -381,9 +377,6 @@ struct ConvParams {
       }
     }
     return !is_output_padding_big();
-#else
-    return false;
-#endif
   }
 
   // Use cudnn for FP16 depthwise convolutions
@@ -1314,9 +1307,7 @@ static inline at::MemoryFormat determine_backend_memory_format(
     const Tensor& weight,
     const ConvBackend backend) {
   auto backend_memory_format = at::MemoryFormat::Contiguous;
-#if !defined(C10_MOBILE)
   auto k = weight.ndimension();
-  // See Note [Mobile check segfaults]
   switch(backend) {
     case ConvBackend::Cudnn:
     case ConvBackend::CudnnTranspose:
@@ -1358,7 +1349,6 @@ static inline at::MemoryFormat determine_backend_memory_format(
     default:
       backend_memory_format = at::MemoryFormat::Contiguous;
   }
-#endif
   return backend_memory_format;
 }
 
