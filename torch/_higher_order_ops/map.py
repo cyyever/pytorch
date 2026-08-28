@@ -2,7 +2,7 @@
 import functools
 from collections.abc import Callable, Sequence
 from typing import Any
-from typing_extensions import TypeVarTuple
+from typing import TypeVarTuple
 
 import torch
 import torch.utils._pytree as pytree

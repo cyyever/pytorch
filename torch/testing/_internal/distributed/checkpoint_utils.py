@@ -12,7 +12,7 @@ from functools import wraps
 from typing import Any, cast, IO
 
 # introduced as collections.abc.Buffer in Python 3.12
-from typing_extensions import Buffer
+from collections.abc import Buffer
 
 import torch.distributed as dist
 from torch.distributed.checkpoint._extension import (

@@ -48,7 +48,8 @@ from typing import (
     TypeGuard,
     TypeVar,
 )
-from typing_extensions import deprecated, ParamSpec
+from typing import ParamSpec
+from warnings import deprecated
 
 import torch
 import torch.fx

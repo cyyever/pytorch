@@ -5,7 +5,7 @@ This module provides reusable encoder functions that convert function parameters
 into JSON-serializable dictionaries for caching purposes.
 """
 
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 import torch
 from torch import Tensor

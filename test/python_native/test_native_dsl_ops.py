@@ -253,8 +253,8 @@ class TestNativeDSLOps(TestCase):
             "torch._native.common_utils", "common_utils.py"
         )
 
-        # Test with real package that has clean version
-        ver = common_utils._available_version("typing_extensions")
+        # Test with a real package: filelock is a hard runtime dependency
+        ver = common_utils._available_version("filelock")
         self.assertIsInstance(ver, Version)
 
         # Test various version format scenarios

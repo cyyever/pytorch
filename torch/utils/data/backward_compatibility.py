@@ -1,5 +1,5 @@
 # mypy: allow-untyped-defs
-from typing_extensions import deprecated as _deprecated
+from warnings import deprecated as _deprecated
 
 
 @_deprecated(

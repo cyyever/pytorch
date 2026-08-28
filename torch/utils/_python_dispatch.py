@@ -7,7 +7,7 @@ import warnings
 from collections import deque
 from dataclasses import dataclass
 from typing import cast, overload, Protocol, TYPE_CHECKING
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 import torchgen

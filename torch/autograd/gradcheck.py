@@ -4,7 +4,7 @@ import functools
 import warnings
 from collections.abc import Callable, Iterable
 from itertools import product
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.testing

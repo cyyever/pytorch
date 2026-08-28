@@ -2,7 +2,7 @@ import operator
 import warnings
 from collections.abc import Callable, Iterable, Sequence
 from typing import TypeAlias, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 from torch.fx._symbolic_trace import _assert_is_none

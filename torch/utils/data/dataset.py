@@ -11,7 +11,7 @@ from collections.abc import Sequence
 #     TypeError: Cannot create a consistent method resolution order (MRO) for
 #     bases Iterable, Generic
 from typing import cast, Generic, Iterable, TypeVar  # noqa: UP035
-from typing_extensions import deprecated
+from warnings import deprecated
 
 # No 'default_generator' in torch/__init__.pyi
 from torch import default_generator, Generator, randperm, Tensor

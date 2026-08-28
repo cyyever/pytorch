@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import sympy
 

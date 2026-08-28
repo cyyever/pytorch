@@ -43,7 +43,8 @@ from typing import (
     TypeAlias,
     TypeVar,
 )
-from typing_extensions import deprecated, NamedTuple, Self, TypeIs
+from typing import NamedTuple, Self, TypeIs
+from warnings import deprecated
 
 from torch.torch_version import TorchVersion as _TorchVersion
 

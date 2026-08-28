@@ -4,7 +4,7 @@ import math
 import warnings
 from collections.abc import Callable
 from typing import Literal, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 from torch import Tensor

@@ -1,7 +1,8 @@
 # mypy: allow-untyped-defs
 import dataclasses
+import logging
 from typing import Any, TYPE_CHECKING
-from typing_extensions import override
+from typing import override
 
 from torch._higher_order_ops.flex_gemm import FlexGemmOpSpec
 from torch._inductor.codegen.common import IndentedBuffer

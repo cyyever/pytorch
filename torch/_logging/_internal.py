@@ -20,7 +20,7 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Generic, Optional
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from weakref import WeakSet
 
 import torch._logging.structured

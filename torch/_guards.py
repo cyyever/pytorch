@@ -6,7 +6,6 @@ import enum
 import functools
 import logging
 import re
-import sys
 import threading
 import traceback
 import unittest.mock
@@ -16,7 +15,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Generic, NamedTuple, overload, TYPE_CHECKING, TypeVar
-from typing_extensions import dataclass_transform
+from typing import dataclass_transform
 
 import torch
 from torch.utils import _pytree as pytree

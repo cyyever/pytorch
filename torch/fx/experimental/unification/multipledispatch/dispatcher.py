@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import itertools as itl
 from typing import Any, TYPE_CHECKING, TypeVar
-from typing_extensions import deprecated
+from warnings import deprecated
 from warnings import warn
 
 

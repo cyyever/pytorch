@@ -7,7 +7,7 @@ import time
 from contextlib import nullcontext
 from functools import wraps
 from typing import Any, cast, Literal, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 from unittest.mock import patch
 
 import torch

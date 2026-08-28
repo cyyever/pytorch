@@ -52,7 +52,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import CellType, CodeType, FunctionType, ModuleType
 from typing import Any, cast, NoReturn, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from weakref import ReferenceType
 
 import torch

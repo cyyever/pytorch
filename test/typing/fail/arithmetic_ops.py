@@ -1,6 +1,6 @@
 # flake8: noqa
 from typing import Any
-from typing_extensions import assert_type
+from typing import assert_type
 
 from torch import randn, Tensor
 

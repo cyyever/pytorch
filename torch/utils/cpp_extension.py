@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 import copy
-import glob
 import importlib
 import importlib.abc
 import importlib.util
@@ -26,7 +25,7 @@ import torch
 import torch._appdirs
 from ._filelock import FileLock
 from ._cpp_extension_versioner import ExtensionVersioner
-from typing_extensions import deprecated
+from warnings import deprecated
 from torch.torch_version import TorchVersion, Version
 from torch._utils_internal import get_file_path
 

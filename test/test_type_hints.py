@@ -53,7 +53,7 @@ def get_all_examples():
         "import itertools",
         "",
         "from typing import Any, ClassVar, Generic, List, Tuple, Union",
-        "from typing_extensions import Literal, get_origin, TypeAlias",
+        "from typing import Literal, get_origin, TypeAlias",
         "T: TypeAlias = object",
         "",
         "import numpy",
@@ -61,7 +61,7 @@ def get_all_examples():
         "import torch",
         "import torch.nn.functional as F",
         "",
-        "from typing_extensions import ParamSpec as _ParamSpec",
+        "from typing import ParamSpec as _ParamSpec",
         "ParamSpec = _ParamSpec",
         "",
         # for requires_grad_ example

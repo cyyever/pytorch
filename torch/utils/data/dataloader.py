@@ -19,7 +19,7 @@ import warnings
 import weakref
 from collections.abc import Callable
 from typing import Any, Generic, NoReturn, TYPE_CHECKING, TypeVar
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.distributed as dist

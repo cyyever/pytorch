@@ -3,7 +3,7 @@
 
 import warnings
 from typing import Any
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 from torch.overrides import get_default_nowrap_functions

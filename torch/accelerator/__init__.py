@@ -4,7 +4,7 @@ This package introduces support for the current :ref:`accelerator<accelerators>`
 
 from functools import cache
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 

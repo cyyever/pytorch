@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 import math
 from typing import Literal
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch import Tensor

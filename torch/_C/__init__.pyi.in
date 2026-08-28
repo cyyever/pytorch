@@ -21,7 +21,7 @@ from typing import (
     SupportsIndex,
     TypeVar,
 )
-from typing_extensions import ParamSpec, Self
+from typing import ParamSpec, Self
 
 import numpy
 

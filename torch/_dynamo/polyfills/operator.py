@@ -5,9 +5,8 @@ Python polyfills for operator
 from __future__ import annotations
 
 import operator
-import sys
 from typing import Any, overload, SupportsIndex, TYPE_CHECKING, TypeVar
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 from ..decorators import substitute_in_graph
 from . import import_fresh_module

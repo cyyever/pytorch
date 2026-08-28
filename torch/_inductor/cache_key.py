@@ -5,7 +5,7 @@ import dataclasses
 import hashlib
 import json
 from typing import Any, Literal, Protocol
-from typing_extensions import assert_never
+from typing import assert_never
 
 
 CacheKeyComponent = str | bytes | bytearray | memoryview

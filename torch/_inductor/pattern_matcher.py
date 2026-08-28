@@ -53,7 +53,7 @@ from collections import defaultdict
 from collections.abc import Callable, Collection, Generator, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, NoReturn, Protocol, TypeVar
-from typing_extensions import Self, TypeIs
+from typing import Self, TypeIs
 
 import torch
 import torch._guards

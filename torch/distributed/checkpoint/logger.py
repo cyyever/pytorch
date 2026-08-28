@@ -4,7 +4,7 @@ import logging
 import time
 from collections.abc import Callable
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from uuid import uuid4
 
 import torch.distributed.c10d_logger as c10d_logger

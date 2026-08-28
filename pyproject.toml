@@ -9,13 +9,6 @@ requires = [
     # table, and native CMAKE_BUILD_TYPE env handling used below. CI pins the
     # exact patch we test against in .ci/requirements-ci.txt.
     "scikit-build-core>=1.0",
-    # Imported by torchgen at build time (cmake/Codegen.cmake runs
-    # `python -m torchgen.gen`, and torchgen/utils.py uses `Self` /
-    # `assert_never`). Currently also pulled in transitively through
-    # scikit-build-core, but list it explicitly as a direct build-time
-    # dep. The CI Docker image ships 4.12.2 on Python <3.14, so do not
-    # raise the lower bound without bumping CI.
-    "typing-extensions>=4.10.0",
     # Dependency chain: NNPACK -> PeachPy -> six. PeachPy emits NNPACK's hot
     # assembly loops at build time and does `import six`. NNPACK is on by
     # default (USE_NNPACK=ON); isolated PEP 517 builds need six available.
@@ -289,7 +282,6 @@ dev = [
     "pyyaml",
     "requests",
     "six",  # dependency chain: NNPACK -> PeachPy -> six
-    "typing-extensions>=4.15.0",
     "pip",  # not technically needed, but this makes setup.py invocation work
 
     # This list should be kept in sync with the requirements.txt in

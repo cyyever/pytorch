@@ -7,7 +7,7 @@ import operator
 from collections import Counter, defaultdict
 from collections.abc import Callable, Sequence
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._inductor as inductor

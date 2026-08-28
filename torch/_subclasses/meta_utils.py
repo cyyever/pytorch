@@ -19,7 +19,7 @@ from typing import (
     TypeGuard,
     TypeVar,
 )
-from typing_extensions import override, TypedDict, Unpack
+from typing import TypedDict, Unpack, override
 
 import torch
 from torch._C._autograd import CreationMeta

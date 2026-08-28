@@ -3,7 +3,7 @@ import contextlib
 import functools
 import logging
 from collections.abc import Callable
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch._library.utils import Kernel, RegistrationHandle

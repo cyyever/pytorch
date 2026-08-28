@@ -3,7 +3,7 @@
 # flake8: noqa: F821
 from collections.abc import Callable, Collection, Mapping, MutableMapping
 from typing import cast, TypeVar
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 from torch.distributed.checkpoint.metadata import STATE_DICT_TYPE

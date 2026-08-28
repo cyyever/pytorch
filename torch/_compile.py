@@ -6,7 +6,7 @@ circular dependencies.
 import functools
 from collections.abc import Callable
 from typing import overload, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 
 _T = TypeVar("_T")

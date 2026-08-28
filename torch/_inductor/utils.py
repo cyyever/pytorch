@@ -47,7 +47,7 @@ from typing import (
     TypeAlias,
     TypeGuard,
 )
-from typing_extensions import dataclass_transform, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar, dataclass_transform
 from unittest import mock
 
 import sympy

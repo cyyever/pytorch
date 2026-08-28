@@ -20,12 +20,11 @@ import logging
 import os.path
 import random
 import re
-import sys
 import types
 import unittest
 from collections.abc import Callable, Generator, Sequence
 from typing import Any, overload, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from unittest.mock import patch
 
 import torch

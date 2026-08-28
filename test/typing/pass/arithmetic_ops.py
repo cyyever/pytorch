@@ -1,5 +1,5 @@
 from typing import TypeAlias
-from typing_extensions import assert_type
+from typing import assert_type
 
 from torch import randn, Tensor
 

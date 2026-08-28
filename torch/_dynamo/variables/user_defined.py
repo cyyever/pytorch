@@ -38,7 +38,7 @@ import warnings
 import weakref
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, cast, NoReturn, TYPE_CHECKING, Union
-from typing_extensions import is_typeddict
+from typing import is_typeddict
 
 import torch._dynamo.config
 import torch.nn

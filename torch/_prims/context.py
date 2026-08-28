@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 from contextlib import nullcontext
 from typing import Any, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 
 if TYPE_CHECKING:

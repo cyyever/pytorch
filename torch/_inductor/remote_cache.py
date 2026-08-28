@@ -11,7 +11,7 @@ import sys
 import typing
 from abc import abstractmethod
 from typing import Any, Generic, TypeAlias, TypeVar, Union
-from typing_extensions import override
+from typing import override
 
 from torch._dynamo.utils import dynamo_timed
 from torch._inductor import config

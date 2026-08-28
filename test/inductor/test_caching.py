@@ -12,7 +12,7 @@ from random import Random
 from shutil import rmtree
 from threading import Event, Lock
 from typing import Any, TYPE_CHECKING
-from typing_extensions import TypeVar
+from typing import TypeVar
 from unittest.mock import patch
 
 from filelock import FileLock

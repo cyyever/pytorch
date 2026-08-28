@@ -11,7 +11,6 @@ import enum
 import inspect
 import io
 import pickle
-import sys
 import textwrap
 import threading
 import types
@@ -24,7 +23,7 @@ from typing import (
     ForwardRef,
     TypeVar,
 )
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._mangling as package_mangling

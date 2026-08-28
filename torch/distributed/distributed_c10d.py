@@ -31,7 +31,8 @@ from typing import (
     TypeAlias,
     TypeVar,
 )
-from typing_extensions import deprecated, NotRequired, TypedDict, TypeIs
+from typing import NotRequired, TypeIs, TypedDict
+from warnings import deprecated
 
 import torch
 from torch._C import _DistStoreError as DistStoreError
