@@ -1442,6 +1442,10 @@ void test_aoti_record_function(const std::string& device) {
   EXPECT_TRUE(sawScope("AOTIModelContainerRunner::run"));
   EXPECT_TRUE(sawScope("AOTIModelContainerRunner::swap_constant_buffer"));
 
+  // Swap back before running: the buffer swapped to above was never
+  // populated, and running on it fails for reasons unrelated to callbacks.
+  runner->swap_constant_buffer();
+
   // Callbacks are torn down again, so later tests are unaffected.
   const size_t recorded = recordedScopeNames().size();
   runner->run(input_tensors);
