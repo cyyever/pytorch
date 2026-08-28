@@ -477,7 +477,6 @@ include_patterns = [
     'torch/nativert/**',
 ]
 exclude_patterns = [
-    'aten/src/ATen/native/quantized/cpu/qnnpack/**',
     '**/fb/**',
     'torch/csrc/utils/pythoncapi_compat.h',
 ]
@@ -1584,7 +1583,6 @@ include_patterns = [
     "aten/src/ATen/native/quantized/*.h",
     "aten/src/ATen/native/quantized/cpu/*.h",
     "aten/src/ATen/native/transformers/*.h",
-    "aten/src/ATen/native/quantized/cpu/qnnpack/include/*.h",
     "aten/src/ATen/native/utils/*.h",
     "aten/src/ATen/native/mps/Copy.h",
     "aten/src/ATen/native/mkldnn/**/*.h",
