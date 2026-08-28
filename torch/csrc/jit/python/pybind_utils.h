@@ -1012,16 +1012,24 @@ inline py::object runAndInsertCall(
   return toPyObject(std::move(stack.back()));
 }
 
+// `self` is prepended to the dispatched arguments when given. Tensor methods
+// already pass their receiver this way, and __torch_function__ implementations
+// rely on it: an FX Proxy needs args[0] to build a call_method node that names
+// the object the method belongs to.
 inline std::optional<py::object> maybeTorchFunctionDispatch(
     const py::object& callee,
     const tuple_slice& args_no_self,
     const py::kwargs& kwargs,
-    const c10::QualifiedName& qualname) {
+    const c10::QualifiedName& qualname,
+    py::handle self = py::handle()) {
   if (consume_should_skip_torch_function()) {
     return std::nullopt;
   }
 
   std::vector<py::handle> args_vec;
+  if (self) {
+    args_vec.push_back(self);
+  }
   for (const auto& arg : args_no_self) {
     args_vec.push_back(arg);
   }
@@ -1076,11 +1084,30 @@ inline py::object invokeScriptFunctionFromPython(
   return runAndInsertCall(callee, args, kwargs, /*self=*/std::nullopt);
 }
 
+// `callable` is the Python object the caller holds for this method and
+// `py_self` the object it is bound to, if the caller has them. Together they
+// let __torch_function__ see both what was called and what it was called on,
+// which is how an FX Proxy gets to stand in for a Tensor argument. Method
+// itself has no pybind type here, so there is nothing else to name the call
+// with.
 inline py::object invokeScriptMethodFromPython(
     Method& callee,
     const tuple_slice& args,
-    const py::kwargs& kwargs) {
+    const py::kwargs& kwargs,
+    py::handle callable = py::handle(),
+    py::handle py_self = py::handle()) {
   auto self = callee.raw_owner();
+
+  if (callable) {
+    if (auto torch_fn_result = maybeTorchFunctionDispatch(
+            py::reinterpret_borrow<py::object>(callable),
+            args,
+            kwargs,
+            callee.name(),
+            py_self)) {
+      return *torch_fn_result;
+    }
+  }
 
   return runAndInsertCall(callee.function(), args, kwargs, self);
 }

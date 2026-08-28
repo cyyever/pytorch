@@ -76,7 +76,6 @@ from torch.testing._internal.common_utils import (
     IS_LINUX,
     IS_WINDOWS,
     TEST_WITH_CROSSREF,
-    TEST_WITH_ROCM,
     run_tests,
     skipIfTorchDynamo,
     xfailIf,
@@ -3284,7 +3283,13 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
         input = torch.randn(3, 4)
         self.assertEqual(traced(input), m(input))
 
-        self.assertTrue(any(n.op == "call_method" for n in traced.graph.nodes))
+        # The call_method node has to name the torchbind object as its receiver.
+        # Asserting only that some call_method exists would also accept a graph
+        # calling `run` on the tensor, which does not execute.
+        (call,) = [n for n in traced.graph.nodes if n.op == "call_method"]
+        self.assertEqual(call.target, "run")
+        self.assertEqual(call.args[0].op, "get_attr")
+        self.assertEqual(call.args[1].op, "placeholder")
 
     def test_namedtuple_return_trace(self):
         class NamedTupReturn(torch.nn.Module):
