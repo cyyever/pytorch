@@ -2666,8 +2666,7 @@ def clone_input(x: torch.Tensor, *, dtype: torch.dtype | None = None) -> torch.T
                 layout=x.layout,
             )
         elif is_traceable_wrapper_subclass(x):
-            # Questionable - but this is required to not fail executorch related
-            # torchao tests.
+            # Questionable - but this is required to not fail torchao tests.
             return torch_clone(x)
 
         needed_size = sum(

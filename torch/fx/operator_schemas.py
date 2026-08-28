@@ -437,10 +437,9 @@ def normalize_function(
         and not (isinstance(target, (OpOverloadPacket, OpOverload)))
         and hasattr(target, "_op")
     ):
-        # ExecuTorch's EdgeOpOverload are a wrapper around PyTorch's OpOverload,
-        # so we can unwrap it here to get its schema
-        # Can't import EdgeOpOverload directly because of a circular dependency,
-        # so checking for "_op" existing is the next best thing.
+        # Out-of-tree op overloads wrap an OpOverload and expose it as `_op`;
+        # unwrap to get its schema. Duck-typing on `_op` rather than importing
+        # the wrapper type, which would be a circular dependency.
         target = target._op
 
     # Repeat the condition after checking for the inner _op field.

@@ -2097,31 +2097,6 @@ test_docs_test() {
   .ci/pytorch/docs-test.sh
 }
 
-test_executorch() {
-  echo "Install torchvision and torchaudio"
-  install_torchvision
-  install_torchaudio
-
-  INSTALL_SCRIPT="$(pwd)/.ci/docker/common/install_executorch.sh"
-
-  pushd /executorch
-  "${INSTALL_SCRIPT}" setup_executorch
-
-  echo "Run ExecuTorch unit tests"
-  pytest -v -n auto
-  # shellcheck disable=SC1091
-  LLVM_PROFDATA=llvm-profdata-12 LLVM_COV=llvm-cov-12 bash test/run_oss_cpp_tests.sh
-
-  echo "Run ExecuTorch regression tests for some models"
-  # TODO(huydhn): Add more coverage here using ExecuTorch's gather models script
-  # shellcheck disable=SC1091
-  source .ci/scripts/test_model.sh mv3 cmake xnnpack-quantization-delegation ''
-
-  popd
-
-  assert_git_not_dirty
-}
-
 test_torchtitan() {
   install_torchao
   install_torchcomms
@@ -2295,8 +2270,6 @@ elif [[ "$TEST_CONFIG" == *vllm* ]]; then
     python -m cli.run test external vllm --test-plan "$TEST_CONFIG" --shard-id "$SHARD_NUMBER" --num-shards "$NUM_TEST_SHARDS"
 elif [[ "$TEST_CONFIG" == *torchtitan* ]]; then
   test_torchtitan
-elif [[ "${TEST_CONFIG}" == *executorch* ]]; then
-  test_executorch
 elif [[ "$TEST_CONFIG" == 'jit_legacy' ]]; then
   test_python_legacy_jit
 elif [[ "$TEST_CONFIG" == 'quantization' ]]; then
