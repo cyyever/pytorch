@@ -72,11 +72,7 @@ def discover_tests(
 TESTS = discover_tests(
     cpp_tests_dir=CPP_TESTS_DIR,
     blocklisted_patterns=[
-        "ao",
-        "custom_backend",
         "fx",  # executed by test_fx.py
-        "mobile",
-        "package",  # executed by test_package.py
         "autograd",  # executed by test_autograd.py
         "cpp_extensions/open_registration_extension/torch_openreg/tests",  # executed by test_openreg.py
     ],
@@ -84,11 +80,7 @@ TESTS = discover_tests(
         "custom_operator/test_custom_ops",
         "test_cpp_extensions_aot",
         "test_determination",
-        "test_jit_fuser",
-        "test_jit_simple",
-        "test_jit_string",
         "test_kernel_launch_checks",
-        "test_nnapi",
         "test_throughput_benchmark",
         "distributed/bin/test_script",
         "distributed/elastic/multiprocessing/bin/test_script",

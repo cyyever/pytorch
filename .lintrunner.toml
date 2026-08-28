@@ -1548,8 +1548,6 @@ include_patterns = [
     "aten/src/ATen/*.cpp",
     "aten/src/ATen/cpu/*.cpp",
     "aten/src/ATen/functorch/**/*.cpp",
-    "aten/src/ATen/nnapi/*.cpp",
-    "aten/src/ATen/quantized/*.cpp",
     "aten/src/ATen/detail/CPUGuardImpl.cpp",
     "aten/src/ATen/detail/MetaGuardImpl.cpp",
     # aten native source
@@ -1575,8 +1573,6 @@ include_patterns = [
     "aten/src/ATen/functorch/**/*.h",
     "aten/src/ATen/ops/*.h",
     "aten/src/ATen/cpu/**/*.h",
-    "aten/src/ATen/nnapi/*.h",
-    "aten/src/ATen/quantized/*.h",
     "aten/src/ATen/mps/*.h",
     # aten native headers
     "aten/src/ATen/native/*.h",
