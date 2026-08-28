@@ -7,7 +7,7 @@ from copy import deepcopy
 from enum import auto, Enum
 from functools import partial, wraps
 from typing import Any, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.distributed._tools.fake_collectives

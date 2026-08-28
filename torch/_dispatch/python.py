@@ -3,7 +3,7 @@ import unittest.mock
 from collections.abc import Callable, Generator, Iterator
 from contextlib import contextmanager
 from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._C

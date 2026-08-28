@@ -20,7 +20,7 @@ from ._normalizations import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from typing import ClassVar, Protocol, TypeAlias
-    from typing_extensions import CapsuleType
+    from typing import CapsuleType
 
     from ._normalizations import Scalar
 

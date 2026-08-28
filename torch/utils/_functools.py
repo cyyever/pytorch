@@ -4,7 +4,7 @@ import functools
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from typing import Concatenate, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 
 if TYPE_CHECKING:

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 from dataclasses import dataclass
 from functools import cache
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 import torch
 from torch.library import Library

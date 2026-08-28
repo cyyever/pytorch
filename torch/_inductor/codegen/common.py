@@ -18,7 +18,7 @@ from enum import auto, Enum
 from itertools import chain
 from textwrap import dedent
 from typing import Any, cast, ClassVar, Generic, NamedTuple, TYPE_CHECKING
-from typing_extensions import Self, TypeVar
+from typing import Self, TypeVar
 
 import sympy
 

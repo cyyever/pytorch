@@ -1,5 +1,5 @@
 from typing import Any, TypeVar
-from typing_extensions import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 __all__ = ["Stateful", "StatefulT"]

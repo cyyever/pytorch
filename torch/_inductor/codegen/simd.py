@@ -13,7 +13,7 @@ import operator
 import textwrap
 from collections import Counter
 from typing import Any, cast, Generic, NamedTuple, TYPE_CHECKING
-from typing_extensions import TypeVar
+from typing import TypeVar
 
 import sympy
 

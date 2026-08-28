@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from enum import Enum
 from typing import Any, Literal
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.distributed._functional_collectives as funcol

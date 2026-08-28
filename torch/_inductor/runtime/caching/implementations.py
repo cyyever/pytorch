@@ -16,7 +16,7 @@ from os import PathLike
 from pathlib import Path
 from threading import Lock
 from typing import Generic, TypeVar
-from typing_extensions import override
+from typing import override
 
 from filelock import BaseFileLock, FileLock
 

@@ -8,7 +8,7 @@ import math
 import warnings
 from copy import deepcopy
 from typing import Any, cast, Literal, TYPE_CHECKING
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch import Tensor

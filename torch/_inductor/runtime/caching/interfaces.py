@@ -18,7 +18,7 @@ from hashlib import sha256
 from os import PathLike
 from pathlib import Path
 from typing import cast, Generic, Protocol, TypedDict
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from filelock import FileLock
 

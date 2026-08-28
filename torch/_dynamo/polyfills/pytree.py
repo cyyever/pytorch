@@ -34,7 +34,7 @@ from ..decorators import substitute_in_graph
 if TYPE_CHECKING:
     import builtins
     from collections.abc import Callable, Iterable, Mapping
-    from typing_extensions import Self, TypeIs
+    from typing import Self, TypeIs
 
     from torch.utils._cxx_pytree import PyTree
 

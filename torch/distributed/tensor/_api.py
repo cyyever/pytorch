@@ -7,7 +7,7 @@ import inspect
 import warnings
 from collections.abc import Callable, Sequence
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.distributed.tensor._dispatch as op_dispatch

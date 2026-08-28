@@ -6,7 +6,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, cast, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import sympy
 

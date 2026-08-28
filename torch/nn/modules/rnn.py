@@ -5,7 +5,7 @@ import numbers
 import warnings
 import weakref
 from typing import overload
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch import _VF, Tensor

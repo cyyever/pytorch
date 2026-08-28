@@ -19,7 +19,7 @@ import textwrap
 from dataclasses import dataclass
 from io import StringIO
 from typing import Any, NamedTuple, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 
 if TYPE_CHECKING:

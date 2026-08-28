@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 from collections.abc import Sequence
 from typing import Any, overload, TypeVar
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch.nn.parallel._functions import Gather, Scatter

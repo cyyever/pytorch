@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import auto, Enum
 from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.distributed as dist

@@ -1,10 +1,10 @@
+from typing import ParamSpec
 import copy
 import dataclasses
 import functools
 import os
 import types
 import typing
-import typing_extensions
 import zipfile
 from pathlib import Path
 
@@ -14,7 +14,7 @@ from torch.export.exported_program import _decompose_exported_program
 from torch.utils._ordered_set import OrderedSet
 
 
-_InputT = typing_extensions.ParamSpec("_InputT")
+_InputT = ParamSpec("_InputT")
 _RetT = typing.TypeVar("_RetT")
 
 

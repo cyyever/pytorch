@@ -34,7 +34,7 @@ import re
 from collections.abc import Callable, Iterable
 from contextlib import nullcontext
 from typing import Any, cast, NoReturn, TYPE_CHECKING, TypeVar, Union
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch._C
 import torch._refs

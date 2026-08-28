@@ -12,7 +12,7 @@ import itertools
 from collections.abc import Callable  # noqa: TC003
 from functools import partial
 from typing import Any, cast, NoReturn, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 from torch import Tensor

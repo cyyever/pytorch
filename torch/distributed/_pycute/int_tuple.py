@@ -37,7 +37,7 @@ Functions for manipulating IntTuples
 from functools import reduce
 from itertools import chain
 from typing import TypeAlias
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 from .typing import Integer
 

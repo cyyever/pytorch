@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from types import TracebackType
 from typing import Any, overload, Protocol, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch.utils._pytree as pytree

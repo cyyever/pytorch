@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 from dataclasses import dataclass
 from typing import Any, IO, TYPE_CHECKING, TypeAlias
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 import torch.utils._pytree as pytree

@@ -2,7 +2,7 @@ import typing
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Generic, overload, TypeAlias, TypeVar
-from typing_extensions import ParamSpec, TypeIs, TypeVarTuple, Unpack
+from typing import ParamSpec, TypeIs, TypeVarTuple, Unpack
 
 import torch
 import torch.fx.node

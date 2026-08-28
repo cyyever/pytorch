@@ -12,7 +12,7 @@ from collections.abc import Callable, Sequence
 from contextlib import nullcontext
 from functools import partial, wraps
 from typing import Any, overload, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar, TypeVarTuple, Unpack
+from typing import ParamSpec, TypeVar, TypeVarTuple, Unpack
 
 import torch
 import torch.utils._pytree as pytree

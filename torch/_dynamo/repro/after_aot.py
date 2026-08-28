@@ -36,7 +36,7 @@ import uuid
 from importlib import import_module
 from tempfile import TemporaryFile
 from typing import Any, IO, TYPE_CHECKING, TypedDict
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 import sympy
 

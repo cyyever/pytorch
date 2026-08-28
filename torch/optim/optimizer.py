@@ -7,7 +7,8 @@ from collections.abc import Callable, Iterable, Sequence
 from copy import deepcopy
 from itertools import chain
 from typing import Any, cast, overload, TypeAlias, TypeVar
-from typing_extensions import deprecated, ParamSpec, Self
+from typing import ParamSpec, Self
+from warnings import deprecated
 
 import torch
 import torch.utils.hooks as hooks

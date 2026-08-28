@@ -5,7 +5,8 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, cast
-from typing_extensions import deprecated, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
+from warnings import deprecated
 
 import torch
 import torch.distributed as dist

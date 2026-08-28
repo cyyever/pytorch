@@ -6,7 +6,7 @@ throughout the caching system.
 
 from collections.abc import Callable
 from functools import lru_cache, wraps
-from typing_extensions import ParamSpec, TypedDict, TypeVar
+from typing import ParamSpec, TypeVar, TypedDict
 
 from torch import Tensor
 

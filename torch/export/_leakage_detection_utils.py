@@ -2,7 +2,7 @@ import gc
 import types
 import typing
 import weakref
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 from torch.fx.experimental.symbolic_shapes import TrackedFake
 

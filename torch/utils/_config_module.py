@@ -14,22 +14,9 @@ import unittest
 from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass
-from graphlib import CycleError, TopologicalSorter
-from types import FunctionType, ModuleType, UnionType
-from typing import (
-    Any,
-    Generic,
-    get_args,
-    get_origin,
-    get_type_hints,
-    Literal,
-    NoReturn,
-    Optional,
-    TYPE_CHECKING,
-    TypeVar,
-    Union,
-)
-from typing_extensions import deprecated
+from types import FunctionType, ModuleType
+from typing import Any, Generic, NoReturn, Optional, TYPE_CHECKING, TypeVar
+from warnings import deprecated
 
 from torch._utils_internal import justknobs_check
 

@@ -3,7 +3,7 @@ from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
 from typing import Any, TYPE_CHECKING, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._custom_ops
