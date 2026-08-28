@@ -806,8 +806,13 @@ void test_aoti_free_buffer(bool use_runtime_constant_folding) {
   const auto& add_tensors = fixtureAt(data_loader, add_attr).toTensor();
 
   torch::inductor::TensorConstantMap rand_map, real_map;
-  rand_map.emplace("L__self___w_pre", new at::Tensor(at::randn({4096, 4096})));
-  rand_map.emplace("L__self___w_add", new at::Tensor(at::randn({4096, 4096})));
+  // Registered only as a Cuda test; the container rejects other devices.
+  rand_map.emplace(
+      "L__self___w_pre",
+      new at::Tensor(at::randn({4096, 4096}).to(at::kCUDA)));
+  rand_map.emplace(
+      "L__self___w_add",
+      new at::Tensor(at::randn({4096, 4096}).to(at::kCUDA)));
   real_map.emplace("L__self___w_pre", new at::Tensor(weight_tensors));
   real_map.emplace("L__self___w_add", new at::Tensor(add_tensors));
 
@@ -1607,14 +1612,14 @@ void test_aoti_observer(const std::string& device) {
   // that flag a failed call would land in the observer's latency distribution
   // as if it had completed normally.
   //
-  // Omitting a constant doesn't fail here (assert_all_constants warns and
-  // skips TensorConstants); a wrong-device one does, on any build.
+  // Omitting a constant does not fail: w_pre and w_add are TensorConstants,
+  // which assert_all_constants warns about and skips. A constant on the wrong
+  // device does fail, and meta is wrong for every container.
   const size_t ends_before = observer->ends.size();
-  torch::inductor::TensorConstantMap missing_map;
-  missing_map.emplace(
+  torch::inductor::TensorConstantMap wrong_device_map;
+  wrong_device_map.emplace(
       "L__self___w_pre",
-      new at::Tensor(at::randn({4, 4}).to(
-          device == "cuda" ? at::kCUDA : at::kCPU)));
+      new at::Tensor(at::randn({4, 4}, at::TensorOptions().device(at::kMeta))));
   try {
     runner->update_constant_buffer(
         wrong_device_map,
