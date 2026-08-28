@@ -48,7 +48,7 @@ from torch.testing._internal.common_utils import (
 
 
 try:
-    import torchvision
+    import torchvision  # noqa: F401
 
     HAS_TORCHVISION = True
 except ImportError:
