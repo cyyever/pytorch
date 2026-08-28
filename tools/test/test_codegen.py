@@ -35,7 +35,6 @@ from torchgen.model import (
     OperatorName,
 )
 from torchgen.native_function_generation import add_generated_native_functions
-from torchgen.selective_build.selector import SelectiveBuilder
 from torchgen.utils import Target
 
 
@@ -259,7 +258,6 @@ class TestGenAutogradFunctions(unittest.TestCase):
 
 class TestGenSchemaRegistration(unittest.TestCase):
     def setUp(self) -> None:
-        self.selector = SelectiveBuilder.get_nop_selector()
         self.custom_native_function, _ = NativeFunction.from_yaml(
             {"func": "custom::func() -> bool"},
             loc=Location(__file__, 1),
@@ -278,14 +276,12 @@ class TestGenSchemaRegistration(unittest.TestCase):
         native_functions = [DEFAULT_NATIVE_FUNCTION]
         registrations, _ = get_native_function_schema_registrations(
             native_functions=native_functions,
-            schema_selector=self.selector,
         )
         self.assertEqual(registrations, ['m.def("func() -> bool", {});\n'])
 
     def test_custom_namespace_schema_registration_code_valid(self) -> None:
         _, registrations = get_native_function_schema_registrations(
             native_functions=[self.custom_native_function],
-            schema_selector=self.selector,
         )
         self.assertEqual(
             registrations,
@@ -302,7 +298,6 @@ TORCH_LIBRARY(custom, m) {
         """
         _, registrations = get_native_function_schema_registrations(
             native_functions=[self.fragment_custom_native_function],
-            schema_selector=self.selector,
         )
         self.assertEqual(
             registrations,
@@ -319,7 +314,6 @@ TORCH_LIBRARY_FRAGMENT(quantized_decomposed, m) {
             custom_registrations,
         ) = get_native_function_schema_registrations(
             native_functions=[DEFAULT_NATIVE_FUNCTION, self.custom_native_function],
-            schema_selector=self.selector,
         )
         self.assertEqual(aten_registrations, ['m.def("func() -> bool", {});\n'])
         self.assertEqual(
@@ -346,7 +340,6 @@ TORCH_LIBRARY(custom, m) {
                 self.custom_native_function,
                 custom2_native_function,
             ],
-            schema_selector=self.selector,
         )
         self.assertEqual(aten_registrations, ['m.def("func() -> bool", {});\n'])
         self.assertEqual(
@@ -524,7 +517,6 @@ class TestNativeDeclDllExportMacro(unittest.TestCase):
         decl = dest.RegisterDispatchKey(
             backend_index=backend_indices[DispatchKey.CUDA],
             target=Target.NAMESPACED_DECLARATION,
-            selector=SelectiveBuilder.get_nop_selector(),
             rocm=False,
             symint=True,
             class_method_name=None,

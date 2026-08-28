@@ -470,16 +470,8 @@ c10::IValue make_custom_class(CtorArgs&&... args) {
 template <class CurClass>
 inline class_<CurClass> selective_class_(
     const std::string& namespace_name,
-    detail::SelectiveStr<true> className) {
-  auto class_name = std::string(className.operator const char*());
-  return torch::class_<CurClass>(namespace_name, class_name);
-}
-
-template <class CurClass>
-inline detail::ClassNotSelected selective_class_(
-    const std::string& /*unused*/,
-    detail::SelectiveStr<false> /*unused*/) {
-  return detail::ClassNotSelected();
+    const char* className) {
+  return torch::class_<CurClass>(namespace_name, std::string(className));
 }
 
 // jit namespace for backward-compatibility
@@ -512,28 +504,5 @@ inline class_<CurClass> Library::class_(const std::string& className) {
 }
 
 const std::unordered_set<std::string> getAllCustomClassesNames();
-
-template <class CurClass>
-inline class_<CurClass> Library::class_(detail::SelectiveStr<true> className) {
-  auto class_name = std::string(className.operator const char*());
-  TORCH_CHECK(
-      kind_ == DEF || kind_ == FRAGMENT,
-      "class_(\"",
-      class_name,
-      "\"): Cannot define a class inside of a TORCH_LIBRARY_IMPL block.  "
-      "All class_()s should be placed in the (unique) TORCH_LIBRARY block for their namespace.  "
-      "(Error occurred at ",
-      file_,
-      ":",
-      line_,
-      ")");
-  TORCH_INTERNAL_ASSERT(ns_.has_value(), file_, ":", line_);
-  return torch::class_<CurClass>(*ns_, class_name);
-}
-
-template <class CurClass>
-inline detail::ClassNotSelected Library::class_(detail::SelectiveStr<false> /*unused*/) {
-  return detail::ClassNotSelected();
-}
 
 } // namespace torch
