@@ -6,14 +6,7 @@ tensors and modules.
 import numpy as np
 import torch
 from torch import Tensor
-from contextlib import contextmanager
-from torch.testing._internal.common_utils import IS_ARM64
 
-supported_qengines = list(torch.backends.quantized.supported_engines)
-# FBGEMM and x86 engines require x86 architecture with AVX2/AVX512 support
-# They are not supported on ARM64 architectures
-if IS_ARM64:
-    supported_qengines = [qe for qe in supported_qengines if qe not in ('fbgemm', 'x86')]
 
 def _conv_output_shape(input_size, kernel_size, padding, stride, dilation,
                        output_padding=0):
@@ -100,33 +93,6 @@ def _snr(x, x_hat):
     snr = signal / noise
     snr_db = 20 * snr.log10()
     return signal, noise, snr_db
-
-@contextmanager
-def override_quantized_engine(qengine):
-    previous = torch.backends.quantized.engine
-    torch.backends.quantized.engine = qengine
-    try:
-        yield
-    finally:
-        torch.backends.quantized.engine = previous
-
-# TODO: Update all quantization tests to use this decorator.
-# Currently for some of the tests it seems to have inconsistent params
-# between engines.
-def override_qengines(qfunction):
-    def test_fn(*args, **kwargs):
-        for qengine in supported_qengines:
-            with override_quantized_engine(qengine):
-                # qfunction should not return anything.
-                qfunction(*args, **kwargs)
-    return test_fn
-
-def qengine_is_fbgemm():
-    return torch.backends.quantized.engine == 'fbgemm'
-def qengine_is_onednn():
-    return torch.backends.quantized.engine == 'onednn'
-def qengine_is_x86():
-    return torch.backends.quantized.engine == 'x86'
 
 # Helper function used to simulate per-channel fake-quant against any axis
 def _permute_to_axis_zero(X, axis):

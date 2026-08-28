@@ -25,11 +25,6 @@
 
 #include <ATen/cpu/FlushDenormal.h>
 
-#ifdef USE_FBGEMM
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
-#include <fbgemm/Fbgemm.h>
-C10_DIAGNOSTIC_POP()
-#endif // USE_FBGEMM
 #if defined(__aarch64__)
 #include <cpuinfo.h>
 #endif
@@ -762,54 +757,6 @@ bool Context::hasLAPACK() {
 #else
   return false;
 #endif
-}
-
-at::QEngine Context::qEngine() const {
-  static auto _quantized_engine = []() {
-    at::QEngine qengine = at::kNoQEngine;
-
-#ifdef USE_FBGEMM
-    if (fbgemm::fbgemmSupportedCPU()) {
-      /* X86 is enabled if and only if fbgemm is available.
-       * It combines goodness of fbgemm and onednn by dispatching.
-       * If onednn not available, always dispatch to fbgemm.
-       * Make it default qengine for X86 CPU platforms.
-      */
-      qengine = at::kX86;
-    }
-#endif
-    return qengine;
-  }();
-  auto qt_engine = quantized_engine.load();
-  return qt_engine == at::QEngine::NoQEngine ? _quantized_engine : qt_engine;
-}
-
-void Context::setQEngine(at::QEngine e) {
-  const auto& qengines = supportedQEngines();
-  if (std::ranges::find(qengines, e) != qengines.end()) {
-    quantized_engine.store(e);
-    return;
-  }
-  TORCH_CHECK(false, "quantized engine ", toString(e), " is not supported");
-}
-
-const std::vector<at::QEngine>& Context::supportedQEngines() {
-  static auto supported_qengines = []() {
-    std::vector<at::QEngine> engines = {};
-    // Engines are listed in priority order: later one wins
-    // By default we prefer FBGEMM if we're running on server side
-
-#ifdef USE_FBGEMM
-    if (fbgemm::fbgemmSupportedCPU()) {
-      engines.push_back(at::kX86);
-      // The X86 qengine is available if and only if FBGEMM is available
-      engines.push_back(at::kFBGEMM);
-    }
-#endif
-
-    return engines;
-  }();
-  return supported_qengines;
 }
 
 void Context::setCheckSparseTensorInvariants(std::optional<bool> e = std::nullopt) {
