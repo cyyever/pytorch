@@ -1,18 +1,9 @@
 #include <c10/macros/Macros.h>
 
 #include <ATen/core/dispatch/Dispatcher.h>
-#include <ATen/core/op_registration/op_allowlist.h>
 #include <ATen/core/op_registration/op_registration.h>
 
 namespace c10 {
-namespace impl {
-void build_feature_required_feature_not_available(const char* feature) {
-  TORCH_CHECK(
-      false,
-      "Required feature '" + std::string(feature) + "' is not available");
-}
-} // namespace impl
-
 static_assert(std::is_nothrow_move_constructible_v<
               std::optional<RegistrationHandleRAII>>);
 static_assert(std::is_nothrow_move_assignable_v<

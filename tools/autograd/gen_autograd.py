@@ -33,7 +33,6 @@ from torchgen.api.autograd import (
     NativeFunctionWithDifferentiabilityInfo,
 )
 from torchgen.gen import parse_native_yaml
-from torchgen.selective_build.selector import SelectiveBuilder
 
 from . import gen_python_functions
 from .gen_autograd_functions import (
@@ -52,7 +51,6 @@ def gen_autograd(
     tags_path: str,
     out: str,
     autograd_dir: str,
-    operator_selector: SelectiveBuilder,
     disable_autograd: bool = False,
 ) -> None:
     # Parse and load derivatives.yaml
@@ -63,12 +61,7 @@ def gen_autograd(
     template_path = os.path.join(autograd_dir, "templates")
 
     native_funcs = parse_native_yaml(native_functions_path, tags_path).native_functions
-    fns = sorted(
-        filter(
-            operator_selector.is_native_function_selected_for_training, native_funcs
-        ),
-        key=lambda f: cpp.name(f.func),
-    )
+    fns = sorted(native_funcs, key=lambda f: cpp.name(f.func))
     fns_with_diff_infos: list[NativeFunctionWithDifferentiabilityInfo] = (
         match_differentiability_info(fns, differentiability_infos)
     )
@@ -136,7 +129,6 @@ def main() -> None:
         args.tags,
         args.out,
         args.autograd,
-        SelectiveBuilder.get_nop_selector(),
     )
 
 

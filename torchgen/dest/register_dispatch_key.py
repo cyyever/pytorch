@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import textwrap
 from dataclasses import dataclass, field
-from typing import Literal, TYPE_CHECKING
+from typing import Literal
 from typing import assert_never
 
 import torchgen.api.cpp as cpp
@@ -39,10 +39,6 @@ from torchgen.model import (
     TensorOptionsArguments,
 )
 from torchgen.utils import mapMaybe, Target
-
-
-if TYPE_CHECKING:
-    from torchgen.selective_build.selector import SelectiveBuilder
 
 
 def gen_registration_headers(
@@ -245,10 +241,6 @@ class RegisterDispatchKey:
         Target.REGISTRATION,
     ]
 
-    # Selector object to determine which operators to generate
-    # registration code for.
-    selector: SelectiveBuilder
-
     # Whether or not we are actually code-genning for ROCm
     rocm: bool
 
@@ -393,7 +385,6 @@ class RegisterDispatchKey:
         structured_gen = StructuredRegisterDispatchKey(
             self.backend_index,
             self.target,
-            self.selector,
             self.rocm,
             self.symint,
             self.class_method_name,
@@ -431,12 +422,6 @@ class RegisterDispatchKey:
                 else:
                     return None
             if f.manual_kernel_registration:
-                return None
-
-            if (
-                self.target is Target.REGISTRATION
-                and not self.selector.is_native_function_selected(f)
-            ):
                 return None
 
             sig = self.wrapper_kernel_sig(f)
@@ -764,12 +749,6 @@ resize_out(out, sizes, strides, options);
             raise AssertionError(
                 f"Function {f.func.name} has manual_kernel_registration=True"
             )
-
-        if (
-            self.target is Target.REGISTRATION
-            and not self.selector.is_native_function_selected(f)
-        ):
-            return None
 
         # TODO: Now, there is something interesting going on here.  In the code below,
         # we generate CompositeExplicitAutogradNonFunctional implementations of functional and inplace
