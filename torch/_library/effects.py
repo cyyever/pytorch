@@ -17,9 +17,6 @@ skip_classes = (
     "__torch__.torch.classes.quantized.Conv3dPackedParamsBase",
     "__torch__.torch.classes.quantized.EmbeddingPackedParamsBase",
     "__torch__.torch.classes.quantized.LinearPackedParamsBase",
-    "__torch__.torch.classes.xnnpack.Conv2dOpContext",
-    "__torch__.torch.classes.xnnpack.LinearOpContext",
-    "__torch__.torch.classes.xnnpack.TransposeConv2dOpContext",
 )
 
 

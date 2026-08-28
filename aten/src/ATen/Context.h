@@ -414,7 +414,6 @@ class TORCH_API Context {
   at::QEngine qEngine() const;
   void setQEngine(at::QEngine e);
   static const std::vector<at::QEngine>& supportedQEngines();
-  static bool isXNNPACKAvailable();
   void setCheckSparseTensorInvariants(std::optional<bool> e);
   std::optional<bool> checkSparseTensorInvariants(
       bool warn_when_uninitialized = false) const;

@@ -66,7 +66,6 @@
     :nosignatures:
 
     check_release_file
-    is_xnnpack_available
     main
     pretty_str
     run

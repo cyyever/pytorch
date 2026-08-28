@@ -1566,7 +1566,6 @@ include_patterns = [
     "aten/src/ATen/native/sparse/*.cpp",
     "aten/src/ATen/native/transformers/*.cpp",
     "aten/src/ATen/native/utils/*.cpp",
-    "aten/src/ATen/native/xnnpack/*.cpp",
     # aten headers
     "aten/src/ATen/*.h",
     "aten/src/ATen/functorch/**/*.h",
@@ -1587,7 +1586,6 @@ include_patterns = [
     "aten/src/ATen/native/transformers/*.h",
     "aten/src/ATen/native/quantized/cpu/qnnpack/include/*.h",
     "aten/src/ATen/native/utils/*.h",
-    "aten/src/ATen/native/xnnpack/*.h",
     "aten/src/ATen/native/mps/Copy.h",
     "aten/src/ATen/native/mkldnn/**/*.h",
 ]

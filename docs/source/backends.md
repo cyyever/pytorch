@@ -398,11 +398,6 @@ These backends include:
 .. py:module:: torch.backends.quantized
 ```
 
-```{eval-rst}
-.. py:module:: torch.backends.xnnpack
-```
-
-
 ## torch.backends.opt_einsum
 
 ```{eval-rst}
