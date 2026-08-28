@@ -346,18 +346,6 @@ auto PyNode::apply_with_saved_impl(
   return to_variable_list(r.get(), is_variable_input);
 }
 
-auto PyNode::is_traceable() -> bool {
-  pybind11::gil_scoped_acquire gil;
-  THPObjectPtr forward_class{PyObject_GetAttrString(pyobj(), "_forward_cls")};
-  if (!forward_class)
-    throw_python_error();
-  THPObjectPtr traceable_py_bool{
-      PyObject_GetAttrString(forward_class, "is_traceable")};
-  if (!traceable_py_bool)
-    throw_python_error();
-  return Py_IsTrue(traceable_py_bool);
-}
-
 auto PyNode::release_variables() -> void {
   // This function is called as part of the Node destructor!
   // Since this object might be kept alive by C++, it is possible

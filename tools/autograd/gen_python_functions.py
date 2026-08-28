@@ -162,8 +162,6 @@ _SKIP_PYTHON_BINDINGS = [
     "retains_grad",
     "set_",
     "_fw_primal",
-    "fake_quantize_per_tensor_affine_cachemask",
-    "fake_quantize_per_channel_affine_cachemask",
     "_new_zeros_with_same_feature_meta",
     "_has_same_storage_numel",  # used for forward AD internals
     "_reshape_alias",

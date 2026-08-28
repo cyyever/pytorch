@@ -586,26 +586,6 @@ struct TORCH_API Node : c10::intrusive_ptr_target {
   /// release variables as they run.
   virtual void will_release_variables() {}
 
-  /// Returns true if this function is traceable. An op is traceable if all
-  /// operations happening within `apply()` are performed on autograd
-  /// `Variables` (i.e. apply mostly instantiates and applies other functions).
-  virtual bool is_traceable() {
-    return false;
-  }
-
-  /// A `Node` is said to pass state transparently to backward, if the
-  /// state consists only of (Saved)Variables and only non-variable objects
-  /// that parameterize the operation in some way that defines the graph
-  /// structure AND the backward function is traceable. In particular,
-  /// parametrization MUST NOT depend on the data of any `Variable`.
-  /// TODO: it might be possible to handle cases where backward is
-  /// non-traceable but state passing could be considered transparent. This
-  /// will probably depend on saved_variable_list being mutable.
-  /// NOTE: this value matters only if is_traceable() returns false.
-  virtual bool passes_state_transparently() {
-    return false;
-  }
-
   // see [Note: Compiled Autograd]
   // Used by compiled autograd to
   //   1) Extract tensors/symint args
@@ -724,14 +704,6 @@ struct TORCH_API Node : c10::intrusive_ptr_target {
       retains_grad_hooks_;
   std::vector<std::unique_ptr<FunctionPostHook>> post_hooks_;
   at::SmallVector<InputMetadata, 2> input_metadata_;
-};
-
-/// See Node::is_traceable() for definition.
-struct TraceableFunction : public Node {
-  using Node::Node;
-  bool is_traceable() final {
-    return true;
-  }
 };
 
 } // namespace torch::autograd

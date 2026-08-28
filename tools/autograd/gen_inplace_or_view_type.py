@@ -337,15 +337,6 @@ def unpacked_name(arg_name: str) -> str:
     return arg_name + "_"
 
 
-# e.g. select.int -> select_copy_int_inverse()
-def inverse_view_name(f: NativeFunction) -> str:
-    copy_variant = f"{f.root_name}_copy"
-    overload = f"{f.func.name.overload_name}"
-    if overload != "":
-        overload = "_" + overload
-    return f"{copy_variant}{overload}_inverse"
-
-
 def extract_bindings(f: NativeFunction) -> list[Binding]:
     return [
         r
