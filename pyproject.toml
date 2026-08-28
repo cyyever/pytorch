@@ -9,10 +9,6 @@ requires = [
     # table, and native CMAKE_BUILD_TYPE env handling used below. CI pins the
     # exact patch we test against in .ci/requirements-ci.txt.
     "scikit-build-core>=1.0",
-    # Dependency chain: NNPACK -> PeachPy -> six. PeachPy emits NNPACK's hot
-    # assembly loops at build time and does `import six`. NNPACK is on by
-    # default (USE_NNPACK=ON); isolated PEP 517 builds need six available.
-    "six",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -280,7 +276,6 @@ dev = [
     "packaging>=24.2",  # required by setuptools>=77 to validate PEP 639 license expressions
     "pyyaml",
     "requests",
-    "six",  # dependency chain: NNPACK -> PeachPy -> six
     "pip",  # not technically needed, but this makes setup.py invocation work
 
     # This list should be kept in sync with the requirements.txt in
