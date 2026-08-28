@@ -20,7 +20,6 @@
 #include <ATen/detail/PrivateUse1HooksInterface.h>
 #include <ATen/detail/XLAHooksInterface.h>
 #include <ATen/detail/XPUHooksInterface.h>
-#include <c10/core/QEngine.h>
 #include <c10/core/impl/DeviceGuardImplInterface.h>
 #include <c10/util/CallOnce.h>
 #include <c10/util/Exception.h>
@@ -411,9 +410,6 @@ class TORCH_API Context {
   std::optional<int32_t> _SMCarveout_EXPERIMENTAL() const;
   void _setSMCarveout_EXPERIMENTAL(std::optional<int32_t> /*c*/);
 
-  at::QEngine qEngine() const;
-  void setQEngine(at::QEngine e);
-  static const std::vector<at::QEngine>& supportedQEngines();
   void setCheckSparseTensorInvariants(std::optional<bool> e);
   std::optional<bool> checkSparseTensorInvariants(
       bool warn_when_uninitialized = false) const;
@@ -532,7 +528,6 @@ class TORCH_API Context {
   bool display_vmap_fallback_warnings_ = false;
   bool warn_on_accumulate_grad_stream_mismatch_ = true;
   bool override_stale_capture_stream_ = false;
-  std::atomic<at::QEngine> quantized_engine = at::QEngine::NoQEngine;
   std::optional<bool> enable_sparse_tensor_invariant_checks = std::nullopt;
   bool allow_fp16_reduction_cpu = false;
   bool allow_native_aot = true;

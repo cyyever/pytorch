@@ -394,10 +394,6 @@ These backends include:
 % Automodules are just here to ensure checks run but they don't actually
 % add anything to the rendered page for now.
 
-```{eval-rst}
-.. py:module:: torch.backends.quantized
-```
-
 ## torch.backends.opt_einsum
 
 ```{eval-rst}
