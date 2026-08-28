@@ -65,7 +65,7 @@ from torch.testing._internal.common_utils import (
 import torch.utils._pytree as pytree
 
 try:
-    import torchvision.models
+    import torchvision.models  # noqa: F401
     from torchvision.models import resnet18
 
     HAS_TORCHVISION = True
