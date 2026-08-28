@@ -11,4 +11,7 @@ if(BUILD_TEST)
   # Core overhead benchmark
   caffe2_binary_target("core_overhead_benchmark.cc")
   target_link_libraries(core_overhead_benchmark benchmark)
+
+  caffe2_binary_target("tensor_add.cpp")
+  target_link_libraries(tensor_add benchmark)
 endif()

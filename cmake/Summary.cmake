@@ -45,7 +45,6 @@ function(caffe2_print_configuration_summary)
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "  CROSS_COMPILING_MACOSX : ${CROSS_COMPILING_MACOSX}")
   endif()
-  message(STATUS "  TRACING_BASED         : ${TRACING_BASED}")
 
   message(STATUS "  USE_BLAS              : ${USE_BLAS}")
   if(${USE_BLAS})

@@ -479,9 +479,6 @@ set(
   ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
 )
 
-if(USE_LIGHTWEIGHT_DISPATCH)
-  set(all_cpu_cpp ${all_cpu_cpp} ${generated_unboxing_sources})
-endif()
 if(AT_MKL_ENABLED)
   set(all_cpu_cpp ${all_cpu_cpp} ${mkl_cpp})
 endif()
@@ -887,11 +884,6 @@ else()
   add_subdirectory(test)
 endif()
 
-list(APPEND ATen_MOBILE_BENCHMARK_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/tensor_add.cpp)
-list(APPEND ATen_MOBILE_BENCHMARK_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/quantize_per_channel.cpp)
-
 # Pass source, includes, and libs to parent
 set(ATen_CORE_SRCS ${ATen_CORE_SRCS} PARENT_SCOPE)
 set(ATen_CPU_SRCS ${ATen_CPU_SRCS} PARENT_SCOPE)
@@ -911,8 +903,6 @@ set(ATen_CUDA_TEST_SRCS ${ATen_CUDA_TEST_SRCS} PARENT_SCOPE)
 set(ATen_XPU_TEST_SRCS ${ATen_XPU_TEST_SRCS} PARENT_SCOPE)
 set(ATen_CORE_TEST_SRCS ${ATen_CORE_TEST_SRCS} PARENT_SCOPE)
 set(ATen_HIP_TEST_SRCS ${ATen_HIP_TEST_SRCS} PARENT_SCOPE)
-set(ATen_MOBILE_BENCHMARK_SRCS ${ATen_MOBILE_BENCHMARK_SRCS} PARENT_SCOPE)
-set(ATen_MOBILE_TEST_SRCS ${ATen_MOBILE_TEST_SRCS} PARENT_SCOPE)
 set(ATen_VEC_TEST_SRCS  ${ATen_VEC_TEST_SRCS} PARENT_SCOPE)
 set(ATen_QUANTIZED_TEST_SRCS ${ATen_QUANTIZED_TEST_SRCS} PARENT_SCOPE)
 set(ATen_MPS_TEST_SRCS ${ATen_MPS_TEST_SRCS} PARENT_SCOPE)

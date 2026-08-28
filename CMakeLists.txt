@@ -331,14 +331,6 @@ option(BUILD_PYTHON "Build Python binaries" ON)
 option(BUILD_SHARED_LIBS "Build libcaffe2.so" ON)
 option(BUILD_TEST "Build C++ test binaries (need gtest and gbenchmark)" ON)
 option(BUILD_AOT_INDUCTOR_TEST "Build C++ test binaries for aot-inductor" OFF)
-option(
-  BUILD_MOBILE_BENCHMARK
-  "Build C++ test binaries for mobile (ARM) targets(need gtest and gbenchmark)"
-  OFF)
-option(
-  BUILD_MOBILE_TEST
-  "Build C++ test binaries for mobile (ARM) targets(need gtest and gbenchmark)"
-  OFF)
 cmake_dependent_option(INSTALL_TEST "Install test binaries if BUILD_TEST is on"
                        ON "BUILD_TEST" OFF)
 option(USE_RELATIVE_PATHS "Use relative paths in generated files for ccache friendliness" OFF)
@@ -569,17 +561,6 @@ option(
   STATIC_DISPATCH_BACKEND
   "Name of the backend for which static dispatch code is generated, e.g.: CPU."
   "")
-option(
-  USE_LIGHTWEIGHT_DISPATCH
-  "Enable codegen unboxing for ATen ops, need to work with static dispatch in order to work properly."
-  OFF)
-if(USE_LIGHTWEIGHT_DISPATCH AND NOT STATIC_DISPATCH_BACKEND)
-  message(
-    FATAL_ERROR
-      "Need to enable static dispatch after enabling USE_LIGHTWEIGHT_DISPATCH.")
-endif()
-option(TRACING_BASED
-       "Master flag to build Lite Interpreter with tracing build option" OFF)
 if(LINUX)
   set(ENV_LDFLAGS "$ENV{LDFLAGS}")
   string(STRIP "${ENV_LDFLAGS}" ENV_LDFLAGS)
@@ -846,10 +827,6 @@ if((NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
   AND("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64"))
   string(APPEND CMAKE_CXX_FLAGS " -DAT_BUILD_ARM_VEC256_WITH_SLEEF")
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
-endif()
-
-if(TRACING_BASED)
-  string(APPEND CMAKE_CXX_FLAGS " -DTRACING_BASED")
 endif()
 
 # ---[ Allowlist file if allowlist is specified

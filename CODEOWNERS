@@ -283,7 +283,6 @@
 # /aten/src/ATen/accelerator/
 # /aten/src/ATen/autocast_mode.cpp
 # /aten/src/ATen/autocast_mode.h
-# /aten/src/ATen/benchmarks/
 # /aten/src/ATen/ceil_div.h
 # /aten/src/ATen/code_template.h
 # /aten/src/ATen/core/
