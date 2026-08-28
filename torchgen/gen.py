@@ -1845,6 +1845,179 @@ def gen_headers(
     headeronly_fm.write("enum_tag.h", gen_tags_enum)
 
 
+def gen_register_dispatch_key_files(
+    *,
+    fm: FileManager,
+    dispatch_key: DispatchKey,
+    backend_index: BackendIndex,
+    grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
+    functions_keys: set[DispatchKey],
+    extra_cuda_headers: str,
+    rocm: bool,
+    skip_dispatcher_op_registration: bool,
+    native_aot_manifests: dict[tuple[DispatchKey, str], NativeAotManifest],
+) -> None:
+    dispatch_namespace = str(dispatch_key).lower()
+
+    def operator_headers() -> list[str]:
+        headers = []
+        for g in grouped_native_functions:
+            is_registered = False
+            if backend_index.has_kernel(g):
+                is_registered = True
+            # The above has_kernel test on a group will only test for
+            # the existence of out dispatch, because that's how
+            # structured kernels work. But sometimes functions can be
+            # grouped but not be structured, and then you need to check
+            # each individual piece, as they may have manual dispatch
+            # entries.
+            elif isinstance(g, NativeFunctionsGroup) and any(
+                backend_index.has_kernel(fn) for fn in g.functions()
+            ):
+                is_registered = True
+            # TODO: this condition is a bit questionable
+            # (It has to do with the fact that structured kernels get generated kernels
+            # to the Meta + CompositeExplicitAutogradNonFunctional keys).
+            elif g.structured and dispatch_key in (
+                DispatchKey.Meta,
+                DispatchKey.CompositeExplicitAutogradNonFunctional,
+            ):
+                is_registered = True
+            if not is_registered:
+                continue
+
+            headers.append(f"#include <ATen/ops/{g.root_name}_native.h>")
+            if (
+                dispatch_key
+                == DispatchKey.CompositeExplicitAutogradNonFunctional
+            ):
+                headers.append(f"#include <ATen/ops/{g.root_name}.h>")
+            if dispatch_key in functions_keys:
+                headers.append(
+                    f"#include <ATen/ops/{g.root_name}_{dispatch_namespace}_dispatch.h>"
+                )
+
+        return sorted(set(headers))
+
+    # CompositeImplicitAutogradNestdTensor does not currently user the helpers generated
+    # compilation will fail when `-Werror=unused-function` flag is set
+    gen_dispatch_helpers: bool = (
+        dispatch_key != DispatchKey.CompositeImplicitAutogradNestedTensor
+    )
+
+    register_dispatch_key_base_env = {
+        "extra_cuda_headers": extra_cuda_headers
+        if is_cuda_dispatch_key(dispatch_key)
+        else "",
+        "external_backend_headers": "",
+        "dispatch_headers": dest.gen_registration_headers(
+            backend_index, rocm
+        ),
+        # ops_headers *could* be sharded, but doesn't seem necessary?
+        "ops_headers": operator_headers(),
+        "dispatch_helpers": (
+            dest.gen_registration_helpers(backend_index)
+            if gen_dispatch_helpers
+            else []
+        ),
+    }
+
+    native_aot_manifests_for_key = {
+        op: m for (key, op), m in native_aot_manifests.items() if key == dispatch_key
+    }
+
+    def register_dispatch_key_env_callable(
+        gnf: NativeFunction | NativeFunctionsGroup,
+    ) -> dict[str, list[str]]:
+        return {
+            "dispatch_definitions": get_native_function_definitions(
+                fm=fm,
+                grouped_native_functions=[gnf],
+                dispatch_key=dispatch_key,
+                backend_idx=backend_index,
+                rocm=rocm,
+                symint=True,
+                skip_dispatcher_op_registration=skip_dispatcher_op_registration,
+                gen_dispatch_helpers=gen_dispatch_helpers,
+                native_aot_manifests=native_aot_manifests_for_key,
+            )
+        }
+
+    fm.write_sharded_with_template(
+        f"Register{dispatch_key}.cpp",
+        "RegisterDispatchKey.cpp",
+        grouped_native_functions,
+        key_fn=lambda x: x.root_name,
+        env_callable=register_dispatch_key_env_callable,
+        num_shards=4 if dispatch_key == DispatchKey.CPU else 1,
+        base_env=register_dispatch_key_base_env,
+        sharded_keys={"dispatch_definitions"},
+    )
+
+
+
+def gen_ufunc_kernels(
+    *,
+    fm: FileManager,
+    cpu_fm: FileManager,
+    cpu_vec_fm: FileManager,
+    dispatch_key: DispatchKey,
+    structured_native_functions: Sequence[NativeFunctionsGroup],
+    backend_index: BackendIndex,
+    rocm: bool,
+) -> None:
+    if not is_ufunc_dispatch_key(dispatch_key):
+        return
+    cuda_headers = (
+        "#include <ATen/native/hip/Loops.cuh>"
+        if rocm
+        else "#include <ATen/native/cuda/Loops.cuh>"
+    )
+    for g in structured_native_functions:
+        if not g.out.ufunc_inner_loop:
+            continue
+        name = g.functional.func.name.name
+        if dispatch_key is DispatchKey.CPU:
+            if fm is not cpu_fm:
+                raise AssertionError("Expected fm to be cpu_fm for DispatchKey.CPU")
+            fm.write_with_template(
+                f"UfuncCPU_{name}.cpp",
+                "UfuncCPU.cpp",
+                lambda: {
+                    "meta_declaration": compute_meta_function_declaration(g),
+                    "native_declaration": dest.compute_native_function_declaration(
+                        g, backend_index
+                    ),
+                    "native_definitions": dest.compute_ufunc_cpu(g),
+                },
+            )
+            cpu_vec_fm.write_with_template(
+                f"UfuncCPUKernel_{name}.cpp",
+                "UfuncCPUKernel.cpp",
+                lambda: {
+                    "name": name,
+                    "native_definitions": dest.compute_ufunc_cpu_kernel(g),
+                },
+            )
+        elif dispatch_key is DispatchKey.CUDA:
+            fm.write_with_template(
+                f"UfuncCUDA_{name}.cu",
+                "UfuncCUDA.cu",
+                lambda: {
+                    "name": name,
+                    "cuda_headers": cuda_headers,
+                    "meta_declaration": compute_meta_function_declaration(g),
+                    "native_declaration": dest.compute_native_function_declaration(
+                        g, backend_index
+                    ),
+                    "native_definitions": dest.compute_ufunc_cuda(g),
+                },
+            )
+        else:
+            raise AssertionError(f"unrecognized {dispatch_key} for ufunc")
+
+
+
 def gen_source_files(
     *,
     native_functions: Sequence[NativeFunction],
@@ -1883,162 +2056,26 @@ def gen_source_files(
 
     for dispatch_key in dispatch_keys:
         fm = file_manager_from_dispatch_key(dispatch_key, device_fms, cpu_fm)
-
-        def operator_headers() -> list[str]:
-            headers = []
-            for g in grouped_native_functions:
-                is_registered = False
-                if backend_index.has_kernel(g):
-                    is_registered = True
-                # The above has_kernel test on a group will only test for
-                # the existence of out dispatch, because that's how
-                # structured kernels work. But sometimes functions can be
-                # grouped but not be structured, and then you need to check
-                # each individual piece, as they may have manual dispatch
-                # entries.
-                elif isinstance(g, NativeFunctionsGroup) and any(
-                    backend_index.has_kernel(fn) for fn in g.functions()
-                ):
-                    is_registered = True
-                # TODO: this condition is a bit questionable
-                # (It has to do with the fact that structured kernels get generated kernels
-                # to the Meta + CompositeExplicitAutogradNonFunctional keys).
-                elif g.structured and dispatch_key in (
-                    DispatchKey.Meta,
-                    DispatchKey.CompositeExplicitAutogradNonFunctional,
-                ):
-                    is_registered = True
-                if not is_registered:
-                    continue
-
-                headers.append(f"#include <ATen/ops/{g.root_name}_native.h>")
-                if (
-                    dispatch_key
-                    == DispatchKey.CompositeExplicitAutogradNonFunctional
-                ):
-                    headers.append(f"#include <ATen/ops/{g.root_name}.h>")
-                if dispatch_key in functions_keys:
-                    headers.append(
-                        f"#include <ATen/ops/{g.root_name}_{dispatch_namespace}_dispatch.h>"
-                    )
-
-            return sorted(set(headers))
-        backend_index = backend_indices[dispatch_key]
-        ns_grouped_native_functions = defaultdict(list)
-        for grouped_native_function in grouped_native_functions:
-            namespace = (
-                grouped_native_function.namespace
-                if isinstance(grouped_native_function, NativeFunction)
-                else grouped_native_function.functional.namespace
-            )
-            ns_grouped_native_functions[namespace].append(grouped_native_function)
-
-        dispatch_namespace = str(dispatch_key).lower()
-
-        # CompositeImplicitAutogradNestdTensor does not currently user the helpers generated
-        # compilation will fail when `-Werror=unused-function` flag is set
-        gen_dispatch_helpers: bool = (
-            dispatch_key != DispatchKey.CompositeImplicitAutogradNestedTensor
+        gen_register_dispatch_key_files(
+            fm=fm,
+            dispatch_key=dispatch_key,
+            backend_index=backend_indices[dispatch_key],
+            grouped_native_functions=grouped_native_functions,
+            functions_keys=functions_keys,
+            extra_cuda_headers=extra_cuda_headers,
+            rocm=rocm,
+            skip_dispatcher_op_registration=skip_dispatcher_op_registration,
+            native_aot_manifests=native_aot_manifests,
         )
-
-        register_dispatch_key_base_env = {
-            "extra_cuda_headers": extra_cuda_headers
-            if is_cuda_dispatch_key(dispatch_key)
-            else "",
-            "external_backend_headers": "",
-            "dispatch_headers": dest.gen_registration_headers(
-                backend_index, rocm
-            ),
-            # ops_headers *could* be sharded, but doesn't seem necessary?
-            "ops_headers": operator_headers(),
-            "dispatch_helpers": (
-                dest.gen_registration_helpers(backend_index)
-                if gen_dispatch_helpers
-                else []
-            ),
-        }
-
-        native_aot_manifests_for_key = {
-            op: m
-            for (key, op), m in native_aot_manifests.items()
-            if key == dispatch_key
-        }
-
-        def register_dispatch_key_env_callable(
-            gnf: NativeFunction | NativeFunctionsGroup,
-        ) -> dict[str, list[str]]:
-            return {
-                "dispatch_definitions": get_native_function_definitions(
-                    fm=fm,  # noqa: F821
-                    grouped_native_functions=[gnf],
-                    dispatch_key=dispatch_key,
-                    backend_idx=backend_index,
-                    rocm=rocm,
-                    symint=True,
-                    skip_dispatcher_op_registration=skip_dispatcher_op_registration,
-                    gen_dispatch_helpers=gen_dispatch_helpers,
-                    native_aot_manifests=native_aot_manifests_for_key,
-                )
-            }
-
-        fm.write_sharded_with_template(
-            f"Register{dispatch_key}.cpp",
-            "RegisterDispatchKey.cpp",
-            grouped_native_functions,
-            key_fn=lambda x: x.root_name,
-            env_callable=register_dispatch_key_env_callable,
-            num_shards=4 if dispatch_key == DispatchKey.CPU else 1,
-            base_env=register_dispatch_key_base_env,
-            sharded_keys={"dispatch_definitions"},
+        gen_ufunc_kernels(
+            fm=fm,
+            cpu_fm=cpu_fm,
+            cpu_vec_fm=cpu_vec_fm,
+            dispatch_key=dispatch_key,
+            structured_native_functions=structured_native_functions,
+            backend_index=backend_indices[dispatch_key],
+            rocm=rocm,
         )
-
-        for g in structured_native_functions:
-            if not g.out.ufunc_inner_loop or not is_ufunc_dispatch_key(dispatch_key):
-                continue
-            name = g.functional.func.name.name
-            if dispatch_key is DispatchKey.CPU:
-                if fm is not cpu_fm:
-                    raise AssertionError("Expected fm to be cpu_fm for DispatchKey.CPU")
-                fm.write_with_template(
-                    f"UfuncCPU_{name}.cpp",
-                    "UfuncCPU.cpp",
-                    lambda: {
-                        "meta_declaration": compute_meta_function_declaration(g),
-                        "native_declaration": dest.compute_native_function_declaration(
-                            g, backend_indices[dispatch_key]
-                        ),
-                        "native_definitions": dest.compute_ufunc_cpu(g),
-                    },
-                )
-                cpu_vec_fm.write_with_template(
-                    f"UfuncCPUKernel_{name}.cpp",
-                    "UfuncCPUKernel.cpp",
-                    lambda: {
-                        "name": name,
-                        "native_definitions": dest.compute_ufunc_cpu_kernel(g),
-                    },
-                )
-            elif dispatch_key is DispatchKey.CUDA:
-                cuda_headers = "#include <ATen/native/cuda/Loops.cuh>"
-                if rocm:
-                    cuda_headers = "#include <ATen/native/hip/Loops.cuh>"
-                fm.write_with_template(
-                    f"UfuncCUDA_{name}.cu",
-                    "UfuncCUDA.cu",
-                    lambda: {
-                        "name": name,
-                        "cuda_headers": cuda_headers,
-                        "meta_declaration": compute_meta_function_declaration(g),
-                        "native_declaration": dest.compute_native_function_declaration(
-                            g, backend_indices[dispatch_key]
-                        ),
-                        "native_definitions": dest.compute_ufunc_cuda(g),
-                    },
-                )
-            else:
-                raise AssertionError(f"unrecognized {dispatch_key} for ufunc")
-
-        del fm
 
     gen_aoti_c_shim_files(
         aoti_fm=aoti_fm,
