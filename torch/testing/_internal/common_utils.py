@@ -112,11 +112,6 @@ NAVI3_ARCH = ("gfx1100", "gfx1101")
 NAVI3_5_ARCH = ("gfx1150", "gfx1151")
 NAVI4_ARCH = ("gfx1200", "gfx1201")
 
-class ProfilingMode(Enum):
-    LEGACY = 1
-    SIMPLE = 2
-    PROFILING = 3
-
 class HardwareClassification(Enum):
     """Hardware classification metadata for test classes.
 
@@ -166,7 +161,6 @@ class HardwareClassification(Enum):
 
 # Set by parse_cmd_line_args() if called
 DISABLED_TESTS_FILE = ""
-GRAPH_EXECUTOR : ProfilingMode | None = None
 LOG_SUFFIX = ""
 PYTEST_SINGLE_TEST = ""
 REPEAT_COUNT = 0
@@ -174,7 +168,6 @@ RERUN_DISABLED_TESTS = False
 RUN_PARALLEL = 0
 SHOWLOCALS = False
 SLOW_TESTS_FILE = ""
-TEST_BAILOUTS = False
 TEST_DISCOVER = False
 TEST_IN_SUBPROCESS = False
 TEST_SAVE_XML = ""
@@ -1033,58 +1026,6 @@ class decorateIf(_TestParametrizer):
         yield (test_wrapper, test_name, {}, decorator_fn)
 
 
-def cppProfilingFlagsToProfilingMode():
-    # The TorchScript graph executor is gone, so there is no profiling
-    # executor state left to query.
-    return ProfilingMode.LEGACY
-
-@contextmanager
-def enable_profiling_mode_for_profiling_tests():
-    old_prof_exec_state = False
-    old_prof_mode_state = False
-    if not GRAPH_EXECUTOR:
-        raise AssertionError("GRAPH_EXECUTOR must be set")
-    if GRAPH_EXECUTOR == ProfilingMode.PROFILING:
-        old_prof_exec_state = torch._C._jit_set_profiling_executor(True)
-        old_prof_mode_state = torch._C._get_graph_executor_optimize(True)
-    try:
-        yield
-    finally:
-        if GRAPH_EXECUTOR == ProfilingMode.PROFILING:
-            torch._C._jit_set_profiling_executor(old_prof_exec_state)
-            torch._C._get_graph_executor_optimize(old_prof_mode_state)
-
-@contextmanager
-def enable_profiling_mode():
-    old_prof_exec_state = torch._C._jit_set_profiling_executor(True)
-    old_prof_mode_state = torch._C._get_graph_executor_optimize(True)
-    try:
-        yield
-    finally:
-        torch._C._jit_set_profiling_executor(old_prof_exec_state)
-        torch._C._get_graph_executor_optimize(old_prof_mode_state)
-
-@contextmanager
-def num_profiled_runs(num_runs):
-    old_num_runs = torch._C._jit_set_num_profiled_runs(num_runs)
-    try:
-        yield
-    finally:
-        torch._C._jit_set_num_profiled_runs(old_num_runs)
-
-
-def prof_callable(callable, *args, **kwargs):
-    if 'profile_and_replay' in kwargs:
-        del kwargs['profile_and_replay']
-        if not GRAPH_EXECUTOR:
-            raise AssertionError("GRAPH_EXECUTOR must be set")
-        if GRAPH_EXECUTOR == ProfilingMode.PROFILING:
-            with enable_profiling_mode_for_profiling_tests():
-                callable(*args, **kwargs)
-                return callable(*args, **kwargs)
-
-    return callable(*args, **kwargs)
-
 def raise_on_run_directly(file_to_call):
     raise RuntimeError("This test file is not meant to be run directly, "
                        f"use:\n\n\tpython {file_to_call} TESTNAME\n\n"
@@ -1101,7 +1042,6 @@ def _get_test_report_path():
 
 def parse_cmd_line_args():
     global DISABLED_TESTS_FILE
-    global GRAPH_EXECUTOR
     global LOG_SUFFIX
     global PYTEST_SINGLE_TEST
     global REPEAT_COUNT
@@ -1109,7 +1049,6 @@ def parse_cmd_line_args():
     global RUN_PARALLEL
     global SHOWLOCALS
     global SLOW_TESTS_FILE
-    global TEST_BAILOUTS
     global TEST_DISCOVER
     global TEST_IN_SUBPROCESS
     global TEST_SAVE_XML
@@ -1122,9 +1061,7 @@ def parse_cmd_line_args():
     parser.add_argument('--subprocess', action='store_true',
                         help='whether to run each test in a subprocess')
     parser.add_argument('--accept', action='store_true')
-    parser.add_argument('--jit-executor', '--jit_executor', type=str)
     parser.add_argument('--repeat', type=int, default=1)
-    parser.add_argument('--test-bailouts', '--test_bailouts', action='store_true')
     parser.add_argument('--use-pytest', action='store_true')
     parser.add_argument('--save-xml', nargs='?', type=str,
                         const=_get_test_report_path(),
@@ -1149,15 +1086,6 @@ def parse_cmd_line_args():
         help_thread.join()
 
     args, remaining = parser.parse_known_args()
-    if args.jit_executor == 'legacy':
-        GRAPH_EXECUTOR = ProfilingMode.LEGACY
-    elif args.jit_executor == 'profiling':
-        GRAPH_EXECUTOR = ProfilingMode.PROFILING
-    elif args.jit_executor == 'simple':
-        GRAPH_EXECUTOR = ProfilingMode.SIMPLE
-    else:
-        # infer flags based on the default settings
-        GRAPH_EXECUTOR = cppProfilingFlagsToProfilingMode()
 
     RERUN_DISABLED_TESTS = args.rerun_disabled_tests
 
@@ -1165,7 +1093,6 @@ def parse_cmd_line_args():
     DISABLED_TESTS_FILE = args.import_disabled_tests
     LOG_SUFFIX = args.log_suffix
     RUN_PARALLEL = args.run_parallel
-    TEST_BAILOUTS = args.test_bailouts
     USE_PYTEST = args.use_pytest
     PYTEST_SINGLE_TEST = args.pytest_single_test
     TEST_DISCOVER = args.discover_tests
@@ -2218,31 +2145,6 @@ def markDynamoStrictTest(cls_or_func=None, nopython=False):
 
 def skipRocmIfTorchInductor(msg="test doesn't currently work with torchinductor on the ROCm stack"):
     return skipIfTorchInductor(msg=msg, condition=TEST_WITH_ROCM and TEST_WITH_TORCHINDUCTOR)
-
-def skipIfLegacyJitExecutor(msg="test doesn't currently work with legacy JIT executor"):
-    def decorator(fn):
-        if not isinstance(fn, type):
-            @wraps(fn)
-            def wrapper(*args, **kwargs):
-                if not GRAPH_EXECUTOR:
-                    raise AssertionError("GRAPH_EXECUTOR must be set")
-                if GRAPH_EXECUTOR == ProfilingMode.LEGACY:
-                    raise unittest.SkipTest(msg)
-                else:
-                    fn(*args, **kwargs)
-            return wrapper
-
-        if not isinstance(fn, type):
-            raise AssertionError(f"expected fn to be a type, got {type(fn)}")
-        if GRAPH_EXECUTOR == ProfilingMode.LEGACY:
-            fn.__unittest_skip__ = True  # type: ignore[attr-defined]
-            fn.__unittest_skip_why__ = msg  # type: ignore[attr-defined]
-
-        return fn
-
-
-    return decorator
-
 
 def make_dynamo_test(
     fn: Callable[..., Any] | None = None
