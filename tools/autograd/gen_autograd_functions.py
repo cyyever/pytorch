@@ -44,8 +44,6 @@ from torchgen.code_template import CodeTemplate
 from torchgen.model import Argument, FunctionSchema
 from torchgen.utils import FileManager
 
-from .gen_inplace_or_view_type import VIEW_FUNCTIONS
-
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -54,12 +52,12 @@ if TYPE_CHECKING:
 FUNCTION_DECLARATION = CodeTemplate(
     """\
 #ifdef _WIN32
-struct ${op} : public ${superclass} {
+struct ${op} : public Node {
   TORCH_API ${op}() = default;
 #else
-struct TORCH_API ${op} : public ${superclass} {
+struct TORCH_API ${op} : public Node {
 #endif
-  using ${superclass}::${superclass};
+  using Node::Node;
   variable_list apply(variable_list&& grads) override;
   std::string name() const override { return "${op}"; }
   void release_variables() override {
@@ -507,14 +505,6 @@ MISC_GETTER_DEFS = {
     BaseCType(scalarT): (GETTER_DEFINITION, GETTER_BODY_SCALAR),
     OptionalCType(BaseCType(scalarT)): (GETTER_DEFINITION_OPT, GETTER_BODY_SCALAR),
 }
-
-# These functions have backwards which cannot be traced, and so must have
-# their backward functions traced opaquely.
-# VIEW_FUNCTIONS are not traceable because they use as_strided, which
-# has an untraceable backwards, see
-# https://github.com/pytorch/pytorch/issues/4250
-# TODO: This is probably not exhaustive, but it's a start
-UNTRACEABLE_FUNCTIONS = VIEW_FUNCTIONS
 
 
 def get_infos_with_derivatives_list(
@@ -1016,11 +1006,6 @@ static PyObject* THP${op}_${name}_getter(THPCppFunction *self, void *_unused) {
             "bool any_grad_defined = any_variable_defined(grads);",
         )
 
-    if info.name in UNTRACEABLE_FUNCTIONS:
-        superclass = "Node"
-    else:
-        superclass = "TraceableFunction"
-
     all_getsetdef_structs = (
         ",\n".join(py_getsetdef_structs) + "," if len(py_getsetdef_structs) != 0 else ""
     )
@@ -1070,7 +1055,6 @@ static PyObject* THP${op}_${name}_getter(THPCppFunction *self, void *_unused) {
         thread_lock=thread_lock,
         will_release_variables=will_release_variables,
         body=body,
-        superclass=superclass,
         all_getter_definitions=all_getter_definitions,
         all_getsetdef_structs=all_getsetdef_structs,
         compiled_args=compiled_args,
