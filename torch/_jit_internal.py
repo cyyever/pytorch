@@ -22,9 +22,7 @@ import warnings
 import weakref
 from typing import (
     Any,
-    Callable,
     Final,
-    ForwardRef,
     get_args,
     get_origin,
     Optional,
@@ -32,6 +30,7 @@ from typing import (
     TypeVar,
     Union,
 )
+from collections.abc import Callable
 from typing import ParamSpec
 
 import torch

@@ -32,7 +32,7 @@ import weakref
 from collections.abc import Callable, Sequence
 from random import Random
 from types import BuiltinFunctionType
-from typing import Any, cast, NoReturn, TYPE_CHECKING, TypeGuard, Union
+from typing import Any, cast, NoReturn, TYPE_CHECKING, TypeGuard
 
 import torch._C
 import torch._numpy as tnp
@@ -484,7 +484,7 @@ class TracebackVariable(VariableTracker):
     def __init__(
         self,
         frame_summary: FrameSummaryVariable,
-        tb_next: Union["TracebackVariable", ConstantVariable],
+        tb_next: "TracebackVariable" | ConstantVariable,
         **kwargs: Any,
     ) -> None:
         # The traceback holds four attributes:
@@ -504,7 +504,7 @@ class TracebackVariable(VariableTracker):
     def from_frame_summary(
         cls,
         frame_summary: traceback.FrameSummary,
-        tb_next: Union["TracebackVariable", ConstantVariable],
+        tb_next: "TracebackVariable" | ConstantVariable,
     ) -> "TracebackVariable":
         return cls(FrameSummaryVariable(frame_summary), tb_next=tb_next)
 

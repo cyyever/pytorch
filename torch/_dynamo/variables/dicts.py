@@ -22,7 +22,7 @@ import functools
 import types
 import weakref
 from collections.abc import Callable, Iterator
-from typing import Any, cast, TYPE_CHECKING, Union
+from typing import Any, cast, TYPE_CHECKING
 
 from torch.utils._pytree import MappingKey
 
@@ -143,7 +143,7 @@ class ConstDictVariable(VariableTracker):
             )
 
         def make_hashable(
-            key: Union[VariableTracker, "HashableTracker"],
+            key: VariableTracker | "HashableTracker",
         ) -> "HashableTracker":
             return key if isinstance(key, Hashable) else Hashable(key)
 

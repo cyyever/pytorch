@@ -309,7 +309,7 @@ def derived_types(
     result: list[tuple[type | typing._SpecialForm | GenericAlias, str]] = [
         (base_type, cpp_type),
         # pyrefly: ignore [not-a-type]
-        (typing.Optional[base_type], f"{cpp_type}?"),  # noqa: UP045
+        (typing.Optional[base_type], f"{cpp_type}?"),
     ]
 
     def derived_seq_types(typ: type | typing._SpecialForm):
@@ -328,11 +328,11 @@ def derived_types(
         result.extend(
             (seq_typ, f"{cpp_type}?[]")
             # pyrefly: ignore [not-a-type]
-            for seq_typ in derived_seq_types(typing.Optional[base_type])  # noqa: UP045
+            for seq_typ in derived_seq_types(typing.Optional[base_type])
         )
     if optional_list_base:
         result.extend(
-            (typing.Optional[seq_typ], f"{cpp_type}[]?")  # noqa: UP045
+            (typing.Optional[seq_typ], f"{cpp_type}[]?")
             for seq_typ in derived_seq_types(base_type)
         )
     return result

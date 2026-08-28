@@ -6,13 +6,13 @@ import dataclasses
 import functools
 import itertools
 import logging
-from collections.abc import Callable, Generator  # noqa: TC003
+from collections.abc import Callable, Generator
 
 import cutlass.operators
 from cutlass.operators import ScaleMode, ScaleSwizzleMode
 from cutlass.operators.arch import TargetSm
 from cutlass.operators.arguments import GemmArguments
-from cutlass.operators.artifact import CompiledArtifact  # noqa: TC002
+from cutlass.operators.artifact import CompiledArtifact
 from cutlass.operators.metadata import (
     DenseTensorConstraints,
     GemmOperandsMetadata,

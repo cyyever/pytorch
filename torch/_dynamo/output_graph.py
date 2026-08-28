@@ -45,7 +45,6 @@ from typing import (
     Optional,
     TYPE_CHECKING,
     TypedDict,
-    Union,
 )
 from typing import NotRequired, ParamSpec, TypeVar
 
@@ -1394,7 +1393,7 @@ class OutputGraph(OutputGraphCommon):
         return self.current_tracer.real_value_cache
 
     @property
-    def bound_symbols(self) -> dict[sympy.Symbol, Union[torch.fx.Proxy, "LazyProxy"]]:
+    def bound_symbols(self) -> dict[sympy.Symbol, torch.fx.Proxy | "LazyProxy"]:
         return self.current_tracer.bound_symbols
 
     # If you are here, and you're looking for create_graph_input,

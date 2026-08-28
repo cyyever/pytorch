@@ -2578,7 +2578,7 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
         class OptionalTypingDictModule(torch.nn.Module):
             def forward(
                 self,
-                value: typing.Optional[  # noqa: UP045
+                value: typing.Optional[
                     typing.Dict[  # noqa: UP006
                         int, typing.Tuple[torch.Tensor, torch.Tensor]  # noqa: UP006
                     ]

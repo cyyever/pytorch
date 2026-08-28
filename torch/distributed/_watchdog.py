@@ -51,7 +51,7 @@ import queue
 import sys
 import threading
 import time
-from collections.abc import Callable, Generator  # noqa: TC003
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import timedelta

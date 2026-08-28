@@ -2,7 +2,7 @@ import dataclasses
 import itertools
 from collections import Counter, defaultdict
 from collections.abc import Callable, Sequence
-from typing import Any, Literal, overload, TYPE_CHECKING, TypeVar, Union
+from typing import Any, Literal, overload, TYPE_CHECKING, TypeVar
 
 import sympy
 
@@ -343,7 +343,7 @@ class NodeSplitGetter:
 
     def __init__(
         self,
-        node: Union["_FusedNodeView", "FusedSchedulerNode", "SchedulerNode"],
+        node: "_FusedNodeView" | "FusedSchedulerNode" | "SchedulerNode",
     ):
         self.node = node
         self.pointwise_numel: sympy.Expr = node.group[1][0]
@@ -545,7 +545,7 @@ def apply_var_mapping(
 
 
 def extract_normalized_read_writes(
-    node: Union["_FusedNodeView", "FusedSchedulerNode", "SchedulerNode"],
+    node: "_FusedNodeView" | "FusedSchedulerNode" | "SchedulerNode",
 ) -> FusedNormalizedReadsWrites | None:
     """Extracts index variables, reduce variables, read/write expressions, and variable ranges from a fused node."""
     reads: dict[sympy.Expr, OrderedSet[str]] = defaultdict(OrderedSet)
@@ -727,7 +727,7 @@ class CoalesceVarAnalysis:
 
 
 def _analyze_memory_coalescing(
-    fused_node: Union["_FusedNodeView", "FusedSchedulerNode", "SchedulerNode"],
+    fused_node: "_FusedNodeView" | "FusedSchedulerNode" | "SchedulerNode",
 ) -> CoalesceVarAnalysis | None:
     """
     Implementation for BaseSchedulerNode.get_coalesce_analysis().

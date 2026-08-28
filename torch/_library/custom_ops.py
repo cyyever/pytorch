@@ -6,7 +6,7 @@ import warnings
 import weakref
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import contextmanager
-from typing import Any, overload, TypeAlias, Union
+from typing import Any, overload, TypeAlias
 
 import torch
 from torch import _C, _ops, Tensor
@@ -73,7 +73,7 @@ def custom_op(
     device_types: device_types_t = None,
     schema: str | None = None,
     tags: tags_t = None,
-) -> Union[Callable[[Callable[..., object]], "CustomOpDef"], "CustomOpDef"]:
+) -> Callable[[Callable[..., object]], "CustomOpDef"] | "CustomOpDef":
     """Wraps a function into custom operator.
 
     Reasons why you may want to create a custom op include:

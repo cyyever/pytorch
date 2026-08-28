@@ -9,7 +9,7 @@ import argparse
 from abc import ABC, abstractmethod
 
 
-from collections.abc import Callable  # noqa: TC003
+from collections.abc import Callable
 from typing import Any, Required, TypedDict
 
 
