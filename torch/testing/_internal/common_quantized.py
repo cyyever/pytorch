@@ -7,13 +7,9 @@ import numpy as np
 import torch
 from torch import Tensor
 from contextlib import contextmanager
-from torch.testing._internal.common_utils import TEST_WITH_TSAN, IS_MACOS, IS_ARM64
+from torch.testing._internal.common_utils import IS_ARM64
 
 supported_qengines = list(torch.backends.quantized.supported_engines)
-# Note: We currently do not run QNNPACK tests on WINDOWS and MACOS as it is flaky. Issue #29326
-# QNNPACK is not supported on PPC
-if 'qnnpack' in supported_qengines and any([TEST_WITH_TSAN, IS_MACOS]):
-    supported_qengines.remove('qnnpack')
 # FBGEMM and x86 engines require x86 architecture with AVX2/AVX512 support
 # They are not supported on ARM64 architectures
 if IS_ARM64:
@@ -114,19 +110,9 @@ def override_quantized_engine(qengine):
     finally:
         torch.backends.quantized.engine = previous
 
-@contextmanager
-def override_cpu_allocator_for_qnnpack(qengine_is_qnnpack):
-    try:
-        if qengine_is_qnnpack:
-            torch._C._set_default_mobile_cpu_allocator()
-        yield
-    finally:
-        if qengine_is_qnnpack:
-            torch._C._unset_default_mobile_cpu_allocator()
-
 # TODO: Update all quantization tests to use this decorator.
 # Currently for some of the tests it seems to have inconsistent params
-# for fbgemm vs qnnpack.
+# between engines.
 def override_qengines(qfunction):
     def test_fn(*args, **kwargs):
         for qengine in supported_qengines:
@@ -137,8 +123,6 @@ def override_qengines(qfunction):
 
 def qengine_is_fbgemm():
     return torch.backends.quantized.engine == 'fbgemm'
-def qengine_is_qnnpack():
-    return torch.backends.quantized.engine == 'qnnpack'
 def qengine_is_onednn():
     return torch.backends.quantized.engine == 'onednn'
 def qengine_is_x86():
