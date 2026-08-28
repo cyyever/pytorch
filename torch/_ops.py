@@ -121,7 +121,7 @@ class OperatorBase:
 
     def py_impl(
         self,
-        k: type[TorchDispatchMode] | type[torch.Tensor] | TransformType | DispatchKey,
+        k: type[TorchDispatchMode | torch.Tensor] | TransformType | DispatchKey,
     ) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
         def inner(fn: Callable[_P, _T]) -> Callable[_P, _T]:
             if inspect.isclass(k) and (
@@ -321,7 +321,7 @@ class HigherOrderOperator(OperatorBase, abc.ABC):
 
     def py_impl(
         self,
-        k: type[TorchDispatchMode] | type[torch.Tensor] | TransformType | DispatchKey,
+        k: type[TorchDispatchMode | torch.Tensor] | TransformType | DispatchKey,
     ) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
         if isinstance(k, DispatchKey) and not self.non_fallthrough_keys.has(k):
             self.non_fallthrough_keys = self.non_fallthrough_keys.add(k)

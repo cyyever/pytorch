@@ -7,7 +7,7 @@ import warnings
 import weakref
 from collections import namedtuple, OrderedDict
 from collections.abc import Callable, Iterator, Mapping
-from typing import Any, Optional, overload, TypeVar, Union
+from typing import Any, Optional, overload, TypeVar
 from typing import Self
 
 import torch
@@ -1918,7 +1918,7 @@ class Module:
     # It is crucial that the return type is not annotated as `Any`, otherwise type checking
     # on `torch.nn.Module` and all its subclasses is largely disabled as a result. See:
     # https://github.com/pytorch/pytorch/pull/115074
-    def __getattr__(self, name: str) -> Union[Tensor, "Module"]:
+    def __getattr__(self, name: str) -> Tensor | "Module":
         if "_parameters" in self.__dict__:
             _parameters = self.__dict__["_parameters"]
             if name in _parameters:
@@ -1935,7 +1935,7 @@ class Module:
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
 
-    def __setattr__(self, name: str, value: Union[Tensor, "Module"]) -> None:
+    def __setattr__(self, name: str, value: Tensor | "Module") -> None:
         def remove_from(*dicts_or_sets) -> None:
             for d in dicts_or_sets:
                 if name in d:

@@ -1944,8 +1944,8 @@ class {test_classname}(torch.nn.Module):
             (torch.Tensor, torch.nn.Parameter),
             (list[torch.Tensor], create_type_hint((torch.nn.Parameter, torch.Tensor))),
             (list[torch.Tensor], create_type_hint((torch.Tensor, torch.nn.Parameter))),
-            (Optional[list[torch.Tensor]], list[torch.Tensor]),  # noqa: UP045
-            (Optional[list[int]], list[int]),  # noqa: UP045
+            (Optional[list[torch.Tensor]], list[torch.Tensor]),
+            (Optional[list[int]], list[int]),
         ] + [
             # pre-PEP585 signatures
             (typing.List[int], int),  # noqa: UP006
@@ -1965,8 +1965,8 @@ class {test_classname}(torch.nn.Module):
             ),
             (typing.List[torch.Tensor], create_type_hint((torch.nn.Parameter, torch.Tensor))),  # noqa: UP006
             (typing.List[torch.Tensor], create_type_hint((torch.Tensor, torch.nn.Parameter))),  # noqa: UP006
-            (Optional[typing.List[torch.Tensor]], typing.List[torch.Tensor]),  # noqa: UP006, UP045
-            (Optional[typing.List[int]], typing.List[int]),  # noqa: UP006, UP045
+            (Optional[typing.List[torch.Tensor]], typing.List[torch.Tensor]),  # noqa: UP006
+            (Optional[typing.List[int]], typing.List[int]),  # noqa: UP006
         ]
 
         for sig_type, arg_type in should_be_equal:

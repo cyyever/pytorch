@@ -19,7 +19,7 @@ if ck4inductor is not None:
     from ck4inductor.grouped_conv_fwd.gen_instances import (  # type: ignore[import]
         gen_conv_ops_library,
     )
-    from ck4inductor.grouped_conv_fwd.op import (  # type: ignore[import]  # noqa: TCH002
+    from ck4inductor.grouped_conv_fwd.op import (  # type: ignore[import]
         CKGroupedConvFwdOp,
     )
 else:

@@ -16,7 +16,7 @@ import re
 import types
 from collections import Counter, deque
 from collections.abc import Callable, Iterable
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 import torch.nn
 from torch._library.opaque_object import is_opaque_constant_type
@@ -153,7 +153,7 @@ class PyCodegen:
         return [x.variable for x in self.graph_outputs.values()]
 
     def call_reconstruct(
-        self, value: Union[VariableTracker, Source, "GraphArg"]
+        self, value: VariableTracker | Source | "GraphArg"
     ) -> None:
         res = value.reconstruct(self)
         if res is not None:

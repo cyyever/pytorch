@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from typing import NamedTuple, TYPE_CHECKING
 
-import cuda.bindings.driver as cuda  # pyrefly: ignore[missing-import]  # noqa: TC002
+import cuda.bindings.driver as cuda  # pyrefly: ignore[missing-import]
 
 import cutlass
 import cutlass.cute as cute

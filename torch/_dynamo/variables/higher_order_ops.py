@@ -29,7 +29,7 @@ import warnings
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, cast, get_args, Literal, Optional, TYPE_CHECKING, Union
+from typing import Any, cast, get_args, Literal, Optional, TYPE_CHECKING
 
 import torch._C
 import torch.fx
@@ -750,9 +750,7 @@ def _check_supported_callable_arg(
 
 
 def _call_while_loop(
-    self: Union[
-        "WhileLoopHigherOrderVariable", "WhileLoopStackOutputHigherOrderVariable"
-    ],
+    self: "WhileLoopHigherOrderVariable" | "WhileLoopStackOutputHigherOrderVariable",
     tx: "InstructionTranslatorBase",
     args: list[VariableTracker],
     kwargs: dict[str, VariableTracker],
@@ -5988,7 +5986,7 @@ class AutogradFunctionApplyVariable(VariableTracker):
         return fn_vt, fn_args
 
 
-def _get_fake_value(x: Union[VariableTracker, Proxy, "FakeTensor"]) -> "FakeTensor":
+def _get_fake_value(x: VariableTracker | Proxy | "FakeTensor") -> "FakeTensor":
     if isinstance(x, variables.VariableTracker):
         return x.as_proxy().node.meta["example_value"]
     elif isinstance(x, torch.fx.Proxy):

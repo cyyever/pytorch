@@ -21,7 +21,6 @@ from typing import (
     Optional,
     TYPE_CHECKING,
     TypeAlias,
-    Union,
 )
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
@@ -195,7 +194,7 @@ class Node(abc.ABC):
         return NotImplemented
 
 
-def _get_grad_fn_or_grad_acc(t: Union[torch.Tensor, "GradientEdge"]) -> Node:
+def _get_grad_fn_or_grad_acc(t: torch.Tensor | "GradientEdge") -> Node:
     if isinstance(t, GradientEdge):
         return t.node
     if t.requires_grad and t.grad_fn is None:
