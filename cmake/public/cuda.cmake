@@ -254,30 +254,6 @@ else()
   message(STATUS "USE_CUFILE is set to 0. Compiling without cuFile support")
 endif()
 
-# curand
-add_library(caffe2::curand INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
-    set_property(
-        TARGET caffe2::curand PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::curand_static)
-else()
-    set_property(
-        TARGET caffe2::curand PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::curand)
-endif()
-
-# cufft
-add_library(caffe2::cufft INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
-    set_property(
-        TARGET caffe2::cufft PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::cufft_static)
-else()
-    set_property(
-        TARGET caffe2::cufft PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::cufft)
-endif()
-
 # nvrtc
 # cuDNN frontend needs libnvrtc symbols, but linking through CUDA::nvrtc pulls
 # CUDA::cuda_driver transitively. Keep a driver-free target for cuDNN users and
