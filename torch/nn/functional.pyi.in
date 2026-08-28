@@ -913,6 +913,24 @@ def upsample(
 
 __all__ += ["upsample"]
 
+def scaled_grouped_mm(
+    mat_a: Tensor,
+    mat_b: Tensor,
+    scale_a: Tensor | list[Tensor],
+    scale_recipe_a: Any,
+    scale_b: Tensor | list[Tensor],
+    scale_recipe_b: Any,
+    swizzle_a: Any | None = ...,
+    swizzle_b: Any | None = ...,
+    bias: Tensor | None = ...,
+    offs: Tensor | None = ...,
+    output_dtype: _dtype | None = ...,
+    contraction_dim: list[int] | tuple[int, ...] = ...,
+    use_fast_accum: bool = ...,
+) -> Tensor: ...
+
+__all__ += ["scaled_grouped_mm"]
+
 ${imported_hints}
 
 ${dispatched_hints}
