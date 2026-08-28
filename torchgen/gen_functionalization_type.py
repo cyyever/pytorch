@@ -768,7 +768,7 @@ def emit_inplace_functionalization_body(
 
 # The below functions generate RegisterFunctionalization.cpp
 # These files provide the kernels that run the functionalization pass, which can be opted into
-# per backend (e.g. XLA or Vulkan), or as a composable transform (functionalize() in functorch).
+# per backend (e.g. XLA), or as a composable transform (functionalize() in functorch).
 
 
 # See Note [Functionalization Pass: View Inverses].

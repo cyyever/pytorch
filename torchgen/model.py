@@ -103,7 +103,6 @@ class DispatchKey(Enum):
 
     FPGA = auto()
     MAIA = auto()
-    Vulkan = auto()
     Metal = auto()
     MKLDNN = auto()
     OpenGL = auto()

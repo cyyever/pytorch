@@ -525,12 +525,6 @@ class TORCH_API TensorBase {
     return impl_->is_maia();
   }
 
-  /// Returns if a `Tensor` is vulkan tensor.
-  bool is_vulkan() const {
-    // NB: this is not a native function to avoid dispatching overhead.
-    return impl_->is_vulkan();
-  }
-
   /// Returns if a `Tensor` is metal tensor.
   bool is_metal() const {
     // NB: this is not a native function to avoid dispatching overhead.

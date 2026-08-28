@@ -345,10 +345,6 @@ class TORCH_API Tensor: public TensorBase {
     return to(options().device(c10::DeviceType::VE), /*non_blocking*/ false, /*copy*/ false);
   }
 
-  Tensor vulkan() const {
-    return to(options().device(c10::DeviceType::Vulkan), /*non_blocking*/ false, /*copy*/ false);
-  }
-
   Tensor metal() const {
     return to(options().device(c10::DeviceType::Metal), /*non_blocking*/ false, /*copy*/ false);
   }

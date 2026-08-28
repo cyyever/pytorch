@@ -3178,16 +3178,6 @@ static PyObject* THPVariable_is_maia(THPVariable* self, void* unused) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* THPVariable_is_vulkan(THPVariable* self, void* unused) {
-  HANDLE_TH_ERRORS
-  if (has_torch_function((PyObject*)self)) {
-    return handle_torch_function_getter(self, "is_vulkan");
-  }
-  auto& self_ = THPVariable_Unpack(self);
-  return torch::autograd::utils::wrap(self_.is_vulkan());
-  END_HANDLE_TH_ERRORS
-}
-
 static PyObject* THPVariable_is_quantized(THPVariable* self, void* unused) {
   HANDLE_TH_ERRORS
   if (has_torch_function((PyObject*)self)) {
@@ -3448,7 +3438,6 @@ static struct PyGetSetDef THPVariable_properties[] = {
     {"is_mkldnn", (getter)THPVariable_is_mkldnn, nullptr, nullptr, nullptr},
     {"is_mps", (getter)THPVariable_is_mps, nullptr, nullptr, nullptr},
     {"is_maia", (getter)THPVariable_is_maia, nullptr, nullptr, nullptr},
-    {"is_vulkan", (getter)THPVariable_is_vulkan, nullptr, nullptr, nullptr},
     {"is_complex", (getter)THPVariable_is_complex, nullptr, nullptr, nullptr},
     {"is_quantized",
      (getter)THPVariable_is_quantized,

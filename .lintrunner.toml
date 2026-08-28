@@ -478,7 +478,6 @@ include_patterns = [
 ]
 exclude_patterns = [
     'aten/src/ATen/native/quantized/cpu/qnnpack/**',
-    'aten/src/ATen/native/vulkan/glsl/**',
     '**/fb/**',
     'torch/csrc/utils/pythoncapi_compat.h',
 ]

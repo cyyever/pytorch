@@ -1230,13 +1230,6 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
     return key_set_.has_all(c10::mkldnn_ks);
   }
 
-  bool is_vulkan() const {
-    if (C10_UNLIKELY(device_policy_)) {
-      return device_custom().is_vulkan();
-    }
-    return device_opt_.has_value() && device_opt_->type() == kVulkan;
-  }
-
   bool is_metal() const {
     if (C10_UNLIKELY(device_policy_)) {
       return device_custom().is_metal();

@@ -132,11 +132,6 @@ struct C10_API Device final {
     return type_ == DeviceType::Lazy;
   }
 
-  /// Return true if the device is of Vulkan type.
-  bool is_vulkan() const noexcept {
-    return type_ == DeviceType::Vulkan;
-  }
-
   /// Return true if the device is of Metal type.
   bool is_metal() const noexcept {
     return type_ == DeviceType::Metal;

@@ -257,9 +257,6 @@ class CommitList:
             if CommitList.keywordInFile(file, ["distributed", "c10d"]):
                 category = "distributed"
                 break
-            if "vulkan" in file_lowercase:
-                category = "vulkan"
-                break
             if "Foreach" in file_lowercase:
                 category = "foreach_frontend"
                 break
