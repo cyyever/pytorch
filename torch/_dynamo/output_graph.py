@@ -48,7 +48,7 @@ from typing import (
     TypedDict,
     Union,
 )
-from typing_extensions import NotRequired, ParamSpec, TypeVar
+from typing import NotRequired, ParamSpec, TypeVar
 
 import sympy
 

@@ -2,7 +2,7 @@ import functools
 import os
 from functools import cached_property
 from typing import Any
-from typing_extensions import Unpack
+from typing import Unpack
 
 from ..utils import is_rocm
 from .triton_compat import ASTSource, CompiledKernel, knobs as triton_knobs

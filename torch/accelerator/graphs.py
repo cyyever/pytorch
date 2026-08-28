@@ -1,6 +1,6 @@
 import gc
 from typing import Literal
-from typing_extensions import Self
+from typing import Self
 
 import torch
 from torch._C import _acceleratorGraph

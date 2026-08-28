@@ -7,7 +7,7 @@ import weakref
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from typing import Any, cast, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 
 if TYPE_CHECKING:

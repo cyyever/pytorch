@@ -28,15 +28,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import (
-    assert_never,
-    Never,
-    override,
-    ParamSpec,
-    Self,
-    TypedDict,
-    TypeIs,
-)
+from typing import Never, ParamSpec, Self, TypeIs, TypedDict, assert_never, override
 from unittest.mock import patch
 
 import sympy

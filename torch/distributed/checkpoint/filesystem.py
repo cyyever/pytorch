@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, cast, Final, IO
 
 # introduced as collections.abc.Buffer in Python 3.12
-from typing_extensions import Buffer
+from collections.abc import Buffer
 
 import torch
 from torch import Tensor

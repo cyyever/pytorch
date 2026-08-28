@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from functools import partial
 from typing import TYPE_CHECKING
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 from .dispatch import dispatch
 from .unification_tools import assoc  # type: ignore[import]

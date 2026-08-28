@@ -2,7 +2,7 @@ import functools
 from collections.abc import Hashable
 from dataclasses import dataclass, fields
 from typing import Any, TypeVar
-from typing_extensions import dataclass_transform
+from typing import dataclass_transform
 
 
 T = TypeVar("T", bound="_Union")

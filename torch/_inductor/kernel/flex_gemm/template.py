@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 import dataclasses
 import logging
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch._dynamo.utils import counters

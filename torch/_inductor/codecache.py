@@ -30,7 +30,7 @@ from collections.abc import Set as AbstractSet
 from copy import copy
 from ctypes import c_void_p, CDLL, cdll
 from datetime import timedelta
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path
 from tempfile import _TemporaryFileWrapper
 from time import time, time_ns
@@ -42,7 +42,7 @@ from types import (
     ModuleType,
 )
 from typing import Any, cast, Generic, Literal, NoReturn, TYPE_CHECKING, TypeVar
-from typing_extensions import override, Self, TypedDict
+from typing import NotRequired, Self, TypedDict, override
 
 import torch
 import torch._library.opaque_object as opaque_object
@@ -78,7 +78,6 @@ from torch._inductor.cpp_builder import (
     batch_convert_cubins_to_obj,
     convert_cubin_to_obj,
     CppBuilder,
-    CppOptions,
     CppTorchDeviceOptions,
     get_compiler_version_info,
     get_cpp_compiler,

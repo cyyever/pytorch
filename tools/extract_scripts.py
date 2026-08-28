@@ -7,7 +7,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
-from typing_extensions import TypedDict  # Python 3.11+
+from typing import TypedDict  # Python 3.11+
 
 import yaml
 

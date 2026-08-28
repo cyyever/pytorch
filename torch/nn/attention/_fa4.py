@@ -7,7 +7,7 @@ import importlib
 from dataclasses import dataclass
 from functools import cache
 from typing import Any, TYPE_CHECKING
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 from . import _registry
 from ._utils import _empty_with_matching_layout

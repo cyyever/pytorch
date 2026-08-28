@@ -4,7 +4,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 from functools import wraps
 from typing import Concatenate, Generic, Protocol
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 import torch.nn as nn

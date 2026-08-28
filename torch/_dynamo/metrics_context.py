@@ -20,7 +20,7 @@ import logging
 import time
 from collections.abc import Callable
 from typing import Any, TYPE_CHECKING, TypeAlias
-from typing_extensions import Self
+from typing import Self
 
 
 if TYPE_CHECKING:

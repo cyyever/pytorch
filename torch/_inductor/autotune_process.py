@@ -21,7 +21,7 @@ from collections.abc import Callable, Iterable, Sequence
 from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
 from ctypes import byref, c_size_t, c_void_p, CDLL
 from typing import Any, IO, TYPE_CHECKING
-from typing_extensions import override
+from typing import override
 
 import torch
 import torch._inductor.async_compile

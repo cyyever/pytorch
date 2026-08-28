@@ -12,7 +12,7 @@ import typing
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, Protocol, TYPE_CHECKING, Union
-from typing_extensions import Never
+from typing import Never
 
 import sympy
 

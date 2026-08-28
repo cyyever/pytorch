@@ -10,7 +10,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from functools import partial
 from typing import Any, TYPE_CHECKING
-from typing_extensions import deprecated, Self
+from typing import Self
+from warnings import deprecated
 from warnings import warn
 
 import torch

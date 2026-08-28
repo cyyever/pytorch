@@ -1,7 +1,7 @@
 # Owner(s): ["module: unknown"]
 from collections import defaultdict
 from typing import Any, TYPE_CHECKING
-from typing_extensions import Self
+from typing import Self
 
 import torch
 import torch.utils._pytree as pytree

@@ -4,10 +4,9 @@ import logging
 import os
 import sys
 import tempfile
-import typing_extensions
+import warnings
 from collections.abc import Callable
-from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import Any, ParamSpec, TypeVar
 
 import torch
 
@@ -313,7 +312,7 @@ def deprecated():
         warning_msg = f"{func.__name__[1:]} is DEPRECATED, please consider using an alternative API(s). "
 
         # public deprecated alias
-        alias = typing_extensions.deprecated(
+        alias = warnings.deprecated(
             # pyrefly: ignore [bad-argument-type]
             warning_msg,
             category=UserWarning,

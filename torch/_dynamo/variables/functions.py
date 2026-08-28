@@ -41,7 +41,7 @@ import typing
 from collections.abc import Callable, Sequence
 from types import CellType, FunctionType
 from typing import Any, cast, Literal, Optional, TYPE_CHECKING, TypeVar
-from typing_extensions import Never
+from typing import Never
 from weakref import WeakKeyDictionary
 
 import torch

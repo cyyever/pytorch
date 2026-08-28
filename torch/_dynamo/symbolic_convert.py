@@ -47,7 +47,7 @@ import unittest
 import weakref
 from collections import defaultdict, deque
 from typing import Any, cast, NoReturn, TYPE_CHECKING, TypeAlias, TypeVar
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 import torch._logging
@@ -154,7 +154,6 @@ from .utils import (
     istype,
     LazyString,
     proxy_args_kwargs,
-    PySendResult,
     unpack_iterable,
 )
 from .variables.base import SourceLocation, typestr, ValueMutationNew, VariableTracker
@@ -5299,7 +5298,6 @@ class InstructionTranslatorBase(
         from .resume_execution import (
             CO_ASYNC_GENERATOR,
             CO_COROUTINE,
-            CO_GENERATOR,
             CO_ITERABLE_COROUTINE,
         )
 

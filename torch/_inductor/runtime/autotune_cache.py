@@ -32,7 +32,7 @@ import re
 import threading
 import weakref
 from typing import Any
-from typing_extensions import override
+from typing import override
 
 import torch
 from torch._guards import CompileContext

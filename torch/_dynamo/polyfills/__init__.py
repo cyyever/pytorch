@@ -16,7 +16,7 @@ from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Seq
 from itertools import repeat as _repeat
 from operator import eq, ge, gt, le, lt, ne
 from typing import Any, TYPE_CHECKING, TypeGuard, TypeVar
-from typing_extensions import TypeIs
+from typing import TypeIs
 
 import torch
 

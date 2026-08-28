@@ -14,13 +14,17 @@ import math
 import operator
 import threading
 import typing
-import typing_extensions
 from collections import defaultdict, OrderedDict
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import _GeneratorContextManager, contextmanager, ExitStack, nullcontext
 from dataclasses import dataclass
 from typing import (
     Any,
+    assert_never,
+    ParamSpec,
+    Self,
+    TypeVarTuple,
+    Unpack,
     cast,
     Concatenate,
     Literal,
@@ -31,7 +35,6 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import ParamSpec, Self, TypeVarTuple, Unpack
 from weakref import WeakKeyDictionary
 
 import torch
@@ -768,7 +771,7 @@ def extract_val(val: _ExtractValType, include_real: bool = False) -> _ExtractVal
     elif val is None:
         return None
 
-    typing_extensions.assert_never(val)
+    assert_never(val)
 
 
 @contextmanager

@@ -4,7 +4,7 @@ import warnings
 import zipfile
 from collections.abc import Callable, Mapping
 from typing import Any
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 import torch.utils._pytree as pytree

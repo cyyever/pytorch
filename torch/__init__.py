@@ -21,7 +21,6 @@ import sys
 import textwrap
 import threading
 import typing
-import typing_extensions
 import warnings
 from collections.abc import Callable as _Callable, Sequence as _Sequence
 from types import ModuleType as _ModuleType
@@ -34,14 +33,8 @@ from typing import (
     TypeGuard as _TypeGuard,
     TypeVar as _TypeVar,
 )
-from typing_extensions import (
-    deprecated as _deprecated,
-    LiteralString as _LiteralString,
-    Never as _Never,
-    ParamSpec as _ParamSpec,
-    Self as _Self,
-    TypeIs as _TypeIs,
-)
+from typing import LiteralString as _LiteralString, Never as _Never, ParamSpec as _ParamSpec, Self as _Self, TypeIs as _TypeIs
+from warnings import deprecated as _deprecated
 
 
 # Re-executing this file (retrying a failed import, or `reload`) would corrupt the C++ global state the first run set up.

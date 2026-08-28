@@ -4,7 +4,7 @@ from __future__ import annotations
 import contextlib
 import logging
 from typing import Any, cast, Literal, NamedTuple, TYPE_CHECKING
-from typing_extensions import TypeVarTuple, Unpack
+from typing import TypeVarTuple, Unpack
 
 import torch
 import torch.distributed as dist

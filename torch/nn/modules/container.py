@@ -5,7 +5,8 @@ import operator
 from collections import abc as container_abcs, OrderedDict
 from itertools import chain, islice
 from typing import Any, overload, TYPE_CHECKING, TypeVar
-from typing_extensions import deprecated, Self
+from typing import Self
+from warnings import deprecated
 
 import torch
 from torch._jit_internal import _copy_to_script_wrapper

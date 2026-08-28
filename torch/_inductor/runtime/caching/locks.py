@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from contextlib import _GeneratorContextManager, contextmanager, ExitStack
 from typing import TYPE_CHECKING, TypeAlias
-from typing_extensions import Protocol
+from typing import Protocol
 
 from filelock import BaseFileLock, Timeout
 

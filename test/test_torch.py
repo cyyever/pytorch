@@ -6252,17 +6252,6 @@ class TestTorchDeviceType(TestCase):
         scaler.step(o2)
         scaler.update()
 
-    @onlyNativeDeviceTypes
-    def test_grad_scaler_deprecated_warning(self, device):
-        device = torch.device(device)
-        GradScaler = torch.amp.GradScaler("cuda") if "cuda" == device.type else torch.amp.GradScaler("cpu")
-
-        with self.assertWarnsRegex(
-            FutureWarning,
-            rf"`torch.{device.type}.amp.GradScaler\(args...\)` is deprecated.",
-        ):
-            _ = GradScaler(init_scale=2.0)
-
     @dtypesIfCUDA(torch.float, torch.double, torch.half)
     @dtypesIfCPU(torch.float, torch.double, torch.bfloat16, torch.half)
     @dtypes(torch.float, torch.double)

@@ -1,6 +1,6 @@
 # mypy: allow-untyped-defs
 import warnings
-from typing_extensions import deprecated
+from warnings import deprecated
 
 import torch
 from torch import Tensor

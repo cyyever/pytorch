@@ -16,7 +16,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from types import FunctionType, ModuleType
 from typing import Any, Generic, NoReturn, Optional, TYPE_CHECKING, TypeVar
-from typing_extensions import deprecated
+from warnings import deprecated
 
 from torch._utils_internal import justknobs_check
 

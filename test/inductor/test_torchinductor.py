@@ -25,7 +25,7 @@ import weakref
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from unittest.mock import patch
 
 import numpy as np

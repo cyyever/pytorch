@@ -9,7 +9,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from numbers import Number
 from typing import Any, cast, Concatenate, TypeVar, Union
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 
 import torch
 import torch._C as _C

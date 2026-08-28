@@ -9,7 +9,7 @@ import io
 import threading
 import warnings
 from typing import Any, cast, TYPE_CHECKING, TypeVar
-from typing_extensions import Self
+from typing import Self
 
 import torch
 from torch._utils import _to, _type

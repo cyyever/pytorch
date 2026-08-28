@@ -15,7 +15,8 @@ from collections import defaultdict
 from collections.abc import Callable
 from types import ModuleType
 from typing import Any, cast, Generic, TYPE_CHECKING, TypedDict
-from typing_extensions import deprecated, NotRequired, ParamSpec
+from typing import NotRequired, ParamSpec
+from warnings import deprecated
 
 import torch
 

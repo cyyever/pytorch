@@ -13,7 +13,7 @@ import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, cast, Literal, TYPE_CHECKING, TypeGuard, TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec
 from unittest.mock import patch
 
 import sympy

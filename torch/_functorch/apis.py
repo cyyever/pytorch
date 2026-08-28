@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import functools
 from typing import Any, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from torch._functorch.utils import argnums_t, exposed_in
 from torch._functorch.vmap import (

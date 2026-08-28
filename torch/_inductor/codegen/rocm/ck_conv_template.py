@@ -3,7 +3,7 @@ import copy
 import logging
 import random
 from typing import Any
-from typing_extensions import override
+from typing import override
 
 from torch._inductor.virtualized import V
 

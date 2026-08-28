@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 import math
 from collections.abc import Callable
-from typing_extensions import deprecated
+from warnings import deprecated
 
 from torch import Tensor
 from torch.nn import _reduction as _Reduction, functional as F

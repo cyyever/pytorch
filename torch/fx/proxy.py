@@ -5,14 +5,13 @@ import enum
 import inspect
 import logging
 import operator
-import sys
 import traceback
 import types
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
 from dataclasses import fields, is_dataclass
 from typing import Any, cast, TypeVar
-from typing_extensions import Never
+from typing import Never
 
 import torch
 import torch.fx.traceback as fx_traceback

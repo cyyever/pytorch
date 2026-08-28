@@ -9,7 +9,7 @@ from __future__ import annotations
 import contextlib
 from functools import partial
 from typing import Any, overload, TYPE_CHECKING
-from typing_extensions import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import torch
 import torch.autograd.forward_ad as fwAD
