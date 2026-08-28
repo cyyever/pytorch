@@ -46,7 +46,6 @@ from torch.export.pt2_archive.constants import (
     CONSTANTS_CONFIG_FILENAME_FORMAT,
     CONSTANTS_DIR,
     CUSTOM_OBJ_FILENAME_PREFIX,
-    EXECUTORCH_DIR,
     EXTRA_DIR,
     MODELS_DIR,
     MODELS_FILENAME_FORMAT,
@@ -635,16 +634,6 @@ def _package_extra_files(
         archive_writer.write_string(f"{EXTRA_DIR}{extra_file_name}", content)
 
 
-def _package_executorch_files(
-    archive_writer: PT2ArchiveWriter, executorch_files: dict[str, bytes] | None
-) -> None:
-    if executorch_files is None:
-        return
-
-    for file_name, content in executorch_files.items():
-        archive_writer.write_bytes(f"{EXECUTORCH_DIR}{file_name}", content)
-
-
 def package_pt2(
     f: FileLike,
     *,
@@ -653,7 +642,6 @@ def package_pt2(
     extra_files: dict[str, Any] | None = None,
     opset_version: dict[str, int] | None = None,
     pickle_protocol: int = DEFAULT_PICKLE_PROTOCOL,
-    executorch_files: dict[str, bytes] | None = None,
 ) -> FileLike:
     r"""
     Saves the artifacts to a PT2Archive format. The artifact can then be loaded
@@ -683,9 +671,6 @@ def package_pt2(
          to the version of this opset
 
         pickle_protocol: can be specified to override the default protocol
-
-        executorch_files (Optional[dict[str, bytes]]): Optional executorch
-         artifacts to save.
 
     """
     if exported_programs is None and aoti_files is None and extra_files is None:
@@ -720,7 +705,6 @@ def package_pt2(
             pickle_protocol=pickle_protocol,
         )
         _package_extra_files(archive_writer, extra_files)
-        _package_executorch_files(archive_writer, executorch_files)
 
     if isinstance(f, (io.IOBase, IO)):
         f.seek(0)

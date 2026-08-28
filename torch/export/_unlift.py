@@ -747,7 +747,6 @@ def _get_input_guards_for_graph(
 
 def _ok_to_generate_guards_fn():
     patterns = [
-        "executorch",
         "modai",
         "on_device_ai",
         "torchao",
