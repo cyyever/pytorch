@@ -962,5 +962,3 @@ aten_cuda_with_sort_by_key_source_list = [
 aten_cuda_cu_with_sort_by_key_source_list = [
     "aten/src/ATen/native/cuda/Unique.cu",
 ]
-
-# Following are source code for xnnpack delegate

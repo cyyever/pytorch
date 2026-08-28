@@ -2777,11 +2777,6 @@ def _test_function(fn, device):
         return fn(self, device)
     return run_test_function
 
-def skipIfNoXNNPACK(fn):
-    return lazy_skip_if(
-        "XNNPACK must be enabled for these tests. Please build with USE_XNNPACK=1.",
-    )(fn)
-
 def skipIfNoLapack(fn):
     return lazy_skip_if(lambda: not torch._C.has_lapack, "PyTorch compiled without Lapack")(fn)
 

@@ -812,10 +812,6 @@ const std::vector<at::QEngine>& Context::supportedQEngines() {
   return supported_qengines;
 }
 
-bool Context::isXNNPACKAvailable() {
-  return false;
-}
-
 void Context::setCheckSparseTensorInvariants(std::optional<bool> e = std::nullopt) {
   enable_sparse_tensor_invariant_checks = e;
 }

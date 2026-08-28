@@ -95,8 +95,8 @@ provider = { path = "tools/metadata", module = "dependencies" }
 [tool.scikit-build.sdist]
 # Goal: ship exactly the git-tracked sources, minus repo/CI plumbing. The
 # sdist file walk applies gitignore semantics, and several vendored trees
-# commit files their own .gitignore matches (XNNPACK gen/ microkernels,
-# oneDNN *.cpp via ideep, clog under deps/); PyTorch's own
+# commit files their own .gitignore matches (oneDNN *.cpp via ideep, clog
+# under deps/); PyTorch's own
 # .gitignore (gen, *.pb.h) also hits tracked third-party files. The blanket
 # includes below restore all of them.
 #
@@ -188,7 +188,6 @@ exclude = [
     "torch/share/cmake/fbgemm/**",
     "torch/share/cmake/kineto/**",
     "torch/share/cmake/sleef/**",
-    "torch/share/cmake/XNNPACK/**",
     "torch/share/cmake/ittapi/**",
     "torch/share/cmake/dnnl/**",
     "torch/share/cpuinfo/**",

@@ -124,7 +124,6 @@ enum class ConvBackend {
   SlowTranspose2d,
   SlowTranspose3d,
   Winograd3x3Depthwise,
-  Xnnpack2d,
   Mps,
   MpsTranspose,
 };

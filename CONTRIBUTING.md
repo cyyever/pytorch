@@ -809,7 +809,6 @@ On the initial build, you can also speed things up by disabling the features you
 - `BUILD_TEST=0` will disable building C++ test binaries.
 - `USE_FBGEMM=0` will disable using FBGEMM (quantized 8-bit server operators).
 - `USE_NNPACK=0` will disable compiling with NNPACK.
-- `USE_XNNPACK=0` will disable compiling with XNNPACK.
 - `USE_FLASH_ATTENTION=0` and `USE_MEM_EFF_ATTENTION=0` will disable compiling flash attention and memory efficient kernels respectively.
 - `USE_PYTORCH_QNNPACK=0` will disable PyTorch's internal QNNPACK quantized kernels.
 - `USE_CPU_VECTORIZATION=0` will disable building vectorized CPU kernel variants (AVX2, AVX512). Only the scalar DEFAULT kernels are built. Fine for correctness/dispatch work; not for CPU benchmarking.
@@ -821,7 +820,7 @@ documented at the top of [`cmake/EnvVarForwarding.cmake`](./cmake/EnvVarForwardi
 
 For example, a good default for the most minimal build is to add to your bashrc is:
 ```bash
-alias BUILD_CONFIG='CMAKE_GENERATOR=Ninja USE_DISTRIBUTED=0 USE_FLASH_ATTENTION=0 USE_MEM_EFF_ATTENTION=0 USE_MKLDNN=0 USE_CUDA=0 BUILD_TEST=0 USE_FBGEMM=0 USE_NNPACK=0 USE_XNNPACK=0 USE_PYTORCH_QNNPACK=0 USE_CPU_VECTORIZATION=0 USE_COLORIZE_OUTPUT=1'
+alias BUILD_CONFIG='CMAKE_GENERATOR=Ninja USE_DISTRIBUTED=0 USE_FLASH_ATTENTION=0 USE_MEM_EFF_ATTENTION=0 USE_MKLDNN=0 USE_CUDA=0 BUILD_TEST=0 USE_FBGEMM=0 USE_NNPACK=0 USE_PYTORCH_QNNPACK=0 USE_CPU_VECTORIZATION=0 USE_COLORIZE_OUTPUT=1'
 ```
 
 You can then re-enable features selectively

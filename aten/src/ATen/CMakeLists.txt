@@ -466,9 +466,6 @@ IF(USE_MSLK)
   endif()
 endif()
 
-# XNNPACK
-file(GLOB native_xnnpack CONFIGURE_DEPENDS "native/xnnpack/*.cpp")
-
 # Add files needed from jit folders
 append_filelist("jit_core_headers" ATen_CORE_HEADERS)
 append_filelist("jit_core_sources" ATen_CORE_SRCS)
@@ -478,7 +475,7 @@ set(
   all_cpu_cpp ${base_cpp} ${ATen_CORE_SRCS} ${native_cpp}
   ${native_sparse_cpp} ${native_nested_cpp} ${native_mkl_cpp}
   ${native_transformers_cpp}
-  ${native_utils_cpp} ${native_xnnpack} ${generated_sources} ${core_generated_sources}
+  ${native_utils_cpp} ${generated_sources} ${core_generated_sources}
   ${ATen_CPU_SRCS} ${ATen_QUANTIZED_SRCS} ${cpu_kernel_cpp}
 )
 

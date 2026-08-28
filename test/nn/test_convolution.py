@@ -2690,8 +2690,7 @@ class TestConvolutionNNDeviceType(NNTestCase):
                 decorators=[onlyCUDA, skipCUDAIfNoMiopen],
                 name="miopen_depthwise3d",
             ),
-            # Note: Tests for mobile backends are not currently supported. This comprises
-            # Winograd3x3Depthwise and Xnnpack2d backends. Testing these
+            # Note: the Winograd3x3Depthwise backend is not tested. Doing so
             # requires the ability to gate tests by whether PyTorch is built with USE_MOBILE=1.
         ],
     )
