@@ -7,7 +7,6 @@
 #include <c10/util/irange.h>
 #include <c10/util/Unroll.h>
 
-#if !defined(C10_MOBILE)
 namespace at::native::blas_impl {
 void fp16_gemv_trans(
     const int m,
@@ -31,8 +30,7 @@ float bf16_dot_with_fp32_arith(
   const at::BFloat16* a,
   int64_t len);
 } // namespace at::native::blas_impl
-#endif
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
 #include <arm_neon.h>
 
 namespace at::native::blas_impl {
@@ -333,7 +331,7 @@ void gemm_transab_(
   }
 }
 
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
 template <>
 void gemm_notrans_(
     int64_t m,
@@ -366,9 +364,8 @@ void gemm_notrans_(
     }
   }
 }
-#endif // defined(__aarch64__) && !defined(C10_MOBILE)
+#endif // defined(__aarch64__)
 
-#if !defined(C10_MOBILE)
 float compute_dot(const at::Half* a, const at::Half* b, int64_t len) {
   return at::native::CPU_CAPABILITY::fp16_dot_with_fp32_arith(
       a, b, len);
@@ -437,7 +434,6 @@ void gemm_transa_(
     }
   });
 }
-#endif // !defined(C10_MOBILE)
 
 template <typename scalar_t, typename opmath_t, typename out_t>
 void gemm_core_(
@@ -464,17 +460,10 @@ void gemm_core_(
   }
 }
 
-#if !defined(C10_MOBILE)
 #define _AT_DISPATCH_GEMM_TYPES(TYPE, NAME, ...)                                                \
         AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND6(                                                 \
             kHalf, kBFloat16, kFloat8_e5m2, kFloat8_e4m3fn, kFloat8_e5m2fnuz, kFloat8_e4m3fnuz, \
             TYPE, NAME, __VA_ARGS__)
-#else
-#define _AT_DISPATCH_GEMM_TYPES(TYPE, NAME, ...)         \
-        AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(          \
-            kHalf, kBFloat16,                            \
-            TYPE, NAME, __VA_ARGS__)
-#endif
 void cpublas_gemm_impl(
     at::ScalarType type,
     TransposeType transa, TransposeType transb,

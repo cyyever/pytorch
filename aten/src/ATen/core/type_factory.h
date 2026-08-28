@@ -94,11 +94,7 @@ struct TORCH_API TypeFactoryBase<c10::Type> {
 using DefaultTypeFactory = TypeFactoryBase<c10::Type>;
 
 using PlatformType =
-#ifdef C10_MOBILE
-    c10::DynamicType
-#else
     c10::Type
-#endif
     ;
 
 using TypeFactory = TypeFactoryBase<PlatformType>;

@@ -54,12 +54,7 @@ TORCH_API const TensorBase& get_tensor_base(const Tensor& t);
 
 namespace impl {
 inline bool variable_excluded_from_dispatch() {
-#ifdef C10_MOBILE
-  // Please read the comment in `VariableFallbackKernel.cpp` about the background of this change.
-  return true;
-#else
   return c10::impl::tls_local_dispatch_key_set().excluded_.isSupersetOf(c10::autograd_dispatch_keyset);
-#endif
 }
 
 }

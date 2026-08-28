@@ -178,7 +178,7 @@ inline void tinygemm_kernel(
 
 #endif
 
-#if !defined(C10_MOBILE) && defined(__aarch64__)
+#if defined(__aarch64__)
 #include <arm_neon.h>
 
 inline float reduce(float32x4_t x) {

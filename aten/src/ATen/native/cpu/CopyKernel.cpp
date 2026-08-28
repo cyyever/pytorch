@@ -196,7 +196,6 @@ static void reduced_float_copy_kernel(TensorIteratorBase &iter, bool requires_ne
   }
 }
 
-#if !defined(C10_MOBILE)
 #define _AT_DISPATCH_ALL_TYPES(TYPE, NAME, ...)                                       \
         AT_DISPATCH_V2(TYPE, NAME, AT_WRAP(__VA_ARGS__),                                       \
             kComplexHalf, kBComplex32, kHalf, kBool, \
@@ -206,16 +205,6 @@ static void reduced_float_copy_kernel(TensorIteratorBase &iter, bool requires_ne
         AT_DISPATCH_V2(TYPE, NAME, AT_WRAP(__VA_ARGS__),                    \
             kBool, kHalf, kBFloat16, AT_EXPAND(AT_FLOAT8_TYPES), \
             AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX), AT_EXPAND(AT_BAREBONES_UNSIGNED_TYPES))
-#else
-#define _AT_DISPATCH_ALL_TYPES(TYPE, NAME, ...)                                               \
-        AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND5(                                               \
-            ScalarType::ComplexHalf, ScalarType::BComplex32, ScalarType::Half, ScalarType::Bool,ScalarType::BFloat16, \
-            TYPE, NAME, __VA_ARGS__)
-#define _AT_DISPATCH_ALL_TYPES_NO_CF(TYPE, NAME, ...) \
-        AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND3(       \
-            kBool, kHalf, kBFloat16,                  \
-            TYPE, NAME, __VA_ARGS__)
-#endif
 
 void direct_copy_kernel(TensorIteratorBase &iter) {
   // TODO: we don't actually need separate instantiations per dtype;

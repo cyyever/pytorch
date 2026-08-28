@@ -3,8 +3,6 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/core/op_registration/op_allowlist.h>
 #include <ATen/core/op_registration/op_registration.h>
-#if !defined(CAFFE2_IS_XPLAT_BUILD)
-#endif
 
 namespace c10 {
 namespace impl {

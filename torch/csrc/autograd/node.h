@@ -739,7 +739,6 @@ struct TraceableFunction : public Node {
 // Enable PyObject support for intrusive_ptr<Node> so that the refcount
 // machinery calls incref_pyobject/decref_pyobject on transitions.
 namespace c10::detail {
-#ifndef C10_MOBILE
 template <class T>
 struct TargetTraits<
     T,
@@ -747,5 +746,4 @@ struct TargetTraits<
         std::is_base_of_v<torch::autograd::Node, std::remove_cv_t<T>>>> {
   static constexpr bool can_have_pyobject = true;
 };
-#endif
 } // namespace c10::detail

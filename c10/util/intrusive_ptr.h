@@ -304,14 +304,12 @@ class C10_API intrusive_ptr_target {
 
 namespace detail {
 
-#ifndef C10_MOBILE
 template <>
 struct TargetTraits<c10::intrusive_ptr_target> {
   // A generic intrusive_ptr<intrusive_ptr_target> may actually be a TensorImpl
   // or StorageImpl, so we have to allow for PyObject support.
   static constexpr bool can_have_pyobject = true;
 };
-#endif
 
 } // namespace detail
 
@@ -1147,13 +1145,9 @@ inline void incref(intrusive_ptr_target* self) {
     uint64_t combined = detail::atomic_combined_refcount_increment(
         self->combined_refcount_, detail::kReferenceCountOne);
 
-#ifndef C10_MOBILE
     if (detail::has_pyobject(combined) && detail::refcount(combined) == 2) {
       self->incref_pyobject();
     }
-#else
-    TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!detail::has_pyobject(combined));
-#endif
   }
 }
 

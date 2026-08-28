@@ -1,4 +1,3 @@
-#if !defined(C10_MOBILE)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cuda.h>
 
 namespace torch::inductor {
@@ -62,4 +61,3 @@ std::unique_ptr<AOTIModelContainerRunner> create_aoti_runner_cuda(
 RegisterAOTIModelRunner register_cuda_runner("cuda", &create_aoti_runner_cuda);
 
 } // namespace torch::inductor
-#endif

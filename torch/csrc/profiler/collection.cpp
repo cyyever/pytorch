@@ -427,10 +427,6 @@ std::unique_ptr<KinetoObserverContext> ThreadLocalSubqueue::begin_op(
     pushed_correlation_id = true;
   }
 
-#if !defined BUILD_LITE_INTERPRETER && !defined C10_MOBILE
-  // backward nodes source range corresponds to the forward node
-  // TODO: consider using C++ stack trace
-#endif
   if (config_.with_flops) {
     torch_ops_.extra_args_.emplace_back(
         torch::profiler::impl::saveExtraArgs(fn));

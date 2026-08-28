@@ -504,14 +504,9 @@ Tensor isreal(const Tensor& self) {
   return at::imag(self) == 0;
 }
 
-#if !defined(C10_MOBILE)
 #define _AT_DISPATCH_INF_TYPES(TYPE, NAME, ...) \
   AT_DISPATCH_FLOATING_TYPES_AND3(              \
       kHalf, kBFloat16, kFloat8_e5m2, TYPE, NAME, __VA_ARGS__)
-#else
-#define _AT_DISPATCH_INF_TYPES(TYPE, NAME, ...) \
-  AT_DISPATCH_FLOATING_TYPES_AND2(kHalf, kBFloat16, TYPE, NAME, __VA_ARGS__)
-#endif
 
 Tensor isinf(const Tensor& self) {
   // Note: Integral tensor values are never infinite

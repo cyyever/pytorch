@@ -1279,16 +1279,10 @@ Tensor outer(const Tensor& self, const Tensor& vec2) {
 }
 
 
-#if !defined(C10_MOBILE)
 #define _AT_DISPATCH_ADDMM_TYPES(TYPE, NAME, ...)                                               \
         AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND6(                                                 \
             kBFloat16, kHalf, kFloat8_e5m2, kFloat8_e4m3fn, kFloat8_e5m2fnuz, kFloat8_e4m3fnuz, \
             TYPE, NAME, __VA_ARGS__)
-#else
-#define _AT_DISPATCH_ADDMM_TYPES(TYPE, NAME, ...)        \
-        AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND(kBFloat16, \
-            TYPE, NAME, __VA_ARGS__)
-#endif
 
 
 static void addmm_impl_cpu_(
@@ -1656,32 +1650,7 @@ static inline void bmm_out_or_baddbmm_(const Tensor& self_or_result_, const Tens
             && self_or_result.is_contiguous()) {
     baddbmm_with_gemm_(self_or_result, batch1, batch2, beta, alpha);
   } else { // split along batch dimension
-#ifdef C10_MOBILE
-    /*
-     * We only do multithreading when Inference mode is enabled because various
-     * thread local state is not appropriately propagated through
-     * at::parallel_for. e.g. RecordFunction related state, dispatchKeySet Big
-     * concern with this is that if we use at::parallel_for where state is not
-     * propagated then dispatch machinery may work differently on main thread
-     * vs. other threads, leading to undefined behavior.
-     * Thus it is recommended to not use at::parallel_for where lambdas do
-     * ops that go through dispatcher.
-     * For now we circumvent this by InferenceMode guard in order to unlock
-     * performance.
-     * Longer term we probably want a separate API that explicitly calls out
-     * the TLS that it propagates.
-     * Also note that this is enabled for mobile only because blas
-     * implementation for non-mobile build is already multithreaded.
-     */
-    // Benchmarking was done as follows:
-    // bmm_test: operator benchmark under
-    // benchmarks/operator_benchmarks/pt/bmm_test.py Ran this benchmark for
-    // various matrix sizes on Samsung S8U
-    const bool enable_multithreaded_bmm = c10::InferenceMode::is_enabled() &&
-        bs >= 4 && res_rows >= 4 && res_cols >= 16 && contraction_size >= 16;
-#else
     const bool enable_multithreaded_bmm{false};
-#endif
     if (is_bmm_out) {
       if (enable_multithreaded_bmm) {
         auto bmm_out_fn = [&](uint64_t start, uint64_t end) {

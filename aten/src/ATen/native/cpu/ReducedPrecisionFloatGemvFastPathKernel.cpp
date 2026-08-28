@@ -11,14 +11,13 @@
 #include <c10/util/Unroll.h>
 #include <c10/util/irange.h>
 
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
 #include <arm_neon.h>
 #include <cpuinfo.h>
 #endif
 
 namespace at::native {
 inline namespace CPU_CAPABILITY {
-#if !defined(C10_MOBILE)
 
 constexpr auto kF32RegisterPairsPerIteration = 4;
 constexpr auto kF32RegistersPerIteration = kF32RegisterPairsPerIteration * 2;
@@ -489,14 +488,11 @@ float bf16_dot(
   return bf16_dot_with_fp32_arith(x, y, n);
 }
 
-#endif // !defined(C10_MOBILE)
 } // namespace CPU_CAPABILITY
 
-#if !defined(C10_MOBILE)
 REGISTER_DISPATCH(fp16_gemv_trans_stub, &fp16_gemv_trans)
 REGISTER_DISPATCH(bf16_gemv_trans_stub, &bf16_gemv_trans)
 REGISTER_DISPATCH(fp16_dot_stub, &fp16_dot)
 REGISTER_DISPATCH(bf16_dot_stub, &bf16_dot)
-#endif //!defined(C10_MOBILE)
 
 } // namespace at::native

@@ -374,9 +374,6 @@ DynamicTypePtr ivalue::TupleTypeFactory<c10::DynamicType>::fallback(
 
 TORCH_API TupleTypePtr ivalue::TupleTypeFactory<TupleType>::fallback(
     [[maybe_unused]] const Type& type) {
-#ifdef C10_MOBILE
-  return nullptr;
-#else
   const auto& dyn = type.expectRef<DynamicType>();
   std::vector<std::string_view> fields;
   std::vector<TypePtr> types;
@@ -391,7 +388,6 @@ TORCH_API TupleTypePtr ivalue::TupleTypeFactory<TupleType>::fallback(
     return TupleType::createNamed(*name, fields, types);
   }
   return TupleType::create(std::move(types));
-#endif
 }
 
 } // namespace c10

@@ -11,7 +11,6 @@
 #include <vector>
 
 using namespace c10;
-#ifndef C10_MOBILE
 static void check(int64_t value) {
   const auto i = SymInt(value);
   EXPECT_EQ(i.maybe_as_int(), std::make_optional(value));
@@ -238,4 +237,3 @@ TEST(SymIntTest, MaterializedShapeSurvivesTensorImplCopy) {
   EXPECT_EQ(copy->sizes(), IntArrayRef(expected_sizes));
   EXPECT_EQ(copy->strides(), IntArrayRef(expected_strides));
 }
-#endif

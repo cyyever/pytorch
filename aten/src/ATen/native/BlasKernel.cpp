@@ -11,7 +11,7 @@
 #include <climits>
 #include <limits>
 
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
 #include <arm_neon.h>
 #include <cpuinfo.h>
 #endif
@@ -83,15 +83,12 @@ extern "C" void sgemv_(char *trans, int *m, int *n, float *alpha, float *a, int 
 #endif // AT_BUILD_WITH_BLAS
 
 namespace at::native {
-#if !defined(C10_MOBILE)
 DEFINE_DISPATCH(fp16_gemv_trans_stub);
 DEFINE_DISPATCH(bf16_gemv_trans_stub);
 DEFINE_DISPATCH(fp16_dot_stub);
 DEFINE_DISPATCH(bf16_dot_stub);
-#endif // !defined(C10_MOBILE)
 
 namespace blas_impl {
-#if !defined(C10_MOBILE)
 void fp16_gemv_trans(
     const int m,
     const int n,
@@ -136,9 +133,7 @@ static float bf16_dot(
   return bf16_dot_stub(kCPU, n, x, incx, y, incy);
 }
 
-#endif // !defined(C10_MOBILE)
-
-#if defined(__aarch64__) && !defined(C10_MOBILE)
+#if defined(__aarch64__)
 #ifdef __ARM_FEATURE_FP16_SCALAR_ARITHMETIC
 static void fp16_gemv_notrans_fp16_arith(int m, int n, const float16_t* a, const int lda, const float16_t *x, float16_t *y) {
   for (auto j = 0; j < n; j++) {
@@ -224,7 +219,7 @@ void fp16_gemv_notrans(
   }
 }
 
-#endif // defined(__aarch64__) && !defined(C10_MOBILE)
+#endif // defined(__aarch64__)
 
 template <typename scalar_t>
 static bool scal_use_fast_path(
@@ -345,7 +340,6 @@ INSTANTIATE(int8_t)
 INSTANTIATE(int16_t)
 INSTANTIATE(int)
 INSTANTIATE(int64_t)
-#if !defined(C10_MOBILE)
 template <>
 bool gemv_use_fast_path<at::BFloat16>(
     [[maybe_unused]] char trans,
@@ -504,10 +498,6 @@ void gemv_fast_path<at::Half>(
 
 // Note that the above block was an else, so it's active if __aarch64__ *is* defined.
 #endif // !defined(__aarch64__)
-#else // !defined(C10_MOBILE))
-INSTANTIATE(c10::Half)
-INSTANTIATE(c10::BFloat16)
-#endif // !defined(C10_MOBILE)
 #endif // AT_BUILD_WITH_BLAS
 #undef INSTANTIATE
 
@@ -717,11 +707,9 @@ Half dot_impl(int64_t n, const Half* x, int64_t incx, const Half* y, int64_t inc
     incx = 1;
     incy = 1;
   }
-#if !defined(C10_MOBILE)
   if (incx == 1 && incy == 1) {
     return blas_impl::fp16_dot(n, x, incx, y, incy);
   }
-#endif // !defined(C10_MOBILE)
   return blas_impl::dot_naive(n, x, incx, y, incy, std::multiplies<float>{});
 }
 
@@ -731,11 +719,9 @@ BFloat16 dot_impl(int64_t n, const BFloat16* x, int64_t incx, const BFloat16* y,
     incx = 1;
     incy = 1;
   }
-#if !defined(C10_MOBILE)
   if (incx == 1 && incy == 1) {
     return blas_impl::bf16_dot(n, x, incx, y, incy);
   }
-#endif // !defined(C10_MOBILE)
   return blas_impl::dot_naive(n, x, incx, y, incy, std::multiplies<float>{});
 }
 
