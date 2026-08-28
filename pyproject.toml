@@ -453,6 +453,26 @@ ignore = [
     "SIM117",
     "SIM300", # Yoda condition detected
     "TC006",
+    # Rules that only fire because requires-python is 3.14. PEP 649 defers
+    # annotation evaluation, which makes quoted annotations redundant (UP037)
+    # and makes it safe to push typing-only imports under TYPE_CHECKING
+    # (TC001-TC003); the rest ask for syntax introduced after 3.10. Taking any
+    # of them would rewrite most of torch/_dynamo and collide with every merge
+    # from upstream, which still supports 3.10.
+    "UP017",
+    "UP036",
+    "UP037",
+    "UP040",
+    "UP041",
+    "UP042",
+    "UP043",
+    "UP044",
+    "UP045",
+    "UP046",
+    "UP047",
+    "TC001",
+    "TC002",
+    "TC003",
     # TODO: Remove Python-3.10 specific suppressions
     "B905",
 ]
