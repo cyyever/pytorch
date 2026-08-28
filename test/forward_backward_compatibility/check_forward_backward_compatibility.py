@@ -190,7 +190,6 @@ dont_parse_list = [
     ("test_backend", datetime.date(2099, 9, 17)),
     ("dist_c10d", datetime.date(2099, 9, 17)),
     ("__backends__.nnc", datetime.date(2099, 9, 17)),
-    ("xnnpack", datetime.date(2099, 9, 17)),
 ]
 
 

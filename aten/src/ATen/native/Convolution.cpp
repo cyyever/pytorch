@@ -1160,10 +1160,6 @@ static ConvBackend _select_conv_backend(
     } else {
       return ConvBackend::Mkldnn;
     }
-  } else if (!need_backward && params.use_xnnpack(input, weight, bias_sizes_opt)) {
-    // Using prepacked conv is preferred, but XNNPACK is still the fastest
-    // option for NHWC.
-    return ConvBackend::Xnnpack2d;
   // 3x3 depthwith convolutions implementation is inference only
   } else if (!need_backward && params.use_cpu_depthwise3x3_winograd(input, weight, bias)) {
     return ConvBackend::Winograd3x3Depthwise;
@@ -1512,9 +1508,6 @@ at::Tensor _convolution(
     case ConvBackend::Winograd3x3Depthwise:
       output = convolution_depthwise3x3_winograd_stub(
           input.device().type(), input, weight, bias, params.stride, params.padding, params.groups);
-      break;
-    case ConvBackend::Xnnpack2d:
-      TORCH_INTERNAL_ASSERT(false, "Xnnpack2d backend was selected in a build without xnnpack support");
       break;
     // Handle backends that don't natively support groups > 1.
     case ConvBackend::Slow2d:
@@ -2089,9 +2082,6 @@ std::tuple<Tensor, Tensor, Tensor> convolution_backward(
     // Backward is not supported for these backends.
     case ConvBackend::Winograd3x3Depthwise:
       TORCH_CHECK(false, "Backward is not supported for depthwise 3x3 winograd");
-      break;
-    case ConvBackend::Xnnpack2d:
-      TORCH_CHECK(false, "Backward is not supported for xnnpack");
       break;
   }
 
