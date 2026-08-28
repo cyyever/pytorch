@@ -6,22 +6,27 @@ removed torch.ao stack."""
 import functools
 import unittest
 
-import numpy as np
 import torch
 import torch._dynamo as torchdynamo
+
+
+# fbgemm::fbgemmSupportedCPU() is an AVX2 check, but it only ever ran when the
+# build defined USE_FBGEMM, and that is still an option. Ask about both.
+def _fbgemm_available() -> bool:
+    return "USE_FBGEMM" in torch.__config__.show() and torch.cpu._is_avx2_supported()
 
 
 def skipIfNoFBGEMM(fn):
     reason = "Quantized operations require FBGEMM. FBGEMM is only optimized for CPUs with instruction set support AVX2 or newer."
     if isinstance(fn, type):
-        if "fbgemm" not in torch.backends.quantized.supported_engines:
+        if not _fbgemm_available():
             fn.__unittest_skip__ = True
             fn.__unittest_skip_why__ = reason
         return fn
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
-        if "fbgemm" not in torch.backends.quantized.supported_engines:
+        if not _fbgemm_available():
             raise unittest.SkipTest(reason)
         else:
             fn(*args, **kwargs)
@@ -29,20 +34,18 @@ def skipIfNoFBGEMM(fn):
     return wrapper
 
 
+# The CPU oneDNN integration is gone, so this always skipped even while the
+# quantized engine list existed.
 def skipIfNoONEDNN(fn):
     reason = "Quantized operations require ONEDNN."
     if isinstance(fn, type):
-        if "onednn" not in torch.backends.quantized.supported_engines:
-            fn.__unittest_skip__ = True
-            fn.__unittest_skip_why__ = reason
+        fn.__unittest_skip__ = True
+        fn.__unittest_skip_why__ = reason
         return fn
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
-        if "onednn" not in torch.backends.quantized.supported_engines:
-            raise unittest.SkipTest(reason)
-        else:
-            fn(*args, **kwargs)
+        raise unittest.SkipTest(reason)
 
     return wrapper
 

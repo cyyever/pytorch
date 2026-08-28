@@ -1,8 +1,8 @@
 ---
 myst:
   html_meta:
-    description: C10 utility classes in PyTorch C++ — Flags, QEngine, and Reduction enumerations.
-    keywords: PyTorch, C++, c10, utilities, QEngine, Reduction
+    description: C10 utility classes in PyTorch C++ — Flags and Reduction enumerations.
+    keywords: PyTorch, C++, c10, utilities, Reduction
 ---
 
 # Utilities

@@ -1651,42 +1651,6 @@ static PyObject* THPModule_getDefaultDevice(PyObject* _unused, PyObject* arg) {
   END_HANDLE_TH_ERRORS
 }
 
-static PyObject* THPModule_setQEngine(PyObject* /* unused */, PyObject* arg) {
-  HANDLE_TH_ERRORS
-  TORCH_CHECK(
-      THPUtils_checkLong(arg),
-      "set_qengine expects an int, "
-      "but got ",
-      THPUtils_typename(arg));
-  auto qengine = THPUtils_unpackLong(arg);
-  // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
-  at::globalContext().setQEngine(static_cast<at::QEngine>(qengine));
-  Py_RETURN_NONE;
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPModule_qEngine(PyObject* _unused, PyObject* noargs) {
-  return THPUtils_packInt64(
-      static_cast<int64_t>(at::globalContext().qEngine()));
-}
-
-static PyObject* THPModule_supportedQEngines(
-    PyObject* _unused,
-    PyObject* noargs) {
-  const auto& qengines = at::globalContext().supportedQEngines();
-  auto list =
-      THPObjectPtr(PyList_New(static_cast<Py_ssize_t>(qengines.size())));
-  if (!list)
-    return nullptr;
-  for (const auto i : c10::irange(qengines.size())) {
-    PyObject* i64 = THPUtils_packInt64(static_cast<int64_t>(qengines[i]));
-    if (!i64)
-      return nullptr;
-    PyList_SET_ITEM(list.get(), i, i64);
-  }
-  return list.release();
-}
-
 static PyObject* THPModule_setCheckSparseTensorInvariants(
     PyObject* _unused,
     PyObject* arg) {
@@ -2247,9 +2211,6 @@ static std::initializer_list<PyMethodDef> TorchMethods = {
     {"get_default_dtype", THPModule_getDefaultDtype, METH_NOARGS, nullptr},
     {"_get_all_dtypes", THPModule_getAllDtypes, METH_NOARGS, nullptr},
     {"_get_default_device", THPModule_getDefaultDevice, METH_NOARGS, nullptr},
-    {"_get_qengine", THPModule_qEngine, METH_NOARGS, nullptr},
-    {"_set_qengine", THPModule_setQEngine, METH_O, nullptr},
-    {"_supported_qengines", THPModule_supportedQEngines, METH_NOARGS, nullptr},
     {"_set_check_sparse_tensor_invariants",
      THPModule_setCheckSparseTensorInvariants,
      METH_O,
