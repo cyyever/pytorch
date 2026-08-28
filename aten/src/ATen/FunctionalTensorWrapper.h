@@ -16,7 +16,7 @@ namespace at {
 // Note [Functionalization Pass In Core]
 // The Functionalization pass is used to remove aliasing from a pytorch program.
 //
-// This is useful for backends that don't support aliasing, like XLA and Vulkan.
+// This is useful for backends that don't support aliasing, like XLA.
 // It's also necessary in order to remove mutation from a program, which is
 // needed in Functorch.
 //
@@ -34,9 +34,9 @@ namespace at {
 //
 // The functionalization pass will turn the above program into a slightly
 // different program that has the same semantics, transparently to the user,
-// that backends like XLA/Vulkan are able to implement a = torch.ones(...) b =
+// that backends like XLA are able to implement a = torch.ones(...) b =
 // a.view_copy(...)  # view() replaced with view_copy(). Backends like
-// XLA/Vulkan can implement this! b.add_(1) a.add_(1)  # Our functionalization
+// XLA can implement this! b.add_(1) a.add_(1)  # Our functionalization
 // pass machinery knows that a and b are aliased - it applies b's mutation to a
 // too.
 //

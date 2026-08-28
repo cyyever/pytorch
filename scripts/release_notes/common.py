@@ -111,7 +111,6 @@ categories = (
         "releng",
         "fx",
         "code_coverage",
-        "vulkan",
         "skip",
         "composability",
         # 2.0 release
