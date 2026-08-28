@@ -54,7 +54,6 @@ from torchgen.utils import concatMap, dataclass_repr, FileManager
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from torchgen.selective_build.selector import SelectiveBuilder
 
 
 # Note: [Mutable Ops Not Using Functionalization]
@@ -773,7 +772,7 @@ def emit_inplace_functionalization_body(
 
 # See Note [Functionalization Pass: View Inverses].
 def gen_functionalization_view_inverse_declaration(
-    selector: SelectiveBuilder, g: NativeFunctionsViewGroup
+    g: NativeFunctionsViewGroup
 ) -> str | None:
     # For every (non-composite) view op, we need a corresponding "inverse view" function.
     # This generates the declarations so we get a good compiler error when someone adds a new view.
@@ -1063,12 +1062,9 @@ std::shared_ptr<at::functionalization::ViewMeta> {self.classname}::to_out_index(
 
 
 def gen_functionalization_view_meta_classes_base(
-    selector: SelectiveBuilder,
     g: NativeFunctionsViewGroup,
     run: Callable[[ViewMetaSpecialization], list[str]],
 ) -> list[str]:
-    if not selector.include_all_operators:
-        return []
 
     if g.composite:
         return []
@@ -1077,26 +1073,26 @@ def gen_functionalization_view_meta_classes_base(
 
 
 def gen_functionalization_view_meta_classes_decl(
-    selector: SelectiveBuilder, g: NativeFunctionsViewGroup
+    g: NativeFunctionsViewGroup
 ) -> list[str]:
     return gen_functionalization_view_meta_classes_base(
-        selector, g, ViewMetaSpecialization.decl
+        g, ViewMetaSpecialization.decl
     )
 
 
 def gen_functionalization_view_meta_classes_impl(
-    selector: SelectiveBuilder, g: NativeFunctionsViewGroup
+    g: NativeFunctionsViewGroup
 ) -> list[str]:
     return gen_functionalization_view_meta_classes_base(
-        selector, g, ViewMetaSpecialization.impl
+        g, ViewMetaSpecialization.impl
     )
 
 
 def gen_functionalization_view_meta_classes_binding(
-    selector: SelectiveBuilder, g: NativeFunctionsViewGroup
+    g: NativeFunctionsViewGroup
 ) -> list[str]:
     return gen_functionalization_view_meta_classes_base(
-        selector, g, ViewMetaSpecialization.binding
+        g, ViewMetaSpecialization.binding
     )
 
 
@@ -1104,7 +1100,6 @@ def gen_functionalization_view_meta_classes_binding(
 def gen_functionalization_view_meta_classes(
     native_functions_path: str,
     tags_path: str,
-    selector: SelectiveBuilder,
     install_dir: str,
     template_dir: str,
 ) -> None:
@@ -1132,9 +1127,7 @@ def gen_functionalization_view_meta_classes(
         lambda: {
             "view_meta_bindings": list(
                 concatMap(
-                    lambda g: gen_functionalization_view_meta_classes_binding(
-                        selector, g
-                    ),
+                    lambda g: gen_functionalization_view_meta_classes_binding(g),
                     view_groups,
                 )
             ),
@@ -1143,7 +1136,6 @@ def gen_functionalization_view_meta_classes(
 
 
 def gen_functionalization_registration(
-    selector: SelectiveBuilder,
     g: NativeFunction | NativeFunctionsGroup | NativeFunctionsViewGroup,
     composite_implicit_autograd_index: BackendIndex,
 ) -> list[str]:
@@ -1170,9 +1162,6 @@ def gen_functionalization_registration(
             registration_str = f"TORCH_FN(functionalization::{wrapper_name(f.func)})"
         return f'm.impl("{f.func.name}", {registration_str});'
 
-    # Don't generate kernels in mobile build
-    if not selector.include_all_operators:
-        return []
 
     if isinstance(g, NativeFunctionsViewGroup):
         # functionalization needs to register kernels for view + view_inplace ops
@@ -1222,16 +1211,12 @@ def gen_functionalization_registration(
 
 
 def gen_functionalization_definition(
-    selector: SelectiveBuilder,
     # Note: Ideally this code should never have to look at NativeFunction
     # (and instead only need to operate on grouped NativeFunctions).
     # The only reason currently is because we need to emit direct dispatch registrations
     # For CompositeImplicitAutograd operators, which are potentially ungrouped.
     g: NativeFunction | NativeFunctionsGroup | NativeFunctionsViewGroup,
 ) -> list[str]:
-    # Don't generate kernels in mobile build
-    if not selector.include_all_operators:
-        return []
 
     if isinstance(g, NativeFunctionsViewGroup):
         # Case 1: emit view -> view_copy kernels for the functionalization pass

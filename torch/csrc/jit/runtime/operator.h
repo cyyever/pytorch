@@ -5,7 +5,6 @@
 
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/core/dispatch/OperatorOptions.h>
-#include <ATen/core/op_registration/op_allowlist.h>
 #include <ATen/core/stack.h>
 #include <c10/util/Exception.h>
 #include <c10/util/overloaded.h>
@@ -302,25 +301,6 @@ std::optional<Operator> OperatorGenerator(
     AliasAnalysisKind alias_analysis) {
   return std::optional<Operator>(Operator(
       std::string(schema_str), std::forward<Func>(op), alias_analysis));
-}
-
-template <typename Func>
-std::optional<Operator> OperatorGenerator(
-    torch::detail::SelectiveStr<true> schema_str,
-    Func&& op,
-    AliasAnalysisKind alias_analysis) {
-  return OperatorGenerator(
-      static_cast<const char*>(schema_str),
-      std::forward<Func>(op),
-      alias_analysis);
-}
-
-template <typename Func>
-std::optional<Operator> OperatorGenerator(
-    torch::detail::SelectiveStr<false> schema_str,
-    Func&& op,
-    AliasAnalysisKind alias_analysis) {
-  return std::nullopt;
 }
 
 template <typename Func>

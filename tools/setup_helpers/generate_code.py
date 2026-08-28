@@ -4,17 +4,11 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Any, cast
 
-import yaml
-
-
-try:
-    # use faster C loader if available
-    from yaml import CSafeLoader as YamlLoader
-except ImportError:
-    from yaml import SafeLoader as YamlLoader  # type: ignore[assignment, misc]
-
+# This script is run by path from the build, so sys.path[0] is this file's
+# directory rather than the repository root; the tools.* imports below need
+# the root on the path.
+sys.path.insert(0, str(Path(__file__).absolute().parents[2]))
 
 NATIVE_FUNCTIONS_PATH = "aten/src/ATen/native/native_functions.yaml"
 TAGS_PATH = "aten/src/ATen/native/tags.yaml"
@@ -27,12 +21,9 @@ def generate_code(
     install_dir: str | None = None,
     subset: str | None = None,
     disable_autograd: bool = False,
-    operator_selector: Any = None,
 ) -> None:
     from tools.autograd.gen_annotated_fn_args import gen_annotated
     from tools.autograd.gen_autograd import gen_autograd, gen_autograd_python
-
-    from torchgen.selective_build.selector import SelectiveBuilder
 
     # Build ATen based Variable classes
     if install_dir is None:
@@ -53,9 +44,6 @@ def generate_code(
             autograd_dir,
         )
 
-    if operator_selector is None:
-        operator_selector = SelectiveBuilder.get_nop_selector()
-
     if subset == "libtorch" or not subset:
         gen_autograd(
             native_functions_path or NATIVE_FUNCTIONS_PATH,
@@ -63,7 +51,6 @@ def generate_code(
             autograd_gen_dir,
             autograd_dir,
             disable_autograd=disable_autograd,
-            operator_selector=operator_selector,
         )
 
     if subset == "python" or not subset:
@@ -75,58 +62,6 @@ def generate_code(
         )
 
 
-def get_selector_from_legacy_operator_selection_list(
-    selected_op_list_path: str,
-) -> Any:
-    with open(selected_op_list_path) as f:
-        # strip out the overload part
-        # It's only for legacy config - do NOT copy this code!
-        selected_op_list = {
-            opname.split(".", 1)[0] for opname in yaml.load(f, Loader=YamlLoader)
-        }
-
-    # Internal build doesn't use this flag any more. Only used by OSS
-    # build now. Every operator should be considered a root operator
-    # (hence generating unboxing code for it, which is consistent with
-    # the current behavior), and also be considered as used for
-    # training, since OSS doesn't support training on mobile for now.
-    #
-    is_root_operator = True
-    is_used_for_training = True
-
-    from torchgen.selective_build.selector import SelectiveBuilder
-
-    selector = SelectiveBuilder.from_legacy_op_registration_allow_list(
-        selected_op_list,
-        is_root_operator,
-        is_used_for_training,
-    )
-
-    return selector
-
-
-def get_selector(
-    selected_op_list_path: str | None,
-    operators_yaml_path: str | None,
-) -> Any:
-    # cwrap depends on pyyaml, so we can't import it earlier
-    REPO_ROOT = Path(__file__).absolute().parents[2]
-    sys.path.insert(0, str(REPO_ROOT))
-
-    from torchgen.selective_build.selector import SelectiveBuilder
-
-    if selected_op_list_path is not None and operators_yaml_path is not None:
-        raise AssertionError(
-            "Expected at most one of selected_op_list_path and "
-            "operators_yaml_path to be set."
-        )
-
-    if selected_op_list_path is None and operators_yaml_path is None:
-        return SelectiveBuilder.get_nop_selector()
-    elif selected_op_list_path is not None:
-        return get_selector_from_legacy_operator_selection_list(selected_op_list_path)
-    else:
-        return SelectiveBuilder.from_yaml_path(cast(str, operators_yaml_path))
 
 
 def main() -> None:
@@ -157,25 +92,12 @@ def main() -> None:
         action="store_true",
         help="It can skip generating autograd related code when the flag is set",
     )
-    parser.add_argument(
-        "--selected-op-list-path",
-        help="Path to the YAML file that contains the list of operators to include for custom build.",
-    )
-    parser.add_argument(
-        "--operators-yaml-path",
-        "--operators_yaml_path",
-        help="Path to the model YAML file that contains the list of operators to include for custom build.",
-    )
     options = parser.parse_args()
 
     # Path: aten/src/ATen
     aten_path = os.path.dirname(
         os.path.dirname(options.native_functions_path or NATIVE_FUNCTIONS_PATH)
     )
-    operator_selector = get_selector(
-        options.selected_op_list_path, options.operators_yaml_path
-    )
-
     generate_code(
         options.gen_dir,
         options.native_functions_path,
@@ -183,8 +105,6 @@ def main() -> None:
         options.install_dir,
         options.subset,
         options.disable_autograd,
-        # options.selected_op_list
-        operator_selector=operator_selector,
     )
 
     # Generate the python bindings for functionalization's `ViewMeta` classes.
@@ -207,7 +127,6 @@ def main() -> None:
     gen_functionalization_view_meta_classes(
         options.native_functions_path or NATIVE_FUNCTIONS_PATH,
         options.tags_path or TAGS_PATH,
-        selector=operator_selector,
         install_dir=functionalization_install_dir,
         template_dir=functionalization_templates_dir,
     )

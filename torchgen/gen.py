@@ -84,7 +84,6 @@ from torchgen.native_function_generation import (
     gen_composite_out_kernel,
     pre_group_native_functions,
 )
-from torchgen.selective_build.selector import SelectiveBuilder
 from torchgen.utils import (
     concatMap,
     context,
@@ -588,18 +587,13 @@ def static_dispatch(
     """
 
 
-# Generates RegisterSchema.cpp.  Depending on the selector, either
-# all schemas are registered, or only some are (in the case of
-# selective build)
+# Generates RegisterSchema.cpp.
 @dataclass(frozen=True)
 class RegisterSchema:
-    selector: SelectiveBuilder
     known_tags: dict[str, int] = field(default_factory=dict)
 
     @method_with_native_function
     def __call__(self, f: NativeFunction) -> str | None:
-        if not self.selector.is_native_function_selected(f):
-            return None
         tags = "{" + ", ".join(f"at::Tag::{tag}" for tag in sorted(f.tags)) + "}"
         if tags == "{}":
             return f"m.def({cpp_string(str(f.func))}, {{}});\n"
@@ -966,13 +960,11 @@ struct TORCH_API structured_{name} : public {parent_class} {{
 """
 
 
-def needs_backend_select(f: NativeFunction, selector: SelectiveBuilder) -> bool:
+def needs_backend_select(f: NativeFunction) -> bool:
     name = str(f.func.name.name)
     if name.endswith("_like") or name.startswith("new_"):
         return False
-    if f.func.arguments.tensor_options is None:
-        return False
-    return selector.is_native_function_selected(f)
+    return f.func.arguments.tensor_options is not None
 
 
 # Generates RegisterBackendSelect.cpp, a series of kernels which provide
@@ -982,13 +974,9 @@ def needs_backend_select(f: NativeFunction, selector: SelectiveBuilder) -> bool:
 class ComputeBackendSelect:
     target: Literal[Target.DEFINITION, Target.REGISTRATION]
 
-    # Selector object to determine which operators to generate
-    # registration code for.
-    selector: SelectiveBuilder
-
     @method_with_native_function
     def __call__(self, f: NativeFunction) -> str | None:
-        if not needs_backend_select(f, self.selector):
+        if not needs_backend_select(f):
             return None
 
         name = native.name(f.func)
@@ -1100,36 +1088,6 @@ def dynamic_type(t: Type) -> str:
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-
-def get_custom_build_selector(
-    provided_op_registration_allowlist: list[str] | None,
-    op_selection_yaml_path: str | None,
-) -> SelectiveBuilder:
-    if (
-        provided_op_registration_allowlist is not None
-        and op_selection_yaml_path is not None
-    ):
-        raise AssertionError(
-            "Both provided_op_registration_allowlist and op_selection_yaml_path "
-            "can NOT be provided at the same time."
-        )
-
-    op_registration_allowlist: set[str] | None = None
-    if provided_op_registration_allowlist is not None:
-        op_registration_allowlist = set(provided_op_registration_allowlist)
-
-    if op_registration_allowlist is not None:
-        selector = SelectiveBuilder.from_legacy_op_registration_allow_list(
-            op_registration_allowlist,
-            True,
-            False,
-        )
-    elif op_selection_yaml_path is not None:
-        selector = SelectiveBuilder.from_yaml_path(op_selection_yaml_path)
-    else:
-        selector = SelectiveBuilder.get_nop_selector()
-
-    return selector
 
 
 def get_grouped_by_view_native_functions(
@@ -1389,7 +1347,6 @@ def get_native_function_definitions(
     grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
     dispatch_key: DispatchKey,
     backend_idx: BackendIndex,
-    selector: SelectiveBuilder,
     rocm: bool,
     symint: bool,
     skip_dispatcher_op_registration: bool,
@@ -1404,7 +1361,6 @@ def get_native_function_definitions(
     ns_gen = dest.RegisterDispatchKey(
         backend_idx,
         Target.NAMESPACED_DEFINITION,
-        selector,
         rocm=rocm,
         symint=symint,
         class_method_name=None,
@@ -1413,7 +1369,6 @@ def get_native_function_definitions(
     anonymous_gen = dest.RegisterDispatchKey(
         backend_idx,
         Target.ANONYMOUS_DEFINITION,
-        selector,
         rocm=rocm,
         symint=symint,
         class_method_name=None,
@@ -1423,7 +1378,6 @@ def get_native_function_definitions(
     reg_gen = dest.RegisterDispatchKey(
         backend_idx,
         Target.REGISTRATION,
-        selector,
         rocm=rocm,
         symint=symint,
         class_method_name=None,
@@ -1490,7 +1444,6 @@ def get_namespaced_declaration(
     grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
     dispatch_key: DispatchKey,
     backend_idx: BackendIndex,
-    selector: SelectiveBuilder,
     rocm: bool,
     symint: bool,
 ) -> list[str]:
@@ -1500,7 +1453,6 @@ def get_namespaced_declaration(
     func = dest.RegisterDispatchKey(
         backend_idx,
         Target.NAMESPACED_DECLARATION,
-        selector,
         rocm=rocm,
         class_method_name=None,
         skip_dispatcher_op_registration=False,
@@ -1536,7 +1488,6 @@ def get_namespaced_declaration(
 def get_native_function_schema_registrations(
     *,
     native_functions: Sequence[NativeFunction],
-    schema_selector: SelectiveBuilder,
 ) -> tuple[list[str], str]:
     ns_native_functions: dict[str, list[NativeFunction]] = defaultdict(list)
     for native_function in native_functions:
@@ -1546,7 +1497,7 @@ def get_native_function_schema_registrations(
     custom_namespace = None
     for namespace, funcs in ns_native_functions.items():
         schema_registrations_body = list(
-            mapMaybe(RegisterSchema(schema_selector), funcs)
+            mapMaybe(RegisterSchema(), funcs)
         )
         # NB: we have to separate aten namespace registration from other namespaces,
         # because in the template we hardcoded an operator for ATen already.
@@ -1574,7 +1525,6 @@ def gen_per_operator_headers(
     native_functions: Sequence[NativeFunction],
     grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
     static_dispatch_idx: list[BackendIndex],
-    selector: SelectiveBuilder,
     backend_indices: dict[DispatchKey, BackendIndex],
     cpu_fm: FileManager,
     device_fms: dict[str, FileManager],
@@ -1701,7 +1651,6 @@ def gen_per_operator_headers(
                     dest.RegisterDispatchKey(
                         backend_indices[dispatch_key],
                         Target.NAMESPACED_DECLARATION,
-                        selector,
                         rocm=rocm,
                         symint=True,
                         class_method_name=None,
@@ -1769,7 +1718,6 @@ def gen_headers(
     grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
     structured_native_functions: Sequence[NativeFunctionsGroup],
     static_dispatch_idx: list[BackendIndex],
-    selector: SelectiveBuilder,
     backend_indices: dict[DispatchKey, BackendIndex],
     headeronly_fm: FileManager,
     core_fm: FileManager,
@@ -1797,7 +1745,6 @@ def gen_headers(
         native_functions=native_functions,
         grouped_native_functions=grouped_native_functions,
         static_dispatch_idx=static_dispatch_idx,
-        selector=selector,
         backend_indices=backend_indices,
         cpu_fm=cpu_fm,
         device_fms=device_fms,
@@ -1904,7 +1851,6 @@ def gen_source_files(
     grouped_native_functions: Sequence[NativeFunction | NativeFunctionsGroup],
     structured_native_functions: Sequence[NativeFunctionsGroup],
     view_groups: Sequence[NativeFunctionsViewGroup],
-    selector: SelectiveBuilder,
     static_dispatch_idx: list[BackendIndex],
     backend_indices: dict[DispatchKey, BackendIndex],
     aoti_fm: FileManager,
@@ -1915,7 +1861,6 @@ def gen_source_files(
     dispatch_keys: Sequence[DispatchKey],
     functions_keys: set[DispatchKey],
     rocm: bool,
-    force_schema_registration: bool,
     skip_dispatcher_op_registration: bool,
     update_aoti_c_shim: bool,
     aoti_backends: set[DispatchKey | None],
@@ -2028,7 +1973,6 @@ def gen_source_files(
                     grouped_native_functions=[gnf],
                     dispatch_key=dispatch_key,
                     backend_idx=backend_index,
-                    selector=selector,
                     rocm=rocm,
                     symint=True,
                     skip_dispatcher_op_registration=skip_dispatcher_op_registration,
@@ -2110,7 +2054,7 @@ def gen_source_files(
     # BackendSelect is generated specially
     def gen_backend_select() -> dict[str, list[str]]:
         relevant_fns = [
-            fn for fn in native_functions if needs_backend_select(fn, selector)
+            fn for fn in native_functions if needs_backend_select(fn)
         ]
         return {
             "ops_headers": list(
@@ -2120,12 +2064,12 @@ def gen_source_files(
             ),
             "backend_select_method_definitions": list(
                 mapMaybe(
-                    ComputeBackendSelect(Target.DEFINITION, selector), relevant_fns
+                    ComputeBackendSelect(Target.DEFINITION), relevant_fns
                 )
             ),
             "backend_select_function_registrations": list(
                 mapMaybe(
-                    ComputeBackendSelect(Target.REGISTRATION, selector), relevant_fns
+                    ComputeBackendSelect(Target.REGISTRATION), relevant_fns
                 )
             ),
         }
@@ -2142,16 +2086,10 @@ def gen_source_files(
         },
     )
 
-    schema_selector = selector
-    if force_schema_registration:
-        schema_selector = SelectiveBuilder.get_nop_selector()
-
     (
         aten_schema_registrations,
         schema_registrations,
-    ) = get_native_function_schema_registrations(
-        native_functions=native_functions, schema_selector=schema_selector
-    )
+    ) = get_native_function_schema_registrations(native_functions=native_functions)
     cpu_fm.write(
         "RegisterSchema.cpp",
         lambda: {
@@ -2252,11 +2190,9 @@ def gen_source_files(
         return {
             "ops_headers": gen_op_headers(g),
             "func_definitions": gen_functionalization_definition(
-                selector,
                 g,
             ),
             "func_registrations": gen_functionalization_registration(
-                selector,
                 g,
                 backend_indices[DispatchKey.CompositeImplicitAutograd],
             ),
@@ -2307,7 +2243,7 @@ def gen_source_files(
             "view_inverse_declarations": list(
                 mapMaybe(
                     lambda g: gen_functionalization_view_inverse_declaration(
-                        selector, g
+                        g
                     ),
                     view_groups,
                 )
@@ -2320,7 +2256,7 @@ def gen_source_files(
         lambda: {
             "view_meta_declarations": list(
                 concatMap(
-                    lambda g: gen_functionalization_view_meta_classes_decl(selector, g),
+                    lambda g: gen_functionalization_view_meta_classes_decl(g),
                     view_groups,
                 )
             )
@@ -2332,7 +2268,7 @@ def gen_source_files(
         lambda: {
             "view_meta_implementations": list(
                 concatMap(
-                    lambda g: gen_functionalization_view_meta_classes_impl(selector, g),
+                    lambda g: gen_functionalization_view_meta_classes_impl(g),
                     view_groups,
                 )
             ),
@@ -2534,13 +2470,6 @@ def main() -> None:
         help="Avoid registering operators into the dispatcher.",
     )
     parser.add_argument(
-        "--force-schema-registration",
-        "--force_schema_registration",
-        action="store_true",
-        help="force it to generate schema-only registrations for all ops, including"
-        "those that are not listed on --op-registration-whitelist",
-    )
-    parser.add_argument(
         "--generate",
         type=str,
         nargs="*",
@@ -2567,10 +2496,6 @@ def main() -> None:
 
     options = parser.parse_args()
 
-    selector = get_custom_build_selector(
-        options.op_registration_whitelist,
-        options.op_selection_yaml_path,
-    )
 
     native_yaml_path = os.path.join(options.source_path, "native/native_functions.yaml")
     tags_yaml_path = os.path.join(options.source_path, "native/tags.yaml")
@@ -2725,7 +2650,6 @@ def main() -> None:
             grouped_native_functions=grouped_native_functions,
             structured_native_functions=structured_native_functions,
             view_groups=view_groups,
-            selector=selector,
             static_dispatch_idx=static_dispatch_idx,
             backend_indices=backend_indices,
             aoti_fm=aoti_fm,
@@ -2736,7 +2660,6 @@ def main() -> None:
             dispatch_keys=dispatch_keys,
             functions_keys=functions_keys,
             rocm=options.rocm,
-            force_schema_registration=options.force_schema_registration,
             skip_dispatcher_op_registration=options.skip_dispatcher_op_registration,
             update_aoti_c_shim=options.update_aoti_c_shim,
             aoti_backends=aoti_backends,
@@ -2751,7 +2674,6 @@ def main() -> None:
             grouped_native_functions=grouped_native_functions,
             structured_native_functions=structured_native_functions,
             static_dispatch_idx=static_dispatch_idx,
-            selector=selector,
             backend_indices=backend_indices,
             headeronly_fm=headeronly_fm,
             core_fm=core_fm,
