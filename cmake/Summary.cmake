@@ -167,6 +167,5 @@ function(caffe2_print_configuration_summary)
   message(STATUS "  Private Dependencies : ${Caffe2_DEPENDENCY_LIBS}")
   message(STATUS "  Public CUDA Deps.    : ${Caffe2_PUBLIC_CUDA_DEPENDENCY_LIBS}")
   message(STATUS "  Private CUDA Deps.   : ${Caffe2_CUDA_DEPENDENCY_LIBS}")
-  # coreml
   message(STATUS "  USE_ROCM_KERNEL_ASSERT : ${USE_ROCM_KERNEL_ASSERT}")
 endfunction()
