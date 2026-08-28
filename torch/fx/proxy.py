@@ -774,6 +774,15 @@ class Proxy:
             )
         tracer = next(iter(tracers.keys()))
 
+        # A torchbind method arrives with its object as args[0], the same way a
+        # Tensor method arrives with its tensor. Keyed on the object rather than
+        # on the callable: the callable is a pybind builtin with no module and
+        # nothing to recognize it by, while torch.classes outlives TorchScript.
+        if args and isinstance(args[0], torch._C.ScriptObject):
+            return tracer.create_proxy(
+                "call_method", orig_method.__name__, args, kwargs
+            )
+
         if torch.overrides.is_tensor_method_or_property(orig_method):
             return tracer.create_proxy(
                 "call_method", orig_method.__name__, args, kwargs

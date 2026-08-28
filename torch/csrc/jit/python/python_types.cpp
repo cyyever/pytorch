@@ -9,6 +9,7 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/python.h>
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -132,12 +133,27 @@ void initPythonTypeBindings(PyObject* module_) {
             // Method has no pybind type here and does not need one.
             if (auto* fn = self.type()->findMethod(name)) {
               auto ivalue = self._ivalue();
-              return py::cpp_function(
-                  [ivalue, fn](const py::args& args, const py::kwargs& kwargs) {
+              // __torch_function__ is handed both the callable and the object
+              // it is bound to, so the lambda needs a handle to itself and one
+              // to self. Both borrowed, not owned: the lambda only runs while
+              // the callable that owns it is alive, and owning either would
+              // make the two keep each other alive.
+              auto self_handle = std::make_shared<PyObject*>(nullptr);
+              py::object bound_object = py::cast(self);
+              py::object callable = py::cpp_function(
+                  [ivalue, fn, self_handle, bound_object](
+                      const py::args& args, const py::kwargs& kwargs) {
                     Method method(ivalue, fn);
                     return invokeScriptMethodFromPython(
-                        method, tuple_slice(args), kwargs);
-                  });
+                        method,
+                        tuple_slice(args),
+                        kwargs,
+                        py::handle(*self_handle),
+                        bound_object);
+                  },
+                  py::name(name.c_str()));
+              *self_handle = callable.ptr();
+              return callable;
             }
             try {
               return toPyObject(self.attr(name));
