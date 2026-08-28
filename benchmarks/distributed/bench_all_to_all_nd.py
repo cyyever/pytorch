@@ -29,7 +29,7 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
-from collections.abc import Callable  # noqa: TC003
+from collections.abc import Callable
 
 import torch
 import torch.distributed as dist

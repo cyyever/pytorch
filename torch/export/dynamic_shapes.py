@@ -6,7 +6,7 @@ import sys
 from collections import defaultdict
 from collections.abc import Callable
 from enum import auto, Enum
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 import torch
 from torch.utils._pytree import (
@@ -535,7 +535,7 @@ def _process_equalities(
     shape_env: "ShapeEnv",
     names: dict[str, tuple[int, int]],
     source_pairs: list[tuple["Source", "Source"]],
-    derived_equalities: list[tuple["Source", Union["Source", "Symbol"], Callable]],
+    derived_equalities: list[tuple["Source", "Source" | "Symbol", Callable]],
     phantom_symbols: dict[str, "Symbol"],
     relaxed_sources: set["Source"],
 ):

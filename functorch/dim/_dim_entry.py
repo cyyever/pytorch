@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
     from . import Dim
 
-import torch  # noqa: TC002
+import torch
 
 
 # NB: The old code represented dimension was from as negative number, so we

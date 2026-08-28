@@ -763,7 +763,7 @@ class _OpPickleData:
     @staticmethod
     def _pickle_op(
         name: str,
-        datacls: type["_OpOverloadPickleData"] | type["_OpOverloadPacketPickleData"],
+        datacls: type["_OpOverloadPickleData" | "_OpOverloadPacketPickleData"],
         options: Options,
     ) -> "_OpPickleData":
         if (ops_filter := options.ops_filter) and not ops_filter(name):

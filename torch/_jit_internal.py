@@ -19,10 +19,9 @@ import warnings
 import weakref
 from typing import (
     Any,
-    Callable,
-    ForwardRef,
     TypeVar,
 )
+from collections.abc import Callable
 from typing import ParamSpec
 
 import torch

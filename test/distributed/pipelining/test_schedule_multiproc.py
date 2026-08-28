@@ -44,7 +44,7 @@ from torch.distributed.pipelining.schedules import (
     FORWARD,
     OVERLAP_F_B,
 )
-from torch.distributed.pipelining.stage import _PipelineStageBase  # noqa: TC002
+from torch.distributed.pipelining.stage import _PipelineStageBase
 from torch.nn.attention.flex_attention import BlockMask, create_block_mask
 from torch.nn.modules.loss import MSELoss
 from torch.testing._internal.common_distributed import (

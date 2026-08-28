@@ -4,7 +4,7 @@ import itertools
 import re
 from typing import Any, TYPE_CHECKING
 
-import torch.fx as fx  # noqa: TC001
+import torch.fx as fx
 from torch.utils._ordered_set import OrderedSet
 
 

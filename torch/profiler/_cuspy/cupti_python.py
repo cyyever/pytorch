@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import ctypes
 import logging
-from collections.abc import Iterable  # noqa: TC003
+from collections.abc import Iterable
 from functools import lru_cache
 from typing import Any, TYPE_CHECKING
 

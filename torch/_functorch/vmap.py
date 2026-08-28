@@ -9,7 +9,7 @@ from __future__ import annotations
 import contextlib
 import functools
 import itertools
-from collections.abc import Callable  # noqa: TC003
+from collections.abc import Callable
 from functools import partial
 from typing import Any, cast, NoReturn, TYPE_CHECKING
 from typing import ParamSpec, TypeVar

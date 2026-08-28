@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from enum import IntFlag
 from multiprocessing import synchronize
 from types import FrameType
-from typing import Any, TextIO, Union
+from typing import Any, TextIO
 
 import torch.multiprocessing as mp
 from torch.distributed.elastic.multiprocessing.errors import ProcessFailure, record
@@ -117,7 +117,7 @@ class Std(IntFlag):
     ALL = OUT | ERR
 
     @classmethod
-    def from_str(cls, vm: str) -> Union["Std", dict[int, "Std"]]:
+    def from_str(cls, vm: str) -> "Std" | dict[int, "Std"]:
         """
         Example:
         ::
