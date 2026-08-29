@@ -147,12 +147,6 @@ def get_cpp_compiler() -> str:
     return compiler
 
 
-def get_ld_and_objcopy(use_relative_path: bool) -> tuple[str, str]:
-    ld = "ld"
-    objcopy = "objcopy"
-    return ld, objcopy
-
-
 def convert_cubin_to_obj(
     cubin_file: str,
     kernel_name: str,
@@ -464,7 +458,6 @@ class BuildOptionsBase:
         libraries: list[str] | None = None,
         passthrough_args: list[str] | None = None,
         aot_mode: bool = False,
-        use_relative_path: bool = False,
         compile_only: bool = False,
         precompiling: bool = False,
         preprocessing: bool = False,
@@ -484,7 +477,6 @@ class BuildOptionsBase:
         self.precompiled_header: str | None = None
 
         self._aot_mode: bool = aot_mode
-        self._use_relative_path: bool = use_relative_path
         self._compile_only: bool = compile_only
         self._precompiling: bool = precompiling
         self._preprocessing: bool = preprocessing
@@ -535,9 +527,6 @@ class BuildOptionsBase:
     def get_aot_mode(self) -> bool:
         return self._aot_mode
 
-    def get_use_relative_path(self) -> bool:
-        return self._use_relative_path
-
     def get_compile_only(self) -> bool:
         return self._compile_only
 
@@ -558,7 +547,6 @@ class BuildOptionsBase:
             "libraries": self.get_libraries(),
             "passthrough_args": self.get_passthrough_args(),
             "aot_mode": self.get_aot_mode(),
-            "use_relative_path": self.get_use_relative_path(),
             "compile_only": self.get_compile_only(),
         }
 
@@ -805,7 +793,6 @@ class CppOptions(BuildOptionsBase):
         compile_only: bool = False,
         warning_all: bool = True,
         extra_flags: Sequence[str] = (),
-        use_relative_path: bool = False,
         compiler: str = "",
         min_optimize: bool = False,
         precompiling: bool = False,
@@ -813,7 +800,6 @@ class CppOptions(BuildOptionsBase):
     ) -> None:
         super().__init__(
             compile_only=compile_only,
-            use_relative_path=use_relative_path,
             precompiling=precompiling,
             preprocessing=preprocessing,
         )
@@ -854,24 +840,6 @@ def _get_torch_cpp_wrapper_definition() -> list[str]:
 
 def _use_custom_generated_macros() -> list[str]:
     return [" C10_USING_CUSTOM_GENERATED_MACROS"]
-
-
-def _use_fb_internal_macros() -> list[str]:
-    return []
-
-
-def _setup_standard_sys_libs(
-    cpp_compiler: str,
-    aot_mode: bool,
-    use_relative_path: bool,
-    cpp_stdlib: CppStdlib,
-) -> tuple[list[str], list[str], list[str], list[str]]:
-    cflags: list[str] = []
-    include_dirs: list[str] = []
-    passthrough_args: list[str] = []
-    ldflags: list[str] = []
-
-    return cflags, include_dirs, passthrough_args, ldflags
 
 
 def _get_build_args_of_chosen_isa(vec_isa: VecISA) -> tuple[list[str], list[str]]:
@@ -1105,7 +1073,6 @@ def get_cpp_torch_options(
     vec_isa: VecISA,
     include_pytorch: bool,
     aot_mode: bool,
-    use_relative_path: bool,
     use_mmap_weights: bool,
     use_mmap_weights_external: bool,
 ) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str], list[str]]:
@@ -1129,13 +1096,6 @@ def get_cpp_torch_options(
     torch_cpp_wrapper_definitions = _get_torch_cpp_wrapper_definition()
     use_custom_generated_macros_definitions = _use_custom_generated_macros()
 
-    (
-        sys_libs_cflags,
-        sys_libs_include_dirs,
-        sys_libs_passthrough_args,
-        sys_libs_ldflags,
-    ) = _setup_standard_sys_libs(cpp_compiler, aot_mode, use_relative_path, cpp_stdlib)
-
     isa_macros, isa_ps_args_build_flags = _get_build_args_of_chosen_isa(vec_isa)
 
     (
@@ -1155,8 +1115,6 @@ def get_cpp_torch_options(
         omp_passthrough_args,
     ) = _get_openmp_args(cpp_compiler)
 
-    fb_macro_passthrough_args = _use_fb_internal_macros()
-
     mmap_self_macros = get_mmap_self_macro(use_mmap_weights, use_mmap_weights_external)
     caching_allocator_macros = get_caching_allocator_macro()
 
@@ -1164,23 +1122,15 @@ def get_cpp_torch_options(
         torch_cpp_wrapper_definitions
         + use_custom_generated_macros_definitions
         + isa_macros
-        + fb_macro_passthrough_args
         + mmap_self_macros
         + caching_allocator_macros
     )
-    include_dirs = (
-        sys_libs_include_dirs
-        + python_include_dirs
-        + torch_include_dirs
-        + omp_include_dir_paths
-    )
-    cflags = sys_libs_cflags + omp_cflags
-    ldflags = sys_libs_ldflags + omp_ldflags
+    include_dirs = python_include_dirs + torch_include_dirs + omp_include_dir_paths
+    cflags = omp_cflags
+    ldflags = omp_ldflags
     libraries_dirs = python_libraries_dirs + torch_libraries_dirs + omp_lib_dir_paths
     libraries = torch_libraries + omp_lib
-    passthrough_args = (
-        sys_libs_passthrough_args + isa_ps_args_build_flags + omp_passthrough_args
-    )
+    passthrough_args = isa_ps_args_build_flags + omp_passthrough_args
 
     return (
         definitions,
@@ -1212,7 +1162,6 @@ class CppTorchOptions(CppOptions):
         warning_all: bool = True,
         aot_mode: bool = False,
         compile_only: bool = False,
-        use_relative_path: bool = False,
         use_mmap_weights: bool = False,
         use_mmap_weights_external: bool = False,
         shared: bool = True,
@@ -1226,7 +1175,6 @@ class CppTorchOptions(CppOptions):
             compile_only=compile_only,
             warning_all=warning_all,
             extra_flags=extra_flags,
-            use_relative_path=use_relative_path,
             compiler=compiler,
             min_optimize=min_optimize,
             precompiling=precompiling,
@@ -1248,7 +1196,6 @@ class CppTorchOptions(CppOptions):
             vec_isa=vec_isa,
             include_pytorch=include_pytorch,
             aot_mode=aot_mode,
-            use_relative_path=use_relative_path,
             use_mmap_weights=use_mmap_weights,
             use_mmap_weights_external=use_mmap_weights_external,
         )
@@ -1398,7 +1345,6 @@ class CppTorchDeviceOptions(CppTorchOptions):
         device_type: str = "cuda",
         aot_mode: bool = False,
         compile_only: bool = False,
-        use_relative_path: bool = False,
         use_mmap_weights: bool = False,
         use_mmap_weights_external: bool = False,
         shared: bool = True,
@@ -1413,7 +1359,6 @@ class CppTorchDeviceOptions(CppTorchOptions):
             include_pytorch=include_pytorch,
             aot_mode=aot_mode,
             compile_only=compile_only,
-            use_relative_path=use_relative_path,
             use_mmap_weights=use_mmap_weights,
             use_mmap_weights_external=use_mmap_weights_external,
             extra_flags=extra_flags,
@@ -1538,12 +1483,9 @@ class CppBuilder:
         self._libraries_args = ""
         self._passthrough_parameters_args = ""
 
-        # When relative path is used, we need to maintain the source dir list.
-        self._orig_source_paths = []
         self._output_dir = ""
         self._target_file = ""
 
-        self._use_relative_path: bool = False
         self._aot_mode: bool = False
 
         self._name = name
@@ -1554,7 +1496,6 @@ class CppBuilder:
         # Code start here, initial self internal variables firstly.
         self._build_option = BuildOption
         self._compiler = BuildOption.get_compiler()
-        self._use_relative_path = BuildOption.get_use_relative_path()
         self._aot_mode = BuildOption.get_aot_mode()
 
         self._output_dir = output_dir
@@ -1581,12 +1522,7 @@ class CppBuilder:
             file_ext, output_flags = self.__get_python_module_flags()
         self._target_file = os.path.join(self._output_dir, f"{self._name}{file_ext}")
 
-        relative_target_file = (
-            os.path.basename(self._target_file)
-            if self._use_relative_path
-            else self._target_file
-        )
-        self._output = f"{output_flags} {relative_target_file}"
+        self._output = f"{output_flags} {self._target_file}"
 
         if isinstance(sources, str):
             sources = [sources]
@@ -1598,10 +1534,6 @@ class CppBuilder:
                 )
             # See above; we can currently assume this is not on MSVC.
             self._sources_args = f"-x c++-header {sources[0]}"
-            if self._use_relative_path and _is_clang(BuildOption.get_compiler()):
-                # Store PCH paths relative to -isysroot so the .pch can
-                # be used from a different build directory.  The matching
-                self._cflags_args += " -relocatable-pch -Xclang -fno-pch-timestamp "
         else:
             self._sources_args = " ".join(sources)
 
@@ -1613,14 +1545,6 @@ class CppBuilder:
 
         if precompiled_header := BuildOption.precompiled_header:
             self._include_dirs_args = f"-include {precompiled_header} "
-            if self._use_relative_path and _is_clang(BuildOption.get_compiler()):
-                # Skip clang's own PCH validation during consumption.
-                # _precompile_header() already handles cache invalidation
-                # via content hashing, and -fno-validate-pch allows the
-                # PCH to be used even when the original source file is at
-                # a different path (e.g. across Remote Execution workers).
-                self._cflags_args += " -Xclang -fno-validate-pch "
-
         for inc_dir in BuildOption.get_include_dirs():
             self._include_dirs_args += f"-I{shlex.quote(inc_dir)} "
 

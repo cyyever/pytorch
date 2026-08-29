@@ -80,7 +80,6 @@ from torch._inductor.cpp_builder import (
     CppTorchDeviceOptions,
     get_compiler_version_info,
     get_cpp_compiler,
-    get_ld_and_objcopy,
     get_name_and_dir_from_output_file_path,
     normalize_path_separator,
     run_asm_build_object,
@@ -2667,8 +2666,6 @@ class AotCodeCompiler:
         # guarantee the source code hash contains ISA difference.
         cpp_command = repr(vec_isa_cmd_gen.get_command_line())
 
-        use_relative_path = False
-
         (
             specified_output_path,
             specified_artifact_name,
@@ -2930,7 +2927,6 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                 device_type=device_type,
                 aot_mode=graph.aot_mode,
                 compile_only=True,
-                use_relative_path=use_relative_path,
             )
             object_builder = CppBuilder(
                 name=str(consts_s.stem),
@@ -3132,7 +3128,6 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                 "device_type": device_type,
                 "use_mmap_weights": use_mmap_weights,
                 "use_mmap_weights_external": use_external_weights,
-                "use_relative_path": use_relative_path,
                 "vec_isa": picked_vec_isa,
             }
             build_abicompat = (
@@ -3336,7 +3331,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
             asm_files = []
             fatbin_cmds: list[tuple[str, str, str | None, str | None]] = []
             cubins_to_embed: list[tuple[str, str]] = []
-            ld, objcopy = get_ld_and_objcopy(use_relative_path)
+            ld, objcopy = "ld", "objcopy"
             kernels = getattr(V.graph.wrapper_code, "_kernel_name_to_body", {})
             for kernel_name, value in CudaKernelParamCache.cache.items():
                 if kernel_name not in kernels:
@@ -3452,7 +3447,6 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                 vec_isa=picked_vec_isa,
                 device_type=device_type,
                 aot_mode=graph.aot_mode,
-                use_relative_path=use_relative_path,
             )
 
             if gpu_kernels_o and device_type == "xpu":
@@ -3461,7 +3455,6 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                     vec_isa=picked_vec_isa,
                     device_type=device_type,
                     aot_mode=graph.aot_mode,
-                    use_relative_path=use_relative_path,
                     extra_flags=[
                         "-fsycl",
                         "-fsycl-targets=intel_gpu_pvc",
@@ -3871,7 +3864,6 @@ class CppCodeCache:
             **cls.cpp_compile_command_flags,
             "device_type": device_type,
             "extra_flags": extra_flags,
-            "use_relative_path": False,
         }
         main_compile_command = {
             **shared_compile_command,

@@ -37,7 +37,7 @@ def compile_so(aoti_dir: str, aoti_files: list[str], so_path: str) -> str:
     with open(file_name + "_compile_flags.json") as f:
         compile_flags = json.load(f)
 
-    compile_options = BuildOptionsBase(**compile_flags, use_relative_path=False)
+    compile_options = BuildOptionsBase(**compile_flags)
     object_builder = CppBuilder(
         name=file_name,
         sources=cpp_file,
@@ -50,7 +50,7 @@ def compile_so(aoti_dir: str, aoti_files: list[str], so_path: str) -> str:
     with open(file_name + "_linker_flags.json") as f:
         linker_flags = json.load(f)
 
-    linker_options = BuildOptionsBase(**linker_flags, use_relative_path=False)
+    linker_options = BuildOptionsBase(**linker_flags)
     so_builder = CppBuilder(
         name=os.path.split(so_path)[-1],
         sources=[output_o, consts_o],
