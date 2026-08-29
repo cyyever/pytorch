@@ -163,9 +163,7 @@ class VecMask {
   template <typename U>
   static VecMask<T, N> from(U* b) {
     __at_align__ T mask[size()];
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
     for (int i = 0; i < size(); i++) {
       mask[i] = value_to_mask(b[i]);
     }
@@ -175,9 +173,7 @@ class VecMask {
   template <typename U>
   static VecMask<T, N> from(U* b, int count) {
     __at_align__ T mask[size()];
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
     for (int i = 0; i < count; i++) {
       mask[i] = value_to_mask(b[i]);
     }
