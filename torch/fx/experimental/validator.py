@@ -770,7 +770,6 @@ def bisect(shape_env: "ShapeEnv") -> None:
     )
     from torch.fx.experimental.symbolic_shapes import (
         CURRENT_NODE_KEY,
-        ShapeEnv,
         SHAPEENV_EVENT_KEY,
     )
 
