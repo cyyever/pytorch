@@ -114,7 +114,7 @@ def type_wrapper_name(f: NativeFunction, key: str = "Default") -> str:
 # See NOTE [ Autograd View Variables ] in variable.h for details.
 # If you update list VIEW_FUNCTIONS or RETURNS_VIEWS_OF_INPUT,
 # you **MUST** also update the public list of view ops accordingly in
-# docs/source/tensor_view.rst. Note not all ATen functions are exposed to public,
+# docs/source/tensor_view.md. Note not all ATen functions are exposed to public,
 # e.g alias & sparse_coo_tensor_with_dims_and_tensors.
 #
 # A map: function name => name of the argument that all outputs are view of
