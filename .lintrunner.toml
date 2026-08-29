@@ -6,17 +6,11 @@ exclude_patterns = [
     'build_test_custom_build/**',
     'build/**',
     'caffe2/**',
-    'docs/caffe2/**',
-    'docs/cpp/src/**',
-    'docs/src/**',
-    'fb/**',
-    '**/fb/**',
     'functorch/docs/**',
     'functorch/examples/**',
     'functorch/docs/source/tutorials/**',
     'torch/_inductor/fx_passes/serialized_patterns/**',
     'torch/_inductor/autoheuristic/artifacts/**',
-    'torch/_inductor/kernel/vendored_templates/cutedsl/kernels/**',
     'torch/_inductor/kernel/vendored_templates/cutedsl/dense_blockscaled_gemm_persistent.py',
     'torch/_inductor/kernel/vendored_templates/flydsl/kernels/**',
     'torch/_vendor/**',
@@ -30,7 +24,6 @@ exclude_patterns = [
     'torch/lib/**',
     'venv/**',
     "tools/experimental/torchfuzz/**",
-    'tools/test/test_selective_build.py',
 ]
 command = [
     'uv',
@@ -65,7 +58,6 @@ include_patterns = [
 exclude_patterns = [
     'aten/src/ATen/native/mps/kernels/Quantized.metal',
     'c10/util/strong_type.h',
-    '**/fb/**',
     'torch/csrc/inductor/aoti_torch/generated/**',
     'torch/csrc/utils/pythoncapi_compat.h',
     'aten/src/ATen/dlpack.h',
@@ -94,7 +86,6 @@ code = 'PYREFLY'
 include_patterns = [
 ]
 exclude_patterns = [
-    'torch/_inductor/kernel/vendored_templates/cutedsl/kernels/**',
     'torch/_inductor/kernel/vendored_templates/cutedsl/dense_blockscaled_gemm_persistent.py',
     'torch/_inductor/kernel/vendored_templates/flydsl/kernels/**',
     'torch/_vendor/**',
@@ -121,7 +112,6 @@ include_patterns = [
 exclude_patterns = [
     # The negative filters below exclude generated headers and CUDA files,
     # which this CI job cannot compile.
-    '**/fb/**',
     '**/*inl.h',
     'aten/src/ATen/cpu/FlushDenormal.cpp',
     'aten/src/ATen/cpu/vml.h',
@@ -141,7 +131,6 @@ exclude_patterns = [
     'c10/util/hash.h',
     'c10/util/strong_type.h',
     'c10/util/SmallVector.h',
-    'c10/util/win32-headers.h',
     'third_party/**/*',
     'torch/csrc/distributed/**/*.cu',
     'torch/csrc/distributed/c10d/quantization/quantization_gpu.h',
@@ -218,9 +207,6 @@ command = [
 code = 'TYPEIGNORE'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
-    'fb/**',
-    '**/fb/**',
-    'test/test_jit.py',
 ]
 command = [
     'python3',
@@ -261,8 +247,6 @@ code = 'NOQA'
 include_patterns = ['**/*.py', '**/*.pyi']
 exclude_patterns = [
     'caffe2/**',
-    'fb/**',
-    '**/fb/**',
     'torch/_vendor/**',
     ]
 command = [
@@ -318,9 +302,6 @@ exclude_patterns=[
     '**/*.ipynb',
     '**/*.ps1',
     '**/*.ptl',
-    'fb/**',
-    '**/fb/**',
-    'tools/clang_format_hash/**',
     'test/cpp/jit/upgrader_models/*.ptl',
     'test/cpp/jit/upgrader_models/*.ptl.ff',
     'test/cpython/**',
@@ -345,8 +326,6 @@ exclude_patterns = [
     '**/*.diff',
     '**/*.patch',
     'third_party/**',
-    'fb/**',
-    '**/fb/**',
     'test/cpp/jit/upgrader_models/*.ptl',
     'test/cpp/jit/upgrader_models/*.ptl.ff',
 ]
@@ -374,8 +353,6 @@ exclude_patterns = [
     'third_party/**',
     '**/.gitattributes',
     '**/.gitmodules',
-    'fb/**',
-    '**/fb/**',
     'test/cpp/jit/upgrader_models/*.ptl',
     'test/cpp/jit/upgrader_models/*.ptl.ff',
     '.lintrunner.toml',
@@ -477,7 +454,6 @@ include_patterns = [
     'torch/nativert/**',
 ]
 exclude_patterns = [
-    '**/fb/**',
     'torch/csrc/utils/pythoncapi_compat.h',
 ]
 command = [
@@ -531,7 +507,6 @@ include_patterns = [
     'torch/_meta_registrations.py',
 ]
 exclude_patterns = [
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -557,7 +532,6 @@ command = [
 code = 'ISINSTANCE_FAKE_TENSOR'
 include_patterns = ['torch/**/*.py']
 exclude_patterns = [
-    '**/fb/**',
     'torch/testing/**',
 ]
 command = [
@@ -588,8 +562,6 @@ exclude_patterns = [
     # These specializations are non-orphan
     'torch/csrc/distributed/c10d/init.cpp',
     'torch/csrc/jit/python/pybind.h',
-    'fb/**',
-    '**/fb/**',
     # These are safe to exclude as they do not have Python
     'c10/**/*',
 ]
@@ -619,7 +591,6 @@ exclude_patterns = [
     '**/*.rst',
     '**/*.md',
     '**/*.diff',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -649,9 +620,6 @@ exclude_patterns = [
     '**/*.bash',
     '**/git-pre-commit',
     '**/git-clang-format',
-    '**/gradlew',
-    'fb/**',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -665,7 +633,6 @@ code = 'CUBINCLUDE'
 include_patterns = ['aten/**']
 exclude_patterns = [
     'aten/src/ATen/cuda/cub*.cuh',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -693,7 +660,6 @@ exclude_patterns = [
     'c10/cuda/CUDAFunctions.h',
     'c10/cuda/CUDACachingAllocator.cpp',
     'c10/cuda/CUDAMallocAsyncAllocator.cpp',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -725,7 +691,6 @@ exclude_patterns = [
     'c10/cuda/CUDAGuard.h',
     'c10/cuda/impl/CUDATest.cpp',
     'torch/csrc/cuda/nccl.cpp',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -754,8 +719,6 @@ exclude_patterns = [
     'functorch/benchmarks/**',
     # Grandfathered in
     'caffe2/**',
-    'fb/**',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -804,9 +767,7 @@ exclude_patterns = [
     'aten/src/ATen/ATenConfig.cmake.in',
     'cmake/TorchConfig.cmake.in',
     'cmake/TorchConfigVersion.cmake.in',
-    'cmake/cmake_uninstall.cmake.i',
-    'fb/**',
-    '**/fb/**',
+    'cmake/cmake_uninstall.cmake.in',
 ]
 command = [
     'uv',
@@ -826,7 +787,6 @@ include_patterns = [
     '.ci/pytorch/**/*.sh'
 ]
 exclude_patterns = [
-    '**/fb/**',
 ]
 command = [
     'uv',
@@ -849,7 +809,6 @@ include_patterns = [
     # '.github/actions/**/*.yaml',
 ]
 exclude_patterns = [
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -874,7 +833,6 @@ include_patterns = [
 ]
 exclude_patterns = [
     'test/run_test.py',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -915,13 +873,8 @@ include_patterns = [
 ]
 exclude_patterns = [
     'test/run_test.py',
-    '**/fb/**',
     'test/cpython/**',
-    'test/quantization/**',  # should be run through test/test_quantization.py
-    'test/jit/**',  # should be run through test/test_jit.py
-    'test/ao/sparsity/**',  # should be run through test/test_ao_sparsity.py
     'test/fx/**',  # should be run through test/test_fx.py
-    'test/package/**',  # excluded by test/run_test.py
     'test/distributed/argparse_util_test.py',
     'test/distributed/bin/test_script.py',
     'test/distributed/elastic/agent/server/test/local_elastic_agent_test.py',
@@ -944,14 +897,12 @@ exclude_patterns = [
     'test/distributed/elastic/utils/data/cycling_iterator_test.py',
     'test/distributed/launcher/api_test.py',
     'test/distributed/launcher/bin/test_script.py',
-    'test/distributed/launcher/bin/test_script_init_method.py',
     'test/distributed/launcher/bin/test_script_is_torchelastic_launched.py',
     'test/distributed/launcher/bin/test_script_local_rank.py',
     'test/distributed/launcher/launch_test.py',
     'test/distributed/optim/test_apply_optimizer_in_backward.py',
     'test/distributed/optim/test_named_optimizer.py',
     'test/distributed/test_c10d_spawn.py',
-    'test/distributed/test_collective_utils.py',
     'test/distributions/test_distributions.py',
     'test/inductor/test_aot_inductor_utils.py',
     'test/nn/test_init.py',
@@ -960,7 +911,6 @@ exclude_patterns = [
     'test/optim/test_swa_utils.py',
     'test/run_test.py',
     'test/test_cuda_expandable_segments.py',
-    'test/test_hub.py',
 ]
 command = [
     'uv',
@@ -983,7 +933,6 @@ include_patterns = [
 ]
 exclude_patterns = [
     'c10/util/CallOnce.h',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -1028,7 +977,6 @@ include_patterns = [
     'torch/nativert/**',
 ]
 exclude_patterns = [
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -1068,7 +1016,6 @@ include_patterns = [
     '.github/**/*.yaml',
 ]
 exclude_patterns = [
-    '**/fb/**',
 ]
 command = [
     'uv',
@@ -1100,17 +1047,13 @@ exclude_patterns = [
     # We don't care too much about files in this directory, don't enforce
     # spelling on them
     'caffe2/**',
-    'fb/**',
-    '**/fb/**',
     'third_party/**',
     'test/cpython/**',
     'torch/_vendor/**',
     'torch/_inductor/fx_passes/serialized_patterns/**',
     'torch/_inductor/autoheuristic/artifacts/**',
-    'torch/_inductor/kernel/vendored_templates/cutedsl/kernels/**',
     'torch/_inductor/kernel/vendored_templates/cutedsl/dense_blockscaled_gemm_persistent.py',
     'torch/_inductor/kernel/vendored_templates/flydsl/kernels/**',
-    'torch/utils/model_dump/preact.mjs',
     # Generated: mirrors the label names on GitHub verbatim
     'tools/linter/adapters/pytorch_labels.json',
 ]
@@ -1134,8 +1077,6 @@ command = [
 exclude_patterns = [
     # We don't care too much about files in this directory, don't enforce
     # formatting on them
-    'fb/**',
-    '**/fb/**',
     'test/cpython/**',
     'torch/_vendor/**',
     'torch/_inductor/fx_passes/serialized_patterns/**',
@@ -1146,50 +1087,16 @@ exclude_patterns = [
     'torch/testing/_internal/py312_intrinsics.py',
     # These files are all grandfathered in, feel free to remove from this list
     # as necessary
-    'test/quantization/__init__.py',
-    'test/quantization/core/__init__.py',
-    'test/quantization/core/experimental/apot_fx_graph_mode_ptq.py',
-    'test/quantization/core/experimental/apot_fx_graph_mode_qat.py',
-    'test/quantization/core/experimental/quantization_util.py',
-    'test/quantization/core/experimental/test_bits.py',
-    'test/quantization/core/experimental/test_fake_quantize.py',
-    'test/quantization/core/experimental/test_linear.py',
-    'test/quantization/core/experimental/test_nonuniform_observer.py',
-    'test/quantization/core/experimental/test_quantized_tensor.py',
-    'test/quantization/core/experimental/test_quantizer.py',
-    'test/quantization/core/test_backend_config.py',
-    'test/quantization/core/test_quantized_functional.py',
-    'test/quantization/core/test_quantized_module.py',
-    'test/quantization/core/test_quantized_op.py',
-    'test/quantization/core/test_quantized_tensor.py',
-    'test/quantization/core/test_top_level_apis.py',
-    'test/quantization/core/test_utils.py',
-    'test/quantization/core/test_workflow_module.py',
-    'test/quantization/core/test_workflow_ops.py',
-    'test/quantization/fx/__init__.py',
-    'test/quantization/fx/test_equalize_fx.py',
-    'test/quantization/fx/test_model_report_fx.py',
-    'test/quantization/fx/test_numeric_suite_fx.py',
-    'test/quantization/fx/test_quantize_fx.py',
-    'test/quantization/fx/test_subgraph_rewriter.py',
     'test/test_function_schema.py',
     'test/test_functional_autograd_benchmark.py',
     'test/test_functional_optim.py',
     'test/test_functionalization_of_rng_ops.py',
-    'test/test_datapipe.py',
     'test/test_futures.py',
     'test/test_fx.py',
     'test/test_fx_experimental.py',
     'test/test_fx_passes.py',
     'test/test_fx_reinplace_pass.py',
     'test/test_import_stats.py',
-    'test/test_jit.py',
-    'test/test_jit_autocast.py',
-    'test/test_jit_disabled.py',
-    'test/test_jit_legacy.py',
-    'test/test_jit_profiling.py',
-    'test/test_jit_simple.py',
-    'test/test_jit_string.py',
     'test/test_jiterator.py',
     'test/test_kernel_launch_checks.py',
     'test/test_linalg.py',
@@ -1199,11 +1106,7 @@ exclude_patterns = [
     'test/test_scaled_matmul_cuda.py',
     'test/test_meta.py',
     'test/test_mkl_verbose.py',
-    'test/test_mkldnn.py',
-    'test/test_mkldnn_fusion.py',
-    'test/test_mkldnn_verbose.py',
     'test/test_modules.py',
-    'test/test_monitor.py',
     'test/test_mps.py',
     'test/test_multiprocessing_spawn.py',
     'test/test_namedtuple_return_api.py',
@@ -1215,7 +1118,6 @@ exclude_patterns = [
     'test/test_prims.py',
     'test/test_proxy_tensor.py',
     'test/test_pruning_op.py',
-    'test/test_quantization.py',
     'test/test_reductions.py',
     'test/test_scatter_gather_ops.py',
     'test/test_schema_check.py',
@@ -1230,7 +1132,6 @@ exclude_patterns = [
     'test/test_subclass.py',
     'test/test_sympy_utils.py',
     'test/test_tensor_creation_ops.py',
-    'test/test_tensorboard.py',
     'test/test_testing.py',
     'test/test_torch.py',
     'test/test_transformers.py',
@@ -1279,11 +1180,9 @@ exclude_patterns = [
     'torch/testing/_internal/check_kernel_launches.py',
     'torch/testing/_internal/codegen/__init__.py',
     'torch/testing/_internal/common_cuda.py',
-    'torch/testing/_internal/common_jit.py',
     'torch/testing/_internal/common_methods_invocations.py',
     'torch/testing/_internal/common_modules.py',
     'torch/testing/_internal/common_nn.py',
-    'torch/testing/_internal/common_pruning.py',
     'torch/testing/_internal/common_quantization.py',
     'torch/testing/_internal/common_quantized.py',
     'torch/testing/_internal/common_subclass.py',
@@ -1296,15 +1195,12 @@ exclude_patterns = [
     'torch/testing/_internal/data/network2.py',
     'torch/testing/_internal/generated/__init__.py',
     'torch/testing/_internal/inductor_utils.py',
-    'torch/testing/_internal/jit_metaprogramming_utils.py',
-    'torch/testing/_internal/jit_utils.py',
     'torch/testing/_internal/logging_tensor.py',
     'torch/testing/_internal/logging_utils.py',
     'torch/testing/_internal/optests/__init__.py',
     'torch/testing/_internal/optests/aot_autograd.py',
     'torch/testing/_internal/optests/fake_tensor.py',
     'torch/testing/_internal/optests/make_fx.py',
-    'torch/testing/_internal/quantization_torch_package_models.py',
     'torch/testing/_internal/test_module/__init__.py',
     'torch/testing/_internal/test_module/future_div.py',
     'torch/testing/_internal/test_module/no_future_div.py',
@@ -1335,7 +1231,6 @@ exclude_patterns = [
     'torch/utils/benchmark/utils/timer.py',
     'torch/utils/benchmark/utils/valgrind_wrapper/__init__.py',
     'torch/utils/benchmark/utils/valgrind_wrapper/timer_interface.py',
-    'torch/utils/bundled_inputs.py',
     'torch/utils/checkpoint.py',
     'torch/utils/collect_env.py',
     'torch/utils/cpp_backtrace.py',
@@ -1349,21 +1244,8 @@ exclude_patterns = [
     'torch/utils/hipify/hipify_python.py',
     'torch/utils/hipify/version.py',
     'torch/utils/hooks.py',
-    'torch/utils/jit/__init__.py',
-    'torch/utils/jit/log_extract.py',
-    'torch/utils/mkldnn.py',
-    'torch/utils/model_dump/__init__.py',
-    'torch/utils/model_dump/__main__.py',
     'torch/utils/model_zoo.py',
     'torch/utils/show_pickle.py',
-    'torch/utils/tensorboard/__init__.py',
-    'torch/utils/tensorboard/_convert_np.py',
-    'torch/utils/tensorboard/_embedding.py',
-    'torch/utils/tensorboard/_proto_graph.py',
-    'torch/utils/tensorboard/_pytorch_graph.py',
-    'torch/utils/tensorboard/_utils.py',
-    'torch/utils/tensorboard/summary.py',
-    'torch/utils/tensorboard/writer.py',
     'torch/utils/throughput_benchmark.py',
     'torch/utils/viz/__init__.py',
     'torch/utils/viz/_cycles.py',
@@ -1413,8 +1295,6 @@ code = 'COPYRIGHT'
 include_patterns = ['**']
 exclude_patterns = [
     '.lintrunner.toml',
-    'fb/**',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -1434,8 +1314,6 @@ command = [
 code = 'LINTRUNNER_VERSION'
 include_patterns = ['**']
 exclude_patterns = [
-    'fb/**',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -1455,7 +1333,6 @@ exclude_patterns = [
     'functorch/docs/**',
     'torch/_inductor/fx_passes/serialized_patterns/**',
     'torch/_inductor/autoheuristic/artifacts/**',
-    'torch/_inductor/kernel/vendored_templates/cutedsl/kernels/**',
     'torch/_inductor/kernel/vendored_templates/cutedsl/dense_blockscaled_gemm_persistent.py',
     'torch/_inductor/kernel/vendored_templates/flydsl/kernels/**',
     'torch/_vendor/**',
@@ -1463,8 +1340,6 @@ exclude_patterns = [
     'test/test_torchfuzz_repros.py',
     'scripts/**',
     'third_party/**',
-    'fb/**',
-    '**/fb/**',
     # Autogenerated pyi stubs (see .gitignore) — lint the .pyi.in templates
     # instead.
 ]
@@ -1489,10 +1364,8 @@ include_patterns = [
 exclude_patterns = [
     'test/cpython/**',
     'test/test_torchfuzz_repros.py',
-    'test/torch_np/numpy_test/**',
+    'test/torch_np/numpy_tests/**',
     'third_party/**',
-    'fb/**',
-    '**/fb/**',
 ]
 command = [
     'python3',
@@ -1550,18 +1423,9 @@ include_patterns = [
     "aten/src/ATen/detail/MetaGuardImpl.cpp",
     # aten native source
     "aten/src/ATen/native/cpu/*.cpp",
-    "aten/src/ATen/native/ao_sparse/cpu/kernels/*.cpp",
-    "aten/src/ATen/native/ao_sparse/quantized/cpu/kernels/*.cpp",
-    "aten/src/ATen/native/quantized/cpu/kernels/*.cpp",
     "aten/src/ATen/native/*.cpp",
     "aten/src/ATen/native/cpu/**/*.cpp",
-    "aten/src/ATen/native/ao_sparse/*.cpp",
-    "aten/src/ATen/native/ao_sparse/**/*.cpp",
-    "aten/src/ATen/native/ao_sparse/quantized/*.cpp",
-    "aten/src/ATen/native/ao_sparse/quantized/**/*.cpp",
     "aten/src/ATen/native/nested/*.cpp",
-    "aten/src/ATen/native/quantized/*.cpp",
-    "aten/src/ATen/native/quantized/**/*.cpp",
     "aten/src/ATen/native/sparse/*.cpp",
     "aten/src/ATen/native/transformers/*.cpp",
     "aten/src/ATen/native/utils/*.cpp",
@@ -1576,12 +1440,6 @@ include_patterns = [
     "aten/src/ATen/native/cpu/**/*.h",
     "aten/src/ATen/native/nested/*.h",
     "aten/src/ATen/native/sparse/*.h",
-    "aten/src/ATen/native/ao_sparse/*.h",
-    "aten/src/ATen/native/ao_sparse/cpu/*.h",
-    "aten/src/ATen/native/ao_sparse/quantized/*.h",
-    "aten/src/ATen/native/ao_sparse/quantized/cpu/*.h",
-    "aten/src/ATen/native/quantized/*.h",
-    "aten/src/ATen/native/quantized/cpu/*.h",
     "aten/src/ATen/native/transformers/*.h",
     "aten/src/ATen/native/utils/*.h",
     "aten/src/ATen/native/mps/Copy.h",
@@ -1592,7 +1450,6 @@ exclude_patterns = [
     "aten/src/ATen/Context.cpp",
     "aten/src/ATen/DLConvertor.cpp",
     "aten/src/ATen/core/Array.h",
-    "aten/src/ATen/native/quantized/ConvUtils.h",
     "aten/src/ATen/native/sparse/SparseBlasImpl.cpp",  # triton implementation
     "aten/src/ATen/native/transformers/attention.cpp",
     "aten/src/ATen/native/**/cudnn/**",  # cudnn is cuda specific
@@ -1648,7 +1505,6 @@ include_patterns = [
    'torch/_inductor/**/*.py'
 ]
 exclude_patterns = [
-    'torch/_inductor/kernel/vendored_templates/cutedsl/kernels/**',
     'torch/_inductor/kernel/vendored_templates/cutedsl/dense_blockscaled_gemm_persistent.py',
     'torch/_inductor/kernel/vendored_templates/flydsl/kernels/**',
 ]
@@ -1813,10 +1669,8 @@ exclude_patterns = [
     'aten/src/ATen/ATenConfig.cmake.in',
     'cmake/TorchConfig.cmake.in',
     'cmake/TorchConfigVersion.cmake.in',
-    'cmake/cmake_uninstall.cmake.i',
+    'cmake/cmake_uninstall.cmake.in',
     'third_party/**',
-    'fb/**',
-    '**/fb/**',
 ]
 command = [
     'python3',
