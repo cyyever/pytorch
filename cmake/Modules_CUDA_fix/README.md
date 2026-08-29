@@ -14,13 +14,8 @@ differently between earlier versions of Visual Studio and VS2017. First
 introduced after 3.10.1 master version (see
 [Kitware/CMake@bc88329e](https://github.com/Kitware/CMake/commit/bc88329e)).
 
-The downside of using these fixes is that `./upstream/CMakeInitializeConfigs.cmake`,
-defining some new CMake variables (added in
-[Kitware/CMake@48f7e2d3](https://github.com/Kitware/CMake/commit/48f7e2d3)),
-must be included before `./upstream/FindCUDA.cmake` to support older CMake
-versions. A wrapper `./FindCUDA.cmake` is created to do this automatically, and
-to allow submodules to use these fixes because we can't patch their
-`CMakeList.txt`.
+A wrapper `./FindCUDA.cmake` forwards to `./upstream/FindCUDA.cmake` so that
+submodules pick these fixes up too, since we cannot patch their `CMakeList.txt`.
 
 If you need to update files under `./upstream` folder, we recommend you issue PRs
 against [the CMake mainline branch](https://github.com/Kitware/CMake/blob/master/Modules/FindCUDA.cmake),
