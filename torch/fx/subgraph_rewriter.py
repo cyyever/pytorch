@@ -270,7 +270,7 @@ def _replace_pattern(
     | None = None,
     node_name_match: str = "",
 ) -> list[ReplacedPatterns]:
-    from torch.fx.passes.utils.matcher_utils import InternalMatch, SubgraphMatcher
+    from torch.fx.passes.utils.matcher_utils import SubgraphMatcher
 
     if match_filters is None:
         match_filters = []
