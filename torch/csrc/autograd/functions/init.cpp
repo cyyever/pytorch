@@ -1,4 +1,3 @@
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/functions/accumulate_grad.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/functions/pybind.h>
@@ -64,43 +63,6 @@ static void addClass(
   Py_INCREF(&type);
   PyModule_AddObject(module, name, (PyObject*)&type);
   registerCppFunction(typeid(C), &type);
-}
-
-template <
-    typename T,
-    typename ValueT,
-    typename ParamsT,
-    ValueT ParamsT::* ptr,
-    typename ConvertArgT,
-    PyObject* (*Convert)(ConvertArgT)>
-static PyObject* getTupleAttr(PyObject* obj, void* _unused) {
-  HANDLE_TH_ERRORS
-  THPCppFunction* self = (THPCppFunction*)obj;
-  auto& arr = ((T*)(self->cdata.get()))->*ptr;
-  auto num_elems = arr.size();
-  THPObjectPtr py_tuple(PyTuple_New(num_elems));
-  if (!py_tuple)
-    return nullptr;
-  for (const auto i : c10::irange(num_elems)) {
-    PyTuple_SET_ITEM(py_tuple.get(), i, Convert(arr[i]));
-  }
-  return py_tuple.release();
-  END_HANDLE_TH_ERRORS
-}
-
-template <
-    typename T,
-    typename ValueT,
-    typename ParamsT,
-    ValueT ParamsT::* ptr,
-    typename ConvertArgT,
-    PyObject* (*Convert)(ConvertArgT)>
-static PyObject* getValueAttr(PyObject* obj, void* _unused) {
-  HANDLE_TH_ERRORS
-  THPCppFunction* self = (THPCppFunction*)obj;
-  auto& val = ((T*)(self->cdata.get()))->*ptr;
-  return Convert(val);
-  END_HANDLE_TH_ERRORS
 }
 
 static PyObject* accumulateGradVar(PyObject* _self, void* _unused) {
