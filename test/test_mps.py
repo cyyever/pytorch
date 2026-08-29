@@ -4805,7 +4805,7 @@ class TestMPS(TestCaseMPS):
         )
 
     # Regression test for uint32 element-offset wrap in MPS scatter/gather kernels
-    # (aten/src/ATen/mps/IndexKernels.h): a strided view whose storage-relative
+    # (aten/src/ATen/native/mps/kernels/Indexing.h): a strided view whose storage-relative
     # element offset crossed 2^32 routed writes/reads to (offset mod 2^32).
     # uint8 chosen for memory economy; the bug is in element-offset arithmetic
     # and is dtype-independent. Minimum 5-D shape that crosses 2^32 elements:

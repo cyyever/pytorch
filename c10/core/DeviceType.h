@@ -2,8 +2,7 @@
 
 #include <c10/macros/Export.h>
 
-// If you modified DeviceType in caffe2/proto/caffe2.proto, please also sync
-// your changes into torch/headeronly/core/DeviceType.h.
+// The enum itself lives in torch/headeronly/core/DeviceType.h.
 #include <torch/headeronly/core/DeviceType.h>
 
 #include <ostream>

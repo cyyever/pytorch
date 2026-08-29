@@ -2365,8 +2365,6 @@ class TestAutograd(TestCase):
         out.backward()
         self.assertEqual(input * 18, input.grad)
 
-    # NB: See test/cpp/api/autograd.cpp for more tests on the interaction between
-    #     retains_grad and hooks in cpp
     def test_retain_grad_inplace(self):
         a = torch.tensor([1.0], requires_grad=True).clone()
         a.retain_grad()

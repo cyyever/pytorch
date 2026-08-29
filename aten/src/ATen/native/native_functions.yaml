@@ -355,13 +355,11 @@
 #      original function.
 # 3) Add docstrings to the new function that reference the original function,
 #      and document the method as usual (if it exists.)
-#    (See torch/_torch_docs.py and docs/source/torch.rst if adding a function,
-#     torch/_tensor_docs.py and docs/source/tensors.rst if adding a method,
+#    (See torch/_torch_docs.py and docs/source/torch.md if adding a function,
 #     or module-specific doc bindings (like torch/linalg/__init__.py) if
 #     adding an alias in a namespace.)
 # 4) Update torch/overrides.py consistent with the original function.
-# 5) Update the alias_map in torch/csrc/jit/passes/normalize_ops.cpp.
-# 6) Add aliases argument to existing OpInfo/UnaryUfuncInfo or create new OpInfo/UnaryUfuncInfo entry
+# 5) Add aliases argument to existing OpInfo/UnaryUfuncInfo or create new OpInfo/UnaryUfuncInfo entry
 # in op_db list in torch/testing/_internal/common_methods_invocations.py
 #
 # See torch.absolute, an alias for torch.abs, as an example.
@@ -7711,7 +7709,7 @@
 
 # Warning: If you want to change the name or overload name of this
 # operator, you might also want to change the `isBlockListedSchema`
-# function in `torch/csrc/jit/frontend/schema_catching.cpp`.
+# function in `torch/csrc/jit/frontend/schema_matching.cpp`.
 # The name and overload name of this operator is hardcoded in that
 # function in order to workaround a bug:
 # https://github.com/pytorch/pytorch/issues/47964
@@ -13622,7 +13620,7 @@
 # Note [linalg namespace binding]
 # Functions in the linalg python module should have their names start with
 #   "linalg_" and be bound to the desired Python name in
-#   torch/linalg/__init__.py, and the desired C++ name in torch/csrc/api/include/torch/linalg.h.
+#   torch/linalg/__init__.py.
 #   The "linalg_" names should be hidden from the user and not documented.
 #
 # See linalg_det as an example.

@@ -195,7 +195,7 @@ enum class DispatchKey : uint16_t {
   //     the user-defined PRNG class.
   //  2) use it as a dispatch key while registering custom kernels
   //     (templatized kernels specialized for user-defined PRNG class)
-  // intended for out of tree use; tested by aten/src/ATen/test/rng_test.cpp
+  // intended for out of tree use
   CustomRNGKeyId,
 
   // TODO: Make Mkldnn a functionality key, so we can give it Meta

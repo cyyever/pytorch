@@ -1263,7 +1263,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
     # the root process and the workers through SHM files. We remove those files from
     # the filesystem as soon as they are created and keep them alive by
     # passing around their file descriptors through AF_UNIX sockets. (See
-    # docs/source/multiprocessing.rst and 'Multiprocessing Technical Notes` in
+    # docs/source/multiprocessing.md and 'Multiprocessing Technical Notes` in
     # the wiki (https://github.com/pytorch/pytorch/wiki).)
     #
     # This sometimes leads us to exceeding the open files limit. When that happens,

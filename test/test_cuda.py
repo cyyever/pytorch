@@ -2808,7 +2808,7 @@ torch.cuda.synchronize()
     @unittest.skipIf(not TEST_CUDNN, "CUDNN not available")
     def test_cudnn_multiple_threads_same_device(self):
         # This function is intended to test the lazy creation and reuse of per-thread
-        # cudnn handles on each device in aten/src/ATen/cudnn/Handles.cpp.
+        # cudnn handles on each device in aten/src/ATen/cudnn/Handle.cpp.
         # Failure here likely indicates something wrong with that logic.
         weight = torch.ones((1, 1, 2, 2), device="cuda")
 
