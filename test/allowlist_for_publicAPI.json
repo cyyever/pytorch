@@ -55,7 +55,6 @@
     "set_debug_level",
     "set_debug_level_from_env",
     "timedelta",
-    "ProcessGroupMPI",
     "ProcessGroupNCCL"
   ],
   "torch.distributed.checkpoint.state_dict": [
