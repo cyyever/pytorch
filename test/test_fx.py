@@ -1478,6 +1478,33 @@ class TestFX(TestCase):
                 f"Expected 2 occurrences of '_torch__ops_aten_aten_relu_', got {count}"
             )
 
+    def test_print_readable_with_sparse_meta_val(self):
+        # The compressed sparse layouts have no strides; annotating a node
+        # whose meta["val"] carries one used to raise from Tensor.stride().
+        for layout in (
+            torch.sparse_csr,
+            torch.sparse_csc,
+            torch.sparse_bsr,
+            torch.sparse_bsc,
+        ):
+            with self.subTest(layout=layout):
+                dense = torch.eye(4)
+                if layout in (torch.sparse_bsr, torch.sparse_bsc):
+                    sparse = dense.to_sparse(layout=layout, blocksize=(2, 2))
+                else:
+                    sparse = dense.to_sparse(layout=layout)
+
+                graph = torch.fx.Graph()
+                node = graph.create_node("placeholder", "x")
+                node.meta["val"] = sparse
+                graph.output(node)
+                gm = torch.fx.GraphModule(torch.nn.Module(), graph)
+
+                text = gm.print_readable(
+                    print_output=False, include_stride=True, include_device=True
+                )
+                self.assertIn("x", text)
+
     def test_print_readable_no_trailing_whitespace_with_inner_graph(self):
         # When a GraphModule has a child GraphModule (e.g., from invoke_subgraph),
         # print_readable() should not produce lines with trailing whitespace.

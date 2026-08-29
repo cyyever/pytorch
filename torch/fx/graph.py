@@ -814,6 +814,8 @@ class CodeGen:
 
                 # use string as annotation, to make it valid python code
                 if isinstance(meta_val, torch.Tensor) and meta_val.layout not in (
+                    torch.sparse_bsc,
+                    torch.sparse_bsr,
                     torch.sparse_csc,
                     torch.sparse_csr,
                 ):
