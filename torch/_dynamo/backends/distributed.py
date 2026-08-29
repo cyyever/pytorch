@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
 # Regular log messages should go through 'log'.
 # ddp_graph_log is a separate artifact logger reserved for dumping graphs.
-# See docs/source/logging.rst for more info.
+# See docs/source/logging.md for more info.
 log = logging.getLogger(__name__)
 ddp_graph_log = torch._logging.getArtifactLogger(__name__, "ddp_graphs")
 

@@ -252,7 +252,6 @@ dependencies as well as the nightly binaries into the repo directory.
           [miopen](aten/src/ATen/native/miopen) [cudnn](aten/src/ATen/native/cudnn)
           - implementations of operators which simply bind to some
             backend library.
-        * [quantized](aten/src/ATen/native/quantized/) - Quantized tensor (i.e. QTensor) operation implementations. [README](aten/src/ATen/native/quantized/README.md) contains details including how to implement native quantized operations.
 * [torch](torch) - The actual PyTorch library. Everything that is not
   in [csrc](torch/csrc) is a Python module, following the PyTorch Python
   frontend module structure.
@@ -276,11 +275,9 @@ dependencies as well as the nightly binaries into the repo directory.
     automatic differentiation support.
   * [test_nn.py](test/test_nn.py) - Tests for NN operators and
     their automatic differentiation.
-  * [test_jit.py](test/test_jit.py) - Tests for the JIT compiler
     and TorchScript.
   * ...
   * [cpp](test/cpp) - C++ unit tests for PyTorch C++ frontend.
-    * [api](test/cpp/api) - [README](test/cpp/api/README.md)
     * [jit](test/cpp/jit) - [README](test/cpp/jit/README.md)
   * [expect](test/expect) - Automatically generated "expect" files
     which are used to compare against expected output.
