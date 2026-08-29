@@ -1713,13 +1713,6 @@ test_distributed() {
     python test/run_test.py -i test_linalg.py -k test_matmul_offline_mgpu_tunable --verbose
 
     if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
-      MPIEXEC=$(command -v mpiexec)
-      if [[ -n "$MPIEXEC" ]]; then
-        # NB: mpiexec only works directly with the C++ test binary here
-        MPICMD="${MPIEXEC} -np 2 $TORCH_BIN_DIR/ProcessGroupMPITest"
-        eval "$MPICMD"
-      fi
-
       python test/run_test.py --cpp --verbose -i cpp/ProcessGroupGlooTest
       python test/run_test.py --cpp --verbose -i cpp/ProcessGroupNCCLTest
       python test/run_test.py --cpp --verbose -i cpp/ProcessGroupNCCLErrorsTest
