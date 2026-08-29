@@ -73,7 +73,6 @@ xfail_not_implemented = {
     "aten::floor_divide_.Scalar",
     "aten::frobenius_norm",
     "aten::get_device",
-    "aten::get_gradients",
     "aten::greater_.Scalar",
     "aten::greater_.Tensor",
     "aten::greater_equal_.Scalar",

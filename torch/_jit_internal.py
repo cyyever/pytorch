@@ -139,8 +139,6 @@ def _qualified_name(obj, mangle_name=True) -> str:
         module_name = module_name.replace("<", "_")
         module_name = module_name.replace(">", "_")
 
-    # The PythonExceptionValue C++ class in torch/csrc/jit/python/python_sugared_value.h
-    # does not need mangle the python class name.
     if mangle_name:
         # __main__ is a builtin module, so rewrite it to "__torch__".
         if module_name == "__main__":
