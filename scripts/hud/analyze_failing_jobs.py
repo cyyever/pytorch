@@ -6,9 +6,7 @@ grid that backs https://hud.pytorch.org for a branch or commit, finds jobs that
 are currently on a failure streak, and prints the streak length, overall
 failure rate, when each started failing, and the distinct failure signatures.
 
-This intentionally does not share code with tools/alerts/create_alerts.py: that
-script is automation that files GitHub issues using alert-firing thresholds,
-whereas this is a read-only human-facing stats view. The only contract here is
+This is a read-only human-facing stats view; the only contract it relies on is
 the public HUD API response shape.
 
 Authentication:
