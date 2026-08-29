@@ -245,12 +245,6 @@ struct TORCH_API Engine {
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   std::vector<std::shared_ptr<ReadyQueue>> device_ready_queues_;
 
-  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-  std::vector<std::function<void()>> final_callbacks_;
-  // To protect reads and writes to final_callbacks_
-  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-  std::mutex post_callbacks_lock_;
-
   // How many nested reentrant calls are allowed until a new thread is used
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   int max_recursion_depth_{MAX_DEPTH};
