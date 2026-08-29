@@ -25,18 +25,21 @@ static variable_list _make_grads(
   size_t num_gradients = grad_outputs.size();
   variable_list new_grads;
   new_grads.reserve(num_tensors);
+  auto push_implicit_grad = [&new_grads](const Variable& output) {
+    TORCH_CHECK(
+        output.numel() == 1,
+        "grad can be implicitly created only for scalar outputs");
+    TORCH_CHECK(
+        c10::isFloatingType(output.scalar_type()),
+        "grad can be computed only for real scalar outputs but got ",
+        output.scalar_type());
+    new_grads.emplace_back(
+        at::ones_like(output, LEGACY_CONTIGUOUS_MEMORY_FORMAT));
+  };
   if (grad_outputs.empty()) {
     for (const Variable& output : outputs) {
       if (output.requires_grad()) {
-        TORCH_CHECK(
-            output.numel() == 1,
-            "grad can be implicitly created only for scalar outputs");
-        TORCH_CHECK(
-            c10::isFloatingType(output.scalar_type()),
-            "grad can be computed only for real scalar outputs but got ",
-            output.scalar_type());
-        new_grads.emplace_back(
-            at::ones_like(output, LEGACY_CONTIGUOUS_MEMORY_FORMAT));
+        push_implicit_grad(output);
       }
     }
   } else {
@@ -52,15 +55,7 @@ static variable_list _make_grads(
       const Variable& grad_output = grad_outputs[i];
       if (!grad_output.defined()) {
         if (output.requires_grad()) {
-          TORCH_CHECK(
-              output.numel() == 1,
-              "grad can be implicitly created only for scalar outputs");
-          TORCH_CHECK(
-              c10::isFloatingType(output.scalar_type()),
-              "grad can be computed only for real scalar outputs but got ",
-              output.scalar_type());
-          new_grads.emplace_back(
-              at::ones_like(output, LEGACY_CONTIGUOUS_MEMORY_FORMAT));
+          push_implicit_grad(output);
         }
       } else {
         TORCH_CHECK(
