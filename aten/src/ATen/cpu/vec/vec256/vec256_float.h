@@ -678,16 +678,12 @@ inline Vectorized<float> Vectorized<float>::le(
 template <>
 inline void convert(const float* src, float* dst, int64_t n) {
   int64_t i;
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
   for (i = 0; i <= (n - Vectorized<float>::size());
        i += Vectorized<float>::size()) {
     _mm256_storeu_ps(dst + i, _mm256_loadu_ps(src + i));
   }
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
   for (; i < n; i++) {
     dst[i] = src[i];
   }
@@ -811,9 +807,7 @@ inline void transpose_mxn<float, 8, 8>(
   // g: g0  g1  g2  g3  g4  g5  g6  g7
   // h: h0  h1  h2  h3  h4  h5  h6  h7
   int i;
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
   for (i = 0; i < 8; i++) {
     input[i] = _mm256_loadu_ps(&src[i * ld_src]);
   }
@@ -821,9 +815,7 @@ inline void transpose_mxn<float, 8, 8>(
   transpose_block(input);
 
   // store from registers to dst
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
   for (i = 0; i < 8; i++) {
     _mm256_storeu_ps(&dst[i * ld_dst], input[i]);
   }

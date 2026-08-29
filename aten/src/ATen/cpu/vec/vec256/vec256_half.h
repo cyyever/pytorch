@@ -191,18 +191,14 @@ Vectorized<Half> inline clamp_min(
 template <>
 inline void convert(const Half* src, Half* dst, int64_t n) {
   int64_t i;
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
   for (i = 0; i <= (n - Vectorized<Half>::size());
        i += Vectorized<Half>::size()) {
     auto vsrc =
         _mm256_loadu_si256(reinterpret_cast<__m256i*>((void*)(src + i)));
     _mm256_storeu_si256(reinterpret_cast<__m256i*>((void*)(dst + i)), vsrc);
   }
-#ifndef __msvc_cl__
 #pragma unroll
-#endif
   for (; i < n; i++) {
     dst[i] = src[i];
   }
