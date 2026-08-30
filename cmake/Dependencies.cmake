@@ -356,10 +356,10 @@ if(BUILD_TEST)
   set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable benchmark install to avoid overwriting vendor install.")
   if(NOT USE_SYSTEM_BENCHMARK)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../third_party/benchmark)
-    # Clang 23+ classifies __COUNTER__ in preprocessor conditions as a C2y
+    # Clang 22+ classifies __COUNTER__ in preprocessor conditions as a C2y
     # extension. benchmark enables -Werror so this becomes fatal. Suppress
     # only that warning on affected compilers without touching the submodule.
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "23.0")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "22.0")
       if(TARGET benchmark)
         target_compile_options(benchmark PRIVATE -Wno-c2y-extensions)
       endif()
