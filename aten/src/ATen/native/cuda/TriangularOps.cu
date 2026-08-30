@@ -120,10 +120,9 @@ __global__ void triu_tril_kernel(
 #endif // !defined(USE_ROCM)
 }
 
-// Helper extracted from the AT_DISPATCH lambda below. The USE_ROCM
-// preprocessor branches must live outside the AT_DISPATCH macro expansion;
-// MSVC's traditional preprocessor does not accept #if/#else/#endif inside a
-// macro argument and the Windows build would otherwise fail.
+// The USE_ROCM branches below cannot sit inside the AT_DISPATCH lambda:
+// a preprocessor directive within a macro argument list is undefined
+// behaviour, so the kernel launch is extracted into this helper.
 template <bool upper, typename scalar_t>
 static void launch_triu_tril_kernel(const Tensor& result, const Tensor& self, int64_t k) {
 #if !defined(USE_ROCM)
@@ -175,7 +174,7 @@ static void launch_triu_tril_kernel(const Tensor& result, const Tensor& self, in
 }
 
 template <bool upper>
-static void triu_tril_cuda_template(const Tensor& result, const Tensor& self, int64_t k, const char* name) {
+static void triu_tril_cuda_template(const Tensor& result, const Tensor& self, int64_t k) {
   AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND4(
       at::ScalarType::ComplexHalf,
       at::ScalarType::Half,
@@ -188,13 +187,13 @@ static void triu_tril_cuda_template(const Tensor& result, const Tensor& self, in
 
 TORCH_IMPL_FUNC(tril_cuda)(const Tensor& self, int64_t k, const Tensor &result) {
   if (self.numel() != 0) {
-    triu_tril_cuda_template<false>(result, self, k, "tril");
+    triu_tril_cuda_template<false>(result, self, k);
   }
 }
 
 TORCH_IMPL_FUNC(triu_cuda)(const Tensor& self, int64_t k, const Tensor &result) {
   if (self.numel() != 0) {
-    triu_tril_cuda_template<true>(result, self, k, "triu");
+    triu_tril_cuda_template<true>(result, self, k);
   }
 }
 

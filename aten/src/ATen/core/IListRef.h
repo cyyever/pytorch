@@ -331,33 +331,13 @@ using MaterializedIListRef = std::vector<MaterializedIListRefElem<T>>;
  *
  * One should be able to use it, as if it were the unwrapped
  * iterators themselves.
-
+ *
  * What does it do?
  * ================
  * Similarly to `IListRef<T>`, this is a wrapper class. Specifically, it
  * wraps each container's `const_iterator` type alias. So, for example,
  * given that the container for `IListRefTag::Boxed` is `c10::List`, this
  * iterator will wrap a `c10::List::const_iterator`.
- *
- * [Note: MSVC Iterator Debug]
- * ===========================
- * MSVC `vector<T>::iterator` implementation (used in the boxed variant)
- * makes it so this union's destructor, copy-constructor (assignment), and
- * move-constructor (assignment) are implicitly deleted.
- *
- * Therefore, we need to explicitly define them as needed. Follows a list
- * of places where these are needed and their reason:
- *
- *   - `Payload` destructor:
- *     it is deleted only if the macro `_ITERATOR_DEBUG_LEVEL` is set to 2.
- *
- *   - `IListRefIterator` destructor:
- *     same as above. However, we need to explicitly call the variant
- *     destructor explicitly.
- *
- *   - `IListRefIterator` copy-constructor:
- *     it is deleted only if the macro `_ITERATOR_DEBUG_LEVEL` is different
- *     than 0.
  */
 template <typename T>
 class IListRefIterator {
@@ -387,8 +367,6 @@ class IListRefIterator {
       typename detail::MaterializedIListRef<T>::const_iterator;
 
   IListRefIterator() : tag_(IListRefTag::None) {}
-
-
 
   IListRefIterator(boxed_iterator_type boxed) : tag_(IListRefTag::Boxed) {
     payload_.boxed_iterator = boxed;

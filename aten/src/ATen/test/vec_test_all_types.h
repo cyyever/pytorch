@@ -22,13 +22,8 @@
 #define CACHE_LINE 32
 #endif
 #include <ATen/native/cpu/utils.h>
-#if defined(__GNUC__)
 #define CACHE_ALIGN __attribute__((aligned(CACHE_LINE)))
 #define not_inline __attribute__((noinline))
-#else
-CACHE_ALIGN #define
-#define not_inline
-#endif
 #if defined(CPU_CAPABILITY_DEFAULT)
 #define TEST_AGAINST_DEFAULT 1
 #elif !defined(CPU_CAPABILITY_AVX512) && !defined(CPU_CAPABILITY_AVX2)

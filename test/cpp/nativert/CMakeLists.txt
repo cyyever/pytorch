@@ -59,10 +59,6 @@ add_executable(test_nativert
   ${NATIVERT_TEST_SRCS}
 )
 
-if(MSVC)
-  target_compile_definitions(test_nativert PRIVATE NATIVERT_MSVC_TEST)
-endif()
-
 # TODO temporary until we can delete the old gtest polyfills.
 target_compile_definitions(test_nativert PRIVATE USE_GTEST)
 

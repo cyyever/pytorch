@@ -398,11 +398,6 @@ C10_API std::string GetExceptionString(const std::exception& e);
 #define C10_BUILD_ERROR(err_type, msg) \
   ::c10::err_type({__func__, __FILE__, static_cast<uint32_t>(__LINE__)}, msg)
 
-// Private helper macro for workaround MSVC misexpansion of nested macro
-// invocations involving __VA_ARGS__.  See
-// https://stackoverflow.com/questions/5134523/msvc-doesnt-expand-va-args-correctly
-#define C10_EXPAND_MSVC_WORKAROUND(x) x
-
 #include <torch/headeronly/util/Exception.h>
 
 // ----------------------------------------------------------------------------
@@ -650,7 +645,7 @@ namespace c10::detail {
 // Optimized version - generates no code.
 #define TORCH_INTERNAL_ASSERT_DEBUG_ONLY(...) \
   while (false)                               \
-  C10_EXPAND_MSVC_WORKAROUND(TORCH_INTERNAL_ASSERT(__VA_ARGS__))
+  TORCH_INTERNAL_ASSERT(__VA_ARGS__)
 // In release: TORCH_INTERNAL_ASSERT_DEBUG_ONLY is a no-op, so return
 // __VA_ARGS__ as a fallback. In debug: crashes via
 // TORCH_INTERNAL_ASSERT(false), so no return is emitted (avoids
@@ -661,9 +656,9 @@ namespace c10::detail {
   } while (0)
 #else
 #define TORCH_INTERNAL_ASSERT_DEBUG_ONLY(...) \
-  C10_EXPAND_MSVC_WORKAROUND(TORCH_INTERNAL_ASSERT(__VA_ARGS__))
+  TORCH_INTERNAL_ASSERT(__VA_ARGS__)
 #define TORCH_INTERNAL_ASSERT_FALSE_OR_RETURN(...) \
-  C10_EXPAND_MSVC_WORKAROUND(TORCH_INTERNAL_ASSERT(false))
+  TORCH_INTERNAL_ASSERT(false)
 #endif
 
 // TODO: We're going to get a lot of similar looking string literals
@@ -869,7 +864,7 @@ inline void deprecated_AT_ASSERTM() {}
 #define AT_ASSERT(...)                                              \
   do {                                                              \
     ::c10::detail::deprecated_AT_ASSERT();                          \
-    C10_EXPAND_MSVC_WORKAROUND(TORCH_INTERNAL_ASSERT(__VA_ARGS__)); \
+    TORCH_INTERNAL_ASSERT(__VA_ARGS__); \
   } while (false)
 
 // Deprecated alias, like AT_ASSERT.  The new TORCH_INTERNAL_ASSERT macro
@@ -883,7 +878,7 @@ inline void deprecated_AT_ASSERTM() {}
 #define AT_ASSERTM(cond, ...)                                             \
   do {                                                                    \
     ::c10::detail::deprecated_AT_ASSERTM();                               \
-    C10_EXPAND_MSVC_WORKAROUND(TORCH_INTERNAL_ASSERT(cond, __VA_ARGS__)); \
+    TORCH_INTERNAL_ASSERT(cond, __VA_ARGS__); \
   } while (false)
 
 // Deprecated alias; this alias was deprecated because it represents extra API
@@ -893,7 +888,7 @@ inline void deprecated_AT_ASSERTM() {}
 #define AT_ERROR(...)                                                        \
   do {                                                                       \
     ::c10::detail::deprecated_AT_ERROR();                                    \
-    C10_EXPAND_MSVC_WORKAROUND(TORCH_CHECK(false, ::c10::str(__VA_ARGS__))); \
+    TORCH_CHECK(false, ::c10::str(__VA_ARGS__)); \
   } while (false)
 
 #endif // C10_UTIL_EXCEPTION_H_

@@ -7,7 +7,6 @@
 
 namespace torch::nativert {
 
-#ifndef NATIVERT_MSVC_TEST
 C10_DEFINE_TYPED_REGISTRY(
     AOTIModelContainerRunnerRegistry,
     c10::DeviceType,
@@ -18,7 +17,6 @@ C10_DEFINE_TYPED_REGISTRY(
     const std::string&,
     const std::string&,
     const bool)
-#endif // NATIVERT_MSVC_TEST
 
 namespace {
 template <typename T>
