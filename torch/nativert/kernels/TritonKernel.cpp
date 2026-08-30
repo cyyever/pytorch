@@ -132,8 +132,6 @@ void addKernelArg(
 
 } // namespace
 
-// in this case, we want to use the symbol from torch_cpu.dll
-#ifndef NATIVERT_MSVC_TEST
 C10_DEFINE_TYPED_REGISTRY(
     TritonKernelManagerRegistry,
     c10::DeviceType,
@@ -142,7 +140,6 @@ C10_DEFINE_TYPED_REGISTRY(
     std::string /* kernel_name */,
     std::string /* kernel_bin_path */,
     std::string /* kernel_launcher_bin_path */)
-#endif
 
 TritonKernel::TritonKernel(
     const Node* node,

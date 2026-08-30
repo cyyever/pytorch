@@ -167,7 +167,6 @@ EXCLUDED_PATTERNS = [
     r"DEFINE_TAG",
     r"COUNT_TAG",
     r"TRUTH_TABLE_ENTRY",
-    r"C10_EXPAND_MSVC_WORKAROUND",
     r"TORCH_FORALL_TAGS",
     # Non-public torch::nn functions (module stream operators, etc.)
     r"torch::nn::operator.*",

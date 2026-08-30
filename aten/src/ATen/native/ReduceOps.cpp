@@ -1,5 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/ReduceOps.h>
+#include <ATen/NumericUtils.h>
 
 #include <ATen/core/Tensor.h>
 #include <ATen/AccumulateType.h>
@@ -816,14 +817,6 @@ Tensor cumprod_backward(const Tensor& grad, const Tensor& input, int64_t dim, co
   }
 }
 
-// Implement std::is_nan<IntegralType> for MSVC.
-namespace {
-template<typename T>
-inline bool isnan_(T x) {
-  return std::isnan(x);
-}
-}
-
 template<typename T1, typename T2, typename Operation>
 static void cummax_cummin_helper(const T1* self_data, T1* values_data, T2* indices_data,
           int self_dim_size, int self_stride, int values_stride, int indices_stride) {
@@ -832,7 +825,7 @@ static void cummax_cummin_helper(const T1* self_data, T1* values_data, T2* indic
       int idx = 0;
       for (const auto i : c10::irange(self_dim_size)) {
         T1 curr_elem = c10::load(&self_data[i*self_stride]);
-        if(isnan_(curr_elem) || (!isnan_(out) && op(curr_elem, out))) {
+        if(at::_isnan(curr_elem) || (!at::_isnan(out) && op(curr_elem, out))) {
             out = curr_elem;
             idx = i;
         }
@@ -2235,7 +2228,7 @@ bool cpu_equal(const Tensor& self, const Tensor& other) {
         }
         char* self_data = data[0];
         for ([[maybe_unused]] const auto i : c10::irange(dim_size)) {
-          if (isnan_(c10::load<scalar_t>(self_data))) {
+          if (at::_isnan(c10::load<scalar_t>(self_data))) {
             result = false;
             return;
           }
