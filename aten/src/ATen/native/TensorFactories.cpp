@@ -390,9 +390,7 @@ Tensor& empty_out(
 // Some scalar types in CAST_OP have no declarations, they may be unused in
 // Pytorch. But we keep them and ignore the warning here until verified in the
 // future.
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wmissing-prototypes")
 AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, DEFINE_CAST_OP)
-C10_DIAGNOSTIC_POP()
 
 #undef DEFINE_CAST_OP
 

@@ -24,10 +24,8 @@
 #include <ATen/ops/expand_copy.h>
 
 #ifdef USE_FBGEMM
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
 #include <fbgemm/Fbgemm.h>
 #include <fbgemm/FbgemmConvert.h>
-C10_DIAGNOSTIC_POP()
 #endif
 
 namespace {

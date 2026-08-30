@@ -44,7 +44,6 @@
 #include <c10/util/intrusive_ptr.h>
 #include <c10/util/irange.h>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-default")
 
 namespace torch {
 namespace jit {
@@ -1335,9 +1334,9 @@ struct C10_EXPORT ivalue::Future final : c10::intrusive_ptr_target {
     excessDevices.reserve(subset.size());
     std::ranges::set_difference(
         subset,
-       
+
         superset,
-       
+
         std::back_inserter(excessDevices),
         [](const c10::Device& a, const c10::Device& b) { return a.index() < b.index(); });
     TORCH_CHECK_VALUE(
@@ -2508,5 +2507,3 @@ TypePtr IValue::type() const {
 }
 
 } // namespace c10
-
-C10_DIAGNOSTIC_POP()

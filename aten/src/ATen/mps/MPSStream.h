@@ -13,13 +13,9 @@
 #ifdef __OBJC__
 // Apple framework headers emit deprecation warnings from CarbonCore and
 // missing-attribute warnings from MPSGraph on recent macOS SDKs.
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wdeprecated-declarations")
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wobjc-property-no-attribute")
 #include <Metal/Metal.h>
 #include <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
-C10_DIAGNOSTIC_POP()
-C10_DIAGNOSTIC_POP()
 typedef MPSCommandBuffer* MPSCommandBuffer_t;
 typedef id<MTLCommandQueue> MTLCommandQueue_t;
 typedef id<MTLComputeCommandEncoder> MTLComputeCommandEncoder_t;

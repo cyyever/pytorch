@@ -6,9 +6,7 @@
 
 #include <c10/macros/Macros.h>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wsuggest-override")
 #include <cudnn_frontend.h>
-C10_DIAGNOSTIC_POP()
 
 #include <ATen/core/Tensor.h>
 #include <ATen/cuda/Exceptions.h>

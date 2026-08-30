@@ -128,7 +128,6 @@ class TORCH_API Tensor: public TensorBase {
       return *this;
     }
 
-    C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-enum")
     switch (this->layout()) {
       case at::kSparse:
       case at::kSparseCsr:
@@ -139,7 +138,6 @@ class TORCH_API Tensor: public TensorBase {
       default:
         return this->_conj();
     }
-    C10_DIAGNOSTIC_POP()
   }
 
   // Bring in base class methods

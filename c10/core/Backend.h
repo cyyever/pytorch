@@ -8,7 +8,6 @@
 
 #include <stdexcept>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-enum")
 
 namespace c10 {
 
@@ -405,5 +404,3 @@ inline bool isSparseCsr(Backend b) {
 }
 
 } // namespace c10
-
-C10_DIAGNOSTIC_POP()
