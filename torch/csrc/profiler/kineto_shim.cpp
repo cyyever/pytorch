@@ -158,7 +158,8 @@ std::string buildXpuScopeConfig(const std::vector<std::string>& metrics) {
 #endif // USE_KINETO
 
 static_assert(
-    std::is_trivial_v<DeviceAndResource>,
+    std::is_trivially_default_constructible_v<DeviceAndResource> &&
+        std::is_trivially_copyable_v<DeviceAndResource>,
     "Kineto specific details should be in `kineto_ids`.");
 
 const DeviceAndResource kineto_ids() {
