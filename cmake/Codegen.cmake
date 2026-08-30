@@ -315,7 +315,10 @@ if(INTERN_BUILD_ATEN_OPS)
       string(APPEND CMAKE_HIP_FLAGS " -DHAVE_AVX512_CPU_DEFINITION")
     endif()
     list(APPEND CPU_CAPABILITY_NAMES "AVX512")
-    list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma")
+    # -mf16c is implied by -mavx512f on clang but not on gcc, and every CPU that
+    # runs AVX-512 has F16C. Without it C10_X86_F16 is off in this capability
+    # under gcc and the half conversions fall back to software.
+    list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma -mf16c")
   endif(CXX_AVX512_FOUND)
 
   if(CXX_AVX2_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
