@@ -4,14 +4,6 @@
 #include <limits>
 #include <type_traits>
 
-C10_CLANG_DIAGNOSTIC_PUSH()
-#if C10_CLANG_HAS_WARNING("-Wstring-conversion")
-C10_CLANG_DIAGNOSTIC_IGNORE("-Wstring-conversion")
-#endif
-#if C10_CLANG_HAS_WARNING("-Wimplicit-int-float-conversion")
-C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
-#endif
-
 namespace c10 {
 
 /// Returns true if x < 0
@@ -88,8 +80,6 @@ inline constexpr bool less_than_lowest(const T& x) {
 }
 
 } // namespace c10
-
-C10_CLANG_DIAGNOSTIC_POP()
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 using c10::greater_than_max;
