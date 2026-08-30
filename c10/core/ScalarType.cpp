@@ -38,6 +38,15 @@ calculate_dtype2index() {
 
 constexpr auto dtype2index = calculate_dtype2index();
 
+// The quantized enumerators still exist because ScalarType values are a
+// serialization format, but this build has no quantization support behind
+// them.
+bool isQuantized(ScalarType t) {
+  return t == ScalarType::QInt8 || t == ScalarType::QUInt8 ||
+      t == ScalarType::QInt32 || t == ScalarType::QUInt4x2 ||
+      t == ScalarType::QUInt2x4;
+}
+
 } // anonymous namespace
 
 ScalarType promoteTypes(ScalarType a, ScalarType b) {
@@ -51,11 +60,10 @@ ScalarType promoteTypes(ScalarType a, ScalarType b) {
     return a;
   }
 
-  // Handle identically equal types
-  if (isQIntType(a) || isQIntType(b)) {
+  if (isQuantized(a) || isQuantized(b)) {
     TORCH_CHECK(
         false,
-        "promoteTypes with quantized numbers is not handled yet; figure out what the correct rules should be, offending types: ",
+        "quantization is not supported in this build; offending types: ",
         toString(a),
         " ",
         toString(b));
@@ -196,18 +204,8 @@ std::pair<std::string_view, std::string_view> getDtypeNames(
       return {"complex128", "cdouble"};
     case c10::ScalarType::Bool:
       return {"bool", ""};
-    case c10::ScalarType::QInt8:
-      return {"qint8", ""};
-    case c10::ScalarType::QUInt8:
-      return {"quint8", ""};
-    case c10::ScalarType::QInt32:
-      return {"qint32", ""};
     case c10::ScalarType::BFloat16:
       return {"bfloat16", ""};
-    case c10::ScalarType::QUInt4x2:
-      return {"quint4x2", ""};
-    case c10::ScalarType::QUInt2x4:
-      return {"quint2x4", ""};
     case c10::ScalarType::Bits1x8:
       return {"bits1x8", ""};
     case c10::ScalarType::Bits2x4:

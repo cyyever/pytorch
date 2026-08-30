@@ -1464,19 +1464,6 @@ inline void transpose_mxn(
   transpose_mxn<T>(src, ld_src, dst, ld_dst, M, N);
 }
 
-inline std::ostream& operator<<(std::ostream& stream, const c10::qint32& val) {
-  stream << val.val_;
-  return stream;
-}
-inline std::ostream& operator<<(std::ostream& stream, const c10::qint8& val) {
-  stream << static_cast<int>(val.val_);
-  return stream;
-}
-inline std::ostream& operator<<(std::ostream& stream, const c10::quint8& val) {
-  stream << static_cast<unsigned int>(val.val_);
-  return stream;
-}
-
 template <typename T>
 std::ostream& operator<<(std::ostream& stream, const Vectorized<T>& vec) {
   std::array<T, Vectorized<T>::size()> buf{};

@@ -204,11 +204,7 @@ void float8_copy_kernel_cuda(TensorIteratorBase &iter) {
 // kernels for equivalent bit lengths
 void direct_copy_kernel_cuda(TensorIteratorBase &iter) {
   ScalarType dtype = iter.dtype(0);
-  if (isQIntType(dtype)) {
-    AT_DISPATCH_QINT_TYPES(dtype, "copy_", [&] {
-      gpu_kernel(iter, [] GPU_LAMBDA(scalar_t x) { return x; });
-    });
-  } else if (isFloat8Type(dtype)) {
+  if (isFloat8Type(dtype)) {
      float8_copy_kernel_cuda(iter);
   } else if (iter.dtype(1) == kFloat && (dtype == kBFloat16 || dtype == kHalf)) {
      if (dtype == kBFloat16) {

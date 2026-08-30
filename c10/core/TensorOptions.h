@@ -627,15 +627,10 @@ inline DispatchKey computeDispatchKey(
   switch (layout_) {
     case Layout::Jagged:
     case Layout::Strided: {
-      const auto dtype_ = dtype_or_default(dtype);
       switch (device_.type()) {
-#define DO_CASE(device, _)                   \
-  case c10::DeviceType::device: {            \
-    if (isQIntType(dtype_)) {                \
-      return DispatchKey::Quantized##device; \
-    }                                        \
-    return DispatchKey::device;              \
-  }
+#define DO_CASE(device, _)      \
+  case c10::DeviceType::device: \
+    return DispatchKey::device;
         C10_FORALL_BACKEND_DEVICE_TYPES(DO_CASE, unused)
 #undef DO_CASE
         case c10::DeviceType::FPGA:
@@ -767,15 +762,5 @@ inline TensorOptions dispatchKeyToTensorOptions(DispatchKey dispatch_key) {
       .layout(dispatchKeyToLayout(dispatch_key))
       .device(dispatchKeyToDeviceType(dispatch_key));
 }
-
-namespace detail {
-inline bool backend_supports_empty_operator(const TensorOptions& options) {
-  // Quantized backends don't support at::empty().
-  // They have separate operators like at::empty_quantized() that take in
-  // extra information about how to quantize the tensor.
-  return !isQIntType(typeMetaToScalarType(options.dtype()));
-}
-
-} // namespace detail
 
 } // namespace c10

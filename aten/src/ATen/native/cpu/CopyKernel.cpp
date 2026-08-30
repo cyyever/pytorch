@@ -215,14 +215,7 @@ void direct_copy_kernel(TensorIteratorBase &iter) {
   // single jump table here; might be worth just writing out the
   // dispatch statement by hand instead of using AT_DISPATCH
   ScalarType dtype = iter.dtype(0);
-  if (isQIntType(dtype)) {
-    AT_DISPATCH_QINT_TYPES(dtype, "copy_kernel", [&] {
-      cpu_kernel_vec(
-          iter,
-          [=](scalar_t a) -> scalar_t { return a; },
-          [=](Vectorized<scalar_t> a) -> Vectorized<scalar_t> { return a; });
-    });
-  } else if (dtype == ScalarType::ComplexHalf) {
+  if (dtype == ScalarType::ComplexHalf) {
     cpu_kernel(iter, [=](c10::complex<at::Half> a) -> c10::complex<at::Half> { return a; });
   } else if (dtype == ScalarType::BComplex32) {
     cpu_kernel(iter, [=](c10::complex<at::BFloat16> a) -> c10::complex<at::BFloat16> { return a; });

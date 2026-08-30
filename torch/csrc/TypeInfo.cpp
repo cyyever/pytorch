@@ -79,8 +79,7 @@ static PyObject* THPIInfo_pynew(
     return PyErr_Format(
         PyExc_TypeError, "torch.bool is not supported by torch.iinfo");
   }
-  if (!at::isIntegralType(scalar_type, /*includeBool=*/false) &&
-      !at::isQIntType(scalar_type)) {
+  if (!at::isIntegralType(scalar_type, /*includeBool=*/false)) {
     return PyErr_Format(
         PyExc_TypeError,
         "torch.iinfo() requires an integer input type. Use torch.finfo to handle '%s'",
@@ -160,36 +159,24 @@ static PyObject* THPFInfo_min(THPFInfo* self, void* /*unused*/) {
 
 static PyObject* THPIInfo_max(THPIInfo* self, void* /*unused*/) {
   HANDLE_TH_ERRORS
-  if (at::isIntegralType(self->type, /*includeBool=*/false)) {
-    return AT_DISPATCH_IINFO_TYPES(self->type, "max", [] {
-      if (std::is_unsigned_v<scalar_t>) {
-        return THPUtils_packUInt64(std::numeric_limits<scalar_t>::max());
-      } else {
-        return THPUtils_packInt64(std::numeric_limits<scalar_t>::max());
-      }
-    });
-  }
-  // Quantized Type
-  return AT_DISPATCH_QINT_AND_SUB_BYTE_TYPES(self->type, "max", [] {
-    return THPUtils_packInt64(std::numeric_limits<underlying_t>::max());
+  return AT_DISPATCH_IINFO_TYPES(self->type, "max", [] {
+    if (std::is_unsigned_v<scalar_t>) {
+      return THPUtils_packUInt64(std::numeric_limits<scalar_t>::max());
+    } else {
+      return THPUtils_packInt64(std::numeric_limits<scalar_t>::max());
+    }
   });
   END_HANDLE_TH_ERRORS
 }
 
 static PyObject* THPIInfo_min(THPIInfo* self, void* /*unused*/) {
   HANDLE_TH_ERRORS
-  if (at::isIntegralType(self->type, /*includeBool=*/false)) {
-    return AT_DISPATCH_IINFO_TYPES(self->type, "min", [] {
-      if (std::is_unsigned_v<scalar_t>) {
-        return THPUtils_packUInt64(std::numeric_limits<scalar_t>::lowest());
-      } else {
-        return THPUtils_packInt64(std::numeric_limits<scalar_t>::lowest());
-      }
-    });
-  }
-  // Quantized Type
-  return AT_DISPATCH_QINT_AND_SUB_BYTE_TYPES(self->type, "min", [] {
-    return THPUtils_packInt64(std::numeric_limits<underlying_t>::lowest());
+  return AT_DISPATCH_IINFO_TYPES(self->type, "min", [] {
+    if (std::is_unsigned_v<scalar_t>) {
+      return THPUtils_packUInt64(std::numeric_limits<scalar_t>::lowest());
+    } else {
+      return THPUtils_packInt64(std::numeric_limits<scalar_t>::lowest());
+    }
   });
   END_HANDLE_TH_ERRORS
 }
