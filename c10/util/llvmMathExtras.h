@@ -22,25 +22,8 @@
 #include <limits>
 #include <type_traits>
 
-#ifdef __ANDROID_NDK__
-#include <android/api-level.h>
-#endif
-
 #ifndef __has_builtin
 #define __has_builtin(x) 0
-#endif
-
-#ifndef LLVM_GNUC_PREREQ
-#if defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#define LLVM_GNUC_PREREQ(maj, min, patch)                             \
-  ((__GNUC__ << 20) + (__GNUC_MINOR__ << 10) + __GNUC_PATCHLEVEL__ >= \
-   ((maj) << 20) + ((min) << 10) + (patch))
-#elif defined(__GNUC__) && defined(__GNUC_MINOR__)
-#define LLVM_GNUC_PREREQ(maj, min, patch) \
-  ((__GNUC__ << 20) + (__GNUC_MINOR__ << 10) >= ((maj) << 20) + ((min) << 10))
-#else
-#define LLVM_GNUC_PREREQ(maj, min, patch) 0
-#endif
 #endif
 
 
@@ -87,7 +70,7 @@ struct TrailingZerosCounter<T, 4> {
     if (ZB != ZB_Undefined && Val == 0)
       return 32;
 
-#if __has_builtin(__builtin_ctz) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_ctz)
     return __builtin_ctz(Val);
 #endif
   }
@@ -99,7 +82,7 @@ struct TrailingZerosCounter<T, 8> {
     if (ZB != ZB_Undefined && Val == 0)
       return 64;
 
-#if __has_builtin(__builtin_ctzll) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_ctzll)
     return __builtin_ctzll(Val);
 #endif
   }
@@ -149,7 +132,7 @@ struct LeadingZerosCounter<T, 4> {
     if (ZB != ZB_Undefined && Val == 0)
       return 32;
 
-#if __has_builtin(__builtin_clz) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_clz)
     return __builtin_clz(Val);
 #endif
   }
@@ -161,7 +144,7 @@ struct LeadingZerosCounter<T, 8> {
     if (ZB != ZB_Undefined && Val == 0)
       return 64;
 
-#if __has_builtin(__builtin_clzll) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_clzll)
     return __builtin_clzll(Val);
 #endif
   }
