@@ -72,6 +72,12 @@ C10_HOST_DEVICE inline constexpr T pi() {
   return static_cast<T>(3.141592653589793238462643383279502);
 }
 
+// Half and BFloat16 used to specialise pi with the bit pattern spelled out,
+// because converting the literal was not a constant expression. It is now.
+// These hold the values those specialisations returned.
+static_assert(pi<Half>().x == 0x4248);
+static_assert(pi<BFloat16>().x == 0x4049);
+
 template <typename T>
 C10_HOST_DEVICE inline constexpr T sqrt_2() {
   return static_cast<T>(1.414213562373095048801688724209698);
@@ -80,19 +86,6 @@ C10_HOST_DEVICE inline constexpr T sqrt_2() {
 template <typename T>
 C10_HOST_DEVICE inline constexpr T sqrt_3() {
   return static_cast<T>(1.732050807568877293527446341505872);
-}
-
-template <>
-C10_HOST_DEVICE inline constexpr BFloat16 pi<BFloat16>() {
-  // According to
-  // https://en.wikipedia.org/wiki/Bfloat16_floating-point_format#Special_values
-  // pi is encoded as 4049
-  return BFloat16(0x4049, BFloat16::from_bits());
-}
-
-template <>
-C10_HOST_DEVICE inline constexpr Half pi<Half>() {
-  return Half(0x4248, Half::from_bits());
 }
 } // namespace detail
 
