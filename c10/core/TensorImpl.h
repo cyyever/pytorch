@@ -2573,12 +2573,7 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
   // should never get called
   int64_t compute_numel() const {
     TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!has_symbolic_sizes_strides_);
-#if C10_HAS_BUILTIN_OVERFLOW()
-    // Use overflow checks if supported by the compiler
     return safe_compute_numel();
-#else
-    return c10::multiply_integers(sizes_and_strides_.sizes_arrayref());
-#endif
   }
 
   /**
