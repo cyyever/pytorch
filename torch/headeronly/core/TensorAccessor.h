@@ -4,6 +4,7 @@
 #include <torch/headeronly/util/Exception.h>
 #include <torch/headeronly/util/HeaderOnlyArrayRef.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>

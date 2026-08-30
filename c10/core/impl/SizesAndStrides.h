@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 
 #include <c10/macros/Macros.h>
 #include <c10/util/ArrayRef.h>
