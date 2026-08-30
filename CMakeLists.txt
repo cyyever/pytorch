@@ -335,7 +335,6 @@ cmake_dependent_option(INSTALL_TEST "Install test binaries if BUILD_TEST is on"
                        ON "BUILD_TEST" OFF)
 option(USE_RELATIVE_PATHS "Use relative paths in generated files for ccache friendliness" OFF)
 option(USE_CPP_CODE_COVERAGE "Compile C/C++ with code coverage flags" OFF)
-option(USE_COLORIZE_OUTPUT "Colorize output during compilation" ON)
 option(USE_ASAN "Use Address+Undefined Sanitizers" OFF)
 option(USE_LSAN "Use Leak Sanitizer" OFF)
 option(USE_TSAN "Use Thread Sanitizer" OFF)
@@ -835,9 +834,6 @@ include(cmake/Allowlist.cmake)
 # ---[ Build flags Re-include to override append_cxx_flag_if_supported from
 # third_party/FBGEMM
 include(cmake/public/utils.cmake)
-if(USE_COLORIZE_OUTPUT)
-  set(CMAKE_COLOR_DIAGNOSTICS ON)
-endif()
 string(APPEND CMAKE_CXX_FLAGS " -O2 -fPIC")
 
 # This prevents use of `c10::optional`, `c10::nullopt` etc within the codebase
