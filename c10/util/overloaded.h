@@ -1,23 +1,12 @@
 #pragma once
 
-#include <memory>
+#include <utility>
 namespace c10 {
 namespace detail {
 
 template <class... Ts>
-struct overloaded_t {};
-
-template <class T0>
-struct overloaded_t<T0> : T0 {
-  using T0::operator();
-  overloaded_t(T0 t0) : T0(std::move(t0)) {}
-};
-template <class T0, class... Ts>
-struct overloaded_t<T0, Ts...> : T0, overloaded_t<Ts...> {
-  using T0::operator();
-  using overloaded_t<Ts...>::operator();
-  overloaded_t(T0 t0, Ts... ts)
-      : T0(std::move(t0)), overloaded_t<Ts...>(std::move(ts)...) {}
+struct overloaded_t : Ts... {
+  using Ts::operator()...;
 };
 
 } // namespace detail
