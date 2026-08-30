@@ -1,6 +1,6 @@
 #include <unordered_map>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <torch/nativert/executor/ExecutionPlanner.h>
 
 namespace torch::nativert {
@@ -103,7 +103,7 @@ void ExecutionPlanner::generateDeallocationPlan(ExecutionPlan& plan) {
 
 std::ostream& operator<<(std::ostream& out, const ExecutionPlan& plan) {
   out << "****** Deallocation Plan ******\n";
-  for (auto&& [i, values] : c10::enumerate(plan.valuesToFree)) {
+  for (auto&& [i, values] : std::views::enumerate(plan.valuesToFree)) {
     out << "Node #" << i << ", valuesToFree = [";
     for (const auto& value : values) {
       out << value << ", ";

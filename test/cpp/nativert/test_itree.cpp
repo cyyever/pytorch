@@ -3,7 +3,7 @@
 
 #include <fmt/format.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <torch/custom_class.h>
 #include <torch/nativert/detail/ITree.h>
 
@@ -560,7 +560,7 @@ TEST(ITreeTest, Flatten) {
       c10::IValue(10),
       c10::IValue(12),
   };
-  for (const auto& [i, flat] : c10::enumerate(flats)) {
+  for (const auto& [i, flat] : std::views::enumerate(flats)) {
     EXPECT_EQ(flat, expected.at(i));
   }
 }

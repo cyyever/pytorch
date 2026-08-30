@@ -1,6 +1,5 @@
 #include <torch/nativert/executor/memory/LayoutPlanner.h>
 
-#include <c10/util/Enumerate.h>
 
 #include <torch/nativert/executor/ExecutionPlanner.h>
 #include <torch/nativert/executor/memory/AliasAnalyzer.h>
@@ -37,7 +36,7 @@ LayoutPlanner::LayoutPlanner(
 
   const auto& tensor_meta = graph.tensorValuesMeta();
 
-  for (auto&& [i, node] : at::enumerate(graph.nodes())) {
+  for (auto&& [i, node] : std::views::enumerate(graph.nodes())) {
     // only manage out variant values
     if (const auto schemaIt = kernelSchemas.find(std::string(node.target()));
         schemaIt == kernelSchemas.end() ||

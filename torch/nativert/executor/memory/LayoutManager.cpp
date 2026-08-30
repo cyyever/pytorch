@@ -3,7 +3,7 @@
 #include <torch/nativert/executor/ExecutionFrame.h>
 
 #include <c10/core/CPUAllocator.h>
-#include <c10/util/Enumerate.h>
+#include <ranges>
 
 namespace torch::nativert {
 
@@ -151,7 +151,7 @@ void LayoutManager::populate_tensor_values() {
   planned_tensors_.resize(value_ids.size());
   planned_tensors_max_nbytes_local_.resize(value_ids.size());
 
-  for (const auto&& [i, v] : c10::enumerate(value_ids)) {
+  for (const auto&& [i, v] : std::views::enumerate(value_ids)) {
 #ifndef NDEBUG
     value_to_vector_idx_map_[v] = i;
 #endif
@@ -160,7 +160,7 @@ void LayoutManager::populate_tensor_values() {
 
   const auto& unplanned_value_ids = planner_.get_unplanned_values();
   unplanned_ivalues_.resize(unplanned_value_ids.size());
-  for (const auto&& [i, v] : c10::enumerate(unplanned_value_ids)) {
+  for (const auto&& [i, v] : std::views::enumerate(unplanned_value_ids)) {
     unplanned_ivalues_[i] = &parent_frame_.getIValue(v);
   }
 }

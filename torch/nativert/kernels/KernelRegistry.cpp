@@ -24,7 +24,6 @@
 #include <ATen/native/layer_norm.h>
 
 #include <c10/core/ScalarType.h>
-#include <c10/util/Enumerate.h>
 #include <c10/util/irange.h>
 
 
