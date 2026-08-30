@@ -1,5 +1,6 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/core/PythonOpRegistrationTrampoline.h>
+#include <iostream>
 #include <list>
 #include <utility>
 #include <c10/util/env.h>
