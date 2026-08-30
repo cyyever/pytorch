@@ -184,19 +184,10 @@ exclude_patterns = [
     'torch/headeronly/util/irange.h',
     'torch/headeronly/util/MathConstants.h',
 ]
-init_command = [
-    'python3',
-    'tools/linter/adapters/s3_init.py',
-    '--config-json=tools/linter/adapters/s3_init_config.json',
-    '--linter=clang-tidy',
-    '--dry-run={{DRYRUN}}',
-    '--output-dir=.lintbin',
-    '--output-name=clang-tidy',
-]
 command = [
     'python3',
     'tools/linter/adapters/clangtidy_linter.py',
-    '--binary=.lintbin/clang-tidy',
+    '--binary=clang-tidy',
     '--build_dir=./build',
     '--',
     '@{{PATHSFILE}}'

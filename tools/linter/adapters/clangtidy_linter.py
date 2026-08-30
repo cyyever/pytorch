@@ -286,7 +286,10 @@ def main() -> None:
         stream=sys.stderr,
     )
 
-    if not os.path.exists(args.binary):
+    # A bare name resolves through PATH, so --binary=clang-tidy picks up the
+    # one the system toolchain provides.
+    resolved = args.binary if os.path.exists(args.binary) else shutil.which(args.binary)
+    if resolved is None:
         err_msg = LintMessage(
             path="<none>",
             line=None,
@@ -296,10 +299,7 @@ def main() -> None:
             name="command-failed",
             original=None,
             replacement=None,
-            description=(
-                f"Could not find clang-tidy binary at {args.binary},"
-                " you may need to run `lintrunner init`."
-            ),
+            description=f"Could not find a clang-tidy binary named {args.binary}.",
         )
         print(json.dumps(err_msg._asdict()), flush=True)
         sys.exit(0)
@@ -312,7 +312,7 @@ def main() -> None:
     # and the build folder. And there is no .lintbin directory in the latter.
     # When it happens in a race condition, the linter command will fails with
     # the following no such file or directory error: '.lintbin/clang-tidy'
-    binary_path = os.path.abspath(args.binary)
+    binary_path = os.path.abspath(resolved)
 
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=num_workers,
