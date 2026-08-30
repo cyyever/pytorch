@@ -7,10 +7,8 @@
 namespace c10 {
 
 /// Returns true if x < 0
-/// NOTE: Will fail on an unsigned custom type
-///       For the most part it's possible to fix this if
-///       the custom type has a constexpr constructor.
-///       However, notably, c10::Half does not :-(
+/// NOTE: Needs T(0), so it will fail on a custom type that has no constexpr
+///       constructor from an integer.
 template <typename T>
 inline constexpr bool is_negative(const T& x) {
   if constexpr (std::is_unsigned_v<T>) {
@@ -22,10 +20,8 @@ inline constexpr bool is_negative(const T& x) {
 }
 
 /// Returns the sign of x as -1, 0, 1
-/// NOTE: Will fail on an unsigned custom type
-///       For the most part it's possible to fix this if
-///       the custom type has a constexpr constructor.
-///       However, notably, c10::Half does not :-(
+/// NOTE: Needs T(0), so it will fail on a custom type that has no constexpr
+///       constructor from an integer.
 template <typename T>
 inline constexpr int signum(const T& x) {
   if constexpr (std::is_unsigned_v<T>) {
@@ -62,10 +58,8 @@ inline constexpr bool greater_than_max(const T& x) {
 #endif
 
 /// Returns true if x is less than the lowest value of type Limit
-/// NOTE: Will fail on an unsigned custom type
-///       For the most part it's possible to fix this if
-///       the custom type has a constexpr constructor.
-///       However, notably, c10::Half does not :
+/// NOTE: Needs T(0), so it will fail on a custom type that has no constexpr
+///       constructor from an integer.
 template <typename Limit, typename T>
 inline constexpr bool less_than_lowest(const T& x) {
   if constexpr (std::is_unsigned_v<T>) {
