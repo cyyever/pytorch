@@ -1,16 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <ATen/ATen.h>
-#include <ATen/DLConvertor.h>
 #include <ATen/Parallel.h>
 #include <ATen/ParallelFuture.h>
 
 #include <atomic>
-#include <iostream>
 #include <memory>
 // NOLINTNEXTLINE(modernize-deprecated-headers)
-#include <string.h>
-#include <sstream>
 #if AT_MKL_ENABLED()
 #include <mkl.h>
 #include <thread>

@@ -2,7 +2,6 @@
 
 #include <ATen/ATen.h>
 #include <ATen/NestedTensorImpl.h>
-#include <ATen/native/NonSymbolicBC.h>
 
 #include <ATen/ops/_nested_from_padded_native.h>
 #include <ATen/ops/narrow_native.h>
@@ -13,7 +12,6 @@
 #include <ATen/native/nested/NestedTensorUtils.h>
 #include <ATen/native/transformers/cuda/sdp_utils.h>
 
-#include <ATen/cuda/CUDAGeneratorImpl.h>
 
 namespace at::native {
 namespace {

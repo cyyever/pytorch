@@ -15,7 +15,6 @@
 #include "torch/csrc/autograd/utils/error_messages.h"
 #include "torch/csrc/autograd/utils/wrap_outputs.h"
 #ifdef USE_CUDA
-#include "torch/csrc/cuda/Event.h"
 #endif
 #include "torch/csrc/utils/device_lazy_init.h"
 #include <torch/csrc/utils/numpy_stub.h>
@@ -38,7 +37,6 @@
 #include "c10/core/Stream.h"
 
 #include <optional>
-#include <stdexcept>
 
 $ops_headers
 #include <ATen/ops/_local_scalar_dense.h>

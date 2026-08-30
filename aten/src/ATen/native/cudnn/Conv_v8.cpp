@@ -15,6 +15,9 @@
 #include <ATen/native/cudnn/ConvShared.h>
 #include <ATen/native/utils/ParamsHash.h>
 #include <cudnn_frontend_find_plan.h>
+// cudnn_frontend_get_plan.h defines EngineConfigGenerator::cudnnGetPlan out of
+// line, so this include is where it gets emitted. Without it the library links
+// and fails at import with an undefined symbol.
 #include <cudnn_frontend_get_plan.h>
 
 #include <c10/cuda/CUDACachingAllocator.h>

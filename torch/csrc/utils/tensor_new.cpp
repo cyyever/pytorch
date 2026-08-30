@@ -5,8 +5,6 @@
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/Size.h>
-#include <torch/csrc/autograd/generated/variable_factories.h>
-#include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/utils/device_lazy_init.h>
 #include <torch/csrc/utils/numpy_stub.h>
 #include <torch/csrc/utils/pybind.h>
@@ -20,7 +18,6 @@
 #include <ATen/DLConvertor.h>
 #include <ATen/InitialTensorOptions.h>
 #include <ATen/NativeFunctions.h>
-#include <ATen/SparseCsrTensorUtils.h>
 #include <ATen/dlpack.h>
 #include <c10/core/Backend.h>
 #include <c10/core/DispatchKeySet.h>

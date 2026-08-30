@@ -5,9 +5,7 @@
 #include <ATen/Dispatch.h>
 #include <ATen/Dispatch_v2.h>
 #include <ATen/ExpandUtils.h>
-#include <ATen/FunctionalTensorWrapper.h>
 #include <ATen/TensorIterator.h>
-#include <ATen/native/mps/Copy.h>
 #include <ATen/native/TensorShape.h>
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
@@ -24,7 +22,6 @@
 #include <ATen/ops/expand_copy.h>
 
 #ifdef USE_FBGEMM
-#include <fbgemm/Fbgemm.h>
 #include <fbgemm/FbgemmConvert.h>
 #endif
 

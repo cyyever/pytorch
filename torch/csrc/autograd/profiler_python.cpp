@@ -13,7 +13,6 @@
 #include <vector>
 
 #include <Python.h>
-#include <frameobject.h>
 
 #include <ATen/core/TensorBase.h>
 #include <c10/macros/Macros.h>

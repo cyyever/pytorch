@@ -1,5 +1,4 @@
 #include <ATen/Operators.h>
-#include <ATen/test/test_assert.h>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 #include <gtest/gtest.h>

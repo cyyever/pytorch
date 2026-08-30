@@ -4,7 +4,6 @@
 #include <ATen/NativeFunctions.h>
 #include <torch/library.h>
 
-#include <torch/csrc/jit/runtime/operator.h>
 
 // NB. These tests use the MAIA dispatch key to test backend dispatching
 // machinery, but these tests are not specific to MAIA at all. The MAIA

@@ -1,12 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <ATen/ATen.h>
-#include <ATen/Utils.h>
 #include <c10/util/accumulate.h>
 
 #include <algorithm>
 #include <iostream>
-#include <numeric>
 
 using namespace at;
 

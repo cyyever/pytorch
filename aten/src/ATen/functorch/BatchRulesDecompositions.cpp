@@ -8,7 +8,6 @@
 #include <ATen/Operators.h>
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/functorch/BatchRulesHelper.h>
-#include <ATen/functorch/BatchedFallback.h>
 
 namespace at::functorch {
 

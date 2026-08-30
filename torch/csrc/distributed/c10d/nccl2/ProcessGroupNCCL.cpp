@@ -20,7 +20,6 @@
 #include <c10/util/env.h>
 #include <fmt/core.h>
 #include <nccl.h>
-#include <torch/csrc/cuda/CUDAPluggableAllocator.h>
 #include <torch/csrc/distributed/c10d/NCCLCommRegistrationHook.hpp>
 #include <torch/csrc/distributed/c10d/nccl2/Logging.hpp>
 #include <torch/csrc/distributed/c10d/nccl2/NCCLBootstrap.hpp>

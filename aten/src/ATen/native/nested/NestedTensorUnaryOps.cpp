@@ -3,8 +3,6 @@
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/NestedTensorImpl.h>
-#include <ATen/TensorIndexing.h>
-#include <ATen/TensorUtils.h>
 #include <ATen/core/Tensor.h>
 #include <ATen/native/nested/NestedTensorUtils.h>
 

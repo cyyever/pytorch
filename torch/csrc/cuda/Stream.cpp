@@ -4,7 +4,6 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_numbers.h>
 
-#include <structmember.h>
 
 PyObject* THCPStreamClass = nullptr;
 

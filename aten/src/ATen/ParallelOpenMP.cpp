@@ -11,7 +11,6 @@
 #endif
 
 
-#include <caffe2/utils/threadpool/pthreadpool-cpp.h>
 
 namespace at {
 

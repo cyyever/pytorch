@@ -8,7 +8,6 @@
 #include <ATen/ops/pixel_shuffle_native.h>
 #include <ATen/ops/pixel_unshuffle_native.h>
 
-#include <algorithm>
 #include <numeric>
 #include <vector>
 

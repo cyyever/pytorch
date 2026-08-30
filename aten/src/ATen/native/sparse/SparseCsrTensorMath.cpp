@@ -13,7 +13,6 @@
 #include <ATen/native/Resize.h>
 #include <ATen/native/SparseTensorUtils.h>
 #include <ATen/native/TensorConversions.h>
-#include <ATen/native/mkl/SparseBlasImpl.h>
 #include <ATen/native/sparse/SparseBlasImpl.h>
 #include <ATen/native/sparse/SparseCsrTensorMath.h>
 #include <c10/macros/Macros.h>

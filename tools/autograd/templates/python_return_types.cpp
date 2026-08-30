@@ -1,8 +1,5 @@
 #include <Python.h>
 
-#include <vector>
-#include <map>
-#include <string>
 
 #include "torch/csrc/autograd/generated/python_return_types.h"
 #include "torch/csrc/utils/structseq.h"

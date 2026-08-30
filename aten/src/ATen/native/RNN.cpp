@@ -5,8 +5,6 @@
 #include <ATen/core/List.h>
 #include <ATen/Context.h>
 #include <ATen/TensorOperators.h>
-#include <ATen/mps/MPSDevice.h>
-#include <c10/core/GradMode.h>
 #include <c10/macros/Macros.h>
 
 #include <array>

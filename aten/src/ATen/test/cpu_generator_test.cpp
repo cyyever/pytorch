@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <ATen/ATen.h>
-#include <ATen/Utils.h>
 #include <ATen/CPUGeneratorImpl.h>
 #include <ATen/core/PhiloxRNGEngine.h>
 #include <c10/util/irange.h>

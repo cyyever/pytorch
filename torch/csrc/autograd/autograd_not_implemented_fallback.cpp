@@ -5,10 +5,9 @@
 #include <ATen/core/TorchDispatchUtils.h>
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/core/ivalue.h>
-
 #include <c10/core/impl/TorchDispatchModeTLS.h>
+
 #include <torch/csrc/autograd/VariableTypeUtils.h>
-#include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/functions/utils.h>

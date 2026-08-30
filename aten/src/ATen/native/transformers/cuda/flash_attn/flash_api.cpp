@@ -3,13 +3,14 @@
  ******************************************************************************/
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
+
+
+#ifdef USE_FLASH_ATTENTION
+
 #include <cstdint>
 #include <tuple>
 #include <type_traits>
 #include <utility>
-
-
-#ifdef USE_FLASH_ATTENTION
 
 #include <ATen/core/Tensor.h>
 #include <ATen/cuda/CUDAContext.h>

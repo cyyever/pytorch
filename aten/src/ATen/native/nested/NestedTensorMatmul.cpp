@@ -4,7 +4,6 @@
 #include <ATen/NativeFunctions.h>
 #include <ATen/NestedTensorImpl.h>
 #include <ATen/TensorIndexing.h>
-#include <ATen/TensorUtils.h>
 #include <ATen/core/Tensor.h>
 #include <ATen/core/grad_mode.h>
 

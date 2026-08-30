@@ -12,7 +12,6 @@
 #include <ATen/ops/slow_conv_transpose2d_native.h>
 #include <ATen/ops/sum.h>
 
-#include <c10/core/TensorOptions.h>
 #include <c10/util/irange.h>
 
 namespace at {
