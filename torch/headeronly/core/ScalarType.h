@@ -13,6 +13,7 @@
 #include <torch/headeronly/util/complex.h>
 
 #include <cstdint>
+#include <ostream>
 
 
 namespace c10 {
