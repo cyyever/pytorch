@@ -1,44 +1,15 @@
 #pragma once
 #include <c10/macros/Macros.h>
 
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
-
-// GCC has __builtin_mul_overflow from before it supported __has_builtin
-#define C10_HAS_BUILTIN_OVERFLOW() (1)
 
 namespace c10 {
 
 template <typename T>
 C10_ALWAYS_INLINE bool add_overflows(T a, T b, T* out) requires (std::is_integral_v<T>) {
-#if C10_HAS_BUILTIN_OVERFLOW()
   return __builtin_add_overflow(a, b, out);
-#else
-  if constexpr (std::is_signed_v<T>) {
-    // For signed types, detect overflow by checking sign changes
-    volatile T tmp = a + b;
-    *out = tmp;
-
-    // If both operands have the same sign, check if result changed sign
-    // unexpectedly.
-    if ((a > 0) == (b > 0)) {
-      if ((a > 0) && (tmp <= 0)) {
-        return true; // Positive overflow
-      }
-      if ((a < 0) && (tmp >= 0)) {
-        return true; // Negative overflow
-      }
-    }
-    return false;
-  } else {
-    // For unsigned types, overflow causes wrap-around
-    volatile T tmp = a + b;
-    *out = tmp;
-    return (tmp < a || tmp < b);
-  }
-#endif
 }
 
 C10_ALWAYS_INLINE bool add_overflows(uint64_t a, uint64_t b, uint64_t* out) {
@@ -47,25 +18,7 @@ C10_ALWAYS_INLINE bool add_overflows(uint64_t a, uint64_t b, uint64_t* out) {
 
 template <typename T>
 C10_ALWAYS_INLINE bool mul_overflows(T a, T b, T* out) requires (std::is_integral_v<T>) {
-#if C10_HAS_BUILTIN_OVERFLOW()
   return __builtin_mul_overflow(a, b, out);
-#else
-  if constexpr (std::is_signed_v<T>) {
-    // For signed types, use the division-based check
-    volatile T tmp = a * b;
-    *out = tmp;
-    if (a == 0 || b == 0) {
-      return false;
-    }
-    return !(a == tmp / b);
-  } else {
-    // For unsigned types, use leading zeros approach
-    // This test isn't exact, but avoids doing integer division
-    *out = a * b;
-    constexpr int bits = sizeof(T) * 8;
-    return (std::countl_zero(a) + std::countl_zero(b)) < bits;
-  }
-#endif
 }
 
 C10_ALWAYS_INLINE bool mul_overflows(uint64_t a, uint64_t b, uint64_t* out) {
@@ -74,7 +27,6 @@ C10_ALWAYS_INLINE bool mul_overflows(uint64_t a, uint64_t b, uint64_t* out) {
 
 template <typename It>
 bool safe_multiplies_u64(It first, It last, uint64_t* out) {
-#if C10_HAS_BUILTIN_OVERFLOW()
   uint64_t prod = 1;
   bool overflow = false;
   for (; first != last; ++first) {
@@ -82,21 +34,6 @@ bool safe_multiplies_u64(It first, It last, uint64_t* out) {
   }
   *out = prod;
   return overflow;
-#else
-  uint64_t prod = 1;
-  uint64_t prod_log2 = 0;
-  bool is_zero = false;
-  for (; first != last; ++first) {
-    auto x = static_cast<uint64_t>(*first);
-    prod *= x;
-    // log2(0) isn't valid, so need to track it specially
-    is_zero |= (x == 0);
-    prod_log2 += std::bit_width(x - 1);
-  }
-  *out = prod;
-  // This test isn't exact, but avoids doing integer division
-  return !is_zero && (prod_log2 >= 64);
-#endif
 }
 
 template <typename Container>
