@@ -730,7 +730,6 @@ coverage_ignore_functions = [
 coverage_ignore_classes = [
     # torch
     "FatalError",
-    "QUInt2x4Storage",
     "Size",
     "Storage",
     "Stream",

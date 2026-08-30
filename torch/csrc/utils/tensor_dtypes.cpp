@@ -17,12 +17,25 @@ void initializeDtypes() {
 
 #undef DEFINE_SCALAR_TYPE
 
+  // The quantized scalar types keep their enumerator values, which are part of
+  // the serialization format, but this build has no quantization support at
+  // all. Leaving them unbound means torch.qint8 and friends do not exist
+  // rather than existing and failing somewhere deeper.
+  auto is_quantized = [](at::ScalarType t) {
+    switch (t) {
+      case at::ScalarType::QInt8:
+      case at::ScalarType::QUInt8:
+      case at::ScalarType::QInt32:
+      case at::ScalarType::QUInt4x2:
+      case at::ScalarType::QUInt2x4:
+        return true;
+      default:
+        return false;
+    }
+  };
+
   for (at::ScalarType scalarType : all_scalar_types) {
-    // The quantized scalar types keep their enumerator values, which are part
-    // of the serialization format, but no kernel is registered for them and no
-    // tensor can carry one. Leaving them unbound means torch.qint8 and friends
-    // do not exist rather than existing and failing inside the dispatcher.
-    if (c10::isQIntType(scalarType)) {
+    if (is_quantized(scalarType)) {
       continue;
     }
     auto [primary_view, legacy_view] = c10::getDtypeNames(scalarType);

@@ -270,12 +270,6 @@ DTYPE_ID_LOOKUP = {
     10: torch.complex32,
     11: torch.bool,
     15: torch.bfloat16,
-    # TODO(jansel): add quantized types?
-    #  _(c10::qint8, QInt8) /* 12 */
-    # _(c10::quint8, QUInt8) /* 13 */
-    # _(c10::qint32, QInt32) /* 14 */
-    # _(c10::quint4x2, QUInt4x2) /* 16 */
-    # _(c10::quint2x4, QUInt2x4) /* 17 */
 }
 
 

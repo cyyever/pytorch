@@ -1608,8 +1608,16 @@ static PyObject* THPModule_getAllDtypes(PyObject* _unused, PyObject* noargs) {
       AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(DEFINE_SCALAR_TYPE)};
 #undef DEFINE_SCALAR_TYPE
 
-  auto is_subbyte_dummy = [](at::ScalarType t) {
+  // Enumerators that exist only to keep the ScalarType numbering stable: the
+  // sub-byte placeholders, which live in Python as tensor subclasses, and the
+  // quantized ones, which this build has no support for at all.
+  auto is_unbound_dtype = [](at::ScalarType t) {
     switch (t) {
+      case at::ScalarType::QInt8:
+      case at::ScalarType::QUInt8:
+      case at::ScalarType::QInt32:
+      case at::ScalarType::QUInt4x2:
+      case at::ScalarType::QUInt2x4:
       case at::ScalarType::UInt1:
       case at::ScalarType::UInt2:
       case at::ScalarType::UInt3:
@@ -1633,7 +1641,7 @@ static PyObject* THPModule_getAllDtypes(PyObject* _unused, PyObject* noargs) {
   THPObjectPtr result(PyList_New(0));
   TORCH_CHECK_PYTHON(result);
   for (auto scalar_type : all_scalar_types) {
-    if (c10::isQIntType(scalar_type) || is_subbyte_dummy(scalar_type)) {
+    if (is_unbound_dtype(scalar_type)) {
       continue;
     }
     auto* dtype = reinterpret_cast<PyObject*>(torch::getTHPDtype(scalar_type));

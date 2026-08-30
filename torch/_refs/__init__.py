@@ -3550,12 +3550,7 @@ _SCALAR_TYPE_NAME_OVERRIDES = {
     "complex64": "ComplexFloat",
     "complex128": "ComplexDouble",
     "bool": "Bool",
-    "qint8": "QInt8",
-    "quint8": "QUInt8",
-    "qint32": "QInt32",
     "bfloat16": "BFloat16",
-    "quint4x2": "QUInt4x2",
-    "quint2x4": "QUInt2x4",
     "bcomplex32": "BComplex32",
 }
 
