@@ -37,7 +37,6 @@
   __attribute__((no_sanitize("signed-integer-overflow")))
 #define __ubsan_ignore_pointer_overflow__ \
   __attribute__((no_sanitize("pointer-overflow")))
-#define __ubsan_ignore_function__ __attribute__((no_sanitize("function")))
 #define __ubsan_ignore_float_cast_overflow__ \
   __attribute__((no_sanitize("float-cast-overflow")))
 #else
@@ -45,7 +44,6 @@
 #define __ubsan_ignore_undefined__
 #define __ubsan_ignore_signed_int_overflow__
 #define __ubsan_ignore_pointer_overflow__
-#define __ubsan_ignore_function__
 #define __ubsan_ignore_float_cast_overflow__
 #endif
 
@@ -100,8 +98,6 @@
 #define C10_CONCATENATE_IMPL(s1, s2) s1##s2
 #define C10_CONCATENATE(s1, s2) C10_CONCATENATE_IMPL(s1, s2)
 
-#define C10_MACRO_EXPAND(args) args
-
 #define C10_STRINGIZE_IMPL(x) #x
 #define C10_STRINGIZE(x) C10_STRINGIZE_IMPL(x)
 
@@ -109,13 +105,8 @@
  * C10_ANONYMOUS_VARIABLE(str) introduces a new identifier which starts with
  * str and ends with a unique number.
  */
-#ifdef __COUNTER__
 #define C10_UID __COUNTER__
 #define C10_ANONYMOUS_VARIABLE(str) C10_CONCATENATE(str, __COUNTER__)
-#else
-#define C10_UID __LINE__
-#define C10_ANONYMOUS_VARIABLE(str) C10_CONCATENATE(str, __LINE__)
-#endif
 
 #ifdef __has_cpp_attribute
 #define C10_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
@@ -130,14 +121,6 @@
 #define C10_LIFETIMEBOUND [[clang::lifetimebound]]
 #else
 #define C10_LIFETIMEBOUND
-#endif
-
-#ifndef FBCODE_CAFFE2
-/// DEPRECATED: Warn if a type or return value is discarded.
-#define C10_NODISCARD [[nodiscard]]
-
-/// DEPRECATED: Suppress an unused variable.
-#define C10_UNUSED [[maybe_unused]]
 #endif
 
 #if !defined(__has_attribute)
@@ -206,7 +189,7 @@ using namespace c10::xpu;
 // takes a long argument, which means you may trigger the wrong conversion
 // without it.
 //
-#if defined(__GNUC__) || defined(__ICL) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
 #define C10_LIKELY(expr) (__builtin_expect(static_cast<bool>(expr), 1))
 #define C10_UNLIKELY(expr) (__builtin_expect(static_cast<bool>(expr), 0))
 #else
@@ -326,12 +309,6 @@ constexpr uint32_t CUDA_THREADS_PER_BLOCK_FALLBACK = 256;
 #define C10_HOST_DEVICE
 #define C10_HOST
 #define C10_DEVICE
-#endif
-
-#if defined(USE_ROCM)
-#define C10_HIP_HOST_DEVICE __host__ __device__
-#else
-#define C10_HIP_HOST_DEVICE
 #endif
 
 // C10_WARP_SIZE is only allowed for device code.
@@ -620,15 +597,6 @@ __host__ __device__
 #else
 #define C10_ALWAYS_INLINE_UNLESS_MOBILE C10_ALWAYS_INLINE
 #endif
-
-#if !defined(FBCODE_CAFFE2) && !defined(C10_NODEPRECATED)
-#define CONSTEXPR_EXCEPT_WIN_CUDA constexpr
-#define C10_HOST_CONSTEXPR_EXCEPT_WIN_CUDA constexpr
-
-#define STATIC_CONSTEXPR_STR_INL_EXCEPT_WIN_CUDA(field, val) \
-  static constexpr const char field[] = val;
-#define STATIC_CONST_STR_OUT_OF_LINE_FOR_WIN_CUDA(cls, field, val)
-#endif // !defined(FBCODE_CAFFE2) && !defined(C10_NODEPRECATED)
 
 #ifndef HAS_DEMANGLE
 #if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
