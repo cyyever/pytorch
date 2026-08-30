@@ -426,7 +426,7 @@ option(BUILD_LIBTORCH_CPU_WITH_DEBUG
        "Enable RelWithDebInfo for libtorch_cpu target only" OFF)
 cmake_dependent_option(
   USE_CCACHE "Attempt using [S]CCache to wrap the compilation" ON "UNIX" OFF)
-option(WERROR "Build with -Werror supported by the compiler" OFF)
+option(WERROR "Build with -Werror supported by the compiler" ON)
 option(
   DEBUG_CUDA
   "When compiling DEBUG, also attempt to compile CUDA with debug flags (may cause nvcc to OOM)"
