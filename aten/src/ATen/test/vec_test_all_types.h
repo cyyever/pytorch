@@ -82,9 +82,6 @@ using vcomplexDbl = VecType<Complex<double>>;
 using vlong = VecType<int64_t>;
 using vint = VecType<int32_t>;
 using vshort = VecType<int16_t>;
-using vqint8 = VecType<c10::qint8>;
-using vquint8 = VecType<c10::quint8>;
-using vqint = VecType<c10::qint32>;
 using vBFloat16 = VecType<c10::BFloat16>;
 using vHalf = VecType<c10::Half>;
 
@@ -146,30 +143,6 @@ struct VecTypeHelper<vcomplexDbl> {
     using memStorageType = double;
     static constexpr int holdCount = vcomplexDbl::size();
     static constexpr int unitStorageCount = 2;
-};
-
-template<>
-struct VecTypeHelper<vqint8> {
-    using holdType = c10::qint8;
-    using memStorageType = typename c10::qint8::underlying;
-    static constexpr int holdCount = vqint8::size();
-    static constexpr int unitStorageCount = 1;
-};
-
-template<>
-struct VecTypeHelper<vquint8> {
-    using holdType = c10::quint8;
-    using memStorageType = typename c10::quint8::underlying;
-    static constexpr int holdCount = vquint8::size();
-    static constexpr int unitStorageCount = 1;
-};
-
-template<>
-struct VecTypeHelper<vqint> {
-    using holdType = c10::qint32;
-    using memStorageType = typename c10::qint32::underlying;
-    static constexpr int holdCount = vqint::size();
-    static constexpr int unitStorageCount = 1;
 };
 
 template<>

@@ -11,11 +11,6 @@
 #include <c10/util/Half.h>
 #include <c10/util/bits.h>
 #include <c10/util/complex.h>
-#include <c10/util/qint32.h>
-#include <c10/util/qint8.h>
-#include <c10/util/quint2x4.h>
-#include <c10/util/quint4x2.h>
-#include <c10/util/quint8.h>
 
 #include <array>
 #include <cstddef>
@@ -41,6 +36,16 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(DEFINE_CONSTANT)
 #undef DEFINE_CONSTANT
 
 inline size_t elementSize(ScalarType t) {
+  // The quantized enumerators are backed by a placeholder type, so the switch
+  // below would report an element size of 1 instead of the size the dtype used
+  // to have. Reject them here rather than hand back a plausible wrong answer.
+  TORCH_CHECK(
+      t != ScalarType::QInt8 && t != ScalarType::QUInt8 &&
+          t != ScalarType::QInt32 && t != ScalarType::QUInt4x2 &&
+          t != ScalarType::QUInt2x4,
+      "quantization is not supported in this build, no element size for ",
+      t);
+
 #define CASE_ELEMENTSIZE_CASE(ctype, name) \
   case ScalarType::name:                   \
     return sizeof(ctype);

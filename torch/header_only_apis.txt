@@ -116,21 +116,6 @@ C10_API
 # torch/headeronly/util/Exception.h
 STD_TORCH_CHECK
 
-# torch/headeronly/util/quint8.h
-quint8
-
-# torch/headeronly/util/quint4x2.h
-quint4x2
-
-# torch/headeronly/util/quint2x4.h
-quint2x4
-
-# torch/headeronly/util/qint8.h
-qint8
-
-# torch/headeronly/util/qint32.h
-qint32
-
 # torch/headeronly/util/bits.h
 bits1x8
 bits2x4
@@ -162,7 +147,7 @@ COMPILE_TIME_MAX_DEVICE_TYPES
 # torch/headeronly/core/ScalarType.h
 NumScalarTypes
 ScalarType
-# dummy_int1_7_t, dummy_uint1_7_t tested through ScalarType
+# dummy_int1_7_t, dummy_qint_t, dummy_uint1_7_t tested through ScalarType
 CppTypeToScalarType
 ScalarTypeToCPPTypeT
 AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_EXCEPT_COMPLEX_HALF_F8NZ
