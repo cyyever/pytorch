@@ -53,6 +53,7 @@ DynamicLayer::DynamicLayer(
       // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
       interpreter_ = Interpreter::Functionalize(layerId, functionalize_add_back_views.value());
       break;
+    case TransformType::Torch:
     default:
       TORCH_INTERNAL_ASSERT(false);
   }

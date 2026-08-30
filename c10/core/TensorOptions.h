@@ -660,6 +660,7 @@ inline DispatchKey computeDispatchKey(
               "This is a grandfathered Caffe2 device type ",
               device_.type(),
               ", it shouldn't ever convert to a DispatchKey.  File a bug describing what you were doing if you think this is in error.");
+        case c10::DeviceType::COMPILE_TIME_MAX_DEVICE_TYPES:
         default:
           TORCH_CHECK_NOT_IMPLEMENTED(
               false,
@@ -710,6 +711,7 @@ inline DispatchKey computeDispatchKey(
               " layout: ",
               device_.type());
       }
+    case Layout::NumOptions:
     default:
       TORCH_CHECK(false, "Unsupported layout: ", layout_);
   }

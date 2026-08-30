@@ -858,6 +858,9 @@ inline DispatchKeySet getAutogradRelatedKeySetFromBackend(BackendComponent t) {
       return inplace_or_view_ks | autograd_privateuse2_ks;
     case BackendComponent::PrivateUse3Bit:
       return inplace_or_view_ks | autograd_privateuse3_ks;
+    case BackendComponent::HIPBit:
+    case BackendComponent::InvalidBit:
+    case BackendComponent::VEBit:
     default:
       return inplace_or_view_ks | autograd_other_ks;
   }

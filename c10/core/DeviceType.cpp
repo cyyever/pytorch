@@ -55,6 +55,7 @@ std::string DeviceTypeName(DeviceType d, bool lower_case) {
       return lower_case ? "mtia" : "MTIA";
     case DeviceType::PrivateUse1:
       return get_privateuse1_backend(/*lower_case=*/lower_case);
+    case DeviceType::COMPILE_TIME_MAX_DEVICE_TYPES:
     default:
       TORCH_CHECK(
           false,
@@ -97,6 +98,7 @@ bool isValidDeviceType(DeviceType d) {
     case DeviceType::MTIA:
     case DeviceType::PrivateUse1:
       return true;
+    case DeviceType::COMPILE_TIME_MAX_DEVICE_TYPES:
     default:
       return false;
   }
