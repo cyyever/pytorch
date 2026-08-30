@@ -91,13 +91,6 @@ __MATH_FUNCTIONS_DECL__ double max(double x, double y) {
   return ::fmax(x, y);
 }
 
-__MATH_FUNCTIONS_DECL__ float min(float x, float y) {
-  return ::fminf(x, y);
-}
-__MATH_FUNCTIONS_DECL__ double min(double x, double y) {
-  return ::fmin(x, y);
-}
-
 __MATH_FUNCTIONS_DECL__ float pow(float x, float y) {
   return ::powf(x, y);
 }
@@ -138,13 +131,6 @@ __MATH_FUNCTIONS_DECL__ float tanh(float x) {
 }
 __MATH_FUNCTIONS_DECL__ double tanh(double x) {
   return ::tanh(x);
-}
-
-__MATH_FUNCTIONS_DECL__ float normcdf(float x) {
-  return ::normcdff(x);
-}
-__MATH_FUNCTIONS_DECL__ double normcdf(double x) {
-  return ::normcdf(x);
 }
 
 } // namespace c10::cuda::compat
