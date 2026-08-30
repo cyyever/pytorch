@@ -188,6 +188,8 @@ std::string to_string(TorchDispatchModeKey mode_key) {
       return "ProxyTorchDispatchMode";
     case TorchDispatchModeKey::FAKE:
       return "FakeTensorMode";
+    case TorchDispatchModeKey::FUNCTIONAL:
+    case TorchDispatchModeKey::NUM_MODE_KEYS:
     default:
       return "UNKNOWN_MODE";
   }

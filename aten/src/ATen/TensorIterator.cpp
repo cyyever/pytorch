@@ -1368,6 +1368,7 @@ bool TensorIteratorBase::fast_set_up(const TensorIteratorConfig& config) {
         }
         break;
       }
+    case FastSetupType::NONE:
     default:
       TORCH_INTERNAL_ASSERT(false, "Unsupported fast setup type", std::to_string((int)setup_type));
   }

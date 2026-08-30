@@ -193,6 +193,7 @@ class IListRef;
   switch (TAG) {                                                 \
     TORCH_ILISTREF_FORALL_TAGS(TORCH_ILISTREF_UNWRAP_CASE, BODY) \
     break;                                                       \
+    case c10::IListRefTag::None:                                 \
     default:                                                     \
       TORCH_INTERNAL_ASSERT(false, "invalid IListRef tag.");     \
   } \

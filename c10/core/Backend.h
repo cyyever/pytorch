@@ -224,6 +224,8 @@ inline DispatchKey backendToDispatchKey(Backend b) {
       return DispatchKey::MTIA;
     case Backend::PrivateUse1:
       return DispatchKey::PrivateUse1;
+    case Backend::NumOptions:
+    case Backend::QuantizedXPU:
     default:
       TORCH_CHECK(false, "Unknown backend");
   }
@@ -290,6 +292,7 @@ inline DeviceType backendToDeviceType(Backend b) {
       return DeviceType::PrivateUse1;
     case Backend::Undefined:
       TORCH_CHECK(false, "Undefined backend is not a valid device type");
+    case Backend::NumOptions:
     default:
       TORCH_CHECK(false, "Unknown backend");
   }
@@ -369,6 +372,8 @@ inline const char* toString(Backend b) {
       return "MTIA";
     case Backend::PrivateUse1:
       return "PrivateUseOne";
+    case Backend::NumOptions:
+    case Backend::Undefined:
     default:
       return "UNKNOWN_BACKEND";
   }

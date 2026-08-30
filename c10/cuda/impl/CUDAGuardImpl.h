@@ -110,6 +110,7 @@ struct CUDAGuardImpl final : public c10::impl::DeviceGuardImplInterface {
       case EventFlag::BACKEND_DEFAULT:
         cuda_flag = cudaEventDefault;
         break;
+      case EventFlag::INVALID:
       default:
         TORCH_CHECK(false, "CUDA event received unknown flag");
     }

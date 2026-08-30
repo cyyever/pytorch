@@ -629,6 +629,8 @@ void apply_lstsq(const Tensor& A, Tensor& B, Tensor& rank, Tensor& singular_valu
         rwork_len = std::max<int64_t>(1, 5 * std::min(m, n));
         break;
       // case driver_t::Gelsd:
+      case driver_t::Gels:
+      case driver_t::Gelsd:
       default:
         rwork_len = std::max<int64_t>(1, rwork_opt);
     }
