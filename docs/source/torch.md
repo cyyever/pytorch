@@ -931,11 +931,7 @@ during migration, we recommend using the public APIs.
     autocast_increment_nesting
     clear_autocast_cache
     compiled_with_cxx11_abi
-    get_autocast_cpu_dtype
     get_autocast_dtype
-    get_autocast_gpu_dtype
-    get_autocast_ipu_dtype
-    get_autocast_xla_dtype
     get_device
     get_device_module
     import_ir_module
@@ -943,10 +939,7 @@ during migration, we recommend using the public APIs.
     is_anomaly_check_nan_enabled
     is_anomaly_enabled
     is_autocast_cache_enabled
-    is_autocast_cpu_enabled
     is_autocast_enabled
-    is_autocast_ipu_enabled
-    is_autocast_xla_enabled
     is_distributed
     merge_type_from_type_comment
     parse_ir
@@ -957,15 +950,8 @@ during migration, we recommend using the public APIs.
     promote_types
     set_anomaly_enabled
     set_autocast_cache_enabled
-    set_autocast_cpu_dtype
-    set_autocast_cpu_enabled
     set_autocast_dtype
     set_autocast_enabled
-    set_autocast_gpu_dtype
-    set_autocast_ipu_dtype
-    set_autocast_ipu_enabled
-    set_autocast_xla_dtype
-    set_autocast_xla_enabled
     use_deterministic_algorithms
     are_deterministic_algorithms_enabled
     is_deterministic_algorithms_warn_only_enabled
