@@ -1,6 +1,6 @@
 
 #include <ATen/detail/CUDAHooksInterface.h>
-#include <c10/util/FileSystem.h>
+#include <filesystem>
 #include <c10/util/string_view.h>
 #include <c10/util/tempfile.h>
 #include <torch/csrc/inductor/aoti_package/model_package_loader.h>
@@ -16,7 +16,7 @@
 #include <utility>
 
 
-namespace fs = c10::filesystem;
+namespace fs = std::filesystem;
 
 namespace {
 

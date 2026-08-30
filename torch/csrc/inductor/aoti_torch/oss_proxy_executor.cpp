@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <c10/util/Exception.h>
-#include <c10/util/FileSystem.h>
+#include <filesystem>
 #include <torch/csrc/inductor/aoti_torch/generated_enum_converters.h>
 #include <torch/csrc/inductor/aoti_torch/oss_proxy_executor.h>
 #include <torch/csrc/jit/serialization/pickle.h>
@@ -585,7 +585,7 @@ OSSProxyExecutor::OSSProxyExecutor(
     // Load custom objects from custom_objs_config.json file
     // Get the constants json path from the extern_kernel_nodes .json file
 
-    auto folder_path = c10::filesystem::path(json_path).parent_path();
+    auto folder_path = std::filesystem::path(json_path).parent_path();
     auto custom_objs_json_path = folder_path / "custom_objs_config.json";
     LOG(INFO) << "Loading custom_objs_config .json file from "
               << custom_objs_json_path;
