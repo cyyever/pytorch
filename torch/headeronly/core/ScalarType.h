@@ -150,8 +150,9 @@ struct dummy_qint_t {};
   _(c10::Float4_e2m1fn_x2, Float4_e2m1fn_x2) /* 45 */    \
   _(c10::complex<c10::BFloat16>, BComplex32) /* 46 */
 
-// NB: despite its generic sounding name, the macros that don't take _AND
-// are mostly only used by the removed NNC fuser
+// NB: the macros that don't take _AND fix their type set at the point of
+// definition, so a call site that needs one more type reaches for the _AND
+// form rather than editing these.
 #define AT_FORALL_INT_TYPES(_) \
   _(uint8_t, Byte)             \
   _(int8_t, Char)              \
@@ -312,7 +313,7 @@ using ScalarTypeToCPPTypeT = typename ScalarTypeToCPPType<N>::type;
 
 } // namespace impl
 
-inline const char* toString(ScalarType t) {
+constexpr const char* toString(ScalarType t) {
 #define DEFINE_CASE(_, name) \
   case ScalarType::name:     \
     return #name;
