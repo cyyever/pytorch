@@ -68,8 +68,8 @@ struct alignas(2) Half {
   constexpr C10_HOST_DEVICE Half(unsigned short bits, from_bits_t /*unused*/)
       : x(bits) {}
 #if defined(__aarch64__) && !defined(__CUDACC__)
-  inline Half(float16_t value);
-  inline operator float16_t() const;
+  constexpr Half(float16_t value);
+  constexpr operator float16_t() const;
 #else
   constexpr C10_HOST_DEVICE Half(float value);
   constexpr C10_HOST_DEVICE operator float() const;
@@ -367,11 +367,11 @@ inline uint32_t fp16_ieee_to_fp32_bits(uint16_t h) {
 #endif // C10_X86_F16
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
-inline float16_t fp16_from_bits(uint16_t h) {
+constexpr float16_t fp16_from_bits(uint16_t h) {
   return std::bit_cast<float16_t>(h);
 }
 
-inline uint16_t fp16_to_bits(float16_t f) {
+constexpr uint16_t fp16_to_bits(float16_t f) {
   return std::bit_cast<uint16_t>(f);
 }
 #endif
@@ -386,8 +386,8 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
 /// Constructors
-inline Half::Half(float16_t value) : x(detail::fp16_to_bits(value)) {}
-inline Half::operator float16_t() const {
+constexpr Half::Half(float16_t value) : x(detail::fp16_to_bits(value)) {}
+constexpr Half::operator float16_t() const {
   return detail::fp16_from_bits(x);
 }
 #else
