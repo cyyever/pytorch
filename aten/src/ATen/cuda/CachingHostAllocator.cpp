@@ -4,7 +4,6 @@
 #include <c10/core/thread_pool.h>
 #include <c10/cuda/CUDAAllocatorConfig.h>
 #include <c10/cuda/CUDAGraphsC10Utils.h>
-#include <c10/util/Gauge.h>
 
 #include <cuda_runtime_api.h>
 #include <future>
@@ -29,8 +28,6 @@ struct CUDACachingHostAllocatorImpl
       // pinned_free_catch_all is enabled: suppress the exception to prevent
       // it from escaping through ~StorageImpl() (implicitly noexcept), which
       // would cause std::terminate. Allows graceful shutdown to proceed.
-      STATIC_GAUGE(pytorch.CUDACachingHostAllocator.free_fail_catch_all)
-          .record(1);
       TORCH_WARN("Suppressed exception in pinned allocator free()");
     }
   }
