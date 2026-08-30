@@ -12,7 +12,6 @@
 #endif
 
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-default")
 
 // Sleef offers vectorized versions of some transcedentals
 // such as sin, cos, tan etc..
@@ -713,5 +712,3 @@ inline Vectorized<float> Vectorized<float>::erf() const {
 
 } // namespace CPU_CAPABILITY
 } // namespace at::vec
-
-C10_DIAGNOSTIC_POP()

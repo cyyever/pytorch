@@ -9,9 +9,6 @@
 
 
 // Three warnings in Cutlass included header files
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wset-but-not-used")
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wunused-but-set-parameter")
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wunused-but-set-variable")
 
 // Determine if the architecture supports rowwise scaled mm
 // Currently failing on windows with:
@@ -433,7 +430,3 @@ void bf16bf16_grouped_mm(
 }
 
 } // namespace at::cuda::detail
-
-C10_DIAGNOSTIC_POP()
-C10_DIAGNOSTIC_POP()
-C10_DIAGNOSTIC_POP()

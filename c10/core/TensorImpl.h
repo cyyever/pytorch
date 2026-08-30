@@ -58,7 +58,6 @@ C10_DECLARE_bool(caffe2_keep_on_shrink);
 // respect caffe2_keep_on_shrink.
 C10_DECLARE_int64(caffe2_max_keep_on_shrink_memory);
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-default")
 
 namespace at {
 class Tensor;
@@ -3286,5 +3285,3 @@ static_assert(
 #undef C10_GCC_VERSION_MINOR
 
 } // namespace c10
-
-C10_DIAGNOSTIC_POP()

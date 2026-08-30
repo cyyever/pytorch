@@ -820,9 +820,7 @@ id<MTLLibrary> MetalShaderLibrary::compileLibrary(const std::string& src) {
       options.mathFloatingPointFunctions =
           fast_math ? MTLMathFloatingPointFunctionsFast : MTLMathFloatingPointFunctionsPrecise;
     } else {
-      C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wdeprecated-declarations")
       [options setFastMathEnabled:fast_math ? YES : NO];
-      C10_DIAGNOSTIC_POP()
     }
   }
 

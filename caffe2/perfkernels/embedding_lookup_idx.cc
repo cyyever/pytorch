@@ -6,7 +6,6 @@
 #include <c10/util/irange.h>
 #include "caffe2/perfkernels/common.h"
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wmissing-prototypes")
 namespace caffe2 {
 
 /**
@@ -248,4 +247,3 @@ EMBEDDING_IDX_SPECIALIZATION(int64_t, uint8_t, uint8_t, float, true)
 #undef EMBEDDING_IDX_SPECIALIZATION
 
 } // namespace caffe2
-C10_DIAGNOSTIC_POP()

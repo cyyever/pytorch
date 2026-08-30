@@ -7405,7 +7405,6 @@ void install_storage_overlapping_guard(
       /* overlapping= */ false);
 }
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wdeprecated-volatile")
 char flush_cache_by_eviction() {
   constexpr size_t evict_size = 32 * 1024 * 1024;
   std::vector<char> buffer(evict_size, 1);
@@ -7416,7 +7415,6 @@ char flush_cache_by_eviction() {
   }
   return sink;
 }
-C10_DIAGNOSTIC_POP()
 
 double profile_guard_manager(
     RootGuardManager* root,

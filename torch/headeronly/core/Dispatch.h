@@ -35,7 +35,6 @@ inline torch::headeronly::ScalarType scalar_type(
     /* don't use TYPE again in case it is an expensive or side-effect op */ \
     torch::headeronly::ScalarType _st = ::detail::scalar_type(the_type);    \
     PRELUDE(at_dispatch_name, _st);                                         \
-    C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-enum")             \
     switch (_st) {                                                          \
       __VA_ARGS__                                                           \
       default:                                                              \
@@ -47,7 +46,6 @@ inline torch::headeronly::ScalarType scalar_type(
             torch::headeronly::toString(_st),                               \
             "'");                                                           \
     }                                                                       \
-    C10_DIAGNOSTIC_POP()                                                    \
   }()
 
 // THO_EMPTY is a helper macro that discards its arguments.

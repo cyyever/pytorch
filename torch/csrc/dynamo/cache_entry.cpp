@@ -21,17 +21,12 @@ CacheEntry::CacheEntry(const py::handle& guarded_code, PyObject* backend)
       this->guard_manager.attr("diff_guard_root"));
 }
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED(
-    "-Wdeprecated-copy-with-user-provided-dtor")
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wdeprecated-copy-dtor")
 // NOLINTNEXTLINE(bugprone-exception-escape)
 CacheEntry::~CacheEntry() {
   // prevent guard_manager from use-after-free when invalidating
   this->guard_manager.attr("cache_entry") = py::none();
   this->guard_manager.attr("extra_state") = py::none();
 }
-C10_DIAGNOSTIC_POP()
-C10_DIAGNOSTIC_POP()
 
 void CacheEntry::invalidate(py::object deleted_guard_manager) {
   // Keep the current pointer alive but make the fields as if no-op

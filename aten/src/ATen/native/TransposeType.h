@@ -1,7 +1,6 @@
 #pragma once
 #include <c10/util/Exception.h>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-default")
 
 namespace at::native {
 
@@ -23,5 +22,3 @@ enum class TransposeType {
 }
 
 }  // namespace at::native
-
-C10_DIAGNOSTIC_POP()

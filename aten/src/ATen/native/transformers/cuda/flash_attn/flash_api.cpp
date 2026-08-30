@@ -28,9 +28,7 @@
 #include <ATen/ops/zeros.h>
 
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wextra-semi")
 #include <cutlass/numeric_types.h>
-C10_DIAGNOSTIC_POP()
 
 
 #include <flash.h>
