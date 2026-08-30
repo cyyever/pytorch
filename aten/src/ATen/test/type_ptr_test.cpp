@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <ATen/core/type_ptr.h>
 #include <ATen/core/jit_type.h>
 
 using c10::SingletonOrSharedTypePtr;

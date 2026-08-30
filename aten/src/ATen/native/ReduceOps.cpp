@@ -119,7 +119,6 @@
 #include <ATen/ops/zeros_like.h>
 
 #include <c10/util/irange.h>
-#include <c10/util/SmallBuffer.h>
 
 #include <algorithm>
 #include <cmath>

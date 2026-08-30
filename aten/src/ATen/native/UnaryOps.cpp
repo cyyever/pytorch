@@ -1,13 +1,15 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
-#include <ATen/ExpandUtils.h>
 #include <ATen/ScalarOps.h>
 #include <ATen/TensorIterator.h>
 #include <ATen/TensorOperators.h>
 
+// ComplexHelper.h defines view_as_real and view_as_complex as non-inline
+// functions, so this include is where they get emitted. Dropping it links
+// clean and fails at import with an undefined symbol.
+#include <ATen/native/ComplexHelper.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/UnaryOps.h>
-#include <ATen/native/ComplexHelper.h>
 
 #include <c10/util/MathConstants.h>
 

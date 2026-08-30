@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <torch/types.h>
-#include <torch/utils.h>
 
 using namespace at;
 

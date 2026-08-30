@@ -5,9 +5,9 @@
 #include <ATen/TensorOperators.h>
 #include <ATen/TensorSubclassLikeUtils.h>
 #include <ATen/TensorUtils.h>
-#include <ATen/cpu/vec/vec.h>
 #include <ATen/native/EmbeddingBag.h>
 
+#include <ATen/cpu/vec/vec.h>
 #include <ATen/native/CPUBlas.h>
 #include <ATen/native/NonSymbolicBC.h>
 
@@ -15,7 +15,6 @@
 #include <c10/util/Half.h>
 
 #ifdef USE_FBGEMM
-#include <fbgemm/Fbgemm.h>
 #include <fbgemm/FbgemmConvert.h>
 #else
 #include <caffe2/perfkernels/embedding_lookup_idx.h>

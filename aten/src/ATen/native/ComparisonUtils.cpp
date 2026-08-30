@@ -1,6 +1,5 @@
 #include <ATen/core/TensorBase.h>
 #include <ATen/core/TensorBody.h>
-#include <c10/util/OptionalArrayRef.h>
 #include <c10/util/Exception.h>
 
 #include <ATen/ops/_assert_tensor_metadata_native.h>

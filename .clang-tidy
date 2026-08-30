@@ -51,9 +51,13 @@ CheckOptions:
   # deliberately does not follow -- it reaches for umbrella headers instead, so
   # that half reports thousands of findings that must not be acted on.
   misc-include-cleaner.MissingIncludes: 'false'
-  # Two kinds of header include-cleaner cannot see the use of. Registration and
+  # Three kinds of header include-cleaner cannot see the use of. Registration and
   # dispatch headers earn their place by what they do at namespace scope rather
   # than by a symbol the file names. Macro-only headers are used through macro
   # expansion; Logging.h alone accounted for seven of eighteen findings in c10,
-  # every one of which failed to compile once removed.
-  misc-include-cleaner.IgnoreHeaders: '.*/ATen/ops/.*;.*/torch/library\.h;.*/ATen/core/op_registration/.*;.*Functions\.h;.*NativeFunctions\.h;.*Operators\.h;.*/torch/csrc/inductor/aoti_torch/generated/.*;.*/c10/util/Logging\.h;.*/c10/util/Exception\.h;.*Macros\.h'
+  # every one of which failed to compile once removed. pybind11 caster headers
+  # are invisible by construction: they only specialise type_caster, so no
+  # translation unit ever names a symbol from them, and dropping one leaves a
+  # module that compiles, links and imports but raises TypeError on every call
+  # that passes the affected type.
+  misc-include-cleaner.IgnoreHeaders: '.*/pybind11/.*;.*/ATen/ops/.*;.*/torch/library\.h;.*/ATen/core/op_registration/.*;.*Functions\.h;.*NativeFunctions\.h;.*Operators\.h;.*/torch/csrc/inductor/aoti_torch/generated/.*;.*/c10/util/Logging\.h;.*/c10/util/Exception\.h;.*Macros\.h'

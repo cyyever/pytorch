@@ -1,18 +1,12 @@
 #include <cstdint>
-#include <c10/util/typeid.h>
 #include <c10/util/Exception.h>
-#include <c10/util/SmallVector.h>
-#include <c10/core/Scalar.h>
 #include <c10/core/ScalarType.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
 #include <ATen/BlasBackend.h>
 #include <ATen/Context.h>
 #include <ATen/core/Tensor.h>
-#include <ATen/TensorUtils.h>
-#include <ATen/native/GroupedMMUtils.h>
 #include <ATen/native/ScaledBlasUtils.h>
-#include <ATen/ceil_div.h>
 
 #include <ATen/ops/_addmm_activation_native.h>
 #include <ATen/ops/addmm_native.h>

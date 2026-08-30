@@ -5,7 +5,6 @@
 #include <c10/util/irange.h>
 
 #include <torch/types.h>
-#include <torch/utils.h>
 
 #include <iostream>
 #include <vector>

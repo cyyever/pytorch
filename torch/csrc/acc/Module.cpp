@@ -5,7 +5,6 @@
 
 #include <ATen/detail/PrivateUse1HooksInterface.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <torch/csrc/utils/pybind.h>
 
 namespace py = pybind11;

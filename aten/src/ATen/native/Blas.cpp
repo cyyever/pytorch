@@ -3,9 +3,6 @@
 #include <ATen/Dispatch.h>
 #include <ATen/ExpandUtils.h>
 
-#include <ATen/native/Resize.h>
-#include <ATen/native/GroupedMMUtils.h>
-#include <cpuinfo.h>
 
 #include <ATen/ops/_efficientzerotensor.h>
 #include <ATen/ops/addmv.h>

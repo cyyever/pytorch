@@ -1,8 +1,8 @@
 #include <torch/csrc/THP.h>
-#include <torch/csrc/mps/Stream.h>
 
 #ifdef USE_MPS
 #include <ATen/mps/MPSStream.h>
+#include <torch/csrc/mps/Stream.h>
 #include <torch/csrc/utils/pybind.h>
 
 #include <structmember.h>

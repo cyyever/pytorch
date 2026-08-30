@@ -1,6 +1,5 @@
 #include <torch/csrc/python_headers.h>
 
-#include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/device_lazy_init.h>
 #include <torch/csrc/utils/pybind.h>
 

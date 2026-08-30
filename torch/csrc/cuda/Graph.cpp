@@ -1,7 +1,5 @@
 #include <torch/csrc/python_headers.h>
 
-#include <pybind11/chrono.h>
-#include <pybind11/stl.h>
 
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/pybind.h>

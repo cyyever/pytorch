@@ -1,7 +1,6 @@
 #include <ATen/core/Dict.h>
 #include <ATen/ATen.h>
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include <string>
 
 using std::string;

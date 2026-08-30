@@ -2,7 +2,6 @@
 #include <torch/csrc/python_headers.h>
 
 #include <array>
-#include <cstdarg>
 #include <exception>
 #include <utility>
 

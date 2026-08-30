@@ -1,6 +1,5 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
-#include <ATen/TensorUtils.h>
 #include <c10/util/Exception.h>
 
 #include <ATen/ops/empty.h>
@@ -11,9 +10,9 @@
 
 // TODO: Remove the condition on AT_ROCM_ENABLED entirely,
 // don't build this file as part of CPU build.
+#include <ATen/TensorUtils.h>
 #include <ATen/cuda/CUDAConfig.h>
 
-#include <utility>
 
 #if !AT_ROCM_ENABLED()
 

@@ -13,9 +13,7 @@
 #include <torch/csrc/PyInterpreter.h>
 #include <torch/csrc/Size.h>
 #include <torch/csrc/THP.h>
-#include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/edge.h>
-#include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/python_cpp_function.h>
 #include <torch/csrc/autograd/python_hook.h>
 #include <torch/csrc/autograd/python_torch_functions.h>
@@ -38,7 +36,6 @@
 
 #include <ATen/ATen.h>
 
-#include <structmember.h>
 #include <algorithm>
 #include <cstdint>
 #include <memory>

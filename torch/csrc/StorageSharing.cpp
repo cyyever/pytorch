@@ -1,14 +1,11 @@
 #include <torch/csrc/python_headers.h>
-#include <structmember.h>
 
 #include <libshm.h>
 #include <torch/csrc/CudaIPCTypes.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/THP.h>
-#include <torch/csrc/copy_utils.h>
 
 #include <c10/util/intrusive_ptr.h>
-#include <fmt/format.h>
 
 #include <torch/csrc/Storage.h>
 #include <torch/csrc/StorageSharing.h>
@@ -16,7 +13,6 @@
 #ifdef USE_CUDA
 #include <ATen/cuda/CUDAEvent.h>
 #include <c10/cuda/CUDAGuard.h>
-#include <cuda.h>
 #include <cuda_runtime.h>
 #endif
 

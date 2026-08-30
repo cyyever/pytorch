@@ -1,7 +1,6 @@
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
 #include <ATen/ATen.h>
-#include <pybind11/pytypes.h>
 #include <torch/csrc/Generator.h>
 #include <torch/csrc/THP.h>
 #include <torch/csrc/mps/Module.h>
@@ -10,7 +9,6 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
-#include <memory>
 
 #ifdef USE_MPS
 #include <ATen/mps/MPSAllocatorInterface.h>

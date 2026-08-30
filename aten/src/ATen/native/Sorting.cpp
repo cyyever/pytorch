@@ -5,7 +5,6 @@
 #include <ATen/MemoryOverlap.h>
 #include <ATen/NumericUtils.h>
 #include <ATen/Parallel.h>
-#include <ATen/ScalarOps.h>
 #include <ATen/TensorIterator.h>
 #include <ATen/TensorMeta.h>
 #include <ATen/TensorOperators.h>

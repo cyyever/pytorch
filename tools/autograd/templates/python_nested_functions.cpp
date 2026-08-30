@@ -1,20 +1,14 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 // ${generated_comment}
 
-#include "torch/csrc/Device.h"
 #include "torch/csrc/DynamicTypes.h"
 #include "torch/csrc/Exceptions.h"
 #include "torch/csrc/autograd/python_nested_functions.h"
-#include "torch/csrc/autograd/generated/python_return_types.h"
 #include "torch/csrc/autograd/python_variable.h"
 #include "torch/csrc/autograd/utils/wrap_outputs.h"
-#include "torch/csrc/autograd/utils/python_arg_parsing.h"
-#include "torch/csrc/autograd/generated/variable_factories.h"
-#include "torch/csrc/utils/out_types.h"
 #include "torch/csrc/utils/pycfunction_helpers.h"
 #include "torch/csrc/utils/python_arg_parser.h"
 #include "torch/csrc/utils/structseq.h"
-#include "torch/csrc/utils/device_lazy_init.h"
 
 $ops_headers
 

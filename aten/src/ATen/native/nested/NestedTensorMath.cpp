@@ -5,7 +5,6 @@
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/NestedTensorImpl.h>
-#include <ATen/TensorIndexing.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/TensorUtils.h>
 #include <ATen/WrapDimUtilsMulti.h>

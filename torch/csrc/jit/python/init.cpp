@@ -2,11 +2,14 @@
 #include <torch/csrc/utils/python_arg_parser.h>
 #include <torch/csrc/utils/schema_info.h>
 
-#include <ATen/core/operator_name.h>
 #include <c10/core/SymNodeImpl.h>
 #include <torch/csrc/jit/frontend/schema_type_parser.h>
-#include <torch/csrc/jit/python/init.h>
+// opaque_obj.h registers aten::OpaqueObject through a namespace-scope static,
+// so this include is what makes the registration happen. Without it the build
+// and the import both succeed and torch._library.opaque_object fails at first
+// use with "Tried to instantiate class 'aten.OpaqueObject'".
 #include <torch/csrc/jit/python/opaque_obj.h>
+#include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/pybind.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
@@ -22,8 +25,6 @@
 #include <caffe2/serialize/inline_container.h>
 
 #include <pybind11/cast.h>
-#include <pybind11/functional.h>
-#include <pybind11/operators.h>
 
 #include <memory>
 #include <sstream>

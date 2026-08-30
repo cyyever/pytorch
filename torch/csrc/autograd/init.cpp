@@ -15,7 +15,6 @@
 #include <torch/csrc/autograd/VariableTypeUtils.h>
 #include <torch/csrc/autograd/autograd.h>
 #include <torch/csrc/autograd/autograd_not_implemented_fallback.h>
-#include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/grad_mode.h>
 #include <torch/csrc/autograd/input_metadata.h>
 #include <torch/csrc/autograd/profiler.h>
@@ -38,7 +37,6 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 #include <torch/csrc/utils/python_raii.h>
-#include <torch/csrc/utils/python_torch_function_mode.h>
 
 #include <set>
 #include <unordered_set>

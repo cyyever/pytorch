@@ -7,7 +7,6 @@
 
 #include <ATen/ATen.h>
 #include <ATen/CPUGeneratorImpl.h>
-#include <ATen/detail/XPUHooksInterface.h>
 
 #include <structmember.h>
 #include <utility>

@@ -1,12 +1,10 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
-#include <ATen/ExpandUtils.h>
 
 #include <ATen/native/Resize.h>
 #include <ATen/native/GroupedMMUtils.h>
 #include <ATen/BlasBackend.h>
 #include <ATen/native/ScaledBlasUtils.h>
-#include <cpuinfo.h>
 
 #include <ATen/ops/copy_native.h>
 #include <ATen/ops/empty.h>

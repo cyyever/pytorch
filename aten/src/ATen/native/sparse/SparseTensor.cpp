@@ -7,7 +7,6 @@
 #include <ATen/SparseTensorImpl.h>
 #include <ATen/native/SparseTensorUtils.h>
 #include <ATen/native/sparse/SparseStubs.h>
-#include <ATen/native/IndexingUtils.h>
 #include <ATen/native/NonSymbolicBC.h>
 
 #include <ATen/native/Copy.h>

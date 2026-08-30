@@ -4,7 +4,6 @@
 #include <ATen/ExpandUtils.h>
 #include <ATen/OpMathType.h>
 #include <ATen/Parallel.h>
-#include <ATen/TensorIndexing.h>
 #include <ATen/TensorIterator.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/TensorSubclassLikeUtils.h>
@@ -19,7 +18,6 @@
 #include <ATen/native/Resize.h>
 #include <c10/core/GradMode.h>
 #include <c10/core/SymBool.h>
-#include <c10/util/accumulate.h>
 #include <c10/util/irange.h>
 #include <numeric>
 #include <variant>
@@ -148,7 +146,6 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <cpuinfo.h>
 
 namespace at {
 

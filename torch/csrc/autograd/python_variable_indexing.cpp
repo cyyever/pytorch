@@ -1,8 +1,6 @@
 #include <torch/csrc/autograd/python_variable_indexing.h>
 
 #include <torch/csrc/Exceptions.h>
-#include <torch/csrc/autograd/function.h>
-#include <torch/csrc/autograd/utils/wrap_outputs.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/utils/numpy_stub.h>
@@ -15,7 +13,6 @@
 #include <torch/csrc/utils/tensor_types.h>
 
 #include <ATen/DeviceGuard.h>
-#include <ATen/ExpandUtils.h>
 #include <ATen/Functions.h>
 #include <ATen/TensorIndexing.h>
 #include <ATen/core/LegacyTypeDispatch.h>
@@ -23,7 +20,6 @@
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
-#include <fmt/format.h>
 
 using namespace at;
 using namespace torch::autograd::utils;

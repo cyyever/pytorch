@@ -7,20 +7,15 @@
 #include <c10/util/SmallVector.h>
 #include <c10/util/irange.h>
 #include <pybind11/pybind11.h>
-#include <structmember.h>
 #include <torch/csrc/PyInterpreter.h>
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/pybind.h>
 
 #include <ATen/FuncTorchTLS.h>
-#include <ATen/functorch/DynamicLayer.h>
 #include <torch/csrc/Dtype.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/THP.h>
-#include <torch/csrc/autograd/functions/accumulate_grad.h>
-#include <torch/csrc/autograd/functions/basic_ops.h>
-#include <torch/csrc/autograd/functions/utils.h>
 #include <torch/csrc/autograd/grad_mode.h>
 #include <torch/csrc/autograd/graph_task.h>
 #include <torch/csrc/autograd/python_anomaly_mode.h>
@@ -38,7 +33,6 @@
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
 
-#include <torch/csrc/autograd/function.h>
 #include <functional>
 #include <memory>
 #include <string>

@@ -2,7 +2,6 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/native/cpu/mixed_data_type.h>
 #include <ATen/native/group_norm.h>
-#include <c10/util/accumulate.h>
 
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>

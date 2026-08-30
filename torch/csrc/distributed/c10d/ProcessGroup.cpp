@@ -6,7 +6,6 @@
 #include <fmt/ranges.h>
 
 #include <algorithm>
-#include <typeinfo>
 #include <unordered_set>
 
 #include <torch/csrc/distributed/c10d/PrefixStore.hpp>

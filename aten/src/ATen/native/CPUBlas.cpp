@@ -6,7 +6,6 @@
 #include <c10/util/irange.h>
 
 #include <climits>
-#include <cpuinfo.h>
 
 #if AT_BUILD_WITH_BLAS()
 #if C10_IOS

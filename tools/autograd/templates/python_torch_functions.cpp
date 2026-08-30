@@ -15,16 +15,12 @@
 #include "torch/csrc/autograd/python_torch_functions.h"
 #include "torch/csrc/autograd/python_variable.h"
 #include "torch/csrc/autograd/utils/wrap_outputs.h"
-#include "torch/csrc/Dtype.h"
 #include "torch/csrc/DynamicTypes.h"
 #include "torch/csrc/Exceptions.h"
 #include "torch/csrc/utils/out_types.h"
 #include "torch/csrc/utils/pybind.h"
 #include "torch/csrc/utils/pycfunction_helpers.h"
 #include "torch/csrc/utils/python_arg_parser.h"
-#include "torch/csrc/utils/tensor_layouts.h"
-#include "torch/csrc/utils/tensor_new.h"
-#include "torch/csrc/utils/tensor_numpy.h"
 #include "torch/csrc/autograd/generated/variable_factories.h"
 #include "torch/csrc/utils/structseq.h"
 #include "torch/csrc/utils/device_lazy_init.h"
@@ -34,10 +30,7 @@
 
 $ops_headers
 
-#include <functional>
 #include <initializer_list>
-#include <stdexcept>
-#include <utility>
 
 using at::Tensor;
 using at::Device;

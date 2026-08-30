@@ -41,7 +41,6 @@ Stats stats() {
 #include <elf.h>
 #include <link.h>
 #include <linux/limits.h>
-#include <pthread.h>
 #include <algorithm>
 #include <climits>
 #include <cstring>
