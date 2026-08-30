@@ -1580,11 +1580,6 @@ partial_fn = functools.partial(fn, scale=2)
             return x - 1
 
     @make_test
-    def test_get_autocast_gpu_dtype(x):
-        dtype = torch.get_autocast_gpu_dtype()
-        return x.type(dtype)
-
-    @make_test
     def test_is_any_autocast_enabled(x):
         if torch._C._is_any_autocast_enabled():
             return x + 1

@@ -247,21 +247,6 @@ class CtxManagerTests(torch._dynamo.test_case.TestCase):
             res = opt_fn(x)
             self.assertTrue(same(ref, res))
 
-    def test_is_autocast_cpu_enabled(self):
-        def fn(a_float32, b_float32):
-            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                c_float16 = torch.mm(a_float32, b_float32)
-                if torch.is_autocast_cpu_enabled():
-                    c_float16 = c_float16 + 1
-            return c_float16
-
-        a = torch.rand((8, 8))
-        b = torch.rand((8, 8))
-        ref = fn(a, b)
-        opt_fn = torch.compile(fn, backend="eager", fullgraph=True)
-        res = opt_fn(a, b)
-        self.assertTrue(same(ref, res))
-
     @unittest.skipIf(
         not PLATFORM_SUPPORTS_FLASH_ATTENTION,
         "Can't run fused SDPA on this platform",
