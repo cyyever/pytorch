@@ -1542,8 +1542,7 @@ static Tensor sparse_compressed_to_flipped(
   // argument. See the comments below for detailed explanations on how exactly
   // each step is performed.
 
-  Tensor compressed_indices, plain_indices;
-  std::tie(compressed_indices, plain_indices) =
+  auto [compressed_indices, plain_indices] =
       at::sparse_csr::getCompressedPlainIndices(self);
   auto values = self.values();
   const auto nnz = plain_indices.size(-1);
@@ -2085,9 +2084,7 @@ static Tensor _compressed_to_block_compressed_cpu(
       "invalid layout template parameter for _compressed_to_block_compressed_cpu");
 
   auto input_values = self.values().contiguous();
-  Tensor input_compressed_indices;
-  Tensor input_plain_indices;
-  std::tie(input_compressed_indices, input_plain_indices) =
+  auto [input_compressed_indices, input_plain_indices] =
       sparse_csr::getCompressedPlainIndices(self);
   input_compressed_indices = input_compressed_indices.contiguous();
   input_plain_indices = input_plain_indices.contiguous();
