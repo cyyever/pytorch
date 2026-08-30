@@ -66,7 +66,6 @@
 #include <ATen/TensorSubclassLikeUtils.h>
 #include <ATen/TensorUtils.h>
 #include <ATen/WrapDimUtils.h>
-#include <ATen/core/IListRef.h>
 #include <ATen/core/Tensor.h>
 #include <ATen/native/BinaryOps.h>
 #include <ATen/native/Copy.h>

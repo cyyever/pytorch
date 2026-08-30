@@ -9,7 +9,6 @@
 #include <torch/csrc/THP.h>
 #include <torch/csrc/autograd/edge.h>
 #include <torch/csrc/autograd/engine.h>
-#include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/functions/basic_ops.h>
 #include <torch/csrc/autograd/python_anomaly_mode.h>
 #include <torch/csrc/autograd/python_cpp_function.h>

@@ -7,7 +7,6 @@
 #include <ATen/native/TensorCompare.h>
 
 #include <ATen/Context.h>
-#include <ATen/TensorUtils.h>
 #include <ATen/TensorIterator.h>
 
 #include <ATen/ops/imag.h>

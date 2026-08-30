@@ -7,7 +7,6 @@
 #include <c10/util/intrusive_ptr.h>
 #include <c10/util/MaybeOwned.h>
 
-#include <memory>
 #include <string>
 
 namespace {

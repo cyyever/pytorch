@@ -6,7 +6,6 @@
 #include <ATen/Parallel.h>
 #include <ATen/native/TensorIterator.h>
 #include <c10/util/irange.h>
-#include <c10/util/Load.h>
 
 #include <ATen/ops/_unique2_native.h>
 #include <ATen/ops/_unique_native.h>

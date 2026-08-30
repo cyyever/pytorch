@@ -1,9 +1,7 @@
 #include <ATen/native/SparseTensorUtils.h>
 
 #include <ATen/ATen.h>
-#include <ATen/SparseTensorImpl.h>
 #include <ATen/native/sparse/SparseStubs.h>
-#include <ATen/Parallel.h>
 #include <c10/util/irange.h>
 
 #include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>

@@ -2,7 +2,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 #include <c10/core/Device.h>
-#include <c10/core/Scalar.h>
 #include <optional>
 
 #include <ATen/ops/_functional_sym_constrain_range_native.h>

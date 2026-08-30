@@ -1,14 +1,10 @@
 #include <torch/csrc/python_headers.h>
-#include <structmember.h>
 
 #include <c10/core/CPUAllocator.h>
 #include <c10/util/overflows.h>
-#include <libshm.h>
-#include <torch/csrc/CudaIPCTypes.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/THP.h>
 #include <torch/csrc/autograd/utils/wrap_outputs.h>
-#include <torch/csrc/copy_utils.h>
 
 #include <c10/util/ScopeExit.h>
 #include <c10/util/intrusive_ptr.h>

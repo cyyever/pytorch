@@ -2,7 +2,6 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/Dispatch.h>
 #include <ATen/Parallel.h>
-#include <ATen/TensorIndexing.h>
 #include <ATen/TensorMeta.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/TensorUtils.h>

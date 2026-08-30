@@ -2,7 +2,6 @@
 #include <ATen/DynamicLibrary.h>
 
 #include <dlfcn.h>
-#include <libgen.h>
 
 namespace at {
 

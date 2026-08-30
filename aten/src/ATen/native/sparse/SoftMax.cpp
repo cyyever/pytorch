@@ -3,7 +3,6 @@
 #include <ATen/Dispatch.h>
 #include <ATen/AccumulateType.h>
 #include <ATen/native/sparse/ParamUtils.h>
-#include <ATen/native/SparseTensorUtils.h>
 #include <ATen/Parallel.h>
 #include <c10/util/accumulate.h>
 #include <c10/util/irange.h>

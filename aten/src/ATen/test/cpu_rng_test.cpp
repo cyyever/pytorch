@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <ATen/test/rng_test.h>
-#include <ATen/Generator.h>
 #include <c10/core/GeneratorImpl.h>
 #include <ATen/Tensor.h>
 #include <ATen/native/DistributionTemplates.h>

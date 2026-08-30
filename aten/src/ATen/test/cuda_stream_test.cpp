@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/CUDAEvent.h>
 #include <c10/core/Event.h>
 #include <c10/core/impl/InlineEvent.h>

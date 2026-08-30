@@ -1,7 +1,6 @@
 #ifdef USE_C10D_NCCL
 #include <cuda_runtime.h>
 
-#include <fstream>
 
 #include <torch/csrc/distributed/c10d/FlightRecorderDetail.hpp>
 #include <torch/csrc/distributed/c10d/ProcessGroupNCCL.hpp>

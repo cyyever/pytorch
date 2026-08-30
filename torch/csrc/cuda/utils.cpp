@@ -2,7 +2,6 @@
 #include <torch/csrc/Stream.h>
 #include <torch/csrc/cuda/THCP.h>
 #include <torch/csrc/python_headers.h>
-#include <cstdarg>
 #include <string>
 
 // NB: It's a list of *optional* CUDAStream; when nullopt, that means to use

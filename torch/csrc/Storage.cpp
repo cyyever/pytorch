@@ -1,7 +1,5 @@
 #include <torch/csrc/python_headers.h>
-#include <structmember.h>
 
-#include <ATen/mps/MPSDevice.h>
 #include <c10/core/CPUAllocator.h>
 #include <torch/csrc/CudaIPCTypes.h>
 #include <torch/csrc/Device.h>
@@ -9,7 +7,6 @@
 #include <torch/csrc/StorageMethods.h>
 #include <torch/csrc/StorageSharing.h>
 #include <torch/csrc/THP.h>
-#include <torch/csrc/copy_utils.h>
 #include <torch/csrc/utils/device_lazy_init.h>
 #include <torch/csrc/utils/pyobject_preservation.h>
 #include <torch/csrc/utils/python_arg_parser.h>

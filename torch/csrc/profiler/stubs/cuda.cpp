@@ -9,7 +9,6 @@
 #include <c10/util/ApproximateClock.h>
 #include <c10/util/irange.h>
 #include <torch/csrc/profiler/stubs/base.h>
-#include <torch/csrc/profiler/util.h>
 
 namespace torch::profiler::impl {
 namespace {

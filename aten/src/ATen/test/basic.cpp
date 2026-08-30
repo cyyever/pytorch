@@ -18,7 +18,6 @@ struct THFloatTensor;
 #include <numeric>
 #include <sstream>
 #include <thread>
-#include <mutex>
 
 #define ASSERT_EQ_RESOLVED(X, Y) \
   {                              \

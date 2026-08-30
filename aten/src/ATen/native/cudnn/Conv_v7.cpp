@@ -19,7 +19,6 @@
 #include <ATen/cudnn/Types.h>
 #include <ATen/native/utils/ParamsHash.h>
 
-#include <ATen/TensorUtils.h>
 #include <c10/util/irange.h>
 
 #include <algorithm>

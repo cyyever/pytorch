@@ -5,7 +5,6 @@
 // LICENSE file in the root directory of this source tree.
 
 #include <ATen/Operators.h>
-#include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/functorch/BatchRulesHelper.h>
 
 namespace at::functorch {

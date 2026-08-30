@@ -5,7 +5,6 @@
 #include <ATen/Dispatch.h>
 #include <ATen/SparseCsrTensorImpl.h>
 #include <ATen/SparseCsrTensorUtils.h>
-#include <ATen/SparseTensorImpl.h>
 #include <ATen/native/LinearAlgebraUtils.h>
 
 #include <ATen/ops/_convert_indices_from_csr_to_coo.h>

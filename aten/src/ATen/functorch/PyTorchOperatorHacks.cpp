@@ -5,7 +5,6 @@
 #include <ATen/Dispatch.h>
 #include <c10/util/irange.h>
 #include <c10/util/Exception.h>
-#include <ATen/native/LinearAlgebraUtils.h>
 
 #include <algorithm>
 #include <utility>

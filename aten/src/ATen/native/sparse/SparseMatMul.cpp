@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/core/Tensor.h>
 #include <ATen/Dispatch.h>
-#include <ATen/SparseTensorImpl.h>
 #include <ATen/native/LinearAlgebraUtils.h>
 #include <ATen/native/SparseTensorUtils.h>
 #include <ATen/native/Resize.h>

@@ -1,4 +1,3 @@
-#include <fmt/format.h>
 #include <cstring>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <torch/csrc/autograd/profiler_kineto.h>
@@ -7,13 +6,9 @@
 #include <c10/util/ApproximateClock.h>
 #include <c10/util/Exception.h>
 #include <c10/util/ScopeExit.h>
-#include <c10/util/flat_hash_map.h>
-#include <c10/util/irange.h>
 #include <c10/util/overloaded.h>
-#include <fmt/format.h>
 #include <torch/csrc/profiler/api.h>
 #include <torch/csrc/profiler/collection.h>
-#include <torch/csrc/profiler/containers.h>
 #include <torch/csrc/profiler/events.h>
 #include <torch/csrc/profiler/kineto_metadata.h>
 #include <torch/csrc/profiler/kineto_shim.h>
