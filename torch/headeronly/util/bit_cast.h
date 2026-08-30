@@ -2,6 +2,9 @@
 
 #include <cstring>
 #include <type_traits>
+// __cpp_lib_bit_cast is announced by <version>; without it in scope the test
+// below sees the macro undefined and always takes the fallback.
+#include <version>
 
 #include <torch/headeronly/macros/Macros.h>
 
