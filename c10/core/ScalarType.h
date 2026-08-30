@@ -35,7 +35,7 @@ namespace c10 {
 AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(DEFINE_CONSTANT)
 #undef DEFINE_CONSTANT
 
-inline size_t elementSize(ScalarType t) {
+constexpr size_t elementSize(ScalarType t) {
   // The quantized enumerators are backed by a placeholder type, so the switch
   // below would report an element size of 1 instead of the size the dtype used
   // to have. Reject them here rather than hand back a plausible wrong answer.
@@ -58,7 +58,7 @@ inline size_t elementSize(ScalarType t) {
 #undef CASE_ELEMENTSIZE_CASE
 }
 
-inline ScalarType opaqueScalarType(ScalarType t) {
+constexpr ScalarType opaqueScalarType(ScalarType t) {
   auto esize = elementSize(t);
   ScalarType result;
   switch (esize) {
@@ -83,7 +83,7 @@ inline ScalarType opaqueScalarType(ScalarType t) {
   return result;
 }
 
-inline bool isIntegralType(ScalarType t, bool includeBool) {
+constexpr bool isIntegralType(ScalarType t, bool includeBool) {
   bool isIntegral =
       (t == ScalarType::Byte || t == ScalarType::Char || t == ScalarType::Int ||
        t == ScalarType::Long || t == ScalarType::Short ||
@@ -93,29 +93,29 @@ inline bool isIntegralType(ScalarType t, bool includeBool) {
   return isIntegral || (includeBool && t == ScalarType::Bool);
 }
 
-inline bool isFloat8Type(ScalarType t) {
+constexpr bool isFloat8Type(ScalarType t) {
   return t == ScalarType::Float8_e5m2 || t == ScalarType::Float8_e5m2fnuz ||
       t == ScalarType::Float8_e4m3fn || t == ScalarType::Float8_e4m3fnuz ||
       t == ScalarType::Float8_e8m0fnu;
 }
 
-inline bool isReducedFloatingType(ScalarType t) {
+constexpr bool isReducedFloatingType(ScalarType t) {
   return t == ScalarType::Half || t == ScalarType::BFloat16 ||
       isFloat8Type(t) || t == ScalarType::Float4_e2m1fn_x2;
 }
 
-inline bool isFloatingType(ScalarType t) {
+constexpr bool isFloatingType(ScalarType t) {
   return t == ScalarType::Double || t == ScalarType::Float ||
       isReducedFloatingType(t);
 }
 
-inline bool isComplexType(ScalarType t) {
+constexpr bool isComplexType(ScalarType t) {
   return (
       t == ScalarType::ComplexHalf || t == ScalarType::ComplexFloat ||
       t == ScalarType::ComplexDouble || t == ScalarType::BComplex32);
 }
 
-inline bool isBitsType(ScalarType t) {
+constexpr bool isBitsType(ScalarType t) {
   return t == ScalarType::Bits1x8 || t == ScalarType::Bits2x4 ||
       t == ScalarType::Bits4x2 || t == ScalarType::Bits8 ||
       t == ScalarType::Bits16;
@@ -129,7 +129,7 @@ constexpr bool isBarebonesUnsignedType(ScalarType t) {
       t == ScalarType::UInt32 || t == ScalarType::UInt64;
 }
 
-inline bool isSignedType(ScalarType t) {
+constexpr bool isSignedType(ScalarType t) {
 #define CASE_ISSIGNED(name)     \
   case ScalarType::name:        \
     return std::numeric_limits< \
@@ -207,7 +207,7 @@ inline bool isSignedType(ScalarType t) {
 #undef CASE_ISSIGNED
 }
 
-inline ScalarType toRealValueType(ScalarType t) {
+constexpr ScalarType toRealValueType(ScalarType t) {
   switch (t) {
     case ScalarType::ComplexHalf:
       return ScalarType::Half;
@@ -222,7 +222,7 @@ inline ScalarType toRealValueType(ScalarType t) {
   }
 }
 
-inline ScalarType toComplexType(ScalarType t) {
+constexpr ScalarType toComplexType(ScalarType t) {
   switch (t) {
     case ScalarType::BFloat16:
       return ScalarType::BComplex32;
@@ -247,7 +247,7 @@ inline ScalarType toComplexType(ScalarType t) {
 
 // see tensor_attributes.rst for detailed explanation and examples
 // of casting rules.
-inline bool canCast(const ScalarType from, const ScalarType to) {
+constexpr bool canCast(const ScalarType from, const ScalarType to) {
   // We disallow complex -> non complex, e.g., float_tensor *= complex is
   // disallowed.
   if (isComplexType(from) && !isComplexType(to)) {
