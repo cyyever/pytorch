@@ -25,6 +25,7 @@ inline std::string gelutype_to_string(const GeluType type) {
   switch(type) {
     case GeluType::None: return "none";
     case GeluType::Tanh: return "tanh";
+    case GeluType::END:
     default: TORCH_CHECK(false, "unknown GELU type: ", static_cast<int>(type));
   }
 }

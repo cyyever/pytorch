@@ -80,6 +80,7 @@ std::string get_cpu_capability() {
       return "AVX2";
     case native::CPUCapability::AVX512:
       return "AVX512";
+    case native::CPUCapability::NUM_OPTIONS:
     default:
       break;
   }
