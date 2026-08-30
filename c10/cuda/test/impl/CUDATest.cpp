@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <c10/core/Device.h>
-#include <c10/core/DeviceType.h>
 #include <c10/cuda/CUDAException.h>
 #if !defined(USE_ROCM) && !defined(__HIP_PLATFORM_AMD__)
 #include <c10/cuda/driver_api.h>

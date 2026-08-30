@@ -1,9 +1,10 @@
 #include <algorithm>
-#include <optional>
 
 #include <c10/util/ArrayRef.h>
 #include <c10/util/Logging.h>
 #include <gtest/gtest.h>
+
+#include <optional>
 
 namespace c10_test {
 

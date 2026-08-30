@@ -4,7 +4,6 @@
 
 #include <gtest/gtest.h>
 
-#include <cstdint>
 #include <limits>
 
 using c10::cuda::CUDACachingAllocator::CUDAAllocatorConfig;
