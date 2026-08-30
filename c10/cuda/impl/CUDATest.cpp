@@ -3,7 +3,6 @@
 #include <c10/cuda/CUDAException.h>
 #include <c10/cuda/impl/CUDATest.h>
 
-#include <cuda_runtime.h>
 
 namespace c10::cuda::impl {
 

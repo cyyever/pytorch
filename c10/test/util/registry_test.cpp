@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <iostream>
 #include <memory>
 
 #include <c10/util/Exception.h>

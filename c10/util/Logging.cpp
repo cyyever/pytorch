@@ -7,9 +7,9 @@
 #include <folly/synchronization/SanitizeThread.h>
 #endif
 
-#include <sys/time.h>
 
 #include <algorithm>
+#include <ctime>
 #include <iostream>
 
 // Common code that we use regardless of whether we use glog or not.

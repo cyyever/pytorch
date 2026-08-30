@@ -23,7 +23,6 @@
 #include <c10/cuda/driver_api.h>
 #endif
 #include <sys/syscall.h>
-#include <sys/types.h>
 #include <unistd.h>
 #endif
 
@@ -42,7 +41,6 @@
 #include <mutex>
 #include <new>
 #include <ranges>
-#include <regex>
 #include <set>
 #include <stack>
 #include <thread>

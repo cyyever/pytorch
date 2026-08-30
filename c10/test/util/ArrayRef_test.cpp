@@ -1,6 +1,5 @@
 #include <c10/util/ArrayRef.h>
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <utility>
