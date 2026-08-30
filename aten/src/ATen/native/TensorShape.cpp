@@ -2248,8 +2248,7 @@ Tensor index_select_sparse_cpu(
           : false;
 
       // src is a source of indices to binary search in sorted
-      Tensor sorted, sorted_idx, src;
-      std::tie(sorted, sorted_idx, src) =
+      auto [sorted, sorted_idx, src] =
           [&dim_indices, &nneg_index, &self, search_in_dim_indices, dim, nnz]()
           -> std::tuple<Tensor, Tensor, Tensor> {
         // sort dim_indices to binary search into it
@@ -2571,15 +2570,12 @@ Tensor index_select_sparse_cpu(
             : false;
       }();
 
-      Tensor idx, idx_counts_per_thread, idx_offset_counts_per_thread;
-      Tensor src, src_counts_per_thread, src_offset_counts_per_thread;
-      std::tie(
-          idx,
-          idx_counts_per_thread,
-          idx_offset_counts_per_thread,
-          src,
-          src_counts_per_thread,
-          src_offset_counts_per_thread) = [&]() {
+      auto [idx,
+            idx_counts_per_thread,
+            idx_offset_counts_per_thread,
+            src,
+            src_counts_per_thread,
+            src_offset_counts_per_thread] = [&]() {
         return search_in_dim_indices
             ? std::make_tuple(
                   nneg_index,
@@ -2600,8 +2596,7 @@ Tensor index_select_sparse_cpu(
       const auto idx_counts = idx_offset_counts_per_thread.select(0, -1);
       const auto src_counts = src_offset_counts_per_thread.select(0, -1);
 
-      Tensor src_idx, src_idx_offsets;
-      std::tie(src_idx, src_idx_offsets) =
+      auto [src_idx, src_idx_offsets] =
           [&](int64_t grain_size =
                   at::internal::GRAIN_SIZE) -> std::tuple<Tensor, Tensor> {
         const auto src_intersection_counts = src_counts.mul(idx_counts > 0);
