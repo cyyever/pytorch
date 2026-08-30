@@ -775,16 +775,8 @@ static void ref_dyn_quant_matmul_4bit_channelwise_kernel_bf16(
   // Roundup lambda for internal stride calculations
   auto roundup = [](size_t a, size_t b) { return ((a + b - 1) / b) * b; };
 
-  // Cast bfloat16 to float32 inline
-  auto cast_bf16_to_f32 = [](uint16_t bf16_val) {
-    uint32_t tmp = static_cast<uint32_t>(bf16_val) << 16;
-    return std::bit_cast<float>(tmp);
-  };
-
-  // Cast float32 to bfloat16 inline
-  auto cast_f32_to_bf16 = [](float f) {
-    return static_cast<uint16_t>(std::bit_cast<uint32_t>(f) >> 16);
-  };
+  auto cast_bf16_to_f32 = c10::detail::f32_from_bits;
+  auto cast_f32_to_bf16 = c10::detail::bits_from_f32;
 
   // Quantization pack lambda (channelwise QA8DX)
   auto quant_pack_8bit_channelwise =

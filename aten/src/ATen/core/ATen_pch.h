@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <atomic>
 #include <chrono>
 #include <complex>
@@ -125,7 +126,6 @@
 #include <c10/util/TypeTraits.h>
 #include <c10/util/UniqueVoidPtr.h>
 #include <c10/util/accumulate.h>
-#include <bit>
 #include <c10/util/bits.h>
 #include <c10/util/complex.h>
 #include <c10/util/floating_point_utils.h>

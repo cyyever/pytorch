@@ -581,7 +581,6 @@ inline double BitsToDouble(uint64_t Bits) {
 
 /// This function takes a 32-bit integer and returns the bit equivalent float.
 inline float BitsToFloat(uint32_t Bits) {
-  // TODO: Use std::bit_cast once C++20 becomes available.
   return std::bit_cast<float>(Bits);
 }
 

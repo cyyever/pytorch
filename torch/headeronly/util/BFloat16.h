@@ -73,7 +73,7 @@ C10_HOST_DEVICE constexpr uint16_t bits_from_f32(float src) {
 
 C10_HOST_DEVICE constexpr uint16_t round_to_nearest_even(float src) {
   // src != src is std::isnan without the library call, which clang cannot
-  // constant-evaluate. It is also what the HIP path here always used.
+  // constant-evaluate.
   if (src != src) {
     return UINT16_C(0x7FC0);
   }

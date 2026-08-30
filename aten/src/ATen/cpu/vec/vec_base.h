@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cassert>
 #include <climits>
 #include <cmath>
@@ -1506,4 +1507,3 @@ std::ostream& operator<<(std::ostream& stream, const Vectorized<T>& vec) {
 #include <ATen/cpu/vec/vec_convert.h>
 #include <ATen/cpu/vec/vec_mask.h>
 #include <ATen/cpu/vec/vec_n.h>
-#include <bit>

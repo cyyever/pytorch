@@ -201,8 +201,7 @@ inline void convertFromBf16Impl(
   const uint16_t* srcPtr = reinterpret_cast<const uint16_t*>(src);
   uint64_t len = static_cast<uint64_t>(n);
   for (uint64_t i = 0; i < len; i++) {
-    uint32_t tmp = static_cast<uint32_t>(srcPtr[i]) << 16;
-    dst[i] = static_cast<to_type>(std::bit_cast<float>(tmp));
+    dst[i] = static_cast<to_type>(c10::detail::f32_from_bits(srcPtr[i]));
   }
 }
 #define CONVERT_FROM_BF16_TEMPLATE(to_type)                                \
