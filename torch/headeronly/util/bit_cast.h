@@ -2,19 +2,18 @@
 
 #include <cstring>
 #include <type_traits>
-// __cpp_lib_bit_cast is announced by <version>, so it has to be in scope before
-// the check below; testing it first only ever saw it undefined.
+// <version> is what announces __cpp_lib_bit_cast; it has to be in scope before
+// the check below.
 #include <version>
 
 #include <torch/headeronly/macros/Macros.h>
 
-#if __has_include(<bit>) && (defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L)
+#if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
 #include <bit>
 #define C10_HAVE_STD_BIT_CAST 1
 #else
 #define C10_HAVE_STD_BIT_CAST 0
-#endif // __has_include(<bit>) && (__cplusplus >= 202002L ||
-       // (defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L))
+#endif
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 
