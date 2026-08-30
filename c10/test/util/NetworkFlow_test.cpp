@@ -1,7 +1,6 @@
 #include <c10/test/util/Macros.h>
 #include <c10/util/NetworkFlow.h>
 #include <gtest/gtest.h>
-#include <cstdlib>
 
 namespace {
 

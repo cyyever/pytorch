@@ -1,7 +1,7 @@
 #include <c10/core/Device.h>
-#include <c10/core/DeviceType.h>
 #include <c10/core/Stream.h>
 #include <gtest/gtest.h>
+#include <c10/core/DeviceType.h>
 
 #include <c10/core/impl/FakeGuardImpl.h>
 #include <c10/core/impl/InlineStreamGuard.h>

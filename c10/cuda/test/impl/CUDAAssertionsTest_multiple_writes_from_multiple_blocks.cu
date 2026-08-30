@@ -6,10 +6,7 @@
 #include <c10/cuda/CUDAFunctions.h>
 #include <c10/cuda/CUDAStream.h>
 
-#include <chrono>
-#include <iostream>
 #include <string>
-#include <thread>
 
 using ::testing::HasSubstr;
 
