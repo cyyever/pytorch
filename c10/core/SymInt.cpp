@@ -136,16 +136,11 @@ SymInt operator-(const SymInt& s) {
     // But on many platforms it equals to self + setting Carry/Overflow flags
     // Which in optimized code affects results of `check_range` condition
     // Workaround by using ternary that avoids alterning the flags
-#if C10_HAS_BUILTIN_OVERFLOW()
     std::decay_t<decltype(val)> out = 0;
     if (C10_UNLIKELY(__builtin_sub_overflow(out, val, &out))) {
       return SymInt(val);
     }
     return SymInt(out);
-#else
-    constexpr auto val_min = std::numeric_limits<decltype(val)>::min();
-    return SymInt(val != val_min ? -val : val_min);
-#endif
   } else {
     return SymInt(s.toSymNodeImplUnowned()->neg());
   }
