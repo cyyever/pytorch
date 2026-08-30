@@ -2,6 +2,9 @@
 
 #include <cstring>
 #include <type_traits>
+// __cpp_lib_bit_cast is announced by <version>, so it has to be in scope before
+// the check below; testing it first only ever saw it undefined.
+#include <version>
 
 #include <torch/headeronly/macros/Macros.h>
 
