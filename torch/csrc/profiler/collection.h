@@ -224,7 +224,8 @@ struct RawAllocation {
 
 // For performance.
 static_assert(
-    std::is_trivial_v<RawAllocation>,
+    std::is_trivially_default_constructible_v<RawAllocation> &&
+        std::is_trivially_copyable_v<RawAllocation>,
     "Non-Trivial member of RawAllocation.");
 
 template <>
@@ -251,7 +252,8 @@ struct ExtraFields<EventType::OutOfMemory> {
 
 // For performance.
 static_assert(
-    std::is_trivial_v<ExtraFields<EventType::OutOfMemory>>,
+    std::is_trivially_default_constructible_v<ExtraFields<EventType::OutOfMemory>> &&
+        std::is_trivially_copyable_v<ExtraFields<EventType::OutOfMemory>>,
     "Non-Trivial member of ExtraFields<EventType::OutOfMemory>.");
 
 struct PyFrameState {

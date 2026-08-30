@@ -50,7 +50,8 @@ struct C10_API PODLocalDispatchKeySet {
   }
 };
 static_assert(
-    std::is_trivial_v<PODLocalDispatchKeySet>,
+    std::is_trivially_default_constructible_v<PODLocalDispatchKeySet> &&
+        std::is_trivially_copyable_v<PODLocalDispatchKeySet>,
     "PODLocalDispatchKeySet must be a POD type.");
 
 struct C10_API LocalDispatchKeySet {
