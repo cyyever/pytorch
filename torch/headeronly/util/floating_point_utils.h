@@ -6,7 +6,7 @@
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly, detail)
 
-C10_HOST_DEVICE inline float fp32_from_bits(uint32_t w) {
+C10_HOST_DEVICE constexpr float fp32_from_bits(uint32_t w) {
 #if defined(__OPENCL_VERSION__)
   return as_float(w);
 #elif defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
@@ -18,7 +18,7 @@ C10_HOST_DEVICE inline float fp32_from_bits(uint32_t w) {
 #endif
 }
 
-C10_HOST_DEVICE inline uint32_t fp32_to_bits(float f) {
+C10_HOST_DEVICE constexpr uint32_t fp32_to_bits(float f) {
 #if defined(__OPENCL_VERSION__)
   return as_uint(f);
 #elif defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)

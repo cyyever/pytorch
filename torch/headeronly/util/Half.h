@@ -13,16 +13,10 @@
 #include <torch/headeronly/util/bit_cast.h>
 #include <torch/headeronly/util/floating_point_utils.h>
 
-#if defined(__cplusplus)
-#include <cmath>
-#elif !defined(__OPENCL_VERSION__)
-#include <math.h>
-#endif
-
-
 #include <cstdint>
 #include <cstring>
 #include <ostream>
+#include <type_traits>
 
 #ifdef __CUDACC__
 #include <cuda_fp16.h>
@@ -83,8 +77,8 @@ struct alignas(2) Half {
   inline Half(float16_t value);
   inline operator float16_t() const;
 #else
-  inline C10_HOST_DEVICE Half(float value);
-  inline C10_HOST_DEVICE operator float() const;
+  constexpr C10_HOST_DEVICE Half(float value);
+  constexpr C10_HOST_DEVICE operator float() const;
 #endif
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
@@ -112,10 +106,12 @@ namespace detail {
  * mode and no operations on denormals) floating-point operations and bitcasts
  * between integer and floating-point variables.
  */
-C10_HOST_DEVICE inline float fp16_ieee_to_fp32_value(uint16_t h) {
+C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
 #ifdef C10_X86_F16
-  return _cvtsh_ss(h);
-#else
+  if (!std::is_constant_evaluated()) {
+    return _cvtsh_ss(h);
+  }
+#endif
   /*
    * Extend the half-precision floating-point number to 32 bits and shift to the
    * upper part of the 32-bit word:
@@ -236,7 +232,6 @@ C10_HOST_DEVICE inline float fp16_ieee_to_fp32_value(uint16_t h) {
       (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value)
                                    : fp32_to_bits(normalized_value));
   return fp32_from_bits(result);
-#endif // C10_X86_F16
 }
 
 /*
@@ -248,10 +243,12 @@ C10_HOST_DEVICE inline float fp16_ieee_to_fp32_value(uint16_t h) {
  * mode and no operations on denormals) floating-point operations and bitcasts
  * between integer and floating-point variables.
  */
-inline uint16_t fp16_ieee_from_fp32_value(float f) {
+C10_HOST_DEVICE constexpr uint16_t fp16_ieee_from_fp32_value(float f) {
 #ifdef C10_X86_F16
-  return _cvtss_sh(f, _MM_FROUND_TO_NEAREST_INT);
-#else
+  if (!std::is_constant_evaluated()) {
+    return _cvtss_sh(f, _MM_FROUND_TO_NEAREST_INT);
+  }
+#endif
   // const float scale_to_inf = 0x1.0p+112f;
   // const float scale_to_zero = 0x1.0p-110f;
   constexpr uint32_t scale_to_inf_bits = (uint32_t)239 << 23;
@@ -259,11 +256,13 @@ inline uint16_t fp16_ieee_from_fp32_value(float f) {
   const float scale_to_inf = c10::bit_cast<float>(scale_to_inf_bits);
   const float scale_to_zero = c10::bit_cast<float>(scale_to_zero_bits);
 
-  float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
-
   const uint32_t w = fp32_to_bits(f);
-  const uint32_t shl1_w = w + w;
   const uint32_t sign = w & UINT32_C(0x80000000);
+  // fabsf(f) as the bit operation it is. Clearing the sign bit gives the same
+  // value for every input including NaN, and unlike fabsf it can be
+  // constant-evaluated by clang, which has not implemented P0533.
+  float base = (fp32_from_bits(w ^ sign) * scale_to_inf) * scale_to_zero;
+  const uint32_t shl1_w = w + w;
   uint32_t bias = shl1_w & UINT32_C(0xFF000000);
   if (bias < UINT32_C(0x71000000)) {
     bias = UINT32_C(0x71000000);
@@ -277,7 +276,6 @@ inline uint16_t fp16_ieee_from_fp32_value(float f) {
   return static_cast<uint16_t>(
       (sign >> 16) |
       (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign));
-#endif // C10_X86_F16
 }
 
 /*
@@ -410,36 +408,57 @@ inline Half::operator float16_t() const {
 }
 #else
 
-inline C10_HOST_DEVICE Half::Half(float value)
-    :
+namespace detail {
+
+// A hardware conversion is never a constant expression -- clang folds
+// _cvtss_sh, gcc does not -- so constant evaluation takes the portable software
+// conversion and everything else keeps the instruction it had. Both directions
+// agree on every input; the software path is the one the hardware implements.
+C10_HOST_DEVICE constexpr uint16_t float_to_half_bits(float value) {
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-      x(__half_as_short(__float2half(value)))
+  if (!std::is_constant_evaluated()) {
+    return __half_as_short(__float2half(value));
+  }
 #elif defined(__SYCL_DEVICE_ONLY__)
-      x(c10::bit_cast<uint16_t>(sycl::half(value)))
+  if (!std::is_constant_evaluated()) {
+    return c10::bit_cast<uint16_t>(sycl::half(value));
+  }
 #elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
     !defined(__APPLE__)
-      x(at::vec::float2half_scalar(value))
-#else
-      x(detail::fp16_ieee_from_fp32_value(value))
+  if (!std::is_constant_evaluated()) {
+    return at::vec::float2half_scalar(value);
+  }
 #endif
-{
+  return fp16_ieee_from_fp32_value(value);
 }
+
+C10_HOST_DEVICE constexpr float half_bits_to_float(uint16_t x) {
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+  if (!std::is_constant_evaluated()) {
+    return __half2float(*reinterpret_cast<const __half*>(&x));
+  }
+#elif defined(__SYCL_DEVICE_ONLY__)
+  if (!std::is_constant_evaluated()) {
+    return float(c10::bit_cast<sycl::half>(x));
+  }
+#elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
+    !defined(__APPLE__)
+  if (!std::is_constant_evaluated()) {
+    return at::vec::half2float_scalar(x);
+  }
+#endif
+  return fp16_ieee_to_fp32_value(x);
+}
+
+} // namespace detail
+
+constexpr C10_HOST_DEVICE Half::Half(float value)
+    : x(detail::float_to_half_bits(value)) {}
 
 /// Implicit conversions
 
-inline C10_HOST_DEVICE Half::operator float() const {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-  return __half2float(*reinterpret_cast<const __half*>(&x));
-#elif defined(__SYCL_DEVICE_ONLY__)
-  return float(c10::bit_cast<sycl::half>(x));
-#elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
-    !defined(__APPLE__)
-  return at::vec::half2float_scalar(x);
-#elif defined(__aarch64__) && !defined(__CUDACC__)
-  return detail::native_fp16_to_fp32_value(x);
-#else
-  return detail::fp16_ieee_to_fp32_value(x);
-#endif
+constexpr C10_HOST_DEVICE Half::operator float() const {
+  return detail::half_bits_to_float(x);
 }
 
 #endif /* !defined(__aarch64__) || defined(__CUDACC__) \
