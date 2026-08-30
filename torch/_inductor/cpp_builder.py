@@ -558,7 +558,12 @@ def _get_warning_all_cflag(warning_all: bool = True) -> list[str]:
     return ["Wall"] if warning_all else []
 
 
-def _get_cpp_std_cflag(std_num: str = "c++23") -> list[str]:
+def _get_cpp_std_cflag(std_num: str = "c++26") -> list[str]:
+    # Keep this at the standard libtorch is built with (CMAKE_CXX_STANDARD).
+    # Generated kernels include cpp_prefix.h and through it most of c10, so a
+    # lower standard here means those headers have to stay compilable at two
+    # versions, and the older one is only exercised when a kernel is compiled
+    # at run time -- a torch.compile failure rather than a build failure.
     return [f"std={std_num}"]
 
 
