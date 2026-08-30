@@ -2849,7 +2849,7 @@ class AotCodeCompiler:
                 consts_asm += f"{symbol_prefix}_binary_constants_bin_end:\n"
                 return consts_asm, "weights.S"
 
-            # Use c++ to convert consts to object file can support more compilers, such as msvc and icx.
+            # Converting consts through c++ rather than assembly supports more compilers, such as icx.
             def format_consts_to_cpp(
                 consts: bytes | bytearray, align_bytes: int, symbol_prefix: str
             ) -> tuple[str, str]:
@@ -2882,17 +2882,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                 This function handles zero-sized constants because the C++ standard prohibits zero-length arrays:
                 https://stackoverflow.com/questions/9722632/what-happens-if-i-define-a-0-size-array-in-c-c
 
-                On Windows (MSVC):
-                    The compiler reports error C2466 for zero-sized arrays:
-                    https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/compiler-error-c2466
-                    Solution: Use assembly compilation to handle this case.
-
-                Why not use Win32 assembly for all paths?
-                    ml64 only supports alignment up to 16 bytes, which isn't optimal for performance.
-
-                Cross-platform implementation:
-                    Linux: Added '-pedantic' to disable zero-sized arrays in C++ compiler
-                    Windows: MSVC naturally rejects zero-sized arrays by default
+                '-pedantic' makes the C++ compiler reject them, so emit assembly for this case instead.
                 """
                 asm_code = f"\t.section\t{section_attr}\n"
                 asm_code += f"\t.balign {align_bytes}\n"

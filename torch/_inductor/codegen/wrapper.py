@@ -734,7 +734,7 @@ def kernel_profile_enabled() -> bool:
     profiling metadata must use this rather than the config flag alone:
     `_get_profiling_args` emits codegen for ReinterpretView arguments, so
     building metadata the shim then declines to emit would leak a handle."""
-    return config.cpp.enable_kernel_profile and sys.platform in ("linux", "win32")
+    return config.cpp.enable_kernel_profile and sys.platform == "linux"
 
 
 def _profiling_arg_entry(value: Any) -> str | None:

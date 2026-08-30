@@ -6,7 +6,7 @@ from enum import Enum
 
 import torch
 
-from .. import cpp_builder, ir
+from .. import ir
 from ..cpu_vec_isa import (
     pick_vec_isa,
     VecAMX,
@@ -197,17 +197,11 @@ inline void {{kernel_name}}(
         return LayoutType.NORMAL
 
     ALLOCATE_WEIGHT_BUFFER = r"""
-    {%- if is_msvc_compiler %}
-    // MSVC doesn't support stack-allocated dynamic-sized arrays, so using heap memory here.
-    auto heap_deq_b_buf_ptr = std::make_unique<{{buffer_dtype}}[]>({{buffer_size}});
-    {{buffer_dtype}}* {{buffer_name}} = heap_deq_b_buf_ptr.get();
-    {%- else %}
     // It's safe to use a stack-allocated array since the blocking strategy would
     // require us to allocate an array that's smaller than the size of L1D cache,
     // and the default per thread max stack size on Linux is quite higher,
     // so we need not worry about stack overflow.
     alignas(4096) {{buffer_dtype}} {{buffer_name}}[{{buffer_size}}];
-    {%- endif %}
 """
 
     def codegen_allocate_weight_buffer(
@@ -219,7 +213,6 @@ inline void {{kernel_name}}(
                 "buffer_name": buffer_name,
                 "buffer_dtype": buffer_dtype,
                 "buffer_size": buffer_size,
-                "is_msvc_compiler": cpp_builder.is_msvc_cl(),
             }
         )
 

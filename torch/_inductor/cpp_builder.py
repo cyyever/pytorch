@@ -286,11 +286,6 @@ def _is_gcc_version_less_than(cpp_compiler: str, major: int) -> bool:
 
 
 @functools.cache
-def _is_msvc_cl(cpp_compiler: str) -> bool:
-    return False
-
-
-@functools.cache
 def _is_intel_compiler(cpp_compiler: str) -> bool:
     def _check_minimal_version(compiler_version: TorchVersion) -> None:
         """
@@ -342,11 +337,6 @@ def is_intel_compiler() -> bool:
 @functools.cache
 def is_apple_clang() -> bool:
     return _is_apple_clang(get_cpp_compiler())
-
-
-@functools.cache
-def is_msvc_cl() -> bool:
-    return _is_msvc_cl(get_cpp_compiler())
 
 
 @functools.cache
@@ -1537,7 +1527,6 @@ class CppBuilder:
                 raise AssertionError(
                     f"expected exactly one source when precompiling, got {len(sources)}"
                 )
-            # See above; we can currently assume this is not on MSVC.
             self._sources_args = f"-x c++-header {sources[0]}"
         else:
             self._sources_args = " ".join(sources)
