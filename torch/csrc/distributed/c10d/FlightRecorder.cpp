@@ -1,4 +1,4 @@
-#include <c10/util/FileSystem.h>
+#include <filesystem>
 #include <torch/csrc/distributed/c10d/FlightRecorderDetail.hpp>
 #include <fstream>
 
@@ -54,7 +54,7 @@ DebugInfoWriter& DebugInfoWriter::getWriter(int rank) {
     }
     auto cacheDirPath = std::filesystem::path(cacheRoot + "/torch");
     // Create the .cache directory if it doesn't exist
-    c10::filesystem::create_directories(cacheDirPath);
+    std::filesystem::create_directories(cacheDirPath);
     auto defaultLocation = cacheDirPath / "comm_lib_trace_rank_";
 
     // For internal bc compatibility, we keep the old the ENV check.

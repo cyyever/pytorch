@@ -7,7 +7,7 @@
 #include <torch/csrc/inductor/aoti_torch/tensor_converter.h>
 #include <torch/csrc/inductor/aoti_torch/utils.h>
 
-#include <c10/util/FileSystem.h>
+#include <filesystem>
 
 #include <exception>
 
@@ -223,7 +223,7 @@ consider rebuild your model with the latest AOTInductor.");
   size_t lastindex = model_so_path.find_last_of('.');
   std::string json_filename = model_so_path.substr(0, lastindex) + ".json";
 
-  if (c10::filesystem::exists(json_filename)) {
+  if (std::filesystem::exists(json_filename)) {
     proxy_executor_ = std::make_unique<torch::aot_inductor::OSSProxyExecutor>(
         json_filename, device_str);
     proxy_executor_handle_ =
