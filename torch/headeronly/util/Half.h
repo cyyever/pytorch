@@ -14,7 +14,6 @@
 #include <torch/headeronly/util/floating_point_utils.h>
 
 #include <cstdint>
-#include <cstring>
 #include <ostream>
 #include <type_traits>
 
@@ -30,11 +29,6 @@
 #include <CL/sycl.hpp> // for SYCL 1.2.1
 #elif defined(SYCL_LANGUAGE_VERSION)
 #include <sycl/sycl.hpp> // for SYCL 2020
-#endif
-
-#if (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
-    !defined(__APPLE__)
-#include <torch/headeronly/cpu/vec/vec_half.h>
 #endif
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
@@ -179,7 +173,7 @@ C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
   constexpr uint32_t exp_offset = UINT32_C(0xE0) << 23;
   // const float exp_scale = 0x1.0p-112f;
   constexpr uint32_t scale_bits = (uint32_t)15 << 23;
-  const float exp_scale = std::bit_cast<float>(scale_bits);
+  const float exp_scale = fp32_from_bits(scale_bits);
   const float normalized_value =
       fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
@@ -253,8 +247,8 @@ C10_HOST_DEVICE constexpr uint16_t fp16_ieee_from_fp32_value(float f) {
   // const float scale_to_zero = 0x1.0p-110f;
   constexpr uint32_t scale_to_inf_bits = (uint32_t)239 << 23;
   constexpr uint32_t scale_to_zero_bits = (uint32_t)17 << 23;
-  const float scale_to_inf = std::bit_cast<float>(scale_to_inf_bits);
-  const float scale_to_zero = std::bit_cast<float>(scale_to_zero_bits);
+  const float scale_to_inf = fp32_from_bits(scale_to_inf_bits);
+  const float scale_to_zero = fp32_from_bits(scale_to_zero_bits);
 
   const uint32_t w = fp32_to_bits(f);
   const uint32_t sign = w & UINT32_C(0x80000000);
@@ -380,16 +374,6 @@ inline float16_t fp16_from_bits(uint16_t h) {
 inline uint16_t fp16_to_bits(float16_t f) {
   return std::bit_cast<uint16_t>(f);
 }
-
-// According to https://godbolt.org/z/frExdbsWG it would translate to single
-// fcvt s0, h0
-inline float native_fp16_to_fp32_value(uint16_t h) {
-  return static_cast<float>(fp16_from_bits(h));
-}
-
-inline uint16_t native_fp16_from_fp32_value(float f) {
-  return fp16_to_bits(static_cast<float16_t>(f));
-}
 #endif
 
 } // namespace detail
@@ -413,7 +397,7 @@ namespace detail {
 // A hardware conversion is never a constant expression -- clang folds
 // _cvtss_sh, gcc does not -- so constant evaluation takes the portable software
 // conversion and everything else keeps the instruction it had. Both directions
-// agree on every input; the software path is the one the hardware implements.
+// agree on every input.
 C10_HOST_DEVICE constexpr uint16_t float_to_half_bits(float value) {
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
   if (!std::is_constant_evaluated()) {
@@ -423,12 +407,9 @@ C10_HOST_DEVICE constexpr uint16_t float_to_half_bits(float value) {
   if (!std::is_constant_evaluated()) {
     return std::bit_cast<uint16_t>(sycl::half(value));
   }
-#elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
-    !defined(__APPLE__)
-  if (!std::is_constant_evaluated()) {
-    return at::vec::float2half_scalar(value);
-  }
 #endif
+  // x86 belongs to fp16_ieee_from_fp32_value, which takes _cvtss_sh under
+  // C10_X86_F16; at::vec::float2half_scalar would be a second dispatch to it.
   return fp16_ieee_from_fp32_value(value);
 }
 
@@ -440,11 +421,6 @@ C10_HOST_DEVICE constexpr float half_bits_to_float(uint16_t x) {
 #elif defined(__SYCL_DEVICE_ONLY__)
   if (!std::is_constant_evaluated()) {
     return float(std::bit_cast<sycl::half>(x));
-  }
-#elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
-    !defined(__APPLE__)
-  if (!std::is_constant_evaluated()) {
-    return at::vec::half2float_scalar(x);
   }
 #endif
   return fp16_ieee_to_fp32_value(x);
@@ -710,8 +686,6 @@ namespace detail {
 #if defined(__aarch64__) && !defined(__CUDACC__)
 using c10::detail::fp16_from_bits;
 using c10::detail::fp16_to_bits;
-using c10::detail::native_fp16_from_fp32_value;
-using c10::detail::native_fp16_to_fp32_value;
 #endif
 
 using c10::detail::fp16_ieee_from_fp32_value;
