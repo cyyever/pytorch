@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <bit>
 
 #include <algorithm>
 #include <cassert>
@@ -569,41 +568,6 @@ inline uint64_t GreatestCommonDivisor64(uint64_t A, uint64_t B) {
     A = T;
   }
   return A;
-}
-
-/// This function takes a 64-bit integer and returns the bit equivalent double.
-inline double BitsToDouble(uint64_t Bits) {
-  double D = 0;
-  static_assert(sizeof(uint64_t) == sizeof(double), "Unexpected type sizes");
-  memcpy(&D, &Bits, sizeof(Bits));
-  return D;
-}
-
-/// This function takes a 32-bit integer and returns the bit equivalent float.
-inline float BitsToFloat(uint32_t Bits) {
-  return std::bit_cast<float>(Bits);
-}
-
-/// This function takes a double and returns the bit equivalent 64-bit integer.
-/// Note that copying doubles around changes the bits of NaNs on some hosts,
-/// notably x86, so this routine cannot be used if these bits are needed.
-inline uint64_t DoubleToBits(double Double) {
-  // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-  uint64_t Bits;
-  static_assert(sizeof(uint64_t) == sizeof(double), "Unexpected type sizes");
-  memcpy(&Bits, &Double, sizeof(Double));
-  return Bits;
-}
-
-/// This function takes a float and returns the bit equivalent 32-bit integer.
-/// Note that copying floats around changes the bits of NaNs on some hosts,
-/// notably x86, so this routine cannot be used if these bits are needed.
-inline uint32_t FloatToBits(float Float) {
-  // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
-  uint32_t Bits;
-  static_assert(sizeof(uint32_t) == sizeof(float), "Unexpected type sizes");
-  memcpy(&Bits, &Float, sizeof(Float));
-  return Bits;
 }
 
 /// A and B are either alignments or offsets. Return the minimum alignment that
