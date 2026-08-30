@@ -17,17 +17,9 @@
 #include <torch/headeronly/macros/Macros.h>
 #include <torch/headeronly/util/floating_point_utils.h>
 
-#if defined(__cplusplus)
-#include <cmath>
 #include <cstdint>
-#elif !defined(__OPENCL_VERSION__)
-#include <math.h>
-#include <stdint.h>
-#endif
-
-
-#include <climits>
-#include <iostream>
+#include <iosfwd>
+#include <ostream>
 
 namespace c10 {
 
@@ -43,10 +35,10 @@ struct alignas(1) Float8_e4m3fn {
 
   constexpr C10_HOST_DEVICE Float8_e4m3fn(uint8_t bits, from_bits_t /*unused*/)
       : x(bits) {}
-  inline C10_HOST_DEVICE Float8_e4m3fn(float value);
-  inline C10_HOST_DEVICE operator float() const;
-  inline C10_HOST_DEVICE bool isnan() const;
-  inline C10_HOST_DEVICE bool isinf() const;
+  C10_HOST_DEVICE constexpr Float8_e4m3fn(float value);
+  C10_HOST_DEVICE constexpr operator float() const;
+  C10_HOST_DEVICE constexpr bool isnan() const;
+  C10_HOST_DEVICE constexpr bool isinf() const;
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Float8_e4m3fn& value) {
@@ -63,7 +55,7 @@ namespace detail {
  *
  * @note The implementation doesn't use any floating-point operations.
  */
-inline C10_HOST_DEVICE float fp8e4m3fn_to_fp32_value(uint8_t input) {
+C10_HOST_DEVICE constexpr float fp8e4m3fn_to_fp32_value(uint8_t input) {
   /*
    * Extend the fp8 E4M3FN number to 32 bits and shift to the
    * upper part of the 32-bit word:
@@ -104,17 +96,7 @@ inline C10_HOST_DEVICE float fp8e4m3fn_to_fp32_value(uint8_t input) {
    * mantissa will shift into exponent, turning the biased exponent into 1, and
    * making mantissa normalized (i.e. without leading 1).
    */
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-  uint32_t renorm_shift = __clz(nonsign);
-#elif defined(__SYCL_DEVICE_ONLY__)
-  // Note: zero is not a supported input into `__builtin_clz`
-  uint32_t renorm_shift =
-      nonsign != 0 ? __builtin_clz(nonsign) : sizeof(uint32_t) * CHAR_BIT;
-#else
-  // Note: zero is not a supported input into `__builtin_clz`
-  uint32_t renorm_shift =
-      nonsign != 0 ? __builtin_clz(nonsign) : sizeof(uint32_t) * CHAR_BIT;
-#endif
+  uint32_t renorm_shift = count_leading_zeros(nonsign);
   renorm_shift = renorm_shift > 4 ? renorm_shift - 4 : 0;
   /*
    * Iff fp8e4m3fn number has all exponent and mantissa bits set to 1,
@@ -161,7 +143,7 @@ inline C10_HOST_DEVICE float fp8e4m3fn_to_fp32_value(uint8_t input) {
  * Convert a 32-bit floating-point number in IEEE single-precision format to a
  * 8-bit floating-point number in fp8 E4M3FN format, in bit representation.
  */
-inline C10_HOST_DEVICE uint8_t fp8e4m3fn_from_fp32_value(float f) {
+C10_HOST_DEVICE constexpr uint8_t fp8e4m3fn_from_fp32_value(float f) {
   /*
    * Binary representation of 480.0f, which is the first value
    * not representable in fp8e4m3fn range:
@@ -245,22 +227,22 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 
 /// Constructors
 
-inline C10_HOST_DEVICE Float8_e4m3fn::Float8_e4m3fn(float value)
+C10_HOST_DEVICE constexpr Float8_e4m3fn::Float8_e4m3fn(float value)
     : x(detail::fp8e4m3fn_from_fp32_value(value)) {}
 
 /// Implicit conversions
 
-inline C10_HOST_DEVICE Float8_e4m3fn::operator float() const {
+C10_HOST_DEVICE constexpr Float8_e4m3fn::operator float() const {
   return detail::fp8e4m3fn_to_fp32_value(x);
 }
 
 /// Special values helper
 
-inline C10_HOST_DEVICE bool Float8_e4m3fn::isnan() const {
+C10_HOST_DEVICE constexpr bool Float8_e4m3fn::isnan() const {
   return (x & 0b01111111) == 0b01111111;
 }
 
-inline C10_HOST_DEVICE bool Float8_e4m3fn::isinf() const {
+C10_HOST_DEVICE constexpr bool Float8_e4m3fn::isinf() const {
   // Note: fp8e4m3fn does not have infinity, so this always returns false.
   return false;
 }

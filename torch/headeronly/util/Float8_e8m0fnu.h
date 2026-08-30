@@ -15,13 +15,7 @@
 #include <torch/headeronly/macros/Macros.h>
 #include <torch/headeronly/util/floating_point_utils.h>
 
-// TODO(#146647): do we need to special case OPENCL?
-#if defined(__cplusplus)
 #include <cstdint>
-#elif !defined(__OPENCL_VERSION__)
-#include <math.h>
-#include <stdint.h>
-#endif
 
 #include <iosfwd>
 #include <limits>
@@ -41,9 +35,9 @@ struct alignas(1) Float8_e8m0fnu {
 
   constexpr C10_HOST_DEVICE Float8_e8m0fnu(uint8_t bits, from_bits_t /*unused*/)
       : x(bits) {}
-  inline C10_HOST_DEVICE Float8_e8m0fnu(float value);
-  inline C10_HOST_DEVICE operator float() const;
-  inline C10_HOST_DEVICE bool isnan() const;
+  C10_HOST_DEVICE constexpr Float8_e8m0fnu(float value);
+  C10_HOST_DEVICE constexpr operator float() const;
+  C10_HOST_DEVICE constexpr bool isnan() const;
 };
 
 inline std::ostream& operator<<(
@@ -58,7 +52,7 @@ namespace detail {
  * Convert a 32-bit floating-point number in IEEE single-precision format to a
  * 8-bit floating-point number in fp8 e8m0fnu format, in bit representation.
  */
-inline C10_HOST_DEVICE uint8_t fp8e8m0fnu_from_fp32_value(float f) {
+C10_HOST_DEVICE constexpr uint8_t fp8e8m0fnu_from_fp32_value(float f) {
   // TODO(#146647): maybe rewrite without control flow
 
   uint32_t f_bits = c10::detail::fp32_to_bits(f);
@@ -121,12 +115,12 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 #endif
 
 /// Constructors
-inline C10_HOST_DEVICE Float8_e8m0fnu::Float8_e8m0fnu(float value)
+C10_HOST_DEVICE constexpr Float8_e8m0fnu::Float8_e8m0fnu(float value)
     : x(detail::fp8e8m0fnu_from_fp32_value(value)) {}
 
 /// Implicit conversions
 
-inline C10_HOST_DEVICE Float8_e8m0fnu::operator float() const {
+C10_HOST_DEVICE constexpr Float8_e8m0fnu::operator float() const {
   // TODO(#146647): maybe rewrite without control flow
 
   // if exponent is zero, need to special case to return 2^-127 instead of zero
@@ -147,7 +141,7 @@ inline C10_HOST_DEVICE Float8_e8m0fnu::operator float() const {
 
 /// Special values helper
 
-inline C10_HOST_DEVICE bool Float8_e8m0fnu::isnan() const {
+C10_HOST_DEVICE constexpr bool Float8_e8m0fnu::isnan() const {
   return x == 0b11111111;
 }
 

@@ -33,10 +33,10 @@ struct alignas(1) Float8_e5m2 {
 
   constexpr C10_HOST_DEVICE Float8_e5m2(uint8_t bits, from_bits_t /*unused*/)
       : x(bits) {}
-  inline C10_HOST_DEVICE Float8_e5m2(float value);
-  inline C10_HOST_DEVICE operator float() const;
-  inline C10_HOST_DEVICE bool isnan() const;
-  inline C10_HOST_DEVICE bool isinf() const;
+  C10_HOST_DEVICE constexpr Float8_e5m2(float value);
+  C10_HOST_DEVICE constexpr operator float() const;
+  C10_HOST_DEVICE constexpr bool isnan() const;
+  C10_HOST_DEVICE constexpr bool isinf() const;
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Float8_e5m2& value) {
@@ -53,7 +53,7 @@ namespace detail {
  *
  * @note The implementation doesn't use any floating-point operations.
  */
-inline C10_HOST_DEVICE float fp8e5m2_to_fp32_value(uint8_t input) {
+C10_HOST_DEVICE constexpr float fp8e5m2_to_fp32_value(uint8_t input) {
   /*
    * Extend the fp8 E5M2 number to 32 bits and shift to the
    * upper part of the 32-bit word:
@@ -74,7 +74,7 @@ inline C10_HOST_DEVICE float fp8e5m2_to_fp32_value(uint8_t input) {
  * Convert a 32-bit floating-point number in IEEE single-precision format to a
  * 8-bit floating-point number in fp8 E5M2 format, in bit representation.
  */
-inline C10_HOST_DEVICE uint8_t fp8e5m2_from_fp32_value(float f) {
+C10_HOST_DEVICE constexpr uint8_t fp8e5m2_from_fp32_value(float f) {
   /*
    * Binary representation of fp32 infinity
    * 0 11111111 00000000000000000000000
@@ -157,22 +157,22 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 
 /// Constructors
 
-inline C10_HOST_DEVICE Float8_e5m2::Float8_e5m2(float value)
+C10_HOST_DEVICE constexpr Float8_e5m2::Float8_e5m2(float value)
     : x(detail::fp8e5m2_from_fp32_value(value)) {}
 
 /// Implicit conversions
 
-inline C10_HOST_DEVICE Float8_e5m2::operator float() const {
+C10_HOST_DEVICE constexpr Float8_e5m2::operator float() const {
   return detail::fp8e5m2_to_fp32_value(x);
 }
 
 /// Special values helpers
 
-inline C10_HOST_DEVICE bool Float8_e5m2::isnan() const {
+C10_HOST_DEVICE constexpr bool Float8_e5m2::isnan() const {
   return (x & 0b01111111) > 0b01111100;
 }
 
-inline C10_HOST_DEVICE bool Float8_e5m2::isinf() const {
+C10_HOST_DEVICE constexpr bool Float8_e5m2::isinf() const {
   return (x & 0b01111111) == 0b01111100;
 }
 
