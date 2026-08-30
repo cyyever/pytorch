@@ -8,7 +8,6 @@
 #include <c10/cuda/CUDAGuard.h>
 #include <c10/cuda/PeerToPeerAccess.h>
 #include <c10/cuda/impl/CUDAGraphMemory.h>
-#include <c10/util/Gauge.h>
 #include <c10/util/Logging.h>
 #include <c10/util/ScopeExit.h>
 #include <c10/util/SmallVector.h>
@@ -2245,12 +2244,6 @@ class DeviceCachingAllocator {
     if (block->size >= AcceleratorAllocatorConfig::max_split_size())
       stats.oversize_allocations.increase(1);
 
-    auto allocated_bytes_gauge =
-        STATIC_GAUGE(pytorch.CUDACachingAllocator.allocated_bytes);
-    allocated_bytes_gauge.record(
-        stats.allocated_bytes[static_cast<int64_t>(StatType::AGGREGATE)]
-            .current);
-
     c10::reportMemoryUsageToProfiler(
         block->ptr,
         static_cast<int64_t>(block->size),
@@ -2488,11 +2481,6 @@ class DeviceCachingAllocator {
       stats.allocation[stat_type].decrease(1);
       stats.allocated_bytes[stat_type].decrease(block->size);
     });
-    auto allocated_bytes_gauge =
-        STATIC_GAUGE(pytorch.CUDACachingAllocator.allocated_bytes);
-    allocated_bytes_gauge.record(
-        stats.allocated_bytes[static_cast<int64_t>(StatType::AGGREGATE)]
-            .current);
 
     record_trace(
         TraceEntry::FREE_REQUESTED,
@@ -3516,11 +3504,6 @@ class DeviceCachingAllocator {
             mapped_range.size);
       }
     });
-    auto reserved_bytes_gauge =
-        STATIC_GAUGE(pytorch.CUDACachingAllocator.reserved_bytes);
-    reserved_bytes_gauge.record(
-        stats.reserved_bytes[static_cast<int64_t>(StatType::AGGREGATE)]
-            .current);
 
     stats.num_device_alloc++;
     record_trace(
@@ -4046,11 +4029,6 @@ class DeviceCachingAllocator {
     });
     if (size >= AcceleratorAllocatorConfig::max_split_size())
       stats.oversize_segments.increase(1);
-    auto reserved_bytes_gauge =
-        STATIC_GAUGE(pytorch.CUDACachingAllocator.reserved_bytes);
-    reserved_bytes_gauge.record(
-        stats.reserved_bytes[static_cast<int64_t>(StatType::AGGREGATE)]
-            .current);
 
     // p.block came from new, not cudaMalloc. It should not be nullptr here.
     TORCH_INTERNAL_ASSERT(p.block != nullptr && p.block->ptr != nullptr);
@@ -4227,11 +4205,6 @@ class DeviceCachingAllocator {
             block->size);
       }
     });
-    auto reserved_bytes_gauge =
-        STATIC_GAUGE(pytorch.CUDACachingAllocator.reserved_bytes);
-    reserved_bytes_gauge.record(
-        stats.reserved_bytes[static_cast<int64_t>(StatType::AGGREGATE)]
-            .current);
 
     if (block->size >= AcceleratorAllocatorConfig::max_split_size())
       stats.oversize_segments.decrease(1);
@@ -4294,11 +4267,6 @@ class DeviceCachingAllocator {
             unmapped.size);
       }
     });
-    auto reserved_bytes_gauge =
-        STATIC_GAUGE(pytorch.CUDACachingAllocator.reserved_bytes);
-    reserved_bytes_gauge.record(
-        stats.reserved_bytes[static_cast<int64_t>(StatType::AGGREGATE)]
-            .current);
 
     if (block->pool->owner_PrivatePool) {
       // The cudaFreed block belonged to a CUDA graph's PrivatePool.
