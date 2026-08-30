@@ -4,6 +4,12 @@
 #include <torch/headeronly/util/BFloat16.h>
 #include <torch/headeronly/util/Half.h>
 
+// The overloads below live in namespace std and call std::acos and friends on a
+// float. Inside namespace std the only candidate visible is the template being
+// defined, whose enable_if rejects float, so the float overloads have to be
+// declared first.
+#include <cmath>
+
 C10_CLANG_DIAGNOSTIC_PUSH()
 #if C10_CLANG_HAS_WARNING("-Wimplicit-float-conversion")
 C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-float-conversion")
