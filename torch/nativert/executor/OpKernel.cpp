@@ -5,7 +5,7 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/util/Logging.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/StringUtil.h>
 #include <c10/util/env.h>
 #include <torch/nativert/executor/ExecutionFrame.h>
@@ -47,7 +47,7 @@ std::string readableArgs(
     const std::vector<c10::IValue>& stack) {
   const auto& schemaArgs = schema.arguments();
   std::stringstream ss;
-  for (const auto& [i, arg] : c10::enumerate(stack)) {
+  for (const auto& [i, arg] : std::views::enumerate(stack)) {
     ss << "arg" << i << ' ' << schemaArgs[i].name() << ": " << arg.tagKind()
        << ' ';
     if (arg.isTensor()) {
@@ -91,7 +91,7 @@ Arguments prefillStackWithStaticArgs(
   dynamicArgs.resize(schemaArgs.size());
 
   // initialized stackWithStaticArgs_ with static inputs
-  for (const auto& [idx, schemaArg] : c10::enumerate(schemaArgs)) {
+  for (const auto& [idx, schemaArg] : std::views::enumerate(schemaArgs)) {
     const auto& argName = schemaArg.name();
 
     // Check if this is a dynamic input to the op.

@@ -3,7 +3,7 @@
 #include <ATen/CPUFunctions.h>
 #include <c10/util/irange.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <torch/nativert/kernels/PrimKernelRegistry.h>
 
 namespace torch::nativert {
@@ -64,7 +64,7 @@ C10_REGISTER_TYPED_CLASS(
 REGISTER_PRIM_KERNEL("prim.ListUnpack", prim_listunpack, {
   RECORD_USER_SCOPE("nativert::OpKernel_prim_listunpack");
   auto inputListRef = KernelInput(0).toListRef();
-  for (const auto& [i, ivalue] : c10::enumerate(inputListRef)) {
+  for (const auto& [i, ivalue] : std::views::enumerate(inputListRef)) {
     KernelOutput(i) = ivalue;
   }
 })

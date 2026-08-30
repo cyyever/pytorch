@@ -1,6 +1,6 @@
 #include <torch/nativert/kernels/CallTorchBindKernel.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 
 #include <c10/util/Logging.h>
 
@@ -45,7 +45,7 @@ void CallTorchBindKernel::computeInternal(
   // set outputs
   const auto& outputs = node_->outputs();
   TORCH_CHECK(outputs.size() == stack.size());
-  for (auto&& [i, outputValue] : c10::enumerate(stack)) {
+  for (auto&& [i, outputValue] : std::views::enumerate(stack)) {
     executionFrame.setIValue(outputs[i]->id(), std::move(outputValue));
   }
 }

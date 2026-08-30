@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <queue>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 
 #include <torch/nativert/executor/Weights.h>
 
@@ -162,7 +162,7 @@ void ConstantFolder::evaluate(Weights& weights) {
   for (const auto& f : foldables_) {
     f.kernel->compute(frame);
 
-    for (auto&& [i, out] : c10::enumerate(f.node->outputs())) {
+    for (auto&& [i, out] : std::views::enumerate(f.node->outputs())) {
       if (foldedOutputValueIds_.contains(out->id())) {
         foldedValues[std::string{out->name()}] = f.kernel->output(i, frame);
       }

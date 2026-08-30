@@ -1,6 +1,6 @@
 #include <torch/nativert/kernels/AutoFunctionalizeKernel.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/Exception.h>
 
 namespace torch::nativert {
@@ -12,7 +12,7 @@ UnsafeAutoFunctionalizeKernel::UnsafeAutoFunctionalizeKernel(const Node* node)
       schema_(op_.schema()),
       arguments_(prefillStackWithStaticArgs(node, schema_)),
       numOutputs_(static_cast<int>(schema_.returns().size())) {
-  for (const auto& [idx, schemaArg] : c10::enumerate(schema_.arguments())) {
+  for (const auto& [idx, schemaArg] : std::views::enumerate(schema_.arguments())) {
     if (schemaArg.alias_info() != nullptr &&
         schemaArg.alias_info()->isWrite()) {
       mutatingInputArgs_.push_back(node->getInput(schemaArg.name()).value);

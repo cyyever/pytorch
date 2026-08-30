@@ -1,4 +1,4 @@
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <gtest/gtest.h>
 
 #include <torch/nativert/executor/memory/Bump.h>
@@ -55,7 +55,7 @@ TEST(LayoutPlannerAlgorithmTests, TestBump) {
   auto& allocations = result.allocations;
 
   size_t offset = 0;
-  for (auto&& [i, spec] : c10::enumerate(specs)) {
+  for (auto&& [i, spec] : std::views::enumerate(specs)) {
     EXPECT_EQ(allocations[i].offset, offset);
     offset += spec.size;
   }
@@ -78,7 +78,7 @@ TEST(LayoutPlannerAlgorithmTests, TestStorageGroup) {
   EXPECT_EQ(allocations[6].offset, 140);
   EXPECT_EQ(allocations[7].offset, 100);
 
-  for (auto&& [i, spec] : c10::enumerate(specs)) {
+  for (auto&& [i, spec] : std::views::enumerate(specs)) {
     EXPECT_EQ(allocations[i].size, spec.size);
   }
 

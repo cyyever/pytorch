@@ -55,7 +55,7 @@ template <typename P, typename T>
 class ListIterator {
   static_assert(std::is_same_v<std::remove_const_t<P>, IntrusiveListHook>);
   static_assert(std::is_base_of_v<IntrusiveListHook, T>);
-  P* ptr_;
+  P* ptr_ = nullptr;
 
   friend class IntrusiveList<T>;
 
@@ -66,6 +66,9 @@ class ListIterator {
   using pointer = value_type*;
   using reference = value_type&;
 
+  // A sentinel has to be semiregular, so <ranges> needs this to be
+  // default-initializable before it will call the container a range.
+  ListIterator() = default;
   explicit ListIterator(P* ptr) : ptr_(ptr) {}
   ~ListIterator() = default;
 
@@ -107,10 +110,24 @@ class ListIterator {
     return *this;
   }
 
+  // std::weakly_incrementable, and so every <ranges> concept above it, needs
+  // the post-forms as well.
+  ListIterator operator++(int) {
+    ListIterator it = *this;
+    ++*this;
+    return it;
+  }
+
   ListIterator& operator--() {
     TORCH_CHECK(ptr_);
     ptr_ = ptr_->prev_;
     return *this;
+  }
+
+  ListIterator operator--(int) {
+    ListIterator it = *this;
+    --*this;
+    return it;
   }
 
   [[nodiscard]] auto* operator->() const {

@@ -4,7 +4,7 @@
 #include <fmt/ranges.h>
 #include <limits>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/FbcodeMaps.h>
 #include <c10/util/StringUtil.h>
 #include <torch/nativert/executor/Placement.h>
@@ -405,7 +405,7 @@ std::vector<Node*> Node::users() const {
 Node* Graph::createListPack(std::vector<Value*> inputs, const Type& inputType) {
   std::vector<NamedArgument> nodeInputs;
   nodeInputs.reserve(inputs.size());
-  for (auto [i, input] : c10::enumerate(inputs)) {
+  for (auto [i, input] : std::views::enumerate(inputs)) {
     nodeInputs.push_back({fmt::format("l{}", i), input});
   }
   // Create a new named value for this
@@ -433,7 +433,7 @@ Node* Graph::createListPack(std::vector<Value*> inputs, const Type& inputType) {
 Node* Graph::createOptionalListPack(std::vector<Value*> inputs) {
   std::vector<NamedArgument> nodeInputs;
   nodeInputs.reserve(inputs.size());
-  for (auto [i, input] : c10::enumerate(inputs)) {
+  for (auto [i, input] : std::views::enumerate(inputs)) {
     nodeInputs.push_back({fmt::format("l{}", i), input});
   }
   // Create a new named value for this
@@ -1025,7 +1025,7 @@ std::ostream& printList(
   if (encloseInSquareBrackets) {
     out << '[';
   }
-  for (const auto& [idx, el] : c10::enumerate(list)) {
+  for (const auto& [idx, el] : std::views::enumerate(list)) {
     if (idx > 0) {
       out << ", ";
     }
@@ -1071,7 +1071,7 @@ std::ostream& operator<<(std::ostream& out, const Constant& constant) {
           out << fmt::format("[{}]", fmt::join(arg, ","));
         } else if constexpr (is_same_v<T, vector<vector<int64_t>>>) {
           out << '[';
-          for (const auto& [idx, inner_list] : c10::enumerate(arg)) {
+          for (const auto& [idx, inner_list] : std::views::enumerate(arg)) {
             if (idx > 0) {
               out << ", ";
             }
@@ -1080,7 +1080,7 @@ std::ostream& operator<<(std::ostream& out, const Constant& constant) {
           out << ']';
         } else if constexpr (is_same_v<T, vector<vector<double>>>) {
           out << '[';
-          for (const auto& [idx, inner_list] : c10::enumerate(arg)) {
+          for (const auto& [idx, inner_list] : std::views::enumerate(arg)) {
             if (idx > 0) {
               out << ", ";
             }

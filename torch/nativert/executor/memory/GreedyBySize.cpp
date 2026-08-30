@@ -2,7 +2,7 @@
 #include <limits>
 #include <optional>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/Logging.h>
 #include <c10/util/irange.h>
 
@@ -112,7 +112,7 @@ LayoutPlan GreedyBySizeAllocationPlanner(
 
   size_t total_allocation_size = 0;
   for (const auto&& [allocation_index, spec_with_original_index] :
-       c10::enumerate(descending_allocation_specs)) {
+       std::views::enumerate(descending_allocation_specs)) {
     auto& spec = spec_with_original_index.spec;
 
     auto new_allocation = GreedyAllocation(
