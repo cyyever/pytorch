@@ -22,12 +22,7 @@
 #include <torch/headeronly/util/TypeSafeSignMath.h>
 #include <torch/headeronly/util/floating_point_utils.h>
 
-#if defined(__cplusplus)
 #include <cstdint>
-#elif !defined(__OPENCL_VERSION__)
-#include <math.h>
-#include <stdint.h>
-#endif
 
 #include <iosfwd>
 #include <ostream>
@@ -48,10 +43,10 @@ struct alignas(1) Float8_e5m2fnuz {
       uint8_t bits,
       from_bits_t /*unused*/)
       : x(bits) {}
-  inline C10_HOST_DEVICE Float8_e5m2fnuz(float value);
-  inline C10_HOST_DEVICE operator float() const;
-  inline C10_HOST_DEVICE bool isnan() const;
-  inline C10_HOST_DEVICE bool isinf() const;
+  C10_HOST_DEVICE constexpr Float8_e5m2fnuz(float value);
+  C10_HOST_DEVICE constexpr operator float() const;
+  C10_HOST_DEVICE constexpr bool isnan() const;
+  C10_HOST_DEVICE constexpr bool isinf() const;
 };
 
 inline std::ostream& operator<<(
@@ -67,7 +62,7 @@ namespace detail {
  * Convert a 32-bit floating-point number in IEEE single-precision format to a
  * 8-bit floating-point number in fp8 E5M2 format, in bit representation.
  */
-inline C10_HOST_DEVICE uint8_t fp8e5m2fnuz_from_fp32_value(float f) {
+C10_HOST_DEVICE constexpr uint8_t fp8e5m2fnuz_from_fp32_value(float f) {
   /*
    * Binary representation of 65536.0f, which is the first value not
    * representable (i.e. the first value which would overflow into the sign
@@ -144,22 +139,22 @@ C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 
 /// Constructors
 
-inline C10_HOST_DEVICE Float8_e5m2fnuz::Float8_e5m2fnuz(float value)
+C10_HOST_DEVICE constexpr Float8_e5m2fnuz::Float8_e5m2fnuz(float value)
     : x(detail::fp8e5m2fnuz_from_fp32_value(value)) {}
 
 /// Implicit conversions
 
-inline C10_HOST_DEVICE Float8_e5m2fnuz::operator float() const {
+C10_HOST_DEVICE constexpr Float8_e5m2fnuz::operator float() const {
   return torch::headeronly::detail::fp8_fnuz_to_fp32_value<5, 2>(x);
 }
 
 /// Special values helpers
 
-inline C10_HOST_DEVICE bool Float8_e5m2fnuz::isnan() const {
+C10_HOST_DEVICE constexpr bool Float8_e5m2fnuz::isnan() const {
   return x == 0b10000000;
 }
 
-inline C10_HOST_DEVICE bool Float8_e5m2fnuz::isinf() const {
+C10_HOST_DEVICE constexpr bool Float8_e5m2fnuz::isinf() const {
   return false;
 }
 

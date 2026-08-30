@@ -5,10 +5,6 @@
 
 #include <cstdint>
 
-#if defined(SYCL_LANGUAGE_VERSION)
-#include <sycl/sycl.hpp>
-#endif
-
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly, detail)
 
 /*
@@ -16,7 +12,7 @@ HIDDEN_NAMESPACE_BEGIN(torch, headeronly, detail)
  * format, in bit representation, to a 32-bit floating-point number.
  */
 template <uint32_t we, uint32_t wm>
-inline C10_HOST_DEVICE float fp8_fnuz_to_fp32_value(uint8_t x) {
+C10_HOST_DEVICE constexpr float fp8_fnuz_to_fp32_value(uint8_t x) {
   static_assert((we == 4 && wm == 3) || (we == 5 && wm == 2));
   constexpr uint32_t weo = 8;
   constexpr uint32_t wmo = 23;
@@ -36,13 +32,7 @@ inline C10_HOST_DEVICE float fp8_fnuz_to_fp32_value(uint8_t x) {
   // subnormal input
   if (exponent == 0) {
     // guaranteed mantissa!=0 since cases 0x0 and 0x80 are handled above
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-    uint32_t renorm_shift = __clz(mantissa);
-#elif defined(__SYCL_DEVICE_ONLY__)
-    uint32_t renorm_shift = sycl::clz(mantissa);
-#else
-    uint32_t renorm_shift = __builtin_clz(mantissa);
-#endif
+    uint32_t renorm_shift = count_leading_zeros(mantissa);
     uint32_t sh = 1 + renorm_shift - (32 - wm);
     mantissa <<= sh;
     exponent += 1 - sh;
