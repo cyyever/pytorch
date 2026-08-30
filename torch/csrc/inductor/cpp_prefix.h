@@ -9,6 +9,7 @@
 #include <map>
 #include <unordered_map>
 
+#include <bit>
 #include <c10/util/hash.h>
 #include <memory>
 #include <optional>
