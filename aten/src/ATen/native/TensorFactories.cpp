@@ -18,14 +18,6 @@
 #include <c10/util/MathConstants.h>
 #include <c10/util/irange.h>
 
-#include <ATen/ops/_cast_Byte_native.h>
-#include <ATen/ops/_cast_Char_native.h>
-#include <ATen/ops/_cast_Double_native.h>
-#include <ATen/ops/_cast_Float_native.h>
-#include <ATen/ops/_cast_Half_native.h>
-#include <ATen/ops/_cast_Int_native.h>
-#include <ATen/ops/_cast_Long_native.h>
-#include <ATen/ops/_cast_Short_native.h>
 #include <ATen/ops/_dim_arange_native.h>
 #include <ATen/ops/_efficientzerotensor_native.h>
 #include <ATen/ops/_sparse_compressed_tensor_with_dims_native.h>
@@ -374,25 +366,6 @@ Tensor& empty_out(
   }
   return result;
 }
-
-// Temporary type cast operators. These are needed to trace type-casts now since
-// Type's are not supported in the IR. Instead, we call down to these
-// specialized operators for each datatype.
-// TODO: remove when we have Type support in the IR
-
-#define DEFINE_CAST_OP(_1, n)                               \
-  Tensor _cast_##n(const Tensor& self, bool non_blocking) { \
-    if (self.scalar_type() == ScalarType::n)                \
-      return self;                                          \
-    return self.to(ScalarType::n, non_blocking);            \
-  }
-
-// Some scalar types in CAST_OP have no declarations, they may be unused in
-// Pytorch. But we keep them and ignore the warning here until verified in the
-// future.
-AT_FORALL_SCALAR_TYPES_AND3(Bool, Half, BFloat16, DEFINE_CAST_OP)
-
-#undef DEFINE_CAST_OP
 
 Tensor empty_like(
     const Tensor& self,
