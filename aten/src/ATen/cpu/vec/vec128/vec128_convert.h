@@ -1,7 +1,7 @@
 #pragma once
 #include <ATen/cpu/vec/vec_base.h>
 #include <ATen/cpu/vec/vec_convert.h>
-#include <c10/util/bit_cast.h>
+#include <bit>
 
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
@@ -202,7 +202,7 @@ inline void convertFromBf16Impl(
   uint64_t len = static_cast<uint64_t>(n);
   for (uint64_t i = 0; i < len; i++) {
     uint32_t tmp = static_cast<uint32_t>(srcPtr[i]) << 16;
-    dst[i] = static_cast<to_type>(c10::bit_cast<float>(tmp));
+    dst[i] = static_cast<to_type>(std::bit_cast<float>(tmp));
   }
 }
 #define CONVERT_FROM_BF16_TEMPLATE(to_type)                                \

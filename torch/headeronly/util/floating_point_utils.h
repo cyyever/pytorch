@@ -1,7 +1,7 @@
 #pragma once
 
 #include <torch/headeronly/macros/Macros.h>
-#include <torch/headeronly/util/bit_cast.h>
+#include <bit>
 #include <cstdint>
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly, detail)
@@ -14,7 +14,7 @@ C10_HOST_DEVICE constexpr float fp32_from_bits(uint32_t w) {
 #elif defined(__INTEL_COMPILER)
   return _castu32_f32(w);
 #else
-  return torch::headeronly::bit_cast<float>(w);
+  return std::bit_cast<float>(w);
 #endif
 }
 
@@ -26,7 +26,7 @@ C10_HOST_DEVICE constexpr uint32_t fp32_to_bits(float f) {
 #elif defined(__INTEL_COMPILER)
   return _castf32_u32(f);
 #else
-  return torch::headeronly::bit_cast<uint32_t>(f);
+  return std::bit_cast<uint32_t>(f);
 #endif
 }
 

@@ -10,7 +10,7 @@
 /// intrinsics directly on the Half type from device code.
 
 #include <torch/headeronly/macros/Macros.h>
-#include <torch/headeronly/util/bit_cast.h>
+#include <bit>
 #include <torch/headeronly/util/floating_point_utils.h>
 
 #include <cstdint>
@@ -179,7 +179,7 @@ C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
   constexpr uint32_t exp_offset = UINT32_C(0xE0) << 23;
   // const float exp_scale = 0x1.0p-112f;
   constexpr uint32_t scale_bits = (uint32_t)15 << 23;
-  const float exp_scale = c10::bit_cast<float>(scale_bits);
+  const float exp_scale = std::bit_cast<float>(scale_bits);
   const float normalized_value =
       fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
@@ -253,8 +253,8 @@ C10_HOST_DEVICE constexpr uint16_t fp16_ieee_from_fp32_value(float f) {
   // const float scale_to_zero = 0x1.0p-110f;
   constexpr uint32_t scale_to_inf_bits = (uint32_t)239 << 23;
   constexpr uint32_t scale_to_zero_bits = (uint32_t)17 << 23;
-  const float scale_to_inf = c10::bit_cast<float>(scale_to_inf_bits);
-  const float scale_to_zero = c10::bit_cast<float>(scale_to_zero_bits);
+  const float scale_to_inf = std::bit_cast<float>(scale_to_inf_bits);
+  const float scale_to_zero = std::bit_cast<float>(scale_to_zero_bits);
 
   const uint32_t w = fp32_to_bits(f);
   const uint32_t sign = w & UINT32_C(0x80000000);
@@ -374,11 +374,11 @@ inline uint32_t fp16_ieee_to_fp32_bits(uint16_t h) {
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
 inline float16_t fp16_from_bits(uint16_t h) {
-  return c10::bit_cast<float16_t>(h);
+  return std::bit_cast<float16_t>(h);
 }
 
 inline uint16_t fp16_to_bits(float16_t f) {
-  return c10::bit_cast<uint16_t>(f);
+  return std::bit_cast<uint16_t>(f);
 }
 
 // According to https://godbolt.org/z/frExdbsWG it would translate to single
@@ -421,7 +421,7 @@ C10_HOST_DEVICE constexpr uint16_t float_to_half_bits(float value) {
   }
 #elif defined(__SYCL_DEVICE_ONLY__)
   if (!std::is_constant_evaluated()) {
-    return c10::bit_cast<uint16_t>(sycl::half(value));
+    return std::bit_cast<uint16_t>(sycl::half(value));
   }
 #elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
     !defined(__APPLE__)
@@ -439,7 +439,7 @@ C10_HOST_DEVICE constexpr float half_bits_to_float(uint16_t x) {
   }
 #elif defined(__SYCL_DEVICE_ONLY__)
   if (!std::is_constant_evaluated()) {
-    return float(c10::bit_cast<sycl::half>(x));
+    return float(std::bit_cast<sycl::half>(x));
   }
 #elif (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
     !defined(__APPLE__)
@@ -515,7 +515,7 @@ inline C10_HOST_DEVICE Half operator-(const Half& a) {
     defined(__HIP_DEVICE_COMPILE__)
   return __hneg(a);
 #elif defined(__SYCL_DEVICE_ONLY__)
-  return -c10::bit_cast<sycl::half>(a);
+  return -std::bit_cast<sycl::half>(a);
 #else
   return -static_cast<float>(a);
 #endif
