@@ -12,8 +12,7 @@
 // In libstdc++ complex square root yield invalid results
 // for -x-0.0j unless C99 csqrt/csqrtf fallbacks are used
 
-#if defined(_LIBCPP_VERSION) || \
-    (defined(__GLIBCXX__) && !defined(_GLIBCXX11_USE_C99_COMPLEX))
+#if defined(_LIBCPP_VERSION)
 
 namespace {
 template <typename T>
