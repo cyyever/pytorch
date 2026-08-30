@@ -21,7 +21,6 @@
 #include <type_traits>
 #include <utility>
 
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-enum")
 
 namespace c10 {
 
@@ -763,5 +762,3 @@ inline TensorOptions dispatchKeyToTensorOptions(DispatchKey dispatch_key) {
 }
 
 } // namespace c10
-
-C10_DIAGNOSTIC_POP()

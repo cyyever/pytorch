@@ -919,7 +919,6 @@ struct TORCH_API DictType : public SharedType {
     if (auto dyn = key->castRaw<DynamicType>()) {
       kind = dyn->dynamicKind();
     }
-    C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wswitch-enum")
     switch (kind) {
       case TypeKind::AnyType:
       case TypeKind::IntType:
@@ -936,7 +935,6 @@ struct TORCH_API DictType : public SharedType {
             key->str(),
             "', only int, float, complex, Tensor, device and string keys are supported");
     }
-    C10_DIAGNOSTIC_POP()
   }
 
   // aligned with the format in FunctionSchema
