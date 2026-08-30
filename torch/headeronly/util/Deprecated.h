@@ -22,17 +22,9 @@
 #if (defined(__cplusplus) && __cplusplus >= 201402L)
 #define C10_DEPRECATED [[deprecated]]
 #define C10_DEPRECATED_MESSAGE(message) [[deprecated(message)]]
-#elif defined(__GNUC__)
-#define C10_DEPRECATED __attribute__((deprecated))
-// TODO Is there some way to implement this?
-#define C10_DEPRECATED_MESSAGE(message) __attribute__((deprecated))
-
 #elif defined(_MSC_VER)
 #define C10_DEPRECATED __declspec(deprecated)
 #define C10_DEPRECATED_MESSAGE(message) __declspec(deprecated(message))
-#else
-#warning "You need to implement C10_DEPRECATED for this compiler"
-#define C10_DEPRECATED
 #endif
 
 // Sample usage:
@@ -81,22 +73,9 @@
 #endif
 #endif
 
-#if !defined(C10_DEFINE_DEPRECATED_USING) && defined(__GNUC__)
-// nvcc has a bug where it doesn't understand __attribute__((deprecated))
-// declarations even when the host compiler supports it. We'll only use this gcc
-// attribute when not cuda, and when using a GCC compiler that doesn't support
-// the c++14 syntax we checked for above (available in __GNUC__ >= 5)
-#if !defined(__CUDACC__)
-#define C10_DEFINE_DEPRECATED_USING(TypeName, TypeThingy) \
-  using TypeName __attribute__((deprecated)) = TypeThingy;
-#else
-// using cuda + gcc < 5, neither deprecated syntax is available so turning off.
+// nvcc doesn't understand [[deprecated]] on using-declarations, so the
+// annotation is dropped there.
+#if !defined(C10_DEFINE_DEPRECATED_USING)
 #define C10_DEFINE_DEPRECATED_USING(TypeName, TypeThingy) \
   using TypeName = TypeThingy;
-#endif
-#endif
-
-#if !defined(C10_DEFINE_DEPRECATED_USING)
-#warning "You need to implement C10_DEFINE_DEPRECATED_USING for this compiler"
-#define C10_DEFINE_DEPRECATED_USING
 #endif
