@@ -11,9 +11,7 @@ namespace {
 // Verifies the requested type is the same as the Tensor's type.
 void check_type(const TensorBase& tensor, ScalarType type) {
   TORCH_CHECK(
-      tensor.scalar_type() == type
-      || (isQIntType(tensor.scalar_type())
-          && toUnderlying(tensor.scalar_type()) == type),
+      tensor.scalar_type() == type,
       "expected scalar type ", type, " but found ", tensor.scalar_type());
 }
 
@@ -49,7 +47,6 @@ T* TensorBase::data_ptr() const {
    kUInt16,
    kUInt32,
    kUInt64)
- AT_FORALL_QINT_TYPES(DEFINE_CAST)
  #undef DEFINE_CAST
 
  #define DEFINE_ITEM(T, name)      \

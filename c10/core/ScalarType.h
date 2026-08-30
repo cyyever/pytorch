@@ -124,19 +124,6 @@ constexpr bool isBarebonesUnsignedType(ScalarType t) {
       t == ScalarType::UInt32 || t == ScalarType::UInt64;
 }
 
-inline ScalarType toQIntType(ScalarType t) {
-  switch (t) {
-    case ScalarType::Byte:
-      return ScalarType::QUInt8;
-    case ScalarType::Char:
-      return ScalarType::QInt8;
-    case ScalarType::Int:
-      return ScalarType::QInt32;
-    default:
-      return t;
-  }
-}
-
 inline bool isSignedType(ScalarType t) {
 #define CASE_ISSIGNED(name)     \
   case ScalarType::name:        \
@@ -213,10 +200,6 @@ inline bool isSignedType(ScalarType t) {
   }
   TORCH_CHECK(false, "Unknown ScalarType ", t);
 #undef CASE_ISSIGNED
-}
-
-inline bool isUnderlying(ScalarType type, ScalarType qtype) {
-  return type == toUnderlying(qtype);
 }
 
 inline ScalarType toRealValueType(ScalarType t) {

@@ -237,13 +237,6 @@ struct dummy_int1_7_t {};
     SCALARTYPE6)                                                   \
   _(c10::impl::ScalarTypeToCPPTypeT<c10::ScalarType::SCALARTYPE7>, SCALARTYPE7)
 
-#define AT_FORALL_QINT_TYPES(_) \
-  _(c10::qint8, QInt8)          \
-  _(c10::quint8, QUInt8)        \
-  _(c10::qint32, QInt32)        \
-  _(c10::quint4x2, QUInt4x2)    \
-  _(c10::quint2x4, QUInt2x4)
-
 #define AT_FORALL_FLOAT8_TYPES(_)          \
   _(c10::Float8_e5m2, Float8_e5m2)         \
   _(c10::Float8_e4m3fn, Float8_e4m3fn)     \
@@ -336,29 +329,6 @@ inline std::ostream& operator<<(
   return stream << toString(scalar_type);
 }
 
-inline bool isQIntType(ScalarType t) {
-  // Don't forget to extend this when adding new QInt types
-  return t == ScalarType::QInt8 || t == ScalarType::QUInt8 ||
-      t == ScalarType::QInt32 || t == ScalarType::QUInt4x2 ||
-      t == ScalarType::QUInt2x4;
-}
-
-inline ScalarType toUnderlying(ScalarType t) {
-  switch (t) {
-    case ScalarType::QUInt8:
-    case ScalarType::QUInt4x2:
-      [[fallthrough]];
-    case ScalarType::QUInt2x4:
-      return ScalarType::Byte;
-    case ScalarType::QInt8:
-      return ScalarType::Char;
-    case ScalarType::QInt32:
-      return ScalarType::Int;
-    default:
-      return t;
-  }
-}
-
 } // namespace c10
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
@@ -369,8 +339,6 @@ using c10::NumScalarTypes;
 using c10::ScalarType;
 using c10::toString;
 using c10::operator<<;
-using c10::isQIntType;
-using c10::toUnderlying;
 
 namespace impl {
 using c10::impl::ScalarTypeToCPPTypeT;
