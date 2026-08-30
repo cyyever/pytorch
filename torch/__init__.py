@@ -2428,10 +2428,12 @@ from torch import _library as _library, _ops as _ops
 from torch._ops import ops as ops  # usort: skip
 from torch._classes import classes as classes  # usort: skip
 
-# torch._C.ScriptObject went away with TorchScript. CustomClassBase is its
-# replacement: its metaclass __instancecheck__ matches real custom class
-# instances and FakeScriptObject wrappers alike, which is what the surviving
-# isinstance(x, torch.ScriptObject) checks across export/functorch mean.
+# torch.ScriptObject no longer aliases torch._C.ScriptObject, which is still
+# bound and still reached by torch.fx's symbolic tracer and ProcessGroup.boxed.
+# CustomClassBase is the right target for the name because its metaclass
+# __instancecheck__ matches real custom class instances and FakeScriptObject
+# wrappers alike, which is what the surviving isinstance(x, torch.ScriptObject)
+# checks across export and functorch mean.
 from torch._custom_class_base import CustomClassBase as ScriptObject  # usort: skip
 
 sys.modules.setdefault(f"{__name__}.ops", ops)
