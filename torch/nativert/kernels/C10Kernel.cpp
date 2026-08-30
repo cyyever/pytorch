@@ -2,7 +2,7 @@
 
 #include <fmt/ostream.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/Exception.h>
 
 #ifdef __SIGRID_USE_GPU__
@@ -89,7 +89,7 @@ void C10Kernel::computeInternal(ExecutionFrame& executionFrame) const {
       outputValues.size() == stack.size(),
       "Output size mismatch for ",
       node_->toString());
-  for (auto&& [i, actualOutput] : c10::enumerate(stack)) {
+  for (auto&& [i, actualOutput] : std::views::enumerate(stack)) {
     executionFrame.setIValue(outputValues[i]->id(), std::move(actualOutput));
   }
 }

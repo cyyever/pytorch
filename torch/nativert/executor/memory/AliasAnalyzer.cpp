@@ -1,13 +1,13 @@
 #include <torch/nativert/executor/memory/AliasAnalyzer.h>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 
 namespace torch::nativert {
 
 AliasAnalyzer::AliasAnalyzer(
     const Graph& graph,
     const c10::FastMap<std::string /* target */, FunctionSchema>& schemas) {
-  for (const auto&& [i, node] : c10::enumerate(graph.nodes())) {
+  for (const auto&& [i, node] : std::views::enumerate(graph.nodes())) {
     for (const auto& input : node.inputs()) {
       create_or_update_lifetime(input.value, i);
     }

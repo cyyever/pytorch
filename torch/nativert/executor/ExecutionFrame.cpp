@@ -1,4 +1,4 @@
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/Exception.h>
 #include <c10/util/Logging.h>
 
@@ -164,7 +164,7 @@ std::vector<c10::IValue> ExecutionFrame::tryMoveUserOutputs() {
   std::vector<c10::IValue> ret;
   const auto& outputs = graph_.userOutputs();
   ret.reserve(outputs.size());
-  for (const auto& [i, outputValue] : c10::enumerate(outputs)) {
+  for (const auto& [i, outputValue] : std::views::enumerate(outputs)) {
     if (const Value* const* valuePtr = std::get_if<Value*>(&outputValue);
         valuePtr && *valuePtr) {
       ret.push_back(

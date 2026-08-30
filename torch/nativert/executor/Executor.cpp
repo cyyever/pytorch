@@ -1,6 +1,6 @@
 #include <memory>
 
-#include <c10/util/Enumerate.h>
+#include <ranges>
 #include <c10/util/Synchronized.h>
 #include <torch/nativert/executor/ExecutionFrame.h>
 #include <torch/nativert/executor/Executor.h>
@@ -111,7 +111,7 @@ void Executor::maybeRunConstantFolding(
 
     auto outputs = execution.executor->execute(constFoldingFrame, inputs);
     for (const auto& [idx, value] :
-         c10::enumerate(execution.executor->graph().outputs())) {
+         std::views::enumerate(execution.executor->graph().outputs())) {
       weights->updateFoldedConst(value->name(), outputs.at(idx));
     }
   }
@@ -169,7 +169,7 @@ void Executor::validateInputs(const std::vector<c10::IValue>& inputs) const {
   const auto& inputValues = graph_->userInputs();
   const auto& tensorValuesMeta = graph_->tensorValuesMeta();
   TORCH_CHECK(inputs.size() == inputValues.size(), "Input size mismatch");
-  for (auto&& [i, actualInput] : c10::enumerate(inputs)) {
+  for (auto&& [i, actualInput] : std::views::enumerate(inputs)) {
     if (actualInput.isTensor()) {
       const auto& inputName = std::string(inputValues[i]->name());
       auto it = tensorValuesMeta.find(inputName);
