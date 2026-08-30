@@ -1,6 +1,5 @@
 #pragma once
 #include <torch/headeronly/macros/Macros.h>
-#include <cstring>
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 namespace detail {
