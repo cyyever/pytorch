@@ -252,7 +252,12 @@ class VecNEON(VecISA):
 class VecAVX512(VecISA):
     _bit_width = 512
     _macro = ["CPU_CAPABILITY_AVX512"]
-    _arch_flags = "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma"  # TODO: use cflags
+    # -mf16c for the same reason the AVX2 flags below carry it: gcc does not
+    # imply F16C from -mavx512f, and without it the half conversions in these
+    # kernels take the software path.
+    _arch_flags = (
+        "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma -mf16c"  # TODO: use cflags
+    )
     _dtype_nelements = {torch.float: 16, torch.bfloat16: 32, torch.float16: 32}
     _is_avx512_bf16_supported = False
 
