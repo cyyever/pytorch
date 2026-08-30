@@ -4,7 +4,7 @@
 // 1 bit for the sign, 8 bits for the exponent and 7 bits for the mantissa.
 
 #include <torch/headeronly/macros/Macros.h>
-#include <torch/headeronly/util/bit_cast.h>
+#include <bit>
 #include <torch/headeronly/util/floating_point_utils.h>
 
 #include <cstdint>
@@ -105,7 +105,7 @@ C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 #elif defined(__SYCL_DEVICE_ONLY__) && \
     defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
   if (!std::is_constant_evaluated()) {
-    return c10::bit_cast<uint16_t>(sycl::ext::oneapi::bfloat16(value));
+    return std::bit_cast<uint16_t>(sycl::ext::oneapi::bfloat16(value));
   }
 #endif
   return round_to_nearest_even(value);

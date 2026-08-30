@@ -6,7 +6,7 @@
 #include <ATen/cpu/vec/vec128/vec128_reduced_precision_common_neon.h>
 #include <ATen/cpu/vec/vec_base.h>
 #include <c10/util/BFloat16.h>
-#include <c10/util/bit_cast.h>
+#include <bit>
 #include <c10/util/irange.h>
 
 namespace at::vec {
@@ -263,7 +263,7 @@ class Vectorized<c10::BFloat16> : public Vectorized16<
   }
 #else
   Vectorized(c10::BFloat16 val)
-      : Vectorized16(at_vdupq_n_bf16(c10::bit_cast<at_bfloat16_t>(val.x))) {}
+      : Vectorized16(at_vdupq_n_bf16(std::bit_cast<at_bfloat16_t>(val.x))) {}
 #endif
   Vectorized(float val) : Vectorized(c10::BFloat16(val)) {}
   Vectorized(
@@ -276,14 +276,14 @@ class Vectorized<c10::BFloat16> : public Vectorized16<
       value_type val6,
       value_type val7)
       : Vectorized16(at_bfloat16x8_t{
-            c10::bit_cast<at_bfloat16_t>(val0.x),
-            c10::bit_cast<at_bfloat16_t>(val1.x),
-            c10::bit_cast<at_bfloat16_t>(val2.x),
-            c10::bit_cast<at_bfloat16_t>(val3.x),
-            c10::bit_cast<at_bfloat16_t>(val4.x),
-            c10::bit_cast<at_bfloat16_t>(val5.x),
-            c10::bit_cast<at_bfloat16_t>(val6.x),
-            c10::bit_cast<at_bfloat16_t>(val7.x)}) {}
+            std::bit_cast<at_bfloat16_t>(val0.x),
+            std::bit_cast<at_bfloat16_t>(val1.x),
+            std::bit_cast<at_bfloat16_t>(val2.x),
+            std::bit_cast<at_bfloat16_t>(val3.x),
+            std::bit_cast<at_bfloat16_t>(val4.x),
+            std::bit_cast<at_bfloat16_t>(val5.x),
+            std::bit_cast<at_bfloat16_t>(val6.x),
+            std::bit_cast<at_bfloat16_t>(val7.x)}) {}
 
   static Vectorized<c10::BFloat16> blendv(
       const Vectorized<c10::BFloat16>& a,

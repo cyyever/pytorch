@@ -12,7 +12,6 @@
 #include <ATen/TensorAccessor.h>
 #include <ATen/TensorOperators.h>
 #include <c10/util/Logging.h>
-#include <c10/util/bit_cast.h>
 
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/CUDAGraphsUtils.cuh>

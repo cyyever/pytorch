@@ -733,7 +733,7 @@ class CppOverrides(OpOverrides):
     def to_dtype_bitcast(x, dtype, src_dtype):
         if dtype not in DTYPE_TO_CPP:
             raise AssertionError(f"{dtype} missing from {__name__}.DTYPE_TO_CPP")
-        return f"c10::bit_cast<{DTYPE_TO_CPP[dtype]}>({x})"
+        return f"std::bit_cast<{DTYPE_TO_CPP[dtype]}>({x})"
 
     @staticmethod
     # pyrefly: ignore [bad-override]
@@ -4564,7 +4564,7 @@ class CppKernelProxy(CppKernel):
                     (ops, value_var, dtype, src_dtype) = _node.args
 
                     # to_dtype_bitcast act as a lowp fp sink:
-                    # c10::bit_cast requires the source and target have the same bitwidth. Because the input tensor's
+                    # std::bit_cast requires the source and target have the same bitwidth. Because the input tensor's
                     # dtype could be promoted, e.g. from float16 to float, we have to cast the tensor to its original
                     # source dtype before invoking bit_cast.
                     if src_dtype in DTYPE_LOWP_FP:

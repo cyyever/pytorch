@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/util/bit_cast.h>
+#include <bit>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/pythoncapi_compat.h>
 #include <cstdint>
@@ -21,7 +21,7 @@ inline uint16_t unpackTritonFp16(PyObject* obj) {
 
 inline uint16_t unpackTritonBf16(PyObject* obj) {
   float value = static_cast<float>(THPUtils_unpackDouble(obj));
-  return static_cast<uint16_t>(c10::bit_cast<uint32_t>(value) >> 16);
+  return static_cast<uint16_t>(std::bit_cast<uint32_t>(value) >> 16);
 }
 
 } // namespace torch::inductor::static_launcher

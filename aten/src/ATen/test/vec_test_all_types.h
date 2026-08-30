@@ -2,7 +2,7 @@
 #include <ATen/cpu/vec/functional.h>
 #include <ATen/cpu/vec/vec.h>
 #include <ATen/cpu/vec/vec_quant.h>
-#include <c10/util/bit_cast.h>
+#include <bit>
 #include <c10/util/irange.h>
 #include <gtest/gtest.h>
 #include <chrono>
@@ -872,8 +872,8 @@ public:
         if (bitwise)
         {
             for (const auto i : c10::irange(sizeX)) {
-                BVT b_exp = c10::bit_cast<BVT>(expArr[i]);
-                BVT b_act = c10::bit_cast<BVT>(actArr[i]);
+                BVT b_exp = std::bit_cast<BVT>(expArr[i]);
+                BVT b_act = std::bit_cast<BVT>(actArr[i]);
                 EXPECT_EQ(b_exp, b_act) << getDetail(i / unitStorageCount);
                 if (::testing::Test::HasFailure())
                     return true;
@@ -1211,7 +1211,7 @@ T func_cmp(Op call, T v0, T v1) {
     using bit_rep = BitType<T>;
     constexpr bit_rep mask = std::numeric_limits<bit_rep>::max();
     bit_rep  ret = call(v0, v1) ? mask : 0;
-    return c10::bit_cast<T>(ret);
+    return std::bit_cast<T>(ret);
 }
 
 struct PreventFma
@@ -1380,8 +1380,8 @@ template<typename T>
 std::enable_if_t<!is_complex<T>::value, T>
 local_and(const T& val0, const T& val1) {
     using bit_rep = BitType<T>;
-    bit_rep ret = c10::bit_cast<bit_rep>(val0) & c10::bit_cast<bit_rep>(val1);
-    return c10::bit_cast<T> (ret);
+    bit_rep ret = std::bit_cast<bit_rep>(val0) & std::bit_cast<bit_rep>(val1);
+    return std::bit_cast<T> (ret);
 }
 
 template <typename T>
@@ -1393,17 +1393,17 @@ local_and(const Complex<T>& val0, const Complex<T>& val1)
     T imag1 = val0.imag();
     T real2 = val1.real();
     T imag2 = val1.imag();
-    bit_rep real_ret = c10::bit_cast<bit_rep>(real1) & c10::bit_cast<bit_rep>(real2);
-    bit_rep imag_ret = c10::bit_cast<bit_rep>(imag1) & c10::bit_cast<bit_rep>(imag2);
-    return Complex<T>(c10::bit_cast<T>(real_ret), c10::bit_cast<T>(imag_ret));
+    bit_rep real_ret = std::bit_cast<bit_rep>(real1) & std::bit_cast<bit_rep>(real2);
+    bit_rep imag_ret = std::bit_cast<bit_rep>(imag1) & std::bit_cast<bit_rep>(imag2);
+    return Complex<T>(std::bit_cast<T>(real_ret), std::bit_cast<T>(imag_ret));
 }
 
 template<typename T>
 std::enable_if_t<!is_complex<T>::value, T>
 local_or(const T& val0, const T& val1) {
     using bit_rep = BitType<T>;
-    bit_rep ret = c10::bit_cast<bit_rep>(val0) | c10::bit_cast<bit_rep>(val1);
-    return c10::bit_cast<T> (ret);
+    bit_rep ret = std::bit_cast<bit_rep>(val0) | std::bit_cast<bit_rep>(val1);
+    return std::bit_cast<T> (ret);
 }
 
 template<typename T>
@@ -1414,17 +1414,17 @@ local_or(const Complex<T>& val0, const Complex<T>& val1) {
     T imag1 = val0.imag();
     T real2 = val1.real();
     T imag2 = val1.imag();
-    bit_rep real_ret = c10::bit_cast<bit_rep>(real1) | c10::bit_cast<bit_rep>(real2);
-    bit_rep imag_ret = c10::bit_cast<bit_rep>(imag1) | c10::bit_cast<bit_rep>(imag2);
-    return Complex<T>(c10::bit_cast<T> (real_ret), c10::bit_cast<T>(imag_ret));
+    bit_rep real_ret = std::bit_cast<bit_rep>(real1) | std::bit_cast<bit_rep>(real2);
+    bit_rep imag_ret = std::bit_cast<bit_rep>(imag1) | std::bit_cast<bit_rep>(imag2);
+    return Complex<T>(std::bit_cast<T> (real_ret), std::bit_cast<T>(imag_ret));
 }
 
 template<typename T>
 std::enable_if_t<!is_complex<T>::value, T>
 local_xor(const T& val0, const T& val1) {
     using bit_rep = BitType<T>;
-    bit_rep ret = c10::bit_cast<bit_rep>(val0) ^ c10::bit_cast<bit_rep>(val1);
-    return c10::bit_cast<T> (ret);
+    bit_rep ret = std::bit_cast<bit_rep>(val0) ^ std::bit_cast<bit_rep>(val1);
+    return std::bit_cast<T> (ret);
 }
 
 template<typename T>
@@ -1435,9 +1435,9 @@ local_xor(const Complex<T>& val0, const Complex<T>& val1) {
     T imag1 = val0.imag();
     T real2 = val1.real();
     T imag2 = val1.imag();
-    bit_rep real_ret = c10::bit_cast<bit_rep>(real1) ^ c10::bit_cast<bit_rep>(real2);
-    bit_rep imag_ret = c10::bit_cast<bit_rep>(imag1) ^ c10::bit_cast<bit_rep>(imag2);
-    return Complex<T>(c10::bit_cast<T> (real_ret), c10::bit_cast<T>(imag_ret));
+    bit_rep real_ret = std::bit_cast<bit_rep>(real1) ^ std::bit_cast<bit_rep>(real2);
+    bit_rep imag_ret = std::bit_cast<bit_rep>(imag1) ^ std::bit_cast<bit_rep>(imag2);
+    return Complex<T>(std::bit_cast<T> (real_ret), std::bit_cast<T>(imag_ret));
 }
 
 template <typename T>
