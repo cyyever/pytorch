@@ -5,12 +5,12 @@
 
 #include <torch/headeronly/macros/Macros.h>
 #include <torch/headeronly/util/bit_cast.h>
+#include <torch/headeronly/util/floating_point_utils.h>
 
-#include <cmath>
 #include <cstdint>
-#include <cstring>
 #include <iosfwd>
 #include <ostream>
+#include <type_traits>
 
 #if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
 #include <cuda_bf16.h>
@@ -43,8 +43,8 @@ struct alignas(2) BFloat16 {
       unsigned short bits,
       from_bits_t /*unused*/)
       : x(bits) {}
-  /* implicit */ inline C10_HOST_DEVICE BFloat16(float value);
-  inline C10_HOST_DEVICE operator float() const;
+  /* implicit */ constexpr C10_HOST_DEVICE BFloat16(float value);
+  constexpr C10_HOST_DEVICE operator float() const;
 
 #if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
   inline C10_HOST_DEVICE BFloat16(const __nv_bfloat16& value);
@@ -63,52 +63,23 @@ inline std::ostream& operator<<(std::ostream& out, const BFloat16& value) {
 }
 
 namespace detail {
-inline C10_HOST_DEVICE float f32_from_bits(uint16_t src) {
-  float res = 0;
-  uint32_t tmp = src;
-  tmp <<= 16;
-
-#if defined(USE_ROCM) && defined(__HIPCC__)
-  float* tempRes;
-
-  // We should be using memcpy in order to respect the strict aliasing rule
-  // but it fails in the HIP environment.
-  tempRes = reinterpret_cast<float*>(&tmp);
-  res = *tempRes;
-#else
-  std::memcpy(&res, &tmp, sizeof(tmp));
-#endif
-
-  return res;
+C10_HOST_DEVICE constexpr float f32_from_bits(uint16_t src) {
+  return fp32_from_bits(static_cast<uint32_t>(src) << 16);
 }
 
-inline C10_HOST_DEVICE uint16_t bits_from_f32(float src) {
-  uint32_t res = 0;
-
-#if defined(USE_ROCM) && defined(__HIPCC__)
-  // We should be using memcpy in order to respect the strict aliasing rule
-  // but it fails in the HIP environment.
-  uint32_t* tempRes = reinterpret_cast<uint32_t*>(&src);
-  res = *tempRes;
-#else
-  std::memcpy(&res, &src, sizeof(res));
-#endif
-
-  return res >> 16;
+C10_HOST_DEVICE constexpr uint16_t bits_from_f32(float src) {
+  return static_cast<uint16_t>(fp32_to_bits(src) >> 16);
 }
 
-inline C10_HOST_DEVICE uint16_t round_to_nearest_even(float src) {
-#if defined(USE_ROCM) && defined(__HIPCC__)
+C10_HOST_DEVICE constexpr uint16_t round_to_nearest_even(float src) {
+  // src != src is std::isnan without the library call, which clang cannot
+  // constant-evaluate. It is also what the HIP path here always used.
   if (src != src) {
-#else
-  if (std::isnan(src)) {
-#endif
     return UINT16_C(0x7FC0);
-  } else {
-    const uint32_t U32 = c10::bit_cast<uint32_t>(src);
-    uint32_t rounding_bias = ((U32 >> 16) & 1) + UINT32_C(0x7FFF);
-    return static_cast<uint16_t>((U32 + rounding_bias) >> 16);
   }
+  const uint32_t U32 = fp32_to_bits(src);
+  const uint32_t rounding_bias = ((U32 >> 16) & 1) + UINT32_C(0x7FFF);
+  return static_cast<uint16_t>((U32 + rounding_bias) >> 16);
 }
 
 } // namespace detail
@@ -119,33 +90,50 @@ C10_CLANG_DIAGNOSTIC_PUSH()
 C10_CLANG_DIAGNOSTIC_IGNORE("-Wimplicit-int-float-conversion")
 #endif
 
-/// Constructors
-inline C10_HOST_DEVICE BFloat16::BFloat16(float value)
-    :
+namespace detail {
+
+// As in Half: a hardware conversion is never a constant expression, so constant
+// evaluation takes the software path and everything else keeps the instruction
+// it had. Both round to nearest even.
+C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 #if defined(__CUDACC__) &&                                                   \
     (!defined(USE_ROCM) && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 800 || \
      defined(USE_ROCM) && (TORCH_HIP_VERSION >= 702))
-      x(__bfloat16_as_ushort(__float2bfloat16(value)))
+  if (!std::is_constant_evaluated()) {
+    return __bfloat16_as_ushort(__float2bfloat16(value));
+  }
 #elif defined(__SYCL_DEVICE_ONLY__) && \
     defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
-      x(c10::bit_cast<uint16_t>(sycl::ext::oneapi::bfloat16(value)))
-#else
-      // RNE by default
-      x(detail::round_to_nearest_even(value))
+  if (!std::is_constant_evaluated()) {
+    return c10::bit_cast<uint16_t>(sycl::ext::oneapi::bfloat16(value));
+  }
 #endif
-{
+  return round_to_nearest_even(value);
 }
 
-/// Implicit conversions
-inline C10_HOST_DEVICE BFloat16::operator float() const {
+C10_HOST_DEVICE constexpr float bfloat16_bits_to_float(uint16_t x) {
 #if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
-  return __bfloat162float(*reinterpret_cast<const __nv_bfloat16*>(&x));
+  if (!std::is_constant_evaluated()) {
+    return __bfloat162float(*reinterpret_cast<const __nv_bfloat16*>(&x));
+  }
 #elif defined(__SYCL_DEVICE_ONLY__) && \
     defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
-  return float(*reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(&x));
-#else
-  return detail::f32_from_bits(x);
+  if (!std::is_constant_evaluated()) {
+    return float(*reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(&x));
+  }
 #endif
+  return f32_from_bits(x);
+}
+
+} // namespace detail
+
+/// Constructors
+constexpr C10_HOST_DEVICE BFloat16::BFloat16(float value)
+    : x(detail::float_to_bfloat16_bits(value)) {}
+
+/// Implicit conversions
+constexpr C10_HOST_DEVICE BFloat16::operator float() const {
+  return detail::bfloat16_bits_to_float(x);
 }
 
 #if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
