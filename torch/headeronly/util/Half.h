@@ -183,10 +183,7 @@ C10_HOST_DEVICE inline float fp16_ieee_to_fp32_value(uint16_t h) {
   constexpr uint32_t exp_offset = UINT32_C(0xE0) << 23;
   // const float exp_scale = 0x1.0p-112f;
   constexpr uint32_t scale_bits = (uint32_t)15 << 23;
-  float exp_scale_val = 0;
-  std::memcpy(&exp_scale_val, &scale_bits, sizeof(exp_scale_val));
-
-  const float exp_scale = exp_scale_val;
+  const float exp_scale = c10::bit_cast<float>(scale_bits);
   const float normalized_value =
       fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
@@ -259,12 +256,8 @@ inline uint16_t fp16_ieee_from_fp32_value(float f) {
   // const float scale_to_zero = 0x1.0p-110f;
   constexpr uint32_t scale_to_inf_bits = (uint32_t)239 << 23;
   constexpr uint32_t scale_to_zero_bits = (uint32_t)17 << 23;
-  float scale_to_inf_val = 0, scale_to_zero_val = 0;
-  std::memcpy(&scale_to_inf_val, &scale_to_inf_bits, sizeof(scale_to_inf_val));
-  std::memcpy(
-      &scale_to_zero_val, &scale_to_zero_bits, sizeof(scale_to_zero_val));
-  const float scale_to_inf = scale_to_inf_val;
-  const float scale_to_zero = scale_to_zero_val;
+  const float scale_to_inf = c10::bit_cast<float>(scale_to_inf_bits);
+  const float scale_to_zero = c10::bit_cast<float>(scale_to_zero_bits);
 
   float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
 
