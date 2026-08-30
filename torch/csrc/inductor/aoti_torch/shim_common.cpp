@@ -27,7 +27,7 @@
 #include <c10/core/Device.h>
 #include <c10/core/DeviceGuard.h>
 #include <c10/core/Stream.h>
-#include <c10/util/FileSystem.h>
+#include <filesystem>
 #include <torch/headeronly/version.h>
 
 
@@ -1166,15 +1166,15 @@ void aoti_torch_save_tensor_handle(
   const std::optional<std::string> save_dir_env =
       c10::utils::get_env("AOTI_TORCH_SAVE_DIR");
   auto tmp_folder = (save_dir_env.has_value() && !save_dir_env->empty())
-      ? c10::filesystem::path(*save_dir_env)
-      : c10::filesystem::current_path() / "tmp" / "aoti_torch";
-  if (!c10::filesystem::exists(tmp_folder)) {
+      ? std::filesystem::path(*save_dir_env)
+      : std::filesystem::current_path() / "tmp" / "aoti_torch";
+  if (!std::filesystem::exists(tmp_folder)) {
     std::cout
         << "aoti_torch_save_tensor_handle: Path does not exist, creating it..."
         << tmp_folder << '\n';
 
     std::error_code ec{};
-    if (!c10::filesystem::create_directories(tmp_folder, ec)) {
+    if (!std::filesystem::create_directories(tmp_folder, ec)) {
       std::cout << "aoti_torch_save_tensor_handle: Error creating directory: "
                 << tmp_folder << " error:" << ec.message() << '\n';
       return;
