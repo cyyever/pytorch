@@ -158,11 +158,11 @@ if(env_cxx_standard GREATER -1)
   message(
     WARNING
       "C++ standard version definition detected in environment variable. "
-      "PyTorch requires -std=c++23. Please remove -std=c++ settings in your environment."
+      "PyTorch requires -std=c++26. Please remove -std=c++ settings in your environment."
   )
 endif()
 set(CMAKE_CXX_STANDARD
-    23
+    26
     CACHE STRING
           "The C++ standard whose features are requested to build this target.")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
