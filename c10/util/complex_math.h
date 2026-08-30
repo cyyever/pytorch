@@ -48,8 +48,7 @@ C10_HOST_DEVICE inline c10::complex<T> log2(const c10::complex<T>& x) {
 
 // Power functions
 //
-#if defined(_LIBCPP_VERSION) || \
-    (defined(__GLIBCXX__) && !defined(_GLIBCXX11_USE_C99_COMPLEX))
+#if defined(_LIBCPP_VERSION)
 namespace _detail {
 C10_API c10::complex<float> sqrt(const c10::complex<float>& in);
 C10_API c10::complex<double> sqrt(const c10::complex<double>& in);
@@ -63,9 +62,7 @@ C10_HOST_DEVICE inline c10::complex<T> sqrt(const c10::complex<T>& x) {
 #if defined(__CUDACC__) || defined(__HIPCC__)
   return static_cast<c10::complex<T>>(
       thrust::sqrt(static_cast<thrust::complex<T>>(x)));
-#elif !(                        \
-    defined(_LIBCPP_VERSION) || \
-    (defined(__GLIBCXX__) && !defined(_GLIBCXX11_USE_C99_COMPLEX)))
+#elif !defined(_LIBCPP_VERSION)
   return static_cast<c10::complex<T>>(
       std::sqrt(static_cast<std::complex<T>>(x)));
 #else
