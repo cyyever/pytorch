@@ -1,6 +1,7 @@
 #pragma once
 
 #include <complex>
+#include <numbers>
 
 #include <torch/headeronly/macros/Macros.h>
 #include <torch/headeronly/util/BFloat16.h>
@@ -152,7 +153,7 @@ struct alignas(sizeof(T) * 2) complex {
   T imag_ = T(0);
 
   constexpr complex() = default;
-  C10_HOST_DEVICE constexpr complex(const T& re, const T& im = T())
+  C10_HOST_DEVICE constexpr complex(T re, T im = T())
       : real_(re), imag_(im) {}
   template <typename U>
   explicit constexpr complex(const std::complex<U>& other)
@@ -170,11 +171,11 @@ struct alignas(sizeof(T) * 2) complex {
   // c10::complex<double>
   template <typename U = T>
   C10_HOST_DEVICE explicit constexpr complex(
-      const std::enable_if_t<std::is_same_v<U, float>, complex<double>>& other)
+      std::enable_if_t<std::is_same_v<U, float>, complex<double>> other)
       : real_(other.real_), imag_(other.imag_) {}
   template <typename U = T>
   C10_HOST_DEVICE constexpr complex(
-      const std::enable_if_t<std::is_same_v<U, double>, complex<float>>& other)
+      std::enable_if_t<std::is_same_v<U, double>, complex<float>> other)
       : real_(other.real_), imag_(other.imag_) {}
 
   constexpr complex<T>& operator=(T re) {
@@ -553,15 +554,13 @@ struct alignas(4) complex<Half> {
 
   // Constructors
   complex() = default;
-  // Half constructor is not constexpr so the following constructor can't
-  // be constexpr
-  C10_HOST_DEVICE explicit inline complex(const Half& real, const Half& imag)
+  C10_HOST_DEVICE explicit constexpr complex(Half real, Half imag)
       : real_(real), imag_(imag) {}
-  C10_HOST_DEVICE inline complex(const c10::complex<float>& value)
+  C10_HOST_DEVICE constexpr complex(c10::complex<float> value)
       : real_(value.real()), imag_(value.imag()) {}
 
   // Conversion operator
-  inline C10_HOST_DEVICE operator c10::complex<float>() const {
+  constexpr C10_HOST_DEVICE operator c10::complex<float>() const {
     return {real_, imag_};
   }
 
@@ -602,17 +601,13 @@ struct alignas(4) complex<BFloat16> {
 
   // Constructors
   complex() = default;
-  // BFloat16 constructor is not constexpr so the following constructor can't
-  // be constexpr
-  C10_HOST_DEVICE explicit inline complex(
-      const BFloat16& real,
-      const BFloat16& imag)
+  C10_HOST_DEVICE explicit constexpr complex(BFloat16 real, BFloat16 imag)
       : real_(real), imag_(imag) {}
-  C10_HOST_DEVICE inline complex(const c10::complex<float>& value)
+  C10_HOST_DEVICE constexpr complex(c10::complex<float> value)
       : real_(value.real()), imag_(value.imag()) {}
 
   // Conversion operator
-  inline C10_HOST_DEVICE operator c10::complex<float>() const {
+  constexpr C10_HOST_DEVICE operator c10::complex<float>() const {
     return {real_, imag_};
   }
 
