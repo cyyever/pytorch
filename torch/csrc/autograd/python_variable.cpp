@@ -1264,7 +1264,7 @@ static c10::
 thread_local std::optional<NativeShardingPropagatorCache>
     native_sharding_propagator_cache_DO_NOT_USE;
 
-NativeShardingPropagatorCache&
+static NativeShardingPropagatorCache&
 get_thread_local_native_sharding_propagator_cache() {
   if (!native_sharding_propagator_cache_DO_NOT_USE.has_value()) {
     native_sharding_propagator_cache_DO_NOT_USE.emplace();
@@ -1306,7 +1306,7 @@ get_thread_local_native_sharding_propagator_cache() {
 
 // We need to clean up all thread_locals if our module is getting
 // unloaded.
-void cleanup_thread_local_native_sharding_propagator_caches() {
+static void cleanup_thread_local_native_sharding_propagator_caches() {
   std::lock_guard<std::mutex> lock(
       native_sharding_propagator_cache_cleanup_mutex);
   for (auto& [_, popt_cache] : all_thread_caches) {
@@ -1793,7 +1793,7 @@ struct NativeRuntimeSchemaInfo {
   size_t static_argnum;
 };
 
-NativeRuntimeSchemaInfo unpack_runtime_schema_info(
+static NativeRuntimeSchemaInfo unpack_runtime_schema_info(
     py::handle runtime_schema_info,
     size_t num_args) {
   NativeRuntimeSchemaInfo result;
