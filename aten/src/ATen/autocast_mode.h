@@ -690,7 +690,6 @@ copy pasted in from VariableTypeEverything.cpp with appropriate substitutions.
 // Op lists for different policies.
 // To make sure other backends can reuse the policy op list.
 #define AT_FORALL_LOWER_PRECISION_FP(_)  \
-  _(_convolution, deprecated)            \
   _(_convolution)                        \
   _(conv1d)                              \
   _(conv2d)                              \
