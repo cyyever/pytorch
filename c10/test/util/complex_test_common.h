@@ -544,7 +544,7 @@ void test_binary_ops_for_int_type_(T real, T img, int_t num) {
   ASSERT_EQ(c / num, c10::complex<T>(real / num, img / num));
   ASSERT_EQ(
       num / c,
-      c10::complex<T>(num * real / std::norm(c), -num * img / std::norm(c)));
+      c10::complex<T>(num * real / ::norm(c), -num * img / ::norm(c)));
 }
 
 template <typename T>
@@ -607,13 +607,13 @@ namespace test_std {
 
 template <typename scalar_t>
 C10_HOST_DEVICE void test_callable_() {
-  static_assert(std::real(c10::complex<scalar_t>(1, 2)) == scalar_t(1), "");
-  static_assert(std::imag(c10::complex<scalar_t>(1, 2)) == scalar_t(2), "");
-  std::abs(c10::complex<scalar_t>(1, 2));
-  std::arg(c10::complex<scalar_t>(1, 2));
-  static_assert(std::norm(c10::complex<scalar_t>(3, 4)) == scalar_t(25), "");
+  static_assert(::real(c10::complex<scalar_t>(1, 2)) == scalar_t(1), "");
+  static_assert(::imag(c10::complex<scalar_t>(1, 2)) == scalar_t(2), "");
+  ::abs(c10::complex<scalar_t>(1, 2));
+  ::arg(c10::complex<scalar_t>(1, 2));
+  static_assert(::norm(c10::complex<scalar_t>(3, 4)) == scalar_t(25), "");
   static_assert(
-      std::conj(c10::complex<scalar_t>(3, 4)) == c10::complex<scalar_t>(3, -4),
+      ::conj(c10::complex<scalar_t>(3, 4)) == c10::complex<scalar_t>(3, -4),
       "");
   c10::polar(float(1), float(PI / 2));
   c10::polar(double(1), double(PI / 2));
@@ -626,10 +626,10 @@ MAYBE_GLOBAL void test_callable() {
 
 template <typename scalar_t>
 void test_values_() {
-  ASSERT_EQ(std::abs(c10::complex<scalar_t>(3, 4)), scalar_t(5));
-  ASSERT_LT(std::abs(std::arg(c10::complex<scalar_t>(0, 1)) - PI / 2), 1e-6);
+  ASSERT_EQ(::abs(c10::complex<scalar_t>(3, 4)), scalar_t(5));
+  ASSERT_LT(std::abs(::arg(c10::complex<scalar_t>(0, 1)) - PI / 2), 1e-6);
   ASSERT_LT(
-      std::abs(
+      ::abs(
           c10::polar(scalar_t(1), scalar_t(PI / 2)) -
           c10::complex<scalar_t>(0, 1)),
       1e-6);

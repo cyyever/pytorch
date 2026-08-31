@@ -96,7 +96,7 @@ Tensor& logspace_out(const Scalar& start, const Scalar& end, int64_t steps, doub
     // skip
   } else if (steps == 1) {
     if (isComplexType(r.scalar_type())){
-      r.fill_(std::pow(base, start.to<c10::complex<double>>()));
+      r.fill_(::pow(base, start.to<c10::complex<double>>()));
     } else {
       r.fill_(std::pow(base, start.to<double>()));
     }
@@ -112,9 +112,9 @@ Tensor& logspace_out(const Scalar& start, const Scalar& end, int64_t steps, doub
         scalar_t is = static_cast<scalar_t>(p_begin);
         for (int64_t i = p_begin; i < p_end; ++i, is+=1) { //std::complex does not support ++operator
           if (i < halfway) {
-            data_ptr[i] = std::pow(scalar_base, scalar_start + step*is);
+            data_ptr[i] = ::pow(scalar_base, scalar_start + step*is);
           } else {
-            data_ptr[i] = std::pow(scalar_base, scalar_end - (step * static_cast<scalar_t>(steps - i - 1)));
+            data_ptr[i] = ::pow(scalar_base, scalar_end - (step * static_cast<scalar_t>(steps - i - 1)));
           }
         }
       });

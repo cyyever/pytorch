@@ -726,7 +726,7 @@ namespace {
 template <typename scalar_t>
 struct vdot_op {
   scalar_t operator()(scalar_t x, scalar_t y) {
-    return std::conj(x) * y;
+    return ::conj(x) * y;
   }
 };
 } // anonymous namespace

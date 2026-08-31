@@ -497,7 +497,7 @@ std::enable_if_t<is_complex<T>::value, void>
 filter_div_ub(T& val1, T& val2) {
     //missing
     //at least consider zero division
-    auto ret = std::abs(val2);
+    auto ret = ::abs(val2);
     if (ret == 0) {
         val2 = T(1, 2);
     }
@@ -776,7 +776,7 @@ template <typename T>
 typename std::enable_if_t<is_complex<Complex<T>>::value, T>
 correctEpsilon(const Complex<T>& eps)
 {
-    return std::abs(eps);
+    return ::abs(eps);
 }
 
 template <typename T>
@@ -1228,7 +1228,7 @@ std::enable_if_t<!is_complex<T>::value, T> local_abs(T x) {
 template <typename T>
 std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_abs(Complex<T> x) {
 #if defined(TEST_AGAINST_DEFAULT)
-    return std::abs(x);
+    return ::abs(x);
 #else
     PreventFma noFma;
     T real = x.real();
@@ -1326,7 +1326,7 @@ std::enable_if_t<!is_complex<T>::value, T> local_sqrt(T x) {
 
 template <typename T>
 std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_sqrt(Complex<T> x) {
-    return std::sqrt(x);
+    return ::sqrt(x);
 }
 
 template <typename T>
@@ -1336,7 +1336,7 @@ std::enable_if_t<!is_complex<T>::value, T> local_asin(T x) {
 
 template <typename T>
 std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_asin(Complex<T> x) {
-    return std::asin(x);
+    return ::asin(x);
 }
 
 template <typename T>
@@ -1346,7 +1346,7 @@ std::enable_if_t<!is_complex<T>::value, T> local_acos(T x) {
 
 template <typename T>
 std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_acos(Complex<T> x) {
-    return std::acos(x);
+    return ::acos(x);
 }
 
 template<typename T>

@@ -343,7 +343,7 @@ C10_HOST_DEVICE inline c10::complex<T> log1p(const c10::complex<T>& z) {
   // and underflow from `(x * (x + 2) + y ^ 2)`
   T x = z.real();
   T y = z.imag();
-  T zabs = std::abs(z);
+  T zabs = ::abs(z);
   T theta = std::atan2(y, x + T(1));
   if (zabs < 0.5) {
     T r = x * (T(2) + x) + y * y;

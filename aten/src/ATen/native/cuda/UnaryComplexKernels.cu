@@ -77,7 +77,7 @@ void conj_kernel_cuda(TensorIteratorBase& iter) {
       jitted_gpu_kernel<conj_name, scalar_t, scalar_t, 1>(iter, conj_string);
     #else
       gpu_kernel(iter, [] GPU_LAMBDA(scalar_t a) -> scalar_t {
-          return std::conj(a);
+          return ::conj(a);
       });
     #endif
   };
@@ -89,7 +89,7 @@ void conj_kernel_cuda(TensorIteratorBase& iter) {
     })
     AT_DISPATCH_CASE_COMPLEX_TYPES([&] {
       gpu_kernel(iter, [] GPU_LAMBDA(scalar_t a) -> scalar_t {
-        return std::conj(a);
+        return ::conj(a);
       });
     })
     AT_DISPATCH_CASE(kComplexHalf, conj_chalf)

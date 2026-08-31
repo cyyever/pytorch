@@ -55,7 +55,7 @@ static void sigmoid_kernel(TensorIteratorBase& iter) {
       cpu_kernel_vec(
           iter,
           [=](scalar_t a) -> scalar_t {
-            return (static_cast<scalar_t>(1) / (static_cast<scalar_t>(1) + std::exp((-a))));
+            return (static_cast<scalar_t>(1) / (static_cast<scalar_t>(1) + ::exp((-a))));
           },
           [=](Vectorized<scalar_t> a) {
             a = (Vectorized<scalar_t>(static_cast<scalar_t>(1)) + a.neg().exp()).reciprocal();
@@ -352,7 +352,7 @@ static void sinc_kernel(TensorIteratorBase& iter) {
           } else {
             using opmath_t = at::opmath_type<scalar_t>;
             opmath_t product = c10::pi<opmath_t> * opmath_t{a};
-            return static_cast<scalar_t>(std::sin(product) / product);
+            return static_cast<scalar_t>(::sin(product) / product);
           }
         });
   });
@@ -362,7 +362,7 @@ static void sinh_kernel(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(kBFloat16, kHalf, iter.dtype(), "sinh_cpu", [&]() {
     cpu_kernel_vec(
         iter,
-        [=](scalar_t a) -> scalar_t { return std::sinh(a); },
+        [=](scalar_t a) -> scalar_t { return ::sinh(a); },
         [=](Vectorized<scalar_t> self_vec){return self_vec.sinh();});
   });
 }
@@ -371,7 +371,7 @@ static void cosh_kernel(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(kBFloat16, kHalf, iter.dtype(), "cosh_cpu", [&]() {
     cpu_kernel_vec(
         iter,
-        [=](scalar_t a) -> scalar_t { return std::cosh(a); },
+        [=](scalar_t a) -> scalar_t { return ::cosh(a); },
         [=](Vectorized<scalar_t> self_vec){return self_vec.cosh();});
   });
 }
@@ -380,7 +380,7 @@ static void acosh_kernel(TensorIteratorBase& iter) {
     AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(kBFloat16, kHalf, iter.dtype(), "acosh_cpu", [&]() {
       cpu_kernel(
         iter,
-        [=](scalar_t a) -> scalar_t { return std::acosh(a); });
+        [=](scalar_t a) -> scalar_t { return ::acosh(a); });
     });
 }
 
@@ -388,7 +388,7 @@ static void asinh_kernel(TensorIteratorBase& iter) {
     AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(kBFloat16, kHalf, iter.dtype(), "asinh_cpu", [&]() {
       cpu_kernel(
         iter,
-        [=](scalar_t a) -> scalar_t { return std::asinh(a); });
+        [=](scalar_t a) -> scalar_t { return ::asinh(a); });
     });
 }
 
@@ -396,7 +396,7 @@ static void atanh_kernel(TensorIteratorBase& iter) {
     AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(kBFloat16, kHalf, iter.dtype(), "atanh_cpu", [&]() {
       cpu_kernel_vec(
         iter,
-        [=](scalar_t a) -> scalar_t { return std::atanh(a); },
+        [=](scalar_t a) -> scalar_t { return ::atanh(a); },
         [=](Vectorized<scalar_t> self_vec){return self_vec.atanh();});
     });
 }
@@ -529,7 +529,7 @@ void rsqrt_kernel(TensorIteratorBase& iter) {
     cpu_kernel_vec(
         iter,
         [=](scalar_t a) __ubsan_ignore_float_divide_by_zero__ -> scalar_t {
-          return (static_cast<scalar_t>(1)) / std::sqrt(a);
+          return (static_cast<scalar_t>(1)) / ::sqrt(a);
         },
         [=](Vectorized<scalar_t> a) { return a.rsqrt(); });
   });
