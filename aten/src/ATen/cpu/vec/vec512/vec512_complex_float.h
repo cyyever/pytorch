@@ -712,7 +712,7 @@ class Vectorized<c10::complex<float>> {
   const c10::complex<float>& operator[](int idx) const = delete;
   c10::complex<float>& operator[](int idx) = delete;
   Vectorized<c10::complex<float>> map(
-      c10::complex<float> (*const f)(const c10::complex<float>&)) const {
+      c10::complex<float> (*const f)(c10::complex<float>)) const {
     __at_align__ c10::complex<float> tmp[size()];
     store(tmp);
     for (const auto i : c10::irange(size())) {
@@ -855,7 +855,7 @@ class Vectorized<c10::complex<float>> {
   Vectorized<c10::complex<float>> log() const {
     // Most trigonomic ops use the log() op to improve complex number
     // performance.
-    return map(std::log);
+    return map(::log);
   }
   Vectorized<c10::complex<float>> log2() const {
     const __m512 log2_ = _mm512_set1_ps(std::log(2));
@@ -866,7 +866,7 @@ class Vectorized<c10::complex<float>> {
     return _mm512_div_ps(log(), log10_);
   }
   Vectorized<c10::complex<float>> log1p() const {
-    return map(std::log1p);
+    return map(::log1p);
   }
   Vectorized<c10::complex<float>> asin() const {
     // TODO: The vectorized implementation requires special handling for the
@@ -890,14 +890,14 @@ class Vectorized<c10::complex<float>> {
     // //sqrt(re + i*im) auto ln = Vectorized(_mm512_add_ps(b_a, root)).log();
     // //ln(iz + sqrt()) return Vectorized(_mm512_permute_ps(ln.values,
     // 0xB1)).conj();         //-i*ln()
-    return map(std::asin);
+    return map(::asin);
   }
   Vectorized<c10::complex<float>> acos() const {
-    return map(std::acos);
+    return map(::acos);
   }
   Vectorized<c10::complex<float>> atan() const;
   Vectorized<c10::complex<float>> atanh() const {
-    return map(std::atanh);
+    return map(::atanh);
   }
   Vectorized<c10::complex<float>> exp() const {
     // TODO: The vectorized implementation requires special handling for the
@@ -914,7 +914,7 @@ class Vectorized<c10::complex<float>> {
     //                                sin_cos.x);                  //cos(b)
     //                                sin(b)
     // return _mm512_mul_ps(exp, cos_sin);
-    return map(std::exp);
+    return map(::exp);
   }
   Vectorized<c10::complex<float>> exp2() const {
     // Use identity 2**x = exp(log(2) * x)
@@ -923,19 +923,19 @@ class Vectorized<c10::complex<float>> {
     return scaled_values.exp();
   }
   Vectorized<c10::complex<float>> expm1() const {
-    return map(std::expm1);
+    return map(::expm1);
   }
   Vectorized<c10::complex<float>> sin() const {
-    return map(std::sin);
+    return map(::sin);
   }
   Vectorized<c10::complex<float>> sinh() const {
-    return map(std::sinh);
+    return map(::sinh);
   }
   Vectorized<c10::complex<float>> cos() const {
-    return map(std::cos);
+    return map(::cos);
   }
   Vectorized<c10::complex<float>> cosh() const {
-    return map(std::cosh);
+    return map(::cosh);
   }
   Vectorized<c10::complex<float>> ceil() const {
     return _mm512_ceil_ps(values);
@@ -952,17 +952,17 @@ class Vectorized<c10::complex<float>> {
         values, (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
   }
   Vectorized<c10::complex<float>> tan() const {
-    return map(std::tan);
+    return map(::tan);
   }
   Vectorized<c10::complex<float>> tanh() const {
-    return map(std::tanh);
+    return map(::tanh);
   }
   Vectorized<c10::complex<float>> trunc() const {
     return _mm512_roundscale_ps(
         values, (_MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC));
   }
   Vectorized<c10::complex<float>> sqrt() const {
-    return map(std::sqrt);
+    return map(::sqrt);
   }
   Vectorized<c10::complex<float>> reciprocal() const;
   Vectorized<c10::complex<float>> rsqrt() const {
@@ -975,7 +975,7 @@ class Vectorized<c10::complex<float>> {
     store(x_tmp);
     exp.store(y_tmp);
     for (const auto i : c10::irange(size())) {
-      x_tmp[i] = std::pow(x_tmp[i], y_tmp[i]);
+      x_tmp[i] = ::pow(x_tmp[i], y_tmp[i]);
     }
     return loadu(x_tmp);
   }
@@ -1144,7 +1144,7 @@ inline Vectorized<c10::complex<float>> Vectorized<c10::complex<float>>::atan()
   // 1+b auto sub = Vectorized(_mm512_sub_ps(i, values)); // -a       1-b auto
   // ln = (sum/sub).log();                                        // ln((i +
   // z)/(i - z)) return i_half*ln; // i/2*ln()
-  return map(std::atan);
+  return map(::atan);
 }
 
 template <>

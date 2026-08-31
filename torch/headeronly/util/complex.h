@@ -522,7 +522,7 @@ constexpr bool operator!=(T lhs, complex<T> rhs) {
 template <typename T, typename CharT, typename Traits>
 std::basic_ostream<CharT, Traits>& operator<<(
     std::basic_ostream<CharT, Traits>& os,
-    const complex<T>& x) {
+    complex<T> x) {
   return (os << static_cast<std::complex<T>>(x));
 }
 
@@ -537,7 +537,7 @@ std::basic_istream<CharT, Traits>& operator>>(
 }
 
 template <typename T>
-C10_HOST_DEVICE complex<T> polar(const T& r, const T& theta = T()) {
+C10_HOST_DEVICE complex<T> polar(T r, T theta = T()) {
 #if defined(__CUDACC__) || defined(__HIPCC__)
   return static_cast<complex<T>>(thrust::polar(r, theta));
 #else
