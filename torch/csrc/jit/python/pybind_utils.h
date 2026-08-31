@@ -772,8 +772,8 @@ inline bool validateFakeScriptObjectSchema(
   auto class_type = argument.real_type()->expect<c10::ClassType>();
   auto fake_class_registry =
       py::module::import("torch._library.fake_class_registry");
-  auto fake_class = fake_class_registry.attr("find_fake_class")(
-      class_type->name().value().qualifiedName());
+  const auto& qualified_name = class_type->name().value().qualifiedName();
+  auto fake_class = fake_class_registry.attr("find_fake_class")(qualified_name);
   if (!py::isinstance(object.attr("wrapped_obj"), fake_class)) {
     throw schema_match_error(c10::str(
         schema.formatTypeMismatchMsg(
@@ -784,7 +784,7 @@ inline bool validateFakeScriptObjectSchema(
         "\nCast error details: ",
         argument.name(),
         " is expected to be a FakeScriptObject of ",
-        class_type->name().value().qualifiedName()));
+        qualified_name));
   }
   return true;
 }
