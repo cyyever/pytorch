@@ -22,12 +22,14 @@ HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 // (uselessly) convert to floating point and then do the test.
 // This function is.
 
-template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+template <typename T>
+  requires std::is_integral_v<T>
 inline C10_HOST_DEVICE bool _isnan(T /*val*/) {
   return false;
 }
 
-template <typename T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
+template <typename T>
+  requires std::is_floating_point_v<T>
 inline C10_HOST_DEVICE bool _isnan(T val) {
 #if defined(__CUDACC__) || defined(__HIPCC__)
   return ::isnan(val);
@@ -36,43 +38,24 @@ inline C10_HOST_DEVICE bool _isnan(T val) {
 #endif
 }
 
-template <typename T, std::enable_if_t<is_complex<T>::value, int> = 0>
+template <typename T>
+  requires is_complex<T>::value
 inline C10_HOST_DEVICE bool _isnan(T val) {
   return std::isnan(val.real()) || std::isnan(val.imag());
 }
 
-template <typename T, std::enable_if_t<std::is_same_v<T, Half>, int> = 0>
+template <typename T>
+  requires(std::is_same_v<T, Half> || std::is_same_v<T, BFloat16>)
 inline C10_HOST_DEVICE bool _isnan(T val) {
   return _isnan(static_cast<float>(val));
 }
 
-template <typename T, std::enable_if_t<std::is_same_v<T, BFloat16>, int> = 0>
-inline C10_HOST_DEVICE bool _isnan(T val) {
-  return _isnan(static_cast<float>(val));
-}
-
-template <typename T, std::enable_if_t<std::is_same_v<T, Float8_e5m2>, int> = 0>
-inline C10_HOST_DEVICE bool _isnan(T val) {
-  return val.isnan();
-}
-
-template <
-    typename T,
-    std::enable_if_t<std::is_same_v<T, Float8_e4m3fn>, int> = 0>
-inline C10_HOST_DEVICE bool _isnan(T val) {
-  return val.isnan();
-}
-
-template <
-    typename T,
-    std::enable_if_t<std::is_same_v<T, Float8_e5m2fnuz>, int> = 0>
-inline C10_HOST_DEVICE bool _isnan(T val) {
-  return val.isnan();
-}
-
-template <
-    typename T,
-    std::enable_if_t<std::is_same_v<T, Float8_e4m3fnuz>, int> = 0>
+// Float8_e8m0fnu has an isnan() of its own but is deliberately not handled
+// here, so the types are named rather than detected.
+template <typename T>
+  requires(
+      std::is_same_v<T, Float8_e5m2> || std::is_same_v<T, Float8_e4m3fn> ||
+      std::is_same_v<T, Float8_e5m2fnuz> || std::is_same_v<T, Float8_e4m3fnuz>)
 inline C10_HOST_DEVICE bool _isnan(T val) {
   return val.isnan();
 }
@@ -81,12 +64,14 @@ inline C10_HOST_DEVICE bool _isnan(T val) {
 // (uselessly) convert to floating point and then do the test.
 // This function is.
 
-template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+template <typename T>
+  requires std::is_integral_v<T>
 inline C10_HOST_DEVICE bool _isinf(T /*val*/) {
   return false;
 }
 
-template <typename T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
+template <typename T>
+  requires std::is_floating_point_v<T>
 inline C10_HOST_DEVICE bool _isinf(T val) {
 #if defined(__CUDACC__) || defined(__HIPCC__)
   return ::isinf(val);
@@ -95,27 +80,25 @@ inline C10_HOST_DEVICE bool _isinf(T val) {
 #endif
 }
 
-inline C10_HOST_DEVICE bool _isinf(Half val) {
+template <typename T>
+  requires(std::is_same_v<T, Half> || std::is_same_v<T, BFloat16>)
+inline C10_HOST_DEVICE bool _isinf(T val) {
   return _isinf(static_cast<float>(val));
 }
 
-inline C10_HOST_DEVICE bool _isinf(BFloat16 val) {
-  return _isinf(static_cast<float>(val));
-}
-
-inline C10_HOST_DEVICE bool _isinf(Float8_e5m2 val) {
+template <typename T>
+  requires std::is_same_v<T, Float8_e5m2>
+inline C10_HOST_DEVICE bool _isinf(T val) {
   return val.isinf();
 }
 
-inline C10_HOST_DEVICE bool _isinf(Float8_e4m3fn val [[maybe_unused]]) {
-  return false;
-}
-
-inline C10_HOST_DEVICE bool _isinf(Float8_e5m2fnuz val [[maybe_unused]]) {
-  return false;
-}
-
-inline C10_HOST_DEVICE bool _isinf(Float8_e4m3fnuz val [[maybe_unused]]) {
+// e4m3fn, e5m2fnuz and e4m3fnuz have no infinity to report.
+template <typename T>
+  requires(
+      std::is_same_v<T, Float8_e4m3fn> ||
+      std::is_same_v<T, Float8_e5m2fnuz> ||
+      std::is_same_v<T, Float8_e4m3fnuz>)
+inline C10_HOST_DEVICE bool _isinf(T /*val*/) {
   return false;
 }
 
