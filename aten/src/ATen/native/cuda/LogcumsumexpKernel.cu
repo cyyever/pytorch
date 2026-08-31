@@ -15,11 +15,11 @@ namespace at::native {
 // custom min and max to be used in logcumsumexp for complex arguments
 template <typename scalar_t, bool min>
 __host__ __device__ c10::complex<scalar_t> _logcumsumexp_minmax(const c10::complex<scalar_t>& x, const c10::complex<scalar_t>& y) {
-  scalar_t xr = std::real(x);
-  scalar_t yr = std::real(y);
-  if (::isnan(yr) || (::isnan(std::imag(y)))) {
+  scalar_t xr = ::real(x);
+  scalar_t yr = ::real(y);
+  if (::isnan(yr) || (::isnan(::imag(y)))) {
     return y;
-  } else if (::isnan(xr) || (::isnan(std::imag(x)))) {
+  } else if (::isnan(xr) || (::isnan(::imag(x)))) {
     return x;
   } else if (min) { // min
     return (xr < yr) ? x : y;
@@ -49,8 +49,8 @@ template <typename scalar_t>
 __host__ __device__ c10::complex<scalar_t> _fast_build_exp(const c10::complex<scalar_t>& x) {
   // complex exponential function, but implemented manually to get fast compilation time
   // this function only handles the case where the x is finite (not inf nor nan)
-  auto xreal = std::real(x);
-  auto ximag = std::imag(x);
+  auto xreal = ::real(x);
+  auto ximag = ::imag(x);
   auto exp_x_abs = std::exp(xreal);
   scalar_t sin_ximag;
   scalar_t cos_ximag;
@@ -69,7 +69,7 @@ template <typename scalar_t>
 __host__ __device__ c10::complex<scalar_t> _fast_build_exp_inf(const c10::complex<scalar_t>& x) {
   // complex exponential function, but implemented manually to get fast compilation time
   // this function only handles the case where the real part of x is infinite
-  auto ximag = std::imag(x);
+  auto ximag = ::imag(x);
   auto exp_x_abs = std::numeric_limits<scalar_t>::infinity();
   scalar_t sin;
   scalar_t cos;
@@ -89,10 +89,10 @@ template <typename scalar_t>
 __host__ __device__ c10::complex<scalar_t> _log_add_exp_helper(const c10::complex<scalar_t>& x, const c10::complex<scalar_t>& y) {
   c10::complex<scalar_t> min = _logcumsumexp_minmax<scalar_t, /*min=*/true>(x, y);
   c10::complex<scalar_t> max = _logcumsumexp_minmax<scalar_t, /*min=*/false>(x, y);
-  scalar_t min_real = std::real(min);
-  scalar_t max_real = std::real(max);
+  scalar_t min_real = ::real(min);
+  scalar_t max_real = ::real(max);
 
-  if (::isnan(min_real) || ::isnan(std::imag(min))) {
+  if (::isnan(min_real) || ::isnan(::imag(min))) {
     // handling the "infectious" NaNs
     return {std::numeric_limits<scalar_t>::quiet_NaN(), std::numeric_limits<scalar_t>::quiet_NaN()};
   }

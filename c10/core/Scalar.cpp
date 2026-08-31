@@ -22,7 +22,7 @@ Scalar Scalar::operator-() const {
 Scalar Scalar::conj() const {
   if (isComplex()) {
     TORCH_INTERNAL_ASSERT(!isSymbolic());
-    return Scalar(std::conj(v.z));
+    return Scalar(::conj(v.z));
   } else {
     return *this;
   }

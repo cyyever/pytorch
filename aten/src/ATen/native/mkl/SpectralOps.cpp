@@ -90,7 +90,7 @@ void _fft_fill_with_conjugate_symmetry_slice(
     if (iter_index[0] > 0) {
       auto end = std::min(signal_half_sizes[0], iter_index[0] + numel_remaining);
       for (const auto i : c10::irange(iter_index[0], end)) {
-        out_ptr[(signal_half_sizes[0] - i) * out_strides[0]] = std::conj(in_ptr[i * in_strides[0]]);
+        out_ptr[(signal_half_sizes[0] - i) * out_strides[0]] = ::conj(in_ptr[i * in_strides[0]]);
       }
       numel_remaining -= (end - iter_index[0]);
       iter_index[0] = 0;
@@ -99,9 +99,9 @@ void _fft_fill_with_conjugate_symmetry_slice(
 
     while (numel_remaining > 0) {
       auto end = std::min(signal_half_sizes[0], numel_remaining);
-      out_ptr[0] = std::conj(in_ptr[0]);
+      out_ptr[0] = ::conj(in_ptr[0]);
       for (const auto i : c10::irange(1, end)) {
-        out_ptr[(signal_half_sizes[0] - i) * out_strides[0]] = std::conj(in_ptr[i * in_strides[0]]);
+        out_ptr[(signal_half_sizes[0] - i) * out_strides[0]] = ::conj(in_ptr[i * in_strides[0]]);
       }
       numel_remaining -= end;
       advance_index();
@@ -111,7 +111,7 @@ void _fft_fill_with_conjugate_symmetry_slice(
     while (numel_remaining > 0) {
       auto end = std::min(signal_half_sizes[0], iter_index[0] + numel_remaining);
       for (int64_t i = iter_index[0]; i != end; ++i) {
-        out_ptr[i * out_strides[0]] = std::conj(in_ptr[i * in_strides[0]]);
+        out_ptr[i * out_strides[0]] = ::conj(in_ptr[i * in_strides[0]]);
       }
       numel_remaining -= (end - iter_index[0]);
       iter_index[0] = 0;

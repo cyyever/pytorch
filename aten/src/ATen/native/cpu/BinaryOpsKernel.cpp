@@ -869,7 +869,7 @@ void sigmoid_backward_kernel(TensorIteratorBase& iter) {
       cpu_kernel_vec(
           iter,
           [=](scalar_t a, scalar_t b) -> scalar_t {
-            return a * std::conj((scalar_t(1) - b) * b);
+            return a * ::conj((scalar_t(1) - b) * b);
           },
           [=](Vectorized<scalar_t> a, Vectorized<scalar_t> b) {
             return a * ((one_vec - b) * b).conj();
@@ -964,7 +964,7 @@ void tanh_backward_kernel(TensorIteratorBase& iter) {
       cpu_kernel_vec(
           iter,
           [=](scalar_t a, scalar_t b) -> scalar_t {
-            return a * std::conj(scalar_t{1} - b * b);
+            return a * ::conj(scalar_t{1} - b * b);
           },
           [=](Vectorized<scalar_t> a, Vectorized<scalar_t> b) {
             return a * (one_vec - b * b).conj();

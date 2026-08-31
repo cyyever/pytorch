@@ -35,8 +35,8 @@ scalar_t _log_add_exp_helper(scalar_t x, scalar_t y) {
 template <typename scalar_t>
 c10::complex<scalar_t> _log_add_exp_helper(const c10::complex<scalar_t>& x, const c10::complex<scalar_t>& y) {
   auto [min, max] = _logcumsumexp_minmax<scalar_t>(x, y);
-  auto min_real = std::real(min);
-  auto max_real = std::real(max);
+  auto min_real = ::real(min);
+  auto max_real = ::real(max);
 
   if (at::_isnan(min)) {  // either real is nan or imag is nan
     // handling the "infectious" NaNs
@@ -50,10 +50,10 @@ c10::complex<scalar_t> _log_add_exp_helper(const c10::complex<scalar_t>& x, cons
     } else {
       // handle the +inf case, we don't need the special precision for log1p for small values
       // and to avoid producing nan in case of real(max) == real(min) == +inf
-      return std::log(std::exp(min) + std::exp(max));
+      return ::log(::exp(min) + ::exp(max));
     }
   } else {
-    return std::log1p(std::exp(min - max)) + max;
+    return ::log1p(::exp(min - max)) + max;
   }
 }
 

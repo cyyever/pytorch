@@ -170,7 +170,7 @@ Tensor& logspace_cuda_out(const Scalar& start, const Scalar& end, int64_t steps,
     // skip
   } else if (steps == 1) {
     if (isComplexType(r.scalar_type())){
-      r.fill_(std::pow(base, start.to<c10::complex<double>>()));
+      r.fill_(::pow(base, start.to<c10::complex<double>>()));
     } else {
       r.fill_(std::pow(base, start.to<double>()));
     }
@@ -183,9 +183,9 @@ Tensor& logspace_cuda_out(const Scalar& start, const Scalar& end, int64_t steps,
       const int64_t halfway = steps / 2;
       gpu_kernel_with_index(r, [scalar_start, scalar_end, scalar_base, steps, step, halfway]GPU_LAMBDA(int64_t ind) -> scalar_t {
         if (ind < halfway) {
-          return std::pow(scalar_base, scalar_start + step * ind);
+          return ::pow(scalar_base, scalar_start + step * ind);
         }
-        return std::pow(scalar_base, scalar_end - step * (steps - ind - 1));
+        return ::pow(scalar_base, scalar_end - step * (steps - ind - 1));
       });
     });
   } else {
@@ -197,9 +197,9 @@ Tensor& logspace_cuda_out(const Scalar& start, const Scalar& end, int64_t steps,
       const int64_t halfway = steps / 2;
       gpu_kernel_with_index(r, [scalar_start, scalar_end, scalar_base, steps, step, halfway]GPU_LAMBDA(int64_t ind) -> scalar_t {
         if (ind < halfway) {
-          return std::pow(scalar_base, scalar_start + step * ind);
+          return ::pow(scalar_base, scalar_start + step * ind);
         }
-        return std::pow(scalar_base, scalar_end - step * (steps - ind - 1));
+        return ::pow(scalar_base, scalar_end - step * (steps - ind - 1));
       });
     });
   }

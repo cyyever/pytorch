@@ -1,4 +1,5 @@
 #define TORCH_ASSERT_NO_OPERATORS
+#include <c10/util/complex.h>
 #include <cmath>
 #include <ATen/Dispatch.h>
 #include <ATen/Parallel.h>
@@ -22,7 +23,7 @@ static void pow_tensor_tensor_kernel(TensorIteratorBase& iter) {
       using Vec = Vectorized<scalar_t>;
       cpu_kernel_vec(iter,
         [=](scalar_t base, scalar_t exp) -> scalar_t {
-          return std::pow(base, exp);
+          return ::pow(base, exp);
         },
         [&](Vec base, Vec exp) -> Vec {
           return base.pow(exp);
@@ -77,7 +78,7 @@ void pow_tensor_scalar_optimized_kernel(TensorIteratorBase& iter, const exp_scal
   } else {
     cpu_kernel_vec(iter,
         [=](scalar_t base) -> scalar_t {
-          return std::pow(base, static_cast<cast_scalar_t>(exp));
+          return c10::math::pow(base, static_cast<cast_scalar_t>(exp));
         },
         [=](Vec base) -> Vec {
           return base.pow(static_cast<cast_scalar_t>(exp));

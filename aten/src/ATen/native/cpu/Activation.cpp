@@ -24,6 +24,12 @@
 
 namespace at::native {
 
+// These kernels dispatch over the real types and c10::complex alike. The real
+// overloads of exp live in std, the complex one at global scope next to
+// c10::complex, so both are named here and the call sites stay unqualified.
+using std::exp;
+using ::exp;
+
 namespace {
 
 void log_sigmoid_cpu_kernel(TensorBase &output, TensorBase &buffer, const TensorBase &input) {
@@ -1140,7 +1146,7 @@ void silu_kernel(TensorIteratorBase& iter) {
         cpu_kernel_vec(
             iter,
             [](scalar_t x) {
-              return x / (scalar_t(1) + std::exp(-x));
+              return x / (scalar_t(1) + exp(-x));
             },
             [kOneVec](Vectorized<scalar_t> x_vec) {
               return x_vec / (kOneVec + x_vec.neg().exp());
@@ -1180,7 +1186,7 @@ void silu_backward_kernel(TensorIteratorBase& iter) {
             iter,
             [](scalar_t dy, scalar_t x) {
               const scalar_t sigmoid =
-                  scalar_t(1) / (scalar_t(1) + std::exp(-x));
+                  scalar_t(1) / (scalar_t(1) + exp(-x));
               return dy * sigmoid * (scalar_t(1) + x * (scalar_t(1) - sigmoid));
             },
             [kOneVec](Vectorized<scalar_t> dy_vec, Vectorized<scalar_t> x_vec) {
