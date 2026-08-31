@@ -31,7 +31,9 @@ Scalar Scalar::conj() const {
 Scalar Scalar::log() const {
   if (isComplex()) {
     TORCH_INTERNAL_ASSERT(!isSymbolic());
-    return std::log(v.z);
+    // ::log, not std::log: the complex overload lives at global scope, and
+    // unqualified lookup inside Scalar::log would find the member and stop.
+    return ::log(v.z);
   } else if (isFloatingPoint()) {
     TORCH_CHECK(!isSymbolic(), "NYI log symbolic float");
     return std::log(v.d);

@@ -641,9 +641,9 @@ TEST(TestStd, BasicFunctions) {
   // CSQRT edge cases: checks for overflows which are likely to occur
   // if square root is computed using polar form
   ASSERT_LT(
-      std::abs(std::sqrt(c10::complex<float>(-1e20, -4988429.2)).real()), 3e-4);
+      std::abs(::sqrt(c10::complex<float>(-1e20, -4988429.2)).real()), 3e-4);
   ASSERT_LT(
-      std::abs(std::sqrt(c10::complex<double>(-1e60, -4988429.2)).real()),
+      std::abs(::sqrt(c10::complex<double>(-1e60, -4988429.2)).real()),
       3e-4);
 }
 
