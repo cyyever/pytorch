@@ -406,7 +406,11 @@ function(torch_compile_options libname)
           continue()
         endif()
       endif()
-      target_compile_options(${libname} PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler ${option}>)
+      # -Xcompiler=<opt>, not -Xcompiler <opt>: target_compile_options
+      # de-duplicates the repeated -Xcompiler token, so the space form leaves
+      # one -Xcompiler followed by the whole option list and nvcc hands only
+      # the first entry to the host compiler.
+      target_compile_options(${libname} PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=${option}>)
     endforeach()
   endif()
 
