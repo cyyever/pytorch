@@ -67,7 +67,7 @@ namespace c10 {
 //
 // There are three types of assign operator:
 // - Assign a real value from the same scalar type
-//   - In std, this is templated as complex& operator=(const T& x)
+//   - In std, this is templated as complex& operator=(T x)
 //     with specialization `complex& operator=(T x)` for float/double/long
 //     double Since we only support float and double, on will use `complex&
 //     operator=(T x)`
@@ -206,28 +206,28 @@ struct alignas(sizeof(T) * 2) complex {
   }
 
   template <typename U>
-  constexpr complex<T>& operator=(const complex<U>& rhs) {
+  constexpr complex<T>& operator=(complex<U> rhs) {
     real_ = rhs.real();
     imag_ = rhs.imag();
     return *this;
   }
 
   template <typename U>
-  constexpr complex<T>& operator+=(const complex<U>& rhs) {
+  constexpr complex<T>& operator+=(complex<U> rhs) {
     real_ += rhs.real();
     imag_ += rhs.imag();
     return *this;
   }
 
   template <typename U>
-  constexpr complex<T>& operator-=(const complex<U>& rhs) {
+  constexpr complex<T>& operator-=(complex<U> rhs) {
     real_ -= rhs.real();
     imag_ -= rhs.imag();
     return *this;
   }
 
   template <typename U>
-  constexpr complex<T>& operator*=(const complex<U>& rhs) {
+  constexpr complex<T>& operator*=(complex<U> rhs) {
     // (a + bi) * (c + di) = (a*c - b*d) + (a * d + b * c) i
     T a = real_;
     T b = imag_;
@@ -244,7 +244,7 @@ struct alignas(sizeof(T) * 2) complex {
 #define FORCE_INLINE_APPLE
 #endif
   template <typename U>
-  constexpr FORCE_INLINE_APPLE complex<T>& operator/=(const complex<U>& rhs)
+  constexpr FORCE_INLINE_APPLE complex<T>& operator/=(complex<U> rhs)
       __ubsan_ignore_float_divide_by_zero__ {
     // (a + bi) / (c + di) = (ac + bd)/(c^2 + d^2) + (bc - ad)/(c^2 + d^2) i
     // the calculation below follows numpy's complex division
@@ -351,82 +351,82 @@ constexpr complex<double> operator""_id(unsigned long long imag) {
 } // namespace complex_literals
 
 template <typename T>
-constexpr complex<T> operator+(const complex<T>& val) {
+constexpr complex<T> operator+(complex<T> val) {
   return val;
 }
 
 template <typename T>
-constexpr complex<T> operator-(const complex<T>& val) {
+constexpr complex<T> operator-(complex<T> val) {
   return complex<T>(-val.real(), -val.imag());
 }
 
 template <typename T>
-constexpr complex<T> operator+(const complex<T>& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator+(complex<T> lhs, complex<T> rhs) {
   complex<T> result = lhs;
   return result += rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator+(const complex<T>& lhs, const T& rhs) {
+constexpr complex<T> operator+(complex<T> lhs, T rhs) {
   complex<T> result = lhs;
   return result += rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator+(const T& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator+(T lhs, complex<T> rhs) {
   return complex<T>(lhs + rhs.real(), rhs.imag());
 }
 
 template <typename T>
-constexpr complex<T> operator-(const complex<T>& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator-(complex<T> lhs, complex<T> rhs) {
   complex<T> result = lhs;
   return result -= rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator-(const complex<T>& lhs, const T& rhs) {
+constexpr complex<T> operator-(complex<T> lhs, T rhs) {
   complex<T> result = lhs;
   return result -= rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator-(const T& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator-(T lhs, complex<T> rhs) {
   complex<T> result = -rhs;
   return result += lhs;
 }
 
 template <typename T>
-constexpr complex<T> operator*(const complex<T>& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator*(complex<T> lhs, complex<T> rhs) {
   complex<T> result = lhs;
   return result *= rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator*(const complex<T>& lhs, const T& rhs) {
+constexpr complex<T> operator*(complex<T> lhs, T rhs) {
   complex<T> result = lhs;
   return result *= rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator*(const T& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator*(T lhs, complex<T> rhs) {
   complex<T> result = rhs;
   return result *= lhs;
 }
 
 template <typename T>
-constexpr complex<T> operator/(const complex<T>& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator/(complex<T> lhs, complex<T> rhs) {
   complex<T> result = lhs;
   return result /= rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator/(const complex<T>& lhs, const T& rhs) {
+constexpr complex<T> operator/(complex<T> lhs, T rhs) {
   complex<T> result = lhs;
   return result /= rhs;
 }
 
 template <typename T>
-constexpr complex<T> operator/(const T& lhs, const complex<T>& rhs) {
+constexpr complex<T> operator/(T lhs, complex<T> rhs) {
   complex<T> result(lhs, T());
   return result /= rhs;
 }
@@ -489,32 +489,32 @@ constexpr c10::complex<fT> operator/(const iT& a, const c10::complex<fT>& b) {
 
 
 template <typename T>
-constexpr bool operator==(const complex<T>& lhs, const complex<T>& rhs) {
+constexpr bool operator==(complex<T> lhs, complex<T> rhs) {
   return (lhs.real() == rhs.real()) && (lhs.imag() == rhs.imag());
 }
 
 template <typename T>
-constexpr bool operator==(const complex<T>& lhs, const T& rhs) {
+constexpr bool operator==(complex<T> lhs, T rhs) {
   return (lhs.real() == rhs) && (lhs.imag() == T());
 }
 
 template <typename T>
-constexpr bool operator==(const T& lhs, const complex<T>& rhs) {
+constexpr bool operator==(T lhs, complex<T> rhs) {
   return (lhs == rhs.real()) && (T() == rhs.imag());
 }
 
 template <typename T>
-constexpr bool operator!=(const complex<T>& lhs, const complex<T>& rhs) {
+constexpr bool operator!=(complex<T> lhs, complex<T> rhs) {
   return !(lhs == rhs);
 }
 
 template <typename T>
-constexpr bool operator!=(const complex<T>& lhs, const T& rhs) {
+constexpr bool operator!=(complex<T> lhs, T rhs) {
   return !(lhs == rhs);
 }
 
 template <typename T>
-constexpr bool operator!=(const T& lhs, const complex<T>& rhs) {
+constexpr bool operator!=(T lhs, complex<T> rhs) {
   return !(lhs == rhs);
 }
 

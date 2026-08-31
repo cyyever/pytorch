@@ -469,24 +469,24 @@ inline __device__ Half __ldg(const Half* ptr) {
 
 /// Arithmetic
 
-inline C10_HOST_DEVICE Half operator+(const Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half operator+(Half a, Half b) {
   return static_cast<float>(a) + static_cast<float>(b);
 }
 
-inline C10_HOST_DEVICE Half operator-(const Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half operator-(Half a, Half b) {
   return static_cast<float>(a) - static_cast<float>(b);
 }
 
-inline C10_HOST_DEVICE Half operator*(const Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half operator*(Half a, Half b) {
   return static_cast<float>(a) * static_cast<float>(b);
 }
 
-inline C10_HOST_DEVICE Half operator/(const Half& a, const Half& b)
+inline C10_HOST_DEVICE Half operator/(Half a, Half b)
     __ubsan_ignore_float_divide_by_zero__ {
   return static_cast<float>(a) / static_cast<float>(b);
 }
 
-inline C10_HOST_DEVICE Half operator-(const Half& a) {
+inline C10_HOST_DEVICE Half operator-(Half a) {
 #if (defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 530) || \
     defined(__HIP_DEVICE_COMPILE__)
   return __hneg(a);
@@ -497,22 +497,22 @@ inline C10_HOST_DEVICE Half operator-(const Half& a) {
 #endif
 }
 
-inline C10_HOST_DEVICE Half& operator+=(Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half& operator+=(Half& a, Half b) {
   a = a + b;
   return a;
 }
 
-inline C10_HOST_DEVICE Half& operator-=(Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half& operator-=(Half& a, Half b) {
   a = a - b;
   return a;
 }
 
-inline C10_HOST_DEVICE Half& operator*=(Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half& operator*=(Half& a, Half b) {
   a = a * b;
   return a;
 }
 
-inline C10_HOST_DEVICE Half& operator/=(Half& a, const Half& b) {
+inline C10_HOST_DEVICE Half& operator/=(Half& a, Half b) {
   a = a / b;
   return a;
 }
@@ -547,16 +547,16 @@ inline C10_HOST_DEVICE float operator/(float a, Half b)
   return a / static_cast<float>(b);
 }
 
-inline C10_HOST_DEVICE float& operator+=(float& a, const Half& b) {
+inline C10_HOST_DEVICE float& operator+=(float& a, Half b) {
   return a += static_cast<float>(b);
 }
-inline C10_HOST_DEVICE float& operator-=(float& a, const Half& b) {
+inline C10_HOST_DEVICE float& operator-=(float& a, Half b) {
   return a -= static_cast<float>(b);
 }
-inline C10_HOST_DEVICE float& operator*=(float& a, const Half& b) {
+inline C10_HOST_DEVICE float& operator*=(float& a, Half b) {
   return a *= static_cast<float>(b);
 }
-inline C10_HOST_DEVICE float& operator/=(float& a, const Half& b) {
+inline C10_HOST_DEVICE float& operator/=(float& a, Half b) {
   return a /= static_cast<float>(b);
 }
 

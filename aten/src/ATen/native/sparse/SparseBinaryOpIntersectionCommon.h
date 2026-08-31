@@ -460,9 +460,7 @@ void _sparse_binary_op_intersection_kernel_out(
 
   if (max_sparse_dims > x.sparse_dim()) {
     _sparse_binary_op_intersection_kernel_impl<
-      // For some reason MSVC complaints about passing constexpr max_sparse_dims
-      // as a template parameter claiming as if it is not know at compile time.
-      kernel_t, value_selection_intersection_kernel_t, index_t, 8>(
+      kernel_t, value_selection_intersection_kernel_t, index_t, max_sparse_dims>(
         res, x, y, broadcasted_shape, x_hash_opt, y_hash_opt, distributive_with_sum);
   } else {
     _sparse_binary_op_intersection_kernel_impl<
