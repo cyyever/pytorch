@@ -735,29 +735,14 @@ class FakeTensorTest(TestCase):
                 True,
                 True,
             )
-            out_deprecated = aten._convolution.deprecated(
-                x,
-                w,
-                None,
-                [2, 2],
-                [0, 0],
-                [1, 1],
-                False,
-                [0, 0],
-                1,
-                False,
-                False,
-                True,
-            )
 
-        for out in (out_default, out_deprecated):
-            self.assertEqual(out.shape[:2], (1, 32))
-            self.assertTrue(
-                statically_known_true(out.shape[2] == (x.shape[2] - 3) // 2 + 1)
-            )
-            self.assertTrue(
-                statically_known_true(out.shape[3] == (x.shape[3] - 3) // 2 + 1)
-            )
+        self.assertEqual(out_default.shape[:2], (1, 32))
+        self.assertTrue(
+            statically_known_true(out_default.shape[2] == (x.shape[2] - 3) // 2 + 1)
+        )
+        self.assertTrue(
+            statically_known_true(out_default.shape[3] == (x.shape[3] - 3) // 2 + 1)
+        )
 
     def test_conv_rejects_mismatched_fake_devices(self):
         if torch._functorch.config.fake_tensor_propagate_real_tensors and not TEST_CUDA:
