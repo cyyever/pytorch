@@ -133,18 +133,17 @@ struct Type final {
 
 static_assert(
     string_view::npos !=
-        get_fully_qualified_type_name<typename Type<int>::type>().find("int"),
+        get_fully_qualified_type_name<Type<int>::type>().find("int"),
     "");
 static_assert(
     string_view::npos !=
-        get_fully_qualified_type_name<typename Type<int>::type>().find('*'),
+        get_fully_qualified_type_name<Type<int>::type>().find('*'),
     "");
 
 // but with remove_pointer applied, there is no '*' in the type name anymore
 static_assert(
     string_view::npos ==
-        get_fully_qualified_type_name<
-            std::remove_pointer_t<typename Type<int>::type>>()
+        get_fully_qualified_type_name<std::remove_pointer_t<Type<int>::type>>()
             .find('*'),
     "");
 
@@ -171,7 +170,7 @@ static_assert(
     // NOLINTNEXTLINE(misc-redundant-expression)
     get_fully_qualified_type_name<std::string(int64_t, const Type<int>&)>() ==
         get_fully_qualified_type_name<
-            typename c10::guts::infer_function_traits_t<Functor>::func_type>(),
+            c10::guts::infer_function_traits_t<Functor>::func_type>(),
     "");
 
 TEST(TypeIndex, FunctionTypeComputationsAreResolved) {
