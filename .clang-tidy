@@ -25,7 +25,7 @@ Checks: ' bugprone-*, -bugprone-easily-swappable-parameters, -bugprone-forward-d
   -cppcoreguidelines-use-enum-class, -facebook-hte-RelativeInclude, google-readability-casting,
   hicpp-exception-baseclass,
   hicpp-avoid-goto, misc-*, -misc-confusable-identifiers, -misc-const-correctness,
-  -misc-use-anonymous-namespace, -misc-unused-parameters, -misc-no-recursion,
+  -misc-use-anonymous-namespace, -misc-no-recursion,
   -misc-non-private-member-variables-in-classes, -misc-unused-using-decls, modernize-*,
   -modernize-macro-to-enum, -modernize-return-braced-init-list, -modernize-use-auto,
   -modernize-use-using, -modernize-use-trailing-return-type, -modernize-use-nodiscard,
