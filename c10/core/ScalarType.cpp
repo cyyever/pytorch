@@ -212,6 +212,20 @@ std::pair<std::string_view, std::string_view> getDtypeNames(
       return {"bits2x4", ""};
     case c10::ScalarType::Bits4x2:
       return {"bits4x2", ""};
+    // The quantized kernels are gone from this fork, but their ScalarType
+    // enumerators stay: the values are part of the serialization format, so
+    // removing them would renumber everything after them. getStringToDtypeMap
+    // walks every enumerator, so each still needs a name here.
+    case c10::ScalarType::QInt8:
+      return {"qint8", ""};
+    case c10::ScalarType::QUInt8:
+      return {"quint8", ""};
+    case c10::ScalarType::QInt32:
+      return {"qint32", ""};
+    case c10::ScalarType::QUInt4x2:
+      return {"quint4x2", ""};
+    case c10::ScalarType::QUInt2x4:
+      return {"quint2x4", ""};
     case c10::ScalarType::Bits8:
       return {"bits8", ""};
     case c10::ScalarType::Bits16:
