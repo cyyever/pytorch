@@ -55,7 +55,7 @@ struct to_tuple<typelist<Types...>> final {
   using type = std::tuple<Types...>;
 };
 template <class TypeList>
-using to_tuple_t = typename to_tuple<TypeList>::type;
+using to_tuple_t = to_tuple<TypeList>::type;
 
 /**
  * Creates a typelist containing the types of a given tuple.
@@ -73,7 +73,7 @@ struct from_tuple<std::tuple<Types...>> final {
   using type = typelist<Types...>;
 };
 template <class Tuple>
-using from_tuple_t = typename from_tuple<Tuple>::type;
+using from_tuple_t = from_tuple<Tuple>::type;
 
 /**
  * Concatenates multiple type lists.
@@ -91,8 +91,7 @@ template <class... Head1Types, class... Head2Types, class... TailLists>
 struct concat<typelist<Head1Types...>, typelist<Head2Types...>, TailLists...>
     final {
   using type =
-      typename concat<typelist<Head1Types..., Head2Types...>, TailLists...>::
-          type;
+      concat<typelist<Head1Types..., Head2Types...>, TailLists...>::type;
 };
 template <class... HeadTypes>
 struct concat<typelist<HeadTypes...>> final {
@@ -103,7 +102,7 @@ struct concat<> final {
   using type = typelist<>;
 };
 template <class... TypeLists>
-using concat_t = typename concat<TypeLists...>::type;
+using concat_t = concat<TypeLists...>::type;
 
 /**
  * Checks if a typelist contains a certain type.
@@ -119,7 +118,7 @@ struct contains_impl<typelist<Types...>, Type>
     : std::bool_constant<(std::is_same_v<Types, Type> || ...)> {};
 } // namespace detail
 template <class TypeList, class Type>
-using contains = typename detail::contains_impl<TypeList, Type>::type;
+using contains = detail::contains_impl<TypeList, Type>::type;
 
 /**
  * Returns true iff the type trait is true for all types in the type list
@@ -180,7 +179,7 @@ struct head<typelist<Head, Tail...>> final {
   using type = Head;
 };
 template <class TypeList>
-using head_t = typename head<TypeList>::type;
+using head_t = head<TypeList>::type;
 
 /**
  * Returns the first element of a type list, or the specified default if the
@@ -196,7 +195,7 @@ struct head_with_default<Default, typelist<Head, Tail...>> final {
   using type = Head;
 };
 template <class Default, class TypeList>
-using head_with_default_t = typename head_with_default<Default, TypeList>::type;
+using head_with_default_t = head_with_default<Default, TypeList>::type;
 
 /**
  * Returns the N-th element of a type list.
@@ -222,7 +221,7 @@ struct element<Index, typelist<Types...>> final {
 
 /// Convenience alias.
 template <size_t Index, class TypeList>
-using element_t = typename element<Index, TypeList>::type;
+using element_t = element<Index, TypeList>::type;
 
 namespace detail {
 template <class TypeList, size_t offset, class IndexSequence>
@@ -246,14 +245,14 @@ struct drop_if_nonempty final {
   static_assert(
       is_instantiation_of<typelist, TypeList>::value,
       "In typelist::drop_if_nonempty<T, num>, the T argument must be typelist<...>.");
-  using type = typename detail::take_elements<
+  using type = detail::take_elements<
       TypeList,
       std::min(num, size<TypeList>::value),
       std::make_index_sequence<
           size<TypeList>::value - std::min(num, size<TypeList>::value)>>::type;
 };
 template <class TypeList, size_t num>
-using drop_if_nonempty_t = typename drop_if_nonempty<TypeList, num>::type;
+using drop_if_nonempty_t = drop_if_nonempty<TypeList, num>::type;
 
 } // namespace typelist
 } // namespace c10::guts
