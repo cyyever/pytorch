@@ -1,9 +1,19 @@
 #include <c10/core/DispatchKeySet.h>
 #include <c10/util/irange.h>
-#include <c10/util/llvmMathExtras.h>
-#include <limits>
+#include <bit>
 
 namespace c10 {
+
+namespace {
+// std::countr_zero reports the full width for an empty mask, and 64 is not a
+// valid bit index, so it doubles as the "no bit set" answer.
+constexpr uint64_t no_bit_set = 64;
+
+// A mask with the n low bits cleared and every higher bit set.
+constexpr uint64_t mask_trailing_zeros(uint64_t n) {
+  return n >= 64 ? 0 : ~uint64_t{0} << n;
+}
+} // namespace
 
 // backend_dispatch_keyset includes all dispatch keys that map to backends.
 // Alias key DispatchKey::CompositeExplicitAutograd maps to
@@ -189,17 +199,16 @@ DispatchKeySet::iterator& DispatchKeySet::iterator::operator++() {
   // Create a masked version of the set representation to ignore previous
   // keys that we've iterated through.
   uint64_t masked_functionality_bits =
-      llvm::maskTrailingZeros<uint64_t>(next_functionality_) & *data_ptr_;
+      mask_trailing_zeros(next_functionality_) & *data_ptr_;
   uint64_t masked_backend_bits =
-      llvm::maskTrailingZeros<uint64_t>(next_backend_) & full_backend_mask &
-      *data_ptr_;
+      mask_trailing_zeros(next_backend_) & full_backend_mask & *data_ptr_;
 
   uint64_t first_functionality_idx =
-      llvm::findFirstSet(masked_functionality_bits);
-  uint64_t first_backendcomponent_idx = llvm::findFirstSet(masked_backend_bits);
+      std::countr_zero(masked_functionality_bits);
+  uint64_t first_backendcomponent_idx = std::countr_zero(masked_backend_bits);
 
   // If there are no keys, set to end iterator value
-  if (first_functionality_idx == std::numeric_limits<uint64_t>::max() ||
+  if (first_functionality_idx == no_bit_set ||
       next_functionality_ == iterator::end_iter_mask_val) {
     // Set up state to be the same as end()
     next_functionality_ = iterator::end_iter_mask_val;
@@ -223,7 +232,7 @@ DispatchKeySet::iterator& DispatchKeySet::iterator::operator++() {
           static_cast<DispatchKey>(next_dispatchkey_idx))) {
     // case 1: if the current backend is undefined, then there is no valid
     // backend instance of this functionality key so we can skip it.
-    if (first_backendcomponent_idx == std::numeric_limits<uint64_t>::max()) {
+    if (first_backendcomponent_idx == no_bit_set) {
       // increment the functionality mask so we skip the current functionality
       // bit on the next increment.
       next_functionality_ = new_next_functionality;
@@ -238,11 +247,11 @@ DispatchKeySet::iterator& DispatchKeySet::iterator::operator++() {
 
     // Next, we need to set up the masks for the next increment.
     uint64_t next_backendcomponent_bits =
-        llvm::maskTrailingZeros<uint64_t>(first_backendcomponent_idx + 1) &
+        mask_trailing_zeros(first_backendcomponent_idx + 1) &
         full_backend_mask & *data_ptr_;
     uint64_t next_backendcomponent_idx =
-        llvm::findFirstSet(next_backendcomponent_bits);
-    if (next_backendcomponent_idx == std::numeric_limits<uint64_t>::max()) {
+        std::countr_zero(next_backendcomponent_bits);
+    if (next_backendcomponent_idx == no_bit_set) {
       // case 2: the current backend is valid, but there is not another backend
       // in the keyset. In this case, we need to bump the functionality mask and
       // reset the backend mask for the next increment
