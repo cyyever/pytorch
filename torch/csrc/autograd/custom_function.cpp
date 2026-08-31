@@ -150,12 +150,12 @@ static void _process_forward_mode_AD(
     if (!raw_outputs[i].has_value()) {
       continue;
     }
-    const auto& out =
-        outputs[i].has_value() ? outputs[i].value() : at::Tensor();
-    auto out_tensor_impl = raw_outputs[i].value().unsafeGetTensorImpl();
+    const auto& raw_out = raw_outputs[i].value();
+    const auto out = outputs[i].value_or(at::Tensor());
+    auto out_tensor_impl = raw_out.unsafeGetTensorImpl();
     bool is_differentiable =
         (!non_differentiable.contains(out_tensor_impl) &&
-         isDifferentiableType(raw_outputs[i].value().scalar_type()));
+         isDifferentiableType(raw_out.scalar_type()));
     const auto& out_grad = forward_grads[i];
     if (!out.defined() || !is_differentiable) {
       TORCH_CHECK(
