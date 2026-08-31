@@ -410,28 +410,3 @@ using c10_complex_math::sinh;
 using c10_complex_math::sqrt;
 using c10_complex_math::tan;
 using c10_complex_math::tanh;
-
-namespace std {
-
-using c10_complex_math::acos;
-using c10_complex_math::acosh;
-using c10_complex_math::asin;
-using c10_complex_math::asinh;
-using c10_complex_math::atan;
-using c10_complex_math::atanh;
-using c10_complex_math::cos;
-using c10_complex_math::cosh;
-using c10_complex_math::exp;
-using c10_complex_math::expm1;
-using c10_complex_math::log;
-using c10_complex_math::log10;
-using c10_complex_math::log1p;
-using c10_complex_math::log2;
-using c10_complex_math::pow;
-using c10_complex_math::sin;
-using c10_complex_math::sinh;
-using c10_complex_math::sqrt;
-using c10_complex_math::tan;
-using c10_complex_math::tanh;
-
-} // namespace std
