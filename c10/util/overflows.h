@@ -55,7 +55,7 @@ template <typename To, typename From>
 bool overflows(
     From f,
     bool strict_unsigned [[maybe_unused]] = false) requires (std::is_floating_point_v<From>) {
-  using ToScalar = typename scalar_value_type<To>::type;
+  using ToScalar = scalar_value_type<To>::type;
   using limit = std::numeric_limits<ToScalar>;
   if (limit::has_infinity && std::isinf(static_cast<double>(f))) {
     return false;
