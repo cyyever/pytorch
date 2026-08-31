@@ -1413,6 +1413,8 @@ if(USE_CUDA)
       torch_cuda INTERFACE $<INSTALL_INTERFACE:include>)
   target_include_directories(
       torch_cuda PRIVATE ${Caffe2_GPU_INCLUDE})
+  target_include_directories(
+      torch_cuda SYSTEM PRIVATE ${ATen_CUDA_SYSTEM_INCLUDE})
   target_link_libraries(
       torch_cuda PRIVATE ${Caffe2_CUDA_DEPENDENCY_LIBS})
 
