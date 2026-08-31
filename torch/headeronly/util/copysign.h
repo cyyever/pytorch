@@ -10,7 +10,7 @@ HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 // is needed to workaround g++-7/8 crash on aarch64, but also makes
 // copysign faster for the half-precision types
 template <typename T, typename U>
-inline auto copysign(const T& a, const U& b) {
+inline auto copysign(T a, U b) {
   return std::copysign(a, b);
 }
 

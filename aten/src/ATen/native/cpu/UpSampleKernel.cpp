@@ -1568,7 +1568,6 @@ void upsample_non_separable_Nd_kernel_impl(
     // name for internal BC.
     AT_DISPATCH_FLOATING_TYPES_AND2(
         kBFloat16, kHalf, iter.dtype(), "upsample_generic_Nd", [&] {
-        // MSVC can not catch constexpr int interp_size here
         constexpr int mode = F::interp_size;
         upsample_non_separable<scalar_t, out_ndims, mode>(iter);
     });

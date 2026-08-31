@@ -8,7 +8,7 @@
 
 namespace at::functorch {
 
-static DispatchKeySet get_all_dynlayer_keyset() {
+static constexpr DispatchKeySet get_all_dynlayer_keyset() {
   // NB: FULL_AFTER does not include the dispatch key
 
   // "all dispatch keys between DynamicLayer{Front, Back}Mode, inclusive"
@@ -29,9 +29,7 @@ static DispatchKeySet get_all_dynlayer_keyset() {
   return result;
 }
 
-// TODO: This should be constexpr, but there are some methods
-// of DispatchKeySet that haven't been marked constexpr yet.
-static DispatchKeySet all_dynlayer_keyset = get_all_dynlayer_keyset();
+static constexpr DispatchKeySet all_dynlayer_keyset = get_all_dynlayer_keyset();
 
 static DispatchKeySet keysForEnteringDynamicLayer(TransformType key) {
   if (key == TransformType::Vmap) {
