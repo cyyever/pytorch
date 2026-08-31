@@ -441,18 +441,16 @@ constexpr C10_HOST_DEVICE Half::operator float() const {
         */
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
-inline C10_HOST_DEVICE Half::Half(const __half& value) {
-  x = *reinterpret_cast<const unsigned short*>(&value);
-}
+inline C10_HOST_DEVICE Half::Half(const __half& value)
+    : x(*reinterpret_cast<const unsigned short*>(&value)) {}
 inline C10_HOST_DEVICE Half::operator __half() const {
   return *reinterpret_cast<const __half*>(&x);
 }
 #endif
 
 #ifdef SYCL_LANGUAGE_VERSION
-inline C10_HOST_DEVICE Half::Half(const sycl::half& value) {
-  x = *reinterpret_cast<const unsigned short*>(&value);
-}
+inline C10_HOST_DEVICE Half::Half(const sycl::half& value)
+    : x(*reinterpret_cast<const unsigned short*>(&value)) {}
 inline C10_HOST_DEVICE Half::operator sycl::half() const {
   return *reinterpret_cast<const sycl::half*>(&x);
 }
