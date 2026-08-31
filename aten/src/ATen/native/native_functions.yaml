@@ -1635,8 +1635,6 @@
     CompositeExplicitAutograd: _convolution
   autogen: _convolution.out
 
-- func: _convolution.deprecated(Tensor input, Tensor weight, Tensor? bias, SymInt[] stride, SymInt[] padding, SymInt[] dilation, bool transposed, int[] output_padding, SymInt groups, bool benchmark, bool deterministic, bool cudnn_enabled) -> Tensor
-
 - func: _convolution_mode(Tensor input, Tensor weight, Tensor? bias, SymInt[] stride, str padding, SymInt[] dilation, SymInt groups) -> Tensor
   dispatch:
     CompositeImplicitAutograd: _convolution_mode_symint

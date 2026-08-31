@@ -1996,7 +1996,6 @@ def nyi(fake_mode: FakeTensorMode, func: OpOverload, *args: Any, **kwargs: Any) 
     [
         aten.convolution.default,
         aten._convolution.default,
-        aten._convolution.deprecated,
         aten.convolution_backward.default,
     ]
 )
@@ -2025,7 +2024,6 @@ def conv(
         in (
             aten.convolution.default,
             aten._convolution.default,
-            aten._convolution.deprecated,
         )
         and input_.dtype != weight.dtype
         and not input_.is_mkldnn
@@ -2115,7 +2113,6 @@ def conv(
         if func in (
             aten.convolution.default,
             aten._convolution.default,
-            aten._convolution.deprecated,
         ):
             return convert(out, mem_fmt)  # type: ignore[return]
         else:

@@ -241,7 +241,7 @@ class TestUtils(TestCase):
                 ),
                 (
                     torch.ops.aten._convolution,
-                    torch.ops.aten._convolution.deprecated,
+                    torch.ops.aten._convolution.default,
                     (
                         torch.Tensor(2, 2, 2),
                         torch.Tensor(2, 2, 2),
@@ -255,6 +255,7 @@ class TestUtils(TestCase):
                         False,
                         True,
                         False,
+                        True,
                     ),
                     {},
                 ),

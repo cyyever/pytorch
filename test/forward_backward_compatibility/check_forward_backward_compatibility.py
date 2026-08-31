@@ -73,6 +73,7 @@ ALLOW_LIST = [
     ("profiler::_record_function_enter", datetime.date(9999, 1, 1)),
     ("aten::cholesky", datetime.date(9999, 1, 1), None, True),
     ("aten::cholesky.out", datetime.date(9999, 1, 1), None, True),
+    ("aten::_convolution\\.deprecated", datetime.date(9999, 1, 1)),
     ("aten::_cholesky_helper", datetime.date(9999, 1, 1)),
     ("aten::_cslt_sparse_mm", datetime.date(9999, 1, 1)),
     ("aten::_lstsq_helper", datetime.date(9999, 1, 1)),

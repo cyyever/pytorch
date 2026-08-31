@@ -227,7 +227,6 @@ TORCH_LIBRARY_IMPL(_, AutocastMPS, m) {
 
 TORCH_LIBRARY_IMPL(aten, AutocastMPS, m) {
   // lower_precision_fp
-  KERNEL_MPS(_convolution, deprecated, lower_precision_fp)
   KERNEL_MPS(_convolution, lower_precision_fp)
   KERNEL_MPS(conv1d, lower_precision_fp)
   KERNEL_MPS(conv2d, lower_precision_fp)
@@ -350,7 +349,6 @@ TORCH_LIBRARY_IMPL(aten, AutocastCPU, m) {
   KERNEL_CPU(_addmm_activation, lower_precision_fp)
   KERNEL_CPU(addbmm, lower_precision_fp)
   KERNEL_CPU(linear, lower_precision_fp)
-  KERNEL_CPU(_convolution, deprecated, lower_precision_fp)
   KERNEL_CPU(matmul, lower_precision_fp)
   KERNEL_CPU(conv_tbc, lower_precision_fp)
   KERNEL_CPU(conv_transpose1d, lower_precision_fp)
