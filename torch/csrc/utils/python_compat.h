@@ -1,7 +1,9 @@
 #ifndef PYTHON_COMPAT
 #define PYTHON_COMPAT
 
-#include <torch/csrc/utils/pythoncapi_compat.h>
+// Included from cpython_defs.c, so this header must stay valid C:
+// python_headers.h pulls in <cmath> and <complex>.
+#include <Python.h>
 
 #ifdef __cplusplus
 extern "C" {

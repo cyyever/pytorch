@@ -1,5 +1,5 @@
 #pragma once
-#include <torch/csrc/utils/pythoncapi_compat.h>
+#include <torch/csrc/python_headers.h>
 namespace torch::autograd {
 
 void initSpecialFunctions(PyObject* module);
