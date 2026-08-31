@@ -53,7 +53,7 @@ struct alignas(1) Float8_e4m3fnuz {
 inline std::ostream& operator<<(
     std::ostream& out,
     Float8_e4m3fnuz value) {
-  out << (float)value;
+  out << static_cast<float>(value);
   return out;
 }
 
@@ -118,7 +118,7 @@ C10_HOST_DEVICE constexpr uint8_t fp8e4m3fnuz_from_fp32_value(float f) {
     uint8_t mant_odd = (f_bits >> 20) & 1;
 
     // update exponent, rounding bias part 1
-    f_bits += ((uint32_t)(8 - 127) << 23) + 0x7FFFF;
+    f_bits += (static_cast<uint32_t>(8 - 127) << 23) + 0x7FFFF;
 
     // rounding bias part 2
     f_bits += mant_odd;
