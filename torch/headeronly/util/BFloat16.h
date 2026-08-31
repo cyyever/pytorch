@@ -58,7 +58,7 @@ struct alignas(2) BFloat16 {
 };
 
 inline std::ostream& operator<<(std::ostream& out, const BFloat16& value) {
-  out << (float)value;
+  out << static_cast<float>(value);
   return out;
 }
 
@@ -370,11 +370,11 @@ inline C10_HOST_DEVICE BFloat16 operator/(int64_t a, BFloat16 b) {
 // Overloading < and > operators, because std::max and std::min use them.
 
 inline C10_HOST_DEVICE bool operator>(BFloat16& lhs, BFloat16& rhs) {
-  return float(lhs) > float(rhs);
+  return static_cast<float>(lhs) > static_cast<float>(rhs);
 }
 
 inline C10_HOST_DEVICE bool operator<(BFloat16& lhs, BFloat16& rhs) {
-  return float(lhs) < float(rhs);
+  return static_cast<float>(lhs) < static_cast<float>(rhs);
 }
 
 C10_CLANG_DIAGNOSTIC_POP()

@@ -40,7 +40,7 @@ struct alignas(1) Float8_e5m2 {
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Float8_e5m2& value) {
-  out << (float)value;
+  out << static_cast<float>(value);
   return out;
 }
 
@@ -129,7 +129,7 @@ C10_HOST_DEVICE constexpr uint8_t fp8e5m2_from_fp32_value(float f) {
       uint32_t mant_odd = (f_bits >> 21) & 1;
 
       // update exponent, rounding bias part 1
-      f_bits += ((uint32_t)(15 - 127) << 23) + 0xFFFFF;
+      f_bits += (static_cast<uint32_t>(15 - 127) << 23) + 0xFFFFF;
 
       // rounding bias part 2
       f_bits += mant_odd;

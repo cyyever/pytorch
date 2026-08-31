@@ -86,7 +86,7 @@ struct alignas(2) Half {
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Half& value) {
-  out << (float)value;
+  out << static_cast<float>(value);
   return out;
 }
 
@@ -117,7 +117,7 @@ C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
    * S - sign bit, E - bits of the biased exponent, M - bits of the mantissa, 0
    * - zero bits.
    */
-  const uint32_t w = (uint32_t)h << 16;
+  const uint32_t w = static_cast<uint32_t>(h) << 16;
   /*
    * Extract the sign of the input number into the high bit of the 32-bit word:
    *
@@ -172,7 +172,7 @@ C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
    */
   constexpr uint32_t exp_offset = UINT32_C(0xE0) << 23;
   // const float exp_scale = 0x1.0p-112f;
-  constexpr uint32_t scale_bits = (uint32_t)15 << 23;
+  constexpr uint32_t scale_bits = static_cast<uint32_t>(15) << 23;
   const float exp_scale = fp32_from_bits(scale_bits);
   const float normalized_value =
       fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
@@ -245,8 +245,8 @@ C10_HOST_DEVICE constexpr uint16_t fp16_ieee_from_fp32_value(float f) {
 #endif
   // const float scale_to_inf = 0x1.0p+112f;
   // const float scale_to_zero = 0x1.0p-110f;
-  constexpr uint32_t scale_to_inf_bits = (uint32_t)239 << 23;
-  constexpr uint32_t scale_to_zero_bits = (uint32_t)17 << 23;
+  constexpr uint32_t scale_to_inf_bits = static_cast<uint32_t>(239) << 23;
+  constexpr uint32_t scale_to_zero_bits = static_cast<uint32_t>(17) << 23;
   const float scale_to_inf = fp32_from_bits(scale_to_inf_bits);
   const float scale_to_zero = fp32_from_bits(scale_to_zero_bits);
 
@@ -291,7 +291,7 @@ inline uint32_t fp16_ieee_to_fp32_bits(uint16_t h) {
    * S - sign bit, E - bits of the biased exponent, M - bits of the mantissa, 0
    * - zero bits.
    */
-  const uint32_t w = (uint32_t)h << 16;
+  const uint32_t w = static_cast<uint32_t>(h) << 16;
   /*
    * Extract the sign of the input number into the high bit of the 32-bit word:
    *
@@ -329,7 +329,7 @@ inline uint32_t fp16_ieee_to_fp32_bits(uint16_t h) {
    * had exponent of 15 (i.e. was NaN or infinity) 0x00000000 otherwise
    */
   const int32_t inf_nan_mask =
-      ((int32_t)(nonsign + 0x04000000) >> 8) & INT32_C(0x7F800000);
+      (static_cast<int32_t>(nonsign + 0x04000000) >> 8) & INT32_C(0x7F800000);
   /*
    * Iff nonsign is 0, it overflows into 0xFFFFFFFF, turning bit 31
    * into 1. Otherwise, bit 31 remains 0. The signed shift right by 31
@@ -337,7 +337,7 @@ inline uint32_t fp16_ieee_to_fp32_bits(uint16_t h) {
    * 0xFFFFFFFF if the half-precision number was zero (+0.0h or -0.0h)
    * 0x00000000 otherwise
    */
-  const int32_t zero_mask = (int32_t)(nonsign - 1) >> 31;
+  const int32_t zero_mask = static_cast<int32_t>(nonsign - 1) >> 31;
   /*
    * 1. Shift nonsign left by renorm_shift to normalize it (if the input
    * was denormal)
