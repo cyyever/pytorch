@@ -137,9 +137,8 @@ constexpr C10_HOST_DEVICE BFloat16::operator float() const {
 }
 
 #if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
-inline C10_HOST_DEVICE BFloat16::BFloat16(const __nv_bfloat16& value) {
-  x = *reinterpret_cast<const unsigned short*>(&value);
-}
+inline C10_HOST_DEVICE BFloat16::BFloat16(const __nv_bfloat16& value)
+    : x(*reinterpret_cast<const unsigned short*>(&value)) {}
 inline C10_HOST_DEVICE BFloat16::operator __nv_bfloat16() const {
   return *reinterpret_cast<const __nv_bfloat16*>(&x);
 }
@@ -147,9 +146,8 @@ inline C10_HOST_DEVICE BFloat16::operator __nv_bfloat16() const {
 
 #if defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
 inline C10_HOST_DEVICE BFloat16::BFloat16(
-    const sycl::ext::oneapi::bfloat16& value) {
-  x = *reinterpret_cast<const unsigned short*>(&value);
-}
+    const sycl::ext::oneapi::bfloat16& value)
+    : x(*reinterpret_cast<const unsigned short*>(&value)) {}
 inline C10_HOST_DEVICE BFloat16::operator sycl::ext::oneapi::bfloat16() const {
   return *reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(&x);
 }
