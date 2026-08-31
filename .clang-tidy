@@ -39,8 +39,8 @@ HeaderFilterRegex: .*/(aten|c10|torch|torchgen)/.*
 # Headers vendored from other projects, which carry their own upstream and are
 # not ours to fix: SmallVector from LLVM, flat_hash_map and
 # order_preserving_flat_hash_map from skarupke, strong_type from rollbear,
-# dlpack from dmlc, pythoncapi_compat from python/pythoncapi-compat.
-ExcludeHeaderFilterRegex: .*/(third_party|build)/.*|.*/c10/util/(SmallVector|flat_hash_map|order_preserving_flat_hash_map|hash|strong_type)\.h|.*/aten/src/ATen/dlpack\.h|.*/torch/csrc/utils/pythoncapi_compat\.h
+# dlpack from dmlc.
+ExcludeHeaderFilterRegex: .*/(third_party|build)/.*|.*/c10/util/(SmallVector|flat_hash_map|order_preserving_flat_hash_map|hash|strong_type)\.h|.*/aten/src/ATen/dlpack\.h
 WarningsAsErrors: '*'
 CheckOptions:
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true

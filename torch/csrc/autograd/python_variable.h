@@ -2,7 +2,6 @@
 
 #include <ATen/core/Tensor.h>
 #include <torch/csrc/python_headers.h>
-#include <torch/csrc/utils/pythoncapi_compat.h>
 
 #include <ATen/core/function_schema.h>
 #include <pybind11/pybind11.h>

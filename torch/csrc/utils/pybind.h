@@ -2,7 +2,6 @@
 
 #include <torch/csrc/Layout.h>
 #include <torch/csrc/python_headers.h>
-#include <torch/csrc/utils/pythoncapi_compat.h>
 
 #include <ATen/core/Tensor.h>
 #include <ATen/core/jit_type_base.h>
