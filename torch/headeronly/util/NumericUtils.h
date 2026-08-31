@@ -47,11 +47,7 @@ inline C10_HOST_DEVICE bool _isnan(T val) {
 }
 
 template <typename T, std::enable_if_t<std::is_same_v<T, BFloat16>, int> = 0>
-inline C10_HOST_DEVICE bool _isnan(BFloat16 val) {
-  return _isnan(static_cast<float>(val));
-}
-
-inline C10_HOST_DEVICE bool _isnan(BFloat16 val) {
+inline C10_HOST_DEVICE bool _isnan(T val) {
   return _isnan(static_cast<float>(val));
 }
 
