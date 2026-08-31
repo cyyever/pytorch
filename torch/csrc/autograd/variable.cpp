@@ -445,8 +445,8 @@ DifferentiableViewMeta* get_view_autograd_meta(const at::TensorBase& self) {
 
 using at::Tensor;
 
-VariableHooks variableHooks;
-at::impl::VariableHooksRegisterer registerVariableHooks(&variableHooks);
+static VariableHooks variableHooks;
+static at::impl::VariableHooksRegisterer registerVariableHooks(&variableHooks);
 
 // See [Note: multi-output view replay]. Functionalization rebuilds one output
 // of a multi-output view as a plain select or slice, which autograd would
