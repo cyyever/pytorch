@@ -1,7 +1,7 @@
 #pragma once
 
 #include <torch/csrc/utils/python_numbers.h>
-#include <torch/csrc/utils/pythoncapi_compat.h>
+#include <torch/csrc/python_headers.h>
 #include <torch/headeronly/util/BFloat16.h>
 #include <cstdint>
 

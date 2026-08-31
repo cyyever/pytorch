@@ -59,7 +59,6 @@ exclude_patterns = [
     'aten/src/ATen/native/mps/kernels/Quantized.metal',
     'c10/util/strong_type.h',
     'torch/csrc/inductor/aoti_torch/generated/**',
-    'torch/csrc/utils/pythoncapi_compat.h',
     'aten/src/ATen/dlpack.h',
 ]
 init_command = [
@@ -137,7 +136,6 @@ exclude_patterns = [
     'torch/csrc/dynamo/eval_frame.h',
     'torch/csrc/inductor/aoti_torch/c/shim.h',
     'torch/csrc/jit/**/*',
-    'torch/csrc/utils/pythoncapi_compat.h',
     'torch/csrc/inductor/aoti_runtime/sycl_runtime_wrappers.h',
     # TODO: Temporary suppression to be removed soon
     # See https://github.com/pytorch/pytorch/issue/178341
@@ -441,9 +439,6 @@ include_patterns = [
     'aten/**',
     'torch/csrc/**',
     'torch/nativert/**',
-]
-exclude_patterns = [
-    'torch/csrc/utils/pythoncapi_compat.h',
 ]
 command = [
     'python3',

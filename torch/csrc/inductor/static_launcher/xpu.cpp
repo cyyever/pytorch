@@ -12,7 +12,7 @@
 #include <fstream>
 #include <optional>
 
-#include <torch/csrc/utils/pythoncapi_compat.h>
+#include <torch/csrc/python_headers.h>
 
 #include <ATen/Context.h>
 #include <ATen/xpu/level_zero_stub/ATenLevelZero.h>
