@@ -496,17 +496,7 @@ struct ClassDef : public TreeView {
          Maybe<List<Property>>::create(range),
          Maybe<List<Assign>>::create(range)}));
   }
-  static ClassDef create(
-      const SourceRange& range,
-      const Ident& name,
-      const Maybe<Expr>& superclass,
-      const List<Stmt>& body,
-      const List<Property>& properties,
-      const List<Assign>& assigns);
 };
-
-TORCH_API std::vector<std::string> getUnresolvedClassAttributes(
-    const ClassDef& def);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Statements
@@ -868,28 +858,6 @@ struct BinOp : public Expr {
   }
 };
 
-struct UnaryOp : public Expr {
-  explicit UnaryOp(const TreeRef& tree) : Expr(tree) {
-    switch (tree->kind()) {
-      case TK_UNARY_MINUS:
-      case '~':
-      case TK_NOT:
-        if (tree->trees().size() != 1)
-          throw(
-              ErrorReport(tree)
-              << "UnaryOp expected 1 subtree, found " << tree->trees().size());
-        return;
-      default:
-        throw(
-            ErrorReport(tree)
-            << kindToString(tree->kind()) << " is not a valid UnaryOp");
-    }
-  }
-  static UnaryOp create(const SourceRange& range, int kind, const Expr& expr) {
-    return UnaryOp(Compound::create(kind, range, {expr}));
-  }
-};
-
 struct Const : public Expr {
   explicit Const(const TreeRef& tree) : Expr(tree) {
     tree_->matchNumSubtrees(TK_CONST, 1);
@@ -1113,29 +1081,6 @@ struct With : public Stmt {
       const List<WithItem>& targets,
       const List<Stmt>& body) {
     return With(Compound::create(TK_WITH, range, {targets, body}));
-  }
-};
-
-struct TernaryIf : public Expr {
-  explicit TernaryIf(const TreeRef& tree) : Expr(tree) {
-    tree_->matchNumSubtrees(TK_IF_EXPR, 3);
-  }
-  Expr cond() const {
-    return Expr(subtree(0));
-  }
-  Expr true_expr() const {
-    return Expr(subtree(1));
-  }
-  Expr false_expr() const {
-    return Expr(subtree(2));
-  }
-  static TernaryIf create(
-      const SourceRange& range,
-      const Expr& cond,
-      const Expr& true_expr,
-      const Expr& false_expr) {
-    return TernaryIf(
-        Compound::create(TK_IF_EXPR, range, {cond, true_expr, false_expr}));
   }
 };
 

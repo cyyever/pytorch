@@ -541,36 +541,15 @@ struct OwnedSourceRange : public SourceRange {
   }
 };
 
-struct TORCH_API SourceRangeHasher {
- public:
-  size_t operator()(const torch::jit::SourceRange& key) const;
-};
-
 struct StackEntry {
   std::string filename;
   SourceRange range;
 };
 
-TORCH_API void format_stack_trace(
-    std::ostream& out,
-    const std::vector<StackEntry>& entries);
-
 inline std::ostream& operator<<(std::ostream& out, const SourceRange& range) {
   range.highlight(out);
   return out;
 }
-
-// A pair of (byte offset, SourceRange) describing a specific segment
-// of the output stream
-struct TaggedRange {
-  TaggedRange(size_t bytes, SourceRange range)
-      : bytes(bytes), range(std::move(range)) {}
-  size_t bytes;
-  SourceRange range;
-};
-using SourceRangeRecords = std::vector<TaggedRange>;
-using SourceRangeTagMap =
-    std::unordered_map<SourceRange, int64_t, SourceRangeHasher>;
 
 } // namespace torch::jit
 

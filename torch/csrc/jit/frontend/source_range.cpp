@@ -183,25 +183,8 @@ StringCordView::IteratorImpl& StringCordView::IteratorImpl::operator+=(
   return *this;
 }
 
-size_t SourceRangeHasher::operator()(const torch::jit::SourceRange& key) const {
-  return (
-      std::hash<const void*>()(key.source().get()) ^
-      std::hash<size_t>()(key.start()) ^ std::hash<size_t>()(key.end()));
-}
-
 void SourceRange::highlight(std::ostream& out) const {
   print_with_context(out, CONTEXT, true, "");
-}
-
-void format_stack_trace(
-    std::ostream& out,
-    const std::vector<StackEntry>& entries) {
-  out << "Traceback of TorchScript";
-  out << " (most recent call last):\n";
-  for (const StackEntry& entry : entries) {
-    entry.range.print_with_context(
-        out, SourceRange::CONTEXT, true, entry.filename);
-  }
 }
 
 void SourceRange::print_with_context(

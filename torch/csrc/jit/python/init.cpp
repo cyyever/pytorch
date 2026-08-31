@@ -14,7 +14,6 @@
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
 #include <torch/csrc/jit/python/utf8_decoding_ignore.h>
-#include <torch/csrc/jit/runtime/graph_executor.h>
 #include <torch/csrc/jit/runtime/jit_exception.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/jit/serialization/storage_context.h>
@@ -101,64 +100,6 @@ void initJITBindings(PyObject* module) {
       // Tracing is always off; kept as a None shim because Python code
       // (e.g. torch.distributions) calls torch._C._get_tracing_state().
       .def("_get_tracing_state", []() { return py::none(); })
-      .def(
-          "_jit_set_profiling_mode",
-          [](bool profiling_flag) {
-            bool oldState = getProfilingMode();
-            getProfilingMode() = profiling_flag;
-            return oldState;
-          })
-      .def(
-          "_jit_set_profiling_executor",
-          [](bool profiling_flag) {
-            bool oldState = getExecutorMode();
-            getExecutorMode() = profiling_flag;
-            return oldState;
-          })
-      .def(
-          "_jit_set_num_profiled_runs",
-          [](size_t num) {
-            size_t old_num = getNumProfiledRuns();
-            getNumProfiledRuns() = num;
-            return old_num;
-          })
-      .def("_jit_get_num_profiled_runs", [] {
-        // pybind can't automatically bind to atomic size_t
-        return static_cast<size_t>(getNumProfiledRuns());
-      })
-      .def(
-          "_jit_set_fusion_strategy",
-          [](const std::vector<std::pair<std::string, size_t>>& strategy) {
-            FusionStrategy vec_conv;
-            for (const auto& pair : strategy) {
-              if (pair.first == "STATIC") {
-                vec_conv.emplace_back(FusionBehavior::STATIC, pair.second);
-              } else if (pair.first == "DYNAMIC") {
-                vec_conv.emplace_back(FusionBehavior::DYNAMIC, pair.second);
-              } else {
-                throw py::value_error(
-                    "FusionBehavior only supported 'STATIC' or 'DYNAMIC', got: " +
-                    pair.first);
-              }
-            }
-            auto old_strategy = getFusionStrategy();
-            auto strat = fmap(
-                std::move(old_strategy),
-                [](std::pair<FusionBehavior, size_t> behav) {
-                  return std::pair<std::string, size_t>(
-                      behav.first == FusionBehavior::STATIC ? "STATIC"
-                                                            : "DYNAMIC",
-                      behav.second);
-                });
-            setFusionStrategy(vec_conv);
-            return strat;
-          })
-      .def(
-          "_jit_set_inline_everything_mode",
-          [](bool enabled) { getInlineEverythingMode() = enabled; })
-      .def("_jit_get_inline_everything_mode", []() {
-        return getInlineEverythingMode();
-      })
       .def(
           "_storage_id",
           [](const at::Tensor& ten) -> int64_t {

@@ -16,7 +16,6 @@
 #include <torch/csrc/jit/api/method.h>
 #include <torch/csrc/jit/frontend/schema_matching.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
-#include <torch/csrc/jit/resource_guard.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_arg_parser.h>
@@ -305,31 +304,6 @@ struct VISIBILITY_HIDDEN PythonAwaitWrapper
 // not use AT_ERROR macros, since these macros add stack trace information
 // that is confusing to display to the end user since it always reports
 // locations in libtorch code rather than user code.
-
-struct TypedIValue : public std::pair<IValue, TypePtr> {
-  using pair::pair;
-
-  IValue& ivalue() {
-    return this->first;
-  }
-  TypePtr& type() {
-    return this->second;
-  }
-};
-
-inline TypedIValue toDictKeyIValue(py::handle key) {
-  if (py::isinstance<py::str>(key)) {
-    return TypedIValue(
-        ConstantString::create(py::cast<std::string>(key)), StringType::get());
-  } else if (py::isinstance<py::int_>(key)) {
-    return TypedIValue(py::cast<int64_t>(key), IntType::get());
-  } else if (py::isinstance<py::float_>(key)) {
-    return TypedIValue(py::cast<double>(key), FloatType::get());
-  } else {
-    TORCH_CHECK(
-        false, "Dictionary inputs may only have string, int, or float keys");
-  }
-}
 
 inline std::optional<TypePtr> unifyOrInitializeType(
     const TypePtr& accum,

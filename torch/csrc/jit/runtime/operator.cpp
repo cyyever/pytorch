@@ -12,6 +12,10 @@
 
 namespace torch::jit {
 
+// Declared here rather than in the header: nothing outside this file uses them.
+static std::string canonicalSchemaString(const FunctionSchema& schema);
+static bool aliasAnalysisHasSpecialCaseFor(c10::Symbol sym);
+
 namespace {
 using OperatorMap =
     std::unordered_map<Symbol, std::vector<std::shared_ptr<Operator>>>;
@@ -278,7 +282,7 @@ bool printerHasSpecialCaseFor(Symbol sym) {
 
 } // anonymous namespace
 
-bool aliasAnalysisHasSpecialCaseFor(Symbol symbol) {
+static bool aliasAnalysisHasSpecialCaseFor(Symbol symbol) {
   using namespace at;
   // WARNING: by adding a case to this list, you are asserting that you have
   // added a case for the unschematized node in AliasDb::analyze
@@ -421,16 +425,6 @@ std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(Symbol name) {
   return sortedOps;
 }
 
-std::shared_ptr<Operator> findOperatorFor(const c10::OperatorName& full_name) {
-  for (const auto& op :
-       getRegistry().getOperators(Symbol::fromQualString(full_name.name))) {
-    if (op->schema().overload_name() == full_name.overload_name) {
-      return op;
-    }
-  }
-  return nullptr;
-}
-
 std::vector<Symbol> findSimilarOperators(Symbol input_op) {
   return getRegistry().findSimilarOperators(input_op);
 }
@@ -439,7 +433,7 @@ std::shared_ptr<Operator> getOperatorForLiteral(const char* signature) {
   return getRegistry().lookupByLiteral(signature);
 }
 
-std::string canonicalSchemaString(const FunctionSchema& schema) {
+static std::string canonicalSchemaString(const FunctionSchema& schema) {
   std::string out = schema.name();
   out.push_back('(');
 

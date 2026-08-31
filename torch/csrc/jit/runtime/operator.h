@@ -257,7 +257,6 @@ struct TORCH_API Operator {
   std::variant<C10Operator, JitOnlyOperator> op_;
 };
 
-TORCH_API std::string canonicalSchemaString(const FunctionSchema& schema);
 
 TORCH_API const std::vector<std::shared_ptr<Operator>> getAllOperators();
 TORCH_API const std::vector<std::shared_ptr<Operator>>& getAllOperatorsFor(
@@ -268,9 +267,6 @@ TORCH_API std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(
 
 // given an operator with an overload name, find the specific operator related
 // to it, may return nullptr if no operator exists.
-TORCH_API std::shared_ptr<Operator> findOperatorFor(
-    const c10::OperatorName& full_name);
-
 TORCH_API std::vector<Symbol> findSimilarOperators(Symbol input_op);
 
 TORCH_API void registerOperator(Operator&& op);
@@ -280,15 +276,7 @@ TORCH_API void deregisterOperator(const FunctionSchema& schema);
 TORCH_API std::shared_ptr<Operator> getOperatorForLiteral(
     const char* signature);
 
-// Ensure the thing that registers c10 ops is defined.
-// Otherwise, our registry will not have c10 ops. You can run into this
-// scenario if you're querying registered ops during static init.
-//
-// This fn is defined in register_c10_ops.cpp
-TORCH_API void ensure_c10_registerer_defined();
-
 // Used to assert that unschematized operators have an analysis method written
-TORCH_API bool aliasAnalysisHasSpecialCaseFor(c10::Symbol sym);
 
 // A factory function to generate an optional operator. It has two
 // instantiations depending on the template bool arg value. The arg can be a

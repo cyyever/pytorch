@@ -21,29 +21,6 @@
 
 namespace torch::jit {
 
-namespace utils {
-std::string getNodesModuleHierarchy(const Node& n) {
-  if (!n.callstack().has_value()) {
-    return std::string();
-  }
-  InlinedCallStackPtr callstack_ptr = n.callstack().value();
-  std::string module_hierarchy;
-  for (auto& entry : callstack_ptr->vec()) {
-    const auto& opt_module_info = std::get<kModuleInstanceInfo>(entry);
-    if (opt_module_info.has_value()) {
-      const auto& module_instance_info = opt_module_info.value();
-      if (!module_hierarchy.empty()) {
-        module_hierarchy.push_back('.');
-      }
-      module_hierarchy.append(utils::get_module_info(module_instance_info));
-    } else {
-      module_hierarchy += ".UNKNOWN_INSTANCE(UNKNOWN_TYPE)";
-    }
-  }
-  return module_hierarchy;
-}
-} // namespace utils
-
 namespace {
 
 // Constants relating to maintaining the topological index of nodes.
@@ -65,13 +42,6 @@ void printValueRef(std::ostream& out, const Value* n) {
 
 bool isNumber(std::string_view str) {
   return str.find_first_not_of("0123456789") == std::string::npos;
-}
-
-std::string normalizeAttrName(std::string_view field) {
-  if (isNumber(field)) {
-    return "_" + std::string{field};
-  }
-  return std::string{field};
 }
 
 void findAllNodes(
@@ -402,269 +372,8 @@ std::ostream& operator<<(std::ostream& out, const Graph& g) {
   return g.print(out, true);
 }
 
-static void checkSameDevice(const Node* node) {
-  bool has_device = false;
-  std::optional<at::Device> device = std::nullopt;
-  auto checkValue = [&](const Value* v) {
-    if (TensorTypePtr type = v->type()->cast<TensorType>()) {
-      if (type->device() && !has_device) {
-        has_device = true;
-        device = *type->device();
-      } else {
-        AT_ASSERT(device == type->device());
-      }
-    }
-  };
-  for (auto input : node->inputs()) {
-    checkValue(input);
-  }
-  for (auto output : node->outputs()) {
-    checkValue(output);
-  }
-}
-
-using node_set = std::set<const Node*>;
-#define ALL_OF(container) container.begin(), container.end()
-
-// These functions purposely operate on the internal members directly, to force
-// you to think about how the invariants change if you change the data
-// representation (even if the external API does not change.)
-
-// NB: This assert is written to assume you don't have any unattached
-// nodes.  Unattached nodes can occur while manipulations to the
-// graph are occurring.
-void Node::lint() const {
-  // Node invariants
-  // - if node should live in list, nodes_iter is consistent
-  // - Inputs are all marked as a use by the nodes they refer to
-  // - Owning graph is non-null and consistent
-  // - The "Select" invariant, when the node is MultiReturn
-  //
-  // The handle invariant:
-  //    If a node takes a handle as an input, it is always the
-  //    LAST input of the node.  There is at most one handle input.
-
-  {
-    size_t i = 0;
-    for (auto input : inputs_) {
-      // WARNING: O(n^2)
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-      AT_ASSERT(
-          std::find(ALL_OF(input->uses_), Use(const_cast<Node*>(this), i)) !=
-          input->uses_.end());
-      AT_ASSERT(graph_->all_nodes.count(this) == 1);
-      i++;
-    }
-  }
-
-  for (auto o : outputs()) {
-    for (auto use : o->uses()) {
-      // Use invariants
-      // - Use is consistent with inputs
-      // - Every user node is live (checked in Graph)
-      AT_ASSERT(use.user->inputs_[use.offset] == o);
-    }
-  }
-
-  // Node subclass invariants
-  switch (kind()) {
-    case prim::Constant:
-      AT_ASSERT(inputs_.empty());
-      break;
-    case prim::Return:
-      // Return uses is zero
-      AT_ASSERT(outputs().empty());
-      break;
-    case prim::Param:
-      // Param inputs is zero
-      AT_ASSERT(inputs_.empty());
-      break;
-    case prim::PythonOp: {
-      // Python operator cconv is correct
-      auto* value = static_cast<const PythonOp*>(this);
-      value->lint_python();
-      break;
-    }
-    case prim::Eval:
-      // TODO: add invariants
-      // TODO: It's not good for these ops to be top-level, it makes cases
-      // longer.
-      break;
-    case prim::FusionGroup:
-    case prim::CudaFusionGroup:
-    case prim::oneDNNFusionGroup:
-      checkSameDevice(this);
-      // TODO: Typecheck the parameters
-      g(attr::Subgraph)->lint();
-      break;
-  }
-}
-
-// TODO: When lint fails, give better indication about which
-// instruction triggered the failure.
-void Graph::lint() const {
-  // Graph invariants
-
-  // Uncomment the following to see the graph
-  // std::cout << *const_cast<Graph*>(this);
-
-  // nodes
-  // - nodes_ is a valid topological ordering for inputs
-  // - No repeated nodes
-  // - Params and return do NOT occur in nodes
-  // - next_unique_ is greater than all uniques in graph
-  // - uniques in all_nodes are unique
-  // - every use will occur later in the toposort
-
-  struct LintScope {
-    LintScope() = default;
-    LintScope(std::unique_ptr<LintScope> parent) : parent(std::move(parent)) {}
-    bool contains(const Value* v) {
-      return values.contains(v) || (parent && parent->contains(v));
-    }
-    bool contains(const Node* n) {
-      return nodes.contains(n) || (parent && parent->contains(n));
-    }
-    void insert(const Value* v) {
-      AT_ASSERT(!contains(v));
-      values.insert(v);
-    }
-    void insert(const Node* n) {
-      AT_ASSERT(!contains(n));
-      nodes.insert(n);
-    }
-    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-    std::unique_ptr<LintScope> parent;
-
-   private:
-    std::unordered_set<const Value*> values;
-    std::unordered_set<const Node*> nodes;
-  };
-  // Struct enables mutual recursion in linting methods.
-  // Putting it inside Graph::lint enables access to private Graph members
-  struct LintImpl {
-    LintImpl(const Graph& g)
-        : g(g),
-          scope(new LintScope()),
-          all_nodes_set(ALL_OF(g.all_nodes)) {} // NB: all_nodes is *unordered*
-    const Graph& g;
-    std::unique_ptr<LintScope> scope;
-    std::unordered_set<size_t> seen_uniques;
-    std::unordered_map<const Node*, int64_t> anticipated_uses;
-    node_set all_nodes_set;
-    node_set sum_set;
-
-    void check_value(const Value* v) {
-      scope->insert(v);
-      auto b2 = seen_uniques.insert(v->unique());
-      AT_ASSERT(b2.second); // insertion took place
-      AT_ASSERT(v->unique() < g.next_unique_);
-
-      for (auto use : v->uses()) {
-        AT_ASSERT(!scope->contains(use.user));
-        AT_ASSERT(g.all_nodes.count(use.user) == 1);
-        anticipated_uses[use.user]++; // int default constructs to 0
-      }
-    }
-    void check_node(const Node* n) {
-      for (auto input : n->inputs_) {
-        if (!scope->contains(input)) {
-          TORCH_INTERNAL_ASSERT(0, input->unique(), " not in scope");
-        }
-      }
-      AT_ASSERT(anticipated_uses[n] == static_cast<int64_t>(n->inputs_.size()));
-      anticipated_uses[n] = -1; // we saw the anticipated user!
-      scope->insert(n);
-      for (auto block : n->blocks()) {
-        scope = std::make_unique<LintScope>(std::move(scope));
-        check_block(block);
-        scope = std::move(scope->parent);
-      }
-      size_t i = 0;
-      for (auto o : n->outputs()) {
-        AT_ASSERT(o->node() == n);
-        AT_ASSERT(i++ == o->offset_);
-        check_value(o);
-      }
-      n->lint();
-    }
-    void check_block(const Block* b) {
-      // Check topological ordering
-      AT_ASSERT(b->param_node()->isBefore(*b->nodes().begin()));
-      auto curNode = *b->nodes().begin();
-      while (curNode != b->return_node()) {
-        AT_ASSERT(curNode->isBefore(curNode->next()));
-        curNode = curNode->next();
-      }
-
-      for (auto input : b->inputs()) {
-        check_value(input);
-        AT_ASSERT(input->node()->kind_ == prim::Param);
-      }
-
-      for (auto n : b->nodes()) {
-        AT_ASSERT(n->kind_ != prim::Param);
-        AT_ASSERT(n->kind_ != prim::Return);
-        check_node(n);
-      }
-
-      AT_ASSERT(b->output_->kind() == prim::Return);
-      check_node(b->output_);
-
-      // all_nodes
-      // - inputs_, output_ and nodes_ are all included in all_nodes
-      // - all_nodes does not contain dead nodes??? (likely to be temporarily
-      // suspended).  Weaker: all_nodes contains all inputs and returns
-      // - only one return node???
-
-      node_set nodes_set(ALL_OF(b->nodes()));
-      node_set inputs_set{b->input_};
-      node_set output_set{b->output_};
-      // TODO: Make a more type safe std::includes wrapper which disallows use
-      // on non-ordered containers
-      AT_ASSERT(std::includes(ALL_OF(all_nodes_set), ALL_OF(nodes_set)));
-      AT_ASSERT(std::includes(ALL_OF(all_nodes_set), ALL_OF(inputs_set)));
-      AT_ASSERT(std::includes(ALL_OF(all_nodes_set), ALL_OF(output_set)));
-
-      sum_set.insert(ALL_OF(nodes_set));
-      sum_set.insert(ALL_OF(inputs_set));
-      sum_set.insert(ALL_OF(output_set));
-    }
-    void check_graph() {
-      node_set all_nodes_set(
-          ALL_OF(g.all_nodes)); // NB: all_nodes is *unordered*
-
-      check_block(g.block_);
-      for (auto kv : anticipated_uses) {
-        AT_ASSERT(kv.second == -1);
-      }
-      AT_ASSERT(std::includes(ALL_OF(sum_set), ALL_OF(all_nodes_set)));
-    }
-  };
-  LintImpl(*this).check_graph();
-}
-
 void Graph::dump() const {
   std::cout << *this << '\n';
-}
-
-void Graph::push_scope(const std::string& scope_name) {
-  current_scope_ = current_scope_->push(Symbol::scope(scope_name));
-  Node* block_node = insertNode(create(prim::TracedModuleForward, 0));
-  block_node->s_(attr::scope, scope_name);
-  Block* b = block_node->addBlock();
-  setInsertPoint(b);
-}
-void Graph::pop_scope() {
-  current_scope_ = current_scope_->parent();
-  if (insertPoint()->owningBlock()->owningNode()->kind() ==
-      prim::TracedModuleForward) {
-    setInsertPoint(insertPoint()->owningBlock()->owningNode()->next());
-  }
-}
-
-void LintGraph(const std::shared_ptr<Graph>& graph) {
-  graph->lint();
 }
 
 Block::Block(Graph* graph_, Node* node_)
@@ -753,12 +462,6 @@ std::shared_ptr<Graph> Graph::copy() {
   return new_g;
 }
 
-std::unique_ptr<Graph> Graph::copyUnique() {
-  auto new_g = std::make_unique<Graph>();
-  new_g->cloneFrom(*this);
-  return new_g;
-}
-
 void Block::remapTypes(const std::function<TypePtr(TypePtr)>& type_map) {
   for (Value* input : inputs()) {
     input->setType(type_map(input->type()));
@@ -798,26 +501,6 @@ void Value::inferTypeFrom(
 bool Value::mustBeNone() const {
   return type()->cast<NoneType>() || node_->mustBeNone();
 }
-bool Value::mustNotBeNone() const {
-  return node_->kind() != prim::AutogradAdd && type() != NoneType::get() &&
-      !type()->cast<OptionalType>() &&
-      !(type()->cast<UnionType>() &&
-        type()->expect<UnionType>()->canHoldType(*NoneType::get()));
-}
-
-std::string Value::debugNameBase() const {
-  std::string name = debugName();
-  std::string name_base = name;
-  auto last_dot_pos = name.find_last_of('.');
-  if (last_dot_pos != std::string::npos && last_dot_pos + 1 != name.size()) {
-    if (name.find_first_not_of("0123456789", last_dot_pos + 1) ==
-        std::string::npos) {
-      name_base = name.substr(0, last_dot_pos);
-    }
-  }
-  return name_base;
-}
-
 bool Value::isValidName(const std::string& name) {
   // Empty strings are legal
   if (name.empty()) {
@@ -911,31 +594,6 @@ void Value::replaceAllUsesWith(Value* newValue) {
   while (!uses().empty()) {
     replaceFirstUseWith(newValue);
   }
-}
-
-void Value::replaceAllUsesAfterNodeWith(const Node* node, Value* newValue) {
-  std::for_each(uses_.begin(), uses_.end(), [&node, newValue](Use& u) {
-    if (u.user->isAfter(node)) {
-      u.user->inputs_[u.offset] = newValue;
-      newValue->uses_.push_back(u);
-    }
-  });
-
-  std::erase_if(uses_, [&node](const Use& u) { return u.user->isAfter(node); });
-}
-
-void Value::replaceAllUsesDominatedByNodeWith(
-    const Node* node,
-    Value* newValue) {
-  std::for_each(uses_.begin(), uses_.end(), [&node, newValue](Use& u) {
-    if (u.user->isDominatedBy(node)) {
-      u.user->inputs_[u.offset] = newValue;
-      newValue->uses_.push_back(u);
-    }
-  });
-
-  std::erase_if(
-      uses_, [&node](const Use& u) { return u.user->isDominatedBy(node); });
 }
 
 static size_t findArgument(
@@ -1680,25 +1338,9 @@ Node* Graph::create(
   return n;
 }
 
-Node* Graph::createAutogradZero() {
-  return create(prim::AutogradZero);
-}
-
 Node* Graph::createNone() {
   Node* n = create(prim::Constant);
   n->output()->setType(NoneType::get());
-  return n;
-}
-
-Node* Graph::createUninitialized(TypePtr typ) {
-  Node* n = create(prim::Uninitialized);
-  n->output()->setType(std::move(typ));
-  return n;
-}
-
-Node* Graph::createWithSubgraph(Symbol kind) {
-  auto n = create(kind, 0);
-  n->g_(attr::Subgraph, std::make_shared<Graph>(current_scope()));
   return n;
 }
 
@@ -1725,52 +1367,6 @@ Node* Graph::createTupleUnpack(Value* v) {
   return n;
 }
 
-Node* Graph::createTupleIndex(
-    Value* tup,
-    Value* idx,
-    const TypePtr& output_type) {
-  auto n = create(prim::TupleIndex, {tup, idx});
-  n->output()->setType(output_type);
-  return n;
-}
-
-Node* Graph::createTupleSlice(
-    Value* tup,
-    int64_t beg,
-    int64_t step_size,
-    int64_t num_values) {
-  std::vector<Value*> new_vals;
-  TupleTypePtr tt = tup->type()->expect<TupleType>();
-  new_vals.reserve(num_values);
-
-  int64_t i = beg;
-  for ([[maybe_unused]] const auto j : c10::irange(num_values)) {
-    auto idx = insertConstant(IValue(i));
-    auto tupleIndex = insertNode(createTupleIndex(tup, idx, tt->elements()[i]));
-
-    new_vals.push_back(tupleIndex->output());
-    i += step_size;
-  }
-
-  auto n = createTuple(new_vals);
-  return n;
-}
-
-Node* Graph::createEnumName(Value* e) {
-  e->type()->expect<EnumType>();
-  assert(e->type()->cast<EnumType>());
-  auto n = create(prim::EnumName, {e});
-  n->output()->setType(StringType::get());
-  return n;
-}
-
-Node* Graph::createEnumValue(Value* e) {
-  auto enum_type = e->type()->expect<EnumType>();
-  auto n = create(prim::EnumValue, {e});
-  n->output()->setType(enum_type->getValueType());
-  return n;
-}
-
 Node* Graph::createList(
     const TypePtr& contained_type,
     at::ArrayRef<Value*> values) {
@@ -1786,154 +1382,6 @@ Node* Graph::createList(
   }
   n->output()->setType(ListType::create(contained_type));
   return n;
-}
-
-Node* Graph::createListUnpack(Value* v, size_t size) {
-  ListTypePtr list_type = v->type()->expect<ListType>();
-  TypePtr elem_type = list_type->getElementType();
-  auto n = create(prim::ListUnpack, {v}, 0);
-  for ([[maybe_unused]] const auto i : c10::irange(size)) {
-    n->addOutput()->setType(elem_type);
-  }
-  return n;
-}
-
-Node* Graph::createDict(
-    const TypePtr& key_type,
-    const TypePtr& value_type,
-    at::ArrayRef<Value*> keys,
-    at::ArrayRef<Value*> values) {
-  AT_ASSERT(keys.size() == values.size());
-  auto n = create(prim::DictConstruct, 1);
-  for (const auto i : c10::irange(keys.size())) {
-    AT_ASSERT(keys[i]->type()->isSubtypeOf(*key_type));
-    AT_ASSERT(values[i]->type()->isSubtypeOf(*value_type));
-
-    n->addInput(keys[i]);
-    n->addInput(values[i]);
-  }
-  n->output()->setType(DictType::create(key_type, value_type));
-  return n;
-}
-
-Node* Graph::createNumToTensor(Value* value) {
-  Node* result = create(prim::NumToTensor, {value});
-  result->output()->setType(TensorType::fromNumberType(*value->type()));
-  return result;
-}
-
-Node* Graph::createObject(const ClassTypePtr& type) {
-  auto result = create(prim::CreateObject);
-  result->output()->setType(type);
-  return result;
-}
-
-Node* Graph::createSetAttr(
-    Value* obj,
-    const std::string& field,
-    Value* newValue) {
-  auto n = create(prim::SetAttr, {obj, newValue}, /*num_outputs=*/0);
-  n->s_(attr::name, field);
-  return n;
-}
-
-Node* Graph::createGetAttr(Value* obj, const std::string& field) {
-  const auto classType = obj->type()->expect<ClassType>();
-
-  auto n = create(prim::GetAttr, {obj}, /*num_outputs=*/1);
-  n->s_(attr::name, field);
-
-  const auto outputType = classType->getAttribute(field);
-  n->output()->setType(outputType);
-  n->output()->setDebugName(normalizeAttrName(field));
-  return n;
-}
-
-Node* Graph::createStore(const std::string& name, Value* v) {
-  auto n = create(prim::Store, {v}, /*num_outputs*/ 0);
-  n->s_(attr::name, name);
-  return n;
-}
-
-Node* Graph::createLoad(const std::string& name, const TypePtr& type) {
-  auto n = create(prim::Load, {}, /*num_outputs*/ 1);
-  n->s_(attr::name, name);
-  n->output()->setType(type);
-  return n;
-}
-
-Node* Graph::createIsInstance(Value* v, at::ArrayRef<TypePtr> types) {
-  auto n = create(prim::isinstance, {v}, /*num_outputs*/ 1);
-  n->tys_(attr::types, types.vec());
-  n->output()->setType(BoolType::get());
-  return n;
-}
-Value* Graph::insertUncheckedCast(Value* v, TypePtr type) {
-  Node* n = insertNode(create(prim::unchecked_cast, {v}));
-  n->output()->setType(std::move(type));
-  return n->output();
-}
-
-Value* Graph::insertToList(Value* v, TypePtr type) {
-  int dim = 0;
-  TypePtr ptr = type;
-
-  // Unwrap the type to determine the number of dimensions.
-  while (auto list_type = ptr->cast<ListType>()) {
-    ptr = list_type->getElementType();
-    ++dim;
-  }
-
-  // Encode the base element type as an integer.
-  int elem_ty = 0;
-  if (ptr == IntType::get()) {
-    elem_ty = 0;
-  } else if (ptr == FloatType::get()) {
-    elem_ty = 1;
-  } else if (ptr == BoolType::get()) {
-    elem_ty = 2;
-  } else if (ptr == ComplexType::get()) {
-    elem_ty = 3;
-  } else {
-    TORCH_CHECK(
-        false,
-        ptr->repr_str(),
-        " is not one of the supported element types for tolist: int, float, complex, bool");
-  }
-
-  // Pass in the number of dimensions and base element type as arguments
-  // to the op.
-  Value* dim_val = insertConstant(IValue(dim));
-  Value* elem_ty_val = insertConstant(IValue(elem_ty));
-  Node* n = insertNode(create(prim::tolist, {v, dim_val, elem_ty_val}));
-  n->output()->setType(std::move(type));
-  return n->output();
-}
-
-Value* Graph::insertFunctionCall(
-    Function* callee,
-    const MatchedSchema& matched) {
-  std::string func_name = callee->name();
-  Value* fn_constant = insertNode(create(prim::Constant))
-                           ->s_(attr::name, func_name)
-                           ->output()
-                           ->setType(FunctionType::create(callee));
-  std::vector<Value*> inputs = {fn_constant};
-  inputs.insert(inputs.end(), matched.inputs.begin(), matched.inputs.end());
-  Value* result = insertNode(create(prim::CallFunction, inputs))
-                      ->output()
-                      ->setType(matched.return_types.at(0));
-  return result;
-}
-
-Value* Graph::insertMethodCall(
-    std::string method_name,
-    const MatchedSchema& matched) {
-  Value* result = insertNode(create(prim::CallMethod, matched.inputs))
-                      ->s_(attr::name, std::move(method_name))
-                      ->output()
-                      ->setType(matched.return_types.at(0));
-  return result;
 }
 
 Node* Graph::createClone(
@@ -2010,24 +1458,6 @@ at::ArrayRef<Value*> createTupleUnpack(Value* v) {
   }
   auto& g = *v->owningGraph();
   return g.insertNode(g.createTupleUnpack(v))->outputs();
-}
-
-std::vector<Value*> unpackOutputs(const std::vector<Value*>& outputs) {
-  std::vector<Value*> new_outputs;
-  if (outputs.size() != 1 || outputs.at(0)->type()->kind() != TupleType::Kind) {
-    return outputs;
-  }
-
-  auto tup = outputs[0];
-  for (Value* v : createTupleUnpack(tup)) {
-    new_outputs.emplace_back(v);
-  }
-  // if this was a peephole tuple unpack we can just get rid of
-  // the tuple construct here and prevent needing DCE
-  if (tup->node()->kind() == prim::TupleConstruct && !tup->node()->hasUses()) {
-    tup->node()->destroy();
-  }
-  return new_outputs;
 }
 
 std::vector<Node*> findAllNodes(

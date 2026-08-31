@@ -21,29 +21,6 @@ struct MatchedSchema {
 
 TORCH_API bool isBlockListedSchema(const FunctionSchema& schema);
 
-TORCH_API MatchedSchema matchSchema(
-    const ::c10::FunctionSchema& schema,
-    const SourceRange& loc,
-    Graph& graph,
-    at::ArrayRef<NamedValue> args,
-    at::ArrayRef<NamedValue> kwargs,
-    const std::optional<NamedValue>& self = std::nullopt);
-
-TORCH_API std::pair<size_t, MatchedSchema> matchSchemas(
-    const std::vector<const ::c10::FunctionSchema*>& schemas,
-    const SourceRange& loc,
-    Graph& graph,
-    at::ArrayRef<NamedValue> args,
-    at::ArrayRef<NamedValue> kwargs,
-    const std::optional<NamedValue>& self = std::nullopt,
-    bool render_errors = false);
-
-TORCH_API bool convertibleToList(
-    const TypePtr& type,
-    const TypePtr& list_type_);
-
-TORCH_API std::string getFullSchemaName(const ::c10::FunctionSchema& schema);
-
 TORCH_API Value* emitBuiltinCall(
     const SourceRange& loc,
     Graph& graph,
@@ -52,17 +29,6 @@ TORCH_API Value* emitBuiltinCall(
     at::ArrayRef<NamedValue> kwargs,
     const std::optional<NamedValue>& self = std::nullopt);
 
-TORCH_API std::optional<size_t> findInputWithName(
-    const std::string& name,
-    at::ArrayRef<NamedValue> kwargs,
-    bool is_aten = false);
-
 // applies implicit conversion from value trying to turn it into type
 // concrete_type it succeeds if the return_value->isSubtypeOf(concrete_type)
-TORCH_API Value* tryConvertToType(
-    const SourceRange& loc,
-    Graph& graph,
-    const TypePtr& concrete_type,
-    Value* value,
-    bool allow_conversions);
 } // namespace torch::jit

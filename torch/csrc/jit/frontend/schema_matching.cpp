@@ -11,6 +11,21 @@
 
 namespace torch::jit {
 
+// Declared here rather than in the header: nothing outside this file uses them.
+static std::pair<size_t, MatchedSchema> matchSchemas(
+    const std::vector<const ::c10::FunctionSchema*>& schemas,
+    const SourceRange& loc,
+    Graph& graph,
+    at::ArrayRef<NamedValue> args,
+    at::ArrayRef<NamedValue> kwargs,
+    const std::optional<NamedValue>& self = std::nullopt,
+    bool render_errors = false);
+static std::optional<size_t> findInputWithName(
+    const std::string& name,
+    at::ArrayRef<NamedValue> kwargs,
+    bool is_aten = false);
+static std::string getFullSchemaName(const ::c10::FunctionSchema& schema);
+
 static TypePtr unwrapOptional(TypePtr opt_type) {
   if (auto dyn = opt_type->castRaw<c10::DynamicType>()) {
     return unwrapOptional(dyn->fallback());
@@ -33,7 +48,7 @@ static bool isIntOrFloatUsedAsList(const Value* value, const Argument& arg) {
 
 /// Returns true if `type` is a Tuple in which all the elements have the
 /// same type or if it's a subtype of `list_type_`.
-bool convertibleToList(const TypePtr& type, const TypePtr& list_type_) {
+static bool convertibleToList(const TypePtr& type, const TypePtr& list_type_) {
   auto list_type = list_type_->castRaw<ListType>();
   if (!list_type) {
     return false;
@@ -55,7 +70,7 @@ bool convertibleToList(const TypePtr& type, const TypePtr& list_type_) {
 
 // Applies implicit conversion from value trying to turn it into type
 // concrete_type. It succeeds if `return_value->isSubtypeOf(concrete_type)`
-Value* tryConvertToType(
+static Value* tryConvertToType(
     const SourceRange& loc,
     Graph& graph,
     const TypePtr& concrete_type,
@@ -238,7 +253,7 @@ static Value* tryMatchArgument(
   return value;
 }
 
-std::optional<size_t> findInputWithName(
+static std::optional<size_t> findInputWithName(
     const std::string& name,
     at::ArrayRef<NamedValue> kwargs,
     bool is_aten) {
@@ -525,7 +540,7 @@ static std::optional<MatchedSchema> tryMatchSchema(
       schema_name};
 }
 
-MatchedSchema matchSchema(
+static MatchedSchema matchSchema(
     const ::c10::FunctionSchema& schema,
     const SourceRange& loc,
     Graph& graph,
@@ -561,7 +576,7 @@ static std::string prefixLine(
   return std::move(ss).str();
 }
 
-std::pair<size_t, MatchedSchema> matchSchemas(
+static std::pair<size_t, MatchedSchema> matchSchemas(
     const std::vector<const FunctionSchema*>& schemas,
     const SourceRange& loc,
     Graph& graph,
@@ -651,7 +666,7 @@ static Value* emitBuiltinNode(
   return packOutputs(graph, n->outputs(), matched_schema.return_field_names);
 }
 
-std::string getFullSchemaName(const ::c10::FunctionSchema& schema) {
+static std::string getFullSchemaName(const ::c10::FunctionSchema& schema) {
   if (!schema.overload_name().empty()) {
     return schema.operator_name().name + "." + schema.overload_name();
   }

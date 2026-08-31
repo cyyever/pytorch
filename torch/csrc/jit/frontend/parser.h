@@ -10,10 +10,6 @@ struct Decl;
 struct ParserImpl;
 struct Lexer;
 
-TORCH_API Decl mergeTypesFromTypeComment(
-    const Decl& decl,
-    const Decl& type_annotation_decl,
-    bool is_method);
 
 struct TORCH_API Parser {
   explicit Parser(const std::shared_ptr<Source>& src);

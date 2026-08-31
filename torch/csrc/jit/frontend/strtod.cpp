@@ -31,8 +31,4 @@ double strtod_c(const char* nptr, char** endptr) {
   return strtod_l(nptr, endptr, loc);
 }
 
-float strtof_c(const char* nptr, char** endptr) {
-  return (float)strtod_c(nptr, endptr);
-}
-
 } // namespace torch::jit
