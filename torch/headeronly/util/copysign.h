@@ -4,6 +4,8 @@
 #include <torch/headeronly/util/BFloat16.h>
 #include <torch/headeronly/util/Half.h>
 
+#include <cmath>
+
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 
 // Note: Explicit implementation of copysign for Half and BFloat16
