@@ -755,13 +755,6 @@ _scaled_dot_product_cudnn_attention_batch_rule(
     &ATEN_FN(fn),\
     c10::guts::function_traits<decltype(ATEN_FN(fn))>::parameter_types>::apply_##num_out)
 
-#define LINALG_CHECK_MATRIX_UNARY_BATCH_RULE2(fn, overload, num_out) SINGLE_ARG(\
-  LinalgCheckMatrixUnaryRuleHelper<\
-    func_string_##fn_##overload,\
-    decltype(&ATEN_FN2(fn, overload)),\
-    &ATEN_FN2(fn, overload),\
-    c10::guts::function_traits<decltype(ATEN_FN2(fn, overload))>::parameter_types>::apply_##num_out)
-
 #define LINALG_CHECK_MATRIX_BINARY_BATCH_RULE(fn, num_out) SINGLE_ARG(\
   LinalgCheckMatrixBinaryRuleHelper<\
     func_string_##fn,\
@@ -770,29 +763,16 @@ _scaled_dot_product_cudnn_attention_batch_rule(
     c10::guts::function_traits<decltype(ATEN_FN(fn))>::parameter_types>::apply_##num_out)
 
 
-// Define string constants with the function names. These will be used as template parameters
-// C++ doesn't let us use string literals as template parameters, so we have to declare them as consts first
-// What is going on with these macros?
-// - clang-5 seems to require the constexpr
-// - windows compiles with or without the constexpr, but the constexpr causes test problems
-// - as a result we have some macro guards.
+// C++ does not let a string literal be a template argument, so the op names are
+// declared as constexpr arrays first and the arrays are what gets passed.
 #define LINALG_STRING_CONST(fn, op_name) \
   constexpr const char func_string_##fn[] = #op_name;\
-
-#define LINALG_STRING_CONST2(fn, overload, op_name) \
-  constexpr const char func_string_##fn_##overload[] = #op_name;\
 
 
 #define LINALG_CHECK_MATRIX_UNARY_ONE_OUT(fn, op_name) \
   LINALG_STRING_CONST(fn, op_name)\
   TORCH_LIBRARY_IMPL(aten, FuncTorchBatched, m) {\
     VMAP_SUPPORT(fn, LINALG_CHECK_MATRIX_UNARY_BATCH_RULE(fn, one));\
-  }
-
-#define LINALG_CHECK_MATRIX_UNARY_ONE_OUT2(fn, overload, op_name) \
-  LINALG_STRING_CONST2(fn, overload, op_name)\
-  TORCH_LIBRARY_IMPL(aten, FuncTorchBatched, m) {\
-    VMAP_SUPPORT2(fn, overload, LINALG_CHECK_MATRIX_UNARY_BATCH_RULE2(fn, overload, one));\
   }
 
 #define LINALG_CHECK_MATRIX_UNARY_TWO_OUT(fn, op_name) \

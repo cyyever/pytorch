@@ -184,9 +184,8 @@ void sinc_kernel_cuda(TensorIteratorBase& iter) {
             if (a == scalar_t(0)) {
               return scalar_t(1);
             } else {
-              // NVCC says constexpr var is not accessible from device
               using opmath_t = at::opmath_type<scalar_t>;
-              opmath_t product = c10::detail::pi<opmath_t>() * opmath_t{a};
+              opmath_t product = c10::pi<opmath_t> * opmath_t{a};
               return static_cast<scalar_t>(std::sin(product) / product);
             }
           });
