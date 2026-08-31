@@ -1,5 +1,6 @@
 #pragma once
 
+#include <c10/util/complex.h>
 #include <ATen/AccumulateType.h>
 #include <ATen/NumericUtils.h>
 #include <ATen/jiterator_macros.h>
@@ -1224,7 +1225,7 @@ inline c10::BFloat16 calc_erfinv(c10::BFloat16 a) { return calc_erfinv(float(a))
 
 template <typename T>
 inline T abs_impl(T v) {
-  return std::abs(v);
+  return c10::math::abs(v);
 }
 
 template <>
@@ -1255,7 +1256,7 @@ C10_HOST_DEVICE c10::complex<T> exp2_impl(c10::complex<T> x) {
   // There is no std::exp2 overload for complex, so instead
   // use the identity 2^x = e^(ln(2) * x)
   constexpr auto ln2 = c10::ln_2<T>;
-  return std::exp(ln2 * x);
+  return ::exp(ln2 * x);
 }
 
 /*

@@ -15,22 +15,22 @@ inline VALUE_TYPE zabs (SCALAR_TYPE z) {
 
 template<>
 inline c10::complex<float> zabs <c10::complex<float>> (c10::complex<float> z) {
-  return c10::complex<float>(std::abs(z));
+  return c10::complex<float>(::abs(z));
 }
 
 template<>
 inline float zabs <c10::complex<float>, float> (c10::complex<float> z) {
-  return std::abs(z);
+  return ::abs(z);
 }
 
 template<>
 inline c10::complex<double> zabs <c10::complex<double>> (c10::complex<double> z) {
-  return c10::complex<double>(std::abs(z));
+  return c10::complex<double>(::abs(z));
 }
 
 template<>
 inline double zabs <c10::complex<double>, double> (c10::complex<double> z) {
-  return std::abs(z);
+  return ::abs(z);
 }
 
 // This overload corresponds to non-complex dtypes.
@@ -49,22 +49,22 @@ inline VALUE_TYPE angle_impl (SCALAR_TYPE z) {
 
 template<>
 inline c10::complex<float> angle_impl <c10::complex<float>> (c10::complex<float> z) {
-  return c10::complex<float>(std::arg(z), 0.0);
+  return c10::complex<float>(::arg(z), 0.0);
 }
 
 template<>
 inline float angle_impl <c10::complex<float>, float> (c10::complex<float> z) {
-  return std::arg(z);
+  return ::arg(z);
 }
 
 template<>
 inline c10::complex<double> angle_impl <c10::complex<double>> (c10::complex<double> z) {
-  return c10::complex<double>(std::arg(z), 0.0);
+  return c10::complex<double>(::arg(z), 0.0);
 }
 
 template<>
 inline double angle_impl <c10::complex<double>, double> (c10::complex<double> z) {
-  return std::arg(z);
+  return ::arg(z);
 }
 
 template <typename SCALAR_TYPE, typename VALUE_TYPE=SCALAR_TYPE>

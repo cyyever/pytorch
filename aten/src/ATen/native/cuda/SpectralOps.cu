@@ -84,7 +84,7 @@ static __global__ void _fft_conjugate_copy_kernel(
   CUDA_KERNEL_LOOP_TYPE(index, numel, index_t) {
     auto in_offset = ic.get(index)[0];
     auto out_offset = oc.get(index)[0];
-    out_data[out_offset] = std::conj(in_data[in_offset]);
+    out_data[out_offset] = ::conj(in_data[in_offset]);
   }
 }
 

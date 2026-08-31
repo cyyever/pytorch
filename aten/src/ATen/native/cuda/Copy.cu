@@ -240,7 +240,7 @@ void direct_copy_kernel_cuda(TensorIteratorBase &iter) {
 
 void neg_conj_kernel_cuda(TensorIteratorBase &iter) {
   AT_DISPATCH_COMPLEX_TYPES(iter.common_dtype(), "neg_conj_cuda", [&] {
-    gpu_kernel(iter, [] GPU_LAMBDA(scalar_t x) { return -std::conj(x); });
+    gpu_kernel(iter, [] GPU_LAMBDA(scalar_t x) { return -::conj(x); });
   });
 }
 

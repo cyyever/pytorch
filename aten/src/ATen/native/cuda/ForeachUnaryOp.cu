@@ -206,7 +206,7 @@ static void floating_half_bfloat16_(TensorList tensors) {
   template <typename T>                    \
   struct functor_name {                    \
     __device__ T operator()(T t) const {   \
-      return std::op_name(t);              \
+      return ::op_name(t);                 \
     }                                      \
   };
 
@@ -271,7 +271,7 @@ template <typename T>
 struct Sigmoid {
   T one = T(1);
   __device__ T operator()(T t) const {
-    return (one / (one + std::exp(-t)));
+    return (one / (one + c10::math::exp(-t)));
   }
 };
 
@@ -315,7 +315,7 @@ template <>
 struct Rsqrt<c10::complex<float>> {
   C10_DEVICE c10::complex<float> operator()(c10::complex<float> t) const {
     const auto one = c10::complex<float>(1.0, 0);
-    return one / std::sqrt(t);
+    return one / ::sqrt(t);
   }
 };
 
@@ -323,7 +323,7 @@ template <>
 struct Rsqrt<c10::complex<double>> {
   C10_DEVICE c10::complex<double> operator()(c10::complex<double> t) const {
     const auto one = c10::complex<double>(1.0, 0);
-    return one / std::sqrt(t);
+    return one / ::sqrt(t);
   }
 };
 
@@ -372,7 +372,7 @@ void foreach_tensor_neg_cuda_(TensorList tensors) {
 template <typename T>
 struct Abs {
   __device__ T operator()(T t) const {
-    return std::abs(t);
+    return ::abs(t);
   }
 };
 
