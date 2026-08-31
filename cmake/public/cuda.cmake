@@ -281,14 +281,6 @@ endif()
 list(APPEND CUDA_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
 message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA}")
 
-# disable some nvcc diagnostic that appears in third-party headers
-foreach(diag cc_clobber_ignored
-             bad_friend_decl)
-  list(APPEND SUPPRESS_WARNING_FLAGS --diag_suppress=${diag})
-endforeach()
-string(REPLACE ";" "," SUPPRESS_WARNING_FLAGS "${SUPPRESS_WARNING_FLAGS}")
-list(APPEND CUDA_NVCC_FLAGS -Xcudafe ${SUPPRESS_WARNING_FLAGS})
-
 # Debug and Release symbol support
 if(CUDA_DEVICE_DEBUG)
   list(APPEND CUDA_NVCC_FLAGS "-g" "-G")  # -G enables device code debugging symbols

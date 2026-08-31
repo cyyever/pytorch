@@ -39,13 +39,6 @@
 
 #include <ATen/native/cuda/cutlass_common.cuh>
 
-
-
-// CUTLASS builds Gemm::Arguments by nested aggregate initialisation, and the
-// epilogue visitor tree leaves later members defaulted on purpose. Clang
-// reports each one under -Wmissing-field-initializers, which -Werror turns
-// into an error.
-C10_DIAGNOSTIC_PUSH_AND_IGNORED_IF_DEFINED("-Wmissing-field-initializers")
 namespace {
 
 using DtypeScale = float;
@@ -1155,5 +1148,3 @@ void f8f8bf16_rowwise(
 }
 
 } // namespace at::cuda::detail
-
-C10_DIAGNOSTIC_POP()
