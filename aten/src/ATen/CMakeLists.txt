@@ -718,8 +718,12 @@ if(USE_CUDA AND NOT USE_ROCM)
   add_definitions(-DCUTLASS_ENABLE_TENSOR_CORE_MMA=1)
   add_definitions(-DCUTLASS_ENABLE_SM90_EXTENDED_MMA_SHAPES=1)
   add_definitions(-DCUTE_SM90_EXTENDED_MMA_SHAPES_ENABLED)
-  list(APPEND ATen_CUDA_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/cutlass/include)
-  list(APPEND ATen_CUDA_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/cutlass/tools/util/include)
+  # CUTLASS is vendored and carries its own upstream, so it goes in as a system
+  # include: -Werror is ours to satisfy, not theirs. Without this the warning
+  # flags reaching CUDA sources fire inside cutlass headers -- unused static
+  # functions such as cutlassGetStatusString and cute's prefetch.
+  list(APPEND ATen_CUDA_SYSTEM_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/cutlass/include)
+  list(APPEND ATen_CUDA_SYSTEM_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/cutlass/tools/util/include)
 
   if($ENV{ATEN_STATIC_CUDA})
     if(CUDA_VERSION VERSION_LESS_EQUAL 12.9)
@@ -909,6 +913,7 @@ set(ATen_MPS_TEST_SRCS ${ATen_MPS_TEST_SRCS} PARENT_SCOPE)
 set(ATen_CPU_INCLUDE ${ATen_CPU_INCLUDE} PARENT_SCOPE)
 set(ATen_THIRD_PARTY_INCLUDE ${ATen_THIRD_PARTY_INCLUDE} PARENT_SCOPE)
 set(ATen_CUDA_INCLUDE ${ATen_CUDA_INCLUDE} PARENT_SCOPE)
+set(ATen_CUDA_SYSTEM_INCLUDE ${ATen_CUDA_SYSTEM_INCLUDE} PARENT_SCOPE)
 set(ATen_HIP_INCLUDE ${ATen_HIP_INCLUDE} PARENT_SCOPE)
 set(ATen_XPU_INCLUDE ${ATen_XPU_INCLUDE} PARENT_SCOPE)
 set(ATen_CPU_DEPENDENCY_LIBS ${ATen_CPU_DEPENDENCY_LIBS} PARENT_SCOPE)
