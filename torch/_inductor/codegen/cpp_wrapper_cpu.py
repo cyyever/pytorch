@@ -2756,7 +2756,7 @@ class CppWrapperCpu(PythonWrapperCodegen):
         # released.
         # Here's a sample usage in the cpp wrapper code:
         # ```
-        # aoti_torch_addmm_out(
+        # aoti_torch_cpu_addmm_out(
         #     buf1,
         #     arg1_1,
         #     RAIIAtenTensorHandle(tmp_tensor_handle_0),
