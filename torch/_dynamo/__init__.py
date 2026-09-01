@@ -61,8 +61,6 @@ from .eval_frame import (
     reset_code,
 )
 
-# pyrefly: ignore [deprecated]
-from .external_utils import is_compiling
 from .mutation_guard import GenerationTracker
 from .pgo import reset_code_state
 from .symbolic_convert import TensorifyState
@@ -94,7 +92,6 @@ __all__ = [
     "explain",
     "forbid_in_graph",
     "graph_break",
-    "is_compiling",
     "is_dynamo_disable_recursive",
     "list_backends",
     "lookup_backend",

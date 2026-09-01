@@ -385,13 +385,13 @@ class RecompileTests(torch._dynamo.test_case.TestCase):
     def test_run_mode_after_cache_limit_hit(self):
         def f(x, n):
             x = x + n
-            if torch._dynamo.is_compiling():
+            if torch.compiler.is_compiling():
                 x = x + 1
             return g(x, n)
 
         def g(x, n):
             x = x + n
-            if torch._dynamo.is_compiling():
+            if torch.compiler.is_compiling():
                 x = x + 2
             return x
 
