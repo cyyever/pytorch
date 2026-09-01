@@ -42,13 +42,11 @@
 #   USE_MSLK=0                disables the MSLK build
 #   USE_KINETO=0              disables libkineto profiling
 #   USE_NUMPY=0               disables the NumPy build
-#   USE_DISTRIBUTED=0         disables distributed (c10d, gloo, mpi, etc.) build
+#   USE_DISTRIBUTED=0         disables distributed (c10d, gloo, etc.) build
 #   USE_GLOO=0                disables the gloo backend
-#   USE_MPI=0                 disables the MPI backend
 #   USE_SYSTEM_NCCL=0         use the submoduled nccl instead of system nccl
 #   USE_OPENMP=0              disables OpenMP parallelization
 #   USE_MKLDNN=0              disables MKLDNN
-#   USE_MKLDNN_ACL           enables Compute Library backend for MKLDNN on Arm
 #                            (USE_MKLDNN must be explicitly enabled)
 #   USE_STATIC_MKL           prefer to link MKL statically (Unix only)
 #   USE_FLASH_ATTENTION=0    disables flash attention for scaled dot product attn
@@ -90,8 +88,6 @@
 #                            is an alias for CUDNN_LIBRARY)
 #   NCCL_ROOT / NCCL_LIB_DIR / NCCL_INCLUDE_DIR   nccl location (read from env in
 #                            cmake/Modules/FindNCCL.cmake)
-#   ACL_ROOT_DIR             Arm Compute Library location (read from env in
-#                            cmake/Modules/FindACL.cmake)
 #   LIBRARY_PATH / LD_LIBRARY_PATH   searched for libraries (compiler/linker native)
 #
 # Handled outside this module (NOT forwarded here; see also the everyday knobs

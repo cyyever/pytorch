@@ -34,18 +34,6 @@ int query_pals_size() {
     return size;
   }
 
-  // MPICH sets PMI_SIZE in its environment.
-  size = env_to_value<int>("PMI_SIZE", -1);
-  if (size > 0) {
-    return size;
-  }
-
-  // OpenMPI sets OMPI_COMM_WORLD_SIZE in its environment.
-  size = env_to_value<int>("OMPI_COMM_WORLD_SIZE", -1);
-  if (size > 0) {
-    return size;
-  }
-
   // Try WORLD_SIZE as a last resort
   size = env_to_value<int>("WORLD_SIZE", -1);
   if (size > 0) {
@@ -130,7 +118,7 @@ std::pair<int, int> query_ranksize() {
   // Constants for ranksize query methods
   const std::string kRanksizeQueryMethodAuto = "auto";
   const std::string kRanksizeQueryMethodTorchrun = "torchrun";
-  const std::string kRanksizeQueryMethodMPI = "mpi";
+
   const std::string kRanksizeQueryMethodPALS = "pals";
   const std::string& kRanksizeQueryMethodDefault = kRanksizeQueryMethodAuto;
 
@@ -164,24 +152,6 @@ std::pair<int, int> query_ranksize() {
       return true;
     }
 
-    // See if we are in an MPI environment
-    if (ranksize_query_method == kRanksizeQueryMethodAuto ||
-        ranksize_query_method == kRanksizeQueryMethodMPI) {
-      // See if we are in an OpenMPI environment
-      rank = env_to_value<int>("OMPI_COMM_WORLD_RANK", -1);
-      comm_size = env_to_value<int>("OMPI_COMM_WORLD_SIZE", -1);
-      if (rank > -1 && comm_size > 0) {
-        return true;
-      }
-
-      // See if we are in an MPICH environment
-      rank = env_to_value<int>("PMI_RANK", -1);
-      comm_size = env_to_value<int>("PMI_SIZE", -1);
-      if (rank > -1 && comm_size > 0) {
-        return true;
-      }
-    }
-
     // See if we are in a PALS environment
     if (ranksize_query_method == kRanksizeQueryMethodAuto ||
         ranksize_query_method == kRanksizeQueryMethodPALS) {
@@ -210,7 +180,7 @@ std::pair<int, int> query_ranksize() {
         false,
         "Unable to determine rank and size from environment variables. "
         "Please set TORCHCOMM_RANK and TORCHCOMM_SIZE, or ensure you are "
-        "running in a supported environment (Torchrun, MPI, or PALS).");
+        "running in a supported environment (torchrun or PALS).");
   }
 
   return std::make_pair(rank, comm_size);

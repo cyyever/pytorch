@@ -299,7 +299,7 @@ FlightRecorderHook::FlightRecorderHook(
   // existed, and setRank makes several ranks write to the same
   // <prefix><rank> dump file, so all but one post-mortem is lost. Backends
   // that fill in Options::global_ranks_in_group (gloo, nccl, nccl2,
-  // nccl-lazy, xccl) never get here; mpi, ucc, fake and out-of-tree plugins
+  // nccl-lazy, xccl) never get here; ucc, fake and out-of-tree plugins
   // do unless the caller supplied the mapping.
   const bool ranks_known = local_rank < global_ranks.size();
   if (!ranks_known && !recorders.empty()) {

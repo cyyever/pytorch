@@ -144,7 +144,7 @@ namespace {
     - Suitable for tests that only check callability/flow, not correctness of
         distributed results.
     - Do not rely on returned outputs or synchronization semantics.
-    - In production, replace with a real backend (e.g., NCCL, Gloo, MPI).
+    - In production, replace with a real backend (e.g., NCCL or Gloo).
 */
 namespace c10d {
 

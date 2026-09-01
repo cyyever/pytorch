@@ -77,7 +77,7 @@ for a brief introduction to all features related to distributed training.
 
 ## Backends
 
-`torch.distributed` supports four built-in backends, each with
+`torch.distributed` supports three built-in backends, each with
 different capabilities. The table below shows which functions are available
 for use with a CPU or GPU for each backend. For NCCL, GPU refers to CUDA GPU
 while for XCCL to XPU GPU.
@@ -165,7 +165,7 @@ In the past, we were often asked: "which backend should I use?".
 
 - CPU hosts with Ethernet interconnect
 
-  - Use Gloo, unless you have specific reasons to use MPI.
+  - Use Gloo.
 
 ### Common environment variables
 
@@ -265,10 +265,6 @@ inconsistent 'UUID' assignment across ranks, and to prevent races during initial
 ```
 
 ```{eval-rst}
-.. autofunction:: is_mpi_available
-```
-
-```{eval-rst}
 .. autofunction:: is_nccl_available
 ```
 
@@ -284,7 +280,7 @@ inconsistent 'UUID' assignment across ranks, and to prevent races during initial
 .. autofunction:: torch.distributed.distributed_c10d.irecv
 .. autofunction:: torch.distributed.distributed_c10d.is_gloo_available
 .. autofunction:: torch.distributed.distributed_c10d.is_initialized
-.. autofunction:: torch.distributed.distributed_c10d.is_mpi_available
+
 .. autofunction:: torch.distributed.distributed_c10d.is_nccl_available
 .. autofunction:: torch.distributed.distributed_c10d.is_torchelastic_launched
 .. autofunction:: torch.distributed.distributed_c10d.is_ucc_available
@@ -876,7 +872,7 @@ moving tensors to CPU before passing them as inputs to an object collective.
 
 ## Third-party backends
 
-Besides the builtin GLOO/MPI/NCCL backends, PyTorch distributed supports
+Besides the built-in Gloo, NCCL, and XCCL backends, PyTorch distributed supports
 third-party backends through a run-time register mechanism.
 For references on how to develop a third-party backend through C++ Extension,
 please refer to [Tutorials - Custom C++ and CUDA Extensions](https://pytorch.org/tutorials/advanced/cpp_extension.html) and
@@ -1351,10 +1347,6 @@ This module is experimental and subject to change.
 
 ```{eval-rst}
 .. py:module:: torch.distributed.nn
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.ddp_comm_hooks.ddp_zero_hook
 ```
 
 ```{eval-rst}

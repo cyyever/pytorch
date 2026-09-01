@@ -96,8 +96,6 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
     UNDEFINED = 0,
     GLOO = 1,
     NCCL = 2,
-    UCC = 3,
-    MPI = 4,
     XCCL = 5,
     CUSTOM = 6,
   };
@@ -110,10 +108,6 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
         return "nccl";
       case BackendType::XCCL:
         return "xccl";
-      case BackendType::UCC:
-        return "ucc";
-      case BackendType::MPI:
-        return "mpi";
       case BackendType::UNDEFINED:
         return "undefined";
       case BackendType::CUSTOM:
@@ -132,10 +126,6 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
       return BackendType::NCCL;
     } else if (backend == "xccl") {
       return BackendType::XCCL;
-    } else if (backend == "ucc") {
-      return BackendType::UCC;
-    } else if (backend == "mpi") {
-      return BackendType::MPI;
     } else {
       return BackendType::CUSTOM;
     }
