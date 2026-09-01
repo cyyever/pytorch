@@ -2465,16 +2465,6 @@ from torch._lobpcg import lobpcg as lobpcg
 # information.
 from torch import masked as masked
 
-# Import removed ops with error message about removal
-from torch._linalg_utils import (  # type: ignore[misc]
-    _symeig as symeig,
-    cholesky,
-    eig,
-    lstsq,
-    matrix_rank,
-    qr,
-    solve,
-)
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
 
