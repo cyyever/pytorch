@@ -606,7 +606,6 @@
 # /torch/__future__.py
 # /torch/__init__.py
 # /torch/_appdirs.py
-# /torch/_awaits/
 # /torch/_compile.py
 # /torch/_decomp/
 # /torch/_dispatch/
