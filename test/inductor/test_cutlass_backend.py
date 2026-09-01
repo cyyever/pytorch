@@ -106,7 +106,7 @@ HAS_CUDA = torch.cuda.is_available()
 HAS_GPU = HAS_CUDA or HAS_XPU
 
 if HAS_CUDA_AND_TRITON:
-    torch.cuda.memory._set_allocator_settings("expandable_segments:False")
+    torch._C._accelerator_setAllocatorSettings("expandable_segments:False")
 
 
 _PRIOR_FP32_MATMUL_PRECISION: str | None = None

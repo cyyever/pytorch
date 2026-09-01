@@ -444,7 +444,6 @@ coverage_ignore_functions = [
     "get_elapsed_time_ms",
     "prof",
     "profile",
-    "publish_metric",
     "put_metric",
     # torch.distributed.elastic.multiprocessing.api
     "get_std_cm",
@@ -1362,7 +1361,6 @@ coverage_ignore_classes = [
     # WARNING: more than one target found for cross-reference 'Module'
     "Module",
     # torch.nn.modules.loss
-    "NLLLoss2d",  # deprecated
     # torch.nn.modules.normalization
     "CrossMapLRN2d",
     # torch.nn.parallel.data_parallel

@@ -4,27 +4,20 @@ import functools
 import warnings
 from collections.abc import Callable, Iterable
 from itertools import product
-from warnings import deprecated
 
 import torch
 import torch.testing
 
 # pyrefly: ignore [deprecated]
-from torch._vmap_internals import _vmap, vmap
+from torch._vmap_internals import _vmap
 from torch.overrides import is_tensor_like
 from torch.types import _TensorOrOptionalTensors, _TensorOrTensors
 
 
-# Note: `get_*_jacobian` functions are added here even though we didn't intend to make them public
-# since they have been exposed from before we added `__all__`  and we already maintain BC for them
-# We should eventually deprecate them and remove them from `__all__`
 __all__ = [
     "gradcheck",
     "gradgradcheck",
     "GradcheckError",
-    "get_numerical_jacobian",
-    "get_analytical_jacobian",
-    "get_numerical_jacobian_wrt_specific_input",
 ]
 
 
@@ -288,7 +281,7 @@ def _get_numerical_jacobian(
         outputs = _as_tuple(fn(*_as_tuple(inputs)))
     if not is_forward_ad and any(o.is_complex() for o in outputs):
         raise ValueError(
-            "Expected output to be non-complex. get_numerical_jacobian no "
+            "Expected output to be non-complex. The numerical jacobian no "
             "longer supports functions that return complex outputs."
         )
     if target is None:
@@ -298,7 +291,7 @@ def _get_numerical_jacobian(
     ]
     for inp, inp_idx in zip(_iter_tensors(target, True), inp_indices):
         jacobians += [
-            get_numerical_jacobian_wrt_specific_input(
+            _get_numerical_jacobian_wrt_specific_input(
                 fn,
                 inp_idx,
                 inputs,
@@ -309,50 +302,6 @@ def _get_numerical_jacobian(
             )
         ]
     return jacobians
-
-
-@deprecated(
-    "`get_numerical_jacobian` was part of PyTorch's private API and not "
-    "meant to be exposed. We are deprecating it and it will be removed "
-    "in a future version of PyTorch. If you have a specific use for "
-    "this or feature request for this to be a stable API, please file "
-    "us an issue at https://github.com/pytorch/pytorch/issues/new",
-    category=FutureWarning,
-)
-def get_numerical_jacobian(fn, inputs, target=None, eps=1e-3, grad_out=1.0):
-    """Compute the numerical Jacobian for a given fn and its inputs.
-
-    This is a Deprecated API.
-
-    Args:
-        fn: the function to compute the Jacobian for (must take inputs as a tuple)
-        inputs: input to `fn`
-        target: the Tensors wrt whom Jacobians are calculated (default=`input`)
-        eps: the magnitude of the perturbation during finite differencing
-             (default=`1e-3`)
-        grad_out: defaults to 1.0.
-
-    Returns:
-        A list of Jacobians of `fn` (restricted to its first output) with respect to
-        each input or target, if provided.
-
-    Note that `target` may not even be part of `input` to `fn`, so please be
-    **very careful** in this to not clone `target`.
-    """
-    if (
-        grad_out != 1.0
-    ):  # grad_out param is only kept for backward compatibility reasons
-        raise ValueError(
-            "Expected grad_out to be 1.0. get_numerical_jacobian no longer "
-            "supports values of grad_out != 1.0."
-        )
-
-    def fn_pack_inps(*inps):
-        return fn(inps)
-
-    jacobians = _get_numerical_jacobian(fn_pack_inps, inputs, None, target, eps)
-
-    return tuple(jacobian_for_each_output[0] for jacobian_for_each_output in jacobians)
 
 
 def _compute_numerical_gradient(fn, entry, v, norm_v, nbhd_checks_fn):
@@ -472,7 +421,7 @@ def _check_outputs_same_dtype_and_shape(output1, output2, eps, idx=None) -> None
         )
 
 
-def get_numerical_jacobian_wrt_specific_input(
+def _get_numerical_jacobian_wrt_specific_input(
     fn, input_idx, inputs, outputs, eps, input=None, is_forward_ad=False
 ) -> tuple[torch.Tensor, ...]:
     # Computes the numerical jacobians wrt to a single input. Returns N jacobian
@@ -837,50 +786,6 @@ def _get_analytical_vJu_backward_mode(
     return reduced_jacobians
 
 
-@deprecated(
-    "`get_analytical_jacobian` was part of PyTorch's private API and not "
-    "meant to be exposed. We are deprecating it and it will be removed "
-    "in a future version of PyTorch. If you have a specific use for "
-    "this or feature request for this to be a stable API, please file "
-    "us an issue at https://github.com/pytorch/pytorch/issues/new",
-    category=FutureWarning,
-)
-def get_analytical_jacobian(inputs, output, nondet_tol=0.0, grad_out=1.0):
-    # Replicates the behavior of the old get_analytical_jacobian before the refactor
-    # This shares much of its code with _check_analytical_jacobian_attributes
-    if (
-        grad_out != 1.0
-    ):  # grad_out param is only kept for backward compatibility reasons
-        raise ValueError(
-            "Expected grad_out to be 1.0. get_analytical_jacobian no longer "
-            "supports values of grad_out != 1.0."
-        )
-    if output.is_complex():
-        raise ValueError(
-            "Expected output to be non-complex. get_analytical_jacobian no "
-            "longer supports functions that return complex outputs."
-        )
-    diff_input_list = list(_iter_tensors(inputs, True))
-
-    def vjp_fn(grad_output):
-        return torch.autograd.grad(
-            output, diff_input_list, grad_output, retain_graph=True, allow_unused=True
-        )
-
-    # Compute everything twice to check for nondeterminism (which we call reentrancy)
-    vjps1 = _compute_analytical_jacobian_rows(vjp_fn, output.clone())
-    vjps2 = _compute_analytical_jacobian_rows(vjp_fn, output.clone())
-
-    output_numel = output.numel()
-    jacobians1, types_ok, sizes_ok = _stack_and_check_tensors(
-        vjps1, inputs, output_numel
-    )
-    jacobians2, _, _ = _stack_and_check_tensors(vjps2, inputs, output_numel)
-    reentrant = _check_jacobians_equal(jacobians1, jacobians2, nondet_tol)
-
-    return jacobians1, reentrant, sizes_ok, types_ok
-
-
 def _get_analytical_jacobian(inputs, outputs, input_idx, output_idx):
     # Computes the analytical Jacobian in slow mode for a single input-output pair.
     # Forgoes performing checks on dtype, shape, and reentrancy.
@@ -1167,9 +1072,8 @@ def _test_batched_grad(input, output, output_idx) -> bool:
     # NB: this doesn't work for CUDA tests: https://github.com/pytorch/pytorch/issues/50209
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="There is a performance drop")
-        warnings.filterwarnings("ignore", message="Please use `torch.vmap`")
         try:
-            result = vmap(vjp)(torch.stack(grad_outputs))
+            result = _vmap(vjp)(torch.stack(grad_outputs))
         except RuntimeError as ex:
             # It's OK that we're not raising the error at the correct callsite.
             # That's because the callsite is always going to inside the Python

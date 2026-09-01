@@ -1,22 +1,12 @@
 # mypy: allow-untyped-defs
 from collections.abc import Sequence
 from typing import Any, overload, TypeVar
-from warnings import deprecated
 
 import torch
 from torch.nn.parallel._functions import Gather, Scatter
 
 
 __all__ = ["scatter", "scatter_kwargs", "gather"]
-
-
-@deprecated(
-    "`is_namedtuple` is deprecated, please use the python checks instead",
-    category=FutureWarning,
-)
-def is_namedtuple(obj: Any) -> bool:
-    # Check if type was created from collections.namedtuple or a typing.NamedTuple.
-    return _is_namedtuple(obj)
 
 
 def _is_namedtuple(obj: Any) -> bool:

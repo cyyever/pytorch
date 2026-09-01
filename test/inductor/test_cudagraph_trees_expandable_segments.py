@@ -40,6 +40,6 @@ if __name__ == "__main__":
     ):
         get_disabled_tests(".")
 
-        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:True")
 
         run_tests()

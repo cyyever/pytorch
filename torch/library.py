@@ -8,7 +8,6 @@ import weakref
 from collections.abc import Callable, Sequence
 from typing import Any, overload, TYPE_CHECKING, TypeVar, Union
 from typing import ParamSpec
-from warnings import deprecated
 
 import torch
 import torch._library as _library
@@ -31,7 +30,6 @@ __all__ = [
     "impl",
     "define",
     "fallthrough_kernel",
-    "impl_abstract",
     "register_autocast",
     "register_fake",
     "register_torch_dispatch",
@@ -969,20 +967,6 @@ def _device_type_to_key(device_type: str) -> str:
         # device_type. I don't really care that much about the difference.
         return "CompositeExplicitAutograd"
     return torch._C._dispatch_key_for_device(device_type)
-
-
-@deprecated(
-    "`torch.library.impl_abstract` was renamed to `torch.library.register_fake`. Please use that "
-    "instead; we will remove `torch.library.impl_abstract` in a future version of PyTorch.",
-    category=FutureWarning,
-)
-def impl_abstract(qualname, func=None, *, lib=None, _stacklevel=1):
-    r"""This API was renamed to :func:`torch.library.register_fake` in PyTorch 2.4.
-    Please use that instead.
-    """
-    if func is not None:
-        _stacklevel = _stacklevel + 1
-    return register_fake(qualname, func, lib=lib, _stacklevel=_stacklevel)
 
 
 _op_identifier = Union[

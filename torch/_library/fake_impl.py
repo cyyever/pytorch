@@ -3,7 +3,6 @@ import contextlib
 import functools
 import logging
 from collections.abc import Callable
-from warnings import deprecated
 
 import torch
 from torch._library.utils import Kernel, RegistrationHandle
@@ -152,14 +151,6 @@ class FakeImplCtx:
         self._fake_mode = _fake_mode
         self._shape_env = _fake_mode.shape_env
         self._op = _op
-
-    @deprecated(
-        "`create_unbacked_symint` is deprecated, please use `new_dynamic_size` instead",
-        category=FutureWarning,
-    )
-    def create_unbacked_symint(self, *, min=2, max=None) -> torch.SymInt:
-        return self.new_dynamic_size(min=min, max=max)
-
     def new_dynamic_size(self, *, min=0, max=None) -> torch.SymInt:
         """Constructs a new symint (symbolic int) representing a data-dependent value.
 

@@ -127,7 +127,7 @@ Unfortunately, there is a pretty complicated set of places where any given opera
 
 - Tensor subclasses support limited constant propagation if the number of elements is very small (this helps deal with some cases where we immediately call item() on such tensors.)
 - We have some fastpath implementations for certain operators, which are done entirely in fake tensor, for performance reasons.
-- If you use @custom_op to generate a custom tensor, these will register impl_abstract directly to fake tensor.
+- If you use @custom_op to generate a custom tensor, these will register a fake implementation directly to fake tensor.
 - Fake tensor itself has some hardcoded special cases for device-converting operations.
 - If there is no meta implementation nor any decomposition, we will generate real zero-filled tensors and attempt to run the operator directly to find out what the results will be. This can cause segfaults if the operator attempts to do indexing with data, so we don't turn this on by default for custom ops.
 

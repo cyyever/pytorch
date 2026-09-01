@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 import math
 from collections.abc import Callable
-from warnings import deprecated
 
 from torch import Tensor
 from torch.nn import _reduction as _Reduction, functional as F
@@ -15,7 +14,6 @@ from .module import Module
 __all__ = [
     "L1Loss",
     "NLLLoss",
-    "NLLLoss2d",
     "PoissonNLLLoss",
     "GaussianNLLLoss",
     "KLDivLoss",
@@ -264,24 +262,6 @@ class NLLLoss(_WeightedLoss):
             ignore_index=self.ignore_index,
             reduction=self.reduction,
         )
-
-
-@deprecated(
-    "`NLLLoss2d` has been deprecated. "
-    "Please use `NLLLoss` instead as a drop-in replacement and see "
-    "https://pytorch.org/docs/main/nn.html#torch.nn.NLLLoss for more details.",
-    category=FutureWarning,
-)
-class NLLLoss2d(NLLLoss):
-    def __init__(
-        self,
-        weight: Tensor | None = None,
-        size_average=None,
-        ignore_index: int = -100,
-        reduce=None,
-        reduction: str = "mean",
-    ) -> None:
-        super().__init__(weight, size_average, ignore_index, reduce, reduction)
 
 
 class PoissonNLLLoss(_Loss):

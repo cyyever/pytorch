@@ -658,8 +658,6 @@ These APIs are experimental and subject to change without notice.
     :nosignatures:
 
     ambiguity_warn
-    halt_ordering
-    restart_ordering
     source
     str_signature
     variadic_signature_matches

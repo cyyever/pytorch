@@ -11,7 +11,6 @@ import threading
 import warnings
 from inspect import signature
 from typing import Any, Literal, TYPE_CHECKING
-from warnings import deprecated
 
 import torch
 from torch import _C
@@ -53,8 +52,6 @@ __all__ = [
     "max_memory_allocated",
     "memory_reserved",
     "max_memory_reserved",
-    "memory_cached",
-    "max_memory_cached",
     "memory_snapshot",
     "memory_summary",
     "list_gpu_processes",
@@ -499,7 +496,7 @@ def reset_max_memory_allocated(device: "Device" = None) -> None:
 def reset_max_memory_cached(device: "Device" = None) -> None:
     r"""Reset the starting point in tracking maximum GPU memory managed by the caching allocator for a given device.
 
-    See :func:`~torch.cuda.max_memory_cached` for details.
+    See :func:`~torch.cuda.max_memory_reserved` for details.
 
     Args:
         device (torch.device or int, optional): selected device. Returns
@@ -604,24 +601,6 @@ def max_memory_reserved(device: "Device" = None) -> int:
         (:func:`~torch.cuda.memory_reserved`) is exact.
     """
     return memory_stats(device=device).get("reserved_bytes.all.peak", 0)
-
-
-@deprecated(
-    "`torch.cuda.memory_cached` has been renamed to `torch.cuda.memory_reserved`",
-    category=FutureWarning,
-)
-def memory_cached(device: "Device" = None) -> int:
-    r"""Deprecated; see :func:`~torch.cuda.memory_reserved`."""
-    return memory_reserved(device=device)
-
-
-@deprecated(
-    "`torch.cuda.max_memory_cached` has been renamed to `torch.cuda.max_memory_reserved`",
-    category=FutureWarning,
-)
-def max_memory_cached(device: "Device" = None) -> int:
-    r"""Deprecated; see :func:`~torch.cuda.max_memory_reserved`."""
-    return max_memory_reserved(device=device)
 
 
 def memory_snapshot(mempool_id=None, include_traces=True):
@@ -1294,15 +1273,6 @@ def _save_memory_usage(filename="output.svg", snapshot=None):
         snapshot = _snapshot()
     with open(filename, "w") as f:
         f.write(_memory(snapshot))
-
-
-@deprecated(
-    "torch.cuda._set_allocator_settings is deprecated. Use torch._C._accelerator_setAllocatorSettings instead.",
-    category=FutureWarning,
-)
-def _set_allocator_settings(env: str):
-    # pyrefly: ignore [missing-attribute]
-    return torch._C._accelerator_setAllocatorSettings(env)
 
 
 def get_allocator_backend() -> str:

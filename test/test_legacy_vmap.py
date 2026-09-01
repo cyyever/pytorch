@@ -9,7 +9,7 @@ import warnings
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from torch._vmap_internals import vmap
+from torch._vmap_internals import _vmap as vmap
 from torch.testing._internal.common_device_type import instantiate_device_type_tests
 from torch.testing._internal.common_utils import run_tests, skipIfTorchDynamo, TestCase
 

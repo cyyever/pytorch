@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 import itertools as itl
 from typing import Any, TYPE_CHECKING, TypeVar
-from warnings import deprecated
 from warnings import warn
 
 
@@ -21,8 +20,6 @@ _T = TypeVar("_T")
 __all__ = [
     "MDNotImplementedError",
     "ambiguity_warn",
-    "halt_ordering",
-    "restart_ordering",
     "variadic_signature_matches_iter",
     "variadic_signature_matches",
     "Dispatcher",
@@ -55,23 +52,6 @@ def ambiguity_warn(
     warning_text
     """
     warn(warning_text(dispatcher.name, ambiguities), AmbiguityWarning)
-
-
-@deprecated(
-    "`halt_ordering` is deprecated, you can safely remove this call.",
-    category=FutureWarning,
-)
-def halt_ordering() -> None:
-    """Deprecated interface to temporarily disable ordering."""
-
-
-@deprecated(
-    "`restart_ordering` is deprecated, if you would like to eagerly order the dispatchers, "
-    "you should call the `reorder()` method on each dispatcher.",
-    category=FutureWarning,
-)
-def restart_ordering(on_ambiguity: Callable[..., None] = ambiguity_warn) -> None:
-    """Deprecated interface to temporarily resume ordering."""
 
 
 def variadic_signature_matches_iter(
@@ -366,17 +346,6 @@ class Dispatcher:
                 if variadic_signature_matches(types, signature):
                     result = self.funcs[signature]
                     yield result
-
-    @deprecated(
-        "`resolve()` is deprecated, use `dispatch(*types)`", category=FutureWarning
-    )
-    def resolve(self, types: tuple[type, ...]) -> Callable[..., object] | None:
-        """Determine appropriate implementation for this type signature
-        .. deprecated:: 0.4.4
-            Use ``dispatch(*types)`` instead
-        """
-        return self.dispatch(*types)
-
     def __getstate__(self) -> dict[str, Any]:
         return {"name": self.name, "funcs": self.funcs}
 

@@ -11,7 +11,6 @@ import abc
 import time
 from collections import namedtuple
 from functools import wraps
-from warnings import deprecated
 
 
 __all__ = [
@@ -23,9 +22,7 @@ __all__ = [
     "configure",
     "getStream",
     "prof",
-    "profile",
     "put_metric",
-    "publish_metric",
     "get_elapsed_time_ms",
     "MetricData",
 ]
@@ -148,45 +145,6 @@ def prof(fn=None, group: str = "torchelastic"):
         return wrap
 
 
-@deprecated("Deprecated, use `@prof` instead", category=FutureWarning)
-def profile(group=None):
-    """
-    @profile decorator adds latency and success/failure metrics to any given function.
-
-    Usage
-
-    ::
-
-     @metrics.profile("my_metric_group")
-     def some_function(<arguments>):
-    """
-
-    def wrap(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                start_time = time.time()
-                result = func(*args, **kwargs)
-                # pyrefly: ignore [bad-argument-type]
-                publish_metric(group, f"{func.__name__}.success", 1)
-            except Exception:
-                # pyrefly: ignore [bad-argument-type]
-                publish_metric(group, f"{func.__name__}.failure", 1)
-                raise
-            finally:
-                publish_metric(
-                    # pyrefly: ignore [bad-argument-type]
-                    group,
-                    f"{func.__name__}.duration.ms",
-                    get_elapsed_time_ms(start_time),  # type: ignore[possibly-undefined]
-                )
-            return result
-
-        return wrapper
-
-    return wrap
-
-
 def put_metric(metric_name: str, metric_value: int, metric_group: str = "torchelastic"):
     """
     Publish a metric data point.
@@ -199,15 +157,6 @@ def put_metric(metric_name: str, metric_value: int, metric_group: str = "torchel
      put_metric("metric_name", 1, "metric_group_name")
     """
     getStream(metric_group).add_value(metric_name, metric_value)
-
-
-@deprecated(
-    "Deprecated, use `put_metric(metric_group)(metric_name, metric_value)` instead",
-    category=FutureWarning,
-)
-def publish_metric(metric_group: str, metric_name: str, metric_value: int):
-    metric_stream = getStream(metric_group)
-    metric_stream.add_value(metric_name, metric_value)
 
 
 def get_elapsed_time_ms(start_time_in_seconds: float):

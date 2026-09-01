@@ -360,7 +360,6 @@ Utility functions to clip parameter gradients.
     :nosignatures:
 
     clip_grad.clip_grad_norm_
-    clip_grad.clip_grad_norm
     clip_grad.clip_grad_value_
 
 

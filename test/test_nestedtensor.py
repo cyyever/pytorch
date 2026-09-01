@@ -19,6 +19,7 @@ import torch._dynamo
 import torch._dynamo.testing
 import torch.nn
 import torch.nn.functional as F
+from torch.nn.attention import sdpa_kernel, SDPBackend
 from torch.nested._internal.nested_tensor import (
     _rebuild_njt,
     buffer_from_jagged,
@@ -7131,15 +7132,11 @@ torch.cuda.synchronize()
         check_forward_backward()
 
         # Test dispatcher works by calling only mem-effn and math (as they are safe for all devices)
-        with torch.backends.cuda.sdp_kernel(
-            enable_flash=False, enable_mem_efficient=True, enable_math=True
-        ):
+        with sdpa_kernel([SDPBackend.EFFICIENT_ATTENTION, SDPBackend.MATH]):
             check_forward_backward()
 
         # Test math fallback
-        with torch.backends.cuda.sdp_kernel(
-            enable_flash=False, enable_mem_efficient=False, enable_math=True
-        ):
+        with sdpa_kernel(SDPBackend.MATH):
             # Math fallback doesn't work with bfloat16 on CUDA because
             # "group_gemm_dispatch" not implemented for 'BFloat16'
             if not (str(device).startswith("cuda") and dtype == torch.bfloat16):
