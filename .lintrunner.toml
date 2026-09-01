@@ -180,19 +180,6 @@ exclude_patterns = [
     'torch/headeronly/util/BFloat16-math.h',
     'torch/headeronly/util/irange.h',
     'torch/headeronly/util/MathConstants.h',
-    # Generated translation units. ExcludeHeaderFilterRegex in .clang-tidy only
-    # covers headers, so without this the codegen sources are linted like any
-    # other: RegisterFunctionalization_0..3 alone produce ~1400 findings.
-    'build/**',
-    # A C translation unit. clang-tidy lints it with the C++ parser and reports
-    # its declarations as syntax errors.
-    'torch/csrc/dynamo/cpython_defs.c',
-    # Includes NCCL's device headers, whose static_asserts fire unless nvcc was
-    # given --extended-lambda. The failure is a parse error, so an entry in
-    # ExcludeHeaderFilterRegex would not suppress it.
-    'torch/csrc/cuda/nccl.cpp',
-    'torch/csrc/distributed/c10d/NCCLUtils.cpp',
-    'torch/csrc/distributed/c10d/NCCLCommRegistrationHook.cpp',
 ]
 command = [
     'python3',

@@ -1,10 +1,17 @@
 ---
 # NOTE there must be no spaces before the '-', so put the comma last.
-# NOTE the modernize-use-{ranges,constraints,designated-initializers} and
-# readability-container-contains checks are disabled because they advise
-# C++20-only constructs (std::ranges, requires-clauses, designated
-# initializers, associative-container .contains()) that some internal builds
-# still on C++17 cannot compile.
+# NOTE cppcoreguidelines-pro-bounds-avoid-unchecked-container-access is off.
+# It fires 3005 times, on sizes[i] and strides[i] -- the idiom every kernel
+# that walks a tensor's geometry is written in. The protection it asks for now
+# lives at the definition instead: ArrayRef::operator[] carries a bounds check
+# under C10_ENABLE_DEBUG_CHECKS, which costs nothing in release and catches the
+# same reads the moment a debug build executes them. Reading the check's output
+# is still worthwhile as a one-off audit -- it is how the out-of-bounds reads in
+# the CTC cuDNN path, _foreach_copy, pushPyOutToStack and enforceInputOrder were
+# found -- but as a per-line rule it would bury those in three thousand NOLINTs.
+# NOTE modernize-use-designated-initializers stays off: it fires on
+# aggregates whose members the call site deliberately leaves defaulted, which
+# is most of the CPython C API structs.
 # The check bugprone-unchecked-optional-access is also turned on.
 # Note that it can cause clang-tidy to hang randomly. The tracking issue
 # can be found at https://github.com/llvm/llvm-project/issues/69369.
@@ -18,6 +25,7 @@ Checks: ' bugprone-*, -bugprone-easily-swappable-parameters, -bugprone-forward-d
   -cppcoreguidelines-avoid-magic-numbers, -cppcoreguidelines-avoid-non-const-global-variables,
   -cppcoreguidelines-interfaces-global-init, -cppcoreguidelines-macro-usage, -cppcoreguidelines-macro-to-enum,
   -cppcoreguidelines-owning-memory, -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-pro-bounds-constant-array-index, -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-cstyle-cast, -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-pro-type-static-cast-downcast, -cppcoreguidelines-pro-type-union-access,
@@ -30,8 +38,8 @@ Checks: ' bugprone-*, -bugprone-easily-swappable-parameters, -bugprone-forward-d
   -modernize-macro-to-enum, -modernize-return-braced-init-list, -modernize-use-auto,
   -modernize-use-using, -modernize-use-trailing-return-type, -modernize-use-nodiscard,
   -modernize-use-integer-sign-comparison, -modernize-use-designated-initializers,
-  -modernize-use-scoped-lock, performance-*, -performance-enum-size, readability-container-size-empty,
-  readability-delete-null-pointer, readability-duplicate-include, readability-named-parameter,
+  -modernize-use-scoped-lock, performance-*, -performance-enum-size, readability-container-contains,
+  readability-container-size-empty, readability-delete-null-pointer, readability-duplicate-include, readability-named-parameter,
   readability-misplaced-array-index, readability-redundant*, readability-simplify-subscript-expr,
   readability-static-definition-in-anonymous-namespace readability-string-compare,
   -readability-redundant-access-specifiers, -readability-redundant-control-flow, -readability-redundant-inline-specifier, '
@@ -40,6 +48,15 @@ HeaderFilterRegex: .*/(aten|c10|torch|torchgen)/.*
 # not ours to fix: SmallVector from LLVM, flat_hash_map and
 # order_preserving_flat_hash_map from skarupke, strong_type from rollbear,
 # dlpack from dmlc.
+# This filters which headers findings are reported against; it does not stop a
+# translation unit from being parsed, and it does not select what to lint.
+# .lintrunner.toml's CLANGTIDY include_patterns does that, and it currently
+# covers three paths under aten/src/ATen. Anything wider -- a run over
+# compile_commands.json, say -- has to do its own filtering, or it will lint the
+# codegen output under build/ (RegisterFunctionalization_0..3 alone are worth
+# ~1400 findings), parse cpython_defs.c as C++, and choke on NCCL's device
+# headers, which need nvcc's --extended-lambda. For .cu files, translate nvcc's
+# command line to clang++ -x cuda first; clang-tidy cannot read nvcc's.
 ExcludeHeaderFilterRegex: .*/(third_party|build)/.*|.*/c10/util/(SmallVector|flat_hash_map|order_preserving_flat_hash_map|hash|strong_type)\.h|.*/aten/src/ATen/dlpack\.h
 WarningsAsErrors: '*'
 CheckOptions:
