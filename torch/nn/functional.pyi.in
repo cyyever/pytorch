@@ -132,8 +132,6 @@ def binary_cross_entropy_with_logits(
     input: Tensor,
     target: Tensor,
     weight: Tensor | None = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
     pos_weight: Tensor | None = ...,
 ) -> Tensor: ...
@@ -144,8 +142,6 @@ def binary_cross_entropy(
     input: Tensor,
     target: Tensor,
     weight: Tensor | None = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -160,8 +156,6 @@ def cosine_embedding_loss(
     input2: Tensor,
     target: Tensor,
     margin: float = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -171,9 +165,7 @@ def cross_entropy(
     input: Tensor,
     target: Tensor,
     weight: Tensor | None = ...,
-    size_average: bool | None = ...,
     ignore_index: int = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
     label_smoothing: float = ...,
 ) -> Tensor: ...
@@ -368,8 +360,6 @@ def hinge_embedding_loss(
     input: Tensor,
     target: Tensor,
     margin: float = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -412,8 +402,6 @@ __all__ += ["interpolate"]
 def kl_div(
     input: Tensor,
     target: Tensor,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
     log_target: bool = ...,
 ) -> Tensor: ...
@@ -423,8 +411,6 @@ __all__ += ["kl_div"]
 def l1_loss(
     input: Tensor,
     target: Tensor,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -517,8 +503,6 @@ def margin_ranking_loss(
     input2: Tensor,
     target: Tensor,
     margin: float = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -600,8 +584,6 @@ __all__ += ["mish"]
 def mse_loss(
     input: Tensor,
     target: Tensor,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -643,8 +625,6 @@ def multi_margin_loss(
     p: int = ...,
     margin: float = ...,
     weight: Tensor | None = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -653,8 +633,6 @@ __all__ += ["multi_margin_loss"]
 def multilabel_margin_loss(
     input: Tensor,
     target: Tensor,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -664,8 +642,6 @@ def multilabel_soft_margin_loss(
     input: Tensor,
     target: Tensor,
     weight: Tensor | None = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -675,9 +651,7 @@ def nll_loss(
     input: Tensor,
     target: Tensor,
     weight: Tensor | None = ...,
-    size_average: bool | None = ...,
     ignore_index: int = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -698,9 +672,7 @@ def poisson_nll_loss(
     target: Tensor,
     log_input: bool = ...,
     full: bool = ...,
-    size_average: bool | None = ...,
     eps: float = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -792,8 +764,6 @@ __all__ += ["silu"]
 def smooth_l1_loss(
     input: Tensor,
     target: Tensor,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
     beta: float = ...,
 ) -> Tensor: ...
@@ -803,8 +773,6 @@ __all__ += ["smooth_l1_loss"]
 def soft_margin_loss(
     input: Tensor,
     target: Tensor,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 
@@ -857,8 +825,6 @@ def triplet_margin_loss(
     p: float = ...,
     eps: float = ...,
     swap: bool = ...,
-    size_average: bool | None = ...,
-    reduce: bool | None = ...,
     reduction: str = ...,
 ) -> Tensor: ...
 

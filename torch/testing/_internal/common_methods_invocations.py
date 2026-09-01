@@ -8936,8 +8936,6 @@ def sample_inputs_loss(op_info, device, dtype, requires_grad, **kwargs):
     rhs_requires_grad = kwargs.get('rhs_requires_grad', requires_grad)
     _make_tensor = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
 
-    # Although most losses also support the reduce and size_average combination instead of reduce, the former is
-    # deprecated since 0.4.1 and thus is not tested
     shapes_and_kwargs = (
         ((), None),
         ((S,), dict(reduction="mean")),
@@ -11851,11 +11849,7 @@ def reference_hash_tensor(tensor, dim=(), keepdim=False, mode=0):
 
 
 def loss_reference_reduction_wrapper(fn):
-    def wrapper(input, target, *, size_average=None, reduce=None, reduction="mean", **other_kwargs):
-        if size_average is not None or reduce is not None:
-            raise RuntimeError(
-                "The keyword arguments 'size_average' and 'reduce' are deprecated and not supported by this wrapper"
-            )
+    def wrapper(input, target, *, reduction="mean", **other_kwargs):
         output = fn(input, target, **other_kwargs)
         if reduction == "mean":
             return np.mean(output)

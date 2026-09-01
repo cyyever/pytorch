@@ -583,20 +583,6 @@ def _check_reduction_value(reduction: str):
         raise ValueError(f"{reduction} is not a valid value for reduction")
 
 
-# This helper function maps deprecated arguments, "size_average" and "reduce"
-# to their corresponding "reduction" string argument
-def _get_string_reduction_arg(*, size_average: bool | None, reduce: bool | None) -> str:
-    if size_average is None:
-        size_average = True
-    if reduce is None:
-        reduce = True
-    if size_average and reduce:
-        ret = "mean"
-    elif reduce:
-        ret = "sum"
-    else:
-        ret = "none"
-    return ret
 
 
 # CompositeImplicitAutograd - don't register decomp
@@ -607,18 +593,11 @@ def _get_string_reduction_arg(*, size_average: bool | None, reduce: bool | None)
 def l1_loss(
     input: TensorLikeType,
     target: TensorLikeType,
-    size_average: bool | None = None,
-    reduce: bool | None = None,
     reduction: str = "mean",
 ) -> TensorLikeType:
     """
     Reference implementation of torch.nn.functional.l1_loss
     """
-    if size_average is not None or reduce is not None:
-        # TODO: Raise exception instead of converting value.  This is only for
-        # primTorch since it can drop support for deprecated arguments.
-        # msg = "size_average and reduce args are deprecated, please use reduction argument."
-        reduction = _get_string_reduction_arg(size_average=size_average, reduce=reduce)
     _check_reduction_value(reduction)
     loss = torch.abs(input - target)
     return _apply_loss_reduction(loss, reduction)
@@ -631,24 +610,17 @@ def l1_loss(
 def smooth_l1_loss(
     input: TensorLikeType,
     target: TensorLikeType,
-    size_average: bool | None = None,
-    reduce: bool | None = None,
     reduction: str = "mean",
     beta: float = 1.0,
 ) -> TensorLikeType:
     """
     Reference implementation of torch.nn.functional.smooth_l1_loss
     """
-    if size_average is not None or reduce is not None:
-        # TODO: Raise exception instead of converting value.  This is only for
-        # primTorch since it can drop support for deprecated arguments.
-        # msg = "size_average and reduce args are deprecated, please use reduction argument."
-        reduction = _get_string_reduction_arg(size_average=size_average, reduce=reduce)
     _check_reduction_value(reduction)
 
     if beta == 0.0:
         return torch.nn.functional.l1_loss(
-            input, target, size_average=size_average, reduce=reduce, reduction=reduction
+            input, target, reduction=reduction
         )
     else:
         loss = torch.abs(input - target)
@@ -699,15 +671,8 @@ def margin_ranking_loss(
 def mse_loss(
     input: TensorLikeType,
     target: TensorLikeType,
-    size_average: bool | None = None,
-    reduce: bool | None = None,
     reduction: str = "mean",
 ) -> TensorLikeType:
-    if size_average is not None or reduce is not None:
-        # TODO: Raise exception instead of converting value.  This is only for
-        # primTorch since it can drop support for deprecated arguments.
-        # msg = "size_average and reduce args are deprecated, please use reduction argument."
-        reduction = _get_string_reduction_arg(size_average=size_average, reduce=reduce)
     _check_reduction_value(reduction)
     loss = torch.pow(input - target, 2)
     return _apply_loss_reduction(loss, reduction)
@@ -819,9 +784,7 @@ def nll_loss(
     input: TensorLikeType,
     target: TensorLikeType,
     weight: TensorLikeType | None = None,
-    size_average: bool | None = None,
     ignore_index: int = -100,
-    reduce: bool | None = None,
     reduction: str = "mean",
 ) -> TensorLikeType:
     """
@@ -833,10 +796,7 @@ def nll_loss(
     )
 
     # TODO: raise exception instead of converting value
-    # msg = "size_average and reduce args are deprecated, please use reduction argument."
     # Convert these options for consistency with the eager mode
-    if size_average is not None or reduce is not None:
-        reduction = _get_string_reduction_arg(size_average=size_average, reduce=reduce)
 
     # The expected behavior when the target and input have zero elements:
     #   reduction = 'none' --- tensor([])
@@ -969,15 +929,8 @@ def triplet_margin_loss(
     p: float = 2,
     eps: float = 1e-6,
     swap: bool = False,
-    size_average: bool | None = None,
-    reduce: bool | None = None,
     reduction: str = "mean",
 ) -> TensorLikeType:
-    if size_average is not None or reduce is not None:
-        # TODO: Raise exception instead of converting value.  This is only for
-        # primTorch since it can drop support for deprecated arguments.
-        # msg = "size_average and reduce args are deprecated, please use reduction argument."
-        reduction = _get_string_reduction_arg(size_average=size_average, reduce=reduce)
 
     if margin <= 0:
         raise ValueError(f"margin must be greater than 0, got {margin}")
@@ -1144,19 +1097,12 @@ def poisson_nll_loss(
     target: TensorLikeType,
     log_input: bool = True,
     full: bool = False,
-    size_average: bool | None = None,
     eps: float = 1e-8,
-    reduce: bool | None = None,
     reduction: str = "mean",
 ) -> TensorLikeType:
     """
     Reference implementation of torch.nn.functional.poisson_nll_loss
     """
-    if size_average is not None or reduce is not None:
-        # TODO: Raise exception instead of converting value.  This is only for
-        # primTorch since it can drop support for deprecated arguments.
-        # msg = "size_average and reduce args are deprecated, please use reduction argument."
-        reduction = _get_string_reduction_arg(size_average=size_average, reduce=reduce)
     _check_reduction_value(reduction)
     if log_input:
         loss = torch.exp(input) - target * input

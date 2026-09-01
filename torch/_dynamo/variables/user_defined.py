@@ -1008,10 +1008,10 @@ class UserDefinedClassVariable(UserDefinedVariable):
         kwargs: dict[str, VariableTracker],
     ) -> VariableTracker:
         """
-        functional: input, target, weight=None, size_average=None, ignore_index=- 100, reduce=None, reduction='mean',
+        functional: input, target, weight=None, ignore_index=-100, reduction='mean',
         label_smoothing=0.0
 
-        non functional ctor: weight=None, size_average=None, ignore_index=- 100, reduce=None, reduction='mean',
+        non functional ctor: weight=None, ignore_index=-100, reduction='mean',
         label_smoothing=0.0
 
         non functional loss call: input, target, optional_output
@@ -1020,26 +1020,20 @@ class UserDefinedClassVariable(UserDefinedVariable):
 
         def normalize_args(
             weight: VariableTracker = ConstantVariable.create(None),
-            size_average: VariableTracker = ConstantVariable.create(None),
             ignore_index: VariableTracker = ConstantVariable.create(-100),
-            reduce: VariableTracker = ConstantVariable.create(None),
             reduction: VariableTracker = ConstantVariable.create("mean"),
             label_smoothing: VariableTracker = ConstantVariable.create(0.0),
         ) -> tuple[VariableTracker, ...]:
             return (
                 weight,
-                size_average,
                 ignore_index,
-                reduce,
                 reduction,
                 label_smoothing,
             )
 
         (
             weight,
-            size_average,
             ignore_index,
-            reduce_arg,
             reduction,
             label_smoothing,
         ) = normalize_args(*args, **kwargs)
@@ -1059,9 +1053,7 @@ class UserDefinedClassVariable(UserDefinedVariable):
                             input,
                             target,
                             weight,
-                            size_average,
                             ignore_index,
-                            reduce_arg,
                             reduction,
                             label_smoothing,
                         ],

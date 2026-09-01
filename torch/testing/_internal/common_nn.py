@@ -14,7 +14,6 @@ import torch
 import torch.cuda
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import _reduction as _Reduction
 from torch.testing._internal import common_utils
 from torch.testing._internal.common_utils import TestCase, to_gpu, freeze_rng_state, is_iterable, \
     gradcheck, gradgradcheck, set_default_dtype, skipIfTorchDynamo, TEST_WITH_ROCM
@@ -35,7 +34,7 @@ PRECISION = 1e-5
 def get_reduction(m):
     result = getattr(m, 'reduction', None)
     if result is None:
-        result = _Reduction.legacy_get_string(getattr(m, 'sizeAverage', None), True, emit_warning=False)
+        result = 'mean' if getattr(m, 'sizeAverage', True) is not False else 'sum'
     if result is None:
         raise AssertionError("Expected result to not be None")
     return result

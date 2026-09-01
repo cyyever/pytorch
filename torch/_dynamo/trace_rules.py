@@ -2351,8 +2351,6 @@ torch_non_c_binding_in_graph_functions = dict.fromkeys(
         "torch.nested.narrow",
         "torch.nested.nested_tensor",
         "torch.nn._reduction.get_enum",
-        "torch.nn._reduction.legacy_get_enum",
-        "torch.nn._reduction.legacy_get_string",
         "torch.nn.factory_kwargs",
         "torch.nn.functional.adaptive_avg_pool2d",
         "torch.nn.functional.adaptive_avg_pool3d",
