@@ -127,8 +127,6 @@ file(GLOB native_cpp CONFIGURE_DEPENDS "native/*.cpp")
 file(GLOB native_mkl_cpp CONFIGURE_DEPENDS "native/mkl/*.cpp")
 file(GLOB native_mkldnn_cpp CONFIGURE_DEPENDS "native/mkldnn/*.cpp")
 
-file(GLOB native_eigen_cpp CONFIGURE_DEPENDS "native/sparse/eigen/*.cpp")
-
 # MPS
 file(GLOB mps_cpp CONFIGURE_DEPENDS "mps/*.cpp")
 file(GLOB mps_mm CONFIGURE_DEPENDS "mps/*.mm")
@@ -506,9 +504,6 @@ endif()
 if(AT_MKLDNN_ENABLED)
   set(all_cpu_cpp ${all_cpu_cpp} ${mkldnn_cpp})
 endif()
-if(USE_EIGEN_SPARSE)
-  set(all_cpu_cpp ${all_cpu_cpp} ${native_eigen_cpp})
-endif()
 
 if(USE_XPU)
   list(APPEND ATen_XPU_SRCS ${mkldnn_xpu_cpp})
@@ -710,11 +705,6 @@ list(APPEND ATen_CPU_DEPENDENCY_LIBS m)
 if(MKLDNN_FOUND)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS ${MKLDNN_LIBRARIES})
 endif(MKLDNN_FOUND)
-
-if(USE_MKLDNN_ACL)
-    list(APPEND ATen_CPU_INCLUDE ${ACL_INCLUDE_DIRS})
-    list(APPEND ATen_CPU_DEPENDENCY_LIBS ${ACL_LIBRARIES})
-endif()
 
 if(NOT EMSCRIPTEN)
   # Bump up optimization level for sleef to -O1, since at -O0 the compiler

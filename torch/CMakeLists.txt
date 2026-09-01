@@ -196,8 +196,6 @@ add_custom_command(
       "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
       "${TORCH_ROOT}/aten/src/ATen/native/tags.yaml"
       "${TORCH_ROOT}/tools/autograd/deprecated.yaml"
-      "${TORCH_ROOT}/torch/_torch_docs.py"
-      "${TORCH_ROOT}/torch/_tensor_docs.py"
       ${pyi_python}
       ${autograd_python}
       ${torchgen_python}
@@ -216,10 +214,6 @@ if(USE_DISTRIBUTED)
     # a private dependency of libtorch_python as well.
     if(USE_NCCL)
       list(APPEND TORCH_PYTHON_LINK_LIBRARIES __caffe2_nccl)
-    endif()
-    # Same for MPI.
-    if(USE_MPI)
-      list(APPEND TORCH_PYTHON_LINK_LIBRARIES MPI::MPI_CXX)
     endif()
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_C10D)
 
@@ -266,20 +260,12 @@ endif()
 # in case of the split build we need to add compile definitions
 if(BUILD_LIBTORCHLESS)
 
-  if(USE_UCC AND USE_C10D_UCC)
-    target_compile_definitions(torch_python PRIVATE USE_C10D_UCC)
-  endif()
-
   if(USE_NCCL AND USE_C10D_NCCL)
     target_compile_definitions(torch_python PRIVATE USE_C10D_NCCL)
   endif()
 
   if(USE_DISTRIBUTED)
     target_compile_definitions(torch_python PRIVATE USE_DISTRIBUTED)
-  endif()
-
-  if(USE_MPI AND USE_C10D_MPI)
-    target_compile_definitions(torch_python PRIVATE USE_C10D_MPI)
   endif()
 
   if(USE_GLOO AND USE_C10D_GLOO)
@@ -344,11 +330,6 @@ target_compile_definitions(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_DEFINITIO
 target_compile_options(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_OPTIONS})
 
 target_include_directories(torch_python PUBLIC ${TORCH_PYTHON_INCLUDE_DIRECTORIES})
-
-if(USE_UCC)
-  target_link_libraries(torch_python PRIVATE __caffe2_ucc)
-  target_compile_definitions(torch_python PRIVATE USE_UCC)
-endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithAssert")
    # Workaround numerous decref-without-a-gil warnings from JIT

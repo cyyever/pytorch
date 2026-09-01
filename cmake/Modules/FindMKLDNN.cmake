@@ -87,7 +87,7 @@ IF(NOT MKLDNN_FOUND)
   endif()
 
   IF(EXISTS "${MKLDNN_ROOT}/include/oneapi/dnnl/dnnl_ukernel.hpp")
-    IF(CPU_POWER OR CPU_RISCV)
+    IF(CPU_RISCV)
       SET(DNNL_EXPERIMENTAL_UKERNEL OFF CACHE BOOL "" FORCE)
     ELSE()
       MESSAGE("-- Will build oneDNN UKERNEL")

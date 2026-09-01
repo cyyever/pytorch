@@ -435,10 +435,7 @@ if(NOT INTERN_DISABLE_AUTOGRAD)
 endif()
 
 list(APPEND TORCH_SRCS
-  ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
   ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
-  ${TORCH_SRC_DIR}/csrc/jit/serialization/export_module.cpp
-  ${TORCH_SRC_DIR}/csrc/jit/api/module_save.cpp
   ${TORCH_SRC_DIR}/csrc/utils/byte_order.cpp
 )
 
@@ -505,7 +502,6 @@ if(USE_CUDA)
     ${TORCH_ROOT}/aten/src/ATen/cuda/detail/LazyNVRTC.cpp
     PROPERTIES COMPILE_DEFINITIONS "NVRTC_SHORTHASH=${CUDA_NVRTC_SHORTHASH}"
   )
-  set_source_files_properties(${TORCH_SRC_DIR}/csrc/jit/passes/frozen_conv_add_relu_fusion.cpp PROPERTIES COMPILE_FLAGS "-DUSE_CUDA=1")
 endif()
 
 if(USE_ROCM)
@@ -533,65 +529,8 @@ endif()
 if(NOT NO_API)
   list(APPEND TORCH_SRCS
     ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/datasets/mnist.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/distributed.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/random.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/sequential.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/stream.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/imethod.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/serialize.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/init.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/module.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/_functions.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/activation.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/adaptive.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/batchnorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/normalization.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/instancenorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/conv.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/dropout.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/distance.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/embedding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/fold.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/linear.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/loss.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/padding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/pixelshuffle.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/pooling.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/rnn.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/upsampling.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/transformer.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/container/functional.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/activation.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/adaptive.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/batchnorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/embedding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/instancenorm.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/normalization.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/conv.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/dropout.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/linear.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/padding.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/pooling.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/rnn.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/vision.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/nn/options/transformer.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/adagrad.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/adam.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/adamw.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/lbfgs.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/optimizer.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/rmsprop.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/serialize.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/sgd.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/schedulers/lr_scheduler.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/schedulers/step_lr.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/optim/schedulers/reduce_on_plateau_scheduler.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/serialize/input-archive.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/serialize/output-archive.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/print.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/xpu.cpp
   )
@@ -953,10 +892,6 @@ elseif(USE_CUDA)
     message(STATUS "NVSHMEM not found, not building with NVSHMEM support.")
   endif()
 
-  if(USE_UCC)
-    target_link_libraries(torch_cuda PRIVATE __caffe2_ucc)
-    target_compile_definitions(torch_cuda PRIVATE USE_UCC)
-  endif()
   if(USE_FLASH_ATTENTION)
     target_compile_definitions(torch_cuda PRIVATE
         USE_FLASH_ATTENTION
@@ -1099,6 +1034,11 @@ if(NOT NO_API)
     ${TORCH_SRC_DIR}/csrc/api/include)
 endif()
 
+if(USE_CUDA AND MSVC)
+  # -INCLUDE is used to ensure torch_cuda is linked against in a project that relies on them.
+  # Related issue: https://github.com/pytorch/pytorch/issues/31611
+  target_link_libraries(torch_cuda INTERFACE "-INCLUDE:?warp_size@cuda@at@@YAHXZ")
+endif()
 
 set(TH_CPU_INCLUDE
   # dense
@@ -1121,10 +1061,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/native/quantized/qlinear_unpack.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 
-if(USE_MKLDNN_ACL)
-  find_package(ACL REQUIRED)
-  target_include_directories(torch_cpu SYSTEM PRIVATE ${ACL_INCLUDE_DIRS})
-endif()
 
 target_include_directories(torch_cpu PRIVATE ${ATen_CPU_INCLUDE})
 
@@ -1194,9 +1130,6 @@ if(BUILD_TEST)
 
   if(USE_DISTRIBUTED)
     add_subdirectory(${TORCH_ROOT}/test/cpp/c10d ${CMAKE_BINARY_DIR}/test_cpp_c10d)
-  endif()
-  if(NOT NO_API)
-    add_subdirectory(${TORCH_ROOT}/test/cpp/api ${CMAKE_BINARY_DIR}/test_api)
   endif()
 endif()
 
@@ -1351,22 +1284,12 @@ if(USE_DISTRIBUTED)
       target_compile_definitions(torch_cuda PUBLIC USE_C10D_NCCL)
     endif()
   endif()
-  if(USE_MPI AND USE_C10D_MPI)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set_source_files_properties(
-        "${TORCH_SRC_DIR}/csrc/distributed/c10d/ProcessGroupMPI.cpp"
-        PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-    endif()
-    target_compile_definitions(torch_cpu PUBLIC USE_C10D_MPI)
-  endif()
 endif()
 
 target_link_libraries(torch_cpu PUBLIC c10)
 target_link_libraries(torch_cpu PUBLIC ${Caffe2_PUBLIC_DEPENDENCY_LIBS})
 target_link_libraries(torch_cpu PRIVATE ${Caffe2_DEPENDENCY_LIBS})
 target_link_libraries(torch_cpu PRIVATE ${Caffe2_DEPENDENCY_WHOLE_LINK_LIBS})
-if(USE_MPI)
-  target_link_libraries(torch_cpu PRIVATE MPI::MPI_CXX)
 endif()
 target_include_directories(torch_cpu INTERFACE $<INSTALL_INTERFACE:include>)
 target_include_directories(torch_cpu PRIVATE ${Caffe2_CPU_INCLUDE})
@@ -1528,9 +1451,6 @@ if(BUILD_SHARED_LIBS)
         VERSION ${TORCH_VERSION} SOVERSION ${TORCH_SOVERSION})
   endif()
   set_target_properties(torch_global_deps PROPERTIES LINKER_LANGUAGE C)
-  if(USE_MPI)
-    target_link_libraries(torch_global_deps MPI::MPI_CXX)
-  endif()
   if(CAFFE2_USE_MKL)
     target_link_libraries(torch_global_deps caffe2::mkl)
   endif()
@@ -1674,6 +1594,9 @@ if(BUILD_TEST)
       set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
       install(TARGETS ${test_name} DESTINATION test)
       # Install PDB files for MSVC builds
+      if(MSVC AND BUILD_SHARED_LIBS)
+        install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
+      endif()
     endif()
   endforeach()
 
@@ -1692,6 +1615,9 @@ if(BUILD_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
         # Install PDB files for MSVC builds
+        if(MSVC AND BUILD_SHARED_LIBS)
+          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
+        endif()
       endif()
     endforeach()
   endif()
@@ -1711,6 +1637,9 @@ if(BUILD_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
         # Install PDB files for MSVC builds
+        if(MSVC AND BUILD_SHARED_LIBS)
+          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
+        endif()
       endif()
     endforeach()
   endif()
@@ -1779,5 +1708,4 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         ${tmp_path} PROPERTIES COMPILE_OPTIONS "-Xcompiler=-Wno-error=unused-function")
     endif()
   endforeach()
-endif()
 endif()

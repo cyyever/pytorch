@@ -21,7 +21,7 @@
 # Review-surface hierarchy:
 # - Compiler: compiler_dynamo, compiler_inductor, compiler_export_fx, compiler_autograd, functorch
 # - Core operators and runtime: core_aten_native_ops, core_aten_linalg, sparse, core_aten_optimizers, core_aten_runtime, core_c10_dispatch, autograd, core_csrc_misc, core_tests
-# - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm, backend_vulkan
+# - Backends and devices: backend_device_runtime, backend_cuda, backend_mps, backend_xpu, backend_rocm
 # - Public APIs and extensions: python_core_api, python_nn_api, python_data_api, python_specialized_api, python_api_tests, cpp_api_custom_ops, cpp_runtime_tests, nativert
 # - Distributed: distributed
 # - Serialization and export: jit_torchscript, serialization_package
@@ -553,7 +553,6 @@
 # /test/test_sympy_utils.py
 # /test/test_tensor_creation_ops.py
 # /test/test_tensor_iterator.py
-# /test/test_tensorboard.py
 # /test/test_torch.py
 # /test/test_torch_config_hash_determinism.py
 # /test/test_torchfuzz_repros.py
@@ -648,13 +647,10 @@
 # /torch/_prims_common/
 # /torch/_python_dispatcher.py
 # /torch/_refs/
-# /torch/_size_docs.py
 # /torch/_sources.py
-# /torch/_storage_docs.py
 # /torch/_streambase.py
 # /torch/_subclasses/
 # /torch/_tensor.py
-# /torch/_tensor_docs.py
 # /torch/_tensor_iterator.py
 # /torch/_tensor_str.py
 # /torch/_thread_safe_fork.py
@@ -667,7 +663,6 @@
 # /torch/accelerator/
 # /torch/amp/
 # /torch/compiler/
-# /torch/contrib/
 # /torch/cpu/
 # /torch/distributions/
 # /torch/fft/
@@ -711,7 +706,6 @@
 # /test/test_masked.py
 # /test/test_maskedtensor.py
 # /torch/masked/
-# /torch/utils/tensorboard/
 #
 # [python_api_tests]
 /test/autograd/ @soulitzer
@@ -735,8 +729,6 @@
 #
 # [cpp_runtime_tests]
 # /test/cpp/
-# /test/cpp_api_parity/
-# /test/test_cpp_api_parity.py
 #
 # [jit_torchscript]
 # /test/test_jiterator.py
@@ -787,14 +779,11 @@
 # /test/test_throughput_benchmark.py
 /torch/autograd/profiler* @scotts @ryanzhang22
 # /torch/autograd/profiler.py
-# /torch/autograd/profiler_legacy.py
 # /torch/autograd/profiler_util.py
 /torch/csrc/autograd/profiler* @scotts @ryanzhang22
 # /torch/csrc/autograd/profiler.h
 # /torch/csrc/autograd/profiler_kineto.cpp
 # /torch/csrc/autograd/profiler_kineto.h
-# /torch/csrc/autograd/profiler_legacy.cpp
-# /torch/csrc/autograd/profiler_legacy.h
 # /torch/csrc/autograd/profiler_python.cpp
 # /torch/csrc/autograd/profiler_python.h
 /torch/csrc/profiler/ @scotts @ryanzhang22

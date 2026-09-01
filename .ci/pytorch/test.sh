@@ -47,11 +47,6 @@ if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
   fi
 fi
 
-# Remove onnxruntime if present to avoid interference with non-ONNX tests
-if [[ "$TEST_CONFIG" != "onnx" ]]; then
-  pip uninstall -y onnxruntime 2>/dev/null || true
-fi
-
 # Remove dill to test that serialization works without it
 if [[ "$BUILD_ENVIRONMENT" == *py3.10-gcc11 ]]; then
   pip uninstall -y dill 2>/dev/null || true
@@ -217,7 +212,7 @@ export LANG=C.UTF-8
 
 PR_NUMBER=${PR_NUMBER:-${CIRCLE_PR_NUMBER:-}}
 
-if [[ -d "${HF_CACHE}" && "$TEST_CONFIG" != "onnx" ]]; then
+if [[ -d "${HF_CACHE}" ]]; then
   export HF_HOME="${HF_CACHE}"
 fi
 
@@ -603,13 +598,6 @@ test_xpu_sycl_tla_backend() {
   sycl_tla_dir=$(realpath "./third_party/sycl-tla")
   rm -rf "${sycl_tla_dir}" && git clone --depth 1 --single-branch -b v0.8 --quiet https://github.com/intel/sycl-tla.git "${sycl_tla_dir}"
   TORCHINDUCTOR_CUTLASS_DIR=$(realpath "./third_party/sycl-tla") python test/run_test.py --include inductor/test_cutlass_backend $PYTHON_TEST_EXTRA_OPTION --upload-artifacts-while-running
-}
-
-test_lazy_tensor_meta_reference_disabled() {
-  export TORCH_DISABLE_FUNCTIONALIZATION_META_REFERENCE=1
-  echo "Testing lazy tensor operations without meta reference"
-  time python test/run_test.py --include lazy/test_ts_opinfo.py --verbose
-  export -n TORCH_DISABLE_FUNCTIONALIZATION_META_REFERENCE
 }
 
 test_dynamo_core() {
@@ -1601,8 +1589,6 @@ test_without_numpy() {
   if [[ "${TEST_CONFIG}" == *dynamo_wrapped* ]]; then
     python -c "import sys;sys.path.insert(0, 'fake_numpy');import torch;torch.compile(lambda x:print(x))('Hello World')"
   fi
-  # Regression test for https://github.com/pytorch/pytorch/pull/157734 (torch.onnx should be importable without numpy)
-  python -c "import sys;sys.path.insert(0, 'fake_numpy');import torch; import torch.onnx"
   popd
 }
 
@@ -1642,16 +1628,15 @@ test_libtorch_jit() {
   python cpp/jit/tests_setup.py setup
   popd
 
-  # Run jit and lazy tensor cpp tests together to finish them faster
-  if [[ "$BUILD_ENVIRONMENT" == *cuda* && "$TEST_CONFIG" != *nogpu* ]]; then
-    LTC_TS_CUDA=1 python test/run_test.py --cpp --verbose -i cpp/test_jit cpp/test_lazy
-  elif [[ "${PYTORCH_TEST_WITH_ASAN}" == "1" ]]; then
-    # cpp/test_jit times out under clang-21 ASAN+UBSAN; skip it for now and run
-    # only cpp/test_lazy. TODO: re-enable once the timeout is root-caused.
-    python test/run_test.py --cpp --verbose -i cpp/test_lazy -k "not CUDA"
+  if [[ "${PYTORCH_TEST_WITH_ASAN}" == "1" ]]; then
+    # cpp/test_jit times out under clang-21 ASAN+UBSAN; skip it for now.
+    # TODO: re-enable once the timeout is root-caused.
+    echo "Skipping cpp/test_jit under ASAN"
+  elif [[ "$BUILD_ENVIRONMENT" == *cuda* && "$TEST_CONFIG" != *nogpu* ]]; then
+    python test/run_test.py --cpp --verbose -i cpp/test_jit
   else
     # CUDA tests have already been skipped when CUDA is not available
-    python test/run_test.py --cpp --verbose -i cpp/test_jit cpp/test_lazy -k "not CUDA"
+    python test/run_test.py --cpp --verbose -i cpp/test_jit -k "not CUDA"
   fi
 
   # Cleaning up test artifacts in the test folder
@@ -1722,15 +1707,6 @@ test_xpu_bin(){
   done
 }
 
-test_vulkan() {
-  if [[ "$BUILD_ENVIRONMENT" == *vulkan* ]]; then
-    ln -sf "$TORCH_LIB_DIR"/libtorch* "$TORCH_TEST_DIR"
-    ln -sf "$TORCH_LIB_DIR"/libc10* "$TORCH_TEST_DIR"
-    export VK_ICD_FILENAMES=/var/lib/jenkins/swiftshader/swiftshader/build/Linux/vk_swiftshader_icd.json
-    CPP_TESTS_DIR="${TORCH_TEST_DIR}" LD_LIBRARY_PATH=/var/lib/jenkins/swiftshader/swiftshader/build/Linux/ python test/run_test.py --cpp --verbose -i cpp/vulkan_api_test
-  fi
-}
-
 test_distributed() {
   # $1 (optional): multigpu filter ("multigpu" | "not-multigpu"), see the
   # `multigpu` marker in test/conftest.py. Empty runs the whole suite.
@@ -1796,7 +1772,6 @@ test_quantization() {
 
   python test/test_quantization.py
 }
-
 
 
 test_custom_script_ops() {
@@ -2342,10 +2317,7 @@ if ! [[ "${BUILD_ENVIRONMENT}" == *libtorch* ]]; then
   (cd test && python -c "import torch; print(torch.__config__.show())")
   (cd test && python -c "import torch; print(torch.__config__.parallel_info())")
 fi
-if [[ "${TEST_CONFIG}" == "onnx" ]]; then
-  install_torchvision
-  "$(dirname "${BASH_SOURCE[0]}")/../../scripts/onnx/test.sh"
-elif [[ "${TEST_CONFIG}" == *numpy_2* ]]; then
+if [[ "${TEST_CONFIG}" == *numpy_2* ]]; then
   # Install numpy-2.0.2 and compatible scipy & numba versions
   # Force re-install of pandas to avoid error where pandas checks numpy version from initial install and fails upon import
   TMP_PANDAS_VERSION=$(python -c "import pandas; print(pandas.__version__)" 2>/dev/null)
@@ -2391,10 +2363,6 @@ elif [[ "$TEST_CONFIG" == distributed ]]; then
     test_distributed multigpu
   else
     test_distributed
-  fi
-  # Only run RPC C++ tests on the first shard
-  if [[ "${SHARD_NUMBER}" == 1 ]]; then
-    test_rpc
   fi
 elif [[ "${TEST_CONFIG}" == *operator_benchmark* ]]; then
   TEST_MODE="short"
@@ -2550,7 +2518,6 @@ elif [[ "${SHARD_NUMBER}" == 1 && $NUM_TEST_SHARDS -gt 1 ]]; then
   if [[ "${BUILD_ENVIRONMENT}" == *cuda* || "${BUILD_ENVIRONMENT}" == *rocm* ]]; then
     test_distributed_single_gpu
   fi
-  test_lazy_tensor_meta_reference_disabled
   test_without_numpy
   install_torchvision
   test_python_shard 1
@@ -2576,8 +2543,6 @@ elif [[ "${SHARD_NUMBER}" -gt 2 ]]; then
   fi
   install_torchvision
   test_python_shard "$SHARD_NUMBER"
-elif [[ "${BUILD_ENVIRONMENT}" == *vulkan* ]]; then
-  test_vulkan
 elif [[ "${BUILD_ENVIRONMENT}" == *-mobile-lightweight-dispatch* ]]; then
   test_libtorch
 elif [[ "${TEST_CONFIG}" = docs_test ]]; then
