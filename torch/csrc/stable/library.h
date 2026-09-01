@@ -193,7 +193,7 @@ void box_from_tuple_impl(
     StableIValue* stack,
     std::tuple<T...> vals,
     std::index_sequence<I...> /*unused*/) {
-  ((stack[I] = from<T>(std::get<I>(vals))), ...);
+  ((stack[I] = torch::stable::detail::from<T>(std::get<I>(vals))), ...);
 }
 
 template <class... T>
@@ -277,7 +277,7 @@ struct boxer_impl<
     std::tuple<unbox_type_t<ParameterTypes>...> args =
         unbox_to_tuple<unbox_type_t<ParameterTypes>...>(stack);
     auto res = std::apply(func, args);
-    stack[0] = from<ReturnType>(res);
+    stack[0] = torch::stable::detail::from<ReturnType>(res);
   }
 };
 
