@@ -61,7 +61,7 @@
 #include <c10/core/Scalar.h>
 #include <c10/core/Storage.h>
 #include <c10/core/TensorOptions.h>
-#include <c10/util/Deprecated.h>
+#include <torch/headeronly/util/Deprecated.h>
 #include <optional>
 #include <c10/util/OptionalArrayRef.h>
 

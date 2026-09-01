@@ -3,7 +3,7 @@
 #include <ATen/core/TensorBase.h>
 #include <ATen/native/DispatchStub.h>
 #include <c10/core/Scalar.h>
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 #include <ATen/native/TensorIterator.h>
 
 

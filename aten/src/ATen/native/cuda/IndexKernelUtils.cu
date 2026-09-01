@@ -5,7 +5,7 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
 #include <c10/util/Half.h>
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <ATen/native/cuda/Loops.cuh>
 #include <ATen/ceil_div.h>
 

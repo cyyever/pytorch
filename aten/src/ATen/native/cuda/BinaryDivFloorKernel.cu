@@ -7,7 +7,7 @@
 #include <ATen/native/cuda/BinaryInternal.h>
 #include <c10/cuda/CUDAGuard.h>
 #include <c10/cuda/CUDAMathCompat.h>
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 #include <c10/util/generic_math.h>
 #include <ATen/native/cuda/JitLoops.cuh>
 #include <ATen/native/cuda/Loops.cuh>

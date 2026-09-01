@@ -18,9 +18,9 @@
 #include <ATen/native/cpu/zmath.h>
 #include <ATen/OpMathType.h>
 
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 #include <c10/core/Scalar.h>
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 #include <c10/util/irange.h>
 
 #if AT_MKL_ENABLED()

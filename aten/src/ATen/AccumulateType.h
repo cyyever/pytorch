@@ -2,11 +2,11 @@
 #include <ATen/Config.h>
 #include <c10/core/DeviceType.h>
 #include <c10/core/ScalarType.h>
-#include <c10/util/BFloat16.h>
-#include <c10/util/Float8_e4m3fn.h>
-#include <c10/util/Float8_e4m3fnuz.h>
-#include <c10/util/Float8_e5m2.h>
-#include <c10/util/Float8_e5m2fnuz.h>
+#include <torch/headeronly/util/BFloat16.h>
+#include <torch/headeronly/util/Float8_e4m3fn.h>
+#include <torch/headeronly/util/Float8_e4m3fnuz.h>
+#include <torch/headeronly/util/Float8_e5m2.h>
+#include <torch/headeronly/util/Float8_e5m2fnuz.h>
 #include <c10/util/Half.h>
 
 // Defines the accumulation type for a scalar type.

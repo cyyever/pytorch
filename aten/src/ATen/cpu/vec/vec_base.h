@@ -29,13 +29,13 @@
 #include <ATen/native/Math.h>
 #include <ATen/native/cpu/zmath.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/BFloat16-math.h>
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16-math.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <c10/util/Half.h>
-#include <c10/util/Load.h>
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/Load.h>
+#include <torch/headeronly/util/MathConstants.h>
 #include <c10/util/TypeCast.h>
-#include <c10/util/copysign.h>
+#include <torch/headeronly/util/copysign.h>
 #include <c10/util/irange.h>
 
 #if defined(__GNUC__)

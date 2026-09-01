@@ -455,7 +455,7 @@ code.append("//// DO NOT MODIFY!!!")
 code.append("//// --------------------------\n")
 
 code.append("#include <c10/util/Half.h>")
-code.append("#include <c10/util/BFloat16.h>")
+code.append("#include <torch/headeronly/util/BFloat16.h>")
 code.append("#include <immintrin.h>")
 
 code.append("namespace caffe2 {\n")

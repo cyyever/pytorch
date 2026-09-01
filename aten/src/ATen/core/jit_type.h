@@ -7,7 +7,7 @@
 #include <ATen/core/symbol.h>
 #include <ATen/core/type_factory.h>
 #include <ATen/core/qualified_name.h>
-#include <c10/util/TypeList.h>
+#include <torch/headeronly/util/TypeList.h>
 #include <c10/util/Exception.h>
 #include <optional>
 #include <c10/core/SymFloat.h>

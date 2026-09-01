@@ -9,7 +9,7 @@
 #include <ATen/native/BinaryOps.h>
 #include <ATen/OpMathType.h>
 #include <c10/cuda/CUDAMathCompat.h>
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 #include <c10/util/complex.h>
 
 #include <cmath>

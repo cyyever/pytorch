@@ -6,7 +6,7 @@
 //// --------------------------
 
 #include <c10/util/Half.h>
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <immintrin.h>
 namespace caffe2 {
 

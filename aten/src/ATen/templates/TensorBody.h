@@ -22,7 +22,7 @@
 #include <c10/core/WrapDimMinimal.h>
 #include <c10/util/Exception.h>
 #include <c10/util/ExclusivelyOwned.h>
-#include <c10/util/Deprecated.h>
+#include <torch/headeronly/util/Deprecated.h>
 #include <c10/util/MaybeOwned.h>
 #include <optional>
 #include <c10/util/OptionalArrayRef.h>

@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <c10/util/Half.h>
-#include <c10/util/floating_point_utils.h>
+#include <torch/headeronly/util/floating_point_utils.h>
 #include <c10/util/irange.h>
 #include <gtest/gtest.h>
 

@@ -43,7 +43,7 @@ static inline void cvtfp8e4m3_fp32(const __m128i& a, __m512& o) {
       _mm512_cmpneq_epi32_mask(mant, _zeros);
   if (denormal_mask) {
     // An alternative solution is as what scalar did in
-    // pytorch/c10/util/Float8_e4m3fn.h To count the num of leading zeros, since
+    // pytorch/torch/headeronly/util/Float8_e4m3fn.h To count the num of leading zeros, since
     // here we know the unsigned denorm value has zero sign and exp which is 5
     // leading zeros, we need to count the leading zero of mant (3bit) which may
     // done through table lookup for example: const uint8_t lz_table[8] = {3, 2,

@@ -1,5 +1,5 @@
 #include <c10/macros/Macros.h>
-#include <c10/util/Float8_e4m3fnuz.h>
+#include <torch/headeronly/util/Float8_e4m3fnuz.h>
 
 namespace c10 {
 
