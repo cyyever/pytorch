@@ -1754,10 +1754,6 @@ bool get_record_concrete_inputs_enabled() {
   return record_concrete_inputs_enabled_fn()();
 }
 
-void set_record_concrete_inputs_enabled_fn(std::function<bool()> fn) {
-  record_concrete_inputs_enabled_fn() = std::move(fn);
-}
-
 void set_record_concrete_inputs_enabled_val(bool val) {
   record_concrete_inputs_enabled_fn() = [val]() { return val; };
 }
@@ -1771,10 +1767,6 @@ std::function<bool()>& fwd_bwd_enabled_fn() {
 
 bool get_fwd_bwd_enabled() {
   return fwd_bwd_enabled_fn()();
-}
-
-void set_fwd_bwd_enabled_fn(std::function<bool()> fn) {
-  fwd_bwd_enabled_fn() = std::move(fn);
 }
 
 void set_fwd_bwd_enabled_val(bool val) {
@@ -1792,34 +1784,8 @@ bool get_cuda_sync_enabled() {
   return cuda_sync_enabled_fn()();
 }
 
-void set_cuda_sync_enabled_fn(std::function<bool()> fn) {
-  cuda_sync_enabled_fn() = std::move(fn);
-}
-
 void set_cuda_sync_enabled_val(bool val) {
   cuda_sync_enabled_fn() = [val]() { return val; };
 }
 
-namespace {
-std::function<bool()>& record_tensor_addrs_enabled() {
-  static std::function<bool()> fn = []() { return false; };
-  return fn;
-}
-} // namespace
-
-bool get_record_tensor_addrs_enabled() {
-  static std::optional<bool> cached_record_tensor_addrs_enabled;
-  if (!cached_record_tensor_addrs_enabled.has_value()) {
-    cached_record_tensor_addrs_enabled = record_tensor_addrs_enabled()();
-  }
-  return cached_record_tensor_addrs_enabled.value();
-}
-
-void set_record_tensor_addrs_enabled_fn(std::function<bool()> fn) {
-  record_tensor_addrs_enabled() = std::move(fn);
-}
-
-void set_record_tensor_addrs_enabled_val(bool val) {
-  record_tensor_addrs_enabled() = [val]() { return val; };
-}
 } // namespace torch::profiler::impl

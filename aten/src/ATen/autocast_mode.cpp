@@ -76,7 +76,7 @@ thread_local std::array<at::ScalarType, at::COMPILE_TIME_MAX_DEVICE_TYPES>
         at::kBFloat16, // HPU / HABANA
         at::ScalarType::Undefined, // SX-Aurora / NEC
         at::ScalarType::Undefined, // Lazy Tensors
-        at::kHalf, // Graphcore IPU
+        at::ScalarType::Undefined, // Graphcore IPU
         at::kHalf, // Meta training and inference devices
         at::kHalf, // PrivateUse1 device
 };

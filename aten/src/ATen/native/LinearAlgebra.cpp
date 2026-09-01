@@ -425,7 +425,7 @@ std::tuple<Tensor, Tensor> get_atol_rtol(
     const std::optional<Tensor>& rtol_opt,
     const std::string_view function_name) {
   auto options = input.options();
-  if (input.device().type() == kMetal || input.device().type() == kMPS) {
+  if (input.device().type() == kMPS) {
     options = options.dtype(ScalarType::Float);
   } else {
     options = options.dtype(ScalarType::Double);
@@ -462,7 +462,7 @@ std::tuple<Tensor, Tensor> get_atol_rtol(
            : default_rtol;
   }
   auto options = input.options();
-  if (input.device().type() == kMetal || input.device().type() == kMPS) {
+  if (input.device().type() == kMPS) {
     options = options.dtype(ScalarType::Float);
   } else {
     options = options.dtype(ScalarType::Double);
@@ -529,7 +529,7 @@ Tensor linalg_pinv(const Tensor& input, const Tensor& rcond, bool hermitian) {
   // For NumPy compatibility the rcond argument is used as relative tolerance
   checkNotComplexTolerance(rcond, "torch.linalg.pinv", "rcond");
   auto options = input.options();
-  if (input.device().type() == kMetal || input.device().type() == kMPS) {
+  if (input.device().type() == kMPS) {
     options = options.dtype(ScalarType::Float);
   } else {
     options = options.dtype(ScalarType::Double);

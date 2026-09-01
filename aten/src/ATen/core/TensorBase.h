@@ -440,12 +440,6 @@ class TORCH_API TensorBase {
     return impl_->is_cuda();
   }
 
-  /// Returns if a `Tensor` has IPU backend.
-  bool is_ipu() const {
-    // NB: this is not a native function to avoid dispatching overhead.
-    return impl_->is_ipu();
-  }
-
   /// Returns if a `Tensor` has XPU backend.
   bool is_xpu() const {
     // NB: this is not a native function to avoid dispatching overhead.
@@ -518,12 +512,6 @@ class TORCH_API TensorBase {
   bool is_maia() const {
     // NB: this is not a native function to avoid dispatching overhead.
     return impl_->is_maia();
-  }
-
-  /// Returns if a `Tensor` is metal tensor.
-  bool is_metal() const {
-    // NB: this is not a native function to avoid dispatching overhead.
-    return impl_->is_metal();
   }
 
   /// Returns if a `Tensor` has quantized backend.

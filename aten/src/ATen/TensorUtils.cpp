@@ -117,10 +117,6 @@ void checkSameSize(CheckedFrom c, const TensorArg& t1, const TensorArg& t2) {
     " (while checking arguments for ", c, ")");
 }
 
-void checkAllSameSize(CheckedFrom c, ArrayRef<TensorArg> tensors) {
-  checkAllSame(c, tensors, checkSameSize);
-}
-
 void checkNumel(CheckedFrom c, const TensorGeometryArg& t, int64_t numel) {
   TORCH_CHECK(
     t->numel() == numel,
@@ -136,10 +132,6 @@ void checkSameNumel(CheckedFrom c, const TensorArg& t1, const TensorArg& t2) {
     " to have same number of elements as tensor for ", t2, "; but ",
     t1->numel(), " does not equal ", t2->numel(),
     " (while checking arguments for ", c, ")");
-}
-
-void checkAllSameNumel(CheckedFrom c, ArrayRef<TensorArg> tensors) {
-  checkAllSame(c, tensors, checkSameNumel);
 }
 
 void checkSameGPU(CheckedFrom c, const TensorArg& t1, const TensorArg& t2) {

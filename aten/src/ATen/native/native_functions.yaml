@@ -7769,20 +7769,6 @@
   dispatch:
     CPU, CUDA, MPS, XPU: scatter_value_out
 
-- func: scatter.reduce(Tensor self, int dim, Tensor index, Tensor src, *, str reduce) -> Tensor
-  structured_delegate: scatter.reduce_out
-  variants: function, method
-
-- func: scatter_.reduce(Tensor(a!) self, int dim, Tensor index, Tensor src, *, str reduce) -> Tensor(a!)
-  structured_delegate: scatter.reduce_out
-  variants: method
-
-- func: scatter.reduce_out(Tensor self, int dim, Tensor index, Tensor src, *, str reduce, Tensor(a!) out) -> Tensor(a!)
-  structured: True
-  variants: function
-  dispatch:
-    CPU, CUDA, MPS, XPU: scatter_reduce_out
-
 - func: scatter.value_reduce(Tensor self, int dim, Tensor index, Scalar value, *, str reduce) -> Tensor
   structured_delegate: scatter.value_reduce_out
   variants: function, method

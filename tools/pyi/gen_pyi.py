@@ -1703,7 +1703,6 @@ def gen_pyi(
             "is_mtia": ["is_mtia: _bool"],
             "is_maia": ["is_maia: _bool"],
             "is_mkldnn": ["is_mkldnn: _bool"],
-            "is_ipu": ["is_ipu: _bool"],
             "storage_offset": [defs("storage_offset", ["self"], "_int | SymInt")],
             "to": [
                 (

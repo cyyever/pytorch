@@ -24,12 +24,13 @@
 
 namespace c10d {
 
-TORCH_API size_t getTensorsNumel(const std::vector<at::Tensor>& tensors);
-
 // Retrieve tensor shapes from a given tensor.
 TORCH_API std::vector<at::Tensor> getTensorShapes(
     const std::vector<at::Tensor>& tensors);
 
+TORCH_API size_t getTensorsNumel(const std::vector<at::Tensor>& tensors);
+
+// Retrieve tensor shapes from a given tensor.
 // Use -2 to represent unset state of env vars
 #define C10D_ENV_NOT_SET -2
 

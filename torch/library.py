@@ -819,7 +819,7 @@ def impl(
     with this API provided they return a function and are placed inside
     this API (see Example 2).
 
-    Some valid types are: "cpu", "cuda", "xla", "mps", "ipu", "xpu".
+    Some valid types are: "cpu", "cuda", "xla", "mps", "xpu".
 
     Args:
         qualname (str): Should be a string that looks like "namespace::operator_name".
@@ -1009,7 +1009,7 @@ def register_kernel(
 ):
     """Register an implementation for a device type for this operator.
 
-    Some valid device_types are: "cpu", "cuda", "xla", "mps", "ipu", "xpu".
+    Some valid device_types are: "cpu", "cuda", "xla", "mps", "xpu".
     This API may be used as a decorator.
 
     Args:

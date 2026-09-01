@@ -5842,7 +5842,6 @@ def meta_scatter_add_(self, dim, index, src):
     [
         aten.scatter.src,
         aten.scatter.value,
-        aten.scatter.reduce,
         aten.scatter.value_reduce,
     ]
 )
@@ -5857,7 +5856,6 @@ def meta_scatter(self, dim, index, src_or_value, reduce=None):
     [
         aten.scatter_.src,
         aten.scatter_.value,
-        aten.scatter_.reduce,
         aten.scatter_.value_reduce,
     ]
 )

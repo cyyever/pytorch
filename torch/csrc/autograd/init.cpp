@@ -161,8 +161,8 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
       .value("FPGA", c10::DeviceType::FPGA)
       .value("MAIA", c10::DeviceType::MAIA)
       .value("XLA", c10::DeviceType::XLA)
-      .value("Vulkan", c10::DeviceType::Vulkan)
       .value("Metal", c10::DeviceType::Metal)
+      .value("Vulkan", c10::DeviceType::Vulkan)
       .value("XPU", c10::DeviceType::XPU)
       .value("MPS", c10::DeviceType::MPS)
       .value("MTIA", c10::DeviceType::MTIA)
@@ -812,7 +812,6 @@ static PyObject* is_any_autocast_enabled(PyObject* _unused, PyObject* arg) {
   if (at::autocast::is_autocast_enabled(at::kCPU) ||
       at::autocast::is_autocast_enabled(at::kCUDA) ||
       at::autocast::is_autocast_enabled(at::kXPU) ||
-      at::autocast::is_autocast_enabled(at::kIPU) ||
       at::autocast::is_autocast_enabled(at::kXLA) ||
       at::autocast::is_autocast_enabled(at::kHPU) ||
       at::autocast::is_autocast_enabled(at::kMTIA) ||

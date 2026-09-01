@@ -1511,7 +1511,6 @@ void TensorIteratorBase::build(TensorIteratorConfig& config) {
   // Extend the condition to MAIA tensors as MAIA tensors also don't have storage.
   if (privateuse1_without_storage  ||
       common_device_.type() == DeviceType::XLA  ||
-      common_device_.type() == DeviceType::IPU  ||
       common_device_.type() == DeviceType::Lazy ||
       common_device_.type() == DeviceType::MAIA  ||
       common_device_.type() == DeviceType::HPU) return;

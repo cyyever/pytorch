@@ -119,58 +119,18 @@ std::string getNvtxStr(
   }
 }
 
-// ----------------------------------------------------------------------------
-// -- Op context (shapes, call stack) -----------------------------------------
-// ----------------------------------------------------------------------------
-std::vector<FileLineFunc> prepareCallstack(
-    const std::vector<jit::StackEntry>& cs) {
-  std::vector<FileLineFunc> entries;
-  entries.reserve(cs.size());
-  for (const auto& entry : cs) {
-    auto& range = entry.range;
-    if (range.source()) {
-      auto& src = range.source();
-      if (src && src->filename()) {
-        auto line =
-            src->starting_line_no() + src->lineno_for_offset(range.start());
-        entries.emplace_back(
-            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            FileLineFunc{*(src->filename()), line, entry.filename});
-      }
-    }
-  }
-  return entries;
-}
-
-std::vector<std::string> callstackStr(const std::vector<FileLineFunc>& cs) {
-  std::vector<std::string> cs_str;
-  cs_str.reserve(cs.size());
-  for (const auto& entry : cs) {
-    std::stringstream loc;
-    loc << entry.filename << '(' << entry.line << "): " << entry.funcname;
-    cs_str.push_back(std::move(loc).str());
-  }
-  return cs_str;
-}
-
 std::string joinStacks(
     const std::vector<std::string>& stacks,
     const char* delim) {
   std::ostringstream oss;
   std::ranges::transform(
       stacks,
-     
+
       std::ostream_iterator<std::string>(oss, delim),
       [](std::string s) -> std::string {
         return s;
       });
   return std::move(oss).str();
-}
-
-std::string stacksToStr(
-    const std::vector<std::string>& stacks,
-    const char* delim) {
-  return "\"" + joinStacks(stacks, delim) + "\"";
 }
 
 static std::vector<std::vector<int64_t>> flattenList(
@@ -326,7 +286,7 @@ std::string strListToStr(const std::vector<std::string>& types) {
     std::ostringstream oss;
     std::ranges::transform(
         types,
-       
+
         std::ostream_iterator<std::string>(oss, ", "),
         [](const std::string& s) -> std::string { return "\"" + s + "\""; });
     auto rc = std::move(oss).str();
@@ -579,60 +539,6 @@ collective_meta_t saveNcclMetaTyped(
   }
   metadata.emplace(kIsAsynchronizedOp, debugInfo->isAsynchronizedOp());
 
-  if (get_record_tensor_addrs_enabled()) {
-    std::vector<std::string> addressList;
-    if (config.introspectInputs) {
-      auto num_inputs = fn.num_inputs();
-      const auto inputs = fn.inputs();
-      if (checkFunctionInputsForLogging(fn)) {
-        // need to account for Stack mode where the inputs are at the end.
-        size_t input_start = inputs.size() - num_inputs;
-        for (const auto i : c10::irange(input_start, inputs.size())) {
-          const c10::IValue& val = inputs[i];
-          auto [is_list, result] = findStartAddrForTensors(val);
-          if (is_list) {
-            auto const& list_result = std::get<std::vector<int>>(result);
-            addressList.push_back(
-                format_list(list_result, config.truncate, false));
-          } else {
-            auto scalar_result = std::get<int>(result);
-            addressList.push_back(std::to_string(scalar_result));
-          }
-          // today we record a lot of metadata in record_param_comms that shows
-          // up as inputs. here we only need the addresses of the first inputs,
-          // which are the real tensor inputs to the collective call. So let's
-          // break out of the loop here.
-          break;
-        }
-        metadata.emplace(
-            kInTensorsStart, format_list(addressList, false, false));
-        addressList.clear();
-      }
-    }
-    if (config.introspectOutputs) {
-      const auto& outputs = fn.outputs();
-      auto num_outputs = fn.num_outputs();
-      if (checkFunctionOutputsForLogging(fn)) {
-        // need to account for Stack mode where the outputs are at the end.
-        size_t output_start = outputs.size() - num_outputs;
-        for (const auto i : c10::irange(output_start, outputs.size())) {
-          const c10::IValue& val = outputs[i];
-          auto [is_list, result] = findStartAddrForTensors(val);
-          if (is_list) {
-            auto const& list_result = std::get<std::vector<int>>(result);
-            addressList.push_back(
-                format_list(list_result, config.truncate, false));
-          } else {
-            auto scalar_result = std::get<int>(result);
-            addressList.push_back(std::to_string(scalar_result));
-          }
-        }
-        metadata.emplace(
-            kOutTensorsStart, format_list(addressList, false, false));
-        addressList.clear();
-      }
-    }
-  }
 #endif // USE_DISTRIBUTED
   return metadata;
 }

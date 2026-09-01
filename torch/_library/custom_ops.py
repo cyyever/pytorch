@@ -394,7 +394,7 @@ class CustomOpDef:
     ) -> Callable:
         """Register an implementation for a device type for this operator.
 
-        Some valid device_types are: "cpu", "cuda", "xla", "mps", "ipu", "xpu".
+        Some valid device_types are: "cpu", "cuda", "xla", "mps", "xpu".
         This API may be used as a decorator.
 
         Args:

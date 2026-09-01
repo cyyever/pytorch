@@ -9125,13 +9125,13 @@ class TestMPS(TestCaseMPS):
             cpu_idx = torch.tensor(idx_np, device='cpu', dtype=idx_dtype)
             idx = cpu_idx.detach().clone().to('mps')
 
-            scatter_result = torch.scatter(x, dim=dim, index=idx, src=src, reduce=reduce_str)
-            scatter_result_cpu = torch.scatter(cpu_x, dim=dim, index=cpu_idx, src=cpu_src, reduce=reduce_str)
+            scatter_result = torch.scatter_reduce(x, dim, idx, src, reduce_str)
+            scatter_result_cpu = torch.scatter_reduce(cpu_x, dim, cpu_idx, cpu_src, reduce_str)
 
             self.assertEqual(scatter_result, scatter_result_cpu)
 
         # for reduce in ["sum", "prod", "amax", "amin"]:
-        for reduce_type in ["add", "multiply"]:
+        for reduce_type in ["sum", "prod"]:
             helper((2, 3), 0, (5, 3), (5, 3), reduce_str=reduce_type)
             helper((2, 8, 4, 5), 0, (10, 8, 4, 5), (10, 8, 4, 5), reduce_str=reduce_type)
             helper((8, 8, 4, 5), 0, (10, 8, 4, 5), (10, 8, 4, 5), reduce_str=reduce_type)

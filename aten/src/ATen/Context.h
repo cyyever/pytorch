@@ -13,7 +13,6 @@
 #include <ATen/detail/CUDAHooksInterface.h>
 #include <ATen/detail/HIPHooksInterface.h>
 #include <ATen/detail/HPUHooksInterface.h>
-#include <ATen/detail/IPUHooksInterface.h>
 #include <ATen/detail/MPSHooksInterface.h>
 #include <ATen/detail/PrivateUse1HooksInterface.h>
 #include <ATen/detail/XLAHooksInterface.h>
@@ -195,9 +194,6 @@ class TORCH_API Context {
   }
   static bool hasMPS() {
     return detail::getMPSHooks().hasMPS();
-  }
-  static bool hasIPU() {
-    return c10::impl::hasDeviceGuardImpl(c10::DeviceType::IPU);
   }
   static bool hasXLA() {
     return detail::getXLAHooks().hasXLA();
@@ -534,10 +530,6 @@ inline bool hasCUDA() {
 
 inline bool hasHIP() {
   return globalContext().hasHIP();
-}
-
-inline bool hasIPU() {
-  return globalContext().hasIPU();
 }
 
 inline bool hasXLA() {

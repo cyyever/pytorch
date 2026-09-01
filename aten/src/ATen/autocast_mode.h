@@ -22,12 +22,14 @@ TORCH_API int decrement_nesting();
 TORCH_API bool is_autocast_cache_enabled();
 TORCH_API void set_autocast_cache_enabled(bool enabled);
 
-const std::array<at::DeviceType, 10> _AUTOCAST_SUPPORTED_DEVICES{
+// Deduce the extent: spelling it out went wrong once already, when IPU was
+// dropped from the list and the 10 stayed, leaving a value-initialised
+// DeviceType(0) at the end.
+constexpr std::array _AUTOCAST_SUPPORTED_DEVICES{
     at::kCPU,
     at::kCUDA,
     at::kMAIA,
     at::kXPU,
-    at::kIPU,
     at::kHPU,
     at::kXLA,
     at::kPrivateUse1,
@@ -48,8 +50,6 @@ inline bool is_autocast_eligible(
       return tensor.is_maia() && tensor.is_floating_point();
     case c10::DeviceType::XPU:
       return tensor.is_xpu() && tensor.is_floating_point();
-    case c10::DeviceType::IPU:
-      return tensor.is_ipu() && tensor.is_floating_point();
     case c10::DeviceType::HPU:
       return tensor.is_hpu() && tensor.is_floating_point();
     case c10::DeviceType::XLA:
@@ -75,8 +75,6 @@ inline DispatchKey get_autocast_dispatch_key_from_device_type(
       return DispatchKey::AutocastMAIA;
     case c10::DeviceType::XPU:
       return DispatchKey::AutocastXPU;
-    case c10::DeviceType::IPU:
-      return DispatchKey::AutocastIPU;
     case c10::DeviceType::HPU:
       return DispatchKey::AutocastHPU;
     case c10::DeviceType::XLA:

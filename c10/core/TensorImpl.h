@@ -43,21 +43,6 @@
 #include <utility>
 #include <vector>
 
-// A global boolean variable to control whether we free memory when a Tensor
-// is shrunk to a smaller size. As a result, a Tensor is always going to
-// keep the memory allocated for its maximum capacity reshaped to so far.
-//
-// This parameter is respected "upper-case" methods which call Resize()
-// (e.g., CopyFrom, ResizeLike); it is NOT respected by Tensor::resize_
-// or ShrinkTo, both of which guarantee to never to free memory.
-C10_DECLARE_bool(caffe2_keep_on_shrink);
-
-// Since we can have high variance in blob memory allocated across different
-// inputs in the same run, we will shrink the blob only if the memory gain
-// is larger than this flag in bytes.  This only applies to functions which
-// respect caffe2_keep_on_shrink.
-C10_DECLARE_int64(caffe2_max_keep_on_shrink_memory);
-
 
 namespace at {
 class Tensor;
@@ -471,20 +456,12 @@ struct C10_API TensorImpl;
  *
  *      - A tensor may be STORAGE UNINITIALIZED.  A tensor of this form
  *        has non-zero size, but has a storage with a null data pointer.
- *        This situation most frequently arises when a user calls
- *        Resize() or FreeMemory().  This is because Caffe2 historically
- *        does lazy allocation: allocation of data doesn't occur until
+ *        Allocation of the data is lazy: it does not happen until
  *        mutable_data<T>() is invoked.  A tensor with zero size is
  *        always storage initialized, because no allocation is necessary
  *        in this case.
  *
  *    All combinations of these two uninitialized states are possible.
- *    Consider the following transcript in idiomatic Caffe2 API:
- *
- *      Tensor x(CPU); // x is storage-initialized, dtype-UNINITIALIZED
- *      x.Resize(4); // x is storage-UNINITIALIZED, dtype-UNINITIALIZED
- *      x.mutable_data<float>(); // x is storage-initialized, dtype-initialized
- *      x.FreeMemory(); // x is storage-UNINITIALIZED, dtype-initialized.
  *
  *    All other fields on tensor are always initialized.  In particular,
  *    size is always valid. (Historically, a tensor declared as Tensor x(CPU)
@@ -494,7 +471,7 @@ struct C10_API TensorImpl;
  *    Uninitialized storages MUST be uniquely owned, to keep our model
  *    simple.  Thus, we will reject operations which could cause an
  *    uninitialized storage to become shared (or a shared storage to
- *    become uninitialized, e.g., from FreeMemory).
+ *    become uninitialized).
  *
  *    In practice, tensors which are storage-UNINITIALIZED and
  *    dtype-UNINITIALIZED are *extremely* ephemeral: essentially,
@@ -1163,13 +1140,6 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
     return device_opt_.has_value() && device_opt_->type() == kXPU;
   }
 
-  bool is_ipu() const {
-    if (C10_UNLIKELY(device_policy_)) {
-      return device_custom().is_ipu();
-    }
-    return device_opt_.has_value() && device_opt_->type() == kIPU;
-  }
-
   bool is_xla() const {
     if (C10_UNLIKELY(device_policy_)) {
       return device_custom().is_xla();
@@ -1227,13 +1197,6 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
 
   bool is_mkldnn() const {
     return key_set_.has_all(c10::mkldnn_ks);
-  }
-
-  bool is_metal() const {
-    if (C10_UNLIKELY(device_policy_)) {
-      return device_custom().is_metal();
-    }
-    return device_opt_.has_value() && device_opt_->type() == kMetal;
   }
 
   bool is_mps() const {
@@ -2185,89 +2148,6 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
   }
 
   /**
-   * @brief Extends the outer-most dimension of this tensor by num elements,
-   * preserving the existing data.
-   *
-   * The underlying data may be reallocated in order to accommodate the new
-   * elements, in which case this tensors' capacity is grown at a factor of
-   * growthPct. This ensures that Extend runs on an amortized O(1) time
-   * complexity.
-   *
-   * This op is auto-asynchronous if the underlying device (CUDA) supports it.
-   */
-  void Extend(int64_t num, float growthPct);
-
-  /**
-   * @brief Reserve space for the underlying tensor.
-   *
-   * This must be called after Resize(), since we only specify the first
-   * dimension This does not copy over the old data to the newly allocated space
-   */
-  void ReserveSpace(int64_t outer_dim);
-
-  /**
-   * @brief Resizes a tensor.
-   *
-   * Resize takes in a vector of ints specifying the dimensions of the tensor.
-   * You can pass in an empty vector to specify that it is a scalar (i.e.
-   * containing one single item).
-   *
-   * The underlying storage may be deleted after calling Resize: if the new
-   * shape leads to a different number of items in the tensor, the old memory
-   * is deleted and new memory will be allocated next time you call
-   * mutable_data(). However, if the shape is different but the total number of
-   * items is the same, the underlying storage is kept.
-   *
-   * This method respects caffe2_keep_on_shrink.  Consult the internal logic
-   * of this method to see exactly under what circumstances this flag matters.
-   */
-  template <typename... Ts>
-  void Resize(Ts... dim_source) {
-    bool size_changed = SetDims(dim_source...);
-    if (size_changed) {
-      HandleResize();
-    }
-  }
-
-  template <typename T>
-  void Resize(const std::vector<T>& dim_source) {
-    Resize(ArrayRef<T>(dim_source));
-  }
-
-  /**
-   * Resizes the tensor without touching underlying storage.
-   * This requires the total size of the tensor to remains constant.
-   */
-  void Reshape(const std::vector<int64_t>& dims);
-
-  /**
-   * Release whatever memory the tensor was holding but keep size and type
-   * information. Subsequent call to mutable_data will trigger new memory
-   * allocation.
-   */
-  void FreeMemory();
-
-  /**
-   * @brief Shares the data with another tensor.
-   *
-   * To share data between two tensors, the sizes of the two tensors must be
-   * equal already. The reason we do not implicitly do a Resize to make the two
-   * tensors have the same shape is that we want to allow tensors of different
-   * shapes but the same number of items to still be able to share data. This
-   * allows one to e.g. have a n-dimensional Tensor and a flattened version
-   * sharing the same underlying storage.
-   *
-   * The source tensor should already have its data allocated.
-   */
-  // To be deprecated
-  void ShareData(const TensorImpl& src);
-
-  void ShareExternalPointer(
-      DataPtr&& data_ptr,
-      const caffe2::TypeMeta data_type,
-      size_t size_bytes);
-
-  /**
    * Returns a mutable raw pointer of the underlying storage. Since we will need
    * to know the type of the data for allocation, a TypeMeta object is passed in
    * to specify the necessary information. This is conceptually equivalent of
@@ -2351,8 +2231,7 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
   }
 
   /**
-   * True if a tensor is storage initialized.  A tensor may become
-   * storage UNINITIALIZED after a Resize() or FreeMemory()
+   * True if a tensor is storage initialized.
    */
   bool storage_initialized() const {
     TORCH_CHECK(
@@ -2499,72 +2378,6 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
   }
 
  private:
-  void HandleResize();
-
-  // The Caffe2 Resize() method supports being called both as Resize({2,2}) as
-  // well as variadic with Resize(2, 2).  These overloads provide all of the
-  // supported calling configurations, while being overloads (and not templates)
-  // so that implicit conversions still work.
-  //
-  // SetDims on ArrayRef is internally implemented as a template, so we can
-  // handle both ArrayRefs of different types (there are some uses of
-  // Resize in Caffe2 which pass in int, not int64_t.)
-
-  template <typename T>
-    requires std::is_integral_v<T>
-  bool SetDimsTemplate(ArrayRef<T> src) {
-    TORCH_CHECK(
-        !has_symbolic_sizes_strides_,
-        "SetDims() called on tensor with symbolic shape")
-
-    auto old_numel = numel_;
-    sizes_and_strides_.resize(src.size());
-    int64_t new_numel = 1;
-    for (const auto i : c10::irange(src.size())) {
-      new_numel *= src[i];
-      sizes_and_strides_.size_at_unchecked(i) = src[i];
-    }
-    numel_ = new_numel;
-    empty_tensor_restride(MemoryFormat::Contiguous);
-    return numel_ != old_numel;
-  }
-
-  bool SetDims(ArrayRef<int64_t> s) {
-    return SetDimsTemplate(s);
-  }
-
-  bool SetDims(ArrayRef<int> s) {
-    return SetDimsTemplate(s);
-  }
-
-  bool SetDims(ArrayRef<size_t> s) {
-    return SetDimsTemplate(s);
-  }
-
-  bool SetDims() {
-    return SetDims(IntArrayRef{});
-  }
-
-  bool SetDims(const int64_t d0) {
-    return SetDims(IntArrayRef{d0});
-  }
-
-  bool SetDims(const int64_t d0, const int64_t d1) {
-    return SetDims(IntArrayRef{d0, d1});
-  }
-
-  bool SetDims(const int64_t d0, const int64_t d1, const int64_t d2) {
-    return SetDims(IntArrayRef{d0, d1, d2});
-  }
-
-  bool SetDims(
-      const int64_t d0,
-      const int64_t d1,
-      const int64_t d2,
-      const int64_t d3) {
-    return SetDims(IntArrayRef{d0, d1, d2, d3});
-  }
-
   /**
    * Compute the number of elements based on the sizes of a tensor.
    */

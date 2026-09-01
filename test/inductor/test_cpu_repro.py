@@ -2919,7 +2919,7 @@ class CPUReproTests(TestCase):
     @patch("torch.cuda.is_available", lambda: False)
     def test_scatter_using_atomic_add(self):
         def fn(a, dim, index, b):
-            return aten.scatter(a, dim, index, b, reduce="add")
+            return aten.scatter_reduce(a, dim, index, b, "sum")
 
         inps = (
             torch.randn(5, 29, 13),
@@ -2981,7 +2981,7 @@ class CPUReproTests(TestCase):
     @torch._inductor.config.patch({"cpp.fallback_scatter_reduce_sum": False})
     def test_scatter_using_atomic_add_vec(self):
         def fn(a, dim, index, b):
-            return aten.scatter(a, dim, index, b, reduce="add")
+            return aten.scatter_reduce(a, dim, index, b, "sum")
 
         inps = (
             torch.zeros(1, 1, 25),

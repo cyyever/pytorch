@@ -106,14 +106,7 @@ struct TORCH_API SaveNcclMetaConfig {
 // can insert "...". Do not parse or restructure them.
 using collective_meta_t = std::unordered_map<std::string, c10::IValue>;
 
-TORCH_API std::vector<FileLineFunc> prepareCallstack(
-    const std::vector<jit::StackEntry>& cs);
-TORCH_API std::vector<std::string> callstackStr(
-    const std::vector<FileLineFunc>& cs);
 TORCH_API std::string joinStacks(
-    const std::vector<std::string>& stacks,
-    const char* delim);
-TORCH_API std::string stacksToStr(
     const std::vector<std::string>& stacks,
     const char* delim);
 TORCH_API std::vector<std::vector<int64_t>> inputSizes(

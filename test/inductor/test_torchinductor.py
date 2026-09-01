@@ -11853,7 +11853,7 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
             check_lowp = False
 
         def fn(a, dim, index, b):
-            return aten.scatter.reduce(a, dim, index, b, reduce="add")
+            return aten.scatter_reduce(a, dim, index, b, "sum")
 
         self.common(
             fn,
@@ -11868,7 +11868,7 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
 
     def test_scatter3(self):
         def fn(a, dim, index, b):
-            return aten.scatter(a, dim, index, b, reduce="add")
+            return aten.scatter_reduce(a, dim, index, b, "sum")
 
         check_lowp = True
         if self.device == "xpu":
@@ -11913,16 +11913,16 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
     def test_scatter5(self):
         def fn(a, dim, index, b, reduce):
             a = a.clone()
-            a.scatter_(dim, index, b, reduce=reduce)
+            a.scatter_reduce_(dim, index, b, reduce)
             a1 = a + 1.0
-            a1.scatter_(dim, index, b, reduce=reduce)
+            a1.scatter_reduce_(dim, index, b, reduce)
             return (a, a1)
 
         check_lowp = True
         if self.device == "xpu":
             check_lowp = False
 
-        for reduce in ["add", "multiply"]:
+        for reduce in ["sum", "prod"]:
             self.common(
                 fn,
                 [
