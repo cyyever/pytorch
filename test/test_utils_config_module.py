@@ -321,8 +321,8 @@ torch.testing._internal.fake_config_module3.e_func = _warnings.warn""",
     def test_dict_copy_semantics(self):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=FutureWarning)
-            p = config.shallow_copy_dict()
-            p2 = config.to_dict()
+            p = config.get_config_copy()
+            p2 = config.get_config_copy()
 
         self.assertDictEqual(
             p,

@@ -5,7 +5,6 @@ import logging
 import os
 import warnings
 from typing import Any, cast, TYPE_CHECKING
-from warnings import deprecated
 
 import torch
 import torch.distributed as dist
@@ -23,36 +22,9 @@ from .utils import _api_bc_check, _DistWrapper, _profile
 if TYPE_CHECKING:
     from torch.distributed.checkpoint.metadata import Metadata
 
-__all__ = ["load_state_dict", "load"]
+__all__ = ["load"]
 
 logger = logging.getLogger()
-
-
-@deprecated(
-    "`load_state_dict` is deprecated and will be removed in future versions. "
-    "Please use `load` instead.",
-    category=FutureWarning,
-)
-def load_state_dict(
-    state_dict: dict[str, Any],
-    storage_reader: StorageReader,
-    process_group: dist.ProcessGroup | None = None,
-    coordinator_rank: int = 0,
-    no_dist: bool = False,
-    planner: LoadPlanner | None = None,
-) -> None:
-    """This method is deprecated. Please switch to 'load'."""
-    storage_reader.reset()
-    with _profile():
-        # TODO: test returning `load` here instead.
-        return _load_state_dict(
-            state_dict,
-            storage_reader,
-            process_group,
-            coordinator_rank,
-            no_dist,
-            planner,
-        )
 
 
 @_dcp_method_logger(log_exceptions=True)
@@ -135,7 +107,7 @@ def load(
         ...     "/checkpoint/1"
         ... )
 
-        >>> torch.distributed.checkpoint.load_state_dict(
+        >>> torch.distributed.checkpoint.load(
         >>>     state_dict=model_state_dict,
         >>>     storage_reader=fs_storage_reader,
         >>> )

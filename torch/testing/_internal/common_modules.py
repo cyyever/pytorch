@@ -37,8 +37,6 @@ MODULE_NAMESPACES: list[ModuleType] = [
 # Modules that shouldn't be tested for one reason or another.
 MODULES_TO_SKIP: set[type] = {
     torch.nn.Module,  # abstract base class
-    torch.nn.Container,  # deprecated
-    torch.nn.NLLLoss2d,  # deprecated
 }
 
 # List of all module classes to test.

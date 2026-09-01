@@ -15,7 +15,7 @@ from torch.distributed.checkpoint.metadata import (
 from torch.distributed.checkpoint.planner import LoadPlanner
 
 # pyrefly: ignore [deprecated]
-from torch.distributed.checkpoint.state_dict_loader import load_state_dict
+from torch.distributed.checkpoint.state_dict_loader import load
 from torch.distributed.checkpoint.storage import StorageReader
 
 
@@ -91,7 +91,7 @@ def load_sharded_optimizer_state_dict(
             # value: TensorStorageMetadata
             state_dict[key] = _alloc_tensor(value.properties, value.size, device_type)
 
-    load_state_dict(
+    load(
         state_dict=state_dict,
         storage_reader=storage_reader,
         planner=planner,

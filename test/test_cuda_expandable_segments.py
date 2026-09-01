@@ -33,7 +33,7 @@ from torch.testing._internal.common_utils import run_tests
 
 # Restore prior env state. EXPANDABLE_SEGMENTS has already been resolved at
 # import time above; the runtime allocator is forced into expandable mode
-# via _set_allocator_settings in __main__ below.
+# via _accelerator_setAllocatorSettings in __main__ below.
 if _PRIOR_ALLOC_CONF is None:
     os.environ.pop("PYTORCH_CUDA_ALLOC_CONF", None)
 else:
@@ -51,5 +51,5 @@ sys.path.remove(str(REPO_ROOT))
 if __name__ == "__main__":
     if torch.cuda.is_available() and not IS_JETSON and not IS_WINDOWS:
         get_disabled_tests(".")
-        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:True")
         run_tests()

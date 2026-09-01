@@ -1074,9 +1074,7 @@ class ProcessGroupNCCLGroupTest(MultiProcessTestCase):
         pg.allreduce(torch.rand(10).cuda(self.rank))
         dist.set_timeout(timedelta(seconds=252), pg)
         self._check_nccl_timeout(timedelta(seconds=252))
-        # the deprecated `_set_pg_timeout` alias still works
-        with self.assertWarnsRegex(FutureWarning, "_set_pg_timeout"):
-            c10d.distributed_c10d._set_pg_timeout(timedelta(seconds=99), pg)
+        dist.set_timeout(timedelta(seconds=99), pg)
         self._check_nccl_timeout(timedelta(seconds=99))
 
     @requires_nccl()

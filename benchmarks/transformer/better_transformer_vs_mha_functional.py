@@ -22,6 +22,7 @@ from prettytable import PrettyTable
 from tqdm import tqdm
 
 import torch
+from torch.nn.attention import sdpa_kernel, SDPBackend
 
 
 warnings.filterwarnings("ignore")
@@ -107,7 +108,7 @@ def run(
         return None
 
     # Benchmark the native MHA in core
-    with torch.backends.cuda.sdp_kernel(enable_math=False, enable_flash=True):
+    with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
         with torch.inference_mode():
             time_native_mha_fast, y_native_mha_fast, _ = benchmark_torch_function(
                 iters, native_mha, q, k, v, need_weights=False

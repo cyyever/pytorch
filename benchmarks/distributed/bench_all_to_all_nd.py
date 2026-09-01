@@ -257,9 +257,9 @@ class AllToAllNdBenchmark(MultiProcContinuousTest):
             trace_json = os.path.join(trace_dir, "col_scatter_both_impls.json")
             trace_stacks = os.path.join(trace_dir, "col_scatter_both_impls.stacks")
             prof.export_chrome_trace(trace_json)
-            prof.export_stacks(trace_stacks, metric="self_cuda_time_total")
+            prof.export_stacks(trace_stacks, metric="self_device_time_total")
 
-            table_kwargs = dict(sort_by="self_cuda_time_total", row_limit=30)
+            table_kwargs = dict(sort_by="self_device_time_total", row_limit=30)
             print()
             print(
                 "profile: both per step (all_to_all_nd then permute+all_to_all_single)"

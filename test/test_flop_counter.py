@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 import torch.utils.flop_counter
 from torch._subclasses.fake_tensor import FakeTensorMode
+from torch.nn.attention import sdpa_kernel, SDPBackend
 from torch.testing._internal.common_cuda import (
     PLATFORM_SUPPORTS_CUDNN_ATTENTION,
     PLATFORM_SUPPORTS_FLASH_ATTENTION,
@@ -384,33 +385,13 @@ class TestFlopCounter(TestCase):
             )
 
             if backend == "math":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=False,
-                    enable_math=True,
-                    enable_mem_efficient=False,
-                    enable_cudnn=False,
-                )
+                backend = sdpa_kernel(SDPBackend.MATH)
             elif backend == "flash":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=True,
-                    enable_math=False,
-                    enable_mem_efficient=False,
-                    enable_cudnn=False,
-                )
+                backend = sdpa_kernel(SDPBackend.FLASH_ATTENTION)
             elif backend == "mem_efficient":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=False,
-                    enable_math=False,
-                    enable_mem_efficient=True,
-                    enable_cudnn=False,
-                )
+                backend = sdpa_kernel(SDPBackend.EFFICIENT_ATTENTION)
             elif backend == "cudnn":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=False,
-                    enable_math=False,
-                    enable_mem_efficient=False,
-                    enable_cudnn=True,
-                )
+                backend = sdpa_kernel(SDPBackend.CUDNN_ATTENTION)
 
             mode = FlopCounterMode()
             with backend, mode:
@@ -563,26 +544,11 @@ class TestFlopCounter(TestCase):
             mode = FlopCounterMode()
 
             if backend == "math":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=False,
-                    enable_math=True,
-                    enable_mem_efficient=False,
-                    enable_cudnn=False,
-                )
+                backend = sdpa_kernel(SDPBackend.MATH)
             elif backend == "flash":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=True,
-                    enable_math=False,
-                    enable_mem_efficient=False,
-                    enable_cudnn=False,
-                )
+                backend = sdpa_kernel(SDPBackend.FLASH_ATTENTION)
             elif backend == "mem_efficient":
-                backend = torch.backends.cuda.sdp_kernel(
-                    enable_flash=False,
-                    enable_math=False,
-                    enable_mem_efficient=True,
-                    enable_cudnn=False,
-                )
+                backend = sdpa_kernel(SDPBackend.EFFICIENT_ATTENTION)
 
             with backend, mode:
                 out = F.scaled_dot_product_attention(

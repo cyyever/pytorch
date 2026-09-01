@@ -20,7 +20,6 @@ from typing import (
     TypeVar,
     Union,
 )
-from warnings import deprecated
 
 import torch
 from torch import sym_float, sym_int, sym_max, sym_min
@@ -2021,29 +2020,6 @@ def check_in_bounds_for_storage(
             f"which requires a storage of size {required_length}"
         )
         raise ValueError(msg)
-
-
-# NOTE: This function should ideally be removed, but some Meta internal models
-# packaged with `torch.package` are using it, so it will have to be removed
-# at some point in the future when those models no longer use this function.
-@deprecated(
-    "`torch._prims_common.check` is deprecated and will be removed in the future. "
-    "Please use `torch._check*` functions instead.",
-    category=FutureWarning,
-)
-def check(
-    b: bool, s: Callable[[], str], exc_type: type[Exception] = RuntimeError
-) -> None:
-    """
-    Helper function for raising an error_type (default: RuntimeError) if a boolean condition fails.
-    Error message is a callable producing a string (to avoid wasting time
-    string formatting in non-error case, and also to make it easier for torchdynamo
-    to trace.)
-
-    .. note:: This function is planned for removal in the future. Please use
-        `torch._check*` functions instead.
-    """
-    torch._check_with(exc_type, b, s)
 
 
 # This combines is_channels_last_strides_2d and is_channels_last_strides_3d in

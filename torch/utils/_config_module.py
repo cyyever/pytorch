@@ -16,7 +16,6 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from types import FunctionType, ModuleType
 from typing import Any, Generic, NoReturn, Optional, TYPE_CHECKING, TypeVar
-from warnings import deprecated
 
 from torch._utils_internal import justknobs_check
 
@@ -846,26 +845,8 @@ class ConfigModule(ModuleType):
             )
         return result
 
-    @deprecated(
-        "`config.to_dict()` has been deprecated. It no longer changes the underlying config."
-        " use `config.get_config_copy()` instead if you just want a copy of the config, or "
-        "config.load_config if you need mutable access",
-        category=FutureWarning,
-    )
-    def to_dict(self) -> dict[str, Any]:
-        return self.get_config_copy()
-
-    @deprecated(
-        "`config.shallow_copy_dict()` has been deprecated. It no longer changes the underlying config."
-        " use `config.get_config_copy()` instead if you just want a copy of the config, or "
-        "config.load_config if you need mutable access",
-        category=FutureWarning,
-    )
-    def shallow_copy_dict(self) -> dict[str, Any]:
-        return self.get_config_copy()
-
     def load_config(self, maybe_pickled_config: bytes | dict[str, Any]) -> None:
-        """Restore from a prior call to save_config() or shallow_copy_dict()"""
+        """Restore from a prior call to save_config() or get_config_copy()"""
         if not isinstance(maybe_pickled_config, dict):
             config = pickle.loads(maybe_pickled_config)
         else:

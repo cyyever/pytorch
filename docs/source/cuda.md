@@ -266,8 +266,6 @@ can equally be saved next to a trace and joined offline.
      memory_reserved
      max_memory_reserved
      set_per_process_memory_fraction
-     memory_cached
-     max_memory_cached
      reset_max_memory_cached
      reset_peak_memory_stats
      reset_peak_host_memory_stats
@@ -431,9 +429,6 @@ with torch.cuda.stream(stream):
 Synchronization between green-context streams and other streams is the user's
 responsibility. Use CUDA events to order work, just as you would for any other
 custom stream.
-
-The `GreenContext.set_context()` and `GreenContext.pop_context()` methods are
-deprecated compatibility APIs.
 
 ```{eval-rst}
 .. currentmodule:: torch.cuda.green_contexts

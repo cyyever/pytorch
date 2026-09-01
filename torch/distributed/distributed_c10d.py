@@ -173,7 +173,6 @@ __all__ = [
     "get_group_rank",
     "get_global_rank",
     "get_process_group_ranks",
-    "reduce_op",
     "all_gather_single",
     "all_gather_into_tensor",
     "reduce_scatter_single",
@@ -1080,33 +1079,6 @@ def _get_default_backend_type_for_backend_config(
     # the order the devices were named in the backend string.
     device = min(device_backend_map, key=_device_priority)
     return _resolve_backend_type(str(device_backend_map[device]))
-
-
-class _reduce_op:
-    r"""
-    Deprecated enum-like class.
-
-    For reduction operations: ``SUM``, ``PRODUCT``, ``MIN``, and ``MAX``.
-
-    :class:`~torch.distributed.ReduceOp` is recommended to use instead.
-    """
-
-    def __init__(self) -> None:
-        # __members__ is a dict storing key-value pairs for enum classes
-        for k, v in ReduceOp.RedOpType.__members__.items():
-            setattr(self, k, v)
-        self.__members__ = ReduceOp.RedOpType.__members__
-
-    @deprecated(
-        "`torch.distributed.reduce_op` is deprecated, "
-        "please use `torch.distributed.ReduceOp` instead",
-        category=FutureWarning,
-    )
-    def __getattribute__(self, key: str) -> object:
-        return object.__getattribute__(self, key)
-
-
-reduce_op = _reduce_op()
 
 
 class P2POp:
@@ -2267,16 +2239,6 @@ def set_timeout(timeout: timedelta, group: ProcessGroup | None = None) -> None:
     if not isinstance(group, ProcessGroup):
         raise AssertionError(f"Expected ProcessGroup, got {type(group)}")
     group.set_timeout(timeout)
-
-
-@deprecated(
-    "`torch.distributed.distributed_c10d._set_pg_timeout` is deprecated, "
-    "please use `torch.distributed.set_timeout` instead",
-    category=FutureWarning,
-)
-def _set_pg_timeout(timeout: timedelta, group: ProcessGroup | None = None) -> None:
-    """Use set_timeout as this method is deprecated."""
-    set_timeout(timeout, group)
 
 
 @_exception_logger

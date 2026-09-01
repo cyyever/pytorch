@@ -483,5 +483,5 @@ The following types are defined as **container type**:
    * - Dataclass
      - Must be registered through `register_dataclass <https://github.com/pytorch/pytorch/blob/901aa85b58e8f490631ce1db44e6555869a31893/torch/export/__init__.py#L693>`__
    * - Custom class
-     - Any custom class defined with `_register_pytree_node <https://github.com/pytorch/pytorch/blob/901aa85b58e8f490631ce1db44e6555869a31893/torch/utils/_pytree.py#L72>`__
+     - Any custom class defined with `register_pytree_node <https://github.com/pytorch/pytorch/blob/main/torch/utils/_pytree.py>`__
 ```

@@ -372,10 +372,6 @@ $1: f32[2] = torch._ops.prims.sin.default($0)""")
         meta_clone = prims._clone_meta(tensor, memory_format=torch.preserve_format)
         self.assertEqual(tensor.contiguous().stride(), meta_clone.stride())
 
-    def test_check_deprecation_warning(self):
-        with self.assertWarnsRegex(FutureWarning, 'will be removed in the future'):
-            torch._prims_common.check(True, lambda: 'message')
-
 
 instantiate_device_type_tests(
     TestPrimsDevice, globals(), only_for=("cpu", "cuda", "xpu"), allow_xpu=True

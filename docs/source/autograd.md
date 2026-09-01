@@ -281,8 +281,6 @@ Base custom {class}`Function` used to build PyTorch utilities
     gradcheck
     gradgradcheck
     GradcheckError
-    get_analytical_jacobian
-    get_numerical_jacobian
     get_numerical_jacobian_wrt_specific_input
 ```
 

@@ -238,7 +238,7 @@ class TestCuda(TestCase):
 
     def test_pinned_memory_with_cudaregister(self):
         try:
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "pinned_use_cuda_host_register:True,pinned_num_register_threads:8"
             )
             t = torch.ones(20)
@@ -252,7 +252,7 @@ class TestCuda(TestCase):
                 # Some GPUs don't support same address space on host and device side
                 pass
         finally:
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "pinned_use_cuda_host_register:False"
             )
 
@@ -469,7 +469,7 @@ class TestCuda(TestCase):
     def test_pinned_memory_empty_cache(self):
         try:
             for alloc_settings in (True, False):
-                torch.cuda.memory._set_allocator_settings(
+                torch._C._accelerator_setAllocatorSettings(
                     f"pinned_use_cuda_host_register:{alloc_settings}"
                 )
                 try:
@@ -481,7 +481,7 @@ class TestCuda(TestCase):
                     # Some GPUs don't support same address space on host and device side
                     pass
         finally:
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "pinned_use_cuda_host_register:False"
             )
 
@@ -492,7 +492,7 @@ class TestCuda(TestCase):
         script = """
 import torch
 
-torch.cuda.memory._set_allocator_settings(
+torch._C._accelerator_setAllocatorSettings(
     f"pinned_use_background_threads:True"
 )
 t = torch.ones(1024 * 1024, pin_memory=True)
@@ -7320,15 +7320,15 @@ class TestCudaAllocator(TestCase):
             def alloc(n):
                 return torch.ones(n * mb, dtype=torch.int8, device="cuda")
 
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "expandable_segments:False,max_split_size_mb:40"
             )
             a = alloc(40)
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "expandable_segments:True,max_split_size_mb:40"
             )
             b = alloc(40)
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "expandable_segments:False,max_split_size_mb:40"
             )
             c = alloc(40)
@@ -7341,7 +7341,7 @@ class TestCudaAllocator(TestCase):
             torch.cuda.memory.set_per_process_memory_fraction(orig)
             # Test toggles expandable_segments internally; restore the
             # suite's baseline so subsequent tests see consistent state.
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 f"expandable_segments:{EXPANDABLE_SEGMENTS}"
             )
 
@@ -7361,11 +7361,11 @@ class TestCudaAllocator(TestCase):
             def alloc(n):
                 return torch.ones(n * mb, dtype=torch.int8, device="cuda")
 
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "expandable_segments:False,garbage_collection_threshold:0.5"
             )
             a = alloc(40)
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "expandable_segments:True,garbage_collection_threshold:0.5"
             )
             b = alloc(40)
@@ -7378,7 +7378,7 @@ class TestCudaAllocator(TestCase):
             torch.cuda.memory.set_per_process_memory_fraction(orig)
             # Test toggles expandable_segments internally; restore the
             # suite's baseline so subsequent tests see consistent state.
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 f"expandable_segments:{EXPANDABLE_SEGMENTS}"
             )
 
@@ -7410,13 +7410,13 @@ class TestCudaAllocator(TestCase):
         nbytes_big = 4 * nelems_big  # floats are 4 bytes
 
         start_mem = torch.cuda.memory_stats()[key_allocated]
-        torch.cuda.memory._set_allocator_settings("")
+        torch._C._accelerator_setAllocatorSettings("")
         x = torch.rand(nelems, device="cuda")
 
         # test roundup_power2_divisions single value syntax
         reg_mem = torch.cuda.memory_stats()[key_allocated]
         start_requested = torch.cuda.memory_stats()[key_requested]
-        torch.cuda.memory._set_allocator_settings("roundup_power2_divisions:4")
+        torch._C._accelerator_setAllocatorSettings("roundup_power2_divisions:4")
         y = torch.rand(nelems, device="cuda")
 
         pow2_div4_mem = torch.cuda.memory_stats()[key_allocated]
@@ -7428,8 +7428,8 @@ class TestCudaAllocator(TestCase):
             self.assertEqual(pow2_div4_mem - reg_mem, power2_div(nbytes, 4))
             self.assertEqual(current_requested - start_requested, nbytes)
 
-        torch.cuda.memory._set_allocator_settings("garbage_collection_threshold:0.5")
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings("garbage_collection_threshold:0.5")
+        torch._C._accelerator_setAllocatorSettings(
             "garbage_collection_threshold:0.5,max_split_size_mb:40"
         )
 
@@ -7442,7 +7442,7 @@ class TestCudaAllocator(TestCase):
 
         # roundup_power2_divisions knob array syntax
         torch.cuda.memory.empty_cache()
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "garbage_collection_threshold:0.5,roundup_power2_divisions:[64:8,128:2,256:2,512:2,1024:1,>:1]"
         )
         start_mem = torch.cuda.memory_stats()[key_allocated]
@@ -7463,7 +7463,7 @@ class TestCudaAllocator(TestCase):
             self.assertEqual(pow2_div2_mem - start_mem, power2_div(nbytes_big, 2))
 
         torch.cuda.memory.empty_cache()
-        torch.cuda.memory._set_allocator_settings("release_lock_on_cudamalloc:True")
+        torch._C._accelerator_setAllocatorSettings("release_lock_on_cudamalloc:True")
         start_mem = torch.cuda.memory_stats()[key_allocated]
         w = torch.rand(nelems, device="cuda")
         reg_mem = torch.cuda.memory_stats()[key_allocated]
@@ -7501,8 +7501,8 @@ class TestCudaAllocator(TestCase):
             )
 
         # Test throw_on_cudamalloc_oom config parsing - valid formats
-        torch.cuda.memory._set_allocator_settings("throw_on_cudamalloc_oom:True")
-        torch.cuda.memory._set_allocator_settings("throw_on_cudamalloc_oom:False")
+        torch._C._accelerator_setAllocatorSettings("throw_on_cudamalloc_oom:True")
+        torch._C._accelerator_setAllocatorSettings("throw_on_cudamalloc_oom:False")
 
         # Test throw_on_cudamalloc_oom config parsing - invalid formats
         with self.assertRaises(ValueError):
@@ -7677,7 +7677,7 @@ print(value, end="")
             # CudaCachingAllocator does early return when searching available blocks
             # if max_split_size_mb is not set
             # Setting this triggers more parts of the code
-            torch.cuda.memory._set_allocator_settings("max_split_size_mb:1024")
+            torch._C._accelerator_setAllocatorSettings("max_split_size_mb:1024")
             torch.cuda.memory.empty_cache()
         with self.assertRaises(torch.cuda.OutOfMemoryError):
             torch.empty(1024 * 1024 * 1024 * 1024, device="cuda")
@@ -8452,14 +8452,14 @@ class TestBlockStateAbsorption(TestCase):
 @contextlib.contextmanager
 def caching_host_allocator_use_host_register(use_cuda_host_register: bool):
     if use_cuda_host_register:
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "pinned_use_cuda_host_register:True,pinned_num_register_threads:8"
         )
     try:
         yield
     finally:
         if use_cuda_host_register:
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "pinned_use_cuda_host_register:False"
             )
 
@@ -8467,12 +8467,12 @@ def caching_host_allocator_use_host_register(use_cuda_host_register: bool):
 @contextlib.contextmanager
 def caching_host_allocator_use_background_threads(use_background_threads: bool):
     if use_background_threads:
-        torch.cuda.memory._set_allocator_settings("pinned_use_background_threads:True")
+        torch._C._accelerator_setAllocatorSettings("pinned_use_background_threads:True")
     try:
         yield
     finally:
         if use_background_threads:
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 "pinned_use_background_threads:False"
             )
 
@@ -9347,7 +9347,7 @@ class TestMemPool(TestCase):
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
     )
     def test_graph_capture_reclaim_2_streams(self):
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:True"
         )
         torch.cuda.empty_cache()
@@ -9396,7 +9396,7 @@ class TestMemPool(TestCase):
         self.assertNotEqual(data1_ptr, data2_ptr)
         self.assertEqual(data1_ptr, data3_ptr)
 
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:False"
         )
 
@@ -9404,7 +9404,7 @@ class TestMemPool(TestCase):
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
     )
     def test_graph_capture_reclaim_4_streams(self):
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:True"
         )
 
@@ -9482,7 +9482,7 @@ class TestMemPool(TestCase):
         self.assertNotEqual(data1_ptr, data2_ptr)
         self.assertEqual(data1_ptr, data3_ptr)
 
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:False"
         )
 
@@ -9490,7 +9490,7 @@ class TestMemPool(TestCase):
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
     )
     def test_graph_capture_reclaim_shared_pool(self):
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:True"
         )
         torch.cuda.empty_cache()
@@ -9535,7 +9535,7 @@ class TestMemPool(TestCase):
 
         self.assertEqual(data_ptr, data2_ptr)
 
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:False"
         )
 
@@ -9552,7 +9552,7 @@ class TestMemPool(TestCase):
         # Exercises the insert_events path in endAllocateToPool.
         spin_wait_kernel = get_wait_for_cpu_kernel()
 
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:True"
         )
         torch.cuda.empty_cache()
@@ -9621,7 +9621,7 @@ class TestMemPool(TestCase):
 
         self.assertEqual(data_ptr, reused_ptr)
 
-        torch.cuda.memory._set_allocator_settings(
+        torch._C._accelerator_setAllocatorSettings(
             "graph_capture_record_stream_reuse:False"
         )
 
@@ -10264,14 +10264,14 @@ class TestMemPool(TestCase):
     @serialTest()
     def test_reserved_bytes_by_private_pools_expandable(self):
         torch.cuda.empty_cache()
-        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:True")
         try:
             self._check_reserved_bytes_by_private_pools()
         finally:
             torch.cuda.empty_cache()
             # Test toggles expandable_segments internally; restore the
             # suite's baseline so subsequent tests see consistent state.
-            torch.cuda.memory._set_allocator_settings(
+            torch._C._accelerator_setAllocatorSettings(
                 f"expandable_segments:{EXPANDABLE_SEGMENTS}"
             )
 
@@ -12064,22 +12064,6 @@ class TestCudaGreenContexts(TestCase):
 
     def tearDown(self):
         super().tearDown()
-
-    def test_greencontext_set_pop_context_deprecation(self):
-        # need to start on a side stream as we are comparing pointers and want to avoid
-        # two NULL streams...
-        s = torch.cuda.Stream()
-        with torch.cuda.stream(s):
-            start_stream = torch.cuda.current_stream()
-            ctx = torch.cuda.green_contexts.GreenContext(num_sms=1)
-            with self.assertWarnsRegex(FutureWarning, "GreenContext.set_context"):
-                ctx.set_context()
-            context_stream = torch.cuda.current_stream()
-            with self.assertWarnsRegex(FutureWarning, "GreenContext.pop_context"):
-                ctx.pop_context()
-            end_stream = torch.cuda.current_stream()
-            self.assertEqual(start_stream.cuda_stream, end_stream.cuda_stream)
-            self.assertNotEqual(start_stream.cuda_stream, context_stream.cuda_stream)
 
     def test_greencontext_stream_context_restores_stream(self):
         # need to start on a side stream as we are comparing pointers and

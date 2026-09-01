@@ -6114,15 +6114,6 @@ class ShapeEnv:
         self.backed_var_to_val[expr] = sympy.Integer(val)
         self.name_to_symbol[expr.name] = expr
 
-    @property
-    @deprecated(
-        "var_to_val is deprecated, use backed_var_to_val instead",
-        category=FutureWarning,
-    )
-    def var_to_val(self) -> dict[sympy.Symbol, sympy.Integer]:
-        """Deprecated: use backed_var_to_val instead."""
-        return self.backed_var_to_val
-
     def _debug_name(self, source: Source) -> str:
         src_name = source.name
         return self.source_name_to_debug_name.get(src_name, src_name)
@@ -7782,56 +7773,6 @@ class ShapeEnv:
                     expr = new_expr
         return expr
 
-    # TODO: overload for allow_none literal
-    @deprecated(
-        "use guarding_hint_or_throw or optimization_hint instead",
-        category=FutureWarning,
-    )
-    @lru_cache(256)
-    def size_hint(
-        self, expr: sympy.Basic, *, allow_none: bool = False
-    ) -> sympy.Basic | None:
-        """
-        Gets a size hint for a given expression from the underlying shapes we had.
-        Does not introduce a guard, so only use this when you can guarantee that
-        your code is still valid for arbitrary shapes (such as optimization decisions)
-        """
-        result_expr = safe_expand(expr).xreplace(self.backed_var_to_val)
-        if not result_expr.is_number:
-            from torch.utils._sympy.singleton_int import SingletonInt
-
-            if isinstance(result_expr, SingletonInt):
-                return None
-            r = self._maybe_evaluate_static(result_expr, compute_hint=True)
-            if r is not None:
-                return r
-            if allow_none:
-                return None
-
-            if self.real_tensor_prop_unbacked_vals:
-                unsound_expr = result_expr.xreplace(self.real_tensor_prop_unbacked_vals)
-                if not unsound_expr.free_symbols:
-                    log.warning(
-                        "propagate_real_tensors size_hint(%s) -> %s", expr, unsound_expr
-                    )
-                    trace_structured(
-                        "propagate_real_tensors",
-                        metadata_fn=lambda: {
-                            "expr": repr(expr),
-                            "result": repr(unsound_expr),
-                            "stack": structured.from_traceback(
-                                CapturedTraceback.extract(skip=1).summary()
-                            ),
-                        },
-                    )
-                    self.guard_or_defer_runtime_assert(
-                        sympy.Eq(result_expr, unsound_expr),
-                        f"propagate_real_tensors: {result_expr} == {unsound_expr}",
-                    )
-                    return unsound_expr
-
-            raise self._make_data_dependent_error(result_expr, expr)
-        return result_expr
 
     @lru_cache(256)
     def guarding_hint_or_throw(self, expr: sympy.Expr | int) -> int | bool:
