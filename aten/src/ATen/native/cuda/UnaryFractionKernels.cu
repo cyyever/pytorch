@@ -21,7 +21,7 @@ __host__ __device__ static inline std::complex<T> ceil_wrapper(std::complex<T> v
   return std::complex<T>(std::ceil(v.real()), std::ceil(v.imag()));
 }
 
-void ceil_kernel_cuda(TensorIteratorBase& iter) {
+static void ceil_kernel_cuda(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       ScalarType::Half, ScalarType::BFloat16,
       iter.dtype(), "ceil_cuda",
@@ -32,7 +32,7 @@ void ceil_kernel_cuda(TensorIteratorBase& iter) {
       });
 }
 
-void frac_kernel_cuda(TensorIteratorBase& iter) {
+static void frac_kernel_cuda(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       ScalarType::Half, ScalarType::BFloat16,
       iter.dtype(), "frac_cuda",
@@ -54,7 +54,7 @@ __host__ __device__ static inline std::complex<T> floor_wrapper(std::complex<T> 
   return std::complex<T>(std::floor(v.real()), std::floor(v.imag()));
 }
 
-void floor_kernel_cuda(TensorIteratorBase& iter) {
+static void floor_kernel_cuda(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       ScalarType::Half, ScalarType::BFloat16,
       iter.dtype(), "floor_cuda",
@@ -128,7 +128,7 @@ __host__ __device__ static inline c10::complex<double> nearbyint_wrapper(c10::co
 }
 #pragma pop
 
-void round_kernel_cuda(TensorIteratorBase& iter) {
+static void round_kernel_cuda(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       ScalarType::Half, ScalarType::BFloat16,
       iter.dtype(), "round_cuda",
@@ -140,7 +140,7 @@ void round_kernel_cuda(TensorIteratorBase& iter) {
       });
 }
 
-void round_decimals_kernel_cuda(TensorIteratorBase& iter, int64_t decimals) {
+static void round_decimals_kernel_cuda(TensorIteratorBase& iter, int64_t decimals) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       ScalarType::Half, ScalarType::BFloat16,
       iter.dtype(), "round_cuda",
@@ -177,7 +177,7 @@ __host__ __device__ static inline c10::complex<double> trunc_wrapper(c10::comple
   return c10::complex<double>(::trunc(static_cast<double>(a.real())), ::trunc(static_cast<double>(a.imag())));
 }
 
-void trunc_kernel_cuda(TensorIteratorBase& iter) {
+static void trunc_kernel_cuda(TensorIteratorBase& iter) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       ScalarType::Half, ScalarType::BFloat16,
       iter.dtype(), "trunc_cuda",

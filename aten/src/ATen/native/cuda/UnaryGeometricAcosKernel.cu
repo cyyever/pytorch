@@ -15,7 +15,7 @@ namespace at::native {
 #if 0 && AT_USE_JITERATOR()
 constexpr char acos_name[] = "acos_impl";
 #endif
-void acos_kernel_cuda(TensorIteratorBase& iter) {
+static void acos_kernel_cuda(TensorIteratorBase& iter) {
   auto common_dtype = iter.common_dtype();
   if (at::isComplexType(common_dtype)) {
     // Disabled due to accuracy issues

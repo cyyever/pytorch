@@ -402,7 +402,7 @@ __global__ void gatherTopK(at::cuda::detail::TensorInfo<const T, IndexType> inpu
 #endif
 
 template <typename T, typename IndexType, int Dim>
-void launch(
+static void launch(
     at::cuda::detail::TensorInfo<const T, IndexType> input,
     IndexType inputSliceSize,
     IndexType outputSliceSize, // aka `k`
@@ -558,7 +558,7 @@ __global__ void warpMergeSortTopK(
 }
 
 template <typename scalar_t, typename IndexType, int Dim>
-void launch(
+static void launch(
     at::cuda::detail::TensorInfo<const scalar_t, IndexType> input,
     IndexType inputSliceSize,
     IndexType k,
@@ -1325,7 +1325,7 @@ public:
 };
 
 template <typename T, typename IndexType, int Dim>
-void launch(
+static void launch(
     at::cuda::detail::TensorInfo<const T, IndexType> input,
     IndexType inputSliceSize,
     IndexType outputSliceSize, // aka `k`

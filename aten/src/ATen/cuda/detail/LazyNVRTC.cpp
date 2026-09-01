@@ -8,7 +8,7 @@
 namespace at::cuda::detail {
 namespace _stubs {
 
-at::DynamicLibrary& getCUDALibrary() {
+static at::DynamicLibrary& getCUDALibrary() {
   static at::DynamicLibrary lib("libcuda.so.1");
   return lib;
 }
@@ -56,7 +56,7 @@ static std::string getAltLibName() {
 #endif
 }
 
-at::DynamicLibrary& getNVRTCLibrary() {
+static at::DynamicLibrary& getNVRTCLibrary() {
   static std::string libname = getLibName();
   static std::string alt_libname = getAltLibName();
   static at::DynamicLibrary lib(libname.c_str(), alt_libname.empty() ? nullptr : alt_libname.c_str());
@@ -107,7 +107,7 @@ RETTYPE NAME(ARG1 a1, ARG2 a2, ARG3 a3, ARG4 a4) {                              
 NVRTC_STUB2(nvrtcVersion, int*, int*)
 NVRTC_STUB2(nvrtcAddNameExpression, nvrtcProgram, const char * const)
 
-nvrtcResult nvrtcCreateProgram(nvrtcProgram *prog,
+static nvrtcResult nvrtcCreateProgram(nvrtcProgram *prog,
                                const char *src,
                                const char *name,
                                int numHeaders,
@@ -151,7 +151,7 @@ CUDA_STUB3(cuPointerGetAttribute, void*, CUpointer_attribute, CUdeviceptr)
 
 
 #if defined(CUDA_VERSION)
-CUresult CUDAAPI
+static CUresult CUDAAPI
 cuTensorMapEncodeTiled(
     CUtensorMap* tensorMap,
     CUtensorMapDataType tensorDataType,
@@ -187,7 +187,7 @@ cuTensorMapEncodeTiled(
 #endif
 
 // Irregularly shaped functions
-CUresult CUDAAPI cuLaunchKernel(CUfunction f,
+static CUresult CUDAAPI cuLaunchKernel(CUfunction f,
                                 unsigned int gridDimX,
                                 unsigned int gridDimY,
                                 unsigned int gridDimZ,
@@ -207,7 +207,7 @@ CUresult CUDAAPI cuLaunchKernel(CUfunction f,
 }
 
 // Irregularly shaped functions
-CUresult CUDAAPI cuLaunchCooperativeKernel(
+static CUresult CUDAAPI cuLaunchCooperativeKernel(
     CUfunction f,
     unsigned int gridDimX,
     unsigned int gridDimY,
@@ -235,7 +235,7 @@ CUresult CUDAAPI cuLaunchCooperativeKernel(
       kernelParams);
 }
 
-CUresult CUDAAPI cuModuleLoadDataEx(CUmodule *module,
+static CUresult CUDAAPI cuModuleLoadDataEx(CUmodule *module,
                                     const void *image,
                                     unsigned int numOptions,
                                     CUjit_option *options,
