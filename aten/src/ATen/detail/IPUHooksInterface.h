@@ -2,7 +2,6 @@
 
 #include <ATen/detail/AcceleratorHooksInterface.h>
 
-#include <c10/core/Allocator.h>
 #include <c10/util/Exception.h>
 #include <c10/util/Registry.h>
 
@@ -30,9 +29,6 @@ struct TORCH_API IPUHooksInterface : AcceleratorHooksInterface {
     TORCH_CHECK(false, "Cannot initialize IPU without ATen_ipu library.");
   }
 };
-
-// Deprecated: no longer used internally, kept for ABI compatibility.
-struct TORCH_API IPUHooksArgs {};
 
 TORCH_DECLARE_REGISTRY(IPUHooksRegistry, IPUHooksInterface);
 #define REGISTER_IPU_HOOKS(clsname) \

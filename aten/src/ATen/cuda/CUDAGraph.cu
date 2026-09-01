@@ -22,7 +22,7 @@ void CUDAGraph::set_conditional_handle(
       handle, scalar_cuda_pred_tensor.const_data_ptr<bool>());
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 #else
-  AT_ERROR("not allowed");
+  TORCH_CHECK(false, "not allowed");
   return;
 #endif
 }
