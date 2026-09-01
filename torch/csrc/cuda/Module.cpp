@@ -16,7 +16,8 @@
 
 #endif
 #include <ATen/cuda/CUDAGeneratorImpl.h>
-#include <ATen/cuda/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
+#include <c10/cuda/CUDAStream.h>
 #include <ATen/cuda/Sleep.h>
 #include <ATen/cuda/detail/CUDAHooks.h>
 #include <ATen/cuda/jiterator.h>

@@ -1,4 +1,5 @@
-#include <ATen/cuda/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
+#include <c10/cuda/CUDAStream.h>
 #include <ATen/native/TensorFactories.h>
 #include <c10/cuda/CUDAException.h>
 #include <c10/cuda/CUDAGuard.h>

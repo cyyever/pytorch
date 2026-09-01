@@ -2,7 +2,7 @@
 
 #include <ATen/ATen.h>
 #include <ATen/TensorIndexing.h>
-#include <ATen/xpu/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
 #include <ATen/xpu/XPUContext.h>
 #include <ATen/xpu/XPUEvent.h>
 #include <c10/core/ScalarType.h>
