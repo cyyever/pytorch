@@ -8030,7 +8030,7 @@ def forward(self, p_linear_weight, p_linear_bias, b_buffer, x):
     def test_sequential_slicing(self):
         # See https://github.com/pytorch/pytorch/issues/137455
 
-        class TestModule1(torch.nn.Module):
+        class TestModule(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
                 self.seq = torch.nn.Sequential(
@@ -15323,35 +15323,21 @@ def forward(self, x, b_t, y):
         export(Foo(), (), strict=False)
 
     def test_compiling_state(self):
-        class TestModule1(torch.nn.Module):
-            def forward(self, x):
-                if torch._dynamo.is_compiling():
-                    return x * 2
-                else:
-                    return x * 3
-
-        class TestModule2(torch.nn.Module):
-            def forward(self, x):
-                if torch._utils.is_compiling():
-                    return x * 2
-                else:
-                    return x * 3
-
-        class TestModule3(torch.nn.Module):
+        class TestModule(torch.nn.Module):
             def forward(self, x):
                 if torch.compiler.is_compiling():
                     return x * 2
                 else:
                     return x * 3
 
-        for m in [TestModule1(), TestModule2(), TestModule3()]:
-            input = torch.randn(5)
-            ep_strict = export(m, (input,), strict=True)
-            ep_non_strict = export(m, (input,), strict=False)
+        m = TestModule()
+        input = torch.randn(5)
+        ep_strict = export(m, (input,), strict=True)
+        ep_non_strict = export(m, (input,), strict=False)
 
-            self.assertTrue(torch.allclose(input * 3, m(input)))
-            self.assertTrue(torch.allclose(input * 2, ep_strict.module()(input)))
-            self.assertTrue(torch.allclose(input * 2, ep_non_strict.module()(input)))
+        self.assertTrue(torch.allclose(input * 3, m(input)))
+        self.assertTrue(torch.allclose(input * 2, ep_strict.module()(input)))
+        self.assertTrue(torch.allclose(input * 2, ep_non_strict.module()(input)))
 
     def test_user_input_and_buffer_mutation(self):
         class MyModule(torch.nn.Module):

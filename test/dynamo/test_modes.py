@@ -693,7 +693,7 @@ class TorchFunctionModeTests(torch._dynamo.test_case.TestCase):
                 nonlocal valid
                 if not kwargs:
                     kwargs = {}
-                if torch._dynamo.is_compiling():
+                if torch.compiler.is_compiling():
                     valid = expected_func == func
                 return super().__torch_function__(func, types, args, kwargs)
 

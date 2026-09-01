@@ -323,10 +323,6 @@ def tracing_state_functions() -> dict[Callable[[], Any], bool | None]:
         torch._C._get_tracing_state: None,
         torch.fx._symbolic_trace.is_fx_tracing: False,
         torch.fx._symbolic_trace.is_fx_symbolic_tracing: False,
-        # pyrefly: ignore [deprecated]
-        torch._dynamo.external_utils.is_compiling: True,
-        # pyrefly: ignore [deprecated]
-        torch._utils.is_compiling: True,
         torch.compiler.is_compiling: True,
         torch.compiler.is_dynamo_compiling: True,
         torch.compiler.is_exporting: True,
@@ -1017,10 +1013,6 @@ class TorchInGraphFunctionVariable(BaseTorchVariable):
                 )
             # See: https://github.com/pytorch/pytorch/issues/110765
             if self.value in (
-                # pyrefly: ignore [deprecated]
-                torch._utils.is_compiling,
-                # pyrefly: ignore [deprecated]
-                torch._dynamo.external_utils.is_compiling,
                 torch.compiler.is_compiling,
                 torch.compiler.is_dynamo_compiling,
                 torch.compiler.is_exporting,

@@ -100,7 +100,7 @@ def to_mx(
 
     data_lp = data_hp / scale_fp32
     # eager fp8 cast is unsaturated; clamp explicitly
-    if not torch._dynamo.is_compiling():
+    if not torch.compiler.is_compiling():
         data_lp = torch.clamp(data_lp, min=-fp8_max, max=fp8_max)
 
     qdata = data_lp.to(elem_dtype).reshape(orig_shape)
@@ -154,7 +154,7 @@ def to_mx_dim0(data_hp: torch.Tensor, block_size: int = 32, scaling_mode: str = 
     scale_fp32 = torch.clamp(scale_fp32, min=F32_MIN_NORMAL)
 
     data_lp = blocks.to(torch.float32) / scale_fp32
-    if not torch._dynamo.is_compiling():
+    if not torch.compiler.is_compiling():
         data_lp = torch.clamp(data_lp, min=-F8E4M3_MAX, max=F8E4M3_MAX)
 
     qdata = data_lp.to(torch.float8_e4m3fn).view(m, k)
