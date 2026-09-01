@@ -101,11 +101,7 @@ includes = [
     "aten/src/ATen/native/transformers/cuda/mem_eff_attention/debug_utils.h",
     "aten/src/ATen/native/transformers/cuda/mem_eff_attention/gemm_kernel_utils.h",
     "aten/src/ATen/native/transformers/cuda/mem_eff_attention/pytorch_utils.h",
-    "aten/src/THC/*",
     "aten/src/ATen/test/*",
-    # CMakeLists.txt isn't processed by default, but there are a few
-    # we do want to handle, so explicitly specify them
-    "aten/src/THC/CMakeLists.txt",
     "torch/*",
     "tools/autograd/templates/python_variable_methods.cpp",
     "torch/csrc/stable/*",

@@ -152,8 +152,6 @@
 # /aten/src/ATen/AccumulateType.cpp
 # /aten/src/ATen/AccumulateType.h
 # /aten/src/ATen/ArrayRef.h
-# /aten/src/ATen/Backend.h
-# /aten/src/ATen/Backtrace.h
 # /aten/src/ATen/BlasBackend.h
 # /aten/src/ATen/CMakeLists.txt
 # /aten/src/ATen/CPUApplyUtils.h
@@ -241,14 +239,12 @@
 # /aten/src/ATen/SDPBackend.h
 # /aten/src/ATen/SavedTensorHooks.cpp
 # /aten/src/ATen/SavedTensorHooks.h
-# /aten/src/ATen/Scalar.h
 # /aten/src/ATen/ScalarOps.cpp
 # /aten/src/ATen/ScalarOps.h
 # /aten/src/ATen/ScalarType.h
 # /aten/src/ATen/SequenceNumber.cpp
 # /aten/src/ATen/SequenceNumber.h
 # /aten/src/ATen/SmallVector.h
-# /aten/src/ATen/Storage.h
 # /aten/src/ATen/StorageUtils.cpp
 # /aten/src/ATen/StorageUtils.h
 # /aten/src/ATen/Tensor.h
@@ -263,7 +259,6 @@
 # /aten/src/ATen/TensorMeta.cpp
 # /aten/src/ATen/TensorMeta.h
 # /aten/src/ATen/TensorOperators.h
-# /aten/src/ATen/TensorOptions.h
 # /aten/src/ATen/TensorSubclassLikeUtils.h
 # /aten/src/ATen/TensorUtils.cpp
 # /aten/src/ATen/TensorUtils.h
@@ -300,7 +295,6 @@
 # /aten/src/ATen/templates/
 # /aten/src/ATen/test/
 # /aten/src/README.md
-# /aten/src/THC/
 # /aten/tools/
 #
 # [core_c10_dispatch]

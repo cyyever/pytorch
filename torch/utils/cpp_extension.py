@@ -1403,7 +1403,6 @@ def include_paths(device_type: str = "cpu", torch_include_dirs=True) -> list[str
             os.path.join(lib_include, 'torch', 'csrc', 'api', 'include'),
         ])
     if device_type == "cuda" and IS_HIP_EXTENSION:
-        paths.append(os.path.join(lib_include, 'THH'))
         paths.append(_join_rocm_home('include'))
     elif device_type == "cuda":
         cuda_home_include = _join_cuda_home('include')
