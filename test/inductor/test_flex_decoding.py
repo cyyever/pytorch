@@ -14,6 +14,7 @@ from torch._inductor.test_case import TestCase as InductorTestCase
 from torch._inductor.utils import run_and_get_code
 from torch.nn.attention.experimental._paged_attention import PagedAttention
 from torch.nn.attention.flex_attention import (
+    AuxRequest,
     _create_empty_block_mask,
     _identity,
     BlockMask,
@@ -458,18 +459,26 @@ class TestFlexDecoding(InductorTestCase):
         )
         compiled_sdpa = torch.compile(sdpa_partial)
         if not self.test_inference_only:
-            golden_out, gold_lse = sdpa_partial(q_gold, k_gold, v_gold, return_lse=True)
-            ref_out, ref_lse = sdpa_partial(q_ref, k_ref, v_ref, return_lse=True)
-            compiled_out, compiled_lse = compiled_sdpa(q, k, v, return_lse=True)
+            aux = AuxRequest(lse=True)
+            golden_out, golden_aux = sdpa_partial(
+                q_gold, k_gold, v_gold, return_aux=aux
+            )
+            ref_out, ref_aux = sdpa_partial(q_ref, k_ref, v_ref, return_aux=aux)
+            compiled_out, compiled_aux = compiled_sdpa(q, k, v, return_aux=aux)
+            gold_lse, ref_lse, compiled_lse = (
+                golden_aux.lse,
+                ref_aux.lse,
+                compiled_aux.lse,
+            )
             self._check_out(
                 gold_lse,
                 ref_lse,
                 compiled_lse,
             )
         else:
-            golden_out = sdpa_partial(q_gold, k_gold, v_gold, return_lse=False)
-            ref_out = sdpa_partial(q_ref, k_ref, v_ref, return_lse=False)
-            compiled_out = compiled_sdpa(q, k, v, return_lse=False)
+            golden_out = sdpa_partial(q_gold, k_gold, v_gold)
+            ref_out = sdpa_partial(q_ref, k_ref, v_ref)
+            compiled_out = compiled_sdpa(q, k, v)
         self._check_out(
             golden_out,
             ref_out,
@@ -643,11 +652,11 @@ class TestFlexDecoding(InductorTestCase):
 
         # compute
         if not self.test_inference_only:
-            compiled_out, compiled_lse = compiled_sdpa(
+            compiled_out, compiled_aux = compiled_sdpa(
                 q,
                 k_cache,
                 v_cache,
-                return_lse=True,
+                return_aux=AuxRequest(lse=True),
                 block_mask=converted_block_mask,
                 score_mod=converted_score_mod,
                 enable_gqa=(Q_H != KV_H),
@@ -659,7 +668,6 @@ class TestFlexDecoding(InductorTestCase):
                 q,
                 k_cache,
                 v_cache,
-                return_lse=False,
                 block_mask=converted_block_mask,
                 score_mod=converted_score_mod,
                 enable_gqa=(Q_H != KV_H),
@@ -714,8 +722,11 @@ class TestFlexDecoding(InductorTestCase):
             block_mask = create_block_mask(noop_mask, Q_B, 1, 1, KV_S, device=device)
 
         sdpa_partial = create_attention(score_mod, block_mask, enable_gqa=(Q_H != KV_H))
-        golden_out, gold_lse = sdpa_partial(q_gold, k_gold, v_gold, return_lse=True)
-        ref_out, ref_lse = sdpa_partial(q_ref, k_ref, v_ref, return_lse=True)
+        golden_out, golden_aux = sdpa_partial(
+            q_gold, k_gold, v_gold, return_aux=AuxRequest(lse=True)
+        )
+        ref_out, ref_aux = sdpa_partial(q_ref, k_ref, v_ref, return_aux=AuxRequest(lse=True))
+        gold_lse, ref_lse = golden_aux.lse, ref_aux.lse
 
         compiled_out, compiled_lse = self.run_paged_attention(
             score_mod,
@@ -1915,14 +1926,15 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
 
         flex = torch.compile(flex_attention, dynamic=False)
         if not self.test_inference_only:
-            out, lse = flex(
+            out, aux = flex(
                 query,
                 key,
                 value,
                 block_mask=block_mask,
                 enable_gqa=True,
-                return_lse=True,
+                return_aux=AuxRequest(lse=True),
             )
+            lse = aux.lse
             self.assertTrue((lse[:, :, M:] == -float("inf")).all())
 
             loss = out.sum() + lse.sum()
@@ -1935,7 +1947,6 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
                 value,
                 block_mask=block_mask,
                 enable_gqa=True,
-                return_lse=False,
             )
         self.assertEqual(out[:, :, M:, :].sum(), 0)
 
@@ -2047,11 +2058,11 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
 
         @torch.compile
         def sdpa_hop(q, k, v, score_mod):
-            return flex_attention(q, k, v, score_mod, return_lse=True)
+            return flex_attention(q, k, v, score_mod, return_aux=AuxRequest(lse=True))
 
         @torch.compile(backend="aot_eager")
         def eager_sdpa_hop(q, k, v, score_mod):
-            return flex_attention(q, k, v, score_mod, return_lse=True)
+            return flex_attention(q, k, v, score_mod, return_aux=AuxRequest(lse=True))
 
         ref_out, ref_lse = eager_sdpa_hop(
             q.to(torch.float64),
@@ -2110,7 +2121,8 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
 
         @torch.compile
         def func(q, k, v, score_mod):
-            _, lse = flex_attention(q, k, v, score_mod, return_lse=True)
+            _, aux = flex_attention(q, k, v, score_mod, return_aux=AuxRequest(lse=True))
+            lse = aux.lse
             lse_2 = lse * 2
             return lse_2
 
