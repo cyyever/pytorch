@@ -361,10 +361,6 @@ DISTRIBUTED_TESTS_CONFIG = {}
 if dist.is_available():
     num_gpus = torch.cuda.device_count()
     DISTRIBUTED_TESTS_CONFIG["test"] = {"WORLD_SIZE": "1"}
-    if not TEST_WITH_ROCM and dist.is_mpi_available():
-        DISTRIBUTED_TESTS_CONFIG["mpi"] = {
-            "WORLD_SIZE": "3",
-        }
     if dist.is_nccl_available() and num_gpus > 0:
         DISTRIBUTED_TESTS_CONFIG["nccl"] = {
             "WORLD_SIZE": f"{num_gpus}",
@@ -375,15 +371,9 @@ if dist.is_available():
             "WORLD_SIZE": f"{num_gpus if num_gpus > 0 else 3}",
         }
     del num_gpus
-    # Test with UCC backend is deprecated.
     # See https://github.com/pytorch/pytorch/pull/137161
-    # if dist.is_ucc_available():
-    #     DISTRIBUTED_TESTS_CONFIG["ucc"] = {
     #         "WORLD_SIZE": f"{torch.cuda.device_count()}",
     #         "UCX_TLS": "tcp,cuda",
-    #         "UCC_TLS": "nccl,ucp,cuda",
-    #         "UCC_TL_UCP_TUNE": "cuda:0",  # don't use UCP TL on CUDA as it is not well supported
-    #         "UCC_EC_CUDA_USE_COOPERATIVE_LAUNCH": "n",  # CI nodes (M60) fail if it is on
     #     }
 
 # https://stackoverflow.com/questions/2549939/get-signal-names-from-numbers-in-python
@@ -1055,15 +1045,11 @@ def test_openreg(test_module, test_directory, options):
 
 
 def test_distributed(test_module, test_directory, options):
-    mpi_available = shutil.which("mpiexec")
-    if options.verbose and not mpi_available:
-        print_to_stderr("MPI not available -- MPI backend tests will be skipped")
 
     config = DISTRIBUTED_TESTS_CONFIG
     for backend, env_vars in config.items():
         if sys.platform == "win32" and backend != "gloo":
             continue
-        if backend == "mpi" and not mpi_available:
             continue
         for with_init_file in {True, False}:
             if sys.platform == "win32" and not with_init_file:
@@ -1382,11 +1368,9 @@ CUSTOM_HANDLERS = {
     "distributed/algorithms/quantization/test_quantization": test_distributed,
     "distributed/test_c10d_nccl": run_test_with_subprocess,
     "distributed/test_c10d_gloo": run_test_with_subprocess,
-    "distributed/test_c10d_ucc": run_test_with_subprocess,
     "distributed/test_c10d_common": run_test_with_subprocess,
     "distributed/test_c10d_spawn_gloo": run_test_with_subprocess,
     "distributed/test_c10d_spawn_nccl": run_test_with_subprocess,
-    "distributed/test_c10d_spawn_ucc": run_test_with_subprocess,
     "distributed/test_store": run_test_with_subprocess,
     "distributed/test_pg_wrapper": run_test_with_subprocess,
     "functorch/test_control_flow_cuda_initialization": run_test_with_subprocess,

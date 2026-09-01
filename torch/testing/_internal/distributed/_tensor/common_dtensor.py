@@ -80,6 +80,7 @@ if TEST_CUDA or TEST_XPU or TEST_HPU or TEST_PRIVATEUSE1:
 else:
     DEVICE_TYPE = "cpu"
     PG_BACKEND = "gloo"
+    PG_BACKEND = "nccl"
 
 if TEST_WITH_ROCM:
     NUM_DEVICES = min(4, max(2, torch.cuda.device_count()))
@@ -810,9 +811,12 @@ class DTensorTestBase(DTensorTestMixin, MultiProcessTestCase):
             "nccl",
             "nccl-legacy",
             "gloo",
+            "fake",
             "mpi",
             f"cpu:gloo,{self.device_type}:{curr_backend}",
             "cpu:gloo,cuda:ncclx",
+            f"cpu:fake,{self.device_type}:{curr_backend}",
+            "cpu:fake,cuda:ncclx",
             "cuda:ncclx",
             "hccl",
             "xccl",

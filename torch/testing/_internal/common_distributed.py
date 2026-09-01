@@ -517,20 +517,6 @@ def requires_xccl():
     )
 
 
-def requires_ucc():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_ucc_available(),
-        "c10d was not compiled with the UCC backend",
-    )
-
-
-def requires_mpi():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_mpi_available(),
-        "c10d was not compiled with the MPI backend",
-    )
-
-
 def requires_accelerator_dist_backend(backends=None):
     """
     Decorator to skip tests if no accelerator communication backend (NCCL, XCCL, HCCL) is available.
@@ -2067,8 +2053,17 @@ class MultiProcContinuousTest(TestCase):
         # Check if the specified backend is available before spawning processes.
         # is_backend_available covers OOT/third-party backends too.
         backend = cls.backend_str() if callable(cls.backend_str) else cls.backend_str
-        if backend is not None and not c10d.is_backend_available(backend):
-            raise unittest.SkipTest(f"Backend '{backend}' is not available")
+        if backend is not None:
+            backend_checks = {
+                "nccl": c10d.is_nccl_available,
+                # The MPI backend was removed; report it unavailable so a
+                # test that asks for it skips instead of failing at init.
+                "mpi": lambda: False,
+                "xccl": c10d.is_xccl_available,
+            }
+            check_fn = backend_checks.get(backend)
+            if check_fn is not None and not check_fn():
+                raise unittest.SkipTest(f"Backend '{backend}' is not available")
 
         logger.info(
             f"Testing class {cls.__name__} on {cls.world_size} {device_type}"  # noqa: G004

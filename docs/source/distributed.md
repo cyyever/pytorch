@@ -77,7 +77,7 @@ for a brief introduction to all features related to distributed training.
 
 ## Backends
 
-`torch.distributed` supports four built-in backends, each with
+`torch.distributed` supports three built-in backends, each with
 different capabilities. The table below shows which functions are available
 for use with a CPU or GPU for each backend. For NCCL, GPU refers to CUDA GPU
 while for XCCL to XPU GPU.
@@ -1351,10 +1351,6 @@ This module is experimental and subject to change.
 
 ```{eval-rst}
 .. py:module:: torch.distributed.nn
-```
-
-```{eval-rst}
-.. py:module:: torch.distributed.algorithms.ddp_comm_hooks.ddp_zero_hook
 ```
 
 ```{eval-rst}

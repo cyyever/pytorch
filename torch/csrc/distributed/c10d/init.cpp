@@ -41,14 +41,6 @@
 #include <torch/csrc/distributed/c10d/symm_mem/nccl_devcomm_manager.hpp>
 #endif
 
-#ifdef USE_C10D_MPI
-#include <torch/csrc/distributed/c10d/ProcessGroupMPI.hpp>
-#endif
-
-#ifdef USE_C10D_UCC
-#include <torch/csrc/distributed/c10d/ProcessGroupUCC.hpp>
-#endif
-
 #include <fmt/format.h>
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -4109,21 +4101,6 @@ Example::
 
 #endif
 
-#ifdef USE_C10D_MPI
-  auto processGroupMPI =
-      intrusive_ptr_no_gil_destructor_class_<::c10d::ProcessGroupMPI>(
-          module, "ProcessGroupMPI", backend);
-
-  // Define static create function instead of a constructor, because
-  // this function may return null. This happens if this process is not
-  // part of a sub group that is to be created.
-  processGroupMPI.def_static(
-      "create",
-      [](std::vector<int> ranks) {
-        return ::c10d::ProcessGroupMPI::createProcessGroupMPI(std::move(ranks));
-      },
-      py::call_guard<py::gil_scoped_release>());
-#endif
 
 #ifdef USE_C10D_XCCL
   auto processGroupXCCL =
@@ -4364,28 +4341,6 @@ Returns:
                 self.getBackendOptions());
           },
           R"(Return the options used to create this ProcessGroupNCCLLazy instance.)");
-#endif
-
-#ifdef USE_C10D_UCC
-  auto processGroupUCC =
-      intrusive_ptr_no_gil_destructor_class_<::c10d::ProcessGroupUCC>(
-          module, "ProcessGroupUCC", backend)
-          .def(
-              py::init([](const c10::intrusive_ptr<::c10d::Store>& store,
-                          int rank,
-                          int size,
-                          const std::chrono::milliseconds& timeout) {
-                // gil_scoped_release is not safe as a call_guard in init.
-                // https://github.com/pybind/pybind11/issues/5473
-                py::gil_scoped_release nogil{};
-
-                return c10::make_intrusive<::c10d::ProcessGroupUCC>(
-                    store, rank, size, timeout);
-              }),
-              py::arg("store"),
-              py::arg("rank"),
-              py::arg("size"),
-              py::arg("timeout") = kProcessGroupDefaultTimeout);
 #endif
 
   py::enum_<::c10d::OpType>(module, "OpType")
