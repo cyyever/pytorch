@@ -15,18 +15,10 @@
 #cmakedefine CAFFE2_THREADPOOL_STATS
 #cmakedefine CAFFE2_USE_ACCELERATE
 #cmakedefine CAFFE2_USE_CUDNN
-#cmakedefine CAFFE2_USE_EIGEN_FOR_BLAS
 #cmakedefine CAFFE2_USE_FBCODE
-#cmakedefine CAFFE2_USE_GOOGLE_GLOG
-#cmakedefine CAFFE2_USE_LITE_PROTO
 #cmakedefine CAFFE2_USE_MKL
 #cmakedefine USE_MKLDNN
 #cmakedefine CAFFE2_USE_NVTX
-#cmakedefine CAFFE2_USE_ITT
-
-#ifndef EIGEN_MPL2_ONLY
-#cmakedefine EIGEN_MPL2_ONLY
-#endif
 
 // Useful build settings that are recorded in the compiled binary
 // torch.__config__.show()
@@ -48,8 +40,6 @@
   {"USE_NCCL", "${USE_NCCL}"}, \
   {"USE_MPI", "${USE_MPI}"}, \
   {"USE_GFLAGS", "${USE_GFLAGS}"}, \
-  {"USE_GLOG", "${USE_GLOG}"}, \
-  {"USE_GLOO", "${USE_GLOO}"}, \
   {"USE_NNPACK", "${USE_NNPACK}"}, \
   {"USE_OPENMP", "${USE_OPENMP}"}, \
   {"FORCE_FALLBACK_CUDA_MPI", "${CAFFE2_FORCE_FALLBACK_CUDA_MPI}"}, \
@@ -58,12 +48,9 @@
   {"PERF_WITH_AVX", "${CAFFE2_PERF_WITH_AVX}"}, \
   {"PERF_WITH_AVX2", "${CAFFE2_PERF_WITH_AVX2}"}, \
   {"USE_ACCELERATE", "${CAFFE2_USE_ACCELERATE}"}, \
-  {"USE_EIGEN_FOR_BLAS", "${CAFFE2_USE_EIGEN_FOR_BLAS}"}, \
-  {"USE_LITE_PROTO", "${CAFFE2_USE_LITE_PROTO}"}, \
   {"USE_MKL", "${CAFFE2_USE_MKL}"}, \
   {"USE_MKLDNN", "${USE_MKLDNN}"}, \
   {"USE_NVTX", "${CAFFE2_USE_NVTX}"}, \
-  {"USE_ITT", "${CAFFE2_USE_ITT}"}, \
   {"USE_ROCM_KERNEL_ASSERT", "${USE_ROCM_KERNEL_ASSERT}"}, \
   {"USE_CUSPARSELT", "${USE_CUSPARSELT}"}, \
   {"USE_HIPSPARSELT", "${USE_HIPSPARSELT}"}, \

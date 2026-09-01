@@ -2,7 +2,6 @@
 # The design document please check this RFC: https://github.com/pytorch/pytorch/issues/124245
 
 import copy
-import ctypes
 import errno
 import functools
 import json
@@ -20,7 +19,7 @@ import tempfile
 import textwrap
 import warnings
 from collections.abc import Sequence
-from ctypes import cdll, wintypes
+from ctypes import cdll
 from ctypes.util import find_library
 from pathlib import Path
 from typing import Any, Literal
@@ -71,21 +70,14 @@ _LINKER_SCRIPT = os.path.join(_TORCH_PATH, "_inductor/script.ld")
 # initialize variables for compilation
 _IS_LINUX = sys.platform.startswith("linux")
 _IS_MACOS = sys.platform.startswith("darwin")
-_IS_WINDOWS = sys.platform == "win32"
 
-MINGW_GXX = "x86_64-w64-mingw32-g++"
-
-SUBPROCESS_DECODE_ARGS = (
-    (locale.getpreferredencoding(), "replace") if _IS_WINDOWS else ()
-)
+SUBPROCESS_DECODE_ARGS = ()
 
 log = logging.getLogger(__name__)
 
 
 # =============================== toolchain ===============================
 def _split_compiler_command(compiler: str) -> list[str]:
-    if _IS_WINDOWS:
-        return [compiler]
     command = shlex.split(compiler)
     if not command:
         raise ValueError("empty compiler command")
@@ -176,286 +168,28 @@ def install_gcc_via_conda() -> str:
     return cxx_path
 
 
-@functools.cache
-def check_compiler_exist_windows(compiler: str) -> None:
-    """
-    Check if compiler is ready, in case end user not activate MSVC environment.
-    """
-    try:
-        subprocess.check_output(
-            _compiler_command(compiler, "/help"), stderr=subprocess.STDOUT
-        )
-    except FileNotFoundError as e:
-        raise exc.InvalidCxxCompiler(compiler) from e
-    except subprocess.SubprocessError:
-        # Expected that some compiler(clang, clang++) is exist, but they not support `/help` args.
-        pass
-
-
-class WinPeFileVersionInfo:
-    def __init__(self, file_path: str) -> None:
-        self.file_path = file_path
-        self.version_dll = ctypes.WinDLL("version.dll")  # type: ignore[attr-defined]
-        self._setup_functions()
-        self._get_version_info()
-
-    def _setup_functions(self) -> None:
-        self.version_dll.GetFileVersionInfoSizeW.argtypes = [
-            wintypes.LPCWSTR,
-            wintypes.LPDWORD,
-        ]
-        self.version_dll.GetFileVersionInfoSizeW.restype = wintypes.DWORD
-
-        self.version_dll.GetFileVersionInfoW.argtypes = [
-            wintypes.LPCWSTR,
-            wintypes.DWORD,
-            wintypes.DWORD,
-            wintypes.LPVOID,
-        ]
-        self.version_dll.GetFileVersionInfoW.restype = wintypes.BOOL
-
-        self.version_dll.VerQueryValueW.argtypes = [
-            wintypes.LPCVOID,
-            wintypes.LPCWSTR,
-            ctypes.POINTER(ctypes.c_void_p),
-            ctypes.POINTER(wintypes.UINT),
-        ]
-        self.version_dll.VerQueryValueW.restype = wintypes.BOOL
-
-    def _get_version_info(self) -> None:
-        dummy = wintypes.DWORD()
-        size = self.version_dll.GetFileVersionInfoSizeW(
-            self.file_path, ctypes.byref(dummy)
-        )
-
-        if size == 0:
-            raise RuntimeError(f"Can't get version info size of {self.file_path}.")
-
-        self.version_info = ctypes.create_string_buffer(size)
-        success = self.version_dll.GetFileVersionInfoW(
-            self.file_path, 0, size, self.version_info
-        )
-
-        if not success:
-            raise RuntimeError(f"Can't get version info of {self.file_path}.")
-
-    def get_language_id(self) -> int:
-        lp_buffer = ctypes.c_void_p()
-        u_len = wintypes.UINT()
-
-        success = self.version_dll.VerQueryValueW(
-            self.version_info,
-            r"\VarFileInfo\Translation",
-            ctypes.byref(lp_buffer),
-            ctypes.byref(u_len),
-        )
-
-        if not success or u_len.value == 0:
-            return 0
-
-        translations = []
-        lang_id: int = 0
-        if lp_buffer.value is not None:
-            for i in range(u_len.value // 4):
-                offset = i * 4
-                data = ctypes.string_at(lp_buffer.value + offset, 4)
-                lang_id = int.from_bytes(data[:2], "little")
-                code_page = int.from_bytes(data[2:4], "little")
-                translations.append((lang_id, code_page))
-        else:
-            # Handle the case where lp_buffer.value is None
-            print("Buffer is None")
-
-        return lang_id
-
-
-@functools.cache
-def check_msvc_cl_language_id(compiler: str) -> None:
-    """
-    Torch.compile() is only work on MSVC with English language pack well.
-    Check MSVC's language pack: https://github.com/pytorch/pytorch/issues/157673#issuecomment-3051682766
-    """
-
-    def get_msvc_cl_path() -> tuple[bool, str]:
-        """
-        Finds the path to cl.exe using vswhere.exe.
-        """
-        vswhere_path = os.path.join(
-            os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
-            "Microsoft Visual Studio",
-            "Installer",
-            "vswhere.exe",
-        )
-        if not os.path.exists(vswhere_path):
-            vswhere_path = os.path.join(
-                os.environ.get("ProgramFiles", "C:\\Program Files"),
-                "Microsoft Visual Studio",
-                "Installer",
-                "vswhere.exe",
-            )
-            if not os.path.exists(vswhere_path):
-                return False, ""  # vswhere.exe not found
-
-        try:
-            # Get the Visual Studio installation path
-            cmd = [
-                vswhere_path,
-                "-latest",
-                "-prerelease",
-                "-products",
-                "*",
-                "-requires",
-                "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
-                "-property",
-                "installationPath",
-            ]
-            vs_install_path = subprocess.check_output(
-                cmd, text=True, encoding="utf-8"
-            ).strip()
-
-            if not vs_install_path:
-                return False, ""
-
-            # Find the latest MSVC toolset version within the installation
-            msvc_tools_path = os.path.join(vs_install_path, "VC", "Tools", "MSVC")
-            if not os.path.exists(msvc_tools_path):
-                return False, ""
-
-            # Get the latest toolset version directory
-            toolset_versions = [
-                d
-                for d in os.listdir(msvc_tools_path)
-                if os.path.isdir(os.path.join(msvc_tools_path, d))
-            ]
-            if not toolset_versions:
-                return False, ""
-            latest_toolset_version = sorted(toolset_versions, reverse=True)[0]
-
-            # Construct the full cl.exe path
-            cl_path = os.path.join(
-                msvc_tools_path,
-                latest_toolset_version,
-                "bin",
-                "HostX64",
-                "x64",
-                "cl.exe",
-            )
-            if os.path.exists(cl_path):
-                return True, cl_path
-            else:
-                # Fallback for older versions or different architectures if needed
-                cl_path = os.path.join(
-                    msvc_tools_path,
-                    latest_toolset_version,
-                    "bin",
-                    "HostX86",
-                    "x86",
-                    "cl.exe",
-                )
-                if os.path.exists(cl_path):
-                    return True, cl_path
-
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return False, ""
-
-        return False, ""
-
-    if not _is_msvc_cl(compiler):
-        return
-
-    if os.path.exists(compiler):
-        # Passed compiler with path.
-        cl_exe_path = compiler
-    else:
-        b_ret, cl_exe_path = get_msvc_cl_path()
-        if b_ret is False:
-            return
-
-    version_info = WinPeFileVersionInfo(cl_exe_path)
-    lang_id = version_info.get_language_id()
-    if lang_id != 1033:
-        # MSVC English language id is 0x0409, and the DEC value is 1033.
-        raise RuntimeError(
-            "Torch.compile() is only support MSVC with English language pack,"
-            "Please reinstall its language pack to English."
-        )
-
-
-@functools.cache
-def check_mingw_win32_flavor(compiler: str) -> str:
-    """
-    Check if MinGW `compiler` exists and return it's flavor (win32 or posix).
-    """
-    try:
-        out = subprocess.check_output(
-            _compiler_command(compiler, "-v"),
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-    except FileNotFoundError as e:
-        raise RuntimeError(f"Compiler: {compiler} is not found.") from e
-    except Exception as e:
-        raise RuntimeError(f"Failed to run {compiler} -v") from e
-
-    flavor: str | None = None
-    for line in out.splitlines():
-        if "Thread model" in line:
-            flavor = line.split(":", 1)[-1].strip().lower()
-
-    if flavor is None:
-        raise RuntimeError(
-            f"Cannot determine the flavor of {compiler} (win32 or posix). No Thread model found in {compiler} -v"
-        )
-
-    if flavor not in ("win32", "posix"):
-        raise RuntimeError(
-            f"Only win32 and pofix flavor of {compiler} is supported. The flavor is {flavor}"
-        )
-
-    return flavor
-
-
 def get_cpp_compiler() -> str:
-    if (
-        config.aot_inductor.cross_target_platform == "windows"
-        and sys.platform != "win32"
-    ):
-        # we're doing cross-compilation
-        compiler = MINGW_GXX
-        if not config.aot_inductor.package_cpp_only:
-            check_mingw_win32_flavor(compiler)
-        return compiler
-
-    if _IS_WINDOWS:
-        compiler = os.environ.get("CXX", "cl")
-        compiler = normalize_path_separator(compiler)
-        check_compiler_exist_windows(compiler)
-        check_msvc_cl_language_id(compiler)
+    if config.is_fbcode():
+        return build_paths.cc
+    if isinstance(config.cpp.cxx, (list, tuple)):
+        search = tuple(config.cpp.cxx)
     else:
-        if config.is_fbcode():
-            return build_paths.cc
-        if isinstance(config.cpp.cxx, (list, tuple)):
-            search = tuple(config.cpp.cxx)
-        else:
-            search = (config.cpp.cxx,)
-        compiler = cpp_compiler_search(search)
+        search = (config.cpp.cxx,)
+    compiler = cpp_compiler_search(search)
     return compiler
 
 
 def get_ld_and_objcopy(use_relative_path: bool) -> tuple[str, str]:
-    if _IS_WINDOWS:
-        raise RuntimeError("Windows is not supported yet.")
+    if config.is_fbcode():
+        ld = build_paths.ld
+        objcopy = (
+            build_paths.objcopy_fallback
+            if use_relative_path
+            else build_paths.objcopy
+        )
     else:
-        if config.is_fbcode():
-            ld = build_paths.ld
-            objcopy = (
-                build_paths.objcopy_fallback
-                if use_relative_path
-                else build_paths.objcopy
-            )
-        else:
-            ld = "ld"
-            objcopy = "objcopy"
+        ld = "ld"
+        objcopy = "objcopy"
     return ld, objcopy
 
 
@@ -544,14 +278,6 @@ def _is_apple_clang(cpp_compiler: str) -> bool:
 
 @functools.cache
 def _is_clang(cpp_compiler: str) -> bool:
-    if _IS_WINDOWS:
-        # clang suite have many compilers, and only clang-cl is supported.
-        if re.search(r"((clang$)|(clang\+\+$))", cpp_compiler):
-            raise RuntimeError(
-                "Please use clang-cl, due to torch.compile only support MSVC-like CLI (compiler flags syntax)."
-            )
-        return bool(re.search(r"(clang-cl)", cpp_compiler))
-
     if sys.platform == "darwin" and _is_apple_clang(cpp_compiler):
         return True
 
@@ -607,23 +333,7 @@ def _is_gcc_version_less_than(cpp_compiler: str, major: int) -> bool:
 
 @functools.cache
 def _is_msvc_cl(cpp_compiler: str) -> bool:
-    if not _IS_WINDOWS:
-        return False
-
-    try:
-        result = subprocess.run(
-            _compiler_command(cpp_compiler, "/help"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
-
-        lines = (result.stdout or b"").strip().splitlines()
-
-        return bool(lines) and b"Microsoft" in lines[0]
-
-    except OSError:
-        return False
+    return False
 
 
 @functools.cache
@@ -632,7 +342,7 @@ def _is_intel_compiler(cpp_compiler: str) -> bool:
         """
         On Windows: early version icx has `-print-file-name` issue, and can't preload correctly for inductor.
         """
-        min_version = "2024.2.1" if _IS_WINDOWS else "0.0.0"
+        min_version = "0.0.0"
         if compiler_version < TorchVersion(min_version):
             raise RuntimeError(
                 f"Intel Compiler error: less than minimal version {min_version}."
@@ -643,12 +353,6 @@ def _is_intel_compiler(cpp_compiler: str) -> bool:
         lines = output_msg.splitlines()
         is_intel_compiler = bool(lines) and "Intel" in lines[0]
         if is_intel_compiler:
-            if _IS_WINDOWS:
-                if re.search(r"((icx$)|(icx-cc$))", cpp_compiler):
-                    raise RuntimeError(
-                        "Please use icx-cl, due to torch.compile only support MSVC-like CLI (compiler flags syntax)."
-                    )
-
             # Version check
             icx_ver_search = re.search(r"(\d+[.]\d+[.]\d+[.]\d+)", output_msg)
             if icx_ver_search is not None:
@@ -779,8 +483,6 @@ def run_compile_cmd(cmd_line: str, cwd: str) -> None:
 
 
 def normalize_path_separator(orig_path: str) -> str:
-    if _IS_WINDOWS:
-        return orig_path.replace(os.sep, "/")
     return orig_path
 
 
@@ -905,100 +607,59 @@ class BuildOptionsBase:
 
 
 def _get_warning_all_cflag(warning_all: bool = True) -> list[str]:
-    if not _IS_WINDOWS:
-        return ["Wall"] if warning_all else []
-    else:
-        return []
+    return ["Wall"] if warning_all else []
 
 
 def _get_cpp_std_cflag(std_num: str = "c++20") -> list[str]:
-    if _IS_WINDOWS:
-        """
-        On Windows, only c++20 can support `std::enable_if_t`.
-        Ref: https://learn.microsoft.com/en-us/cpp/overview/cpp-conformance-improvements-2019?view=msvc-170#checking-for-abstract-class-types # noqa: B950
-        Note:
-            Only setup c++20 for Windows inductor. I tried to upgrade all project to c++20, but it is failed:
-            https://github.com/pytorch/pytorch/pull/131504
-        """
-        std_num = "c++20"
-        return [f"std:{std_num}"]
-    else:
-        return [f"std={std_num}"]
+    return [f"std={std_num}"]
 
 
 def _get_os_related_cpp_cflags(cpp_compiler: str) -> list[str]:
-    if _IS_WINDOWS:
-        cflags = [
-            "wd4819",
-            "wd4251",
-            "wd4244",
-            "wd4267",
-            "wd4275",
-            "wd4018",
-            "wd4190",
-            "wd4624",
-            "wd4067",
-            "wd4068",
-            "EHsc",
-            # For Intel oneAPI, ref: https://learn.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170
-            "Zc:__cplusplus",
-            # Enable max compatible to msvc for oneAPI headers.
-            # ref: https://github.com/pytorch/pytorch/blob/db38c44ad639e7ada3e9df2ba026a2cb5e40feb0/cmake/public/utils.cmake#L352-L358
-            "permissive-",
-        ]
-    else:
-        cflags = ["Wno-unused-variable", "Wno-unknown-pragmas"]
-        if _is_clang(cpp_compiler):
-            ignored_optimization_argument = (
-                "Werror=ignored-optimization-argument"
-                if config.aot_inductor.raise_error_on_ignored_optimization
-                else "Wno-ignored-optimization-argument"
-            )
-            cflags.append(ignored_optimization_argument)
-        if _is_gcc(cpp_compiler):
-            # Issue all the warnings demanded by strict ISO C and ISO C++.
-            # Ref: https://github.com/pytorch/pytorch/issues/153180#issuecomment-2986676878
-            cflags.append("pedantic")
+    cflags = ["Wno-unused-variable", "Wno-unknown-pragmas"]
+    if _is_clang(cpp_compiler):
+        ignored_optimization_argument = (
+            "Werror=ignored-optimization-argument"
+            if config.aot_inductor.raise_error_on_ignored_optimization
+            else "Wno-ignored-optimization-argument"
+        )
+        cflags.append(ignored_optimization_argument)
+    if _is_gcc(cpp_compiler):
+        # Issue all the warnings demanded by strict ISO C and ISO C++.
+        # Ref: https://github.com/pytorch/pytorch/issues/153180#issuecomment-2986676878
+        cflags.append("pedantic")
     return cflags
 
 
 def _get_os_related_cpp_definitions(cpp_compiler: str) -> list[str]:
     os_definitions: list[str] = []
-    if _IS_WINDOWS:
-        # On Windows, we need disable min/max macro to avoid C2589 error, as PyTorch CMake:
-        # https://github.com/pytorch/pytorch/blob/9a41570199155eee92ebd28452a556075e34e1b4/CMakeLists.txt#L1118-L1119
-        os_definitions.append("NOMINMAX")
     return os_definitions
 
 
 def _get_ffast_math_flags() -> list[str]:
-    if _IS_WINDOWS:
-        flags = []
-    else:
-        # This starts from the flags implied by -ffast-math, as in
-        # https://github.com/gcc-mirror/gcc/blob/4700ad1c78ccd7767f846802fca148b2ea9a1852/gcc/opts.cc#L3458-L3468
-        # however gcc<13 sets the FTZ/DAZ flags for runtime on x86 even if we have
-        # -ffast-math -fno-unsafe-math-optimizations because the flags for runtime
-        # are added by linking in crtfastmath.o. This is done by the spec file which
-        # only does globbing for -ffast-math.
-        flags = [
-            "fno-trapping-math",
-            "funsafe-math-optimizations",
-            "ffinite-math-only",
-            "fno-signed-zeros",
-        ]
+    # This starts from the flags implied by -ffast-math, as in
+    # https://github.com/gcc-mirror/gcc/blob/4700ad1c78ccd7767f846802fca148b2ea9a1852/gcc/opts.cc#L3458-L3468
+    # however gcc<13 sets the FTZ/DAZ flags for runtime on x86 even if we have
+    # -ffast-math -fno-unsafe-math-optimizations because the flags for runtime
+    # are added by linking in crtfastmath.o. This is done by the spec file which
+    # only does globbing for -ffast-math.
+    flags = [
+        "fno-trapping-math",
+        "funsafe-math-optimizations",
+        "ffinite-math-only",
+        "fno-signed-zeros",
+    ]
 
-        flags.append("fno-finite-math-only")
-        if not config.cpp.enable_unsafe_math_opt_flag:
-            flags.append("fno-unsafe-math-optimizations")
-        # Keep errno-preserving libm semantics.  With -fno-math-errno, GCC can
-        # inline/transform libm call pairs like sin(atan(x)) in ways that do not
-        # preserve NaN values (see https://github.com/pytorch/pytorch/issues/143978).
-        flags.append("fmath-errno")
-        flags.append(f"ffp-contract={config.cpp.enable_floating_point_contract_flag}")
+    flags.append("fno-finite-math-only")
+    if not config.cpp.enable_unsafe_math_opt_flag:
+        flags.append("fno-unsafe-math-optimizations")
+    # Keep errno-preserving libm semantics.  With -fno-math-errno, GCC can
+    # inline/transform libm call pairs like sin(atan(x)) in ways that do not
+    # preserve NaN values (see https://github.com/pytorch/pytorch/issues/143978).
+    flags.append("fmath-errno")
+    flags.append(f"ffp-contract={config.cpp.enable_floating_point_contract_flag}")
 
-        if is_gcc():
-            flags.append("fexcess-precision=fast")
+    if is_gcc():
+        flags.append("fexcess-precision=fast")
 
     return flags
 
@@ -1012,11 +673,7 @@ def _get_inductor_debug_symbol_cflags() -> tuple[list[str], list[str]]:
     cflags: list[str] = []
     ldflags: list[str] = []
 
-    if _IS_WINDOWS:
-        cflags = ["ZI", "_DEBUG"]
-        ldflags = ["DEBUG", "ASSEMBLYDEBUG ", "OPT:REF", "OPT:ICF"]
-    else:
-        cflags.append("g")
+    cflags.append("g")
 
     return cflags, ldflags
 
@@ -1031,13 +688,6 @@ def _get_linux_aarch64_cpu_flags() -> OrderedSet[str]:
     if not sys.platform.startswith("linux"):
         return flags
 
-    capabilities = torch.cpu.get_capabilities()
-    flags.update(
-        capability
-        for capability in ("bf16", "sve", "sve2")
-        if capabilities.get(capability, False)
-    )
-
     return flags
 
 
@@ -1046,11 +696,8 @@ def _get_linux_aarch64_arch_flag(cpp_compiler: str) -> str:
     flags = _get_linux_aarch64_cpu_flags()
 
     if _is_gcc(cpp_compiler) and _is_gcc_version_less_than(cpp_compiler, 13):
-        if OrderedSet(["bf16", "sve", "sve2"]).issubset(flags):
-            return "march=armv8.6-a+sve+sve2+bf16"
-
-        if OrderedSet(["bf16", "sve"]).issubset(flags):
-            return "march=armv8.6-a+sve+bf16"
+        if OrderedSet(["bf16"]).issubset(flags):
+            return "march=armv8.6-a+bf16"
 
     return "march=native"
 
@@ -1102,18 +749,12 @@ def _get_optimization_cflags(
         or os.environ.get("TORCHINDUCTOR_DEBUG_SYMBOL", "0") == "1"
     )
     if should_use_optimized_flags:
-        if _IS_WINDOWS:
-            cflags += ["O1" if min_optimize else "O2"]
-        else:
-            cflags += [
-                config.aot_inductor.compile_wrapper_opt_level if min_optimize else "O3",
-                "DNDEBUG",
-            ]
+        cflags += [
+            config.aot_inductor.compile_wrapper_opt_level if min_optimize else "O3",
+            "DNDEBUG",
+        ]
     else:
-        if _IS_WINDOWS:
-            cflags += ["Od", "Ob0", "Oy-"]
-        else:
-            cflags += ["O0"]
+        cflags += ["O0"]
 
     if should_add_debug_symbol_flags:
         debug_cflags, debug_ldflags = _get_inductor_debug_symbol_cflags()
@@ -1121,41 +762,28 @@ def _get_optimization_cflags(
         ldflags += debug_ldflags
 
     if config.aot_inductor.enable_frame_pointer:
-        if _IS_WINDOWS:
-            cflags.append("Oy-")
-        else:
-            cflags.append("fno-omit-frame-pointer")
+        cflags.append("fno-omit-frame-pointer")
 
     if config.aot_inductor.enable_line_tables and not should_add_debug_symbol_flags:
-        if not _IS_WINDOWS:
-            if _is_clang(cpp_compiler):
-                cflags.append("gline-tables-only")
-            else:
-                cflags.append("g1")
+        if _is_clang(cpp_compiler):
+            cflags.append("gline-tables-only")
+        else:
+            cflags.append("g1")
 
     cflags += _get_ffast_math_flags()
 
-    if _IS_WINDOWS:
-        pass
-    else:
-        # on macos, unknown argument: '-fno-tree-loop-vectorize'
-        if sys.platform != "darwin" and _is_gcc(cpp_compiler):
-            cflags.append("fno-tree-loop-vectorize")
-        cflags += _get_cpu_arch_cflags(cpp_compiler)
+    # on macos, unknown argument: '-fno-tree-loop-vectorize'
+    if sys.platform != "darwin" and _is_gcc(cpp_compiler):
+        cflags.append("fno-tree-loop-vectorize")
+    cflags += _get_cpu_arch_cflags(cpp_compiler)
 
-        if config.aot_inductor.enable_lto and _is_clang(cpp_compiler):
-            cflags.append("flto=thin")
+    if config.aot_inductor.enable_lto and _is_clang(cpp_compiler):
+        cflags.append("flto=thin")
 
     return cflags, ldflags
 
 
 def _get_shared_cflags(cpp_compiler: str, do_link: bool) -> list[str]:
-    if _IS_WINDOWS:
-        """
-        MSVC `/MD` using python `ucrtbase.dll` lib as runtime.
-        https://learn.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features?view=msvc-170
-        """
-        return ["DLL", "MD"]
     if platform.system() == "Darwin" and _is_clang(cpp_compiler):
         # This causes undefined symbols to behave the same as linux
         return ["shared", "fPIC", "undefined dynamic_lookup"]
@@ -1194,21 +822,11 @@ def get_cpp_options(
 
     definitions += _get_os_related_cpp_definitions(cpp_compiler)
 
-    if not _IS_WINDOWS and config.aot_inductor.enable_lto and _is_clang(cpp_compiler):
+    if config.aot_inductor.enable_lto and _is_clang(cpp_compiler):
         ldflags.append("fuse-ld=lld")
         ldflags.append("flto=thin")
 
     passthrough_args.append(" ".join(extra_flags))
-
-    if config.aot_inductor.cross_target_platform == "windows":
-        passthrough_args.extend(["-static-libstdc++", "-static-libgcc"])
-        if check_mingw_win32_flavor(MINGW_GXX) == "posix":
-            # winpthread provides clock_gettime, referenced by static libstdc++'s
-            # chrono. The driver places libstdc++ after these args, so force the
-            # symbol undefined up front to pull winpthread in regardless of order.
-            passthrough_args.append(
-                "-Wl,-u,clock_gettime -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic"
-            )
 
     return (
         definitions,
@@ -1289,21 +907,17 @@ def _use_custom_generated_macros() -> list[str]:
 
 
 def _use_fb_internal_macros() -> list[str]:
-    if not _IS_WINDOWS:
-        if config.is_fbcode():
-            fb_internal_macros = [
-                "C10_USE_GLOG",
-                "C10_USE_MINIMAL_GLOG",
-                "C10_DISABLE_TENSORIMPL_EXTENSIBILITY",
+    if config.is_fbcode():
+        fb_internal_macros = [
+            "C10_USE_MINIMAL_GLOG",
+            "C10_DISABLE_TENSORIMPL_EXTENSIBILITY",
+        ]
+        if platform.machine() == "x86_64":
+            fb_internal_macros += [
+                "ATEN_MKL_ENABLED_FBCODE=1",
+                "ATEN_MKLDNN_ENABLED_FBCODE=1",
             ]
-            if platform.machine() == "x86_64":
-                fb_internal_macros += [
-                    "ATEN_MKL_ENABLED_FBCODE=1",
-                    "ATEN_MKLDNN_ENABLED_FBCODE=1",
-                ]
-            return fb_internal_macros
-        else:
-            return []
+        return fb_internal_macros
     else:
         return []
 
@@ -1318,9 +932,6 @@ def _setup_standard_sys_libs(
     include_dirs: list[str] = []
     passthrough_args: list[str] = []
     ldflags: list[str] = []
-    if _IS_WINDOWS:
-        return cflags, include_dirs, passthrough_args, ldflags
-
     if config.is_fbcode():
         if aot_mode and cpp_stdlib == "libc++":
             stdlib_isystem = build_paths.aoti_libcxx_include
@@ -1405,40 +1016,10 @@ def _get_torch_related_args(
         libraries_dirs = [TORCH_LIB_PATH]
         if sys.platform != "darwin" and not config.is_fbcode():
             libraries.extend(["torch", "torch_cpu"])
-            if _IS_WINDOWS:
-                libraries.append("c10")
             if not aot_mode:
                 libraries.append("torch_python")
     else:
         libraries_dirs = []
-        if config.aot_inductor.cross_target_platform == "windows":
-            aoti_shim_library = config.aot_inductor.aoti_shim_library
-
-            if not aoti_shim_library:
-                raise AssertionError(
-                    "'config.aot_inductor.aoti_shim_library' must be set when 'cross_target_platform' is 'windows'."
-                )
-            if isinstance(aoti_shim_library, str):
-                libraries.append(aoti_shim_library)
-            else:
-                if not isinstance(aoti_shim_library, list):
-                    raise AssertionError(
-                        f"expected aoti_shim_library to be a list, got {type(aoti_shim_library)}"
-                    )
-                libraries.extend(aoti_shim_library)
-
-    if config.aot_inductor.cross_target_platform == "windows":
-        if not config.aot_inductor.aoti_shim_library_path:
-            raise AssertionError(
-                (
-                    "'config.aot_inductor.aoti_shim_library_path' must be set to the path of the AOTI shim library",
-                    " when 'cross_target_platform' is 'windows'.",
-                )
-            )
-        libraries_dirs.append(config.aot_inductor.aoti_shim_library_path)
-
-    if _IS_WINDOWS:
-        libraries.append("sleef")
 
     return include_dirs, libraries_dirs, libraries
 
@@ -1459,21 +1040,12 @@ def _get_python_include_dirs() -> list[str]:
 def _get_python_related_args() -> tuple[list[str], list[str]]:
     python_include_dirs = _get_python_include_dirs()
     python_include_path = sysconfig.get_path(
-        "include", scheme="nt" if _IS_WINDOWS else "posix_prefix"
+        "include", scheme="posix_prefix"
     )
     if python_include_path is not None:
         python_include_dirs.append(python_include_path)
 
-    if _IS_WINDOWS:
-        python_lib_path = [
-            str(
-                (
-                    Path(sysconfig.get_path("include", scheme="nt")).parent / "libs"
-                ).absolute()
-            )
-        ]
-    else:
-        python_lib_path = [sysconfig.get_config_var("LIBDIR")]
+    python_lib_path = [sysconfig.get_config_var("LIBDIR")]
 
     if config.is_fbcode():
         python_include_dirs.append(build_paths.python_include)
@@ -1567,8 +1139,6 @@ def _get_openmp_args(
     libs: list[str] = []
     passthrough_args: list[str] = []
 
-    if config.aot_inductor.cross_target_platform == "windows":
-        return cflags, ldflags, include_dir_paths, lib_dir_paths, libs, passthrough_args
     if _IS_MACOS:
         # Per https://mac.r-project.org/openmp/ right way to pass `openmp` flags to MacOS is via `-Xclang`
         cflags.append("Xclang")
@@ -1615,53 +1185,23 @@ def _get_openmp_args(
 
         # if openmp is still not available, we let the compiler to have a try,
         # and raise error together with instructions at compilation error later
-    elif _IS_WINDOWS:
-        """
-        On Windows, `clang` and `icx` have their specific openmp implenmention.
-        And the openmp lib is in compiler's some sub-directory.
-        For dynamic library(DLL) load, the Windows native APIs are `LoadLibraryA` and `LoadLibraryExA`, and their search
-        dependencies have some rules:
-        https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryexa#searching-for-dlls-and-dependencies
-        In some case, the rules may not include compiler's sub-directories.
-        So, it can't search and load compiler's openmp library correctly.
-        And then, the whole application would be broken.
+    if config.is_fbcode():
+        include_dir_paths.append(build_paths.openmp_include)
 
-        To avoid the openmp load failed, we can automatic locate the openmp binary and preload it.
-        1. For clang, the function is `perload_clang_libomp_win`.
-        2. For icx, the function is `perload_icx_libomp_win`.
-        """
-        if _is_clang(cpp_compiler):
-            cflags.append("openmp")
-            libs.append("libomp")
-            perload_clang_libomp_win(cpp_compiler, "libomp.dll")
-        elif _is_intel_compiler(cpp_compiler):
-            cflags.append("Qiopenmp")
-            libs.append("libiomp5md")
-            perload_icx_libomp_win(cpp_compiler)
-        else:
-            # /openmp, /openmp:llvm
-            # llvm on Windows, new openmp: https://devblogs.microsoft.com/cppblog/msvc-openmp-update/
-            # msvc openmp: https://learn.microsoft.com/zh-cn/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170
-            cflags.append("openmp")
-            cflags.append("openmp:experimental")  # MSVC CL
+        passthrough_args.append("-Wp,-fopenmp")
+        lib_dir_paths.append(os.path.dirname(build_paths.openmp_lib_so))
+
+        libs.append("omp")
     else:
-        if config.is_fbcode():
-            include_dir_paths.append(build_paths.openmp_include)
-
-            passthrough_args.append("-Wp,-fopenmp")
-            lib_dir_paths.append(os.path.dirname(build_paths.openmp_lib_so))
-
-            libs.append("omp")
+        if _is_clang(cpp_compiler):
+            # TODO: fix issue, can't find omp.h
+            cflags.append("fopenmp")
+            libs.append("gomp")
+        elif _is_intel_compiler(cpp_compiler):
+            cflags.append("fiopenmp")
         else:
-            if _is_clang(cpp_compiler):
-                # TODO: fix issue, can't find omp.h
-                cflags.append("fopenmp")
-                libs.append("gomp")
-            elif _is_intel_compiler(cpp_compiler):
-                cflags.append("fiopenmp")
-            else:
-                cflags.append("fopenmp")
-                libs.append("gomp")
+            cflags.append("fopenmp")
+            libs.append("gomp")
 
     return cflags, ldflags, include_dir_paths, lib_dir_paths, libs, passthrough_args
 
@@ -1932,192 +1472,6 @@ def _find_libcudart_static(path: str) -> Path | None:
     return None
 
 
-def _gen_mingw_import_lib(dll_path: str, def_path: str, import_lib_path: str) -> None:
-    """Generate a MinGW import library (.a) from a DLL using gendef and dlltool."""
-    dll_name = os.path.basename(dll_path)
-    with open(def_path, "w") as def_file:
-        subprocess.run(
-            ["gendef", "-", dll_path],
-            stdout=def_file,
-            stderr=subprocess.PIPE,
-            check=True,
-        )
-
-    subprocess.run(
-        [
-            "x86_64-w64-mingw32-dlltool",
-            "-d",
-            def_path,
-            "-l",
-            import_lib_path,
-            "-D",
-            dll_name,
-        ],
-        stderr=subprocess.PIPE,
-        check=True,
-    )
-    log.info("Generated MinGW import library %s from %s", import_lib_path, dll_name)
-
-
-# MSVC /GS and Control Flow Guard stubs for MinGW cross-compilation.
-# CUDA 13.0+ cudart.lib contains MSVC-compiled static objects that reference the
-# /GS symbols (__security_cookie, __security_check_cookie, __GSHandlerCheck); the
-# CUDA 13.2 cudart.lib is additionally built with Control Flow Guard (/guard:cf)
-# and references the CFG dispatch/check function pointers. When cross-compiling
-# with MinGW (no MSVC runtime), we provide stubs so the linker can resolve them.
-# At runtime on Windows the CUDA runtime DLL handles its own security/CFG checks;
-# the static loader code that references these symbols is a thin shim. The /GS
-# and CFG-check stubs are safe no-ops, but the CFG *dispatch* stub must tail-jump
-# to the real target (in rax on x86_64) -- a no-op would drop the indirect call.
-_MSVC_GS_STUBS_SOURCE = """\
-#include <stdint.h>
-uint64_t __security_cookie = 0x00002B992DDFA232ULL;
-void __security_check_cookie(uint64_t cookie) { (void)cookie; }
-void __GSHandlerCheck(void) {}
-void __guard_check_icall_nop(void *target) { (void)target; }
-void (*__guard_check_icall_fptr)(void *target) = __guard_check_icall_nop;
-__attribute__((naked)) void __guard_dispatch_icall_nop(void) {
-    __asm__ __volatile__("jmp *%rax");
-}
-void (*__guard_dispatch_icall_fptr)(void) = __guard_dispatch_icall_nop;
-"""
-
-
-def _create_msvc_gs_stubs_lib(output_dir: str) -> str | None:
-    """
-    Create a static library with MSVC GS security symbol stubs for MinGW.
-
-    Returns the library name (without lib prefix / .a suffix) if successful,
-    or None on failure.
-    """
-    stubs_lib = os.path.join(output_dir, "libmsvc_gs_stubs.a")
-    if os.path.exists(stubs_lib):
-        return "msvc_gs_stubs"
-
-    src_path = ""
-    obj_path = ""
-    try:
-        src_path = os.path.join(output_dir, "_msvc_gs_stubs.c")
-        obj_path = os.path.join(output_dir, "_msvc_gs_stubs.o")
-        with open(src_path, "w") as f:
-            f.write(_MSVC_GS_STUBS_SOURCE)
-
-        mingw_gcc = MINGW_GXX.replace("g++", "gcc")
-        subprocess.run(
-            [mingw_gcc, "-c", src_path, "-o", obj_path],
-            stderr=subprocess.PIPE,
-            check=True,
-        )
-        mingw_ar = MINGW_GXX.replace("g++", "ar")
-        subprocess.run(
-            [mingw_ar, "rcs", stubs_lib, obj_path],
-            stderr=subprocess.PIPE,
-            check=True,
-        )
-        log.info("Created MSVC GS stubs library: %s", stubs_lib)
-        return "msvc_gs_stubs"
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        log.warning(
-            "Failed to create MSVC GS stubs library.",
-            exc_info=True,
-        )
-        if os.path.exists(stubs_lib):
-            os.remove(stubs_lib)
-        return None
-    finally:
-        for f in [src_path, obj_path]:
-            if f and os.path.exists(f):
-                os.remove(f)
-
-
-def _ensure_mingw_cudart_import_lib(libraries_dirs: list[str]) -> list[str]:
-    """
-    Auto-generate a MinGW-compatible import library (libcudart.a)
-    from the CUDA runtime DLL. This avoids linking against the hybrid cudart.lib
-    which contains MSVC-compiled static objects with /GS security symbols that
-    MinGW cannot resolve.
-
-    Falls back to creating MSVC GS security stubs if the DLL is unavailable,
-    and falls back gracefully to the original cudart.lib if that also fails.
-
-    Returns a list of extra library names to link (e.g. ["msvc_gs_stubs"]).
-    """
-    import glob
-
-    windows_cuda_home = os.environ.get("WINDOWS_CUDA_HOME")
-    if not windows_cuda_home:
-        log.debug(
-            "WINDOWS_CUDA_HOME not set, skipping MinGW cudart import lib generation"
-        )
-        return []
-
-    for lib_dir in libraries_dirs:
-        if os.path.exists(os.path.join(lib_dir, "libcudart.a")):
-            log.debug("libcudart.a already exists in %s, skipping generation", lib_dir)
-            return []
-
-    # Find the CUDA runtime DLL for import lib generation
-    bin_dir = os.path.join(windows_cuda_home, "bin", "x64")
-    if not os.path.isdir(bin_dir):
-        bin_dir = os.path.join(windows_cuda_home, "bin")
-    dll_candidates = glob.glob(os.path.join(bin_dir, "cudart64_*.dll"))
-
-    # Find a writable directory containing cudart.lib for output
-    output_dir = None
-    for lib_dir in libraries_dirs:
-        if os.path.isdir(lib_dir) and os.access(lib_dir, os.W_OK):
-            if os.path.exists(os.path.join(lib_dir, "cudart.lib")):
-                output_dir = lib_dir
-                break
-
-    if not dll_candidates:
-        log.warning(
-            "No cudart64_*.dll found in %s. Cannot generate MinGW import library. "
-            "Will create MSVC GS security stubs as fallback.",
-            bin_dir,
-        )
-        # Fallback: create GS stubs so the hybrid cudart.lib can link
-        if output_dir is not None:
-            stub_lib = _create_msvc_gs_stubs_lib(output_dir)
-            if stub_lib:
-                return [stub_lib]
-        return []
-
-    if output_dir is None:
-        log.warning(
-            "No writable directory containing cudart.lib found. "
-            "Cannot generate MinGW import library. "
-            "If linking fails with undefined references to __security_cookie, "
-            "ensure cudart.lib is present in one of: %s",
-            libraries_dirs,
-        )
-        return []
-
-    dll_path = dll_candidates[0]
-    dll_name = os.path.basename(dll_path)
-
-    def_path = os.path.join(output_dir, dll_name.replace(".dll", ".def"))
-    import_lib_path = os.path.join(output_dir, "libcudart.a")
-
-    try:
-        _gen_mingw_import_lib(dll_path, def_path, import_lib_path)
-        return []
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        log.warning(
-            "Failed to generate MinGW cudart import library. "
-            "Falling back to MSVC GS stubs.",
-            exc_info=True,
-        )
-        for f in [def_path, import_lib_path]:
-            if os.path.exists(f):
-                os.remove(f)
-        # Fallback: create GS stubs
-        stub_lib = _create_msvc_gs_stubs_lib(output_dir)
-        if stub_lib:
-            return [stub_lib]
-        return []
-
-
 def _transform_cuda_paths(lpaths: list[str]) -> None:
     # This handles two cases:
     # 1. Cases where libs are in (e.g.) lib/cuda-12 and lib/cuda-12/stubs
@@ -2227,9 +1581,7 @@ def get_cpp_torch_device_options(
                 libraries += ["cuda"]
             else:
                 libraries += ["cuda", "torch_cuda"]
-            if config.aot_inductor.cross_target_platform == "windows":
-                extra_libs = _ensure_mingw_cudart_import_lib(libraries_dirs)
-                libraries += ["cudart"] + extra_libs
+            libraries += ["cudart"]
             _transform_cuda_paths(libraries_dirs)
 
     if device_type == "xpu":
@@ -2238,17 +1590,10 @@ def get_cpp_torch_device_options(
             "Intel GPU driver is not properly installed, please follow the instruction "
             "in https://github.com/pytorch/pytorch?tab=readme-ov-file#intel-gpu-support."
         )
-        if _IS_WINDOWS:
-            ze_root = os.getenv("LEVEL_ZERO_V1_SDK_PATH")
-            if ze_root is None:
-                raise OSError(xpu_error_string)
-            include_dirs += [os.path.join(ze_root, "include")]
-            libraries_dirs += [os.path.join(ze_root, "lib")]
-        else:
-            # Suppress multi-line comment warnings in sycl headers
-            cflags += ["Wno-comment"]
-            if not find_library("ze_loader"):
-                raise OSError(xpu_error_string)
+        # Suppress multi-line comment warnings in sycl headers
+        cflags += ["Wno-comment"]
+        if not find_library("ze_loader"):
+            raise OSError(xpu_error_string)
 
         libraries += ["ze_loader", "sycl"]
         if link_libtorch:
@@ -2424,26 +1769,26 @@ class CppBuilder:
 
     @staticmethod
     def __get_python_module_flags() -> tuple[str, str]:
-        extension = ".pyd" if _IS_WINDOWS else ".so"
-        output_flags = "/Fe" if _IS_WINDOWS else "-o"
+        extension = ".so"
+        output_flags = "-o"
         return extension, output_flags
 
     @staticmethod
     def __get_object_flags() -> tuple[str, str]:
-        extension = ".obj" if _IS_WINDOWS else ".o"
-        output_flags = "/c /Fo" if _IS_WINDOWS else "-c -o"  # codespell:ignore
+        extension = ".o"
+        output_flags = "-c -o"
         return extension, output_flags
 
     @staticmethod
     def __get_precompiled_header_flags() -> tuple[str, str]:
-        extension = ".pch" if _IS_WINDOWS or not is_gcc() else ".gch"
-        output_flags = "/Fp" if _IS_WINDOWS else "-o"
+        extension = ".gch" if not is_gcc() else ".pch"
+        output_flags = "-o"
         return extension, output_flags
 
     @staticmethod
     def __get_preprocessor_output_flags() -> tuple[str, str]:
         extension = ".i"
-        output_flags = "/EP /P" if _IS_WINDOWS else "-E -P -o"
+        output_flags = "-E -P -o"
         return extension, output_flags
 
     def __init__(
@@ -2495,12 +1840,6 @@ class CppBuilder:
             self._compile_only or self._precompiling or self._preprocessing
         )
 
-        # MSVC produces two files when precompiling: the actual .pch file, as well as an
-        # object file which must be linked into the final library.  This class assumes
-        # only one output file of note, so for now we'll error out here.
-        if _IS_WINDOWS and self._precompiling:
-            raise AssertionError("Cannot currently precompile headers on Windows!")
-
         if self._compile_only:
             file_ext, output_flags = self.__get_object_flags()
         elif self._precompiling:
@@ -2516,14 +1855,7 @@ class CppBuilder:
             if self._use_relative_path
             else self._target_file
         )
-        if _IS_WINDOWS:
-            if self._preprocessing:
-                # The target file name is automatically determined by MSVC.
-                self._output = output_flags
-            else:
-                self._output = f"{output_flags}{relative_target_file}"
-        else:
-            self._output = f"{output_flags} {relative_target_file}"
+        self._output = f"{output_flags} {relative_target_file}"
 
         if isinstance(sources, str):
             sources = [sources]
@@ -2551,56 +1883,32 @@ class CppBuilder:
             self._sources_args = " ".join(sources)
 
         for cflag in BuildOption.get_cflags():
-            if _IS_WINDOWS:
-                self._cflags_args += f"/{cflag} "
-            else:
-                self._cflags_args += f"-{cflag} "
+            self._cflags_args += f"-{cflag} "
 
         for definition in BuildOption.get_definitions():
-            if _IS_WINDOWS:
-                self._definitions_args += f"/D {definition} "
-            else:
-                self._definitions_args += f"-D {definition} "
+            self._definitions_args += f"-D {definition} "
 
         if precompiled_header := BuildOption.precompiled_header:
-            if _IS_WINDOWS:
-                log.warning(
-                    "Precompiled header support for MSVC is currently unavailable; ignoring %s",
-                    precompiled_header,
-                )
-            else:
-                self._include_dirs_args = f"-include {precompiled_header} "
-                if self._use_relative_path and _is_clang(BuildOption.get_compiler()):
-                    # Skip clang's own PCH validation during consumption.
-                    # _precompile_header() already handles cache invalidation
-                    # via content hashing, and -fno-validate-pch allows the
-                    # PCH to be used even when the original source file is at
-                    # a different path (e.g. across Remote Execution workers).
-                    self._cflags_args += " -Xclang -fno-validate-pch "
+            self._include_dirs_args = f"-include {precompiled_header} "
+            if self._use_relative_path and _is_clang(BuildOption.get_compiler()):
+                # Skip clang's own PCH validation during consumption.
+                # _precompile_header() already handles cache invalidation
+                # via content hashing, and -fno-validate-pch allows the
+                # PCH to be used even when the original source file is at
+                # a different path (e.g. across Remote Execution workers).
+                self._cflags_args += " -Xclang -fno-validate-pch "
 
         for inc_dir in BuildOption.get_include_dirs():
-            if _IS_WINDOWS:
-                self._include_dirs_args += f'/I "{inc_dir}" '
-            else:
-                self._include_dirs_args += f"-I{shlex.quote(inc_dir)} "
+            self._include_dirs_args += f"-I{shlex.quote(inc_dir)} "
 
         for ldflag in BuildOption.get_ldflags():
-            if _IS_WINDOWS:
-                self._ldflags_args += f"/{ldflag} "
-            else:
-                self._ldflags_args += f"-{ldflag} "
+            self._ldflags_args += f"-{ldflag} "
 
         for lib_dir in BuildOption.get_libraries_dirs():
-            if _IS_WINDOWS:
-                self._libraries_dirs_args += f'/LIBPATH:"{lib_dir}" '
-            else:
-                self._libraries_dirs_args += f"-L{shlex.quote(lib_dir)} "
+            self._libraries_dirs_args += f"-L{shlex.quote(lib_dir)} "
 
         for lib in BuildOption.get_libraries():
-            if _IS_WINDOWS:
-                self._libraries_args += f'"{lib}.lib" '
-            else:
-                self._libraries_args += f"-l{lib} "
+            self._libraries_args += f"-l{lib} "
 
         for passthrough_arg in self._stage_passthrough_paths(
             BuildOption.get_passthrough_args()
@@ -2620,23 +1928,12 @@ class CppBuilder:
             passthrough_args: str,
             output: str,
         ) -> str:
-            if _IS_WINDOWS:
-                # https://learn.microsoft.com/en-us/cpp/build/walkthrough-compile-a-c-program-on-the-command-line?view=msvc-1704
-                # https://stackoverflow.com/a/31566153
-                cmd = (
-                    f"{compiler} {include_dirs_args} {definitions_args} {cflags_args} "
-                    f"{sources} {passthrough_args} {output}"
-                )
-                if self._do_link:
-                    cmd += f" /LD /link {libraries_dirs_args} {libraries_args} {ldflags_args}"
-                cmd = normalize_path_separator(cmd)
-            else:
-                cmd = (
-                    f"{compiler} {sources} {definitions_args} {cflags_args} "
-                    f"{include_dirs_args} {passthrough_args} {output}"
-                )
-                if self._do_link:
-                    cmd += f" {ldflags_args} {libraries_args} {libraries_dirs_args}"
+            cmd = (
+                f"{compiler} {sources} {definitions_args} {cflags_args} "
+                f"{include_dirs_args} {passthrough_args} {output}"
+            )
+            if self._do_link:
+                cmd += f" {ldflags_args} {libraries_args} {libraries_dirs_args}"
             return cmd
 
         command_line = format_build_command(
@@ -2717,7 +2014,7 @@ class CppBuilder:
                     # compiler can find it.
                     pch_header = self._build_option.precompiled_header
                     if pch_header and os.path.isfile(pch_header):
-                        pch_ext = ".pch" if _IS_WINDOWS or not is_gcc() else ".gch"
+                        pch_ext = ".gch" if not is_gcc() else ".pch"
                         pch_compiled = pch_header + pch_ext
                         pch_basename = os.path.basename(pch_header)
                         shutil.copy(pch_header, os.path.join(tmp_dir, pch_basename))
@@ -3011,22 +2308,14 @@ class CppBuilder:
 
 def run_asm_build_object(src: str, target: str, cwd: str) -> None:
     def get_asm_compiler() -> str:
-        if _IS_WINDOWS:
-            ASM_CC = "ml64"
-        else:
-            ASM_CC = get_cpp_compiler()
-            # Intel compiler is not support to compile asm, switch to gcc.
-            if _is_intel_compiler(ASM_CC):
-                ASM_CC = "gcc"
+        ASM_CC = get_cpp_compiler()
+        # Intel compiler is not support to compile asm, switch to gcc.
+        if _is_intel_compiler(ASM_CC):
+            ASM_CC = "gcc"
         return ASM_CC
 
     def get_command_line(asm_cc: str, src: str, target: str) -> str:
-        if _IS_WINDOWS:
-            # Format reference:
-            # https://learn.microsoft.com/en-us/cpp/assembler/masm/ml-and-ml64-command-line-reference?view=msvc-170
-            cmd = f"{asm_cc} {src} /c /Fo {target}"  # codespell:ignore /Fo
-        else:
-            cmd = f"{asm_cc} -c {src} -o {target}"
+        cmd = f"{asm_cc} -c {src} -o {target}"
 
         return cmd
 
