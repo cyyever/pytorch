@@ -2,7 +2,6 @@
 
 import math
 import warnings
-from collections.abc import Callable
 from typing import Literal, TypeVar
 from typing import ParamSpec
 
@@ -26,18 +25,6 @@ __all__ = [
     "kaiming_normal_",
     "orthogonal_",
     "sparse_",
-    # Deprecated aliases (for backward compatibility)
-    "uniform",
-    "normal",
-    "constant",
-    "eye",
-    "dirac",
-    "xavier_uniform",
-    "xavier_normal",
-    "kaiming_uniform",
-    "kaiming_normal",
-    "orthogonal",
-    "sparse",
 ]
 
 
@@ -759,40 +746,3 @@ def sparse_(
             zero_indices = row_indices[:num_zeros]
             tensor[zero_indices, col_idx] = 0
     return tensor
-
-
-# for backward compatibility
-def _make_deprecate(meth: Callable[_P, _R]) -> Callable[_P, _R]:
-    new_name = meth.__name__
-    old_name = new_name[:-1]
-
-    def deprecated_init(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-        warnings.warn(
-            f"`nn.init.{old_name}` is now deprecated in favor of `nn.init.{new_name}`.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return meth(*args, **kwargs)
-
-    deprecated_init.__doc__ = rf"""
-    {old_name}(...)
-
-    .. warning::
-        This method is now deprecated in favor of :func:`torch.nn.init.{new_name}`.
-
-    See :func:`~torch.nn.init.{new_name}` for details."""
-    deprecated_init.__name__ = old_name
-    return deprecated_init
-
-
-uniform = _make_deprecate(uniform_)
-normal = _make_deprecate(normal_)
-constant = _make_deprecate(constant_)
-eye = _make_deprecate(eye_)
-dirac = _make_deprecate(dirac_)
-xavier_uniform = _make_deprecate(xavier_uniform_)
-xavier_normal = _make_deprecate(xavier_normal_)
-kaiming_uniform = _make_deprecate(kaiming_uniform_)
-kaiming_normal = _make_deprecate(kaiming_normal_)
-orthogonal = _make_deprecate(orthogonal_)
-sparse = _make_deprecate(sparse_)

@@ -1,5 +1,3 @@
-from warnings import deprecated
-
 from torch.nn.parallel.data_parallel import data_parallel, DataParallel
 from torch.nn.parallel.distributed import DistributedDataParallel
 from torch.nn.parallel.parallel_apply import parallel_apply
