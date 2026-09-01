@@ -186,7 +186,7 @@ TEST_SKIPS = {
 class DistTestCases:
     # Backends that do not support a specific collective
     skip_collective = {}
-    skip_collective["allgather_coalesced"] = {"nccl", "mpi", "ucc", "xccl"}
+    skip_collective["allgather_coalesced"] = {"nccl", "ucc", "xccl"}
     skip_collective["reduce"] = set()
     skip_collective["sendrecv anysource"] = {"nccl", "ucc", "xccl"}
     skip_collective["cpu barrier"] = {"nccl", "ucc", "xccl"}
@@ -234,7 +234,7 @@ def skip_if_no_gpu(func):
 def skip_if_small_worldsize(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if (os.environ["BACKEND"] != "mpi") and int(os.environ["WORLD_SIZE"]) < 8:
+        if int(os.environ["WORLD_SIZE"]) < 8:
             sys.exit(TEST_SKIPS["small_worldsize"].exit_code)
 
         return func(*args, **kwargs)
@@ -245,7 +245,7 @@ def skip_if_small_worldsize(func):
 def skip_if_odd_worldsize(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if (os.environ["BACKEND"] != "mpi") and int(os.environ["WORLD_SIZE"]) % 2 == 1:
+        if int(os.environ["WORLD_SIZE"]) % 2 == 1:
             sys.exit(TEST_SKIPS["odd_worldsize"].exit_code)
 
         return func(*args, **kwargs)
@@ -514,20 +514,6 @@ def requires_xccl():
     return skip_but_pass_in_sandcastle_if(
         not c10d.is_xccl_available(),
         "c10d was not compiled with the XCCL backend",
-    )
-
-
-def requires_ucc():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_ucc_available(),
-        "c10d was not compiled with the UCC backend",
-    )
-
-
-def requires_mpi():
-    return skip_but_pass_in_sandcastle_if(
-        not c10d.is_mpi_available(),
-        "c10d was not compiled with the MPI backend",
     )
 
 
@@ -2067,8 +2053,17 @@ class MultiProcContinuousTest(TestCase):
         # Check if the specified backend is available before spawning processes.
         # is_backend_available covers OOT/third-party backends too.
         backend = cls.backend_str() if callable(cls.backend_str) else cls.backend_str
-        if backend is not None and not c10d.is_backend_available(backend):
-            raise unittest.SkipTest(f"Backend '{backend}' is not available")
+        if backend is not None:
+            backend_checks = {
+                "nccl": c10d.is_nccl_available,
+                # The MPI backend was removed; report it unavailable so a
+                # test that asks for it skips instead of failing at init.
+                "mpi": lambda: False,
+                "xccl": c10d.is_xccl_available,
+            }
+            check_fn = backend_checks.get(backend)
+            if check_fn is not None and not check_fn():
+                raise unittest.SkipTest(f"Backend '{backend}' is not available")
 
         logger.info(
             f"Testing class {cls.__name__} on {cls.world_size} {device_type}"  # noqa: G004

@@ -398,7 +398,7 @@ class AbstractFlightRecorderHookTest:
         from torch.distributed.flight_recorder.components.types import Op
 
         if self.backend_name != "fake":
-            # NCCL has no recvAnysource; only mpi, ucc and fake do.
+            # NCCL has no recvAnysource; only fake does.
             self.skipTest("backend does not support recv_any_source")
         pg = self._init_pg()
         hook = self._fr_hook(pg)

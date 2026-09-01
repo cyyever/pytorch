@@ -542,7 +542,6 @@ class TestTorchCommsHandlesBackend(TestCase):
     def test_custom_backend_falls_through(self):
         with self._patch(built=["nccl"]):
             self.assertFalse(c10d._torchcomms_handles_backend("mooncake"))
-            self.assertFalse(c10d._torchcomms_handles_backend("ucc"))
 
     def test_case_insensitive(self):
         with self._patch(built=["nccl"]):

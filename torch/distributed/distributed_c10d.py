@@ -135,11 +135,9 @@ __all__ = [
     "irecv",
     "is_gloo_available",
     "is_initialized",
-    "is_mpi_available",
     "is_backend_available",
     "is_nccl_available",
     "is_torchelastic_launched",
-    "is_ucc_available",
     "is_xccl_available",
     "isend",
     "monitored_barrier",
@@ -186,10 +184,8 @@ __all__ = [
     "record_comm",
 ]
 
-_MPI_AVAILABLE = True
 _NCCL_AVAILABLE = True
 _GLOO_AVAILABLE = True
-_UCC_AVAILABLE = True
 _XCCL_AVAILABLE = True
 
 try:
@@ -391,14 +387,6 @@ except ImportError:
     _GLOO_AVAILABLE = False
 
 try:
-    from torch._C._distributed_c10d import ProcessGroupUCC
-
-    ProcessGroupUCC.__module__ = "torch.distributed.distributed_c10d"
-    __all__ += ["ProcessGroupUCC"]
-except ImportError:
-    _UCC_AVAILABLE = False
-
-try:
     from torch._C._distributed_c10d import ProcessGroupXCCL
 
     ProcessGroupXCCL.__module__ = "torch.distributed.distributed_c10d"
@@ -411,10 +399,8 @@ if TYPE_CHECKING:
     from torch._C._distributed_c10d import (  # noqa: TC004
         _ProcessGroupWrapper,
         ProcessGroupGloo,
-        ProcessGroupMPI,
         ProcessGroupNCCL,
         ProcessGroupNCCL2,
-        ProcessGroupUCC,
         ProcessGroupXCCL,
     )
 
@@ -474,7 +460,7 @@ class Backend(str):  # noqa: SLOT000
     """
     An enum-like class for backends.
 
-    Available backends: GLOO, NCCL, UCC, MPI, XCCL, FAKE, and other registered backends.
+    Available backends: GLOO, NCCL, XCCL, FAKE, and other registered backends.
 
     The values of this class are lowercase strings, e.g., ``"gloo"``. They can
     be accessed as attributes, e.g., ``Backend.NCCL``.
@@ -492,8 +478,6 @@ class Backend(str):  # noqa: SLOT000
     UNDEFINED = "undefined"
     GLOO = "gloo"
     NCCL = "nccl"
-    UCC = "ucc"
-    MPI = "mpi"
     XCCL = "xccl"
     FAKE = "fake"
 
@@ -503,7 +487,7 @@ class Backend(str):  # noqa: SLOT000
 
     _plugins: dict[str, _BackendPlugin] = {}
 
-    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, UCC, MPI, FAKE]
+    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, FAKE]
 
     # 3rd-party devices can register the default backend support here
     default_device_backend_map: dict[str, str] = {
@@ -517,8 +501,6 @@ class Backend(str):  # noqa: SLOT000
         GLOO: ["cpu", "cuda"],
         NCCL: ["cuda"],
         XCCL: ["xpu"],
-        UCC: ["cpu", "cuda"],
-        MPI: ["cpu", "cuda"],
         FAKE: ["cpu", "cuda", "hpu", "xpu"],
     }
 
@@ -527,8 +509,6 @@ class Backend(str):  # noqa: SLOT000
         GLOO: ProcessGroup.BackendType.GLOO,
         NCCL: ProcessGroup.BackendType.NCCL,
         XCCL: ProcessGroup.BackendType.XCCL,
-        UCC: ProcessGroup.BackendType.UCC,
-        MPI: ProcessGroup.BackendType.MPI,
         FAKE: ProcessGroup.BackendType.CUSTOM,
     }
 
@@ -651,17 +631,6 @@ class Backend(str):  # noqa: SLOT000
             func,
             extended_api,
         )
-
-
-def _create_mpi_process_group(
-    opts: _DistributedBackendOptions, backend_options: object | None
-) -> C10DBackend | None:
-    if not is_mpi_available():
-        raise RuntimeError(
-            "Distributed package doesn't have MPI built in. MPI is only included "
-            "if you build PyTorch from source on a host that has MPI installed."
-        )
-    return ProcessGroupMPI.create(opts.global_ranks_in_group)
 
 
 def _create_gloo_process_group(
@@ -853,13 +822,8 @@ def _create_xccl_process_group(
     return backend_class
 
 
-def _register_builtin_mpi_backend() -> None:
     Backend.register_backend(
-        Backend.MPI,
-        _create_mpi_process_group,
         extended_api=True,
-        devices=Backend.backend_capability[Backend.MPI],
-        _backend_type=ProcessGroup.BackendType.MPI,
     )
 
 
@@ -995,7 +959,7 @@ class BackendConfig:
             pass
         elif normalized_backend in Backend.backend_list:
             # Cases for when backend is a single string (without device types)
-            # e.g. "nccl", "gloo", "ucc", "mpi"
+            # e.g. "nccl", "gloo", "xccl"
             supported_devices = Backend.backend_capability[normalized_backend]
             backend_val = Backend(backend)
 
@@ -1323,7 +1287,6 @@ class _World:
         Provide Mapping from ProcessGroup to backend name and store.
 
         For NCCL and GLOO pg, it is a map from ProcessGroup to (Backend, Store)
-        For MPI pg, it is a map from ProcessGroup to (Backend, None)
 
         TODO don't expose the map, expose fine grained ops
         """
@@ -1966,9 +1929,6 @@ def _check_p2p_op_list(p2p_op_list: list[P2POp]) -> None:
         raise ValueError("All ops need to use the same group.")
 
 
-def is_mpi_available() -> bool:
-    """Check if the MPI backend is available."""
-    return _MPI_AVAILABLE
 
 
 def is_nccl_available() -> bool:
@@ -1981,9 +1941,6 @@ def is_gloo_available() -> bool:
     return _GLOO_AVAILABLE
 
 
-def is_ucc_available() -> bool:
-    """Check if the UCC backend is available."""
-    return _UCC_AVAILABLE
 
 
 def is_xccl_available() -> bool:
@@ -2316,7 +2273,6 @@ def set_timeout(timeout: timedelta, group: ProcessGroup | None = None) -> None:
     :func:`init_process_group` or :func:`new_group`). The new timeout is
     forwarded to every backend registered with :attr:`group` -- for example both
     the Gloo and NCCL backends of a group spanning CPU and CUDA devices. Backends
-    that do not support changing their timeout (such as MPI and UCC) emit a
     warning and leave their timeout unchanged.
 
     Args:
@@ -2396,9 +2352,8 @@ def init_process_group(
 
     Args:
         backend (str or Backend, optional): The backend to use. Depending on
-            build-time configurations, valid values include ``mpi``, ``gloo``,
-            ``nccl``, ``ucc``, ``xccl`` or one that is registered by a third-party
-            plugin.
+            build-time configurations, valid values include ``gloo``, ``nccl``,
+            ``xccl`` or one that is registered by a third-party plugin.
             Since 2.6, if ``backend`` is not provided, c10d will use a backend
             registered for the device type indicated by the `device_id` kwarg
             (if provided). The known default registrations today are: ``nccl``
@@ -2412,7 +2367,6 @@ def init_process_group(
             If using multiple processes per machine with ``nccl`` backend, each
             process must have exclusive access to every GPU it uses, as sharing
             GPUs between processes can result in deadlock or NCCL invalid usage.
-            ``ucc`` backend is experimental.
             Default backend for the device can be queried with
             :func:`get_default_backend_for_device`.
         init_method (str, optional): URL specifying how to initialize the
@@ -2461,8 +2415,6 @@ def init_process_group(
             Backends that do not support reconfigure ignore this flag. Default
             is ``False``.
 
-    .. note:: To enable ``backend == Backend.MPI``, PyTorch needs to be built from source
-        on a system that supports MPI.
 
     .. note:: Support for multiple backends is experimental. Currently when no backend is
         specified, both ``gloo`` and ``nccl`` backends will be created. The ``gloo`` backend
@@ -2726,7 +2678,6 @@ def _get_split_source(pg: ProcessGroup) -> C10DBackend | None:
 # Backends that feed a FlightRecorder without any help: ProcessGroupGloo
 # unconditionally, ProcessGroupNCCL and ProcessGroupXCCL through their own
 # integrations. "fake" and "undefined" never communicate, so recording them is
-# pure noise. Everything else -- nccl2, nccl-lazy, mpi, ucc, out-of-tree
 # plugins -- is invisible to the flight recorder unless a hook is attached.
 #
 # Backend.NCCL is not in here by construction: which implementation the name
@@ -3026,7 +2977,7 @@ def _new_process_group_helper(
 
         # Process group wrapper initialization for supported PGs when TORCH_DISTRIBUTED_DEBUG is set
         if (
-            backend_str in [Backend.GLOO, Backend.NCCL, Backend.XCCL, Backend.UCC]
+            backend_str in [Backend.GLOO, Backend.NCCL, Backend.XCCL]
             or backend_str.upper() in Backend._plugins
         ):
             # In debug mode and if GLOO is available, wrap in a wrapper PG that
@@ -3785,7 +3736,7 @@ def batch_isend_irecv(p2p_op_list: list[P2POp]) -> list[Work]:
     Send or Receive a batch of tensors asynchronously and return a list of requests.
 
     Process each of the operations in ``p2p_op_list`` and return the corresponding
-    requests. NCCL, Gloo, and UCC backend are currently supported.
+    requests. NCCL and Gloo backends are currently supported.
 
     Args:
         p2p_op_list: A list of point-to-point operations(type of each operator is
