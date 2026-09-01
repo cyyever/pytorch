@@ -2,7 +2,6 @@
 #define AOTI_TORCH_SHIM
 
 #include <torch/csrc/inductor/aoti_torch/c/macros.h>
-#include <torch/csrc/inductor/aoti_torch/c/shim_deprecated.h>
 #include <torch/csrc/stable/version.h>
 #include <torch/headeronly/util/Exception.h>
 
