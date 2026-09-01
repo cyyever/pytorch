@@ -21,21 +21,6 @@
 using std::cout;
 using namespace at;
 
-template<typename scalar_type>
-struct Foo {
-  static void apply(Tensor a, [[maybe_unused]] Tensor b) {
-    scalar_type s = 1;
-    std::stringstream ss;
-    ss << "hello, dispatch: " << a.toString() << s << '\n';
-    auto data = (scalar_type*)a.data_ptr();
-    (void)data;
-  }
-};
-template<>
-struct Foo<Half> {
-  static void apply(Tensor a, Tensor b) {}
-};
-
 void test_overflow() {
   auto s1 = Scalar(M_PI);
   ASSERT_EQ(s1.toFloat(), static_cast<float>(M_PI));
@@ -120,9 +105,11 @@ TEST(TestScalar, TestScalar) {
     AT_DISPATCH_ALL_TYPES(x.scalar_type(), "foo", [&] {
       scalar_t s = 1;
       std::stringstream ss;
-      // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto,hicpp-avoid-goto)
-      ASSERT_NO_THROW(
-          ss << "hello, dispatch" << x.toString() << s << '\n');
+      ss << s;
+      // int8_t and uint8_t are character types, so streaming a dispatched
+      // scalar_t writes them as characters unless it is widened first. This
+      // asserted only that the insertion did not throw, which it never does.
+      ASSERT_EQ(ss.str(), "1");
       auto data = (scalar_t*)x.data_ptr();
       (void)data;
     });
