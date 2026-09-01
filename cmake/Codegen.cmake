@@ -364,7 +364,7 @@ if(INTERN_BUILD_ATEN_OPS)
   endif()
   # Handle source files that need to be compiled multiple times for
   # different vectorization options
-  file(GLOB cpu_kernel_cpp_in "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/cpu/*.cpp")
+  file(GLOB cpu_kernel_cpp_in "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/cpu/*.cpp" "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/quantized/cpu/kernels/*.cpp")
 
   list(APPEND CPU_CAPABILITY_NAMES "DEFAULT")
   list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}")
@@ -407,12 +407,6 @@ if(INTERN_BUILD_ATEN_OPS)
     endif()
   endif(CXX_AVX2_FOUND)
 
-  if(CXX_ZVECTOR_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
-    add_compile_definitions("HAVE_ZVECTOR_CPU_DEFINITION")
-    LIST(APPEND CPU_CAPABILITY_NAMES "ZVECTOR")
-    LIST(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}  ${CXX_ZVECTOR_FLAGS}")
-  endif(CXX_ZVECTOR_FOUND)
-
 
   list(LENGTH CPU_CAPABILITY_NAMES NUM_CPU_CAPABILITY_NAMES)
   math(EXPR NUM_CPU_CAPABILITY_NAMES "${NUM_CPU_CAPABILITY_NAMES}-1")
@@ -443,6 +437,10 @@ if(INTERN_BUILD_ATEN_OPS)
         if(("${NAME}" STREQUAL "native/cpu/GridSamplerKernel.cpp") AND ("${CPU_CAPABILITY}" STREQUAL "DEFAULT"))
           # See https://github.com/pytorch/pytorch/issues/38855
           set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-uninitialized")
+        endif()
+        if("${NAME}" STREQUAL "native/quantized/cpu/kernels/QuantizedOpKernels.cpp")
+          # See https://github.com/pytorch/pytorch/issues/38854
+          set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-deprecated-copy")
         endif()
       endif()
       set_source_files_properties(${NEW_IMPL} PROPERTIES COMPILE_FLAGS "${FLAGS} ${EXTRA_FLAGS}")

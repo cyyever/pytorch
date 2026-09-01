@@ -474,7 +474,6 @@ def main() -> None:
         "cpu",
         "cpu-aarch64",
         "cpu-riscv64",
-        "cpu-s390x",
         "cpu-cxx11-abi",
     ):
         cleanup_cuda_for_cpu_build()

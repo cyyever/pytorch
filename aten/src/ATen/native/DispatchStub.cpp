@@ -5,36 +5,14 @@
 #include <c10/util/Exception.h>
 #include <c10/util/env.h>
 
-#if !defined(__s390x__) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#endif
 #include <algorithm>
 
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-#include <sys/auxv.h>
-#endif
-
 namespace at::native {
-
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-static inline bool cpu_has_vxe()
-{
-  return (getauxval(AT_HWCAP) & HWCAP_S390_VXE);
-}
-#endif
 
 static CPUCapability compute_cpu_capability() {
   const auto envar = c10::utils::get_env("ATEN_CPU_CAPABILITY");
   if (envar.has_value()) {
-#if defined(HAVE_VSX_CPU_DEFINITION)
-    if (envar == "vsx") {
-      return CPUCapability::VSX;
-    }
-#elif defined(HAVE_ZVECTOR_CPU_DEFINITION)
-    if (envar == "zvector") {
-      return CPUCapability::ZVECTOR;
-    }
-#else
 #ifdef HAVE_AVX512_CPU_DEFINITION
     if (envar == "avx512") {
       return CPUCapability::AVX512;
@@ -45,14 +23,12 @@ static CPUCapability compute_cpu_capability() {
       return CPUCapability::AVX2;
     }
 #endif
-#endif
     if (envar == "default") {
       return CPUCapability::DEFAULT;
     }
     TORCH_WARN("ignoring invalid value for ATEN_CPU_CAPABILITY: ", envar.value());
   }
 
-#if !defined(__powerpc__) && !defined(__s390x__)
   if (cpuinfo_initialize()) {
 #if defined(HAVE_AVX512_CPU_DEFINITION)
     // GCC supports some AVX512 intrinsics such as _mm512_set_epi16 only in
@@ -70,20 +46,8 @@ static CPUCapability compute_cpu_capability() {
     }
 #endif
   }
-#endif
 
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  // vxe is needed for fp32 vector instructions
-  if (cpu_has_vxe()) {
-    return CPUCapability::ZVECTOR;
-  }
-#endif
-
-#ifdef HAVE_VSX_CPU_DEFINITION
-  return CPUCapability::VSX;
-#else
   return CPUCapability::DEFAULT;
-#endif
 }
 
 CPUCapability get_cpu_capability() {
@@ -99,12 +63,6 @@ DispatchResult DispatchStubImpl::try_get_call_ptr(
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
   , void *AVX2
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-  , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  , void *ZVECTOR
 #endif
 ) {
   constexpr auto supported_devices = std::to_array<c10::DeviceType>(
@@ -134,12 +92,6 @@ DispatchResult DispatchStubImpl::try_get_call_ptr(
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
           , AVX2
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-          , VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-          , ZVECTOR
 #endif
         );
         if (!std::holds_alternative<ErrorType>(result)) {
@@ -189,12 +141,6 @@ void* DispatchStubImpl::get_call_ptr(
 #ifdef HAVE_AVX2_CPU_DEFINITION
   , void *AVX2
 #endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-  , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  , void *ZVECTOR
-#endif
 ) {
 
   auto result = try_get_call_ptr(
@@ -207,14 +153,6 @@ void* DispatchStubImpl::get_call_ptr(
 #ifdef HAVE_AVX2_CPU_DEFINITION
       ,
       AVX2
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-      ,
-      VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-      ,
-      ZVECTOR
 #endif
   );
   if (std::holds_alternative<ErrorType>(result)) {
@@ -240,12 +178,6 @@ DispatchResult DispatchStubImpl::try_choose_cpu_impl(
 #ifdef HAVE_AVX2_CPU_DEFINITION
     , void *AVX2
 #endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-    , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-    , void *ZVECTOR
-#endif
   ){
 
   auto capability = static_cast<int>(get_cpu_capability());
@@ -268,16 +200,6 @@ DispatchResult DispatchStubImpl::try_choose_cpu_impl(
     return AVX2 != nullptr ? DispatchResult(AVX2) : ErrorType::MissingDeviceKernel;
   }
 #endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-  if (capability >= static_cast<int>(CPUCapability::VSX)) {
-    return VSX != nullptr ? DispatchResult(VSX) : ErrorType::MissingDeviceKernel;
-  }
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  if (capability >= static_cast<int>(CPUCapability::ZVECTOR)) {
-    return ZVECTOR != nullptr ? DispatchResult(ZVECTOR) : ErrorType::MissingDeviceKernel;
-  }
-#endif
   return DEFAULT != nullptr ? DispatchResult(DEFAULT) : ErrorType::MissingDeviceKernel;
 }
 
@@ -288,12 +210,6 @@ void* DispatchStubImpl::choose_cpu_impl(
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
   , void *AVX2
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-  , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  , void *ZVECTOR
 #endif
 ) {
   auto capability = static_cast<int>(get_cpu_capability());
@@ -316,18 +232,6 @@ void* DispatchStubImpl::choose_cpu_impl(
   if (capability >= static_cast<int>(CPUCapability::AVX2)) {
     TORCH_INTERNAL_ASSERT(AVX2, "DispatchStub: missing AVX2 kernel");
     return AVX2;
-  }
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-  if (capability >= static_cast<int>(CPUCapability::VSX)) {
-    TORCH_INTERNAL_ASSERT(VSX, "DispatchStub: missing VSX kernel");
-    return VSX;
-  }
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  if (capability >= static_cast<int>(CPUCapability::ZVECTOR)) {
-    TORCH_INTERNAL_ASSERT(ZVECTOR, "DispatchStub: missing ZVECTOR kernel");
-    return ZVECTOR;
   }
 #endif
   TORCH_INTERNAL_ASSERT(DEFAULT, "DispatchStub: missing default kernel");

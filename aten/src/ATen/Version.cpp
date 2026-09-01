@@ -96,18 +96,10 @@ std::string get_cpu_capability() {
   switch (capability) {
     case native::CPUCapability::DEFAULT:
       return "DEFAULT";
-#if defined(HAVE_VSX_CPU_DEFINITION)
-    case native::CPUCapability::VSX:
-      return "VSX";
-#elif defined(HAVE_ZVECTOR_CPU_DEFINITION)
-    case native::CPUCapability::ZVECTOR:
-      return "Z VECTOR";
-#else
     case native::CPUCapability::AVX2:
       return "AVX2";
     case native::CPUCapability::AVX512:
       return "AVX512";
-#endif
     default:
       break;
   }

@@ -6,26 +6,16 @@
 #include <ATen/cpu/vec/intrinsics.h>
 
 #include <ATen/cpu/vec/vec_base.h>
-#if !defined(CPU_CAPABILITY_ZVECTOR)
 // clang-format off
 #include <ATen/cpu/vec/vec256/vec256_float.h>
 #include <ATen/cpu/vec/vec256/vec256_double.h>
 #include <ATen/cpu/vec/vec256/vec256_int.h>
 #include <ATen/cpu/vec/vec256/vec256_qint.h>
-#if !!defined(__ARM_FEATURE_BF16)
 #include <ATen/cpu/vec/vec256/vec256_bfloat16.h>
-#endif
 #include <ATen/cpu/vec/vec256/vec256_half.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_float.h>
 #include <ATen/cpu/vec/vec256/vec256_complex_double.h>
 // clang-format on
-#else
-// clang-format off
-#include <ATen/cpu/vec/vec256/zarch/vec256_zarch.h>
-#include <ATen/cpu/vec/vec256/vec256_bfloat16.h>
-#include <ATen/cpu/vec/vec256/vec256_half.h>
-// clang-format on
-#endif
 
 #include <ATen/cpu/vec/vec256/vec256_convert.h>
 #include <ATen/cpu/vec/vec256/vec256_mask.h>

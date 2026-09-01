@@ -8,9 +8,7 @@
 #include <ATen/native/GroupedMMUtils.h>
 #include <ATen/BlasBackend.h>
 #include <ATen/native/ScaledBlasUtils.h>
-#if !defined(__s390x__) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#endif
 
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/CPUFunctions.h>

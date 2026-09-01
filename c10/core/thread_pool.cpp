@@ -2,9 +2,7 @@
 #include <c10/util/Logging.h>
 #include <c10/util/thread_name.h>
 #include <utility>
-#if !defined(__powerpc__) && !defined(__s390x__)
 #include <cpuinfo.h>
-#endif
 
 #if defined(__linux__)
 #include <sched.h>
@@ -31,7 +29,6 @@ size_t get_cpuset_num_threads() {
 
 size_t TaskThreadPoolBase::defaultNumThreads() {
   size_t num_threads = 0;
-#if !defined(__powerpc__) && !defined(__s390x__)
   if (cpuinfo_initialize()) {
     // In cpuinfo parlance cores are physical ones and processors are virtual
     // ThreadPool should be defaulted to number of physical cores
@@ -51,7 +48,6 @@ size_t TaskThreadPoolBase::defaultNumThreads() {
       return num_threads;
     }
   }
-#endif
   num_threads = std::thread::hardware_concurrency();
   size_t cpuset_threads = get_cpuset_num_threads();
   if (cpuset_threads > 0 &&

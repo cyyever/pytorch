@@ -32,7 +32,7 @@ CACHE_ALIGN #define
 #endif
 #if defined(CPU_CAPABILITY_DEFAULT)
 #define TEST_AGAINST_DEFAULT 1
-#elif !defined(CPU_CAPABILITY_AVX512) && !defined(CPU_CAPABILITY_AVX2) && !defined(CPU_CAPABILITY_VSX) && !defined(CPU_CAPABILITY_ZVECTOR)
+#elif !defined(CPU_CAPABILITY_AVX512) && !defined(CPU_CAPABILITY_AVX2)
 #define TEST_AGAINST_DEFAULT 1
 #else
 #undef TEST_AGAINST_DEFAULT
@@ -47,11 +47,11 @@ CACHE_ALIGN #define
     return __VA_ARGS__(std::forward<decltype(args)>(args)...); \
   }
 
-#if defined(CPU_CAPABILITY_ZVECTOR) || defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_AVX2) || \
+#if defined(CPU_CAPABILITY_AVX2) || \
   defined(CPU_CAPABILITY_AVX512) && (defined(__GNUC__) || defined(__GNUG__))
 #undef CHECK_DEQUANT_WITH_LOW_PRECISION
 #define CHECK_WITH_FMA 1
-#elif !defined(CPU_CAPABILITY_VSX) && !defined(CPU_CAPABILITY_AVX2)
+#elif !defined(CPU_CAPABILITY_AVX2)
 #undef CHECK_DEQUANT_WITH_LOW_PRECISION
 #undef CHECK_WITH_FMA
 #else
@@ -1282,14 +1282,6 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_multiply(Compl
     T x_imag = x.imag();
     T y_real = y.real();
     T y_imag = y.imag();
-#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
-    //check multiplication considering swap and fma
-    T rr = x_real * y_real;
-    T ii = x_imag * y_real;
-    T neg_imag = -y_imag;
-    rr = fma(x_imag, neg_imag, rr);
-    ii = fma(x_real, y_imag, ii);
-#else
     // replicate order
     PreventFma noFma;
     T ac = x_real * y_real;
@@ -1298,7 +1290,6 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_multiply(Compl
     T bc = x_imag * (-y_real);
     T rr = noFma.sub(ac, bd);
     T ii = noFma.sub(ad, bc);
-#endif
     return Complex<T>(rr, ii);
 #endif
 }
@@ -1322,53 +1313,12 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_division(Compl
     T y_real = y.real();
     T y_imag = y.imag();
     PreventFma noFma;
-#if defined(CPU_CAPABILITY_ZVECTOR)
-    T abs_c = std::abs(y_real);
-    T abs_d = std::abs(y_imag);
-    T scale = 1.0 / std::max(abs_c, abs_d);
-
-    T a_sc = x_real * scale; // a/sc
-    T b_sc = x_imag * scale; // b/sc
-    T c_sc = y_real * scale; // c/sc
-    T d_sc = y_imag * scale; // d/sc
-
-    T ac_sc2 = a_sc * c_sc; // ac/sc^2
-    T bd_sc2 = b_sc * d_sc; // bd/sc^2
-
-    T neg_d_sc = -1.0 * d_sc; // -d/sc^2
-
-    T neg_ad_sc2 = a_sc * neg_d_sc; // -ad/sc^2
-    T bc_sc2 = b_sc * c_sc; // bc/sc^2
-
-    T ac_bd_sc2 = noFma.add(ac_sc2, bd_sc2); // (ac+bd)/sc^2
-    T bc_ad_sc2 = noFma.add(bc_sc2, neg_ad_sc2); // (bc-ad)/sc^2
-
-    T c2_sc2 = c_sc * c_sc; // c^2/sc^2
-    T d2_sc2 = d_sc * d_sc; // d^2/sc^2
-
-    T c2_d2_sc2 = noFma.add(c2_sc2, d2_sc2); // (c^2+d^2)/sc^2
-
-    T rr = ac_bd_sc2 / c2_d2_sc2; // (ac+bd)/(c^2+d^2)
-    T ii = bc_ad_sc2 / c2_d2_sc2; // (bc-ad)/(c^2+d^2)
-
-    return Complex<T>(rr, ii);
-#else /* defined(CPU_CAPABILITY_ZVECTOR) */
-#if defined(CPU_CAPABILITY_VSX)
-    //check multiplication considering swap and fma
-    T rr = x_real * y_real;
-    T ii = x_imag * y_real;
-    T neg_imag = -y_imag;
-    rr = fma(x_imag, y_imag, rr);
-    ii = fma(x_real, neg_imag, ii);
-    //b.abs_2
-#else /* defined(CPU_CAPABILITY_VSX) */
     T ac = x_real * y_real;
     T bd = x_imag * y_imag;
     T ad = x_real * y_imag;
     T bc = x_imag * y_real;
     T rr = noFma.add(ac, bd);
     T ii = noFma.sub(bc, ad);
-#endif /* defined(CPU_CAPABILITY_VSX) */
     //b.abs_2()
     T abs_rr = y_real * y_real;
     T abs_ii = y_imag * y_imag;
@@ -1376,7 +1326,6 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_division(Compl
     rr = rr / abs_2;
     ii = ii / abs_2;
     return Complex<T>(rr, ii);
-#endif /* defined(CPU_CAPABILITY_ZVECTOR) */
 #endif /* defined(TEST_AGAINST_DEFAULT) */
 }
 

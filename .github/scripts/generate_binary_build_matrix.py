@@ -54,7 +54,6 @@ XPU_ARCHES = ["xpu"]
 
 CPU_AARCH64_ARCH = ["cpu-aarch64"]
 
-CPU_S390X_ARCH = ["cpu-s390x"]
 
 CUDA_AARCH64_ARCHES = [
     "12.6-aarch64",
@@ -195,25 +194,8 @@ def validate_nccl_dep_consistency(arch_version: str) -> None:
         )
 
 
-def _parse_linux_cudnn_versions() -> dict[str, str]:
-    """Return {cuda_short_version: cudnn_version} from install_cuda.sh."""
-    text = (REPO_ROOT / ".ci" / "docker" / "common" / "install_cuda.sh").read_text()
-    results: dict[str, str] = {}
-    func_re = re.compile(r"^function install_(\d+)\s*\{")
-    cudnn_re = re.compile(r"^\s*CUDNN_VERSION=(\S+)")
-    current_func: str | None = None
-    for line in text.splitlines():
-        m = func_re.match(line)
-        if m:
-            digits = m.group(1)
-            current_func = digits[:-1] + "." + digits[-1]
-            continue
-        if current_func is not None:
-            m = cudnn_re.match(line)
-            if m:
-                results[current_func] = m.group(1)
-                current_func = None
-    return results
+_BUILD_ENV_SETUP = REPO_ROOT / ".ci" / "manywheel" / "build_env_setup.py"
+_RUNTIME_CUDA_INIT = REPO_ROOT / "torch" / "cuda" / "__init__.py"
 
 
 def _read_dict_constant(path: Path, name: str) -> dict[str, dict[str, set[int]]]:
@@ -256,8 +238,6 @@ def arch_type(arch_version: str) -> str:
         return "xpu"
     elif arch_version in CPU_AARCH64_ARCH:
         return "cpu-aarch64"
-    elif arch_version in CPU_S390X_ARCH:
-        return "cpu-s390x"
     elif arch_version in CUDA_AARCH64_ARCHES:
         return "cuda-aarch64"
     else:  # arch_version should always be "cpu" in this case
@@ -276,7 +256,6 @@ WHEEL_CONTAINER_IMAGES = {
     "xpu": "manylinux2_28-builder:xpu",
     "cpu": "manylinux2_28-builder:cpu",
     "cpu-aarch64": "manylinux2_28_aarch64-builder:cpu-aarch64",
-    "cpu-s390x": "manylinuxs390x-builder:cpu-s390x",
 }
 
 RELEASE = "release"
@@ -298,7 +277,6 @@ def translate_desired_cuda(gpu_arch_type: str, gpu_arch_version: str) -> str:
     return {
         "cpu": "cpu",
         "cpu-aarch64": "cpu",
-        "cpu-s390x": "cpu",
         "cuda": f"cu{gpu_arch_version.replace('.', '')}",
         "cuda-aarch64": f"cu{gpu_arch_version.replace('-aarch64', '').replace('.', '')}",
         "rocm": f"rocm{gpu_arch_version}",
@@ -353,8 +331,8 @@ def generate_wheels_matrix(
     python_versions: list[str] | None = None,
 ) -> list[dict[str, str]]:
     package_type = "wheel"
-    if os == "linux" or os == "linux-aarch64" or os == "linux-s390x":
-        # NOTE: We only build manywheel packages for x86_64 and aarch64 and s390x linux
+    if os == "linux" or os == "linux-aarch64":
+        # NOTE: We only build manywheel packages for x86_64 and aarch64 linux
         package_type = "manywheel"
 
     if python_versions is None:
@@ -369,10 +347,6 @@ def generate_wheels_matrix(
             # Separate new if as the CPU type is different and
             # uses different build/test scripts
             arches = CPU_AARCH64_ARCH + CUDA_AARCH64_ARCHES
-        elif os == "linux-s390x":
-            # Only want the one arch as the CPU type is different and
-            # uses different build/test scripts
-            arches = ["cpu-s390x"]
 
     ret: list[dict[str, str]] = []
     for python_version in python_versions:
@@ -382,7 +356,6 @@ def generate_wheels_matrix(
                 ""
                 if arch_version == "cpu"
                 or arch_version == "cpu-aarch64"
-                or arch_version == "cpu-s390x"
                 or arch_version == "xpu"
                 else arch_version
             )
@@ -391,7 +364,6 @@ def generate_wheels_matrix(
             if os not in [
                 "linux",
                 "linux-aarch64",
-                "linux-s390x",
                 "macos-arm64",
             ] and (python_version == "3.14" or python_version == "3.14t"):
                 continue

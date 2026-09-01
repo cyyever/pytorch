@@ -11,19 +11,4 @@
 #elif defined(__GNUC__) && defined(__IWMMXT__)
 /* GCC-compatible compiler, targeting ARM with WMMX */
 #include <mmintrin.h>
-#elif defined(__s390x__)
-// targets Z/architecture
-// we will include vecintrin later
-#elif (defined(__GNUC__) || defined(__xlC__)) && \
-    (defined(__VEC__) || defined(__ALTIVEC__))
-/* XLC or GCC-compatible compiler, targeting PowerPC with VMX/VSX */
-#include <altivec.h>
-/* We need to undef those tokens defined by <altivec.h> to avoid conflicts
-   with the C++ types. => Can still use __bool/__vector */
-#undef bool
-#undef vector
-#undef pixel
-#elif defined(__GNUC__) && defined(__SPE__)
-/* GCC-compatible compiler, targeting PowerPC with SPE */
-#include <spe.h>
 #endif

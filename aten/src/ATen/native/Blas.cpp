@@ -7,9 +7,8 @@
 #include <ATen/native/mkldnn/Linear.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/GroupedMMUtils.h>
-#if !defined(__s390x__) && !defined(__powerpc__)
+#include <ATen/BlasBackend.h>
 #include <cpuinfo.h>
-#endif
 
 #ifndef AT_PER_OPERATOR_HEADERS
 #include <ATen/CPUFunctions.h>

@@ -7,9 +7,7 @@
 #include <c10/util/irange.h>
 
 #include <climits>
-#if !defined(__s390x__ ) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#endif
 
 #if AT_BUILD_WITH_BLAS()
 #if C10_IOS
@@ -483,13 +481,6 @@ void gemm(
       return;
    }
 #endif
-#if AT_MKLDNN_ACL_ENABLED()
-// add heuristic based on shape to dispatch to sbgemm_ vs MKLDNN
-   if (mkldnn_bf16f32_gemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)) {
-     return;
-   }
-#endif //AT_MKLDNN_ACL_ENABLED
-
 #ifdef MKL_HAS_SBGEMM
   if (use_blas_gemm(transa, transb, m, n, k, lda, ldb, ldc)) {
     int m_ = m, n_ = n, k_ = k, lda_ = lda, ldb_ = ldb, ldc_ = ldc;

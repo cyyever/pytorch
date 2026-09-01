@@ -60,14 +60,8 @@ namespace at::native {
 
 enum class CPUCapability {
   DEFAULT = 0,
-#if defined(HAVE_VSX_CPU_DEFINITION)
-  VSX = 1,
-#elif defined(HAVE_ZVECTOR_CPU_DEFINITION)
-  ZVECTOR = 1,
-#else
   AVX2 = 1,
   AVX512 = 2,
-#endif
   NUM_OPTIONS
 };
 
@@ -107,12 +101,6 @@ struct TORCH_API DispatchStubImpl {
 #ifdef HAVE_AVX2_CPU_DEFINITION
       , void *AVX2
 #endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-      , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-      , void *ZVECTOR
-#endif
   );
 
   // Analogous to try_get_call_ptr(), but it will return the ErrorType and not
@@ -125,12 +113,6 @@ struct TORCH_API DispatchStubImpl {
 #ifdef HAVE_AVX2_CPU_DEFINITION
     , void *AVX2
 #endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-    , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-    , void *ZVECTOR
-#endif
   );
 
 
@@ -142,12 +124,6 @@ struct TORCH_API DispatchStubImpl {
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
       , void *AVX2
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-      , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-      , void *ZVECTOR
 #endif
   );
 
@@ -163,12 +139,6 @@ struct TORCH_API DispatchStubImpl {
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
     , void *AVX2
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-    , void *VSX
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-    , void *ZVECTOR
 #endif
   );
 
@@ -204,12 +174,6 @@ private:
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
       , reinterpret_cast<void*>(AVX2)
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-      , reinterpret_cast<void*>(VSX)
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-      , reinterpret_cast<void*>(ZVECTOR)
 #endif
       )
     );
@@ -263,12 +227,6 @@ public:
 #ifdef HAVE_AVX2_CPU_DEFINITION
       , reinterpret_cast<void*>(AVX2)
 #endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-      , reinterpret_cast<void*>(VSX)
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-      , reinterpret_cast<void*>(ZVECTOR)
-#endif
       );
     if (std::holds_alternative<ErrorType>(result)){
       return false;
@@ -282,12 +240,6 @@ public:
 #endif
 #ifdef HAVE_AVX2_CPU_DEFINITION
   static TORCH_API FnPtr AVX2;
-#endif
-#ifdef HAVE_VSX_CPU_DEFINITION
-  static TORCH_API FnPtr VSX;
-#endif
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-  static TORCH_API FnPtr ZVECTOR;
 #endif
 private:
   DispatchStubImpl impl;
@@ -378,26 +330,12 @@ struct RegisterPRIVATEUSE1Dispatch {
 #define REGISTER_AVX2_DISPATCH(name, fn)
 #endif
 
-#ifdef HAVE_VSX_CPU_DEFINITION
-#define REGISTER_VSX_DISPATCH(name, fn) REGISTER_ARCH_DISPATCH(name, VSX, fn)
-#else
-#define REGISTER_VSX_DISPATCH(name, fn)
-#endif
-
-#ifdef HAVE_ZVECTOR_CPU_DEFINITION
-#define REGISTER_ZVECTOR_DISPATCH(name, fn) REGISTER_ARCH_DISPATCH(name, ZVECTOR, fn)
-#else
-#define REGISTER_ZVECTOR_DISPATCH(name, fn)
-#endif
-
 // Macro to register the same kernel for all CPU arch types. This is useful
 // if a kernel does not benefit from being recompiled across different arch types.
 #define REGISTER_ALL_CPU_DISPATCH(name, fn)                                    \
   REGISTER_ARCH_DISPATCH(name, DEFAULT, fn)                                    \
   REGISTER_AVX512_DISPATCH(name, fn)                                           \
-  REGISTER_AVX2_DISPATCH(name, fn)                                             \
-  REGISTER_VSX_DISPATCH(name, fn)                                              \
-  REGISTER_ZVECTOR_DISPATCH(name, fn)
+  REGISTER_AVX2_DISPATCH(name, fn)
 
 #define REGISTER_NO_CPU_DISPATCH(name)                                         \
   REGISTER_ALL_CPU_DISPATCH(name, nullptr)

@@ -145,21 +145,6 @@ namespace {
             x = generator.get();
         }
         // test counted load stores
-#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
-        for (int i = 1; i < 2 * vec::size(); i++) {
-            vec v = vec::loadu(ref_storage, i);
-            v.store(storage);
-            size_t count = std::min(i * sizeof(VT), b_size);
-            bool cmp = (std::memcmp(ref_storage, storage, count) == 0);
-            ASSERT_TRUE(cmp) << "Failure Details:\nTest Seed to reproduce: " << seed
-                << "\nCount: " << i;
-            if (::testing::Test::HasFailure()) {
-                break;
-            }
-            // clear storage
-            std::memset(storage, 0, b_size);
-        }
-#endif
         // testing unaligned load store
         for (size_t offset = 0; offset < b_size; offset += 1) {
             unsigned char* p1 = ref_storage + offset;

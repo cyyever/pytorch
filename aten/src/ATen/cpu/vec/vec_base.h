@@ -140,11 +140,7 @@ using int_same_size_t = typename int_of_size<sizeof(T)>::type;
  * point types directly if they're supported, or convert through float
  * if not.
  */
-#if defined(__s390x__)
-template <class T, class TEMP = void>
-#else
 template <typename T>
-#endif
 struct is_vec_specialized_for : std::bool_constant<false> {
 };
 
@@ -156,11 +152,7 @@ constexpr bool is_vec_specialized_for_v = is_vec_specialized_for<T>::value;
 // that type.
 
 // emulates Vectorized types
-#if defined(__s390x__)
-template <class T, class TEMP = void>
-#else
 template <class T>
-#endif
 struct Vectorized {
  private:
   __at_align__ std::array<T, VECTOR_WIDTH / sizeof(T)> values{};
