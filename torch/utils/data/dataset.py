@@ -11,7 +11,6 @@ from collections.abc import Sequence
 #     TypeError: Cannot create a consistent method resolution order (MRO) for
 #     bases Iterable, Generic
 from typing import cast, Generic, Iterable, TypeVar  # noqa: UP035
-from warnings import deprecated
 
 # No 'default_generator' in torch/__init__.pyi
 from torch import default_generator, Generator, randperm, Tensor
@@ -343,15 +342,6 @@ class ConcatDataset(Dataset[_T_co]):
         else:
             sample_idx = idx - self.cumulative_sizes[dataset_idx - 1]
         return self.datasets[dataset_idx][sample_idx]
-
-    @property
-    @deprecated(
-        "`cummulative_sizes` attribute is renamed to `cumulative_sizes`",
-        category=FutureWarning,
-    )
-    def cummulative_sizes(self):
-        return self.cumulative_sizes
-
 
 class ChainDataset(IterableDataset):
     r"""Dataset for chaining multiple :class:`IterableDataset` s.

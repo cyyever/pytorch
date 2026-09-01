@@ -2995,15 +2995,6 @@ class ShapeGuardPythonPrinter(_SymSafeMinMaxPrinter, _ShapeGuardPrinter, PythonP
             return res
 
 
-@deprecated(
-    "`torch.fx.experimental.symbolic_shapes.ShapeGuardPrinter` is deprecated, "
-    "please use `torch.fx.experimental.symbolic_shapes.ShapeGuardPythonPrinter` instead.",
-    category=FutureWarning,
-)
-class ShapeGuardPrinter(ShapeGuardPythonPrinter):
-    pass
-
-
 class _ShapeGuardCppPrinter(_ShapeGuardPrinter, CppPrinter):
     def __init__(self, *args: Any) -> None:
         self.all_symbols: set[str] = set()
@@ -6131,14 +6122,6 @@ class ShapeEnv:
     def var_to_val(self) -> dict[sympy.Symbol, sympy.Integer]:
         """Deprecated: use backed_var_to_val instead."""
         return self.backed_var_to_val
-
-    @deprecated(
-        "add_var_to_val is deprecated, use add_backed_var_to_val instead",
-        category=FutureWarning,
-    )
-    def add_var_to_val(self, expr: sympy.Symbol, val: int) -> None:
-        """Deprecated: use add_backed_var_to_val instead."""
-        return self.add_backed_var_to_val(expr, val)
 
     def _debug_name(self, source: Source) -> str:
         src_name = source.name

@@ -1728,16 +1728,6 @@ def get_global_rank(group: ProcessGroup, group_rank: int) -> int:
 
 
 # TODO: remove this once the ecosystem moves away from it.
-@deprecated(
-    "`torch.distributed.distributed_c10d._get_global_rank` is deprecated, "
-    "please use `torch.distributed.distributed_c10d.get_global_rank` instead",
-    category=FutureWarning,
-)
-def _get_global_rank(group: ProcessGroup, rank: int) -> int:
-    """Use get_global_rank as this method is deprecated."""
-    return get_global_rank(group, rank)
-
-
 def get_process_group_ranks(group: ProcessGroup | None) -> list[int]:
     """
     Get all ranks associated with ``group``.
