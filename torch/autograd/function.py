@@ -7,7 +7,6 @@ from collections import OrderedDict
 from collections.abc import Callable
 from typing import Any, Concatenate, TypeVar
 from typing import ParamSpec
-from warnings import deprecated
 
 import torch
 import torch._C as _C
@@ -192,15 +191,6 @@ class FunctionCtx:
 
         """
         self.dirty_tensors = args
-
-    @deprecated(
-        "`mark_shared_storage` is deprecated. "
-        "Tensors with shared storages are automatically tracked. "
-        "Note that calls to `set_()` are not tracked",
-        category=FutureWarning,
-    )
-    def mark_shared_storage(self, *pairs):
-        pass
 
     def mark_non_differentiable(self, *args: torch.Tensor):
         r"""Mark outputs as non-differentiable.

@@ -25,7 +25,6 @@ import torch
 import torch._appdirs
 from ._filelock import FileLock
 from ._cpp_extension_versioner import ExtensionVersioner
-from warnings import deprecated
 from torch.torch_version import TorchVersion, Version
 from torch._utils_internal import get_file_path
 
@@ -1593,10 +1592,6 @@ def load(name,
         is_python_module,
         is_standalone,
         keep_intermediates=keep_intermediates)
-
-@deprecated("PyBind11 ABI handling is internal to PyBind11; this will be removed after PyTorch 2.9.0")
-def _get_pybind11_abi_build_flags() -> list[str]:
-    return []
 
 def check_compiler_is_gcc(compiler) -> bool:
     if not IS_LINUX:

@@ -16,12 +16,3 @@ __all__ = [
     "DataParallel",
     "DistributedDataParallel",
 ]
-
-
-@deprecated(
-    "`torch.nn.parallel.DistributedDataParallelCPU` is deprecated, "
-    "please use `torch.nn.parallel.DistributedDataParallel` instead.",
-    category=FutureWarning,
-)
-class DistributedDataParallelCPU(DistributedDataParallel):
-    pass

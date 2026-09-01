@@ -1063,15 +1063,6 @@ BUILTIN_TYPES: frozenset[type] = frozenset(
 )
 
 
-@deprecated(
-    "torch.utils._pytree._is_namedtuple_instance is private and will be removed in a future release. "
-    "Please use torch.utils._pytree.is_namedtuple_instance instead.",
-    category=FutureWarning,
-)
-def _is_namedtuple_instance(tree: Any) -> bool:
-    return is_namedtuple_instance(tree)
-
-
 def _get_node_type(tree: Any) -> Any:
     node_type = type(tree)
     # All namedtuple types are implicitly registered as pytree nodes.
@@ -1106,15 +1097,6 @@ def tree_is_leaf(
     if is_leaf is not None and is_leaf(tree):
         return True
     return _get_node_type(tree) not in SUPPORTED_NODES
-
-
-@deprecated(
-    "torch.utils._pytree._is_leaf is private and will be removed in a future release. "
-    "Please use torch.utils._pytree.tree_is_leaf instead.",
-    category=FutureWarning,
-)
-def _is_leaf(tree: PyTree, is_leaf: Callable[[PyTree], bool] | None = None) -> bool:
-    return tree_is_leaf(tree, is_leaf=is_leaf)
 
 
 # A TreeSpec represents the structure of a pytree. It holds:
@@ -1200,16 +1182,6 @@ class TreeSpec:
     @property
     def context(self) -> Context:
         return self._context
-
-    @property
-    @deprecated(
-        "`treespec.children_specs` is deprecated. "
-        "Use `treespec.child(index)` to access a single child, "
-        "or `treespec.children()` to get all children.",
-        category=FutureWarning,
-    )
-    def children_specs(self) -> list[Self]:
-        return self._children
 
     def is_leaf(self) -> bool:
         """Test whether the treespec represents a leaf."""
@@ -2130,23 +2102,7 @@ def treespec_pprint(treespec: TreeSpec) -> str:
 
 
 # TODO(angelayi): remove this function after OSS/internal stabilize
-@deprecated(
-    "`pytree_to_str` is deprecated. Please use `treespec_dumps` instead.",
-    category=FutureWarning,
-)
-def pytree_to_str(treespec: TreeSpec) -> str:
-    return treespec_dumps(treespec)
-
-
 # TODO(angelayi): remove this function after OSS/internal stabilize
-@deprecated(
-    "`str_to_pytree` is deprecated. Please use `treespec_loads` instead.",
-    category=FutureWarning,
-)
-def str_to_pytree(json: str) -> TreeSpec:
-    return treespec_loads(json)
-
-
 def arg_tree_leaves(*args: PyTree, **kwargs: PyTree) -> list[Any]:
     """Get a flat list of arguments to this function
 

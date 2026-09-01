@@ -908,14 +908,6 @@ class FunctionEvent(FormattedTimesMixin):
         return self._metadata_json
 
     @property
-    @deprecated(
-        "`self_cuda_memory_usage` is deprecated. Use `self_device_memory_usage` instead.",
-        category=FutureWarning,
-    )
-    def self_cuda_memory_usage(self):  # To be deprecated
-        return self.self_device_memory_usage
-
-    @property
     def cpu_time_total(self):
         if self.device_type == DeviceType.CPU:
             return self.time_range.elapsed_us()
@@ -955,14 +947,6 @@ class FunctionEvent(FormattedTimesMixin):
                     f"Expected device_type to be CUDA, PrivateUse1, MTIA, HPU or XPU, but got {self.device_type}"
                 )
             return self.time_range.elapsed_us()
-
-    @property
-    @deprecated(
-        "`cuda_time_total` is deprecated. Use `device_time_total` instead.",
-        category=FutureWarning,
-    )
-    def cuda_time_total(self):  # To be deprecated
-        return self.device_time_total
 
     @property
     def self_device_time_total(self):
