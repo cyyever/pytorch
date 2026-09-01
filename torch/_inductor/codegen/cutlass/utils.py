@@ -72,23 +72,9 @@ def _rename_cutlass_import(content: str, cutlass_modules: list[str]) -> str:
 @functools.cache
 def try_import_cutlass() -> bool:
     """
-    We want to support three ways of passing in CUTLASS:
-    1. fbcode, handled by the internal build system.
-    2. User specifies cutlass_dir. The default is ../third_party/cutlass/,
-       which is the directory when developers build from source.
+    CUTLASS comes from cutlass_dir, which defaults to ../third_party/cutlass/
+    -- the directory a source build leaves it in.
     """
-    if config.is_fbcode():
-        try:
-            import cutlass_cppgen  # type: ignore[import-not-found]
-            import cutlass_library  # type: ignore[import-not-found]
-        except ImportError as e:
-            log.warning(
-                "Failed to import CUTLASS packages in fbcode: %s, ignoring the CUTLASS backend.",
-                e,
-            )
-            return False
-
-        return True
 
     # Copy CUTLASS python scripts to a temp dir and add the temp dir to Python search path.
     # This is a temporary hack to avoid CUTLASS module naming conflicts.

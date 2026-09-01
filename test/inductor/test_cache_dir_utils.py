@@ -41,7 +41,6 @@ class TestCacheDirUtils(TestCase):
                 mock.patch.object(
                     cache_dir_utils.os, "getuid", return_value=1001, create=True
                 ),
-                mock.patch.object(cache_dir_utils, "is_fbcode", return_value=False),
             ):
                 self.assertEqual(
                     cache_dir_utils.default_cache_dir(),
@@ -56,7 +55,6 @@ class TestCacheDirUtils(TestCase):
                 side_effect=OSError("user unavailable"),
             ),
             mock.patch.object(cache_dir_utils, "os", SimpleNamespace(path=os.path)),
-            mock.patch.object(cache_dir_utils, "is_fbcode", return_value=False),
         ):
             self.assertEqual(
                 cache_dir_utils.default_cache_dir(),

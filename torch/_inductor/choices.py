@@ -53,19 +53,12 @@ if TYPE_CHECKING:
 log: logging.Logger = logging.getLogger(__name__)
 
 
-if TYPE_CHECKING or not config.is_fbcode():
-
-    def _maybe_log_inductor_mm_shape(
-        kernel_inputs: KernelInputs,
-        op_name: str,
-        context_fn: Any = None,
-    ) -> None:
-        return
-
-else:
-    from torch._inductor.fb.shape_logging import (
-        log_inductor_mm_shape as _maybe_log_inductor_mm_shape,
-    )
+def _maybe_log_inductor_mm_shape(
+    kernel_inputs: KernelInputs,
+    op_name: str,
+    context_fn: Any = None,
+) -> None:
+    return
 
 
 class Sortable(typing.Protocol):

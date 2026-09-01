@@ -172,7 +172,6 @@ def _emit_triton_kernel_compile_metric(
     )
 
 
-
 log = logging.getLogger(__name__)
 
 # Used to keep track of all process pools invoked so far.
@@ -981,11 +980,7 @@ def maybe_warm_pool() -> None:
     if (
         os.environ.get("TORCH_TNT_IN_USE", "0") == "1"
         or os.environ.get("TORCH_WARM_POOL", "1") != "1"
-        # The subprocess pool is only used for the Triton backend
         or not has_triton_package()
-        # Skip for fbcode. We have internal reports of usages inside multiprocessing
-        # pools that lead a multiplicative number of compile subprocesses.
-        or config.is_fbcode()
     ):
         return
 

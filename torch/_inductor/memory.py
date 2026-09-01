@@ -7,7 +7,6 @@ import logging
 from typing import TYPE_CHECKING, TypedDict
 
 import torch
-from torch._environment import is_fbcode
 from torch._utils_internal import signpost_event
 from torch.utils._ordered_set import OrderedSet
 
@@ -52,8 +51,10 @@ class MemoryPlanningInfoForBuffer:
     def __post_init__(self) -> None:
         torch._check(
             len(self.succ_nodes) <= len(self.succ_nodes_for_ordering),
-            lambda: f"succ_nodes must be a subset of succ_nodes_for_ordering. "
-            f"len(succ_nodes)={len(self.succ_nodes)}, len(succ_nodes_for_ordering)={len(self.succ_nodes_for_ordering)}",
+            lambda: (
+                f"succ_nodes must be a subset of succ_nodes_for_ordering. "
+                f"len(succ_nodes)={len(self.succ_nodes)}, len(succ_nodes_for_ordering)={len(self.succ_nodes_for_ordering)}"
+            ),
         )
 
 
@@ -1056,8 +1057,7 @@ def reorder_for_peak_memory(
         validate_unique_buffer_names(nodes, name_to_buf, name_to_freeable_input_buf)
     except RuntimeError:
         torch_log.exception("Memory planning validation failed")
-        if not is_fbcode():  # TODO: remove after ensuring OSS side is safe
-            raise
+        raise
 
     # keep track of the peak memory estimates of different methods
     peak_memory_diff_methods: list[PeakMemoryResult] = []
@@ -1088,8 +1088,7 @@ def reorder_for_peak_memory(
             torch_log.info("%s peak memory: %d", method.__name__, peak_memory)
         except Exception:
             torch_log.exception("Failed to reorder for %s", method.__name__)
-            if not is_fbcode():  # TODO: remove after ensuring OSS side is safe
-                raise
+            raise
 
     signpost_event(
         category="inductor",

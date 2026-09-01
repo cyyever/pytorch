@@ -10,16 +10,13 @@ behavior, including:
 - Feature toggles for experimental features
 """
 
-import getpass
 import os
 import sys
 import sysconfig
-import tempfile
 from collections.abc import Callable
 from os.path import abspath, dirname
 from typing import Any, Literal, TYPE_CHECKING
 
-from torch._environment import is_fbcode
 from torch.utils._config_module import Config, get_tristate_env, install_config_module
 
 
@@ -439,9 +436,6 @@ do_not_emit_runtime_asserts: bool = (
     os.environ.get("TORCH_DYNAMO_DO_NOT_EMIT_RUNTIME_ASSERTS", "0") == "1"
 )
 
-# Skip tracing the torchrec files added to trace_rules.FBCODE_SKIP_DIRS
-skip_torchrec = True
-
 # Don't apply most trace_rules.py rules
 dont_skip_tracing = False
 
@@ -648,12 +642,7 @@ def default_debug_dir_root() -> str:
     DEBUG_DIR_VAR_NAME = "TORCH_COMPILE_DEBUG_DIR"
     if DEBUG_DIR_VAR_NAME in os.environ:
         return os.path.join(os.environ[DEBUG_DIR_VAR_NAME], "torch_compile_debug")
-    elif is_fbcode():
-        return os.path.join(
-            tempfile.gettempdir(), getpass.getuser(), "torch_compile_debug"
-        )
-    else:
-        return os.path.join(os.getcwd(), "torch_compile_debug")
+    return os.path.join(os.getcwd(), "torch_compile_debug")
 
 
 # [@compile_ignored: debug]

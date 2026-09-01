@@ -214,9 +214,6 @@ def lazy_init(input_device: torch.device | None = None):
         split_cat,
     )
 
-    if config.is_fbcode():
-        from . import fb  # type: ignore[attr-defined]  # noqa: F401
-
 
 def _get_pass_name_func(p):
     if isinstance(p, PatternMatcherPassBase):

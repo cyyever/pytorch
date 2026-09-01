@@ -811,7 +811,9 @@ class DeferredTritonCallWrapper:
 
         # kernel_args_ is consumed by both JIT and AOT launchKernel calls.
         prefix.writeline(f"void* kernel_args_[] = {{{call_args_str}}};")
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
+        enable_kernel_profile = (
+            config.cpp.enable_kernel_profile and sys.platform == "linux"
+        )
         prefix.writeline_jit(f"launchKernel({kernel_name}, {common_launch_args});")
         if enable_kernel_profile:
             profile_arg_types = [arg_type_lookup.get(n) for n in kernel_arg_names]
@@ -1104,7 +1106,9 @@ class DeferredTritonCallWrapper:
         if wrapper.device_codegen.cpp_kernel_launch_supports_pdl():
             launch_kernel_args.append(_launch_pdl_cpp_literal(triton_meta))
 
-        enable_kernel_profile = config.cpp.enable_kernel_profile and sys.platform == "linux"
+        enable_kernel_profile = (
+            config.cpp.enable_kernel_profile and sys.platform == "linux"
+        )
         if enable_kernel_profile:
             self.generate_profiled_launch_kernel(
                 prefix,
@@ -1543,11 +1547,6 @@ class CppWrapperGpu(CppWrapperCpu):
         #
         # JIT Inductor does not guard on input alignment. It relies on copy_misaligned_inputs to
         # copy misaligned inputs to aligned buffers. For AOTInductor, we need to do the same in cpp.
-
-        if config.is_fbcode():
-            # TODO: This is added because FC. Remove this once the newly added shim symbols,
-            # e.g. aoti_torch_clone_preserve_strides, have landed
-            return super().codegen_inputs()
 
         if V.graph.aot_mode and V.graph.inputs_to_check:
             for idx in V.graph.inputs_to_check:

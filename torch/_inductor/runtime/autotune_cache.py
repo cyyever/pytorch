@@ -86,7 +86,6 @@ def inductor_meta_from_config() -> _InductorMetaTy:
         "backend_hash": backend_hash,
         "bundled_autotune_remote_cache": config.bundled_autotune_remote_cache,
         "coordinate_descent_tuning": config.coordinate_descent_tuning,
-        "is_fbcode": config.is_fbcode(),
         "is_hip": is_hip,
     }
 
@@ -254,8 +253,6 @@ class AutotuneCache:
 
         from ..codecache import torch_key
 
-        is_fbcode = bool(inductor_meta.get("is_fbcode", False))
-
         salt = "autotune-best-config-v2"
         # re: torch_key - see [Note: torch_key in autotune cache key]
         key = AUTOTUNE_CACHE_KEY_STRATEGY.key(
@@ -264,8 +261,6 @@ class AutotuneCache:
 
         remote_cache = create_cache(
             key,
-            is_fbcode,
-            "FbRemoteAutotuneCache",
             "RemoteAutotuneCache",
         )
         if not remote_cache:
@@ -274,7 +269,6 @@ class AutotuneCache:
         # Save the args passed to create_cache
         # in case AutotuneCache needs to be pickled
         self.remote_cache_full_key = key
-        self.is_fbcode = is_fbcode
         self.remote_cache = (remote_cache, cache_key)
 
     # The AutotuneCache may be serialized/deserialized if we're using
@@ -304,15 +298,9 @@ class AutotuneCache:
                 raise AssertionError(
                     "Missing remote_cache_full_key attribute after deserialization"
                 )
-            if not hasattr(self, "is_fbcode"):
-                raise AssertionError(
-                    "Missing is_fbcode attribute after deserialization"
-                )
             cache_key = self.remote_cache
             remote_cache = create_cache(
                 self.remote_cache_full_key,
-                self.is_fbcode,
-                "FbRemoteAutotuneCache",
                 "RemoteAutotuneCache",
             )
             if remote_cache is not None:
@@ -422,22 +410,7 @@ class _AutotuneCacheBundlerImpl:
         ) is not None:
             return bool(bundled_autotune_remote_cache)
 
-        if not cls._get_is_fbcode(inductor_meta):
-            return False
-        if torch._utils_internal.is_fb_unit_test():
-            return False
-        if inductor_meta.get("is_hip"):
-            return False
-
-        try:
-            from torch._inductor.fb.remote_cache import REMOTE_CACHE_VERSION
-        except ModuleNotFoundError:
-            return False
-
-        jk = torch._utils_internal.justknobs_getval_int(
-            "pytorch/remote_cache:bundled_autotune_remote_cache_version"
-        )
-        return REMOTE_CACHE_VERSION >= jk
+        return False
 
     def _load_cache(self) -> bool:
         from torch._inductor import codecache
@@ -467,10 +440,6 @@ class _AutotuneCacheBundlerImpl:
         codecache.add_ephemeral_timeout_increase_for_distributed(time_saved_ns)
 
         return True
-
-    @staticmethod
-    def _get_is_fbcode(inductor_meta: _InductorMetaTy) -> bool:
-        return bool(inductor_meta.get("is_fbcode", False))
 
     @staticmethod
     def _get_backend_hash(inductor_meta: _InductorMetaTy) -> str:
@@ -557,8 +526,6 @@ class AutotuneCacheBundler:
 
         cache = create_cache(
             "bundled-autotune-v1",
-            _AutotuneCacheBundlerImpl._get_is_fbcode(inductor_meta),
-            "FbRemoteBundledAutotuneCache",
             "RemoteBundledAutotuneCache",
         )
         if not cache:
@@ -644,21 +611,7 @@ def _comment_stripped_hash(code: str) -> str:
 def _should_use_remote_autotune_cache(inductor_meta: _InductorMetaTy) -> bool:
     if (config := inductor_meta.get("autotune_remote_cache")) is not None:
         return bool(config)
-    if not inductor_meta.get("is_fbcode"):
-        return False
-    if torch._utils_internal.is_fb_unit_test():
-        return False
-    if inductor_meta.get("is_hip"):
-        return False
-
-    try:
-        from torch._inductor.fb.remote_cache import REMOTE_CACHE_VERSION
-    except ModuleNotFoundError:
-        return False
-
-    return REMOTE_CACHE_VERSION >= torch._utils_internal.justknobs_getval_int(
-        "pytorch/remote_cache:autotune_memcache_version"
-    )
+    return False
 
 
 def _reconstruct_triton_config(

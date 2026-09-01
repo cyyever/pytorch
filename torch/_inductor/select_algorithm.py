@@ -3783,7 +3783,7 @@ def append_to_log(filename, data):
         try:
             with open(filename) as f:
                 log_data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError, json.JSONDecodeError:
             log_data = []
 
         log_data.append(data)
@@ -3894,14 +3894,6 @@ def get_num_workers() -> int:
     cpu_count = torch._utils.cpu_count()
     if not cpu_count:
         raise AssertionError(f"expected nonzero cpu_count, got {cpu_count}")
-
-    # Divide the number of CPUs by the number of GPUs for distributed workloads
-    if (
-        config.is_fbcode()
-        and torch.cuda.is_available()
-        and torch.cuda.device_count() > 0
-    ):
-        cpu_count = cpu_count // torch.cuda.device_count()
 
     return cpu_count
 
@@ -4069,10 +4061,10 @@ def _classify_kernel_operation(
                     try:
                         if input_0_shape[1] == input_1_shape[1]:
                             return "conv"
-                    except (IndexError, TypeError):
+                    except IndexError, TypeError:
                         pass
 
-        except (ValueError, IndexError, AttributeError):
+        except ValueError, IndexError, AttributeError:
             pass
 
     # Last resort: exact name matching (not substring to avoid false positives)
@@ -5893,7 +5885,7 @@ class AlgorithmSelectorCache(PersistentCache):
 
                         json.dumps(value)  # Test if serializable
                         result[key] = value
-                    except (TypeError, ValueError):
+                    except TypeError, ValueError:
                         result[key] = str(value)
 
             return result
