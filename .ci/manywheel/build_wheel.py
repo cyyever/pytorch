@@ -40,8 +40,6 @@ def configure_blas_env() -> None:
         if not Path("/acl").is_dir():
             sys.exit("ERROR: ARM Compute Library not found at /acl")
         os.environ["USE_MKLDNN"] = "1"
-        os.environ["USE_MKLDNN_ACL"] = "1"
-        os.environ["ACL_ROOT_DIR"] = "/acl"
 
         if gpu_arch_type == "cuda-aarch64":
             nvpl = Path("/usr/local/lib/libnvpl_blas_lp64_gomp.so.0")
