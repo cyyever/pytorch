@@ -1465,9 +1465,6 @@ TORCH_API intrusive_ptr<ivalue::Future> collectAll(
     const c10::List<c10::intrusive_ptr<ivalue::Future>>& srcs);
 // Input is a List of Futures with the same target type.
 // Output is a Future that will be updated with a seen value.
-TORCH_API intrusive_ptr<ivalue::Future> collectAny(
-    const c10::List<c10::intrusive_ptr<ivalue::Future>>& srcs);
-
 // User-defined object.
 struct C10_EXPORT ivalue::Object final : c10::intrusive_ptr_target {
  public:

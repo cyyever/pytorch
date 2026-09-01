@@ -172,7 +172,6 @@ TORCH_API c10::intrusive_ptr<Node> rebase_history(
     Edge gradient_edge);
 
 /// Gets the raw gradient function pointer, whatever it currently is.
-TORCH_API Node* grad_fn_unsafe(const Variable& /*self*/);
 
 /// Increments the version count of this `Variable`.
 TORCH_API void bump_version(const Variable& /*self*/);

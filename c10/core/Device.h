@@ -107,11 +107,6 @@ struct C10_API Device final {
     return type_ == DeviceType::XPU;
   }
 
-  /// Return true if the device is of IPU type.
-  bool is_ipu() const noexcept {
-    return type_ == DeviceType::IPU;
-  }
-
   /// Return true if the device is of XLA type.
   bool is_xla() const noexcept {
     return type_ == DeviceType::XLA;
@@ -125,11 +120,6 @@ struct C10_API Device final {
   /// Return true if the device is of Lazy type.
   bool is_lazy() const noexcept {
     return type_ == DeviceType::Lazy;
-  }
-
-  /// Return true if the device is of Metal type.
-  bool is_metal() const noexcept {
-    return type_ == DeviceType::Metal;
   }
 
   /// Return true if the device is of MAIA type.
@@ -149,8 +139,7 @@ struct C10_API Device final {
 
   /// Return true if the device supports arbitrary strides.
   bool supports_as_strided() const noexcept {
-    return type_ != DeviceType::IPU && type_ != DeviceType::XLA &&
-        type_ != DeviceType::Lazy;
+    return type_ != DeviceType::XLA && type_ != DeviceType::Lazy;
   }
 
   /// Same string as returned from operator<<.

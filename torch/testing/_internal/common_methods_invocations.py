@@ -7993,7 +7993,13 @@ def sample_inputs_scatter(op_info, device, dtype, requires_grad, **kwargs):
     for tensor, args in test_cases:
         yield SampleInput(tensor, *args)
 
-        if not requires_grad and dtype not in float8_types():
+        # reduce= survives only for the scalar-src overload; the Tensor-src one
+        # was removed in favour of scatter_reduce.
+        if (
+            not requires_grad
+            and dtype not in float8_types()
+            and not isinstance(args[-1], torch.Tensor)
+        ):
             yield SampleInput(tensor.detach().clone(), *args, reduce='add')
 
             if dtype.is_floating_point:

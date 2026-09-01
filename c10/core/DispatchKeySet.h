@@ -707,8 +707,8 @@ constexpr DispatchKeySet autogradother_backends =
         // Technically, HIP will now redispatch to its own custom AutogradHIP
         // slot in the runtime table.
         {DispatchKey::FPGA,
-         DispatchKey::Vulkan,
          DispatchKey::Metal,
+         DispatchKey::Vulkan,
          DispatchKey::CustomRNGKeyId,
          DispatchKey::MkldnnCPU,
          // Sparse and Quantized backends also live here.

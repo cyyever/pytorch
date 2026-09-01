@@ -347,14 +347,6 @@ void nccl_get_out(
 #endif
 }
 
-bool is_nccl_symmem_available() {
-#ifdef NCCL_HAS_SYMMEM_SUPPORT
-    return true;
-#else
-    return false;
-#endif
-}
-
 void nccl_put_signal(at::Tensor& tensor, const c10::intrusive_ptr<SymmetricMemory>& hdl, int64_t peer) {
 #ifdef NCCL_HAS_ONE_SIDED_API
   // Check input arguments

@@ -153,7 +153,7 @@ class Tensor(torch._C.TensorBase):
             if (
                 self.is_sparse
                 or self.device.type
-                in ["lazy", "xla", "mps", "maia", "meta", "ipu"]
+                in ["lazy", "xla", "mps", "maia", "meta"]
                 or (
                     not torch._C._has_storage(self)
                     and self.device.type == torch._C._get_privateuse1_backend_name()

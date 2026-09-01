@@ -15,7 +15,6 @@ namespace at::cpu {
 TORCH_API std::unordered_map<std::string, c10::IValue> get_cpu_capabilities();
 
 // Detect if CPU supports AVX512 Vector Neural Network Instructions.
-TORCH_API bool is_avx512_vnni_supported();
 
 // Enable the system to use AMX instructions.
 TORCH_API bool init_amx();

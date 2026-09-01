@@ -543,7 +543,6 @@ aten_cpu_non_globed_sources = [
     "aten/src/ATen/detail/PrivateUse1HooksInterface.cpp",
     "aten/src/ATen/detail/XLAHooksInterface.cpp",
     "aten/src/ATen/detail/XPUHooksInterface.cpp",
-    "aten/src/ATen/detail/IPUHooksInterface.cpp",
     "aten/src/ATen/record_function.cpp",
     "aten/src/ATen/Dispatch.cpp",
     "aten/src/ATen/SequenceNumber.cpp",

@@ -1444,21 +1444,6 @@ REGISTER_CPU_KERNEL("torch.ops.aten.scatter.value", aten_scatter_value, {
   at::cpu::scatter_out(out, self, dim, index, value);
 })
 
-REGISTER_CPU_KERNEL("torch.ops.aten.scatter.reduce", aten_scatter_reduce, {
-  const auto& self = KernelInput(0).toTensor();
-  const auto dim = KernelInput(1).toInt();
-  const auto& index = KernelInput(2).toTensor();
-  const auto& src = KernelInput(3).toTensor();
-  const auto reduce = KernelInput(4).toStringView();
-  if (KernelOutput(0).isNone()) {
-    KernelOutput(0) = at::cpu::scatter(self, dim, index, src, reduce);
-    return;
-  }
-  auto& out = KernelOutput(0).toTensor();
-  fastResizeToZero(out);
-  at::cpu::scatter_out(out, self, dim, index, src, reduce);
-})
-
 REGISTER_CPU_KERNEL(
     "torch.ops.aten.scatter.value_reduce",
     aten_scatter_value_reduce,
