@@ -10,11 +10,6 @@
 
 namespace c10d {
 
-// callback function will be given arguments (std::optional<string> oldValue,
-// std::optional<string> newValue)
-using WatchKeyCallback =
-    std::function<void(std::optional<std::string>, std::optional<std::string>)>;
-
 class TORCH_API Store : public torch::CustomClassHolder {
  public:
   static constexpr std::chrono::milliseconds kDefaultTimeout =
@@ -75,16 +70,6 @@ class TORCH_API Store : public torch::CustomClassHolder {
   virtual const std::chrono::milliseconds& getTimeout() const noexcept;
 
   virtual void setTimeout(const std::chrono::milliseconds& timeout);
-
-  // watchKey() is deprecated and no longer supported.
-  virtual void watchKey(
-      const std::string& /* unused */,
-      // NOLINTNEXTLINE(performance-unnecessary-value-param)
-      WatchKeyCallback /* unused */) {
-    C10_THROW_ERROR(
-        NotImplementedError,
-        "watchKey is deprecated, no implementation supports it.");
-  }
 
   virtual void append(
       const std::string& key,

@@ -147,7 +147,6 @@ if TYPE_CHECKING:
 #                             ^
 #                             +--- dispatch_lambda_args / dispatch_lambda_return_str
 #                                  generated from NativeFunction / CppSignature
-#                                  (deprecated PythonSignature is special)
 #                                  arguments are represented by DispatchLambdaArgument
 #
 #          pybind11::gil_scoped_release no_gil;
@@ -257,34 +256,25 @@ class PythonArgument:
         else:
             return f"{type_str} {name}"
 
-    def argument_str_pyi(
-        self, *, method: bool = False, deprecated: bool = False
-    ) -> str:
+    def argument_str_pyi(self, *, method: bool = False) -> str:
         type_str = argument_type_str_pyi(self.type)
 
         name = self.name
         # s/self/input/ outside method bindings
         # [old codegen] TODO: remove this? doesn't rename in codegen, it's just
         # for the parse string
-        if name == "self" and type_str == "Tensor" and not method and not deprecated:
+        if name == "self" and type_str == "Tensor" and not method:
             name = "input"
 
         if name == "from":  # from is a Python keyword...
             name += "_"
 
         # pyi merges the _out and functional variants into the same signature, with an optional out arg
-        if name == "out" and not deprecated:
+        if name == "out":
             type_str = _append_optional_pyi(type_str)
 
-        # pyi deprecated signatures don't get defaults for their out arg
-        treat_as_no_default = (
-            deprecated
-            and isinstance(self, PythonOutArgument)
-            and self.default == "None"
-        )
-
         # add default
-        if self.default is not None and not treat_as_no_default:
+        if self.default is not None:
             if (
                 isinstance(self.type, ListType)
                 and self.type.elem == BaseType(BaseTy.int)
@@ -374,10 +364,6 @@ class PythonSignature:
     # method or function signature?
     method: bool
 
-    @property
-    def deprecated(self) -> bool:
-        return False
-
     def arguments(
         self, *, skip_outputs: bool = False, skip_tensor_options: bool = False
     ) -> tuple[PythonArgument | PythonOutArgument, ...]:
@@ -466,60 +452,13 @@ class PythonSignature:
         return format_function_signature(self.name, schema_formals, returns_str)
 
 
-# The deprecated python signature involves some special logic, so create a
-# dedicated data model to store these extra properties.
-@dataclass(frozen=True)
-class PythonSignatureDeprecated(PythonSignature):
-    # Schema for the deprecated function
-    deprecated_schema: FunctionSchema
-
-    # The deprecated signature might miss some arguments that the corresponding
-    # C++ signature expects. We need store the constant default values to pass in.
-    # For example:
-    #   [deprecate signature]: addmm(Scalar beta, Tensor self, Tensor mat1, Tensor mat2)
-    #   [func schema]: aten::addmm(Tensor self, Tensor mat1, Tensor mat2, *, Scalar beta=1, Scalar alpha=1) -> Tensor
-    #   [func call]: self.addmm(mat1, mat2, beta, 1)
-    # We store ['self', 'mat1', 'mat2', 'beta', '1'] in this case.
-    deprecated_args_exprs: tuple[str, ...]
-
-    @property
-    def deprecated(self) -> bool:
-        return True
-
-    def signature_str(self, *, skip_outputs: bool = False, symint: bool = True) -> str:
-        return (
-            PythonSignature.signature_str(
-                self, skip_outputs=skip_outputs, symint=symint
-            )
-            + "|deprecated"
-        )
-
-    def signature_str_pyi(self, *, skip_outputs: bool = False) -> str:
-        args = self.arguments(skip_outputs=skip_outputs)
-        schema_formals: list[str] = [
-            a.argument_str_pyi(method=self.method, deprecated=True) for a in args
-        ]
-        positional_argc = len(self.input_args)
-        if len(schema_formals) > positional_argc:
-            schema_formals.insert(positional_argc, "*")
-
-        returns_str = returns_str_pyi(self)
-        return format_function_signature(self.name, schema_formals, returns_str)
-
-    def signature_str_pyi_vararg(self, *, skip_outputs: bool = False) -> str | None:
-        # the codegen doesn't include vararg variants for deprecated signatures
-        return None
-
 
 # This struct is used to hold the PythonSignature and its corresponding
 # NativeFunction BEFORE grouping base and out-variant functions.
 # Why not store NativeFunction in PythonSignature or construct PythonSignature
-# from NativeFunction? Because they are not 1-1 mapped.
-# One native function could have both deprecated and non-deprecated python
-# signatures - NativeFunction doesn't contain information to construct the
-# deprecated python signature.
-# One python signature is used to handle both the base and the out-variant
-# function - see 'PythonSignatureGroup'.
+# from NativeFunction? Because they are not 1-1 mapped: one python signature is
+# used to handle both the base and the out-variant function - see
+# 'PythonSignatureGroup'.
 @dataclass(frozen=True)
 class PythonSignatureNativeFunctionPair:
     signature: PythonSignature
@@ -1112,18 +1051,12 @@ def returns_str_pyi(signature: PythonSignature) -> str:
 #   // aten::max.dim_max(Tensor self, int dim, bool keepdim=False, *,
 #   //     Tensor(a!) max, Tensor(b!) max_values) -> (Tensor(a!) values, Tensor(b!) indices)
 #   [](Tensor & max, Tensor & max_values, const Tensor & self, int64_t dim, bool keepdim) -> std::tuple<Tensor,Tensor>
-#
-# For deprecated python signature, it should follow deprecated python arg order.
-# TODO: This is to keep same byte-for-byte result as the old codegen - maybe unnecessary?
 
 
 def dispatch_lambda_args(
     ps: PythonSignature, f: NativeFunction, symint: bool = True
 ) -> tuple[DispatchLambdaArgument, ...]:
-    if isinstance(ps, PythonSignatureDeprecated):
-        schema = ps.deprecated_schema
-    else:
-        schema = f.func
+    schema = f.func
 
     # Start with cpp arguments - dispatch lambda signature always include 'self'
     cpp_args = cpp.arguments(
@@ -1243,18 +1176,8 @@ def cpp_dispatch_exprs(
 ) -> tuple[str, ...]:
     cpp_args: Sequence[Binding] = _cpp_signature(f, method=False).arguments()
 
-    exprs: tuple[str, ...] = ()
-    if not isinstance(python_signature, PythonSignatureDeprecated):
-        # By default the exprs are consistent with the C++ signature.
-        exprs = tuple(a.name for a in cpp_args)
-    else:
-        # For deprecated python signature we may need fill in some constants.
-        exprs = tuple(
-            filter(
-                lambda n: n != "out" or f.func.is_out_fn(),
-                python_signature.deprecated_args_exprs,
-            )
-        )
+    # The exprs are consistent with the C++ signature.
+    exprs: tuple[str, ...] = tuple(a.name for a in cpp_args)
 
     if Variant.method in f.variants:
         exprs = tuple(filter("self".__ne__, exprs))

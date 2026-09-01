@@ -203,7 +203,6 @@ struct FunctionSignature {
   size_t max_pos_args{0};
   int index;
   bool hidden{false};
-  bool deprecated{false};
 };
 
 // A PythonArgParser contains a list of valid signatures. Instances are
@@ -234,7 +233,6 @@ struct PYBIND11_EXPORT PythonArgParser {
       PyObject* kwargs,
       // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
       PyObject* parsed_args[]);
-  void check_deprecated(const FunctionSignature& signature);
   PythonArgs raw_parse(
       PyObject* self,
       PyObject* args,
