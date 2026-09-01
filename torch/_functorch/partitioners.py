@@ -1746,8 +1746,6 @@ def default_partition(
             # profiling spans), but they're safe to duplicate during AC recompute.
             # We skip both enter and exit to keep profiling spans balanced.
             torch.ops.profiler._record_function_enter_new.default,
-            torch.ops.profiler._record_function_enter.default,
-            torch.ops.profiler._record_function_exit.default,
             torch.ops.profiler._record_function_exit._RecordFunction,
         ):
             continue
