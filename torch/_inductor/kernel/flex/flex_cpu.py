@@ -97,7 +97,7 @@ def lower_cpu(
 
     if kernel_options["OUTPUT_LOGSUMEXP"]:
         raise NotImplementedError(
-            "torch.compile on CPU only supports inference and `return_lse` is not supported yet."
+            "torch.compile on CPU only supports inference and returning `lse` is not supported yet."
         )
     if not check_cpu_supported():
         raise NotImplementedError(

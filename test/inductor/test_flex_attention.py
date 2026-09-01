@@ -915,27 +915,24 @@ class TestFlexAttention(InductorTestCase):
         compiled_sdpa = torch.compile(flex_attention)
 
         # compute
-        return_lse = True
         requires_grad = device in DEVICE_SUPPORTS_BACKWARDS
         if requires_grad:
-            compiled_out, compiled_lse = compiled_sdpa(
+            compiled_out, compiled_aux = compiled_sdpa(
                 q,
                 k_cache,
                 v_cache,
-                return_lse=return_lse,
+                return_aux=AuxRequest(lse=True),
                 block_mask=converted_block_mask,
                 score_mod=converted_score_mod,
                 enable_gqa=(Q_H != KV_H),
                 kernel_options=kernel_options,
             )
         else:
-            return_lse = False
             compiled_lse = None
             compiled_out = compiled_sdpa(
                 q,
                 k_cache,
                 v_cache,
-                return_lse=return_lse,
                 block_mask=converted_block_mask,
                 score_mod=converted_score_mod,
                 enable_gqa=(Q_H != KV_H),
@@ -1000,10 +997,14 @@ class TestFlexAttention(InductorTestCase):
             )
         else:
             sdpa_partial_gold = sdpa_partial
-        golden_out, golden_lse = sdpa_partial_gold(
-            q_gold, k_gold, v_gold, return_lse=True
+        golden_out, golden_aux = sdpa_partial_gold(
+            q_gold, k_gold, v_gold, return_aux=AuxRequest(lse=True)
         )
-        ref_out, ref_lse = sdpa_partial(q_ref, k_ref, v_ref, return_lse=True)
+        golden_lse = golden_aux.lse
+        ref_out, ref_aux = sdpa_partial(
+            q_ref, k_ref, v_ref, return_aux=AuxRequest(lse=True)
+        )
+        ref_lse = ref_aux.lse
         self._check_out(
             golden_out,
             ref_out,
@@ -2962,73 +2963,8 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
         self.assertIsNone(aux_none.lse)
         self.assertIsNone(aux_none.max_scores)
 
-        # Test 6: Verify outputs are consistent with legacy API, can't fullgraph through warnings
-        out_legacy, lse_legacy = flex_compile_partial(
-            query, key, value, score_mod, return_lse=True
-        )
         torch.testing.assert_close(out_only, out_legacy, atol=1e-6, rtol=1e-6)
         torch.testing.assert_close(aux_lse.lse, lse_legacy, atol=1e-6, rtol=1e-6)
-
-    @unittest.skipIf(
-        IS_LINUX or TEST_WITH_ROCM or TEST_WITH_SLOW,
-        "https://github.com/pytorch/pytorch/issues/162464",
-    )
-    @supported_platform
-    @dtypes(*device_configs["cpu"].dtypes_fast)
-    @dtypesIfCUDA(*device_configs["cuda"].dtypes_fast)
-    @dtypesIfXPU(*device_configs["xpu"].dtypes_fast)
-    @skip_on_cpu
-    @skip_on_mps  # tests deprecation-warning emission; flaky under test-suite ordering
-    def test_return_aux_deprecation_warnings(self, device, dtype):
-        """Test that deprecation warnings are issued for legacy parameters"""
-        import warnings
-
-        import torch.nn.attention.flex_attention as fa
-
-        make_tensor = functools.partial(
-            torch.randn,
-            (2, 2, 64, 16),
-            device=device,
-            dtype=dtype,
-        )
-        query, key, value = make_tensor(), make_tensor(), make_tensor()
-
-        # Clear shown warnings to ensure we can test them
-        original_shown = fa._WARNINGS_SHOWN.copy()
-        fa._WARNINGS_SHOWN.clear()
-
-        try:
-            # Test deprecation warning for return_lse
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
-                flex_attention(query, key, value, return_lse=True)
-                self.assertTrue(
-                    any(
-                        "return_lse is deprecated" in str(warning.message)
-                        for warning in w
-                    )
-                )
-
-            # Clear for next test
-            fa._WARNINGS_SHOWN.clear()
-
-            # Test error when both old and new API are used
-            with self.assertRaises(ValueError) as cm:
-                flex_attention(
-                    query,
-                    key,
-                    value,
-                    return_lse=True,
-                    return_aux=AuxRequest(lse=True),
-                )
-            self.assertIn(
-                "Cannot specify both return_lse and return_aux", str(cm.exception)
-            )
-
-        finally:
-            # Restore original warnings state
-            fa._WARNINGS_SHOWN.clear()
-            fa._WARNINGS_SHOWN.update(original_shown)
 
     @supported_platform
     @dtypes(*device_configs["cpu"].dtypes)
@@ -4023,7 +3959,7 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
     @dtypesIfCUDA(*device_configs["cuda"].dtypes)
     @dtypesIfXPU(*device_configs["xpu"].dtypes)
     @common_utils.parametrize("score_mod", [_identity, _causal])
-    @expected_not_implemented_on_mps  # backward path (return_lse / requires_grad); NIE on MPS
+    @expected_not_implemented_on_mps  # backward path (lse / requires_grad); NIE on MPS
     def test_logsumexp_correctness(self, device, dtype, score_mod):
         make_tensor = functools.partial(
             torch.randn,
@@ -4036,11 +3972,11 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
 
         @torch.compile
         def sdpa_hop(q, k, v, score_mod):
-            return flex_attention(q, k, v, score_mod, return_lse=True)
+            return flex_attention(q, k, v, score_mod, return_aux=AuxRequest(lse=True))
 
         @torch.compile(backend="aot_eager")
         def eager_sdpa_hop(q, k, v, score_mod):
-            return flex_attention(q, k, v, score_mod, return_lse=True)
+            return flex_attention(q, k, v, score_mod, return_aux=AuxRequest(lse=True))
 
         q_ref, k_ref, v_ref = query_key_value_clones(q, k, v, torch.float64)
         ref_out, ref_lse = eager_sdpa_hop(q_ref, k_ref, v_ref, score_mod)
@@ -4078,7 +4014,8 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
 
         @torch.compile
         def func(q, k, v, score_mod):
-            _, lse = flex_attention(q, k, v, score_mod, return_lse=True)
+            _, aux = flex_attention(q, k, v, score_mod, return_aux=AuxRequest(lse=True))
+            lse = aux.lse
             lse_2 = lse * 2
             return lse_2
 
@@ -4161,7 +4098,7 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
         query, key, value = make_tensor(), make_tensor(), make_tensor()
 
         def flex_attention_lse_only(q, k, v):
-            return flex_attention(q, k, v, return_lse=True)[1]
+            return flex_attention(q, k, v, return_aux=AuxRequest(lse=True))[1].lse
 
         func = torch.compile(flex_attention_lse_only, backend="aot_eager")
 
@@ -4183,14 +4120,18 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
         q, k, v = make_tensor(), make_tensor(), make_tensor()
         lse_mask = torch.randn(2, 2, 128, device=device)
 
-        out, lse = flex_attention(q, k, v, return_lse=True)
+        out, aux = flex_attention(q, k, v, return_aux=AuxRequest(lse=True))
+        lse = aux.lse
         (out.mean() + (lse * lse_mask).sum()).backward()
         q_grad, k_grad, v_grad = q.grad, k.grad, v.grad
         q.grad = None
         k.grad = None
         v.grad = None
 
-        out2, lse2 = torch.compile(flex_attention)(q, k, v, return_lse=True)
+        out2, aux2 = torch.compile(flex_attention)(
+            q, k, v, return_aux=AuxRequest(lse=True)
+        )
+        lse2 = aux2.lse
         (out2.mean() + (lse2 * lse_mask).sum()).backward()
         q_grad2, k_grad2, v_grad2 = q.grad, k.grad, v.grad
         tolerance = Tolerances(atol=1e-1, rtol=1e-1)
@@ -4640,7 +4581,10 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
             torch.compile(flex_attention, dynamic=False) if compile else flex_attention
         )
         if requires_grad:
-            out, lse = flex(query, key, value, block_mask=block_mask, return_lse=True)
+            out, aux = flex(
+                query, key, value, block_mask=block_mask, return_aux=AuxRequest(lse=True)
+            )
+            lse = aux.lse
             self.assertEqual(out[:, :, M:, :].sum(), 0)
             self.assertTrue((lse[:, :, M:] == -float("inf")).all())
 
@@ -4648,7 +4592,7 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
             loss.backward()
             self.assertEqual(query.grad[:, :, M:, :].sum(), 0)
         else:
-            out = flex(query, key, value, block_mask=block_mask, return_lse=False)
+            out = flex(query, key, value, block_mask=block_mask)
 
         self.assertEqual(out[:, :, M:, :].sum(), 0)
 
@@ -5293,7 +5237,7 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
         value = torch.randn(1, 1, 4, 8, device=device, dtype=torch.float32)
 
         kernel_options = _apply_kernel_options(
-            query, key, value, return_lse=True, kernel_options={}
+            query, key, value, kernel_options={}, return_aux=AuxRequest(lse=True)
         )
         self.assertEqual(kernel_options["BACKEND"], "AUTO")
 
@@ -5302,7 +5246,7 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
                 query,
                 key,
                 value,
-                return_lse=True,
+                return_aux=AuxRequest(lse=True),
                 kernel_options={"BACKEND": "INVALID"},
             )
 
@@ -5383,10 +5327,16 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
             requires_grad=False,
         )
         query, key, value = make_tensor(), make_tensor(), make_tensor()
-        out_eager, lse_eager = flex_attention(query, key, value, return_lse=True)
+        out_eager, aux_eager = flex_attention(
+            query, key, value, return_aux=AuxRequest(lse=True)
+        )
+        lse_eager = aux_eager.lse
 
         flex_compile = torch.compile(flex_attention)
-        out_compiled, lse_compiled = flex_compile(query, key, value, return_lse=True)
+        out_compiled, aux_compiled = flex_compile(
+            query, key, value, return_aux=AuxRequest(lse=True)
+        )
+        lse_compiled = aux_compiled.lse
 
         out_paged, lse_paged = self.run_paged_attention(
             score_mod=_identity, q=query, k=key, v=value, dtype=dtype, device=device
@@ -5449,20 +5399,21 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
         local_attn = functools.partial(
             flex_call,
             block_mask=sliding_window_causal,
-            return_lse=True,
+            return_aux=AuxRequest(lse=True),
             kernel_options=kernel_options,
         )
         global_attn = functools.partial(
             flex_call,
             block_mask=global_causal,
-            return_lse=True,
+            return_aux=AuxRequest(lse=True),
             kernel_options=kernel_options,
         )
         q, k, v = make_tensor(), make_tensor(), make_tensor()
         gradOut = make_tensor(requires_grad=False)
 
-        x_local, lse_local = local_attn(q, k, v)
-        x_global, lse_global = global_attn(q, k, v)
+        x_local, aux_local = local_attn(q, k, v)
+        x_global, aux_global = global_attn(q, k, v)
+        lse_local, lse_global = aux_local.lse, aux_global.lse
 
         max_lse = torch.maximum(lse_local, lse_global)
         lse_global = lse_global - max_lse
@@ -5653,12 +5604,20 @@ def forward(self, arg0_1, arg1_1, arg2_1, arg3_1, arg4_1):
         query, key, value = make_tensor(), make_tensor(), make_tensor()
         kernel_options = {"FORCE_USE_FLEX_ATTENTION": True}
         out_eager, lse_eager = flex_attention(
-            query, key, value, return_lse=True, kernel_options=kernel_options
+            query,
+            key,
+            value,
+            kernel_options=kernel_options,
+            return_aux=AuxRequest(lse=True),
         )
 
         flex_compile = torch.compile(flex_attention, fullgraph=True)
         out_compiled, lse_compiled = flex_compile(
-            query, key, value, return_lse=True, kernel_options=kernel_options
+            query,
+            key,
+            value,
+            kernel_options=kernel_options,
+            return_aux=AuxRequest(lse=True),
         )
 
         if not torch.equal(out_eager, out_compiled):
@@ -6579,7 +6538,7 @@ class GraphModule(torch.nn.Module):
         # Test 2: Run flex_attention with normal tensors first
         compiled_fn = torch.compile(flex_attention, backend="aot_eager")
         normal_out, normal_lse = compiled_fn(
-            query_elem, key_elem, value_elem, return_lse=True
+            query_elem, key_elem, value_elem, return_aux=AuxRequest(lse=True)
         )
 
         # Test 3: Wrap in our subclass
@@ -6590,7 +6549,8 @@ class GraphModule(torch.nn.Module):
         # This should NOT error with as_strided after the fix
         # Before the fix, it would error because FakeTensorMode would directly
         # call flex_attention_fake_impl which uses as_strided
-        out, lse = compiled_fn(query, key, value, return_lse=True)
+        out, aux = compiled_fn(query, key, value, return_aux=AuxRequest(lse=True))
+        lse = aux.lse
         # Verify we got valid output
         self.assertIsInstance(out, AsStridedErrorTensor)
         self.assertIsInstance(lse, AsStridedErrorTensor)
@@ -6653,9 +6613,9 @@ class GraphModule(torch.nn.Module):
         attention = torch.compile(flex_attention)
         with self.assertRaisesRegex(
             torch._inductor.exc.InductorError,
-            r"NotImplementedError: torch.compile on CPU only supports inference and `return_lse` is not supported yet.",
+            r"NotImplementedError: torch.compile on CPU only supports inference and returning `lse` is not supported yet.",
         ):
-            attention(query, key, value, return_lse=True)
+            attention(query, key, value, return_aux=AuxRequest(lse=True))
 
     @supported_platform
     @skip_on_cpu

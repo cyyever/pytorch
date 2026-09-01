@@ -2434,7 +2434,7 @@ class TestFlexFlash(InductorTestCase):
             functools.partial(
                 flex_attention,
                 scale=1.0,
-                return_lse=True,
+                return_aux=AuxRequest(lse=True),
                 kernel_options={"BACKEND": "FLASH"},
             )
         )
@@ -2442,13 +2442,14 @@ class TestFlexFlash(InductorTestCase):
             functools.partial(
                 flex_attention,
                 scale=1.0,
-                return_lse=True,
+                return_aux=AuxRequest(lse=True),
                 kernel_options={"BACKEND": "TRITON"},
             )
         )
 
-        _, lse_flash = flash_flex(q, k, v)
-        _, lse_triton = triton_flex(q, k, v)
+        _, aux_flash = flash_flex(q, k, v)
+        _, aux_triton = triton_flex(q, k, v)
+        lse_flash, lse_triton = aux_flash.lse, aux_triton.lse
         ref_lse = torch.logsumexp(
             torch.matmul(q.float(), k.float().transpose(-2, -1)), dim=-1
         )
@@ -2480,11 +2481,12 @@ class TestFlexFlash(InductorTestCase):
                     flex_attention,
                     score_mod=_times_two,
                     scale=1.0,
-                    return_lse=True,
+                    return_aux=AuxRequest(lse=True),
                     kernel_options={"BACKEND": backend},
                 )
             )
-            out, lse = compiled_flex(q_in, k_in, v_in)
+            out, aux = compiled_flex(q_in, k_in, v_in)
+            lse = aux.lse
             return torch.autograd.grad(
                 (out, lse), (q_in, k_in, v_in), (grad_out, grad_lse)
             )
@@ -2499,14 +2501,15 @@ class TestFlexFlash(InductorTestCase):
         grads_triton = run_backend("TRITON", q_triton, k_triton, v_triton)
 
         q_ref, k_ref, v_ref = [t.detach().float().requires_grad_() for t in (q, k, v)]
-        out_ref, lse_ref = flex_attention(
+        out_ref, aux_ref = flex_attention(
             q_ref,
             k_ref,
             v_ref,
             score_mod=_times_two,
             scale=1.0,
-            return_lse=True,
+            return_aux=AuxRequest(lse=True),
         )
+        lse_ref = aux_ref.lse
         grads_ref = torch.autograd.grad(
             (out_ref, lse_ref),
             (q_ref, k_ref, v_ref),
