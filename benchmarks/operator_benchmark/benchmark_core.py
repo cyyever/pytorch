@@ -204,12 +204,7 @@ class BenchmarkRunner:
         self.multiplier = 2
         self.predefined_minimum_secs = 1
         self.max_iters = 1e6
-        self.use_jit = args.use_jit
         self.use_compile = args.use_compile
-        if self.use_jit and self.use_compile:
-            raise ValueError(
-                "use_jit and use_compile are mutually exclusive, please specify one."
-            )
         self.num_runs = args.num_runs
         self.print_per_iter = False
         self.output_csv = args.output_csv
@@ -241,28 +236,16 @@ class BenchmarkRunner:
             if self.args.operators:
                 print(f"# {self.args.operators}")
 
+    @property
+    def runtime_label(self) -> str:
+        return "Compile" if self.use_compile else "Eager"
+
     def _print_perf_result(self, results, test_case):
         if self.args.report_aibench:
-            # Output for AIBench
-            # Print out per iteration execution time instead of avg time
+            # AIBench prints per-iteration times from _print_per_iter instead.
             return
-            test_name = "_".join([test_case.framework, test_case.test_config.test_name])
-            for run in range(self.num_runs):
-                print(
-                    f"{test_case.framework}Observer "
-                    + json.dumps(
-                        {
-                            "type": test_name,
-                            "metric": "latency",
-                            "unit": "us",
-                            "value": str(results["reported_run_time_us"[run]]),
-                        }
-                    )
-                )
         else:
-            print(
-                f"# Mode: {'JIT' if self.use_jit else 'Compile' if self.use_compile else 'Eager'}"
-            )
+            print(f"# Mode: {self.runtime_label}")
             print(
                 f"# Name: {test_case.test_config.test_name}\n# Input: {test_case.test_config.input_config}"
             )
@@ -296,9 +279,7 @@ class BenchmarkRunner:
         out = {
             "test_name": test_case.test_config.test_name,
             "input_config": test_case.test_config.input_config,
-            "runtime": (
-                "JIT" if self.use_jit else "Compile" if self.use_compile else "Eager"
-            ),
+            "runtime": self.runtime_label,
             "run": "Backward" if test_case.test_config.run_backward else "Forward",
             "latency": round(results["reported_run_time_us"][0], 3),
             "latency unit": "us",
@@ -367,8 +348,6 @@ class BenchmarkRunner:
         test_name = test_case.test_config.test_name
         gpu_sync = ("cuda" in test_name) or ("xpu" in test_name)
         func = test_case.run_forward
-        if self.use_jit:
-            func = test_case.run_jit_forward
         if self.use_compile:
             func = test_case.run_compile_forward
 
@@ -452,13 +431,7 @@ class BenchmarkRunner:
             time_trace.append(report_run_time)
             # Print out the time spent in each epoch in ms
             if self.args.report_aibench:
-                mode = (
-                    "JIT"
-                    if self.use_jit
-                    else "Compile"
-                    if self.use_compile
-                    else "Eager"
-                )
+                mode = self.runtime_label
                 test_name = "_".join(
                     [test_case.framework, test_case.test_config.test_name, mode]
                 )
@@ -589,7 +562,6 @@ class BenchmarkRunner:
             memory_bandwidth = perf_item.get("memory bandwidth", 0)
             device = perf_item.get("device", "unknown")
             dtype = perf_item.get("dtype", "torch.float").split(".")[1]
-            runtime = perf_item.get("runtime", None)
 
             # Extract mode based on run_type
             mode = None
@@ -598,13 +570,7 @@ class BenchmarkRunner:
             elif run_type == "Backward":
                 mode = "training"
 
-            # Extract use_compile from it
-            if runtime == "Compile":
-                use_compile = True
-            elif runtime == "Eager":
-                use_compile = False
-            else:
-                use_compile = None
+            use_compile = self.use_compile
 
             device_arch = (
                 torch.cuda.get_device_name(0)
