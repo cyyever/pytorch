@@ -107,7 +107,7 @@ import warnings
 from typing import Any
 
 import torch
-from torch.hub import tqdm
+from tqdm import tqdm
 from torch.testing import make_tensor
 
 

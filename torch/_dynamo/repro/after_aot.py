@@ -92,7 +92,7 @@ from torch.fx.experimental.symbolic_shapes import (
     fx_placeholder_targets,
     has_free_symbols,
 )
-from torch.hub import tqdm
+from tqdm import tqdm
 
 from .. import config
 from . import _minifier_sanity_guard

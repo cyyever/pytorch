@@ -74,7 +74,6 @@ torch.utils.cpp_extension <cpp_extension>
 torch.utils.data <data>
 torch.utils.deterministic <deterministic>
 torch.utils.dlpack <dlpack>
-torch.utils.model_zoo <model_zoo>
 torch.utils.module_tracker <module_tracker>
 type_info
 torch.__config__ <config_mod>

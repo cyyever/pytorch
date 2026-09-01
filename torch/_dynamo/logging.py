@@ -14,7 +14,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from torch.hub import _Faketqdm, tqdm
+from tqdm import tqdm
 
 
 # Disable progress bar by default, not in dynamo config because otherwise get a circular import
@@ -60,8 +60,7 @@ if not disable_progress:
 def get_step_logger(logger: logging.Logger) -> Callable[..., None]:
     if not disable_progress:
         pbar.update(1)
-        if not isinstance(pbar, _Faketqdm):
-            pbar.set_postfix_str(f"{logger.name}")
+        pbar.set_postfix_str(f"{logger.name}")
 
     step = next(_step_counter)
 

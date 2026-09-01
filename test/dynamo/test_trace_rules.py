@@ -208,7 +208,6 @@ def gen_allowed_objs_and_ids(record=False, c_binding_only=True) -> AllowedObject
             "torch.compiler",
             "torch.distributed",
             "torch.export",
-            "torch.hub",
             "torch.jit",
             "torch.library",
             "torch.masked.maskedtensor",

@@ -10,7 +10,7 @@ from typing import Any, TYPE_CHECKING
 
 import torch
 import torch.fx as fx
-from torch.hub import tqdm
+from tqdm import tqdm
 from torch.multiprocessing.reductions import StorageWeakRef
 from torch.utils._content_store import ContentStoreWriter
 
