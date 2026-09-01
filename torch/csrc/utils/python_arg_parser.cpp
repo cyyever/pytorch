@@ -15,7 +15,6 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/util/irange.h>
 
-#include <algorithm>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -1492,10 +1491,7 @@ FunctionSignature::FunctionSignature(const std::string& fmt, int index)
     }
   }
 
-  if (fmt.substr(last_offset) == "|deprecated") {
-    hidden = true;
-    deprecated = true;
-  } else if (fmt.substr(last_offset) == "|hidden") {
+  if (fmt.substr(last_offset) == "|hidden") {
     hidden = true;
   }
 
@@ -1797,34 +1793,8 @@ PythonArgParser::PythonArgParser(const std::vector<std::string>& fmts) {
   if (!signatures_.empty()) {
     function_name = signatures_[0].name;
   }
-
-  // Check deprecated signatures last
-  std::ranges::stable_partition(
-      signatures_, [](const FunctionSignature& sig) {
-        return !sig.deprecated;
-      });
 }
 
-void PythonArgParser::check_deprecated(const FunctionSignature& signature) {
-  if (signature.deprecated) {
-    auto msg = c10::str(
-        "This overload of ",
-        signature.name,
-        " is deprecated:\n\t",
-        signature.name,
-        signature.toString());
-    auto signatures = get_signatures();
-    if (!signatures.empty()) {
-      msg += "\nConsider using one of the following signatures instead:";
-      for (const auto& sig : signatures) {
-        msg += "\n\t";
-        msg += signature.name;
-        msg += sig;
-      }
-    }
-    TORCH_WARN_ONCE(msg);
-  }
-}
 
 PythonArgs PythonArgParser::raw_parse(
     PyObject* self,
@@ -1836,7 +1806,6 @@ PythonArgs PythonArgParser::raw_parse(
     auto& signature = signatures_[0];
     std::vector<PyObject*> overloaded_args;
     signature.parse(self, args, kwargs, parsed_args, overloaded_args, true);
-    check_deprecated(signature);
     return PythonArgs(
         skip_torch_function,
         signature,
@@ -1848,7 +1817,6 @@ PythonArgs PythonArgParser::raw_parse(
     std::vector<PyObject*> overloaded_args;
     if (signature.parse(
             self, args, kwargs, parsed_args, overloaded_args, false)) {
-      check_deprecated(signature);
       return PythonArgs(
           skip_torch_function,
           signature,

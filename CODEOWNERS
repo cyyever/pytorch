@@ -281,7 +281,6 @@
 # /aten/src/ATen/ceil_div.h
 # /aten/src/ATen/code_template.h
 # /aten/src/ATen/core/
-# /aten/src/ATen/cpp_custom_type_hack.h
 # /aten/src/ATen/cpu/
 # /aten/src/ATen/detail/
 # /aten/src/ATen/div_rtn.h
@@ -651,7 +650,6 @@
 # /torch/futures/
 /torch/header_only_apis.txt @janeyx99
 /torch/headeronly/ @janeyx99
-# /torch/hub.py
 # /torch/legacy/
 # /torch/lib/
 # /torch/multiprocessing/

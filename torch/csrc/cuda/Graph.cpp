@@ -68,13 +68,6 @@ using shared_ptr_class_ = py::class_<T, std::shared_ptr<T>>;
       .def_property_readonly(
           "_has_graph_exec", &at::cuda::CUDAGraph::has_graph_exec)
       .def(
-          "register_generator_state",
-          [](::at::cuda::CUDAGraph& self, py::handle /*raw_generator*/) {
-            TORCH_WARN_DEPRECATION(
-                "CUDAGraph.register_generator_state() is deprecated, and will be removed in a future PyTorch release. It is now a no-op and can be safely removed from your code.");
-          },
-          py::arg("generator"))
-      .def(
           "replay",
           torch::wrap_pybind_function_no_gil(&at::cuda::CUDAGraph::replay))
       .def(

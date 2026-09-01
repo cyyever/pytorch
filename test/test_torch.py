@@ -3529,10 +3529,6 @@ class TestTorchDeviceType(TestCase):
 
         self.assertEqual(expected, actual)
 
-        with self.assertWarnsOnceRegex(
-                UserWarning, "This overload of addcmul is deprecated"):
-            self.assertEqual(actual, torch.addcmul(a, alpha, b, c))
-
         if self.device_type == 'cuda' and dtype == torch.half:
             a = torch.tensor([60000.0], device=device, dtype=dtype)
             b = torch.tensor([60000.0], device=device, dtype=dtype)
@@ -4327,10 +4323,6 @@ class TestTorchDeviceType(TestCase):
             expected = a + (alpha * b) / c
             actual = torch.addcdiv(a, b, c, value=alpha)
             self.assertEqual(expected, actual)
-
-            with self.assertWarnsOnceRegex(
-                    UserWarning, "This overload of addcdiv is deprecated"):
-                self.assertEqual(actual, torch.addcdiv(a, alpha, b, c))
 
         if not (dtype.is_floating_point or dtype.is_complex):
             # Integer division with addcdiv is prohibited

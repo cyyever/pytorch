@@ -188,14 +188,12 @@ add_custom_command(
     "${Python_EXECUTABLE}" -mtools.pyi.gen_pyi
       --native-functions-path "aten/src/ATen/native/native_functions.yaml"
       --tags-path "aten/src/ATen/native/tags.yaml"
-      --deprecated-functions-path "tools/autograd/deprecated.yaml"
     DEPENDS
       "${TORCH_SRC_DIR}/_C/__init__.pyi.in"
       "${TORCH_SRC_DIR}/_C/_VariableFunctions.pyi.in"
       "${TORCH_SRC_DIR}/nn/functional.pyi.in"
       "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
       "${TORCH_ROOT}/aten/src/ATen/native/tags.yaml"
-      "${TORCH_ROOT}/tools/autograd/deprecated.yaml"
       ${pyi_python}
       ${autograd_python}
       ${torchgen_python}

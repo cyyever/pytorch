@@ -948,24 +948,6 @@ inline py::object createPyObjectForStack(Stack&& stack) {
 #endif
 }
 
-// TODO: Remove once we clean up the GraphExecutor usage.
-inline Stack evilDeprecatedBadCreateStackDoNotUse(
-    const py::tuple& tuple,
-    at::ArrayRef<Value*> inputs,
-    size_t reserve_extra_space = 0) {
-  if (tuple.size() != inputs.size()) {
-    TORCH_CHECK(
-        false,
-        "expected " + std::to_string(inputs.size()) + " inputs, but got " +
-            std::to_string(tuple.size()));
-  }
-  Stack result;
-  result.reserve(tuple.size() + reserve_extra_space);
-  for (const auto i : c10::irange(inputs.size())) {
-    result.push_back(toIValue(std::move(tuple[i]), inputs[i]->type()));
-  }
-  return result;
-}
 
 inline py::object runAndInsertCall(
     Function& callee,

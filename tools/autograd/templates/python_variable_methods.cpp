@@ -260,8 +260,7 @@ static void maybe_warn_requires_grad(const Tensor & self) {
 {
   HANDLE_TH_ERRORS
   static PythonArgParser parser({
-    "copy_(Tensor other, bool non_blocking=False)",
-    "copy_(Tensor other, bool async=False)|deprecated"
+    "copy_(Tensor other, bool non_blocking=False)"
   });
   auto& self_ = THPVariable_Unpack(self);
   ParsedArgs<2> parsed_args;
@@ -440,8 +439,7 @@ static PyObject * THPVariable_cuda(PyObject* self, PyObject* args, PyObject* kwa
 {
   HANDLE_TH_ERRORS
   static PythonArgParser parser({
-    "cuda(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)",
-    "cuda(Device? device=None, bool async=False, *, MemoryFormat? memory_format=None)|deprecated"
+    "cuda(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)"
   });
   auto& self_ = THPVariable_Unpack(self);
   ParsedArgs<3> parsed_args;
@@ -463,8 +461,7 @@ static PyObject * THPVariable_mtia(PyObject* self, PyObject* args, PyObject* kwa
 {
   HANDLE_TH_ERRORS
   static PythonArgParser parser({
-    "mtia(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)",
-    "mtia(Device? device=None, bool async=False, *, MemoryFormat? memory_format=None)|deprecated"
+    "mtia(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)"
   });
   auto& self_ = THPVariable_Unpack(self);
   ParsedArgs<3> parsed_args;
@@ -486,8 +483,7 @@ static PyObject * THPVariable_xpu(PyObject* self, PyObject* args, PyObject* kwar
 {
   HANDLE_TH_ERRORS
   static PythonArgParser parser({
-    "xpu(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)",
-    "xpu(Device? device=None, bool async=False, *, MemoryFormat? memory_format=None)|deprecated"
+    "xpu(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)"
   });
   auto& self_ = THPVariable_Unpack(self);
   ParsedArgs<3> parsed_args;
@@ -509,8 +505,7 @@ static PyObject * THPVariable_ipu(PyObject* self, PyObject* args, PyObject* kwar
 {
   HANDLE_TH_ERRORS
   static PythonArgParser parser({
-    "ipu(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)",
-    "ipu(Device? device=None, bool async=False, *, MemoryFormat? memory_format=None)|deprecated"
+    "ipu(Device? device=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)"
   });
   auto& self_ = THPVariable_Unpack(self);
   ParsedArgs<3> parsed_args;
@@ -986,8 +981,7 @@ static PyObject * THPVariable_type(PyObject* self, PyObject* args, PyObject* kwa
 {
   HANDLE_TH_ERRORS
   static PythonArgParser parser({
-    "type(PyObject* dtype=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)",
-    "type(PyObject* dtype=None, bool async=False, *, MemoryFormat? memory_format=None)|deprecated"
+    "type(PyObject* dtype=None, bool non_blocking=False, *, MemoryFormat? memory_format=None)"
   });
   auto& self_ = THPVariable_Unpack(self);
   ParsedArgs<3> parsed_args;

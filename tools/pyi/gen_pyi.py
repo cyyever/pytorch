@@ -289,16 +289,8 @@ def sig_for_ops(opname: str) -> list[str]:
 def generate_type_hints(sig_group: PythonSignatureGroup) -> list[str]:
     type_hints: list[str] = []
 
-    # Some deprecated ops that are on the blocklist are still included in pyi
-    if sig_group.signature.name in blocklist and not sig_group.signature.deprecated:
+    if sig_group.signature.name in blocklist:
         return type_hints
-
-    # deprecated signatures have separate entries for their functional and out variants
-    # (as opposed to the native ops, which fuse the two into a single signature).
-    # generate the functional variant here, if an out variant exists.
-    if sig_group.signature.deprecated and sig_group.outplace is not None:
-        type_hint = sig_group.signature.signature_str_pyi(skip_outputs=True)
-        type_hints.append(type_hint)
 
     # PythonSignatureGroups that have both a functional + out variant get a single signature, with an optional out argument
     # Generates the out variant if one exists. Otherwise, generate the functional variant
@@ -994,7 +986,6 @@ def add_docstr_to_hint(docstr: str, hint: str) -> str:
 def gen_pyi(
     native_yaml_path: str,
     tags_yaml_path: str,
-    deprecated_yaml_path: str,
     fm: FileManager,
 ) -> None:
     """gen_pyi()
@@ -1461,17 +1452,14 @@ def gen_pyi(
     ).native_functions
     native_functions = list(filter(should_generate_py_binding, native_functions))
 
-    function_signatures = load_signatures(
-        native_functions, deprecated_yaml_path, method=False, pyi=True
-    )
+    function_signatures = load_signatures(native_functions, method=False, pyi=True)
     sig_groups = get_py_torch_functions(function_signatures)
     for group in sorted(sig_groups, key=lambda g: g.signature.name):
         name = group.signature.name
         unsorted_function_hints[name] += generate_type_hints(group)
 
         structseq = returns_structseq_pyi(group.signature)
-        if structseq is not None and not group.signature.deprecated:
-            # deprecated structseqs are currently not included for torch functions
+        if structseq is not None:
             tuple_name, tuple_def = structseq
             if tuple_name in structseqs:
                 if structseqs[tuple_name] != tuple_def:
@@ -1873,14 +1861,8 @@ def gen_pyi(
     for name in simple_conversions:
         unsorted_tensor_method_hints[name].append(f"def {name}(self) -> Tensor: ...")
 
-    # pyi tensor methods don't currently include deprecated signatures for some reason
-    # TODO: we should probably add them in
     tensor_method_signatures = load_signatures(
-        native_functions,
-        deprecated_yaml_path,
-        method=True,
-        skip_deprecated=True,
-        pyi=True,
+        native_functions, method=True, pyi=True
     )
     tensor_method_sig_groups = get_py_torch_functions(
         tensor_method_signatures, method=True
@@ -1891,8 +1873,7 @@ def gen_pyi(
         unsorted_tensor_method_hints[name] += generate_type_hints(group)
 
         structseq = returns_structseq_pyi(group.signature)
-        if structseq is not None and not group.signature.deprecated:
-            # deprecated structseqs are currently not included for torch functions
+        if structseq is not None:
             tuple_name, tuple_def = structseq
             if tuple_name in structseqs:
                 if structseqs[tuple_name] != tuple_def:
@@ -2081,12 +2062,6 @@ def main() -> None:
         help="path to tags.yaml",
     )
     parser.add_argument(
-        "--deprecated-functions-path",
-        metavar="DEPRECATED",
-        default="tools/autograd/deprecated.yaml",
-        help="path to deprecated.yaml",
-    )
-    parser.add_argument(
         "--out",
         metavar="OUT",
         default=".",
@@ -2101,12 +2076,7 @@ def main() -> None:
     fm = FileManager(
         install_dir=args.out, template_dir=args.template_dir, dry_run=False
     )
-    gen_pyi(
-        args.native_functions_path,
-        args.tags_path,
-        args.deprecated_functions_path,
-        fm,
-    )
+    gen_pyi(args.native_functions_path, args.tags_path, fm)
 
 
 if __name__ == "__main__":
