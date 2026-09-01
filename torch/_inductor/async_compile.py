@@ -59,7 +59,7 @@ from torch._inductor.runtime.compile_tasks import (
 from torch._inductor.utils import clear_on_fresh_cache
 from torch._inductor.virtualized import V
 from torch._utils_internal import log_triton_builds
-from torch.hub import _Faketqdm, tqdm
+from tqdm import tqdm
 from torch.utils._ordered_set import OrderedSet
 from torch.utils._triton import has_triton_package
 
@@ -952,7 +952,7 @@ class AsyncCompile:
         # receive the same "no timeout" sentinel.
         wait_timeout = config.compile_worker_wait_timeout or None
         for key, result in kernels.items():
-            if config.verbose_progress and not isinstance(pbar, _Faketqdm):
+            if config.verbose_progress:
                 pbar.set_postfix_str(key)
             try:
                 kernel = result.result(timeout=wait_timeout)

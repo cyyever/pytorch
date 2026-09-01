@@ -46,7 +46,7 @@ from torch._dynamo.debug_utils import (
     same_two_models,
 )
 from torch.fx.experimental.symbolic_shapes import fx_placeholder_targets
-from torch.hub import tqdm
+from tqdm import tqdm
 
 from .. import config
 from ..backends.registry import CompilerFn, lookup_backend, register_debug_backend

@@ -41,7 +41,7 @@ from torch._dynamo.debug_utils import (
     NopInputReader,
 )
 from torch.export import ExportedProgram
-from torch.hub import tqdm
+from tqdm import tqdm
 
 from . import _minifier_sanity_guard
 

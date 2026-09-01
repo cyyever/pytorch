@@ -52,7 +52,7 @@ from .utils import clone_inputs, get_debug_dir, warn_once
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from torch.hub import tqdm
+    from tqdm import tqdm
     from torch.storage import UntypedStorage
 
 
