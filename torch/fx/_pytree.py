@@ -10,10 +10,6 @@ from torch.utils._pytree import PyTree, tree_flatten, TreeSpec
 FlattenFnSpec = Callable[[PyTree, TreeSpec], list[Any]]
 FlattenFnExactMatchSpec = Callable[[PyTree, TreeSpec], bool]
 
-# Keep deprecated alias for backward compatibility
-FlattenFuncSpec = FlattenFnSpec  # deprecated
-FlattenFuncExactMatchSpec = FlattenFnExactMatchSpec  # deprecated
-
 SUPPORTED_NODES: dict[type[Any], FlattenFnSpec] = {}
 SUPPORTED_NODES_EXACT_MATCH: dict[type[Any], FlattenFnExactMatchSpec | None] = {}
 
