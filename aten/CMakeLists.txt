@@ -63,11 +63,8 @@ if(USE_CUDA AND USE_ROCM)
 endif()
 
 if(USE_ROCM)
-  add_subdirectory(src/THH)
   message("ROCm is enabled.")
-elseif(USE_CUDA)
-  add_subdirectory(src/THC)
-else()
+elseif(NOT USE_CUDA)
   message("disabling CUDA because USE_CUDA is set false")
 endif()
 

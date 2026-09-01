@@ -30,9 +30,9 @@ HTML_OUTPUT            = doxygen_html
 STRIP_FROM_PATH        = ../../..
 # What folders / files Doxygen should process.
 INPUT                  = ../../../aten/src/ATen/ATen.h \
-                         ../../../aten/src/ATen/Backend.h \
+                         ../../../c10/core/Backend.h \
                          ../../../aten/src/ATen/core/ivalue.h \
-                         ../../../aten/src/ATen/core/ScalarType.h \
+                         ../../../c10/core/ScalarType.h \
                          ../../../aten/src/ATen/cuda/CUDAContext.h \
                          ../../../aten/src/ATen/cuda/CUDAContextLight.h \
                          ../../../aten/src/ATen/cudnn/Descriptors.h \
@@ -42,8 +42,8 @@ INPUT                  = ../../../aten/src/ATen/ATen.h \
                          ../../../aten/src/ATen/DeviceGuard.h \
                          ../../../aten/src/ATen/Layout.h \
                          ../../../aten/src/ATen/mkl/Descriptors.h \
-                         ../../../aten/src/ATen/Scalar.h \
-                         ../../../aten/src/ATen/TensorOptions.h \
+                         ../../../aten/src/ATen/core/Scalar.h \
+                         ../../../c10/core/TensorOptions.h \
                          ../../../aten/src/ATen/core/Tensor.h \
                          ../../../aten/src/ATen/native/TensorShape.h \
                          ../../../build/aten/src/ATen/Functions.h \
