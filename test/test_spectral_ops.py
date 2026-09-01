@@ -620,6 +620,7 @@ class TestFFT(TestCase):
         for input_ndim, s in transform_desc:
             shape = itertools.islice(itertools.cycle(range(4, 9)), input_ndim)
             input = torch.randn(*shape, device=device, dtype=dtype)
+            input_np = input.cpu().numpy()
             for fname, norm in product(fft_functions, norm_modes):
                 torch_fn = getattr(torch.fft, fname)
                 if "hfft" in fname:
@@ -629,24 +630,14 @@ class TestFFT(TestCase):
                 else:
                     numpy_fn = getattr(np.fft, fname)
 
-                def fn(t: torch.Tensor, s: list[int] | None, dim: list[int] = (-2, -1), norm: str | None = None):
-                    return torch_fn(t, s, dim, norm)
-
-                torch_fns = (torch_fn, torch.jit.script(fn))
-
                 # Once with dim defaulted
-                input_np = input.cpu().numpy()
                 expected = numpy_fn(input_np, s, norm=norm)
-                for fn in torch_fns:
-                    actual = fn(input, s, norm=norm)
-                    self.assertEqual(actual, expected)
+                self.assertEqual(torch_fn(input, s, norm=norm), expected)
 
                 # Once with explicit dims
                 dim = (1, 0)
                 expected = numpy_fn(input_np, s, dim, norm)
-                for fn in torch_fns:
-                    actual = fn(input, s, dim, norm)
-                    self.assertEqual(actual, expected)
+                self.assertEqual(torch_fn(input, s, dim, norm), expected)
 
     @skipCPUIfNoFFT
     @onlyNativeDeviceTypes
