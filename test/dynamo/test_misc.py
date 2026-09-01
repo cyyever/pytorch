@@ -6389,10 +6389,8 @@ not ___dict_contains('cccccccc', G['sys'].modules)""",
 
     def test_typing_union_and_optional(self):
         def fn(x):
-            a = torch.jit.annotate(typing.Dict[str, typing.Optional[torch.Tensor]], {})
-            b = torch.jit.annotate(
-                typing.Dict[str, typing.Union[torch.Tensor, None]], {}
-            )
+            a: typing.Dict[str, typing.Optional[torch.Tensor]] = {}  # noqa: UP006
+            b: typing.Dict[str, typing.Union[torch.Tensor, None]] = {}  # noqa: UP006
             return a, b, x + 1
 
         x = torch.randn(3)

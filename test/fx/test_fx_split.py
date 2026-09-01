@@ -10,7 +10,6 @@ from torch.fx.passes.split_utils import split_by_tags
 from torch.testing._internal.common_utils import TestCase
 
 
-@torch.jit.script
 @dataclasses.dataclass
 class DummyDataClass:
     a: int

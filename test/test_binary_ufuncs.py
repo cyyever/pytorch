@@ -2127,37 +2127,6 @@ class TestBinaryUfuncsDevice(TestCase):
     @onlyNativeDeviceTypes
     @skipIfTorchDynamo("Not a suitable test for TorchDynamo")
     def test_idiv_and_ifloordiv_vs_python(self, device):
-        def _wrapped_idiv_tensor(a, b):
-            a /= b
-            return a
-
-        def _wrapped_idiv_scalar(a):
-            a /= 5
-            return a
-
-        def _wrapped_true_divide__tensor(a, b):
-            a.true_divide_(b)
-            return a
-
-        def _wrapped_true_divide__scalar(a):
-            a.true_divide_(5)
-            return a
-
-        def _wrapped_floor_divide__tensor(a, b):
-            a.floor_divide_(b)
-            return a
-
-        def _wrapped_floor_divide__scalar(a):
-            a.floor_divide_(5)
-            return a
-
-        scripted_idiv_tensor = torch.jit.script(_wrapped_idiv_tensor)
-        scripted_idiv_scalar = torch.jit.script(_wrapped_idiv_scalar)
-        scripted_true_divide__tensor = torch.jit.script(_wrapped_true_divide__tensor)
-        scripted_true_divide__scalar = torch.jit.script(_wrapped_true_divide__scalar)
-        scripted_floor_divide__tensor = torch.jit.script(_wrapped_floor_divide__tensor)
-        scripted_floor_divide__scalar = torch.jit.script(_wrapped_floor_divide__scalar)
-
         for a, b in product(range(-10, 10), range(-10, 10)):
             for op in (lambda x: x * 0.5, lambda x: math.floor(x)):
                 a = op(a)
@@ -2182,13 +2151,7 @@ class TestBinaryUfuncsDevice(TestCase):
 
                     self.assertEqual(tmp0.item(), expected_idiv)
                     self.assertEqual(tmp1.item(), expected_idiv)
-                    self.assertEqual(
-                        scripted_true_divide__tensor(a_t.clone(), b_t).item(),
-                        expected_idiv,
-                    )
-                    self.assertEqual(
-                        scripted_true_divide__scalar(a_t.clone()).item(), a / 5
-                    )
+                    self.assertEqual(a_t.clone().true_divide_(5).item(), a / 5)
                 else:
                     tmp = a_t.clone()
                     with self.assertRaises(RuntimeError):
@@ -2196,15 +2159,13 @@ class TestBinaryUfuncsDevice(TestCase):
                     with self.assertRaises(RuntimeError):
                         tmp /= b_t
                     with self.assertRaises(RuntimeError):
-                        scripted_true_divide__tensor(tmp, b_t)
+                        tmp.true_divide_(b_t)
                     with self.assertRaises(RuntimeError):
-                        scripted_true_divide__scalar(tmp)
+                        tmp.true_divide_(5)
 
                 if not a_t.is_floating_point() and b_t.is_floating_point():
                     # Inplace modification fails because a float tensor is required
                     #   if the divisor is a float tensor
-                    a_t.clone().floor_divide_(b_t)
-                    scripted_floor_divide__tensor(a_t.clone(), b_t)
                     tmp = a_t.clone()
                     tmp //= b_t
                 else:
@@ -2213,15 +2174,11 @@ class TestBinaryUfuncsDevice(TestCase):
                     self.assertEqual(
                         a_t.clone().floor_divide_(b_t).item(), expected_ifloordiv
                     )
-                    self.assertEqual(
-                        scripted_floor_divide__tensor(a_t.clone(), b_t).item(),
-                        expected_ifloordiv,
-                    )
                     tmp = a_t.clone()
                     tmp //= b_t
                     self.assertEqual(tmp.item(), expected_ifloordiv)
 
-                self.assertEqual(scripted_floor_divide__scalar(a_t), math.floor(a / 5))
+                self.assertEqual(a_t.clone().floor_divide_(5), math.floor(a / 5))
 
     # Tests binary op equivalence with Python builtin ops
     # Also tests that reverse operations are equivalent to forward ops
