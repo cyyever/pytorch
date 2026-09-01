@@ -2403,7 +2403,7 @@ struct DropoutState {
 // clear_dropout_state() (exposed as torch._C._cudnn_clear_dropout_state()).
 std::vector<DropoutState>& dropout_state_cache() {
   static std::vector<DropoutState> cache{
-      static_cast<size_t>(cuda::getNumGPUs())};
+      static_cast<size_t>(cuda::device_count())};
   return cache;
 }
 

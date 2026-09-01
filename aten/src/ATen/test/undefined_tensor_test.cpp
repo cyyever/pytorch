@@ -11,7 +11,7 @@ TEST(TestUndefined, UndefinedTest) {
 
   // mainly test ops on undefined tensors don't segfault and give a reasonable error message.
   Tensor und;
-  Tensor ft = ones({1}, CPU(kFloat));
+  Tensor ft = ones({1}, at::kFloat);
 
   std::stringstream ss;
   ss << und << std::endl;
@@ -65,7 +65,7 @@ TEST(TestUndefined, UndefinedTest) {
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
   ASSERT_ANY_THROW(ft.toBackend(Backend::Undefined));
 
-  Tensor to_move = ones({1}, CPU(kFloat));
+  Tensor to_move = ones({1}, at::kFloat);
   Tensor m(std::move(to_move));
   // NOLINTNEXTLINE(bugprone-use-after-move)
   ASSERT_FALSE(to_move.defined());

@@ -1320,11 +1320,8 @@ inline torch::stable::Tensor floor_divide(
 /// @param self The input tensor.
 /// @return true if the tensor is pinned, false otherwise.
 inline bool is_pinned(const torch::stable::Tensor& self) {
-  const auto num_args = 2;
-  // Pass nullopt for aten::is_pinned's deprecated optional Device arg.
-  std::array<StableIValue, num_args> stack{
-      torch::stable::detail::from(self),
-      torch::stable::detail::from(std::nullopt)};
+  const auto num_args = 1;
+  std::array<StableIValue, num_args> stack{torch::stable::detail::from(self)};
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::is_pinned", "", stack.data(), TORCH_ABI_VERSION));
   return torch::stable::detail::to<bool>(stack[0]);

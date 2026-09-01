@@ -15,7 +15,7 @@ TEST(PackedtensoraccessorTest, TransposeTest) {
   /* test a 3d tensor */
   constexpr int dimension = 3;
   constexpr std::array<int64_t, dimension> sizes{3, 4, 5};
-  Tensor t = rand(sizes, CPU(kFloat));
+  Tensor t = rand(sizes, at::kFloat);
   auto original = t.packed_accessor64<float, dimension, DefaultPtrTraits>();
   auto transposed = original.transpose(0, 2);
   ASSERT_EQ(original.size(0), transposed.size(2));
@@ -31,7 +31,7 @@ TEST(PackedtensoraccessorTest, TransposeTest) {
 
   /* test the special case of a 1d tensor */
   int size = 3;
-  t = rand({size}, CPU(kFloat));
+  t = rand({size}, at::kFloat);
   auto original_1d = t.packed_accessor64<float, 1, DefaultPtrTraits>();
   auto transposed_1d = original_1d.transpose(0, 0);
   for (const auto i : c10::irange(size)) {

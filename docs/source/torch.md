@@ -604,7 +604,6 @@ False
     mode
     norm
     norm_except_dim
-    nuclear_norm
     nansum
     prod
     quantile
@@ -882,15 +881,12 @@ False
     dot
     dsmm
     geqrf
-    ger
     hsmm
     inner
     inverse
     det
     logdet
     slogdet
-    lu
-    lu_solve
     lu_unpack
     matmul
     matrix_power
@@ -903,7 +899,6 @@ False
     pinverse
     saddmm
     spmm
-    svd
     svd_lowrank
     pca_lowrank
     lobpcg

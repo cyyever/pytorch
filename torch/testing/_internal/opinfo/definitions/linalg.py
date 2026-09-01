@@ -81,7 +81,6 @@ def sample_inputs_svd(op_info, device, dtype, requires_grad=False, **kwargs):
         make_fullrank, dtype=dtype, device=device, requires_grad=requires_grad
     )
 
-    is_linalg_svd = "linalg.svd" in op_info.name
     batches = [(), (0,), (3,)]
     ns = [0, 3, 5]
 
@@ -89,7 +88,7 @@ def sample_inputs_svd(op_info, device, dtype, requires_grad=False, **kwargs):
         S = usv[1]
         k = S.shape[-1]
         U = usv[0][..., :k]
-        Vh = usv[2] if is_linalg_svd else usv[2].mH
+        Vh = usv[2]
         Vh = Vh[..., :k, :]
         return U, S, Vh
 
@@ -111,7 +110,7 @@ def sample_inputs_svd(op_info, device, dtype, requires_grad=False, **kwargs):
 
     fns = (fn_U, fn_S, fn_Vh, fn_UVh)
 
-    fullmat = "full_matrices" if is_linalg_svd else "some"
+    fullmat = "full_matrices"
 
     for batch, n, k, fullmat_val, fn in product(batches, ns, ns, (True, False), fns):
         shape = batch + (n, k)
@@ -236,7 +235,7 @@ def sample_inputs_linalg_det_logdet_slogdet(
 
 
 def sample_inputs_lu_solve(op_info, device, dtype, requires_grad=False, **kwargs):
-    """Samples the inputs for both linalg.lu_solve and lu_solve"""
+    """Samples the inputs for linalg.lu_solve"""
     make_fn = make_fullrank_matrices_with_distinct_singular_values
     make_a = partial(make_fn, dtype=dtype, device=device)
     make_b = partial(make_tensor, dtype=dtype, device=device)
@@ -246,7 +245,6 @@ def sample_inputs_lu_solve(op_info, device, dtype, requires_grad=False, **kwargs
         Y.requires_grad_(requires_grad)
         return Y
 
-    is_linalg_lu_solve = op_info.name == "linalg.lu_solve"
 
     batches = ((), (0,), (2,))
     ns = (3, 1, 0)
@@ -271,15 +269,12 @@ def sample_inputs_lu_solve(op_info, device, dtype, requires_grad=False, **kwargs
             if requires_grad and not LU_grad and not B_grad:
                 continue
 
-            if is_linalg_lu_solve:
-                for adjoint, left in product((True, False), repeat=2):
-                    yield SampleInput(
-                        clone(LU, LU_grad),
-                        args=(pivots, clone(B if left else B.mT, B_grad)),
-                        kwargs=dict(adjoint=adjoint, left=left),
-                    )
-            else:
-                yield SampleInput(clone(B, B_grad), args=(clone(LU, LU_grad), pivots))
+            for adjoint, left in product((True, False), repeat=2):
+                yield SampleInput(
+                    clone(LU, LU_grad),
+                    args=(pivots, clone(B if left else B.mT, B_grad)),
+                    kwargs=dict(adjoint=adjoint, left=left),
+                )
 
 
 def sample_inputs_linalg_multi_dot(op_info, device, dtype, requires_grad, **kwargs):

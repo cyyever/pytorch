@@ -29,7 +29,6 @@ __all__ = [
     "cdist",
     "einsum",
     "istft",
-    "lu",
     "norm",
     "meshgrid",
     "pca_lowrank",
@@ -1830,68 +1829,6 @@ def norm(
     # NB. All the repeated code and weird python is to please TorchScript.
     #     For a more compact implementation see the relevant function in `_refs/__init__.py`
 
-    # We don't do this for MPS or sparse tensors
-    if input.layout == torch.strided and input.device.type in (
-        "cpu",
-        "cuda",
-        "xpu",
-        "meta",
-        torch.utils.backend_registration._privateuse1_backend_name,
-    ):
-        if dim is not None:
-            if isinstance(dim, (int, torch.SymInt)):
-                _dim = [dim]
-            else:
-                _dim = dim
-        else:
-            _dim = None  # type: ignore[assignment]
-
-        if isinstance(p, str):
-            if p == "fro" and (
-                dim is None
-                or isinstance(dim, (int, torch.SymInt))
-                or len(dim) <= 2  # pyrefly: ignore  # bad-argument-type
-            ):
-                if out is None:
-                    return torch.linalg.vector_norm(
-                        input, 2, _dim, keepdim, dtype=dtype
-                    )
-                else:
-                    return torch.linalg.vector_norm(
-                        input, 2, _dim, keepdim, dtype=dtype, out=out
-                    )
-
-            # Here we either call the nuclear norm, or we call matrix_norm with some arguments
-            # that will throw an error
-            if _dim is None:
-                _dim = list(range(input.ndim))
-            if out is None:
-                return torch.linalg.matrix_norm(input, p, _dim, keepdim, dtype=dtype)
-            else:
-                return torch.linalg.matrix_norm(
-                    input, p, _dim, keepdim, dtype=dtype, out=out
-                )
-        else:
-            # NB. p should be Union[str, number], not Optional!
-            _p = 2.0 if p is None else p
-            if out is None:
-                return torch.linalg.vector_norm(input, _p, _dim, keepdim, dtype=dtype)
-            else:
-                return torch.linalg.vector_norm(
-                    input, _p, _dim, keepdim, dtype=dtype, out=out
-                )
-
-    ndim = input.dim()
-
-    # catch default case
-    if dim is None and out is None and dtype is None and p is not None:
-        if isinstance(p, str):
-            if p == "fro":
-                return _VF.frobenius_norm(input, dim=(), keepdim=keepdim)
-        if not isinstance(p, str):
-            _dim = list(range(ndim))
-            return _VF.norm(input, p, dim=_dim, keepdim=keepdim)  # type: ignore[attr-defined]
-
     # TODO: when https://github.com/pytorch/pytorch/issues/33782 is fixed
     # remove the overloads where dim is an int and replace with BroadcastingList1
     # and remove next four lines, replace _dim with dim
@@ -1903,45 +1840,65 @@ def norm(
     else:
         _dim = None  # type: ignore[assignment]
 
+    # linalg covers every layout and device for the string orders, so they are
+    # handled before the layout/device split below.
     if isinstance(p, str):
-        if p == "fro":
-            if dtype is not None:
-                raise ValueError("dtype argument is not supported in frobenius norm")
-
-            if _dim is None:
-                _dim = list(range(ndim))
+        if p == "fro" and (
+            dim is None
+            or isinstance(dim, (int, torch.SymInt))
+            or len(dim) <= 2  # pyrefly: ignore  # bad-argument-type
+        ):
             if out is None:
-                return _VF.frobenius_norm(input, _dim, keepdim=keepdim)  # type: ignore[arg-type]
+                return torch.linalg.vector_norm(input, 2, _dim, keepdim, dtype=dtype)
             else:
-                return _VF.frobenius_norm(input, _dim, keepdim=keepdim, out=out)  # type: ignore[arg-type]
-        elif p == "nuc":
-            if dtype is not None:
-                raise ValueError("dtype argument is not supported in nuclear norm")
-            if _dim is None:
-                if out is None:
-                    return _VF.nuclear_norm(input, keepdim=keepdim)  # type: ignore[arg-type]
-                else:
-                    return _VF.nuclear_norm(input, keepdim=keepdim, out=out)  # type: ignore[arg-type]
-            else:
-                if out is None:
-                    return _VF.nuclear_norm(input, _dim, keepdim=keepdim)  # type: ignore[arg-type]
-                else:
-                    return _VF.nuclear_norm(input, _dim, keepdim=keepdim, out=out)  # type: ignore[arg-type]
-        raise RuntimeError(f"only valid string values are 'fro' and 'nuc', found {p}")
-    else:
-        if _dim is None:
-            _dim = list(range(ndim))
+                return torch.linalg.vector_norm(
+                    input, 2, _dim, keepdim, dtype=dtype, out=out
+                )
 
+        # Here we either call the nuclear norm, or we call matrix_norm with some arguments
+        # that will throw an error
+        if _dim is None:
+            _dim = list(range(input.ndim))
         if out is None:
-            if dtype is None:
-                return _VF.norm(input, p, _dim, keepdim=keepdim)  # type: ignore[attr-defined]
-            else:
-                return _VF.norm(input, p, _dim, keepdim=keepdim, dtype=dtype)  # type: ignore[attr-defined]
+            return torch.linalg.matrix_norm(input, p, _dim, keepdim, dtype=dtype)
         else:
-            if dtype is None:
-                return _VF.norm(input, p, _dim, keepdim=keepdim, out=out)  # type: ignore[attr-defined]
-            else:
-                return _VF.norm(input, p, _dim, keepdim=keepdim, dtype=dtype, out=out)  # type: ignore[attr-defined]
+            return torch.linalg.matrix_norm(input, p, _dim, keepdim, dtype=dtype, out=out)
+
+    # We don't do this for MPS or sparse tensors
+    if input.layout == torch.strided and input.device.type in (
+        "cpu",
+        "cuda",
+        "xpu",
+        "meta",
+        torch.utils.backend_registration._privateuse1_backend_name,
+    ):
+        # NB. p should be Union[str, number], not Optional!
+        _p = 2.0 if p is None else p
+        if out is None:
+            return torch.linalg.vector_norm(input, _p, _dim, keepdim, dtype=dtype)
+        else:
+            return torch.linalg.vector_norm(input, _p, _dim, keepdim, dtype=dtype, out=out)
+
+    ndim = input.dim()
+
+    # catch default case
+    if dim is None and out is None and dtype is None and p is not None:
+        _dim = list(range(ndim))
+        return _VF.norm(input, p, dim=_dim, keepdim=keepdim)  # type: ignore[attr-defined]
+
+    if _dim is None:
+        _dim = list(range(ndim))
+
+    if out is None:
+        if dtype is None:
+            return _VF.norm(input, p, _dim, keepdim=keepdim)  # type: ignore[attr-defined]
+        else:
+            return _VF.norm(input, p, _dim, keepdim=keepdim, dtype=dtype)  # type: ignore[attr-defined]
+    else:
+        if dtype is None:
+            return _VF.norm(input, p, _dim, keepdim=keepdim, out=out)  # type: ignore[attr-defined]
+        else:
+            return _VF.norm(input, p, _dim, keepdim=keepdim, dtype=dtype, out=out)  # type: ignore[attr-defined]
 
 
 def unravel_index(
@@ -2047,170 +2004,3 @@ def _unravel_index(indices: Tensor, shape: int | Sequence[int]) -> Tensor:
     return indices.unsqueeze(-1).floor_divide(
         torch.tensor(coefs, device=indices.device, dtype=torch.int64)
     ) % torch.tensor(shape, device=indices.device, dtype=torch.int64)
-
-
-
-def _lu_impl(A, pivot=True, get_infos=False, out=None):
-    # type: (Tensor, bool, bool, Any) -> tuple[Tensor, Tensor, Tensor]
-    r"""Computes the LU factorization of a matrix or batches of matrices
-    :attr:`A`. Returns a tuple containing the LU factorization and
-    pivots of :attr:`A`.  Pivoting is done if :attr:`pivot` is set to
-    ``True``.
-
-    .. warning::
-
-        :func:`torch.lu` is deprecated in favor of :func:`torch.linalg.lu_factor`
-        and :func:`torch.linalg.lu_factor_ex`. :func:`torch.lu` will be removed in a
-        future PyTorch release.
-        ``LU, pivots, info = torch.lu(A, compute_pivots)`` should be replaced with
-
-        .. code:: python
-
-            LU, pivots = torch.linalg.lu_factor(A, compute_pivots)
-
-        ``LU, pivots, info = torch.lu(A, compute_pivots, get_infos=True)`` should be replaced with
-
-        .. code:: python
-
-            LU, pivots, info = torch.linalg.lu_factor_ex(A, compute_pivots)
-
-    .. note::
-        * The returned permutation matrix for every matrix in the batch is
-          represented by a 1-indexed vector of size ``min(A.shape[-2], A.shape[-1])``.
-          ``pivots[i] == j`` represents that in the ``i``-th step of the algorithm,
-          the ``i``-th row was permuted with the ``j-1``-th row.
-        * LU factorization with :attr:`pivot` = ``False`` is not available
-          for CPU, and attempting to do so will throw an error. However,
-          LU factorization with :attr:`pivot` = ``False`` is available for
-          CUDA.
-        * This function does not check if the factorization was successful
-          or not if :attr:`get_infos` is ``True`` since the status of the
-          factorization is present in the third element of the return tuple.
-        * In the case of batches of square matrices with size less or equal
-          to 32 on a CUDA device, the LU factorization is repeated for
-          singular matrices.
-        * ``L``, ``U``, and ``P`` can be derived using :func:`torch.lu_unpack`.
-
-    .. warning::
-        The gradients of this function will only be finite when :attr:`A` is full rank.
-        This is because the LU decomposition is just differentiable at full rank matrices.
-        Furthermore, if :attr:`A` is close to not being full rank,
-        the gradient will be numerically unstable as it depends on the computation of :math:`L^{-1}` and :math:`U^{-1}`.
-
-    Args:
-        A (Tensor): the tensor to factor of size :math:`(*, m, n)`
-        pivot (bool, optional): Whether to compute the LU decomposition with partial pivoting, or the regular LU
-                                decomposition. :attr:`pivot`\ `= False` not supported on CPU. Default: `True`.
-        get_infos (bool, optional): if set to ``True``, returns an info IntTensor.
-                                    Default: ``False``
-        out (tuple, optional): optional output tuple. If :attr:`get_infos` is ``True``,
-                               then the elements in the tuple are Tensor, IntTensor,
-                               and IntTensor. If :attr:`get_infos` is ``False``, then the
-                               elements in the tuple are Tensor, IntTensor. Default: ``None``
-
-    Returns:
-        (Tensor, IntTensor, IntTensor (optional)): A tuple of tensors containing
-
-            - **factorization** (*Tensor*): the factorization of size :math:`(*, m, n)`
-
-            - **pivots** (*IntTensor*): the pivots of size :math:`(*, \text{min}(m, n))`.
-              ``pivots`` stores all the intermediate transpositions of rows.
-              The final permutation ``perm`` could be reconstructed by
-              applying ``swap(perm[i], perm[pivots[i] - 1])`` for ``i = 0, ..., pivots.size(-1) - 1``,
-              where ``perm`` is initially the identity permutation of :math:`m` elements
-              (essentially this is what :func:`torch.lu_unpack` is doing).
-
-            - **infos** (*IntTensor*, *optional*): if :attr:`get_infos` is ``True``, this is a tensor of
-              size :math:`(*)` where non-zero values indicate whether factorization for the matrix or
-              each minibatch has succeeded or failed
-
-    Example::
-
-        >>> # xdoctest: +REQUIRES(env:TORCH_DOCTEST_LAPACK)
-        >>> # xdoctest: +IGNORE_WANT("non-deterministic")
-        >>> warnings.filterwarnings("ignore", message=".*torch.lu is deprecated")  # docs: hide
-        >>> A = torch.randn(2, 3, 3)
-        >>> A_LU, pivots = torch.lu(A)
-        >>> A_LU
-        tensor([[[ 1.3506,  2.5558, -0.0816],
-                 [ 0.1684,  1.1551,  0.1940],
-                 [ 0.1193,  0.6189, -0.5497]],
-
-                [[ 0.4526,  1.2526, -0.3285],
-                 [-0.7988,  0.7175, -0.9701],
-                 [ 0.2634, -0.9255, -0.3459]]])
-        >>> pivots
-        tensor([[ 3,  3,  3],
-                [ 3,  3,  3]], dtype=torch.int32)
-        >>> A_LU, pivots, info = torch.lu(A, get_infos=True)
-        >>> if info.nonzero().size(0) == 0:
-        ...     print('LU factorization succeeded for all samples!')
-        LU factorization succeeded for all samples!
-    """
-    # If get_infos is True, then we don't need to check for errors and vice versa
-    return torch._lu_with_info(A, pivot=pivot, check_errors=(not get_infos))
-
-
-if TYPE_CHECKING:
-    _ListOrSeq = Sequence[Tensor]
-else:
-    _ListOrSeq = list[Tensor]
-
-
-def _check_list_size(out_len: int, get_infos: bool, out: _ListOrSeq) -> None:
-    get_infos_int = 1 if get_infos else 0
-    if out_len - get_infos_int != 2:
-        raise TypeError(
-            f"expected tuple of {2 + int(get_infos)} elements but got {out_len}"
-        )
-    if not isinstance(out, (tuple, list)):
-        raise TypeError(
-            f"argument 'out' must be tuple of Tensors, not {type(out).__name__}"
-        )
-
-
-def _lu_with_infos(A, pivot=True, get_infos=False, out=None):
-    # type: (Tensor, bool, bool, Optional[tuple[Tensor, Tensor, Tensor]]) -> tuple[Tensor, Tensor, Tensor]
-    if has_torch_function_unary(A):
-        return handle_torch_function(
-            lu, (A,), A, pivot=pivot, get_infos=get_infos, out=out
-        )
-    result = _lu_impl(A, pivot, get_infos, out)
-    if out is not None:
-        _check_list_size(len(out), get_infos, out)
-        for i in range(len(out)):
-            out[i].resize_as_(result[i]).copy_(result[i])
-        return out
-    else:
-        return result  # A_LU, pivots, infos
-
-
-def _lu_no_infos(A, pivot=True, get_infos=False, out=None):
-    # type: (Tensor, bool, bool, Optional[tuple[Tensor, Tensor]]) -> tuple[Tensor, Tensor]
-    # need to check for torch_function here so that we exit if
-    if has_torch_function_unary(A):
-        return handle_torch_function(
-            lu, (A,), A, pivot=pivot, get_infos=get_infos, out=out
-        )
-    result = _lu_impl(A, pivot, get_infos, out)
-    if out is not None:
-        _check_list_size(len(out), get_infos, out)
-        for i in range(len(out)):
-            out[i].resize_as_(result[i]).copy_(result[i])
-        return out
-    else:
-        return result[0], result[1]  # A_LU, pivots
-
-
-# The return type of lu depends on `get_infos`, so in order to resolve the output type
-# of lu in TorchScript we need to statically know the value of `get_infos`
-lu = boolean_dispatch(
-    arg_name="get_infos",
-    arg_index=2,
-    default=False,
-    if_true=_lu_with_infos,
-    if_false=_lu_no_infos,
-    module_name=__name__,
-    func_name="lu",
-)
-lu.__doc__ = _lu_impl.__doc__

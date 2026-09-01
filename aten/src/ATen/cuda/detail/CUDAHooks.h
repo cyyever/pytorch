@@ -27,7 +27,6 @@ struct CUDAHooks : public at::CUDAHooksInterface {
   bool hasCKSDPA() const override;
   bool hasCKGEMM() const override;
   const at::cuda::NVRTC& nvrtc() const override;
-  DeviceIndex current_device() const override;
   bool isBuilt() const override {return true;}
   bool isAvailable() const override {return hasCUDA();}
   bool hasPrimaryContext(DeviceIndex device_index) const override;
@@ -52,7 +51,6 @@ struct CUDAHooks : public at::CUDAHooksInterface {
   void cuFFTSetPlanCacheMaxSize(DeviceIndex device_index, int64_t max_size) const override;
   int64_t cuFFTGetPlanCacheSize(DeviceIndex device_index) const override;
   void cuFFTClearPlanCache(DeviceIndex device_index) const override;
-  int getNumGPUs() const override;
   DeviceIndex deviceCount() const override;
   DeviceIndex getCurrentDevice() const override;
 

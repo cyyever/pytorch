@@ -150,7 +150,7 @@ TEST(TestStream, MultithreadGetAndSetTest) {
 // CUDA Guard
 TEST(TestStream, CUDAGuardTest) {
   if (!at::cuda::is_available()) return;
-  if (at::cuda::getNumGPUs() < 2) {
+  if (at::cuda::device_count() < 2) {
     return;
   }
 
@@ -225,7 +225,7 @@ TEST(TestStream, StreamPoolTest) {
 // Multi-GPU
 TEST(TestStream, MultiGPUTest) {
   if (!at::cuda::is_available()) return;
-  if (at::cuda::getNumGPUs() < 2)
+  if (at::cuda::device_count() < 2)
     return;
 
   at::cuda::CUDAStream s0 = at::cuda::getStreamFromPool(true, 0);
@@ -263,7 +263,7 @@ TEST(TestStream, CUDAEventSyncTest) {
 // Cross-Device Events
 TEST(TestStream, CrossDeviceTest) {
   if (!at::cuda::is_available()) return;
-  if (at::cuda::getNumGPUs() < 2)
+  if (at::cuda::device_count() < 2)
     return;
 
   const auto stream0 = at::cuda::getStreamFromPool();
@@ -354,7 +354,7 @@ TEST(TestStream, ExternalTest) {
 TEST(TestStream, ExternalMultiDeviceTest) {
   if (!at::cuda::is_available())
     return;
-  if (at::cuda::getNumGPUs() < 2)
+  if (at::cuda::device_count() < 2)
     return;
   cudaStream_t cuda_stream_0;
   cudaStream_t cuda_stream_1;

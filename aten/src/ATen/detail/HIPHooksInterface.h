@@ -31,20 +31,12 @@ struct TORCH_API HIPHooksInterface : AcceleratorHooksInterface {
     return false;
   }
 
-  virtual c10::DeviceIndex current_device() const {
-    return -1;
-  }
-
   bool isPinnedPtr(const void* /*data*/ ) const override {
     return false;
   }
 
   Allocator* getPinnedMemoryAllocator() const override {
     TORCH_CHECK(false, "Pinned memory requires HIP.");
-  }
-
-  virtual int getNumGPUs() const {
-    return 0;
   }
 
   bool hasPrimaryContext(DeviceIndex /*device_index*/ ) const override {

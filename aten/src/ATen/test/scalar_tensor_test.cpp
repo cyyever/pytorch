@@ -43,7 +43,7 @@ bool should_expand(const IntArrayRef &from_size, const IntArrayRef &to_size) {
   return true;
 }
 
-void test(DeprecatedTypeProperties &T) {
+void test(const TensorOptions& T) {
   std::vector<std::vector<int64_t>> sizes = {{}, {0}, {1}, {1, 1}, {2}};
 
   // single-tensor/size tests
@@ -238,11 +238,11 @@ void test(DeprecatedTypeProperties &T) {
                        require_equal_size_dim(result, lhs));
       }
 
-      // ger
+      // outer
       {
         auto lhs = ones(*lhs_it, T);
         auto rhs = ones(*rhs_it, T);
-        TRY_CATCH_ELSE(auto result = lhs.ger(rhs),
+        TRY_CATCH_ELSE(auto result = lhs.outer(rhs),
                        ASSERT_TRUE(
                            (lhs.numel() == 0 || rhs.numel() == 0 ||
                             lhs.dim() != 1 || rhs.dim() != 1)),
@@ -283,14 +283,14 @@ void test(DeprecatedTypeProperties &T) {
 
 TEST(TestScalarTensor, TestScalarTensorCPU) {
   manual_seed(123);
-  test(CPU(kFloat));
+  test(at::kFloat);
 }
 
 TEST(TestScalarTensor, TestScalarTensorCUDA) {
   manual_seed(123);
 
   if (at::hasCUDA()) {
-    test(CUDA(kFloat));
+    test(at::device(at::kCUDA).dtype(at::kFloat));
   }
 }
 
@@ -298,6 +298,6 @@ TEST(TestScalarTensor, TestScalarTensorMPS) {
   manual_seed(123);
 
   if (at::hasMPS()) {
-    test(MPS(kFloat));
+    test(at::device(at::kMPS).dtype(at::kFloat));
   }
 }

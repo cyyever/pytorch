@@ -1485,7 +1485,7 @@ def where_self(func, *args, **kwargs):
     )
 
 
-@register_jagged_func(torch.ops.aten._pin_memory.default, "self: jt, device: any?")
+@register_jagged_func(torch.ops.aten._pin_memory.default, "self: jt")
 def _pin_memory_default(func, *args, **kwargs):
     _, new_kwargs = normalize_function(  # type: ignore[misc]
         func, args=args, kwargs=kwargs, normalize_to_only_use_kwargs=True
@@ -1496,7 +1496,7 @@ def _pin_memory_default(func, *args, **kwargs):
     return NestedTensor(func(inp._values, **new_kwargs), **extract_kwargs(inp))
 
 
-@register_jagged_func(torch.ops.aten.is_pinned.default, "self: jt, device: any?")
+@register_jagged_func(torch.ops.aten.is_pinned.default, "self: jt")
 def is_pinned_default(func, *args, **kwargs):
     _, new_kwargs = normalize_function(  # type: ignore[misc]
         func, args=args, kwargs=kwargs, normalize_to_only_use_kwargs=True

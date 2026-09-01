@@ -3,13 +3,13 @@
 #include <ATen/ATen.h>
 
 using namespace at;
-void TestSimpleCase(DeprecatedTypeProperties& T) {
+void TestSimpleCase(const TensorOptions& T) {
   auto a = randn({2, 3, 4, 5}, T);
   ASSERT_TRUE(a.prod(-4).equal(a.prod(0)));
   ASSERT_TRUE(a.prod(3).equal(a.prod(-1)));
 }
 
-void TestExpressionSpecification(DeprecatedTypeProperties& T) {
+void TestExpressionSpecification(const TensorOptions& T) {
   auto a = randn({2, 3, 4, 5}, T);
   ASSERT_TRUE(a.unsqueeze(-5).equal(a.unsqueeze(0)));
   ASSERT_TRUE(a.unsqueeze(4).equal(a.unsqueeze(-1)));
@@ -19,12 +19,12 @@ void TestExpressionSpecification(DeprecatedTypeProperties& T) {
   ASSERT_TRUE(b.unsqueeze(0).equal(b.unsqueeze(-1)));
 }
 
-void TestEmptyTensor(DeprecatedTypeProperties& T) {
+void TestEmptyTensor(const TensorOptions& T) {
   auto a = randn(0, T);
   ASSERT_TRUE(a.prod(0).equal(at::ones({}, T)));
 }
 
-void TestScalarVs1Dim1Size(DeprecatedTypeProperties& T) {
+void TestScalarVs1Dim1Size(const TensorOptions& T) {
   auto a = randn(1, T);
   ASSERT_TRUE(a.prod(0).equal(a.prod(-1)));
   a.resize_({});
@@ -34,7 +34,7 @@ void TestScalarVs1Dim1Size(DeprecatedTypeProperties& T) {
 
 TEST(TestWrapdim, TestWrapdim) {
   manual_seed(123);
-  DeprecatedTypeProperties& T = CPU(kFloat);
+  const TensorOptions T = at::kFloat;
 
   TestSimpleCase(T);
   TestEmptyTensor(T);

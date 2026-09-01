@@ -54,13 +54,6 @@ manage their own state. There is only a single CUDA context/state.
 */
 
 /**
- * DEPRECATED: use device_count() instead
- */
-inline int64_t getNumGPUs() {
-    return c10::cuda::device_count();
-}
-
-/**
  * CUDA is available if we compiled with CUDA, and there are one or more
  * devices.  If we compiled with CUDA but there is a driver problem, etc.,
  * this function will report CUDA is not available (rather than raise an error.)

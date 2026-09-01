@@ -418,26 +418,15 @@ class TestPinMemory(TestCase):
 
         tensor = torch.randn(10)
         storage = tensor.storage()
-        self.assertFalse(storage.is_pinned("openreg"))
-        pinned_storage = storage.pin_memory("openreg")
-        self.assertTrue(pinned_storage.is_pinned("openreg"))
+        self.assertFalse(storage.is_pinned())
+        pinned_storage = storage.pin_memory()
+        self.assertTrue(pinned_storage.is_pinned())
 
         tensor = torch.randn(10)
         untyped_storage = tensor.untyped_storage()
-        self.assertFalse(untyped_storage.is_pinned("openreg"))
-        pinned_untyped_storage = untyped_storage.pin_memory("openreg")
-        self.assertTrue(pinned_untyped_storage.is_pinned("openreg"))
-
-    @skipIfTorchDynamo("unsupported aten.is_pinned.default")
-    def test_pin_memory_different_devices(self):
-        """Test pin memory on different devices"""
-        tensor = torch.randn(10)
-        pinned_tensor = tensor.pin_memory()
-        self.assertTrue(pinned_tensor.is_pinned())
-
-        # Test pinning to specific device
-        pinned_tensor_openreg = tensor.pin_memory("openreg")
-        self.assertTrue(pinned_tensor_openreg.is_pinned("openreg"))
+        self.assertFalse(untyped_storage.is_pinned())
+        pinned_untyped_storage = untyped_storage.pin_memory()
+        self.assertTrue(pinned_untyped_storage.is_pinned())
 
     @skipIfTorchDynamo("unsupported aten.is_pinned.default")
     def test_pin_memory_view(self):

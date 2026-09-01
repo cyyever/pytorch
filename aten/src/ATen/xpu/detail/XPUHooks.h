@@ -15,8 +15,6 @@ struct XPUHooks : public at::XPUHooksInterface {
       DeviceIndex device_index = -1) const override;
   Generator getNewGenerator(DeviceIndex device_index = -1) const override;
   Device getDeviceFromPtr(void* data) const override;
-  c10::DeviceIndex getNumGPUs() const override;
-  DeviceIndex current_device() const override;
   void deviceSynchronize(DeviceIndex device_index) const override;
   Allocator* getPinnedMemoryAllocator() const override;
 

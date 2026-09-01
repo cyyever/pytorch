@@ -10,7 +10,6 @@ from torch.autograd import Function
 
 if TYPE_CHECKING:
     from torch._ops import OpOverload
-    from torch._prims_common import DeviceLikeType
     from torch.autograd.function import FunctionCtx
 
 
@@ -160,8 +159,8 @@ class ComplexTensor(Tensor):
     def __repr__(self, *, tensor_contents: object | None = None) -> str:
         return f"ComplexTensor({self._re!r}, {self._im!r})"
 
-    def is_pinned(self, device: DeviceLikeType | None = None) -> bool:
-        return self._re.is_pinned(device)
+    def is_pinned(self) -> bool:
+        return self._re.is_pinned()
 
 
 class Complex(Function):

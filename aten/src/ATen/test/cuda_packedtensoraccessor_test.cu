@@ -26,9 +26,9 @@ TEST(PackedtensoraccessorTest, PackedtensoraccessorTestCUDA) {
   if (!at::cuda::is_available()) return;
   manual_seed(123);
 
-  Tensor t1 = rand({4, 4}, CUDA(kFloat));
-  Tensor t2 = rand({4}, CUDA(kFloat));
-  Tensor res = empty({4}, CUDA(kFloat));
+  Tensor t1 = rand({4, 4}, at::device(at::kCUDA).dtype(at::kFloat));
+  Tensor t2 = rand({4}, at::device(at::kCUDA).dtype(at::kFloat));
+  Tensor res = empty({4}, at::device(at::kCUDA).dtype(at::kFloat));
 
   auto t1a = t1.packed_accessor64<float, 2, RestrictPtrTraits>();
   auto t2a = t2.packed_accessor64<float, 1, RestrictPtrTraits>();

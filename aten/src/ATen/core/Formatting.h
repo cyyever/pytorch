@@ -13,7 +13,6 @@ TORCH_API std::string toString(const Scalar& s);
 }
 namespace at {
 
-TORCH_API std::ostream& operator<<(std::ostream& out, const DeprecatedTypeProperties& t);
 TORCH_API std::ostream& print(
     std::ostream& stream,
     const Tensor& tensor,

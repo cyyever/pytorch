@@ -877,8 +877,6 @@ struct FromImpl<Tag> {
             torch_tag_nondeterministic_bitwise());
       case Tag::nondeterministic_seeded:
         return torch::stable::detail::from(torch_tag_nondeterministic_seeded());
-      case Tag::out_variant:
-        return torch::stable::detail::from(torch_tag_out_variant());
       case Tag::pointwise:
         return torch::stable::detail::from(torch_tag_pointwise());
       case Tag::pt2_compliant_tag:
@@ -929,8 +927,6 @@ struct ToImpl<Tag> {
       return Tag::nondeterministic_bitwise;
     } else if (shim_tag == torch_tag_nondeterministic_seeded()) {
       return Tag::nondeterministic_seeded;
-    } else if (shim_tag == torch_tag_out_variant()) {
-      return Tag::out_variant;
     } else if (shim_tag == torch_tag_pointwise()) {
       return Tag::pointwise;
     } else if (shim_tag == torch_tag_pt2_compliant_tag()) {

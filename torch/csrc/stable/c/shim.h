@@ -210,7 +210,6 @@ AOTI_TORCH_EXPORT int32_t torch_tag_needs_exact_strides();
 AOTI_TORCH_EXPORT int32_t torch_tag_needs_fixed_stride_order();
 AOTI_TORCH_EXPORT int32_t torch_tag_nondeterministic_bitwise();
 AOTI_TORCH_EXPORT int32_t torch_tag_nondeterministic_seeded();
-AOTI_TORCH_EXPORT int32_t torch_tag_out_variant();
 AOTI_TORCH_EXPORT int32_t torch_tag_pointwise();
 AOTI_TORCH_EXPORT int32_t torch_tag_pt2_compliant_tag();
 AOTI_TORCH_EXPORT int32_t torch_tag_reduction();
