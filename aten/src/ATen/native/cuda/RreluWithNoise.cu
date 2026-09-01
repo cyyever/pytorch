@@ -61,7 +61,7 @@ __global__ void rrelu_with_noise_cuda_kernel(
 }
 
 template <typename scalar_t>
-inline void _rrelu_with_noise_cuda_train(
+static inline void _rrelu_with_noise_cuda_train(
     Tensor& output,
     const Tensor& input_,
     Tensor& noise_,
