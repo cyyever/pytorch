@@ -84,12 +84,12 @@ Read more on Triton's performance
 in Python, it's fairly easy to understand even if you have not written all that
 many CUDA kernels.
 
-Next, let's try a real model like resnet50 from the PyTorch
-hub.
+Next, let's try a real model like resnet50 from torchvision.
 
 ```python
 import torch
-model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet50', pretrained=True)
+import torchvision
+model = torchvision.models.resnet50()
 opt_model = torch.compile(model, backend="inductor")
 opt_model(torch.randn(1,3,64,64))
 ```

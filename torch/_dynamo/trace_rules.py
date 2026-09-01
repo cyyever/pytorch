@@ -3171,7 +3171,6 @@ MOD_SKIPLIST = [
     "torch.functional",
     "torch.futures",
     "torch.fx",
-    "torch.hub",
     "torch.jit",
     "torch.library",
     "torch.linalg",
