@@ -24,7 +24,6 @@
 #include <torch/csrc/autograd/utils/wrap_outputs.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/distributed/Placement.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/tensor/python_tensor.h>
 #include <torch/csrc/utils/pybind.h>
@@ -687,7 +686,6 @@ static Tensor make_tensor_for_subclass_helper(
     const std::optional<c10::SymInt>& storage_size,
     std::optional<DispatchKeySet> extra_dispatch_keys) {
   AutoDispatchBelowADInplaceOrView guard{}; // TODO: Remove.
-  tracer::impl::NoTracerDispatchMode tracer_guard{};
 
   c10::SymInt size_bytes;
   auto dtype_itemsize = static_cast<int64_t>(options.dtype().itemsize());
@@ -1622,7 +1620,7 @@ py::object dispatchDTensorOp(
   const bool is_out_variant_op = !is_inplace_op &&
       std::ranges::any_of(
           schema_arguments,
-         
+
           [](const c10::Argument& argument) { return argument.is_out(); });
 
   // Fast path for default or view ops.
@@ -2508,7 +2506,7 @@ create_native_op_schema(
             op.schema().arguments()[underlying_index].name();
         if (std::ranges::find(
                 static_kwarg_names,
-               
+
                 kwarg_name) == static_kwarg_names.end()) {
           continue;
         }
@@ -3650,7 +3648,6 @@ PyObject* THPVariable_pynew(
   TORCH_CHECK(
       type != &THPVariableType,
       "Cannot directly construct TensorBase; subclass it and then construct that");
-  jit::tracer::warn("torch.Tensor", jit::tracer::WARN_CONSTRUCTOR);
   // WARNING: tensor is NOT guaranteed to be a fresh tensor; e.g., if it was
   // given a raw pointer that will refcount bump
   // NB: base_tensor_ctor can call into dispatched ATen functions (e.g.,

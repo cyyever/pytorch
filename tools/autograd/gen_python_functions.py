@@ -73,7 +73,6 @@ from torchgen.utils import FileManager, split_name_params
 from torchgen.yaml_utils import YamlLoader
 
 from .gen_inplace_or_view_type import is_tensor_list_type
-from .gen_trace_type import should_trace
 
 
 if TYPE_CHECKING:
@@ -841,7 +840,7 @@ static PyObject * ${pycname}(PyObject* self_, PyObject* args, PyObject* kwargs)
   ${method_header}
   static PythonArgParser parser({
     ${signatures}
-  }, /*traceable=*/${traceable});
+  });
 
   ParsedArgs<${max_args}> parsed_args;
   auto _r = parser.parse(${self_}, args, kwargs, parsed_args);
@@ -875,7 +874,7 @@ static PyObject * ${pycname}(PyObject* self_, PyObject* args, PyObject* kwargs)
   ${method_header}
   static PythonArgParser parser({
     ${signatures}
-  }, /*traceable=*/${traceable});
+  });
 
   ParsedArgs<${max_args}> parsed_args;
   auto _r = parser.parse(${self_}, args, kwargs, parsed_args);
@@ -926,8 +925,6 @@ def method_impl(
 
     method_footer = ([] if noarg else ["Py_RETURN_NONE;"]) + ["END_HANDLE_TH_ERRORS"]
 
-    traceable = "true" if all(should_trace(o.function) for o in overloads) else "false"
-
     grouped_overloads: Sequence[PythonSignatureGroup] = group_overloads(
         overloads, symint=symint
     )
@@ -959,7 +956,6 @@ def method_impl(
         method_header=method_header,
         max_args=max(o.signature.arguments_count() for o in overloads),
         signatures=signatures,
-        traceable=traceable,
         check_has_torch_function=gen_has_torch_function_check(
             name=name,
             module=module,

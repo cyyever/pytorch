@@ -32,7 +32,6 @@ import operator
 import os
 import random
 import re
-import sys
 import types
 import typing
 import unittest
@@ -808,7 +807,6 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
         "torch._C._jit_get_num_profiled_runs",
         "torch._C._jit_get_operation",
         "torch._C._jit_get_schemas_for_operator",
-        "torch._C._jit_get_tracer_state_warn",
         "torch._C._jit_has_cpp_tests",
         "torch._C._jit_init",
         "torch._C._jit_interpret_graph",
@@ -926,7 +924,6 @@ torch_c_binding_in_graph_functions = dict.fromkeys(
         "torch._C._jit_set_profiling_executor",
         "torch._C._jit_set_profiling_mode",
         "torch._C._jit_set_symbolic_shapes_test_mode",
-        "torch._C._jit_set_tracer_state_warn",
         "torch._C._jit_set_utf8_decoding_ignore",
         "torch._C._jit_shape_compute_graph_for_node",
         "torch._C._jit_symbolic_shapes_test_mode_enabled",

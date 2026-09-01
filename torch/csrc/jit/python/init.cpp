@@ -5,7 +5,6 @@
 #include <ATen/core/operator_name.h>
 #include <c10/core/SymNodeImpl.h>
 #include <torch/csrc/jit/frontend/schema_type_parser.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/opaque_obj.h>
 #include <torch/csrc/jit/python/pybind.h>
@@ -101,14 +100,6 @@ void initJITBindings(PyObject* module) {
       // Tracing is always off; kept as a None shim because Python code
       // (e.g. torch.distributions) calls torch._C._get_tracing_state().
       .def("_get_tracing_state", []() { return py::none(); })
-      .def(
-          "_jit_set_tracer_state_warn",
-          [](bool new_warn) {
-            jit::tracer::getTracerStateWarnMode() = new_warn;
-          })
-      .def(
-          "_jit_get_tracer_state_warn",
-          []() { return jit::tracer::getTracerStateWarnMode().load(); })
       .def(
           "_jit_set_profiling_mode",
           [](bool profiling_flag) {

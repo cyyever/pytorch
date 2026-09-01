@@ -48,7 +48,6 @@
 // STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP
 // STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP
 
-#include <ATen/TracerMode.h>
 #include <ATen/core/Tensor.h>
 
 #include <ATen/ops/empty.h>
@@ -87,7 +86,6 @@ template <typename T>
 create(std::unique_ptr<T> ptr, TensorOptions options) {
   // None of this should trace, so turn off Tracer dispatching
   at::AutoDispatchBelowADInplaceOrView guard; // TODO: remove
-  at::tracer::impl::NoTracerDispatchMode tracer_guard;
 
   // We store this instance away in a Tensor and register a deleter function
   // so that we do not leak memory. On the other side, we pull out the storage's

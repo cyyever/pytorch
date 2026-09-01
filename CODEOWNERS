@@ -271,7 +271,6 @@
 # /aten/src/ATen/ThreadLocalPythonObjects.h
 # /aten/src/ATen/ThreadLocalState.cpp
 # /aten/src/ATen/ThreadLocalState.h
-# /aten/src/ATen/TracerMode.h
 # /aten/src/ATen/TypeDefault.h
 # /aten/src/ATen/Utils.cpp
 # /aten/src/ATen/Utils.h

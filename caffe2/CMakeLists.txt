@@ -429,7 +429,6 @@ list(APPEND TORCH_SRCS
 
 if(NOT INTERN_DISABLE_AUTOGRAD)
   list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/autograd/TraceTypeManual.cpp
     ${TORCH_SRC_DIR}/csrc/autograd/VariableTypeManual.cpp
   )
 endif()

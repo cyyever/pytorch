@@ -21,7 +21,6 @@
 #include <ATen/InitialTensorOptions.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/SparseCsrTensorUtils.h>
-#include <ATen/TracerMode.h>
 #include <ATen/dlpack.h>
 #include <c10/core/Backend.h>
 #include <c10/core/DispatchKeySet.h>
@@ -396,7 +395,6 @@ Tensor internal_new_from_data(
       // Tracing should probably also use the "lift" operator to add the tensor
       // to a trace, but it's technically BC-breaking to do that, since we
       // currently trace .to() calls.
-      at::tracer::impl::NoTracerDispatchMode tracer_guard;
 
       if (isStorage(data)) {
         auto [storage, storage_scalar_type, is_typed_storage] =
@@ -465,7 +463,6 @@ Tensor internal_new_from_data(
 
   // torch.jit.trace will continue to trace out `.to()` instead of `.lift()`,
   // since changing it is BC-breaking.
-  at::tracer::impl::NoTracerDispatchMode tracer_guard;
   {
     // lift has no autograd implementation, so we need to make sure we don't try
     // to dispatch to it.

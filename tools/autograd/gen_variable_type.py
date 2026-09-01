@@ -85,23 +85,21 @@ from .gen_inplace_or_view_type import (
     AUTOGRAD_NOT_IMPLEMENTED_REGISTRATION,
     gen_formals,
     get_base_name,
+    get_return_value,
     get_view_info,
     is_tensor_list_type,
     is_tensor_type,
+    MANUAL_AUTOGRAD_AND_TRACER,
+    MANUAL_BACKEND,
     METHOD_DEFINITION,
     modifies_arguments,
+    tie_return_values,
     TMP_VAR,
+    type_wrapper_name,
     unpack_args,
     unpacked_name,
     use_derived,
     WRAPPER_REGISTRATION,
-)
-from .gen_trace_type import (
-    get_return_value,
-    MANUAL_AUTOGRAD_AND_TRACER,
-    MANUAL_BACKEND,
-    tie_return_values,
-    type_wrapper_name,
 )
 
 

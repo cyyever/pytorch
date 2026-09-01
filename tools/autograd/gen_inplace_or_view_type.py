@@ -38,12 +38,77 @@ from torchgen.model import (
 from torchgen.utils import FileManager
 
 from .context import with_native_function_with_differentiability_info
-from .gen_trace_type import (
-    get_return_value,
-    MANUAL_AUTOGRAD,
-    tie_return_values,
-    type_wrapper_name,
-)
+
+
+# Note [Manual Backend kernels]
+# For these ops, we want to manually register to dispatch key Backend and
+# skip codegen-ed registration to all keys before Backend.
+# For codegen this means:
+#   - op set below must match ops with manual_kernel_registration=True in native_functions.yaml
+#     where we skip codegen backend kernels
+#   - all ops below are part of MANUAL_AUTOGRAD to skip codegen Autograd kernel registration
+# You can find the manual registration in torch/csrc/autograd/VariableTypeManual.cpp
+MANUAL_BACKEND = {
+    "options",
+    "data",
+    "set_data",
+    "is_leaf",
+    "output_nr",
+    "_version",
+    "retain_grad",
+    "_backward",
+    "requires_grad_",
+}
+
+# For these ops we want to skip the codegen-ed registration to both Autograd and Tracer keys.
+# You can find the manual registration in torch/csrc/autograd/VariableTypeManual.cpp
+MANUAL_AUTOGRAD_AND_TRACER = {
+    "resize_",
+    "resize_as_",
+    "detach",
+    "detach_",
+    "copy_",
+    "_fw_primal",
+    "_make_dual",
+}
+
+# Currently MANUAL_AUTOGRAD and MANUAL_TRACER share the same set of ops:
+#   union(MANUAL_BACKEND, MANUAL_AUTOGRAD_AND_TRACER)
+# You can find the manual registration in torch/csrc/autograd/VariableTypeManual.cpp
+MANUAL_AUTOGRAD = MANUAL_BACKEND | MANUAL_AUTOGRAD_AND_TRACER
+
+def tie_return_values(f: NativeFunction) -> str:
+    if len(f.func.returns) == 1:
+        return f"auto {f.func.returns[0].name or 'result'}"
+    names = cpp.return_names(f)
+    return f"auto [{', '.join(names)}]"
+
+
+def get_return_value(f: NativeFunction) -> str:
+    names = cpp.return_names(f)
+    if len(f.func.returns) == 1:
+        return names[0]
+    if f.func.kind() == SchemaKind.out:
+        return f"std::forward_as_tuple({', '.join(names)})"
+    else:
+        moved = ", ".join(f"std::move({name})" for name in names)
+        return f"std::make_tuple({moved})"
+
+def type_wrapper_name(f: NativeFunction, key: str = "Default") -> str:
+    if f.func.name.overload_name:
+        name = f"{cpp.name(f.func)}_{f.func.name.overload_name}"
+    else:
+        name = cpp.name(f.func)
+
+    # The key argument is only used in gen_variable_type where we need fns per autograd dispatch key.
+    # In gen_inplace_view_type where only one fn per native_fn must be generated,
+    # the key argument should not be passed.
+    # We do not append key if it is Default so that generated functions from
+    # before per-dispatch-key derivatives were added retain the same names.
+    if key != "Default":
+        name = name + f"_{key}"
+    return name
+
 
 
 # See NOTE [ Autograd View Variables ] in variable.h for details.

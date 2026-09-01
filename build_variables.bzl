@@ -20,16 +20,6 @@ def libtorch_generated_sources(gencode_pattern, path_prefix="torch/csrc/", only_
         "autograd/generated/VariableType_7.cpp",
         "autograd/generated/VariableType_8.cpp",
         "autograd/generated/VariableType_9.cpp",
-        "autograd/generated/TraceType_0.cpp",
-        "autograd/generated/TraceType_1.cpp",
-        "autograd/generated/TraceType_2.cpp",
-        "autograd/generated/TraceType_3.cpp",
-        "autograd/generated/TraceType_4.cpp",
-        "autograd/generated/TraceType_5.cpp",
-        "autograd/generated/TraceType_6.cpp",
-        "autograd/generated/TraceType_7.cpp",
-        "autograd/generated/TraceType_8.cpp",
-        "autograd/generated/TraceType_9.cpp",
         "autograd/generated/ADInplaceOrViewType_0.cpp",
         "autograd/generated/ADInplaceOrViewType_1.cpp",
     ] + ([] if only_type_vars else [
@@ -136,7 +126,6 @@ core_sources_full_mobile_no_backend_interface_xplat = [
     "torch/csrc/jit/frontend/parser.cpp",
     "torch/csrc/jit/frontend/schema_matching.cpp",
     "torch/csrc/jit/frontend/script_type_parser.cpp",
-    "torch/csrc/jit/frontend/tracer.cpp",
     "torch/csrc/jit/frontend/tree_views.cpp",
     "torch/csrc/jit/ir/attributes.cpp",
     "torch/csrc/jit/ir/constants.cpp",
@@ -304,7 +293,6 @@ libtorch_nativert_cuda_sources = [
 libtorch_cmake_sources = libtorch_core_sources + libtorch_core_jit_sources
 
 libtorch_extra_sources = libtorch_core_jit_sources + [
-    "torch/csrc/autograd/TraceTypeManual.cpp",
     "torch/csrc/autograd/VariableTypeManual.cpp",
     "torch/csrc/autograd/FunctionsManual.cpp",
     # To be included for eager symbolication in lite interpreter

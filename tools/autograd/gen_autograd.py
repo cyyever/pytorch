@@ -41,7 +41,6 @@ from .gen_autograd_functions import (
     gen_autograd_functions_python,
 )
 from .gen_inplace_or_view_type import gen_inplace_or_view_type
-from .gen_trace_type import gen_trace_type
 from .gen_variable_factories import gen_variable_factories
 from .gen_variable_type import gen_variable_type
 from .gen_view_funcs import gen_view_funcs
@@ -89,8 +88,6 @@ def gen_autograd(
             out, native_functions_path, tags_path, fns_with_diff_infos, template_path
         )
 
-        # operator filter not applied as tracing sources are excluded in selective build
-        gen_trace_type(out, native_funcs, template_path)
     # Generate Functions.h/cpp
     gen_autograd_functions_lib(out, differentiability_infos, template_path)
 

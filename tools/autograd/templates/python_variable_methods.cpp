@@ -14,7 +14,6 @@
 #include "torch/csrc/autograd/utils/python_arg_parsing.h"
 #include "torch/csrc/autograd/utils/error_messages.h"
 #include "torch/csrc/autograd/utils/wrap_outputs.h"
-#include "torch/csrc/jit/frontend/tracer.h"
 #ifdef USE_CUDA
 #include "torch/csrc/cuda/Event.h"
 #endif
@@ -103,12 +102,8 @@ static PyObject * THPVariable_size(PyObject* self, PyObject* args, PyObject* kwa
   if (!r.toInt64Optional(0).has_value()) {
     return THPSize_NewFromSymSizes(self_);
   }
-  if (jit::tracer::isTracing()) {
-    // will error out if a tensor has symints
-    return wrap(jit::tracer::getSizeOf(self_, r.toInt64(0)));
-  } else {
-    return torch::toPyObject(self_.sym_size(r.toInt64(0)));
-  }
+  return torch::toPyObject(self_.sym_size(r.toInt64(0)));
+
   END_HANDLE_TH_ERRORS
 }
 
@@ -215,11 +210,8 @@ static PyObject * THPVariable_numel(PyObject* self, PyObject* args)
      return handle_torch_function(self, "numel", args);
    }
    auto& self_ = THPVariable_Unpack(self);
-   if (jit::tracer::isTracing()) {
-     return wrap(jit::tracer::getNumelOf(self_));
-   } else {
-     return py::cast(self_.sym_numel()).release().ptr();
-   }
+   return py::cast(self_.sym_numel()).release().ptr();
+
    END_HANDLE_TH_ERRORS
 }
 
@@ -246,20 +238,6 @@ static PyObject * THPVariable_contiguous(PyObject* self, PyObject* args, PyObjec
   auto memory_format = r.memoryformat(0);
   // avoids touching the GIL or current device if self is already contiguous
   if (self_.is_contiguous_or_false(memory_format)) {
-    // NOTE: this logic is duplicated from VariableType.cpp. Since we need to
-    // record this call to contiguous() in the trace regardless of whether
-    // we actually call contiguous here, we need to record this information
-    // manually.
-    if (jit::tracer::isTracing()) {
-      const auto& tracer_state = jit::tracer::getTracingState();
-      auto op_name = c10::Symbol::fromQualString("aten::contiguous");
-      auto node = tracer_state->createNode(op_name, /*num_outputs=*/0);
-      jit::tracer::recordSourceLocation(node);
-      jit::tracer::addInputs(node, "self", self_);
-      jit::tracer::addInputs(node, "memory_format", memory_format);
-      tracer_state->insertNode(node);
-      jit::tracer::addOutput(node, self_);
-    }
     Py_INCREF(self);
     return self;
   }
@@ -312,7 +290,6 @@ static PyObject * THPVariable_float_scalar(PyObject* self, PyObject* args) {
   if (has_torch_function(self)) {
     return handle_torch_function(self, "__float__", args);
   }
-  jit::tracer::warn("Converting a tensor to a Python float", jit::tracer::WARN_PYTHON_DATAFLOW);
   auto& self_ = THPVariable_Unpack(self);
   maybe_warn_requires_grad(self_);
   return wrap(dispatch_to<double>(self_));
@@ -324,7 +301,6 @@ static PyObject * THPVariable_complex_scalar(PyObject* self, PyObject* args) {
   if (has_torch_function(self)) {
     return handle_torch_function(self, "__complex__", args);
   }
-  jit::tracer::warn("Converting a tensor to a Python complex", jit::tracer::WARN_PYTHON_DATAFLOW);
   auto& self_ = THPVariable_Unpack(self);
   maybe_warn_requires_grad(self_);
   return wrap(dispatch_to<c10::complex<double>>(self_));
@@ -336,7 +312,6 @@ static PyObject * THPVariable_integral_scalar(PyObject* self, PyObject* args) {
   if (has_torch_function(self)) {
     return handle_torch_function(self, "__int__", args);
   }
-  jit::tracer::warn("Converting a tensor to a Python integer", jit::tracer::WARN_PYTHON_DATAFLOW);
   auto& self_ = THPVariable_Unpack(self);
   if (isFloatingType(self_.scalar_type())) {
     // we can't dispatch to item<int64_t> here because we want to avoid ATen overflow checks;
@@ -792,7 +767,6 @@ static PyObject * THPVariable_numpy(PyObject* self, PyObject* args, PyObject* kw
     return handle_torch_function(r, self, args, kwargs, THPVariableClass, "torch.Tensor");
   }
 
-  jit::tracer::warn("Converting a tensor to a NumPy array", jit::tracer::WARN_PYTHON_DATAFLOW);
   return torch::utils::tensor_to_numpy(self_, r.toBool(0));
   END_HANDLE_TH_ERRORS
 }
@@ -861,7 +835,6 @@ static PyObject * THPVariable_item(PyObject* self, PyObject* args)
   if (has_torch_function(self)) {
     return handle_torch_function(self, "item", args);
   }
-  jit::tracer::warn("Converting a tensor to a Python number", jit::tracer::WARN_PYTHON_DATAFLOW);
   auto& self_ = THPVariable_Unpack(self);
   auto dispatch_item_ = [](const Tensor& self) -> at::Scalar {
     pybind11::gil_scoped_release no_gil;
@@ -1006,7 +979,6 @@ static PyObject * THPVariable_tolist(PyObject* self, PyObject* args)
   if (has_torch_function(self)) {
     return handle_torch_function(self, "tolist", args);
   }
-  jit::tracer::warn("Converting a tensor to a Python list", jit::tracer::WARN_PYTHON_DATAFLOW);
   auto self_ = THPVariable_Unpack(self);
   return torch::utils::tensor_to_list(self_);
   END_HANDLE_TH_ERRORS
@@ -1073,7 +1045,6 @@ static PyObject * THPVariable_bool_scalar(PyObject* self, PyObject* args) {
     return handle_torch_function(self, "__bool__", args);
     END_HANDLE_TH_ERRORS
   }
-  jit::tracer::warn("Converting a tensor to a Python boolean", jit::tracer::WARN_PYTHON_DATAFLOW);
   return THPVariable_is_nonzero(self, args);
 }
 
@@ -1084,7 +1055,7 @@ static PyObject * THPVariable___eq__(PyObject* self_, PyObject* args, PyObject* 
   if (torch::utils::is_numpy_available()) {
     static PythonArgParser parser({
       "__eq__(PyObject* other)",
-    }, /*traceable=*/true);
+    });
 
     ParsedArgs<1> parsed_args;
     auto _r = parser.parse(self_, args, kwargs, parsed_args);
@@ -1142,8 +1113,7 @@ static PyObject* THPVariable_set_(
           "set_(Storage source, SymInt storage_offset, SymIntArrayRef size, SymIntArrayRef stride=None)",
           "set_(Tensor source)",
           "set_(Tensor source, SymInt storage_offset, SymIntArrayRef size, SymIntArrayRef stride=None)",
-      },
-      /*traceable=*/false);
+      });
 
   ParsedArgs<4> parsed_args;
   auto _r = parser.parse(args, kwargs, parsed_args);
