@@ -14,8 +14,6 @@ from torch._inductor import config
 from torch._inductor.utils import python_subprocess_env
 
 
-
-
 def _get_isa_dry_compile_fingerprint(isa_flags: str) -> str:
     # ISA dry compile will cost about 1 sec time each startup time.
     # Please check the issue: https://github.com/pytorch/pytorch/issues/100378
@@ -234,9 +232,6 @@ except OSError:
         if vec_isa_ok is not None:
             return vec_isa_ok
 
-        if config.is_fbcode():
-            return True
-
         return self.check_build(VecISA._avx_code)
 
 
@@ -248,13 +243,9 @@ class VecNEON(VecISA):
     _dtype_nelements = {torch.float: 4, torch.bfloat16: 8, torch.float16: 8}
 
     def __str__(self) -> str:
-        if config.is_fbcode():
-            return "neon"
         return "asimd"  # detects the presence of advanced SIMD on armv8-a kernels
 
     __hash__: Callable[[VecISA], Any] = VecISA.__hash__  # type: ignore[assignment]
-
-
 
 
 @dataclasses.dataclass
@@ -283,8 +274,6 @@ extern "C" __m512bh __avx512_bf16_chk_kernel(__m512 a, __m512 b) {
     # pyrefly: ignore [bad-override]
     def __bool__(self) -> bool:
         if super().__bool__():
-            if config.is_fbcode():
-                return False
             # check avx512_bf16
             if torch.cpu._is_avx512_bf16_supported():
                 # save _arch_flags
@@ -343,11 +332,8 @@ extern "C" __m512i __avx512_vnni_chk_kernel_2(__m512i src, __m512i a, __m512i b)
     @functools.cache  # noqa: B019
     def __bool__(self) -> bool:
         if super().__bool__():
-            if config.is_fbcode():
-                return False
-            if (
-                torch.cpu._is_vnni_supported()
-                and self.check_build(self._avx512_vnni_code)
+            if torch.cpu._is_vnni_supported() and self.check_build(
+                self._avx512_vnni_code
             ):
                 return True
         return False
@@ -394,8 +380,6 @@ extern "C" void __amx_chk_kernel() {
     @functools.cache  # noqa: B019
     def __bool__(self) -> bool:
         if super().__bool__():
-            if config.is_fbcode():
-                return False
             if self.check_build(VecAMX._amx_code) and torch.cpu._init_amx():
                 # check amx-fp16 as well when check amx
                 if torch.cpu._is_amx_fp16_supported():
@@ -430,9 +414,7 @@ extern "C" void __amx_chk_kernel() {
 class VecAVX2(VecISA):
     _bit_width = 256
     _macro = ["CPU_CAPABILITY_AVX2"]
-    _arch_flags = (
-        "-mavx2 -mfma -mf16c"
-    )  # TODO: use cflags
+    _arch_flags = "-mavx2 -mfma -mf16c"  # TODO: use cflags
     _dtype_nelements = {torch.float: 8, torch.bfloat16: 16, torch.float16: 16}
 
     def __str__(self) -> str:
@@ -554,8 +536,6 @@ def valid_vec_isa_list() -> list[VecISA]:
 
 
 def pick_vec_isa() -> VecISA:
-    if config.is_fbcode() and (platform.machine() in ["x86_64", "AMD64"]):
-        return VecAVX2()
 
     _valid_vec_isa_list: list[VecISA] = valid_vec_isa_list()
     if not _valid_vec_isa_list:

@@ -24,7 +24,6 @@ from torch._decomp.decompositions import (
 )
 from torch._decomp.decompositions_for_rng import extra_random_decomps
 from torch._dynamo.utils import counters
-from torch._environment import is_fbcode
 from torch._higher_order_ops.out_dtype import out_dtype
 from torch._inductor.utils import pad_listlike
 from torch._prims_common import (
@@ -200,7 +199,7 @@ if torch.distributed.is_available():
             )
 
             group_size = _get_group_size_by_name(GroupName(group_name))
-        except (RuntimeError, ValueError):
+        except RuntimeError, ValueError:
             return NotImplemented
 
         input_shape = list(inp.shape)
@@ -354,7 +353,7 @@ def index_add(
     *,
     alpha: torch.types.Number = 1,
 ) -> torch.Tensor:
-    if not is_fbcode() and x.dtype == torch.bfloat16:
+    if x.dtype == torch.bfloat16:
         # Triton supports BF16 atomic add on ROCm and NVIDIA SM90 and newer.
         if x.device.type != "cuda" or (
             torch.version.hip is None

@@ -957,11 +957,8 @@ class TritonPrinter(PythonPrinter):  # noqa: docstring_linter
             # this workaround prints the float as an integer
             # xref: https://github.com/sympy/sympy/issues/26620
             ret = str(int(expr))
-        elif config.is_fbcode() and torch.version.hip:
-            ret = f"{expr}"
-        else:
-            float_type = self._get_scalar_float_type()
-            ret = f"tl.full([], {expr}, {float_type})"
+        float_type = self._get_scalar_float_type()
+        ret = f"tl.full([], {expr}, {float_type})"
         return ret
 
     def _print_ToFloat(self, expr: sympy.Expr) -> str:
@@ -7522,8 +7519,6 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
 
         if torch.version.hip is not None:
             inductor_meta["is_hip"] = True
-        if config.is_fbcode():
-            inductor_meta["is_fbcode"] = True
         if config.profile_bandwidth:
             inductor_meta["profile_bandwidth"] = config.profile_bandwidth
             inductor_meta["profile_bandwidth_regex"] = config.profile_bandwidth_regex
@@ -7599,7 +7594,53 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
             if flops is not None:
                 out["kernel_flop"] = flops
         if self.host_tma_descriptor_args:
-            out["host_tma_descriptor_args"] = self.resolved_host_tma_descriptor_args()
+            _, _, signature, _ = self.args.python_argdefs()
+            sig_arg_names = OrderedSet(
+                arg.name for arg in signature if hasattr(arg, "name")
+            )
+            fixed_blocks: dict[str, int] = {}
+            if self.persistent_reduction:
+                for rt in self.range_trees:
+                    if rt.is_reduction:
+                        block_name = f"{rt.prefix.upper()}BLOCK"
+                        if block_name not in sig_arg_names:
+                            try:
+                                val = self._get_persistent_reduction_block(rt.numel)
+                                if self.is_native_matmul:
+                                    val = max(val, 16)
+                                fixed_blocks[block_name] = val
+                            except TypeError, ValueError:
+                                pass
+
+            def _resolve_block_dim(s):
+                s_str = str(s)
+                if s_str in sig_arg_names:
+                    return s_str
+                if s_str in fixed_blocks:
+                    return fixed_blocks[s_str]
+                try:
+                    return int(s)
+                except TypeError, ValueError:
+                    return s_str
+
+            def _resolve_tensor_dim(s):
+                try:
+                    return int(s)
+                except TypeError, ValueError:
+                    return str(s)
+
+            resolved = {}
+            for inner, opts in self.host_tma_descriptor_args.items():
+                if isinstance(opts, dict):
+                    resolved[inner] = opts
+                    continue
+                dims = [_resolve_block_dim(s) for s in opts.block_shape]
+                resolved[inner] = {
+                    "block_shape": dims,
+                    "shape": [_resolve_tensor_dim(s) for s in opts.shape],
+                    "strides": [_resolve_tensor_dim(s) for s in opts.strides],
+                }
+            out["host_tma_descriptor_args"] = resolved
         return out
 
     def resolved_host_tma_descriptor_args(self) -> dict[str, Any]:

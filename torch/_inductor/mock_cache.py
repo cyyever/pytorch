@@ -226,43 +226,6 @@ class PatchCaches(contextlib.AbstractContextManager):
         )
         self._stack.enter_context(ctx)
 
-        if config.is_fbcode():
-            ctx = patch(
-                "torch._inductor.fb.remote_cache.FbRemoteAutotuneCache.backend_override_cls",
-                MockBackend.with_name("autotune_remote"),
-            )
-            self._stack.enter_context(ctx)
-
-            ctx = patch(
-                "torch._inductor.fb.remote_cache.FbRemoteBundledAutotuneCache.backend_override_cls",
-                MockBackend.with_name("bundled_autotune"),
-            )
-            self._stack.enter_context(ctx)
-
-            ctx = patch(
-                "torch._inductor.fb.remote_cache.FbRemoteFxGraphCache.backend_override_cls",
-                MockBackend.with_name("fx_graph"),
-            )
-            self._stack.enter_context(ctx)
-
-            ctx = patch(
-                "triton.fb.fb_memcache.FbMemcacheRemoteKernelCache.backend_override_cls",
-                MockBackend.with_name("triton"),
-            )
-            self._stack.enter_context(ctx)
-
-            ctx = patch(
-                "torch._inductor.fb.remote_cache.FbRemoteAOTAutogradCache.backend_override_cls",
-                MockBackend.with_name("aot_autograd"),
-            )
-            self._stack.enter_context(ctx)
-
-            ctx = patch(
-                "torch._inductor.fb.remote_cache.FbRemoteDynamoPGOCache.backend_override_cls",
-                MockBackend.with_name("dynamo_pgo"),
-            )
-            self._stack.enter_context(ctx)
-
         return self
 
     def __exit__(

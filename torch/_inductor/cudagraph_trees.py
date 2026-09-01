@@ -2517,13 +2517,7 @@ class CUDAGraphTreeManager:
         self.running_forwards_with_pending_backwards = False
         self.mode: CompilationMode | None = None
 
-        self.disable_invalidate_aliases = (
-            False
-            if not torch._environment.is_fbcode()
-            else torch._utils_internal.justknobs_check(
-                "pytorch/inductor:disable_cudagraph_alias_invalidation"
-            )
-        )
+        self.disable_invalidate_aliases = False
 
     def run(self, new_inputs: list[InputType], function_id: FunctionID) -> OutputType:
         if self.graph is None:

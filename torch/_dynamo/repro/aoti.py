@@ -50,7 +50,6 @@ log = logging.getLogger(__name__)
 
 
 inductor_config = import_module("torch._inductor.config")
-use_buck = inductor_config.is_fbcode()
 
 
 class AOTIMinifierError(Exception):

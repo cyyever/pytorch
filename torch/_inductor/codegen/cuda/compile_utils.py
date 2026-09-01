@@ -2,44 +2,23 @@
 import logging
 import os
 import re
-import shutil
 
 import torch
 from torch._inductor import config
 from torch._inductor.codegen.cuda import cuda_env
-from torch._inductor.cpp_builder import _set_gpu_runtime_env, _transform_cuda_paths
+from torch._inductor.cpp_builder import _transform_cuda_paths
 from torch._inductor.utils import is_linux
 from torch.utils._ordered_set import OrderedSet
-
-
-if config.is_fbcode():
-    from triton.fb.build import build_paths
 
 
 log = logging.getLogger(__name__)
 autotuning_log = torch._logging.getArtifactLogger(__name__, "autotuning")
 
 
-def use_re_build() -> bool:
-    """
-    Use for CUTLASS compilation only right now.
-    """
-    if config.is_fbcode() and not cuda_env.nvcc_exist(_cuda_compiler()):
-        from triton.fb.re_build_helper import should_build_locally
-
-        return not should_build_locally()
-    return False
-
-
 def _cutlass_path() -> str | None:
-    if config.is_fbcode():
-        from libfb.py import parutil
+    from torch._inductor.codegen.cutlass.utils import try_import_cutlass
 
-        return parutil.get_dir_path("cutlass-4-headers")
-    else:
-        from torch._inductor.codegen.cutlass.utils import try_import_cutlass
-
-        return config.cutlass.cutlass_dir if try_import_cutlass() else None
+    return config.cutlass.cutlass_dir if try_import_cutlass() else None
 
 
 def _cutlass_paths() -> list[str]:
@@ -49,19 +28,6 @@ def _cutlass_paths() -> list[str]:
         "tools/library/src",
         "tools/util/include",
     ]
-
-
-def _clone_cutlass_paths(build_root: str) -> list[str]:
-    cutlass_root = _cutlass_path()
-    if cutlass_root is None:
-        return []
-    paths = []
-    for path in _cutlass_paths():
-        old_path = os.path.join(cutlass_root, path)
-        new_path = os.path.join(build_root, path)
-        shutil.copytree(old_path, new_path, dirs_exist_ok=True)
-        paths.append(new_path)
-    return paths
 
 
 def _cutlass_include_paths() -> list[str]:
@@ -78,8 +44,6 @@ def _cutlass_include_paths() -> list[str]:
 def _cuda_compiler() -> str | None:
     if cuda_env.nvcc_exist(config.cuda.cuda_cxx):
         return config.cuda.cuda_cxx
-    if config.is_fbcode():
-        return os.path.join(build_paths.sdk_home, "bin", "nvcc")
     if cuda_env.nvcc_exist(os.getenv("CUDACXX")):
         return os.getenv("CUDACXX", "")
     if cuda_env.nvcc_exist(os.getenv("CUDA_HOME")):
@@ -91,15 +55,9 @@ def _cuda_lib_options() -> list[str]:
     """
     Util function for CUTLASS backend to find the correct CUDA libraries.
     """
-    _set_gpu_runtime_env()  # cpp_extension consults the env
     from torch.utils import cpp_extension
 
     lpaths = cpp_extension.library_paths(device_type="cuda")
-    if use_re_build():
-        lpaths += [
-            build_paths.sdk_lib,
-            os.path.join(build_paths.sdk_lib, "stubs"),
-        ]
     extra_ldflags: list[str] = []
     if is_linux():
         _transform_cuda_paths(lpaths)
@@ -314,8 +272,6 @@ def _nvcc_compiler_options() -> list[str]:
         "--expt-relaxed-constexpr",
         "-DNDEBUG",
     ]
-    if config.is_fbcode():
-        options.extend(["-ccbin", os.path.dirname(build_paths.gcc)])
     if config.cutlass.enable_debug_info:
         options.extend(["-lineinfo", "-g", "-DCUTLASS_DEBUG_TRACE_LEVEL=1"])
     if config.cuda.enable_ptxas_info:
@@ -346,13 +302,7 @@ def cuda_compile_command(
 ) -> str:
     if extra_args is None:
         extra_args = []
-    if use_re_build():
-        build_path = os.path.dirname(dst_file)
-        include_paths = _clone_cutlass_paths(build_path)
-        src_files = [os.path.basename(src_file) for src_file in src_files]
-        dst_file = os.path.basename(dst_file)
-    else:
-        include_paths = _cutlass_include_paths()
+    include_paths = _cutlass_include_paths()
     cuda_lib_options = _cuda_lib_options()
     nvcc_host_compiler_options = _nvcc_host_compiler_options()
     nvcc_compiler_options = _nvcc_compiler_options()

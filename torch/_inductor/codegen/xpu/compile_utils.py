@@ -53,7 +53,6 @@ def _sycl_lib_options() -> list[str]:
     """
     Util function for CUTLASS backend to find the correct XPU libraries.
     """
-    # _set_gpu_runtime_env()  # cpp_extension consults the env
     from torch.utils import cpp_extension
 
     lpaths = cpp_extension.library_paths(device_type="xpu")

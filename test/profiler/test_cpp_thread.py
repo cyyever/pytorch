@@ -4,7 +4,6 @@ import os
 
 import torch
 import torch.utils.cpp_extension
-from torch._environment import is_fbcode
 from torch.testing._internal.common_device_type import (
     instantiate_device_type_tests,
     skipCUDAIf,
@@ -13,24 +12,19 @@ from torch.testing._internal.common_device_type import (
 from torch.testing._internal.common_utils import IS_WINDOWS, run_tests, TestCase
 
 
-if is_fbcode():
-    import caffe2.test.profiler_test_cpp_thread_lib as cpp  # @manual=//caffe2/test:profiler_test_cpp_thread_lib
-else:
-    # cpp extensions use relative paths. Those paths are relative to
-    # this file, so we'll change the working directory temporarily
-    old_working_dir = os.getcwd()
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+old_working_dir = os.getcwd()
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    cpp = torch.utils.cpp_extension.load(
-        name="profiler_test_cpp_thread_lib",
-        sources=[
-            "test_cpp_thread.cpp",
-        ],
-        verbose=True,
-    )
+cpp = torch.utils.cpp_extension.load(
+    name="profiler_test_cpp_thread_lib",
+    sources=[
+        "test_cpp_thread.cpp",
+    ],
+    verbose=True,
+)
 
-    # return the working directory (see setUp)
-    os.chdir(old_working_dir)
+# return the working directory (see setUp)
+os.chdir(old_working_dir)
 
 
 KinetoProfiler = None
@@ -88,8 +82,7 @@ class CppThreadTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if not is_fbcode():
-            torch.testing._internal.common_utils.remove_cpp_extensions_build_root()
+        torch.testing._internal.common_utils.remove_cpp_extensions_build_root()
 
     def setUp(self) -> None:
         super().setUp()
@@ -130,8 +123,9 @@ class CppThreadTest(TestCase):
             min_count = count * (ActivateIteration - 1)
             dev = values[1]
             filtered = filter(
-                lambda ev: ev.name == key
-                and str(ev.device_type) == f"DeviceType.{dev}",
+                lambda ev: (
+                    ev.name == key and str(ev.device_type) == f"DeviceType.{dev}"
+                ),
                 event_list,
             )
 

@@ -3,11 +3,9 @@
 # Test to ensure sparsity information propagates properly into traced graph.
 #
 
-import unittest
 
 import torch
 from torch._dynamo.source import LocalSource
-from torch._environment import is_fbcode
 from torch._subclasses.fake_tensor import FakeTensor, FakeTensorMode
 from torch.fx.experimental.symbolic_shapes import (
     DimDynamic,
@@ -97,7 +95,6 @@ class SparseActivationCSR(torch.nn.Module):
 #
 
 
-@unittest.skipIf(is_fbcode(), "See torch._dynamo.config")
 class TestSparseProp(TestCase):
     hw_classification = HardwareClassification.GENERIC
 

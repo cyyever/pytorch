@@ -105,13 +105,6 @@ def maybe_fetch_ops(device_type: str) -> list[Any] | None:
                 exc_info=True,
             )
             serialized_ops = None
-    elif config.is_fbcode():
-        from torch._inductor.fb.cutlass_remote_cache import (
-            maybe_fetch_cutlass_configs_from_remote,
-        )
-
-        # from remote
-        serialized_ops = maybe_fetch_cutlass_configs_from_remote(filepath)
 
     if serialized_ops is None:
         return None
