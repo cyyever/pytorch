@@ -7008,33 +7008,6 @@ class TestCudaAllocator(TestCase):
     @unittest.skipIf(
         TEST_CUDAMALLOCASYNC, "setContextRecorder not supported by CUDAMallocAsync"
     )
-    def test_memory_snapshot_script(self):
-        try:
-            torch._C._cuda_clearCublasWorkspaces()
-            torch.cuda.memory.empty_cache()
-            torch.cuda.memory._record_memory_history("state", stacks="python")
-
-            @torch.jit.script
-            def foo():
-                return torch.rand(311, 411, device="cuda")
-
-            x = foo()
-
-            ss = torch.cuda.memory._snapshot()["segments"]
-            found_it = False
-            for seg in ss:
-                for b in seg["blocks"]:
-                    if b["requested_size"] == 311 * 411 * 4:
-                        self.assertEqual(b["frames"][0]["name"], "foo")
-                        found_it = True
-            self.assertTrue(found_it)
-
-        finally:
-            torch.cuda.memory._record_memory_history(None)
-
-    @unittest.skipIf(
-        TEST_CUDAMALLOCASYNC, "setContextRecorder not supported by CUDAMallocAsync"
-    )
     def test_memory_snapshot_skip_actions(self):
         """Test that skip_actions parameter correctly filters out specified action types."""
         # Test cases: (skip_actions, description)
@@ -7662,12 +7635,11 @@ print(value, end="")
             try:
                 m.record(True, ctx)
 
-                @torch.jit.script
-                def the_script_fn():
+                def the_fn():
                     return torch.rand(311, 411, device="cuda")
 
                 def run():
-                    t = the_script_fn()
+                    t = the_fn()
                     return pickle.loads(m.do_snapshot())
 
                 mem = run()
@@ -7680,8 +7652,7 @@ print(value, end="")
                                     frame_text = str(b["frames"])
                                     # C++ frame
                                     self.assertTrue("::rand" in frame_text)
-                                    # script frame
-                                    self.assertTrue("the_script_fn" in frame_text)
+                                    self.assertTrue("the_fn" in frame_text)
                                     # python frame
                                     self.assertTrue("case.py" in frame_text)
                                 found = True
@@ -11055,7 +11026,7 @@ class TestCudaAutocast(TestAutocast):
         loss = output.sum()
         loss.backward()
 
-    def test_autocast_cat_jit(self):
+    def test_autocast_cat(self):
         # Reported at https://github.com/pytorch/pytorch/issues/38958
 
         class Model(torch.nn.Module):
@@ -11066,14 +11037,10 @@ class TestCudaAutocast(TestAutocast):
                 d = torch.stack([c, c], 0)
                 return d
 
-        # The JIT here doesn't really matter, we just need to call
-        # cat via the boxed API
         model = Model()
-        model_jit_script = torch.jit.script(model)
 
         with torch.autocast("cuda", enabled=True):
-            model()
-            model_jit_script()
+            self.assertEqual(model().dtype, torch.float32)
 
     # cudnn RNNs require special backend handling (weights are cast to FP16 and reflattened)
     # so they get a dedicated test.

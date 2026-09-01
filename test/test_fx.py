@@ -341,9 +341,7 @@ class TestFX(TestCase):
                 )
 
         m = MyModule()
-        gm = symbolic_trace(m)
-
-        ms = torch.jit.script(gm)
+        symbolic_trace(m)
 
         class M2(torch.nn.Module):
             def forward(self, A):
@@ -1551,18 +1549,6 @@ class TestFX(TestCase):
                 lambda msg: f"{msg}\nLine {i + 1} has trailing whitespace: {repr(line)}",
             )
 
-    def test_script_tensor_constant(self):
-        # TorchScript seems to ignore attributes that start with `__`.
-        # We used to call anonymous Tensor values `__tensor_constant*`, but
-        # they were getting ignored by script. Now they're called
-        # `_tensor_constant*`
-        class IHaveATensorConstant(torch.nn.Module):
-            def forward(self, x):
-                return x + torch.rand(3, 4)
-
-        traced = torch.fx.symbolic_trace(IHaveATensorConstant())
-        torch.jit.script(traced)
-
     def test_autowrap_functions(self):
         class AutowrapFnTest(torch.nn.Module):
             def forward(self, x):
@@ -1580,9 +1566,7 @@ class TestFX(TestCase):
         tracer_2 = Tracer(autowrap_functions=(fx_int, fx_int_x2))
         tracer_2.trace(AutowrapFnTest2())
 
-        # Test scriptability
-        traced_scripted = torch.jit.script(traced)
-        self.assertEqual(traced_scripted(torch.rand(4)), 2)
+        self.assertEqual(traced(torch.rand(4)), 2)
 
     def test_tuple_no_subscript(self):
         def foo(x: tuple):
@@ -1611,13 +1595,7 @@ class TestFX(TestCase):
 
         traced = symbolic_trace(FXLenTest())
         self.assertEqual(traced(torch.rand(3, 4)), 3)
-
-        # Test scriptability
-        scripted = torch.jit.script(FXLenTest())
-        self.assertEqual(scripted(torch.rand(3)), 3)
-
-        traced_scripted = torch.jit.script(traced)
-        self.assertEqual(traced_scripted(torch.rand(3)), 3)
+        self.assertEqual(traced(torch.rand(3)), 3)
 
         # Test non-proxy len
         class FXLenTest2(torch.nn.Module):
@@ -2588,18 +2566,11 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
             ) -> dict[str, torch.Tensor]:
                 return {"a": p.x + p.y + z + i}
 
-        foo_scripted = torch.jit.script(Foo())
-        foo_scripted(Pair(torch.rand(5), torch.rand(5)), torch.rand(5), 3)
-
         fixed = symbolic_trace(Foo())
-        fxed_scripted = torch.jit.script(fixed)
-        fxed_scripted(Pair(torch.rand(5), torch.rand(5)), torch.rand(5), 3)
-
-    def test_fn_type_annotation_empty(self):
-        def forward(a: list[torch.Tensor]):
-            return a[0]
-
-        torch.jit.script(symbolic_trace(forward))
+        fixed(Pair(torch.rand(5), torch.rand(5)), torch.rand(5), 3)
+        FileCheck().check("p : __main___Pair").check("z : torch.Tensor").check(
+            "i : int"
+        ).run(fixed.code)
 
     def test_optional_typing_dict_placeholder_annotation_python314(self):
         class OptionalTypingDictModule(torch.nn.Module):
@@ -2618,7 +2589,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
         FileCheck().check("value : typing_Union[typing_Dict").check(
             "typing_Tuple"
         ).check("NoneType]").run(traced.code)
-        torch.jit.script(traced)
 
     def test_wrapped_method(self):
         def wrap_with_relu(fn):
@@ -4213,12 +4183,6 @@ def forward(self, x : _torch_Tensor_) -> _torch_Tensor_:
             "typing_Tuple[str,typing_Tuple[()]]"
         ).run(traced.code)
 
-        scripted = torch.jit.script(traced)
-
-        scripted(x, y)
-
-        FileCheck().check("Tuple[()]").check("Tuple[str, Tuple[()]]").run(scripted.code)
-
     def test_pytree(self):
         # Used to test that you can use your own placeholder class
         class PHTest(PHBase):
@@ -4452,9 +4416,6 @@ def forward(self, args_list: List[torch.Tensor]){maybe_return_annotation}:
         self.assertEqual(
             nf.graph.process_outputs(bare_fx(*nf.graph.process_inputs(vals))), f(*vals)
         )
-
-        ts_f = torch.jit.script(nf)
-        self.assertEqual(nf(vals), ts_f(vals))
 
     def test_custom_codegen_with_transformer(self):
         class ListCodeGen(CodeGen):

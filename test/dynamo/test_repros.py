@@ -773,7 +773,6 @@ class BatchNormAct2d(torch.nn.BatchNorm2d):
         )
         self.act = act_layer(inplace=inplace)
 
-    @torch.jit.ignore
     def _forward_python(self, x):
         return super().forward(x)
 
@@ -6000,25 +5999,6 @@ def forward(self, L_x_ : torch.Tensor, s77 : torch.SymInt, s27 : torch.SymInt):
             torch.compile(fn, backend="eager")()
 
         torch.compile(fn2, backend="eager")()
-
-    def test_jit_script_defaults(self):
-        @torch.jit.script
-        def fast_cos(x, c: float = 2.0):
-            return torch.cos(x) * c
-
-        class Mod(torch.nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.fast_cos = fast_cos
-
-            def forward(self, x):
-                return self.fast_cos(x)
-
-        mod = Mod()
-        opt_mod = torch.compile(mod, backend="eager", fullgraph=True)
-        x = torch.randn(4)
-
-        self.assertEqual(mod(x), opt_mod(x))
 
     def test_enum(self):
         class ExplicitEnum(str, Enum):

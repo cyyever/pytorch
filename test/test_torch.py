@@ -928,8 +928,6 @@ class TestTorchDeviceType(TestCase):
 
         # Checks eager-mode cpp warning
         with warnings.catch_warnings(record=True) as w:
-            # nvfuser deprecation warning filter
-            warnings.filterwarnings("ignore", "torch::jit::fuser::cuda", UserWarning)
             cpp_warn_fn()
             frameinfo = inspect.getframeinfo(inspect.currentframe())
             warning = w[0]
@@ -941,52 +939,7 @@ class TestTorchDeviceType(TestCase):
             # Checks the Python features of the warning
             # Note: the eager mode warning refers to the line in the function
             # that throws the warning.
-            self.assertEqual(frameinfo.lineno - 8, warning.lineno)
-            self.assertEqual(len(w), 1)
-
-        # Checks jitted cpp warning
-        with warnings.catch_warnings(record=True) as w:
-            # nvfuser deprecation warning filter
-            warnings.filterwarnings("ignore", "torch::jit::fuser::cuda", UserWarning)
-            # ignore all deprecation warnings
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            # torch.jit.script emits a visible FutureWarning; ignore it too
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            scripted_cpp_warn_fn = torch.jit.script(cpp_warn_fn)
-            scripted_cpp_warn_fn()
-            warning = w[0]
-
-            # Checks for cpp context in the warning message
-            escaped_warning_message = str(warning.message).encode('unicode_escape')
-            self.assertTrue(re.search(s, repr(escaped_warning_message), re.IGNORECASE) is not None)
-
-            # Checks the Python features of the warning
-            # Note: the jitted warning's lineno refers to the call to the jitted
-            # function, which in our test suite has a layer of indirection
-            # that makes checking the Python lineno fragile
-            self.assertEqual(len(w), 1)
-
-        # Checks jitted Python warning
-        def warn_fn():
-            warnings.warn("Warning!")
-
-        # The jit mimics an eager-mode Python warning in this case
-        with warnings.catch_warnings(record=True) as w:
-            # nvfuser deprecation warning filter
-            warnings.filterwarnings("ignore", "torch::jit::fuser::cuda", UserWarning)
-            # ignore all deprecation warnings
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            # torch.jit.script emits a visible FutureWarning; ignore it too
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            scripted_warn_fn = torch.jit.script(warn_fn)
-            scripted_warn_fn()
-            frameinfo = inspect.getframeinfo(inspect.currentframe())
-            warning = w[0]
-
-            self.assertTrue(re.search('Warning!', str(warning.message)) is not None)
-
-            # Checks the Python features of the warning
-            self.assertEqual(frameinfo.lineno - 12, warning.lineno)
+            self.assertEqual(frameinfo.lineno - 6, warning.lineno)
             self.assertEqual(len(w), 1)
 
     # FIXME: move to test_testing
@@ -8652,10 +8605,6 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
     def test_get_cpu_capability(self):
         # This method is primarily exposed for torchvision's resize
         torch.backends.cpu.get_cpu_capability()
-
-        # We have to ensure that method is torchscriptable as torchvision's resize
-        # should be torchscriptable
-        torch.jit.script(torch.backends.cpu.get_cpu_capability)
 
     @slowTest
     def test_slow_test(self):

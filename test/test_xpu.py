@@ -1344,30 +1344,6 @@ print(torch.xpu.is_initialized())
             finally:
                 torch.xpu.memory._record_memory_history(None)
 
-    def test_memory_snapshot_script(self):
-        try:
-            gc.collect()
-            torch.xpu.memory.empty_cache()
-            torch.xpu.memory._record_memory_history("state", stacks="python")
-
-            @torch.jit.script
-            def foo():
-                return torch.rand(311, 411, device="xpu")
-
-            _ = foo()
-
-            ss = torch.xpu.memory.memory_snapshot()
-            found_it = False
-            for seg in ss:
-                for b in seg["blocks"]:
-                    if b["requested_size"] == 311 * 411 * 4:
-                        self.assertEqual(b["frames"][0]["name"], "foo")
-                        found_it = True
-            self.assertTrue(found_it)
-
-        finally:
-            torch.xpu.memory._record_memory_history(None)
-
     def collect_frames(
         self, augmented_snapshot, collect_device_traces=True, collect_segments=True
     ):

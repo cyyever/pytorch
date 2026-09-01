@@ -2988,11 +2988,6 @@ class TestLinalg(TestCase):
             for density in [0.005, 0.1]:
                 run_subtest(None, size, (), device, torch.svd_lowrank, density=density)
 
-        # jitting support
-        jitted = torch.jit.script(torch.svd_lowrank)
-        actual_rank, size, batches = 2, (17, 4), ()
-        run_subtest(actual_rank, size, batches, device, jitted)
-
     @skipCUDAIfNoCusolver
     @skipCPUIfNoLapack
     @precisionOverride({torch.float: 1e-4, torch.cfloat: 2e-4})
@@ -6110,23 +6105,6 @@ class TestLinalg(TestCase):
             self.assertEqual(matmul(A, V) / E.max(), mm(matmul(B, V), (E / E.max()).diag_embed()),
                              atol=prec, rtol=0)
 
-    @skipCPUIfNoLapack
-    @onlyCPU
-    @dtypes(torch.double)
-    def test_lobpcg_torchscript(self, device, dtype):
-        from torch.testing._internal.common_utils import random_sparse_pd_matrix
-        from torch._linalg_utils import matmul as mm
-
-        lobpcg = torch.jit.script(torch.lobpcg)
-
-        m = 500
-        k = 5
-        A1 = random_sparse_pd_matrix(m, density=2.0 / m, device=device, dtype=dtype)
-        X1 = torch.randn((m, k), dtype=dtype, device=device)
-        E1, V1 = lobpcg(A1, X=X1)
-        eq_err = torch.norm((mm(A1, V1) - V1 * E1), 2) / E1.max()
-        self.assertLess(eq_err, 1e-6)
-
     @unittest.skipIf(not TEST_SCIPY or (TEST_SCIPY and version.parse(scipy.__version__) < version.parse('1.4.1')),
                      "Scipy not found or older than 1.4.1")
     @skipCPUIfNoLapack
@@ -8965,11 +8943,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
                 (21, (100, 40)), (20, (40, 100)), (600, (1000, 1000))]:
             for density in [0.005, 0.1]:
                 run_subtest(guess_rank, None, size, (), device, torch.pca_lowrank, density=density)
-
-        # jitting support
-        jitted = torch.jit.script(torch.pca_lowrank)
-        guess_rank, actual_rank, size, batches = 2, 2, (17, 4), ()
-        run_subtest(guess_rank, actual_rank, size, batches, device, jitted)
 
     # Ensure that nuclear_norm's out variant gives the same result as the non-out
     @onlyNativeDeviceTypes
