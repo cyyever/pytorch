@@ -138,8 +138,6 @@
 
 #include <ATen/StorageUtils.h>
 #include <ATen/core/ATen_fwd.h>
-#include <ATen/core/DeprecatedTypeProperties.h>
-#include <ATen/core/DeprecatedTypePropertiesRegistry.h>
 #include <ATen/core/DimVector.h>
 #include <ATen/core/Generator.h>
 #include <ATen/core/TensorAccessor.h>

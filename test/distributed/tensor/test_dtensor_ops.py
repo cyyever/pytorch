@@ -797,7 +797,6 @@ ops_unbacked_dtensor_dde = {
     xfail("linalg.lu"),
     xfail("linalg.lu_factor"),
     xfail("linalg.lu_factor_ex"),
-    xfail("lu"),
     xfail("masked_fill"),
     xfail("masked_scatter"),
     xfail("masked_select"),

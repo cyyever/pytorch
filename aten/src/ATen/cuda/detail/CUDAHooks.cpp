@@ -220,13 +220,6 @@ DeviceIndex current_device() {
   return -1;
 }
 
-/**
- * DEPRECATED: use getCurrentDevice() instead
- */
-DeviceIndex CUDAHooks::current_device() const {
-  return at::cuda::detail::current_device();
-}
-
 bool CUDAHooks::hasPrimaryContext(DeviceIndex device_index) const {
   return _hasPrimaryContext(device_index);
 }
@@ -478,13 +471,6 @@ int64_t CUDAHooks::cuFFTGetPlanCacheSize(DeviceIndex device_index) const {
 
 void CUDAHooks::cuFFTClearPlanCache(DeviceIndex device_index) const {
   at::native::detail::cufft_clear_plan_cache_impl(device_index);
-}
-
-/**
- * DEPRECATED: use deviceCount() instead
- */
-int CUDAHooks::getNumGPUs() const {
-  return at::cuda::device_count();
 }
 
 DeviceIndex CUDAHooks::deviceCount() const {

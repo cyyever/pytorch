@@ -58,20 +58,6 @@ inline std::string toString(const c10::Layout& layout) {
   return std::move(ss).str();
 }
 
-inline void assertSameType(
-    const at::DeprecatedTypeProperties& type,
-    const std::vector<at::Tensor>& tensors) {
-  for (const auto i : c10::irange(tensors.size())) {
-    if (!tensors[i].options().type_equal(type.options())) {
-      const std::string expected = type.toString();
-      const std::string actual = tensors[i].toString();
-      throw std::invalid_argument(
-          // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-          "mixed types (" + expected + " and " + actual + ")");
-    }
-  }
-}
-
 inline std::vector<std::string> split(
     char separator,
     const std::string& string) {
@@ -220,17 +206,6 @@ inline void assertSameSizeAndType(const std::vector<at::Tensor>& tensors) {
           "argument contains mixed types (" + expected + " and " + actual +
           ")");
     }
-  }
-}
-
-inline void assertTypeMatch(
-    const std::function<void(const std::string&)>& fn,
-    const at::DeprecatedTypeProperties& type,
-    const at::ArrayRef<at::Tensor> tensors,
-    size_t index) {
-  if (!tensors[index].options().type_equal(type.options())) {
-    fn("invalid tensor type at index " + std::to_string(index) + " (expected " +
-       type.toString() + ", got " + tensors[index].toString() + ")");
   }
 }
 
@@ -461,17 +436,6 @@ inline void assertSameDevice(
     if (tensors[i].device() != device) {
       fn("tensors should be on the same device");
     }
-  }
-}
-
-inline void assertTypeAndSizesMatch(
-    const std::function<void(const std::string&)>& fn,
-    const at::ArrayRef<at::Tensor> tensors,
-    const at::DeprecatedTypeProperties& type,
-    const at::IntArrayRef& sizes) {
-  for (const auto i : c10::irange(tensors.size())) {
-    assertTypeMatch(fn, type, tensors, i);
-    assertSizesMatch(fn, sizes, tensors, i);
   }
 }
 

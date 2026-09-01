@@ -58,8 +58,8 @@ using at::cuda::detail::getTensorInfo;
 
 namespace {
   Tensor _to_csr_int(const Tensor& rowIndices, int64_t dim, int64_t nnz) {
-    Tensor csr = at::empty({dim+1}, CUDA(kInt));
-    Tensor rowIndicesInt = at::empty({rowIndices.size(0)}, CUDA(kInt));
+    Tensor csr = at::empty({dim+1}, at::device(at::kCUDA).dtype(at::kInt));
+    Tensor rowIndicesInt = at::empty({rowIndices.size(0)}, at::device(at::kCUDA).dtype(at::kInt));
     rowIndicesInt.copy_(rowIndices);
     sparse::cuda::Xcoo2csr(rowIndicesInt.mutable_data_ptr<int32_t>(), nnz, dim, csr.mutable_data_ptr<int32_t>());
     return csr;
@@ -209,7 +209,7 @@ SparseTensor& hspmm_out_sparse_cuda(
 
   int64_t nnz = sparse._nnz();
 
-  Tensor indices = at::empty({1, nnz}, CUDA(kLong));
+  Tensor indices = at::empty({1, nnz}, at::device(at::kCUDA).dtype(at::kLong));
   // create values in column-major format to avoid copying in spaddmm
   Tensor values = at::empty({n, nnz}, dense.options());
   values.transpose_(0, 1);

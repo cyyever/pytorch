@@ -2870,20 +2870,49 @@ TORCH_LIBRARY(test_autograd_function_backed_op, m) {
         loss.backward()
         self.assertEqual(x.grad, temp)
 
-    def test_torch_ops_warning_propagation(self):
-        x = torch.ones(2)
-        y = torch.ones(2)
-        out = torch.empty(2, 2)
-        with self.assertWarnsRegex(UserWarning, "torch.ger is deprecated"):
-            torch.ops.aten.ger.out(x, y, out=out)
+    # Each test needs its own namespace: scoped_load_inline builds into a fresh
+    # temp dir per call, so two loads of one TORCH_LIBRARY would run the same
+    # static initializer twice and hit the single-registration check.
+    WARN_IN_FORWARD_SOURCE = """
+#include <torch/extension.h>
 
-    def test_dispatch_call_boxed_warning_propagation(self):
-        op = torch._C._dispatch_find_schema_or_throw("aten::ger", "out")
+torch::Tensor& warn_in_forward_out(const torch::Tensor& x, torch::Tensor& out) {
+  TORCH_WARN("warn_in_forward called");
+  out.copy_(x);
+  return out;
+}
+
+TORCH_LIBRARY(NAMESPACE, m) {
+  m.def("foo.out(Tensor x, *, Tensor(a!) out) -> Tensor(a!)");
+  m.impl("foo.out", c10::DispatchKey::CPU, TORCH_FN(warn_in_forward_out));
+}
+"""
+
+    def _load_warn_in_forward(self, load_inline, namespace):
+        load_inline(
+            name=namespace,
+            cpp_sources=self.WARN_IN_FORWARD_SOURCE.replace("NAMESPACE", namespace),
+            is_python_module=False,
+        )
+
+    @scoped_load_inline
+    def test_torch_ops_warning_propagation(self, load_inline):
+        self._load_warn_in_forward(load_inline, "_test_warn_in_forward_ops")
         x = torch.ones(2)
-        y = torch.ones(2)
-        out = torch.empty(2, 2)
-        with self.assertWarnsRegex(UserWarning, "torch.ger is deprecated"):
-            torch._C._dispatch_call_boxed(op, x, y, out=out)
+        out = torch.empty(2)
+        with self.assertWarnsRegex(UserWarning, "warn_in_forward called"):
+            torch.ops._test_warn_in_forward_ops.foo.out(x, out=out)
+
+    @scoped_load_inline
+    def test_dispatch_call_boxed_warning_propagation(self, load_inline):
+        self._load_warn_in_forward(load_inline, "_test_warn_in_forward_boxed")
+        op = torch._C._dispatch_find_schema_or_throw(
+            "_test_warn_in_forward_boxed::foo", "out"
+        )
+        x = torch.ones(2)
+        out = torch.empty(2)
+        with self.assertWarnsRegex(UserWarning, "warn_in_forward called"):
+            torch._C._dispatch_call_boxed(op, x, out=out)
 
     @scoped_load_inline
     def test_torch_ops_out_of_range_raises_index_error(self, load_inline):

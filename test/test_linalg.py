@@ -190,7 +190,7 @@ class TestLinalg(TestCase):
                                     r"input tensors but got shapes \[2, 3\] and \[2, 2\]"):
             torch.randn(2, 3, device=device, dtype=dtype).inner(torch.randn(2, 2, device=device, dtype=dtype))
 
-    # Tests torch.outer, and its alias, torch.ger, vs. NumPy
+    # Tests torch.outer vs. NumPy
     @precisionOverride({torch.bfloat16: 1e-1})
     @dtypes(*all_types_and_complex_and(torch.half, torch.bfloat16, torch.bool))
     def test_outer(self, device, dtype):
@@ -208,16 +208,9 @@ class TestLinalg(TestCase):
             self.assertEqual(torch.outer(a, b), expected, exact_dtype=False)
             self.assertEqual(torch.Tensor.outer(a, b), expected, exact_dtype=False)
 
-            self.assertEqual(torch.ger(a, b), expected, exact_dtype=False)
-            self.assertEqual(torch.Tensor.ger(a, b), expected, exact_dtype=False)
-
             # test out variant
             out = torch.empty(a.size(0), b.size(0), device=device, dtype=dtype)
             torch.outer(a, b, out=out)
-            self.assertEqual(out, expected, exact_dtype=False)
-
-            out = torch.empty(a.size(0), b.size(0), device=device, dtype=dtype)
-            torch.ger(a, b, out=out)
             self.assertEqual(out, expected, exact_dtype=False)
 
         a = torch.randn(50).to(device=device, dtype=dtype)
@@ -856,7 +849,7 @@ class TestLinalg(TestCase):
     def test_outer_type_promotion(self, device, dtypes):
         a = torch.randn(5).to(device=device, dtype=dtypes[0])
         b = torch.randn(5).to(device=device, dtype=dtypes[1])
-        for op in (torch.outer, torch.Tensor.outer, torch.ger, torch.Tensor.ger):
+        for op in (torch.outer, torch.Tensor.outer):
             result = op(a, b)
             self.assertEqual(result.dtype, torch.result_type(a, b))
 
@@ -882,7 +875,6 @@ class TestLinalg(TestCase):
             b = torch.rand(size[1], device=device)
 
             self.assertEqual(torch.outer(a, b).shape, size)
-            self.assertEqual(torch.ger(a, b).shape, size)
 
             m = torch.empty(size, device=device)
             self.assertEqual(torch.addr(m, a, b).shape, size)
@@ -892,8 +884,6 @@ class TestLinalg(TestCase):
         b = torch.tensor(6, device=device)
         self.assertRaises(RuntimeError, lambda: torch.outer(a, b))
         self.assertRaises(RuntimeError, lambda: torch.outer(b, a))
-        self.assertRaises(RuntimeError, lambda: torch.ger(a, b))
-        self.assertRaises(RuntimeError, lambda: torch.ger(b, a))
         self.assertRaises(RuntimeError, lambda: torch.addr(m, a, b))
         self.assertRaises(RuntimeError, lambda: torch.addr(m, b, a))
 
@@ -2995,7 +2985,7 @@ class TestLinalg(TestCase):
     @dtypes(*floating_and_complex_types())
     @serialTest()
     def test_svd(self, device, dtype):
-        # tests linalg.svd, svd, linalg.svdvals
+        # tests linalg.svd, linalg.svdvals
         make_arg = partial(make_tensor, dtype=dtype, device=device)
 
         backends = ["default"]
@@ -3029,16 +3019,6 @@ class TestLinalg(TestCase):
                 self.assertEqual(mul_svd_factors(U_f[..., :k], S_f, Vh_f[..., :k, :]), A)
 
                 S_s = torch.linalg.svdvals(A, driver=driver)
-                self.assertEqual(S_s, S)
-
-                U, S, V = torch.svd(A, some=True)
-                self.assertEqual(mul_svd_factors(U, S, V.mH), A)
-
-                U_f, S_f, V_f = torch.svd(A, some=False)
-                self.assertEqual(S_f, S)
-                self.assertEqual(mul_svd_factors(U_f[..., :k], S_f, V_f[..., :, :k].mH), A)
-
-                S_s = torch.svd(A, compute_uv=False).S
                 self.assertEqual(S_s, S)
 
     @skipCPUIfNoLapack
@@ -5739,8 +5719,7 @@ class TestLinalg(TestCase):
     @skipCPUIfNoLapack
     @dtypes(*floating_and_complex_types())
     def test_linalg_lu_family(self, device, dtype):
-        # Tests torch.lu
-        #       torch.linalg.lu_factor
+        # Tests torch.linalg.lu_factor
         #       torch.linalg.lu_factor_ex
         #       torch.lu_unpack
         #       torch.linalg.lu_solve
@@ -5812,7 +5791,7 @@ class TestLinalg(TestCase):
         sizes = ((3, 3), (5, 5), (4, 2), (3, 4), (0, 0), (0, 1), (1, 0))
         batches = ((0,), (), (1,), (2,), (3,), (1, 0), (3, 5))
         pivots = (True, False) if self.device_type != "cpu" else (True,)
-        fns = (partial(torch.lu, get_infos=True), torch.linalg.lu_factor, torch.linalg.lu_factor_ex)
+        fns = (torch.linalg.lu_factor, torch.linalg.lu_factor_ex)
         for ms, batch, pivot, singular, fn in itertools.product(sizes, batches, pivots, (True, False), fns):
             shape = batch + ms
             A = make_arg(shape) if singular else make_arg_full(*shape)
@@ -5833,7 +5812,7 @@ class TestLinalg(TestCase):
 
         if self.device_type == 'cpu':
             # Error checking, no pivoting variant on CPU
-            fns = [torch.lu, torch.linalg.lu_factor, torch.linalg.lu_factor_ex, torch.linalg.lu]
+            fns = [torch.linalg.lu_factor, torch.linalg.lu_factor_ex, torch.linalg.lu]
             for f in fns:
                 with self.assertRaisesRegex(RuntimeError, 'LU without pivoting is not implemented on the CPU'):
                     f(torch.empty(1, 2, 2), pivot=False)
@@ -8460,7 +8439,8 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
             test((torch.randn(n, n, n + 1, dtype=dtype, device=device) * scale)[:, 2, 1:])
             # det = 0
             r = torch.randn(n, n, dtype=dtype, device=device) * scale
-            u, s, v = r.svd()
+            u, s, vh = torch.linalg.svd(r, full_matrices=False)
+            v = vh.mH
             if reference_slogdet(u)[0] < 0:
                 u = -u
             if reference_slogdet(v)[0] < 0:
@@ -8472,7 +8452,8 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
         # Small values to test numerical stability. Note that we don't scale
         # this matrix.
         r = torch.randn(512, 512, dtype=dtype, device=device)
-        u, s, v = r.svd()
+        u, s, vh = torch.linalg.svd(r, full_matrices=False)
+        v = vh.mH
         s.fill_(1. / (100 * s.numel()))
         test(u.mm(s.diag()).mm(v))
 
@@ -8766,112 +8747,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
         for indices in itertools.product((True, False), repeat=2):
             verify_batched_matmul(*indices)
 
-    def lu_solve_test_helper(self, A_dims, b_dims, pivot, device, dtype):
-        make_fullrank = make_fullrank_matrices_with_distinct_singular_values
-        make_A = partial(make_fullrank, device=device, dtype=dtype)
-
-        b = torch.randn(*b_dims, dtype=dtype, device=device)
-        A = make_A(*A_dims)
-        LU_data, LU_pivots, info = torch.linalg.lu_factor_ex(A)
-        self.assertEqual(info, torch.zeros_like(info))
-        return b, A, LU_data, LU_pivots
-
-    @skipCPUIfNoLapack
-    @skipCUDAIfNoCusolver
-    @dtypes(*floating_and_complex_types())
-    @precisionOverride({torch.float32: 1e-3, torch.complex64: 1e-3,
-                        torch.float64: 1e-8, torch.complex128: 1e-8})
-    def test_lu_solve(self, device, dtype):
-        def sub_test(pivot):
-            for k, n in zip([2, 3, 5], [3, 5, 7]):
-                b, A, LU_data, LU_pivots = self.lu_solve_test_helper((n, n), (n, k), pivot, device, dtype)
-                x = torch.lu_solve(b, LU_data, LU_pivots)
-                self.assertEqual(b, np.matmul(A.cpu(), x.cpu()))
-
-        sub_test(True)
-        if self.device_type != 'cpu':
-            sub_test(False)
-
-    @skipCPUIfNoLapack
-    @skipCUDAIfNoCusolver
-    @dtypes(*floating_and_complex_types())
-    @precisionOverride({torch.float32: 1e-3, torch.complex64: 1e-3,
-                        torch.float64: 1e-8, torch.complex128: 1e-8})
-    def test_lu_solve_batched(self, device, dtype):
-        def sub_test(pivot):
-            def lu_solve_batch_test_helper(A_dims, b_dims, pivot):
-                b, A, LU_data, LU_pivots = self.lu_solve_test_helper(A_dims, b_dims, pivot, device, dtype)
-                x_exp_list = []
-                for i in range(b_dims[0]):
-                    x_exp_list.append(torch.lu_solve(b[i], LU_data[i], LU_pivots[i]))
-                x_exp = torch.stack(x_exp_list)  # Stacked output
-                x_act = torch.lu_solve(b, LU_data, LU_pivots)  # Actual output
-                self.assertEqual(x_exp, x_act)  # Equality check
-                Ax = np.matmul(A.cpu(), x_act.cpu())
-                self.assertEqual(b, Ax)
-
-            for batchsize in [1, 3, 4]:
-                lu_solve_batch_test_helper((batchsize, 5, 5), (batchsize, 5, 10), pivot)
-
-        # Tests tensors with 0 elements
-        b = torch.randn(3, 0, 3, dtype=dtype, device=device)
-        A = torch.randn(3, 0, 0, dtype=dtype, device=device)
-        LU_data, LU_pivots = torch.linalg.lu_factor(A)
-        self.assertEqual(torch.empty_like(b), b.lu_solve(LU_data, LU_pivots))
-
-        sub_test(True)
-        if self.device_type != 'cpu':
-            sub_test(False)
-
-    @slowTest
-    @skipCPUIfNoLapack
-    @skipCUDAIfNoCusolver
-    @dtypes(*floating_and_complex_types())
-    def test_lu_solve_batched_many_batches(self, device, dtype):
-        def run_test(A_dims, b_dims):
-            b, A, LU_data, LU_pivots = self.lu_solve_test_helper(A_dims, b_dims, True, device, dtype)
-            x = torch.lu_solve(b, LU_data, LU_pivots)
-            Ax = torch.matmul(A, x)
-            self.assertEqual(Ax, b.expand_as(Ax))
-
-        run_test((65536, 5, 5), (65536, 5, 10))
-        run_test((262144, 5, 5), (262144, 5, 10))
-
-    @skipCPUIfNoLapack
-    @skipCUDAIfNoCusolver
-    @dtypes(*floating_and_complex_types())
-    def test_lu_solve_batched_broadcasting(self, device, dtype):
-        make_fullrank = make_fullrank_matrices_with_distinct_singular_values
-        make_A = partial(make_fullrank, device=device, dtype=dtype)
-
-        def run_test(A_dims, b_dims, pivot=True):
-            A_matrix_size = A_dims[-1]
-            A_batch_dims = A_dims[:-2]
-            A = make_A(*A_batch_dims, A_matrix_size, A_matrix_size)
-            b = make_tensor(b_dims, dtype=dtype, device=device)
-            x_exp = np.linalg.solve(A.cpu(), b.cpu())
-            LU_data, LU_pivots = torch.linalg.lu_factor(A)
-            x = torch.lu_solve(b, LU_data, LU_pivots)
-            self.assertEqual(x, x_exp)
-
-        # test against numpy.linalg.solve
-        run_test((2, 1, 3, 4, 4), (2, 1, 3, 4, 6))  # no broadcasting
-        run_test((2, 1, 3, 4, 4), (4, 6))  # broadcasting b
-        run_test((4, 4), (2, 1, 3, 4, 2))  # broadcasting A
-        run_test((1, 3, 1, 4, 4), (2, 1, 3, 4, 5))  # broadcasting A & b
-
-    @onlyAccelerator
-    @dtypes(*floating_and_complex_types())
-    # this tests https://github.com/pytorch/pytorch/issues/36921
-    def test_lu_solve_large_matrices(self, device, dtype):
-        def run_test(A_dims, b_dims):
-            b, A, LU_data, LU_pivots = self.lu_solve_test_helper(A_dims, b_dims, True, device, dtype)
-            x = torch.lu_solve(b, LU_data, LU_pivots)
-            Ax = torch.matmul(A, x)
-            self.assertEqual(Ax, b.expand_as(Ax))
-
-        run_test((1, 1), (1, 1, 1025))
-
     @skipCPUIfNoLapack
     def test_pca_lowrank(self, device):
         from torch.testing._internal.common_utils import random_lowrank_matrix, random_sparse_matrix
@@ -8944,7 +8819,7 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
             for density in [0.005, 0.1]:
                 run_subtest(guess_rank, None, size, (), device, torch.pca_lowrank, density=density)
 
-    # Ensure that nuclear_norm's out variant gives the same result as the non-out
+    # Ensure that the nuclear norm's out variant gives the same result as the non-out
     @onlyNativeDeviceTypes
     @skipCUDAIfNoLinalgsolver
     @skipCPUIfNoLapack
@@ -8964,11 +8839,11 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
                 x = torch.randn(*input_size, device=device, dtype=dtype)
                 result_out = torch.empty(0, device=device, dtype=dtype)
                 if dim is None:
-                    result = torch.nuclear_norm(x, keepdim=keepdim)
-                    torch.nuclear_norm(x, keepdim=keepdim, out=result_out)
+                    result = torch.norm(x, p="nuc", keepdim=keepdim)
+                    torch.norm(x, p="nuc", keepdim=keepdim, out=result_out)
                 else:
-                    result = torch.nuclear_norm(x, keepdim=keepdim, dim=dim)
-                    torch.nuclear_norm(x, keepdim=keepdim, dim=dim, out=result_out)
+                    result = torch.norm(x, p="nuc", dim=dim, keepdim=keepdim)
+                    torch.norm(x, p="nuc", dim=dim, keepdim=keepdim, out=result_out)
                 self.assertEqual(result, result_out, msg=msg)
 
     @skipCUDAIfNoCusolver

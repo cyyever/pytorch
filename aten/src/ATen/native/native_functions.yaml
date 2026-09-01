@@ -4380,7 +4380,7 @@
     CPU: channel_shuffle_cpu
     CompositeImplicitAutograd: math_channel_shuffle
 
-- func: is_pinned(Tensor self, Device? device=None) -> bool
+- func: is_pinned(Tensor self) -> bool
   variants: method
   dispatch:
     # the NestedTensor keys are necessary because NestedTensor has been removed
@@ -4391,11 +4391,11 @@
 
 # TODO: add a copy kwarg that guarantees that the tensor is put into fresh
 # pinned memory
-- func: pin_memory(Tensor(a) self, Device? device=None) -> Tensor(a)
+- func: pin_memory(Tensor(a) self) -> Tensor(a)
   variants: method
 
 # Unlike pin_memory, this is guaranteed to give a new non-aliasing tensor
-- func: _pin_memory(Tensor self, Device? device=None) -> Tensor
+- func: _pin_memory(Tensor self) -> Tensor
   dispatch:
     CompositeExplicitAutograd: _pin_memory
     NestedTensorCPU: _pin_memory_nested
@@ -6570,29 +6570,6 @@
   tags: pointwise
 
 # Deprecated (v.1.12)
-- func: frobenius_norm.dim(Tensor self, int[1] dim, bool keepdim=False) -> Tensor
-  variants: function
-
-# Deprecated (v.1.12)
-- func: frobenius_norm.out(Tensor self, int[1] dim, bool keepdim=False, *, Tensor(a!) out) -> Tensor(a!)
-  variants: function
-
-# Deprecated (v.1.12)
-- func: nuclear_norm(Tensor self, bool keepdim=False) -> Tensor
-  variants: function
-
-# Deprecated (v.1.12)
-- func: nuclear_norm.out(Tensor self, bool keepdim=False, *, Tensor(a!) out) -> Tensor(a!)
-  variants: function
-
-# Deprecated (v.1.12)
-- func: nuclear_norm.dim(Tensor self, int[2] dim, bool keepdim=False) -> Tensor
-  variants: function
-
-# Deprecated (v.1.12)
-- func: nuclear_norm.dim_out(Tensor self, int[2] dim, bool keepdim=False, *, Tensor(a!) out) -> Tensor(a!)
-  variants: function
-
 - func: clone(Tensor self, *, MemoryFormat? memory_format=None) -> Tensor
   variants: function, method
   dispatch:
@@ -8909,11 +8886,6 @@
   dispatch:
     CompositeImplicitAutograd: linalg_vander_symint
 
-- func: svd.U(Tensor self, bool some=True, bool compute_uv=True, *, Tensor(a!) U, Tensor(b!) S, Tensor(c!) V) -> (Tensor(a!) U, Tensor(b!) S, Tensor(c!) V)
-
-- func: svd(Tensor self, bool some=True, bool compute_uv=True) -> (Tensor U, Tensor S, Tensor V)
-  variants: method, function
-
 # swapaxes, alias for transpose
 - func: swapaxes(Tensor(a) self, int axis0, int axis1) -> Tensor(a)
   variants: function, method
@@ -8987,14 +8959,6 @@
   variants: method, function
   dispatch:
     CPU, CUDA: ormqr
-
-- func: _lu_with_info(Tensor self, bool pivot=True, bool check_errors=True) -> (Tensor LU, Tensor pivots, Tensor info)
-  variants: function
-
-- func: lu_solve.out(Tensor self, Tensor LU_data, Tensor LU_pivots, *, Tensor(a!) out) -> Tensor(a!)
-
-- func: lu_solve(Tensor self, Tensor LU_data, Tensor LU_pivots) -> Tensor
-  variants: method, function
 
 # lu_unpack
 - func: lu_unpack(Tensor LU_data, Tensor LU_pivots, bool unpack_data=True, bool unpack_pivots=True) -> (Tensor P, Tensor L, Tensor U)
@@ -13876,12 +13840,6 @@
   variants: function, method
 
 - func: outer.out(Tensor self, Tensor vec2, *, Tensor(a!) out) -> Tensor(a!)
-
-# torch.ger, alias for torch.outer
-- func: ger(Tensor self, Tensor vec2) -> Tensor
-  variants: function, method
-
-- func: ger.out(Tensor self, Tensor vec2, *, Tensor(a!) out) -> Tensor(a!)
 
 - func: linalg_norm(Tensor self, Scalar? ord=None, int[1]? dim=None, bool keepdim=False, *, ScalarType? dtype=None) -> Tensor
   python_module: linalg

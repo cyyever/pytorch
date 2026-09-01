@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   std::vector<at::Tensor> tensors;
   for (const auto i : c10::irange(ntensors)) {
     auto x =
-        at::ones({1000, 16 * (i + 1)}, at::TensorOptions(at::CPU(at::kFloat)));
+        at::ones({1000, 16 * (i + 1)}, at::TensorOptions(at::kCPU).dtype(at::kFloat));
     tensors.push_back(x);
   }
 

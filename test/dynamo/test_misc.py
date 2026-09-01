@@ -7054,7 +7054,7 @@ not ___dict_contains('cccccccc', G['sys'].modules)""",
             return arg.is_pinned()
 
         def fn(x):
-            if pinned_memory_of(x) or x.is_pinned(None) or x.is_pinned(device=None):
+            if pinned_memory_of(x):
                 return x + 1
             return x + 2
 

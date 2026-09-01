@@ -5068,7 +5068,7 @@ class TestSerializationAccelerator(TestCase):
     def test_use_pinned_memory_for_d2h(self, device):
         def patched_write_record(self, filename, data, nbytes):
             if isinstance(data, (torch.TypedStorage, torch.UntypedStorage)):
-                if not data.is_pinned(device=device):
+                if not data.is_pinned():
                     raise RuntimeError("Expected storage to be in pinned memory")
                 return None
 

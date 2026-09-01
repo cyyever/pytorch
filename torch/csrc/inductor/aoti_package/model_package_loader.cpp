@@ -439,7 +439,7 @@ void validate_package_device(
     const char* backend_name = "CUDA";
 #endif
     TORCH_CHECK(
-        at::detail::getCUDAHooks().getNumGPUs() > 0,
+        at::detail::getCUDAHooks().deviceCount() > 0,
         "Cannot load AOTInductor package for device 'cuda' because ",
         backend_name,
         " is not available in this process. Check that this host or container has GPU access, or compile/package the model for CPU.");

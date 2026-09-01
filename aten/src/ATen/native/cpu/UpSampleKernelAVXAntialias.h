@@ -67,7 +67,7 @@ at::Tensor unpack_rgb(const at::Tensor& packed_tensor) {
   auto num_channels = packed_tensor.size(0);
 
   constexpr int rgba_size = 4;
-  auto unpacked_tensor = at::empty({rgba_size, packed_tensor.size(1), packed_tensor.size(2)}, at::CPU(at::kByte));
+  auto unpacked_tensor = at::empty({rgba_size, packed_tensor.size(1), packed_tensor.size(2)}, at::kByte);
   uint8_t* unpacked = (uint8_t*) unpacked_tensor.data_ptr<uint8_t>();
 
   auto stride_i = packed_tensor.stride(2);

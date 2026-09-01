@@ -80,8 +80,8 @@ def imag_impl(self: ComplexTensor) -> torch.Tensor:
 
 
 @register_complex(aten.is_pinned)
-def is_pinned_impl(self: ComplexTensor, device: torch.device | None = None) -> bool:
-    return self.is_pinned(device)
+def is_pinned_impl(self: ComplexTensor) -> bool:
+    return self.is_pinned()
 
 
 SIMPLE_OPS_LIST = [

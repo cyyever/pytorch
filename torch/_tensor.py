@@ -899,22 +899,6 @@ class Tensor(torch._C.TensorBase):
             )
         return torch.norm(self, p, dim, keepdim, dtype=dtype)
 
-    def lu(self, pivot=True, get_infos=False):
-        r"""See :func:`torch.lu`"""
-        # If get_infos is True, then we don't need to check for errors and vice versa
-        if has_torch_function_unary(self):
-            return handle_torch_function(
-                Tensor.lu, (self,), self, pivot=pivot, get_infos=get_infos
-            )
-
-        LU, pivots, infos = torch._lu_with_info(
-            self, pivot=pivot, check_errors=(not get_infos)
-        )
-        if get_infos:
-            return LU, pivots, infos
-        else:
-            return LU, pivots
-
     def stft(
         self,
         n_fft: int,

@@ -92,7 +92,6 @@ ops_dde_xfail = {
     xfail("log_normal"),
     xfail("logdet"),
     xfail("logsumexp"),
-    xfail("lu_solve"),
     xfail("masked.amax"),
     xfail("masked.amin"),
     xfail("masked.argmax"),

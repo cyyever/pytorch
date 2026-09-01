@@ -23,7 +23,7 @@ void fill_tensor(int64_t scalar, Tensor& t_) {
 // write the same type as we read (using a0, ..., aX-1) and we once write to
 // double (using a4 as a target). We also exercise on a zero_dim and empty
 // tensor.
-void test(DeprecatedTypeProperties& type, IntArrayRef shape, int64_t a = 0, int64_t b = 1) {
+void test(const TensorOptions& type, IntArrayRef shape, int64_t a = 0, int64_t b = 1) {
   auto zero_dim = at::empty({}, type);
   zero_dim.fill_(2);
   zero_dim.exp_();
@@ -35,10 +35,10 @@ void test(DeprecatedTypeProperties& type, IntArrayRef shape, int64_t a = 0, int6
   empty_t.fill_(3);
   empty_t.exp_();
 
-  auto a0 = at::empty({0}, type.options());
-  auto a1 = at::empty({0}, type.options());
-  auto a2 = at::empty({0}, type.options());
-  auto a3 = at::empty({0}, type.options());
+  auto a0 = at::empty({0}, type);
+  auto a1 = at::empty({0}, type);
+  auto a2 = at::empty({0}, type);
+  auto a3 = at::empty({0}, type);
   auto a4 = at::empty({0}, at::TensorOptions(kCPU).dtype(kDouble));
 
   std::vector<Tensor> tensors({a0, a1, a2, a3, a4});
@@ -109,35 +109,35 @@ void test(DeprecatedTypeProperties& type, IntArrayRef shape, int64_t a = 0, int6
 // apply utils test 2-dim small contiguous
 TEST(ApplyUtilsTest, Contiguous2D) {
   manual_seed(123);
-  test(CPU(kDouble), {2, 1}, -1, -1);
+  test(at::kDouble, {2, 1}, -1, -1);
 }
 
 // apply utils test 2-dim small
 TEST(ApplyUtilsTest, Small2D) {
   manual_seed(123);
-  test(CPU(kDouble), {2, 1});
+  test(at::kDouble, {2, 1});
 }
 
 // apply utils test 2-dim
 TEST(ApplyUtilsTest, _2D) {
   manual_seed(123);
-  test(CPU(kDouble), {20, 10});
+  test(at::kDouble, {20, 10});
 }
 
 // apply utils test 3-dim
 TEST(ApplyUtilsTest, _3D) {
   manual_seed(123);
-  test(CPU(kDouble), {3, 4, 2});
+  test(at::kDouble, {3, 4, 2});
 }
 
 // apply utils test 3-dim medium
 TEST(ApplyUtilsTest, Medium3D) {
   manual_seed(123);
-  test(CPU(kDouble), {3, 40, 2});
+  test(at::kDouble, {3, 40, 2});
 }
 
 // apply utils test 10-dim
 TEST(ApplyUtilsTest, _10D) {
   manual_seed(123);
-  test(CPU(kDouble), {3, 4, 2, 5, 2, 1, 3, 4, 2, 3});
+  test(at::kDouble, {3, 4, 2, 5, 2, 1, 3, 4, 2, 3});
 }

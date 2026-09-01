@@ -1259,13 +1259,12 @@ Tensor select_copy_sparse_csr(const Tensor& self, int64_t dim, int64_t index) {
   return select_sparse_csr_worker<false, true>(self, dim, index);
 }
 
-bool is_pinned_sparse_compressed(const Tensor& self, std::optional<Device> device) {
+bool is_pinned_sparse_compressed(const Tensor& self) {
   // Assuming that compressed/plain_indices has the same pin memory state as values
-  return self.values().is_pinned(device);
+  return self.values().is_pinned();
 }
 
-Tensor _pin_memory_sparse_compressed(const Tensor& self, std::optional<Device> device) {
-  TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!device.has_value() || device->is_cuda());
+Tensor _pin_memory_sparse_compressed(const Tensor& self) {
   // pinning of sparse tensor is equivalent to cloning indices and
   // values that will not change the sparse tensor invariants. Hence,
   // we can skip checking the sparse tensor invariants for efficiency.
@@ -1273,9 +1272,9 @@ Tensor _pin_memory_sparse_compressed(const Tensor& self, std::optional<Device> d
   TensorOptions options = self.options().pinned_memory(true);
   auto impl = get_sparse_csr_impl(self);
   return at::_sparse_compressed_tensor_unsafe(
-        impl->compressed_indices().pin_memory(device),
-        impl->plain_indices().pin_memory(device),
-        impl->values().pin_memory(device),
+        impl->compressed_indices().pin_memory(),
+        impl->plain_indices().pin_memory(),
+        impl->values().pin_memory(),
         self.sizes(),
         optTypeMetaToScalarType(options.dtype_opt()),
         options.layout_opt(),

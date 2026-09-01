@@ -410,7 +410,6 @@ view of a storage and defines numeric operations on it.
     Tensor.greater_equal_
     Tensor.geometric_
     Tensor.geqrf
-    Tensor.ger
     Tensor.get_device
     Tensor.gt
     Tensor.gt_
@@ -507,8 +506,6 @@ view of a storage and defines numeric operations on it.
     Tensor.lt_
     Tensor.less
     Tensor.less_
-    Tensor.lu
-    Tensor.lu_solve
     Tensor.as_subclass
     Tensor.map_
     Tensor.masked_scatter_
@@ -670,7 +667,6 @@ view of a storage and defines numeric operations on it.
     Tensor.subtract_
     Tensor.sum
     Tensor.sum_to_size
-    Tensor.svd
     Tensor.swapaxes
     Tensor.swapdims
     Tensor.t

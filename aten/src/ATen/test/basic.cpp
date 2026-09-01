@@ -27,15 +27,15 @@ struct THFloatTensor;
 
 using namespace at;
 
-void TestResize(DeprecatedTypeProperties& type) {
-  auto a = at::empty({0}, type.options());
+void TestResize(const TensorOptions& type) {
+  auto a = at::empty({0}, type);
   a.resize_({3, 4});
   ASSERT_EQ_RESOLVED(a.numel(), 12);
   a.resize_({5, 7});
   ASSERT_EQ_RESOLVED(a.numel(), 35);
 }
 
-void TestOnesAndDot(DeprecatedTypeProperties& type) {
+void TestOnesAndDot(const TensorOptions& type) {
   Tensor b0 = ones({1, 1}, type);
   ASSERT_EQ_RESOLVED((b0 + b0).sum().item<double>(), 2);
 
@@ -45,12 +45,12 @@ void TestOnesAndDot(DeprecatedTypeProperties& type) {
   Tensor b = ones({3, 4}, type);
   ASSERT_EQ_RESOLVED((b + b).sum().item<double>(), 24);
   ASSERT_EQ_RESOLVED(b.numel(), 12);
-  if (type.backend() != Backend::CPU || type.scalarType() != kHalf) {
+  if (!type.device().is_cpu() || type.dtype() != kHalf) {
     ASSERT_EQ_RESOLVED(b.view(-1).dot(b.view(-1)).item<double>(), 12);
   }
 }
 
-void TestSort(DeprecatedTypeProperties& type) {
+void TestSort(const TensorOptions& type) {
   Tensor b = rand({3, 4}, type);
 
   auto z = b.sort(1);
@@ -60,8 +60,8 @@ void TestSort(DeprecatedTypeProperties& type) {
   ASSERT_TRUE(isLT);
 }
 
-void TestRandperm(DeprecatedTypeProperties& type) {
-  if (type.backend() != Backend::CUDA) {
+void TestRandperm(const TensorOptions& type) {
+  if (!type.device().is_cuda()) {
     Tensor b = randperm(15, type);
     auto [rv, ri] = sort(b, 0);
     bool isLE = (rv[0].item<float>() <= rv[1].item<float>());
@@ -74,20 +74,20 @@ void SendContext() {
   ss << "context: " << std::hex << (int64_t)&globalContext() << std::endl;
 }
 
-void TestAdd(DeprecatedTypeProperties& type) {
+void TestAdd(const TensorOptions& type) {
   Tensor a = rand({3, 4}, type);
   Tensor b = rand({3, 4}, type);
   Tensor c = add(a, add(a, b));
   // TODO:0-dim Tensor d(3.f);
   Scalar d = 3.f;
-  if (type.backend() == Backend::CPU && type.scalarType() == kHalf) {
+  if (type.device().is_cpu() && type.dtype() == kHalf) {
       ASSERT_TRUE(add(c, d).allclose(a + a + b + d, 1e-2));
   } else {
       ASSERT_TRUE(add(c, d).allclose(a + a + b + d));
   }
 }
 
-void TestZeros(DeprecatedTypeProperties& type) {
+void TestZeros(const TensorOptions& type) {
   auto begin = std::chrono::high_resolution_clock::now();
   Tensor a = zeros({1024, 1024}, type);
   for ([[maybe_unused]] const auto i : c10::irange(1, 1000)) {
@@ -104,7 +104,7 @@ void TestZeros(DeprecatedTypeProperties& type) {
    ASSERT_EQ(norm(a).item<double>(), 0.0);
 }
 
-void TestLoadsOfAdds(DeprecatedTypeProperties& type) {
+void TestLoadsOfAdds(const TensorOptions& type) {
   auto begin = std::chrono::high_resolution_clock::now();
   Tensor d = ones({3, 4}, type);
   Tensor r = zeros({3, 4}, type);
@@ -121,7 +121,7 @@ void TestLoadsOfAdds(DeprecatedTypeProperties& type) {
   ASSERT_EQ_RESOLVED(norm(1000 * d).item<double>(), norm(r).item<double>());
 }
 
-void TestLoadOfAddsWithCopy(DeprecatedTypeProperties& type) {
+void TestLoadOfAddsWithCopy(const TensorOptions& type) {
   auto begin = std::chrono::high_resolution_clock::now();
   Tensor d = ones({3, 4}, type);
   Tensor r = zeros({3, 4}, type);
@@ -138,22 +138,22 @@ void TestLoadOfAddsWithCopy(DeprecatedTypeProperties& type) {
   ASSERT_EQ_RESOLVED(norm(1000 * d).item<double>(), norm(r).item<double>());
 }
 
-void TestIsContiguous(DeprecatedTypeProperties& type) {
+void TestIsContiguous(const TensorOptions& type) {
   Tensor a = rand({3, 4}, type);
   ASSERT_TRUE(a.is_contiguous());
   a = a.transpose(0, 1);
   ASSERT_FALSE(a.is_contiguous());
 }
 
-void TestPermute(DeprecatedTypeProperties& type) {
+void TestPermute(const TensorOptions& type) {
   Tensor a = rand({3, 4, 5}, type);
   Tensor b = a.permute({1, 2, 0});
   ASSERT_TRUE(b.sizes().equals({4, 5, 3}));
   ASSERT_TRUE(b.strides().equals({5, 1, 20}));
 }
 
-void TestMm(DeprecatedTypeProperties& type) {
-  if (type.backend() != Backend::CPU || type.scalarType() != kHalf) {
+void TestMm(const TensorOptions& type) {
+  if (!type.device().is_cpu() || type.dtype() != kHalf) {
     Tensor a = rand({3, 4}, type);
     Tensor b = rand({4}, type);
     Tensor c = mv(a, b);
@@ -161,26 +161,26 @@ void TestMm(DeprecatedTypeProperties& type) {
   }
 }
 
-void TestSqueeze(DeprecatedTypeProperties& type) {
+void TestSqueeze(const TensorOptions& type) {
   Tensor a = rand({2, 1}, type);
   Tensor b = squeeze(a);
   ASSERT_EQ_RESOLVED(b.dim(), 1);
   a = rand({1}, type);
   b = squeeze(a);
   ASSERT_TRUE(a[0].equal(b));
-  Tensor c = at::scalar_tensor(1, type.options());
+  Tensor c = at::scalar_tensor(1, type);
   Tensor d = squeeze(c);
   ASSERT_TRUE(c.equal(d));
 }
 
-void TestCopy(DeprecatedTypeProperties& type) {
+void TestCopy(const TensorOptions& type) {
   Tensor a = zeros({4, 3}, type);
   Tensor e = rand({4, 3}, type);
   a.copy_(e);
   ASSERT_TRUE(a.equal(e));
 }
 
-void TestCopyBroadcasting(DeprecatedTypeProperties& type) {
+void TestCopyBroadcasting(const TensorOptions& type) {
   Tensor a = zeros({4, 3}, type);
   Tensor e = rand({3}, type);
   a.copy_(e);
@@ -188,8 +188,8 @@ void TestCopyBroadcasting(DeprecatedTypeProperties& type) {
     ASSERT_TRUE(a[i].equal(e));
   }
 }
-void TestAbsValue(DeprecatedTypeProperties& type) {
-  Tensor r = at::abs(at::scalar_tensor(-3, type.options()));
+void TestAbsValue(const TensorOptions& type) {
+  Tensor r = at::abs(at::scalar_tensor(-3, type));
   ASSERT_EQ_RESOLVED(r.item<int32_t>(), 3);
 }
 /*
@@ -205,12 +205,12 @@ std::cout << (a == 10.) << " -- should be 1" << std::endl;
 #endif
 */
 
-void TestAddingAValueWithScalar(DeprecatedTypeProperties& type) {
+void TestAddingAValueWithScalar(const TensorOptions& type) {
   Tensor a = rand({4, 3}, type);
   ASSERT_TRUE((ones({4, 3}, type) + a).equal(add(a, 1)));
 }
 
-void TestSelect(DeprecatedTypeProperties& type) {
+void TestSelect(const TensorOptions& type) {
   Tensor a = rand({3, 7}, type);
   auto a_13 = select(a, 1, 3);
   auto a_13_02 = select(select(a, 1, 3), 0, 2);
@@ -218,8 +218,8 @@ void TestSelect(DeprecatedTypeProperties& type) {
   ASSERT_TRUE(a[2][3].equal(a_13_02));
 }
 
-void TestZeroDim(DeprecatedTypeProperties& type) {
-  Tensor a = at::scalar_tensor(4, type.options()); // rand(type, {1});
+void TestZeroDim(const TensorOptions& type) {
+  Tensor a = at::scalar_tensor(4, type); // rand(type, {1});
 
   Tensor b = rand({3, 4}, type);
   ASSERT_EQ_RESOLVED((a + a).dim(), 0);
@@ -294,7 +294,7 @@ void TestIndexingByZerodimTensor() {
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
   ASSERT_ANY_THROW(tensor[ones({2, 3, 4}, kInt)].equal(one));
 }
-void TestIndexingMixedDevice(DeprecatedTypeProperties& type) {
+void TestIndexingMixedDevice(const TensorOptions& type) {
   Tensor tensor = randn({20, 20}, type);
   Tensor index = arange(10, kLong).cpu();
   Tensor result = tensor.index({index});
@@ -307,17 +307,17 @@ void TestDispatch() {
   ASSERT_TRUE(result.allclose(mse_loss(relu(tensor), other)));
 }
 
-void TestNegativeDim(DeprecatedTypeProperties& type) {
+void TestNegativeDim(const TensorOptions& type) {
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
-  ASSERT_ANY_THROW(empty({5, -5, 5}, type.options()));
+  ASSERT_ANY_THROW(empty({5, -5, 5}, type));
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
-  ASSERT_ANY_THROW(empty({5, -5, -5}, type.options()));
-  Tensor tensor = empty({5, 5}, type.options());
+  ASSERT_ANY_THROW(empty({5, -5, -5}, type));
+  Tensor tensor = empty({5, 5}, type);
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
   ASSERT_ANY_THROW(tensor.reshape({-5, -5}));
 }
 
-void TestView(DeprecatedTypeProperties& type) {
+void TestView(const TensorOptions& type) {
   // Testing the tensor view path, which is different from
   // the Variable view path, see https://github.com/pytorch/pytorch/pull/23452
   // for details
@@ -328,16 +328,16 @@ void TestView(DeprecatedTypeProperties& type) {
   ASSERT_TRUE(viewed.sizes().equals({3, 4}));
 }
 
-void TestIntArrayRefExpansion(DeprecatedTypeProperties& type) {
-  if (type.backend() != Backend::CPU || type.scalarType() != kHalf) {
-    max_pool2d(randn({3, 3, 3, 3}, type.options()), 2, 1, 1, 1);
-    max_pool3d(randn({3, 3, 3, 3, 3}, type.options()), 2, 1, 1, 1);
-    avg_pool2d(randn({3, 3, 3, 3}, type.options()), 2, 1, 1);
-    avg_pool3d(randn({3, 3, 3, 3, 3}, type.options()), 2, 1, 1);
+void TestIntArrayRefExpansion(const TensorOptions& type) {
+  if (!type.device().is_cpu() || type.dtype() != kHalf) {
+    max_pool2d(randn({3, 3, 3, 3}, type), 2, 1, 1, 1);
+    max_pool3d(randn({3, 3, 3, 3, 3}, type), 2, 1, 1, 1);
+    avg_pool2d(randn({3, 3, 3, 3}, type), 2, 1, 1);
+    avg_pool3d(randn({3, 3, 3, 3, 3}, type), 2, 1, 1);
   }
 }
 
-void test(DeprecatedTypeProperties& type) {
+void test(const TensorOptions& type) {
   TestResize(type);
   TestOnesAndDot(type);
 
@@ -371,20 +371,20 @@ void test(DeprecatedTypeProperties& type) {
 TEST(BasicTest, BasicTestCPU) {
   manual_seed(123);
 
-  test(CPU(kFloat));
+  test(at::kFloat);
 }
 
 TEST(BasicTest, BasicTestHalfCPU) {
   manual_seed(234);
 
-  test(CPU(kHalf));
+  test(at::kHalf);
 }
 
 TEST(BasicTest, BasicTestCUDA) {
   manual_seed(123);
 
   if (at::hasCUDA()) {
-    test(CUDA(kFloat));
+    test(at::device(at::kCUDA).dtype(at::kFloat));
   }
 }
 

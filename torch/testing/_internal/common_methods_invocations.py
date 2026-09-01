@@ -44,7 +44,6 @@ from torch.testing._internal.common_quantized import (
 )
 from torch.testing._internal.common_utils import (
     getRocmVersion,
-    make_fullrank_matrices_with_distinct_singular_values,
     TEST_WITH_ROCM, IS_FBCODE, IS_LINUX, IS_MACOS, MACOS_VERSION, TEST_SCIPY,
     torch_to_numpy_dtype_dict, numpy_to_torch_dtype, TEST_WITH_ASAN,
     GRADCHECK_NONDET_TOL, slowTest, TEST_WITH_SLOW,
@@ -133,9 +132,7 @@ from torch.testing._internal.opinfo.definitions.linalg import (
     sample_inputs_cross,
     sample_inputs_linalg_qr_geqrf,
     sample_inputs_linalg_invertible,
-    sample_inputs_lu_solve,
     sample_inputs_legacy_solve,
-    sample_inputs_svd,
     sample_inputs_linalg_det_logdet_slogdet,
     sample_inputs_linalg_lu,
     sample_inputs_diagonal_diag_embed,
@@ -6524,18 +6521,6 @@ def sample_inputs_cholesky_solve(op_info, device, dtype, requires_grad=False, **
         sample.input = make_tensor(psd_matrix.shape, dtype=dtype, device=device, requires_grad=requires_grad, low=None, high=None)
         sample.args = (psd_matrix.requires_grad_(requires_grad),)
         yield sample
-
-
-def sample_inputs_lu(op_info, device, dtype, requires_grad=False, **kwargs):
-    make_arg = partial(make_fullrank_matrices_with_distinct_singular_values,
-                       dtype=dtype, device=device, requires_grad=requires_grad)
-
-    # not needed once OpInfo tests support Iterables
-    batch_shapes = ((), (3,), (3, 3))
-    for batch_shape, get_infos, size_delta in product(batch_shapes, (True, False), (-2, -1, 0, +1, +2)):
-        shape = batch_shape + (S + size_delta, S)
-        input = make_arg(*shape)
-        yield SampleInput(input, args=(True, get_infos))
 
 
 def sample_inputs_lu_unpack(op_info, device, dtype, requires_grad=False, **kwargs):
@@ -14255,44 +14240,6 @@ op_db: list[OpInfo] = [
                skipCPUIfNoLapack,
            ),
            sample_inputs_func=sample_inputs_lu_unpack),
-    OpInfo('lu',
-           op=torch.lu,
-           dtypes=floating_and_complex_types(),
-           # complex64 backward needs solve_triangular, which is float32-only on
-           # MPS, so only the float forward+backward runs there.
-           backward_dtypesIfMPS=floating_types(),
-           # Runs very slowly on slow gradcheck - alternatively reduce input sizes
-           gradcheck_fast_mode=True,
-           supports_forward_ad=True,
-           supports_fwgrad_bwgrad=True,
-           # https://github.com/pytorch/pytorch/issues/66357
-           check_batched_forward_grad=False,
-           sample_inputs_func=sample_inputs_lu,
-           decorators=[skipCUDAIfNoLinalgsolver, skipCPUIfNoLapack],
-           skips=(
-               # RuntimeError not raised: Expected RuntimeError when calling with input.device=cpu and out.device=cuda
-               DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_out'),
-               # UserWarning not triggered : Resized a non-empty tensor but did not warn about it.
-               DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_out_warning'),
-           )),
-    OpInfo('lu_solve',
-           op=torch.lu_solve,
-           dtypes=floating_and_complex_types(),
-           # complex64 backward needs solve_triangular, which is float32-only on MPS.
-           backward_dtypesIfMPS=floating_types(),
-           supports_forward_ad=True,
-           # See https://github.com/pytorch/pytorch/issues/66357
-           check_batched_forward_grad=False,
-           supports_fwgrad_bwgrad=True,
-           sample_inputs_func=sample_inputs_lu_solve,
-           skips=(
-               DecorateInfo(unittest.skip("Skipped!"), 'TestCommon', 'test_out',
-                            device_type='mps', dtypes=[torch.float32]),
-               DecorateInfo(unittest.skip("Skipped!"), 'TestCommon', 'test_variant_consistency_eager',
-                            device_type='mps', dtypes=[torch.float32]),
-               DecorateInfo(unittest.skip("Tests different backward paths"),
-                            "TestCommon", "test_floating_inputs_are_differentiable"),),
-           decorators=[skipCPUIfNoLapack, skipCUDAIfNoLinalgsolver]),
     OpInfo('masked_fill',
            dtypes=all_types_and_complex_and(torch.bool, torch.half, torch.bfloat16, torch.chalf),
            dtypesIfHpu=custom_types(torch.float32, torch.bfloat16, torch.int8, torch.bool, torch.int32),
@@ -17488,7 +17435,6 @@ op_db: list[OpInfo] = [
            sample_inputs_func=sample_inputs_dist),
     OpInfo('outer',
            op=torch.outer,
-           aliases=('ger', ),
            dtypes=all_types_and_complex_and(torch.bool, torch.float16, torch.bfloat16),
            supports_forward_ad=True,
            supports_fwgrad_bwgrad=True,
@@ -18505,27 +18451,6 @@ op_db: list[OpInfo] = [
            sample_inputs_func=sample_inputs_einsum,
            skips=(
                DecorateInfo(unittest.expectedFailure, 'TestNormalizeOperators', 'test_normalize_operator_exhaustive'),
-           )),
-    OpInfo('svd',
-           op=torch.svd,
-           dtypes=floating_and_complex_types(),
-           sample_inputs_func=sample_inputs_svd,
-           # Runs very slowly on slow-gradcheck - alternatively reduce input sizes
-           gradcheck_fast_mode=True,
-           supports_forward_ad=True,
-           supports_fwgrad_bwgrad=True,
-           check_batched_forward_grad=False,
-           # We're using at::allclose, which does not have a batching rule
-           check_batched_grad=False,
-           check_batched_gradgrad=False,
-           decorators=[skipCUDAIfNoLinalgsolver, skipCPUIfNoLapack, with_tf32_off],
-           skips=(
-               # Issue with conj and torch dispatch, see https://github.com/pytorch/pytorch/issues/82479
-               DecorateInfo(
-                   unittest.skip("Skipped!"),
-                   'TestSchemaCheckModeOpInfo',
-                   'test_schema_correctness',
-                   dtypes=(torch.complex64, torch.complex128)),
            )),
     OpInfo('svd_lowrank',
            op=lambda *args, **kwargs: wrapper_set_seed(

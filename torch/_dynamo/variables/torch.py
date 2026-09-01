@@ -320,7 +320,6 @@ methods_consuming_unbacked_scalars: frozenset[str] = frozenset(
 def tracing_state_functions() -> dict[Callable[[], Any], bool | None]:
     # Defined as a function to avoid circular imports
     return {
-        torch._C._get_tracing_state: None,
         torch.fx._symbolic_trace.is_fx_tracing: False,
         torch.fx._symbolic_trace.is_fx_symbolic_tracing: False,
         torch.compiler.is_compiling: True,

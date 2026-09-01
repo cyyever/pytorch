@@ -745,9 +745,6 @@ copy pasted in from VariableTypeEverything.cpp with appropriate substitutions.
   _(native_layer_norm)                \
   _(rms_norm)                         \
   _(group_norm)                       \
-  _(frobenius_norm, dim)              \
-  _(nuclear_norm)                     \
-  _(nuclear_norm, dim)                \
   _(cosine_similarity)                \
   _(poisson_nll_loss)                 \
   _(cosine_embedding_loss)            \

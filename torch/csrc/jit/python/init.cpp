@@ -97,9 +97,6 @@ void initJITBindings(PyObject* module) {
       JITException::getCaughtOriginalMsg);
 
   m.def("_jit_init", []() { return true; })
-      // Tracing is always off; kept as a None shim because Python code
-      // (e.g. torch.distributions) calls torch._C._get_tracing_state().
-      .def("_get_tracing_state", []() { return py::none(); })
       .def(
           "_storage_id",
           [](const at::Tensor& ten) -> int64_t {

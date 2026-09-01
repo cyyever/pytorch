@@ -1121,7 +1121,6 @@ exclude_patterns = [
     'test/test_transformers.py',
     'test/test_type_promotion.py',
     'test/test_unary_ufuncs.py',
-    'torch/_awaits/__init__.py',
     'torch/_export/__init__.py',
     'torch/_export/db/__init__.py',
     'torch/_export/db/case.py',

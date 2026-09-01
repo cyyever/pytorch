@@ -109,7 +109,6 @@ torch_tag_needs_exact_strides: TORCH_VERSION_2_12_0
 torch_tag_needs_fixed_stride_order: TORCH_VERSION_2_12_0
 torch_tag_nondeterministic_bitwise: TORCH_VERSION_2_12_0
 torch_tag_nondeterministic_seeded: TORCH_VERSION_2_12_0
-torch_tag_out_variant: TORCH_VERSION_2_12_0
 torch_tag_pointwise: TORCH_VERSION_2_12_0
 torch_tag_pt2_compliant_tag: TORCH_VERSION_2_12_0
 torch_tag_reduction: TORCH_VERSION_2_12_0

@@ -47,14 +47,6 @@ struct TORCH_API XPUHooksInterface : AcceleratorHooksInterface{
     TORCH_CHECK(false, "Cannot get XPU generator without ATen_xpu library.");
   }
 
-  virtual DeviceIndex getNumGPUs() const {
-    return 0;
-  }
-
-  virtual DeviceIndex current_device() const {
-    TORCH_CHECK(false, "Cannot get current device on XPU without ATen_xpu library.");
-  }
-
   Device getDeviceFromPtr(void* /*data*/) const override {
     TORCH_CHECK(false, "Cannot get device of pointer on XPU without ATen_xpu library.");
   }

@@ -5767,9 +5767,8 @@ class TestSparseAny(TestCase):
     @onlyCPU
     @all_sparse_layouts('layout', include_strided=True)
     def test_constructor_pinned_memory(self, device, layout):
-        """Tests sparse_xyz_tensor(indices.pin_memory(device), values.pin_memory(device))
+        """Tests sparse_xyz_tensor(indices.pin_memory(), values.pin_memory())
         """
-        pin_memory_device = "cuda"
         for t in self.generate_simple_inputs(
                 layout, device=device, dtype=torch.float64,
                 enable_zero_sized=False,     # pinning zero-sized tensors is a no-op

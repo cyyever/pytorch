@@ -16699,13 +16699,12 @@ class TestConsistency(TestCaseMPS):
                 self._assert_random_op_match(mps_out, cpu_out)
                 continue
 
-            if op.name in ("linalg.svd", "svd"):
+            if op.name == "linalg.svd":
                 # Singular vectors are only defined up to a per-mode sign (gauge):
                 # MPS's Jacobi solver and CPU LAPACK pick different but equally valid
                 # signs. Compare gauge-invariantly: singular values exactly, the
-                # vector magnitudes, and the reconstruction == A. linalg.svd returns
-                # (U, S, Vh); legacy torch.svd returns (U, S, V) with V (not V^H).
-                U_m, S_m, W_m = mps_out  # W = Vh (linalg) or V (legacy)
+                # vector magnitudes, and the reconstruction == A.
+                U_m, S_m, W_m = mps_out  # W = Vh
                 U_c, S_c, W_c = cpu_out
                 self.assertEqual(S_c, S_m, atol=atol, rtol=rtol)
                 kk = S_m.shape[-1]
@@ -16774,7 +16773,7 @@ class TestConsistency(TestCaseMPS):
 
             if op.name in self.RANDOM_OP_NAMES:
                 self._assert_random_op_match(mps_out, cpu_out)
-            elif op.name in ("linalg.svd", "svd"):
+            elif op.name == "linalg.svd":
                 # Gauge-invariant forward check (see test_output_match): vectors carry
                 # an arbitrary per-mode sign; compare S exactly, |U|/|V[h]|, and recon.
                 U_m, S_m, W_m = mps_out
@@ -16832,7 +16831,7 @@ class TestConsistency(TestCaseMPS):
             # rand_like does not work with certain dtypes, so cast to double and cast back
             cpu_grad_outputs = tuple(torch.rand_like(t, dtype=torch.double).to(dtype=t.dtype) for t in diff_cpu_out)
 
-            if op.name in ("linalg.svd", "svd"):
+            if op.name == "linalg.svd":
                 # Singular vectors carry an arbitrary per-mode sign/phase (gauge) that
                 # MPS's Jacobi solver fixes differently from CPU LAPACK. The gradients
                 # w.r.t. U and Vh are therefore gauge-dependent and not comparable

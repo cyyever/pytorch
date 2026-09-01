@@ -121,7 +121,6 @@ EXCLUDED_PATTERNS = [
     r"at::cuda::getCurrentCUDABlasHandleWithWorkspace",
     r"at::cuda::getCUDADeviceAllocator",
     r"at::cuda::getChosenWorkspaceSize",
-    r"at::cuda::getNumGPUs",
     r"at::cuda::is_available",
     r"at::cuda::isCUDABlasWorkspaceCachingEnabled",
     r"at::cuda::warp_size",

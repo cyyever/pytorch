@@ -30,8 +30,7 @@
 #include <c10/macros/Export.h>
 #include <c10/macros/Macros.h>
 #include <ATen/core/CheckMemoryFormat.h>
-#include <ATen/core/DeprecatedTypePropertiesRegistry.h>
-#include <ATen/core/DeprecatedTypeProperties.h>
+#include <ATen/core/Generator.h>
 #include <c10/core/SymInt.h>
 #include <ATen/core/TensorAccessor.h>
 #include <ATen/core/TensorBase.h>
@@ -44,9 +43,7 @@ template<class T> class List;
 template<class T> class IListRef;
 }
 namespace at {
-struct Generator;
 struct Type;
-class DeprecatedTypeProperties;
 class Tensor;
 } // namespace at
 namespace at {
@@ -220,13 +217,6 @@ class TORCH_API Tensor: public TensorBase {
   // NOLINTNEXTLINE(performance-noexcept-move-constructor)
   Tensor& operator=(Tensor&& rhs) && {
     return copy_(rhs);
-  }
-
-  C10_DEPRECATED_MESSAGE("Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device().")
-  DeprecatedTypeProperties & type() const {
-    return globalDeprecatedTypePropertiesRegistry().getDeprecatedTypeProperties(
-        dispatchKeyToBackend(legacyExtractDispatchKey(key_set())),
-        scalar_type());
   }
 
   Tensor toType(ScalarType t) const {
