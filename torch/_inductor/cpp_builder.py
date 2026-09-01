@@ -14,14 +14,12 @@ import shutil
 import subprocess
 import sys
 import sysconfig
-import tempfile
 import textwrap
 import warnings
 from collections.abc import Sequence
 from ctypes import cdll
 from ctypes.util import find_library
 from pathlib import Path
-from typing import Any, Literal
 
 import torch
 from torch._dynamo.device_interface import get_interface_for_device
@@ -31,33 +29,6 @@ from torch._inductor.cpu_vec_isa import invalid_vec_isa, VecISA
 from torch._inductor.runtime.runtime_utils import cache_dir
 from torch.torch_version import TorchVersion
 from torch.utils._ordered_set import OrderedSet
-
-
-CppStdlib = Literal["libstdc++", "libc++"]
-
-
-if config.is_fbcode():
-    from triton.fb.build import _run_build_command, build_paths
-
-    from torch._inductor.fb.utils import (
-        log_global_cache_errors,
-        log_global_cache_stats,
-        log_global_cache_vals,
-        use_global_cache,
-    )
-else:
-
-    def log_global_cache_errors(*args: Any, **kwargs: Any) -> None:  # type: ignore[misc]
-        pass
-
-    def log_global_cache_stats(*args: Any, **kwargs: Any) -> None:  # type: ignore[misc]
-        pass
-
-    def log_global_cache_vals(*args: Any, **kwargs: Any) -> None:  # type: ignore[misc]
-        pass
-
-    def use_global_cache() -> bool:  # type: ignore[misc]
-        return False
 
 
 # Windows need setup a temp dir to store .obj files.
@@ -98,7 +69,7 @@ def _compiler_version_string(cpp_compiler: str) -> str:
             .strip()
             .decode(*SUBPROCESS_DECODE_ARGS)
         )
-    except (FileNotFoundError, subprocess.SubprocessError, ValueError):
+    except FileNotFoundError, subprocess.SubprocessError, ValueError:
         return ""
 
 
@@ -168,8 +139,6 @@ def install_gcc_via_conda() -> str:
 
 
 def get_cpp_compiler() -> str:
-    if config.is_fbcode():
-        return build_paths.cc
     if isinstance(config.cpp.cxx, (list, tuple)):
         search = tuple(config.cpp.cxx)
     else:
@@ -179,16 +148,8 @@ def get_cpp_compiler() -> str:
 
 
 def get_ld_and_objcopy(use_relative_path: bool) -> tuple[str, str]:
-    if config.is_fbcode():
-        ld = build_paths.ld
-        objcopy = (
-            build_paths.objcopy_fallback
-            if use_relative_path
-            else build_paths.objcopy
-        )
-    else:
-        ld = "ld"
-        objcopy = "objcopy"
+    ld = "ld"
+    objcopy = "objcopy"
     return ld, objcopy
 
 
@@ -320,7 +281,7 @@ def _is_gcc_version_less_than(cpp_compiler: str, major: int) -> bool:
             .strip()
             .decode(*SUBPROCESS_DECODE_ARGS)
         )
-    except (FileNotFoundError, subprocess.SubprocessError):
+    except FileNotFoundError, subprocess.SubprocessError:
         return False
 
     version_search = re.search(r"\d+(?:\.\d+)*", output_msg)
@@ -702,8 +663,6 @@ def _get_linux_aarch64_arch_flag(cpp_compiler: str) -> str:
 
 
 def _get_cpu_arch_cflags(cpp_compiler: str) -> list[str]:
-    if config.is_fbcode():
-        return []
 
     march = config.cpp.march
     if march == "":
@@ -898,19 +857,7 @@ def _use_custom_generated_macros() -> list[str]:
 
 
 def _use_fb_internal_macros() -> list[str]:
-    if config.is_fbcode():
-        fb_internal_macros = [
-            "C10_USE_MINIMAL_GLOG",
-            "C10_DISABLE_TENSORIMPL_EXTENSIBILITY",
-        ]
-        if platform.machine() == "x86_64":
-            fb_internal_macros += [
-                "ATEN_MKL_ENABLED_FBCODE=1",
-                "ATEN_MKLDNN_ENABLED_FBCODE=1",
-            ]
-        return fb_internal_macros
-    else:
-        return []
+    return []
 
 
 def _setup_standard_sys_libs(
@@ -923,54 +870,6 @@ def _setup_standard_sys_libs(
     include_dirs: list[str] = []
     passthrough_args: list[str] = []
     ldflags: list[str] = []
-    if config.is_fbcode():
-        if aot_mode and cpp_stdlib == "libc++":
-            stdlib_isystem = build_paths.aoti_libcxx_include
-            # Use -nostdinc++ to strip the default C++ stdlib path, then add
-            # our AOTI libc++ headers via -I.  We avoid -stdlib++-isystem
-            # because it creates an isolated include realm that breaks
-            # libc++'s C header wrappers (ctype.h, stddef.h, etc.).
-            passthrough_args.append(" -nostdinc++")
-            # No -D_LIBCPP_* here: the package's __config_site carries the
-            # configuration and libc++'s own __config includes it, so these
-            # headers self-configure identically to how the archives were
-            # built. Passing flags as well would be a second source of truth.
-            cflags.append("fvisibility=hidden")
-            cflags.append("fvisibility-inlines-hidden")
-
-            # Note that the order of include paths do matter.
-            # libc++ headers must come first so C wrappers are found before
-            # the compiler's or glibc's versions.
-            include_dirs.append(stdlib_isystem)
-        else:
-            # Non-AOT fbcode CPU kernels still rely on the existing libstdc++
-            # toolchain path and may link split translation units that call
-            # generated inline helpers across object boundaries.
-            cflags.append("nostdinc")
-
-        include_dirs.append(build_paths.sleef_include)
-        include_dirs.append(build_paths.openmp_include)
-        include_dirs.append(build_paths.python_include)
-        include_dirs.append(build_paths.cc_include)
-        if not aot_mode or cpp_stdlib == "libstdc++":
-            include_dirs.append(build_paths.libgcc_include)
-            include_dirs.append(build_paths.libgcc_arch_include)
-            include_dirs.append(build_paths.libgcc_backward_include)
-        include_dirs.append(build_paths.glibc_include)
-        include_dirs.append(build_paths.linux_kernel_include)
-        include_dirs.append("include")
-
-        if not use_relative_path:
-            linker_script = _LINKER_SCRIPT
-        else:
-            linker_script = os.path.basename(_LINKER_SCRIPT)
-
-        if _is_clang(cpp_compiler):
-            passthrough_args.append(" --rtlib=compiler-rt")
-            passthrough_args.append(" -B" + build_paths.glibc_lib)
-            ldflags.append("fuse-ld=lld")
-            ldflags.append(f"Wl,--script={linker_script}")
-            ldflags.append("L" + build_paths.glibc_lib)
 
     return cflags, include_dirs, passthrough_args, ldflags
 
@@ -983,14 +882,6 @@ def _get_build_args_of_chosen_isa(vec_isa: VecISA) -> tuple[list[str], list[str]
         macros.extend(copy.deepcopy(x) for x in vec_isa.build_macro())
 
         build_flags = [vec_isa.build_arch_flags()]
-
-        if config.is_fbcode():
-            cap = str(vec_isa).upper()
-            macros = [
-                f"CPU_CAPABILITY={cap}",
-                f"CPU_CAPABILITY_{cap}",
-                f"HAVE_{cap}_CPU_DEFINITION",
-            ]
 
     return macros, build_flags
 
@@ -1005,7 +896,7 @@ def _get_torch_related_args(
 
     if config.aot_inductor.link_libtorch:
         libraries_dirs = [TORCH_LIB_PATH]
-        if sys.platform != "darwin" and not config.is_fbcode():
+        if sys.platform != "darwin":
             libraries.extend(["torch", "torch_cpu"])
             if not aot_mode:
                 libraries.append("torch_python")
@@ -1030,16 +921,11 @@ def _get_python_include_dirs() -> list[str]:
 
 def _get_python_related_args() -> tuple[list[str], list[str]]:
     python_include_dirs = _get_python_include_dirs()
-    python_include_path = sysconfig.get_path(
-        "include", scheme="posix_prefix"
-    )
+    python_include_path = sysconfig.get_path("include", scheme="posix_prefix")
     if python_include_path is not None:
         python_include_dirs.append(python_include_path)
 
     python_lib_path = [sysconfig.get_config_var("LIBDIR")]
-
-    if config.is_fbcode():
-        python_include_dirs.append(build_paths.python_include)
 
     return python_include_dirs, python_lib_path
 
@@ -1050,7 +936,7 @@ def is_conda_llvm_openmp_installed() -> bool:
         command = "conda list llvm-openmp --json"
         output = subprocess.check_output(command.split()).decode("utf8")
         return len(json.loads(output)) > 0
-    except (subprocess.SubprocessError, FileNotFoundError):
+    except subprocess.SubprocessError, FileNotFoundError:
         return False
 
 
@@ -1176,80 +1062,17 @@ def _get_openmp_args(
 
         # if openmp is still not available, we let the compiler to have a try,
         # and raise error together with instructions at compilation error later
-    if config.is_fbcode():
-        include_dir_paths.append(build_paths.openmp_include)
-
-        passthrough_args.append("-Wp,-fopenmp")
-        lib_dir_paths.append(os.path.dirname(build_paths.openmp_lib_so))
-
-        libs.append("omp")
+    if _is_clang(cpp_compiler):
+        # TODO: fix issue, can't find omp.h
+        cflags.append("fopenmp")
+        libs.append("gomp")
+    elif _is_intel_compiler(cpp_compiler):
+        cflags.append("fiopenmp")
     else:
-        if _is_clang(cpp_compiler):
-            # TODO: fix issue, can't find omp.h
-            cflags.append("fopenmp")
-            libs.append("gomp")
-        elif _is_intel_compiler(cpp_compiler):
-            cflags.append("fiopenmp")
-        else:
-            cflags.append("fopenmp")
-            libs.append("gomp")
+        cflags.append("fopenmp")
+        libs.append("gomp")
 
     return cflags, ldflags, include_dir_paths, lib_dir_paths, libs, passthrough_args
-
-
-def _validate_cpp_stdlib(
-    cpp_stdlib: CppStdlib, device_type: str, aot_mode: bool
-) -> None:
-    """Reject cpp_stdlib requests that would otherwise be silently ignored.
-
-    The private libc++ is only available in fbcode and wired up for AOT CPU
-    builds: the archives are linked in get_cpp_torch_device_options under
-    device_type == "cpu", and both the header setup and the link flags gate on
-    aot_mode. Any other combination either strips the default stdlib without
-    linking a replacement or quietly produces a libstdc++ artifact, so fail
-    loudly instead.
-    """
-    if cpp_stdlib != "libc++":
-        return
-    if not config.is_fbcode():
-        raise RuntimeError("cpp_stdlib='libc++' is only supported in fbcode.")
-    if device_type != "cpu":
-        raise RuntimeError(
-            "cpp_stdlib='libc++' is only supported with device_type='cpu', "
-            f"got device_type='{device_type}'"
-        )
-    if not aot_mode:
-        raise RuntimeError(
-            "cpp_stdlib='libc++' is only supported with aot_mode=True; "
-            "non-AOT builds link the default libstdc++."
-        )
-
-
-def _get_cpp_stdlib_args(
-    aot_mode: bool, cpp_stdlib: CppStdlib
-) -> tuple[list[str], list[str], list[str]]:
-    """
-    For fbcode AOTI, select either the legacy dynamic libstdc++ dependency or
-    the statically linked private __aoti-namespace libc++.
-    """
-    lib_dir_paths: list[str] = []
-    libs: list[str] = []
-    passthrough_args: list[str] = []
-    if config.is_fbcode() and aot_mode and cpp_stdlib == "libc++":
-        lib_dir_paths = [build_paths.aoti_libcxx_lib]
-        passthrough_args = [
-            " -nostdlib++",
-            " -Wl,-Bstatic",
-            " -laoti_c++",
-            " -laoti_c++abi",
-            " -Wl,-Bdynamic",
-            " -Wl,--exclude-libs,ALL",
-        ]
-    elif config.is_fbcode():
-        lib_dir_paths = [sysconfig.get_config_var("LIBDIR")]
-        libs.append("stdc++")
-
-    return lib_dir_paths, libs, passthrough_args
 
 
 def get_mmap_self_macro(
@@ -1285,7 +1108,6 @@ def get_cpp_torch_options(
     use_relative_path: bool,
     use_mmap_weights: bool,
     use_mmap_weights_external: bool,
-    cpp_stdlib: CppStdlib,
 ) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str], list[str]]:
     """
     This function is used to get the build args of torch related build options.
@@ -1399,7 +1221,6 @@ class CppTorchOptions(CppOptions):
         min_optimize: bool = False,
         precompiling: bool = False,
         preprocessing: bool = False,
-        cpp_stdlib: CppStdlib = "libstdc++",
     ) -> None:
         super().__init__(
             compile_only=compile_only,
@@ -1430,7 +1251,6 @@ class CppTorchOptions(CppOptions):
             use_relative_path=use_relative_path,
             use_mmap_weights=use_mmap_weights,
             use_mmap_weights_external=use_mmap_weights_external,
-            cpp_stdlib=cpp_stdlib,
         )
 
         _append_list(self._definitions, torch_definitions)
@@ -1441,16 +1261,6 @@ class CppTorchOptions(CppOptions):
         _append_list(self._libraries, torch_libraries)
         _append_list(self._passthrough_args, torch_passthrough_args)
         self._finalize_options()
-
-
-def _set_gpu_runtime_env() -> None:
-    if (
-        config.is_fbcode()
-        and torch.version.hip is None
-        and "CUDA_HOME" not in os.environ
-        and "CUDA_PATH" not in os.environ
-    ):
-        os.environ["CUDA_HOME"] = build_paths.sdk_home
 
 
 @functools.lru_cache(8)
@@ -1477,32 +1287,11 @@ def _transform_cuda_paths(lpaths: list[str]) -> None:
             if stub_dir.exists():
                 lpaths.append(str(stub_dir))
 
-    # Internal path needs special care, using the SDK lib path directly.
-    if config.is_fbcode():
-        # Add sdk_lib and its stubs/ (which hold the CUDA libs) unconditionally:
-        # an existence gate fails on the not-yet-materialized EdenFS path, and a
-        # nonexistent -L is harmless to the linker.
-        for cuda_lib_dir in (
-            build_paths.sdk_lib,
-            os.path.join(build_paths.sdk_lib, "stubs"),
-        ):
-            if cuda_lib_dir not in lpaths:
-                lpaths.append(cuda_lib_dir)
-
-
-def _transform_rocm_paths(lpaths: list[str]) -> None:
-    # Internal path needs special care, using the SDK lib path directly.
-    if config.is_fbcode():
-        sdk_lib = build_paths.sdk_lib
-        if os.path.isdir(sdk_lib) and sdk_lib not in lpaths:
-            lpaths.append(sdk_lib)
-
 
 def get_cpp_torch_device_options(
     device_type: str,
     aot_mode: bool = False,
     compile_only: bool = False,
-    cpp_stdlib: CppStdlib = "libstdc++",
 ) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str], list[str]]:
     """
     This function is used to get the build args of device related build options.
@@ -1511,10 +1300,6 @@ def get_cpp_torch_device_options(
     3. MISC
     4. Return the build args
     """
-    # CppTorchDeviceOptions validates too, but this is a public entry point in
-    # its own right.
-    _validate_cpp_stdlib(cpp_stdlib, device_type, aot_mode)
-
     try:
         device_options = get_interface_for_device(device_type).get_cpp_device_options(
             aot_mode, compile_only
@@ -1531,14 +1316,7 @@ def get_cpp_torch_device_options(
     libraries_dirs: list[str] = []
     libraries: list[str] = []
     passthrough_args: list[str] = []
-    if (
-        config.is_fbcode()
-        and "CUDA_HOME" not in os.environ
-        and "CUDA_PATH" not in os.environ
-    ):
-        os.environ["CUDA_HOME"] = build_paths.sdk_home
 
-    _set_gpu_runtime_env()
     from torch.utils import cpp_extension
 
     # cpp_extension resolves CUDA_HOME into a module-level global at import time,
@@ -1561,14 +1339,13 @@ def get_cpp_torch_device_options(
         definitions.append(" USE_ROCM" if torch.version.hip else " USE_CUDA")
 
         if torch.version.hip is not None:
-            if config.is_fbcode() or not link_libtorch:
+            if not link_libtorch:
                 libraries += ["amdhip64"]
             else:
                 libraries += ["torch_hip"]
             definitions.append(" __HIP_PLATFORM_AMD__")
-            _transform_rocm_paths(libraries_dirs)
         else:
-            if config.is_fbcode() or not link_libtorch:
+            if not link_libtorch:
                 libraries += ["cuda"]
             else:
                 libraries += ["cuda", "torch_cuda"]
@@ -1592,27 +1369,6 @@ def get_cpp_torch_device_options(
 
     if device_type == "mps":
         definitions.append(" USE_MPS")
-
-    if config.is_fbcode():
-        include_dirs.append(build_paths.sdk_include)
-
-        if aot_mode and device_type == "cuda":
-            if torch.version.hip is None:
-                if not compile_only:
-                    # Only add link args, when compile_only is false.
-                    passthrough_args = ["-Wl,-Bstatic -lcudart_static -Wl,-Bdynamic"]
-
-        if device_type == "cpu":
-            (
-                libcxx_lib_dir_paths,
-                libcxx_libs,
-                libcxx_passthrough,
-            ) = _get_cpp_stdlib_args(aot_mode, cpp_stdlib)
-            libraries_dirs += libcxx_lib_dir_paths
-            libraries += libcxx_libs
-            if not compile_only:
-                # Only add link args, when compile_only is false.
-                passthrough_args += libcxx_passthrough
 
     if config.aot_inductor.custom_op_libs:
         libraries += config.aot_inductor.custom_op_libs
@@ -1651,12 +1407,7 @@ class CppTorchDeviceOptions(CppTorchOptions):
         precompiling: bool = False,
         preprocessing: bool = False,
         compiler: str = "",
-        cpp_stdlib: CppStdlib = "libstdc++",
     ) -> None:
-        # Validate before super().__init__, which runs the header setup that
-        # would strip the default stdlib.
-        _validate_cpp_stdlib(cpp_stdlib, device_type, aot_mode)
-
         super().__init__(
             vec_isa=vec_isa,
             include_pytorch=include_pytorch,
@@ -1670,7 +1421,6 @@ class CppTorchDeviceOptions(CppTorchOptions):
             precompiling=precompiling,
             preprocessing=preprocessing,
             compiler=compiler,
-            cpp_stdlib=cpp_stdlib,
         )
 
         device_definitions: list[str] = []
@@ -1693,7 +1443,6 @@ class CppTorchDeviceOptions(CppTorchOptions):
             device_type=device_type,
             aot_mode=aot_mode,
             compile_only=compile_only,
-            cpp_stdlib=cpp_stdlib,
         )
         _append_list(self._definitions, device_definitions)
         _append_list(self._include_dirs, device_include_dirs)
@@ -1706,15 +1455,6 @@ class CppTorchDeviceOptions(CppTorchOptions):
 
     def _finalize_options(self) -> None:
         super()._finalize_options()
-        if config.is_fbcode():
-            # Re-order library search paths in case there are lib conflicts
-            # that also live in the FBCode python lib dir.
-            _, python_lib_dirs = _get_python_related_args()
-            if len(python_lib_dirs) != 1:
-                raise AssertionError(f"Python lib dirs: {python_lib_dirs}")
-            if python_lib_dirs[0] in self._libraries_dirs:
-                self._libraries_dirs.remove(python_lib_dirs[0])
-                self._libraries_dirs.append(python_lib_dirs[0])
 
 
 def get_name_and_dir_from_output_file_path(
@@ -1851,13 +1591,6 @@ class CppBuilder:
         if isinstance(sources, str):
             sources = [sources]
 
-        # Use relative paths only when requested (typically for remote builds)
-        if config.is_fbcode() and self._use_relative_path:
-            # Will create another temp directory for building, so do NOT use the
-            # absolute path.
-            self._orig_source_paths = list(sources)
-            sources = [os.path.basename(i) for i in sources]
-
         if self._precompiling:
             if len(sources) != 1:
                 raise AssertionError(
@@ -1868,7 +1601,6 @@ class CppBuilder:
             if self._use_relative_path and _is_clang(BuildOption.get_compiler()):
                 # Store PCH paths relative to -isysroot so the .pch can
                 # be used from a different build directory.  The matching
-                # -isysroot is injected by build_fbcode_re().
                 self._cflags_args += " -relocatable-pch -Xclang -fno-pch-timestamp "
         else:
             self._sources_args = " ".join(sources)
@@ -1901,9 +1633,7 @@ class CppBuilder:
         for lib in BuildOption.get_libraries():
             self._libraries_args += f"-l{lib} "
 
-        for passthrough_arg in self._stage_passthrough_paths(
-            BuildOption.get_passthrough_args()
-        ):
+        for passthrough_arg in BuildOption.get_passthrough_args():
             self._passthrough_parameters_args += f"{passthrough_arg} "
 
     def get_command_line(self) -> str:
@@ -1944,118 +1674,11 @@ class CppBuilder:
     def get_target_file_path(self) -> str:
         return normalize_path_separator(self._target_file)
 
-    def _stage_passthrough_paths(self, args: list[str]) -> list[str]:
-        """For fbcode remote builds, treat any absolute file path that appears
-        as a passthrough arg (e.g. precompiled .so kernels passed in via
-        ``extra_flags``) the same way as a source: stage the file into the
-        remote build sandbox and rewrite the command to reference it by
-        basename. Without this the linker is handed a path that only exists on
-        the submitting host and the remote build fails to find the file."""
-        if not (config.is_fbcode() and self._use_relative_path):
-            return args
-        rewritten = []
-        rpath_dirs: OrderedSet[str] = OrderedSet()
-        for arg in args:
-            tokens = shlex.split(arg)
-            new_tokens = []
-            for tok in tokens:
-                if os.path.isabs(tok) and os.path.isfile(tok):
-                    self._orig_source_paths.append(tok)
-                    # Rewriting the absolute path to a basename makes the
-                    # linker record a bare-basename DT_NEEDED entry, because
-                    # the staged kernel .so files carry no DT_SONAME. That
-                    # basename is unresolvable when the wrapper .so is later
-                    # dlopen'd, so add rpath entries the runtime loader can
-                    # search: $ORIGIN for a kernel .so co-staged next to the
-                    # wrapper, and the kernel .so's original directory as a
-                    # fallback when it is loaded from its cache location.
-                    if self._do_link and tok.endswith(".so"):
-                        rpath_dirs.add(os.path.dirname(tok))
-                    new_tokens.append(os.path.basename(tok))
-                else:
-                    new_tokens.append(tok)
-            rewritten.append(" ".join(shlex.quote(t) for t in new_tokens))
-        if rpath_dirs:
-            rewritten.append("-Wl,-rpath," + shlex.quote("$ORIGIN"))
-            for rpath_dir in rpath_dirs:
-                rewritten.append(f"-Wl,-rpath,{shlex.quote(rpath_dir)}")
-        return rewritten
-
-    def build_fbcode_re(
-        self,
-    ) -> None:
-        with dynamo_timed("compile_file"):
-            command = shlex.split(self.get_command_line())
-            try:
-                output_path = self._target_file
-                # When we build remotely, we need to make sure to carefully copy any files
-                # that are required during the compilation process into our build directly.
-                # This is where all of the ATen/c10/Torch includes come from.
-                torch_includes_path = os.path.join(_TORCH_PATH, "include")
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    # Copy everything to tmp compilation folder
-                    shutil.copy(_LINKER_SCRIPT, os.path.join(tmp_dir, "script.ld"))
-                    for src in self._orig_source_paths:
-                        shutil.copy(src, os.path.join(tmp_dir, os.path.basename(src)))
-                    dest_include_path = os.path.join(tmp_dir, "include")
-                    shutil.copytree(torch_includes_path, dest_include_path)
-
-                    # Copy precompiled header (.h and .gch/.pch) into the
-                    # build directory and rewrite the -include flag so the
-                    # compiler can find it.
-                    pch_header = self._build_option.precompiled_header
-                    if pch_header and os.path.isfile(pch_header):
-                        pch_ext = ".gch" if not is_gcc() else ".pch"
-                        pch_compiled = pch_header + pch_ext
-                        pch_basename = os.path.basename(pch_header)
-                        shutil.copy(pch_header, os.path.join(tmp_dir, pch_basename))
-                        if os.path.isfile(pch_compiled):
-                            shutil.copy(
-                                pch_compiled,
-                                os.path.join(tmp_dir, pch_basename + pch_ext),
-                            )
-                        command = [
-                            pch_basename if arg == pch_header else arg
-                            for arg in command
-                        ]
-
-                    # Relocatable PCH stores include paths relative to
-                    # -isysroot.  Set sysroot to the tmp build dir so
-                    # paths resolve correctly in both precompilation and
-                    # later kernel compilations that consume the PCH.
-                    if self._precompiling or (
-                        pch_header and os.path.isfile(pch_header)
-                    ):
-                        command[1:1] = ["-isysroot", "."]
-
-                    # Run the build, raising RuntimeError on failure instead of
-                    # SkipFrame so compilation errors propagate rather than
-                    # silently falling back to eager execution.
-                    tmp_output_path = _run_build_command(
-                        command,
-                        tmp_dir,
-                        os.path.basename(output_path),
-                        exception_class=RuntimeError,
-                    )
-                    # Copy output from the build
-                    if os.path.exists(output_path):
-                        os.remove(output_path)
-                    shutil.copy(tmp_output_path, output_path)
-                    if output_path.endswith(".o"):
-                        os.chmod(output_path, 0o644)
-                    elif output_path.endswith(".so"):
-                        os.chmod(output_path, 0o755)
-            except subprocess.CalledProcessError as e:
-                raise exc.CppCompileError(command, e.output.decode("utf-8")) from e
-
     def build(self) -> None:
         """
         It is must need a temporary directory to store object files in Windows.
         After build completed, delete the temporary directory to save disk space.
         """
-        if self._use_relative_path:
-            # remote build uses relative path
-            return self.build_fbcode_re()
         _create_if_dir_not_exist(self._output_dir)
         _build_tmp_dir = os.path.join(
             self._output_dir, f"{self._name}_{_BUILD_TEMP_DIR}"

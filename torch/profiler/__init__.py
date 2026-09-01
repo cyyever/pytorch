@@ -14,7 +14,6 @@ from typing import TypeVarTuple, Unpack
 
 from torch._C._autograd import _supported_activities, DeviceType, kineto_available
 from torch._C._profiler import _ExperimentalConfig, ProfilerActivity, RecordScope
-from torch._environment import is_fbcode
 from torch.autograd.profiler import KinetoStepTracker, record_function
 from torch.optim.optimizer import Optimizer, register_optimizer_step_post_hook
 
@@ -43,7 +42,6 @@ __all__ = [
 ]
 
 
-
 _Ts = TypeVarTuple("_Ts")
 
 
@@ -53,7 +51,5 @@ def _optimizer_post_hook(
     KinetoStepTracker.increment_step("Optimizer")
 
 
-if os.environ.get("KINETO_USE_DAEMON", "") or (
-    is_fbcode() and os.environ.get("KINETO_FORCE_OPTIMIZER_HOOK", "")
-):
+if os.environ.get("KINETO_USE_DAEMON", ""):
     _ = register_optimizer_step_post_hook(_optimizer_post_hook)

@@ -5,7 +5,6 @@ from typing import Any, cast, Literal, TYPE_CHECKING
 
 import torch
 import torch._inductor.custom_graph_pass
-from torch._environment import is_fbcode
 from torch.utils._config_module import (
     Config,
     get_tristate_env,
@@ -45,7 +44,7 @@ def bundled_autotune_remote_cache_default() -> bool | None:
 def bundle_triton_into_fx_graph_cache_default() -> bool | None:
     return get_tristate_env(
         "TORCHINDUCTOR_BUNDLE_TRITON_INTO_FX_GRAPH_CACHE",
-        True if not is_fbcode() else None,
+        True,
     )
 
 
@@ -54,31 +53,15 @@ def autotune_at_compile_time_default() -> bool | None:
 
 
 def static_cuda_launcher_default() -> bool:
-    STATIC_CUDA_LAUNCHER_VERSION = 2
-
     if "TORCHINDUCTOR_USE_STATIC_CUDA_LAUNCHER" in os.environ:
         return os.environ.get("TORCHINDUCTOR_USE_STATIC_CUDA_LAUNCHER") == "1"
-    elif is_fbcode():
-        version = torch._utils_internal.justknobs_getval_int(
-            "pytorch/inductor:static_cuda_launcher_version"
-        )
-        return version <= STATIC_CUDA_LAUNCHER_VERSION
-    else:
-        # Default true in OSS
-        return True
+    return True
 
 
 def prologue_fusion_enabled() -> bool:
-    ENABLE_PROLOGUE_FUSION_VERSION = 0
-
     if "TORCHINDUCTOR_PROLOGUE_FUSION" in os.environ:
         return os.environ.get("TORCHINDUCTOR_PROLOGUE_FUSION") == "1"
-    elif is_fbcode():
-        jk_name = "pytorch/inductor:prologue_fusion_version"
-        version = torch._utils_internal.justknobs_getval_int(jk_name)
-        return version <= ENABLE_PROLOGUE_FUSION_VERSION
-    else:
-        return True
+    return True
 
 
 # Enable auto_functionalized_v2 (enabled by default)
@@ -96,9 +79,7 @@ disable_progress = True
 verbose_progress = False
 
 # Configurable compile worker logging path for subproc_pool
-worker_log_path = (
-    "/logs/dedicated_log_torch_compile_worker_rank" if is_fbcode() else None
-)
+worker_log_path = None
 
 # precompilation timeout
 precompilation_timeout_seconds: int = int(
@@ -210,10 +191,7 @@ fx_wrapper: bool = os.environ.get("TORCHINDUCTOR_FX_WRAPPER", "0") == "1"
 # (i.e. for cpp_wrapper mode and for cpp kernels on CPU).  AOTI header precompiling is
 # controlled by a separate flag.
 cpp_cache_precompile_headers: bool = (
-    os.environ.get(
-        "TORCHINDUCTOR_CPP_CACHE_PRECOMPILE_HEADERS", "0" if is_fbcode() else "1"
-    )
-    == "1"
+    os.environ.get("TORCHINDUCTOR_CPP_CACHE_PRECOMPILE_HEADERS", "1") == "1"
 )
 
 online_softmax = os.environ.get("TORCHINDUCTOR_ONLINE_SOFTMAX", "1") == "1"
@@ -244,11 +222,7 @@ unsafe_skip_scalar_range_asserts = (
     os.environ.get("TORCHINDUCTOR_UNSAFE_SKIP_SCALAR_RANGE_ASSERTS") == "1"
 )
 
-# Disable by default in fbcode
-alignment_asserts = (
-    os.environ.get("TORCHINDUCTOR_ALIGNMENT_ASSERTS", "0" if is_fbcode() else "1")
-    == "1"
-)
+alignment_asserts = os.environ.get("TORCHINDUCTOR_ALIGNMENT_ASSERTS", "1") == "1"
 
 # enable loop reordering based on input orders
 pick_loop_orders = True
@@ -605,10 +579,7 @@ triton_disable_device_detection = (
 )
 
 # enable inductor graph partition to allow multiple inductor graphs for the same dynamo graph
-graph_partition: bool = (
-    os.environ.get("TORCHINDUCTOR_GRAPH_PARTITION", "1" if not is_fbcode() else "0")
-    == "1"
-)
+graph_partition: bool = os.environ.get("TORCHINDUCTOR_GRAPH_PARTITION", "1") == "1"
 
 # Pluggable CUDAGraph wrapping policy.  When set to a ``CUDAGraphPolicy``
 # instance, ``post_compile`` delegates cudagraph wrapping to the policy
@@ -981,10 +952,7 @@ debug_fusion: bool = os.environ.get("TORCHINDUCTOR_DEBUG_FUSION") == "1"
 benchmark_fusion: bool = os.environ.get("TORCHINDUCTOR_BENCHMARK_FUSION") == "1"
 enabled_metric_tables = os.environ.get("TORCHINDUCTOR_ENABLED_METRIC_TABLES", "")
 loop_ordering_after_fusion: bool = (
-    os.environ.get(
-        "TORCHINDUCTOR_LOOP_ORDERING_AFTER_FUSION", "0" if is_fbcode() else "1"
-    )
-    == "1"
+    os.environ.get("TORCHINDUCTOR_LOOP_ORDERING_AFTER_FUSION", "1") == "1"
 )
 loop_reindexing_after_fusion: bool = (
     os.environ.get("TORCHINDUCTOR_LOOP_REINDEXING_AFTER_FUSION", "1") == "1"
@@ -1158,7 +1126,7 @@ debug_index_asserts = False
 
 # warnings intended for PyTorch developers, disable for point releases
 is_nightly_or_source = "dev" in torch.__version__ or "git" in torch.__version__
-developer_warnings = is_fbcode() or is_nightly_or_source
+developer_warnings = is_nightly_or_source
 
 # This pattern matches a special usage of scatter
 # 1. It's applied to a constant tensor
@@ -1450,27 +1418,12 @@ class aten_distributed_optimizations:
     allow_comms_decompositions: bool = False
 
 
-def parallel_compile_enabled_internally() -> bool:
-    """
-    TODO: Remove when parallel compiled is fully enabled internally. For rollout, use a
-    knob to enable / disable. The justknob should not be performed at import, however.
-    So for fbcode, we assign compile_threads to 'None' below and initialize lazily in
-    async_compile.py.
-    """
-    ENABLE_PARALLEL_COMPILE_VERSION = 1
-
-    jk_name = "pytorch/inductor:enable_parallel_compile_version"
-    version = torch._utils_internal.justknobs_getval_int(jk_name)
-    return ENABLE_PARALLEL_COMPILE_VERSION >= version
-
-
 def decide_compile_threads() -> int:
     """
     Here are the precedence to decide compile_threads
     1. User can override it by TORCHINDUCTOR_COMPILE_THREADS.  One may want to disable async compiling by
        setting this to 1 to make pdb happy.
-    2. Set to 1 in fbcode without internal parallel compile support
-    3. decide by the number of CPU cores
+    2. decide by the number of CPU cores
     """
     import logging
 
@@ -1481,21 +1434,18 @@ def decide_compile_threads() -> int:
     if "TORCHINDUCTOR_COMPILE_THREADS" in os.environ:
         compile_threads = int(os.environ["TORCHINDUCTOR_COMPILE_THREADS"])
         log.info("compile_threads set to %d via env", compile_threads)
-    elif is_fbcode() and not parallel_compile_enabled_internally():
-        compile_threads = 1
-        log.info("compile_threads set to 1 in fbcode")
-    else:
-        cpu_count = torch._utils.cpu_count()
-        if not cpu_count:
-            raise AssertionError(f"expected nonzero cpu_count, got {cpu_count}")
-        compile_threads = min(32, cpu_count)
-        log.info("compile_threads set to %d", compile_threads)
+        return compile_threads
+
+    cpu_count = torch._utils.cpu_count()
+    if not cpu_count:
+        raise AssertionError(f"expected nonzero cpu_count, got {cpu_count}")
+    compile_threads = min(32, cpu_count)
+    log.info("compile_threads set to %d", compile_threads)
 
     return compile_threads
 
 
-# TODO: Set directly after internal rollout.
-compile_threads: int | None = None if is_fbcode() else decide_compile_threads()
+compile_threads: int | None = decide_compile_threads()
 
 # Whether to quiesce the Triton-compile subprocess pool at the end of each compilation.
 quiesce_async_compile_pool: bool = Config(
@@ -1566,21 +1516,7 @@ use_launch_metadata_schema: bool = (
 
 # gemm autotuning global cache dir
 global_cache_dir: str | None
-if is_fbcode():
-    try:
-        from libfb.py import parutil
-
-        if __package__:
-            global_cache_dir = parutil.get_dir_path(
-                os.path.join(__package__.replace(".", os.sep), "fb/cache")
-            )
-        else:
-            global_cache_dir = parutil.get_dir_path("fb/cache")
-    except (ValueError, ImportError):
-        global_cache_dir = None
-
-else:
-    global_cache_dir = None
+global_cache_dir = None
 
 # If kernel is fused, the name is generated from the origin node op names
 # for larger kernels limit this
@@ -1659,7 +1595,7 @@ _raise_error_for_testing = False
 
 # Use fp64 for unbacked float scalars (from .item()) in Triton kernel signatures
 # to preserve precision. When False, uses fp32 (legacy behavior with precision loss).
-_use_fp64_for_unbacked_floats: bool = not is_fbcode()
+_use_fp64_for_unbacked_floats: bool = True
 
 _profile_var = os.environ.get("TORCHINDUCTOR_PROFILE", "")
 profile_bandwidth = _profile_var != ""
@@ -1755,12 +1691,6 @@ enable_autograd_for_aot: bool = False
 
 def get_worker_log_path() -> str | None:
     log_loc = None
-    if is_fbcode():
-        mast_job_name = os.environ.get("MAST_HPC_JOB_NAME", None)
-        global_rank = os.environ.get("ROLE_RANK", "0")
-
-        if mast_job_name is not None:
-            log_loc = f"/logs/dedicated_log_torch_compile_worker_rank{global_rank}"
 
     return log_loc
 
@@ -1995,7 +1925,7 @@ class triton:
     cudagraph_trees_generation_cloning: Literal["user_visible"] | None = None
 
     # Enable cudagraph support for mutated inputs from prior cudagraph pool
-    cudagraph_support_input_mutation = not is_fbcode()
+    cudagraph_support_input_mutation = True
 
     # Maximal number of allowed cudagraph re-record for a function and
     # a cudagraph node due to static input tensor address changes or
@@ -2292,8 +2222,7 @@ class triton:
     enable_pdl = os.environ.get("TORCHINDUCTOR_ENABLE_PDL", "0") == "1"
 
     mix_order_reduction = (
-        os.environ.get("TORCHINDUCTOR_MIX_ORDER_REDUCTION", "0" if is_fbcode() else "1")
-        == "1"
+        os.environ.get("TORCHINDUCTOR_MIX_ORDER_REDUCTION", "1") == "1"
     )
     mix_order_reduction_initial_xblock = 1
 
@@ -2502,7 +2431,7 @@ class aot_inductor:
     package_constants_on_disk_format: str | None = None
 
     # Experimental.  Controls automatic precompiling of common AOTI include files.
-    precompile_headers: bool = not is_fbcode()
+    precompile_headers: bool = True
 
     # Embed generated kernel binary files into model.so
     embed_kernel_binary: bool | None = None
@@ -2668,16 +2597,6 @@ class cutlass:
     cutlass_enabled_ops: str = os.environ.get(
         "TORCHINDUCTOR_CUTLASS_ENABLED_OPS", "all"
     )
-
-    # Whether to consult the binary remote cache
-    use_binary_remote_cache: bool = True
-
-    # Whether to upload compiled kernels to remote cache
-    upload_to_binary_remote_cache: bool = False
-
-    # Whether to force upload if the key already exists
-    # Use this to overwrite and handle cache pollution
-    binary_remote_cache_force_write: bool = False
 
     # Enable caching codegen of cuda templates.
     enable_caching_codegen: bool = True

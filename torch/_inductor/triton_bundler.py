@@ -6,7 +6,6 @@ import uuid
 from pathlib import Path
 
 from torch._dynamo.utils import counters, dynamo_timed, set_feature_use
-from torch._utils_internal import justknobs_check
 from torch.utils._ordered_set import OrderedSet
 
 from .runtime.runtime_utils import triton_cache_dir
@@ -121,12 +120,7 @@ class TritonBundler:
         if (b := config.bundle_triton_into_fx_graph_cache) is not None:
             return b
 
-        if not config.is_fbcode():
-            return False
-
-        return justknobs_check(
-            "pytorch/remote_cache:bundle_triton_into_fx_graph_cache_v2"
-        )
+        return False
 
     @classmethod
     def begin_compile(cls) -> None:

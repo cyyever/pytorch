@@ -229,9 +229,6 @@ exclude = [
     # torchgen codegen-generator scripts (not consumed at runtime); legacy
     # did not ship these either.
     "torchgen/fuse/gen_*.py",
-    # Thrift-generated C++ headers under torch/_export/serde/gen-cpp2/ --
-    # not in legacy wheels.
-    "torch/_export/serde/gen-cpp2/**",
     # Convenience headers duplicated at the package root; the canonical
     # copies live at torch/include/torch/*.h. legacy ships only the
     # torch/include/... versions.

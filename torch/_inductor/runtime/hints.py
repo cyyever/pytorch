@@ -293,7 +293,6 @@ class InductorMeta(typing.TypedDict, total=False):
     dynamic_disable_pipelining: bool
     are_deterministic_algorithms_enabled: bool
     is_hip: bool | None
-    is_fbcode: bool
     profile_bandwidth: bool
     profile_bandwidth_regex: str
     profile_bandwidth_output: str

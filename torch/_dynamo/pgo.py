@@ -35,7 +35,6 @@ from torch._dynamo.utils import (
     set_feature_use,
     warn_once,
 )
-from torch._environment import is_fbcode
 from torch._logging._internal import trace_structured_artifact
 from torch.compiler._cache import (
     CacheArtifact,
@@ -654,20 +653,7 @@ def should_use_remote_dynamo_pgo_cache() -> bool:
     if (r := torch._dynamo.config.automatic_dynamic_remote_pgo) is not None:
         return r
 
-    if not is_fbcode():
-        return False
-
-    if torch._utils_internal.is_fb_unit_test():
-        return False
-
-    try:
-        from torch._inductor.fb.remote_cache import REMOTE_CACHE_VERSION
-    except ModuleNotFoundError:
-        return False
-
-    return REMOTE_CACHE_VERSION >= torch._utils_internal.justknobs_getval_int(
-        "pytorch/remote_cache:dynamo_pgo_version"
-    )
+    return False
 
 
 def get_remote_cache() -> RemoteCache[JsonDataTy] | None:
@@ -678,8 +664,6 @@ def get_remote_cache() -> RemoteCache[JsonDataTy] | None:
 
     return create_cache(
         "dynamo-pgo",
-        is_fbcode(),
-        "FbRemoteDynamoPGOCache",
         "RemoteDynamoPGOCache",
     )
 

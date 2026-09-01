@@ -954,11 +954,8 @@ class TritonPrinter(PythonPrinter):  # noqa: docstring_linter
             # this workaround prints the float as an integer
             # xref: https://github.com/sympy/sympy/issues/26620
             ret = str(int(expr))
-        elif config.is_fbcode() and torch.version.hip:
-            ret = f"{expr}"
-        else:
-            float_type = self._get_scalar_float_type()
-            ret = f"tl.full([], {expr}, {float_type})"
+        float_type = self._get_scalar_float_type()
+        ret = f"tl.full([], {expr}, {float_type})"
         return ret
 
     def _print_ToFloat(self, expr: sympy.Expr) -> str:
@@ -7255,8 +7252,6 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
 
         if torch.version.hip is not None:
             inductor_meta["is_hip"] = True
-        if config.is_fbcode():
-            inductor_meta["is_fbcode"] = True
         if config.profile_bandwidth:
             inductor_meta["profile_bandwidth"] = config.profile_bandwidth
             inductor_meta["profile_bandwidth_regex"] = config.profile_bandwidth_regex
@@ -7345,7 +7340,7 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
                                 if self.is_native_matmul:
                                     val = max(val, 16)
                                 fixed_blocks[block_name] = val
-                            except (TypeError, ValueError):
+                            except TypeError, ValueError:
                                 pass
 
             def _resolve_block_dim(s):
@@ -7356,13 +7351,13 @@ class TritonKernel(SIMDKernel[TritonCSEVariable]):
                     return fixed_blocks[s_str]
                 try:
                     return int(s)
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     return s_str
 
             def _resolve_tensor_dim(s):
                 try:
                     return int(s)
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     return str(s)
 
             resolved = {}

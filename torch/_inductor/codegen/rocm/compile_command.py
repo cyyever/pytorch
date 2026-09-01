@@ -22,11 +22,6 @@ def _rocm_system_include_dir(rocm_home: str | None = None) -> str:
 def _ck_dir() -> str:
     from torch.utils import cpp_extension
 
-    if config.is_fbcode():
-        from libfb.py import parutil
-
-        return parutil.get_dir_path("composable-kernel-headers")
-
     if not config.rocm.ck_dir:
         ck_dir, _, _, _ = try_import_ck_lib()
         if not ck_dir:

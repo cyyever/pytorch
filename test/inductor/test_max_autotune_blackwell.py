@@ -444,7 +444,7 @@ class TestMaxAutotuneBlackwell(TestCase):
                 #
                 # This only happens in fbcode https://www.internalfb.com/diff/D101855575.
                 # Can not repro it in OSS build.
-                "triton.dynamic_disable_pipelining": not config.is_fbcode(),
+                "triton.dynamic_disable_pipelining": True,
             }
         ):
             c_actual, code = run_and_get_code(

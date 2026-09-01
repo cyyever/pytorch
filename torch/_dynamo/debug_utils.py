@@ -62,10 +62,6 @@ T = TypeVar("T")
 
 
 inductor_config = import_module("torch._inductor.config")
-use_buck = inductor_config.is_fbcode()
-
-if use_buck:
-    pass
 
 
 # pyrefly: ignore [implicit-any]
@@ -276,7 +272,7 @@ def _cuda_system_info_comment() -> str:
             model_str += f"{comment}\n"
         else:
             model_str += "# Not searching for nvcc on ROCM setup\n"
-    except (OSError, subprocess.CalledProcessError):
+    except OSError, subprocess.CalledProcessError:
         model_str += "# nvcc not found\n"
 
     gpu_names = Counter(
@@ -516,9 +512,9 @@ def cast_to(
         model = cast_dtype_args_to_fp64(model)
 
     inputs = tree_map(
-        lambda x: x.to(dtype)
-        if isinstance(x, torch.Tensor) and x.is_floating_point()
-        else x,
+        lambda x: (
+            x.to(dtype) if isinstance(x, torch.Tensor) and x.is_floating_point() else x
+        ),
         inputs,
     )
     return model, inputs
@@ -948,7 +944,9 @@ def aot_graph_input_parser(
     def get_sym_int(symint: str) -> int:
         torch._check(
             symint in sym_shapes_dict or default_sym_shape is not None,
-            lambda: f"{symint} not in symbolic_shapes and default sym shape not passed in",
+            lambda: (
+                f"{symint} not in symbolic_shapes and default sym shape not passed in"
+            ),
         )
         return sym_shapes_dict.get(symint, default_sym_shape)  # type: ignore[return-value]
 

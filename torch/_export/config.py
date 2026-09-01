@@ -10,7 +10,6 @@ behavior, including:
 import sys
 from typing import Any, TYPE_CHECKING
 
-from torch._environment import is_fbcode
 from torch.utils._config_module import install_config_module
 
 
@@ -29,9 +28,7 @@ detect_non_strict_fake_tensor_leaks = False
 error_on_lifted_constant_tensors = True
 
 # enable auto_functionalized_v2 in export
-# We turn this off in fbcode due to downstream users not
-# being ready to handle auto_functionalized_v2.
-enable_auto_functionalized_v2_for_export = not is_fbcode()
+enable_auto_functionalized_v2_for_export = True
 
 use_legacy_dynamo_graph_capture = True
 

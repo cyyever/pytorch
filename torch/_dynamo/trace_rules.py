@@ -44,7 +44,6 @@ import torch
 import torch._inductor.test_operators
 import torch.distributed
 import torch.utils._content_store
-from torch._environment import is_fbcode
 from torch.utils import _config_module
 
 from . import config
@@ -3255,37 +3254,6 @@ BUILTIN_INLINE_WHEN_CALLED.update(
 
 SKIP_DIRS_RE = re.compile(r"match nothing^")
 
-# Skip fbcode paths containing
-# one of the following strings.
-FBCODE_SKIP_DIRS: set[str] = set()
-
-FBCODE_SKIP_DIRS_RE = re.compile(f".*({'|'.join(map(re.escape, FBCODE_SKIP_DIRS))})")
-
-# Remove this after fbcode is fully migrated to tracing through torchrec.
-FBCODE_SKIP_TORCHREC_DIRS = {
-    "torchrec/distributed",
-    "torchrec/fb/distributed",
-    "caffe2/torch/fb/sparsenn/pooled_embeddings_modules.py",
-}
-
-FBCODE_SKIP_TORCHREC_DIRS_RE = re.compile(
-    f".*({'|'.join(re.escape(_as_posix_path(d)) for d in FBCODE_SKIP_TORCHREC_DIRS)})"
-)
-
-# TODO(yanboliang, anijain2305) - There are a few concerns that we should
-# resolve
-# 1) Audit if torchrec/distributed is even required in FBCODE_SKIPS_DIR
-# 2) To inline just one file but skip others in a directory, we could use
-# manual_torch_name_rule_map but this one is hard because FBCODE can add unusual
-# names like torch_package.
-# So, this is a stop gap solution till then.
-FBCODE_INLINE_FILES_IN_SKIPPED_DIRS = {
-    "torchrec/distributed/types.py",
-}
-FBCODE_INLINE_FILES_IN_SKIPPED_DIRS_RE = re.compile(
-    f".*({'|'.join(re.escape(_as_posix_path(d)) for d in FBCODE_INLINE_FILES_IN_SKIPPED_DIRS)})"
-)
-
 # torch.optim is a special case,
 # we usually want to inline it, but the directory
 # structure does not match the module structure
@@ -3347,22 +3315,6 @@ def check_file(filename: str | None, is_inlined_call: bool = False) -> SkipResul
         return SkipResult(
             False, f"file matches BUILTIN_INLINE_WHEN_CALLED ({filename})"
         )
-    if (
-        is_fbcode()
-        and FBCODE_SKIP_DIRS
-        and bool(FBCODE_SKIP_DIRS_RE.match(filename))
-        and not bool(FBCODE_INLINE_FILES_IN_SKIPPED_DIRS_RE.match(filename))
-    ):
-        return SkipResult(True, "file matches FBCODE_SKIP_DIRS")
-
-    if (
-        is_fbcode()
-        and config.skip_torchrec
-        and FBCODE_SKIP_TORCHREC_DIRS
-        and bool(FBCODE_SKIP_TORCHREC_DIRS_RE.match(filename))
-        and not bool(FBCODE_INLINE_FILES_IN_SKIPPED_DIRS_RE.match(filename))
-    ):
-        return SkipResult(True, "file matches FBCODE_SKIP_TORCHREC_DIRS")
 
     unittest_dir = _module_dir(unittest)
     if (

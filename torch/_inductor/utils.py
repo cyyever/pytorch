@@ -18,7 +18,6 @@ import re
 import shutil
 import statistics
 import sys
-import sysconfig
 import tempfile
 import time
 import unittest
@@ -143,7 +142,6 @@ from torch.utils._sympy.value_ranges import bound_sympy, ValueRanges
 
 from . import config
 from .runtime.runtime_utils import ceildiv as runtime_ceildiv
-
 
 
 log = logging.getLogger(__name__)
@@ -389,9 +387,7 @@ def get_importable_constexpr_types(
     return sorted(result.values(), key=lambda spec: (spec.module, spec.root_name))
 
 
-XPU_KERNEL_FORMAT = (
-    os.getenv("TORCHINDUCTOR_XPU_KERNEL_FORMAT", "zebin")
-)
+XPU_KERNEL_FORMAT = os.getenv("TORCHINDUCTOR_XPU_KERNEL_FORMAT", "zebin")
 
 GPU_KERNEL_BIN_EXTS = {
     "cuda": ".cubin",
@@ -1634,7 +1630,6 @@ def get_all_devices(gm: torch.fx.GraphModule) -> OrderedSet[torch.device]:
     return input_devices | out_devices
 
 
-
 _registered_caches: list[Any] = []
 
 
@@ -2407,7 +2402,7 @@ def ensure_nv_universal_gemm_available() -> bool:
     """
     try:
         available = importlib.util.find_spec("cutlass.operators") is not None
-    except (ImportError, ValueError):
+    except ImportError, ValueError:
         return False
     if available:
         _ensure_fp4_dtype_registered()
@@ -2425,7 +2420,7 @@ def _ensure_fp4_dtype_registered():
 
     try:
         _dtype_utils.cutlass_type_from_torch_type(torch.float4_e2m1fn_x2)
-    except (KeyError, AttributeError):
+    except KeyError, AttributeError:
         import cutlass
 
         _orig = _dtype_utils.cutlass_type_from_torch_type
@@ -3746,7 +3741,7 @@ def _triton_supported_fp8_dtypes(
         # This is the same option Triton checks when lowering tl.float8* types.
         target = GPUTarget(backend_name, arch, warp_size)
         options = make_backend(target).parse_options({})
-    except (AttributeError, ImportError, KeyError, TypeError):
+    except AttributeError, ImportError, KeyError, TypeError:
         return None
 
     supported_fp8_dtypes = getattr(options, "supported_fp8_dtypes", None)
@@ -4145,20 +4140,7 @@ def set_tracing_context_output_strides(
 def should_use_remote_fx_graph_cache() -> bool:
     if config.fx_graph_remote_cache is not None:
         return config.fx_graph_remote_cache
-    if not config.is_fbcode():
-        return False
-
-    if torch._utils_internal.is_fb_unit_test():
-        return False
-
-    try:
-        from torch._inductor.fb.remote_cache import REMOTE_CACHE_VERSION
-    except ModuleNotFoundError:
-        return False
-
-    return REMOTE_CACHE_VERSION >= torch._utils_internal.justknobs_getval_int(
-        "pytorch/remote_cache:fx_graph_memcache_version"
-    )
+    return False
 
 
 def normalize_name(name: str) -> str:
@@ -4509,13 +4491,6 @@ def is_cudagraph_unsafe_op(node: Operation) -> bool:
 
 def get_ld_library_path() -> str:
     path = os.environ.get("LD_LIBRARY_PATH", "")
-    if config.is_fbcode():
-        from libfb.py.parutil import get_runtime_path
-
-        runtime_path = get_runtime_path()
-        if runtime_path:
-            lib_path = os.path.join(runtime_path, "runtime", "lib")
-            path = os.pathsep.join([lib_path, path]) if path else lib_path
 
     return path
 
@@ -4722,7 +4697,7 @@ def determine_aoti_mmap_flags(consts_size: int) -> tuple[bool, bool]:
         return False, False
 
     use_external_weights = False
-    use_mmap_weights = not config.is_fbcode()
+    use_mmap_weights = True
 
     return use_external_weights, use_mmap_weights
 
@@ -4786,8 +4761,6 @@ def python_subprocess_env() -> dict[str, str]:
     # This can't be done for external builds.  The process can be run from a
     # venv and that won't include Python headers.  The process needs to be able
     # to search for and find the platform runtime.
-    if config.is_fbcode():
-        env["PYTHONHOME"] = sysconfig.get_path("data")
 
     return env
 

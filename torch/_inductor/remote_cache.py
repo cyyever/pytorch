@@ -14,7 +14,6 @@ from typing import Any, Generic, TypeAlias, TypeVar, Union
 from typing import override
 
 from torch._dynamo.utils import dynamo_timed
-from torch._inductor import config
 from torch._monitor import _WaitCounter
 
 
@@ -31,14 +30,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-if config.is_fbcode():
-    from rfe.scubadata.scubadata_py3 import (  # type: ignore[import-not-found]
-        Sample as Sample_,
-    )
-
-    Sample: TypeAlias = Sample_
-else:
-    Sample: TypeAlias = type[object]  # type: ignore[misc,no-redef]
+Sample: TypeAlias = type[object]  # type: ignore[misc,no-redef]
 
 
 _T = TypeVar("_T")
@@ -47,7 +39,7 @@ _U = TypeVar("_U")
 
 remote_fx_cache_get_timed = functools.partial(
     dynamo_timed,
-    "FbRemoteFxGraphCache.get",
+    "RemoteFxGraphCache.get",
     phase_name="remote_fx_graph_cache_get",
     log_pt2_compile_event=False,
     dynamo_compile_column_us="remote_fx_graph_cache_get_time_us",
@@ -55,7 +47,7 @@ remote_fx_cache_get_timed = functools.partial(
 )
 remote_fx_cache_put_timed = functools.partial(
     dynamo_timed,
-    "FbRemoteFxGraphCache.put",
+    "RemoteFxGraphCache.put",
     phase_name="remote_fx_graph_cache_put",
     log_pt2_compile_event=False,
     dynamo_compile_column_us="remote_fx_graph_cache_put_time_us",
@@ -404,9 +396,7 @@ class RemoteDynamoPGOCache(RedisRemoteCache):
 
 def create_cache(
     key: str,
-    is_fbcode: bool = False,
-    fb_cache_cls: str | None = None,
-    oss_cache_cls: str | None = None,
+    cache_cls_name: str | None = None,
     *,
     local_cache_cls: str | None = None,
 ) -> RemoteCache[JsonDataTy] | None:
@@ -415,18 +405,10 @@ def create_cache(
         if local_cache_cls is not None:
             cache_cls = getattr(this_module, local_cache_cls)
             return cache_cls(key)
-        elif is_fbcode:
-            if fb_cache_cls is None:
-                raise AssertionError("fb_cache_cls must not be None in fbcode")
-            import torch._inductor.fb.remote_cache
-
-            cache_cls = getattr(torch._inductor.fb.remote_cache, fb_cache_cls)
-            return cache_cls(key)
-        else:
-            if oss_cache_cls is None:
-                raise AssertionError("oss_cache_cls must not be None")
-            cache_cls = getattr(this_module, oss_cache_cls)
-            return cache_cls(key)
+        if cache_cls_name is None:
+            raise AssertionError("cache_cls_name must not be None")
+        cache_cls = getattr(this_module, cache_cls_name)
+        return cache_cls(key)
 
     except Exception:
         log.warning("Unable to create cache", exc_info=True)

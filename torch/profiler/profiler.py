@@ -24,7 +24,6 @@ from torch._C._profiler import (
     _ExperimentalConfig,
     _remove_execution_trace_observer,
 )
-from torch._environment import is_fbcode
 from torch._utils_internal import profiler_allow_cudagraph_cupti_lazy_reinit_cuda12
 from torch.autograd import kineto_available, ProfilerActivity
 from torch.profiler._memory_profiler import MemoryProfile, MemoryProfileTimeline
@@ -1344,9 +1343,7 @@ class profile(_KinetoProfile):
             self.current_action = ProfilerAction.DEVICE_STOPPED
 
         self._transit_action(prev_action, self.current_action)
-        if os.environ.get("KINETO_USE_DAEMON", "") or (
-            is_fbcode() and os.environ.get("KINETO_FORCE_STEP_HOOK", "")
-        ):
+        if os.environ.get("KINETO_USE_DAEMON", ""):
             prof.KinetoStepTracker.increment_step(PROFILER_STEP_NAME)
 
         if self.record_steps:

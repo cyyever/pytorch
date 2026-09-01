@@ -73,7 +73,6 @@ from torch._inductor.codegen.rocm.compile_command import (
 from torch._inductor.compile_worker.utils import in_toplevel_process
 from torch._inductor.cpp_builder import (
     _LINKER_SCRIPT,
-    _set_gpu_runtime_env,
     _TORCH_PATH,
     batch_convert_cubins_to_obj,
     convert_cubin_to_obj,
@@ -773,7 +772,7 @@ class FxGraphCachePickler(pickle.Pickler):
         # First encounter: probe whether the default reduce protocol works.
         try:
             result = obj.__reduce_ex__(pickle.DEFAULT_PROTOCOL)
-        except (TypeError, AttributeError, pickle.PicklingError):
+        except TypeError, AttributeError, pickle.PicklingError:
             self._pickleable_type_cache[t] = False
             return self._reduce_unpicklable(obj)
         except RuntimeError as e:
@@ -1005,33 +1004,28 @@ def torch_key() -> bytes:
     Compute a key that contains relevant information about torch source files
     """
     with dynamo_timed("inductor_codecache_torch_key", log_pt2_compile_event=False):
-        if not config.is_fbcode():
 
-            def get_code_hash(root: str) -> bytes:
-                # This function isn't meant to be used outside of torch_key, just a
-                # helper for clarity. Instead, use torch_key() directly when you need
-                # a hash representing the state of the source code.
-                extra_files = (
-                    "codegen/aoti_runtime/interface.cpp",
-                    "codegen/aoti_runtime/streams.h",
-                    "script.ld",
-                )
-                inductor_root = os.path.dirname(__file__)
-                extra_files = [os.path.join(inductor_root, x) for x in extra_files]
-                hasher = hashlib.sha256()
-                hasher.update(torch.__version__.encode("utf-8"))
-                build_code_hash([root], "", hasher)
-                for path in extra_files:
-                    if os.path.exists(path):
-                        with open(path, "rb") as f:
-                            hasher.update(f.read())
-                return hasher.digest()
+        def get_code_hash(root: str) -> bytes:
+            # This function isn't meant to be used outside of torch_key, just a
+            # helper for clarity. Instead, use torch_key() directly when you need
+            # a hash representing the state of the source code.
+            extra_files = (
+                "codegen/aoti_runtime/interface.cpp",
+                "codegen/aoti_runtime/streams.h",
+                "script.ld",
+            )
+            inductor_root = os.path.dirname(__file__)
+            extra_files = [os.path.join(inductor_root, x) for x in extra_files]
+            hasher = hashlib.sha256()
+            hasher.update(torch.__version__.encode("utf-8"))
+            build_code_hash([root], "", hasher)
+            for path in extra_files:
+                if os.path.exists(path):
+                    with open(path, "rb") as f:
+                        hasher.update(f.read())
+            return hasher.digest()
 
-            return get_code_hash(_TORCH_PATH)
-
-        from libfb.py import parutil
-
-        return parutil.get_file_contents("torch/src_hash.txt").rstrip().encode("ascii")
+        return get_code_hash(_TORCH_PATH)
 
 
 def get_inductor_root() -> str:
@@ -1820,17 +1814,6 @@ def add_ephemeral_timeout_increase_for_distributed(time_saved_ns: int) -> int:
 
     increased_timeout_sec = int(time_saved_ns // 1e9)  # convert to seconds
 
-    if config.is_fbcode():
-        fudge_factor = torch._utils_internal.justknobs_getval_int(
-            "pytorch/remote_cache:ephemeral_timeout_fudge_factor_percentage"
-        )
-        log.info(
-            "Ephemeral NCCL timeout increase fudge factor %d and original increase value %d",
-            fudge_factor,
-            increased_timeout_sec,
-        )
-        increased_timeout_sec += int(increased_timeout_sec * fudge_factor / 100)
-
     log.info("Increasing NCCL timeout by %d", increased_timeout_sec)
     dist.distributed_c10d._add_ephemeral_timeout_for_all_pgs(
         timedelta(seconds=increased_timeout_sec)
@@ -2428,8 +2411,6 @@ class FxGraphCache(GuardedCache[CompiledFxGraph]):
         cache_id = "fx-graph-v1"
         return create_cache(
             cache_id,
-            config.is_fbcode(),
-            "FbRemoteFxGraphCache",
             "RemoteFxGraphCache",
         )
 
@@ -2669,8 +2650,6 @@ class AotCodeCompiler:
         """
         generated_files: list[str | Weights] = additional_files  # type: ignore[assignment]
 
-        _set_gpu_runtime_env()  # cpp_extension consults the env
-
         picked_vec_isa = pick_vec_isa()
         vec_isa_cmd_gen = CppBuilder(
             name="o",
@@ -2688,10 +2667,7 @@ class AotCodeCompiler:
         # guarantee the source code hash contains ISA difference.
         cpp_command = repr(vec_isa_cmd_gen.get_command_line())
 
-        # Meta internal AOTInductor CPU
-        use_relative_path = (
-            config.is_fbcode() and device_type == "cpu" and graph.aot_mode
-        )
+        use_relative_path = False
 
         (
             specified_output_path,
@@ -2923,9 +2899,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                 """
                 asm_code = f"\t.section\t{section_attr}\n"
                 asm_code += f"\t.balign {align_bytes}\n"
-                asm_code += (
-                    f"\t.globl\t{symbol_prefix}_binary_constants_bin_start\n"
-                )
+                asm_code += f"\t.globl\t{symbol_prefix}_binary_constants_bin_start\n"
                 asm_code += f"{symbol_prefix}_binary_constants_bin_start:\n"
                 asm_code += f".globl\t{symbol_prefix}_binary_constants_bin_end\n"
                 asm_code += f"{symbol_prefix}_binary_constants_bin_end:\n"
@@ -3374,10 +3348,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                     asm_files.append(asm_file)
 
                 cubin_file = value[get_cpp_wrapper_cubin_path_name()]
-                if (
-                    config.aot_inductor.emit_multi_arch_kernel
-                    and device_type == "cuda"
-                ):
+                if config.aot_inductor.emit_multi_arch_kernel and device_type == "cuda":
                     if torch.version.hip is None:
                         fatbin_cmds.append(
                             (
@@ -3441,9 +3412,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                         asm_f, cubin_f, raw_cubin_f, nvcc, fatbinary, cuda_arch
                     )
                     try:
-                        subprocess.run(
-                            cmd, capture_output=True, text=True, check=True
-                        )
+                        subprocess.run(cmd, capture_output=True, text=True, check=True)
                     except subprocess.CalledProcessError as e:
                         print(
                             f"{shlex.join(cmd)} failed with:\nstdout:\n{e.stdout}\nstderr:\n{e.stderr}",
@@ -3475,9 +3444,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                     )
                     for cubin_file, kernel_name in cubins_to_embed:
                         cubins_o.append(
-                            convert_cubin_to_obj(
-                                cubin_file, kernel_name, ld, objcopy
-                            )
+                            convert_cubin_to_obj(cubin_file, kernel_name, ld, objcopy)
                         )
 
             output_name, output_dir = get_name_and_dir_from_output_file_path(output_so)
@@ -3904,7 +3871,7 @@ class CppCodeCache:
             **cls.cpp_compile_command_flags,
             "device_type": device_type,
             "extra_flags": extra_flags,
-            "use_relative_path": config.is_fbcode(),
+            "use_relative_path": False,
         }
         main_compile_command = {
             **shared_compile_command,
@@ -3914,8 +3881,6 @@ class CppCodeCache:
             **shared_compile_command,
             "vec_isa": picked_vec_isa if kernel_needs_vec_isa else invalid_vec_isa,
         }
-
-        _set_gpu_runtime_env()  # cpp_extension consults the env
 
         # Note the distinction between the two booleans.  We do minimal optimization if
         # the optimized_code argument is present at all, since that's how the user of
@@ -4517,17 +4482,7 @@ def _load_triton_kernel_from_source(
 def cutlass_key() -> bytes:
     """
     Compute a key representing the state of the CUTLASS library.
-
-    Note: OSS and fbcode will have different keys.
     """
-    if config.is_fbcode():
-        with (
-            importlib.resources.path(
-                "cutlass_library", "src_hash.txt"
-            ) as resource_path,
-            open(resource_path) as resource_file,
-        ):
-            return resource_file.read().encode()
 
     combined_hash = hashlib.sha256()
     build_code_hash([config.cutlass.cutlass_dir], "", combined_hash)
@@ -4645,43 +4600,6 @@ class CUTLASSCodeCache:
         cls.aot_kernels_o.clear()
         cls.write.cache_clear()
 
-    @staticmethod
-    @lru_cache(maxsize=4)
-    def get_kernel_binary_remote_cache(
-        caching_enabled: bool, caching_available: bool
-    ) -> Any | None:
-        """
-        Get or create the class instance of the CUTLASSKernelBinaryRemoteCache.
-
-        Args:
-            caching_enabled: Whether binary remote caching is enabled
-            caching_available: Whether we're in fbcode environment
-
-        Returns:
-            CUTLASSKernelBinaryRemoteCache: The class instance of the kernel binary remote cache
-        """
-        if not caching_enabled:
-            log.debug("CUTLASSKernelBinaryRemoteCache not requested, skipping")
-            return None
-        if not caching_available:
-            return None
-
-        try:
-            from torch._inductor.fb.kernel_binary_remote_cache import (
-                CUTLASSKernelBinaryRemoteCache,
-            )
-
-            return CUTLASSKernelBinaryRemoteCache()
-        except ImportError:
-            log.debug(
-                "CUTLASSKernelBinaryRemoteCache not available, remote caching disabled"
-            )
-            return None
-
-    @classmethod
-    def _use_re_build(cls) -> bool:
-        raise NotImplementedError
-
     @classmethod
     def _compile_command(
         cls,
@@ -4743,30 +4661,10 @@ class CUTLASSCodeCache:
             with lock:
                 output_path = input_path[: -len(cls._SOURCE_CODE_SUFFIX)] + dst_file_ext
                 error_path = binary_error_path(output_path)
-                binary_remote_cache = cls.get_kernel_binary_remote_cache(
-                    caching_enabled=config.cutlass.use_binary_remote_cache
-                    and not config.force_disable_caches,
-                    caching_available=config.is_fbcode(),
-                )
-                if binary_remote_cache is not None:
-                    # The remote cache implementation will only download if the file does
-                    # not already exist locally
-                    binary_remote_cache.get(output_path, error_path)
-
                 if os.path.exists(error_path):
                     with open(error_path, encoding="utf-8") as fh:
                         error_json = fh.read()
                     cmd_parts, error_output = json.loads(error_json)
-                    if (
-                        binary_remote_cache is not None
-                        and config.cutlass.upload_to_binary_remote_cache
-                    ):
-                        # This ensures that a local error is uploaded to the remote cache,
-                        # as we make no assumptions about the remote cache having the same
-                        # information as the local cache
-                        binary_remote_cache.put(
-                            error_path, config.cutlass.binary_remote_cache_force_write
-                        )
                     cls.cache[key_with_ext] = cls.CacheEntry(
                         input_path, output_path, error_json
                     )
@@ -4782,18 +4680,9 @@ class CUTLASSCodeCache:
                     log.debug("%s %s: %s", cls._BACKEND, operation_name, cmd)
                     cmd_parts = shlex.split(cmd)
                     try:
-                        if cls._use_re_build():
-                            from triton.fb.re_build_helper import run_build_command
-
-                            run_build_command(
-                                cmd_parts,
-                                os.path.dirname(input_path),
-                                os.path.basename(output_path),
-                            )
-                        else:
-                            subprocess.check_output(
-                                cmd_parts, stderr=subprocess.STDOUT, env=os.environ
-                            )
+                        subprocess.check_output(
+                            cmd_parts, stderr=subprocess.STDOUT, env=os.environ
+                        )
                     except subprocess.CalledProcessError as error:
                         cls._record_compile_error(
                             error.output.decode("utf-8"),
@@ -4801,7 +4690,6 @@ class CUTLASSCodeCache:
                             cmd_parts,
                             input_path,
                             output_path,
-                            binary_remote_cache,
                         )
                         raise cls._COMPILE_ERROR(cmd_parts, error.output) from error
                     except Exception as error:
@@ -4812,7 +4700,6 @@ class CUTLASSCodeCache:
                                 cmd_parts,
                                 input_path,
                                 output_path,
-                                binary_remote_cache,
                             )
                             raise cls._COMPILE_ERROR(cmd_parts, str(error)) from error
                         raise error
@@ -4826,15 +4713,6 @@ class CUTLASSCodeCache:
                         cls._BACKEND,
                         operation_name,
                         output_path,
-                    )
-                # Upload to remote cache if enabled
-                if (
-                    binary_remote_cache is not None
-                    and config.cutlass.upload_to_binary_remote_cache
-                ):
-                    # will log on errors, but not fail out
-                    binary_remote_cache.put(
-                        output_path, config.cutlass.binary_remote_cache_force_write
                     )
                 cls.cache[key_with_ext] = cls.CacheEntry(input_path, output_path, None)
 
@@ -4870,9 +4748,6 @@ class CUTLASSCodeCache:
         cmd_parts: list[str],
         input_path: str,
         output_path: str,
-        # Any here, as the import and type will only work in fbcode
-        # TODO: Make the typing hint strong here
-        binary_remote_cache: Any = None,
     ) -> None:
         error_json = json.dumps([cmd_parts, error_str])
         cls.cache[key_with_ext] = cls.CacheEntry(input_path, output_path, error_json)
@@ -4880,24 +4755,11 @@ class CUTLASSCodeCache:
         with open(error_path, "w", encoding="utf-8") as fh:
             fh.write(error_json)
 
-        # Upload to remote cache directly from memory if enabled
-        if (
-            binary_remote_cache is not None
-            and config.cutlass.upload_to_binary_remote_cache
-        ):
-            binary_remote_cache.put(
-                error_path, config.cutlass.binary_remote_cache_force_write
-            )
-
 
 @clear_on_fresh_cache
 class CUDACodeCache(CUTLASSCodeCache):
     _SOURCE_CODE_SUFFIX = "cu"
     _BACKEND = "CUDA"
-
-    @classmethod
-    def _use_re_build(cls) -> bool:
-        return cuda_compile_utils.use_re_build()
 
     @classmethod
     def _compile_command(
@@ -4943,10 +4805,6 @@ class XPUCodeCache(CUTLASSCodeCache):
     def cache_clear(cls) -> None:
         super().cache_clear()
         cls.dll_cache.clear()
-
-    @classmethod
-    def _use_re_build(cls) -> bool:
-        return False
 
     @classmethod
     def _compile_command(

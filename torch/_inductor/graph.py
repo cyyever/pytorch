@@ -148,18 +148,13 @@ aten = torch.ops.aten
 
 _post_grad_graph_counter = itertools.count()
 
-if config.is_fbcode():
-    from torch._inductor.fb.triton_kernel_metadata import (
-        save_triton_kernel_perf_artifact,
-    )
-    from torch._inductor.fb.utils import log_module_code
-else:
 
-    def log_module_code(*args: Any, **kwargs: Any) -> None:
-        pass
+def log_module_code(*args: Any, **kwargs: Any) -> None:
+    pass
 
-    def save_triton_kernel_perf_artifact(*args: Any, **kwargs: Any) -> None:
-        pass
+
+def save_triton_kernel_perf_artifact(*args: Any, **kwargs: Any) -> None:
+    pass
 
 
 def may_get_constant_buffer_dtype(constant_buffer: sympy.Expr) -> torch.dtype | None:
@@ -482,9 +477,7 @@ class GraphLowering(torch.fx.Interpreter):
         self.named_parameters: dict[str, torch.Tensor] = (
             const_module.named_parameters if const_module else {}
         )
-        self.torchbind_constants: dict[
-            str, torch.ScriptObject | FakeScriptObject
-        ] = {}
+        self.torchbind_constants: dict[str, torch.ScriptObject | FakeScriptObject] = {}
         self.torchbind_replay_objects: dict[
             str, torch.ScriptObject | FakeScriptObject
         ] = {}
@@ -510,9 +503,7 @@ class GraphLowering(torch.fx.Interpreter):
         from torch._inductor.extern_node_serializer import extern_node_json_serializer
 
         self.extern_node_serializer: Callable[[list[ir.ExternKernelNode]], Any] = (
-            extern_node_serializer
-            if config.is_fbcode() and extern_node_serializer
-            else extern_node_json_serializer
+            extern_node_json_serializer
         )
 
         self.current_node: torch.fx.Node = None  # type: ignore[assignment]

@@ -4852,7 +4852,6 @@ class TestAutotuneCache(TestCase):
             "autotune_local_cache": False,
             "autotune_remote_cache": True,
             "backend_hash": "backend_hash",
-            "is_fbcode": False,
         }
 
         with mock.patch(
@@ -4913,7 +4912,6 @@ class TestAutotuneCache(TestCase):
             "autotune_local_cache": True,
             "backend_hash": "backend",
             "bundled_autotune_remote_cache": True,
-            "is_fbcode": False,
         }
 
         ctx1 = CompileContext(None)
@@ -4968,7 +4966,6 @@ class TestAutotuneCache(TestCase):
             "autotune_local_cache": True,
             "backend_hash": "backend",
             "bundled_autotune_remote_cache": True,
-            "is_fbcode": False,
         }
 
         graph = CompiledFxGraph.__new__(CompiledFxGraph)
@@ -5382,7 +5379,9 @@ class TestVecISACheckBuild(TestCase):
         self.assertEqual(calls, [60])
         self.assertTrue(
             any("hung after 60s" in str(w.message) for w in caught),
-            msg=lambda msg: f"{msg}\nexpected timeout warning, got: {[str(w.message) for w in caught]}",
+            msg=lambda msg: (
+                f"{msg}\nexpected timeout warning, got: {[str(w.message) for w in caught]}"
+            ),
         )
 
     def test_probe_load_returns_false_on_called_process_error(self):
@@ -5414,7 +5413,9 @@ class TestVecISACheckBuild(TestCase):
         self.assertEqual(
             value.split(os.pathsep)[0],
             torch_lib,
-            msg=lambda msg: f"{msg}\nLD_LIBRARY_PATH should be prepended with {torch_lib!r}, got {value!r}",
+            msg=lambda msg: (
+                f"{msg}\nLD_LIBRARY_PATH should be prepended with {torch_lib!r}, got {value!r}"
+            ),
         )
 
     @unittest.skipUnless(sys.platform == "linux", "Linux loader semantics")

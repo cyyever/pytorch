@@ -156,16 +156,10 @@ if TYPE_CHECKING:
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
 
-if TYPE_CHECKING or not config.is_fbcode():
-    # no-op decorator
-    def time_and_log(attr: str) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
-        return dynamo_utils.identity
 
-    def log_optimus_to_scuba(*args: object, **kwargs: object) -> None:
-        pass
+def time_and_log(attr: str) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
+    return dynamo_utils.identity
 
-else:
-    from torch._inductor.fb.utils import log_optimus_to_scuba, time_and_log
 
 if TYPE_CHECKING:
     from torch._functorch._aot_autograd.schemas import (
@@ -1279,7 +1273,7 @@ def _compile_fx_inner(
                     triton_bundler_meta,
                 ) = TritonBundler.collect()
                 mb_compiled_graph.set_triton_bundle(triton_bundle)
-            except (ShortenTraceback, SkipFrame):
+            except ShortenTraceback, SkipFrame:
                 raise
             except Exception as e:
                 raise InductorError(e, currentframe()).with_traceback(
@@ -1348,7 +1342,7 @@ def _compile_fx_inner(
                     triton_bundler_meta,
                 ) = TritonBundler.collect()
                 mb_compiled_graph.set_triton_bundle(triton_bundle)
-            except (ShortenTraceback, SkipFrame):
+            except ShortenTraceback, SkipFrame:
                 raise
             except Exception as e:
                 raise InductorError(e, currentframe()).with_traceback(
@@ -1727,17 +1721,6 @@ class _InProcessFxCompile(FxCompile):
                     CompileEventLogger.compilation_metric(
                         overwrite=True, num_graph_breaks=num_graph_breaks
                     )
-                if config.is_fbcode():
-                    try:
-                        log_optimus_to_scuba(
-                            extra_logging={
-                                "pt2_configs": str(get_patched_config_dict())
-                            }
-                        )
-                    except Exception:
-                        # TODO(T216453900): need to work around for now to support vllm
-                        # See details in vllm/compilation/pass_manager.py.
-                        log.warning("failed to log pt2_configs")
 
             with (
                 V.set_fake_mode(fake_mode),
@@ -1754,11 +1737,15 @@ class _InProcessFxCompile(FxCompile):
                     # See caffe2/torch/fx/_symbolic_trace.py?lines=406
                     const_gm, const_output_index = split_const_gm(
                         gm,
-                        skip_folding_node_fn=lambda node: node.op == "get_attr"
-                        and isinstance(node.target, str)
-                        and (
-                            node.target.startswith("_torchbind_obj")
-                            or isinstance(node.meta.get("val", None), FakeScriptObject)
+                        skip_folding_node_fn=lambda node: (
+                            node.op == "get_attr"
+                            and isinstance(node.target, str)
+                            and (
+                                node.target.startswith("_torchbind_obj")
+                                or isinstance(
+                                    node.meta.get("val", None), FakeScriptObject
+                                )
+                            )
                         ),
                     )
 
@@ -1933,7 +1920,9 @@ class _InProcessFxCompile(FxCompile):
                                 "name": "inductor_provenance_tracking_node_mappings",
                                 "encoding": "json",
                             },
-                            payload_fn=lambda: inductor_provenance_tracking_node_mappings,
+                            payload_fn=lambda: (
+                                inductor_provenance_tracking_node_mappings
+                            ),
                         )
                         trace_structured(
                             "artifact",
@@ -2134,9 +2123,7 @@ def fx_codegen_and_compile(
             )
         # pyrefly: ignore [unbound-name]
         scheme = _AsyncFxCompile(scheme)
-        scheme._compile.compile_region_name = (
-            compile_region_name  # pyrefly: ignore[attr-defined]
-        )
+        scheme._compile.compile_region_name = compile_region_name  # pyrefly: ignore[attr-defined]
 
     if fx_compile_progressive:
         from .compile_fx_async import _ProgressiveFxCompile
@@ -2156,9 +2143,7 @@ def fx_codegen_and_compile(
 
         # pyrefly: ignore [unbound-name]
         scheme = _ProgressiveFxCompile(fast_scheme, scheme, progression_configs)
-        scheme._optimized_compile.compile_region_name = (
-            compile_region_name  # pyrefly: ignore[attr-defined]
-        )
+        scheme._optimized_compile.compile_region_name = compile_region_name  # pyrefly: ignore[attr-defined]
 
     scheme.compile_region_name = compile_region_name  # pyrefly: ignore[unbound-name]
 
@@ -3028,10 +3013,12 @@ def run_pre_grad_passes(
             "name": "before_pre_grad_graph",
             "encoding": "string",
         },
-        payload_fn=lambda: model_.print_readable(
-            print_output=False, include_stride=True, include_device=True
-        )
-        + f"\n\n # graph id: {id(model_.graph)}",
+        payload_fn=lambda: (
+            model_.print_readable(
+                print_output=False, include_stride=True, include_device=True
+            )
+            + f"\n\n # graph id: {id(model_.graph)}"
+        ),
     )
     pre_grad_graphs_log.debug(
         "%s",
@@ -3059,10 +3046,12 @@ def run_pre_grad_passes(
             "name": "after_pre_grad_graph",
             "encoding": "string",
         },
-        payload_fn=lambda: model_.print_readable(
-            print_output=False, include_stride=True, include_device=True
-        )
-        + f"\n\n # graph id: {id(model_.graph)}",
+        payload_fn=lambda: (
+            model_.print_readable(
+                print_output=False, include_stride=True, include_device=True
+            )
+            + f"\n\n # graph id: {id(model_.graph)}"
+        ),
     )
     return model_
 

@@ -1317,13 +1317,12 @@ class LazyTraceHandler(logging.StreamHandler):
 
 def _log_torch_version() -> None:
     import torch
-    from torch._environment import is_fbcode
     from torch._utils_internal import get_torch_source_version
 
     version_info: dict[str, object] = {
         "pytorch_version": torch.__version__,
         "commit": get_torch_source_version(),
-        "oss": not is_fbcode(),
+        "oss": True,
     }
 
     trace_structured(

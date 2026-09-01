@@ -65,8 +65,6 @@ cse = True
 # probe the size of a (Fake)ScriptObject.
 unsafe_treat_script_objects_as_zero_size = False
 
-from torch._environment import is_fbcode
-
 
 enable_autograd_cache: bool = Config(
     justknob="pytorch/remote_cache:enable_local_autograd_cache",
@@ -88,7 +86,7 @@ bypass_autograd_cache_key: bool = False
 
 # Whether or not to normalize placeholder names in graphs
 # from dynamo in AOTAutogradCache
-autograd_cache_normalize_inputs = not is_fbcode()
+autograd_cache_normalize_inputs = True
 
 # Enable debug mode at first invocation to check if custom ops are valid.
 # When enabled, this checks that custom operators don't violate aliasing constraints.
@@ -144,7 +142,7 @@ enable_remote_autograd_cache = remote_autograd_cache_default()
 # View replay is currently not compatible with AOTAutogradCache, since
 # FunctionalTensors are not serializable. We'll need to make them
 # serializable before enabling warm cache with this config turned on.
-view_replay_for_aliased_outputs = not is_fbcode()
+view_replay_for_aliased_outputs = True
 
 # Restricts the amount of computation AOTAutograd can do.
 # NB: We have essentially disabled this heuristic now. However, this is kept
@@ -344,7 +342,7 @@ backward_pass_autocast = "same_as_forward"
 
 # This controls whether we collect donated buffers. This flag must be set
 # False if a user wants to retain_graph=True for backward.
-donated_buffer = not is_fbcode()
+donated_buffer = True
 
 # Controls the default graph output format used by draw_graph.
 # Most supported formats are defined here https://graphviz.org/docs/outputs/.
@@ -416,7 +414,7 @@ disable_guess_zero_tangent_for_mutated_input_subclass = False
 # At runtime non contiguous tangents will be coerced to be contiguous.
 # This config changes this guess for tangents strides to be the same as outputs.
 # TODO(ivankobzarev): Remove this config once extra memory usage is investigated.
-guess_tangent_strides_as_outputs = not is_fbcode()
+guess_tangent_strides_as_outputs = True
 
 
 # This is a temporary config to ensure all ranks take the same decision in the partitioner
