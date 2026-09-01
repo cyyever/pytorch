@@ -224,7 +224,6 @@ These backends include:
 ```
 
 ```{eval-rst}
-.. autofunction:: torch.backends.cuda.sdp_kernel
 ```
 
 ## torch.backends.cudnn

@@ -43,7 +43,6 @@ from .batchnorm import (
 )
 from .channelshuffle import ChannelShuffle
 from .container import (
-    Container,
     ModuleDict,
     ModuleList,
     ParameterDict,
@@ -102,7 +101,6 @@ from .loss import (
     MultiLabelSoftMarginLoss,
     MultiMarginLoss,
     NLLLoss,
-    NLLLoss2d,
     PoissonNLLLoss,
     SmoothL1Loss,
     SoftMarginLoss,
@@ -195,7 +193,6 @@ __all__ = [
     "ConstantPad1d",
     "ConstantPad2d",
     "ConstantPad3d",
-    "Container",
     "Conv1d",
     "Conv2d",
     "Conv3d",
@@ -279,7 +276,6 @@ __all__ = [
     "MultiMarginLoss",
     "MultiheadAttention",
     "NLLLoss",
-    "NLLLoss2d",
     "PReLU",
     "PairwiseDistance",
     "ParameterDict",

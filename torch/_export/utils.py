@@ -39,7 +39,7 @@ from torch.fx._pytree import (
 )
 from torch.utils._pytree import (
     _deregister_pytree_node,
-    _register_pytree_node,
+    _private_register_pytree_node,
     Context,
     FlattenFn,
     FromDumpableContextFn,
@@ -559,7 +559,7 @@ def register_dataclass_as_pytree_node(
             "be None or registered."
         )
 
-    _register_pytree_node(
+    _private_register_pytree_node(
         cls,
         flatten_fn,
         unflatten_fn,
@@ -1586,7 +1586,7 @@ def register_module_as_pytree_input_node(cls: type[torch.nn.Module]) -> None:
         s[1] = PrototypeModule(torch.nn.Module())
         return s
 
-    _register_pytree_node(
+    _private_register_pytree_node(
         cls,
         flatten_fn,
         unflatten_fn,

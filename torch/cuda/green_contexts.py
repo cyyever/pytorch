@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import warnings
 from typing import Any
-from warnings import deprecated
 
 import torch
 from torch.cuda._utils import (
@@ -24,13 +23,6 @@ _WORKQUEUE_SCOPE_VALUES = {
     "device_ctx": 0,
     "balanced": 1,
 }
-
-_CONTEXT_STACK_DEPRECATION = (
-    "`GreenContext.set_context` and `GreenContext.pop_context` are deprecated. "
-    "Please create a stream with `GreenContext.Stream()` and use "
-    "`torch.cuda.stream(stream)` instead."
-)
-
 
 # note: this can safely be cached in a process/thread because
 # the driver version cannot change during the lifetime of a process
@@ -301,62 +293,6 @@ class GreenContext:
     def _ensure_alive(self) -> None:
         if self._green_ctx is None or self._context is None:
             raise RuntimeError("GreenContext has been destroyed")
-
-    @deprecated(_CONTEXT_STACK_DEPRECATION, category=FutureWarning)
-    def set_context(self) -> None:
-        r"""Make the green context the current context.
-
-        Deprecated. Create streams with :meth:`Stream` and use
-        :func:`torch.cuda.stream` instead.
-        """
-        self._ensure_alive()
-        if self._parent_stream is not None:
-            raise RuntimeError("set_context called twice before pop_context")
-        current_stream = torch.cuda.current_stream()
-        self._parent_stream = current_stream
-
-        event = torch.cuda.Event()
-        event.record(current_stream)
-
-        # pyrefly: ignore [missing-attribute]
-        current_ctx = _check_cuda_bindings(_drv.cuCtxGetCurrent())
-        if int(current_ctx) == 0:
-            # pyrefly: ignore [missing-attribute]
-            _check_cuda_bindings(_drv.cuCtxSetCurrent(self._context))
-        else:
-            # pyrefly: ignore [missing-attribute]
-            _check_cuda_bindings(_drv.cuCtxPushCurrent(self._context))
-
-        green_ctx_stream = torch.cuda.default_stream(self._device_id)
-        event.wait(green_ctx_stream)
-        torch.cuda.set_stream(green_ctx_stream)
-
-    @deprecated(_CONTEXT_STACK_DEPRECATION, category=FutureWarning)
-    def pop_context(self) -> None:
-        r"""Assuming the green context is the current context, pop it from the
-        context stack and restore the previous context.
-
-        Deprecated. Create streams with :meth:`Stream` and use
-        :func:`torch.cuda.stream` instead.
-        """
-        try:
-            self._ensure_alive()
-            if self._parent_stream is None:
-                raise RuntimeError("pop_context called without matching set_context")
-
-            event = torch.cuda.Event()
-            event.record(torch.cuda.current_stream())
-
-            # pyrefly: ignore [missing-attribute]
-            popped = _check_cuda_bindings(_drv.cuCtxPopCurrent())
-            # pyrefly: ignore [bad-argument-type]
-            if int(popped) != int(self._context):
-                raise RuntimeError("expected popped context to be the current ctx")
-
-            event.wait(self._parent_stream)
-            torch.cuda.set_stream(self._parent_stream)
-        finally:
-            self._parent_stream = None
 
     def Stream(self) -> torch.cuda.Stream:
         r"""Return a CUDA stream associated with this green context.

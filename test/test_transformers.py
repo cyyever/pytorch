@@ -4696,7 +4696,7 @@ class TestSDPACudaOnly(NNTestCase):
         key = torch.tensor([[[[1]]]], dtype=torch.float16, device=device)
         value = torch.tensor([[[[1]]]], dtype=torch.float16, device=device)
 
-        with torch.backends.cuda.sdp_kernel(enable_math=False, enable_flash=True, enable_mem_efficient=False):
+        with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
             scaled_dot_product_attention(query, key, value)
 
     @unittest.skipIf(not PLATFORM_SUPPORTS_MEM_EFF_ATTENTION, "Fused SDPA was not built for this system")

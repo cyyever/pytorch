@@ -29,6 +29,6 @@ if __name__ == "__main__":
     if torch.cuda.is_available() and not IS_JETSON and not IS_WINDOWS:
         get_disabled_tests(".")
 
-        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:True")
 
         run_tests()

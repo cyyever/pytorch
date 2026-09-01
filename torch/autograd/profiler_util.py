@@ -255,7 +255,7 @@ class EventList(list):
         Args:
             sort_by (str, optional): Attribute used to sort entries. By default
                 they are printed in the same order as they were registered.
-                Valid keys include: ``cpu_time``, ``cuda_time``, ``xpu_time``,
+                Valid keys include: ``cpu_time``, ``xpu_time``,
                 ``cpu_time_total``, ``cuda_time_total``, ``xpu_time_total``,
                 ``cpu_memory_usage``, ``cuda_memory_usage``, ``xpu_memory_usage``,
                 ``self_cpu_memory_usage``, ``self_cuda_memory_usage``,
@@ -345,7 +345,6 @@ class EventList(list):
     def supported_export_stacks_metrics(self):
         return [
             "self_cpu_time_total",
-            "self_cuda_time_total",
             "self_xpu_time_total",
             "self_privateuse1_time_total",
         ]
@@ -538,15 +537,6 @@ class FormattedTimesMixin:
     @property
     def device_time(self):
         return 0.0 if self.count == 0 else 1.0 * self.device_time_total / self.count  # type: ignore[attr-defined]
-
-    @property
-    @deprecated(
-        "`cuda_time` is deprecated, please use `device_time` instead.",
-        category=FutureWarning,
-    )
-    def cuda_time(self):  # To be deprecated
-        return self.device_time
-
 
 class Interval:
     def __init__(self, start, end):
@@ -968,15 +958,6 @@ class FunctionEvent(FormattedTimesMixin):
                     f"Expected device_type to be CUDA, PrivateUse1, MTIA, HPU or XPU, but got {self.device_type}"
                 )
             return self.device_time_total
-
-    @property
-    @deprecated(
-        "`self_cuda_time_total` is deprecated. Use `self_device_time_total` instead.",
-        category=FutureWarning,
-    )
-    def self_cuda_time_total(self):  # To be deprecated
-        return self.self_device_time_total
-
     @property
     def key(self):
         return self.name

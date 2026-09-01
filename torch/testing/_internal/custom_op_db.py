@@ -213,7 +213,7 @@ def numpy_nonzero(x: Tensor) -> Tensor:
 @numpy_nonzero.register_fake
 def _(x):
     ctx = torch._custom_op.impl.get_ctx()
-    i0 = ctx.create_unbacked_symint()
+    i0 = ctx.new_dynamic_size()
     shape = [i0, x.dim()]
     result = x.new_empty(shape, dtype=torch.long)
     return result
@@ -436,7 +436,7 @@ def _(boxes, scores, iou_threshold):
         raise AssertionError(f"scores.shape must be (N,), got {scores.shape}")
 
     ctx = torch._custom_op.impl.get_ctx()
-    i0 = ctx.create_unbacked_symint()
+    i0 = ctx.new_dynamic_size()
     result = boxes.new_empty([i0], dtype=torch.int64)
     return result
 

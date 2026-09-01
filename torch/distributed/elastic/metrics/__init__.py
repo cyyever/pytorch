@@ -152,8 +152,6 @@ from .api import (
     MetricsConfig,
     NullMetricHandler,
     prof,
-    profile,
-    publish_metric,
     put_metric,
 )
 

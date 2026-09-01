@@ -562,20 +562,6 @@ class TestNNInit(TestCase):
                         rtol=0,
                     )
 
-    def test_deprecation(self):
-        x = torch.randn(3, 3)
-
-        def fn():
-            init.normal(x)
-
-        with self.assertWarnsRegex(
-            FutureWarning,
-            "deprecated",
-            msg="methods not suffixed with underscore should be deprecated",
-        ):
-            fn()
-
-
 class TestNNInitDevice(TestCase):
     hw_classification = HardwareClassification.ACCELERATOR
 

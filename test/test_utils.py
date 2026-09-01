@@ -20,7 +20,6 @@ import torch.nn as nn
 import torch.utils.cpp_extension
 import torch.utils.data
 from torch._utils import try_import
-from torch._utils_internal import deprecated
 from torch.testing._internal.common_device_type import (
     deviceCountAtLeast,
     instantiate_device_type_tests,
@@ -1177,22 +1176,6 @@ class TestUtilsInternal(TestCase):
             [("max_clock", "handle", 1), "shutdown"],
         )
 
-
-@deprecated()
-def _deprecated_api(x, y=15):
-    return x + y
-
-
-class TestDeprecate(TestCase):
-    def test_deprecated(self):
-        with self.assertWarnsRegex(Warning, "is DEPRECATED"):
-            # pyrefly: ignore [unknown-name]
-            deprecated_api(1, 2)  # noqa: F821
-        with self.assertWarnsRegex(Warning, "is DEPRECATED"):
-            # pyrefly: ignore [unknown-name]
-            deprecated_api(1, y=2)  # noqa: F821
-        _deprecated_api(1, 2)
-        _deprecated_api(1, y=2)
 
 
 class TestDeviceLazyInit(TestCase):

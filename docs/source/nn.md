@@ -423,7 +423,6 @@ Utility functions to clip parameter gradients.
     :nosignatures:
 
     clip_grad_norm_
-    clip_grad_norm
     clip_grad_value_
     get_total_norm
     clip_grads_with_norm_

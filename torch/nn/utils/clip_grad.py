@@ -7,7 +7,6 @@ import warnings
 from collections.abc import Callable
 from typing import cast, TypeAlias, TypeVar
 from typing import ParamSpec
-from warnings import deprecated
 
 import torch
 from torch import Tensor
@@ -19,7 +18,6 @@ from torch.utils._foreach_utils import (
 
 
 __all__: list[str] = [
-    "clip_grad_norm",
     "clip_grad_norm_",
     "clip_grad_value_",
 ]
@@ -231,27 +229,6 @@ def clip_grad_norm_(
     total_norm = _get_total_norm(grads, norm_type, error_if_nonfinite, foreach)
     _clip_grads_with_norm_(parameters, max_norm, total_norm, foreach)
     return total_norm
-
-
-@deprecated(
-    "`torch.nn.utils.clip_grad_norm` is now deprecated "
-    "in favor of `torch.nn.utils.clip_grad_norm_`.",
-    category=FutureWarning,
-)
-def clip_grad_norm(
-    parameters: _tensor_or_tensors,
-    max_norm: float,
-    norm_type: float = 2.0,
-    error_if_nonfinite: bool = False,
-    foreach: bool | None = None,
-) -> torch.Tensor:
-    r"""Clip the gradient norm of an iterable of parameters.
-
-    .. warning::
-        This method is now deprecated in favor of
-        :func:`torch.nn.utils.clip_grad_norm_`.
-    """
-    return clip_grad_norm_(parameters, max_norm, norm_type, error_if_nonfinite, foreach)
 
 
 @_no_grad

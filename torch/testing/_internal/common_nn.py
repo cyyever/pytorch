@@ -3342,7 +3342,7 @@ class NNTestCase(TestCase):
             to_cat = []
             for p in param:
                 jacobian = _get_numerical_jacobian(fw, input, target=p, eps=1e-6)
-                # get_numerical_jacobian returns a list of tuples but we require a tensor
+                # the numerical jacobian is a list of tuples but we require a tensor
                 to_cat.append(jacobian[0][0])
             res += (torch.cat(to_cat, 0),)
         return res

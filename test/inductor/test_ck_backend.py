@@ -37,7 +37,7 @@ from torch.testing._internal.inductor_utils import (
 
 
 if HAS_CUDA_AND_TRITON:
-    torch.cuda.memory._set_allocator_settings("expandable_segments:False")
+    torch._C._accelerator_setAllocatorSettings("expandable_segments:False")
 
 log = logging.getLogger(__name__)
 

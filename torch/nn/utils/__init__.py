@@ -2,7 +2,6 @@ from . import parametrizations, parametrize, rnn, stateless
 from .clip_grad import (
     _clip_grads_with_norm_ as clip_grads_with_norm_,
     _get_total_norm as get_total_norm,
-    clip_grad_norm,
     clip_grad_norm_,
     clip_grad_value_,
 )
@@ -23,7 +22,6 @@ from .weight_norm import remove_weight_norm, weight_norm
 
 
 __all__ = [
-    "clip_grad_norm",
     "clip_grad_norm_",
     "clip_grads_with_norm_",
     "clip_grad_value_",

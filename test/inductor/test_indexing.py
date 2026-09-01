@@ -963,7 +963,7 @@ class TestPrecomputedSizeHinting(InductorTestCase):
 
         # Create a backed symbol with a concrete hint value
         s0 = sizevars.shape_env.create_symbol(168, source=ConstantSource("s0"))
-        sizevars.shape_env.var_to_val[s0] = sympy.Integer(168)
+        sizevars.shape_env.backed_var_to_val[s0] = sympy.Integer(168)
         sizevars.backed_var_to_val[s0] = sympy.Integer(168)
 
         # Create a complex expression that would be precomputed
@@ -987,7 +987,7 @@ class TestPrecomputedSizeHinting(InductorTestCase):
 
         # Create a backed symbol with a concrete hint value
         s0 = sizevars.shape_env.create_symbol(42, source=ConstantSource("s0"))
-        sizevars.shape_env.var_to_val[s0] = sympy.Integer(42)
+        sizevars.shape_env.backed_var_to_val[s0] = sympy.Integer(42)
         sizevars.backed_var_to_val[s0] = sympy.Integer(42)
 
         # Create a complex expression
@@ -1007,7 +1007,7 @@ class TestPrecomputedSizeHinting(InductorTestCase):
 
         # Create a backed symbol
         s0 = sizevars.shape_env.create_symbol(10, source=ConstantSource("s0"))
-        sizevars.shape_env.var_to_val[s0] = sympy.Integer(10)
+        sizevars.shape_env.backed_var_to_val[s0] = sympy.Integer(10)
         sizevars.backed_var_to_val[s0] = sympy.Integer(10)
 
         # Register s0 * 5 as precomputed (ps0 = 50)

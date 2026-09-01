@@ -870,28 +870,6 @@ class TestPythonPytree(TestCase):
                 reconstructed = reconstruct()
             self.assertIs(reconstructed, leaf)
 
-    def test_deprecated_register_pytree_node(self):
-        class DummyType:
-            def __init__(self, x, y):
-                self.x = x
-                self.y = y
-
-        with self.assertWarnsRegex(
-            FutureWarning, "torch.utils._pytree._register_pytree_node"
-        ):
-            python_pytree._register_pytree_node(
-                DummyType,
-                lambda dummy: ([dummy.x, dummy.y], None),
-                lambda xs, _: DummyType(*xs),
-            )
-
-        with self.assertWarnsRegex(UserWarning, "already registered"):
-            python_pytree._register_pytree_node(
-                DummyType,
-                lambda dummy: ([dummy.x, dummy.y], None),
-                lambda xs, _: DummyType(*xs),
-            )
-
     def test_import_pytree_doesnt_import_optree(self):
         # importing torch.utils._pytree shouldn't import optree.
         # only importing torch.utils._cxx_pytree should.

@@ -6,7 +6,6 @@ from collections import abc as container_abcs, OrderedDict
 from itertools import chain, islice
 from typing import Any, overload, TYPE_CHECKING, TypeVar
 from typing import Self
-from warnings import deprecated
 
 import torch
 from torch._jit_internal import _copy_to_script_wrapper
@@ -20,7 +19,6 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Container",
     "Sequential",
     "ModuleList",
     "ModuleDict",
@@ -43,18 +41,6 @@ def _addindent(s_, numSpaces):
     s = "\n".join(s)
     s = first + "\n" + s
     return s
-
-
-@deprecated(
-    "`nn.Container` is deprecated. "
-    "All of its functionality is now implemented in `nn.Module`. Subclass that instead.",
-    category=FutureWarning,
-)
-class Container(Module):
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__()
-        for key, value in kwargs.items():
-            self.add_module(key, value)
 
 
 class Sequential(Module):

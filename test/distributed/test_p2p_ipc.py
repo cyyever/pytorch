@@ -177,7 +177,7 @@ class P2PIpcTest(MultiProcContinuousTest):
         # Enable IPC handles for expandable segments (disabled by default in
         # fbcode). Use a scoped env so state does not leak across tests.
         with _scoped_env("TORCH_CUDA_EXPANDABLE_SEGMENTS_IPC", "1"):
-            torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+            torch._C._accelerator_setAllocatorSettings("expandable_segments:True")
             torch.cuda.empty_cache()
             # 8MB > the 2MB default segment size, forcing an expandable segment.
             self._test_p2p_ipc_impl(
@@ -188,7 +188,7 @@ class P2PIpcTest(MultiProcContinuousTest):
 
     @classmethod
     def tearDownClass(cls):
-        torch.cuda.memory._set_allocator_settings("expandable_segments:False")
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:False")
         super().tearDownClass()
 
 

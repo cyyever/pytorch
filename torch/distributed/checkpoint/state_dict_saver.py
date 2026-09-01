@@ -8,7 +8,6 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from enum import Enum
 from typing import cast, TYPE_CHECKING
-from warnings import deprecated
 
 import torch
 import torch.distributed as dist
@@ -41,7 +40,6 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "save_state_dict",
     "save",
     "async_save",
     "AsyncCheckpointerType",
@@ -54,34 +52,6 @@ class AsyncCheckpointerType(Enum):
 
     THREAD = "thread"
     PROCESS = "process"
-
-
-@deprecated(
-    "`save_state_dict` is deprecated and will be removed in future versions."
-    "Please use `save` instead.",
-    category=FutureWarning,
-)
-def save_state_dict(
-    state_dict: STATE_DICT_TYPE,
-    storage_writer: StorageWriter,
-    process_group: dist.ProcessGroup | None = None,
-    coordinator_rank: int = 0,
-    no_dist: bool = False,
-    planner: SavePlanner | None = None,
-) -> Metadata:
-    """This method is deprecated. Please switch to 'save'."""
-    storage_writer.reset()
-
-    # TODO: test returning `save` here instead.
-    with _profile():
-        return _save_state_dict(
-            state_dict,
-            storage_writer,
-            process_group,
-            coordinator_rank,
-            no_dist,
-            planner,
-        )
 
 
 @_dcp_method_logger(log_exceptions=True)  # type: ignore[arg-type]

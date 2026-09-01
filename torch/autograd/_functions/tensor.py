@@ -1,34 +1,8 @@
 # mypy: allow-untyped-defs
 import operator
 from functools import reduce
-from warnings import deprecated
 
-import torch
-import torch._utils
 from torch.autograd.function import Function
-
-
-class Type(Function):
-    @staticmethod
-    @deprecated(
-        "`torch.autograd._functions.Type` is deprecated as of PyTorch 2.1, "
-        "please use `torch.tensor.to(dtype=dtype)` instead.",
-        category=FutureWarning,
-    )
-    # pyrefly: ignore [bad-override]
-    def forward(ctx, i, dest_type):
-        ctx.input_type = type(i)
-        ctx.input_device = -1 if not i.is_cuda else i.get_device()
-        return i.type(dest_type)
-
-    @staticmethod
-    # pyrefly: ignore [bad-override]
-    def backward(ctx, grad_output):
-        if ctx.input_device == -1:
-            return grad_output.type(ctx.input_type), None
-        else:
-            with torch.accelerator.device_index(ctx.input_device):
-                return grad_output.type(ctx.input_type), None
 
 
 # TODO: deprecate this

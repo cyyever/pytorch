@@ -61,7 +61,7 @@ class CupyAsTensorTest(MultiProcContinuousTest):
         device_module = torch.get_device_module(device_type)
         # need to use vmm api to test it,
         # see https://forums.developer.nvidia.com/t/inconsistent-behavior-of-cudapointergetattributes-between-cudamalloc-ipc-and-vmm-based-ipc/339025/5
-        torch._C._accelerator_setAllocatorSettings("expandable_segments:True")  # type: ignore[attr-defined]
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:True")
         # init and pin the process to the device
         device_module.set_device(self.device(device_type))
         torch.empty(1, device=self.device(device_type))
@@ -114,7 +114,7 @@ class CupyAsTensorTest(MultiProcContinuousTest):
 
     @classmethod
     def tearDownClass(cls):
-        torch._C._accelerator_setAllocatorSettings("expandable_segments:False")  # type: ignore[attr-defined]
+        torch._C._accelerator_setAllocatorSettings("expandable_segments:False")
         super().tearDownClass()
 
 
