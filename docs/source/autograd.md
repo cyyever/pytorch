@@ -313,7 +313,6 @@ nvprof based (registers both CPU and GPU activity) using
     profiler.profile.key_averages
     profiler.profile.self_cpu_time_total
     profiler.profile.total_average
-    profiler.parse_nvprof_trace
     profiler.EnforceUnique
     profiler.KinetoStepTracker
     profiler.record_function
@@ -329,14 +328,6 @@ nvprof based (registers both CPU and GPU activity) using
 
 ```{eval-rst}
 .. autoclass:: torch.autograd.profiler.emit_nvtx
-```
-
-```{eval-rst}
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    profiler.load_nvprof
 ```
 
 ## Debugging and anomaly detection
@@ -484,10 +475,6 @@ to avoid a reference cycle when the saved tensor is a graph output; see
 
 ```{eval-rst}
 .. py:module:: torch.autograd.profiler
-```
-
-```{eval-rst}
-.. py:module:: torch.autograd.profiler_legacy
 ```
 
 ```{eval-rst}

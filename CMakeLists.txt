@@ -242,59 +242,56 @@ if(APPLE)
                        CLANG_VERSION_STRING ${clang_full_version_string})
   message(STATUS "CLANG_VERSION_STRING:         " ${CLANG_VERSION_STRING})
 
-  if(NOT IOS)
-    # Determine if we can link against MPSGraph
-    set(MPS_FOUND OFF)
+  # Determine if we can link against MPSGraph
+  set(MPS_FOUND OFF)
+  execute_process(
+    COMMAND bash -c "xcrun --sdk macosx --show-sdk-version"
+    RESULT_VARIABLE _exit_code
+    OUTPUT_VARIABLE _macosx_sdk_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(_exit_code EQUAL 0)
+    set(_MPS_supported_os_version OFF)
+    if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
+      set(_MPS_supported_os_version ON)
+    endif()
+    message(
+      STATUS
+        "sdk version: ${_macosx_sdk_version}, mps supported: ${_MPS_supported_os_version}"
+    )
     execute_process(
-      COMMAND bash -c "xcrun --sdk macosx --show-sdk-version"
-      RESULT_VARIABLE _exit_code
-      OUTPUT_VARIABLE _macosx_sdk_version
+      COMMAND bash -c "xcrun --sdk macosx --show-sdk-path"
+      OUTPUT_VARIABLE _macosx_sdk_path
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(_exit_code EQUAL 0)
-      set(_MPS_supported_os_version OFF)
-      if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
-        set(_MPS_supported_os_version ON)
-      endif()
-      message(
-        STATUS
-          "sdk version: ${_macosx_sdk_version}, mps supported: ${_MPS_supported_os_version}"
-      )
-      execute_process(
-        COMMAND bash -c "xcrun --sdk macosx --show-sdk-path"
-        OUTPUT_VARIABLE _macosx_sdk_path
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-      set(_SDK_SEARCH_PATH "${_macosx_sdk_path}/System/Library/Frameworks/")
-      set(_FRAMEWORK_SEARCH_PATH "/System/Library/Frameworks/")
+    set(_SDK_SEARCH_PATH "${_macosx_sdk_path}/System/Library/Frameworks/")
+    set(_FRAMEWORK_SEARCH_PATH "/System/Library/Frameworks/")
 
-      find_library(
-        _MPS_fwrk_path_
-        NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
-        PATHS ${_FRAMEWORK_SEARCH_PATH}
-        NO_DEFAULT_PATH)
-      find_library(
-        _MPS_sdk_path_
-        NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
-        PATHS ${_SDK_SEARCH_PATH}
-        NO_DEFAULT_PATH)
+    find_library(
+      _MPS_fwrk_path_
+      NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
+      PATHS ${_FRAMEWORK_SEARCH_PATH}
+      NO_DEFAULT_PATH)
+    find_library(
+      _MPS_sdk_path_
+      NAMES MetalPerformanceShadersGraph MetalPerformanceShaders
+      PATHS ${_SDK_SEARCH_PATH}
+      NO_DEFAULT_PATH)
 
-      if(_MPS_supported_os_version
-         AND _MPS_fwrk_path_
-         AND _MPS_sdk_path_)
-        set(MPS_FOUND ON)
-        message(STATUS "MPSGraph framework found")
-      else()
-        message(STATUS "MPSGraph framework not found")
-      endif()
+    if(_MPS_supported_os_version
+       AND _MPS_fwrk_path_
+       AND _MPS_sdk_path_)
+      set(MPS_FOUND ON)
+      message(STATUS "MPSGraph framework found")
     else()
-      message(STATUS "MPS: unable to get MacOS sdk version")
       message(STATUS "MPSGraph framework not found")
     endif()
+  else()
+    message(STATUS "MPS: unable to get MacOS sdk version")
+    message(STATUS "MPSGraph framework not found")
   endif()
 endif()
 
 set(CPU_AARCH64 OFF)
 set(CPU_INTEL OFF)
-set(CPU_POWER OFF)
 set(CPU_RISCV OFF)
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|x86_64)")
@@ -303,8 +300,6 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)")
   # Linux reports "aarch64", macOS "arm64", and native Windows on Arm "ARM64".
   # CMake MATCHES is case-sensitive, so accept each spelling.
   set(CPU_AARCH64 ON)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(ppc64le)")
-  set(CPU_POWER ON)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv64)")
   set(CPU_RISCV ON)
 endif()
@@ -391,7 +386,6 @@ option(USE_FBGEMM "Use FBGEMM (quantized 8-bit server operators)" ON)
 option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_GFLAGS "Use GFLAGS" OFF)
-option(USE_GLOG "Use GLOG" OFF)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
 cmake_dependent_option(USE_MPS "Use MPS for macOS build" ON "MPS_FOUND" OFF)
 option(USE_DISTRIBUTED "Use distributed" ON)
@@ -454,10 +448,6 @@ option(
   OFF)
 option(USE_PER_OPERATOR_HEADERS
        "Whether ATen should generate separate headers for each operator" ON)
-cmake_dependent_option(
-  BUILD_LAZY_TS_BACKEND
-  "Build the lazy Torchscript backend, not compatible with mobile builds" ON
-  "NOT INTERN_BUILD_MOBILE" OFF)
 cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)
@@ -477,15 +467,15 @@ if(USE_CMAKE_INSTRUMENTATION)
     CALLBACK "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/build_trace_summary.py" --root "${CMAKE_CURRENT_SOURCE_DIR}" --index
   )
 endif()
-# prioritized text linker, ON by default for AArch64+Linux, option visible to all AArch64, x86 and ppc64le.
+# prioritized text linker, ON by default for AArch64+Linux, option visible to all AArch64 and x86.
 set(USE_PRIORITIZED_TEXT_DEFAULT OFF)
 if(LINUX AND CPU_AARCH64)
   set(USE_PRIORITIZED_TEXT_DEFAULT ON)
 endif()
 cmake_dependent_option(USE_PRIORITIZED_TEXT_FOR_LD "Use prioritized text linker for ld."
-  "${USE_PRIORITIZED_TEXT_DEFAULT}" "CPU_INTEL OR CPU_AARCH64 OR CPU_POWER" OFF)
+  "${USE_PRIORITIZED_TEXT_DEFAULT}" "CPU_INTEL OR CPU_AARCH64" OFF)
 
-# LLVM BOLT post-link binary optimization. Visible on AArch64, x86 and ppc64le.
+# LLVM BOLT post-link binary optimization. Visible on AArch64 and x86.
 # Defaults ON for aarch64+linux+CUDA builds that also apply the linker script
 # optimization and a suitable llvm-bolt (>=21) is available. Depends on the
 # linker script because the committed profiles were collected with it enabled.
@@ -503,7 +493,7 @@ if(LINUX AND USE_CUDA AND CPU_AARCH64 AND USE_PRIORITIZED_TEXT_FOR_LD AND LLVM_B
   set(USE_LLVM_BOLT_DEFAULT ON)
 endif()
 cmake_dependent_option(USE_LLVM_BOLT "Optimize libraries with LLVM BOLT."
-  "${USE_LLVM_BOLT_DEFAULT}" "CPU_INTEL OR CPU_AARCH64 OR CPU_POWER" OFF)
+  "${USE_LLVM_BOLT_DEFAULT}" "CPU_INTEL OR CPU_AARCH64" OFF)
 
 option(USE_MIMALLOC "Use mimalloc" OFF)
 # Enable third party mimalloc library to improve memory allocation performance
@@ -579,31 +569,6 @@ if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_NVTX ON)
 endif()
 
-# /Z7 override option When generating debug symbols, CMake default to use the
-# flag /Zi. However, it is not compatible with sccache. So we rewrite it off.
-# But some users don't use sccache; this override is for them.
-cmake_dependent_option(
-  MSVC_Z7_OVERRIDE
-  "Work around sccache bug by replacing /Zi and /ZI with /Z7 when using MSVC (if you are not using sccache, you can turn this OFF)"
-  ON
-  "MSVC"
-  OFF)
-
-if(NOT USE_SYSTEM_ONNX)
-  set(ONNX_NAMESPACE
-      "onnx_torch"
-      CACHE
-        STRING
-        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
-  )
-else()
-  set(ONNX_NAMESPACE
-      "onnx"
-      CACHE
-        STRING
-        "A namespace for ONNX; needed to build with other frameworks that share ONNX."
-  )
-endif()
 set(SELECTED_OP_LIST
     ""
     CACHE
@@ -651,48 +616,6 @@ string(APPEND CMAKE_CUDA_FLAGS " -Xfatbin -compress-all")
 if(LINUX AND CPU_AARCH64)
   add_link_options_if_supported("-z,max-page-size=0x10000")
   add_link_options_if_supported("--stub-group-size=0x2000000")
-endif()
-
-# Set INTERN_BUILD_MOBILE for all mobile builds. Components that are not
-# applicable to mobile are disabled by this variable. Setting
-# `BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN` environment variable can force it
-# to do mobile build with host toolchain - which is useful for testing purpose.
-if(ANDROID
-   OR IOS
-   OR DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
-  set(INTERN_BUILD_MOBILE ON)
-
-  set(USE_KLEIDIAI OFF)
-  message(WARNING "KleidiAI cannot be used on Mobile builds. Set it to OFF")
-
-  # Set -ffunction-sections and -fdata-sections so that each method has its own
-  # text section. This allows the linker to remove unused section when the flag
-  # -Wl,-gc-sections is provided at link time.
-  string(APPEND CMAKE_CXX_FLAGS " -ffunction-sections")
-  string(APPEND CMAKE_C_FLAGS " -ffunction-sections")
-  string(APPEND CMAKE_CXX_FLAGS " -fdata-sections")
-  string(APPEND CMAKE_C_FLAGS " -fdata-sections")
-
-  # Please note that the use of the following flags is required when linking
-  # against libtorch_cpu.a for mobile builds. -Wl,--whole-archive -ltorch_cpu
-  # -Wl,--no-whole-archive
-  #
-  # This allows global constructors to be included and run. Global constructors
-  # are used for operator/kernel registration with the PyTorch Dispatcher.
-
-  if(DEFINED ENV{BUILD_PYTORCH_MOBILE_WITH_HOST_TOOLCHAIN})
-    # C10_MOBILE is derived from Android/iOS toolchain macros in
-    # c10/macros/Macros.h, so it needs to be explicitly set here.
-    string(APPEND CMAKE_CXX_FLAGS " -DC10_MOBILE")
-  endif()
-
-  if(DEFINED ENV{PYTORCH_MOBILE_TRIM_DISPATCH_KEY_SET})
-    # If PYTORCH_MOBILE_TRIM_DISPATCH_KEY_SET is defined (env var), then define
-    # C10_MOBILE_TRIM_DISPATCH_KEYS, which limits the number of dispatch keys in
-    # OperatorEntry::dispatchTable_ to reduce peak memory during library
-    # initialization.
-    string(APPEND CMAKE_CXX_FLAGS " -DC10_MOBILE_TRIM_DISPATCH_KEYS")
-  endif()
 endif()
 
 # INTERN_BUILD_ATEN_OPS is used to control whether to build ATen/TH operators.
@@ -752,29 +675,6 @@ if(USE_LLVM_BOLT)
        DESTINATION "${LLVM_BOLT_PROFILES_DIR}")
 endif()
 
-# Build libtorch mobile library, which contains ATen/TH ops and native support
-# for TorchScript model, but doesn't contain not-yet-unified caffe2 ops;
-if(INTERN_BUILD_MOBILE)
-  if(NOT BUILD_SHARED_LIBS AND NOT "${SELECTED_OP_LIST}" STREQUAL "")
-    string(APPEND CMAKE_CXX_FLAGS " -DNO_EXPORT")
-  endif()
-  if(BUILD_MOBILE_AUTOGRAD)
-    set(INTERN_DISABLE_AUTOGRAD OFF)
-  else()
-    set(INTERN_DISABLE_AUTOGRAD ON)
-  endif()
-  set(BUILD_PYTHON OFF)
-  set(BUILD_FUNCTORCH OFF)
-  set(USE_DISTRIBUTED OFF)
-  set(NO_API ON)
-  set(USE_FBGEMM OFF)
-  if(USE_BLAS)
-    set(INTERN_USE_EIGEN_BLAS ON)
-  else()
-    set(INTERN_USE_EIGEN_BLAS OFF)
-  endif()
-endif()
-
 # ---[ Version numbers for generated libraries
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS version.txt)
 file(READ version.txt TORCH_DEFAULT_VERSION)
@@ -825,8 +725,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # The below means we are cross compiling for arm64 or x86_64 on MacOSX
-if(NOT IOS
-   AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin"
    AND CMAKE_OSX_ARCHITECTURES MATCHES "^(x86_64|arm64)$")
   set(CROSS_COMPILING_MACOSX TRUE)
 endif()
@@ -847,7 +746,6 @@ if(USE_FBGEMM AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
   set(USE_FBGEMM OFF)
 endif()
 
-set(BUILD_ONEDNN_GRAPH OFF)
 
 # Note for ROCM platform: 1. USE_ROCM is always ON until
 # include(cmake/Dependencies.cmake) 2. USE_CUDA will become OFF during
@@ -889,6 +787,7 @@ if(USE_FLASH_ATTENTION AND USE_CUDA AND NOT USE_ROCM)
     set(USE_FLASH_ATTENTION OFF)
   endif()
 endif()
+
 
 IF(USE_ROCM AND ("gfx942" IN_LIST PYTORCH_ROCM_ARCH OR "gfx950" IN_LIST PYTORCH_ROCM_ARCH))
   message(WARNING "Setting USE_MSLK for gfx942/gfx950 to ON by default, doing ROCM build")
@@ -958,14 +857,6 @@ if(TRACING_BASED)
   string(APPEND CMAKE_CXX_FLAGS " -DTRACING_BASED")
 endif()
 
-if(USE_PYTORCH_METAL)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL")
-endif()
-
-if(USE_PYTORCH_METAL_EXPORT)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_PYTORCH_METAL_EXPORT")
-endif()
-
 # ---[ Allowlist file if allowlist is specified
 include(cmake/Allowlist.cmake)
 
@@ -1017,16 +908,11 @@ endif()
 
 # Use ld.gold if available, fall back to ld.bfd (the default ld) if not
 if(USE_GOLD_LINKER)
-  if(USE_DISTRIBUTED AND USE_MPI)
-    # Same issue as here with default MPI on Ubuntu
-    # https://bugs.launchpad.net/ubuntu/+source/deal.ii/+bug/1841577
-    message(WARNING "Refusing to use gold when USE_MPI=1")
-  else()
-    execute_process(
+  execute_process(
       COMMAND "${CMAKE_C_COMPILER}" -fuse-ld=gold -Wl,--version
       ERROR_QUIET
       OUTPUT_VARIABLE LD_VERSION)
-    if(NOT "${LD_VERSION}" MATCHES "GNU gold")
+  if(NOT "${LD_VERSION}" MATCHES "GNU gold")
       message(
         WARNING
           "USE_GOLD_LINKER was set but ld.gold isn't available, turning it off"
@@ -1040,7 +926,6 @@ if(USE_GOLD_LINKER)
       set(CMAKE_MODULE_LINKER_FLAGS
           "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
     endif()
-  endif()
 endif()
 
 append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
@@ -1129,16 +1014,6 @@ endif()
 
 append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
 
-if(ANDROID AND (NOT ANDROID_DEBUG_SYMBOLS))
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    string(APPEND CMAKE_CXX_FLAGS " -s")
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    string(APPEND CMAKE_CXX_FLAGS " -g0")
-  else()
-    string(APPEND CMAKE_EXE_LINKER_FLAGS " -s")
-  endif()
-endif()
-
 if(NOT APPLE AND UNIX)
   list(APPEND Caffe2_DEPENDENCY_LIBS dl)
 endif()
@@ -1188,9 +1063,9 @@ endif()
 # ---[ Make configuration files for cmake to allow dependent libraries easier
 # access to Caffe2.
 
-if((NOT USE_GLOG) OR (NOT USE_GFLAGS))
+if(NOT USE_GFLAGS)
   message(WARNING "Generated cmake files are only fully tested if one builds "
-                  "with system glog and gflags. Other settings may "
+                  "with system gflags. Other settings may "
                   "generate files that are not well tested.")
 endif()
 
@@ -1211,7 +1086,6 @@ if(BUILD_SHARED_LIBS)
   install(
     FILES ${PROJECT_SOURCE_DIR}/cmake/public/cuda.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/xpu.cmake
-          ${PROJECT_SOURCE_DIR}/cmake/public/glog.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/gflags.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkl.cmake
           ${PROJECT_SOURCE_DIR}/cmake/public/mkldnn.cmake

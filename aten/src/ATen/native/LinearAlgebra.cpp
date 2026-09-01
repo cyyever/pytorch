@@ -157,9 +157,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#if !defined(__s390x__) && !defined(__powerpc__)
 #include <cpuinfo.h>
-#endif
 
 namespace at {
 
@@ -1345,8 +1343,8 @@ Tensor outer(const Tensor& self, const Tensor& vec2) {
 #endif
 
 
-#if !defined(__aarch64__) || AT_MKLDNN_ACL_ENABLED()
-// Used by default on x86 platforms and on AArch64+ACL
+#if !defined(__aarch64__)
+// Used by default on x86 platforms
 static inline int64_t get_mkldnn_matmul_min_dim() {
   static auto value = [&] {
     const int64_t default_min_dim = [&] {
@@ -1493,47 +1491,19 @@ static void addmm_impl_cpu_(
   // Always ensure the conjugation for c is resolved since there's no way to specify c's conjugation in the gemm call
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!c.is_conj());
 
-  bool dispatched = false;
-#if defined(__aarch64__) && AT_MKLDNN_ACL_ENABLED()
-  // On AArch64 if LHS matrix in BLAS routine is transposed but RHS is not then
-  // it is faster to call oneDNN matrix multiplication primitive with RHS*LHS
-  // that will call then into Arm® Compute Library (ACL) GEMM kernel and also
-  // additionally have support for running kernel with BF16 instructions
-  if (transpose_c) {
-    bool apply_heur =
-        apply_mkldnn_matmul_heur(b.sizes()[0], b.sizes()[1], a.sizes()[1]);
-    if (apply_heur && transpose_a && !transpose_b &&
-        (result.scalar_type() == at::ScalarType::Float ||
-         result.scalar_type() == at::ScalarType::BFloat16 ||
-         result.scalar_type() == at::ScalarType::Half)) {
-      try {
-        mkldnn_matmul(b, a, c, beta.to<float>(), alpha.to<float>());
-        // We have dispatched to ACL GEMM for single precision float
-        // so do not need to dispatch to BLAS GEMM below
-        dispatched = true;
-      } catch (const std::exception& e) {
-        TORCH_WARN("mkldnn_matmul failed, switching to BLAS gemm:", e.what());
-        at::globalContext().setUserEnabledMkldnn(false);
-      }
-    }
-  }
-#endif
-
-  if(!dispatched) {
-    // Apply BLAS routine
-    _AT_DISPATCH_ADDMM_TYPES(result.scalar_type(), "addmm_impl_cpu_", [&]{
-          using opmath_t = at::opmath_type<scalar_t>;
-          at::native::cpublas::gemm(
-              transpose_a ? a.is_conj() ? TransposeType::ConjTranspose : TransposeType::Transpose : TransposeType::NoTranspose,
-              transpose_b ? b.is_conj() ? TransposeType::ConjTranspose : TransposeType::Transpose : TransposeType::NoTranspose,
-              m, n, k,
-              alpha.to<opmath_t>(),
-              a.const_data_ptr<scalar_t>(), lda,
-              b.const_data_ptr<scalar_t>(), ldb,
-              beta.to<opmath_t>(),
-              c.mutable_data_ptr<scalar_t>(), ldc);
-        });
-  }
+  // Apply BLAS routine
+  _AT_DISPATCH_ADDMM_TYPES(result.scalar_type(), "addmm_impl_cpu_", [&]{
+        using opmath_t = at::opmath_type<scalar_t>;
+        at::native::cpublas::gemm(
+            transpose_a ? a.is_conj() ? TransposeType::ConjTranspose : TransposeType::Transpose : TransposeType::NoTranspose,
+            transpose_b ? b.is_conj() ? TransposeType::ConjTranspose : TransposeType::Transpose : TransposeType::NoTranspose,
+            m, n, k,
+            alpha.to<opmath_t>(),
+            a.const_data_ptr<scalar_t>(), lda,
+            b.const_data_ptr<scalar_t>(), ldb,
+            beta.to<opmath_t>(),
+            c.mutable_data_ptr<scalar_t>(), ldc);
+      });
 
   if (!c.is_same(result)) {
     result.copy_(c);
@@ -1754,8 +1724,8 @@ static inline void bmm_out_or_baddbmm_(const Tensor& self_or_result_, const Tens
     return (strides[2] == 1 && (sizes[1] == 1 || strides[1] >= sizes[2])) ||
         (strides[1] == 1 && (sizes[2] == 1 || strides[2] >= sizes[1]));
   };
-#if !defined(__aarch64__) || AT_MKLDNN_ACL_ENABLED()
-  // Always apply mkldnn heuristic on x86 platform, but on ARM only if compiled with ACL
+#if !defined(__aarch64__)
+  // Apply the mkldnn heuristic on x86 only
   bool apply_heur = apply_mkldnn_matmul_heur(batch1.sizes()[1], batch1.sizes()[2], batch2.sizes()[2]);
   if (apply_heur && use_mkldnn_matmul(batch1, batch2, self_or_result)) {
     try {

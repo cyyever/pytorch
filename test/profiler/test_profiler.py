@@ -35,7 +35,6 @@ import torch.utils.data
 from torch._C._profiler import _ExperimentalConfig, _ExtraFields_PyCall
 from torch._inductor.utils import is_big_gpu
 from torch.autograd.profiler import KinetoStepTracker, profile as _profile
-from torch.autograd.profiler_legacy import profile as _profile_legacy
 from torch.profiler import (
     _utils,
     CuspyConfig,
@@ -1388,10 +1387,6 @@ class TestProfiler(TestCase):
         profiler_type = torch._C._autograd._profiler_type
         ActiveProfilerType = torch._C._profiler.ActiveProfilerType
         self.assertEqual(profiler_type(), ActiveProfilerType.NONE)
-
-        # Autograd profiler
-        with _profile_legacy():
-            self.assertEqual(profiler_type(), ActiveProfilerType.LEGACY)
 
         # Kineto profiler
         with profile():

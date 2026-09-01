@@ -136,32 +136,6 @@ struct NormalFill16<float, true> {
   }
 };
 
-#elif defined(__VSX__) || defined(CPU_CAPABILITY_VSX)
-
-template <>
-struct NormalFill16<float, Vectorized<float>::size() == 8> {
-  using Vec = Vectorized<float>;
-  Vec mean_;
-  Vec std_;
-  Vec two_pi_ = Vec(2.0f * c10::pi<double>);
-  Vec one_ = Vec(1.0f);
-  Vec minus_two_ = Vec(-2.0f);
-
-  NormalFill16(float mean, float std)
-    : mean_(mean), std_(std) {}
-
-  void operator()(float* data) const {
-    Vec u1 = one_ - Vec::loadu(data);
-    Vec u2 = Vec::loadu(data + 8);
-    Vec radius = (minus_two_ * u1.log()).sqrt();
-    Vec theta = two_pi_ * u2;
-    Vec output1 = radius * theta.cos() * std_ + mean_;
-    Vec output2 = radius * theta.sin() * std_ + mean_;
-    output1.store(data);
-    output2.store(data + 8);
-  }
-};
-
 #endif
 
 template <typename scalar_t, typename RNG>

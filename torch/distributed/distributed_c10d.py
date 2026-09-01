@@ -237,7 +237,7 @@ def _torchcomms_handles_backend(backend) -> bool:
     """True if TorchComms can create a comm for *backend*.
 
     Backends TorchComms doesn't own -- custom c10d plugins such as ``mooncake``
-    or ``ucc`` -- must fall through to the normal ProcessGroup path even when
+    -- must fall through to the normal ProcessGroup path even when
     TorchComms is enabled, rather than being routed through ``new_comm`` /
     ``split_group`` (which cannot construct them).
 
@@ -340,14 +340,6 @@ def _export_c_types() -> None:
 
 
 _export_c_types()
-
-try:
-    from torch._C._distributed_c10d import ProcessGroupMPI
-
-    ProcessGroupMPI.__module__ = "torch.distributed.distributed_c10d"
-    __all__ += ["ProcessGroupMPI"]
-except ImportError:
-    _MPI_AVAILABLE = False
 
 try:
     from torch._C._distributed_c10d import ProcessGroupNCCL
@@ -789,21 +781,6 @@ def _create_nccl_lazy_process_group(
     return backend
 
 
-def _create_ucc_process_group(
-    opts: _DistributedBackendOptions, backend_options: object | None
-) -> C10DBackend:
-    if not is_ucc_available():
-        raise RuntimeError("Distributed package doesn't have UCC built in")
-    backend_class = ProcessGroupUCC(
-        opts.store,
-        opts.group_rank,
-        opts.group_size,
-        # pyrefly: ignore [bad-argument-type]
-        timeout=opts.timeout,
-    )
-    return backend_class
-
-
 def _create_xccl_process_group(
     opts: _DistributedBackendOptions, backend_options: object | None
 ) -> C10DBackend:
@@ -900,16 +877,6 @@ def _register_builtin_nccl_lazy_backend() -> None:
         extended_api=True,
         devices=["cuda"],
         _backend_type=ProcessGroup.BackendType.CUSTOM,
-    )
-
-
-def _register_builtin_ucc_backend() -> None:
-    Backend.register_backend(
-        Backend.UCC,
-        _create_ucc_process_group,
-        extended_api=True,
-        devices=Backend.backend_capability[Backend.UCC],
-        _backend_type=ProcessGroup.BackendType.UCC,
     )
 
 
@@ -2511,7 +2478,7 @@ def init_process_group(
         _use_torchcomms_enabled()
         and device_id is not None
         and ":" not in backend
-        and backend not in (Backend.UNDEFINED, Backend.MPI, Backend.FAKE)
+        and backend not in (Backend.UNDEFINED, Backend.FAKE)
         and _torchcomms_handles_backend(backend)
     ):
         bare = backend.lower()
@@ -2544,57 +2511,36 @@ def init_process_group(
         group_name = _process_group_name([], use_hashed_name=False)
     else:
         group_name = _process_group_name(_ranks, use_hashed_name=True)
-    if backend == Backend.MPI:
-        if world_size != -1 or rank != -1:
-            warnings.warn(
-                f"For MPI backend, world_size ({world_size}) and rank ({rank}) "
-                "are ignored since they are assigned by the "
-                "MPI runtime.",
-                stacklevel=2,
+    # backward compatible API
+    if store is None:
+        if backend == Backend.FAKE:
+            from torch.testing._internal.distributed.fake_pg import FakeStore
+
+            store = FakeStore()
+        else:
+            rendezvous_iterator = rendezvous(
+                not_none(init_method), rank, world_size, timeout=timeout
             )
+            store, rank, world_size = next(rendezvous_iterator)
+            store.set_timeout(timeout)
 
-        default_pg, _ = _new_process_group_helper(
-            -1,
-            -1,
-            [],
-            backend,
-            Store(),  # Placeholder value since store cannot be None
-            group_name,
-            timeout=timeout,
-            group_desc="default_pg",
-            enable_reconfigure=enable_reconfigure,
-        )
-    else:
-        # backward compatible API
-        if store is None:
-            if backend == Backend.FAKE:
-                from torch.testing._internal.distributed.fake_pg import FakeStore
+        # Use a PrefixStore to avoid accidental overrides of keys used by
+        # different systems (e.g. RPC) in case the store is multi-tenant.
+        store = PrefixStore("default_pg", store)
 
-                store = FakeStore()
-            else:
-                rendezvous_iterator = rendezvous(
-                    not_none(init_method), rank, world_size, timeout=timeout
-                )
-                store, rank, world_size = next(rendezvous_iterator)
-                store.set_timeout(timeout)
-
-            # Use a PrefixStore to avoid accidental overrides of keys used by
-            # different systems (e.g. RPC) in case the store is multi-tenant.
-            store = PrefixStore("default_pg", store)
-
-        default_pg, _ = _new_process_group_helper(
-            world_size,
-            rank,
-            [],
-            backend,
-            store,
-            group_name,
-            backend_options=pg_options,
-            timeout=timeout,
-            device_id=device_id,
-            group_desc="default_pg",
-            enable_reconfigure=enable_reconfigure,
-        )
+    default_pg, _ = _new_process_group_helper(
+        world_size,
+        rank,
+        [],
+        backend,
+        store,
+        group_name,
+        backend_options=pg_options,
+        timeout=timeout,
+        device_id=device_id,
+        group_desc="default_pg",
+        enable_reconfigure=enable_reconfigure,
+    )
 
     if not isinstance(default_pg, ProcessGroup):
         raise AssertionError("Default process group creation returned a nonmember")
@@ -2640,15 +2586,11 @@ def init_process_group(
             "Performing barrier after ProcessGroup initialization since "
             "TORCH_DIST_INIT_BARRIER = 1"
         )
-        if backend == Backend.MPI:
-            # MPI backend doesn't use store.
-            barrier()
-        else:
-            if store is None:
-                raise AssertionError("Default process group store is not initialized")
-            # Use store based barrier here since barrier() used a bunch of
-            # default devices and messes up NCCL internal state.
-            _store_based_barrier(rank, store, group_name, world_size, timeout)
+        if store is None:
+            raise AssertionError("Default process group store is not initialized")
+        # Use store based barrier here since barrier() used a bunch of
+        # default devices and messes up NCCL internal state.
+        _store_based_barrier(rank, store, group_name, world_size, timeout)
 
 
 def _get_split_source(pg: ProcessGroup) -> C10DBackend | None:
@@ -6963,7 +6905,6 @@ def new_group(
         A handle of distributed group that can be given to collective calls or
         GroupMember.NON_GROUP_MEMBER if the rank is not part of ``ranks``.
 
-    N.B. use_local_synchronization doesn't work with MPI.
 
     N.B. While use_local_synchronization=True can be significantly faster with larger
     clusters and small process groups, care must be taken since it changes cluster behavior
@@ -7044,11 +6985,6 @@ def _new_group_with_tag(
             raise TypeError("ranks must be a sequence of integers") from error
 
     if use_local_synchronization:
-        # MPI backend doesn't have a way for us to perform a partial sync
-        if backend == Backend.MPI:
-            raise ValueError(
-                "MPI backend doesn't support use_local_synchronization=True"
-            )
         if ranks is not None and get_rank() not in ranks:
             return GroupMember.NON_GROUP_MEMBER
 
@@ -7146,22 +7082,18 @@ def _new_group_with_tag(
             "Performing barrier after ProcessGroup initialization since "
             "TORCH_DIST_INIT_BARRIER = 1"
         )
-        if backend == Backend.MPI:
-            # MPI doesn't have store.
-            barrier()
+        if use_local_synchronization:
+            if pg_store is None:
+                raise AssertionError("Local process group store is not initialized")
+            barrier_store = pg_store
         else:
-            if use_local_synchronization:
-                if pg_store is None:
-                    raise AssertionError("Local process group store is not initialized")
-                barrier_store = pg_store
-            else:
-                barrier_store = default_store
-            world_size = len(ranks) if use_local_synchronization else get_world_size()
-            # Use store based barrier here since barrier() used a bunch of
-            # default devices and messes up NCCL internal state.
-            _store_based_barrier(
-                global_rank, barrier_store, group_name, world_size, timeout
-            )
+            barrier_store = default_store
+        world_size = len(ranks) if use_local_synchronization else get_world_size()
+        # Use store based barrier here since barrier() used a bunch of
+        # default devices and messes up NCCL internal state.
+        _store_based_barrier(
+            global_rank, barrier_store, group_name, world_size, timeout
+        )
 
     return pg_or_nonmember
 

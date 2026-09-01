@@ -325,11 +325,9 @@ class ZeroRedundancyOptimizer(Optimizer, Joinable):
             ``params.data`` stays intact (default: ``False``).
         overlap_with_ddp (bool, optional): if ``True``, :meth:`step` is
             overlapped with :class:`DistributedDataParallel` 's gradient
-            synchronization; this requires (1) either a functional optimizer
-            for the ``optimizer_class`` argument or one with a functional
-            equivalent and (2) registering a DDP communication hook
-            constructed from one of the functions in ``ddp_zero_hook.py``;
-            parameters are packed into buckets matching those in
+            synchronization; this requires a functional optimizer (or one
+            with a functional equivalent) for the ``optimizer_class``
+            argument; parameters are packed into buckets matching those in
             :class:`DistributedDataParallel`, meaning that the
             ``parameters_as_bucket_view`` argument is ignored.
             If ``False``, :meth:`step` runs disjointly after the backward pass

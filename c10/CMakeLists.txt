@@ -17,7 +17,6 @@ else()
 endif()
 
 set(C10_USE_GFLAGS ${USE_GFLAGS})  # also used in torch/headeronly
-set(C10_USE_GLOG ${USE_GLOG})  # also used in torch/headeronly
 set(C10_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})  # also used in torch/headeronly
 set(C10_USE_NUMA ${USE_NUMA})  # also used in torch/headeronly
 set(C10_USE_ROCM_KERNEL_ASSERT ${USE_ROCM_KERNEL_ASSERT})  # also used in torch/headeronly
@@ -85,9 +84,6 @@ if(NOT BUILD_LIBTORCHLESS)
     target_link_libraries(c10 PUBLIC gflags)
   endif()
 
-  if(C10_USE_GLOG)
-    target_link_libraries(c10 PUBLIC glog::glog)
-  endif()
 
   target_link_libraries(c10 PUBLIC headeronly)
   target_link_libraries(c10 PRIVATE fmt::fmt-header-only)
@@ -146,10 +142,8 @@ if(NOT BUILD_LIBTORCHLESS)
     message(STATUS "don't use NUMA")
   endif()
 
-  if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(s390x|ppc64le)$")
-    target_link_libraries(c10 INTERFACE "$<BUILD_INTERFACE:cpuinfo>")
-    target_link_libraries(c10 PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,cpuinfo>")
-  endif()
+  target_link_libraries(c10 INTERFACE "$<BUILD_INTERFACE:cpuinfo>")
+  target_link_libraries(c10 PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,cpuinfo>")
 
   find_package(Backtrace)
   if(Backtrace_FOUND)
