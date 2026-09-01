@@ -375,7 +375,7 @@ cmake_dependent_option(USE_CUSPARSELT "Use cuSPARSELt" ON "USE_CUDA" OFF)
 cmake_dependent_option(USE_HIPSPARSELT "Use hipSPARSELt" ON "USE_ROCM" OFF)
 cmake_dependent_option(USE_CUDSS "Use cuDSS" ON "USE_CUDA" OFF)
 cmake_dependent_option(USE_CUFILE "Use cuFile" ON "USE_CUDA OR USE_ROCM" OFF)
-option(USE_FBGEMM "Use FBGEMM (quantized 8-bit server operators)" ON)
+set(USE_FBGEMM ON)  # required: see the FBGEMM check below
 option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
@@ -703,14 +703,13 @@ include(cmake/MiscCheck.cmake)
 # External projects
 include(ExternalProject)
 
-# ---[ Dependencies ---[ FBGEMM doesn't work on x86 32bit and
-# CMAKE_SYSTEM_PROCESSOR thinks its 64bit
-if(USE_FBGEMM AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
-  message(WARNING
-    "x86_64 or aarch64 required for FBGEMM. "
-    "Not compiling with FBGEMM. "
-    "Turn this warning off by USE_FBGEMM=OFF.")
-  set(USE_FBGEMM OFF)
+# FBGEMM provides the only CPU embedding-bag and quantized kernels this fork
+# ships, so it is required rather than optional.
+if(NOT USE_FBGEMM)
+  message(FATAL_ERROR "USE_FBGEMM=OFF is not supported")
+endif()
+if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
+  message(FATAL_ERROR "FBGEMM requires x86_64 or aarch64")
 endif()
 
 
@@ -805,10 +804,6 @@ if(DEBUG_CUDA)
   string(APPEND CMAKE_CUDA_FLAGS_DEBUG " -lineinfo")
   string(APPEND CMAKE_CUDA_FLAGS_RELWITHDEBINFO " -lineinfo")
 endif(DEBUG_CUDA)
-
-if(USE_FBGEMM)
-  string(APPEND CMAKE_CXX_FLAGS " -DUSE_FBGEMM")
-endif()
 
 if(USE_MSLK)
   string(APPEND CMAKE_CXX_FLAGS " -DUSE_MSLK")

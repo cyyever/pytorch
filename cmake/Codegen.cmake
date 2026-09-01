@@ -1,6 +1,6 @@
 # This ill-named file does a number of things:
 # - Installs Caffe2 header files (this has nothing to do with code generation)
-# - Configures caffe2/core/macros.h
+# - Configures ATen/BuildInfo.h
 # - Creates an ATen target for its generated C++ files and adds it
 #   as a dependency
 # - Reads build lists defined in build_variables.bzl
@@ -44,8 +44,8 @@ execute_process(
 
 # ---[ Write the macros file
 configure_file(
-    ${CMAKE_CURRENT_LIST_DIR}/../caffe2/core/macros.h.in
-    ${CMAKE_BINARY_DIR}/caffe2/core/macros.h)
+    ${CMAKE_CURRENT_LIST_DIR}/../aten/src/ATen/BuildInfo.h.in
+    ${CMAKE_BINARY_DIR}/aten/src/ATen/BuildInfo.h)
 
 # ---[ Installing the header files
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../caffe2
@@ -56,8 +56,8 @@ if(NOT INTERN_BUILD_ATEN_OPS)
           DESTINATION include/ATen
           FILES_MATCHING PATTERN "*.h")
 endif()
-install(FILES ${CMAKE_BINARY_DIR}/caffe2/core/macros.h
-        DESTINATION include/caffe2/core)
+install(FILES ${CMAKE_BINARY_DIR}/aten/src/ATen/BuildInfo.h
+        DESTINATION include/ATen)
 
 # ---[ ATen specific
 if(INTERN_BUILD_ATEN_OPS)

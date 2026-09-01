@@ -21,9 +21,7 @@
 #include <ATen/ops/empty_strided.h>
 #include <ATen/ops/expand_copy.h>
 
-#ifdef USE_FBGEMM
 #include <fbgemm/FbgemmConvert.h>
-#endif
 
 namespace {
 
@@ -127,7 +125,6 @@ static Tensor & copy_impl(Tensor & self, const Tensor & src, bool non_blocking) 
   // support broadcasting. This also guards against out of bounds memory access
   // when copying, see fbgemm::Float16ToFloat_ref.
   // https://github.com/pytorch/pytorch/issues/88543
-  #ifdef USE_FBGEMM
     if (((self.dtype() == at::kFloat && src.dtype() == at::kHalf) ||
          (self.dtype() == at::kHalf && src.dtype() == at::kFloat)) &&
         (self.device().is_cpu() && src.device().is_cpu()) &&
@@ -170,7 +167,6 @@ static Tensor & copy_impl(Tensor & self, const Tensor & src, bool non_blocking) 
       }
       return self;
     }
-  #endif
 
   if (self.is_same(src)) {
     return self;

@@ -2,8 +2,13 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/Config.h>
 #include <cstdint>
+#include <optional>
 
-#ifdef USE_FBGEMM
+// The kernel cache is built on FBGEMM, whose headers are only on the include
+// path of the translation units that link it -- torch_cpu's. The CUDA and MPS
+// sources below take _EmbeddingBagKernelCache only by pointer, so they get an
+// opaque declaration instead.
+#if !defined(__CUDACC__)
 #include <fbgemm/FbgemmEmbedding.h>
 #endif
 
@@ -58,8 +63,7 @@ void make_offset2bag_out(
     const std::optional<Tensor>& per_sample_weights,
     const int64_t padding_idx = -1);
 
-#ifdef USE_FBGEMM
-
+#if !defined(__CUDACC__)
 template<bool has_weight, typename TIndex, typename TData>
 struct _CallbackAndBlockSize {
     using TCallback = typename fbgemm::EmbeddingSpMDMKernelSignature<TData, TIndex, TIndex, TData>::Type;
@@ -122,7 +126,7 @@ using _EmbeddingBagKernelCache = _EmbeddingBagKernelCacheImpl<
     _CallbackAndBlockSize<false, int64_t, unsigned short>>;
 #else
 struct _EmbeddingBagKernelCache {
-    explicit _EmbeddingBagKernelCache(std::optional<int64_t> /* maybe_block_size */) {}
+  explicit _EmbeddingBagKernelCache(std::optional<int64_t> /* maybe_block_size */) {}
 };
 #endif
 

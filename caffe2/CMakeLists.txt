@@ -17,26 +17,11 @@ if(PRINT_CMAKE_DEBUG_INFO)
   include(../cmake/DebugHelper.cmake)
 endif()
 
-# ATen parallelism settings
-#  OMP - OpenMP for intra-op, native thread pool for inter-op parallelism
-#  NATIVE - using native thread pool for intra- and inter-op parallelism
-if(USE_OPENMP)
-  set(ATEN_THREADING "OMP" CACHE STRING "ATen parallel backend")
-else()
-  set(ATEN_THREADING "NATIVE" CACHE STRING "ATen parallel backend")
+# ATen parallelism: OpenMP for intra-op, native thread pool for inter-op.
+if(NOT USE_OPENMP)
+  message(FATAL_ERROR "ATen requires OpenMP for intra-op parallelism")
 endif()
-
-set(AT_PARALLEL_OPENMP 0)
-set(AT_PARALLEL_NATIVE 0)
-
-message(STATUS "Using ATen parallel backend: ${ATEN_THREADING}")
-if("${ATEN_THREADING}" STREQUAL "OMP")
-  set(AT_PARALLEL_OPENMP 1)
-elseif("${ATEN_THREADING}" STREQUAL "NATIVE")
-  set(AT_PARALLEL_NATIVE 1)
-else()
-  message(FATAL_ERROR "Unknown ATen parallel backend: ${ATEN_THREADING}")
-endif()
+set(AT_PARALLEL_OPENMP 1)
 
 # ---[ Declare source file lists
 
@@ -84,12 +69,7 @@ endif()
 # Note: the folders that are being commented out have not been properly
 # addressed yet.
 
-add_subdirectory(core)
 add_subdirectory(serialize)
-add_subdirectory(utils)
-if(NOT USE_FBGEMM)
-  add_subdirectory(perfkernels)
-endif()
 
 # Advanced: if we have allow list specified, we will do intersections for all
 # main lib srcs.
@@ -234,17 +214,15 @@ set(GENERATED_CXX_TORCH
   "${TORCH_SRC_DIR}/csrc/autograd/generated/ViewFuncs.cpp"
   )
 
-if(NOT INTERN_DISABLE_AUTOGRAD)
-  append_filelist("libtorch_generated_sources('{}', only_type_vars=True)" GENERATED_CXX_TORCH)
+append_filelist("libtorch_generated_sources('{}', only_type_vars=True)" GENERATED_CXX_TORCH)
+list(APPEND GENERATED_CXX_TORCH
+  "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
+  "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_aten.cpp"
+)
+if(USE_MPS)
   list(APPEND GENERATED_CXX_TORCH
-    "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
-    "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_aten.cpp"
+    "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_mps.cpp"
   )
-  if(USE_MPS)
-    list(APPEND GENERATED_CXX_TORCH
-      "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_mps.cpp"
-    )
-  endif()
 endif()
 
 set(GENERATED_H_TORCH
@@ -253,11 +231,9 @@ set(GENERATED_H_TORCH
   "${TORCH_SRC_DIR}/csrc/autograd/generated/ViewFuncs.h"
   )
 
-if(NOT INTERN_DISABLE_AUTOGRAD)
-  list(APPEND GENERATED_H_TORCH
-    "${TORCH_SRC_DIR}/csrc/autograd/generated/VariableType.h"
-  )
-endif()
+list(APPEND GENERATED_H_TORCH
+  "${TORCH_SRC_DIR}/csrc/autograd/generated/VariableType.h"
+)
 
 set(GENERATED_CXX_PYTHON
   "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions_0.cpp"
@@ -320,7 +296,6 @@ add_custom_command(
   Python::Interpreter tools/setup_helpers/generate_code.py
     --native-functions-path "aten/src/ATen/native/native_functions.yaml"
     --tags-path "aten/src/ATen/native/tags.yaml"
-    $<$<BOOL:${INTERN_DISABLE_AUTOGRAD}>:--disable-autograd>
     $<$<BOOL:${SELECTED_OP_LIST}>:--selected-op-list-path="${SELECTED_OP_LIST}">
   DEPENDS
     "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
@@ -427,11 +402,9 @@ list(APPEND TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/utils/out_types.cpp
 )
 
-if(NOT INTERN_DISABLE_AUTOGRAD)
-  list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/autograd/VariableTypeManual.cpp
-  )
-endif()
+list(APPEND TORCH_SRCS
+  ${TORCH_SRC_DIR}/csrc/autograd/VariableTypeManual.cpp
+)
 
 list(APPEND TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/jit/serialization/export.cpp
@@ -525,15 +498,13 @@ if(USE_ROCM)
   install(TARGETS caffe2_nvrtc DESTINATION "${TORCH_INSTALL_LIB_DIR}")
 endif()
 
-if(NOT NO_API)
-  list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/print.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/xpu.cpp
-  )
-endif()
+list(APPEND TORCH_SRCS
+  ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
+  ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
+  ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
+  ${TORCH_SRC_DIR}/csrc/api/src/print.cpp
+  ${TORCH_SRC_DIR}/csrc/api/src/xpu.cpp
+)
 
 list(APPEND Caffe2_CPU_SRCS ${TORCH_SRCS})
 
@@ -627,7 +598,7 @@ if(HAVE_SOVERSION)
 endif()
 torch_compile_options(torch_cpu)  # see cmake/public/utils.cmake
 
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND NOT USE_IOS)
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   target_compile_options_if_supported(torch_cpu "-Wmissing-prototypes")
   target_compile_options_if_supported(torch_cpu "-Werror=missing-prototypes")
   if(TARGET torch_cuda)
@@ -1052,11 +1023,9 @@ endif()
 
 
 
-if(NOT NO_API)
-  target_include_directories(torch_cpu PRIVATE
-    ${TORCH_SRC_DIR}/csrc/api
-    ${TORCH_SRC_DIR}/csrc/api/include)
-endif()
+target_include_directories(torch_cpu PRIVATE
+  ${TORCH_SRC_DIR}/csrc/api
+  ${TORCH_SRC_DIR}/csrc/api/include)
 
 if(USE_CUDA AND MSVC)
   # -INCLUDE is used to ensure torch_cuda is linked against in a project that relies on them.
@@ -1177,11 +1146,9 @@ set(TORCH_PYTHON_LINK_FLAGS ${TORCH_PYTHON_LINK_FLAGS} PARENT_SCOPE)
 # END formerly-libtorch flags
 # ==========================================================
 
-if(NOT NO_API)
-  target_include_directories(torch_cpu PUBLIC
-    $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/api>
-    $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/api/include>)
-endif()
+target_include_directories(torch_cpu PUBLIC
+  $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/api>
+  $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/api/include>)
 
 if(USE_ROCM)
   target_compile_definitions(torch_hip PRIVATE

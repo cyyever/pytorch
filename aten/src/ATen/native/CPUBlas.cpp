@@ -43,9 +43,7 @@ extern "C" void zaxpy_(int *n, void *a, const void *x, int *incx, void *y, int *
 #endif  // C10_IOS
 #endif  // AT_BUILD_WITH_BLAS
 
-#ifdef USE_FBGEMM
 #include <fbgemm/FbgemmI64.h>
-#endif  // USE_FBGEMM
 
 
 #if defined(ONEDNN_UKERNEL_ENABLED)
@@ -97,7 +95,6 @@ bool use_blas_gemm(
       (ldc >= std::max(int64_t{1}, m)));
 }
 
-#ifdef USE_FBGEMM
 fbgemm::matrix_op_t to_fbgemm(TransposeType trans) {
   switch (trans) {
     case TransposeType::Transpose: return fbgemm::matrix_op_t::Transpose;
@@ -106,7 +103,6 @@ fbgemm::matrix_op_t to_fbgemm(TransposeType trans) {
   }
   TORCH_INTERNAL_ASSERT(false, "Invalid transpose type");
 }
-#endif  // USE_FBGEMM
 
 #if (AT_BUILD_WITH_BLAS() && C10_IOS)
 CBLAS_TRANSPOSE to_apple_accelerate_transpose(TransposeType trans) {
@@ -473,7 +469,6 @@ void gemm(
     const int64_t beta,
     int64_t *c, int64_t ldc) {
   internal::normalize_last_dims(transa, transb, m, n, k, &lda, &ldb, &ldc);
-#ifdef USE_FBGEMM
   if (alpha == 1 && (beta == 0 || beta == 1)) {
     // In FBGEMM, we assume row-major ordering; However, here we assume the
     // column-major ordering following the FORTRAN tradition in BLAS interface
@@ -500,7 +495,6 @@ void gemm(
         ldc);
     return;
   }
-#endif
 
   gemm_stub(
       kCPU, kLong,

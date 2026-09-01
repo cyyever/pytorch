@@ -14,7 +14,6 @@
 
     { include: ["<ATen/Parallel-inl.h>", private, "<ATen/Parallel.h>", public] },
     { include: ["<ATen/ParallelOpenMP.h>", private, "<ATen/Parallel.h>", public] },
-    { include: ["<ATen/ParallelNative.h>", private, "<ATen/Parallel.h>", public] },
     { include: ["<ATen/ParallelNativeTBB.h>", private, "<ATen/Parallel.h>", public] },
 
 ]

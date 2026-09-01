@@ -3,13 +3,8 @@ include(CheckCXXCompilerFlag)
 include(CMakePushCheckState)
 
 # ---[ Check if the compiler has AVX/AVX2 support. We only check AVX2.
+# CXX_AVX2_FOUND gates the vectorized CPU kernels in cmake/Codegen.cmake.
 find_package(AVX) # checks AVX and AVX2
-if(CXX_AVX2_FOUND)
-  message(STATUS "Current compiler supports avx2 extension. Will build perfkernels.")
-  # Also see CMakeLists.txt under caffe2/perfkernels.
-  set(CAFFE2_PERF_WITH_AVX 1)
-  set(CAFFE2_PERF_WITH_AVX2 1)
-endif()
 
 # ---[ Checks if compiler supports -fvisibility=hidden
 check_cxx_compiler_flag("-fvisibility=hidden" COMPILER_SUPPORTS_HIDDEN_VISIBILITY)

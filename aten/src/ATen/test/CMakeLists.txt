@@ -1,5 +1,6 @@
 list(APPEND ATen_CPU_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Dict_test.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ExclusivelyOwned_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/MaybeOwned_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/accelerator_graph_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/apply_utils_test.cpp
@@ -86,8 +87,7 @@ list(APPEND ATen_HIP_TEST_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_optional_test.hip
   ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_packedtensoraccessor_test.hip
   ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_vectorized_test.hip)
-# TODO: fix and enable these
-#  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_tensor_interop_test.cpp
+# TODO: fix and enable this
 #  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_stream_test.cpp
 
 list(APPEND ATen_VEC_TEST_SRCS

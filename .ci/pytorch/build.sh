@@ -60,11 +60,6 @@ if [[ "$BUILD_ENVIRONMENT" == *cuda13* ]]; then
   export USE_FBGEMM=0
 fi
 
-if [[ ${BUILD_ENVIRONMENT} == *"parallelnative"* ]]; then
-  export ATEN_THREADING=NATIVE
-fi
-
-
 # mkl-static/mkl-include are pip-installed into the active Python environment
 # (a conda env or a venv), not provided by conda. Detect MKL directly rather
 # than guessing from the presence of conda.

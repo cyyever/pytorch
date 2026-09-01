@@ -54,10 +54,6 @@ void set_num_threads(int nthreads) {
   // See https://github.com/pytorch/pytorch/issues/13757
   mkl_set_dynamic(false);
 #endif
-#ifdef USE_PTHREADPOOL
-  caffe2::PThreadPool* const pool = caffe2::pthreadpool(nthreads);
-  TORCH_INTERNAL_ASSERT(pool, "Invalid thread pool!");
-#endif
 }
 
 // Explicitly calling omp_get_max_threads() as the size of the parallel

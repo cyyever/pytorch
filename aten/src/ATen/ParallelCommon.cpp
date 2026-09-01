@@ -79,13 +79,7 @@ std::string get_parallel_info() {
      << get_env_var("MKL_NUM_THREADS", "[not set]") << '\n';
 #endif
 
-  ss << "ATen parallel backend: ";
-  #if AT_PARALLEL_OPENMP
-  ss << "OpenMP";
-  #elif AT_PARALLEL_NATIVE
-  ss << "native thread pool";
-  #endif
-  ss << '\n';
+  ss << "ATen parallel backend: OpenMP\n";
 
   #if AT_EXPERIMENTAL_SINGLE_THREAD_POOL
   ss << "Experimental: single thread pool" << std::endl;
