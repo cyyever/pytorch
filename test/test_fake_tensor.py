@@ -1209,7 +1209,7 @@ class FakeTensorTest(TestCase):
         )
         sdpa_partial = create_attention(_identity, None)
         with FakeTensorMode(allow_non_fake_inputs=True):
-            sdpa_partial(q, k, v, return_lse=False)
+            sdpa_partial(q, k, v)
 
     @unittest.skipIf(
         TEST_WITH_TORCHDYNAMO, "isinstance check for FakeTensor won't work with compile"
