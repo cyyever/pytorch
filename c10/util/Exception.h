@@ -15,9 +15,6 @@
 #include <variant>
 #include <vector>
 
-#if defined(_MSC_VER) && _MSC_VER <= 1900
-#define __func__ __FUNCTION__
-#endif
 
 namespace c10 {
 
@@ -753,14 +750,6 @@ namespace c10::detail {
   TORCH_CHECK(cond, "invalid argument ", argN, ": ", __VA_ARGS__)
 
 #ifndef FATAL_IF
-#ifdef C10_USE_GLOG
-#define FATAL_IF(condition)                                           \
-  condition ? (void)0                                                 \
-            : ::c10::LoggerVoidify() &                                \
-          ::c10::MessageLogger(                                       \
-              ::c10::SourceLocation::current(), ::google::GLOG_FATAL) \
-              .stream()
-#else
 #define FATAL_IF(condition)                                        \
   condition ? (void)0                                              \
             : ::c10::LoggerVoidify() &                             \
@@ -768,24 +757,14 @@ namespace c10::detail {
               ::c10::SourceLocation::current(), ::c10::GLOG_FATAL) \
               .stream()
 #endif
-#endif
 
 #ifndef NON_FATAL_IF
-#ifdef C10_USE_GLOG
-#define NON_FATAL_IF(condition)                                              \
-  condition ? (void)0                                                        \
-            : ::c10::LoggerVoidify() &                                       \
-          ::c10::MessageLogger(                                              \
-              ::c10::SourceLocation::current(), ::google::GLOG_FATAL, false) \
-              .stream()
-#else
 #define NON_FATAL_IF(condition)                                           \
   condition ? (void)0                                                     \
             : ::c10::LoggerVoidify() &                                    \
           ::c10::MessageLogger(                                           \
               ::c10::SourceLocation::current(), ::c10::GLOG_FATAL, false) \
               .stream()
-#endif
 #endif
 
 // Binary comparison check macros
