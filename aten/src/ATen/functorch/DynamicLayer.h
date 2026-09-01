@@ -75,7 +75,6 @@ TORCH_API int64_t initAndPushDynamicLayer(
 TORCH_API DynamicLayer popDynamicLayerAndDeleteMetadata();
 TORCH_API std::optional<DynamicLayer> maybeCurrentDynamicLayer();
 TORCH_API const std::vector<DynamicLayer>& getDynamicLayerStack();
-TORCH_API void setDynamicLayerStack(const std::vector<DynamicLayer>& stack);
 TORCH_API void setDynamicLayerFrontBackKeysIncluded(bool included);
 
 // NOTE: [Life handles and lexically scoped transforms]

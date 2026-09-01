@@ -158,10 +158,6 @@ std::unordered_map<std::string, c10::IValue> get_cpu_capabilities() {
   return capabilities;
 }
 
-bool is_avx512_vnni_supported() {
-  return cpuinfo_initialize() && cpuinfo_has_x86_avx512vnni();
-}
-
 static bool is_amx_tile_supported() {
   return cpuinfo_initialize() && cpuinfo_has_x86_amx_tile();
 }

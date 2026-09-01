@@ -116,7 +116,6 @@ TORCH_API void checkSameNumel(
     CheckedFrom c,
     const TensorArg& t1,
     const TensorArg& t2);
-TORCH_API void checkAllSameNumel(CheckedFrom c, ArrayRef<TensorArg> tensors);
 TORCH_API void checkScalarType(CheckedFrom c, const TensorArg& t, ScalarType s);
 TORCH_API void checkScalarTypes(
     CheckedFrom c,
@@ -136,7 +135,6 @@ TORCH_API void checkSameSize(
     CheckedFrom c,
     const TensorArg& t1,
     const TensorArg& t2);
-TORCH_API void checkAllSameSize(CheckedFrom c, ArrayRef<TensorArg> tensors);
 TORCH_API void checkDefined(CheckedFrom c, const TensorArg& t);
 TORCH_API void checkAllDefined(CheckedFrom c, at::ArrayRef<TensorArg> t);
 

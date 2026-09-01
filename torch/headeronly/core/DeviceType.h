@@ -103,12 +103,12 @@ using c10::kIPU;
 using c10::kLazy;
 using c10::kMAIA;
 using c10::kMeta;
-using c10::kMetal;
 using c10::kMPS;
 using c10::kMTIA;
 using c10::kPrivateUse1;
 using c10::kVE;
 using c10::kVulkan;
 using c10::kXLA;
+using c10::kMetal;
 using c10::kXPU;
 HIDDEN_NAMESPACE_END(torch, headeronly)

@@ -36,12 +36,6 @@ std::unordered_set<c10::OperatorName>& setForCategory(
   TORCH_INTERNAL_ASSERT(false, "unknown FakeDispatchCategory");
 }
 
-const std::unordered_set<c10::OperatorName>& setForCategory(
-    const FakeDispatchTables& t,
-    FakeDispatchCategory category) {
-  return setForCategory(const_cast<FakeDispatchTables&>(t), category);
-}
-
 } // namespace
 
 void fakeDispatchTableAdd(
@@ -56,14 +50,6 @@ void fakeDispatchTableRemove(
     const c10::OperatorName& name) {
   fakeDispatchTables().write(
       [&](FakeDispatchTables& t) { setForCategory(t, category).erase(name); });
-}
-
-bool fakeDispatchTableContains(
-    FakeDispatchCategory category,
-    const c10::OperatorName& name) {
-  return fakeDispatchTables().read([&](const FakeDispatchTables& t) {
-    return setForCategory(t, category).contains(name);
-  });
 }
 
 } // namespace at::impl

@@ -352,14 +352,6 @@ void set_gradient_edge(const Variable& self, Edge edge) {
   }
 }
 
-Node* grad_fn_unsafe(const Variable& self) {
-  if (get_autograd_meta(self)) {
-    return get_autograd_meta(self)->grad_fn_.get();
-  } else {
-    return nullptr;
-  }
-}
-
 // Versions
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

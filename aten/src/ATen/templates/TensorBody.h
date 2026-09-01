@@ -237,15 +237,6 @@ class TORCH_API Tensor: public TensorBase {
   template <typename T>
   T item() const;
 
-  template<typename T, size_t N, template <typename U> class PtrTraits = DefaultPtrTraits, typename index_t = int64_t>
-  C10_DEPRECATED_MESSAGE("packed_accessor is deprecated, use packed_accessor32 or packed_accessor64 instead")
-  GenericPackedTensorAccessor<T,N,PtrTraits,index_t> packed_accessor() const & {
-    return generic_packed_accessor<T,N,PtrTraits,index_t>();
-  }
-  template<typename T, size_t N, template <typename U> class PtrTraits = DefaultPtrTraits, typename index_t = int64_t>
-  C10_DEPRECATED_MESSAGE("packed_accessor is deprecated, use packed_accessor32 or packed_accessor64 instead")
-  GenericPackedTensorAccessor<T,N,PtrTraits,index_t> packed_accessor() && = delete;
-
   Tensor operator~() const {
     return bitwise_not();
   }
@@ -331,10 +322,6 @@ class TORCH_API Tensor: public TensorBase {
 
   Tensor ve() const {
     return to(options().device(c10::DeviceType::VE), /*non_blocking*/ false, /*copy*/ false);
-  }
-
-  Tensor metal() const {
-    return to(options().device(c10::DeviceType::Metal), /*non_blocking*/ false, /*copy*/ false);
   }
 
   Tensor meta() const {

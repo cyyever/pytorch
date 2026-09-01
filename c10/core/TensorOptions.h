@@ -745,6 +745,8 @@ inline c10::DeviceType dispatchKeyToDeviceType(DispatchKey dispatch_key) {
       return c10::DeviceType::CPU;
     case DispatchKey::Vulkan:
       return c10::DeviceType::Vulkan;
+    case DispatchKey::Metal:
+      return c10::DeviceType::Metal;
 
     case DispatchKey::MAIA:
       return c10::DeviceType::MAIA;

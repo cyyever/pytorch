@@ -205,18 +205,6 @@ TORCH_META_FUNC2(scatter, value)
   scatter_meta_impl(*this, self, dim, index);
 }
 
-TORCH_META_FUNC2(scatter, reduce)
-(const Tensor& self,
- int64_t dim,
- const Tensor& index,
- const Tensor& src,
- const std::string_view reduce) {
-  TORCH_WARN_ONCE(
-      "The reduce argument of torch.scatter with Tensor src is deprecated and will be removed ",
-      "in a future PyTorch release. Use torch.scatter_reduce instead for more reduction options.");
-  scatter_meta_impl(*this, self, dim, index, src, reduce);
-}
-
 TORCH_META_FUNC2(scatter, value_reduce)
 (const Tensor& self,
  int64_t dim,
@@ -2203,17 +2191,6 @@ TORCH_IMPL_FUNC(scatter_value_out)
       out,
       scatter_scalar_reduce_stub,
       scatter_fill_stub);
-}
-
-TORCH_IMPL_FUNC(scatter_reduce_out)
-(const Tensor& self,
- int64_t dim,
- const Tensor& index,
- const Tensor& src,
- const std::string_view reduce,
- const Tensor& out) {
-  scatter_impl(
-      self, dim, index, src, out, scatter_reduce_stub, scatter_stub, reduce);
 }
 
 TORCH_IMPL_FUNC(scatter_value_reduce_out)
