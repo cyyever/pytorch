@@ -11,6 +11,8 @@
 #include <ATen/ops/tensor.h>
 
 #include <initializer_list>
+#include <ostream>
+#include <type_traits>
 
 namespace torch::detail {
 
@@ -21,6 +23,18 @@ struct TensorDataContainer;
 inline std::ostream& operator<<(
     std::ostream& stream,
     const TensorDataContainer& tensor_data_container);
+
+// int8_t and uint8_t are character types, so operator<< writes them as
+// characters rather than as numbers, and AT_DISPATCH_ALL_TYPES_AND3
+// instantiates the printers below for both. Widen them.
+template <typename T>
+std::ostream& print_scalar(std::ostream& stream, T value) {
+  if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t>) {
+    return stream << static_cast<int>(value);
+  } else {
+    return stream << value;
+  }
+}
 
 inline c10::ScalarType compute_desired_dtype(c10::ScalarType scalar_type) {
   if (scalar_type == at::kInt || scalar_type == at::kLong) {
@@ -265,7 +279,7 @@ struct TensorDataContainer {
           at::kBFloat16,
           scalar_type_,
           "TensorDataContainer_pretty_print_scalar",
-          [&] { stream << scalar_.to<scalar_t>(); });
+          [&] { print_scalar(stream, scalar_.to<scalar_t>()); });
     } else if (is_init_list()) {
       stream << '{';
       for (const TensorDataContainer* it = init_list_.begin();
@@ -285,7 +299,7 @@ struct TensorDataContainer {
             at::kBFloat16,
             scalar_type_,
             "TensorDataContainer_pretty_print_tensor_item",
-            [&] { stream << tensor_[i].item<scalar_t>(); });
+            [&] { print_scalar(stream, tensor_[i].item<scalar_t>()); });
         if (i != tensor_.sizes()[0] - 1)
           stream << ", ";
       }
