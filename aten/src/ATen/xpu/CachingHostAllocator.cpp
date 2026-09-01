@@ -1,4 +1,5 @@
-#include <ATen/xpu/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
+#include <ATen/xpu/XPUEvent.h>
 #include <c10/xpu/XPUGraphsC10Utils.h>
 
 namespace at::xpu {

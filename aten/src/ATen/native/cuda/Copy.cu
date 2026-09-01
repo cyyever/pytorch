@@ -5,7 +5,7 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/CUDAEvent.h>
-#include <ATen/cuda/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
 #include <ATen/cuda/PeerToPeerAccess.h>
 #include <ATen/native/Copy.h>
 #include <ATen/native/TensorIterator.h>

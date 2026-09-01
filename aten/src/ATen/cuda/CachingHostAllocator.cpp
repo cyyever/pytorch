@@ -1,4 +1,5 @@
-#include <ATen/cuda/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
+#include <c10/cuda/CUDAStream.h>
 
 #include <ATen/cuda/CUDAEvent.h>
 #include <c10/core/thread_pool.h>

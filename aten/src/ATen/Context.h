@@ -445,28 +445,6 @@ class TORCH_API Context {
   bool maskUnconditionalNativeAot() const;
   void setMaskUnconditionalNativeAot(bool /*b*/);
 
-  // Preserved for BC
-  void lazyInitCUDA() {
-    TORCH_WARN_DEPRECATION(
-        "lazyInitCUDA is deprecated. Please use lazyInitDevice(at::kCUDA) instead.")
-    lazyInitDevice(at::kCUDA);
-  }
-  void lazyInitHIP() {
-    TORCH_WARN_DEPRECATION(
-        "lazyInitHIP is deprecated. Please use lazyInitDevice(at::kHIP) instead.")
-    lazyInitDevice(at::kHIP);
-  }
-  void lazyInitXPU() {
-    TORCH_WARN_DEPRECATION(
-        "lazyInitXPU is deprecated. Please use lazyInitDevice(at::kXPU) instead.")
-    lazyInitDevice(at::kXPU);
-  }
-  void lazyInitPrivateUse1() {
-    TORCH_WARN_DEPRECATION(
-        "lazyInitPrivateUse1 is deprecated. Please use lazyInitDevice(at::kPrivateUse1) instead.")
-    lazyInitDevice(at::kPrivateUse1);
-  }
-
  private:
   std::array<c10::once_flag, at::COMPILE_TIME_MAX_DEVICE_TYPES> init_;
   bool enabled_cudnn = true;
