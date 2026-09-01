@@ -70,7 +70,6 @@ struct TORCH_API PrivateUse1HooksInterface : AcceleratorHooksInterface {
 #undef FAIL_PRIVATEUSE1HOOKS_FUNC
 };
 
-struct TORCH_API PrivateUse1HooksArgs {};
 
 TORCH_API void RegisterPrivateUse1HooksInterface(
     at::PrivateUse1HooksInterface* hook_);

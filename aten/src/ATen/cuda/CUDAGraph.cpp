@@ -459,7 +459,8 @@ void CUDAGraph::begin_capture_to_if_node(
   begin_capture_to_conditional_node(
       scalar_cuda_pred_tensor, cudaGraphCondTypeIf);
 #else // !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
-  AT_ERROR(
+  TORCH_CHECK(
+      false,
       __func__,
       " CUDA Graphs conditional nodes are not supported for cuda version < 12.4");
   return;
@@ -472,7 +473,8 @@ void CUDAGraph::begin_capture_to_while_node(
   begin_capture_to_conditional_node(
       scalar_cuda_pred_tensor, cudaGraphCondTypeWhile);
 #else // !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
-  AT_ERROR(
+  TORCH_CHECK(
+      false,
       __func__,
       " CUDA Graphs conditional nodes are not supported for cuda version < 12.4");
   return;
@@ -631,7 +633,8 @@ void CUDAGraph::end_capture_to_conditional_node() {
   TORCH_CHECK(!rng_or_generators_changed, rng_with_conditional_nodes_error);
 
 #else // !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
-  AT_ERROR(
+  TORCH_CHECK(
+      false,
       __func__,
       " CUDA Graphs conditional nodes are not supported for cuda version < 12.4");
 #endif
@@ -646,7 +649,8 @@ void CUDAGraph::set_conditional_handle_for_current_node(
   set_conditional_handle(
       conditional_node_handles_.top(), scalar_cuda_pred_tensor);
 #else // !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
-  AT_ERROR(
+  TORCH_CHECK(
+      false,
       __func__,
       " CUDA Graphs conditional nodes are not supported for cuda version < 12.4");
 #endif
@@ -659,7 +663,8 @@ std::function<bool(cudaStream_t)> CUDAGraph::create_child_allocate_filter() {
       return capture_id_opt.has_value() && capture_id_opt.value() == current_capture_id;
   };
 #else // !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
-  AT_ERROR(
+  TORCH_CHECK(
+      false,
       __func__,
       " CUDA Graphs conditional nodes are not supported for cuda version < 12.4");
   return std::function<bool(cudaStream_t)>();

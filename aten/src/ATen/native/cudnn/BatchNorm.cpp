@@ -43,7 +43,7 @@ std::tuple<Tensor&, Tensor&, Tensor&, Tensor&> cudnn_batch_norm_out(
     Tensor& save_mean,
     Tensor& save_var,
     Tensor& reserve) {
-  AT_ERROR("cudnn_batch_norm_out: ATen not compiled with cuDNN support");
+  TORCH_CHECK(false, "cudnn_batch_norm_out: ATen not compiled with cuDNN support");
 }
 
 std::tuple<Tensor, Tensor, Tensor> cudnn_batch_norm_backward(

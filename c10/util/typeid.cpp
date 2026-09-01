@@ -47,7 +47,7 @@ detail::TypeMetaData* TypeMeta::typeMetaDatas() {
 #undef SCALAR_TYPE_META
       // The remainder of the array is padded with TypeMetaData blanks.
       // The first of these is the entry for ScalarType::Undefined.
-      // The rest are consumed by CAFFE_KNOWN_TYPE entries.
+      // The rest are consumed by CAFFE_DEFINE_KNOWN_TYPE entries.
   };
   return instances;
 }

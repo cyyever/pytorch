@@ -35,7 +35,7 @@
 
 // TODO: This file is still in the caffe2 namespace, despite living
 // in the ATen directory.  This is because the macro
-// CAFFE_KNOWN_TYPE (and CAFFE_DECLARE_KNOWN_TYPE) defines a template
+// CAFFE_DECLARE_KNOWN_TYPE defines a template
 // specialization, which relies
 // on the namespace of TypeMeta matching the namespace where the macro is
 // called.  This requires us to fix all of the call-sites, which I want to do
@@ -52,8 +52,8 @@ namespace caffe2 {
 
 /**
  * A type id is a unique id for a given C++ type.
- * You need to register your types using CAFFE_KNOWN_TYPE(MyType) to be able to
- * use TypeIdentifier with custom types. This is for example used to store the
+ * You need to register your types with CAFFE_DECLARE_KNOWN_TYPE(MyType, ident)
+ * to be able to use TypeIdentifier with custom types. This is for example used to store the
  * dtype of tensors.
  */
 class C10_API TypeIdentifier final
@@ -521,7 +521,7 @@ class C10_API TypeMeta final {
     const uint16_t index = nextTypeIndex++;
     TORCH_CHECK(
         index <= MaxTypeIndex,
-        "Maximum number of CAFFE_KNOWN_TYPE declarations has been exceeded. ",
+        "Maximum number of known-type declarations has been exceeded. ",
         "Please report this issue.");
     typeMetaDatas()[index] = detail::TypeMetaData{
         sizeof(T),
@@ -588,15 +588,10 @@ inline std::ostream& operator<<(
  * Register unique id for a type so it can be used in TypeMeta context, e.g. be
  * used as a type for Blob or for Tensor elements.
  *
- * CAFFE_KNOWN_TYPE is deprecated; prefer CAFFE_DECLARE_KNOWN_TYPE and
- * CAFFE_DEFINE_KNOWN_TYPE.
- *
- * CAFFE_KNOWN_TYPE does explicit instantiation of TypeIdentifier::Get<T>
- * template function and thus needs to be put in a single translation unit (.cpp
- * file) for a given type T. Other translation units that use type T as a type
- * of the caffe2::Blob or element type of caffe2::Tensor need to depend on the
- * translation unit that contains CAFFE_KNOWN_TYPE declaration via regular
- * linkage dependencies.
+ * Use CAFFE_DECLARE_KNOWN_TYPE in a header and CAFFE_DEFINE_KNOWN_TYPE in a
+ * single translation unit; other translation units that use type T as a
+ * caffe2::Blob type or Tensor element type depend on that one through regular
+ * linkage.
  *
  * NOTE: the macro needs to be invoked in ::caffe2 namespace
  */
@@ -612,16 +607,6 @@ inline std::ostream& operator<<(
 #define EXPORT_IF_NOT_GCC
 #endif
 
-// CAFFE_KNOWN_TYPE is deprecated! Use CAFFE_DECLARE_KNOWN_TYPE and
-// CAFFE_DEFINE_KNOWN_TYPE instead.
-#define CAFFE_KNOWN_TYPE(T)                                          \
-  template uint16_t TypeMeta::addTypeMetaData<T>();                  \
-  template <>                                                        \
-  EXPORT_IF_NOT_GCC uint16_t TypeMeta::_typeMetaData<T>() noexcept { \
-    static const uint16_t index = addTypeMetaData<T>();              \
-    return index;                                                    \
-  }
-
 #define CAFFE_DEFINE_KNOWN_TYPE(T, ident)                   \
   template uint16_t TypeMeta::addTypeMetaData<T>();         \
   namespace detail {                                        \
@@ -629,8 +614,8 @@ inline std::ostream& operator<<(
       TypeMeta::addTypeMetaData<T>();                       \
   } // namespace detail
 
-// Unlike CAFFE_KNOWN_TYPE, CAFFE_DECLARE_KNOWN_TYPE avoids a function
-// call to access _typeMetaData in the common case.
+// CAFFE_DECLARE_KNOWN_TYPE avoids a function call to access _typeMetaData in
+// the common case.
 #define CAFFE_DECLARE_KNOWN_TYPE(T, ident)                 \
   extern template uint16_t TypeMeta::addTypeMetaData<T>(); \
   namespace detail {                                       \
