@@ -281,12 +281,10 @@ dependencies as well as the nightly binaries into the repo directory.
     * [jit](test/cpp/jit) - [README](test/cpp/jit/README.md)
   * [expect](test/expect) - Automatically generated "expect" files
     which are used to compare against expected output.
-  * [onnx](test/onnx) - Tests for ONNX export functionality,
-    using both PyTorch and Caffe2.
-* [caffe2](caffe2) - The Caffe2 library.
-  * [core](caffe2/core) - Core files of Caffe2, e.g., tensor, workspace,
-    blobs, etc.
-  * ...
+  * [onnx](test/onnx) - Tests for ONNX export functionality.
+* [caffe2](caffe2) - What is left of the Caffe2 tree.
+  * [serialize](caffe2/serialize) - The zip container behind
+    `torch.save` / `torch.load`.
 
 ## AI-Assisted Development
 

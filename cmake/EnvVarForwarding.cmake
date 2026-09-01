@@ -38,7 +38,6 @@
 #   USE_CUSPARSELT=0          disables the cuSPARSELt build
 #   USE_CUDSS=0               disables the cuDSS build
 #   USE_CUFILE=0              disables the cuFile build
-#   USE_FBGEMM=0              disables the FBGEMM build
 #   USE_MSLK=0                disables the MSLK build
 #   USE_KINETO=0              disables libkineto profiling
 #   USE_NUMPY=0               disables the NumPy build
@@ -73,7 +72,6 @@
 #   BLAS                     MKL, Eigen, ATLAS, FlexiBLAS, or OpenBLAS; fails the
 #                            build if the requested BLAS is not found (passthrough)
 #   MKL_THREADING            MKL threading mode: SEQ or OMP (default)
-#   ATEN_THREADING           OMP or NATIVE intra-/inter-op parallel backend
 #   ATEN_AVX512_256=TRUE     let ATen AVX2 kernels use 32 ymm registers (read from
 #                            the environment in cmake/Codegen.cmake)
 #
@@ -132,7 +130,6 @@ set(_ENV_PASSTHROUGH
   MKL_THREADING
   Numa_INCLUDE_DIR
   Numa_LIBRARIES
-  ATEN_THREADING
   WERROR
   OPENSSL_ROOT_DIR
   STATIC_DISPATCH_BACKEND

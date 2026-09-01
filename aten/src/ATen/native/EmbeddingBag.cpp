@@ -14,11 +14,7 @@
 #include <c10/util/irange.h>
 #include <c10/util/Half.h>
 
-#ifdef USE_FBGEMM
 #include <fbgemm/FbgemmConvert.h>
-#else
-#include <caffe2/perfkernels/embedding_lookup_idx.h>
-#endif
 
 #include <cstring>
 #include <tuple>
@@ -217,7 +213,6 @@ index_select_add(
       offsets_include_last[offsets.numel()] = select_indices.numel();
       offsets_data = offsets_include_last.data();
     }
-#if defined(USE_FBGEMM)
     constexpr bool isbf16 = std::is_same_v<data_t, at::Half> ? false : true;
     auto kernel_16bit_index_t = fbgemm_kernel_cache
         ? fbgemm_kernel_cache
@@ -252,53 +247,6 @@ index_select_add(
                 select_indices_data + offsets_data[start_idx]);
           }
         });
-#else
-    // Initialize the intermediate output buffer to be 0.
-    Tensor output_fp32 = at::zeros({output_size, ddim}, output.options().dtype(at::kFloat));
-    auto* output_data_fp32 = output_fp32.data_ptr<float>();
-    using bVec = vec::Vectorized<BFloat16>;
-    using fVec = vec::Vectorized<float>;
-    at::parallel_for(
-        0, output_size, 1, [&](index_t start_idx, index_t end_idx) {
-          caffe2::EmbeddingLookupIdx(
-              /*block_size=*/ddim,
-              /*output_size=*/end_idx - start_idx,
-              /*index_size=*/offsets_data[end_idx] - offsets_data[start_idx],
-              /*data_size=*/src.size(0),
-              /*input=*/src_data,
-              /*indices=*/select_indices_data + offsets_data[start_idx],
-              /*offsets=*/offsets_data + start_idx,
-              /*weights=*/nullptr,
-              /*scale_bias=*/nullptr,
-              /*normalize_by_lengths=*/false,
-              /*out=*/output_data_fp32 + start_idx * ddim);
-          for (int64_t i = start_idx; i < end_idx; i++) {
-            // Convert FP32 intermediate buffer result back to 16 bit for
-            // output dtype
-            if constexpr (std::is_same_v<data_t, at::Half>) {
-              // FP16
-              for (const auto d : c10::irange(ddim)) {
-                (output_data + i * ddim)[d] =
-                    static_cast<data_t>((output_data_fp32 + ddim * i)[d]);
-              }
-            } else {
-              // BF16
-              int64_t d = 0;
-              for (; d < ddim - (ddim % bVec::size()); d += bVec::size()) {
-                fVec temp_fp32_0 = fVec::loadu(output_data_fp32 + ddim * i + d);
-                fVec temp_fp32_1 =
-                    fVec::loadu(output_data_fp32 + ddim * i + d + fVec::size());
-                convert_float_bfloat16(temp_fp32_0, temp_fp32_1)
-                    .store(output_data + i * ddim + d);
-              }
-              for (; d < ddim; d++) {
-                (output_data + i * ddim)[d] =
-                    static_cast<data_t>((output_data_fp32 + ddim * i)[d]);
-              }
-            }
-          }
-        });
-#endif
   } else {
     TORCH_CHECK(select_indices.numel() == add_indices.numel());
     auto* src_data = src.const_data_ptr<data_t>();
@@ -396,7 +344,6 @@ index_select_add(const Tensor &select_indices,
       offsets_data = offsets_include_last.data();
     }
 
-#ifdef USE_FBGEMM
     auto kernel_fp32_index_t =
       fbgemm_kernel_cache ?
       fbgemm_kernel_cache->getCallback</* has_weight */ false, index_t, float>(ddim) :
@@ -408,10 +355,8 @@ index_select_add(const Tensor &select_indices,
         /* is_weight_positional */false,
         /* use_offsets */true
       );
-#endif
     at::parallel_for(
         0, output_size, 1, [&](index_t start_idx, index_t end_idx) {
-#ifdef USE_FBGEMM
           bool success = kernel_fp32_index_t(
             /* output_size */end_idx - start_idx,
             /* index_size */offsets_data[end_idx] - offsets_data[start_idx],
@@ -429,20 +374,6 @@ index_select_add(const Tensor &select_indices,
                 offsets_data + start_idx,
                 select_indices_data + offsets_data[start_idx]);
           }
-#else
-          caffe2::EmbeddingLookupIdx(
-              /*block_size=*/ddim,
-              /*output_size=*/end_idx - start_idx,
-              /*index_size=*/offsets_data[end_idx] - offsets_data[start_idx],
-              /*data_size=*/src.size(0),
-              /*input=*/src_data,
-              /*indices=*/select_indices_data + offsets_data[start_idx],
-              /*offsets=*/offsets_data + start_idx,
-              /*weights=*/nullptr,
-              /*scale_bias=*/nullptr,
-              /*normalize_by_lengths=*/false,
-              /*out=*/output_data + start_idx * ddim);
-#endif
         });
   } else {
     AT_ASSERT(select_indices.numel() == add_indices.numel());
@@ -584,7 +515,6 @@ index_select_scale_add(
     Tensor scale_fp32 = at::empty(scale.sizes(), scale.options().dtype(at::kFloat));
     auto* scale_data_fp32 = scale_fp32.mutable_data_ptr<float>();
 
-#if defined(USE_FBGEMM)
     constexpr bool isbf16 = std::is_same_v<data_t, at::Half> ? false : true;
     if constexpr (isbf16) {
       fbgemm::Bfloat16ToFloat_simd(
@@ -630,57 +560,6 @@ index_select_scale_add(
                 select_indices_data + offsets_data[start_idx]);
           }
         });
-#else
-    // Initialize the intermediate output buffer to be 0.
-    Tensor output_fp32 =
-        at::zeros({output_size, ddim}, output.options().dtype(at::kFloat));
-    auto* output_data_fp32 = output_fp32.data_ptr<float>();
-    for (const auto i : c10::irange(scale.numel())) {
-      scale_data_fp32[i] = static_cast<float>(scale_data[i]);
-    }
-    using bVec = vec::Vectorized<BFloat16>;
-    using fVec = vec::Vectorized<float>;
-    at::parallel_for(
-        0, output_size, 1, [&](index_t start_idx, index_t end_idx) {
-          caffe2::EmbeddingLookupIdx(
-              /*block_size=*/ddim,
-              /*output_size=*/end_idx - start_idx,
-              /*index_size=*/offsets_data[end_idx] - offsets_data[start_idx],
-              /*data_size=*/src.size(0),
-              /*input=*/src_data,
-              /*indices=*/select_indices_data + offsets_data[start_idx],
-              /*offsets=*/offsets_data + start_idx,
-              /*weights=*/scale_data_fp32 + offsets_data[start_idx],
-              /*scale_bias=*/nullptr,
-              /*normalize_by_lengths=*/false,
-              /*out=*/output_data_fp32 + start_idx * ddim);
-          for (int64_t i = start_idx; i < end_idx; i++) {
-            // Convert FP32 intermediate buffer result back to 16 bit for
-            // output dtype
-            if constexpr (std::is_same_v<data_t, at::Half>) {
-              // FP16
-              for (const auto d : c10::irange(ddim)) {
-                (output_data + i * ddim)[d] =
-                    static_cast<data_t>((output_data_fp32 + ddim * i)[d]);
-              }
-            } else {
-              // BF16
-              int64_t d = 0;
-              for (; d < ddim - (ddim % bVec::size()); d += bVec::size()) {
-                fVec temp_fp32_0 = fVec::loadu(output_data_fp32 + ddim * i + d);
-                fVec temp_fp32_1 =
-                    fVec::loadu(output_data_fp32 + ddim * i + d + fVec::size());
-                convert_float_bfloat16(temp_fp32_0, temp_fp32_1)
-                    .store(output_data + i * ddim + d);
-              }
-              for (; d < ddim; d++) {
-                (output_data + i * ddim)[d] =
-                    static_cast<data_t>((output_data_fp32 + ddim * i)[d]);
-              }
-            }
-          }
-        });
-#endif
   } else {
     AT_ASSERT(select_indices.numel() == add_indices.numel());
     auto* src_data = src.const_data_ptr<data_t>();
@@ -770,7 +649,6 @@ index_select_scale_add(const Tensor &select_indices,
       offsets_data = offsets_include_last.data();
     }
 
-#ifdef USE_FBGEMM
     auto kernel_fp32_index_t =
       fbgemm_kernel_cache ?
       fbgemm_kernel_cache->getCallback</* has_weight */ true, index_t, float>(ddim) :
@@ -782,10 +660,8 @@ index_select_scale_add(const Tensor &select_indices,
         /* is_weight_positional */false,
         /* use_offsets */true
       );
-#endif
     at::parallel_for(
         0, output_size, 1, [&](index_t start_idx, index_t end_idx) {
-#ifdef USE_FBGEMM
           bool success = kernel_fp32_index_t(
             /* output_size */end_idx - start_idx,
             /* index_size */offsets_data[end_idx] - offsets_data[start_idx],
@@ -803,20 +679,6 @@ index_select_scale_add(const Tensor &select_indices,
                 offsets_data + start_idx,
                 select_indices_data + offsets_data[start_idx]);
           }
-#else
-          caffe2::EmbeddingLookupIdx(
-              /*block_size=*/ddim,
-              /*output_size=*/end_idx - start_idx,
-              /*index_size=*/offsets_data[end_idx] - offsets_data[start_idx],
-              /*data_size=*/src.size(0),
-              /*input=*/src_data,
-              /*indices=*/select_indices_data + offsets_data[start_idx],
-              /*offsets=*/offsets_data + start_idx,
-              /*weights=*/scale_data + offsets_data[start_idx],
-              /*scale_bias=*/nullptr,
-              /*normalize_by_lengths=*/false,
-              /*out=*/output_data + start_idx * ddim);
-#endif
         });
   } else {
     AT_ASSERT(select_indices.numel() == add_indices.numel());

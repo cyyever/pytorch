@@ -3,7 +3,6 @@
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/Tensor.h>
-#include <caffe2/core/tensor.h>
 #include <c10/util/ExclusivelyOwned.h>
 #include <c10/util/intrusive_ptr.h>
 
@@ -32,11 +31,6 @@ at::Tensor getSampleValue() {
   return at::zeros({2, 2}).to(at::kCPU);
 }
 
-template <>
-caffe2::Tensor getSampleValue() {
-  return caffe2::Tensor(getSampleValue<at::Tensor>());
-}
-
 template <typename T>
 void assertIsSampleObject(const T& eo);
 
@@ -49,22 +43,13 @@ void assertIsSampleObject<at::Tensor>(const at::Tensor& t) {
   EXPECT_EQ(memcmp(zeros, t.data_ptr(), 4 * sizeof(float)), 0);
 }
 
-template <>
-void assertIsSampleObject<caffe2::Tensor>(const caffe2::Tensor& t) {
-  assertIsSampleObject<at::Tensor>(at::Tensor(t));
-}
-
-
 template <typename T>
 void ExclusivelyOwnedTest<T>::SetUp() {
   defaultConstructed = c10::ExclusivelyOwned<T>();
   sample = c10::ExclusivelyOwned<T>(getSampleValue<T>());
 }
 
-using ExclusivelyOwnedTypes = ::testing::Types<
-  at::Tensor,
-  caffe2::Tensor
-  >;
+using ExclusivelyOwnedTypes = ::testing::Types<at::Tensor>;
 
 TYPED_TEST_SUITE(ExclusivelyOwnedTest, ExclusivelyOwnedTypes);
 

@@ -6,7 +6,7 @@
 #endif
 
 
-#include <caffe2/core/common.h>
+#include <ATen/BuildInfo.h>
 
 #include <ATen/native/DispatchStub.h>
 
@@ -14,6 +14,11 @@
 #include <sstream>
 
 namespace at {
+
+const std::map<std::string, std::string>& GetBuildOptions() {
+  static const std::map<std::string, std::string> kMap = TORCH_BUILD_STRINGS;
+  return kMap;
+}
 
 std::string get_mkl_version() {
   std::string version;
@@ -151,7 +156,7 @@ std::string show_config() {
   }
 
   ss << "  - Build settings: ";
-  for (const auto& pair : caffe2::GetBuildOptions()) {
+  for (const auto& pair : GetBuildOptions()) {
     if (!pair.second.empty()) {
       ss << pair.first << '=' << pair.second << ", ";
     }
@@ -173,7 +178,7 @@ std::string get_cxx_flags() {
     "As a result, `get_cxx_flags` is OSS only."
   );
   #else
-  return caffe2::GetBuildOptions().at("CXX_FLAGS");
+  return GetBuildOptions().at("CXX_FLAGS");
   #endif
 }
 

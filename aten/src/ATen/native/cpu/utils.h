@@ -5,9 +5,7 @@
 #include <ATen/cpu/vec/vec.h>
 #include <bit>
 
-#ifdef USE_FBGEMM
 #include <fbgemm/Fbgemm.h>
-#endif
 
 namespace at::native {
 
@@ -152,7 +150,6 @@ inline void transpose(int64_t M, int64_t N, const T* src, int64_t ld_src, T* dst
   }
 }
 
-#ifdef USE_FBGEMM
 template <>
 inline void transpose<float>(int64_t M, int64_t N, const float* src, int64_t ld_src, float* dst, int64_t ld_dst) {
   TORCH_CHECK(fbgemm::fbgemmSupportedCPU(), "Your CPU does not support FBGEMM.");
@@ -170,7 +167,6 @@ inline void transpose<uint8_t>(int64_t M, int64_t N, const uint8_t* src, int64_t
   TORCH_CHECK(fbgemm::fbgemmSupportedCPU(), "Your CPU does not support FBGEMM.");
   fbgemm::transpose_simd<uint8_t>(M, N, src, ld_src, dst, ld_dst);
 }
-#endif
 
 template <typename index_t, typename F>
 inline void parallel_sparse_csr(
