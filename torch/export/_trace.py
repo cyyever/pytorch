@@ -2109,7 +2109,6 @@ def _export_to_aten_ir_make_fx(
                     # that either runtimes provide their own profiling
                     # OR user wrap the compiled region on a profiling in
                     # later stage.
-                    torch.ops.profiler._record_function_enter.default,
                     torch.ops.profiler._record_function_enter_new.default,
                     torch.ops.profiler._record_function_exit._RecordFunction,
                     # In theory, we could fix this dead detach and getattr nodes

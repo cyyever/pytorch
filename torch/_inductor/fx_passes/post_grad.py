@@ -99,7 +99,6 @@ def _remove_profiler_ops(graph: torch.fx.Graph) -> None:
     """
     profiler_ops = OrderedSet(
         [
-            torch.ops.profiler._record_function_enter.default,
             torch.ops.profiler._record_function_enter_new.default,
             torch.ops.profiler._record_function_exit._RecordFunction,
         ]

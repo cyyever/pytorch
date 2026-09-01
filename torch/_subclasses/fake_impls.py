@@ -319,30 +319,6 @@ def non_kwarg_is_pinned(
     return r
 
 
-# Legacy profiler ops return Tensors but don't follow tensor constructor patterns
-# They take string arguments and should not have device/dtype parameters added
-@register_op_impl(torch.ops.profiler._record_function_enter.default)
-def _record_function_enter(
-    fake_mode: FakeTensorMode, func: OpOverload, name: str, args: object | None = None
-) -> FakeTensor:
-    # Call the real implementation to get a real handle tensor
-    with in_kernel_invocation_manager(fake_mode):
-        real_handle = func(name, args)
-    # Create a meta tensor with the same properties as the real handle
-    meta_handle = torch.empty_like(real_handle, device="meta")
-    # Wrap it as a FakeTensor
-    return FakeTensor(fake_mode, meta_handle, torch.device("cpu"))
-
-
-@register_op_impl(torch.ops.profiler._record_function_exit.default)
-def _record_function_exit(
-    fake_mode: FakeTensorMode, func: OpOverload, handle: Any
-) -> None:
-    # Exit doesn't return anything and doesn't need to do anything for fake tensors
-    # Just return None (the actual return type is void)
-    pass
-
-
 @register_op_impl(torch.ops.profiler._record_function_enter_new.default)
 def _record_function_enter_new(
     fake_mode: FakeTensorMode, func: OpOverload, name: str, args: object | None = None
