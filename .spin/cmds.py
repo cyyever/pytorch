@@ -85,7 +85,6 @@ TYPE_STUBS = [
         [
             "aten/src/ATen/native/native_functions.yaml",
             "aten/src/ATen/native/tags.yaml",
-            "tools/autograd/deprecated.yaml",
         ],
         [
             sys.executable,
@@ -95,8 +94,6 @@ TYPE_STUBS = [
             "aten/src/ATen/native/native_functions.yaml",
             "--tags-path",
             "aten/src/ATen/native/tags.yaml",
-            "--deprecated-functions-path",
-            "tools/autograd/deprecated.yaml",
         ],
     ),
 ]

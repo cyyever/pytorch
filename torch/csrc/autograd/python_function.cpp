@@ -1817,35 +1817,6 @@ PyObject* THPFunction_saved_tensors(THPFunction* self, void* _unused) {
   END_HANDLE_TH_ERRORS
 }
 
-PyObject* THPFunction_saved_variables(THPFunction* self, void* _unused) {
-  HANDLE_TH_ERRORS
-  auto r = PyErr_WarnEx(
-      PyExc_DeprecationWarning,
-      "'saved_variables' is deprecated; use 'saved_tensors'",
-      0);
-  if (r != 0)
-    throw_python_error();
-  TORCH_CHECK(
-      !self->saved_tensors_accessed_and_cleared,
-      "saved_tensors can only be accessed once when "
-      "clear_saved_tensors_on_access=True is set on the autograd.Function. "
-      "Either access saved_tensors only once, or set "
-      "clear_saved_tensors_on_access=False.");
-  PyObject* result = unpack_saved_variables(
-      self, [](const Variable& var) { return THPVariable_Wrap(var); });
-  if (!result) {
-    return nullptr;
-  }
-
-  if (self->clear_saved_tensors_on_access) {
-    self->saved_variables.clear();
-    self->saved_tensors_accessed_and_cleared = true;
-  }
-
-  return result;
-  END_HANDLE_TH_ERRORS
-}
-
 PyObject* THPFunction_get_compiled_autograd_symints(
     PyObject* _self,
     PyObject* _unused) {
@@ -2027,11 +1998,6 @@ PyObject* getRequiresGrad(PyObject* obj, void* _unused) {
 static struct PyGetSetDef THPFunction_properties[] = {
     {"saved_tensors",
      (getter)THPFunction_saved_tensors,
-     nullptr,
-     nullptr,
-     nullptr},
-    {"saved_variables",
-     (getter)THPFunction_saved_variables,
      nullptr,
      nullptr,
      nullptr},

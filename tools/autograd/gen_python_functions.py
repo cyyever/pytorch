@@ -33,12 +33,9 @@
 
 from __future__ import annotations
 
-import itertools
 import re
 from collections import defaultdict
 from typing import TYPE_CHECKING
-
-import yaml
 
 from torchgen.api import cpp
 from torchgen.api.python import (
@@ -50,33 +47,28 @@ from torchgen.api.python import (
     dispatch_lambda_return_str,
     has_tensor_options,
     PythonSignature,
-    PythonSignatureDeprecated,
     PythonSignatureGroup,
     PythonSignatureNativeFunctionPair,
     signature,
-    signature_from_schema,
     structseq_fieldnames,
 )
 from torchgen.code_template import CodeTemplate
 from torchgen.context import with_native_function
 from torchgen.gen import cpp_string, parse_native_yaml, parse_tags_yaml
 from torchgen.model import (
-    Argument,
     BaseOperatorName,
-    FunctionSchema,
     NativeFunction,
     SchemaKind,
     Type,
     Variant,
 )
-from torchgen.utils import FileManager, split_name_params
-from torchgen.yaml_utils import YamlLoader
+from torchgen.utils import FileManager
 
 from .gen_inplace_or_view_type import is_tensor_list_type
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Sequence
 
 
 #
@@ -269,7 +261,6 @@ def gen(
     out: str,
     native_yaml_path: str,
     tags_yaml_path: str,
-    deprecated_yaml_path: str,
     template_path: str,
     *,
     symint: bool = True,
@@ -280,7 +271,7 @@ def gen(
     ).native_functions
     native_functions = list(filter(should_generate_py_binding, native_functions))
 
-    methods = load_signatures(native_functions, deprecated_yaml_path, method=True)
+    methods = load_signatures(native_functions, method=True)
     create_python_bindings(
         fm,
         methods,
@@ -293,7 +284,7 @@ def gen(
 
     # NOTE: num_shards here must be synced with gatherTorchFunctions in
     #       torch/csrc/autograd/python_torch_functions_manual.cpp
-    functions = load_signatures(native_functions, deprecated_yaml_path, method=False)
+    functions = load_signatures(native_functions, method=False)
     create_python_bindings_sharded(
         fm,
         functions,
@@ -563,10 +554,8 @@ def create_python_bindings_sharded(
 
 def load_signatures(
     native_functions: list[NativeFunction],
-    deprecated_yaml_path: str,
     *,
     method: bool,
-    skip_deprecated: bool = False,
     pyi: bool = False,
 ) -> Sequence[PythonSignatureNativeFunctionPair]:
     @with_native_function
@@ -576,124 +565,8 @@ def load_signatures(
             function=f,
         )
 
-    pairs = list(map(gen_signature_pairs, native_functions))
-    deprecated = load_deprecated_signatures(
-        pairs, deprecated_yaml_path, method=method, pyi=pyi
-    )
-    return pairs if skip_deprecated else pairs + deprecated
+    return list(map(gen_signature_pairs, native_functions))
 
-
-def load_deprecated_signatures(
-    pairs: Sequence[PythonSignatureNativeFunctionPair],
-    deprecated_yaml_path: str,
-    *,
-    method: bool,
-    pyi: bool,
-) -> list[PythonSignatureNativeFunctionPair]:
-    # The deprecated.yaml doesn't have complete type information, we need
-    # find and leverage the original ATen signature (to which it delegates
-    # the call) to generate the full python signature.
-    # We join the deprecated and the original signatures using type-only form.
-
-    # group the original ATen signatures by name
-    grouped: dict[str, list[PythonSignatureNativeFunctionPair]] = defaultdict(list)
-    for pair in pairs:
-        grouped[pair.signature.name].append(pair)
-
-    # find matching original signatures for each deprecated signature
-    results: list[PythonSignatureNativeFunctionPair] = []
-
-    with open(deprecated_yaml_path) as f:
-        deprecated_defs = yaml.load(f, Loader=YamlLoader)
-
-    for deprecated in deprecated_defs:
-        schema = FunctionSchema.parse(deprecated["name"])
-        aten_name, call_args = split_name_params(deprecated["aten"])
-        is_out = aten_name.endswith("_out")
-        if is_out:
-            aten_name = aten_name.replace("_out", "")
-
-        # HACK: these are fixed constants used to pass the aten function.
-        # The type must be known ahead of time
-        known_constants = {
-            "1": Type.parse("Scalar"),
-        }
-        schema_args_by_name = {a.name: a for a in schema.arguments.flat_all}
-        for name in call_args:
-            if name not in schema_args_by_name and name not in known_constants:
-                raise AssertionError(
-                    f"deprecation definition: Unrecognized value {name}"
-                )
-
-        # Map deprecated signature arguments to their aten signature and test
-        # if the types and alias annotation match.
-        def is_schema_compatible(
-            aten_schema: FunctionSchema,
-        ) -> bool:
-            arguments: Iterable[Argument]
-            if is_out:
-                arguments = itertools.chain(
-                    aten_schema.arguments.out, aten_schema.arguments.flat_non_out
-                )
-            else:
-                arguments = aten_schema.arguments.flat_all
-
-            for i, arg in enumerate(arguments):
-                if i < len(call_args):
-                    arg_name = call_args[i]
-                    if arg_name in known_constants:
-                        schema_type = known_constants[arg_name]
-                        schema_annotation = None
-                    else:
-                        schema_arg = schema_args_by_name[arg_name]
-                        schema_type = schema_arg.type
-                        schema_annotation = schema_arg.annotation
-
-                    if schema_type != arg.type or schema_annotation != arg.annotation:
-                        return False
-                else:
-                    if arg.default is None:
-                        return False
-
-            return len(schema.returns) == len(aten_schema.returns) and all(
-                a == b for a, b in zip(schema.returns, aten_schema.returns)
-            )
-
-        any_schema_found = False
-        for pair in grouped[aten_name]:
-            if not is_schema_compatible(pair.function.func):
-                continue
-            any_schema_found = True
-
-            python_sig = signature_from_schema(
-                schema,
-                category_override=pair.function.category_override,
-                method=method,
-                pyi=pyi,
-            )
-
-            results.append(
-                PythonSignatureNativeFunctionPair(
-                    signature=PythonSignatureDeprecated(
-                        name=python_sig.name,
-                        input_args=python_sig.input_args,
-                        input_kwargs=python_sig.input_kwargs,
-                        output_args=python_sig.output_args,
-                        tensor_options_args=python_sig.tensor_options_args,
-                        method=python_sig.method,
-                        deprecated_schema=schema,
-                        deprecated_args_exprs=tuple(call_args),
-                        returns=python_sig.returns,
-                    ),
-                    function=pair.function,
-                )
-            )
-        if not any_schema_found:
-            raise AssertionError(
-                f"No native function with name {aten_name} matched signature:\n  {str(schema)}"
-            )
-
-    return results
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -1151,7 +1024,6 @@ def group_overloads(
                     str(overload.function.func.name.name)
                     == str(out.function.func.name.name)
                     and not overload.function.func.is_out_fn()
-                    and not overload.signature.deprecated
                 ):
                     candidates.append(
                         overload.signature.signature_str(
@@ -1321,10 +1193,7 @@ def emit_single_dispatch(
     @with_native_function
     def go(f: NativeFunction) -> str:
         # header comments
-        if isinstance(ps, PythonSignatureDeprecated):
-            schema_comment = f"// [deprecated] aten::{ps.deprecated_schema}"
-        else:
-            schema_comment = f"// aten::{f.func}"
+        schema_comment = f"// aten::{f.func}"
 
         # dispatch lambda signature
         name = cpp.name(f.func)

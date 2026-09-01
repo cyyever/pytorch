@@ -441,7 +441,7 @@ class TestTypePromotionDevice(TestCase):
         self.assertRaisesRegex(RuntimeError, "Boolean alpha only supported",
                                lambda: torch.add(1, 1, alpha=True))
         self.assertEqual(torch.add(torch.tensor(True, device=device),
-                         torch.tensor(True, device=device), True),
+                         torch.tensor(True, device=device), alpha=True),
                          torch.tensor(True, device=device))
 
     @skipIfTorchDynamo("Not a TorchDynamo suitable test")
