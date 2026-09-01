@@ -73,12 +73,6 @@ class Laplace(Distribution):
     def rsample(self, sample_shape: _size = torch.Size()) -> Tensor:
         shape = self._extended_shape(sample_shape)
         finfo = torch.finfo(self.loc.dtype)
-        if torch._C._get_tracing_state():
-            # [JIT WORKAROUND] lack of support for .uniform_()
-            u = torch.rand(shape, dtype=self.loc.dtype, device=self.loc.device) * 2 - 1
-            return self.loc - self.scale * u.sign() * torch.log1p(
-                -u.abs().clamp(min=finfo.tiny)
-            )
         u = self.loc.new(shape).uniform_(finfo.eps - 1, 1)
         # TODO: If we ever implement tensor.nextafter, below is what we want ideally.
         # u = self.loc.new(shape).uniform_(self.loc.nextafter(-.5, 0), .5)
