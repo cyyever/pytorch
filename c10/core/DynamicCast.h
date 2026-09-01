@@ -2,7 +2,7 @@
 
 #include <c10/core/ScalarType.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/Load.h>
+#include <torch/headeronly/util/Load.h>
 #include <c10/util/TypeCast.h>
 #include <torch/headeronly/core/Dispatch_v2.h>
 

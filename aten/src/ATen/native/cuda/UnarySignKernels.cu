@@ -7,14 +7,14 @@
 #include <ATen/native/DispatchStub.h>
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/cuda/Math.cuh>
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 #include <ATen/OpMathType.h>
 
 #include <type_traits>
 
 namespace at::native {
 
-void logical_not_kernel_cuda(TensorIteratorBase& iter) {
+static void logical_not_kernel_cuda(TensorIteratorBase& iter) {
   // error check -- this is just ensuring we don't dispatch on types that aren't in ALL_TYPES_AND_COMPLEX_AND3(...)
   // so we don't have to maintain a separate list or to do double dispatch.
   AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND3(kBool, kHalf, kBFloat16, iter.dtype(0), "logical_not_cuda", [&]() {});
@@ -59,7 +59,7 @@ void neg_kernel_cuda(TensorIteratorBase& iter) {
   }
 }
 
-void sign_kernel_cuda(TensorIteratorBase& iter){
+static void sign_kernel_cuda(TensorIteratorBase& iter){
   if (iter.dtype() == ScalarType::Bool) {
     gpu_kernel(iter, []GPU_LAMBDA(bool a){
       return a;
@@ -73,7 +73,7 @@ void sign_kernel_cuda(TensorIteratorBase& iter){
   }
 }
 
-void signbit_kernel_cuda(TensorIteratorBase& iter){
+static void signbit_kernel_cuda(TensorIteratorBase& iter){
   // NOTE: signbit does not always support integral arguments.
   if (at::isIntegralType(iter.input_dtype(), /*includeBool=*/false)) {
     AT_DISPATCH_INTEGRAL_TYPES(iter.input_dtype(), "signbit_cuda", [&]() {
@@ -97,7 +97,7 @@ C10_HOST_DEVICE static inline c10::complex<T> sgn_wrapper(c10::complex<T> z) {
 }
 
 constexpr char sgn_name[] = "sgn_kernel";
-void sgn_kernel_cuda(TensorIteratorBase& iter){
+static void sgn_kernel_cuda(TensorIteratorBase& iter){
   auto dtype = iter.dtype();
   #if AT_USE_JITERATOR()
     static const auto sgn_string = jiterator_stringify(

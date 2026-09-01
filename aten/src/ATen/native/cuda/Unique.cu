@@ -4,7 +4,7 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/ThrustAllocator.h>
 
-#include <c10/util/Load.h>
+#include <torch/headeronly/util/Load.h>
 #include <utility>
 
 #include <ATen/ops/_unique2_native.h>

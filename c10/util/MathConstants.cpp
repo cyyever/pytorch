@@ -1,6 +1,6 @@
 // define constants like M_PI and C keywords for MSVC
 
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 
 // NOLINTNEXTLINE(modernize-deprecated-headers)
 #include <math.h>

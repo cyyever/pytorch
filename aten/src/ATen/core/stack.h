@@ -5,7 +5,7 @@
 #include <utility>
 
 #include <ATen/core/ivalue.h>
-#include <c10/util/Deprecated.h>
+#include <torch/headeronly/util/Deprecated.h>
 #include <c10/util/irange.h>
 
 // TODO move this to c10 namespace

@@ -15,7 +15,7 @@
 #include <c10/core/ScalarType.h>
 #include <c10/core/TensorOptions.h>
 #include <c10/util/Exception.h>
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 #include <c10/util/irange.h>
 
 #include <ATen/ops/_dim_arange_native.h>

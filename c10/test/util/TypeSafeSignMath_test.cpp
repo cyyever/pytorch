@@ -1,4 +1,4 @@
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 
 #include <gtest/gtest.h>
 

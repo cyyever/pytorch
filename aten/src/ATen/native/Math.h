@@ -5,9 +5,9 @@
 #include <ATen/NumericUtils.h>
 #include <ATen/jiterator_macros.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <c10/util/Half.h>
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 #include <cfloat>
 #include <cmath>
 #include <cstdint>

@@ -14,7 +14,7 @@
 #include <ATen/native/cpu/LogAddExp.h>
 #include <ATen/native/cpu/Loops.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 #include <c10/util/generic_math.h>
 
 namespace at::native {
