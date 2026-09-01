@@ -44,7 +44,6 @@ TARGET_DET_LIST = [
     "test_serialization",
     "test_shape_ops",
     "test_sort_and_select",
-    "test_tensorboard",
     "test_testing",
     "test_torch",
     "test_utils",
