@@ -538,7 +538,6 @@ if(NOT NO_API)
     ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/random.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/sequential.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/data/samplers/stream.cpp
-    ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/imethod.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/serialize.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/jit.cpp

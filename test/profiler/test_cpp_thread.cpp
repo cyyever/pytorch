@@ -1,7 +1,7 @@
 
 #include <torch/csrc/autograd/profiler_kineto.h>  // @manual
 #include <torch/csrc/utils/pybind.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <string>
 
 using namespace torch::autograd::profiler;

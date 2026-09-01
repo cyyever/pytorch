@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <limits>
 #include <sstream>
 

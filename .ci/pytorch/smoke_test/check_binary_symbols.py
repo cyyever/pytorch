@@ -164,7 +164,7 @@ def check_stable_only_symbols(install_root: Path) -> None:
 
     test_cpp_content = """
 // Main torch C++ API headers
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <torch/all.h>
 
 // ATen tensor library
