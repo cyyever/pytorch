@@ -5005,24 +5005,9 @@ def interpolate(  # noqa: F811
         # The C++ code will recompute it based on the (integer) output size.
         if scale_factors is None:
             raise AssertionError("scale_factors is unexpectedly None")
-        if torch._C._get_tracing_state():
-            # make scale_factor a tensor in tracing so constant doesn't get baked in
-            output_size = [
-                (
-                    torch.floor(
-                        (
-                            # pyrefly: ignore [missing-attribute]
-                            input.size(i + 2).float()
-                            * torch.tensor(scale_factors[i], dtype=torch.float32)
-                        ).float()
-                    )
-                )
-                for i in range(dim)
-            ]
-        else:
-            output_size = [
-                _sym_int(input.size(i + 2) * scale_factors[i]) for i in range(dim)
-            ]
+        output_size = [
+            _sym_int(input.size(i + 2) * scale_factors[i]) for i in range(dim)
+        ]
         scale_factors = None
 
     if antialias and not (

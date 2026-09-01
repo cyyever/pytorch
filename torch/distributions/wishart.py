@@ -261,7 +261,7 @@ class Wishart(ExponentialFamily):
         """
 
         if max_try_correction is None:
-            max_try_correction = 3 if torch._C._get_tracing_state() else 10
+            max_try_correction = 10
 
         sample_shape = torch.Size(sample_shape)
         sample = self._bartlett_sampling(sample_shape)
@@ -271,33 +271,20 @@ class Wishart(ExponentialFamily):
         if self._batch_shape:
             is_singular = is_singular.amax(self._batch_dims)
 
-        if torch._C._get_tracing_state():
-            # Less optimized version for JIT
+        if is_singular.any():
+            warnings.warn("Singular sample detected.", stacklevel=2)
+
             for _ in range(max_try_correction):
-                sample_new = self._bartlett_sampling(sample_shape)
-                sample = torch.where(is_singular, sample_new, sample)
+                sample_new = self._bartlett_sampling(is_singular[is_singular].shape)
+                sample[is_singular] = sample_new
 
-                is_singular = ~self.support.check(sample)
+                is_singular_new = ~self.support.check(sample_new)
                 if self._batch_shape:
-                    is_singular = is_singular.amax(self._batch_dims)
+                    is_singular_new = is_singular_new.amax(self._batch_dims)
+                is_singular[is_singular.clone()] = is_singular_new
 
-        else:
-            # More optimized version with data-dependent control flow.
-            if is_singular.any():
-                warnings.warn("Singular sample detected.", stacklevel=2)
-
-                for _ in range(max_try_correction):
-                    sample_new = self._bartlett_sampling(is_singular[is_singular].shape)
-                    sample[is_singular] = sample_new
-
-                    is_singular_new = ~self.support.check(sample_new)
-                    if self._batch_shape:
-                        is_singular_new = is_singular_new.amax(self._batch_dims)
-                    is_singular[is_singular.clone()] = is_singular_new
-
-                    if not is_singular.any():
-                        break
-
+                if not is_singular.any():
+                    break
         return sample
 
     def log_prob(self, value):
