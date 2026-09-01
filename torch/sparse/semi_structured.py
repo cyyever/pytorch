@@ -309,7 +309,6 @@ class SparseSemiStructuredTensor(torch.Tensor):
 
 def to_sparse_semi_structured(
     original_tensor: torch.Tensor,
-    transposed: bool = False,
     alg_id: int = SparseSemiStructuredTensor._DEFAULT_ALG_ID,
 ) -> SparseSemiStructuredTensor:
     """
@@ -323,7 +322,6 @@ def to_sparse_semi_structured(
 
     Args:
         original_tensor (Tensor): the dense tensor to convert
-        transposed (bool, optional): deprecated arg to be removed in another release. Do not use.
         alg_id (int, optional): the algorithm id to use for cuSPARSELt matmul. Defaults to 0.
             Can be obtained via ``torch._cslt_sparse_mm_search``.
     Returns:
@@ -359,15 +357,6 @@ def to_sparse_semi_structured(
                 [-4370, -4370, -4370,  ..., -4370, -4370, -4370],
                 [-4370, -4370, -4370,  ..., -4370, -4370, -4370]], device='cuda:0', dtype=torch.int16))
     """
-    if transposed:
-        warnings.warn(
-            "Setting transpose from `to_sparse_semi_structured` is deprecated "
-            "and will be removed in a future release. "
-            "`SparseSemiStructuredTensor` only support contiguous input tensors.",
-            FutureWarning,
-            stacklevel=2,
-        )
-
     # set from _FORCE_CUTLASS flag
     SPARSE_SUBCLASS = (
         torch.sparse.SparseSemiStructuredTensorCUTLASS
