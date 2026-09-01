@@ -146,10 +146,6 @@ std::string show_config() {
     ss << detail::getCUDAHooks().showConfig();
   }
 
-  if (hasMAIA()) {
-    ss << detail::getMAIAHooks().showConfig();
-  }
-
   if (hasXPU()) {
     ss << detail::getXPUHooks().showConfig();
   }

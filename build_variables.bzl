@@ -540,7 +540,6 @@ aten_cpu_non_globed_sources = [
     "aten/src/ATen/detail/HIPHooksInterface.cpp",
     "aten/src/ATen/detail/HPUHooksInterface.cpp",
     "aten/src/ATen/detail/MPSHooksInterface.cpp",
-    "aten/src/ATen/detail/MAIAHooksInterface.cpp",
     "aten/src/ATen/detail/PrivateUse1HooksInterface.cpp",
     "aten/src/ATen/detail/XLAHooksInterface.cpp",
     "aten/src/ATen/detail/XPUHooksInterface.cpp",

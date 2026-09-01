@@ -283,10 +283,6 @@ template <typename T, size_t N>
 
 using IntArrayRef = ArrayRef<int64_t>;
 
-using IntList [[deprecated(
-    "This alias is deprecated because it doesn't make ownership semantics obvious. Use IntArrayRef instead!")]] =
-    ArrayRef<int64_t>;
-
 } // namespace c10
 
 #if __cplusplus >= 202002L
@@ -295,6 +291,9 @@ using IntList [[deprecated(
 // is destroyed (the underlying array outlives it). Opt in to the ranges
 // borrowed-range contract so that algorithms like std::ranges::find return
 // real iterators rather than std::ranges::dangling for temporary ArrayRefs.
+// The standard requires enable_borrowed_range to be specialized in its own
+// namespace.
+// NOLINTNEXTLINE(bugprone-std-namespace-modification)
 namespace std::ranges {
 template <typename T>
 inline constexpr bool enable_borrowed_range<c10::ArrayRef<T>> = true;
