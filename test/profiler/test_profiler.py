@@ -961,12 +961,9 @@ class TestProfiler(TestCase):
 
             # Test with non-default values
             config = _ExperimentalConfig(
-                profiler_metrics=["metric1", "metric2"],
-                profiler_measure_per_kernel=True,
                 verbose=True,
                 performance_events=["event1", "event2"],
                 enable_cuda_sync_events=True,
-                adjust_profiler_step=True,
                 disable_external_correlation=True,
                 profile_all_threads=True,
                 capture_overload_names=True,
@@ -981,37 +978,6 @@ class TestProfiler(TestCase):
             # Test deepcopy (which uses pickle internally)
             copied = copy.deepcopy(config)
             self.assertIsInstance(copied, _ExperimentalConfig)
-
-    def test_profiler_range_metrics_deprecated(self):
-        # profiler_metrics and profiler_measure_per_kernel are deprecated
-        # no-ops: passing either must warn with FutureWarning and not error.
-        for cfg in (
-            _ExperimentalConfig(profiler_metrics=["m1", "m2"]),
-            _ExperimentalConfig(profiler_measure_per_kernel=True),
-        ):
-            with self.assertWarnsRegex(FutureWarning, "profiler_metrics"):
-                with profile(
-                    activities=[ProfilerActivity.CPU],
-                    experimental_config=cfg,
-                ):
-                    pass
-
-    def test_adjust_profiler_step_deprecated(self):
-        # adjust_profiler_step is a deprecated no-op: passing it must warn with
-        # FutureWarning and not error.
-        with self.assertWarnsRegex(FutureWarning, "adjust_profiler_step"):
-            with profile(
-                activities=[ProfilerActivity.CPU],
-                experimental_config=_ExperimentalConfig(adjust_profiler_step=True),
-            ):
-                pass
-
-    def test_with_modules_deprecated(self):
-        # with_modules only collects data for TorchScript models and is on its
-        # way out: passing it must warn with FutureWarning and not error.
-        with self.assertWarnsRegex(FutureWarning, "with_modules is deprecated"):
-            with profile(activities=[ProfilerActivity.CPU], with_modules=True):
-                torch.ones(1)
 
     @unittest.skipIf(not kineto_available(), "Kineto is required")
     @parametrize("use_cuda", [False, True])
