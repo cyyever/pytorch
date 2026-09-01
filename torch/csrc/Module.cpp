@@ -56,7 +56,6 @@
 #include <torch/csrc/TensorIterator.h>
 #include <torch/csrc/TypeInfo.h>
 #include <torch/csrc/acc/Module.h>
-#include <torch/csrc/api/include/torch/python/init.h>
 #include <torch/csrc/autograd/generated/python_return_types.h>
 #include <torch/csrc/autograd/python_cpp_function.h>
 #include <torch/csrc/autograd/python_enum_tag.h>
@@ -80,6 +79,7 @@
 #include <torch/csrc/inductor/aoti_runner/pybind.h>
 #include <torch/csrc/instruction_counter/Module.h>
 #include <torch/csrc/jit/python/init.h>
+#include <torch/csrc/jit/python/python_types.h>
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/mps/Module.h>
 #include <torch/csrc/multiprocessing/init.h>
@@ -125,8 +125,6 @@
 #ifdef USE_C10D
 #include <torch/csrc/distributed/c10d/c10d.h>
 #endif
-#endif
-
 #endif
 
 #include <torch/nativert/python/Bindings.h>
@@ -2532,6 +2530,7 @@ PyObject* initModule() {
   ASSERT_TRUE(THPEngine_initModule(module));
   torch::autograd::initEnumTag(module);
   torch::jit::initJITBindings(module);
+  torch::jit::initPythonTypeBindings(module);
   torch::impl::dispatch::initDispatchBindings(module);
   torch::dynamo::initDynamoBindings(module);
   torch::functorch::impl::initFuncTorchBindings(module);
@@ -2545,7 +2544,6 @@ PyObject* initModule() {
   torch::autograd::initSpecialFunctions(module);
   torch::autograd::init_legacy_variable(module);
   torch::profiler::initPythonBindings(module);
-  torch::python::init_bindings(module);
   torch::_export::initExportBindings(module);
   torch::inductor::initAOTIRunnerBindings(module);
   torch::inductor::initAOTIPackageBindings(module);
@@ -2796,10 +2794,7 @@ Call this whenever a new thread is created in order to propagate values from
       set_module_attr("has_openmp", at::hasOpenMP() ? Py_True : Py_False));
   ASSERT_TRUE(set_module_attr("has_mkl", at::hasMKL() ? Py_True : Py_False));
   ASSERT_TRUE(
-  ASSERT_TRUE(
       set_module_attr("has_lapack", at::hasLAPACK() ? Py_True : Py_False));
-  ASSERT_TRUE(set_module_attr(
-      "_has_eigen_sparse", at::hasEigenSparse() ? Py_True : Py_False));
 
   py::class_<WeakTensorRef>(py_module, "_WeakTensorRef")
       .def(py::init([](const py::object& tensor) {
@@ -3219,9 +3214,6 @@ Call this whenever a new thread is created in order to propagate values from
   ASSERT_TRUE(set_module_attr("_has_xpu", has_xpu));
   ASSERT_TRUE(
       set_module_attr("_has_mkldnn", at::hasMKLDNN() ? Py_True : Py_False));
-  ASSERT_TRUE(set_module_attr(
-      "_has_mkldnn_acl", AT_MKLDNN_ACL_ENABLED() ? Py_True : Py_False));
-
   ASSERT_TRUE(set_module_attr("_GLIBCXX_USE_CXX11_ABI", Py_True));
 
   py_module.def(

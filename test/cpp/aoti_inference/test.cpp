@@ -26,7 +26,7 @@
 #include <c10/cuda/CUDAStream.h>
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cuda.h>
 #endif
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <torch/csrc/jit/serialization/pickle.h>
 
 #include "aoti_custom_class.h"

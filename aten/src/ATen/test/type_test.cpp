@@ -1,6 +1,6 @@
 #include <ATen/ATen.h>
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <ATen/core/jit_type.h>
 
 namespace c10 {

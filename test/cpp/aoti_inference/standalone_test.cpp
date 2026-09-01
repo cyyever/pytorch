@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
 #include <torch/csrc/jit/serialization/pickle.h>
 

@@ -1,4 +1,4 @@
-#include <torch/torch.h>
+#include <torch/all.h>
 
 int main(int argc, const char* argv[]) {
     std::cout << "Checking that CUDA archs are setup correctly" << std::endl;

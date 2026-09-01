@@ -2,7 +2,7 @@
 
 #include <ATen/xpu/XPUContext.h>
 #include <ATen/xpu/XPUDevice.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 TEST(XpuDeviceTest, getDeviceProperties) {
   EXPECT_EQ(at::xpu::is_available(), torch::xpu::is_available());
