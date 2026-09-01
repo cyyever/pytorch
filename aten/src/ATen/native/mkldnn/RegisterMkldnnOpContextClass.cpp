@@ -26,7 +26,7 @@ static bool is_mkldnn_fp16_supported() {
 }
 
 static constexpr bool is_mkldnn_acl_supported() {
-  return AT_MKLDNN_ACL_ENABLED();
+  return false;
 }
 
 TORCH_LIBRARY(mkldnn, m) {
