@@ -1,0 +1,16 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 945ab36d..5daf5747 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -50,9 +50,8 @@ set_build_flags()
+ 
+ # -- [ Re-generate the macros file for https://github.com/pytorch/pytorch/pull/147161
+ macro(update_caffe2_macros_file)
+-  configure_file(
+-    ${TORCH_ROOT}/caffe2/core/macros.h.in
+-    ${CMAKE_BINARY_DIR}/caffe2/core/macros.h)
++  # This fork ships no caffe2/core/macros.h.in and nothing includes the
++  # generated header, so there is nothing to re-generate.
+ endmacro()
+ 
+ if(USE_XCCL)

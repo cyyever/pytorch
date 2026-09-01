@@ -28,7 +28,6 @@ TORCH_API Tensor fromDLPackVersioned(
     DLManagedTensorVersioned* src,
     std::function<void(void*)> deleter = {});
 TORCH_API DLDataType getDLDataType(const Tensor& t);
-TORCH_API DLDevice getDLContext(const Tensor& tensor, const int64_t& device_id);
 
 // Copies the Tensor if there's a device mismatch or copy is forced.
 // This should be used before actually creating the DLPack capsule.

@@ -6,9 +6,12 @@
 #include <cstring>
 #include <fstream>
 #include <istream>
+#include <memory>
 #include <ostream>
 #include <sstream>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include <c10/core/Allocator.h>
 #include <c10/core/CPUAllocator.h>
@@ -17,7 +20,6 @@
 #include <c10/util/hash.h>
 #include <c10/util/string_view.h>
 
-#include "caffe2/core/common.h"
 #include "caffe2/serialize/file_adapter.h"
 #include "caffe2/serialize/inline_container.h"
 #include "caffe2/serialize/istream_adapter.h"
@@ -700,7 +702,7 @@ PyTorchStreamWriter::PyTorchStreamWriter(
   setup(archive_name_);
 }
 
-void PyTorchStreamWriter::setup(const string& file_name) {
+void PyTorchStreamWriter::setup(const std::string& file_name) {
   ar_ = std::make_unique<mz_zip_archive>();
   memset(ar_.get(), 0, sizeof(mz_zip_archive));
   archive_name_plus_slash_ = archive_name_ + "/"; // for writeRecord().

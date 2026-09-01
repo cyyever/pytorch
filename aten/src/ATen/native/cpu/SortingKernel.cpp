@@ -16,9 +16,7 @@
 #include <ATen/native/TopKImpl.h>
 #include <c10/core/WrapDimMinimal.h>
 #include <c10/util/irange.h>
-#ifdef USE_FBGEMM
 #include <fbgemm/Utils.h>
-#endif
 
 namespace at::native {
 
@@ -89,7 +87,6 @@ struct KeyValueCompDesc {
   }
 };
 
-#ifdef USE_FBGEMM
 bool can_use_radix_sort(const TensorBase& values, const bool descending) {
   // radix_sort can be used only for 1D data
   if (values.dim() != 1) return false;
@@ -137,7 +134,6 @@ void parallel_sort1d_kernel(
     }
   });
 }
-#endif
 
 template <typename scalar_t, typename value_accessor_t, typename indices_accessor_t>
 inline void sort_kernel_impl(const value_accessor_t& value_accessor,
@@ -179,12 +175,10 @@ void sort_kernel(
     // https://github.com/pytorch/pytorch/issues/91420
     return;
   }
-#ifdef USE_FBGEMM
   if (can_use_radix_sort(values, descending)) {
     parallel_sort1d_kernel(values, indices);
     return;
   }
-#endif
   _dim_apply(
     values, indices, dim,
     "sort_cpu", [&](

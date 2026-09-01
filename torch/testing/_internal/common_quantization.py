@@ -10,10 +10,10 @@ import torch
 import torch._dynamo as torchdynamo
 
 
-# fbgemm::fbgemmSupportedCPU() is an AVX2 check, but it only ever ran when the
-# build defined USE_FBGEMM, and that is still an option. Ask about both.
+# FBGEMM is always built; fbgemm::fbgemmSupportedCPU() is an AVX2 check, so
+# that is all that is left to ask about.
 def _fbgemm_available() -> bool:
-    return "USE_FBGEMM" in torch.__config__.show() and torch.cpu._is_avx2_supported()
+    return torch.cpu._is_avx2_supported()
 
 
 def skipIfNoFBGEMM(fn):
@@ -462,5 +462,3 @@ def _dynamically_quantize_per_channel(x, quant_min, quant_max, target_dtype):
     quant = torch.clamp(x_zp, quant_min, quant_max).to(target_dtype)
 
     return quant, scales.to(x_dtype), zero_points
-
-
