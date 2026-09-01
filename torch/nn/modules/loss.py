@@ -3,7 +3,7 @@ import math
 from collections.abc import Callable
 
 from torch import Tensor
-from torch.nn import _reduction as _Reduction, functional as F
+from torch.nn import functional as F
 
 from .distance import PairwiseDistance
 from .linear import Linear
@@ -40,23 +40,18 @@ __all__ = [
 class _Loss(Module):
     reduction: str
 
-    def __init__(self, size_average=None, reduce=None, reduction: str = "mean") -> None:
+    def __init__(self, reduction: str = "mean") -> None:
         super().__init__()
-        if size_average is not None or reduce is not None:
-            self.reduction: str = _Reduction.legacy_get_string(size_average, reduce)
-        else:
-            self.reduction = reduction
+        self.reduction = reduction
 
 
 class _WeightedLoss(_Loss):
     def __init__(
         self,
         weight: Tensor | None = None,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.register_buffer("weight", weight)
         self.weight: Tensor | None
 
@@ -91,21 +86,10 @@ class L1Loss(_Loss):
     Supports real-valued and complex-valued inputs.
 
     Args:
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(*)`, where :math:`*` means any number of dimensions.
@@ -177,23 +161,14 @@ class NLLLoss(_WeightedLoss):
         weight (Tensor, optional): a manual rescaling weight given to each
             class. If given, it has to be a Tensor of size `C`. Otherwise, it is
             treated as if having all ones.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``None``
         ignore_index (int, optional): Specifies a target value that is ignored
             and does not contribute to the input gradient. When
-            :attr:`size_average` is ``True``, the loss is averaged over
+            the loss is averaged over
             non-ignored targets.
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``None``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will
             be applied, ``'mean'``: the weighted mean of the output is taken,
-            ``'sum'``: the output will be summed. Note: :attr:`size_average`
+            ``'sum'``: the output will be summed.
             and :attr:`reduce` are in the process of being deprecated, and in
             the meantime, specifying either of those two args will override
             :attr:`reduction`. Default: ``'mean'``
@@ -243,12 +218,10 @@ class NLLLoss(_WeightedLoss):
     def __init__(
         self,
         weight: Tensor | None = None,
-        size_average=None,
         ignore_index: int = -100,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(weight, size_average, reduce, reduction)
+        super().__init__(weight, reduction)
         self.ignore_index = ignore_index
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
@@ -288,23 +261,12 @@ class PoissonNLLLoss(_Loss):
 
             .. math::
                 \text{target}*\log(\text{target}) - \text{target} + 0.5 * \log(2\pi\text{target}).
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
         eps (float, optional): Small value to avoid evaluation of :math:`\log(0)` when
             :attr:`log_input = False`. Default: 1e-8
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Examples:
 
@@ -330,12 +292,10 @@ class PoissonNLLLoss(_Loss):
         self,
         log_input: bool = True,
         full: bool = False,
-        size_average=None,
         eps: float = 1e-8,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.log_input = log_input
         self.full = full
         self.eps = eps
@@ -492,15 +452,6 @@ class KLDivLoss(_Loss):
         :attr:`reduction`\ `= "batchmean"` which aligns with the mathematical definition.
 
     Args:
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to `False`, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is `False`. Default: `True`
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is `False`, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: `True`
         reduction (str, optional): Specifies the reduction to apply to the output. Default: `"mean"`
         log_target (bool, optional): Specifies whether `target` is the log space. Default: `False`
 
@@ -527,12 +478,10 @@ class KLDivLoss(_Loss):
 
     def __init__(
         self,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
         log_target: bool = False,
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.log_target = log_target
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
@@ -572,21 +521,10 @@ class MSELoss(_Loss):
     The division by :math:`N` can be avoided if one sets ``reduction = 'sum'``.
 
     Args:
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(*)`, where :math:`*` means any number of dimensions.
@@ -653,21 +591,10 @@ class BCELoss(_WeightedLoss):
     Args:
         weight (Tensor, optional): a manual rescaling weight given to the loss
             of each batch element. If given, has to be a Tensor of size `nbatch`.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(*)`, where :math:`*` means any number of dimensions.
@@ -760,21 +687,10 @@ class BCEWithLogitsLoss(_Loss):
         weight (Tensor, optional): a manual rescaling weight given to the loss
             of each batch element. The dimension of weight supports :ref:`broadcasting to a common shape <broadcasting-semantics>`
             with respect to the output (and target) shape.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
         pos_weight (Tensor, optional): a weight of positive examples to be broadcasted with target.
             Must be a tensor with equal size along the class dimension to the number of classes.
             Pay close attention to PyTorch's broadcasting semantics in order to achieve the desired
@@ -802,12 +718,10 @@ class BCEWithLogitsLoss(_Loss):
     def __init__(
         self,
         weight: Tensor | None = None,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
         pos_weight: Tensor | None = None,
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.register_buffer("weight", weight)
         self.register_buffer("pos_weight", pos_weight)
         self.weight: Tensor | None
@@ -851,21 +765,10 @@ class HingeEmbeddingLoss(_Loss):
 
     Args:
         margin (float, optional): Has a default value of `1`.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(*)` where :math:`*` means, any number of dimensions. The sum operation
@@ -888,11 +791,9 @@ class HingeEmbeddingLoss(_Loss):
     def __init__(
         self,
         margin: float = 1.0,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.margin = margin
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
@@ -924,21 +825,10 @@ class MultiLabelMarginLoss(_Loss):
     This allows for different samples to have variable amounts of target classes.
 
     Args:
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(C)` or :math:`(N, C)` where `N` is the batch size and `C`
@@ -1013,21 +903,10 @@ class SmoothL1Loss(_Loss):
     .. _`Fast R-CNN`: https://arxiv.org/abs/1504.08083
 
     Args:
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
         beta (float, optional): Specifies the threshold at which to change between L1 and L2 loss.
             The value must be non-negative. Default: 1.0
 
@@ -1048,9 +927,9 @@ class SmoothL1Loss(_Loss):
     __constants__ = ["reduction"]
 
     def __init__(
-        self, size_average=None, reduce=None, reduction: str = "mean", beta: float = 1.0
+        self, reduction: str = "mean", beta: float = 1.0
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.beta = beta
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
@@ -1139,21 +1018,10 @@ class SoftMarginLoss(_Loss):
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
 
     Args:
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(*)`, where :math:`*` means any number of dimensions.
@@ -1250,23 +1118,14 @@ class CrossEntropyLoss(_WeightedLoss):
     Args:
         weight (Tensor, optional): a manual rescaling weight given to each class.
             If given, has to be a Tensor of size `C`.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
         ignore_index (int, optional): Specifies a target value that is ignored
-            and does not contribute to the input gradient. When :attr:`size_average` is
-            ``True``, the loss is averaged over non-ignored targets. Note that
+            and does not contribute to the input gradient. The loss is averaged
+            over non-ignored targets. Note that
             :attr:`ignore_index` is only applicable when the target contains class indices.
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will
             be applied, ``'mean'``: the weighted mean of the output is taken,
-            ``'sum'``: the output will be summed. Note: :attr:`size_average`
+            ``'sum'``: the output will be summed.
             and :attr:`reduce` are in the process of being deprecated, and in
             the meantime, specifying either of those two args will override
             :attr:`reduction`. Default: ``'mean'``
@@ -1365,13 +1224,11 @@ class CrossEntropyLoss(_WeightedLoss):
     def __init__(
         self,
         weight: Tensor | None = None,
-        size_average=None,
         ignore_index: int = -100,
-        reduce=None,
         reduction: str = "mean",
         label_smoothing: float = 0.0,
     ) -> None:
-        super().__init__(weight, size_average, reduce, reduction)
+        super().__init__(weight, reduction)
         self.ignore_index = ignore_index
         self.label_smoothing = label_smoothing
 
@@ -1537,7 +1394,7 @@ class LinearCrossEntropyLoss(_WeightedLoss):
                 f"expected label_smoothing to be in range [0, 1], got {label_smoothing}"
             )
         super().__init__(
-            weight=weight, size_average=None, reduce=None, reduction=reduction
+            weight=weight, reduction=reduction
         )
         self.num_classes = num_classes
         self.out_features = out_features
@@ -1609,21 +1466,10 @@ class MultiLabelSoftMarginLoss(_WeightedLoss):
         weight (Tensor, optional): a manual rescaling weight given to each
             class. If given, it has to be a Tensor of size `C`. Otherwise, it is
             treated as if having all ones.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(N, C)` where `N` is the batch size and `C` is the number of classes.
@@ -1668,21 +1514,10 @@ class CosineEmbeddingLoss(_Loss):
         margin (float, optional): Should be a number from :math:`-1` to :math:`1`,
             :math:`0` to :math:`0.5` is suggested. If :attr:`margin` is missing, the
             default value is :math:`0`.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input1: :math:`(N, D)` or :math:`(D)`, where `N` is the batch size and `D` is the embedding dimension.
@@ -1706,11 +1541,9 @@ class CosineEmbeddingLoss(_Loss):
     def __init__(
         self,
         margin: float = 0.0,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.margin = margin
 
     def forward(self, input1: Tensor, input2: Tensor, target: Tensor) -> Tensor:
@@ -1735,21 +1568,10 @@ class MarginRankingLoss(_Loss):
 
     Args:
         margin (float, optional): Has a default value of :math:`0`.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input1: :math:`(N)` or :math:`()` where `N` is the batch size.
@@ -1773,11 +1595,9 @@ class MarginRankingLoss(_Loss):
     def __init__(
         self,
         margin: float = 0.0,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         self.margin = margin
 
     def forward(self, input1: Tensor, input2: Tensor, target: Tensor) -> Tensor:
@@ -1817,21 +1637,10 @@ class MultiMarginLoss(_WeightedLoss):
         weight (Tensor, optional): a manual rescaling weight given to each
             class. If given, it has to be a Tensor of size `C`. Otherwise, it is
             treated as if having all ones.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(N, C)` or :math:`(C)`, where :math:`N` is the batch size and :math:`C` is the number of classes.
@@ -1857,11 +1666,9 @@ class MultiMarginLoss(_WeightedLoss):
         p: int = 1,
         margin: float = 1.0,
         weight: Tensor | None = None,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(weight, size_average, reduce, reduction)
+        super().__init__(weight, reduction)
         if p != 1 and p != 2:
             raise ValueError("only p == 1 and p == 2 supported")
         if weight is not None and weight.dim() != 1:
@@ -1919,21 +1726,10 @@ class TripletMarginLoss(_Loss):
         swap (bool, optional): The distance swap is described in detail in the paper
             `Learning shallow convolutional feature descriptors with triplet losses` by
             V. Balntas, E. Riba et al. Default: ``False``.
-        size_average (bool, optional): Deprecated (see :attr:`reduction`). By default,
-            the losses are averaged over each loss element in the batch. Note that for
-            some losses, there are multiple elements per sample. If the field :attr:`size_average`
-            is set to ``False``, the losses are instead summed for each minibatch. Ignored
-            when :attr:`reduce` is ``False``. Default: ``True``
-        reduce (bool, optional): Deprecated (see :attr:`reduction`). By default, the
-            losses are averaged or summed over observations for each minibatch depending
-            on :attr:`size_average`. When :attr:`reduce` is ``False``, returns a loss per
-            batch element instead and ignores :attr:`size_average`. Default: ``True``
         reduction (str, optional): Specifies the reduction to apply to the output:
             ``'none'`` | ``'mean'`` | ``'sum'``. ``'none'``: no reduction will be applied,
             ``'mean'``: the sum of the output will be divided by the number of
-            elements in the output, ``'sum'``: the output will be summed. Note: :attr:`size_average`
-            and :attr:`reduce` are in the process of being deprecated, and in the meantime,
-            specifying either of those two args will override :attr:`reduction`. Default: ``'mean'``
+            elements in the output, ``'sum'``: the output will be summed. Default: ``'mean'``
 
     Shape:
         - Input: :math:`(N, D)` or :math:`(D)` where :math:`D` is the vector dimension.
@@ -1965,11 +1761,9 @@ class TripletMarginLoss(_Loss):
         p: float = 2.0,
         eps: float = 1e-6,
         swap: bool = False,
-        size_average=None,
-        reduce=None,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average, reduce, reduction)
+        super().__init__(reduction)
         if margin <= 0:
             raise ValueError(
                 f"TripletMarginLoss: expected margin to be greater than 0, got {margin} instead"
@@ -2104,7 +1898,7 @@ class TripletMarginWithDistanceLoss(_Loss):
         swap: bool = False,
         reduction: str = "mean",
     ) -> None:
-        super().__init__(size_average=None, reduce=None, reduction=reduction)
+        super().__init__(reduction=reduction)
         if margin <= 0:
             raise ValueError(
                 f"TripletMarginWithDistanceLoss: expected margin to be greater than 0, got {margin} instead"
