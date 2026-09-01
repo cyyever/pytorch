@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace torch::cuda::python {
-void initCommMethods(PyObject* module) {
+ void initCommMethods(PyObject* module) {
   auto m = py::cast<py::module>(module);
   m.def(
        "_broadcast_coalesced",

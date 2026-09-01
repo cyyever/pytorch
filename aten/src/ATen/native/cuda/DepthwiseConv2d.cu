@@ -690,7 +690,7 @@ Tensor conv_depthwise2d_cuda(
                                    stride, padding, dilation, out);
 }
 
-std::tuple<Tensor&, Tensor&> conv_depthwise2d_backward_cuda_out(
+static std::tuple<Tensor&, Tensor&> conv_depthwise2d_backward_cuda_out(
     const Tensor & grad_output_,
     const Tensor & self_,
     const Tensor & weight_,
@@ -724,7 +724,7 @@ std::tuple<Tensor&, Tensor&> conv_depthwise2d_backward_cuda_out(
   return std::forward_as_tuple(grad_input, grad_weight);
 }
 
-std::tuple<Tensor, Tensor> conv_depthwise2d_backward_cuda(
+static std::tuple<Tensor, Tensor> conv_depthwise2d_backward_cuda(
     const Tensor& grad_output,
     const Tensor& self,
     const Tensor& weight,

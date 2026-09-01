@@ -475,7 +475,7 @@ static std::string import_err_msg(
   return std::move(oss).str();
 }
 
-void validate_rendezvous_requests(
+static void validate_rendezvous_requests(
     const std::vector<RendezvousRequest>& reqs,
     int world_size) {
   TORCH_CHECK(reqs.size() == (size_t)world_size);

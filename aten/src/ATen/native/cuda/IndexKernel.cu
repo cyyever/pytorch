@@ -53,7 +53,7 @@ static void launch_kernel(const int64_t N, const func_t& f) {
 }
 
 template <typename func_t>
-void gpu_index_kernel(TensorIteratorBase& iter, const IntArrayRef index_size, const IntArrayRef index_stride, const func_t& f, const bool is_gather_like) {
+static void gpu_index_kernel(TensorIteratorBase& iter, const IntArrayRef index_size, const IntArrayRef index_stride, const func_t& f, const bool is_gather_like) {
   const auto num_indices = index_size.size();
   AT_ASSERT(num_indices == index_stride.size());
   AT_ASSERT(static_cast<int64_t>(num_indices) == iter.ntensors() - 2);
@@ -123,7 +123,7 @@ void gpu_index_kernel(TensorIteratorBase& iter, const IntArrayRef index_size, co
 template <int N> struct alignas(N) OpaqueType { char data[N]; };
 
 template <typename scalar_t>
-void index_fill_kernel_impl(
+static void index_fill_kernel_impl(
   TensorIterator& iter,
   const int64_t dim,
   const int64_t self_dim_size,
@@ -161,7 +161,7 @@ void index_fill_kernel_impl(
 }
 
 template <typename scalar_t>
-void index_copy_kernel_impl(
+static void index_copy_kernel_impl(
   TensorIterator& iter,
   const int64_t dim,
   const int64_t self_dim_size,
@@ -197,14 +197,14 @@ void index_copy_kernel_impl(
 }
 
 template <typename scalar_t>
-void index_kernel_impl(TensorIteratorBase& iter, const IntArrayRef index_size, const IntArrayRef index_stride) {
+static void index_kernel_impl(TensorIteratorBase& iter, const IntArrayRef index_size, const IntArrayRef index_stride) {
   gpu_index_kernel(iter, index_size, index_stride, []C10_DEVICE(char* const out_data, const char* const in_data, const int64_t offset) {
     *reinterpret_cast<scalar_t*>(out_data) = *reinterpret_cast<const scalar_t*>(in_data + offset);
   }, true);
 }
 
 template <typename scalar_t>
-void index_put_kernel_impl(TensorIterator& iter, const IntArrayRef index_size, const IntArrayRef index_stride) {
+static void index_put_kernel_impl(TensorIterator& iter, const IntArrayRef index_size, const IntArrayRef index_stride) {
   gpu_index_kernel(iter, index_size, index_stride, []C10_DEVICE(char* const out_data, const char* const in_data, const int64_t offset) {
     *reinterpret_cast<scalar_t*>(out_data + offset) = *reinterpret_cast<const scalar_t*>(in_data);
   }, false);
@@ -284,7 +284,7 @@ static void index_put_kernel(TensorIterator& iter, const IntArrayRef index_size,
 }
 
 template <typename scalar_t, typename index_t, typename func_t>
-void cuda_take_put_kernel(
+static void cuda_take_put_kernel(
   TensorIterator& iter,
   const TensorBase& indexed,
   const func_t& f) {
@@ -331,7 +331,7 @@ void cuda_take_put_kernel(
   launch_kernel<launch_size_nd, launch_bound2>(iter.numel(), loop);
 }
 
-void put_kernel(TensorIterator& iter, const TensorBase& output, const bool accumulate) {
+static void put_kernel(TensorIterator& iter, const TensorBase& output, const bool accumulate) {
   AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND3(at::ScalarType::Half, at::ScalarType::Bool, at::ScalarType::BFloat16, iter.dtype(), "put_cuda", [&] {
     // Cannot use `OpaqueType`, as we need the actual type for `fastSpecializedgpuAtomicAdd`
     AT_DISPATCH_INDEX_TYPES(cuda::detail::canUse32BitIndexMath(output) ? ScalarType::Int : ScalarType::Long,
@@ -354,7 +354,7 @@ void put_kernel(TensorIterator& iter, const TensorBase& output, const bool accum
   });
 }
 
-void take_kernel(
+static void take_kernel(
   TensorIterator& iter,
   const TensorBase& input) {
   AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND3(at::ScalarType::Half, at::ScalarType::Bool, at::ScalarType::BFloat16, iter.dtype(), "take_cuda", [&] {
@@ -437,7 +437,7 @@ void launch_masked_scatter_kernel(
 }
 
 template <typename scalar_t>
-void flip_kernel_impl(TensorIterator& iter) {
+static void flip_kernel_impl(TensorIterator& iter) {
   if (!iter.can_use_32bit_indexing()) {
     for (auto& sub_iter : iter.with_32bit_indexing()) {
       flip_kernel_impl<scalar_t>(sub_iter);

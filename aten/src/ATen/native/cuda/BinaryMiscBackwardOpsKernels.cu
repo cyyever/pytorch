@@ -16,7 +16,7 @@
 namespace at::native {
 
 constexpr char sigmoid_backward_name[] = "sigmoid_backward";
-void sigmoid_backward_kernel_cuda(TensorIteratorBase& iter) {
+static void sigmoid_backward_kernel_cuda(TensorIteratorBase& iter) {
   auto dtype = iter.dtype();
   if(isComplexType(dtype)) {
 #if AT_USE_JITERATOR()
@@ -53,7 +53,7 @@ void sigmoid_backward_kernel_cuda(TensorIteratorBase& iter) {
   }
 }
 
-void logit_backward_kernel_cuda(TensorIteratorBase& iter, const Scalar& eps_scalar) {
+static void logit_backward_kernel_cuda(TensorIteratorBase& iter, const Scalar& eps_scalar) {
   AT_DISPATCH_FLOATING_TYPES_AND2(
       at::ScalarType::Half,
       at::ScalarType::BFloat16,
@@ -87,7 +87,7 @@ void logit_backward_kernel_cuda(TensorIteratorBase& iter, const Scalar& eps_scal
 }
 
 constexpr char tanh_backward_name[] = "tanh_backward";
-void tanh_backward_kernel_cuda(TensorIteratorBase& iter) {
+static void tanh_backward_kernel_cuda(TensorIteratorBase& iter) {
   auto dtype = iter.dtype();
   if(isComplexType(dtype)) {
 #if AT_USE_JITERATOR()

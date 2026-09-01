@@ -447,7 +447,7 @@ using scaled_blas::convert_int_to_enum;
 using scaled_blas::ScaledGemmImplementation;
 using scaled_blas::ScaleKernelDispatchEntry;
 
-std::array<ScaleKernelDispatchEntry, 2> scale_kernel_dispatch = {{
+static std::array<ScaleKernelDispatchEntry, 2> scale_kernel_dispatch = {{
     {"tensorwise_tensorwise",
      scaled_blas::check_tensorwise_recipe,
      ScaledGemmImplementation::TENSORWISE_TENSORWISE},
@@ -555,7 +555,7 @@ TORCH_IMPL_FUNC(_scaled_mm_cpu_v2_out)(
 // TODO(vasiliy, future PR): figure out why we need to declare this function, when
 // other functions that live in ATen/native/*.cpp without declarations
 // or headers work just fine.
-Tensor _grouped_mm(const Tensor& mat_a, const Tensor& mat_b,
+ Tensor _grouped_mm(const Tensor& mat_a, const Tensor& mat_b,
 const std::optional<at::Tensor>& offs,
 const std::optional<at::Tensor>& bias,
 std::optional<c10::ScalarType> out_dtype);

@@ -442,7 +442,7 @@ Tensor slow_conv_dilated2d_cuda(
   return output;
 }
 
-std::tuple<Tensor, Tensor, Tensor> slow_conv_dilated2d_backward_cuda(
+static std::tuple<Tensor, Tensor, Tensor> slow_conv_dilated2d_backward_cuda(
     const Tensor& grad_output,
     const Tensor& input,
     const Tensor& weight,
@@ -548,7 +548,7 @@ Tensor slow_conv_dilated3d_cuda(
   return output;
 }
 
-std::tuple<Tensor, Tensor, Tensor> slow_conv_dilated3d_backward_cuda(
+static std::tuple<Tensor, Tensor, Tensor> slow_conv_dilated3d_backward_cuda(
     const Tensor& grad_output,
     const Tensor& input,
     const Tensor& weight,
