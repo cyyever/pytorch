@@ -44,12 +44,12 @@ For most applications, prefer using the higher-level `torch::` namespace
 The following headers are part of the ATen public API:
 
 - `ATen/ATen.h` - Main ATen header
-- `ATen/Backend.h` - Backend enumeration
+- `c10/core/Backend.h` - Backend enumeration
 - `ATen/core/Tensor.h` - Tensor class
 - `ATen/core/ivalue.h` - IValue type (see {doc}`../c10/index`)
-- `ATen/core/ScalarType.h` - Data type definitions
-- `ATen/TensorOptions.h` - Tensor creation options
-- `ATen/Scalar.h` - Scalar type
+- `c10/core/ScalarType.h` - Data type definitions
+- `c10/core/TensorOptions.h` - Tensor creation options
+- `ATen/core/Scalar.h` - Scalar type
 - `ATen/Layout.h` - Tensor layout
 - `ATen/DeviceGuard.h` - Device context management
 - `ATen/native/TensorShape.h` - Tensor shape operations
