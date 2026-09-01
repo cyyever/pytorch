@@ -1,6 +1,6 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <random>
 #include "test/cpp/nativert/static_kernel_test_utils.h" // @manual
 

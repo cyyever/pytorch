@@ -37,7 +37,7 @@ def _get_main_cpp_file(
             "#include <fstream>",
             "#include <iostream>",
             "#include <memory>",
-            "#include <torch/torch.h>",
+            "#include <torch/all.h>",
             "#include <vector>",
             "#include <torch/csrc/inductor/aoti_torch/tensor_converter.h>",
         ]

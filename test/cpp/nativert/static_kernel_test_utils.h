@@ -3,7 +3,7 @@
 #include <ATen/ATen.h>
 #include <torch/nativert/executor/Executor.h>
 #include <torch/nativert/graph/Graph.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 #include <torch/nativert/kernels/KernelHandlerRegistry.h>
 

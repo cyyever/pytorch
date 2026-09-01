@@ -1,5 +1,5 @@
 #include <torch/extension.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 using namespace torch::autograd;
 

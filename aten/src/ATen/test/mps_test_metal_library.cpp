@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <ATen/mps/MPSStream.h>
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/native/mps/MetalShaderLibrary.h>

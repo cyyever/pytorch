@@ -3,7 +3,7 @@
 #include <torch/nativert/executor/ExecutionFrame.h>
 #include <torch/nativert/graph/Graph.h>
 #include <torch/nativert/kernels/C10Kernel.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 
 namespace torch::nativert {
 

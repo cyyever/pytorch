@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <torch/csrc/jit/serialization/pickle.h>
 #include <torch/custom_class.h>
-#include <torch/torch.h>
+#include <torch/all.h>
 #include <memory>
 
 #include <torch/nativert/executor/Placement.h>
