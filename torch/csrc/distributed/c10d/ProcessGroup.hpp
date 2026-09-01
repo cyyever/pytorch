@@ -13,7 +13,7 @@
 #include <ATen/ATen.h>
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/Deprecated.h>
+#include <torch/headeronly/util/Deprecated.h>
 
 // *************************************************************************
 // PROCESS GROUP collective communication API IS BEING CHANGED BETWEEN

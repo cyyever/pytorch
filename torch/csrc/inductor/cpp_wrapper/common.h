@@ -25,7 +25,7 @@ using gil_scoped_release_simple = gil_scoped_release;
 
 #ifdef TORCH_INDUCTOR_PRECOMPILE_HEADERS
 // Include some often-used cpp_wrapper headers, for precompiling.
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <torch/csrc/Device.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/utils/tensor_memoryformats.h>

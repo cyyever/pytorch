@@ -4,7 +4,7 @@
 // access constants such as M_SQRT2 and M_2_SQRTPI.
 
 #include <ATen/cpu/vec/vec.h>
-#include <c10/util/BFloat16.h> // For c10::is_reduced_floating_point_v.
+#include <torch/headeronly/util/BFloat16.h> // For c10::is_reduced_floating_point_v.
 
 namespace at::native {
 inline namespace CPU_CAPABILITY {

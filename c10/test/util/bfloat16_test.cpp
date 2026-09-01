@@ -1,6 +1,6 @@
 // clang-format off
-#include <c10/util/BFloat16.h>
-#include <c10/util/BFloat16-math.h>
+#include <torch/headeronly/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16-math.h>
 #include <c10/util/irange.h>
 // clang-format on
 #include <bit>

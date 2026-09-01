@@ -7,7 +7,7 @@
 #include <ATen/cuda/cub.cuh>
 
 #include <c10/core/DeviceArray.h>
-#include <c10/util/Load.h>
+#include <torch/headeronly/util/Load.h>
 #include <utility>
 
 #include <ATen/ops/arange.h>

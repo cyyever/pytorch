@@ -3,7 +3,7 @@
 #include <ATen/core/CachingHostAllocator.h>
 #include <c10/core/Allocator.h>
 #include <c10/cuda/CUDAStream.h>
-#include <c10/util/Deprecated.h>
+#include <torch/headeronly/util/Deprecated.h>
 
 namespace at::cuda {
 

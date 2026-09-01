@@ -11,7 +11,7 @@
 #include <ATen/native/Resize.h>
 #include <ATen/native/UnaryOps.h>
 
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 
 #include <ATen/ops/_conj_native.h>
 #include <ATen/ops/_conj_physical.h>

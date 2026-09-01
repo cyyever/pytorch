@@ -4,7 +4,7 @@
 #include <ATen/native/cuda/Loops.cuh>
 #include <ATen/native/BinaryOps.h>
 #include <ATen/native/TensorIterator.h>
-#include <c10/util/TypeSafeSignMath.h>
+#include <torch/headeronly/util/TypeSafeSignMath.h>
 
 #include <limits>
 #include <type_traits>

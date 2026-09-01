@@ -372,7 +372,7 @@ struct alignas(2) BFloat16 {
 }
 )ESCAPE";
 
-// From c10/util/Load.h
+// From torch/headeronly/util/Load.h
 const std::string load_support_literal = R"ESCAPE(
 
   namespace c10 {

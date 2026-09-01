@@ -4,7 +4,7 @@
 #include <ATen/cuda/cub.cuh>
 #include <ATen/cuda/CUDAContext.h>
 
-#include <c10/util/Load.h>
+#include <torch/headeronly/util/Load.h>
 #include <limits>
 #include <cmath>
 

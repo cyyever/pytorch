@@ -27,7 +27,7 @@
 //
 
 #include <cstdint>
-#include <c10/util/Load.h>
+#include <torch/headeronly/util/Load.h>
 #include <c10/util/irange.h>
 #include <ATen/detail/FunctionTraits.h>
 #include <ATen/native/cpu/IsContiguous.h>

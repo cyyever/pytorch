@@ -8,7 +8,7 @@
 #include <array>
 #include <ATen/native/Math.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/MathConstants.h>
 #endif
 
 // ROCm hip compiler doesn't work well with using std:: in kernel functions

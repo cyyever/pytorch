@@ -1,6 +1,6 @@
 #include "caffe2/perfkernels/embedding_lookup_idx.h"
 
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <c10/util/Half.h>
 #include <c10/util/Logging.h>
 #include <c10/util/irange.h>

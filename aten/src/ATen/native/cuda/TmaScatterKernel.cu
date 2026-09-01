@@ -4,7 +4,7 @@
 #include <ATen/ceil_div.h>
 #include <ATen/native/cuda/IndexKernelUtils.h>
 #include <c10/util/Half.h>
-#include <c10/util/BFloat16.h>
+#include <torch/headeronly/util/BFloat16.h>
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
 #include <type_traits>

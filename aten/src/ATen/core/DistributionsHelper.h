@@ -2,8 +2,8 @@
 
 #include <ATen/core/TransformationHelper.h>
 #include <c10/util/Half.h>
-#include <c10/util/BFloat16.h>
-#include <c10/util/MathConstants.h>
+#include <torch/headeronly/util/BFloat16.h>
+#include <torch/headeronly/util/MathConstants.h>
 #include <c10/macros/Macros.h>
 
 #include <cmath>
