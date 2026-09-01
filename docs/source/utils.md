@@ -183,8 +183,6 @@ for tracking purposes -->
 .. py:module:: torch.utils.hooks
 .. py:module:: torch.utils.mkldnn
 .. py:module:: torch.utils.show_pickle
-.. py:module:: torch.utils.tensorboard.summary
-.. py:module:: torch.utils.tensorboard.writer
 .. py:module:: torch.utils.throughput_benchmark
 .. automodule:: torch.utils.weak
 

@@ -2803,7 +2803,7 @@ class TestImports(TestCase):
     def test_circular_dependencies(self) -> None:
         """ Checks that all modules inside torch can be imported
         Prevents regression reported in https://github.com/pytorch/pytorch/issues/77441 """
-        ignored_modules = ["torch.utils.tensorboard",  # deps on tensorboard
+        ignored_modules = [
                            "torch.distributed.elastic.rendezvous",  # depps on etcd
                            "torch.contrib.",  # something weird
                            "torch.testing._internal.distributed.",  # just fails

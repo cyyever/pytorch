@@ -735,7 +735,6 @@ coverage_ignore_functions = [
     "warn_if_has_hooks",
     # torch.utils.mkldnn
     "to_mkldnn",
-    # torch.utils.tensorboard.summary
     "audio",
     "compute_curve",
     "custom_scalars",
@@ -1144,7 +1143,6 @@ coverage_ignore_classes = [
     "GatherOptions",
     "GroupMember",
     "ProcessGroup",
-    "ProcessGroupGloo",
     "ProcessGroupNCCL",
     "ReduceOptions",
     "ReduceScatterOptions",
@@ -1649,7 +1647,6 @@ coverage_ignore_classes = [
     "DumpUnpickler",
     "FakeClass",
     "FakeObject",
-    # torch.utils.tensorboard.writer
     "FileWriter",
     "SummaryWriter",
     # torch.utils.throughput_benchmark

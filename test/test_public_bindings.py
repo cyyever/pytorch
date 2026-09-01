@@ -337,11 +337,6 @@ class TestPublicBindings(TestCase):
             "torch.distributed.checkpoint._fsspec_filesystem",
             "torch.distributed.examples.memory_tracker_example",
             "torch.utils._cxx_pytree",
-            "torch.utils.tensorboard._convert_np",
-            "torch.utils.tensorboard._embedding",
-            "torch.utils.tensorboard._proto_graph",
-            "torch.utils.tensorboard._pytorch_graph",
-            "torch.utils.tensorboard._utils",
         }
 
         errors = []
