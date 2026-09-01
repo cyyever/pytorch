@@ -207,13 +207,6 @@ static void py_initialize_tensor_type(
   TORCH_CHECK_PYTHON(PyDict_Merge(type.tp_dict, tp_dict, 0) >= 0);
 }
 
-static std::string get_name(Backend backend, ScalarType scalarType) {
-  std::ostringstream ss;
-  ss << torch::utils::backend_to_string(backend) << '.' << toString(scalarType)
-     << "Tensor";
-  return std::move(ss).str();
-}
-
 static THPObjectPtr get_storage_obj(Backend backend, ScalarType dtype) {
   auto module_name = torch::utils::backend_to_string(backend);
   auto module_obj = THPObjectPtr(PyImport_ImportModule(module_name));
@@ -338,7 +331,7 @@ static void initialize_aten_types(std::vector<PyTensorType*>& tensor_types) {
     Backend backend = declared_types[i].first;
     ScalarType scalar_type = declared_types[i].second;
     set_type(tensor_type, backend, scalar_type);
-    set_name(tensor_type, get_name(backend, scalar_type));
+    set_name(tensor_type, torch::utils::type_to_string(backend, scalar_type));
   }
 
   set_default_tensor_type(Backend::CPU, ScalarType::Float);

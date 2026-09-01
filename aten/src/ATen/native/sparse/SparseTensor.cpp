@@ -863,13 +863,12 @@ Tensor empty_like_sparse_coo(
   }
 }
 
-bool is_pinned_sparse_coo(const Tensor& self, std::optional<Device> device) {
+bool is_pinned_sparse_coo(const Tensor& self) {
   // Assuming that _indices has the same pin memory state as _values
-  return self._values().is_pinned(device);
+  return self._values().is_pinned();
 }
 
-Tensor _pin_memory_sparse_coo(const Tensor& self, std::optional<Device> device) {
-  TORCH_INTERNAL_ASSERT_DEBUG_ONLY(!device.has_value() || device->is_cuda());
+Tensor _pin_memory_sparse_coo(const Tensor& self) {
   // pinning of sparse tensor is equivalent to cloning indices and
   // values that will not change the sparse tensor invariants. Hence,
   // we can skip checking the sparse tensor invariants for efficiency.
@@ -879,8 +878,8 @@ Tensor _pin_memory_sparse_coo(const Tensor& self, std::optional<Device> device) 
       self.sparse_dim(),
       self.dense_dim(),
       self.sizes(),
-      self._indices().pin_memory(device),
-      self._values().pin_memory(device),
+      self._indices().pin_memory(),
+      self._values().pin_memory(),
       options,
       self.is_coalesced());
 }

@@ -1,9 +1,9 @@
 //  Copyright © 2022 Apple Inc.
 
+#include <ATen/Version.h>
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/native/CPUFallback.h>
 #include <c10/util/env.h>
-#include <caffe2/core/common.h>
 
 namespace at {
 #ifdef USE_DISTRIBUTED
@@ -17,7 +17,7 @@ static void mps_distributed_error(const c10::OperatorHandle& op) {
       "for the MPS device. If you want this op to be considered for addition ",
       "please comment on https://github.com/pytorch/pytorch/issues/141287 and mention use-case, that resulted in missing op",
       " as well as commit hash ",
-      caffe2::GetBuildOptions().at("COMMIT_SHA"),
+      at::GetBuildOptions().at("COMMIT_SHA"),
       ". Please note, that distributed operators can not fall back to CPU");
 }
 #endif
@@ -74,7 +74,7 @@ static void mps_error_fallback(const c10::OperatorHandle& op, torch::jit::Stack*
       "for the MPS device. If you want this op to be considered for addition ",
       "please comment on https://github.com/pytorch/pytorch/issues/141287 and mention use-case, that resulted in missing op",
       " as well as commit hash ",
-      caffe2::GetBuildOptions().at("COMMIT_SHA"),
+      at::GetBuildOptions().at("COMMIT_SHA"),
       ". As a temporary fix, you can set the environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1` ",
       "to use the CPU as a fallback for this op. WARNING: this will be slower than running natively ",
       "on MPS.");

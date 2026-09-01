@@ -361,12 +361,8 @@ class _StorageBase:
         """Casts this storage to float8_e4m3fnuz type"""
         return self._to(torch.float8_e4m3fnuz)
 
-    def is_pinned(self, device: DeviceLikeType | None = None):
-        r"""Determine whether the CPU storage is already pinned on device.
-
-        Args:
-            device (str or torch.device): The device to pin memory on (default: ``None``).
-                This argument is discouraged and subject to deprecated.
+    def is_pinned(self):
+        r"""Determine whether the CPU storage is already pinned on the current accelerator.
 
         Returns:
             A boolean variable.
@@ -374,15 +370,11 @@ class _StorageBase:
         return (
             torch.tensor([], dtype=torch.uint8, device=self.device)
             .set_(cast(Storage, self))
-            .is_pinned(device)
+            .is_pinned()
         )
 
-    def pin_memory(self, device: DeviceLikeType | None = None):
+    def pin_memory(self):
         r"""Copy the CPU storage to pinned memory, if it's not already pinned.
-
-        Args:
-            device (str or torch.device): The device to pin memory on (default: ``None``).
-                This argument is discouraged and subject to deprecated.
 
         Returns:
             A pinned CPU storage.
@@ -393,7 +385,7 @@ class _StorageBase:
         pinned_tensor = (
             torch.tensor([], dtype=torch.uint8, device=self.device)
             .set_(cast(Storage, self))
-            .pin_memory(device)
+            .pin_memory()
         )
         return pinned_tensor.untyped_storage()
 
@@ -1064,33 +1056,23 @@ class TypedStorage:
         _warn_typed_storage_removal()
         return self._new_wrapped_storage(self._untyped_storage.cpu())
 
-    def is_pinned(self, device: DeviceLikeType | None = None):
-        r"""Determine whether the CPU TypedStorage is already pinned on device.
-
-        Args:
-            device (str or torch.device): The device to pin memory on (default: ``None``).
-                This argument is discouraged and subject to deprecated.
+    def is_pinned(self):
+        r"""Determine whether the CPU TypedStorage is already pinned on the current accelerator.
 
         Returns:
             A boolean variable.
         """
         _warn_typed_storage_removal()
-        return self._untyped_storage.is_pinned(device)
+        return self._untyped_storage.is_pinned()
 
-    def pin_memory(self, device: DeviceLikeType | None = None):
+    def pin_memory(self):
         r"""Copy the CPU TypedStorage to pinned memory, if it's not already pinned.
-
-        Args:
-            device (str or torch.device): The device to pin memory on (default: ``None``).
-                This argument is discouraged and subject to deprecated.
 
         Returns:
             A pinned CPU storage.
         """
         _warn_typed_storage_removal()
-        return self._new_wrapped_storage(
-            self._untyped_storage.pin_memory(device=device)
-        )
+        return self._new_wrapped_storage(self._untyped_storage.pin_memory())
 
     def share_memory_(self):
         """See :meth:`torch.UntypedStorage.share_memory_`"""

@@ -116,10 +116,6 @@ struct TORCH_API CUDAHooksInterface : AcceleratorHooksInterface {
     TORCH_CHECK(false, "Cannot call hasPrimaryContext(", device_index, ") without ATen_cuda library. ", CUDA_HELP);
   }
 
-  virtual DeviceIndex current_device() const {
-    return -1;
-  }
-
   Allocator* getPinnedMemoryAllocator() const override {
     TORCH_CHECK(false, "Pinned memory requires CUDA. ", CUDA_HELP);
   }
@@ -199,10 +195,6 @@ struct TORCH_API CUDAHooksInterface : AcceleratorHooksInterface {
 
   virtual void cuFFTClearPlanCache(DeviceIndex /*device_index*/) const {
     TORCH_CHECK(false, "Cannot access cuFFT plan cache without ATen_cuda library. ", CUDA_HELP);
-  }
-
-  virtual int getNumGPUs() const {
-    return 0;
   }
 
 #ifdef USE_ROCM

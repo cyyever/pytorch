@@ -1462,8 +1462,6 @@ coverage_ignore_classes = [
     "slogdet_out",
     "sort",
     "sort_out",
-    "svd",
-    "svd_out",
     "topk",
     "topk_out",
     "triangular_solve",

@@ -44,20 +44,6 @@ Device XPUHooks::getDeviceFromPtr(void* data) const {
   return at::xpu::getDeviceFromPtr(data);
 }
 
-/**
- * DEPRECATED: use deviceCount() instead
- */
-c10::DeviceIndex XPUHooks::getNumGPUs() const {
-  return at::xpu::device_count();
-}
-
-/**
- * DEPRECATED: use getCurrentDevice() instead
- */
-DeviceIndex XPUHooks::current_device() const {
-  return c10::xpu::current_device();
-}
-
 void XPUHooks::deviceSynchronize(DeviceIndex device_index) const {
   // Only the SYCL queues we have reserved will be synchronized, see Note
   // [Synchronize Streams on Device].

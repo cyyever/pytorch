@@ -11,7 +11,7 @@
 // will throw an exception when multiple threads call
 // their first parallel construct.
 static void test(int given_num_threads) {
-  auto t = at::ones({1000 * 1000}, at::CPU(at::kFloat));
+  auto t = at::ones({1000 * 1000}, at::kFloat);
   ASSERT_TRUE(given_num_threads >= 0);
   ASSERT_EQ(at::get_num_threads(), given_num_threads);
   auto t_sum = t.sum();
@@ -31,10 +31,8 @@ TEST(ThreadInitTest, ThreadInit) {
   });
   t1.join();
 
-  #if !AT_PARALLEL_NATIVE
   at::set_num_threads(5);
   ASSERT_EQ(at::get_num_threads(), 5);
-  #endif
 
   // test inter-op settings
   at::set_num_interop_threads(5);

@@ -19,42 +19,28 @@ int64_t _debug_has_internal_overlap(const Tensor& self) {
   return static_cast<int64_t>(at::has_internal_overlap(self));
 }
 
-bool is_pinned(const Tensor& self, std::optional<c10::Device> device) {
-  std::optional<c10::DeviceType> opt_device_type;
-  if (device.has_value()) {
-    TORCH_WARN_DEPRECATION(
-        "The argument 'device' of Tensor.is_pinned() ",
-        "is deprecated. Please do not pass this argument.")
-    opt_device_type = device.value().type();
-  }
+bool is_pinned(const Tensor& self) {
   // Only CPU tensors can be pinned
   if (!self.is_cpu()) {
     return false;
   }
   // Use getAcceleratorHooksInterface to make is_pinned device-agnostic
-  return at::globalContext().isPinnedPtr(self.storage().data(), opt_device_type);
+  return at::globalContext().isPinnedPtr(self.storage().data());
 }
 
-Tensor pin_memory(const Tensor& self, std::optional<c10::Device> device) {
-  if (device.has_value()) {
-    TORCH_WARN_DEPRECATION(
-        "The argument 'device' of Tensor.pin_memory() ",
-        "is deprecated. Please do not pass this argument.")
-  }
+Tensor pin_memory(const Tensor& self) {
   // Kind of mad that I have to do two dynamic dispatches here, pretty
   // annoying
-  if (self.is_pinned(device)) {
+  if (self.is_pinned()) {
     return self;
   }
-  return at::_pin_memory(self, device);
+  return at::_pin_memory(self);
 }
 
-Tensor _pin_memory(const Tensor& self, std::optional<c10::Device> device) {
+Tensor _pin_memory(const Tensor& self) {
   TORCH_CHECK(self.device().is_cpu(), "cannot pin '", self.toString(), "' only dense CPU tensors can be pinned");
   // Use getAcceleratorHooksInterface to make pin_memory device-agnostic
-  auto* allocator = device.has_value()?
-      at::globalContext().getPinnedMemoryAllocator(device.value().type()):
-      at::globalContext().getPinnedMemoryAllocator();
+  auto* allocator = at::globalContext().getPinnedMemoryAllocator();
   auto storage = Storage(
       Storage::use_byte_size_t(),
       detail::computeStorageNbytes(

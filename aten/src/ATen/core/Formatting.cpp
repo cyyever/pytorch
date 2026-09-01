@@ -51,10 +51,6 @@ static bool& print_sci_mode() {
   return enabled;
 }
 } // namespace internal
-std::ostream& operator<<(std::ostream& out, const DeprecatedTypeProperties& t) {
-  return out << t.toString();
-}
-
 enum class FormatType {
   Default, // 'g' format (defaultfloat equivalent)
   Scientific, // 'e' format with precision 4

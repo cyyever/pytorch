@@ -179,11 +179,11 @@ Tensor& NestedTensor_silu_(Tensor& self){
   return self;
 }
 
-Tensor _pin_memory_nested(const Tensor& self, std::optional<Device> device) {
+Tensor _pin_memory_nested(const Tensor& self) {
   auto* nt_input = get_nested_tensor_impl(self);
   const auto& input_buffer = nt_input->get_unsafe_storage_as_tensor();
   return wrap_buffer(
-      at::_pin_memory(input_buffer, device),
+      at::_pin_memory(input_buffer),
       nt_input->get_nested_sizes(),
       nt_input->get_nested_strides(),
       nt_input->get_storage_offsets());

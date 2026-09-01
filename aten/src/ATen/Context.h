@@ -7,7 +7,6 @@
 #include <ATen/ROCmFABackend.h>
 #include <ATen/SDPBackend.h>
 #include <ATen/core/ATenGeneral.h>
-#include <ATen/core/DeprecatedTypeProperties.h>
 #include <ATen/core/Generator.h>
 #include <ATen/core/LegacyTypeDispatch.h>
 #include <ATen/detail/AcceleratorHooksInterface.h>
@@ -120,14 +119,9 @@ class TORCH_API Context {
     }
   }
 
-  bool isPinnedPtr(
-      const void* data,
-      std::optional<c10::DeviceType> device_type = std::nullopt) {
-    auto opt_device_type =
-        device_type.has_value() ? device_type : at::getAccelerator();
-    if (!opt_device_type.has_value() || // there is no accelerator
-        !at::isAccelerator(
-            opt_device_type.value())) { // passed device not an accelerator
+  bool isPinnedPtr(const void* data) {
+    auto opt_device_type = at::getAccelerator();
+    if (!opt_device_type.has_value()) { // there is no accelerator
       return false;
     }
     if (!init_[static_cast<int8_t>(opt_device_type.value())].test_once()) {
@@ -534,33 +528,6 @@ inline void init() {
 
 TORCH_API Allocator* getCPUAllocator();
 
-inline DeprecatedTypeProperties& getDeprecatedTypeProperties(
-    Backend p,
-    ScalarType s) {
-  return globalDeprecatedTypePropertiesRegistry().getDeprecatedTypeProperties(
-      p, s);
-}
-
-inline DeprecatedTypeProperties& CPU(ScalarType s) {
-  return globalDeprecatedTypePropertiesRegistry().getDeprecatedTypeProperties(
-      Backend::CPU, s);
-}
-
-inline DeprecatedTypeProperties& CUDA(ScalarType s) {
-  return globalDeprecatedTypePropertiesRegistry().getDeprecatedTypeProperties(
-      Backend::CUDA, s);
-}
-
-inline DeprecatedTypeProperties& HIP(ScalarType s) {
-  return globalDeprecatedTypePropertiesRegistry().getDeprecatedTypeProperties(
-      Backend::HIP, s);
-}
-
-inline DeprecatedTypeProperties& MPS(ScalarType s) {
-  return globalDeprecatedTypePropertiesRegistry().getDeprecatedTypeProperties(
-      Backend::MPS, s);
-}
-
 inline bool hasCUDA() {
   return globalContext().hasCUDA();
 }
@@ -604,7 +571,7 @@ inline size_t getNumGPUs() {
   } else if (hasCUDA()) {
     return detail::getCUDAHooks().deviceCount();
   } else if (hasHIP()) {
-    return detail::getHIPHooks().getNumGPUs();
+    return detail::getHIPHooks().deviceCount();
   } else {
     return 0;
   }

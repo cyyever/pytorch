@@ -1070,7 +1070,6 @@ inductor_skip_exact_stride = {
     "linalg.solve",
     "linalg.solve_ex",
     "linalg.qr",
-    "lu",
     "matmul",
     "__rmatmul__",
     "nn.functional.adaptive_avg_pool1d",

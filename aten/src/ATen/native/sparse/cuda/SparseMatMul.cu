@@ -41,8 +41,8 @@ namespace {
 using namespace at::sparse;
 
 Tensor _to_csr_int(const Tensor& rowIndices, int64_t dim, int64_t nnz) {
-  Tensor csr = at::empty({dim + 1}, CUDA(kInt));
-  Tensor rowIndicesInt = at::empty({rowIndices.size(0)}, CUDA(kInt));
+  Tensor csr = at::empty({dim + 1}, at::device(at::kCUDA).dtype(at::kInt));
+  Tensor rowIndicesInt = at::empty({rowIndices.size(0)}, at::device(at::kCUDA).dtype(at::kInt));
   rowIndicesInt.copy_(rowIndices);
   sparse::cuda::Xcoo2csr(
       rowIndicesInt.data_ptr<int32_t>(), nnz, dim, csr.data_ptr<int32_t>());

@@ -723,7 +723,6 @@ meta_function_skips = {
     torch.nn.functional.binary_cross_entropy : {bf16, f64, f32, f16},
     torch.nn.functional.dropout3d : {bf16, f64, f32, f16},
     torch.nn.functional.local_response_norm : {bf16, f64, f32, f16},
-    torch.svd : {c128, c64},
     torch.take_along_dim : {bf16, i8, i64, u8, c128, b8, f64, i16, i32, f32, f16, c64},
     torch.vstack : {bf16, i8, c32, i64, u8, c128, b8, f64, i16, i32, f32, f16, c64},
     torch.diff : {b8},
@@ -775,7 +774,6 @@ meta_function_device_skips['cuda'] = {
     torch.nn.functional.cross_entropy: {f16},
     torch.nn.functional.interpolate: {f16},
     torch.nn.functional.nll_loss: {f16},
-    torch.svd: {f32, f64},
 }
 
 # This is a __torch_function__ mode that, when enabled, interposes every

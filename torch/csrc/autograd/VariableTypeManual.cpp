@@ -1,6 +1,5 @@
 #include <ATen/RedispatchFunctions.h>
 #include <ATen/core/op_registration/op_registration.h>
-#include <c10/util/irange.h>
 #include <torch/csrc/autograd/FunctionsManual.h>
 #include <torch/csrc/autograd/VariableTypeUtils.h>
 #include <torch/csrc/autograd/functions/utils.h>
@@ -19,40 +18,6 @@ using torch::autograd::CreationMeta;
 namespace torch {
 
 namespace autograd::VariableType {
-
-static std::vector<at::DeprecatedTypeProperties*> allTypesForBackends(
-    at::ArrayRef<at::Backend> backends) {
-  std::vector<DeprecatedTypeProperties*> res;
-  res.reserve(backends.size());
-  for (auto p : backends) {
-    for (const auto s :
-         c10::irange(static_cast<int64_t>(ScalarType::NumOptions))) {
-      auto& type = getDeprecatedTypeProperties(
-          static_cast<Backend>(p), static_cast<ScalarType>(s));
-      res.emplace_back(&type);
-    }
-  }
-  return res;
-}
-
-std::vector<at::DeprecatedTypeProperties*> allCPUTypes() {
-  return allTypesForBackends({Backend::CPU, Backend::SparseCPU});
-}
-
-std::vector<at::DeprecatedTypeProperties*> allCUDATypes() {
-  at::globalContext().lazyInitDevice(c10::DeviceType::CUDA);
-  return allTypesForBackends({Backend::CUDA, Backend::SparseCUDA});
-}
-
-std::vector<at::DeprecatedTypeProperties*> allXPUTypes() {
-  return allTypesForBackends({Backend::XPU, Backend::SparseXPU});
-}
-
-std::vector<at::DeprecatedTypeProperties*> allPrivateUser1Types() {
-  at::globalContext().lazyInitDevice(c10::DeviceType::PrivateUse1);
-  return allTypesForBackends(
-      {Backend::PrivateUse1, Backend::SparsePrivateUse1});
-}
 
 namespace {
 const Variable& checked_cast_variable(

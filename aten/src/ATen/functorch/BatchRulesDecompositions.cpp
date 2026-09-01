@@ -127,7 +127,6 @@ TORCH_LIBRARY_IMPL(aten, FuncTorchBatchedDecomposition, m) {
   OP_DECOMPOSE2(float_power, Tensor_Scalar);
   OP_DECOMPOSE2(float_power, Scalar);
   OP_DECOMPOSE(gather_backward);
-  OP_DECOMPOSE(ger);
   OP_DECOMPOSE2(gradient, scalarint);
   OP_DECOMPOSE2(gradient, scalararray);
   OP_DECOMPOSE2(gradient, array);
@@ -186,7 +185,6 @@ TORCH_LIBRARY_IMPL(aten, FuncTorchBatchedDecomposition, m) {
   OP_DECOMPOSE(log_sigmoid);
   OP_DECOMPOSE(logdet);
   OP_DECOMPOSE2(log_softmax, int);
-  OP_DECOMPOSE(_lu_with_info);
   OP_DECOMPOSE(matmul);
   OP_DECOMPOSE(matrix_H);
   OP_DECOMPOSE(matrix_exp);
@@ -208,9 +206,6 @@ TORCH_LIBRARY_IMPL(aten, FuncTorchBatchedDecomposition, m) {
   OP_DECOMPOSE(nanmean);
   m.impl("narrow", native::narrow_symint);
   OP_DECOMPOSE(negative);
-  OP_DECOMPOSE2(frobenius_norm, dim);
-  OP_DECOMPOSE2(nuclear_norm, dim);
-  OP_DECOMPOSE(nuclear_norm);
   m.impl("nll_loss_nd", native::nll_loss_nd_symint);
   m.impl("nll_loss", native::nll_loss_symint);
   m.impl("nll_loss2d", native::nll_loss2d_symint);
@@ -283,7 +278,6 @@ TORCH_LIBRARY_IMPL(aten, FuncTorchBatchedDecomposition, m) {
   OP_DECOMPOSE(swapaxes);
   OP_DECOMPOSE2(subtract, Tensor);
   m.impl("sum_to_size", native::sum_to_size_symint);
-  OP_DECOMPOSE(svd);
   OP_DECOMPOSE(swapdims);
   OP_DECOMPOSE(take_along_dim);
   OP_DECOMPOSE(tensordot);

@@ -2,9 +2,9 @@
 #include <torch/csrc/utils/tensor_types.h>
 
 #include <ATen/Context.h>
-#include <ATen/Formatting.h>
-#include <torch/csrc/autograd/generated/VariableType.h>
 #include <torch/csrc/tensor/python_tensor.h>
+
+#include <c10/util/irange.h>
 
 #include <sstream>
 #include <unordered_map>
@@ -68,21 +68,38 @@ std::string options_to_string(const at::TensorOptions& options) {
   return std::move(ss).str();
 }
 
-std::string type_to_string(const at::DeprecatedTypeProperties& type) {
+std::string type_to_string(Backend backend, ScalarType scalar_type) {
   std::ostringstream ss;
-  ss << backend_to_string(type.backend()) << '.' << toString(type.scalarType())
-     << "Tensor";
+  ss << backend_to_string(backend) << '.' << toString(scalar_type) << "Tensor";
   return std::move(ss).str();
 }
 
-using TypeMap = std::unordered_map<std::string, at::DeprecatedTypeProperties*>;
+static at::TensorOptions options_for(Backend backend, ScalarType scalar_type) {
+  return at::TensorOptions()
+      .dtype(scalar_type)
+      .device(backendToDeviceType(backend))
+      .layout(layout_from_backend(backend));
+}
 
-static TypeMap build_type_map(
-    const std::vector<at::DeprecatedTypeProperties*>& types) {
+using TypeMap = std::unordered_map<std::string, at::TensorOptions>;
+
+// The legacy `torch.cuda.FloatTensor`-style names, for every scalar type of a
+// backend and of its sparse counterpart. Initializing the device here rather
+// than at each lookup keeps it to once per backend, as the type list this
+// replaced did.
+static TypeMap build_type_map(Backend dense, Backend sparse) {
+  auto device_type = backendToDeviceType(dense);
+  if (at::isAccelerator(device_type)) {
+    at::globalContext().lazyInitDevice(device_type);
+  }
   TypeMap m;
-  m.reserve(types.size());
-  for (auto type : types)
-    m.emplace(type_to_string(*type), type);
+  for (auto backend : {dense, sparse}) {
+    for (const auto s :
+         c10::irange(static_cast<int64_t>(ScalarType::NumOptions))) {
+      auto scalar_type = static_cast<ScalarType>(s);
+      m.emplace(type_to_string(backend, scalar_type), options_for(backend, scalar_type));
+    }
+  }
   return m;
 }
 
@@ -95,30 +112,28 @@ at::TensorOptions options_from_string(const std::string& str) {
     auto backend =
         dispatchKeyToBackend(torch::tensors::get_default_dispatch_key());
     auto scalar_type = torch::tensors::get_default_scalar_type();
-    return getDeprecatedTypeProperties(backend, scalar_type).options();
+    return options_for(backend, scalar_type);
   }
 
   if (str.starts_with("torch.cuda.")) {
     static const auto cuda_map =
-        build_type_map(autograd::VariableType::allCUDATypes());
+        build_type_map(Backend::CUDA, Backend::SparseCUDA);
     map = &cuda_map;
   } else if (str.starts_with("torch.xpu.")) {
-    static const auto xpu_map =
-        build_type_map(autograd::VariableType::allXPUTypes());
+    static const auto xpu_map = build_type_map(Backend::XPU, Backend::SparseXPU);
     map = &xpu_map;
   } else if (str.starts_with(privateUser_prefix)) {
     static const auto privateUser1_map =
-        build_type_map(autograd::VariableType::allPrivateUser1Types());
+        build_type_map(Backend::PrivateUse1, Backend::SparsePrivateUse1);
     map = &privateUser1_map;
   } else {
-    static const auto cpu_map =
-        build_type_map(autograd::VariableType::allCPUTypes());
+    static const auto cpu_map = build_type_map(Backend::CPU, Backend::SparseCPU);
     map = &cpu_map;
   }
 
   auto it = map->find(str);
   TORCH_CHECK_VALUE(it != map->end(), "invalid type: '", str, "'");
-  return it->second->options();
+  return it->second;
 }
 
 std::vector<std::pair<Backend, ScalarType>> all_declared_types() {

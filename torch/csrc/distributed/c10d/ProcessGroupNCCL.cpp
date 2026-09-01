@@ -946,7 +946,7 @@ ProcessGroupNCCL::ProcessGroupNCCL(
       intraNodeComm_(nullptr) {
   TORCH_CHECK_WITH(
       ValueError,
-      at::cuda::getNumGPUs() != 0,
+      at::cuda::device_count() != 0,
       "ProcessGroupNCCL is only supported with GPUs, no GPUs found!");
   TORCH_CHECK(
       !options_->enable_reconfigure,
@@ -968,7 +968,7 @@ ProcessGroupNCCL::ProcessGroupNCCL(
   const auto ncclVersion = getNcclVersion();
   this->setGroupUid(options_->group_name);
   this->setUsePgForSymmMemRendezvous(options_->use_pg_for_symm_mem_rendezvous);
-  this->localDeviceCount_ = static_cast<int>(at::cuda::getNumGPUs());
+  this->localDeviceCount_ = static_cast<int>(at::cuda::device_count());
   logPrefix_ = createLogPrefix();
   blockingWait_ = getCvarBool(TORCH_NCCL_BLOCKING_WAIT, false);
   asyncErrorHandling_ = static_cast<ErrorHandlingMode>(

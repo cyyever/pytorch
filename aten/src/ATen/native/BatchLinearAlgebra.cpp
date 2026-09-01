@@ -32,7 +32,6 @@
 #include <ATen/ops/_linalg_svd.h>
 #include <ATen/ops/_linalg_svd_meta.h>
 #include <ATen/ops/_linalg_svd_native.h>
-#include <ATen/ops/_lu_with_info_native.h>
 #include <ATen/ops/all.h>
 #include <ATen/ops/arange.h>
 #include <ATen/ops/cat.h>
@@ -97,7 +96,6 @@
 #include <ATen/ops/linalg_svdvals_native.h>
 #include <ATen/ops/linalg_vander_native.h>
 #include <ATen/ops/linalg_vecdot_native.h>
-#include <ATen/ops/lu_solve_native.h>
 #include <ATen/ops/lu_unpack.h>
 #include <ATen/ops/lu_unpack_meta.h>
 #include <ATen/ops/lu_unpack_native.h>
@@ -106,7 +104,6 @@
 #include <ATen/ops/real.h>
 #include <ATen/ops/resize_as_native.h>
 #include <ATen/ops/sum.h>
-#include <ATen/ops/svd_native.h>
 #include <ATen/ops/triangular_solve_meta.h>
 #include <ATen/ops/triangular_solve_native.h>
 #include <ATen/ops/tril.h>
@@ -1978,22 +1975,6 @@ std::tuple<Tensor, Tensor> linalg_lu_factor(const Tensor& A, bool pivot) {
   return std::make_tuple(std::move(LU), std::move(pivots));
 }
 
-// TODO Deprecate this function in favour of linalg_lu_factor_ex
-std::tuple<Tensor, Tensor, Tensor> _lu_with_info(const Tensor& self, bool compute_pivots, bool /*unused*/) {
-   TORCH_WARN_ONCE(
-    "torch.lu is deprecated in favor of torch.linalg.lu_factor / torch.linalg.lu_factor_ex and will be ",
-    "removed in a future PyTorch release.\n",
-    "LU, pivots = torch.lu(A, compute_pivots)\n",
-    "should be replaced with\n",
-    "LU, pivots = torch.linalg.lu_factor(A, compute_pivots)\n",
-    "and\n",
-    "LU, pivots, info = torch.lu(A, compute_pivots, get_infos=True)\n",
-    "should be replaced with\n",
-    "LU, pivots, info = torch.linalg.lu_factor_ex(A, compute_pivots)"
-  );
-  return at::linalg_lu_factor_ex(self, compute_pivots, false);
-}
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ linalg_lu ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEFINE_DISPATCH(unpack_pivots_stub);
@@ -2134,30 +2115,6 @@ TORCH_IMPL_FUNC(linalg_lu_solve_out)(const Tensor& LU,
       result._set_conj(!result.is_conj());
     }
   }
-}
-
-Tensor lu_solve(const Tensor& self, const Tensor& LU_data, const Tensor& LU_pivots) {
-  TORCH_WARN_ONCE(
-    "torch.lu_solve is deprecated in favor of torch.linalg.lu_solve",
-    "and will be removed in a future PyTorch release.\n",
-    "Note that torch.linalg.lu_solve has its arguments reversed.\n",
-    "X = torch.lu_solve(B, LU, pivots)\n",
-    "should be replaced with\n",
-    "X = torch.linalg.lu_solve(LU, pivots, B)"
-  );
-  return at::linalg_lu_solve(LU_data, LU_pivots, self);
-}
-
-Tensor& lu_solve_out(const Tensor& self, const Tensor& LU_data, const Tensor& LU_pivots, Tensor& result) {
-  TORCH_WARN_ONCE(
-    "torch.lu_solve is deprecated in favor of torch.linalg.lu_solve",
-    "and will be removed in a future PyTorch release.\n",
-    "Note that torch.linalg.lu_solve has its arguments reversed.\n",
-    "X = torch.lu_solve(B, LU, pivots)\n",
-    "should be replaced with\n",
-    "X = torch.linalg.lu_solve(LU, pivots, B)"
-  );
-  return at::linalg_lu_solve_out(result, LU_data, LU_pivots, self);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ triangular_solve ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3154,80 +3111,6 @@ Tensor linalg_svdvals(const Tensor& A, std::optional<std::string_view> driver) {
   return std::get<1>(at::_linalg_svd(A, /*full_matrices=*/false,
                      /*compute_uv=*/_may_require_fw_or_bw_grad(A),
                      /*driver=*/driver));
-}
-
-std::tuple<Tensor&, Tensor&, Tensor&> svd_out(const Tensor& self, bool some, bool compute_uv,
-    Tensor& U, Tensor& S, Tensor& V) {
-
-  if (compute_uv) {
-    if (V.dim() >= 2) {
-      V.transpose_(-2, -1);
-    }
-    at::linalg_svd_out(U, S, V, self, /*full_matrices=*/!some);
-    V.transpose_(-2, -1);
-    if (V.is_complex()) {
-      // We cannot use `_set_conj` as it does not play well with backwards
-      V.conj_physical_();
-    }
-  } else {
-    TORCH_CHECK(self.scalar_type() == U.scalar_type(),
-    "torch.svd: Expected out tensor to have dtype ", self.scalar_type(), " but got ", U.scalar_type(), " instead");
-
-    TORCH_CHECK(self.scalar_type() == V.scalar_type(),
-    "torch.svd: Expected out tensor to have dtype ", self.scalar_type(), " but got ", V.scalar_type(), " instead");
-
-    at::linalg_svdvals_out(S, self);
-    // some == false returns U, Vh of size (m, m), (n, n) full of zeros
-    const auto m = self.size(-2);
-    const auto n = self.size(-1);
-    auto sizes = self.sizes().vec();
-
-    sizes.end()[-1] = m;
-    at::native::resize_output(U, sizes);
-    U.zero_();
-
-    sizes.end()[-2] = n;
-    sizes.end()[-1] = n;
-    at::native::resize_output(V, sizes);
-    V.zero_();
-  }
-
-  return std::tie(U, S, V);
-}
-
-std::tuple<Tensor, Tensor, Tensor> svd(const Tensor& self, bool some, bool compute_uv) {
-  // TODO: uncomment the following when svd is deprecated not only in docs
-  // torch/xla is blocking the transition from at::svd to at::linalg_svd in at::linalg_pinv code
-  // see https://github.com/pytorch/xla/issues/2755
-  // TORCH_WARN_ONCE(
-  //     "torch.svd is deprecated in favor of torch.linalg.svd and will be ",
-  //     "removed in a future PyTorch release.\n",
-  //     "U, S, V = torch.svd(A, some=some, compute_uv=True) (default)\n",
-  //     "should be replaced with\n",
-  //     "U, S, Vh = torch.linalg.svd(A, full_matrices=not some)\n",
-  //     "V = Vh.mH\n",
-  //     "and\n",
-  //     "_, S, _ = torch.svd(A, some=some, compute_uv=False)\n",
-  //     "should be replaced with\n",
-  //     "S = torch.linalg.svdvals(A)");
-  TORCH_CHECK(self.dim() >= 2, "linalg.svd: input should have at least 2 dimensions, but has ", self.dim(), " dimensions instead");
-  Tensor U, S, Vh;
-  if (compute_uv) {
-    std::tie(U, S, Vh) = at::linalg_svd(self, /*full_matrices=*/!some);
-  } else {
-    S = at::linalg_svdvals(self);
-    // some == false returns U, Vh of size (m, m), (n, n) full of zeros
-    const auto m = self.size(-2);
-    const auto n = self.size(-1);
-
-    auto sizes = self.sizes().vec();
-    sizes.end()[-1] = m;
-    U = at::zeros(sizes, self.options());
-    sizes.end()[-2] = n;
-    sizes.end()[-1] = n;
-    Vh = at::zeros(sizes, self.options());
-  }
-  return std::make_tuple(std::move(U), std::move(S), Vh.mH());
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lstsq ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

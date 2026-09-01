@@ -1252,19 +1252,14 @@ class TensorVariable(VariableTracker):
     def method_is_pinned(
         self,
         tx: "InstructionTranslatorBase",
-        device: VariableTracker | None = None,
     ) -> ConstantVariable | None:
         # ATen is_pinned() is always false for non-CPU tensors. CPU pinning can
         # vary without changing Dynamo's tensor metadata guards, so leave it to
         # the generic path. Tensor subclasses can override is_pinned through
         # __torch_dispatch__, so preserve dispatch for them too.
-        no_device = device is None or (
-            isinstance(device, ConstantVariable) and device.value is None
-        )
         example_value = self.proxy.node.meta.get("example_value")
         if (
-            no_device
-            and self.device is not None
+            self.device is not None
             and self.device.type != "cpu"
             and not is_traceable_wrapper_subclass(example_value)
         ):

@@ -5,7 +5,6 @@
 #include <torch/csrc/autograd/variable.h>
 
 #include <ATen/TensorGeometry.h>
-#include <ATen/core/DeprecatedTypeProperties.h>
 #include <optional>
 
 #include <cstdint>

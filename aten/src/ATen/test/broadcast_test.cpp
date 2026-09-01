@@ -6,14 +6,14 @@
 using namespace at;
 
 // can't expand empty tensor
-void TestEmptyTensor(DeprecatedTypeProperties& T) {
+void TestEmptyTensor(const TensorOptions& T) {
   auto empty = randn({0}, T);
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
   ASSERT_ANY_THROW(empty.expand({3}));
 }
 
 // out-place function with 2 args
-void TestOut2Basic(DeprecatedTypeProperties& T) {
+void TestOut2Basic(const TensorOptions& T) {
   auto a = randn({3, 1}, T);
   auto b = randn({5}, T);
   std::vector<int64_t> expanded_sizes = {3, 5};
@@ -22,7 +22,7 @@ void TestOut2Basic(DeprecatedTypeProperties& T) {
 }
 
 // with scalar
-void TestOut2WithScalar(DeprecatedTypeProperties& T) {
+void TestOut2WithScalar(const TensorOptions& T) {
   auto aScalar = ones({}, T);
   auto b = randn({3, 5}, T);
   ASSERT_TRUE(
@@ -30,7 +30,7 @@ void TestOut2WithScalar(DeprecatedTypeProperties& T) {
 }
 
 // old fallback behavior yields error
-void TestOut2OldFallback(DeprecatedTypeProperties& T) {
+void TestOut2OldFallback(const TensorOptions& T) {
   auto a = randn({3, 5}, T);
   auto b = randn({5, 3}, T);
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
@@ -38,7 +38,7 @@ void TestOut2OldFallback(DeprecatedTypeProperties& T) {
 }
 
 // with mismatched sizes
-void TestOut2MismatchedSizes(DeprecatedTypeProperties& T) {
+void TestOut2MismatchedSizes(const TensorOptions& T) {
   auto a = randn({3, 5}, T);
   auto b = randn({7, 5}, T);
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
@@ -46,7 +46,7 @@ void TestOut2MismatchedSizes(DeprecatedTypeProperties& T) {
 }
 
 // out-place function with 3 args
-void TestOut3Basic(DeprecatedTypeProperties& T) {
+void TestOut3Basic(const TensorOptions& T) {
   auto a = randn({3, 1, 1}, T);
   auto b = randn({1, 2, 1}, T);
   auto c = randn({1, 1, 5}, T);
@@ -57,7 +57,7 @@ void TestOut3Basic(DeprecatedTypeProperties& T) {
 }
 
 // with scalar
-void TestOut3WithScalar(DeprecatedTypeProperties& T) {
+void TestOut3WithScalar(const TensorOptions& T) {
   auto aTensorScalar = ones({}, T);
   auto b = randn({3, 2, 1}, T);
   auto c = randn({1, 2, 5}, T);
@@ -68,7 +68,7 @@ void TestOut3WithScalar(DeprecatedTypeProperties& T) {
 }
 
 // old fallback behavior yields error
-void TestOut3OldFallback(DeprecatedTypeProperties& T) {
+void TestOut3OldFallback(const TensorOptions& T) {
   auto a = randn({3, 2, 5}, T);
   auto b = randn({2, 3, 5}, T);
   auto c = randn({5, 3, 2}, T);
@@ -77,7 +77,7 @@ void TestOut3OldFallback(DeprecatedTypeProperties& T) {
 }
 
 // with mismatched sizes
-void TestOut3MismatchedSizes(DeprecatedTypeProperties& T) {
+void TestOut3MismatchedSizes(const TensorOptions& T) {
   auto a = randn({3, 2, 5}, T);
   auto b = randn({2, 3, 5}, T);
   auto c = randn({5, 5, 5}, T);
@@ -86,21 +86,21 @@ void TestOut3MismatchedSizes(DeprecatedTypeProperties& T) {
 }
 
 // in-place function with 2 args
-void TestIn2Basic(DeprecatedTypeProperties& T) {
+void TestIn2Basic(const TensorOptions& T) {
   auto a = randn({3, 5}, T);
   auto b = randn({3, 1}, T);
   ASSERT_TRUE((a + b).equal(a + b.expand({3, 5})));
 }
 
 // with scalar
-void TestIn2WithScalar(DeprecatedTypeProperties& T) {
+void TestIn2WithScalar(const TensorOptions& T) {
   auto a = randn({3, 5}, T);
   auto bScalar = ones({}, T);
   ASSERT_TRUE((a + bScalar).equal(a + bScalar.expand(a.sizes())));
 }
 
 // error: would have to expand inplace arg
-void TestIn2ExpandError(DeprecatedTypeProperties& T) {
+void TestIn2ExpandError(const TensorOptions& T) {
   auto a = randn({1, 5}, T);
   auto b = randn({3, 1}, T);
   // NOLINTNEXTLINE(hicpp-avoid-goto,cppcoreguidelines-avoid-goto)
@@ -108,7 +108,7 @@ void TestIn2ExpandError(DeprecatedTypeProperties& T) {
 }
 
 // in-place function with 3 args
-void TestIn3Basic(DeprecatedTypeProperties& T) {
+void TestIn3Basic(const TensorOptions& T) {
   auto a = randn({3, 5, 2}, T);
   auto b = randn({3, 1, 2}, T);
   auto c = randn({1, 5, 1}, T);
@@ -118,7 +118,7 @@ void TestIn3Basic(DeprecatedTypeProperties& T) {
 }
 
 // with scalar
-void TestIn3WithScalar(DeprecatedTypeProperties& T) {
+void TestIn3WithScalar(const TensorOptions& T) {
   auto a = randn({3, 5, 2}, T);
   auto b = randn({3, 1, 2}, T);
   auto c = randn({1, 5, 1}, T);
@@ -130,7 +130,7 @@ void TestIn3WithScalar(DeprecatedTypeProperties& T) {
 }
 
 // error: would have to expand inplace arg
-void TestIn3ExpandError(DeprecatedTypeProperties& T) {
+void TestIn3ExpandError(const TensorOptions& T) {
   auto a = randn({1, 3, 5}, T);
   auto b = randn({4, 1, 1}, T);
   auto c = randn({1, 3, 1}, T);
@@ -139,7 +139,7 @@ void TestIn3ExpandError(DeprecatedTypeProperties& T) {
 }
 
 // explicit dim specification
-void TestExplicitDimBasic(DeprecatedTypeProperties& T) {
+void TestExplicitDimBasic(const TensorOptions& T) {
   auto a = randn({1}, T);
   auto b = randn({5, 3}, T);
   auto c = randn({3, 7}, T);
@@ -147,7 +147,7 @@ void TestExplicitDimBasic(DeprecatedTypeProperties& T) {
 }
 
 // with scalar
-void TestExplicitDimWithScalar(DeprecatedTypeProperties& T) {
+void TestExplicitDimWithScalar(const TensorOptions& T) {
   auto a = randn({1}, T);
   auto b = randn({5, 3}, T);
   auto c = randn({3, 7}, T);
@@ -156,7 +156,7 @@ void TestExplicitDimWithScalar(DeprecatedTypeProperties& T) {
 }
 
 // with mismatched sizes
-void TestExplicitDimWithMismatchedSizes(DeprecatedTypeProperties& T) {
+void TestExplicitDimWithMismatchedSizes(const TensorOptions& T) {
   auto b = randn({5, 3}, T);
   auto c = randn({3, 7}, T);
   auto a = randn({3, 3}, T);
@@ -166,7 +166,7 @@ void TestExplicitDimWithMismatchedSizes(DeprecatedTypeProperties& T) {
 
 TEST(BroadcastTest, Broadcast) {
   manual_seed(123);
-  DeprecatedTypeProperties& T = CPU(kFloat);
+  const TensorOptions T = at::kFloat;
 
   TestEmptyTensor(T);
 
