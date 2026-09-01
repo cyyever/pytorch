@@ -1,6 +1,7 @@
 #pragma once
 
-#include <ATen/cuda/CachingHostAllocator.h>
+#include <ATen/core/CachingHostAllocator.h>
+#include <c10/cuda/CUDAStream.h>
 
 namespace at::cuda {
 
