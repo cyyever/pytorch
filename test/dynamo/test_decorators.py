@@ -1828,7 +1828,7 @@ class DecoratorTests(PytreeRegisteringTestCase):
     def test_set_stance_force_eager(self):
         @torch.compile(backend="eager")
         def a(x):
-            if torch._dynamo.is_compiling():
+            if torch.compiler.is_compiling():
                 return x + 1
             return x + 2
 
@@ -1857,7 +1857,7 @@ class DecoratorTests(PytreeRegisteringTestCase):
     def test_set_stance_eager_on_recompile(self):
         @torch.compile(backend="eager", dynamic=False)
         def a(x, n):
-            if torch._dynamo.is_compiling():
+            if torch.compiler.is_compiling():
                 return x + n + 1
             return x + n + 2
 
@@ -1874,7 +1874,7 @@ class DecoratorTests(PytreeRegisteringTestCase):
     def test_set_stance_fail_on_recompile(self):
         @torch.compile(backend="eager", dynamic=False)
         def a(x, n):
-            if torch._dynamo.is_compiling():
+            if torch.compiler.is_compiling():
                 return x + n + 1
             return x + n + 2
 
@@ -1983,9 +1983,8 @@ Detected recompile when torch.compile stance is 'fail_on_recompile'. filename: '
         @torch.compile(backend="eager")
         def g(x):
             torch._dynamo.skip_frame()
-            # NOTE: torch._dynamo.is_compiling() will get traced
-            # and return true. torch.compiler.is_compiling() is skipped
-            # and will return false.
+            # NOTE: skip_frame above means this frame is not traced, so
+            # is_compiling() runs eagerly and returns false.
             if torch.compiler.is_compiling():
                 raise RuntimeError("Expect this frame to be skipped")
             # should not be traced, but eval frame callback is still set

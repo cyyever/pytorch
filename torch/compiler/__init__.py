@@ -584,10 +584,6 @@ def is_compiling() -> bool:
     """
     Indicates whether a graph is executed/traced as part of torch.compile() or torch.export().
 
-    Note that there are 2 other related flags that should deprecated eventually:
-      * torch._dynamo.external_utils.is_compiling()
-      * torch._utils.is_compiling()
-
     Example::
 
         >>> def forward(self, x):

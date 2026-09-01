@@ -9293,30 +9293,18 @@ not ___dict_contains('cccccccc', G['sys'].modules)""",
 
     def test_is_compiling(self):
         def f1():
-            if torch._dynamo.is_compiling():
-                return torch.ones(2, 2)
-            else:
-                return torch.zeros(2, 2)
-
-        def f2():
-            if torch._utils.is_compiling():
-                return torch.ones(2, 2)
-            else:
-                return torch.zeros(2, 2)
-
-        def f3():
             if torch.compiler.is_compiling():
                 return torch.ones(2, 2)
             else:
                 return torch.zeros(2, 2)
 
-        def f4():
+        def f2():
             if torch.compiler.is_dynamo_compiling():
                 return torch.ones(2, 2)
             else:
                 return torch.zeros(2, 2)
 
-        for f in [f1, f2, f3, f4]:
+        for f in [f1, f2]:
             opt_f = torch.compile(f, backend="eager")
 
             self.assertEqual(f(), torch.zeros(2, 2))

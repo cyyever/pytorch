@@ -595,7 +595,7 @@ class OpCheckMode(TorchFunctionMode):
         # Only intercept calls to operators
         if not isinstance(func, (torch._ops.OpOverloadPacket, torch._ops.OpOverload)):
             return func(*args, **kwargs)
-        if torch._dynamo.is_compiling():
+        if torch.compiler.is_compiling():
             return func(*args, **kwargs)
         # Pre-existing code may not use the .default overload. If we see an
         # OpOverloadPacket and we cannot resolve the overload, then we just throw

@@ -16539,8 +16539,8 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
                 # The lowering chooses a different stride order than eager. The
                 # mutable custom op still needs the eager stride order.
                 z = torch.ops.mylib.make_strided(x)
-                output = torch.ops.mylib.bar(z, torch._dynamo.is_compiling())
-                torch.ops.mylib.set_one(output, torch._dynamo.is_compiling())
+                output = torch.ops.mylib.bar(z, torch.compiler.is_compiling())
+                torch.ops.mylib.set_one(output, torch.compiler.is_compiling())
                 return output**2
 
             with torch.no_grad():

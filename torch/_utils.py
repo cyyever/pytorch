@@ -14,14 +14,13 @@ import warnings
 from collections import defaultdict
 from collections.abc import Callable
 from types import ModuleType
-from typing import Any, cast, Generic, TYPE_CHECKING, TypedDict
+from typing import Any, cast, Generic, TypedDict
 from typing import NotRequired, ParamSpec
-from warnings import deprecated
 
 import torch
 
 
-def _type(self, dtype=None, non_blocking=False, **kwargs):
+def _type(self, dtype=None, non_blocking=False):
     """Returns the type if `dtype` is not provided, else casts this object to
     the specified type.
 
@@ -34,10 +33,7 @@ def _type(self, dtype=None, non_blocking=False, **kwargs):
             and destination is on the GPU or vice versa, the copy is performed
             asynchronously with respect to the host. Otherwise, the argument
             has no effect.
-        **kwargs: For compatibility, may contain the key ``async`` in place of
-            the ``non_blocking`` argument. The ``async`` arg is deprecated.
     """
-    non_blocking = _get_async_or_non_blocking("type", non_blocking, kwargs)
     if dtype is None:
         return self.__module__ + "." + self.__class__.__name__
 
@@ -109,24 +105,6 @@ def _to(self, device, non_blocking=False):
             untyped_storage = torch.UntypedStorage(self.size(), device=device)
             untyped_storage.copy_(self, non_blocking)
             return untyped_storage
-
-
-def _get_async_or_non_blocking(function_name, non_blocking, kwargs):
-    """Return the non-blocking flag given the function name and kwargs.
-
-    Args:
-        function_name (str): the name of the function being used.
-        non_blocking (bool): the default value.
-        **kwargs (dict): the kwargs passed to the function.
-    """
-    if not kwargs:
-        return non_blocking
-    if len(kwargs) != 1 or "async" not in kwargs:
-        message = "{}() got an unexpected keyword argument '{}'"
-        argument = list(kwargs.keys()).pop()
-        raise TypeError(message.format(function_name, argument))
-    warnings.warn("'async' is deprecated; use 'non_blocking'", stacklevel=2)
-    return kwargs["async"]
 
 
 def _get_restore_location(device):
@@ -899,30 +877,6 @@ def classproperty(func):
     if not isinstance(func, (classmethod, staticmethod)):
         func = classmethod(func)
     return _ClassPropertyDescriptor(func)
-
-
-if TYPE_CHECKING:
-    # TorchScript does not support `@deprecated`
-    # This is a workaround to avoid breaking TorchScript
-    @deprecated(
-        "`torch._utils.is_compiling` is deprecated. Use `torch.compiler.is_compiling` instead.",
-        category=FutureWarning,
-    )
-    def is_compiling() -> bool:
-        return torch.compiler.is_compiling()
-
-else:
-
-    def is_compiling() -> bool:
-        """
-        Indicates whether we are tracing/compiling with torch.compile() or torch.export().
-        """
-        warnings.warn(  # use `warnings.warn` instead of `@deprecated`
-            "`torch._utils.is_compiling` is deprecated. Use `torch.compiler.is_compiling` instead.",
-            # FutureWarning,  # TorchScript does not support Warning type
-            stacklevel=2,
-        )
-        return torch.compiler.is_compiling()
 
 
 def _functionalize_sync(t):

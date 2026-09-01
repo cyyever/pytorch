@@ -174,13 +174,11 @@ manual_torch_name_rule_map: dict[
     "torch.distributed.distributed_c10d._get_group_tag": TorchInGraphFunctionVariable,
     "torch.distributed.distributed_c10d.get_process_group_ranks": TorchInGraphFunctionVariable,
     "torch.distributed.destroy_process_group": SkipFunctionVariable,
-    "torch._utils.is_compiling": TorchInGraphFunctionVariable,
     "torch._utils._chunk_or_narrow_cat": UserFunctionVariable,
     "torch._utils._maybe_view_chunk_cat": UserFunctionVariable,
     "torch.fx._symbolic_trace.is_fx_tracing": TorchInGraphFunctionVariable,
     "torch.fx._symbolic_trace.is_fx_symbolic_tracing": TorchInGraphFunctionVariable,
     "torch.mps.is_available": TorchInGraphFunctionVariable,
-    "torch._dynamo.external_utils.is_compiling": TorchInGraphFunctionVariable,
     "torch._dynamo.utils._disable_side_effect_safety_checks_for_current_subtracer": UserFunctionVariable,
     # Tracing this marked-constant helper requires a Python-constant device argument.
     "torch._dynamo.utils.is_compile_supported": UserFunctionVariable,
