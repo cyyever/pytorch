@@ -26,13 +26,10 @@ from __future__ import annotations
 
 import argparse
 import collections
-import importlib
 import inspect
 import sys
 import textwrap
 from typing import TYPE_CHECKING
-from unittest.mock import Mock, patch
-from warnings import warn
 
 from tools.autograd.gen_python_functions import (
     group_overloads,
@@ -974,38 +971,11 @@ def gen_nn_functional(fm: FileManager) -> None:
     )
 
 
-"""
-We gather the docstrings for torch with the following steps:
-1. Mock torch and torch._C, which are the only dependencies of the docs files
-2. Mock the _add_docstr function to save the docstrings
-3. Import the docs files to trigger mocked _add_docstr and collect docstrings
-"""
-
-
+# Stub docstrings were harvested by mock-importing torch/_torch_docs.py and
+# torch/_tensor_docs.py; the latter is gone in this fork, so the stubs are
+# generated without docstrings.
 def gather_docstrs() -> dict[str, str]:
-    docstrs = {}
-
-    def mock_add_docstr(func: Mock, docstr: str) -> None:
-        docstrs[func._extract_mock_name()] = docstr.strip()
-
-    # sys.modules and sys.path are restored after the context manager exits
-    with patch.dict(sys.modules), patch.object(sys, "path", sys.path + ["torch"]):
-        # mock the torch module and torch._C._add_docstr
-        sys.modules["torch"] = Mock(name="torch")
-        sys.modules["torch._C"] = Mock(_add_docstr=mock_add_docstr)
-
-        try:
-            # manually import torch._torch_docs and torch._tensor_docs to trigger
-            # the mocked _add_docstr and collect docstrings
-            sys.modules["torch._torch_docs"] = importlib.import_module("_torch_docs")
-            sys.modules["torch._tensor_docs"] = importlib.import_module("_tensor_docs")
-        except ModuleNotFoundError:
-            # Gracefully fail if these modules are not importable
-            warn(
-                "Failed to import _torch_docs/_tensor_docs, skipping docstring in pyi files."
-            )
-
-    return docstrs
+    return {}
 
 
 def add_docstr_to_hint(docstr: str, hint: str) -> str:
