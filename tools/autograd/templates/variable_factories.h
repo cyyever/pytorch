@@ -3,7 +3,6 @@
 // ${generated_comment}
 
 #include <ATen/core/Tensor.h>
-#include <ATen/TracerMode.h>
 #include <ATen/core/grad_mode.h>
 #include <c10/util/ArrayRef.h>
 #include <c10/core/MemoryFormat.h>
@@ -67,7 +66,6 @@ inline at::Tensor from_blob(
     const at::TensorOptions& options = at::TensorOptions()) {
   at::Tensor tensor = ([&]() {
     at::AutoDispatchBelowAutograd guard;  // TODO: remove
-    at::tracer::impl::NoTracerDispatchMode tracer_guard;
     return at::from_blob(data, sizes, strides, deleter, options.requires_grad(::std::nullopt));
   })();
   return autograd::make_variable(tensor, options.requires_grad());
@@ -85,7 +83,6 @@ inline at::Tensor from_blob(
     const at::TensorOptions& options = at::TensorOptions()) {
   at::Tensor tensor = ([&]() {
     at::AutoDispatchBelowAutograd guard;  // TODO: remove
-    at::tracer::impl::NoTracerDispatchMode tracer_guard;
     return at::from_blob(data, sizes, strides, options.requires_grad(::std::nullopt));
   })();
   return autograd::make_variable(tensor, options.requires_grad());
@@ -104,7 +101,6 @@ inline at::Tensor from_blob(
     const at::TensorOptions& options = at::TensorOptions()) {
   at::Tensor tensor = ([&]() {
     at::AutoDispatchBelowAutograd guard;  // TODO: remove
-    at::tracer::impl::NoTracerDispatchMode tracer_guard;
     return at::from_blob(data, sizes, deleter, options.requires_grad(::std::nullopt));
   })();
   return autograd::make_variable(tensor, options.requires_grad());
@@ -120,7 +116,6 @@ inline at::Tensor from_blob(
     const at::TensorOptions& options = at::TensorOptions()) {
   at::Tensor tensor = ([&]() {
     at::AutoDispatchBelowAutograd guard;  // TODO: remove
-    at::tracer::impl::NoTracerDispatchMode tracer_guard;
     return at::from_blob(data, sizes, options.requires_grad(::std::nullopt));
   })();
   return autograd::make_variable(tensor, options.requires_grad());

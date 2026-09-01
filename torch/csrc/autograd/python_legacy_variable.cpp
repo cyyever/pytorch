@@ -5,7 +5,6 @@
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/autograd/python_function.h>
 #include <torch/csrc/autograd/python_variable.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/tensor/python_tensor.h>
 
 using namespace at;
@@ -97,13 +96,6 @@ static PyObject* THPVariable_pynew(
 
   if (name) {
     impl::set_name(var, name);
-  }
-
-  if (jit::tracer::isTracing() && data && !Py_IsNone(data) &&
-      THPVariable_Check(data)) {
-    if (auto* v = jit::tracer::getValueTrace(THPVariable_Unpack(data))) {
-      jit::tracer::setValueTrace(var, v);
-    }
   }
 
   return THPVariable_Wrap(var);

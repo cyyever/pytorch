@@ -126,7 +126,7 @@ if TYPE_CHECKING:
 #         ^
 #         +--- Python Schema, represented by PythonSignature and PythonArgument
 #
-#      }, /*traceable=*/true);
+#      });
 #
 #      ParsedArgs<2> parsed_args;
 #      auto _r = parser.parse(nullptr, args, kwargs, parsed_args);

@@ -54,7 +54,6 @@
 #include <ATen/Context.h>
 #include <ATen/DeviceGuard.h>
 #include <ATen/TensorUtils.h>
-#include <ATen/TracerMode.h>
 #include <ATen/core/Generator.h>
 #include <ATen/core/Reduction.h>
 #include <c10/core/SymInt.h>

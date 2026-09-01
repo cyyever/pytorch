@@ -5,7 +5,6 @@
 #include <ATen/core/operator_name.h>
 #include <c10/core/SymNodeImpl.h>
 #include <torch/csrc/jit/frontend/schema_type_parser.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/opaque_obj.h>
 #include <torch/csrc/jit/python/pybind.h>

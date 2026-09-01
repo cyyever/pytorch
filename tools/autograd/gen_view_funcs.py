@@ -130,10 +130,6 @@ def view_func_name(
     return f"{namespace}{view_func_name}"
 
 
-def is_symint_or_tensor(arg: Argument) -> bool:
-    return arg.type.is_tensor_like() or arg.type.is_symint_like()
-
-
 def remove_const_ref(binding: Binding) -> Binding:
     return Binding(
         name=binding.name,

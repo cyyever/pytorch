@@ -30,7 +30,6 @@
 #include <torch/csrc/autograd/utils/wrap_outputs.h>
 #include <torch/csrc/dynamo/compiled_autograd.h>
 #include <torch/csrc/functorch/init.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/jit/ir/ir.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/profiler/api.h>
@@ -345,18 +344,6 @@ auto PyNode::apply_with_saved_impl(
 
   // Massage the Python results tuple back into a C++ variable_list
   return to_variable_list(r.get(), is_variable_input);
-}
-
-auto PyNode::is_traceable() -> bool {
-  pybind11::gil_scoped_acquire gil;
-  THPObjectPtr forward_class{PyObject_GetAttrString(pyobj(), "_forward_cls")};
-  if (!forward_class)
-    throw_python_error();
-  THPObjectPtr traceable_py_bool{
-      PyObject_GetAttrString(forward_class, "is_traceable")};
-  if (!traceable_py_bool)
-    throw_python_error();
-  return Py_IsTrue(traceable_py_bool);
 }
 
 auto PyNode::release_variables() -> void {

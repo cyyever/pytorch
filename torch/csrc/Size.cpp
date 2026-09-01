@@ -11,28 +11,14 @@
 #include <string>
 
 #include <torch/csrc/autograd/python_variable.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 
 struct THPSize {
   PyTupleObject tuple;
 };
 
 PyObject* THPSize_New(const torch::autograd::Variable& var) {
-  if (!torch::jit::tracer::isTracing()) {
-    auto sizes = var.sizes();
-    return THPSize_NewFromSizes(var.dim(), sizes.data());
-  }
-  auto self = THPObjectPtr(THPSizeType.tp_alloc(&THPSizeType, var.dim()));
-  TORCH_CHECK_PYTHON(self);
-
-  for (const auto i : c10::irange(var.dim())) {
-    PyObject* py_size_tensor =
-        THPVariable_Wrap(torch::jit::tracer::getSizeOf(var, i));
-    TORCH_CHECK_PYTHON(py_size_tensor);
-    PyTuple_SET_ITEM(self.get(), i, py_size_tensor);
-  }
-
-  return self.release();
+  auto sizes = var.sizes();
+  return THPSize_NewFromSizes(var.dim(), sizes.data());
 }
 
 PyObject* THPSize_NewFromSizes(int64_t dim, const int64_t* sizes) {
@@ -55,34 +41,17 @@ PyObject* THPSize_NewFromSymSizes(const at::Tensor& self_) {
       // First check for actual symbolic values.
       // Reason: so that we don't replace it by its integer replacement
       // implicitly.
-      TORCH_CHECK(
-          !torch::jit::tracer::isTracing(),
-          "JIT Tracing of SymInts isn't supported");
       auto py_symint = py::cast(si).release().ptr();
       TORCH_CHECK_PYTHON(py_symint);
       PyTuple_SET_ITEM(ret.get(), i, py_symint);
     } else {
       // Otherwise, we know that it is an actual integer value.
       auto m = si.maybe_as_int();
-      if (torch::jit::tracer::isTracing()) {
-        PyObject* py_size_tensor = THPVariable_Wrap(
-            torch::jit::tracer::getSizeOf(self_, static_cast<int64_t>(i)));
-        TORCH_CHECK_PYTHON(py_size_tensor);
-        PyTuple_SET_ITEM(ret.get(), i, py_size_tensor);
-      } else {
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        PyTuple_SET_ITEM(ret.get(), i, THPUtils_packInt64(m.value()));
-      }
+      // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+      PyTuple_SET_ITEM(ret.get(), i, THPUtils_packInt64(m.value()));
     }
   }
   return ret.release();
-}
-
-static bool isTracedZeroDimVar(PyObject* item) {
-  if (!THPVariable_Check(item))
-    return false;
-  auto& var = THPVariable_Unpack(item);
-  return var.dim() == 0 && torch::jit::tracer::getValueTrace(var);
 }
 
 static PyObject* THPSize_pynew(
@@ -98,9 +67,6 @@ static PyObject* THPSize_pynew(
         continue;
       }
       if (torch::is_symint(item)) {
-        continue;
-      }
-      if (torch::jit::tracer::isTracing() && isTracedZeroDimVar(item)) {
         continue;
       }
       // item.__index__() works with 0-dim tensors and tensors with one element

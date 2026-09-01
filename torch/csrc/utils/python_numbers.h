@@ -2,7 +2,6 @@
 
 #include <c10/core/Device.h>
 #include <torch/csrc/Exceptions.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/object_ptr.h>
 #include <torch/csrc/utils/tensor_numpy.h>

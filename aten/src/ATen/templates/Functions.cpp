@@ -8,7 +8,6 @@ namespace at {
 
 Tensor TensorMaker::make_tensor() {
    AutoDispatchBelowADInplaceOrView guard{}; // TODO: Remove.
-   tracer::impl::NoTracerDispatchMode tracer_guard{};
 
    check_size_nonnegative(sizes_);
 

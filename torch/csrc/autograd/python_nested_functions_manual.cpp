@@ -19,8 +19,6 @@ static PyObject* THPVariable_nested_tensor(
   ParsedArgs<ctor_num_args> parsed_args;
   auto r = parser.parse(args, kwargs, parsed_args);
 
-  jit::tracer::warn(
-      "torch.nested.nested_tensor", jit::tracer::WARN_CONSTRUCTOR);
   return THPVariable_Wrap(torch::utils::nested_tensor_ctor(
       torch::tensors::get_default_dispatch_key(),
       torch::tensors::get_default_scalar_type(),
