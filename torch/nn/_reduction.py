@@ -1,6 +1,3 @@
-import warnings
-
-
 # NB: Keep this file in sync with enums in aten/src/ATen/core/Reduction.h
 
 
@@ -8,13 +5,6 @@ def get_enum(reduction: str) -> int:
     if reduction == "none":
         ret = 0
     elif reduction == "mean":
-        ret = 1
-    elif reduction == "elementwise_mean":
-        warnings.warn(
-            "reduction='elementwise_mean' is deprecated. "
-            "Please use reduction='mean' instead.",
-            stacklevel=2,
-        )
         ret = 1
     elif reduction == "sum":
         ret = 2
