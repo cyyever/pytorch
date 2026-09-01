@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Callable, Iterable
 from typing import Any, NamedTuple, TypeVar
 from typing import Self
@@ -300,14 +299,6 @@ def pack_padded_sequence(
         a :class:`PackedSequence` object
     """
     if not isinstance(lengths, torch.Tensor):
-        if torch._C._get_tracing_state():
-            warnings.warn(
-                "pack_padded_sequence has been called with a Python list of "
-                "sequence lengths. The tracer cannot track the data flow of Python "
-                "values, and it will treat them as constants, likely rendering "
-                "the trace incorrect for any other combination of lengths.",
-                stacklevel=2,
-            )
         lengths = torch.as_tensor(lengths, dtype=torch.int64, device="cpu")
     else:
         lengths = lengths.to(dtype=torch.int64)

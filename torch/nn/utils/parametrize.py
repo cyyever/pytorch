@@ -417,13 +417,7 @@ def _inject_property(module: Module, tensor_name: str) -> None:
         parametrization = self.parametrizations[tensor_name]
         # pyrefly: ignore [redundant-condition]
         if _cache_enabled:
-            if torch._C._get_tracing_state() is not None:
-                # Tracing
-                raise RuntimeError(
-                    "Cannot trace a model while caching parametrizations."
-                )
-            else:
-                return get_cached_parametrization(parametrization)
+            return get_cached_parametrization(parametrization)
         else:
             # If caching is not active, this function just evaluates the parametrization
             return parametrization()
