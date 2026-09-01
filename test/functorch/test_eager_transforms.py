@@ -41,10 +41,6 @@ from functorch.experimental import functionalize, replace_all_batch_norm_modules
 from torch._C import _ExcludeDispatchKeyGuard, DispatchKey, DispatchKeySet
 from torch._dynamo import allow_in_graph
 from torch._functorch.eager_transforms import _slice_argnums
-from torch._functorch.make_functional import (
-    functional_init,
-    functional_init_with_buffers,
-)
 from torch._functorch.utils import enable_single_level_autograd_function
 from torch._ops import HigherOrderOperator
 from torch._subclasses.fake_tensor import FakeTensorMode
@@ -918,9 +914,10 @@ class TestGradTransform(TestCase):
                 return x
 
         B = 10
-        weights, fn, _ = functional_init(MLPClassifier, (B,), device=device)(32, 2)
+        models = [MLPClassifier(32, 2).to(device) for _ in range(B)]
+        params, _ = stack_module_state(models)
         inputs = torch.randn(B, 7, 2, device=device)
-        vmap(fn)(weights, (inputs,))
+        vmap(lambda p, x: functional_call(models[0], p, (x,)))(params, inputs)
 
     def test_functional_init_with_buffers(self, device):
         class MLPClassifier(nn.Module):
@@ -942,11 +939,12 @@ class TestGradTransform(TestCase):
                 return x
 
         B = 10
-        weights, buffers, fn, _, _ = functional_init_with_buffers(
-            MLPClassifier, [B], device=device
-        )(32, 2)
+        models = [MLPClassifier(32, 2).to(device) for _ in range(B)]
+        params, buffers = stack_module_state(models)
         inputs = torch.randn(B, 7, 2, device=device)
-        vmap(fn)(weights, buffers, (inputs,))
+        vmap(lambda p, b, x: functional_call(models[0], (p, b), (x,)))(
+            params, buffers, inputs
+        )
 
     def test_advanced_indexing(self, device):
         def f(value):

@@ -41,7 +41,6 @@ from functorch import grad, grad_and_value, jacfwd, jvp, vjp, vmap
 from functorch.experimental import chunk_vmap
 from torch import Tensor
 from torch._C._functorch import reshape_dim_into, reshape_dim_outof
-from torch._functorch.make_functional import functional_init_with_buffers
 from torch._functorch.vmap import restore_vmap
 from torch.nn.attention import sdpa_kernel, SDPBackend
 from torch.testing._internal.autograd_function_db import autograd_function_db
@@ -5334,8 +5333,16 @@ class TestVmapOperatorsOpInfo(TestCase):
         ensemble_size = 10
         hidden_dim = 3
 
-        weights, buffers, _, _, _ = functional_init_with_buffers(BN, [ensemble_size])(
-            hidden_dim, affine=affine, track_running_stats=track_running_stats
+        models = [
+            BN(hidden_dim, affine=affine, track_running_stats=track_running_stats)
+            for _ in range(ensemble_size)
+        ]
+        params, buffer_dict = torch.func.stack_module_state(models)
+        weights = (params["weight"], params["bias"]) if affine else ()
+        buffers = (
+            (buffer_dict["running_mean"], buffer_dict["running_var"], None)
+            if track_running_stats
+            else ()
         )
 
         inputs = [torch.randn(ensemble_size, 32, hidden_dim, 16, 16, device=device)]
