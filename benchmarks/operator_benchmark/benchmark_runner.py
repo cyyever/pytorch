@@ -134,16 +134,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--use-jit",
-        "--use_jit",
-        type=benchmark_utils.str2bool,
-        nargs="?",
-        const=True,
-        default=False,
-        help="Run operators with PyTorch JIT mode",
-    )
-
-    parser.add_argument(
         "--use-compile",
         "--use_compile",
         type=benchmark_utils.str2bool,
