@@ -9,7 +9,6 @@
 #include <ATen/Parallel.h>
 #include <ATen/SparseCsrTensorUtils.h>
 #include <ATen/TensorOperators.h>
-#include <ATen/TracerMode.h>
 #include <ATen/core/Generator.h>
 #include <ATen/core/Tensor.h>
 #include <ATen/native/UnaryOps.h>
@@ -921,7 +920,6 @@ Tensor scalar_tensor(
     // perf difference. In the future when we remove the overhead of device
     // dispatch, we'll happily revert this to following:
     //   auto result = at::empty({}, options);
-    at::tracer::impl::NoTracerDispatchMode tracer_guard;
     at::AutoDispatchBelowAutograd mode;
     auto result = empty_cpu(
         {},

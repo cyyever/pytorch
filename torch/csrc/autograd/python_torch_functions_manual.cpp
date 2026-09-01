@@ -6,7 +6,6 @@
 #include <torch/csrc/autograd/python_torch_functions.h>
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/autograd/utils/wrap_outputs.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/utils/device_lazy_init.h>
 #include <torch/csrc/utils/out_types.h>
 #include <torch/csrc/utils/pybind.h>
@@ -124,7 +123,6 @@ static PyObject* THPVariable_as_tensor(
     return handle_torch_function(
         r, nullptr, args, kwargs, THPVariableFunctionsModule, "torch");
   }
-  jit::tracer::warn("torch.as_tensor", jit::tracer::WARN_CONSTRUCTOR);
   return THPVariable_Wrap(torch::utils::as_tensor(
       torch::tensors::get_default_dispatch_key(),
       torch::tensors::get_default_scalar_type(),
@@ -136,7 +134,6 @@ static PyObject* THPVariable_as_tensor(
 // declarable See: ATen/native/README.md for more context
 static PyObject* THPVariable_from_numpy(PyObject* module, PyObject* arg) {
   HANDLE_TH_ERRORS
-  jit::tracer::warn("torch.from_numpy", jit::tracer::WARN_CONSTRUCTOR);
   return THPVariable_Wrap(torch::utils::tensor_from_numpy(arg));
   END_HANDLE_TH_ERRORS
 }
@@ -175,7 +172,6 @@ static PyObject* THPVariable_nonzero(
       return handle_torch_function(                                       \
           r, nullptr, args, kwargs, THPVariableFunctionsModule, "torch"); \
     }                                                                     \
-    jit::tracer::warn("torch." #NAME, jit::tracer::WARN_CONSTRUCTOR);     \
     return THPVariable_Wrap(torch::utils::NAME##_ctor(                    \
         torch::tensors::get_default_dispatch_key(),                       \
         torch::tensors::get_default_scalar_type(),                        \
@@ -226,7 +222,6 @@ static PyObject* THPVariable_sparse_coo_tensor(
     return handle_torch_function(
         r, nullptr, args, kwargs, THPVariableFunctionsModule, "torch");
   }
-  jit::tracer::warn("torch.sparse_coo_tensor", jit::tracer::WARN_CONSTRUCTOR);
   return THPVariable_Wrap(torch::utils::sparse_coo_tensor_ctor(
       torch::tensors::get_default_dispatch_key(),
       torch::tensors::get_default_scalar_type(),
@@ -252,7 +247,6 @@ static PyObject* THPVariable_tensor(
     return handle_torch_function(
         r, nullptr, args, kwargs, THPVariableFunctionsModule, "torch");
   }
-  jit::tracer::warn("torch.tensor", jit::tracer::WARN_CONSTRUCTOR);
   return THPVariable_Wrap(torch::utils::tensor_ctor(
       torch::tensors::get_default_dispatch_key(),
       torch::tensors::get_default_scalar_type(),
@@ -268,8 +262,7 @@ static PyObject* THPVariable_get_device(
   static PythonArgParser parser(
       {
           "get_device(Tensor input)",
-      },
-      /*traceable=*/false);
+      });
 
   ParsedArgs<1> parsed_args;
   auto r = parser.parse(args, kwargs, parsed_args);
@@ -296,8 +289,7 @@ static PyObject* THPVariable__from_blob(
   static PythonArgParser parser(
       {
           "_from_blob(int64_t data, IntArrayRef sizes, IntArrayRef? strides=None, *, ScalarType? dtype=None, Device? device=None)",
-      },
-      /*traceable=*/false);
+      });
 
   ParsedArgs<5> parsed_args;
   auto r = parser.parse(args, kwargs, parsed_args);
@@ -338,8 +330,7 @@ static PyObject* THPVariable_frombuffer(
   static PythonArgParser parser(
       {
           "frombuffer(PyObject* buffer, *, ScalarType dtype, int64_t count=-1, int64_t offset=0, bool requires_grad=False)",
-      },
-      /*traceable=*/false);
+      });
 
   ParsedArgs<5> parsed_args;
   auto r = parser.parse(args, kwargs, parsed_args);
@@ -370,8 +361,7 @@ static PyObject* THPVariable_asarray(
   static PythonArgParser parser(
       {
           "asarray(PyObject* obj, *, ScalarType? dtype=None, Device? device=None, bool? copy=None, bool? requires_grad=None)",
-      },
-      /*traceable=*/false);
+      });
 
   ParsedArgs<5> parsed_args;
   auto r = parser.parse(args, kwargs, parsed_args);
@@ -510,8 +500,7 @@ static PyObject* THPVariable_numel(
   static PythonArgParser parser(
       {
           "numel(Tensor input)",
-      },
-      /*traceable=*/false);
+      });
 
   ParsedArgs<1> parsed_args;
   auto r = parser.parse(args, kwargs, parsed_args);

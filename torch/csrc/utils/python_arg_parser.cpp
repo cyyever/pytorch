@@ -12,7 +12,6 @@
 
 #include <ATen/ATen.h>
 #include <ATen/PythonTorchFunctionTLS.h>
-#include <ATen/TracerMode.h>
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <c10/util/irange.h>
 
@@ -1061,15 +1060,10 @@ static bool is_int_or_symint_list(
           continue;
         }
 
-        // NOTE: JIT tracer allows arbitrary scalar tensors to act as ints
-        // in an intlist argument. Even float or complex scalar tensors.
-        bool r =
-            (jit::tracer::isTracing() && THPVariable_Check(item_ptr) &&
-             THPVariable_Unpack(item_ptr).sizes().empty());
-        if (!r && failed_item != nullptr) {
+        if (failed_item != nullptr) {
           *failed_item = py::reinterpret_borrow<py::object>(item_ptr);
         }
-        if (!r && !has_torch_func) {
+        if (!has_torch_func) {
           return false;
         }
       }
@@ -1789,10 +1783,7 @@ bool FunctionSignature::parse(
   return true;
 }
 
-PythonArgParser::PythonArgParser(
-    const std::vector<std::string>& fmts,
-    bool traceable)
-    : traceable(traceable) {
+PythonArgParser::PythonArgParser(const std::vector<std::string>& fmts) {
   int index = 0;
   for (auto& fmt : fmts) {
     signatures_.emplace_back(fmt, index);
@@ -1847,7 +1838,6 @@ PythonArgs PythonArgParser::raw_parse(
     signature.parse(self, args, kwargs, parsed_args, overloaded_args, true);
     check_deprecated(signature);
     return PythonArgs(
-        traceable,
         skip_torch_function,
         signature,
         parsed_args,
@@ -1860,7 +1850,6 @@ PythonArgs PythonArgParser::raw_parse(
             self, args, kwargs, parsed_args, overloaded_args, false)) {
       check_deprecated(signature);
       return PythonArgs(
-          traceable,
           skip_torch_function,
           signature,
           parsed_args,
@@ -1958,7 +1947,6 @@ at::Tensor PythonArgs::tensor_slow(int i) {
             i,
             Py_TYPE(obj)->tp_name));
   }
-  at::tracer::impl::NoTracerDispatchMode tracer_guard;
 
   at::Tensor tensor = scalar_to_tensor(scalar);
   tensor.unsafeGetTensorImpl()->set_wrapped_number(true);
@@ -1973,11 +1961,6 @@ at::Tensor PythonArgs::tensor_slow(int i) {
 }
 
 at::Scalar PythonArgs::scalar_slow(int i) {
-  if (traceable && jit::tracer::isTracing() && THPVariable_Check(args[i])) {
-    auto& var = THPVariable_Unpack(args[i]);
-    jit::tracer::ArgumentStash::stashValue(
-        signature.params[i].name, idx, var, c10::NumberType::get());
-  }
 
   return scalar_slow(args[i]);
 }

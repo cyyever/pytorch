@@ -85,23 +85,21 @@ from .gen_inplace_or_view_type import (
     AUTOGRAD_NOT_IMPLEMENTED_REGISTRATION,
     gen_formals,
     get_base_name,
+    get_return_value,
     get_view_info,
     is_tensor_list_type,
     is_tensor_type,
+    MANUAL_AUTOGRAD_AND_TRACER,
+    MANUAL_BACKEND,
     METHOD_DEFINITION,
     modifies_arguments,
+    tie_return_values,
     TMP_VAR,
+    type_wrapper_name,
     unpack_args,
     unpacked_name,
     use_derived,
     WRAPPER_REGISTRATION,
-)
-from .gen_trace_type import (
-    get_return_value,
-    MANUAL_AUTOGRAD_AND_TRACER,
-    MANUAL_BACKEND,
-    tie_return_values,
-    type_wrapper_name,
 )
 
 
@@ -144,9 +142,6 @@ DONT_REQUIRE_DERIVATIVE = {
     "_sobol_engine_initialize_state_",
     # This is an unsafe method that is meant to be out of reach of autograd.
     "_coalesced_",
-    # Quantize functions should not record gradients
-    "quantize_per_tensor",
-    "quantize_per_channel",
     # Functions that return integers should not have output that require gradients
     "argmax",
     "argmin",
@@ -568,14 +563,11 @@ DONT_ENFORCE_TENSOR_IMPL_USE_COUNT = {
     # See https://github.com/pytorch/pytorch/issues/60426 for more information
     "_embedding_bag",
     "_embedding_bag_forward_only",
-    "q_per_channel_scales",
-    "q_per_channel_zero_points",
     "lu_unpack",
     "_cudnn_rnn_backward",
     # The below failed StorageImpl use_count check but we skip tensor_impl check
     # just in case
     "_cudnn_rnn",
-    "dequantize_self",
     # lift() should never actually be called with a requires_grad=True tensor,
     "lift",
     "lift_fresh",
@@ -874,15 +866,6 @@ FW_DERIVATIVE_FORBID_TEMPLATE = CodeTemplate(
 TORCH_CHECK_NOT_IMPLEMENTED(!(${cond}), "Trying to use forward AD with ${name} that does not support it ${msg}");
 """
 )
-
-FW_DERIVATIVE_FORBID_LIST_TEMPLATE = CodeTemplate(
-    """\
-for (const auto& _t: ${arg}) {
-    TORCH_CHECK_NOT_IMPLEMENTED(!(${cond}), "Trying to use forward AD with ${name} that does not support it ${msg}");
-}
-"""
-)
-
 
 def gen_variable_type(
     out: str,

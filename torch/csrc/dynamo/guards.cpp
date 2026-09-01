@@ -1282,8 +1282,7 @@ static PyObject* _empty_strided_mtia(PyObject* dummy, PyObject* args) {
 static PyObject* _reinterpret_tensor(PyObject* dummy, PyObject* args) {
   HANDLE_TH_ERRORS;
   static PythonArgParser parser(
-      {"_reinterpret_tensor(Tensor base, IntArrayRef sizes, IntArrayRef strides, int64_t offset_increment=0)"},
-      /*traceable=*/true);
+      {"_reinterpret_tensor(Tensor base, IntArrayRef sizes, IntArrayRef strides, int64_t offset_increment=0)"});
 
   ParsedArgs<4> parsed_args;
   auto r = parser.parse(args, /*kwargs=*/nullptr, parsed_args);

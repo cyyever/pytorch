@@ -34,7 +34,6 @@ bool THPUtils_checkIndex(PyObject* obj) {
   if (torch::is_symint(py::handle(obj))) {
     return true;
   }
-  torch::jit::tracer::NoWarn no_warn_guard;
   auto index = THPObjectPtr(PyNumber_Index(obj));
   if (!index) {
     PyErr_Clear();

@@ -45,7 +45,6 @@ struct PyNode : public Node {
 
   void release_variables() override;
   std::string name() const override;
-  bool is_traceable() override;
 
   bool is_aot_backward() const override;
 

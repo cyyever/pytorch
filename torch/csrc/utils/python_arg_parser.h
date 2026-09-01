@@ -56,7 +56,6 @@
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/dynamo/eval_frame.h>
-#include <torch/csrc/jit/frontend/tracer.h>
 #include <torch/csrc/tensor/python_tensor.h>
 #include <torch/csrc/utils/disable_torch_function.h>
 #include <torch/csrc/utils/object_ptr.h>
@@ -210,9 +209,7 @@ struct FunctionSignature {
 // A PythonArgParser contains a list of valid signatures. Instances are
 // typically global variables and should be immutable.
 struct PYBIND11_EXPORT PythonArgParser {
-  explicit PythonArgParser(
-      const std::vector<std::string>& fmts,
-      bool traceable = false);
+  explicit PythonArgParser(const std::vector<std::string>& fmts);
 
   // meant only for `torch` functions.
   template <int N>
@@ -248,27 +245,23 @@ struct PYBIND11_EXPORT PythonArgParser {
   std::vector<FunctionSignature> signatures_;
   std::string function_name;
   size_t max_args{0};
-  bool traceable;
 };
 
 // PythonArgs contains bound Python arguments for an actual invocation
 // along with references to the matched signature.
 struct TORCH_PYTHON_API PythonArgs {
   PythonArgs(
-      bool traceable,
       bool skip_torch_function,
       const FunctionSignature& signature,
       PyObject** args,
       std::vector<PyObject*> overloaded_args)
       : idx(signature.index),
-        traceable(traceable),
         skip_torch_function(skip_torch_function),
         signature(signature),
         args(args),
         overloaded_args(std::move(overloaded_args)) {}
 
   int idx;
-  bool traceable;
   bool skip_torch_function;
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
   const FunctionSignature& signature;
@@ -580,53 +573,39 @@ inline std::vector<c10::SymInt> PythonArgs::symintlist(int i) {
     PyObject* obj =
         tuple ? PyTuple_GET_ITEM(arg, idx) : PyList_GET_ITEM(arg, idx);
 
-    // Elements of torch.Size are tensors during tracing, and we need to
-    // record extra information before they are turned into an IntArrayRef
-    if (traceable && jit::tracer::isTracing() && THPVariable_Check(obj)) {
-      auto& var = THPVariable_Unpack(obj);
-      jit::tracer::ArgumentStash::stashIntArrayRefElem(
-          signature.params[i].name, size2, idx, var);
+    // convert tensor to scalar outside of try / catch,
+    // so that Tensor subclass exceptions will not be caught.
+    if (THPUtils_checkLongExact(obj)) {
+      // Fast path for plain numbers
       try {
-        res.emplace_back(var.item<int64_t>());
-        continue;
+        res.emplace_back(THPUtils_unpackLong(obj));
       } catch (std::exception& e) {
         throw_intlist_exception(this, i, obj, idx, e);
       }
-      continue;
+    } else if (THPVariable_Check(obj)) {
+      auto& var = THPVariable_Unpack(obj);
+      if (var.numel() != 1 ||
+          !at::isIntegralType(
+              var.dtype().toScalarType(), /*include_bool*/ true)) {
+        throw_intlist_exception(this, i, obj, idx);
+      }
+      auto scalar = var.item();
+      TORCH_CHECK(scalar.isIntegral(/*include bool*/ false));
+      res.push_back(scalar.toSymInt());
     } else {
-      // convert tensor to scalar outside of try / catch,
-      // so that Tensor subclass exceptions will not be caught.
-      if (THPUtils_checkLongExact(obj)) {
-        // Fast path for plain numbers
-        try {
-          res.emplace_back(THPUtils_unpackLong(obj));
-        } catch (std::exception& e) {
-          throw_intlist_exception(this, i, obj, idx, e);
+      try {
+        if (is_symint(py::handle(obj))) {
+          res.push_back(py::handle(obj).cast<c10::SymInt>());
+        } else if (is_dynint(py::handle(obj))) {
+          res.emplace_back(py::handle(obj).cast<int>());
+        } else {
+          res.emplace_back(THPUtils_unpackIndex(obj));
         }
-      } else if (THPVariable_Check(obj)) {
-        auto& var = THPVariable_Unpack(obj);
-        if (var.numel() != 1 ||
-            !at::isIntegralType(
-                var.dtype().toScalarType(), /*include_bool*/ true)) {
-          throw_intlist_exception(this, i, obj, idx);
-        }
-        auto scalar = var.item();
-        TORCH_CHECK(scalar.isIntegral(/*include bool*/ false));
-        res.push_back(scalar.toSymInt());
-      } else {
-        try {
-          if (is_symint(py::handle(obj))) {
-            res.push_back(py::handle(obj).cast<c10::SymInt>());
-          } else if (is_dynint(py::handle(obj))) {
-            res.emplace_back(py::handle(obj).cast<int>());
-          } else {
-            res.emplace_back(THPUtils_unpackIndex(obj));
-          }
-        } catch (std::exception& e) {
-          throw_intlist_exception(this, i, obj, idx, e);
-        }
+      } catch (std::exception& e) {
+        throw_intlist_exception(this, i, obj, idx, e);
       }
     }
+
   }
 
   return res;
@@ -663,49 +642,36 @@ inline std::vector<int64_t> PythonArgs::intlistWithDefault(
   for (const auto idx : c10::irange(size2)) {
     PyObject* obj =
         tuple ? PyTuple_GET_ITEM(arg, idx) : PyList_GET_ITEM(arg, idx);
-    // Elements of torch.Size are tensors during tracing, and we need to
-    // record extra information before they are turned into an IntArrayRef
-    if (traceable && jit::tracer::isTracing() && THPVariable_Check(obj)) {
-      auto& var = THPVariable_Unpack(obj);
-      jit::tracer::ArgumentStash::stashIntArrayRefElem(
-          signature.params[i].name, size2, idx, var);
+    // convert tensor to scalar outside of try / catch,
+    // so that Tensor subclass exceptions will not be caught.
+    if (THPUtils_checkLongExact(obj)) {
+      // Fast path for plain numbers
       try {
-        res[idx] = var.item<int64_t>();
-        continue;
+        res[idx] = THPUtils_unpackLong(obj);
       } catch (std::exception& e) {
         throw_intlist_exception(this, i, obj, idx, e);
       }
+    } else if (torch::is_symint(py::handle(obj))) {
+      res[idx] = py::cast<c10::SymInt>(py::handle(obj))
+                     .guard_int(__FILE__, __LINE__);
+    } else if (torch::is_dynint(py::handle(obj))) {
+      res[idx] = py::handle(obj).cast<int>();
+    } else if (THPVariable_Check(obj)) {
+      auto& var = THPVariable_Unpack(obj);
+      if (var.numel() != 1 ||
+          !at::isIntegralType(
+              var.dtype().toScalarType(), /*include_bool*/ true)) {
+        throw_intlist_exception(this, i, obj, idx);
+      }
+      res[idx] = var.item<int64_t>();
     } else {
-      // convert tensor to scalar outside of try / catch,
-      // so that Tensor subclass exceptions will not be caught.
-      if (THPUtils_checkLongExact(obj)) {
-        // Fast path for plain numbers
-        try {
-          res[idx] = THPUtils_unpackLong(obj);
-        } catch (std::exception& e) {
-          throw_intlist_exception(this, i, obj, idx, e);
-        }
-      } else if (torch::is_symint(py::handle(obj))) {
-        res[idx] = py::cast<c10::SymInt>(py::handle(obj))
-                       .guard_int(__FILE__, __LINE__);
-      } else if (torch::is_dynint(py::handle(obj))) {
-        res[idx] = py::handle(obj).cast<int>();
-      } else if (THPVariable_Check(obj)) {
-        auto& var = THPVariable_Unpack(obj);
-        if (var.numel() != 1 ||
-            !at::isIntegralType(
-                var.dtype().toScalarType(), /*include_bool*/ true)) {
-          throw_intlist_exception(this, i, obj, idx);
-        }
-        res[idx] = var.item<int64_t>();
-      } else {
-        try {
-          res[idx] = THPUtils_unpackIndex(obj);
-        } catch (std::exception& e) {
-          throw_intlist_exception(this, i, obj, idx, e);
-        }
+      try {
+        res[idx] = THPUtils_unpackIndex(obj);
+      } catch (std::exception& e) {
+        throw_intlist_exception(this, i, obj, idx, e);
       }
     }
+
   }
   return res;
 }
@@ -961,11 +927,6 @@ inline std::optional<std::string_view> PythonArgs::stringViewOptional(int i) {
 inline int64_t PythonArgs::toInt64(int i) {
   if (!args[i])
     return signature.params[i].default_int;
-  if (traceable && jit::tracer::isTracing() && THPVariable_Check(args[i])) {
-    auto& var = THPVariable_Unpack(args[i]);
-    jit::tracer::ArgumentStash::stashValue(
-        signature.params[i].name, idx, var, c10::IntType::get());
-  }
   if (torch::is_symint(py::handle(args[i]))) {
     return py::cast<c10::SymInt>(py::handle(args[i]))
         .guard_int(__FILE__, __LINE__);
@@ -981,11 +942,6 @@ inline c10::SymInt PythonArgs::toSymInt(int i) {
     return c10::SymInt(signature.params[i].default_int);
   }
 
-  if (traceable && jit::tracer::isTracing() && THPVariable_Check(args[i])) {
-    auto& var = THPVariable_Unpack(args[i]);
-    jit::tracer::ArgumentStash::stashValue(
-        signature.params[i].name, idx, var, c10::IntType::get());
-  }
 
   return py::cast<c10::SymInt>(py::handle(args[i]));
 }
@@ -993,11 +949,6 @@ inline c10::SymInt PythonArgs::toSymInt(int i) {
 inline c10::SymBool PythonArgs::toSymBool(int i) {
   if (!args[i]) {
     return c10::SymBool(signature.params[i].default_bool);
-  }
-  if (traceable && jit::tracer::isTracing() && THPVariable_Check(args[i])) {
-    auto& var = THPVariable_Unpack(args[i]);
-    jit::tracer::ArgumentStash::stashValue(
-        signature.params[i].name, idx, var, c10::BoolType::get());
   }
 
   return py::cast<c10::SymBool>(py::handle(args[i]));
