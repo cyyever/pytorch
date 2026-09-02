@@ -1044,7 +1044,8 @@ struct ExpandableSegment {
   size_t max_handles_;
   struct Handle {
     CUmemGenericAllocationHandle handle;
-    std::optional<std::variant<int, CUmemFabricHandle>> shareable_handle;
+    std::optional<std::variant<int, CUmemFabricHandle>> shareable_handle =
+        std::nullopt;
     // False for handles imported via fromShared but not yet cuMemMap'd, so
     // unmapHandles can skip cuMemUnmap on ranges that were never mapped.
     bool mapped = false;
