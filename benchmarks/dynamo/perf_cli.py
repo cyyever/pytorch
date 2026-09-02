@@ -48,10 +48,6 @@ WORKFLOWS = {
         "name": "inductor-perf-b200",
         "id": 173716622,
     },
-    "rocm-mi300": {
-        "name": "inductor-perf-nightly-rocm-mi300",
-        "id": 197925166,
-    },
     "rocm-mi350": {
         "name": "inductor-perf-nightly-rocm-mi350",
         "id": 197925165,
@@ -1583,7 +1579,7 @@ Examples:
   python benchmarks/dynamo/perf_cli.py launch --dynamic
 
   # Launch on ROCm MI300
-  python benchmarks/dynamo/perf_cli.py launch --device rocm-mi300
+  python benchmarks/dynamo/perf_cli.py launch --device rocm-mi350
 
   # Check your branch against latest main nightly
   python benchmarks/dynamo/perf_cli.py summary my-feature-branch

@@ -69,18 +69,6 @@ CUDA_BUILD_ENV_DEFAULTS: dict[str, str] = {
 # validate_runtime_release_table_consistency() in
 # .github/scripts/generate_binary_build_matrix.py.
 TORCH_CUDA_ARCH_LIST_TABLE: dict[str, dict[str, set[int]]] = {
-    "12.6": {
-        "x86_64": {50, 60, 70, 75, 80, 86, 90},
-        "aarch64": {80, 90},
-    },
-    "13.0": {
-        "x86_64": {75, 80, 86, 90, 100, 120},
-        "aarch64": {80, 90, 100, 110, 120},
-    },
-    "13.2": {
-        "x86_64": {75, 80, 86, 90, 100, 120},
-        "aarch64": {80, 90, 100, 110, 120},
-    },
     "13.4": {
         "x86_64": {75, 80, 86, 90, 100, 120},
         "aarch64": {80, 90, 100, 110, 120},

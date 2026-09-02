@@ -25,27 +25,16 @@ bool is_cuda_caching_allocator_tensor(const Tensor& self) {
 
 template <typename scalar_t>
 void _local_scalar_dense_cuda_impl(const Tensor& self, Scalar& r) {
-#if defined(USE_ROCM) && (ROCM_VERSION >= 70200)
+#if defined(USE_ROCM)
   // If this is a large BAR device, we can just read directly from VRAM
   if (
       at::cuda::getCurrentDeviceProperties()->isLargeBar &&
       is_cuda_caching_allocator_tensor(self)) {
     cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-#if ROCM_VERSION < 71400
-    hipStreamCaptureStatus captureStatus;
-    C10_CUDA_CHECK(hipStreamGetCaptureInfo(stream, &captureStatus, nullptr));
-    if (C10_LIKELY(captureStatus == hipStreamCaptureStatusNone)) {
-      at::cuda::stream_synchronize(stream);
-      r = Scalar(*self.template const_data_ptr<scalar_t>());
-    } else {
-      C10_CUDA_CHECK(hipErrorStreamCaptureUnsupported);
-    }
-#else // ROCM_VERSION
-    // HIP reports the errors during graph capture in ROCm 7.14+
-    // no StreamCaptureStatus check required
+    // HIP reports the errors during graph capture, no StreamCaptureStatus
+    // check required
     at::cuda::stream_synchronize(stream);
     r = Scalar(*self.template const_data_ptr<scalar_t>());
-#endif // ROCM_VERSION
     return;
   }
 #endif

@@ -43,17 +43,9 @@ self-hosted-runner:
     # Organization-wide AMD-hosted runners
     # MI2xx runners
     - linux.rocm.gpu
-    - linux.rocm.gpu.mi250
-    - linux.rocm.gpu.mi250.1
-    - linux.rocm.gpu.mi250.4
     - linux.rocm.gpu.2
     - linux.rocm.gpu.4
-    - linux.rocm.gpu.mi210.1
-    - linux.rocm.gpu.mi210.2
     - linux.rocm.mi210.docker-cache
-    # gfx942 runners
-    - linux.rocm.gpu.mi300.1
-    - linux.rocm.gpu.mi300.4
     # gfx950 runners
     - linux.rocm.gpu.gfx950.1
     - linux.rocm.gpu.gfx950.4

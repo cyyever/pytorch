@@ -12,9 +12,9 @@
 namespace c10d::cuda::detail {
 
 __device__ void nanosleep(int64_t ns) {
-  // This is a noop on pre-CUDA-7.0 and ROCm devices and effectively falls back
-  // to a spinlock. This only can sleep for a max of 1ms on CUDA devices.
-#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 700)
+  // This is a noop on ROCm devices and effectively falls back to a spinlock.
+  // This only can sleep for a max of 1ms on CUDA devices.
+#if defined(__CUDA_ARCH__) && !defined(USE_ROCM)
   __nanosleep(ns);
 #endif
 }
@@ -39,7 +39,7 @@ __device__ int32_t load_cpu_int32(int32_t* ptr) {
 }
 
 __device__ void store_cpu_int32(int32_t* ptr, int32_t val) {
-#if defined(USE_ROCM) || (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 700))
+#if defined(USE_ROCM)
   // WARNING: this value may be cached without .release
   *ptr = val;
 #else

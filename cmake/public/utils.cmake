@@ -327,6 +327,18 @@ macro(torch_cuda_get_nvcc_gencode_flag store_var)
     endif()
   endif()
 
+  # CUDA 13 dropped offline compilation for everything below sm_75, so anything
+  # older cannot be built even if it is asked for.
+  foreach(_torch_arch ${TORCH_CUDA_ARCH_LIST})
+    if(_torch_arch MATCHES "^([0-9]+\\.[0-9]+)")
+      if(CMAKE_MATCH_1 VERSION_LESS 7.5)
+        message(FATAL_ERROR
+            "PyTorch needs compute capability 7.5 or above, but TORCH_CUDA_ARCH_LIST "
+            "contains ${_torch_arch}.")
+      endif()
+    endif()
+  endforeach()
+
   # Invoke cuda_select_nvcc_arch_flags from proper cmake FindCUDA.
   cuda_select_nvcc_arch_flags(${store_var} ${TORCH_CUDA_ARCH_LIST})
 endmacro()

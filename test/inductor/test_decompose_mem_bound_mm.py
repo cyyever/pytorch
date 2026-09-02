@@ -13,7 +13,6 @@ from torch.testing import FileCheck
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
     IS_LINUX,
-    is_navi3_arch,
     parametrize,
     patch_test_members,
 )
@@ -225,12 +224,10 @@ class TestDecomposeMemMM(TestCase):
         )
         counters.clear()
 
-    # We have to increase tolerance for navi3 because all fp16, bf16
-    # GEMMs operations have an accuracy issue caused by hardware limitation
     @patch_test_members(
         {
-            "atol": 2e-3 if is_navi3_arch() else 1e-3,
-            "rtol": 2e-3 if is_navi3_arch() else 1e-3,
+            "atol": 1e-3,
+            "rtol": 1e-3,
         }
     )
     @parametrize(
@@ -341,12 +338,10 @@ class TestDecomposeMemMM(TestCase):
         )
         counters.clear()
 
-    # We have to increase tolerance for navi3 because all fp16, bf16
-    # GEMMs operations have an accuracy issue caused by hardware limitation
     @patch_test_members(
         {
-            "atol": 8e-3 if is_navi3_arch() else 1e-3,
-            "rtol": 8e-3 if is_navi3_arch() else 1e-3,
+            "atol": 1e-3,
+            "rtol": 1e-3,
         }
     )
     @parametrize(

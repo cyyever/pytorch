@@ -1090,16 +1090,6 @@ def helper(x):
                 torch.float8_e5m2fnuz, triton_backend="cuda", triton_arch=100
             )
         )
-        self.assertTrue(
-            is_triton_fp8_dtype_supported(
-                torch.float8_e4m3fnuz, triton_backend="hip", triton_arch="gfx942"
-            )
-        )
-        self.assertTrue(
-            is_triton_fp8_dtype_supported(
-                torch.float8_e5m2fnuz, triton_backend="hip", triton_arch="gfx942"
-            )
-        )
 
     def test_signature_of_float8_e4m3fn_uses_uint8_on_pre_sm89_cuda_inputs(self):
         class FakeGraph:

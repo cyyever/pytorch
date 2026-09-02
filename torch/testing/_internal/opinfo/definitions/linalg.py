@@ -12,7 +12,7 @@ from numpy import inf
 
 import torch
 from torch.testing import make_tensor
-from torch.testing._internal.common_cuda import ROCM_VERSION, with_tf32_off
+from torch.testing._internal.common_cuda import with_tf32_off
 from torch.testing._internal.common_device_type import (
     has_cusolver,
     skipCPUIfNoLapack,
@@ -1379,11 +1379,6 @@ op_db: list[OpInfo] = [
             ),
             # Exception: The operator 'aten::linalg_eig' is not currently implemented for the MPS device
             DecorateInfo(unittest.expectedFailure, "TestCommon", device_type="mps"),
-            # hipSOLVER xgeev requires ROCm >= 7.14
-            DecorateInfo(
-                unittest.skip("hipSOLVER xgeev requires ROCm >= 7.14"),
-                active_if=TEST_WITH_ROCM and ROCM_VERSION < (7, 14),
-            ),
         ),
         decorators=[
             skipCUDAIfNoLinalgsolver,
@@ -1427,11 +1422,6 @@ op_db: list[OpInfo] = [
             ),
             # Exception: The operator 'aten::linalg_eig' is not currently implemented for the MPS device
             DecorateInfo(unittest.expectedFailure, "TestCommon", device_type="mps"),
-            # hipSOLVER xgeev requires ROCm >= 7.14
-            DecorateInfo(
-                unittest.skip("hipSOLVER xgeev requires ROCm >= 7.14"),
-                active_if=TEST_WITH_ROCM and ROCM_VERSION < (7, 14),
-            ),
         ),
     ),
     OpInfo(
@@ -1624,11 +1614,6 @@ op_db: list[OpInfo] = [
         skips=(
             # NotImplementedError: The operator 'aten::linalg_ldl_factor_ex.out' is not currently implemented for the MPS device
             DecorateInfo(unittest.expectedFailure, "TestCommon", device_type="mps"),
-            # hipSOLVER ldl_solve uses DnXsytrs, which requires ROCm >= 7.14.
-            DecorateInfo(
-                unittest.skip("hipSOLVER DnXsytrs requires ROCm >= 7.14"),
-                active_if=TEST_WITH_ROCM and ROCM_VERSION < (7, 14),
-            ),
         ),
     ),
     OpInfo(

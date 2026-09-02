@@ -160,10 +160,8 @@ ProcessGroupNCCL::RedOpRAII::~RedOpRAII() {
 size_t ProcessGroupNCCL::wordSize(ncclDataType_t type) const {
   switch (type) {
     case ncclChar:
-#if NCCL_MAJOR >= 2
     // case ncclInt8:
     case ncclUint8:
-#endif
 #ifdef NCCL_SUPPORTS_FP8
     case ncclFloat8e4m3:
     case ncclFloat8e5m2:
@@ -175,11 +173,9 @@ size_t ProcessGroupNCCL::wordSize(ncclDataType_t type) const {
       return 2;
     case ncclInt:
     case ncclFloat:
-#if NCCL_MAJOR >= 2
     // case ncclInt32:
     case ncclUint32:
       // case ncclFloat32:
-#endif
       return 4;
     case ncclInt64:
     case ncclUint64:

@@ -22,7 +22,7 @@
 #include <hip/hip_runtime_api.h>
 #endif
 
-#if defined(CUDART_VERSION) && CUDART_VERSION >= 12030
+#if !defined(USE_ROCM)
 #define CUDART_SUPPORTS_MULTICAST
 #endif
 
@@ -963,11 +963,7 @@ c10::intrusive_ptr<CUDAPeerAllocInfo> make_peer_alloc_info(
 #elif defined(USE_ROCM)
     C10_CUDA_CHECK(hipMemImportFromShareableHandle(
         &handles[r],
-#if ROCM_VERSION >= 70100
         reinterpret_cast<void*>(static_cast<uintptr_t>(imported_handles[r])),
-#else
-        (void*)(uintptr_t)&(imported_handles[r]),
-#endif
         hipMemHandleTypePosixFileDescriptor));
 #else
     TORCH_CHECK(

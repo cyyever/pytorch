@@ -2031,11 +2031,11 @@ class TestE8M0ToFloat(TestCase):
 
 
 class TestCvtE8M0RceilGating(TestCase):
-    def test_nvidia_sm100_gate_excludes_rocm_gfx1101(self):
+    def test_nvidia_sm100_gate_excludes_rocm_gfx1151(self):
         with (
             mock.patch.object(torch.cuda, "is_available", return_value=True),
             mock.patch.object(
-                torch.cuda, "get_device_capability", return_value=(11, 0)
+                torch.cuda, "get_device_capability", return_value=(11, 5)
             ),
             mock.patch.object(torch.version, "hip", "7.2.26015"),
         ):

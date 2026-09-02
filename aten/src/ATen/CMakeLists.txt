@@ -404,18 +404,16 @@ IF(USE_MSLK)
     # Add MSLK include directories for gemm_torch.h
     list(APPEND ATen_CUDA_INCLUDE ${MSLK_INCLUDE})
   elseif(USE_ROCM)
-    # MSLK only supports gfx942/gfx950. Auto-disable when none of those archs
-    # are in PYTORCH_ROCM_ARCH; otherwise the mslk target ends up with an empty
+    # MSLK only supports gfx950. Auto-disable when that arch is not in
+    # PYTORCH_ROCM_ARCH; otherwise the mslk target ends up with an empty
     # HIP_ARCHITECTURES and CMake errors out.
     set(_mslk_hip_arches "")
-    foreach(ARCH gfx942 gfx950)
-      if(${ARCH} IN_LIST PYTORCH_ROCM_ARCH)
-        list(APPEND _mslk_hip_arches ${ARCH})
-      endif()
-    endforeach()
+    if("gfx950" IN_LIST PYTORCH_ROCM_ARCH)
+      set(_mslk_hip_arches "gfx950")
+    endif()
   endif()
   if(USE_MSLK AND USE_ROCM AND _mslk_hip_arches STREQUAL "")
-    message(STATUS "USE_MSLK disabled: PYTORCH_ROCM_ARCH (${PYTORCH_ROCM_ARCH}) has no MI3xx arch (gfx942/gfx950)")
+    message(STATUS "USE_MSLK disabled: PYTORCH_ROCM_ARCH (${PYTORCH_ROCM_ARCH}) does not contain gfx950")
     caffe2_update_option(USE_MSLK OFF)
   endif()
   if(USE_MSLK AND USE_ROCM)
@@ -726,17 +724,10 @@ if(USE_CUDA AND NOT USE_ROCM)
   list(APPEND ATen_CUDA_SYSTEM_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/cutlass/tools/util/include)
 
   if($ENV{ATEN_STATIC_CUDA})
-    if(CUDA_VERSION VERSION_LESS_EQUAL 12.9)
-      list(APPEND ATen_CUDA_DEPENDENCY_LIBS
-          ${CUDA_LIBRARIES}
-          CUDA::cusparse_static
-          CUDA::cufft_static_nocallback)
-    else()
-      list(APPEND ATen_CUDA_DEPENDENCY_LIBS
-          ${CUDA_LIBRARIES}
-          CUDA::cusparse_static
-          CUDA::cufft_static)
-    endif()
+    list(APPEND ATen_CUDA_DEPENDENCY_LIBS
+        ${CUDA_LIBRARIES}
+        CUDA::cusparse_static
+        CUDA::cufft_static)
 
    if(NOT BUILD_LAZY_CUDA_LINALG)
      list(APPEND ATen_CUDA_DEPENDENCY_LIBS

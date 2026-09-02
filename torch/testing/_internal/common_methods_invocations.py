@@ -16636,7 +16636,7 @@ op_db: list[OpInfo] = [
         'torch._scaled_mm_v2',
         sample_inputs_func=sample_inputs_scaled_mm_v2,
         dtypes=float8_types(),
-        # Deliberately e4m3fn even on gfx942 (native fnuz): this dtype only
+        # Deliberately e4m3fn: this dtype only
         # names the generated test id, which must stay stable across archs for
         # the disable-test bot and flaky-test aggregator. Sample inputs ignore
         # it and use e4m3_type / e5m2_type instead.
@@ -16668,7 +16668,7 @@ op_db: list[OpInfo] = [
         'torch._scaled_mm',
         sample_inputs_func=sample_inputs_scaled_mm,
         dtypes=float8_types(),
-        # Deliberately e4m3fn even on gfx942 (native fnuz); see _scaled_mm_v2.
+        # Deliberately e4m3fn; see _scaled_mm_v2.
         dtypesIfCUDA=empty_types() + (torch.float8_e4m3fn,),
         supports_out=True,
         supports_forward_ad=False,

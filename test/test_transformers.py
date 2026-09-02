@@ -2872,7 +2872,7 @@ class TestSDPACudaOnly(NNTestCase):
         Summary:
             Math: always supported
             FlashAttention: Supported on sm80 or newer hardware
-            MemEfficientAttention: Supported on sm50 or newer hardware
+            MemEfficientAttention: Supported on sm75 or newer hardware
     """
     _do_cuda_memory_leak_check = True
     _do_cuda_non_default_stream = True
@@ -5262,7 +5262,7 @@ class TestSDPACudaOnly(NNTestCase):
                 fudge_factors['grad_key'] = 70.0
             if seq_len_k >= 2048:
                 fudge_factors['grad_key'] = 160.0
-                fudge_factors['grad_query'] = 670.0  # gfx90a
+                fudge_factors['grad_query'] = 670.0
             if dtype == torch.float32:
                 fudge_factors['grad_key'] = 90.0
                 if "gfx95" in torch.cuda.get_device_properties(0).gcnArchName:

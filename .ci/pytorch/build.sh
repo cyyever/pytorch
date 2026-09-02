@@ -13,7 +13,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/common-build.sh"
 if [[ "$BUILD_ENVIRONMENT" == *rocm* ]]; then
   # shellcheck source=./rocm_utils.sh
   source "$(dirname "${BASH_SOURCE[0]}")/rocm_utils.sh"
-  export PYTORCH_ROCM_ARCH="${PYTORCH_ROCM_ARCH};gfx1033"
 
   if command -v sccache >/dev/null; then
     SCCACHE_PATH="$(command -v sccache)"
@@ -100,9 +99,9 @@ if [[ "$BUILD_ENVIRONMENT" == *rocm* ]]; then
   fi
 
   if [[ -n "$CI" && -z "$PYTORCH_ROCM_ARCH" ]]; then
-      # Set ROCM_ARCH to gfx906 for CI builds, if user doesn't override.
-      echo "Limiting PYTORCH_ROCM_ARCH to gfx906 for CI builds"
-      export PYTORCH_ROCM_ARCH="gfx906"
+      # Set ROCM_ARCH to gfx950 for CI builds, if user doesn't override.
+      echo "Limiting PYTORCH_ROCM_ARCH to gfx950 for CI builds"
+      export PYTORCH_ROCM_ARCH="gfx950"
   fi
 
   # hipify sources

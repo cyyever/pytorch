@@ -34,9 +34,7 @@ bool has_aligned_varlen_layout(const Tensor& tensor) {
 
 } // namespace at::native
 
-#if defined(USE_ROCM) || !AT_CUDNN_ENABLED() || !defined(CUDNN_VERSION) || \
-    !defined(CUDNN_FRONTEND_VERSION) ||                                    \
-    (defined(CUDNN_FRONTEND_VERSION) && CUDNN_FRONTEND_VERSION < 10100)
+#if defined(USE_ROCM) || !AT_CUDNN_ENABLED() || !defined(CUDNN_VERSION)
 namespace at {
 namespace native {
 
@@ -152,7 +150,7 @@ void run_cudnn_SDP_bprop_nestedtensor(
 } // namespace native
 } // namespace at
 
-#else // AT_CUDNN_ENABLED && CUDNN_FRONTEND_VERSION >= 10100
+#else // AT_CUDNN_ENABLED
 #include <cudnn_frontend.h>
 
 #include <ATen/native/cudnn/MHA.h>
@@ -171,11 +169,7 @@ void run_cudnn_SDP_bprop_nestedtensor(
 #include <cstdint>
 #include <iostream>
 
-#if CUDNN_FRONTEND_VERSION >= 12500 && CUDNN_VERSION >= 92400
 #define AT_CUDNN_HAS_CUMULATIVE_SEQUENCE_LENGTHS 1
-#else
-#define AT_CUDNN_HAS_CUMULATIVE_SEQUENCE_LENGTHS 0
-#endif
 
 namespace at::native {
 
@@ -713,11 +707,7 @@ std::unique_ptr<fe::graph::Graph> build_graph(
   auto scaled_dot_product_flash_attention_options =
       fe::graph::SDPA_attributes()
           .set_name("CUDNN_SDPA")
-#if CUDNN_FRONTEND_VERSION <= 11200
-          .set_is_inference(!return_softmaxstats)
-#else
           .set_generate_stats(return_softmaxstats)
-#endif
           .set_causal_mask(is_causal)
           .set_attn_scale(attn_scale);
   if (use_ragged_in_dense(q, k, v, o, attn_bias.has_value())) {
@@ -935,11 +925,7 @@ std::unique_ptr<fe::graph::Graph> build_graph_nestedtensor(
   auto scaled_dot_product_flash_attention_options =
       fe::graph::SDPA_attributes()
           .set_name("CUDNN_SDPA_NESTEDTENSOR")
-#if CUDNN_FRONTEND_VERSION <= 11200
-          .set_is_inference(!return_softmaxstats)
-#else
           .set_generate_stats(return_softmaxstats)
-#endif
           .set_causal_mask(is_causal)
           .set_attn_scale(attn_scale)
           .set_padding_mask(true);
@@ -1936,27 +1922,11 @@ void run_cudnn_SDP_bprop(
   }
 
   Tensor dO_ = dO;
-// cuDNN < 9.5.1 assumes gradOutput has same strides as Output
-#if defined(CUDNN_VERSION) && CUDNN_VERSION < 90501
-  if (!same_strides(o, dO)) {
-    TORCH_WARN_ONCE(
-        "cuDNN SDPA backward got grad_output.strides() != output.strides(), "
-        "attempting to materialize a grad_output with matching strides."
-        "Consider upgrading cuDNN v9.5.1+ to avoid this warning.");
-    permute_to_matching_layout(o, dO_);
-  }
-  TORCH_INTERNAL_ASSERT(
-      same_strides(o, dO_),
-      "cuDNN SDPA expected grad_output.strides() == output.strides(), "
-      "the previous step probably failed to materialize a grad_output "
-      "with matching strides...");
-#else
   const auto innermost_dO_stride = dO.strides()[dO.strides().size() - 1];
   if (innermost_dO_stride != 1 ||
       use_ragged_in_dense(q, k, v, o, attn_bias.has_value())) {
     permute_to_matching_layout(o, dO_);
   }
-#endif
   if (use_ragged_in_dense(q, k, v, o, attn_bias.has_value())) {
     seqlen_q = at::full({b, 1, 1, 1}, s_q, q.options().dtype(kInt));
     seqlen_kv = at::full({b, 1, 1, 1}, s_kv, q.options().dtype(kInt));

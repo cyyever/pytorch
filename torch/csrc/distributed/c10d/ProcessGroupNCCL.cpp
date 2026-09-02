@@ -203,65 +203,6 @@ std::string getExceptionMsgFromExceptionPtr(
   }
 }
 
-#if defined(USE_ROCM) && ROCM_VERSION < 70201
-// Indicates that we're in the watchdog's event-query phase. This allows ROCm
-// workaround behavior to be applied only to watchdog-side queries, while
-// preserving existing behavior for user/main-thread `WorkNCCL::isCompleted()`
-// and `wait()` calls.
-thread_local bool g_in_rocm_watchdog_event_query_context = false;
-
-struct RocmWatchdogEventQueryContextGuard {
-  RocmWatchdogEventQueryContextGuard()
-      : previous_(g_in_rocm_watchdog_event_query_context) {
-    g_in_rocm_watchdog_event_query_context = true;
-  }
-  ~RocmWatchdogEventQueryContextGuard() {
-    g_in_rocm_watchdog_event_query_context = previous_;
-  }
-
- private:
-  bool previous_;
-};
-#endif // defined(USE_ROCM) && ROCM_VERSION < 70201
-
-#if defined(USE_ROCM) && ROCM_VERSION < 70201
-// Watchdog-side cudaEventQuery workaround for HIP runtimes without the
-// capture-mode fix.
-// TODO: Remove once all supported runtimes include
-// https://github.com/ROCm/rocm-systems/pull/3176
-bool queryEventWithRocmWatchdogCaptureWorkaround(
-    const std::shared_ptr<at::cuda::CUDAEvent>& event) {
-  if (!event->isCreated()) {
-    return true;
-  }
-
-  // Must unconditionally return false here during watchdog + active capture:
-  // on affected HIP runtimes, even calling cudaEventQuery from the watchdog
-  // thread while another thread has GLOBAL capture active can invalidate that
-  // capture and cause downstream failures. Skip the query entirely and report
-  // "not complete yet"; the watchdog will re-poll once capture ends. Timeout
-  // enforcement is also deferred during this window (see the
-  // is_graph_capture_active() gate in the watchdog loop).
-  if (g_in_rocm_watchdog_event_query_context &&
-      at::cuda::is_graph_capture_active()) {
-    return false;
-  }
-
-  const cudaError_t err =
-      C10_CUDA_ERROR_HANDLED(cudaEventQuery(event->event()));
-  if (err == cudaSuccess) {
-    return true;
-  } else if (err != cudaErrorNotReady) {
-    C10_CUDA_CHECK(err);
-  } else {
-    // ignore and clear the error if not ready
-    (void)cudaGetLastError();
-  }
-
-  return false;
-}
-#endif // defined(USE_ROCM) && ROCM_VERSION < 70201
-
 inline void errorIfCapturingNonCapturableNCCL(c10::cuda::CaptureStatus status) {
   // parentheses avoid some compiler warnings
   static const uint64_t min_version =
@@ -687,11 +628,7 @@ bool ProcessGroupNCCL::WorkNCCL::startedGPUExecutionInternal() const {
     return false;
   }
   // Checking the work's corresponding CUDA event's status
-#if defined(USE_ROCM) && ROCM_VERSION < 70201
-  if (!queryEventWithRocmWatchdogCaptureWorkaround(ncclStartEvent_)) {
-#else
   if (!ncclStartEvent_->query()) {
-#endif
     return false;
   }
   return true;
@@ -704,11 +641,7 @@ bool ProcessGroupNCCL::WorkNCCL::finishedGPUExecutionInternal() const {
   // hang if another thread is holding the CUDA global context lock. For
   // example, when doing a `cudaDeviceSynchronize` or even
   // `cudaStreamSynchronize`.
-#if defined(USE_ROCM) && ROCM_VERSION < 70201
-  if (!queryEventWithRocmWatchdogCaptureWorkaround(ncclEndEvent_)) {
-#else
   if (!ncclEndEvent_->query()) {
-#endif
     return false;
   }
   return true;
@@ -2357,19 +2290,7 @@ void ProcessGroupNCCL::Watchdog::runLoop() {
       // Skip if work has encountered an error.
 
       bool timedout = false;
-#if defined(USE_ROCM) && ROCM_VERSION < 70201
-      // On ROCm, watchdog event queries may be intentionally skipped during
-      // active graph capture to avoid HIP runtime capture invalidation.
-      // In that window, timeout checks can report false positives for
-      // otherwise-complete work, so we defer timeout enforcement.
-      // TODO: Remove once all supported HIP runtimes include:
-      // https://github.com/ROCm/rocm-systems/pull/3176
-      if (!at::cuda::is_graph_capture_active()) {
-        timedout = !work.exception() && work.checkTimeout();
-      }
-#else
       timedout = !work.exception() && work.checkTimeout();
-#endif
 
       // Report desync state in case of timeout (if TORCH_NCCL_DESYNC_DEBUG is
       // turned on; otherwise, run() is no-op)
@@ -2439,11 +2360,6 @@ void ProcessGroupNCCL::Watchdog::runLoop() {
       // allow watchdog to do an event query on a side thread
       at::cuda::CUDAGuard device_guard(work.ncclEndEvent_->device_index());
       at::cuda::CUDAStreamCaptureModeGuard g{cudaStreamCaptureModeThreadLocal};
-#if defined(USE_ROCM) && ROCM_VERSION < 70201
-      // Mark this thread/scope as watchdog event-query context so the ROCm
-      // workaround applies only here (not to main-thread wait()/isCompleted()).
-      RocmWatchdogEventQueryContextGuard watchdog_event_query_context_guard;
-#endif
       // a work could be started but not completed, so we should not update
       // lastStartedSeq and lastStartedOpName if the work state is checked
       // multiple times after the start

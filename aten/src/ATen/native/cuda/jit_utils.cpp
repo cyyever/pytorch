@@ -873,52 +873,13 @@ void codegenOutputQuery(
     int& nvrtc_major,
     int& nvrtc_minor,
     bool& compile_to_sass) {
-#ifdef USE_ROCM
   AT_CUDA_NVRTC_CHECK(nvrtc().nvrtcVersion(&nvrtc_major, &nvrtc_minor));
   cuda_major = prop->major;
   cuda_minor = prop->minor;
+#ifdef USE_ROCM
   compile_to_sass = false;
 #else
-  AT_CUDA_NVRTC_CHECK(nvrtc().nvrtcVersion(&nvrtc_major, &nvrtc_minor));
-  TORCH_CHECK(
-      nvrtc_major >= 6, "NVRTC versions less than 6 are not supported. Is: ", nvrtc_major);
-
-  // Version supported by device
-  // Usually any lower version works too but is less efficient
-  using CUDAVersion = std::pair<int, int>;
-  const CUDAVersion nvrtc_version{nvrtc_major, nvrtc_minor};
-  const CUDAVersion dev_version{prop->major, prop->minor};
-  // Maximum version supported by the driver, cap dev_version to this
-  CUDAVersion max_dev_version;
-  if (nvrtc_major <= 7) { // 7 supports 2-5.x
-    max_dev_version = CUDAVersion(5, 0);
-  } else if (nvrtc_major <= 8) { // 8 supports 2-6.x
-    max_dev_version = CUDAVersion(6, 0);
-  } else if (nvrtc_major <= 9) { // 9 supports 3-7.2
-    max_dev_version = CUDAVersion(7, 2);
-  } else if (nvrtc_major <= 10) { // 10 supports 3-7.5
-    max_dev_version = CUDAVersion(7, 5);
-  } else if (nvrtc_version == CUDAVersion(11, 0)) { // 11.0 supports 3-8.0
-    max_dev_version = CUDAVersion(8, 0);
-  } else if (nvrtc_major == 11 && nvrtc_minor < 8) {
-    max_dev_version = CUDAVersion(8, 6);
-  } else {
-    // If the driver version is unknown (i.e. newer than this code)
-    // assume the driver supports this device
-    max_dev_version = dev_version;
-  }
-
-  if (dev_version > max_dev_version) {
-    cuda_major = max_dev_version.first;
-    cuda_minor = max_dev_version.second;
-    // if we are clamping major/minor, sass is not compatible
-    compile_to_sass = false;
-  } else {
-    cuda_major = dev_version.first;
-    cuda_minor = dev_version.second;
-    compile_to_sass = true;
-  }
-
+  compile_to_sass = true;
 #endif
 }
 

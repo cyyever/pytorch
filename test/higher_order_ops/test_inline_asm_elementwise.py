@@ -20,10 +20,7 @@ from torch.testing._internal.common_device_type import (
 )
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
-    MI200_ARCH,
-    MI300_ARCH,
     NAVI3_5_ARCH,
-    NAVI3_ARCH,
     NAVI4_ARCH,
     NAVI_ARCH,
     parametrize,
@@ -36,8 +33,8 @@ from torch.testing._internal.common_utils import (
 from torch.utils._triton import has_triton
 
 
-# Upstream Triton enables LLVM real-true16 for Navi3, Navi3.5, and Navi4.
-TRUE16_ARCH = (*NAVI3_ARCH, *NAVI3_5_ARCH, *NAVI4_ARCH)
+# Upstream Triton enables LLVM real-true16 for Navi3.5 and Navi4.
+TRUE16_ARCH = (*NAVI3_5_ARCH, *NAVI4_ARCH)
 
 
 @dataclass
@@ -341,8 +338,6 @@ class TestInlineAsmElementwise(TestCase):
             and tc.name == "add_bf16_native"
             and evaluate_gfx_arch_within(
                 [
-                    *MI200_ARCH,
-                    *MI300_ARCH,
                     *NAVI_ARCH,
                 ]
             )
@@ -400,8 +395,6 @@ class TestInlineAsmElementwise(TestCase):
             and tc.name == "add_bf16_native"
             and evaluate_gfx_arch_within(
                 [
-                    *MI200_ARCH,
-                    *MI300_ARCH,
                     *NAVI_ARCH,
                 ]
             )

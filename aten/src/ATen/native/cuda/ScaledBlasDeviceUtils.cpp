@@ -11,16 +11,11 @@ namespace at::native::scaled {
 // On ROCm, sm90_only/sm100_only are ignored.
 bool scaled_mm_arch_allowed(bool /*sm90_only*/, bool /*sm100_only*/) {
   static const std::vector<std::string> archs = {
-      "gfx942",
-#if ROCM_VERSION >= 60300
       "gfx1200", "gfx1201",
 #endif
 #if ROCM_VERSION >= 60500
       "gfx950",
-#endif
-#if ROCM_VERSION >= 71400
       "gfx1250",
-#endif
   };
   return at::detail::getCUDAHooks().isGPUArch(archs);
 }

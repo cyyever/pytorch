@@ -2061,8 +2061,6 @@ def get_tma_workspace_arg(
 def get_default_kpack(block_k: int = 16) -> int:
     if not torch.version.hip:
         return 0
-    if "gfx942" in torch.cuda.get_device_properties(0).gcnArchName and block_k <= 16:
-        return 1
     return 2
 
 
@@ -2402,7 +2400,7 @@ def ensure_nv_universal_gemm_available() -> bool:
     """
     try:
         available = importlib.util.find_spec("cutlass.operators") is not None
-    except ImportError, ValueError:
+    except (ImportError, ValueError):
         return False
     if available:
         _ensure_fp4_dtype_registered()

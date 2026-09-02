@@ -85,7 +85,7 @@ struct ConvertToFloat8E4M3fnOp {
 // to work around the ptxas subnormal codegen bug.
 struct ConvertFloatToFloat8E5M2Op {
   __device__ __forceinline__ Float8_e5m2 operator()(float value) const {
-#if defined(CUDA_VERSION) && CUDA_VERSION >= 13020 && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 1000
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 1000
     auto x = __nv_cvt_float_to_fp8(value, __NV_NOSAT, __NV_E5M2);
     return Float8_e5m2(x, Float8_e5m2::from_bits());
 #else

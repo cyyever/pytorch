@@ -63,15 +63,12 @@ namespace{
 
 #ifdef USE_ROCM
 bool _scaled_mm_is_fnuz() {
-    return at::detail::getCUDAHooks().isGPUArch({"gfx942"});
+    return false;
 }
 
 #if ROCM_VERSION >= 70000
 static void check_blockwise_e8m0fnu_arch_supported() {
-  std::vector<std::string> mx_archs{"gfx950"};
-#if ROCM_VERSION >= 71400
-  mx_archs.push_back("gfx1250");
-#endif
+  std::vector<std::string> mx_archs{"gfx950", "gfx1250"};
   TORCH_CHECK_NOT_IMPLEMENTED(
       at::detail::getCUDAHooks().isGPUArch(mx_archs),
       "Block-wise scaling for Float8_e8m0fnu is only supported on ",

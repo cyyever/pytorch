@@ -105,7 +105,6 @@ def make_gemm_gfx950_param(
     smem_bytes = stages * (block_m + block_n) * block_k * in_dbytes
     smem_bytes = max(smem_bytes, block_m * block_n * out_dbytes)
     smem_capacity = {
-        "gfx942": 65536,
         "gfx950": 163840,
     }.get(get_rocm_arch(), 65536)
     if smem_bytes > smem_capacity:

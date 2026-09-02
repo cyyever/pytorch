@@ -424,15 +424,9 @@ class _KinetoProfile:
                     "distributedInfo", json.dumps(dist_info, cls=_NumpyEncoder)
                 )
 
-            cuda_version = None
-            if hasattr(torch, "version"):
-                from torch.torch_version import TorchVersion
-
-                cuda_version = TorchVersion(getattr(torch.version, "cuda", "0.0"))
-
-            if self.has_cudagraphs and (
-                (cuda_version and cuda_version < "12.6")
-                or not profiler_allow_cudagraph_cupti_lazy_reinit_cuda12()
+            if (
+                self.has_cudagraphs
+                and not profiler_allow_cudagraph_cupti_lazy_reinit_cuda12()
             ):
                 os.environ["DISABLE_CUPTI_LAZY_REINIT"] = "1"
                 self.add_metadata_json("DISABLE_CUPTI_LAZY_REINIT", "1")

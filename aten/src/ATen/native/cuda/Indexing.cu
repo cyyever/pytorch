@@ -453,8 +453,7 @@ class ReduceAdd {
     // TODO: this check is too coarse, revisit, we should only be checking for
     //       the availability of the builtins required by the implementation, at
     //       most.
-    if(__builtin_amdgcn_processor_is("gfx942") ||
-       __builtin_amdgcn_processor_is("gfx950"))
+    if(__builtin_amdgcn_processor_is("gfx950"))
       return opportunistic_fastAtomicAdd(self_data_start, index, numel, *src_data);
     fastAtomicAdd(self_data_start, index, numel, *src_data, true);
 #else
@@ -1030,7 +1029,7 @@ static void index_add_cuda_impl(const Tensor& self, int64_t dim, const Tensor& i
 
   const int mpc = at::cuda::getCurrentDeviceProperties()->multiProcessorCount;
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12080
+#if !defined(USE_ROCM)
   // Fast path: index_add_(0, idx, src) with alpha == 1 is equivalent to
   // self.scatter_add_(0, idx.view({n, 1, ...}).expand_as(src), src). Delegate
   // so scatter_add's own TMA/vectorized eligibility check + dispatch is the

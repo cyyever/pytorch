@@ -34,7 +34,7 @@ def generate_embedded_hsa_header(
     Args:
         hsa_dir: Base directory containing hsa files (e.g., third_party/aiter/hsa)
         output_file: Path to the output header file
-        subdirs: List of subdirectories to scan for .co files (e.g., ["gfx942/fmha_v3_bwd", "gfx950/fmha_v3_bwd"])
+        subdirs: List of subdirectories to scan for .co files (e.g., ["gfx950/fmha_v3_bwd"])
 
     Returns:
         Number of .co files embedded
@@ -45,7 +45,7 @@ def generate_embedded_hsa_header(
         pattern_dir = hsa_dir / subdir
         if pattern_dir.exists():
             for co_file in sorted(pattern_dir.glob("*.co")):
-                # Key format: hsa/gfx942/fmha_v3_bwd/xxx.co
+                # Key format: hsa/gfx950/fmha_v3_bwd/xxx.co
                 # Use as_posix() to ensure forward slashes on all platforms
                 rel_path = co_file.relative_to(hsa_dir).as_posix()
                 map_key = f"hsa/{rel_path}"
@@ -129,7 +129,7 @@ def main():
     parser.add_argument(
         "--subdirs",
         nargs="+",
-        default=["gfx942/fmha_v3_bwd", "gfx950/fmha_v3_bwd"],
+        default=["gfx950/fmha_v3_bwd"],
         help="Subdirectories to scan for .co files",
     )
 

@@ -2274,13 +2274,6 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
     # Note: keep combined names ("arch1+arch2") above single names, otherwise
     # string replacement may not do the right thing
     named_arches = collections.OrderedDict([
-        ('Kepler+Tesla', '3.7'),
-        ('Kepler', '3.5+PTX'),
-        ('Maxwell+Tegra', '5.3'),
-        ('Maxwell', '5.0;5.2+PTX'),
-        ('Pascal', '6.0;6.1+PTX'),
-        ('Volta+Tegra', '7.2'),
-        ('Volta', '7.0+PTX'),
         ('Turing', '7.5+PTX'),
         ('Ampere+Tegra', '8.7'),
         ('Ampere', '8.0;8.6+PTX'),
@@ -2291,15 +2284,13 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
         ('Rubin', '10.7+PTX'),
     ])
 
-    supported_arches = ['3.5', '3.7', '5.0', '5.2', '5.3', '6.0', '6.1', '6.2',
-                        '7.0', '7.2', '7.5', '8.0', '8.6', '8.7', '8.9', '9.0', '9.0a',
+    supported_arches = ['7.5', '8.0', '8.6', '8.7', '8.9', '9.0', '9.0a',
                         '10.0', '10.0a', '11.0', '11.0a', '10.3', '10.3a', '10.7', '10.7a',
                         '12.0', '12.0a', '12.1', '12.1a']
     valid_arch_strings = supported_arches + [s + "+PTX" for s in supported_arches]
 
-    # The default is sm_30 for CUDA 9.x and 10.x
     # First check for an env var (same as used by the main setup.py)
-    # Can be one or more architectures, e.g. "6.1" or "3.5;5.2;6.0;6.1;7.0+PTX"
+    # Can be one or more architectures, e.g. "8.6" or "7.5;8.0;8.6;9.0+PTX"
     # See cmake/Modules_CUDA_fix/upstream/FindCUDA/select_compute_arch.cmake
     _arch_list = os.environ.get('TORCH_CUDA_ARCH_LIST', None)
 

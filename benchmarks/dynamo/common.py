@@ -4333,7 +4333,7 @@ def run(runner, args, original_dir=None):
             # path indexes randoms by flat element offset, whereas eager ROCm
             # rng indexes by (thread_id, intra_thread_iter), so the two produce
             # different dropout masks for the same seed and trip DistillGPT2's
-            # tight accuracy tolerance (observed on ROCm/gfx942). Setting
+            # tight accuracy tolerance (observed on ROCm). Setting
             # fallback_random=False re-enables inductor's replace_random passes,
             # which align the masks with eager on that backend. Leave CUDA on
             # the default fallback path; the Triton RNG path is not

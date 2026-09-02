@@ -24,7 +24,6 @@ from torch.testing import make_tensor
 from torch.testing._internal.common_cuda import (
     PLATFORM_SUPPORTS_FP8,
     PLATFORM_SUPPORTS_FP8_SPARSE,
-    ROCM_VERSION,
     evaluate_platform_supports_hipsparselt,
     xfailIfSM89PreCUDA13,
 )
@@ -57,7 +56,7 @@ if torch.cuda.is_available():
     _IS_SM9X = torch.version.cuda is not None and (
         torch.cuda.get_device_capability(0)[0] == 9
     )
-    _IS_HIPSPARSELT_AVAILABLE = bool(torch.version.hip) and ROCM_VERSION >= (7, 12)
+    _IS_HIPSPARSELT_AVAILABLE = bool(torch.version.hip)
     _IS_HIPSPARSELT_DEVICE_SUPPORTED = evaluate_platform_supports_hipsparselt()
     # CUTLASS kernels only work for Ampere
     if _IS_SM8X:
@@ -1344,8 +1343,7 @@ class TestSparseSemiStructuredCUTLASS(TestCase):
 CUSPARSELT_MIXED_DTYPE_SUPPORT = [torch.float16, torch.bfloat16, torch.int32]
 
 
-# e4m3_type is float8_e4m3fnuz on gfx942 (MI300 has hardware-native FNUZ FP8)
-# and float8_e4m3fn on gfx950/CUDA.
+# e4m3_type is float8_e4m3fn on gfx950/CUDA.
 def to_float8(x, dtype=e4m3_type):
     finfo = torch.finfo(dtype)
     # Calculate the scale as dtype max divided by absmax
@@ -1844,7 +1842,7 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
         "FP8 sparse requires cuSPARSELt v0.6.2+ on SM 8.9+ or MI300+ on ROCm 7.12+",
     )
     def test_cslt_sparse_mm_fp8_compile(self, device):
-        # Exercises meta__cslt_sparse_mm with fp8 inputs (e4m3fnuz on gfx942),
+        # Exercises meta__cslt_sparse_mm with fp8 inputs,
         # including the omitted-out_dtype path where the fake tensor must be
         # fp32 on ROCm to match the eager result.
         A = rand_sparse_semi_structured_mask(256, 128, dtype=torch.float16)
@@ -1871,8 +1869,6 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
         "FP8 sparse requires cuSPARSELt v0.6.2+ on SM 8.9+ or MI300+ on ROCm 7.12+",
     )
     @unittest.skipIf(not TEST_WITH_ROCM, "ROCm-specific out_dtype restriction")
-    # e4m3_type is named explicitly so the generated test id does not change
-    # between gfx942 (fnuz) and gfx950 (fn).
     @parametrize(
         "out_dtype",
         [torch.float16, torch.bfloat16, subtest(e4m3_type, name="fp8")],

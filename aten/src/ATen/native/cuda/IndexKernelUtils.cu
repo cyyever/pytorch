@@ -67,7 +67,7 @@ __device__ __forceinline__ void atomicAddVec(
       atomicAdd(dst + i, vals[i]);
     }
   } else if constexpr (std::is_same_v<scalar_t, c10::Half>) {
-#if defined(USE_ROCM) || (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 700))
+#if defined(USE_ROCM)
     const c10::Half* vals = reinterpret_cast<const c10::Half*>(&vec);
     #pragma unroll
     for (int i = 0; i < N; i++) {

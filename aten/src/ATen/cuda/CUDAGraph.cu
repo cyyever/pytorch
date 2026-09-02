@@ -5,7 +5,7 @@ namespace at::cuda {
 
 namespace {
 
-#if !(defined(USE_ROCM)) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
+#if !defined(USE_ROCM)
 __global__ void set_conditional_handle_kernel(
     cudaGraphConditionalHandle handle,
     const bool* value) {
@@ -17,7 +17,7 @@ __global__ void set_conditional_handle_kernel(
 void CUDAGraph::set_conditional_handle(
     cudaGraphConditionalHandle handle,
     const Tensor& scalar_cuda_pred_tensor) {
-#if !(defined(USE_ROCM)) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
+#if !defined(USE_ROCM)
   set_conditional_handle_kernel<<<1, 1, 0, getCurrentCUDAStream()>>>(
       handle, scalar_cuda_pred_tensor.const_data_ptr<bool>());
   C10_CUDA_KERNEL_LAUNCH_CHECK();

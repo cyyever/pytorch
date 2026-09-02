@@ -223,7 +223,7 @@ using detail::CuBlasLtMatmulDescriptor;
 using detail::CuBlasLtMatrixLayout;
 using detail::CuBlasLtMatmulPreference;
 using detail::CublasLtWorkspace;
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
 using detail::CuBlasLtGroupedMatrixLayout;
 #endif
 
@@ -600,41 +600,19 @@ inline void bgemm_internal_cublas_half_helper(CUDABLAS_BGEMM_ARGTYPES_AND_C_DTYP
                                    (int) num_batches, rocblas_datatype_f32_r, rocblas_gemm_algo_standard,
                                    0, flag)));
 #else
-  cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-  if (prop->major >= 7 && at::globalContext().allowFP16AccumulationCuBLAS()) {
+  if (at::globalContext().allowFP16AccumulationCuBLAS()) {
     halpha = alpha;
     hbeta = beta;
     compute_type = CUDA_R_16F;
     alpha_ptr = &halpha;
     beta_ptr = &hbeta;
   }
-  if (prop->major >= 5){
-    TORCH_CUDABLAS_CHECK(cublasGemmStridedBatchedEx(
-      handle, opa, opb, m, n, k,
-      alpha_ptr, a, CUDA_R_16F, lda, stridea,
-      b, CUDA_R_16F, ldb, strideb, beta_ptr,
-      c, std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16F, ldc, stridec,
-      num_batches, compute_type, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
-  } else {
-    for (const auto i : c10::irange(num_batches)) {
-      if (std::is_same_v<C_Dtype, float>) {
-        float* c_ptr = (float*)(c + i * stridec);
-        at::cuda::blas::gemm<at::Half, float>(
-            transa, transb,
-            m, n, k,
-            alpha, (a + i * stridea), lda,
-            (b + i * strideb), ldb, beta,
-            c_ptr, ldc);
-      } else {
-        at::cuda::blas::gemm<at::Half>(
-            transa, transb,
-            m, n, k,
-            alpha, (a + i * stridea), lda,
-            (b + i * strideb), ldb, beta,
-            (c + i * stridec), ldc);
-      }
-    }
-  }
+  TORCH_CUDABLAS_CHECK(cublasGemmStridedBatchedEx(
+    handle, opa, opb, m, n, k,
+    alpha_ptr, a, CUDA_R_16F, lda, stridea,
+    b, CUDA_R_16F, ldb, strideb, beta_ptr,
+    c, std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16F, ldc, stridec,
+    num_batches, compute_type, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
 #endif // USE_ROCM
 }
 
@@ -757,17 +735,6 @@ template <>
 void bgemm_internal<at::Half>(CUDABLAS_BGEMM_ARGTYPES(at::Half))
 {
   auto preferred = at::globalContext().blasPreferredBackend();
-#ifdef USE_ROCM
-  // hipBLASLt has no equivalent of rocblas_gemm_flags_fp16_alt_impl on gfx90a,
-  // so a backward fp16 GEMM on the hipBLASLt path silently flushes subnormals
-  // (issue #182952). Route fp16 backward GEMMs to rocBLAS so the
-  // ROCmBackwardPassGuard / fp16_alt_impl handling still applies.
-  if (preferred == BlasBackend::Cublaslt &&
-      at::ROCmBackwardPassGuard::is_backward_pass() &&
-      at::detail::getCUDAHooks().isGPUArch({"gfx90a"})) {
-    preferred = BlasBackend::Cublas;
-  }
-#endif
   if (preferred == BlasBackend::Cublaslt) {
     if (!bgemm_internal_cublaslt<at::Half>(CUDABLAS_BGEMM_ARGS(at::Half))) {
       bgemm_internal_cublas<at::Half>(CUDABLAS_BGEMM_ARGS(at::Half));
@@ -805,15 +772,6 @@ void bgemm_internal<at::Half, float>(CUDABLAS_BGEMM_ARGTYPES_AND_C_DTYPE(at::Hal
   }
 
   auto preferred = at::globalContext().blasPreferredBackend();
-#ifdef USE_ROCM
-  // See bgemm_internal<at::Half>: reroute fp16 backward GEMMs off hipBLASLt on
-  // gfx90a to preserve subnormals (issue #182952).
-  if (preferred == BlasBackend::Cublaslt &&
-      at::ROCmBackwardPassGuard::is_backward_pass() &&
-      at::detail::getCUDAHooks().isGPUArch({"gfx90a"})) {
-    preferred = BlasBackend::Cublas;
-  }
-#endif
   if (preferred == BlasBackend::Cublaslt) {
     if (!bgemm_internal_cublaslt<at::Half, float>(CUDABLAS_BGEMM_ARGS(at::Half))) {
       bgemm_internal_cublas<at::Half, float>(CUDABLAS_BGEMM_ARGS(at::Half));
@@ -1113,69 +1071,47 @@ inline void gemm_internal_cublas_half_helper(CUDABLAS_GEMM_ARGTYPES_AND_C_DTYPE(
       0,
       flag)));
 #else
-  cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-  if (prop->major >= 7 && at::globalContext().allowFP16AccumulationCuBLAS()) {
+  if (at::globalContext().allowFP16AccumulationCuBLAS()) {
     compute_type = CUDA_R_16F;
     halpha = alpha;
     hbeta = beta;
     alpha_ptr = &halpha;
     beta_ptr = &hbeta;
   }
-  if (prop->major >= 5) {
-    cublasMath_t cublas_flags = CUBLAS_DEFAULT_MATH;
-    auto fp16_reduction = at::globalContext().allowFP16ReductionCuBLAS();
-    TORCH_CHECK(fp16_reduction !=
-        at::CuBLASReductionOption::DisallowReducedPrecisionDisallowSplitK,
-          "torch.backends.cuda.matmul.allow_fp16_reduced_precision_reduction("
-          "..., allow_splitk=False) requires the cuBLASLt backend");
-    if (fp16_reduction !=
-        at::CuBLASReductionOption::AllowReducedPrecisionWithSplitK) {
-      cublas_flags = static_cast<cublasMath_t>(
-          cublas_flags | CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
-    }
-    // Disallow fp16 reductions that could lead to unexpected overflow issues.
-    TORCH_CUDABLAS_CHECK(cublasSetMathMode(handle, cublas_flags));
-    TORCH_CUDABLAS_CHECK(cublasGemmEx(
-        handle,
-        opa,
-        opb,
-        m,
-        n,
-        k,
-        alpha_ptr,
-        a,
-        CUDA_R_16F,
-        lda,
-        b,
-        CUDA_R_16F,
-        ldb,
-        beta_ptr,
-        c,
-        std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16F,
-        ldc,
-        compute_type,
-        CUBLAS_GEMM_DEFAULT_TENSOR_OP));
-    TORCH_CUDABLAS_CHECK(cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH));
-  } else {
-    TORCH_CUDABLAS_CHECK(cublasSgemmEx(
-        handle,
-        opa,
-        opb,
-        m,
-        n,
-        k,
-        &falpha,
-        a,
-        CUDA_R_16F,
-        lda,
-        b,
-        CUDA_R_16F,
-        ldb,
-        &fbeta,
-        c,
-        std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16F,
-        ldc));
+  cublasMath_t cublas_flags = CUBLAS_DEFAULT_MATH;
+  auto fp16_reduction = at::globalContext().allowFP16ReductionCuBLAS();
+  TORCH_CHECK(fp16_reduction !=
+      at::CuBLASReductionOption::DisallowReducedPrecisionDisallowSplitK,
+        "torch.backends.cuda.matmul.allow_fp16_reduced_precision_reduction("
+        "..., allow_splitk=False) requires the cuBLASLt backend");
+  if (fp16_reduction !=
+      at::CuBLASReductionOption::AllowReducedPrecisionWithSplitK) {
+    cublas_flags = static_cast<cublasMath_t>(
+        cublas_flags | CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
   }
+  // Disallow fp16 reductions that could lead to unexpected overflow issues.
+  TORCH_CUDABLAS_CHECK(cublasSetMathMode(handle, cublas_flags));
+  TORCH_CUDABLAS_CHECK(cublasGemmEx(
+      handle,
+      opa,
+      opb,
+      m,
+      n,
+      k,
+      alpha_ptr,
+      a,
+      CUDA_R_16F,
+      lda,
+      b,
+      CUDA_R_16F,
+      ldb,
+      beta_ptr,
+      c,
+      std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16F,
+      ldc,
+      compute_type,
+      CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+  TORCH_CUDABLAS_CHECK(cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH));
 #endif
 }
 
@@ -1336,17 +1272,6 @@ template <>
 void gemm_internal<at::Half>(CUDABLAS_GEMM_ARGTYPES(at::Half))
 {
   auto preferred = at::globalContext().blasPreferredBackend();
-#ifdef USE_ROCM
-  // hipBLASLt has no equivalent of rocblas_gemm_flags_fp16_alt_impl on gfx90a,
-  // so a backward fp16 GEMM on the hipBLASLt path silently flushes subnormals
-  // (issue #182952). Route fp16 backward GEMMs to rocBLAS so the
-  // ROCmBackwardPassGuard / fp16_alt_impl handling still applies.
-  if (preferred == BlasBackend::Cublaslt &&
-      at::ROCmBackwardPassGuard::is_backward_pass() &&
-      at::detail::getCUDAHooks().isGPUArch({"gfx90a"})) {
-    preferred = BlasBackend::Cublas;
-  }
-#endif
   if (preferred == BlasBackend::Cublaslt) {
     gemm_internal_cublaslt<at::Half>(CUDABLAS_GEMM_ARGS(at::Half));
   }
@@ -1385,15 +1310,6 @@ void gemm_internal<at::Half, float>(CUDABLAS_GEMM_ARGTYPES_AND_C_DTYPE(at::Half,
   }
 
   auto preferred = at::globalContext().blasPreferredBackend();
-#ifdef USE_ROCM
-  // See gemm_internal<at::Half>: reroute fp16 backward GEMMs off hipBLASLt on
-  // gfx90a to preserve subnormals (issue #182952).
-  if (preferred == BlasBackend::Cublaslt &&
-      at::ROCmBackwardPassGuard::is_backward_pass() &&
-      at::detail::getCUDAHooks().isGPUArch({"gfx90a"})) {
-    preferred = BlasBackend::Cublas;
-  }
-#endif
   if (preferred == BlasBackend::Cublaslt) {
     gemm_internal_cublaslt<at::Half, float>(CUDABLAS_GEMM_ARGS(at::Half));
   }
@@ -1949,18 +1865,13 @@ void scaled_gemm(
     matmulDescB = HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT;
   }
   else if (mat1_scale_dtype == kFloat8_e8m0fnu && mat2_scale_dtype == kFloat8_e8m0fnu) {
-  #if ROCM_VERSION >= 70000
-            std::vector<std::string> mx_archs{"gfx950"};
-  #if ROCM_VERSION >= 71400
-            mx_archs.push_back("gfx1250");
-  #endif
-            if (at::detail::getCUDAHooks().isGPUArch(mx_archs)) {
-                // TODO: add constraints based on hipblaslt internals
-                TORCH_CHECK((m % 16 == 0) && (n % 16 == 0) && (k % 128 == 0),
-                           "M, N must be multiples of 16 and K should be multiple of 128 for MX format. "
-                           "Got m=", m, ", n=", n, ", k=", k);
-            }
-  #endif
+    std::vector<std::string> mx_archs{"gfx950", "gfx1250"};
+    if (at::detail::getCUDAHooks().isGPUArch(mx_archs)) {
+      // TODO: add constraints based on hipblaslt internals
+      TORCH_CHECK((m % 16 == 0) && (n % 16 == 0) && (k % 128 == 0),
+                 "M, N must be multiples of 16 and K should be multiple of 128 for MX format. "
+                 "Got m=", m, ", n=", n, ", k=", k);
+    }
   }
 #endif  // if defined(USE_ROCM) && !defined(HIPBLASLT_OUTER_VEC) && defined(HIPBLASLT_VEC_EXT)
   computeDesc.setAttribute(matmulDescA, mat1_scale_ptr);
@@ -2310,7 +2221,7 @@ void grouped_gemm(
     const void *lddArrayDev,
     int batchCount,
     bool use_int64_dims) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
   cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
   const bool sm90 = prop->major == 9;
   TORCH_CHECK(prop->major >= 9 && prop->major < 12, "grouped cublasLtMatmul requires SM 9.0-11.0");
@@ -2394,7 +2305,7 @@ void grouped_gemm(
   return;
 #else
   TORCH_CHECK(false, "grouped cublasLtMatmul requires CUDA >= 13.3 and is not supported on ROCm. Current build does not meet these requirements.");
-#endif // !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#endif // !defined(USE_ROCM)
 }
 
 template <>

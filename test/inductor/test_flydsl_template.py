@@ -223,10 +223,10 @@ class TestFlyDSLTemplate(TestCase):
                 "gfx950",
             ),
             (
-                {"FLYDSL_GPU_ARCH": "", "HSA_OVERRIDE_GFX_VERSION": "9.0.10"},
+                {"FLYDSL_GPU_ARCH": "", "HSA_OVERRIDE_GFX_VERSION": "9.5.10"},
                 False,
                 None,
-                "gfx90a",
+                "gfx95a",
             ),
             (
                 {"FLYDSL_GPU_ARCH": "", "HSA_OVERRIDE_GFX_VERSION": ""},
@@ -237,8 +237,8 @@ class TestFlyDSLTemplate(TestCase):
             (
                 {"FLYDSL_GPU_ARCH": "", "HSA_OVERRIDE_GFX_VERSION": "9.0.x"},
                 True,
-                "gfx942:xnack-",
-                "gfx942",
+                "gfx1200:xnack-",
+                "gfx1200",
             ),
         ),
     )

@@ -246,8 +246,6 @@ struct CusparseMatrixMultiplyOp {
         "sparse_mm: Float16 and BFloat16 are not supported on ROCm");
     #else // defined(USE_ROCM)
     cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-    TORCH_CHECK(prop->major >= 5 && !((10*prop->major + prop->minor) < 53 && computeType == CUDA_R_16F),
-        "sparse_mm: CUDA Float16 requires compute capability >= 53 (current: ", prop->major, prop->minor, ")");
     TORCH_CHECK(!(prop->major < 8 && computeType == CUDA_R_16BF),
         "sparse_mm: CUDA BFloat16 requires compute capability >= 80 (current: ", prop->major, prop->minor, ")");
     #endif // defined(USE_ROCM)

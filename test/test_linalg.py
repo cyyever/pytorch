@@ -29,7 +29,7 @@ from torch.testing._internal.common_utils import \
      make_fullrank_matrices_with_distinct_singular_values,
      freeze_rng_state, IS_ARM64, IS_SANDCASTLE, TEST_OPT_EINSUM, isRocmArchAnyOf, parametrize, skipIfTorchDynamo,
      skipIfRocmArch, skipIfRocmVersionAtLeast, setBlasBackendsToDefaultFinally, setLinalgBackendsToDefaultFinally, serialTest, skipIfRocm,
-     runOnRocmArch, MI200_ARCH, MI300_ARCH, MI350_ARCH, NAVI_ARCH, TEST_CUDA,
+     MI350_ARCH, NAVI_ARCH, TEST_CUDA,
      skipIfNoNvmath)
 from torch.testing._internal.common_device_type import \
     (instantiate_device_type_tests, dtypes, has_cusolver, onlyCPU, skipCPUIfNoLapack, precisionOverride,
@@ -42,8 +42,8 @@ from torch.testing._internal.common_dtype import (
     all_types, all_types_and_complex_and, floating_and_complex_types, integral_types,
     floating_and_complex_types_and, floating_types_and, complex_types,
 )
-from torch.testing._internal.common_cuda import BF16X9_SUPPORTED, CDNA2OrLater, CDNA5OrLater, SM80OrLater, SM90OrLater, tf32_enabled, tf32_on_and_off, _get_magma_version, \
-    _get_torch_cuda_version, TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, blas_library_context, ROCM_VERSION
+from torch.testing._internal.common_cuda import BF16X9_SUPPORTED, CDNA2OrLater, CDNA5OrLater, SM80OrLater, SM90OrLater, tf32_enabled, tf32_on_and_off, \
+    _get_torch_cuda_version, TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, blas_library_context
 from torch.testing._internal.common_quantization import _group_quantize_tensor, _dynamically_quantize_per_channel, \
     _group_quantize_tensor_symmetric
 from torch.testing._internal.common_mkldnn import reduced_f32_on_and_off
@@ -68,13 +68,7 @@ if TEST_SCIPY:
 def blaslt_supported_device():
     if torch.cuda.is_available():
         if torch.version.hip:
-            archs = ['gfx90a', 'gfx94']
-            if ROCM_VERSION >= (6, 3):
-                archs.extend(['gfx110', 'gfx120'])
-            if ROCM_VERSION >= (6, 5):
-                archs.append('gfx95')
-            if ROCM_VERSION >= (7, 14):
-                archs.append('gfx1250')
+            archs = ['gfx95', 'gfx120', 'gfx1250']
             for arch in archs:
                 if arch in torch.cuda.get_device_properties(0).gcnArchName:
                     return True
@@ -2916,9 +2910,6 @@ class TestLinalg(TestCase):
     @dtypes(torch.double, torch.cdouble)
     def test_svd_lowrank(self, device, dtype):
         from torch.testing._internal.common_utils import random_lowrank_matrix, random_sparse_matrix
-
-        if torch.version.hip and isRocmArchAnyOf(MI200_ARCH) and dtype is torch.complex128:
-            self.skipTest("Currently failing on rocm mi200")
 
         def run_subtest(actual_rank, matrix_size, batches, device, svd_lowrank, **options):
             density = options.pop('density', 1)
@@ -10580,7 +10571,7 @@ class TestLinalgCudaOnly(TestCase):
                     find_tunableop_result(results, op_signature, params_signature)
                 )
 
-    @runOnRocmArch(MI300_ARCH)
+    @skipIfRocm
     @dtypes(torch.float)
     def test_tf32_tunableop(self, device, dtype):
         with tf32_enabled():
@@ -10634,7 +10625,7 @@ class TestLinalgCudaOnly(TestCase):
                                                      'nn_37_37_37_ld_37_37_37')
                 self.assertTrue(found_result is not None)
 
-    @runOnRocmArch(MI300_ARCH)
+    @skipIfRocm
     @dtypes(torch.float)
     def test_tf32_offline_tunableop(self, device, dtype):
         # This test is the offline version of test_tf32_tunableop
@@ -11282,8 +11273,6 @@ class TestLinalgCudaOnly(TestCase):
     @setBlasBackendsToDefaultFinally
     @parametrize("dtype", [torch.float32, torch.bfloat16])
     def test_ck_blas_library_mm(self, dtype):
-        if dtype == torch.bfloat16 and isRocmArchAnyOf(MI200_ARCH):
-            self.skipTest("bfloat16 case skipped on gfx90a")
         device = 'cuda'
         shapes = [(7168, 8192, 1280), (1280, 8192, 7168), (8192, 8192, 1280)]
         for M, K, N in shapes:

@@ -108,7 +108,7 @@ IS_THOR = LazyVal(lambda: torch.cuda.is_available() and torch.version.cuda is no
 IS_JETSON = LazyVal(lambda: torch.cuda.is_available() and (torch.cuda.get_device_capability() in [(7, 2), (8, 7)] or IS_THOR))
 # These exact-match SM predicates identify specific NVIDIA architectures and must
 # be False on ROCm, where torch.cuda.get_device_capability() returns the gfx-arch
-# version and collides with NVIDIA capability tuples (e.g. gfx90a reads as (9, 0)).
+# version and collides with NVIDIA capability tuples (e.g. gfx1200 reads as (12, 0)).
 IS_SM89 = LazyVal(lambda: torch.version.hip is None and torch.cuda.is_available() and
                   torch.cuda.get_device_capability() == (8, 9))
 IS_SM90 = LazyVal(lambda: torch.version.hip is None and torch.cuda.is_available() and
@@ -152,15 +152,15 @@ def evaluate_gfx_arch_within(arch_list):
         return False
     gcn_arch_name = torch.cuda.get_device_properties('cuda').gcnArchName
     effective_arch = os.environ.get('PYTORCH_DEBUG_FLASH_ATTENTION_GCN_ARCH_OVERRIDE', gcn_arch_name)
-    # gcnArchName can be complicated strings like gfx90a:sramecc+:xnack-
+    # gcnArchName can be complicated strings like gfx950:sramecc+:xnack-
     # Hence the matching should be done reversely
     return any(arch in effective_arch for arch in arch_list)
 
 # Per-generation gfx targets, ordered oldest -> newest. Each "OrLater" helper
 # below unions its own generation with every newer one, so the predicates are
-# nested by construction: CDNA5OrLater => CDNA3OrLater => CDNA2OrLater.
-_CDNA2_ARCHS = ["gfx90a"]
-_CDNA3_ARCHS = ["gfx942", "gfx950"]
+# nested by construction: CDNA5OrLater => CDNA3OrLater => CDNA2OrLater. No
+# supported CDNA2 target remains, so CDNA2OrLater matches the CDNA3+ set.
+_CDNA3_ARCHS = ["gfx950"]
 # GFX1250 (CDNA 5)
 _CDNA5_ARCHS = ["gfx1250"]
 
@@ -171,13 +171,13 @@ def CDNA3OrLater():
     return evaluate_gfx_arch_within(_CDNA3_ARCHS + _CDNA5_ARCHS)
 
 def CDNA2OrLater():
-    return evaluate_gfx_arch_within(_CDNA2_ARCHS + _CDNA3_ARCHS + _CDNA5_ARCHS)
+    return CDNA3OrLater()
 
 # Archs that take the opportunistic_fastAtomicAdd path (packed 2x16 atomics + DPP
 # lane coalescing) in ScatterGatherKernel.cu. Keep in sync with that kernel's arch
 # gate; this is intentionally not CDNA3OrLater (gfx1250 uses plain fastAtomicAdd).
 def gfx_arch_supports_opportunistic_fastatomics():
-    return evaluate_gfx_arch_within(["gfx942", "gfx950"])
+    return evaluate_gfx_arch_within(["gfx950"])
 
 def evaluate_platform_supports_flash_attention():
     if TEST_WITH_ROCM:
@@ -188,9 +188,9 @@ def evaluate_platform_supports_flash_attention():
         # (see cmake/External/aotriton.cmake). The CK FAv3/AITER codegen is
         # separately not yet wired for gfx1250
         # (see aten/src/ATen/native/transformers/hip/flash_attn/ck/fav_v3/CMakeLists.txt).
-        arch_list = ["gfx90a", "gfx942", "gfx1100", "gfx1201", "gfx950"]
+        arch_list = ["gfx1201", "gfx950"]
         if os.environ.get("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "0") != "0":
-            arch_list += ["gfx1101", "gfx1102", "gfx1150", "gfx1151", "gfx1200"]
+            arch_list += ["gfx1151", "gfx1200"]
         return evaluate_gfx_arch_within(arch_list)
     if TEST_CUDA:
         return SM80OrLater
@@ -213,9 +213,9 @@ def evaluate_platform_supports_efficient_attention():
         # by PR #188242, which also adds gfx1250 here; this gate-only PR leaves
         # it out to avoid conflicting with that change. The CK FAv3/AITER codegen
         # is separately not yet wired for gfx1250.
-        arch_list = ["gfx90a", "gfx942", "gfx1100", "gfx1201", "gfx950"]
+        arch_list = ["gfx1201", "gfx950"]
         if os.environ.get("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "0") != "0":
-            arch_list += ["gfx1101", "gfx1102", "gfx1150", "gfx1151", "gfx1200"]
+            arch_list += ["gfx1151", "gfx1200"]
         return evaluate_gfx_arch_within(arch_list)
     if TEST_CUDA:
         return True
@@ -317,9 +317,9 @@ def evaluate_platform_supports_fp8_grouped_gemm():
         if torch.version.hip:
             if "USE_MSLK" not in torch.__config__.show():
                 return False
-            # gfx1250 omitted: MSLK only builds gfx942/gfx950 kernels (see the arch
+            # gfx1250 omitted: MSLK only builds gfx950 kernels (see the arch
             # filter in aten/src/ATen/CMakeLists.txt). Add gfx1250 here once MSLK does.
-            archs = ['gfx942', 'gfx950']
+            archs = ['gfx950']
             for arch in archs:
                 if arch in torch.cuda.get_device_properties(0).gcnArchName:
                     return True
@@ -330,9 +330,8 @@ def evaluate_platform_supports_fp8_grouped_gemm():
 def evaluate_platform_supports_mx_gemm():
     if torch.cuda.is_available():
         if torch.version.hip:
-            if ROCM_VERSION >= (7, 0):
-                gcn_name = torch.cuda.get_device_properties(0).gcnArchName
-                return 'gfx950' in gcn_name or ('gfx1250' in gcn_name and ROCM_VERSION >= (7, 14))
+            gcn_name = torch.cuda.get_device_properties(0).gcnArchName
+            return 'gfx950' in gcn_name or 'gfx1250' in gcn_name
         else:
             return SM100OrLater
     if torch.xpu.is_available():
@@ -349,11 +348,7 @@ def hipsparselt_supported_archs():
     # Keep in sync with hipSparseLtSupportedArchs() in
     # aten/src/ATen/native/sparse/cuda/cuSPARSELtOps.cpp. Gating on a wider set
     # than the runtime supports turns a skip into a hard TORCH_CHECK failure.
-    if ROCM_VERSION >= (7, 14):
-        return ['gfx942', 'gfx950', 'gfx1250']
-    elif ROCM_VERSION >= (7, 12):
-        return ['gfx942', 'gfx950']
-    return []
+    return ['gfx950', 'gfx1250']
 
 def evaluate_platform_supports_hipsparselt():
     return bool(torch.version.hip) and evaluate_gfx_arch_within(hipsparselt_supported_archs())
@@ -628,7 +623,7 @@ def xfailIfSM89PreCUDA13(func):
 
 def xfailIfSM100OrLater(func):
     # SMxxx LazyVals are derived from torch.cuda.get_device_capability(), which
-    # on ROCm reports the gfx-arch major version (e.g. (11, 0) for gfx1100). That
+    # on ROCm reports the gfx-arch major version (e.g. (12, 0) for gfx1200). That
     # makes SM100OrLater spuriously true on AMD gfx10/11/12, so guard with
     # TEST_WITH_ROCM to keep the xfail NVIDIA-only.
     if TEST_WITH_ROCM:

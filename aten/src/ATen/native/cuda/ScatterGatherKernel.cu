@@ -36,8 +36,7 @@ class ReduceAdd {
     // TODO: this check is too coarse, revisit, we should only be checking for
     //       the availability of the builtins required by the implementation, at
     //       most.
-    if (__builtin_amdgcn_processor_is("gfx942") ||
-        __builtin_amdgcn_processor_is("gfx950"))
+    if (__builtin_amdgcn_processor_is("gfx950"))
       return opportunistic_fastAtomicAdd(self_data_start, index, numel, *src_data);
     fastAtomicAdd(self_data_start, index, numel, *src_data, true);
   #else

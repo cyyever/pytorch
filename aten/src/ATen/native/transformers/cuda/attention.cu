@@ -1670,8 +1670,8 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, c10::SymInt, c10::SymInt> _efficient_
     auto ret = aotriton::v2::flash::check_gpu(stream);
     if (hipSuccess != ret) {
         TORCH_CHECK(false,
-                  "[AOTriton] Accelerated SDPA only supports MI200/MI300X/Navi31 GPUs"
-                  " (gfx90a:sramecc+:xnack-/gfx942:sramecc+:xnack-/gfx1100)")
+                  "[AOTriton] Accelerated SDPA only supports MI350X/Strix Halo/RDNA4 GPUs"
+                  " (gfx950/gfx1151/gfx1200/gfx1201/gfx1250)")
     }
 
     // AOTriton may accept aligned on logsumexp tensor in the future for better

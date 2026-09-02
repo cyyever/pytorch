@@ -286,11 +286,7 @@ template <int vec_size, typename func_t, typename array_t>
 C10_LAUNCH_BOUNDS_1(num_threads())
 __global__ void vectorized_elementwise_kernel(int N, func_t f, array_t data) {
   constexpr auto io_size = calc_io_size<func_t>();
-  constexpr auto tws_942 = 16;
   constexpr auto tws = elems_per_thread<io_size>();
-  if (__builtin_amdgcn_processor_is("gfx942"))
-    return vectorized_elementwise_kernel_impl<vec_size, tws_942>(N, f, data);
-
   vectorized_elementwise_kernel_impl<vec_size, tws>(N, f, data);
 }
 #endif // USE_ROCM
@@ -331,10 +327,7 @@ static inline void launch_vectorized_kernel(
   auto stream = at::cuda::getCurrentCUDAStream();
 #ifdef USE_ROCM
   int vec_size = memory::can_vectorize_up_to<func_t>(data);
-  c10::DeviceIndex curDevice = -1;
-  AT_CUDA_CHECK(c10::cuda::GetDevice(&curDevice));
-  // Similar check in vectorized_elementwise_kernel() as well. Both should be in sync.
-  int tws = at::detail::getCUDAHooks().isGPUArch({"gfx942"}, curDevice) ? 16 : elems_per_thread<io_size>();
+  int tws = elems_per_thread<io_size>();
 #else
   using cpp_type = typename function_traits<func_t>::result_type;
   const uint16_t max_vec_size = memory::can_vectorize_up_to<func_t>(data);

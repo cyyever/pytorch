@@ -344,15 +344,7 @@ void linalg_eig_kernel(Tensor& eigenvalues, Tensor& eigenvectors, Tensor& infos,
   // the content of eigenvalues, eigenvectors and infos is overwritten by
   // 'linalg_eig_cusolver_xgeev', which modifies the provided input matrix in-place,
   // therefore we need a copy
-#if (defined(CUSOLVER_VERSION) && (CUSOLVER_VERSION >= 11702)) || (defined(USE_ROCM) && ROCM_VERSION >= 71400)
   linalg_eig_cusolver_xgeev(eigenvalues, eigenvectors, input, infos, compute_eigenvectors);
-#else
-  // geev is only available from cuSOLVER 11.7.2 (CUDA 12.8) and hipSOLVER 3.5.0 (ROCm 7.14)
-  TORCH_CHECK(false,
-      "Calling torch.linalg.eig on a CUDA tensor requires cuSOLVER 11.7.2 (CUDA 12.8) "
-      "or hipSOLVER 3.5.0 (ROCm 7.14) or newer. Transfer the tensor to the CPU before "
-      "calling torch.linalg.eig.");
-#endif
 }
 
 REGISTER_CUDA_DISPATCH(linalg_eig_stub, &linalg_eig_kernel)

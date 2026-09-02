@@ -266,12 +266,6 @@ public:
     // complex-to-real transforms are not supported. Since our output is always
     // contiguous, only need to check real-to-complex case.
     if (dtype == ScalarType::Half) {
-      // cuFFT on half requires compute capability of at least SM_53
-      auto dev_prop = at::cuda::getCurrentDeviceProperties();
-      TORCH_CHECK(dev_prop->major >= 5 && !(dev_prop->major == 5 && dev_prop->minor < 3),
-               "cuFFT doesn't support signals of half type with compute "
-               "capability less than SM_53, but the device containing input half "
-               "tensor only has SM_", dev_prop->major, dev_prop->minor);
       for (const auto i : c10::irange(signal_ndim)) {
         TORCH_CHECK(is_pow_of_two(sizes[i + 1]),
             "cuFFT only supports dimensions whose sizes are powers of two when"

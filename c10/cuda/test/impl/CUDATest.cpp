@@ -30,8 +30,7 @@ TEST(CUDAGuardImplTest, UncheckedSetDeviceSwallowsErrorAndDoesNotTerminate) {
       impl.uncheckedSetDevice(c10::Device(c10::DeviceType::CUDA, -1)));
 }
 
-#if !defined(USE_ROCM) && !defined(__HIP_PLATFORM_AMD__) && \
-    defined(CUDA_VERSION) && (CUDA_VERSION >= 12090)
+#if !defined(USE_ROCM) && !defined(__HIP_PLATFORM_AMD__)
 TEST(CUDAErrorTest, IncludesDriverErrorLog) {
   int device_count = 0;
   if (cudaGetDeviceCount(&device_count) != cudaSuccess || device_count == 0) {

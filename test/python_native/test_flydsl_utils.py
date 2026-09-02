@@ -66,14 +66,14 @@ class TestFlyDSLArchResolution(TestCase):
         self.assertEqual(self._resolve(hsa="gfx950:sramecc+"), "gfx950")
 
     def test_hsa_override_stepping_is_hexadecimal(self):
-        # 9.0.10 is gfx90a, not gfx9010 -- the one rule here that is easy to
+        # 9.5.10 is gfx95a, not gfx9510 -- the one rule here that is easy to
         # get wrong by reading the format as decimal.
-        self.assertEqual(self._resolve(hsa="9.0.10"), "gfx90a")
+        self.assertEqual(self._resolve(hsa="9.5.10"), "gfx95a")
 
     @parametrize("hsa", ("9.0", "9.0.x", "not-a-version"))
     def test_unusable_hsa_override_falls_back_to_the_device(self, hsa):
-        props = SimpleNamespace(gcnArchName="gfx942:xnack-")
-        self.assertEqual(self._resolve(hsa=hsa, props=props), "gfx942")
+        props = SimpleNamespace(gcnArchName="gfx1200:xnack-")
+        self.assertEqual(self._resolve(hsa=hsa, props=props), "gfx1200")
 
     def test_device_properties_are_stripped(self):
         props = SimpleNamespace(gcnArchName="gfx950:sramecc+:xnack-")
@@ -91,9 +91,9 @@ class TestFlyDSLArchResolution(TestCase):
         self.assertIsNone(self._resolve(props=SimpleNamespace()))
 
     def test_resolution_is_cached_per_device(self):
-        props = SimpleNamespace(gcnArchName="gfx942")
-        self.assertEqual(self._resolve(props=props), "gfx942")
-        self.assertEqual(self._resolve(flydsl_arch="gfx950"), "gfx942")
+        props = SimpleNamespace(gcnArchName="gfx1200")
+        self.assertEqual(self._resolve(props=props), "gfx1200")
+        self.assertEqual(self._resolve(flydsl_arch="gfx950"), "gfx1200")
         flydsl_utils._resolve_rocm_arch.cache_clear()
         self.assertEqual(self._resolve(flydsl_arch="gfx950"), "gfx950")
 
@@ -108,8 +108,8 @@ class TestFlyDSLSharedPredicates(TestCase):
         "arch,supported_arches,expected",
         (
             ("gfx950", ("gfx950",), True),
-            ("gfx942", ("gfx950",), False),
-            ("gfx942", ("gfx942", "gfx950"), True),
+            ("gfx1200", ("gfx950",), False),
+            ("gfx1200", ("gfx1200", "gfx950"), True),
             (None, ("gfx950",), False),
         ),
     )
@@ -123,7 +123,7 @@ class TestFlyDSLSharedPredicates(TestCase):
         with patch.object(
             flydsl_utils,
             "_resolve_rocm_arch",
-            side_effect=("gfx950", "gfx942"),
+            side_effect=("gfx950", "gfx1200"),
         ) as resolve:
             self.assertTrue(flydsl_utils._is_supported_arch(0, ("gfx950",)))
             self.assertTrue(flydsl_utils._is_supported_arch(0, ("gfx950",)))

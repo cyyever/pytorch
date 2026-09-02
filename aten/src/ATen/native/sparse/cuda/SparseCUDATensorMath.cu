@@ -720,11 +720,6 @@ cudaDataType getTensorCudaDataType(Tensor self) {
   return cuda_data_type;
 }
 
-// cusparseSpMV bug on CUDA < 13.1 -> COO row index array needs to be 16-byte aligned.
-// See https://github.com/pytorch/pytorch/issues/167901
-#if defined(USE_CUDA) && CUDA_VERSION < 13010
-#define CUSPARSE_SPMV_ALIGNMENT_BUG_PRESENT
-#endif
 
 Tensor& bmm_out_sparse_cuda(const SparseTensor& self, const Tensor& mat2, Tensor& result) {
   TORCH_CHECK(!mat2.is_sparse(), "bmm_sparse: Tensor 'mat2' must be dense");
@@ -780,47 +775,12 @@ Tensor& bmm_out_sparse_cuda(const SparseTensor& self, const Tensor& mat2, Tensor
   cudaDeviceSynchronize();
   auto* mat_el_end_indices = mat_el_end_indices_host.data_ptr<int64_t>();
 
-  // cusparseSpMV bug on CUDA < 13.1 -> COO row index array needs to be 16-byte aligned,
-  // so we use a buffer for misaglined sub-arrays to copy into.
-#ifdef CUSPARSE_SPMV_ALIGNMENT_BUG_PRESENT
-  auto aligned_row_indices_buffer = [&]() -> Tensor {
-    if (dim_k == 1) { // implies cusparseSpMV
-      const auto* row_indices_start_ptr = indices_dim1.const_data_ptr<int64_t>();
-      const auto* mat_end_offsets_ptr = mat_el_end_indices_host.const_data_ptr<int64_t>();
-      int64_t max_nnz = 0;
-      int64_t start_offset = 0;
-      for (const auto i : c10::irange(num_matrices)) {
-        const auto* row_indices_ptr = row_indices_start_ptr + start_offset;
-        const int64_t row_indices_ptr_not_aligned = (
-            (reinterpret_cast<uintptr_t>(row_indices_ptr) % 16) / 8
-        );
-        const auto end_offset = mat_end_offsets_ptr[i];
-        const auto nnz = end_offset - start_offset;
-        max_nnz = std::max(row_indices_ptr_not_aligned * nnz, max_nnz);
-        start_offset = end_offset;
-      }
-      return max_nnz ? at::empty({max_nnz}, indices.options()) : Tensor{};
-    }
-    return Tensor{};
-  }();
-#endif
 
   // MSVC is not happy with having macros in AT_DISPATCH,
   // so we are using a lambda which we try to force-inline
   const auto maybe_provide_aligned_buffer_idx_ptr
-    = [&](int64_t* idx_ptr, int64_t start_offset, int64_t len) C10_ALWAYS_INLINE_ATTRIBUTE -> int64_t* {
-#ifdef CUSPARSE_SPMV_ALIGNMENT_BUG_PRESENT
-      auto* start = idx_ptr + start_offset;
-      const auto is_misaligned_start = (reinterpret_cast<uintptr_t>(start) % 16) != 0;
-      if (is_misaligned_start && aligned_row_indices_buffer.defined()) {
-        aligned_row_indices_buffer.narrow(0, 0, len)
-          .copy_(indices_dim1.narrow(0, start_offset, len));
-        return aligned_row_indices_buffer.data_ptr<int64_t>();
-      }
-      return start;
-#else
+    = [&](int64_t* idx_ptr, int64_t start_offset, int64_t /*len*/) C10_ALWAYS_INLINE_ATTRIBUTE -> int64_t* {
       return idx_ptr + start_offset;
-#endif
   };
 
   Scalar beta = 0;

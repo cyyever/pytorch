@@ -1695,18 +1695,6 @@ class ROCmConfigHeuristic(BaseConfigHeuristic):
             (torch.float16, 256): ROCmFlexConfig(32, 64, 2, 4, kpack=default_kpack),
         }
 
-        self.gfx942_default_flex_config = {
-            (torch.float32, 64): ROCmFlexConfig(128, 32, 1, 4, kpack=default_kpack),
-            (torch.float32, 128): ROCmFlexConfig(128, 32, 1, 4, kpack=default_kpack),
-            (torch.float32, 256): ROCmFlexConfig(64, 16, 1, 4, kpack=default_kpack),
-            (torch.bfloat16, 64): ROCmFlexConfig(64, 64, 2, 8, kpack=default_kpack),
-            (torch.bfloat16, 128): ROCmFlexConfig(64, 64, 2, 8, kpack=default_kpack),
-            (torch.bfloat16, 256): ROCmFlexConfig(32, 64, 2, 8, kpack=default_kpack),
-            (torch.float16, 64): ROCmFlexConfig(64, 32, 1, 8, kpack=default_kpack),
-            (torch.float16, 128): ROCmFlexConfig(64, 32, 1, 8, kpack=default_kpack),
-            (torch.float16, 256): ROCmFlexConfig(32, 32, 1, 8, kpack=default_kpack),
-        }
-
         # Backward defaults measured on gfx950. Only the head dims covered here were
         # measured; anything else keeps the shared ROCm values below. The block shape
         # and num_stages=2 have to move together: on gfx950 either one alone is a
@@ -1754,7 +1742,6 @@ class ROCmConfigHeuristic(BaseConfigHeuristic):
         # part -- so there is no direction along which tuning can be inherited.
         # Targets absent here fall back to the shared ROCm defaults below.
         self.flex_fwd_config_by_arch = {
-            "gfx942": self.gfx942_default_flex_config,
             "gfx950": self.gfx950_default_flex_config,
         }
         self.flex_bwd_config_by_arch = {

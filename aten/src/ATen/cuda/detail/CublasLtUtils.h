@@ -81,7 +81,7 @@ class CuBlasLtMatrixLayout : public CuBlasLtDescriptor<
   }
 };
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
 class CuBlasLtGroupedMatrixLayout : public CuBlasLtDescriptor<
                                         cublasLtMatrixLayoutOpaque_t,
                                         &cublasLtMatrixLayoutDestroy> {
@@ -120,7 +120,7 @@ class CuBlasLtGroupedMatrixLayout : public CuBlasLtDescriptor<
         descriptor(), attr, &value, sizeof(T)));
   }
 };
-#endif // !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#endif // !defined(USE_ROCM)
 
 class CuBlasLtMatmulPreference : public CuBlasLtDescriptor<
                                      cublasLtMatmulPreferenceOpaque_t,
@@ -304,8 +304,7 @@ CublasLtTypeInfo<T, C_Dtype> getCublasLtTypeInfo() {
     info.scale_type = CUDA_C_32F;
   } else if constexpr (std::is_same_v<T, at::Half>) {
 #ifndef USE_ROCM
-    auto* prop = at::cuda::getCurrentDeviceProperties();
-    if (prop->major >= 7 && at::globalContext().allowFP16AccumulationCuBLAS()) {
+    if (at::globalContext().allowFP16AccumulationCuBLAS()) {
       info.compute_type = CUBLAS_COMPUTE_16F;
       info.scale_type = CUDA_R_16F;
     }

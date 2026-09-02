@@ -37,14 +37,10 @@ from torch.testing._internal.common_device_type import (
 
 from torch.testing._internal.common_utils import (
     IS_JETSON,
-    MI200_ARCH,
     NAVI_ARCH,
-    getRocmVersion,
-    isRocmArchAnyOf,
     parametrize,
     random_matrix_with_scaled_reduction_dim,
     run_tests,
-    runOnRocmArch,
     serialTest,
     skipIfRocm,
     skipIfRocmArch,
@@ -571,9 +567,6 @@ class TestMatmulCuda(InductorTestCase):
     @parametrize("backend", ["cublas", "cublaslt"])
     def test_cublas_addmm(self, size: int, dtype: torch.dtype, backend):
         with blas_library_context(backend):
-            if (TEST_WITH_ROCM and backend == "cublas" and isRocmArchAnyOf(NAVI_ARCH) and
-                    getRocmVersion() < (6, 4) and dtype == torch.float16 and size >= 10000):
-                self.skipTest(f"failed on Navi for ROCm6.3 due to hipblas backend, dtype={dtype} and size={size}")
             self.cublas_addmm(size, dtype, False)
 
     @onlyCUDA
@@ -630,14 +623,14 @@ class TestMatmulCuda(InductorTestCase):
 
     @onlyCUDA
     @skipCUDAIfNotRocm
-    @runOnRocmArch(MI200_ARCH)
+    @skipIfRocm
     @parametrize("batched", [False, True])
     @parametrize("backend", ["cublas", "cublaslt"])
     def test_fp16_backward_preserves_subnormals_rocm(self, backend, batched):
         # Regression test for issue #182952. On ROCm, the hipBLASLt path for
         # at::Half had no equivalent of rocBLAS's fp16_alt_impl, so backward
         # fp16 GEMMs silently flushed subnormals to zero. The dispatcher now
-        # routes fp16 backward GEMMs to rocBLAS on gfx90a regardless of the
+        # routes fp16 backward GEMMs to rocBLAS on MI200 regardless of the
         # user's preferred backend.
         dtype = torch.float16
         M = K = N = 64
@@ -745,7 +738,8 @@ class TestMatmulCuda(InductorTestCase):
         if N == M and M == P:
             M2_eye = torch.eye(N, device=device, dtype=dtype)
             out1_eye_gpu = torch.nn.functional.linear(M1, M2_eye.t(), torch.zeros_like(A))
-            if runOnRocmArch(MI200_ARCH) and dtype == torch.float16:
+            # fp16 identity matmuls need a looser tolerance.
+            if dtype == torch.float16:
                 self.assertEqual(M1_cpu.to(dtype=dtype), out1_eye_gpu.cpu(), atol=1e-4, rtol=0.001)
             else:
                 self.assertEqual(M1_cpu.to(dtype=dtype), out1_eye_gpu.cpu())
@@ -763,7 +757,8 @@ class TestMatmulCuda(InductorTestCase):
         if N == M and M == P:
             M2_eye = torch.eye(N, device=device, dtype=dtype).expand(batch_size, N, N)
             out2_eye_gpu = torch.baddbmm(torch.zeros_like(A), M1, M2_eye, beta=beta, alpha=alpha)
-            if runOnRocmArch(MI200_ARCH) and dtype == torch.float16:
+            # fp16 identity matmuls need a looser tolerance.
+            if dtype == torch.float16:
                 self.assertEqual(M1_cpu.to(dtype=dtype), out2_eye_gpu.cpu(), atol=1e-4, rtol=0.001)
             else:
                 self.assertEqual(M1_cpu.to(dtype=dtype), out2_eye_gpu.cpu())
@@ -1274,9 +1269,7 @@ class TestMatmulCuda(InductorTestCase):
     @parametrize("batch_size", [None, 1, 16])
     @parametrize("backend", ["cublas", "cublaslt"])
     def test_mm_bmm_dtype_overload(self, input_dtype, M, N, K, batch_size, backend):
-        if torch.version.hip and (
-            _get_torch_rocm_version() < (7, 2, 1) or isRocmArchAnyOf(MI200_ARCH)
-        ):
+        if torch.version.hip and _get_torch_rocm_version() < (7, 2, 1):
             msg = "accuracy regression in hipblas and hipblaslt in ROCm 7.0 for certain shapes"
             if input_dtype == torch.bfloat16 and N == 1 and K == 32 and batch_size:
                 raise unittest.SkipTest(msg)
@@ -1343,9 +1336,7 @@ class TestMatmulCuda(InductorTestCase):
     @parametrize("high_precision_self", [False, True])
     @parametrize("backend", ["cublas", "cublaslt"])
     def test_addmm_baddmm_dtype_overload(self, input_dtype, M, N, K, batch_size, broadcast_self, high_precision_self, backend):
-        if torch.version.hip and (
-            _get_torch_rocm_version() < (7, 2, 1) or isRocmArchAnyOf(MI200_ARCH)
-        ):
+        if torch.version.hip and _get_torch_rocm_version() < (7, 2, 1):
             msg = "accuracy regression in hipblas and hipblaslt in ROCm 7.0 for certain shapes"
             if input_dtype == torch.bfloat16 and N == 1 and K == 32 and batch_size:
                 raise unittest.SkipTest(msg)

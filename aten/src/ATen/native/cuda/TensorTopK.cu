@@ -437,7 +437,7 @@ static void launch(
 }
 } // namespace sbtopk
 
-#if defined(USE_ROCM) && HAS_WARP_MERGE_SORT()
+#if defined(USE_ROCM)
 namespace warptopk {
 
 constexpr int MAX_WARP_TOPK_SLICE = 512;
@@ -640,7 +640,7 @@ static void launch(
 }
 
 } // namespace warptopk
-#endif // defined(USE_ROCM) && HAS_WARP_MERGE_SORT()
+#endif // defined(USE_ROCM)
 
 namespace mbtopk { // multi_block_topk
 
@@ -1452,8 +1452,8 @@ static void launch(
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 
   // CUDA path: Do a prefix scan of withinKCounts and kthCounts using slice_idx as keys to get the starting index of each block
-  using counting_iter_t = ATEN_CUB_COUNTING_ITERATOR(uint32_t);
-  using slice_idx_iter_t = ATEN_CUB_TRANSFORM_ITERATOR(uint32_t, BlockIdxToKey, counting_iter_t);
+  using counting_iter_t = cccl_counting_iterator<uint32_t>;
+  using slice_idx_iter_t = ::cuda::transform_iterator<BlockIdxToKey, counting_iter_t>;
   slice_idx_iter_t slice_idx_iter(counting_iter_t(0), BlockIdxToKey(blocks_per_slice));
   at::cuda::cub::inclusive_sum_by_key(slice_idx_iter, withinKCounts, withinKCounts, num_blocks);
   at::cuda::cub::inclusive_sum_by_key(slice_idx_iter, kthCounts, kthCounts, num_blocks);
@@ -1486,7 +1486,7 @@ static bool should_use_multiblock(int64_t num_slices, int64_t slice_size) {
 }
 
 static bool should_use_warp_topk(int64_t slice_size, int64_t k) {
-#if !defined(USE_ROCM) || !HAS_WARP_MERGE_SORT()
+#if !defined(USE_ROCM)
   return false;
 #else
   if (slice_size <= 0 || k <= 0 || slice_size > warptopk::MAX_WARP_TOPK_SLICE) {
@@ -1525,7 +1525,7 @@ void launch_gather_topk_kernel(
       indicesInfo,                                                      \
       static_cast<INDEX_T>(indicesInfo.strides[collapseIndicesDim]));
 
-#if defined(USE_ROCM) && HAS_WARP_MERGE_SORT()
+#if defined(USE_ROCM)
 #define RUN_MB(INDEX_T, DIM)                                              \
   if (should_use_warp_topk(sliceSize, k)) {                               \
     RUN_K(INDEX_T, DIM, warptopk::launch);                                \

@@ -611,8 +611,8 @@ _efficient_attention_backward(
     auto ret = aotriton::v2::flash::check_gpu(stream);
     if (hipSuccess != ret) {
       TORCH_CHECK(false,
-                "[AOTriton] Accelerated SDPA only supports MI200/MI300X/7900XTX/9070XT GPUs"
-                " (gfx90a/gfx942/gfx1100/gfx1201)")
+                "[AOTriton] Accelerated SDPA only supports MI350X/Strix Halo/RDNA4 GPUs"
+                " (gfx950/gfx1151/gfx1200/gfx1201/gfx1250)")
     }
     bool deterministic{false};
     auto& ctx = at::globalContext();

@@ -760,7 +760,7 @@ class TestScatterAddOverrideConds(TestCase):
     _has_sm90_plus() gate makes arch-dependent; below sm_90 (e.g. the L4
     runners in trunk CI) every predicate is uniformly False and the class
     tests nothing. ROCm is excluded explicitly: SM90OrLater is a raw
-    capability compare, and gfx942/gfx950 report (9, 4)/(9, 5), but the
+    capability compare, and gfx950 reports (9, 5), but the
     predicates also reject ROCm outright. Correctness-on-fallback is
     covered by TestScatterAddOverrideCorrectness, which is deliberately
     not arch-gated."""

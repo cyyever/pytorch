@@ -16,8 +16,6 @@
 #include <torch/csrc/distributed/c10d/symm_mem/CUDASymmetricMemory-inl.cuh>
 #include <torch/csrc/distributed/c10d/symm_mem/CUDASymmetricMemory.hpp>
 
-#if defined(USE_ROCM) || (defined(CUDART_VERSION) && CUDART_VERSION >= 12030)
-
 #define INT_SWITCH_CASE(name, val, ...) \
   case val: {                           \
     constexpr int name = val;           \
@@ -1166,7 +1164,6 @@ at::Tensor reduce_scatter_out(
   return output;
 }
 } // namespace
-#endif // defined(USE_ROCM) || (defined(CUDART_VERSION) && CUDART_VERSION >= 12030)
 
 namespace {
 
@@ -1289,7 +1286,6 @@ at::Tensor stream_write_value32_(
 } // namespace
 
 TORCH_LIBRARY_IMPL(symm_mem, CUDA, m) {
-#if defined(USE_ROCM) || defined(CUDART_VERSION)
   m.impl("one_shot_all_reduce", ::one_shot_all_reduce);
   m.impl("one_shot_all_reduce_out", ::one_shot_all_reduce_out);
   m.impl("one_shot_all_reduce_copy", ::one_shot_all_reduce_copy);
@@ -1299,8 +1295,8 @@ TORCH_LIBRARY_IMPL(symm_mem, CUDA, m) {
   m.impl("reduce_scatter_out", ::reduce_scatter_out);
 
   m.impl("_async_input_mm", c10d::cuda::detail::async_input_mm);
-#endif
-#if defined(CUDART_VERSION)
+
+#if !defined(USE_ROCM)
   m.impl("multimem_all_reduce_", ::multimem_all_reduce_);
 
   // NOTE: [multimem_one_shot_all_reduce]

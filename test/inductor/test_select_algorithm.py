@@ -39,8 +39,6 @@ from torch._prims_common import ELEMENTWISE_TYPE_PROMOTION_KIND
 from torch.testing import FileCheck
 from torch.testing._internal.common_utils import (
     IS_LINUX,
-    MI200_ARCH,
-    skipIfRocmArch,
     TEST_WITH_ROCM,
     TEST_XPU,
 )
@@ -859,7 +857,6 @@ class TestExternKernelCaller(TestCase):
         expected = torch.mm(a, b)
         torch.testing.assert_close(result, expected, atol=1e-4, rtol=1e-4)
 
-    @skipIfRocmArch(MI200_ARCH)
     @patches
     def test_extern_kernel_caller_hash_key_deduplication(self):
         def fn(a, b, c, d):
@@ -886,7 +883,6 @@ class TestExternKernelCaller(TestCase):
         if not torch.version.hip:  # autotuning is not guaranteed to run on ROCm
             self.assertEqual(counters["inductor"]["select_algorithm_autotune"], 1)
 
-    @skipIfRocmArch(MI200_ARCH)
     @patches
     def test_extern_kernel_benchmark_valid_timing(self):
         def fn(a, b):

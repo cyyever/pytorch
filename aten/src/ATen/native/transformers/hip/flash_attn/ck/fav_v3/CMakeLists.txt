@@ -7,7 +7,7 @@ include(CMakePrintHelpers)
 # standard library, so this step runs under plain python3 like every other CK
 # generator here -- no venv or pandas/numpy install required.
 execute_process(
-    COMMAND ${CMAKE_COMMAND} -E env "AITER_GPU_ARCHS=gfx942;gfx950"
+    COMMAND ${CMAKE_COMMAND} -E env "AITER_GPU_ARCHS=gfx950"
             python3 ${CMAKE_CURRENT_LIST_DIR}/codegen_compat.py
             --hsa-dir ${CMAKE_SOURCE_DIR}/third_party/aiter/hsa
             -m fmha_v3_bwd --output_dir ${CMAKE_CURRENT_LIST_DIR}
@@ -33,7 +33,7 @@ execute_process(
     COMMAND python3 ${GENERATE_SCRIPT}
             --hsa-dir ${AITER_HSA_DIR}
             --output ${AITER_EMBEDDED_HSA_HEADER}
-            --subdirs gfx942/fmha_v3_bwd gfx950/fmha_v3_bwd
+            --subdirs gfx950/fmha_v3_bwd
     RESULT_VARIABLE ret
 )
 

@@ -300,7 +300,7 @@ DeviceAssertionsData* CUDAKernelLaunchRegistry::
   C10_CUDA_CHECK_WO_DSA(
       cudaMallocManaged(&uvm_assertions_ptr, sizeof(DeviceAssertionsData)));
 
-#if CUDART_VERSION >= 13000 && !defined(USE_ROCM)
+#if !defined(USE_ROCM)
   cudaMemLocation cpuDevice;
   cpuDevice.type = cudaMemLocationTypeDevice;
   cpuDevice.id = cudaCpuDeviceId;

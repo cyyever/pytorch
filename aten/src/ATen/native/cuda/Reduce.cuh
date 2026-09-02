@@ -843,25 +843,6 @@ struct ReduceOp {
           }
         }
       } else {
-#if defined(USE_ROCM) && ROCM_VERSION <= 71300
-        index_t input_offset = threadIdx.y;
-        index_t step = blockDim.y;
-        #define PRFCH 4
-        for (; input_offset < config.ctas_per_output; input_offset += step*PRFCH) {
-         arg_vec_t next[PRFCH];
-         #pragma unroll
-         for (int u = 0; (u < PRFCH) && (input_offset + u*step < config.ctas_per_output); u++) {
-          index_t idx = config.staging_memory_offset(input_offset + u*step);
-          next[u] = reduce_buffer[idx];
-         }
-         for (int u = 0; (u < PRFCH) && (input_offset + u*step < config.ctas_per_output); u++) {
-          #pragma unroll
-          for (int i = 0; i < output_vec_size; i++) {
-            value[i] = ops.combine(value[i], next[u][i]);
-          }
-         }
-        }
-#else
 #if defined(USE_ROCM)
         int input_offset = threadIdx.y;
         int step = blockDim.y;
@@ -878,7 +859,6 @@ struct ReduceOp {
             value[i] = ops.combine(value[i], next[i]);
           }
         }
-#endif
       }
       value = block_y_reduce<output_vec_size>(value, shared_memory);
       if (config.should_block_x_reduce()) {
