@@ -52,8 +52,6 @@ static bool is_empty_tensor(const Tensor& self) {
 }
 
 static void unary_op_noresize(const Tensor& self, const Tensor& output_, std::string op_name, UnaryOpBlock unaryBlock) {
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
-
   auto output = output_;
   bool needsCopyToOutput = false;
   if (needsGather(output)) {
@@ -73,15 +71,6 @@ static void unary_op_noresize(const Tensor& self, const Tensor& output_, std::st
       newCachedGraph->outputTensor_ = unaryBlock(mpsGraph, castTensor);
     });
 
-    // If self is non-densely mapped in storage, create a dense output-like representation
-    at::Tensor self_;
-    if (!is_dense_in_storage(self) && !is_macOS_15_0_or_newer) {
-      self_ = at::empty_like(output, self.scalar_type());
-      mps::mps_copy_(self_, self, false);
-    } else {
-      self_ = self;
-    }
-
     bool gatherTensorData = true;
     // NS: This check is wrong and needs to be fixed, as it would produce wrong results for transposed outputs
     // See https://github.com/pytorch/pytorch/issues/100764
@@ -90,7 +79,7 @@ static void unary_op_noresize(const Tensor& self, const Tensor& output_, std::st
       gatherTensorData = false;
     }
 
-    auto selfPlaceholder = Placeholder(cachedGraph->inputTensor_, self_, /*mpsShape=*/nullptr, gatherTensorData);
+    auto selfPlaceholder = Placeholder(cachedGraph->inputTensor_, self, /*mpsShape=*/nullptr, gatherTensorData);
     auto outputPlaceholder = Placeholder(cachedGraph->outputTensor_, output, /*mpsShape=*/nullptr, false);
     auto feeds = dictionaryFromPlaceholders(selfPlaceholder);
     runMPSGraph(getCurrentMPSStream(), cachedGraph->graph(), feeds, outputPlaceholder);

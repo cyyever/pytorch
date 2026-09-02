@@ -12,30 +12,12 @@
 
 namespace at::native {
 
-static void get_shapes(MPSShape* input_shape_readonly,
-                       NSMutableArray<NSNumber*>*& input_shape,
-                       int num_input_dims,
-                       c10::MemoryFormat memory_format) {
-  // Modify the shape
-  if (memory_format == at::MemoryFormat::Contiguous) {
-    for (int i = 0; i < num_input_dims; i++)
-      input_shape[i] = input_shape_readonly[i];
-  } else { // ChannelsLast
-    auto num_channels = input_shape_readonly[1];
-    input_shape[0] = input_shape_readonly[0];
-    for (int i = 1; i < num_input_dims - 1; i++)
-      input_shape[i] = input_shape_readonly[i + 1];
-    input_shape[num_input_dims - 1] = num_channels;
-  }
-}
-
 // Note - Currently only supported for 4D image tensors
 
 TORCH_IMPL_FUNC(softmax_mps_out)
 (const Tensor& input_, const int64_t dim, const bool half_to_float, const Tensor& output) {
   TORCH_CHECK(!half_to_float, "softmax with half to float conversion is not supported on MPS");
   TORCH_CHECK(c10::isFloatingType(input_.scalar_type()), "softmax only supported for floating types");
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
 
   if (input_.numel() == 0) {
     return;
@@ -65,30 +47,6 @@ TORCH_IMPL_FUNC(softmax_mps_out)
     // Check - Channels last implies 4d
     TORCH_CHECK(memory_format != at::MemoryFormat::ChannelsLast || num_input_dims == 4,
                 "ChannelsLast implies 4d tensor")
-    // Input shape changes based on memory format
-    NSMutableArray<NSNumber*>* input_shape = [NSMutableArray<NSNumber*> arrayWithCapacity:num_input_dims];
-
-    get_shapes(input_shape_readonly, input_shape, num_input_dims, memory_format);
-
-    // Change dim
-    if (memory_format == at::MemoryFormat::ChannelsLast && dim_ > 0 && !is_macOS_15_0_or_newer) {
-      switch (dim_) {
-        case 1:
-          dim_ = 3;
-          break;
-        case 2:
-          dim_ = 1;
-          break;
-        case 3:
-          dim_ = 2;
-          break;
-        default:
-          assert(0 && "Invalid dim\n");
-      }
-    }
-
-    NSString* ns_shape_key = [[input_shape valueForKey:@"description"] componentsJoinedByString:@","];
-
     std::string key = "softmax_mps_out" + getTensorsStringKey(input, true, /*exclude_shape*/ true) + ":" +
         mem_format_key + ":" + std::to_string(dim_);
 
@@ -98,26 +56,11 @@ TORCH_IMPL_FUNC(softmax_mps_out)
       // passing selector of softMaxWithTensor on the mpsGraph object
       MPSGraphTensor* outputTensor = [mpsGraph softMaxWithTensor:inputTensor axis:(NSInteger)dim_ name:nil];
 
-      // Output needs to be contiguous format
-      if (memory_format == at::MemoryFormat::ChannelsLast && !is_macOS_15_0_or_newer) {
-        auto N = input_shape[0];
-        auto H = input_shape[1];
-        auto W = input_shape[2];
-        auto C = input_shape[3];
-
-        outputTensor = [mpsGraph reshapeTensor:outputTensor
-                                     withShape:@[ N, ([NSNumber numberWithInt:[H intValue] * [W intValue]]), C ]
-                                          name:nil];
-        outputTensor = [mpsGraph transposeTensor:outputTensor dimension:1 withDimension:2 name:nil];
-        outputTensor = [mpsGraph reshapeTensor:outputTensor withShape:@[ N, C, H, W ] name:nil];
-      }
-
       newCachedGraph->inputTensor_ = inputTensor;
       newCachedGraph->outputTensor_ = outputTensor;
     });
 
-    Placeholder inputPlaceholder =
-        Placeholder(cachedGraph->inputTensor_, input, is_macOS_15_0_or_newer ? nil : input_shape);
+    Placeholder inputPlaceholder = Placeholder(cachedGraph->inputTensor_, input);
     // This must be the Contiguous shape
     Placeholder outputPlaceholder = Placeholder(cachedGraph->outputTensor_, output);
 
