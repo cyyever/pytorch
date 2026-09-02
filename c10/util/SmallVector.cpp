@@ -84,7 +84,10 @@ static void report_at_maximum_capacity(size_t MaxSize) {
 
 // Note: Moving this function into the header may cause performance regression.
 template <class Size_T>
-static size_t getNewCapacity(size_t MinSize, size_t TSize, size_t OldCapacity) {
+static size_t getNewCapacity(
+    size_t MinSize,
+    size_t /*TSize*/,
+    size_t OldCapacity) {
   constexpr size_t MaxSize = std::numeric_limits<Size_T>::max();
 
   // Ensure we can fit the new capacity.
