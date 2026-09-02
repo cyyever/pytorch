@@ -98,11 +98,11 @@ using op_input_t = std::variant<
 // KinetoEvent constructor and the Kineto metadata producers.
 struct OpArgData {
   bool hasData;
-  std::vector<shape> shapes;
-  std::vector<std::string> dtypes;
-  std::vector<c10::IValue> concreteInputs;
-  std::vector<std::vector<int64_t>> shapesForKinetoEvent;
-  std::vector<shape> strides;
+  std::vector<shape> shapes{};
+  std::vector<std::string> dtypes{};
+  std::vector<c10::IValue> concreteInputs{};
+  std::vector<std::vector<int64_t>> shapesForKinetoEvent{};
+  std::vector<shape> strides{};
 };
 
 TORCH_API OpArgData parseArgData(
@@ -202,8 +202,10 @@ struct ExtraFields<EventType::Backend> {
   at::RecordScope scope_;
   std::string name_;
   std::string backend_;
-  jit_stack_t jit_stack_;
-  jit_modules_t jit_modules_;
+  // emplace_backend_event leaves these two out, so spell their defaults rather
+  // than aggregate-initializing past them.
+  jit_stack_t jit_stack_{};
+  jit_modules_t jit_modules_{};
 };
 
 template <>
@@ -364,10 +366,10 @@ struct ExtraFields<EventType::Kineto> {
   uint64_t correlation_id_{0};
   libkineto::ActivityType activity_type_;
   Flow flow;
-  std::weak_ptr<Result> linked_activity_;
-  std::string metadata_json_;
-  extra_meta_t extra_meta_;
-  typed_metadata_t typed_metadata_;
+  std::weak_ptr<Result> linked_activity_{};
+  std::string metadata_json_{};
+  extra_meta_t extra_meta_{};
+  typed_metadata_t typed_metadata_{};
 };
 
 struct TORCH_API Result : public std::enable_shared_from_this<Result> {
@@ -443,14 +445,14 @@ struct TORCH_API Result : public std::enable_shared_from_this<Result> {
 struct KinetoObserverContext : public at::ObserverContext {
   struct Event {
     TorchOpBasicFields basic_fields_;
-    c10::approx_time_t start_time_;
+    c10::approx_time_t start_time_{};
 
     // Set in the exit callback.
     c10::approx_time_t end_time_{
         std::numeric_limits<c10::approx_time_t>::min()};
 
-    bool allow_tf32_cublas_;
-    std::unique_ptr<perf_counters_t> counters_;
+    bool allow_tf32_cublas_{};
+    std::unique_ptr<perf_counters_t> counters_{};
     collective_meta_t* collective_meta_{};
   };
 
