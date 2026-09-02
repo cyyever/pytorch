@@ -212,10 +212,6 @@ class _StorageBase:
     def is_cuda(self):
         raise NotImplementedError
 
-    @property
-    def is_hpu(self):
-        raise NotImplementedError
-
     @classmethod
     def from_file(cls, filename, shared, nbytes) -> _StorageBase | TypedStorage:
         raise NotImplementedError
@@ -474,10 +470,6 @@ class UntypedStorage(torch._C.StorageBase, _StorageBase):
     @property
     def is_cuda(self):
         return self.device.type == "cuda"
-
-    @property
-    def is_hpu(self):
-        return self.device.type == "hpu"
 
     @property
     def filename(self) -> str | None:
@@ -843,11 +835,6 @@ class TypedStorage:
     def is_cuda(self):
         _warn_typed_storage_removal()
         return self._untyped_storage.device.type == "cuda"
-
-    @property
-    def is_hpu(self):
-        _warn_typed_storage_removal()
-        return self._untyped_storage.device.type == "hpu"
 
     def untyped(self):
         """Return the internal :class:`torch.UntypedStorage`."""

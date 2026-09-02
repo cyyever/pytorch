@@ -112,11 +112,6 @@ struct C10_API Device final {
     return type_ == DeviceType::XLA;
   }
 
-  /// Return true if the device is of HPU type.
-  bool is_hpu() const noexcept {
-    return type_ == DeviceType::HPU;
-  }
-
   /// Return true if the device is of Lazy type.
   bool is_lazy() const noexcept {
     return type_ == DeviceType::Lazy;

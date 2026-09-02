@@ -494,9 +494,6 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
     if (at::hasXPU()) {
       activities.insert(torch::profiler::impl::ActivityType::XPU);
     }
-    if (at::hasHPU()) {
-      activities.insert(torch::profiler::impl::ActivityType::HPU);
-    }
     if (c10::get_privateuse1_backend() != "privateuseone") {
       activities.insert(torch::profiler::impl::ActivityType::PrivateUse1);
     }
@@ -818,7 +815,6 @@ static PyObject* is_any_autocast_enabled(PyObject* _unused, PyObject* arg) {
       at::autocast::is_autocast_enabled(at::kCUDA) ||
       at::autocast::is_autocast_enabled(at::kXPU) ||
       at::autocast::is_autocast_enabled(at::kXLA) ||
-      at::autocast::is_autocast_enabled(at::kHPU) ||
       at::autocast::is_autocast_enabled(at::kPrivateUse1)) {
     Py_RETURN_TRUE;
   } else {
