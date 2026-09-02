@@ -115,13 +115,6 @@ def _stack_if_compiling(
 def _disable_dynamo_if_unsupported(
     single_tensor_fn: Callable[..., object] | None = None,
 ) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
-    # workaround for torchscript BC
-    # it requires all called functions to be in the
-    # global environment at the site at which the
-    # maybe_fallback closure is created
-    if single_tensor_fn:
-        globals()[single_tensor_fn.__name__] = single_tensor_fn
-
     def wrapper(func: Callable[_P, _T]) -> Callable[_P, _T]:
         import inspect
 

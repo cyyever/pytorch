@@ -12,8 +12,8 @@ TEST(TorchStableIValue, TestStableIValueUse) {
   ASSERT_EQ(torch_new_stable_ivalue(&a), AOTI_TORCH_SUCCESS);
   // Check if it is now a valid pointer.
   ASSERT_NE(a, nullptr);
-  // Assign to verify that we can actually write to the full u64 size, this will
-  // show up in valgrind if we were to allocate less than the required size.
+  // Assign to verify that we can actually write to the full u64 size; a
+  // smaller allocation would show up under a memory checker.
   *a = std::numeric_limits<StableIValue>::max();
 
   // Free the value again.
@@ -31,7 +31,7 @@ TEST(TorchStableIValue, TestStableIValueUse) {
 
 TEST(TorchStableIValue, TestStableIValueLargeAmount) {
   // Next, do a bunch of allocations and frees, such that if the delete isn't
-  // working but the allocation is we see a clear memory leak in valgrind.
+  // working but the allocation is we see a clear memory leak.
   StableIValue* v = nullptr;
   const size_t total_allocation_bytes = 10'000'000;
   const size_t number_of_allocations =

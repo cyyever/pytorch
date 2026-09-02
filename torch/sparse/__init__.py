@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 # The Tensor classes are added to this module by python_tensor.cpp
-# A workaround to support both TorchScript and MyPy:
 from typing import Any, TYPE_CHECKING
 
 import torch

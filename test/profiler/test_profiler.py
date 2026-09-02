@@ -217,9 +217,6 @@ def add_one(in_: torch.Tensor):
 
 sample_arg = torch.zeros(10, device="cuda").requires_grad_(True)
 
-# add this before cuda graphs are created
-torch.profiler._utils._init_for_cuda_graphs()
-
 add_one_graphed = torch.cuda.graphs.make_graphed_callables(add_one, sample_args=(sample_arg,))
 zeros = torch.zeros(10, device="cuda")
 out = add_one_graphed(zeros)

@@ -264,10 +264,6 @@ def record_chromium_event_internal(
     return None
 
 
-def profiler_allow_cudagraph_cupti_lazy_reinit_cuda12():
-    return True
-
-
 def get_default_numa_options():
     """
     When using elastic agent, if no numa options are provided, we will use these

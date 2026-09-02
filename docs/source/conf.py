@@ -670,12 +670,10 @@ coverage_ignore_functions = [
     "bench_loop",
     # torch.utils.benchmark.utils.cpp_jit
     "compile_timeit_template",
-    "get_compat_bindings",
     # torch.utils.benchmark.utils.fuzzer
     "dtype_size",
     # torch.utils.benchmark.utils.timer
     "timer",
-    "wrapper_singleton",
     # torch.utils.bundled_inputs
     "augment_many_model_functions_with_bundled_inputs",
     "augment_model_with_bundled_inputs",
@@ -1511,10 +1509,6 @@ coverage_ignore_classes = [
     "CPPTimer",
     "Language",
     "Timer",
-    "FunctionCount",
-    "FunctionCounts",
-    "GlobalsBridge",
-    "Serialization",
     # torch.utils.bundled_inputs
     "InflatableArg",
     # torch.utils.checkpoint

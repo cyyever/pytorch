@@ -93,45 +93,7 @@ if [[ "$BUILD_ENVIRONMENT" == *rocm* ]]; then
     export TORCHINDUCTOR_COMPILE_THREADS=16
 fi
 
-export VALGRIND=ON
 # export TORCH_INDUCTOR_INSTALL_GXX=ON
-if [[ "$BUILD_ENVIRONMENT" == *clang9* || "$BUILD_ENVIRONMENT" == *xpu* ]]; then
-  # clang9 appears to miscompile code involving std::optional<c10::SymInt>,
-  # such that valgrind complains along these lines:
-  #
-  # Conditional jump or move depends on uninitialised value(s)
-  #    at 0x40303A: ~optional_base (Optional.h:281)
-  #    by 0x40303A: call (Dispatcher.h:448)
-  #    by 0x40303A: call(at::Tensor const&, c10::ArrayRef<c10::SymInt>, c10::ArrayRef<c10::SymInt>, std::optional<c10::SymInt>) (basic.cpp:10)
-  #    by 0x403700: main (basic.cpp:16)
-  #  Uninitialised value was created by a stack allocation
-  #    at 0x402AAA: call(at::Tensor const&, c10::ArrayRef<c10::SymInt>, c10::ArrayRef<c10::SymInt>, std::optional<c10::SymInt>) (basic.cpp:6)
-  #
-  # The problem does not appear with gcc or newer versions of clang (we tested
-  # clang14).  So we suppress valgrind testing for clang9 specifically.
-  # You may need to suppress it for other versions of clang if they still have
-  # the bug.
-  #
-  # A minimal repro for the valgrind error is below:
-  #
-  # #include <ATen/ATen.h>
-  # #include <ATen/core/dispatch/Dispatcher.h>
-  #
-  # using namespace at;
-  #
-  # Tensor call(const at::Tensor & self, c10::SymIntArrayRef size, c10::SymIntArrayRef stride, std::optional<c10::SymInt> storage_offset) {
-  #   auto op = c10::Dispatcher::singleton()
-  #       .findSchemaOrThrow(at::_ops::as_strided::name, at::_ops::as_strided::overload_name)
-  #       .typed<at::_ops::as_strided::schema>();
-  #   return op.call(self, size, stride, storage_offset);
-  # }
-  #
-  # int main(int argv) {
-  #   Tensor b = empty({3, 4});
-  #   auto z = call(b, b.sym_sizes(), b.sym_strides(), std::nullopt);
-  # }
-  export VALGRIND=OFF
-fi
 
 detect_cuda_arch
 
@@ -259,8 +221,6 @@ if [[ "$TEST_CONFIG" == *crossref* ]]; then
 fi
 
 if [[ "$BUILD_ENVIRONMENT" == *rocm* ]]; then
-  # regression in ROCm 6.0 on MI50 CI runners due to hipblaslt; remove in 6.1
-  export VALGRIND=OFF
   # Print GPU info
   rocminfo
   rocminfo | grep -E 'Name:.*\sgfx|Marketing'
@@ -294,11 +254,6 @@ fi
 # ninja is installed in $HOME/.local/bin, e.g., /var/lib/jenkins/.local/bin for CI user jenkins
 # but this script should be runnable by any user, including root
 export PATH="$HOME/.local/bin:$PATH"
-
-if [[ "$BUILD_ENVIRONMENT" == *aarch64* ]]; then
-  # TODO: revisit this once the CI is stabilized on aarch64 linux
-  export VALGRIND=OFF
-fi
 
 # DANGER WILL ROBINSON.  The LD_PRELOAD here could cause you problems
 # if you're not careful.  Check this if you made some changes and the
@@ -347,9 +302,6 @@ if [[ "$BUILD_ENVIRONMENT" == *asan* ]]; then
 
     LD_PRELOAD=$(clang --print-file-name=libclang_rt.asan-x86_64.so)
     export LD_PRELOAD
-    # Disable valgrind for asan
-    export VALGRIND=OFF
-
     (cd test && python -c "import torch; print(torch.__version__, torch.version.git_version)")
     echo "The next four invocations are expected to crash; if they don't that means ASAN/UBSAN is misconfigured"
     (cd test && ! get_exit_code python -c "import torch; torch._C._crash_if_csrc_asan(3)")

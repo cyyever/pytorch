@@ -14,10 +14,6 @@ namespace torch::nativert {
 
 namespace {
 
-// Workaround for MSVC bug: "std" ambiguous symbol.
-template <typename T, typename U>
-constexpr bool is_same_v = std::is_same_v<T, U>;
-
 bool isBlank(char n) {
   return std::isspace(n);
 }
@@ -184,7 +180,7 @@ std::ostream& operator<<(std::ostream& out, const Type& ty) {
   std::visit(
       [&out](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
-        if constexpr (is_same_v<T, Type::Kind>) {
+        if constexpr (std::is_same_v<T, Type::Kind>) {
           switch (arg) {
             case Type::Kind::None:
               out << "None";
@@ -216,7 +212,7 @@ std::ostream& operator<<(std::ostream& out, const Type& ty) {
             default:
               TORCH_CHECK(false, "Unhandled type");
           }
-        } else if constexpr (is_same_v<T, Type::CustomObjData>) {
+        } else if constexpr (std::is_same_v<T, Type::CustomObjData>) {
           out << "CustomObj: " << arg.classFqn;
         }
       },
@@ -637,7 +633,7 @@ void Graph::finalize() {
         userOutputs_.emplace_back(std::visit(
             [](const auto& val) -> Constant {
               using T = std::decay_t<decltype(val)>;
-              if constexpr (is_same_v<T, std::unique_ptr<Graph>>) {
+              if constexpr (std::is_same_v<T, std::unique_ptr<Graph>>) {
                 TORCH_CHECK(false, "Graph constant outputs cannot be copied");
                 return Constant(None{});
               } else {
@@ -859,11 +855,10 @@ std::vector<Value*> Graph::insertGraph(
 
       std::visit(
           [&](auto&& val) -> void {
-            // Workaround for MSVC bug: "std" ambiguous symbol.
             using std::unique_ptr;
             using std::move;
             using T = std::decay_t<decltype(val)>;
-            if constexpr (is_same_v<T, unique_ptr<Graph>>) {
+            if constexpr (std::is_same_v<T, unique_ptr<Graph>>) {
               LOG(ERROR)
                   << "Graph attributes are not supported yet. Skipping attribute: "
                   << attr.name;
@@ -986,18 +981,17 @@ template <class>
 [[maybe_unused]] inline constexpr bool AlwaysFalse = false;
 
 c10::IValue constantToIValue(const Constant& constant) {
-  // Workaround for MSVC bug: "std" ambiguous symbol.
   using std::string;
   using std::unique_ptr;
   using std::vector;
   return std::visit(
       [](auto&& arg) -> c10::IValue {
         using T = std::decay_t<decltype(arg)>;
-        if constexpr (is_same_v<T, None>) {
+        if constexpr (std::is_same_v<T, None>) {
           return c10::IValue();
         } else if constexpr (std::is_convertible_v<T, c10::IValue>) {
           return arg;
-        } else if constexpr (is_same_v<T, unique_ptr<Graph>>) {
+        } else if constexpr (std::is_same_v<T, unique_ptr<Graph>>) {
           TORCH_CHECK(
               false, "subgraph arguments cannot be turned into ivalues!");
         } else {
@@ -1038,7 +1032,6 @@ std::ostream& printList(
 }
 
 std::ostream& operator<<(std::ostream& out, const Constant& constant) {
-  // Workaround for MSVC bug: "std" ambiguous symbol.
   using std::quoted;
   using std::string;
   using std::unique_ptr;
@@ -1046,30 +1039,30 @@ std::ostream& operator<<(std::ostream& out, const Constant& constant) {
   std::visit(
       [&](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
-        if constexpr (is_same_v<T, None>) {
+        if constexpr (std::is_same_v<T, None>) {
           out << "None";
-        } else if constexpr (is_same_v<T, int64_t> || is_same_v<T, bool>) {
+        } else if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, bool>) {
           out << arg;
         } else if constexpr (
-            is_same_v<T, vector<int64_t>> || is_same_v<T, vector<bool>>) {
+            std::is_same_v<T, vector<int64_t>> || std::is_same_v<T, vector<bool>>) {
           out << fmt::format("{}", fmt::streamed(arg));
-        } else if constexpr (is_same_v<T, double>) {
+        } else if constexpr (std::is_same_v<T, double>) {
           printDouble(out, arg);
-        } else if constexpr (is_same_v<T, vector<double>>) {
+        } else if constexpr (std::is_same_v<T, vector<double>>) {
           printList(out, true, arg, printDouble);
-        } else if constexpr (is_same_v<T, string>) {
+        } else if constexpr (std::is_same_v<T, string>) {
           out << quoted(arg);
-        } else if constexpr (is_same_v<T, c10::ScalarType>) {
+        } else if constexpr (std::is_same_v<T, c10::ScalarType>) {
           out << kScalarTypePrefix << arg;
-        } else if constexpr (is_same_v<T, c10::MemoryFormat>) {
+        } else if constexpr (std::is_same_v<T, c10::MemoryFormat>) {
           out << kMemoryFormatPrefix << arg;
-        } else if constexpr (is_same_v<T, c10::Layout>) {
+        } else if constexpr (std::is_same_v<T, c10::Layout>) {
           out << kLayoutPrefix << arg;
-        } else if constexpr (is_same_v<T, c10::Device>) {
+        } else if constexpr (std::is_same_v<T, c10::Device>) {
           out << kDevicePrefix << '{' << arg << '}';
-        } else if constexpr (is_same_v<T, vector<string>>) {
+        } else if constexpr (std::is_same_v<T, vector<string>>) {
           out << fmt::format("[{}]", fmt::join(arg, ","));
-        } else if constexpr (is_same_v<T, vector<vector<int64_t>>>) {
+        } else if constexpr (std::is_same_v<T, vector<vector<int64_t>>>) {
           out << '[';
           for (const auto& [idx, inner_list] : std::views::enumerate(arg)) {
             if (idx > 0) {
@@ -1078,7 +1071,7 @@ std::ostream& operator<<(std::ostream& out, const Constant& constant) {
             out << fmt::format("{}", fmt::streamed(inner_list));
           }
           out << ']';
-        } else if constexpr (is_same_v<T, vector<vector<double>>>) {
+        } else if constexpr (std::is_same_v<T, vector<vector<double>>>) {
           out << '[';
           for (const auto& [idx, inner_list] : std::views::enumerate(arg)) {
             if (idx > 0) {
@@ -1087,7 +1080,7 @@ std::ostream& operator<<(std::ostream& out, const Constant& constant) {
             out << fmt::format("{}", fmt::streamed(inner_list));
           }
           out << ']';
-        } else if constexpr (is_same_v<T, unique_ptr<Graph>>) {
+        } else if constexpr (std::is_same_v<T, unique_ptr<Graph>>) {
           out << fmt::format("<subgraph>");
           VLOG(0) << "Subgraph pretty print is not implemented";
         } else {

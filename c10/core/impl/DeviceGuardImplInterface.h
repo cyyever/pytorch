@@ -401,12 +401,8 @@ class C10_API DeviceGuardImplRegistrar {
       g_##DeviceType)(::c10::DeviceType::DevType, new DeviceGuardImpl());
 
 inline const DeviceGuardImplInterface* getDeviceGuardImpl(DeviceType type) {
-  // Two adjacent int16_t fields DeviceType and DeviceIndex has field access
-  // miscompiled on NVCC. To workaround this issue, we apply a mask to the
-  // DeviceType. First check if the DeviceType is 16-bit.
-  // FB employees can see
-  //   https://fb.workplace.com/groups/llvm.gcc/permalink/4053565044692080/
-  // for more details
+  // DeviceType is signed, so mask before indexing: a negative value would
+  // sign-extend to a huge size_t and run off the end of the registry.
   static_assert(sizeof(DeviceType) == 1, "DeviceType is not 8-bit");
   auto p = device_guard_impl_registry[static_cast<size_t>(type) & 0xFF].load();
 

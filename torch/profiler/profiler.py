@@ -23,7 +23,6 @@ from torch._C._profiler import (
     _ExperimentalConfig,
     _remove_execution_trace_observer,
 )
-from torch._utils_internal import profiler_allow_cudagraph_cupti_lazy_reinit_cuda12
 from torch.autograd import kineto_available, ProfilerActivity
 from torch.profiler._memory_profiler import MemoryProfile, MemoryProfileTimeline
 
@@ -423,18 +422,6 @@ class _KinetoProfile:
                 self.add_metadata_json(
                     "distributedInfo", json.dumps(dist_info, cls=_NumpyEncoder)
                 )
-
-            if (
-                self.has_cudagraphs
-                and not profiler_allow_cudagraph_cupti_lazy_reinit_cuda12()
-            ):
-                os.environ["DISABLE_CUPTI_LAZY_REINIT"] = "1"
-                self.add_metadata_json("DISABLE_CUPTI_LAZY_REINIT", "1")
-                # FIXME: CUDA Graph does not work well with CUPTI teardown.
-                #   1) crashes on 1st lazy CUPTI re-init after teardown (CUDA 11)
-                #   2) crashes on 2nd non-lazy CUPTI re-init after teardown (CUDA 12)
-                # Workaround: turn off CUPTI teardown when using CUDA Graphs.
-                os.environ["TEARDOWN_CUPTI"] = "0"
 
             # Insert the preset user metadata to the trace
             for k, v in self.preset_metadata.items():

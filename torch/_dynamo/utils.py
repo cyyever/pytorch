@@ -3463,8 +3463,8 @@ def const_repr(x: Any, *, local: Any) -> str:
             else:
                 return f"({elems_repr})"
     elif isinstance(x, enum.Enum):
-        # To workaround repr(Enum) returning invalid global reference before python 3.11
-        # by calling enum_repr and removing quotes to render enum in guard code.
+        # repr(SomeEnum.MEMBER) is "<SomeEnum.MEMBER: 1>", which guard code
+        # cannot evaluate; enum_repr renders a reference that it can.
         return enum_repr(x, local=local).replace("'", "")
     elif is_builtin_callable(x):
         return x.__name__

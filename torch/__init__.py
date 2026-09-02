@@ -62,7 +62,6 @@ from torch._utils import (
 from torch._utils_internal import (
     get_file_path,
     prepare_multiprocessing_environment,
-    profiler_allow_cudagraph_cupti_lazy_reinit_cuda12,
     USE_RTLD_GLOBAL_WITH_LIBTORCH,
 )
 from torch.torch_version import __version__ as __version__
@@ -2485,15 +2484,6 @@ class _TorchCompileInductorWrapper:
         self.apply_mode(mode)
         self.apply_options(options)
         self.apply_options(CompilerBisector.get_config_change("inductor"))
-
-        cudagraphs = self.config.get("triton.cudagraphs", False)
-        if cudagraphs and not profiler_allow_cudagraph_cupti_lazy_reinit_cuda12():
-            os.environ["DISABLE_CUPTI_LAZY_REINIT"] = "1"
-            # FIXME: CUDA Graph does not work well with CUPTI teardown.
-            #   1) crashes on 1st lazy CUPTI re-init after teardown (CUDA 11)
-            #   2) crashes on 2nd non-lazy CUPTI re-init after teardown (CUDA 12)
-            # Workaround: turn off CUPTI teardown when using CUDA Graphs.
-            os.environ["TEARDOWN_CUPTI"] = "0"
 
     def __eq__(self, other: object) -> builtins.bool:
         return (

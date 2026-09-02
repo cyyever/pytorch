@@ -8,7 +8,7 @@ import threading
 from typing import Any
 
 import torch
-from torch.utils.benchmark.utils._stubs import CallgrindModuleType, TimeitModuleType
+from torch.utils.benchmark.utils._stubs import TimeitModuleType
 from torch.utils.benchmark.utils.common import _make_temp_dir
 from torch.utils import cpp_extension
 
@@ -50,8 +50,7 @@ def _get_build_root() -> str:
 #   earlier version of PyTorch. (e.g. a regression.)
 #
 #   The problem is that Timer relies on several aspects of core PyTorch, namely
-#   some binding functions for Valgrind symbols in `torch._C` and the
-#   `torch.__config__._cxx_flags()` method. If we were to naively copy code
+#   the `torch.__config__._cxx_flags()` method. If we were to naively copy code
 #   around this wouldn't work as the symbols of interest aren't present in
 #   earlier versions of PyTorch. In order to work around this, we must add back
 #   testing shims. These shims will never activate during normal use, but will
@@ -82,29 +81,11 @@ else:
     # FIXME: Remove when back testing is no longer required.
     CXX_FLAGS = ["-O2", "-fPIC", "-g"]
 
-EXTRA_INCLUDE_PATHS: list[str] = [os.path.join(SOURCE_ROOT, "valgrind_wrapper")]
+EXTRA_INCLUDE_PATHS: list[str] = []
 CONDA_PREFIX = os.getenv("CONDA_PREFIX")
 if CONDA_PREFIX is not None:
     # Load will automatically search /usr/include, but not conda include.
     EXTRA_INCLUDE_PATHS.append(os.path.join(CONDA_PREFIX, "include"))
-
-
-COMPAT_CALLGRIND_BINDINGS: CallgrindModuleType | None = None
-def get_compat_bindings() -> CallgrindModuleType:
-    with LOCK:
-        global COMPAT_CALLGRIND_BINDINGS
-        if COMPAT_CALLGRIND_BINDINGS is None:
-            COMPAT_CALLGRIND_BINDINGS = cpp_extension.load(
-                name="callgrind_bindings",
-                sources=[os.path.join(
-                    SOURCE_ROOT,
-                    "valgrind_wrapper",
-                    "compat_bindings.cpp"
-                )],
-                extra_cflags=CXX_FLAGS,
-                extra_include_paths=EXTRA_INCLUDE_PATHS,
-            )
-    return COMPAT_CALLGRIND_BINDINGS
 
 
 def _compile_template(
@@ -113,7 +94,6 @@ def _compile_template(
     setup: str,
     global_setup: str,
     src: str,
-    is_standalone: bool
 ) -> Any:
     for before, after, indentation in (
         ("// GLOBAL_SETUP_TEMPLATE_LOCATION", global_setup, 0),
@@ -148,8 +128,6 @@ def _compile_template(
         build_directory=build_dir,
         extra_cflags=CXX_FLAGS,
         extra_include_paths=EXTRA_INCLUDE_PATHS,
-        is_python_module=not is_standalone,
-        is_standalone=is_standalone,
     )
 
 
@@ -158,18 +136,7 @@ def compile_timeit_template(*, stmt: str, setup: str, global_setup: str) -> Time
     with open(template_path) as f:
         src: str = f.read()
 
-    module = _compile_template(stmt=stmt, setup=setup, global_setup=global_setup, src=src, is_standalone=False)
+    module = _compile_template(stmt=stmt, setup=setup, global_setup=global_setup, src=src)
     if not isinstance(module, TimeitModuleType):
         raise AssertionError("compiled module is not a TimeitModuleType")
     return module
-
-
-def compile_callgrind_template(*, stmt: str, setup: str, global_setup: str) -> str:
-    template_path: str = os.path.join(SOURCE_ROOT, "valgrind_wrapper", "timer_callgrind_template.cpp")
-    with open(template_path) as f:
-        src: str = f.read()
-
-    target = _compile_template(stmt=stmt, setup=setup, global_setup=global_setup, src=src, is_standalone=True)
-    if not isinstance(target, str):
-        raise AssertionError("compiled target path is not a string")
-    return target
