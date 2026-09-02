@@ -1343,8 +1343,10 @@ if(NOT MSVC)
   append_cxx_flag_if_supported("-faligned-new" CMAKE_CXX_FLAGS)
 
   if(WERROR)
+    # append_cxx_flag_if_supported names its result after the flag it probes,
+    # so the -Werror probe lands in HAS_WERROR.
     append_cxx_flag_if_supported("-Werror" CMAKE_CXX_FLAGS)
-    if(NOT COMPILER_SUPPORT_WERROR)
+    if(NOT HAS_WERROR)
       set(WERROR FALSE)
     endif()
   endif()
