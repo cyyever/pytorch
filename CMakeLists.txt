@@ -180,9 +180,9 @@ set(CMAKE_C_STANDARD
 include(cmake/public/utils.cmake)
 
 # --- [ Check that minimal gcc version is 15+
-# libstdc++ 15 is the first with a complete C++23 library. Older GCCs accept
-# -std=c++23 but are missing pieces of it, so they fail deep in the build
-# instead of here.
+# libstdc++ 15 is the first with a complete C++23 library, which is the level
+# this tree's sources actually require. Older GCCs accept the -std flag but are
+# missing pieces of it, so they fail deep in the build instead of here.
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
   message(
     FATAL_ERROR
