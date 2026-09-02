@@ -296,7 +296,11 @@ def gen_returns(schema: FunctionSchema) -> tuple[list[str], list[str]]:
 declaration_definition_cache: dict[tuple[str, str, str], tuple[str, str]] = {}
 
 
-_TORCH_VERSION_PATTERN = re.compile(r"^TORCH_VERSION_\d+_\d+_\d+$")
+_TORCH_VERSION_PATTERN = re.compile(r"^TORCH_VERSION_(\d+)_(\d+)_(\d+)$")
+
+# The oldest libtorch this build still supports targeting through the stable ABI.
+# A "since" older than this is statically satisfied, so no gate is emitted.
+_MIN_SUPPORTED_TORCH_VERSION = (2, 14, 0)
 
 
 def _get_earliest_torch_version_for_op_variant(
@@ -305,7 +309,8 @@ def _get_earliest_torch_version_for_op_variant(
 ) -> str | None:
     """
     Return the TORCH_VERSION_X_Y_Z macro string at which the given op variant became
-    available, or None if the variant is ungated.
+    available, or None if the variant is ungated (no "since" key, or a "since" older
+    than the oldest libtorch we still support targeting).
 
     op_metadata contains the entry for an op in a dictionary like aten_shimified_ops
     in torchgen/aoti/fallback_ops.py
@@ -321,10 +326,13 @@ def _get_earliest_torch_version_for_op_variant(
         since = variant.get("since") if isinstance(variant, dict) else None
     if since is None:
         return None
-    if not isinstance(since, str) or not _TORCH_VERSION_PATTERN.match(since):
+    match = _TORCH_VERSION_PATTERN.match(since) if isinstance(since, str) else None
+    if match is None:
         raise AssertionError(
             f"`since` value {since!r} is not of the form TORCH_VERSION_X_Y_Z"
         )
+    if tuple(int(g) for g in match.groups()) < _MIN_SUPPORTED_TORCH_VERSION:
+        return None
     return since
 
 

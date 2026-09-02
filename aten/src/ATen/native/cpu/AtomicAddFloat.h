@@ -2,7 +2,7 @@
 #define ATOMIC_ADD_FLOAT
 
 #if (defined(__x86_64__) || defined(__i386__) || defined(__aarch64__))
-#include <ATen/native/cpu/Intrinsics.h>
+#include <ATen/cpu/vec/intrinsics.h>
 #else
 #define _mm_pause()
 #endif

@@ -25,13 +25,6 @@ static_assert(list_iterators_conform<
 
 using std::string;
 
-// TODO(NS): Remove me
-// For some reason emplace tests in this file fails to compile with C++20 with the following warning
-// aten/src/ATen/core/ivalue.h:240:3: error: array subscript 0 is outside array bounds of 'c10::IValue [0]'
-#if defined(__GNUC__) && __GNUC__ == 13
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-
 // NOLINTBEGIN(performance-move-const-arg, bugprone-use-after-move, *analyzer*Move)
 TEST(ListTestIValueBasedList, givenEmptyList_whenCallingEmpty_thenReturnsTrue) {
     List<string> list;

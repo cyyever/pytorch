@@ -1207,11 +1207,7 @@ inline Expr pep604union_to_union(const Expr& expr) {
       expr.range(),
       Var::create(expr.range(), Ident::create(expr.range(), "Union")),
       List<Expr>::create(expr.range(), members));
-#if defined(__clang__)
-  return std::move(synthesised_union);
-#else
   return synthesised_union;
-#endif
 }
 
 } // namespace torch::jit

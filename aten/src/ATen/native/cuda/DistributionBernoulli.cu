@@ -1,6 +1,5 @@
 #define TORCH_ASSERT_NO_OPERATORS
 #include <ATen/Dispatch.h>
-#include <ATen/cuda/CUDAApplyUtils.cuh>
 #include <ATen/AccumulateType.h>
 #include <ATen/cuda/CUDAGeneratorImpl.h>
 #include <ATen/native/UnaryOps.h>

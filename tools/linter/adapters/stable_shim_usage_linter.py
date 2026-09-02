@@ -128,7 +128,7 @@ def write_shim_function_versions(
             "# This file is automatically updated by the stable_shim_usage_linter.\n"
         )
         f.write(
-            "# If a function is not in this file, it was available before 2.10.0.\n"
+            "# If a function is not in this file, it was available before 2.14.0.\n"
         )
         f.write("# DO NOT EDIT MANUALLY.\n\n")
 

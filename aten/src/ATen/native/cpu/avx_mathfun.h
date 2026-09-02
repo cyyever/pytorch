@@ -30,7 +30,7 @@
   (this is the zlib license)
 */
 
-#include <ATen/native/cpu/Intrinsics.h>
+#include <ATen/cpu/vec/intrinsics.h>
 
 /* The original source of this file has been modified. */
 #if defined(CPU_CAPABILITY_AVX2)

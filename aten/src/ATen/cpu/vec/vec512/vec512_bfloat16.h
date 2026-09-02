@@ -21,11 +21,7 @@ inline namespace CPU_CAPABILITY {
 #if defined(CPU_CAPABILITY_AVX512)
 
 #ifndef SLEEF_CONST
-#if (defined(__GNUC__) || defined(__CLANG__)) && !defined(__INTEL_COMPILER)
 #define SLEEF_CONST const
-#else
-#define SLEEF_CONST
-#endif
 #define SLEEF_CONST_OLD SLEEF_CONST
 #else
 #define SLEEF_CONST_OLD

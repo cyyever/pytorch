@@ -107,7 +107,6 @@ jobs:
           { config: "distributed", shard: 7, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}linux.2xlarge.amx" },
           { config: "distributed", shard: 8, num_shards: 8, runner: "${{ needs.get-label-type.outputs.label-type }}linux.2xlarge.amx" },
           { config: "numpy_2_x", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.c7i.2xlarge" },
-          { config: "libtorch_agnostic_targetting", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.2xlarge" },
           { config: "openreg", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.2xlarge" },
         ]}
       python-version: "3.10"

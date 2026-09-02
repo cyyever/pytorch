@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ATen/cuda/detail/TensorInfo.cuh>
-#include <ATen/cuda/CUDAApplyUtils.cuh>
+#include <ATen/cuda/ApplyGridUtils.cuh>
 #include <ATen/native/cuda/thread_constants.h>
 #include <c10/macros/Macros.h>
 

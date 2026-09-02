@@ -264,7 +264,6 @@ static Tensor& pad_out_template(Tensor& output,
                                            rightPadding:rightPadding
                                           constantValue:0.0
                                                    name:nil];
-        // workaround for the right padding bug in Monterey
         if (needsSlice) {
           newCachedGraph->gradInputTensor_ =
               [mpsGraph sliceTensor:padTensor

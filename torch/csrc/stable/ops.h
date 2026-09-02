@@ -42,13 +42,8 @@ inline torch::stable::Tensor empty_like(const torch::stable::Tensor& self) {
       torch::stable::detail::from(std::nullopt),
       torch::stable::detail::from(std::nullopt),
       torch::stable::detail::from(std::nullopt)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::empty_like", "", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::empty_like", "", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -99,114 +94,6 @@ inline torch::stable::Tensor narrow(
       aoti_torch_aten_narrow(self.get(), dim, start, length, &ret0));
   return torch::stable::Tensor(ret0);
 }
-
-#if TORCH_FEATURE_VERSION < TORCH_VERSION_2_10_0
-/// Stable version of the new_empty op (2.9 version).
-///
-/// Creates a new uninitialized tensor with the specified size, inheriting
-/// device and layout from the input tensor. This version only supports the
-/// dtype kwarg. For the full kwargs version, use PyTorch 2.10+.
-///
-/// Minimum compatible version: PyTorch 2.9. For full kwargs support, use
-/// PyTorch 2.10+.
-///
-/// @param self The input tensor whose device
-/// @param size The desired size of the output tensor.
-/// @param dtype Optional scalar type for the tensor elements. If not provided,
-///              inherits from self.
-/// @return A new uninitialized tensor with the specified properties.
-inline torch::stable::Tensor new_empty(
-    const torch::stable::Tensor& self,
-    torch::headeronly::IntHeaderOnlyArrayRef size,
-    std::optional<torch::headeronly::ScalarType> dtype = std::nullopt) {
-  int32_t device_type;
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_get_device_type(self.get(), &device_type));
-
-  int32_t device_index;
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_get_device_index(self.get(), &device_index));
-
-  int32_t target_dtype;
-  if (dtype.has_value()) {
-    target_dtype = torch::stable::detail::to<int32_t>(
-        torch::stable::detail::from(dtype.value()));
-  } else {
-    STABLE_TORCH_ERROR_CODE_CHECK(
-        aoti_torch_get_dtype(self.get(), &target_dtype));
-  }
-
-  int32_t layout;
-  STABLE_TORCH_ERROR_CODE_CHECK(aoti_torch_get_layout(self.get(), &layout));
-
-  AtenTensorHandle ret0;
-  STABLE_TORCH_ERROR_CODE_CHECK(aoti_torch_aten_new_empty(
-      self.get(),
-      size.data(),
-      static_cast<int64_t>(size.size()),
-      &target_dtype,
-      &layout,
-      &device_type,
-      device_index,
-      nullptr, // pin_memory (nullptr for default)
-      &ret0));
-
-  return torch::stable::Tensor(ret0);
-}
-
-/// Stable version of the new_zeros op (2.9 version).
-///
-/// Creates a new tensor filled with zeros with the specified size, inheriting
-/// device and layout from the input tensor. This version only supports the
-/// dtype kwarg. For the full kwargs version, use PyTorch 2.10+.
-///
-/// Minimum compatible version: PyTorch 2.9. For full kwargs support, use
-/// PyTorch 2.10+.
-///
-/// @param self The input tensor whose device and layout will be inherited.
-/// @param size The desired size of the output tensor.
-/// @param dtype Optional scalar type for the tensor elements. If not provided,
-///              inherits from self.
-/// @return A new zero-filled tensor with the specified properties.
-inline torch::stable::Tensor new_zeros(
-    const torch::stable::Tensor& self,
-    torch::headeronly::IntHeaderOnlyArrayRef size,
-    std::optional<torch::headeronly::ScalarType> dtype = std::nullopt) {
-  int32_t device_type;
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_get_device_type(self.get(), &device_type));
-
-  int32_t device_index;
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_get_device_index(self.get(), &device_index));
-
-  int32_t target_dtype;
-  if (dtype.has_value()) {
-    target_dtype = torch::stable::detail::to<int32_t>(
-        torch::stable::detail::from(dtype.value()));
-  } else {
-    STABLE_TORCH_ERROR_CODE_CHECK(
-        aoti_torch_get_dtype(self.get(), &target_dtype));
-  }
-
-  int32_t layout;
-  STABLE_TORCH_ERROR_CODE_CHECK(aoti_torch_get_layout(self.get(), &layout));
-
-  AtenTensorHandle ath;
-  STABLE_TORCH_ERROR_CODE_CHECK(aoti_torch_aten_new_zeros(
-      self.get(),
-      size.data(),
-      static_cast<int64_t>(size.size()),
-      &target_dtype,
-      &layout,
-      &device_type,
-      device_index,
-      nullptr, // pin_memory (nullptr for default)
-      &ath));
-
-  return torch::stable::Tensor(ath);
-}
-#endif // TORCH_FEATURE_VERSION < TORCH_VERSION_2_10_0
 
 /// Stable version of the pad.default op.
 ///
@@ -312,13 +199,8 @@ inline torch::stable::Tensor transpose(
       torch::stable::detail::from(self),
       torch::stable::detail::from(dim0),
       torch::stable::detail::from(dim1)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::transpose", "int", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::transpose", "int", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -334,13 +216,8 @@ inline torch::stable::Tensor transpose(
 inline torch::stable::Tensor zero_(torch::stable::Tensor& self) {
   const auto num_args = 1;
   std::array<StableIValue, num_args> stack{torch::stable::detail::from(self)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::zero_", "", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::zero_", "", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -366,13 +243,8 @@ inline torch::stable::Tensor copy_(
       torch::stable::detail::from(self),
       torch::stable::detail::from(src),
       torch::stable::detail::from(non_blocking.value_or(false))};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::copy_", "", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::copy_", "", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -392,13 +264,8 @@ inline torch::stable::Tensor clone(const torch::stable::Tensor& self) {
   std::array<StableIValue, num_args> stack{
       torch::stable::detail::from(self),
       torch::stable::detail::from(std::nullopt)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::clone", "", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::clone", "", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -423,13 +290,8 @@ inline torch::stable::Tensor flatten(
       torch::stable::detail::from(self),
       torch::stable::detail::from(start_dim),
       torch::stable::detail::from(end_dim)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::flatten", "using_ints", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::flatten", "using_ints", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -451,13 +313,8 @@ inline torch::stable::Tensor unsqueeze(
   const auto num_args = 2;
   std::array<StableIValue, num_args> stack{
       torch::stable::detail::from(self), torch::stable::detail::from(dim)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::unsqueeze", "", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::unsqueeze", "", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -479,13 +336,8 @@ inline torch::stable::Tensor squeeze(
   const auto num_args = 2;
   std::array<StableIValue, num_args> stack{
       torch::stable::detail::from(self), torch::stable::detail::from(dim)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::squeeze", "dim", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::squeeze", "dim", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -513,13 +365,8 @@ inline torch::stable::Tensor select(
       torch::stable::detail::from(self),
       torch::stable::detail::from(dim),
       torch::stable::detail::from(index)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::select", "int", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::select", "int", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
 
@@ -540,17 +387,10 @@ inline torch::stable::Tensor matmul(
   const auto num_args = 2;
   std::array<StableIValue, num_args> stack{
       torch::stable::detail::from(self), torch::stable::detail::from(other)};
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   STABLE_TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
       "aten::matmul", "", stack.data(), TORCH_ABI_VERSION));
-#else
-  STABLE_TORCH_ERROR_CODE_CHECK(
-      aoti_torch_call_dispatcher("aten::matmul", "", stack.data()));
-#endif
   return torch::stable::detail::to<torch::stable::Tensor>(stack[0]);
 }
-
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 /// Stable parallel_for utility.
 ///
@@ -746,7 +586,6 @@ inline torch::stable::Tensor from_blob(
   return torch::stable::Tensor(ath);
 }
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
 /// Creates a tensor from an existing data blob with a custom deleter.
 ///
 /// This is the same as the from_blob function above, but allows specifying a
@@ -830,7 +669,6 @@ inline torch::stable::Tensor from_blob(
   }
   return torch::stable::Tensor(ath);
 }
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
 
 /// Stable version of the to.dtype_layout op.
 ///
@@ -1326,7 +1164,5 @@ inline bool is_pinned(const torch::stable::Tensor& self) {
       "aten::is_pinned", "", stack.data(), TORCH_ABI_VERSION));
   return torch::stable::detail::to<bool>(stack[0]);
 }
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 HIDDEN_NAMESPACE_END(torch, stable)

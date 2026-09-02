@@ -29,21 +29,21 @@
 
 #include <torch/headeronly/macros/Export.h>
 
+// GCC takes __attribute__((no_sanitize("<check>"))) but not in the position
+// these headers use it, between a function's declarator and its body, so the
+// suppressions stay clang-only.
 #if defined(__clang__)
 #define __ubsan_ignore_float_divide_by_zero__ \
   __attribute__((no_sanitize("float-divide-by-zero")))
 #define __ubsan_ignore_undefined__ __attribute__((no_sanitize("undefined")))
 #define __ubsan_ignore_signed_int_overflow__ \
   __attribute__((no_sanitize("signed-integer-overflow")))
-#define __ubsan_ignore_pointer_overflow__ \
-  __attribute__((no_sanitize("pointer-overflow")))
 #define __ubsan_ignore_float_cast_overflow__ \
   __attribute__((no_sanitize("float-cast-overflow")))
 #else
 #define __ubsan_ignore_float_divide_by_zero__
 #define __ubsan_ignore_undefined__
 #define __ubsan_ignore_signed_int_overflow__
-#define __ubsan_ignore_pointer_overflow__
 #define __ubsan_ignore_float_cast_overflow__
 #endif
 
@@ -189,7 +189,7 @@ using namespace c10::xpu;
 // takes a long argument, which means you may trigger the wrong conversion
 // without it.
 //
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #define C10_LIKELY(expr) (__builtin_expect(static_cast<bool>(expr), 1))
 #define C10_UNLIKELY(expr) (__builtin_expect(static_cast<bool>(expr), 0))
 #else
