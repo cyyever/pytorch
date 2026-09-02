@@ -182,7 +182,7 @@ void FatalSignalHandler::fatalSignalHandlerPostProcess() {}
 void FatalSignalHandler::fatalSignalHandlerStatic(
     int signum,
     siginfo_t* info,
-    void* ctx) {
+    void* /*ctx*/) {
   getInstance().fatalSignalHandler(signum, info);
 }
 
