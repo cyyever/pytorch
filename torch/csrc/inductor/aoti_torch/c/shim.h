@@ -620,7 +620,7 @@ AOTI_TORCH_EXPORT void aoti_torch_check(
         __func__,                                      \
         __FILE__,                                      \
         static_cast<uint32_t>(__LINE__),               \
-        STD_TORCH_CHECK_MSG(cond, "", ##__VA_ARGS__)); \
+        STD_TORCH_CHECK_MSG(cond, "" __VA_OPT__(,) __VA_ARGS__)); \
   }
 #endif
 

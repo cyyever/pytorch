@@ -580,7 +580,7 @@ void record_function_with_scope(
   at::RecordFunction guard(scope);                         \
   if (guard.isActive()) {                                  \
     ::at::detail::record_function_with_scope(              \
-        guard, fn, inputs, ##__VA_ARGS__);                 \
+        guard, fn, inputs __VA_OPT__(,) __VA_ARGS__);                 \
   }
 
 #define RECORD_FUNCTION_WITH_SCOPE_INPUTS_OUTPUTS( \
@@ -588,9 +588,9 @@ void record_function_with_scope(
   at::RecordFunction guard(scope);                 \
   if (guard.isActive()) {                          \
     if (guard.needsInputs()) {                     \
-      guard.before(fn, inputs, ##__VA_ARGS__);     \
+      guard.before(fn, inputs __VA_OPT__(,) __VA_ARGS__);     \
     } else {                                       \
-      guard.before(fn, ##__VA_ARGS__);             \
+      guard.before(fn __VA_OPT__(,) __VA_ARGS__);             \
     }                                              \
     if (guard.needsOutputs()) {                    \
       guard.setOutputs(outputs);                   \
@@ -599,14 +599,14 @@ void record_function_with_scope(
 
 #define RECORD_FUNCTION(fn, inputs, ...) \
   RECORD_FUNCTION_WITH_SCOPE(            \
-      at::RecordScope::FUNCTION, fn, inputs, ##__VA_ARGS__)
+      at::RecordScope::FUNCTION, fn, inputs __VA_OPT__(,) __VA_ARGS__)
 
 #define RECORD_TORCHSCRIPT_FUNCTION(mn, inputs) \
   RECORD_FUNCTION_WITH_SCOPE(at::RecordScope::TORCHSCRIPT_FUNCTION, mn, inputs)
 
 #define RECORD_FUNCTION_WITH_INPUTS_OUTPUTS(fn, inputs, outputs, ...) \
   RECORD_FUNCTION_WITH_SCOPE_INPUTS_OUTPUTS(                          \
-      at::RecordScope::FUNCTION, fn, inputs, outputs, ##__VA_ARGS__)
+      at::RecordScope::FUNCTION, fn, inputs, outputs __VA_OPT__(,) __VA_ARGS__)
 
 // Custom user scopes in C++; similar to Python's 'with record_function("..."):'
 #define RECORD_USER_SCOPE(fn) \

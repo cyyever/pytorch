@@ -14,7 +14,7 @@
 #endif
 
 #define SYSASSERT(rv, ...) \
-  TORCH_CHECK((rv) >= 0, ##__VA_ARGS__, ": ", c10::utils::str_error(errno))
+  TORCH_CHECK((rv) >= 0 __VA_OPT__(,) __VA_ARGS__, ": ", c10::utils::str_error(errno))
 
 namespace torch::multiprocessing {
 
