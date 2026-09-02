@@ -256,7 +256,7 @@ if(APPLE)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(_exit_code EQUAL 0)
     set(_MPS_supported_os_version OFF)
-    if(_macosx_sdk_version VERSION_GREATER_EQUAL 12.3)
+    if(_macosx_sdk_version VERSION_GREATER_EQUAL 26.0)
       set(_MPS_supported_os_version ON)
     endif()
     message(
@@ -348,7 +348,7 @@ else()
 endif()
 
 # CUDA is incompatible with TSAN
-cmake_dependent_option(USE_CUDA "Use CUDA" ON "NOT USE_TSAN" OFF)
+cmake_dependent_option(USE_CUDA "Use CUDA" ON "NOT USE_TSAN;NOT APPLE" OFF)
 
 # If USE_XPU is already defined in cache, it means user explicitly set it
 if(DEFINED CACHE{USE_XPU})
@@ -357,7 +357,7 @@ else()
   set(_USE_XPU_EXPLICITLY_SET FALSE)
 endif()
 
-option(USE_XPU "Use XPU" ON)
+cmake_dependent_option(USE_XPU "Use XPU" ON "NOT APPLE" OFF)
 cmake_dependent_option(
   BUILD_LAZY_CUDA_LINALG "Build cuda linalg ops as separate library" ON
   "USE_CUDA AND LINUX AND BUILD_PYTHON" OFF)
@@ -449,18 +449,13 @@ if(USE_CMAKE_INSTRUMENTATION)
     CALLBACK "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/build_trace_summary.py" --root "${CMAKE_CURRENT_SOURCE_DIR}" --index
   )
 endif()
-# prioritized text linker, ON by default for AArch64+Linux, option visible to all AArch64 and x86.
-set(USE_PRIORITIZED_TEXT_DEFAULT OFF)
-if(LINUX AND CPU_AARCH64)
-  set(USE_PRIORITIZED_TEXT_DEFAULT ON)
-endif()
+# The linker script feeds a GNU ld/lld section ordering, so it is Linux only.
 cmake_dependent_option(USE_PRIORITIZED_TEXT_FOR_LD "Use prioritized text linker for ld."
-  "${USE_PRIORITIZED_TEXT_DEFAULT}" "CPU_INTEL OR CPU_AARCH64" OFF)
+  OFF "LINUX" OFF)
 
-# LLVM BOLT post-link binary optimization. Visible on AArch64 and x86.
-# Defaults ON for aarch64+linux+CUDA builds that also apply the linker script
-# optimization and a suitable llvm-bolt (>=21) is available. Depends on the
-# linker script because the committed profiles were collected with it enabled.
+# LLVM BOLT post-link binary optimization. BOLT rewrites ELF, so Linux only.
+# The committed profiles were collected with the linker script enabled, so
+# enable USE_PRIORITIZED_TEXT_FOR_LD alongside it.
 function(check_llvm_bolt_version var item)
   execute_process(COMMAND ${item} --version OUTPUT_VARIABLE _cmd_out)
   string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" _bolt_version "${_cmd_out}")
@@ -470,32 +465,11 @@ function(check_llvm_bolt_version var item)
 endfunction()
 find_program(LLVM_BOLT_EXECUTABLE NAMES llvm-bolt VALIDATOR check_llvm_bolt_version)
 
-set(USE_LLVM_BOLT_DEFAULT OFF)
-if(LINUX AND USE_CUDA AND CPU_AARCH64 AND USE_PRIORITIZED_TEXT_FOR_LD AND LLVM_BOLT_EXECUTABLE)
-  set(USE_LLVM_BOLT_DEFAULT ON)
-endif()
 cmake_dependent_option(USE_LLVM_BOLT "Optimize libraries with LLVM BOLT."
-  "${USE_LLVM_BOLT_DEFAULT}" "CPU_INTEL OR CPU_AARCH64" OFF)
+  OFF "LINUX;LLVM_BOLT_EXECUTABLE" OFF)
 
 option(USE_MIMALLOC "Use mimalloc" OFF)
-# Enable third party mimalloc library to improve memory allocation performance
-# on AArch64 Linux.
 option(USE_MIMALLOC_ON_MKL "Use mimalloc on MKL" OFF)
-if(CPU_AARCH64 AND NOT APPLE)
-  set(USE_MIMALLOC ON)
-  # Disable OPT flags for mimalloc on aarch64 as it breaks ARMv8.0
-  # See https://github.com/pytorch/pytorch/issues/174344
-  if(CPU_AARCH64)
-    set(MI_NO_OPT_ARCH ON)
-  endif()
-
-  # Not enable USE_MIMALLOC_ON_MKL due to it caused issue:
-  # https://github.com/pytorch/pytorch/issues/138994
-  # Will turn on when we can fix USE_STATIC_MKL lost functionality:
-  # https://github.com/pytorch/pytorch/pull/138996
-  # set(USE_MIMALLOC_ON_MKL ON)
-endif()
-
 if(USE_CCACHE)
   find_program(CCACHE_PROGRAM ccache)
   find_program(SCCACHE_EXECUTABLE sccache)
@@ -567,14 +541,6 @@ string(APPEND CMAKE_CUDA_FLAGS " -compress-mode=size")
 # MAX_JOBS within the core count on the machines this fork is built on.
 string(APPEND CMAKE_CUDA_FLAGS " --split-compile=2")
 
-# Set linker max-page-size to 64KiB on AArch64 Linux
-# And stub group size to 32MiB to workaround R_AARCH64_CALL26
-# relocation errors
-if(LINUX AND CPU_AARCH64)
-  add_link_options_if_supported("-z,max-page-size=0x10000")
-  add_link_options_if_supported("--stub-group-size=0x2000000")
-endif()
-
 # INTERN_BUILD_ATEN_OPS is used to control whether to build ATen/TH operators.
 set(INTERN_BUILD_ATEN_OPS ON)
 
@@ -603,11 +569,6 @@ if(USE_PRIORITIZED_TEXT_FOR_LD)
     VERBATIM
   )
   add_custom_target(generate_linker_script DEPENDS "${LINKER_SCRIPT_FILE_OUT}")
-elseif(LINUX AND CPU_AARCH64)
-  message(WARNING [[
-  It is strongly recommend to enable linker script optimization for all AArch64 Linux builds.
-  To do so please export USE_PRIORITIZED_TEXT_FOR_LD=1
-  ]])
 endif()
 
 if(USE_LLVM_BOLT)
@@ -698,7 +659,7 @@ include(ExternalProject)
 if(NOT USE_FBGEMM)
   message(FATAL_ERROR "USE_FBGEMM=OFF is not supported")
 endif()
-if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|aarch64)$")
+if(NOT CPU_INTEL AND NOT CPU_AARCH64)
   message(FATAL_ERROR "FBGEMM requires x86_64 or aarch64")
 endif()
 
@@ -806,12 +767,6 @@ if((${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") AND ("${CMAKE_SYSTEM_PROCESSOR}" STR
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
 endif()
 
-# Enable sleef on Arm(R) architecture by default
-if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
-  string(APPEND CMAKE_CXX_FLAGS " -DAT_BUILD_ARM_VEC256_WITH_SLEEF")
-  add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
-endif()
-
 # ---[ Allowlist file if allowlist is specified
 include(cmake/Allowlist.cmake)
 
@@ -874,18 +829,11 @@ if(WERROR)
 endif()
 append_cxx_flag_if_supported("-Wno-maybe-uninitialized" CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-fstandalone-debug" CMAKE_CXX_FLAGS_DEBUG)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-  if(CMAKE_BUILD_TYPE MATCHES Debug)
-    message(WARNING "Applying -Og optimization for aarch64 GCC debug build to workaround ICE")
-  endif()
-  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -Og")
-else()
-  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -O0")
-endif()
+string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -O0")
 # aarch64 C++ stack unwinding uses frame-pointer chain walking, so frame
 # pointers must be present in all build types.  The cost is negligible on
 # aarch64 (31 GPRs vs x86-64's 16, so dedicating x29 rarely spills).
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+if(CPU_AARCH64)
   append_cxx_flag_if_supported("-fno-omit-frame-pointer" CMAKE_CXX_FLAGS)
 endif()
 append_cxx_flag_if_supported("-fno-math-errno" CMAKE_CXX_FLAGS)
@@ -932,14 +880,6 @@ if(APPLE)
                                  CMAKE_OBJCXX_FLAGS)
   endif()
   append_cxx_flag_if_supported("-Wno-missing-braces" CMAKE_CXX_FLAGS)
-endif()
-
-if(EMSCRIPTEN)
-  string(
-    APPEND
-    CMAKE_CXX_FLAGS
-    " -Wno-implicit-function-declaration -DEMSCRIPTEN -s DISABLE_EXCEPTION_CATCHING=0"
-  )
 endif()
 
 append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
