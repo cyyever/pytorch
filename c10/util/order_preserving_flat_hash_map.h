@@ -4,7 +4,6 @@
 // - https://github.com/skarupke/flat_hash_map/pull/25
 // - https://github.com/skarupke/flat_hash_map/pull/26
 // - replace size_t with uint64_t to fix it for 32bit
-// - add "GCC diagnostic" pragma to ignore -Wshadow
 // - make sherwood_v3_table::convertible_to_iterator public because GCC5 seems
 // to have issues with it otherwise
 // - fix compiler warnings in operator templated_iterator<const value_type>
