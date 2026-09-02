@@ -44,7 +44,6 @@ inline Layout Tensor::layout() const {
   return torch::stable::detail::to<Layout>(torch::stable::detail::from(layout));
 }
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 // The following data ptr cast methods mirror the methods defined in
 // aten/src/ATen/templates/TensorMethods.cpp
 #define DEFINE_DATA_PTR_CAST(T, name, PRED)          \
@@ -77,6 +76,5 @@ AT_FORALL_SCALAR_TYPES_V2(
     torch::headeronly::ScalarType::UInt64)
 #undef DEFINE_CAST
 #undef _PRED
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 HIDDEN_NAMESPACE_END(torch, stable)

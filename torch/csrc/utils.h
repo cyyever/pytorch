@@ -15,7 +15,7 @@
 
 #define THPUtils_typename(obj) (Py_TYPE(obj)->tp_name)
 
-#if defined(__GNUC__) || defined(__ICL) || defined(__clang__)
+#if defined(__GNUC__)
 #define THP_EXPECT(x, y) (__builtin_expect((x), (y)))
 #else
 #define THP_EXPECT(x, y) (x)

@@ -22,9 +22,11 @@
 #   #if TORCH_FEATURE_VERSION >= <since>
 #   ...
 #   #endif
-# guard. When absent, the declaration is emitted ungated, which would signify that the op was
-# available since torch 2.9. ALL NEWLY ADDED OPS MUST INCLUDE A "since" KEY WITH THE VALUE SET
-# TO THE CURRENT TORCH VERSION (the version when the op was added).
+# guard, unless the "since" predates the oldest libtorch we still support targeting (see
+# _MIN_SUPPORTED_TORCH_VERSION in torchgen/gen_aoti_c_shim.py), in which case the gate would
+# always be true and is omitted. When absent, the declaration is emitted ungated. ALL NEWLY
+# ADDED OPS MUST INCLUDE A "since" KEY WITH THE VALUE SET TO THE CURRENT TORCH VERSION (the
+# version when the op was added).
 
 inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = {
     "aten._adaptive_avg_pool2d_backward.default": {},
@@ -50,22 +52,20 @@ inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = 
     "aten._flash_attention_forward.default": {
         "v2": {
             "new_args": ["block_table", "num_splits"],
-            "since": "TORCH_VERSION_2_12_0",
         }
     },
     "aten._flash_attention_forward_no_dropout_inplace.default": {
-        "since": "TORCH_VERSION_2_12_0",
-        "v2": {"new_args": ["num_splits"], "since": "TORCH_VERSION_2_12_0"},
+        "v2": {"new_args": ["num_splits"]},
     },
-    "aten._flash_attention_forward.quantized": {"since": "TORCH_VERSION_2_11_0"},
+    "aten._flash_attention_forward.quantized": {},
     "aten._fused_rms_norm.default": {},
-    "aten._grouped_mm.default": {"since": "TORCH_VERSION_2_12_0"},
+    "aten._grouped_mm.default": {},
     "aten._histogramdd_from_bin_cts.default": {},
     "aten._int_mm.out": {},
     "aten._pdist_backward.default": {},
     "aten._pdist_forward.default": {},
     "aten._scaled_dot_product_attention_math_for_mps.default": {
-        "v2": {"new_args": ["enable_gqa"], "since": "TORCH_VERSION_2_13_0"}
+        "v2": {"new_args": ["enable_gqa"]}
     },
     "aten._scaled_dot_product_cudnn_attention_backward.default": {},
     "aten._scaled_dot_product_cudnn_attention.default": {},
@@ -75,13 +75,11 @@ inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = 
     "aten._scaled_dot_product_flash_attention_for_cpu_backward.default": {},
     "aten._scaled_dot_product_flash_attention_for_cpu.default": {},
     "aten._scaled_dot_product_flash_attention.default": {},
-    "aten._scaled_dot_product_flash_attention.quantized": {
-        "since": "TORCH_VERSION_2_11_0"
-    },
+    "aten._scaled_dot_product_flash_attention.quantized": {},
     "aten._scaled_dot_product_fused_attention_overrideable_backward.default": {},
     "aten._scaled_dot_product_fused_attention_overrideable.default": {},
     "aten._scaled_mm.default": {},
-    "aten._scaled_grouped_mm.default": {"since": "TORCH_VERSION_2_10_0"},
+    "aten._scaled_grouped_mm.default": {},
     "aten._scaled_mm.out": {},
     "aten._segment_reduce_backward.default": {},
     "aten._thnn_fused_lstm_cell.default": {},
@@ -127,8 +125,8 @@ inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = 
     "aten.gcd.default": {},
     "aten.geqrf.default": {},
     "aten.grid_sampler_2d_backward.default": {},
-    "aten.grid_sampler_3d.default": {"since": "TORCH_VERSION_2_13_0"},
-    "aten.grid_sampler_3d_backward.default": {"since": "TORCH_VERSION_2_13_0"},
+    "aten.grid_sampler_3d.default": {},
+    "aten.grid_sampler_3d_backward.default": {},
     "aten.hann_window.default": {},
     "aten.histc.default": {},
     "aten.histogram.bin_ct": {},
@@ -149,7 +147,7 @@ inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = 
     "aten.max_unpool3d.default": {},
     "aten.median.default": {},
     "aten.mm.out": {},
-    "aten.mm.dtype_out": {"since": "TORCH_VERSION_2_11_0"},
+    "aten.mm.dtype_out": {},
     "aten.mode.default": {},
     "aten.mul.Scalar": {},
     "aten.mul.Tensor": {},
@@ -157,7 +155,7 @@ inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = 
     "aten.narrow.default": {},
     "aten.native_dropout.default": {},
     "aten.nonzero.default": {},
-    "aten.nonzero_static.default": {"since": "TORCH_VERSION_2_11_0"},
+    "aten.nonzero_static.default": {},
     "aten.normal_functional.default": {},
     "aten.ormqr.default": {},
     "aten.pad.default": {},
@@ -175,12 +173,12 @@ inductor_fallback_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = 
     "aten.randn.default": {},
     "aten.randn.generator": {},
     "aten.randperm.default": {},
-    "aten.rand_like.default": {"since": "TORCH_VERSION_2_12_0"},
-    "aten.rand_like.generator": {"since": "TORCH_VERSION_2_12_0"},
-    "aten.randint_like.default": {"since": "TORCH_VERSION_2_12_0"},
-    "aten.randint_like.low_dtype": {"since": "TORCH_VERSION_2_12_0"},
-    "aten.randn_like.default": {"since": "TORCH_VERSION_2_12_0"},
-    "aten.randn_like.generator": {"since": "TORCH_VERSION_2_12_0"},
+    "aten.rand_like.default": {},
+    "aten.rand_like.generator": {},
+    "aten.randint_like.default": {},
+    "aten.randint_like.low_dtype": {},
+    "aten.randn_like.default": {},
+    "aten.randn_like.generator": {},
     "aten.repeat_interleave.Tensor": {},
     "aten.replication_pad1d_backward.default": {},
     "aten.replication_pad2d_backward.default": {},
@@ -225,6 +223,6 @@ aten_shimified_ops: dict[str, dict[str, str | dict[str, list[str] | str]]] = {
     "aten.amax.default": {},
     "aten.new_empty.default": {},
     "aten.new_zeros.default": {},
-    "aten.full.default": {"since": "TORCH_VERSION_2_10_0"},
-    "aten.subtract.Tensor": {"since": "TORCH_VERSION_2_10_0"},
+    "aten.full.default": {},
+    "aten.subtract.Tensor": {},
 }

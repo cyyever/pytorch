@@ -59,20 +59,20 @@ struct FromImpl {
       T val,
       [[maybe_unused]] uint64_t extension_build_version,
       [[maybe_unused]] bool is_internal) {
-    // Ensure 2.10+ types don't accidentally use the base case - provide clear
-    // compile-time errors.
+    // Ensure specialized types don't accidentally use the base case - provide
+    // clear compile-time errors.
     static_assert(
         !std::is_same_v<T, torch::stable::Device>,
-        "torch::stable::Device requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "torch::stable::Device must use its dedicated specialization, not the catch-all");
     static_assert(
         !is_header_only_array_ref_v<T>,
-        "HeaderOnlyArrayRef<T> requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "HeaderOnlyArrayRef<T> must use its dedicated specialization, not the catch-all");
     static_assert(
         !is_std_vector_v<T>,
-        "std::vector<T> requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "std::vector<T> must use its dedicated specialization, not the catch-all");
     static_assert(
         !std::is_same_v<T, std::string>,
-        "std::string requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "std::string must use its dedicated specialization, not the catch-all");
     static_assert(
         sizeof(T) <= sizeof(StableIValue),
         "StableLibrary stack does not support parameter types larger than 64 bits.");
@@ -157,12 +157,10 @@ struct FromImpl<ScalarType> {
         return torch::stable::detail::from(aoti_torch_dtype_uint32());
       case ScalarType::UInt64:
         return torch::stable::detail::from(aoti_torch_dtype_uint64());
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
       case ScalarType::Float8_e8m0fnu:
         return torch::stable::detail::from(torch_dtype_float8_e8m0fnu());
       case ScalarType::Float4_e2m1fn_x2:
         return torch::stable::detail::from(torch_dtype_float4_e2m1fn_x2());
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
       default:
         STD_TORCH_CHECK(
             false,
@@ -173,18 +171,6 @@ struct FromImpl<ScalarType> {
   }
 };
 
-// [Note DeviceType version guard]
-// This conversion was introduced in 2.10. However, we do not gate it
-// with TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0 because this
-// conversion is not actually used to pass DeviceType between user
-// extensions and libtorch (i.e. there is no c10::TypeKind::DeviceType).
-// The purpose of gating other conversions is to ensure that user
-// extensions do not try to pass a StableIValue that libtorch is
-// unable to interpret.
-// This conversion is only used
-// (1) In the conversion for torch::stable::Device (already gated)
-// (2) Within the user extension to translate between libtorch/extension's
-//     DeviceType (no gating needed)
 // Specialization for torch::headeronly::DeviceType => StableIValue
 // Note that we call into the shim to translate between the user's
 // DeviceType and libtorch's DeviceType, which can be different!
@@ -266,7 +252,6 @@ struct FromImpl<std::optional<T>> {
     if (!val.has_value()) {
       return torch::stable::detail::from(std::nullopt);
     }
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 
     const StableIValue value = detail::FromImpl<T>::call(
         val.value(), extension_build_version, is_internal);
@@ -275,11 +260,6 @@ struct FromImpl<std::optional<T>> {
     TORCH_ERROR_CODE_CHECK(torch_new_stable_ivalue(&ivalue_ptr));
     *ivalue_ptr = value;
     return torch::stable::detail::from(ivalue_ptr);
-#else
-    return torch::stable::detail::from(
-        new StableIValue(detail::FromImpl<T>::call(
-            val.value(), extension_build_version, is_internal)));
-#endif
   }
 };
 
@@ -298,7 +278,6 @@ struct FromImpl<torch::stable::Tensor> {
   }
 };
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 // Specialization for torch::stable::Generator => StableIValue
 // Returns a new owning reference of the underlying Generator.
 template <>
@@ -313,12 +292,6 @@ struct FromImpl<torch::stable::Generator> {
     return torch::stable::detail::from(new_gen);
   }
 };
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
-
-// =============================================================================
-// FROM CONVERSIONS requiring TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-// =============================================================================
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 // Specialization for torch::headeronly::Layout => StableIValue
 // Note that we call into the shim to translate between the user's
@@ -464,8 +437,6 @@ struct FromImpl<std::string> {
   }
 };
 
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-
 // =============================================================================
 // TO CONVERSIONS (StableIValue -> T)
 // =============================================================================
@@ -477,20 +448,20 @@ struct ToImpl {
       StableIValue val,
       [[maybe_unused]] uint64_t extension_build_version,
       [[maybe_unused]] bool is_internal) {
-    // Ensure 2.10+ types don't accidentally use the base case - provide clear
-    // compile-time errors.
+    // Ensure specialized types don't accidentally use the base case - provide
+    // clear compile-time errors.
     static_assert(
         !std::is_same_v<T, torch::stable::Device>,
-        "torch::stable::Device requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "torch::stable::Device must use its dedicated specialization, not the catch-all");
     static_assert(
         !is_header_only_array_ref_v<T>,
-        "HeaderOnlyArrayRef<T> requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "HeaderOnlyArrayRef<T> must use its dedicated specialization, not the catch-all");
     static_assert(
         !is_std_vector_v<T>,
-        "std::vector<T> requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "std::vector<T> must use its dedicated specialization, not the catch-all");
     static_assert(
         !std::is_same_v<T, std::string>,
-        "std::string requires TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0");
+        "std::string must use its dedicated specialization, not the catch-all");
     static_assert(std::is_trivially_copyable_v<T>);
     // T may not have a default constructor. (For example, it might be
     // c10::Device.) However, std::memcpy implicitly creates a T at the
@@ -571,12 +542,10 @@ struct ToImpl<ScalarType> {
       return ScalarType::UInt32;
     } else if (shim_scalartype == aoti_torch_dtype_uint64()) {
       return ScalarType::UInt64;
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
     } else if (shim_scalartype == torch_dtype_float8_e8m0fnu()) {
       return ScalarType::Float8_e8m0fnu;
     } else if (shim_scalartype == torch_dtype_float4_e2m1fn_x2()) {
       return ScalarType::Float4_e2m1fn_x2;
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
     } else {
       STD_TORCH_CHECK(
           false,
@@ -587,7 +556,6 @@ struct ToImpl<ScalarType> {
   }
 };
 
-// See [Note DeviceType version guard]
 // Specialization for StableIValue => torch::headeronly::DeviceType
 template <>
 struct ToImpl<DeviceType> {
@@ -649,11 +617,7 @@ struct ToImpl<std::optional<T>> {
         detail::ToImpl<T>::call(*sivp, extension_build_version, is_internal);
 
 // free the memory associated with StableIValue* sivp
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
     TORCH_ERROR_CODE_CHECK(torch_delete_stable_ivalue(sivp));
-#else
-    delete sivp;
-#endif
 
     return std::make_optional(inner_val);
   }
@@ -673,7 +637,6 @@ struct ToImpl<torch::stable::Tensor> {
   }
 };
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 // Specialization for StableIValue => torch::stable::Generator
 // The resulting stable::Generator steals ownership of the input's
 // underlying AtenGeneratorHandle.
@@ -687,12 +650,6 @@ struct ToImpl<torch::stable::Generator> {
         torch::stable::detail::to<AtenGeneratorHandle>(val));
   }
 };
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
-
-// =============================================================================
-// TO CONVERSIONS requiring TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-// =============================================================================
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 // Specialization for StableIValue => torch::headeronly::Layout
 template <>
@@ -829,13 +786,6 @@ struct ToImpl<std::string> {
   }
 };
 
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-
-// =============================================================================
-// FROM/TO CONVERSIONS requiring TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
-// =============================================================================
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
-
 // Specialization for torch::headeronly::Tag => StableIValue
 // Uses shim getter functions so the integer representation is resolved at
 // runtime from libtorch, not baked in at extension compile time.
@@ -944,8 +894,6 @@ struct ToImpl<Tag> {
     }
   }
 };
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
 
 // =============================================================================
 //  end to helpers for converting between StableIValue and T

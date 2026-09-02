@@ -131,7 +131,6 @@ class Tensor {
     return data_ptr;
   }
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   /**
    * @brief Returns a mutable pointer to the tensor's data.
    *
@@ -197,7 +196,6 @@ class Tensor {
         torch_set_requires_grad(ath_.get(), requires_grad));
     return *this;
   }
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
   /**
    * @brief Returns the number of dimensions of the tensor.

@@ -25,17 +25,15 @@
 #include <hip/hip_fp16.h>
 #endif
 
-#if defined(CL_SYCL_LANGUAGE_VERSION)
-#include <CL/sycl.hpp> // for SYCL 1.2.1
-#elif defined(SYCL_LANGUAGE_VERSION)
-#include <sycl/sycl.hpp> // for SYCL 2020
+#if defined(SYCL_LANGUAGE_VERSION)
+#include <sycl/sycl.hpp>
 #endif
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
 #include <arm_neon.h>
 #endif
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
     defined(_M_IX86)
 #if defined(__F16C__) &&                               \
@@ -46,7 +44,7 @@
 #endif // defined(__F16C__) && !(defined(__CUDA_ARCH__) || defined(__CUDACC__)
        // || defined(__HIP_DEVICE_COMPILE__))
 #endif // __x86_64__ || _M_X64 || __i386 || _M_IX86
-#endif // __GNUC__ || __clang__
+#endif // __GNUC__
 
 namespace c10 {
 

@@ -16,10 +16,8 @@
 #include <cuda_bf16.h>
 #endif
 
-#if defined(CL_SYCL_LANGUAGE_VERSION)
-#include <CL/sycl.hpp> // for SYCL 1.2.1
-#elif defined(SYCL_LANGUAGE_VERSION)
-#include <sycl/sycl.hpp> // for SYCL 2020
+#if defined(SYCL_LANGUAGE_VERSION)
+#include <sycl/sycl.hpp>
 #endif
 
 namespace c10 {

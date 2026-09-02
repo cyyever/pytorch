@@ -152,8 +152,7 @@ float reduce(vec::VectorizedN<float, kF32RegistersPerIteration>& x) {
 #if defined(__aarch64__) && defined(__clang__) && __clang_major__ > 15
 // https://godbolt.org/z/z8P4Yncra
 #define COMPILER_SUPPORTS_BF16_TARGET 1
-#elif defined(__aarch64__) && !defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 10
-// https://gcc.gnu.org/gcc-10/changes.html
+#elif defined(__aarch64__) && !defined(__clang__) && defined(__GNUC__)
 // https://godbolt.org/z/cdGG7vn8o
 #define COMPILER_SUPPORTS_BF16_TARGET 1
 #else // defined(__aarch64__) && defined(__clang__) && __clang_major__ > 15

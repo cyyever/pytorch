@@ -1,9 +1,9 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/cuda/UniqueCub.cuh>
+#include <ATen/cuda/ApplyGridUtils.cuh>
 
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/detail/KernelUtils.h>
-#include <ATen/cuda/CUDAApplyUtils.cuh>
 #include <ATen/cuda/cub.cuh>
 
 #include <c10/core/DeviceArray.h>

@@ -443,39 +443,6 @@ class DispatchKeySet final {
     return static_cast<uint8_t>(std::bit_width(repr_));
   }
 
-#if defined(C10_MOBILE_TRIM_DISPATCH_KEYS)
-  // [Note: Trimmed Mobile Dispatch Keys]
-  /**
-   * The method below maps the dispatch key in the enum DispatchKey to an
-   * integer index in the dispatchTable_ array in OperatorEntry. The array
-   * is trimmed for mobile to reduce peak memory usage since it's
-   * unnecessary to reserve additional space for dispatch keys that will
-   * never be used on mobile.
-   */
-  [[nodiscard]] int getDispatchTableIndexForDispatchKeySet() const {
-    auto dk = highestPriorityTypeId();
-    switch (dk) {
-      case DispatchKey::Undefined:
-        return 0;
-      case DispatchKey::CPU:
-        return 1;
-      case DispatchKey::QuantizedCPU:
-        return 2;
-      case DispatchKey::SparseCPU:
-        return 3;
-      case DispatchKey::BackendSelect:
-        return 4;
-      case DispatchKey::ADInplaceOrView:
-        return 5;
-      case DispatchKey::AutogradOther:
-        return 6;
-      case DispatchKey::AutogradCPU:
-        return 7;
-      default:
-        return -1;
-    }
-  }
-#else
   // returns the index in the operator table of highest priority key in the the
   // keyset Note that we could in theory implement this using
   // highestPriorityTypeId(), but this code is very hotpath and we can do it
@@ -492,7 +459,6 @@ class DispatchKeySet final {
         DispatchKeySet((repr_ & offset_and_mask.mask) >> 1).indexOfHighestBit();
     return offset_and_mask.offset + backend_idx;
   }
-#endif
 
   // returns the "index" of the highest priority backend in the keyset.
   // This is pretty similar to getBackendKey(), but:

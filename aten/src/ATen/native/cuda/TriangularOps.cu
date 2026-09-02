@@ -1,5 +1,7 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/ceil_div.h>
+#include <ATen/cuda/detail/IndexUtils.cuh>
+#include <ATen/cuda/detail/TensorInfo.cuh>
 #include <ATen/Context.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/Dispatch.h>
@@ -12,7 +14,6 @@
 #include <ATen/ops/tril_native.h>
 #include <ATen/ops/triu_native.h>
 
-#include <ATen/cuda/CUDAApplyUtils.cuh>
 
 #define BOOL_SWITCH(COND, CONST_NAME, ...)      \
   [&] {                                         \
