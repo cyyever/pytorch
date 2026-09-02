@@ -10,8 +10,8 @@
 #include <ATen/mps/MPSAllocatorInterface.h>
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/mps/MPSStream.h>
-#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 #include <ATen/native/mps/OperationUtils.h>
+#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
@@ -803,13 +803,8 @@ id<MTLLibrary> MetalShaderLibrary::compileLibrary(const std::string& src) {
   MTLCompileOptions* options = compile_options;
   if (!options) {
     options = [[MTLCompileOptions new] autorelease];
-    if (is_macos_at_least(MacOSVersion::MACOS_26_0)) {
-      // Metal-4.0 allows tensor template arguments
-      [options setLanguageVersion:MTLLanguageVersion4_0];
-    } else {
-      // Metal-3.2 allows lambdas in shader code
-      [options setLanguageVersion:MTLLanguageVersion3_2];
-    }
+    // Metal-4.0 allows tensor template arguments
+    [options setLanguageVersion:MTLLanguageVersion4_0];
     options.mathMode = fast_math ? MTLMathModeFast : MTLMathModeSafe;
     options.mathFloatingPointFunctions =
         fast_math ? MTLMathFloatingPointFunctionsFast : MTLMathFloatingPointFunctionsPrecise;

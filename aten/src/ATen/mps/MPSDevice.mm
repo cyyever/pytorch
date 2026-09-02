@@ -51,14 +51,11 @@ MPSDevice::MPSDevice() : _mtl_device(nil) {
 }
 
 bool MPSDevice::isMacOS13Plus(MacOSVersion version) const {
-  static bool _macos_26_0_plus = is_os_version_at_least(26, 0);
   static bool _macos_26_2_plus = is_os_version_at_least(26, 2);
   static bool _macos_26_4_plus = is_os_version_at_least(26, 4);
   static bool _macos_27_0_plus = is_os_version_at_least(27, 0);
 
   switch (version) {
-    case MacOSVersion::MACOS_26_0:
-      return _macos_26_0_plus;
     case MacOSVersion::MACOS_26_2:
       return _macos_26_2_plus;
     case MacOSVersion::MACOS_26_4:

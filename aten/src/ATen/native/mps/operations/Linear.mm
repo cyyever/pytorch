@@ -2,13 +2,13 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/ExpandUtils.h>
 #include <ATen/mps/MPSProfiler.h>
-#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/ops/addmm.h>
 #include <ATen/ops/linear_backward_native.h>
 #include <ATen/ops/linear_native.h>
 #include <ATen/ops/mm.h>
 #include <ATen/ops/zeros.h>
+#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 
 namespace at::native {
 
@@ -175,8 +175,7 @@ Tensor _mps_linear(const Tensor& input, const Tensor& weight_arg, const std::opt
     // The fused 3-source kernel drops the bias for vector-shaped (M==1) inputs on the M1
     // (Apple7) family on macOS 26; add it separately there. Fixed in macOS 27.
     static const bool decompose_bias = is_apple_family_or_newer(AppleGPUFamily::APPLE_7_PLUS) &&
-        !is_apple_family_or_newer(AppleGPUFamily::APPLE_8_PLUS) && is_macos_at_least(MacOSVersion::MACOS_26_0) &&
-        !is_macos_at_least(MacOSVersion::MACOS_27_0);
+        !is_apple_family_or_newer(AppleGPUFamily::APPLE_8_PLUS) && !is_macos_at_least(MacOSVersion::MACOS_27_0);
     // linear's leading dims are a fake batch (weight is shared), so a >2D input is one 2D GEMM.
     // Passing it as a batched NDArray instead triggers a 2^16 batch-index wraparound (#189495) and
     // a small-batch GEMV perf cliff (#189847); flatten to 2D (a free view here) to avoid both.
