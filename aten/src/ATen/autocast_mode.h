@@ -30,7 +30,6 @@ constexpr std::array _AUTOCAST_SUPPORTED_DEVICES{
     at::kCUDA,
     at::kMAIA,
     at::kXPU,
-    at::kHPU,
     at::kXLA,
     at::kPrivateUse1,
     at::kMPS};
@@ -50,8 +49,6 @@ inline bool is_autocast_eligible(
       return tensor.is_maia() && tensor.is_floating_point();
     case c10::DeviceType::XPU:
       return tensor.is_xpu() && tensor.is_floating_point();
-    case c10::DeviceType::HPU:
-      return tensor.is_hpu() && tensor.is_floating_point();
     case c10::DeviceType::XLA:
       return tensor.is_xla() && tensor.is_floating_point();
     case c10::DeviceType::PrivateUse1:

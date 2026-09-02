@@ -525,7 +525,6 @@ def glob_libtorch_python_sources(gencode_pattern = ":generate-code[{}]"):
 aten_cpu_non_globed_sources = [
     "aten/src/ATen/detail/CUDAHooksInterface.cpp",
     "aten/src/ATen/detail/HIPHooksInterface.cpp",
-    "aten/src/ATen/detail/HPUHooksInterface.cpp",
     "aten/src/ATen/detail/MPSHooksInterface.cpp",
     "aten/src/ATen/detail/PrivateUse1HooksInterface.cpp",
     "aten/src/ATen/detail/XLAHooksInterface.cpp",

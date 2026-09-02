@@ -453,10 +453,6 @@ class TORCH_API TensorBase {
 
   /// Returns if a `Tensor` has MTIA backend.
   /// Returns if a `Tensor` has HPU backend.
-  bool is_hpu() const {
-    return impl_->is_hpu();
-  }
-
   /// Returns if a `Tensor` has Lazy backend.
   bool is_lazy() const {
     return impl_->is_lazy();

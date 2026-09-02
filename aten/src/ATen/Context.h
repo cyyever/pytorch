@@ -12,7 +12,6 @@
 #include <ATen/detail/AcceleratorHooksInterface.h>
 #include <ATen/detail/CUDAHooksInterface.h>
 #include <ATen/detail/HIPHooksInterface.h>
-#include <ATen/detail/HPUHooksInterface.h>
 #include <ATen/detail/MPSHooksInterface.h>
 #include <ATen/detail/PrivateUse1HooksInterface.h>
 #include <ATen/detail/XLAHooksInterface.h>
@@ -92,10 +91,8 @@ class TORCH_API Context {
       return at::detail::getMPSHooks();
     } else if (opt_device_type == at::kPrivateUse1) {
       return at::detail::getPrivateUse1Hooks();
-        } else if (opt_device_type == at::kHIP) {
+    } else if (opt_device_type == at::kHIP) {
       return at::detail::getHIPHooks();
-    } else if (opt_device_type == at::kHPU) {
-      return at::detail::getHPUHooks();
     } else if (opt_device_type == at::kXLA) {
       return at::detail::getXLAHooks();
     } else {
@@ -204,10 +201,6 @@ class TORCH_API Context {
   static bool hasLazy() {
     return c10::impl::hasDeviceGuardImpl(c10::DeviceType::Lazy);
   }
-  static bool hasHPU() {
-    return detail::getHPUHooks().hasHPU();
-  }
-
   static const at::cuda::NVRTC& getNVRTC() {
     return detail::getCUDAHooks().nvrtc();
   }
@@ -542,10 +535,6 @@ inline bool hasMPS() {
 
 inline bool hasXPU() {
   return globalContext().hasXPU();
-}
-
-inline bool hasHPU() {
-  return globalContext().hasHPU();
 }
 
 // Despite its name, this function returns the number of *CUDA* GPUs.
