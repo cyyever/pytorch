@@ -375,7 +375,9 @@ cmake_dependent_option(USE_CUSPARSELT "Use cuSPARSELt" ON "USE_CUDA" OFF)
 cmake_dependent_option(USE_HIPSPARSELT "Use hipSPARSELt" ON "USE_ROCM" OFF)
 cmake_dependent_option(USE_CUDSS "Use cuDSS" ON "USE_CUDA" OFF)
 cmake_dependent_option(USE_CUFILE "Use cuFile" ON "USE_CUDA OR USE_ROCM" OFF)
-set(USE_FBGEMM ON)  # required: see the FBGEMM check below
+# Required: see the FBGEMM check below. A cache entry, because
+# caffe2_update_option reads the option helpstring back out of the cache.
+set(USE_FBGEMM ON CACHE BOOL "Use FBGEMM" FORCE)
 option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)

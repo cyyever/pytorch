@@ -949,8 +949,10 @@ if(USE_XPU)
   if(NOT _exitcode EQUAL 0)
     message(FATAL_ERROR "Fail to fetch ${TORCH_XPU_OPS_REPO_URL}")
   endif()
+  # --force: the patch loop below leaves the tree dirty, so a plain checkout
+  # refuses to run on the next configure.
   execute_process(
-    COMMAND git checkout --quiet ${TORCH_XPU_OPS_COMMIT}
+    COMMAND git checkout --quiet --force ${TORCH_XPU_OPS_COMMIT}
     WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
     RESULT_VARIABLE _exitcode)
   if(NOT _exitcode EQUAL 0)
