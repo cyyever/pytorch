@@ -115,14 +115,6 @@ if(USE_ASAN OR USE_LSAN OR USE_TSAN)
       message(WARNING "ASAN not found. Suppress this warning with -DUSE_ASAN=OFF.")
       caffe2_update_option(USE_ASAN OFF)
     endif()
-    # UBSan (-fsanitize=undefined) combined with ASAN on ROCm Clang
-    # causes ASAN global metadata to reference unaligned original
-    # globals instead of aligned __sanitized_padded_global copies,
-    # triggering an unconditional alignment check abort in the ASAN
-    # runtime. Skip UBSan under USE_ROCM until that interaction is fixed.
-    if(TARGET Sanitizer::undefined AND NOT USE_ROCM)
-      list(APPEND Caffe2_DEPENDENCY_LIBS Sanitizer::undefined)
-    endif()
   endif()
   if(USE_LSAN)
     if(TARGET Sanitizer::leak)
@@ -994,6 +986,17 @@ if(NOT USE_ROCM)
 else()
   include_directories(BEFORE ${MIOPEN_INCLUDE_DIRS})
   set(AT_ROCM_ENABLED 1)
+endif()
+
+# UBSan (-fsanitize=undefined) combined with ASAN on ROCm Clang causes ASAN
+# global metadata to reference unaligned original globals instead of aligned
+# __sanitized_padded_global copies, triggering an unconditional alignment check
+# abort in the ASAN runtime. Skip UBSan under USE_ROCM until that interaction is
+# fixed. This has to sit after USE_ROCM settles: on Linux it defaults ON and is
+# only turned off above, so testing it beside the other sanitizer options
+# dropped UBSan from every fresh-cache ASAN build.
+if(USE_ASAN AND TARGET Sanitizer::undefined AND NOT USE_ROCM)
+  list(APPEND Caffe2_DEPENDENCY_LIBS Sanitizer::undefined)
 endif()
 
 
