@@ -11,9 +11,7 @@
 #include <tuple>
 #include <optional>
 
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 12)
 #define AOTRITON_V2_API_FLASH_ATTN_H  // Suppress the include of deprecated flash/v2.h
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Common macros copied from cuda/mem_eff_attention/gemm_kernel_utils.h
@@ -121,7 +119,6 @@ inline aotriton::TensorView<0> mk_atomictensor(const int32_t* ptr)
                                  aotriton::DType::kInt32);
 }
 
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 11)
 
 struct LazyTensorContext {
   at::Tensor like_tensor;
@@ -131,17 +128,9 @@ struct LazyTensorContext {
 
 template<int kRank, bool kRequireZeros>
 struct LazyTensorFunctions : public LazyTensorContext {
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 12)
   using HolderType = aotriton::LazyTensor<kRank>;
-#else
-  using HolderType = void;
-#endif
   static aotriton::TensorView<kRank> acquire(HolderType* self) {
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 12)
     auto ctx = (LazyTensorContext*)self->cookie;
-#else
-    auto ctx = (LazyTensorContext*)cookie;
-#endif
     if (!ctx->tensor.defined()) {
       auto q = ctx->like_tensor;
       if constexpr (kRequireZeros) {
@@ -200,7 +189,6 @@ inline auto parse_window_size(std::optional<int64_t> window_size_left,
 }
 
 
-#endif  // >= 0.11
 
 } // namespace aotriton_adapter
 
