@@ -349,7 +349,7 @@ endmacro()
 # Usage:
 #   torch_compile_options(lib_name)
 function(torch_compile_options libname)
-  set_property(TARGET ${libname} PROPERTY CXX_STANDARD 23)
+  set_property(TARGET ${libname} PROPERTY CXX_STANDARD ${CMAKE_CXX_STANDARD})
 
   # until they can be unified, keep these lists synced with setup.py
   set(private_compile_options
