@@ -372,8 +372,6 @@ function(torch_compile_options libname)
       # namespace MemoryOps_cu_d8602b38_109889 __attribute__((visibility("hidden")))  { };
       list(APPEND private_compile_options -Wextra-semi)
     else()
-      # NVCC + clang15  reports deprecated copies from GPU lambda instantiations
-      list(APPEND private_compile_options -Wno-deprecated-copy)
       # NVCC inserts whitespace into literal operators, triggering a spurious Clang warning.
       list(APPEND private_compile_options -Wno-deprecated-literal-operator)
     endif()
