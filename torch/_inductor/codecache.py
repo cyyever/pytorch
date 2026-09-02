@@ -42,7 +42,7 @@ from types import (
     ModuleType,
 )
 from typing import Any, cast, Generic, Literal, NoReturn, TYPE_CHECKING, TypeVar
-from typing import NotRequired, Self, TypedDict, override
+from typing import override, Self, TypedDict
 
 import torch
 import torch._library.opaque_object as opaque_object
