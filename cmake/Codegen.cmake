@@ -161,23 +161,6 @@ if(INTERN_BUILD_ATEN_OPS)
     set(GEN_XPU_FLAG --xpu)
   endif()
 
-  set(CUSTOM_BUILD_FLAGS)
-
-  if(SELECTED_OP_LIST AND NOT STATIC_DISPATCH_BACKEND)
-    message(WARNING
-      "Selective build needs a static dispatch backend.\n"
-      "Switching to STATIC_DISPATCH_BACKEND=CPU."
-    )
-    set(STATIC_DISPATCH_BACKEND CPU)
-  endif()
-
-  if(STATIC_DISPATCH_BACKEND)
-    message(STATUS "Custom build with static dispatch backends: ${STATIC_DISPATCH_BACKEND}")
-    list(LENGTH STATIC_DISPATCH_BACKEND len)
-    list(APPEND CUSTOM_BUILD_FLAGS
-      --static_dispatch_backend ${STATIC_DISPATCH_BACKEND})
-  endif()
-
   set(GEN_COMMAND
       "${Python_EXECUTABLE}" -m torchgen.gen
       --source-path ${CMAKE_CURRENT_LIST_DIR}/../aten/src/ATen
@@ -186,7 +169,6 @@ if(INTERN_BUILD_ATEN_OPS)
         ${GEN_ROCM_FLAG}
       ${GEN_MPS_FLAG}
       ${GEN_XPU_FLAG}
-      ${CUSTOM_BUILD_FLAGS}
   )
 
   file(GLOB_RECURSE headers_templates "${CMAKE_CURRENT_LIST_DIR}/../aten/src/ATen/templates/*\.h")

@@ -202,14 +202,10 @@ TEST(ThreadLocalTest, TestObjectsAreReleasedByNonstaticThreadLocal) {
 
   std::atomic_bool b(false);
   std::thread t([&b]() {
-#if defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
-    ::c10::ThreadLocal<A> a;
-#else // defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
     ::c10::ThreadLocal<A> a([]() {
       static thread_local A var;
       return &var;
     });
-#endif // defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
 
     EXPECT_EQ(a->i, 0);
     a->i = 1;

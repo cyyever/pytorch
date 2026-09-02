@@ -241,8 +241,6 @@ docs/source/scripts/lr_scheduler_images/
 build/
 # Allow tools/build/bazel for build support.
 !tools/build/bazel
-build_android
-build_ios
 .build_debug/*
 .build_release/*
 .build_profile/*
@@ -380,10 +378,6 @@ venv/
 # Log files
 *.log
 sweep/
-
-# Android build artifacts
-android/pytorch_android/.cxx
-android/pytorch_android_torchvision/.cxx
 
 # Pyre configs (for internal usage)
 .pyre_configuration

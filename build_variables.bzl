@@ -121,7 +121,7 @@ core_trainer_sources = [
     "torch/csrc/jit/serialization/pickler.cpp",
 ]
 
-core_sources_full_mobile_no_backend_interface_xplat = [
+core_sources_full = [
     "torch/csrc/jit/frontend/parser.cpp",
     "torch/csrc/jit/frontend/schema_matching.cpp",
     "torch/csrc/jit/frontend/script_type_parser.cpp",
@@ -140,19 +140,6 @@ core_sources_full_mobile_no_backend_interface_xplat = [
     "torch/csrc/utils/schema_info.cpp",
     "torch/csrc/utils/tensor_flatten.cpp",
     "torch/csrc/utils/variadic.cpp",
-]
-
-core_sources_full_mobile_no_backend_interface = core_sources_full_mobile_no_backend_interface_xplat + [
-    # backend_debug_info.cpp provides
-    # __torch__.torch.classes.backend.BackendDebugInfo class
-    # This should not be needed eventually.
-    # TODO: Remove this dependency
-]
-
-core_sources_full_mobile = core_sources_full_mobile_no_backend_interface + [
-]
-
-core_sources_full = core_sources_full_mobile + [
 ]
 
 inductor_core_resources = [

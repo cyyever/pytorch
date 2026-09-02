@@ -35,8 +35,6 @@ enum class C10_API_ENUM RecordScope : uint8_t {
   CUSTOM_CLASS,
   // Generic Build Feature
   BUILD_FEATURE,
-  // Kernel Function dtype Tag
-  LITE_INTERPRETER,
   // User defined scope (e.g. with record_function())
   USER_SCOPE,
   // Scopes for static runtime, a specialized TorchScript interpreter
@@ -565,24 +563,6 @@ void record_function_with_scope(
   }
 }
 
-template <typename Inputs, typename... Args>
-void record_function_with_scope_and_debug_handle(
-    RecordFunction& guard,
-    RecordFunction::FunctionDescriptor fn,
-    int64_t debug_handle,
-    const Inputs& inputs,
-    Args&&... args) {
-  guard.setDebugHandle(debug_handle);
-  if (guard.needsInputs()) {
-    guard.before(
-        fn,
-        c10::ArrayRef<const c10::IValue>(inputs.data(), inputs.size()),
-        std::forward<Args>(args)...);
-  } else {
-    guard.before(fn, std::forward<Args>(args)...);
-  }
-}
-
 template <typename... Args>
 void record_function_with_scope(
     RecordFunction& guard,
@@ -591,18 +571,6 @@ void record_function_with_scope(
     Args&&... args) {
   return record_function_with_scope<c10::ArrayRef<const c10::IValue>, Args...>(
       guard, fn, inputs, std::forward<Args>(args)...);
-}
-
-template <typename... Args>
-void record_function_with_scope_and_debug_handle(
-    RecordFunction& guard,
-    RecordFunction::FunctionDescriptor fn,
-    int64_t debug_handle,
-    c10::ArrayRef<const c10::IValue> inputs,
-    Args&&... args) {
-  return record_function_with_scope_and_debug_handle<
-      c10::ArrayRef<const c10::IValue>,
-      Args...>(guard, fn, debug_handle, inputs, std::forward<Args>(args)...);
 }
 
 } // namespace detail
@@ -655,22 +623,6 @@ void record_function_with_scope_and_debug_handle(
       fn,                                              \
       c10::ArrayRef<const c10::IValue>{},              \
       kwargs)
-
-// Helper macro to pass in debug handle that is used to
-// post process events
-#define RECORD_WITH_SCOPE_DEBUG_HANDLE_AND_INPUTS(             \
-    scope, fn, debug_handle, inputs, ...)                      \
-  at::RecordFunction guard(scope);                             \
-  if (guard.isActive()) {                                      \
-    ::at::detail::record_function_with_scope_and_debug_handle( \
-        guard, fn, debug_handle, inputs, ##__VA_ARGS__);       \
-  }
-
-// Helper macros to record LITE INTERPRETER scope events with debug handles
-#define RECORD_EDGE_SCOPE_WITH_DEBUG_HANDLE_AND_INPUTS( \
-    fn, debug_handle, inputs)                           \
-  RECORD_WITH_SCOPE_DEBUG_HANDLE_AND_INPUTS(            \
-      at::RecordScope::LITE_INTERPRETER, fn, debug_handle, inputs)
 
 // Bookend to the RECORD_FUNCTION macros.  Use this after the kernel
 // launch to let the profiler bind the outputs to the op that produced

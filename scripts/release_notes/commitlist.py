@@ -286,17 +286,6 @@ class CommitList:
             if CommitList.keywordInFile(
                 file,
                 [
-                    "torch/csrc/jit/mobile",
-                    "aten/src/ATen/native/metal",
-                    "test/mobile",
-                    "test/test_nnapi.py",
-                ],
-            ):
-                category = "mobile"
-                break
-            if CommitList.keywordInFile(
-                file,
-                [
                     "aten/src/ATen/native/LinearAlgebra.cpp",
                     "test/test_linalg.py",
                     "torch/linalg",
@@ -355,8 +344,6 @@ class CommitList:
                 f_name.endswith((".cu", ".cuh")) for f_name in files_changed
             ):
                 category = "cuda"
-            elif "[PyTorch Edge]" in title:
-                category = "mobile"
             elif (
                 len(files_changed) == 1
                 and "torch/testing/_internal/common_methods_invocations.py"

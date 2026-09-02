@@ -92,7 +92,6 @@ categories = (
         "Uncategorized",
         "lazy",
         "hub",
-        "mobile",
         "jit",
         "visualization",
         "onnx",
