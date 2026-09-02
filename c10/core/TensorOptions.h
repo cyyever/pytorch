@@ -619,7 +619,7 @@ inline std::string toString(const TensorOptions& options) {
 // This is intended to be a centralized location by which we can determine
 // what an appropriate DispatchKey for a tensor is.
 inline DispatchKey computeDispatchKey(
-    std::optional<ScalarType> dtype,
+    std::optional<ScalarType> /*dtype*/,
     std::optional<Layout> layout,
     std::optional<Device> device) {
   const auto layout_ = layout_or_default(layout);
