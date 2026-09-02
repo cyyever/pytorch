@@ -24,12 +24,6 @@ check_cxx_compiler_flag("-rdynamic" COMPILER_SUPPORTS_RDYNAMIC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
   endif()
 
-if(IOS AND (${IOS_ARCH} MATCHES "armv7*"))
-  add_definitions("-mfpu=neon-fp16")
-  add_definitions("-arch" ${IOS_ARCH})
-  add_definitions("-Wno-deprecated-declarations")
-endif()
-
 # ---[ Create CAFFE2_BUILD_SHARED_LIBS for macros.h.in usage.
 set(CAFFE2_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 
