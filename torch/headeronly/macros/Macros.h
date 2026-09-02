@@ -476,8 +476,8 @@ __host__ __device__
         blockIdx.z,                                                    \
         threadIdx.x,                                                   \
         threadIdx.y,                                                   \
-        threadIdx.z,                                                   \
-        ##__VA_ARGS__); \
+        threadIdx.z                                                   \
+        __VA_OPT__(,) __VA_ARGS__); \
     __assert_fail(                                                       \
         #cond, __FILE__, static_cast<unsigned int>(__LINE__), __func__); \
   }

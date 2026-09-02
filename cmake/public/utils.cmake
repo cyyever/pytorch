@@ -393,6 +393,13 @@ function(torch_compile_options libname)
     endif()
   endif()
 
+  # After the WERROR block on purpose: -Werror=pedantic re-enables whatever was
+  # switched off ahead of it. C10_ANONYMOUS_VARIABLE needs __COUNTER__, which
+  # only C2y standardizes, so pedantic rejects every use of it.
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    list(APPEND private_compile_options -Wno-c2y-extensions)
+  endif()
+
 
   target_compile_options(${libname} PRIVATE
       $<$<COMPILE_LANGUAGE:CXX>:${private_compile_options}>)

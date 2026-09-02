@@ -13,7 +13,7 @@ struct UnwindError : public std::runtime_error {
   do {                                                              \
     if (!(cond)) {                                                  \
       throw unwind::UnwindError(fmt::format(                        \
-          "{}:{}: " fmtstring, __FILE__, __LINE__, ##__VA_ARGS__)); \
+          "{}:{}: " fmtstring, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__)); \
     }                                                               \
   } while (0)
 

@@ -66,8 +66,8 @@ HIDDEN_NAMESPACE_END(torch, headeronly, detail)
       "Expected " #cond                                    \
       " to be true, but got false.  "                      \
       "(Could this error message be improved?  If so, "    \
-      "please report an enhancement request to PyTorch.)", \
-      ##__VA_ARGS__))
+      "please report an enhancement request to PyTorch.)" \
+      __VA_OPT__(,) __VA_ARGS__))
 #endif // STRIP_ERROR_MESSAGES
 
 #define STD_TORCH_CHECK(cond, ...)                                    \
@@ -81,6 +81,6 @@ HIDDEN_NAMESPACE_END(torch, headeronly, detail)
         __FILE__,                                                     \
         ":",                                                          \
         __LINE__,                                                     \
-        ", ",                                                         \
-        ##__VA_ARGS__));                                              \
+        ", "                                                         \
+        __VA_OPT__(,) __VA_ARGS__));                                              \
   }
