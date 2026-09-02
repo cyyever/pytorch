@@ -5,13 +5,13 @@
 #       - "Auto" detects local machine GPU compute arch at runtime.
 #       - "Common" and "All" cover common and entire subsets of architectures
 #      ARCH_AND_PTX : NAME | NUM.NUM | NUM.NUM(NUM.NUM) | NUM.NUM+PTX
-#      NAME: Kepler Maxwell Kepler+Tegra Kepler+Tesla Maxwell+Tegra Pascal Volta Turing Ampere
+#      NAME: Turing Ampere Ada Hopper Blackwell Rubin
 #      NUM: Any number. Only those pairs are currently accepted by NVCC though:
-#            3.5 3.7 5.0 5.2 5.3 6.0 6.2 7.0 7.2 7.5 8.0
+#            7.5 8.0 8.6 8.7 8.9 9.0 10.0 10.3 10.7 11.0 12.0 12.1
 #      Returns LIST of flags to be added to CUDA_NVCC_FLAGS in ${out_variable}
 #      Additionally, sets ${out_variable}_readable to the resulting numeric list
 #      Example:
-#       CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS 3.0 3.5+PTX 5.2(5.0) Maxwell)
+#       CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS 7.5 8.6+PTX Ampere)
 #        LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
 #
 #      More info on CUDA architectures: https://en.wikipedia.org/wiki/CUDA
@@ -27,65 +27,14 @@ endif()
 # See: https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
 
 # This list will be used for CUDA_ARCH_NAME = All option
-set(CUDA_KNOWN_GPU_ARCHITECTURES  "Kepler" "Maxwell")
+set(CUDA_KNOWN_GPU_ARCHITECTURES "Turing" "Ampere" "Ada" "Hopper" "Blackwell")
 
 # This list will be used for CUDA_ARCH_NAME = Common option (enabled by default)
-set(CUDA_COMMON_GPU_ARCHITECTURES "5.0")
+set(CUDA_COMMON_GPU_ARCHITECTURES
+    "7.5" "8.0" "8.6" "8.9" "9.0" "9.0a" "10.0" "10.0a" "11.0a" "12.0" "12.0a")
 
 # This list is used to filter CUDA archs when autodetecting
-set(CUDA_ALL_GPU_ARCHITECTURES "5.0")
-
-if(CUDA_VERSION VERSION_GREATER "10.5")
-  list(APPEND CUDA_KNOWN_GPU_ARCHITECTURES "Ampere")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "8.0")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "8.0")
-
-  if(CUDA_VERSION VERSION_LESS "11.1")
-    list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "8.0+PTX")
-  endif()
-endif()
-
-if(NOT CUDA_VERSION VERSION_LESS "11.1")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "8.6")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "8.6")
-
-  if(CUDA_VERSION VERSION_LESS "11.8")
-    list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "8.6+PTX")
-  endif()
-endif()
-
-if(NOT CUDA_VERSION VERSION_LESS "11.8")
-  list(APPEND CUDA_KNOWN_GPU_ARCHITECTURES "Ada")
-  list(APPEND CUDA_KNOWN_GPU_ARCHITECTURES "Hopper")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "8.9")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "9.0")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "8.9")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "9.0")
-
-endif()
-
-list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "9.0a")
-list(APPEND CUDA_ALL_GPU_ARCHITECTURES "9.0a")
-
-if(CUDA_VERSION VERSION_GREATER "12.6")
-  list(APPEND CUDA_KNOWN_GPU_ARCHITECTURES "Blackwell")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "10.0")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "10.0a")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "10.1a")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "12.0")
-  list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "12.0a")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "10.0")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "10.0a")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "10.1a")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "12.0")
-  list(APPEND CUDA_ALL_GPU_ARCHITECTURES "12.0a")
-  if(NOT CUDA_VERSION VERSION_LESS "13.0")
-    list(REMOVE_ITEM CUDA_COMMON_GPU_ARCHITECTURES "10.1a")
-    list(REMOVE_ITEM CUDA_ALL_GPU_ARCHITECTURES "10.1a")
-    list(APPEND CUDA_COMMON_GPU_ARCHITECTURES "11.0a")
-    list(APPEND CUDA_ALL_GPU_ARCHITECTURES "11.0a")
-  endif()
-endif()
+set(CUDA_ALL_GPU_ARCHITECTURES ${CUDA_COMMON_GPU_ARCHITECTURES})
 
 
 if(CUDA_VERSION VERSION_GREATER_EQUAL "13.4")
@@ -148,7 +97,6 @@ function(CUDA_DETECT_INSTALLED_GPUS OUT_VARIABLE)
     string(REGEX MATCHALL "[0-9]+\\.[0-9]+" compute_capabilities "${compute_capabilities}")
 
     if(run_result EQUAL 0)
-      string(REPLACE "2.1" "2.1(2.0)" compute_capabilities "${compute_capabilities}")
       set(CUDA_GPU_DETECT_OUTPUT ${compute_capabilities}
         CACHE INTERNAL "Returned GPU architectures from detect_gpus tool" FORCE)
     endif()
@@ -215,25 +163,7 @@ function(CUDA_SELECT_NVCC_ARCH_FLAGS out_variable)
       set(arch_ptx ${arch_bin})
     else()
       # Look for it in our list of known architectures
-      if(${arch_name} STREQUAL "Kepler+Tesla")
-        set(arch_bin 3.7)
-      elseif(${arch_name} STREQUAL "Kepler")
-        set(arch_bin 3.5)
-        set(arch_ptx 3.5)
-      elseif(${arch_name} STREQUAL "Maxwell+Tegra")
-        set(arch_bin 5.3)
-      elseif(${arch_name} STREQUAL "Maxwell")
-        set(arch_bin 5.0 5.2)
-        set(arch_ptx 5.2)
-      elseif(${arch_name} STREQUAL "Pascal")
-        set(arch_bin 6.0 6.1)
-        set(arch_ptx 6.1)
-     elseif(${arch_name} STREQUAL "Volta+Tegra")
-        set(arch_bin 7.2)
-      elseif(${arch_name} STREQUAL "Volta")
-        set(arch_bin 7.0 7.0)
-        set(arch_ptx 7.0)
-      elseif(${arch_name} STREQUAL "Turing")
+      if(${arch_name} STREQUAL "Turing")
         set(arch_bin 7.5)
         set(arch_ptx 7.5)
       elseif(${arch_name} STREQUAL "Ampere+Tegra")

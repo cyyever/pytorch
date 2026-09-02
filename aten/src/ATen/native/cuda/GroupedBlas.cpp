@@ -16,7 +16,7 @@
 #include <ATen/native/cuda/ScaledBlasDeviceUtils.h>
 #include <ATen/cuda/tunable/Tunable.h>
 #include <ATen/native/GroupedMMUtils.h>
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
 #include <ATen/native/cuda/CublasGroupedArgs.h>
 #endif
 #include <ATen/native/cuda/ScaledGroupMM.h>
@@ -61,7 +61,7 @@ namespace at::native {
 
 namespace {
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
 bool should_use_cublaslt_grouped_gemm(
     const Tensor& mat_a,
     const Tensor& mat_b,
@@ -185,15 +185,8 @@ _f8_f8_bf16_rowwise_grouped_mm_rocm(
       const Tensor& scale_b,
       const std::optional<Tensor>& offs,
       Tensor& out) {
-  bool is_gfx942 = at::detail::getCUDAHooks().isGPUArch({"gfx942"});
-
-  if (is_gfx942) {
-    TORCH_CHECK_VALUE(mat_a.dtype() == at::kFloat8_e4m3fnuz, "Expected mat_a to be Float8_e4m3fnuz matrix got ", mat_a.scalar_type());
-    TORCH_CHECK_VALUE(mat_b.dtype() == at::kFloat8_e4m3fnuz, "Expected mat_b to be Float8_e4m3fnuz matrix got ", mat_b.scalar_type());
-  } else {
-    TORCH_CHECK_VALUE(mat_a.dtype() == at::kFloat8_e4m3fn, "Expected mat_a to be Float8_e4m3 matrix got ", mat_a.scalar_type());
-    TORCH_CHECK_VALUE(mat_b.dtype() == at::kFloat8_e4m3fn, "Expected mat_b to be Float8_e4m3 matrix got ", mat_b.scalar_type());
-  }
+  TORCH_CHECK_VALUE(mat_a.dtype() == at::kFloat8_e4m3fn, "Expected mat_a to be Float8_e4m3 matrix got ", mat_a.scalar_type());
+  TORCH_CHECK_VALUE(mat_b.dtype() == at::kFloat8_e4m3fn, "Expected mat_b to be Float8_e4m3 matrix got ", mat_b.scalar_type());
 
 #if defined(USE_MSLK) && defined(USE_ROCM)
   mslk::gemm::f8f8bf16_rowwise_grouped_mm(
@@ -425,7 +418,7 @@ static Tensor grouped_mm_cublaslt(const Tensor& mat_a, const Tensor& mat_b,
 const std::optional<at::Tensor>& offs,
 const std::optional<at::Tensor>& bias,
 std::optional<c10::ScalarType> out_dtype) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
   TORCH_CHECK(
       mat_a.dtype() == at::kBFloat16 || mat_a.dtype() == at::kHalf,
       "cublasLt grouped GEMM requires BFloat16 or Float16 input, got ", mat_a.scalar_type());
@@ -473,7 +466,7 @@ std::optional<c10::ScalarType> out_dtype) {
   return out;
 #else
   TORCH_CHECK(false, "cublasLt grouped GEMM requires CUDA >= 13.3 and is not supported on ROCm. Current build does not meet these requirements.");
-#endif // !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#endif // !defined(USE_ROCM)
 }
 
 Tensor
@@ -733,7 +726,7 @@ const std::optional<at::Tensor>& offs,
 const std::optional<at::Tensor>& bias,
 std::optional<c10::ScalarType> out_dtype) {
   _grouped_mm_validate_inputs(mat_a, mat_b, offs, bias, out_dtype);
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
   if (should_use_cublaslt_grouped_gemm(mat_a, mat_b, offs, out_dtype)) {
     return grouped_mm_cublaslt(mat_a, mat_b, offs, bias, out_dtype);
   }
@@ -762,7 +755,7 @@ std::optional<c10::ScalarType> out_dtype) {
 #if defined(USE_ROCM_CK_GEMM)
   // ifdef USE_ROCM_CK_GEMM is required since ROCm systems w/o CK should not call ck path.
   // To enable CK path, use env variable ROCM_ALLOW_GROUP_GEMM_CK=1.
-  if (at::globalContext().rocmAllowGroupGemmCk() && at::detail::getCUDAHooks().isGPUArch({"gfx942", "gfx950", "gfx90a"})) {
+  if (at::globalContext().rocmAllowGroupGemmCk() && at::detail::getCUDAHooks().isGPUArch({"gfx950"})) {
     at::hip::detail::group_gemm_ck(mat_a, mat_b, offs, bias, out);
   } else {
     _grouped_mm_fallback(mat_a, mat_b, offs, bias, out_dtype, out);

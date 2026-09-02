@@ -43,7 +43,7 @@ from torch.testing._internal.common_dtype import (
     floating_and_complex_types_and, floating_types_and, complex_types,
 )
 from torch.testing._internal.common_cuda import BF16X9_SUPPORTED, CDNA2OrLater, CDNA5OrLater, IS_SM90, SM80OrLater, SM90OrLater, tf32_enabled, tf32_on_and_off, \
-    _get_magma_version, _get_torch_cuda_version, TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, PLATFORM_SUPPORTS_MX_GEMM, blas_library_context, ROCM_VERSION
+    _get_torch_cuda_version, TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, PLATFORM_SUPPORTS_MX_GEMM, blas_library_context
 from torch.testing._internal.common_quantization import _group_quantize_tensor, _dynamically_quantize_per_channel, \
     _group_quantize_tensor_symmetric
 from torch.testing._internal.common_mkldnn import reduced_f32_on_and_off
@@ -69,13 +69,7 @@ if TEST_SCIPY:
 def blaslt_supported_device():
     if torch.cuda.is_available():
         if torch.version.hip:
-            archs = ['gfx90a', 'gfx94']
-            if ROCM_VERSION >= (6, 3):
-                archs.extend(['gfx110', 'gfx120'])
-            if ROCM_VERSION >= (6, 5):
-                archs.append('gfx95')
-            if ROCM_VERSION >= (7, 14):
-                archs.append('gfx1250')
+            archs = ['gfx95', 'gfx120', 'gfx1250']
             for arch in archs:
                 if arch in torch.cuda.get_device_properties(0).gcnArchName:
                     return True
@@ -2998,9 +2992,6 @@ class TestLinalg(TestCase):
     @dtypes(torch.double, torch.cdouble)
     def test_svd_lowrank(self, device, dtype):
         from torch.testing._internal.common_utils import random_lowrank_matrix, random_sparse_matrix
-
-        if torch.version.hip and torch.device(device).type == "cuda" and dtype is torch.complex128:
-            self.skipTest("linalg.svd of the projected complex128 matrix fails to converge on ROCm")
 
         def run_subtest(actual_rank, matrix_size, batches, device, svd_lowrank, **options):
             density = options.pop('density', 1)
@@ -9266,10 +9257,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
 
     @skipCUDAIfNoLinalgsolver
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        TEST_WITH_ROCM and ROCM_VERSION < (7, 14),
-        "hipsolverDnXsytrs requires ROCm >= 7.14"
-    )
     @dtypes(*floating_and_complex_types())
     def test_ldl_solve(self, device, dtype):
         from torch.testing._internal.common_utils import random_hermitian_pd_matrix
@@ -10884,7 +10871,7 @@ class TestLinalgCudaOnly(TestCase):
             fastest_time = min(info["timings"].values())
             self.assertEqual(winner_time, fastest_time, (key, info))
 
-    @runOnRocmArch(MI300_ARCH)
+    @skipIfRocm
     @dtypes(torch.float)
     def test_tf32_tunableop(self, device, dtype):
         with tf32_enabled():
@@ -10938,7 +10925,7 @@ class TestLinalgCudaOnly(TestCase):
                                                      'nn_37_37_37_ld_37_37_37')
                 self.assertTrue(found_result is not None)
 
-    @runOnRocmArch(MI300_ARCH)
+    @skipIfRocm
     @dtypes(torch.float)
     def test_tf32_offline_tunableop(self, device, dtype):
         # This test is the offline version of test_tf32_tunableop
@@ -11521,6 +11508,8 @@ class TestLinalgCudaOnly(TestCase):
     @tf32_on_and_off(0.05)
     @reduced_f32_on_and_off(0.05)
     def test_addmm_relu_tunableop(self, device, dtype):
+        if torch.version.hip and isRocmArchAnyOf(MI350_ARCH) and dtype is torch.double:
+            self.skipTest("Currently failing on rocm mi350, hipblaslt mem fault")
         with self._tunableop_ctx():
             torch.cuda.tunable.set_rotating_buffer_size(0)
             torch.cuda.tunable.set_max_tuning_iterations(1)
@@ -11583,8 +11572,6 @@ class TestLinalgCudaOnly(TestCase):
     @setBlasBackendsToDefaultFinally
     @parametrize("dtype", [torch.float32, torch.bfloat16])
     def test_ck_blas_library_mm(self, dtype):
-        if dtype == torch.bfloat16 and isRocmArchAnyOf(MI200_ARCH):
-            self.skipTest("bfloat16 case skipped on gfx90a")
         device = 'cuda'
         shapes = [(7168, 8192, 1280), (1280, 8192, 7168), (8192, 8192, 1280)]
         for M, K, N in shapes:

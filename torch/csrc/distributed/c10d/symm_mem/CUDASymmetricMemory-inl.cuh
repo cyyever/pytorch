@@ -2,7 +2,7 @@
 
 #include <atomic>
 
-#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 900) && CUDART_VERSION >= 12010
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 900)
 #define NVCC_SUPPORTS_MULTICAST 1
 #endif
 
@@ -12,9 +12,7 @@
 #endif
 #if !defined(USE_ROCM)
 #include <cuda_bf16.h>
-#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 600)
 #include <cuda/atomic>
-#endif
 #endif
 #include <ATen/native/cuda/MemoryAccess.cuh>
 
@@ -32,7 +30,7 @@ using at::native::memory::get_alignment;
 template <std::memory_order Sem>
 __device__ __forceinline__ uint32_t
 cas(uint32_t* addr, uint32_t compare, uint32_t val) {
-#if !defined(USE_ROCM) && defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 600)
+#if !defined(USE_ROCM) && defined(__CUDA_ARCH__)
   ::cuda::atomic_ref<uint32_t, ::cuda::thread_scope_system> ref(*addr);
   ref.compare_exchange_strong(compare, val, ::cuda::std::memory_order(Sem));
   return compare;

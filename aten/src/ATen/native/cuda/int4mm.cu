@@ -140,8 +140,8 @@ constexpr int32_t kWarpSize = 64;
 template<typename T, uint32_t Rank>
 using VecT = T __attribute__((ext_vector_type(Rank)));
 
-static bool isCDNA2orLater(int index) {
-    return at::detail::getCUDAHooks().isGPUArch({"gfx90a", "gfx942", "gfx950"}, index);
+static bool isCDNA4orLater(int index) {
+    return at::detail::getCUDAHooks().isGPUArch({"gfx950"}, index);
 }
 
 static bool isCDNA5orLater(int index) {
@@ -619,17 +619,10 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
     int32_t kTiles) {
   constexpr int32_t kMTileSize = 16;
 #if defined(USE_ROCM)
-  // Workaround for ROCm compiler bug where __builtin_amdgcn_is_invocable
-  // incorrectly reports mfma_f32_16x16x16bf16_1k as available on gfx908
-#if defined(__gfx908__)
-  printf("__builtin_amdgcn_mfma_f32_16x16x16bf16_1k is not supported on gfx908\n");
-  return;
-#else
   if (!__builtin_amdgcn_is_invocable(__builtin_amdgcn_mfma_f32_16x16x16bf16_1k)) {
-    printf("__builtin_amdgcn_mfma_f32_16x16x16bf16_1k is only supported on AMD gpu arch greater than or equal to CDNA2\n");
+    printf("__builtin_amdgcn_mfma_f32_16x16x16bf16_1k is only supported on AMD gpu arch greater than or equal to CDNA4\n");
     return;
   }
-#endif
   constexpr int32_t kNTileSize = 16;
 #else
   constexpr int32_t kNTileSize = 8;
@@ -739,7 +732,7 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
 
 #pragma unroll
         for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM) && !defined(__gfx908__)
+#if defined(USE_ROCM)
           if (__builtin_amdgcn_is_invocable(__builtin_amdgcn_mfma_f32_16x16x16bf16_1k)) {
             cTmp[k] = __builtin_amdgcn_mfma_f32_16x16x16bf16_1k(
                 a[i * kInnerKTiles + j * 2 + k].val,
@@ -839,7 +832,7 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
 
 #pragma unroll
       for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM) && !defined(__gfx908__)
+#if defined(USE_ROCM)
         if (__builtin_amdgcn_is_invocable(__builtin_amdgcn_mfma_f32_16x16x16bf16_1k)) {
           cTmp[k] = __builtin_amdgcn_mfma_f32_16x16x16bf16_1k(
             a[j * 2 + k].val,
@@ -1110,8 +1103,8 @@ at::Tensor _weight_int4pack_mm_cuda(
                 "_weight_int4pack_mm_cuda is not yet supported on gfx1250. "
                 "A WMMA-based implementation is required for gfx1250.");
   }
-  if (!isCDNA2orLater(A.device().index())) {
-    TORCH_CHECK(false, "_weight_int4pack_mm_cuda is only supported on AMD gpu arch greater than or equal to CDNA2");
+  if (!isCDNA4orLater(A.device().index())) {
+    TORCH_CHECK(false, "_weight_int4pack_mm_cuda is only supported on AMD gpu arch greater than or equal to CDNA4");
   }
 #endif
 
@@ -1309,8 +1302,8 @@ at::Tensor _convert_weight_to_int4pack_cuda(
                 "_convert_weight_to_int4pack_cuda is not yet supported on gfx1250. "
                 "A WMMA-based implementation is required for gfx1250.");
   }
-  if (!isCDNA2orLater(in.device().index())) {
-    TORCH_CHECK(false, "_convert_weight_to_int4pack_cuda is only supported on AMD gpu arch greater than or equal to CDNA2");
+  if (!isCDNA4orLater(in.device().index())) {
+    TORCH_CHECK(false, "_convert_weight_to_int4pack_cuda is only supported on AMD gpu arch greater than or equal to CDNA4");
   }
   constexpr int32_t kNTileSize = 16;
 #else
@@ -1342,7 +1335,7 @@ at::Tensor _convert_weight_to_int4pack_cuda(
       {nTilesTensor, kSuperTiles, 32, innerKTiles / 2},
       at::TensorOptions().dtype(at::kInt).device(in.device()));
 
-#if defined(USE_ROCM) || ((defined(CUDA_VERSION) && CUDA_VERSION >= 12000) && (!defined(__CUDA_ARCH__) || (__CUDA_ARCH__ >= 800)))
+#if defined(USE_ROCM) || !defined(__CUDA_ARCH__) || (__CUDA_ARCH__ >= 800)
   auto stream = at::cuda::getCurrentCUDAStream();
   dim3 grid(kSuperTiles, nTiles);
 

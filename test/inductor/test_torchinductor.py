@@ -81,8 +81,8 @@ from torch.library import _scoped_library
 from torch.nn import functional as F
 from torch.testing import FileCheck, make_tensor
 from torch.testing._internal.common_cuda import (
-    _get_torch_cuda_version,
     _get_torch_rocm_version,
+    _get_torch_cuda_version,
     IS_SM90,
     PLATFORM_SUPPORTS_FLASH_ATTENTION,
     PLATFORM_SUPPORTS_FP8,
@@ -118,7 +118,6 @@ from torch.testing._internal.common_utils import (
     IS_X86,
     isRocmArchAnyOf,
     MACOS_VERSION,
-    NAVI3_ARCH,
     NAVI_ARCH,
     parametrize,
     recover_orig_fp32_precision,
@@ -2642,7 +2641,6 @@ class CommonTemplate:
             fn, (torch.rand((14923), dtype=torch.float16),), atol=atol, rtol=rtol
         )
 
-    @skipIfRocmArch(NAVI3_ARCH)  # gfx1100 split-scan cumsum numerics
     def test_split_cumsum(self):
         def fn(a):
             return torch.cumsum(a, -1)
@@ -2687,7 +2685,6 @@ class CommonTemplate:
 
     # Triton CPU generates a split scan that uses tl.debug_barrier, which is
     # not yet implemented in Triton CPU.
-    @skipIfRocmArch(NAVI3_ARCH)  # gfx1100 split-scan cumsum numerics
     @xfail_if_triton_cpu
     def test_consecutive_split_cumsum(self):
         def fn(a, b):
@@ -4615,7 +4612,6 @@ for dtype in (torch.int32, torch.int64):
         actual = compiled_fn(t[2**30 :])
         self.assertTrue((actual == 4).all())
 
-    @skipIfRocmArch(NAVI3_ARCH)  # gfx1100 Triton hsaco LLD target emulation unknown
     @largeTensorTest("2GB", inductor=True)
     def test_large_strided_reduction(self):
         # Test 64-bit indexing is used when input numel is less than INT_MAX
@@ -4979,12 +4975,6 @@ for dtype in (torch.int32, torch.int64):
             return torch.dot(a, b) + torch.dot(a, b)
 
         fn = torch.vmap(dot_based)
-        gcn_arch_name = (
-            torch.cuda.get_device_properties(0).gcnArchName.split(":")[0]
-            if TEST_WITH_ROCM
-            else ""
-        )
-        is_gfx11_0_or_5_x = re.fullmatch(r"gfx11[05]\d", gcn_arch_name) is not None
         bmm_codegen_call = (
             "aoti_torch_cuda_bmm_out" if config.cpp_wrapper else "extern_kernels.bmm"
         )
@@ -5010,18 +5000,7 @@ for dtype in (torch.int32, torch.int64):
                     actual, code = run_and_get_code(
                         torch.compile(fn, fullgraph=True), a, b
                     )
-                    # Workaround bf16 accuracy issue for gfx1100 root cause is incorrect calculation
-                    # `expected` in eager mode that uses rocBLAS(rocblas_gemvtsm_kernel) on gfx11[0|5]x
-                    # in case of usage of ROCM < 7.13
-                    if (
-                        TEST_WITH_ROCM
-                        and _get_torch_rocm_version() < (7, 13)
-                        and is_gfx11_0_or_5_x
-                        and dtype == torch.bfloat16
-                    ):
-                        self.assertEqual(actual, expected, atol=0.05, rtol=0.1)
-                    else:
-                        self.assertEqual(actual, expected)
+                    self.assertEqual(actual, expected)
                     code_str = "\n".join(code)
                     self.assertNotIn(bmm_codegen_call, code_str)
                     self.assertNotIn(bmm_fallback_call, code_str)
@@ -13635,7 +13614,6 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
         t1[:, 100] = float("nan")
         self.common(fn, (t1,))
 
-    @skipIfRocmArch(NAVI3_ARCH)  # gfx1100 Triton hsaco LLD target emulation unknown
     @requires_cuda
     def test_max_min_bool(self):
         # Regression test for https://github.com/pytorch/pytorch/issues/174069
@@ -15053,7 +15031,7 @@ def forward(self, arg0_1: "Sym(s77)", arg1_1: "Sym(s27)", arg2_1: "Sym(s53)", ar
                 return clone
 
         # DeterministicGuard locks MIOpen's solver choice on gfx950. atol/rtol
-        # cover the fp16 hgemm noise floor on gfx90a. Derivation:
+        # cover the fp16 hgemm noise floor. Derivation:
         # https://github.com/pytorch/pytorch/issues/183581
         with DeterministicGuard(True, warn_only=True):
             self.common(

@@ -41,19 +41,13 @@ if(NOT __AOTRITON_INCLUDED)
       "f024225d8b6063f7d95974e5957cb20893a1579a9a73b22b60426441331bc021"  # rocm7.15
       )
   set(__AOTRITON_IMAGE_LIST
-      "amd-gfx90a"
-      "amd-gfx942"
       "amd-gfx950"
-      "amd-gfx110x"
       "amd-gfx115x"
       "amd-gfx120x"
       "amd-gfx1250"
      )
   set(__AOTRITON_IMAGE_SHA256_LIST
-     "a3d1a6868ce290ba8118618207093e785252eff4e18a64f495752cb5a03ffed6" # amd-gfx90a
-     "ccdbc7e3d96839be4895ee004f21531cc55d590c9018937b9e314bba363b3927" # amd-gfx942
      "518fd072eb05948fc0a6c25a20832591c6406df865e3b691a2aeff3fd4c5ce1d" # amd-gfx950
-     "efe773e7a2c8adc995d90ecd0daca2db801285445ee10432df2b29c67d5b11d2" # amd-gfx110x
      "1bc50e8aa8b6bda3410e92886ccca8fd45df3e60a6cbda9ffc58b2c541efd5c2" # amd-gfx115x
      "6a465dbc03148bba8a2d78c4c2a3cb83155eca00f4f7f749e676402d7660968c" # amd-gfx120x
      "4aaf71d6e510549d593757e5f88598df1e4a29cbcd91f70750ee8a76f65c027f" # amd-gfx1250
@@ -73,13 +67,11 @@ if(NOT __AOTRITON_INCLUDED)
         "3f5cfba6c42261a3e3b44022c66083ec859fcc98296faa4646b65373fead3448"  # rocm7.14+asan
         "7a7928d881d6341fc0b8ffb3ad7077f62438a8412ec57f97fb4b4dfbc73b3e64"  # rocm7.15+asan
         )
-    # ASAN only supports gfx942+gfx950
+    # ASAN only supports gfx950
     set(__AOTRITON_IMAGE_LIST
-        "amd-gfx942"
         "amd-gfx950"
        )
     set(__AOTRITON_IMAGE_SHA256_LIST
-       "563d2e4c41b367725c7b8e12fdfd04df4d1b1ff15947e011e2452818f3a43d26" # amd-gfx942+asan
        "b428dfe6eef7a1dcfac54ac2408dd136dbd622016331dc863e87ce9ea84c8054" # amd-gfx950+asan
        )
   endif()

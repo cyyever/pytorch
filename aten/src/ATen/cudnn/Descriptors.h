@@ -292,29 +292,23 @@ struct TORCH_CUDA_CPP_API RNNDescriptor : public Descriptor<
             /*recProjSize=*/proj_size,
             /*outProjSize=*/0));
     }
-    cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-    if (prop->major >= 7) {
-      if (input_type == CUDNN_DATA_HALF) {
-        cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_TENSOR_OP_MATH);
-      }
-      else if (input_type == CUDNN_DATA_FLOAT && !allow_tf32) {
-        cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_FMA_MATH);
-      }
-      else {
-        // Technically, as the default it's not necessary to explicitly
-        // set this.
-        cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_DEFAULT_MATH);
-      }
+    if (input_type == CUDNN_DATA_HALF) {
+      cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_TENSOR_OP_MATH);
+    }
+    else if (input_type == CUDNN_DATA_FLOAT && !allow_tf32) {
+      cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_FMA_MATH);
+    }
+    else {
+      // Technically, as the default it's not necessary to explicitly
+      // set this.
+      cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_DEFAULT_MATH);
     }
 #else
-    cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
     auto math_type = CUDNN_DEFAULT_MATH;
-    if (prop->major >= 7) {
-      if (input_type == CUDNN_DATA_HALF) {
-        math_type = CUDNN_TENSOR_OP_MATH;
-      } else if (!allow_tf32) {
-        math_type = CUDNN_FMA_MATH;
-      }
+    if (input_type == CUDNN_DATA_HALF) {
+      math_type = CUDNN_TENSOR_OP_MATH;
+    } else if (!allow_tf32) {
+      math_type = CUDNN_FMA_MATH;
     }
     AT_CUDNN_CHECK(cudnnSetRNNDescriptor_v8(
           mut_desc(),

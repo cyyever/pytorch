@@ -28,12 +28,10 @@ from torch.distributed.tensor.parallel import (
 )
 from torch.testing._internal.common_distributed import (
     skip_if_lt_x_gpu,
-    skip_if_rocm_arch_multiprocess,
 )
 from torch.testing._internal.common_fsdp import FSDPTestContinuous, MLP, MLPStack
 from torch.testing._internal.common_utils import (
     IS_LINUX,
-    MI200_ARCH,
     run_tests,
     TEST_WITH_ROCM,
     TEST_XPU,
@@ -111,7 +109,6 @@ class TestFullyShard2DTraining(FSDPTestContinuous):
             mesh_dim_names=("dp", "tp"),
         )
 
-    @skip_if_rocm_arch_multiprocess(MI200_ARCH)
     @skip_if_lt_x_gpu(4)
     def test_train_parity_2d_mlp(self):
         global_mesh = self.init_global_mesh()

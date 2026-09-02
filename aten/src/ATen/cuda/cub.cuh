@@ -6,10 +6,6 @@
 #include <iterator>
 #include <limits>
 
-#ifndef USE_ROCM
-#include <cuda/std/functional>
-#endif
-
 #include <ATen/cuda/cub_definitions.cuh>
 #include <ATen/cuda/CUDAContextLight.h>
 
@@ -36,14 +32,9 @@
 #define ROCM_HIPCUB(x) x
 #endif
 
-#if CUB_V3_4_PLUS()
 #include <cuda/iterator>
 #include <cuda/functional>
 #include <cuda/std/iterator>
-#define ATEN_CUB_TRANSFORM_ITERATOR(ValueType, ...) ::cuda::transform_iterator<__VA_ARGS__>
-#define ATEN_CUB_COUNTING_ITERATOR(...) ::cuda::counting_iterator<__VA_ARGS__>
-#define ATEN_CUB_CONSTANT_ITERATOR(...) ::cuda::constant_iterator<__VA_ARGS__>
-#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
 template<class T>
 using cccl_constant_iterator = ::cuda::constant_iterator<T>;
 template<class T>
@@ -51,69 +42,7 @@ using cccl_counting_iterator = ::cuda::counting_iterator<T>;
 using cccl_discard_iterator  = ::cuda::discard_iterator;
 template<class Iter>
 auto cccl_make_reverse_iterator(Iter it) { return ::cuda::std::make_reverse_iterator(it); }
-#elif CUB_V3_PLUS()
-#include <thrust/iterator/transform_iterator.h>
-#include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/constant_iterator.h>
-#include <thrust/iterator/discard_iterator.h>
-#include <thrust/iterator/reverse_iterator.h>
-#define ATEN_CUB_TRANSFORM_ITERATOR(ValueType, ...) ::thrust::transform_iterator<__VA_ARGS__>
-#define ATEN_CUB_COUNTING_ITERATOR(...) ::thrust::counting_iterator<__VA_ARGS__>
-#define ATEN_CUB_CONSTANT_ITERATOR(...) ::thrust::constant_iterator<__VA_ARGS__>
-#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
-template<class T>
-using cccl_constant_iterator = ::thrust::constant_iterator<T>;
-template<class T>
-using cccl_counting_iterator = ::thrust::counting_iterator<T>;
-using cccl_discard_iterator  = ::thrust::discard_iterator<>;
-template<class Iter>
-auto cccl_make_reverse_iterator(Iter it) { return ::thrust::make_reverse_iterator(it); }
-#else
-#include <thrust/iterator/transform_iterator.h>
-#include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/constant_iterator.h>
-#include <thrust/iterator/discard_iterator.h>
-#include <thrust/iterator/reverse_iterator.h>
-#define ATEN_CUB_TRANSFORM_ITERATOR(...) NO_ROCM(at_cuda_detail)ROCM_HIPCUB(::cub)::TransformInputIterator<__VA_ARGS__>
-#define ATEN_CUB_COUNTING_ITERATOR(...) NO_ROCM(at_cuda_detail)ROCM_HIPCUB(::cub)::CountingInputIterator<__VA_ARGS__>
-#define ATEN_CUB_CONSTANT_ITERATOR(...) NO_ROCM(at_cuda_detail)ROCM_HIPCUB(::cub)::ConstantInputIterator<__VA_ARGS__>
-#define ATEN_CUB_MAXIMUM() NO_ROCM(at_cuda_detail)ROCM_HIPCUB(::cub)::Max()
-template<class T>
-using cccl_constant_iterator = ::thrust::constant_iterator<T>;
-template<class T>
-using cccl_counting_iterator = ::thrust::counting_iterator<T>;
-using cccl_discard_iterator  = ::thrust::discard_iterator<>;
-template<class Iter>
-auto cccl_make_reverse_iterator(Iter it) { return ::thrust::make_reverse_iterator(it); }
-#endif
 
-// Pre ROCm 8.0 we require backporting of FpLimits specialization
-// for 'c10::BFloat16'. However, ROCm 8.0 lifts the compatible
-// CUB version to 3.x which uses libhipcxx and derives numerical
-// limits from there.
-#if defined(USE_ROCM) && CUB_VERSION < 300000
-
-// backport https://github.com/NVIDIA/cub/pull/306 for c10::BFloat16
-
-template <>
-struct ROCM_HIPCUB(cub)::FpLimits<c10::BFloat16>
-{
-    static __host__ __device__ __forceinline__ c10::BFloat16 Max() {
-        unsigned short max_word = 0x7F7F;
-        return reinterpret_cast<c10::BFloat16&>(max_word);
-    }
-
-    static __host__ __device__ __forceinline__ c10::BFloat16 Lowest() {
-        unsigned short lowest_word = 0xFF7F;
-        return reinterpret_cast<c10::BFloat16&>(lowest_word);
-    }
-};
-
-template <>
-struct ROCM_HIPCUB(cub)::NumericTraits<c10::BFloat16>:
-       ROCM_HIPCUB(cub)::BaseTraits<ROCM_HIPCUB(cub)::FLOATING_POINT, true, false, unsigned short, c10::BFloat16> {};
-
-#endif
 
 #if !defined(USE_ROCM)
 namespace at::native {
@@ -141,7 +70,7 @@ struct cuda_type<c10::BFloat16> {
   using type = __nv_bfloat16;
 };
 
-#elif defined(USE_ROCM)
+#else
 
 template<>
 struct cuda_type<c10::BFloat16> {
@@ -196,14 +125,9 @@ inline void unique_by_key(
   ValuesOutputIteratorT values_out,
   NumSelectedIteratorT num_selected, int64_t num_input_items)
 {
-  // TODO: use thrust::discard_iterator to handle null keys_out when https://github.com/NVIDIA/cub/issues/406 is fixed.
-  using KeyT = typename std::iterator_traits<KeysInputIteratorT>::value_type;
-  auto allocator = c10::cuda::CUDACachingAllocator::get();
-  c10::DataPtr keys_out_owner;
-  keys_out_owner = allocator->allocate(num_input_items * sizeof(KeyT));
-  auto keys_out_ = static_cast<KeyT *>(keys_out_owner.get());
   CUB_WRAPPER(NO_ROCM(at_cuda_detail)::cub::DeviceSelect::UniqueByKey,
-    keys_in, values_in, keys_out_, values_out, num_selected, num_input_items, c10::cuda::getCurrentCUDAStream());
+    keys_in, values_in, cccl_discard_iterator(), values_out, num_selected,
+    num_input_items, c10::cuda::getCurrentCUDAStream());
 }
 
 namespace impl {
@@ -403,7 +327,7 @@ __global__ void calc_block_sums(const T * d_in, aggT * agg, int64_t nelem, int i
     aggT data[ITEMS_PER_THREAD];
     aggT agg_val = 0;
     TransformFunctor<T, aggT, nonzero> transform_functor;
-    auto iter_in = ATEN_CUB_TRANSFORM_ITERATOR(aggT, TransformFunctor<T, aggT, nonzero>, const T*)(d_in, transform_functor);
+    auto iter_in = ::cuda::transform_iterator<TransformFunctor<T, aggT, nonzero>, const T*>(d_in, transform_functor);
     for (int i=0; i<iters_per_cta; i++){
       if (remaining >= BLOCK_THREADS * ITEMS_PER_THREAD) {
         BlockLoadT(temp_storage.load).Load(iter_in, data);

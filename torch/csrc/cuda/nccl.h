@@ -10,7 +10,7 @@
 // NCCL BFloat16 is enabled for CUDA builds where the bf16 type exists and NCCL
 // is present (NCCL is required to be 2.23+), or on HIP builds.
 #if defined(__CUDA_BF16_TYPES_EXIST__)
-#define HAS_NCCL_BF16_DATATYPE (NCCL_MAJOR >= 2)
+#define HAS_NCCL_BF16_DATATYPE 1
 #elif defined(USE_ROCM)
 #define HAS_NCCL_BF16_DATATYPE 1
 #else

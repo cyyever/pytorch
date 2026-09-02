@@ -22,7 +22,7 @@ DTYPES = {
     "bf16": "cutlass::bfloat16_t",
 }
 
-SM_RANGES: list[tuple[int, int]] = [(50, 69), (70, 74), (75, 79), (80, 121)]
+SM_RANGES: list[tuple[int, int]] = [(75, 79), (80, 121)]
 
 KERNEL_IMPL_TEMPLATE = """__global__ void __launch_bounds__(
     {CPP_CLASS}::kNumThreads,

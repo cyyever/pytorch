@@ -1,0 +1,122 @@
+diff --git a/test/xpu/test_nn_xpu.py b/test/xpu/test_nn_xpu.py
+index d9b7eb3d..0004c659 100644
+--- a/test/xpu/test_nn_xpu.py
++++ b/test/xpu/test_nn_xpu.py
+@@ -103,14 +103,12 @@ from torch.testing._internal.common_utils import (
+     instantiate_parametrized_tests,
+     IS_PPC,
+     load_tests,
+-    MI300_ARCH,
+     parametrize as parametrize_test,
+     run_tests,
+     set_default_dtype,
+     skipIfMPS,
+     skipIfNoLapack,
+     skipIfRocm,
+-    skipIfRocmArch,
+     skipIfTorchDynamo,
+     skipIfXpu,
+     subtest,
+@@ -11046,7 +11044,6 @@ class TestNNDeviceType(NNTestCase):
+         (not TEST_NUMPY) or (not TEST_SCIPY) or (scipy.__version__ < "1.0.0"),
+         "Scipy v1.0 and/or numpy not found",
+     )
+-    @skipIfRocmArch(MI300_ARCH)
+     @expectedFailureMPS  # Unsupported Border padding mode https://github.com/pytorch/pytorch/issues/125098
+     @tf32_on_and_off(0.001)
+     @reduced_f32_on_and_off(0.001)
+@@ -11238,7 +11235,6 @@ class TestNNDeviceType(NNTestCase):
+         (not TEST_NUMPY) or (not TEST_SCIPY) or (scipy.__version__ < "1.0.0"),
+         "Scipy v1.0 and/or numpy not found",
+     )
+-    @skipIfRocmArch(MI300_ARCH)
+     @expectedFailureMPS  # Unsupported Border padding mode https://github.com/pytorch/pytorch/issues/125098
+     @tf32_on_and_off(0.005)
+     @reduced_f32_on_and_off(0.005)
+@@ -11304,7 +11300,6 @@ class TestNNDeviceType(NNTestCase):
+         (not TEST_NUMPY) or (not TEST_SCIPY) or (scipy.__version__ < "1.0.0"),
+         "Scipy v1.0 and/or numpy not found",
+     )
+-    @skipIfRocmArch(MI300_ARCH)
+     @tf32_on_and_off(0.005)
+     @reduced_f32_on_and_off(0.005)
+     def test_affine_3d_rotateRandom(self, device):
+@@ -12365,7 +12360,6 @@ class TestNNDeviceType(NNTestCase):
+             unfold(inp)
+ 
+     @onlyOn(["cuda", "xpu"])
+-    @skipIfRocmArch(MI300_ARCH)
+     @dtypes(torch.float, torch.double)
+     @tf32_on_and_off(0.005)
+     def test_rnn_fused(self, device, dtype):
+@@ -15597,7 +15591,6 @@ class TestNNDeviceType(NNTestCase):
+                 log_probs, targets, input_lengths, target_lengths, reduction="none"
+             )
+ 
+-    @skipIfRocmArch(MI300_ARCH)
+     @expectedFailureMPS  # RuntimeError: LSTM with projections is not currently supported with MPS.
+     @dtypesIfCUDA(torch.half, torch.float, torch.double)
+     @dtypesIfXPU(torch.half)
+diff --git a/test/xpu/test_torch_xpu.py b/test/xpu/test_torch_xpu.py
+index 24ef3a66..4a6e2942 100644
+--- a/test/xpu/test_torch_xpu.py
++++ b/test/xpu/test_torch_xpu.py
+@@ -101,7 +101,6 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
+     IS_SANDCASTLE,
+     IS_WINDOWS,
+     load_tests,
+-    MI300_ARCH,
+     noncontiguous_like,
+     parametrize,
+     run_tests,
+@@ -112,7 +111,6 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
+     skipIfMPS,
+     skipIfNoSciPy,
+     skipIfRocm,
+-    skipIfRocmArch,
+     skipIfTorchDynamo,
+     skipIfTorchInductor,
+     skipIfXpu,
+@@ -2143,7 +2141,6 @@ class TestTorchDeviceType(TestCase):
+             torch.device(device).type == "cuda" or torch.device(device).type == "xpu",
+         )
+ 
+-    @skipIfRocmArch(MI300_ARCH)
+     @skipIfTorchInductor("https://github.com/pytorch/pytorch/issues/113707")
+     @onlyOn(["cuda", "xpu"])
+     def test_deterministic_cumsum(self, device):
+@@ -3015,7 +3012,6 @@ class TestTorchDeviceType(TestCase):
+                         self.assertEqual(x1.grad, x2.grad, rtol=0, atol=0.001)
+                         self.assertEqual(y1.grad, y2.grad, rtol=0, atol=0.001)
+ 
+-    @skipIfRocmArch(MI300_ARCH)
+     @tf32_on_and_off(0.005)
+     @reduced_f32_on_and_off(0.08)
+     def test_cdist_large(self, device):
+diff --git a/test/xpu/test_transformers_xpu.py b/test/xpu/test_transformers_xpu.py
+index b185bff5..a1a9f808 100644
+--- a/test/xpu/test_transformers_xpu.py
++++ b/test/xpu/test_transformers_xpu.py
+@@ -42,14 +42,12 @@ from torch.testing._internal.common_utils import (
+     gradcheck,
+     isRocmArchAnyOf,
+     make_tensor,
+-    MI300_ARCH,
+     MI350_ARCH,
+     NOTEST_CPU,
+     parametrize,
+     run_tests,
+     set_default_dtype,
+     skipIfRocm,
+-    skipIfRocmArch,
+     skipIfTorchDynamo,
+     skipIfXpu,
+     slowTest,
+@@ -607,7 +605,6 @@ class TestTransformers(NNTestCase):
+         # remove hook
+         handle.remove()
+ 
+-    @skipIfRocmArch(MI300_ARCH)
+     @tf32_on_and_off(0.001)
+     @parametrize("use_torchscript", [False])
+     @parametrize("enable_nested_tensor", [True, False])

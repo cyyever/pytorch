@@ -148,7 +148,7 @@ def compile_llvm_ir_to_code_object(
     Args:
         llvm_ir_path: Path to .ll file
         output_path: Where to write .hsaco file
-        target_arch: Target architecture (e.g., 'gfx90a')
+        target_arch: Target architecture (e.g., 'gfx950')
 
     Returns:
         True if successful
@@ -225,7 +225,7 @@ def create_multiarch_bundle(code_objects: dict, output_bundle_path: str) -> bool
             continue
         # hipv4 = HIP version 4 code object format
         # amdgcn-amd-amdhsa = target triple for ROCm/HSA runtime
-        # arch = specific GPU (gfx90a, gfx942, etc.)
+        # arch = specific GPU (gfx950, gfx1200, etc.)
         targets.append(f"hipv4-amdgcn-amd-amdhsa--{arch}")
         inputs.append(path)
 
@@ -285,7 +285,7 @@ def compile_multiarch_bundle_from_llvm_ir(
 
     for arch in target_archs:
         # Create temporary single-architecture code object
-        # Format: kernel_name_gfx90a.co, kernel_name_gfx942.co, etc.
+        # Format: kernel_name_gfx950.co, kernel_name_gfx1200.co, etc.
         co_path = os.path.join(temp_dir, f"{kernel_name}_{arch}.co")
 
         # Compile with clang backend: LLVM IR → GPU machine code

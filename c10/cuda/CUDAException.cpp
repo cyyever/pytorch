@@ -17,8 +17,7 @@ namespace c10::cuda {
 
 namespace {
 
-#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED) && \
-    defined(CUDA_VERSION) && (CUDA_VERSION >= 12090)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
 // This size matches the one used by cuLogsDumpToMemory, however we could shrink
 // it as in our case this size is per-thread, and it only needs to be large
 // enough to contain the messages printed by a single CUDA function call.
@@ -91,8 +90,7 @@ class CUDAErrorLogCallbackRegistration {
 } // namespace
 
 CUDAErrorLogCapture::CUDAErrorLogCapture() noexcept {
-#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED) && \
-    defined(CUDA_VERSION) && (CUDA_VERSION >= 12090)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
   static const CUDAErrorLogCallbackRegistration callback_registration
       [[maybe_unused]];
   cuda_error_log_buffer.length = 0;
@@ -100,8 +98,7 @@ CUDAErrorLogCapture::CUDAErrorLogCapture() noexcept {
 }
 
 std::string CUDAErrorLogCapture::get_error_log_suffix() noexcept {
-#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED) && \
-    defined(CUDA_VERSION) && (CUDA_VERSION >= 12090)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
   auto& buffer = cuda_error_log_buffer;
   if (buffer.length == 0) {
     return {};

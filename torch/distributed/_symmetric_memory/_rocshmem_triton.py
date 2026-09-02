@@ -48,7 +48,7 @@ class RocshmemLibFinder:
             )
 
         props = torch.cuda.get_device_properties(0)
-        # gcnArchName returns e.g. "gfx942:sramecc+:xnack-"
+        # gcnArchName returns e.g. "gfx950:sramecc+:xnack-"
         arch = props.gcnArchName.split(":")[0]
         logger.info("Detected GPU architecture: %s", arch)
 

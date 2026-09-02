@@ -300,7 +300,7 @@ DeviceAssertionsData* CUDAKernelLaunchRegistry::
   C10_CUDA_CHECK_WO_DSA(
       cudaMallocManaged(&uvm_assertions_ptr, sizeof(DeviceAssertionsData)));
 
-#if CUDART_VERSION >= 13000 && !defined(USE_ROCM)
+#if !defined(USE_ROCM)
   // The CPU is addressed via cudaMemLocationTypeHost; a device location with
   // id == cudaCpuDeviceId is rejected with cudaErrorInvalidValue, since ids are
   // only validated as device ordinals. The id field is ignored for host

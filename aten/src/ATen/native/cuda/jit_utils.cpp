@@ -29,118 +29,8 @@
 
 namespace at::cuda::jit {
 
-// hiprtc already includes some traits, so this removes duplicate definitions of
-// integral_constant, is_same, is_integral, enable_if, is_floating_point, is_arithmetic.
-// Copied from aten/src/ATen/cuda/llvm_basic.cpp, then modified as above.
-// If not compiling for ROCm, return the original get_traits_string().
 std::string get_traits_string_but_hiprtc_safe() {
-#if defined(USE_ROCM) && HIP_VERSION_MAJOR < 7
-    return R"ESCAPE(
-namespace std {
-
-template <class _Tp>
-_Tp&& __declval(int);
-template <class _Tp>
-_Tp __declval(long);
-template <class _Tp>
-decltype(__declval<_Tp>(0)) declval() noexcept;
-
-template <class _Tp> struct remove_const            {typedef _Tp type;};
-template <class _Tp> struct remove_const<const _Tp> {typedef _Tp type;};
-template <class _Tp> using remove_const_t = typename remove_const<_Tp>::type;
-
-template <class _Tp> struct remove_volatile               {typedef _Tp type;};
-template <class _Tp> struct remove_volatile<volatile _Tp> {typedef _Tp type;};
-template <class _Tp> using remove_volatile_t = typename remove_volatile<_Tp>::type;
-
-template <class _Tp> struct remove_cv
-{typedef typename remove_volatile<typename remove_const<_Tp>::type>::type type;};
-template <class _Tp> using remove_cv_t = typename remove_cv<_Tp>::type;
-
-template <class _Tp> struct __libcpp_is_floating_point              : public false_type {};
-template <>          struct __libcpp_is_floating_point<float>       : public true_type {};
-template <>          struct __libcpp_is_floating_point<double>      : public true_type {};
-template <>          struct __libcpp_is_floating_point<long double> : public true_type {};
-
-template <class _Tp>
-inline constexpr bool is_arithmetic_v = is_arithmetic<_Tp>::value;
-
-template <class _Tp>
-struct __numeric_type
-{
-   static void __test(...);
-   static float __test(float);
-   static double __test(char);
-   static double __test(int);
-   static double __test(unsigned);
-   static double __test(long);
-   static double __test(unsigned long);
-   static double __test(long long);
-   static double __test(unsigned long long);
-   static double __test(double);
-   static long double __test(long double);
-
-   typedef decltype(__test(declval<_Tp>())) type;
-   static const bool value = !is_same<type, void>::value;
-};
-
-template <>
-struct __numeric_type<void>
-{
-   static const bool value = true;
-};
-
-// __promote
-
-template <class _A1, class _A2 = void, class _A3 = void,
-          bool = __numeric_type<_A1>::value &&
-                 __numeric_type<_A2>::value &&
-                 __numeric_type<_A3>::value>
-class __promote_imp
-{
-public:
-    static const bool value = false;
-};
-
-template <class _A1, class _A2, class _A3>
-class __promote_imp<_A1, _A2, _A3, true>
-{
-private:
-    typedef typename __promote_imp<_A1>::type __type1;
-    typedef typename __promote_imp<_A2>::type __type2;
-    typedef typename __promote_imp<_A3>::type __type3;
-public:
-    typedef decltype(__type1() + __type2() + __type3()) type;
-    static const bool value = true;
-};
-
-template <class _A1, class _A2>
-class __promote_imp<_A1, _A2, void, true>
-{
-private:
-    typedef typename __promote_imp<_A1>::type __type1;
-    typedef typename __promote_imp<_A2>::type __type2;
-public:
-    typedef decltype(__type1() + __type2()) type;
-    static const bool value = true;
-};
-
-template <class _A1>
-class __promote_imp<_A1, void, void, true>
-{
-public:
-    typedef typename __numeric_type<_A1>::type type;
-    static const bool value = true;
-};
-
-template <class _A1, class _A2 = void, class _A3 = void>
-class __promote : public __promote_imp<_A1, _A2, _A3> {};
-
-} // namespace std
-)ESCAPE";
-#else
-    return get_traits_string();
-#endif
+  return get_traits_string();
 }
 
 #ifdef USE_ROCM
@@ -873,52 +763,13 @@ void codegenOutputQuery(
     int& nvrtc_major,
     int& nvrtc_minor,
     bool& compile_to_sass) {
-#ifdef USE_ROCM
   AT_CUDA_NVRTC_CHECK(nvrtc().nvrtcVersion(&nvrtc_major, &nvrtc_minor));
   cuda_major = prop->major;
   cuda_minor = prop->minor;
+#ifdef USE_ROCM
   compile_to_sass = false;
 #else
-  AT_CUDA_NVRTC_CHECK(nvrtc().nvrtcVersion(&nvrtc_major, &nvrtc_minor));
-  TORCH_CHECK(
-      nvrtc_major >= 6, "NVRTC versions less than 6 are not supported. Is: ", nvrtc_major);
-
-  // Version supported by device
-  // Usually any lower version works too but is less efficient
-  using CUDAVersion = std::pair<int, int>;
-  const CUDAVersion nvrtc_version{nvrtc_major, nvrtc_minor};
-  const CUDAVersion dev_version{prop->major, prop->minor};
-  // Maximum version supported by the driver, cap dev_version to this
-  CUDAVersion max_dev_version;
-  if (nvrtc_major <= 7) { // 7 supports 2-5.x
-    max_dev_version = CUDAVersion(5, 0);
-  } else if (nvrtc_major <= 8) { // 8 supports 2-6.x
-    max_dev_version = CUDAVersion(6, 0);
-  } else if (nvrtc_major <= 9) { // 9 supports 3-7.2
-    max_dev_version = CUDAVersion(7, 2);
-  } else if (nvrtc_major <= 10) { // 10 supports 3-7.5
-    max_dev_version = CUDAVersion(7, 5);
-  } else if (nvrtc_version == CUDAVersion(11, 0)) { // 11.0 supports 3-8.0
-    max_dev_version = CUDAVersion(8, 0);
-  } else if (nvrtc_major == 11 && nvrtc_minor < 8) {
-    max_dev_version = CUDAVersion(8, 6);
-  } else {
-    // If the driver version is unknown (i.e. newer than this code)
-    // assume the driver supports this device
-    max_dev_version = dev_version;
-  }
-
-  if (dev_version > max_dev_version) {
-    cuda_major = max_dev_version.first;
-    cuda_minor = max_dev_version.second;
-    // if we are clamping major/minor, sass is not compatible
-    compile_to_sass = false;
-  } else {
-    cuda_major = dev_version.first;
-    cuda_minor = dev_version.second;
-    compile_to_sass = true;
-  }
-
+  compile_to_sass = true;
 #endif
 }
 

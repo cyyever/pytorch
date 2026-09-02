@@ -48,16 +48,10 @@
     } else if (CC >= 75) {                                                \
       using ArchTag = cutlass::arch::Sm75;                                \
       func();                                                             \
-    } else if (CC >= 70) {                                                \
-      using ArchTag = cutlass::arch::Sm70;                                \
-      func();                                                             \
-    } else if (CC >= 50) {                                                \
-      using ArchTag = cutlass::arch::Sm50;                                \
-      func();                                                             \
     } else {                                                              \
       TORCH_CHECK(                                                     \
           false,                                                          \
-          "Your device is too old. We require compute capability >= 50"); \
+          "Your device is too old. We require compute capability >= 75"); \
     }                                                                     \
   }
 
@@ -155,17 +149,6 @@ struct DefaultGemmType<
   static constexpr int kMinimumAlignment = 4;
   using OpClass = cutlass::arch::OpClassTensorOp;
   using InstructionShape = cutlass::gemm::GemmShape<16, 8, 8>;
-  using Operator = cutlass::arch::OpMultiplyAdd;
-};
-
-// Specialization for tensorcores with f16 - Volta
-template <>
-struct DefaultGemmType<cutlass::arch::Sm70, cutlass::half_t, void> {
-  static constexpr int ThreadK = 32;
-  static constexpr int WarpK = 32;
-  static constexpr int kMinimumAlignment = 2;
-  using OpClass = cutlass::arch::OpClassTensorOp;
-  using InstructionShape = cutlass::gemm::GemmShape<8, 8, 4>;
   using Operator = cutlass::arch::OpMultiplyAdd;
 };
 

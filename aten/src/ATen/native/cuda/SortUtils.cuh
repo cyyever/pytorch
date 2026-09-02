@@ -9,15 +9,6 @@
 #include <ATen/native/cuda/Sort.h>
 #include <ATen/native/StridedRandomAccessor.h>
 
-#if defined(USE_ROCM)
-// ROCm: WarpMergeSort available and tested on ROCm 7.0+
-#define HAS_WARP_MERGE_SORT() (1)
-#else
-// CUDA: WarpMergeSort available since CUDA 11.6
-#define HAS_WARP_MERGE_SORT() (CUDA_VERSION >= 11060)
-#endif
-
-
 namespace at::native {
 
 template <typename T>
@@ -162,8 +153,6 @@ bitonicSortKVInPlace(at::cuda::detail::TensorInfo<K, IndexType> keys,
   }
 }
 
-#if HAS_WARP_MERGE_SORT()
-
 // Note [warp merge sort WARP_SIZE template param]
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // warpMergeSortKVInPlace was written assuming C10_WARP_SIZE is a constexpr.
@@ -255,8 +244,6 @@ warpMergeSortKVInPlace(
   WARP_SYNC();
   StoreValues(warp_storage.store_values).Store(values_iter, local_values, keySliceSize);
 }
-
-#endif // HAS_WARP_MERGE_SORT()
 
 template <int KeyDims, int ValueDims,
           int block_size, int items_per_thread,

@@ -224,20 +224,10 @@ def max_clock_rate(device: int | None = None):
         gcn_arch = str(
             torch.cuda.get_device_properties(device).gcnArchName.split(":", 1)[0]
         )
-        if "gfx94" in gcn_arch:
-            return 1700
-        elif "gfx90a" in gcn_arch:
-            return 1700
-        elif "gfx908" in gcn_arch:
-            return 1502
-        elif "gfx12" in gcn_arch:
+        if "gfx12" in gcn_arch:
             return 1700
         elif "gfx11" in gcn_arch:
             return 1700
-        elif "gfx103" in gcn_arch:
-            return 1967
-        elif "gfx101" in gcn_arch:
-            return 1144
         elif "gfx95" in gcn_arch:
             return 1700  # TODO: placeholder, get actual value
         else:

@@ -883,12 +883,6 @@ class TestExternKernelCaller(TestCase):
         if not torch.version.hip:  # autotuning is not guaranteed to run on ROCm
             self.assertEqual(counters["inductor"]["select_algorithm_autotune"], 1)
 
-    # gfx942: the 128x128x64 / 8-warp Triton candidate is miscompiled by the AMD
-    # block-pingpong schedule (LDS race, stale-by-one-BLOCK_K A operands), so the
-    # autotune correctness check fails intermittently; the compile-worker pool
-    # does not forward TRITON_HIP_USE_BLOCK_PINGPONG, so it cannot be disabled
-    # per test. https://github.com/triton-lang/triton/issues/11696
-    @skipIfRocmArch(MI300_ARCH)
     @patches
     def test_extern_kernel_benchmark_valid_timing(self):
         def fn(a, b):
