@@ -10,7 +10,7 @@
 #include <ATen/mps/MPSAllocatorInterface.h>
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/mps/MPSStream.h>
-#include <ATen/native/mps/MPSGraphSequoiaOps.h>
+#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 #include <ATen/native/mps/OperationUtils.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -372,29 +372,17 @@ static void check_mps_shape(MPSShape* shape) {
   }
 }
 
-bool isTooLargeForMPSGraph(const Tensor& tensor, bool useMPSStridedAPI, bool checkLinearOffset) {
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
-  if ((!tensor.is_contiguous() || tensor.storage_offset()) && useMPSStridedAPI && is_macOS_15_0_or_newer) {
+bool isTooLargeForMPSGraph(const Tensor& tensor, bool useMPSStridedAPI) {
+  if ((!tensor.is_contiguous() || tensor.storage_offset()) && useMPSStridedAPI) {
     auto storage_numel = tensor.storage().nbytes() / tensor.element_size() - tensor.storage_offset();
     if (storage_numel > std::numeric_limits<int32_t>::max()) {
       return true;
     }
   }
-  // checkLinearOffset also requires the largest linear offset
-  // sum(stride[d] * (size[d] - 1)) to fit in int32, for kernels indexing in int32.
-  const bool check_offset = checkLinearOffset && tensor.numel() > 0;
-  int64_t max_linear_offset = 0;
-  for (const auto dim : c10::irange(tensor.dim())) {
-    const auto size = tensor.size(dim);
+  for (auto size : tensor.sizes()) {
     if (size > std::numeric_limits<int32_t>::max()) {
       return true;
     }
-    if (check_offset) {
-      max_linear_offset += tensor.stride(dim) * (size - 1);
-    }
-  }
-  if (check_offset && max_linear_offset > std::numeric_limits<int32_t>::max()) {
-    return true;
   }
   return false;
 }
@@ -479,10 +467,8 @@ Placeholder::Placeholder(MPSGraphTensor* mpsGraphTensor,
   // extract the pointer to MTLBuffer from the Tensor's storage
   id<MTLBuffer> srcBuf = getMTLBufferStorage(src);
 
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
-  // Use gather kernel to solve strides for macOS < 15.0
-  // Starting with macOS 15.0, MPS supports native strides directly in the kernels
-  if (!is_macOS_15_0_or_newer || !useMPSStridedAPI) {
+  // MPS supports native strides directly in the kernels
+  if (!useMPSStridedAPI) {
     if ((!src.is_contiguous() || src.storage_offset()) && gatherTensorData) {
       Tensor emptyShell = Tensor();
       // use "_tensor" from Placeholder to retain view's output during its usage in other ops
@@ -823,14 +809,16 @@ id<MTLLibrary> MetalShaderLibrary::compileLibrary(const std::string& src) {
   MTLCompileOptions* options = compile_options;
   if (!options) {
     options = [[MTLCompileOptions new] autorelease];
-    [options setLanguageVersion:static_cast<MTLLanguageVersion>(metal_language_version())];
-    if (is_macos_at_least(MacOSVersion::MACOS_15_0)) {
-      options.mathMode = fast_math ? MTLMathModeFast : MTLMathModeSafe;
-      options.mathFloatingPointFunctions =
-          fast_math ? MTLMathFloatingPointFunctionsFast : MTLMathFloatingPointFunctionsPrecise;
+    if (is_macos_at_least(MacOSVersion::MACOS_26_0)) {
+      // Metal-4.0 allows tensor template arguments
+      [options setLanguageVersion:MTLLanguageVersion4_0];
     } else {
-      [options setFastMathEnabled:fast_math ? YES : NO];
+      // Metal-3.2 allows lambdas in shader code
+      [options setLanguageVersion:MTLLanguageVersion3_2];
     }
+    options.mathMode = fast_math ? MTLMathModeFast : MTLMathModeSafe;
+    options.mathFloatingPointFunctions =
+        fast_math ? MTLMathFloatingPointFunctionsFast : MTLMathFloatingPointFunctionsPrecise;
   }
 
   const auto str = [NSString stringWithCString:src.c_str() encoding:NSASCIIStringEncoding];

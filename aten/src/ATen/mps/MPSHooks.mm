@@ -31,26 +31,9 @@ bool MPSHooks::isOnMacOSorNewer(unsigned major, unsigned minor) const {
           return is_macos_at_least(MacOSVersion::MACOS_26_0);
       }
     case 15:
-      switch (minor) {
-        case 0:
-          return is_macos_at_least(MacOSVersion::MACOS_15_0);
-        case 1:
-          return is_macos_at_least(MacOSVersion::MACOS_15_1);
-        default:
-          TORCH_WARN("Can't check whether running on 15.", minor, "+ returning one for 15.1+");
-          return is_macos_at_least(MacOSVersion::MACOS_15_1);
-      }
     case 14:
-      switch (minor) {
-        case 0:
-          return true;
-        case 4:
-          return is_macos_at_least(MacOSVersion::MACOS_14_4);
-        default:
-          TORCH_WARN("Can't check whether running on 14.", minor, "+ returning one for 14.4+");
-          return is_macos_at_least(MacOSVersion::MACOS_14_4);
-      }
     case 13:
+      // Below the macOS 26 floor the backend is not brought up at all
       return true;
     default:
       TORCH_WARN("Checking for unexpected MacOS ", major, ".", minor, " returning false");

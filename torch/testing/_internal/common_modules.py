@@ -4141,9 +4141,6 @@ def module_error_inputs_torch_nn_LogSoftmax(module_info, device, dtype, requires
     ]
 
 
-_macos15_or_newer = torch.backends.mps.is_available() and torch.backends.mps.is_macos_or_newer(15, 0)
-
-
 # Database of ModuleInfo entries in alphabetical order.
 module_db: list[ModuleInfo] = [
     ModuleInfo(torch.nn.AdaptiveAvgPool1d,
@@ -4530,16 +4527,7 @@ module_db: list[ModuleInfo] = [
                module_inputs_func=module_inputs_torch_nn_LPPool2d,
                skips=(
                    DecorateInfo(unittest.skip("Skipped!"), 'TestModule', 'test_grad'),
-                   DecorateInfo(unittest.skip("Skipped!"), 'TestModule', 'test_gradgrad'),
-                   # Fails on backward check on MPS
-                   # See https://github.com/pytorch/pytorch/issues/107214
-                   DecorateInfo(
-                       unittest.expectedFailure,
-                       'TestModule',
-                       'test_memory_format',
-                       active_if=operator.itemgetter('training') and not _macos15_or_newer,
-                       device_type='mps',
-                   ),)
+                   DecorateInfo(unittest.skip("Skipped!"), 'TestModule', 'test_gradgrad'),)
                ),
     ModuleInfo(torch.nn.LPPool3d,
                module_inputs_func=module_inputs_torch_nn_LPPool3d,
@@ -4909,16 +4897,6 @@ module_db: list[ModuleInfo] = [
                ),
     ModuleInfo(torch.nn.ReLU,
                module_inputs_func=module_inputs_torch_nn_ReLU,
-               skips=None if _macos15_or_newer else (
-                   # Fails on backward check on MPS
-                   # See https://github.com/pytorch/pytorch/issues/107214
-                   DecorateInfo(
-                       unittest.expectedFailure,
-                       'TestModule',
-                       'test_memory_format',
-                       active_if=operator.itemgetter('training'),
-                       device_type='mps',
-                   ),)
                ),
     ModuleInfo(torch.nn.LeakyReLU,
                module_inputs_func=module_inputs_torch_nn_LeakyReLU,
