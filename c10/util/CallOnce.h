@@ -46,10 +46,6 @@ class once_flag {
     init_.store(true, std::memory_order_release);
   }
 
-  void reset_once() {
-    init_.store(false, std::memory_order_release);
-  }
-
  private:
   std::mutex mutex_;
   std::atomic<bool> init_{false};
