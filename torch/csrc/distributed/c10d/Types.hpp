@@ -180,7 +180,7 @@ struct AllToAllOptions {
 struct BarrierOptions {
   std::vector<int64_t> device_ids;
   std::chrono::milliseconds timeout = kUnsetTimeout;
-  std::optional<at::Device> device;
+  std::optional<at::Device> device = std::nullopt;
   bool asyncOp = true;
 };
 
