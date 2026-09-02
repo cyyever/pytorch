@@ -1697,11 +1697,6 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, c10::SymInt, c10::SymInt> _efficient_
       is_causal = false;
     } else {
       is_causal = true;
-#if AOTRITON_V3_API == 0
-      if (static_cast<int64_t>(sdp::CustomMaskType::CausalFromTopLeft) != custom_mask_type) {
-        TORCH_CHECK(false, "[_efficient_attention_forward] Unsupported mask type on ROCM, for now");
-      }
-#endif
     }
 
     at::Tensor atomic_counter;

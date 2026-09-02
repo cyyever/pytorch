@@ -57,9 +57,6 @@
 #include <aotriton/flash.h>
 #include <aotriton/runtime.h>
 
-#if AOTRITON_VERSION_CURRENT < AOTRITON_VERSION_INT(0, 9)
-#error "This adaptor code is only tested with AOTriton >= 0.9"
-#endif
 
 namespace pytorch_flash {
 
@@ -80,7 +77,6 @@ calculate_swa(std::optional<int64_t> window_size_left,
               int max_seqlen_q,
               int max_seqlen_k,
               bool is_causal) {
-#if AOTRITON_V3_API  // SWA is exposed through V3 API
   bool needs_swa = false;
   using aotriton::v3::flash::WindowValue;
   // Default values when std::optional window_size_left/right have no value
@@ -96,14 +92,6 @@ calculate_swa(std::optional<int64_t> window_size_left,
     window_right = window_size_right.value_or(window_right);
   }
   return std::make_tuple(needs_swa, window_left, window_right);
-#else
-  if (window_size_left.has_value() || window_size_right.has_value()) {
-    TORCH_WARN_ONCE("Current AOTriton does not support sliding window attention (SWA)."
-                    " Both window_size_left and window_size_right will be ignored."
-                    " Re-compile PyTorch with AOTriton >= 0.10b to enable SWA support.");
-  }
-  return std::make_tuple(false, 0, 0);
-#endif
 }
 
 // We want to checkpoint and save the RNG state for backward if dropout
@@ -234,13 +222,7 @@ mha_fwd_aot(const at::Tensor &q,         // batch_size x seqlen_q x num_heads x 
                                                               seqlen_q,
                                                               seqlen_k,
                                                               is_causal);
-#if AOTRITON_V3_API
   const bool uses_swa = needs_swa;
-#else
-  // When AOTRITON_V3_API = 0, uses_swa is constexpr and the if (uses_swa) branch can be
-  // optimized out (hopefully).
-  constexpr bool uses_swa = false;
-#endif
 
   // SWA in AOTriton Kernels is treated as "Generalized Causal masks"
   is_causal = is_causal || uses_swa;
@@ -403,13 +385,8 @@ mha_varlen_fwd_aot(const at::Tensor &q,  // total_q x num_heads x head_size, tot
 
   auto opts = q.options();
 
-#if AOTRITON_COMPACT_VARLEN_LSE
   auto softmax_lse = at::empty({num_heads, total_q}, opts.dtype(at::kFloat));
   at::Tensor M = softmax_lse;
-#else
-  auto softmax_lse = at::empty({batch_size, num_heads, max_seqlen_q}, opts.dtype(at::kFloat));
-  at::Tensor M = softmax_lse.view({batch_size * num_heads, max_seqlen_q});
-#endif
   at::Tensor softmax_fa_t;
   // Only return softmax if there's dropout to reduce compilation time
   if (return_softmax) {
@@ -432,13 +409,7 @@ mha_varlen_fwd_aot(const at::Tensor &q,  // total_q x num_heads x head_size, tot
                                                               max_seqlen_q,
                                                               max_seqlen_k,
                                                               is_causal);
-#if AOTRITON_V3_API
   const bool uses_swa = needs_swa;
-#else
-  // When AOTRITON_V3_API = 0, uses_swa is constexpr and the if (uses_swa) branch can be
-  // optimized out (hopefully).
-  constexpr bool uses_swa = false;
-#endif
 
   // SWA in AOTriton Kernels is treated as "Generalized Causal masks"
   is_causal = is_causal || uses_swa;
@@ -620,13 +591,7 @@ mha_bwd_aot(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x hea
                                                               seqlen_q,
                                                               seqlen_k,
                                                               is_causal);
-#if AOTRITON_V3_API
   const bool uses_swa = needs_swa;
-#else
-  // When AOTRITON_V3_API = 0, uses_swa is constexpr and the if (uses_swa) branch can be
-  // optimized out (hopefully).
-  constexpr bool uses_swa = false;
-#endif
 
   auto opts = q.options();
   auto softmax_d = at::empty({batch_size, num_heads, seqlen_q}, opts.dtype(at::kFloat));
@@ -766,11 +731,7 @@ mha_varlen_bwd_aot(const at::Tensor &dout,  // total_q x num_heads, x head_size
   CHECK_SHAPE(cu_seqlens_q, batch_size + 1);
   CHECK_SHAPE(cu_seqlens_k, batch_size + 1);
 
-#if AOTRITON_COMPACT_VARLEN_LSE
   at::Tensor softmax_lse_cont = softmax_lse.view({num_heads, total_q}).contiguous();
-#else
-  at::Tensor softmax_lse_cont = softmax_lse.view({batch_size * num_heads, max_seqlen_q}).contiguous();
-#endif
 
   at::Tensor q_padded, k_padded, v_padded;
   q_padded = q.unsqueeze(0).transpose(1, 2);
@@ -828,13 +789,7 @@ mha_varlen_bwd_aot(const at::Tensor &dout,  // total_q x num_heads, x head_size
                                                               max_seqlen_q,
                                                               max_seqlen_k,
                                                               is_causal);
-#if AOTRITON_V3_API
   const bool uses_swa = needs_swa;
-#else
-  // When AOTRITON_V3_API = 0, uses_swa is constexpr and the if (uses_swa) branch can be
-  // optimized out (hopefully).
-  constexpr bool uses_swa = false;
-#endif
 
   at::PhiloxCudaState philox_args;
   if (is_dropout) {

@@ -39,11 +39,6 @@
 #define USE_ROCM_ATTENTION 0
 #endif
 
-// Avoid potential compiler -Wall -Werror complains undefined macro
-#ifndef AOTRITON_VERSION_MINOR
-#define AOTRITON_VERSION_MINOR 0
-#endif
-
 /**
 * Note [SDPA Runtime Dispatch]
 * SDPA relies on a runtime dispatch mechanism to select the appropriate
@@ -152,7 +147,6 @@ int64_t minimum_gemm_alignment(sdp_params const& params) {
 #if USE_ROCM_ATTENTION
 inline int aotriton_max_hdim() {
   static const int max_hdim = []() {
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 11)
     // gfx11xx is capped at hdim <= 256 from AOTriton 0.11 onward, and this is a
     // standing decision rather than a version workaround: 0.11/0.12 ship no
     // larger kernels, and the 0.13 hdim 512 kernels are miscompiled under
@@ -164,24 +158,12 @@ inline int aotriton_max_hdim() {
     if (arch.starts_with("gfx11")) {
       return 256;
     }
-#endif // AOTriton >= 0.11
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 9)
     return 512;
-#else
-    return 256;
-#endif
   }();
   return max_hdim;
 }
 #endif // USE_ROCM_ATTENTION
 
-// For AOTriton <= 0.11:
-// On ROCm, ME and FA share the backend, and hence they share the checking
-// function for fundamental limitations by the GPU kernel
-// caller_is_meff is added to make the TORCH_WARN message showing the correct result
-//
-// FIXME: revert this reuse when removing AOTriton <= 0.11 support
-//
 // AOTriton 0.12 supports hdim_qk != hdim_vo, but we cannot enable this in
 // check_head_dim_size_flash because it changes the backend selection logic for
 // FA, which can break certain workloads that rely on the behavior of rejecting
@@ -239,7 +221,6 @@ bool check_head_dim_size_fa4(sdp_params const& params) {
 }
 #endif
 
-template<bool caller_is_meff = false>
 bool check_head_dim_size_flash(sdp_params const& params, bool debug) {
   const auto query_size_last = params.query.sym_size(-1);
   const auto key_size_last = params.key.sym_size(-1);
@@ -263,7 +244,7 @@ bool check_head_dim_size_flash(sdp_params const& params, bool debug) {
     if (debug) {
 #if USE_ROCM_ATTENTION
       const std::string requirement = c10::str(
-          caller_is_meff ? "Efficient attention on ROCm" : "Flash attention",
+          "Flash attention",
           " requires q,k,v to have the same last dimension and to be less than or equal to ",
           max_size,
           ".");
@@ -284,33 +265,9 @@ bool check_head_dim_size_flash(sdp_params const& params, bool debug) {
     }
     return false;
   }
-  if constexpr(caller_is_meff) {
-    bool is_half = (params.query.dtype() == at::kHalf) ||
-      (params.query.dtype() == at::kBFloat16);
-    const int64_t alignment = is_half ? 8 : 4;
-    if (!(query_size_last % alignment == 0 && query_size_last > 0 &&
-          value_size_last % alignment == 0 && value_size_last > 0)) {
-      if (debug) {
-        TORCH_WARN(
-            "Mem efficient attention requires last dimension of inputs to be divisible by ",
-            alignment,
-            ". ",
-            "Got Query.size(-1): ",
-            query_size_last,
-            ", Key.size(-1): ",
-            params.key.sym_size(-1),
-            ", Value.size(-1): ",
-            params.value.sym_size(-1),
-            " instead.");
-      }
-      return false;
-    }
-  }
   return true;
 }
 
-// See check_head_dim_size_flash above for the purpose of caller_is_meff
-template<bool caller_is_meff = false>
 bool check_head_dim_size_flash_nested(sdp_params const& params, bool debug) {
   const auto max_size = c10::SymInt(256);
   const auto query_size_last = params.query.sym_size(-1);
@@ -323,7 +280,7 @@ bool check_head_dim_size_flash_nested(sdp_params const& params, bool debug) {
     if (debug) {
       TORCH_WARN(
           "For NestedTensor inputs,",
-          caller_is_meff ? " Efficient attention on ROCm " : " Flash attention",
+          " Flash attention",
           " requires q,k,v to have the same last dimension and to be a multiple of 8 and less than or equal to 256.",
           " Got Query.size(-1): ",
           query_size_last,
@@ -340,9 +297,6 @@ bool check_head_dim_size_flash_nested(sdp_params const& params, bool debug) {
 
 bool check_head_dim_size_mem_efficient(sdp_params const& params, bool debug) {
 #if USE_ROCM_ATTENTION
-#if AOTRITON_VERSION_CURRENT < AOTRITON_VERSION_INT(0, 12)
-  return check_head_dim_size_flash_nested<true /* caller_is_meff */>(params, debug);
-#endif
 #endif
   const auto query_size_last = params.query.sym_size(-1);
   const auto value_size_last = params.value.sym_size(-1);
@@ -372,7 +326,6 @@ bool check_head_dim_size_mem_efficient(sdp_params const& params, bool debug) {
     return false;
   }
 #if USE_ROCM_ATTENTION
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 12)
   const auto max_size = c10::SymInt(aotriton_max_hdim());
   if (!(query_size_last <= max_size && value_size_last <= max_size)) {
     if (debug) {
@@ -390,7 +343,6 @@ bool check_head_dim_size_mem_efficient(sdp_params const& params, bool debug) {
     }
     return false;
   }
-#endif // AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 12)
 #endif // USE_ROCM_ATTENTION
   return true;
 }
@@ -491,7 +443,6 @@ bool check_flash_attention_hardware_support(sdp_params const& params, bool debug
         }
         return false;
     }
-#if AOTRITON_VERSION_MINOR >= 9
     if (aotriton::isArchExperimentallySupported(stream)) {
       static const bool enable_experimental = c10::utils::check_env("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL") == true;
       if (!enable_experimental) {
@@ -500,7 +451,6 @@ bool check_flash_attention_hardware_support(sdp_params const& params, bool debug
         return false;
       }
     }
-#endif
   }
 #else
   return false;
@@ -551,7 +501,6 @@ bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) 
         }
         return false;
     }
-#if AOTRITON_VERSION_MINOR >= 9
     if (aotriton::isArchExperimentallySupported(stream)) {
       static const bool enable_experimental = c10::utils::check_env("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL") == true;
       if (!enable_experimental) {
@@ -560,7 +509,6 @@ bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) 
         return false;
       }
     }
-#endif
   }
 #else
   return false;
@@ -1113,7 +1061,7 @@ bool can_use_flash_attention(sdp_params const& params, bool debug) {
       check_tensor_shapes,
       check_for_attn_mask,
       check_fa4_constraints,
-      check_head_dim_size_flash<false /*caller_is_meff*/>,
+      check_head_dim_size_flash,
       check_flash_attention_hardware_support,
       check_requires_grad_and_head_dim_gt192_constraints_on_sm86_89_or_120,
       check_flash_causal_non_square_seqlens,
@@ -1127,7 +1075,7 @@ bool can_use_flash_attention(sdp_params const& params, bool debug) {
   if (has_for_nested_inputs(params)) {
     constexpr auto nested_constraints = std::to_array<bool (*)(sdp_params const&, bool)>({
         check_batch_size_nested,
-        check_head_dim_size_flash_nested<false /*caller_is_meff*/>,
+        check_head_dim_size_flash_nested,
         check_for_seq_len_0_nested_tensor});
     for (auto& constraint : nested_constraints) {
       if (!constraint(params, debug)) {

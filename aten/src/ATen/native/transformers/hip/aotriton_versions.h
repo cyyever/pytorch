@@ -5,22 +5,12 @@
 #define AOTRITON_VERSION_INT(x, y) (x * 100 + y)
 #define AOTRITON_VERSION_CURRENT (AOTRITON_VERSION_MAJOR * 100 + AOTRITON_VERSION_MINOR)
 
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 11)
-#define AOTRITON_ALWAYS_V3_API 1
-#else
-#define AOTRITON_ALWAYS_V3_API 0
-#endif
-
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 10)
-#define AOTRITON_V3_API 1
-#else
-#define AOTRITON_V3_API 0
-#endif
-
-#if AOTRITON_VERSION_CURRENT >= AOTRITON_VERSION_INT(0, 12)
-#define AOTRITON_COMPACT_VARLEN_LSE 1
-#else
-#define AOTRITON_COMPACT_VARLEN_LSE 1
+// cmake/External/aotriton.cmake downloads 0.13b, but AOTRITON_INSTALLED_PREFIX
+// and PYTORCH_AOTRITON_COMMIT let a build supply its own. Declare the floor so
+// the V3 API, the compact varlen LSE layout and the hdim_qk != hdim_vo support
+// can be assumed unconditionally.
+#if AOTRITON_VERSION_CURRENT < AOTRITON_VERSION_INT(0, 12)
+#error "PyTorch requires AOTriton 0.12 or newer."
 #endif
 
 #endif

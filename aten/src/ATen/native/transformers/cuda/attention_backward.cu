@@ -631,11 +631,6 @@ _efficient_attention_backward(
       is_causal = false;
     } else {
       is_causal = true;
-#if AOTRITON_V3_API == 0
-      if (static_cast<int64_t>(sdp::CustomMaskType::CausalFromTopLeft) != custom_mask_type) {
-        TORCH_CHECK(false, "[_efficient_attention_forward] Unsupported mask type on ROCM, for now");
-      }
-#endif
     }
     at::Tensor q_t = query.permute({0,2,1,3});
     at::Tensor k_t = key.permute({0,2,1,3});
