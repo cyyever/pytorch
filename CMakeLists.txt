@@ -812,7 +812,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   string(APPEND CMAKE_CXX_FLAGS " -Wno-psabi")
 endif()
 
-append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-Wconstant-conversion" CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-Qunused-arguments" CMAKE_CXX_FLAGS)
 

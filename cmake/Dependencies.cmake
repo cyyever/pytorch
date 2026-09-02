@@ -779,11 +779,6 @@ if(USE_XCCL)
   endif()
 endif()
 
-if(USE_CUDA AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # NVCC inserts whitespace into literal operators, triggering a spurious Clang warning.
-  string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler -Wno-deprecated-literal-operator")
-endif()
-
 # nlohmann-json and concurrentqueue are header-only and used by torch_cpu
 # (c10/util/Semaphore.h, the profiler, export serialization).
 list(APPEND Caffe2_DEPENDENCY_LIBS nlohmann)
