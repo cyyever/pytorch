@@ -355,7 +355,6 @@ void initPythonBindings(PyObject* module) {
       .value("KERNEL_FUNCTION_DTYPE", at::RecordScope::KERNEL_FUNCTION_DTYPE)
       .value("CUSTOM_CLASS", at::RecordScope::CUSTOM_CLASS)
       .value("BUILD_FEATURE", at::RecordScope::BUILD_FEATURE)
-      .value("LITE_INTERPRETER", at::RecordScope::LITE_INTERPRETER)
       .value("USER_SCOPE", at::RecordScope::USER_SCOPE)
       .value("STATIC_RUNTIME_OP", at::RecordScope::STATIC_RUNTIME_OP)
       .value("STATIC_RUNTIME_MODEL", at::RecordScope::STATIC_RUNTIME_MODEL);

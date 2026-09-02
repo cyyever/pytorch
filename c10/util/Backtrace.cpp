@@ -47,7 +47,7 @@ class GetBacktraceImpl {
   facebook::process::StackTrace st_;
 };
 
-#elif SUPPORTS_BACKTRACE // !defined(C10_ANDROID)
+#elif SUPPORTS_BACKTRACE
 
 struct FrameInformation {
   /// If available, the demangled name of the function at this frame, else

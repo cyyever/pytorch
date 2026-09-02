@@ -40,15 +40,15 @@ TEST(ProfilerTest, LinuxPerf) {
 
   // Should have counted something if worked, so lets test that
   // And if it not supported the counters should be zeros.
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   for (auto counter : counters) {
     ASSERT_GT(counter, 0);
   }
-#else /* __ANDROID__ || __linux__ */
+#else /* __linux__ */
   for (auto counter : counters) {
     ASSERT_EQ(counter, 0);
   }
-#endif /* __ANDROID__ || __linux__ */
+#endif /* __linux__ */
 }
 
 TEST(ProfilerTest, LinuxPerfNestedDepth) {
@@ -108,20 +108,20 @@ TEST(ProfilerTest, LinuxPerfNestedDepth) {
   }
 
 // for each counter, assert A > B > C
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   for (auto i = 0; i < standard_events.size(); ++i) {
     ASSERT_GT(counters_A[i], counters_B[i]);
     ASSERT_GT(counters_A[i], counters_C[i]);
     ASSERT_GT(counters_B[i], counters_C[i]);
     ASSERT_GT(counters_A[i], counters_B[i] + counters_C[i]);
   }
-#else /* __ANDROID__ || __linux__ */
+#else /* __linux__ */
   for (auto i = 0; i < standard_events.size(); ++i) {
     ASSERT_EQ(counters_A[i], 0);
     ASSERT_EQ(counters_B[i], 0);
     ASSERT_EQ(counters_C[i], 0);
   }
-#endif /* __ANDROID__ || __linux__ */
+#endif /* __linux__ */
 }
 
 TEST(ProfilerTest, LinuxPerfNestedMultiple) {
@@ -178,20 +178,20 @@ TEST(ProfilerTest, LinuxPerfNestedMultiple) {
   }
 
 // for each counter, assert A > B > C
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   for (auto i = 0; i < standard_events.size(); ++i) {
     ASSERT_GT(counters_A[i], counters_B[i]);
     ASSERT_GT(counters_A[i], counters_C[i]);
     ASSERT_GT(counters_B[i], counters_C[i]);
     ASSERT_GT(counters_A[i], counters_B[i] + counters_C[i]);
   }
-#else /* __ANDROID__ || __linux__ */
+#else /* __linux__ */
   for (auto i = 0; i < standard_events.size(); ++i) {
     ASSERT_EQ(counters_A[i], 0);
     ASSERT_EQ(counters_B[i], 0);
     ASSERT_EQ(counters_C[i], 0);
   }
-#endif /* __ANDROID__ || __linux__ */
+#endif /* __linux__ */
 }
 
 TEST(ProfilerTest, LinuxPerfNestedSingle) {
@@ -232,17 +232,17 @@ TEST(ProfilerTest, LinuxPerfNestedSingle) {
   }
 
 // for each counter, assert A > B > C
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__linux__)
   for (auto i = 0; i < standard_events.size(); ++i) {
     ASSERT_GE(counters_A[i], counters_B[i]);
     ASSERT_GE(counters_A[i], counters_C[i]);
     ASSERT_GE(counters_B[i], counters_C[i]);
   }
-#else /* __ANDROID__ || __linux__ */
+#else /* __linux__ */
   for (auto i = 0; i < standard_events.size(); ++i) {
     ASSERT_EQ(counters_A[i], 0);
     ASSERT_EQ(counters_B[i], 0);
     ASSERT_EQ(counters_C[i], 0);
   }
-#endif /* __ANDROID__ || __linux__ */
+#endif /* __linux__ */
 }

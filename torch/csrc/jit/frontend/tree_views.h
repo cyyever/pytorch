@@ -886,8 +886,8 @@ struct Const : public Expr {
     }
   }
   double asFloatingPoint() const {
-    // We can't pass in nullptr as the dummy pointer gets dereferenced for
-    // Android version of strtod_c().
+    // We can't pass in nullptr as the dummy pointer gets dereferenced by
+    // some strtod_c() implementations.
     char* dummy = nullptr;
     return torch::jit::strtod_c(subtree(0)->stringValue().c_str(), &dummy);
   }

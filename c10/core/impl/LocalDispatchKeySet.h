@@ -62,10 +62,6 @@ struct C10_API LocalDispatchKeySet {
 };
 
 // thread_local variables cannot be C10_API on Windows.
-// Inlining this seems to break AutoDispatchBelowAutograd on Android.
-#if defined(C10_IPHONE)
-C10_API LocalDispatchKeySet tls_local_dispatch_key_set();
-#else
 extern C10_API thread_local PODLocalDispatchKeySet raw_local_dispatch_key_set;
 
 inline C10_API LocalDispatchKeySet tls_local_dispatch_key_set() {
@@ -73,7 +69,6 @@ inline C10_API LocalDispatchKeySet tls_local_dispatch_key_set() {
   // because they include this header.
   return raw_local_dispatch_key_set;
 }
-#endif
 
 // Internal, use ThreadLocalStateGuard
 C10_API void _force_tls_local_dispatch_key_set(LocalDispatchKeySet key_set);

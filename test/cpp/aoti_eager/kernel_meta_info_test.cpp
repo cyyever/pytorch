@@ -2,8 +2,6 @@
 // which enable a single compiled AOTI kernel to serve multiple input shapes by
 // matching dtype/device/rank instead of exact sizes and strides.
 
-#if !defined(ANDROID)
-
 #include <gtest/gtest.h>
 
 #include <torch/csrc/inductor/aoti_eager/kernel_meta_info.h>
@@ -134,5 +132,3 @@ TEST(ParameterMetadataDynamicCheckTest, StringUsesExactMatch) {
 }
 
 } // namespace torch::inductor
-
-#endif // !defined(ANDROID)

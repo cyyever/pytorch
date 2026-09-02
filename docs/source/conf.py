@@ -771,7 +771,6 @@ coverage_ignore_classes = [
     "InterfaceType",
     "ListType",
     "LockingLogger",
-    "MobileOptimizerType",
     "ModuleDict",
     "Node",
     "NoneType",
@@ -889,7 +888,6 @@ coverage_ignore_classes = [
     "cuFFTPlanCacheManager",
     # torch.distributed.algorithms.ddp_comm_hooks
     "DDPCommHookType",
-    # torch.jit.mobile
     "DeQuantize",
     "Quantize",
     # torch.utils.backcompat

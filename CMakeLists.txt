@@ -550,16 +550,6 @@ if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_NVTX ON)
 endif()
 
-set(SELECTED_OP_LIST
-    ""
-    CACHE
-      STRING
-      "Path to the yaml file that contains the list of operators to include for custom build. Include all operators by default."
-)
-option(
-  STATIC_DISPATCH_BACKEND
-  "Name of the backend for which static dispatch code is generated, e.g.: CPU."
-  "")
 if(LINUX)
   set(ENV_LDFLAGS "$ENV{LDFLAGS}")
   string(STRIP "${ENV_LDFLAGS}" ENV_LDFLAGS)
@@ -816,9 +806,8 @@ if((${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") AND ("${CMAKE_SYSTEM_PROCESSOR}" STR
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
 endif()
 
-# Enable sleef on Arm(R) architecture by default (except Android)
-if((NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
-  AND("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64"))
+# Enable sleef on Arm(R) architecture by default
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
   string(APPEND CMAKE_CXX_FLAGS " -DAT_BUILD_ARM_VEC256_WITH_SLEEF")
   add_definitions(-DAT_BUILD_ARM_VEC256_WITH_SLEEF)
 endif()

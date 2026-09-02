@@ -81,8 +81,6 @@ else
   export CMAKE_PREFIX_PATH
 fi
 
-# Use special scripts for Android builds
-
 if [[ "$BUILD_ENVIRONMENT" == *rocm* ]]; then
   # hcc used to run out of memory, silently exiting without stopping
   # the build process, leaving undefined symbols in the shared lib,
