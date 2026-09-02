@@ -30,7 +30,7 @@ ${py_forwards}
 
 static PyMethodDef sparse_functions[] = {
   ${py_method_defs}
-  {NULL}
+  {}
 };
 
 static PyObject* THPSparseVariableFunctionsModule = NULL;
@@ -41,7 +41,11 @@ void initSparseFunctions(PyObject* module) {
      "torch._C._sparse",
      NULL,
      -1,
-     sparse_functions
+     sparse_functions,
+     nullptr, /* m_slots */
+     nullptr, /* m_traverse */
+     nullptr, /* m_clear */
+     nullptr  /* m_free */
   };
   PyObject* sparse = PyModule_Create(&def);
   THPSparseVariableFunctionsModule = sparse;

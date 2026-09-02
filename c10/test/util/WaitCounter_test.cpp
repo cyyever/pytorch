@@ -25,12 +25,13 @@ class MockWaitCounterBackend
   explicit MockWaitCounterBackend(std::shared_ptr<CounterState> state)
       : state_(state) {}
 
-  intptr_t start(std::chrono::steady_clock::time_point now) noexcept override {
+  intptr_t start(std::chrono::steady_clock::time_point /*now*/) noexcept
+      override {
     state_->startCount.fetch_add(1);
     return reinterpret_cast<intptr_t>(this);
   }
 
-  void stop(std::chrono::steady_clock::time_point now, intptr_t ctx) noexcept
+  void stop(std::chrono::steady_clock::time_point /*now*/, intptr_t ctx) noexcept
       override {
     state_->stopCount.fetch_add(1);
     EXPECT_EQ(ctx, reinterpret_cast<intptr_t>(this));

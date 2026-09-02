@@ -37,7 +37,7 @@ ${py_forwards}
 
 static PyMethodDef special_functions[] = {
   ${py_method_defs}
-  {NULL}
+  {}
 };
 
 static PyObject* THPSpecialVariableFunctionsModule = NULL;
@@ -48,7 +48,11 @@ void initSpecialFunctions(PyObject* module) {
      "torch._C._special",
      NULL,
      -1,
-     special_functions
+     special_functions,
+     nullptr, /* m_slots */
+     nullptr, /* m_traverse */
+     nullptr, /* m_clear */
+     nullptr  /* m_free */
   };
   PyObject* special = PyModule_Create(&def);
   THPSpecialVariableFunctionsModule = special;

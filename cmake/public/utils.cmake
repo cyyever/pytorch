@@ -410,6 +410,12 @@ function(torch_compile_options libname)
           continue()
         endif()
       endif()
+      # nvcc hands the host compiler its own preprocessed output, whose `#line`
+      # directives that compiler reports as a GNU extension, so -Werror=pedantic
+      # fails on every CUDA translation unit regardless of what the source says.
+      if("${option}" STREQUAL "-Werror=pedantic")
+        continue()
+      endif()
       # -Xcompiler=<opt>, not -Xcompiler <opt>: target_compile_options
       # de-duplicates the repeated -Xcompiler token, so the space form leaves
       # one -Xcompiler followed by the whole option list and nvcc hands only

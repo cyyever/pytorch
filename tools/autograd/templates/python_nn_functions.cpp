@@ -79,7 +79,7 @@ static PyMethodDef nn_functions[] = {
   {"_parse_to", castPyCFunctionWithKeywords(THPVariable__parse_to),
     METH_VARARGS | METH_KEYWORDS, nullptr},
   ${py_method_defs}
-  {nullptr}
+  {}
 };
 
 void initNNFunctions(PyObject* module) {
@@ -88,7 +88,11 @@ void initNNFunctions(PyObject* module) {
      "torch._C._nn",
      nullptr,
      -1,
-     nn_functions
+     nn_functions,
+     nullptr, /* m_slots */
+     nullptr, /* m_traverse */
+     nullptr, /* m_clear */
+     nullptr  /* m_free */
   };
   PyObject* nn = PyModule_Create(&def);
   THPNNVariableFunctionsModule = nn;

@@ -41,7 +41,7 @@ ${py_forwards}
 
 static PyMethodDef fft_functions[] = {
   ${py_method_defs}
-  {NULL}
+  {}
 };
 
 static PyObject* THPFFTVariableFunctionsModule = NULL;
@@ -52,7 +52,11 @@ void initFFTFunctions(PyObject* module) {
      "torch._C._fft",
      NULL,
      -1,
-     fft_functions
+     fft_functions,
+     nullptr, /* m_slots */
+     nullptr, /* m_traverse */
+     nullptr, /* m_clear */
+     nullptr  /* m_free */
   };
   PyObject* fft = PyModule_Create(&def);
   THPFFTVariableFunctionsModule = fft;
