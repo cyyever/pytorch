@@ -69,7 +69,6 @@ The categories are as follow:
 
 * jit: Everything related to the jit (including tensorexpr)
 * quantization: Everything related to the quantization mode/passes/operators
-* mobile: Everything related to the mobile build/ops/features
 * onnx: Everything related to onnx
 * caffe2: Everything that happens in the caffe2 folder. No need to add any topics here as these are ignored (they don’t make it into the final release notes)
 * distributed: Everything related to distributed training and rpc

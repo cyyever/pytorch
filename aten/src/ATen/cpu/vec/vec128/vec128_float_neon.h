@@ -22,9 +22,7 @@
 // Due to follow two reasons aarch32 is not currently supported.
 // 1. Due to difference in ISA been aarch32 and aarch64, intrinsics
 //    that work for aarch64 dont work for aarch32.
-// 2. Android NDK r21 has problems with compiling aarch32.
-//    Clang seg faults.
-//    https://github.com/android/ndk/issues/1248
+// 2. Clang has had codegen bugs on aarch32.
 //    https://bugs.llvm.org/show_bug.cgi?id=45824
 // Most likely we will do aarch32 support with inline asm.
 #if defined(__aarch64__)

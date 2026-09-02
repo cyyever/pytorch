@@ -1,7 +1,6 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/record_function.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/ThreadLocal.h>
 #include <c10/util/overloaded.h>
 
 #include <algorithm>
@@ -367,13 +366,8 @@ int CacheEntry::sampleTries(double p) const {
 // == LocalCallbackManager: Implementation ====================================
 // ============================================================================
 LocalCallbackManager& LocalCallbackManager::get() {
-#if defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
-  static c10::ThreadLocal<LocalCallbackManager> manager;
-  return manager.get();
-#else // defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
   static thread_local LocalCallbackManager manager;
   return manager;
-#endif // defined(C10_PREFER_CUSTOM_THREAD_LOCAL_STORAGE)
 }
 
 LocalCallbackManager::LocalCallbackManager() {

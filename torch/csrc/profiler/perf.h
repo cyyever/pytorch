@@ -31,7 +31,7 @@ struct PerfCounter {
 };
 
 /*
- * Basic perf event handler for Android and Linux
+ * Basic perf event handler for Linux
  */
 class PerfEvent {
  public:

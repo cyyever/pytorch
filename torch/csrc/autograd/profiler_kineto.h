@@ -155,7 +155,7 @@ struct TORCH_API ProfilerResult {
  * @param end_time_us: end time in us of the event
  * @param debug_handle: debug handle to correlate this event/op with
  * model level module/source information
- * @param scope: scope of the event, e.g. LITE_INTERPRETER, RECORD_FN etc.
+ * @param scope: scope of the event, e.g. RECORD_FUNCTION etc.
  * @param event_name: name of the event, e.g. op name
  * @param backend_name: name of the backend where the event took place.
  */
@@ -180,15 +180,11 @@ TORCH_API void enableProfiler(
  * Additionally, it takes a functor that does in-place post processing of
  * events, e.g. populate stack trace or module hierarchy information lazily
  * using debug_handle.
- * Example usage is with lite interpreter that has recording scope of
- * LITE_INTERPRETER. In this case lite interpreter runtime, records debug
- * handles in RecordFunction, along with other information. Debug handles are
- * eventually passed down to KinetoEvent and recorded as part of the event.
- * The edge CPU profiler, now removed, enabled
- * profiler using post-processing callback, via
- * enableProfilerWithEventPostProcess, that takes these debug handles and
- * generates stack trace and module hierarchy information, once profiling is
- * done.
+ * A runtime can record debug handles in RecordFunction, along with other
+ * information. Debug handles are eventually passed down to KinetoEvent and
+ * recorded as part of the event. The post-processing callback takes these
+ * debug handles and generates stack trace and module hierarchy information,
+ * once profiling is done.
  */
 using post_process_t = std::function<void(
     /*debug_handle */ int64_t,

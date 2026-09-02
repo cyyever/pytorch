@@ -501,21 +501,8 @@ __host__ __device__
 #define CUDA_KERNEL_ASSERT_VERBOSE(cond, ...) CUDA_KERNEL_ASSERT(cond)
 #endif
 
-#if defined(__APPLE__)
-#include <TargetConditionals.h>
-#endif
-
-#if (                   \
-    defined(__APPLE__) && \
-    (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
-#define C10_IOS 1
-#endif
-
 #if !defined(HAS_DEMANGLE)
 #if defined(__EMSCRIPTEN__)
-#define HAS_DEMANGLE 0
-#elif defined(__APPLE__) && \
-    (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE)
 #define HAS_DEMANGLE 0
 #else
 #define HAS_DEMANGLE 1

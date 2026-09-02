@@ -56,9 +56,8 @@ class C10_API Scalar {
   AT_FORALL_FLOAT8_TYPES(DEFINE_IMPLICIT_CTOR)
 
   // Helper constructors to allow Scalar creation from long and long long types
-  // As std::is_same_v<long, long long> is false(except Android), one needs to
-  // provide a constructor from either long or long long in addition to one from
-  // int64_t
+  // As std::is_same_v<long, long long> is false, one needs to provide a
+  // constructor from either long or long long in addition to one from int64_t
 #if defined(__APPLE__) || defined(__MACOSX)
   static_assert(
       std::is_same_v<long long, int64_t>,

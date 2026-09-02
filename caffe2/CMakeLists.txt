@@ -296,7 +296,6 @@ add_custom_command(
   Python::Interpreter tools/setup_helpers/generate_code.py
     --native-functions-path "aten/src/ATen/native/native_functions.yaml"
     --tags-path "aten/src/ATen/native/tags.yaml"
-    $<$<BOOL:${SELECTED_OP_LIST}>:--selected-op-list-path="${SELECTED_OP_LIST}">
   DEPENDS
     "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
     "${TORCH_ROOT}/aten/src/ATen/native/tags.yaml"

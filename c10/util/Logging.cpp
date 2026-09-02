@@ -334,10 +334,6 @@ C10_DEFINE_bool(logtostderr, false, "Equivalent to glog logtostderr")
 #ifdef FBCODE_CAFFE2
 #endif
 
-#ifdef ANDROID
-#include <android/log.h>
-#endif // ANDROID
-
 C10_DEFINE_int(
     caffe2_log_level,
     c10::GLOG_WARNING,
@@ -418,26 +414,7 @@ MessageLogger::~MessageLogger() noexcept(false) {
     return;
   }
   stream_ << '\n';
-#ifdef ANDROID
-  static const int android_log_levels[] = {
-      ANDROID_LOG_FATAL, // LOG_FATAL
-      ANDROID_LOG_ERROR, // LOG_ERROR
-      ANDROID_LOG_WARN, // LOG_WARNING
-      ANDROID_LOG_INFO, // LOG_INFO
-      ANDROID_LOG_DEBUG, // VLOG(1)
-      ANDROID_LOG_VERBOSE, // VLOG(2) .. VLOG(N)
-  };
-  int android_level_index = GLOG_FATAL - std::min(GLOG_FATAL, severity_);
-  int level = android_log_levels[std::min(android_level_index, 5)];
-  // Output the log string the Android log at the appropriate level.
-  __android_log_print(level, tag_, "%s", stream_.str().c_str());
-  // Indicate termination if needed.
-  if (severity_ == GLOG_FATAL) {
-    __android_log_print(ANDROID_LOG_FATAL, tag_, "terminating.\n");
-  }
-#else // !ANDROID
   if (severity_ >= FLAGS_caffe2_log_level) {
-    // If not building on Android, log all output to std::cerr.
     std::cerr << stream_.str();
     // Simulating the glog default behavior: if the severity is above INFO,
     // we flush the stream so that the output appears immediately on std::cerr.
@@ -446,7 +423,6 @@ MessageLogger::~MessageLogger() noexcept(false) {
       std::cerr << std::flush;
     }
   }
-#endif // ANDROID
   if (severity_ == GLOG_FATAL) {
     DealWithFatal();
   }
