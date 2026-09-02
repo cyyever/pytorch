@@ -63,8 +63,7 @@ namespace c10 {
 // The APIs of operator = are mostly copied from C++ standard:
 //   https://en.cppreference.com/w/cpp/numeric/complex/operator%3D
 //
-// Since C++20, all operator= are constexpr. Although we are not building with
-// C++20, we also obey this behavior.
+// Since C++20, all operator= are constexpr.
 //
 // There are three types of assign operator:
 // - Assign a real value from the same scalar type
