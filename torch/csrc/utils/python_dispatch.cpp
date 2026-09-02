@@ -1460,7 +1460,7 @@ void initDispatchBindings(PyObject* module) {
         "Expected device_type string to not have a device index; got ",
         device_type);
     return c10::toString(
-        c10::computeDispatchKey(std::nullopt, std::nullopt, device));
+        c10::computeDispatchKey(std::nullopt, device));
   });
 
   m.def("_are_functorch_transforms_active", []() {
