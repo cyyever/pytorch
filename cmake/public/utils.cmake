@@ -357,8 +357,6 @@ function(torch_compile_options libname)
     -Wextra
     -Wdeprecated
     -Wunused
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -Wno-array-bounds
     -Wno-unknown-pragmas
     -Wno-strict-overflow
@@ -380,11 +378,6 @@ function(torch_compile_options libname)
       list(APPEND private_compile_options -Wno-deprecated-literal-operator)
     endif()
     list(APPEND private_compile_options -Wmove)
-  else()
-    list(APPEND private_compile_options
-      # Considered to be flaky.  See the discussion at
-      # https://github.com/pytorch/pytorch/pull/9608
-      -Wno-maybe-uninitialized)
   endif()
 
   if(WERROR)
@@ -396,9 +389,6 @@ function(torch_compile_options libname)
       -Werror=pedantic
       -Werror=unused
       -Wno-error=unused-parameter
-      # Deprecated APIs (e.g. c10::checked_convert) must warn, not break the
-      # build, so they can be retired while external/BC callers migrate.
-      -Wno-error=deprecated-declarations
     )
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       list(APPEND private_compile_options -Werror=unused-but-set-variable -Werror=cpp)
