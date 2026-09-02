@@ -179,14 +179,15 @@ set(CMAKE_C_STANDARD
 # ---[ Utils
 include(cmake/public/utils.cmake)
 
-# --- [ Check that minimal gcc version is 15+
-# libstdc++ 15 is the first with a complete C++23 library, which is the level
-# this tree's sources actually require. Older GCCs accept the -std flag but are
-# missing pieces of it, so they fail deep in the build instead of here.
-if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+# --- [ Check that minimal gcc version is 16+
+# GCC 16 is the first whose C++26 support lines up with the clang floor below:
+# structured bindings reach 202411, and std::inplace_vector, owner_equal and
+# optional's range support appear. Older GCCs accept -std=c++26 but are missing
+# pieces of it, so they fail deep in the build instead of here.
+if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16)
   message(
     FATAL_ERROR
-      "GCC-15 or newer is required to compile PyTorch, but found ${CMAKE_CXX_COMPILER_VERSION}"
+      "GCC-16 or newer is required to compile PyTorch, but found ${CMAKE_CXX_COMPILER_VERSION}"
   )
 endif()
 
