@@ -8,6 +8,8 @@
 // to have issues with it otherwise
 // - fix compiler warnings in operator templated_iterator<const value_type>
 // - make use of 'if constexpr' and eliminate AssignIfTrue template
+// - replace the hand-rolled log2/next_power_of_two and void_t with <bit> and
+// std::void_t
 
 //          Copyright Malte Skarupke 2017.
 // Distributed under the Boost Software License, Version 1.0.
@@ -17,6 +19,7 @@
 
 #include <c10/macros/Macros.h>
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -167,49 +170,23 @@ struct sherwood_v3_entry {
   };
 };
 
+// The de Bruijn table this replaced answered 63 for zero, which callers rely
+// on to pick the largest probe count for an empty table.
 inline int8_t log2(uint64_t value) {
-  // NOLINTNEXTLINE(*c-arrays*)
-  static constexpr int8_t table[64] = {
-      63, 0,  58, 1,  59, 47, 53, 2,  60, 39, 48, 27, 54, 33, 42, 3,
-      61, 51, 37, 40, 49, 18, 28, 20, 55, 30, 34, 11, 43, 14, 22, 4,
-      62, 57, 46, 52, 38, 26, 32, 41, 50, 36, 17, 19, 29, 10, 13, 21,
-      56, 45, 25, 31, 35, 16, 9,  12, 44, 24, 15, 8,  23, 7,  6,  5};
-  value |= value >> 1;
-  value |= value >> 2;
-  value |= value >> 4;
-  value |= value >> 8;
-  value |= value >> 16;
-  value |= value >> 32;
-  return table[((value - (value >> 1)) * 0x07EDD5E59A4E28C2) >> 58];
+  return value == 0 ? int8_t{63} : static_cast<int8_t>(std::bit_width(value) - 1);
 }
 
+// std::bit_ceil(0) is 1; the bit-twiddling this replaced wrapped around to 0.
 inline uint64_t next_power_of_two(uint64_t i) {
-  --i;
-  i |= i >> 1;
-  i |= i >> 2;
-  i |= i >> 4;
-  i |= i >> 8;
-  i |= i >> 16;
-  i |= i >> 32;
-  ++i;
-  return i;
+  return i == 0 ? 0 : std::bit_ceil(i);
 }
-
-// Implementation taken from http://en.cppreference.com/w/cpp/types/void_t
-// (it takes CWG1558 into account and also works for older compilers)
-template <typename... Ts>
-struct make_void {
-  typedef void type;
-};
-template <typename... Ts>
-using void_t = typename make_void<Ts...>::type;
 
 template <typename T, typename = void>
 struct HashPolicySelector {
   typedef fibonacci_hash_policy type;
 };
 template <typename T>
-struct HashPolicySelector<T, void_t<typename T::hash_policy>> {
+struct HashPolicySelector<T, std::void_t<typename T::hash_policy>> {
   typedef typename T::hash_policy type;
 };
 
