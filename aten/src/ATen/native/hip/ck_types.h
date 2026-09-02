@@ -7,10 +7,7 @@
  */
 
 // work around CK assuming only a single FP8 interpretation at a time
-#if defined(__gfx942__) && __HIP_DEVICE_COMPILE__
-#define CK_USE_FNUZ_FP8 1
-#undef CK_USE_OCP_FP8
-#elif __HIP_DEVICE_COMPILE__
+#if __HIP_DEVICE_COMPILE__
 #undef CK_USE_FNUZ_FP8
 #define CK_USE_OCP_FP8 1
 #endif

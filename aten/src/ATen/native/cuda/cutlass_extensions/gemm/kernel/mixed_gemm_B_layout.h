@@ -27,15 +27,6 @@ template<typename TypeB, typename Arch, typename Enable = void>
 struct LayoutDetailsB {
 };
 
-// Volta specialiations. Volta will dequantize before STS, so we need a different operator
-template<typename TypeB>
-struct LayoutDetailsB<TypeB, arch::Sm70> {
-    static constexpr int ThreadblockK      = 64;
-    using Layout                           = layout::RowMajor;
-    static constexpr int ElementsPerAccess = 8;
-    using Operator                         = cutlass::arch::OpMultiplyAdd;
-};
-
 // Specializations for Turing+ when B is FP16. These are currently only used for MoE networks.
 // TODO - Switch this to column major for weights since gemms should be more performant.
 template<typename Arch>

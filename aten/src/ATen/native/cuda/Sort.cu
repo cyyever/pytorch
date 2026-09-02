@@ -102,8 +102,6 @@ struct SmallBitonicSort {
   }
 };
 
-#if HAS_WARP_MERGE_SORT()
-
 // For small sorts (n <= 128) we use warpMergeSortKVInPlace which
 // sorts one slice per warp and potentially multiple slices in the
 // same block for improved occupancy with large batch sizes.
@@ -180,8 +178,6 @@ struct WarpMergeSort {
   }
 };
 
-#endif // !HAS_WARP_MERGE_SORT()
-
 // For medium sizes (128 < n <= 4096) use radixSortKVInplace.
 struct MediumRadixSort {
 
@@ -226,21 +222,13 @@ struct MediumRadixSort {
         break;
       case 128:
       case 64:
-#if !HAS_WARP_MERGE_SORT()
-        HANDLE_CASE(128, 4);
-        break;
-#endif
       case 32:
       case 16:
       case 8:
       case 4:
       case 2:
-#if HAS_WARP_MERGE_SORT()
         TORCH_INTERNAL_ASSERT(
             false, "Expected size <= 128 to be handled by a different algorithm");
-#else
-        HANDLE_CASE(32, 2);
-#endif
         break;
       case 1:
         /* Nothing to do, data already sorted */
@@ -377,7 +365,6 @@ void sortKeyValueInplace(
   } else if (!stable && sort_size <= 32) {
     // NOTE: Bitonic sort is unstable
     sortCommon(SmallBitonicSort{}, key, value, dim, descending);
-#if HAS_WARP_MERGE_SORT()
   } else if (sort_size <= 128) {
 #ifdef USE_ROCM
     if (at::cuda::warp_size() == 32) {
@@ -388,7 +375,6 @@ void sortKeyValueInplace(
     }
 #else
     sortCommon(WarpMergeSort<128, C10_WARP_SIZE>{}, key, value, dim, descending);
-#endif
 #endif
   } else {
     sortCommon(MediumRadixSort{}, key, value, dim, descending);

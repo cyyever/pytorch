@@ -776,12 +776,8 @@ struct ExpandableSegment {
             c10::make_scope_exit([&myfd]() { close(static_cast<int>(myfd)); });
         CUmemGenericAllocationHandle handle = 0;
 #ifdef USE_ROCM
-#if ROCM_VERSION >= 70100
         void* myfd_handle =
             reinterpret_cast<void*>(static_cast<uintptr_t>(myfd));
-#else
-        void* myfd_handle = (void*)(uintptr_t)&myfd;
-#endif
         C10_CUDA_CHECK(hipMemImportFromShareableHandle(
             &handle, myfd_handle, hipMemHandleTypePosixFileDescriptor));
 #else
@@ -909,7 +905,7 @@ struct ExpandableSegment {
   }
 
   void setAccess(c10::DeviceIndex device, size_t begin, size_t end) {
-#if defined(USE_ROCM) && (ROCM_VERSION >= 70200)
+#if defined(USE_ROCM)
     constexpr int num_desc = 2;
     std::array<CUmemAccessDesc, num_desc> desc{};
     desc[1].location.type = CU_MEM_LOCATION_TYPE_HOST;

@@ -131,10 +131,7 @@ bool use_tensor_cores(sdp_params const& params, cudaDeviceProp* dprops, bool is_
   if (dprops->major >= 8) {
     return true;
   }
-  if (dprops->major >= 7) {
-    return is_half;
-  }
-  return false;
+  return is_half;
 }
 int64_t minimum_gemm_alignment(sdp_params const& params) {
   auto dprops = at::cuda::getCurrentDeviceProperties();
@@ -532,8 +529,8 @@ bool check_flash_attention_hardware_support(sdp_params const& params, bool debug
 }
 
 bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) {
-  // Mem Efficient attention supports hardware in the range [sm_50, sm_90]
-  using sm50 = SMVersion<5, 0>;
+  // Mem Efficient attention supports hardware in the range [sm_75, sm_121]
+  using sm75 = SMVersion<7, 5>;
   using sm121 = SMVersion<12, 1>;
 #if USE_ROCM
 #if USE_ROCM_ATTENTION
@@ -576,10 +573,10 @@ bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) 
     return false;
   }
   auto dprops = at::cuda::getCurrentDeviceProperties();
-  if (!check_sm_version<sm50, sm121>(dprops)) {
+  if (!check_sm_version<sm75, sm121>(dprops)) {
     if (debug) {
       TORCH_WARN(
-          "Mem Efficient Attention only supports gpu architectures in the range [sm50, sm121]. Attempting to run on a sm ",
+          "Mem Efficient Attention only supports gpu architectures in the range [sm75, sm121]. Attempting to run on a sm ",
           dprops->major,
           ".",
           dprops->minor,

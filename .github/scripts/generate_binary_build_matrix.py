@@ -24,8 +24,8 @@ SCRIPT_DIR = Path(__file__).absolute().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
 
 
-CUDA_ARCHES = ["13.0", "13.2", "13.4"]
-CUDA_STABLE = "13.0"
+CUDA_ARCHES = ["13.4"]
+CUDA_STABLE = "13.4"
 
 ROCM_ARCHES = ["7.14", "10.0"]
 
@@ -35,28 +35,10 @@ CPU_AARCH64_ARCH = ["cpu-aarch64"]
 
 
 CUDA_AARCH64_ARCHES = [
-    "13.0-aarch64",
-    "13.2-aarch64",
     "13.4-aarch64",
 ]
 
 PYTORCH_EXTRA_INSTALL_REQUIREMENTS = {
-    "13.0": (
-        "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.0.3; platform_system == 'Linux' | "
-        "cuda-bindings>=13.0.3,<14; platform_system == 'Linux' and python_version < '3.15' | "
-        "nvidia-cudnn-cu13==9.25.1.1; platform_system == 'Linux' | "
-        "nvidia-cusparselt-cu13==0.8.1; platform_system == 'Linux' | "
-        "nvidia-nccl-cu13==2.30.7; platform_system == 'Linux' | "
-        "nvidia-nvshmem-cu13==3.7.2; platform_system == 'Linux'"
-    ),
-    "13.2": (
-        "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.2.1; platform_system == 'Linux' | "
-        "cuda-bindings>=13.0.3,<14; platform_system == 'Linux' and python_version < '3.15' | "
-        "nvidia-cudnn-cu13==9.25.1.1; platform_system == 'Linux' | "
-        "nvidia-cusparselt-cu13==0.8.1; platform_system == 'Linux' | "
-        "nvidia-nccl-cu13==2.30.7; platform_system == 'Linux' | "
-        "nvidia-nvshmem-cu13==3.7.2; platform_system == 'Linux'"
-    ),
     "13.4": (
         "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.4.0rc1; platform_system == 'Linux' | "
         "cuda-bindings>=13.0.3,<14; platform_system == 'Linux' and python_version < '3.15' | "
@@ -346,7 +328,7 @@ def generate_wheels_matrix(
             # cuda linux wheels require PYTORCH_EXTRA_INSTALL_REQUIREMENTS to install
 
             if (
-                arch_version in ["13.4", "13.2", "13.0"]
+                arch_version in ["13.4"]
                 and os == "linux"
                 or arch_version in CUDA_AARCH64_ARCHES
             ):

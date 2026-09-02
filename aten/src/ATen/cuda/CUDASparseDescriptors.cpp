@@ -12,19 +12,9 @@ cusparseStatus_t destroyConstDnMat(const cusparseDnMatDescr* dnMatDescr) {
 
 namespace {
 
-// If a specific GPU model does not provide native support for a given data
-// type, cuSparse routines return CUSPARSE_STATUS_ARCH_MISMATCH error
-void check_supported_cuda_type(cudaDataType cuda_type) {
-  if (cuda_type == CUDA_R_16F) {
-    cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-    TORCH_CHECK(
-        prop->major >= 5 && ((10 * prop->major + prop->minor) >= 53),
-        "Sparse operations with CUDA tensors of Float16 type are not supported on GPUs with compute capability < 5.3 (current: ",
-        prop->major,
-        ".",
-        prop->minor,
-        ")");
-  }
+// cuSparse returns CUSPARSE_STATUS_ARCH_MISMATCH rather than a useful message
+// when the device lacks native support for the value type.
+void check_supported_cuda_type([[maybe_unused]] cudaDataType cuda_type) {
 #if !defined(USE_ROCM)
   if (cuda_type == CUDA_R_16BF) {
     cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();

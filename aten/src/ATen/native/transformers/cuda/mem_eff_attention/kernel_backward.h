@@ -169,7 +169,7 @@ struct AtomicLock {
       int thread_id) {
     if (thread_id == 0) {
       while (atomicCAS(lock, 0 /*cmp*/, set_val /*setval*/) != set_val) {
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 700
+#if defined(__CUDA_ARCH__) && !defined(USE_ROCM)
         __nanosleep(40);
 #endif
       }
@@ -179,13 +179,9 @@ struct AtomicLock {
   CUTLASS_DEVICE static void release(int32_t* lock, int thread_id) {
     if (thread_id == 0) {
       int status = 0;
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 700
       asm volatile("st.global.release.gpu.b32 [%0], %1;\n"
                    :
                    : "l"(lock), "r"(status));
-#else
-      asm volatile("st.global.cg.b32 [%0], %1;\n" : : "l"(lock), "r"(status));
-#endif
     }
   }
 };

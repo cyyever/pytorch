@@ -2,17 +2,9 @@
 
 #include <ATen/cuda/CUDAContext.h>
 
-#if (defined(CUDART_VERSION) && defined(CUSOLVER_VERSION) && CUSOLVER_VERSION >= 11000) || \
-    (defined(USE_ROCM) && ROCM_VERSION >= 71400)
-// cuSOLVER version >= 11000 / ROCm >= 7.14 includes 64-bit API
 #define USE_CUSOLVER_64_BIT
-#endif
 
-#if (defined(CUDART_VERSION) && defined(CUSOLVER_VERSION) && CUSOLVER_VERSION >= 11701) || \
-    (defined(USE_ROCM) && ROCM_VERSION >= 71400)
-// cuSOLVER version >= 11701 / ROCm >= 7.14 includes 64-bit API for batched syev
 #define USE_CUSOLVER_64_BIT_XSYEV_BATCHED
-#endif
 
 namespace at {
 namespace cuda {
@@ -653,7 +645,6 @@ void xsyevd<c10::complex<double>, double>(
 
 // cuSOLVER Xgeev (non-Hermitian eigen decomposition, CUDA >= 12.8)
 // hipSOLVER Xgeev (non-Hermitian eigen decomposition, ROCm >= 7.14)
-#if (defined(CUSOLVER_VERSION) && (CUSOLVER_VERSION >= 11702)) || (defined(USE_ROCM) && ROCM_VERSION >= 71400)
 
 #define CUDASOLVER_XGEEV_BUFFERSIZE_ARGTYPES(scalar_t)                        \
 cusolverDnHandle_t handle, cusolverDnParams_t params,                         \
@@ -708,7 +699,6 @@ void xgeev<c10::complex<float>>(CUDASOLVER_XGEEV_ARGTYPES(c10::complex<float>));
 template <>
 void xgeev<c10::complex<double>>(CUDASOLVER_XGEEV_ARGTYPES(c10::complex<double>));
 
-#endif // (defined(CUSOLVER_VERSION) && (CUSOLVER_VERSION >= 11702)) || (defined(USE_ROCM) && ROCM_VERSION >= 71400)
 
 #ifdef USE_CUSOLVER_64_BIT_XSYEV_BATCHED
 

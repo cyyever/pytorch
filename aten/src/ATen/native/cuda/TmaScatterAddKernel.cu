@@ -12,8 +12,7 @@
 
 namespace at::native {
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12080 && \
-    defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 900
+#if !defined(USE_ROCM) && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 900
 
 namespace tma {
 
@@ -112,8 +111,7 @@ __global__ void tma_scatter_add_kernel(
     int num_ind, int D, int64_t self_dim_size,
     int64_t self_stride, int64_t src_stride,
     int entries_per_block, int chunk_elems) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12080 && \
-    defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 900
+#if !defined(USE_ROCM) && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 900
 
     extern __shared__ char smem_raw[];
 
@@ -195,7 +193,7 @@ void tma_scatter_add_kernel_launch(
     scalar_t* self_data, const scalar_t* src_data, index_t* idx, int num_ind,
     int D, int64_t self_dim_size,
     int64_t self_stride_bytes, int64_t src_stride_bytes) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12080
+#if !defined(USE_ROCM)
     constexpr int max_threads = 256;
     // One warp per entry: lane 0 issues TMA commands, __syncwarp() synchronizes.
     constexpr int threads_per_entry = C10_WARP_SIZE;

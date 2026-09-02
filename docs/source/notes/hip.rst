@@ -77,7 +77,7 @@ which version of PyTorch you are using, refer to this example below::
 TensorFloat-32(TF32) on ROCm
 ----------------------------
 
-TF32 is supported on AMD Instinct MI300 (gfx942, CDNA3) via hipBLASLt. The
+TF32 is supported on AMD Instinct GPUs via hipBLASLt. The
 same ``torch.backends.cuda.matmul.fp32_precision`` and
 ``torch.backends.cuda.matmul.allow_tf32`` controls used on NVIDIA hardware
 also apply on ROCm, except that the ``"bfx9"`` precision mode is NVIDIA-only
@@ -127,7 +127,7 @@ avoid repeatedly allocating workspaces, these workspaces are not deallocated unl
 HIP. The workspace size per allocation can be specified via the environment variable
 ``HIPBLAS_WORKSPACE_CONFIG`` with the format ``:[SIZE]:[COUNT]``.  As an example, the environment
 variable ``HIPBLAS_WORKSPACE_CONFIG=:4096:2:16:8`` specifies a total size of ``2 * 4096 + 8 * 16
-KiB`` or 8 MIB. The default workspace size is 32 MiB; MI300 and newer defaults to 128 MiB. To force
+KiB`` or 8 MIB. The default workspace size is 32 MiB; MI350 and newer defaults to 128 MiB. To force
 hipBLAS to avoid using workspaces, set ``HIPBLAS_WORKSPACE_CONFIG=:0:0``. For convenience,
 ``CUBLAS_WORKSPACE_CONFIG`` is also accepted.
 
@@ -170,7 +170,7 @@ Alternatively, if it is desired to take the code path for ROCm/HIP:
 
 Or if it is desired to take the code path for ROCm/HIP only for specific HIP versions:
 
-``#if (defined(CUDA_VERSION) && CUDA_VERSION >= 11000) || (defined(USE_ROCM) && ROCM_VERSION >= 40300)``
+``#if (defined(CUDA_VERSION) && CUDA_VERSION >= 11000) || (defined(USE_ROCM) && ROCM_VERSION >= 71400)``
 
 
 Refer to CUDA Semantics doc

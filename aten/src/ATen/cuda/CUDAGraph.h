@@ -13,12 +13,11 @@
 #include <stack>
 #include <vector>
 
-#if defined(USE_ROCM) || !(defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
-// this type is not defined until CUDA 12.4, but we use it as a
-// parameter type and return type in some below functions, so we give
-// it the same definition as in CUDA 12.4.
+#if defined(USE_ROCM)
+// ROCm/HIP does not define this type, but it appears as a parameter and
+// return type below, so give it the same definition CUDA uses.
 typedef unsigned long long cudaGraphConditionalHandle;
-#endif // defined(USE_ROCM) || !(defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
+#endif // defined(USE_ROCM)
 
 namespace at {
 
@@ -113,11 +112,11 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
   std::function<bool(cudaStream_t)> create_child_allocate_filter();
   void record_retained_pool(MempoolId_t pool);
   bool has_retained_pool(MempoolId_t pool) const;
-#if !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
+#if !defined(USE_ROCM)
   void begin_capture_to_conditional_node(
       const Tensor& scalar_cuda_pred_tensor,
       cudaGraphConditionalNodeType conditional_type);
-#endif // !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12040
+#endif // !defined(USE_ROCM)
 
  protected:
   cudaGraph_t graph_ = nullptr;
@@ -184,7 +183,7 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
   bool keep_graph_;
   cudaStreamCaptureMode capture_mode_{};
 
-#if !defined(USE_ROCM) && (defined(CUDA_VERSION) && CUDA_VERSION >= 12040)
+#if !defined(USE_ROCM)
   struct OwnedCUDAStream {
     cudaStream_t stream = nullptr;
     OwnedCUDAStream() = default;
@@ -209,7 +208,7 @@ struct TORCH_CUDA_CPP_API CUDAGraph {
   std::stack<CaptureId_t> conditional_graph_capture_ids_;
   std::stack<OwnedCUDAStream> conditional_node_raw_streams_;
   std::stack<cudaGraphConditionalHandle> conditional_node_handles_;
-#endif // !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12040
+#endif // !defined(USE_ROCM)
 };
 
 template <>

@@ -336,17 +336,9 @@ class _CompatSet:
 #   are merely rules based on sm compatibility guarantees for NVIDIA
 #   devices while accounting for incompatibility of iGPU and dGPU.
 DEVICE_REQUIREMENT: dict[int, _CompatSet | _CompatInterval] = {
-    50: _CompatInterval(start=50, exclude={53}),
-    52: _CompatInterval(start=52, exclude={53}),
-    53: _CompatSet({53}),
-    60: _CompatInterval(start=60, exclude={62}),
-    61: _CompatInterval(start=61, exclude={62}),
-    62: _CompatSet({62}),
-    70: _CompatInterval(start=70, exclude={72}),
-    72: _CompatSet({72}),
     75: _CompatInterval(start=75),
-    80: _CompatInterval(start=80, exclude={87}),
-    86: _CompatInterval(start=86, exclude={87}),
+    80: _CompatInterval(start=80),
+    86: _CompatInterval(start=86),
     87: _CompatSet({87}),
     89: _CompatInterval(start=89),
     90: _CompatInterval(start=90),
@@ -358,33 +350,10 @@ DEVICE_REQUIREMENT: dict[int, _CompatSet | _CompatInterval] = {
     121: _CompatInterval(start=121),
 }
 
-# CUDA 13.2 allows SBSA binaries to run on Jetson devices.
-# This dict can be combined with DEVICE_REQUIREMENT once
-# the minimum supported CUDA version is 13.2.
-DEVICE_REQUIREMENT_POST_JETSON_SBSA_UNIFICATION: dict[
-    int, _CompatSet | _CompatInterval
-] = DEVICE_REQUIREMENT | {
-    70: _CompatInterval(start=70),
-    80: _CompatInterval(start=80),
-    86: _CompatInterval(start=86),
-}
-
 # TORCH_CUDA_ARCH_LIST for PyTorch releases, keyed by host arch.
 # Kept in sync with .ci/manywheel/build_cuda.sh by the validator in
 # .github/scripts/generate_binary_build_matrix.py.
 PYTORCH_RELEASES_CODE_CC: dict[str, dict[str, set[int]]] = {
-    "12.6": {
-        "x86_64": {50, 60, 70, 75, 80, 86, 90},
-        "aarch64": {80, 90},
-    },
-    "13.0": {
-        "x86_64": {75, 80, 86, 90, 100, 120},
-        "aarch64": {80, 90, 100, 110, 120},
-    },
-    "13.2": {
-        "x86_64": {75, 80, 86, 90, 100, 120},
-        "aarch64": {80, 90, 100, 110, 120},
-    },
     "13.4": {
         "x86_64": {75, 80, 86, 90, 100, 120},
         "aarch64": {80, 90, 100, 110, 120},
@@ -395,12 +364,7 @@ PYTORCH_RELEASES_CODE_CC: dict[str, dict[str, set[int]]] = {
 def _device_requirement(code_cc):
     if torch.version.cuda is None:
         return None
-    requirement = (
-        DEVICE_REQUIREMENT_POST_JETSON_SBSA_UNIFICATION
-        if tuple(int(x) for x in torch.version.cuda.split(".")) >= (13, 2)
-        else DEVICE_REQUIREMENT
-    )
-    return requirement.get(code_cc, None)
+    return DEVICE_REQUIREMENT.get(code_cc)
 
 
 def _host_arch_key() -> str:

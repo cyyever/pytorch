@@ -34,16 +34,16 @@ from torch.testing._internal.common_optimizers import (
     optim_db, optims, _get_optim_inputs_including_global_cliquey_kwargs)
 
 from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
-    MI200_ARCH, TEST_WITH_TORCHINDUCTOR, TEST_WITH_ROCM, run_tests, IS_JETSON,
+    TEST_WITH_TORCHINDUCTOR, TEST_WITH_ROCM, run_tests, IS_JETSON,
     IS_FILESYSTEM_UTF8_ENCODING,
-    IS_SANDCASTLE, IS_FBCODE, IS_REMOTE_GPU, skipIfRocmArch, skipIfTorchInductor, load_tests, slowTest, slowTestIf,
+    IS_SANDCASTLE, IS_FBCODE, IS_REMOTE_GPU, skipIfTorchInductor, load_tests, slowTest, slowTestIf,
     skipIfCrossRef, TEST_WITH_CROSSREF, skipIfTorchDynamo, set_default_dtype,
     skipCUDAMemoryLeakCheckIf, BytesIOContext,
     skipIfRocm, skipIfNoSciPy, TemporaryFileName, TemporaryDirectoryName,
     wrapDeterministicFlagAPITest, DeterministicGuard, CudaSyncGuard,
     bytes_to_scalar, parametrize, noncontiguous_like,
     TEST_WITH_TORCHDYNAMO, xfailIfTorchDynamo,
-    set_warn_always_context, decorateIf, isRocmArchAnyOf,
+    set_warn_always_context,
     IS_MACOS,
 )
 from multiprocessing.reduction import ForkingPickler
@@ -194,12 +194,10 @@ class TestTorchDeviceType(TestCase):
         self.assertTrue(any("elementwise_kernel" in name for name in names), names)
 
     # For testing in64 support in upsample_nearest3d
-    @skipIfRocmArch(MI200_ARCH)
     @onlyCUDA
     @largeTensorTest('56GB', device='cuda')
     @dtypes(torch.bfloat16)
     @unittest.skipIf(IS_JETSON, "Large tensor tests are too large for Jetson.")
-    @decorateIf(unittest.expectedFailure, lambda params: isRocmArchAnyOf(MI200_ARCH))
     def test_int64_upsample3d(self, device, dtype):
         x = torch.ones((1, 256, 16, 720, 1280), dtype=dtype, device=device)
         try:

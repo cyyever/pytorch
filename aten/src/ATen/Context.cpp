@@ -608,8 +608,6 @@ bool Context::ckGemmSupported() {
 #ifdef USE_ROCM
   // CK GEMM support is broader than CK SDPA.
   static const std::vector<std::string> supported_archs = {
-      "gfx90a",
-      "gfx942",
       "gfx950",
   };
   for (auto index : c10::irange(detail::getCUDAHooks().deviceCount())) {

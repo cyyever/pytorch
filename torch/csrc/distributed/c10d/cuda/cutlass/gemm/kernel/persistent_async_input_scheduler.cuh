@@ -42,7 +42,7 @@ __device__ __forceinline__ void wait_signal(uint32_t* addr) {
                  : "=r"(ready)
                  : "l"(addr)
                  : "memory");
-#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ > 700)
+#if defined(__CUDA_ARCH__)
     asm volatile("nanosleep.u32 20;");
 #endif
   };

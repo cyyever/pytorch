@@ -25,7 +25,7 @@ static constexpr int64_t kBlockSize = 512;
 // still limited to 4KB. We adopt naive values for 32KB from
 // https://github.com/pytorch/pytorch/pull/134373.
 // TODO: The values for 32KB can very much be optimized further.
-#if defined(CUDART_VERSION) && CUDART_VERSION >= 13000 && !defined(USE_ROCM)
+#if !defined(USE_ROCM)
 
 static constexpr int32_t depth_to_max_tensors[5] = {770, 448, 336, 252, 210};
 static constexpr int32_t depth_to_max_blocks[5] =

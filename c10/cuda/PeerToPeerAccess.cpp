@@ -74,8 +74,7 @@ bool get_p2p_access(c10::DeviceIndex dev, c10::DeviceIndex dev_to_access) {
 }
 
 namespace {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12040 && \
-    defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
 
 nvmlDevice_t get_nvml_device(c10::DeviceIndex dev) {
   static bool nvml_init [[maybe_unused]] = []() {
@@ -161,8 +160,7 @@ bool isFabricSupported() {
 } // namespace
 
 bool get_fabric_access(c10::DeviceIndex dev) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12040 && \
-    defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
   TORCH_CHECK(
       num_devices_ >= 0,
       "p2p access cache not initialized. "
@@ -218,8 +216,7 @@ bool get_fabric_access(c10::DeviceIndex dev) {
 }
 
 int get_fabric_clique_id(c10::DeviceIndex dev) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12040 && \
-    defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
   // Ensure cache is populated via get_fabric_access (which does the NVML query
   // and stashes clique_id as a side effect).
   get_fabric_access(dev);
@@ -231,8 +228,7 @@ int get_fabric_clique_id(c10::DeviceIndex dev) {
 }
 
 std::string get_nvml_fabric_info([[maybe_unused]] c10::DeviceIndex dev) {
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12040 && \
-    defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
+#if !defined(USE_ROCM) && defined(PYTORCH_C10_DRIVER_API_SUPPORTED)
   if (DriverAPI::get()->nvmlDeviceGetGpuFabricInfoV_ == nullptr) {
     return "fabric info unsupported (nvmlDeviceGetGpuFabricInfoV not available)";
   }

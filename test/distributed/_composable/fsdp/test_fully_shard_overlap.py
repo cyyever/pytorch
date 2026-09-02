@@ -18,7 +18,6 @@ from torch.distributed.tensor import init_device_mesh, Shard
 from torch.distributed.tensor.experimental import implicit_replication
 from torch.testing._internal.common_distributed import (
     skip_if_lt_x_gpu,
-    skip_if_rocm_arch_multiprocess,
 )
 from torch.testing._internal.common_fsdp import (
     FSDPTest,
@@ -29,7 +28,6 @@ from torch.testing._internal.common_fsdp import (
 from torch.testing._internal.common_utils import (
     get_cycles_per_ms,
     IS_LINUX,
-    MI200_ARCH,
     run_tests,
 )
 from torch.testing._internal.distributed._tensor.common_dtensor import (
@@ -73,7 +71,6 @@ class TestFullyShardOverlap(FSDPTest):
     def world_size(self) -> int:
         return min(2, torch.get_device_module(device_type).device_count())
 
-    @skip_if_rocm_arch_multiprocess(MI200_ARCH)
     @skip_if_lt_x_gpu(2)
     @unittest.skipIf(
         not hasattr(torch.get_device_module(device_type), "_sleep"),
@@ -192,7 +189,6 @@ class TestFullyShardOverlap(FSDPTest):
         # )
         self.assertLessEqual(fwd_bwd_time, ref_fwd_bwd_time)
 
-    @skip_if_rocm_arch_multiprocess(MI200_ARCH)
     @skip_if_lt_x_gpu(2)
     def test_fully_shard_backward_comm_overlap(self):
         """Exercise backward with reduce-scatter sharing the shard process
@@ -485,7 +481,6 @@ class TestFullyShardPerParamMeshOverlap(FSDPTest):
             dist.barrier()
             _pg_mod.foreach_reduce = orig
 
-    @skip_if_rocm_arch_multiprocess(MI200_ARCH)
     @skip_if_lt_x_gpu(4)
     @unittest.skipIf(
         not hasattr(torch.get_device_module(device_type), "_sleep"),
@@ -494,7 +489,6 @@ class TestFullyShardPerParamMeshOverlap(FSDPTest):
     def test_fully_shard_per_param_mesh_training_overlap(self):
         self._test_per_param_mesh_overlap(simulate_no_grad_input=False)
 
-    @skip_if_rocm_arch_multiprocess(MI200_ARCH)
     @skip_if_lt_x_gpu(4)
     @unittest.skipIf(
         not hasattr(torch.get_device_module(device_type), "_sleep"),

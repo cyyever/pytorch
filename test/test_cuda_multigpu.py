@@ -1397,7 +1397,7 @@ class TestCudaComm(TestCase):
             self.assertEqual(t._version, old_version + 1)
 
     @unittest.skipIf(not TEST_MULTIGPU, "only one GPU detected")
-    # Note: fails sometimes on the CI, passes on dual gfx906
+    # Note: fails sometimes on the CI, passes on dual-GPU ROCm
     def test_broadcast_coalesced(self):
         numel = 5
         num_bytes = numel * 8

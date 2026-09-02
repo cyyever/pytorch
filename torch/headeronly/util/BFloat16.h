@@ -12,7 +12,7 @@
 #include <ostream>
 #include <type_traits>
 
-#if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
+#if defined(__CUDACC__)
 #include <cuda_bf16.h>
 #endif
 
@@ -46,7 +46,7 @@ struct alignas(2) BFloat16 {
   /* implicit */ constexpr C10_HOST_DEVICE BFloat16(float value);
   constexpr C10_HOST_DEVICE operator float() const;
 
-#if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
+#if defined(__CUDACC__)
   inline C10_HOST_DEVICE BFloat16(const __nv_bfloat16& value);
   explicit inline C10_HOST_DEVICE operator __nv_bfloat16() const;
 #endif
@@ -98,7 +98,7 @@ namespace detail {
 C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 #if defined(__CUDACC__) &&                                                   \
     (!defined(USE_ROCM) && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 800 || \
-     defined(USE_ROCM) && (TORCH_HIP_VERSION >= 702))
+     defined(USE_ROCM))
   if (!std::is_constant_evaluated()) {
     return __bfloat16_as_ushort(__float2bfloat16(value));
   }
@@ -112,7 +112,7 @@ C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 }
 
 C10_HOST_DEVICE constexpr float bfloat16_bits_to_float(uint16_t x) {
-#if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
+#if defined(__CUDACC__)
   if (!std::is_constant_evaluated()) {
     return __bfloat162float(*reinterpret_cast<const __nv_bfloat16*>(&x));
   }
@@ -136,7 +136,7 @@ constexpr C10_HOST_DEVICE BFloat16::operator float() const {
   return detail::bfloat16_bits_to_float(x);
 }
 
-#if defined(__CUDACC__) && (!defined(USE_ROCM) || (TORCH_HIP_VERSION >= 702))
+#if defined(__CUDACC__)
 inline C10_HOST_DEVICE BFloat16::BFloat16(const __nv_bfloat16& value)
     : x(*reinterpret_cast<const unsigned short*>(&value)) {}
 inline C10_HOST_DEVICE BFloat16::operator __nv_bfloat16() const {

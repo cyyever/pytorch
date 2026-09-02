@@ -73,7 +73,6 @@ from torch.testing._internal.common_utils import (
     freeze_rng_state,
     gcIfJetson,
     get_cycles_per_ms,
-    getRocmVersion,
     instantiate_parametrized_tests,
     IS_ARM64,
     IS_FBCODE,
@@ -83,7 +82,6 @@ from torch.testing._internal.common_utils import (
     IS_WINDOWS,
     IS_X86,
     load_tests,
-    MI200_ARCH,
     MI350_ARCH,
     parametrize,
     recover_orig_fp32_precision,
@@ -646,10 +644,10 @@ print(t.is_pinned())
         IS_JETSON, "oom reporting has issues on jetson igx due to partial nvml support"
     )
     def test_out_of_memory(self):
-        if TEST_WITH_ROCM and getRocmVersion() >= (7, 14) and EXPANDABLE_SEGMENTS:
+        if TEST_WITH_ROCM and EXPANDABLE_SEGMENTS:
             self.skipTest(
                 "TestCuda.test_out_of_memory: OOM tensor flag is False on ROCm "
-                "expandable segments (7.14+)"
+                "expandable segments"
             )
         tensor = torch.zeros(1024, device="cuda")
 
@@ -753,7 +751,7 @@ print("RECOVERED")
         IS_JETSON, "oom reporting has issues on jetson igx due to partial nvml support"
     )
     def test_set_per_process_memory_fraction(self):
-        if TEST_WITH_ROCM and getRocmVersion() >= (7, 14) and EXPANDABLE_SEGMENTS:
+        if TEST_WITH_ROCM and EXPANDABLE_SEGMENTS:
             self.skipTest(
                 "ROCm 7.14+ expandable segments reports OOM below the expected "
                 "per-process memory fraction limit"
@@ -927,15 +925,17 @@ print("RECOVERED")
             else:
                 # ROCm logic is less so, it's cublaslt for some Instinct, cublas for all else
                 # Mirror CUDAHooks::getHipblasltPreferredArchs in CUDAHooks.cpp
-                archs = ["gfx90a", "gfx942"]
-                if ROCM_VERSION >= (6, 4):
-                    archs.extend(["gfx1200", "gfx1201"])
-                if ROCM_VERSION >= (7, 0):
-                    archs.append("gfx950")
-                if ROCM_VERSION >= (7, 13):
-                    archs.extend(["gfx1100", "gfx1101", "gfx1151"])
-                if ROCM_VERSION >= (7, 14):
-                    archs.append("gfx1250")
+                archs = [
+                    "gfx90a",
+                    "gfx942",
+                    "gfx1200",
+                    "gfx1201",
+                    "gfx950",
+                    "gfx1100",
+                    "gfx1101",
+                    "gfx1151",
+                    "gfx1250",
+                ]
                 # blasDefaultBackend() only prefers hipblaslt when every visible
                 # device matches, so device 0 alone is not enough.
                 gcn_arch_names = [
@@ -1032,7 +1032,7 @@ print("RECOVERED")
             gcn_arch = str(
                 torch.cuda.get_device_properties(0).gcnArchName.split(":", 1)[0]
             )
-            if gcn_arch in ["gfx942", "gfx950", "gfx1250"]:
+            if gcn_arch in ["gfx950", "gfx1250"]:
                 default_workspace_size = 1024 * 128 * 1024  # :1024:128
         else:
             default_workspace_size = (
@@ -9193,7 +9193,6 @@ class TestMemPool(TestCase):
             torch.cuda.empty_cache()
 
     @unittest.skipIf(IS_LINUX, "https://github.com/pytorch/pytorch/issues/176145")
-    @skipIfRocmArch(MI200_ARCH)
     @serialTest()
     def test_deleted_mempool_not_used_on_oom(self):
         """
@@ -10055,7 +10054,7 @@ class TestMemPool(TestCase):
           1. Default pool -- OOM recovery releases cached blocks, succeeds.
           2. use_mem_pool -- same recovery should work (the fix).
         """
-        if TEST_WITH_ROCM and getRocmVersion() >= (7, 14) and EXPANDABLE_SEGMENTS:
+        if TEST_WITH_ROCM and EXPANDABLE_SEGMENTS:
             self.skipTest(
                 "ROCm 7.14+ expandable segments OOMs before mempool cached "
                 "blocks can be recovered"

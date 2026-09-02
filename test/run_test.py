@@ -29,7 +29,6 @@ from torch.testing._internal.common_utils import (
     IS_CI,
     IS_MACOS,
     IS_WINDOWS,
-    isRocmArchAnyOf,
     retry_shell,
     set_cwd,
     shell,
@@ -190,15 +189,6 @@ ROCM_BLOCKLIST = [
     "distributed/pipelining/test_dtensor_pp_integration",
     "inductor/test_cpu_repro",  # excessive runtimes compared to CUDA
 ]
-
-# Add architecture-specific blocklist entries
-if TEST_WITH_ROCM and isRocmArchAnyOf(("gfx1100",)):
-    # Some autotune tests on gfx1100 are hanging, disable for now
-    ROCM_BLOCKLIST.append("inductor/test_max_autotune")
-    # ROCm 7.2 gfx1100 started timing out due to these
-    ROCM_BLOCKLIST.append("inductor/test_torchinductor_dynamic_shapes")
-    ROCM_BLOCKLIST.append("inductor/test_torchinductor_opinfo")
-    ROCM_BLOCKLIST.append("inductor/test_ck_backend")
 
 XPU_BLOCKLIST = [
     "test_autograd",

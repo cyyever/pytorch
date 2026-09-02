@@ -10,7 +10,7 @@
 
 namespace at::native {
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#if !defined(USE_ROCM)
 struct cublasGroupedArgs {
   cublasGroupedArgs(
       const Tensor& mat1,
@@ -48,6 +48,6 @@ struct cublasGroupedArgs {
   float* alphaScalar;
   float* betaScalar;
 };
-#endif // !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 13030
+#endif // !defined(USE_ROCM)
 
 } // namespace at::native

@@ -218,7 +218,7 @@ inline __device__ void gpuAtomicAdd(int64_t* address, int64_t val) {
 }
 
 inline __device__ at::Half gpuAtomicAdd(at::Half* address, at::Half val) {
-#if defined(USE_ROCM) || ((defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 700)))
+#if defined(USE_ROCM)
   return AtomicFPOp<at::Half>()(
       address, val, [](at::Half hsum, at::Half val) { return hsum + val; });
 #else
@@ -241,24 +241,6 @@ inline __device__ at::BFloat16 gpuAtomicAdd(
   return *reinterpret_cast<c10::BFloat16*>(&r);
 #endif
 }
-
-#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 600)
-// from CUDA C Programming Guide
-inline __device__ double atomicAdd(double* address, double val)
-#if defined(__clang__) && defined(__CUDA__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wgcc-compat"
-    __attribute__((enable_if(true, "")))
-#pragma GCC diagnostic pop
-#endif
-{
-
-  return AtomicFPOp<double>()(
-      address, val, [](double val, unsigned long long int assumed) {
-        return __double_as_longlong(val + __longlong_as_double(assumed));
-      });
-}
-#endif
 
 inline __device__ double gpuAtomicAdd(double* address, double val) {
   return atomicAdd(address, val);
@@ -314,10 +296,8 @@ inline __device__ void atomicAdd(bool* address, bool val) {
 
 /* Note [explicitly non-returning atomics]
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * AMD's MI100 (gfx908) provides an optimized fp32 atomicAdd, exposed via
- * atomicAddNoRet(). Due to compiler limitations, callers must opt-in to
- * guarantee the optimized instruction. This non-returning atomicAddNoRet cannot
- * be used to implement the returning atomicAdd, therefore we need a new API
+ * unsafeAtomicAdd() is a non-returning fp32/fp64 atomic add that cannot be used
+ * to implement the returning atomicAdd, therefore we need a new API
  * 'gpuAtomicAddNoReturn'.
  */
 template <typename T>
@@ -366,8 +346,6 @@ inline __device__ void gpuAtomicAddNoReturn(
  */
 #if defined(USE_ROCM)
 inline __device__ void gpuAtomicAddNoReturn(float* address, float val) {
-  if (__builtin_amdgcn_processor_is("gfx908"))
-    return atomicAddNoRet(address, val);
   (void)unsafeAtomicAdd(address, val);
 }
 inline __device__ void gpuAtomicAddNoReturn(double* address, double val) {
