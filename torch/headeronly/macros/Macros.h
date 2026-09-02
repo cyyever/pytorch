@@ -49,43 +49,17 @@
 
 // Detect address sanitizer as some stuff doesn't work with it
 #undef C10_ASAN_ENABLED
-
-// for clang
-#if defined(__has_feature)
-#if ((__has_feature(address_sanitizer)))
+#if __has_feature(address_sanitizer)
 #define C10_ASAN_ENABLED 1
-#endif
-#endif
-
-// for gcc
-#if defined(__SANITIZE_ADDRESS__)
-#if __SANITIZE_ADDRESS__
-#if !defined(C10_ASAN_ENABLED)
-#define C10_ASAN_ENABLED 1
-#endif
-#endif
-#endif
-
-#if !defined(C10_ASAN_ENABLED)
+#else
 #define C10_ASAN_ENABLED 0
 #endif
 
 // Detect undefined-behavior sanitizer (UBSAN)
 #undef C10_UBSAN_ENABLED
-
-// for clang or gcc >= 14
-// NB: gcc 14 adds support for Clang's __has_feature
-//   https://gcc.gnu.org/gcc-14/changes.html
-//   gcc < 14 doesn't have a macro for UBSAN
-//   (e.g. __SANITIZE_UNDEFINED__ does not exist in gcc)
-//   https://github.com/google/sanitizers/issues/765
-#if defined(__has_feature)
-#if ((__has_feature(undefined_behavior_sanitizer)))
+#if __has_feature(undefined_behavior_sanitizer)
 #define C10_UBSAN_ENABLED 1
-#endif
-#endif
-
-#if !defined(C10_UBSAN_ENABLED)
+#else
 #define C10_UBSAN_ENABLED 0
 #endif
 
