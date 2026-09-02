@@ -490,7 +490,7 @@ void initJITBindings(PyObject* module) {
                 c10::make_intrusive<at::TensorImpl, at::UndefinedTensorImpl>(
                     std::move(storage),
                     at::DispatchKeySet(),
-                    at::CPU(scalar_type).typeMeta());
+                    c10::scalarTypeToTypeMeta(scalar_type));
             return at::Tensor(std::move(ptr));
           })
       .def("serialization_id", &PyTorchStreamReader::serializationId)
@@ -542,7 +542,7 @@ void initJITBindings(PyObject* module) {
                 c10::make_intrusive<at::TensorImpl, at::UndefinedTensorImpl>(
                     std::move(storage),
                     at::DispatchKeySet(),
-                    at::CPU(scalar_type).typeMeta());
+                    c10::scalarTypeToTypeMeta(scalar_type));
 
             return at::Tensor(std::move(ptr));
           })

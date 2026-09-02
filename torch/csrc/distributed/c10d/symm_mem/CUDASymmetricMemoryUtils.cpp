@@ -148,7 +148,8 @@ IpcChannel::IpcChannel()
   TORCH_CHECK(
       socket_ != -1, "Failed to create socket: ", c10::utils::str_error(errno));
 
-  struct sockaddr_un addr = {.sun_family = AF_UNIX};
+  struct sockaddr_un addr = {};
+  addr.sun_family = AF_UNIX;
   // NOLINTNEXTLINE(modernize-use-ranges)
   std::copy(socket_name_.begin(), socket_name_.end(), addr.sun_path);
 
@@ -168,7 +169,8 @@ void IpcChannel::send_fd(int dst_pid, int fd) {
   // pass them via normal socket payloads (like write() or send()).  Unix domain
   // sockets provide a mechanism to pass actual FDs via sendmsg()/recvmsg().
   // Define destination socket address
-  struct sockaddr_un addr = {.sun_family = AF_UNIX};
+  struct sockaddr_un addr = {};
+  addr.sun_family = AF_UNIX;
   auto socket_name = get_socket_name(dst_pid);
   // NOLINTNEXTLINE(modernize-use-ranges)
   std::copy(socket_name.begin(), socket_name.end(), addr.sun_path);
@@ -193,7 +195,8 @@ void IpcChannel::send_fd(int dst_pid, int fd) {
       .msg_iov = &io,
       .msg_iovlen = 1,
       .msg_control = cbuf,
-      .msg_controllen = sizeof(cbuf)};
+      .msg_controllen = sizeof(cbuf),
+      .msg_flags = 0};
 
   // This points to the first control message header
   // With SCM_RIGHTS we let the kernel know that we are passing file
@@ -235,7 +238,8 @@ int IpcChannel::recv_fd() {
 
   // Define socket address to receive on: family AF_UNIX means unix domain
   // socket
-  struct sockaddr_un addr = {.sun_family = AF_UNIX};
+  struct sockaddr_un addr = {};
+  addr.sun_family = AF_UNIX;
   // NOLINTNEXTLINE(modernize-use-ranges)
   std::copy(socket_name_.begin(), socket_name_.end(), addr.sun_path);
 
@@ -246,7 +250,8 @@ int IpcChannel::recv_fd() {
       .msg_iov = &io,
       .msg_iovlen = 1,
       .msg_control = cbuf,
-      .msg_controllen = sizeof(cbuf)};
+      .msg_controllen = sizeof(cbuf),
+      .msg_flags = 0};
 
   // Receive message on socket_
   TORCH_CHECK(

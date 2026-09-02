@@ -239,7 +239,7 @@ ${all_getter_definitions}
 static struct PyGetSetDef ${op}_properties[] = {
   THP_FUNCTION_DEFAULT_PROPERTIES,
   ${all_getsetdef_structs}
-  {nullptr} /* sentinel */
+  {} /* sentinel */
 };
 
 """

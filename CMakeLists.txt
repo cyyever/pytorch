@@ -314,7 +314,8 @@ if(NOT LINUX)
       OFF
       CACHE STRING "Use distributed")
   # On macOS, if USE_DISTRIBUTED is enabled (specified by the user), then make
-  # Gloo build with the libuv transport.
+  # Gloo build with the libuv transport. This USE_LIBUV is gloo's own option
+  # ("Build libuv transport"), unrelated to TCPStore, which always uses libuv.
   if(APPLE AND USE_DISTRIBUTED)
     set(USE_LIBUV
         ON
@@ -513,7 +514,6 @@ option(USE_SYSTEM_SLEEF "Use system-provided sleef." OFF)
 option(USE_SYSTEM_GLOO "Use system-provided gloo." OFF)
 option(USE_SYSTEM_PYBIND11 "Use system-provided PyBind11." OFF)
 option(USE_SYSTEM_BENCHMARK "Use system-provided google benchmark." OFF)
-option(USE_SYSTEM_NVTX "Use system-provided nvtx." OFF)
 if(USE_SYSTEM_LIBS)
   set(USE_SYSTEM_CPUINFO ON)
   set(USE_SYSTEM_SLEEF ON)
@@ -524,7 +524,6 @@ if(USE_SYSTEM_LIBS)
   if(USE_NCCL)
     set(USE_SYSTEM_NCCL ON)
   endif()
-  set(USE_SYSTEM_NVTX ON)
 endif()
 
 if(LINUX)
@@ -825,6 +824,10 @@ if(WERROR)
   if(NOT HAS_WERROR)
     set(WERROR FALSE)
   endif()
+  # Targets that do not go through torch_compile_options -- the c10 and ATen
+  # test executables, third-party subprojects -- still inherit the -Werror
+  # above, so the one exemption that block grants has to be granted here too.
+  append_cxx_flag_if_supported("-Wno-error=unused-parameter" CMAKE_CXX_FLAGS)
 endif()
 append_cxx_flag_if_supported("-fstandalone-debug" CMAKE_CXX_FLAGS_DEBUG)
 string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -O0")

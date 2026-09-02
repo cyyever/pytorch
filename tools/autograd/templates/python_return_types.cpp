@@ -26,7 +26,8 @@ static void addReturnType(
 
 void initReturnTypes(PyObject* module) {
   static struct PyModuleDef def = {
-      PyModuleDef_HEAD_INIT, "torch._C._return_types", nullptr, -1, {}};
+      PyModuleDef_HEAD_INIT, "torch._C._return_types", nullptr, -1, {},
+      nullptr, nullptr, nullptr, nullptr};
   // AddObjectRef takes its own reference rather than stealing ours, so the
   // module we create is owned here and released on the way out.
   THPObjectPtr return_types_module(PyModule_Create(&def));

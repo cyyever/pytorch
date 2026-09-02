@@ -15,13 +15,9 @@
 #include <torch/csrc/distributed/c10d/socket_fmt.h>
 #include <torch/csrc/distributed/c10d/store/TCPStoreBackend.hpp>
 
-#ifdef TORCH_USE_LIBUV
 #include <uv.h>
-#endif
 
 namespace c10d::detail {
-
-#ifdef TORCH_USE_LIBUV
 
 /*
 
@@ -1625,25 +1621,11 @@ bool LibUVStoreDaemon::barrier(
   }
 }
 
-#endif
-
 std::unique_ptr<BackgroundThread> create_libuv_tcpstore_backend(
     const TCPStoreOptions& opts) {
-#ifdef TORCH_USE_LIBUV
   auto res = std::make_unique<LibUVStoreDaemon>(opts.port);
   res->init(opts);
   return res;
-#else
-  C10D_THROW_ERROR(DistStoreError, "LibUV TCPStore implementation missing");
-#endif
-}
-
-bool is_libuv_tcpstore_backend_available() {
-#ifdef TORCH_USE_LIBUV
-  return true;
-#else
-  return false;
-#endif
 }
 
 } // namespace c10d::detail

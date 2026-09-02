@@ -15,7 +15,6 @@ from unittest import mock
 
 import torch
 import torch.distributed as dist
-import torch.distributed.distributed_c10d as c10d
 from torch.distributed import DistError, DistNetworkError, DistStoreError
 from torch.testing._internal.common_distributed import MultiThreadedTestCase
 from torch.testing._internal.common_utils import instantiate_parametrized_tests
@@ -364,7 +363,7 @@ class PrefixFileStoreTest(TestCase, StoreTestBase):
 class TCPStoreTest(TestCase, StoreTestBase):
     hw_classification = HardwareClassification.GENERIC
 
-    _use_libuv = False
+    _use_libuv = True
 
     def _create_store(self):
         store = create_tcp_store(use_libuv=self._use_libuv)
@@ -643,15 +642,6 @@ class TCPStoreTest(TestCase, StoreTestBase):
                 f.result()
 
 
-class LibUvTCPStoreTest(TCPStoreTest):
-    hw_classification = HardwareClassification.GENERIC
-
-    _use_libuv = True
-
-    def _create_store(self):
-        store = create_tcp_store(use_libuv=True)
-        store.set_timeout(timedelta(seconds=300))
-        return store
 
     def _create_store_with_ws(self, addr, world_size):
         return create_tcp_store(
@@ -1035,8 +1025,7 @@ class TestMultiThreadedWait(MultiThreadedTestCase):
     file_store = dist.FileStore(tempfile.NamedTemporaryFile(delete=False).name, 1)  # noqa: SIM115
     hash_store = dist.HashStore()
 
-    tcp_store = create_tcp_store(use_libuv=False)
-    tcp_store_uv = create_tcp_store(use_libuv=True)
+    tcp_store = create_tcp_store()
 
     @property
     def world_size(self):
@@ -1073,7 +1062,6 @@ class TestMultiThreadedWait(MultiThreadedTestCase):
                 port=master_store.port,
                 is_master=False,
                 wait_for_workers=False,
-                use_libuv=False,
             )
         )
         self._test_wait(store)
@@ -1083,9 +1071,6 @@ class TestMultiThreadedWait(MultiThreadedTestCase):
 
     def test_wait_tcp_store(self):
         self._test_wait_tcp_store(self.tcp_store)
-
-    def test_wait_tcp_store_uv(self):
-        self._test_wait_tcp_store(self.tcp_store_uv)
 
 
 instantiate_parametrized_tests(TestMultiThreadedWait)
@@ -1157,50 +1142,6 @@ class TimeoutTest(TestCase):
             t.join()
         self.assertTrue(rank_res[0], "rank0")
         self.assertTrue(rank_res[1], "rank1")
-
-
-class InitPgWithNonUvStore(TestCase):
-    """
-    This test shows how to use the legacy TCPStore (non-libuv) backend since libuv is now
-    the default backend.
-    """
-
-    hw_classification = HardwareClassification.GENERIC
-
-    def tearDown(self):
-        super().tearDown()
-        os.environ.pop("USE_LIBUV", None)
-        os.environ.pop("MASTER_ADDR", None)
-        os.environ.pop("MASTER_PORT", None)
-
-    def test_with_url_param(self):
-        port = common.find_free_port()
-        dist.init_process_group(
-            "gloo",
-            rank=0,
-            world_size=1,
-            init_method=f"tcp://{DEFAULT_HOSTNAME}:{port}?use_libuv=0",
-        )
-        self._run_test()
-
-    def test_with_env_var(self):
-        port = common.find_free_port()
-        os.environ["USE_LIBUV"] = "0"
-        os.environ["MASTER_ADDR"] = DEFAULT_HOSTNAME
-        os.environ["MASTER_PORT"] = str(port)
-        dist.init_process_group("gloo", rank=0, world_size=1, init_method="env://")
-        self._run_test()
-
-    def _run_test(self):
-        pg = dist.group.WORLD
-        store = c10d._get_process_group_store(pg)
-        self.assertTrue(isinstance(store, dist.PrefixStore))
-        # c10d does multiple levels of wrapping
-        while isinstance(store, dist.PrefixStore):
-            store = store.underlying_store
-        self.assertTrue(isinstance(store, dist.TCPStore))
-        self.assertFalse(store.libuvBackend)
-        dist.destroy_process_group()
 
 
 class TestClientProtocol(TestCase):

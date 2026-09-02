@@ -55,8 +55,7 @@ std::mutex TCPServer::cache_mutex_{};
 
 std::shared_ptr<TCPServer> TCPServer::start(const TCPStoreOptions& opts) {
   auto startCore = [&opts]() {
-    auto daemon = opts.useLibUV ? create_libuv_tcpstore_backend(opts)
-                                : create_tcpstore_backend(opts);
+    auto daemon = create_libuv_tcpstore_backend(opts);
     daemon->start();
     return std::make_shared<TCPServer>(daemon->port(), std::move(daemon));
   };
@@ -247,12 +246,10 @@ TCPStore::TCPStore(std::string host, const TCPStoreOptions& opts)
       usingLibUv_{opts.useLibUV} {
   STATIC_SCOPED_WAIT_COUNTER(pytorch.wait_counter.TCPStore__init);
 
-  if (opts.useLibUV) {
-    TORCH_CHECK_WITH(
-        DistStoreError,
-        ::c10d::detail::is_libuv_tcpstore_backend_available(),
-        "use_libuv was requested but PyTorch was built without libuv support, run with USE_LIBUV=0 to disable it.");
-  }
+  TORCH_CHECK_WITH(
+      DistStoreError,
+      opts.useLibUV,
+      "TCPStore only has the libuv backend; use_libuv=False and USE_LIBUV=0 are no longer supported.");
 
   Socket::initialize();
 

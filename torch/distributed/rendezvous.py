@@ -60,12 +60,6 @@ def _query_to_dict(query: str) -> dict[str, str]:
     }
 
 
-def _get_use_libuv_from_query_dict(query_dict: dict[str, str]) -> bool:
-    # libuv is the default backend for TCPStore. To enable the non-libuv backend,
-    # user can explicitly specify ``use_libuv=0`` in the URL parameter.
-    return query_dict.get("use_libuv", os.environ.get("USE_LIBUV", "1")) == "1"
-
-
 def _rendezvous_helper(url: str, rank: int, world_size_opt: int | None, **kwargs):
     result = urlparse(url)
     if world_size_opt is None:
@@ -166,9 +160,7 @@ def _agent_store_serves(hostname, port) -> bool:
     )
 
 
-def _create_c10d_store(
-    hostname, port, rank, world_size, timeout, use_libuv=True
-) -> Store:
+def _create_c10d_store(hostname, port, rank, world_size, timeout) -> Store:
     """
     Smartly creates a c10d Store object on ``rank`` based on whether we need to reuse agent store.
 
@@ -210,7 +202,6 @@ def _create_c10d_store(
             is_master=start_daemon,
             timeout=timeout,
             multi_tenant=True,
-            use_libuv=use_libuv,
         )
 
 
@@ -231,14 +222,10 @@ def _tcp_rendezvous_handler(
 
     rank = int(query_dict["rank"])
     world_size = int(query_dict["world_size"])
-    use_libuv = _get_use_libuv_from_query_dict(query_dict)
-
     if result.hostname is None:
         raise AssertionError("hostname cannot be None")
 
-    store = _create_c10d_store(
-        result.hostname, result.port, rank, world_size, timeout, use_libuv
-    )
+    store = _create_c10d_store(result.hostname, result.port, rank, world_size, timeout)
 
     yield (store, rank, world_size)
 
@@ -282,11 +269,7 @@ def _env_rendezvous_handler(
 
     master_addr = _get_env_or_raise("MASTER_ADDR")
     master_port = int(_get_env_or_raise("MASTER_PORT"))
-    use_libuv = _get_use_libuv_from_query_dict(query_dict)
-
-    store = _create_c10d_store(
-        master_addr, master_port, rank, world_size, timeout, use_libuv
-    )
+    store = _create_c10d_store(master_addr, master_port, rank, world_size, timeout)
 
     yield (store, rank, world_size)
 

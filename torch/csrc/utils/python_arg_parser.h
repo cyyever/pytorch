@@ -127,8 +127,10 @@ struct PythonArgs;
 template <int N>
 struct ParsedArgs {
   ParsedArgs() : args() {}
+  // N is 0 for a signature that takes no arguments, and a zero-length array is
+  // a GNU extension; the extra slot is never read.
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
-  PyObject* args[N];
+  PyObject* args[N == 0 ? 1 : N];
 };
 
 // FunctionParameter is a single formal parameter of a Python function.

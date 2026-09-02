@@ -131,21 +131,6 @@ class DistributedUtilTest(TestCase):
         wait_for_workers = False
         localhost = socket.gethostname()
 
-        os.environ["USE_LIBUV"] = "0"
-        store = create_c10d_store(
-            is_server=True,
-            server_addr=localhost,
-            server_port=0,
-            timeout=2,
-            world_size=world_size,
-            wait_for_workers=wait_for_workers,
-        )
-        self.assertFalse(store.libuvBackend)
-        del os.environ["USE_LIBUV"]
-        if "USE_LIBUV" in os.environ:
-            raise AssertionError("Expected USE_LIBUV to be removed from os.environ")
-
-        # libuv backend is enabled by default
         store = create_c10d_store(
             is_server=True,
             server_addr=localhost,

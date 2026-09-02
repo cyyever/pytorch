@@ -10,9 +10,7 @@ namespace c10_test {
 
 class Foo {
  public:
-  explicit Foo(int x) {
-    // LOG(INFO) << "Foo " << x;
-  }
+  explicit Foo(int /*x*/) {}
   virtual ~Foo() = default;
 };
 

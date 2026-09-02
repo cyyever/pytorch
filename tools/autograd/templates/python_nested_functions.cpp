@@ -37,7 +37,7 @@ ${py_forwards}
 static PyMethodDef nested_functions[] = {
   {NULL, NULL, 0, NULL},
   ${py_method_defs}
-  {NULL}
+  {}
 };
 
 static PyObject* THPNestedVariableFunctionsModule = NULL;
@@ -49,7 +49,11 @@ void initNestedFunctions(PyObject* module) {
      "torch._C._nested",
      NULL,
      -1,
-     nested_functions
+     nested_functions,
+     nullptr, /* m_slots */
+     nullptr, /* m_traverse */
+     nullptr, /* m_clear */
+     nullptr  /* m_free */
   };
   PyObject* nested = PyModule_Create(&def);
   THPNestedVariableFunctionsModule = nested;
