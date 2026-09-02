@@ -132,7 +132,17 @@ class SmallVectorTemplateCommon
   // Space after 'FirstEl' is clobbered, do not add any instance vars after it.
 
  protected:
+  // getFirstEl() derives a pointer from `this` while the object is still under
+  // construction, which GCC 16 reports as a possible uninitialized read of
+  // `<unknown>`. There is nothing uninitialized here: only `this` is read.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
   SmallVectorTemplateCommon(size_t Size) : Base(getFirstEl(), Size) {}
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
   void grow_pod(size_t MinSize, size_t TSize) {
     Base::grow_pod(getFirstEl(), MinSize, TSize);
