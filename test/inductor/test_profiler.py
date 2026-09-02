@@ -18,7 +18,6 @@ from torch.testing._internal.inductor_utils import (
     IS_BIG_GPU,
 )
 from torch.testing._internal.logging_utils import logs_to_string
-from torch.torch_version import TorchVersion
 from torch.utils._triton import has_triton
 
 
@@ -322,10 +321,7 @@ class DynamoProfilerTests(torch._inductor.test_case.TestCase):
         with torch.profiler.profile():
             fn_c(x, y)
 
-        if TorchVersion(torch.version.cuda) >= "12.6":
-            self.assertEqual("0", os.environ.get("DISABLE_CUPTI_LAZY_REINIT", "0"))
-        else:
-            self.assertEqual("1", os.environ.get("DISABLE_CUPTI_LAZY_REINIT", "0"))
+        self.assertEqual("0", os.environ.get("DISABLE_CUPTI_LAZY_REINIT", "0"))
 
     @torch._dynamo.config.patch("capture_profiler_record_function", True)
     def test_inductor_remove_profiler_ops(self):

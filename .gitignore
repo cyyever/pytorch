@@ -117,8 +117,6 @@ torch/lib64
 torch/include/
 torch/share/
 torch/test/
-torch/utils/benchmark/utils/valgrind_wrapper/callgrind.h
-torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h
 torch/version.py
 torch/_inductor/kernel/vendored_templates/cutedsl/kernels/*
 torch/_inductor/kernel/vendored_templates/cutedsl_grouped_gemm.py

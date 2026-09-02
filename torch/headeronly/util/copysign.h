@@ -8,9 +8,8 @@
 
 HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 
-// Note: Explicit implementation of copysign for Half and BFloat16
-// is needed to workaround g++-7/8 crash on aarch64, but also makes
-// copysign faster for the half-precision types
+// Note: the explicit Half and BFloat16 overloads below avoid the float
+// round-trip std::copysign would take, which is also faster
 template <typename T, typename U>
 inline auto copysign(T a, U b) {
   return std::copysign(a, b);

@@ -30,17 +30,6 @@ def index_of_first_match(seq, predicate, start=0, end=None):
     return None
 
 
-# Provide an OSS workaround for cudagraphs + CUPTI issue
-# https://github.com/pytorch/pytorch/issues/75504
-# TODO(dberard) - deprecate / remove workaround for CUDA >= 12, when
-# we stop supporting older CUDA versions.
-def _init_for_cuda_graphs() -> None:
-    from torch.autograd.profiler import profile
-
-    with profile():
-        pass
-
-
 @dataclass
 class TimelineEvent:
     """Represents an event in the profiler timeline."""

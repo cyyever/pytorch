@@ -7,9 +7,9 @@ namespace at::vec {
 inline namespace CPU_CAPABILITY {
 #if defined(__aarch64__)
 
-// Enable auto-vectorization for clang-17+
-// GCC-12 has a bug: gcc.gnu.org/bugzilla/show_bug.cgi?id=117001
-#if defined(__clang__) && (__clang_major__ >= 17)
+// clang only: GCC mis-vectorizes this loop
+// (gcc.gnu.org/bugzilla/show_bug.cgi?id=117001)
+#if defined(__clang__)
 
 template <typename from_type, typename to_type>
 inline void convertImpl(
