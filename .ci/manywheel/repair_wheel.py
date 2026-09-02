@@ -11,7 +11,7 @@ Usage: repair_wheel.py <input_dir> <output_dir>
 
 Environment variables:
     DESIRED_CUDA       - cpu, cu126, cu130, xpu, rocm6.4.1, etc.
-    GPU_ARCH_TYPE      - cpu, cuda, cuda-aarch64, rocm, xpu
+    GPU_ARCH_TYPE      - cpu, cuda, rocm, xpu
     GPU_ARCH_VERSION   - 12.6, 13.0, 13.2, 6.4.1, etc. (empty for CPU)
     USE_CUDA           - "0" or "1"
     PYTORCH_ROCM_ARCH  - ;-separated gfx targets (ROCm only)
@@ -116,36 +116,12 @@ def rocm_rpaths() -> str:
     )
 
 
-def arch_extra_deps(arch: str, use_cuda: bool) -> list[Path]:
-    """
-    CPU builds link against OpenBLAS + libgfortran
-    CUDA builds link against NVPL.
-    """
+def arch_extra_deps(use_cuda: bool) -> list[Path]:
+    """CPU builds may link against OpenBLAS; libgfortran comes along either way."""
     candidates: list[Path] = [Path("/usr/lib64/libgfortran.so.5")]
-    if arch == "aarch64":
-        # Both CPU and CUDA builds pick up ARM Compute Library (ACL) for
-        # oneDNN acceleration on AArch64.
-        if Path("/acl/build").is_dir():
-            candidates += [
-                Path("/acl/build/libarm_compute.so"),
-                Path("/acl/build/libarm_compute_graph.so"),
-            ]
-
-    if use_cuda:
-        candidates += [
-            Path(f"/usr/local/lib/{name}")
-            for name in (
-                "libnvpl_blas_lp64_gomp.so.0",
-                "libnvpl_lapack_lp64_gomp.so.0",
-                "libnvpl_blas_core.so.0",
-                "libnvpl_lapack_core.so.0",
-            )
-        ]
-    else:
+    if not use_cuda:
         candidates.append(Path("/opt/OpenBLAS/lib/libopenblas.so.0"))
-
-    deps: list[Path] = [p for p in candidates if p.is_file()]
-    return deps
+    return [p for p in candidates if p.is_file()]
 
 
 # ROCm shared libs to bundle. Discovered under $ROCM_HOME/{lib,lib64}.
@@ -380,7 +356,7 @@ def repair_wheel(
                     str(sofile),
                 )
 
-        # Bundle aarch64 BLAS/LAPACK/ACL dependencies (no-op on x86)
+        # Bundle extra BLAS/LAPACK dependencies (usually none)
         for dep in arch_deps:
             shutil.copy(dep, torch_lib / dep.name)
 
@@ -489,7 +465,7 @@ def main() -> None:
         lib_so_rpath = "$ORIGIN"
         force_rpath = False
 
-    arch_deps = arch_extra_deps(arch, use_cuda)
+    arch_deps = arch_extra_deps(use_cuda)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     wheels = sorted(args.input_dir.glob("*.whl"))

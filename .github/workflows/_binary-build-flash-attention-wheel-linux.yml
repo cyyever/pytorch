@@ -42,26 +42,6 @@ jobs:
             docker_image: "pytorch/manylinux2_28-builder:cuda13.0"
             runner: "mt-l-x86iavx512-48-384"
             manylinux_plat: "manylinux_2_28_x86_64"
-          - cuda_version: "12.6.3"
-            arch: "aarch64"
-            cuda_short: "126"
-            torch_cuda_arch_list: "9.0"
-            docker_image: "quay.io/pypa/manylinux_2_34_aarch64"
-            runner: "mt-l-arm64g3-61-463"
-            max_jobs: "4"
-            nvcc_threads: "2"
-            manylinux_plat: "manylinux_2_34_aarch64"
-            cuda_installer_name: "cuda_12.6.3_560.35.05_linux"
-          - cuda_version: "13.0.2"
-            arch: "aarch64"
-            cuda_short: "130"
-            torch_cuda_arch_list: "9.0;10.0"
-            docker_image: "quay.io/pypa/manylinux_2_34_aarch64"
-            runner: "mt-l-arm64g3-61-463"
-            max_jobs: "4"
-            nvcc_threads: "2"
-            manylinux_plat: "manylinux_2_34_aarch64"
-            cuda_installer_name: "cuda_13.0.2_580.95.05_linux"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 1440
     # Build inside the manylinux builder image (the pod is the builder): ARC has
@@ -89,9 +69,6 @@ jobs:
         env:
           FA_FINAL_PACKAGE_DIR: ${{ runner.temp }}/artifacts
           MANYLINUX_PLAT: ${{ matrix.manylinux_plat }}
-          MAX_JOBS: ${{ matrix.max_jobs }}
-          NVCC_THREADS: ${{ matrix.nvcc_threads }}
-          CUDA_INSTALLER_NAME: ${{ matrix.cuda_installer_name }}
           FA_TEST_BUILD: ${{ inputs.test }}
         run: |
           set -x

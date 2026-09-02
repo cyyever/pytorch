@@ -18,33 +18,6 @@ FLASH_ATTENTION_HOPPER_DIR="${FLASH_ATTENTION_DIR}/hopper"
 TORCH_MIN_VERSION="2.9.0"
 PYTHON="${PYTHON_EXECUTABLE:-python}"
 
-# for ARM builds we need GLIBC 2.29+ so we use upstream linux image
-# need to install dependencies
-if [[ "$(uname -m)" == "aarch64" ]]; then
-    if command -v dnf &> /dev/null; then
-        dnf install -y \
-            wget \
-            perl \
-            make \
-            xz \
-            bzip2 \
-            gcc-toolset-13-gcc \
-            gcc-toolset-13-gcc-c++
-        export PATH=/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
-        export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-13/root/usr/lib64:/opt/rh/gcc-toolset-13/root/usr/lib:${LD_LIBRARY_PATH:-}
-    fi
-
-    source "${PYTORCH_ROOT}/.ci/docker/common/install_cuda.sh"
-    [[ -z "$CUDA_INSTALLER_NAME" ]] && fatal "CUDA_INSTALLER_NAME must be set for aarch64 builds"
-    install_cuda "$CUDA_VERSION" "$CUDA_INSTALLER_NAME"
-
-    export CUDA_HOME=/usr/local/cuda
-    export PATH=/usr/local/cuda/bin:$PATH
-
-    echo "installed CUDA version:"
-    nvcc --version
-fi
-
 echo "installing dependencies"
 "$PYTHON" -m pip install einops packaging ninja numpy wheel setuptools
 

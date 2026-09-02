@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # meant to be called only from the neighboring build.sh and build_cpu.sh scripts
 # NOTE: This script is only used for ROCm builds.
-#       CPU/CUDA x86 and aarch64 builds use build_wheel.sh + repair_wheel.sh.
+#       CPU/CUDA x86_64 builds use build_wheel.sh + repair_wheel.sh.
 
 set -ex
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
@@ -37,9 +37,6 @@ if [[ "$OS_NAME" == *"AlmaLinux"* ]]; then
     case $ARCH in
         x86_64)
             PLATFORM="manylinux_2_28_x86_64"
-            ;;
-        aarch64)
-            PLATFORM="manylinux_2_28_aarch64"
             ;;
         *)
             echo "Other architectures: $ARCH, not setting PLATFORM"
@@ -319,8 +316,8 @@ for pkg in /$WHEELHOUSE_DIR/torch_no_python*.whl /$WHEELHOUSE_DIR/torch*linux*.w
             # ROCm workaround for roctracer dlopens
             if [[ "$DESIRED_CUDA" == *"rocm"* ]]; then
                 patchedpath=$(fname_without_so_number $destpath)
-            # Keep the so number for XPU dependencies, libgomp.so.1, ACL libraries, and NVPL libraries to avoid twice load
-            elif [[ "$DESIRED_CUDA" == *"xpu"* || "$filename" == "libgomp.so.1" || "$filename" == libarm_compute* || "$filename" == libnvpl* || "$filename" == "libgfortran.so.5" ]]; then
+            # Keep the so number for XPU dependencies and libgomp.so.1 to avoid twice load
+            elif [[ "$DESIRED_CUDA" == *"xpu"* || "$filename" == "libgomp.so.1" || "$filename" == "libgfortran.so.5" ]]; then
                 patchedpath=$destpath
             else
                 patchedpath=$(fname_with_sha256 $destpath)
@@ -372,11 +369,6 @@ for pkg in /$WHEELHOUSE_DIR/torch_no_python*.whl /$WHEELHOUSE_DIR/torch*linux*.w
         wheel_file=$(echo $(basename $pkg) | sed -e 's/-cp.*$/.dist-info\/WHEEL/g')
         sed -i -e s#linux_x86_64#"${PLATFORM}"# $wheel_file;
     fi
-    if [[ $PLATFORM == "manylinux_2_28_aarch64" ]]; then
-        wheel_file=$(echo $(basename $pkg) | sed -e 's/-cp.*$/.dist-info\/WHEEL/g')
-        sed -i -e s#linux_aarch64#"${PLATFORM}"# $wheel_file;
-    fi
-
     # regenerate the RECORD file with new hashes
     record_file=$(echo $(basename $pkg) | sed -e 's/-cp.*$/.dist-info\/RECORD/g')
     if [[ -e $record_file ]]; then
@@ -420,11 +412,6 @@ for pkg in /$WHEELHOUSE_DIR/torch_no_python*.whl /$WHEELHOUSE_DIR/torch*linux*.w
     # into WHEEL above; otherwise the upload artifact stays linux_*.
     if [[ $PLATFORM == "manylinux_2_28_x86_64" && $GPU_ARCH_TYPE != "xpu" ]]; then
         pkg_name=$(echo $(basename $pkg) | sed -e s#linux_x86_64#"${PLATFORM}"#)
-        zip -rq $pkg_name $PREIX*
-        rm -f $pkg
-        mv $pkg_name $(dirname $pkg)/$pkg_name
-    elif [[ $PLATFORM == "manylinux_2_28_aarch64" ]]; then
-        pkg_name=$(echo $(basename $pkg) | sed -e s#linux_aarch64#"${PLATFORM}"#)
         zip -rq $pkg_name $PREIX*
         rm -f $pkg
         mv $pkg_name $(dirname $pkg)/$pkg_name

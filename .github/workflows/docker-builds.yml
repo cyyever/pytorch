@@ -39,8 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         # BuildKit is a *remote* builder running on OSDC; the orchestrator
-        # runner just streams context and waits, so the smallest pool fits
-        # both amd64 and arm64 builds. Only `buildkit_addr` differs per arch.
+        # runner just streams context and waits, so the smallest pool fits.
         buildkit_addr: ["tcp://buildkitd-amd64.buildkit:1234"]
         docker-image-name: [
           pytorch-linux-jammy-cuda13.0-cudnn9-py3-gcc11,
@@ -73,15 +72,7 @@ jobs:
           pytorch-linux-jammy-cuda13.0-cudnn9-py3.10-linter,
           pytorch-linux-jammy-py3.12-triton-cpu
         ]
-        include:
-          - docker-image-name: pytorch-linux-jammy-aarch64-py3.10-gcc13
-            buildkit_addr: "tcp://buildkitd-arm64.buildkit:1234"
-            runner_label: mt-l-arm64g4-16-62
-          - docker-image-name: pytorch-linux-jammy-aarch64-py3.10-gcc13-inductor-benchmarks
-            buildkit_addr: "tcp://buildkitd-arm64.buildkit:1234"
-            timeout-minutes: 600
-            runner_label: mt-l-arm64g4-16-62
-    runs-on: ${{ matrix.runner_label || 'mt-l-x86iavx512-8-64' }}
+    runs-on: mt-l-x86iavx512-8-64
     container:
       image: ghcr.io/actions/actions-runner:latest
     steps:

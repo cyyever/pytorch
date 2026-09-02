@@ -5,13 +5,6 @@ skip:
   device:
     cpu:
       - ~
-    # Skip these additional models when running on aarch64
-    cpu_aarch64:
-      # timeout on aarch64
-      - dm_nfnet_f0
-      - nfnet_l0
-      - visformer_small
-
 
 # TODO - Figure out the reason of cold start memory spike
 batch_size:

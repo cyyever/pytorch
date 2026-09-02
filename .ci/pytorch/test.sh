@@ -885,8 +885,6 @@ test_perf_for_dashboard() {
       device=cpu_x86_zen
     elif [[ "${TEST_CONFIG}" == *cpu_x86* ]]; then
       device=cpu_x86
-    elif [[ "${TEST_CONFIG}" == *cpu_aarch64* ]]; then
-      device=cpu_aarch64
     fi
     test_inductor_set_cpu_affinity
   elif [[ "${TEST_CONFIG}" == *cuda_a10g* ]]; then
@@ -1413,13 +1411,11 @@ test_inductor_set_cpu_affinity(){
   export LD_PRELOAD="$JEMALLOC_LIB":"$LD_PRELOAD"
   export MALLOC_CONF="oversize_threshold:1,background_thread:true,metadata_thp:auto,dirty_decay_ms:-1,muzzy_decay_ms:-1"
 
-  if [[ "$(uname -m)" != "aarch64" ]]; then
-    # Use Intel OpenMP for x86
-    IOMP_LIB="$(dirname "$(which python)")/../lib/libiomp5.so"
-    export LD_PRELOAD="$IOMP_LIB":"$LD_PRELOAD"
-    export KMP_AFFINITY=granularity=fine,compact,1,0
-    export KMP_BLOCKTIME=1
-  fi
+  # Use Intel OpenMP for x86
+  IOMP_LIB="$(dirname "$(which python)")/../lib/libiomp5.so"
+  export LD_PRELOAD="$IOMP_LIB":"$LD_PRELOAD"
+  export KMP_AFFINITY=granularity=fine,compact,1,0
+  export KMP_BLOCKTIME=1
 
   # Use nproc here instead of lscpu because it takes into account cgroups slice
   cpus=$(nproc)

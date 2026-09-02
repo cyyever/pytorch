@@ -6,7 +6,7 @@ name: linux-binary-build
 # Two execution modes selected by `use_container_directive`:
 # - true (default): launch the build container via GHA's native `container:`
 #   directive — checkout, env-setup, and the .ci/* build scripts all run
-#   directly inside it. Used by x86 / aarch64 / cuda runners.
+#   directly inside it. Used by x86 / cuda runners.
 # - false: run on the bare runner and spawn the build container with
 #   `docker run` from a step. Used by self-hosted runners that lack a host-level
 #   docker CLI compatible with GHA's container directive.
@@ -160,6 +160,7 @@ jobs:
         if: inputs.use_container_directive
         shell: bash
         run: |
+          # shellcheck disable=SC1090
           source "${BINARY_ENV_FILE}"
           bash .ci/${{ inputs.PACKAGE_TYPE }}/build.sh
 

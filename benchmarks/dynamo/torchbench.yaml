@@ -248,9 +248,6 @@ skip:
       - llava
       - moco
 
-    # Skip these additional models when running on aarch64
-    cpu_aarch64: []
-
     cuda: []
 
     xpu:

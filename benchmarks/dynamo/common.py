@@ -15,7 +15,6 @@ import itertools
 import json
 import logging
 import os
-import platform
 import random
 import shutil
 import signal
@@ -1876,10 +1875,6 @@ class BenchmarkRunner:
 
     @property
     def skip_models_for_cpu(self):
-        return set()
-
-    @property
-    def skip_models_for_cpu_aarch64(self):
         return set()
 
     @property
@@ -4406,10 +4401,7 @@ def run(runner, args, original_dir=None):
         runner.skip_models.update(runner.slow_models)
 
     if args.devices == ["cpu"]:
-        arch = platform.machine()
         runner.skip_models.update(runner.skip_models_for_cpu)
-        if arch == "aarch64":
-            runner.skip_models.update(runner.skip_models_for_cpu_aarch64)
     elif args.devices == ["cuda"]:
         runner.skip_models.update(runner.skip_models_for_cuda)
     elif args.devices == ["xpu"]:

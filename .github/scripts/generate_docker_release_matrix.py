@@ -7,7 +7,7 @@ Will output a condensed version of the matrix. Will include fllowing:
     * CUDA full version
     * CUDNN version short
     * Image type either runtime or devel
-    * Platform linux/arm64,linux/amd64
+    * Platform linux/amd64
 
 """
 
@@ -21,8 +21,7 @@ DOCKER_IMAGE_TYPES = ["runtime", "devel"]
 
 def generate_docker_matrix() -> dict[str, list[dict[str, str]]]:
     ret: list[dict[str, str]] = []
-    # CUDA amd64 Docker images are available as both runtime and devel while
-    # CPU arm64 image is only available as runtime.
+    # CUDA amd64 Docker images are available as both runtime and devel.
     for cuda, version in generate_binary_build_matrix.CUDA_ARCHES_FULL_VERSION.items():
         for image in DOCKER_IMAGE_TYPES:
             if (
@@ -41,16 +40,6 @@ def generate_docker_matrix() -> dict[str, list[dict[str, str]]]:
                     "platform": "linux/amd64",
                 }
             )
-    ret.append(
-        {
-            "cuda": "cpu",
-            "cuda_full_version": "",
-            "cudnn_version": "",
-            "image_type": "runtime",
-            "platform": "linux/arm64",
-        }
-    )
-
     return {"include": ret}
 
 

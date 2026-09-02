@@ -18,11 +18,6 @@ self-hosted-runner:
     - linux.24xlarge.memory
     - linux.24xlarge.ephemeral
     - linux.24xlarge.amd
-    - linux.arm64.2xlarge
-    - linux.arm64.2xlarge.ephemeral
-    - linux.arm64.m7g.4xlarge
-    - linux.arm64.m7g.4xlarge.ephemeral
-    - linux.arm64.r7g.12xlarge.memory
     - linux.aws.a100
     - linux.aws.h100
     - linux.aws.h100.4
@@ -35,7 +30,6 @@ self-hosted-runner:
     - lf.linux.4xlarge
     - lf.linux.12xlarge
     - lf.linux.24xlarge
-    - lf.linux.arm64.2xlarge
     - lf.linux.g5.4xlarge.nvidia.gpu
     - lf.linux.c7i.2xlarge
     # Organization wide AWS Windows runners
@@ -68,13 +62,11 @@ self-hosted-runner:
     - linux.google.tpuv7x.4
     # OSDC ARC (multi-tenant) runners
     - mt-l-x86iavx512-2-4
+    - mt-l-x86iavx512-8-64
     - mt-l-x86iavx512-16-128
     - mt-l-x86iavx512-48-384
     - mt-l-x86iavx512-94-768
     - mt-l-x86iamx-8-16
     - mt-rel-l-x86iavx512-8-64
-    - mt-rel-l-arm64g4-16-62
     - mt-rel-l-x86iavx512-44-340
-    - mt-rel-l-arm64g3-44-340
-    - mt-l-arm64g3-61-463
     - mt-l-x86iamx-22-225-h100

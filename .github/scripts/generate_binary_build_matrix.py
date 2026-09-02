@@ -46,13 +46,6 @@ ROCM_ARCHES = ["7.14", "10.0"]
 
 XPU_ARCHES = ["xpu"]
 
-CPU_AARCH64_ARCH = ["cpu-aarch64"]
-
-
-CUDA_AARCH64_ARCHES = [
-    "13.4-aarch64",
-]
-
 PYTORCH_EXTRA_INSTALL_REQUIREMENTS = {
     "13.4": (
         "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.4.0rc1; platform_system == 'Linux' | "
@@ -202,10 +195,6 @@ def arch_type(arch_version: str) -> str:
         return "rocm"
     elif arch_version in XPU_ARCHES:
         return "xpu"
-    elif arch_version in CPU_AARCH64_ARCH:
-        return "cpu-aarch64"
-    elif arch_version in CUDA_AARCH64_ARCHES:
-        return "cuda-aarch64"
     else:  # arch_version should always be "cpu" in this case
         return "cpu"
 
@@ -214,14 +203,9 @@ DEFAULT_TAG = os.getenv("RELEASE_VERSION_TAG", "main")
 
 WHEEL_CONTAINER_IMAGES = {
     **{gpu_arch: f"manylinux2_28-builder:cuda{gpu_arch}" for gpu_arch in CUDA_ARCHES},
-    **{
-        gpu_arch: f"manylinuxaarch64-builder:cuda{gpu_arch.replace('-aarch64', '')}"
-        for gpu_arch in CUDA_AARCH64_ARCHES
-    },
     **{gpu_arch: f"manylinux2_28-builder:rocm{gpu_arch}" for gpu_arch in ROCM_ARCHES},
     "xpu": "manylinux2_28-builder:xpu",
     "cpu": "manylinux2_28-builder:cpu",
-    "cpu-aarch64": "manylinux2_28_aarch64-builder:cpu-aarch64",
 }
 
 RELEASE = "release"
@@ -242,9 +226,7 @@ FULL_PYTHON_VERSIONS = [
 def translate_desired_cuda(gpu_arch_type: str, gpu_arch_version: str) -> str:
     return {
         "cpu": "cpu",
-        "cpu-aarch64": "cpu",
         "cuda": f"cu{gpu_arch_version.replace('.', '')}",
-        "cuda-aarch64": f"cu{gpu_arch_version.replace('-aarch64', '').replace('.', '')}",
         "rocm": f"rocm{gpu_arch_version}",
         "xpu": "xpu",
     }.get(gpu_arch_type, gpu_arch_version)
@@ -297,8 +279,8 @@ def generate_wheels_matrix(
     python_versions: list[str] | None = None,
 ) -> list[dict[str, str]]:
     package_type = "wheel"
-    if os == "linux" or os == "linux-aarch64":
-        # NOTE: We only build manywheel packages for x86_64 and aarch64 linux
+    if os == "linux":
+        # NOTE: We only build manywheel packages for x86_64 linux
         package_type = "manywheel"
 
     if python_versions is None:
@@ -309,44 +291,30 @@ def generate_wheels_matrix(
         arches = ["cpu"]
         if os == "linux":
             arches += CUDA_ARCHES + ROCM_ARCHES + XPU_ARCHES
-        elif os == "linux-aarch64":
-            # Separate new if as the CPU type is different and
-            # uses different build/test scripts
-            arches = CPU_AARCH64_ARCH + CUDA_AARCH64_ARCHES
 
     ret: list[dict[str, str]] = []
     for python_version in python_versions:
         for arch_version in arches:
             gpu_arch_type = arch_type(arch_version)
             gpu_arch_version = (
-                ""
-                if arch_version == "cpu"
-                or arch_version == "cpu-aarch64"
-                or arch_version == "xpu"
-                else arch_version
+                "" if arch_version in ("cpu", "xpu") else arch_version
             )
 
             # TODO: Enable python 3.14 for rest
-            if os not in [
-                "linux",
-                "linux-aarch64",
-                "macos-arm64",
-            ] and (python_version == "3.14" or python_version == "3.14t"):
+            if os not in ["linux", "macos-arm64"] and (
+                python_version == "3.14" or python_version == "3.14t"
+            ):
                 continue
 
             # TODO: Enable python 3.15 on non linux OSes
-            if os not in ["linux", "linux-aarch64", "macos-arm64"] and (
+            if os not in ["linux", "macos-arm64"] and (
                 python_version == "3.15" or python_version == "3.15t"
             ):
                 continue
 
             # cuda linux wheels require PYTORCH_EXTRA_INSTALL_REQUIREMENTS to install
 
-            if (
-                arch_version in ["13.4"]
-                and os == "linux"
-                or arch_version in CUDA_AARCH64_ARCHES
-            ):
+            if arch_version in CUDA_ARCHES and os == "linux":
                 desired_cuda = translate_desired_cuda(gpu_arch_type, gpu_arch_version)
                 ret.append(
                     {
@@ -361,19 +329,12 @@ def generate_wheels_matrix(
                             arch_version
                         ].split(":")[1],
                         "package_type": package_type,
-                        "pytorch_extra_install_requirements": (
-                            PYTORCH_EXTRA_INSTALL_REQUIREMENTS[
-                                f"{desired_cuda[2:4]}.{desired_cuda[4:]}"  # for cuda-aarch64: cu126 -> 12.6
-                            ]
-                            if os == "linux-aarch64"
-                            else PYTORCH_EXTRA_INSTALL_REQUIREMENTS[arch_version]
+                        "pytorch_extra_install_requirements": PYTORCH_EXTRA_INSTALL_REQUIREMENTS[
+                            arch_version
+                        ],
+                        "build_name": f"{package_type}-py{python_version}-{gpu_arch_type}{gpu_arch_version}".replace(
+                            ".", "_"
                         ),
-                        "build_name": (
-                            f"{package_type}-py{python_version}-{gpu_arch_type}"
-                            f"{'-' if 'aarch64' in gpu_arch_type else ''}{gpu_arch_version.replace('-aarch64', '')}".replace(
-                                ".", "_"
-                            )
-                        ),  # include special case for aarch64 build, remove the -aarch64 postfix
                     }
                 )
             else:

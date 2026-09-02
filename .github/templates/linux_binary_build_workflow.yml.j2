@@ -20,13 +20,13 @@ name: !{{ build_environment }}
     invalidation handles the per-Python ABI bits). Everything else still runs
     on the per-Python matrix below. Add more arch types here as their inline
     build job is wired up. -#}
-{%- set unified_arch_types = ['cpu', 'cpu-aarch64', 'cuda', 'cuda-aarch64'] %}
+{%- set unified_arch_types = ['cpu', 'cuda'] %}
 {%- set unified_build_configs = build_configs | selectattr('gpu_arch_type', 'in', unified_arch_types) | list %}
 {%- set matrix_build_configs = build_configs | rejectattr('gpu_arch_type', 'in', unified_arch_types) | list %}
 
 {#- Standard (non-ROCm/XPU) configs that are built by the manywheel-build matrix
-    rather than an inline unified job (e.g. cpu-aarch64). manywheel-test consumes
-    these, so it must wait on manywheel-build only when such configs exist. -#}
+    rather than an inline unified job. manywheel-test consumes these, so it must
+    wait on manywheel-build only when such configs exist. -#}
 {%- set matrix_standard_configs = matrix_build_configs | rejectattr('gpu_arch_type', 'in', ['rocm', 'xpu']) | list %}
 
 {#- Group unified configs by (gpu_arch_type, desired_cuda). Containers differ
@@ -44,19 +44,11 @@ name: !{{ build_environment }}
 
 {#- Per-OS values that shape the build/test runner labels. -#}
 {%- set release_runner_if = "(github.ref == 'refs/heads/main' || github.ref == 'refs/heads/nightly' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/v'))" %}
-{%- if "aarch64" in build_environment %}
-  {%- set build_runs_on = "${{ " ~ release_runner_if ~ " && 'rel-l-arm64g3-44-340' || 'l-arm64g3-61-463' }}" %}
-  {%- set alpine_image  = "arm64v8/alpine" %}
-  {%- set timeout_minutes = 420 %}
-  {%- set runner_prefix = "${{ needs.get-label-type.outputs.label-type }}" %}
-  {%- set use_container_directive = true %}
-{%- else %}
-  {%- set build_runs_on = "${{ " ~ release_runner_if ~ " && 'rel-l-x86iavx512-44-340' || 'l-x86iavx512-48-384' }}" %}
-  {%- set alpine_image  = "308535385114.dkr.ecr.us-east-1.amazonaws.com/tool/alpine" %}
-  {%- set timeout_minutes = common.timeout_minutes %}
-  {%- set runner_prefix = "${{ needs.get-label-type.outputs.label-type }}" %}
-  {%- set use_container_directive = true %}
-{%- endif %}
+{%- set build_runs_on = "${{ " ~ release_runner_if ~ " && 'rel-l-x86iavx512-44-340' || 'l-x86iavx512-48-384' }}" %}
+{%- set alpine_image  = "308535385114.dkr.ecr.us-east-1.amazonaws.com/tool/alpine" %}
+{%- set timeout_minutes = common.timeout_minutes %}
+{%- set runner_prefix = "${{ needs.get-label-type.outputs.label-type }}" %}
+{%- set use_container_directive = true %}
 
 {#- On release-candidate tag builds the manylinux builder image is pinned to the
     .ci/docker tree hash (computed at runtime by the get-docker-tag job below) so
@@ -242,15 +234,15 @@ jobs:
   {%- set arch_type = g['arch_type'] %}
   {%- set desired_cuda = g['desired_cuda'] %}
   {%- set first = group[0] %}
-  {#- Job name: keep cpu/cpu-aarch64 names stable; for cuda, include the
-      desired_cuda variant so cu126/cu130/cu132 each get a distinct job. -#}
+  {#- Job name: keep the cpu name stable; for cuda, include the desired_cuda
+      variant so cu126/cu130/cu132 each get a distinct job. -#}
   {%- if desired_cuda == 'cpu' %}
     {%- set job_name = "manywheel-" ~ arch_type ~ "-build" %}
   {%- else %}
     {%- set job_name = "manywheel-" ~ arch_type ~ "-" ~ desired_cuda ~ "-build" %}
   {%- endif %}
   {#- BUILD_NAME_SUFFIX = the part of build_name after "manywheel-py{X_Y}".
-      E.g. "manywheel-py3_10-cuda-aarch64-12_6" -> "-cuda-aarch64-12_6". -#}
+      E.g. "manywheel-py3_10-cuda13_4" -> "-cuda13_4". -#}
   {%- set py_dotless = first['python_version'] | replace('.', '_') %}
   {%- set build_name_suffix = first['build_name'] | replace('manywheel-py' ~ py_dotless, '') %}
   {%- set _ = unified_upload_groups.append({
@@ -384,8 +376,8 @@ jobs:
         'configs': u['configs']}) %}
 {%- endfor %}
 {%- if matrix_standard_configs %}
-  {#- Standard configs built by the manywheel-build matrix (e.g. cpu-aarch64)
-      keep the manywheel-test name. -#}
+  {#- Standard configs built by the manywheel-build matrix keep the
+      manywheel-test name. -#}
   {%- set _ = standard_test_jobs.append({
         'name': 'manywheel-test',
         'needs': ['manywheel-build'],
@@ -403,9 +395,7 @@ jobs:
       matrix:
         include:
         {%- for config in test_job['configs'] %}
-          {%- if "aarch64" in build_environment %}
-          {%- set _runs_on = "l-arm64g3-16-62" %}
-          {%- elif config['gpu_arch_type'] == "cuda" %}
+          {%- if config['gpu_arch_type'] == "cuda" %}
           {%- set _runs_on = "l-x86iavx512-29-115-t4" %}
           {%- else %}
           {%- set _runs_on = "l-x86iavx512-16-128" %}
@@ -515,8 +505,8 @@ jobs:
     its own build and test are done.
 
     The groups below partition build_configs exactly: unified groups (cpu /
-    cuda per version), the standard configs built by the manywheel-build matrix
-    (e.g. cpu-aarch64), then rocm and xpu. -#}
+    cuda per version), the standard configs built by the manywheel-build
+    matrix, then rocm and xpu. -#}
 {%- set upload_jobs = [] %}
 {%- for u in unified_upload_groups %}
   {%- set _ = upload_jobs.append({

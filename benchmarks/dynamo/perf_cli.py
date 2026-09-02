@@ -60,10 +60,6 @@ WORKFLOWS = {
         "name": "inductor-perf-nightly-x86-zen",
         "id": 167573808,
     },
-    "aarch64": {
-        "name": "inductor-perf-nightly-aarch64",
-        "id": 109196799,
-    },
     "macos": {
         "name": "inductor-perf-nightly-macos",
         "id": 117199085,

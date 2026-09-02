@@ -41,6 +41,7 @@ jobs:
         # setup-linux's `sudo chmod` fails. Provide /usr/bin/sudo as a passthrough
         # that drops leading sudo options and runs the command directly.
         run: |
+          # shellcheck disable=SC2016
           printf '%s\n' \
             '#!/bin/sh' \
             'while [ $# -gt 0 ]; do' \
@@ -104,7 +105,8 @@ jobs:
           # Put the selected interpreter's bin dir on PATH so the pip-installed
           # cmake (and python/pip) are found by triton's setup.py. In the original
           # docker-exec env this was on PATH; in container: mode it is not.
-          export PATH="$(dirname "${PYTHON_EXECUTABLE}"):${PATH}"
+          PYTHON_BIN_DIR="$(dirname "${PYTHON_EXECUTABLE}")"
+          export PATH="${PYTHON_BIN_DIR}:${PATH}"
 
           RELEASE=""
           WITH_CLANG_LDD=""
@@ -116,7 +118,7 @@ jobs:
           "${PYTHON_EXECUTABLE}" -m pip install -U setuptools==78.1.0 pybind11==3.0.1 auditwheel wheel
           "${PYTHON_EXECUTABLE}" -m pip install -U cmake --force-reinstall
 
-          if [[ ("${{ inputs.device }}" == "cuda" || "${{ inputs.device }}" == "rocm" || "${{ inputs.device }}" == "aarch64" ) ]]; then
+          if [[ ("${{ inputs.device }}" == "cuda" || "${{ inputs.device }}" == "rocm") ]]; then
             # With this install, it gets clang 16.0.6.
             dnf install clang lld -y
             WITH_CLANG_LDD="--with-clang-ldd"
