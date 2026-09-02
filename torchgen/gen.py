@@ -560,7 +560,7 @@ def static_dispatch(
     subexprs: list[str] = []
     if tensor_opts is not None:
         subexprs.append(
-            "DispatchKeySet(c10::computeDispatchKey(dtype, layout, device))"
+            "DispatchKeySet(c10::computeDispatchKey(layout, device))"
         )
     if tensor_args != "":
         subexprs.append(f"c10::detail::multi_dispatch_key_set({tensor_args})")
@@ -994,7 +994,7 @@ class ComputeBackendSelect:
         sig: NativeSignature | DispatcherSignature
         sig = dispatcher_sig
         dispatcher_exprs = dispatcher_sig.exprs()
-        dispatch_key = "c10::computeDispatchKey(dtype, layout, device)"
+        dispatch_key = "c10::computeDispatchKey(layout, device)"
 
         if self.target is Target.DEFINITION:
             # I don't think there's actually a good reason to generate
