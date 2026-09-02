@@ -14,8 +14,8 @@
 
 namespace at::native { namespace {
 
-// fixes segfaults for GCC >= 12 on some AArch64 cpus https://github.com/pytorch/pytorch/issues/157626
-#if defined(__GNUC__) && __GNUC__ >= 12 && defined(__aarch64__)
+// fixes segfaults for GCC on some AArch64 cpus https://github.com/pytorch/pytorch/issues/157626
+#if !defined(__clang__) && defined(__GNUC__) && defined(__aarch64__)
 #pragma GCC push_options
 #pragma GCC optimize ("no-strict-aliasing")
 #endif
@@ -1020,7 +1020,7 @@ struct ApplyGridSample<scalar_t, 2, GridSamplerInterpolation::Bicubic,
   }
 };
 
-#if defined(__GNUC__) && __GNUC__ >= 12 && defined(__aarch64__)
+#if !defined(__clang__) && defined(__GNUC__) && defined(__aarch64__)
 #pragma GCC pop_options
 #endif
 

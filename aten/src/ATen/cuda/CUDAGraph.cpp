@@ -23,16 +23,6 @@ static std::mutex _currently_capturing_graphs_mutex;
 static ska::flat_hash_map<CaptureId_t, CUDAGraph*> _currently_capturing_graphs;
 
 
-#if defined(USE_ROCM)
-// Returns true when at least one CUDAGraph capture is currently active in this
-// process. Uses the same mutex-protected capture map as capture lifecycle
-// bookkeeping.
-bool is_graph_capture_active() {
-  std::unique_lock<std::mutex> lock(_currently_capturing_graphs_mutex);
-  return !_currently_capturing_graphs.empty();
-}
-#endif // defined(USE_ROCM)
-
 CUDAGraph* get_graph_from_capture_id(CaptureId_t capture_id) {
   std::lock_guard<std::mutex> lock(_currently_capturing_graphs_mutex);
   auto it = _currently_capturing_graphs.find(capture_id);

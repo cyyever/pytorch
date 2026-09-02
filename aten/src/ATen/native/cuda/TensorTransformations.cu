@@ -1,9 +1,10 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/TensorTransformations.h>
+#include <ATen/cuda/ApplyGridUtils.cuh>
+#include <ATen/cuda/detail/TensorInfo.cuh>
 
 #include <ATen/Dispatch.h>
 #include <ATen/cuda/detail/IndexUtils.cuh>
-#include <ATen/cuda/CUDAApplyUtils.cuh>
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/macros/Macros.h>
 

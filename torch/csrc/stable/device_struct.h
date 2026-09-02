@@ -64,7 +64,6 @@ class Device {
     validate();
   }
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
   // Defined in device_inl.h to avoid circular dependencies.
   /**
    * @brief Constructs a stable::Device from a string description.
@@ -77,7 +76,6 @@ class Device {
    * Minimum compatible version: PyTorch 2.10.
    */
   /* implicit */ Device(const std::string& device_string);
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
   // Copy and move constructors can be default
   /// \private

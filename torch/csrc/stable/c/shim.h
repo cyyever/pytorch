@@ -16,8 +16,6 @@
 extern "C" {
 #endif
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-
 // Has the same semantic as aoti_torch_call_dispatcher, but takes an
 // additional argument for the extension build version. This is
 // needed for backward compatibility when calling native functions via
@@ -156,12 +154,9 @@ AOTI_TORCH_EXPORT void torch_c10_cuda_free_error_msg(char* error_msg);
 AOTI_TORCH_EXPORT AOTITorchError
 torch_set_requires_grad(AtenTensorHandle tensor, bool requires_grad);
 
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-
 /**
  * The beginning of all shims added in 2.11.0 onwards.
  */
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
 
 // Shims for a few dtypes not already in
 // torch/csrc/inductor/aoti_torch/c/shim.h
@@ -188,12 +183,9 @@ AOTI_TORCH_EXPORT AOTITorchError torch_from_blob(
     void (*deleter)(void* data, void* ctx),
     void* deleter_ctx);
 
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_11_0
-
 /**
  * The beginning of all shims added in 2.12.0 onwards.
  */
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
 
 // Tag getter functions for ABI-stable tag passing.  By hiding these behind
 // functions, the precise enum ordinal is NOT part of the ABI contract.
@@ -223,12 +215,10 @@ AOTI_TORCH_EXPORT AOTITorchError torch_library_def_with_tags(
     const char* schema,
     const int32_t* tags,
     int32_t num_tags);
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
 
 /**
  * The beginning of all shims added in 2.13.0 onwards.
  */
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 
 // Stable corollary to torch::Library method m.set_python_module(...).
 AOTI_TORCH_EXPORT AOTITorchError torch_library_set_python_module(
@@ -286,8 +276,6 @@ AOTI_TORCH_EXPORT AOTITorchError torch_generator_get_device(
     AtenGeneratorHandle generator,
     int32_t* ret_device_type,
     int32_t* ret_device_index);
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 
 /**
  * The beginning of all shims added in 2.14.0 onwards.

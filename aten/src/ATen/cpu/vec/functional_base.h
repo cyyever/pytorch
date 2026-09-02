@@ -52,7 +52,6 @@ struct VecReduceAllSIMD {
   }
 };
 
-#if defined(__GNUC__) && (__GNUC__ > 5)
 #if defined(CPU_CAPABILITY_AVX2)
 template <typename Op>
 struct VecReduceAllSIMD<float, Op> {
@@ -98,7 +97,6 @@ struct VecReduceAllSIMD<float, Op> {
   }
 };
 #endif // defined(CPU_CAPABILITY_AVX512)
-#endif // defined(__GNUC__) && (__GNUC__ > 5)
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
 template <typename Op>

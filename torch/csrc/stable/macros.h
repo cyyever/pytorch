@@ -9,8 +9,6 @@
 
 #include <dlfcn.h>
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-
 // Users of this macro are expected to include cuda_runtime.h
 #define STD_CUDA_CHECK(EXPR)                                             \
   do {                                                                   \
@@ -33,8 +31,6 @@
 
 // Users of this macro are expected to include cuda_runtime.h
 #define STD_CUDA_KERNEL_LAUNCH_CHECK() STD_CUDA_CHECK(cudaGetLastError())
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 HIDDEN_NAMESPACE_BEGIN(torch, stable, detail)
 // Look up a symbol already loaded in the current process. Used to reach
@@ -81,22 +77,12 @@ HIDDEN_NAMESPACE_END(torch, stable, detail)
     return FALLBACK_FUNCTION(__VA_ARGS__);                             \
   })()
 
-// Entry point for dynamic version calls for shims added in 2.13.0. Putting the
-// version expectation in the macro lets us bypass the symbol lookup entirely
-// when the target version already includes the shim and call it directly;
-// otherwise we fall through to the runtime lookup.
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
-// Target version already includes the shim, call it directly.
+// Entry point for dynamic version calls for shims added in 2.13.0. Every
+// supported target version already includes those shims, so this calls them
+// directly and never needs the runtime lookup.
 #define TORCH_DYNAMIC_VERSION_CALL_2_13_0( \
     SHIM_FUNCTION, FALLBACK_FUNCTION, ...) \
   ([&]() { return SHIM_FUNCTION(__VA_ARGS__); })()
-#else
-// Target version predates the shim, try a dynamic lookup.
-#define TORCH_DYNAMIC_VERSION_CALL_2_13_0( \
-    SHIM_FUNCTION, FALLBACK_FUNCTION, ...) \
-  TORCH_DYNAMIC_VERSION_CALL(              \
-      TORCH_VERSION_2_13_0, SHIM_FUNCTION, FALLBACK_FUNCTION, __VA_ARGS__)
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 
 HIDDEN_NAMESPACE_BEGIN(torch, stable, detail)
 [[maybe_unused]] C10_NOINLINE static void throw_exception(

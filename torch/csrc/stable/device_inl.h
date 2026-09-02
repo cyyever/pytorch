@@ -21,8 +21,6 @@ HIDDEN_NAMESPACE_BEGIN(torch, stable)
 using DeviceType = torch::headeronly::DeviceType;
 using DeviceIndex = torch::stable::accelerator::DeviceIndex;
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
-
 inline Device::Device(const std::string& device_string) {
   uint32_t device_type;
   int32_t device_index;
@@ -36,7 +34,5 @@ inline Device::Device(const std::string& device_string) {
 
   *this = Device(dt, di);
 }
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_10_0
 
 HIDDEN_NAMESPACE_END(torch, stable)

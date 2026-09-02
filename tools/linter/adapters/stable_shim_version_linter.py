@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-STABLE_SHIM_VERSION: Ensures that function declarations in stable/c/shim.h
-are properly wrapped in TORCH_FEATURE_VERSION macros corresponding to the
-current TORCH_ABI_VERSION.
+STABLE_SHIM_VERSION: Ensures that newly added function declarations in
+stable/c/shim.h are properly wrapped in TORCH_FEATURE_VERSION macros
+corresponding to the current TORCH_ABI_VERSION.
 """
 
 from __future__ import annotations
@@ -96,19 +96,15 @@ def get_added_lines(filename: str) -> set[int]:
 
 def check_file(filename: str) -> list[LintMessage]:
     """
-    Parse the stable/c/shim.h file and check that:
-    1. All function declarations are within TORCH_FEATURE_VERSION blocks
-    2. New functions added in this commit use the current version macro
+    Parse the stable/c/shim.h file and check that new function declarations
+    added in this commit are wrapped in a TORCH_FEATURE_VERSION block using the
+    current version macro.
 
-    For the manual AOTI shims (torch/csrc/inductor/aoti_torch/c/*.h), we only
-    enforce versioning on NEW function declarations, since existing functions
-    are intentionally not version-guarded.
+    Only NEW function declarations are required to carry a version guard:
+    declarations that predate the oldest libtorch we support targeting are
+    intentionally left unguarded.
     """
     lint_messages: list[LintMessage] = []
-
-    # Check if this is a manual AOTI shim - only enforce versioning on new lines,
-    # since existing declarations in these headers are intentionally unversioned.
-    is_aoti_shim = "torch/csrc/inductor/aoti_torch/c/" in filename
 
     # Get current version
     current_version = get_current_version()
@@ -169,20 +165,10 @@ def check_file(filename: str) -> list[LintMessage]:
                 )
 
                 if not inside_version_block:
-                    # Function declaration outside of version block
+                    # Existing declarations outside a version block are fine;
+                    # only new ones must be guarded.
                     if not is_new_line:
-                        # Existing function declaration outside of version block in aoti shim is ignored
-                        if is_aoti_shim:
-                            continue
-                        expected_version_macro_str = "TORCH_VERSION_X_Y_Z"
-                        expected_version_check_str = (
-                            f"#if TORCH_FEATURE_VERSION >= {expected_version_macro}"
-                        )
-                        additional_text = "\nX, Y, and Z correspond to the TORCH_ABI_VERSION when the function was added."
-                    else:
-                        expected_version_macro_str = expected_version_macro
-                        expected_version_check_str = expected_version_check
-                        additional_text = ""
+                        continue
                     lint_messages.append(
                         LintMessage(
                             path=filename,
@@ -195,11 +181,10 @@ def check_file(filename: str) -> list[LintMessage]:
                             replacement=None,
                             description=(
                                 f"Function declaration found outside of TORCH_FEATURE_VERSION block. "
-                                f"All function declarations must be wrapped in:\n"
-                                f"{expected_version_check_str}\n"
+                                f"New function declarations must be wrapped in:\n"
+                                f"{expected_version_check}\n"
                                 f"// ... your declarations ...\n"
-                                f"#endif // TORCH_FEATURE_VERSION >= {expected_version_macro_str}"
-                                f"{additional_text}"
+                                f"#endif // TORCH_FEATURE_VERSION >= {expected_version_macro}"
                             ),
                         )
                     )

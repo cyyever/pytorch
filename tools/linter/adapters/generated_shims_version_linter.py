@@ -31,7 +31,18 @@ from tools.linter.adapters._stable_shim_utils import (
 
 LINTER_CODE = "GENERATED_SHIMS_VERSION"
 
-_TORCH_VERSION_PATTERN = re.compile(r"^TORCH_VERSION_\d+_\d+_\d+$")
+_TORCH_VERSION_PATTERN = re.compile(r"^TORCH_VERSION_(\d+)_(\d+)_(\d+)$")
+
+# Kept in sync with _MIN_SUPPORTED_TORCH_VERSION in torchgen/gen_aoti_c_shim.py.
+_MIN_SUPPORTED_TORCH_VERSION = (2, 14, 0)
+
+
+def _is_below_min_supported(since: str | None) -> bool:
+    """A "since" older than the oldest libtorch we support targeting is dead weight."""
+    match = _TORCH_VERSION_PATTERN.match(since) if since else None
+    if match is None:
+        return False
+    return tuple(int(g) for g in match.groups()) < _MIN_SUPPORTED_TORCH_VERSION
 
 # {op_name: {op_version: (since_value_or_None, lineno)}}
 # op_version == 1 represents the base op (top-level "since" in the per-op dict);
@@ -178,6 +189,10 @@ def _check_one_dict(
                     )
             else:
                 prev_since, _ = prev
+                if since is None and _is_below_min_supported(prev_since):
+                    # The gate would always be true, so codegen no longer emits
+                    # it and the annotation is free to go.
+                    continue
                 if since != prev_since:
                     messages.append(
                         _msg(

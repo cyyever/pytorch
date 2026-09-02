@@ -68,10 +68,8 @@ AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float8_e5m2();
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float8_e4m3fn();
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float8_e5m2fnuz();
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float8_e4m3fnuz();
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float8_e8m0fnu();
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float4_e2m1fn_x2();
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_12_0
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_bfloat16();
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float16();
 AOTI_TORCH_EXPORT int32_t aoti_torch_dtype_float32();
@@ -389,7 +387,6 @@ AOTI_TORCH_EXPORT AOTITorchError aoti_torch__mm_plus_mm_out(
     AtenTensorHandle b,
     AtenTensorHandle c,
     AtenTensorHandle d);
-
 
 // This will soon be deprecated after ao_quantization is complete.
 // Please refrain from using this or increasing callsites.

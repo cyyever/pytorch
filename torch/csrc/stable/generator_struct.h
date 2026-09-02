@@ -11,8 +11,6 @@
 
 HIDDEN_NAMESPACE_BEGIN(torch, stable)
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
-
 // The torch::stable::Generator class is a highlevel C++ wrapper around the C
 // shim Generator APIs, modeled after at::Generator (see ATen/core/Generator.h).
 //
@@ -82,7 +80,5 @@ class Generator {
    */
   Device device() const;
 };
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 
 HIDDEN_NAMESPACE_END(torch, stable)

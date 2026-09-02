@@ -256,7 +256,7 @@ We provide a `TORCH_ABI_VERSION` macro in `torch/headeronly/version.h` of the fo
 [MAJ   ][ MIN  ][PATCH ][                 ABI TAG              ]
 ```
 
-In the present phase of development, APIs in the C-shim will be versioned based on major.minor.patch release that they are first introduced in, with 2.10 being the first release where this will be enforced. The ABI tag is reserved for future use.
+In the present phase of development, APIs in the C-shim will be versioned based on major.minor.patch release that they are first introduced in, with 2.14 being the oldest release that can still be targeted. The ABI tag is reserved for future use.
 
 Extensions can select the minimum abi version to be compatible with using:
 
@@ -269,6 +269,6 @@ before including any stable headers or by passing the equivalent `-D` option to 
 You cannot target a newer ABI version than the libtorch you are compiling against. Setting `TORCH_TARGET_VERSION` above the torch version (`TORCH_ABI_VERSION`) you are
 building with will result in a compile error.
 
-The above ensures that if a user defines `TORCH_TARGET_VERSION` to be 0x0209000000000000 (2.9) and attempts to use a C shim API `foo` that was introduced in version 2.10, a compilation error will be raised. Similarly, the C++ wrapper APIs in `torch/csrc/stable` are compatible with older libtorch binaries up to the TORCH_ABI_VERSION they are exposed in and forward compatible with newer libtorch binaries.
+The above ensures that if a user defines `TORCH_TARGET_VERSION` to be 0x020e000000000000 (2.14) and attempts to use a C shim API `foo` that was introduced in a later version, a compilation error will be raised. Similarly, the C++ wrapper APIs in `torch/csrc/stable` are compatible with older libtorch binaries up to the TORCH_ABI_VERSION they are exposed in and forward compatible with newer libtorch binaries.
 
 C++ APIs in ``torch/csrc/stable`` or ``torch/headeronly`` are subject to the same FC/BC policy as the rest of PyTorch (see [policy](https://github.com/pytorch/pytorch/wiki/PyTorch's-Python-Frontend-Backward-and-Forward-Compatibility-Policy)). LibTorch ABI stable C shim APIs are guaranteed to have at least a two year compatibility window.

@@ -13,8 +13,6 @@
 
 HIDDEN_NAMESPACE_BEGIN(torch, stable)
 
-#if TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
-
 inline Device Generator::device() const {
   int32_t device_type;
   int32_t device_index;
@@ -24,7 +22,5 @@ inline Device Generator::device() const {
       torch::stable::detail::from(device_type));
   return Device(extension_device_type, static_cast<DeviceIndex>(device_index));
 }
-
-#endif // TORCH_FEATURE_VERSION >= TORCH_VERSION_2_13_0
 
 HIDDEN_NAMESPACE_END(torch, stable)

@@ -14,7 +14,7 @@
 #include <torch/csrc/inductor/aoti_torch/c/shim.h>
 #include <torch/headeronly/util/shim_utils.h>
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #define AOTI_NOINLINE __attribute__((noinline))
 #else
 #define AOTI_NOINLINE
