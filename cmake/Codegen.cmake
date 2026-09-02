@@ -352,16 +352,10 @@ if(INTERN_BUILD_ATEN_OPS)
         string(APPEND EXTRA_FLAGS " -D_GLIBCXX_PARALLEL")
       endif()
 
-      # Disable certain warnings for GCC-9.X
-      if(CMAKE_COMPILER_IS_GNUCXX)
-        if(("${NAME}" STREQUAL "native/cpu/GridSamplerKernel.cpp") AND ("${CPU_CAPABILITY}" STREQUAL "DEFAULT"))
-          # See https://github.com/pytorch/pytorch/issues/38855
-          set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-uninitialized")
-        endif()
-        if("${NAME}" STREQUAL "native/quantized/cpu/kernels/QuantizedOpKernels.cpp")
-          # See https://github.com/pytorch/pytorch/issues/38854
-          set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-deprecated-copy")
-        endif()
+      if(CMAKE_COMPILER_IS_GNUCXX AND ("${NAME}" STREQUAL "native/cpu/GridSamplerKernel.cpp")
+         AND ("${CPU_CAPABILITY}" STREQUAL "DEFAULT"))
+        # See https://github.com/pytorch/pytorch/issues/38855
+        set(EXTRA_FLAGS "${EXTRA_FLAGS} -Wno-uninitialized")
       endif()
       set_source_files_properties(${NEW_IMPL} PROPERTIES COMPILE_FLAGS "${FLAGS} ${EXTRA_FLAGS}")
     endfunction()

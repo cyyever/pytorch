@@ -815,8 +815,6 @@ endif()
 
 append_cxx_flag_if_supported("-Wno-error=old-style-cast" CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-Wconstant-conversion" CMAKE_CXX_FLAGS)
-append_cxx_flag_if_supported("-Wno-aligned-allocation-unavailable"
-                             CMAKE_CXX_FLAGS)
 append_cxx_flag_if_supported("-Qunused-arguments" CMAKE_CXX_FLAGS)
 
 append_cxx_flag_if_supported("-faligned-new" CMAKE_CXX_FLAGS)
@@ -882,7 +880,6 @@ if(APPLE)
   append_cxx_flag_if_supported("-Wno-missing-braces" CMAKE_CXX_FLAGS)
 endif()
 
-append_cxx_flag_if_supported("-Wno-stringop-overflow" CMAKE_CXX_FLAGS)
 
 if(NOT APPLE AND UNIX)
   list(APPEND Caffe2_DEPENDENCY_LIBS dl)
