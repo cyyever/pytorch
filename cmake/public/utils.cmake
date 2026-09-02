@@ -371,9 +371,6 @@ function(torch_compile_options libname)
       # NS: One can not compile CUDA code with extra-semi flag as nvcc generates code like
       # namespace MemoryOps_cu_d8602b38_109889 __attribute__((visibility("hidden")))  { };
       list(APPEND private_compile_options -Wextra-semi)
-    else()
-      # NVCC inserts whitespace into literal operators, triggering a spurious Clang warning.
-      list(APPEND private_compile_options -Wno-deprecated-literal-operator)
     endif()
     list(APPEND private_compile_options -Wmove)
   endif()
