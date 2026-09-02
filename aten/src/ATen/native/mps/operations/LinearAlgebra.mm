@@ -621,12 +621,6 @@ bool use_metal_mm(const Tensor& self, const Tensor& other, const Tensor& output)
   if (always_use_metal || c10::isIntegralType(self.scalar_type(), true)) {
     return true;
   }
-  // MPSGraph mis-writes a non-contiguous output before macOS 26; the metal
-  // kernels honor the output strides.
-  static const bool is_macos_26_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_26_0);
-  if (!output.is_contiguous() && !is_macos_26_0_or_newer) {
-    return true;
-  }
   // An output with a storage offset is gathered into a temporary that the
   // graph writes and nothing scatters back; the metal kernels honor the offset.
   if (needsGather(output)) {
@@ -1582,12 +1576,6 @@ static Tensor& bmm_out_mps_impl(const Tensor& batch1, const Tensor& batch2, Tens
     return do_metal_bmm(batch1, batch2, result);
   }
 
-  // MPSGraph mis-writes a non-contiguous output before macOS 26; the metal
-  // kernel honors the output strides.
-  static const bool is_macos_26_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_26_0);
-  if (!result.is_contiguous() && !is_macos_26_0_or_newer) {
-    return do_metal_bmm(batch1, batch2, result);
-  }
   // Same crack as use_metal_mm: an output with a storage offset is gathered
   // into a temporary that nothing scatters back.
   if (needsGather(result)) {
