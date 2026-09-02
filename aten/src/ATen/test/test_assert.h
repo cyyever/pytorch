@@ -12,7 +12,7 @@ static inline void barf(const char *fmt, ...) {
 }
 
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #define AT_EXPECT(x, y) (__builtin_expect((x),(y)))
 #else
 #define AT_EXPECT(x, y) (x)

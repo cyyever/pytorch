@@ -1127,8 +1127,7 @@ class LOBPCG:
                 BU_norm = torch.linalg.vector_norm(BU)
                 R = UBU - torch.eye(UBU.shape[-1], device=UBU.device, dtype=UBU.dtype)
                 R_norm = torch.linalg.vector_norm(R)
-                # https://github.com/pytorch/pytorch/issues/33810 workaround:
-                rerr = float(R_norm) * float(BU_norm * U_norm) ** -1
+                rerr = float(R_norm) / float(BU_norm * U_norm)
                 vkey = f"ortho_UBUmI_rerr[{i}, {j}]"
                 self.fvars[vkey] = rerr
                 if rerr < tau_ortho:
@@ -1136,7 +1135,7 @@ class LOBPCG:
             VBU = mm(V.mT, BU)
             VBU_norm = torch.linalg.vector_norm(VBU)
             U_norm = torch.linalg.vector_norm(U)
-            rerr = float(VBU_norm) * float(BV_norm * U_norm) ** -1
+            rerr = float(VBU_norm) / float(BV_norm * U_norm)
             vkey = f"ortho_VBU_rerr[{i}]"
             self.fvars[vkey] = rerr
             if rerr < tau_ortho:

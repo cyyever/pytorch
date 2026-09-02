@@ -67,17 +67,6 @@ Alternatively, turn on *all* flows with the “Flow events” dropdown at the to
 
 ## Working around CUDA Graph profiling issues
 
-When CUDA graphs are enabled, some CUDA configurations (driver version under 525.85.12 or CUDA < 12)  can encounter issues between the profiling tools and CUDA graphs. To fix these issues, add an empty profiling context at the top of your program:
-
-```python
-
-    import torch
-
-    torch.profiler._utils._init_for_cuda_graphs()
-
-    # ... rest of program
-```
-
 ## Understanding compilation time
 
 To understand why compilation is taking a long time, you can profile the first invocation of a torch.compile-ed program. Keep in mind that profile traces of compilations can be distorted more than typical profiling, because compilation workloads can be quite different from typical PyTorch workloads. In some cases, trace files may also be quite large. Traces > 1GB can be difficult to open with the chrome tracing tool.

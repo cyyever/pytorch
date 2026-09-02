@@ -149,15 +149,12 @@ float reduce(vec::VectorizedN<float, kF32RegistersPerIteration>& x) {
 // BFDOT. Deferring that for now to get the NEON/ASIMD BFDOT path
 // working.
 #if __ARM_FEATURE_BF16_VECTOR_ARITHMETIC
-#if defined(__aarch64__) && defined(__clang__) && __clang_major__ > 15
-// https://godbolt.org/z/z8P4Yncra
+// clang: https://godbolt.org/z/z8P4Yncra  gcc: https://godbolt.org/z/cdGG7vn8o
+#if defined(__aarch64__)
 #define COMPILER_SUPPORTS_BF16_TARGET 1
-#elif defined(__aarch64__) && !defined(__clang__) && defined(__GNUC__)
-// https://godbolt.org/z/cdGG7vn8o
-#define COMPILER_SUPPORTS_BF16_TARGET 1
-#else // defined(__aarch64__) && defined(__clang__) && __clang_major__ > 15
+#else // defined(__aarch64__)
 #define COMPILER_SUPPORTS_BF16_TARGET 0
-#endif // defined(__aarch64__) && defined(__clang__) && __clang_major__ > 15
+#endif // defined(__aarch64__)
 #else // __ARM_FEATURE_BF16_VECTOR_ARITHMETIC
 #define COMPILER_SUPPORTS_BF16_TARGET 0
 #endif // __ARM_FEATURE_BF16_VECTOR_ARITHMETIC

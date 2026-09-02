@@ -338,8 +338,9 @@ ScalarType numpy_dtype_to_aten(int dtype) {
     case NPY_BOOL:
       return kBool;
     default:
-      // Workaround: MSVC does not support two switch cases that have the same
-      // value
+      // NPY_INT32 and NPY_INT64 are aliases whose values coincide with one of
+      // the cases above depending on the platform, so they cannot be listed as
+      // cases of their own.
       if (dtype == NPY_INT || dtype == NPY_INT32) {
         // To cover all cases we must use NPY_INT because
         // NPY_INT32 is an alias which maybe equal to:
@@ -352,8 +353,7 @@ ScalarType numpy_dtype_to_aten(int dtype) {
         // - NPY_LONGLONG, when sizeof(long) = 4 and sizeof(long long) = 8
         return kLong;
       } else {
-        break; // break as if this is one of the cases above because this is
-               // only a workaround
+        break; // fall through to the unsupported-dtype error below
       }
   }
   auto pytype = THPObjectPtr(PyArray_TypeObjectFromType(dtype));
