@@ -128,7 +128,6 @@ inline bool pinned_memory_or_default(std::optional<bool> pinned_memory) {
 /// resolution is done before template resolution, our problem is solved.
 
 DispatchKey computeDispatchKey(
-    std::optional<ScalarType> dtype,
     std::optional<Layout> layout,
     std::optional<Device> device);
 
@@ -435,8 +434,7 @@ struct C10_API TensorOptions {
   // the most part, this just means that this function never returns an
   // Autograd key)
   DispatchKey computeDispatchKey() const {
-    return c10::computeDispatchKey(
-        optTypeMetaToScalarType(dtype_opt()), layout_opt(), device_opt());
+    return c10::computeDispatchKey(layout_opt(), device_opt());
   }
 
  private:
@@ -619,7 +617,6 @@ inline std::string toString(const TensorOptions& options) {
 // This is intended to be a centralized location by which we can determine
 // what an appropriate DispatchKey for a tensor is.
 inline DispatchKey computeDispatchKey(
-    std::optional<ScalarType> /*dtype*/,
     std::optional<Layout> layout,
     std::optional<Device> device) {
   const auto layout_ = layout_or_default(layout);
