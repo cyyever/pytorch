@@ -63,8 +63,8 @@ fi
 # (a conda env or a venv), not provided by conda. Detect MKL directly rather
 # than guessing from the presence of conda.
 if ! python -m pip show mkl-static >/dev/null 2>&1; then
-  # No MKL (e.g. aarch64, or ROCm cross compilation on intel build
-  # machines that later run on amd). Enable MKLDNN, except for ROCm where we
+  # No MKL (e.g. ROCm cross compilation on intel build machines that later
+  # run on amd). Enable MKLDNN, except for ROCm where we
   # deliberately keep some non-mkldnn builds working.
   if [[ "$BUILD_ENVIRONMENT" != *rocm* ]]; then
     export USE_MKLDNN=1
@@ -79,12 +79,6 @@ else
   # hints are needed.
   CMAKE_PREFIX_PATH="$(python -c 'import sys; print(sys.prefix)')"
   export CMAKE_PREFIX_PATH
-fi
-
-if [[ "$BUILD_ENVIRONMENT" == *aarch64* ]]; then
-  export USE_MKLDNN=1
-  export USE_MKLDNN_ACL=1
-  export ACL_ROOT_DIR=/acl
 fi
 
 # Use special scripts for Android builds

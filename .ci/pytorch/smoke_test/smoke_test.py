@@ -356,7 +356,6 @@ def smoke_test_cuda(
         and target_os
         in [
             "linux",
-            "linux-aarch64",
             "macos-arm64",
             "darwin",
         ]

@@ -39,8 +39,7 @@ from pathlib import Path
 # link against libtorch_cuda.so).
 CUDA_BUILD_ENV_STATIC: dict[str, str] = {
     # USE_CUDA=1 is also what repair_wheel.py reads to decide CUDA RPATHs
-    # and to bundle NVPL on aarch64 -- keep it explicit even though CMake
-    # would auto-detect.
+    # -- keep it explicit even though CMake would auto-detect.
     "USE_CUDA": "1",
     "NCCL_ROOT_DIR": "/usr/local/cuda",
     "CUDNN_ROOT_DIR": "/usr/local/cuda",
@@ -71,7 +70,6 @@ CUDA_BUILD_ENV_DEFAULTS: dict[str, str] = {
 TORCH_CUDA_ARCH_LIST_TABLE: dict[str, dict[str, set[int]]] = {
     "13.4": {
         "x86_64": {75, 80, 86, 90, 100, 120},
-        "aarch64": {80, 90, 100, 110, 120},
     },
 }
 
@@ -102,8 +100,8 @@ def _ptx_arches() -> set[int]:
 def torch_cuda_arch_list(cuda_version: str, arch: str) -> str:
     """Format TORCH_CUDA_ARCH_LIST for the wheel build (";"-separated).
 
-    Returns e.g. "8.0;9.0;10.0;11.0;12.0+PTX" for cuda 13.x aarch64 on
-    nightly builds; release/RC builds omit the +PTX suffix (see _ptx_arches()).
+    Returns e.g. "7.5;8.0;8.6;9.0;10.0;12.0+PTX" for cuda 13.x on nightly
+    builds; release/RC builds omit the +PTX suffix (see _ptx_arches()).
 
     CUDA 13.x dropped sm_50/60/70, so we must NOT leave this empty --
     CMake's defaults still include compute_50 which nvcc 13 rejects with
@@ -210,7 +208,6 @@ def discover_rocm_home() -> str:
 
 PLATFORM_TAGS: dict[str, str] = {
     "x86_64": "manylinux_2_28_x86_64",
-    "aarch64": "manylinux_2_28_aarch64",
 }
 
 
@@ -267,12 +264,7 @@ def ensure_pip_on_path() -> None:
 
 
 def cuda_version_from_env() -> str:
-    """Match the original build_cuda.sh precedence: DESIRED_CUDA wins.
-
-    GPU_ARCH_VERSION on aarch64 jobs comes through as e.g. "12.6-aarch64"
-    which install_cuda.sh rejects, so we strip the "-aarch64" suffix when
-    falling back to it.
-    """
+    """Match the original build_cuda.sh precedence: DESIRED_CUDA wins."""
     desired = os.environ.get("DESIRED_CUDA", "")
     # "12.6" → keep; "cu126" → "12.6"
     if "." in desired and desired.replace(".", "").isdigit():
@@ -280,8 +272,7 @@ def cuda_version_from_env() -> str:
     if len(desired) == 5 and desired.startswith("cu") and desired[2:].isdigit():
         return f"{desired[2:4]}.{desired[4]}"
 
-    arch_version = os.environ.get("GPU_ARCH_VERSION", "")
-    return arch_version.removesuffix("-aarch64")
+    return os.environ.get("GPU_ARCH_VERSION", "")
 
 
 def install_cuda_toolkit(cuda_version: str) -> None:
@@ -440,7 +431,7 @@ def main() -> None:
 
     ensure_pip_on_path()
 
-    # MKL: x86_64 only; aarch64 uses OpenBLAS/ACL from the builder image.
+    # MKL: x86_64 only.
     if arch == "x86_64" and not Path("/opt/intel/lib").is_dir():
         print("MKL not found, installing...")
         subprocess.run(
@@ -448,7 +439,7 @@ def main() -> None:
             check=True,
         )
 
-    if gpu_arch_type in ("cuda", "cuda-aarch64"):
+    if gpu_arch_type == "cuda":
         cuda_version = cuda_version_from_env()
         if not cuda_version:
             sys.exit(
@@ -457,11 +448,7 @@ def main() -> None:
         setup_cuda(cuda_version)
         env_out.update(cuda_build_env(cuda_version, arch))
         print(f"CUDA {cuda_version} environment configured")
-    elif gpu_arch_type in (
-        "cpu",
-        "cpu-aarch64",
-        "cpu-cxx11-abi",
-    ):
+    elif gpu_arch_type in ("cpu", "cpu-cxx11-abi"):
         cleanup_cuda_for_cpu_build()
         env_out.update(CPU_BUILD_ENV)
         print("CPU environment configured")

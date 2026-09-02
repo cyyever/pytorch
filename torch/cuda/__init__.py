@@ -356,7 +356,6 @@ DEVICE_REQUIREMENT: dict[int, _CompatSet | _CompatInterval] = {
 PYTORCH_RELEASES_CODE_CC: dict[str, dict[str, set[int]]] = {
     "13.4": {
         "x86_64": {75, 80, 86, 90, 100, 120},
-        "aarch64": {80, 90, 100, 110, 120},
     },
 }
 
@@ -365,11 +364,6 @@ def _device_requirement(code_cc):
     if torch.version.cuda is None:
         return None
     return DEVICE_REQUIREMENT.get(code_cc)
-
-
-def _host_arch_key() -> str:
-    machine = platform.machine().lower()
-    return "aarch64" if machine == "aarch64" else "x86_64"
 
 
 def _code_compatible_with_device(device_cc: int, code_cc: int):
@@ -387,10 +381,9 @@ def _code_compatible_with_device(device_cc: int, code_cc: int):
 def _warn_unsupported_code(device_index: int, device_cc: int, code_ccs: list[int]):
     name = get_device_name(device_index)
 
-    arch = _host_arch_key()
     compatible_releases: list[str] = []
     for cuda, by_arch in PYTORCH_RELEASES_CODE_CC.items():
-        build_ccs = by_arch.get(arch, set())
+        build_ccs = by_arch.get("x86_64", set())
         if any(_code_compatible_with_device(device_cc, cc) for cc in build_ccs):
             compatible_releases.append(cuda)
 

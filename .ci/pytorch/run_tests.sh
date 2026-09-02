@@ -88,11 +88,9 @@ pushd /
 echo "Smoke testing imports"
 python -c 'import torch'
 
-# Test that MKL is there (x86_64 only; aarch64 uses OpenBLAS/ACL)
+# Test that MKL is there
 if [[ "$(uname)" == 'Darwin' && "$package_type" == *wheel ]]; then
     echo 'Not checking for MKL on Darwin wheel packages'
-elif [[ "$(uname -m)" == 'aarch64' ]]; then
-    echo 'Not checking for MKL on aarch64 (uses OpenBLAS/ACL instead)'
 else
     echo "Checking that MKL is available"
     python -c 'import torch; exit(0 if torch.backends.mkl.is_available() else 1)'

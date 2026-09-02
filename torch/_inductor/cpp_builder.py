@@ -28,7 +28,6 @@ from torch._inductor import config, exc
 from torch._inductor.cpu_vec_isa import invalid_vec_isa, VecISA
 from torch._inductor.runtime.runtime_utils import cache_dir
 from torch.torch_version import TorchVersion
-from torch.utils._ordered_set import OrderedSet
 
 
 # Windows need setup a temp dir to store .obj files.
@@ -622,31 +621,7 @@ def _get_inductor_debug_symbol_cflags() -> tuple[list[str], list[str]]:
 
 
 @functools.cache
-def _get_linux_aarch64_cpu_flags() -> OrderedSet[str]:
-    flags: OrderedSet[str] = OrderedSet()
-
-    if platform.machine() not in ("aarch64", "arm64"):
-        return flags
-
-    if not sys.platform.startswith("linux"):
-        return flags
-
-    return flags
-
-
-@functools.cache
-def _get_linux_aarch64_arch_flag(cpp_compiler: str) -> str:
-    flags = _get_linux_aarch64_cpu_flags()
-
-    if _is_gcc(cpp_compiler) and _is_gcc_version_less_than(cpp_compiler, 13):
-        if OrderedSet(["bf16"]).issubset(flags):
-            return "march=armv8.6-a+bf16"
-
-    return "march=native"
-
-
-def _get_cpu_arch_cflags(cpp_compiler: str) -> list[str]:
-
+def _get_cpu_arch_cflags() -> list[str]:
     march = config.cpp.march
     if march == "":
         return []
@@ -656,13 +631,7 @@ def _get_cpu_arch_cflags(cpp_compiler: str) -> list[str]:
     if sys.platform == "darwin" and march is None:
         return []
 
-    machine = platform.machine()
-    if march is None:
-        if machine in ("aarch64", "arm64"):
-            return [_get_linux_aarch64_arch_flag(cpp_compiler)]
-        return ["march=native"]
-
-    return [f"march={march}"]
+    return ["march=native"] if march is None else [f"march={march}"]
 
 
 def _get_optimization_cflags(
@@ -708,7 +677,7 @@ def _get_optimization_cflags(
     # on macos, unknown argument: '-fno-tree-loop-vectorize'
     if sys.platform != "darwin" and _is_gcc(cpp_compiler):
         cflags.append("fno-tree-loop-vectorize")
-    cflags += _get_cpu_arch_cflags(cpp_compiler)
+    cflags += _get_cpu_arch_cflags()
 
     if config.aot_inductor.enable_lto and _is_clang(cpp_compiler):
         cflags.append("flto=thin")

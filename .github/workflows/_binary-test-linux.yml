@@ -6,7 +6,7 @@ name: linux-binary-test
 # Two execution modes selected by `use_container_directive`:
 # - true (default): launch the test container via GHA's native `container:`
 #   directive — checkout, env-setup, and the .ci/* test scripts all run
-#   directly inside it. Used by x86 / aarch64 / cuda runners.
+#   directly inside it. Used by x86 / cuda runners.
 # - false: run on the bare runner and spawn the test container with
 #   `docker run` from a step. Used by self-hosted runners that lack a host-level
 #   docker CLI compatible with GHA's container directive.
@@ -179,6 +179,7 @@ jobs:
           ln -sf "${GITHUB_WORKSPACE}" /pytorch
           ln -sf "${PYTORCH_FINAL_PACKAGE_DIR}" /final_pkgs
           bash .ci/pytorch/binary_linux_test.sh
+          # shellcheck disable=SC1090
           source "${BINARY_ENV_FILE}"
           bash -x /run.sh
 

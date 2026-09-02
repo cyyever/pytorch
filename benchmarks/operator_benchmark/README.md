@@ -155,7 +155,6 @@ The [operator_benchmark.yml](../../.github/workflows/operator_benchmark.yml) wor
 
 **Devices:**
 - x86_64: `linux.12xlarge` (Intel/AMD CPUs)
-- aarch64: `linux.arm64.m8g.4xlarge` (ARM64 CPUs)
 
 **Operators Tracked:** All operators in the `pt/` directory with tag: `short`
 

@@ -44,16 +44,6 @@ jobs:
       runs_on: ${{ needs.select-runner.outputs.x86 }}
       docker_image: "pytorch/manylinux2_28-builder:cpu"
 
-  build-wheel-aarch64:
-    if: github.repository_owner == 'pytorch'
-    needs: select-runner
-    uses: ./.github/workflows/_build-triton-wheel-linux.yml
-    secrets: inherit
-    with:
-      device: "aarch64"
-      runs_on: ${{ needs.select-runner.outputs.arm64 }}
-      docker_image: "pytorch/manylinux2_28_aarch64-builder:cpu-aarch64"
-
   build-wheel-rocm:
     if: github.repository_owner == 'pytorch'
     needs: select-runner
@@ -75,7 +65,7 @@ jobs:
       docker_image: "pytorch/manylinux2_28-builder:cpu"
 
   upload-wheel-triton:
-    needs: [build-wheel-cuda, build-wheel-aarch64]
+    needs: [build-wheel-cuda]
     permissions:
       id-token: write
       contents: read
@@ -83,7 +73,6 @@ jobs:
     secrets: inherit
     with:
       artifact_pattern: triton-wheel-*-cuda-manylinux_2_28_x86_64
-      extra_artifact_pattern: triton-wheel-*-aarch64-manylinux_2_28_x86_64
 
   upload-wheel-rocm:
     needs: build-wheel-rocm
