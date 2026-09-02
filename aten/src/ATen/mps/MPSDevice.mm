@@ -7,6 +7,16 @@
 
 namespace at::mps {
 
+namespace {
+bool is_os_version_at_least(int major, int minor) {
+  @autoreleasepool {
+    NSProcessInfo* processInfo = [[NSProcessInfo new] autorelease];
+    return
+        [processInfo isOperatingSystemAtLeastVersion:{.majorVersion = major, .minorVersion = minor, .patchVersion = 0}];
+  }
+}
+} // namespace
+
 MPSDevice* MPSDevice::getInstance() {
   static MPSDevice mps_device;
   return &mps_device;
@@ -18,12 +28,10 @@ MPSDevice::~MPSDevice() {
 }
 
 MPSDevice::MPSDevice() : _mtl_device(nil) {
-  // Check that MacOS 13.0+ version of MPS framework is available
-  // Create the MPSGraph and check method introduced in 14.0
-  // which is used by MPS backend.
-  id mpsCD = NSClassFromString(@"MPSGraph");
-
-  if ([mpsCD instancesRespondToSelector:@selector(HermiteanToRealFFTWithTensor:axes:descriptor:name:)] == NO) {
+  // macOS 26.0 is the minimum supported version: every version gate in the MPS
+  // backend assumes it, so refuse to bring the device up below that.
+  if (!is_os_version_at_least(26, 0)) {
+    TORCH_WARN("MPS backend requires macOS 26.0 or newer, disabling it");
     return;
   }
 
@@ -43,31 +51,12 @@ MPSDevice::MPSDevice() : _mtl_device(nil) {
 }
 
 bool MPSDevice::isMacOS13Plus(MacOSVersion version) const {
-  auto is_os_version_at_least = [](int major, int minor) {
-    @autoreleasepool {
-      NSProcessInfo* processInfo = [[NSProcessInfo new] autorelease];
-      return [processInfo
-          isOperatingSystemAtLeastVersion:{.majorVersion = major, .minorVersion = minor, .patchVersion = 0}];
-    }
-  };
-  static bool _macos_14_4_plus = is_os_version_at_least(14, 4);
-  static bool _macos_15_0_plus = is_os_version_at_least(15, 0);
-  static bool _macos_15_1_plus = is_os_version_at_least(15, 1);
-  static bool _macos_15_2_plus = is_os_version_at_least(15, 2);
   static bool _macos_26_0_plus = is_os_version_at_least(26, 0);
   static bool _macos_26_2_plus = is_os_version_at_least(26, 2);
   static bool _macos_26_4_plus = is_os_version_at_least(26, 4);
   static bool _macos_27_0_plus = is_os_version_at_least(27, 0);
 
   switch (version) {
-    case MacOSVersion::MACOS_14_4:
-      return _macos_14_4_plus;
-    case MacOSVersion::MACOS_15_0:
-      return _macos_15_0_plus;
-    case MacOSVersion::MACOS_15_1:
-      return _macos_15_1_plus;
-    case MacOSVersion::MACOS_15_2:
-      return _macos_15_2_plus;
     case MacOSVersion::MACOS_26_0:
       return _macos_26_0_plus;
     case MacOSVersion::MACOS_26_2:

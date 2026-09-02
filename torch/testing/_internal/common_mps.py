@@ -3,7 +3,6 @@ from collections.abc import Sequence
 
 import torch
 
-from .common_utils import MACOS_VERSION
 from .opinfo.core import DecorateInfo, OpInfo
 
 
@@ -47,18 +46,6 @@ if torch.backends.mps.is_available():
             "sparse.sampled_addmm",
             "to_sparse",
             "triangular_solve",
-        }
-
-        MACOS_BEFORE_14_4_XFAILLIST = {
-            # These ops work fine in 14.4 but fail in 14.2 or 13.x
-            "fft.hfft2": [torch.complex64],
-        }
-
-        MACOS_BEFORE_15_0_XFAILLIST = {
-            # matrix_exp is disabled on MPS before macOS 15 (TORCH_CHECK): MPSGraph
-            # complex matmul is numerically unreliable there and breaks the
-            # scale-and-square recurrence, so the op raises for every dtype.
-            "matrix_exp": None,
         }
 
         # Those ops are not expected to work
@@ -494,32 +481,6 @@ if torch.backends.mps.is_available():
                         DecorateInfo(unittest.expectedFailure, dtypes=xfaillist[key]),
                     )
 
-            if (
-                key in MACOS_BEFORE_14_4_XFAILLIST
-                and key not in xfail_exclusion
-                and (MACOS_VERSION < 14.4)
-            ):
-                addDecorator(
-                    op,
-                    DecorateInfo(
-                        unittest.expectedFailure,
-                        dtypes=MACOS_BEFORE_14_4_XFAILLIST[key],
-                    ),
-                )
-
-            if (
-                key in MACOS_BEFORE_15_0_XFAILLIST
-                and key not in xfail_exclusion
-                and (MACOS_VERSION < 15.0)
-            ):
-                addDecorator(
-                    op,
-                    DecorateInfo(
-                        unittest.expectedFailure,
-                        dtypes=MACOS_BEFORE_15_0_XFAILLIST[key],
-                    ),
-                )
-
             # If op is not supported for complex types, expect it to fail
             if key in UNSUPPORTED_COMPLEX_OPS:
                 addDecorator(
@@ -595,12 +556,6 @@ if torch.backends.mps.is_available():
             "nn.functional.conv3d": [torch.float32],
         }
 
-        MACOS_BEFORE_15_0_XFAILLIST_GRAD = {
-            # matrix_exp is disabled on MPS before macOS 15 (TORCH_CHECK), so the
-            # forward leg of the grad test raises for every dtype.
-            "matrix_exp": None,
-        }
-
         def addDecorator(op: OpInfo, d: DecorateInfo) -> None:
             op.decorators = op.decorators + (d,)
 
@@ -610,15 +565,6 @@ if torch.backends.mps.is_available():
                 addDecorator(
                     op,
                     DecorateInfo(unittest.expectedFailure, dtypes=XFAILLIST_GRAD[key]),
-                )
-
-            if key in MACOS_BEFORE_15_0_XFAILLIST_GRAD and MACOS_VERSION < 15.0:
-                addDecorator(
-                    op,
-                    DecorateInfo(
-                        unittest.expectedFailure,
-                        dtypes=MACOS_BEFORE_15_0_XFAILLIST_GRAD[key],
-                    ),
                 )
 
             if key in SKIPLIST_GRAD:

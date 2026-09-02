@@ -369,8 +369,7 @@ static void check_mps_shape(MPSShape* shape) {
 }
 
 bool isTooLargeForMPSGraph(const Tensor& tensor, bool useMPSStridedAPI) {
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
-  if ((!tensor.is_contiguous() || tensor.storage_offset()) && useMPSStridedAPI && is_macOS_15_0_or_newer) {
+  if ((!tensor.is_contiguous() || tensor.storage_offset()) && useMPSStridedAPI) {
     auto storage_numel = tensor.storage().nbytes() / tensor.element_size() - tensor.storage_offset();
     if (storage_numel > std::numeric_limits<int32_t>::max()) {
       return true;
@@ -464,10 +463,8 @@ Placeholder::Placeholder(MPSGraphTensor* mpsGraphTensor,
   // extract the pointer to MTLBuffer from the Tensor's storage
   id<MTLBuffer> srcBuf = getMTLBufferStorage(src);
 
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
-  // Use gather kernel to solve strides for macOS < 15.0
-  // Starting with macOS 15.0, MPS supports native strides directly in the kernels
-  if (!is_macOS_15_0_or_newer || !useMPSStridedAPI) {
+  // MPS supports native strides directly in the kernels
+  if (!useMPSStridedAPI) {
     if ((!src.is_contiguous() || src.storage_offset()) && gatherTensorData) {
       Tensor emptyShell = Tensor();
       // use "_tensor" from Placeholder to retain view's output during its usage in other ops
@@ -809,19 +806,13 @@ id<MTLLibrary> MetalShaderLibrary::compileLibrary(const std::string& src) {
     if (is_macos_at_least(MacOSVersion::MACOS_26_0)) {
       // Metal-4.0 allows tensor template arguments
       [options setLanguageVersion:MTLLanguageVersion4_0];
-    } else if (is_macos_at_least(MacOSVersion::MACOS_15_0)) {
+    } else {
       // Metal-3.2 allows lambdas in shader code
       [options setLanguageVersion:MTLLanguageVersion3_2];
-    } else {
-      [options setLanguageVersion:MTLLanguageVersion3_1];
     }
-    if (is_macos_at_least(MacOSVersion::MACOS_15_0)) {
-      options.mathMode = fast_math ? MTLMathModeFast : MTLMathModeSafe;
-      options.mathFloatingPointFunctions =
-          fast_math ? MTLMathFloatingPointFunctionsFast : MTLMathFloatingPointFunctionsPrecise;
-    } else {
-      [options setFastMathEnabled:fast_math ? YES : NO];
-    }
+    options.mathMode = fast_math ? MTLMathModeFast : MTLMathModeSafe;
+    options.mathFloatingPointFunctions =
+        fast_math ? MTLMathFloatingPointFunctionsFast : MTLMathFloatingPointFunctionsPrecise;
   }
 
   const auto str = [NSString stringWithCString:src.c_str() encoding:NSASCIIStringEncoding];
