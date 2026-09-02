@@ -2,7 +2,7 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/ExpandUtils.h>
 #include <ATen/mps/MPSProfiler.h>
-#include <ATen/native/mps/MPSGraphSequoiaOps.h>
+#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/ops/addmm.h>
 #include <ATen/ops/linear_backward_native.h>

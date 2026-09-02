@@ -9,7 +9,7 @@
 #include <ATen/native/Pool.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/TransposeType.h>
-#include <ATen/native/mps/MPSGraphSequoiaOps.h>
+#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 #include <ATen/native/mps/OperationUtils.h>
 #include <ATen/native/mps/kernels/LinearAlgebra.h>
 #include <ATen/native/mps/operations/GemmHeuristics.h>

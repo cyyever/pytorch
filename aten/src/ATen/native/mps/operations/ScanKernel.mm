@@ -261,7 +261,7 @@ static bool strided_decoupled_supports_vec(int64_t vec) {
 
 // Single-pass decoupled look-back for a narrow-stride outer scan over
 // [n_orows, axis_size, VEC] contiguous: 1 dispatch, 1 read + 1 write, no global
-// reduce->carry barrier. Float-accumulate dtypes only; gated to macOS 15+.
+// reduce->carry barrier. Float-accumulate dtypes only.
 static void scan_strided_decoupled_mps_impl(const Tensor& input,
                                             const Tensor& output,
                                             int64_t wrapped_dim,

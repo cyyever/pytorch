@@ -3,7 +3,7 @@
 #include <ATen/mps/MPSAllocatorInterface.h>
 #include <ATen/mps/MPSDevice.h>
 #include <ATen/mps/MPSStream.h>
-#include <ATen/native/mps/MPSGraphSequoiaOps.h>
+#include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 
 namespace at::mps {
 
