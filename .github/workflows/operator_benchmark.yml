@@ -75,38 +75,3 @@ jobs:
       compiler: gcc11
       cuda-version: cpu
     secrets: inherit
-
-  aarch64-opbenchmark-build:
-    if: github.repository_owner == 'pytorch'
-    name: aarch64-opbenchmark-build
-    uses: ./.github/workflows/_linux-build.yml
-    needs: get-label-type
-    with:
-      runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
-      build-environment: linux-jammy-aarch64-py3.10
-      runner: linux.arm64.m7g.4xlarge
-      docker-image-name: ci-image:pytorch-linux-jammy-aarch64-py3.10-gcc13
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
-      test-matrix: |
-        { include: [
-          { config: "cpu_operator_benchmark_short", shard: 1, num_shards: 1, runner: "linux.arm64.m8g.4xlarge" },
-        ]}
-      python-version: "3.10"
-      compiler: gcc13
-      cuda-version: cpu
-    secrets: inherit
-
-  aarch64-opbenchmark-test:
-    name: aarch64-opbenchmark-test
-    uses: ./.github/workflows/_linux-test.yml
-    needs:
-      - aarch64-opbenchmark-build
-      - get-label-type
-    with:
-      build-environment: ${{ needs.aarch64-opbenchmark-build.outputs.build-environment }}
-      docker-image: ${{ needs.aarch64-opbenchmark-build.outputs.docker-image }}
-      test-matrix: ${{ needs.aarch64-opbenchmark-build.outputs.test-matrix }}
-      python-version: "3.10"
-      compiler: gcc13
-      cuda-version: cpu
-    secrets: inherit

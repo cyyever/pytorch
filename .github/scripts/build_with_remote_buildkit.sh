@@ -6,10 +6,7 @@
 # Genuine build errors (once BuildKit has started the build) are never retried.
 set -euo pipefail
 
-case "$(uname -m)" in
-  aarch64|arm64) buildkit_addr="tcp://buildkitd-arm64.buildkit:1234" ;;
-  *)             buildkit_addr="tcp://buildkitd-amd64.buildkit:1234" ;;
-esac
+buildkit_addr="tcp://buildkitd-amd64.buildkit:1234"
 docker buildx create --name remote-buildkit --driver remote --use "${buildkit_addr}" >/dev/null 2>&1 \
   || docker buildx use remote-buildkit
 

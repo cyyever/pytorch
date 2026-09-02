@@ -17,7 +17,6 @@ from pathlib import Path
 
 EXPECTED_PLATFORM_TAGS: dict[str, str] = {
     "linux": r"_x86_64$",
-    "linux-aarch64": r"_aarch64$",
     "macos-arm64": r"^macosx_\d+_\d+_arm64$",
     "darwin": r"^macosx_\d+_\d+_(arm64|x86_64)$",
 }
@@ -61,9 +60,7 @@ def check_wheel_platform_tag() -> None:
     wheel_dir = os.getenv("PYTORCH_FINAL_PACKAGE_DIR", "")
 
     target_os = os.getenv("TARGET_OS", sys.platform)
-    if target_os == "linux" and platform.machine() == "aarch64":
-        target_os = "linux-aarch64"
-    elif target_os in ("win32", "windows") and platform.machine().lower() == "arm64":
+    if target_os in ("win32", "windows") and platform.machine().lower() == "arm64":
         target_os = "windows-arm64"
     expected_python = f"cp{sys.version_info.major}{sys.version_info.minor}"
     import sysconfig

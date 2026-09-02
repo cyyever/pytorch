@@ -8,20 +8,20 @@
 # Inputs (env):
 #   PYTORCH_ROOT       Path to the PyTorch checkout.
 #   DESIRED_PYTHONS    Space-separated versions, e.g. "3.10 3.11 3.12 3.13 3.13t".
-#   GPU_ARCH_TYPE      cpu-aarch64 / cuda-aarch64 / cpu / cuda / ...
+#   GPU_ARCH_TYPE      cpu / cuda / rocm / xpu
 #   PYTORCH_FINAL_PACKAGE_DIR
 #                      Parent dir; each Python's wheel lands under
 #                      "${PYTORCH_FINAL_PACKAGE_DIR}/${build_name}/".
-#   BUILD_NAME_PREFIX  e.g. "manywheel-py" -- "${desired//./_}-cpu-aarch64"
+#   BUILD_NAME_PREFIX  e.g. "manywheel-py" -- "${desired//./_}-cpu"
 #                      is appended.
-#   BUILD_NAME_SUFFIX  e.g. "-cpu-aarch64".
+#   BUILD_NAME_SUFFIX  e.g. "-cpu".
 
 set -eux -o pipefail
 
 : "${PYTORCH_ROOT:?PYTORCH_ROOT must be set}"
 : "${DESIRED_PYTHONS:?DESIRED_PYTHONS must be set (space-separated list)}"
 : "${BUILD_NAME_PREFIX:?BUILD_NAME_PREFIX must be set (e.g. manywheel-py)}"
-: "${BUILD_NAME_SUFFIX:?BUILD_NAME_SUFFIX must be set (e.g. -cpu-aarch64)}"
+: "${BUILD_NAME_SUFFIX:?BUILD_NAME_SUFFIX must be set (e.g. -cpu)}"
 : "${PYTORCH_FINAL_PACKAGE_DIR:?PYTORCH_FINAL_PACKAGE_DIR must be set}"
 
 SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"

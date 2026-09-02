@@ -89,10 +89,8 @@ if [[ "\$GPU_ARCH_TYPE" != *xpu* && "\$GPU_ARCH_TYPE" != *rocm*  && "$PACKAGE_TY
     python /pytorch/.ci/pytorch/smoke_test/smoke_test.py --package=torchonly --torch-compile-check disabled $extra_parameters
   fi
 
-  if [[ "\$GPU_ARCH_TYPE" != *cpu-aarch64* ]]; then
-    # https://github.com/pytorch/pytorch/issues/149422
-    python /pytorch/.ci/pytorch/smoke_test/check_gomp.py
-  fi
+  # https://github.com/pytorch/pytorch/issues/149422
+  python /pytorch/.ci/pytorch/smoke_test/check_gomp.py
 fi
 
 # Clean temp files

@@ -522,11 +522,7 @@ def valid_vec_isa_list() -> list[VecISA]:
     if sys.platform != "linux":
         return isa_list
 
-    arch = platform.machine()
-    if arch == "aarch64":
-        isa_list.append(VecNEON())
-
-    elif arch in ["x86_64", "AMD64"]:
+    if platform.machine() in ["x86_64", "AMD64"]:
         """
         arch value is x86_64 on Linux, and the value is AMD64 on Windows.
         """
