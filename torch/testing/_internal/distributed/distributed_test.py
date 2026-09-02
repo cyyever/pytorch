@@ -159,8 +159,6 @@ def create_collectives_object_test_list():
 PROFILING_SUPPORTED_BACKENDS = [
     dist.Backend.NCCL,
     dist.Backend.GLOO,
-    dist.Backend.MPI,
-    dist.Backend.UCC,
 ]
 
 # Allowlist of distributed backends where profiling collectives with a CUDA
@@ -170,17 +168,13 @@ PROFILING_SUPPORTED_BACKENDS = [
 # unreachable and the membership test always passes.
 CUDA_PROFILING_SUPPORTED_BACKENDS = [
     dist.Backend.GLOO,
-    dist.Backend.MPI,
     dist.Backend.NCCL,
-    dist.Backend.UCC,
 ]
 
 # Allowlist of distributed backends where profiling is supported for p2p ops
 SEND_RECV_PROFILING_SUPPORTED_BACKENDS = [
-    dist.Backend.MPI,
     dist.Backend.GLOO,
     dist.Backend.NCCL,
-    dist.Backend.UCC,
 ]
 
 # Dummy NamedTuple data structures to test DDP support for NamedTuple types.
@@ -422,10 +416,6 @@ def require_backend_is_available(backends):
             return dist.is_gloo_available()
         if backend == dist.Backend.NCCL:
             return dist.is_nccl_available()
-        if backend == dist.Backend.MPI:
-            return dist.is_mpi_available()
-        if backend == dist.Backend.UCC:
-            return dist.is_ucc_available()
         if backend in DistTestCases.backend_feature["plugin"]:
             return True
         return False

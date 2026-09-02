@@ -645,7 +645,7 @@ def generate_return_type_definition_and_registrations(
             definitions.append(
                 f"""\
 PyTypeObject* get_{name}_structseq() {{
-    static PyStructSequence_Field NamedTuple_fields[] = {{ {fields},  {{nullptr}} }};
+    static PyStructSequence_Field NamedTuple_fields[] = {{ {fields},  {{}} }};
     static PyTypeObject {typename};
     static bool is_initialized = false;
     static PyStructSequence_Desc desc = {{ "torch.return_types.{name}", nullptr, NamedTuple_fields, {len(fieldnames)} }};

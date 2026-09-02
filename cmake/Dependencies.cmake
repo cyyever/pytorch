@@ -570,21 +570,16 @@ if(USE_CUDNN)
 endif()
 
 # ---[ nvtx
-if(USE_SYSTEM_NVTX)
-  find_path(nvtx3_dir NAMES nvtx3 PATHS ${CUDA_INCLUDE_DIRS})
-else()
-  find_path(nvtx3_dir NAMES nvtx3 PATHS "${PROJECT_SOURCE_DIR}/third_party/NVTX/c/include" NO_DEFAULT_PATH)
-endif()
+find_path(nvtx3_dir NAMES nvtx3 PATHS "${PROJECT_SOURCE_DIR}/third_party/NVTX/c/include" NO_DEFAULT_PATH)
 find_package_handle_standard_args(nvtx3 DEFAULT_MSG nvtx3_dir)
-if(nvtx3_FOUND)
-  add_library(torch::nvtx3 INTERFACE IMPORTED)
-  target_include_directories(torch::nvtx3 INTERFACE "${nvtx3_dir}")
-  target_compile_definitions(torch::nvtx3 INTERFACE TORCH_CUDA_USE_NVTX3)
-else()
-  message(WARNING "Cannot find NVTX3, find old NVTX instead")
-  add_library(torch::nvtoolsext INTERFACE IMPORTED)
-  set_property(TARGET torch::nvtoolsext PROPERTY INTERFACE_LINK_LIBRARIES CUDA::nvToolsExt)
+if(NOT nvtx3_FOUND)
+  # The old CUDA::nvToolsExt fallback is gone: libnvToolsExt was removed from
+  # the toolkit in CUDA 12, and NVTX3 is header-only and vendored.
+  message(FATAL_ERROR "Cannot find NVTX3; run git submodule update --init "
+                      "third_party/NVTX")
 endif()
+add_library(torch::nvtx3 INTERFACE IMPORTED)
+target_include_directories(torch::nvtx3 INTERFACE "${nvtx3_dir}")
 
 
 # ---[ HIP
@@ -777,20 +772,18 @@ list(APPEND Caffe2_DEPENDENCY_LIBS nlohmann)
 list(APPEND Caffe2_DEPENDENCY_LIBS moodycamel)
 
 # TCPStore's libuv backend used to compile and link against the libuv copy
-# vendored by TensorPipe. TensorPipe is gone, so look for libuv on the system;
-# without it TCPStore falls back to its legacy backend (USE_LIBUV=0).
-# never had the libuv backend (TensorPipe was unavailable there), so keep it off.
+# vendored by TensorPipe. TensorPipe is gone, so look for libuv on the system.
+# The legacy poll backend is gone too, so libuv is required rather than
+# preferred.
 if(USE_DISTRIBUTED)
   find_path(libuv_INCLUDE_DIR NAMES uv.h HINTS $ENV{libuv_ROOT}/include)
   find_library(libuv_LIBRARY NAMES uv libuv HINTS $ENV{libuv_ROOT}/lib)
-  if(libuv_INCLUDE_DIR AND libuv_LIBRARY)
-    include_directories(SYSTEM ${libuv_INCLUDE_DIR})
-    list(APPEND Caffe2_DEPENDENCY_LIBS ${libuv_LIBRARY})
-    add_compile_options(-DTORCH_USE_LIBUV)
-  else()
-    message(WARNING "libuv not found, building TCPStore without its libuv "
-                    "backend. Pass USE_LIBUV=0 at runtime to use the legacy one.")
+  if(NOT libuv_INCLUDE_DIR OR NOT libuv_LIBRARY)
+    message(FATAL_ERROR "libuv not found; TCPStore has no other backend. "
+                        "Install libuv or build with USE_DISTRIBUTED=0.")
   endif()
+  include_directories(SYSTEM ${libuv_INCLUDE_DIR})
+  list(APPEND Caffe2_DEPENDENCY_LIBS ${libuv_LIBRARY})
 endif()
 
 if(USE_GLOO)

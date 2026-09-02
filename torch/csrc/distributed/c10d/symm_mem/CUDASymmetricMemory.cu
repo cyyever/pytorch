@@ -457,7 +457,7 @@ struct RendezvousRequest {
   size_t buffer_offset;
   bool has_multicast_support;
   int clique_id;
-  char hostname[HOST_NAME_MAX + 1];
+  char hostname[HOST_NAME_MAX + 1]{};
 };
 
 static std::string import_err_msg(

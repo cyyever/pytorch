@@ -118,13 +118,7 @@ if(USE_CUDA)
         list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_CUFILE)
     endif()
 
-    if(TARGET torch::nvtx3)
-      list(APPEND TORCH_PYTHON_LINK_LIBRARIES torch::nvtx3)
-    else()
-      if(TARGET torch::nvtoolsext)
-        list(APPEND TORCH_PYTHON_LINK_LIBRARIES torch::nvtoolsext)
-      endif()
-    endif()
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES torch::nvtx3)
 endif()
 
 if(USE_ROCM)
@@ -226,6 +220,13 @@ endif()
 
 add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})
 torch_compile_options(torch_python)  # see cmake/public/utils.cmake
+# The CPython C API is initialized by writing the first N fields of PyTypeObject,
+# PyGetSetDef and friends and letting the rest default; PyTypeObject alone has
+# some sixty trailing members. Spelling them out would be strictly worse code,
+# so this one diagnostic stays off for the binding layer. ATen and c10 keep it,
+# where it does find real omissions.
+target_compile_options(torch_python PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>: -Wno-missing-field-initializers>)
 torch_optimize_layout_if_enabled(
   torch_python
   "libtorch_python-${Python_SOABI}.yaml")

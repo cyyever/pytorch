@@ -7,7 +7,6 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import datetime
-import os
 import socket
 from contextlib import closing
 
@@ -38,13 +37,9 @@ def create_c10d_store(
 ):
     if use_libuv is not None:
         logger.warning(
-            "argument use_libuv is deprecated and ignored. Set USE_LIBUV environment "
-            'variable to "0" to disable libuv, or "1" to enable it. If the env var '
-            "is not set, libuv will be used by default."
+            "argument use_libuv is deprecated and ignored; TCPStore only has "
+            "the libuv backend."
         )
-
-    # check os.environ for use_libuv
-    use_libuv = os.environ.get("USE_LIBUV", "1") == "1"  # libuv is the default option
 
     if server_port == -1 and world_size > 1:
         raise ValueError(
@@ -66,14 +61,12 @@ def create_c10d_store(
             "Creating c10d store on %s:%s\n"
             "  world_size  : %s\n"
             "  is_server   : %s\n"
-            "  timeout(sec): %s\n"
-            "  use_libuv   : %s\n",
+            "  timeout(sec): %s\n",
             server_addr,
             port,
             world_size,
             is_server,
             timeout,
-            use_libuv,
         )
 
         try:
@@ -84,7 +77,6 @@ def create_c10d_store(
                 is_master=is_server,
                 timeout=datetime.timedelta(seconds=timeout),
                 wait_for_workers=wait_for_workers,
-                use_libuv=use_libuv,
             )
             # skips full rank check when we don't have to wait for all workers
             if wait_for_workers:
