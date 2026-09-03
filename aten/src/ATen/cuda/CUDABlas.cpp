@@ -252,15 +252,6 @@ using detail::CuBlasLtGroupedMatrixLayout;
 
 template <typename Dtype, typename C_Dtype = Dtype>
 static inline bool bgemm_internal_cublaslt(CUDABLAS_BGEMM_ARGTYPES_AND_C_DTYPE(Dtype, C_Dtype)) {
-#if defined(USE_ROCM) && ROCM_VERSION == 60400
-  // regression in ROCm 6.4, planned fixed in 6.4.1, hipblaslt TT fp32 calculation errors
-  // best to disallow hipblaslt for this specific case
-  if constexpr (std::is_same_v<Dtype, float>) {
-    if (detail::cublasOpFromChar(transa) == CUBLAS_OP_T && detail::cublasOpFromChar(transb) == CUBLAS_OP_T) {
-        return false;
-    }
-  }
-#endif
   const auto type_info = detail::getCublasLtTypeInfo<Dtype, C_Dtype>();
   const cudaDataType_t abType = type_info.ab_type;
   const cudaDataType_t cType = type_info.c_type;
@@ -505,7 +496,7 @@ void bgemm_internal_cublas<float>(CUDABLAS_BGEMM_ARGTYPES(float)) {
   detail::cublasAdjustLdLevel3(transa, transb, m, n, k, &lda, &ldb, &ldc);
   BGEMM_CHECK_ARGVALUES(float);
   auto compute_type = CUBLAS_COMPUTE_32F;
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12090
+#if !defined(USE_ROCM)
   if (useBF16x9()) {
     compute_type = CUBLAS_COMPUTE_32F_EMULATED_16BFX9;
   }
@@ -965,7 +956,7 @@ void gemm_internal_cublas<float>(CUDABLAS_GEMM_ARGTYPES(float)) {
   detail::cublasAdjustLdLevel3(transa, transb, m, n, k, &lda, &ldb, &ldc);
   GEMM_CHECK_ARGVALUES(float);
   auto compute_type = CUBLAS_COMPUTE_32F;
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 12090
+#if !defined(USE_ROCM)
   if (useBF16x9()) {
     compute_type = CUBLAS_COMPUTE_32F_EMULATED_16BFX9;
   }

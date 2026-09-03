@@ -66,7 +66,6 @@ bool _scaled_mm_is_fnuz() {
     return false;
 }
 
-#if ROCM_VERSION >= 70000
 static void check_blockwise_e8m0fnu_arch_supported() {
   std::vector<std::string> mx_archs{"gfx950", "gfx1250"};
   TORCH_CHECK_NOT_IMPLEMENTED(
@@ -74,7 +73,6 @@ static void check_blockwise_e8m0fnu_arch_supported() {
       "Block-wise scaling for Float8_e8m0fnu is only supported on ",
       c10::Join(",", mx_archs));
 }
-#endif
 #endif
 
 /*
@@ -534,15 +532,6 @@ _scaled_mm_out_cuda(const Tensor& mat1, const Tensor& mat2,
     TORCH_CHECK(mat1.scalar_type() != ScalarType::Float4_e2m1fn_x2 && mat2.scalar_type() != ScalarType::Float4_e2m1fn_x2, "`use_fast_accum` is not supported when `mat1` or `mat2` tensors have the `Float4_e2m1fn_x2` dtype.");
   }
 #ifdef USE_ROCM
-  if (mat1.scalar_type() == ScalarType::Float4_e2m1fn_x2 || mat2.scalar_type() == ScalarType::Float4_e2m1fn_x2) {
-    TORCH_CHECK(ROCM_VERSION >= 70000, "Float4_e2m1fn_x2 is only supported for ROCm 7.0 and above");
-  }
-  if (mat1.scalar_type() == ScalarType::Float8_e5m2 || mat2.scalar_type() == ScalarType::Float8_e5m2) {
-    TORCH_CHECK(ROCM_VERSION >= 60500, "Float8_e5m2 is only supported for ROCm 6.5 and above");
-  }
-  if (mat1.scalar_type() == ScalarType::Float8_e4m3fn || mat2.scalar_type() == ScalarType::Float8_e4m3fn) {
-    TORCH_CHECK(ROCM_VERSION >= 60500, "Float8_e4m3fn is only supported for ROCm 6.5 and above");
-  }
 #endif
   if (bias) {
     TORCH_CHECK(out.scalar_type() != kFloat,
@@ -632,7 +621,6 @@ _scaled_mm_out_cuda(const Tensor& mat1, const Tensor& mat2,
   }
   else if (scaling_choice_a == ScalingType::BlockWise1x32 && scaling_choice_b == ScalingType::BlockWise1x32) {
 #ifdef USE_ROCM
-#if ROCM_VERSION >= 70000
     check_blockwise_e8m0fnu_arch_supported();
 
     int packed_factor = 1;
@@ -648,9 +636,6 @@ _scaled_mm_out_cuda(const Tensor& mat1, const Tensor& mat2,
     TORCH_CHECK_VALUE(out.scalar_type() == ScalarType::BFloat16 ||
                 out.scalar_type() == ScalarType::Half,
                 "Block-wise scaling only supports BFloat16 or Half output types");
-#else
-    TORCH_CHECK_NOT_IMPLEMENTED(false, "Block-wise scaling for Float8_e8m0fnu requires ROCm 7.0 or later");
-#endif
 #endif
   }
 
@@ -1075,7 +1060,6 @@ _scaled_mxfp8_mxfp8(
   auto scaling_choice_b = ScalingType::BlockWise1x32;
 
 #ifdef USE_ROCM
-#if ROCM_VERSION >= 70000
   check_blockwise_e8m0fnu_arch_supported();
 
   TORCH_CHECK_VALUE(mat_a.size(0) % 32 == 0 && mat_a.size(1) % 32 == 0 &&
@@ -1086,9 +1070,6 @@ _scaled_mxfp8_mxfp8(
               out.scalar_type() == ScalarType::Half,
               "Block-wise scaling only supports BFloat16 or Half output types");
   return _scaled_gemm(mat_a, mat_b, scale_a, scale_b, scaling_choice_a, scaling_choice_b, bias, false /* use_fast_accum */, out);
-#else
-    TORCH_CHECK_NOT_IMPLEMENTED(false, "Block-wise scaling for Float8_e8m0fnu requires ROCm 7.0 or later");
-#endif
 #else
   return _scaled_gemm(mat_a, mat_b, scale_a, scale_b, scaling_choice_a, scaling_choice_b, bias, false /* use_fast_accum */, out);
 #endif
@@ -1161,7 +1142,6 @@ _scaled_mxfp4_mxfp4(
   auto scaling_choice_a = ScalingType::BlockWise1x32;
   auto scaling_choice_b = ScalingType::BlockWise1x32;
 
-#if ROCM_VERSION >= 70000
   check_blockwise_e8m0fnu_arch_supported();
 
   TORCH_CHECK_VALUE(mat_a.size(0) % 32 == 0 && mat_a.size(1) % 32 == 0 &&
@@ -1171,7 +1151,6 @@ _scaled_mxfp4_mxfp4(
   TORCH_CHECK_VALUE(out.scalar_type() == ScalarType::BFloat16 ||
               out.scalar_type() == ScalarType::Half,
               "Block-wise scaling only supports BFloat16 or Half output types");
-#endif
 
   return _scaled_gemm(mat_a, mat_b, scale_a, scale_b, scaling_choice_a, scaling_choice_b, bias, false /* use_fast_accum */, out);
 #else
@@ -1363,20 +1342,6 @@ TORCH_IMPL_FUNC(_scaled_mm_cuda_v2_out)(
   if (use_fast_accum) {
     TORCH_CHECK_VALUE(mat_a.scalar_type() != ScalarType::Float4_e2m1fn_x2 && mat_b.scalar_type() != ScalarType::Float4_e2m1fn_x2, "`use_fast_accum` is not supported when `mat_a` or `mat_b` tensors have the `Float4_e2m1fn_x2` dtype.");
   }
-#ifdef USE_ROCM
-  if (mat_a.scalar_type() == ScalarType::Float4_e2m1fn_x2 || mat_b.scalar_type() == ScalarType::Float4_e2m1fn_x2) {
-    TORCH_CHECK_NOT_IMPLEMENTED(ROCM_VERSION >= 70000,
-        "Float4_e2m1fn_x2 is only supported for ROCm 7.0 and above");
-  }
-  if (mat_a.scalar_type() == ScalarType::Float8_e5m2 || mat_b.scalar_type() == ScalarType::Float8_e5m2) {
-    TORCH_CHECK_NOT_IMPLEMENTED(ROCM_VERSION >= 60500,
-        "Float8_e5m2 is only supported for ROCm 6.5 and above");
-  }
-  if (mat_a.scalar_type() == ScalarType::Float8_e4m3fn || mat_b.scalar_type() == ScalarType::Float8_e4m3fn) {
-    TORCH_CHECK_NOT_IMPLEMENTED(ROCM_VERSION >= 60500,
-        "Float8_e4m3fn is only supported for ROCm 6.5 and above");
-  }
-#endif
   if (bias.has_value()) {
     TORCH_CHECK_VALUE(out.scalar_type() != kFloat,
         "Bias is not supported when out_dtype is set to Float32");

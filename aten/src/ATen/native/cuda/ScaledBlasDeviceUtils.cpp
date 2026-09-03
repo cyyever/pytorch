@@ -11,9 +11,8 @@ namespace at::native::scaled {
 // On ROCm, sm90_only/sm100_only are ignored.
 bool scaled_mm_arch_allowed(bool /*sm90_only*/, bool /*sm100_only*/) {
   static const std::vector<std::string> archs = {
-      "gfx1200", "gfx1201",
-#endif
-#if ROCM_VERSION >= 60500
+      "gfx1200",
+      "gfx1201",
       "gfx950",
       "gfx1250",
   };
