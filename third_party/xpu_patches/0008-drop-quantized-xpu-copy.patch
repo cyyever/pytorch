@@ -1,0 +1,16 @@
+diff --git a/src/ATen/native/xpu/sycl/CopyKernel.cpp b/src/ATen/native/xpu/sycl/CopyKernel.cpp
+--- a/src/ATen/native/xpu/sycl/CopyKernel.cpp
++++ b/src/ATen/native/xpu/sycl/CopyKernel.cpp
+@@ -147,11 +147,7 @@ void float4_copy_kernel_xpu(TensorIteratorBase& iter) {
+ 
+ void copy_kernel(TensorIteratorBase& iter) {
+   ScalarType dtype = iter.common_dtype();
+-  if (isQIntType(dtype)) {
+-    AT_DISPATCH_QINT_TYPES(dtype, "copy_xpu", [&] {
+-      gpu_kernel(iter, CopyScalarFunc<scalar_t>());
+-    });
+-  } else if (isBitsType(dtype)) {
++  if (isBitsType(dtype)) {
+     TORCH_CHECK(
+         iter.dtype(0) == iter.dtype(1),
+         "copy_() does not support casting bits types to different bits types. "

@@ -844,11 +844,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   append_cxx_flag_if_supported("-Wno-dangling-reference" CMAKE_CXX_FLAGS)
   append_cxx_flag_if_supported("-Wno-error=dangling-reference" CMAKE_CXX_FLAGS)
 endif()
-# needed for compat with newer versions of clang that use C++20 mangling rules
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  append_cxx_flag_if_supported("-fclang-abi-compat=17" CMAKE_CXX_FLAGS)
-endif()
-
 # Add code coverage flags to supported compilers
 if(USE_CPP_CODE_COVERAGE)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
