@@ -551,7 +551,7 @@ void SchemaTypeParser::parseList(
     int begin,
     int sep,
     int end,
-    c10::function_ref<void()> callback) {
+    std::function_ref<void()> callback) {
   auto r = L.cur().range;
   if (begin != TK_NOTHING)
     L.expect(begin);

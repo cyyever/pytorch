@@ -6,8 +6,9 @@
 #include <ATen/core/function_schema.h>
 #include <ATen/core/jit_type.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/FunctionRef.h>
 #include <torch/csrc/jit/frontend/lexer.h>
+
+#include <functional>
 
 namespace torch::jit {
 
@@ -61,7 +62,7 @@ struct TORCH_API SchemaTypeParser {
       int begin,
       int sep,
       int end,
-      c10::function_ref<void()> callback);
+      std::function_ref<void()> callback);
 
   bool complete_tensor_types;
   Lexer& L;

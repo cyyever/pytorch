@@ -26,9 +26,9 @@ using ITreeUnflattenFn =
 
 using ContextLoadFn = nlohmann::json (*)(std::string_view);
 
-using ITreeMapFn = c10::function_ref<c10::IValue(const c10::IValue&)>;
+using ITreeMapFn = std::function_ref<c10::IValue(const c10::IValue&)>;
 using ITreeMapNoReturnFn =
-    c10::function_ref<void(const c10::IValue&, const Value*)>;
+    std::function_ref<void(const c10::IValue&, const Value*)>;
 
 using IValueApplyFn =
     void (*)(ITreeMapNoReturnFn, const c10::IValue&, const ITreeSpec&);
