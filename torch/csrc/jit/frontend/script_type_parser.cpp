@@ -248,18 +248,9 @@ std::optional<std::string> ScriptTypeParser::parseBaseTypeName(
 }
 
 TypePtr ScriptTypeParser::parseTypeFromExpr(const Expr& expr) const {
-  // the resolver needs to recursively resolve the expression, so to avoid
-  // resolving all type expr subtrees we only use it for the top level
-  // expression and base type names.
   if (expr.kind() == '|') {
     auto converted = pep604union_to_union(expr);
     return parseTypeFromExpr(converted);
-  }
-  if (resolver_) {
-    if (auto typePtr =
-            resolver_->resolveType(expr.range().text().str(), expr.range())) {
-      return typePtr;
-    }
   }
   return parseTypeFromExprImpl(expr);
 }
@@ -304,24 +295,12 @@ TypePtr ScriptTypeParser::parseTypeFromExprImpl(const Expr& expr) const {
       return custom_class_type;
     }
 
-    if (resolver_) {
-      if (auto typePtr = resolver_->resolveType(type_name, expr.range())) {
-        return typePtr;
-      }
-    }
-
     throw ErrorReport(expr) << "Unknown type name '" << type_name << '\'';
   } else if (auto name = parseBaseTypeName(expr)) {
     auto itr = string_to_type_lut().find(*name);
     if (itr != string_to_type_lut().end()) {
       return itr->second;
     }
-    if (resolver_) {
-      if (auto typePtr = resolver_->resolveType(*name, expr.range())) {
-        return typePtr;
-      }
-    }
-
     if (auto custom_class_type = getCustomClass(*name)) {
       return custom_class_type;
     }

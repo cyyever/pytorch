@@ -15,7 +15,6 @@ endif()
 # Build the cpp gtest binary containing the cpp-only tests.
 set(JIT_TEST_SRCS
   ${JIT_TEST_ROOT}/source_range_test.cpp
-  ${JIT_TEST_ROOT}/test_class_parser.cpp
   ${JIT_TEST_ROOT}/test_custom_class_registrations.h
   ${JIT_TEST_ROOT}/test_custom_class_registrations.cpp
   ${JIT_TEST_ROOT}/test_lexer.cpp
