@@ -152,9 +152,7 @@ void c10_cuda_check_implementation(
   }
 #endif
   throw c10::AcceleratorError(
-      {.function = function_name, .file = filename, .line = line_number},
-      err,
-      std::move(check_message));
+      function_name, filename, line_number, err, std::move(check_message));
 }
 
 } // namespace c10::cuda

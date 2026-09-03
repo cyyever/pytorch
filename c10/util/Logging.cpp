@@ -92,30 +92,50 @@ namespace {
 
 class PyTorchStyleBacktrace : public OptimisticLazyValue<std::string> {
  public:
-  PyTorchStyleBacktrace(SourceLocation source_location)
-      : backtrace_(GetFetchStackTrace()()), source_location_(source_location) {}
+  PyTorchStyleBacktrace(const char* function, const char* file, uint32_t line)
+      : backtrace_(GetFetchStackTrace()()),
+        function_(function),
+        file_(file),
+        line_(line) {}
 
  private:
   std::string compute() const override {
     return str(
         "Exception raised from ",
-        source_location_,
+        function_,
+        " at ",
+        file_,
+        ':',
+        line_,
         " (most recent call first):\n",
         backtrace_->get());
   }
 
   ::c10::Backtrace backtrace_;
-  SourceLocation source_location_;
+  const char* function_;
+  const char* file_;
+  uint32_t line_;
 };
 
 } // namespace
 
 // PyTorch-style error message
 // (This must be defined here for access to GetFetchStackTrace)
-Error::Error(SourceLocation source_location, std::string msg)
+Error::Error(
+    const char* function,
+    const char* file,
+    uint32_t line,
+    std::string msg)
     : Error(
           std::move(msg),
-          std::make_shared<PyTorchStyleBacktrace>(source_location)) {}
+          std::make_shared<PyTorchStyleBacktrace>(function, file, line)) {}
+
+Error::Error(std::source_location source_location, std::string msg)
+    : Error(
+          source_location.function_name(),
+          source_location.file_name(),
+          source_location.line(),
+          std::move(msg)) {}
 
 // Explicit constructor definitions for Error subclasses. Required because
 // clang-cl does not emit dllexport symbols for constructors inherited via
@@ -124,55 +144,55 @@ Error::Error(SourceLocation source_location, std::string msg)
 // extensions, etc.). Each definition just delegates to the base class
 // constructor so behavior is unchanged.
 ErrorAlwaysShowCppStacktrace::ErrorAlwaysShowCppStacktrace(
-    SourceLocation loc,
+    std::source_location loc,
     std::string msg)
     : Error(loc, std::move(msg)) {}
 
-IndexError::IndexError(SourceLocation loc, std::string msg)
+IndexError::IndexError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-ValueError::ValueError(SourceLocation loc, std::string msg)
+ValueError::ValueError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-TypeError::TypeError(SourceLocation loc, std::string msg)
+TypeError::TypeError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-NotImplementedError::NotImplementedError(SourceLocation loc, std::string msg)
+NotImplementedError::NotImplementedError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-BufferError::BufferError(SourceLocation loc, std::string msg)
+BufferError::BufferError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-EnforceFiniteError::EnforceFiniteError(SourceLocation loc, std::string msg)
+EnforceFiniteError::EnforceFiniteError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
 OnnxfiBackendSystemError::OnnxfiBackendSystemError(
-    SourceLocation loc,
+    std::source_location loc,
     std::string msg)
     : Error(loc, std::move(msg)) {}
 
-LinAlgError::LinAlgError(SourceLocation loc, std::string msg)
+LinAlgError::LinAlgError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-OutOfMemoryError::OutOfMemoryError(SourceLocation loc, std::string msg)
+OutOfMemoryError::OutOfMemoryError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-SyntaxError::SyntaxError(SourceLocation loc, std::string msg)
+SyntaxError::SyntaxError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-DistError::DistError(SourceLocation loc, std::string msg)
+DistError::DistError(std::source_location loc, std::string msg)
     : Error(loc, std::move(msg)) {}
 
-DistBackendError::DistBackendError(SourceLocation loc, std::string msg)
+DistBackendError::DistBackendError(std::source_location loc, std::string msg)
     : DistError(loc, std::move(msg)) {}
 
-DistStoreError::DistStoreError(SourceLocation loc, std::string msg)
+DistStoreError::DistStoreError(std::source_location loc, std::string msg)
     : DistError(loc, std::move(msg)) {}
 
-DistNetworkError::DistNetworkError(SourceLocation loc, std::string msg)
+DistNetworkError::DistNetworkError(std::source_location loc, std::string msg)
     : DistError(loc, std::move(msg)) {}
 
-DistQueueEmptyError::DistQueueEmptyError(SourceLocation loc, std::string msg)
+DistQueueEmptyError::DistQueueEmptyError(std::source_location loc, std::string msg)
     : DistStoreError(loc, std::move(msg)) {}
 
 using APIUsageLoggerType = std::function<void(const std::string&)>;
@@ -372,12 +392,27 @@ void ShowLogInfoToStderr() {
 }
 
 MessageLogger::MessageLogger(
-    SourceLocation source_location,
+    std::source_location source_location,
+    int severity,
+    bool exit_on_fatal)
+    : MessageLogger(
+          source_location.function_name(),
+          source_location.file_name(),
+          source_location.line(),
+          severity,
+          exit_on_fatal) {}
+
+MessageLogger::MessageLogger(
+    const char* function,
+    const char* file,
+    uint32_t line,
     int severity,
     bool exit_on_fatal)
     : severity_(severity),
       exit_on_fatal_(exit_on_fatal),
-      source_location_(source_location) {
+      function_(function),
+      file_(file),
+      line_(line) {
   if (severity_ < FLAGS_caffe2_log_level) {
     // Nothing needs to be logged.
     return;
@@ -403,8 +438,8 @@ MessageLogger::MessageLogger(
           << std::setfill('0') << ' ' << std::setw(2) << timeinfo->tm_hour
           << ':' << std::setw(2) << timeinfo->tm_min << ':' << std::setw(2)
           << timeinfo->tm_sec << '.' << std::setw(9) << ns << ' '
-          << c10::detail::StripBasename(std::string(source_location_.file))
-          << ':' << source_location_.line << "] ";
+          << c10::detail::StripBasename(std::string(file_)) << ':' << line_
+          << "] ";
 }
 
 // Output the contents of the stream to the proper channel on destruction.
@@ -436,10 +471,10 @@ void MessageLogger::DealWithFatal() {
   if (exit_on_fatal_) {
     abort();
   } else {
-    // source_location_ is the CHECK_* site, not this function, so TORCH_CHECK
+    // The stored location is the CHECK_* site, not this function, so TORCH_CHECK
     // would report the wrong location.
     // @allow-raw-throw: DealWithFatal's throw site, non-glog build
-    throw c10::Error(source_location_, stream_.str());
+    throw c10::Error(function_, file_, line_, stream_.str());
   }
 }
 

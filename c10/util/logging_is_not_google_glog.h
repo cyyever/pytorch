@@ -15,6 +15,7 @@
 
 #include <c10/util/Flags.h>
 #include <c10/util/logging_common.h>
+#include <source_location>
 
 const char CAFFE2_SEVERITY_PREFIX[] = "FEWIV";
 
@@ -36,9 +37,7 @@ T& CheckNotNullCommon(
     T& t,
     bool fatal) {
   if (t == nullptr) {
-    MessageLogger(
-        SourceLocation::current(file, nullptr, line), GLOG_FATAL, fatal)
-            .stream()
+    MessageLogger(nullptr, file, line, GLOG_FATAL, fatal).stream()
         << "Check failed: '" << names << "' must be non NULL. ";
   }
   return t;
@@ -74,19 +73,19 @@ static_assert(
 // should not generate anything in optimized code.
 #define LOG(n)                                                            \
   if (::c10::GLOG_##n >= CAFFE2_LOG_THRESHOLD)                            \
-  ::c10::MessageLogger(::c10::SourceLocation::current(), ::c10::GLOG_##n) \
+  ::c10::MessageLogger(std::source_location::current(), ::c10::GLOG_##n) \
       .stream()
 #define VLOG(n)                   \
   if (-n >= CAFFE2_LOG_THRESHOLD) \
-  ::c10::MessageLogger(::c10::SourceLocation::current(), -n).stream()
+  ::c10::MessageLogger(std::source_location::current(), -n).stream()
 
 #define LOG_IF(n, condition)                                              \
   if (::c10::GLOG_##n >= CAFFE2_LOG_THRESHOLD && (condition))             \
-  ::c10::MessageLogger(::c10::SourceLocation::current(), ::c10::GLOG_##n) \
+  ::c10::MessageLogger(std::source_location::current(), ::c10::GLOG_##n) \
       .stream()
 #define VLOG_IF(n, condition)                    \
   if (-n >= CAFFE2_LOG_THRESHOLD && (condition)) \
-  ::c10::MessageLogger(::c10::SourceLocation::current(), -n).stream()
+  ::c10::MessageLogger(std::source_location::current(), -n).stream()
 
 #define VLOG_IS_ON(verboselevel) (CAFFE2_LOG_THRESHOLD <= -(verboselevel))
 
@@ -94,15 +93,13 @@ static_assert(
 // warning/error handlers implemented as functions, not macros)
 #define LOG_AT_FILE_LINE(n, file, line)                                     \
   if (::c10::GLOG_##n >= CAFFE2_LOG_THRESHOLD)                              \
-  ::c10::MessageLogger(                                                     \
-      ::c10::SourceLocation::current(file, nullptr, line), ::c10::GLOG_##n) \
-      .stream()
+  ::c10::MessageLogger(nullptr, file, line, ::c10::GLOG_##n).stream()
 // Log only if condition is met.  Otherwise evaluates to void.
 #define FATAL_IF(condition)                                        \
   condition ? (void)0                                              \
             : ::c10::LoggerVoidify() &                             \
           ::c10::MessageLogger(                                    \
-              ::c10::SourceLocation::current(), ::c10::GLOG_FATAL) \
+              std::source_location::current(), ::c10::GLOG_FATAL) \
               .stream()
 
 // Check for a given boolean condition.
@@ -122,7 +119,7 @@ static_assert(
   true ? (void)0                                                 \
        : ::c10::LoggerVoidify() &                                \
           ::c10::MessageLogger(                                  \
-              ::c10::SourceLocation::current(), ::c10::GLOG_##n) \
+              std::source_location::current(), ::c10::GLOG_##n) \
               .stream()
 #endif // NDEBUG
 

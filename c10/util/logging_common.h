@@ -3,6 +3,7 @@
 
 #include <c10/macros/Export.h>
 #include <c10/util/StringUtil.h>
+#include <source_location>
 #include <sstream>
 
 namespace c10 {
@@ -12,7 +13,16 @@ namespace c10 {
 class C10_API MessageLogger {
  public:
   MessageLogger(
-      SourceLocation source_location,
+      std::source_location source_location,
+      int severity,
+      bool exit_on_fatal = true);
+
+  // For a location that arrived as values: WarningHandler re-emits the one
+  // stored in the warning, which std::source_location cannot carry.
+  MessageLogger(
+      const char* function,
+      const char* file,
+      uint32_t line,
       int severity,
       bool exit_on_fatal = true);
   ~MessageLogger() noexcept(false);
@@ -28,7 +38,9 @@ class C10_API MessageLogger {
   std::stringstream stream_;
   int severity_;
   bool exit_on_fatal_;
-  SourceLocation source_location_;
+  const char* function_;
+  const char* file_;
+  uint32_t line_;
 };
 
 // This class is used to explicitly ignore values in the conditional

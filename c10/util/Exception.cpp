@@ -20,7 +20,7 @@ Error::Error(std::string msg, Backtrace backtrace, const void* caller)
 }
 
 // PyTorch-style error message
-// Error::Error(SourceLocation source_location, const std::string& msg)
+// Error::Error(std::source_location source_location, const std::string& msg)
 // NB: This is defined in Logging.cpp for access to GetFetchStackTrace
 
 // Caffe2-style error message
@@ -110,7 +110,7 @@ void torchCheckFail(
     uint32_t line,
     const std::string& msg) {
   // @allow-raw-throw: this is the throw TORCH_CHECK routes to
-  throw ::c10::Error({func, file, line}, msg);
+  throw ::c10::Error(func, file, line, msg);
 }
 
 void torchCheckFail(
@@ -119,7 +119,7 @@ void torchCheckFail(
     uint32_t line,
     const char* msg) {
   // @allow-raw-throw: this is the throw TORCH_CHECK routes to
-  throw ::c10::Error({func, file, line}, msg);
+  throw ::c10::Error(func, file, line, msg);
 }
 
 void torchInternalAssertFail(
@@ -210,37 +210,59 @@ void warn(const Warning& warning) {
 
 Warning::Warning(
     warning_variant_t type,
-    const SourceLocation& source_location,
+    std::source_location source_location,
     std::string msg,
     const bool verbatim)
-    : type_(type),
-      source_location_(source_location),
-      msg_(std::move(msg)),
-      verbatim_(verbatim) {}
+    : Warning(
+          type,
+          source_location.function_name(),
+          source_location.file_name(),
+          source_location.line(),
+          std::move(msg),
+          verbatim) {}
 
 Warning::Warning(
     warning_variant_t type,
-    SourceLocation source_location,
+    std::source_location source_location,
     detail::CompileTimeEmptyString /*msg*/,
     const bool verbatim)
     : Warning(type, source_location, "", verbatim) {}
 
 Warning::Warning(
     warning_variant_t type,
-    SourceLocation source_location,
+    std::source_location source_location,
     const char* msg,
     const bool verbatim)
+    : Warning(type, source_location, std::string(msg), verbatim) {}
+
+Warning::Warning(
+    warning_variant_t type,
+    const char* function,
+    const char* file,
+    uint32_t line,
+    std::string msg,
+    const bool verbatim)
     : type_(type),
-      source_location_(source_location),
-      msg_(std::string(msg)),
+      function_(function),
+      file_(file),
+      line_(line),
+      msg_(std::move(msg)),
       verbatim_(verbatim) {}
 
 Warning::warning_variant_t Warning::type() const {
   return type_;
 }
 
-const SourceLocation& Warning::source_location() const {
-  return source_location_;
+const char* Warning::function() const {
+  return function_;
+}
+
+const char* Warning::file() const {
+  return file_;
+}
+
+uint32_t Warning::line() const {
+  return line_;
 }
 
 const std::string& Warning::msg() const {
@@ -252,10 +274,9 @@ bool Warning::verbatim() const {
 }
 
 void WarningHandler::process(const Warning& warning) {
-  LOG_AT_FILE_LINE(
-      WARNING, warning.source_location().file, warning.source_location().line)
-      << "Warning: " << warning.msg() << " (function "
-      << warning.source_location().function << ')';
+  LOG_AT_FILE_LINE(WARNING, warning.file(), warning.line())
+      << "Warning: " << warning.msg() << " (function " << warning.function()
+      << ')';
 }
 
 std::string GetExceptionString(const std::exception& e) {

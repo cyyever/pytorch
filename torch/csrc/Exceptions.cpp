@@ -240,13 +240,9 @@ PyWarningHandler::~PyWarningHandler() noexcept(false) {
       PyErr_Fetch(&type, &value, &traceback);
     }
     for (const auto& warning : warning_buffer) {
-      auto source_location = warning.source_location();
       auto msg = warning.msg();
       processErrorMsgInplace(msg);
-      if (source_location.file == nullptr) {
-        result =
-            PyErr_WarnEx(map_warning_to_python_type(warning), msg.c_str(), 1);
-      } else if (warning.verbatim()) {
+      if (warning.verbatim()) {
         // Sets the source location from the warning
         // Note: PyErr_WarnExplicit will disregard Python's warning filter
         // and always appear. This is in contrast to PyErr_WarnEx,
@@ -254,8 +250,8 @@ PyWarningHandler::~PyWarningHandler() noexcept(false) {
         result = PyErr_WarnExplicit(
             /*category=*/map_warning_to_python_type(warning),
             /*message=*/msg.c_str(),
-            /*filename=*/source_location.file,
-            /*lineno=*/static_cast<int>(source_location.line),
+            /*filename=*/warning.file(),
+            /*lineno=*/static_cast<int>(warning.line()),
             /*module=*/nullptr,
             /*registry=*/nullptr);
       } else {
@@ -264,8 +260,8 @@ PyWarningHandler::~PyWarningHandler() noexcept(false) {
         auto buf = fmt::format(
             "{} (Triggered internally at {}:{}.)",
             msg,
-            source_location.file,
-            source_location.line);
+            warning.file(),
+            warning.line());
         result =
             PyErr_WarnEx(map_warning_to_python_type(warning), buf.c_str(), 1);
       }
