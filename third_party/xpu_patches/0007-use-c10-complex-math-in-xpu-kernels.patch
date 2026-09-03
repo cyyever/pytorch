@@ -1,0 +1,192 @@
+diff --git a/src/ATen/native/xpu/sycl/AbsKernel.cpp b/src/ATen/native/xpu/sycl/AbsKernel.cpp
+--- a/src/ATen/native/xpu/sycl/AbsKernel.cpp
++++ b/src/ATen/native/xpu/sycl/AbsKernel.cpp
+@@ -12,6 +12,7 @@
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
+ #include <c10/core/ScalarType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -23,6 +24,6 @@ template <typename scalar_t>
+ struct AbsFunctor {
+   scalar_t operator()(const scalar_t a) const {
+-    return std::abs(a);
++    return c10::math::abs(a);
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/ActivationSiluKernels.cpp b/src/ATen/native/xpu/sycl/ActivationSiluKernels.cpp
+--- a/src/ATen/native/xpu/sycl/ActivationSiluKernels.cpp
++++ b/src/ATen/native/xpu/sycl/ActivationSiluKernels.cpp
+@@ -28,7 +28,7 @@ struct SiluFunctor {
+     using opmath_t = at::opmath_type<scalar_t>;
+     const opmath_t x_acc = static_cast<opmath_t>(x);
+     if constexpr (c10::is_complex<opmath_t>::value) {
+-      return x_acc / (opmath_t(1) + std::exp(-x_acc));
++      return x_acc / (opmath_t(1) + c10::math::exp(-x_acc));
+     } else {
+       return x_acc / (opmath_t(1) + sycl::exp(-x_acc));
+     }
+diff --git a/src/ATen/native/xpu/sycl/BinaryMiscBackwardOpsKernels.cpp b/src/ATen/native/xpu/sycl/BinaryMiscBackwardOpsKernels.cpp
+--- a/src/ATen/native/xpu/sycl/BinaryMiscBackwardOpsKernels.cpp
++++ b/src/ATen/native/xpu/sycl/BinaryMiscBackwardOpsKernels.cpp
+@@ -12,6 +12,7 @@
+ #include <ATen/NumericUtils.h>
+ #include <ATen/native/Activation.h>
+ #include <ATen/native/TensorIterator.h>
++#include <c10/util/complex.h>
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+ #include <ATen/native/xpu/sycl/BinaryMiscBackwardOpsKernels.h>
+@@ -26,7 +27,8 @@ struct SigmoidBackwardComplexFunctor {
+     const auto one = opmath_t{1.};
+     const auto comp_b = static_cast<opmath_t>(b);
+     const auto comp_a = static_cast<opmath_t>(a);
+-    return static_cast<scalar_t>(comp_a * std::conj((one - comp_b) * comp_b));
++    return static_cast<scalar_t>(
++        comp_a * c10::math::conj((one - comp_b) * comp_b));
+   }
+ };
+ 
+@@ -123,7 +125,8 @@ struct TanhBackwardComplexFunctor {
+     const auto one = comp_t{1.};
+     const auto comp_b = static_cast<comp_t>(b);
+     const auto comp_a = static_cast<comp_t>(a);
+-    return static_cast<scalar_t>(comp_a * std::conj(one - comp_b * comp_b));
++    return static_cast<scalar_t>(
++        comp_a * c10::math::conj(one - comp_b * comp_b));
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp b/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp
+--- a/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp
++++ b/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp
+@@ -12,6 +12,7 @@
+ #include <ATen/native/SpectralOpsUtils.h>
+ #include <ATen/native/xpu/sycl/FFTKernelFunctor.h>
+ #include <ATen/native/xpu/sycl/OffsetCalculator.h>
++#include <c10/util/complex.h>
+ #include <c10/xpu/XPUCachingAllocator.h>
+ #include <comm/SYCLContext.h>
+ #include <comm/TensorInfo.h>
+@@ -983,7 +984,7 @@ struct FFTConjugateCopyKernelFunctor {
+   void operator()(sycl::item<1> item_id) const {
+     auto in_offset = ic_.get(item_id)[0];
+     auto out_offset = oc_.get(item_id)[0];
+-    out_data_[out_offset] = std::conj(in_data_[in_offset]);
++    out_data_[out_offset] = c10::math::conj(in_data_[in_offset]);
+   }
+ 
+   FFTConjugateCopyKernelFunctor(
+diff --git a/src/ATen/native/xpu/sycl/ForeachUnaryKernels.cpp b/src/ATen/native/xpu/sycl/ForeachUnaryKernels.cpp
+index a575990a..1e0f8a32 100644
+--- a/src/ATen/native/xpu/sycl/ForeachUnaryKernels.cpp
++++ b/src/ATen/native/xpu/sycl/ForeachUnaryKernels.cpp
+@@ -13,6 +13,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
++#include <c10/util/complex.h>
+ #include <ATen/native/xpu/sycl/ForeachFunctors.h>
+ #include <ATen/native/xpu/sycl/ForeachUnaryKernels.h>
+ #include <ATen/native/xpu/sycl/Loops.h>
+@@ -186,9 +187,17 @@ void floating_half_bfloat16_(TensorList tensors) {
+     }                                      \
+   }
+ 
++#define C10_MATH_FUNCTOR(OP_NAME, FUNCTOR_NAME) \
++  template <typename T>                         \
++  struct FUNCTOR_NAME {                         \
++    T operator()(T t) const {                   \
++      return c10::math::OP_NAME(t);             \
++    }                                           \
++  }
++
+ STD_FUNCTOR(erf, Erf);
+ STD_FUNCTOR(erfc, Erfc);
+-STD_FUNCTOR(expm1, Expm1);
++C10_MATH_FUNCTOR(expm1, Expm1);
+ 
+ template <typename T>
+ struct Lgamma {
+@@ -251,15 +260,15 @@ FOREACH_UNARY_KERNEL(ceil) {
+   return floating_half_bfloat16<Ceil>(tensors);
+ }
+ 
+-STD_FUNCTOR(acos, Acos);
+-STD_FUNCTOR(asin, Asin);
+-STD_FUNCTOR(atan, Atan);
+-STD_FUNCTOR(cosh, Cosh);
+-STD_FUNCTOR(sinh, Sinh);
+-STD_FUNCTOR(tanh, Tanh);
+-STD_FUNCTOR(cos, Cos);
+-STD_FUNCTOR(sin, Sin);
+-STD_FUNCTOR(tan, Tan);
++C10_MATH_FUNCTOR(acos, Acos);
++C10_MATH_FUNCTOR(asin, Asin);
++C10_MATH_FUNCTOR(atan, Atan);
++C10_MATH_FUNCTOR(cosh, Cosh);
++C10_MATH_FUNCTOR(sinh, Sinh);
++C10_MATH_FUNCTOR(tanh, Tanh);
++C10_MATH_FUNCTOR(cos, Cos);
++C10_MATH_FUNCTOR(sin, Sin);
++C10_MATH_FUNCTOR(tan, Tan);
+ 
+ FOREACH_UNARY_INPLACE_KERNEL(acos) {
+   return floating_complex_half_bfloat16_<Acos>(tensors);
+@@ -324,12 +333,12 @@ FOREACH_UNARY_KERNEL(tan) {
+   return floating_complex_half_bfloat16<Tan>(tensors);
+ }
+ 
+-STD_FUNCTOR(exp, Exp);
+-STD_FUNCTOR(log, Log);
+-STD_FUNCTOR(log1p, Log1p);
+-STD_FUNCTOR(log2, Log2);
+-STD_FUNCTOR(log10, Log10);
+-STD_FUNCTOR(sqrt, Sqrt);
++C10_MATH_FUNCTOR(exp, Exp);
++C10_MATH_FUNCTOR(log, Log);
++C10_MATH_FUNCTOR(log1p, Log1p);
++C10_MATH_FUNCTOR(log2, Log2);
++C10_MATH_FUNCTOR(log10, Log10);
++C10_MATH_FUNCTOR(sqrt, Sqrt);
+ 
+ FOREACH_UNARY_INPLACE_KERNEL(exp) {
+   return floating_complex_half_bfloat16_<Exp>(tensors);
+@@ -379,7 +388,7 @@ struct Sigmoid {
+     using opmath_t = at::opmath_type<T>;
+     const opmath_t one = opmath_t{1};
+     if constexpr (c10::is_complex<opmath_t>::value) {
+-      return one / (one + std::exp(-static_cast<opmath_t>(t)));
++      return one / (one + c10::math::exp(-static_cast<opmath_t>(t)));
+     } else {
+       return one / (one + sycl::exp(-static_cast<opmath_t>(t)));
+     }
+@@ -426,7 +435,7 @@ template <>
+ struct Rsqrt<c10::complex<float>> {
+   c10::complex<float> operator()(c10::complex<float> t) const {
+     const auto one = c10::complex<float>(1.0, 0);
+-    return one / std::sqrt(t);
++    return one / c10::math::sqrt(t);
+   }
+ };
+ 
+@@ -434,7 +443,7 @@ template <>
+ struct Rsqrt<c10::complex<double>> {
+   c10::complex<double> operator()(c10::complex<double> t) const {
+     const auto one = c10::complex<double>(1.0, 0);
+-    return one / std::sqrt(t);
++    return one / c10::math::sqrt(t);
+   }
+ };
+ 
+@@ -490,6 +499,6 @@ FOREACH_UNARY_KERNEL(neg) {
+ template <typename T>
+ struct Abs {
+   T operator()(T t) const {
+-    return std::abs(t);
++    return c10::math::abs(t);
+   }
+ };

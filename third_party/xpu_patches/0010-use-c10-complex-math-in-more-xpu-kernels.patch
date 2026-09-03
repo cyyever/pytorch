@@ -1,0 +1,143 @@
+diff --git a/src/ATen/native/xpu/sycl/PowKernels.cpp b/src/ATen/native/xpu/sycl/PowKernels.cpp
+index b8eef080..0dbe4ffe 100644
+--- a/src/ATen/native/xpu/sycl/PowKernels.cpp
++++ b/src/ATen/native/xpu/sycl/PowKernels.cpp
+@@ -12,6 +12,7 @@
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/Pow.h>
+ #include <ATen/native/TensorIterator.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ #include <ATen/native/xpu/sycl/UnaryFractionKernels.h>
+@@ -95,9 +96,9 @@ struct PowScalarTensorFunctor {
+ template <typename T>
+ struct PowScalarTensorFunctor<c10::complex<T>> {
+   c10::complex<T> operator()(c10::complex<T> exp) const {
+-    return std::exp(fct_ * exp);
++    return c10::math::exp(fct_ * exp);
+   }
+-  PowScalarTensorFunctor(c10::complex<T> base) : fct_(std::log(base)) {}
++  PowScalarTensorFunctor(c10::complex<T> base) : fct_(c10::math::log(base)) {}
+ 
+  private:
+   c10::complex<T> fct_;
+@@ -107,10 +108,10 @@ template <>
+ struct PowScalarTensorFunctor<c10::complex<at::Half>> {
+   using opmath_t = at::opmath_type<c10::complex<at::Half>>;
+   c10::complex<at::Half> operator()(c10::complex<at::Half> exp) const {
+-    return std::exp(fct_ * opmath_t{exp});
++    return c10::math::exp(fct_ * opmath_t{exp});
+   }
+   PowScalarTensorFunctor(c10::complex<at::Half> base) {
+-    fct_ = std::log(opmath_t{base});
++    fct_ = c10::math::log(opmath_t{base});
+   }
+ 
+  private:
+@@ -126,7 +127,7 @@ void pow_scalar_tensor_impl(TensorIteratorBase& iter, scalar_t base) {
+ template <typename scalar_t, typename opmath_t>
+ struct PowChalfTensorScalarFunctor {
+   scalar_t operator()(scalar_t base) const {
+-    return std::pow(opmath_t{base}, exp_);
++    return c10::math::pow(opmath_t{base}, exp_);
+   }
+   PowChalfTensorScalarFunctor(opmath_t exp) : exp_(exp) {}
+ 
+diff --git a/src/ATen/native/xpu/sycl/RangeFactoriesKernel.cpp b/src/ATen/native/xpu/sycl/RangeFactoriesKernel.cpp
+index f126d1fb..db1de716 100644
+--- a/src/ATen/native/xpu/sycl/RangeFactoriesKernel.cpp
++++ b/src/ATen/native/xpu/sycl/RangeFactoriesKernel.cpp
+@@ -13,6 +13,7 @@
+ #include <ATen/OpMathType.h>
+ #include <ATen/core/Tensor.h>
+ #include <ATen/detail/FunctionTraits.h>
++#include <c10/util/complex.h>
+ #include <comm/SYCLContext.h>
+ #include <comm/xpu_aten.h>
+ 
+@@ -244,9 +245,10 @@ struct LogspaceFunctor {
+   scalar_t operator()(int64_t ind) const {
+     if constexpr (c10::is_complex<step_type>::value) {
+       if (ind < halfway_) {
+-        return std::pow(scalar_base_, scalar_start_ + step_ * ind);
++        return c10::math::pow(scalar_base_, scalar_start_ + step_ * ind);
+       }
+-      return std::pow(scalar_base_, scalar_end_ - step_ * (steps_ - ind - 1));
++      return c10::math::pow(
++          scalar_base_, scalar_end_ - step_ * (steps_ - ind - 1));
+     } else {
+       using opmath_t = at::opmath_type<step_type>;
+       if (ind < halfway_) {
+@@ -302,7 +304,7 @@ Tensor& logspace_kernel(
+     // skip
+   } else if (steps == 1) {
+     if (isComplexType(r.scalar_type())) {
+-      r.fill_(std::pow(base, start.to<c10::complex<double>>()));
++      r.fill_(c10::math::pow(base, start.to<c10::complex<double>>()));
+     } else {
+       r.fill_(std::pow(base, start.to<double>()));
+     }
+diff --git a/src/ATen/native/xpu/sycl/SharedReduceOps.h b/src/ATen/native/xpu/sycl/SharedReduceOps.h
+index 4e576508..a8d55bfa 100644
+--- a/src/ATen/native/xpu/sycl/SharedReduceOps.h
++++ b/src/ATen/native/xpu/sycl/SharedReduceOps.h
+@@ -18,6 +18,7 @@
+ #include <ATen/detail/FunctionTraits.h>
+ #include <ATen/native/cpu/zmath.h>
+ #include <c10/macros/Macros.h>
++#include <c10/util/complex.h>
+ #include <comm/XPUPair.h>
+ #include <sycl/sycl.hpp>
+ #include <cmath>
+@@ -135,7 +136,7 @@ struct MeanOps {
+ template <typename scalar_t, typename acc_t = scalar_t, typename out_t = acc_t>
+ struct AbsMinOps {
+   inline acc_t reduce(acc_t acc, scalar_t data, int64_t /*idx*/) const {
+-    return min_impl(acc, static_cast<acc_t>(std::abs(data)));
++    return min_impl(acc, static_cast<acc_t>(c10::math::abs(data)));
+   }
+ 
+   inline acc_t combine(acc_t a, acc_t b) const {
+@@ -158,7 +159,7 @@ struct AbsMinOps {
+ template <typename scalar_t, typename acc_t = scalar_t, typename out_t = acc_t>
+ struct AbsMaxOps {
+   inline acc_t reduce(acc_t acc, scalar_t data, int64_t /*idx*/) const {
+-    return max_impl(acc, static_cast<acc_t>(std::abs(data)));
++    return max_impl(acc, static_cast<acc_t>(c10::math::abs(data)));
+   }
+ 
+   inline acc_t combine(acc_t a, acc_t b) const {
+@@ -183,7 +184,7 @@ struct NormOps {
+   acc_t norm_;
+ 
+   inline acc_t reduce(acc_t acc, scalar_t data, int64_t /*idx*/) const {
+-    return acc + sycl::pow(static_cast<acc_t>(std::abs(data)), norm_);
++    return acc + sycl::pow(static_cast<acc_t>(c10::math::abs(data)), norm_);
+   }
+ 
+   inline acc_t combine(acc_t a, acc_t b) const {
+@@ -233,7 +234,7 @@ struct NormZeroOps {
+ template <typename scalar_t, typename acc_t = scalar_t, typename out_t = acc_t>
+ struct NormOneOps {
+   inline acc_t reduce(acc_t acc, scalar_t data, int64_t /*idx*/) const {
+-    return acc + static_cast<acc_t>(std::abs(data));
++    return acc + static_cast<acc_t>(c10::math::abs(data));
+   }
+ 
+   inline acc_t combine(acc_t a, acc_t b) const {
+@@ -259,12 +260,12 @@ inline acc_t abs_if_complex(scalar_t data, AbsSwitch<acc_t>) {
+ 
+ template <typename scalar_t, typename acc_t>
+ inline acc_t abs_if_complex(std::complex<scalar_t> data, AbsSwitch<acc_t>) {
+-  return static_cast<acc_t>(std::abs(data));
++  return static_cast<acc_t>(c10::math::abs(data));
+ }
+ 
+ template <typename scalar_t, typename acc_t>
+ inline acc_t abs_if_complex(c10::complex<scalar_t> data, AbsSwitch<acc_t>) {
+-  return static_cast<acc_t>(std::abs(data));
++  return static_cast<acc_t>(c10::math::abs(data));
+ }
+ 
+ // This accumulator template is used to calculate the order two norm of the

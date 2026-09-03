@@ -1,0 +1,64 @@
+diff --git a/cmake/Modules/FindSYCL.cmake b/cmake/Modules/FindSYCL.cmake
+index ddf7a3b8..8a810279 100644
+--- a/cmake/Modules/FindSYCL.cmake
++++ b/cmake/Modules/FindSYCL.cmake
+@@ -85,7 +85,7 @@ endif()
+ 
+ function(SYCL_GET_SOURCES_AND_OPTIONS _sycl_sources _cxx_sources _cmake_options)
+   cmake_parse_arguments(PARSE_ARGV 3 PARSED_SYCL
+-    "STATIC;SHARED;MODULE;EXCLUDE_FROM_ALL"
++    "STATIC;SHARED;MODULE;OBJECT;EXCLUDE_FROM_ALL"
+     ""
+     "SYCL_SOURCES;CXX_SOURCES")
+   if("OPTIONS" IN_LIST ARGN)
+@@ -94,7 +94,7 @@ function(SYCL_GET_SOURCES_AND_OPTIONS _sycl_sources _cxx_sources _cmake_options)
+   set(${_sycl_sources} ${PARSED_SYCL_SYCL_SOURCES} PARENT_SCOPE)
+   set(${_cxx_sources} ${PARSED_SYCL_CXX_SOURCES} PARENT_SCOPE)
+   set(_opts "")
+-  foreach(_kw IN ITEMS STATIC SHARED MODULE EXCLUDE_FROM_ALL)
++  foreach(_kw IN ITEMS STATIC SHARED MODULE OBJECT EXCLUDE_FROM_ALL)
+     if(PARSED_SYCL_${_kw})
+       list(APPEND _opts ${_kw})
+     endif()
+@@ -109,9 +109,11 @@ function(SYCL_BUILD_SHARED_LIBRARY shared_flag)
+   list(FIND cmake_args SHARED _sycl_found_SHARED)
+   list(FIND cmake_args MODULE _sycl_found_MODULE)
+   list(FIND cmake_args STATIC _sycl_found_STATIC)
++  list(FIND cmake_args OBJECT _sycl_found_OBJECT)
+   if( _sycl_found_SHARED GREATER -1 OR
+       _sycl_found_MODULE GREATER -1 OR
+-      _sycl_found_STATIC GREATER -1)
++      _sycl_found_STATIC GREATER -1 OR
++      _sycl_found_OBJECT GREATER -1)
+     set(_sycl_build_shared_libs)
+   else()
+     if(BUILD_SHARED_LIBS)
+diff --git a/src/BuildOnLinux.cmake b/src/BuildOnLinux.cmake
+index 01bc5f3e..5369236b 100644
+--- a/src/BuildOnLinux.cmake
++++ b/src/BuildOnLinux.cmake
+@@ -14,7 +14,7 @@ set(SYCL_LINK_LIBRARIES_KEYWORD PRIVATE)
+ macro(setup_common_libraries)
+   add_library(
+     torch_xpu_ops
+-    STATIC
++    OBJECT
+     ${ATen_XPU_MKL_SRCS}
+     ${ATen_XPU_NATIVE_CPP_SRCS}
+     ${ATen_XPU_XCCL_SRCS})
+@@ -58,7 +58,7 @@ if(BUILD_SEPARATE_OPS)
+ else()
+   sycl_add_library(
+     torch_xpu_ops
+-    STATIC
++    OBJECT
+     CXX_SOURCES  ${ATen_XPU_MKL_SRCS} ${ATen_XPU_NATIVE_CPP_SRCS} ${ATen_XPU_XCCL_SRCS}
+     SYCL_SOURCES ${ATen_XPU_SYCL_SRCS})
+   if(USE_C10D_XCCL)
+@@ -71,6 +71,5 @@ else()
+     target_compile_definitions(torch_xpu_ops PRIVATE USE_SYCLTLA)
+   endif()
+ 
+-  install(TARGETS torch_xpu_ops DESTINATION "${TORCH_INSTALL_LIB_DIR}")
+   list(APPEND TORCH_XPU_OPS_LIBRARIES torch_xpu_ops)
+ endif()

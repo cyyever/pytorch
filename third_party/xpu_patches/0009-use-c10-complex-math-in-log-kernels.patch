@@ -1,0 +1,175 @@
+diff --git a/src/ATen/native/xpu/sycl/LogAddExpKernels.cpp b/src/ATen/native/xpu/sycl/LogAddExpKernels.cpp
+index 3b079bf1..594e9f16 100644
+--- a/src/ATen/native/xpu/sycl/LogAddExpKernels.cpp
++++ b/src/ATen/native/xpu/sycl/LogAddExpKernels.cpp
+@@ -29,11 +29,11 @@ template <typename scalar_t, bool min>
+ c10::complex<scalar_t> _logaddexp_minmax(
+     const c10::complex<scalar_t>& x,
+     const c10::complex<scalar_t>& y) {
+-  scalar_t xr = std::real(x);
+-  scalar_t yr = std::real(y);
+-  if (sycl::isnan(yr) || (sycl::isnan(std::imag(y)))) {
++  scalar_t xr = c10::math::real(x);
++  scalar_t yr = c10::math::real(y);
++  if (sycl::isnan(yr) || (sycl::isnan(c10::math::imag(y)))) {
+     return y;
+-  } else if (sycl::isnan(xr) || (sycl::isnan(std::imag(x)))) {
++  } else if (sycl::isnan(xr) || (sycl::isnan(c10::math::imag(x)))) {
+     return x;
+   } else if constexpr (min) {
+     return (xr < yr) ? x : y;
+@@ -46,24 +46,24 @@ c10::complex<scalar_t> _logaddexp_minmax(
+ // i*sin(y))
+ template <typename scalar_t>
+ c10::complex<scalar_t> _fast_build_exp(const c10::complex<scalar_t>& x) {
+-  auto xreal = std::real(x);
+-  auto ximag = std::imag(x);
+-  auto exp_x_abs = std::exp(xreal);
+-  auto exp_x_real = exp_x_abs * std::cos(ximag);
+-  auto exp_x_imag = exp_x_abs * std::sin(ximag);
++  auto xreal = c10::math::real(x);
++  auto ximag = c10::math::imag(x);
++  auto exp_x_abs = c10::math::exp(xreal);
++  auto exp_x_real = exp_x_abs * c10::math::cos(ximag);
++  auto exp_x_imag = exp_x_abs * c10::math::sin(ximag);
+   return {exp_x_real, exp_x_imag};
+ }
+ 
+ // Fast complex exponential when real part is infinite
+ template <typename scalar_t>
+ c10::complex<scalar_t> _fast_build_exp_inf(const c10::complex<scalar_t>& x) {
+-  auto ximag = std::imag(x);
++  auto ximag = c10::math::imag(x);
+   constexpr auto exp_x_abs = std::numeric_limits<scalar_t>::infinity();
+   if (!sycl::isfinite(ximag)) { // Consistent with std::exp behavior
+     return {exp_x_abs, std::numeric_limits<scalar_t>::quiet_NaN()};
+   }
+-  auto sin = std::sin(ximag);
+-  auto cos = std::cos(ximag);
++  auto sin = c10::math::sin(ximag);
++  auto cos = c10::math::cos(ximag);
+   // Handle exact multiples of pi/2 to avoid inf * 0 = NaN
+   auto exp_x_real = (cos == 0) ? (scalar_t)0.0 : exp_x_abs * cos;
+   auto exp_x_imag = (sin == 0) ? (scalar_t)0.0 : exp_x_abs * sin;
+@@ -78,11 +78,11 @@ c10::complex<scalar_t> _log_add_exp_helper(
+     const c10::complex<scalar_t>& y) {
+   c10::complex<scalar_t> min = _logaddexp_minmax<scalar_t, /*min=*/true>(x, y);
+   c10::complex<scalar_t> max = _logaddexp_minmax<scalar_t, /*min=*/false>(x, y);
+-  scalar_t min_real = std::real(min);
+-  scalar_t max_real = std::real(max);
++  scalar_t min_real = c10::math::real(min);
++  scalar_t max_real = c10::math::real(max);
+ 
+   // Handle NaN propagation
+-  if (sycl::isnan(min_real) || sycl::isnan(std::imag(min))) {
++  if (sycl::isnan(min_real) || sycl::isnan(c10::math::imag(min))) {
+     return {
+         std::numeric_limits<scalar_t>::quiet_NaN(),
+         std::numeric_limits<scalar_t>::quiet_NaN()};
+@@ -93,7 +93,8 @@ c10::complex<scalar_t> _log_add_exp_helper(
+     } else {
+       auto exp_min = _fast_build_exp_inf(min);
+       auto exp_max = _fast_build_exp_inf(max);
+-      return std::log1p(exp_min + exp_max - c10::complex<scalar_t>(1, 0));
++      return c10::math::log1p(
++          exp_min + exp_max - c10::complex<scalar_t>(1, 0));
+     }
+   } else {
+     // Normal case: use numerically stable formula
+@@ -105,7 +106,7 @@ c10::complex<scalar_t> _log_add_exp_helper(
+     } else {
+       exp_minmax = _fast_build_exp(minmax);
+     }
+-    return std::log1p(exp_minmax) + max;
++    return c10::math::log1p(exp_minmax) + max;
+   }
+ }
+ 
+diff --git a/src/ATen/native/xpu/sycl/LogcumsumexpKernel.cpp b/src/ATen/native/xpu/sycl/LogcumsumexpKernel.cpp
+index 7c330b03..a767bf90 100644
+--- a/src/ATen/native/xpu/sycl/LogcumsumexpKernel.cpp
++++ b/src/ATen/native/xpu/sycl/LogcumsumexpKernel.cpp
+@@ -13,6 +13,7 @@
+ #include <ATen/TensorUtils.h>
+ #include <ATen/core/Tensor.h>
+ #include <ATen/core/TensorBase.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/ScanKernels.h>
+ #include <ATen/native/xpu/sycl/ScanUtils.h>
+@@ -27,11 +28,11 @@ template <typename scalar_t, bool min>
+ c10::complex<scalar_t> _logcumsumexp_minmax(
+     const c10::complex<scalar_t>& x,
+     const c10::complex<scalar_t>& y) {
+-  scalar_t xr = std::real(x);
+-  scalar_t yr = std::real(y);
+-  if (at::_isnan(yr) || (at::_isnan(std::imag(y)))) {
++  scalar_t xr = c10::math::real(x);
++  scalar_t yr = c10::math::real(y);
++  if (at::_isnan(yr) || (at::_isnan(c10::math::imag(y)))) {
+     return y;
+-  } else if (at::_isnan(xr) || (at::_isnan(std::imag(x)))) {
++  } else if (at::_isnan(xr) || (at::_isnan(c10::math::imag(x)))) {
+     return x;
+   } else if constexpr (min) { // min
+     return (xr < yr) ? x : y;
+@@ -64,11 +65,11 @@ c10::complex<scalar_t> _fast_build_exp(const c10::complex<scalar_t>& x) {
+   // complex exponential function, but implemented manually to get fast
+   // compilation time this function only handles the case where the x is finite
+   // (not inf nor nan)
+-  auto xreal = std::real(x);
+-  auto ximag = std::imag(x);
+-  auto exp_x_abs = std::exp(xreal);
+-  auto exp_x_real = exp_x_abs * std::cos(ximag);
+-  auto exp_x_imag = exp_x_abs * std::sin(ximag);
++  auto xreal = c10::math::real(x);
++  auto ximag = c10::math::imag(x);
++  auto exp_x_abs = c10::math::exp(xreal);
++  auto exp_x_real = exp_x_abs * c10::math::cos(ximag);
++  auto exp_x_imag = exp_x_abs * c10::math::sin(ximag);
+   return {exp_x_real, exp_x_imag};
+ }
+ 
+@@ -77,10 +78,10 @@ c10::complex<scalar_t> _fast_build_exp_inf(const c10::complex<scalar_t>& x) {
+   // complex exponential function, but implemented manually to get fast
+   // compilation time this function only handles the case where the real part of
+   // x is infinite
+-  auto ximag = std::imag(x);
++  auto ximag = c10::math::imag(x);
+   auto exp_x_abs = std::numeric_limits<scalar_t>::infinity();
+-  auto sin = std::sin(ximag);
+-  auto cos = std::cos(ximag);
++  auto sin = c10::math::sin(ximag);
++  auto cos = c10::math::cos(ximag);
+   // special case if the angle is exactly the multiple of pi/2
+   auto exp_x_real = (cos == 0) ? (scalar_t)0.0 : exp_x_abs * cos;
+   auto exp_x_imag = (sin == 0) ? (scalar_t)0.0 : exp_x_abs * sin;
+@@ -95,10 +96,10 @@ c10::complex<scalar_t> _log_add_exp_helper(
+       _logcumsumexp_minmax<scalar_t, /*min=*/true>(x, y);
+   c10::complex<scalar_t> max =
+       _logcumsumexp_minmax<scalar_t, /*min=*/false>(x, y);
+-  scalar_t min_real = std::real(min);
+-  scalar_t max_real = std::real(max);
++  scalar_t min_real = c10::math::real(min);
++  scalar_t max_real = c10::math::real(max);
+ 
+-  if (at::_isnan(min_real) || at::_isnan(std::imag(min))) {
++  if (at::_isnan(min_real) || at::_isnan(c10::math::imag(min))) {
+     // handling the "infectious" NaNs
+     return {
+         std::numeric_limits<scalar_t>::quiet_NaN(),
+@@ -116,12 +117,12 @@ c10::complex<scalar_t> _log_add_exp_helper(
+       // real(min) == +inf
+       auto exp_min = _fast_build_exp_inf(min);
+       auto exp_max = _fast_build_exp_inf(max);
+-      return ::log1p(
++      return c10::math::log1p(
+           exp_min + exp_max - 1); // log1p(x - 1) builds faster than log
+     }
+   } else {
+     auto minmax = min - max;
+     auto exp_minmax = _fast_build_exp(minmax);
+-    return ::log1p(exp_minmax) + max;
++    return c10::math::log1p(exp_minmax) + max;
+   }
+ }
