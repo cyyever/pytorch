@@ -6,16 +6,12 @@
 
 namespace torch::jit {
 
-struct Decl;
 struct ParserImpl;
 struct Lexer;
 
 
 struct TORCH_API Parser {
   explicit Parser(const std::shared_ptr<Source>& src);
-  TreeRef parseFunction(bool is_method);
-  TreeRef parseClass();
-  Decl parseTypeComment();
   Expr parseExp();
   Lexer& lexer();
   ~Parser();
