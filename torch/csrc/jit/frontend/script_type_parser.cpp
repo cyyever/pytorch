@@ -2,10 +2,26 @@
 
 #include <ATen/core/type_factory.h>
 #include <torch/csrc/jit/frontend/parser.h>
-#include <torch/csrc/jit/ir/ir.h>
 #include <torch/custom_class.h>
 
 namespace torch::jit {
+
+// These used to arrive through jit/ir/ir.h, which this file no longer needs.
+using ::c10::Argument;
+using ::c10::AwaitType;
+using ::c10::DictType;
+using ::c10::FutureType;
+using ::c10::IntType;
+using ::c10::ListType;
+using ::c10::OptionalType;
+using ::c10::RRefType;
+using ::c10::FunctionSchema;
+using ::c10::IValue;
+using ::c10::TensorType;
+using ::c10::TupleType;
+using ::c10::TypePtr;
+using ::c10::UnionType;
+
 namespace {
 
 bool isTorch(const Expr& expr) {
