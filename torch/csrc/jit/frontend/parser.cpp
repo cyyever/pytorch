@@ -8,42 +8,6 @@
 
 namespace torch::jit {
 
-static Decl mergeTypesFromTypeComment(
-    const Decl& decl,
-    const Decl& type_annotation_decl,
-    bool is_method) {
-  auto expected_num_annotations = decl.params().size();
-  if (is_method) {
-    // `self` argument
-    expected_num_annotations -= 1;
-  }
-  if (expected_num_annotations != type_annotation_decl.params().size()) {
-    throw ErrorReport(decl.range())
-        << "Number of type annotations ("
-        << type_annotation_decl.params().size()
-        << ") did not match the number of "
-        << (is_method ? "method" : "function") << " parameters ("
-        << expected_num_annotations << ')';
-  }
-  auto old = decl.params();
-  auto _new = type_annotation_decl.params();
-  // Merge signature idents and ranges with annotation types
-
-  std::vector<Param> new_params;
-  size_t i = is_method ? 1 : 0;
-  size_t j = 0;
-  if (is_method) {
-    new_params.push_back(old[0]);
-  }
-  for (; i < decl.params().size(); ++i, ++j) {
-    new_params.emplace_back(old[i].withType(_new[j].type()));
-  }
-  return Decl::create(
-      decl.range(),
-      List<Param>::create(decl.range(), new_params),
-      type_annotation_decl.return_type());
-}
-
 struct ParserImpl {
   explicit ParserImpl(const std::shared_ptr<Source>& source)
       : L(source), shared(sharedParserData()) {}
@@ -209,40 +173,6 @@ struct ParserImpl {
       }
     }
     return prefix;
-  }
-  std::optional<TreeRef> maybeParseAssignmentOp() {
-    auto r = L.cur().range;
-    switch (L.cur().kind) {
-      case TK_PLUS_EQ:
-      case TK_MINUS_EQ:
-      case TK_TIMES_EQ:
-      case TK_DIV_EQ:
-      case TK_BIT_OR_EQ:
-      case TK_BIT_AND_EQ:
-      case TK_BIT_XOR_EQ:
-      case TK_MOD_EQ: {
-        int modifier = L.next().text()[0];
-        return create_compound(modifier, r, {});
-      } break;
-      case TK_LSHIFT_EQ: {
-        L.next();
-        return create_compound(TK_LSHIFT, r, {});
-      } break;
-      case TK_RSHIFT_EQ: {
-        L.next();
-        return create_compound(TK_RSHIFT, r, {});
-      } break;
-      case TK_POW_EQ: {
-        L.next();
-        return create_compound(TK_POW, r, {});
-      } break;
-      case '=': {
-        L.next();
-        return create_compound('=', r, {}); // no reduction
-      } break;
-      default:
-        return std::nullopt;
-    }
   }
   TreeRef parseTrinary(
       TreeRef true_branch,
@@ -432,353 +362,23 @@ struct ParserImpl {
     return Subscript::create(whole_range, Expr(value), subscript_exprs);
   }
 
-  Maybe<Expr> maybeParseTypeAnnotation() {
-    if (L.nextIf(':')) {
-      // NB: parseExp must not be called inline, since argument evaluation order
-      // changes when L.cur().range is mutated with respect to the parseExp()
-      // call.
-      auto expr = parseExp();
-      return Maybe<Expr>::create(expr.range(), expr);
-    } else {
-      return Maybe<Expr>::create(L.cur().range);
-    }
-  }
 
-  TreeRef parseFormalParam(bool kwarg_only) {
-    auto ident = parseIdent();
-    TreeRef type = maybeParseTypeAnnotation();
-    TreeRef def;
-    if (L.nextIf('=')) {
-      // NB: parseExp must not be called inline, since argument evaluation order
-      // changes when L.cur().range is mutated with respect to the parseExp()
-      // call.
-      auto expr = parseExp();
-      def = Maybe<Expr>::create(expr.range(), expr);
-    } else {
-      def = Maybe<Expr>::create(L.cur().range);
-    }
-    return Param::create(
-        type->range(),
-        Ident(ident),
-        Maybe<Expr>(type),
-        Maybe<Expr>(def),
-        kwarg_only);
-  }
 
-  Param parseBareTypeAnnotation() {
-    auto type = parseExp();
-    return Param::create(
-        type.range(),
-        Ident::create(type.range(), ""),
-        Maybe<Expr>::create(type.range(), type),
-        Maybe<Expr>::create(type.range()),
-        /*kwarg_only=*/false);
-  }
 
-  Decl parseTypeComment() {
-    auto range = L.cur().range;
-    L.expect(TK_TYPE_COMMENT);
-    auto param_types =
-        parseList('(', ',', ')', &ParserImpl::parseBareTypeAnnotation);
-    TreeRef return_type;
-    if (L.nextIf(TK_ARROW)) {
-      auto return_type_range = L.cur().range;
-      return_type = Maybe<Expr>::create(return_type_range, parseExp());
-    } else {
-      return_type = Maybe<Expr>::create(L.cur().range);
-    }
-    return Decl::create(range, param_types, Maybe<Expr>(return_type));
-  }
 
   // 'first' has already been parsed since expressions can exist
   // alone on a line:
   // first[,other,lhs] = rhs
-  TreeRef parseAssign(const Expr& lhs) {
-    auto type = maybeParseTypeAnnotation();
-    auto maybeOp = maybeParseAssignmentOp();
-    if (maybeOp) {
-      // There is an assignment operator, parse the RHS and generate the
-      // assignment.
-      auto rhs = parseExpOrExpTuple();
-      if (maybeOp.value()->kind() == '=') {
-        std::vector<Expr> lhs_list = {lhs};
-        while (L.nextIf('=')) {
-          lhs_list.push_back(rhs);
-          rhs = parseExpOrExpTuple();
-        }
-        if (type.present() && lhs_list.size() > 1) {
-          throw ErrorReport(type.range())
-              << "Annotated multiple assignment is not supported in python";
-        }
-        L.expect(TK_NEWLINE);
-        return Assign::create(
-            lhs.range(),
-            List<Expr>::create(lhs_list[0].range(), lhs_list),
-            Maybe<Expr>::create(rhs.range(), rhs),
-            type);
-      } else {
-        L.expect(TK_NEWLINE);
-        // this is an augmented assignment
-        if (lhs.kind() == TK_TUPLE_LITERAL) {
-          throw ErrorReport(lhs.range())
-              << " augmented assignment can only have one LHS expression";
-        }
-        return AugAssign::create(
-            lhs.range(), lhs, AugAssignKind(*maybeOp), Expr(rhs));
-      }
-    } else {
-      // There is no assignment operator, so this is of the form `lhs : <type>`
-      TORCH_INTERNAL_ASSERT(type.present());
-      L.expect(TK_NEWLINE);
-      return Assign::create(
-          lhs.range(),
-          List<Expr>::create(lhs.range(), {lhs}),
-          Maybe<Expr>::create(lhs.range()),
-          type);
-    }
-  }
 
-  TreeRef parseStmt(bool in_class = false) {
-    switch (L.cur().kind) {
-      case TK_IF:
-        return parseIf();
-      case TK_WHILE:
-        return parseWhile();
-      case TK_FOR:
-        return parseFor();
-      case TK_GLOBAL: {
-        auto range = L.next().range;
-        auto idents =
-            parseList(TK_NOTHING, ',', TK_NOTHING, &ParserImpl::parseIdent);
-        L.expect(TK_NEWLINE);
-        return Global::create(range, idents);
-      }
-      case TK_RETURN: {
-        auto range = L.next().range;
-        Expr value = L.cur().kind != TK_NEWLINE
-            ? parseExpOrExpTuple()
-            : Expr(create_compound(TK_NONE, range, {}));
-        L.expect(TK_NEWLINE);
-        return Return::create(range, value);
-      }
-      case TK_RAISE: {
-        auto range = L.next().range;
-        auto expr = parseExp();
-        L.expect(TK_NEWLINE);
-        return Raise::create(range, expr);
-      }
-      case TK_ASSERT: {
-        auto range = L.next().range;
-        auto cond = parseExp();
-        Maybe<Expr> maybe_first = Maybe<Expr>::create(range);
-        if (L.nextIf(',')) {
-          auto msg = parseExp();
-          maybe_first = Maybe<Expr>::create(range, Expr(msg));
-        }
-        L.expect(TK_NEWLINE);
-        return Assert::create(range, cond, maybe_first);
-      }
-      case TK_BREAK: {
-        auto range = L.next().range;
-        L.expect(TK_NEWLINE);
-        return Break::create(range);
-      }
-      case TK_CONTINUE: {
-        auto range = L.next().range;
-        L.expect(TK_NEWLINE);
-        return Continue::create(range);
-      }
-      case TK_PASS: {
-        auto range = L.next().range;
-        L.expect(TK_NEWLINE);
-        return Pass::create(range);
-      }
-      case TK_DEF: {
-        return parseFunction(/*is_method=*/in_class);
-      }
-      case TK_DELETE: {
-        auto range = L.next().range;
-        auto targets =
-            parseList(TK_NOTHING, ',', TK_NOTHING, &ParserImpl::parseExp);
-        L.expect(TK_NEWLINE);
-        return Delete::create(range, targets);
-      }
-      case TK_WITH: {
-        return parseWith();
-      }
-      default: {
-        auto lhs = parseExpOrExpTuple();
-        if (L.cur().kind != TK_NEWLINE) {
-          return parseAssign(lhs);
-        } else {
-          L.expect(TK_NEWLINE);
-          return ExprStmt::create(lhs.range(), lhs);
-        }
-      }
-    }
-  }
 
-  WithItem parseWithItem() {
-    auto target = parseExp();
 
-    if (L.cur().kind == TK_AS) {
-      // If the current token is TK_AS, this with item is of the form
-      // "expression as target".
-      auto token = L.expect(TK_AS);
-      Ident ident = parseIdent();
-      auto var = Var::create(ident.range(), ident);
-      return WithItem::create(
-          token.range, target, Maybe<Var>::create(ident.range(), var));
-    } else {
-      // If not, this with item is of the form "expression".
-      return WithItem::create(
-          target.range(), target, Maybe<Var>::create(target.range()));
-    }
-  }
 
-  TreeRef parseIf(bool expect_if = true) {
-    auto r = L.cur().range;
-    if (expect_if)
-      L.expect(TK_IF);
-    auto cond = parseExp();
-    L.expect(':');
-    auto true_branch = parseStatements(/*expect_indent=*/true);
-    auto false_branch = makeList(L.cur().range, {});
-    if (L.nextIf(TK_ELSE)) {
-      L.expect(':');
-      false_branch = parseStatements(/*expect_indent=*/true);
-    } else if (L.nextIf(TK_ELIF)) {
-      // NB: this needs to be a separate statement, since the call to parseIf
-      // mutates the lexer state, and thus causes a heap-use-after-free in
-      // compilers which evaluate argument expressions LTR
-      auto range = L.cur().range;
-      false_branch = makeList(range, {parseIf(false)});
-    }
-    return If::create(
-        r, Expr(cond), List<Stmt>(true_branch), List<Stmt>(false_branch));
-  }
-  TreeRef parseWhile() {
-    auto r = L.cur().range;
-    L.expect(TK_WHILE);
-    auto cond = parseExp();
-    L.expect(':');
-    auto body = parseStatements(/*expect_indent=*/true);
-    return While::create(r, Expr(cond), List<Stmt>(body));
-  }
 
-  TreeRef parseFor() {
-    auto r = L.cur().range;
-    L.expect(TK_FOR);
-    auto targets = parseList(TK_NOTHING, ',', TK_IN, &ParserImpl::parseLHSExp);
-    auto itrs = parseList(TK_NOTHING, ',', ':', &ParserImpl::parseExp);
-    auto body = parseStatements(/*expect_indent=*/true);
-    return For::create(r, targets, itrs, body);
-  }
 
-  TreeRef parseWith() {
-    auto r = L.cur().range;
-    // Parse "with expression [as target][, expression [as target]]*:".
-    L.expect(TK_WITH);
-    auto targets = parseList(TK_NOTHING, ',', ':', &ParserImpl::parseWithItem);
-    // Parse the body.
-    auto body = parseStatements(/*expect_indent=*/true);
-    return With::create(r, targets, body);
-  }
 
-  TreeRef parseStatements(bool expect_indent, bool in_class = false) {
-    auto r = L.cur().range;
-    if (expect_indent) {
-      L.expect(TK_INDENT);
-    }
-    TreeList stmts;
-    do {
-      stmts.push_back(parseStmt(in_class));
-    } while (!L.nextIf(TK_DEDENT));
-    return create_compound(TK_LIST, r, std::move(stmts));
-  }
 
-  Maybe<Expr> parseReturnAnnotation() {
-    if (L.nextIf(TK_ARROW)) {
-      // Exactly one expression for return type annotation
-      auto return_type_range = L.cur().range;
-      return Maybe<Expr>::create(return_type_range, parseExp());
-    } else {
-      return Maybe<Expr>::create(L.cur().range);
-    }
-  }
 
-  List<Param> parseFormalParams() {
-    auto r = L.cur().range;
-    std::vector<Param> params;
-    bool kwarg_only = false;
-    parseSequence('(', ',', ')', [&] {
-      if (!kwarg_only && L.nextIf('*')) {
-        kwarg_only = true;
-      } else {
-        params.emplace_back(parseFormalParam(kwarg_only));
-      }
-    });
-    return List<Param>::create(r, params);
-  }
-  Decl parseDecl() {
-    // Parse return type annotation
-    List<Param> paramlist = parseFormalParams();
-    TreeRef return_type;
-    Maybe<Expr> return_annotation = parseReturnAnnotation();
-    L.expect(':');
-    return Decl::create(
-        paramlist.range(), List<Param>(paramlist), return_annotation);
-  }
 
-  TreeRef parseClass() {
-    L.expect(TK_CLASS_DEF);
-    const auto name = parseIdent();
-    Maybe<Expr> superclass = Maybe<Expr>::create(name.range());
-    if (L.nextIf('(')) {
-      // Only support inheriting from NamedTuple right now.
-      auto id = parseExp();
-      superclass = Maybe<Expr>::create(id.range(), id);
-      L.expect(')');
-    }
-    L.expect(':');
-    const auto statements =
-        parseStatements(/*expect_indent=*/true, /*in_class=*/true);
-    return ClassDef::create(
-        name.range(), name, superclass, List<Stmt>(statements));
-  }
-
-  TreeRef parseFunction(bool is_method) {
-    L.expect(TK_DEF);
-    auto name = parseIdent();
-    auto decl = parseDecl();
-
-    TreeRef stmts_list;
-    if (L.nextIf(TK_INDENT)) {
-      // Handle type annotations specified in a type comment as the first line
-      // of the function.
-      if (L.cur().kind == TK_TYPE_COMMENT) {
-        auto type_annotation_decl = Decl(parseTypeComment());
-        L.expect(TK_NEWLINE);
-        decl = mergeTypesFromTypeComment(decl, type_annotation_decl, is_method);
-      }
-
-      stmts_list = parseStatements(false);
-    } else {
-      // Special case: the Python grammar allows one-line functions with a
-      // single statement.
-      if (L.cur().kind == TK_TYPE_COMMENT) {
-        auto type_annotation_decl = Decl(parseTypeComment());
-        decl = mergeTypesFromTypeComment(decl, type_annotation_decl, is_method);
-      }
-
-      TreeList stmts;
-      stmts.push_back(parseStmt(is_method));
-      stmts_list = create_compound(TK_LIST, L.cur().range, std::move(stmts));
-    }
-
-    return Def::create(
-        name.range(), Ident(name), Decl(decl), List<Stmt>(stmts_list));
-  }
   Lexer& lexer() {
     return L;
   }
@@ -803,17 +403,8 @@ Parser::Parser(const std::shared_ptr<Source>& src)
 
 Parser::~Parser() = default;
 
-TreeRef Parser::parseFunction(bool is_method) {
-  return pImpl->parseFunction(is_method);
-}
-TreeRef Parser::parseClass() {
-  return pImpl->parseClass();
-}
 Lexer& Parser::lexer() {
   return pImpl->lexer();
-}
-Decl Parser::parseTypeComment() {
-  return pImpl->parseTypeComment();
 }
 Expr Parser::parseExp() {
   return pImpl->parseExp();
