@@ -269,8 +269,7 @@ void undo_broadcast_on_batch(at::Tensor& m1, at::Tensor& m2) {
   constexpr int dim_b = 0;
   constexpr int dim_m = 1;
   constexpr int dim_n = 2;
-  auto only_broadcasted_on_batch =
-      [dim_b, dim_m, dim_n](const at::Tensor& tensor) {
+  auto only_broadcasted_on_batch = [](const at::Tensor& tensor) {
         auto tensor_dim = tensor.dim();
         bool is_bmm = tensor_dim == 3;
         if (!is_bmm)
@@ -487,15 +486,6 @@ bool binary_valid(
       (self.is_contiguous(cl_tag) && other.is_contiguous(cl_tag)))
     return true;
   return false;
-}
-
-static inline bool is_channels_last(at::MemoryFormat fmt) {
-  return (at::MemoryFormat::ChannelsLast == fmt) ||
-      (at::MemoryFormat::ChannelsLast3d == fmt);
-}
-
-static inline bool is_smf_channels_last(const Tensor& t) {
-  return is_channels_last(t.suggest_memory_format());
 }
 
 bool use_channels_last_for_conv(
