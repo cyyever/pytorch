@@ -69,7 +69,7 @@ void initPythonTypeBindings(PyObject* module_) {
   // tryToInferType's result type; _jit_try_infer_type below returns it and the
   // HOP schema generator reads .type() off it.
   py::class_<InferredType, std::shared_ptr<InferredType>>(m, "InferredType")
-      .def(py::init([](std::shared_ptr<Type> type) {
+      .def(py::init([](std::shared_ptr<c10::Type> type) {
         return std::make_shared<InferredType>(std::move(type));
       }))
       .def(py::init([](std::string reason) {

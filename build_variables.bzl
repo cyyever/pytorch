@@ -123,12 +123,7 @@ core_trainer_sources = [
 
 core_sources_full = [
     "torch/csrc/jit/frontend/parser.cpp",
-    "torch/csrc/jit/frontend/schema_matching.cpp",
     "torch/csrc/jit/frontend/script_type_parser.cpp",
-    "torch/csrc/jit/ir/attributes.cpp",
-    "torch/csrc/jit/ir/constants.cpp",
-    "torch/csrc/jit/ir/ir.cpp",
-    "torch/csrc/jit/ir/scope.cpp",
     "torch/csrc/jit/python/utf8_decoding_ignore.cpp",
     "torch/csrc/jit/serialization/export.cpp",
     "torch/csrc/jit/serialization/import.cpp",

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ATen/core/enum_type.h>
 #include <ATen/core/ivalue.h>
 #include <ATen/core/jit_type.h>
 #include <ATen/core/qualified_name.h>
@@ -14,7 +15,6 @@
 #include <torch/csrc/QScheme.h>
 #include <torch/csrc/Stream.h>
 #include <torch/csrc/jit/api/method.h>
-#include <torch/csrc/jit/frontend/schema_matching.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
 #include <torch/csrc/jit/runtime/operator.h>
 #include <torch/csrc/utils/pybind.h>
@@ -36,6 +36,31 @@
 #define VISIBILITY_HIDDEN __attribute__((visibility("hidden")))
 
 namespace torch::jit {
+
+// These used to arrive through jit/ir/ir.h, which this header no longer needs.
+using ::c10::BoolType;
+using ::c10::CapsuleType;
+using ::c10::ClassType;
+using ::c10::ivalue::ConstantString;
+using ::c10::ComplexType;
+using ::c10::DeviceObjType;
+using ::c10::DictType;
+using ::c10::EnumType;
+using ::c10::EnumTypePtr;
+using ::c10::FloatType;
+using ::c10::GeneratorType;
+using ::c10::IntType;
+using ::c10::ListType;
+using ::c10::NoneType;
+using ::c10::OptionalType;
+using ::c10::PyObjectType;
+using ::c10::StreamObjType;
+using ::c10::StringType;
+using ::c10::TensorType;
+using ::c10::TupleType;
+using ::c10::TypeKind;
+using ::c10::UnionType;
+using ::c10::TypePtr;
 
 using ResolutionCallback = std::function<py::object(std::string)>;
 
