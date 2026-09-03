@@ -149,22 +149,6 @@ template <class Container>
 size_t C10_API
 ReplaceAll(std::string& s, std::string_view from, std::string_view to);
 
-/// Represents a location in source code (for debugging).
-struct C10_API SourceLocation {
-  const char* function;
-  const char* file;
-  uint32_t line;
-
-  [[nodiscard]] static constexpr SourceLocation current(
-      const char* file = __builtin_FILE(),
-      const char* function = __builtin_FUNCTION(),
-      const std::uint_least32_t line = __builtin_LINE()) noexcept {
-    return {.function = function, .file = file, .line = line};
-  }
-};
-
-std::ostream& operator<<(std::ostream& out, const SourceLocation& loc);
-
 // unix isprint but insensitive to locale
 [[nodiscard]] inline bool isPrint(char s) {
   return s > 0x1f && s < 0x7f;

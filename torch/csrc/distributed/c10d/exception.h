@@ -9,14 +9,15 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
 
+#include <source_location>
+
 // Utility macro similar to C10_THROW_ERROR, the major difference is that this
 // macro handles exception types defined in the c10d namespace, whereas
 // C10_THROW_ERROR requires an exception to be defined in the c10 namespace.
 #define C10D_THROW_ERROR(err_type, ...)                       \
   /* @allow-raw-throw: this macro is the c10d throw itself */ \
   throw ::c10d::err_type(                                     \
-      {__func__, __FILE__, static_cast<uint32_t>(__LINE__)},  \
-      c10::str(__VA_ARGS__))
+      std::source_location::current(), c10::str(__VA_ARGS__))
 
 #define C10D_CHECK_WITH(error_t, cond, ...)                         \
   if (C10_UNLIKELY_OR_CONST(!(cond))) {                             \

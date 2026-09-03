@@ -934,7 +934,7 @@ void aoti_torch_warn(
     uint32_t line,
     const char* msg) {
   ::c10::warn(
-      ::c10::Warning(::c10::UserWarning(), {func, file, line}, msg, false));
+      ::c10::Warning(::c10::UserWarning(), func, file, line, msg, false));
 }
 
 AOTITorchError aoti_torch__alloc_from_pool(
