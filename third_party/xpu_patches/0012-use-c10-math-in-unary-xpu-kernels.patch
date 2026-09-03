@@ -1,0 +1,377 @@
+diff --git a/src/ATen/native/xpu/sycl/UnaryComplexKernels.cpp b/src/ATen/native/xpu/sycl/UnaryComplexKernels.cpp
+index 76a640e2..7f656023 100644
+--- a/src/ATen/native/xpu/sycl/UnaryComplexKernels.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryComplexKernels.cpp
+@@ -16,6 +16,7 @@
+ #include <ATen/core/Tensor.h>
+ #include <ATen/native/TensorIterator.h>
+ #include <c10/core/ScalarType.h>
++#include <c10/util/complex.h>
+ #include <numbers>
+ 
+ #include <ATen/native/xpu/sycl/CopyKernel.h>
+@@ -29,6 +30,6 @@ namespace at::native::xpu {
+ template <typename scalar_t>
+ struct ConjScalarFunc {
+   scalar_t operator()(scalar_t src_val) const {
+-    return std::conj(src_val);
++    return c10::math::conj(src_val);
+   }
+ };
+@@ -56,7 +57,7 @@ void conj_kernel(TensorIterator& iter) {
+ template <typename scalar_t>
+ struct ConjPhysicalFunctor {
+   scalar_t operator()(scalar_t z) const {
+-    return std::conj(z);
++    return c10::math::conj(z);
+   }
+ };
+ 
+@@ -90,7 +91,7 @@ void conj_physical_kernel(TensorIteratorBase& iter) {
+ template <typename scalar_t>
+ struct NegConjScalarFunc {
+   scalar_t operator()(scalar_t src_val) const {
+-    return std::conj(-src_val);
++    return c10::math::conj(-src_val);
+   }
+ };
+ 
+@@ -142,7 +143,7 @@ struct AngleWrapper {
+ template <typename T>
+ struct AngleWrapper<c10::complex<T>> {
+   c10::complex<T> operator()(c10::complex<T> v) const {
+-    return c10::complex<T>{std::arg(v), 0};
++    return c10::complex<T>{c10::math::arg(v), 0};
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricAcosKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricAcosKernel.cpp
+index acf8ec89..4e84ad30 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricAcosKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricAcosKernel.cpp
+@@ -12,6 +12,7 @@
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
++#include <c10/util/complex.h>
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+ #include <ATen/native/xpu/sycl/UnaryGeometricAcosKernel.h>
+@@ -21,7 +22,7 @@ template <typename scalar_t, typename acc_t = at::opmath_type<scalar_t>>
+ struct AcosFunctor {
+   scalar_t operator()(scalar_t a) const {
+     if constexpr (c10::is_complex<acc_t>::value) {
+-      return std::acos(static_cast<acc_t>(a));
++      return c10::math::acos(static_cast<acc_t>(a));
+     } else {
+       return sycl::acos(static_cast<acc_t>(a));
+     }
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricAcoshKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricAcoshKernel.cpp
+index 35216bf2..00d5a9fc 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricAcoshKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricAcoshKernel.cpp
+@@ -12,6 +12,7 @@
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
++#include <c10/util/complex.h>
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+ #include <ATen/native/xpu/sycl/UnaryGeometricAcoshKernel.h>
+@@ -22,7 +23,7 @@ template <typename scalar_t, typename acc_t = at::opmath_type<scalar_t>>
+ struct AcoshFunctor {
+   scalar_t operator()(scalar_t a) const {
+     if constexpr (c10::is_complex<acc_t>::value) {
+-      return std::acosh(static_cast<acc_t>(a));
++      return c10::math::acosh(static_cast<acc_t>(a));
+     } else {
+       return sycl::acosh(static_cast<acc_t>(a));
+     }
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricAsinKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricAsinKernel.cpp
+index a41ef4df..e23c8502 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricAsinKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricAsinKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct AsinComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(const scalar_t a) const {
+-    return std::asin(static_cast<opmath_t>(a));
++    return c10::math::asin(static_cast<opmath_t>(a));
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricAsinhKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricAsinhKernel.cpp
+index 41c93965..9c09e967 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricAsinhKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricAsinhKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct AsinhComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(const scalar_t a) const {
+-    return std::asinh(static_cast<opmath_t>(a));
++    return c10::math::asinh(static_cast<opmath_t>(a));
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricAtanKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricAtanKernel.cpp
+index 83028a6c..0b271f10 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricAtanKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricAtanKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct AtanComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(const scalar_t a) const {
+-    return std::atan(static_cast<opmath_t>(a));
++    return c10::math::atan(static_cast<opmath_t>(a));
+   }
+ };
+ 
+@@ -30,7 +31,7 @@ template <typename scalar_t>
+ struct AtanFunctor {
+   scalar_t operator()(const scalar_t a) const {
+     if constexpr (c10::is_complex<scalar_t>::value) {
+-      return std::atan(a);
++      return c10::math::atan(a);
+     } else {
+       using opmath_t = at::opmath_type<scalar_t>;
+       return sycl::atan(static_cast<opmath_t>(a));
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricAtanhKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricAtanhKernel.cpp
+index bdb38ff7..771d5fa9 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricAtanhKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricAtanhKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct AtanhComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(const scalar_t a) const {
+-    return std::atanh(static_cast<opmath_t>(a));
++    return c10::math::atanh(static_cast<opmath_t>(a));
+   }
+ };
+ 
+@@ -30,7 +31,7 @@ template <typename scalar_t>
+ struct AtanhFunctor {
+   scalar_t operator()(const scalar_t a) const {
+     if constexpr (c10::is_complex<scalar_t>::value) {
+-      return std::atanh(a);
++      return c10::math::atanh(a);
+     } else {
+       using opmath_t = at::opmath_type<scalar_t>;
+       return sycl::atanh(static_cast<opmath_t>(a));
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricCosKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricCosKernel.cpp
+index 9513acdf..38732f38 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricCosKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricCosKernel.cpp
+@@ -13,6 +13,7 @@
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
+ #include <c10/core/ScalarType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -24,7 +25,7 @@ template <typename scalar_t>
+ struct CosFunctor {
+   scalar_t operator()(const scalar_t a) const {
+     if constexpr (c10::is_complex<scalar_t>::value) {
+-      return std::cos(a);
++      return c10::math::cos(a);
+     } else {
+       using opmath_t = at::opmath_type<scalar_t>;
+       return sycl::cos(static_cast<opmath_t>(a));
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricCoshKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricCoshKernel.cpp
+index 92054c1f..a794c065 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricCoshKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricCoshKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct CoshComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(scalar_t a) const {
+-    return std::cosh(static_cast<opmath_t>(a));
++    return c10::math::cosh(static_cast<opmath_t>(a));
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricSinKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricSinKernel.cpp
+index 4ad1c639..1217ce9c 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricSinKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricSinKernel.cpp
+@@ -13,6 +13,7 @@
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
+ #include <c10/core/ScalarType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -24,7 +25,7 @@ template <typename scalar_t>
+ struct SinFunctor {
+   scalar_t operator()(const scalar_t a) const {
+     if constexpr (c10::is_complex<scalar_t>::value) {
+-      return std::sin(a);
++      return c10::math::sin(a);
+     } else {
+       using opmath_t = at::opmath_type<scalar_t>;
+       return sycl::sin(static_cast<opmath_t>(a));
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricSinhKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricSinhKernel.cpp
+index 4e6d1ade..7d646f32 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricSinhKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricSinhKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct SinhComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(scalar_t a) const {
+-    return std::sinh(static_cast<opmath_t>(a));
++    return c10::math::sinh(static_cast<opmath_t>(a));
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricTanKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricTanKernel.cpp
+index f1ab310a..98a47632 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricTanKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricTanKernel.cpp
+@@ -11,6 +11,7 @@
+ #include <ATen/Dispatch.h>
+ #include <ATen/Dispatch_v2.h>
+ #include <ATen/OpMathType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -22,7 +23,7 @@ template <typename scalar_t>
+ struct TanComplexFunctor {
+   using opmath_t = at::opmath_type<scalar_t>;
+   scalar_t operator()(scalar_t a) const {
+-    return std::tan(static_cast<opmath_t>(a));
++    return c10::math::tan(static_cast<opmath_t>(a));
+   }
+ };
+ 
+diff --git a/src/ATen/native/xpu/sycl/UnaryGeometricTanhKernel.cpp b/src/ATen/native/xpu/sycl/UnaryGeometricTanhKernel.cpp
+index f9e5965e..1761668a 100644
+--- a/src/ATen/native/xpu/sycl/UnaryGeometricTanhKernel.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryGeometricTanhKernel.cpp
+@@ -13,6 +13,7 @@
+ #include <ATen/OpMathType.h>
+ #include <ATen/native/TensorIterator.h>
+ #include <c10/core/ScalarType.h>
++#include <c10/util/complex.h>
+ 
+ #include <ATen/native/xpu/sycl/Loops.h>
+ 
+@@ -25,7 +26,7 @@ struct TanhFunctor {
+   scalar_t operator()(scalar_t a) const {
+     using opmath_t = at::opmath_type<scalar_t>;
+     if constexpr (c10::is_complex<opmath_t>::value) {
+-      return std::tanh(static_cast<opmath_t>(a));
++      return c10::math::tanh(static_cast<opmath_t>(a));
+     } else {
+       return sycl::tanh(static_cast<opmath_t>(a));
+     }
+diff --git a/src/ATen/native/xpu/sycl/UnaryKernels.cpp b/src/ATen/native/xpu/sycl/UnaryKernels.cpp
+index b9eae64d..b84ff723 100644
+--- a/src/ATen/native/xpu/sycl/UnaryKernels.cpp
++++ b/src/ATen/native/xpu/sycl/UnaryKernels.cpp
+@@ -31,7 +31,7 @@ template <typename scalar_t>
+ struct SqrtFunctor {
+   scalar_t operator()(scalar_t a) const {
+     if constexpr (c10::is_complex<scalar_t>::value) {
+-      return std::sqrt(a);
++      return c10::math::sqrt(a);
+     } else {
+       using opmath_t = at::opmath_type<scalar_t>;
+       return sycl::sqrt(static_cast<opmath_t>(a));
+@@ -56,9 +56,7 @@ struct RsqrtFunctor<double> {
+ template <typename T>
+ struct RsqrtFunctor<c10::complex<T>> {
+   c10::complex<T> operator()(c10::complex<T> a) const {
+-    return c10::complex<T>(1.0, 0) /
+-        static_cast<c10::complex<T>>(
+-               std::sqrt(static_cast<std::complex<T>>(a)));
++    return c10::complex<T>(1.0, 0) / c10::math::sqrt(a);
+   }
+ };
+ 
+@@ -66,7 +64,7 @@ template <typename scalar_t, typename acc_t = at::opmath_type<scalar_t>>
+ struct ExpFunctor {
+   scalar_t operator()(scalar_t a) const {
+     if constexpr (c10::is_complex<acc_t>::value) {
+-      return std::exp(static_cast<acc_t>(a));
++      return c10::math::exp(static_cast<acc_t>(a));
+     } else {
+       return sycl::exp(static_cast<acc_t>(a));
+     }
+@@ -279,9 +277,10 @@ struct Expm1Functor {
+ template <typename T>
+ struct Expm1Functor<c10::complex<T>> {
+   c10::complex<T> operator()(c10::complex<T> x) const {
+-    auto a = std::sin(T(.5) * x.imag());
+-    auto re = sycl::expm1(x.real()) * std::cos(x.imag()) - T(2) * a * a;
+-    auto im = std::exp(x.real()) * std::sin(x.imag());
++    auto a = c10::math::sin(T(.5) * x.imag());
++    auto re =
++        sycl::expm1(x.real()) * c10::math::cos(x.imag()) - T(2) * a * a;
++    auto im = c10::math::exp(x.real()) * c10::math::sin(x.imag());
+     return c10::complex<T>(re, im);
+   }
+ };
+diff --git a/src/ATen/native/xpu/sycl/UnarySignKernels.cpp b/src/ATen/native/xpu/sycl/UnarySignKernels.cpp
+index 9d62dd75..c1a06ba0 100644
+--- a/src/ATen/native/xpu/sycl/UnarySignKernels.cpp
++++ b/src/ATen/native/xpu/sycl/UnarySignKernels.cpp
+@@ -29,7 +29,7 @@ struct SgnFunctor {
+     if (z == opmath_t(0, 0)) {
+       return opmath_t(0, 0);
+     } else {
+-      return z / std::abs(z);
++      return z / c10::math::abs(z);
+     }
+   }
+ };
