@@ -129,7 +129,6 @@ ignores = [
     "third_party/nvfuser/runtime/broadcast.cu",
     "third_party/nvfuser/runtime/grid_reduction.cu",
     "third_party/nvfuser/runtime/helpers.cu",
-    "torch/csrc/jit/ir/ir.h",
     # generated files we shouldn't frob
     "torch/lib/tmp_install/*",
     "torch/include/*",
