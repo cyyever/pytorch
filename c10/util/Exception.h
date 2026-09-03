@@ -6,6 +6,7 @@
 #include <c10/util/Backtrace.h>
 #include <c10/util/Lazy.h>
 #include <c10/util/StringUtil.h>
+#include <source_location>
 
 #include <cstdint>
 #include <exception>
@@ -58,7 +59,16 @@ class C10_API Error : public std::exception {
  public:
   // PyTorch-style Error constructor.  NB: the implementation of this
   // is actually in Logging.cpp
-  Error(SourceLocation source_location, std::string msg);
+  Error(std::source_location source_location, std::string msg);
+
+  // Same, for the paths that carry a location taken somewhere else: the
+  // TORCH_CHECK helpers, which receive it as macro arguments, and the
+  // non-glog logger. std::source_location cannot be built from values.
+  Error(
+      const char* function,
+      const char* file,
+      uint32_t line,
+      std::string msg);
 
   // Caffe2-style error message
   Error(
@@ -121,25 +131,37 @@ class C10_API Warning {
 
   Warning(
       warning_variant_t type,
-      const SourceLocation& source_location,
+      std::source_location source_location,
       std::string msg,
       bool verbatim);
 
   Warning(
       warning_variant_t type,
-      SourceLocation source_location,
+      std::source_location source_location,
       const char* msg,
       bool verbatim);
 
   Warning(
       warning_variant_t type,
-      SourceLocation source_location,
+      std::source_location source_location,
       ::c10::detail::CompileTimeEmptyString msg,
+      bool verbatim);
+
+  // For a location that arrived as values rather than from the warning site:
+  // the AOTI shim gets one from generated code.
+  Warning(
+      warning_variant_t type,
+      const char* function,
+      const char* file,
+      uint32_t line,
+      std::string msg,
       bool verbatim);
 
   // Getters for members
   warning_variant_t type() const;
-  const SourceLocation& source_location() const;
+  const char* function() const;
+  const char* file() const;
+  uint32_t line() const;
   const std::string& msg() const;
   bool verbatim() const;
 
@@ -148,7 +170,9 @@ class C10_API Warning {
   warning_variant_t type_;
 
   // Where the warning happened.
-  SourceLocation source_location_;
+  const char* function_;
+  const char* file_;
+  uint32_t line_;
 
   // The actual warning message.
   std::string msg_;
@@ -236,7 +260,7 @@ struct C10_API WarnAlways {
 class C10_API ErrorAlwaysShowCppStacktrace : public Error {
  public:
   using Error::Error;
-  ErrorAlwaysShowCppStacktrace(SourceLocation source_location, std::string msg);
+  ErrorAlwaysShowCppStacktrace(std::source_location source_location, std::string msg);
   const char* what_without_backtrace() const noexcept override {
     return what();
   }
@@ -248,7 +272,7 @@ class C10_API ErrorAlwaysShowCppStacktrace : public Error {
 class C10_API IndexError : public Error {
  public:
   using Error::Error;
-  IndexError(SourceLocation source_location, std::string msg);
+  IndexError(std::source_location source_location, std::string msg);
 };
 
 // Used in ATen for invalid values.  These turn into
@@ -256,7 +280,7 @@ class C10_API IndexError : public Error {
 class C10_API ValueError : public Error {
  public:
   using Error::Error;
-  ValueError(SourceLocation source_location, std::string msg);
+  ValueError(std::source_location source_location, std::string msg);
 };
 
 // Used in ATen for invalid types.  These turn into
@@ -264,7 +288,7 @@ class C10_API ValueError : public Error {
 class C10_API TypeError : public Error {
  public:
   using Error::Error;
-  TypeError(SourceLocation source_location, std::string msg);
+  TypeError(std::source_location source_location, std::string msg);
 };
 
 // Used in ATen for functionality that is not implemented.  These turn into
@@ -272,7 +296,7 @@ class C10_API TypeError : public Error {
 class C10_API NotImplementedError : public Error {
  public:
   using Error::Error;
-  NotImplementedError(SourceLocation source_location, std::string msg);
+  NotImplementedError(std::source_location source_location, std::string msg);
 };
 
 // Used in ATen for buffer-related errors, e.g. trying to create a DLPack of
@@ -281,7 +305,7 @@ class C10_API NotImplementedError : public Error {
 class C10_API BufferError : public Error {
  public:
   using Error::Error;
-  BufferError(SourceLocation source_location, std::string msg);
+  BufferError(std::source_location source_location, std::string msg);
 };
 
 // Used in ATen for non finite indices.  These turn into
@@ -289,7 +313,7 @@ class C10_API BufferError : public Error {
 class C10_API EnforceFiniteError : public Error {
  public:
   using Error::Error;
-  EnforceFiniteError(SourceLocation source_location, std::string msg);
+  EnforceFiniteError(std::source_location source_location, std::string msg);
 };
 
 // Used in Onnxifi backend lowering.  These turn into
@@ -297,7 +321,7 @@ class C10_API EnforceFiniteError : public Error {
 class C10_API OnnxfiBackendSystemError : public Error {
  public:
   using Error::Error;
-  OnnxfiBackendSystemError(SourceLocation source_location, std::string msg);
+  OnnxfiBackendSystemError(std::source_location source_location, std::string msg);
 };
 
 // Used for numerical errors from the linalg module. These
@@ -305,13 +329,13 @@ class C10_API OnnxfiBackendSystemError : public Error {
 class C10_API LinAlgError : public Error {
  public:
   using Error::Error;
-  LinAlgError(SourceLocation source_location, std::string msg);
+  LinAlgError(std::source_location source_location, std::string msg);
 };
 
 class C10_API OutOfMemoryError : public Error {
  public:
   using Error::Error;
-  OutOfMemoryError(SourceLocation source_location, std::string msg);
+  OutOfMemoryError(std::source_location source_location, std::string msg);
 };
 
 // Used for handling syntactic errors in input arguments.
@@ -319,7 +343,7 @@ class C10_API OutOfMemoryError : public Error {
 class C10_API SyntaxError : public Error {
  public:
   using Error::Error;
-  SyntaxError(SourceLocation source_location, std::string msg);
+  SyntaxError(std::source_location source_location, std::string msg);
 };
 
 // Raised when accelerator API call hits an error.
@@ -328,8 +352,15 @@ class C10_API AcceleratorError : public Error {
   int32_t error_code;
 
  public:
-  AcceleratorError(SourceLocation loc, int32_t code, std::string msg)
+  AcceleratorError(std::source_location loc, int32_t code, std::string msg)
       : Error(loc, std::move(msg)), error_code(code) {}
+  AcceleratorError(
+      const char* function,
+      const char* file,
+      uint32_t line,
+      int32_t code,
+      std::string msg)
+      : Error(function, file, line, std::move(msg)), error_code(code) {}
   int32_t get_error_code() const {
     return error_code;
   }
@@ -340,7 +371,7 @@ class C10_API AcceleratorError : public Error {
 class C10_API DistError : public Error {
  public:
   using Error::Error;
-  DistError(SourceLocation source_location, std::string msg);
+  DistError(std::source_location source_location, std::string msg);
 };
 
 // Used for collective communication library errors from the distributed module.
@@ -348,7 +379,7 @@ class C10_API DistError : public Error {
 class C10_API DistBackendError : public DistError {
  public:
   using DistError::DistError;
-  DistBackendError(SourceLocation source_location, std::string msg);
+  DistBackendError(std::source_location source_location, std::string msg);
 };
 
 // Used for errors originating from the store.
@@ -356,7 +387,7 @@ class C10_API DistBackendError : public DistError {
 class C10_API DistStoreError : public DistError {
  public:
   using DistError::DistError;
-  DistStoreError(SourceLocation source_location, std::string msg);
+  DistStoreError(std::source_location source_location, std::string msg);
 };
 
 // Used for errors originating from the TCP/IP stack and not from collective
@@ -364,7 +395,7 @@ class C10_API DistStoreError : public DistError {
 class C10_API DistNetworkError : public DistError {
  public:
   using DistError::DistError;
-  DistNetworkError(SourceLocation source_location, std::string msg);
+  DistNetworkError(std::source_location source_location, std::string msg);
 };
 
 // Raised when a queue is empty and a non-blocking pop is called.
@@ -372,7 +403,7 @@ class C10_API DistNetworkError : public DistError {
 class C10_API DistQueueEmptyError : public DistStoreError {
  public:
   using DistStoreError::DistStoreError;
-  DistQueueEmptyError(SourceLocation source_location, std::string msg);
+  DistQueueEmptyError(std::source_location source_location, std::string msg);
 };
 
 // A utility function to return an exception std::string by prepending its
@@ -383,20 +414,16 @@ C10_API std::string GetExceptionString(const std::exception& e);
 
 // Private helper macro for implementing TORCH_INTERNAL_ASSERT and TORCH_CHECK
 //
-// Note: In the debug build With MSVC, __LINE__ might be of long type (a.k.a
-// int32_t), which is different from the definition of `SourceLocation` that
-// requires unsigned int (a.k.a uint32_t) and may cause a compile error with the
-// message: error C2397: conversion from 'long' to 'uint32_t' requires a
-// narrowing conversion Here the static cast is used to pass the build. if this
-// is used inside a lambda the __func__ macro expands to operator(), which isn't
+// Note: the check helpers take the line as uint32_t, so __LINE__ is cast
+// explicitly. If this is used inside a lambda the __func__ macro expands to
+// operator(), which isn't
 // very useful, but hard to fix in a macro so suppressing the warning.
 #define C10_THROW_ERROR(err_type, msg)                       \
   /* @allow-raw-throw: this macro is the c10 throw itself */ \
-  throw ::c10::err_type(                                     \
-      {__func__, __FILE__, static_cast<uint32_t>(__LINE__)}, msg)
+  throw ::c10::err_type(std::source_location::current(), msg)
 
 #define C10_BUILD_ERROR(err_type, msg) \
-  ::c10::err_type({__func__, __FILE__, static_cast<uint32_t>(__LINE__)}, msg)
+  ::c10::err_type(std::source_location::current(), msg)
 
 #include <torch/headeronly/util/Exception.h>
 
@@ -706,10 +733,10 @@ namespace c10::detail {
 #define _TORCH_WARN_WITH(...) ((void)0);
 #else
 #define _TORCH_WARN_WITH(warning_t, ...)                     \
-  ::c10::warn(::c10::Warning(                                \
-      warning_t(),                                           \
-      {__func__, __FILE__, static_cast<uint32_t>(__LINE__)}, \
-      WARNING_MESSAGE_STRING(__VA_ARGS__),                   \
+  ::c10::warn(::c10::Warning(          \
+      warning_t(),                     \
+      std::source_location::current(), \
+      WARNING_MESSAGE_STRING(__VA_ARGS__), \
       false));
 #endif
 
@@ -749,7 +776,7 @@ namespace c10::detail {
   condition ? (void)0                                              \
             : ::c10::LoggerVoidify() &                             \
           ::c10::MessageLogger(                                    \
-              ::c10::SourceLocation::current(), ::c10::GLOG_FATAL) \
+              std::source_location::current(), ::c10::GLOG_FATAL) \
               .stream()
 #endif
 
@@ -758,7 +785,7 @@ namespace c10::detail {
   condition ? (void)0                                                     \
             : ::c10::LoggerVoidify() &                                    \
           ::c10::MessageLogger(                                           \
-              ::c10::SourceLocation::current(), ::c10::GLOG_FATAL, false) \
+              std::source_location::current(), ::c10::GLOG_FATAL, false) \
               .stream()
 #endif
 
