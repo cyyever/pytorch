@@ -136,11 +136,10 @@ ProcessGroupNCCL::ProcessGroupNCCL(
     auto nonblocking = c10::utils::check_env("TORCH_NCCL_USE_COMM_NONBLOCKING");
     options_c10d_->config.blocking = nonblocking.value_or(false) ? 0 : 1;
   }
-#if NCCL_VERSION_CODE < NCCL_VERSION(2, 28, 0) || defined(USE_ROCM)
+#ifdef USE_ROCM
   TORCH_CHECK(
       !options_c10d_->enable_reconfigure,
-      "nccl2 reconfigure requires NCCL 2.28 or later and is not supported "
-      "with RCCL");
+      "nccl2 reconfigure is not supported with RCCL");
 #endif
 }
 
@@ -445,13 +444,10 @@ c10::intrusive_ptr<::c10d::Window> ProcessGroupNCCL::new_window(
 }
 
 bool ProcessGroupNCCL::supportsWindow() const {
-#if NCCL_VERSION_CODE >= NCCL_VERSION(2, 29, 0)
+  // Headers are 2.30 or later, but the library loaded at runtime need not be.
   int runtime_version = 0;
   return ncclGetVersion(&runtime_version) == ncclSuccess &&
       runtime_version >= NCCL_VERSION(2, 29, 0);
-#else
-  return false;
-#endif
 }
 
 // ---------------------------------------------------------------------------
