@@ -11,9 +11,7 @@
 #include <tuple>
 #include <utility>
 
-#include <ATen/cuda/CUDAGraph.h>
 #include <c10/cuda/CUDAAllocatorConfig.h>
-#include <c10/cuda/CUDAException.h>
 #include <c10/cuda/CUDAGraphsC10Utils.h>
 #include <c10/cuda/CUDAGuard.h>
 #include <c10/util/Exception.h>
@@ -34,7 +32,6 @@
 #include <torch/csrc/distributed/c10d/Utils.hpp>
 #include <torch/csrc/distributed/c10d/cuda/utils.hpp>
 #include <torch/csrc/distributed/c10d/symm_mem/nccl_devcomm_manager.hpp>
-#include <torch/all.h>
 #include <optional>
 
 namespace c10d {

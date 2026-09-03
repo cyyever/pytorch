@@ -1,6 +1,5 @@
 #include <torch/csrc/jit/serialization/export.h>
 
-#include <ATen/ATen.h>
 #include <torch/csrc/jit/serialization/pickler_helper.h>
 
 #include <string>

@@ -15,7 +15,6 @@
 #include <torch/csrc/autograd/python_function.h>
 #include <torch/csrc/autograd/python_node_creation_hook.h>
 #include <torch/csrc/autograd/python_saved_variable_hooks.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 
 #include <pthread.h>

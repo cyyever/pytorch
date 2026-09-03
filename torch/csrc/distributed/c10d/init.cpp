@@ -1,4 +1,3 @@
-#include <torch/csrc/python_headers.h>
 
 #include <pybind11/chrono.h>
 #include <c10/util/intrusive_ptr.h>
@@ -58,7 +57,6 @@
 #include <torch/csrc/distributed/c10d/python_comm_hook.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/object_ptr.h>
-#include <torch/csrc/utils/pybind.h>
 
 
 namespace {

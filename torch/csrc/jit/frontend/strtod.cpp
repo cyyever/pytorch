@@ -3,7 +3,6 @@
 #include <torch/csrc/jit/frontend/strtod.h>
 
 #include <c10/macros/Macros.h>
-#include <clocale>
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #include <xlocale.h>

@@ -2,14 +2,11 @@
 
 #include <atomic>
 
-#include <ATen/ATen.h>
 #include <ATen/SequenceNumber.h>
 #include <c10/util/SmallVector.h>
 #include <c10/util/irange.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/PyInterpreter.h>
-#include <torch/csrc/python_headers.h>
-#include <torch/csrc/utils/pybind.h>
 
 #include <ATen/FuncTorchTLS.h>
 #include <torch/csrc/Dtype.h>

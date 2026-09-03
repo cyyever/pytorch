@@ -1,7 +1,6 @@
 #include <c10/util/irange.h>
 #include <torch/csrc/autograd/python_cpp_function.h>
 
-#include <torch/csrc/python_headers.h>
 #include <cstdio>
 #include <memory>
 #include <typeindex>
@@ -13,7 +12,6 @@
 #include <torch/csrc/autograd/python_function.h>
 #include <torch/csrc/autograd/python_hook.h>
 #include <torch/csrc/autograd/python_variable.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pyobject_preservation.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
