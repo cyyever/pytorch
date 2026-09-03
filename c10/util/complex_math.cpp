@@ -1,6 +1,4 @@
-#include <c10/util/complex.h>
 
-#include <cmath>
 
 // Note [ Complex Square root in libc++]
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

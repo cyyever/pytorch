@@ -5,10 +5,8 @@
 #include <type_traits>
 #include <utility>
 
-#include <ATen/ATen.h>
 #include <ATen/core/Dict.h>
 
-#include <c10/util/irange.h>
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/utils/byte_order.h>
 
