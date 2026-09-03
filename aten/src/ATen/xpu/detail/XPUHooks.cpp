@@ -95,6 +95,6 @@ const at::xpu::LevelZero& XPUHooks::level_zero() const {
   return at::xpu::detail::level_zero();
 }
 
-REGISTER_XPU_HOOKS(XPUHooks);
+REGISTER_XPU_HOOKS(XPUHooks)
 
 } // namespace at::xpu::detail

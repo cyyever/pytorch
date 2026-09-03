@@ -59,7 +59,7 @@ DECLARE_HOST_ALLOCATOR(
     raw_local_deleter,
     caching_host_allocator)
 
-REGISTER_HOST_ALLOCATOR(at::kXPU, &caching_host_allocator);
+REGISTER_HOST_ALLOCATOR(at::kXPU, &caching_host_allocator)
 
 } // anonymous namespace
 } // namespace at::xpu
