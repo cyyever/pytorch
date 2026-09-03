@@ -12,6 +12,8 @@
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/utils/byte_order.h>
 
+#include <bit>
+
 namespace torch::jit {
 
 // Protocol 2 is the highest that can be decoded by Python 2
@@ -201,15 +203,15 @@ void Pickler::pushInt(int64_t n) {
     push<uint8_t>(n);
   } else if (std::in_range<uint16_t>(n)) {
     push<PickleOpCode>(PickleOpCode::BININT2);
-    push<uint16_t>(to_le16(n));
+    push<uint16_t>(torch::utils::swapLittleEndian(static_cast<uint16_t>(n)));
   } else if (std::in_range<int32_t>(n)) {
     push<PickleOpCode>(PickleOpCode::BININT);
-    push<int32_t>(to_le32(n));
+    push<int32_t>(torch::utils::swapLittleEndian(static_cast<int32_t>(n)));
   } else {
     // Push 8 byte integer
     push<PickleOpCode>(PickleOpCode::LONG1);
     push<uint8_t>(8);
-    push<int64_t>(to_le64(n));
+    push<int64_t>(torch::utils::swapLittleEndian(n));
   }
 }
 
@@ -232,11 +234,13 @@ void Pickler::pushBinGet(uint32_t memo_id) {
 void Pickler::pushStringImpl(const std::string& string) {
   if (string.size() <= UINT_MAX) {
     push<PickleOpCode>(PickleOpCode::BINUNICODE);
-    push<uint32_t>(to_le32(string.size()));
+    push<uint32_t>(
+        torch::utils::swapLittleEndian(static_cast<uint32_t>(string.size())));
     pushBytes(string);
   } else {
     push<PickleOpCode>(PickleOpCode::BINUNICODE8);
-    push<int64_t>(to_le64(string.size()));
+    push<int64_t>(
+        torch::utils::swapLittleEndian(static_cast<int64_t>(string.size())));
     pushBytes(string);
   }
 }
@@ -481,28 +485,19 @@ void Pickler::pushSpecializedList(
   push<PickleOpCode>(PickleOpCode::REDUCE);
 }
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 static double swapDouble(double value) {
-  const char* bytes = reinterpret_cast<const char*>(&value);
-  double flipped = 0;
-  char* out_bytes = reinterpret_cast<char*>(&flipped);
-  for (const auto i : c10::irange(sizeof(double))) {
-    out_bytes[i] = bytes[sizeof(double) - i - 1];
-  }
-  return *reinterpret_cast<double*>(out_bytes);
+  return std::bit_cast<double>(std::byteswap(std::bit_cast<uint64_t>(value)));
 }
-#endif
 
 void Pickler::pushDouble(double value) {
   push<PickleOpCode>(PickleOpCode::BINFLOAT);
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-  // Python pickle format is big endian, swap.
-  push<double>(swapDouble(value));
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-  push<double>(value);
-#else
-#error Unexpected or undefined __BYTE_ORDER__
-#endif
+  // The pickle format stores doubles big-endian, the opposite of the integer
+  // fields above.
+  if constexpr (std::endian::native == std::endian::little) {
+    push<double>(swapDouble(value));
+  } else {
+    push<double>(value);
+  }
 }
 void Pickler::pushComplexDouble(const IValue& value) {
   c10::complex<double> d = value.toComplexDouble();
