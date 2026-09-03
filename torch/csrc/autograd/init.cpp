@@ -704,7 +704,7 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
               return py::none();
             }
             py::gil_scoped_acquire gil;
-            const auto& [unpack_safe, _unused_data] = *opt;
+            const auto& [unpack_safe, _] = *opt;
             auto* unpack_ptr = unpack_safe.ptr(getPyInterpreter());
             return py::reinterpret_borrow<py::function>(unpack_ptr);
           });
