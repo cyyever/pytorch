@@ -297,7 +297,7 @@ if(INTERN_BUILD_ATEN_OPS)
     # gcc does not imply -mf16c from -mavx512f; without it C10_X86_F16 is off
     # here and the half conversions fall back to software.
     list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma -mf16c")
-  endif(CXX_AVX512_FOUND)
+  endif()
 
   if(CXX_AVX2_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
     add_compile_definitions("HAVE_AVX2_CPU_DEFINITION")
@@ -325,7 +325,7 @@ if(INTERN_BUILD_ATEN_OPS)
     else()
       list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx2 -mfma -mf16c ${CPU_NO_AVX256_SPLIT_FLAGS}")
     endif()
-  endif(CXX_AVX2_FOUND)
+  endif()
 
 
   list(LENGTH CPU_CAPABILITY_NAMES NUM_CPU_CAPABILITY_NAMES)
