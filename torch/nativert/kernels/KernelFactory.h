@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include <torch/csrc/inductor/aoti_torch/proxy_executor.h>
@@ -24,10 +25,10 @@ class KernelFactoryHandler {
  public:
   using OpKernelPtr = std::unique_ptr<OpKernel>;
   using DelegateExecutorPtr = std::unique_ptr<DelegateExecutor>;
-  using Matcher = c10::function_ref<
+  using Matcher = std::function_ref<
       bool(const Node& node, const torch::nativert::ExecutorConfig&)>;
   using Callback =
-      c10::function_ref<std::pair<OpKernelPtr, DelegateExecutorPtr>(
+      std::function_ref<std::pair<OpKernelPtr, DelegateExecutorPtr>(
           const Node&,
           std::shared_ptr<Weights> weights,
           const torch::nativert::ExecutorConfig& executorConfig,
