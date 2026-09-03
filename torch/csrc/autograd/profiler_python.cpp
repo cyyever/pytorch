@@ -12,7 +12,6 @@
 #include <utility>
 #include <vector>
 
-#include <Python.h>
 
 #include <ATen/core/TensorBase.h>
 #include <c10/macros/Macros.h>
@@ -28,7 +27,6 @@
 #include <torch/csrc/profiler/containers.h>
 #include <torch/csrc/profiler/orchestration/python_tracer.h>
 #include <torch/csrc/profiler/util.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_strings.h>
 #include <optional>

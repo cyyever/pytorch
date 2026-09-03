@@ -1,4 +1,3 @@
-#include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/tensor_new.h>
 
 #include <pybind11/pybind11.h>
@@ -7,14 +6,12 @@
 #include <torch/csrc/Size.h>
 #include <torch/csrc/utils/device_lazy_init.h>
 #include <torch/csrc/utils/numpy_stub.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_arg_parser.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_scalars.h>
 #include <torch/csrc/utils/python_strings.h>
 #include <torch/csrc/utils/tensor_numpy.h>
 
-#include <ATen/ATen.h>
 #include <ATen/DLConvertor.h>
 #include <ATen/InitialTensorOptions.h>
 #include <ATen/NativeFunctions.h>

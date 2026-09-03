@@ -3,7 +3,6 @@
 #include <torch/csrc/autograd/functions/utils.h>
 #include <torch/csrc/dynamo/compiled_autograd.h>
 
-#include <ATen/ATen.h>
 
 #include <utility>
 

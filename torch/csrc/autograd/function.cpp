@@ -5,7 +5,6 @@
 #include <c10/util/ThreadLocal.h>
 #include <torch/csrc/autograd/engine.h>
 
-#include <ATen/ATen.h>
 
 #include <string>
 #include <utility>

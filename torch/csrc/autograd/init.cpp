@@ -1,5 +1,4 @@
 #include <ATen/core/functional.h>
-#include <torch/csrc/python_headers.h>
 
 #include <ATen/NodeCreationHooks.h>
 #include <ATen/PythonTorchFunctionTLS.h>
@@ -34,7 +33,6 @@
 #include <ITraceActivity.h>
 #endif
 #include <torch/csrc/utils/disable_torch_function.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 #include <torch/csrc/utils/python_raii.h>
 

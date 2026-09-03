@@ -6,7 +6,6 @@
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/cuda/comm.h>
 
-#include <ATen/ATen.h>
 
 #include <vector>
 

@@ -52,7 +52,6 @@ bool is_numpy_dlpack_deleter_bugged() {
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/utils/object_ptr.h>
 
-#include <ATen/ATen.h>
 #include <ATen/TensorUtils.h>
 
 using namespace at;

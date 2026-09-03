@@ -4,7 +4,6 @@
 #include <torch/csrc/jit/frontend/parse_string_literal.h>
 #include <torch/csrc/jit/frontend/tree.h>
 #include <torch/csrc/jit/frontend/tree_views.h>
-#include <optional>
 
 namespace torch::jit {
 

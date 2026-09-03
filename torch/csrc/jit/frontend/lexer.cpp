@@ -1,8 +1,6 @@
 #include <torch/csrc/jit/frontend/lexer.h>
 
-#include <cstring>
 #include <string>
-#include <unordered_map>
 
 namespace torch::jit {
 

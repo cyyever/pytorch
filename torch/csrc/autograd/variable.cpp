@@ -9,7 +9,6 @@
 #include <torch/csrc/autograd/generated/ViewFuncs.h>
 #include <torch/csrc/autograd/utils/error_messages.h>
 
-#include <ATen/ATen.h>
 #include <ATen/FuncTorchTLS.h>
 #include <ATen/FunctionalTensorWrapper.h>
 #include <ATen/MemoryOverlap.h>

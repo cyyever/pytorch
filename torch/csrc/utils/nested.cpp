@@ -1,7 +1,4 @@
-#include <ATen/ATen.h>
-#include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/nested.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/tensor_new.h>
 #include <torch/all.h>
 #include <vector>
