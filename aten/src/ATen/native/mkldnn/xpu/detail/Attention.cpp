@@ -1090,12 +1090,11 @@ void sdpa(
       head_dim_qk,
       head_dim_v,
       is_causal,
-      compute_logsumexp,
-      enable_dropout);
-  auto& partition =
-      sdpa_forward::find_or_create_graph_partition(logical_params);
-  l_inputs = std::move(logical_params.get_input());
-  l_outputs = std::move(logical_params.get_output());
+      compute_logsumexp);
+  auto& partition = sdpa_forward::find_or_create_graph_partition(
+      is_causal, compute_logsumexp, logical_params);
+  l_inputs = logical_params.get_input();
+  l_outputs = logical_params.get_output();
   compiled_partition = partition.compile(l_inputs, l_outputs, eng);
 
   std::vector<dnnl::graph::tensor> outputs = {
@@ -1217,12 +1216,11 @@ void sdpa_backward(
       seq_len_kv,
       head_dim_qk,
       head_dim_v,
-      is_causal,
-      enable_dropout);
-  auto& partition =
-      sdpa_backward::find_or_create_backward_graph_partition(logical_params);
-  l_inputs = std::move(logical_params.get_input());
-  l_outputs = std::move(logical_params.get_output());
+      is_causal);
+  auto& partition = sdpa_backward::find_or_create_backward_graph_partition(
+      is_causal, logical_params);
+  l_inputs = logical_params.get_input();
+  l_outputs = logical_params.get_output();
   compiled_partition = partition.compile(l_inputs, l_outputs, eng);
 
   std::vector<dnnl::graph::tensor> outputs = {
