@@ -1001,8 +1001,6 @@ void generateForwardBackwardLinks(
 }
 #endif // USE_KINETO
 
-static constexpr const char* indexKey = "Ev Idx";
-
 static std::string sanitizeNameForKinetoJSON(std::string name) {
   // Kineto's Chrome trace writer quotes names itself but does not escape '"'.
   std::ranges::replace(name, '"', '\'');
@@ -1065,6 +1063,8 @@ void passEventsToKineto(
 }
 
 #ifdef USE_KINETO
+static constexpr const char* indexKey = "Ev Idx";
+
 // There are two mechanisms that we use to connect Profiler and Kineto events.
 // The first is the correlation ID. The profiler pushes a unique integer at the
 // start of an op and pops it at the end. Kineto then associates the events
