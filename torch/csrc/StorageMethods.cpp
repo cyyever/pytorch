@@ -1,5 +1,7 @@
 #include <torch/csrc/python_headers.h>
 
+#include <bit>
+
 #include <c10/core/CPUAllocator.h>
 #include <c10/util/overflows.h>
 #include <torch/csrc/DynamicTypes.h>
@@ -626,17 +628,17 @@ static PyObject* THPStorage_byteswap(PyObject* self, PyObject* args) {
   if (elem_size == 2) {
     auto buffer = static_cast<uint16_t*>(storage.mutable_data());
     for (uint64_t i = 0; i < count; i++, buffer++) {
-      *buffer = thp_bswap16(*buffer);
+      *buffer = std::byteswap(*buffer);
     }
   } else if (elem_size == 4) {
     auto buffer = static_cast<uint32_t*>(storage.mutable_data());
     for (uint64_t i = 0; i < count; i++, buffer++) {
-      *buffer = thp_bswap32(*buffer);
+      *buffer = std::byteswap(*buffer);
     }
   } else if (elem_size == 8) {
     auto buffer = static_cast<uint64_t*>(storage.mutable_data());
     for (uint64_t i = 0; i < count; i++, buffer++) {
-      *buffer = thp_bswap64(*buffer);
+      *buffer = std::byteswap(*buffer);
     }
   }
 

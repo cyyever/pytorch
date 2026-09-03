@@ -320,25 +320,25 @@ PickleOpCode Unpickler::readInstruction() {
       stack_.emplace_back(int64_t(value));
     } break;
     case PickleOpCode::BININT2: {
-      uint16_t value = from_le16(read<uint16_t>());
+      uint16_t value = torch::utils::swapLittleEndian(read<uint16_t>());
       stack_.emplace_back(int64_t(value));
     } break;
     case PickleOpCode::BININT: {
-      int32_t value = from_le32(read<int32_t>());
+      int32_t value = torch::utils::swapLittleEndian(read<int32_t>());
       stack_.emplace_back(int64_t(value));
     } break;
     case PickleOpCode::LONG1: {
       // Only read LONG1s with 8 as the length
       uint8_t length = read<uint8_t>();
       TORCH_CHECK(length == 8, "Expected length to be 8, got ", int(length));
-      stack_.emplace_back(int64_t(from_le64(read<int64_t>())));
+      stack_.emplace_back(int64_t(torch::utils::swapLittleEndian(read<int64_t>())));
     } break;
     case PickleOpCode::BINUNICODE: {
-      uint32_t length = from_le32(read<uint32_t>());
+      uint32_t length = torch::utils::swapLittleEndian(read<uint32_t>());
       stack_.emplace_back(readBytes(length));
     } break;
     case PickleOpCode::BINUNICODE8: {
-      int64_t length = from_le64(read<int64_t>());
+      int64_t length = torch::utils::swapLittleEndian(read<int64_t>());
       stack_.emplace_back(readBytes(length));
     } break;
     case PickleOpCode::BINFLOAT:
