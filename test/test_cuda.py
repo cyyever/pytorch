@@ -926,13 +926,9 @@ print("RECOVERED")
                 # ROCm logic is less so, it's cublaslt for some Instinct, cublas for all else
                 # Mirror CUDAHooks::getHipblasltPreferredArchs in CUDAHooks.cpp
                 archs = [
-                    "gfx90a",
-                    "gfx942",
                     "gfx1200",
                     "gfx1201",
                     "gfx950",
-                    "gfx1100",
-                    "gfx1101",
                     "gfx1151",
                     "gfx1250",
                 ]
