@@ -1,0 +1,59 @@
+diff --git a/src/ATen/native/xpu/sycl/BatchKernel.h b/src/ATen/native/xpu/sycl/BatchKernel.h
+--- a/src/ATen/native/xpu/sycl/BatchKernel.h
++++ b/src/ATen/native/xpu/sycl/BatchKernel.h
+@@ -164,9 +164,9 @@ class BatchKernelConfig {
+         problem_along_x,
+         Policy::pLoop,
+         syclDeviceMaxWorkGroupSize());
+-    size_t wg_num = (cfg_.glb_range_x_ / cfg_.wg_range_x_) *
++    int64_t wg_num = (cfg_.glb_range_x_ / cfg_.wg_range_x_) *
+         (cfg_.glb_range_y_ / cfg_.wg_range_y_);
+-    size_t wg_size = cfg_.wg_range_x_ * cfg_.wg_range_y_;
++    int64_t wg_size = cfg_.wg_range_x_ * cfg_.wg_range_y_;
+     if (wg_size * (wg_num + 1) > target_wi_num) {
+       return Policy::pLoop;
+     }
+@@ -205,7 +205,8 @@ class BatchKernelConfig {
+     size_t sg_size = syclMaxSubGroupSize();
+     // Caller takes responsibility of if work group size is valid or compatible.
+     if (prefer_wg_size_ != 0 && prefer_wg_size_ % sg_size == 0 &&
+-        prefer_wg_size_ <= syclDeviceMaxWorkGroupSize()) {
++        prefer_wg_size_ <=
++            static_cast<size_t>(syclDeviceMaxWorkGroupSize())) {
+       wg_size = prefer_wg_size_;
+     } else {
+       wg_size = syclMaxWorkGroupSize<KernelClass>();
+@@ -220,8 +221,10 @@ class BatchKernelConfig {
+
+     // ensure assigning successive work items along contiguous (small stride)
+     // dimension
+-    auto range_bound_x = problem_along_x_ ? problem_ : problem_batch_;
+-    auto range_bound_y = problem_along_x_ ? problem_batch_ : problem_;
++    auto range_bound_x =
++        static_cast<size_t>(problem_along_x_ ? problem_ : problem_batch_);
++    auto range_bound_y =
++        static_cast<size_t>(problem_along_x_ ? problem_batch_ : problem_);
+
+     // Implications,
+     // 1. assign proper x/y to accommodate workload exactly.
+diff --git a/src/ATen/native/xpu/sycl/ScanUtils.h b/src/ATen/native/xpu/sycl/ScanUtils.h
+--- a/src/ATen/native/xpu/sycl/ScanUtils.h
++++ b/src/ATen/native/xpu/sycl/ScanUtils.h
+@@ -587,7 +587,7 @@ void group_x_scan_with_indices(
+
+   slm[liy * rx + lix] = value;
+   slm_idx[liy * rx + lix] = idx;
+-  for (int offset = 1; offset < rx; offset <<= 1) {
++  for (size_t offset = 1; offset < rx; offset <<= 1) {
+     sycl::group_barrier(item.get_group());
+     if (lix >= offset) {
+       binary_op_update(
+@@ -646,7 +646,7 @@ void group_y_scan_with_indices(
+
+   temp[liy * rx + lix] = value;
+   temp_idx[liy * rx + lix] = idx;
+-  for (int offset = 1; offset < ry; offset <<= 1) {
++  for (size_t offset = 1; offset < ry; offset <<= 1) {
+     sycl::group_barrier(item.get_group());
+     if (liy >= offset) {
+       binary_op_update(

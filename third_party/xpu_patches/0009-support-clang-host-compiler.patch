@@ -14,7 +14,7 @@ index d344e4ae..0ff30ba7 100644
      return()
    endif()
    set(SYCL_HOST_FLAGS)
-@@ -70,7 +70,7 @@ macro(set_build_flags)
+@@ -70,11 +70,7 @@ macro(set_build_flags)
      set(SYCL_HOST_PER_CONFIG_FLAGS
        $<$<CONFIG:Debug>:/Od;/Z7>
        $<$<CONFIG:RelWithDebInfo>:/O2;/Z7>)
@@ -22,15 +22,19 @@ index d344e4ae..0ff30ba7 100644
 +  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
      list(APPEND SYCL_HOST_FLAGS -fPIC)
      list(APPEND SYCL_HOST_FLAGS -std=${CPP_STD})
-     # Excluding warnings which flood the compilation output
-@@ -138,7 +138,7 @@ macro(set_build_flags)
+-    # Excluding warnings which flood the compilation output
+-    # TODO: fix warnings in the source code and then reenable them in compilation
+-    list(APPEND SYCL_HOST_FLAGS -Wno-sign-compare)
+-
+     # PyTorch forces -O2 into the base CMAKE_CXX_FLAGS this path inherits, so
+@@ -138,7 +134,6 @@ macro(set_build_flags)
      list(APPEND SYCL_KERNEL_OPTIONS /Qftz-)
      # Suppress warnings about dllexport.
      list(APPEND SYCL_KERNEL_OPTIONS -Wno-ignored-attributes)
 -  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 +  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
      list(APPEND SYCL_KERNEL_OPTIONS -std=${CPP_STD})
-     list(APPEND SYCL_KERNEL_OPTIONS -Wno-absolute-value)
+-    list(APPEND SYCL_KERNEL_OPTIONS -Wno-absolute-value)
      # -fma which we used before is an alias used for -ffp-contract=fast for compatibility reasons
 diff --git a/test/sycl/CMakeLists.txt b/test/sycl/CMakeLists.txt
 --- a/test/sycl/CMakeLists.txt
