@@ -14,8 +14,9 @@ def get_xpu_arch() -> str | None:
     from torch.testing._internal.common_xpu import get_xpu_codename, XPUCodename
 
     name2arch = {
-        XPUCodename.PVC: "Xe12",
         XPUCodename.BMG: "Xe20",
+        XPUCodename.LNL: "Xe20",
+        XPUCodename.PTL: "Xe30",
     }
 
     codename = get_xpu_codename()

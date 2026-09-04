@@ -1,0 +1,27 @@
+diff --git a/src/ATen/native/xpu/sycl/TensorTransformationsKernels.cpp b/src/ATen/native/xpu/sycl/TensorTransformationsKernels.cpp
+--- a/src/ATen/native/xpu/sycl/TensorTransformationsKernels.cpp
++++ b/src/ATen/native/xpu/sycl/TensorTransformationsKernels.cpp
+@@ -135,10 +135,7 @@ void flip_kernel_impl(TensorIterator& iter) {
+   launch_kernel(iter.numel(), loop);
+ }
+
+-void flip_kernel(TensorIterator& iter, bool quantized) {
+-  if (quantized) {
+-    TORCH_CHECK(false, "XPU current does not flip for quantized tensor");
+-  }
++void flip_kernel(TensorIterator& iter) {
+   AT_DISPATCH_V2(
+       iter.dtype(),
+       "flip_xpu",
+diff --git a/src/ATen/native/xpu/sycl/TensorTransformationsKernels.h b/src/ATen/native/xpu/sycl/TensorTransformationsKernels.h
+--- a/src/ATen/native/xpu/sycl/TensorTransformationsKernels.h
++++ b/src/ATen/native/xpu/sycl/TensorTransformationsKernels.h
+@@ -14,7 +14,7 @@
+
+ namespace at::native::xpu {
+
+-TORCH_XPU_API void flip_kernel(TensorIterator& iter, bool quantized);
++TORCH_XPU_API void flip_kernel(TensorIterator& iter);
+
+ TORCH_XPU_API void roll_kernel(
+     const Tensor& input,
