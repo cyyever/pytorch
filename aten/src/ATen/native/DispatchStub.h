@@ -56,6 +56,9 @@ namespace at::native {
 
 enum class CPUCapability {
   DEFAULT = 0,
+  // No kernels are compiled for this tier any more -- the x86 baseline is
+  // x86-64-v3, so DEFAULT already is the AVX2 tier -- but the value is part of
+  // the reported capability and of ATEN_CPU_CAPABILITY.
   AVX2 = 1,
   AVX512 = 2,
   NUM_OPTIONS
@@ -94,9 +97,6 @@ struct TORCH_API DispatchStubImpl {
 #ifdef HAVE_AVX512_CPU_DEFINITION
       , void *AVX512
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      , void *AVX2
-#endif
   );
 
   // Analogous to try_get_call_ptr(), but it will return the ErrorType and not
@@ -106,9 +106,6 @@ struct TORCH_API DispatchStubImpl {
 #ifdef HAVE_AVX512_CPU_DEFINITION
     , void *AVX512
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-    , void *AVX2
-#endif
   );
 
 
@@ -117,9 +114,6 @@ struct TORCH_API DispatchStubImpl {
     , void *DEFAULT
 #ifdef HAVE_AVX512_CPU_DEFINITION
       , void *AVX512
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      , void *AVX2
 #endif
   );
 
@@ -132,9 +126,6 @@ struct TORCH_API DispatchStubImpl {
     void *DEFAULT
 #ifdef HAVE_AVX512_CPU_DEFINITION
     , void *AVX512
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-    , void *AVX2
 #endif
   );
 
@@ -167,9 +158,6 @@ private:
       , reinterpret_cast<void*>(T::DEFAULT)
 #ifdef HAVE_AVX512_CPU_DEFINITION
       , reinterpret_cast<void*>(T::AVX512)
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      , reinterpret_cast<void*>(T::AVX2)
 #endif
       )
     );
@@ -219,9 +207,6 @@ public:
       , reinterpret_cast<void*>(T::DEFAULT)
 #ifdef HAVE_AVX512_CPU_DEFINITION
       , reinterpret_cast<void*>(T::AVX512)
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      , reinterpret_cast<void*>(T::AVX2)
 #endif
       );
     if (std::holds_alternative<ErrorType>(result)){
@@ -301,11 +286,6 @@ struct RegisterPRIVATEUSE1Dispatch {
 #else
 #define _DECLARE_DISPATCH_AVX512()
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-#define _DECLARE_DISPATCH_AVX2() static TORCH_API FnPtr AVX2;
-#else
-#define _DECLARE_DISPATCH_AVX2()
-#endif
 
 #define DECLARE_DISPATCH(fn, name)                                                         \
   struct name##_DECLARE_DISPATCH_type : DispatchStub<fn, name##_DECLARE_DISPATCH_type> {   \
@@ -317,7 +297,6 @@ struct RegisterPRIVATEUSE1Dispatch {
     ~name##_DECLARE_DISPATCH_type() = default;                                             \
     static TORCH_API FnPtr DEFAULT;                                                        \
     _DECLARE_DISPATCH_AVX512()                                                             \
-    _DECLARE_DISPATCH_AVX2()                                                               \
   };                                                                                       \
   extern TORCH_API struct name##_DECLARE_DISPATCH_type name;
 
@@ -335,18 +314,12 @@ struct RegisterPRIVATEUSE1Dispatch {
 #define REGISTER_AVX512_DISPATCH(name, fn)
 #endif
 
-#ifdef HAVE_AVX2_CPU_DEFINITION
-#define REGISTER_AVX2_DISPATCH(name, fn) REGISTER_ARCH_DISPATCH(name, AVX2, fn)
-#else
-#define REGISTER_AVX2_DISPATCH(name, fn)
-#endif
 
 // Macro to register the same kernel for all CPU arch types. This is useful
 // if a kernel does not benefit from being recompiled across different arch types.
 #define REGISTER_ALL_CPU_DISPATCH(name, fn)                                    \
   REGISTER_ARCH_DISPATCH(name, DEFAULT, fn)                                    \
-  REGISTER_AVX512_DISPATCH(name, fn)                                           \
-  REGISTER_AVX2_DISPATCH(name, fn)
+  REGISTER_AVX512_DISPATCH(name, fn)
 
 #define REGISTER_NO_CPU_DISPATCH(name)                                         \
   REGISTER_ALL_CPU_DISPATCH(name, nullptr)

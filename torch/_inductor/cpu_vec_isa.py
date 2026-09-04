@@ -452,19 +452,13 @@ def x86_isa_checker() -> list[str]:
         if isa_supported:
             dest.append(isa_name)
 
-    Arch = platform.machine()
-    """
-    Arch value is x86_64 on Linux, and the value is AMD64 on Windows.
-    """
-    if Arch != "x86_64" and Arch != "AMD64":
+    if platform.machine() != "x86_64":
         return supported_isa
 
-    avx2 = torch.cpu._is_avx2_supported()
     avx512 = torch.cpu._is_avx512_supported()
     avx512_vnni = avx512 and torch.cpu._is_vnni_supported()
     amx_tile = torch.cpu._is_amx_tile_supported()
 
-    _check_and_append_supported_isa(supported_isa, avx2, "avx2")
     _check_and_append_supported_isa(supported_isa, avx512, "avx512")
     _check_and_append_supported_isa(supported_isa, avx512_vnni, "avx512_vnni")
     _check_and_append_supported_isa(supported_isa, amx_tile, "amx_tile")
@@ -526,16 +520,18 @@ def valid_vec_isa_list() -> list[VecISA]:
     if arch == "aarch64":
         isa_list.append(VecNEON())
 
-    elif arch in ["x86_64", "AMD64"]:
-        """
-        arch value is x86_64 on Linux, and the value is AMD64 on Windows.
-        """
+    elif arch == "x86_64":
+        # The x86 build baseline is x86-64-v3, so a machine that can run this
+        # build always has AVX2; only the tiers above it are worth probing.
         _cpu_supported_x86_isa = x86_isa_checker()
         isa_list.extend(
             isa
             for isa in supported_vec_isa_list
-            if all(flag in _cpu_supported_x86_isa for flag in str(isa).split()) and isa
+            if str(isa) != "avx2"
+            and all(flag in _cpu_supported_x86_isa for flag in str(isa).split())
+            and isa
         )
+        isa_list.append(VecAVX2())
 
     return isa_list
 
