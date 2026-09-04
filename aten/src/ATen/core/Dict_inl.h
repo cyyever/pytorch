@@ -90,12 +90,12 @@ Dict<Key, Value> Dict<Key, Value>::copy() const {
 }
 
 template<class Key, class Value>
-typename Dict<Key, Value>::iterator Dict<Key, Value>::begin() const {
+Dict<Key, Value>::iterator Dict<Key, Value>::begin() const {
   return iterator{impl_->dict.begin()};
 }
 
 template<class Key, class Value>
-typename Dict<Key, Value>::iterator Dict<Key, Value>::end() const {
+Dict<Key, Value>::iterator Dict<Key, Value>::end() const {
   return iterator{impl_->dict.end()};
 }
 
@@ -105,7 +105,7 @@ bool Dict<Key, Value>::empty() const {
 }
 
 template<class Key, class Value>
-typename Dict<Key, Value>::size_type Dict<Key, Value>::size() const {
+Dict<Key, Value>::size_type Dict<Key, Value>::size() const {
   return impl_->dict.size();
 }
 
@@ -152,7 +152,7 @@ Value Dict<Key, Value>::at(const Key& key) const {
 }
 
 template<class Key, class Value>
-typename Dict<Key, Value>::iterator Dict<Key, Value>::find(const Key& key) const {
+Dict<Key, Value>::iterator Dict<Key, Value>::find(const Key& key) const {
   return iterator{impl_->dict.find(key)};
 }
 
