@@ -10,6 +10,21 @@ if(TARGET TBB::tbb)
   return()
 endif()
 
+# An XPU build runs inside the oneAPI environment, whose LD_LIBRARY_PATH puts
+# oneAPI's own libtbb ahead of the system one. Both carry SONAME libtbb.so.12,
+# so that is the copy which will actually be loaded; build against it rather
+# than against a different one, and keep the two consistent.
+if(USE_XPU)
+  foreach(_tbb_hint IN ITEMS "$ENV{TBBROOT}" "$ENV{ONEAPI_ROOT}/tbb/latest"
+                             "/opt/intel/oneapi/tbb/latest")
+    if(_tbb_hint AND EXISTS "${_tbb_hint}/lib/cmake/tbb/TBBConfig.cmake")
+      message(STATUS "Preferring oneAPI's oneTBB for the XPU build: ${_tbb_hint}")
+      set(TBB_DIR "${_tbb_hint}/lib/cmake/tbb" CACHE PATH "" FORCE)
+      break()
+    endif()
+  endforeach()
+endif()
+
 # A config package found is not a library found. Arch's CUDA package symlinks
 # ${CUDA_HOME}/lib/cmake to /usr/lib/cmake, so the system TBBConfig.cmake is
 # also reachable under the CUDA prefix -- where, being relocatable, it derives
