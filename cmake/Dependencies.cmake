@@ -293,8 +293,14 @@ if(NOT INTERN_BUILD_MOBILE)
   set(USE_BLAS 1)
   if(NOT (ATLAS_FOUND OR BLIS_FOUND OR GENERIC_BLAS_FOUND OR MKL_FOUND OR OpenBLAS_FOUND OR VECLIB_FOUND OR FlexiBLAS_FOUND OR NVPL_BLAS_FOUND OR APL_FOUND))
     message(WARNING "Preferred BLAS (" ${BLAS} ") cannot be found, now searching for a general BLAS library")
+    # CMake's own FindBLAS, which reports neither a vendor name nor the f2c
+    # calling convention, so both are settled here instead.
     find_package(BLAS)
-    if(NOT BLAS_FOUND)
+    if(BLAS_FOUND)
+      list(APPEND Caffe2_DEPENDENCY_LIBS ${BLAS_LIBRARIES})
+      set(BLAS_INFO "generic")
+      include(cmake/BLAS_ABI.cmake)
+    else()
       set(USE_BLAS 0)
     endif()
   endif()
@@ -960,8 +966,13 @@ endif()
 
 # ---[ OpenMP
 if(USE_OPENMP AND NOT TARGET caffe2::openmp)
-  include(${CMAKE_CURRENT_LIST_DIR}/Modules/FindOpenMP.cmake)
-  if(OPENMP_FOUND)
+  # The macOS wheel build stages a libomp under OMP_PREFIX; that is where
+  # find_package expects to be pointed.
+  if(NOT OpenMP_ROOT AND NOT "$ENV{OMP_PREFIX}" STREQUAL "")
+    set(OpenMP_ROOT "$ENV{OMP_PREFIX}")
+  endif()
+  find_package(OpenMP)
+  if(OpenMP_FOUND)
     message(STATUS "Adding OpenMP CXX_FLAGS: " ${OpenMP_CXX_FLAGS})
     if(APPLE AND USE_MPS)
       string(APPEND CMAKE_OBJCXX_FLAGS " ${OpenMP_CXX_FLAGS}")

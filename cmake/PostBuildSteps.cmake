@@ -129,26 +129,31 @@ endif()
 # Gated on USE_OPENMP as well as OpenMP_FOUND so that a user-forced
 # USE_OPENMP=OFF doesn't ship an orphan libomp.dylib in the wheel.
 if(APPLE AND BUILD_PYTHON AND USE_OPENMP AND OpenMP_FOUND)
-  # OpenMP_libomp_LIBRARY is set by our FindOpenMP module to the full path
-  # of the OpenMP shared library (e.g. /path/to/libomp.dylib).
-  if(OpenMP_libomp_LIBRARY AND EXISTS "${OpenMP_libomp_LIBRARY}")
-    install(FILES "${OpenMP_libomp_LIBRARY}"
+  # FindOpenMP reports one variable per entry of OpenMP_CXX_LIB_NAMES; the
+  # runtime is whichever of them is an omp library (libomp or libiomp5),
+  # the rest being pthread and friends.
+  set(_omp_runtime "")
+  foreach(_name IN LISTS OpenMP_CXX_LIB_NAMES)
+    if(_name MATCHES "omp" AND EXISTS "${OpenMP_${_name}_LIBRARY}")
+      set(_omp_runtime "${OpenMP_${_name}_LIBRARY}")
+      break()
+    endif()
+  endforeach()
+  if(_omp_runtime)
+    install(FILES "${_omp_runtime}"
             DESTINATION "${TORCH_INSTALL_LIB_DIR}")
-    # Install omp.h so Inductor's C++ backend can find it at runtime.
-    # FindOpenMP doesn't export an include-dir variable; OpenMP_C_FLAGS
-    # carries -I<path> on macOS, so parse it for the header location.
-    if(OpenMP_C_FLAGS)
-      separate_arguments(_omp_c_flags UNIX_COMMAND "${OpenMP_C_FLAGS}")
-      foreach(_flag IN LISTS _omp_c_flags)
-        if(_flag MATCHES "^-I(.+)$")
-          set(_omp_h_dir "${CMAKE_MATCH_1}")
-          if(EXISTS "${_omp_h_dir}/omp.h")
-            install(FILES "${_omp_h_dir}/omp.h"
-                    DESTINATION "${TORCH_INSTALL_INCLUDE_DIR}")
-            break()
-          endif()
-        endif()
-      endforeach()
+    # Install omp.h so Inductor's C++ backend can find it at runtime. FindOpenMP
+    # exports no include directory, so look next to the runtime we just found
+    # and fall back to a search that knows where Homebrew keeps it.
+    get_filename_component(_omp_lib_dir "${_omp_runtime}" DIRECTORY)
+    get_filename_component(_omp_prefix "${_omp_lib_dir}" DIRECTORY)
+    find_path(_omp_h_dir omp.h
+      HINTS "${_omp_prefix}/include" "$ENV{OMP_PREFIX}/include"
+            /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include
+      NO_DEFAULT_PATH)
+    if(_omp_h_dir)
+      install(FILES "${_omp_h_dir}/omp.h"
+              DESTINATION "${TORCH_INSTALL_INCLUDE_DIR}")
     endif()
     # Fix libtorch_cpu's load command and rpaths so the bundled libomp is
     # the only one resolved at runtime. See tools/embed_libomp_macos.py
@@ -157,7 +162,7 @@ if(APPLE AND BUILD_PYTHON AND USE_OPENMP AND OpenMP_FOUND)
       execute_process(
         COMMAND \"${_python_exe}\"
           \"${_project_src}/tools/embed_libomp_macos.py\"
-          --libomp-path \"${OpenMP_libomp_LIBRARY}\"
+          --libomp-path \"${_omp_runtime}\"
           --lib-dir \"\${CMAKE_INSTALL_PREFIX}/${TORCH_INSTALL_LIB_DIR}\"
         COMMAND_ERROR_IS_FATAL ANY
       )
