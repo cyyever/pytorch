@@ -48,6 +48,13 @@ static void gds_load_storage(
   // Read the binary file
   ssize_t ret = cuFileRead(cf_handle, dataPtr, nbytes, offset, 0);
   TORCH_CHECK(ret >= 0, "cuFileRead failed: ", cuGDSFileGetErrorString(ret));
+  TORCH_CHECK(
+      ret == static_cast<ssize_t>(nbytes),
+      "cuFileRead handled only ",
+      ret,
+      " of ",
+      nbytes,
+      " bytes");
 }
 
 static void gds_save_storage(
@@ -64,6 +71,13 @@ static void gds_save_storage(
   // Write device memory contents to the file
   ssize_t ret = cuFileWrite(cf_handle, dataPtr, nbytes, offset, 0);
   TORCH_CHECK(ret >= 0, "cuFileWrite failed: ", cuGDSFileGetErrorString(ret));
+  TORCH_CHECK(
+      ret == static_cast<ssize_t>(nbytes),
+      "cuFileWrite handled only ",
+      ret,
+      " of ",
+      nbytes,
+      " bytes");
 }
 
 static void gds_register_buffer(const at::Storage& storage) {

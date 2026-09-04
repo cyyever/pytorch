@@ -1556,58 +1556,52 @@ def load(
     with _open_file_like(f, "rb") as opened_file:
         if _is_zipfile(opened_file):
             overall_storage = None
-            gds_file, gds_device = (
-                _open_gds_file(f, map_location)
-                if config.load.use_gds and not mmap
-                else (None, None)
-            )
-            try:
-                with _open_zipfile_reader(opened_file) as opened_zipfile:
-                    if _is_torchscript_zip(opened_zipfile):
-                        raise RuntimeError(
-                            "'torch.load' received a TorchScript archive, which is no longer supported"
-                        )
-                    if mmap:
-                        if not _is_path(f):
-                            raise ValueError(
-                                "f must be a file path in order to use the mmap argument"
-                            )
-                        size = os.path.getsize(f)
-                        shared = get_default_mmap_options() == MAP_SHARED
-                        overall_storage = torch.UntypedStorage.from_file(
-                            os.fspath(f),
-                            shared,
-                            size,
-                        )
-                    if weights_only:
-                        try:
-                            return _load(
-                                opened_zipfile,
-                                map_location,
-                                _weights_only_unpickler,
-                                overall_storage=overall_storage,
-                                weights_only=True,
-                                gds_file=gds_file,
-                                gds_device=gds_device,
-                                **pickle_load_args,
-                            )
-                        except pickle.UnpicklingError as e:
-                            raise pickle.UnpicklingError(
-                                _get_wo_message(str(e))
-                            ) from None
-                    return _load(
-                        opened_zipfile,
-                        map_location,
-                        pickle_module,
-                        overall_storage=overall_storage,
-                        weights_only=False,
-                        gds_file=gds_file,
-                        gds_device=gds_device,
-                        **pickle_load_args,
+            with (
+                _open_gds_file(f, map_location, mmap) as (gds_file, gds_device),
+                _open_zipfile_reader(opened_file) as opened_zipfile,
+            ):
+                if _is_torchscript_zip(opened_zipfile):
+                    raise RuntimeError(
+                        "'torch.load' received a TorchScript archive, which is no longer supported"
                     )
-            finally:
-                if gds_file is not None:
-                    gds_file.close()
+                if mmap:
+                    if not _is_path(f):
+                        raise ValueError(
+                            "f must be a file path in order to use the mmap argument"
+                        )
+                    size = os.path.getsize(f)
+                    shared = get_default_mmap_options() == MAP_SHARED
+                    overall_storage = torch.UntypedStorage.from_file(
+                        os.fspath(f),
+                        shared,
+                        size,
+                    )
+                if weights_only:
+                    try:
+                        return _load(
+                            opened_zipfile,
+                            map_location,
+                            _weights_only_unpickler,
+                            overall_storage=overall_storage,
+                            weights_only=True,
+                            gds_file=gds_file,
+                            gds_device=gds_device,
+                            **pickle_load_args,
+                        )
+                    except pickle.UnpicklingError as e:
+                        raise pickle.UnpicklingError(
+                            _get_wo_message(str(e))
+                        ) from None
+                return _load(
+                    opened_zipfile,
+                    map_location,
+                    pickle_module,
+                    overall_storage=overall_storage,
+                    weights_only=False,
+                    gds_file=gds_file,
+                    gds_device=gds_device,
+                    **pickle_load_args,
+                )
         if mmap:
             f_name = "" if not isinstance(f, str) else f"{f}, "
             raise RuntimeError(
@@ -1986,29 +1980,41 @@ class StorageType:
 _GDS_OFFSET_ALIGNMENT = 4096
 
 
-def _open_gds_file(f, map_location):
-    """Return ``(GdsFile, device)`` to read a checkpoint straight into CUDA memory.
+@contextmanager
+def _open_gds_file(f, map_location, mmap):
+    """Yield ``(GdsFile, device)`` to read a checkpoint straight into CUDA memory.
 
-    Returns ``(None, None)`` whenever GDS cannot be used, as this is purely a
+    Yields ``(None, device)`` whenever GDS cannot be used, as this is purely a
     performance path: the caller then falls back to the regular load.
     """
-    if not _is_path(f):
-        return None, None
-    if isinstance(map_location, (str, bytes)):
-        device = torch.device(_maybe_decode_ascii(map_location))
-    elif isinstance(map_location, torch.device):
-        device = map_location
-    else:
-        return None, None
-    if device.type != "cuda":
-        return None, None
-    if not torch.cuda.is_available() or not torch.cuda.gds.is_available():
-        return None, None
+    from torch.utils.serialization import config
+
+    gds_file = None
+    device = None
+    if (
+        config.load.use_gds
+        and not mmap
+        and _is_path(f)
+        and torch.cuda.gds.is_available()
+        and torch.cuda.is_available()
+    ):
+        try:
+            if isinstance(map_location, (str, bytes)):
+                device = torch.device(_maybe_decode_ascii(map_location))
+            elif isinstance(map_location, torch.device):
+                device = map_location
+            if device is not None and device.type == "cuda":
+                gds_file = torch.cuda.gds.GdsFile(os.fspath(f), os.O_RDONLY)
+        except OSError, RuntimeError:
+            # A location tag torch.device cannot parse (register_package allows
+            # them), no O_DIRECT support on this filesystem, or no usable cuFile
+            # driver.
+            device = None
     try:
-        return torch.cuda.gds.GdsFile(os.fspath(f), os.O_RDONLY), device
-    except OSError, RuntimeError:
-        # No O_DIRECT support on this filesystem, or no usable cuFile driver.
-        return None, None
+        yield gds_file, device
+    finally:
+        if gds_file is not None:
+            gds_file.close()
 
 
 def _load(
@@ -2064,6 +2070,11 @@ def _load(
     storage_alignment = 64
     if zip_file.has_record(".storage_alignment"):
         storage_alignment = int(zip_file.get_record(".storage_alignment"))
+
+    if gds_file is not None and storage_alignment % _GDS_OFFSET_ALIGNMENT != 0:
+        # Record offsets are only aligned to storage_alignment, so cuFile cannot
+        # read any of them directly.
+        gds_file = None
 
     if (
         not zip_file.has_record(byteordername)
@@ -2143,7 +2154,7 @@ def _load(
 
     def load_tensor(dtype, nbytes, key, location):
         name = f"data/{key}"
-        gds_offset = None
+        used_gds = False
         if torch._guards.detect_fake_mode(None) is not None or is_meta_map_location:
             storage = torch.UntypedStorage(nbytes, device="meta")
             if can_calculate_storage_offsets:
@@ -2165,13 +2176,15 @@ def _load(
             else:
                 storage_offset = zip_file.get_record_offset(name)
             storage = overall_storage[storage_offset : storage_offset + nbytes]
-        elif gds_file is not None and (
-            (offset := zip_file.get_record_offset(name)) % _GDS_OFFSET_ALIGNMENT == 0
-        ):
-            gds_offset = offset
+        elif gds_file is not None:
+            if can_calculate_storage_offsets and calculate_storage_offsets:
+                offset = _get_offset(key, name, nbytes)
+            else:
+                offset = zip_file.get_record_offset(name)
             storage = torch.UntypedStorage(nbytes, device=gds_device)
             if nbytes > 0:
-                gds_file.load_storage(storage, gds_offset)
+                gds_file.load_storage(storage, offset)
+            used_gds = True
         else:
             if can_calculate_storage_offsets and run_debug_asserts:
                 # This is debug code that we use to test the validity of
@@ -2196,7 +2209,7 @@ def _load(
         # TODO: Once we decide to break serialization FC, we can
         # stop wrapping with TypedStorage
 
-        if is_meta_map_location or gds_offset is not None:
+        if is_meta_map_location or used_gds:
             # Skip restore_location for meta map_location. Since we already created
             # a meta storage above, calling restore_location would just redundantly
             # call _meta_deserialize which creates another meta storage with the same

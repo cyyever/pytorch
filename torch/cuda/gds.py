@@ -141,10 +141,12 @@ class GdsFile:
         """
         if self.fd < 0:
             return
-        if self.handle is not None:
-            self.deregister_handle()
-        os.close(self.fd)
-        self.fd = -1
+        try:
+            if self.handle is not None:
+                self.deregister_handle()
+        finally:
+            os.close(self.fd)
+            self.fd = -1
 
     def register_handle(self) -> None:
         """Registers file descriptor to cuFile Driver.
