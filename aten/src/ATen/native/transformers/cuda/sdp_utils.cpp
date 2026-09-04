@@ -122,26 +122,12 @@ std::array<SDPBackend, num_backends> priority_order(sdp_params const& params) {
   return at::globalContext().sDPPriorityOrder();
 }
 
-bool use_tensor_cores(sdp_params const& params, cudaDeviceProp* dprops, bool is_half) {
-  if (dprops->major >= 8) {
-    return true;
-  }
-  return is_half;
-}
 int64_t minimum_gemm_alignment(sdp_params const& params) {
-  auto dprops = at::cuda::getCurrentDeviceProperties();
+  // Tensor cores are always used on the architectures we support
   bool is_half = (params.query.dtype() == at::kHalf) ||
       (params.query.dtype() == at::kBFloat16);
-  bool use_tc = use_tensor_cores(params, dprops, is_half);
-  int64_t matmul_alignment_mn = 1;
-  if (dprops->major >= 8) {
-    matmul_alignment_mn = 4;
-  }
   int64_t bits_per_scalar = is_half ? 16 : 32;
-  if (use_tc) {
-    matmul_alignment_mn = std::max(matmul_alignment_mn, 128 / bits_per_scalar);
-  }
-  return matmul_alignment_mn;
+  return std::max<int64_t>(4, 128 / bits_per_scalar);
 }
 
 #if USE_ROCM_ATTENTION
@@ -354,10 +340,6 @@ bool check_data_ptr_alignment_mem_efficient(sdp_params const& params, bool debug
   if (!has_only_dense_inputs(params)) {
     return true;
   }
-  auto dprops = at::cuda::getCurrentDeviceProperties();
-  if (dprops->major < 8) {
-    return true;
-  }
   const int64_t alignment_bytes =
       minimum_gemm_alignment(params) * params.query.element_size();
   // The CUDA caching allocator returns base pointers aligned to >= 256 bytes,
@@ -381,7 +363,7 @@ bool check_data_ptr_alignment_mem_efficient(sdp_params const& params, bool debug
       !is_aligned(params.value)) {
     if (debug) {
       TORCH_WARN(
-          "Mem efficient attention on sm80 or newer requires q, k, and v storage offsets * element_size to be aligned to ",
+          "Mem efficient attention requires q, k, and v storage offsets * element_size to be aligned to ",
           alignment_bytes,
           " bytes. Got query.storage_offset() * element_size % alignment_bytes: ",
           offset_bytes(params.query) % alignment_bytes,
@@ -479,8 +461,8 @@ bool check_flash_attention_hardware_support(sdp_params const& params, bool debug
 }
 
 bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) {
-  // Mem Efficient attention supports hardware in the range [sm_75, sm_121]
-  using sm75 = SMVersion<7, 5>;
+  // Mem Efficient attention supports hardware in the range [sm_89, sm_121]
+  using sm89 = SMVersion<8, 9>;
   using sm121 = SMVersion<12, 1>;
 #if USE_ROCM
 #if USE_ROCM_ATTENTION
@@ -521,10 +503,10 @@ bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) 
     return false;
   }
   auto dprops = at::cuda::getCurrentDeviceProperties();
-  if (!check_sm_version<sm75, sm121>(dprops)) {
+  if (!check_sm_version<sm89, sm121>(dprops)) {
     if (debug) {
       TORCH_WARN(
-          "Mem Efficient Attention only supports gpu architectures in the range [sm75, sm121]. Attempting to run on a sm ",
+          "Mem Efficient Attention only supports gpu architectures in the range [sm89, sm121]. Attempting to run on a sm ",
           dprops->major,
           ".",
           dprops->minor,
@@ -1105,15 +1087,13 @@ bool can_use_mem_efficient_attention(sdp_params const& params, bool debug) {
   return false;
 #endif
   // Constraints specific to mem efficient attention
-  constexpr auto less_than_sm80_mem_efficient_dtypes =
-      std::to_array<at::ScalarType>({at::kHalf, at::kFloat});
 #ifdef USE_ROCM
   constexpr auto aotriton_mem_efficient_dtypes =
       std::to_array<at::ScalarType>({at::kHalf, at::kFloat, at::kBFloat16});
   constexpr auto ck_mem_efficient_dtypes =
       std::to_array<at::ScalarType>({at::kHalf, at::kBFloat16});
 #else
-  constexpr auto greater_than_or_equal_sm80_mem_efficient_dtypes =
+  constexpr auto mem_efficient_dtypes =
       std::to_array<at::ScalarType>({at::kHalf, at::kFloat, at::kBFloat16});
 #endif
 
@@ -1178,11 +1158,7 @@ bool can_use_mem_efficient_attention(sdp_params const& params, bool debug) {
   }
   return check_tensor_dtype(params, aotriton_mem_efficient_dtypes, debug);
 #else
-  auto dprop = at::cuda::getCurrentDeviceProperties();
-  if (dprop->major >= 8) {
-    return check_tensor_dtype(params, greater_than_or_equal_sm80_mem_efficient_dtypes, debug);
-  }
-  return check_tensor_dtype(params, less_than_sm80_mem_efficient_dtypes, debug);
+  return check_tensor_dtype(params, mem_efficient_dtypes, debug);
 #endif
 }
 
