@@ -2,7 +2,6 @@
 #include <torch/library.h>
 #include <ATen/ATen.h>
 #include <ATen/functorch/BatchedTensorImpl.h>
-#include <ATen/Dispatch.h>
 #include <c10/util/irange.h>
 #include <c10/util/Exception.h>
 

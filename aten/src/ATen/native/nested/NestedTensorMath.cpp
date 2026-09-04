@@ -8,7 +8,6 @@
 #include <ATen/TensorOperators.h>
 #include <ATen/TensorUtils.h>
 #include <ATen/WrapDimUtilsMulti.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/native/layer_norm.h>
 #include <ATen/native/Resize.h>
 #include <ATen/native/nested/NestedTensorUtils.h>

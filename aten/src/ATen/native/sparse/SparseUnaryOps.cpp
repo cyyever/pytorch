@@ -1,6 +1,5 @@
 // #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/SparseTensorUtils.h>
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/_sparse_coo_tensor_with_dims_and_tensors.h>
 #include <ATen/ops/abs.h>

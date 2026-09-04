@@ -2,9 +2,7 @@
 
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
-#include <ATen/Tensor.h>
 #include <c10/util/ExclusivelyOwned.h>
-#include <c10/util/intrusive_ptr.h>
 
 #include <string>
 

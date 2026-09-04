@@ -1,7 +1,6 @@
 #include <ATen/cuda/detail/CUDAHooks.h>
 
 #include <ATen/cuda/CUDAGeneratorImpl.h>
-#include <ATen/Context.h>
 #include <ATen/DynamicLibrary.h>
 #include <ATen/cuda/CUDAConfig.h>
 #include <ATen/cuda/CUDADevice.h>

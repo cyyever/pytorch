@@ -1,6 +1,5 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
-#include <ATen/core/Tensor.h>
 #include <ATen/cpu/StatelessPhilox4x32.h>
 #include <ATen/Dispatch.h>
 #include <ATen/Dispatch_v2.h>

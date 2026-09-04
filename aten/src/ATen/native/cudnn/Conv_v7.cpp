@@ -3,7 +3,6 @@
 
 #if AT_CUDNN_ENABLED()
 
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/empty.h>
 #include <ATen/ops/empty_like.h>

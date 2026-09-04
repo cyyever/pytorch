@@ -1,4 +1,3 @@
-#include <torch/csrc/python_headers.h>
 
 #include <torch/csrc/utils/device_lazy_init.h>
 #include <torch/csrc/utils/pybind.h>

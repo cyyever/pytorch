@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/cuda/CUDAConfig.h>
 
 #include <ATen/ops/cudnn_affine_grid_generator_backward_native.h>

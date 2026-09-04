@@ -4,7 +4,6 @@
 
 #include <c10/util/irange.h>
 #include <c10/util/MaybeOwned.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/Dispatch.h>
 #include <ATen/native/sparse/SparseStubs.h>
 #include <ATen/Parallel.h>

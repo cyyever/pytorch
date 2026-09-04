@@ -1,7 +1,6 @@
 // Copyright 2004-present Facebook. All Rights Reserved.
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
-#include <ATen/core/Tensor.h>
 #include <ATen/FunctionalInverses.h>
 #include <ATen/ScalarOps.h>
 #include <ATen/Parallel.h>

@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/RNN.h>
 
-#include <ATen/core/Tensor.h>
 #include <ATen/core/List.h>
 #include <ATen/Context.h>
 #include <ATen/TensorOperators.h>

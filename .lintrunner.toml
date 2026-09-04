@@ -544,7 +544,6 @@ exclude_patterns = [
     'torch/csrc/utils/pybind.h',
     # These specializations are non-orphan
     'torch/csrc/distributed/c10d/init.cpp',
-    'torch/csrc/jit/python/pybind.h',
     # These are safe to exclude as they do not have Python
     'c10/**/*',
 ]

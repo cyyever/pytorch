@@ -1,4 +1,3 @@
-#include <torch/csrc/python_headers.h>
 
 #include <bit>
 
@@ -15,7 +14,6 @@
 #include <torch/csrc/Storage.h>
 #include <torch/csrc/StorageMethods.h>
 
-#include <ATen/ATen.h>
 #include <ATen/MapAllocator.h>
 #include <ATen/StorageUtils.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
@@ -24,7 +22,6 @@
 
 #ifdef USE_CUDA
 #include <ATen/native/cuda/Resize.h>
-#include <cuda_runtime.h>
 #endif
 
 #include <ATen/native/Resize.h>

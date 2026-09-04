@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/is_nonzero_native.h>
 #include <ATen/ops/_foobar_native.h>

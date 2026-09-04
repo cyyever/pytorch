@@ -1,6 +1,5 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/Cross.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/TensorMeta.h>
 #include <ATen/WrapDimUtils.h>
 #include <ATen/ExpandUtils.h>

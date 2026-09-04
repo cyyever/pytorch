@@ -1,12 +1,10 @@
 #include <gtest/gtest.h>
 #include <ATen/test/rng_test.h>
 #include <c10/core/GeneratorImpl.h>
-#include <ATen/Tensor.h>
 #include <ATen/native/DistributionTemplates.h>
 #include <ATen/native/cpu/DistributionTemplates.h>
 #include <torch/library.h>
 #include <optional>
-#include <torch/all.h>
 
 using namespace at;
 

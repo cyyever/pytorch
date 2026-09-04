@@ -2,7 +2,6 @@
 #include <ATen/native/cuda/Activation.h>
 
 #include <ATen/core/DimVector.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/TensorIterator.h>
 #include <ATen/WrapDimUtils.h>
 #include <ATen/native/Resize.h>

@@ -2,11 +2,7 @@
 #include <utility>
 
 #include <ATen/native/BatchLinearAlgebra.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/Context.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <ATen/Dispatch.h>
-#include <ATen/cuda/detail/IndexUtils.cuh>
 
 #include <c10/util/Exception.h>
 

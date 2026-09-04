@@ -1,5 +1,4 @@
 #include <torch/csrc/Exceptions.h>
-#include <torch/csrc/python_headers.h>
 
 #include <array>
 #include <exception>

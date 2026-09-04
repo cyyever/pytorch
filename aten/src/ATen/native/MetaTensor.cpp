@@ -1,6 +1,5 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/EmptyTensor.h>
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/empty_native.h>
 #include <ATen/ops/empty_strided_native.h>

@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <ATen/ATen.h>
-#include <ATen/test/test_assert.h>
-#include <cmath>
-#include <iostream>
 #include <limits>
 #include <sstream>
 #include <type_traits>

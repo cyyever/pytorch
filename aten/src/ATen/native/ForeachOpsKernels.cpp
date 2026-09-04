@@ -1,7 +1,6 @@
 #include <limits>
 #include <vector>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/native/ForeachUtils.h>
 #include <c10/util/irange.h>
 

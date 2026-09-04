@@ -1,8 +1,6 @@
-#include <cuda_runtime.h>
 
 #include <gtest/gtest.h>
 
-#include <ATen/ATen.h>
 #include <ATen/DLConvertor.h>
 #include <ATen/cuda/CUDAConfig.h>
 #include <ATen/cuda/CUDAContext.h>

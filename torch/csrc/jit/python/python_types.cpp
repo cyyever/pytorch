@@ -6,7 +6,6 @@
 #include <torch/csrc/jit/testing/file_check.h>
 #include <pybind11/pybind11.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/python.h>
 
 #include <memory>

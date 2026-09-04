@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/_pack_padded_sequence_backward_native.h>
 #include <ATen/ops/_pack_padded_sequence_native.h>
@@ -208,7 +207,7 @@ Tensor pad_sequence(TensorList sequences, bool batch_first, double padding_value
   IntArrayRef trailing_dims = max_size.slice(1);
   int64_t max_len = std::ranges::max_element(
     sequences,
-   
+
     [](const Tensor &a, const Tensor &b) {
       return a.size(0) < b.size(0);
     }

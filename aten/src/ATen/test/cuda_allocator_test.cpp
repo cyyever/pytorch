@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDACachingAllocator.h>
 
