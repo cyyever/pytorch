@@ -38,3 +38,29 @@ if(USE_NATIVE_ARCH)
         "by setting -DUSE_NATIVE_ARCH=OFF.")
   endif()
 endif()
+
+# ---[ x86 baseline. Every x86 CPU released from 2020 on satisfies x86-64-v3
+# (AVX2, FMA, BMI1/2, F16C), including the AVX-512-less AMD Zen 3 and the
+# consumer Intel parts that fuse AVX-512 off, so v3 is the default. Raise it to
+# x86-64-v4 for a build that only ever runs on AVX-512 hardware; note that the
+# ATen kernels dispatch to an AVX-512 slice at run time either way, so this only
+# affects the code outside those slices. -march=native, when asked for, is more
+# specific and wins.
+# A host that can run AVX-512 itself gets x86-64-v4. Note this makes the default
+# depend on the build machine, so a binary built on such a host will not run on
+# one without AVX-512; set TORCH_X86_BASELINE explicitly for a portable build.
+if(CPU_HOST_HAS_AVX512)
+  set(_torch_x86_baseline_default "x86-64-v4")
+else()
+  set(_torch_x86_baseline_default "x86-64-v3")
+endif()
+set(TORCH_X86_BASELINE "${_torch_x86_baseline_default}" CACHE STRING "-march baseline for x86 builds")
+if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
+  check_cxx_compiler_flag("-march=${TORCH_X86_BASELINE}" COMPILER_SUPPORTS_X86_BASELINE)
+  if(COMPILER_SUPPORTS_X86_BASELINE)
+    string(APPEND CMAKE_C_FLAGS " -march=${TORCH_X86_BASELINE}")
+    string(APPEND CMAKE_CXX_FLAGS " -march=${TORCH_X86_BASELINE}")
+  else()
+    message(WARNING "Compiler does not support -march=${TORCH_X86_BASELINE}; building for generic x86-64.")
+  endif()
+endif()

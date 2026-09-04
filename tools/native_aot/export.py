@@ -647,7 +647,7 @@ def main(argv: list[str] | None = None) -> None:
     # rather than matching no declaration and exiting 0.
     #
     # TORCH_CUDA_ARCH_LIST is filtered below rather than refused: a release list names
-    # arches AOT does not ship (7.5, 8.6) and must not fail the build for it.
+    # arches AOT does not ship (8.9, 12.0) and must not fail the build for it.
     for named_arch in args.arch or ():
         if named_arch not in decl.KNOWN_ARCHES:
             raise RuntimeError(

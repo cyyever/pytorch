@@ -5,10 +5,6 @@ if(TARGET torch::cudart)
   return()
 endif()
 
-# sccache is only supported in CMake master and not in the newest official
-# release (3.11.3) yet. Hence we need our own Modules_CUDA_fix to enable sccache.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../Modules_CUDA_fix)
-
 # We don't want to statically link cudart, because we rely on it's dynamic linkage in
 # python (follow along torch/cuda/__init__.py and usage of cudaGetErrorName).
 # Technically, we can link cudart here statically, and link libtorch_python.so
@@ -23,9 +19,13 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../Modules_CUDA_fix)
 # https://github.com/pytorch/pytorch/issues/17108
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE INTERNAL "")
 
-# Find CUDA.
-find_package(CUDA)
-if(NOT CUDA_FOUND)
+# Find CUDA. CUDA_HOME is the historical PyTorch spelling of the install
+# location; CMake's own module only looks at CUDAToolkit_ROOT and CUDA_PATH.
+if(NOT CUDAToolkit_ROOT AND DEFINED ENV{CUDA_HOME})
+  set(CUDAToolkit_ROOT "$ENV{CUDA_HOME}")
+endif()
+find_package(CUDAToolkit)
+if(NOT CUDAToolkit_FOUND)
   # If user explicitly set USE_CUDA=1, error out instead of falling back
   if(_USE_CUDA_EXPLICITLY_SET AND USE_CUDA)
     message(FATAL_ERROR
@@ -43,8 +43,32 @@ if(NOT CUDA_FOUND)
   return()
 endif()
 
-# Enable CUDA language support
-set(CUDAToolkit_ROOT "${CUDA_TOOLKIT_ROOT_DIR}")
+# The Find modules for the CUDA satellite libraries and cmake/External/nccl.cmake
+# take the toolkit root as a hint; FindCUDAToolkit does not define it. Likewise
+# CUDA_VERSION, the major.minor spelling that ATen/BuildInfo.h and the vendored
+# cutlass builds read.
+get_filename_component(CUDA_TOOLKIT_ROOT_DIR "${CUDAToolkit_BIN_DIR}" DIRECTORY)
+set(CUDA_VERSION "${CUDAToolkit_VERSION_MAJOR}.${CUDAToolkit_VERSION_MINOR}")
+# nccl.cmake passes this to NCCL's makefile as NVCC=; an empty value there
+# overrides NCCL's own default instead of falling back to it. It can already be
+# set from the environment (see cmake/EnvVarForwarding.cmake).
+if(NOT CUDA_NVCC_EXECUTABLE)
+  set(CUDA_NVCC_EXECUTABLE "${CUDAToolkit_NVCC_EXECUTABLE}")
+endif()
+
+# enable_language(CUDA) below fills CMAKE_CUDA_ARCHITECTURES in with the
+# compiler default, so whether the user asked for one has to be answered first.
+if(DEFINED CMAKE_CUDA_ARCHITECTURES)
+  message(WARNING
+          "pytorch is not compatible with `CMAKE_CUDA_ARCHITECTURES` and will ignore its value. "
+          "Please configure `TORCH_CUDA_ARCH_LIST` instead.")
+endif()
+
+# Enable CUDA language support. The compiler search only looks at CUDACXX and
+# PATH, so hand it the nvcc that the toolkit search above settled on.
+if(NOT CMAKE_CUDA_COMPILER)
+  set(CMAKE_CUDA_COMPILER "${CUDAToolkit_NVCC_EXECUTABLE}")
+endif()
 # Pass clang as host compiler, which according to the docs
 # Must be done before CUDA language is enabled, see
 # https://cmake.org/cmake/help/v3.15/variable/CMAKE_CUDA_HOST_COMPILER.html
@@ -62,64 +86,17 @@ if("X${CMAKE_CUDA_STANDARD}" STREQUAL "X" )
 endif()
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-find_package(CUDAToolkit REQUIRED)
-
 if(NOT CMAKE_CUDA_COMPILER_VERSION VERSION_EQUAL CUDAToolkit_VERSION)
   message(FATAL_ERROR "Found two conflicting CUDA versions:\n"
-                      "V${CMAKE_CUDA_COMPILER_VERSION} in '${CUDA_INCLUDE_DIRS}' and\n"
+                      "V${CMAKE_CUDA_COMPILER_VERSION} from ${CMAKE_CUDA_COMPILER} and\n"
                       "V${CUDAToolkit_VERSION} in '${CUDAToolkit_INCLUDE_DIRS}'")
 endif()
 
-message(STATUS "PyTorch: CUDA detected: " ${CUDA_VERSION})
-message(STATUS "PyTorch: CUDA nvcc is: " ${CUDA_NVCC_EXECUTABLE})
+message(STATUS "PyTorch: CUDA detected: " ${CUDAToolkit_VERSION})
+message(STATUS "PyTorch: CUDA nvcc is: " ${CUDAToolkit_NVCC_EXECUTABLE})
 message(STATUS "PyTorch: CUDA toolkit directory: " ${CUDA_TOOLKIT_ROOT_DIR})
-if(CUDA_VERSION VERSION_LESS 13.3)
+if(CUDAToolkit_VERSION VERSION_LESS 13.3)
   message(FATAL_ERROR "PyTorch requires CUDA 13.3 or above.")
-endif()
-
-if(CUDA_FOUND)
-  # Sometimes, we may mismatch nvcc with the CUDA headers we are
-  # compiling with, e.g., if a ccache nvcc is fed to us by CUDA_NVCC_EXECUTABLE
-  # but the PATH is not consistent with CUDA_HOME.  It's better safe
-  # than sorry: make sure everything is consistent.
-  set(PROJECT_RANDOM_BINARY_DIR "${PROJECT_BINARY_DIR}")
-  set(file "${PROJECT_BINARY_DIR}/detect_cuda_version.cc")
-  file(WRITE ${file} ""
-    "#include <cuda.h>\n"
-    "#include <cstdio>\n"
-    "int main() {\n"
-    "  printf(\"%d.%d\", CUDA_VERSION / 1000, (CUDA_VERSION / 10) % 100);\n"
-    "  return 0;\n"
-    "}\n"
-    )
-  if(NOT CMAKE_CROSSCOMPILING)
-    try_run(run_result compile_result ${PROJECT_RANDOM_BINARY_DIR} ${file}
-      CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CUDA_INCLUDE_DIRS}"
-      LINK_LIBRARIES ${CUDA_LIBRARIES}
-      RUN_OUTPUT_VARIABLE cuda_version_from_header
-      COMPILE_OUTPUT_VARIABLE output_var
-      )
-    if(NOT compile_result)
-      message(FATAL_ERROR "PyTorch: Couldn't determine version from header: " ${output_var})
-    endif()
-    message(STATUS "PyTorch: Header version is: " ${cuda_version_from_header})
-    if(NOT cuda_version_from_header STREQUAL ${CUDA_VERSION_STRING})
-      # Force CUDA to be processed for again next time
-      # TODO: I'm not sure if this counts as an implementation detail of
-      # FindCUDA
-      set(cuda_version_from_findcuda ${CUDA_VERSION_STRING})
-      unset(CUDA_TOOLKIT_ROOT_DIR_INTERNAL CACHE)
-      # Not strictly necessary, but for good luck.
-      unset(CUDA_VERSION CACHE)
-      # Error out
-      message(FATAL_ERROR "FindCUDA says CUDA version is ${cuda_version_from_findcuda} (usually determined by nvcc), "
-        "but the CUDA headers say the version is ${cuda_version_from_header}.  This often occurs "
-        "when you set both CUDA_HOME and CUDA_NVCC_EXECUTABLE to "
-        "non-standard locations, without also setting PATH to point to the correct nvcc.  "
-        "Perhaps, try re-running this command again with PATH=${CUDA_TOOLKIT_ROOT_DIR}/bin:$PATH.  "
-        "See above log messages for more diagnostics, and see https://github.com/pytorch/pytorch/issues/8092 for more details.")
-    endif()
-  endif()
 endif()
 
 # ---[ CUDA libraries wrapper
@@ -269,14 +246,10 @@ set_property(
     CUDA::nvrtc caffe2::cuda)
 
 # setting nvcc arch flags
+# The architectures go in as explicit -gencode flags below, so CMake must not
+# add any of its own.
 torch_cuda_get_nvcc_gencode_flag(NVCC_FLAGS_EXTRA)
-# CMake 3.18 adds integrated support for architecture selection, but we can't rely on it
-if(DEFINED CMAKE_CUDA_ARCHITECTURES)
-  message(WARNING
-          "pytorch is not compatible with `CMAKE_CUDA_ARCHITECTURES` and will ignore its value. "
-          "Please configure `TORCH_CUDA_ARCH_LIST` instead.")
-  set(CMAKE_CUDA_ARCHITECTURES OFF)
-endif()
+set(CMAKE_CUDA_ARCHITECTURES OFF)
 
 list(APPEND CUDA_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
 message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA}")

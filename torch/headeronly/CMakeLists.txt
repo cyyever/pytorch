@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29 FATAL_ERROR)
+cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 
 project(headeronly CXX)
 

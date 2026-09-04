@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29 FATAL_ERROR)
+cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 
@@ -723,7 +723,7 @@ if(USE_CUDA AND NOT USE_ROCM)
 
   if($ENV{ATEN_STATIC_CUDA})
     list(APPEND ATen_CUDA_DEPENDENCY_LIBS
-        ${CUDA_LIBRARIES}
+        CUDA::cudart
         CUDA::cusparse_static
         CUDA::cufft_static)
 
@@ -735,7 +735,7 @@ if(USE_CUDA AND NOT USE_ROCM)
    endif()
   else()
     list(APPEND ATen_CUDA_DEPENDENCY_LIBS
-      ${CUDA_LIBRARIES}
+      CUDA::cudart
       CUDA::cusparse
       CUDA::cufft
     )
