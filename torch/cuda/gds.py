@@ -132,9 +132,19 @@ class GdsFile:
         self.register_handle()
 
     def __del__(self) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """Deregisters the handle if needed and closes the file descriptor.
+
+        Calling this more than once is a no-op.
+        """
+        if self.fd < 0:
+            return
         if self.handle is not None:
             self.deregister_handle()
         os.close(self.fd)
+        self.fd = -1
 
     def register_handle(self) -> None:
         """Registers file descriptor to cuFile Driver.
