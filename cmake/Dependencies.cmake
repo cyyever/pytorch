@@ -298,8 +298,14 @@ if(NOT INTERN_BUILD_MOBILE)
   set(USE_BLAS 1)
   if(NOT (ATLAS_FOUND OR BLIS_FOUND OR GENERIC_BLAS_FOUND OR MKL_FOUND OR OpenBLAS_FOUND OR VECLIB_FOUND OR FlexiBLAS_FOUND OR NVPL_BLAS_FOUND OR APL_FOUND))
     message(WARNING "Preferred BLAS (" ${BLAS} ") cannot be found, now searching for a general BLAS library")
+    # CMake's own FindBLAS, which reports neither a vendor name nor the f2c
+    # calling convention, so both are settled here instead.
     find_package(BLAS)
-    if(NOT BLAS_FOUND)
+    if(BLAS_FOUND)
+      list(APPEND Caffe2_DEPENDENCY_LIBS ${BLAS_LIBRARIES})
+      set(BLAS_INFO "generic")
+      include(cmake/BLAS_ABI.cmake)
+    else()
       set(USE_BLAS 0)
     endif()
   endif()
@@ -315,6 +321,26 @@ elseif(INTERN_USE_EIGEN_BLAS)
   set(USE_BLAS 1)
   include(${CMAKE_CURRENT_LIST_DIR}/External/EigenBLAS.cmake)
   list(APPEND Caffe2_DEPENDENCY_LIBS eigen_blas)
+endif()
+
+# Does this BLAS provide the bf16 and fp16 GEMM entry points? OpenBLAS only
+# builds them when configured with BUILD_BFLOAT16/BUILD_HALF, so probe rather
+# than assume. CPUBlas.cpp calls them directly when they exist, in place of
+# ATen's own kernels.
+if(USE_BLAS AND BLAS_LIBRARIES)
+  include(CheckFunctionExists)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_LIBRARIES ${BLAS_LIBRARIES})
+  check_function_exists("sbgemm_" BLAS_HAS_SBGEMM)
+  check_function_exists("shgemm_" BLAS_HAS_SHGEMM)
+  cmake_pop_check_state()
+  if(BLAS_HAS_SBGEMM)
+    add_compile_options(-DBLAS_HAS_SBGEMM)
+  endif()
+  if(BLAS_HAS_SHGEMM)
+    add_compile_options(-DBLAS_HAS_SHGEMM)
+  endif()
 endif()
 
 # --- [ PocketFFT
@@ -965,8 +991,13 @@ endif()
 
 # ---[ OpenMP
 if(USE_OPENMP AND NOT TARGET caffe2::openmp)
-  include(${CMAKE_CURRENT_LIST_DIR}/Modules/FindOpenMP.cmake)
-  if(OPENMP_FOUND)
+  # The macOS wheel build stages a libomp under OMP_PREFIX; that is where
+  # find_package expects to be pointed.
+  if(NOT OpenMP_ROOT AND NOT "$ENV{OMP_PREFIX}" STREQUAL "")
+    set(OpenMP_ROOT "$ENV{OMP_PREFIX}")
+  endif()
+  find_package(OpenMP)
+  if(OpenMP_FOUND)
     message(STATUS "Adding OpenMP CXX_FLAGS: " ${OpenMP_CXX_FLAGS})
     if(APPLE AND USE_MPS)
       string(APPEND CMAKE_OBJCXX_FLAGS " ${OpenMP_CXX_FLAGS}")
