@@ -8,7 +8,7 @@
 #include <c10/util/irange.h>
 
 #include <limits>
-#if (defined(CPU_CAPABILITY_AVX512))
+#if (defined(__AVX512F__))
 #define SLEEF_STATIC_LIBS
 #include <sleef.h>
 #endif
@@ -17,7 +17,7 @@ namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 
 template <>
 struct is_vec_specialized_for<double> : std::bool_constant<true> {};

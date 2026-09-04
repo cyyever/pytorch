@@ -13,7 +13,7 @@
 
 #include <limits>
 
-#if defined(CPU_CAPABILITY_AVX2)
+#if defined(__AVX2__)
 #define SLEEF_STATIC_LIBS
 #include <sleef.h>
 #endif
@@ -22,7 +22,7 @@ namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX2)
+#if defined(__AVX2__)
 
 #ifndef SLEEF_CONST
 #define SLEEF_CONST const
@@ -803,7 +803,7 @@ static inline Vectorized<T> ternary_op_as_fp32(
     out2 = out2_values;                                                     \
   }
 
-#else // CPU_CAPABILITY_AVX2
+#else // __AVX2__
 
 #define CONVERT_NON_VECTORIZED_INIT(type, name)                     \
   inline std::tuple<Vectorized<float>, Vectorized<float>>           \
@@ -845,6 +845,6 @@ static inline Vectorized<T> ternary_op_as_fp32(
     load_fp32_from_##name(data, out2);                                      \
   }
 
-#endif // CPU_CAPABILITY_AVX2
+#endif // __AVX2__
 } // namespace CPU_CAPABILITY
 } // namespace at::vec

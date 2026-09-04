@@ -11,7 +11,7 @@
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
-#ifdef CPU_CAPABILITY_AVX512
+#ifdef __AVX512F__
 
 struct Vectorizedi {
  protected:
@@ -34,9 +34,9 @@ struct Vectorizedi {
 
 struct Vectorizedi {}; // dummy definition to make Vectorizedi always defined
 
-#endif // CPU_CAPABILITY_AVX512
+#endif // __AVX512F__
 
-#ifdef CPU_CAPABILITY_AVX512
+#ifdef __AVX512F__
 
 template <>
 struct is_vec_specialized_for<int64_t> : std::bool_constant<true> {};
@@ -1369,7 +1369,7 @@ Vectorized<int8_t> inline operator*(
     const Vectorized<int8_t>& a,
     const Vectorized<int8_t>& b) {
   // We don't have an instruction for multiplying int8_t
-#ifndef CPU_CAPABILITY_AVX512
+#ifndef __AVX512F__
   return int_elementwise_binary_512(a, b, std::multiplies<int8_t>());
 #else
   __m512i mask00FF = _mm512_set1_epi16(0x00FF);
@@ -1389,7 +1389,7 @@ Vectorized<uint8_t> inline operator*(
     const Vectorized<uint8_t>& a,
     const Vectorized<uint8_t>& b) {
   // We don't have an instruction for multiplying uint8_t
-#ifndef CPU_CAPABILITY_AVX512
+#ifndef __AVX512F__
   return int_elementwise_binary_512(a, b, std::multiplies<uint8_t>());
 #else
   __m512i mask00FF = _mm512_set1_epi16(0x00FF);
