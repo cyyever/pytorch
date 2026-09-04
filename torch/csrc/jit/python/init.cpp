@@ -270,11 +270,11 @@ void initJITBindings(PyObject* module) {
           py::init<std::string, bool, uint64_t>(),
           py::arg("file_name"),
           py::arg("compute_crc32") = true,
-          py::arg("storage_alignment") = 64)
+          py::arg("storage_alignment") = 4096)
       .def(
           py::init([](const py::object& buffer,
                       bool compute_crc32 = true,
-                      uint64_t storage_alignment = 64) {
+                      uint64_t storage_alignment = 4096) {
             auto writer_func = [=](const void* data, size_t size) {
               // Writing an empty file is a noop
               if (size == 0) {
@@ -297,7 +297,7 @@ void initJITBindings(PyObject* module) {
           }),
           py::arg("buffer"),
           py::arg("compute_crc32") = true,
-          py::arg("storage_alignment") = 64)
+          py::arg("storage_alignment") = 4096)
       .def(
           py::init<
               const std::function<size_t(const void*, size_t)>&,
@@ -305,7 +305,7 @@ void initJITBindings(PyObject* module) {
               uint64_t>(),
           py::arg("writer_func"),
           py::arg("compute_crc32") = true,
-          py::arg("storage_alignment") = 64)
+          py::arg("storage_alignment") = 4096)
       // [Note: write_record_metadata]
       // The write_record_metadata function is intended to write metadata (i.e.
       // the zipfile header and end of central directory record) for a file

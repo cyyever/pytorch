@@ -203,8 +203,8 @@ The entries are as follows:
 - `version` contains a version number at save time that can be used at load time
 
 When saving, PyTorch will ensure that the local file header of each file is padded
-to an offset that is a multiple of 64 bytes, ensuring that the offset of each file
-is 64-byte aligned.
+to an offset that is a multiple of 4096 bytes, ensuring that the offset of each file
+is 4096-byte aligned.
 
 ```{note}
 Tensors on certain devices such as XLA are serialized as pickled numpy arrays. As
@@ -389,7 +389,7 @@ The following utility functions are related to serialization:
   See {func}`~torch.serialization.set_crc32_options`.
 - `use_pinned_memory_for_d2h`: for storages that are on an accelerator when passed to `torch.save`, whether to
   move storage to pinned memory or pageable memory on CPU within `torch.save`. (Default: `False` (i.e. pageable))
-- `storage_alignment`: alignment of storages in the checkpoint during `torch.save` in bytes. (Default `64`)
+- `storage_alignment`: alignment of storages in the checkpoint during `torch.save` in bytes. (Default `4096`)
 
 `torch.utils.serialization.config.load` contains options that control the behavior of `torch.load`.
 

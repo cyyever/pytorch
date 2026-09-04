@@ -43,7 +43,7 @@ typedef struct mz_zip_archive mz_zip_archive;
 // The PyTorchStreamWriter also ensures additional useful properties for these
 // files
 // 1. All files are stored uncompressed.
-// 2. All files in the archive are aligned to 64 byte boundaries such that
+// 2. All files in the archive are aligned to 4096 byte boundaries such that
 //    it is possible to mmap the entire file and get an aligned pointer to
 //    tensor data.
 // 3. We universally write in ZIP64 format for consistency.
@@ -54,7 +54,9 @@ typedef struct mz_zip_archive mz_zip_archive;
 //    the reader can still read files that were compressed.
 // 2. It provides a getRecordOffset function which returns the offset into the
 //    raw file where file data lives. If the file was written with
-//    PyTorchStreamWriter it is guaranteed to be 64 byte aligned.
+//    PyTorchStreamWriter it is guaranteed to be aligned to the writer's
+//    alignment, 4096 bytes by default, which is what cuFile wants for a
+//    direct read into device memory.
 
 // PyTorchReader/Writer handle checking the version number on the archive format
 // and ensure that all files are written to a archive_name directory so they
@@ -230,11 +232,11 @@ class TORCH_API PyTorchStreamWriter final {
   explicit PyTorchStreamWriter(
       const std::string& archive_name,
       bool compute_crc32 = true,
-      uint64_t alignment = 64);
+      uint64_t alignment = 4096);
   explicit PyTorchStreamWriter(
       const std::function<size_t(const void*, size_t)> writer_func,
       bool compute_crc32 = true,
-      uint64_t alignment = 64);
+      uint64_t alignment = 4096);
 
   void setMinVersion(const uint64_t version);
 
