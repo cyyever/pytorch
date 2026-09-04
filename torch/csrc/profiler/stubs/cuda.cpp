@@ -1,10 +1,6 @@
 #include <sstream>
 
-#ifndef ROCM_ON_WINDOWS
 #include <nvtx3/nvtx3.hpp>
-#else // ROCM_ON_WINDOWS
-#include <c10/util/Exception.h>
-#endif // ROCM_ON_WINDOWS
 #include <c10/cuda/CUDAGuard.h>
 #include <c10/util/ApproximateClock.h>
 #include <c10/util/irange.h>
@@ -69,7 +65,6 @@ struct CUDAMethods : public ProfilerStubs {
     return ms * 1000.0;
   }
 
-#ifndef ROCM_ON_WINDOWS
   void mark(const char* name) const override {
     ::nvtxMark(name);
   }
@@ -81,20 +76,6 @@ struct CUDAMethods : public ProfilerStubs {
   void rangePop() const override {
     ::nvtxRangePop();
   }
-#else // ROCM_ON_WINDOWS
-  static void printUnavailableWarning() {
-    TORCH_WARN_ONCE("Warning: roctracer isn't available on Windows");
-  }
-  void mark(const char* name) const override {
-    printUnavailableWarning();
-  }
-  void rangePush(const char* name) const override {
-    printUnavailableWarning();
-  }
-  void rangePop() const override {
-    printUnavailableWarning();
-  }
-#endif
 
   void onEachDevice(std::function<void(int)> op) const override {
     at::cuda::OptionalCUDAGuard device_guard;
