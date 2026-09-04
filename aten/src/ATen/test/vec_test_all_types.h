@@ -1242,14 +1242,18 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_abs(Complex<T>
 
 template <typename T>
 std::enable_if_t<!is_complex<T>::value, T> local_multiply(T x, T y) {
+    if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
+        using unsigned_t = std::make_unsigned_t<T>;
+        auto result = static_cast<unsigned_t>(
+            static_cast<uintmax_t>(static_cast<unsigned_t>(x)) *
+            static_cast<uintmax_t>(static_cast<unsigned_t>(y)));
+        return std::bit_cast<T>(result);
+    }
     return x * y;
 }
 
 template <typename T>
 std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_multiply(Complex<T> x, Complex<T> y) {
-#if defined(TEST_AGAINST_DEFAULT)
-    return x * y;
-#else
     //(a + bi)  * (c + di) = (ac - bd) + (ad + bc)i
     T x_real = x.real();
     T x_imag = x.imag();
@@ -1264,7 +1268,6 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_multiply(Compl
     T rr = noFma.sub(ac, bd);
     T ii = noFma.sub(ad, bc);
     return Complex<T>(rr, ii);
-#endif
 }
 
 
@@ -1276,30 +1279,7 @@ std::enable_if_t<!is_complex<T>::value, T> local_division(T x, T y) {
 
 template <typename T>
 std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_division(Complex<T> x, Complex<T> y) {
-#if defined(TEST_AGAINST_DEFAULT)
     return x / y;
-#else /* defined(TEST_AGAINST_DEFAULT) */
-    //re = (ac + bd)/abs_2()
-    //im = (bc - ad)/abs_2()
-    T x_real = x.real();
-    T x_imag = x.imag();
-    T y_real = y.real();
-    T y_imag = y.imag();
-    PreventFma noFma;
-    T ac = x_real * y_real;
-    T bd = x_imag * y_imag;
-    T ad = x_real * y_imag;
-    T bc = x_imag * y_real;
-    T rr = noFma.add(ac, bd);
-    T ii = noFma.sub(bc, ad);
-    //b.abs_2()
-    T abs_rr = y_real * y_real;
-    T abs_ii = y_imag * y_imag;
-    T abs_2 = noFma.add(abs_rr, abs_ii);
-    rr = rr / abs_2;
-    ii = ii / abs_2;
-    return Complex<T>(rr, ii);
-#endif /* defined(TEST_AGAINST_DEFAULT) */
 }
 
 
