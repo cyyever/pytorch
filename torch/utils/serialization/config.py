@@ -14,6 +14,7 @@ class load:
     # MAP_PRIVATE = 2
     mmap_flags: int | None = 2
     calculate_storage_offsets: bool = False
+    use_gds: bool = False
 
 
 class save:

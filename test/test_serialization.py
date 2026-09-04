@@ -5450,11 +5450,115 @@ class TestSubclassSerialization(TestCase):
             torch.load(modified_buffer, weights_only=True)
 
 
+class TestSerializationGDS(TestCase):
+    def _require_gds(self):
+        # GDS needs the cuFile/hipFile bindings built in, plus an O_DIRECT-capable
+        # local filesystem (ext4/xfs) for the checkpoint being read.
+        if not torch.cuda.is_available():
+            self.skipTest("CUDA not available")
+        if not torch.cuda.gds.is_available():
+            self.skipTest("GDS (cuFile/hipFile) not built into this install")
+        try:
+            import psutil
+        except ImportError:
+            self.skipTest("psutil is needed to check the filesystem type")
+        my_path = os.path.realpath(tempfile.gettempdir())
+        fs_type = ""
+        for part in psutil.disk_partitions():
+            if part.mountpoint == "/":
+                fs_type = fs_type or part.fstype
+            if part.mountpoint == my_path:
+                fs_type = part.fstype
+                break
+        if fs_type not in ("ext4", "xfs"):
+            self.skipTest("GPUDirect Storage requires ext4/xfs for local filesystem")
+
+    def test_gds_config_defaults_to_off(self):
+        self.assertFalse(serialization_config.load.use_gds)
+
+    @unittest.skipIf(IS_WINDOWS, "TemporaryFileName on windows")
+    @parametrize("path_type", (str, Path))
+    def test_gds_falls_back_for_cpu_map_location(self, path_type):
+        # map_location is not CUDA, so the load must silently take the usual path.
+        sd = torch.nn.Linear(17, 5).state_dict()
+        with TemporaryFileName() as f:
+            f = path_type(f)
+            torch.save(sd, f)
+            with serialization_config.patch("load.use_gds", True):
+                loaded = torch.load(f, map_location="cpu")
+        self.assertEqual(loaded, sd)
+        for v in loaded.values():
+            self.assertEqual(v.device.type, "cpu")
+
+    def test_gds_falls_back_for_file_object(self):
+        # f is not a path, so there is no file to hand to cuFile: no error, just a
+        # regular load.
+        sd = torch.nn.Linear(17, 5).state_dict()
+        map_location = "cuda" if torch.cuda.is_available() else "cpu"
+        expected = {k: v.to(map_location) for k, v in sd.items()}
+        with tempfile.NamedTemporaryFile() as checkpoint:
+            torch.save(sd, checkpoint)
+            checkpoint.seek(0)
+            with serialization_config.patch("load.use_gds", True):
+                loaded = torch.load(checkpoint, map_location=map_location)
+        self.assertEqual(loaded, expected)
+        for v in loaded.values():
+            self.assertEqual(v.device.type, map_location)
+
+    @unittest.skipIf(IS_WINDOWS, "TemporaryFileName on windows")
+    @parametrize("path_type", (str, Path))
+    def test_gds_load_round_trip(self, path_type):
+        self._require_gds()
+        m = torch.nn.Sequential(*[torch.nn.Linear(37, 37) for _ in range(5)])
+        sd = m.state_dict()
+        with TemporaryFileName() as f:
+            f = path_type(f)
+            torch.save(sd, f)
+            with serialization_config.patch("load.use_gds", True):
+                loaded = torch.load(f, map_location="cuda")
+            reference = torch.load(f, map_location="cuda")
+        for k, v in loaded.items():
+            self.assertEqual(v.device.type, "cuda")
+            self.assertEqual(v, reference[k])
+            self.assertTrue(torch.equal(v, sd[k].cuda()))
+
+    @unittest.skipIf(IS_WINDOWS, "TemporaryFileName on windows")
+    @parametrize("dtype", (torch.float32, torch.float64, torch.uint8, torch.int64))
+    def test_gds_load_dtypes(self, dtype):
+        self._require_gds()
+        if dtype.is_floating_point:
+            t = torch.randn(4321, dtype=dtype)
+        else:
+            t = torch.randint(0, 128, (4321,), dtype=dtype)
+        # An empty storage exercises the zero-length record path.
+        payload = {"t": t, "empty": torch.empty(0, dtype=dtype)}
+        with TemporaryFileName() as f:
+            torch.save(payload, f)
+            with serialization_config.patch("load.use_gds", True):
+                loaded = torch.load(f, map_location="cuda")
+        self.assertEqual(loaded["t"].device.type, "cuda")
+        self.assertTrue(torch.equal(loaded["t"], t.cuda()))
+        self.assertEqual(loaded["empty"].numel(), 0)
+
+    @unittest.skipIf(IS_WINDOWS, "TemporaryFileName on windows")
+    def test_gds_load_indexed_device(self):
+        self._require_gds()
+        sd = torch.nn.Linear(64, 64).state_dict()
+        with TemporaryFileName() as f:
+            torch.save(sd, f)
+            with serialization_config.patch("load.use_gds", True):
+                loaded = torch.load(f, map_location=torch.device("cuda", 0))
+        for k, v in loaded.items():
+            self.assertEqual(v.device, torch.device("cuda", 0))
+            self.assertTrue(torch.equal(v, sd[k].cuda()))
+
+
 instantiate_device_type_tests(TestBothSerialization, globals(), allow_xpu=True)
 instantiate_device_type_tests(TestSerializationAccelerator, globals(), allow_xpu=True)
 instantiate_parametrized_tests(TestSubclassSerialization)
 instantiate_parametrized_tests(TestOldSerialization)
 instantiate_parametrized_tests(TestSerialization)
+instantiate_parametrized_tests(TestSerializationGDS)
 
 if __name__ == '__main__':
     run_tests()

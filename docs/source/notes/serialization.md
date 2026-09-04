@@ -403,3 +403,9 @@ The following utility functions are related to serialization:
 - `calculate_storage_offsets`: If this config is set to `True`, offsets for storages will be
   calculated rather than read via random reads when using `torch.load(mmap=True)`. This minimizes
   random reads, which can be helpful when the file is being loaded over a network. (Default : `False`)
+- `use_gds`: If this config is set to `True` and `torch.load` is given a file path with a CUDA
+  `map_location`, storages are read from the file straight into device memory with GPUDirect Storage
+  (cuFile) instead of being staged through CPU memory. This requires a build with cuFile/hipFile and
+  a filesystem that supports `O_DIRECT`; when any requirement is not met, `torch.load` silently falls
+  back to the regular path. `O_DIRECT` bypasses the page cache, so this can be slower for a file that
+  is already cached. (Default : `False`)
