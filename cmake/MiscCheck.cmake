@@ -38,3 +38,18 @@ if(USE_NATIVE_ARCH)
         "by setting -DUSE_NATIVE_ARCH=OFF.")
   endif()
 endif()
+
+# ---[ x86 baseline. x86-64-v3 covers post-2020 mainstream x86 CPUs, including
+# AMD Zen 3 and Intel consumer parts without AVX-512. ATen still dispatches to
+# AVX-512 kernels when available. Use x86-64-v4 explicitly for AVX-512-only
+# deployments, or USE_NATIVE_ARCH for a machine-specific build.
+set(TORCH_X86_BASELINE "x86-64-v3" CACHE STRING "-march baseline for x86 builds")
+if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
+  check_cxx_compiler_flag("-march=${TORCH_X86_BASELINE}" COMPILER_SUPPORTS_X86_BASELINE)
+  if(COMPILER_SUPPORTS_X86_BASELINE)
+    string(APPEND CMAKE_C_FLAGS " -march=${TORCH_X86_BASELINE}")
+    string(APPEND CMAKE_CXX_FLAGS " -march=${TORCH_X86_BASELINE}")
+  else()
+    message(WARNING "Compiler does not support -march=${TORCH_X86_BASELINE}; building for generic x86-64.")
+  endif()
+endif()

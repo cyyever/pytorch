@@ -305,7 +305,204 @@ macro(torch_xpu_get_arch_list store_var)
 endmacro()
 
 ##############################################################################
-# Get the NVCC arch flags specified by TORCH_CUDA_ARCH_LIST and CUDA_ARCH_NAME.
+# GPU architectures this build knows about. sm_89 (Ada) is the floor: the
+# lists are also what clamps autodetection, so keep the numeric entries sorted
+# by release, not by value (Rubin's 10.7 is below Blackwell's 12.0).
+# Sets, in the caller's scope: _cuda_known_archs, _cuda_common_archs,
+# _cuda_min_arch and _cuda_limit_arch.
+macro(torch_cuda_architecture_lists)
+  set(_cuda_known_archs "Ada" "Hopper" "Blackwell")
+  set(_cuda_common_archs "8.9" "9.0" "9.0a" "10.0" "10.0a" "11.0a" "12.0" "12.0a")
+  if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 13.4)
+    list(APPEND _cuda_known_archs "Rubin")
+    list(APPEND _cuda_common_archs "10.7" "10.7a")
+  endif()
+
+  # Oldest and newest arch this toolkit can compile for, used to clamp
+  # autodetection.
+  set(_cuda_plain_archs ${_cuda_common_archs})
+  list(FILTER _cuda_plain_archs INCLUDE REGEX "^[0-9]+\\.[0-9]+$")
+  list(SORT _cuda_plain_archs COMPARE NATURAL)
+  list(GET _cuda_plain_archs 0 _cuda_min_arch)
+  list(GET _cuda_plain_archs -1 _cuda_limit_arch)
+endmacro()
+
+##############################################################################
+# Detect the compute capabilities of the GPUs installed on this machine.
+# Usage:
+#   torch_cuda_detect_installed_gpus(variable_to_store_archs)
+function(torch_cuda_detect_installed_gpus out_variable)
+  torch_cuda_architecture_lists()
+
+  if(NOT CUDA_GPU_DETECT_OUTPUT)
+    set(file "${PROJECT_BINARY_DIR}/detect_cuda_compute_capabilities.cu")
+    file(WRITE ${file} ""
+      "#include <cuda_runtime.h>\n"
+      "#include <cstdio>\n"
+      "int main()\n"
+      "{\n"
+      "  int count = 0;\n"
+      "  if (cudaSuccess != cudaGetDeviceCount(&count)) return -1;\n"
+      "  if (count == 0) return -1;\n"
+      "  for (int device = 0; device < count; ++device)\n"
+      "  {\n"
+      "    cudaDeviceProp prop;\n"
+      "    if (cudaSuccess == cudaGetDeviceProperties(&prop, device))\n"
+      "      std::printf(\"%d.%d \", prop.major, prop.minor);\n"
+      "  }\n"
+      "  return 0;\n"
+      "}\n")
+
+    try_run(run_result compile_result ${PROJECT_BINARY_DIR} ${file}
+            RUN_OUTPUT_VARIABLE compute_capabilities)
+
+    # Filter unrelated content out of the output.
+    string(REGEX MATCHALL "[0-9]+\\.[0-9]+" compute_capabilities "${compute_capabilities}")
+
+    if(run_result EQUAL 0)
+      set(CUDA_GPU_DETECT_OUTPUT ${compute_capabilities}
+        CACHE INTERNAL "Returned GPU architectures from detect_gpus tool" FORCE)
+    endif()
+  endif()
+
+  if(NOT CUDA_GPU_DETECT_OUTPUT)
+    message(STATUS "Automatic GPU detection failed. Building for common architectures.")
+    set(${out_variable} ${_cuda_common_archs} PARENT_SCOPE)
+    return()
+  endif()
+
+  set(detected "")
+  separate_arguments(CUDA_GPU_DETECT_OUTPUT)
+  foreach(item IN ITEMS ${CUDA_GPU_DETECT_OUTPUT})
+    if(item VERSION_GREATER _cuda_limit_arch)
+      # Too new for SASS; fall back to the newest known arch's PTX for JIT.
+      list(APPEND detected "${_cuda_limit_arch}+PTX")
+    elseif(item VERSION_LESS _cuda_min_arch)
+      # Below the supported floor. Build for the floor instead of failing, so
+      # configuration still succeeds; the detected GPU cannot run the result.
+      message(STATUS "Detected GPU architecture ${item} is below the minimum supported "
+                     "architecture ${_cuda_min_arch}; building for "
+                     "${_cuda_min_arch} instead.")
+      list(APPEND detected "${_cuda_min_arch}")
+    else()
+      list(APPEND detected "${item}")
+    endif()
+  endforeach()
+
+  set(${out_variable} ${detected} PARENT_SCOPE)
+endfunction()
+
+##############################################################################
+# Translate a list of CUDA architectures into nvcc -gencode flags.
+#   arch_list : Auto | Common | All | LIST(ARCH_AND_PTX ...)
+#     - "Auto" builds for the GPUs installed on this machine
+#     - "Common" and "All" cover the common and the entire known subsets
+#   ARCH_AND_PTX : NAME | NUM.NUM | NUM.NUM(NUM.NUM) | NUM.NUM+PTX
+#     NAME: Ada Hopper Blackwell Rubin
+# Usage:
+#   torch_cuda_select_nvcc_arch_flags(variable_to_store_flags [arch_list])
+# Additionally sets ${variable_to_store_flags}_readable to the numeric list.
+function(torch_cuda_select_nvcc_arch_flags out_variable)
+  torch_cuda_architecture_lists()
+
+  set(arch_list "${ARGN}")
+  if("X${arch_list}" STREQUAL "X")
+    set(arch_list "Auto")
+  endif()
+
+  if("${arch_list}" STREQUAL "All")
+    set(arch_list ${_cuda_known_archs})
+  elseif("${arch_list}" STREQUAL "Common")
+    set(arch_list ${_cuda_common_archs})
+  elseif("${arch_list}" STREQUAL "Auto")
+    torch_cuda_detect_installed_gpus(arch_list)
+    message(STATUS "Autodetected CUDA architecture(s): ${arch_list}")
+  endif()
+
+  set(cuda_arch_bin)
+  set(cuda_arch_ptx)
+
+  string(REGEX REPLACE "[ \t]+" ";" arch_list "${arch_list}")
+  list(REMOVE_DUPLICATES arch_list)
+  foreach(arch_name ${arch_list})
+    set(arch_bin)
+    set(arch_ptx)
+    set(add_ptx FALSE)
+    if(arch_name MATCHES "(.*)\\+PTX$")
+      set(add_ptx TRUE)
+      set(arch_name ${CMAKE_MATCH_1})
+    endif()
+    if(arch_name MATCHES "^([0-9]+\\.[0-9][af]?(\\([0-9]+\\.[0-9]\\))?)$")
+      set(arch_bin ${CMAKE_MATCH_1})
+      set(arch_ptx ${arch_bin})
+    elseif(arch_name STREQUAL "Ada")
+      set(arch_bin 8.9)
+      set(arch_ptx 8.9)
+    elseif(arch_name STREQUAL "Hopper")
+      set(arch_bin 9.0)
+      set(arch_ptx 9.0)
+    elseif(arch_name STREQUAL "Blackwell+Tegra")
+      set(arch_bin 10.1)
+    elseif(arch_name STREQUAL "Blackwell")
+      set(arch_bin 10.0 12.0)
+      set(arch_ptx 10.0 12.0)
+    elseif(arch_name STREQUAL "Rubin")
+      set(arch_bin 10.7)
+      set(arch_ptx 10.7)
+    else()
+      message(FATAL_ERROR "Unknown CUDA architecture name in TORCH_CUDA_ARCH_LIST: ${arch_name}")
+    endif()
+    list(APPEND cuda_arch_bin ${arch_bin})
+    if(add_ptx)
+      if(NOT arch_ptx)
+        set(arch_ptx ${arch_bin})
+      endif()
+      list(APPEND cuda_arch_ptx ${arch_ptx})
+    endif()
+  endforeach()
+
+  # remove dots and convert to lists
+  string(REGEX REPLACE "\\." "" cuda_arch_bin "${cuda_arch_bin}")
+  string(REGEX REPLACE "\\." "" cuda_arch_ptx "${cuda_arch_ptx}")
+  string(REGEX MATCHALL "[0-9()]+[af]?" cuda_arch_bin "${cuda_arch_bin}")
+  string(REGEX MATCHALL "[0-9]+[af]?"   cuda_arch_ptx "${cuda_arch_ptx}")
+
+  if(cuda_arch_bin)
+    list(REMOVE_DUPLICATES cuda_arch_bin)
+  endif()
+  if(cuda_arch_ptx)
+    list(REMOVE_DUPLICATES cuda_arch_ptx)
+  endif()
+
+  set(nvcc_flags "")
+  set(nvcc_archs_readable "")
+
+  # Tell NVCC to add binaries for the specified GPUs
+  foreach(arch ${cuda_arch_bin})
+    if(arch MATCHES "([0-9]+)\\(([0-9]+)\\)")
+      # User explicitly specified ARCH for the concrete CODE
+      list(APPEND nvcc_flags -gencode arch=compute_${CMAKE_MATCH_2},code=sm_${CMAKE_MATCH_1})
+      list(APPEND nvcc_archs_readable sm_${CMAKE_MATCH_1})
+    else()
+      # User didn't explicitly specify ARCH for the concrete CODE, we assume ARCH=CODE
+      list(APPEND nvcc_flags -gencode arch=compute_${arch},code=sm_${arch})
+      list(APPEND nvcc_archs_readable sm_${arch})
+    endif()
+  endforeach()
+
+  # Tell NVCC to add PTX intermediate code for the specified architectures
+  foreach(arch ${cuda_arch_ptx})
+    list(APPEND nvcc_flags -gencode arch=compute_${arch},code=compute_${arch})
+    list(APPEND nvcc_archs_readable compute_${arch})
+  endforeach()
+
+  string(REPLACE ";" " " nvcc_archs_readable "${nvcc_archs_readable}")
+  set(${out_variable}          ${nvcc_flags}          PARENT_SCOPE)
+  set(${out_variable}_readable ${nvcc_archs_readable} PARENT_SCOPE)
+endfunction()
+
+##############################################################################
+# Get the NVCC arch flags specified by TORCH_CUDA_ARCH_LIST.
 # Usage:
 #   torch_cuda_get_nvcc_gencode_flag(variable_to_store_flags)
 #
@@ -315,32 +512,20 @@ macro(torch_cuda_get_nvcc_gencode_flag store_var)
   if((NOT DEFINED TORCH_CUDA_ARCH_LIST) AND (DEFINED ENV{TORCH_CUDA_ARCH_LIST}))
     set(TORCH_CUDA_ARCH_LIST $ENV{TORCH_CUDA_ARCH_LIST})
   endif()
-  if(DEFINED CUDA_ARCH_NAME)
-    message(WARNING
-        "CUDA_ARCH_NAME is no longer used. Use TORCH_CUDA_ARCH_LIST instead. "
-        "Right now, CUDA_ARCH_NAME is ${CUDA_ARCH_NAME} and "
-        "TORCH_CUDA_ARCH_LIST is ${TORCH_CUDA_ARCH_LIST}.")
-    if(NOT TORCH_CUDA_ARCH_LIST)
-      set(TORCH_CUDA_ARCH_LIST ${CUDA_ARCH_NAME})
-    else()
-      list(APPEND TORCH_CUDA_ARCH_LIST ${CUDA_ARCH_NAME})
-    endif()
-  endif()
 
-  # CUDA 13 dropped offline compilation for everything below sm_75, so anything
+  # sm_89 (Ada) is the oldest architecture this build supports, so anything
   # older cannot be built even if it is asked for.
   foreach(_torch_arch ${TORCH_CUDA_ARCH_LIST})
     if(_torch_arch MATCHES "^([0-9]+\\.[0-9]+)")
-      if(CMAKE_MATCH_1 VERSION_LESS 7.5)
+      if(CMAKE_MATCH_1 VERSION_LESS 8.9)
         message(FATAL_ERROR
-            "PyTorch needs compute capability 7.5 or above, but TORCH_CUDA_ARCH_LIST "
+            "PyTorch needs compute capability 8.9 or above, but TORCH_CUDA_ARCH_LIST "
             "contains ${_torch_arch}.")
       endif()
     endif()
   endforeach()
 
-  # Invoke cuda_select_nvcc_arch_flags from proper cmake FindCUDA.
-  cuda_select_nvcc_arch_flags(${store_var} ${TORCH_CUDA_ARCH_LIST})
+  torch_cuda_select_nvcc_arch_flags(${store_var} ${TORCH_CUDA_ARCH_LIST})
 endmacro()
 
 
@@ -436,42 +621,6 @@ function(torch_compile_options libname)
         $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden>)
   endif()
 
-endfunction()
-
-##############################################################################
-# Set old-style FindCuda.cmake compile flags from modern CMake cuda flags.
-# Usage:
-#   torch_update_find_cuda_flags()
-function(torch_update_find_cuda_flags)
-  # Convert -O2 -Xcompiler="-O2 -Wall" to "-O2;-Xcompiler=-O2,-Wall"
-  if(USE_CUDA)
-    separate_arguments(FLAGS UNIX_COMMAND "${CMAKE_CUDA_FLAGS}")
-    string(REPLACE " " "," FLAGS "${FLAGS}")
-    set(CUDA_NVCC_FLAGS ${FLAGS} PARENT_SCOPE)
-
-    separate_arguments(FLAGS_DEBUG UNIX_COMMAND "${CMAKE_CUDA_FLAGS_DEBUG}")
-    string(REPLACE " " "," FLAGS_DEBUG "${FLAGS_DEBUG}")
-    set(CUDA_NVCC_FLAGS_DEBUG "${FLAGS_DEBUG}" PARENT_SCOPE)
-
-    separate_arguments(FLAGS_RELEASE UNIX_COMMAND "${CMAKE_CUDA_FLAGS_RELEASE}")
-    string(REPLACE " " "," FLAGS_RELEASE "${FLAGS_RELEASE}")
-    set(CUDA_NVCC_FLAGS_RELEASE "${FLAGS_RELEASE}" PARENT_SCOPE)
-
-    separate_arguments(FLAGS_MINSIZEREL UNIX_COMMAND "${CMAKE_CUDA_FLAGS_MINSIZEREL}")
-    string(REPLACE " " "," FLAGS_MINSIZEREL "${FLAGS_MINSIZEREL}")
-    set(CUDA_NVCC_FLAGS_MINSIZEREL "${FLAGS_MINSIZEREL}" PARENT_SCOPE)
-
-    separate_arguments(FLAGS_RELWITHDEBINFO UNIX_COMMAND "${CMAKE_CUDA_FLAGS_RELWITHDEBINFO}")
-    string(REPLACE " " "," FLAGS_RELWITHDEBINFO "${FLAGS_RELWITHDEBINFO}")
-    set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${FLAGS_RELWITHDEBINFO}" PARENT_SCOPE)
-
-    message(STATUS "Converting CMAKE_CUDA_FLAGS to CUDA_NVCC_FLAGS:\n"
-                    "    CUDA_NVCC_FLAGS                = ${FLAGS}\n"
-                    "    CUDA_NVCC_FLAGS_DEBUG          = ${FLAGS_DEBUG}\n"
-                    "    CUDA_NVCC_FLAGS_RELEASE        = ${FLAGS_RELEASE}\n"
-                    "    CUDA_NVCC_FLAGS_RELWITHDEBINFO = ${FLAGS_RELWITHDEBINFO}\n"
-                    "    CUDA_NVCC_FLAGS_MINSIZEREL     = ${FLAGS_MINSIZEREL}")
-  endif()
 endfunction()
 
 include(CheckCXXCompilerFlag)
