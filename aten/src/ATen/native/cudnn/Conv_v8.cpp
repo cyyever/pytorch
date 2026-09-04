@@ -8,7 +8,6 @@
 
 #include <cudnn_frontend.h>
 
-#include <ATen/core/Tensor.h>
 #include <ATen/cuda/Exceptions.h>
 #include <ATen/cudnn/Handle.h>
 #include <ATen/native/ConvUtils.h>
@@ -18,7 +17,6 @@
 // cudnn_frontend_get_plan.h defines EngineConfigGenerator::cudnnGetPlan out of
 // line, so this include is where it gets emitted. Without it the library links
 // and fails at import with an undefined symbol.
-#include <cudnn_frontend_get_plan.h>
 
 #include <c10/cuda/CUDACachingAllocator.h>
 #include <c10/cuda/CUDAException.h>
@@ -31,7 +29,6 @@
 #include <ATen/ops/empty.h>
 
 #ifdef __linux__
-#include <dlfcn.h>
 #endif
 
 namespace at::native {

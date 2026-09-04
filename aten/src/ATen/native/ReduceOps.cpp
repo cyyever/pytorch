@@ -2,7 +2,6 @@
 #include <ATen/native/ReduceOps.h>
 #include <ATen/NumericUtils.h>
 
-#include <ATen/core/Tensor.h>
 #include <ATen/AccumulateType.h>
 #include <ATen/Dispatch.h>
 #include <ATen/Dispatch_v2.h>

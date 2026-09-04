@@ -7,7 +7,6 @@
 #include <c10/cuda/impl/CUDAGuardImpl.h>
 #include <c10/util/irange.h>
 
-#include <cuda_runtime.h>
 
 #include <functional>
 #include <future>

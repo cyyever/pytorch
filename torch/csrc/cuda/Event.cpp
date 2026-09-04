@@ -1,9 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Device.h>
 #include <torch/csrc/Stream.h>
-#include <torch/csrc/THP.h>
 #include <torch/csrc/cuda/Event.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 #include <torch/csrc/utils/python_arg_parser.h>
 

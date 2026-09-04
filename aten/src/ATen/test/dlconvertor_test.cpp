@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <ATen/ATen.h>
 #include <ATen/DLConvertor.h>
 
 using namespace at;

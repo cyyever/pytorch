@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/Pow.h>
 
-#include <ATen/core/Tensor.h>
 #include <ATen/ScalarOps.h>
 
 #include <ATen/ops/float_power_native.h>

@@ -1,8 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/Copy.h>
 
-#include <ATen/core/Tensor.h>
-#include <ATen/Dispatch.h>
 #include <ATen/Dispatch_v2.h>
 #include <ATen/ExpandUtils.h>
 #include <ATen/TensorIterator.h>

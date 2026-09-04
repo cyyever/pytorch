@@ -1,8 +1,4 @@
 #include <ATen/native/sparse/cuda/cuSPARSELtOps.h>
-#include <c10/cuda/CUDAGuard.h>
-#include <unordered_map>
-#include <vector>
-#include <c10/util/StringUtil.h>
 
 #include <ATen/ops/_cslt_compress_native.h>
 #include <ATen/ops/_cslt_sparse_mm_native.h>

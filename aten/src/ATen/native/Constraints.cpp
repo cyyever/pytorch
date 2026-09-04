@@ -1,6 +1,5 @@
 #include <limits>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <c10/core/Device.h>
 #include <optional>
 

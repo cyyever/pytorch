@@ -5,7 +5,6 @@
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/utils/python_arg_parser.h>
 
-#include <ATen/ATen.h>
 #include <ATen/CPUGeneratorImpl.h>
 
 #include <structmember.h>

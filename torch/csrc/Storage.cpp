@@ -1,4 +1,3 @@
-#include <torch/csrc/python_headers.h>
 
 #include <c10/core/CPUAllocator.h>
 #include <torch/csrc/CudaIPCTypes.h>

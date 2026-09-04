@@ -2,10 +2,8 @@
 
 #include <pybind11/pybind11.h>
 #include <torch/csrc/Exceptions.h>
-#include <torch/csrc/THP.h>
 #include <torch/csrc/cuda/THCP.h>
 #include <torch/csrc/cuda/nccl.h>
-#include <torch/csrc/utils/pybind.h>
 
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>

@@ -1,5 +1,4 @@
 
-#include <cuda_runtime.h>
 
 #ifndef ROCM_ON_WINDOWS
 #include <nvtx3/nvtx3.hpp>

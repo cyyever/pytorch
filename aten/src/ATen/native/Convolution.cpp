@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/native/CanUse32BitIndexMath.h>
 #include <ATen/native/ConvolutionMM3d.h>

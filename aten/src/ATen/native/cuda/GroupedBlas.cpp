@@ -2,19 +2,13 @@
 #include <limits>
 #include <c10/util/typeid.h>
 #include <c10/util/Exception.h>
-#include <c10/util/SmallVector.h>
-#include <c10/core/Scalar.h>
 #include <c10/core/ScalarType.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/Context.h>
 #include <ATen/core/Tensor.h>
-#include <ATen/Dispatch.h>
-#include <ATen/ExpandUtils.h>
-#include <ATen/TensorUtils.h>
 #include <ATen/cuda/CUDABlas.h>
 #include <ATen/native/ScaledBlasUtils.h>
 #include <ATen/native/cuda/ScaledBlasDeviceUtils.h>
-#include <ATen/cuda/tunable/Tunable.h>
 #include <ATen/native/GroupedMMUtils.h>
 #if !defined(USE_ROCM)
 #include <ATen/native/cuda/CublasGroupedArgs.h>
@@ -24,7 +18,6 @@
 #if defined(USE_ROCM) && defined(USE_ROCM_CK_GEMM)
 #include <ATen/native/hip/ck_group_gemm.h>
 #endif
-#include <ATen/ceil_div.h>
 
 #ifdef USE_MSLK
 #include <mslk/gemm/gemm_torch.h>

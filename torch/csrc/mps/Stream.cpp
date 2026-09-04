@@ -1,4 +1,3 @@
-#include <torch/csrc/THP.h>
 
 #ifdef USE_MPS
 #include <ATen/mps/MPSStream.h>

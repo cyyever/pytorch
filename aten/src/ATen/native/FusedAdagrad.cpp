@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/native/DispatchStub.h>
 #include <ATen/native/FusedAdagrad.h>
 

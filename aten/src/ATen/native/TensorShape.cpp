@@ -3,7 +3,6 @@
 #include <c10/core/ScalarType.h>
 #include <c10/core/SymInt.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Dispatch.h>
 #include <ATen/ExpandUtils.h>
 #include <ATen/InferSize.h>
 #include <ATen/MemoryOverlap.h>
@@ -12,7 +11,6 @@
 #include <ATen/TensorSubclassLikeUtils.h>
 #include <ATen/WrapDimUtils.h>
 #include <ATen/core/DimVector.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/core/functional.h>
 #include <ATen/native/Copy.h>
 #include <ATen/native/NonSymbolicBC.h>

@@ -10,7 +10,6 @@
 
 #include <ATen/native/DispatchStub.h>
 
-#include <array>
 #include <sstream>
 
 namespace at {

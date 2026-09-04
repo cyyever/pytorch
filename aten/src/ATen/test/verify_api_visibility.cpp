@@ -1,4 +1,3 @@
-#include <ATen/ATen.h>
 
 #ifdef AT_CUDNN_ENABLED
 #error "AT_CUDNN_ENABLED should not be visible in public headers"

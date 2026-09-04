@@ -1,9 +1,6 @@
 #include <ATen/cuda/CUDAContext.h>
-#include <ATen/detail/CUDAHooksInterface.h>
 #include <ATen/native/cuda/ScaledBlasDeviceUtils.h>
 
-#include <string>
-#include <vector>
 
 namespace at::native::scaled {
 
