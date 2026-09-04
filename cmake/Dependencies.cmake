@@ -1078,6 +1078,20 @@ unset(_fmt_no_unique_address)
 list(APPEND Caffe2_DEPENDENCY_LIBS fmt::fmt-header-only)
 set(BUILD_SHARED_LIBS ${TEMP_BUILD_SHARED_LIBS} CACHE BOOL "Build shared libs" FORCE)
 
+# ---[ oneTBB
+if(USE_TBB)
+  include(${CMAKE_CURRENT_LIST_DIR}/External/tbb.cmake)
+  if(TARGET TBB::tbb)
+    list(APPEND Caffe2_DEPENDENCY_LIBS TBB::tbb)
+  elseif(TARGET tbb)
+    list(APPEND Caffe2_DEPENDENCY_LIBS tbb)
+  else()
+    message(WARNING "USE_TBB is on but no usable oneTBB was found; "
+                    "the C++17 parallel algorithms will not link.")
+    set(USE_TBB OFF)
+  endif()
+endif()
+
 # ---[ Kineto
 if(USE_KINETO)
   if(USE_CUDA)

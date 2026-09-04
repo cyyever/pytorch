@@ -393,6 +393,9 @@ set(USE_FBGEMM ON CACHE BOOL "Use FBGEMM" FORCE)
 option(USE_KINETO "Use Kineto profiling library" ON)
 option(USE_CUPTI_SO "Use CUPTI as a shared library" ON)
 option(USE_NATIVE_ARCH "Use -march=native" OFF)
+cmake_dependent_option(USE_TBB
+    "Link oneTBB, which is what libstdc++'s C++17 parallel algorithms run on"
+    ON "CPU_INTEL" OFF)
 cmake_dependent_option(USE_MPS "Use MPS for macOS build" ON "MPS_FOUND" OFF)
 option(USE_DISTRIBUTED "Use distributed" ON)
 cmake_dependent_option(USE_NCCL "Use NCCL" ON
