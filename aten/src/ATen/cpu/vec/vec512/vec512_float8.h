@@ -5,7 +5,7 @@
 
 #include <ATen/cpu/vec/intrinsics.h>
 #include <ATen/cpu/vec/vec_base.h>
-#if (defined(CPU_CAPABILITY_AVX512))
+#if (defined(__AVX512F__))
 #define SLEEF_STATIC_LIBS
 #include <sleef.h>
 #endif
@@ -14,7 +14,7 @@ namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 
 static inline void cvtfp8e4m3_fp32(const __m128i& a, __m512& o) {
 #ifdef __AVX10_2__

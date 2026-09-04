@@ -29,7 +29,7 @@ namespace vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CAST (AVX512)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -368,7 +368,7 @@ inline Vectorized<bool> operator&&(
   return ret;
 }
 
-#endif // defined(CPU_CAPABILITY_AVX512)
+#endif // defined(__AVX512F__)
 
 } // namespace CPU_CAPABILITY
 } // namespace vec

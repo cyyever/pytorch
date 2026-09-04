@@ -478,7 +478,7 @@ inline Vectorized<scalar_t> _nan_to_num_replace(
 template <typename scalar_t>
 inline Vectorized<c10::complex<scalar_t>> _nan_to_num_replace(
     Vectorized<c10::complex<scalar_t>> a, scalar_t nan, scalar_t posinf, scalar_t neginf) {
-#if (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512))
+#if (defined(__AVX2__) || defined(__AVX512F__))
   return {_nan_to_num_replace(Vectorized<scalar_t>(a), nan, posinf, neginf)};
 #else
   __at_align__ c10::complex<scalar_t> buffer[a.size()];

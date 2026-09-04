@@ -52,28 +52,7 @@ struct VecReduceAllSIMD {
   }
 };
 
-#if defined(CPU_CAPABILITY_AVX2)
-template <typename Op>
-struct VecReduceAllSIMD<float, Op> {
-  static inline float apply(
-      const Op& vec_fun,
-      const Vectorized<float>& acc_vec) {
-    using Vec = Vectorized<float>;
-    Vec v = acc_vec;
-    // 128-bit shuffle
-    Vec v1 = _mm256_permute2f128_ps(v, v, 0x1);
-    v = vec_fun(v, v1);
-    // 64-bit shuffle
-    v1 = _mm256_shuffle_ps(v, v, 0x4E);
-    v = vec_fun(v, v1);
-    // 32-bit shuffle
-    v1 = _mm256_shuffle_ps(v, v, 0xB1);
-    v = vec_fun(v, v1);
-    return _mm256_cvtss_f32(v);
-  }
-};
-#endif // defined(CPU_CAPABILITY_AVX2)
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 template <typename Op>
 struct VecReduceAllSIMD<float, Op> {
   static inline float apply(
@@ -96,7 +75,27 @@ struct VecReduceAllSIMD<float, Op> {
     return _mm512_cvtss_f32(v);
   }
 };
-#endif // defined(CPU_CAPABILITY_AVX512)
+#elif defined(__AVX2__)
+template <typename Op>
+struct VecReduceAllSIMD<float, Op> {
+  static inline float apply(
+      const Op& vec_fun,
+      const Vectorized<float>& acc_vec) {
+    using Vec = Vectorized<float>;
+    Vec v = acc_vec;
+    // 128-bit shuffle
+    Vec v1 = _mm256_permute2f128_ps(v, v, 0x1);
+    v = vec_fun(v, v1);
+    // 64-bit shuffle
+    v1 = _mm256_shuffle_ps(v, v, 0x4E);
+    v = vec_fun(v, v1);
+    // 32-bit shuffle
+    v1 = _mm256_shuffle_ps(v, v, 0xB1);
+    v = vec_fun(v, v1);
+    return _mm256_cvtss_f32(v);
+  }
+};
+#endif // defined(__AVX512F__)
 
 #if defined(__aarch64__) && !defined(__CUDACC__)
 template <typename Op>

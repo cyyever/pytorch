@@ -599,7 +599,7 @@ int64_t vectorized_cpu_hflip_channels_last(
     char * C10_RESTRICT *data, const int64_t data_size, const int64_t data_stride, const std::array<char, 32> & mdata) {
 
   int64_t i = 0;
-#ifdef CPU_CAPABILITY_AVX2
+#ifdef __AVX2__
 
   constexpr auto vec_size = 256 / 8;
 

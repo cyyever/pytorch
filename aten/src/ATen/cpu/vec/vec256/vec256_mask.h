@@ -7,7 +7,7 @@
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX2)
+#if defined(__AVX2__)
 
 template <typename T, int dst_n, typename mask_t, int mask_n>
 struct VecMaskLoad<

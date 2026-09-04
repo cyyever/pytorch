@@ -15,7 +15,7 @@ Like PIL, Pillow is licensed under the open source HPND License
 // https://github.com/uploadcare/pillow-simd/blob/simd/master/src/libImaging/Resample.c
 
 #pragma once
-#ifdef CPU_CAPABILITY_AVX2
+#ifdef __AVX2__
 // TODO: This file only supports AVX2. We could split the AVX kernels into
 // smaller logical blocks in order to port them into the Vec.h logic. This would
 // allow to support other vectorization architectures and perhaps also support
@@ -1369,4 +1369,4 @@ void ImagingResampleVerticalConvolution8u(
 }
 
 } // anonymous namespace
-#endif // CPU_CAPABILITY_AVX2
+#endif // __AVX2__

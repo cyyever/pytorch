@@ -188,8 +188,12 @@ DispatchResult DispatchStubImpl::try_choose_cpu_impl(
     // for AVX512 because some of their tests are flaky on Windows.
     // Ideally, we should have AVX512 kernels for all kernels.
     if (C10_UNLIKELY(!AVX512)) {
-      // dispatch to AVX2, since the AVX512 kernel is missing
+      // Fall back to the next tier down, since the AVX512 kernel is missing.
+#ifdef HAVE_AVX2_CPU_DEFINITION
       return AVX2 != nullptr ? DispatchResult(AVX2) : ErrorType::MissingDeviceKernel;
+#else
+      return DEFAULT != nullptr ? DispatchResult(DEFAULT) : ErrorType::MissingDeviceKernel;
+#endif
     } else {
       return DispatchResult(AVX512);
     }
@@ -220,9 +224,14 @@ void* DispatchStubImpl::choose_cpu_impl(
     // for AVX512 because some of their tests are flaky on Windows.
     // Ideally, we should have AVX512 kernels for all kernels.
     if (C10_UNLIKELY(!AVX512)) {
-      // dispatch to AVX2, since the AVX512 kernel is missing
+      // Fall back to the next tier down, since the AVX512 kernel is missing.
+#ifdef HAVE_AVX2_CPU_DEFINITION
       TORCH_INTERNAL_ASSERT(AVX2, "DispatchStub: missing AVX2 kernel");
       return AVX2;
+#else
+      TORCH_INTERNAL_ASSERT(DEFAULT, "DispatchStub: missing DEFAULT kernel");
+      return DEFAULT;
+#endif
     } else {
       return AVX512;
     }

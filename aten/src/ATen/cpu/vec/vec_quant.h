@@ -15,7 +15,7 @@ static inline void transpose_pad_4x64_block(
     int64_t ld_src,
     int krem = 4,
     int nrem = 64) {
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   __m512i r[4];
   // Load with mask if partial
   if (nrem < 64) {
@@ -113,7 +113,7 @@ static inline void pack_vnni4(
     int64_t ld_src,
     int64_t K,
     int64_t N) {
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   int64_t bk = 0;
   int64_t _K = K / 4 * 4;
   int64_t _N = N / 64 * 64;
@@ -168,7 +168,7 @@ static inline void transpose_vnni4_pad_4x16_block(
     int64_t ld_src,
     int64_t ld_dst,
     int krem = 4) {
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   __m128i r[4];
   for (int i = 0; i < krem; ++i) {
     r[i] = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src + i * ld_src));
@@ -221,7 +221,7 @@ static inline void transpose_pack_vnni4(
     int64_t ld_src,
     int64_t K,
     int64_t N) {
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   TORCH_CHECK(
       N % 16 == 0, "N needs to be multiple of 16 for transpose_pack_vnni4");
   int64_t bk = 0;
