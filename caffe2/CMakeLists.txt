@@ -1410,18 +1410,7 @@ if(USE_XPU)
   if(MSVC)
     target_link_libraries(torch_xpu PUBLIC torch_cpu_library)
   else()
-    include(CheckLinkerFlag)
-
-    # Check whether the compiler supports '--no-as-needed' and '--as-needed'
-    check_linker_flag(CXX "-Wl,--no-as-needed" HAVE_NO_AS_NEEDED)
-    check_linker_flag(CXX "-Wl,--as-needed" HAVE_AS_NEEDED)
-
-    if(HAVE_NO_AS_NEEDED AND HAVE_AS_NEEDED)
-      target_link_libraries(torch_xpu PRIVATE
-          "-Wl,--no-as-needed,\"$<TARGET_FILE:torch_cpu>\" -Wl,--as-needed")
-    else()
-      target_link_libraries(torch_xpu PRIVATE "$<TARGET_FILE:torch_cpu>")
-    endif()
+    target_link_libraries(torch_xpu PRIVATE torch_cpu)
   endif()
 endif()
 
