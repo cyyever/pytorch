@@ -374,14 +374,31 @@ def _get_icpx_version() -> str:
     return f"{version[0]}{version[1]:02}{version[2]:02}"
 
 
+_PRE_XE2_XPU_ARCH_PREFIXES = (
+    'pvc', 'dg1', 'dg2', 'ats', 'acm', 'tgl', 'adl', 'rkl', 'mtl', 'arl', 'xe-lpg',
+)
+
+
 def _get_sycl_arch_list():
     if 'TORCH_XPU_ARCH_LIST' in os.environ:
-        return os.environ.get('TORCH_XPU_ARCH_LIST')
-    arch_list = torch.xpu.get_arch_list()
-    # Dropping dg2* archs since they lack hardware support for fp64 and require
-    # special consideration from the user. If needed these platforms can
-    # be requested thru TORCH_XPU_ARCH_LIST environment variable.
-    arch_list = [x for x in arch_list if not x.startswith('dg2')]
+        arch_list_string = os.environ['TORCH_XPU_ARCH_LIST']
+    else:
+        arch_list_string = ','.join(torch.xpu.get_arch_list())
+    arch_list = [
+        arch.strip()
+        for arch in re.split(r'[,\s]+', arch_list_string)
+        if arch.strip()
+    ]
+    unsupported = [
+        arch
+        for arch in arch_list
+        if arch.startswith(_PRE_XE2_XPU_ARCH_PREFIXES)
+    ]
+    if unsupported:
+        raise ValueError(
+            "PyTorch XPU supports only Xe2 or newer architectures; "
+            f"unsupported targets: {', '.join(unsupported)}"
+        )
     return ','.join(arch_list)
 
 
@@ -1353,7 +1370,7 @@ def SyclExtension(name, sources, *args, **kwargs):
     `TORCH_XPU_ARCH_LIST` to explicitly specify which device architectures you want the extension
     to support:
 
-    ``TORCH_XPU_ARCH_LIST="pvc,xe-lpg" python build_my_extension.py``
+    ``TORCH_XPU_ARCH_LIST="bmg,lnl-m,ptl-h" python build_my_extension.py``
 
     Note that while it's possible to include all supported archs, the more archs get included the
     slower the building process will be, as it will build a separate kernel image for each arch.

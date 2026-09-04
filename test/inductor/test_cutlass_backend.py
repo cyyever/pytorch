@@ -2777,7 +2777,7 @@ class TestCutlassBackend(TestCase):
     @skipXPUIf(not Xe2_Or_Later, "")
     @unittest.skipIf(not HAS_XPU, "XPU not available")
     @mock.patch.dict(os.environ, {"PATH": _get_path_without_sccache()})
-    @parametrize("arch", ("Xe12", "Xe20"))
+    @parametrize("arch", ("Xe20",))
     @parametrize("xpu_version", ("20250201", "20250301"))
     def test_gemm_operation_serialization_xpu(self, arch: str, xpu_version: str):
         from torch._inductor.codegen.cutlass.utils import _normalize_xpu_arch

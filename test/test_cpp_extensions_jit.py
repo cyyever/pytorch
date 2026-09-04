@@ -245,9 +245,16 @@ class TestCppExtensionJIT(common.TestCase):
 
     @unittest.skipIf(not (TEST_XPU), "XPU not found")
     def test_jit_xpu_archlists(self):
+        from torch.utils.cpp_extension import _PRE_XE2_XPU_ARCH_PREFIXES
+
         # NOTE: in this test we explicitly test few different options
         # for TORCH_XPU_ARCH_LIST. Setting TORCH_XPU_ARCH_LIST in the
         # environment before the test won't affect it.
+        supported_arches = [
+            arch
+            for arch in torch.xpu.get_arch_list()
+            if not arch.startswith(_PRE_XE2_XPU_ARCH_PREFIXES)
+        ]
         cases = [
             {
                 # Testing JIT compilation
@@ -258,14 +265,14 @@ class TestCppExtensionJIT(common.TestCase):
                 # Testing JIT + AOT (full torch AOT arch list)
                 # NOTE: default cpp extension AOT arch list might be reduced
                 # from the full list
-                "archlist": ",".join(torch.xpu.get_arch_list()),
+                "archlist": ",".join(supported_arches),
                 "extra_sycl_cflags": [],
             },
             {
                 # Testing AOT (full torch AOT arch list)
                 # NOTE: default cpp extension AOT arch list might be reduced
                 # from the full list
-                "archlist": ",".join(torch.xpu.get_arch_list()),
+                "archlist": ",".join(supported_arches),
                 # below excludes spir64 target responsible for JIT
                 "extra_sycl_cflags": ["-fsycl-targets=spir64_gen"],
             },
@@ -280,6 +287,24 @@ class TestCppExtensionJIT(common.TestCase):
                 os.environ.pop("TORCH_XPU_ARCH_LIST")
             else:
                 os.environ["TORCH_XPU_ARCH_LIST"] = old_envvar
+
+    def test_jit_xpu_arch_floor(self):
+        from torch.utils.cpp_extension import _get_sycl_arch_list
+
+        for arch in ("pvc", "dg2", "mtl-h", "arl-h"):
+            with (
+                self.subTest(arch=arch),
+                mock.patch.dict(os.environ, {"TORCH_XPU_ARCH_LIST": arch}),
+                self.assertRaisesRegex(ValueError, "only Xe2 or newer"),
+            ):
+                _get_sycl_arch_list()
+
+        for arch in ("bmg", "lnl-m", "ptl-h", "cri"):
+            with (
+                self.subTest(arch=arch),
+                mock.patch.dict(os.environ, {"TORCH_XPU_ARCH_LIST": arch}),
+            ):
+                self.assertEqual(_get_sycl_arch_list(), arch)
 
     @unittest.skipIf(not TEST_MPS, "MPS not found")
     def test_mps_extension(self):

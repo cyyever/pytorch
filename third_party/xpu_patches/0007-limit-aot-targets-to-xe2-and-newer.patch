@@ -1,0 +1,62 @@
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+index d344e4ae..0a3ff08b 100644
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -177,14 +177,6 @@ macro(set_build_flags)
+       $<$<CONFIG:Debug,RelWithDebInfo>:-gline-tables-only;-O2>)
+   endif()
+
+-  CHECK_SYCL_FLAG("-fsycl-fp64-conv-emu" SUPPORTS_FP64_CONV_EMU)
+-  if(NOT SUPPORTS_FP64_CONV_EMU)
+-    message(WARNING "The compiler does not support the '-fsycl-fp64-conv-emu' flag, \
+-    will disable it. On some platforms that don't support FP64, \
+-    running operations with the FP64 datatype will raise a Runtime error: Required aspect fp64 is not supported on the device \
+-    or a Native API failed error.")
+-  endif()
+-
+   # TORCH_XPU_OPS_FLAGS stays config-agnostic: its target_compile_options
+   # consumers already get PyTorch's per-config host flags via
+   # CMAKE_CXX_FLAGS_<CONFIG> (which carries -fno-omit-frame-pointer/-O0 in
+@@ -218,28 +210,31 @@ macro(set_build_flags)
+     if(TORCH_XPU_ARCH_LIST STREQUAL "cri")
+       set(SYCL_OFFLINE_COMPILER_AOT_OPTIONS "-device cri")
+     else()
+-      set(SYCL_OFFLINE_COMPILER_AOT_OPTIONS "-device pvc,bmg")
++      set(SYCL_OFFLINE_COMPILER_AOT_OPTIONS "-device bmg")
+     endif()
+   else()
+     if(WIN32)
+-      set(AOT_TARGETS "mtl,mtl-h,bmg,dg2,arl-h,lnl-m,ptl")
++      set(AOT_TARGETS "bmg,lnl-m,ptl")
+     else()
+-      set(AOT_TARGETS "pvc,bmg,dg2,arl-h,mtl-h,lnl-m,ptl-h,ptl-u")
++      set(AOT_TARGETS "bmg,lnl-m,ptl-h,ptl-u")
+     endif()
+     if(TORCH_XPU_ARCH_LIST)
+       set(AOT_TARGETS "${TORCH_XPU_ARCH_LIST}")
+     endif()
++    if(NOT AOT_TARGETS STREQUAL "none")
++      string(REPLACE "," ";" AOT_TARGET_LIST "${AOT_TARGETS}")
++      foreach(AOT_TARGET IN LISTS AOT_TARGET_LIST)
++        if(AOT_TARGET MATCHES
++            "^(pvc|dg1|dg2|ats|acm|tgl|adl|rkl|mtl|arl|xe-lpg)")
++          message(FATAL_ERROR
++            "Unsupported pre-Xe2 XPU target '${AOT_TARGET}'. "
++            "This build supports only Xe2 or newer architectures.")
++        endif()
++      endforeach()
++    endif()
+     if(AOT_TARGETS STREQUAL "none")
+       set(TORCH_XPU_ARCH_LIST "" PARENT_SCOPE)
+     else()
+-      if(SUPPORTS_FP64_CONV_EMU)
+-        string(FIND "${AOT_TARGETS}" "dg2" _dg2_index)
+-        string(FIND "${AOT_TARGETS}" "ats-m" _atsm_index)
+-        if(_dg2_index GREATER_EQUAL 0 OR _atsm_index GREATER_EQUAL 0)
+-          list(APPEND SYCL_KERNEL_OPTIONS -fsycl-fp64-conv-emu)
+-          list(APPEND SYCL_DEVICE_LINK_FLAGS -fsycl-fp64-conv-emu)
+-        endif()
+-      endif()
+       set(SYCL_TARGETS_OPTION -fsycl-targets=spir64_gen,spir64)
+       list(APPEND SYCL_KERNEL_OPTIONS ${SYCL_TARGETS_OPTION})
+       list(APPEND SYCL_DEVICE_LINK_FLAGS ${SYCL_TARGETS_OPTION})

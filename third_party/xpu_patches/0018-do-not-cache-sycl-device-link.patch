@@ -1,0 +1,12 @@
+diff --git a/cmake/Modules/FindSYCL.cmake b/cmake/Modules/FindSYCL.cmake
+--- a/cmake/Modules/FindSYCL.cmake
++++ b/cmake/Modules/FindSYCL.cmake
+@@ -324,7 +324,7 @@ macro(SYCL_LINK_DEVICE_OBJECTS output_file sycl_target)
+       OUTPUT ${output_file}
+       DEPENDS ${object_files}
+       COMMAND ${CMAKE_COMMAND} -E make_directory "$<PATH:REMOVE_FILENAME,${output_file}>"
+-      COMMAND ${CMAKE_SYCL_COMPILER_LAUNCHER} ${SYCL_EXECUTABLE}
++      COMMAND ${SYCL_EXECUTABLE}
+       ${SYCL_device_link_flags}
+       -fsycl-link ${object_files}
+       -Xs ${SYCL_OFFLINE_COMPILER_FLAGS}
