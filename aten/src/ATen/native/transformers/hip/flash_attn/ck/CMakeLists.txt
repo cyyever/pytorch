@@ -10,9 +10,7 @@ set(CK_FMHA_GENERATE python3 ${CMAKE_CURRENT_LIST_DIR}/generate_compat.py
 # so no instances are emitted for RDNA4 even when the build is configured for it.
 set(_ck_fmha_targets "")
 foreach(ARCH IN LISTS AT_ROCM_CK_SDPA_ARCHS)
-  if(ARCH STREQUAL "gfx942")
-    list(APPEND _ck_fmha_targets gfx9)
-  elseif(ARCH STREQUAL "gfx950")
+  if(ARCH STREQUAL "gfx950")
     list(APPEND _ck_fmha_targets gfx950)
   elseif(ARCH MATCHES "^gfx12")
     list(APPEND _ck_fmha_targets gfx12)
