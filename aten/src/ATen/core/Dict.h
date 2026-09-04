@@ -162,7 +162,7 @@ private:
 
   DictEntryRef<Key, Value, Iterator> entryRef_;
 
-  friend class DictIterator<Key, Value, typename c10::detail::DictImpl::dict_map_type::iterator>;
+  friend class DictIterator<Key, Value, c10::detail::DictImpl::dict_map_type::iterator>;
   friend class Dict<Key, Value>;
 };
 
@@ -210,8 +210,8 @@ private:
 public:
   using key_type = Key;
   using mapped_type = Value;
-  using size_type = typename detail::DictImpl::dict_map_type::size_type;
-  using iterator = impl::DictIterator<Key, Value, typename detail::DictImpl::dict_map_type::iterator>;
+  using size_type = detail::DictImpl::dict_map_type::size_type;
+  using iterator = impl::DictIterator<Key, Value, detail::DictImpl::dict_map_type::iterator>;
 
   /**
    * Creates an empty dict.

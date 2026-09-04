@@ -19,7 +19,7 @@ List<T>::List(const c10::intrusive_ptr<c10::detail::ListImpl>& elements)
 template<class T>
 List<T>::List()
 : List(make_intrusive<c10::detail::ListImpl>(
-  typename c10::detail::ListImpl::list_type(),
+  c10::detail::ListImpl::list_type(),
   getTypePtr<T>())) {
   static_assert(!std::is_same_v<T, IValue>, "This constructor is not valid for List<IValue>. Please use c10::impl::GenericList(elementType) instead.");
 }
@@ -27,7 +27,7 @@ List<T>::List()
 template<class T>
 List<T>::List(ArrayRef<T> values)
 : List(make_intrusive<c10::detail::ListImpl>(
-    typename c10::detail::ListImpl::list_type(),
+    c10::detail::ListImpl::list_type(),
     getTypePtr<T>())) {
   static_assert(!std::is_same_v<T, IValue>, "This constructor is not valid for List<IValue>. Please use c10::impl::GenericList(elementType).");
   impl_->list.reserve(values.size());
@@ -45,7 +45,7 @@ List<T>::List(std::initializer_list<T> initial_values)
 template<class T>
 List<T>::List(TypePtr elementType)
 : List(make_intrusive<c10::detail::ListImpl>(
-    typename c10::detail::ListImpl::list_type(),
+    c10::detail::ListImpl::list_type(),
     std::move(elementType))) {
   static_assert(std::is_same_v<T, IValue> || std::is_same_v<T, c10::intrusive_ptr<ivalue::Future>>,
                 "This constructor is only valid for c10::impl::GenericList or List<Future>.");
@@ -175,13 +175,13 @@ bool operator==(const ListElementReference<T, Iterator>& lhs, const T& rhs) {
 }
 
 template<class T>
-inline typename ListElementConstReferenceTraits<T>::const_reference
+inline ListElementConstReferenceTraits<T>::const_reference
 list_element_to_const_ref(const IValue& element) {
   return element.template to<T>();
 }
 
 template<>
-inline typename ListElementConstReferenceTraits<std::optional<std::string>>::const_reference
+inline ListElementConstReferenceTraits<std::optional<std::string>>::const_reference
 list_element_to_const_ref<std::optional<std::string>>(const IValue& element) {
   return element.toOptionalStringRef();
 }
@@ -199,23 +199,23 @@ void List<T>::set(size_type pos, value_type&& value) const {
 }
 
 template<class T>
-typename List<T>::internal_const_reference_type List<T>::get(size_type pos) const {
+List<T>::internal_const_reference_type List<T>::get(size_type pos) const {
   return operator[](pos);
 }
 
 template<class T>
-typename List<T>::internal_const_reference_type List<T>::operator[](size_type pos) const {
+List<T>::internal_const_reference_type List<T>::operator[](size_type pos) const {
   return c10::impl::list_element_to_const_ref<T>(impl_->list.at(pos));
 }
 
 template<class T>
-typename List<T>::internal_reference_type List<T>::operator[](size_type pos) {
+List<T>::internal_reference_type List<T>::operator[](size_type pos) {
   static_cast<void>(impl_->list.at(pos)); // Throw the exception if it is out of range.
-  return {impl_->list.begin() + static_cast<typename c10::detail::ListImpl::list_type::difference_type>(pos)};
+  return {impl_->list.begin() + static_cast<c10::detail::ListImpl::list_type::difference_type>(pos)};
 }
 
 template<class T>
-typename List<T>::value_type List<T>::extract(size_type pos) const {
+List<T>::value_type List<T>::extract(size_type pos) const {
   auto& elem = impl_->list.at(pos);
   auto result = c10::detail::list_element_to<T>(std::move(elem));
   // Reset the list element to a T() instead of None to keep it correctly typed
@@ -224,12 +224,12 @@ typename List<T>::value_type List<T>::extract(size_type pos) const {
 }
 
 template<class T>
-typename List<T>::iterator List<T>::begin() const {
+List<T>::iterator List<T>::begin() const {
   return iterator(impl_->list.begin());
 }
 
 template<class T>
-typename List<T>::iterator List<T>::end() const {
+List<T>::iterator List<T>::end() const {
   return iterator(impl_->list.end());
 }
 
@@ -239,7 +239,7 @@ bool List<T>::empty() const {
 }
 
 template<class T>
-typename List<T>::size_type List<T>::size() const {
+List<T>::size_type List<T>::size() const {
   return impl_->list.size();
 }
 
@@ -254,18 +254,18 @@ void List<T>::clear() const {
 }
 
 template<class T>
-typename List<T>::iterator List<T>::insert(iterator pos, const T& value) const {
+List<T>::iterator List<T>::insert(iterator pos, const T& value) const {
   return iterator { impl_->list.insert(pos.iterator_, c10::detail::ListElementFrom<T>::from(value)) };
 }
 
 template<class T>
-typename List<T>::iterator List<T>::insert(iterator pos, T&& value) const {
+List<T>::iterator List<T>::insert(iterator pos, T&& value) const {
   return iterator { impl_->list.insert(pos.iterator_, c10::detail::ListElementFrom<T>::from(std::move(value))) };
 }
 
 template<class T>
 template<class... Args>
-typename List<T>::iterator List<T>::emplace(iterator pos, Args&&... value) const {
+List<T>::iterator List<T>::emplace(iterator pos, Args&&... value) const {
   // Build T first, or the IValue picks the args' own overload, not T's.
   return iterator{impl_->list.emplace(
       pos.iterator_,
@@ -299,12 +299,12 @@ void List<T>::emplace_back(Args&&... args) const {
 }
 
 template<class T>
-typename List<T>::iterator List<T>::erase(iterator pos) const {
+List<T>::iterator List<T>::erase(iterator pos) const {
   return iterator { impl_->list.erase(pos.iterator_) };
 }
 
 template<class T>
-typename List<T>::iterator List<T>::erase(iterator first, iterator last) const {
+List<T>::iterator List<T>::erase(iterator first, iterator last) const {
   return iterator { impl_->list.erase(first.iterator_, last.iterator_) };
 }
 
