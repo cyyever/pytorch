@@ -33,6 +33,8 @@
 #                            forwarded: both sides read the environment directly
 #
 # Feature toggles (USE_*/BUILD_*, forwarded by prefix):
+#   USE_ASAN=1               enables AddressSanitizer
+#   USE_UBSAN=1              enables UndefinedBehaviorSanitizer
 #   USE_CUDA=0                disables CUDA build
 #   USE_CUDNN=0               disables the cuDNN build
 #   USE_CUSPARSELT=0          disables the cuSPARSELt build
@@ -69,6 +71,7 @@
 #                            in cmake/public/utils.cmake)
 #
 # Library/backend selection (passthrough or read from the environment):
+#   UBSAN_FLAGS             additional UBSan compiler and linker flags
 #   BLAS                     Generic, MKL, OpenBLAS or vecLib; fails the build if
 #                            the requested BLAS is not found (passthrough)
 #   MKL_THREADING            MKL threading mode: SEQ or OMP (default)

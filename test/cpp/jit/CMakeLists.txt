@@ -27,13 +27,8 @@ add_executable(test_jit
   ${JIT_TEST_SRCS}
 )
 
-# We also build with UBSAN flag in build_asan.h
-# Skip UBSan on ROCm: combining ASAN + UBSan on ROCm Clang causes
-# misaligned ASAN global metadata, triggering spurious ASAN alignment
-# check aborts at startup.
-if(USE_ASAN AND NOT USE_ROCM)
-  target_compile_options(test_jit PRIVATE "-fsanitize=undefined")
-  target_link_libraries(test_jit PRIVATE "-fsanitize=undefined")
+if(USE_UBSAN AND TARGET Sanitizer::undefined)
+  target_link_libraries(test_jit PRIVATE Sanitizer::undefined)
 endif()
 
 
