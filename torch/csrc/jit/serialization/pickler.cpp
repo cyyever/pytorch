@@ -28,16 +28,6 @@ void Pickler::protocol() {
   push<uint8_t>(PROTOCOL_VERSION);
 }
 
-void Pickler::startTuple() {
-  // All attributes get pushed into a tuple and their indices saved in the
-  // module def
-  push<PickleOpCode>(PickleOpCode::MARK);
-}
-
-void Pickler::endTuple() {
-  push<PickleOpCode>(PickleOpCode::TUPLE);
-}
-
 void Pickler::stop() {
   push<PickleOpCode>(PickleOpCode::STOP);
   flush();

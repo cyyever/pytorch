@@ -76,7 +76,7 @@
 #include <torch/csrc/instruction_counter/Module.h>
 #include <torch/csrc/jit/python/init.h>
 #include <torch/csrc/jit/python/python_types.h>
-#include <torch/csrc/jit/serialization/pickler.h>
+#include <torch/csrc/jit/serialization/pickler_helper.h>
 #include <torch/csrc/mps/Module.h>
 #include <torch/csrc/multiprocessing/init.h>
 #include <torch/csrc/profiler/python/init.h>

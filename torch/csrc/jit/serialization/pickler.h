@@ -51,14 +51,10 @@ class TORCH_API Pickler {
 
   void pushIValue(const IValue& ivalue);
 
-  void startTuple();
-  void endTuple();
-
   const std::vector<at::Tensor>& tensorData() {
     return tensor_data_;
   }
 
-  void pushEmptyDict();
   void pushDict(const IValue& ivalue);
   void pushInt(int64_t value);
   void pushLong(const std::string& data);
@@ -80,8 +76,6 @@ class TORCH_API Pickler {
   void pushTuple(const IValue& ivalue);
   void pushString(const std::string& string);
   void pushDevice(const IValue& ivalue);
-#ifdef USE_DISTRIBUTED
-#endif
   // unmemoized version
   void pushStringImpl(const std::string& string);
   void pushStorageOfTensor(const at::Tensor& tensor);

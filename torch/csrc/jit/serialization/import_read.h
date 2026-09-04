@@ -21,7 +21,4 @@ TORCH_API c10::IValue readArchiveAndTensors(
         Unpickler::defaultTypeParser,
     std::shared_ptr<DeserializationStorageContext> storage_context = nullptr);
 
-bool check_zip_file(
-    const std::shared_ptr<caffe2::serialize::ReadAdapterInterface>& rai);
-
 } // namespace torch::jit

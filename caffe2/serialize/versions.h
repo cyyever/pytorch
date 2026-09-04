@@ -80,53 +80,5 @@ constexpr uint64_t kProducedFileFormatVersion = 0xAL;
 // greater than this number.
 constexpr uint64_t kMinProducedFileFormatVersion = 0x3L;
 
-// The version we write when the archive contains bytecode.
-// It must be higher or eq to kProducedFileFormatVersion.
-// Because torchscript changes is likely introduce bytecode change.
-// If kProducedFileFormatVersion is increased, kProducedBytecodeVersion
-// should be increased too. The relationship is:
-// kMaxSupportedFileFormatVersion >= (most likely ==) kProducedBytecodeVersion
-//   >= kProducedFileFormatVersion
-// If a format change is forward compatible (still readable by older
-// executables), we will not increment the version number, to minimize the
-// risk of breaking existing clients. TODO: A better way would be to allow
-// the caller that creates a model to specify a maximum version that its
-// clients can accept.
-// Versions:
-//  0x1L: Initial version
-//  0x2L: (Comment missing)
-//  0x3L: (Comment missing)
-//  0x4L: (update) Added schema to function tuple. Forward-compatible change.
-//  0x5L: (update) Update bytecode is sharing constant tensor files from
-//  torchscript, and only serialize extra tensors that are not in the
-//  torchscript constant table. Also update tensor storage schema adapting to
-//  the unify format, the root key of tensor storage is updated from {index} to
-//  {the_pointer_value_the_tensor.storage}, for example:
-//  `140245072983168.storage` Forward-compatibility change.
-//  0x6L: Implicit opereator versioning using number of specified argument.
-//  Refer to the summary of https://github.com/pytorch/pytorch/pull/56845 for
-//  details.
-//  0x7L: Enable support for operators with default arguments plus out
-//  arguments. Refer. See https://github.com/pytorch/pytorch/pull/63651 for
-//  details.
-//  0x8L: Emit promoted operators as instructions. See
-//  https://github.com/pytorch/pytorch/pull/71662 for details.
-//  0x9L: Change serialization format from pickle to format This version is to
-//  serve migration. v8 pickle and v9 flatbuffer are the same. Refer to the
-//  summary of https://github.com/pytorch/pytorch/pull/75201 for more details.
-constexpr uint64_t kProducedBytecodeVersion = 0x8L;
-
-// static_assert(
-//     kProducedBytecodeVersion >= kProducedFileFormatVersion,
-//     "kProducedBytecodeVersion must be higher or equal to
-//     kProducedFileFormatVersion.");
-
-// Introduce kMinSupportedBytecodeVersion and kMaxSupportedBytecodeVersion
-// for limited backward/forward compatibility support of bytecode. If
-// kMinSupportedBytecodeVersion <= model_version <= kMaxSupportedBytecodeVersion
-// (in loader), we should support this model_version. For example, we provide a
-// wrapper to handle an updated operator.
-constexpr uint64_t kMinSupportedBytecodeVersion = 0x4L;
-constexpr uint64_t kMaxSupportedBytecodeVersion = 0x9L;
 
 } // namespace caffe2::serialize
