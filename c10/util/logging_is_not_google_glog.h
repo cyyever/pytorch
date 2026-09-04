@@ -127,6 +127,7 @@ static_assert(
 // These are adapted from glog to support a limited set of logging capability
 // for STL objects.
 
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std {
 // Forward declare these two, and define them after all the container streams
 // operators so that we can recurse from pair -> container -> container -> pair
@@ -134,12 +135,17 @@ namespace std {
 template <class First, class Second>
 std::ostream& operator<<(std::ostream& out, const std::pair<First, Second>& p);
 } // namespace std
+// NOLINTEND(bugprone-std-namespace-modification)
 
 namespace c10 {
 template <class Iter>
 void PrintSequence(std::ostream& ss, Iter begin, Iter end);
 } // namespace c10
 
+// Adding operator<< for std types is what [namespace.std]/1 forbids, and ADL
+// is exactly why they are here: LOG(INFO) << some_vector from outside c10
+// finds them only in namespace std.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std {
 #define INSTANTIATE_FOR_CONTAINER(container)               \
   template <class... Types>                                \
@@ -168,6 +174,7 @@ inline std::ostream& operator<<(
   out << "(null)";
   return out;
 }
+// NOLINTEND(bugprone-std-namespace-modification)
 } // namespace std
 
 namespace c10 {

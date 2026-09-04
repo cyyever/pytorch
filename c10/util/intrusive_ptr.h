@@ -1213,6 +1213,9 @@ template <typename T>
 
 } // namespace c10
 
+// Specializing a std class template for a program-defined type is allowed;
+// the check reports every namespace std block the same way.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std {
 // To allow intrusive_ptr and weak_intrusive_ptr inside std::unordered_map or
 // std::unordered_set, we need std::hash
@@ -1229,3 +1232,4 @@ struct hash<c10::weak_intrusive_ptr<TTarget, NullType>> {
   }
 };
 } // namespace std
+// NOLINTEND(bugprone-std-namespace-modification)

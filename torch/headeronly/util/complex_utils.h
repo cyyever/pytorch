@@ -35,6 +35,10 @@ struct scalar_value_type<c10::complex<T>> {
 
 HIDDEN_NAMESPACE_END(torch, headeronly)
 
+// numeric_limits below is a specialization and fine; isnan is an overload,
+// which [namespace.std]/1 does not allow. It stays for the same reason as the
+// reduced-float math overloads: callers spell std::isnan.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std {
 
 template <typename T>
@@ -45,4 +49,5 @@ bool isnan(c10::complex<T> v) {
   return std::isnan(v.real()) || std::isnan(v.imag());
 }
 
+// NOLINTEND(bugprone-std-namespace-modification)
 } // namespace std
