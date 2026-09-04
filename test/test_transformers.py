@@ -5352,9 +5352,9 @@ class TestSDPACudaOnly(NNTestCase):
         # gate is is_ck_sdpa_available(), not an arch list -- and none of them
         # branch on gfx950. What they prove does vary by arch: the generator
         # emits the qr_async_trload instances this change re-guards only in the
-        # gfx950 bucket (gfx950 gets 192 of them, gfx9 none), so the emitted gfx9
-        # dispatch chain is byte-identical before and after. On gfx942 these are
-        # no-regression coverage; on gfx950 they also cover the re-routed arms.
+        # gfx950 bucket, so on any other target the emitted dispatch chain is
+        # byte-identical before and after and these are no-regression coverage;
+        # on gfx950 they also cover the re-routed arms.
         torch.backends.cuda.preferred_rocm_fa_library("ck")
         if (
             torch.backends.cuda.preferred_rocm_fa_library()

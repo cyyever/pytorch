@@ -62,7 +62,7 @@ set_bool(AT_HIPSPARSELT_ENABLED CAFFE2_USE_HIPSPARSELT)
 # SDPA for them would add code generation and compile cost to existing builds.
 set(AT_ROCM_CK_SDPA_ARCHS "")
 if(USE_ROCM AND USE_ROCM_CK_SDPA AND USE_FLASH_ATTENTION)
-  set(_ck_sdpa_candidate_archs gfx942 gfx950)
+  set(_ck_sdpa_candidate_archs gfx950)
   if(USE_ROCM_CK_SDPA_GFX12)
     list(APPEND _ck_sdpa_candidate_archs gfx1200 gfx1201)
   endif()
@@ -184,7 +184,7 @@ if(USE_FLASH_ATTENTION)
     # is built for. Auto-disable when it is empty; otherwise the ck_sdpa target
     # ends up with an empty HIP_ARCHITECTURES and CMake errors out.
     if(USE_ROCM_CK_SDPA AND NOT AT_ROCM_CK_SDPA_ARCHS)
-      message(STATUS "USE_ROCM_CK_SDPA disabled: PYTORCH_ROCM_ARCH (${PYTORCH_ROCM_ARCH}) has no arch CK SDPA is built for (gfx942/gfx950; gfx1200/gfx1201 with USE_ROCM_CK_SDPA_GFX12)")
+      message(STATUS "USE_ROCM_CK_SDPA disabled: PYTORCH_ROCM_ARCH (${PYTORCH_ROCM_ARCH}) has no arch CK SDPA is built for (gfx950; gfx1200/gfx1201 with USE_ROCM_CK_SDPA_GFX12)")
       caffe2_update_option(USE_ROCM_CK_SDPA OFF)
     endif()
   endif()

@@ -2770,7 +2770,7 @@ def rocm_gfx_arch() -> str:
     Prefer this over get_device_capability() for target-specific behaviour. On
     ROCm that call reports the gfx major/minor, which does not order by
     capability and spans two product lines: gfx1250 (MI450) reports (12, 5) and
-    gfx1100 (RDNA3) reports (11, 0), both greater than gfx950's (9, 5). Target
+    gfx1151 (RDNA3.5) reports (11, 5), both greater than gfx950's (9, 5). Target
     features are stripped, so "gfx950:sramecc+:xnack-" becomes "gfx950".
     """
     if not torch.version.hip or not torch.cuda.is_available():
