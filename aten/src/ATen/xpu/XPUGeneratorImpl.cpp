@@ -5,7 +5,7 @@
 #include <ATen/xpu/XPUGraph.h>
 #include <ATen/xpu/XPUGraphsUtils.h>
 #include <c10/core/StreamGuard.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <c10/xpu/XPUFunctions.h>
 
 constexpr uint64_t PHILOX_ROUND_SIZE = 4;
@@ -20,7 +20,7 @@ namespace {
  * requested for a device.
  */
 DeviceIndex num_gpus = -1;
-std::deque<c10::once_flag> xpu_gens_init_flag;
+std::deque<std::once_flag> xpu_gens_init_flag;
 std::vector<Generator> default_gens_xpu;
 
 void initXPUGenVector() {
@@ -41,7 +41,7 @@ const Generator& getDefaultXPUGenerator(DeviceIndex device) {
     device = c10::xpu::current_device();
   }
   check_device_index(device);
-  c10::call_once(xpu_gens_init_flag[device], [&]() {
+  std::call_once(xpu_gens_init_flag[device], [&]() {
     default_gens_xpu[device] = make_generator<XPUGeneratorImpl>(device);
     default_gens_xpu[device].seed();
   });

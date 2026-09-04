@@ -17,12 +17,12 @@
 #include <ATen/detail/XLAHooksInterface.h>
 #include <ATen/detail/XPUHooksInterface.h>
 #include <c10/core/impl/DeviceGuardImplInterface.h>
-#include <c10/util/CallOnce.h>
 #include <c10/util/Exception.h>
 #include <c10/util/env.h>
 #include <c10/util/hash.h>
 #include <c10/util/irange.h>
 
+#include <atomic>
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -120,7 +120,8 @@ class TORCH_API Context {
     if (!opt_device_type.has_value()) { // there is no accelerator
       return false;
     }
-    if (!init_[static_cast<int8_t>(opt_device_type.value())].test_once()) {
+    if (!initialized_[static_cast<int8_t>(opt_device_type.value())].load(
+            std::memory_order_acquire)) {
       // If the device is not initialized, no pointer can be pinned for it
       return false;
     }
@@ -139,8 +140,12 @@ class TORCH_API Context {
 
   void lazyInitDevice(c10::DeviceType device_type) {
     if (device_type != at::kCPU) {
-      c10::call_once(init_[static_cast<int8_t>(device_type)], [&] {
+      std::call_once(init_[static_cast<int8_t>(device_type)], [&] {
         getAcceleratorHooksInterface(device_type).init();
+        // Published after init() returns so that isPinnedPtr never sees a
+        // half-initialized device.
+        initialized_[static_cast<int8_t>(device_type)].store(
+            true, std::memory_order_release);
       });
     }
   }
@@ -425,7 +430,9 @@ class TORCH_API Context {
   void setMaskUnconditionalNativeAot(bool /*b*/);
 
  private:
-  std::array<c10::once_flag, at::COMPILE_TIME_MAX_DEVICE_TYPES> init_;
+  std::array<std::once_flag, at::COMPILE_TIME_MAX_DEVICE_TYPES> init_;
+  std::array<std::atomic<bool>, at::COMPILE_TIME_MAX_DEVICE_TYPES>
+      initialized_{};
   bool enabled_cudnn = true;
   bool deterministic_cudnn = false;
   bool deterministic_mkldnn = false;
