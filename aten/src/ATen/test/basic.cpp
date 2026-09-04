@@ -5,7 +5,7 @@
 #include <torch/cuda.h>
 #include <ATen/test/test_assert.h>
 #include <c10/util/irange.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 
 // for TH compat test only...
 struct THFloatTensor;
@@ -475,11 +475,11 @@ TEST(BasicTest, FactoryMethodsTest) {
 }
 
 TEST(BasicTest, BasicStdTestCPU) {
-  c10::once_flag flag1, flag2;
+  std::once_flag flag1, flag2;
 
   auto simple_do_once = [&]()
   {
-      c10::call_once(flag1, [](){ std::cout << "Simple example: called once\n"; });
+      std::call_once(flag1, [](){ std::cout << "Simple example: called once\n"; });
   };
 
   auto may_throw_function = [&](bool do_throw)
@@ -494,7 +494,7 @@ TEST(BasicTest, BasicStdTestCPU) {
   auto do_once = [&](bool do_throw)
   {
     try {
-      c10::call_once(flag2, may_throw_function, do_throw);
+      std::call_once(flag2, may_throw_function, do_throw);
     }
     catch (...) {
     }

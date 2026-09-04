@@ -5,7 +5,7 @@
 #include <thread>
 
 #include <c10/macros/Macros.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <c10/util/FbcodeMaps.h>
 #include <c10/util/LeftRight.h>
 
@@ -133,7 +133,7 @@ class LayoutPlanner {
   LayoutPlannerAlgorithm* algorithm_;
   c10::LeftRight<LayoutPlan> plan_;
 
-  c10::once_flag worker_once_flag_;
+  std::once_flag worker_once_flag_;
 
 #ifndef NDEBUG
   AliasAnalyzer alias_analyzer_;

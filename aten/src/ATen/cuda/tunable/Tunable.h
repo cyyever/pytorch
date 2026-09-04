@@ -9,7 +9,6 @@
 //
 #pragma once
 
-#include <c10/util/CallOnce.h>
 #include <c10/util/StringUtil.h>
 #include <c10/util/env.h>
 
@@ -297,7 +296,7 @@ class TORCH_CUDA_CPP_API TuningContext {
     bool icache_flush_;
     int rotating_buffer_size_;
     mutable TuningResultsManager manager_;
-    mutable c10::once_flag manager_init_once_;
+    mutable std::once_flag manager_init_once_;
     TuningResultsValidator validator_;
     std::string filename_;
     std::ofstream untuned_file_;

@@ -1,6 +1,6 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDACachingAllocator.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 
 #include <deque>
 #include <vector>
@@ -10,7 +10,7 @@ namespace at::cuda {
 namespace {
 
 DeviceIndex num_gpus = -1;
-std::deque<c10::once_flag> device_flags;
+std::deque<std::once_flag> device_flags;
 std::vector<cudaDeviceProp> device_properties;
 
 void initCUDAContextVectors() {
@@ -54,7 +54,7 @@ cudaDeviceProp* getDeviceProperties(c10::DeviceIndex device) {
       static_cast<int>(device),
       ", num_gpus=",
       static_cast<int>(num_gpus));
-  c10::call_once(device_flags[device], initDeviceProperty, device);
+  std::call_once(device_flags[device], initDeviceProperty, device);
   return &device_properties[device];
 }
 

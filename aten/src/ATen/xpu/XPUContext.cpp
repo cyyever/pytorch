@@ -1,5 +1,5 @@
 #include <ATen/xpu/XPUContext.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <c10/util/Exception.h>
 
 #include <deque>
@@ -16,10 +16,10 @@ namespace {
  * requested for a device.
  */
 DeviceIndex num_gpus = -1;
-std::deque<c10::once_flag> device_prop_flags;
+std::deque<std::once_flag> device_prop_flags;
 std::vector<DeviceProp> device_properties;
 
-std::deque<c10::once_flag> device_global_idx_flags;
+std::deque<std::once_flag> device_global_idx_flags;
 std::vector<int32_t> device_global_idxs;
 
 void initXPUContextVectors() {
@@ -63,7 +63,7 @@ DeviceProp* getDeviceProperties(DeviceIndex device) {
   if (device == -1)
     device = c10::xpu::current_device();
   check_device_index(device);
-  c10::call_once(device_prop_flags[device], initDeviceProperty, device);
+  std::call_once(device_prop_flags[device], initDeviceProperty, device);
   return &device_properties[device];
 }
 
@@ -74,7 +74,7 @@ int32_t getGlobalIdxFromDevice(DeviceIndex device) {
   if (device == -1)
     device = c10::xpu::current_device();
   check_device_index(device);
-  c10::call_once(device_global_idx_flags[device], initDeviceGlobalIdx, device);
+  std::call_once(device_global_idx_flags[device], initDeviceGlobalIdx, device);
   return device_global_idxs[device];
 }
 

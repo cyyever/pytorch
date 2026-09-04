@@ -1,6 +1,6 @@
 #include "OpenRegStream.h"
 
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
@@ -14,7 +14,6 @@ namespace c10::openreg {
 namespace {
 
 // Global stream state and constants
-c10::once_flag init_flag;
 DeviceIndex num_devices = -1;
 constexpr int kStreamsPerPoolBits = 5;
 constexpr int kStreamsPerPool = 1 << kStreamsPerPoolBits;
@@ -28,7 +27,7 @@ int max_stream_priorities;
  * a queue is requested, the next queue in the pool to be returned in a
  * round-robin fashion, see Note [Stream Management].
  */
-std::deque<c10::once_flag> device_flags;
+std::deque<std::once_flag> device_flags;
 std::vector<std::array<
     std::array<orStream_t, kStreamsPerPool>,
     c10::openreg::max_compile_time_stream_priorities>>
@@ -154,9 +153,10 @@ void initDeviceStreamState(DeviceIndex device_index) {
 }
 
 void initOpenRegStreamsOnce() {
-  c10::call_once(init_flag, initGlobalStreamState);
+  static bool global_state_init [[maybe_unused]] =
+      (initGlobalStreamState(), true);
   for (const auto i : c10::irange(num_devices)) {
-    c10::call_once(
+    std::call_once(
         device_flags[i], initDeviceStreamState, static_cast<DeviceIndex>(i));
   }
   if (current_streams) {

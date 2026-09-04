@@ -1651,7 +1651,6 @@ class CppWrapperGpu(CppWrapperCpu):
                         for name in self._lazy_kernel_names
                     )
                 )
-                self.include_extra_header("mutex")
                 self.prefix.writeline_jit("")
                 self.prefix.splice_jit(
                     f"""\
@@ -1660,13 +1659,11 @@ static inline void start_all_triton_kernel_compiles() {{
     {start_compile_body}
 }}
 
-// inductor_entry_impl calls this on every forward;
-// std::call_once makes the first call do the work.
-static std::once_flag _triton_kernel_compile_init_flag;
+// inductor_entry_impl calls this on every forward; the function-local static
+// makes the first call do the work.
 static inline void ensure_triton_kernel_compiles_started() {{
-    std::call_once(_triton_kernel_compile_init_flag, [] {{
-        start_all_triton_kernel_compiles();
-    }});
+    static bool started [[maybe_unused]] =
+        (start_all_triton_kernel_compiles(), true);
 }}
 """
                 )
