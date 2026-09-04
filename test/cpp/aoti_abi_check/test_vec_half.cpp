@@ -8,8 +8,7 @@ TEST(TestVecHalf, TestConversion) {
     f32s[i] = static_cast<float>(i + 0.3);
   }
   for (int i = 0; i < 100; i++) {
-#if (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
-    !defined(__APPLE__)
+#if (defined(__F16C__) || defined(__AVX512F__)) && !defined(__APPLE__)
     uint16_t u16 = torch::headeronly::vec::float2half_scalar(f32s[i]);
     float x = torch::headeronly::vec::half2float_scalar(u16);
     EXPECT_EQ(

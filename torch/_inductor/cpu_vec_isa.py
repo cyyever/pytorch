@@ -252,12 +252,9 @@ class VecNEON(VecISA):
 class VecAVX512(VecISA):
     _bit_width = 512
     _macro = ["CPU_CAPABILITY_AVX512"]
-    # -mf16c for the same reason the AVX2 flags below carry it: gcc does not
-    # imply F16C from -mavx512f, and without it the half conversions in these
-    # kernels take the software path.
-    _arch_flags = (
-        "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma -mf16c"  # TODO: use cflags
-    )
+    # -mf16c because gcc does not imply F16C from -mavx512f, and without it the
+    # half conversions in these kernels take the software path.
+    _arch_flags = "-mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma -mf16c"
     _dtype_nelements = {torch.float: 16, torch.bfloat16: 32, torch.float16: 32}
     _is_avx512_bf16_supported = False
 
@@ -306,8 +303,7 @@ extern "C" __m512bh __avx512_bf16_chk_kernel(__m512 a, __m512 b) {
 
 @dataclasses.dataclass
 class VecAVX512VNNI(VecAVX512):
-    _bit_width = 512
-    _arch_flags = VecAVX512._arch_flags + " -mavx512vnni -mavx512vl"
+    _arch_flags = VecAVX512._arch_flags + " -mavx512vnni"
     _dtype_nelements = {
         torch.float: 16,
         torch.bfloat16: 32,
@@ -419,7 +415,12 @@ extern "C" void __amx_chk_kernel() {
 class VecAVX2(VecISA):
     _bit_width = 256
     _macro = ["CPU_CAPABILITY_AVX2"]
-    _arch_flags = "-mavx2 -mfma -mf16c"  # TODO: use cflags
+    # These must stay -m<feature> flags, not -march=<baseline>. They ride in
+    # passthrough_args, which get_command_line() places after cflags, and cflags
+    # already carry the -march=native that _get_cpu_arch_cflags() emits by
+    # default; -march is last-one-wins, so a baseline here would silently
+    # downgrade every generated kernel from the host uarch to that baseline.
+    _arch_flags = "-mavx2 -mfma -mf16c"
     _dtype_nelements = {torch.float: 8, torch.bfloat16: 16, torch.float16: 16}
 
     def __str__(self) -> str:
@@ -430,7 +431,7 @@ class VecAVX2(VecISA):
 
 class InvalidVecISA(VecISA):
     _bit_width = 0
-    _macro = [""]
+    _macro = []
     _arch_flags = ""
     _dtype_nelements = {}
 
@@ -439,8 +440,6 @@ class InvalidVecISA(VecISA):
 
     def __bool__(self) -> bool:  # type: ignore[override]
         return False
-
-    __hash__: Callable[[VecISA], Any] = VecISA.__hash__  # type: ignore[assignment]
 
 
 def x86_isa_checker() -> list[str]:
@@ -452,19 +451,13 @@ def x86_isa_checker() -> list[str]:
         if isa_supported:
             dest.append(isa_name)
 
-    Arch = platform.machine()
-    """
-    Arch value is x86_64 on Linux, and the value is AMD64 on Windows.
-    """
-    if Arch != "x86_64" and Arch != "AMD64":
+    if platform.machine() != "x86_64":
         return supported_isa
 
-    avx2 = torch.cpu._is_avx2_supported()
     avx512 = torch.cpu._is_avx512_supported()
     avx512_vnni = avx512 and torch.cpu._is_vnni_supported()
     amx_tile = torch.cpu._is_amx_tile_supported()
 
-    _check_and_append_supported_isa(supported_isa, avx2, "avx2")
     _check_and_append_supported_isa(supported_isa, avx512, "avx512")
     _check_and_append_supported_isa(supported_isa, avx512_vnni, "avx512_vnni")
     _check_and_append_supported_isa(supported_isa, amx_tile, "amx_tile")
@@ -483,25 +476,16 @@ supported_vec_isa_list = [
 
 
 def get_isa_from_cpu_capability(
-    capability: str | None,
-    vec_isa_list: list[VecISA],
-    invalid_vec_isa: InvalidVecISA,
-):
+    capability: str | None, vec_isa_list: list[VecISA]
+) -> VecISA:
     # AMX setting is not supported in eager
     # VecAMX will be prioritized for selection when setting ATEN_CPU_CAPABILITY to avx512
     # TODO add sve256 support
-    capability_to_isa_str = {
-        "default": "INVALID_VEC_ISA",
-        "avx2": "avx2",
-        "avx512": "avx512",
-    }
-    if capability in capability_to_isa_str:
-        # pyrefly: ignore [bad-index, index-error]
-        isa_str = capability_to_isa_str[capability]
-        if isa_str == "INVALID_VEC_ISA":
-            return invalid_vec_isa
+    if capability == "default":
+        return invalid_vec_isa
+    if capability in ("avx2", "avx512"):
         for vec_isa in vec_isa_list:
-            if isa_str in str(vec_isa):
+            if capability in str(vec_isa):
                 return vec_isa
 
     if capability:
@@ -522,16 +506,18 @@ def valid_vec_isa_list() -> list[VecISA]:
     if sys.platform != "linux":
         return isa_list
 
-    if platform.machine() in ["x86_64", "AMD64"]:
-        """
-        arch value is x86_64 on Linux, and the value is AMD64 on Windows.
-        """
+    if platform.machine() == "x86_64":
+        # The x86 build baseline is x86-64-v3, so a machine that can run this
+        # build always has AVX2; only the tiers above it are worth probing.
         _cpu_supported_x86_isa = x86_isa_checker()
         isa_list.extend(
             isa
             for isa in supported_vec_isa_list
-            if all(flag in _cpu_supported_x86_isa for flag in str(isa).split()) and isa
+            if str(isa) != "avx2"
+            and all(flag in _cpu_supported_x86_isa for flag in str(isa).split())
+            and isa
         )
+        isa_list.append(VecAVX2())
 
     return isa_list
 
@@ -546,7 +532,7 @@ def pick_vec_isa() -> VecISA:
     # to control CPU vec ISA
     if config.cpp.simdlen is None:
         return get_isa_from_cpu_capability(
-            os.getenv("ATEN_CPU_CAPABILITY"), _valid_vec_isa_list, invalid_vec_isa
+            os.getenv("ATEN_CPU_CAPABILITY"), _valid_vec_isa_list
         )
 
     for isa in _valid_vec_isa_list:
