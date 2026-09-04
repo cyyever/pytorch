@@ -347,7 +347,8 @@ cmake_dependent_option(INSTALL_TEST "Install test binaries if BUILD_TEST is on"
                        ON "BUILD_TEST" OFF)
 option(USE_RELATIVE_PATHS "Use relative paths in generated files for ccache friendliness" OFF)
 option(USE_CPP_CODE_COVERAGE "Compile C/C++ with code coverage flags" OFF)
-option(USE_ASAN "Use Address+Undefined Sanitizers" OFF)
+option(USE_ASAN "Use AddressSanitizer" OFF)
+option(USE_UBSAN "Use UndefinedBehaviorSanitizer" OFF)
 option(USE_LSAN "Use Leak Sanitizer" OFF)
 option(USE_TSAN "Use Thread Sanitizer" OFF)
 

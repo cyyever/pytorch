@@ -584,7 +584,7 @@ function(torch_compile_options libname)
     endforeach()
   endif()
 
-  if(NOT USE_ASAN)
+  if(NOT USE_ASAN AND NOT USE_UBSAN)
     # Enable hidden visibility by default to make it easier to debug issues with
     # TORCH_API annotations. Hidden visibility with selective default visibility
     # behaves close enough to Windows' dllimport/dllexport.

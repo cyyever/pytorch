@@ -8,7 +8,7 @@
 #  Sanitizer::memory
 include_guard(GLOBAL)
 
-option(UBSAN_FLAGS "additional UBSAN flags" OFF)
+set(UBSAN_FLAGS "" CACHE STRING "Additional UBSan compiler and linker flags")
 
 get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
 
@@ -64,7 +64,7 @@ foreach(sanitizer_name IN ITEMS address thread undefined leak memory)
   endif()
   if(sanitizer_name STREQUAL "undefined")
     # clang-21 removed vptr from the -fsanitize=undefined group; request it
-    # explicitly so USE_ASAN keeps UBSAN vtable checks. Redundant no-op on gcc
+    # explicitly so USE_UBSAN keeps UBSan vtable checks. Redundant no-op on gcc
     # and older clang where undefined already implies vptr; needs RTTI.
     list(APPEND CMAKE_REQUIRED_FLAGS "-fsanitize=vptr")
   endif()
