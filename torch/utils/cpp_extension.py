@@ -1167,18 +1167,18 @@ def CUDAExtension(name, sources, *args, **kwargs):
     You can override the default behavior using `TORCH_CUDA_ARCH_LIST` to explicitly specify which
     CCs you want the extension to support:
 
-    ``TORCH_CUDA_ARCH_LIST="6.1 8.6" python build_my_extension.py``
-    ``TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX" python build_my_extension.py``
+    ``TORCH_CUDA_ARCH_LIST="8.9 9.0" python build_my_extension.py``
+    ``TORCH_CUDA_ARCH_LIST="8.9 9.0 10.0 12.0+PTX" python build_my_extension.py``
 
     The +PTX option causes extension kernel binaries to include PTX instructions for the specified
     CC. PTX is an intermediate representation that allows kernels to runtime-compile for any CC >=
-    the specified CC (for example, 8.6+PTX generates PTX that can runtime-compile for any GPU with
-    CC >= 8.6). This improves your binary's forward compatibility. However, relying on older PTX to
+    the specified CC (for example, 8.9+PTX generates PTX that can runtime-compile for any GPU with
+    CC >= 8.9). This improves your binary's forward compatibility. However, relying on older PTX to
     provide forward compat by runtime-compiling for newer CCs can modestly reduce performance on
     those newer CCs. If you know exact CC(s) of the GPUs you want to target, you're always better
-    off specifying them individually. For example, if you want your extension to run on 8.0 and 8.6,
-    "8.0+PTX" would work functionally because it includes PTX that can runtime-compile for 8.6, but
-    "8.0 8.6" would be better.
+    off specifying them individually. For example, if you want your extension to run on 8.9 and 9.0,
+    "8.9+PTX" would work functionally because it includes PTX that can runtime-compile for 9.0, but
+    "8.9 9.0" would be better.
 
     Note that while it's possible to include all supported archs, the more archs get included the
     slower the building process will be, as it will build a separate kernel image for each arch.
@@ -2259,8 +2259,8 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
     For an added "+PTX", an additional
     ``-gencode=arch=compute_xx,code=compute_xx`` is added.
 
-    See select_compute_arch.cmake for corresponding named and supported arches
-    when building with CMake.
+    See torch_cuda_select_nvcc_arch_flags in cmake/public/utils.cmake for the
+    corresponding named and supported arches when building with CMake.
     """
     # If cflags is given, there may already be user-provided arch flags in it
     # (from `extra_compile_args`)
@@ -2274,9 +2274,6 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
     # Note: keep combined names ("arch1+arch2") above single names, otherwise
     # string replacement may not do the right thing
     named_arches = collections.OrderedDict([
-        ('Turing', '7.5+PTX'),
-        ('Ampere+Tegra', '8.7'),
-        ('Ampere', '8.0;8.6+PTX'),
         ('Ada', '8.9+PTX'),
         ('Hopper', '9.0+PTX'),
         ('Blackwell+Tegra', '11.0'),
@@ -2284,14 +2281,13 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
         ('Rubin', '10.7+PTX'),
     ])
 
-    supported_arches = ['7.5', '8.0', '8.6', '8.7', '8.9', '9.0', '9.0a',
-                        '10.0', '10.0a', '11.0', '11.0a', '10.3', '10.3a', '10.7', '10.7a',
-                        '12.0', '12.0a', '12.1', '12.1a']
+    supported_arches = ['8.9', '9.0', '9.0a', '10.0', '10.0a', '11.0', '11.0a',
+                        '10.3', '10.3a', '10.7', '10.7a', '12.0', '12.0a', '12.1', '12.1a']
     valid_arch_strings = supported_arches + [s + "+PTX" for s in supported_arches]
 
     # First check for an env var (same as used by the main setup.py)
-    # Can be one or more architectures, e.g. "8.6" or "7.5;8.0;8.6;9.0+PTX"
-    # See cmake/Modules_CUDA_fix/upstream/FindCUDA/select_compute_arch.cmake
+    # Can be one or more architectures, e.g. "8.9" or "8.9;9.0;10.0+PTX"
+    # See torch_cuda_select_nvcc_arch_flags in cmake/public/utils.cmake
     _arch_list = os.environ.get('TORCH_CUDA_ARCH_LIST', None)
 
     # If not given or set as native, determine what's best for the GPU / CUDA version that can be found

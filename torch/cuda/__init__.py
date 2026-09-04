@@ -355,7 +355,7 @@ DEVICE_REQUIREMENT: dict[int, _CompatSet | _CompatInterval] = {
 # .github/scripts/generate_binary_build_matrix.py.
 PYTORCH_RELEASES_CODE_CC: dict[str, dict[str, set[int]]] = {
     "13.4": {
-        "x86_64": {75, 80, 86, 90, 100, 120},
+        "x86_64": {89, 90, 100, 120},
     },
 }
 

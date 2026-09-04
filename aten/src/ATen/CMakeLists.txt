@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29 FATAL_ERROR)
+cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 
@@ -691,6 +691,14 @@ if(NOT USE_SYSTEM_SLEEF)
   set(SLEEF_BUILD_TESTS OFF CACHE BOOL "Don't build sleef tests" FORCE)
   set(SLEEF_BUILD_SCALAR_LIB OFF CACHE BOOL "libsleefscalar will be built." FORCE)
   set(SLEEF_DISABLE_OPENMP ON CACHE BOOL "OpenMP only used by sleef DFT and tests, both disabled" FORCE)
+  if(CPU_INTEL)
+    # The PyTorch x86 baseline requires AVX2, so older SLEEF variants cannot be
+    # selected and only increase the embedded static library size.
+    set(SLEEF_DISABLE_SSE2 ON CACHE BOOL "Disable pre-AVX2 SLEEF kernels" FORCE)
+    set(SLEEF_DISABLE_SSE4 ON CACHE BOOL "Disable pre-AVX2 SLEEF kernels" FORCE)
+    set(SLEEF_DISABLE_AVX ON CACHE BOOL "Disable pre-AVX2 SLEEF kernels" FORCE)
+    set(SLEEF_DISABLE_FMA4 ON CACHE BOOL "Disable obsolete FMA4 SLEEF kernels" FORCE)
+  endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
       set(DISABLE_SVE ON CACHE BOOL "Xcode's clang-12.5 crashes while trying to compile SVE code" FORCE)
@@ -726,7 +734,7 @@ if(USE_CUDA AND NOT USE_ROCM)
 
   if($ENV{ATEN_STATIC_CUDA})
     list(APPEND ATen_CUDA_DEPENDENCY_LIBS
-        ${CUDA_LIBRARIES}
+        CUDA::cudart
         CUDA::cusparse_static
         CUDA::cufft_static)
 
@@ -738,7 +746,7 @@ if(USE_CUDA AND NOT USE_ROCM)
    endif()
   else()
     list(APPEND ATen_CUDA_DEPENDENCY_LIBS
-      ${CUDA_LIBRARIES}
+      CUDA::cudart
       CUDA::cusparse
       CUDA::cufft
     )

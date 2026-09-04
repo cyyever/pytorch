@@ -43,11 +43,7 @@
 #    DLL and macOS OpenMP bundling).
 # 9. Summary (cmake/Summary.cmake): print the resolved configuration.
 
-cmake_minimum_required(VERSION 3.29 FATAL_ERROR)
-
-cmake_policy(SET CMP0126 OLD)
-# Don't remove the FindCUDA module
-cmake_policy(SET CMP0146 OLD)
+cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 
 # Prohibit in-source builds
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
@@ -952,11 +948,7 @@ if(BUILD_SHARED_LIBS)
     DESTINATION share/cmake/Caffe2/public
     COMPONENT dev)
   install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/Modules_CUDA_fix
-    DESTINATION share/cmake/Caffe2/
-    COMPONENT dev)
-  install(
-    FILES ${PROJECT_SOURCE_DIR}/cmake/Modules/FindCUDAToolkit.cmake
+    FILES ${PROJECT_SOURCE_DIR}/cmake/Modules/FindCUDNN.cmake
     DESTINATION share/cmake/Caffe2/
     COMPONENT dev)
   install(

@@ -929,9 +929,58 @@ string(REGEX REPLACE "[-/]DNDEBUG" "" CMAKE_CXX_FLAGS_DEBUG "" ${CMAKE_CXX_FLAGS
 
 set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
 
+include(CheckFunctionExists)
+
+# CMake's own FindLAPACK searches for a LAPACK independently of the BLAS we
+# picked above, so point it at the same vendor first: mixing two
+# implementations is what the LAPACK search has to avoid. It reports no vendor
+# name either, so LAPACK_INFO is settled here as it is for BLAS.
+if(BLAS_INFO STREQUAL "open")
+  set(BLA_VENDOR "OpenBLAS")
+elseif(BLAS_INFO STREQUAL "mkl")
+  # Must match the threading layer find_package(MKL) selected, or the search
+  # brings in a second one and the binary links both.
+  if("${MKL_THREADING}" STREQUAL "SEQ")
+    set(BLA_VENDOR "Intel10_64lp_seq")
+  else()
+    set(BLA_VENDOR "Intel10_64lp")
+  endif()
+elseif(BLAS_INFO STREQUAL "veclib")
+  set(BLA_VENDOR "Apple")
+endif()
 find_package(LAPACK)
+if(NOT LAPACK_FOUND AND BLA_VENDOR)
+  unset(BLA_VENDOR)
+  find_package(LAPACK)
+endif()
+
 if(LAPACK_FOUND)
   set(USE_LAPACK 1)
+  if(BLA_VENDOR)
+    set(LAPACK_INFO ${BLAS_INFO})
+  else()
+    set(LAPACK_INFO "generic")
+  endif()
+  # Some OpenBLAS builds carry LAPACK but resolve cgesdd only with gfortran. The
+  # two probes cache under different names on purpose: with one name the second
+  # configure reads the with-gfortran result, skips the test, and never appends
+  # the library, so the link fails on an incremental build only.
+  if(LAPACK_INFO STREQUAL "open")
+    set(CMAKE_REQUIRED_LIBRARIES ${LAPACK_LIBRARIES})
+    check_function_exists("cgesdd_" LAPACK_CGESDD_WORKS)
+    if(NOT LAPACK_CGESDD_WORKS)
+      find_library(GFORTRAN_LIBRARY NAMES gfortran libgfortran.a
+                   PATHS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
+      list(APPEND CMAKE_REQUIRED_LIBRARIES "${GFORTRAN_LIBRARY}")
+      check_function_exists("cgesdd_" LAPACK_CGESDD_WORKS_WITH_GFORTRAN)
+      if(LAPACK_CGESDD_WORKS_WITH_GFORTRAN)
+        list(APPEND LAPACK_LIBRARIES "${GFORTRAN_LIBRARY}")
+      else()
+        message(WARNING "OpenBLAS was built with LAPACK, but cgesdd cannot be used")
+      endif()
+    endif()
+    unset(CMAKE_REQUIRED_LIBRARIES)
+  endif()
   list(APPEND Caffe2_PRIVATE_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
 endif()
 
