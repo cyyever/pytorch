@@ -175,7 +175,7 @@ if(CAFFE2_USE_CUDNN)
   target_include_directories(torch::cudnn INTERFACE ${CUDNN_INCLUDE_PATH})
   if(CUDNN_STATIC)
     target_link_options(torch::cudnn INTERFACE
-        "-Wl,--exclude-libs,libcudnn_static.a")
+        "LINKER:--exclude-libs,libcudnn_static.a")
   else()
     target_link_libraries(torch::cudnn INTERFACE ${CUDNN_LIBRARY_PATH})
   endif()

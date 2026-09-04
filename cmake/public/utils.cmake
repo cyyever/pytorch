@@ -645,21 +645,6 @@ function(target_compile_options_if_supported target flag)
   endif()
 endfunction()
 
-# Check if a global link option is supported
-# Also defines HAS_LINKER_UPPER_CASE_FLAG_NAME
-# Usage:
-#   add_link_options_if_supported("--emit-relocs")
-function(add_link_options_if_supported flag)
-  string(TOUPPER "HAS_LINKER${flag}" _FLAG_NAME)
-  string(REGEX REPLACE "[=,-]" "_" _FLAG_NAME "${_FLAG_NAME}")
-  check_linker_flag(C "LINKER:${flag}" ${_FLAG_NAME})
-  if(${_FLAG_NAME})
-    add_link_options("LINKER:${flag}")
-  else()
-    message(WARNING "Attempted to use unsupported link option : ${flag}.")
-  endif()
-endfunction()
-
 function(target_link_options_if_supported tgt flag)
   string(TOUPPER "HAS_LINKER${flag}" _FLAG_NAME)
   string(REGEX REPLACE "[=,-]" "_" _FLAG_NAME "${_FLAG_NAME}")
