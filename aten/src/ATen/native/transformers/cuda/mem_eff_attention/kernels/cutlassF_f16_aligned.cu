@@ -9,25 +9,6 @@
 #include <ATen/native/transformers/cuda/mem_eff_attention/kernel_forward.h>
 using namespace PyTorchMemEffAttention;
 __global__ void __launch_bounds__(
-    AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 64, 64, 64, true, true>::kNumThreads,
-    AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 64, 64, 64, true, true>::kMinBlocksPerSm)
-fmha_cutlassF_f16_aligned_64x64_rf_sm75(typename AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 64, 64, 64, true, true>::Params p) {
-#ifdef __CUDA_ARCH__
-#if __CUDA_ARCH__ >= 750
-#if __CUDA_ARCH__ <= 790
-  if (!p.advance_to_block()) {
-    return;
-  }
-  AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 64, 64, 64, true, true>::attention_kernel(p);
-  return;
-#endif
-#endif
-    printf(
-        "FATAL: kernel `fmha_cutlassF_f16_aligned_64x64_rf_sm75` is for sm75-sm79, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
-#endif
-}
-__global__ void __launch_bounds__(
     AttentionKernel<cutlass::half_t, cutlass::arch::Sm80, true, 64, 64, 64, true, true>::kNumThreads,
     AttentionKernel<cutlass::half_t, cutlass::arch::Sm80, true, 64, 64, 64, true, true>::kMinBlocksPerSm)
 fmha_cutlassF_f16_aligned_64x64_rf_sm80(typename AttentionKernel<cutlass::half_t, cutlass::arch::Sm80, true, 64, 64, 64, true, true>::Params p) {
@@ -47,25 +28,6 @@ fmha_cutlassF_f16_aligned_64x64_rf_sm80(typename AttentionKernel<cutlass::half_t
 #endif
 }
 __global__ void __launch_bounds__(
-    AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 128, true, true>::kNumThreads,
-    AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 128, true, true>::kMinBlocksPerSm)
-fmha_cutlassF_f16_aligned_32x128_rf_sm75(typename AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 128, true, true>::Params p) {
-#ifdef __CUDA_ARCH__
-#if __CUDA_ARCH__ >= 750
-#if __CUDA_ARCH__ <= 790
-  if (!p.advance_to_block()) {
-    return;
-  }
-  AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 128, true, true>::attention_kernel(p);
-  return;
-#endif
-#endif
-    printf(
-        "FATAL: kernel `fmha_cutlassF_f16_aligned_32x128_rf_sm75` is for sm75-sm79, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
-#endif
-}
-__global__ void __launch_bounds__(
     AttentionKernel<cutlass::half_t, cutlass::arch::Sm80, true, 64, 128, 128, true, true>::kNumThreads,
     AttentionKernel<cutlass::half_t, cutlass::arch::Sm80, true, 64, 128, 128, true, true>::kMinBlocksPerSm)
 fmha_cutlassF_f16_aligned_64x128_rf_sm80(typename AttentionKernel<cutlass::half_t, cutlass::arch::Sm80, true, 64, 128, 128, true, true>::Params p) {
@@ -81,25 +43,6 @@ fmha_cutlassF_f16_aligned_64x128_rf_sm80(typename AttentionKernel<cutlass::half_
 #endif
     printf(
         "FATAL: kernel `fmha_cutlassF_f16_aligned_64x128_rf_sm80` is for sm80-sm121, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
-#endif
-}
-__global__ void __launch_bounds__(
-    AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 65536, true, true>::kNumThreads,
-    AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 65536, true, true>::kMinBlocksPerSm)
-fmha_cutlassF_f16_aligned_32x128_gmem_sm75(typename AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 65536, true, true>::Params p) {
-#ifdef __CUDA_ARCH__
-#if __CUDA_ARCH__ >= 750
-#if __CUDA_ARCH__ <= 790
-  if (!p.advance_to_block()) {
-    return;
-  }
-  AttentionKernel<cutlass::half_t, cutlass::arch::Sm75, true, 32, 128, 65536, true, true>::attention_kernel(p);
-  return;
-#endif
-#endif
-    printf(
-        "FATAL: kernel `fmha_cutlassF_f16_aligned_32x128_gmem_sm75` is for sm75-sm79, but was built for sm%d\n",
         int(__CUDA_ARCH__ + 0) / 10);
 #endif
 }
