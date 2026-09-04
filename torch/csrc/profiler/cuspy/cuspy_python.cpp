@@ -2,7 +2,6 @@
 
 #include <torch/csrc/profiler/cuspy/cuspy_native.h>
 #include <torch/csrc/profiler/cuspy/cuspy_pftrace.h>
-#include <torch/csrc/utils/pybind.h>
 
 #include <pybind11/numpy.h>
 

@@ -3,7 +3,6 @@
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/autograd/variable.h>
 #include <torch/csrc/utils/numpy_stub.h>
-#include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/python_arg_parser.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <torch/csrc/utils/python_symnode.h>
