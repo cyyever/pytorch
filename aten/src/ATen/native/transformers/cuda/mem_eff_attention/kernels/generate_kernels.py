@@ -22,7 +22,7 @@ DTYPES = {
     "bf16": "cutlass::bfloat16_t",
 }
 
-SM_RANGES: list[tuple[int, int]] = [(75, 79), (80, 121)]
+SM_RANGES: list[tuple[int, int]] = [(80, 121)]
 
 KERNEL_IMPL_TEMPLATE = """__global__ void __launch_bounds__(
     {CPP_CLASS}::kNumThreads,
@@ -116,23 +116,16 @@ class FwdKernel:
     @classmethod
     def get_all(cls) -> list["FwdKernel"]:
         kernels: list[FwdKernel] = []
-        for aligned, dtype, (sm, sm_max) in itertools.product(
-            [True, False], DTYPES.keys(), SM_RANGES
-        ):
-            # Remove some kernels we don't use
-            if dtype == "bf16" and sm < 80:
-                continue
-            if not aligned and sm >= 80:
-                continue
+        for dtype, (sm, sm_max) in itertools.product(DTYPES.keys(), SM_RANGES):
             for q, k, max_k in [
                 (64, 64, 64),
                 # We get better perf with 64x128 on A100
-                (64 if sm > 75 else 32, 128, 128),
+                (64, 128, 128),
                 (32, 128, 2**16),
             ]:
                 kernels.append(
                     cls(
-                        aligned=aligned,
+                        aligned=True,
                         dtype=dtype,
                         sm_range=(sm, sm_max),
                         q=q,
@@ -225,33 +218,27 @@ class BwdKernel:
     @classmethod
     def get_all(cls) -> list["BwdKernel"]:
         kernels: list[BwdKernel] = []
-        for aligned, dtype, (sm, sm_max), apply_dropout, max_k in itertools.product(
-            [True, False],
+        for dtype, (sm, sm_max), apply_dropout, max_k in itertools.product(
             DTYPES.keys(),
             SM_RANGES,
             [True, False],
             [32, 64, 128, 2**16],
         ):
-            if dtype == "bf16" and sm < 80:
-                continue
-            if not aligned and sm >= 80:
-                continue
             is_half = dtype in ["bf16", "f16"]
 
             bi_values = [64]
             # Some architectures have more shmem and can use 128
             # We still need fallback to 64 for GPUs with less shmem
-            # (Sm75, Sm86 ...)
-            if sm >= 80 or (sm >= 70 and is_half):
-                if max_k > 64:
-                    bi_values.append(128)
+            # (Sm86 ...)
+            if max_k > 64:
+                bi_values.append(128)
             for bi in bi_values:
                 output_in_rf = is_half and max_k <= bi
-                preload_mmas = is_half and sm >= 80 and output_in_rf
+                preload_mmas = is_half and output_in_rf
                 bj = 128 if (preload_mmas and max_k > 64) else 64
                 kernels.append(
                     cls(
-                        aligned=aligned,
+                        aligned=True,
                         dtype=dtype,
                         sm_range=(sm, sm_max),
                         apply_dropout=apply_dropout,
@@ -262,13 +249,11 @@ class BwdKernel:
                     )
                 )
                 # A few specialized kernels that are faster
-                if apply_dropout or max_k > 128 or not is_half or not aligned:
-                    continue
-                if sm not in [70, 80]:
+                if apply_dropout or max_k > 128 or not is_half:
                     continue
                 kernels.append(
                     cls(
-                        aligned=aligned,
+                        aligned=True,
                         dtype=dtype,
                         sm_range=(sm, sm_max),
                         apply_dropout=apply_dropout,
@@ -281,7 +266,7 @@ class BwdKernel:
                 )
         # Add some specialized kernels for stable diffusion BW (K=80)
         # This is the only kernel that can keep the outputs on RF on
-        # Sm86/Sm89, so it's much faster than the 64x64 one
+        # Sm89, so it's much faster than the 64x64 one
         sm80_range = next(sm_range for sm_range in SM_RANGES if sm_range[0] == 80)
         for dtype in ["f16", "bf16"]:
             kernels.append(
@@ -294,8 +279,8 @@ class BwdKernel:
                     block_i=128,
                     block_j=64,
                     max_k=96,
-                    # Sm80 has a faster kernel for this case
-                    dispatch_cond="cc == 86 || cc == 89",
+                    # Sm90+ has a faster kernel for this case
+                    dispatch_cond="cc == 89",
                 )
             )
         return kernels

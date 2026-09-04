@@ -28,25 +28,6 @@ fmha_cutlassB_f16_aligned_64x64_k32_seqaligned_sm80(typename AttentionBackwardKe
 #endif
 }
 __global__ void __launch_bounds__(
-    AttentionBackwardKernel<cutlass::arch::Sm75, cutlass::half_t, true, false, false, 64, 64, 32>::kNumThreads,
-    AttentionBackwardKernel<cutlass::arch::Sm75, cutlass::half_t, true, false, false, 64, 64, 32>::kMinBlocksPerSm)
-fmha_cutlassB_f16_aligned_64x64_k32_sm75(typename AttentionBackwardKernel<cutlass::arch::Sm75, cutlass::half_t, true, false, false, 64, 64, 32>::Params p) {
-#ifdef __CUDA_ARCH__
-#if __CUDA_ARCH__ >= 750
-#if __CUDA_ARCH__ <= 790
-  if (!p.advance_to_block()) {
-    return;
-  }
-  AttentionBackwardKernel<cutlass::arch::Sm75, cutlass::half_t, true, false, false, 64, 64, 32>::attention_kernel(p);
-  return;
-#endif
-#endif
-    printf(
-        "FATAL: kernel `fmha_cutlassB_f16_aligned_64x64_k32_sm75` is for sm75-sm79, but was built for sm%d\n",
-        int(__CUDA_ARCH__ + 0) / 10);
-#endif
-}
-__global__ void __launch_bounds__(
     AttentionBackwardKernel<cutlass::arch::Sm80, cutlass::half_t, true, false, true, 64, 64, 32>::kNumThreads,
     AttentionBackwardKernel<cutlass::arch::Sm80, cutlass::half_t, true, false, true, 64, 64, 32>::kMinBlocksPerSm)
 fmha_cutlassB_f16_aligned_64x64_k32_sm80(typename AttentionBackwardKernel<cutlass::arch::Sm80, cutlass::half_t, true, false, true, 64, 64, 32>::Params p) {
