@@ -302,20 +302,25 @@ T safe_fpt_division(T f1, T f2)
     return f1 / f2;
 }
 
+// The error is measured relative to expected, so the argument order matters.
+// Read as a bound on the absolute error the tolerance would pass exp's whole
+// negative tail, where both values sit under it and any answer compares equal.
+// The floor is the smallest normal rather than the tolerance: below it one ulp
+// is already a large relative error -- 3.7% at exp(-100) -- so a purely
+// relative bound would ask for bit-exact agreement where the type cannot even
+// represent the difference.
 template<class T>
 std::enable_if_t<std::is_floating_point_v<T>, bool>
-nearlyEqual(T a, T b, T tolerance) {
-    if (check_both_nan<T>(a, b)) return true;
-    if (check_both_big(a, b)) return true;
-    T absA = std::abs(a);
-    T absB = std::abs(b);
-    T diff = std::abs(a - b);
-    if (diff <= tolerance) {
-        return true;
+nearlyEqual(T expected, T actual, T tolerance) {
+    if (check_both_nan<T>(expected, actual)) return true;
+    if (check_both_big(expected, actual)) return true;
+    T diff = std::abs(expected - actual);
+    if (expected == static_cast<T>(0)) {
+        // Nothing to be relative to.
+        return diff <= tolerance;
     }
-    T d1 = safe_fpt_division<T>(diff, absB);
-    T d2 = safe_fpt_division<T>(diff, absA);
-    return (d1 <= tolerance) || (d2 <= tolerance);
+    return diff <=
+        std::numeric_limits<T>::min() + tolerance * std::abs(expected);
 }
 
 template<class T>

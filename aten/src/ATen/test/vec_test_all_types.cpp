@@ -523,6 +523,22 @@ namespace {
             }
         }
     }
+    TEST(ToleranceIsRelativeForSmallValues, ExpSmallResults) {
+        // ExpU20 checks its whole [-100, 100] domain against the default
+        // tolerance. Read as a bound on the absolute error, that tolerance
+        // covers everything below x = ln(5e-5) -- 45% of the domain -- so an
+        // exp returning zero there would compare equal.
+        const float tolerance = getDefaultTolerance<float>();
+        EXPECT_FALSE(nearlyEqual<float>(std::exp(-20.0f), 0.0f, tolerance));
+
+        // Below the smallest normal the comparison has to stop being relative:
+        // one ulp is 3.7% there, and flushing to zero is a legitimate answer
+        // for a vector implementation. The edge cases ExpU20 spells out at the
+        // fast path boundary are both in that range.
+        EXPECT_TRUE(nearlyEqual<float>(std::exp(-100.0f), 0.0f, tolerance));
+        EXPECT_TRUE(
+            nearlyEqual<float>(std::exp(-0x1.5d5e2ap+6f), 0.0f, tolerance));
+    }
     TYPED_TEST(ErrorFunctions, Erf) {
         using vec = TypeParam;
         test_unary<vec>(
