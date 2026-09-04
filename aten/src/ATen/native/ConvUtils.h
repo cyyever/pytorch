@@ -29,11 +29,6 @@ using slow_conv_transpose_backward_fn = std::tuple<at::Tensor,at::Tensor,at::Ten
     const at::Tensor&, const at::Tensor&, const at::Tensor&, at::IntArrayRef, at::IntArrayRef,
     at::IntArrayRef, at::IntArrayRef, at::IntArrayRef, std::array<bool,3>);
 
-// 3-output backward, forward shape (mps, mkldnn): 3 IARs + groups.
-using conv_backward_fn = std::tuple<at::Tensor,at::Tensor,at::Tensor>(*)(
-    const at::Tensor&, const at::Tensor&, const at::Tensor&, at::IntArrayRef, at::IntArrayRef,
-    at::IntArrayRef, int64_t, std::array<bool,3>);
-
 // 3-output backward, transpose shape (mkldnn_transpose): 4 IARs + groups.
 using conv_transpose_backward_fn = std::tuple<at::Tensor,at::Tensor,at::Tensor>(*)(
     const at::Tensor&, const at::Tensor&, const at::Tensor&, at::IntArrayRef, at::IntArrayRef,
@@ -64,9 +59,6 @@ DECLARE_DISPATCH(conv_dilated_backward_fn, conv_depthwise3d_backward_stub)
 // cuDNN.
 DECLARE_DISPATCH(cudnn_convolution_backward_fn, cudnn_convolution_backward_stub)
 DECLARE_DISPATCH(cudnn_convolution_transpose_backward_fn, cudnn_convolution_transpose_backward_stub)
-
-// MPS.
-DECLARE_DISPATCH(conv_backward_fn, mps_convolution_backward_stub)
 
 // MIOpen.
 DECLARE_DISPATCH(miopen_convolution_backward_fn, miopen_convolution_backward_stub)

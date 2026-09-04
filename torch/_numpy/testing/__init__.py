@@ -10,7 +10,6 @@ from .utils import (
     assert_raises_regex,
     assert_warns,
     HAS_REFCOUNT,
-    IS_WASM,
     suppress_warnings,
 )
 
