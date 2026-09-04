@@ -18,18 +18,18 @@
 namespace memory {
 
 MAYBE_GLOBAL void test_size() {
-  static_assert(sizeof(c10::complex<float>) == 2 * sizeof(float), "");
-  static_assert(sizeof(c10::complex<double>) == 2 * sizeof(double), "");
+  static_assert(sizeof(c10::complex<float>) == 2 * sizeof(float));
+  static_assert(sizeof(c10::complex<double>) == 2 * sizeof(double));
 }
 
 MAYBE_GLOBAL void test_align() {
-  static_assert(alignof(c10::complex<float>) == 2 * sizeof(float), "");
-  static_assert(alignof(c10::complex<double>) == 2 * sizeof(double), "");
+  static_assert(alignof(c10::complex<float>) == 2 * sizeof(float));
+  static_assert(alignof(c10::complex<double>) == 2 * sizeof(double));
 }
 
 MAYBE_GLOBAL void test_pod() {
-  static_assert(std::is_standard_layout<c10::complex<float>>::value, "");
-  static_assert(std::is_standard_layout<c10::complex<double>>::value, "");
+  static_assert(std::is_standard_layout<c10::complex<float>>::value);
+  static_assert(std::is_standard_layout<c10::complex<double>>::value);
 }
 
 TEST(TestMemory, ReinterpretCast) {
@@ -104,12 +104,12 @@ C10_HOST_DEVICE void test_construct_from_scalar() {
   constexpr scalar_t num1 = scalar_t(1.23);
   constexpr scalar_t num2 = scalar_t(4.56);
   constexpr scalar_t zero = scalar_t();
-  static_assert(c10::complex<scalar_t>(num1, num2).real() == num1, "");
-  static_assert(c10::complex<scalar_t>(num1, num2).imag() == num2, "");
-  static_assert(c10::complex<scalar_t>(num1).real() == num1, "");
-  static_assert(c10::complex<scalar_t>(num1).imag() == zero, "");
-  static_assert(c10::complex<scalar_t>().real() == zero, "");
-  static_assert(c10::complex<scalar_t>().imag() == zero, "");
+  static_assert(c10::complex<scalar_t>(num1, num2).real() == num1);
+  static_assert(c10::complex<scalar_t>(num1, num2).imag() == num2);
+  static_assert(c10::complex<scalar_t>(num1).real() == num1);
+  static_assert(c10::complex<scalar_t>(num1).imag() == zero);
+  static_assert(c10::complex<scalar_t>().real() == zero);
+  static_assert(c10::complex<scalar_t>().imag() == zero);
 }
 
 template <typename scalar_t, typename other_t>
@@ -119,11 +119,9 @@ C10_HOST_DEVICE void test_construct_from_other() {
   constexpr scalar_t num3 = scalar_t(num1);
   constexpr scalar_t num4 = scalar_t(num2);
   static_assert(
-      c10::complex<scalar_t>(c10::complex<other_t>(num1, num2)).real() == num3,
-      "");
+      c10::complex<scalar_t>(c10::complex<other_t>(num1, num2)).real() == num3);
   static_assert(
-      c10::complex<scalar_t>(c10::complex<other_t>(num1, num2)).imag() == num4,
-      "");
+      c10::complex<scalar_t>(c10::complex<other_t>(num1, num2)).imag() == num4);
 }
 
 MAYBE_GLOBAL void test_convert_constructors() {
@@ -131,29 +129,22 @@ MAYBE_GLOBAL void test_convert_constructors() {
   test_construct_from_scalar<double>();
 
   static_assert(
-      std::is_convertible<c10::complex<float>, c10::complex<float>>::value, "");
+      std::is_convertible<c10::complex<float>, c10::complex<float>>::value);
   static_assert(
-      !std::is_convertible<c10::complex<double>, c10::complex<float>>::value,
-      "");
+      !std::is_convertible<c10::complex<double>, c10::complex<float>>::value);
   static_assert(
-      std::is_convertible<c10::complex<float>, c10::complex<double>>::value,
-      "");
+      std::is_convertible<c10::complex<float>, c10::complex<double>>::value);
   static_assert(
-      std::is_convertible<c10::complex<double>, c10::complex<double>>::value,
-      "");
+      std::is_convertible<c10::complex<double>, c10::complex<double>>::value);
 
   static_assert(
-      std::is_constructible<c10::complex<float>, c10::complex<float>>::value,
-      "");
+      std::is_constructible<c10::complex<float>, c10::complex<float>>::value);
   static_assert(
-      std::is_constructible<c10::complex<double>, c10::complex<float>>::value,
-      "");
+      std::is_constructible<c10::complex<double>, c10::complex<float>>::value);
   static_assert(
-      std::is_constructible<c10::complex<float>, c10::complex<double>>::value,
-      "");
+      std::is_constructible<c10::complex<float>, c10::complex<double>>::value);
   static_assert(
-      std::is_constructible<c10::complex<double>, c10::complex<double>>::value,
-      "");
+      std::is_constructible<c10::complex<double>, c10::complex<double>>::value);
 
   test_construct_from_other<float, float>();
   test_construct_from_other<float, double>();
@@ -166,11 +157,11 @@ C10_HOST_DEVICE void test_construct_from_std() {
   constexpr scalar_t num1 = scalar_t(1.23);
   constexpr scalar_t num2 = scalar_t(4.56);
   static_assert(
-      c10::complex<scalar_t>(std::complex<scalar_t>(num1, num2)).real() == num1,
-      "");
+      c10::complex<scalar_t>(std::complex<scalar_t>(num1, num2)).real() ==
+      num1);
   static_assert(
-      c10::complex<scalar_t>(std::complex<scalar_t>(num1, num2)).imag() == num2,
-      "");
+      c10::complex<scalar_t>(std::complex<scalar_t>(num1, num2)).imag() ==
+      num2);
 }
 
 MAYBE_GLOBAL void test_std_conversion() {
@@ -225,10 +216,10 @@ constexpr c10::complex<scalar_t> one() {
 }
 
 MAYBE_GLOBAL void test_assign_real() {
-  static_assert(one<float>().real() == float(1), "");
-  static_assert(one<float>().imag() == float(), "");
-  static_assert(one<double>().real() == double(1), "");
-  static_assert(one<double>().imag() == double(), "");
+  static_assert(one<float>().real() == float(1));
+  static_assert(one<float>().imag() == float());
+  static_assert(one<double>().real() == double(1));
+  static_assert(one<double>().imag() == double());
 }
 
 constexpr std::tuple<c10::complex<double>, c10::complex<float>> one_two() {
@@ -241,10 +232,10 @@ constexpr std::tuple<c10::complex<double>, c10::complex<float>> one_two() {
 
 MAYBE_GLOBAL void test_assign_other() {
   constexpr auto tup = one_two();
-  static_assert(std::get<c10::complex<double>>(tup).real() == double(1), "");
-  static_assert(std::get<c10::complex<double>>(tup).imag() == double(2), "");
-  static_assert(std::get<c10::complex<float>>(tup).real() == float(1), "");
-  static_assert(std::get<c10::complex<float>>(tup).imag() == float(2), "");
+  static_assert(std::get<c10::complex<double>>(tup).real() == double(1));
+  static_assert(std::get<c10::complex<double>>(tup).imag() == double(2));
+  static_assert(std::get<c10::complex<float>>(tup).real() == float(1));
+  static_assert(std::get<c10::complex<float>>(tup).imag() == float(2));
 }
 
 constexpr std::tuple<c10::complex<double>, c10::complex<float>> one_two_std() {
@@ -257,15 +248,15 @@ constexpr std::tuple<c10::complex<double>, c10::complex<float>> one_two_std() {
 
 MAYBE_GLOBAL void test_assign_std() {
   constexpr auto tup = one_two();
-  static_assert(std::get<c10::complex<double>>(tup).real() == double(1), "");
-  static_assert(std::get<c10::complex<double>>(tup).imag() == double(2), "");
-  static_assert(std::get<c10::complex<float>>(tup).real() == float(1), "");
-  static_assert(std::get<c10::complex<float>>(tup).imag() == float(2), "");
+  static_assert(std::get<c10::complex<double>>(tup).real() == double(1));
+  static_assert(std::get<c10::complex<double>>(tup).imag() == double(2));
+  static_assert(std::get<c10::complex<float>>(tup).real() == float(1));
+  static_assert(std::get<c10::complex<float>>(tup).imag() == float(2));
 }
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
-C10_HOST_DEVICE std::tuple<c10::complex<double>, c10::complex<float>>
-one_two_thrust() {
+C10_HOST_DEVICE std::
+    tuple<c10::complex<double>, c10::complex<float>> one_two_thrust() {
   thrust::complex<float> src(1, 2);
   c10::complex<double> ret0;
   c10::complex<float> ret1;
@@ -288,20 +279,19 @@ namespace literals {
 
 MAYBE_GLOBAL void test_complex_literals() {
   using namespace c10::complex_literals;
-  static_assert(std::is_same<decltype(0.5_if), c10::complex<float>>::value, "");
-  static_assert((0.5_if).real() == float(), "");
-  static_assert((0.5_if).imag() == float(0.5), "");
-  static_assert(
-      std::is_same<decltype(0.5_id), c10::complex<double>>::value, "");
-  static_assert((0.5_id).real() == float(), "");
-  static_assert((0.5_id).imag() == float(0.5), "");
+  static_assert(std::is_same<decltype(0.5_if), c10::complex<float>>::value);
+  static_assert((0.5_if).real() == float());
+  static_assert((0.5_if).imag() == float(0.5));
+  static_assert(std::is_same<decltype(0.5_id), c10::complex<double>>::value);
+  static_assert((0.5_id).real() == float());
+  static_assert((0.5_id).imag() == float(0.5));
 
-  static_assert(std::is_same<decltype(1_if), c10::complex<float>>::value, "");
-  static_assert((1_if).real() == float(), "");
-  static_assert((1_if).imag() == float(1), "");
-  static_assert(std::is_same<decltype(1_id), c10::complex<double>>::value, "");
-  static_assert((1_id).real() == double(), "");
-  static_assert((1_id).imag() == double(1), "");
+  static_assert(std::is_same<decltype(1_if), c10::complex<float>>::value);
+  static_assert((1_if).real() == float());
+  static_assert((1_if).imag() == float(1));
+  static_assert(std::is_same<decltype(1_id), c10::complex<double>>::value);
+  static_assert((1_id).real() == double());
+  static_assert((1_id).imag() == double(1));
 }
 
 } // namespace literals
@@ -323,15 +313,15 @@ constexpr c10::complex<scalar_t> one_zero() {
 }
 
 MAYBE_GLOBAL void test_real_imag_modify() {
-  static_assert(zero_one<float>().real() == float(0), "");
-  static_assert(zero_one<float>().imag() == float(1), "");
-  static_assert(zero_one<double>().real() == double(0), "");
-  static_assert(zero_one<double>().imag() == double(1), "");
+  static_assert(zero_one<float>().real() == float(0));
+  static_assert(zero_one<float>().imag() == float(1));
+  static_assert(zero_one<double>().real() == double(0));
+  static_assert(zero_one<double>().imag() == double(1));
 
-  static_assert(one_zero<float>().real() == float(1), "");
-  static_assert(one_zero<float>().imag() == float(0), "");
-  static_assert(one_zero<double>().real() == double(1), "");
-  static_assert(one_zero<double>().imag() == double(0), "");
+  static_assert(one_zero<float>().real() == float(1));
+  static_assert(one_zero<float>().imag() == float(0));
+  static_assert(one_zero<double>().real() == double(1));
+  static_assert(one_zero<double>().imag() == double(0));
 }
 
 } // namespace real_imag
@@ -369,17 +359,17 @@ constexpr c10::complex<scalar_t> d(scalar_t value) {
 template <typename scalar_t>
 C10_HOST_DEVICE void test_arithmetic_assign_scalar() {
   constexpr c10::complex<scalar_t> x = p(scalar_t(1));
-  static_assert(x.real() == scalar_t(3), "");
-  static_assert(x.imag() == scalar_t(2), "");
+  static_assert(x.real() == scalar_t(3));
+  static_assert(x.imag() == scalar_t(2));
   constexpr c10::complex<scalar_t> y = m(scalar_t(1));
-  static_assert(y.real() == scalar_t(1), "");
-  static_assert(y.imag() == scalar_t(2), "");
+  static_assert(y.real() == scalar_t(1));
+  static_assert(y.imag() == scalar_t(2));
   constexpr c10::complex<scalar_t> z = t(scalar_t(2));
-  static_assert(z.real() == scalar_t(4), "");
-  static_assert(z.imag() == scalar_t(4), "");
+  static_assert(z.real() == scalar_t(4));
+  static_assert(z.imag() == scalar_t(4));
   constexpr c10::complex<scalar_t> t = d(scalar_t(2));
-  static_assert(t.real() == scalar_t(1), "");
-  static_assert(t.imag() == scalar_t(1), "");
+  static_assert(t.real() == scalar_t(1));
+  static_assert(t.imag() == scalar_t(1));
 }
 
 template <typename scalar_t, typename rhs_t>
@@ -426,34 +416,34 @@ template <typename scalar_t>
 C10_HOST_DEVICE void test_arithmetic_assign_complex() {
   using namespace c10::complex_literals;
   constexpr c10::complex<scalar_t> x2 = p(scalar_t(2), scalar_t(2), 1.0_if);
-  static_assert(x2.real() == scalar_t(2), "");
-  static_assert(x2.imag() == scalar_t(3), "");
+  static_assert(x2.real() == scalar_t(2));
+  static_assert(x2.imag() == scalar_t(3));
   constexpr c10::complex<scalar_t> x3 = p(scalar_t(2), scalar_t(2), 1.0_id);
-  static_assert(x3.real() == scalar_t(2), "");
+  static_assert(x3.real() == scalar_t(2));
 
-  static_assert(x3.imag() == scalar_t(3), "");
+  static_assert(x3.imag() == scalar_t(3));
 
   constexpr c10::complex<scalar_t> y2 = m(scalar_t(2), scalar_t(2), 1.0_if);
-  static_assert(y2.real() == scalar_t(2), "");
-  static_assert(y2.imag() == scalar_t(1), "");
+  static_assert(y2.real() == scalar_t(2));
+  static_assert(y2.imag() == scalar_t(1));
   constexpr c10::complex<scalar_t> y3 = m(scalar_t(2), scalar_t(2), 1.0_id);
-  static_assert(y3.real() == scalar_t(2), "");
+  static_assert(y3.real() == scalar_t(2));
 
-  static_assert(y3.imag() == scalar_t(1), "");
+  static_assert(y3.imag() == scalar_t(1));
 
   constexpr c10::complex<scalar_t> z2 = t(scalar_t(1), scalar_t(-2), 1.0_if);
-  static_assert(z2.real() == scalar_t(2), "");
-  static_assert(z2.imag() == scalar_t(1), "");
+  static_assert(z2.real() == scalar_t(2));
+  static_assert(z2.imag() == scalar_t(1));
   constexpr c10::complex<scalar_t> z3 = t(scalar_t(1), scalar_t(-2), 1.0_id);
-  static_assert(z3.real() == scalar_t(2), "");
-  static_assert(z3.imag() == scalar_t(1), "");
+  static_assert(z3.real() == scalar_t(2));
+  static_assert(z3.imag() == scalar_t(1));
 
   constexpr c10::complex<scalar_t> t2 = d(scalar_t(-1), scalar_t(2), 1.0_if);
-  static_assert(t2.real() == scalar_t(2), "");
-  static_assert(t2.imag() == scalar_t(1), "");
+  static_assert(t2.real() == scalar_t(2));
+  static_assert(t2.imag() == scalar_t(1));
   constexpr c10::complex<scalar_t> t3 = d(scalar_t(-1), scalar_t(2), 1.0_id);
-  static_assert(t3.real() == scalar_t(2), "");
-  static_assert(t3.imag() == scalar_t(1), "");
+  static_assert(t3.real() == scalar_t(2));
+  static_assert(t3.imag() == scalar_t(1));
 }
 
 MAYBE_GLOBAL void test_arithmetic_assign() {
@@ -469,62 +459,49 @@ namespace arithmetic {
 
 template <typename scalar_t>
 C10_HOST_DEVICE void test_arithmetic_() {
+  static_assert(c10::complex<scalar_t>(1, 2) == +c10::complex<scalar_t>(1, 2));
   static_assert(
-      c10::complex<scalar_t>(1, 2) == +c10::complex<scalar_t>(1, 2), "");
-  static_assert(
-      c10::complex<scalar_t>(-1, -2) == -c10::complex<scalar_t>(1, 2), "");
+      c10::complex<scalar_t>(-1, -2) == -c10::complex<scalar_t>(1, 2));
 
   static_assert(
       c10::complex<scalar_t>(1, 2) + c10::complex<scalar_t>(3, 4) ==
-          c10::complex<scalar_t>(4, 6),
-      "");
+      c10::complex<scalar_t>(4, 6));
   static_assert(
       c10::complex<scalar_t>(1, 2) + scalar_t(3) ==
-          c10::complex<scalar_t>(4, 2),
-      "");
+      c10::complex<scalar_t>(4, 2));
   static_assert(
       scalar_t(3) + c10::complex<scalar_t>(1, 2) ==
-          c10::complex<scalar_t>(4, 2),
-      "");
+      c10::complex<scalar_t>(4, 2));
 
   static_assert(
       c10::complex<scalar_t>(1, 2) - c10::complex<scalar_t>(3, 4) ==
-          c10::complex<scalar_t>(-2, -2),
-      "");
+      c10::complex<scalar_t>(-2, -2));
   static_assert(
       c10::complex<scalar_t>(1, 2) - scalar_t(3) ==
-          c10::complex<scalar_t>(-2, 2),
-      "");
+      c10::complex<scalar_t>(-2, 2));
   static_assert(
       scalar_t(3) - c10::complex<scalar_t>(1, 2) ==
-          c10::complex<scalar_t>(2, -2),
-      "");
+      c10::complex<scalar_t>(2, -2));
 
   static_assert(
       c10::complex<scalar_t>(1, 2) * c10::complex<scalar_t>(3, 4) ==
-          c10::complex<scalar_t>(-5, 10),
-      "");
+      c10::complex<scalar_t>(-5, 10));
   static_assert(
       c10::complex<scalar_t>(1, 2) * scalar_t(3) ==
-          c10::complex<scalar_t>(3, 6),
-      "");
+      c10::complex<scalar_t>(3, 6));
   static_assert(
       scalar_t(3) * c10::complex<scalar_t>(1, 2) ==
-          c10::complex<scalar_t>(3, 6),
-      "");
+      c10::complex<scalar_t>(3, 6));
 
   static_assert(
       c10::complex<scalar_t>(-5, 10) / c10::complex<scalar_t>(3, 4) ==
-          c10::complex<scalar_t>(1, 2),
-      "");
+      c10::complex<scalar_t>(1, 2));
   static_assert(
       c10::complex<scalar_t>(5, 10) / scalar_t(5) ==
-          c10::complex<scalar_t>(1, 2),
-      "");
+      c10::complex<scalar_t>(1, 2));
   static_assert(
       scalar_t(25) / c10::complex<scalar_t>(3, 4) ==
-          c10::complex<scalar_t>(3, -4),
-      "");
+      c10::complex<scalar_t>(3, -4));
 }
 
 MAYBE_GLOBAL void test_arithmetic() {
@@ -543,8 +520,7 @@ void test_binary_ops_for_int_type_(T real, T img, int_t num) {
   ASSERT_EQ(num * c, c10::complex<T>(num * real, num * img));
   ASSERT_EQ(c / num, c10::complex<T>(real / num, img / num));
   ASSERT_EQ(
-      num / c,
-      c10::complex<T>(num * real / ::norm(c), -num * img / ::norm(c)));
+      num / c, c10::complex<T>(num * real / ::norm(c), -num * img / ::norm(c)));
 }
 
 template <typename T>
@@ -566,14 +542,12 @@ namespace equality {
 
 template <typename scalar_t>
 C10_HOST_DEVICE void test_equality_() {
-  static_assert(
-      c10::complex<scalar_t>(1, 2) == c10::complex<scalar_t>(1, 2), "");
-  static_assert(c10::complex<scalar_t>(1, 0) == scalar_t(1), "");
-  static_assert(scalar_t(1) == c10::complex<scalar_t>(1, 0), "");
-  static_assert(
-      c10::complex<scalar_t>(1, 2) != c10::complex<scalar_t>(3, 4), "");
-  static_assert(c10::complex<scalar_t>(1, 2) != scalar_t(1), "");
-  static_assert(scalar_t(1) != c10::complex<scalar_t>(1, 2), "");
+  static_assert(c10::complex<scalar_t>(1, 2) == c10::complex<scalar_t>(1, 2));
+  static_assert(c10::complex<scalar_t>(1, 0) == scalar_t(1));
+  static_assert(scalar_t(1) == c10::complex<scalar_t>(1, 0));
+  static_assert(c10::complex<scalar_t>(1, 2) != c10::complex<scalar_t>(3, 4));
+  static_assert(c10::complex<scalar_t>(1, 2) != scalar_t(1));
+  static_assert(scalar_t(1) != c10::complex<scalar_t>(1, 2));
 }
 
 MAYBE_GLOBAL void test_equality() {
@@ -607,14 +581,13 @@ namespace test_std {
 
 template <typename scalar_t>
 C10_HOST_DEVICE void test_callable_() {
-  static_assert(::real(c10::complex<scalar_t>(1, 2)) == scalar_t(1), "");
-  static_assert(::imag(c10::complex<scalar_t>(1, 2)) == scalar_t(2), "");
+  static_assert(::real(c10::complex<scalar_t>(1, 2)) == scalar_t(1));
+  static_assert(::imag(c10::complex<scalar_t>(1, 2)) == scalar_t(2));
   ::abs(c10::complex<scalar_t>(1, 2));
   ::arg(c10::complex<scalar_t>(1, 2));
-  static_assert(::norm(c10::complex<scalar_t>(3, 4)) == scalar_t(25), "");
+  static_assert(::norm(c10::complex<scalar_t>(3, 4)) == scalar_t(25));
   static_assert(
-      ::conj(c10::complex<scalar_t>(3, 4)) == c10::complex<scalar_t>(3, -4),
-      "");
+      ::conj(c10::complex<scalar_t>(3, 4)) == c10::complex<scalar_t>(3, -4));
   c10::polar(float(1), float(PI / 2));
   c10::polar(double(1), double(PI / 2));
 }
@@ -643,8 +616,7 @@ TEST(TestStd, BasicFunctions) {
   ASSERT_LT(
       std::abs(::sqrt(c10::complex<float>(-1e20, -4988429.2)).real()), 3e-4);
   ASSERT_LT(
-      std::abs(::sqrt(c10::complex<double>(-1e60, -4988429.2)).real()),
-      3e-4);
+      std::abs(::sqrt(c10::complex<double>(-1e60, -4988429.2)).real()), 3e-4);
 }
 
 } // namespace test_std
