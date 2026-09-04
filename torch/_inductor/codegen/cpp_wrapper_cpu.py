@@ -189,18 +189,20 @@ class DeferredCpuTritonCallWrapper:
         launcher_so: str,
         kernel_symbol: str,
     ) -> None:
-        # `std::call_once` keeps init thread-safe under concurrent first calls.
         kernel_member = f"kernels_.{self.kernel_name}_kernel_fn"
         launcher_member = f"kernels_.{self.kernel_name}_launcher_fn"
+        # Guard on the kernels_ members themselves. kernels_ is owned per
+        # AOTInductorModel and a container holds num_models of them, so a
+        # function-local static would load into whichever instance ran first and
+        # leave every other instance's pointers null.
         prefix.splice(f"""
             using namespace torch::aot_inductor;
-            static std::once_flag {self.kernel_name}_init_flag;
-            std::call_once({self.kernel_name}_init_flag, [&]() {{
+            if ({kernel_member} == nullptr) {{
                 {kernel_member} = loadCpuTritonKernel(
                     "{kernel_so}", "{kernel_symbol}", cubin_dir_);
                 {launcher_member} = loadCpuTritonLauncher(
                     "{launcher_so}", cubin_dir_);
-            }});
+            }}
             """)
 
     def _generate_launch(
@@ -1555,7 +1557,6 @@ class CppWrapperCpu(PythonWrapperCodegen):
             '#error "CPU AOTI Triton kernels are not supported on Windows"'
         )
         prefix.writeline("#endif")
-        prefix.writeline("#include <mutex>")
         prefix.writeline(
             "#include <torch/csrc/inductor/aoti_runtime/cpu_triton_runtime_wrappers.h>"
         )

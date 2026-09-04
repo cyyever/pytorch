@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 import uuid
 import zipfile
@@ -8350,6 +8351,48 @@ class AOTInductorTestsTemplate:
         self.assertEqual(new_expected_1, output_after_swap_1)
 
         runner.free_inactive_constant_buffer()
+
+    def test_cpu_triton_kernel_load_is_per_model_instance(self):
+        # kernels_ is owned per AOTInductorModel and a container holds
+        # num_models of them, so the CPU Triton kernel load has to be guarded
+        # on the kernels_ members. A once-per-process guard loads into
+        # whichever instance runs first and leaves the rest calling through
+        # null function pointers.
+        if self.device != "cpu":
+            raise unittest.SkipTest("CPU Triton backend is CPU only")
+
+        class Model(torch.nn.Module):
+            def forward(self, x, y):
+                return x + y
+
+        example_inputs = (torch.randn(64), torch.randn(64))
+        expected = Model()(*example_inputs)
+
+        with config.patch({"cpu_backend": "triton"}):
+            so_path = torch._export.aot_compile(Model(), example_inputs)
+
+        num_models = 2
+        runner = torch._C._aoti.AOTIModelContainerRunnerCpu(so_path, num_models)
+
+        # The container hands the same model back for sequential calls, so only
+        # overlapping runs reach the second instance.
+        barrier = threading.Barrier(num_models)
+        outputs: list = [None] * num_models
+
+        def run(index):
+            barrier.wait()
+            outputs[index] = runner.run(list(example_inputs))[0]
+
+        threads = [
+            threading.Thread(target=run, args=(i,)) for i in range(num_models)
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        for output in outputs:
+            self.assertEqual(expected, output)
 
     def test_create_with_external_constants(self):
         # AOTInductorModelContainerCreateWithExternalConstants: a runner
