@@ -278,11 +278,7 @@ static PyObject* THPStorage_get(THPStorage* self, PyObject* index) {
     std::optional<at::Device> device_opt = old_storage_impl->device();
     auto new_storage_impl = make_storage_impl(
         c10::StorageImpl::use_byte_size_t(),
-#ifdef THQUANTIZED
-        slicelength * sizeof(quantized_t),
-#else
         slicelength,
-#endif
         at::DataPtr(
             static_cast<void*>(data + start),
             old_storage_impl,

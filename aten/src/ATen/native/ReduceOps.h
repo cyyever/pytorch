@@ -33,10 +33,6 @@ using reduce_std_var_function =
     void (*)(TensorIterator&, double correction, bool take_sqrt);
 DECLARE_DISPATCH(reduce_std_var_function, std_var_stub)
 
-using reduce_norm_fn =
-    void (*)(Tensor&, const Tensor&, const c10::Scalar&, std::optional<int64_t>);
-DECLARE_DISPATCH(reduce_norm_fn, norm_kernel)
-
 using reduce_fn_flag = void(*)(TensorIterator &, const c10::Scalar&);
 DECLARE_DISPATCH(reduce_fn_flag, norm_stub)
 DECLARE_DISPATCH(reduce_fn_flag, powsum_stub)

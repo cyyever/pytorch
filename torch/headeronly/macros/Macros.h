@@ -82,16 +82,10 @@
 #define C10_UID __COUNTER__
 #define C10_ANONYMOUS_VARIABLE(str) C10_CONCATENATE(str, __COUNTER__)
 
-#if defined(__has_cpp_attribute)
-#define C10_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
-#else
-#define C10_HAS_CPP_ATTRIBUTE(x) (0)
-#endif
-
 /// Bind a returned reference/pointer's lifetime to a parameter (or *this) so
 /// Clang can warn when it would dangle. Expands to nothing on compilers that
 /// lack the attribute (e.g. non-clang, older nvcc).
-#if C10_HAS_CPP_ATTRIBUTE(clang::lifetimebound)
+#if __has_cpp_attribute(clang::lifetimebound)
 #define C10_LIFETIMEBOUND [[clang::lifetimebound]]
 #else
 #define C10_LIFETIMEBOUND
@@ -255,10 +249,6 @@ constexpr uint32_t CUDA_THREADS_PER_BLOCK_FALLBACK = 256;
         : ((CUDA_MAX_THREADS_PER_SM + (threads_per_block) - 1) /       \
            (threads_per_block))))
 // C10_LAUNCH_BOUNDS is analogous to __launch_bounds__
-#define C10_LAUNCH_BOUNDS_0 \
-  __launch_bounds__(        \
-      256, 4) // default launch bounds that should give good occupancy and
-              // versatility across all architectures.
 #define C10_LAUNCH_BOUNDS_1(max_threads_per_block) \
   __launch_bounds__((C10_MAX_THREADS_PER_BLOCK((max_threads_per_block))))
 #define C10_LAUNCH_BOUNDS_2(max_threads_per_block, min_blocks_per_sm) \
@@ -373,13 +363,6 @@ extern SYCL_EXTERNAL void __assert_fail(
     const char* file,
     unsigned int line,
     const char* func);
-#elif (defined(__EMSCRIPTEN__))
-// As defined in assert.h in the Emscripten stdlib
-_Noreturn void __assert_fail(
-    const char* expr,
-    const char* file,
-    int line,
-    const char* func);
 #else
 #if (defined(__CUDA_ARCH__) && !(defined(__clang__) && defined(__CUDA__)))
 // CUDA supports __assert_fail function which are common for both device
@@ -469,14 +452,6 @@ __host__ __device__
   CUDA_KERNEL_ASSERT_PRINTF(cond, __VA_ARGS__)
 #else
 #define CUDA_KERNEL_ASSERT_VERBOSE(cond, ...) CUDA_KERNEL_ASSERT(cond)
-#endif
-
-#if !defined(HAS_DEMANGLE)
-#if defined(__EMSCRIPTEN__)
-#define HAS_DEMANGLE 0
-#else
-#define HAS_DEMANGLE 1
-#endif
 #endif
 
 #define _C10_PRAGMA__(string) _Pragma(#string)

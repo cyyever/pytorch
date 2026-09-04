@@ -626,11 +626,6 @@ aten_cpu_source_non_codegen_list = [
     "aten/src/ATen/native/mkldnn/UnaryOps.cpp",
     "aten/src/ATen/native/mkldnn/Utils.cpp",
     "aten/src/ATen/native/mkldnn/Matmul.cpp",
-    # This is moved to aten_cpu because some of the custom ops use empty_with_tail_padding
-    # which was available only within aten_native_cpu. Ideally the right fix is to make
-    # empty_with_tail_padding into an op and use dispatcher with it. But exposing it as an op
-    # has limited use and hence does not seem to really make sense.
-    "aten/src/ATen/native/utils/Factory.cpp",
     "aten/src/ATen/SavedTensorHooks.cpp",
     "aten/src/ATen/NodeCreationHooks.cpp",
     "aten/src/ATen/native/prim_native_functions.cpp",

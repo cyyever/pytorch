@@ -9,7 +9,6 @@ import contextlib
 import gc
 import operator
 import os
-import platform
 import pprint
 import re
 import shutil
@@ -88,7 +87,6 @@ __all__ = [
     "tempdir",
     "IS_PYPY",
     "HAS_REFCOUNT",
-    "IS_WASM",
     "suppress_warnings",
     "assert_array_compare",
     "assert_no_gc_cycles",
@@ -99,7 +97,6 @@ __all__ = [
 
 verbose = 0
 
-IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == "pypy"
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, "getrefcount", None) is not None and not IS_PYSTON
