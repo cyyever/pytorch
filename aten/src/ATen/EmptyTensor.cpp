@@ -10,20 +10,11 @@ namespace at::detail {
 namespace {
 c10::Allocator* GetCPUAllocatorMaybePinned(bool pin_memory) {
   if (pin_memory) {
-    // NB: This is not quite right, if you somehow had both CUDA and PrivateUse1 initialized
-    // in the same PyTorch build, you would ONLY ever get the CUDA pinned memory allocator.
-    // To properly support this, see https://github.com/pytorch/pytorch/issues/14560
-
-    std::optional<c10::DeviceType> opt_device_type = std::nullopt;
-    // As mentioned in Note [Accelerator Context], the accelerators in PyTorch should be mutually exclusive,
-    // and PrivateUse1 has the highest priority, followed by CUDA;
-    // However, since exclusivity between accelerators cannot be guaranteed at present,
-    // in order to ensure backward compatibility (previously the default was CUDA), CUDA are prioritized.
-    if (at::globalContext().hasCUDA()) {
-      opt_device_type = c10::DeviceType::CUDA;
-    } else {
-      opt_device_type = at::getAccelerator(false);
-    }
+    // Per Note [Accelerator Context] the accelerators are mutually exclusive,
+    // so whichever one getAccelerator reports is the one to pin with. It
+    // answers PrivateUse1 first when one is registered, which is what an
+    // out-of-tree backend loaded next to a built-in one expects.
+    std::optional<c10::DeviceType> opt_device_type = at::getAccelerator(false);
     if (opt_device_type.has_value()) {
       return at::globalContext().getPinnedMemoryAllocator(opt_device_type);
     } else {
