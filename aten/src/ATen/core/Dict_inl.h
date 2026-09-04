@@ -138,7 +138,7 @@ std::pair<typename Dict<Key, Value>::iterator, bool> Dict<Key, Value>::insert_or
 
 template<class Key, class Value>
 void Dict<Key, Value>::erase(iterator iter) const {
-  impl_->dict.erase(iter.entryRef_.iterator_);
+  impl_->dict.erase(iter.iterator_);
 }
 
 template <class Key, class Value>

@@ -104,26 +104,27 @@ private:
 template<class Key, class Value, class Iterator>
 class DictIterator final {
 public:
-   // C++17 friendly std::iterator implementation
-  using iterator_category = std::forward_iterator_tag;
+  // operator* hands out a proxy, so it cannot be a reference to anything the
+  // iterator owns: forward iterators must yield the same object from equal
+  // iterators, and the entry would dangle with the iterator besides. C++17
+  // then forbids the forward tag, so the real category goes in
+  // iterator_concept.
+  using iterator_concept = std::forward_iterator_tag;
+  using iterator_category = std::input_iterator_tag;
   using value_type = DictEntryRef<Key, Value, Iterator>;
   using difference_type = std::ptrdiff_t;
-  using pointer = value_type*;
-  using reference = value_type&;
+  using reference = value_type;
 
   explicit DictIterator() = default;
   ~DictIterator() = default;
 
-  DictIterator(const DictIterator& rhs): entryRef_(rhs.entryRef_) {}
-  DictIterator(DictIterator&& rhs) noexcept: entryRef_(std::move(rhs.entryRef_)) {}
-  DictIterator& operator=(const DictIterator& rhs) = default;
-  DictIterator& operator=(DictIterator&& rhs) noexcept {
-    entryRef_ = std::move(rhs.entryRef_);
-    return *this;
-  }
+  DictIterator(const DictIterator&) = default;
+  DictIterator(DictIterator&&) noexcept = default;
+  DictIterator& operator=(const DictIterator&) = default;
+  DictIterator& operator=(DictIterator&&) noexcept = default;
 
   DictIterator& operator++() {
-      ++entryRef_.iterator_;
+      ++iterator_;
       return *this;
   }
 
@@ -133,23 +134,37 @@ public:
       return copy;
   }
 
-  const DictEntryRef<Key, Value, Iterator>& operator*() const {
-      return entryRef_;
+  DictEntryRef<Key, Value, Iterator> operator*() const {
+      return DictEntryRef<Key, Value, Iterator>{iterator_};
   }
 
-  const DictEntryRef<Key, Value, Iterator>* operator->() const {
-    return &entryRef_;
+  // operator-> cannot hand out a pointer to a prvalue, so it hands out
+  // something that owns the entry and forwards one more arrow to it.
+  class ArrowProxy final {
+   public:
+    explicit ArrowProxy(DictEntryRef<Key, Value, Iterator> entry)
+        : entry_(std::move(entry)) {}
+    const DictEntryRef<Key, Value, Iterator>* operator->() const {
+      return &entry_;
+    }
+
+   private:
+    DictEntryRef<Key, Value, Iterator> entry_;
+  };
+
+  ArrowProxy operator->() const {
+    return ArrowProxy{**this};
   }
 
   friend difference_type operator-(const DictIterator& lhs, const DictIterator& rhs) {
-    return lhs.entryRef_.iterator_ - rhs.entryRef_.iterator_;
+    return lhs.iterator_ - rhs.iterator_;
   }
 
 private:
-  explicit DictIterator(Iterator iterator): entryRef_(std::move(iterator)) {}
+  explicit DictIterator(Iterator iterator): iterator_(std::move(iterator)) {}
 
   const Iterator& get_iterator_() const {
-    return entryRef_.iterator_;
+    return iterator_;
   }
 
   friend bool operator==(const DictIterator& lhs, const DictIterator& rhs) {
@@ -160,7 +175,7 @@ private:
     return lhs.get_iterator_() <=> rhs.get_iterator_();
   }
 
-  DictEntryRef<Key, Value, Iterator> entryRef_;
+  Iterator iterator_;
 
   friend class DictIterator<Key, Value, typename c10::detail::DictImpl::dict_map_type::iterator>;
   friend class Dict<Key, Value>;

@@ -730,7 +730,7 @@ py::object toPyObject(IValue ivalue) {
   } else if (ivalue.isGenericDict()) {
     auto dict = std::move(ivalue).toGenericDict();
     py::dict py_dict;
-    for (auto& pair : dict) {
+    for (auto pair : dict) {
       py_dict[toPyObject(IValue{pair.key()})] =
           toPyObject(IValue{pair.value()});
     }

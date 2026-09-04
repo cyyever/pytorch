@@ -28,7 +28,7 @@ void for_each_tensor_in_ivalue(
     }
   } else if (iv.isGenericDict()) {
     c10::Dict<c10::IValue, c10::IValue> dict = iv.toGenericDict();
-    for (auto& it : dict) {
+    for (auto it : dict) {
       for_each_tensor_in_ivalue(it.value(), func);
     }
   } else {

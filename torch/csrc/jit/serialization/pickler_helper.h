@@ -196,7 +196,7 @@ inline void setTensorMetadata(
     const at::Tensor& t,
     const c10::Dict<c10::IValue, c10::IValue>& metadata_idict) {
   std::unordered_map<std::string, bool> metadata;
-  for (auto& pair : metadata_idict) {
+  for (auto pair : metadata_idict) {
     auto key = *pair.key().toString();
     metadata[key] = pair.value().toBool();
   }

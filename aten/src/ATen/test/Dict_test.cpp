@@ -9,6 +9,29 @@ using c10::Dict;
 
 #define ASSERT_EQUAL(t1, t2) ASSERT_TRUE(t1.equal(t2));
 
+namespace {
+// operator* hands out a proxy, so the legacy tag has to say input; assert the
+// real category, which iterator_concept carries, against the C++20 concept.
+static_assert(std::forward_iterator<c10::Dict<string, string>::iterator>);
+} // namespace
+
+TEST(DictTest, iteratorSatisfiesTheMultipassGuarantee) {
+  // Equal forward iterators have to yield entries for the same element, and
+  // the entry has to outlive the iterator it came from.
+  Dict<string, string> dict;
+  dict.insert("key", "value");
+
+  auto iter = dict.begin();
+  auto copy = iter;
+  EXPECT_EQ(iter, copy);
+  EXPECT_EQ((*iter).key(), (*copy).key());
+  EXPECT_EQ((*iter).value(), (*copy).value());
+
+  auto entry = *dict.begin();
+  EXPECT_EQ("key", entry.key());
+  EXPECT_EQ("value", entry.value());
+}
+
 TEST(DictTest, givenEmptyDict_whenCallingEmpty_thenReturnsTrue) {
     Dict<int64_t, string> dict;
     EXPECT_TRUE(dict.empty());
