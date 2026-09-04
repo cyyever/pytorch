@@ -82,7 +82,7 @@ __device__ __forceinline__ void atomicAddVec(
     }
 #endif
   } else if constexpr (std::is_same_v<scalar_t, c10::BFloat16>) {
-#if defined(USE_ROCM) || (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
+#if defined(USE_ROCM)
     const c10::BFloat16* vals = reinterpret_cast<const c10::BFloat16*>(&vec);
     #pragma unroll
     for (int i = 0; i < N; i++) {

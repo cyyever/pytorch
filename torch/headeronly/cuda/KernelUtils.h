@@ -2,7 +2,7 @@
 
 #include <torch/headeronly/cuda/Atomic.h>
 
-#if !(defined(USE_ROCM) || ((defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))))
+#if !defined(USE_ROCM)
 #include <cuda_bf16.h>
 #endif
 
@@ -82,11 +82,6 @@ __device__ __forceinline__ void fastSpecializedAtomicAdd(
     index_t index,
     const index_t numel,
     scalar_t value) {
-#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
-  gpuAtomicAddNoReturn(
-      reinterpret_cast<at::BFloat16*>(tensor) + index,
-      static_cast<at::BFloat16>(value));
-#else
   // Accounts for the chance tensor falls on an odd 16 bit alignment (ie, not 32
   // bit aligned)
   __nv_bfloat16* target_addr = reinterpret_cast<__nv_bfloat16*>(tensor + index);
@@ -117,7 +112,6 @@ __device__ __forceinline__ void fastSpecializedAtomicAdd(
         *reinterpret_cast<__nv_bfloat16*>(&value));
 #endif
   }
-#endif
 }
 
 template <

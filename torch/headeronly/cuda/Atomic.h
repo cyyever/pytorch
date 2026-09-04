@@ -6,7 +6,7 @@
 #include <torch/headeronly/util/NumericUtils.h>
 #include <torch/headeronly/util/complex.h>
 
-#if !(defined(USE_ROCM) || ((defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))))
+#if !defined(USE_ROCM)
 #include <cuda_bf16.h>
 #endif
 
@@ -229,7 +229,7 @@ inline __device__ at::Half gpuAtomicAdd(at::Half* address, at::Half val) {
 inline __device__ at::BFloat16 gpuAtomicAdd(
     at::BFloat16* address,
     at::BFloat16 val) {
-#if defined(USE_ROCM) || ((defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800)))
+#if defined(USE_ROCM)
   return AtomicFPOp<at::BFloat16>()(
       address, val, [](at::BFloat16 bsum, at::BFloat16 val) {
         return bsum + val;

@@ -131,7 +131,7 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint8_t, 4> {
     static result_type convert(source_type const& source)
     {
         result_type result;
-#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
+#if defined(__CUDA_ARCH__)
 
         uint32_t*      bf16_result_ptr = reinterpret_cast<uint32_t*>(&result);
         uint32_t const i8s             = reinterpret_cast<uint32_t const&>(source);
@@ -333,7 +333,7 @@ struct FastInterleavedAndBiasedNumericArrayConverter<bfloat16_t, uint4b_t, 8> {
     static result_type convert(source_type const& source)
     {
         result_type result;
-#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
+#if defined(__CUDA_ARCH__)
 
         uint32_t*      h          = reinterpret_cast<uint32_t*>(&result);
         uint32_t const source_i4s = reinterpret_cast<uint32_t const&>(source);
