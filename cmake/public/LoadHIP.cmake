@@ -235,7 +235,11 @@ if(PYTORCH_FOUND_HIP)
   # Find ROCM components using Config mode
   # These components will be searced for recursively in ${ROCM_PATH}
   message("\n***** Library versions from cmake find_package *****\n")
-  find_package_and_print_version(amd_comgr REQUIRED)
+  # amd_comgr and hsa-runtime64 have no direct consumer in this tree: no
+  # imported target of theirs is linked and no header of theirs is included.
+  # hip-config already pulls both in as dependencies of hip::amdhip64, so
+  # these lookups only print a version.
+  find_package_and_print_version(amd_comgr)
   find_package_and_print_version(rocrand REQUIRED)
   find_package_and_print_version(hiprand REQUIRED)
   find_package_and_print_version(rocblas REQUIRED)
@@ -262,7 +266,7 @@ if(PYTORCH_FOUND_HIP)
 
   if(UNIX)
     find_package_and_print_version(rccl)
-    find_package_and_print_version(hsa-runtime64 REQUIRED)
+    find_package_and_print_version(hsa-runtime64)
     # hipFile is Linux-only and ships with ROCm 7.14 and later, where it is required.
     if(ROCM_VERSION_DEV VERSION_GREATER_EQUAL "7.14.0")
       find_package_and_print_version(hipfile REQUIRED)
