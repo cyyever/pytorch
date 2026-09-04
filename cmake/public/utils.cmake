@@ -164,37 +164,8 @@ macro(caffe2_interface_library SRC DST)
   if(${__src_target_type} STREQUAL "STATIC_LIBRARY")
     # In the case of static library, we will need to add whole-static flags.
     target_link_libraries(${DST} INTERFACE $<LINK_LIBRARY:WHOLE_ARCHIVE,${SRC}>)
-    # Link all interface link libraries of the src target as well.
-    # For static library, we need to explicitly depend on all the libraries
-    # that are the dependent library of the source library. Note that we cannot
-    # use the populated INTERFACE_LINK_LIBRARIES property, because if one of the
-    # dependent library is not a target, cmake creates a $<LINK_ONLY:src> wrapper
-    # and then one is not able to find target "src". For more discussions, check
-    #   https://cmake.org/Bug/print_bug_page.php?bug_id=15415
-    #   https://cmake.org/pipermail/cmake-developers/2013-May/019019.html
-    # Specifically the following quote
-    #
-    # """
-    # For STATIC libraries we can define that the PUBLIC/PRIVATE/INTERFACE keys
-    # are ignored for linking and that it always populates both LINK_LIBRARIES
-    # LINK_INTERFACE_LIBRARIES.  Note that for STATIC libraries the
-    # LINK_LIBRARIES property will not be used for anything except build-order
-    # dependencies.
-    # """
-    target_link_libraries(${DST} INTERFACE
-        $<TARGET_PROPERTY:${SRC},LINK_LIBRARIES>)
   elseif(${__src_target_type} STREQUAL "SHARED_LIBRARY")
-    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-      target_link_libraries(${DST} INTERFACE
-          "-Wl,--no-as-needed,\"$<TARGET_FILE:${SRC}>\" -Wl,--as-needed")
-    else()
-      target_link_libraries(${DST} INTERFACE ${SRC})
-    endif()
-    # Link all interface link libraries of the src target as well.
-    # For shared libraries, we can simply depend on the INTERFACE_LINK_LIBRARIES
-    # property of the target.
-    target_link_libraries(${DST} INTERFACE
-        $<TARGET_PROPERTY:${SRC},INTERFACE_LINK_LIBRARIES>)
+    target_link_libraries(${DST} INTERFACE ${SRC})
   else()
     message(FATAL_ERROR
         "You made a CMake build file error: target " ${SRC}
