@@ -11,7 +11,7 @@
 namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
-#ifdef CPU_CAPABILITY_AVX2
+#ifdef __AVX2__
 
 struct Vectorizedi {
  protected:
@@ -36,9 +36,9 @@ struct Vectorizedi {
 
 struct Vectorizedi {}; // dummy definition to make Vectorizedi always defined
 
-#endif // CPU_CAPABILITY_AVX2
+#endif // __AVX2__
 
-#ifdef CPU_CAPABILITY_AVX2
+#ifdef __AVX2__
 
 template <>
 struct is_vec_specialized_for<int64_t> : std::bool_constant<true> {};
@@ -1218,7 +1218,7 @@ Vectorized<int8_t> inline operator*(
     const Vectorized<int8_t>& a,
     const Vectorized<int8_t>& b) {
   // We don't have an instruction for multiplying int8_t
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return int_elementwise_binary_256(a, b, std::multiplies<int8_t>());
 #else
   __m256i mask00FF = _mm256_set1_epi16(0x00FF);
@@ -1238,7 +1238,7 @@ Vectorized<uint8_t> inline operator*(
     const Vectorized<uint8_t>& a,
     const Vectorized<uint8_t>& b) {
   // We don't have an instruction for multiplying uint8_t
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return int_elementwise_binary_256(a, b, std::multiplies<uint8_t>());
 #else
   __m256i mask00FF = _mm256_set1_epi16(0x00FF);
@@ -1257,7 +1257,7 @@ template <>
 Vectorized<int64_t> inline minimum(
     const Vectorized<int64_t>& a,
     const Vectorized<int64_t>& b) {
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return emulate(a, b, [](int64_t a_point, int64_t b_point) {
     return std::min(a_point, b_point);
   });
@@ -1299,7 +1299,7 @@ template <>
 Vectorized<int64_t> inline maximum(
     const Vectorized<int64_t>& a,
     const Vectorized<int64_t>& b) {
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return emulate(a, b, [](int64_t a_point, int64_t b_point) {
     return std::max(a_point, b_point);
   });
@@ -1342,7 +1342,7 @@ Vectorized<int64_t> inline clamp(
     const Vectorized<int64_t>& a,
     const Vectorized<int64_t>& min_val,
     const Vectorized<int64_t>& max_val) {
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return emulate(
       a,
       min_val,
@@ -1391,7 +1391,7 @@ template <>
 Vectorized<int64_t> inline clamp_max(
     const Vectorized<int64_t>& a,
     const Vectorized<int64_t>& max_val) {
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return emulate(a, max_val, [](int64_t a_point, int64_t max_point) {
     return std::min(max_point, a_point);
   });
@@ -1432,7 +1432,7 @@ template <>
 Vectorized<int64_t> inline clamp_min(
     const Vectorized<int64_t>& a,
     const Vectorized<int64_t>& min_val) {
-#ifndef CPU_CAPABILITY_AVX2
+#ifndef __AVX2__
   return emulate(a, min_val, [](int64_t a_point, int64_t min_point) {
     return std::max(min_point, a_point);
   });

@@ -2,9 +2,10 @@ include(CheckCXXSourceCompiles)
 include(CheckCXXCompilerFlag)
 include(CMakePushCheckState)
 
-# ---[ Check if the compiler has AVX/AVX2 support. We only check AVX2.
-# CXX_AVX2_FOUND gates the vectorized CPU kernels in cmake/Codegen.cmake.
-find_package(AVX) # checks AVX and AVX2
+# ---[ Check what vector extensions the compiler supports. CXX_AVX512_FOUND
+# gates the AVX-512 slice of the CPU kernels in cmake/Codegen.cmake; AVX2 needs
+# no gate, since the x86 baseline below already requires it.
+find_package(AVX)
 
 # ---[ Checks if compiler supports -fvisibility=hidden
 check_cxx_compiler_flag("-fvisibility=hidden" COMPILER_SUPPORTS_HIDDEN_VISIBILITY)
@@ -62,5 +63,27 @@ if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
     string(APPEND CMAKE_CXX_FLAGS " -march=${TORCH_X86_BASELINE}")
   else()
     message(WARNING "Compiler does not support -march=${TORCH_X86_BASELINE}; building for generic x86-64.")
+  endif()
+endif()
+
+# The ATen CPU kernels have no separate AVX2 slice any more (see
+# cmake/Codegen.cmake): the DEFAULT slice is the AVX2 tier. Check the macro the
+# compiler actually defines rather than trusting the flag name, so an overridden
+# TORCH_X86_BASELINE or a -march=native on a pre-AVX2 host fails here instead of
+# silently building scalar kernels.
+if(CPU_INTEL)
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_CXX_FLAGS}")
+  check_cxx_source_compiles("
+    #if !defined(__AVX2__) || !defined(__FMA__)
+    #error no avx2
+    #endif
+    int main() { return 0; }" TORCH_X86_BASELINE_HAS_AVX2)
+  cmake_pop_check_state()
+  if(NOT TORCH_X86_BASELINE_HAS_AVX2)
+    message(FATAL_ERROR
+        "x86 builds require AVX2 and FMA, but the compiler does not define "
+        "__AVX2__/__FMA__ with the selected flags "
+        "(TORCH_X86_BASELINE=${TORCH_X86_BASELINE}, USE_NATIVE_ARCH=${USE_NATIVE_ARCH}).")
   endif()
 endif()

@@ -1887,7 +1887,7 @@ void upsample_bilinear2d_kernel_impl(
     std::optional<double> scales_w) {
 
   if (input.dtype() == at::kByte) {
-    #ifdef CPU_CAPABILITY_AVX2
+    #ifdef __AVX2__
       if (input.size(1) <= 4) {
         return upsample_avx_bilinear_bicubic_uint8<scale_t, HelperInterpLinear>(input,
           output, align_corners, {scales_h, scales_w},
@@ -1901,7 +1901,7 @@ void upsample_bilinear2d_kernel_impl(
           input, output, align_corners, {scales_h, scales_w},
           /*antialias=*/false);
       }
-    #endif  // CPU_CAPABILITY_AVX2
+    #endif  // __AVX2__
     return upsample_separable_Nd_kernel_impl<2, scale_t, HelperInterpLinear>(
       output, input, align_corners, {scales_h, scales_w},
       /*antialias=*/false);
@@ -1917,7 +1917,7 @@ void upsample_bilinear2d_aa_kernel_impl(
     std::optional<double> scales_h,
     std::optional<double> scales_w) {
   if (input.dtype() == at::kByte) {
-    #ifdef CPU_CAPABILITY_AVX2
+    #ifdef __AVX2__
       if (input.size(1) <= 4) {
         return upsample_avx_bilinear_bicubic_uint8<scale_t, HelperInterpLinear>(
           input, output, align_corners, {scales_h, scales_w},
@@ -1931,7 +1931,7 @@ void upsample_bilinear2d_aa_kernel_impl(
           input, output, align_corners, {scales_h, scales_w},
           /*antialias=*/true);
       }
-    #endif  // CPU_CAPABILITY_AVX2
+    #endif  // __AVX2__
   }
   return upsample_separable_Nd_kernel_impl<2, scale_t, HelperInterpLinear>(
     output, input, align_corners, {scales_h, scales_w},
@@ -1963,7 +1963,7 @@ void upsample_bicubic2d_kernel_impl(
     std::optional<double> scales_w) {
 
   if (input.dtype() == at::kByte) {
-    #ifdef CPU_CAPABILITY_AVX2
+    #ifdef __AVX2__
       if (input.size(1) <= 4) {
         return upsample_avx_bilinear_bicubic_uint8<scale_t, HelperInterpCubic>(input,
           output, align_corners, {scales_h, scales_w},
@@ -1977,7 +1977,7 @@ void upsample_bicubic2d_kernel_impl(
           input, output, align_corners, {scales_h, scales_w},
           /*antialias=*/false);
       }
-    #endif  // CPU_CAPABILITY_AVX2
+    #endif  // __AVX2__
     return upsample_separable_Nd_kernel_impl<2, scale_t, HelperInterpCubic>(
       output, input, align_corners, {scales_h, scales_w},
       /*antialias=*/false);
@@ -1994,7 +1994,7 @@ void upsample_bicubic2d_aa_kernel_impl(
     std::optional<double> scales_w) {
 
   if (input.dtype() == at::kByte) {
-    #ifdef CPU_CAPABILITY_AVX2
+    #ifdef __AVX2__
       if (input.size(1) <= 4) {
         return upsample_avx_bilinear_bicubic_uint8<scale_t, HelperInterpCubic>(
           input, output, align_corners, {scales_h, scales_w},
@@ -2008,7 +2008,7 @@ void upsample_bicubic2d_aa_kernel_impl(
           input, output, align_corners, {scales_h, scales_w},
           /*antialias=*/true);
       }
-    #endif  // CPU_CAPABILITY_AVX2
+    #endif  // __AVX2__
   }
   return upsample_separable_Nd_kernel_impl<2, scale_t, HelperInterpCubic>(
     output, input, align_corners, {scales_h, scales_w},
@@ -2023,7 +2023,7 @@ void upsample_lanczos2d_aa_kernel_impl(
     std::optional<double> scales_w) {
 
   if (input.dtype() == at::kByte) {
-    #ifdef CPU_CAPABILITY_AVX2
+    #ifdef __AVX2__
       if (input.size(1) <= 4) {
         return upsample_avx_bilinear_bicubic_uint8<scale_t, HelperInterpLanczos>(
           input, output, align_corners, {scales_h, scales_w},
@@ -2037,7 +2037,7 @@ void upsample_lanczos2d_aa_kernel_impl(
           input, output, align_corners, {scales_h, scales_w},
           /*antialias=*/true);
       }
-    #endif  // CPU_CAPABILITY_AVX2
+    #endif  // __AVX2__
   }
   return upsample_separable_Nd_kernel_impl<2, scale_t, HelperInterpLanczos>(
     output, input, align_corners, {scales_h, scales_w},

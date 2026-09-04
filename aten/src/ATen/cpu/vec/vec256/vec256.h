@@ -36,7 +36,7 @@ namespace at::vec {
 // accessed as `at::vec`.
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX2)
+#if defined(__AVX2__)
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CAST (AVX2) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -372,7 +372,7 @@ inline Vectorized<bool> operator&&(
   return ret;
 }
 
-#endif // (defined(CPU_CAPABILITY_AVX2)
+#endif // (defined(__AVX2__)
 
 } // namespace CPU_CAPABILITY
 } // namespace at::vec

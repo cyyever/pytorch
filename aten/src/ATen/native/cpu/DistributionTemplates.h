@@ -10,7 +10,7 @@
 #include <ATen/native/cpu/Loops.h>
 #include <mutex>
 
-#ifdef CPU_CAPABILITY_AVX2
+#ifdef __AVX2__
 #include <ATen/native/cpu/avx_mathfun.h>
 #include <c10/util/irange.h>
 #endif
@@ -108,7 +108,7 @@ struct NormalFill16 {
   }
 };
 
-#if defined(CPU_CAPABILITY_AVX2)
+#if defined(__AVX2__)
 
 template <>
 struct NormalFill16<float, true> {

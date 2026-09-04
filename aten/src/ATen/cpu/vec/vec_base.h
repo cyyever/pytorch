@@ -43,7 +43,7 @@
 #endif
 
 // These macros helped us unify vec_base.h
-#ifdef CPU_CAPABILITY_AVX512
+#ifdef __AVX512F__
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(64)))
 #else
@@ -58,7 +58,7 @@
 #define __at_align__
 #endif
 #define VECTOR_WIDTH 16
-#else // CPU_CAPABILITY_AVX512
+#else // __AVX512F__
 #if defined(__GNUC__)
 #define __at_align__ __attribute__((aligned(32)))
 #else
@@ -66,7 +66,7 @@
 #endif
 #define VECTOR_WIDTH 32
 #define int_vector __m256i
-#endif // CPU_CAPABILITY_AVX512
+#endif // __AVX512F__
 
 // See Note [CPU_CAPABILITY namespace]
 namespace at::vec::inline CPU_CAPABILITY {
@@ -993,31 +993,31 @@ VECTORIZED_SUPPORT_SCALARS_FOR_BINARY_FUNC(clamp_min)
 
 struct Vectorizedi;
 
-#if defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX2__) || defined(__AVX512F__)
 template <class T, typename Op>
 static inline Vectorized<T> bitwise_binary_op(
     const Vectorized<T>& a,
     const Vectorized<T>& b,
     Op op) {
   int_vector buffer;
-#if defined(CPU_CAPABILITY_AVX2)
-  int_vector a_buffer =
-      _mm256_load_si256(reinterpret_cast<const int_vector*>((const T*)a));
-  int_vector b_buffer =
-      _mm256_load_si256(reinterpret_cast<const int_vector*>((const T*)b));
-#elif defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   int_vector a_buffer =
       _mm512_load_si512(reinterpret_cast<const int_vector*>((const T*)a));
   int_vector b_buffer =
       _mm512_load_si512(reinterpret_cast<const int_vector*>((const T*)b));
+#elif defined(__AVX2__)
+  int_vector a_buffer =
+      _mm256_load_si256(reinterpret_cast<const int_vector*>((const T*)a));
+  int_vector b_buffer =
+      _mm256_load_si256(reinterpret_cast<const int_vector*>((const T*)b));
 #endif
   buffer = op(a_buffer, b_buffer);
   __at_align__ std::array<T, Vectorized<T>::size()> results{};
 
-#if defined(CPU_CAPABILITY_AVX2)
-  _mm256_store_si256(reinterpret_cast<int_vector*>(results.data()), buffer);
-#elif defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   _mm512_store_si512(reinterpret_cast<int_vector*>(results.data()), buffer);
+#elif defined(__AVX2__)
+  _mm256_store_si256(reinterpret_cast<int_vector*>(results.data()), buffer);
 #endif
   return Vectorized<T>::loadu(results.data());
 }
@@ -1029,12 +1029,12 @@ template <
 inline Vectorized<T> operator&(const Vectorized<T>& a, const Vectorized<T>& b) {
   // We enclose _mm512_and_si512 or _mm256_and_si256 with lambda because it is
   // always_inline
-#if defined(CPU_CAPABILITY_AVX2)
-  return bitwise_binary_op(
-      a, b, [](int_vector a, int_vector b) { return _mm256_and_si256(a, b); });
-#elif defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   return bitwise_binary_op(
       a, b, [](int_vector a, int_vector b) { return _mm512_and_si512(a, b); });
+#elif defined(__AVX2__)
+  return bitwise_binary_op(
+      a, b, [](int_vector a, int_vector b) { return _mm256_and_si256(a, b); });
 #endif
 }
 template <
@@ -1044,12 +1044,12 @@ template <
 inline Vectorized<T> operator|(const Vectorized<T>& a, const Vectorized<T>& b) {
   // We enclose _mm512_or_si512 or _mm256_or_si256 with lambda because it is
   // always_inline
-#if defined(CPU_CAPABILITY_AVX2)
-  return bitwise_binary_op(
-      a, b, [](int_vector a, int_vector b) { return _mm256_or_si256(a, b); });
-#elif defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   return bitwise_binary_op(
       a, b, [](int_vector a, int_vector b) { return _mm512_or_si512(a, b); });
+#elif defined(__AVX2__)
+  return bitwise_binary_op(
+      a, b, [](int_vector a, int_vector b) { return _mm256_or_si256(a, b); });
 #endif
 }
 template <
@@ -1059,12 +1059,12 @@ template <
 inline Vectorized<T> operator^(const Vectorized<T>& a, const Vectorized<T>& b) {
   // We enclose _mm512_xor_si512 or _mm256_xor_si256 with lambda because it is
   // always_inline
-#if defined(CPU_CAPABILITY_AVX2)
-  return bitwise_binary_op(
-      a, b, [](int_vector a, int_vector b) { return _mm256_xor_si256(a, b); });
-#elif defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   return bitwise_binary_op(
       a, b, [](int_vector a, int_vector b) { return _mm512_xor_si512(a, b); });
+#elif defined(__AVX2__)
+  return bitwise_binary_op(
+      a, b, [](int_vector a, int_vector b) { return _mm256_xor_si256(a, b); });
 #endif
 }
 
@@ -1129,7 +1129,7 @@ inline Vectorized<T> operator^(const Vectorized<T>& a, const Vectorized<T>& b) {
   return bitwise_binary_op(a, b, std::bit_xor<>());
 }
 
-#endif // defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)
+#endif // defined(__AVX2__) || defined(__AVX512F__)
 
 VECTORIZED_SUPPORT_SCALARS_FOR_BINARY_OP(&)
 VECTORIZED_SUPPORT_SCALARS_FOR_BINARY_OP(|)

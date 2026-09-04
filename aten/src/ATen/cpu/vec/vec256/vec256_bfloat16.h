@@ -10,7 +10,7 @@ namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX2)
+#if defined(__AVX2__)
 
 template <>
 struct is_vec_specialized_for<BFloat16> : std::bool_constant<true> {};
@@ -286,13 +286,13 @@ Vectorized<BFloat16> inline fnmsub(
 CONVERT_VECTORIZED_INIT(BFloat16, bfloat16)
 LOAD_FP32_VECTORIZED_INIT(BFloat16, bf16)
 
-#else // defined(CPU_CAPABILITY_AVX2)
+#else // defined(__AVX2__)
 
 #if !(defined(__aarch64__) && !defined(__CUDACC__))
 CONVERT_NON_VECTORIZED_INIT(BFloat16, bfloat16)
 #endif
 
 LOAD_FP32_NON_VECTORIZED_INIT(BFloat16, bf16)
-#endif // defined(CPU_CAPABILITY_AVX2)
+#endif // defined(__AVX2__)
 } // namespace CPU_CAPABILITY
 } // namespace at::vec

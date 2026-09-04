@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 #include <ATen/cpu/vec/vec512/vec512.h>
 #else
 #include <ATen/cpu/vec/vec128/vec128.h>

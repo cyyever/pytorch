@@ -284,8 +284,21 @@ if(INTERN_BUILD_ATEN_OPS)
   # different vectorization options
   file(GLOB cpu_kernel_cpp_in "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/cpu/*.cpp" "${PROJECT_SOURCE_DIR}/aten/src/ATen/native/quantized/cpu/kernels/*.cpp")
 
+  # Some versions of GCC pessimistically split unaligned load and store
+  # instructions when using the default tuning. This is a bad choice on
+  # new Intel and AMD processors so we disable it.
+  # See https://stackoverflow.com/questions/52626726/why-doesnt-gcc-resolve-mm256-loadu-pd-as-single-vmovupd#tab-top
+  check_cxx_compiler_flag("-mno-avx256-split-unaligned-load -mno-avx256-split-unaligned-store" COMPILER_SUPPORTS_NO_AVX256_SPLIT)
+  if(COMPILER_SUPPORTS_NO_AVX256_SPLIT)
+    set(CPU_NO_AVX256_SPLIT_FLAGS "-mno-avx256-split-unaligned-load -mno-avx256-split-unaligned-store")
+  endif()
+
+  # The x86 baseline (see cmake/MiscCheck.cmake) is at least x86-64-v3, so the
+  # DEFAULT slice already has AVX2, FMA and F16C. There is no separate AVX2
+  # slice: it would compile the same code twice and dispatch between two
+  # identical implementations.
   list(APPEND CPU_CAPABILITY_NAMES "DEFAULT")
-  list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG}")
+  list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} ${CPU_NO_AVX256_SPLIT_FLAGS}")
 
   if(CXX_AVX512_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
     add_compile_definitions("HAVE_AVX512_CPU_DEFINITION")
@@ -297,30 +310,6 @@ if(INTERN_BUILD_ATEN_OPS)
     # gcc does not imply -mf16c from -mavx512f; without it C10_X86_F16 is off
     # here and the half conversions fall back to software.
     list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma -mf16c")
-  endif()
-
-  if(CXX_AVX2_FOUND AND NOT "$ENV{USE_CPU_VECTORIZATION}" STREQUAL "0")
-    add_compile_definitions("HAVE_AVX2_CPU_DEFINITION")
-    if(USE_ROCM)
-      string(APPEND CMAKE_HIP_FLAGS " -DHAVE_AVX2_CPU_DEFINITION")
-    endif()
-
-    # Some versions of GCC pessimistically split unaligned load and store
-    # instructions when using the default tuning. This is a bad choice on
-    # new Intel and AMD processors so we disable it when compiling with AVX2.
-    # See https://stackoverflow.com/questions/52626726/why-doesnt-gcc-resolve-mm256-loadu-pd-as-single-vmovupd#tab-top
-    check_cxx_compiler_flag("-mno-avx256-split-unaligned-load -mno-avx256-split-unaligned-store" COMPILER_SUPPORTS_NO_AVX256_SPLIT)
-    if(COMPILER_SUPPORTS_NO_AVX256_SPLIT)
-      set(CPU_NO_AVX256_SPLIT_FLAGS "-mno-avx256-split-unaligned-load -mno-avx256-split-unaligned-store")
-    endif(COMPILER_SUPPORTS_NO_AVX256_SPLIT)
-
-    list(APPEND CPU_CAPABILITY_NAMES "AVX2")
-    if("$ENV{ATEN_AVX512_256}" MATCHES "TRUE" AND CXX_AVX512_FOUND)
-      message("-- ATen AVX2 kernels will use 32 ymm registers")
-      list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -march=native ${CPU_NO_AVX256_SPLIT_FLAGS}")
-    else()
-      list(APPEND CPU_CAPABILITY_FLAGS "${OPT_FLAG} -mavx2 -mfma -mf16c ${CPU_NO_AVX256_SPLIT_FLAGS}")
-    endif()
   endif()
 
 

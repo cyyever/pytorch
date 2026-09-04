@@ -19,7 +19,7 @@ static inline void transpose_pad_2x32_block(
     int64_t ld_src,
     int krem = 2,
     int nrem = 32) {
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   __m512i r0, r1;
   __m512i d0, d1;
   // load
@@ -81,7 +81,7 @@ static inline void pack_vnni2(
     int64_t ld_src,
     int64_t K,
     int64_t N) {
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
   int64_t bk = 0;
   int64_t _K = K / 2 * 2;
   int64_t _N = N / 32 * 32;

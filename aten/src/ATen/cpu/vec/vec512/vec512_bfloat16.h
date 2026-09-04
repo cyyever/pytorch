@@ -9,7 +9,7 @@
 
 #include <limits>
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 #define SLEEF_STATIC_LIBS
 #include <sleef.h>
 #endif
@@ -18,7 +18,7 @@ namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 
 #ifndef SLEEF_CONST
 #define SLEEF_CONST const
@@ -1894,7 +1894,7 @@ Vectorized<Half> inline fnmsub(
 CONVERT_VECTORIZED_INIT(BFloat16, bfloat16)
 CONVERT_VECTORIZED_INIT(Half, half)
 
-#else // defined(CPU_CAPABILITY_AVX512)
+#else // defined(__AVX512F__)
 
 #define CONVERT_NON_VECTORIZED_INIT(type, name)                     \
   inline std::tuple<Vectorized<float>, Vectorized<float>>           \
@@ -1926,9 +1926,9 @@ CONVERT_VECTORIZED_INIT(Half, half)
 CONVERT_NON_VECTORIZED_INIT(BFloat16, bfloat16)
 CONVERT_NON_VECTORIZED_INIT(Half, half)
 
-#endif // defined(CPU_CAPABILITY_AVX512)
+#endif // defined(__AVX512F__)
 
-#if defined(CPU_CAPABILITY_AVX512)
+#if defined(__AVX512F__)
 #define LOAD_FP32_VECTORIZED_INIT(type, name)                                 \
   inline void load_fp32_from_##name(                                          \
       const type* data, Vectorized<float>& out) {                             \
@@ -1949,7 +1949,7 @@ CONVERT_NON_VECTORIZED_INIT(Half, half)
 LOAD_FP32_VECTORIZED_INIT(BFloat16, bf16)
 LOAD_FP32_VECTORIZED_INIT(Half, fp16)
 
-#else // defined(CPU_CAPABILITY_AVX512)
+#else // defined(__AVX512F__)
 #define LOAD_FP32_NON_VECTORIZED_INIT(type, name)                           \
   inline void load_fp32_from_##name(                                        \
       const type* data, Vectorized<float>& out) {                           \

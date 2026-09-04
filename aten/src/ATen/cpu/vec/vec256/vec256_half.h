@@ -10,7 +10,7 @@ namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
 inline namespace CPU_CAPABILITY {
 
-#ifdef CPU_CAPABILITY_AVX2
+#ifdef __AVX2__
 
 template <>
 struct is_vec_specialized_for<Half> : std::bool_constant<true> {};
@@ -286,13 +286,13 @@ Vectorized<Half> inline fnmsub(
 CONVERT_VECTORIZED_INIT(Half, half)
 LOAD_FP32_VECTORIZED_INIT(Half, fp16)
 
-#else // defined(CPU_CAPABILITY_AVX2)
+#else // defined(__AVX2__)
 
 #if !(defined(__aarch64__) && !defined(__CUDACC__))
 CONVERT_NON_VECTORIZED_INIT(Half, half)
 #endif
 
 LOAD_FP32_NON_VECTORIZED_INIT(Half, fp16)
-#endif // defined(CPU_CAPABILITY_AVX2)
+#endif // defined(__AVX2__)
 } // namespace CPU_CAPABILITY
 } // namespace at::vec
