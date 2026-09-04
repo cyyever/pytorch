@@ -232,6 +232,26 @@ if(NOT (GENERIC_BLAS_FOUND OR MKL_FOUND OR OpenBLAS_FOUND OR VECLIB_FOUND))
   endif()
 endif()
 
+# Does this BLAS provide the bf16 and fp16 GEMM entry points? OpenBLAS only
+# builds them when configured with BUILD_BFLOAT16/BUILD_HALF, so probe rather
+# than assume. CPUBlas.cpp calls them directly when they exist, in place of
+# ATen's own kernels.
+if(USE_BLAS AND BLAS_LIBRARIES)
+  include(CheckFunctionExists)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_LIBRARIES ${BLAS_LIBRARIES})
+  check_function_exists("sbgemm_" BLAS_HAS_SBGEMM)
+  check_function_exists("shgemm_" BLAS_HAS_SHGEMM)
+  cmake_pop_check_state()
+  if(BLAS_HAS_SBGEMM)
+    add_compile_options(-DBLAS_HAS_SBGEMM)
+  endif()
+  if(BLAS_HAS_SHGEMM)
+    add_compile_options(-DBLAS_HAS_SHGEMM)
+  endif()
+endif()
+
 if(MKL_FOUND)
   if("${MKL_THREADING}" STREQUAL "SEQ")
     set(AT_MKL_SEQUENTIAL 1)
