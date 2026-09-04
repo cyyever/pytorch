@@ -69,8 +69,8 @@
 #                            in cmake/public/utils.cmake)
 #
 # Library/backend selection (passthrough or read from the environment):
-#   BLAS                     MKL, Eigen, ATLAS, FlexiBLAS, or OpenBLAS; fails the
-#                            build if the requested BLAS is not found (passthrough)
+#   BLAS                     Generic, MKL, OpenBLAS or vecLib; fails the build if
+#                            the requested BLAS is not found (passthrough)
 #   MKL_THREADING            MKL threading mode: SEQ or OMP (default)
 #   ATEN_AVX512_256=TRUE     let ATen AVX2 kernels use 32 ymm registers (read from
 #                            the environment in cmake/Codegen.cmake)
