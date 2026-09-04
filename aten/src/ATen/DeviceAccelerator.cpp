@@ -6,29 +6,8 @@
 namespace at::accelerator {
 
 std::optional<c10::DeviceType> getAccelerator(bool checked) {
-  // 1. Check PrivateUse1 backends
-  // We explicitly allow PrivateUse1 and another device at the same time as we
-  // use this for testing. Whenever a PrivateUse1 device is registered, use it
-  // first.
-  // Note that this check is only for hook registration and thus is NOT initializing
-  // the device or poisoning fork.
-  if (is_privateuse1_backend_registered()) {
-    return kPrivateUse1;
-  }
-
-  // 2. Check runtime backends
-  // This state is temporary, these runtime checks should be moved to compile-time
-  // once they provide the new isBuilt API and we are sure they're never in the
-  // same binary as another accelerator.
-#define DETECT_RUNTIME_ACCELERATOR(device_name)     \
-  if (at::has##device_name()) {                     \
-    return k##device_name;                          \
-  }
-
-
-#undef DETECT_RUNTIME_ACCELERATOR
-
-  // 2. Check compile-time backends
+  // Check the compile-time backends. They are mutually exclusive, so finding
+  // two of them built into one binary is a build error, not a choice to make.
   std::optional<c10::DeviceType> device_type = std::nullopt;
 
 #define DETECT_AND_ASSIGN_ACCELERATOR_COMP(device_name) \
@@ -44,6 +23,15 @@ std::optional<c10::DeviceType> getAccelerator(bool checked) {
   DETECT_AND_ASSIGN_ACCELERATOR_COMP(XPU)
   DETECT_AND_ASSIGN_ACCELERATOR_COMP(HIP)
   DETECT_AND_ASSIGN_ACCELERATOR_COMP(MPS)
+
+  // A PrivateUse1 backend registers itself at run time rather than being built
+  // in, so it is asked for last: an out-of-tree backend loaded next to a
+  // built-in accelerator does not displace it. The check is on hook
+  // registration alone and so initializes no device and poisons no fork.
+  if (!device_type.has_value() && is_privateuse1_backend_registered()) {
+    device_type = kPrivateUse1;
+  }
+
   if (checked) {
     TORCH_CHECK(
         device_type, "Cannot access accelerator device when none is available.")
