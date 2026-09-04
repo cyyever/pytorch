@@ -189,18 +189,19 @@ class DeferredCpuTritonCallWrapper:
         launcher_so: str,
         kernel_symbol: str,
     ) -> None:
-        # `std::call_once` keeps init thread-safe under concurrent first calls.
+        # A function-local static keeps init thread-safe under concurrent first
+        # calls.
         kernel_member = f"kernels_.{self.kernel_name}_kernel_fn"
         launcher_member = f"kernels_.{self.kernel_name}_launcher_fn"
         prefix.splice(f"""
             using namespace torch::aot_inductor;
-            static std::once_flag {self.kernel_name}_init_flag;
-            std::call_once({self.kernel_name}_init_flag, [&]() {{
+            static bool {self.kernel_name}_loaded [[maybe_unused]] = [&] {{
                 {kernel_member} = loadCpuTritonKernel(
                     "{kernel_so}", "{kernel_symbol}", cubin_dir_);
                 {launcher_member} = loadCpuTritonLauncher(
                     "{launcher_so}", cubin_dir_);
-            }});
+                return true;
+            }}();
             """)
 
     def _generate_launch(
@@ -1507,7 +1508,6 @@ class CppWrapperCpu(PythonWrapperCodegen):
     def _write_cpu_triton_runtime_includes(prefix: IndentedBuffer) -> None:
         """One-time includes/guards needed by emitted CPU Triton wrappers."""
         prefix.writeline("// CPU AOTI Triton kernel wrappers")
-        prefix.writeline("#include <mutex>")
         prefix.writeline(
             "#include <torch/csrc/inductor/aoti_runtime/cpu_triton_runtime_wrappers.h>"
         )

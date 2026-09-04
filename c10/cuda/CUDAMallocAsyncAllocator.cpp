@@ -62,7 +62,7 @@ struct PtrUsage {
 };
 
 int device_count = 0;
-// these don't need to be c10::once_flags as in CUDAGeneratorImpl.cpp
+// these don't need to be std::once_flags as in CUDAGeneratorImpl.cpp
 // because they'll only be flipped by functions that have locked the mutex.
 std::vector<bool> devs_initialized_flags;
 std::vector<UsageStream> dummy_unifying_free_streams;

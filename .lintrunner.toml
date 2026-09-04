@@ -906,31 +906,6 @@ command = [
 ]
 
 [[linter]]
-code = 'CALL_ONCE'
-include_patterns = [
-    'c10/**',
-    'aten/**',
-    'torch/csrc/**',
-    'torch/nativert/**',
-]
-exclude_patterns = [
-    'c10/util/CallOnce.h',
-]
-command = [
-    'python3',
-    'tools/linter/adapters/grep_linter.py',
-    '--pattern=std::call_once',
-    '--linter-name=CALL_ONCE',
-    '--error-name=invalid call_once',
-    '--replace-pattern=s/std::call_once/c10::call_once/',
-    """--error-description=\
-        Use of std::call_once is forbidden and should be replaced with c10::call_once\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
-
-[[linter]]
 code = 'CONTEXT_DECORATOR'
 include_patterns = [
     'torch/**',
@@ -945,30 +920,6 @@ command = [
     """--error-description=\
         Do not use context manager as decorator as it breaks cProfile traces.  Use it as \
         a context manager instead\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
-
-[[linter]]
-code = 'ONCE_FLAG'
-include_patterns = [
-    'c10/**',
-    'aten/**',
-    'torch/csrc/**',
-    'torch/nativert/**',
-]
-exclude_patterns = [
-]
-command = [
-    'python3',
-    'tools/linter/adapters/grep_linter.py',
-    '--pattern=std::once_flag',
-    '--linter-name=ONCE_FLAG',
-    '--error-name=invalid once_flag',
-    '--replace-pattern=s/std::once_flag/c10::once_flag/',
-    """--error-description=\
-        Use of std::once_flag is forbidden and should be replaced with c10::once_flag\
     """,
     '--',
     '@{{PATHSFILE}}'

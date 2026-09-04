@@ -4,7 +4,6 @@
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/mps/MPSStream.h>
 #include <c10/metal/error.h>
-#include <c10/util/CallOnce.h>
 #include <c10/util/irange.h>
 
 #include <array>
@@ -309,7 +308,6 @@ namespace {
 constexpr int kMPSStreamsPerPool = 32;
 
 std::array<MPSStream*, kMPSStreamsPerPool> stream_pool{};
-c10::once_flag stream_pool_flag;
 std::atomic<uint32_t> stream_pool_counter{0};
 std::atomic<bool> stream_pool_initialized{false};
 
@@ -323,7 +321,7 @@ void initStreamPool() {
 } // namespace
 
 MPSStream* getStreamFromPool() {
-  c10::call_once(stream_pool_flag, initStreamPool);
+  static bool stream_pool_init [[maybe_unused]] = (initStreamPool(), true);
   return stream_pool[stream_pool_counter++ % kMPSStreamsPerPool];
 }
 

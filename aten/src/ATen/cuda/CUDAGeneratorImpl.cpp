@@ -4,7 +4,7 @@
 #include <ATen/cuda/CUDAGraphsUtils.cuh>
 #include <c10/cuda/CUDACachingAllocator.h>
 #include <c10/cuda/CUDAFunctions.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <deque>
 
 namespace at {
@@ -16,7 +16,7 @@ namespace {
 int64_t num_gpus;
 
 // Ensures default_gens_cuda is initialized once.
-std::deque<c10::once_flag> cuda_gens_init_flag;
+std::deque<std::once_flag> cuda_gens_init_flag;
 
 // Default, global CUDA generators, one per GPU.
 std::vector<Generator> default_gens_cuda;
@@ -53,7 +53,7 @@ const Generator& getDefaultCUDAGenerator(DeviceIndex device_index) {
   } else {
     TORCH_CHECK(idx >= 0 && idx < num_gpus);
   }
-  c10::call_once(cuda_gens_init_flag[idx], [&] {
+  std::call_once(cuda_gens_init_flag[idx], [&] {
     default_gens_cuda[idx] = make_generator<CUDAGeneratorImpl>(idx);
     default_gens_cuda[idx].seed();
   });

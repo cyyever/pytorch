@@ -181,7 +181,7 @@ const std::vector<ValueId>& LayoutPlanner::get_unplanned_values() const {
 }
 
 void LayoutPlanner::start_worker_if_not_started() {
-  c10::call_once(worker_once_flag_, [&]() {
+  std::call_once(worker_once_flag_, [&]() {
     // make sure plan is populated by the time this
     // returns for the first time :P
     create_plan();

@@ -2,7 +2,7 @@
 #include <c10/cuda/CUDAFunctions.h>
 #include <c10/cuda/CUDAGuard.h>
 #include <c10/cuda/CUDAStream.h>
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 
@@ -38,7 +38,7 @@ int max_stream_priorities;
 // the destruction.
 #if !defined(USE_ROCM)
 // CUDA-only: used to initializes the stream pools (once)
-std::array<c10::once_flag, C10_COMPILE_TIME_MAX_GPUS> device_flags;
+std::array<std::once_flag, C10_COMPILE_TIME_MAX_GPUS> device_flags;
 #endif
 std::array<
     std::array<std::atomic<uint32_t>, C10_COMPILE_TIME_MAX_GPUS>,
@@ -52,7 +52,7 @@ std::array<
     c10::cuda::max_compile_time_stream_priorities>
     streams;
 #ifdef USE_ROCM
-static c10::once_flag
+static std::once_flag
     stream_flags[c10::cuda::max_compile_time_stream_priorities]
                 [C10_COMPILE_TIME_MAX_GPUS][kStreamsPerPool];
 #endif
@@ -328,7 +328,7 @@ cudaStream_t CUDAStream::stream() const {
         ")");
 #ifdef USE_ROCM
     // See Note [HIP Lazy Streams]
-    c10::call_once(
+    std::call_once(
         stream_flags[st.getStreamType() - 1][device_index][si],
         initSingleStream,
         st.getStreamType() - 1,
@@ -352,7 +352,7 @@ CUDAStream getStreamFromPool(const int priority, DeviceIndex device_index) {
 #if !defined(USE_ROCM)
   // See Note [HIP Lazy Streams]
   // CUDA-only: Initializes the stream pools (once)
-  c10::call_once(
+  std::call_once(
       device_flags[device_index], initDeviceStreamState, device_index);
 #endif
   auto pri_idx = std::clamp(-priority, 0, max_stream_priorities - 1);

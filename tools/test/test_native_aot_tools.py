@@ -808,7 +808,9 @@ class TestLauncherGeneration(unittest.TestCase):
             "mOut_s.dynamic_shapes[1] = static_cast<int32_t>(mOut.size(1));", src
         )
         # Lazy module load + wrapper call with all tensor structs.
-        self.assertIn("c10::call_once(fakeop_f32_n1024_k8_loaded", src)
+        self.assertIn(
+            "static bool fakeop_f32_n1024_k8_loaded [[maybe_unused]] =", src
+        )
         self.assertIn(
             "cute_dsl_fakeop_f32_n1024_k8_wrapper(&fakeop_f32_n1024_k8_module, &mX_s, &mOut_s,",
             src,

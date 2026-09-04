@@ -1,4 +1,4 @@
-#include <c10/util/CallOnce.h>
+#include <mutex>
 #include <c10/util/irange.h>
 #include <c10/xpu/XPUException.h>
 #include <c10/xpu/XPUStream.h>
@@ -20,7 +20,7 @@ constexpr int kStreamTypeBits = 3;
 // for a device. The device flags track the initialization of each device. When
 // a queue is requested, the next queue in the pool to be returned in a
 // round-robin fashion, see Note [Stream Management].
-std::deque<c10::once_flag> device_flags;
+std::deque<std::once_flag> device_flags;
 std::vector<std::array<
     std::array<std::unique_ptr<sycl::queue>, kStreamsPerPool>,
     max_compile_time_stream_priorities>>
@@ -190,7 +190,7 @@ void initXPUStreamsOnce() {
 // Creates the reserved sycl queue pools for the specified device to ensure
 // initialization only occurs once.
 inline void initDeviceStreamOnce(DeviceIndex device) {
-  c10::call_once(device_flags[device], initDeviceStreamState, device);
+  std::call_once(device_flags[device], initDeviceStreamState, device);
 }
 
 uint32_t get_idx(std::atomic<uint32_t>& counter) {

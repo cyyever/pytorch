@@ -149,14 +149,14 @@ class CuteDslToolchain(Toolchain):
     RUNTIME_DISTS = ("nvidia-cutlass-dsl", "apache-tvm-ffi")
     REQUIRED_BUILD_KEYS = ("fn", "fake_args", "tensor_args")
 
-    # Rendered into the generated file's anonymous namespace, so the module handle,
-    # the once_flag and launch_ itself all get internal linkage.
+    # Rendered into the generated file's anonymous namespace, so the module handle
+    # and launch_ itself both get internal linkage.
     LAUNCHER_TMPL = """\
 {prefix}_Kernel_Module_t {prefix}_module;
-c10::once_flag {prefix}_loaded;
 
 void launch_{prefix}({tparams}, c10::Stream stream) {{
-  c10::call_once({prefix}_loaded, [] {{ {prefix}_Kernel_Module_Load(&{prefix}_module); }});
+  static bool {prefix}_loaded [[maybe_unused]] =
+      ({prefix}_Kernel_Module_Load(&{prefix}_module), true);
 {fills}
   int32_t rc = cute_dsl_{prefix}_wrapper(&{prefix}_module, {call_args},
                                          c10::cuda::CUDAStream(stream).stream());

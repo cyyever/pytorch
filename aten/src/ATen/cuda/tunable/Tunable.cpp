@@ -868,7 +868,7 @@ int TuningContext::GetRotatingBufferSize() const {
 }
 
 TuningResultsManager& TuningContext::GetTuningResultsManager() {
-  c10::call_once(manager_init_once_, [this]() {
+  std::call_once(manager_init_once_, [this]() {
     manager_initialized_ = true;
     if (GetFilename().empty()) {
       // if SetFilename() was not already called, call it now with the default or env var
