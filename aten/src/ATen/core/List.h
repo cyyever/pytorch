@@ -62,7 +62,7 @@ bool operator==(const ListElementReference<T, Iterator>& lhs, const T& rhs);
 template<class T>
 struct ListElementConstReferenceTraits {
   // In the general case, we use IValue::to().
-  using const_reference = typename c10::detail::ivalue_to_const_ref_overload_return<T>::type;
+  using const_reference = c10::detail::ivalue_to_const_ref_overload_return<T>::type;
 };
 
 // There is no to() overload for std::optional<std::string>.
@@ -225,7 +225,7 @@ private:
     return std::strong_ordering::equal;
   }
 
-  friend class ListIterator<T, typename c10::detail::ListImpl::list_type::iterator>;
+  friend class ListIterator<T, c10::detail::ListImpl::list_type::iterator>;
   friend class List<T>;
 };
 
@@ -260,15 +260,15 @@ private:
   // ListImpl.
   c10::intrusive_ptr<c10::detail::ListImpl> impl_;
 
-  using internal_reference_type = impl::ListElementReference<T, typename c10::detail::ListImpl::list_type::iterator>;
-  using internal_const_reference_type = typename impl::ListElementConstReferenceTraits<T>::const_reference;
+  using internal_reference_type = impl::ListElementReference<T, c10::detail::ListImpl::list_type::iterator>;
+  using internal_const_reference_type = impl::ListElementConstReferenceTraits<T>::const_reference;
 
 public:
   using value_type = T;
-  using size_type = typename c10::detail::ListImpl::list_type::size_type;
-  using iterator = impl::ListIterator<T, typename c10::detail::ListImpl::list_type::iterator>;
-  using const_iterator = impl::ListIterator<T, typename c10::detail::ListImpl::list_type::iterator>;
-  using reverse_iterator = impl::ListIterator<T, typename c10::detail::ListImpl::list_type::reverse_iterator>;
+  using size_type = c10::detail::ListImpl::list_type::size_type;
+  using iterator = impl::ListIterator<T, c10::detail::ListImpl::list_type::iterator>;
+  using const_iterator = impl::ListIterator<T, c10::detail::ListImpl::list_type::iterator>;
+  using reverse_iterator = impl::ListIterator<T, c10::detail::ListImpl::list_type::reverse_iterator>;
 
   /**
    * Constructs an empty list.
