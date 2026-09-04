@@ -33,6 +33,22 @@ index ddf7a3b8..8a810279 100644
      set(_sycl_build_shared_libs)
    else()
      if(BUILD_SHARED_LIBS)
+@@ -374,6 +376,15 @@ macro(SYCL_ADD_LIBRARY sycl_target)
+       ${_cxx_sources}
+       ${${sycl_target}_sycl_objects}
+       ${device_object})
++    if(OBJECT IN_LIST _cmake_options)
++      # CMake does not propagate generated EXTERNAL_OBJECT sources when an
++      # object library is consumed through target_link_libraries().
++      target_sources(
++        ${sycl_target}
++        INTERFACE
++        ${${sycl_target}_sycl_objects}
++        ${device_object})
++    endif()
+   else()
+     add_library(
+       ${sycl_target}
 diff --git a/src/BuildOnLinux.cmake b/src/BuildOnLinux.cmake
 index 01bc5f3e..5369236b 100644
 --- a/src/BuildOnLinux.cmake
