@@ -778,13 +778,21 @@ if(USE_GLOO)
       set(GLOO_USE_CUDA_TOOLKIT ON CACHE BOOL "" FORCE)
 
       # Disable NCCL/RCCL since we don't use Gloo+NCCL, make sure to re-enable it!
+      # gloo's own CUDA support goes with them: its only entry point here was an
+      # allreduce that needs transport::Device::hasGPUDirect(), which only the
+      # ibverbs transport ever returns true for and only with nv_peer_mem
+      # loaded. CUDA collectives go through NCCL, and gloo stages CUDA tensors
+      # through host memory.
       set(USE_NCCL_SAVED ${USE_NCCL})
       set(USE_RCCL_SAVED ${USE_RCCL})
+      set(USE_CUDA_SAVED ${USE_CUDA})
       set(USE_NCCL OFF)
       set(USE_RCCL OFF)
+      set(USE_CUDA OFF)
       add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../third_party/gloo)
       set(USE_NCCL ${USE_NCCL_SAVED})
       set(USE_RCCL ${USE_RCCL_SAVED})
+      set(USE_CUDA ${USE_CUDA_SAVED})
 
       # Here is a little bit hacky. We have to put PROJECT_BINARY_DIR in front
       # of PROJECT_SOURCE_DIR with/without conda system. The reason is that
@@ -796,7 +804,7 @@ if(USE_GLOO)
       if(NOT Gloo_FOUND)
         message(FATAL_ERROR "Cannot find gloo")
       endif()
-      message("Found gloo: ${Gloo_NATIVE_LIBRARY}, cuda lib: ${Gloo_CUDA_LIBRARY}, hip lib: ${Gloo_HIP_LIBRARY}")
+      message("Found gloo: ${Gloo_NATIVE_LIBRARY}, hip lib: ${Gloo_HIP_LIBRARY}")
       message("Found gloo include directories: ${Gloo_INCLUDE_DIRS}")
 
       # Validate that the system-installed gloo was built with the GPU flavor
@@ -806,16 +814,7 @@ if(USE_GLOO)
       set(_gloo_config_h "${Gloo_INCLUDE_DIRS}/gloo/config.h")
       if(EXISTS "${_gloo_config_h}")
         file(READ "${_gloo_config_h}" _gloo_config_contents)
-        if(USE_CUDA)
-          string(REGEX MATCH "#define GLOO_USE_CUDA ([01])" _match "${_gloo_config_contents}")
-          if(NOT "${CMAKE_MATCH_1}" STREQUAL "1")
-            message(FATAL_ERROR
-              "USE_SYSTEM_GLOO: the gloo found at ${Gloo_INCLUDE_DIRS} was not "
-              "built with CUDA support (GLOO_USE_CUDA=${CMAKE_MATCH_1} in "
-              "${_gloo_config_h}). Rebuild gloo with -DUSE_CUDA=ON or point "
-              "CMAKE_PREFIX_PATH at a CUDA-enabled gloo installation.")
-          endif()
-        elseif(USE_ROCM)
+        if(USE_ROCM)
           string(REGEX MATCH "#define GLOO_USE_ROCM ([01])" _match "${_gloo_config_contents}")
           if(NOT "${CMAKE_MATCH_1}" STREQUAL "1")
             message(FATAL_ERROR
@@ -834,10 +833,7 @@ if(USE_GLOO)
 
       add_library(gloo SHARED IMPORTED)
       set_target_properties(gloo PROPERTIES IMPORTED_LOCATION ${Gloo_NATIVE_LIBRARY})
-      if(USE_CUDA)
-        add_library(gloo_cuda SHARED IMPORTED)
-        set_target_properties(gloo_cuda PROPERTIES IMPORTED_LOCATION ${Gloo_CUDA_LIBRARY})
-      elseif(USE_ROCM)
+      if(USE_ROCM)
         add_library(gloo_hip SHARED IMPORTED)
         set_target_properties(gloo_hip PROPERTIES IMPORTED_LOCATION ${Gloo_HIP_LIBRARY})
       endif()
@@ -850,14 +846,8 @@ if(USE_GLOO)
     # Add explicit dependency since NCCL is built from third_party.
     # Without dependency, make -jN with N>1 can fail if the NCCL build
     # hasn't finished when CUDA targets are linked.
-    if(NOT USE_SYSTEM_NCCL AND USE_NCCL AND NOT USE_ROCM)
-      add_dependencies(gloo_cuda nccl_external)
-    endif()
-    # Pick the right dependency depending on USE_CUDA
     list(APPEND Caffe2_DEPENDENCY_LIBS gloo)
-    if(USE_CUDA)
-      list(APPEND Caffe2_CUDA_DEPENDENCY_LIBS gloo_cuda)
-    elseif(USE_ROCM)
+    if(USE_ROCM)
       list(APPEND Caffe2_HIP_DEPENDENCY_LIBS gloo_hip)
     endif()
     add_compile_options(-DCAFFE2_USE_GLOO)

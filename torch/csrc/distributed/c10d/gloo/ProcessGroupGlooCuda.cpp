@@ -3,74 +3,7 @@
 #include <torch/csrc/distributed/c10d/gloo/ProcessGroupGlooDetail.hpp>
 #include <utility>
 
-#include <gloo/cuda_allreduce_ring_chunked.h>
-
 namespace c10d {
-
-class AsyncAllreduceCUDADeviceWork : public ProcessGroupGloo::AsyncWork {
- public:
-  AsyncAllreduceCUDADeviceWork(
-      std::shared_ptr<gloo::Context> context,
-      std::vector<at::Tensor>& inputs,
-      ReduceOp reduceOp,
-      uint32_t tag,
-      uint64_t seq,
-      std::chrono::milliseconds timeout)
-      : ProcessGroupGloo::AsyncWork(
-            std::move(context),
-            {inputs},
-            OpType::ALLREDUCE,
-            seq,
-            timeout,
-            "gloo:all_reduce",
-            inputs),
-        inputs_(inputs),
-        reduceOp_(std::move(reduceOp)) {}
-
-  template <typename T>
-  void createAlgorithm(std::unique_ptr<gloo::Algorithm>& algo) {
-    auto count = inputs_.at(0).numel();
-    std::vector<T*> ptrs;
-    for (const auto& tensor : inputs_) {
-      TORCH_CHECK_EQ(tensor.numel(), count);
-      ptrs.push_back(static_cast<T*>(tensor.data_ptr()));
-    }
-    algo = std::make_unique<
-        gloo::CudaAllreduceRingChunked<T, gloo::CudaDeviceWorkspace<T>>>(
-        context_, ptrs, count);
-  }
-
-  void run() override {
-    const auto& scalarType = inputs_.at(0).scalar_type();
-
-    std::unique_ptr<gloo::Algorithm> algo;
-    GENERATE_ALL_TYPES(scalarType, createAlgorithm, algo);
-    algo->run();
-
-    // Gloo doesn't support AVG so we use SUM + division.
-    if (reduceOp_ == ReduceOp::AVG) {
-      inputs_[0] /= context_->size;
-    } else {
-      TORCH_CHECK_EQ(reduceOp_, ReduceOp::SUM);
-    }
-  }
-
-  const std::vector<at::Tensor> getInputTensors() override {
-    return inputs_;
-  }
-
-  const std::vector<at::Tensor> getOutputTensors() override {
-    return inputs_;
-  }
-
-  void synchronize() override {
-    // TODO: is synchronization needed?
-  }
-
- private:
-  std::vector<at::Tensor> inputs_;
-  const ReduceOp reduceOp_;
-};
 
 class AsyncAllreduceCUDAHostWork : public AsyncAllreduceWork {
  public:
@@ -195,13 +128,11 @@ static c10::intrusive_ptr<ProcessGroupGloo::AsyncWork> makeAllreduceCUDAWork(
   auto layout = inputs[0].layout();
 
   if (layout == c10::kStrided) {
-    if (context->getDevice()->hasGPUDirect()) {
-      return c10::make_intrusive<AsyncAllreduceCUDADeviceWork>(
-          std::move(context), inputs, reduceOp, tag, seq, timeout);
-    } else {
-      return c10::make_intrusive<AsyncAllreduceCUDAHostWork>(
-          std::move(context), inputs, reduceOp, tag, seq, timeout);
-    }
+    // Staging through host memory. gloo's own CUDA algorithms are not built:
+    // they are only reachable with GPUDirect, and CUDA collectives go through
+    // NCCL here.
+    return c10::make_intrusive<AsyncAllreduceCUDAHostWork>(
+        std::move(context), inputs, reduceOp, tag, seq, timeout);
   } else if (layout == c10::kSparse) {
     return c10::make_intrusive<AsyncSparseAllreduceCUDAWork>(
         std::move(context), inputs, tag, seq, timeout);
