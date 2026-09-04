@@ -24,9 +24,7 @@
 #include <ATen/native/cpu/utils.h>
 #define CACHE_ALIGN __attribute__((aligned(CACHE_LINE)))
 #define not_inline __attribute__((noinline))
-#if defined(CPU_CAPABILITY_DEFAULT)
-#define TEST_AGAINST_DEFAULT 1
-#elif !defined(CPU_CAPABILITY_AVX512) && !defined(CPU_CAPABILITY_AVX2)
+#if !defined(CPU_CAPABILITY_AVX512)
 #define TEST_AGAINST_DEFAULT 1
 #else
 #undef TEST_AGAINST_DEFAULT

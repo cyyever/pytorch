@@ -18,11 +18,6 @@ static CPUCapability compute_cpu_capability() {
       return CPUCapability::AVX512;
     }
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-    if (envar == "avx2") {
-      return CPUCapability::AVX2;
-    }
-#endif
     if (envar == "default") {
       return CPUCapability::DEFAULT;
     }
@@ -40,11 +35,6 @@ static CPUCapability compute_cpu_capability() {
       return CPUCapability::AVX512;
     }
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-    if (cpuinfo_has_x86_avx2() && cpuinfo_has_x86_fma3()) {
-      return CPUCapability::AVX2;
-    }
-#endif
   }
 
   return CPUCapability::DEFAULT;
@@ -60,9 +50,6 @@ DispatchResult DispatchStubImpl::try_get_call_ptr(
   , void *DEFAULT
 #ifdef HAVE_AVX512_CPU_DEFINITION
   , void *AVX512
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-  , void *AVX2
 #endif
 ) {
   constexpr auto supported_devices = std::to_array<c10::DeviceType>(
@@ -89,9 +76,6 @@ DispatchResult DispatchStubImpl::try_get_call_ptr(
           DEFAULT
 #ifdef HAVE_AVX512_CPU_DEFINITION
           , AVX512
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-          , AVX2
 #endif
         );
         if (!std::holds_alternative<ErrorType>(result)) {
@@ -138,9 +122,6 @@ void* DispatchStubImpl::get_call_ptr(
 #ifdef HAVE_AVX512_CPU_DEFINITION
   , void *AVX512
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-  , void *AVX2
-#endif
 ) {
 
   auto result = try_get_call_ptr(
@@ -149,10 +130,6 @@ void* DispatchStubImpl::get_call_ptr(
 #ifdef HAVE_AVX512_CPU_DEFINITION
       ,
       AVX512
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      ,
-      AVX2
 #endif
   );
   if (std::holds_alternative<ErrorType>(result)) {
@@ -175,33 +152,18 @@ DispatchResult DispatchStubImpl::try_choose_cpu_impl(
 #ifdef HAVE_AVX512_CPU_DEFINITION
     , void *AVX512
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-    , void *AVX2
-#endif
   ){
 
   auto capability = static_cast<int>(get_cpu_capability());
   (void)capability;
 #ifdef HAVE_AVX512_CPU_DEFINITION
   if (capability >= static_cast<int>(CPUCapability::AVX512)) {
-    // Quantization kernels have also been disabled on Windows
-    // for AVX512 because some of their tests are flaky on Windows.
-    // Ideally, we should have AVX512 kernels for all kernels.
     if (C10_UNLIKELY(!AVX512)) {
       // Fall back to the next tier down, since the AVX512 kernel is missing.
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      return AVX2 != nullptr ? DispatchResult(AVX2) : ErrorType::MissingDeviceKernel;
-#else
       return DEFAULT != nullptr ? DispatchResult(DEFAULT) : ErrorType::MissingDeviceKernel;
-#endif
     } else {
       return DispatchResult(AVX512);
     }
-  }
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-  if (capability >= static_cast<int>(CPUCapability::AVX2)) {
-    return AVX2 != nullptr ? DispatchResult(AVX2) : ErrorType::MissingDeviceKernel;
   }
 #endif
   return DEFAULT != nullptr ? DispatchResult(DEFAULT) : ErrorType::MissingDeviceKernel;
@@ -212,35 +174,18 @@ void* DispatchStubImpl::choose_cpu_impl(
 #ifdef HAVE_AVX512_CPU_DEFINITION
   , void *AVX512
 #endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-  , void *AVX2
-#endif
 ) {
   auto capability = static_cast<int>(get_cpu_capability());
   (void)capability;
 #ifdef HAVE_AVX512_CPU_DEFINITION
   if (capability >= static_cast<int>(CPUCapability::AVX512)) {
-    // Quantization kernels have also been disabled on Windows
-    // for AVX512 because some of their tests are flaky on Windows.
-    // Ideally, we should have AVX512 kernels for all kernels.
     if (C10_UNLIKELY(!AVX512)) {
       // Fall back to the next tier down, since the AVX512 kernel is missing.
-#ifdef HAVE_AVX2_CPU_DEFINITION
-      TORCH_INTERNAL_ASSERT(AVX2, "DispatchStub: missing AVX2 kernel");
-      return AVX2;
-#else
       TORCH_INTERNAL_ASSERT(DEFAULT, "DispatchStub: missing DEFAULT kernel");
       return DEFAULT;
-#endif
     } else {
       return AVX512;
     }
-  }
-#endif
-#ifdef HAVE_AVX2_CPU_DEFINITION
-  if (capability >= static_cast<int>(CPUCapability::AVX2)) {
-    TORCH_INTERNAL_ASSERT(AVX2, "DispatchStub: missing AVX2 kernel");
-    return AVX2;
   }
 #endif
   TORCH_INTERNAL_ASSERT(DEFAULT, "DispatchStub: missing default kernel");
