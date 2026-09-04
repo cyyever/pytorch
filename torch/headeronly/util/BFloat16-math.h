@@ -32,6 +32,12 @@ using torch::headeronly::is_reduced_floating_point;
 using torch::headeronly::is_reduced_floating_point_v;
 } // namespace c10
 
+// These are overloads, not specializations, so [namespace.std]/1 does not
+// allow them. They stay because moving them to c10 changes what generic code
+// gets: std::exp(bf16) would then convert to float and hand back a float
+// rather than a BFloat16, and the qualified calls that would have to become
+// unqualified sit in templates, where the element type is a parameter.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std {
 
 #if !defined(FBCODE_CAFFE2) && !defined(C10_NODEPRECATED)
@@ -328,6 +334,7 @@ C10_HOST_DEVICE inline T nextafter(T from, T to) {
   return ufrom.f;
 }
 
+// NOLINTEND(bugprone-std-namespace-modification)
 } // namespace std
 
 C10_CLANG_DIAGNOSTIC_POP()
