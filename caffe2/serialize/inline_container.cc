@@ -637,8 +637,10 @@ size_t PyTorchStreamReader::getRecordOffset(const std::string& name) {
 }
 
 size_t PyTorchStreamReader::getRecordSize(const std::string& name) {
+  std::lock_guard<std::mutex> guard(reader_lock_);
   mz_zip_archive_file_stat stat;
   mz_zip_reader_file_stat(ar_.get(), getRecordID(name), &stat);
+  valid("retrieving file meta-data for ", name.c_str());
   return stat.m_uncomp_size;
 }
 
