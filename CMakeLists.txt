@@ -444,7 +444,6 @@ option(
   DEBUG_CUDA
   "When compiling DEBUG, also attempt to compile CUDA with debug flags (may cause nvcc to OOM)"
   OFF)
-cmake_dependent_option(BUILD_FUNCTORCH "Build Functorch" ON "BUILD_PYTHON" OFF)
 cmake_dependent_option(BUILD_BUNDLE_PTXAS "Bundle PTX into torch/bin folder"
                        OFF "USE_CUDA" OFF)
 cmake_dependent_option(
@@ -691,14 +690,6 @@ endif()
 # aotriton build decision later.
 
 include(cmake/Dependencies.cmake)
-
-# MKL resolves symbols between its own sub-libraries, so the linker must keep
-# every one of them in DT_NEEDED even though torch references only some. Without
-# this, libmkl_intel_lp64.so fails at run time with undefined symbol mkl_blas_dsyrk.
-# https://software.intel.com/en-us/articles/symbol-lookup-error-when-linking-intel-mkl-with-gcc
-if(LINUX AND CAFFE2_USE_MKL)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
-endif()
 
 cmake_dependent_option(
   USE_FLASH_ATTENTION

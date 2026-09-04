@@ -6,7 +6,25 @@ endif()
 
 add_library(caffe2::mkl INTERFACE IMPORTED)
 target_include_directories(caffe2::mkl INTERFACE ${MKL_INCLUDE_DIR})
-target_link_libraries(caffe2::mkl INTERFACE ${MKL_LIBRARIES})
+
+# MKL resolves symbols between its own sub-libraries, so the linker must keep
+# every one of them in DT_NEEDED even though torch references only some. Without
+# this, libmkl_intel_lp64.so fails at run time with undefined symbol
+# mkl_blas_dsyrk.
+# https://software.intel.com/en-us/articles/symbol-lookup-error-when-linking-intel-mkl-with-gcc
+# push-state/pop-state confines this to MKL's own libraries and restores
+# whatever state the surrounding link line was in.
+if(UNIX AND NOT USE_STATIC_MKL AND NOT CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED)
+  set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED
+      "LINKER:--push-state,--no-as-needed" "<LINK_ITEM>" "LINKER:--pop-state")
+  set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED TRUE)
+endif()
+if(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED)
+  target_link_libraries(caffe2::mkl INTERFACE
+      "$<LINK_LIBRARY:MKL_NEEDED,${MKL_LIBRARIES}>")
+else()
+  target_link_libraries(caffe2::mkl INTERFACE ${MKL_LIBRARIES})
+endif()
 foreach(MKL_LIB IN LISTS MKL_LIBRARIES)
   if(EXISTS "${MKL_LIB}")
     get_filename_component(MKL_LINK_DIR "${MKL_LIB}" DIRECTORY)
@@ -33,7 +51,7 @@ if(UNIX)
 
       # Match archive libraries starting with "libmkl_"
       if(MKL_LIB_NAME MATCHES "^libmkl_" AND MKL_LIB_NAME MATCHES ".a$")
-        target_link_options(caffe2::mkl INTERFACE "-Wl,--exclude-libs,${MKL_LIB_NAME}")
+        target_link_options(caffe2::mkl INTERFACE "LINKER:--exclude-libs,${MKL_LIB_NAME}")
       endif()
     endforeach()
   endif()
