@@ -1,7 +1,6 @@
 // Returns unique elements of input tensor.
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
-#include <ATen/core/Tensor.h>
 #include <ATen/Dispatch_v2.h>
 #include <ATen/Parallel.h>
 #include <ATen/native/TensorIterator.h>

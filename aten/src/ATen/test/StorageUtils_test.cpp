@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <ATen/Functions.h>
-#include <ATen/Tensor.h>
 #include <ATen/StorageUtils.h>
 
 using namespace ::testing;

@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/native/AdaptivePooling.h>
 
 #include <ATen/ops/_adaptive_avg_pool2d.h>

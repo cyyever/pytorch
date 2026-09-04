@@ -10,7 +10,6 @@
 #include <ATen/SparseCsrTensorUtils.h>
 #include <ATen/TensorOperators.h>
 #include <ATen/core/Generator.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/native/UnaryOps.h>
 #include <c10/core/ScalarType.h>
 #include <c10/core/TensorOptions.h>

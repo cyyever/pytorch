@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <random>
-#include <c10/core/SymInt.h>
 #include <c10/util/Exception.h>
 // define constants like M_PI and C keywords for MSVC
 #include <ATen/ATen.h>

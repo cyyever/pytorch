@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/eq_cuda_dispatch.h>
 #include <ATen/ops/equal_native.h>

@@ -1,9 +1,7 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/cuda/Sort.h>
 #include <ATen/core/Tensor.h>
-#include <ATen/ExpandUtils.h>
 #include <ATen/MemoryOverlap.h>
-#include <ATen/TensorUtils.h>
 #include <ATen/native/Sorting.h>
 
 #include <ATen/ops/arange.h>

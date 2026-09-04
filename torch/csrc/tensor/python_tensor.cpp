@@ -1,7 +1,6 @@
 #include <torch/csrc/tensor/python_tensor.h>
 
 #include <pybind11/pybind11.h>
-#include <torch/csrc/utils/pybind.h>
 
 #include <torch/csrc/Dtype.h>
 #include <torch/csrc/DynamicTypes.h>
@@ -14,10 +13,8 @@
 #include <torch/csrc/utils/tensor_new.h>
 #include <torch/csrc/utils/tensor_types.h>
 
-#include <ATen/ATen.h>
 
 #include <algorithm>
-#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>

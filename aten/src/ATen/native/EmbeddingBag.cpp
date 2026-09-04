@@ -7,7 +7,6 @@
 #include <ATen/TensorUtils.h>
 #include <ATen/native/EmbeddingBag.h>
 
-#include <ATen/cpu/vec/vec.h>
 #include <ATen/native/CPUBlas.h>
 #include <ATen/native/NonSymbolicBC.h>
 

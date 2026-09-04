@@ -10,7 +10,6 @@
 #include <torch/csrc/utils/python_tuples.h>
 #include <string>
 
-#include <torch/csrc/autograd/python_variable.h>
 
 struct THPSize {
   PyTupleObject tuple;

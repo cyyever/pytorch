@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/Tensor.h>
 #include <ATen/ExpandUtils.h>
 #include <ATen/SparseCsrTensorUtils.h>
 #include <ATen/native/Resize.h>

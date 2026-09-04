@@ -2,7 +2,6 @@
 #include <ATen/native/ReduceAllOps.h>
 #include <ATen/native/Resize.h>
 
-#include <ATen/core/Tensor.h>
 
 #include <ATen/ops/empty.h>
 #include <ATen/ops/max_native.h>

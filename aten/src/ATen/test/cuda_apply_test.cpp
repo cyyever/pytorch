@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cuda_runtime.h>
 
 #include <ATen/cuda/detail/TensorInfo.cuh>
 #include <ATen/cuda/CUDAContext.h>

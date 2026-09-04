@@ -1,11 +1,9 @@
 #include <torch/csrc/acc/Module.h>
 
-#include <ATen/ATen.h>
 #include <torch/extension.h>
 
 #include <ATen/detail/PrivateUse1HooksInterface.h>
 #include <pybind11/pybind11.h>
-#include <torch/csrc/utils/pybind.h>
 
 namespace py = pybind11;
 

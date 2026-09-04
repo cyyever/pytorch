@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <c10/core/impl/COW.h>
 
 #include <ATen/ops/_has_same_storage_numel_native.h>

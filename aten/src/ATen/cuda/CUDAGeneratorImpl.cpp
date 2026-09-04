@@ -1,5 +1,4 @@
 #include <ATen/Functions.h>
-#include <ATen/Tensor.h>
 #include <ATen/cuda/CUDAGeneratorImpl.h>
 #include <ATen/cuda/CUDAGraph.h>
 #include <ATen/cuda/CUDAGraphsUtils.cuh>

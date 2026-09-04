@@ -4,7 +4,6 @@
 // This helps reduce size of GPU memory context if linear algebra functions are not used
 #include <ATen/Context.h>
 #include <ATen/NativeFunctions.h>
-#include <ATen/Dispatch.h>
 #include <ATen/DynamicLibrary.h>
 #include <ATen/native/BatchLinearAlgebra.h>
 #include <ATen/native/TransposeType.h>

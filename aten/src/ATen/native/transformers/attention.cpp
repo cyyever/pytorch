@@ -1,11 +1,7 @@
 #include <ATen/core/TensorBody.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/TensorOperators.h>
-#include <ATen/AccumulateType.h>
-#include <ATen/Dispatch.h>
 #include <ATen/OpMathType.h>
-#include <ATen/mps/MPSDevice.h>
 #include <ATen/native/DispatchStub.h>
 #include <ATen/NestedTensorImpl.h>
 #include <ATen/TensorIndexing.h>

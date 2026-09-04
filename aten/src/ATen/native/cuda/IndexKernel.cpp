@@ -1,6 +1,5 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/cuda/IndexKernel.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/core/List.h>
 #include <ATen/ExpandUtils.h>
 #include <ATen/MemoryOverlap.h>

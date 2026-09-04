@@ -3,7 +3,6 @@
 #include <ATen/Functions.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/NestedTensorImpl.h>
-#include <ATen/core/Tensor.h>
 #include <ATen/native/nested/NestedTensorUtils.h>
 
 namespace at::native {

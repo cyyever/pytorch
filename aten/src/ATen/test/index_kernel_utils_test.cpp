@@ -4,7 +4,6 @@
 #include <ostream>
 #include <vector>
 
-#include <ATen/ATen.h>
 #include <ATen/native/cpu/IndexKernelUtils.h>
 
 using namespace at::native;

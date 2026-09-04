@@ -1,4 +1,3 @@
-#include <torch/csrc/python_headers.h>
 #include <vector>
 
 #include <ATen/ops/from_blob.h>

@@ -8,9 +8,8 @@
 // so this include is what makes the registration happen. Without it the build
 // and the import both succeed and torch._library.opaque_object fails at first
 // use with "Tried to instantiate class 'aten.OpaqueObject'".
-#include <torch/csrc/jit/python/opaque_obj.h>
+#include <torch/csrc/jit/python/opaque_obj.h>  // NOLINT(misc-include-cleaner)
 #include <torch/csrc/jit/python/init.h>
-#include <torch/csrc/jit/python/pybind.h>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/jit/python/python_custom_class.h>
 #include <torch/csrc/jit/python/utf8_decoding_ignore.h>

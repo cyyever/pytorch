@@ -6,7 +6,6 @@
 #include <torch/csrc/PyObjectConversion.h>
 
 #include <torch/csrc/autograd/python_variable.h>
-#include <torch/csrc/python_headers.h>
 
 namespace torch::detail {
 

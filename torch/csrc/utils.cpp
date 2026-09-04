@@ -1,7 +1,5 @@
 #include <fmt/format.h>
-#include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/THP.h>
-#include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/invalid_arguments.h>
 #include <torch/csrc/utils/python_symnode.h>
 #include <torch/csrc/utils/python_tuples.h>

@@ -1,7 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/layer_norm.h>
 
-#include <ATen/core/Tensor.h>
 #include <ATen/Dispatch.h>
 #include <ATen/native/cpu/mixed_data_type.h>
 #include <c10/util/irange.h>

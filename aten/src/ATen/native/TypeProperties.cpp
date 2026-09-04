@@ -1,5 +1,4 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
-#include <ATen/core/Tensor.h>
 #include <ATen/native/TypeProperties.h>
 
 #include <ATen/ops/_has_compatible_shallow_copy_type_native.h>

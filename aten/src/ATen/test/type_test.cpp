@@ -1,4 +1,3 @@
-#include <ATen/ATen.h>
 #include <gtest/gtest.h>
 #include <torch/all.h>
 #include <ATen/core/jit_type.h>

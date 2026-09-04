@@ -4,10 +4,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#include <ATen/ATen.h>
 #include <ATen/functorch/BatchedFallback.h>
 #include <ATen/core/dispatch/Dispatcher.h>
-#include <torch/headeronly/util/Metaprogramming.h>
 
 // This file contains batching rules for operations that return Tensors of
 // dynamic shape. We generally don't support those with vmap so we raise
