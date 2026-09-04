@@ -445,10 +445,7 @@ __device__ __inline__ void multimem_st(T* mc_ptr, Vec<Alignment>& vec) {
 template <typename T>
 __device__ __inline__ T add_bf16x2(T a, T b) {
   static_assert(sizeof(T) == 4);
-#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
-  CUDA_KERNEL_ASSERT(false);
-  return T{};
-#elif defined(USE_ROCM)
+#if defined(USE_ROCM)
   union bf2f {
     float f;
     __hip_bfloat16 bf[2];

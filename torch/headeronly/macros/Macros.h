@@ -221,15 +221,11 @@ using namespace c10::xpu;
 #define C10_HOST __host__
 // constants from
 // (https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#features-and-technical-specifications)
-// The maximum number of threads per multiprocessor is 1024 for Turing
-// architecture (7.5), 1536 for Geforce Ampere (8.6)/Jetson Orin (8.7), and
-// 2048 for all other architectures. You'll get warnings if you exceed these
-// constants. Hence, the following macros adjust the input values from the user
-// to resolve potential warnings.
-#if __CUDA_ARCH__ == 750
-constexpr uint32_t CUDA_MAX_THREADS_PER_SM = 1024;
-#elif __CUDA_ARCH__ == 860 || __CUDA_ARCH__ == 870 || __CUDA_ARCH__ == 890 || \
-    __CUDA_ARCH__ == 1200
+// The maximum number of threads per multiprocessor is 1536 for Ada (8.9) and
+// Geforce Blackwell (12.0), and 2048 for all other architectures. You'll get
+// warnings if you exceed these constants. Hence, the following macros adjust
+// the input values from the user to resolve potential warnings.
+#if __CUDA_ARCH__ == 890 || __CUDA_ARCH__ == 1200
 constexpr uint32_t CUDA_MAX_THREADS_PER_SM = 1536;
 #else
 constexpr uint32_t CUDA_MAX_THREADS_PER_SM = 2048;

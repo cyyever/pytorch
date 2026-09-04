@@ -155,8 +155,8 @@ public:
     CUTLASS_DEVICE
     void dequantize(FragmentDequantizedOperand& operand_frag, const FragmentScale& scale_frag)
     {
-//#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800) && defined(ENABLE_BF16))
-#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
+//#if (defined(__CUDA_ARCH__) && defined(ENABLE_BF16))
+#if defined(__CUDA_ARCH__)
         using _MmaOperandB        = typename ArchMmaOperator::FragmentB;
         using ExpandedMmaOperandB = Array<typename _MmaOperandB::Element, kExpansionFactor * _MmaOperandB::kElements>;
         static_assert(ExpandedMmaOperandB::kElements * MmaOperator::MmaIterations::kColumn
@@ -191,7 +191,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// Specialization for Turing & Ampere
+// Specialization for Ampere and newer
 template<
     /// Underlying matrix multiply operator (concept: MmaTensorOp)
     typename MmaOperator_,
@@ -205,7 +205,7 @@ class MmaTensorOpDequantizer<
     layout::RowMajor,
     32,
     typename platform::enable_if<
-        MmaOperator_::ArchTag::kMinComputeCapability >= 75
+        MmaOperator_::ArchTag::kMinComputeCapability >= 80
         && platform::is_same<typename MmaOperator_::ArchMmaOperator::LayoutB, layout::ColumnMajor>::value>::type> {
 
 public:

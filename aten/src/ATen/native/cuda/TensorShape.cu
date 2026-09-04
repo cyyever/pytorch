@@ -46,7 +46,7 @@ static __host__ __device__ inline int64_t div_up(int64_t a, int64_t b) {
 template <typename T>
 __device__ inline void stream_load128(uint4& val, const T* addr) {
   uint64_t low, high;
-#if defined(USE_ROCM) || (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
+#if defined(USE_ROCM)
   low = reinterpret_cast<const uint64_t*>(addr)[0];
   high = reinterpret_cast<const uint64_t*>(addr)[1];
 #else
@@ -63,7 +63,7 @@ __device__ inline void stream_store128(T* addr, const uint4& val) {
   uint64_t low, high;
   low = reinterpret_cast<const uint64_t*>(&val)[0];
   high = reinterpret_cast<const uint64_t*>(&val)[1];
-#if defined(USE_ROCM) || (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
+#if defined(USE_ROCM)
   reinterpret_cast<uint64_t*>(addr)[0] = low;
   reinterpret_cast<uint64_t*>(addr)[1] = high;
 #else
