@@ -850,14 +850,14 @@ class PyTorchFileWriter:
         self,
         name: str,
         compute_crc32: _bool = True,
-        storage_alignment: _int = 64,
+        storage_alignment: _int = 4096,
     ) -> None: ...
     @overload
     def __init__(
         self,
         buffer: IO[bytes],
         compute_crc32: _bool = True,
-        storage_alignment: _int = 64,
+        storage_alignment: _int = 4096,
     ) -> None: ...
     def write_record(
         self,

@@ -15,7 +15,7 @@ namespace serialize {
 namespace {
 
 TEST(PyTorchStreamWriterAndReader, SaveAndLoad) {
-  int64_t kFieldAlignment = 64L;
+  int64_t kFieldAlignment = 4096L;
 
   std::ostringstream oss;
   // write records through writers

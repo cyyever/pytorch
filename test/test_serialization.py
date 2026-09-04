@@ -4650,16 +4650,16 @@ class TestSerialization(TestCase, SerializationMixin):
             torch.save(sd, f)
             f.seek(0)
             sd_loaded = load_with_mode(f)
-            check_loaded_state_dict(sd_loaded, sd, expected_weight_offset=832, expected_bias_offset=1344)
+            check_loaded_state_dict(sd_loaded, sd, expected_weight_offset=20480, expected_bias_offset=24576)
 
         storage_alignment_before = serialization_config.save.storage_alignment
         with tempfile.NamedTemporaryFile() as f:
             try:
-                serialization_config.save.storage_alignment = 4096
+                serialization_config.save.storage_alignment = 64
                 torch.save(sd, f)
                 f.seek(0)
                 sd_loaded = load_with_mode(f)
-                check_loaded_state_dict(sd_loaded, sd, expected_weight_offset=20480, expected_bias_offset=24576)
+                check_loaded_state_dict(sd_loaded, sd, expected_weight_offset=832, expected_bias_offset=1344)
 
                 f.seek(0)
                 sd_loaded = torch.load(f)
