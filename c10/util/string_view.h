@@ -98,6 +98,9 @@ struct TransparentStringHash {
 
 } // namespace c10
 
+// A specialization for a program-defined type, which is allowed; the check
+// reports every namespace std block the same way.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std {
 template <class CharT>
 struct hash<::c10::basic_string_view<CharT>> {
@@ -106,3 +109,4 @@ struct hash<::c10::basic_string_view<CharT>> {
   }
 };
 } // namespace std
+// NOLINTEND(bugprone-std-namespace-modification)

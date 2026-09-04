@@ -273,8 +273,12 @@ using IntHeaderOnlyArrayRef = HeaderOnlyArrayRef<int64_t>;
 // HeaderOnlyArrayRef is destroyed. Opt in to the ranges borrowed-range
 // contract so that algorithms like std::ranges::find return real iterators
 // rather than std::ranges::dangling for temporary HeaderOnlyArrayRefs.
+// enable_borrowed_range is a customization point the standard asks users to
+// specialize; the check reports every namespace std block the same way.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
 namespace std::ranges {
 template <typename T>
 inline constexpr bool enable_borrowed_range<c10::HeaderOnlyArrayRef<T>> = true;
 } // namespace std::ranges
+// NOLINTEND(bugprone-std-namespace-modification)
 #endif
