@@ -95,7 +95,7 @@ if(USE_XPU)
   include(${CMAKE_CURRENT_LIST_DIR}/Modules/FindMKLDNN.cmake)
 endif()
 
-if(USE_ASAN OR USE_LSAN OR USE_TSAN)
+if(USE_ASAN OR USE_UBSAN OR USE_LSAN OR USE_TSAN)
   find_package(Sanitizer REQUIRED)
   if(USE_ASAN)
     if(TARGET Sanitizer::address)
@@ -115,6 +115,10 @@ if(USE_ASAN OR USE_LSAN OR USE_TSAN)
       message(WARNING "ASAN not found. Suppress this warning with -DUSE_ASAN=OFF.")
       caffe2_update_option(USE_ASAN OFF)
     endif()
+  endif()
+  if(USE_UBSAN AND NOT TARGET Sanitizer::undefined)
+    message(WARNING "UBSan not found. Suppress this warning with -DUSE_UBSAN=OFF.")
+    caffe2_update_option(USE_UBSAN OFF)
   endif()
   if(USE_LSAN)
     if(TARGET Sanitizer::leak)
@@ -1003,15 +1007,17 @@ else()
   set(AT_ROCM_ENABLED 1)
 endif()
 
-# UBSan (-fsanitize=undefined) combined with ASAN on ROCm Clang causes ASAN
-# global metadata to reference unaligned original globals instead of aligned
-# __sanitized_padded_global copies, triggering an unconditional alignment check
-# abort in the ASAN runtime. Skip UBSan under USE_ROCM until that interaction is
-# fixed. This has to sit after USE_ROCM settles: on Linux it defaults ON and is
-# only turned off above, so testing it beside the other sanitizer options
-# dropped UBSan from every fresh-cache ASAN build.
-if(USE_ASAN AND TARGET Sanitizer::undefined AND NOT USE_ROCM)
-  list(APPEND Caffe2_DEPENDENCY_LIBS Sanitizer::undefined)
+# ASan combined with UBSan on ROCm Clang can produce misaligned ASan global
+# metadata and abort at startup. UBSan-only builds are supported. This check has
+# to sit after USE_ROCM settles: on Linux it defaults ON and is only turned off
+# above.
+if(USE_UBSAN)
+  if(USE_ASAN AND USE_ROCM)
+    message(WARNING "Disabling UBSan because ASan and UBSan cannot be combined with ROCm.")
+    caffe2_update_option(USE_UBSAN OFF)
+  elseif(TARGET Sanitizer::undefined)
+    list(APPEND Caffe2_DEPENDENCY_LIBS Sanitizer::undefined)
+  endif()
 endif()
 
 
