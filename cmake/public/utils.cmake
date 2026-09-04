@@ -324,7 +324,11 @@ function(torch_cuda_detect_installed_gpus out_variable)
       "  return 0;\n"
       "}\n")
 
+    # The probe only calls the runtime API and has no device code, so it needs
+    # no architecture; saying so explicitly keeps it from inheriting whatever
+    # CMAKE_CUDA_ARCHITECTURES the enclosing project happens to be in.
     try_run(run_result compile_result ${PROJECT_BINARY_DIR} ${file}
+            CMAKE_FLAGS "-DCMAKE_CUDA_ARCHITECTURES=OFF"
             RUN_OUTPUT_VARIABLE compute_capabilities)
 
     # Filter unrelated content out of the output.
