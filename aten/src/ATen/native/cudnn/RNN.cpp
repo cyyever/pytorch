@@ -1114,19 +1114,7 @@ inline bool use_persist_device_heuristics(
     const TensorDescriptorListParams& tensors) {
   auto bsize = tensors.mini_batch;
   cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-  if (prop->major == 7) {
-    if (prop->minor == 5) {
-      // Excludes Turing from using persistent rnn.
-      return false;
-    } else {
-      // technically, batch size should be multiple of 8, but there are quite a
-      // few multiple-of-8 batchsizes that give bad perf, weed them out
-      return ((bsize % 16 == 0 && bsize != 80 && bsize != 112) || bsize == 8) &&
-          ((tensors.seq_length >= 40 && bsize <= 128) ||
-           (tensors.seq_length >= 20 && bsize <= 96) ||
-           (tensors.seq_length >= 10 && bsize <= 32));
-    }
-  } else if (prop->major >= 8 && prop->multiProcessorCount >= 98) {
+  if (prop->major >= 8 && prop->multiProcessorCount >= 98) {
     // SM count check excludes A30 (similar issue to A40)
     if (prop->minor == 6) {
       // Excludes sm_86 GPU devices from using persistent rnn.
@@ -1161,10 +1149,6 @@ inline bool use_rnn_persist_small_h(
     const RNNDescriptorParams& rnn,
     const TensorDescriptorListParams& tensors,
     bool forward) {
-  cudaDeviceProp* prop = at::cuda::getCurrentDeviceProperties();
-  if (prop->major < 6)
-    return false;
-
   if (forward) {
     if (rnn.mode == CUDNN_RNN_RELU || rnn.mode == CUDNN_RNN_TANH) {
       return rnn.hidden_size <= 384;

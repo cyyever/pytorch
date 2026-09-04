@@ -8,10 +8,8 @@ namespace gemm {
 namespace threadblock {
 ////////////////////////////////////////////////////////////////////////////////
 
-// We need to distinguish here, since we want volta support. It is too much effort
-// to write shared memory iterators that are probably needed for volta to function
-// properly. As a result, we allow converters both after the LDG (for volta) and after
-// the LDS for Turing+.
+// We allow converters both after the LDG and after the LDS, since the two
+// dequantize operators below want the conversion at different points.
 template<
     /// Iterator for B matrix in global memory
     typename IteratorB,

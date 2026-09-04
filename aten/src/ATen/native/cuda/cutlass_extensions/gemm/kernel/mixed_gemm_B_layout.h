@@ -27,10 +27,10 @@ template<typename TypeB, typename Arch, typename Enable = void>
 struct LayoutDetailsB {
 };
 
-// Specializations for Turing+ when B is FP16. These are currently only used for MoE networks.
+// Specializations for Ampere+ when B is FP16. These are currently only used for MoE networks.
 // TODO - Switch this to column major for weights since gemms should be more performant.
 template<typename Arch>
-struct LayoutDetailsB<half_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 75>::type> {
+struct LayoutDetailsB<half_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 80>::type> {
     static constexpr int ThreadblockK      = 64;
     using Layout                           = layout::RowMajor;
     static constexpr int ElementsPerAccess = 128 / cutlass::sizeof_bits<half_t>::value;
@@ -38,17 +38,17 @@ struct LayoutDetailsB<half_t, Arch, typename platform::enable_if<Arch::kMinCompu
 };
 
 template<typename Arch>
-struct LayoutDetailsB<bfloat16_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 75>::type> {
+struct LayoutDetailsB<bfloat16_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 80>::type> {
     static constexpr int ThreadblockK      = 64;
     using Layout                           = layout::RowMajor;
     static constexpr int ElementsPerAccess = 128 / cutlass::sizeof_bits<bfloat16_t>::value;
     using Operator                         = cutlass::arch::OpMultiplyAdd;
 };
 
-// Specializations for Turing+ when B is quantized. These can use the operator OpMultiplyAddDequantizeInterleavedBToA,
+// Specializations for Ampere+ when B is quantized. These can use the operator OpMultiplyAddDequantizeInterleavedBToA,
 // which signals that we want to dequantize after loading from smem.
 template<typename Arch>
-struct LayoutDetailsB<uint8_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 75>::type> {
+struct LayoutDetailsB<uint8_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 80>::type> {
     static constexpr int ThreadblockK = 64;
 
 private:
@@ -62,7 +62,7 @@ public:
 };
 
 template<typename Arch>
-struct LayoutDetailsB<uint4b_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 75>::type> {
+struct LayoutDetailsB<uint4b_t, Arch, typename platform::enable_if<Arch::kMinComputeCapability >= 80>::type> {
     static constexpr int ThreadblockK = 64;
 
 private:

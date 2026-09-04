@@ -38,20 +38,6 @@ int dsa_get_device_id() {
   C10_CUDA_CHECK_WO_DSA(c10::cuda::GetDevice(&device));
   return device;
 }
-
-/// Get a device's compute capability - note that this dangerously assumes
-/// that if one CUDA GPU supports device-side assertions they all do. This is
-/// probably fine since the latest CUDA GPU that doesn't support UVM is the
-/// K80 released 2014-11-17. Mixing that GPU with a newer one is likely to be
-/// rare enough that the defensive
-/// We need our own implementation of this function to prevent
-/// an infinite initialization loop for CUDAKernelLaunchRegistry
-int dsa_get_device_compute_capability(const int device_num) {
-  int compute_capability = -1;
-  C10_CUDA_CHECK_WO_DSA(cudaDeviceGetAttribute(
-      &compute_capability, cudaDevAttrComputeCapabilityMajor, device_num));
-  return compute_capability;
-}
 #endif
 
 /// Get the number of CUDA devices
@@ -67,15 +53,9 @@ bool dsa_check_if_all_devices_support_managed_memory() {
 #ifdef USE_ROCM
   return true;
 #else
-// It looks as though this'll work best on CUDA GPUs with Pascal
-// architectures or newer, per
+// Every CUDA architecture we support has unified memory, per
 // https://developer.nvidia.com/blog/unified-memory-cuda-beginners/
 #ifdef TORCH_USE_CUDA_DSA
-  for (const auto i : c10::irange(dsa_get_device_count())) {
-    if (dsa_get_device_compute_capability(i) < 6) {
-      return false;
-    }
-  }
   return true;
 #else
   return false;
