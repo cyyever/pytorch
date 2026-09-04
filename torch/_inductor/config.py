@@ -2638,7 +2638,7 @@ class cuda(cutlass):
 @inherit_fields_from(cutlass)
 class xpu(cutlass):
     # Xe arch to use for SYCL kernel compilation.
-    # eg. 12, 20, which corresponding to Xe12(PVC) and Xe20 (BMG)
+    # For example, 20 corresponds to Xe20 (BMG).
     arch: str | None = None
     # oneAPI version to use for SYCL kernel compilation.
     # e.g. "20250201".

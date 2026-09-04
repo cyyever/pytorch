@@ -1,0 +1,104 @@
+diff --git a/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_bwd.cpp b/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_bwd.cpp
+index 49df8aca..1e9d5eaa 100644
+--- a/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_bwd.cpp
++++ b/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_bwd.cpp
+@@ -72,9 +72,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> mha_bwd(
+           .get_info<
+               sycl::ext::oneapi::experimental::info::device::architecture>();
+   constexpr auto supported_architectures =
+-      std::array<sycl::ext::oneapi::experimental::architecture, 4>{
+-          sycl::ext::oneapi::experimental::architecture::intel_gpu_pvc,
+-          sycl::ext::oneapi::experimental::architecture::intel_gpu_pvc_vg,
++      std::array<sycl::ext::oneapi::experimental::architecture, 2>{
+           sycl::ext::oneapi::experimental::architecture::intel_gpu_bmg_g21,
+           sycl::ext::oneapi::experimental::architecture::intel_gpu_bmg_g31};
+   if (std::find(
+@@ -83,7 +81,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> mha_bwd(
+           device_architecture) == supported_architectures.end()) {
+     TORCH_CHECK(
+         false,
+-        "XPU device architecture does not support flash attention backward. Supported architectures are: intel_gpu_pvc, intel_gpu_pvc_vg, intel_gpu_bmg_g21, intel_gpu_bmg_g31.");
++        "XPU device architecture does not support flash attention backward. Supported architectures are: intel_gpu_bmg_g21, intel_gpu_bmg_g31.");
+   }
+
+   TORCH_CHECK(
+diff --git a/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_fwd.cpp b/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_fwd.cpp
+index 122d15d3..8b3d8c16 100644
+--- a/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_fwd.cpp
++++ b/src/ATen/native/transformers/xpu/flash_attn/sycltla/mha_fwd.cpp
+@@ -102,9 +102,7 @@ mha_fwd(
+           .get_info<
+               sycl::ext::oneapi::experimental::info::device::architecture>();
+   constexpr auto supported_architectures =
+-      std::array<sycl::ext::oneapi::experimental::architecture, 4>{
+-          sycl::ext::oneapi::experimental::architecture::intel_gpu_pvc,
+-          sycl::ext::oneapi::experimental::architecture::intel_gpu_pvc_vg,
++      std::array<sycl::ext::oneapi::experimental::architecture, 2>{
+           sycl::ext::oneapi::experimental::architecture::intel_gpu_bmg_g21,
+           sycl::ext::oneapi::experimental::architecture::intel_gpu_bmg_g31};
+   if (std::find(
+@@ -113,7 +111,7 @@ mha_fwd(
+           device_architecture) == supported_architectures.end()) {
+     TORCH_CHECK(
+         false,
+-        "XPU device architecture does not support flash attention. Supported architectures are: intel_gpu_pvc, intel_gpu_pvc_vg, intel_gpu_bmg_g21, intel_gpu_bmg_g31.");
++        "XPU device architecture does not support flash attention. Supported architectures are: intel_gpu_bmg_g21, intel_gpu_bmg_g31.");
+   }
+
+   TORCH_CHECK(
+diff --git a/src/ATen/native/xpu/Copy.cpp b/src/ATen/native/xpu/Copy.cpp
+index 069e6a15..ec6b57c2 100644
+--- a/src/ATen/native/xpu/Copy.cpp
++++ b/src/ATen/native/xpu/Copy.cpp
+@@ -23,7 +23,6 @@ DISABLE_SYCL_DEPRECATED_WARNING_BEGIN
+ #undef SYCL_DISABLE_FSYCL_SYCLHPP_WARNING
+ DISABLE_SYCL_DEPRECATED_WARNING_END
+ #include <c10/core/ScalarType.h>
+-#include <c10/util/env.h>
+ #include <c10/xpu/XPUStream.h>
+ #include <comm/xpu_aten.h>
+
+@@ -89,24 +89,10 @@ void memcpyAsync(
+     TORCH_INTERNAL_ASSERT(p2p_enabled == true);
+   }
+   auto q = copy_stream.queue();
+-  auto dev = q.get_device();
+-  // TORCH_XPU_USE_COPY_ENGINE (default: disabled)
+-  // On PVC, the copy kernel is default for better performance. Set to 1 to
+-  // force use of the SYCL queue copy engine instead, e.g. for benchmarking
+-  static const bool use_copy_engine =
+-      c10::utils::check_env("TORCH_XPU_USE_COPY_ENGINE").value_or(false);
+-  if (!use_copy_engine &&
+-      (dev.ext_oneapi_architecture_is(
+-           sycl::ext::oneapi::experimental::architecture::intel_gpu_pvc) ||
+-       dev.ext_oneapi_architecture_is(
+-           sycl::ext::oneapi::experimental::architecture::intel_gpu_pvc_vg))) {
+-    copy_kernel(iter);
+-  } else {
+-    auto dst = (char*)iter.data_ptr(0);
+-    auto src = (char*)iter.data_ptr(1);
+-    size_t size = iter.numel() * iter.element_size(0);
+-    q.copy(src, dst, size);
+-  }
++  auto dst = (char*)iter.data_ptr(0);
++  auto src = (char*)iter.data_ptr(1);
++  size_t size = iter.numel() * iter.element_size(0);
++  q.copy(src, dst, size);
+ }
+
+ void copy_device_to_device(
+diff --git a/src/ATen/xpu/Sleep.cpp b/src/ATen/xpu/Sleep.cpp
+index aa5d224b..faa29ba0 100644
+--- a/src/ATen/xpu/Sleep.cpp
++++ b/src/ATen/xpu/Sleep.cpp
+@@ -37,10 +37,6 @@ void sleep(uint64_t cycles) {
+   )""";
+
+   namespace syclex = sycl::ext::oneapi::experimental;
+-  // TODO: PVC does not expose ext_oneapi_clock_sub_group because its bundled
+-  // IGC (Intel Graphics Compiler) is too old, and enabling the extension breaks
+-  // AOT builds on PVC. Online compilation is used here as a workaround. Once
+-  // the driver ships a newer IGC, migrate to a functor-based implementation.
+   TORCH_CHECK_NOT_IMPLEMENTED(
+       c10::xpu::get_raw_device(c10::xpu::current_device())
+           .has(sycl::aspect::ext_oneapi_clock_sub_group),

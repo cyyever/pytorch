@@ -1,0 +1,85 @@
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -264,7 +264,8 @@ function(torch_xpu_ops_finalize_targets)
+     target_compile_options(${lib} PRIVATE ${TORCH_XPU_OPS_FLAGS})
+
+     target_include_directories(${lib} PUBLIC
+-        ${TORCH_XPU_OPS_INCLUDE_DIRS} ${ATen_XPU_INCLUDE_DIRS} ${SYCL_INCLUDE_DIR})
++        ${TORCH_XPU_OPS_INCLUDE_DIRS} ${ATen_XPU_INCLUDE_DIRS})
++    target_include_directories(${lib} SYSTEM PUBLIC ${SYCL_INCLUDE_DIR})
+
+     target_link_libraries(${lib}
+         PUBLIC  ${SYCL_LIBRARY} ${ARGN}
+diff --git a/src/ATen/native/nested/NestedTensorTransformerFunctions.cpp b/src/ATen/native/nested/NestedTensorTransformerFunctions.cpp
+--- a/src/ATen/native/nested/NestedTensorTransformerFunctions.cpp
++++ b/src/ATen/native/nested/NestedTensorTransformerFunctions.cpp
+@@ -27,4 +27,4 @@ Tensor NestedTensor_softmax_dropout_xpu(
+       /*mask type */ 1); // NestedTensor_to_mask produces a BxT mask
+ }
+
+-} // namespace at::native
+\ No newline at end of file
++} // namespace at::native
+diff --git a/src/ATen/native/sparse/xpu/SparseBinaryOpIntersection.cpp b/src/ATen/native/sparse/xpu/SparseBinaryOpIntersection.cpp
+--- a/src/ATen/native/sparse/xpu/SparseBinaryOpIntersection.cpp
++++ b/src/ATen/native/sparse/xpu/SparseBinaryOpIntersection.cpp
+@@ -15,12 +15,12 @@ namespace at::native {
+
+ REGISTER_XPU_DISPATCH(
+     mul_sparse_sparse_out_stub,
+-    &xpu::mul_sparse_sparse_kernel);
++    &xpu::mul_sparse_sparse_kernel)
+ REGISTER_XPU_DISPATCH(
+     sparse_mask_intersection_out_stub,
+-    &xpu::sparse_mask_intersection_kernel);
++    &xpu::sparse_mask_intersection_kernel)
+ REGISTER_XPU_DISPATCH(
+     sparse_mask_projection_out_stub,
+-    &xpu::sparse_mask_projection_kernel);
++    &xpu::sparse_mask_projection_kernel)
+
+ } // namespace at::native
+diff --git a/src/ATen/native/sparse/xpu/SparseCsrTensorMath.cpp b/src/ATen/native/sparse/xpu/SparseCsrTensorMath.cpp
+--- a/src/ATen/native/sparse/xpu/SparseCsrTensorMath.cpp
++++ b/src/ATen/native/sparse/xpu/SparseCsrTensorMath.cpp
+@@ -48,7 +48,7 @@ TORCH_IMPL_FUNC(_convert_indices_from_coo_to_csr_structured_xpu)
+  const Tensor& result) {
+   xpu::convert_indices_from_coo_to_csr_structured_kernel(
+       input, size, out_int32, result);
+-};
++}
+
+ TORCH_IMPL_FUNC(_convert_indices_from_csr_to_coo_structured_xpu)
+ (const Tensor& crow_indices,
+@@ -58,7 +58,7 @@ TORCH_IMPL_FUNC(_convert_indices_from_csr_to_coo_structured_xpu)
+  const Tensor& result) {
+   xpu::convert_indices_from_csr_to_coo_structured_kernel(
+       crow_indices, col_indices, out_int32, transpose, result);
+-};
++}
+
+ Tensor _sparse_csr_sum_xpu(
+     const Tensor& input,
+diff --git a/src/ATen/native/sparse/xpu/SparseTensor.cpp b/src/ATen/native/sparse/xpu/SparseTensor.cpp
+--- a/src/ATen/native/sparse/xpu/SparseTensor.cpp
++++ b/src/ATen/native/sparse/xpu/SparseTensor.cpp
+@@ -19,6 +19,6 @@ SparseTensor _coalesce_sparse_xpu(const SparseTensor& self) {
+   return xpu::coalesce_sparse_kernel(self);
+ }
+
+-REGISTER_XPU_DISPATCH(flatten_indices_stub, &xpu::flatten_indices_kernel);
++REGISTER_XPU_DISPATCH(flatten_indices_stub, &xpu::flatten_indices_kernel)
+
+ } // namespace at::native
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -37,6 +37,6 @@ endif()
+
+ if(USE_ONEMKL_XPU)
+   target_compile_definitions(torch_xpu_ops PRIVATE USE_ONEMKL_XPU)
+-  target_include_directories(torch_xpu_ops PUBLIC ${TORCH_XPU_OPS_ONEMKL_INCLUDE_DIR})
++  target_include_directories(torch_xpu_ops SYSTEM PUBLIC ${TORCH_XPU_OPS_ONEMKL_INCLUDE_DIR})
+   target_link_libraries(torch_xpu_ops PUBLIC ${TORCH_XPU_OPS_ONEMKL_LIBRARIES})
+ endif()

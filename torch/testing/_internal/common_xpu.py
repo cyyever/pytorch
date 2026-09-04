@@ -10,30 +10,20 @@ XPU_ALREADY_INITIALIZED_ON_IMPORT = torch.xpu.is_initialized()
 
 
 class XPUCodename(enum.Enum):
-    PVC = "PVC"  # Intel® Data Center GPU Max Series
     BMG = "BMG"  # Intel® Arc™ Pro Battlemage Graphics
+    LNL = "LNL"  # Intel® Core™ Ultra 200V Series Graphics
+    PTL = "PTL"  # Intel® Core™ Ultra Series 3 Graphics
 
 
 class XPUArch(enum.IntEnum):
     Unknown = 0
-    Xe = 1  # Xe HPC
     Xe2 = 2
+    Xe3 = 3
 
 
 # device_id -> GPU codename
 # From https://github.com/intel/intel-graphics-compiler/blob/master/inc/common/igfxfmid.h
 _DEVICE_ID_TO_CODENAME = {
-    0x0BD0: XPUCodename.PVC,
-    0x0BD4: XPUCodename.PVC,
-    0x0BD5: XPUCodename.PVC,
-    0x0BD6: XPUCodename.PVC,
-    0x0BD7: XPUCodename.PVC,
-    0x0BD8: XPUCodename.PVC,
-    0x0BD9: XPUCodename.PVC,
-    0x0BDA: XPUCodename.PVC,
-    0x0BDB: XPUCodename.PVC,
-    0x0B69: XPUCodename.PVC,
-    0x0B6E: XPUCodename.PVC,
     0xE202: XPUCodename.BMG,
     0xE20B: XPUCodename.BMG,
     0xE20C: XPUCodename.BMG,
@@ -47,12 +37,29 @@ _DEVICE_ID_TO_CODENAME = {
     0xE221: XPUCodename.BMG,
     0xE222: XPUCodename.BMG,
     0xE223: XPUCodename.BMG,
+    0x6420: XPUCodename.LNL,
+    0x64A0: XPUCodename.LNL,
+    0x64B0: XPUCodename.LNL,
+    0xB080: XPUCodename.PTL,
+    0xB081: XPUCodename.PTL,
+    0xB082: XPUCodename.PTL,
+    0xB083: XPUCodename.PTL,
+    0xB084: XPUCodename.PTL,
+    0xB085: XPUCodename.PTL,
+    0xB086: XPUCodename.PTL,
+    0xB087: XPUCodename.PTL,
+    0xB08F: XPUCodename.PTL,
+    0xB090: XPUCodename.PTL,
+    0xB0A0: XPUCodename.PTL,
+    0xB0B0: XPUCodename.PTL,
+    0xB0FF: XPUCodename.PTL,
 }
 
 # GPU codename -> architecture
 _CODENAME_TO_ARCH = {
-    XPUCodename.PVC: XPUArch.Xe,
     XPUCodename.BMG: XPUArch.Xe2,
+    XPUCodename.LNL: XPUArch.Xe2,
+    XPUCodename.PTL: XPUArch.Xe3,
 }
 
 

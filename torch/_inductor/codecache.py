@@ -3391,6 +3391,10 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
             )
 
             if gpu_kernels_o and device_type == "xpu":
+                from torch._inductor.codegen.xpu.compile_utils import (
+                    _sycl_arch_as_compile_option,
+                )
+
                 so_build_options = CppTorchDeviceOptions(
                     compiler="icpx",
                     vec_isa=picked_vec_isa,
@@ -3398,7 +3402,8 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                     aot_mode=graph.aot_mode,
                     extra_flags=[
                         "-fsycl",
-                        "-fsycl-targets=intel_gpu_pvc",
+                        "-fsycl-targets=spir64_gen",
+                        f'-Xs "-device {_sycl_arch_as_compile_option()}"',
                         "-Xspirv-translator",
                         (
                             "-spirv-ext="

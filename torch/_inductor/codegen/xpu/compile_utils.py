@@ -75,9 +75,19 @@ def _sycl_lib_options() -> list[str]:
 
 
 def _sycl_arch_as_compile_option() -> str:
-    arc_option_map = {"Xe12": "pvc", "Xe20": "bmg-g21,bmg-g31"}
-    arch = get_xpu_arch()
-    return arc_option_map.get(arch, "pvc")
+    from torch.testing._internal.common_xpu import get_xpu_codename, XPUCodename
+
+    arc_option_map = {
+        XPUCodename.BMG: "bmg-g21,bmg-g31",
+        XPUCodename.LNL: "lnl-m",
+        XPUCodename.PTL: "ptl-h,ptl-u",
+    }
+    codename = get_xpu_codename()
+    if codename not in arc_option_map:
+        raise NotImplementedError(
+            "Cannot determine a supported Xe2-or-newer XPU architecture"
+        )
+    return arc_option_map[codename]
 
 
 def _sycl_compiler_options() -> list[str]:
