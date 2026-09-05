@@ -684,7 +684,7 @@ if(USE_ROCM)
     list(APPEND Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS
       roc::hipblas roc::rocblas hip::hipfft hip::hiprand roc::hipsparse roc::hipsolver roc::hipblaslt roc::rocsolver)
     # hipsparselt is an optional component that will eventually be enabled by default.
-    if(hipsparselt_FOUND)
+    if(hipsparselt_FOUND AND USE_HIPSPARSELT)
       list(APPEND Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS
         roc::hipsparselt
       )
