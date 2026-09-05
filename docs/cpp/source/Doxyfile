@@ -36,7 +36,6 @@ INPUT                  = ../../../aten/src/ATen/ATen.h \
                          ../../../aten/src/ATen/cuda/CUDAContext.h \
                          ../../../aten/src/ATen/cuda/CUDAContextLight.h \
                          ../../../aten/src/ATen/cudnn/Descriptors.h \
-                         ../../../aten/src/ATen/cudnn/Handles.h \
                          ../../../aten/src/ATen/cudnn/Types.h \
                          ../../../aten/src/ATen/cudnn/Utils.h \
                          ../../../aten/src/ATen/DeviceGuard.h \
