@@ -43,6 +43,7 @@
 #include <torch/csrc/utils/python_strings.h>
 #include <array>
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <thread>
 #include <unordered_map>
@@ -594,8 +595,8 @@ static PyObject* THCPModule_memoryStats(PyObject* _unused, PyObject* arg) {
     const std::array<const char*, static_cast<size_t>(StatType::NUM_TYPES)>
         statTypeNames = {"all", "small_pool", "large_pool"};
     py::dict dict;
-    for (const auto i : c10::irange(statTypeNames.size())) {
-      dict[statTypeNames[i]] = statToDict(statArray[i]);
+    for (auto&& [name, stat] : std::views::zip(statTypeNames, statArray)) {
+      dict[name] = statToDict(stat);
     }
     return dict;
   };
