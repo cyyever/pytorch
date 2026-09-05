@@ -339,9 +339,6 @@ struct C10_API VariableVersion {
   bool unique() const {
     return version_counter_ ? 1 == version_counter_.use_count() : true;
   }
-  // NOTE: As of C++11 and 14, default-constructing a std::atomic variable
-  // leaves it in a persistently undefined state. See
-  // https://cplusplus.github.io/LWG/issue2334.
   VariableVersion(uint32_t version)
       : version_counter_(c10::make_intrusive<VersionCounter>(version)) {}
   VariableVersion(Disabled /*unused*/ = DISABLED) {}

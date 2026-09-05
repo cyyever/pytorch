@@ -39,7 +39,7 @@ static inline int last_pow2(int n) {
 // returns reduced fraction numerator & denominator
 C10_HOST_DEVICE static void reduce_fraction(size_t &numerator, size_t &denominator) {
   // get GCD of num and denom using Euclid's algorithm.
-  // Can replace this with std::gcd if we ever support c++17.
+  // std::gcd is not callable from device code, hence the hand-rolled loop.
   size_t a = denominator;
   size_t b = numerator;
   while (b != 0) {

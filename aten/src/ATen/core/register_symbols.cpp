@@ -38,7 +38,7 @@ std::string qual_name_for_entry(const Entry& entry) {
 // and then storing two uint16_t (or uint32_t if needed) offsets into
 // the raw string tables in Entry instead of 8-byte pointers.
 // I haven't implemented that because it's not clear to me how to
-// dedupe the namespaces array at compile-time, particularly in C++14,
+// dedupe the namespaces array at compile-time,
 // but it would be straightforward if we switched to codegen.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
 constexpr Entry entries[] = {
