@@ -121,7 +121,6 @@ exclude_patterns = [
     'aten/src/ATen/core/interned_strings.h',
     'c10/xpu/XPUMacros.h',
     'c10/benchmark/intrusive_ptr_benchmark.cpp',
-    'c10/cuda/CUDAAlgorithm.h',
     'c10/util/complex_math.h',
     'torch/headeronly/util/complex_utils.h',
     'torch/headeronly/cuda/Atomic.h',
@@ -1379,7 +1378,6 @@ exclude_patterns = [
     "aten/src/ATen/Context.h",
     "aten/src/ATen/Context.cpp",
     "aten/src/ATen/DLConvertor.cpp",
-    "aten/src/ATen/core/Array.h",
     "aten/src/ATen/native/sparse/SparseBlasImpl.cpp",  # triton implementation
     "aten/src/ATen/native/transformers/attention.cpp",
     "aten/src/ATen/native/**/cudnn/**",  # cudnn is cuda specific

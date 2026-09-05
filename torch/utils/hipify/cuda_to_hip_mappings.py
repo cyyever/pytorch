@@ -3327,7 +3327,6 @@ C10_MAPPINGS = collections.OrderedDict([
     ("CUDA_VERSION", "TORCH_HIP_VERSION"),
     ("CUDA_LAUNCH_BLOCKING=1", "AMD_SERIALIZE_KERNEL=3"),
     ("CUDA_LAUNCH_BLOCKING", "AMD_SERIALIZE_KERNEL"),
-    ("c10/cuda/CUDAAlgorithm.h", "c10/hip/HIPAlgorithm.h"),
     ("c10/cuda/CUDAAllocatorConfig.h", "c10/hip/HIPAllocatorConfig.h"),
     ("c10/cuda/CUDACachingAllocator.h", "c10/hip/HIPCachingAllocator.h"),
     ("c10/cuda/CUDADeviceAssertion.h", "c10/hip/HIPDeviceAssertion.h"),

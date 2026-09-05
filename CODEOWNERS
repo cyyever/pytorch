@@ -356,7 +356,6 @@
 # /torch/csrc/TypeInfo.h
 # /torch/csrc/Types.h
 # /torch/csrc/acc/
-# /torch/csrc/copy_utils.h
 # /torch/csrc/cpu/
 # /torch/csrc/export/
 # /torch/csrc/functionalization/
