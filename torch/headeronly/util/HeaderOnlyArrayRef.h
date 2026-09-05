@@ -200,6 +200,16 @@ class HeaderOnlyArrayRef {
   /// @name Operator Overloads
   /// @{
   constexpr const T& operator[](size_t Index) const {
+    // Debug-only: this is the hot accessor, and every kernel that walks a
+    // shape or a stride goes through it. It is also unchecked in release,
+    // which is how out-of-bounds reads here stay silent -- use at() where the
+    // index is not already known to be in range.
+    STD_TORCH_CHECK_DEBUG_ONLY(
+        Index < this->Length,
+        "HeaderOnlyArrayRef: invalid index Index = ",
+        Index,
+        "; Length = ",
+        this->Length);
     return this->Data[Index];
   }
 

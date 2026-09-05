@@ -84,3 +84,19 @@ HIDDEN_NAMESPACE_END(torch, headeronly, detail)
         ", "                                                         \
         __VA_OPT__(,) __VA_ARGS__));                                              \
   }
+
+// Debug-only STD_TORCH_CHECK, for assertions that belong on a hot path but are
+// too expensive to keep in a release build. Mirrors c10's
+// TORCH_INTERNAL_ASSERT_DEBUG_ONLY, which headeronly cannot depend on.
+//
+// The switch is C10_ENABLE_DEBUG_CHECKS, written into cmake_macros.h when
+// libtorch is configured, not NDEBUG. These headers are installed and included
+// by extensions built on their own terms: keying off NDEBUG would give the
+// same inline function two different bodies depending on who compiled it.
+#ifdef C10_ENABLE_DEBUG_CHECKS
+#define STD_TORCH_CHECK_DEBUG_ONLY(cond, ...) STD_TORCH_CHECK(cond, __VA_ARGS__)
+#else
+#define STD_TORCH_CHECK_DEBUG_ONLY(cond, ...) \
+  while (false)                               \
+  STD_TORCH_CHECK(cond, __VA_ARGS__)
+#endif
