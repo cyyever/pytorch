@@ -11,6 +11,8 @@
 // don't build this file as part of CPU build.
 #include <ATen/cuda/CUDAConfig.h>
 
+#include <ranges>
+
 
 #if !AT_ROCM_ENABLED()
 
@@ -86,18 +88,22 @@ bool _use_miopen_ctc_loss(
       (log_probs.device().type() == at::kCUDA) && (log_probs.dim() == 3);
 
   if (use_miopen) {
-    // The two length lists should be the same size, but nothing has compared
-    // them by the time this runs; see the note in the cuDNN copy.
+    // The two length lists should be the same size, but nothing has checked
+    // by the time this runs; see the note in the cuDNN copy of this function.
     use_miopen = use_miopen && (input_lengths.size() == target_lengths.size());
+  }
+
+  if (use_miopen) {
     int64_t max_input_length = log_probs.size(0);
     for (const auto input_length : input_lengths) {
       use_miopen = use_miopen && ((input_length == max_input_length) ? 1 : 0);
     }
-    for (const auto b : c10::irange(target_lengths.size())) {
+    for (const auto [target_length, input_length] :
+         std::views::zip(target_lengths, input_lengths)) {
       // target length < 256 is documented, but we see illegal memory accesses
       // when target lengths > input lengths for MIOpen (same as cuDNN)
-      use_miopen = use_miopen && (target_lengths[b] < 256) &&
-          (target_lengths[b] <= input_lengths[b]);
+      use_miopen =
+          use_miopen && (target_length < 256) && (target_length <= input_length);
     }
   }
   return use_miopen;
@@ -124,10 +130,11 @@ bool _use_miopen_ctc_loss_tensor(
     IntArrayRef il(ilc.const_data_ptr<int64_t>(), ilc.numel());
     IntArrayRef tl(tlc.const_data_ptr<int64_t>(), tlc.numel());
     use_miopen = use_miopen && (il.size() == tl.size());
-    for (const auto b : c10::irange(tl.size())) {
+    for (const auto [target_length, input_length] : std::views::zip(tl, il)) {
       // target length < 256 is documented, but we see illegal memory accesses
       // when target lengths > input lengths for MIOpen (same as cuDNN)
-      use_miopen = use_miopen && (tl[b] < 256) && (tl[b] <= il[b]);
+      use_miopen =
+          use_miopen && (target_length < 256) && (target_length <= input_length);
       if (!use_miopen) {
         return use_miopen;
       }
