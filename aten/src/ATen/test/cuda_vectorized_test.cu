@@ -10,8 +10,15 @@ using namespace at::native::memory;
 
 constexpr int buffer_size = 1024;
 
-__managed__ double4_16a buffer1[buffer_size];
-__managed__ double4_16a buffer2[buffer_size];
+struct alignas(16) aligned_double4 {
+  double x;
+  double y;
+  double z;
+  double w;
+};
+
+__managed__ aligned_double4 buffer1[buffer_size];
+__managed__ aligned_double4 buffer2[buffer_size];
 
 void reset_buffers() {
   for (int i = 0; i < buffer_size; i++) {

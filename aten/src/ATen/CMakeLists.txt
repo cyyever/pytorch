@@ -579,7 +579,9 @@ if(USE_ROCM)
     set_target_properties(ck_gemm PROPERTIES
       POSITION_INDEPENDENT_CODE ON
       HIP_ARCHITECTURES "${_ck_gemm_hip_arches}")
-    target_compile_options(ck_gemm PRIVATE ${HIP_CXX_FLAGS})
+    target_compile_options(ck_gemm PRIVATE
+      ${HIP_CXX_FLAGS}
+      $<$<COMPILE_LANGUAGE:HIP>:-fvisibility=hidden>)
     target_include_directories(ck_gemm PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/hip
       ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/include
