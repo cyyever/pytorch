@@ -571,6 +571,13 @@ target_include_directories(torch::nvtx3 INTERFACE "${nvtx3_dir}")
 
 # ---[ HIP
 if(USE_ROCM)
+  set(PYTORCH_HIP_GCC_INSTALL_DIR "/usr/lib/gcc/x86_64-pc-linux-gnu/15.3.0")
+  if(NOT IS_DIRECTORY "${PYTORCH_HIP_GCC_INSTALL_DIR}")
+    message(FATAL_ERROR "HIP compilation requires GCC 15 at ${PYTORCH_HIP_GCC_INSTALL_DIR}")
+  endif()
+  string(APPEND CMAKE_HIP_FLAGS " --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
+  message(STATUS "HIP compilation uses libstdc++ from ${PYTORCH_HIP_GCC_INSTALL_DIR}")
+
   include(${CMAKE_CURRENT_LIST_DIR}/public/LoadHIP.cmake)
   if(PYTORCH_FOUND_HIP)
     message(INFO "Compiling with HIP for AMD.")
@@ -1152,6 +1159,13 @@ if(USE_KINETO)
 
   if(NOT TARGET kineto)
     add_subdirectory("${KINETO_SOURCE_DIR}")
+    if(KINETO_BACKEND STREQUAL "rocm" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      foreach(_kineto_target kineto_base kineto_api)
+        target_compile_options(
+          ${_kineto_target} PRIVATE
+          "--gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
+      endforeach()
+    endif()
     set_property(TARGET kineto PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
   list(APPEND Caffe2_DEPENDENCY_LIBS kineto)
