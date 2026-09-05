@@ -671,7 +671,7 @@ if(USE_ROCM)
        $<INSTALL_INTERFACE:include> ${Caffe2_HIP_INCLUDE})
 
     set(Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS
-      hip::host MIOpen hiprtc::hiprtc)
+      hip::host MIOpen hiprtc::hiprtc libhipcxx::libhipcxx)
 
     # intra_node_comm.cpp is the only consumer, and -Wl,--no-as-needed would
     # stamp the DT_NEEDED on even when it is not built.

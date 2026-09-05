@@ -6,10 +6,27 @@
 #include <iterator>
 #include <limits>
 
+#ifndef USE_ROCM
+#include <cuda/std/functional>
+#endif
+
 #include <ATen/cuda/cub_definitions.cuh>
 #include <ATen/cuda/CUDAContextLight.h>
 
+#ifdef USE_ROCM
+#include <hipcub/block/block_load.hpp>
+#include <hipcub/block/block_reduce.hpp>
+#include <hipcub/block/block_scan.hpp>
+#include <hipcub/block/block_store.hpp>
+#include <hipcub/device/device_radix_sort.hpp>
+#include <hipcub/device/device_reduce.hpp>
+#include <hipcub/device/device_run_length_encode.hpp>
+#include <hipcub/device/device_scan.hpp>
+#include <hipcub/device/device_segmented_radix_sort.hpp>
+#include <hipcub/device/device_select.hpp>
+#else
 #include <cub/cub.cuh>
+#endif
 
 #include <ATen/cuda/Exceptions.h>
 #include <c10/cuda/CUDACachingAllocator.h>
@@ -32,9 +49,14 @@
 #define ROCM_HIPCUB(x) x
 #endif
 
+#if CUB_V3_4_PLUS()
 #include <cuda/iterator>
 #include <cuda/functional>
 #include <cuda/std/iterator>
+#define ATEN_CUB_TRANSFORM_ITERATOR(ValueType, ...) ::cuda::transform_iterator<__VA_ARGS__>
+#define ATEN_CUB_COUNTING_ITERATOR(...) ::cuda::counting_iterator<__VA_ARGS__>
+#define ATEN_CUB_CONSTANT_ITERATOR(...) ::cuda::constant_iterator<__VA_ARGS__>
+#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
 template<class T>
 using cccl_constant_iterator = ::cuda::constant_iterator<T>;
 template<class T>
@@ -42,7 +64,24 @@ using cccl_counting_iterator = ::cuda::counting_iterator<T>;
 using cccl_discard_iterator  = ::cuda::discard_iterator;
 template<class Iter>
 auto cccl_make_reverse_iterator(Iter it) { return ::cuda::std::make_reverse_iterator(it); }
-
+#else
+#include <thrust/iterator/transform_iterator.h>
+#include <thrust/iterator/counting_iterator.h>
+#include <thrust/iterator/constant_iterator.h>
+#include <thrust/iterator/discard_iterator.h>
+#include <thrust/iterator/reverse_iterator.h>
+#define ATEN_CUB_TRANSFORM_ITERATOR(ValueType, ...) ::thrust::transform_iterator<__VA_ARGS__>
+#define ATEN_CUB_COUNTING_ITERATOR(...) ::thrust::counting_iterator<__VA_ARGS__>
+#define ATEN_CUB_CONSTANT_ITERATOR(...) ::thrust::constant_iterator<__VA_ARGS__>
+#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
+template<class T>
+using cccl_constant_iterator = ::thrust::constant_iterator<T>;
+template<class T>
+using cccl_counting_iterator = ::thrust::counting_iterator<T>;
+using cccl_discard_iterator  = ::thrust::discard_iterator<>;
+template<class Iter>
+auto cccl_make_reverse_iterator(Iter it) { return ::thrust::make_reverse_iterator(it); }
+#endif
 
 #if !defined(USE_ROCM)
 namespace at::native {
@@ -125,9 +164,21 @@ inline void unique_by_key(
   ValuesOutputIteratorT values_out,
   NumSelectedIteratorT num_selected, int64_t num_input_items)
 {
+#if CUB_V3_4_PLUS()
   CUB_WRAPPER(NO_ROCM(at_cuda_detail)::cub::DeviceSelect::UniqueByKey,
     keys_in, values_in, cccl_discard_iterator(), values_out, num_selected,
     num_input_items, c10::cuda::getCurrentCUDAStream());
+#else
+  // TODO: use thrust::discard_iterator to handle null keys_out when
+  // https://github.com/NVIDIA/cub/issues/406 is fixed.
+  using KeyT = typename std::iterator_traits<KeysInputIteratorT>::value_type;
+  auto allocator = c10::cuda::CUDACachingAllocator::get();
+  auto keys_out_owner = allocator->allocate(num_input_items * sizeof(KeyT));
+  auto keys_out_ = static_cast<KeyT*>(keys_out_owner.get());
+  CUB_WRAPPER(NO_ROCM(at_cuda_detail)::cub::DeviceSelect::UniqueByKey,
+    keys_in, values_in, keys_out_, values_out, num_selected, num_input_items,
+    c10::cuda::getCurrentCUDAStream());
+#endif
 }
 
 namespace impl {
@@ -327,7 +378,7 @@ __global__ void calc_block_sums(const T * d_in, aggT * agg, int64_t nelem, int i
     aggT data[ITEMS_PER_THREAD];
     aggT agg_val = 0;
     TransformFunctor<T, aggT, nonzero> transform_functor;
-    auto iter_in = ::cuda::transform_iterator<TransformFunctor<T, aggT, nonzero>, const T*>(d_in, transform_functor);
+    auto iter_in = ATEN_CUB_TRANSFORM_ITERATOR(aggT, TransformFunctor<T, aggT, nonzero>, const T*)(d_in, transform_functor);
     for (int i=0; i<iters_per_cta; i++){
       if (remaining >= BLOCK_THREADS * ITEMS_PER_THREAD) {
         BlockLoadT(temp_storage.load).Load(iter_in, data);
