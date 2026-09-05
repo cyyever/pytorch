@@ -12,8 +12,8 @@
 #include <ostream>
 #include <type_traits>
 
-#if defined(__HIPCC__)
-#include <hip/hip_bf16.h>
+#if defined(__CUDACC__)
+#include <cuda_bf16.h>
 #endif
 
 #if defined(SYCL_LANGUAGE_VERSION)
@@ -44,9 +44,9 @@ struct alignas(2) BFloat16 {
   /* implicit */ constexpr C10_HOST_DEVICE BFloat16(float value);
   constexpr C10_HOST_DEVICE operator float() const;
 
-#if defined(__HIPCC__)
-  inline C10_HOST_DEVICE BFloat16(const __hip_bfloat16& value);
-  explicit inline C10_HOST_DEVICE operator __hip_bfloat16() const;
+#if defined(__CUDACC__)
+  inline C10_HOST_DEVICE BFloat16(const __nv_bfloat16& value);
+  explicit inline C10_HOST_DEVICE operator __nv_bfloat16() const;
 #endif
 
 #if defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
@@ -94,7 +94,7 @@ namespace detail {
 // evaluation takes the software path and everything else keeps the instruction
 // it had. Both round to nearest even.
 C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
-#if defined(__HIPCC__) && \
+#if defined(__CUDACC__) && \
     (!defined(USE_ROCM) && defined(__CUDA_ARCH__) || defined(USE_ROCM))
   if (!std::is_constant_evaluated()) {
     return __bfloat16_as_ushort(__float2bfloat16(value));
@@ -109,9 +109,9 @@ C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 }
 
 C10_HOST_DEVICE constexpr float bfloat16_bits_to_float(uint16_t x) {
-#if defined(__HIPCC__)
+#if defined(__CUDACC__)
   if (!std::is_constant_evaluated()) {
-    return __bfloat162float(*reinterpret_cast<const __hip_bfloat16*>(&x));
+    return __bfloat162float(*reinterpret_cast<const __nv_bfloat16*>(&x));
   }
 #elif defined(__SYCL_DEVICE_ONLY__) && \
     defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
@@ -133,11 +133,11 @@ constexpr C10_HOST_DEVICE BFloat16::operator float() const {
   return detail::bfloat16_bits_to_float(x);
 }
 
-#if defined(__HIPCC__)
-inline C10_HOST_DEVICE BFloat16::BFloat16(const __hip_bfloat16& value)
+#if defined(__CUDACC__)
+inline C10_HOST_DEVICE BFloat16::BFloat16(const __nv_bfloat16& value)
     : x(*reinterpret_cast<const unsigned short*>(&value)) {}
-inline C10_HOST_DEVICE BFloat16::operator __hip_bfloat16() const {
-  return *reinterpret_cast<const __hip_bfloat16*>(&x);
+inline C10_HOST_DEVICE BFloat16::operator __nv_bfloat16() const {
+  return *reinterpret_cast<const __nv_bfloat16*>(&x);
 }
 #endif
 
@@ -152,10 +152,10 @@ inline C10_HOST_DEVICE BFloat16::operator sycl::ext::oneapi::bfloat16() const {
 
 // CUDA intrinsics
 
-#if defined(__HIPCC__) || defined(__HIPCC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
 inline C10_DEVICE BFloat16 __ldg(const BFloat16* ptr) {
 #if !defined(USE_ROCM) && defined(__CUDA_ARCH__)
-  return __ldg(reinterpret_cast<const __hip_bfloat16*>(ptr));
+  return __ldg(reinterpret_cast<const __nv_bfloat16*>(ptr));
 #else
   return *ptr;
 #endif
