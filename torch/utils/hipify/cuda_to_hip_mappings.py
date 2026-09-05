@@ -287,6 +287,7 @@ CUDA_INCLUDE_MAP = collections.OrderedDict([
     ("cuComplex.h", "hip/hip_complex.h"),
     ("cuda_fp16.h", "hip/hip_fp16.h"),
     ("cuda_bf16.h", "hip/hip_bf16.h"),
+    ("cuda_fp8.h", "hip/hip_fp8.h"),
     ("cuda_texture_types.h", "hip/hip_texture_types.h"),
     ("cooperative_groups.h", "hip/hip_cooperative_groups.h"),
     ("vector_types.h", "hip/hip_vector_types.h"),
