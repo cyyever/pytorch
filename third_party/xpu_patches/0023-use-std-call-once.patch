@@ -1,7 +1,7 @@
 diff --git a/src/xccl/XPUSymmetricMemory.cpp b/src/xccl/XPUSymmetricMemory.cpp
 --- a/src/xccl/XPUSymmetricMemory.cpp
 +++ b/src/xccl/XPUSymmetricMemory.cpp
-@@ -363,8 +363,8 @@
+@@ -363,7 +363,7 @@
    // PR_SET_PTRACER(getppid()) is NOT sufficient -- it only authorizes the
    // launcher. We need PR_SET_PTRACER_ANY so any peer rank can import our
    // IPC handles. This is scoped to the lifetime of this process.
@@ -11,4 +11,3 @@ diff --git a/src/xccl/XPUSymmetricMemory.cpp b/src/xccl/XPUSymmetricMemory.cpp
 +  std::call_once(prctl_once, []() {
      (void)::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
    });
- 
