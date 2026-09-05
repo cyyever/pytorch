@@ -249,7 +249,6 @@ if(USE_FLASH_ATTENTION)
         CK_ENABLE_FP8
         CK_ENABLE_INT8
         CK_USE_FNUZ_FP8
-        CK_USE_GFX94
         CK_USE_XDL
         ENABLE_CK
         __HIP_PLATFORM_AMD__=1
@@ -263,11 +262,8 @@ if(USE_FLASH_ATTENTION)
 
     message(STATUS "Generating CK kernel instances...")
     add_subdirectory(native/transformers/hip/flash_attn/ck)
-    # FAv3 Generation
-    add_subdirectory(native/transformers/hip/flash_attn/ck/fav_v3)
     file(GLOB ck_sdpa_sources_hip CONFIGURE_DEPENDS
-         "native/transformers/hip/flash_attn/ck/*.hip"
-         "native/transformers/hip/flash_attn/ck/fav_v3/*.hip")
+         "native/transformers/hip/flash_attn/ck/*.hip")
     # Take the generated FMHA instances from the blob lists this configure
     # wrote instead of from the glob: they are generated into the source tree,
     # which can also hold instances from an earlier configure that asked for
@@ -285,16 +281,13 @@ if(USE_FLASH_ATTENTION)
       # build cost.
       HIP_ARCHITECTURES "${AT_ROCM_CK_SDPA_ARCHS}")
     target_compile_definitions(ck_sdpa PUBLIC ${CK_SDPA_EXTRA_HIPCC_OPTIONS})
-    target_compile_definitions(ck_sdpa PRIVATE AITER_EMBEDDED_HSA_HEADER="aiter_embedded_hsa.h")
     target_include_directories(ck_sdpa PUBLIC
                                ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/include
                                ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/library/include
                                ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/example/ck_tile/01_fmha
                                ${CMAKE_CURRENT_BINARY_DIR}/composable_kernel
                                ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/aiter/csrc/include
-                               ${CMAKE_CURRENT_SOURCE_DIR}/native/transformers/hip/flash_attn/ck
-                               ${AITER_EMBEDDED_HSA_HEADER_DIR}
-                               )
+                               ${CMAKE_CURRENT_SOURCE_DIR}/native/transformers/hip/flash_attn/ck)
 
   endif()
   file(GLOB flash_attention_hip_aot_hip CONFIGURE_DEPENDS "native/transformers/hip/flash_attn/aot/*.hip")
