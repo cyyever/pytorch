@@ -109,7 +109,6 @@
 # Additional env vars that are forwarded with a different CMake variable name.
 set(_ENV_ALIASES
   "CUDNN_LIB_DIR=CUDNN_LIBRARY"
-  "USE_CUDA_STATIC_LINK=CAFFE2_STATIC_LINK_CUDA"
 )
 
 # Additional env vars forwarded with the same name.

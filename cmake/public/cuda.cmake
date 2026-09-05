@@ -5,20 +5,6 @@ if(TARGET torch::cudart)
   return()
 endif()
 
-# We don't want to statically link cudart, because we rely on it's dynamic linkage in
-# python (follow along torch/cuda/__init__.py and usage of cudaGetErrorName).
-# Technically, we can link cudart here statically, and link libtorch_python.so
-# to a dynamic libcudart.so, but that's just wasteful.
-# However, on Windows, if this one gets switched off, the error "cuda: unknown error"
-# will be raised when running the following code:
-# >>> import torch
-# >>> torch.cuda.is_available()
-# >>> torch.cuda.current_device()
-# More details can be found in the following links.
-# https://github.com/pytorch/pytorch/issues/20635
-# https://github.com/pytorch/pytorch/issues/17108
-set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE INTERNAL "")
-
 # Find CUDA. CUDA_HOME is the historical PyTorch spelling of the install
 # location; CMake's own module only looks at CUDAToolkit_ROOT and CUDA_PATH.
 if(NOT CUDAToolkit_ROOT AND DEFINED ENV{CUDA_HOME})
@@ -143,10 +129,6 @@ if(CUDA_NVRTC_LIB AND NOT CUDA_NVRTC_SHORTHASH)
 endif()
 
 # Create new style imported libraries.
-# Several of these libraries have a hardcoded path if CAFFE2_STATIC_LINK_CUDA
-# is set. This path is where sane CUDA installations have their static
-# libraries installed. This flag should only be used for binary builds, so
-# end-users should never have this flag set.
 
 # cuda
 add_library(caffe2::cuda INTERFACE IMPORTED)
@@ -156,32 +138,16 @@ set_property(
 
 # cudart
 add_library(torch::cudart INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
-    set_property(
-        TARGET torch::cudart PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::cudart_static)
-else()
-    set_property(
-        TARGET torch::cudart PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::cudart)
-endif()
+set_property(
+    TARGET torch::cudart PROPERTY INTERFACE_LINK_LIBRARIES
+    CUDA::cudart)
 
 
 # cublas
 add_library(caffe2::cublas INTERFACE IMPORTED)
-if(CAFFE2_STATIC_LINK_CUDA)
-    set_property(
-        TARGET caffe2::cublas PROPERTY INTERFACE_LINK_LIBRARIES
-        # NOTE: cublas is always linked dynamically
-        CUDA::cublas CUDA::cublasLt)
-    set_property(
-        TARGET caffe2::cublas APPEND PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::cudart_static rt)
-else()
-    set_property(
-        TARGET caffe2::cublas PROPERTY INTERFACE_LINK_LIBRARIES
-        CUDA::cublas CUDA::cublasLt)
-endif()
+set_property(
+    TARGET caffe2::cublas PROPERTY INTERFACE_LINK_LIBRARIES
+    CUDA::cublas CUDA::cublasLt)
 
 # cudnn interface
 # static linking is handled by USE_STATIC_CUDNN environment variable
@@ -251,15 +217,9 @@ endif()
 # cufile
 if(CAFFE2_USE_CUFILE)
   add_library(torch::cufile INTERFACE IMPORTED)
-  if(CAFFE2_STATIC_LINK_CUDA)
-      set_property(
-          TARGET torch::cufile PROPERTY INTERFACE_LINK_LIBRARIES
-          CUDA::cuFile_static)
-  else()
-      set_property(
-          TARGET torch::cufile PROPERTY INTERFACE_LINK_LIBRARIES
-          CUDA::cuFile)
-  endif()
+  set_property(
+      TARGET torch::cufile PROPERTY INTERFACE_LINK_LIBRARIES
+      CUDA::cuFile)
 else()
   message(STATUS "USE_CUFILE is set to 0. Compiling without cuFile support")
 endif()
