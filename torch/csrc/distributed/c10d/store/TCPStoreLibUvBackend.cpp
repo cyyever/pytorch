@@ -1373,7 +1373,7 @@ void LibUVStoreDaemon::stop() {
 
 bool LibUVStoreDaemon::isMiscellaneousClient(
     const c10::intrusive_ptr<UvHandle>& client) {
-  if (miscellaneousClients_.find(client) != miscellaneousClients_.end()) {
+  if (miscellaneousClients_.contains(client)) {
     miscellaneousClients_.erase(client);
     return true;
   }
@@ -1389,7 +1389,7 @@ void LibUVStoreDaemon::registerClient(
 void LibUVStoreDaemon::unregisterClient(
     const c10::intrusive_ptr<UvHandle>& client) {
   clients_.erase(client);
-  if (miscellaneousClients_.find(client) != miscellaneousClients_.end()) {
+  if (miscellaneousClients_.contains(client)) {
     miscellaneousClients_.erase(client);
   }
   clearClientWaitState(client);
@@ -1397,7 +1397,7 @@ void LibUVStoreDaemon::unregisterClient(
 
 void LibUVStoreDaemon::clearClientWaitState(
     const c10::intrusive_ptr<UvHandle>& client) {
-  if (keysAwaited_.find(client) == keysAwaited_.end()) {
+  if (!keysAwaited_.contains(client)) {
     return;
   }
   keysAwaited_.erase(client);
@@ -1450,7 +1450,7 @@ const std::vector<uint8_t>& LibUVStoreDaemon::compareAndSet(
 
 const std::vector<uint8_t>& LibUVStoreDaemon::get(const std::string& key) {
   static std::vector<uint8_t> missing_key;
-  return tcpStore_.count(key) ? tcpStore_.at(key) : missing_key;
+  return tcpStore_.contains(key) ? tcpStore_.at(key) : missing_key;
 }
 
 int64_t LibUVStoreDaemon::add(const std::string& key, int64_t addVal) {
@@ -1475,7 +1475,7 @@ int64_t LibUVStoreDaemon::add(const std::string& key, int64_t addVal) {
 
 bool LibUVStoreDaemon::checkKeys(const std::vector<std::string>& keys) {
   return std::ranges::all_of(keys, [&](const std::string& s) {
-    if (tcpStore_.count(s) > 0) {
+    if (tcpStore_.contains(s)) {
       return true;
     }
     if (auto it = queues_.find(s); it != queues_.end() && !it->second.empty()) {
@@ -1494,7 +1494,7 @@ bool LibUVStoreDaemon::waitKeys(
   int numKeysToAwait = 0;
   for (auto& key : keys) {
     // Only count keys that have not already been set
-    if (tcpStore_.find(key) == tcpStore_.end()) {
+    if (!tcpStore_.contains(key)) {
       waitingSockets_[key].push_back(client);
       numKeysToAwait++;
     }

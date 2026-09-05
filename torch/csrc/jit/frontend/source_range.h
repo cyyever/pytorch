@@ -1,5 +1,6 @@
 #pragma once
 #include <c10/util/Exception.h>
+#include <algorithm>
 #include <optional>
 
 #include <algorithm>
@@ -361,8 +362,8 @@ struct TORCH_API Source {
 
   // Calculate the line (within the code segment) on which `offset` resides.
   size_t lineno_for_offset(size_t offset) const {
-    auto iter = std::upper_bound(
-        line_starting_offsets_.begin(), line_starting_offsets_.end(), offset);
+    auto iter = std::ranges::upper_bound(
+        line_starting_offsets_, offset);
     return iter - line_starting_offsets_.begin() - 1;
   }
 

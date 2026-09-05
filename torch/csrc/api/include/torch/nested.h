@@ -44,9 +44,9 @@ inline at::Tensor nested_tensor(
   }
   // Construct a TensorList using nested_tensor_data
   std::vector<at::Tensor> tensor_list(nested_tensor_data.size());
-  std::transform(
-      nested_tensor_data.begin(),
-      nested_tensor_data.end(),
+  std::ranges::transform(
+      nested_tensor_data,
+
       tensor_list.begin(),
       [&](const detail::TensorDataContainer& tdc) {
         return tdc.convert_to_tensor(options);

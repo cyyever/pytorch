@@ -10,6 +10,7 @@
 #include <torch/csrc/autograd/variable_info.h>
 #include <torch/csrc/utils/python_stub.h>
 #include <torch/csrc/utils/torch_dispatch_mode.h>
+#include <algorithm>
 #include <typeindex>
 #include <vector>
 
@@ -465,7 +466,7 @@ class CompiledNodeArgs {
 
     std::vector<std::string> keys =
         c10::fmap(m, [](const auto& entry) { return entry.first; });
-    std::sort(keys.begin(), keys.end());
+    std::ranges::sort(keys);
     for (const auto& k : keys) {
       collect(k);
       collect(m.at(k));
@@ -964,7 +965,7 @@ class SwapSavedVariables {
   void before(ska::flat_hash_map<std::string, V>& m) {
     std::vector<std::string> keys =
         c10::fmap(m, [](const auto& entry) { return entry.first; });
-    std::sort(keys.begin(), keys.end());
+    std::ranges::sort(keys);
     for (auto& k : keys) {
       before(m.at(k));
     }

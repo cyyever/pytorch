@@ -18,7 +18,7 @@ class TORCH_API DeserializationStorageContext {
   }
 
   bool hasStorage(const std::string& name) {
-    return name_storage_map_.find(name) != name_storage_map_.end();
+    return name_storage_map_.contains(name);
   }
 
   c10::Storage getStorage(const std::string& name) {
