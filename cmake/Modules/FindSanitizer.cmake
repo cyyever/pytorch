@@ -167,6 +167,14 @@ foreach(sanitizer_name IN ITEMS address thread undefined leak memory)
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:$__CXX_${sanitizer_name}_res>,$<CXX_COMPILER_ID:GNU>>:-lubsan>
         $<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:$__C_${sanitizer_name}_res>,$<C_COMPILER_ID:GNU>>:-lubsan>
       )
+      add_library(Sanitizer::undefined_runtime INTERFACE IMPORTED GLOBAL)
+      get_target_property(
+        _undefined_link_options
+        Sanitizer::${sanitizer_name}
+        INTERFACE_LINK_OPTIONS)
+      set_property(
+        TARGET Sanitizer::undefined_runtime
+        PROPERTY INTERFACE_LINK_OPTIONS "${_undefined_link_options}")
     endif()
   endif()
 endforeach()

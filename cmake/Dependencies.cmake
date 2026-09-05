@@ -1017,6 +1017,9 @@ if(USE_UBSAN)
     caffe2_update_option(USE_UBSAN OFF)
   elseif(TARGET Sanitizer::undefined)
     list(APPEND Caffe2_DEPENDENCY_LIBS Sanitizer::undefined)
+    # Every executable that consumes an instrumented shared library must also
+    # link the UBSan runtime, even if its own sources are not instrumented.
+    link_libraries(Sanitizer::undefined_runtime)
   endif()
 endif()
 

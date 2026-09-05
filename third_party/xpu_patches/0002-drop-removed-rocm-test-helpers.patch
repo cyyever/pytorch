@@ -1,122 +1,752 @@
+diff --git a/test/xpu/quantization/core/test_workflow_module_xpu.py b/test/xpu/quantization/core/test_workflow_module_xpu.py
+deleted file mode 100644
+index 78cf28d5..00000000
+--- a/test/xpu/quantization/core/test_workflow_module_xpu.py
++++ /dev/null
+@@ -1,100 +0,0 @@
+-# Copyright 2020-2026 Intel Corporation
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-# http://www.apache.org/licenses/LICENSE-2.0
+-
+-# Owner(s): ["module: intel"]
+-
+-import torch
+-import torch.testing._internal.hypothesis_utils as hu
+-from hypothesis import given, strategies as st
+-from torch.testing._internal.common_device_type import instantiate_device_type_tests
+-from torch.testing._internal.common_utils import run_tests, TestCase
+-
+-try:
+-    from xpu_test_utils import XPUPatchForImport
+-except Exception as e:
+-    import os
+-    import sys
+-
+-    script_path = os.path.split(__file__)[0]
+-    sys.path.insert(0, os.path.realpath(os.path.join(script_path, "../..")))
+-    from xpu_test_utils import XPUPatchForImport
+-
+-with XPUPatchForImport(False):
+-    from test_workflow_module import (
+-        TestDistributed,
+-        TestFakeQuantize,
+-        TestFusedObsFakeQuantModule,
+-        TestHistogramObserver,
+-        TestObserver,
+-        TestRecordHistogramObserver,
+-    )
+-
+-
+-def rewrap_hypothesis_test(test, extra_given_kwargs=None, additional_wrapper=None):
+-    innert_test = test.hypothesis.inner_test
+-    given_kwargs = {
+-        "device": st.sampled_from(
+-            ["cpu", "xpu"] if torch.xpu.is_available() else ["cpu"]
+-        )
+-    }
+-    if extra_given_kwargs is not None:
+-        for k, v in extra_given_kwargs.items():
+-            given_kwargs[k] = v
+-
+-    if additional_wrapper is not None:
+-        return given(**given_kwargs)(additional_wrapper(innert_test))
+-
+-    return given(**given_kwargs)(innert_test)
+-
+-
+-TestFakeQuantize.test_fq_module_per_channel = rewrap_hypothesis_test(
+-    TestFakeQuantize.test_fq_module_per_channel,
+-    extra_given_kwargs={
+-        "X": hu.per_channel_tensor(
+-            shapes=hu.array_shapes(
+-                2,
+-                5,
+-            ),
+-            qparams=hu.qparams(dtypes=torch.qint8),
+-        )
+-    },
+-)
+-TestFusedObsFakeQuantModule.test_compare_fused_obs_fq_oss_module = (
+-    rewrap_hypothesis_test(
+-        TestFusedObsFakeQuantModule.test_compare_fused_obs_fq_oss_module
+-    )
+-)
+-TestFusedObsFakeQuantModule.test_fused_obs_fq_module = rewrap_hypothesis_test(
+-    TestFusedObsFakeQuantModule.test_fused_obs_fq_module
+-)
+-TestFusedObsFakeQuantModule.test_fused_obs_fq_moving_avg_module = (
+-    rewrap_hypothesis_test(
+-        TestFusedObsFakeQuantModule.test_fused_obs_fq_moving_avg_module
+-    )
+-)
+-
+-instantiate_device_type_tests(
+-    TestDistributed, globals(), only_for="xpu", allow_xpu=True
+-)
+-instantiate_device_type_tests(
+-    TestFakeQuantize, globals(), only_for="xpu", allow_xpu=True
+-)
+-instantiate_device_type_tests(
+-    TestFusedObsFakeQuantModule, globals(), only_for="xpu", allow_xpu=True
+-)
+-instantiate_device_type_tests(
+-    TestHistogramObserver, globals(), only_for="xpu", allow_xpu=True
+-)
+-instantiate_device_type_tests(TestObserver, globals(), only_for="xpu", allow_xpu=True)
+-instantiate_device_type_tests(
+-    TestRecordHistogramObserver, globals(), only_for="xpu", allow_xpu=True
+-)
+-
+-if __name__ == "__main__":
+-    TestCase._default_dtype_check_enabled = True
+-    run_tests()
+diff --git a/test/xpu/quantization/core/test_workflow_ops_xpu.py b/test/xpu/quantization/core/test_workflow_ops_xpu.py
+deleted file mode 100644
+index 86febd21..00000000
+--- a/test/xpu/quantization/core/test_workflow_ops_xpu.py
++++ /dev/null
+@@ -1,265 +0,0 @@
+-# Copyright 2020-2026 Intel Corporation
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-# http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Portions of this file are derived from PyTorch
+-# Copyright (c) Meta Platforms, Inc. and affiliates.
+-# SPDX-License-Identifier: BSD-3-Clause
+-
+-# Owner(s): ["module: intel"]
+-
+-import unittest
+-
+-import torch
+-import torch.testing._internal.hypothesis_utils as hu
+-from hypothesis import given, strategies as st
+-from torch.testing._internal.common_device_type import instantiate_device_type_tests
+-from torch.testing._internal.common_utils import run_tests, TestCase
+-
+-try:
+-    from xpu_test_utils import XPUPatchForImport
+-except Exception as e:
+-    import os
+-    import sys
+-
+-    script_path = os.path.split(__file__)[0]
+-    sys.path.insert(0, os.path.realpath(os.path.join(script_path, "../..")))
+-    from xpu_test_utils import XPUPatchForImport
+-
+-with XPUPatchForImport(False):
+-    from test_workflow_ops import (
+-        NP_RANDOM_SEED,
+-        TestFakeQuantizeOps,
+-        TestFusedObsFakeQuant,
+-    )
+-    from torch.testing._internal.common_cuda import TEST_CUDA
+-
+-
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_forward_per_tensor_cachemask_cuda(self):
+-    device = torch.device("xpu")
+-    self._test_forward_per_tensor_cachemask_impl(device)
+-
+-
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_backward_per_tensor_cachemask_cuda(self):
+-    device = torch.device("xpu")
+-    self._test_backward_per_tensor_cachemask_impl(device)
+-
+-
+-@given(
+-    X=hu.tensor(
+-        shapes=hu.array_shapes(
+-            1,
+-            5,
+-        ),
+-        elements=hu.floats(-1e3, 1e3, allow_nan=False, allow_infinity=False),
+-        qparams=hu.qparams(dtypes=torch.quint8),
+-    )
+-)
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_learnable_forward_per_tensor_cuda(self, X):
+-    X, (_, _, _) = X
+-    scale_base = torch.normal(mean=0, std=1, size=(1,)).clamp(1e-4, 100)
+-    zero_point_base = torch.normal(mean=0, std=128, size=(1,))
+-    self._test_learnable_forward_per_tensor(X, "xpu", scale_base, zero_point_base)
+-
+-
+-@given(
+-    X=hu.tensor(
+-        shapes=hu.array_shapes(
+-            1,
+-            5,
+-        ),
+-        elements=hu.floats(-1e3, 1e3, allow_nan=False, allow_infinity=False),
+-        qparams=hu.qparams(dtypes=torch.quint8),
+-    )
+-)
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_learnable_backward_per_tensor_cuda(self, X):
+-    torch.random.manual_seed(NP_RANDOM_SEED)
+-    X, (_, _, _) = X
+-    scale_base = torch.normal(mean=0, std=1, size=(1,)).clamp(1e-4, 100)
+-    zero_point_base = torch.normal(mean=0, std=128, size=(1,))
+-    self._test_learnable_backward_per_tensor(X, "xpu", scale_base, zero_point_base)
+-
+-
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_forward_per_channel_cachemask_cuda(self):
+-    self._test_forward_per_channel_cachemask_impl("xpu")
+-
+-
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_learnable_forward_per_channel_cuda(self):
+-    torch.random.manual_seed(NP_RANDOM_SEED)
+-    shape = (2, 1, 2, 10)
+-    axis = 1
+-
+-    for dtype in [torch.float32, torch.bfloat16]:
+-        X_base = torch.randn(shape, device="xpu").to(dtype)
+-        channel_size = X_base.size(axis)
+-        scale_base = (
+-            torch.normal(mean=0, std=1, size=(channel_size,)).clamp(1e-4, 100).to(dtype)
+-        )
+-        zero_point_base = torch.normal(mean=0, std=128, size=(channel_size,)).to(dtype)
+-
+-        self._test_learnable_forward_per_channel(
+-            X_base, "xpu", scale_base, zero_point_base, axis
+-        )
+-
+-
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_backward_per_channel_cachemask_cuda(self):
+-    self._test_backward_per_channel_cachemask_impl("xpu")
+-
+-
+-@unittest.skipIf(not TEST_CUDA, "No gpu is not available.")
+-def _test_learnable_backward_per_channel_cuda(self):
+-    torch.random.manual_seed(NP_RANDOM_SEED)
+-
+-    x_shape = (2, 1)
+-    scale_shape = (2,)
+-    zero_point_shape = (2,)
+-    axis = 0
+-
+-    for dtype in [torch.bfloat16, torch.float32]:
+-        X_base = torch.randn(x_shape, dtype=dtype, device="xpu")
+-        scale_base = torch.randn(scale_shape, dtype=dtype, device="xpu")
+-        zero_point_base = torch.randint(0, 10, zero_point_shape, device="xpu").to(
+-            dtype=dtype
+-        )
+-        self._test_learnable_backward_per_channel(
+-            X_base, "xpu", scale_base, zero_point_base, axis, dtype
+-        )
+-
+-
+-def rewrap_hypothesis_test(test, extra_given_kwargs=None, additional_wrapper=None):
+-    innert_test = test.hypothesis.inner_test
+-    given_kwargs = {
+-        "device": st.sampled_from(
+-            ["cpu", "xpu"] if torch.xpu.is_available() else ["cpu"]
+-        )
+-    }
+-    if extra_given_kwargs is not None:
+-        for k, v in extra_given_kwargs.items():
+-            given_kwargs[k] = v
+-
+-    if additional_wrapper is not None:
+-        return given(**given_kwargs)(additional_wrapper(innert_test))
+-
+-    return given(**given_kwargs)(innert_test)
+-
+-
+-given_kwargs_dict1 = {
+-    "X": hu.tensor(
+-        shapes=hu.array_shapes(
+-            1,
+-            5,
+-        ),
+-        qparams=hu.qparams(dtypes=torch.quint8),
+-    ),
+-}
+-given_kwargs_dict2 = {
+-    "X": hu.per_channel_tensor(
+-        shapes=hu.array_shapes(
+-            1,
+-            5,
+-        ),
+-        qparams=hu.qparams(dtypes=torch.quint8),
+-    ),
+-}
+-given_kwargs_dict3 = {
+-    "symmetric_quant": st.booleans(),
+-    "use_bool": st.booleans(),
+-}
+-given_kwargs_dict4 = {
+-    "symmetric_quant": st.booleans(),
+-    "use_bool": st.booleans(),
+-    "sampled_dtype": st.sampled_from(["bf16", "fp16", "fp32"]),
+-}
+-
+-TestFakeQuantizeOps.test_forward_per_tensor = rewrap_hypothesis_test(
+-    TestFakeQuantizeOps.test_forward_per_tensor, extra_given_kwargs=given_kwargs_dict1
+-)
+-TestFakeQuantizeOps.test_backward_per_tensor = rewrap_hypothesis_test(
+-    TestFakeQuantizeOps.test_backward_per_tensor,
+-    extra_given_kwargs=given_kwargs_dict1,
+-    additional_wrapper=unittest.skip("temporarily disable the test"),
+-)
+-TestFakeQuantizeOps.test_fq_module_per_tensor = rewrap_hypothesis_test(
+-    TestFakeQuantizeOps.test_fq_module_per_tensor, extra_given_kwargs=given_kwargs_dict1
+-)
+-TestFakeQuantizeOps.test_forward_per_channel = rewrap_hypothesis_test(
+-    TestFakeQuantizeOps.test_forward_per_channel, extra_given_kwargs=given_kwargs_dict2
+-)
+-TestFakeQuantizeOps.test_backward_per_channel = rewrap_hypothesis_test(
+-    TestFakeQuantizeOps.test_backward_per_channel,
+-    extra_given_kwargs=given_kwargs_dict2,
+-    additional_wrapper=unittest.skip(
+-        "this is broken without changes to any relevant code, "
+-        "we need to remove hypothesis testing in CI"
+-    ),
+-)
+-
+-TestFakeQuantizeOps.test_forward_per_tensor_cachemask_cuda = (
+-    _test_forward_per_tensor_cachemask_cuda
+-)
+-TestFakeQuantizeOps.test_backward_per_tensor_cachemask_cuda = (
+-    _test_backward_per_tensor_cachemask_cuda
+-)
+-TestFakeQuantizeOps.test_learnable_forward_per_tensor_cuda = (
+-    _test_learnable_forward_per_tensor_cuda
+-)
+-TestFakeQuantizeOps.test_learnable_backward_per_tensor_cuda = (
+-    _test_learnable_backward_per_tensor_cuda
+-)
+-TestFakeQuantizeOps.test_forward_per_channel_cachemask_cuda = (
+-    _test_forward_per_channel_cachemask_cuda
+-)
+-TestFakeQuantizeOps.test_learnable_forward_per_channel_cuda = (
+-    _test_learnable_forward_per_channel_cuda
+-)
+-TestFakeQuantizeOps.test_backward_per_channel_cachemask_cuda = (
+-    _test_backward_per_channel_cachemask_cuda
+-)
+-TestFakeQuantizeOps.test_learnable_backward_per_channel_cuda = (
+-    _test_learnable_backward_per_channel_cuda
+-)
+-TestFakeQuantizeOps.test_fixed_qparams_fq_module = rewrap_hypothesis_test(
+-    TestFakeQuantizeOps.test_fixed_qparams_fq_module,
+-    extra_given_kwargs=given_kwargs_dict1,
+-)
+-
+-TestFusedObsFakeQuant.test_fused_obs_fake_quant_moving_avg = rewrap_hypothesis_test(
+-    TestFusedObsFakeQuant.test_fused_obs_fake_quant_moving_avg,
+-    extra_given_kwargs=given_kwargs_dict4,
+-)
+-TestFusedObsFakeQuant.test_fused_obs_fake_quant_moving_avg_per_channel = (
+-    rewrap_hypothesis_test(
+-        TestFusedObsFakeQuant.test_fused_obs_fake_quant_moving_avg_per_channel,
+-        extra_given_kwargs=given_kwargs_dict3,
+-    )
+-)
+-TestFusedObsFakeQuant.test_fused_obs_fake_quant_backward_op = rewrap_hypothesis_test(
+-    TestFusedObsFakeQuant.test_fused_obs_fake_quant_backward_op
+-)
+-TestFusedObsFakeQuant.test_fused_backward_op_fake_quant_off = rewrap_hypothesis_test(
+-    TestFusedObsFakeQuant.test_fused_backward_op_fake_quant_off
+-)
+-
+-
+-instantiate_device_type_tests(
+-    TestFusedObsFakeQuant, globals(), only_for="xpu", allow_xpu=True
+-)
+-instantiate_device_type_tests(
+-    TestFakeQuantizeOps, globals(), only_for="xpu", allow_xpu=True
+-)
+-
+-
+-if __name__ == "__main__":
+-    TestCase._default_dtype_check_enabled = True
+-    run_tests()
+diff --git a/test/xpu/skip_list_common.py b/test/xpu/skip_list_common.py
+index 592f5e62..89135e7c 100644
+--- a/test/xpu/skip_list_common.py
++++ b/test/xpu/skip_list_common.py
+@@ -54,16 +53,0 @@ skip_dict = {
+-    "quantization/core/test_workflow_module_xpu.py": None,
+-    "quantization/core/test_workflow_ops_xpu.py": (
+-        # AssertionError:
+-        # Not equal to tolerance rtol=1e-06, atol=1e-06
+-        "test_forward_per_channel_xpu",
+-        # AssertionError:
+-        # Not equal to tolerance rtol=1e-06, atol=1e-06
+-        "test_forward_per_tensor_xpu",
+-        # deprecated fake quantization stack, https://github.com/intel/torch-xpu-ops/issues/2434
+-        # https://docs.pytorch.org/docs/2.12/quantization.html
+-        # https://dev-discuss.pytorch.org/t/torch-ao-quantization-migration-plan/2810
+-        # https://dev-discuss.pytorch.org/t/clarification-of-pytorch-quantization-flow-support-in-pytorch-and-torchao/2809
+-        "test_fq_module_per_tensor_xpu",
+-        # AssertionError: False is not true : Expected kernel forward function to have results match the reference forward function
+-        "test_learnable_forward_per_channel_cpu_xpu",
+-    ),
 diff --git a/test/xpu/test_nn_xpu.py b/test/xpu/test_nn_xpu.py
-index d9b7eb3d..0004c659 100644
+index 895c96fd..86650c4d 100644
 --- a/test/xpu/test_nn_xpu.py
 +++ b/test/xpu/test_nn_xpu.py
-@@ -103,14 +103,12 @@ from torch.testing._internal.common_utils import (
-     instantiate_parametrized_tests,
-     IS_PPC,
-     load_tests,
+@@ -26,2 +25,0 @@ import torch.nn.utils.rnn as rnn_utils
+-import torch.testing._internal.hypothesis_utils as hu
+-from hypothesis import given
+@@ -104 +101,0 @@ from torch.testing._internal.common_utils import (
+-    IS_PPC,
+@@ -106 +102,0 @@ from torch.testing._internal.common_utils import (
 -    MI300_ARCH,
-     parametrize as parametrize_test,
-     run_tests,
-     set_default_dtype,
-     skipIfMPS,
-     skipIfNoLapack,
-     skipIfRocm,
+@@ -113 +108,0 @@ from torch.testing._internal.common_utils import (
 -    skipIfRocmArch,
-     skipIfTorchDynamo,
-     skipIfXpu,
-     subtest,
-@@ -11046,7 +11044,6 @@ class TestNNDeviceType(NNTestCase):
-         (not TEST_NUMPY) or (not TEST_SCIPY) or (scipy.__version__ < "1.0.0"),
-         "Scipy v1.0 and/or numpy not found",
-     )
+@@ -2424,25 +2418,0 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""",
+-    @unittest.skipUnless(
+-        "fbgemm" in torch.backends.quantized.supported_engines,
+-        "Linear_FP16_weight requires FBGEMM. FBGEMM is only optimized for CPUs"
+-        " with instruction set support avx2 or newer.",
+-    )
+-    def test_fb_fc_packed(self):
+-        X = np.random.rand(16, 16).astype(np.float32) - 0.5
+-        W = np.random.rand(16, 16).astype(np.float32) - 0.5
+-        b = np.random.rand(16).astype(np.float32) - 0.5
+-
+-        def fc_op(X, W, b):
+-            return np.dot(X, W.T) + b
+-
+-        x_tensor = torch.tensor(X)
+-        w_tensor = torch.tensor(W)
+-        b_tensor = torch.tensor(b)
+-        packed_w_tensor = torch.fbgemm_pack_gemm_matrix_fp16(w_tensor)
+-        actual_output = torch.fbgemm_linear_fp16_weight(
+-            x_tensor, packed_w_tensor, b_tensor
+-        )
+-        expected_output = fc_op(X, W, b)
+-        torch.testing.assert_close(
+-            torch.from_numpy(expected_output), actual_output.cpu(), atol=1e-3, rtol=1e-3
+-        )
+-
+@@ -8772,20 +8741,0 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""",
+-        if IS_PPC:
+-            # Both OpenCV and PyTorch give a slightly different result on PPC
+-            expected_out_t = torch.tensor(
+-                [
+-                    [
+-                        [
+-                            [-0.32725, -0.08843, 0.37933, 0.79744],
+-                            [0.15039, 0.38921, 0.85697, 1.27508],
+-                            [1.08591, 1.32473, 1.79249, 2.21060],
+-                            [1.92212, 2.16094, 2.62870, 3.04681],
+-                        ],
+-                        [
+-                            [3.67275, 3.91157, 4.37933, 4.79743],
+-                            [4.15039, 4.38921, 4.85697, 5.27508],
+-                            [5.08591, 5.32473, 5.79249, 6.21059],
+-                            [5.92212, 6.16094, 6.62870, 7.04680],
+-                        ],
+-                    ]
+-                ]
+-            )
+@@ -9848,40 +9797,0 @@ tensor(..., device='meta', size=(1,), requires_grad=True)""",
+-class TestFusionEval(TestCase):
+-    @set_default_dtype(torch.double)
+-    @given(
+-        X=hu.tensor(shapes=((5, 3, 5, 5),), dtype=np.double),
+-        running_mean=hu.tensor(shapes=(6,), dtype=np.double),
+-        running_var=hu.tensor(shapes=(6,), dtype=np.double),
+-    )
+-    def test_fuse_module_eval_numerics(self, X, running_mean, running_var):
+-        inputs, _ = X
+-
+-        iC, oC = inputs.shape[1], len(running_mean[0])
+-        inputs = torch.from_numpy(inputs)
+-        kernel_size = (3, 3)
+-
+-        conv_ref = torch.nn.Conv2d(iC, oC, bias=True, kernel_size=kernel_size)
+-        bn_ref = torch.nn.BatchNorm2d(oC)
+-        bn_ref.running_mean = torch.from_numpy(running_mean[0])
+-        bn_ref.running_var = torch.from_numpy(running_var[0])
+-
+-        conv_ref.eval()
+-        bn_ref.eval()
+-
+-        Y_ref = bn_ref(conv_ref(inputs))
+-        conv_bn_fused = torch.nn.utils.fusion.fuse_conv_bn_eval(conv_ref, bn_ref)
+-        Y_hat = conv_bn_fused(inputs)
+-
+-        self.assertEqual(Y_ref, Y_hat, msg="Conv+BN fusion results are off")
+-
+-        na_bn_ref = torch.nn.BatchNorm2d(oC, affine=False)
+-        na_bn_ref.running_mean = torch.from_numpy(running_mean[0])
+-        na_bn_ref.running_var = torch.from_numpy(running_var[0])
+-        na_bn_ref.eval()
+-
+-        Y_ref = na_bn_ref(conv_ref(inputs))
+-        conv_na_bn_fused = torch.nn.utils.fusion.fuse_conv_bn_eval(conv_ref, na_bn_ref)
+-        Y_hat = conv_na_bn_fused(inputs)
+-
+-        self.assertEqual(Y_ref, Y_hat, msg="Conv+BN(non-affine) fusion results are off")
+-
+-
+@@ -11049 +10958,0 @@ class TestNNDeviceType(NNTestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @expectedFailureMPS  # Unsupported Border padding mode https://github.com/pytorch/pytorch/issues/125098
-     @tf32_on_and_off(0.001)
-     @reduced_f32_on_and_off(0.001)
-@@ -11238,7 +11235,6 @@ class TestNNDeviceType(NNTestCase):
-         (not TEST_NUMPY) or (not TEST_SCIPY) or (scipy.__version__ < "1.0.0"),
-         "Scipy v1.0 and/or numpy not found",
-     )
+@@ -11241 +11149,0 @@ class TestNNDeviceType(NNTestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @expectedFailureMPS  # Unsupported Border padding mode https://github.com/pytorch/pytorch/issues/125098
-     @tf32_on_and_off(0.005)
-     @reduced_f32_on_and_off(0.005)
-@@ -11304,7 +11300,6 @@ class TestNNDeviceType(NNTestCase):
-         (not TEST_NUMPY) or (not TEST_SCIPY) or (scipy.__version__ < "1.0.0"),
-         "Scipy v1.0 and/or numpy not found",
-     )
+@@ -11307 +11214,0 @@ class TestNNDeviceType(NNTestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @tf32_on_and_off(0.005)
-     @reduced_f32_on_and_off(0.005)
-     def test_affine_3d_rotateRandom(self, device):
-@@ -12365,7 +12360,6 @@ class TestNNDeviceType(NNTestCase):
-             unfold(inp)
- 
-     @onlyOn(["cuda", "xpu"])
+@@ -12368 +12274,0 @@ class TestNNDeviceType(NNTestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @dtypes(torch.float, torch.double)
-     @tf32_on_and_off(0.005)
-     def test_rnn_fused(self, device, dtype):
-@@ -15597,7 +15591,6 @@ class TestNNDeviceType(NNTestCase):
-                 log_probs, targets, input_lengths, target_lengths, reduction="none"
-             )
- 
+@@ -15601 +15506,0 @@ class TestNNDeviceType(NNTestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @expectedFailureMPS  # RuntimeError: LSTM with projections is not currently supported with MPS.
-     @dtypesIfCUDA(torch.half, torch.float, torch.double)
-     @dtypesIfXPU(torch.half)
 diff --git a/test/xpu/test_torch_xpu.py b/test/xpu/test_torch_xpu.py
-index 24ef3a66..4a6e2942 100644
+index 24ef3a66..ef42aae0 100644
 --- a/test/xpu/test_torch_xpu.py
 +++ b/test/xpu/test_torch_xpu.py
-@@ -101,7 +101,6 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
-     IS_SANDCASTLE,
-     IS_WINDOWS,
-     load_tests,
+@@ -40 +39,0 @@ import torch
+-import torch.backends.quantized
+@@ -82 +80,0 @@ from torch.testing._internal.common_dtype import (
+-    get_all_qint_dtypes,
+@@ -104 +101,0 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
 -    MI300_ARCH,
-     noncontiguous_like,
-     parametrize,
-     run_tests,
-@@ -112,7 +111,6 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
-     skipIfMPS,
-     skipIfNoSciPy,
-     skipIfRocm,
+@@ -115 +111,0 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
 -    skipIfRocmArch,
-     skipIfTorchDynamo,
-     skipIfTorchInductor,
-     skipIfXpu,
-@@ -2143,7 +2141,6 @@ class TestTorchDeviceType(TestCase):
-             torch.device(device).type == "cuda" or torch.device(device).type == "xpu",
-         )
- 
+@@ -130 +125,0 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
+-    xfailIfS390X,
+@@ -243,55 +237,0 @@ torch.testing._internal.common_utils.TestCase._should_stop_test_suite = (
+-@contextlib.contextmanager
+-def torch_vital_set(value):
+-    stash = None
+-    if "TORCH_VITAL" in os.environ:
+-        stash = os.environ["TORCH_VITAL"]
+-    os.environ["TORCH_VITAL"] = value
+-    try:
+-        yield
+-    finally:
+-        if stash:
+-            os.environ["TORCH_VITAL"] = stash
+-        else:
+-            del os.environ["TORCH_VITAL"]
+-
+-
+-# Tests Vital Signs for Torch
+-# FIXME: document or deprecate whatever this is
+-class TestBasicVitalSigns(TestCase):
+-    # VitalsAPI has been deactivated and will remain disabled unless a valid use case is identified.
+-    @onlyCUDA
+-    def test_basic_vitals(self):
+-        with torch_vital_set(""):
+-            self.assertFalse(torch.vitals_enabled())
+-        with torch_vital_set("ON"):
+-            self.assertTrue(torch.vitals_enabled())
+-
+-    @onlyCUDA
+-    def test_basic_vitals_read_write(self):
+-        with torch_vital_set("ON"):
+-            self.assertTrue(torch.vitals_enabled())
+-            # This tests the code path of setting a vital
+-            self.assertTrue(
+-                torch.set_vital("Dataloader", "basic_unit_test", "TEST_VALUE_STRING")
+-            )
+-            self.assertIn("TEST_VALUE_STRING", torch.read_vitals())
+-            self.assertIn("CUDA.used", torch.read_vitals())
+-
+-    @onlyCUDA
+-    def test_dataloader_vitals(self):
+-        with torch_vital_set("ON"):
+-            inps = torch.arange(10 * 5, dtype=torch.float32).view(10, 5)
+-            tgts = torch.arange(10 * 5, dtype=torch.float32).view(10, 5)
+-            dataset = torch.utils.data.TensorDataset(inps, tgts)
+-            torch.utils.data.DataLoader(dataset, batch_size=2)
+-            self.assertIn("Dataloader.enabled\t\t True", torch.read_vitals())
+-
+-
+-# FIXME: document or deprecate whatever this is
+-class TestVitalSignsCuda(TestCase):
+-    @onlyCUDA  # VitalsAPI has been deactivated and will remain disabled unless a valid use case is identified.
+-    def test_cuda_vitals_gpu_only(self, device):
+-        with torch_vital_set("ON"):
+-            self.assertIn("CUDA.used\t\t true", torch.read_vitals())
+-
+-
+@@ -425,4 +364,0 @@ class TestTorchDeviceType(TestCase):
+-        torch.quint8,
+-        torch.qint8,
+-        torch.qint32,
+-        torch.quint4x2,
+@@ -435,5 +370,0 @@ class TestTorchDeviceType(TestCase):
+-        # Skip quantized dtypes for CUDA, since they're not supported
+-        if torch.device(device).type == "cuda" or torch.device(device).type == "xpu":
+-            if dtype in [torch.quint8, torch.qint8, torch.qint32, torch.quint4x2]:
+-                return
+-
+@@ -1612,10 +1542,0 @@ class TestTorchDeviceType(TestCase):
+-    @onlyCPU
+-    @skipIfTorchInductor("https://github.com/pytorch/pytorch/issues/113707")
+-    @dtypes(*get_all_qint_dtypes())
+-    def test_nondeterministic_resize_quantized(self, device, dtype):
+-        a = torch.tensor([-1, 0, 1, 2, 3], dtype=torch.float, device=device)
+-        b = torch.quantize_per_tensor(a, 0.1, 10, dtype)
+-        self.check_nondeterministic_alert(
+-            lambda: b.resize_((10,)), "quantized_resize_cpu_"
+-        )
+-
+@@ -2146 +2066,0 @@ class TestTorchDeviceType(TestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @skipIfTorchInductor("https://github.com/pytorch/pytorch/issues/113707")
-     @onlyOn(["cuda", "xpu"])
-     def test_deterministic_cumsum(self, device):
-@@ -3015,7 +3012,6 @@ class TestTorchDeviceType(TestCase):
-                         self.assertEqual(x1.grad, x2.grad, rtol=0, atol=0.001)
-                         self.assertEqual(y1.grad, y2.grad, rtol=0, atol=0.001)
- 
+@@ -3018 +2937,0 @@ class TestTorchDeviceType(TestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @tf32_on_and_off(0.005)
-     @reduced_f32_on_and_off(0.08)
-     def test_cdist_large(self, device):
+@@ -9001,8 +8919,0 @@ class TestTorch(TestCase):
+-        quantized_storages = [
+-            torch.QInt32Storage,
+-            torch.QInt8Storage,
+-            torch.QUInt2x4Storage,
+-            torch.QUInt4x2Storage,
+-            torch.QUInt8Storage,
+-        ]
+-
+@@ -9058,6 +8969,2 @@ class TestTorch(TestCase):
+-                if storage_class in quantized_storages:
+-                    with self.assertRaisesRegex(
+-                        RuntimeError, r"Cannot create CUDA storage with quantized dtype"
+-                    ):
+-                        s.cuda()
+-
++                if s.is_cuda:
++                    s_other_device = s.cpu()
+@@ -9065,4 +8972 @@ class TestTorch(TestCase):
+-                    if s.is_cuda:
+-                        s_other_device = s.cpu()
+-                    else:
+-                        s_other_device = s.cuda()
++                    s_other_device = s.cuda()
+@@ -9070,4 +8974,4 @@ class TestTorch(TestCase):
+-                    with self.assertRaisesRegex(
+-                        RuntimeError, r"Device of 'wrap_storage' must be"
+-                    ):
+-                        storage_class(wrap_storage=s_other_device.untyped())
++                with self.assertRaisesRegex(
++                    RuntimeError, r"Device of 'wrap_storage' must be"
++                ):
++                    storage_class(wrap_storage=s_other_device.untyped())
+@@ -9076,6 +8980,2 @@ class TestTorch(TestCase):
+-                if storage_class in quantized_storages:
+-                    with self.assertRaisesRegex(
+-                        RuntimeError, r"Cannot create XPU storage with quantized dtype"
+-                    ):
+-                        s.xpu()
+-
++                if s.is_xpu:
++                    s_other_device = s.cpu()
+@@ -9083,4 +8983 @@ class TestTorch(TestCase):
+-                    if s.is_xpu:
+-                        s_other_device = s.cpu()
+-                    else:
+-                        s_other_device = s.xpu()
++                    s_other_device = s.xpu()
+@@ -9088,4 +8985,4 @@ class TestTorch(TestCase):
+-                    with self.assertRaisesRegex(
+-                        RuntimeError, r"Device of 'wrap_storage' must be"
+-                    ):
+-                        storage_class(wrap_storage=s_other_device.untyped())
++                with self.assertRaisesRegex(
++                    RuntimeError, r"Device of 'wrap_storage' must be"
++                ):
++                    storage_class(wrap_storage=s_other_device.untyped())
+@@ -10704 +10601 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        def test_memory_layout(x, y, scale, zero_point, out):
++        def test_memory_layout(x, y, out):
+@@ -10714,11 +10611,3 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-                            if scale is not None and zero_point is not None:
+-                                self.assertEqual(
+-                                    out[n][c][h][w],
+-                                    torch.ops.quantized.add(
+-                                        x[n][c][h][w], y[n][c][h][w], scale, zero_point
+-                                    ),
+-                                )
+-                            else:
+-                                self.assertEqual(
+-                                    out[n][c][h][w], x[n][c][h][w] + y[n][c][h][w]
+-                                )
++                            self.assertEqual(
++                                out[n][c][h][w], x[n][c][h][w] + y[n][c][h][w]
++                            )
+@@ -10728,2 +10616,0 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        qxraw = torch.quantize_per_tensor(xraw, 0.1, 5, torch.quint8)
+-        qyraw = torch.quantize_per_tensor(yraw, 0.1, 5, torch.quint8)
+@@ -10732,4 +10619 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        test_memory_layout(xraw, yraw, None, None, xraw + yraw)
+-        test_memory_layout(
+-            qxraw, qyraw, 0.1, 5, torch.ops.quantized.add(qxraw, qyraw, 0.1, 5)
+-        )
++        test_memory_layout(xraw, yraw, xraw + yraw)
+@@ -10740,4 +10624 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        test_memory_layout(x, y, None, None, x + y)
+-        qx = qxraw.contiguous(memory_format=torch.channels_last)
+-        qy = qyraw.contiguous(memory_format=torch.channels_last)
+-        test_memory_layout(qx, qy, 0.1, 5, torch.ops.quantized.add(qx, qy, 0.1, 5))
++        test_memory_layout(x, y, x + y)
+@@ -10748,4 +10629 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        test_memory_layout(x, y, None, None, x + y)
+-        qx = qxraw.permute(0, 2, 3, 1)
+-        qy = qyraw.permute(0, 2, 3, 1)
+-        test_memory_layout(qx, qy, 0.1, 5, torch.ops.quantized.add(qx, qy, 0.1, 5))
++        test_memory_layout(x, y, x + y)
+@@ -10762 +10640 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        test_memory_layout(x, y, None, None, torch.add(x, y, out=out))
++        test_memory_layout(x, y, torch.add(x, y, out=out))
+@@ -10768,4 +10646 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        test_memory_layout(x, y, None, None, x + y)
+-        qx = qxraw.permute(0, 2, 3, 1)
+-        qy = qyraw.permute(0, 3, 2, 1)
+-        test_memory_layout(qx, qy, 0.1, 5, torch.ops.quantized.add(qx, qy, 0.1, 5))
++        test_memory_layout(x, y, x + y)
+@@ -10827,10 +10701,0 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-        self.assertRaisesRegex(
+-            RuntimeError, "not supported for quantized", lambda: torch.quint8.is_signed
+-        )
+-        self.assertRaisesRegex(
+-            RuntimeError, "not supported for quantized", lambda: torch.qint8.is_signed
+-        )
+-        self.assertRaisesRegex(
+-            RuntimeError, "not supported for quantized", lambda: torch.qint32.is_signed
+-        )
+-
+@@ -11313,10 +11177,0 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
+-    # FIXME: port to a quantization test suite
+-    @xfailIfS390X
+-    def test_qengine(self):
+-        qengines = torch.backends.quantized.supported_engines
+-        original_qe = torch.backends.quantized.engine
+-        for qe in qengines:
+-            torch.backends.quantized.engine = qe
+-            assert torch.backends.quantized.engine == qe, "qengine not set successfully"
+-        torch.backends.quantized.engine = original_qe
+-
+@@ -12838,3 +12692,0 @@ instantiate_device_type_tests(TestViewOps, globals(), allow_xpu=True, only_for="
+-instantiate_device_type_tests(
+-    TestVitalSignsCuda, globals(), allow_xpu=True, only_for="xpu"
+-)
 diff --git a/test/xpu/test_transformers_xpu.py b/test/xpu/test_transformers_xpu.py
 index b185bff5..a1a9f808 100644
 --- a/test/xpu/test_transformers_xpu.py
 +++ b/test/xpu/test_transformers_xpu.py
-@@ -42,14 +42,12 @@ from torch.testing._internal.common_utils import (
-     gradcheck,
-     isRocmArchAnyOf,
-     make_tensor,
+@@ -45 +44,0 @@ from torch.testing._internal.common_utils import (
 -    MI300_ARCH,
-     MI350_ARCH,
-     NOTEST_CPU,
-     parametrize,
-     run_tests,
-     set_default_dtype,
-     skipIfRocm,
+@@ -52 +50,0 @@ from torch.testing._internal.common_utils import (
 -    skipIfRocmArch,
-     skipIfTorchDynamo,
-     skipIfXpu,
-     slowTest,
-@@ -607,7 +605,6 @@ class TestTransformers(NNTestCase):
-         # remove hook
-         handle.remove()
- 
+@@ -610 +607,0 @@ class TestTransformers(NNTestCase):
 -    @skipIfRocmArch(MI300_ARCH)
-     @tf32_on_and_off(0.001)
-     @parametrize("use_torchscript", [False])
-     @parametrize("enable_nested_tensor", [True, False])
+diff --git a/tools/fixheaders/pytorch.yaml b/tools/fixheaders/pytorch.yaml
+index c56a1ca2..bb6efbda 100644
+--- a/tools/fixheaders/pytorch.yaml
++++ b/tools/fixheaders/pytorch.yaml
+@@ -90 +89,0 @@ custom_headers:
+-      - "test/xpu/quantization/core/test_workflow_ops_xpu.py"
