@@ -1,0 +1,365 @@
+diff --git a/src/ATen/native/transformers/sycl/AttentionKernels.cpp b/src/ATen/native/transformers/sycl/AttentionKernels.cpp
+index 0d16ca12..4d896ec1 100644
+--- a/src/ATen/native/transformers/sycl/AttentionKernels.cpp
++++ b/src/ATen/native/transformers/sycl/AttentionKernels.cpp
+@@ -17 +17 @@
+-#include <ATen/core/Array.h>
++#include <array>
+@@ -85 +85 @@ void transform_bias_rescale_qkv_add_padding_kernel(
+-    using LoadT = at::detail::Array<scalar_t, VEC>;
++    using LoadT = std::array<scalar_t, VEC>;
+@@ -273 +273 @@ void transform_bias_rescale_qkv_kernel(
+-    using LoadT = at::detail::Array<scalar_t, VEC>;
++    using LoadT = std::array<scalar_t, VEC>;
+diff --git a/src/ATen/native/xpu/sycl/EmbeddingBag.h b/src/ATen/native/xpu/sycl/EmbeddingBag.h
+index adb14d25..09617c6f 100644
+--- a/src/ATen/native/xpu/sycl/EmbeddingBag.h
++++ b/src/ATen/native/xpu/sycl/EmbeddingBag.h
+@@ -13 +13 @@
+-#include <ATen/core/Array.h>
++#include <array>
+diff --git a/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp b/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp
+index 04ffff4b..0b72ff19 100644
+--- a/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp
++++ b/src/ATen/native/xpu/sycl/FFTKernelFunctor.cpp
+@@ -927 +927 @@ struct HermitianSymmetryOffsetCalculator {
+-  using offset_type = at::detail::Array<index_t, 1>;
++  using offset_type = std::array<index_t, 1>;
+diff --git a/src/ATen/native/xpu/sycl/GroupReduceUtils.h b/src/ATen/native/xpu/sycl/GroupReduceUtils.h
+index e10bc9f2..3b7f39d3 100644
+--- a/src/ATen/native/xpu/sycl/GroupReduceUtils.h
++++ b/src/ATen/native/xpu/sycl/GroupReduceUtils.h
+@@ -14 +14 @@
+-#include <ATen/core/Array.h>
++#include <array>
+diff --git a/src/ATen/native/xpu/sycl/Indexing.h b/src/ATen/native/xpu/sycl/Indexing.h
+index 4264be70..7b41076e 100644
+--- a/src/ATen/native/xpu/sycl/Indexing.h
++++ b/src/ATen/native/xpu/sycl/Indexing.h
+@@ -454,2 +454,2 @@ struct SmallIndexKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-      at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_sizes,
+-      at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_strides,
++      std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_sizes,
++      std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_strides,
+@@ -458,2 +458,2 @@ struct SmallIndexKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-      at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes,
+-      at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides,
++      std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes,
++      std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides,
+@@ -464 +464 @@ struct SmallIndexKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-      at::detail::Array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs)
++      std::array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs)
+@@ -495,2 +495,2 @@ struct SmallIndexKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_sizes_;
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_strides_;
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_sizes_;
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_strides_;
+@@ -499,2 +499,2 @@ struct SmallIndexKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes_;
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides_;
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes_;
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides_;
+@@ -505 +505 @@ struct SmallIndexKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-  at::detail::Array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs_;
++  std::array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs_;
+@@ -545,2 +545,2 @@ void small_index_kernel(
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_sizes(0);
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_strides(0);
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_sizes{};
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> src_strides{};
+@@ -554,2 +554,2 @@ void small_index_kernel(
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes(0);
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides(0);
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes{};
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides{};
+@@ -566 +566 @@ void small_index_kernel(
+-  at::detail::Array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs;
++  std::array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs;
+@@ -638,3 +638,3 @@ struct IndexKernelFunctor {
+-      at::detail::Array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs,
+-      at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes,
+-      at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides)
++      std::array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs,
++      std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes,
++      std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides)
+@@ -658,3 +658,3 @@ struct IndexKernelFunctor {
+-  at::detail::Array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs_;
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes_;
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides_;
++  std::array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs_;
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes_;
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides_;
+@@ -671,2 +671,2 @@ void index_kernel_impl(
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes(0);
+-  at::detail::Array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides(0);
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> sizes{};
++  std::array<int64_t, XPU_MAX_TENSORINFO_DIMS> strides{};
+@@ -684 +684 @@ void index_kernel_impl(
+-  at::detail::Array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs;
++  std::array<index_buf_type, XPU_MAX_TENSORINFO_DIMS> index_ptrs;
+diff --git a/src/ATen/native/xpu/sycl/Loops.h b/src/ATen/native/xpu/sycl/Loops.h
+index 8af84a6c..77ad85c0 100644
+--- a/src/ATen/native/xpu/sycl/Loops.h
++++ b/src/ATen/native/xpu/sycl/Loops.h
+@@ -275 +275 @@ struct LegacyKernelScalarFunctor {
+-    *out = invoke(f_, &data_.data[1], &offsets.data[1], 1);
++    *out = invoke(f_, data_.data() + 1, offsets.data() + 1, 1);
+@@ -279 +279 @@ struct LegacyKernelScalarFunctor {
+-      at::detail::Array<char*, ntensors> data,
++      std::array<char*, ntensors> data,
+@@ -285 +285 @@ struct LegacyKernelScalarFunctor {
+-  at::detail::Array<char*, ntensors> data_;
++  std::array<char*, ntensors> data_;
+@@ -300 +300,2 @@ struct LegacyKernelWithCastScalarFunctor {
+-        invoke(f_, &data_.data[1], &offsets.data[1], &dtypes_.data[1], 1);
++        invoke(
++            f_, data_.data() + 1, offsets.data() + 1, dtypes_.data() + 1, 1);
+@@ -305,2 +305,2 @@ struct LegacyKernelWithCastScalarFunctor {
+-      at::detail::Array<char*, ntensors> data,
+-      at::detail::Array<ScalarType, ntensors> dtypes,
++      std::array<char*, ntensors> data,
++      std::array<ScalarType, ntensors> dtypes,
+@@ -312,2 +312,2 @@ struct LegacyKernelWithCastScalarFunctor {
+-  at::detail::Array<char*, ntensors> data_;
+-  at::detail::Array<ScalarType, ntensors> dtypes_;
++  std::array<char*, ntensors> data_;
++  std::array<ScalarType, ntensors> dtypes_;
+@@ -519 +519 @@ void gpu_kernel_impl_nocast(TensorIteratorBase& iter, const func_t& f) {
+-  at::detail::Array<char*, ntensors> data;
++  std::array<char*, ntensors> data;
+@@ -569 +569 @@ void gpu_kernel_impl(TensorIteratorBase& iter, const func_t& f) {
+-  at::detail::Array<char*, ntensors> data;
++  std::array<char*, ntensors> data;
+@@ -627 +627 @@ void gpu_kernel_impl(TensorIteratorBase& iter, const func_t& f) {
+-    at::detail::Array<ScalarType, ntensors> dtypes;
++    std::array<ScalarType, ntensors> dtypes;
+@@ -830 +830 @@ void gpu_kernel_multiple_outputs_impl(
+-  at::detail::Array<char*, ntensors> data;
++  std::array<char*, ntensors> data;
+diff --git a/src/ATen/native/xpu/sycl/MemoryAccess.h b/src/ATen/native/xpu/sycl/MemoryAccess.h
+index b29e504e..872749d5 100644
+--- a/src/ATen/native/xpu/sycl/MemoryAccess.h
++++ b/src/ATen/native/xpu/sycl/MemoryAccess.h
+@@ -13 +13 @@
+-#include <ATen/core/Array.h>
++#include <array>
+diff --git a/src/ATen/native/xpu/sycl/MemoryAccessUtils.h b/src/ATen/native/xpu/sycl/MemoryAccessUtils.h
+index 1ef3702e..31b723ea 100644
+--- a/src/ATen/native/xpu/sycl/MemoryAccessUtils.h
++++ b/src/ATen/native/xpu/sycl/MemoryAccessUtils.h
+@@ -13 +13 @@
+-#include <ATen/core/Array.h>
++#include <array>
+@@ -98 +98 @@ struct multi_outputs_store_helper {
+-  template <int ntensors, int num_outputs, typename... Args>
++  template <size_t ntensors, size_t num_outputs, typename... Args>
+@@ -100,2 +100,2 @@ struct multi_outputs_store_helper {
+-      at::detail::Array<char*, ntensors> data,
+-      at::detail::Array<uint32_t, num_outputs> offsets,
++      std::array<char*, ntensors> data,
++      std::array<uint32_t, num_outputs> offsets,
+@@ -120,2 +120,2 @@ struct LoadWithCastFP {
+-  using array_t = at::detail::Array<at::ScalarType, std::max<int>(N, 1)>;
+-  using size_array_t = at::detail::Array<uint32_t, std::max<int>(N, 1)>;
++  using array_t = std::array<at::ScalarType, std::max<int>(N, 1)>;
++  using size_array_t = std::array<uint32_t, std::max<int>(N, 1)>;
+@@ -157,2 +157,2 @@ struct LoadWithCast {
+-  using array_t = at::detail::Array<at::ScalarType, std::max<int>(N, 1)>;
+-  using size_array_t = at::detail::Array<uint32_t, std::max<int>(N, 1)>;
++  using array_t = std::array<at::ScalarType, std::max<int>(N, 1)>;
++  using size_array_t = std::array<uint32_t, std::max<int>(N, 1)>;
+@@ -206,2 +206,2 @@ struct StoreWithCast {
+-  using array_t = at::detail::Array<at::ScalarType, std::max<int>(N, 1)>;
+-  using size_array_t = at::detail::Array<uint32_t, std::max<int>(N, 1)>;
++  using array_t = std::array<at::ScalarType, std::max<int>(N, 1)>;
++  using size_array_t = std::array<uint32_t, std::max<int>(N, 1)>;
+diff --git a/src/ATen/native/xpu/sycl/Norm.h b/src/ATen/native/xpu/sycl/Norm.h
+index 333971ec..09d33ddd 100644
+--- a/src/ATen/native/xpu/sycl/Norm.h
++++ b/src/ATen/native/xpu/sycl/Norm.h
+@@ -14 +14 @@
+-#include <ATen/core/Array.h>
++#include <array>
+diff --git a/src/ATen/native/xpu/sycl/OffsetCalculator.h b/src/ATen/native/xpu/sycl/OffsetCalculator.h
+index 89002863..3c7581d8 100644
+--- a/src/ATen/native/xpu/sycl/OffsetCalculator.h
++++ b/src/ATen/native/xpu/sycl/OffsetCalculator.h
+@@ -13 +12,0 @@
+-#include <ATen/core/Array.h>
+@@ -39 +38 @@ struct OffsetCalculator {
+-  using offset_type = at::detail::Array<stride_t, std::max<int>(NARGS, 1)>;
++  using offset_type = std::array<stride_t, std::max<int>(NARGS, 1)>;
+@@ -95 +94 @@ struct TrivialOffsetCalculator {
+-  using offset_type = at::detail::Array<index_t, std::max<int>(NARGS, 1)>;
++  using offset_type = std::array<index_t, std::max<int>(NARGS, 1)>;
+diff --git a/src/ATen/native/xpu/sycl/Reduce.h b/src/ATen/native/xpu/sycl/Reduce.h
+index 3dc293db..1580fd40 100644
+--- a/src/ATen/native/xpu/sycl/Reduce.h
++++ b/src/ATen/native/xpu/sycl/Reduce.h
+@@ -14 +14 @@
+-#include <ATen/core/Array.h>
++#include <array>
+@@ -39 +39 @@ using namespace at::xpu;
+-using at::detail::Array;
++using std::array;
+@@ -54 +54 @@ struct get_native_sycl_op<T, std::void_t<typename T::native_sycl_op>> {
+-template <class arg_t, class CombineFunc, class NativeOp, int out_vec_sz>
++template <class arg_t, class CombineFunc, class NativeOp, size_t out_vec_sz>
+@@ -57 +57 @@ void subgroup_tree_reduce(
+-    at::detail::Array<arg_t, out_vec_sz>& value,
++    std::array<arg_t, out_vec_sz>& value,
+@@ -85 +85 @@ template <
+-    int out_vec_sz = 1>
++    size_t out_vec_sz = 1>
+@@ -86 +86 @@ template <
+-inline at::detail::Array<arg_t, out_vec_sz> group_reduce(
++inline std::array<arg_t, out_vec_sz> group_reduce(
+@@ -90 +90 @@ inline at::detail::Array<arg_t, out_vec_sz> group_reduce(
+-    at::detail::Array<arg_t, out_vec_sz> value,
++    std::array<arg_t, out_vec_sz> value,
+@@ -93 +93 @@ inline at::detail::Array<arg_t, out_vec_sz> group_reduce(
+-  using vec_t = at::detail::Array<arg_t, out_vec_sz>;
++  using vec_t = std::array<arg_t, out_vec_sz>;
+@@ -149,2 +149,2 @@ template <class arg_t, class item_t, class CombineFunc, int out_vec_sz = 1>
+-template <class arg_t, class item_t, class CombineFunc, int out_vec_sz = 1>
+-inline at::detail::Array<arg_t, out_vec_sz> group_x_reduce(
++template <class arg_t, class item_t, class CombineFunc, size_t out_vec_sz = 1>
++inline std::array<arg_t, out_vec_sz> group_x_reduce(
+@@ -153 +153 @@ inline at::detail::Array<arg_t, out_vec_sz> group_x_reduce(
+-    at::detail::Array<arg_t, out_vec_sz> value,
++    std::array<arg_t, out_vec_sz> value,
+@@ -155 +155 @@ inline at::detail::Array<arg_t, out_vec_sz> group_x_reduce(
+-  using vec_t = at::detail::Array<arg_t, out_vec_sz>;
++  using vec_t = std::array<arg_t, out_vec_sz>;
+@@ -193,2 +193,2 @@ template <class arg_t, class item_t, class CombineFunc, int out_vec_sz = 1>
+-template <class arg_t, class item_t, class CombineFunc, int out_vec_sz = 1>
+-inline at::detail::Array<arg_t, out_vec_sz> group_y_reduce(
++template <class arg_t, class item_t, class CombineFunc, size_t out_vec_sz = 1>
++inline std::array<arg_t, out_vec_sz> group_y_reduce(
+@@ -197 +197 @@ inline at::detail::Array<arg_t, out_vec_sz> group_y_reduce(
+-    at::detail::Array<arg_t, out_vec_sz> value,
++    std::array<arg_t, out_vec_sz> value,
+@@ -199 +199 @@ inline at::detail::Array<arg_t, out_vec_sz> group_y_reduce(
+-  using vec_t = at::detail::Array<arg_t, out_vec_sz>;
++  using vec_t = std::array<arg_t, out_vec_sz>;
+@@ -227 +227 @@ using namespace detail;
+-using at::detail::Array;
++using std::array;
+@@ -595 +595 @@ struct ReduceOp {
+-    using arg_vec_t = at::detail::Array<arg_t, output_vec_size>;
++    using arg_vec_t = std::array<arg_t, output_vec_size>;
+@@ -640,2 +640,2 @@ struct ReduceOp {
+-    using out_ptr_vec_t = at::detail::Array<out_scalar_t*, output_vec_size>;
+-    using offset_vec_t = at::detail::Array<index_t, output_vec_size>;
++    using out_ptr_vec_t = std::array<out_scalar_t*, output_vec_size>;
++    using offset_vec_t = std::array<index_t, output_vec_size>;
+@@ -702 +702 @@ struct ReduceOp {
+-  at::detail::Array<arg_t, output_vec_size> item_reduce(
++  std::array<arg_t, output_vec_size> item_reduce(
+@@ -809 +809 @@ struct ReduceOp {
+-  at::detail::Array<arg_t, output_vec_size> item_reduce_impl(
++  std::array<arg_t, output_vec_size> item_reduce_impl(
+@@ -817 +817 @@ struct ReduceOp {
+-    using arg_vec_t = at::detail::Array<arg_t, output_vec_size>;
++    using arg_vec_t = std::array<arg_t, output_vec_size>;
+@@ -902,4 +902,4 @@ struct ReduceOp {
+-  at::detail::Array<arg_t, output_vec_size> accumulate_in_output(
+-      at::detail::Array<out_scalar_t*, output_vec_size> out,
+-      at::detail::Array<arg_t, output_vec_size> value) const {
+-    at::detail::Array<arg_t, output_vec_size> ret;
++  std::array<arg_t, output_vec_size> accumulate_in_output(
++      std::array<out_scalar_t*, output_vec_size> out,
++      std::array<arg_t, output_vec_size> value) const {
++    std::array<arg_t, output_vec_size> ret;
+@@ -925,3 +925,3 @@ struct ReduceOp {
+-  at::detail::Array<arg_t, output_vec_size> accumulate_in_output(
+-      at::detail::Array<out_scalar_t*, output_vec_size>,
+-      at::detail::Array<arg_t, output_vec_size>) const {
++  std::array<arg_t, output_vec_size> accumulate_in_output(
++      std::array<out_scalar_t*, output_vec_size>,
++      std::array<arg_t, output_vec_size>) const {
+@@ -929 +929 @@ struct ReduceOp {
+-    return arg_t{};
++    return {};
+@@ -967,2 +967,2 @@ struct ReduceOp {
+-      at::detail::Array<arg_t, output_vec_size> value,
+-      at::detail::Array<index_t, output_vec_size> base_offset) const {
++      std::array<arg_t, output_vec_size> value,
++      std::array<index_t, output_vec_size> base_offset) const {
+@@ -977 +977 @@ struct ReduceOp {
+-  at::detail::Array<arg_t, output_vec_size> global_reduce(
++  std::array<arg_t, output_vec_size> global_reduce(
+@@ -979,2 +979,2 @@ struct ReduceOp {
+-      at::detail::Array<arg_t, output_vec_size> value,
+-      at::detail::Array<arg_t, output_vec_size>* acc,
++      std::array<arg_t, output_vec_size> value,
++      std::array<arg_t, output_vec_size>* acc,
+@@ -983,3 +983,3 @@ struct ReduceOp {
+-    using arg_vec_t = at::detail::Array<arg_t, output_vec_size>;
+-    using out_ptr_vec_t = at::detail::Array<out_scalar_t*, output_vec_size>;
+-    using offset_vec_t = at::detail::Array<index_t, output_vec_size>;
++    using arg_vec_t = std::array<arg_t, output_vec_size>;
++    using out_ptr_vec_t = std::array<out_scalar_t*, output_vec_size>;
++    using offset_vec_t = std::array<index_t, output_vec_size>;
+@@ -1007 +1007 @@ struct ReduceOp {
+-      value = ident;
++      value.fill(ident);
+@@ -1447 +1447 @@ inline void gpu_reduce_kernel(
+-    at::detail::Array<char*, 1> data;
++    std::array<char*, 1> data;
+diff --git a/src/ATen/native/xpu/sycl/SortingKernels.h b/src/ATen/native/xpu/sycl/SortingKernels.h
+index 5e2c296a..98dc8f70 100644
+--- a/src/ATen/native/xpu/sycl/SortingKernels.h
++++ b/src/ATen/native/xpu/sycl/SortingKernels.h
+@@ -436 +436 @@ void segmented_radix_sort_pairs_kernel(
+-    at::detail::Array<char*, 2> data;
++    std::array<char*, 2> data;
+diff --git a/src/ATen/native/xpu/sycl/WeightNormKernels.cpp b/src/ATen/native/xpu/sycl/WeightNormKernels.cpp
+index 85a88435..cd99eeec 100644
+--- a/src/ATen/native/xpu/sycl/WeightNormKernels.cpp
++++ b/src/ATen/native/xpu/sycl/WeightNormKernels.cpp
+@@ -12 +12 @@
+-#include <ATen/core/Array.h>
++#include <array>
+@@ -66 +66 @@ struct WeightNormKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -69 +69 @@ struct WeightNormKernelFunctor : public __SYCL_KER_CONFIG_CONVENTION__ {
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -115 +115 @@ static inline void launch_weight_norm_reduce_kernel(
+-  using vec_t = at::detail::Array<accscalar_t, 1>;
++  using vec_t = std::array<accscalar_t, 1>;
+@@ -140 +140 @@ static inline void weight_norm_reduce(
+-  using vec_t = at::detail::Array<accscalar_t, 1>;
++  using vec_t = std::array<accscalar_t, 1>;
+@@ -281 +281 @@ struct WeightNormReduceKernelFunctor
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -284 +284 @@ struct WeightNormReduceKernelFunctor
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -357 +357 @@ static inline void weight_norm(
+-  using vec_t = at::detail::Array<accscalar_t, 1>;
++  using vec_t = std::array<accscalar_t, 1>;
+@@ -487 +487 @@ struct WeightNormBackwardReduceKernelFunctor
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -490 +490 @@ struct WeightNormBackwardReduceKernelFunctor
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -537 +537 @@ static inline void launch_weight_norm_backward_reduce_kernel(
+-  using vec_t = at::detail::Array<accscalar_t, 1>;
++  using vec_t = std::array<accscalar_t, 1>;
+@@ -567 +567 @@ static inline void weight_norm_backward_reduce(
+-  using vec_t = at::detail::Array<accscalar_t, 1>;
++  using vec_t = std::array<accscalar_t, 1>;
+@@ -767 +767 @@ struct WeightNormBackwardKernelFunctor
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -770 +770 @@ struct WeightNormBackwardKernelFunctor
+-          item, shared_, vec_t(value), ReduceAdd<accscalar_t>())[0];
++          item, shared_, vec_t{value}, ReduceAdd<accscalar_t>())[0];
+@@ -862 +862 @@ static inline void weight_norm_backward(
+-  using vec_t = at::detail::Array<accscalar_t, 1>;
++  using vec_t = std::array<accscalar_t, 1>;
