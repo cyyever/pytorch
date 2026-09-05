@@ -1,0 +1,14 @@
+diff --git a/src/ATen/native/xpu/sycl/Reduce.h b/src/ATen/native/xpu/sycl/Reduce.h
+index 1580fd40..7c24b690 100644
+--- a/src/ATen/native/xpu/sycl/Reduce.h
++++ b/src/ATen/native/xpu/sycl/Reduce.h
+@@ -1157,5 +1157,9 @@ inline constexpr int DEFAULT_OUTPUT_VEC_SIZE = 4;
+ template <typename scalar_t, int vt1>
+ int get_output_vec_size(at::TensorIterator& iter) {
++  if constexpr (c10::is_complex<scalar_t>::value) {
++    return 1;
++  }
++
+   int vec_size = DEFAULT_OUTPUT_VEC_SIZE;
+   auto update_vec_size = [&vec_size](uint64_t n) {
+     while (n % vec_size != 0) {
