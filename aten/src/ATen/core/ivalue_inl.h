@@ -1910,6 +1910,10 @@ inline T IValue::to() && {
   if constexpr (std::is_same_v<T, type>) {                                     \
     return static_cast<T>(std::move(*this).converter());                       \
   } else
+  // TORCH_FORALL_CONVERSIONS expands to one if-constexpr per IValue type; the
+  // branches differ only by macro argument, which is what makes them look
+  // cloned after expansion.
+  // NOLINTNEXTLINE(bugprone-branch-clone)
   TORCH_FORALL_CONVERSIONS(DEFINE_BRANCH)
   /* else */ if constexpr (std::is_same_v<T, std::optional<std::string_view>>) {
     // In the default implementation, the IValue is destroyed with std::move.
@@ -1930,6 +1934,10 @@ inline typename c10::detail::ivalue_to_const_ref_overload_return<T>::type IValue
   if constexpr (std::is_same_v<T, type>) {                                     \
     return static_cast<return_type>(this->converter());                        \
   } else
+  // TORCH_FORALL_CONVERSIONS expands to one if-constexpr per IValue type; the
+  // branches differ only by macro argument, which is what makes them look
+  // cloned after expansion.
+  // NOLINTNEXTLINE(bugprone-branch-clone)
   TORCH_FORALL_CONVERSIONS(DEFINE_BRANCH)
   /* else */ {
     return generic_to(*this, _fake_type<T>{});

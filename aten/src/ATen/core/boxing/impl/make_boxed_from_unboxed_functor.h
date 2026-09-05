@@ -115,6 +115,9 @@ using supported_primitive_arg_types = guts::typelist::typelist<
 template <class T, bool AllowDeprecatedTypes, class Enable = void>
 struct assert_is_valid_input_type {
   assert_is_valid_input_type() {
+    // Both branches are intentionally empty: the construct documents that each
+    // case is already valid, so there is nothing to differentiate.
+    // NOLINTNEXTLINE(bugprone-branch-clone)
     if constexpr (guts::typelist::contains<supported_primitive_arg_types, T>::
                       value) {
       /* everything is ok, this is a primitive type */
@@ -261,6 +264,9 @@ struct assert_is_valid_input_type<
 template <class T, bool AllowDeprecatedTypes, class Enable = void>
 struct assert_is_valid_output_type {
   assert_is_valid_output_type() {
+    // Both branches are intentionally empty: the construct documents that each
+    // case is already valid, so there is nothing to differentiate.
+    // NOLINTNEXTLINE(bugprone-branch-clone)
     if constexpr (guts::typelist::contains<supported_primitive_arg_types, T>::
                       value) {
       /* everything is ok, this is a primitive type */
@@ -680,6 +686,9 @@ struct push_outputs final {
   // OutputType&& here to avoid one extra call to the move constructor in this
   // case. This is still not a universal reference though because OutputType is
   // an explicitly specified class template parameter.
+  // Forwarded below; the check does not recognise std::forward on an
+  // explicitly specified class template parameter as a move.
+  // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
   static void call(OutputType&& output, Stack* stack) {
     torch::jit::push(
         *stack,
@@ -707,6 +716,8 @@ struct push_outputs<std::tuple<OutputTypes...>, AllowDeprecatedTypes> final {
  private:
   template <size_t... indices>
   static void call_(
+      // Its elements are forwarded one by one below, not the tuple itself.
+      // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
       std::tuple<OutputTypes...>&& output,
       Stack* stack,
       std::index_sequence<indices...> /*unused*/) {

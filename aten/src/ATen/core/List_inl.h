@@ -69,6 +69,7 @@ List<T> toTypedList(impl::GenericList list) {
 }
 
 template<class T>
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 impl::GenericList toList(List<T>&& list) {
   return GenericList(std::move(list.impl_));
 }
@@ -152,6 +153,9 @@ const ListElementReference<T, Iterator>& ListElementReference<T, Iterator>::oper
 }
 
 template<class T, class Iterator>
+// See the declaration in List.h: these proxies are exchanged by their
+// referents, not moved.
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 void swap(ListElementReference<T, Iterator>&& lhs, ListElementReference<T, Iterator>&& rhs)  noexcept {
   std::swap(*lhs.iterator_, *rhs.iterator_);
 }
