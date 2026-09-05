@@ -392,3 +392,7 @@ CLAUDE.local.md
 /debug_*.py
 CLAUDE_CONTEXT/
 /.claude/settings.local.json
+
+# Cloned by caffe2/CMakeLists.txt at the commit third_party/xpu.txt pins, then
+# patched from third_party/xpu_patches. It is not a submodule.
+third_party/torch-xpu-ops/
