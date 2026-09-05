@@ -985,7 +985,6 @@ void generateForwardBackwardLinks(
   // So we sort them by end_time_ns_ before processing.
   std::ranges::sort(
       torch_events,
-
       [](const result_activity_t& left, const result_activity_t& right) {
         auto left_end_time =
             std::get<ExtraFields<EventType::TorchOp>>(left.first->extra_fields_)

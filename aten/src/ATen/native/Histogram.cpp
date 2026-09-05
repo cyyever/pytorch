@@ -1,5 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
+#include <ATen/core/functional.h>
 #include <ATen/native/Histogram.h>
 #include <ATen/native/Resize.h>
 
@@ -143,8 +144,7 @@ void histogramdd_prepare_out(const Tensor& input, const std::vector<int64_t>& bi
 
 void histogramdd_prepare_out(const Tensor& input, TensorList bins,
         const Tensor& hist, const TensorList& bin_edges) {
-    std::vector<int64_t> bin_ct(bins.size());
-    std::ranges::transform(bins, bin_ct.begin(), [](const Tensor& t) { return t.numel() - 1; });
+    auto bin_ct = fmap(bins, [](const Tensor& t) { return t.numel() - 1; });
     histogramdd_prepare_out(input, bin_ct, hist, bin_edges);
 }
 

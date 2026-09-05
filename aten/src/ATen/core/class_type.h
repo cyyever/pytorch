@@ -177,7 +177,6 @@ struct TORCH_API ClassType : public NamedType {
   bool hasAttribute(const std::string& name) const {
     return std::ranges::find_if(
                attributes_,
-
                [&](const ClassAttribute& attr) { return attr.getName() == name; }) !=
         attributes_.cend();
   }
@@ -250,7 +249,6 @@ struct TORCH_API ClassType : public NamedType {
   bool hasConstant(const std::string& name) const {
     return std::ranges::find_if(
                constantNames_,
-
                [&](const std::string& constant) { return constant == name; }) !=
         constantNames_.cend();
   }

@@ -130,7 +130,6 @@ std::string ClassType::getForwardHookErrorMessage(size_t hook_idx) const {
 bool ClassType::isUnresolvedClassAttribute(const std::string& name) const {
   return std::ranges::find(
       unresolved_class_attributes_,
-
       name) != unresolved_class_attributes_.end();
 }
 

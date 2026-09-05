@@ -102,7 +102,6 @@ std::vector<MemEvent> create_and_sort_mem_events(
   }
   std::ranges::sort(
       events,
-
       [](const MemEvent& a, const MemEvent& b) -> bool {
         return a.time < b.time;
       });

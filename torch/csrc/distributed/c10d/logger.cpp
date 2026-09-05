@@ -392,7 +392,6 @@ void Logger::set_runtime_stats_and_log() {
   // selected num_iterations_ is larger.
   if (std::ranges::find(
           LoggingIterations,
-
           num_iterations_stats_recorded_) != std::end(LoggingIterations)) {
     at::LogPyTorchDDPUsage(*ddp_logging_data_);
   }

@@ -414,12 +414,10 @@ std::vector<std::shared_ptr<Operator>> getAllSortedOperatorsFor(Symbol name) {
   sortedOps.reserve(unsortedOps.size());
   std::ranges::copy_if(
       unsortedOps,
-
       std::back_inserter(sortedOps),
       [](const std::shared_ptr<Operator>& op) { return op->isC10Op(); });
   std::ranges::copy_if(
       unsortedOps,
-
       std::back_inserter(sortedOps),
       [](const std::shared_ptr<Operator>& op) { return !op->isC10Op(); });
   return sortedOps;

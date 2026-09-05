@@ -1336,9 +1336,7 @@ struct C10_EXPORT ivalue::Future final : c10::intrusive_ptr_target {
     excessDevices.reserve(subset.size());
     std::ranges::set_difference(
         subset,
-
         superset,
-
         std::back_inserter(excessDevices),
         [](const c10::Device& a, const c10::Device& b) { return a.index() < b.index(); });
     TORCH_CHECK_VALUE(

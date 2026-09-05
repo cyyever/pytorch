@@ -1115,7 +1115,6 @@ void ProcessGroupNCCL::registerMemPool(at::cuda::MemPool* pool, bool symm) {
   auto snapshot = c10::cuda::CUDACachingAllocator::snapshot(pool->id());
   std::ranges::sort(
       snapshot.segments,
-
       [](const SegmentInfo& a, const SegmentInfo& b) {
         return a.registration_counter < b.registration_counter;
       });

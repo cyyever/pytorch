@@ -46,7 +46,6 @@ DeviceType parse_type(const std::string& device_string) {
   }
   auto device = std::ranges::find_if(
       types,
-
       [&device_string](const std::pair<const char*, DeviceType>& p) {
         return p.first && p.first == device_string;
       });

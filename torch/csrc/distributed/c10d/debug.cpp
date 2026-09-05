@@ -30,7 +30,6 @@ DebugLevel loadDebugLevelFromEnvironment() {
 
   std::ranges::transform(
       level_str,
-
       level_str.begin(),
       [](unsigned char c) { return toupper(c); });
 
