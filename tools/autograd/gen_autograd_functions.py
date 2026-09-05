@@ -363,16 +363,16 @@ return obj.release().ptr();
 
 GETTER_BODY_VEC_SAVEDVAR = """\
 PyObject* tup = PyTuple_New((Py_ssize_t) prop.size());
-for (auto i: c10::irange(prop.size())) {
-  PyTuple_SetItem(tup, (Py_ssize_t) i, THPVariable_Wrap(prop[i].unpack(self->cdata)));
+for (auto&& [i, v] : std::views::enumerate(prop)) {
+  PyTuple_SetItem(tup, (Py_ssize_t) i, THPVariable_Wrap(v.unpack(self->cdata)));
 }
 return tup;
 """
 
 GETTER_BODY_RAW_VEC_SAVEDVAR = """\
 PyObject* tup = PyTuple_New((Py_ssize_t) prop.size());
-for (auto i : c10::irange(prop.size())) {
-  pybind11::object obj = pybind11::cast(prop[i], pybind11::return_value_policy::reference);
+for (auto&& [i, v] : std::views::enumerate(prop)) {
+  pybind11::object obj = pybind11::cast(v, pybind11::return_value_policy::reference);
   PyTuple_SetItem(tup, (Py_ssize_t) i, obj.release().ptr());
 }
 return tup;
@@ -380,16 +380,15 @@ return tup;
 
 GETTER_BODY_ARRAYREF_LONG = """\
 PyObject* tup = PyTuple_New((Py_ssize_t) prop.size());
-for (auto i : c10::irange(prop.size())) {
-  PyTuple_SetItem(tup, (Py_ssize_t) i, PyLong_FromUnsignedLong((uint64_t) prop[i]));
+for (auto&& [i, v] : std::views::enumerate(prop)) {
+  PyTuple_SetItem(tup, (Py_ssize_t) i, PyLong_FromUnsignedLong((uint64_t) v));
 }
 return tup;
 """
 
 GETTER_BODY_ARRAYREF_SYMINT = """\
 PyObject* tup = PyTuple_New((Py_ssize_t) prop.size());
-for (auto i : c10::irange(prop.size())) {
-    auto si = prop[i];
+for (auto&& [i, si] : std::views::enumerate(prop)) {
     if (auto m = si.maybe_as_int()) {
       PyTuple_SetItem(tup, (Py_ssize_t) i, PyLong_FromUnsignedLong(*m));
     } else {
@@ -402,8 +401,8 @@ return tup;
 
 GETTER_BODY_ARRAYREF_DOUBLE = """\
 PyObject* tup = PyTuple_New((Py_ssize_t) prop.size());
-for (auto i : c10::irange(prop.size())) {
-  PyTuple_SetItem(tup, (Py_ssize_t) i, PyFloat_FromDouble((double) prop[i]));
+for (auto&& [i, v] : std::views::enumerate(prop)) {
+  PyTuple_SetItem(tup, (Py_ssize_t) i, PyFloat_FromDouble((double) v));
 }
 return tup;
 """

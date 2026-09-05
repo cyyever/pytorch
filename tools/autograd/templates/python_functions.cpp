@@ -13,6 +13,8 @@
 #include <pybind11/pybind11.h>
 #include <torch/csrc/utils/pybind.h>
 
+#include <ranges>
+
 // NOTE: See [Sharded File] comment in VariableType
 
 namespace torch::autograd::generated {
