@@ -9,6 +9,7 @@
 #include <ATen/TensorUtils.h>
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/TransposeType.h>
+#include <algorithm>
 #include <limits>
 #include <string_view>
 #include <type_traits>
@@ -381,7 +382,7 @@ inline Tensor _move_to_end(const Tensor& self, IntArrayRef axes) {
   perm.reserve(static_cast<size_t>(std::max<int64_t>(0, ndim)));
 
   for (const auto i : c10::irange(ndim)) {
-    auto it = std::find(a.begin(), a.end(), i);
+    auto it = std::ranges::find(a, i);
     if (it == a.end()) {
        perm.push_back(i);
     }

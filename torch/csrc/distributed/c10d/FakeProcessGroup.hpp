@@ -118,7 +118,7 @@ class FakeProcessGroup : public Backend {
       const c10::intrusive_ptr<Store>& /* store */,
       const std::vector<int>& ranks,
       const c10::intrusive_ptr<Backend::Options>& opts) override {
-    auto it = std::find(ranks.begin(), ranks.end(), rank_);
+    auto it = std::ranges::find(ranks, rank_);
     if (it == ranks.end()) {
       return nullptr;
     }

@@ -923,8 +923,7 @@ class TORCH_API ProcessGroup : public torch::CustomClassHolder {
   }
 
   bool hasBackendForDeviceType(c10::DeviceType deviceType) {
-    return deviceTypeToBackendType_.find(deviceType) !=
-        deviceTypeToBackendType_.end();
+    return deviceTypeToBackendType_.contains(deviceType);
   }
 
   void setBackend(

@@ -383,26 +383,22 @@ void prepareTrace(
           torch::autograd::profiler::ActivityType::MTIA, kMtiaTypes);
     } else {
       k_activities.insert(libkineto::ActivityType::COLLECTIVE_COMM);
-      if (config.custom_profiler_config.find("disable_runtime_events") ==
-          std::string::npos) {
+      if (!config.custom_profiler_config.contains("disable_runtime_events")) {
         k_activities.insert(libkineto::ActivityType::MTIA_RUNTIME);
       } else {
         LOG(INFO) << "Disabling MTIA runtime events";
       }
-      if (config.custom_profiler_config.find("disable_ccp_events") ==
-          std::string::npos) {
+      if (!config.custom_profiler_config.contains("disable_ccp_events")) {
         k_activities.insert(libkineto::ActivityType::MTIA_CCP_EVENTS);
       } else {
         LOG(INFO) << "Disabling MTIA CCP events";
       }
-      if (config.custom_profiler_config.find("disable_insight_events") ==
-          std::string::npos) {
+      if (!config.custom_profiler_config.contains("disable_insight_events")) {
         k_activities.insert(libkineto::ActivityType::MTIA_INSIGHT);
       } else {
         LOG(INFO) << "Disabling MTIA insight events";
       }
-      if (config.custom_profiler_config.find("disable_counter_events") ==
-          std::string::npos) {
+      if (!config.custom_profiler_config.contains("disable_counter_events")) {
         k_activities.insert(libkineto::ActivityType::MTIA_COUNTERS);
       } else {
         LOG(INFO) << "Disabling MTIA counter events";

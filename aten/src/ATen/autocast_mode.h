@@ -8,6 +8,8 @@
 #include <c10/core/impl/LocalDispatchKeySet.h>
 #include <c10/util/intrusive_ptr.h>
 
+#include <algorithm>
+
 namespace at::autocast {
 
 TORCH_API bool is_autocast_enabled(at::DeviceType device_type);
@@ -91,10 +93,8 @@ inline DispatchKey get_autocast_dispatch_key_from_device_type(
 }
 
 inline bool is_autocast_available(c10::DeviceType device_type) {
-  if (std::find(
-          _AUTOCAST_SUPPORTED_DEVICES.begin(),
-          _AUTOCAST_SUPPORTED_DEVICES.end(),
-          device_type) != _AUTOCAST_SUPPORTED_DEVICES.end()) {
+  if (std::ranges::find(_AUTOCAST_SUPPORTED_DEVICES, device_type) !=
+      _AUTOCAST_SUPPORTED_DEVICES.end()) {
     return true;
   } else {
     return false;

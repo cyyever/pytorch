@@ -1,5 +1,6 @@
 #include <c10/util/StringUtil.h>
 #include <fmt/format.h>
+#include <algorithm>
 #include <torch/csrc/distributed/c10d/Utils.hpp>
 #include <torch/csrc/distributed/c10d/debug.h>
 #include <torch/csrc/distributed/c10d/logger.hpp>
@@ -389,9 +390,9 @@ void Logger::set_runtime_stats_and_log() {
   // not scientific here, it assumes most of applications will run
   // at least 10 iterations. stats could have smaller variance if
   // selected num_iterations_ is larger.
-  if (std::find(
-          std::begin(LoggingIterations),
-          std::end(LoggingIterations),
+  if (std::ranges::find(
+          LoggingIterations,
+
           num_iterations_stats_recorded_) != std::end(LoggingIterations)) {
     at::LogPyTorchDDPUsage(*ddp_logging_data_);
   }

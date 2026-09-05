@@ -767,7 +767,7 @@ void ProcessGroupNCCL::registerMemPool(at::cuda::MemPool* pool, bool symm) {
       // The allocator hook normally registered this segment already; only the
       // ones it could not reach (allocated while the comm was down, or
       // deregistered by an earlier deregisterMemPool) are left to do here.
-      if (!memoryRegistrationHandles_.count(addr)) {
+      if (!memoryRegistrationHandles_.contains(addr)) {
         registerAddressLocked(addr, segment.total_size);
       }
     }

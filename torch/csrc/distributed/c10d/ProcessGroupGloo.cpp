@@ -1,5 +1,6 @@
 #include <c10/util/Exception.h>
 #include <c10/util/error.h>
+#include <numeric>
 #include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
 
 #ifdef USE_C10D_GLOO
@@ -751,7 +752,7 @@ const std::vector<uint64_t>& ProcessGroupGloo::groupRanks() const {
   if (options_->global_ranks_in_group.empty()) {
     if (defaultRanks_.size() != static_cast<size_t>(size_)) {
       defaultRanks_.resize(size_);
-      std::iota(defaultRanks_.begin(), defaultRanks_.end(), 0);
+      std::ranges::iota(defaultRanks_, 0);
     }
     return defaultRanks_;
   }

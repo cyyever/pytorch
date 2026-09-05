@@ -105,7 +105,7 @@ void populateNcclConfigFromHints(
   // ncclCommInitRankConfig call, so we use .c_str() directly.
 
   for (const auto& [key, val] : hints) {
-    if (kLayerHints.count(key)) {
+    if (kLayerHints.contains(key)) {
       continue;
     } else if (key == "blocking") {
       config.blocking = std::stoi(val);

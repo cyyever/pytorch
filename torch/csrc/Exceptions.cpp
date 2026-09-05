@@ -177,7 +177,7 @@ static void processErrorMsgInplace(std::string& str) {
       });
 
   // Avoid doing any work if no types need translated
-  if (str.find("Type") == str.npos) {
+  if (!str.contains("Type")) {
     return;
   }
   for (const auto& it : changes) {

@@ -2102,8 +2102,7 @@ void ProcessGroupNCCL::Watchdog::run() {
     // This condition is triggered when any routine in watchdog gets an
     // exception
     pg_->dumpExtraDebuggingInfo();
-    if (std::string(e.what()).find("driver shutting down") !=
-        std::string::npos) {
+    if (std::string(e.what()).contains("driver shutting down")) {
       VLOG(2)
           << pg_->logPrefix()
           << "main process destroyed cuda before watchdog loop exited, terminating watchdog."
@@ -2710,8 +2709,7 @@ void ProcessGroupNCCL::runHookLoop() {
         it = completedWorkList_.erase(it);
       }
     } catch (std::exception& e) {
-      if (std::string(e.what()).find("driver shutting down") !=
-          std::string::npos) {
+      if (std::string(e.what()).contains("driver shutting down")) {
         LOG(INFO)
             << logPrefix()
             << "main process destroyed cuda before runHookLoop exited, terminating runHookLoop."
@@ -2931,7 +2929,7 @@ void ProcessGroupNCCL::allgatherUniqueNCCLIDs(
 
 void ProcessGroupNCCL::destroyNCCLComms(const std::string& devNCCLCommMapKey) {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (devNCCLCommMap_.find(devNCCLCommMapKey) == devNCCLCommMap_.end()) {
+  if (!devNCCLCommMap_.contains(devNCCLCommMapKey)) {
     TORCH_INTERNAL_ASSERT(
         false,
         "Expected to find key ",
@@ -3252,7 +3250,7 @@ int64_t ProcessGroupNCCL::getCommPtr() {
 std::shared_ptr<NCCLComm> ProcessGroupNCCL::getNCCLComm(
     const std::string& deviceKey) {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (devNCCLCommMap_.find(deviceKey) != devNCCLCommMap_.end()) {
+  if (devNCCLCommMap_.contains(deviceKey)) {
     // Reuse the cached communicator if there is one.
     return devNCCLCommMap_[deviceKey];
   }

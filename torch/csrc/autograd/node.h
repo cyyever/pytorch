@@ -451,7 +451,7 @@ struct TORCH_API Node : c10::intrusive_ptr_target {
 
   /// Returns true if any of the output edges in any of the ranges are active.
   bool should_compute_output(std::initializer_list<IndexRange> idxs) const {
-    return std::any_of(idxs.begin(), idxs.end(), [this](IndexRange range) {
+    return std::ranges::any_of(idxs, [this](IndexRange range) {
       for (const auto i : c10::irange(range.first, range.second)) {
         if (should_compute_output(i))
           return true;
@@ -469,7 +469,7 @@ struct TORCH_API Node : c10::intrusive_ptr_target {
   /// and should be computed in the current graph task.
   bool task_should_compute_output(
       std::initializer_list<IndexRange> idxs) const {
-    return std::any_of(idxs.begin(), idxs.end(), [this](IndexRange range) {
+    return std::ranges::any_of(idxs, [this](IndexRange range) {
       for (const auto i : c10::irange(range.first, range.second)) {
         if (task_should_compute_output(i))
           return true;

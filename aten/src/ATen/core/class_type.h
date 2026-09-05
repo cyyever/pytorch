@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 
 #include <ATen/core/ivalue.h>
@@ -174,9 +175,9 @@ struct TORCH_API ClassType : public NamedType {
   }
 
   bool hasAttribute(const std::string& name) const {
-    return std::find_if(
-               attributes_.cbegin(),
-               attributes_.cend(),
+    return std::ranges::find_if(
+               attributes_,
+
                [&](const ClassAttribute& attr) { return attr.getName() == name; }) !=
         attributes_.cend();
   }
@@ -247,9 +248,9 @@ struct TORCH_API ClassType : public NamedType {
   }
 
   bool hasConstant(const std::string& name) const {
-    return std::find_if(
-               constantNames_.cbegin(),
-               constantNames_.cend(),
+    return std::ranges::find_if(
+               constantNames_,
+
                [&](const std::string& constant) { return constant == name; }) !=
         constantNames_.cend();
   }
