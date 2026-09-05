@@ -10,6 +10,8 @@
 #include <ATen/ops/linalg_cross.h>
 #include <ATen/ops/linalg_cross_native.h>
 
+#include <ranges>
+
 namespace at::meta {
 
 TORCH_META_FUNC(linalg_cross)
@@ -42,8 +44,8 @@ static int64_t _default_cross_dim(const std::optional<int64_t> &dimension, SymIn
     return *dimension;
   }
 
-  for(auto i : c10::irange(sizes.size())) {
-    if(sizes[i] == 3) {
+  for (auto&& [i, size] : std::views::enumerate(sizes)) {
+    if(size == 3) {
       return i;
     }
   }
