@@ -479,13 +479,13 @@ if(USE_CCACHE)
   # torch-xpu-ops consumes CMAKE_SYCL_COMPILER_LAUNCHER directly; this does not
   # require CMake to provide native SYCL language support.
   if(CCACHE_PROGRAM)
-    foreach(LANG CXX C CUDA SYCL)
+    foreach(LANG CXX C CUDA HIP SYCL)
       set(CMAKE_${LANG}_COMPILER_LAUNCHER
           "${CCACHE_PROGRAM}"
           CACHE STRING "${LANG} compiler launcher")
     endforeach()
   elseif(SCCACHE_EXECUTABLE)
-    foreach(LANG CXX C CUDA SYCL)
+    foreach(LANG CXX C CUDA HIP SYCL)
       set(CMAKE_${LANG}_COMPILER_LAUNCHER
           "${SCCACHE_EXECUTABLE}"
           CACHE STRING "${LANG} compiler launcher")
