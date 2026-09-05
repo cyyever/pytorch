@@ -1,7 +1,6 @@
-#include <ATen/cuda/CUDABlasHandle.h>
-#include <ATen/cuda/CUDABlasWorkspace.h>
 #include <ATen/core/TensorBody.h>
 #include <ATen/hip/HIPConfig.h>
+#include <ATen/hip/HIPContextLight.h>
 #include <ATen/native/ConvUtils.h>
 #include <ATen/native/RNN.h>
 #include <c10/core/Device.h>
