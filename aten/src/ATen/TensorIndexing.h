@@ -132,8 +132,8 @@ struct TORCH_API TensorIndex final {
   TensorIndex(int integer) : TensorIndex(SymInt(integer)) {}
 
   // Case 4: Boolean value
-  template <class T, class = std::enable_if_t<std::is_same_v<bool, T>>>
-  TensorIndex(T boolean) : boolean_(boolean), type_(TensorIndexType::Boolean) {}
+  template <class T>
+  TensorIndex(T boolean) requires (std::is_same_v<bool, T>) : boolean_(boolean), type_(TensorIndexType::Boolean) {}
 
   // Case 5: Slice represented in `at::indexing::Slice` form
   TensorIndex(Slice slice)

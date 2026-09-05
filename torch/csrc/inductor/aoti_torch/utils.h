@@ -122,8 +122,8 @@ inline std::optional<T> pointer_to_optional(T* ptr) {
   return ptr ? std::make_optional(*ptr) : std::nullopt;
 }
 
-template <class T, class U, typename = std::enable_if_t<!std::is_same_v<T, U>>>
-inline std::optional<T> pointer_to_optional(U* ptr) {
+template <class T, class U>
+inline std::optional<T> pointer_to_optional(U* ptr) requires (!std::is_same_v<T, U>) {
   return ptr ? std::make_optional<T>(T(*ptr)) : std::nullopt;
 }
 
@@ -170,9 +170,8 @@ inline c10::ArrayRef<T> pointer_to_list(T* ptr, int64_t len) {
 template <
     class T,
     class U,
-    typename = std::enable_if_t<!std::is_same_v<T, U>>,
-    typename = std::enable_if_t<!is_optional<T>::value>>
-inline std::vector<T> pointer_to_list(U* ptr, int64_t len) {
+    typename = std::enable_if_t<!std::is_same_v<T, U>>>
+inline std::vector<T> pointer_to_list(U* ptr, int64_t len) requires (!is_optional<T>::value) {
   // std::vector<T> will be implicitly converted to c10::ArrayRef<T> at the call
   // site
   std::vector<T> result;
@@ -183,8 +182,8 @@ inline std::vector<T> pointer_to_list(U* ptr, int64_t len) {
   return result;
 }
 
-template <class T, class U, typename = std::enable_if_t<is_optional<T>::value>>
-inline std::vector<T> pointer_to_list(U** ptr, int64_t len) {
+template <class T, class U>
+inline std::vector<T> pointer_to_list(U** ptr, int64_t len) requires is_optional<T>::value {
   // Here U** denotes a list of optional arguments
   // std::vector<T> will be implicitly converted to c10::ArrayRef<T> at the call
   // site

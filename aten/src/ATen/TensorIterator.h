@@ -434,14 +434,11 @@ struct TORCH_API TensorIteratorBase : public impl::MetaBase {
 
  public:
   template <
-      typename loop1d_t,
-      std::enable_if_t<
-          std::is_convertible_v<
+      typename loop1d_t>
+  void for_each(loop1d_t loop, int64_t grain_size = at::internal::GRAIN_SIZE) requires (std::is_convertible_v<
               loop1d_t,
               c10::function_ref<
-                  void(char**, const int64_t* strides, int64_t size)>>,
-          int> = 0>
-  void for_each(loop1d_t loop, int64_t grain_size = at::internal::GRAIN_SIZE) {
+                  void(char**, const int64_t* strides, int64_t size)>>) {
     for_each(loop_2d_from_1d(loop), grain_size);
   }
 
@@ -450,14 +447,11 @@ struct TORCH_API TensorIteratorBase : public impl::MetaBase {
   void parallel_reduce(loop2d_t loop);
 
   template <
-      typename loop1d_t,
-      std::enable_if_t<
-          std::is_convertible_v<
+      typename loop1d_t>
+  void serial_for_each(loop1d_t loop, Range range) requires (std::is_convertible_v<
               loop1d_t,
               c10::function_ref<
-                  void(char**, const int64_t* strides, int64_t size)>>,
-          int> = 0>
-  void serial_for_each(loop1d_t loop, Range range) {
+                  void(char**, const int64_t* strides, int64_t size)>>) {
     serial_for_each(loop_2d_from_1d(loop), range);
   }
 

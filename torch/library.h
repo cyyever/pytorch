@@ -267,11 +267,8 @@ class TORCH_API CppFunction final {
   /// Create a function from an unboxed kernel function.
   /// This is typically used to register common operators.
   template <
-      typename FuncPtr,
-      std::enable_if_t<
-          c10::guts::is_function_type<FuncPtr>::value,
-          std::nullptr_t> = nullptr>
-  static CppFunction makeFromUnboxedFunction(FuncPtr* f) {
+      typename FuncPtr>
+  static CppFunction makeFromUnboxedFunction(FuncPtr* f) requires c10::guts::is_function_type<FuncPtr>::value {
     return CppFunction(f);
   }
 
@@ -280,11 +277,8 @@ class TORCH_API CppFunction final {
   /// Compile time function pointers can be used to allow the compiler
   /// to optimize (e.g. inline) calls to it.
   template <
-      typename FuncPtr,
-      std::enable_if_t<
-          c10::is_compile_time_function_pointer<FuncPtr>::value,
-          std::nullptr_t> = nullptr>
-  static CppFunction makeFromUnboxedFunction(FuncPtr f) {
+      typename FuncPtr>
+  static CppFunction makeFromUnboxedFunction(FuncPtr f) requires c10::is_compile_time_function_pointer<FuncPtr>::value {
     return CppFunction(f);
   }
 

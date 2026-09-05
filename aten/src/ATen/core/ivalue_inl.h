@@ -2311,10 +2311,10 @@ inline IValue IValue::make_capsule(
   return iv;
 }
 
-template <
-    typename T,
-    std::enable_if_t<std::is_base_of_v<torch::CustomClassHolder, T>, int>>
-IValue::IValue(c10::intrusive_ptr<T> custom_class) : tag(Tag::Object) {
+template <typename T>
+IValue::IValue(c10::intrusive_ptr<T> custom_class)
+  requires(std::is_base_of_v<torch::CustomClassHolder, T>)
+    : tag(Tag::Object) {
   auto classType = []() {
     try {
       return c10::getCustomClassType<c10::intrusive_ptr<T>>();
