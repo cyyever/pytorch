@@ -1013,7 +1013,6 @@ bool Reducer::is_unused_bucket(Bucket& bucket) {
   for (const auto& variable_index : bucket.variable_indices) {
     if (std::ranges::find(
             unused_parameters_,
-
             variable_index) == unused_parameters_.end()) {
       return false;
     }
@@ -2355,7 +2354,6 @@ compute_bucket_assignment_by_size(
   if (tensor_indices.empty()) {
     std::ranges::sort(
         result,
-
         [](const std::tuple<std::vector<size_t>, size_t>& a,
            const std::tuple<std::vector<size_t>, size_t>& b) {
           const auto& indices_a = std::get<0>(a);

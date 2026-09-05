@@ -64,7 +64,6 @@ inline bool areAnyOptionalTensorSubclassLike(
     return true;
   return std::ranges::any_of(
       tensors,
-
       [](const std::optional<Tensor>& opt_tensor) {
         return (
             opt_tensor.has_value() && isTensorSubclassLike(opt_tensor.value()));

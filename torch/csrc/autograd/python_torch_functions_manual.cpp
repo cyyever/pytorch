@@ -545,7 +545,6 @@ static void gatherTorchFunctions(std::vector<PyMethodDef>& torch_functions) {
   for (const auto& alias : aliases) {
     auto it = std::ranges::find_if(
         torch_functions,
-
         [&](const PyMethodDef& def) {
           return strcmp(def.ml_name, alias.first) == 0;
         });

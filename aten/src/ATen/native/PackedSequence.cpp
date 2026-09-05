@@ -207,7 +207,6 @@ Tensor pad_sequence(TensorList sequences, bool batch_first, double padding_value
   IntArrayRef trailing_dims = max_size.slice(1);
   int64_t max_len = std::ranges::max_element(
     sequences,
-
     [](const Tensor &a, const Tensor &b) {
       return a.size(0) < b.size(0);
     }

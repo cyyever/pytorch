@@ -161,7 +161,6 @@ tensor_list2d broadcast_coalesced(
   TORCH_CHECK(
       std::ranges::all_of(
           tensors,
-
           [&](const at::Tensor& t) { return t.get_device() == devices[0]; }),
       "All tensors must be on devices[0]: ",
       devices[0]);

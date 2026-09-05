@@ -162,7 +162,6 @@ StringCordView::IteratorImpl& StringCordView::IteratorImpl::operator+=(
   }
   auto upper = std::ranges::upper_bound(
       str_->accumulated_sizes_,
-
       target_abs_pos);
   if (upper == str_->accumulated_sizes_.end()) {
     *this = str_->end_impl();
