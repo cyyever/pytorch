@@ -76,15 +76,48 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   set(CMAKE_CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}")
 endif()
 enable_language(CUDA)
-# Device code stays at C++20 even when the host is newer. C++23 gives <cmath>
-# overloads for _Float16 and __bf16, and once those are in the overload set a
-# std:: math call on c10::Half or c10::BFloat16 in device code makes nvcc 13.3
-# abort with `Internal Compiler Error (codegen): "unsupported float variant!"`.
-# Raise this once nvcc compiles those kernels.
-if("X${CMAKE_CUDA_STANDARD}" STREQUAL "X" )
-  set(CMAKE_CUDA_STANDARD 20)
-endif()
+# Device code is C++23. nvcc rejects -std=c++26 outright, so this is as far as
+# device code can follow the host.
+set(CMAKE_CUDA_STANDARD 23)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+# nvcc's host pass, and only it, is pointed at libstdc++ 15. nvcc's EDG frontend
+# has not implemented P1787R6, the C++23 relaxation that lets a ref-qualified
+# and a non-ref-qualified member function share one overload set; libstdc++ 16
+# relies on it for P2438's `basic_string::substr() &&`, so under nvcc a bare
+# `#include <string>` fails to compile. libstdc++ 15 predates P2438.
+#
+# Scoped to CMAKE_CUDA_FLAGS on purpose: host C++ and every other backend keep
+# the standard library they were configured with. The halves then disagree on
+# libstdc++ minor version, which is the ordinary `-ccbin <older gcc>` situation
+# and safe across a shared ABI -- but it does mean shared headers must not
+# branch on library feature-test macros, since the two passes see different
+# values for them.
+set(CUDA_HOST_GCC_INSTALL_DIR "" CACHE PATH
+    "GCC install directory whose libstdc++ nvcc's host pass compiles against")
+
+if(NOT CUDA_HOST_GCC_INSTALL_DIR)
+  file(GLOB _cuda_gcc15_dirs LIST_DIRECTORIES true "/usr/lib/gcc/*/15" "/usr/lib/gcc/*/15.*")
+  list(SORT _cuda_gcc15_dirs COMPARE NATURAL ORDER DESCENDING)
+  foreach(_dir ${_cuda_gcc15_dirs})
+    if(IS_DIRECTORY "${_dir}/include/c++")
+      set(CUDA_HOST_GCC_INSTALL_DIR "${_dir}" CACHE PATH "" FORCE)
+      break()
+    endif()
+  endforeach()
+endif()
+
+if(NOT CUDA_HOST_GCC_INSTALL_DIR)
+  message(FATAL_ERROR
+    "Device code is built as C++23, which nvcc can only do against libstdc++ 15 "
+    "or older. No such toolchain was found under /usr/lib/gcc. Install GCC 15, "
+    "or set CUDA_HOST_GCC_INSTALL_DIR to a directory holding an older one.")
+endif()
+
+string(APPEND CMAKE_CUDA_FLAGS
+       " -Xcompiler --gcc-install-dir=${CUDA_HOST_GCC_INSTALL_DIR}")
+message(STATUS "CUDA host pass uses libstdc++ from ${CUDA_HOST_GCC_INSTALL_DIR}")
+
 
 if(NOT CMAKE_CUDA_COMPILER_VERSION VERSION_EQUAL CUDAToolkit_VERSION)
   message(FATAL_ERROR "Found two conflicting CUDA versions:\n"
