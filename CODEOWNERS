@@ -221,7 +221,6 @@
 # /aten/src/ATen/NodeCreationHooks.h
 # /aten/src/ATen/NumericUtils.h
 # /aten/src/ATen/OpMathType.h
-# /aten/src/ATen/OpaqueTensorImpl.h
 # /aten/src/ATen/PTThreadPool.h
 # /aten/src/ATen/PadNd.h
 # /aten/src/ATen/Parallel-inl.h
