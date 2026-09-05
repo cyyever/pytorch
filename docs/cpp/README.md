@@ -64,7 +64,7 @@ All source files use MyST Markdown syntax (fenced directives with backticks).
 **Classes and structs** — use `doxygenclass` or `doxygenstruct`:
 
 ````markdown
-```{doxygenclass} torch::nn::Linear
+```{doxygenclass} torch::Library
 :members:
 :undoc-members:
 ```
@@ -162,12 +162,12 @@ Optional prose explaining usage, with a code example:
 auto x = torch::randn({2, 3});
 ```
 
-```{doxygenclass} torch::nn::SomeClass
+```{doxygenclass} torch::SomeClass
 :members:
 :undoc-members:
 ```
 
-```{doxygenstruct} torch::nn::SomeClassOptions
+```{doxygenstruct} torch::SomeClassOptions
 :members:
 :undoc-members:
 ```
@@ -193,11 +193,10 @@ Returns the number of dimensions.
 Doxygen extracts documentation from comments in headers. Use `///` style:
 
 ```cpp
-/// Applies a linear transformation to the incoming data: :math:`y = xA^T + b`.
+/// Computes the one-dimensional discrete Fourier transform of `self`.
 ///
 /// @code{.cpp}
-/// auto linear = torch::nn::Linear(torch::nn::LinearOptions(10, 5));
-/// auto output = linear->forward(input);
+/// auto spectrum = torch::fft::fft(signal);
 /// @endcode
 ///
 /// @note The weight matrix is transposed compared to the Python API.
