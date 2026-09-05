@@ -1,3 +1,4 @@
+#include <ranges>
 #include <utility>
 #include <ATen/ATen.h>
 #include <ATen/xpu/Sleep.h>
@@ -220,8 +221,8 @@ static PyObject* THXPModule_memoryStats(PyObject* self, PyObject* arg) {
     const std::array<const char*, static_cast<size_t>(StatType::NUM_TYPES)>
         statTypeNames = {"all", "small_pool", "large_pool"};
     py::dict dict;
-    for (const auto i : c10::irange(statTypeNames.size())) {
-      dict[statTypeNames[i]] = statToDict(statArray[i]);
+    for (auto&& [name, stat] : std::views::zip(statTypeNames, statArray)) {
+      dict[name] = statToDict(stat);
     }
     return dict;
   };
