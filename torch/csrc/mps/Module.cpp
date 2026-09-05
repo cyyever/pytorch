@@ -15,6 +15,8 @@
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/native/mps/MetalShaderLibrary.h>
 #include <torch/csrc/mps/Stream.h>
+#include <ranges>
+
 #endif
 
 namespace torch::mps {
@@ -466,16 +468,16 @@ void initModule(PyObject* module) {
             OptionalArgCaster caster(arg_casts);
             self.runCommandBlock([&] {
               self.startEncoding();
-              for (auto idx : c10::irange(args.size())) {
-                if (THPVariable_Check(args[idx].ptr())) {
-                  auto t = THPVariable_Unpack(args[idx].ptr());
+              for (auto&& [idx, arg] : std::views::enumerate(args)) {
+                if (THPVariable_Check(arg.ptr())) {
+                  auto t = THPVariable_Unpack(arg.ptr());
                   self.setArg(idx, t);
                   if (!threads) {
                     threads = {static_cast<uint64_t>(t.numel())};
                   }
                   continue;
                 }
-                caster.setValue(self, idx, args[idx]);
+                caster.setValue(self, idx, arg);
               }
               // Set error buffer if error_buf_idx is provided
               if (!error_buf_idx.is_none()) {

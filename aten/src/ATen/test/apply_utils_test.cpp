@@ -5,6 +5,8 @@
 #include <ATen/test/test_assert.h>
 #include <c10/util/irange.h>
 
+#include <ranges>
+
 using namespace std;
 using namespace at;
 
@@ -42,11 +44,11 @@ void test(const TensorOptions& type, IntArrayRef shape, int64_t a = 0, int64_t b
   auto a4 = at::empty({0}, at::TensorOptions(kCPU).dtype(kDouble));
 
   std::vector<Tensor> tensors({a0, a1, a2, a3, a4});
-  for (const auto i : c10::irange(tensors.size())) {
-    tensors[i].resize_(shape);
-    fill_tensor(i + 1, tensors[i]);
+  for (auto&& [i, tensor] : std::views::enumerate(tensors)) {
+    tensor.resize_(shape);
+    fill_tensor(i + 1, tensor);
     if (a >= 0 && b >= 0) {
-      tensors[i].transpose_(a, b);
+      tensor.transpose_(a, b);
     }
   }
 
