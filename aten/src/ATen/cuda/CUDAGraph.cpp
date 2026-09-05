@@ -1,5 +1,6 @@
 #include <ATen/core/CachingHostAllocator.h>
 #include <ATen/cuda/CUDAContextLight.h>
+#include <ATen/cuda/CUDABlasWorkspace.h>
 #include <ATen/cuda/CUDAGeneratorImpl.h>
 #include <ATen/cuda/CUDAGraph.h>
 #include <ATen/cuda/CUDAGraphsUtils.cuh>

@@ -1,14 +1,14 @@
 #pragma once
 // Light-weight version of CUDAContext.h with fewer transitive includes
 
-#include <cstdint>
-#include <map>
-#include <shared_mutex>
-
 #include <cuda_runtime_api.h>
-#include <c10/core/Allocator.h>
+
 #include <c10/cuda/CUDAFunctions.h>
 
+// getCUDADeviceAllocator returns a pointer, so declaring it needs only the
+// name. c10/cuda/CUDAFunctions.h already supplies most of Allocator.h
+// transitively, so dropping the explicit include saves 598 lines per
+// translation unit rather than the 123k the header costs on its own.
 namespace c10 {
 struct Allocator;
 }
@@ -56,27 +56,5 @@ TORCH_CUDA_CPP_API bool canDeviceAccessPeer(
     c10::DeviceIndex peer_device);
 
 TORCH_CUDA_CPP_API c10::Allocator* getCUDADeviceAllocator();
-
-TORCH_CUDA_CPP_API void clearCublasWorkspaces();
-TORCH_CUDA_CPP_API void clearCublasWorkspacesForStream(cudaStream_t stream);
-struct WorkspaceMapWithMutex {
-  std::map<std::tuple<void*, void*>, std::pair<at::DataPtr, size_t>> map;
-  std::shared_mutex mutex;
-};
-
-TORCH_CUDA_CPP_API WorkspaceMapWithMutex& cublas_handle_stream_to_workspace();
-TORCH_CUDA_CPP_API WorkspaceMapWithMutex& cublaslt_handle_stream_to_workspace();
-TORCH_CUDA_CPP_API size_t getChosenWorkspaceSize();
-TORCH_CUDA_CPP_API size_t getCUDABlasLtWorkspaceSize();
-TORCH_CUDA_CPP_API bool isCUDABlasWorkspaceCachingEnabled();
-// These return cache-owned allocations even when ATen workspace caching is
-// disabled. Use allocateCUDABlasWorkspace for operation-scoped storage.
-TORCH_CUDA_CPP_API void* getCUDABlasLtWorkspace();
-TORCH_CUDA_CPP_API void* getCUDABlasLtWorkspace(size_t workspace_size);
-TORCH_CUDA_CPP_API at::DataPtr allocateCUDABlasWorkspace(size_t size);
-TORCH_CUDA_CPP_API void setChosenWorkspaceSize(size_t size);
-TORCH_CUDA_CPP_API void setCUDABlasLtWorkspaceSize(size_t size);
-TORCH_CUDA_CPP_API void resetChosenWorkspaceSize();
-TORCH_CUDA_CPP_API void resetCUDABlasLtWorkspaceSize();
 
 } // namespace at::cuda

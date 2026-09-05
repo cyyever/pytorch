@@ -1,7 +1,7 @@
 #pragma once
 // Split out of CUDAContextLight.h; see CUDABlasHandle.h. cusolverDn.h is the
-// most expensive of the four at ~50k preprocessed lines, and it includes
-// cublas_v2.h, so cuSOLVER callers need not include CUDABlasHandle.h as well.
+// most expensive of the four, and it includes cublas_v2.h, so cuSOLVER callers
+// need not include CUDABlasHandle.h as well.
 
 #ifdef CUDART_VERSION
 #include <cusolverDn.h>
