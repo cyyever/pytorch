@@ -267,12 +267,19 @@ if(PYTORCH_FOUND_HIP)
       "#include <hipblaslt/hipblaslt.h>\n"
       "int main() {\n"
       "    hipblasLtMatmulMatrixScale_t attr = HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;\n"
+      "    (void)attr;\n"
       "    return 0;\n"
       "}\n"
       )
+    set(_hipblaslt_probe_flags
+      -D__HIP_PLATFORM_AMD__
+      -Wno-error=newline-eof
+      -Wno-error=unused-but-set-variable)
     try_compile(hipblaslt_compile_result_outer_vec ${PROJECT_RANDOM_BINARY_DIR} ${file}
-      CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
-      COMPILE_DEFINITIONS -D__HIP_PLATFORM_AMD__
+      CMAKE_FLAGS
+        "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
+        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}"
+      COMPILE_DEFINITIONS ${_hipblaslt_probe_flags}
       OUTPUT_VARIABLE hipblaslt_compile_output_outer_vec)
 
     # check whether hipblaslt provides HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
@@ -282,13 +289,17 @@ if(PYTORCH_FOUND_HIP)
       "#include <hipblaslt/hipblaslt.h>\n"
       "int main() {\n"
       "    hipblasLtMatmulDescAttributes_t attr = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT;\n"
+      "    (void)attr;\n"
       "    return 0;\n"
       "}\n"
       )
     try_compile(hipblaslt_compile_result_vec_ext ${PROJECT_RANDOM_BINARY_DIR} ${file}
-      CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
-      COMPILE_DEFINITIONS -D__HIP_PLATFORM_AMD__
+      CMAKE_FLAGS
+        "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
+        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}"
+      COMPILE_DEFINITIONS ${_hipblaslt_probe_flags}
       OUTPUT_VARIABLE hipblaslt_compile_output_vec_ext)
+    unset(_hipblaslt_probe_flags)
 
     if(hipblaslt_compile_result_outer_vec)
       set(HIPBLASLT_OUTER_VEC ON)
