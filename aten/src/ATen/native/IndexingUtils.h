@@ -8,6 +8,9 @@
 #include <ATen/ops/empty.h>
 #include <ATen/ops/nonzero.h>
 
+#include <algorithm>
+#include <ranges>
+
 namespace at::native {
 
 [[noreturn]]
@@ -104,13 +107,9 @@ inline torch::List<std::optional<Tensor>> toListOfOptionalTensors(ArrayRef<IValu
   // true if all the non-null tensors are adjacent
   auto isDefined = [](const Tensor & tensor){ return tensor.defined(); };
   auto isNull = [](const Tensor & tensor){ return !tensor.defined(); };
-  auto start = std::find_if(tl.begin(), tl.end(), isDefined);
-  if (start == tl.end()) {
-    return true;
-  }
-  auto stop = std::find_if(tl.rbegin(), tl.rend(), isDefined);
-  auto it = std::find_if(start, stop.base(), isNull);
-  return it == stop.base();
+  auto first = std::ranges::find_if(tl, isDefined);
+  auto afterRun = std::ranges::find_if(first, tl.end(), isNull);
+  return std::ranges::none_of(std::ranges::subrange(afterRun, tl.end()), isDefined);
 }
 
 // Transposes the tensor and indices together so that all the non-null indices

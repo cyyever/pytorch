@@ -167,10 +167,10 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <numeric>
+#include <ranges>
 #include <utility>
 #include <vector>
-
-#include <ranges>
 
 namespace at::meta {
 
@@ -3357,17 +3357,13 @@ Tensor row_stack(TensorList tensors) {
 }
 
 static std::vector<Tensor> reshape_input_for_column_stack(TensorList tensors) {
-  std::vector<Tensor> result(tensors.size());
-  auto transform_lambda = [](const Tensor& input) -> Tensor {
+  return fmap(tensors, [](const Tensor& input) -> Tensor {
     // reshape 0D or 1D tensor t into (t.numel(), 1)
     if (input.dim() <= 1) {
       return input.reshape_symint({input.sym_numel(), 1});
     }
     return input;
-  };
-  std::transform(
-      tensors.cbegin(), tensors.cend(), result.begin(), transform_lambda);
-  return result;
+  });
 }
 
 Tensor& column_stack_out(TensorList tensors, Tensor& result) {
@@ -4232,8 +4228,8 @@ Tensor movedim(const Tensor& self, IntArrayRef src, IntArrayRef dst) {
 
   auto all_unique = [](const DimVector& dims) {
     DimVector copy = dims;
-    std::sort(copy.begin(), copy.end());
-    auto duplicate = std::adjacent_find(copy.begin(), copy.end());
+    std::ranges::sort(copy);
+    auto duplicate = std::ranges::adjacent_find(copy);
     return duplicate == copy.end();
   };
   TORCH_CHECK(
@@ -4271,8 +4267,8 @@ Tensor movedim(const Tensor& self, IntArrayRef src, IntArrayRef dst) {
   //     order = NA, NA, NA, NA, NA
   //     source_dims = 0, 1, 2, 3, 4
   //     destination_dims = 0, 1, 2, 3, 4
-  std::iota(source_dims.begin(), source_dims.end(), 0);
-  std::iota(destination_dims.begin(), destination_dims.end(), 0);
+  std::ranges::iota(source_dims, 0);
+  std::ranges::iota(destination_dims, 0);
 
   // We mark and update position for the dim provided by user
   // i.e. `normalized_src` and `normalized_dims`
@@ -4291,9 +4287,9 @@ Tensor movedim(const Tensor& self, IntArrayRef src, IntArrayRef dst) {
   // Variable State:
   //     source_dims = 2, 3, 4
   //     destination_dims = 0, 1, 3
-  auto source_iter = std::remove(source_dims.begin(), source_dims.end(), -1);
+  auto source_iter = std::ranges::remove(source_dims, -1).begin();
   auto destination_iter =
-      std::remove(destination_dims.begin(), destination_dims.end(), -1);
+      std::ranges::remove(destination_dims, -1).begin();
 
   int64_t rest_dim = self.dim() - src.size();
   TORCH_INTERNAL_ASSERT(

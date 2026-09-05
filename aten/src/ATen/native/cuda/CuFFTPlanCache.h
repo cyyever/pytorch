@@ -9,6 +9,7 @@
 #include <cufft.h>
 #include <cufftXt.h>
 
+#include <algorithm>
 #include <limits>
 #include <list>
 #include <sstream>
@@ -52,9 +53,9 @@ struct CuFFTParams
     TORCH_INTERNAL_ASSERT(out_strides.size() == signal_sizes.size());
     TORCH_INTERNAL_ASSERT(1 <= signal_ndim_ && signal_ndim_ <= max_rank);
 
-    std::copy(signal_sizes.cbegin(), signal_sizes.cend(), sizes_);
-    std::copy(in_strides.cbegin(), in_strides.cend(), input_strides_);
-    std::copy(out_strides.cbegin(), out_strides.cend(), output_strides_);
+    std::ranges::copy(signal_sizes, sizes_);
+    std::ranges::copy(in_strides, input_strides_);
+    std::ranges::copy(out_strides, output_strides_);
   }
 };
 
