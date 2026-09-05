@@ -480,10 +480,9 @@ struct TORCH_API IValue final {
   c10::intrusive_ptr<torch::CustomClassHolder> toCapsule() const&;
 
   // Custom C++ classes
-  template <
-      typename T,
-      std::enable_if_t<std::is_base_of_v<torch::CustomClassHolder, T>, int> = 0>
-  IValue(intrusive_ptr<T> custom_class);
+  template <typename T>
+  IValue(intrusive_ptr<T> custom_class)
+    requires(std::is_base_of_v<torch::CustomClassHolder, T>);
   bool isCustomClass() const;
   template <typename T>
   c10::intrusive_ptr<T> toCustomClass() &&;

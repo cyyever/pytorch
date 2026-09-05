@@ -83,8 +83,10 @@ TORCH_API void initializeStreamsEvents(
 
 typedef void (*ReduceFunc)(void*, const void*, const void*, size_t);
 
-template <typename T, std::enable_if_t<!std::is_integral_v<T>, int> = 0>
-ReduceFunc toFunction(const ReduceOp& r) {
+template <typename T>
+ReduceFunc toFunction(const ReduceOp& r)
+  requires(!std::is_integral_v<T>)
+{
   switch (r) {
     case ReduceOp::SUM:
     case ReduceOp::AVG:
@@ -116,8 +118,10 @@ ReduceFunc toFunction(const ReduceOp& r) {
 }
 
 // Bitwise AND with SFINAE guard for integral types.
-template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-void band(void* c, const void* a, const void* b, size_t n) {
+template <typename T>
+void band(void* c, const void* a, const void* b, size_t n)
+  requires(std::is_integral_v<T>)
+{
   auto tc = static_cast<T*>(c);
   auto ta = static_cast<const T*>(a);
   auto tb = static_cast<const T*>(b);
@@ -127,8 +131,10 @@ void band(void* c, const void* a, const void* b, size_t n) {
 }
 
 // Bitwise OR with SFINAE guard for integral types.
-template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-void bor(void* c, const void* a, const void* b, size_t n) {
+template <typename T>
+void bor(void* c, const void* a, const void* b, size_t n)
+  requires(std::is_integral_v<T>)
+{
   auto tc = static_cast<T*>(c);
   auto ta = static_cast<const T*>(a);
   auto tb = static_cast<const T*>(b);
@@ -138,8 +144,10 @@ void bor(void* c, const void* a, const void* b, size_t n) {
 }
 
 // Bitwise XOR with SFINAE guard for integral types.
-template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-void bxor(void* c, const void* a, const void* b, size_t n) {
+template <typename T>
+void bxor(void* c, const void* a, const void* b, size_t n)
+  requires(std::is_integral_v<T>)
+{
   auto tc = static_cast<T*>(c);
   auto ta = static_cast<const T*>(a);
   auto tb = static_cast<const T*>(b);
@@ -148,8 +156,10 @@ void bxor(void* c, const void* a, const void* b, size_t n) {
   }
 }
 
-template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-ReduceFunc toFunction(const ReduceOp& r) {
+template <typename T>
+ReduceFunc toFunction(const ReduceOp& r)
+  requires(std::is_integral_v<T>)
+{
   switch (r) {
     case ReduceOp::SUM:
     case ReduceOp::AVG:

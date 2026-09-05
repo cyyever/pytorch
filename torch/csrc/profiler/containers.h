@@ -74,8 +74,8 @@ class AppendOnlyList {
   }
 
   template <typename T0>
-  std::enable_if_t<std::is_same_v<T0, T> && std::is_trivially_copyable_v<T>>
-  copy(c10::ArrayRef<T0> src) {
+  void
+  copy(c10::ArrayRef<T0> src) requires (std::is_same_v<T0, T> && std::is_trivially_copyable_v<T>) {
     size_t n = src.size();
     if (C10_UNLIKELY(n == 0)) {
       return;

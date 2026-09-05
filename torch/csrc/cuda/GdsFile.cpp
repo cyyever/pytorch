@@ -12,9 +12,8 @@ namespace {
 // To get error message for cuFileRead/Write APIs that return ssize_t (-1 for
 // filesystem error and a negative CUfileOpError enum value otherwise).
 template <
-    class T,
-    std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
-std::string cuGDSFileGetErrorString(T status) {
+    class T>
+std::string cuGDSFileGetErrorString(T status) requires (std::is_integral_v<T>) {
   status = std::abs(status);
   return IS_CUFILE_ERR(status) ? std::string(CUFILE_ERRSTR(status))
                                : std::string(c10::utils::str_error(errno));
@@ -23,9 +22,8 @@ std::string cuGDSFileGetErrorString(T status) {
 // To get error message for Buf/Handle registration APIs that return
 // CUfileError_t
 template <
-    class T,
-    std::enable_if_t<!std::is_integral_v<T>, std::nullptr_t> = nullptr>
-std::string cuGDSFileGetErrorString(T status) {
+    class T>
+std::string cuGDSFileGetErrorString(T status) requires (!std::is_integral_v<T>) {
   std::string errStr = cuGDSFileGetErrorString(static_cast<int>(status.err));
   if (IS_CUDA_ERR(status))
     errStr.append(".").append(

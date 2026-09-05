@@ -9,11 +9,9 @@ namespace c10 {
 
 namespace detail {
 template <typename Base, typename Child, typename... Args>
-std::enable_if_t<
-    !std::is_array_v<Base> && !std::is_array_v<Child> &&
-        std::is_base_of_v<Base, Child>,
-    std::unique_ptr<Base>>
-make_unique_base(Args&&... args) {
+std::unique_ptr<Base>
+make_unique_base(Args&&... args) requires (!std::is_array_v<Base> && !std::is_array_v<Child> &&
+        std::is_base_of_v<Base, Child>) {
   return std::make_unique<Child>(std::forward<Args>(args)...);
 }
 } // namespace detail
