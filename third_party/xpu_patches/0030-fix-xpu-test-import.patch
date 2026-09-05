@@ -1,0 +1,103 @@
+# Remove the obsolete Mkldnn-disabling decorator from XPU convolution tests.
+diff --git a/test/xpu/nn/test_convolution_xpu.py b/test/xpu/nn/test_convolution_xpu.py
+index 9da70be1..119c0d06 100644
+--- a/test/xpu/nn/test_convolution_xpu.py
++++ b/test/xpu/nn/test_convolution_xpu.py
+@@ -25 +24,0 @@ from torch.testing._internal.common_device_type import (
+-    disableMkldnn,
+@@ -53,8 +51,0 @@ class skipXPUIf(skipIf):
+-# Skips a test on XPU if mkldnn is not available.
+-def skipXPUIfNoMkldnn(fn):
+-    return skipXPUIf(
+-        not torch.backends.mkldnn.is_available(),
+-        "PyTorch is built without mkldnn support",
+-    )(fn)
+-
+-
+@@ -244 +243 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -256 +255 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -268 +267 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -280 +279 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -292 +291 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -304 +303 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -316 +315 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -328 +327 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -341 +340 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, disableMkldnn],
++                decorators=[onlyXPU],
+@@ -346 +345 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-            #         decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN], name='slow3d_transposed'),
++            #         decorators=[onlyNativeDeviceTypes, disablecuDNN], name='slow3d_transposed'),
+@@ -356 +355 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN],
++                decorators=[onlyNativeDeviceTypes, disablecuDNN],
+@@ -361 +360 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-            #         decorators=[onlyNativeDeviceTypes, disableMkldnn, disablecuDNN], name='slow3d_dilated_transposed'),
++            #         decorators=[onlyNativeDeviceTypes, disablecuDNN], name='slow3d_dilated_transposed'),
+@@ -371 +370 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -383 +382 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -395 +394 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -407 +406 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -419 +418 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -431 +430 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -443 +442 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -455 +454 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -467 +466 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyNativeDeviceTypes, disableMkldnn],
++                decorators=[onlyNativeDeviceTypes],
+@@ -479 +478 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, disableMkldnn],
++                decorators=[onlyXPU],
+@@ -491 +490 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, disableMkldnn],
++                decorators=[onlyXPU],
+@@ -503 +502 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, disableMkldnn],
++                decorators=[onlyXPU],
+@@ -515 +506 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, skipXPUIfNoMkldnn],
++                decorators=[onlyXPU],
+@@ -527 +518 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, skipXPUIfNoMkldnn],
++                decorators=[onlyXPU],
+@@ -539 +530 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, skipXPUIfNoMkldnn],
++                decorators=[onlyXPU],
+@@ -551 +542 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, skipXPUIfNoMkldnn],
++                decorators=[onlyXPU],
+@@ -563 +554 @@ class TestConvolutionNNDeviceType(NNTestCase):
+-                decorators=[onlyXPU, skipXPUIfNoMkldnn],
++                decorators=[onlyXPU],
