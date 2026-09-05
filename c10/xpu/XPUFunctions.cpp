@@ -199,7 +199,7 @@ void initDeviceProperties(DeviceProp* device_prop, DeviceIndex device) {
   device_prop->name = device_prop->name == 0 ? default : device_prop->name;
 
   namespace syclex = sycl::ext::oneapi::experimental;
-  if (device_prop->architecture >= syclex::architecture::intel_gpu_acm_g10 ||
+  if (device_prop->architecture >= syclex::architecture::intel_gpu_acm_g10 &&
       device_prop->architecture <= syclex::architecture::intel_gpu_pvc_vg) {
     AT_FORALL_XPU_EXT_DEVICE_PROPERTIES_XE(OVERRIDE_DEVICE_PROP_XE)
     device_prop->xe_cores_per_cluster =
