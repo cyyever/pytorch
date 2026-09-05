@@ -1,4 +1,5 @@
 #include <ATen/cuda/CUDABlasHandle.h>
+#include <ATen/cuda/CUDABlasWorkspace.h>
 #include <ATen/core/TensorBody.h>
 #include <ATen/cuda/CUDAConfig.h>
 #include <ATen/native/ConvUtils.h>

@@ -3,6 +3,7 @@
 #include <ATen/BlasBackend.h>
 #include <ATen/cuda/CUDABlas.h>
 #include <ATen/cuda/CUDAContextLight.h>
+#include <ATen/cuda/CUDABlasWorkspace.h>
 #include <ATen/cuda/CUDABlasLtHandle.h>
 #include <ATen/cuda/Exceptions.h>
 #include <c10/core/ScalarType.h>

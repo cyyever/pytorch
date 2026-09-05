@@ -1,10 +1,10 @@
 #pragma once
-// Split out of CUDAContextLight.h: cublas_v2.h is ~44k preprocessed lines and
-// only the handful of files that actually touch a cuBLAS handle should pay for
-// it.
+// Split out of CUDAContextLight.h. Adding cublas_v2.h back to that header
+// would cost every translation unit reaching it 20,331 preprocessed lines --
+// its marginal cost, the rest of its 45k being cuda_runtime_api.h and friends
+// already present -- so only the files that name a cuBLAS handle pay it here.
 
 #include <cublas_v2.h>
-#include <cuda_runtime_api.h>
 
 #include <c10/core/Allocator.h>
 #include <torch/headeronly/macros/Export.h>
