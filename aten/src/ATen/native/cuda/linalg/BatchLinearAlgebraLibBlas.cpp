@@ -18,6 +18,7 @@
 // implementation files. The original file BatchLinearAlgebraLib.cpp
 // contains the full, original git history for both files.
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
+#include <ATen/cuda/CUDABlasHandle.h>
 #include <ATen/Context.h>
 #include <ATen/Dispatch.h>
 #include <ATen/ExpandUtils.h>

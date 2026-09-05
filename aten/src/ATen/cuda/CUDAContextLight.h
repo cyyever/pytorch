@@ -6,23 +6,6 @@
 #include <shared_mutex>
 
 #include <cuda_runtime_api.h>
-#include <cusparse.h>
-#include <cublas_v2.h>
-
-#include <cublasLt.h>
-
-#ifdef CUDART_VERSION
-#include <cusolverDn.h>
-#endif
-
-#if defined(USE_CUDSS)
-#include <cudss.h>
-#endif
-
-#if defined(USE_ROCM)
-#include <hipsolver/hipsolver.h>
-#endif
-
 #include <c10/core/Allocator.h>
 #include <c10/cuda/CUDAFunctions.h>
 
@@ -74,48 +57,6 @@ TORCH_CUDA_CPP_API bool canDeviceAccessPeer(
 
 TORCH_CUDA_CPP_API c10::Allocator* getCUDADeviceAllocator();
 
-/* Handles */
-TORCH_CUDA_CPP_API cusparseHandle_t getCurrentCUDASparseHandle();
-// On CUDA, the public handle uses cuBLAS's default workspace unless ATen
-// workspace caching is explicitly enabled. ROCm caches workspaces by default.
-TORCH_CUDA_CPP_API cublasHandle_t getCurrentCUDABlasHandle(bool setup = true);
-
-// Internal scoped handle for ATen operations. When caching is disabled, it owns
-// an eager workspace and restores the default before releasing it; otherwise it
-// wraps the cache-backed handle. External users should continue to use
-// getCurrentCUDABlasHandle(). Eager scopes for the same underlying handle must
-// not overlap because restoring an inner scope replaces the outer workspace.
-class TORCH_CUDA_CPP_API CUDABlasHandleWithWorkspace {
- public:
-  CUDABlasHandleWithWorkspace(
-      cublasHandle_t handle,
-      cudaStream_t stream,
-      at::DataPtr workspace,
-      bool restore_default_workspace);
-  ~CUDABlasHandleWithWorkspace();
-
-  CUDABlasHandleWithWorkspace(CUDABlasHandleWithWorkspace&& other) noexcept;
-  CUDABlasHandleWithWorkspace(const CUDABlasHandleWithWorkspace&) = delete;
-  CUDABlasHandleWithWorkspace& operator=(
-      const CUDABlasHandleWithWorkspace&) = delete;
-  CUDABlasHandleWithWorkspace& operator=(
-      CUDABlasHandleWithWorkspace&&) = delete;
-
-  operator cublasHandle_t() const noexcept {
-    return handle_;
-  }
-
- private:
-  cublasHandle_t handle_{nullptr};
-  cudaStream_t stream_{nullptr};
-  at::DataPtr workspace_;
-  bool restore_default_workspace_{false};
-};
-
-TORCH_CUDA_CPP_API CUDABlasHandleWithWorkspace
-getCurrentCUDABlasHandleWithWorkspace();
-TORCH_CUDA_CPP_API cublasLtHandle_t getCurrentCUDABlasLtHandle();
-
 TORCH_CUDA_CPP_API void clearCublasWorkspaces();
 TORCH_CUDA_CPP_API void clearCublasWorkspacesForStream(cudaStream_t stream);
 struct WorkspaceMapWithMutex {
@@ -137,11 +78,5 @@ TORCH_CUDA_CPP_API void setChosenWorkspaceSize(size_t size);
 TORCH_CUDA_CPP_API void setCUDABlasLtWorkspaceSize(size_t size);
 TORCH_CUDA_CPP_API void resetChosenWorkspaceSize();
 TORCH_CUDA_CPP_API void resetCUDABlasLtWorkspaceSize();
-
-TORCH_CUDA_CPP_API cusolverDnHandle_t getCurrentCUDASolverDnHandle();
-
-#if defined(USE_CUDSS)
-TORCH_CUDA_CPP_API cudssHandle_t getCurrentCudssHandle();
-#endif
 
 } // namespace at::cuda

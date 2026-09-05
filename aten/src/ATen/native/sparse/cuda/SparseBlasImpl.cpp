@@ -1,4 +1,5 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
+#include <ATen/cuda/CUDASparseHandle.h>
 #include <ATen/Dispatch.h>
 #include <ATen/OpMathType.h>
 #include <ATen/cuda/CUDADataType.h>

@@ -1,3 +1,4 @@
+#include <ATen/cuda/CUDABlasLtHandle.h>
 #include <cstdint>
 #include <c10/util/Exception.h>
 #include <c10/core/ScalarType.h>
