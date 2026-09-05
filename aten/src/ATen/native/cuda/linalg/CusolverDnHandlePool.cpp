@@ -1,4 +1,5 @@
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDASolverDnHandle.h>
 #include <ATen/cuda/detail/DeviceThreadHandles.h>
 #include <c10/macros/Export.h>
 
