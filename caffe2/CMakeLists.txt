@@ -968,13 +968,13 @@ if(USE_XPU)
     # A patch that is already applied makes --check fail; that is the signal to
     # skip it, not an error worth printing.
     execute_process(
-      COMMAND git apply --check ${_patch}
+      COMMAND git apply --check --unidiff-zero ${_patch}
       WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
       RESULT_VARIABLE _applies
       ERROR_QUIET)
     if(_applies EQUAL 0)
       execute_process(
-        COMMAND git apply ${_patch}
+        COMMAND git apply --unidiff-zero ${_patch}
         WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
         RESULT_VARIABLE _exitcode)
       if(NOT _exitcode EQUAL 0)

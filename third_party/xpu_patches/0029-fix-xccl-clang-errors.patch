@@ -1,0 +1,61 @@
+# Fix XCCL host compilation with strict Clang diagnostics.
+diff --git a/cmake/XCCL.cmake b/cmake/XCCL.cmake
+index 0e0c273e..9e58b805 100644
+--- a/cmake/XCCL.cmake
++++ b/cmake/XCCL.cmake
+@@ -116,3 +116 @@ if(NOT __XCCL_INCLUDED)
+-  set_property(
+-    TARGET torch_xccl PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+-    ${XCCL_INCLUDE_DIR})
++  target_include_directories(torch_xccl SYSTEM INTERFACE ${XCCL_INCLUDE_DIR})
+diff --git a/src/ATen/native/xpu/sycl/MemoryAccess.h b/src/ATen/native/xpu/sycl/MemoryAccess.h
+index 872749d5..73b6a333 100644
+--- a/src/ATen/native/xpu/sycl/MemoryAccess.h
++++ b/src/ATen/native/xpu/sycl/MemoryAccess.h
+@@ -343,8 +343 @@ struct alignas(sizeof(T) * 4) m_vec4 {
+-  union {
+-    T val[4];
+-    struct {
+-      T x, y, z, w;
+-    };
+-  };
+-  m_vec4() = default;
+-  m_vec4(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
++  T val[4];
+diff --git a/src/xccl/ProcessGroupXCCL.hpp b/src/xccl/ProcessGroupXCCL.hpp
+index 9a00a4f9..81a7b4f5 100644
+--- a/src/xccl/ProcessGroupXCCL.hpp
++++ b/src/xccl/ProcessGroupXCCL.hpp
+@@ -202 +202 @@ class TORCH_API ProcessGroupXCCL : public Backend {
+-  bool isInitialized();
++  bool isInitialized() override;
+diff --git a/src/xccl/XPUSymmetricMemory.cpp b/src/xccl/XPUSymmetricMemory.cpp
+index b7f2f867..43683da3 100644
+--- a/src/xccl/XPUSymmetricMemory.cpp
++++ b/src/xccl/XPUSymmetricMemory.cpp
+@@ -74,2 +73,0 @@ XPUSymmetricMemory::XPUSymmetricMemory(
+-    HandleType mc_handle,
+-    void* mc_addr,
+@@ -83,2 +80,0 @@ XPUSymmetricMemory::XPUSymmetricMemory(
+-      mc_handle_(mc_handle),
+-      mc_addr_(mc_addr),
+@@ -425,3 +420,0 @@ c10::intrusive_ptr<SymmetricMemory> XPUSymmetricMemoryAllocator::rendezvous(
+-  HandleType mc_handle{};
+-  void* mc_addr = nullptr;
+-
+@@ -442,2 +434,0 @@ c10::intrusive_ptr<SymmetricMemory> XPUSymmetricMemoryAllocator::rendezvous(
+-      mc_handle,
+-      mc_addr,
+diff --git a/src/xccl/XPUSymmetricMemory.hpp b/src/xccl/XPUSymmetricMemory.hpp
+index f47c4c8a..09c1fa49 100644
+--- a/src/xccl/XPUSymmetricMemory.hpp
++++ b/src/xccl/XPUSymmetricMemory.hpp
+@@ -40,2 +39,0 @@ class XPUSymmetricMemory : public SymmetricMemory {
+-      HandleType mc_handle,
+-      void* mc_addr,
+@@ -47 +45 @@ class XPUSymmetricMemory : public SymmetricMemory {
+-  ~XPUSymmetricMemory() override{};
++  ~XPUSymmetricMemory() override = default;
+@@ -76,2 +73,0 @@ class XPUSymmetricMemory : public SymmetricMemory {
+-  HandleType mc_handle_;
+-  void* mc_addr_;
