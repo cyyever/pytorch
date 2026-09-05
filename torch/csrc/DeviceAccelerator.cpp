@@ -1,4 +1,5 @@
 #include <c10/core/AllocatorConfig.h>
+#include <ranges>
 #include <torch/csrc/DeviceAccelerator.h>
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/utils/device_lazy_init.h>
@@ -130,8 +131,8 @@ void initModule(PyObject* module) {
       const std::array<const char*, static_cast<size_t>(StatType::NUM_TYPES)>
           kStatTypeNames = {"all", "small_pool", "large_pool"};
       py::dict dict;
-      for (const auto i : c10::irange(kStatTypeNames.size())) {
-        dict[kStatTypeNames[i]] = stat_to_dict(stats[i]);
+      for (auto&& [name, stat] : std::views::zip(kStatTypeNames, stats)) {
+        dict[name] = stat_to_dict(stat);
       }
       return dict;
     };
