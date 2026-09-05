@@ -706,7 +706,6 @@ std::vector<c10::cuda::CUDACachingAllocator::SegmentInfo> poolSegments(
   auto snapshot = c10::cuda::CUDACachingAllocator::snapshot(id);
   std::ranges::sort(
       snapshot.segments,
-
       [](const auto& a, const auto& b) {
         return a.registration_counter < b.registration_counter;
       });

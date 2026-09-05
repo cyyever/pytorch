@@ -200,7 +200,6 @@ struct UnwindCache {
         this);
     std::ranges::sort(
         all_libraries_,
-
         [](const LibraryInfo& lhs, const LibraryInfo& rhs) {
           return lhs.first_addr() < rhs.first_addr();
         });

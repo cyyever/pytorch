@@ -2,6 +2,7 @@
 
 #include <ATen/ATen.h>
 #include <ATen/core/ATen_fwd.h>
+#include <ATen/core/functional.h>
 #include <torch/csrc/api/include/torch/detail/TensorDataContainer.h>
 #include <algorithm>
 
@@ -43,12 +44,8 @@ inline at::Tensor nested_tensor(
         "nested_tensor() not implemented for these parameters");
   }
   // Construct a TensorList using nested_tensor_data
-  std::vector<at::Tensor> tensor_list(nested_tensor_data.size());
-  std::ranges::transform(
-      nested_tensor_data,
-
-      tensor_list.begin(),
-      [&](const detail::TensorDataContainer& tdc) {
+  auto tensor_list = c10::fmap(
+      nested_tensor_data, [&](const detail::TensorDataContainer& tdc) {
         return tdc.convert_to_tensor(options);
       });
   auto out = at::_nested_tensor_from_tensor_list(

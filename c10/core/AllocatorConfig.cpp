@@ -220,7 +220,6 @@ size_t AcceleratorAllocatorConfig::parseRoundUpPower2Divisions(
         "For roundups, the divisions has to be power of 2 ");
     std::ranges::fill(
         roundup_power2_divisions_,
-
         value);
   }
   return i;

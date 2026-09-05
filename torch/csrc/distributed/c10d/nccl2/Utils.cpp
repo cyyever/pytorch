@@ -61,7 +61,6 @@ bool string_to_bool(std::string_view str) {
   std::string lowercase_str = trim_whitespace(str);
   std::ranges::transform(
       lowercase_str,
-
       lowercase_str.begin(),
       [](unsigned char c) { return std::tolower(c); });
 
@@ -147,7 +146,6 @@ std::pair<int, int> query_ranksize() {
   // Convert to lowercase for comparison
   std::ranges::transform(
       ranksize_query_method,
-
       ranksize_query_method.begin(),
       [](unsigned char c) { return std::tolower(c); });
 

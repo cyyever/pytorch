@@ -127,7 +127,6 @@ std::string joinStacks(
   std::ostringstream oss;
   std::ranges::transform(
       stacks,
-
       std::ostream_iterator<std::string>(oss, delim),
       [](std::string s) -> std::string {
         return s;
@@ -288,7 +287,6 @@ std::string strListToStr(const std::vector<std::string>& types) {
     std::ostringstream oss;
     std::ranges::transform(
         types,
-
         std::ostream_iterator<std::string>(oss, ", "),
         [](const std::string& s) -> std::string { return "\"" + s + "\""; });
     auto rc = std::move(oss).str();

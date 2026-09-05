@@ -73,7 +73,6 @@ bool SchemaInfo::is_mutable(const c10::SchemaArgument& argument) {
       [this](size_t aliasing_index) {
         const auto is_training_op = std::ranges::find_if(
             training_ops,
-
             [this](const auto& training_op) {
               return this->schema_ == training_op.first;
             });
