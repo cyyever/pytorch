@@ -46,11 +46,11 @@ from __future__ import annotations
 import importlib.metadata
 import threading
 import warnings
+from warnings import deprecated
 from collections.abc import Mapping
 from contextlib import contextmanager
 from logging import getLogger
 from typing import Any, NamedTuple, TYPE_CHECKING, TypeAlias
-from typing_extensions import deprecated
 
 
 if TYPE_CHECKING:
