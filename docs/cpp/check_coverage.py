@@ -54,7 +54,6 @@ EXCLUDED_PATTERNS = [
     # Underscore-prefixed internal classes
     r".*::_\w+",
     # Enum helper structs
-    r"torch::enumtype::.*",
     # OptimizerCloneableOptions SFINAE helpers
     r"torch::optim::OptimizerCloneableOptions::.*",
     # Internal optimizer state/options cloneable helpers
@@ -78,10 +77,6 @@ EXCLUDED_PATTERNS = [
     r"c10::Capsule",
     r"c10::OptionalArray",
     r"c10::StreamData3",
-    # OrderedDict::Item (internal helper)
-    r"torch::OrderedDict::Item",
-    # ExpandingArray (internal template utility)
-    r"torch::ExpandingArray.*",
     # IMethod (internal)
     r"torch::IMethod",
     # CustomClassHolder (internal base)
@@ -231,8 +226,6 @@ EXCLUDED_SYMBOLS = {
     "torch::data::datasets::make_shared_dataset",
     "torch::data::datasets::operator<<",
     "torch::data::datasets::operator>>",
-    "torch::enumtype::get_enum_name",
-    "torch::enumtype::reduction_get_enum",
     "torch::autograd::_wrap_outputs",
     "torch::autograd::check_variable_result",
     "torch::autograd::CppNode_apply_functional",

@@ -499,7 +499,6 @@ endif()
 
 list(APPEND TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
-  ${TORCH_SRC_DIR}/csrc/api/src/enum.cpp
   ${TORCH_SRC_DIR}/csrc/api/src/mps.cpp
   ${TORCH_SRC_DIR}/csrc/api/src/print.cpp
   ${TORCH_SRC_DIR}/csrc/api/src/xpu.cpp

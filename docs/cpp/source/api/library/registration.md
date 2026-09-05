@@ -90,13 +90,6 @@ TORCH_LIBRARY(myops, m) {
 :no-link:
 ```
 
-### OrderedDict
-
-```{doxygenclass} torch::OrderedDict
-:members:
-:undoc-members:
-```
-
 ## Functions
 
 The library API provides builder methods on the `Library` class for registering
