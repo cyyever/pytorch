@@ -1,0 +1,10 @@
+# Follow the upstream NN initialization device-test class rename.
+diff --git a/test/xpu/nn/test_init_xpu.py b/test/xpu/nn/test_init_xpu.py
+--- a/test/xpu/nn/test_init_xpu.py
++++ b/test/xpu/nn/test_init_xpu.py
+@@ -20 +20 @@ with XPUPatchForImport(False):
+-    from test_init import TestNNInit, TestNNInitDeviceType  # noqa: F401
++    from test_init import TestNNInit, TestNNInitDevice  # noqa: F401
+@@ -24 +24 @@ instantiate_device_type_tests(
+-    TestNNInitDeviceType, globals(), only_for="xpu", allow_xpu=True
++    TestNNInitDevice, globals(), only_for="xpu", allow_xpu=True
