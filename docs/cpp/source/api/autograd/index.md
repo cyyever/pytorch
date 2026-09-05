@@ -43,7 +43,7 @@ std::cout << x.grad() << std::endl;  // dz/dx = 2x
 - `torch/csrc/autograd/autograd.h` - High-level autograd API
 - `torch/csrc/autograd/function.h` - Custom autograd functions
 - `torch/csrc/autograd/grad_mode.h` - Gradient computation modes
-- `torch/csrc/api/include/torch/autograd.h` - C++ Frontend autograd
+- `torch/csrc/api/include/torch/autograd.h` - the torch:: autograd entry point
 
 ## Autograd Categories
 

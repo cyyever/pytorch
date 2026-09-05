@@ -23,16 +23,6 @@ xpu/index
 
 ```{toctree}
 :maxdepth: 2
-:caption: C++ Frontend
-
-nn/index
-optim/index
-data/index
-serialize/index
-```
-
-```{toctree}
-:maxdepth: 2
 :caption: Extensions
 
 library/index

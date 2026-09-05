@@ -55,9 +55,7 @@ EXCLUDED_PATTERNS = [
     r".*::_\w+",
     # Enum helper structs
     # OptimizerCloneableOptions SFINAE helpers
-    r"torch::optim::OptimizerCloneableOptions::.*",
     # Internal optimizer state/options cloneable helpers
-    r"torch::optim::OptimizerCloneable.*",
     # Error classes (c10 exceptions)
     r"c10::.*Error$",
     r"c10::ErrorAlwaysShowCppStacktrace",
@@ -91,7 +89,6 @@ EXCLUDED_PATTERNS = [
     r"torch::autograd::TraceableFunction",
     r"torch::autograd::TypeAndSize",
     # Sequencer internals
-    r"torch::data::.*::detail::.*",
     # cuDNN descriptor internals
     r"at::native::ActivationDescriptor",
     r"at::native::ConvolutionDescriptor",
@@ -127,13 +124,8 @@ EXCLUDED_PATTERNS = [
     r".*::operator==",
     r".*::operator!=",
     # Internal serialize helpers
-    r"torch::optim::serialize",
-    r"torch::optim::detail::.*",
     # Reduction enum helpers
-    r"torch::nn::reduction",
-    r"torch::nn::log_target",
     # Internal module utils
-    r"torch::nn::modules::utils::.*",
     # Internal c10 helpers
     r"c10::detail::.*",
     r"c10::detail_::.*",
@@ -147,52 +139,20 @@ EXCLUDED_PATTERNS = [
     # torch::detail
     r"torch::detail::.*",
     # Internal data shuttle/queue
-    r"torch::data::detail::.*",
     # DataLoaderBase internal types
-    r"torch::data::DataLoaderBase::.*",
-    r"torch::data::WorkerException",
-    r"torch::data::FullDataLoaderOptions",
     # Template specializations of Stack
-    r"torch::data::transforms::Stack< .*>",
     # Example partial specialization
-    r"torch::data::Example< .*>",
     # Doxygen internal macros
     r"DEFINE_CASE",
     r"DEFINE_TAG",
     r"COUNT_TAG",
     r"TRUTH_TABLE_ENTRY",
     r"TORCH_FORALL_TAGS",
-    # Non-public torch::nn functions (module stream operators, etc.)
-    r"torch::nn::operator.*",
     # AnyModule/AnyValue internal holders
-    r"torch::nn::AnyModuleHolder.*",
-    r"torch::nn::AnyModulePlaceholder",
-    r"torch::nn::AnyValue.*",
-    r"torch::nn::NamedAnyModule",
     # Internal base classes (users use the derived classes)
-    r"torch::nn::ConvNdImpl",
-    r"torch::nn::ConvTransposeNdImpl",
-    r"torch::nn::BatchNormImplBase",
-    r"torch::nn::NormImplBase",
-    r"torch::nn::InstanceNormImpl",
-    r"torch::nn::MaxPoolImpl",
-    r"torch::nn::AvgPoolImpl",
-    r"torch::nn::AdaptiveAvgPoolImpl",
-    r"torch::nn::AdaptiveMaxPoolImpl",
-    r"torch::nn::MaxUnpoolImpl",
-    r"torch::nn::LPPoolImpl",
-    r"torch::nn::ConstantPadImpl",
-    r"torch::nn::ReflectionPadImpl",
-    r"torch::nn::ReplicationPadImpl",
-    r"torch::nn::ZeroPadImpl",
-    r"torch::nn::FractionalMaxPoolImpl",
     # nn::functions internal namespace
-    r"torch::nn::functions::.*",
     # AdaptiveLogSoftmaxWithLoss (niche, rarely used in C++)
-    r"torch::nn::AdaptiveLogSoftmaxWithLoss.*",
-    r"torch::nn::ASMoutput",
     # CrossMapLRN2d (niche)
-    r"torch::nn::CrossMapLRN2d.*",
     # _out function variants (documented alongside the main function)
     r"torch::special::.*_out",
     r"torch::fft::.*_out",
@@ -222,10 +182,6 @@ EXCLUDED_PATTERNS = [
 # Specific symbols to exclude (exact match)
 EXCLUDED_SYMBOLS = {
     # Internal / not useful to document individually
-    "torch::data::datasets::map",
-    "torch::data::datasets::make_shared_dataset",
-    "torch::data::datasets::operator<<",
-    "torch::data::datasets::operator>>",
     "torch::autograd::_wrap_outputs",
     "torch::autograd::check_variable_result",
     "torch::autograd::CppNode_apply_functional",
@@ -240,9 +196,6 @@ EXCLUDED_SYMBOLS = {
     "torch::autograd::get_current_node",
     "torch::autograd::to_optional",
     "torch::autograd::to_output_type",
-    "torch::nn::parallel::replicate",
-    "torch::nn::parallel::parallel_apply",
-    "torch::nn::parallel::data_parallel",
     "torch::python::add_module_bindings",
     "torch::python::bind_module",
     "torch::python::init_bindings",
@@ -280,11 +233,6 @@ PUBLIC_FUNCTION_NAMESPACES = {
     "torch::xpu",
     "torch::fft",
     "torch::special",
-    "torch::nn::functional",
-    "torch::nn::init",
-    "torch::nn::utils",
-    "torch::nn::utils::rnn",
-    "torch::data",
     "torch::stable",
     "torch::stable::accelerator",
     "c10",
@@ -311,26 +259,8 @@ def _is_excluded(symbol: str) -> bool:
 
 def _categorize(name: str) -> str:
     """Assign a category based on the symbol's namespace."""
-    if name.startswith("torch::nn::functional::"):
-        return "torch::nn::functional"
-    if name.startswith("torch::nn::init::"):
-        return "torch::nn::init"
-    if name.startswith("torch::nn::utils::"):
-        return "torch::nn::utils"
-    if name.startswith("torch::nn::"):
-        # Distinguish modules from other nn symbols
-        short = name.split("::")[-1]
-        if short[0].isupper():
-            return "torch::nn (modules)"
-        return "torch::nn"
-    if name.startswith("torch::optim::"):
-        return "torch::optim"
-    if name.startswith("torch::data::"):
-        return "torch::data"
     if name.startswith("torch::autograd::"):
         return "torch::autograd"
-    if name.startswith("torch::serialize::") or name in ("torch::save", "torch::load"):
-        return "torch::serialize"
     if name.startswith("torch::stable::"):
         return "torch::stable"
     if name.startswith("torch::fft::"):
@@ -427,7 +357,7 @@ def discover_apis_from_xml(xml_dir: Path) -> dict[str, list[tuple[str, str]]]:
 
 # ─── Source scanning ─────────────────────────────────────────────────────────
 
-# RST directives: .. doxygenclass:: torch::nn::ReLU
+# RST directives: .. doxygenclass:: torch::Library
 RST_DIRECTIVE_RE = re.compile(
     r"^\.\.\s+doxygen(class|struct|function|typedef|define|enum|namespace)"
     r"::\s*(.+?)\s*$",
@@ -439,7 +369,7 @@ RST_CPP_DIRECTIVE_RE = re.compile(
     re.MULTILINE,
 )
 
-# MyST directives: ```{doxygenclass} torch::nn::ReLU
+# MyST directives: ```{doxygenclass} torch::Library
 MYST_DIRECTIVE_RE = re.compile(
     r"^`{3,}\{doxygen(class|struct|function|typedef|define|enum|namespace)\}\s*(.+?)\s*$",
     re.MULTILINE,
