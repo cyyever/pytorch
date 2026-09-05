@@ -27,6 +27,7 @@
 
 #include <ATen/cuda/cub.cuh>
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDASparseHandle.h>
 #include <ATen/cuda/CUDAUtils.h>
 #include <ATen/cuda/ThrustAllocator.h>
 #include <c10/cuda/CUDACachingAllocator.h>

@@ -4,6 +4,7 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/Dispatch.h>
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDASparseHandle.h>
 #include <ATen/native/SparseTensorUtils.h>
 #include <ATen/SparseCsrTensorUtils.h>
 #include <ATen/native/sparse/SparseTensorMath.h>
