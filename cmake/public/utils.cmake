@@ -592,8 +592,14 @@ function(torch_compile_options libname)
     # Unfortunately, hidden visibility messes up some ubsan warnings because
     # templated classes crossing library boundary get duplicated (but identical)
     # definitions. It's easier to just disable it.
+    #
+    # Device translation units need this spelled out per language or they keep
+    # default visibility and export their internals. nvcc has to route it to
+    # its host pass; hipcc is clang and takes it directly.
     target_compile_options(${libname} PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden>)
+        $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden>
+        $<$<COMPILE_LANGUAGE:CUDA>: -Xcompiler=-fvisibility=hidden>
+        $<$<COMPILE_LANGUAGE:HIP>: -fvisibility=hidden>)
   endif()
 
 endfunction()
