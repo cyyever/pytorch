@@ -20,6 +20,8 @@
 #include <torch/csrc/distributed/c10d/logger.hpp>
 #include <utility>
 
+#include <ranges>
+
 namespace c10d {
 namespace {
 
@@ -499,8 +501,8 @@ std::vector<c10d::GradBucket> Reducer::get_grad_buckets(
   std::lock_guard<std::mutex> lock(mutex_);
   std::vector<c10d::GradBucket> gradBuckets;
   gradBuckets.reserve(buckets_.size());
-  for (const auto i : c10::irange(buckets_.size())) {
-    auto& bucket = buckets_[i];
+  for (auto&& [i, buckets_elem] : std::views::enumerate(buckets_)) {
+    auto& bucket = buckets_elem;
     auto variables_for_bucket = get_variables_for_bucket(i, bucket);
     gradBuckets.emplace_back(
         i,
@@ -638,8 +640,8 @@ void Reducer::delay_all_reduce() {
   }
 
   // launch all reduces for all buckets
-  for (const auto bucket_index : c10::irange(buckets_.size())) {
-    auto& bucket = buckets_[bucket_index];
+  for (auto&& [bucket_index, buckets_elem] : std::views::enumerate(buckets_)) {
+    auto& bucket = buckets_elem;
     if (batched_grad_copy_) {
       flush_deferred_copies(bucket, bucket_index);
     }
@@ -1011,7 +1013,7 @@ bool Reducer::is_unused_bucket(Bucket& bucket) {
   for (const auto& variable_index : bucket.variable_indices) {
     if (std::ranges::find(
             unused_parameters_,
-           
+
             variable_index) == unused_parameters_.end()) {
       return false;
     }
@@ -2353,7 +2355,7 @@ compute_bucket_assignment_by_size(
   if (tensor_indices.empty()) {
     std::ranges::sort(
         result,
-       
+
         [](const std::tuple<std::vector<size_t>, size_t>& a,
            const std::tuple<std::vector<size_t>, size_t>& b) {
           const auto& indices_a = std::get<0>(a);
@@ -2458,8 +2460,8 @@ void verify_params_across_processes(
   control.copy_(metadata, /*non_blocking=*/false);
   auto control_accessor = control.accessor<int64_t, 1>();
   i = 0;
-  for (const auto p : c10::irange(params.size())) {
-    const auto& t = params[p];
+  for (auto&& [p, params_elem] : std::views::enumerate(params)) {
+    const auto& t = params_elem;
     for (const auto& sz : t.sizes()) {
       auto msg = c10::str(
           "[",
