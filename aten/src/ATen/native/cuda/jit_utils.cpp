@@ -21,7 +21,7 @@
 #include <cstdlib>
 #include <string>
 
-// TODO: C++17 has the filesystem header, which may replace these
+// TODO: std::filesystem would replace these
   #include <sys/types.h>
   #include <sys/stat.h> // mkdir
   #include <unistd.h>
@@ -1623,7 +1623,7 @@ NvrtcFunction jit_pwise_function(
     //   Files replaced through this process should remain extant if they are being read because
     //     of UNIX filesystem properties, but this behavior is unverified and may require
     //     additional review in the future.
-    // TODO: In C++17 we should be able to use the filesystem header.
+    // TODO: std::filesystem would replace this.
     const auto pid = getpid();
     std::stringstream tmp_file_path_ss;
     tmp_file_path_ss << file_path << "_tmp_" << pid;

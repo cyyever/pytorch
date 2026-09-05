@@ -19,7 +19,6 @@ template <typename T>
 struct is_complex<c10::complex<T>> : public std::true_type {};
 
 // Extract double from std::complex<double>; is identity otherwise
-// TODO: Write in more idiomatic C++17
 template <typename T>
 struct scalar_value_type {
   using type = T;

@@ -13,8 +13,8 @@ constexpr size_t gPagesize = 4096;
 // for buffers of size 2MB or larger to avoid memory bloating
 constexpr size_t gAlloc_threshold_thp = static_cast<size_t>(2) * 1024 * 1024;
 
-// Cache line size used to avoid false sharing between threads. Falls back to 64
-// bytes if C++17 feature is unavailable.
+// Cache line size used to avoid false sharing between threads. libc++ still
+// does not implement this, so the fallback stays.
 #ifdef __cpp_lib_hardware_interference_size
 using std::hardware_destructive_interference_size;
 #else
