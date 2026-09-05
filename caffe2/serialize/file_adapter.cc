@@ -1,15 +1,18 @@
 #include "caffe2/serialize/file_adapter.h"
 #include <c10/util/Exception.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <algorithm>
 #include <cerrno>
-#include <cstdio>
 #include <string>
 
 namespace caffe2 {
 namespace serialize {
 
 FileAdapter::RAIIFile::RAIIFile(const std::string& file_name) {
-  fp_ = fopen(file_name.c_str(), "rb");
-  if (fp_ == nullptr) {
+  fd_ = open(file_name.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd_ < 0) {
     auto old_errno = errno;
     auto error_msg =
         std::system_category().default_error_condition(old_errno).message();
@@ -17,7 +20,7 @@ FileAdapter::RAIIFile::RAIIFile(const std::string& file_name) {
         false,
         "open file failed because of errno ",
         old_errno,
-        " on fopen: ",
+        " on open: ",
         error_msg,
         ", file path: ",
         file_name);
@@ -25,19 +28,18 @@ FileAdapter::RAIIFile::RAIIFile(const std::string& file_name) {
 }
 
 FileAdapter::RAIIFile::~RAIIFile() {
-  if (fp_ != nullptr) {
-    fclose(fp_);
+  if (fd_ >= 0) {
+    close(fd_);
   }
 }
 
-// FileAdapter directly calls C file API.
+// Reads go through pread, so the descriptor carries no shared file position
+// and concurrent reads of different records need no synchronization.
 FileAdapter::FileAdapter(const std::string& file_name) : file_(file_name) {
-  const int fseek_ret = fseek(file_.fp_, 0L, SEEK_END);
-  TORCH_CHECK(fseek_ret == 0, "fseek returned ", fseek_ret);
-  const off_t ftell_ret = ftello(file_.fp_);
-  TORCH_CHECK(ftell_ret != -1L, "ftell returned ", ftell_ret);
-  size_ = ftell_ret;
-  rewind(file_.fp_);
+  struct stat file_stat{};
+  const int fstat_ret = fstat(file_.fd_, &file_stat);
+  TORCH_CHECK(fstat_ret == 0, "fstat returned ", fstat_ret);
+  size_ = file_stat.st_size;
 }
 
 size_t FileAdapter::size() const {
@@ -54,10 +56,23 @@ size_t FileAdapter::read(uint64_t pos, void* buf, size_t n, const char* what)
   // user requested to read beyond the end of the file, we clamp to just the
   // end of the file.
   n = std::min(static_cast<size_t>(size_ - pos), n);
-  const int fseek_ret = fseeko(file_.fp_, pos, SEEK_SET);
-  TORCH_CHECK(
-      fseek_ret == 0, "fseek returned ", fseek_ret, ", context: ", what);
-  return fread(buf, 1, n, file_.fp_);
+  size_t done = 0;
+  while (done < n) {
+    const ssize_t got = pread(
+        file_.fd_, static_cast<char*>(buf) + done, n - done, pos + done);
+    if (got < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      TORCH_CHECK(
+          false, "pread failed with errno ", errno, ", context: ", what);
+    }
+    if (got == 0) {
+      break;
+    }
+    done += static_cast<size_t>(got);
+  }
+  return done;
 }
 
 FileAdapter::~FileAdapter() = default;

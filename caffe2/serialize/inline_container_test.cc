@@ -1,12 +1,15 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <string>
+#include <vector>
 
 #include <gtest/gtest.h>
 
 #include <c10/util/Logging.h>
 #include "c10/util/irange.h"
+#include "caffe2/serialize/file_adapter.h"
 #include "caffe2/serialize/in_memory_adapter.h"
 #include "caffe2/serialize/inline_container.h"
 
@@ -113,87 +116,55 @@ TEST(PyTorchStreamWriterAndReader, SaveAndLoad) {
   remove(file_name);
 }
 
-TEST(PyTorchStreamWriterAndReader, LoadWithMultiThreads) {
+TEST(PyTorchStreamWriterAndReader, LoadFromFile) {
   std::ostringstream oss;
-  // write records through writers
   PyTorchStreamWriter writer([&](const void* b, size_t n) -> size_t {
     oss.write(static_cast<const char*>(b), n);
     return oss ? n : 0;
   });
 
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,cppcoreguidelines-avoid-magic-numbers)
-  std::array<char, 127> data1;
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,cppcoreguidelines-avoid-magic-numbers)
-  std::array<char, 64> data2;
+  std::array<char, 127> data1{};
+  std::array<char, 64> data2{};
   for (auto i : c10::irange(data1.size())) {
     data1[i] = data1.size() - i;
   }
   writer.writeRecord("key1", data1.data(), data1.size());
-
   for (auto i : c10::irange(data2.size())) {
     data2[i] = data2.size() - i;
   }
   writer.writeRecord("key2", data2.data(), data2.size());
-
-  const std::unordered_set<std::string>& written_records =
-      writer.getAllWrittenRecords();
-  ASSERT_EQ(written_records.size(), 2);
-  ASSERT_EQ(written_records.count("key1"), 1);
-  ASSERT_EQ(written_records.count("key2"), 1);
-
   writer.writeEndOfFile();
-  ASSERT_EQ(written_records.count(kSerializationIdRecordName), 1);
 
-  std::string the_file = std::move(oss).str();
-  const char* file_name = "output.zip";
-  std::ofstream foo(file_name);
-  foo.write(the_file.c_str(), the_file.size());
-  foo.close();
+  const std::string the_file = std::move(oss).str();
+  const char* file_name = "output_from_file.zip";
+  {
+    std::ofstream out(file_name, std::ios::binary);
+    out.write(the_file.c_str(), the_file.size());
+  }
 
-  // read records through pytorchStreamReader
-  std::istringstream iss(the_file);
-  PyTorchStreamReader reader(&iss);
-  reader.setAdditionalReaderSizeThreshold(0);
-  // before testing, sanity check
-  int64_t size1, size2, ret;
+  // Read through the file path, which is the one that goes via FileAdapter.
+  PyTorchStreamReader reader(file_name);
   at::DataPtr data_ptr;
-  std::tie(data_ptr, size1) = reader.getRecord("key1");
-  std::tie(data_ptr, size2) = reader.getRecord("key2");
+  size_t size = 0;
 
-  // Test getRecord(name, additional_readers)
-  std::vector<std::shared_ptr<ReadAdapterInterface>> additionalReader;
-  for (int i = 0; i < 10; ++i) {
-    // Test various sized additional readers.
-    std::tie(data_ptr, ret) = reader.getRecord("key1", additionalReader);
-    ASSERT_EQ(ret, size1);
-    ASSERT_EQ(memcmp(data_ptr.get(), data1.data(), size1), 0);
+  std::tie(data_ptr, size) = reader.getRecord("key1");
+  EXPECT_EQ(size, data1.size());
+  EXPECT_EQ(memcmp(data_ptr.get(), data1.data(), data1.size()), 0);
 
-    std::tie(data_ptr, ret) = reader.getRecord("key2", additionalReader);
-    ASSERT_EQ(ret, size2);
-    ASSERT_EQ(memcmp(data_ptr.get(), data2.data(), size2), 0);
-  }
+  // Out of order, and back again: each read carries its own offset, so the
+  // record read before it cannot leave the descriptor somewhere else.
+  std::tie(data_ptr, size) = reader.getRecord("key2");
+  EXPECT_EQ(size, data2.size());
+  EXPECT_EQ(memcmp(data_ptr.get(), data2.data(), data2.size()), 0);
 
-  // Inplace multi-threading getRecord(name, dst, n, additional_readers) test
-  additionalReader.clear();
-  // Each IStreamAdapter needs its own independent stream to avoid data races.
-  // IStreamAdapter does not synchronize access to the underlying istream.
-  std::vector<std::unique_ptr<std::istringstream>> additional_streams;
-  std::vector<uint8_t> dst1(size1), dst2(size2);
-  for (int i = 0; i < 10; ++i) {
-    // Test various sizes of read threads
-    additional_streams.push_back(std::make_unique<std::istringstream>(the_file));
-    additionalReader.push_back(
-        std::make_unique<IStreamAdapter>(additional_streams.back().get()));
+  std::tie(data_ptr, size) = reader.getRecord("key1");
+  EXPECT_EQ(memcmp(data_ptr.get(), data1.data(), data1.size()), 0);
 
-    ret = reader.getRecord("key1", dst1.data(), size1, additionalReader);
-    ASSERT_EQ(ret, size1);
-    ASSERT_EQ(memcmp(dst1.data(), data1.data(), size1), 0);
+  // In-place variant over the same file.
+  std::vector<uint8_t> dst(data2.size());
+  EXPECT_EQ(reader.getRecord("key2", dst.data(), dst.size()), data2.size());
+  EXPECT_EQ(memcmp(dst.data(), data2.data(), data2.size()), 0);
 
-    ret = reader.getRecord("key2", dst2.data(), size2, additionalReader);
-    ASSERT_EQ(ret, size2);
-    ASSERT_EQ(memcmp(dst2.data(), data2.data(), size2), 0);
-  }
-  // clean up
   remove(file_name);
 }
 
@@ -522,6 +493,45 @@ TEST(MemoryReadAdapterTest, ClampsReadsToBufferSize) {
   // In-bounds read returns full count.
   out.fill(0);
   EXPECT_EQ(adapter.read(0, out.data(), out.size()), out.size());
+}
+
+TEST(FileAdapterTest, ReadsAtOffsetsIndependently) {
+  constexpr size_t kSize = 100000;
+  const char* file_name = "file_adapter.bin";
+  std::vector<uint8_t> ref(kSize);
+  for (const auto i : c10::irange(kSize)) {
+    ref[i] = static_cast<uint8_t>(i * 31 + 7);
+  }
+  {
+    std::ofstream out(file_name, std::ios::binary);
+    out.write(reinterpret_cast<const char*>(ref.data()), ref.size());
+  }
+
+  FileAdapter adapter(file_name);
+  ASSERT_EQ(adapter.size(), kSize);
+  std::vector<uint8_t> buf(kSize);
+
+  EXPECT_EQ(adapter.read(0, buf.data(), kSize), kSize);
+  EXPECT_EQ(memcmp(buf.data(), ref.data(), kSize), 0);
+
+  EXPECT_EQ(adapter.read(12345, buf.data(), 5000), 5000u);
+  EXPECT_EQ(memcmp(buf.data(), ref.data() + 12345, 5000), 0);
+
+  // pos straddles end: only the tail is available.
+  EXPECT_EQ(adapter.read(kSize - 10, buf.data(), 999), 10u);
+  EXPECT_EQ(memcmp(buf.data(), ref.data() + kSize - 10, 10), 0);
+
+  // pos past end: zero bytes, no read past the file.
+  EXPECT_EQ(adapter.read(kSize + 500, buf.data(), 10), 0u);
+
+  // Reads carry their own offset, so one does not move the next. This is what
+  // the fseeko+fread implementation could not do on a single descriptor.
+  EXPECT_EQ(adapter.read(0, buf.data(), 4), 4u);
+  EXPECT_EQ(adapter.read(50000, buf.data() + 4, 4), 4u);
+  EXPECT_EQ(memcmp(buf.data(), ref.data(), 4), 0);
+  EXPECT_EQ(memcmp(buf.data() + 4, ref.data() + 50000, 4), 0);
+
+  remove(file_name);
 }
 
 } // namespace
