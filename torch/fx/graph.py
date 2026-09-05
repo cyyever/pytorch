@@ -19,8 +19,7 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Literal, NamedTuple, TYPE_CHECKING
-from typing_extensions import TypeVarTuple, Unpack
+from typing import Any, Literal, NamedTuple, TYPE_CHECKING, TypeVarTuple, Unpack
 
 import torch
 import torch.utils._pytree as pytree
