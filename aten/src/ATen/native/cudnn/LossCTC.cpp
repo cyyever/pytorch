@@ -15,6 +15,7 @@
 #include <ATen/ops/le.h>
 #include <ATen/ops/lt.h>
 
+#include <ranges>
 #include <utility>
 
 #if (!AT_CUDNN_ENABLED())
@@ -91,17 +92,25 @@ bool _use_cudnn_ctc_loss(
       (log_probs.device().type() == at::kCUDA) && (log_probs.dim() == 3);
 
   if (use_cudnn) {
-    // we don't know that input_lengths and target_lengths have the same size
-    // (they should, but we didn't check yet)
+    // The two length lists should be the same size, but callers reach this
+    // before anything has checked: ctc_loss_cpu and ctc_loss_gpu compare them
+    // against the batch size only after this returns, and the operator is
+    // exposed to Python on its own. A mismatch is not a cuDNN candidate, and
+    // zip below would otherwise decide the answer from the shorter list.
+    use_cudnn = use_cudnn && (input_lengths.size() == target_lengths.size());
+  }
+
+  if (use_cudnn) {
     int64_t max_input_length = log_probs.size(0);
     for (const auto input_length : input_lengths) {
       use_cudnn = use_cudnn && ((input_length == max_input_length) ? 1 : 0);
     }
-    for (const auto b : c10::irange(target_lengths.size())) {
+    for (const auto [target_length, input_length] :
+         std::views::zip(target_lengths, input_lengths)) {
       // target length < 256 is documented, but we see illegal memory accesses
       // when target lengths > input lengths for CuDNN
-      use_cudnn = use_cudnn && (target_lengths[b] < 256) &&
-          (target_lengths[b] <= input_lengths[b]);
+      use_cudnn =
+          use_cudnn && (target_length < 256) && (target_length <= input_length);
     }
   }
   return use_cudnn;
@@ -125,17 +134,19 @@ bool _use_cudnn_ctc_loss_tensor(
   if (use_cudnn) {
     if (at::cuda::currentStreamCaptureStatus() ==
         at::cuda::CaptureStatus::None) {
+      // Both copies are hoisted out: the loop used to redo them, and the
+      // inner tlc shadowed the outer one. il was only ever read at the index
+      // tl bounds, so a shorter il was read past its end.
+      Tensor ilc = input_lengths.to(Device(at::kCPU), at::kLong).contiguous();
       Tensor tlc = target_lengths.to(Device(at::kCPU), at::kLong).contiguous();
+      IntArrayRef il(ilc.const_data_ptr<int64_t>(), ilc.numel());
       IntArrayRef tl(tlc.const_data_ptr<int64_t>(), tlc.numel());
-      for (const auto b : c10::irange(tl.size())) {
+      use_cudnn = use_cudnn && (il.size() == tl.size());
+      for (const auto [target_length, input_length] : std::views::zip(tl, il)) {
         // target length < 256 is documented, but we see illegal memory accesses
         // when target lengths > input lengths for CuDNN
-        Tensor ilc = input_lengths.to(Device(at::kCPU), at::kLong).contiguous();
-        Tensor tlc =
-            target_lengths.to(Device(at::kCPU), at::kLong).contiguous();
-        IntArrayRef il(ilc.const_data_ptr<int64_t>(), ilc.numel());
-        IntArrayRef tl(tlc.const_data_ptr<int64_t>(), tlc.numel());
-        use_cudnn = use_cudnn && (tl[b] < 256) && (tl[b] <= il[b]);
+        use_cudnn = use_cudnn && (target_length < 256) &&
+            (target_length <= input_length);
         if (!use_cudnn) {
           break;
         }
