@@ -116,6 +116,23 @@ default branch:
   `check-runs?per_page=100` call silently truncates and makes red look green.
   Use `gh pr checks <PR> --json name,state,workflow,link,bucket,completedAt`
   (already head-only, no paging).
+- **Always rebase this branch with `--empty=keep`.** `trim_build` carries
+  commits whose content upstream has since taken, reverted, or reworked, and a
+  plain rebase drops any of them that replay empty -- silently, with no line in
+  the output. `--empty=keep` keeps the commit so the branch still records the
+  decision.
+- **Verify a rebase or a fixup by its effect, never by the commit being
+  present.** After folding, check the tree at the target commit
+  (`git show <commit>:<path>`), and after a rebase check that what the commit
+  was supposed to change is actually changed. A commit can survive a rebase
+  with its content silently emptied, and `git cherry`'s `-` only means the
+  patch is upstream -- not that the change is still in upstream's tree, since
+  it may have been merged and then reverted.
+- **Do not run any git command against the repository while a rebase, a build,
+  or a clang-tidy pass is running.** A concurrent `git status` is enough to
+  lose the race for `.git/index.lock` and leave the rebase stopped mid-step
+  with its changes staged but uncommitted. Recover by committing that step with
+  `git commit -C <the stopped-at commit>` and then continuing.
 
 # Commit messages
 
