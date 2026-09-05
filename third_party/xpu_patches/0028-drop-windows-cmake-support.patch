@@ -1,0 +1,263 @@
+# Remove Windows-specific CMake support.
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f263fa40..c00a055b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -32,4 +32,2 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
+-if(NOT WIN32)
+-  if("$ENV{IS_XPU_CI}" STREQUAL "1")
+-    string(APPEND CMAKE_CXX_FLAGS " -Werror=unused-variable")
+-  endif()
++if("$ENV{IS_XPU_CI}" STREQUAL "1")
++  string(APPEND CMAKE_CXX_FLAGS " -Werror=unused-variable")
+@@ -68 +66 @@ option(USE_SYCLTLA "Build with SYCL-TLA support" ON)
+-if(WIN32 OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0)
++if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0)
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+index 3f763c18..e0d3f043 100644
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -34 +34 @@ macro(set_build_flags)
+- set(_TORCH_XPU_OPS_SUPPORTED_COMPILERS "Clang" "GNU" "MSVC")
++ set(_TORCH_XPU_OPS_SUPPORTED_COMPILERS "Clang" "GNU")
+@@ -36 +36 @@ macro(set_build_flags)
+-    message(WARNING "Not compiling with XPU. Currently only support Clang or GCC on Linux and MSVC on Windows as CXX compiler.")
++    message(WARNING "Not compiling with XPU. Only Clang or GCC on Linux is supported.")
+@@ -60,22 +60,7 @@ macro(set_build_flags)
+-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+-    list(APPEND SYCL_HOST_FLAGS /std:${CPP_STD})
+-    list(APPEND SYCL_HOST_FLAGS /MD)
+-    list(APPEND SYCL_HOST_FLAGS /EHsc) # exception handling
+-    # SYCL headers warnings
+-    list(APPEND SYCL_HOST_FLAGS /wd4996) # allow usage of deprecated functions
+-    list(APPEND SYCL_HOST_FLAGS /wd4018) # allow signed and unsigned comparison
+-
+-    # -fsycl-host-compiler-options never sees CMAKE_CXX_FLAGS_<CONFIG>, so spell
+-    # per-config flags here via $<CONFIG:>. /Z7 (not /Zi) avoids PDB contention.
+-    set(SYCL_HOST_PER_CONFIG_FLAGS
+-      $<$<CONFIG:Debug>:/Od;/Z7>
+-      $<$<CONFIG:RelWithDebInfo>:/O2;/Z7>)
+-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+-    list(APPEND SYCL_HOST_FLAGS -fPIC)
+-    list(APPEND SYCL_HOST_FLAGS -std=${CPP_STD})
+-    # PyTorch forces -O2 into the base CMAKE_CXX_FLAGS this path inherits, so
+-    # Debug must override it back to -O0; RelWithDebInfo only adds debug info.
+-    set(SYCL_HOST_PER_CONFIG_FLAGS
+-      $<$<CONFIG:Debug>:-g;-fno-omit-frame-pointer;-O0>
+-      $<$<CONFIG:RelWithDebInfo>:-g>)
+-  endif()
++  list(APPEND SYCL_HOST_FLAGS -fPIC)
++  list(APPEND SYCL_HOST_FLAGS -std=${CPP_STD})
++  # PyTorch forces -O2 into the base CMAKE_CXX_FLAGS this path inherits, so
++  # Debug must override it back to -O0; RelWithDebInfo only adds debug info.
++  set(SYCL_HOST_PER_CONFIG_FLAGS
++    $<$<CONFIG:Debug>:-g;-fno-omit-frame-pointer;-O0>
++    $<$<CONFIG:RelWithDebInfo>:-g>)
+@@ -115,6 +100,2 @@ macro(set_build_flags)
+-  # it before /Qfma and -ffp-contract=fast, which re-add the FMA we do want.
+-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+-    set(_sycl_strict_fp_flag /fp:strict)
+-  else()
+-    set(_sycl_strict_fp_flag -fno-fast-math)
+-  endif()
++  # it before -ffp-contract=fast, which re-adds the FMA we do want.
++  set(_sycl_strict_fp_flag -fno-fast-math)
+@@ -129,20 +110,10 @@ macro(set_build_flags)
+-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+-    # On Windows icx uses the clang-cl driver, which ignores -std= with
+-    # only a warning; spell it as -Qstd= so device code is really C++20.
+-    list(APPEND SYCL_KERNEL_OPTIONS -Qstd=${CPP_STD})
+-    list(APPEND SYCL_KERNEL_OPTIONS /Qfma)
+-    list(APPEND SYCL_KERNEL_OPTIONS /Qftz-)
+-    # Suppress warnings about dllexport.
+-    list(APPEND SYCL_KERNEL_OPTIONS -Wno-ignored-attributes)
+-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+-    list(APPEND SYCL_KERNEL_OPTIONS -std=${CPP_STD})
+-    # -fma which we used before is an alias used for -ffp-contract=fast for compatibility reasons
+-    # with very old version of the ICX compiler. The -ffp-contract=fast is supported by both closed
+-    # source and open source DPC++ compiler versions.
+-    list(APPEND SYCL_KERNEL_OPTIONS -ffp-contract=fast)
+-    # -no-ftz is supported only by ICX compiler shipped with oneAPI Toolkits. For the
+-    # DPCLANG open source compiler that's the default mode and no option is needed.
+-    CHECK_SYCL_FLAG("-no-ftz" SUPPORTS_NO_FTZ)
+-    if(SUPPORTS_NO_FTZ)
+-      list(APPEND SYCL_KERNEL_OPTIONS -no-ftz)
+-    endif()
++  list(APPEND SYCL_KERNEL_OPTIONS -std=${CPP_STD})
++  # -fma which we used before is an alias used for -ffp-contract=fast for compatibility reasons
++  # with very old version of the ICX compiler. The -ffp-contract=fast is supported by both closed
++  # source and open source DPC++ compiler versions.
++  list(APPEND SYCL_KERNEL_OPTIONS -ffp-contract=fast)
++  # -no-ftz is supported only by ICX compiler shipped with oneAPI Toolkits. For the
++  # DPCLANG open source compiler that's the default mode and no option is needed.
++  CHECK_SYCL_FLAG("-no-ftz" SUPPORTS_NO_FTZ)
++  if(SUPPORTS_NO_FTZ)
++    list(APPEND SYCL_KERNEL_OPTIONS -no-ftz)
+@@ -151,5 +122 @@ macro(set_build_flags)
+-  if(WIN32)
+-    list(APPEND _sycl_intel_lib_libirc_flag "/Qno-intel-lib:libirc")
+-  else()
+-    list(APPEND _sycl_intel_lib_libirc_flag "-no-intel-lib=libirc")
+-  endif()
++  list(APPEND _sycl_intel_lib_libirc_flag "-no-intel-lib=libirc")
+diff --git a/cmake/Modules/FindONEMKL.cmake b/cmake/Modules/FindONEMKL.cmake
+index 7023b38b..a82fd93f 100644
+--- a/cmake/Modules/FindONEMKL.cmake
++++ b/cmake/Modules/FindONEMKL.cmake
+@@ -61,8 +61,3 @@ set(MKL_LIB_NAMES "mkl_sycl_blas" "mkl_sycl_dft" "mkl_sycl_lapack"
+-if(WIN32)
+-  list(APPEND MKL_LIB_NAMES "mkl_intel_thread")
+-  list(TRANSFORM MKL_LIB_NAMES APPEND "_dll.lib")
+-else()
+-  list(APPEND MKL_LIB_NAMES "mkl_gnu_thread")
+-  list(TRANSFORM MKL_LIB_NAMES PREPEND "lib")
+-  list(TRANSFORM MKL_LIB_NAMES APPEND ".so")
+-endif()
++list(APPEND MKL_LIB_NAMES "mkl_gnu_thread")
++list(TRANSFORM MKL_LIB_NAMES PREPEND "lib")
++list(TRANSFORM MKL_LIB_NAMES APPEND ".so")
+diff --git a/cmake/Modules/FindSYCL/run_sycl.cmake b/cmake/Modules/FindSYCL/run_sycl.cmake
+index 7f48b315..8a296a39 100644
+--- a/cmake/Modules/FindSYCL/run_sycl.cmake
++++ b/cmake/Modules/FindSYCL/run_sycl.cmake
+@@ -65,2 +65,2 @@ foreach(flag ${CMAKE_HOST_FLAGS})
+-  # Extract -D (GCC/Clang) or /D (MSVC) defines from CMAKE_HOST_FLAGS and pass
+-  # them directly to icpx, since host compiler is removed. This is needed for
++  # Extract -D defines from CMAKE_HOST_FLAGS and pass them directly to icpx,
++  # since the host compiler is removed. This is needed for
+@@ -71,3 +70,0 @@ foreach(flag ${CMAKE_HOST_FLAGS})
+-  elseif(flag MATCHES "^/D")
+-    string(REGEX REPLACE "^/D" "-D" converted_flag "${flag}")
+-    list(APPEND SYCL_compile_flags "${converted_flag}")
+@@ -122,5 +119 @@ SYCL_execute_process(
+-if(WIN32)
+-  set(SYCL_dependency_file_args /clang:-MD /clang:-MF /clang:${SYCL_generated_dependency_file})
+-else()
+-  set(SYCL_dependency_file_args -MD -MF "${SYCL_generated_dependency_file}")
+-endif()
++set(SYCL_dependency_file_args -MD -MF "${SYCL_generated_dependency_file}")
+diff --git a/cmake/ONEMKL.cmake b/cmake/ONEMKL.cmake
+index f247eade..cb270e61 100644
+--- a/cmake/ONEMKL.cmake
++++ b/cmake/ONEMKL.cmake
+@@ -30,5 +30,2 @@ set(TORCH_XPU_OPS_ONEMKL_LIBRARIES ${ONEMKL_LIBRARIES})
+-# --start-group/--end-group are GNU ld options; MSVC link does not know them.
+-if(NOT WIN32)
+-  list(PREPEND TORCH_XPU_OPS_ONEMKL_LIBRARIES "-Wl,--start-group")
+-  list(APPEND TORCH_XPU_OPS_ONEMKL_LIBRARIES "-Wl,--end-group")
+-endif()
++list(PREPEND TORCH_XPU_OPS_ONEMKL_LIBRARIES "-Wl,--start-group")
++list(APPEND TORCH_XPU_OPS_ONEMKL_LIBRARIES "-Wl,--end-group")
+diff --git a/src/BuildOnWindows.cmake b/src/BuildOnWindows.cmake
+deleted file mode 100644
+index cec4b9db..00000000
+--- a/src/BuildOnWindows.cmake
++++ /dev/null
+@@ -1,74 +0,0 @@
+-# Copyright 2020-2026 Intel Corporation
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-# http://www.apache.org/licenses/LICENSE-2.0
+-
+-# Build on Windows
+-
+-set(TORCH_XPU_OPS_LIBRARIES)
+-set(SYCL_LINK_LIBRARIES_KEYWORD PRIVATE)
+-
+-add_library(
+-  torch_xpu_ops
+-  STATIC
+-  ${ATen_XPU_MKL_SRCS}
+-  ${ATen_XPU_NATIVE_CPP_SRCS})
+-target_compile_definitions(torch_xpu_ops PRIVATE TORCH_XPU_BUILD_MAIN_LIB)
+-
+-if(BUILD_SEPARATE_OPS)
+-  target_link_libraries(torch_xpu_ops PUBLIC torch_xpu torch_cpu c10)
+-  foreach(sycl_src ${ATen_XPU_SYCL_SRCS})
+-    cmake_path(GET sycl_src STEM LAST_ONLY name)
+-    set(sycl_lib torch-xpu-ops-sycl-${name})
+-    sycl_add_library(
+-      ${sycl_lib}
+-      SHARED
+-      SYCL_SOURCES ${sycl_src})
+-    target_link_libraries(torch_xpu_ops PUBLIC ${sycl_lib})
+-    list(APPEND TORCH_XPU_OPS_LIBRARIES ${sycl_lib})
+-
+-    # Decouple with PyTorch cmake definition.
+-    install(TARGETS ${sycl_lib} DESTINATION "${TORCH_INSTALL_LIB_DIR}")
+-  endforeach()
+-  list(APPEND TORCH_XPU_OPS_LIBRARIES torch_xpu_ops)
+-else()
+-  # On Windows, it is not possible to combine all obj files into one library
+-  # because the obj files of kernels compiled on Windows are much larger than
+-  # those on Linux. If they are combined into one, the library size will exceed
+-  # 4GB, which conflicts with the size limit of a single library on Windows.
+-  # We will combine the libraries on Windows into one after the compiler is fixed.
+-  # Split SYCL kernels into 2 libraries: common kernels (matched below) vs. the rest.
+-  set(sycl_common_regex "(Foreach|Reduce|Unary|Binary|Copy|Pow|Activation|Norm|Loss|Resize|Distribution|Polynomial)")
+-  set(ATen_XPU_SYCL_COMMON_SRCS ${ATen_XPU_SYCL_SRCS})
+-  set(ATen_XPU_SYCL_OTHERS_SRCS ${ATen_XPU_SYCL_SRCS})
+-  list(FILTER ATen_XPU_SYCL_COMMON_SRCS INCLUDE REGEX "${sycl_common_regex}")
+-  list(FILTER ATen_XPU_SYCL_OTHERS_SRCS EXCLUDE REGEX "${sycl_common_regex}")
+-  # Common kernel lib
+-  set(sycl_common_lib torch_xpu_ops_sycl_common_kernels)
+-  sycl_add_library(
+-    ${sycl_common_lib}
+-    STATIC
+-    SYCL_SOURCES ${ATen_XPU_SYCL_COMMON_SRCS})
+-  target_compile_definitions(${sycl_common_lib} PRIVATE TORCH_XPU_BUILD_MAIN_LIB)
+-  list(APPEND TORCH_XPU_OPS_LIBRARIES ${sycl_common_lib})
+-
+-  # Other kernel lib
+-  set(sycl_lib torch_xpu_ops_sycl_kernels)
+-  sycl_add_library(
+-    ${sycl_lib}
+-    STATIC
+-    SYCL_SOURCES ${ATen_XPU_SYCL_OTHERS_SRCS})
+-  target_compile_definitions(${sycl_lib} PRIVATE TORCH_XPU_BUILD_MAIN_LIB)
+-  list(APPEND TORCH_XPU_OPS_LIBRARIES ${sycl_lib})
+-
+-  target_link_libraries(torch_xpu_ops PUBLIC
+-      "$<LINK_LIBRARY:WHOLE_ARCHIVE,${sycl_common_lib},${sycl_lib}>"
+-  )
+-  list(APPEND TORCH_XPU_OPS_LIBRARIES torch_xpu_ops)
+-endif()
+-set(SYCL_LINK_LIBRARIES_KEYWORD)
+-
+-torch_xpu_ops_finalize_targets(c10_xpu torch_cpu)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index fca8b9fd..2b69b8e8 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -26,11 +26 @@ endif()
+-# With the increasement of bin size, we have to split libtorch_xpu into
+-# multiple libraries. Because of strict linkage requirements on Windows,
+-# we add extra logics to resolve, 1) Cyclic dependence, 2) Make symbols visible.
+-# To isolate impact and keep both maintainable, there are separate code pieces
+-# to setup CMAKE targets. Will revert splitting library and unify these once
+-# compression of device code is supported by SYCL/backend compiler.
+-if(WIN32)
+-  include(BuildOnWindows.cmake)
+-else()
+-  include(BuildOnLinux.cmake)
+-endif()
++include(BuildOnLinux.cmake)
+diff --git a/test/sycl/CMakeLists.txt b/test/sycl/CMakeLists.txt
+index 3fce60b8..c9bca64d 100644
+--- a/test/sycl/CMakeLists.txt
++++ b/test/sycl/CMakeLists.txt
+@@ -32,9 +32,2 @@ add_executable(
+-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+-  # Windows
+-  target_link_libraries(test_sycl_build_archive
+-  "-WHOLEARCHIVE:\"$<TARGET_FILE:sycl_simple_kernel_test>\"")
+-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+-  # Linux
+-  target_link_libraries(test_sycl_build_archive
+-    "-Wl,--whole-archive,\"$<TARGET_FILE:sycl_simple_kernel_test>\" -Wl,--no-whole-archive")
+-endif()
++target_link_libraries(test_sycl_build_archive
++  "-Wl,--whole-archive,\"$<TARGET_FILE:sycl_simple_kernel_test>\" -Wl,--no-whole-archive")
