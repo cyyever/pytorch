@@ -3,6 +3,7 @@
  */
 
 #include <ATen/cuda/CUDAContextLight.h>
+#include <ATen/cuda/CUDABlasHandle.h>
 #include <ATen/cuda/CUDABlas.h>
 #include <ATen/cuda/Exceptions.h>
 #include <ATen/cuda/CUDADataType.h>

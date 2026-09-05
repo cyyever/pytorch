@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDASolverDnHandle.h>
 
 #define USE_CUSOLVER_64_BIT
 

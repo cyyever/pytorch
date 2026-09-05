@@ -1,4 +1,6 @@
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDABlasHandle.h>
+#include <ATen/cuda/CUDABlasLtHandle.h>
 #include <ATen/cuda/nvrtc_stub/ATenNVRTC.h>
 #include <ATen/cuda/detail/DeviceThreadHandles.h>
 

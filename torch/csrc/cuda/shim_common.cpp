@@ -1,4 +1,5 @@
 #include <ATen/cuda/CUDAContextLight.h>
+#include <ATen/cuda/CUDABlasHandle.h>
 #include <c10/cuda/CUDAException.h>
 #include <c10/cuda/CUDAStream.h>
 #include <c10/util/Exception.h>

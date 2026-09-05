@@ -1,5 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDASparseHandle.h>
 #include <c10/util/Exception.h>
 #include <ATen/cuda/Exceptions.h>
 #include <ATen/native/sparse/cuda/SparseCUDABlas.h>
