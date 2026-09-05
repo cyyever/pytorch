@@ -268,6 +268,8 @@ if(USE_FLASH_ATTENTION)
     # different target families.
     list(FILTER ck_sdpa_sources_hip EXCLUDE REGEX "/fmha_[^/]*\\.hip$")
     list(APPEND ck_sdpa_sources_hip ${CK_FMHA_GENERATED_SOURCES})
+    list(APPEND ck_sdpa_sources_hip
+         "${CMAKE_CURRENT_SOURCE_DIR}/native/transformers/hip/flash_attn/ck/mha_bwd_dispatch_ck.hip")
 
     set_source_files_properties(${ck_sdpa_sources_hip} PROPERTIES LANGUAGE HIP)
 
