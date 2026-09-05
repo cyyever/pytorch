@@ -21,6 +21,8 @@
 #include <cufftXt.h>
 
 #include <cmath>
+#include <algorithm>
+#include <numeric>
 
 
 namespace at::native {
@@ -172,18 +174,18 @@ const Tensor& _exec_fft(Tensor& out, const Tensor& self, IntArrayRef out_sizes,
   // Permute dimensions so batch dimensions come first, and in stride order
   // This maximizes data locality when collapsing to a single batch dimension
   DimVector dim_permute(ndim);
-  std::iota(dim_permute.begin(), dim_permute.end(), int64_t{0});
+  std::ranges::iota(dim_permute, int64_t{0});
 
   c10::SmallVector<bool, kDimVectorStaticSize> is_transformed_dim(ndim);
   for (const auto& d : dim) {
     is_transformed_dim[d] = true;
   }
-  auto batch_end = std::partition(dim_permute.begin(), dim_permute.end(),
-                                  [&](int64_t d) {return !is_transformed_dim[d]; });
+  auto batch_end = std::ranges::partition(dim_permute,
+                                  [&](int64_t d) {return !is_transformed_dim[d]; }).begin();
   auto self_strides = self.strides();
   std::sort(dim_permute.begin(), batch_end,
             [&](int64_t a, int64_t b) { return self_strides[a] > self_strides[b]; });
-  std::copy(dim.cbegin(), dim.cend(), batch_end);
+  std::ranges::copy(dim, batch_end);
   auto input = self.permute(dim_permute);
 
   // Collapse batch dimensions into a single dimension
@@ -436,7 +438,7 @@ Tensor _fft_r2c_cufft(const Tensor& self, IntArrayRef dim, int64_t normalization
 
       // Resort dimensions every time as _exec_fft re-strides the output
       auto strides = working_tensor.strides();
-      std::sort(sorted_dims.begin(), sorted_dims.end(),
+      std::ranges::sort(sorted_dims,
                 [&](int64_t a, int64_t b) { return strides[a] > strides[b]; });
 
       const auto max_dims = std::min(static_cast<size_t>(cufft_max_ndim), sorted_dims.size());
@@ -536,7 +538,7 @@ Tensor _fft_c2c_cufft(const Tensor& self, IntArrayRef dim, int64_t normalization
   while (true) {
     // Sort dimensions every time as _exec_fft re-strides the output
     auto strides = working_tensor.strides();
-    std::sort(sorted_dims.begin(), sorted_dims.end(),
+    std::ranges::sort(sorted_dims,
               [&](int64_t a, int64_t b) { return strides[a] > strides[b]; });
 
     const auto max_dims = std::min(static_cast<size_t>(cufft_max_ndim), sorted_dims.size());

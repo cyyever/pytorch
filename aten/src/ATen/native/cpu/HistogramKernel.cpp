@@ -123,8 +123,7 @@ void histogramdd_cpu_contiguous(Tensor& hist, const TensorList& bin_edges,
     const auto hist_sizes = hist.sizes();
     DimVector thread_hist_sizes(hist_sizes.size() + 1);
     thread_hist_sizes[0] = num_threads;
-    std::copy(hist_sizes.begin(), hist_sizes.end(),
-              thread_hist_sizes.begin() + 1);
+    std::ranges::copy(hist_sizes, thread_hist_sizes.begin() + 1);
     Tensor thread_histograms = at::zeros(thread_hist_sizes, hist.dtype());
     TORCH_INTERNAL_ASSERT(thread_histograms.is_contiguous());
 

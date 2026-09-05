@@ -1,5 +1,6 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/IndexKernel.h> // for flip_stub
+#include <ATen/core/functional.h>
 #include <ATen/native/TensorTransformations.h>
 
 #include <ATen/TensorIterator.h>
@@ -181,13 +182,7 @@ Tensor atleast_1d(const Tensor& self) {
 }
 
 std::vector<Tensor> atleast_1d(TensorList tensors) {
-  std::vector<Tensor> result(tensors.size());
-  auto transform_lambda = [](const Tensor& input) -> Tensor {
-    return at::native::atleast_1d(input);
-  };
-  std::transform(
-      tensors.cbegin(), tensors.cend(), result.begin(), transform_lambda);
-  return result;
+  return fmap(tensors, [](const Tensor& input) { return at::native::atleast_1d(input); });
 }
 
 Tensor atleast_2d(const Tensor& self) {
@@ -203,13 +198,7 @@ Tensor atleast_2d(const Tensor& self) {
 }
 
 std::vector<Tensor> atleast_2d(TensorList tensors) {
-  std::vector<Tensor> result(tensors.size());
-  auto transform_lambda = [](const Tensor& input) -> Tensor {
-    return at::native::atleast_2d(input);
-  };
-  std::transform(
-      tensors.cbegin(), tensors.cend(), result.begin(), transform_lambda);
-  return result;
+  return fmap(tensors, [](const Tensor& input) { return at::native::atleast_2d(input); });
 }
 
 Tensor atleast_3d(const Tensor& self) {
@@ -228,13 +217,7 @@ Tensor atleast_3d(const Tensor& self) {
 }
 
 std::vector<Tensor> atleast_3d(TensorList tensors) {
-  std::vector<Tensor> result(tensors.size());
-  auto transform_lambda = [](const Tensor& input) -> Tensor {
-    return at::native::atleast_3d(input);
-  };
-  std::transform(
-      tensors.cbegin(), tensors.cend(), result.begin(), transform_lambda);
-  return result;
+  return fmap(tensors, [](const Tensor& input) { return at::native::atleast_3d(input); });
 }
 
 Tensor chalf(const Tensor& self, std::optional<MemoryFormat> memory_format) {

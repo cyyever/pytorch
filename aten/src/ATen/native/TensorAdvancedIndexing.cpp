@@ -479,8 +479,8 @@ static void check_indices_on_cpu_or_selfdevice(
     const Tensor& self,
     const at::MaterializedIOptTensorListRef& indices) {
   auto dev = self.device();
-  bool indices_on_cpu_or_dev = std::all_of(
-      indices.begin(), indices.end(), [=](const at::OptionalTensorRef& opt) {
+  bool indices_on_cpu_or_dev = std::ranges::all_of(
+      indices, [=](const at::OptionalTensorRef& opt) {
         return opt.has_value() ? (opt->is_cpu() || opt->device() == dev) : true;
       });
   TORCH_CHECK(
@@ -636,9 +636,9 @@ AdvancedIndex::AdvancedIndex(const Tensor& src, TensorList indices_list) {
   // is no number that's a valid index for an empty tensor. Normally, out of
   // bounds is handled in the indexing kernel, but this case fails earlier in
   // restride_src with an unhelpful error message.
-  if (std::find(indexed_sizes.begin(), indexed_sizes.end(), 0) !=
+  if (std::ranges::find(indexed_sizes, 0) !=
           indexed_sizes.end() &&
-      std::find(replacement_shape.begin(), replacement_shape.end(), 0) ==
+      std::ranges::find(replacement_shape, 0) ==
           replacement_shape.end()) {
     TORCH_CHECK_INDEX(
         false, "index is out of bounds for dimension with size 0");
@@ -754,10 +754,9 @@ Tensor _unsafe_masked_index(
   };
 
   torch::List<std::optional<Tensor>> clamped_indices(indices);
-  std::transform(
-      indices.begin(),
-      indices.end(),
-      self.sizes().begin(),
+  std::ranges::transform(
+      indices,
+      self.sizes(),
       clamped_indices.begin(),
       clamp);
 
@@ -775,10 +774,9 @@ Tensor _unsafe_masked_index(
         return size;
       }
     };
-    std::transform(
-        indices.begin(),
-        indices.end(),
-        self.sizes().begin(),
+    std::ranges::transform(
+        indices,
+        self.sizes(),
         new_sizes.begin(),
         compute_new_size);
     auto result = self.new_full(new_sizes, fill);
@@ -818,10 +816,9 @@ Tensor _unsafe_masked_index_put_accumulate(
   };
 
   torch::List<std::optional<Tensor>> clamped_indices(indices);
-  std::transform(
-      indices.begin(),
-      indices.end(),
-      self.sizes().begin(),
+  std::ranges::transform(
+      indices,
+      self.sizes(),
       clamped_indices.begin(),
       clamp);
 
@@ -2830,8 +2827,8 @@ Tensor& nonzero_out_cpu(const Tensor& self, Tensor& result) {
 
               // +1 faster than additional condition check inside loop
               c10::SmallVector<int64_t, 33> sizes(ndim + 1, -1);
-              std::copy(
-                  self_sizes.begin(), self_sizes.end(), sizes.begin() + 1);
+              std::ranges::copy(
+                  self_sizes, sizes.begin() + 1);
               c10::SmallVector<int64_t, 33> current_idx(ndim + 1);
               if (begin > 0) {
                 auto idx = begin;
