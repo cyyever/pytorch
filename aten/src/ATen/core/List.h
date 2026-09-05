@@ -94,6 +94,10 @@ public:
     return *iterator_;
   }
 
+  // ListElementReference is a proxy: the && parameters are how a mutable
+  // reference is obtained, and the swap exchanges the referents. Moving the
+  // proxies themselves would swap nothing.
+  // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
   friend void swap<T, Iterator>(ListElementReference&& lhs, ListElementReference&& rhs) noexcept;
 
   ListElementReference(const ListElementReference&) = delete;
@@ -230,6 +234,9 @@ private:
 };
 
 template<class T> List<T> toTypedList(List<IValue> list);
+// Moves the member out of the rvalue argument, which is what the argument is
+// for; moving the argument itself would be a no-op here.
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 template<class T> List<IValue> toList(List<T>&& list);
 template<class T> List<IValue> toList(const List<T>& list);
 const IValue* ptr_to_first_element(const List<IValue>& list);
