@@ -1,6 +1,8 @@
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 
+#include <ATen/MatrixRef.h>
 #include <ATen/cuda/CUDAConfig.h>
+#include <ATen/native/RNN.h>
 #include <c10/util/Exception.h>
 
 #include <optional>
@@ -446,7 +448,7 @@ void _viewOrCopyParams(MatrixRef<Tensor> params_from, MatrixRef<Tensor> params_t
                 a != layer_params_from.end() && b != layer_params_to.end();
                 ++a, ++b) {
             auto param_from = *a, param_to = *b;
-            TORCH_CHECK(param_from.type() == param_to.type(), "parameter types mismatch");
+            TORCH_CHECK(param_from.scalar_type() == param_to.scalar_type(), "parameter types mismatch");
             if (copy) {
                 param_to.copy_(param_from.view_as(param_to));
             } else {
@@ -465,7 +467,7 @@ void _copyParams_and_permute(MatrixRef<Tensor> params_from, MatrixRef<Tensor> pa
                 a != layer_params_from.end() && b != layer_params_to.end();
                 ++a, ++b) {
             auto param_from = *a, param_to = *b;
-            TORCH_CHECK(param_from.type() == param_to.type(), "parameter types mismatch");
+            TORCH_CHECK(param_from.scalar_type() == param_to.scalar_type(), "parameter types mismatch");
             auto tmp = permute_wei_for_miopen(param_from, mode);
             param_to.copy_(tmp.view_as(param_to));
         }

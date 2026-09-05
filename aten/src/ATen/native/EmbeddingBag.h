@@ -8,7 +8,7 @@
 // path of the translation units that link it -- torch_cpu's. The CUDA and MPS
 // sources below take _EmbeddingBagKernelCache only by pointer, so they get an
 // opaque declaration instead.
-#if !defined(__CUDACC__)
+#if !defined(__CUDACC__) && !defined(__HIPCC__)
 #include <fbgemm/FbgemmEmbedding.h>
 #endif
 
@@ -63,7 +63,7 @@ void make_offset2bag_out(
     const std::optional<Tensor>& per_sample_weights,
     const int64_t padding_idx = -1);
 
-#if !defined(__CUDACC__)
+#if !defined(__CUDACC__) && !defined(__HIPCC__)
 template<bool has_weight, typename TIndex, typename TData>
 struct _CallbackAndBlockSize {
     using TCallback = typename fbgemm::EmbeddingSpMDMKernelSignature<TData, TIndex, TIndex, TData>::Type;

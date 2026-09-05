@@ -38,7 +38,6 @@
 
 namespace c10d {
 
-constexpr const char* const kNCCLAbortedCommStoreKey = "NCCLABORTEDCOMM";
 using FlightRecorderCUDA = FlightRecorder<at::cuda::CUDAEvent>;
 
 namespace {
@@ -183,10 +182,6 @@ void syncStream(
     at::cuda::CUDAStream& ncclStream) {
   ncclEvent.record(at::cuda::getCurrentCUDAStream(device.index()));
   ncclEvent.block(ncclStream);
-}
-
-std::string getNcclAbortedCommStoreKey(const std::string& ncclIdStr) {
-  return std::string(kNCCLAbortedCommStoreKey) + ":" + ncclIdStr;
 }
 
 // Returns exception's what() given an exception_ptr instance.

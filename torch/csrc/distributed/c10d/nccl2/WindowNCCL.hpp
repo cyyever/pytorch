@@ -10,6 +10,10 @@
 #include <hip/hip_runtime.h>
 #include <rccl/rccl.h>
 
+#if defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <torch/csrc/distributed/c10d/Window.hpp>
 #include <torch/csrc/distributed/c10d/nccl2/NcclApi.hpp>
 

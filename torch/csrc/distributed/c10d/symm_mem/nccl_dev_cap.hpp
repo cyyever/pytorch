@@ -3,6 +3,11 @@
 #if USE_NCCL
 
 #include <rccl/rccl.h>
+
+#if defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <torch/csrc/cuda/nccl.h>
 
 #define NCCL_HAS_SYMMEM_SUPPORT
