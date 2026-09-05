@@ -452,10 +452,6 @@ class TORCH_API TensorBase {
   }
 
   /// Returns if a `Tensor` has MTIA backend.
-  bool is_mtia() const {
-    return impl_->is_mtia();
-  }
-
   /// Returns if a `Tensor` has HPU backend.
   bool is_hpu() const {
     return impl_->is_hpu();
