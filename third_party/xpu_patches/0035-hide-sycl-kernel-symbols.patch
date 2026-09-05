@@ -1,0 +1,12 @@
+# Hide the host symbols SYCL kernel translation units define.
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -61,0 +62,5 @@
++  # Kernel translation units otherwise export every host symbol they define,
++  # including the lambda wrappers behind each kernel. Set on both paths: this
++  # one when a separate host compiler runs, SYCL_KERNEL_OPTIONS when icpx
++  # compiles host and device together.
++  list(APPEND SYCL_HOST_FLAGS -fvisibility=hidden)
+@@ -110,0 +116 @@
++  list(APPEND SYCL_KERNEL_OPTIONS -fvisibility=hidden)
