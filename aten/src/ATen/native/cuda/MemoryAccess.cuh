@@ -24,6 +24,12 @@ namespace at::native::memory {
 
 namespace detail {
 
+template <size_t I, typename Tuple>
+C10_HOST_DEVICE decltype(auto) tuple_get(Tuple&& tuple) {
+  using std::get;
+  return get<I>(std::forward<Tuple>(tuple));
+}
+
 // What does the `static_unroll` do?
 //
 // We want to do something like:
@@ -66,7 +72,9 @@ struct vectorized_load_helper {
     // `data` hold the data_ptr for tensors [output, input0, input1, ...], so we
     // need a +1 offset to get the input
     auto ptr = reinterpret_cast<arg_t *>(self.data[arg_index + 1]) + block_work_size * idx;
-    auto args_accessor = [&args] __device__ (int thread_unroll_idx) -> arg_t & { return std::get<arg_index>(args[thread_unroll_idx]); };
+    auto args_accessor = [&args] __device__ (int thread_unroll_idx) -> arg_t & {
+      return tuple_get<arg_index>(args[thread_unroll_idx]);
+    };
     self.load_single_arg(args_accessor, ptr);
   }
 };
@@ -86,7 +94,7 @@ struct vectorized_templated_load_helper {
     // type of the current argument.
     char* ptr = (self.data[arg_index + 1]);
     auto args_accessor = [&args] __device__(int thread_unroll_idx) -> arg_t& {
-      return std::get<arg_index>(args[thread_unroll_idx]);
+      return tuple_get<arg_index>(args[thread_unroll_idx]);
     };
     self.template load_single_arg<arg_index>(args_accessor, ptr, idx);
   }
@@ -100,7 +108,10 @@ struct unroll_load_helper {
     using arg_t = std::tuple_element_t<arg_index, args_t>;
     // `data` hold the data_ptr for tensors [output, input0, input1, ...], so we
     // need a +1 offset to get the input
-    std::get<arg_index>(args[j]) = loader.template load<arg_t>(self.data[arg_index + num_outputs], offset[arg_index], arg_index);
+    tuple_get<arg_index>(args[j]) = loader.template load<arg_t>(
+        self.data[arg_index + num_outputs],
+        offset[arg_index],
+        arg_index);
   }
 };
 
