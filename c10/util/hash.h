@@ -2,6 +2,7 @@
 
 #include <c10/util/Exception.h>
 #include <cstddef>
+#include <algorithm>
 #include <functional>
 #include <iomanip>
 #include <ios>
@@ -318,11 +319,10 @@ struct hash<std::pair<T1, T2>> {
 template <typename T>
 struct hash<c10::ArrayRef<T>> {
   size_t operator()(c10::ArrayRef<T> v) const {
-    size_t seed = 0;
-    for (const auto& elem : v) {
-      seed = hash_combine(seed, _hash_detail::simple_get_hash(elem));
-    }
-    return seed;
+    return std::ranges::fold_left(
+        v, size_t{0}, [](size_t seed, const T& elem) {
+          return hash_combine(seed, _hash_detail::simple_get_hash(elem));
+        });
   }
 };
 
