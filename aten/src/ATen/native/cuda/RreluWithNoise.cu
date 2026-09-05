@@ -134,6 +134,13 @@ Tensor& rrelu_with_noise_out_cuda(const Tensor& self,
     bool training,
     std::optional<Generator> generator,
     Tensor& output) {
+  TORCH_CHECK(self.sym_sizes() == noise.sym_sizes(), "noise tensor shape must match self tensor shape. Got self.shape = ", self.sym_sizes(), " noise.shape = ", noise.sym_sizes());
+  if (training) {
+    // The shape check above also passes for an expanded (0-stride) noise. The
+    // train path takes noise.contiguous(), so an expanded one is written to a
+    // temporary and the caller never sees the values it asked for.
+    TORCH_CHECK(noise.is_contiguous(), "rrelu_with_noise: noise tensor must be contiguous, got one with sizes ", noise.sizes(), " and strides ", noise.strides());
+  }
   at::native::resize_output(output, self.sizes());
 
   if (self.numel() == 0) {
