@@ -571,13 +571,13 @@ _scaled_mm_out_cuda(const Tensor& mat1, const Tensor& mat2,
     return out;
   }
 
-  // NVIDIA's cuBLAS only started supporting row-wise scaling in version 12.9,
-  // and only for compute capability 9.0+. In other cases we use CUTLASS.
+  // NVIDIA's cuBLAS supports row-wise scaling only for compute capability
+  // 9.0+. In other cases we use CUTLASS.
   // We are doing row-wise scaling
   if (scaling_choice_a == ScalingType::RowWise && scaling_choice_b == ScalingType::RowWise) {
 #ifndef USE_ROCM
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    if ((dprops->major < 9 || cublasLtGetVersion() < 120900)
+    if (dprops->major < 9
         // cuBLAS only supports tiled 1D factor layout for 1D block scaling, no 2D block scales
         ||  (dprops->major >= 10 && (!scale_a.sizes().empty() || !scale_b.sizes().empty()))) {
       TORCH_CHECK_VALUE(
@@ -717,12 +717,12 @@ _scaled_rowwise_rowwise(
   auto scaling_choice_a = ScalingType::RowWise;
   auto scaling_choice_b = ScalingType::RowWise;
   //
-  // NVIDIA's cuBLAS only started supporting row-wise scaling in version 12.9,
-  // and only for compute capability 9.0+. In other cases we use CUTLASS.
+  // NVIDIA's cuBLAS supports row-wise scaling only for compute capability
+  // 9.0+. In other cases we use CUTLASS.
 #ifndef USE_ROCM
   // We are doing row-wise scaling
   auto dprops = at::cuda::getCurrentDeviceProperties();
-  if (((dprops->major < 9 || cublasLtGetVersion() < 120900)
+  if ((dprops->major < 9
       // cuBLAS only supports tiled 1D factor layout for 1D block scaling, no 2D block scales
       ||  (dprops->major >= 10 && (!scale_a.sizes().empty() || !scale_b.sizes().empty())))) {
     TORCH_CHECK_VALUE(
@@ -769,11 +769,6 @@ _check_deepseek_support() {
       dprops->major == 9,
       "DeepSeek style (1x128, 128x128) scaling only supported in CUDA for SM90")
   }
-  // Only in cublasLt >= 12.9
-  TORCH_CHECK_NOT_IMPLEMENTED(
-    cublasLtGetVersion() >= 120900,
-    "DeepSeek style (1x128, 128x128) scaling requires cublasLt >= 12.9"
-  );
 #endif
 }
 
