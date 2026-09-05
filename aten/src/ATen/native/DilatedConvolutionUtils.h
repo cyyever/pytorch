@@ -22,13 +22,13 @@
 namespace at::native::internal {
 namespace {
 inline bool all_positive(IntArrayRef& arr) {
-  return std::all_of(
-      arr.begin(), arr.end(), [](int64_t item) { return item > 0; });
+  return std::ranges::all_of(
+      arr, [](int64_t item) { return item > 0; });
 }
 
 inline bool all_nonnegative(std::vector<int64_t>& arr) {
-  return std::all_of(
-      arr.begin(), arr.end(), [](int64_t item) { return item >= 0; });
+  return std::ranges::all_of(
+      arr, [](int64_t item) { return item >= 0; });
 }
 
 } // namespace

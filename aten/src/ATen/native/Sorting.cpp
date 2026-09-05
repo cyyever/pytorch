@@ -242,14 +242,14 @@ Tensor quantile_select_indices_cpu(const Tensor& reduced, const Tensor& ranks) {
             for (const auto m : c10::irange(M)) {
               sorted_ranks[m] = rkrow[m];
             }
-            std::sort(sorted_ranks.begin(), sorted_ranks.end());
+            std::ranges::sort(sorted_ranks);
             const int64_t U =
-                std::unique(sorted_ranks.begin(), sorted_ranks.end()) -
+                std::ranges::unique(sorted_ranks).begin() -
                 sorted_ranks.begin();
             TORCH_INTERNAL_ASSERT(
                 sorted_ranks[0] >= 0 && sorted_ranks[U - 1] < L,
                 "quantile() rank out of range");
-            std::iota(idx.begin(), idx.end(), int64_t{0});
+            std::ranges::iota(idx, int64_t{0});
             quantile_select_recurse<scalar_t>(
                 idx.data(), drow, sorted_ranks.data(), 0, L, 0, U);
             for (const auto m : c10::irange(M)) {

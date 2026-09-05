@@ -3,7 +3,6 @@
 #include <ATen/ATen.h>
 #include <ATen/core/ATen_fwd.h>
 #include <torch/csrc/api/include/torch/detail/TensorDataContainer.h>
-#include <algorithm>
 
 namespace torch::nested {
 

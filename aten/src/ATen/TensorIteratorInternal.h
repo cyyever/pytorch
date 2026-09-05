@@ -3,6 +3,8 @@
 #include <c10/util/SmallBuffer.h>
 #include <c10/util/irange.h>
 
+#include <algorithm>
+
 namespace at {
 
 struct DimCounter {
@@ -27,7 +29,7 @@ inline void get_data_ptrs(
     IntArrayRef counter) {
   const auto ntensors = base.size();
   const auto ndim = counter.size();
-  std::copy(base.begin(), base.end(), ptrs);
+  std::ranges::copy(base, ptrs);
   for (const auto dim : c10::irange(ndim)) {
     int64_t value = counter[dim];
     for (const auto arg : c10::irange(ntensors)) {

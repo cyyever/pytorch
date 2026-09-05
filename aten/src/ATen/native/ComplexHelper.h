@@ -7,6 +7,7 @@
 #include <ATen/ops/view_as_real_native.h>
 #include <ATen/ops/view_as_complex_native.h>
 
+#include <algorithm>
 #include <utility>
 
 // WARNING: this header contains non-inline functions and should be only
@@ -40,7 +41,7 @@ inline Tensor _view_as_real_physical(const Tensor& self) {
   TORCH_CHECK_TYPE(self.is_complex(), "view_as_real is only supported for complex tensors");
   auto old_sizes = self.sym_sizes();
   SymDimVector new_sizes(old_sizes.size() + 1);
-  std::copy(old_sizes.begin(), old_sizes.end(), new_sizes.begin());
+  std::ranges::copy(old_sizes, new_sizes.begin());
   // last dimension will always have two elements containing the real and imag vals
   new_sizes.back() = 2;
   auto new_strides = computeStrideForViewAsReal(self.sym_strides());

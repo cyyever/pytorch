@@ -54,6 +54,7 @@
 #include <ATen/ops/zeros.h>
 
 #include <algorithm>
+#include <numeric>
 
 namespace at::native {
 
@@ -307,8 +308,8 @@ ShapeAndDims canonicalize_fft_shape_and_dim_args(
 
     // Check dims are unique
     DimVector copy = ret.dim;
-    std::sort(copy.begin(), copy.end());
-    auto duplicate = std::adjacent_find(copy.begin(), copy.end());
+    std::ranges::sort(copy);
+    auto duplicate = std::ranges::adjacent_find(copy);
     TORCH_CHECK(duplicate == copy.end(), "FFT dims must be unique");
   }
 
@@ -324,7 +325,7 @@ ShapeAndDims canonicalize_fft_shape_and_dim_args(
     // If shape is given, dims defaults to the last shape.size() dimensions
     if (!dim) {
       ret.dim.resize(transform_ndim);
-      std::iota(ret.dim.begin(), ret.dim.end(), input_dim - transform_ndim);
+      std::ranges::iota(ret.dim, input_dim - transform_ndim);
     }
 
     // Translate shape of -1 to the default length
@@ -336,9 +337,9 @@ ShapeAndDims canonicalize_fft_shape_and_dim_args(
   } else if (!dim) {
     // No shape, no dim
     ret.dim.resize(input_dim);
-    std::iota(ret.dim.begin(), ret.dim.end(), int64_t{0});
+    std::ranges::iota(ret.dim, int64_t{0});
     ret.shape.resize(input_dim);
-    std::copy(input_sizes.begin(), input_sizes.end(), ret.shape.begin());
+    std::ranges::copy(input_sizes, ret.shape.begin());
   } else {
     // No shape, has dim
     ret.shape.resize(ret.dim.size());
@@ -773,7 +774,7 @@ static DimVector default_alldims(const Tensor& self, at::OptionalIntArrayRef dim
     }
   } else {
     dim.resize(self.dim());
-    std::iota(dim.begin(), dim.end(), 0);
+    std::ranges::iota(dim, 0);
   }
   return dim;
 }
@@ -1234,9 +1235,9 @@ void _fft_fill_with_conjugate_symmetry_(const Tensor& input, IntArrayRef dim_) {
 
   // Small dimensions may be treated as batch dims since they don't get mirrored
   dim.erase(
-      std::remove_if(dim.begin(), dim.end(), [&](int64_t dim) {
+      std::ranges::remove_if(dim, [&](int64_t dim) {
         return (input_sizes[dim] <= 2);
-      }),
+      }).begin(),
       dim.end());
 
   // Use TensorIterator to coalesce batch dimensions
@@ -1253,8 +1254,8 @@ void _fft_fill_with_conjugate_symmetry_(const Tensor& input, IntArrayRef dim_) {
   const auto ndim = static_cast<int64_t>(iter_strides.size() + dim.size());
   DimVector in_strides(ndim), signal_half_sizes(ndim);
   // Take coalesced batch dimensions from TensorIterator
-  std::copy(iter_strides.begin(), iter_strides.end(), in_strides.begin());
-  std::copy(iter_sizes.begin(), iter_sizes.end(), signal_half_sizes.begin());
+  std::ranges::copy(iter_strides, in_strides.begin());
+  std::ranges::copy(iter_sizes, signal_half_sizes.begin());
 
   // Take transformed dimensions directly from the input
   const auto element_size = iter.element_size(0);
@@ -1276,8 +1277,8 @@ void _fft_fill_with_conjugate_symmetry_(const Tensor& input, IntArrayRef dim_) {
 
   // Reorder dimensions by stride to maximize data locality
   DimVector dim_permute(ndim);
-  std::iota(dim_permute.begin(), dim_permute.end(), 0);
-  std::sort(dim_permute.begin(), dim_permute.end(),
+  std::ranges::iota(dim_permute, 0);
+  std::ranges::sort(dim_permute,
       [&](auto dim1, auto dim2) {
         return in_strides[dim1] < in_strides[dim2];
       });
