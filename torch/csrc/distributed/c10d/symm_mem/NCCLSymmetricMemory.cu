@@ -3,7 +3,7 @@
 #ifdef NCCL_HAS_SYMMEM_SUPPORT
 
 #include <algorithm>
-#include <vector_types.h>
+#include <hip/hip_vector_types.h>
 #include <torch/csrc/distributed/c10d/GroupRegistry.hpp>
 #include <torch/csrc/distributed/c10d/NCCLUtils.hpp>
 #include <torch/csrc/distributed/c10d/cuda/utils.hpp>
@@ -14,9 +14,9 @@
 #include <torch/csrc/distributed/c10d/symm_mem/nccl_devcomm_manager.hpp>
 
 #include <ATen/ceil_div.h>
-#include <ATen/cuda/CUDAContext.h>
-#include <c10/cuda/CUDACachingAllocator.h>
-#include <c10/cuda/CUDAGuard.h>
+#include <ATen/hip/HIPContext.h>
+#include <c10/hip/HIPCachingAllocator.h>
+#include <c10/hip/HIPGuard.h>
 #include <c10/util/error.h>
 #include <mutex>
 #include <c10/util/flat_hash_map.h>
@@ -210,16 +210,16 @@ class NCCLPeerAllocInfo : public c10::intrusive_ptr_target {
         ? nullptr
         : static_cast<char*>(signal_pads_[i]) + buffer_offset_;
   }
-  C10_CUDA_CHECK(cudaMemcpy(
+  C10_CUDA_CHECK(hipMemcpy(
     buffers_dev_,  // dst (device)
     buffers_.data(),  // src (host)
     arr_size,
-    cudaMemcpyHostToDevice));
-  C10_CUDA_CHECK(cudaMemcpy(
+    hipMemcpyHostToDevice));
+  C10_CUDA_CHECK(hipMemcpy(
       signal_pads_dev_,  // dst (device)
       signal_pads_.data(),  // src (host)
       arr_size,
-      cudaMemcpyHostToDevice));
+      hipMemcpyHostToDevice));
 
   // Starting from NCCL 2.29, we can use `ncclGetLsaMultimemDevicePointer`
   // to get multicast address.
@@ -336,7 +336,7 @@ void NCCLSymmetricMemory::barrier(int channel, size_t timeout_ms) {
   c10::cuda::CUDAGuard device_guard(device_idx_);
   barrier_kernel<<<
       1,
-      std::max(at::cuda::warp_size(), world_size_),
+      ::max(at::cuda::warp_size(), world_size_),
       0,
       at::cuda::getCurrentCUDAStream()>>>(
       reinterpret_cast<uint32_t**>(pai_->signal_pads_dev_),
@@ -519,7 +519,7 @@ class NCCLSymmetricMemoryAllocator : public SymmetricMemoryAllocator {
     // ncclMemAlloc does not zero memory. Zero the signal pad (the first
     // buffer_offset bytes) so the CAS-based barrier() protocol starts from a
     // known all-zero state on first use.
-    C10_CUDA_CHECK(cudaMemset(alloc_base, 0, buffer_offset));
+    C10_CUDA_CHECK(hipMemset(alloc_base, 0, buffer_offset));
     // Hand back the data buffer pointer, not alloc_base; the signal pad stays
     // hidden in front. Returning the data ptr is safe for free(): the whole
     // block is owned by the NCCLAllocation keyed below, which ncclMemFree's

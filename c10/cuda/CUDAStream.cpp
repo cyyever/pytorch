@@ -213,7 +213,7 @@ void initSingleStream(int p, DeviceIndex device_index, int i) {
 
 // Creates the low and high priority stream pools for the specified device
 // Warning: only call once per device!
-void initDeviceStreamState(DeviceIndex device_index) {
+[[maybe_unused]] void initDeviceStreamState(DeviceIndex device_index) {
   for (const auto i : c10::irange(kStreamsPerPool)) {
     for (const auto p : c10::irange(max_stream_priorities)) {
       initSingleStream(p, device_index, i);

@@ -4,6 +4,11 @@
 #include <c10/cuda/CUDAMacros.h>
 #include <c10/cuda/CUDAMiscFunctions.h>
 #include <c10/macros/Macros.h>
+
+#if defined(USE_ROCM) && defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <c10/util/Exception.h>
 #include <c10/util/irange.h>
 #include <cuda.h>

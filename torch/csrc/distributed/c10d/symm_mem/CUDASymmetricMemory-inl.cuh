@@ -1,3 +1,4 @@
+#include <hip/hip_runtime.h>
 #pragma once
 
 #include <atomic>
@@ -11,10 +12,10 @@
 #include <hip/hip_bf16.h>
 #endif
 #if !defined(USE_ROCM)
-#include <cuda_bf16.h>
+#include <hip/hip_bf16.h>
 #include <cuda/atomic>
 #endif
-#include <ATen/native/cuda/MemoryAccess.cuh>
+#include <ATen/native/hip/MemoryAccess.cuh>
 
 namespace c10d::symmetric_memory {
 
@@ -472,8 +473,8 @@ __device__ __inline__ T add_bf16x2(T a, T b) {
   return *reinterpret_cast<T*>(&rtn);
 #else
   auto res = __hadd2(
-      *reinterpret_cast<__nv_bfloat162*>(&a),
-      *reinterpret_cast<__nv_bfloat162*>(&b));
+      *reinterpret_cast<__hip_bfloat162*>(&a),
+      *reinterpret_cast<__hip_bfloat162*>(&b));
   return *reinterpret_cast<T*>(&res);
 #endif
 }

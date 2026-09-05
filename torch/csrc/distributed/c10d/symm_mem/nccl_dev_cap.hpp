@@ -2,7 +2,7 @@
 
 #if USE_NCCL
 
-#include <nccl.h>
+#include <rccl/rccl.h>
 #include <torch/csrc/cuda/nccl.h>
 
 #define NCCL_HAS_SYMMEM_SUPPORT

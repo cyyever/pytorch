@@ -31,7 +31,7 @@ inline C10_HOST_DEVICE bool _isnan(T /*val*/) {
 template <typename T>
   requires std::is_floating_point_v<T>
 inline C10_HOST_DEVICE bool _isnan(T val) {
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__HIPCC__) || defined(__HIPCC__)
   return ::isnan(val);
 #else
   return std::isnan(val);
@@ -73,7 +73,7 @@ inline C10_HOST_DEVICE bool _isinf(T /*val*/) {
 template <typename T>
   requires std::is_floating_point_v<T>
 inline C10_HOST_DEVICE bool _isinf(T val) {
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__HIPCC__) || defined(__HIPCC__)
   return ::isinf(val);
 #else
   return std::isinf(val);

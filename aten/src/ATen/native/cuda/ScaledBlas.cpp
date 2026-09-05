@@ -6,6 +6,8 @@
 #include <ATen/core/Tensor.h>
 #include <ATen/TensorUtils.h>
 #include <ATen/cuda/CUDABlas.h>
+#include <ATen/cuda/tunable/Tunable.h>
+#include <ATen/cuda/tunable/TunableGemm.h>
 #include <ATen/native/LinearAlgebraUtils.h>
 #include <ATen/native/ScaledBlasUtils.h>
 #include <ATen/native/cuda/ScaledBlasDeviceUtils.h>
@@ -759,9 +761,9 @@ _scaled_rowwise_rowwise(
   return out;
 }
 
+#ifndef USE_ROCM
 void
 _check_deepseek_support() {
-#ifndef USE_ROCM
   auto dprops = at::cuda::getCurrentDeviceProperties();
   if (dprops->major != 9) {
     // Only on Hopper GPUs
@@ -769,8 +771,8 @@ _check_deepseek_support() {
       dprops->major == 9,
       "DeepSeek style (1x128, 128x128) scaling only supported in CUDA for SM90")
   }
-#endif
 }
+#endif
 
 Tensor&
 _scaled_block1x128_block1x128(
@@ -1263,7 +1265,7 @@ void check_swizzle_lengths(ScaledGemmImplementation impl,
   }
 }
 
-};  // anonymous namespace
+} // anonymous namespace
 
 // V2: Computes matrix multiply + bias while applying scaling to input and output matrices.
 // Shape inference + output allocation happens in TORCH_META_FUNC(_scaled_mm_v2);

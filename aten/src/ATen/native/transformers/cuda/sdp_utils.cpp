@@ -61,7 +61,7 @@
 namespace sdp {
 namespace {
 
-constexpr long kMinCuDNNFrontendVersionForD256 = 12400;
+[[maybe_unused]] constexpr long kMinCuDNNFrontendVersionForD256 = 12400;
 #if AT_CUDNN_ENABLED() && defined(CUDNN_FRONTEND_VERSION)
 constexpr bool kCuDNNFrontendSupportsD256 =
     CUDNN_FRONTEND_VERSION >= kMinCuDNNFrontendVersionForD256;
@@ -122,6 +122,7 @@ std::array<SDPBackend, num_backends> priority_order(sdp_params const& params) {
   return at::globalContext().sDPPriorityOrder();
 }
 
+#if !defined(USE_ROCM)
 int64_t minimum_gemm_alignment(sdp_params const& params) {
   // Tensor cores are always used on the architectures we support
   bool is_half = (params.query.dtype() == at::kHalf) ||
@@ -129,6 +130,7 @@ int64_t minimum_gemm_alignment(sdp_params const& params) {
   int64_t bits_per_scalar = is_half ? 16 : 32;
   return std::max<int64_t>(4, 128 / bits_per_scalar);
 }
+#endif
 
 #if USE_ROCM_ATTENTION
 inline int aotriton_max_hdim() {
@@ -407,8 +409,6 @@ bool check_sm_version(cudaDeviceProp * dprops) {
 
 bool check_flash_attention_hardware_support(sdp_params const& params, bool debug) {
   // Check that the gpu is capable of running flash attention
-  using sm80 = SMVersion<8, 0>;
-  using sm121 = SMVersion<12, 1>;
 #if USE_ROCM
 #if USE_ROCM_ATTENTION
   if(at::globalContext().getROCmFAPreferredBackend() == at::ROCmFABackend::Ck) {
@@ -438,6 +438,8 @@ bool check_flash_attention_hardware_support(sdp_params const& params, bool debug
   return false;
 #endif
 #else
+  using sm80 = SMVersion<8, 0>;
+  using sm121 = SMVersion<12, 1>;
   if (!at::cuda::is_available()) {
     if (debug) {
       TORCH_WARN("flash attention requires a CUDA device, which is not available.");
@@ -462,8 +464,6 @@ bool check_flash_attention_hardware_support(sdp_params const& params, bool debug
 
 bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) {
   // Mem Efficient attention supports hardware in the range [sm_89, sm_121]
-  using sm89 = SMVersion<8, 9>;
-  using sm121 = SMVersion<12, 1>;
 #if USE_ROCM
 #if USE_ROCM_ATTENTION
   if (at::cuda::device_count() == 0) {
@@ -496,6 +496,8 @@ bool check_mem_efficient_hardware_support(sdp_params const& params, bool debug) 
   return false;
 #endif
 #else
+  using sm89 = SMVersion<8, 9>;
+  using sm121 = SMVersion<12, 1>;
   if (!at::cuda::is_available()) {
     if (debug) {
       TORCH_WARN("Mem Efficient attention requires a CUDA device, which is not available.");
@@ -772,7 +774,9 @@ bool check_cudnn_d256_bprop_head_dim(
   return true;
 }
 
-bool check_cudnn_layout(sdp_params const& params, bool debug) {
+[[maybe_unused]] bool check_cudnn_layout(
+    sdp_params const& params,
+    bool debug) {
   const int64_t h = params.query.size(1);
   const int64_t s_q = params.query.size(2);
   const int64_t d = params.query.size(3);

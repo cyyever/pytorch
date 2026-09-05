@@ -26,9 +26,9 @@
 //
 //    using BadType [[deprecated]] = int;
 
-// nvcc does not understand a deprecation attribute on a using-declaration, so
+// hipcc does not understand a deprecation attribute on a using-declaration, so
 // the alias is defined without one there.
-#if defined(__CUDACC__)
+#if defined(__HIPCC__)
 #define C10_DEFINE_DEPRECATED_USING(TypeName, TypeThingy) \
   using TypeName = TypeThingy;
 #else

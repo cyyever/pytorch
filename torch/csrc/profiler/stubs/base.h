@@ -6,14 +6,14 @@
 #include <c10/core/Device.h>
 #include <torch/csrc/Export.h>
 
-struct CUevent_st;
+struct ihipEvent_t;
 
 namespace torch::profiler::impl {
 
 // ----------------------------------------------------------------------------
 // -- Annotation --------------------------------------------------------------
 // ----------------------------------------------------------------------------
-using ProfilerEventStub = std::shared_ptr<CUevent_st>;
+using ProfilerEventStub = std::shared_ptr<ihipEvent_t>;
 using ProfilerVoidEventStub = std::shared_ptr<void>;
 
 struct TORCH_API ProfilerStubs {

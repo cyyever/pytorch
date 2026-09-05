@@ -96,8 +96,13 @@ inline CaptureInfo captureInfoMayInitCtx(cudaStream_t stream) {
   cudaStreamCaptureStatus status{};
   CaptureId_t capture_id = 0;
   cudaGraph_t graph = nullptr;
+#if defined(USE_ROCM)
+  C10_CUDA_CHECK(cudaStreamGetCaptureInfo_v2(
+      stream, &status, &capture_id, &graph, nullptr, nullptr));
+#else
   C10_CUDA_CHECK(cudaStreamGetCaptureInfo(
       stream, &status, &capture_id, &graph, nullptr, nullptr, nullptr));
+#endif
   return {CaptureStatus(status), capture_id, graph};
 }
 

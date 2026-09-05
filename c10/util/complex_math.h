@@ -108,8 +108,8 @@ C10_HOST_DEVICE inline thrust::complex<float> complex_mul_fma(
 
 template <>
 C10_HOST_DEVICE inline c10::complex<float> pow(
-    const c10::complex<float>& x,
-    const c10::complex<float>& y) {
+    c10::complex<float> x,
+    c10::complex<float> y) {
   auto log_x = thrust::log(static_cast<thrust::complex<float>>(x));
   auto y_log_x =
       detail::complex_mul_fma(static_cast<thrust::complex<float>>(y), log_x);

@@ -3,6 +3,10 @@
 
 #include <cuda_runtime_api.h>
 
+#if defined(USE_ROCM) && defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <c10/cuda/CUDAFunctions.h>
 
 // getCUDADeviceAllocator returns a pointer, so declaring it needs only the

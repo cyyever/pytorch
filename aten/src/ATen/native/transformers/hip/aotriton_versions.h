@@ -2,6 +2,8 @@
 
 #ifdef USE_ROCM
 
+#include <aotriton/config.h>
+
 #define AOTRITON_VERSION_INT(x, y) (x * 100 + y)
 #define AOTRITON_VERSION_CURRENT (AOTRITON_VERSION_MAJOR * 100 + AOTRITON_VERSION_MINOR)
 

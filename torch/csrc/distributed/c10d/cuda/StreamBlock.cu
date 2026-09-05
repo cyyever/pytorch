@@ -1,9 +1,9 @@
 #include <ATen/core/CachingHostAllocator.h>
-#include <c10/cuda/CUDAStream.h>
+#include <c10/hip/HIPStream.h>
 #include <ATen/native/TensorFactories.h>
-#include <c10/cuda/CUDAException.h>
-#include <c10/cuda/CUDAGuard.h>
-#include <cuda_runtime.h>
+#include <c10/hip/HIPException.h>
+#include <c10/hip/HIPGuard.h>
+#include <hip/hip_runtime.h>
 #include <torch/csrc/distributed/c10d/symm_mem/CUDASymmetricMemory-inl.cuh>
 #include <torch/csrc/distributed/c10d/cuda/StreamBlock.cuh>
 

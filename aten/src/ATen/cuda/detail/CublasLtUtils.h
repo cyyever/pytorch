@@ -206,16 +206,28 @@ inline int cublasLtMatmulScaleMode(
       TORCH_CHECK(
           !use_fast_accum,
           "scaled_gemm doesn't support fast accum with 1x128 blockwise scaling");
+#if defined(USE_ROCM)
+      return HIPBLASLT_MATMUL_MATRIX_SCALE_VEC128_32F;
+#else
       return CUBLASLT_MATMUL_MATRIX_SCALE_VEC128_32F;
+#endif
     case at::blas::ScalingType::BlockWise128x128:
       TORCH_CHECK(scale_dtype == kFloat);
       TORCH_CHECK(
           !use_fast_accum,
           "scaled_gemm doesn't support fast accum with 128x128 blockwise scaling");
+#if defined(USE_ROCM)
+      return HIPBLASLT_MATMUL_MATRIX_SCALE_BLK128x128_32F;
+#else
       return CUBLASLT_MATMUL_MATRIX_SCALE_BLK128x128_32F;
+#endif
     case at::blas::ScalingType::TensorWise:
       TORCH_CHECK(scale_dtype == kFloat);
+#if defined(USE_ROCM)
+      return HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+#else
       return CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+#endif
     default:
       TORCH_CHECK(false);
   }

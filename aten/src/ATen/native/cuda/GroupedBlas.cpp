@@ -141,6 +141,7 @@ _mx8_mx8_bf16_grouped_mm_mslk(
 // 2d-2d and 2d-3d cases
 // scaling=rowwise
 // CUDA-only
+#if !defined(USE_ROCM)
 Tensor&
 _f8_f8_bf16_rowwise_grouped_mm_cuda(
           const Tensor& mat_a,
@@ -165,6 +166,7 @@ _f8_f8_bf16_rowwise_grouped_mm_cuda(
       out);
     return out;
 }
+#endif
 
 // 2d-2d and 2d-3d cases
 // scaling=rowwise
@@ -407,11 +409,11 @@ void check_scale(const Tensor& mat, const Tensor& scale, const int dim, const in
 
 } // namespace
 
+#if !defined(USE_ROCM)
 static Tensor grouped_mm_cublaslt(const Tensor& mat_a, const Tensor& mat_b,
 const std::optional<at::Tensor>& offs,
 const std::optional<at::Tensor>& bias,
 std::optional<c10::ScalarType> out_dtype) {
-#if !defined(USE_ROCM)
   TORCH_CHECK(
       mat_a.dtype() == at::kBFloat16 || mat_a.dtype() == at::kHalf,
       "cublasLt grouped GEMM requires BFloat16 or Float16 input, got ", mat_a.scalar_type());
@@ -457,10 +459,8 @@ std::optional<c10::ScalarType> out_dtype) {
                                args.DPtrArray, args.lddArray,
                                args.batchCount, args.use_int64);
   return out;
-#else
-  TORCH_CHECK(false, "cublasLt grouped GEMM requires CUDA >= 13.3 and is not supported on ROCm. Current build does not meet these requirements.");
-#endif // !defined(USE_ROCM)
 }
+#endif
 
 Tensor
 _scaled_grouped_mm_cuda(
@@ -724,12 +724,12 @@ std::optional<c10::ScalarType> out_dtype) {
     return grouped_mm_cublaslt(mat_a, mat_b, offs, bias, out_dtype);
   }
 #endif
+#ifndef USE_ROCM
   bool a_b_and_out_are_bf16 = (
     mat_a.dtype() == at::kBFloat16 &&
     mat_b.dtype() == at::kBFloat16 &&
     out_dtype.value_or(at::kBFloat16) == at::kBFloat16
   );
-#ifndef USE_ROCM
   bool use_fast_path = scaled_mm_arch_allowed(/*sm90_only=*/true, /*sm100_only=*/true) && a_b_and_out_are_bf16;
   const auto out_dtype_ = _resolve_grouped_mm_out_dtype(mat_a, mat_b, out_dtype);
   Tensor out = create_grouped_gemm_output_tensor(mat_a, mat_b, offs, out_dtype_);

@@ -294,7 +294,7 @@ inline std::string to_string_epilogue(const at::cuda::blas::GEMMAndBiasActivatio
 
 namespace detail {
 
-static bool NumericalCheck(ScalarType dtype, void* c, void* other_c, int64_t size, const NumericalCheckConfig& config) {
+inline bool NumericalCheck(ScalarType dtype, void* c, void* other_c, int64_t size, const NumericalCheckConfig& config) {
 
   if (!config.enabled) {
     return true; // skip when disabled

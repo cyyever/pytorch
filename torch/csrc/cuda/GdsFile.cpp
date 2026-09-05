@@ -4,30 +4,30 @@
 #include <torch/csrc/utils/pybind.h>
 
 #if defined(USE_CUFILE)
-#include <c10/cuda/CUDAGuard.h>
+#include <c10/hip/HIPGuard.h>
 
-#include <cufile.h>
+#include <hipfile.h>
 
 namespace {
-// To get error message for cuFileRead/Write APIs that return ssize_t (-1 for
+// To get error message for hipFileRead/Write APIs that return ssize_t (-1 for
 // filesystem error and a negative CUfileOpError enum value otherwise).
 template <
     class T>
 std::string cuGDSFileGetErrorString(T status) requires (std::is_integral_v<T>) {
   status = std::abs(status);
-  return IS_CUFILE_ERR(status) ? std::string(CUFILE_ERRSTR(status))
+  return IS_HIPFILE_ERR(status) ? std::string(HIPFILE_ERRSTR(status))
                                : std::string(c10::utils::str_error(errno));
 }
 
 // To get error message for Buf/Handle registration APIs that return
-// CUfileError_t
+// hipFileError_t
 template <
     class T>
 std::string cuGDSFileGetErrorString(T status) requires (!std::is_integral_v<T>) {
   std::string errStr = cuGDSFileGetErrorString(static_cast<int>(status.err));
-  if (IS_CUDA_ERR(status))
+  if (IS_HIP_DRV_ERR(status))
     errStr.append(".").append(
-        cudaGetErrorString(static_cast<cudaError_t>(status.cu_err)));
+        hipGetErrorString(static_cast<hipError_t>(status.hip_drv_err)));
   return errStr;
 }
 } // namespace
@@ -37,18 +37,18 @@ static void gds_load_storage(
     const at::Storage& storage,
     off_t offset) {
   // NOLINTNEXTLINE(performance-no-int-to-ptr)
-  CUfileHandle_t cf_handle = reinterpret_cast<CUfileHandle_t>(handle);
+  hipFileHandle_t cf_handle = reinterpret_cast<hipFileHandle_t>(handle);
   c10::cuda::CUDAGuard gpuGuard(storage.device());
 
   void* dataPtr = storage.mutable_data();
   const size_t nbytes = storage.nbytes();
 
   // Read the binary file
-  ssize_t ret = cuFileRead(cf_handle, dataPtr, nbytes, offset, 0);
-  TORCH_CHECK(ret >= 0, "cuFileRead failed: ", cuGDSFileGetErrorString(ret));
+  ssize_t ret = hipFileRead(cf_handle, dataPtr, nbytes, offset, 0);
+  TORCH_CHECK(ret >= 0, "hipFileRead failed: ", cuGDSFileGetErrorString(ret));
   TORCH_CHECK(
       ret == static_cast<ssize_t>(nbytes),
-      "cuFileRead handled only ",
+      "hipFileRead handled only ",
       ret,
       " of ",
       nbytes,
@@ -60,18 +60,18 @@ static void gds_save_storage(
     const at::Storage& storage,
     off_t offset) {
   // NOLINTNEXTLINE(performance-no-int-to-ptr)
-  CUfileHandle_t cf_handle = reinterpret_cast<CUfileHandle_t>(handle);
+  hipFileHandle_t cf_handle = reinterpret_cast<hipFileHandle_t>(handle);
   c10::cuda::CUDAGuard gpuGuard(storage.device());
 
   void* dataPtr = storage.mutable_data();
   const size_t nbytes = storage.nbytes();
 
   // Write device memory contents to the file
-  ssize_t ret = cuFileWrite(cf_handle, dataPtr, nbytes, offset, 0);
-  TORCH_CHECK(ret >= 0, "cuFileWrite failed: ", cuGDSFileGetErrorString(ret));
+  ssize_t ret = hipFileWrite(cf_handle, dataPtr, nbytes, offset, 0);
+  TORCH_CHECK(ret >= 0, "hipFileWrite failed: ", cuGDSFileGetErrorString(ret));
   TORCH_CHECK(
       ret == static_cast<ssize_t>(nbytes),
-      "cuFileWrite handled only ",
+      "hipFileWrite handled only ",
       ret,
       " of ",
       nbytes,
@@ -82,35 +82,35 @@ static void gds_register_buffer(const at::Storage& storage) {
   void* dataPtr = storage.mutable_data();
   const size_t nbytes = storage.nbytes();
 
-  CUfileError_t status = cuFileBufRegister(dataPtr, nbytes, 0);
+  hipFileError_t status = hipFileBufRegister(dataPtr, nbytes, 0);
   TORCH_CHECK(
-      status.err == CU_FILE_SUCCESS,
-      "cuFileBufRegister failed: ",
+      status.err == hipFileSuccess,
+      "hipFileBufRegister failed: ",
       cuGDSFileGetErrorString(status));
   return;
 }
 
 static void gds_deregister_buffer(const at::Storage& storage) {
   void* dataPtr = storage.mutable_data();
-  CUfileError_t status = cuFileBufDeregister(dataPtr);
+  hipFileError_t status = hipFileBufDeregister(dataPtr);
   TORCH_CHECK(
-      status.err == CU_FILE_SUCCESS,
-      "cuFileBufDeregister failed: ",
+      status.err == hipFileSuccess,
+      "hipFileBufDeregister failed: ",
       cuGDSFileGetErrorString(status));
   return;
 }
 
 static int64_t gds_register_handle(int fd) {
-  CUfileDescr_t cf_descr;
-  CUfileHandle_t cf_handle{};
-  memset((void*)&cf_descr, 0, sizeof(CUfileDescr_t));
+  hipFileDescr_t cf_descr;
+  hipFileHandle_t cf_handle{};
+  memset((void*)&cf_descr, 0, sizeof(hipFileDescr_t));
   cf_descr.handle.fd = fd;
-  cf_descr.type = CU_FILE_HANDLE_TYPE_OPAQUE_FD;
-  CUfileError_t status = cuFileHandleRegister(&cf_handle, &cf_descr);
-  if (status.err != CU_FILE_SUCCESS) {
+  cf_descr.type = hipFileHandleTypeOpaqueFD;
+  hipFileError_t status = hipFileHandleRegister(&cf_handle, &cf_descr);
+  if (status.err != hipFileSuccess) {
     TORCH_CHECK(
         false,
-        "cuFileHandleRegister failed: ",
+        "hipFileHandleRegister failed: ",
         cuGDSFileGetErrorString(status));
   }
 
@@ -120,8 +120,8 @@ static int64_t gds_register_handle(int fd) {
 
 static void gds_deregister_handle(int64_t handle) {
   // NOLINTNEXTLINE(performance-no-int-to-ptr)
-  CUfileHandle_t cf_handle = reinterpret_cast<CUfileHandle_t>(handle);
-  cuFileHandleDeregister(cf_handle);
+  hipFileHandle_t cf_handle = reinterpret_cast<hipFileHandle_t>(handle);
+  hipFileHandleDeregister(cf_handle);
 }
 
 #endif
