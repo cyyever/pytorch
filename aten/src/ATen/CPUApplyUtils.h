@@ -6,6 +6,7 @@
 #include <c10/util/irange.h>
 #include <cstring>
 #include <limits>
+#include <algorithm>
 
 namespace at {
 
@@ -46,7 +47,7 @@ inline Tensor sort_strides(Tensor& tensor_) {
   for (const auto i : c10::irange(tensor_.ndimension())) {
     indices.push_back(i);
   }
-  std::sort(indices.begin(), indices.end(), [&strides](int64_t i1, int64_t i2) {
+  std::ranges::sort(indices, [&strides](int64_t i1, int64_t i2) {
     return strides[i1] > strides[i2];
   });
   Tensor tensor = tensor_.permute(indices);

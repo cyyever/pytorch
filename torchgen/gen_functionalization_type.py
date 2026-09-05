@@ -333,11 +333,7 @@ def emit_expr_has_symbolic_values(expr: str, type: CType) -> str:
     if type in (BaseCType(symIntArrayRefT), VectorCType(BaseCType(SymIntT))):
         argname = "arg"
         lambda_check = emit_expr_has_symbolic_values(argname, BaseCType(SymIntT))
-        return (
-            "std::any_of("
-            f"{expr}.begin(), {expr}.end(), "
-            f"[=](auto& {argname}) {{ return {lambda_check}; }})"
-        )
+        return f"std::ranges::any_of({expr}, [](auto& {argname}) {{ return {lambda_check}; }})"
 
     raise ValueError(
         "unsupported type for has_symbolic_values check. "

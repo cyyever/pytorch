@@ -282,12 +282,9 @@ void mode_kernel_impl(
             // (it's basically the same as std::less), doing so degrades
             // performance. That is because its implementation for std::pair
             // uses 3 comparisons.
-            std::sort(
-                elements.begin(),
-                elements.end(),
-                [=](const auto& i, const auto& j) {
-                  return i.first < j.first;
-                });
+            std::ranges::sort(elements, [](const auto& i, const auto& j) {
+              return i.first < j.first;
+            });
 
             for (const auto i : c10::irange(self_dim_size)) {
               temp_freq++;
