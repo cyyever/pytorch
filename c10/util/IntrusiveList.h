@@ -2,6 +2,12 @@
 
 #include <c10/util/Exception.h>
 
+#include <functional>
+#include <initializer_list>
+#include <iterator>
+#include <ranges>
+#include <type_traits>
+
 namespace c10 {
 
 template <typename T>
@@ -93,11 +99,6 @@ class ListIterator {
   template <typename Q>
   [[nodiscard]] bool operator==(const ListIterator<Q, T>& other) const {
     return ptr_ == other.ptr_;
-  }
-
-  template <typename Q>
-  [[nodiscard]] bool operator!=(const ListIterator<Q, T>& other) const {
-    return !(*this == other);
   }
 
   [[nodiscard]] auto& operator*() const {
@@ -205,11 +206,9 @@ class IntrusiveList {
   }
 
   [[nodiscard]] size_t size() const {
-    size_t ret = 0;
-    for ([[maybe_unused]] auto& _ : *this) {
-      ret++;
-    }
-    return ret;
+    // Not distance(*this): that resolves through ranges::size, which finds
+    // this very member and recurses.
+    return static_cast<size_t>(std::ranges::distance(begin(), end()));
   }
 
   [[nodiscard]] bool empty() const {
@@ -219,5 +218,16 @@ class IntrusiveList {
  private:
   IntrusiveListHook head_;
 };
+
+// The iterator is only ever handed out through these, so asserting here covers
+// both constness flavours.
+static_assert(std::bidirectional_iterator<
+              ListIterator<IntrusiveListHook, IntrusiveListHook>>);
+static_assert(std::bidirectional_iterator<
+              ListIterator<const IntrusiveListHook, IntrusiveListHook>>);
+static_assert(
+    std::ranges::bidirectional_range<IntrusiveList<IntrusiveListHook>>);
+static_assert(
+    std::ranges::bidirectional_range<const IntrusiveList<IntrusiveListHook>>);
 
 } // namespace c10
