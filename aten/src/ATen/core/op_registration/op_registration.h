@@ -150,7 +150,7 @@ public:
      */
     template<class KernelFunctor, class... ConstructorParameters>
     // enable_if: only enable it if KernelFunctor is actually a functor
-    std::enable_if_t<guts::is_functor<KernelFunctor>::value, Options&&> kernel(DispatchKey dispatch_key, ConstructorParameters&&... constructorParameters) && {
+    Options&& kernel(DispatchKey dispatch_key, ConstructorParameters&&... constructorParameters) && requires guts::is_functor<KernelFunctor>::value {
       static_assert(std::is_base_of_v<OperatorKernel, KernelFunctor>, "Tried to register a kernel functor using the kernel<Functor>() API, but it doesn't inherit from c10::OperatorKernel. Please have the functor inherit from it.");
       static_assert(std::is_constructible_v<KernelFunctor, ConstructorParameters...>, "Wrong argument list for constructor of kernel functor. The arguments to kernel<Functor>(arguments...) must match one of the constructors of Functor.");
 
@@ -202,7 +202,7 @@ public:
      */
     template<class KernelFunctor, class... ConstructorParameters>
     // enable_if: only enable it if KernelFunctor is actually a functor
-    std::enable_if_t<guts::is_functor<KernelFunctor>::value, Options&&> catchAllKernel(ConstructorParameters&&... constructorParameters) && {
+    Options&& catchAllKernel(ConstructorParameters&&... constructorParameters) && requires guts::is_functor<KernelFunctor>::value {
       static_assert(std::is_base_of_v<OperatorKernel, KernelFunctor>, "Tried to register a kernel functor using the kernel<Functor>() API, but it doesn't inherit from c10::OperatorKernel. Please have the functor inherit from it.");
       static_assert(std::is_constructible_v<KernelFunctor, ConstructorParameters...>, "Wrong argument list for constructor of kernel functor. The arguments to kernel<Functor>(arguments...) must match one of the constructors of Functor.");
 
@@ -230,7 +230,7 @@ public:
      */
     template<class FuncType, FuncType* kernel_func>
     // enable_if: only enable it if FuncType is actually a function
-    std::enable_if_t<guts::is_function_type<FuncType>::value, Options&&> kernel(DispatchKey dispatch_key) && {
+    Options&& kernel(DispatchKey dispatch_key) && requires guts::is_function_type<FuncType>::value {
       static_assert(!std::is_same_v<FuncType, KernelFunction::BoxedKernelFunction>, "Tried to register a stackbased (i.e. internal) kernel function using the public kernel<...>() API. Please either use the internal kernel(...) API or also implement the kernel function as defined by the public API.");
       static_assert(kernel_func != nullptr, "Kernel function cannot be nullptr");
 
@@ -259,7 +259,7 @@ public:
      */
     template<class FuncType, FuncType* kernel_func>
     // enable_if: only enable it if FuncType is actually a function
-    std::enable_if_t<guts::is_function_type<FuncType>::value, Options&&> catchAllKernel() && {
+    Options&& catchAllKernel() && requires guts::is_function_type<FuncType>::value {
       static_assert(!std::is_same_v<FuncType, KernelFunction::BoxedKernelFunction>, "Tried to register a stackbased (i.e. internal) kernel function using the public kernel<...>() API. Please either use the internal kernel(...) API or also implement the kernel function as defined by the public API.");
       static_assert(kernel_func != nullptr, "Kernel function cannot be nullptr");
 
@@ -274,7 +274,7 @@ public:
 
     template<class FuncType>
     // enable_if: only enable it if FuncType is actually a function
-    std::enable_if_t<guts::is_function_type<FuncType>::value, Options&&> kernel(DispatchKey dispatch_key, FuncType* kernel_func) && {
+    Options&& kernel(DispatchKey dispatch_key, FuncType* kernel_func) && requires guts::is_function_type<FuncType>::value {
       static_assert(!std::is_same_v<FuncType, KernelFunction::BoxedKernelFunction>, "Tried to register a stackbased (i.e. internal) kernel function using the public kernel<...>() API. Please either use the internal kernel(...) API or also implement the kernel function as defined by the public API.");
       TORCH_INTERNAL_ASSERT(kernel_func != nullptr, "Kernel function cannot be nullptr");
 
@@ -289,7 +289,7 @@ public:
 
     template<class FuncType>
     // enable_if: only enable it if FuncType is actually a function
-    std::enable_if_t<guts::is_function_type<FuncType>::value, Options&&> catchAllKernel(FuncType* kernel_func) && {
+    Options&& catchAllKernel(FuncType* kernel_func) && requires guts::is_function_type<FuncType>::value {
       static_assert(!std::is_same_v<FuncType, KernelFunction::BoxedKernelFunction>, "Tried to register a stackbased (i.e. internal) kernel function using the public kernel<...>() API. Please either use the internal kernel(...) API or also implement the kernel function as defined by the public API.");
       TORCH_INTERNAL_ASSERT(kernel_func != nullptr, "Kernel function cannot be nullptr");
 
@@ -320,10 +320,8 @@ public:
      */
     template<class Lambda>
     // enable_if: only enable it if Lambda is a functor (note: lambdas are functors)
-    std::enable_if_t<
-        guts::is_functor<std::decay_t<Lambda>>::value
-        && !std::is_same_v<typename guts::infer_function_traits_t<std::decay_t<Lambda>>::func_type, KernelFunction::BoxedKernelFunction>,
-        Options&&> kernel(DispatchKey dispatch_key, Lambda&& functor) && {
+    Options&& kernel(DispatchKey dispatch_key, Lambda&& functor) && requires (guts::is_functor<std::decay_t<Lambda>>::value
+        && !std::is_same_v<typename guts::infer_function_traits_t<std::decay_t<Lambda>>::func_type, KernelFunction::BoxedKernelFunction>) {
       static_assert(!std::is_base_of_v<OperatorKernel, std::decay_t<Lambda>>, "The kernel(x) API for registering a kernel is only meant to be used with lambdas. Your kernel is a functor. Please use the kernel<Functor>() API instead.");
 
       // We don't support stateful lambdas (i.e. lambdas with a capture), because their
@@ -361,10 +359,8 @@ public:
      */
     template<class Lambda>
     // enable_if: only enable it if Lambda is a functor (note: lambdas are functors)
-    std::enable_if_t<
-        guts::is_functor<std::decay_t<Lambda>>::value
-        && !std::is_same_v<typename guts::infer_function_traits_t<std::decay_t<Lambda>>::func_type, KernelFunction::BoxedKernelFunction>,
-        Options&&> catchAllKernel(Lambda&& lambda) && {
+    Options&& catchAllKernel(Lambda&& lambda) && requires (guts::is_functor<std::decay_t<Lambda>>::value
+        && !std::is_same_v<typename guts::infer_function_traits_t<std::decay_t<Lambda>>::func_type, KernelFunction::BoxedKernelFunction>) {
       static_assert(!std::is_base_of_v<OperatorKernel, std::decay_t<Lambda>>, "The kernel(x) API for registering a kernel is only meant to be used with lambdas. Your kernel is a functor. Please use the kernel<Functor>() API instead.");
 
       // We don't support stateful lambdas (i.e. lambdas with a capture), because their
@@ -508,8 +504,8 @@ public:
    */
    template<class FuncType>
    // enable_if: only enable it if FuncType is actually a function, but not a stack based BoxedKernelFunction.
-   std::enable_if_t<guts::is_function_type<FuncType>::value && !std::is_same_v<FuncType, KernelFunction::BoxedKernelFunction>, RegisterOperators&&>
-   op(const std::string& schemaOrName, FuncType* func, Options&& options = RegisterOperators::options()) && {
+   RegisterOperators&&
+   op(const std::string& schemaOrName, FuncType* func, Options&& options = RegisterOperators::options()) && requires (guts::is_function_type<FuncType>::value && !std::is_same_v<FuncType, KernelFunction::BoxedKernelFunction>) {
      constexpr bool AllowLegacyTypes = true;
      return std::move(*this).op(std::move(options).schema(schemaOrName).kernel(
        std::nullopt,
@@ -537,8 +533,8 @@ public:
     */
     template<class Lambda>
     // enable_if: only enable it if Lambda is actually a stateless lambda
-    std::enable_if_t<guts::is_functor<Lambda>::value && guts::is_stateless_lambda<std::decay_t<Lambda>>::value, RegisterOperators&&>
-    op(const std::string& schemaOrName, Lambda&& lambda, Options&& options = RegisterOperators::options()) && {
+    RegisterOperators&&
+    op(const std::string& schemaOrName, Lambda&& lambda, Options&& options = RegisterOperators::options()) && requires (guts::is_functor<Lambda>::value && guts::is_stateless_lambda<std::decay_t<Lambda>>::value) {
       static_assert(!std::is_base_of_v<OperatorKernel, Lambda>, "c10::OperatorKernel is part of the new kernel registration API and shouldn't be used together with the deprecated registration API. Please use the new RegisterOperators::options().kernel() based API instead.");
 
       constexpr bool AllowLegacyTypes = true;
@@ -554,8 +550,8 @@ public:
     template<class Lambda>
     C10_DEPRECATED_MESSAGE("Registering operator kernels with stateful lambdas (i.e. lambdas with a capture) has non-obvious behavior. This is deprecated. Please use a lambda without a capture or a functor class instead.")
     // enable_if: only enable it if Lambda is actually a functor but not a stateless lambda
-    std::enable_if_t<guts::is_functor<Lambda>::value && !guts::is_stateless_lambda<std::decay_t<Lambda>>::value, RegisterOperators&&>
-    op(const std::string& schemaOrName, Lambda&& lambda, Options&& options = RegisterOperators::options()) && {
+    RegisterOperators&&
+    op(const std::string& schemaOrName, Lambda&& lambda, Options&& options = RegisterOperators::options()) && requires (guts::is_functor<Lambda>::value && !guts::is_stateless_lambda<std::decay_t<Lambda>>::value) {
       static_assert(!std::is_base_of_v<OperatorKernel, Lambda>, "c10::OperatorKernel is part of the new kernel registration API and shouldn't be used together with the deprecated registration API. Please use the new RegisterOperators::options().kernel() based API instead.");
 
       constexpr bool AllowLegacyTypes = true;

@@ -21,17 +21,15 @@ class Operation {
   using accepts = std::is_constructible<std::function<void(Arg)>, F&&>;
 
  public:
-  template <typename F,
-            std::enable_if_t<accepts<F, Stack*>::value, int> = 0>
+  template <typename F>
   C10_DEPRECATED_MESSAGE("Please use void(Stack&) to register operator instead.")
-  Operation(F&& raw): op_([raw = std::forward<F>(raw)](Stack& stack) {
+  Operation(F&& raw)requires accepts<F, Stack*>::value : op_([raw = std::forward<F>(raw)](Stack& stack) {
     raw(&stack);
   }) {}
 
-  template <typename F,
-            std::enable_if_t<accepts<F, Stack&>::value &&
-                !std::is_same_v<std::decay_t<F>, Operation>, int> = 0>
-  Operation(F&& op): op_(std::forward<F>(op)) {}
+  template <typename F>
+  Operation(F&& op)requires (accepts<F, Stack&>::value &&
+                !std::is_same_v<std::decay_t<F>, Operation>) : op_(std::forward<F>(op)) {}
 
   Operation(std::nullptr_t) noexcept {}
 
@@ -154,16 +152,14 @@ inline std::tuple<Types...> pop_impl(
 }
 } // namespace detail
 template <
-    typename... Types,
-    std::enable_if_t<(sizeof...(Types) > 0), int> = 0>
-inline std::tuple<Types...> pop(Stack& stack) {
+    typename... Types>
+inline std::tuple<Types...> pop(Stack& stack) requires (sizeof...(Types) > 0) {
   return detail::pop_impl<Types...>(
       stack, std::make_index_sequence<sizeof...(Types)>{});
 }
 template <
-    typename... Types,
-    std::enable_if_t<(sizeof...(Types) > 0), int> = 0>
-inline std::tuple<Types...> pop(Stack* stack) {
+    typename... Types>
+inline std::tuple<Types...> pop(Stack* stack) requires (sizeof...(Types) > 0) {
   return pop<Types...>(*stack);
 }
 template <typename Type>

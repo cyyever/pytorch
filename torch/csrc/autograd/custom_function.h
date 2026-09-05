@@ -451,15 +451,15 @@ inline void extract_vars(
 }
 
 template <typename T>
-std::enable_if_t<std::is_same_v<T, variable_list>, T> to_output_type(
-    std::vector<std::optional<Variable>>& output_list) {
+T to_output_type(
+    std::vector<std::optional<Variable>>& output_list) requires (std::is_same_v<T, variable_list>) {
   return c10::fmap(
       output_list, [](const std::optional<Variable>& var) { return *var; });
 }
 
 template <typename T>
-std::enable_if_t<std::is_same_v<T, Variable>, T> to_output_type(
-    std::vector<std::optional<Variable>>& output_list) {
+T to_output_type(
+    std::vector<std::optional<Variable>>& output_list) requires (std::is_same_v<T, Variable>) {
   return *output_list[0];
 }
 

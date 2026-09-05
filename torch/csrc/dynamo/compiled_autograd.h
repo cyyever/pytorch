@@ -706,7 +706,7 @@ class CompiledNodeArgs {
   // a mix of -Werror, -Wtautological-type-limit-compare and
   // -Wunknown-pragmas
   template <typename T>
-  std::enable_if_t<std::is_unsigned_v<T>, void> collect_size(T s) {
+  void collect_size(T s) requires (std::is_unsigned_v<T>) {
     // we expect sizes to be small, so try to cram them into a single byte
     constexpr uint8_t encode_as_u64 = std::numeric_limits<uint8_t>::max();
     constexpr uint8_t encode_as_u32 = encode_as_u64 - 1;
