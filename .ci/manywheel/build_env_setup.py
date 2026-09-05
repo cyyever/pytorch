@@ -48,7 +48,6 @@ CUDA_BUILD_ENV_STATIC: dict[str, str] = {
     "USE_STATIC_CUDNN": "0",
     "USE_STATIC_NCCL": "0",
     "ATEN_STATIC_CUDA": "0",
-    "USE_CUDA_STATIC_LINK": "0",
     "USE_CUPTI_SO": "1",
     "USE_SYSTEM_NCCL": "1",
     "NCCL_INCLUDE_DIR": "/usr/local/cuda/include/",
@@ -166,7 +165,6 @@ ROCM_BUILD_ENV_STATIC: dict[str, str] = {
     "USE_STATIC_CUDNN": "1",
     "USE_STATIC_NCCL": "1",
     "ATEN_STATIC_CUDA": "1",
-    "USE_CUDA_STATIC_LINK": "1",
     "INSTALL_TEST": "0",
     "FORCE_RPATH": "--force-rpath",
 }
