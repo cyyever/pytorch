@@ -256,30 +256,10 @@ __global__ void upsample_bilinear2d_backward_out_frame(
     const accscalar_t w0lambda = static_cast<accscalar_t>(1) - w1lambda;
     //
     const scalar_t d2val = odata[index];
-    fastAtomicAdd(
-        idata,
-        idx(nc, height1, width1, h1, w1),
-        i_numel,
-        static_cast<scalar_t>(h0lambda * w0lambda * d2val),
-        true);
-    fastAtomicAdd(
-        idata,
-        idx(nc, height1, width1, h1, w1 + w1p),
-        i_numel,
-        static_cast<scalar_t>(h0lambda * w1lambda * d2val),
-        true);
-    fastAtomicAdd(
-        idata,
-        idx(nc, height1, width1, h1 + h1p, w1),
-        i_numel,
-        static_cast<scalar_t>(h1lambda * w0lambda * d2val),
-        true);
-    fastAtomicAdd(
-        idata,
-        idx(nc, height1, width1, h1 + h1p, w1 + w1p),
-        i_numel,
-        static_cast<scalar_t>(h1lambda * w1lambda * d2val),
-        true);
+    fastAtomicAdd(std::span(idata, i_numel), idx(nc, height1, width1, h1, w1), static_cast<scalar_t>(h0lambda * w0lambda * d2val), true);
+    fastAtomicAdd(std::span(idata, i_numel), idx(nc, height1, width1, h1, w1 + w1p), static_cast<scalar_t>(h0lambda * w1lambda * d2val), true);
+    fastAtomicAdd(std::span(idata, i_numel), idx(nc, height1, width1, h1 + h1p, w1), static_cast<scalar_t>(h1lambda * w0lambda * d2val), true);
+    fastAtomicAdd(std::span(idata, i_numel), idx(nc, height1, width1, h1 + h1p, w1 + w1p), static_cast<scalar_t>(h1lambda * w1lambda * d2val), true);
   }
 #endif
 }
@@ -323,30 +303,10 @@ __global__ void upsample_bilinear2d_backward_nhwc_out_frame(
     const accscalar_t w0lambda = static_cast<accscalar_t>(1) - w1lambda;
 
     const scalar_t d2val = odata[index];
-    fastAtomicAdd(
-        idata,
-        idx_cl<index_t>(n, h1, w1, c, height1, width1, channels),
-        i_numel,
-        static_cast<scalar_t>(h0lambda * w0lambda * d2val),
-        true);
-    fastAtomicAdd(
-        idata,
-        idx_cl<index_t>(n, h1, w1 + w1p, c, height1, width1, channels),
-        i_numel,
-        static_cast<scalar_t>(h0lambda * w1lambda * d2val),
-        true);
-    fastAtomicAdd(
-        idata,
-        idx_cl<index_t>(n, h1 + h1p, w1, c, height1, width1, channels),
-        i_numel,
-        static_cast<scalar_t>(h1lambda * w0lambda * d2val),
-        true);
-    fastAtomicAdd(
-        idata,
-        idx_cl<index_t>(n, h1 + h1p, w1 + w1p, c, height1, width1, channels),
-        i_numel,
-        static_cast<scalar_t>(h1lambda * w1lambda * d2val),
-        true);
+    fastAtomicAdd(std::span(idata, i_numel), idx_cl<index_t>(n, h1, w1, c, height1, width1, channels), static_cast<scalar_t>(h0lambda * w0lambda * d2val), true);
+    fastAtomicAdd(std::span(idata, i_numel), idx_cl<index_t>(n, h1, w1 + w1p, c, height1, width1, channels), static_cast<scalar_t>(h0lambda * w1lambda * d2val), true);
+    fastAtomicAdd(std::span(idata, i_numel), idx_cl<index_t>(n, h1 + h1p, w1, c, height1, width1, channels), static_cast<scalar_t>(h1lambda * w0lambda * d2val), true);
+    fastAtomicAdd(std::span(idata, i_numel), idx_cl<index_t>(n, h1 + h1p, w1 + w1p, c, height1, width1, channels), static_cast<scalar_t>(h1lambda * w1lambda * d2val), true);
   }
 }
 

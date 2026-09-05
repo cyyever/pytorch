@@ -38,10 +38,10 @@ class ReduceAdd {
     //       most.
     if (__builtin_amdgcn_processor_is("gfx942") ||
         __builtin_amdgcn_processor_is("gfx950"))
-      return opportunistic_fastAtomicAdd(self_data_start, index, numel, *src_data);
-    fastAtomicAdd(self_data_start, index, numel, *src_data, true);
+      return opportunistic_fastAtomicAdd(std::span(self_data_start, numel), index, *src_data);
+    fastAtomicAdd(std::span(self_data_start, numel), index, *src_data, true);
   #else
-    fastAtomicAdd(self_data_start, index, numel, *src_data, true);
+    fastAtomicAdd(std::span(self_data_start, numel), index, *src_data, true);
   #endif
   }
 };
@@ -51,7 +51,7 @@ class ReduceMean {
 public:
   template <typename scalar_t>
   constexpr C10_DEVICE void operator() (scalar_t* self_data_start, int64_t index, int64_t numel, const scalar_t * src_data) const {
-    fastAtomicAdd(self_data_start, index, numel, *src_data, true);
+    fastAtomicAdd(std::span(self_data_start, numel), index, *src_data, true);
   }
 };
 static ReduceMean reduce_mean;

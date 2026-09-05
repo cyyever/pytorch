@@ -252,11 +252,7 @@ void safe_add_2d(scalar_t *data, int h, int w,
                  const index_t NC_offset,
                  const index_t memory_span) {
   if (within_bounds_2d(h, w, H, W)) {
-    fastAtomicAdd(data,
-                  NC_offset + h * sH + w * sW,
-                  memory_span,
-                  delta,
-                  true);
+    fastAtomicAdd(std::span(data, memory_span), NC_offset + h * sH + w * sW, delta, true);
   }
 }
 
@@ -268,11 +264,7 @@ void safe_add_3d(scalar_t *data, int d, int h, int w,
                  const index_t NC_offset,
                  const index_t memory_span) {
   if (within_bounds_3d(d, h, w, D, H, W)) {
-    fastAtomicAdd(data,
-                  NC_offset + d * sD + h * sH + w * sW,
-                  memory_span,
-                  delta,
-                  true);
+    fastAtomicAdd(std::span(data, memory_span), NC_offset + d * sD + h * sH + w * sW, delta, true);
   }
 }
 

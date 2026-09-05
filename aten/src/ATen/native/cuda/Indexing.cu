@@ -525,10 +525,10 @@ class ReduceAdd {
     //       most.
     if(__builtin_amdgcn_processor_is("gfx942") ||
        __builtin_amdgcn_processor_is("gfx950"))
-      return opportunistic_fastAtomicAdd(self_data_start, index, numel, *src_data);
-    fastAtomicAdd(self_data_start, index, numel, *src_data, true);
+      return opportunistic_fastAtomicAdd(std::span(self_data_start, numel), index, *src_data);
+    fastAtomicAdd(std::span(self_data_start, numel), index, *src_data, true);
 #else
-    fastAtomicAdd(self_data_start, index, numel, *src_data, true);
+    fastAtomicAdd(std::span(self_data_start, numel), index, *src_data, true);
 #endif
   }
 };

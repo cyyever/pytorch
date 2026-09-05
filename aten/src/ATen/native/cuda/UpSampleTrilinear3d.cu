@@ -187,54 +187,14 @@ __global__ void upsample_trilinear3d_backward_out_frame(
       for (int c = 0; c < channels; ++c) {
         const scalar_t d2val = odata[n][c][t2][h2][w2];
         const size_t nc = n * channels + c;
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1, h1, w1),
-          i_numel,
-          static_cast<scalar_t>(t0lambda * h0lambda * w0lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1, h1, w1 + w1p),
-          i_numel,
-          static_cast<scalar_t>(t0lambda * h0lambda * w1lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1, h1 + h1p, w1),
-          i_numel,
-          static_cast<scalar_t>(t0lambda * h1lambda * w0lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1, h1 + h1p, w1 + w1p),
-          i_numel,
-          static_cast<scalar_t>(t0lambda * h1lambda * w1lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1 + t1p, h1, w1),
-          i_numel,
-          static_cast<scalar_t>(t1lambda * h0lambda * w0lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1 + t1p, h1, w1 + w1p),
-          i_numel,
-          static_cast<scalar_t>(t1lambda * h0lambda * w1lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1 + t1p, h1 + h1p, w1),
-          i_numel,
-          static_cast<scalar_t>(t1lambda * h1lambda * w0lambda * d2val),
-          true);
-        fastAtomicAdd(
-          idata_ptr,
-          idx_3d(nc, depth1, height1, width1, t1 + t1p, h1 + h1p, w1 + w1p),
-          i_numel,
-          static_cast<scalar_t>(t1lambda * h1lambda * w1lambda * d2val),
-          true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1, h1, w1), static_cast<scalar_t>(t0lambda * h0lambda * w0lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1, h1, w1 + w1p), static_cast<scalar_t>(t0lambda * h0lambda * w1lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1, h1 + h1p, w1), static_cast<scalar_t>(t0lambda * h1lambda * w0lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1, h1 + h1p, w1 + w1p), static_cast<scalar_t>(t0lambda * h1lambda * w1lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1 + t1p, h1, w1), static_cast<scalar_t>(t1lambda * h0lambda * w0lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1 + t1p, h1, w1 + w1p), static_cast<scalar_t>(t1lambda * h0lambda * w1lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1 + t1p, h1 + h1p, w1), static_cast<scalar_t>(t1lambda * h1lambda * w0lambda * d2val), true);
+        fastAtomicAdd(std::span(idata_ptr, i_numel), idx_3d(nc, depth1, height1, width1, t1 + t1p, h1 + h1p, w1 + w1p), static_cast<scalar_t>(t1lambda * h1lambda * w1lambda * d2val), true);
       }
     }
   }

@@ -24,7 +24,7 @@ using torch::headeronly::fastSpecializedAtomicAdd;
 //
 // fastAtomicAdd needs to know how far it may look for a pairing partner -- see
 // Note [Passing pointer and offset to fastAtomicAdd] in GridSampler.cu. A
-// caller holding a raw pointer supplies that by hand, and too large a value
+// caller holding a raw pointer sizes the span by hand, and too large a size
 // lets the pairing write past the allocation. An accessor already carries what
 // it would be derived from:
 //
@@ -55,7 +55,7 @@ __device__ __forceinline__ void fastAtomicAdd(
     offset += index[d] * accessor.stride(d);
     memory_span += (accessor.size(d) - 1) * accessor.stride(d);
   }
-  fastAtomicAdd(accessor.data(), offset, memory_span, value, true);
+  fastAtomicAdd(std::span(accessor.data(), memory_span), offset, value, true);
 }
 
 __device__ __forceinline__ size_t
@@ -149,10 +149,10 @@ __device__ inline void cmtdStore(void* address, T value) {
 // destination address.
 template <class scalar_t, class index_t>
 __device__ __forceinline__ void opportunistic_fastAtomicAdd(
-    scalar_t* self_ptr,
+    std::span<scalar_t> self_ptr,
     index_t index,
-    const index_t numel,
     scalar_t value) {
+  const auto numel = static_cast<index_t>(self_ptr.size());
   // TODO: move the builtin checks around the point-of-use, and implement a
   //       fallback for their absence, so as to allow targets that implement a
   //       subset to derive some benefit at least
@@ -161,7 +161,7 @@ __device__ __forceinline__ void opportunistic_fastAtomicAdd(
           __builtin_amdgcn_flat_atomic_fadd_v2bf16) ||
       !__builtin_amdgcn_is_invocable(__builtin_amdgcn_flat_atomic_fadd_v2f16))
     return;
-  scalar_t* dst = self_ptr + index;
+  scalar_t* dst = self_ptr.data() + index;
 
   // pack coalesced bf16 and fp16
   if constexpr (
@@ -185,7 +185,7 @@ __device__ __forceinline__ void opportunistic_fastAtomicAdd(
     bfi_oneUpVal.s = __builtin_amdgcn_mov_dpp(bfi_.s, 0x130, 0xf, 0xf, 0);
     auto oneUpVal = bfi_oneUpVal.bf;
 
-    __half* target_addr = reinterpret_cast<__half*>(self_ptr + index);
+    __half* target_addr = reinterpret_cast<__half*>(self_ptr.data() + index);
     bool low_byte =
         (reinterpret_cast<std::uintptr_t>(target_addr) % sizeof(__half2) == 0);
     bool canCombnUp = (bool)(__activemask() & (1 << (threadIdx.x + 1))) &&
@@ -222,7 +222,7 @@ __device__ __forceinline__ void opportunistic_fastAtomicAdd(
   if (numel > 16 /*<-hueristic threshold*/ * 64) {
     // well shucks, unlikely to capture same-dest atomics in a wave.
     // fall back to direct fastAtomic...
-    fastAtomicAdd(self_ptr, index, numel, value, true);
+    fastAtomicAdd(std::span(self_ptr, numel), index, value, true);
     return;
   }
 
@@ -311,7 +311,7 @@ __device__ __forceinline__ void opportunistic_fastAtomicAdd(
   // Once the correct crnt_val is determined, only the leader thread does the
   // update to the dest addr
   if (__lane_id() == leader) {
-    fastAtomicAdd(self_ptr, index, numel, crnt_val, true);
+    fastAtomicAdd(std::span(self_ptr, numel), index, crnt_val, true);
   }
 }
 #endif

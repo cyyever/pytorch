@@ -39,15 +39,13 @@ __global__ void scatter_add_kernel(
     bool fast_atomics) {
   for (int64_t i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
        i += static_cast<int64_t>(blockDim.x) * gridDim.x) {
-    torch::headeronly::fastAtomicAdd(
-        out, indices[i], numel, static_cast<scalar_t>(1), fast_atomics);
+    torch::headeronly::fastAtomicAdd(std::span(out, numel), indices[i], static_cast<scalar_t>(1), fast_atomics);
   }
 }
 
 template <typename scalar_t, typename index_t>
 __global__ void specialized_add_kernel(scalar_t* out, index_t numel) {
-  torch::headeronly::fastSpecializedAtomicAdd(
-      out, index_t{0}, numel, static_cast<scalar_t>(1));
+  torch::headeronly::fastSpecializedAtomicAdd(std::span(out, numel), index_t{0}, static_cast<scalar_t>(1));
 }
 
 // Scatters +1 into each of `indices` of a `numel`-element tensor starting

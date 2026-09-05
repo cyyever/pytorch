@@ -268,7 +268,7 @@ __global__ void avg_pool3d_cuda_update_grad_input_atomic(
         for (int iCol = wstart; iCol < wend; ++iCol)
         {
           const int64_t index = slice * gradInput.stride(0) + iFrame * gradInput.stride(1) + iRow * gradInput.stride(2) + iCol * gradInput.stride(3);
-          fastAtomicAdd(gradInput.data(), index, gradInput_numel, val, true);
+          fastAtomicAdd(std::span(gradInput.data(), gradInput_numel), index, val, true);
         }
       }
     }

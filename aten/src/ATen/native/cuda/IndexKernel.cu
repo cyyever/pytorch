@@ -364,7 +364,7 @@ void put_kernel(TensorIterator& iter, const TensorBase& output, const bool accum
              index_t numel = output.numel();
              cuda_take_put_kernel<scalar_t, index_t>(iter, output,
                  [numel, indexed_ptr] __device__(scalar_t& iterated, const index_t offset) {
-                   fastSpecializedAtomicAdd(indexed_ptr, offset, numel, iterated);
+                   fastSpecializedAtomicAdd(std::span(indexed_ptr, numel), offset, iterated);
                  });
            }
            else {

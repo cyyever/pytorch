@@ -2,6 +2,11 @@
 
 #include <torch/headeronly/cuda/Atomic.h>
 
+// Only data() and size() may be used on these spans. libstdc++'s
+// span::operator[] calls __glibcxx_assert, and hip-clang rejects the
+// resulting reference to a __host__ function from device code.
+#include <span>
+
 #if !(defined(USE_ROCM) || ((defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))))
 #include <cuda_bf16.h>
 #endif
@@ -108,26 +113,26 @@ HIDDEN_NAMESPACE_BEGIN(torch, headeronly)
 // We can convert a __half atomic into a __half2 atomic by simply
 // pairing the __half with a zero entry on the left/right depending
 // on alignment... but only if this wouldn't cause an out of bounds
-// access!  Thus, you must specify tensor and numel so we can check
-// if you would be out-of-bounds and use a plain __half atomic if
-// you would be.
+// access!  The span carries the bound the pairing is checked against, so a
+// caller cannot hand over a pointer without one; out of bounds falls back to
+// a plain __half atomic.
 template <
     typename scalar_t,
     typename index_t,
     typename std::enable_if_t<std::is_same_v<c10::Half, scalar_t>>* = nullptr>
 __device__ __forceinline__ void fastSpecializedAtomicAdd(
-    scalar_t* tensor,
+    std::span<scalar_t> tensor,
     index_t index,
-    const index_t numel,
     scalar_t value) {
+  const auto numel = static_cast<index_t>(tensor.size());
 #if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 700))
   gpuAtomicAddNoReturn(
-      reinterpret_cast<at::Half*>(tensor) + index,
+      reinterpret_cast<at::Half*>(tensor.data()) + index,
       static_cast<at::Half>(value));
 #else
   // Accounts for the chance tensor falls on an odd 16 bit alignment (ie, not 32
   // bit aligned)
-  __half* target_addr = reinterpret_cast<__half*>(tensor + index);
+  __half* target_addr = reinterpret_cast<__half*>(tensor.data() + index);
   bool low_byte =
       (reinterpret_cast<std::uintptr_t>(target_addr) % sizeof(__half2) == 0);
 
@@ -146,11 +151,12 @@ __device__ __forceinline__ void fastSpecializedAtomicAdd(
   } else {
 #ifdef USE_ROCM
     gpuAtomicAddNoReturn(
-        reinterpret_cast<at::Half*>(tensor) + index,
+        reinterpret_cast<at::Half*>(tensor.data()) + index,
         static_cast<at::Half>(value));
 #else
     atomicAdd(
-        reinterpret_cast<__half*>(tensor) + index, static_cast<__half>(value));
+        reinterpret_cast<__half*>(tensor.data()) + index,
+        static_cast<__half>(value));
 #endif
   }
 #endif
@@ -162,18 +168,19 @@ template <
     typename std::enable_if_t<std::is_same_v<c10::BFloat16, scalar_t>>* =
         nullptr>
 __device__ __forceinline__ void fastSpecializedAtomicAdd(
-    scalar_t* tensor,
+    std::span<scalar_t> tensor,
     index_t index,
-    const index_t numel,
     scalar_t value) {
+  const auto numel = static_cast<index_t>(tensor.size());
 #if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
   gpuAtomicAddNoReturn(
-      reinterpret_cast<at::BFloat16*>(tensor) + index,
+      reinterpret_cast<at::BFloat16*>(tensor.data()) + index,
       static_cast<at::BFloat16>(value));
 #else
   // Accounts for the chance tensor falls on an odd 16 bit alignment (ie, not 32
   // bit aligned)
-  __nv_bfloat16* target_addr = reinterpret_cast<__nv_bfloat16*>(tensor + index);
+  __nv_bfloat16* target_addr =
+      reinterpret_cast<__nv_bfloat16*>(tensor.data() + index);
   bool low_byte =
       (reinterpret_cast<std::uintptr_t>(target_addr) % sizeof(__nv_bfloat162) ==
        0);
@@ -193,11 +200,11 @@ __device__ __forceinline__ void fastSpecializedAtomicAdd(
   } else {
 #ifdef USE_ROCM
     gpuAtomicAddNoReturn(
-        reinterpret_cast<at::BFloat16*>(tensor) + index,
+        reinterpret_cast<at::BFloat16*>(tensor.data()) + index,
         static_cast<at::BFloat16>(value));
 #else
     atomicAdd(
-        reinterpret_cast<__nv_bfloat16*>(tensor) + index,
+        reinterpret_cast<__nv_bfloat16*>(tensor.data()) + index,
         *reinterpret_cast<__nv_bfloat16*>(&value));
 #endif
   }
@@ -211,24 +218,22 @@ template <
         !std::is_same_v<c10::Half, scalar_t> &&
         !std::is_same_v<c10::BFloat16, scalar_t>>* = nullptr>
 __device__ __forceinline__ void fastSpecializedAtomicAdd(
-    scalar_t* tensor,
+    std::span<scalar_t> tensor,
     index_t index,
-    const index_t numel,
     scalar_t value) {
-  gpuAtomicAddNoReturn(tensor + index, value);
+  gpuAtomicAddNoReturn(tensor.data() + index, value);
 }
 
 template <class scalar_t, class index_t>
 __device__ __forceinline__ void fastAtomicAdd(
-    scalar_t* tensor,
+    std::span<scalar_t> tensor,
     index_t index,
-    const index_t numel,
     scalar_t value,
     bool fast_atomics) {
   if (fast_atomics) {
-    fastSpecializedAtomicAdd(tensor, index, numel, value);
+    fastSpecializedAtomicAdd(tensor, index, value);
   } else {
-    gpuAtomicAddNoReturn(tensor + index, value);
+    gpuAtomicAddNoReturn(tensor.data() + index, value);
   }
 }
 
