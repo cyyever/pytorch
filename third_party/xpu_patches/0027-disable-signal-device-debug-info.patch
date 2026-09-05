@@ -1,0 +1,12 @@
+# Disable device debug information for Signal.cpp.
+diff --git a/src/BuildOnLinux.cmake b/src/BuildOnLinux.cmake
+index 5369236b..5500757b 100644
+--- a/src/BuildOnLinux.cmake
++++ b/src/BuildOnLinux.cmake
+@@ -38,0 +39,4 @@ if(BUILD_SEPARATE_OPS)
++    set(_sycl_compile_flags ${SYCL_COMPILE_FLAGS})
++    if(name STREQUAL "Signal")
++      list(APPEND SYCL_COMPILE_FLAGS -g0)
++    endif()
+@@ -43,0 +48 @@ if(BUILD_SEPARATE_OPS)
++    set(SYCL_COMPILE_FLAGS ${_sycl_compile_flags})
