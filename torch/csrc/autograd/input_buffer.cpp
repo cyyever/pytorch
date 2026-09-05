@@ -68,12 +68,13 @@ namespace {
 // TODO: clean this up when https://github.com/pytorch/pytorch/issues/60306 is
 // improved
 void record_stream_any_impl(Variable& var, const c10::Stream& stream) {
-  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-
   if (stream.device_index() != var.device().index()) {
     return;
   }
 
+  // var is defined here: the caller reached this through a Variable it
+  // just accumulated, and the line above already asked for its device.
+  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
   const auto guard = c10::impl::VirtualGuardImpl(device_of(var).value().type());
 
   if (C10_UNLIKELY(at::isBatchedTensor(var))) {
