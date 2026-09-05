@@ -11,6 +11,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(C10_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS}) # used in cmake_macros.h.in
 set(C10_USE_NUMA ${USE_NUMA}) # used in cmake_macros.h.in
 set(C10_USE_ROCM_KERNEL_ASSERT ${USE_ROCM_KERNEL_ASSERT}) # used in cmake_macros.h.in
+# Debug-only checks in the headeronly headers key off this rather than NDEBUG,
+# so that an extension's own build type cannot change the body of an inline
+# function libtorch also defines. used in cmake_macros.h.in
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithAssert")
+  set(C10_ENABLE_DEBUG_CHECKS ON)
+endif()
 configure_file(
     ${CMAKE_CURRENT_LIST_DIR}/macros/cmake_macros.h.in
     ${CMAKE_BINARY_DIR}/torch/headeronly/macros/cmake_macros.h)
