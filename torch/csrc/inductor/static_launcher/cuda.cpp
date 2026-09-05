@@ -448,11 +448,14 @@ PyObject* load_kernel(PyObject* self, PyObject* args) {
   CUcontext pctx = nullptr;
 
 #if defined(USE_ROCM)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   AT_CUDA_DRIVER_CHECK(hipCtxGetCurrent(&pctx));
   if (!pctx) {
     AT_CUDA_DRIVER_CHECK(hipDevicePrimaryCtxRetain(&pctx, device));
     AT_CUDA_DRIVER_CHECK(hipCtxSetCurrent(pctx));
   }
+#pragma clang diagnostic pop
 #else
   AT_CUDA_DRIVER_CHECK(nvrtc().cuCtxGetCurrent(&pctx));
   if (!pctx) {
@@ -592,7 +595,10 @@ PyObject* launch_kernel(PyObject* self, PyObject* args) {
   }
   CUcontext pctx = nullptr;
 #if defined(USE_ROCM)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   AT_CUDA_DRIVER_CHECK(hipCtxGetCurrent(&pctx));
+#pragma clang diagnostic pop
 #else
   AT_CUDA_DRIVER_CHECK(nvrtc().cuCtxGetCurrent(&pctx));
 #endif
@@ -601,9 +607,12 @@ PyObject* launch_kernel(PyObject* self, PyObject* args) {
     // Ensure device context exists
     CUdevice device = 0;
 #if defined(USE_ROCM)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     AT_CUDA_DRIVER_CHECK(hipDeviceGet(&device, 0));
     AT_CUDA_DRIVER_CHECK(hipDevicePrimaryCtxRetain(&pctx, device));
     AT_CUDA_DRIVER_CHECK(hipCtxSetCurrent(pctx));
+#pragma clang diagnostic pop
 #else
     AT_CUDA_DRIVER_CHECK(nvrtc().cuDeviceGet(&device, 0));
     AT_CUDA_DRIVER_CHECK(nvrtc().cuDevicePrimaryCtxRetain(&pctx, device));
