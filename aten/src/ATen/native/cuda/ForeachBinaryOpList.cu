@@ -4,6 +4,7 @@
 #include <ATen/native/ForeachUtils.h>
 #include <ATen/native/cuda/ForeachFunctors.cuh>
 #include <ATen/native/cuda/ForeachMinMaxFunctors.cuh>
+#include <algorithm>
 #include <functional>
 #include <type_traits>
 
@@ -409,18 +410,12 @@ void foreach_tensor_copy_list_kernel_cuda_(
   check_foreach_api_restrictions(self, src);
   if (!(_check_tensors_share_device_and_dtype(
             {self, src}, /* skip_dtype_check */ true) &&
-        std::all_of(
-            src.cbegin(),
-            src.cend(),
-            [&src](const auto& t) -> bool {
-              return t.dtype() == src[0].dtype();
-            }) &&
-        std::all_of(
-            self.cbegin(),
-            self.cend(),
-            [&self](const auto& t) -> bool {
-              return t.dtype() == self[0].dtype();
-            }) &&
+        std::ranges::all_of(
+            src,
+            [&src](const auto& t) { return t.dtype() == src[0].dtype(); }) &&
+        std::ranges::all_of(
+            self,
+            [&self](const auto& t) { return t.dtype() == self[0].dtype(); }) &&
         _check_tensors_share_sizes_and_strides({self, src}))) {
     return at::native::foreach_tensor_copy_list_kernel_slow_(
         self, src, non_blocking);
