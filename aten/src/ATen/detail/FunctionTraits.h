@@ -46,6 +46,8 @@ struct function_traits<ReturnType(Args...)> {
   enum { arity = sizeof...(Args) };
 
   using ArgsTuple = std::tuple<Args...>;
+  template <template <typename...> class Tuple>
+  using ArgsTupleWith = Tuple<Args...>;
   using result_type = ReturnType;
 
   template <size_t i>

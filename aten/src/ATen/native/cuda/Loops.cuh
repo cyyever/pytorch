@@ -8,9 +8,11 @@
 #include <ATen/native/cuda/thread_constants.h>
 #include <ATen/native/cuda/MemoryAccess.cuh>
 
-#include <c10/util/C++17.h>
 #include <tuple>
 
+#ifdef USE_ROCM
+#include <hip/std/tuple>
+#endif
 
 
 namespace at::native {
@@ -45,7 +47,11 @@ template <bool reverted_idx = false, typename func_t, typename policy_t>
 __device__ inline void elementwise_kernel_helper(func_t f, policy_t policy) {
   using traits = function_traits<func_t>;
   using return_t = typename traits::result_type;
+#ifdef USE_ROCM
+  using args_t = typename traits::template ArgsTupleWith<::hip::std::tuple>;
+#else
   using args_t = typename traits::ArgsTuple;
+#endif
   constexpr int elems_per_thread = policy_t::tws;
 
   int idx = blockIdx.x;
@@ -62,8 +68,8 @@ __device__ inline void elementwise_kernel_helper(func_t f, policy_t policy) {
   #pragma unroll
   for (int i = 0; i < elems_per_thread; i++) {
     if (policy.check_inbounds(i)) {
-#if defined(__HIP__)
-      results[i] = c10::guts::apply(f, args[i]);
+#ifdef USE_ROCM
+      results[i] = ::hip::std::apply(f, args[i]);
 #else
       results[i] = std::apply(f, args[i]);
 #endif
