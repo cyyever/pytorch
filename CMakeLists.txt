@@ -551,6 +551,10 @@ endif()
 
 string(APPEND CMAKE_CUDA_FLAGS " -compress-mode=size")
 
+# nvcc's host pass needs the section flags forwarded; see the CXX ones below.
+string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler=-ffunction-sections")
+string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler=-fdata-sections")
+
 # Let nvcc split device codegen across threads. Two keeps the product with
 # MAX_JOBS within the core count on the machines this fork is built on.
 string(APPEND CMAKE_CUDA_FLAGS " --split-compile=2")
@@ -562,13 +566,32 @@ if(NOT DEFINED USE_BLAS)
   set(USE_BLAS ON)
 endif()
 
+# One section per function and per datum. This is what lets a linker reason
+# about either at link time -- --gc-sections to drop them, --icf to fold
+# identical ones -- and the prioritized-text script below to place them.
+append_cxx_flag_if_supported("-ffunction-sections" CMAKE_CXX_FLAGS)
+append_cxx_flag_if_supported("-fdata-sections" CMAKE_CXX_FLAGS)
+append_c_flag_if_supported("-ffunction-sections" CMAKE_C_FLAGS)
+append_c_flag_if_supported("-fdata-sections" CMAKE_C_FLAGS)
+
+# lld, not the default bfd: it links a library the size of libtorch_cuda.so in
+# a fraction of the time, and it is the linker that implements --icf. Skip it
+# when the toolchain has no ld.lld rather than failing the configure.
+if(NOT DEFINED CMAKE_LINKER_TYPE AND NOT APPLE AND NOT MSVC)
+  find_program(LLD_EXECUTABLE NAMES ld.lld)
+  if(LLD_EXECUTABLE)
+    set(CMAKE_LINKER_TYPE LLD)
+    message(STATUS "Linking with lld: ${LLD_EXECUTABLE}")
+    # Fold identical sections. "safe" and not "all": the dispatcher keys
+    # registrations on function pointers, and only safe proves, through the
+    # address-significance table clang emits, that a folded function's address
+    # is never compared.
+    add_link_options("LINKER:--icf=safe")
+  endif()
+endif()
+
 # Prioritized Text Linker Optimization
 if(USE_PRIORITIZED_TEXT_FOR_LD)
-  append_cxx_flag_if_supported("-ffunction-sections" CMAKE_CXX_FLAGS)
-  append_cxx_flag_if_supported("-fdata-sections" CMAKE_CXX_FLAGS)
-  append_c_flag_if_supported("-ffunction-sections" CMAKE_C_FLAGS)
-  append_c_flag_if_supported("-fdata-sections" CMAKE_C_FLAGS)
-
   set(LINKER_SCRIPT_FILE_IN "${CMAKE_SOURCE_DIR}/cmake/prioritized_text.txt")
   set(LINKER_SCRIPT_FILE_OUT "${CMAKE_SOURCE_DIR}/cmake/linker_script.ld")
   set(LINKER_SCRIPT_PATH "${CMAKE_SOURCE_DIR}/tools/setup_helpers/generate_linker_script.py")
