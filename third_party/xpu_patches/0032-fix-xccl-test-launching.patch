@@ -1,0 +1,61 @@
+# Fix XCCL test environment setup and distributed runner error propagation.
+diff --git a/test/xpu/distributed/test_c10d_ops_xccl.py b/test/xpu/distributed/test_c10d_ops_xccl.py
+index f8520461..cf36584a 100644
+--- a/test/xpu/distributed/test_c10d_ops_xccl.py
++++ b/test/xpu/distributed/test_c10d_ops_xccl.py
+@@ -37 +37,5 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+-from test_c10d_xccl import init_multigpu_helper, requires_xccl
++from test_c10d_xccl import (
++    init_multigpu_helper,
++    requires_xccl,
++    set_xccl_launcher_env,
++)
+@@ -61,0 +66,5 @@ class ProcessGroupXCCLOpTest(MultiProcContinuousTest):
++    @classmethod
++    def _init_pg(cls, rank, world_size, rdvz_file):
++        set_xccl_launcher_env(rank, world_size)
++        super()._init_pg(rank, world_size, rdvz_file)
++
+diff --git a/test/xpu/distributed/test_c10d_xccl.py b/test/xpu/distributed/test_c10d_xccl.py
+index 7dc44f84..d153d89f 100644
+--- a/test/xpu/distributed/test_c10d_xccl.py
++++ b/test/xpu/distributed/test_c10d_xccl.py
+@@ -66,0 +67,6 @@ def requires_xccl():
++def set_xccl_launcher_env(rank, world_size):
++    os.environ["CCL_PROCESS_LAUNCHER"] = "none"
++    os.environ["CCL_LOCAL_RANK"] = str(rank)
++    os.environ["CCL_LOCAL_SIZE"] = str(world_size)
++
++
+@@ -124,0 +131,3 @@ class RendezvousEnvTest(TestCase):
++            "CCL_PROCESS_LAUNCHER": "none",
++            "CCL_LOCAL_RANK": "0",
++            "CCL_LOCAL_SIZE": "1",
+@@ -215,0 +225,5 @@ class ProcessGroupXCCLTest(MultiProcessTestCase):
++    @classmethod
++    def _run(cls, rank, test_name, file_name, parent_pipe, **kwargs):
++        set_xccl_launcher_env(rank, cls(test_name).world_size)
++        super()._run(rank, test_name, file_name, parent_pipe, **kwargs)
++
+diff --git a/test/xpu/run_distributed.py b/test/xpu/run_distributed.py
+index 2477c801..7202dd9a 100644
+--- a/test/xpu/run_distributed.py
++++ b/test/xpu/run_distributed.py
+@@ -16 +15,0 @@ from xpu_test_utils import launch_test
+-res = 0
+@@ -20 +19,5 @@ fail_test = []
+-os.environ["PYTHONPATH"] = "$PYTHONPATH:../../../../test/distributed/pipelining"
++pipelining_path = os.path.abspath("../../../../test/distributed/pipelining")
++python_path = os.environ.get("PYTHONPATH")
++os.environ["PYTHONPATH"] = (
++    os.pathsep.join((python_path, pipelining_path)) if python_path else pipelining_path
++)
+@@ -50 +53,4 @@ if ret == 0:
+-    os.environ["ZE_AFFINITY_MASK"] = str(max_affinity)
++    if max_affinity:
++        os.environ["ZE_AFFINITY_MASK"] = max_affinity
++    else:
++        os.environ.setdefault("ZE_AFFINITY_MASK", "0")
+@@ -79 +85 @@ if fail_test:
+-sys.exit(res)
++sys.exit(res2)
