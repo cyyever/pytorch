@@ -1192,7 +1192,7 @@ static void registerCudaDeviceProperties(PyObject* module) {
       .def_readonly(
           "gcnArchName",
 #if USE_ROCM
-          &cudaDeviceProp::gcnArchName
+          &hipDeviceProp_t::gcnArchName
 #else
           &cudaDeviceProp::name
 #endif // USE_ROCM

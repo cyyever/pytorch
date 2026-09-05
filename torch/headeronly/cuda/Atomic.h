@@ -1,6 +1,10 @@
 #pragma once
 
+#if defined(USE_ROCM)
+#include <hip/hip_runtime.h>
+#else
 #include <cuda.h>
+#endif
 #include <torch/headeronly/util/BFloat16.h>
 #include <torch/headeronly/util/Half.h>
 #include <torch/headeronly/util/NumericUtils.h>

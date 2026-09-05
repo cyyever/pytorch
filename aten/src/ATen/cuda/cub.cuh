@@ -14,7 +14,9 @@
 #include <ATen/cuda/CUDAContextLight.h>
 
 #ifdef USE_ROCM
+#include <hipcub/block/block_exchange.hpp>
 #include <hipcub/block/block_load.hpp>
+#include <hipcub/block/block_radix_sort.hpp>
 #include <hipcub/block/block_reduce.hpp>
 #include <hipcub/block/block_scan.hpp>
 #include <hipcub/block/block_store.hpp>
@@ -23,7 +25,12 @@
 #include <hipcub/device/device_run_length_encode.hpp>
 #include <hipcub/device/device_scan.hpp>
 #include <hipcub/device/device_segmented_radix_sort.hpp>
+#include <hipcub/device/device_segmented_reduce.hpp>
 #include <hipcub/device/device_select.hpp>
+#include <hipcub/warp/warp_load.hpp>
+#include <hipcub/warp/warp_merge_sort.hpp>
+#include <hipcub/warp/warp_store.hpp>
+#include <rocprim/functional.hpp>
 #else
 #include <cub/cub.cuh>
 #endif
@@ -44,9 +51,11 @@
 #ifdef USE_ROCM
 #define NO_ROCM(x)
 #define ROCM_HIPCUB(x) ::hipcub
+#define ATEN_CUB_MAXIMUM() ::rocprim::maximum<>()
 #else
 #define NO_ROCM(x) x
 #define ROCM_HIPCUB(x) x
+#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
 #endif
 
 #if CUB_V3_4_PLUS()
@@ -56,7 +65,6 @@
 #define ATEN_CUB_TRANSFORM_ITERATOR(ValueType, ...) ::cuda::transform_iterator<__VA_ARGS__>
 #define ATEN_CUB_COUNTING_ITERATOR(...) ::cuda::counting_iterator<__VA_ARGS__>
 #define ATEN_CUB_CONSTANT_ITERATOR(...) ::cuda::constant_iterator<__VA_ARGS__>
-#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
 template<class T>
 using cccl_constant_iterator = ::cuda::constant_iterator<T>;
 template<class T>
@@ -73,7 +81,6 @@ auto cccl_make_reverse_iterator(Iter it) { return ::cuda::std::make_reverse_iter
 #define ATEN_CUB_TRANSFORM_ITERATOR(ValueType, ...) ::thrust::transform_iterator<__VA_ARGS__>
 #define ATEN_CUB_COUNTING_ITERATOR(...) ::thrust::counting_iterator<__VA_ARGS__>
 #define ATEN_CUB_CONSTANT_ITERATOR(...) ::thrust::constant_iterator<__VA_ARGS__>
-#define ATEN_CUB_MAXIMUM() ::cuda::maximum<>()
 template<class T>
 using cccl_constant_iterator = ::thrust::constant_iterator<T>;
 template<class T>

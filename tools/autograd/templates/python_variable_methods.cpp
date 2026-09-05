@@ -14,7 +14,7 @@
 #include "torch/csrc/autograd/utils/python_arg_parsing.h"
 #include "torch/csrc/autograd/utils/error_messages.h"
 #include "torch/csrc/autograd/utils/wrap_outputs.h"
-#ifdef USE_CUDA
+#ifdef USE_ROCM
 #endif
 #include "torch/csrc/utils/device_lazy_init.h"
 #include <torch/csrc/utils/numpy_stub.h>

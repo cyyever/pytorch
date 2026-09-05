@@ -1,6 +1,11 @@
 #pragma once
 
 #include <ATen/miopen/miopen-wrapper.h>
+
+#if defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <string>
 #include <stdexcept>
 #include <sstream>

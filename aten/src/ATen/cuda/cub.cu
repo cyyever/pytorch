@@ -41,7 +41,7 @@ struct CountMaskOp {
 
 void mask_exclusive_sum(const uint8_t *mask, int64_t *output_idx, int64_t n) {
   CountMaskOp op{};
-  auto iter = ::cuda::transform_iterator<decltype(op), decltype(mask)>(mask, op);
+  auto iter = ATEN_CUB_TRANSFORM_ITERATOR(bool, decltype(op), decltype(mask))(mask, op);
   exclusive_scan(iter, output_idx, SumOp<int64_t>{}, int64_t{0}, n);
 }
 

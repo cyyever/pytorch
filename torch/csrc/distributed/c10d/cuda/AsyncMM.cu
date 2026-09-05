@@ -7,7 +7,7 @@
 
 // Two warnings in Cutlass included header files
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION)
+#if !defined(USE_ROCM) && defined(TORCH_HIP_VERSION)
 #define BUILD_ASYNC_MM_KERNEL
 #endif
 

@@ -107,7 +107,8 @@ void TensorDescriptor::print() { std::cout << *this; }
 
 void FilterDescriptor::set(const at::Tensor &t, const at::MemoryFormat memory_format, int64_t pad) {
   auto dim = t.ndimension();
-  if (dim > MIOPEN_DIM_MAX || pad > MIOPEN_DIM_MAX)
+  if (dim > static_cast<int64_t>(MIOPEN_DIM_MAX) ||
+      pad > static_cast<int64_t>(MIOPEN_DIM_MAX))
   TORCH_CHECK(false, "MIOpen supports only up to ", MIOPEN_DIM_MAX, " dimensions");
   // NB: It is possible for this test to be insufficient, because the
   // Tensor passed in to set the filter descriptor may not be the actual

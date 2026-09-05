@@ -1499,11 +1499,13 @@ static void linalg_eigh_cusolver_syevd(const Tensor& eigenvalues, const Tensor& 
   });
 }
 
+#if !defined(USE_ROCM)
 static void linalg_eigh_cusolver_syevj_batched(const Tensor& eigenvalues, const Tensor& eigenvectors, const Tensor& infos, bool upper, bool compute_eigenvectors) {
   AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(eigenvectors.scalar_type(), "linalg_eigh_cuda", [&] {
     apply_syevj_batched<scalar_t>(eigenvalues, eigenvectors, infos, upper, compute_eigenvectors);
   });
 }
+#endif
 
 #if defined(USE_ROCM) && ROCSOLVER_SYEVD_BATCHED_ENABLED
 static void linalg_eigh_rocsolver_syevd_batched(const Tensor& eigenvalues, const Tensor& eigenvectors, const Tensor& infos, bool upper, bool compute_eigenvectors) {

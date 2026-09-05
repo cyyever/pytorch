@@ -7,7 +7,7 @@
 namespace torch::cuda::shared {
 
 struct RangeHandle {
-  nvtxRangeId_t id;
+  int id;
   const char* msg;
 };
 

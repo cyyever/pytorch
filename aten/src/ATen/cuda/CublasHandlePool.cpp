@@ -79,19 +79,27 @@ static hipblasStatus_t rocBLASStatusToHIPStatus(rocblas_status error) {
     case rocblas_status_size_unchanged:
     case rocblas_status_size_increased:
     case rocblas_status_success:
+    case rocblas_status_continue:
+    case rocblas_status_perf_degraded:
         return HIPBLAS_STATUS_SUCCESS;
     case rocblas_status_invalid_handle:
         return HIPBLAS_STATUS_NOT_INITIALIZED;
     case rocblas_status_not_implemented:
+    case rocblas_status_excluded_from_build:
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     case rocblas_status_invalid_pointer:
     case rocblas_status_invalid_size:
     case rocblas_status_invalid_value:
+    case rocblas_status_size_query_mismatch:
         return HIPBLAS_STATUS_INVALID_VALUE;
     case rocblas_status_memory_error:
         return HIPBLAS_STATUS_ALLOC_FAILED;
     case rocblas_status_internal_error:
         return HIPBLAS_STATUS_INTERNAL_ERROR;
+    case rocblas_status_check_numerics_fail:
+        return HIPBLAS_STATUS_EXECUTION_FAILED;
+    case rocblas_status_arch_mismatch:
+        return HIPBLAS_STATUS_ARCH_MISMATCH;
     }
     TORCH_CHECK(false, "HIPBLAS_STATUS_INVALID_ENUM");
 }

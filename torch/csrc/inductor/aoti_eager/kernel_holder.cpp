@@ -6,7 +6,7 @@
 #include <torch/csrc/PyInterpreter.h>
 #include <torch/csrc/autograd/python_variable.h>
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cpu.h>
-#if defined(USE_CUDA)
+#if defined(USE_ROCM)
 #include <torch/csrc/inductor/aoti_runner/model_container_runner_cuda.h>
 #endif
 #if defined(USE_XPU)
@@ -495,7 +495,7 @@ std::shared_ptr<AOTIModelContainerRunner> AOTIPythonKernelHolder::
       " now.");
   // NOLINTNEXTLINE(bugprone-branch-clone)
   if (device_.type() == c10::DeviceType::CUDA) {
-#if defined(USE_CUDA)
+#if defined(USE_ROCM)
     return std::make_shared<AOTIModelContainerRunnerCuda>(so_path);
 #else
     return nullptr;

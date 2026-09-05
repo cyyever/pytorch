@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cublas_v2.h>
+#if defined(USE_ROCM)
+#undef __noinline__
+#endif
 #include <cusparse.h>
 #include <c10/macros/Export.h>
 
