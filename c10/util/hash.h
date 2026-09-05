@@ -261,29 +261,19 @@ namespace _hash_detail {
 template <typename T>
 size_t simple_get_hash(const T& o);
 
-template <typename T, typename V>
-using type_if_not_enum = std::enable_if_t<!std::is_enum_v<T>, V>;
-
-// Use SFINAE to dispatch to std::hash if possible, cast enum types to int
-// automatically, and fall back to T::hash otherwise. NOTE: C++14 added support
-// for hashing enum types to the standard, and some compilers implement it even
-// when C++14 flags aren't specified. This is why we have to disable this
-// overload if T is an enum type (and use the one below in this case).
+// Enums go through their underlying type: std::hash handles them, but hashing
+// the underlying value is what the rest of the tree expects. Anything else
+// std::hash accepts goes to std::hash, and the remainder must supply T::hash.
 template <typename T>
-auto dispatch_hash(const T& o)
-    -> decltype(std::hash<T>()(o), type_if_not_enum<T, size_t>()) {
-  return std::hash<T>()(o);
-}
-
-template <typename T>
-std::enable_if_t<std::is_enum_v<T>, size_t> dispatch_hash(const T& o) {
-  using R = std::underlying_type_t<T>;
-  return std::hash<R>()(static_cast<R>(o));
-}
-
-template <typename T>
-auto dispatch_hash(const T& o) -> decltype(T::hash(o), size_t()) {
-  return T::hash(o);
+size_t dispatch_hash(const T& o) {
+  if constexpr (std::is_enum_v<T>) {
+    using R = std::underlying_type_t<T>;
+    return std::hash<R>()(static_cast<R>(o));
+  } else if constexpr (std::is_invocable_r_v<size_t, std::hash<T>, const T&>) {
+    return std::hash<T>()(o);
+  } else {
+    return T::hash(o);
+  }
 }
 
 } // namespace _hash_detail
@@ -299,32 +289,29 @@ struct hash {
 // Specialization for std::tuple
 template <typename... Types>
 struct hash<std::tuple<Types...>> {
-  template <size_t idx, typename... Ts>
-  struct tuple_hash {
-    size_t operator()(const std::tuple<Ts...>& t) const {
-      return hash_combine(
-          _hash_detail::simple_get_hash(std::get<idx>(t)),
-          tuple_hash<idx - 1, Ts...>()(t));
-    }
-  };
-
-  template <typename... Ts>
-  struct tuple_hash<0, Ts...> {
-    size_t operator()(const std::tuple<Ts...>& t) const {
-      return _hash_detail::simple_get_hash(std::get<0>(t));
-    }
-  };
-
   size_t operator()(const std::tuple<Types...>& t) const {
-    return tuple_hash<sizeof...(Types) - 1, Types...>()(t);
+    if constexpr (sizeof...(Types) == 0) {
+      return 0;
+    } else {
+      // The first element seeds; each later one wraps what came before, which
+      // is the association the recursion this replaces produced.
+      return [&]<size_t... Is>(std::index_sequence<Is...>) {
+        size_t seed = _hash_detail::simple_get_hash(std::get<0>(t));
+        ((seed = hash_combine(
+              _hash_detail::simple_get_hash(std::get<Is + 1>(t)), seed)),
+         ...);
+        return seed;
+      }(std::make_index_sequence<sizeof...(Types) - 1>{});
+    }
   }
 };
 
 template <typename T1, typename T2>
 struct hash<std::pair<T1, T2>> {
   size_t operator()(const std::pair<T1, T2>& pair) const {
-    std::tuple<T1, T2> tuple = std::make_tuple(pair.first, pair.second);
-    return _hash_detail::simple_get_hash(tuple);
+    // std::tie, not make_tuple: the members are only read, and copying them
+    // to hash them is what this used to do.
+    return _hash_detail::simple_get_hash(std::tie(pair.first, pair.second));
   }
 };
 
