@@ -2,6 +2,10 @@
 
 #include <cuda_runtime_api.h>
 
+#if defined(USE_ROCM) && defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <c10/core/DeviceGuard.h>
 #include <c10/core/Stream.h>
 #include <c10/cuda/CUDAFunctions.h>

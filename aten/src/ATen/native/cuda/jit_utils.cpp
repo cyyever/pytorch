@@ -1,4 +1,7 @@
 #define TORCH_ASSERT_NO_OPERATORS
+#if defined(USE_ROCM)
+#undef __noinline__
+#endif
 #include <c10/core/ScalarType.h>
 #include <c10/util/irange.h>
 #include <c10/util/hash.h>

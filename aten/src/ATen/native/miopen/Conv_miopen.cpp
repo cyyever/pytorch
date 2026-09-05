@@ -9,6 +9,7 @@
 #include <ATen/ops/miopen_convolution_transpose_native.h>
 #include <ATen/ops/miopen_depthwise_convolution_native.h>
 #include <ATen/ops/squeeze.h>
+#include <ATen/ops/sum.h>
 #include <ATen/ops/zeros.h>
 #include <ATen/ops/zeros_like.h>
 
@@ -1804,13 +1805,6 @@ void raw_miopen_convolution_add_relu_out(
       at::native::reshape_bias(input.dim(), bias).add(z, alpha);
   output.add_(alpha_mul_z_add_bias);
   output.relu_();
-}
-
-static at::Tensor self_or_new_memory_format(at::Tensor& self, at::MemoryFormat memory_format) {
-  if (self.is_contiguous(memory_format)) {
-    return self;
-  }
-  return at::empty_like(self, self.options(), memory_format);
 }
 
 Tensor miopen_convolution_add_relu(

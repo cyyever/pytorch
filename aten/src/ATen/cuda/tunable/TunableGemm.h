@@ -44,7 +44,7 @@ class DefaultGemmOp : public Callable<GemmParams<T>> {
     }
 };
 
-static bool _transposeBoolFromChar(char op) {
+[[maybe_unused]] static bool _transposeBoolFromChar(char op) {
   return op == 't' || op == 'T';
 }
 

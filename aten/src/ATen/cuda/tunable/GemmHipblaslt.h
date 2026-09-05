@@ -392,7 +392,7 @@ static hipblasOperation_t _hipblasOpFromChar(char op) {
       "_hipblasOpFromChar input should be 't', 'n' or 'c' but got `", op, "`");
 }
 
-static char _charFromhipblasOp(hipblasOperation_t op) {
+[[maybe_unused]] static char _charFromhipblasOp(hipblasOperation_t op) {
   switch (op) {
     case HIPBLAS_OP_N:
       return 'N';

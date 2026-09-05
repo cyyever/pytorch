@@ -124,8 +124,8 @@ CudaTritonKernelManager::CudaTritonKernelManager(
 CudaTritonKernelManager::~CudaTritonKernelManager() {
   const auto& nvrtc = get_nvrtc();
   for (auto& mod : loaded_modules_) {
-    if (CUresult err = nvrtc.cuModuleUnload(mod); err != 0) {
-      CU_LOG_ERROR(nvrtc.cuModuleUnload, err);
+    if (CUresult err = nvrtc.hipModuleUnload(mod); err != 0) {
+      CU_LOG_ERROR(nvrtc.hipModuleUnload, err);
     }
   }
 }
@@ -140,18 +140,18 @@ CUfunction CudaTritonKernelManager::load() {
 
   CUmodule mod_ptr = nullptr;
 
-  if (CUresult err = nvrtc.cuModuleLoad(&mod_ptr, kernel_bin_path_.c_str());
+  if (CUresult err = nvrtc.hipModuleLoad(&mod_ptr, kernel_bin_path_.c_str());
       err != 0) {
-    CU_LOG_ERROR(nvrtc.cuModuleLoad, err);
+    CU_LOG_ERROR(nvrtc.hipModuleLoad, err);
     return nullptr;
   }
 
   CUfunction func = nullptr;
 
   if (CUresult err =
-          nvrtc.cuModuleGetFunction(&func, mod_ptr, kernel_name_.c_str());
+          nvrtc.hipModuleGetFunction(&func, mod_ptr, kernel_name_.c_str());
       err != 0) {
-    CU_LOG_ERROR(nvrtc.cuModuleGetFunction, err);
+    CU_LOG_ERROR(nvrtc.hipModuleGetFunction, err);
     return nullptr;
   }
 

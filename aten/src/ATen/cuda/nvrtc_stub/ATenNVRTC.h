@@ -121,11 +121,20 @@ namespace at::cuda {
 
 #endif
 
+#if defined(USE_ROCM)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 extern "C" typedef struct NVRTC {
 #define CREATE_MEMBER(name) decltype(&name) name;
   AT_FORALL_NVRTC(CREATE_MEMBER)
 #undef CREATE_MEMBER
 } NVRTC;
+
+#if defined(USE_ROCM)
+#pragma clang diagnostic pop
+#endif
 
 extern "C" TORCH_CUDA_CPP_API NVRTC* load_nvrtc();
 } // at::cuda

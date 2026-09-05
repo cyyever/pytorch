@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(USE_ROCM) && defined(__noinline__)
+#undef __noinline__
+#endif
+
 #include <ATen/Context.h>
 #include <ATen/core/Generator.h>
 #include <ATen/core/TensorBase.h>

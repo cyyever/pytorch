@@ -16,6 +16,12 @@
 #include <c10/cuda/CUDACachingAllocator.h>
 #include <c10/util/MaybeOwned.h>
 
+#ifdef USE_ROCM
+#define AT_CUSPARSE_SPSM_SOLVE hipsparseSpSM_solve_ex
+#else
+#define AT_CUSPARSE_SPSM_SOLVE cusparseSpSM_solve
+#endif
+
 namespace at::native::sparse::impl::cuda {
 
 namespace {
@@ -1249,12 +1255,6 @@ void triangular_solve_out_sparse_csr(
               desc_spsv.descriptor()));
         });
   } else {
-    // this macro must exist outside the DISPATCH macro for windows builds
-#ifdef USE_ROCM
-#define ROCM_EXTRA_ARG ,nullptr
-#else
-#define ROCM_EXTRA_ARG
-#endif
     AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(
         X.scalar_type(), "triangular_solve_out_sparse_csr_cuda_impl", [&] {
           scalar_t alpha = 1;
@@ -1296,7 +1296,7 @@ void triangular_solve_out_sparse_csr(
               desc_spsm.descriptor(),
               work_data.get()));
 
-          TORCH_CUDASPARSE_CHECK(cusparseSpSM_solve(
+          TORCH_CUDASPARSE_CHECK(AT_CUSPARSE_SPSM_SOLVE(
               handle,
               opA,
               opB,
@@ -1306,9 +1306,7 @@ void triangular_solve_out_sparse_csr(
               descX.descriptor(),
               compute_type,
               CUSPARSE_SPSM_ALG_DEFAULT,
-              desc_spsm.descriptor()
-              ROCM_EXTRA_ARG
-            ));
+              desc_spsm.descriptor()));
         });
   }
   if (!X.is_same(*X_)) {
@@ -1418,3 +1416,5 @@ void sampled_addmm_out_sparse_csr(
 }
 
 } // namespace at::native::sparse::impl::cuda
+
+#undef AT_CUSPARSE_SPSM_SOLVE

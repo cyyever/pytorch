@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define ROCBLAS_BETA_FEATURES_API
+
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/tunable/TunableOp.h>
 #include <ATen/cuda/tunable/GemmCommon.h>
@@ -11,8 +13,8 @@
 #include <algorithm>
 #include <cstdint>
 
-#define ROCBLAS_BETA_FEATURES_API
 #include <rocblas/rocblas.h>
+#include <rocblas/internal/rocblas-beta.h>
 
 #define TORCH_ROCBLAS_CHECK(EXPR)                 \
   do {                                            \
@@ -120,7 +122,7 @@ inline auto DoCastForHalfOrBfloat16<BFloat16>(const BFloat16 fp) {
   return h;
 }
 
-static rocblas_operation _rocblasOpFromChar(char op) {
+[[maybe_unused]] static rocblas_operation _rocblasOpFromChar(char op) {
   switch (op) {
     case 'n':
     case 'N':
@@ -135,6 +137,27 @@ static rocblas_operation _rocblasOpFromChar(char op) {
   TORCH_CHECK(false,
       "_rocblasOpFromChar input should be 't', 'n' or 'c' but got `", op, "`");
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+inline rocblas_status rocblasGemmExGetSolutionsByType(
+    rocblas_handle handle,
+    rocblas_datatype input_type,
+    rocblas_datatype output_type,
+    rocblas_datatype compute_type,
+    uint32_t flags,
+    rocblas_int* solutions,
+    rocblas_int* solution_size) {
+  return rocblas_gemm_ex_get_solutions_by_type(
+      handle,
+      input_type,
+      output_type,
+      compute_type,
+      flags,
+      solutions,
+      solution_size);
+}
+#pragma clang diagnostic pop
 
 template <typename T>
 class RocblasGemmOp : public Callable<GemmParams<T>> {
@@ -180,7 +203,7 @@ auto GetRocBlasGemmTypeStringAndOps() {
   auto input_output_type = RocBlasDataTypeFor<T>();
   auto compute_type = RocBlasComputeTypeFor<T>();
   // Get the number of available solutions
-  TORCH_ROCBLAS_CHECK(rocblas_gemm_ex_get_solutions_by_type(handle,
+  TORCH_ROCBLAS_CHECK(rocblasGemmExGetSolutionsByType(handle,
                                                             input_output_type,
                                                             input_output_type,
                                                             compute_type,
@@ -190,7 +213,7 @@ auto GetRocBlasGemmTypeStringAndOps() {
   const auto solution_capacity = static_cast<size_t>(solution_size);
   std::vector<rocblas_int> solutions(solution_capacity);
   // Get the list of available solutions
-  TORCH_ROCBLAS_CHECK(rocblas_gemm_ex_get_solutions_by_type(handle,
+  TORCH_ROCBLAS_CHECK(rocblasGemmExGetSolutionsByType(handle,
                                                             input_output_type,
                                                             input_output_type,
                                                             compute_type,
@@ -254,7 +277,7 @@ auto GetRocBlasGemmStridedBatchedTypeStringAndOps() {
   auto input_output_type = RocBlasDataTypeFor<T>();
   auto compute_type = RocBlasComputeTypeFor<T>();
   // Get the number of available solutions
-  TORCH_ROCBLAS_CHECK(rocblas_gemm_ex_get_solutions_by_type(handle,
+  TORCH_ROCBLAS_CHECK(rocblasGemmExGetSolutionsByType(handle,
                                                             input_output_type,
                                                             input_output_type,
                                                             compute_type,
@@ -264,7 +287,7 @@ auto GetRocBlasGemmStridedBatchedTypeStringAndOps() {
   const auto solution_capacity = static_cast<size_t>(solution_size);
   std::vector<rocblas_int> solutions(solution_capacity);
   // Get the list of available solutions
-  TORCH_ROCBLAS_CHECK(rocblas_gemm_ex_get_solutions_by_type(handle,
+  TORCH_ROCBLAS_CHECK(rocblasGemmExGetSolutionsByType(handle,
                                                             input_output_type,
                                                             input_output_type,
                                                             compute_type,

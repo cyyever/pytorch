@@ -100,7 +100,7 @@
 #include <torch/csrc/profiler/kineto_client_interface.h>
 #include <sstream>
 
-#ifdef USE_CUDA
+#ifdef USE_ROCM
 #include <ATen/ROCmFABackend.h>
 #include <ATen/native/transformers/cuda/sdp_utils.h>
 #include <torch/csrc/inductor/static_launcher/cuda.h>
