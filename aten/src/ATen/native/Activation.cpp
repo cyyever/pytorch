@@ -8,6 +8,7 @@
 #include <ATen/ScalarOps.h>
 #include <ATen/core/DistributionsHelper.h>
 #include <ATen/native/Resize.h>
+#include <ATen/native/RreluUtils.h>
 
 #include <c10/util/irange.h>
 #include <c10/core/ScalarType.h>
@@ -545,11 +546,9 @@ Tensor& rrelu_with_noise_out_cpu(const Tensor& self,
     bool training,
     std::optional<Generator> generator,
     Tensor& output) {
-  TORCH_CHECK(self.sym_sizes() == noise.sym_sizes(), "noise tensor shape must match self tensor shape. Got self.shape = ", self.sym_sizes(), " noise.shape = ", noise.sym_sizes());
+  check_rrelu_with_noise_inputs(self, noise, training);
   if (training) {
-    // The shape check above also passes for an expanded (0-stride) noise.
-    TORCH_CHECK(noise.is_contiguous(), "rrelu_with_noise: noise tensor must be contiguous, got one with sizes ", noise.sizes(), " and strides ", noise.strides());
-    // Not a structured op, so nothing else has sized output for us.
+    // Not a structured op, so nothing sized output for us.
     resize_output(output, self.sizes());
     AT_DISPATCH_FLOATING_TYPES_AND(ScalarType::BFloat16, self.scalar_type(), "rrelu_with_noise_out_cpu", [&] {
       _rrelu_with_noise_train<scalar_t>(output, self.contiguous(), noise, lower, upper, generator);
