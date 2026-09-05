@@ -9378,6 +9378,23 @@ tensor([[[1.+1.j, 1.+1.j, 1.+1.j,  ..., 1.+1.j, 1.+1.j, 1.+1.j],
         if torch.version.cuda is not None:
             self._test_to_with_layout(torch.sparse_csr)
 
+    def test_to_prim_device_copy_without_dtype(self):
+        # aten::to.prim_Device takes device and dtype as nullable. With both
+        # null and copy set, the operator used to fall into the branch that
+        # reads the dtype, dereferencing an empty optional: the result came
+        # back as whatever scalar type the uninitialised storage decoded to.
+        op = torch.ops.aten.to.prim_Device
+        for dtype in (torch.float32, torch.float64, torch.int16):
+            x = torch.ones(2, dtype=dtype)
+            out = op(x, None, None, False, True)
+            self.assertEqual(out.dtype, dtype)
+            self.assertEqual(out, x)
+            self.assertFalse(out.data_ptr() == x.data_ptr())
+
+        # copy unset still returns self untouched
+        x = torch.ones(2)
+        self.assertTrue(op(x, None, None, False, False).data_ptr() == x.data_ptr())
+
     # FIXME: describe this test
     def test_as_subclass(self):
         class SubTensor(torch.Tensor):

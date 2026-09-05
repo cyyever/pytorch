@@ -69,6 +69,11 @@ at::Tensor to_dispatch(
   }
   if (!device && !scalarType && !copy) {
     return self;
+  } else if (!device && !scalarType) {
+    // copy is set, so a copy is still owed even though neither the device
+    // nor the dtype changes. Without this branch the next one dereferences
+    // an empty scalarType.
+    return self.to(self.options(), non_blocking, copy);
   } else if (!device) {
     return self.to(*scalarType, non_blocking, copy);
   } else if (!scalarType) {
