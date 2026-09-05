@@ -4,6 +4,7 @@
 #include <ATen/Dispatch_v2.h>
 #include <ATen/ExpandUtils.h>
 #include <ATen/TensorIterator.h>
+#include <ATen/native/ForeachUtils.h>
 #include <ATen/native/TensorShape.h>
 #include <ATen/Parallel.h>
 #include <c10/util/irange.h>
@@ -284,6 +285,10 @@ Tensor copy(const Tensor& self, const Tensor& src, bool non_blocking) {
 }
 
 ::std::vector<at::Tensor> _foreach_copy(at::TensorList self, at::TensorList src, bool non_blocking) {
+  // The in-place sibling in ForeachOpsKernels.cpp has always checked this. The
+  // loop below is bounded by src, so without it a shorter self is indexed past
+  // its end and the operator segfaults on a plain Python call.
+  check_foreach_api_restrictions(self, src);
   std::vector<at::Tensor> outs;
   outs.reserve(self.size());
   // This is a very slow implementation, but needs to directly call the copy() kernel above to handle

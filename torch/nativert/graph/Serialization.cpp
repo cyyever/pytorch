@@ -144,6 +144,15 @@ enforceInputOrder(
   // 4. tensor_constant
   // 5. custom_obj
   // 6. user_input/constant_input
+  // Both lists come from the archive, as two independent JSON arrays. The
+  // loops below walk inputSpecs and index graphInputs with the same counter.
+  TORCH_CHECK(
+      inputSpecs.size() == graphInputs.size(),
+      "Graph signature declares ",
+      inputSpecs.size(),
+      " inputs but the graph has ",
+      graphInputs.size());
+
   std::vector<torch::_export::InputSpec> reorderedInputSpecs;
   std::vector<torch::_export::Argument> reorderedGraphInputs;
   std::vector<torch::_export::InputSpec::Tag> desiredOrder = {
