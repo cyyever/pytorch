@@ -52,9 +52,11 @@
 // and launch triton compiled CUDA kernels, so CUDA should always be
 // initialized.
 namespace {
+#if !defined(USE_ROCM)
 const at::cuda::NVRTC& nvrtc() {
   return at::globalContext().getNVRTC();
 }
+#endif
 
 // 120 max args + 1 for global scratch size
 #define MAX_ARGS 121
