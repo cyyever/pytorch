@@ -101,7 +101,8 @@ endif()
 
 enable_language(HIP)
 if("X${CMAKE_HIP_STANDARD}" STREQUAL "X")
-  set(CMAKE_HIP_STANDARD ${CMAKE_CXX_STANDARD})
+  # ROCm Clang cannot compile HIP as C++26 against current libstdc++ headers.
+  set(CMAKE_HIP_STANDARD 23)
 endif()
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 message(STATUS "HIP language enabled with compiler: ${CMAKE_HIP_COMPILER}")
@@ -275,9 +276,22 @@ if(PYTORCH_FOUND_HIP)
 
   # Optional components.
   find_package_and_print_version(hipsparselt)  # Will be required when ready.
-  # ROCm 8.0 and later requires libhipcxx! This should be marked as
-  # 'REQUIRED' once minimal ROCm version is bumped to 8.0 or later.
-  find_package_and_print_version(libhipcxx)
+
+  find_package(libhipcxx QUIET CONFIG)
+  if(NOT libhipcxx_FOUND AND ROCM_VERSION_DEV_MAJOR EQUAL 10)
+    include(FetchContent)
+    set(libhipcxx_ENABLE_INSTALL_RULES OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+      libhipcxx
+      URL https://codeload.github.com/ROCm/libhipcxx/tar.gz/8e336919711e1eb7fece0678a3d9e92bccfe6673
+      URL_HASH SHA256=41e8daa3624bd6404638b1841b206fd57661346e7f7cd16c729dab06c3ef65b3
+      DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
+    FetchContent_MakeAvailable(libhipcxx)
+  endif()
+  if(NOT TARGET libhipcxx::libhipcxx)
+    message(FATAL_ERROR "ROCm ${ROCM_VERSION_DEV} requires libhipcxx.")
+  endif()
+  message("libhipcxx VERSION: ${libhipcxx_VERSION}")
 
   list(REMOVE_DUPLICATES ROCM_INCLUDE_DIRS)
 
