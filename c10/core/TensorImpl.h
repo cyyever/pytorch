@@ -1144,13 +1144,6 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
     return device_opt_.has_value() && device_opt_->type() == kXLA;
   }
 
-  bool is_hpu() const {
-    if (C10_UNLIKELY(device_policy_)) {
-      return device_custom().is_hpu();
-    }
-    return device_opt_.has_value() && device_opt_->type() == kHPU;
-  }
-
   bool is_lazy() const {
     if (C10_UNLIKELY(device_policy_)) {
       return device_custom().is_lazy();
