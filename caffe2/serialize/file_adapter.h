@@ -20,9 +20,9 @@ class TORCH_API FileAdapter final : public ReadAdapterInterface {
   ~FileAdapter() override;
 
  private:
-  // An RAII Wrapper for a FILE pointer. Closes on destruction.
+  // An RAII wrapper for a file descriptor. Closes on destruction.
   struct RAIIFile {
-    FILE* fp_;
+    int fd_;
     explicit RAIIFile(const std::string& file_name);
     ~RAIIFile();
   };
