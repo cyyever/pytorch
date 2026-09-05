@@ -36,8 +36,9 @@ if (at::cuda::is_available()) {
 }
 ```
 
-For most applications, prefer using the higher-level `torch::` namespace
-(see {doc}`../nn/index`, {doc}`../optim/index`) which provides a more user-friendly API.
+For most applications, prefer the tensor factory functions in the `torch::`
+namespace: unlike their `at::` counterparts they produce differentiable
+tensors.
 
 ## Header Files
 
