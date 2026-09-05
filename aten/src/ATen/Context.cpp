@@ -124,9 +124,7 @@ std::string cudnn_depthwise2str(CuDNNDepthwiseKernel k) {
   TORCH_CHECK(false, "Invalid enum CuDNNDepthwiseKernel(", static_cast<int>(k), ")");
 }
 
-#ifdef USE_ROCM
 static constexpr const auto rocm_allow_group_gemm_ck = "ROCM_ALLOW_GROUP_GEMM_CK";
-#endif
 
 Context::Context() = default;
 
@@ -263,12 +261,10 @@ bool Context::allowTF32OneDNN() const {
   #endif
 }
 
-#ifdef USE_ROCM
 bool Context::rocmAllowGroupGemmCk() const {
     const auto allow_group_gemm_ck = c10::utils::check_env(rocm_allow_group_gemm_ck) == true;
     return allow_group_gemm_ck;
 }
-#endif
 
 bool Context::userEnabledFlashSDP() const {
   return enabled_flashSDP;
