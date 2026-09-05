@@ -23,7 +23,7 @@ struct RangeTable {
   }
   std::optional<T> find(uint64_t address) {
     maybeSort();
-    auto it = std::upper_bound(addresses_.begin(), addresses_.end(), address);
+    auto it = std::ranges::upper_bound(addresses_, address);
     return payloads_.at(it - addresses_.begin() - 1);
   }
   void dump() {

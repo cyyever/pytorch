@@ -8,6 +8,8 @@
 
 #include <c10/util/intrusive_ptr.h>
 
+#include <algorithm>
+
 namespace torch::autograd {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,8 +62,8 @@ inline void create_gradient_edge(
 
 /// Return true if any of the variables in the list require a gradient.
 inline bool any_variable_requires_grad(const variable_list& variables) {
-  return std::any_of(
-      variables.begin(), variables.end(), [](const Variable& variable) {
+  return std::ranges::any_of(
+      variables, [](const Variable& variable) {
         return variable.defined() && variable.requires_grad();
       });
 }

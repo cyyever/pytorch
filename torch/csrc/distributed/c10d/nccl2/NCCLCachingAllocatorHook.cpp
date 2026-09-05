@@ -126,7 +126,7 @@ void NCCLCachingAllocatorHook::registerComm(ProcessGroupNCCL* comm) {
 
 void NCCLCachingAllocatorHook::deregisterComm(ProcessGroupNCCL* comm) {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (!registeredComms_.count(comm)) {
+  if (!registeredComms_.contains(comm)) {
     return;
   }
   for (const auto& [addr, mem_info] : registeredMemMap_) {

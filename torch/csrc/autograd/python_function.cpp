@@ -858,8 +858,7 @@ static void _wrap_outputs(
         const auto& raw_output_var = raw_output_vars[i];
         TORCH_INTERNAL_ASSERT(raw_output_var.has_value());
         bool is_differentiable =
-            non_differentiable.count(raw_output_var->unsafeGetTensorImpl()) ==
-                0 &&
+            !non_differentiable.contains(raw_output_var->unsafeGetTensorImpl()) &&
             isDifferentiableType(raw_output_var->scalar_type());
         bool use_zeros_like =
             is_differentiable && num_outputs > 1 && wrapped_output->is_nested();
@@ -968,7 +967,7 @@ static void _save_variables(
       self->saved_variables.emplace_back();
     } else {
       bool is_output =
-          output_impls.count(opt_tensor.value().unsafeGetTensorImpl()) > 0;
+          output_impls.contains(opt_tensor.value().unsafeGetTensorImpl());
       self->saved_variables.emplace_back(opt_tensor.value(), is_output);
     }
   }

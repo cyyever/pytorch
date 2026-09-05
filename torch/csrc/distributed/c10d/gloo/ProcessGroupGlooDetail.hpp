@@ -4,6 +4,7 @@
 
 #include <c10/util/Registry.h>
 #include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
+#include <algorithm>
 
 #include <gloo/allgather.h>
 #include <gloo/allgatherv.h>
@@ -19,29 +20,29 @@
 #define GENERATE_ALL_TYPES(type, func, ...)      \
   switch (type) {                                \
     case ::at::ScalarType::Float:                \
-      func<float>(__VA_ARGS__);                         \
+      func<float>(__VA_ARGS__);                  \
       break;                                     \
     case ::at::ScalarType::Double:               \
-      func<double>(__VA_ARGS__);                        \
+      func<double>(__VA_ARGS__);                 \
       break;                                     \
     case ::at::ScalarType::Half:                 \
-      func<c10::Half>(__VA_ARGS__);                     \
+      func<c10::Half>(__VA_ARGS__);              \
       break;                                     \
     case ::at::ScalarType::BFloat16:             \
-      func<c10::BFloat16>(__VA_ARGS__);                 \
+      func<c10::BFloat16>(__VA_ARGS__);          \
       break;                                     \
     case ::at::ScalarType::Char:                 \
-      func<int8_t>(__VA_ARGS__);                        \
+      func<int8_t>(__VA_ARGS__);                 \
       break;                                     \
     case ::at::ScalarType::Byte:                 \
     case ::at::ScalarType::Bool:                 \
-      func<uint8_t>(__VA_ARGS__);                       \
+      func<uint8_t>(__VA_ARGS__);                \
       break;                                     \
     case ::at::ScalarType::Int:                  \
-      func<int32_t>(__VA_ARGS__);                       \
+      func<int32_t>(__VA_ARGS__);                \
       break;                                     \
     case ::at::ScalarType::Long:                 \
-      func<int64_t>(__VA_ARGS__);                       \
+      func<int64_t>(__VA_ARGS__);                \
       break;                                     \
     default:                                     \
       TORCH_CHECK(false, "Invalid scalar type"); \
@@ -622,9 +623,9 @@ class AsyncSparseAllreduceWork : public ProcessGroupGloo::AsyncWork {
       const auto nnz = i.nnz();
       const auto numel = denseNumel * nnz;
       auto tensorShape = std::vector<int64_t>({(int64_t)nnz});
-      std::copy(
-          valueShape.begin(),
-          valueShape.end(),
+      std::ranges::copy(
+          valueShape,
+
           std::back_inserter(tensorShape));
       values.push_back(output.narrow(0, offset, numel).reshape(tensorShape));
       offset += numel;

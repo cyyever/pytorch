@@ -8,6 +8,7 @@
 #include <ATen/core/alias_info.h>
 #include <ATen/core/operator_name.h>
 #include <ATen/core/dispatch/OperatorOptions.h>
+#include <algorithm>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -380,8 +381,8 @@ struct TORCH_API FunctionSchema {
     return aliasInfo;
   }
   bool is_mutable() const {
-    return std::any_of(
-        arguments_.cbegin(), arguments_.cend(), [](const Argument& arg) {
+    return std::ranges::any_of(
+        arguments_, [](const Argument& arg) {
           const AliasInfo* aliasInfo = arg.alias_info();
           return aliasInfo && aliasInfo->isWrite();
         });

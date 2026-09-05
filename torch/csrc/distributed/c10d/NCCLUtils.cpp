@@ -466,7 +466,7 @@ ncclResult_t NCCLComm::registerSegment(
   // which are guaranteed to be with disjoint addr ranges. Thus, a ptr always
   // maps to a unique handle and should not be registered before the current
   // ptr is deregistered and freed.
-  if (registeredSegmentHandles_.count(ptr) > 0) {
+  if (registeredSegmentHandles_.contains(ptr)) {
     TORCH_CHECK(
         !errorOnRereg,
         "Segment with ptr ",

@@ -476,8 +476,8 @@ PyObject* dynamo__custom_eval_frame(
   // overtriggering and we don't need to do guard collectives the very first
   // time we've seen a frame in this region.
   bool has_relevant_entries =
-      extra->cache_entry_map.count(isolate_recompiles_id) > 0 ||
-      extra->cache_entry_map.count(-1) > 0;
+      extra->cache_entry_map.contains(isolate_recompiles_id) ||
+      extra->cache_entry_map.contains(-1);
   if (guard_complete_hook != nullptr && has_relevant_entries) {
     py::handle guard_complete_hook_handle(guard_complete_hook);
     // False means force compilation (someone cache missed)

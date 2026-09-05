@@ -5,6 +5,8 @@
 
 #include <ATen/ops/equal.h>
 
+#include <algorithm>
+
 namespace at {
 
 // Note [Tensor-subclass-like Tensors]
@@ -53,16 +55,16 @@ inline bool isTensorSubclassLike(const Tensor& tensor) {
 inline bool areAnyTensorSubclassLike(TensorList tensors) {
   if (c10::impl::dispatch_mode_enabled())
     return true;
-  return std::any_of(tensors.begin(), tensors.end(), isTensorSubclassLike);
+  return std::ranges::any_of(tensors, isTensorSubclassLike);
 }
 
 inline bool areAnyOptionalTensorSubclassLike(
     const c10::List<std::optional<Tensor>>& tensors) {
   if (c10::impl::dispatch_mode_enabled())
     return true;
-  return std::any_of(
-      tensors.begin(),
-      tensors.end(),
+  return std::ranges::any_of(
+      tensors,
+
       [](const std::optional<Tensor>& opt_tensor) {
         return (
             opt_tensor.has_value() && isTensorSubclassLike(opt_tensor.value()));
