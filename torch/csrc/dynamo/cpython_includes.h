@@ -21,7 +21,6 @@
 
 #include <internal/pycore_frame.h>
 
-#include <torch/csrc/dynamo/stackref_bridge.h>
 #include <internal/pycore_code.h>
 #include <internal/pycore_genobject.h>
 #include <internal/pycore_interpframe.h>
@@ -37,10 +36,8 @@ extern "C" {
 #define PREV_INSTR(x) (x)->instr_ptr
 
 // 3.14 stores f_executable/f_funcobj as stackrefs rather than PyObject*.
-#define F_CODE(x) \
-  ((PyCodeObject*)THP_PyStackRef_AsPyObjectBorrow(&(x)->f_executable))
-#define FUNC(x) \
-  ((PyFunctionObject*)THP_PyStackRef_AsPyObjectBorrow(&(x)->f_funcobj))
+#define F_CODE(x) ((PyCodeObject*)PyStackRef_AsPyObjectBorrow((x)->f_executable))
+#define FUNC(x) ((PyFunctionObject*)PyStackRef_AsPyObjectBorrow((x)->f_funcobj))
 
 #ifdef __cplusplus
 } // extern "C"
