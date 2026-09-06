@@ -19,9 +19,11 @@ from torchgen.api.types import (
     ConstRefCType,
     CType,
     DispatcherSignature,
+    generatorT,
     intArrayRefT,
     longT,
     OptionalCType,
+    storageT,
     symIntArrayRefT,
     SymIntT,
     tensorT,
@@ -579,6 +581,19 @@ def modifies_arguments(f: NativeFunction) -> bool:
     return f.func.kind() in [SchemaKind.inplace, SchemaKind.out]
 
 
+# The by-value types the dispatcher hands over that own something -- a refcount,
+# a heap buffer -- so copying them is not free. Reference types are excluded by
+# the BaseCType test, and the by-value types not listed here (IntArrayRef,
+# TensorList, the trivially copyable scalars) gain nothing from a move.
+OWNING_BY_VALUE_TYPES = {SymIntT, storageT, generatorT}
+
+
+def owns_by_value(t: CType) -> bool:
+    if isinstance(t, OptionalCType):
+        t = t.elem
+    return isinstance(t, BaseCType) and t.type in OWNING_BY_VALUE_TYPES
+
+
 @with_native_function_with_differentiability_info
 def emit_inplace_or_view_body(fn: NativeFunctionWithDifferentiabilityInfo) -> list[str]:
     f = fn.func
@@ -590,11 +605,20 @@ def emit_inplace_or_view_body(fn: NativeFunctionWithDifferentiabilityInfo) -> li
     # code-generated ADInplaceOrView kernels plumb and recompute dispatch keys directly through the kernel for performance.
     # See Note [Plumbing Keys Through The Dispatcher] for details.
     dispatch_key_set = "ks & c10::after_ADInplaceOrView_keyset"
-    redispatch_args = ", ".join([dispatch_key_set] + [a.expr for a in dispatcher_exprs])
 
     # Note that this calls the slow, dispatching variants of manual_cpp_binding ops.
     # We could probably work harder to ensure that the fast variants are called instead, but the perf benefit would be minimal.
     if modifies_arguments(f):  # inplace op
+        # The redispatch is the last read of the by-value arguments here --
+        # everything after it touches the out references -- so the ones that own
+        # a refcount or a buffer are moved into the call.
+        redispatch_args = ", ".join(
+            [dispatch_key_set]
+            + [
+                f"std::move({a.expr})" if owns_by_value(a.type.type) else a.expr
+                for a in dispatcher_exprs
+            ]
+        )
         inplace_view_body.append(
             INPLACE_REDISPATCH.substitute(
                 unambiguous_name=f.func.name.unambiguous_name(),
@@ -606,6 +630,11 @@ def emit_inplace_or_view_body(fn: NativeFunctionWithDifferentiabilityInfo) -> li
     else:
         if get_view_info(f) is None:
             raise AssertionError("Expected view info to be non-None")
+        # No moves on this path: emit_view_body reads the same arguments again
+        # after the call, to build the ViewFunc.
+        redispatch_args = ", ".join(
+            [dispatch_key_set] + [a.expr for a in dispatcher_exprs]
+        )
         inplace_view_body.append(
             VIEW_REDISPATCH.substitute(
                 assign_return_values="auto " + TMP_VAR + " = ",
