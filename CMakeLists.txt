@@ -560,6 +560,15 @@ append_cxx_flag_if_supported("-fdata-sections" CMAKE_CXX_FLAGS)
 append_c_flag_if_supported("-ffunction-sections" CMAKE_C_FLAGS)
 append_c_flag_if_supported("-fdata-sections" CMAKE_C_FLAGS)
 
+# Custom link-library features must be defined in the directory scope where
+# consuming targets are created. Keep oneMKL's required DT_NEEDED entries
+# without changing as-needed behavior for unrelated libraries.
+if(UNIX AND NOT CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED)
+  set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED
+      "LINKER:--push-state,--no-as-needed" "<LINK_ITEM>" "LINKER:--pop-state")
+  set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED TRUE)
+endif()
+
 # lld, not the default bfd: it links a library the size of libtorch_cuda.so in
 # a fraction of the time, and it is the linker that implements --icf. Skip it
 # when the toolchain has no ld.lld rather than failing the configure.
@@ -575,6 +584,11 @@ if(NOT DEFINED CMAKE_LINKER_TYPE AND NOT APPLE AND NOT MSVC)
     add_link_options("LINKER:--icf=safe")
   endif()
 endif()
+
+# Enable ThinLTO for Clang Release builds through CMake's IPO support.
+include(CheckIPOSupported)
+check_ipo_supported(LANGUAGES C CXX)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 # Prioritized Text Linker Optimization
 if(USE_PRIORITIZED_TEXT_FOR_LD)

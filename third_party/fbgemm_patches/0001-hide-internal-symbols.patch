@@ -1,0 +1,9 @@
+diff --git a/cmake/modules/CppLibrary.cmake b/cmake/modules/CppLibrary.cmake
+index 5c9a454..c07279d 100644
+--- a/cmake/modules/CppLibrary.cmake
++++ b/cmake/modules/CppLibrary.cmake
+@@ -203 +203,3 @@ function(cpp_library)
+-        POSITION_INDEPENDENT_CODE ON)
++        POSITION_INDEPENDENT_CODE ON
++        CXX_VISIBILITY_PRESET hidden
++        VISIBILITY_INLINES_HIDDEN ON)

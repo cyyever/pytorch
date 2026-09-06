@@ -595,6 +595,8 @@ if(HAVE_SOVERSION)
       VERSION ${TORCH_VERSION} SOVERSION ${TORCH_SOVERSION})
 endif()
 torch_compile_options(torch_cpu)  # see cmake/public/utils.cmake
+target_link_options(torch_cpu PRIVATE
+  "$<$<PLATFORM_ID:Linux>:LINKER:--exclude-libs,libfbgemm.a>")
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   target_compile_options_if_supported(torch_cpu "-Wmissing-prototypes")
@@ -926,6 +928,9 @@ if(USE_XPU)
   list(APPEND Caffe2_XPU_SRCS ${TORCH_SRC_DIR}/csrc/inductor/aoti_runner/model_container_runner_xpu.cpp)
   add_library(torch_xpu ${Caffe2_XPU_SRCS})
   torch_compile_options(torch_xpu)  # see cmake/public/utils.cmake
+  target_link_options(torch_xpu PRIVATE
+    "$<$<PLATFORM_ID:Linux>:LINKER:--gc-sections>"
+    "$<$<PLATFORM_ID:Linux>:LINKER:--exclude-libs,libdnnl.a>")
   target_compile_definitions(torch_xpu PRIVATE USE_XPU)
 
   # ATen XPU implementation

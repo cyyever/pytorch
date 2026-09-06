@@ -1,0 +1,28 @@
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+index 0a3ff08b..5499a128 100644
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -199 +199 @@ macro(set_build_flags)
+-      set(SYCL_TARGETS_OPTION -fsycl-targets=spir64_gen,spir64)
++      set(SYCL_TARGETS_OPTION -fsycl-targets=spir64_gen)
+diff --git a/cmake/ONEMKL.cmake b/cmake/ONEMKL.cmake
+index cb270e61..f952b98a 100644
+--- a/cmake/ONEMKL.cmake
++++ b/cmake/ONEMKL.cmake
+@@ -28,4 +28,12 @@ set(TORCH_XPU_OPS_ONEMKL_INCLUDE_DIR ${ONEMKL_INCLUDE_DIR})
+-set(TORCH_XPU_OPS_ONEMKL_LIBRARIES ${ONEMKL_LIBRARIES})
+-
+-list(PREPEND TORCH_XPU_OPS_ONEMKL_LIBRARIES "-Wl,--start-group")
+-list(APPEND TORCH_XPU_OPS_ONEMKL_LIBRARIES "-Wl,--end-group")
++if(UNIX AND NOT CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED)
++  set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED
++      "LINKER:--push-state,--no-as-needed" "<LINK_ITEM>" "LINKER:--pop-state")
++  set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED TRUE)
++endif()
++
++if(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED)
++  set(TORCH_XPU_OPS_ONEMKL_LIBRARIES
++      "$<LINK_LIBRARY:MKL_NEEDED,${ONEMKL_LIBRARIES}>")
++else()
++  set(TORCH_XPU_OPS_ONEMKL_LIBRARIES ${ONEMKL_LIBRARIES})
++endif()

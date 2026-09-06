@@ -374,9 +374,7 @@ def _get_icpx_version() -> str:
     return f"{version[0]}{version[1]:02}{version[2]:02}"
 
 
-_PRE_XE2_XPU_ARCH_PREFIXES = (
-    'pvc', 'dg1', 'dg2', 'ats', 'acm', 'tgl', 'adl', 'rkl', 'mtl', 'arl', 'xe-lpg',
-)
+_SUPPORTED_XPU_ARCHES = ('bmg',)
 
 
 def _get_sycl_arch_list():
@@ -389,32 +387,23 @@ def _get_sycl_arch_list():
         for arch in re.split(r'[,\s]+', arch_list_string)
         if arch.strip()
     ]
-    unsupported = [
-        arch
-        for arch in arch_list
-        if arch.startswith(_PRE_XE2_XPU_ARCH_PREFIXES)
-    ]
+    if not arch_list:
+        arch_list = list(_SUPPORTED_XPU_ARCHES)
+    unsupported = [arch for arch in arch_list if arch not in _SUPPORTED_XPU_ARCHES]
     if unsupported:
         raise ValueError(
-            "PyTorch XPU supports only Xe2 or newer architectures; "
+            "PyTorch XPU supports only the BMG architecture; "
             f"unsupported targets: {', '.join(unsupported)}"
         )
     return ','.join(arch_list)
 
 
-# If arch list returned by _get_sycl_arch_list() is empty, then sycl kernels will be compiled
-# for default spir64 target and avoid device specific compilations entirely. Further, kernels
-# will be JIT compiled at runtime.
 def _append_sycl_targets_if_missing(cflags) -> None:
     if any(flag.startswith('-fsycl-targets=') for flag in cflags):
         # do nothing: user has manually specified sycl targets
         return
-    if _get_sycl_arch_list() != '':
-        # AOT (spir64_gen) + JIT (spir64)
-        cflags.append('-fsycl-targets=spir64_gen,spir64')
-    else:
-        # JIT (spir64)
-        cflags.append('-fsycl-targets=spir64')
+    _get_sycl_arch_list()
+    cflags.append('-fsycl-targets=spir64_gen')
 
 def _get_sycl_device_flags(cflags):
     # We need last occurrence of -fsycl-targets as it will be the one taking effect.
