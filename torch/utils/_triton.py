@@ -9,6 +9,18 @@ log = logging.getLogger(__name__)
 
 
 _FAILED_TO_MAP_SEGMENT_FROM_SHARED_OBJECT = "failed to map segment from shared object"
+_SYSTEM_ONEAPI_ROOT = "/opt/intel/oneapi"
+
+
+def _set_default_xpu_oneapi_root() -> None:
+    import torch
+
+    if (
+        torch.version.xpu
+        and "ONEAPI_ROOT" not in os.environ
+        and os.path.isdir(os.path.join(_SYSTEM_ONEAPI_ROOT, "compiler", "latest"))
+    ):
+        os.environ["ONEAPI_ROOT"] = _SYSTEM_ONEAPI_ROOT
 
 
 def _triton_cache_dir_for_error_message() -> str | None:
@@ -294,6 +306,8 @@ def has_triton(*, include_cpu: bool = False) -> bool:
 
 @functools.cache
 def triton_backend() -> Any:
+    _set_default_xpu_oneapi_root()
+
     from triton.compiler.compiler import make_backend
     from triton.runtime.driver import driver
 

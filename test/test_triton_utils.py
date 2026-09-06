@@ -6,11 +6,31 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
+import torch
 from torch.testing._internal.common_utils import run_tests, TestCase
 from torch.utils import _triton as triton_utils
 
 
 class TestTritonUtils(TestCase):
+    def test_set_default_xpu_oneapi_root(self):
+        with (
+            mock.patch.object(torch.version, "xpu", "20260100"),
+            mock.patch.object(triton_utils.os.path, "isdir", return_value=True),
+            mock.patch.dict(os.environ, {}, clear=True),
+        ):
+            triton_utils._set_default_xpu_oneapi_root()
+            self.assertEqual(os.environ["ONEAPI_ROOT"], "/opt/intel/oneapi")
+
+    def test_preserve_explicit_oneapi_root(self):
+        with (
+            mock.patch.object(torch.version, "xpu", "20260100"),
+            mock.patch.dict(
+                os.environ, {"ONEAPI_ROOT": "/custom/oneapi"}, clear=True
+            ),
+        ):
+            triton_utils._set_default_xpu_oneapi_root()
+            self.assertEqual(os.environ["ONEAPI_ROOT"], "/custom/oneapi")
+
     def _run_triton_backend_load_failure(self, exc, env):
         driver_mod = importlib.import_module("triton.runtime.driver")
         fake_driver = SimpleNamespace(
