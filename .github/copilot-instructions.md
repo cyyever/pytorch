@@ -112,7 +112,6 @@ git stash pop
 1. **Editing generated files** - If it's in `build/`, don't edit it. Edit the source template or `native_functions.yaml`
 2. **NVCC template compilation** - NVCC is stricter about C++ than gcc/clang; code working on Linux may fail Windows CI
 3. **Windows symbol visibility** - Use `TORCH_API` macros for exported symbols (required on Windows, optional on Linux)
-4. **No internet access** - DO NOT attempt to install dependencies during development
 
 ## Key Files Reference
 
