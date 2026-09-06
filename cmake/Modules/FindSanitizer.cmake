@@ -31,14 +31,6 @@ foreach(sanitizer_name IN ITEMS address thread undefined leak memory)
   set(CMAKE_REQUIRED_FLAGS
       "-fsanitize=${sanitizer_name};-fno-omit-frame-pointer")
   set(CMAKE_REQUIRED_LINK_OPTIONS "")
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_ID STREQUAL
-                                              "MSVC")
-    if(sanitizer_name STREQUAL "address")
-      set(CMAKE_REQUIRED_FLAGS "/fsanitize=${sanitizer_name}")
-    else()
-      continue()
-    endif()
-  endif()
   set(_asan_rpath_flag "")
   if(sanitizer_name STREQUAL "address")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL
@@ -103,22 +95,12 @@ foreach(sanitizer_name IN ITEMS address thread undefined leak memory)
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:$__CXX_${sanitizer_name}_res>>:${CMAKE_REQUIRED_FLAGS}>
         $<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:$__C_${sanitizer_name}_res>>:${CMAKE_REQUIRED_FLAGS}>
     )
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND NOT CMAKE_C_COMPILER_ID
-                                                     STREQUAL "MSVC")
-      target_link_options(
-        Sanitizer::${sanitizer_name}
-        INTERFACE
-        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:$__CXX_${sanitizer_name}_res>>:${CMAKE_REQUIRED_FLAGS}>
-        $<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:$__C_${sanitizer_name}_res>>:${CMAKE_REQUIRED_FLAGS}>
-      )
-    else()
-      target_link_options(
-        Sanitizer::${sanitizer_name}
-        INTERFACE
-        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:$__CXX_${sanitizer_name}_res>>:/INCREMENTAL:NO>
-        $<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:$__C_${sanitizer_name}_res>>:/INCREMENTAL:NO>
-      )
-    endif()
+    target_link_options(
+      Sanitizer::${sanitizer_name}
+      INTERFACE
+      $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:$__CXX_${sanitizer_name}_res>>:${CMAKE_REQUIRED_FLAGS}>
+      $<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:$__C_${sanitizer_name}_res>>:${CMAKE_REQUIRED_FLAGS}>
+    )
 
     if(sanitizer_name STREQUAL "address")
       # Include HIP language so HIP-side TUs update libstdc++ container

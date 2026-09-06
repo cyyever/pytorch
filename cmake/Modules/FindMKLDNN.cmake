@@ -7,13 +7,7 @@
 include(ExternalProject)
 
   if(USE_XPU) # Build oneDNN GPU library
-    if(WIN32)
-      # Windows
-      set(DNNL_HOST_COMPILER "DEFAULT")
-      set(DNNL_C_COMPILER "icx")
-      set(SYCL_CXX_DRIVER "icx")
-      set(DNNL_LIB_NAME "dnnl.lib")
-    elseif(LINUX)
+    if(LINUX)
       # Linux
       # g++ is soft linked to /usr/bin/cxx, oneDNN would not treat it as an absolute path
       set(DNNL_HOST_COMPILER "g++")

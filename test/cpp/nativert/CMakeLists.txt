@@ -83,8 +83,4 @@ endif()
 if(INSTALL_TEST)
   set_target_properties(test_nativert PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
   install(TARGETS test_nativert DESTINATION bin)
-  # Install PDB files for MSVC builds
-  if(MSVC AND BUILD_SHARED_LIBS)
-    install(FILES $<TARGET_PDB_FILE:test_nativert> DESTINATION bin OPTIONAL)
-  endif()
 endif()
