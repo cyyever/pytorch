@@ -955,6 +955,7 @@ if(USE_XPU)
     # USE_C10D_XCCL to decide if XCCL backend is enabled in torch-xpu-ops build.
     if(USE_C10D_XCCL)
       target_compile_definitions(torch_xpu PUBLIC USE_C10D_XCCL)
+      target_link_libraries(torch_xpu_ops PRIVATE nlohmann)
     endif()
     target_link_libraries(torch_xpu PRIVATE torch_xpu_ops)
 

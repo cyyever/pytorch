@@ -44,9 +44,6 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}/caffe2/aten/src
     ${CMAKE_BINARY_DIR}/third_party
 
-    ${TORCH_ROOT}/third_party/gloo
-    ${TORCH_ROOT}/third_party/kineto/libkineto/include
-
     ${TORCH_SRC_DIR}/csrc
     ${TORCH_SRC_DIR}/csrc/api/include
     ${TORCH_SRC_DIR}/lib
@@ -129,6 +126,7 @@ endif()
 if(USE_XPU)
     include(${TORCH_ROOT}/cmake/public/xpu.cmake)
     append_filelist("libtorch_python_xpu_sources" TORCH_PYTHON_SRCS)
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${TORCH_XPU_LIB} torch::xpurt)
     list(APPEND TORCH_PYTHON_INCLUDE_DIRECTORIES
       ${TORCH_ROOT}/third_party/torch-xpu-ops/src)
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_XPU)
@@ -319,6 +317,9 @@ target_compile_definitions(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_DEFINITIO
 target_compile_options(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_OPTIONS})
 
 target_include_directories(torch_python PUBLIC ${TORCH_PYTHON_INCLUDE_DIRECTORIES})
+target_include_directories(torch_python SYSTEM PRIVATE
+    ${TORCH_ROOT}/third_party/gloo
+    ${TORCH_ROOT}/third_party/kineto/libkineto/include)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithAssert")
    # Workaround numerous decref-without-a-gil warnings from JIT

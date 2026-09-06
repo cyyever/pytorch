@@ -42,7 +42,14 @@ if(NOT BUILD_LIBTORCHLESS)
   endif()
 
   # ---[ Dependency of c10_xpu
-  target_link_libraries(c10_xpu PUBLIC c10 torch::xpurt)
+  target_link_libraries(c10_xpu PUBLIC torch::xpurt)
+  if(BUILD_SHARED_LIBS)
+    # c10 is already part of torch_cpu, which owns these objects in shared
+    # builds. Avoid propagating c10's static dependency closure to torch_xpu.
+    add_dependencies(c10_xpu c10)
+  else()
+    target_link_libraries(c10_xpu PUBLIC c10)
+  endif()
   target_include_directories(
       c10_xpu PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
