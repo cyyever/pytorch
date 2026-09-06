@@ -483,19 +483,6 @@ def create_build_tuple(n: int) -> Instruction:
     return create_instruction("BUILD_TUPLE", arg=n)
 
 
-def linetable_writer(
-    first_lineno: int,
-) -> tuple[list[int], Callable[[int, int], None], Callable[[int], None]]:
-    """
-    Used to create typing.CodeType.co_linetable
-    See https://github.com/python/cpython/blob/3.10/Objects/lnotab_notes.txt
-    This is the internal format of the line number table for Python 3.10
-    """
-    raise AssertionError(
-        f"linetable_writer requires Python 3.10, got {sys.version_info[:2]}"
-    )
-
-
 def encode_varint(n: int) -> list[int]:
     """
     6-bit chunk encoding of an unsigned integer
@@ -1076,13 +1063,6 @@ def overwrite_instruction(
     old_inst.argval = new_insts[0].argval
     old_inst.target = new_insts[0].target
     return [old_inst] + new_insts[1:]
-
-
-def remove_load_call_method(instructions: list[Instruction]) -> list[Instruction]:
-    """LOAD_METHOD puts a NULL on the stack which causes issues, so remove it"""
-    raise AssertionError(
-        "remove_load_call_method should not be called on Python 3.11+"
-    )
 
 
 def remove_jump_if_none(instructions: list[Instruction]) -> None:

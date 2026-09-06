@@ -6297,8 +6297,10 @@ class InliningGeneratorInstructionTranslator(InliningInstructionTranslator):
     def YIELD_VALUE(self, inst: Instruction) -> None:
         top = self.pop()
         self.generated_items.append(top)
+        # This handler is only reached through the dispatch table, which is
+        # keyed on dis.opmap, so inst is always YIELD_VALUE.
         prev = self.instructions[self.indexof[inst] - 1].opname
-        if inst.opname == "YIELD_FROM" or prev == "SEND":
+        if prev == "SEND":
             self.frame_state = FrameState.FRAME_SUSPENDED_YIELD_FROM
         else:
             self.frame_state = FrameState.FRAME_SUSPENDED
@@ -6332,11 +6334,6 @@ class InliningGeneratorInstructionTranslator(InliningInstructionTranslator):
     def RETURN_CONST(self, inst: Instruction) -> None:
         self.frame_state = FrameState.FRAME_CLEARED
         return super().RETURN_CONST(inst)
-
-    def YIELD_FROM(self, inst: Instruction) -> None:
-        # https://github.com/python/cpython/blob/1790e584142b5db070b74bc64777ad14e26608c2/Python/ceval.c#L2581
-        raise AssertionError("Python 3.10 specific")
-
 
     def SEND(self, inst: Instruction) -> None:
         if not (len(self.stack) >= 2):
