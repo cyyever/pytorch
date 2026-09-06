@@ -5,7 +5,6 @@ import os
 import sys
 import time
 import unittest
-from sys import platform
 
 import torch
 import torch.cuda
@@ -623,24 +622,15 @@ class TestMultiprocessing(_MultiprocessingTestMixin, TestCase):
                 do_test()
 
     @unittest.skipIf(
-        platform == "darwin", "file descriptor strategy is not supported on macOS"
-    )
-    @unittest.skipIf(
         TEST_WITH_ASAN,
         "seems to hang with ASAN, see https://github.com/pytorch/pytorch/issues/5326",
     )
     def test_fd_sharing(self):
         self._test_sharing(repeat=TEST_REPEATS)
 
-    @unittest.skipIf(
-        platform == "darwin", "file descriptor strategy is not supported on macOS"
-    )
     def test_fd_preserve_sharing(self):
         self._test_preserve_sharing(repeat=TEST_REPEATS)
 
-    @unittest.skipIf(
-        platform == "darwin", "file descriptor strategy is not supported on macOS"
-    )
     def test_fd_pool(self):
         self._test_pool(repeat=TEST_REPEATS)
 
@@ -1040,9 +1030,6 @@ if __name__ == "__main__":
         t.share_memory_()
         self.assertTrue(t.is_shared())
 
-    @unittest.skipIf(
-        platform == "darwin", "file descriptor strategy is not supported on macOS"
-    )
     def test_is_shared(self):
         self._test_is_shared()
 
