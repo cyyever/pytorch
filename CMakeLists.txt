@@ -45,13 +45,6 @@
 
 cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 
-# This fork builds on Linux and macOS. The Windows paths were removed rather
-# than left to rot untested, so say so here instead of failing somewhere deep
-# in a toolchain check.
-if(WIN32)
-  message(FATAL_ERROR "This fork does not support Windows.")
-endif()
-
 # Prohibit in-source builds
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
   message(FATAL_ERROR "In-source build are not supported")
@@ -93,6 +86,13 @@ endif()
 project(${SKBUILD_PROJECT_NAME}
         VERSION ${SKBUILD_PROJECT_VERSION}
         LANGUAGES CXX C)
+
+# This fork builds on Linux and macOS. The Windows paths were removed rather
+# than left to rot untested, so say so here instead of failing somewhere deep
+# in a toolchain check. After project(), which is what defines WIN32.
+if(WIN32)
+  message(FATAL_ERROR "This fork does not support Windows.")
+endif()
 
 # When built via scikit-build-core, Python_EXECUTABLE is already set.
 # For standalone cmake invocations, find it via find_package.
