@@ -329,8 +329,6 @@ if(BUILD_TEST)
   set(BUILD_GMOCK ON CACHE BOOL "Build gmock." FORCE)
 
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../third_party/googletest)
-  include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_LIST_DIR}/../third_party/googletest/googletest/include)
-  include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_LIST_DIR}/../third_party/googletest/googlemock/include)
 
   # We will not need to test benchmark lib itself.
   set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing as we don't need it.")
@@ -856,11 +854,19 @@ if(USE_GLOO)
       set(USE_RCCL ${USE_RCCL_SAVED})
       set(USE_CUDA ${USE_CUDA_SAVED})
 
-      # Here is a little bit hacky. We have to put PROJECT_BINARY_DIR in front
-      # of PROJECT_SOURCE_DIR with/without conda system. The reason is that
-      # gloo generates a new config.h in the binary directory.
-      include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_LIST_DIR}/../third_party/gloo)
-      include_directories(BEFORE SYSTEM ${PROJECT_BINARY_DIR}/third_party/gloo)
+      # gloo declares only $<INSTALL_INTERFACE:include> on its targets, so a
+      # consumer that builds it as a subproject rather than finding an
+      # installed copy gets no include directory at all. Supply the build-tree
+      # halves here. The binary directory comes first because gloo generates
+      # config.h into it, and a stale installed copy in the source tree would
+      # otherwise win.
+      foreach(_gloo_target IN ITEMS gloo gloo_cuda gloo_hip)
+        if(TARGET ${_gloo_target})
+          target_include_directories(${_gloo_target} SYSTEM BEFORE INTERFACE
+              $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/third_party/gloo>
+              $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../third_party/gloo>)
+        endif()
+      endforeach()
     else()
       find_package(Gloo)
       if(NOT Gloo_FOUND)
