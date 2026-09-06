@@ -711,32 +711,9 @@ if(NOT USE_SYSTEM_SLEEF)
     endif()
   endif()
   set(SLEEF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef")
-  file(GLOB SLEEF_PATCHES
-       "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef_patches/*.patch")
-  list(SORT SLEEF_PATCHES)
-  foreach(_patch IN LISTS SLEEF_PATCHES)
-    execute_process(
-      COMMAND git apply --check --unidiff-zero ${_patch}
-      WORKING_DIRECTORY ${SLEEF_SOURCE_DIR}
-      RESULT_VARIABLE _applies
-      ERROR_QUIET)
-    if(_applies EQUAL 0)
-      execute_process(
-        COMMAND git apply --unidiff-zero ${_patch}
-        WORKING_DIRECTORY ${SLEEF_SOURCE_DIR}
-        COMMAND_ERROR_IS_FATAL ANY)
-    else()
-      execute_process(
-        COMMAND git apply --reverse --check --unidiff-zero ${_patch}
-        WORKING_DIRECTORY ${SLEEF_SOURCE_DIR}
-        RESULT_VARIABLE _already_applied
-        ERROR_QUIET)
-      if(NOT _already_applied EQUAL 0)
-        message(FATAL_ERROR
-            "${_patch} neither applies nor is already applied to SLEEF")
-      endif()
-    endif()
-  endforeach()
+  apply_third_party_patches(
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef_patches"
+      "${SLEEF_SOURCE_DIR}" SLEEF)
   add_subdirectory("${SLEEF_SOURCE_DIR}" ${CMAKE_BINARY_DIR}/sleef)
   set_property(TARGET sleef PROPERTY FOLDER "dependencies")
   list(APPEND ATen_THIRD_PARTY_INCLUDE ${CMAKE_BINARY_DIR}/include)

@@ -181,6 +181,7 @@ set(CMAKE_C_STANDARD
 
 # ---[ Utils
 include(cmake/public/utils.cmake)
+include(cmake/ThirdPartyPatches.cmake)
 
 # --- [ Check that minimal gcc version is 16+
 # GCC 16 is the first whose C++26 support lines up with the clang floor below:

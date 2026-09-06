@@ -372,35 +372,8 @@ if(USE_FBGEMM)
     set(FBGEMM_BUILD_BENCHMARKS OFF CACHE BOOL "")
     set(FBGEMM_LIBRARY_TYPE "static" CACHE STRING "")
 
-    file(GLOB FBGEMM_PATCHES
-         "${CAFFE2_THIRD_PARTY_ROOT}/fbgemm_patches/*.patch")
-    list(SORT FBGEMM_PATCHES)
-    foreach(_patch ${FBGEMM_PATCHES})
-      execute_process(
-        COMMAND git apply --check --unidiff-zero ${_patch}
-        WORKING_DIRECTORY ${FBGEMM_SOURCE_DIR}
-        RESULT_VARIABLE _applies
-        ERROR_QUIET)
-      if(_applies EQUAL 0)
-        execute_process(
-          COMMAND git apply --unidiff-zero ${_patch}
-          WORKING_DIRECTORY ${FBGEMM_SOURCE_DIR}
-          RESULT_VARIABLE _exitcode)
-        if(NOT _exitcode EQUAL 0)
-          message(FATAL_ERROR "Fail to apply ${_patch} to FBGEMM")
-        endif()
-      else()
-        execute_process(
-          COMMAND git apply --reverse --check --unidiff-zero ${_patch}
-          WORKING_DIRECTORY ${FBGEMM_SOURCE_DIR}
-          RESULT_VARIABLE _already_applied
-          ERROR_QUIET)
-        if(NOT _already_applied EQUAL 0)
-          message(FATAL_ERROR
-            "${_patch} neither applies nor is already applied to FBGEMM")
-        endif()
-      endif()
-    endforeach()
+    apply_third_party_patches(
+        "${CAFFE2_THIRD_PARTY_ROOT}/fbgemm_patches" "${FBGEMM_SOURCE_DIR}" FBGEMM)
 
     add_subdirectory("${FBGEMM_SOURCE_DIR}")
 
@@ -865,24 +838,14 @@ if(USE_GLOO)
       set(USE_NCCL OFF)
       set(USE_RCCL OFF)
       set(USE_CUDA OFF)
+      apply_third_party_patches(
+          "${CAFFE2_THIRD_PARTY_ROOT}/gloo_patches"
+          "${CMAKE_CURRENT_LIST_DIR}/../third_party/gloo" gloo)
       add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../third_party/gloo)
       set(USE_NCCL ${USE_NCCL_SAVED})
       set(USE_RCCL ${USE_RCCL_SAVED})
       set(USE_CUDA ${USE_CUDA_SAVED})
 
-      # gloo declares only $<INSTALL_INTERFACE:include> on its targets, so a
-      # consumer that builds it as a subproject rather than finding an
-      # installed copy gets no include directory at all. Supply the build-tree
-      # halves here. The binary directory comes first because gloo generates
-      # config.h into it, and a stale installed copy in the source tree would
-      # otherwise win.
-      foreach(_gloo_target IN ITEMS gloo gloo_cuda gloo_hip)
-        if(TARGET ${_gloo_target})
-          target_include_directories(${_gloo_target} SYSTEM BEFORE INTERFACE
-              $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/third_party/gloo>
-              $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../third_party/gloo>)
-        endif()
-      endforeach()
     else()
       find_package(Gloo)
       if(NOT Gloo_FOUND)

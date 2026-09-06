@@ -931,35 +931,8 @@ if(USE_XPU)
   # torch-xpu-ops is fetched at a pinned commit and still calls ATen
   # quantization APIs that this tree no longer has. Re-apply the fixups after
   # every checkout, since the checkout above resets the tree.
-  file(GLOB TORCH_XPU_OPS_PATCHES
-       "${TORCH_ROOT}/third_party/xpu_patches/*.patch")
-  list(SORT TORCH_XPU_OPS_PATCHES)
-  foreach(_patch ${TORCH_XPU_OPS_PATCHES})
-    execute_process(
-      COMMAND git apply --check --unidiff-zero ${_patch}
-      WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
-      RESULT_VARIABLE _applies
-      ERROR_QUIET)
-    if(_applies EQUAL 0)
-      execute_process(
-        COMMAND git apply --unidiff-zero ${_patch}
-        WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
-        RESULT_VARIABLE _exitcode)
-      if(NOT _exitcode EQUAL 0)
-        message(FATAL_ERROR "Fail to apply ${_patch} to torch-xpu-ops")
-      endif()
-    else()
-      execute_process(
-        COMMAND git apply --reverse --check --unidiff-zero ${_patch}
-        WORKING_DIRECTORY ${TORCH_XPU_OPS_DIR}
-        RESULT_VARIABLE _already_applied
-        ERROR_QUIET)
-      if(NOT _already_applied EQUAL 0)
-        message(FATAL_ERROR
-          "${_patch} neither applies nor is already applied to torch-xpu-ops")
-      endif()
-    endif()
-  endforeach()
+  apply_third_party_patches(
+      "${TORCH_ROOT}/third_party/xpu_patches" "${TORCH_XPU_OPS_DIR}" torch-xpu-ops)
 
   set(TORCH_XPU_OPS_INCLUDE_DIRS
       ${TORCH_SRC_DIR}/csrc/api
