@@ -108,12 +108,10 @@ if [[ "$BUILD_ENVIRONMENT" == *xpu* ]]; then
   # shellcheck disable=SC1091
   source /opt/intel/oneapi/ccl/latest/env/vars.sh
   # shellcheck disable=SC1091
-  source /opt/intel/oneapi/mpi/latest/env/vars.sh
-  # shellcheck disable=SC1091
   source /opt/intel/oneapi/pti/latest/env/vars.sh
   # Enable XCCL build
   export USE_XCCL=1
-  export USE_MPI=0
+  export USE_KINETO=1
   export USE_STATIC_MKL=1
   export TORCH_XPU_ARCH_LIST=pvc
   # Use different AOT target list for different runner tests

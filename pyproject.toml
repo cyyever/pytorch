@@ -339,7 +339,6 @@ torchfrtrace = "torch.distributed.flight_recorder.fr_trace:main"
 default = "torch.distributed.elastic.multiprocessing:DefaultLogsSpecs"
 
 [project.entry-points."torch.distributed.backends"]
-
 gloo = "torch.distributed.distributed_c10d:_register_builtin_gloo_backend"
 nccl = "torch.distributed.distributed_c10d:_register_builtin_nccl_backend"
 "nccl-legacy" = "torch.distributed.distributed_c10d:_register_builtin_nccl_legacy_backend"

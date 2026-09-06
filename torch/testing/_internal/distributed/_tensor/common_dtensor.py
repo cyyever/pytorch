@@ -812,7 +812,6 @@ class DTensorTestBase(DTensorTestMixin, MultiProcessTestCase):
             "nccl-legacy",
             "gloo",
             "fake",
-
             f"cpu:gloo,{self.device_type}:{curr_backend}",
             "cpu:gloo,cuda:ncclx",
             f"cpu:fake,{self.device_type}:{curr_backend}",

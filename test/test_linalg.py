@@ -7808,16 +7808,16 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
 
         def run_test(M):
             # Testing against definition for pseudo-inverses
-            MPI = torch.pinverse(M)
-            MPI_ = MPI.cpu().numpy()
+            pinv = torch.pinverse(M)
+            pinv_ = pinv.cpu().numpy()
             M_ = M.cpu().numpy()
             if M.numel() > 0:
-                self.assertEqual(M_, np.matmul(np.matmul(M_, MPI_), M_))
-                self.assertEqual(MPI_, np.matmul(np.matmul(MPI_, M_), MPI_))
-                self.assertEqual(np.matmul(M_, MPI_), np.matmul(M_, MPI_).swapaxes(-2, -1).conj())
-                self.assertEqual(np.matmul(MPI_, M_), np.matmul(MPI_, M_).swapaxes(-2, -1).conj())
+                self.assertEqual(M_, np.matmul(np.matmul(M_, pinv_), M_))
+                self.assertEqual(pinv_, np.matmul(np.matmul(pinv_, M_), pinv_))
+                self.assertEqual(np.matmul(M_, pinv_), np.matmul(M_, pinv_).swapaxes(-2, -1).conj())
+                self.assertEqual(np.matmul(pinv_, M_), np.matmul(pinv_, M_).swapaxes(-2, -1).conj())
             else:
-                self.assertEqual(M.shape, MPI.shape[:-2] + (MPI.shape[-1], MPI.shape[-2]))
+                self.assertEqual(M.shape, pinv.shape[:-2] + (pinv.shape[-1], pinv.shape[-2]))
         for sizes in [(5, 5), (3, 5, 5), (3, 7, 5, 5),  # square matrices
                       (3, 2), (5, 3, 2), (7, 5, 3, 2),  # fat matrices
                       (2, 3), (5, 2, 3), (7, 5, 2, 3),  # thin matrices

@@ -345,8 +345,8 @@ def repair_wheel(
     arch_deps: list[Path],
     bundled_libs: list[BundledLib],
     aux_files: list[AuxFile],
-    c_so_rpath: str,
-    lib_so_rpath: str,
+    c_so_rpath: str | None,
+    lib_so_rpath: str | None,
     force_rpath: bool,
 ) -> None:
     # InWheelCtx unpacks via auditwheel's zip2dir on enter and, once out_wheel is
@@ -409,13 +409,14 @@ def repair_wheel(
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(aux.src, dest)
 
-        # Set RPATH on top-level (_C.so etc.) and lib/ shared objects
-        for sofile in torch_dir.glob("*.so*"):
-            if sofile.is_file():
-                set_rpath(sofile, c_so_rpath, force_rpath)
-        for sofile in torch_lib.glob("*.so*"):
-            if sofile.is_file():
-                set_rpath(sofile, lib_so_rpath, force_rpath)
+        # Set RPATH on top-level (_C.so etc.) and lib/ shared objects.
+        if c_so_rpath is not None and lib_so_rpath is not None:
+            for sofile in torch_dir.glob("*.so*"):
+                if sofile.is_file():
+                    set_rpath(sofile, c_so_rpath, force_rpath)
+            for sofile in torch_lib.glob("*.so*"):
+                if sofile.is_file():
+                    set_rpath(sofile, lib_so_rpath, force_rpath)
 
         # Retag linux_* -> manylinux_2_28_* in both the filename and the WHEEL
         # metadata. add_platforms updates ctx.out_wheel to the new name; RECORD
@@ -450,11 +451,10 @@ def main() -> None:
         lib_so_rpath = f"{rpaths}:$ORIGIN"
         force_rpath = True
     elif gpu_arch_type == "xpu":
-        # XPU runtime libs come from pypi packages; set RPATHs like CUDA.
-        xpu_rpaths = "$ORIGIN/../../../.."
-        c_so_rpath = f"{xpu_rpaths}:$ORIGIN:$ORIGIN/lib"
-        lib_so_rpath = f"{xpu_rpaths}:$ORIGIN"
-        force_rpath = True
+        # XPU targets retain their Arch oneAPI paths as transitive DT_RPATH.
+        c_so_rpath = None
+        lib_so_rpath = None
+        force_rpath = False
     elif is_rocm:
         rocm_home = Path(os.environ.get("ROCM_HOME", "/opt/rocm"))
         if "_rocm_sdk" in str(rocm_home):

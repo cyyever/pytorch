@@ -57,21 +57,11 @@ remain external.
 
 ## XPU runtime dependencies
 
-The XPU wheel declares only runtime packages used by the BMG build:
-
-- Intel compiler and Unified Runtime support
-- SYCL runtime
-- oneCCL runtime
-- oneMKL BLAS, DFT, LAPACK, and classic MKL runtime
-- Intel OpenMP, TBB, tcmlib, UMF, and PTI
-
-Development-only oneCCL files, oneMKL RNG and sparse components, MPI, OpenCL,
-Python Level Zero tooling, and redundant meta or license packages are not
-declared as top-level wheel dependencies.
-
-Some SYCL and Unified Runtime components are loaded dynamically and therefore
-do not appear in `DT_NEEDED`. Dependency removal must be validated in a clean
-runtime image without `/opt/intel/oneapi`.
+XPU wheels target the Arch Linux hosts used by this fork and use the oneAPI
+installation under `/opt/intel/oneapi`. The wheel does not install Intel
+runtime packages from PyPI. XPU targets use transitive `DT_RPATH` entries so
+indirect dependencies such as the Intel compiler runtime resolve without
+sourcing `setvars.sh`.
 
 ## Bundled libuv
 

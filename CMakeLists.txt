@@ -751,6 +751,13 @@ endif()
 
 include(cmake/Dependencies.cmake)
 
+# oneAPI libraries such as libpti_view have indirect dependencies on the Intel
+# compiler runtime. DT_RUNPATH is not transitive, so XPU builds must retain the
+# linked oneAPI directories as DT_RPATH to import without setvars.sh.
+if(USE_XPU AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_link_options(LINKER:--disable-new-dtags)
+endif()
+
 cmake_dependent_option(
   USE_FLASH_ATTENTION
   "Whether to build the flash_attention kernel for scaled dot product attention.\

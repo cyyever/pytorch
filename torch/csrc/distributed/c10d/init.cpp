@@ -4542,8 +4542,8 @@ such as `dist.all_reduce(tensor, async_op=True)`.
                 >>> ddp_model.register_comm_hook(state=None, hook=allreduce)
 
             .. warning ::
-                ``get_future`` API supports NCCL, and partially GLOO and MPI backends
-                (no support for peer-to-peer operations like send/recv) and will return a ``torch.futures.Future``.
+                ``get_future`` API supports NCCL and partially supports GLOO
+                (no support for peer-to-peer operations like send/recv). It returns a ``torch.futures.Future``.
 
                 In the example above, ``allreduce`` work will be done on GPU using NCCL backend,
                 ``fut.wait()`` will return after synchronizing the appropriate NCCL streams

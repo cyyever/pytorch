@@ -2056,9 +2056,6 @@ class MultiProcContinuousTest(TestCase):
         if backend is not None:
             backend_checks = {
                 "nccl": c10d.is_nccl_available,
-                # The MPI backend was removed; report it unavailable so a
-                # test that asks for it skips instead of failing at init.
-                "mpi": lambda: False,
                 "xccl": c10d.is_xccl_available,
             }
             check_fn = backend_checks.get(backend)

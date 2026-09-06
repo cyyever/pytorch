@@ -146,18 +146,18 @@ CPU_BUILD_ENV: dict[str, str] = {
     "USE_CUDA": "0",
 }
 
-# XPU builds source the oneAPI environment and enable SYCL/MKL/XCCL.
+# XPU builds source the required oneAPI components and enable SYCL/MKL/XCCL.
 XPU_BUILD_ENV: dict[str, str] = {
     "TH_BINARY_BUILD": "1",
     "BUILD_TEST": "0",
     "USE_CUDA": "0",
     "USE_ROCM": "0",
     "USE_NCCL": "0",
+    "USE_KINETO": "1",
     "USE_STATIC_MKL": "1",
     "USE_ONEMKL": "1",
     "USE_XCCL": "1",
     "USE_C10D_XCCL": "1",
-    "USE_MPI": "0",
     "INSTALL_TEST": "0",
     "CFLAGS": "-march=x86-64-v3",
     "CXXFLAGS": "-march=x86-64-v3",
@@ -368,7 +368,6 @@ def source_oneapi_env() -> dict[str, str]:
         "/opt/intel/oneapi/pti/latest/env/vars.sh",
         "/opt/intel/oneapi/umf/latest/env/vars.sh",
         "/opt/intel/oneapi/ccl/latest/env/vars.sh",
-        "/opt/intel/oneapi/mpi/latest/env/vars.sh",
     ]
     existing = [s for s in scripts if Path(s).is_file()]
     if not existing:
