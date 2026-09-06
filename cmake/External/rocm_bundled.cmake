@@ -42,21 +42,24 @@ set(_bundled_rocm_common_cmake_args
   "-DCMAKE_INSTALL_RPATH:STRING=$ORIGIN"
   "-DCMAKE_PREFIX_PATH:STRING=${_bundled_rocm_prefix_path}"
   "-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}"
-  "-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}"
+  "-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_HIP_COMPILER}"
   "-DCMAKE_HIP_COMPILER:FILEPATH=${CMAKE_HIP_COMPILER}"
   "-DCMAKE_HIP_ARCHITECTURES:STRING=${_bundled_rocm_archs}"
-  "-DAMDGPU_TARGETS:STRING=${_bundled_rocm_archs}"
   "-DGPU_TARGETS:STRING=${_bundled_rocm_archs}"
+  "-DPython_EXECUTABLE:FILEPATH=${Python_EXECUTABLE}"
+  "-DPython3_EXECUTABLE:FILEPATH=${Python_EXECUTABLE}"
   "-DROCM_PATH:PATH=${ROCM_PATH}"
-  "-DHIP_PATH:PATH=${ROCM_PATH}"
-  "-DHIP_ROOT_DIR:PATH=${ROCM_PATH}"
-  "-DHIP_PLATFORM:STRING=amd"
   "-DBUILD_SHARED_LIBS:BOOL=ON"
   "-DBUILD_TESTING:BOOL=OFF")
 if(CMAKE_TOOLCHAIN_FILE)
   list(APPEND _bundled_rocm_common_cmake_args
     "-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}")
 endif()
+
+set(_bundled_rocm_build_environment
+  "ROCM_PATH=set:${ROCM_PATH}"
+  "PATH=path_list_prepend:${ROCM_PATH}/lib/llvm/bin"
+  "PATH=path_list_prepend:${ROCM_PATH}/bin")
 
 set(_bundled_rocm_build_command "${CMAKE_COMMAND}" --build <BINARY_DIR>)
 set(_bundled_rocm_install_command "${CMAKE_COMMAND}" --install <BINARY_DIR>)
@@ -85,9 +88,11 @@ ExternalProject_Add(pytorch_bundled_hipblaslt
     "-DHIPBLASLT_ENABLE_FETCH:BOOL=OFF"
     "-DHIPBLASLT_ENABLE_ROCROLLER:BOOL=OFF"
     "-DHIPBLASLT_ENABLE_THEROCK:BOOL=ON"
+    "-DCMAKE_DISABLE_FIND_PACKAGE_origami:BOOL=ON"
     "-DTENSILELITE_BUILD_TESTING:BOOL=OFF"
     "-DTENSILELITE_ENABLE_CLIENT:BOOL=OFF"
   BUILD_COMMAND ${_bundled_rocm_build_command}
+  BUILD_ENVIRONMENT_MODIFICATION ${_bundled_rocm_build_environment}
   INSTALL_COMMAND ${_bundled_rocm_install_command}
   BUILD_BYPRODUCTS "${_bundled_rocm_install}/lib/libhipblaslt.so"
   USES_TERMINAL_CONFIGURE TRUE
@@ -116,6 +121,7 @@ ExternalProject_Add(pytorch_bundled_rocblas
     "-DTensile_TEST_LOCAL_PATH:PATH=${_bundled_rocm_libraries_source}/shared/tensile"
     "-Dhipblaslt_path:PATH=${_bundled_rocm_install}"
   BUILD_COMMAND ${_bundled_rocm_build_command}
+  BUILD_ENVIRONMENT_MODIFICATION ${_bundled_rocm_build_environment}
   INSTALL_COMMAND ${_bundled_rocm_install_command}
   BUILD_BYPRODUCTS "${_bundled_rocm_install}/lib/librocblas.so"
   DEPENDS pytorch_bundled_hipblaslt
@@ -142,12 +148,16 @@ ExternalProject_Add(pytorch_bundled_miopen
     "-DMIOPEN_BUILD_BENCHMARKS:BOOL=OFF"
     "-DMIOPEN_BUILD_DOCS:BOOL=OFF"
     "-DMIOPEN_BUILD_PYTHON:BOOL=OFF"
+    "-DMIOPEN_ENABLE_AI_IMMED_MODE_FALLBACK:BOOL=OFF"
+    "-DMIOPEN_ENABLE_AI_KERNEL_TUNING:BOOL=OFF"
     "-DMIOPEN_INSTALL_GPU_DATABASES:STRING=${_bundled_rocm_archs}"
     "-DMIOPEN_STANDALONE_BUILD:BOOL=OFF"
     "-DMIOPEN_USE_COMPOSABLEKERNEL:BOOL=OFF"
+    "-DMIOPEN_USE_HIPCONV:BOOL=OFF"
     "-Drocblas_DIR:PATH=${_bundled_rocm_install}/lib/cmake/rocblas"
     "-Dhipblaslt_DIR:PATH=${_bundled_rocm_install}/lib/cmake/hipblaslt"
   BUILD_COMMAND ${_bundled_rocm_build_command}
+  BUILD_ENVIRONMENT_MODIFICATION ${_bundled_rocm_build_environment}
   INSTALL_COMMAND ${_bundled_rocm_install_command}
   BUILD_BYPRODUCTS "${_bundled_rocm_install}/lib/libMIOpen.so"
   DEPENDS pytorch_bundled_rocblas

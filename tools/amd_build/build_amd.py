@@ -145,51 +145,6 @@ def is_hip_clang() -> bool:
     return True
 
 
-# TODO Remove once the following submodules are updated
-hip_platform_files = [
-    "third_party/fbgemm/fbgemm_gpu/CMakeLists.txt",
-    "third_party/fbgemm/fbgemm_gpu/cmake/Hip.cmake",
-    "third_party/fbgemm/fbgemm_gpu/codegen/embedding_backward_dense_host.cpp",
-    "third_party/fbgemm/fbgemm_gpu/codegen/embedding_backward_split_host_template.cpp",
-    "third_party/fbgemm/fbgemm_gpu/codegen/embedding_backward_split_template.cu",
-    "third_party/fbgemm/fbgemm_gpu/codegen/embedding_forward_quantized_split_lookup.cu",
-    "third_party/fbgemm/fbgemm_gpu/include/fbgemm_gpu/utils/cuda_prelude.cuh",
-    "third_party/fbgemm/fbgemm_gpu/include/fbgemm_gpu/utils/stochastic_rounding.cuh",
-    "third_party/fbgemm/fbgemm_gpu/include/fbgemm_gpu/utils/vec4.cuh",
-    "third_party/fbgemm/fbgemm_gpu/include/fbgemm_gpu/utils/weight_row.cuh",
-    "third_party/fbgemm/fbgemm_gpu/include/fbgemm_gpu/sparse_ops.cuh",
-    "third_party/fbgemm/fbgemm_gpu/src/jagged_tensor_ops.cu",
-    "third_party/fbgemm/fbgemm_gpu/src/quantize_ops.cu",
-    "third_party/fbgemm/fbgemm_gpu/src/sparse_ops.cu",
-    "third_party/fbgemm/fbgemm_gpu/src/split_embeddings_cache_cuda.cu",
-    "third_party/fbgemm/fbgemm_gpu/src/topology_utils.cpp",
-    "third_party/fbgemm/src/EmbeddingSpMDM.cc",
-    "third_party/gloo/cmake/Dependencies.cmake",
-    "third_party/gloo/gloo/cuda.cu",
-    "third_party/kineto/libkineto/CMakeLists.txt",
-    "third_party/nvfuser/CMakeLists.txt",
-]
-
-
-def remove_hcc(line: str) -> str:
-    line = line.replace("HIP_PLATFORM_HCC", "HIP_PLATFORM_AMD")
-    line = line.replace("HIP_HCC_FLAGS", "HIP_CLANG_FLAGS")
-    return line
-
-
-for hip_platform_file in hip_platform_files:
-    do_write = False
-    if os.path.exists(hip_platform_file):
-        with open(hip_platform_file) as sources:
-            lines = sources.readlines()
-        newlines = [remove_hcc(line) for line in lines]
-        if lines == newlines:
-            print(f"{hip_platform_file} skipped")
-        else:
-            with open(hip_platform_file, "w") as sources:
-                sources.writelines(newlines)
-            print(f"{hip_platform_file} updated")
-
 # NOTE: MSLK sources needing hipify
 # MSLK is its own project with its own build system. pytorch uses mslk as
 # a submodule to acquire some gpu source files but compiles only those sources
@@ -216,60 +171,6 @@ if not buck_build:
     mslk_original = mslk_dir / "tuning_cache.cuh"
     if mslk_original.exists():
         extra_files.append(mslk_original.as_posix())
-
-# TODO Remove once the following submodules are updated to use hipify v2
-hipify_v1_to_v2_files = [
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/gemm/ck_extensions.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/bf16_grouped/bf16_grouped_gemm.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/bf16_grouped/kernels/bf16_grouped_common.h",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/ck_utility.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_blockwise_gemm.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_rowwise_batched/kernels/fp8_rowwise_batched_common.h",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_rowwise_grouped/fp8_rowwise_grouped_gemm.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_rowwise_grouped/kernels/fp8_rowwise_grouped_common.h",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_rowwise/kernels/fp8_rowwise_common.h",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_rowwise_preshuffle/kernels/fp8_rowwise_preshuffle_common.h",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fp8_tensorwise_gemm.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/ck_extensions/fused_moe/fused_moe_kernel.hip",
-    "third_party/fbgemm/fbgemm_gpu/experimental/gen_ai/src/quantize/common/include/fbgemm_gpu/quantize/tuning_cache.hpp",
-    "third_party/mslk/csrc/moe/ck_extensions/fused_moe_kernel.hip",
-    "third_party/mslk/csrc/gemm/ck/bf16_grouped/bf16_grouped_gemm.hip",
-    "third_party/mslk/csrc/gemm/ck/bf16_grouped/kernels/bf16_grouped_common.h",
-    "third_party/mslk/csrc/gemm/ck/fp8_rowwise/kernels/fp8_rowwise_common.h",
-    "third_party/mslk/csrc/gemm/ck/fp8_rowwise_grouped/kernels/fp8_rowwise_grouped_common.h",
-    "third_party/mslk/csrc/gemm/ck/fp8_rowwise_grouped/fp8_rowwise_grouped_gemm.hip",
-    "third_party/mslk/csrc/gemm/ck/fp8_rowwise_batched/kernels/fp8_rowwise_batched_common.h",
-    "third_party/mslk/csrc/gemm/ck/fp8_rowwise_preshuffle/kernels/fp8_rowwise_preshuffle_common.h",
-    "third_party/mslk/csrc/gemm/ck/fp8_tensorwise_gemm.hip",
-    "third_party/mslk/csrc/gemm/ck/fp8_blockwise_gemm.hip",
-]
-
-
-def hipify_v1_to_v2(line: str) -> str:
-    line = line.replace("hip::HIPStreamMasqueradingAsCUDA", "cuda::CUDAStream")
-    line = line.replace(
-        "hip::HIPStreamGuardMasqueradingAsCUDA", "cuda::CUDAStreamGuard"
-    )
-    line = line.replace(
-        "hip::getStreamFromPoolMasqueradingAsCUDA", "cuda::getStreamFromPool"
-    )
-    line = line.replace("getCurrentHIPStream", "getCurrentCUDAStream")
-    return line
-
-
-for hipify_v1_to_v2_file in hipify_v1_to_v2_files:
-    do_write = False
-    if os.path.exists(hipify_v1_to_v2_file):
-        with open(hipify_v1_to_v2_file) as sources:
-            lines = sources.readlines()
-        newlines = [hipify_v1_to_v2(line) for line in lines]
-        if lines == newlines:
-            print(f"{hipify_v1_to_v2_file} skipped")
-        else:
-            with open(hipify_v1_to_v2_file, "w") as sources:
-                sources.writelines(newlines)
-            print(f"{hipify_v1_to_v2_file} updated")
-
 
 hipify_python.hipify(
     project_directory=proj_dir,

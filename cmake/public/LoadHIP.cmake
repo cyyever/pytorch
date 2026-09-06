@@ -14,11 +14,16 @@ if(DEFINED ENV{ROCM_PATH})
       "Set a valid ROCM_PATH or unset ROCM_PATH environment variable to fix.")
   endif()
 else()
-  # Try to get ROCM_PATH from rocm-sdk if available
-  find_program(ROCM_SDK_EXECUTABLE rocm-sdk)
-  if(ROCM_SDK_EXECUTABLE)
+  # Prefer the rocm-sdk package installed for the Python driving the PEP 517
+  # build. Its console script need not be on PATH.
+  if(Python_EXECUTABLE)
+    set(_rocm_sdk_python "${Python_EXECUTABLE}")
+  elseif(Python3_EXECUTABLE)
+    set(_rocm_sdk_python "${Python3_EXECUTABLE}")
+  endif()
+  if(_rocm_sdk_python)
     execute_process(
-      COMMAND ${ROCM_SDK_EXECUTABLE} path --root
+      COMMAND "${_rocm_sdk_python}" -m rocm_sdk path --root
       OUTPUT_VARIABLE ROCM_SDK_PATH
       OUTPUT_STRIP_TRAILING_WHITESPACE
       RESULT_VARIABLE ROCM_SDK_RESULT
@@ -26,7 +31,28 @@ else()
     )
     if(ROCM_SDK_RESULT EQUAL 0 AND EXISTS "${ROCM_SDK_PATH}")
       set(ROCM_PATH "${ROCM_SDK_PATH}")
+      set(PYTORCH_ROCM_USE_SDK_WHEELS TRUE)
       message(STATUS "Found ROCm installation via rocm-sdk at: ${ROCM_PATH}")
+    endif()
+  endif()
+  unset(_rocm_sdk_python)
+
+  # Also support a system rocm-sdk installation when Python has no SDK package.
+  if(NOT DEFINED ROCM_PATH)
+    find_program(ROCM_SDK_EXECUTABLE rocm-sdk)
+    if(ROCM_SDK_EXECUTABLE)
+      execute_process(
+        COMMAND "${ROCM_SDK_EXECUTABLE}" path --root
+        OUTPUT_VARIABLE ROCM_SDK_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE ROCM_SDK_RESULT
+        ERROR_QUIET
+      )
+      if(ROCM_SDK_RESULT EQUAL 0 AND EXISTS "${ROCM_SDK_PATH}")
+        set(ROCM_PATH "${ROCM_SDK_PATH}")
+        set(PYTORCH_ROCM_USE_SDK_WHEELS TRUE)
+        message(STATUS "Found ROCm installation via rocm-sdk at: ${ROCM_PATH}")
+      endif()
     endif()
   endif()
 

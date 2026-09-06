@@ -1,0 +1,26 @@
+def initialize():
+    import ctypes
+    from pathlib import Path
+
+    import rocm_sdk
+
+    rocm_sdk.initialize_process(
+        preload_shortnames=["amd_comgr", "amdhip64", "roctx64", "hiprtc", "hipfile"],
+        check_version="@ROCM_VERSION_DEV_MAJOR@.@ROCM_VERSION_DEV_MINOR@.*",
+    )
+
+    lib_dir = Path(__file__).parent / "lib"
+    for soname in ("librocblas.so.5", "libhipblaslt.so.1", "libMIOpen.so.1"):
+        ctypes.CDLL(lib_dir / soname, mode=ctypes.RTLD_GLOBAL)
+
+    rocm_sdk.initialize_process(
+        preload_shortnames=[
+            "hipblas",
+            "hipfft",
+            "hiprand",
+            "hipsparse",
+            "hipsolver",
+            "rccl",
+        ],
+        check_version="@ROCM_VERSION_DEV_MAJOR@.@ROCM_VERSION_DEV_MINOR@.*",
+    )

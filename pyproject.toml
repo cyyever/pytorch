@@ -2,6 +2,8 @@
 
 [build-system]
 requires = [
+    "joblib>=1.4.0",
+    "msgpack",
     "numpy",
     "packaging>=24.2",  # required by setuptools>=77 to validate PEP 639 license expressions
     "pyyaml",
@@ -30,6 +32,11 @@ CMAKE_BUILD_PARALLEL_LEVEL = { env = "MAX_JOBS" }
 # An ambient CC/CXX is still respected.
 CC = { env = "CC" }
 CXX = { env = "CXX" }
+
+# This fork's ROCm wheels target gfx1201. PYTORCH_ROCM_ARCH in the environment
+# still takes precedence for explicit multi-architecture builds.
+[tool.scikit-build.cmake.define]
+PYTORCH_ROCM_ARCH = "gfx1201"
 
 # cmake.build-type is deliberately not set: it defaults to Release, and
 # leaving it unconfigured lets scikit-build-core honor a CMAKE_BUILD_TYPE
