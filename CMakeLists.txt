@@ -393,6 +393,9 @@ cmake_dependent_option(USE_TBB
     ON "CPU_INTEL" OFF)
 cmake_dependent_option(USE_MPS "Use MPS for macOS build" ON "MPS_FOUND" OFF)
 option(USE_DISTRIBUTED "Use distributed" ON)
+cmake_dependent_option(
+  USE_BUNDLED_LIBUV "Download and statically link libuv" OFF
+  "USE_DISTRIBUTED" OFF)
 cmake_dependent_option(USE_NCCL "Use NCCL" ON
                        "USE_DISTRIBUTED;USE_CUDA OR USE_ROCM;UNIX;NOT APPLE" OFF)
 cmake_dependent_option(USE_XCCL "Use XCCL" ON
