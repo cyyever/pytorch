@@ -755,6 +755,18 @@ include(cmake/Dependencies.cmake)
 # compiler runtime. DT_RUNPATH is not transitive, so XPU builds must retain the
 # linked oneAPI directories as DT_RPATH to import without setvars.sh.
 if(USE_XPU AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(TORCH_XPU_UMF_LIBRARY /opt/intel/oneapi/umf/latest/lib/libumf.so)
+  if(NOT EXISTS ${TORCH_XPU_UMF_LIBRARY})
+    message(FATAL_ERROR "XPU builds require ${TORCH_XPU_UMF_LIBRARY}")
+  endif()
+  list(APPEND CMAKE_INSTALL_RPATH
+    /opt/intel/oneapi/compiler/latest/lib
+    /opt/intel/oneapi/mkl/latest/lib
+    /opt/intel/oneapi/tbb/latest/lib
+    /opt/intel/oneapi/tbb/latest/lib/intel64/gcc4.8
+    /opt/intel/oneapi/pti/latest/lib
+    /opt/intel/oneapi/ccl/latest/lib
+    /opt/intel/oneapi/umf/latest/lib)
   add_link_options(LINKER:--disable-new-dtags)
 endif()
 
