@@ -23,10 +23,8 @@ std::string trim_whitespace(std::string_view str) {
   return std::string(str.substr(start, end - start + 1));
 }
 
-// Note: PALS does not provide an env variable for size, like `PALS_SIZE`.
-// We just check it if supplied in the future. We try to query size from other
-// env vars that may be set in a PALS environment, such as PMI_SIZE, WORLD_SIZE,
-// etc.
+// Note: PALS does not currently provide a documented size variable. Check
+// PALS_SIZE in case one is added, then fall back to WORLD_SIZE.
 // TODO: replace with the correct PALS env var for size once it is available.
 int query_pals_size() {
   int size = env_to_value<int>("PALS_SIZE", -1);
@@ -34,7 +32,6 @@ int query_pals_size() {
     return size;
   }
 
-  // Try WORLD_SIZE as a last resort
   size = env_to_value<int>("WORLD_SIZE", -1);
   if (size > 0) {
     return size;
@@ -117,7 +114,6 @@ std::pair<int, int> query_ranksize() {
   // Constants for ranksize query methods
   const std::string kRanksizeQueryMethodAuto = "auto";
   const std::string kRanksizeQueryMethodTorchrun = "torchrun";
-
   const std::string kRanksizeQueryMethodPALS = "pals";
   const std::string& kRanksizeQueryMethodDefault = kRanksizeQueryMethodAuto;
 

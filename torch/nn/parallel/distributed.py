@@ -2135,8 +2135,8 @@ class DistributedDataParallel(Module, Joinable):
 
                              We also provide an API called ``get_future`` to retrieve a
                              Future associated with the completion of ``c10d.ProcessGroup.Work``.
-                             ``get_future`` is currently supported for NCCL and also supported for most
-                             operations on GLOO and MPI, except for peer to peer operations (send/recv).
+                             ``get_future`` is currently supported for NCCL and most
+                             operations on GLOO, except peer-to-peer operations (send/recv).
 
         .. warning ::
             Grad bucket's tensors will not be predivided by world_size. User is responsible
@@ -2151,8 +2151,8 @@ class DistributedDataParallel(Module, Joinable):
             that has the same shape with the tensors inside grad bucket.
 
         .. warning ::
-            ``get_future`` API supports NCCL, and partially GLOO and MPI backends (no support
-            for peer-to-peer operations like send/recv) and will return a ``torch.futures.Future``.
+            ``get_future`` API supports NCCL and partially supports GLOO (no support
+            for peer-to-peer operations like send/recv). It returns a ``torch.futures.Future``.
 
         Example::
             Below is an example of a noop hook that returns the same tensor.

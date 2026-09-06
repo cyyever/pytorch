@@ -128,7 +128,6 @@ jobs:
       DESIRED_PYTHONS: "3.14 3.15"
       BUILD_NAME_PREFIX: "manywheel-py"
       BUILD_NAME_SUFFIX: "-xpu-bmg"
-      PYTORCH_EXTRA_INSTALL_REQUIREMENTS: "intel-cmplr-lib-rt==2026.1.0 | intel-cmplr-lib-ur==2026.1.0 | intel-sycl-rt==2026.1.0 | oneccl==2022.1.1; platform_system == 'Linux' and platform_machine == 'x86_64' | onemkl-sycl-blas==2026.1.0 | onemkl-sycl-dft==2026.1.0 | onemkl-sycl-lapack==2026.1.0 | mkl==2026.1.0 | intel-openmp==2026.1.0 | tbb==2023.1.0 | tcmlib==1.5.0 | umf==1.1.0 | intel-pti==1.0.1"
     steps:
       - name: Configure git safe directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"

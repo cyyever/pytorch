@@ -11,12 +11,16 @@ include(ExternalProject)
       # Linux
       # g++ is soft linked to /usr/bin/cxx, oneDNN would not treat it as an absolute path
       set(DNNL_HOST_COMPILER "g++")
+      get_filename_component(SYCL_COMPILER_DIR "${SYCL_COMPILER}" DIRECTORY)
       if("${XPU_SYCL_COMPILER}" MATCHES "icx")
-        set(DNNL_C_COMPILER "icx")
-        set(SYCL_CXX_DRIVER "icpx")
+        find_program(DNNL_C_COMPILER icx
+          PATHS "${SYCL_COMPILER_DIR}" NO_DEFAULT_PATH REQUIRED)
+        find_program(SYCL_CXX_DRIVER icpx
+          PATHS "${SYCL_COMPILER_DIR}" NO_DEFAULT_PATH REQUIRED)
       elseif("${XPU_SYCL_COMPILER}" MATCHES "dpclang")
-        set(DNNL_C_COMPILER "dpclang")
-        set(SYCL_CXX_DRIVER "dpclang++")
+        find_program(DNNL_C_COMPILER dpclang
+          PATHS "${SYCL_COMPILER_DIR}" NO_DEFAULT_PATH REQUIRED)
+        set(SYCL_CXX_DRIVER "${SYCL_COMPILER}")
       else()
         message(FATAL_ERROR "Unsupported SYCL compiler: ${XPU_SYCL_COMPILER}")
       endif()

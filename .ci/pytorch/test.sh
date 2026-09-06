@@ -243,8 +243,6 @@ if [[ "$BUILD_ENVIRONMENT" == *xpu* ]]; then
   # shellcheck disable=SC1091
   source /opt/intel/oneapi/ccl/latest/env/vars.sh
   # shellcheck disable=SC1091
-  source /opt/intel/oneapi/mpi/latest/env/vars.sh
-  # shellcheck disable=SC1091
   source /opt/intel/oneapi/pti/latest/env/vars.sh
   # Check XPU status before testing
   timeout 30 xpu-smi discovery || true

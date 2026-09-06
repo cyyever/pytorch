@@ -82,45 +82,41 @@ different capabilities. The table below shows which functions are available
 for use with a CPU or GPU for each backend. For NCCL, GPU refers to CUDA GPU
 while for XCCL to XPU GPU.
 
-MPI supports CUDA only if the implementation used to build PyTorch supports it.
-
 ```{eval-rst}
-+----------------+-----------+-----------+-----------+-----------+
-| Backend        | ``gloo``  | ``mpi``   | ``nccl``  | ``xccl``  |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| Device         | CPU | GPU | CPU | GPU | CPU | GPU | CPU | GPU |
-+================+=====+=====+=====+=====+=====+=====+=====+=====+
-| send           | ✓   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| recv           | ✓   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| broadcast      | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| all_reduce     | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| reduce         | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| all_gather     | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| gather         | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| scatter        | ✓   | ✓   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| reduce_scatter | ✓   | ✓   | ✘   | ✘   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| all_to_all     | ✘   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
-| barrier        | ✓   | ✘   | ✓   | ?   | ✘   | ✓   | ✘   | ✓   |
-+----------------+-----+-----+-----+-----+-----+-----+-----+-----+
++----------------+-----------+-----------+-----------+
+| Backend        | ``gloo``  | ``nccl``  | ``xccl``  |
++----------------+-----+-----+-----+-----+-----+-----+
+| Device         | CPU | GPU | CPU | GPU | CPU | GPU |
++================+=====+=====+=====+=====+=====+=====+
+| send           | ✓   | ✘   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| recv           | ✓   | ✘   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| broadcast      | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| all_reduce     | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| reduce         | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| all_gather     | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| gather         | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| scatter        | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| reduce_scatter | ✓   | ✓   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| all_to_all     | ✘   | ✘   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
+| barrier        | ✓   | ✘   | ✘   | ✓   | ✘   | ✓   |
++----------------+-----+-----+-----+-----+-----+-----+
 ```
 
 ### Backends that come with PyTorch
 
 PyTorch distributed package supports Linux (stable), macOS (stable), and Windows (prototype).
 By default for Linux, the Gloo and NCCL backends are built and included in PyTorch
-distributed (NCCL only when building with CUDA). MPI is an optional backend that can only be
-included if you build PyTorch from source. (e.g. building PyTorch on a host that has MPI
-installed.)
+distributed (NCCL only when building with CUDA).
 
 :::{note}
 As of PyTorch v1.8, Windows supports all collective communications backends but NCCL,
@@ -159,9 +155,7 @@ In the past, we were often asked: "which backend should I use?".
 
 - CPU hosts with InfiniBand interconnect
 
-  - If your InfiniBand has enabled IP over IB, use Gloo, otherwise,
-    use MPI instead. We are planning on adding InfiniBand support for
-    Gloo in the upcoming releases.
+  - Use Gloo with IP over IB.
 
 - CPU hosts with Ethernet interconnect
 
@@ -280,7 +274,6 @@ inconsistent 'UUID' assignment across ranks, and to prevent races during initial
 .. autofunction:: torch.distributed.distributed_c10d.irecv
 .. autofunction:: torch.distributed.distributed_c10d.is_gloo_available
 .. autofunction:: torch.distributed.distributed_c10d.is_initialized
-
 .. autofunction:: torch.distributed.distributed_c10d.is_nccl_available
 .. autofunction:: torch.distributed.distributed_c10d.is_torchelastic_launched
 .. autofunction:: torch.distributed.distributed_c10d.is_ucc_available
@@ -592,8 +585,8 @@ is guaranteed to support two methods:
   default stream without further synchronization.
 - `wait()` - in the case of CPU collectives, will block the process until the operation is completed. In the case
   of CUDA collectives, will block the currently active CUDA stream until the operation is completed (but will not block the CPU).
-- `get_future()` - returns `torch._C.Future` object. Supported for NCCL, also supported for most operations on GLOO
-  and MPI, except for peer to peer operations.
+- `get_future()` - returns `torch._C.Future` object. Supported for NCCL and for most operations on GLOO,
+  except for peer-to-peer operations.
   Note: as we continue adopting Futures and merging APIs, `get_future()` call might become redundant.
 
 **Example**
@@ -765,8 +758,8 @@ Key-Value Stores: {class}`~torch.distributed.TCPStore`,
 
 ## Profiling Collective Communication
 
-Note that you can use `torch.profiler` (recommended, only available after 1.8.1) or `torch.autograd.profiler` to profile collective communication and point-to-point communication APIs mentioned here. All out-of-the-box backends (`gloo`,
-`nccl`, `mpi`) are supported and collective communication usage will be rendered as expected in profiling output/traces. Profiling your code is the same as any regular torch operator:
+Note that you can use `torch.profiler` (recommended, only available after 1.8.1) or `torch.autograd.profiler` to profile collective communication and point-to-point communication APIs mentioned here. All built-in backends (`gloo`,
+`nccl`, `xccl`) are supported and collective communication usage will be rendered as expected in profiling output/traces. Profiling your code is the same as any regular torch operator:
 
 ```
 import torch

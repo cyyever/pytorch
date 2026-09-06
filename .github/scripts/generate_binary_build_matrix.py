@@ -47,21 +47,6 @@ PYTORCH_EXTRA_INSTALL_REQUIREMENTS = {
     # dependency on latest patch version for (major, minor)
     "7.14": ("rocm[libraries,device-all]==7.14.*"),
     "10.0": ("rocm[libraries,device-all]==10.0.*"),
-    "xpu": (
-        "intel-cmplr-lib-rt==2026.1.0 | "
-        "intel-cmplr-lib-ur==2026.1.0 | "
-        "intel-sycl-rt==2026.1.0 | "
-        "oneccl==2022.1.1; platform_system == 'Linux' and platform_machine == 'x86_64' | "
-        "onemkl-sycl-blas==2026.1.0 | "
-        "onemkl-sycl-dft==2026.1.0 | "
-        "onemkl-sycl-lapack==2026.1.0 | "
-        "mkl==2026.1.0 | "
-        "intel-openmp==2026.1.0 | "
-        "tbb==2023.1.0 | "
-        "tcmlib==1.5.0 | "
-        "umf==1.1.0 | "
-        "intel-pti==1.0.1"
-    ),
 }
 
 
@@ -354,9 +339,7 @@ def generate_wheels_matrix(
                             ".", "_"
                         ),
                         "pytorch_extra_install_requirements": (
-                            PYTORCH_EXTRA_INSTALL_REQUIREMENTS["xpu"]
-                            if gpu_arch_type == "xpu"
-                            else PYTORCH_EXTRA_INSTALL_REQUIREMENTS.get(
+                            PYTORCH_EXTRA_INSTALL_REQUIREMENTS.get(
                                 gpu_arch_version, ""
                             )
                             if gpu_arch_type == "rocm"
