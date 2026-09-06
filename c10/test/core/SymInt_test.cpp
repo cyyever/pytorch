@@ -8,9 +8,54 @@
 #include <c10/core/TensorImpl.h>
 #include <c10/macros/Macros.h>
 
+#include <type_traits>
 #include <vector>
 
 using namespace c10;
+
+// The mixed SymInt/scalar operators are constrained templates declared as
+// hidden friends, so what they accept is easy to shift by accident while
+// editing the constraints. Pin the set here; it is the one the by-type
+// overloads these replaced accepted.
+namespace {
+enum Unscoped { kUnscoped };
+enum class Scoped { kScoped };
+struct ConvertsToInt64 {
+  operator int64_t() const;
+};
+
+template <typename T>
+concept adds = requires(SymInt s, T v) { s + v; };
+template <typename T>
+concept adds_reversed = requires(SymInt s, T v) { v + s; };
+
+static_assert(adds<int64_t> && adds<int32_t> && adds<uint64_t>);
+static_assert(adds<uint32_t> && adds<size_t> && adds<short>);
+static_assert(adds<char> && adds<bool> && adds<float> && adds<double>);
+static_assert(adds<Unscoped> && adds_reversed<Unscoped>);
+
+// Scoped enums have no implicit conversion, so they were rejected before too.
+static_assert(!adds<Scoped>);
+static_assert(!adds<const char*>);
+
+// Wider than the int64_t and double these hold: they would truncate inside the
+// constructor with nothing said, so the operators delete them.
+#ifdef __SIZEOF_INT128__
+static_assert(!adds<__int128>);
+#endif
+static_assert(!adds<long double>);
+
+// Types that merely convert to a scalar no longer bind: T is deduced exactly,
+// where the by-type overloads took them through the conversion.
+static_assert(!adds<ConvertsToInt64>);
+
+static_assert(std::is_same_v<decltype(SymInt(1) + 1), SymInt>);
+static_assert(std::is_same_v<decltype(SymInt(1) + 1.0), SymFloat>);
+static_assert(std::is_same_v<decltype(1.0 + SymInt(1)), SymFloat>);
+static_assert(std::is_same_v<decltype(SymInt(1) == 1), bool>);
+static_assert(std::is_same_v<decltype(SymInt(7) % 2), SymInt>);
+} // namespace
+
 static void check(int64_t value) {
   const auto i = SymInt(value);
   EXPECT_EQ(i.maybe_as_int(), std::make_optional(value));
