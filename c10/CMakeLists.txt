@@ -43,7 +43,7 @@ endif()
           util/*.h
         )
 if(NOT BUILD_LIBTORCHLESS)
-  add_library(c10 ${C10_SRCS} ${C10_HEADERS})
+  add_library(c10 STATIC ${C10_SRCS} ${C10_HEADERS})
   torch_compile_options(c10)
   torch_optimize_layout_if_enabled(c10)
   if(HAVE_SOVERSION)
@@ -190,11 +190,12 @@ if(USE_XPU)
 endif()
 
 if(NOT BUILD_LIBTORCHLESS)
-  # ---[ Installation
-  # Note: for now, we will put all export path into one single Caffe2Targets group
-  # to deal with the cmake deployment need. Inside the Caffe2Targets set, the
-  # individual libraries like libc10.so and libcaffe2.so are still self-contained.
-  install(TARGETS c10 EXPORT Caffe2Targets DESTINATION lib)
+  # A shared build reaches these objects through the runtime DSO that
+  # whole-archives them, so the archive itself is not shipped. A static one has
+  # no such DSO and its consumers link the archive directly.
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS c10 EXPORT Caffe2Targets DESTINATION lib)
+  endif()
 endif()
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}

@@ -33,7 +33,7 @@ set(C10_XPU_HEADERS
     impl/XPUGuardImpl.h
 )
 if(NOT BUILD_LIBTORCHLESS)
-  add_library(c10_xpu ${C10_XPU_SRCS} ${C10_XPU_HEADERS})
+  add_library(c10_xpu STATIC ${C10_XPU_SRCS} ${C10_XPU_HEADERS})
   torch_compile_options(c10_xpu)
   target_compile_options(c10_xpu PRIVATE "-DC10_XPU_BUILD_MAIN_LIB")
   # Enable hidden visibility if compiler supports it.
@@ -49,7 +49,12 @@ if(NOT BUILD_LIBTORCHLESS)
       $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
       $<INSTALL_INTERFACE:include>
       )
-  install(TARGETS c10_xpu EXPORT Caffe2Targets DESTINATION lib)
+  # A shared build reaches these objects through the runtime DSO that
+  # whole-archives them, so the archive itself is not shipped. A static one has
+  # no such DSO and its consumers link the archive directly.
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS c10_xpu EXPORT Caffe2Targets DESTINATION lib)
+  endif()
   set(C10_XPU_LIB c10_xpu)
   add_subdirectory(test)
 endif()

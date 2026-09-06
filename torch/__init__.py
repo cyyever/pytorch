@@ -222,6 +222,31 @@ else:
     from torch._C import *  # noqa: F403
 
 
+def _load_compatibility_libraries() -> list[ctypes.CDLL]:
+    if sys.platform not in ("darwin", "linux"):
+        return []
+
+    suffix = ".dylib" if sys.platform == "darwin" else ".so"
+    library_names = ["c10", "torch"]
+    if sys.platform == "linux":
+        library_names.extend(("c10_cuda", "c10_hip", "c10_xpu"))
+
+    extension_dir = os.path.dirname(sys.modules["torch._C"].__file__)
+    library_dir = os.path.join(extension_dir, "lib")
+    library_paths = [
+        os.path.join(library_dir, f"lib{name}{suffix}") for name in library_names
+    ]
+    return [
+        ctypes.CDLL(path, mode=ctypes.RTLD_LOCAL)
+        for path in library_paths
+        if os.path.exists(path)
+    ]
+
+
+_compatibility_libraries = _load_compatibility_libraries()
+del _load_compatibility_libraries
+
+
 _PrimType = _TypeVar("_PrimType")
 _SymType = _TypeVar("_SymType")
 _SymIteT = _TypeVar("_SymIteT")

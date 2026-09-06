@@ -27,7 +27,7 @@ file(GLOB C10_HIP_SRCS CONFIGURE_DEPENDS
 file(GLOB_RECURSE C10_HIP_HEADERS CONFIGURE_DEPENDS *.h)
 
 if(NOT BUILD_LIBTORCHLESS)
-  add_library(c10_hip ${C10_HIP_SRCS} ${C10_HIP_HEADERS})
+  add_library(c10_hip STATIC ${C10_HIP_SRCS} ${C10_HIP_HEADERS})
   set_target_properties(c10_hip PROPERTIES LINKER_LANGUAGE CXX)
   torch_compile_options(c10_hip)
 
@@ -49,14 +49,22 @@ if(NOT BUILD_LIBTORCHLESS)
   # (see cmake/public/LoadHIP.cmake) is attached directly to the hip::amdhip64
   # imported target, so every consumer -- this one included -- inherits it
   # regardless of how many levels of target_link_libraries separate them.
-  target_link_libraries(c10_hip PUBLIC ${C10_LIB} hip::host)
+  target_link_libraries(c10_hip PUBLIC hip::host)
+  if(NOT BUILD_SHARED_LIBS)
+    target_link_libraries(c10_hip PUBLIC ${C10_LIB})
+  endif()
 
   target_include_directories(
       c10_hip PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
       $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
       $<INSTALL_INTERFACE:include>)
-  install(TARGETS c10_hip EXPORT Caffe2Targets DESTINATION lib)
+  # A shared build reaches these objects through the runtime DSO that
+  # whole-archives them, so the archive itself is not shipped. A static one has
+  # no such DSO and its consumers link the archive directly.
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS c10_hip EXPORT Caffe2Targets DESTINATION lib)
+  endif()
   set(C10_HIP_LIB c10_hip)
 endif()
 

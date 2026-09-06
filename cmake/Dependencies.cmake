@@ -130,8 +130,8 @@ if(USE_ASAN OR USE_UBSAN OR USE_LSAN OR USE_TSAN)
   endif()
   if(USE_TSAN)
     if(TARGET Sanitizer::thread)
-      # Use global flags so that all targets (including executables like
-      # torch_shm_manager that don't link torch_cpu) get TSan instrumentation.
+      # Use global flags so that targets not linked through torch_cpu also get
+      # TSan instrumentation.
       add_compile_options(-fsanitize=thread)
       add_link_options(-fsanitize=thread)
     else()

@@ -73,6 +73,8 @@ from .utils import (
     reset_recompile_user_contexts,
 )
 
+is_compiling = torch.compiler.is_compiling
+
 
 # Register polyfill functions
 from .polyfills import loader as _  # usort: skip
@@ -92,6 +94,7 @@ __all__ = [
     "explain",
     "forbid_in_graph",
     "graph_break",
+    "is_compiling",
     "is_dynamo_disable_recursive",
     "list_backends",
     "lookup_backend",
