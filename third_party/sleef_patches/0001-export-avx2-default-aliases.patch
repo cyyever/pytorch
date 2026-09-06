@@ -1,0 +1,10 @@
+diff --git a/src/libm/CMakeLists.txt b/src/libm/CMakeLists.txt
+--- a/src/libm/CMakeLists.txt
++++ b/src/libm/CMakeLists.txt
+@@ -166,0 +167,3 @@
++command_arguments(ALIAS_PARAMS_AVX2_DP      4 __m256d __m128i d avx2)
++command_arguments(ALIAS_PARAMS_AVX2_SP     -8 __m256  __m256i d avx2)
++
+@@ -177 +180 @@
+-set(EXT_ENABLE_ALIAS AVX512F ADVSIMD NEON32)
++set(EXT_ENABLE_ALIAS AVX512F AVX2 ADVSIMD NEON32)

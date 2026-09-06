@@ -687,19 +687,57 @@ if(NOT USE_SYSTEM_SLEEF)
   set(SLEEF_BUILD_SCALAR_LIB OFF CACHE BOOL "libsleefscalar will be built." FORCE)
   set(SLEEF_DISABLE_OPENMP ON CACHE BOOL "OpenMP only used by sleef DFT and tests, both disabled" FORCE)
   if(CPU_INTEL)
-    # The PyTorch x86 baseline requires AVX2, so older SLEEF variants cannot be
-    # selected and only increase the embedded static library size.
-    set(SLEEF_DISABLE_SSE2 ON CACHE BOOL "Disable pre-AVX2 SLEEF kernels" FORCE)
-    set(SLEEF_DISABLE_SSE4 ON CACHE BOOL "Disable pre-AVX2 SLEEF kernels" FORCE)
-    set(SLEEF_DISABLE_AVX ON CACHE BOOL "Disable pre-AVX2 SLEEF kernels" FORCE)
-    set(SLEEF_DISABLE_FMA4 ON CACHE BOOL "Disable obsolete FMA4 SLEEF kernels" FORCE)
+    # PyTorch's x86 baseline is AVX2, and ATen directly uses only the AVX2 and
+    # AVX-512 vector APIs. Limit bundled SLEEF at its target-generation source
+    # instead of maintaining a collection of legacy per-ISA disable switches.
+    set(_sleef_x86_extensions AVX512F AVX2)
+    set(SLEEF_ALL_SUPPORTED_EXTENSIONS "${_sleef_x86_extensions}" CACHE STRING
+        "SIMD architectures checked by bundled SLEEF" FORCE)
+    set(SLEEF_SUPPORTED_LIBM_EXTENSIONS "${_sleef_x86_extensions}" CACHE STRING
+        "SIMD architectures built by bundled SLEEF" FORCE)
+    set(SLEEF_SUPPORTED_GNUABI_EXTENSIONS "" CACHE STRING
+        "GNU ABI architectures built by bundled SLEEF" FORCE)
+
+    # Drop results left by older configurations. SLEEF's dispatcher targets
+    # consult these variables directly rather than its supported-target list.
+    foreach(_sleef_legacy_isa IN ITEMS SSE2 SSE4 AVX FMA4 AVX2128 AVX512FNOFMA)
+      unset(COMPILER_SUPPORTS_${_sleef_legacy_isa} CACHE)
+    endforeach()
+    unset(_sleef_x86_extensions)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
       set(DISABLE_SVE ON CACHE BOOL "Xcode's clang-12.5 crashes while trying to compile SVE code" FORCE)
     endif()
   endif()
-  add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef" ${CMAKE_BINARY_DIR}/sleef)
+  set(SLEEF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef")
+  file(GLOB SLEEF_PATCHES
+       "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/sleef_patches/*.patch")
+  list(SORT SLEEF_PATCHES)
+  foreach(_patch IN LISTS SLEEF_PATCHES)
+    execute_process(
+      COMMAND git apply --check --unidiff-zero ${_patch}
+      WORKING_DIRECTORY ${SLEEF_SOURCE_DIR}
+      RESULT_VARIABLE _applies
+      ERROR_QUIET)
+    if(_applies EQUAL 0)
+      execute_process(
+        COMMAND git apply --unidiff-zero ${_patch}
+        WORKING_DIRECTORY ${SLEEF_SOURCE_DIR}
+        COMMAND_ERROR_IS_FATAL ANY)
+    else()
+      execute_process(
+        COMMAND git apply --reverse --check --unidiff-zero ${_patch}
+        WORKING_DIRECTORY ${SLEEF_SOURCE_DIR}
+        RESULT_VARIABLE _already_applied
+        ERROR_QUIET)
+      if(NOT _already_applied EQUAL 0)
+        message(FATAL_ERROR
+            "${_patch} neither applies nor is already applied to SLEEF")
+      endif()
+    endif()
+  endforeach()
+  add_subdirectory("${SLEEF_SOURCE_DIR}" ${CMAKE_BINARY_DIR}/sleef)
   set_property(TARGET sleef PROPERTY FOLDER "dependencies")
   list(APPEND ATen_THIRD_PARTY_INCLUDE ${CMAKE_BINARY_DIR}/include)
   link_directories(${CMAKE_BINARY_DIR}/sleef/lib)
