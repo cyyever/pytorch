@@ -50,12 +50,8 @@ from .spawn import (
 )
 
 
-if sys.platform == "darwin":
-    _sharing_strategy = "file_system"
-    _all_sharing_strategies = {"file_system"}
-else:
-    _sharing_strategy = "file_descriptor"
-    _all_sharing_strategies = {"file_descriptor", "file_system"}
+_sharing_strategy = "file_descriptor"
+_all_sharing_strategies = {"file_descriptor"}
 
 
 def set_sharing_strategy(new_strategy):

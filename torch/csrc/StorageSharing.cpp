@@ -1,5 +1,4 @@
 
-#include <libshm.h>
 #include <torch/csrc/CudaIPCTypes.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/THP.h>
@@ -18,159 +17,6 @@
 #include <ATen/StorageUtils.h>
 #include <torch/csrc/utils/python_numbers.h>
 #include <string>
-
-static PyObject* THPStorage_sharedDecref(PyObject* self, PyObject* noargs) {
-  HANDLE_TH_ERRORS
-  THPStorage_assertNotNull(self);
-  const auto& storage = THPStorage_Unpack(self);
-  c10::DeviceType device_type = storage.device_type();
-  if (device_type == at::kCPU) {
-    THManagedMapAllocator* ctx =
-        THManagedMapAllocator::fromDataPtr(storage.data_ptr());
-    if (ctx) {
-      ctx->decref();
-    }
-  }
-  return Py_NewRef(self);
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPStorage_sharedIncref(PyObject* self, PyObject* noargs) {
-  HANDLE_TH_ERRORS
-  THPStorage_assertNotNull(self);
-  const auto& storage = THPStorage_Unpack(self);
-  c10::DeviceType device_type = storage.device_type();
-  if (device_type == at::kCPU) {
-    THManagedMapAllocator* ctx =
-        THManagedMapAllocator::fromDataPtr(storage.data_ptr());
-    if (ctx) {
-      ctx->incref();
-    }
-  }
-  Py_RETURN_NONE;
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPStorage_pyNewFilenameStorage(
-    PyObject* _unused,
-    PyObject* args) {
-  HANDLE_TH_ERRORS
-  long long size = 0;
-  if (!PyArg_ParseTuple(args, "L", &size)) {
-    return nullptr;
-  }
-  if (size < 0) {
-    return nullptr;
-  }
-
-  int flags = at::ALLOCATOR_MAPPED_SHAREDMEM | at::ALLOCATOR_MAPPED_EXCLUSIVE;
-  std::string handle = at::NewProcessWideShmHandle();
-  return THPStorage_NewWithStorage(
-      THPStorageClass,
-      c10::make_intrusive<at::StorageImpl>(
-          c10::StorageImpl::use_byte_size_t(),
-          size,
-          THManagedMapAllocator::makeDataPtr(
-              "", handle.c_str(), flags, static_cast<size_t>(size)),
-          /*allocator=*/nullptr,
-          /*resizable=*/false));
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPStorage_shareFilename(PyObject* self, PyObject* noargs) {
-  HANDLE_TH_ERRORS
-  THPStorage_assertNotNull(self);
-  const auto& storage = THPStorage_Unpack(self);
-  TORCH_CHECK(
-      storage.device_type() == at::kCPU,
-      "_share_filename_: only available on CPU");
-  THManagedMapAllocator* ctx =
-      THManagedMapAllocator::fromDataPtr(storage.data_ptr());
-  // Storage is already in shared memory, just return a handle
-  if (ctx) {
-    // done
-  } else {
-    // TODO: retry on collision
-    // TODO: free GIL - but remember to reacquire it when an exception is thrown
-    int flags = at::ALLOCATOR_MAPPED_SHAREDMEM | at::ALLOCATOR_MAPPED_EXCLUSIVE;
-    std::string handle = at::NewProcessWideShmHandle();
-    // Create a new storage in shared memory
-    at::Storage new_storage(c10::make_intrusive<at::StorageImpl>(
-        c10::StorageImpl::use_byte_size_t(),
-        storage.nbytes(),
-        THManagedMapAllocator::makeDataPtr(
-            "", handle.c_str(), flags, storage.nbytes()),
-        /*allocator=*/nullptr,
-        /*resizable=*/false));
-
-    {
-      // Copying into shared memory can be slow, so release the GIL
-      pybind11::gil_scoped_release no_gil;
-      // Copy data from old storage into the new one
-      at::storage_copy(new_storage, storage);
-    }
-
-    // Replace the old data_ptr and allocator with the new ones
-    storage.set_data_ptr(std::move(new_storage.mutable_data_ptr()));
-    storage.unsafeGetStorageImpl()->set_allocator(new_storage.allocator());
-
-    ctx = THManagedMapAllocator::fromDataPtr(storage.data_ptr());
-    AT_ASSERT(ctx);
-  }
-
-  THPObjectPtr manager_handle(PyBytes_FromString(ctx->manager_handle()));
-  if (!manager_handle)
-    return nullptr;
-  THPObjectPtr storage_handle(PyBytes_FromString(ctx->filename()));
-  if (!storage_handle)
-    return nullptr;
-  THPObjectPtr size(THPUtils_packUInt64(storage.nbytes()));
-  if (!size)
-    return nullptr;
-
-  THPObjectPtr tuple(PyTuple_New(3));
-  if (!tuple)
-    return nullptr;
-  PyTuple_SET_ITEM(tuple.get(), 0, manager_handle.release());
-  PyTuple_SET_ITEM(tuple.get(), 1, storage_handle.release());
-  PyTuple_SET_ITEM(tuple.get(), 2, size.release());
-  return tuple.release();
-  END_HANDLE_TH_ERRORS
-}
-
-static PyObject* THPStorage_newSharedFilename(
-    PyObject* _unused,
-    PyObject* args) {
-  HANDLE_TH_ERRORS
-  TORCH_CHECK(PyTuple_GET_SIZE(args) == 3, "tuple of 3 items expected");
-  PyObject* _manager_handle = PyTuple_GET_ITEM(args, 0);
-  PyObject* _object_handle = PyTuple_GET_ITEM(args, 1);
-  PyObject* _size = PyTuple_GET_ITEM(args, 2);
-  if (!PyBytes_Check(_manager_handle) || !PyBytes_Check(_object_handle) ||
-      !THPUtils_checkLong(_size)) {
-    THPUtils_invalidArguments(
-        args,
-        nullptr,
-        "_new_shared in file system mode",
-        1,
-        "a handle (string/bytes) and storage size (int)");
-    return nullptr;
-  }
-  const char* manager_handle = PyBytes_AS_STRING(_manager_handle);
-  const char* object_handle = PyBytes_AS_STRING(_object_handle);
-  uint64_t size = THPUtils_unpackUInt64(_size);
-  int flags = at::ALLOCATOR_MAPPED_SHAREDMEM | at::ALLOCATOR_MAPPED_NOCREATE;
-  return THPStorage_NewWithStorage(
-      THPStorageClass,
-      c10::make_intrusive<at::StorageImpl>(
-          c10::StorageImpl::use_byte_size_t(),
-          size,
-          THManagedMapAllocator::makeDataPtr(
-              manager_handle, object_handle, flags, size),
-          /*allocator=*/nullptr,
-          /*resizable=*/false));
-  END_HANDLE_TH_ERRORS
-}
 
 static PyObject* THPStorage_pyNewFdStorage(PyObject* _unused, PyObject* args) {
   HANDLE_TH_ERRORS
@@ -612,8 +458,7 @@ static PyObject* THPStorage_isShared(PyObject* self, PyObject* noargs) {
   if (storage.device_type() != at::kCPU && storage.device_type() != at::kMeta) {
     Py_RETURN_TRUE;
   }
-  if (at::MapAllocator::fromDataPtr(storage.data_ptr()) ||
-      THManagedMapAllocator::fromDataPtr(storage.data_ptr())) {
+  if (at::MapAllocator::fromDataPtr(storage.data_ptr())) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -644,20 +489,9 @@ static PyMethodDef THPStorage_sharingMethods[] = {
      THPStorage_pyNewFdStorage,
      METH_VARARGS | METH_STATIC,
      nullptr},
-    {"_share_filename_cpu_", THPStorage_shareFilename, METH_NOARGS, nullptr},
-    {"_new_shared_filename_cpu",
-     THPStorage_newSharedFilename,
-     METH_VARARGS | METH_STATIC,
-     nullptr},
-    {"_new_using_filename_cpu",
-     THPStorage_pyNewFilenameStorage,
-     METH_VARARGS | METH_STATIC,
-     nullptr},
     {"_weak_ref", THPStorage_weakRef, METH_NOARGS, nullptr},
     {"_free_weak_ref", THPStorage_freeWeakRef, METH_O | METH_STATIC, nullptr},
     {"_expired", THPStorage_expired, METH_O | METH_STATIC, nullptr},
-    {"_shared_decref", THPStorage_sharedDecref, METH_NOARGS, nullptr},
-    {"_shared_incref", THPStorage_sharedIncref, METH_NOARGS, nullptr},
     {"_get_shared_fd", THPStorage_sharedFd, METH_NOARGS, nullptr},
     {"is_shared", THPStorage_isShared, METH_NOARGS, nullptr},
     {nullptr}};

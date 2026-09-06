@@ -20,10 +20,7 @@ if(NOT TORCH_INSTALL_LIB_DIR)
   set(TORCH_INSTALL_LIB_DIR lib)
 endif()
 
-set(LIBSHM_SUBDIR libshm)
 
-set(LIBSHM_SRCDIR ${TORCH_SRC_DIR}/lib/${LIBSHM_SUBDIR})
-add_subdirectory(${LIBSHM_SRCDIR})
 
 # Generate files
 set(TOOLS_PATH "${TORCH_ROOT}/tools")
@@ -58,14 +55,12 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${TORCH_SRC_DIR}/standalone
     )
 
-list(APPEND TORCH_PYTHON_INCLUDE_DIRECTORIES ${LIBSHM_SRCDIR})
 
 set(TORCH_PYTHON_LINK_LIBRARIES
     Python::Module
     pybind::pybind11
     nlohmann
     moodycamel
-    shm
     fmt::fmt-header-only
     ATEN_CPU_FILES_GEN_LIB)
 

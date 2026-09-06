@@ -4,13 +4,10 @@ import logging
 import os
 import sys
 import tempfile
-from typing import Any, ParamSpec, TypeVar
+from typing import Any
 
 import torch
 
-
-_T = TypeVar("_T")
-_P = ParamSpec("_P")
 
 log = logging.getLogger(__name__)
 
@@ -234,8 +231,8 @@ def get_mast_job_name_version() -> tuple[str, int] | None:
 
 TEST_MASTER_ADDR = "127.0.0.1"
 TEST_MASTER_PORT = 29500
-# USE_RTLD_GLOBAL_WITH_LIBTORCH controls whether __init__.py tries to load
-# _C.so with RTLD_GLOBAL during the call to dlopen.
+# Controls whether __init__.py loads _C.so and its PyTorch dependencies with
+# RTLD_GLOBAL.
 USE_RTLD_GLOBAL_WITH_LIBTORCH = False
 # If an op was defined in C++ and extended from Python using the
 # torch.library.register_fake, returns if we require that there be a

@@ -1,5 +1,4 @@
 # Owner(s): ["module: multiprocessing"]
-import contextlib
 import copy
 import gc
 import os
@@ -20,7 +19,6 @@ from torch.testing._internal.common_device_type import (
 )
 from torch.testing._internal.common_utils import (
     IS_LINUX,
-    IS_MACOS,
     IS_WINDOWS,
     load_tests,
     run_tests,
@@ -284,16 +282,6 @@ def _event_handle_exporter_consumer(handle, p2c, c2p):
         p2c.get()
 
 
-@contextlib.contextmanager
-def fs_sharing():
-    prev_strategy = mp.get_sharing_strategy()
-    mp.set_sharing_strategy("file_system")
-    try:
-        yield
-    finally:
-        mp.set_sharing_strategy(prev_strategy)
-
-
 class leak_checker:
     def __init__(self, test_case):
         self.checked_pids = [os.getpid()]
@@ -333,7 +321,7 @@ class leak_checker:
             return False
 
         result = self._has_shm_files()
-        if not result or mp.get_sharing_strategy() != "file_system" or not wait:
+        if not result or not wait:
             return result
 
         total_waiting_time = 0
@@ -656,39 +644,11 @@ class TestMultiprocessing(_MultiprocessingTestMixin, TestCase):
     def test_fd_pool(self):
         self._test_pool(repeat=TEST_REPEATS)
 
-    @unittest.skipIf(
-        TEST_WITH_ASAN,
-        "seems to hang with ASAN, see https://github.com/pytorch/pytorch/issues/5326",
-    )
-    def test_fs_sharing(self):
-        with fs_sharing():
-            # The test works but is very slow on MacOS, see https://github.com/pytorch/pytorch/pull/93183,
-            # so run it only once there. The delay is in waiting for the child process to terminate (join)
-            repeat = 1 if IS_MACOS else TEST_REPEATS
-            self._test_sharing(repeat=repeat)
-
-    def test_fs_preserve_sharing(self):
-        with fs_sharing():
-            self._test_preserve_sharing(repeat=TEST_REPEATS)
-
-    def test_fs_pool(self):
-        with fs_sharing():
-            self._test_pool(repeat=TEST_REPEATS)
-
-    @unittest.skipIf(not HAS_SHM_FILES, "don't not how to check if shm files exist")
-    def test_fs(self):
-        def queue_put():
-            x = torch.DoubleStorage(4)
-            q = mp.Queue()
-            self.assertFalse(lc.has_shm_files())
-            q.put(x)
-            time.sleep(0.05)  # queue serializes asynchronously
-            self.assertTrue(lc.has_shm_files(wait=False))
-            q.get()
-
-        with fs_sharing(), leak_checker(self) as lc:
-            for _ in range(TEST_REPEATS):
-                queue_put()
+    def test_only_file_descriptor_sharing_strategy(self):
+        self.assertEqual(mp.get_sharing_strategy(), "file_descriptor")
+        self.assertEqual(mp.get_all_sharing_strategies(), {"file_descriptor"})
+        with self.assertRaisesRegex(AssertionError, "invalid sharing strategy"):
+            mp.set_sharing_strategy("file_system")
 
     def test_inherit_tensor(self):
         t = torch.zeros(5, 5)
@@ -1085,10 +1045,6 @@ if __name__ == "__main__":
     )
     def test_is_shared(self):
         self._test_is_shared()
-
-    def test_fs_is_shared(self):
-        with fs_sharing():
-            self._test_is_shared()
 
     @unittest.skipIf(sys.platform != "linux", "Only runs on Linux; requires prctl(2)")
     def test_set_thread_name(self):

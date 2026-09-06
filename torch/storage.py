@@ -130,15 +130,7 @@ class _StorageBase:
     def resizable(self) -> _bool:
         raise NotImplementedError
 
-    # Defined in torch/csrc/generic/StorageSharing.cpp
-    def _share_filename_cpu_(self, *args, **kwargs):
-        raise NotImplementedError
-
     def _share_fd_cpu_(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @classmethod
-    def _new_using_filename_cpu(cls, size: _int) -> Self:
         raise NotImplementedError
 
     @classmethod
@@ -147,18 +139,6 @@ class _StorageBase:
 
     @classmethod
     def from_buffer(cls, *args, **kwargs) -> Self:
-        raise NotImplementedError
-
-    @classmethod
-    def _new_shared_filename_cpu(
-        cls,
-        manager,
-        obj,
-        size,
-        *,
-        device=None,
-        dtype=None,
-    ) -> Self:
         raise NotImplementedError
 
     @classmethod
@@ -171,9 +151,6 @@ class _StorageBase:
 
     @classmethod
     def _new_with_weak_ptr(cls, *args, **kwargs) -> Self:
-        raise NotImplementedError
-
-    def _shared_decref(self) -> _StorageBase | TypedStorage:
         raise NotImplementedError
 
     def _write_file(self, *args, **kwargs):
@@ -199,9 +176,6 @@ class _StorageBase:
 
     @classmethod
     def _new_shared_cuda(cls, *args, **kwargs) -> Self:
-        raise NotImplementedError
-
-    def _shared_incref(self, *args, **kwargs):
         raise NotImplementedError
 
     @classmethod
@@ -387,12 +361,8 @@ class _StorageBase:
 
     def share_memory_(self):
         """See :meth:`torch.UntypedStorage.share_memory_`"""
-        from torch.multiprocessing import get_sharing_strategy
-
         if self.device.type not in ("cpu", "meta"):
             pass  # only CPU uses POSIX shared memory
-        elif get_sharing_strategy() == "file_system":
-            self._share_filename_cpu_()
         else:
             self._share_fd_cpu_()
         return self
@@ -400,13 +370,9 @@ class _StorageBase:
     @classmethod
     def _new_shared(cls, size, *, device="cpu"):
         """Create a new storage in shared memory with the same data type."""
-        from torch.multiprocessing import get_sharing_strategy
-
         device = torch.device(device)
         if device.type != "cpu":
             return cls(size, device=device)
-        elif get_sharing_strategy() == "file_system":
-            return cls._new_using_filename_cpu(size)
         else:
             return cls._new_using_fd_cpu(size)
 
@@ -518,10 +484,6 @@ class UntypedStorage(torch._C.StorageBase, _StorageBase):
     @_share_memory_lock_protected
     def _share_fd_cpu_(self, *args, **kwargs):
         return super()._share_fd_cpu_(*args, **kwargs)
-
-    @_share_memory_lock_protected
-    def _share_filename_cpu_(self, *args, **kwargs):
-        return super()._share_filename_cpu_(*args, **kwargs)
 
 
 def _load_from_bytes(b):
@@ -1332,24 +1294,9 @@ class TypedStorage:
     def _new_shared_cuda(cls, *args, **kwargs):
         return torch.UntypedStorage._new_shared_cuda(*args, **kwargs)
 
-    def _share_filename_cpu_(self, *args, **kwargs):
-        (
-            manager_handle,
-            storage_handle,
-            size,
-        ) = self._untyped_storage._share_filename_cpu_(*args, **kwargs)
-        return manager_handle, storage_handle, size // self._element_size()
-
-    def _shared_decref(self):
-        self._untyped_storage._shared_decref()
-        return self
-
     @classmethod
     def _release_ipc_counter(cls, *args, device=None, **kwargs):
         return torch.UntypedStorage._release_ipc_counter_cuda(*args, **kwargs)
-
-    def _shared_incref(self, *args, **kwargs):
-        return self._untyped_storage._shared_incref(*args, **kwargs)
 
     def _share_fd_cpu_(self, *args, **kwargs):
         fd, size = self._untyped_storage._share_fd_cpu_(*args, **kwargs)
@@ -1407,15 +1354,6 @@ class _LegacyStorage(TypedStorage, metaclass=_LegacyStorageMeta):
     @classmethod
     def _release_ipc_counter(cls, *args, **kwargs):
         return torch.UntypedStorage._release_ipc_counter_cuda(*args, **kwargs)
-
-    @classmethod
-    def _new_shared_filename(cls, manager, obj, size):
-        bytes_size = size * torch._utils._element_size(cls.dtype)
-        return cls(
-            wrap_storage=torch.UntypedStorage._new_shared_filename_cpu(
-                manager, obj, bytes_size
-            )
-        )
 
 
 def _get_dtype_from_pickle_storage_type(pickle_storage_type: str):

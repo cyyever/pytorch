@@ -60,8 +60,6 @@ from torch._utils import (
     classproperty,
 )
 from torch._utils_internal import (
-    get_file_path,
-    prepare_multiprocessing_environment,
     USE_RTLD_GLOBAL_WITH_LIBTORCH,
 )
 from torch.torch_version import __version__ as __version__
@@ -202,9 +200,8 @@ def _get_cuda_dep_paths(path: str, lib_folder: str, lib_name: str) -> list[str]:
 
 # See Note [Global dependencies]
 if USE_RTLD_GLOBAL_WITH_LIBTORCH or os.getenv("TORCH_USE_RTLD_GLOBAL"):
-    # Do it the hard way.  You might want to load libtorch with RTLD_GLOBAL if
-    # you're trying to run PyTorch under UBSAN and you need to ensure that only
-    # one copy of libtorch is loaded, so vptr checks work properly.
+    # Do it the hard way. You might want to load the PyTorch C++ libraries with
+    # RTLD_GLOBAL under UBSAN so vptr checks observe one copy of each symbol.
     #
     # If you're using this setting, you must verify that all the libraries
     # you load consistently use the same libstdc++, or you may have
@@ -219,9 +216,8 @@ if USE_RTLD_GLOBAL_WITH_LIBTORCH or os.getenv("TORCH_USE_RTLD_GLOBAL"):
     del old_flags
 
 else:
-    # Easy way.  You want this most of the time, because it will prevent
-    # C++ symbols from libtorch clobbering C++ symbols from other
-    # libraries, leading to mysterious segfaults.
+    # Easy way. You want this most of the time, because it prevents PyTorch C++
+    # symbols from clobbering symbols from other libraries.
     #
     from torch._C import *  # noqa: F403
 
@@ -2253,18 +2249,7 @@ from torch.serialization import load, save
 ################################################################################
 
 
-# Shared memory manager needs to know the exact location of manager executable
-def _manager_path() -> bytes:
-    path = get_file_path("torch", "bin", "torch_shm_manager")
-    prepare_multiprocessing_environment(get_file_path("torch"))
-    if not os.path.exists(path):
-        raise RuntimeError("Unable to find torch_shm_manager at " + path)
-    return path.encode("utf-8")
-
-
-_C._initExtension(_manager_path())  # pyrefly: ignore[bad-argument-type]
-
-del _manager_path
+_C._initExtension()
 
 # Appease the type checker: it can't deal with direct setting of globals().
 # Note that we will see "too many" functions when reexporting this way; there

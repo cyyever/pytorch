@@ -429,9 +429,6 @@ class TestTorchDeviceType(TestCase):
         with self.assertRaisesRegex(RuntimeError, r'only available on CPU'):
             s0._share_fd_cpu_()
 
-        with self.assertRaisesRegex(RuntimeError, r'only available on CPU'):
-            s0._share_filename_cpu_()
-
         if torch.cuda.is_available():
             with self.assertRaisesRegex(NotImplementedError, r'Cannot copy out'):
                 s0.cuda()
@@ -7760,9 +7757,6 @@ class TestTorch(TestCase):
 
             with self.assertRaisesRegex(RuntimeError, r'Not available for CUDA storage'):
                 storage_class._new_with_weak_ptr()
-
-            with self.assertRaisesRegex(RuntimeError, r'Not available for CUDA storage'):
-                storage_class._new_shared_filename(0, 0, 0)
 
     def test_storage_casts(self):
         storage = torch.IntStorage([-1, 0, 1, 2, 3, 4])
