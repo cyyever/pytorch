@@ -552,6 +552,8 @@ string(APPEND CMAKE_CUDA_FLAGS " -compress-mode=size")
 # nvcc's host pass needs the section flags forwarded; see the CXX ones below.
 string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler=-ffunction-sections")
 string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler=-fdata-sections")
+string(APPEND CMAKE_HIP_FLAGS " -ffunction-sections")
+string(APPEND CMAKE_HIP_FLAGS " -fdata-sections")
 
 # Let nvcc split device codegen across threads. Two keeps the product with
 # MAX_JOBS within the core count on the machines this fork is built on.
@@ -602,6 +604,7 @@ if(NOT DEFINED CMAKE_LINKER_TYPE AND NOT APPLE)
     # address-significance table clang emits, that a folded function's address
     # is never compared.
     add_link_options("LINKER:--icf=safe")
+    add_link_options("LINKER:--gc-sections")
   endif()
 endif()
 

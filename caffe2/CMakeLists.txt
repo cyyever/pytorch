@@ -1445,6 +1445,12 @@ if(USE_ROCM)
     target_link_libraries(torch_hip PRIVATE ck_gemm)
   endif()
 
+  if(UNIX AND NOT APPLE)
+    target_link_options(torch_hip PRIVATE
+      "LINKER:--exclude-libs,libck_sdpa.a"
+      "LINKER:--exclude-libs,libck_gemm.a")
+  endif()
+
   if(USE_MSLK)
     if(USE_ROCM)
       target_link_libraries(torch_hip PRIVATE mslk)
