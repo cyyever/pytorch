@@ -211,7 +211,7 @@ TORCH_META_FUNC(linalg_vector_norm)(const Tensor& self, const Scalar& scalar_ord
   at::detail::check_linalg_norm_dtype(opt_dtype, self.scalar_type(), "linalg.vector_norm");
 
   auto mask = at::native::make_dim_mask(dim, self.dim());
-  auto shape = at::native::shape_from_dim_mask(self, std::move(mask), keepdim);
+  auto shape = at::native::shape_from_dim_mask(self, mask, keepdim);
   auto options = self.options()
                      .dtype(toRealValueType(opt_dtype.value_or(self.scalar_type())));
 

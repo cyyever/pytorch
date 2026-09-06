@@ -1169,7 +1169,7 @@ std::tuple<Tensor, Tensor> lstm_cell(
   check_rnn_cell_forward_input(input, w_ih.sym_size(1));
   check_rnn_cell_forward_weights<4>(w_ih, w_hh, hidden_size);
   check_rnn_cell_forward_hidden(input, hx[0], hidden_size, 0);
-  check_rnn_cell_forward_hidden(input, hx[1], std::move(hidden_size), 1);
+  check_rnn_cell_forward_hidden(input, hx[1], hidden_size, 1);
   static at::Tensor undefined;
   return LSTMCell<CellParams>{}(input, std::make_tuple(hx[0], hx[1]), CellParams{w_ih, w_hh, b_ih, b_hh, undefined});
 }

@@ -8430,8 +8430,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__defaults_accessor__");
             return self.get_child_manager<FuncDefaultsGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 std::move(example_value),
                 guard_manager_enum);
           },
@@ -8451,8 +8451,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__kwdefaults_accessor__");
             return self.get_child_manager<FuncKwDefaultsGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 std::move(example_value),
                 guard_manager_enum);
           },
@@ -8481,8 +8481,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__type_accessor__");
             return self.get_child_manager<TypeGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8501,8 +8501,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__type_dict_accessor__");
             return self.get_child_manager<TypeDictGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8521,8 +8521,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__type_mro_accessor__");
             return self.get_child_manager<TypeMROGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8541,8 +8541,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__weakref_call_accessor__");
             return self.get_child_manager<WeakRefCallGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8561,8 +8561,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__call_function_no_args_accessor__");
             return self.get_child_manager<CallFunctionNoArgsGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8599,8 +8599,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__code_accessor__");
             return self.get_child_manager<CodeGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8619,8 +8619,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__closure_accessor__");
             return self.get_child_manager<ClosureGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8659,8 +8659,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__grad_accessor__");
             return self.get_child_manager<GradGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8679,8 +8679,8 @@ PyObject* torch_c_dynamo_guards_init() {
             // A unique key is used to save as the accessor key.
             py::str unique_key("__generic_dict_accessor__");
             return self.get_child_manager<GetGenericDictGuardAccessor>(
-                std::move(unique_key),
-                std::move(source),
+                unique_key,
+                source,
                 example_value,
                 guard_manager_enum);
           },
@@ -8856,8 +8856,8 @@ PyObject* torch_c_dynamo_guards_init() {
                 !self.is_exact_dict_type(),
                 "getattr_manager on a DictGuardManager is supported only for dict subclasses");
             return self.get_child_manager<GetAttrGuardAccessor>(
-                std::move(attr_name),
-                std::move(source),
+                attr_name,
+                source,
                 example_value,
                 guard_manager_enum);
           },

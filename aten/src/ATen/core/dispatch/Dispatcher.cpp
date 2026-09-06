@@ -372,7 +372,7 @@ RegistrationHandleRAII Dispatcher::registerImpl(
     *this,
     dispatch_key,
     std::move(kernel),
-    std::move(cpp_signature),
+    cpp_signature,
     std::move(inferred_function_schema),
     std::move(debug)
   );

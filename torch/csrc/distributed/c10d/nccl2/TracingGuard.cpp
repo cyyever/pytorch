@@ -106,7 +106,7 @@ void TracingGuard::initializeTracingCommon(
         comm_size};
     c10::ArrayRef<const c10::IValue> paramInputs(paramList);
     record_function_guard_->before(
-        at::kParamCommsCallName, std::move(paramInputs));
+        at::kParamCommsCallName, paramInputs);
   } else {
     record_function_guard_->before(at::kParamCommsCallName);
   }

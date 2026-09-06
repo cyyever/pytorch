@@ -104,7 +104,7 @@ void registerUpgrader(
 
   TORCH_CHECK_VALUE(!keypath_vector.empty(), "Empty keypath provided");
 
-  registerUpgrader(version, std::move(keypath_vector), upgrade_func);
+  registerUpgrader(version, keypath_vector, upgrade_func);
 }
 
 bool deregisterUpgrader(int version, const std::vector<std::string>& keypath) {
@@ -193,7 +193,7 @@ nlohmann::json upgrade(nlohmann::json artifact, int target_version) {
       auto field_to_upgrade = getFieldByKeypath(artifact, upgrader.keypath);
 
       // Apply the upgrade transformation
-      auto upgraded_field = upgrader.upgrade_func(std::move(field_to_upgrade));
+      auto upgraded_field = upgrader.upgrade_func(field_to_upgrade);
 
       // Update the artifact with the upgraded field
       setFieldByKeypath(artifact, upgrader.keypath, upgraded_field);

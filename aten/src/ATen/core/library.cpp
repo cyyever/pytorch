@@ -185,7 +185,7 @@ Library& Library::_def(std::variant<c10::OperatorName, c10::FunctionSchema>&& na
   auto dispatch_key = f.dispatch_key_.has_value() ? f.dispatch_key_ : dispatch_key_;
   registrars_.emplace_back(
     c10::Dispatcher::singleton().registerImpl(
-      std::move(name),
+      name,
       dispatch_key,
       std::move(f.func_),
       f.cpp_signature_,
@@ -238,7 +238,7 @@ Library& Library::_impl(const char* name_str, CppFunction&& f, _RegisterOrVerify
     case _RegisterOrVerify::REGISTER:
       registrars_.emplace_back(
         c10::Dispatcher::singleton().registerImpl(
-          std::move(name),
+          name,
           dispatch_key,
           std::move(f.func_),
           f.cpp_signature_,

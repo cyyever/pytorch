@@ -248,7 +248,7 @@ struct FlightRecorder {
       const std::tuple<std::string, std::string>& pg_name,
       std::vector<uint64_t> ranks);
 
-  void record_accelerator_version(const std::string comm_lib_version);
+  void record_accelerator_version(std::string comm_lib_version);
 
   void update_state(Entry& r);
 

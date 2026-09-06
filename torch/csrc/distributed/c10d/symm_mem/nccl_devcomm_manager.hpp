@@ -139,9 +139,7 @@ class TORCH_API NCCLDevCommManager {
         group_name, std::unordered_map<std::string, ncclDevComm>());
     auto& group_map = group_it->second;
     // Try to insert the device communicator with the given key
-    // Use std::move to avoid copying the device communicator
-    auto [key_it, key_inserted] =
-        group_map.try_emplace(key, std::move(devcomm));
+    auto [key_it, key_inserted] = group_map.try_emplace(key, devcomm);
     if (!key_inserted) {
       // Already registered - this is a programming error, so throw
       TORCH_CHECK(
