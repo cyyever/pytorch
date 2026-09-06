@@ -1061,9 +1061,6 @@ if(USE_KINETO)
     ${TORCH_ROOT}/third_party/kineto/libkineto/src)
 endif()
 
-target_include_directories(torch_cpu PRIVATE
-  ${TORCH_ROOT}/third_party/nlohmann/include)
-
 
 # The native .pftrace encoder's only extra build dep (perfetto) is pulled in
 # just when the CUPTI stubs were generated above (CUPTI_STUBS_GENERATED): the

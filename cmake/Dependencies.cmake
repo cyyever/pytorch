@@ -802,10 +802,13 @@ if(USE_XCCL)
   endif()
 endif()
 
-# nlohmann-json and concurrentqueue are header-only and used by torch_cpu
-# (c10/util/Semaphore.h, the profiler, export serialization).
+# nlohmann-json and concurrentqueue are header-only. nlohmann is also needed by
+# the GPU libraries: c10d's flight recorder is compiled into each of them.
 list(APPEND Caffe2_DEPENDENCY_LIBS nlohmann)
 list(APPEND Caffe2_DEPENDENCY_LIBS moodycamel)
+list(APPEND Caffe2_CUDA_DEPENDENCY_LIBS nlohmann)
+list(APPEND Caffe2_HIP_DEPENDENCY_LIBS nlohmann)
+list(APPEND Caffe2_XPU_DEPENDENCY_LIBS nlohmann)
 
 # TCPStore's libuv backend used to compile and link against the libuv copy
 # vendored by TensorPipe. TensorPipe is gone, so look for libuv on the system.
