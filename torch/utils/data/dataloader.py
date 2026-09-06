@@ -1250,10 +1250,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
                     raise RuntimeError(
                         "Too many open files. Communication with the"
                         " workers is no longer possible. Please increase the"
-                        " limit using `ulimit -n` in the shell or change the"
-                        " sharing strategy by calling"
-                        " `torch.multiprocessing.set_sharing_strategy('file_system')`"
-                        " at the beginning of your code"
+                        " limit using `ulimit -n` in the shell"
                     ) from None
             raise
 

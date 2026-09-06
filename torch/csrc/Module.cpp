@@ -28,7 +28,6 @@
 #include <c10/util/Logging.h>
 #include <c10/util/env.h>
 #include <c10/util/irange.h>
-#include <libshm.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <cstdlib>
@@ -169,7 +168,7 @@ static PyObject* THPModule_initNames(PyObject* self, PyObject* arg) {
 // classes
 static PyObject* THPModule_initExtension(
     PyObject* _unused,
-    PyObject* shm_manager_path) {
+    PyObject* noargs) {
   HANDLE_TH_ERRORS
 #if !defined(FBCODE_CAFFE2) && !defined(__aarch64__)
   if (torch::get_cpp_stacktraces_enabled()) {
@@ -201,19 +200,11 @@ static PyObject* THPModule_initExtension(
     });
   }
 #endif
-  if (!THPUtils_checkString(shm_manager_path)) {
-    THPUtils_setError(
-        "initialization error - expected bytes/string object as shm_manager_path!");
-    return nullptr;
-  }
   torch::utils::initializeLayouts();
   torch::utils::initializeMemoryFormats();
   torch::utils::initializeQSchemes();
   torch::utils::initializeDtypes();
   torch::tensors::initialize_python_bindings();
-  std::string path = THPUtils_unpackString(shm_manager_path);
-  libshm_init(path.c_str());
-
   auto module = THPObjectPtr(PyImport_ImportModule("torch"));
   TORCH_CHECK_PYTHON(module);
 
@@ -1945,7 +1936,7 @@ static PyObject* LogAPIUsageOnceFromPython(PyObject* self, PyObject* event) {
 
 static std::initializer_list<PyMethodDef> TorchMethods = {
     {"_log_api_usage_once", LogAPIUsageOnceFromPython, METH_O, nullptr},
-    {"_initExtension", THPModule_initExtension, METH_O, nullptr},
+    {"_initExtension", THPModule_initExtension, METH_NOARGS, nullptr},
     {"_autograd_init", THPAutograd_initExtension, METH_NOARGS, nullptr},
     {"_add_docstr", THPModule_addDocStr, METH_VARARGS, nullptr},
     {"_swap_tensor_impl", THPModule_swap_tensor_impl, METH_VARARGS, nullptr},

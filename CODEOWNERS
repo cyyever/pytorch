@@ -649,7 +649,6 @@
 # /torch/futures/
 /torch/header_only_apis.txt @janeyx99
 /torch/headeronly/ @janeyx99
-# /torch/lib/
 # /torch/multiprocessing/
 # /torch/nested/
 # /torch/numa/

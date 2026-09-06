@@ -114,10 +114,7 @@ the CUDA API, as that's the only way they can be shared.
 
 ### File descriptor - `file_descriptor`
 
-:::{note}
-This is the default strategy (except for macOS and OS X where it's not
-supported).
-:::
+This is the only supported sharing strategy.
 
 This strategy will use file descriptors as shared memory handles. Whenever a
 storage is moved to shared memory, a file descriptor obtained from `shm_open`
@@ -126,31 +123,8 @@ the file descriptor will be transferred (e.g. via UNIX sockets) to it. The
 receiver will also cache the file descriptor and `mmap` it, to obtain a shared
 view onto the storage data.
 
-Note that if there will be a lot of tensors shared, this strategy will keep a
-large number of file descriptors open most of the time. If your system has low
-limits for the number of open file descriptors, and you can't raise them, you
-should use the `file_system` strategy.
-
-### File system - `file_system`
-
-This strategy will use file names given to `shm_open` to identify the shared
-memory regions. This has a benefit of not requiring the implementation to cache
-the file descriptors obtained from it, but at the same time is prone to shared
-memory leaks. The file can't be deleted right after its creation, because other
-processes need to access it to open their views. If the processes fatally
-crash, or are killed, and don't call the storage destructors, the files will
-remain in the system. This is very serious, because they keep using up the
-memory until the system is restarted, or they're freed manually.
-
-To counter the problem of shared memory file leaks, {mod}`torch.multiprocessing`
-will spawn a daemon named `torch_shm_manager` that will isolate itself from
-the current process group, and will keep track of all shared memory allocations.
-Once all processes connected to it exit, it will wait a moment to ensure there
-will be no new connections, and will iterate over all shared memory files
-allocated by the group. If it finds that any of them still exist, they will be
-deallocated. We've tested this method and it proved to be robust to various
-failures. Still, if your system has high enough limits, and `file_descriptor`
-is a supported strategy, we do not recommend switching to this one.
+This strategy keeps shared-memory file descriptors open. Systems that share
+many tensors must configure a sufficiently high file-descriptor limit.
 
 ## Spawning subprocesses
 

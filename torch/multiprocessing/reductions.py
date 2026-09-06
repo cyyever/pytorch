@@ -552,24 +552,6 @@ def rebuild_storage_fd(cls, df, size):
         os.close(fd)
 
 
-def rebuild_storage_filename(cls, manager, handle, size, dtype=None):
-    storage: torch.TypedStorage | torch.UntypedStorage = storage_from_cache(cls, handle)
-    if storage is not None:
-        return storage._shared_decref()
-    if dtype is None:
-        storage = torch.UntypedStorage._new_shared_filename_cpu(manager, handle, size)
-    else:
-        byte_size = size * torch._utils._element_size(dtype)
-        untyped_storage: torch.UntypedStorage = (
-            torch.UntypedStorage._new_shared_filename_cpu(manager, handle, byte_size)
-        )
-        storage = torch.TypedStorage(
-            wrap_storage=untyped_storage, dtype=dtype, _internal=True
-        )
-    shared_cache[handle] = StorageWeakRef(storage)
-    return storage._shared_decref()
-
-
 def rebuild_storage_empty(cls):
     return cls()
 
@@ -593,8 +575,6 @@ def reduce_typed_storage_child(storage):
 
 
 def reduce_storage(storage):
-    from . import get_sharing_strategy
-
     if storage.is_cuda:
         raise RuntimeError(
             "Cannot pickle CUDA storage; try pickling a CUDA tensor instead"
@@ -603,13 +583,6 @@ def reduce_storage(storage):
         raise RuntimeError(
             "Cannot pickle meta storage; try pickling a meta tensor instead"
         )
-    elif get_sharing_strategy() == "file_system":
-        metadata = storage._share_filename_cpu_()
-        cache_key = metadata[1]
-        rebuild = rebuild_storage_filename
-        if isinstance(storage, torch.TypedStorage):
-            metadata += (storage.dtype,)
-        storage._shared_incref()
     elif storage.size() == 0:
         # This is special cased because Empty tensors
         # (with size 0) cannot be mmapped.
