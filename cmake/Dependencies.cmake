@@ -572,6 +572,19 @@ if(USE_OPENMP AND NOT TARGET caffe2::openmp)
     message(WARNING "Not compiling with OpenMP. Suppress this warning with -DUSE_OPENMP=OFF")
     caffe2_update_option(USE_OPENMP OFF)
   endif()
+
+  # No guard here against a BLAS that carries GNU's OpenMP. The vendored
+  # FindOpenMP used to decline libomp when OpenBLAS had brought libgomp in
+  # (gh-147725), reading an ldd of the BLAS library, and dropping that module
+  # dropped the guard with it. It is not missed: ldd reports what the loader
+  # maps, not what it binds, and libomp implements the GOMP ABI down to the
+  # GOMP_1.0..5.0 version nodes. Both libraries are direct dependencies of
+  # libtorch_cpu.so while libgomp arrives one level down through OpenBLAS, so
+  # the breadth-first scope reaches libomp first and OpenBLAS's GOMP_parallel
+  # and GOMP_task bind there, versioned references and all -- confirmed with
+  # LD_DEBUG=bindings. libgomp stays mapped and idle. What would actually
+  # break this is libtorch_cpu.so no longer linking an OpenMP runtime of its
+  # own, which is a different thing to check and cannot be checked here.
 endif()
 
 
