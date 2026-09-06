@@ -43,6 +43,10 @@ removed because doing so would change the dispatcher surface and ABI.
 The public `torch.utils.benchmark` API remains available, but its examples and
 operator-fuzzer workloads are not packaged.
 
+The base wheel does not install `fsspec`. Local filesystem distributed
+checkpoints remain available; users of fsspec-backed checkpoint storage install
+the `torch[distributed-checkpoint]` extra.
+
 Static archives are excluded from wheels. XPU wheels contain the four PyTorch
 ELF objects `_C`, `libtorch_python`, `libtorch_cpu`, and `libtorch_xpu`; Intel
 and system runtimes remain external.
