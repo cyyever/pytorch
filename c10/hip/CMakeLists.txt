@@ -27,7 +27,7 @@ file(GLOB C10_HIP_SRCS CONFIGURE_DEPENDS
 file(GLOB_RECURSE C10_HIP_HEADERS CONFIGURE_DEPENDS *.h)
 
 if(NOT BUILD_LIBTORCHLESS)
-  add_library(c10_hip ${C10_HIP_SRCS} ${C10_HIP_HEADERS})
+  add_library(c10_hip STATIC ${C10_HIP_SRCS} ${C10_HIP_HEADERS})
   set_target_properties(c10_hip PROPERTIES LINKER_LANGUAGE CXX)
   torch_compile_options(c10_hip)
 
@@ -56,7 +56,12 @@ if(NOT BUILD_LIBTORCHLESS)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
       $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
       $<INSTALL_INTERFACE:include>)
-  install(TARGETS c10_hip EXPORT Caffe2Targets DESTINATION lib)
+  # A shared build reaches these objects through the runtime DSO that
+  # whole-archives them, so the archive itself is not shipped. A static one has
+  # no such DSO and its consumers link the archive directly.
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS c10_hip EXPORT Caffe2Targets DESTINATION lib)
+  endif()
   set(C10_HIP_LIB c10_hip)
 endif()
 

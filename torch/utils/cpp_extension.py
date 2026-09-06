@@ -1100,8 +1100,6 @@ def CppExtension(name, sources, *args, **kwargs):
     kwargs['library_dirs'] = library_dirs
 
     libraries = kwargs.get('libraries', [])
-    libraries.append('c10')
-    libraries.append('torch')
     libraries.append('torch_cpu')
     if not kwargs.get('py_limited_api', False):
         # torch_python uses more than the python limited api
@@ -1236,15 +1234,12 @@ def CUDAExtension(name, sources, *args, **kwargs):
     kwargs['library_dirs'] = library_dirs
 
     libraries = kwargs.get('libraries', [])
-    libraries.append('c10')
-    libraries.append('torch')
     libraries.append('torch_cpu')
     if not kwargs.get('py_limited_api', False):
         # torch_python uses more than the python limited api
         libraries.append('torch_python')
     if IS_HIP_EXTENSION:
         libraries.append('amdhip64')
-        libraries.append('c10_hip')
         libraries.append('torch_hip')
     else:
         libraries.append('cudart')
@@ -1371,9 +1366,6 @@ def SyclExtension(name, sources, *args, **kwargs):
     kwargs["library_dirs"] = library_dirs
 
     libraries = kwargs.get("libraries", [])
-    libraries.append("c10")
-    libraries.append("c10_xpu")
-    libraries.append("torch")
     libraries.append("torch_cpu")
     libraries.append("sycl")
     if not kwargs.get('py_limited_api', False):
@@ -2216,17 +2208,13 @@ def verify_ninja_availability() -> None:
 
 def _prepare_ldflags(extra_ldflags, with_cuda, with_sycl, verbose, is_standalone):
     extra_ldflags.append(f'-L{TORCH_LIB_PATH}')
-    extra_ldflags.append('-lc10')
-    if with_cuda:
-        extra_ldflags.append('-lc10_hip' if IS_HIP_EXTENSION else '-lc10_cuda')
-    if with_sycl:
-        extra_ldflags.append('-lc10_xpu')
+    if with_cuda and not IS_HIP_EXTENSION:
+        extra_ldflags.append('-lc10_cuda')
     extra_ldflags.append('-ltorch_cpu')
     if with_cuda:
         extra_ldflags.append('-ltorch_hip' if IS_HIP_EXTENSION else '-ltorch_cuda')
     if with_sycl:
         extra_ldflags.append('-ltorch_xpu')
-    extra_ldflags.append('-ltorch')
     if not is_standalone:
         extra_ldflags.append('-ltorch_python')
 

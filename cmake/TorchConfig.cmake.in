@@ -58,11 +58,11 @@ set(TORCH_INCLUDE_DIRS
 if(@BUILD_SHARED_LIBS@)
   find_dependency(Caffe2 PATHS ${CMAKE_CURRENT_LIST_DIR}/../Caffe2)
   set(TORCH_LIBRARIES torch ${Caffe2_MAIN_LIBS})
-  append_torchlib_if_found(c10)
 else()
-  add_library(torch STATIC IMPORTED) # set imported_location at the bottom
+  add_library(torch INTERFACE IMPORTED)
   #library need whole archive
-  append_wholearchive_lib_if_found(torch torch_cpu)
+  # torch is an INTERFACE target; torch_cpu carries the objects.
+  append_wholearchive_lib_if_found(torch_cpu)
   if(@USE_CUDA@)
     append_wholearchive_lib_if_found(torch_cuda c10_cuda)
   endif()
@@ -99,21 +99,9 @@ if(@USE_CUDA@)
   list(APPEND TORCH_LIBRARIES ${TORCH_CUDA_LIBRARIES})
 endif()
 
-if(@USE_XPU@ AND @BUILD_SHARED_LIBS@)
-    append_torchlib_if_found(c10_xpu torch_xpu)
-endif()
-
-find_library(TORCH_LIBRARY torch PATHS "${TORCH_INSTALL_PREFIX}/lib")
-# the statements below changes target properties on
-# - the imported target from Caffe2Targets.cmake in shared library mode (see the find_dependency above)
-#    - this is untested whether it is the correct (or desired) methodology in CMake
-# - the imported target created in this file in static library mode
 if(NOT @BUILD_SHARED_LIBS@)
-  # do not set this property on the shared library target, as it will cause confusion in some builds
-  # as the configuration specific property is set in the Caffe2Targets.cmake file
   set_target_properties(torch PROPERTIES
-      IMPORTED_LOCATION "${TORCH_LIBRARY}"
-  )
+      INTERFACE_LINK_LIBRARIES "${TORCH_LIBRARIES}")
 endif()
 set_target_properties(torch PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${TORCH_INCLUDE_DIRS}"
@@ -134,4 +122,4 @@ if(TORCH_CXX_FLAGS)
   set_property(TARGET torch APPEND PROPERTY INTERFACE_COMPILE_OPTIONS "${TORCH_CXX_FLAGS}")
 endif()
 
-find_package_handle_standard_args(Torch DEFAULT_MSG TORCH_LIBRARY TORCH_INCLUDE_DIRS)
+find_package_handle_standard_args(Torch DEFAULT_MSG TORCH_LIBRARIES TORCH_INCLUDE_DIRS)

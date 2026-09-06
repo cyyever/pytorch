@@ -344,6 +344,7 @@ option(USE_ASAN "Use AddressSanitizer" OFF)
 option(USE_UBSAN "Use UndefinedBehaviorSanitizer" OFF)
 option(USE_LSAN "Use Leak Sanitizer" OFF)
 option(USE_TSAN "Use Thread Sanitizer" OFF)
+option(USE_LTO "Enable link-time optimization in Release builds" OFF)
 
 # Track whether USE_CUDA was explicitly set by the user (before option() is called)
 # If USE_CUDA is already defined in cache, it means user explicitly set it
@@ -592,26 +593,24 @@ if(NOT DEFINED CMAKE_LINKER_TYPE AND NOT APPLE)
   endif()
 endif()
 
-# Enable ThinLTO for Clang Release builds through CMake's IPO support.
-include(CheckIPOSupported)
-# ThinLTO leaves bitcode in the object files, which plain ar cannot index, so
-# CMake archives through the compiler's own tools. When those are missing the
-# IPO probe fails at the archive step and reports only "check failed to
-# compile", which names neither the tool nor the package. Say it here instead.
-foreach(_ipo_lang IN ITEMS C CXX)
-  foreach(_ipo_tool IN ITEMS AR RANLIB)
-    if(NOT CMAKE_${_ipo_lang}_COMPILER_${_ipo_tool} OR
-       CMAKE_${_ipo_lang}_COMPILER_${_ipo_tool} MATCHES "NOTFOUND")
-      message(FATAL_ERROR
-        "ThinLTO is enabled for Release builds but "
-        "CMAKE_${_ipo_lang}_COMPILER_${_ipo_tool} was not found. Install the "
-        "LLVM binary utilities (llvm-ar and llvm-ranlib, in the llvm package "
-        "on most distributions); clang ships neither.")
-    endif()
-  endforeach()
-endforeach()
-check_ipo_supported(LANGUAGES C CXX)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+# CMake selects ThinLTO for Clang and the compiler's native LTO mode otherwise.
+if(USE_LTO)
+  include(CheckIPOSupported)
+  # Ask the probe rather than predicting how it will fail. The usual cause is
+  # the archiver: LTO leaves bitcode in the object files, which plain ar cannot
+  # index, so CMake archives through the compiler's own tools and clang does
+  # not ship them. Naming that is a hint, not a precondition -- Apple's
+  # toolchain deliberately has no llvm-ar and still supports IPO.
+  check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error LANGUAGES C CXX)
+  if(NOT _ipo_supported)
+    message(FATAL_ERROR
+      "USE_LTO is on but this toolchain cannot do it. If the failure below is "
+      "an archiver that could not be run, install the LLVM binary utilities "
+      "(llvm-ar and llvm-ranlib, packaged apart from clang on most "
+      "distributions).\n${_ipo_error}")
+  endif()
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+endif()
 
 # Prioritized Text Linker Optimization
 if(USE_PRIORITIZED_TEXT_FOR_LD)
@@ -1049,7 +1048,7 @@ if(DEFINED USE_CUSTOM_DEBINFO)
     # care about and caffe2/ for all test targets defined there
     if(BUILD_LIBTORCHLESS)
       caffe2_update_option(USE_CUDA OFF)
-      set(ALL_PT_TARGETS "torch_python;${C10_LIB};${TORCH_CPU_LIB};${TORCH_LIB}")
+      set(ALL_PT_TARGETS "torch_python;${C10_LIB};${TORCH_CPU_LIB}")
     else()
       # @todo test if we can remove this
       set(ALL_PT_TARGETS "torch_python;c10;torch_cpu;torch")

@@ -59,7 +59,7 @@ set(C10_CUDA_HEADERS
 )
 
 if(NOT BUILD_LIBTORCHLESS)
-  torch_cuda_based_add_library(c10_cuda ${C10_CUDA_SRCS} ${C10_CUDA_HEADERS})
+  torch_cuda_based_add_library(c10_cuda STATIC ${C10_CUDA_SRCS} ${C10_CUDA_HEADERS})
   torch_compile_options(c10_cuda)
   torch_optimize_layout_if_enabled(c10_cuda)
   # If building shared library, set dllimport/dllexport proper.
@@ -81,11 +81,19 @@ if(NOT BUILD_LIBTORCHLESS)
       $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
       $<INSTALL_INTERFACE:include>)
 
+if(NOT BUILD_LIBTORCHLESS)
+  # A shared build reaches these objects through the runtime DSO that
+  # whole-archives them, so the archive itself is not shipped. A static one has
+  # no such DSO and its consumers link the archive directly.
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS c10_cuda EXPORT Caffe2Targets DESTINATION lib)
+  endif()
+endif()
+
 # ---[ Installation
 # Note: for now, we will put all export path into one single Caffe2Targets group
 # to deal with the cmake deployment need. Inside the Caffe2Targets set, the
 # individual libraries like libc10.so and libcaffe2.so are still self-contained.
-install(TARGETS c10_cuda EXPORT Caffe2Targets DESTINATION lib)
 
 endif()
 

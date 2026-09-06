@@ -550,7 +550,6 @@ set(Caffe2_CPU_SRCS ${Caffe2_CPU_SRCS_NON_AVX} ${Caffe2_CPU_SRCS_AVX2} ${Caffe2_
 # ==========================================================
 
 if(BUILD_LIBTORCHLESS)
-  find_library(TORCH_LIB torch PATHS $ENV{LIBTORCH_LIB_PATH} NO_DEFAULT_PATH)
   find_library(TORCH_CPU_LIB torch_cpu PATHS $ENV{LIBTORCH_LIB_PATH} NO_DEFAULT_PATH)
 
   if(USE_CUDA)
@@ -680,23 +679,8 @@ if(CMAKE_COMPILER_IS_GNUCXX AND BUILD_LIBTORCH_CPU_WITH_DEBUG)
   target_compile_options(torch_cpu PRIVATE "-g")
 endif()
 
-# This is required for older versions of CMake, which don't allow
-# specifying add_library() without a list of source files
-set(DUMMY_EMPTY_FILE ${CMAKE_BINARY_DIR}/empty.cpp)
-
-set(DUMMY_FILE_CONTENT "")
-
-# file(GENERATE) is copy-if-different, so re-configuring does not bump the
-# mtime and force a torch_cpu/torch relink.
-file(GENERATE OUTPUT ${DUMMY_EMPTY_FILE} CONTENT "${DUMMY_FILE_CONTENT}")
-
-# Wrapper library for people who link against torch and expect both CPU and CUDA support
-# Contains "torch_cpu" and "torch_cuda"
-add_library(torch ${DUMMY_EMPTY_FILE})
-if(HAVE_SOVERSION)
-  set_target_properties(torch PROPERTIES
-      VERSION ${TORCH_VERSION} SOVERSION ${TORCH_SOVERSION})
-endif()
+# Keep torch as a dependency aggregator without producing an empty library.
+add_library(torch INTERFACE)
 
 if(USE_ROCM)
   # Only .cu/.hip sources need LANGUAGE HIP; .cpp files compile as CXX.
@@ -1264,7 +1248,7 @@ if(USE_DISTRIBUTED)
   endif()
 endif()
 
-target_link_libraries(torch_cpu PUBLIC c10)
+target_link_libraries(torch_cpu PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,c10>)
 target_link_libraries(torch_cpu PUBLIC ${Caffe2_PUBLIC_DEPENDENCY_LIBS})
 target_link_libraries(torch_cpu PRIVATE ${Caffe2_DEPENDENCY_LIBS})
 target_link_libraries(torch_cpu PRIVATE ${Caffe2_DEPENDENCY_WHOLE_LINK_LIBS})
@@ -1302,7 +1286,8 @@ elseif(USE_XPU)
   caffe2_interface_library(torch_xpu torch_xpu_library)
 endif()
 
-caffe2_interface_library(torch torch_library)
+add_library(torch_library INTERFACE)
+target_link_libraries(torch_library INTERFACE torch)
 
 install(TARGETS torch_cpu torch_cpu_library EXPORT Caffe2Targets DESTINATION "${TORCH_INSTALL_LIB_DIR}")
 
@@ -1316,16 +1301,16 @@ endif()
 
 install(TARGETS torch torch_library EXPORT Caffe2Targets DESTINATION "${TORCH_INSTALL_LIB_DIR}")
 
-target_link_libraries(torch PUBLIC torch_cpu_library)
+target_link_libraries(torch INTERFACE torch_cpu_library)
 
 if(USE_CUDA)
-  target_link_libraries(torch PUBLIC torch_cuda_library)
+  target_link_libraries(torch INTERFACE torch_cuda_library)
 elseif(USE_ROCM)
-  target_link_libraries(torch PUBLIC torch_hip_library)
+  target_link_libraries(torch INTERFACE torch_hip_library)
 endif()
 
 if(USE_XPU)
-  target_link_libraries(torch PUBLIC torch_xpu_library)
+  target_link_libraries(torch INTERFACE torch_xpu_library)
 endif()
 
 torch_optimize_layout_if_enabled(torch_cpu)
@@ -1348,7 +1333,8 @@ if(USE_CUDA)
     target_link_libraries(torch_cpu PRIVATE torch::cudart)
   endif()
   target_link_libraries(torch_cuda INTERFACE torch::cudart)
-  target_link_libraries(torch_cuda PUBLIC c10_cuda)
+  target_link_libraries(
+      torch_cuda PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,c10_cuda>)
   target_link_libraries(torch_cuda PRIVATE torch::nvtx3)
 
   target_include_directories(
@@ -1374,7 +1360,8 @@ endif()
 if(USE_XPU)
   target_link_libraries(torch_xpu INTERFACE torch::xpurt)
 
-  target_link_libraries(torch_xpu PUBLIC c10_xpu)
+  target_link_libraries(
+      torch_xpu PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,c10_xpu>)
 
   target_include_directories(
       torch_xpu INTERFACE $<INSTALL_INTERFACE:include>)
@@ -1419,7 +1406,8 @@ if(USE_ROCM)
   # Since PyTorch files contain HIP headers, these flags are required for the necessary definitions to be added.
   target_compile_options(torch_hip PUBLIC ${HIP_CXX_FLAGS})  # experiment
 
-  target_link_libraries(torch_hip PUBLIC c10_hip)
+  target_link_libraries(
+      torch_hip PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,c10_hip>)
 
   # TODO: Cut this over to ATEN_HIP_FILES_GEN_LIB.  At the moment, we
   # only generate CUDA files
