@@ -62,27 +62,25 @@ inline Vectorized<double> cast<double, int64_t>(
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GATHER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MSVC is not working well on complex function overload.
 template <int64_t scale = 1>
-std::enable_if_t<
-    scale == 1 || scale == 2 || scale == 4 || scale == 8,
-    Vectorized<
-        double>> inline gather(const double* base_addr, const Vectorized<int64_t>& vindex) {
+  requires gather_scale<scale>
+inline Vectorized<double> gather(
+    const double* base_addr,
+    const Vectorized<int64_t>& vindex) {
   return _mm256_i64gather_pd(base_addr, vindex, scale);
 }
 
 template <int64_t scale = 1>
-std::enable_if_t<
-    scale == 1 || scale == 2 || scale == 4 || scale == 8,
-    Vectorized<
-        float>> inline gather(const float* base_addr, const Vectorized<int32_t>& vindex) {
+  requires gather_scale<scale>
+inline Vectorized<float> gather(
+    const float* base_addr,
+    const Vectorized<int32_t>& vindex) {
   return _mm256_i32gather_ps(base_addr, vindex, scale);
 }
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ MASK GATHER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MSVC is not working well on complex function overload.
 template <int64_t scale = 1>
-std::
-    enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<double>> inline mask_gather(
+  requires gather_scale<scale>
+inline Vectorized<double> mask_gather(
         const Vectorized<double>& src,
         const double* base_addr,
         const Vectorized<int64_t>& vindex,
@@ -91,8 +89,8 @@ std::
 }
 
 template <int64_t scale = 1>
-std::
-    enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<float>> inline mask_gather(
+  requires gather_scale<scale>
+inline Vectorized<float> mask_gather(
         const Vectorized<float>& src,
         const float* base_addr,
         const Vectorized<int32_t>& vindex,
