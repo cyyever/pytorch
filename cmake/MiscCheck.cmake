@@ -2,10 +2,24 @@ include(CheckCXXSourceCompiles)
 include(CheckCXXCompilerFlag)
 include(CMakePushCheckState)
 
-# ---[ Check what vector extensions the compiler supports. CXX_AVX512_FOUND
-# gates the AVX-512 slice of the CPU kernels in cmake/Codegen.cmake; AVX2 needs
-# no gate, since the x86 baseline below already requires it.
-find_package(AVX)
+# ---[ Check whether the AVX-512 slice of the CPU kernels can be built.
+# CXX_AVX512_FOUND gates it in cmake/Codegen.cmake; AVX2 needs no gate, since
+# the x86 baseline below already requires it. The probe compiles intrinsics
+# rather than only asking whether the flags are accepted, and it uses the flags
+# Codegen actually passes -- the FindAVX module this replaces also demanded
+# -mavx512bf16, which that slice does not use, so a compiler without the bf16
+# extension was reported as having no AVX-512 at all.
+cmake_push_check_state()
+set(CMAKE_REQUIRED_FLAGS
+    "-mavx512f -mavx512bw -mavx512vl -mavx512dq -mfma -mf16c")
+check_cxx_source_compiles("
+  #include <immintrin.h>
+  int main() {
+    __m512i a = _mm512_set1_epi8(0);
+    __mmask64 m = _mm512_cmp_epi8_mask(a, a, _MM_CMPINT_EQ);
+    return static_cast<int>(m);
+  }" CXX_AVX512_FOUND)
+cmake_pop_check_state()
 
 # ---[ Checks if compiler supports -fvisibility=hidden
 check_cxx_compiler_flag("-fvisibility=hidden" COMPILER_SUPPORTS_HIDDEN_VISIBILITY)
