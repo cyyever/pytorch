@@ -12,6 +12,7 @@ wheel built from it (e.g. CUDA nightly wheels).
 from __future__ import annotations
 
 import os
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any, TYPE_CHECKING
 
 # _common is resolved at build time via scikit-build-core's provider path,
@@ -51,13 +52,20 @@ def dynamic_metadata(
     # BUILD_PYTHON_ONLY: add libtorch wheel as a dependency
     if _is_truthy(os.environ.get("BUILD_PYTHON_ONLY")):
         libtorch_pkg = os.environ.get("LIBTORCH_PACKAGE_NAME", "torch_no_python")
-        version = get_torch_version()
-        deps.append(f"{libtorch_pkg}=={version}")
+        torch_version = get_torch_version()
+        deps.append(f"{libtorch_pkg}=={torch_version}")
 
     # PYTORCH_EXTRA_INSTALL_REQUIREMENTS: pipe-separated PEP 508 strings
     extra = os.environ.get("PYTORCH_EXTRA_INSTALL_REQUIREMENTS")
     if extra:
         deps.extend(r.strip() for r in extra.split("|") if r.strip())
+    elif _is_truthy(os.environ.get("USE_ROCM")):
+        try:
+            rocm_version = version("rocm")
+        except PackageNotFoundError:
+            pass
+        else:
+            deps.append(f"rocm[libraries]=={rocm_version}")
 
     return {"dependencies": deps}
 

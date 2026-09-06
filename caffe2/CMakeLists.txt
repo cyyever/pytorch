@@ -695,6 +695,8 @@ if(USE_ROCM)
   list(APPEND Caffe2_HIP_SRCS ${GENERATED_CXX_TORCH_CUDA})
   add_library(torch_hip ${Caffe2_HIP_SRCS})
   add_dependencies(torch_hip pytorch_bundled_miopen)
+  target_compile_options(torch_hip PRIVATE
+    "$<$<COMPILE_LANGUAGE:CXX>:SHELL:-include ${PROJECT_SOURCE_DIR}/cmake/hip_host_compiler_compat.h>")
   # HIP device code is compiled with -fno-gpu-rdc, so there is no device link
   # step and the C++ linker can drive this target.
   set_target_properties(torch_hip PROPERTIES LINKER_LANGUAGE CXX)
@@ -1424,7 +1426,7 @@ if(USE_ROCM)
   endif()
 
   # Since PyTorch files contain HIP headers, these flags are required for the necessary definitions to be added.
-  target_compile_options(torch_hip PUBLIC ${HIP_CXX_FLAGS})  # experiment
+  target_compile_options(torch_hip PRIVATE ${HIP_CXX_FLAGS})
 
   target_link_libraries(
       torch_hip PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,c10_hip>)

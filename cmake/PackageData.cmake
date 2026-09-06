@@ -14,6 +14,17 @@ set(_torch_pkg "${SKBUILD_PLATLIB_DIR}/torch")
 
 # --- torch package data ---
 
+if(USE_ROCM AND PYTORCH_ROCM_USE_SDK_WHEELS)
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/cmake/rocm_init.py.in"
+    "${PROJECT_BINARY_DIR}/_rocm_init.py"
+    @ONLY
+  )
+  install(FILES "${PROJECT_BINARY_DIR}/_rocm_init.py"
+    DESTINATION "${_torch_pkg}"
+  )
+endif()
+
 # Type stubs
 install(DIRECTORY "${TORCH_SRC_DIR}/"
   DESTINATION "${_torch_pkg}"

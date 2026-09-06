@@ -151,6 +151,8 @@ endmacro()
 macro(torch_hip_get_arch_list store_var)
   if(DEFINED ENV{PYTORCH_ROCM_ARCH})
     set(_TMP $ENV{PYTORCH_ROCM_ARCH})
+  elseif(DEFINED PYTORCH_ROCM_ARCH)
+    set(_TMP ${PYTORCH_ROCM_ARCH})
   else()
     # Use arch of installed GPUs as default
     execute_process(COMMAND "rocm_agent_enumerator" COMMAND bash "-c" "grep -v gfx000 | sort -u | xargs | tr -d '\n'"

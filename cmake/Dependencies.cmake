@@ -606,6 +606,7 @@ if(USE_ROCM)
     # HIP_CXX_FLAGS: applied to targets via target_compile_options (definitions, warnings).
     # These are used for both HIP device code and C++ code that needs HIP defines.
     string(APPEND CMAKE_HIP_FLAGS " -fPIC")
+    list(APPEND HIP_CXX_FLAGS "--gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
     list(APPEND HIP_CXX_FLAGS -D__HIP_PLATFORM_AMD__=1)
     list(APPEND HIP_CXX_FLAGS -DCUDA_HAS_FP16=1)
     list(APPEND HIP_CXX_FLAGS -DUSE_ROCM)
