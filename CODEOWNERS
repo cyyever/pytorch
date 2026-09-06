@@ -647,6 +647,7 @@
 # /torch/fft/
 # /torch/functional.py
 # /torch/futures/
+# /torch/hub.py
 /torch/header_only_apis.txt @janeyx99
 /torch/headeronly/ @janeyx99
 # /torch/multiprocessing/
