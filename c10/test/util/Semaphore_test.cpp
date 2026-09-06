@@ -3,6 +3,10 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <memory>
+#include <semaphore>
 #include <thread>
 
 using namespace ::testing;
@@ -33,4 +37,58 @@ TEST(SemaphoreTest, TestConcurrency) {
       threads, [](std::thread& t) { t.join(); });
 
   EXPECT_FALSE(sem.tryAcquire());
+}
+
+// c10::Semaphore refuses std::counting_semaphore on libstdc++ (see the
+// __GLIBCXX__ term in Semaphore.h) because of gcc bug 98033: _M_release only
+// notifies when the counter was zero, so a waiter that failed its CAS and saw
+// zero could sleep through a release. This exercises that shape directly --
+// many waiters, releases arriving while the counter is already positive -- and
+// says whether the standard library in use still drops one.
+//
+// The waiters block in acquire(), so a lost wakeup would hang rather than fail.
+// They are detached and the semaphore is leaked so that a timeout can be
+// reported and the process can still exit.
+TEST(SemaphoreTest, StlSemaphoreWakesEveryWaiter) {
+  constexpr int kRounds = 200;
+  const unsigned num_waiters =
+      std::max(4u, std::thread::hardware_concurrency());
+
+  for ([[maybe_unused]] const auto round : c10::irange(kRounds)) {
+    auto* sem = new std::counting_semaphore<>(0);
+    auto* woken = new std::atomic<unsigned>(0);
+
+    auto* ready = new std::atomic<unsigned>(0);
+    for ([[maybe_unused]] const auto _ : c10::irange(num_waiters)) {
+      std::thread([sem, woken, ready] {
+        ready->fetch_add(1, std::memory_order_release);
+        sem->acquire();
+        woken->fetch_add(1, std::memory_order_release);
+      }).detach();
+    }
+
+    // Wait until every waiter has reached acquire(), so the releases below are
+    // answering threads that are parked rather than ones still starting up.
+    while (ready->load(std::memory_order_acquire) < num_waiters) {
+      std::this_thread::yield();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    // Release one at a time. Waiters that wake early consume permits as fast as
+    // they appear, so later releases keep finding a positive counter -- the
+    // case _M_release declines to notify.
+    for ([[maybe_unused]] const auto _ : c10::irange(num_waiters)) {
+      sem->release();
+    }
+
+    const auto deadline =
+        std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    while (woken->load(std::memory_order_acquire) < num_waiters &&
+           std::chrono::steady_clock::now() < deadline) {
+      std::this_thread::yield();
+    }
+    ASSERT_EQ(woken->load(std::memory_order_acquire), num_waiters)
+        << "a waiter was not woken after every permit was released; "
+        << "std::counting_semaphore dropped a wakeup on round " << round;
+  }
 }
