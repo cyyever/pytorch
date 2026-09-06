@@ -53,8 +53,7 @@ message("Building PyTorch for GPU arch: ${PYTORCH_ROCM_ARCH}")
 # call to individual ROCM components uses the Config mode search
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH})
 
-macro(find_package_and_print_version PACKAGE_NAME)
-  find_package("${PACKAGE_NAME}" ${ARGN})
+macro(print_package_version PACKAGE_NAME)
   if(NOT ${PACKAGE_NAME}_FOUND)
     message("Optional package ${PACKAGE_NAME} not found")
   else()
@@ -63,6 +62,11 @@ macro(find_package_and_print_version PACKAGE_NAME)
       list(APPEND ROCM_INCLUDE_DIRS ${${PACKAGE_NAME}_INCLUDE_DIR})
     endif()
   endif()
+endmacro()
+
+macro(find_package_and_print_version PACKAGE_NAME)
+  find_package("${PACKAGE_NAME}" ${ARGN})
+  print_package_version(${PACKAGE_NAME})
 endmacro()
 
 # Use CMake's native HIP language support instead of FindHIP.cmake.
@@ -202,12 +206,23 @@ if(PYTORCH_FOUND_HIP)
   # imported target of theirs is linked and no header of theirs is included.
   # hip-config already pulls both in as dependencies of hip::amdhip64, so
   # these lookups only print a version.
+  set(_pytorch_using_bundled_rocm_libs FALSE)
   find_package_and_print_version(amd_comgr)
   find_package_and_print_version(rocrand REQUIRED)
   find_package_and_print_version(hiprand REQUIRED)
-  find_package_and_print_version(rocblas REQUIRED)
+  if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/../External/rocm_bundled.cmake")
+    # Source builds always compile these libraries for PYTORCH_ROCM_ARCH.
+    include("${CMAKE_CURRENT_LIST_DIR}/../External/rocm_bundled.cmake")
+    set(_pytorch_using_bundled_rocm_libs TRUE)
+    print_package_version(rocblas)
+    print_package_version(miopen)
+    print_package_version(hipblaslt)
+  else()
+    find_package_and_print_version(rocblas REQUIRED)
+    find_package_and_print_version(miopen REQUIRED)
+    find_package_and_print_version(hipblaslt REQUIRED)
+  endif()
   find_package_and_print_version(hipblas REQUIRED)
-  find_package_and_print_version(miopen REQUIRED)
   find_package_and_print_version(hipfft REQUIRED)
   find_package_and_print_version(hipsparse REQUIRED)
   find_package_and_print_version(rocprim REQUIRED)
@@ -225,8 +240,6 @@ if(PYTORCH_FOUND_HIP)
   else()
     find_package_and_print_version(hiprtc REQUIRED)
   endif()
-  find_package_and_print_version(hipblaslt REQUIRED)
-
   if(UNIX)
     find_package_and_print_version(rccl)
     find_package_and_print_version(hsa-runtime64)
@@ -252,68 +265,78 @@ if(PYTORCH_FOUND_HIP)
   endif()
   message("libhipcxx VERSION: ${libhipcxx_VERSION}")
 
+  if(_pytorch_using_bundled_rocm_libs)
+    list(REMOVE_ITEM ROCM_INCLUDE_DIRS "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
+    list(PREPEND ROCM_INCLUDE_DIRS "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
+  endif()
   list(REMOVE_DUPLICATES ROCM_INCLUDE_DIRS)
 
   if(UNIX)
     # roctx is part of roctracer
     find_library(ROCM_ROCTX_LIB roctx64 HINTS ${ROCM_PATH}/lib)
 
-    set(PROJECT_RANDOM_BINARY_DIR "${PROJECT_BINARY_DIR}")
-
-    # check whether hipblaslt provides HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F
-    set(file "${PROJECT_BINARY_DIR}/hipblaslt_test_outer_vec.cc")
-    file(WRITE ${file} ""
-      "#define LEGACY_HIPBLAS_DIRECT\n"
-      "#include <hipblaslt/hipblaslt.h>\n"
-      "int main() {\n"
-      "    hipblasLtMatmulMatrixScale_t attr = HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;\n"
-      "    (void)attr;\n"
-      "    return 0;\n"
-      "}\n"
-      )
-    set(_hipblaslt_probe_flags
-      -D__HIP_PLATFORM_AMD__
-      -Wno-error=newline-eof
-      -Wno-error=unused-but-set-variable)
-    try_compile(hipblaslt_compile_result_outer_vec ${PROJECT_RANDOM_BINARY_DIR} ${file}
-      CMAKE_FLAGS
-        "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
-        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}"
-      COMPILE_DEFINITIONS ${_hipblaslt_probe_flags}
-      OUTPUT_VARIABLE hipblaslt_compile_output_outer_vec)
-
-    # check whether hipblaslt provides HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
-    set(file "${PROJECT_BINARY_DIR}/hipblaslt_test_vec_ext.cc")
-    file(WRITE ${file} ""
-      "#define LEGACY_HIPBLAS_DIRECT\n"
-      "#include <hipblaslt/hipblaslt.h>\n"
-      "int main() {\n"
-      "    hipblasLtMatmulDescAttributes_t attr = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT;\n"
-      "    (void)attr;\n"
-      "    return 0;\n"
-      "}\n"
-      )
-    try_compile(hipblaslt_compile_result_vec_ext ${PROJECT_RANDOM_BINARY_DIR} ${file}
-      CMAKE_FLAGS
-        "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
-        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}"
-      COMPILE_DEFINITIONS ${_hipblaslt_probe_flags}
-      OUTPUT_VARIABLE hipblaslt_compile_output_vec_ext)
-    unset(_hipblaslt_probe_flags)
-
-    if(hipblaslt_compile_result_outer_vec)
+    if(_pytorch_using_bundled_rocm_libs)
       set(HIPBLASLT_OUTER_VEC ON)
       set(HIPBLASLT_VEC_EXT OFF)
-      message("hipblaslt is using scale pointer outer vec")
-    elseif(hipblaslt_compile_result_vec_ext)
-      set(HIPBLASLT_OUTER_VEC OFF)
-      set(HIPBLASLT_VEC_EXT ON)
-      message("hipblaslt is using scale pointer vec ext")
+      message("Bundled hipBLASLt uses scale pointer outer vec")
     else()
-      set(HIPBLASLT_OUTER_VEC OFF)
-      set(HIPBLASLT_VEC_EXT OFF)
-      message("hipblaslt is NOT using scale pointer outer vec: ${hipblaslt_compile_output_outer_vec}")
-      message("hipblaslt is NOT using scale pointer vec ext: ${hipblaslt_compile_output_vec_ext}")
+      set(PROJECT_RANDOM_BINARY_DIR "${PROJECT_BINARY_DIR}")
+
+      # check whether hipblaslt provides HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F
+      set(file "${PROJECT_BINARY_DIR}/hipblaslt_test_outer_vec.cc")
+      file(WRITE ${file} ""
+        "#define LEGACY_HIPBLAS_DIRECT\n"
+        "#include <hipblaslt/hipblaslt.h>\n"
+        "int main() {\n"
+        "    hipblasLtMatmulMatrixScale_t attr = HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;\n"
+        "    (void)attr;\n"
+        "    return 0;\n"
+        "}\n"
+        )
+      set(_hipblaslt_probe_flags
+        -D__HIP_PLATFORM_AMD__
+        -Wno-error=newline-eof
+        -Wno-error=unused-but-set-variable)
+      try_compile(hipblaslt_compile_result_outer_vec ${PROJECT_RANDOM_BINARY_DIR} ${file}
+        CMAKE_FLAGS
+          "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
+          "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}"
+        COMPILE_DEFINITIONS ${_hipblaslt_probe_flags}
+        OUTPUT_VARIABLE hipblaslt_compile_output_outer_vec)
+
+      # check whether hipblaslt provides HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
+      set(file "${PROJECT_BINARY_DIR}/hipblaslt_test_vec_ext.cc")
+      file(WRITE ${file} ""
+        "#define LEGACY_HIPBLAS_DIRECT\n"
+        "#include <hipblaslt/hipblaslt.h>\n"
+        "int main() {\n"
+        "    hipblasLtMatmulDescAttributes_t attr = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT;\n"
+        "    (void)attr;\n"
+        "    return 0;\n"
+        "}\n"
+        )
+      try_compile(hipblaslt_compile_result_vec_ext ${PROJECT_RANDOM_BINARY_DIR} ${file}
+        CMAKE_FLAGS
+          "-DINCLUDE_DIRECTORIES=${ROCM_INCLUDE_DIRS}"
+          "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}"
+        COMPILE_DEFINITIONS ${_hipblaslt_probe_flags}
+        OUTPUT_VARIABLE hipblaslt_compile_output_vec_ext)
+      unset(_hipblaslt_probe_flags)
+
+      if(hipblaslt_compile_result_outer_vec)
+        set(HIPBLASLT_OUTER_VEC ON)
+        set(HIPBLASLT_VEC_EXT OFF)
+        message("hipblaslt is using scale pointer outer vec")
+      elseif(hipblaslt_compile_result_vec_ext)
+        set(HIPBLASLT_OUTER_VEC OFF)
+        set(HIPBLASLT_VEC_EXT ON)
+        message("hipblaslt is using scale pointer vec ext")
+      else()
+        set(HIPBLASLT_OUTER_VEC OFF)
+        set(HIPBLASLT_VEC_EXT OFF)
+        message("hipblaslt is NOT using scale pointer outer vec: ${hipblaslt_compile_output_outer_vec}")
+        message("hipblaslt is NOT using scale pointer vec ext: ${hipblaslt_compile_output_vec_ext}")
+      endif()
     endif()
   endif()
 endif()

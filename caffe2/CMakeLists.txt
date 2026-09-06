@@ -694,6 +694,7 @@ endif()
 if(USE_ROCM)
   list(APPEND Caffe2_HIP_SRCS ${GENERATED_CXX_TORCH_CUDA})
   add_library(torch_hip ${Caffe2_HIP_SRCS})
+  add_dependencies(torch_hip pytorch_bundled_miopen)
   # HIP device code is compiled with -fno-gpu-rdc, so there is no device link
   # step and the C++ linker can drive this target.
   set_target_properties(torch_hip PROPERTIES LINKER_LANGUAGE CXX)
@@ -1454,6 +1455,10 @@ if(USE_ROCM)
   if(USE_MSLK)
     if(USE_ROCM)
       target_link_libraries(torch_hip PRIVATE mslk)
+      if(UNIX AND NOT APPLE)
+        target_link_options(torch_hip PRIVATE
+          "LINKER:--exclude-libs,libmslk.a")
+      endif()
     endif()
   endif()
   # Since PyTorch files contain HIP headers, this is also needed to capture the includes.

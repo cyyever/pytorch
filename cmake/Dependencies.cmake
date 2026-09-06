@@ -693,11 +693,13 @@ if(USE_ROCM)
        $<INSTALL_INTERFACE:include> ${Caffe2_HIP_INCLUDE})
 
     set(Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS
-      hip::host MIOpen libhipcxx::libhipcxx)
+      hip::host libhipcxx::libhipcxx)
+    list(APPEND Caffe2_HIP_DEPENDENCY_LIBS
+      MIOpen roc::rocblas roc::hipblaslt)
 
     # Math libraries
     list(APPEND Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS
-      roc::hipblas roc::rocblas hip::hipfft roc::hipsparse roc::hipsolver roc::hipblaslt roc::rocsolver)
+      roc::hipblas hip::hipfft roc::hipsparse roc::hipsolver roc::rocsolver)
     # hipsparselt is an optional component that will eventually be enabled by default.
     if(hipsparselt_FOUND AND USE_HIPSPARSELT)
       list(APPEND Caffe2_PUBLIC_HIP_DEPENDENCY_LIBS

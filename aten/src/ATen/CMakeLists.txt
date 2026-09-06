@@ -441,7 +441,10 @@ IF(USE_MSLK)
     set_target_properties(mslk PROPERTIES
       POSITION_INDEPENDENT_CODE ON
       HIP_ARCHITECTURES "${_mslk_hip_arches}")
-    target_compile_options(mslk PRIVATE $<$<COMPILE_LANGUAGE:HIP>:${MSLK_EXTRA_HIP_FLAGS}> ${HIP_CXX_FLAGS})
+    target_compile_options(mslk PRIVATE
+      $<$<COMPILE_LANGUAGE:HIP>:${MSLK_EXTRA_HIP_FLAGS}>
+      ${HIP_CXX_FLAGS}
+      $<$<COMPILE_LANGUAGE:HIP>:-fvisibility=hidden>)
     target_compile_definitions(mslk PRIVATE MSLK_NO_EXTENDED_SHAPES)
 
     target_include_directories(mslk PRIVATE
