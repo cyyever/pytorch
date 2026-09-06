@@ -893,7 +893,11 @@ if(USE_GLOO)
     # Add explicit dependency since NCCL is built from third_party.
     # Without dependency, make -jN with N>1 can fail if the NCCL build
     # hasn't finished when CUDA targets are linked.
+    # ProcessGroupGlooCuda.cpp is compiled into the GPU libraries, so they need
+    # gloo's headers too. There is no gloo_cuda target: gloo is configured with
+    # USE_CUDA OFF above, since CUDA collectives go through NCCL.
     list(APPEND Caffe2_DEPENDENCY_LIBS gloo)
+    list(APPEND Caffe2_CUDA_DEPENDENCY_LIBS gloo)
     if(USE_ROCM)
       list(APPEND Caffe2_HIP_DEPENDENCY_LIBS gloo_hip)
     endif()
