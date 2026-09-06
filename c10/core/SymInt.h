@@ -1,12 +1,14 @@
 #pragma once
 
 #include <c10/core/SymBool.h>
+#include <c10/core/SymFloat.h>
 #include <c10/core/SymNodeImpl.h>
 #include <c10/macros/Export.h>
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
 
 #include <algorithm>
+#include <concepts>
 #include <cstdint>
 #include <iterator>
 #include <numeric>
@@ -16,7 +18,49 @@
 
 namespace c10 {
 
-class SymFloat;
+class SymInt;
+
+namespace detail {
+
+// Scalars reach SymInt arithmetic in whatever type the caller happened to have.
+// Constrain on the two categories instead of listing them: everything that
+// converts to int64_t goes through SymInt, floating point through SymFloat.
+// Unscoped enums are in the integral set because the by-type overloads this
+// replaces accepted them through promotion; scoped enums do not convert and
+// were rejected then too.
+// SymInt holds an int64_t and SymFloat a double, so operands wider than those
+// are excluded: they would truncate inside the constructor with nothing said,
+// where the by-type overloads this replaces made them a hard error. Both cases
+// are reachable -- __int128 satisfies std::integral under the gnu dialects this
+// builds with, and long double satisfies std::floating_point.
+template <typename T>
+concept sym_int_operand =
+    (std::integral<T> || (std::is_enum_v<T> && std::convertible_to<T, int64_t>)) &&
+    sizeof(T) <= sizeof(int64_t);
+
+template <typename T>
+concept sym_operand =
+    sym_int_operand<T> || (std::floating_point<T> && sizeof(T) <= sizeof(double));
+
+// Too wide to hold. These are not simply left out of sym_operand: SymInt's
+// implicit constructor would then take them through the SymInt member
+// operators instead, truncating with nothing said. The operators below delete
+// them so the call is an error, which is what the by-type overloads this
+// replaces produced -- by accident, through ambiguity, but produced.
+template <typename T>
+concept sym_too_wide = (std::integral<T> && sizeof(T) > sizeof(int64_t)) ||
+    (std::floating_point<T> && sizeof(T) > sizeof(double));
+
+template <typename T>
+using sym_result_t = std::conditional_t<std::is_floating_point_v<T>, SymFloat, SymInt>;
+
+// Returns a reference in the identity case, so that reaching the SymInt
+// overload of an operator does not bump a refcount. Defined below, where
+// SymInt is complete.
+template <typename R>
+decltype(auto) sym_promote(const SymInt& a);
+
+} // namespace detail
 
 // SymInt represents either a regular int64_t, or a symbolic integer
 // (represented in a type erased way as SymNode).  The intention is for SymInt
@@ -304,6 +348,43 @@ class C10_API SymInt {
     return sym_ge(o).guard_bool(__FILE__, __LINE__);
   }
 
+  // Mixed SymInt/scalar operators, as hidden friends so that only ADL finds
+  // them. At namespace scope they would also be candidates for expressions
+  // with no SymInt in them: in `int == some_unscoped_enum` the template binds
+  // the enum exactly while the built-in operator only promotes it, and the int
+  // reaches SymInt through the implicit constructor above, so neither candidate
+  // wins and the comparison is ambiguous.
+#define C10_SYMINT_FRIEND_OP(op, RetTy, Operand)          \
+  template <detail::Operand T>                            \
+  friend RetTy operator op(const SymInt& a, T b) {        \
+    using R = detail::sym_result_t<T>;                    \
+    return detail::sym_promote<R>(a) op R(b);             \
+  }                                                       \
+  template <detail::Operand T>                            \
+  friend RetTy operator op(T a, const SymInt& b) {        \
+    using R = detail::sym_result_t<T>;                    \
+    return R(a) op detail::sym_promote<R>(b);             \
+  }                                                       \
+  template <detail::sym_too_wide T>                       \
+  friend RetTy operator op(const SymInt& a, T b) = delete; \
+  template <detail::sym_too_wide T>                       \
+  friend RetTy operator op(T a, const SymInt& b) = delete;
+
+  C10_SYMINT_FRIEND_OP(+, detail::sym_result_t<T>, sym_operand)
+  C10_SYMINT_FRIEND_OP(-, detail::sym_result_t<T>, sym_operand)
+  C10_SYMINT_FRIEND_OP(*, detail::sym_result_t<T>, sym_operand)
+  C10_SYMINT_FRIEND_OP(/, detail::sym_result_t<T>, sym_operand)
+  C10_SYMINT_FRIEND_OP(%, SymInt, sym_int_operand)
+
+  C10_SYMINT_FRIEND_OP(==, bool, sym_operand)
+  C10_SYMINT_FRIEND_OP(!=, bool, sym_operand)
+  C10_SYMINT_FRIEND_OP(<, bool, sym_operand)
+  C10_SYMINT_FRIEND_OP(<=, bool, sym_operand)
+  C10_SYMINT_FRIEND_OP(>, bool, sym_operand)
+  C10_SYMINT_FRIEND_OP(>=, bool, sym_operand)
+
+#undef C10_SYMINT_FRIEND_OP
+
   SymInt min(const SymInt& sci) const {
     if (auto ma = maybe_as_int()) {
       if (auto mb = sci.maybe_as_int()) {
@@ -415,6 +496,19 @@ class C10_API SymInt {
   int64_t data_;
 };
 
+namespace detail {
+
+template <typename R>
+decltype(auto) sym_promote(const SymInt& a) {
+  if constexpr (std::is_same_v<R, SymInt>) {
+    return (a);
+  } else {
+    return SymFloat(a);
+  }
+}
+
+} // namespace detail
+
 /// Sum of a list of SymInt; accumulates into the c10::SymInt expression
 template <typename C>
   requires std::is_same_v<typename C::value_type, c10::SymInt>
@@ -438,51 +532,6 @@ inline c10::SymInt multiply_integers(Iter begin, Iter end) {
       [](const c10::SymInt& a, const c10::SymInt& b) { return a * b; });
 }
 
-#define DECLARE_SYMINT_OP_INTONLY(scalar_t, RetTy)      \
-  C10_API RetTy operator%(const SymInt& a, scalar_t b); \
-  C10_API RetTy operator%(scalar_t a, const SymInt& b);
-
-#define DECLARE_SYMINT_OP(scalar_t, RetTy)              \
-  C10_API RetTy operator+(const SymInt& a, scalar_t b); \
-  C10_API RetTy operator-(const SymInt& a, scalar_t b); \
-  C10_API RetTy operator*(const SymInt& a, scalar_t b); \
-  C10_API RetTy operator/(const SymInt& a, scalar_t b); \
-  C10_API RetTy operator+(scalar_t a, const SymInt& b); \
-  C10_API RetTy operator-(scalar_t a, const SymInt& b); \
-  C10_API RetTy operator*(scalar_t a, const SymInt& b); \
-  C10_API RetTy operator/(scalar_t a, const SymInt& b); \
-  C10_API bool operator==(const SymInt& a, scalar_t b); \
-  C10_API bool operator!=(const SymInt& a, scalar_t b); \
-  C10_API bool operator<(const SymInt& a, scalar_t b);  \
-  C10_API bool operator<=(const SymInt& a, scalar_t b); \
-  C10_API bool operator>(const SymInt& a, scalar_t b);  \
-  C10_API bool operator>=(const SymInt& a, scalar_t b); \
-  C10_API bool operator==(scalar_t a, const SymInt& b); \
-  C10_API bool operator!=(scalar_t a, const SymInt& b); \
-  C10_API bool operator<(scalar_t a, const SymInt& b);  \
-  C10_API bool operator<=(scalar_t a, const SymInt& b); \
-  C10_API bool operator>(scalar_t a, const SymInt& b);  \
-  C10_API bool operator>=(scalar_t a, const SymInt& b);
-
-DECLARE_SYMINT_OP_INTONLY(int64_t, SymInt)
-DECLARE_SYMINT_OP_INTONLY(int32_t, SymInt)
-DECLARE_SYMINT_OP_INTONLY(uint64_t, SymInt)
-DECLARE_SYMINT_OP_INTONLY(uint32_t, SymInt)
-DECLARE_SYMINT_OP(int64_t, SymInt)
-DECLARE_SYMINT_OP(int32_t, SymInt) // make sure constants work
-DECLARE_SYMINT_OP(uint64_t, SymInt)
-DECLARE_SYMINT_OP(uint32_t, SymInt)
-DECLARE_SYMINT_OP(double, SymFloat)
-DECLARE_SYMINT_OP(float, SymFloat) // just for completeness
-
-// On OSX size_t is different than uint64_t so we have to
-// define it separately
-#if defined(__APPLE__)
-DECLARE_SYMINT_OP_INTONLY(size_t, SymInt)
-DECLARE_SYMINT_OP(size_t, SymInt)
-#endif
-
-#undef DECLARE_SYMINT_OP
 
 C10_API std::ostream& operator<<(std::ostream& os, const SymInt& s);
 C10_API SymInt operator-(const SymInt& s);
