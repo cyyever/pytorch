@@ -1263,6 +1263,47 @@ target_link_libraries(torch_library INTERFACE torch)
 
 install(TARGETS torch_cpu torch_cpu_library EXPORT Caffe2Targets DESTINATION "${TORCH_INSTALL_LIB_DIR}")
 
+if((LINUX OR APPLE) AND BUILD_SHARED_LIBS)
+  function(add_torch_compatibility_library compat_name owner_target)
+    add_library(${compat_name}_compat SHARED torch_compatibility.cpp)
+    set_target_properties(${compat_name}_compat PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/compat"
+      LINKER_LANGUAGE CXX
+      OUTPUT_NAME ${compat_name})
+    add_dependencies(${compat_name}_compat ${owner_target})
+    if(APPLE)
+      target_link_libraries(${compat_name}_compat PRIVATE
+        "$<LINK_LIBRARY:NEEDED_LIBRARY,$<TARGET_FILE:${owner_target}>>")
+    else()
+      target_link_libraries(${compat_name}_compat PRIVATE
+        "$<LINK_LIBRARY:TORCH_COMPAT_NEEDED,$<TARGET_FILE:${owner_target}>>")
+    endif()
+    set(_compat_build_path
+      "${CMAKE_BINARY_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${compat_name}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    add_custom_command(TARGET ${compat_name}_compat POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lib"
+      COMMAND ${CMAKE_COMMAND} -E rm -f "${_compat_build_path}"
+      COMMAND ${CMAKE_COMMAND} -E create_symlink
+        "$<TARGET_FILE:${compat_name}_compat>" "${_compat_build_path}")
+    install(TARGETS ${compat_name}_compat DESTINATION "${TORCH_INSTALL_LIB_DIR}")
+  endfunction()
+
+  add_torch_compatibility_library(c10 torch_cpu)
+  add_torch_compatibility_library(torch torch_cpu)
+
+  if(LINUX)
+    if(USE_CUDA)
+      add_torch_compatibility_library(c10_cuda torch_cuda)
+    endif()
+    if(USE_ROCM)
+      add_torch_compatibility_library(c10_hip torch_hip)
+    endif()
+    if(USE_XPU)
+      add_torch_compatibility_library(c10_xpu torch_xpu)
+    endif()
+  endif()
+endif()
+
 if(USE_CUDA)
   install(TARGETS torch_cuda torch_cuda_library EXPORT Caffe2Targets DESTINATION "${TORCH_INSTALL_LIB_DIR}")
 elseif(USE_ROCM)

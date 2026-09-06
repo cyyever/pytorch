@@ -581,6 +581,14 @@ if(UNIX AND NOT CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED)
   set(CMAKE_CXX_LINK_LIBRARY_USING_MKL_NEEDED_SUPPORTED TRUE)
 endif()
 
+# Compatibility DSOs intentionally have no symbol references of their own.
+# Preserve their owner DSO as a DT_NEEDED entry despite --as-needed.
+if(LINUX AND NOT CMAKE_CXX_LINK_LIBRARY_USING_TORCH_COMPAT_NEEDED_SUPPORTED)
+  set(CMAKE_CXX_LINK_LIBRARY_USING_TORCH_COMPAT_NEEDED
+      "LINKER:--push-state,--no-as-needed" "<LINK_ITEM>" "LINKER:--pop-state")
+  set(CMAKE_CXX_LINK_LIBRARY_USING_TORCH_COMPAT_NEEDED_SUPPORTED TRUE)
+endif()
+
 # lld, not the default bfd: it links a library the size of libtorch_cuda.so in
 # a fraction of the time, and it is the linker that implements --icf. Skip it
 # when the toolchain has no ld.lld rather than failing the configure.

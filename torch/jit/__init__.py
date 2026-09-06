@@ -5,12 +5,17 @@ __all__ = [
     "annotate",
     "export",
     "ignore",
+    "is_tracing",
     "script",
     "script_if_tracing",
     "unused",
 ]
 
 _T = TypeVar("_T")
+
+
+def is_tracing() -> bool:
+    return False
 
 
 # TorchScript has been removed, so the decorators below only ever marked code up

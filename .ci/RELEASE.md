@@ -47,9 +47,13 @@ The base wheel does not install `fsspec`. Local filesystem distributed
 checkpoints remain available; users of fsspec-backed checkpoint storage install
 the `torch[distributed-checkpoint]` extra.
 
-Static archives are excluded from wheels. XPU wheels contain the four PyTorch
-ELF objects `_C`, `libtorch_python`, `libtorch_cpu`, and `libtorch_xpu`; Intel
-and system runtimes remain external.
+Static archives are excluded from wheels. XPU implementations live in
+`libtorch_xpu`, while CPU and common runtime implementations live in
+`libtorch_cpu`. Small `libc10`, `libtorch`, and `libc10_xpu` compatibility DSOs
+preserve the library names used by existing extensions and forward them to
+their owner DSOs. CUDA and ROCm builds use the same layout with `libc10_cuda`
+and `libc10_hip`; MPS remains part of `libtorch_cpu`. Intel and system runtimes
+remain external.
 
 ## XPU runtime dependencies
 

@@ -647,6 +647,7 @@
 # /torch/fft/
 # /torch/functional.py
 # /torch/futures/
+# /torch/hub.py
 /torch/header_only_apis.txt @janeyx99
 /torch/headeronly/ @janeyx99
 # /torch/multiprocessing/
@@ -691,6 +692,7 @@
 /test/optim/ @janeyx99
 /test/test_autograd.py @soulitzer
 /test/test_autograd_fallback.py @soulitzer
+# /test/test_hub_compat.py
 # /test/test_modules.py
 # /test/test_nn.py
 # /test/test_numpy_interop.py
@@ -708,6 +710,7 @@
 #
 # [jit_torchscript]
 # /test/test_jiterator.py
+# /test/test_jit_stub.py
 # /torch/csrc/jit/
 # /torch/jit/
 # /torch/csrc/jit/python/init.cpp
@@ -910,7 +913,9 @@
 # [serialization_package]
 # /benchmarks/serialization/
 # /caffe2/serialize/
+# /test/test_onnx_stub.py
 # /test/test_serialization.py
+# /torch/onnx/
 # /torch/serialization.py
 #
 # [compiler_export_fx]
