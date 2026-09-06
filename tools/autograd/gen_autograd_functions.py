@@ -325,11 +325,11 @@ GETTER_DEFINITION_OPT = CodeTemplate(
     """\
 static PyObject* THP${op}_${name}_getter(THPCppFunction *self, void *_unused) {
   HANDLE_TH_ERRORS
-  auto opt_prop = static_cast<${op}*>(self->cdata.get())->${name};
+  const auto& opt_prop = static_cast<${op}*>(self->cdata.get())->${name};
   if (!opt_prop.has_value()) {
     Py_RETURN_NONE;
   }
-  auto prop = opt_prop.value();
+  const auto& prop = opt_prop.value();
   ${body}
   END_HANDLE_TH_ERRORS
 }
@@ -340,11 +340,11 @@ GETTER_DEFINITION_OPT_ARRAYREF = CodeTemplate(
     """\
 static PyObject* THP${op}_${name}_getter(THPCppFunction *self, void *_unused) {
   HANDLE_TH_ERRORS
-  auto opt_prop = static_cast<${op}*>(self->cdata.get())->${name};
+  const auto& opt_prop = static_cast<${op}*>(self->cdata.get())->${name};
   if (!opt_prop.list.has_value()) {
     Py_RETURN_NONE;
   }
-  auto prop = opt_prop.list.value();
+  const auto& prop = opt_prop.list.value();
   ${body}
   END_HANDLE_TH_ERRORS
 }

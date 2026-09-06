@@ -825,7 +825,7 @@ if (${all_res}_new_fw_grad_opt.has_value() && std::get<${idx}>(${all_res}_new_fw
 FW_DERIVATIVE_SETTER_TENSOR_LIST = CodeTemplate(
     """\
 if (${out_arg}_new_fw_grad_opt.has_value()) {
-  auto ${out_arg}_new_fw_grad = ${out_arg}_new_fw_grad_opt.value();
+  const auto& ${out_arg}_new_fw_grad = ${out_arg}_new_fw_grad_opt.value();
   TORCH_INTERNAL_ASSERT(${out_arg}.size() == ${out_arg}_new_fw_grad.size());
   for (const auto i : c10::irange(${out_arg}.size())) {
     if (${out_arg}_new_fw_grad[i].defined() && ${out_arg}[i].defined()) {
