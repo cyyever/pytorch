@@ -129,6 +129,7 @@
 #include <c10/util/irange.h>
 
 #include <algorithm>
+#include <iterator>
 #include <numeric>
 #include <utility>
 #include <vector>
@@ -721,6 +722,30 @@ Tensor _unsafe_index(
   return at::index(self, indices);
 }
 
+static torch::List<std::optional<Tensor>> clamp_indices(
+    const torch::List<std::optional<Tensor>>& indices,
+    IntArrayRef sizes) {
+  auto clamp = [](const std::optional<Tensor>& index,
+                  auto size) -> std::optional<Tensor> {
+    if (!index) {
+      return index;
+    }
+    // Disallow bool
+    auto dtype = index->scalar_type();
+    TORCH_CHECK(
+        dtype == kLong || dtype == kInt,
+        "_unsafe_masked_index found unexpected index type ",
+        dtype);
+    return at::clamp(*index, -size, size - 1);
+  };
+
+  torch::List<std::optional<Tensor>> clamped_indices;
+  clamped_indices.reserve(indices.size());
+  std::ranges::transform(
+      indices, sizes, std::back_inserter(clamped_indices), clamp);
+  return clamped_indices;
+}
+
 Tensor _unsafe_masked_index(
     const Tensor& self,
     const Tensor& mask,
@@ -739,26 +764,7 @@ Tensor _unsafe_masked_index(
   //
   // compiler backends should implement this op such that `self[indices]` is not
   // loaded when `mask` is true. See inductor for a reference.
-  auto clamp = [](const std::optional<Tensor>& index,
-                  auto size) -> std::optional<Tensor> {
-    if (!index) {
-      return index;
-    }
-    // Disallow bool
-    auto dtype = index->scalar_type();
-    TORCH_CHECK(
-        dtype == kLong || dtype == kInt,
-        "_unsafe_masked_index found unexpected index type ",
-        dtype);
-    return at::clamp(*index, -size, size - 1);
-  };
-
-  torch::List<std::optional<Tensor>> clamped_indices(indices);
-  std::ranges::transform(
-      indices,
-      self.sizes(),
-      clamped_indices.begin(),
-      clamp);
+  auto clamped_indices = clamp_indices(indices, self.sizes());
 
   if (self.numel() == 0) {
     // Returns a tensor filled with `fill` value
@@ -801,26 +807,7 @@ Tensor _unsafe_masked_index_put_accumulate(
 
   // We recompute the clamped indices and rely on inductor to CSE the
   // computation
-  auto clamp = [](const std::optional<Tensor>& index,
-                  auto size) -> std::optional<Tensor> {
-    if (!index) {
-      return index;
-    }
-    // Disallow bool
-    auto dtype = index->scalar_type();
-    TORCH_CHECK(
-        dtype == kLong || dtype == kInt,
-        "_unsafe_masked_index found unexpected index type ",
-        dtype);
-    return at::clamp(*index, -size, size - 1);
-  };
-
-  torch::List<std::optional<Tensor>> clamped_indices(indices);
-  std::ranges::transform(
-      indices,
-      self.sizes(),
-      clamped_indices.begin(),
-      clamp);
+  auto clamped_indices = clamp_indices(indices, self.sizes());
 
   auto masked_value = values.masked_fill(at::logical_not(mask), 0);
   return at::_unsafe_index_put(self, clamped_indices, masked_value, true);
