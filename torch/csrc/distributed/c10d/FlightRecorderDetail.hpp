@@ -171,7 +171,7 @@ void FlightRecorder<EventType>::record_pg_ranks(
 
 template <typename EventType>
 void FlightRecorder<EventType>::record_accelerator_version(
-    const std::string comm_lib_version) {
+    std::string comm_lib_version) {
   if (!enabled_) {
     return;
   }

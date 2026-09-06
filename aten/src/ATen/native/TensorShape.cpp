@@ -409,9 +409,9 @@ Tensor& set_storage_meta__symint(
 
       c10::SymInt new_size_bytes = result.is_contiguous()
           ? at::detail::computeStorageNbytesContiguous(
-                size, itemsize, std::move(storage_offset))
+                size, itemsize, storage_offset)
           : at::detail::computeStorageNbytes(
-                size, stride, itemsize, std::move(storage_offset));
+                size, stride, itemsize, storage_offset);
 
       if (new_size_bytes.has_hint() && storage.sym_nbytes().has_hint() &&
           (new_size_bytes > storage.sym_nbytes())) {
@@ -3411,7 +3411,7 @@ Tensor& transpose_(Tensor& self, int64_t dim0, int64_t dim1) {
   std::swap(sizes[dim0], sizes[dim1]);
   SymDimVector strides(self.sym_strides().begin(), self.sym_strides().end());
   std::swap(strides[dim0], strides[dim1]);
-  self.as_strided__symint(std::move(sizes), std::move(strides));
+  self.as_strided__symint(sizes, strides);
   return self;
 }
 

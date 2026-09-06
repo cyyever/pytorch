@@ -506,7 +506,7 @@ class SchemaAdapterRegistry {
   AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE({
     auto& registry = SchemaAdapterRegistry::instance();
     registry.register_adapter(
-        std::string(op_name), applies_to_versions_below, std::move(adapter_fn));
+        std::string(op_name), applies_to_versions_below, adapter_fn);
   });
 }
 
