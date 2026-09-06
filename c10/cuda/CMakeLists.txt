@@ -70,7 +70,10 @@ if(NOT BUILD_LIBTORCHLESS)
   endif()
 
   # ---[ Dependency of c10_cuda
-  target_link_libraries(c10_cuda PUBLIC ${C10_LIB} torch::cudart)
+  target_link_libraries(c10_cuda PUBLIC torch::cudart)
+  if(NOT BUILD_SHARED_LIBS)
+    target_link_libraries(c10_cuda PUBLIC ${C10_LIB})
+  endif()
 
   target_link_libraries(c10_cuda PRIVATE dl)
   target_compile_definitions(c10_cuda PRIVATE PYTORCH_C10_DRIVER_API_SUPPORTED)

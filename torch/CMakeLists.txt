@@ -89,6 +89,7 @@ if(USE_CUDA)
     include(${TORCH_ROOT}/cmake/public/cuda.cmake)
     append_filelist("libtorch_python_cuda_core_sources" TORCH_PYTHON_SRCS)
 
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${TORCH_CUDA_LIB})
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_CUDA)
     if(USE_CUDNN)
         list(APPEND TORCH_PYTHON_LINK_LIBRARIES torch::cudnn)
@@ -109,6 +110,7 @@ endif()
 if(USE_ROCM)
     append_filelist("libtorch_python_cuda_core_sources" TORCH_PYTHON_SRCS)
 
+    list(APPEND TORCH_PYTHON_LINK_LIBRARIES ${TORCH_HIP_LIB})
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS
       USE_ROCM
       __HIP_PLATFORM_AMD__

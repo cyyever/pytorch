@@ -49,7 +49,10 @@ if(NOT BUILD_LIBTORCHLESS)
   # (see cmake/public/LoadHIP.cmake) is attached directly to the hip::amdhip64
   # imported target, so every consumer -- this one included -- inherits it
   # regardless of how many levels of target_link_libraries separate them.
-  target_link_libraries(c10_hip PUBLIC ${C10_LIB} hip::host)
+  target_link_libraries(c10_hip PUBLIC hip::host)
+  if(NOT BUILD_SHARED_LIBS)
+    target_link_libraries(c10_hip PUBLIC ${C10_LIB})
+  endif()
 
   target_include_directories(
       c10_hip PUBLIC
