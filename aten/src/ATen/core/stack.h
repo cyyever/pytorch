@@ -23,12 +23,12 @@ class Operation {
  public:
   template <typename F>
   C10_DEPRECATED_MESSAGE("Please use void(Stack&) to register operator instead.")
-  Operation(F&& raw)requires accepts<F, Stack*>::value : op_([raw = std::forward<F>(raw)](Stack& stack) {
+  Operation(F&& raw) requires (accepts<F, Stack*>::value) : op_([raw = std::forward<F>(raw)](Stack& stack) {
     raw(&stack);
   }) {}
 
   template <typename F>
-  Operation(F&& op)requires (accepts<F, Stack&>::value &&
+  Operation(F&& op) requires (accepts<F, Stack&>::value &&
                 !std::is_same_v<std::decay_t<F>, Operation>) : op_(std::forward<F>(op)) {}
 
   Operation(std::nullptr_t) noexcept {}
