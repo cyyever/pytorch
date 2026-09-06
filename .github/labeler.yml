@@ -44,7 +44,6 @@
 "module: cpu":
 - aten/src/ATen/cpu/**
 - aten/src/ATen/native/cpu/**
-- aten/src/ATen/native/quantized/cpu/**
 - aten/src/ATen/native/Convolution*.cpp
 - torch/cpu/**
 - torch/utils/_sympy/**
@@ -55,15 +54,6 @@
 - aten/src/ATen/autocast_mode.*
 - torch/csrc/jit/passes/autocast.cpp
 - test/test_autocast.py
-
-"NNC":
-- torch/csrc/jit/tensorexpr/**
-
-"release notes: quantization":
-- torch/ao/quantization/**
-- aten/src/ATen/quantized/**
-- aten/src/ATen/native/quantized/cpu/**
-- test/quantization/**
 
 "ciflow/trunk":
 - .ci/pins/triton.txt
