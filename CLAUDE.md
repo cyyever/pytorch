@@ -33,6 +33,28 @@ activate it and retry. If no `.venv` is found, stop and ask the user if an
 environment is needed. Do NOT try to find alternatives or install these tools.
 
 
+# Binary Releases
+
+- Build Python wheels only for CUDA, ROCm/MI300X, XPU/BMG, and macOS
+  arm64/MPS. Do not add Linux CPU-only or Windows release jobs.
+- Support CPython 3.14 and 3.15. Do not add free-threaded Python ABIs unless
+  explicitly requested.
+- Keep the distribution name `torch`. Distinguish builds with a PEP 440 local
+  version containing the backend, runtime or card variant, and the eight-digit
+  source commit.
+- Do not ship test binaries, standalone Python test packages, or C10 test
+  headers in release wheels. Keep `torch.testing._internal` while production
+  modules import it.
+- Release builds must use `USE_BUNDLED_LIBUV=1`. The bundled libuv is linked
+  statically and its symbols must remain hidden from the PyTorch DSO ABI.
+- Treat `.github/workflows/generated-*.yml` as generated files. Change the
+  workflow generator, binary matrix, or Jinja templates and then regenerate.
+- Do not connect release workflows to PyTorch's official upload services.
+  Private-index upload changes require explicit user review and approval.
+
+See `.ci/RELEASE.md` for the release matrix, package naming, dependency policy,
+and local build configuration.
+
 # Build
 
 Always check local memory for build configuration (env vars, incremental-build shortcuts, etc.) before running the build, and apply what you find. If nothing applicable is in memory, ask the user.

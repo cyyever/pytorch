@@ -56,11 +56,19 @@ if tagged_version >/dev/null; then
   # Turns tag v1.6.0-rc1 -> v1.6.0
   BASE_BUILD_VERSION="$(tagged_version | sed -e 's/^v//' -e 's/-.*$//')"
 fi
+BUILD_COMMIT="$(git -C "${PYTORCH_ROOT}" rev-parse --short=8 HEAD)"
 if [[ "$(uname)" == 'Darwin' ]]; then
-  export PYTORCH_BUILD_VERSION="${BASE_BUILD_VERSION}"
+  PACKAGE_BUILD_VARIANT="mps.apple.silicon"
+elif [[ "${GPU_ARCH_TYPE:-}" == "xpu" ]]; then
+  PACKAGE_BUILD_VARIANT="xpu.bmg"
+elif [[ "${GPU_ARCH_TYPE:-}" == "rocm" ]]; then
+  PACKAGE_BUILD_VARIANT="rocm.${GPU_ARCH_VERSION}.mi300x"
+elif [[ "${GPU_ARCH_TYPE:-}" == "cuda" ]]; then
+  PACKAGE_BUILD_VARIANT="cuda.${GPU_ARCH_VERSION}"
 else
-  export PYTORCH_BUILD_VERSION="${BASE_BUILD_VERSION}+$DESIRED_CUDA"
+  PACKAGE_BUILD_VARIANT="${DESIRED_CUDA}"
 fi
+export PYTORCH_BUILD_VERSION="${BASE_BUILD_VERSION}+${PACKAGE_BUILD_VARIANT}.g${BUILD_COMMIT}"
 
 export PYTORCH_BUILD_NUMBER=1
 
@@ -160,6 +168,7 @@ export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${PYTORCH_EXTRA_INSTALL_REQUIREMENTS:
 export TORCH_PACKAGE_NAME='torch'
 
 export USE_FBGEMM=1
+export USE_BUNDLED_LIBUV=1
 export PIP_UPLOAD_FOLDER="$PIP_UPLOAD_FOLDER"
 export DOCKER_IMAGE="$DOCKER_IMAGE"
 

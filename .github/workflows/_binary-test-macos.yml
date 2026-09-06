@@ -35,6 +35,10 @@ on:
       gpu_arch_type:
         required: true
         type: string
+      upload_enabled:
+        required: false
+        type: boolean
+        default: true
       docker_image:
         required: false
         type: string
@@ -87,6 +91,7 @@ jobs:
           python .ci/pytorch/smoke_test/smoke_test.py --package torchonly
 
   upload:
+    if: inputs.upload_enabled
     needs: test
     permissions:
       id-token: write

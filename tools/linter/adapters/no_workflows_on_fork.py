@@ -6,8 +6,8 @@
 # ///
 """
 This a linter that ensures that jobs that can be triggered by push,
-pull_request, or schedule will check if the repository owner is 'pytorch'.  This
-ensures that forks will not run jobs.
+pull_request, or schedule check that they are running in an intended repository.
+This ensures that forks will not run jobs.
 
 There are some edge cases that might be caught, and this prevents workflows from
 being reused in other organizations, but as of right now, there are no workflows
@@ -120,6 +120,8 @@ def check_file(filename: str) -> list[LintMessage]:
                 lambda x: "github.repository == 'pytorch/pytorch'" in x
                 and "github.event_name != 'schedule' || github.repository == 'pytorch/pytorch'"
                 not in x,
+                lambda x: "github.repository == vars.BINARY_RELEASE_REPOSITORY"
+                in x,
                 lambda x: "github.repository_owner == 'pytorch'" in x,
             ]
             if not any(f(if_statement) for f in valid_checks):

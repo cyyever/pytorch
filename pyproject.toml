@@ -216,9 +216,16 @@ exclude = [
     "torch/distributed/examples/**",
     "torch/distributed/tensor/examples/**",
     "torch/fx/experimental/shape_inference/**",
-    # Only the sparse/ sub-dir is leakage; legacy ships the rest of
-    # torch/utils/benchmark/examples/.
-    "torch/utils/benchmark/examples/sparse/**",
+    # Test-only Python modules and C++ helper headers are not part of the
+    # runtime or extension API shipped by this fork. Keep
+    # torch/testing/_internal because production modules still import it.
+    "torch/fx/passes/tests/**",
+    "torch/include/c10/test/**",
+    "torch/include/c10/xpu/test/**",
+    # Keep the torch.utils.benchmark API, but do not ship example programs or
+    # benchmark-only operator workloads.
+    "torch/utils/benchmark/examples/**",
+    "torch/utils/benchmark/op_fuzzers/**",
     # Stray license file under torch/fx/experimental/unification/ that
     # legacy did not ship (the canonical vendored-code licenses we do ship
     # live under torch/_vendor/).

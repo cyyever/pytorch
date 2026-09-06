@@ -61,7 +61,7 @@ for desired in ${DESIRED_PYTHONS}; do
         exit 1
     fi
 
-    build_name="wheel-py${desired//./_}-cpu"
+    build_name="wheel-py${desired//./_}-mps-apple-silicon"
     export DESIRED_PYTHON="${desired}"
     export PYTORCH_FINAL_PACKAGE_DIR="${RUNNER_TEMP}/artifacts/${build_name}"
     mkdir -p "${PYTORCH_FINAL_PACKAGE_DIR}"
