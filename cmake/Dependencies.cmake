@@ -783,19 +783,46 @@ list(APPEND Caffe2_CUDA_DEPENDENCY_LIBS nlohmann)
 list(APPEND Caffe2_HIP_DEPENDENCY_LIBS nlohmann)
 list(APPEND Caffe2_XPU_DEPENDENCY_LIBS nlohmann)
 
-# TCPStore's libuv backend used to compile and link against the libuv copy
-# vendored by TensorPipe. TensorPipe is gone, so look for libuv on the system.
-# The legacy poll backend is gone too, so libuv is required rather than
-# preferred.
+# TCPStore has no non-libuv backend. Binary builds use a pinned static libuv so
+# the wheel does not depend on a system libuv DSO.
 if(USE_DISTRIBUTED)
-  find_path(libuv_INCLUDE_DIR NAMES uv.h HINTS $ENV{libuv_ROOT}/include)
-  find_library(libuv_LIBRARY NAMES uv libuv HINTS $ENV{libuv_ROOT}/lib)
-  if(NOT libuv_INCLUDE_DIR OR NOT libuv_LIBRARY)
-    message(FATAL_ERROR "libuv not found; TCPStore has no other backend. "
-                        "Install libuv or build with USE_DISTRIBUTED=0.")
+  if(USE_BUNDLED_LIBUV)
+    include(FetchContent)
+    set(LIBUV_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+    set(LIBUV_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(LIBUV_BUILD_BENCH OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+      libuv
+      URL https://dist.libuv.org/dist/v1.49.2/libuv-v1.49.2.tar.gz
+      URL_HASH SHA256=8c10706bd2cf129045c42b94799a92df9aaa75d05f07e99cf083507239bae5a8
+      DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
+    set(_pytorch_build_shared_libs ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(libuv)
+    set(BUILD_SHARED_LIBS ${_pytorch_build_shared_libs})
+    unset(_pytorch_build_shared_libs)
+    set_target_properties(
+      uv_a PROPERTIES
+      POSITION_INDEPENDENT_CODE ON
+      C_VISIBILITY_PRESET hidden)
+    target_compile_definitions(uv_a PRIVATE "UV_EXTERN=")
+    target_link_options(
+      uv_a INTERFACE
+      "$<$<PLATFORM_ID:Linux>:LINKER:--exclude-libs,libuv.a>")
+    target_include_directories(
+      uv_a SYSTEM INTERFACE $<BUILD_INTERFACE:${libuv_SOURCE_DIR}/include>)
+    list(APPEND Caffe2_DEPENDENCY_LIBS uv_a)
+  else()
+    find_path(libuv_INCLUDE_DIR NAMES uv.h HINTS $ENV{libuv_ROOT}/include)
+    find_library(libuv_LIBRARY NAMES uv libuv HINTS $ENV{libuv_ROOT}/lib)
+    if(NOT libuv_INCLUDE_DIR OR NOT libuv_LIBRARY)
+      message(FATAL_ERROR "libuv not found; TCPStore has no other backend. "
+                          "Install libuv, enable USE_BUNDLED_LIBUV, or build "
+                          "with USE_DISTRIBUTED=0.")
+    endif()
+    include_directories(SYSTEM ${libuv_INCLUDE_DIR})
+    list(APPEND Caffe2_DEPENDENCY_LIBS ${libuv_LIBRARY})
   endif()
-  include_directories(SYSTEM ${libuv_INCLUDE_DIR})
-  list(APPEND Caffe2_DEPENDENCY_LIBS ${libuv_LIBRARY})
 endif()
 
 if(USE_GLOO)

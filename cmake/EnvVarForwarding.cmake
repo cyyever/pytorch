@@ -44,6 +44,7 @@
 #   USE_KINETO=0              disables libkineto profiling
 #   USE_NUMPY=0               disables the NumPy build
 #   USE_DISTRIBUTED=0         disables distributed (c10d, gloo, etc.) build
+#   USE_BUNDLED_LIBUV=1       downloads and statically links libuv for TCPStore
 #   USE_GLOO=0                disables the gloo backend
 #   USE_SYSTEM_NCCL=0         use the submoduled nccl instead of system nccl
 #   USE_OPENMP=0              disables OpenMP parallelization

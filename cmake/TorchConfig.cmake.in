@@ -80,6 +80,13 @@ else()
   append_torchlib_if_found(cpuinfo)
   append_torchlib_if_found(fbgemm)
   append_torchlib_if_found(sleef asmjit)
+  if(@USE_BUNDLED_LIBUV@)
+    find_dependency(
+      libuv CONFIG
+      PATHS "${TORCH_INSTALL_PREFIX}/lib/cmake/libuv"
+      NO_DEFAULT_PATH)
+    list(APPEND TORCH_LIBRARIES libuv::uv_a)
+  endif()
 endif()
 
 if(@USE_KINETO@)
