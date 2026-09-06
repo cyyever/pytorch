@@ -594,6 +594,22 @@ endif()
 
 # Enable ThinLTO for Clang Release builds through CMake's IPO support.
 include(CheckIPOSupported)
+# ThinLTO leaves bitcode in the object files, which plain ar cannot index, so
+# CMake archives through the compiler's own tools. When those are missing the
+# IPO probe fails at the archive step and reports only "check failed to
+# compile", which names neither the tool nor the package. Say it here instead.
+foreach(_ipo_lang IN ITEMS C CXX)
+  foreach(_ipo_tool IN ITEMS AR RANLIB)
+    if(NOT CMAKE_${_ipo_lang}_COMPILER_${_ipo_tool} OR
+       CMAKE_${_ipo_lang}_COMPILER_${_ipo_tool} MATCHES "NOTFOUND")
+      message(FATAL_ERROR
+        "ThinLTO is enabled for Release builds but "
+        "CMAKE_${_ipo_lang}_COMPILER_${_ipo_tool} was not found. Install the "
+        "LLVM binary utilities (llvm-ar and llvm-ranlib, in the llvm package "
+        "on most distributions); clang ships neither.")
+    endif()
+  endforeach()
+endforeach()
 check_ipo_supported(LANGUAGES C CXX)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
