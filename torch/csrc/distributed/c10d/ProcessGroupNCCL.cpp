@@ -4399,6 +4399,9 @@ c10::intrusive_ptr<Work> ProcessGroupNCCL::allreduce_sparse(
     std::vector<at::Tensor>& tensors,
     const AllreduceOptions& opts) {
   TORCH_CHECK(tensors.size() == 1, MULTI_DEVICE_ERROR_MSG);
+  // tensor is reassigned by coalesce() under IS_NCCLX, which the check does
+  // not see when that macro is undefined.
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   auto tensor = tensors.back();
   TORCH_CHECK(
       !isUnsupportedFloat8(tensor.scalar_type()),

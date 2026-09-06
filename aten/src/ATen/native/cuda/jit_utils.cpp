@@ -883,6 +883,9 @@ std::string generate_code(
     bool vectorized,
     int vec_size,
     bool return_by_ref) {
+  // func is reassigned by unhipify_math_functions under USE_ROCM, which the
+  // check does not see in a CUDA-only configuration.
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   std::string func = func_;
   at::jit::TemplateEnv env;
 
@@ -1232,6 +1235,9 @@ std::string generate_reduction_code(
     bool vectorized,
     int vec_size,
     int max_threads_codegen) {
+      // func is reassigned by unhipify_math_functions under USE_ROCM, which the
+      // check does not see in a CUDA-only configuration.
+      // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
       std::string func = func_;
       at::jit::TemplateEnv env;
       constexpr int thread_work_size = JIT_THREAD_WORK_SIZE;
