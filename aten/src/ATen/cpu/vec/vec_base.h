@@ -1269,11 +1269,14 @@ Vectorized<T> inline operator&&(
 
 VECTORIZED_SUPPORT_SCALARS_FOR_BINARY_OP(&&)
 
+template <int64_t scale>
+concept gather_scale = (scale == 1 || scale == 2 || scale == 4 || scale == 8);
+
 template <int64_t scale = 1, typename T = void>
-std::enable_if_t<
-    scale == 1 || scale == 2 || scale == 4 || scale == 8,
-    Vectorized<
-        T>> inline gather(T const* base_addr, const Vectorized<int_same_size_t<T>>& vindex) {
+  requires gather_scale<scale>
+inline Vectorized<T> gather(
+    T const* base_addr,
+    const Vectorized<int_same_size_t<T>>& vindex) {
   static constexpr int size = Vectorized<T>::size();
   std::array<int_same_size_t<T>, size> index_arr{};
   vindex.store(index_arr.data());
@@ -1285,8 +1288,8 @@ std::enable_if_t<
 }
 
 template <int64_t scale = 1, typename T = void>
-std::
-    enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<T>> inline mask_gather(
+  requires gather_scale<scale>
+inline Vectorized<T> mask_gather(
         const Vectorized<T>& src,
         T const* base_addr,
         const Vectorized<int_same_size_t<T>>& vindex,
