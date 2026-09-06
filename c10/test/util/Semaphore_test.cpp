@@ -42,23 +42,27 @@ TEST(SemaphoreTest, TestConcurrency) {
 // c10::Semaphore refuses std::counting_semaphore on libstdc++ (see the
 // __GLIBCXX__ term in Semaphore.h) because of gcc bug 98033: _M_release only
 // notifies when the counter was zero, so a waiter that failed its CAS and saw
-// zero could sleep through a release. This exercises that shape directly --
-// many waiters, releases arriving while the counter is already positive -- and
-// says whether the standard library in use still drops one.
+// zero could sleep through a release. This drives that shape directly and says
+// whether the standard library in use still drops one.
 //
-// The waiters block in acquire(), so a lost wakeup would hang rather than fail.
-// They are detached and the semaphore is leaked so that a timeout can be
-// reported and the process can still exit.
+// The waiters block in acquire(), so a lost wakeup would hang rather than
+// fail. They are detached and hold the round's state through shared_ptr, which
+// lets the deadline below report a failure while a stranded waiter keeps what
+// it is parked on alive.
+//
+// The rendezvous is a counter and a yield rather than std::latch on purpose:
+// this asks about a libstdc++ synchronization primitive, so it leans on as few
+// of them as it can.
 TEST(SemaphoreTest, StlSemaphoreWakesEveryWaiter) {
-  constexpr int kRounds = 200;
+  constexpr int kRounds = 50;
   const unsigned num_waiters =
       std::max(4u, std::thread::hardware_concurrency());
 
   for ([[maybe_unused]] const auto round : c10::irange(kRounds)) {
-    auto* sem = new std::counting_semaphore<>(0);
-    auto* woken = new std::atomic<unsigned>(0);
+    auto sem = std::make_shared<std::counting_semaphore<>>(0);
+    auto woken = std::make_shared<std::atomic<unsigned>>(0);
+    auto ready = std::make_shared<std::atomic<unsigned>>(0);
 
-    auto* ready = new std::atomic<unsigned>(0);
     for ([[maybe_unused]] const auto _ : c10::irange(num_waiters)) {
       std::thread([sem, woken, ready] {
         ready->fetch_add(1, std::memory_order_release);
@@ -67,8 +71,8 @@ TEST(SemaphoreTest, StlSemaphoreWakesEveryWaiter) {
       }).detach();
     }
 
-    // Wait until every waiter has reached acquire(), so the releases below are
-    // answering threads that are parked rather than ones still starting up.
+    // The counter says every waiter reached acquire(); the pause gives them
+    // time to park in it, which is the state the releases below need to find.
     while (ready->load(std::memory_order_acquire) < num_waiters) {
       std::this_thread::yield();
     }

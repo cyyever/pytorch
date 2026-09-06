@@ -22,7 +22,7 @@ include(ExternalProject)
       endif()
       set(DNNL_LIB_NAME "libdnnl.a")
     else()
-      MESSAGE(FATAL_ERROR "OneDNN for Intel GPU in PyTorch currently supports only Windows and Linux.
+      MESSAGE(FATAL_ERROR "OneDNN for Intel GPU in PyTorch currently supports only Linux.
                            Detected system '${CMAKE_SYSTEM_NAME}' is not supported.")
     endif()
 
