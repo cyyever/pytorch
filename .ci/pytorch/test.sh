@@ -376,14 +376,14 @@ test_python_shard() {
 
   # modify LD_LIBRARY_PATH to ensure it has the conda env.
   # This set of tests has been shown to be buggy without it for the split-build
-  time python test/run_test.py --exclude-jit-executor --exclude-distributed-tests --exclude-quantization-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --shard "$1" "$NUM_TEST_SHARDS" --verbose $PYTHON_TEST_EXTRA_OPTION --upload-artifacts-while-running
+  time python test/run_test.py --exclude-jit-executor --exclude-distributed-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --shard "$1" "$NUM_TEST_SHARDS" --verbose $PYTHON_TEST_EXTRA_OPTION --upload-artifacts-while-running
 
   assert_git_not_dirty
 }
 
 test_python() {
   # shellcheck disable=SC2086
-  time python test/run_test.py --exclude-jit-executor --exclude-distributed-tests --exclude-quantization-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --verbose $PYTHON_TEST_EXTRA_OPTION
+  time python test/run_test.py --exclude-jit-executor --exclude-distributed-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --verbose $PYTHON_TEST_EXTRA_OPTION
   assert_git_not_dirty
 }
 
@@ -579,7 +579,7 @@ test_dynamo_wrapped_shard() {
     --exclude-distributed-tests \
     --exclude-torch-export-tests \
     --exclude-aot-dispatch-tests \
-    --exclude-quantization-tests \
+    \
     --shard "$1" "$NUM_TEST_SHARDS" \
     --verbose \
     --upload-artifacts-while-running
