@@ -129,7 +129,7 @@ find_package_and_print_version(hip REQUIRED CONFIG)
 # own lib dir directly to the imported target so every consumer inherits it,
 # regardless of how many levels of target_link_libraries separate them from
 # hip::amdhip64. ELF/GNU-ld only.
-if(NOT WIN32 AND NOT APPLE AND TARGET hip::amdhip64)
+if(NOT APPLE AND TARGET hip::amdhip64)
   set_property(TARGET hip::amdhip64 APPEND PROPERTY
     INTERFACE_LINK_OPTIONS "$<BUILD_INTERFACE:LINKER:-rpath-link,${ROCM_PATH}/lib>")
 endif()

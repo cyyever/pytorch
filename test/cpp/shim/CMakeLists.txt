@@ -1,8 +1,3 @@
-# Skip on windows
-if(WIN32)
-  return()
-endif()
-
 set(TORCH_SHIM_TEST_ROOT ${TORCH_ROOT}/test/cpp/shim)
 
 # Build the cpp gtest binary containing the cpp-only tests.
@@ -25,8 +20,4 @@ target_include_directories(test_shim PRIVATE ${ATen_CPU_INCLUDE})
 
 if(INSTALL_TEST)
   install(TARGETS test_shim DESTINATION bin)
-  # Install PDB files for MSVC builds
-  if(MSVC AND BUILD_SHARED_LIBS)
-    install(FILES $<TARGET_PDB_FILE:test_shim> DESTINATION bin OPTIONAL)
-  endif()
 endif()

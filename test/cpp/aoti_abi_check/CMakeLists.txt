@@ -1,8 +1,3 @@
-# Skip on windows
-if(WIN32)
-  return()
-endif()
-
 set(AOTI_ABI_CHECK_TEST_ROOT ${TORCH_ROOT}/test/cpp/aoti_abi_check)
 
 # Build the cpp gtest binary containing the cpp-only tests.
@@ -95,8 +90,4 @@ endforeach()
 
 if(INSTALL_TEST)
   install(TARGETS test_aoti_abi_check DESTINATION bin)
-  # Install PDB files for MSVC builds
-  if(MSVC AND BUILD_SHARED_LIBS)
-    install(FILES $<TARGET_PDB_FILE:test_aoti_abi_check> DESTINATION bin OPTIONAL)
-  endif()
 endif()

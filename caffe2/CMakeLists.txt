@@ -412,9 +412,7 @@ list(APPEND TORCH_SRCS
 
 if(USE_DISTRIBUTED)
   append_filelist("libtorch_distributed_base_sources" TORCH_SRCS)
-  if(NOT WIN32)
-    append_filelist("libtorch_distributed_extra_sources" TORCH_SRCS)
-  endif()
+  append_filelist("libtorch_distributed_extra_sources" TORCH_SRCS)
 endif()
 
 if(USE_CUDA OR USE_ROCM)
@@ -426,12 +424,7 @@ if(USE_CUDA)
   list(APPEND Caffe2_GPU_CU_SRCS ${Caffe2_GPU_HIP_JIT_FUSERS_SRCS})
   add_library(caffe2_nvrtc SHARED ${ATen_NVRTC_STUB_SRCS})
   target_compile_definitions(caffe2_nvrtc PRIVATE TORCH_CUDA_BUILD_MAIN_LIB)
-  if(MSVC)
-    # Delay load nvcuda.dll so we can import torch compiled with cuda on a CPU-only machine
-    set(DELAY_LOAD_FLAGS "-DELAYLOAD:nvcuda.dll;delayimp.lib")
-  else()
-    set(DELAY_LOAD_FLAGS "")
-  endif()
+  set(DELAY_LOAD_FLAGS "")
 
   target_link_libraries(caffe2_nvrtc PRIVATE caffe2::nvrtc ${DELAY_LOAD_FLAGS})
   install(TARGETS caffe2_nvrtc DESTINATION "${TORCH_INSTALL_LIB_DIR}")
@@ -441,24 +434,22 @@ if(USE_CUDA)
   endif()
   if(USE_DISTRIBUTED)
     append_filelist("libtorch_cuda_distributed_base_sources" Caffe2_GPU_SRCS)
-    if(NOT WIN32)
-      append_filelist("libtorch_cuda_distributed_extra_sources" Caffe2_GPU_SRCS)
-      set_source_files_properties(
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/ProcessGroupNCCL.cpp
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/cuda/utils.cpp
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/intra_node_comm.cpp
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CudaDMAConnectivity.cpp
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemory.cu
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemoryOps.cu
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemoryUtils.cpp
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/NCCLSymmetricMemory.cu
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/nccl_extension.cu
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/ops/nccl_reduce_scatter_offset.cu
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/ops/nccl_all_to_all_nd.cu
-        ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/cuda_mem_pool.cpp
-        PROPERTIES COMPILE_FLAGS "-DPYTORCH_C10_DRIVER_API_SUPPORTED=1"
-      )
-    endif()
+    append_filelist("libtorch_cuda_distributed_extra_sources" Caffe2_GPU_SRCS)
+    set_source_files_properties(
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/ProcessGroupNCCL.cpp
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/cuda/utils.cpp
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/intra_node_comm.cpp
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CudaDMAConnectivity.cpp
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemory.cu
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemoryOps.cu
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemoryUtils.cpp
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/NCCLSymmetricMemory.cu
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/nccl_extension.cu
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/ops/nccl_reduce_scatter_offset.cu
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/ops/nccl_all_to_all_nd.cu
+      ${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/cuda_mem_pool.cpp
+      PROPERTIES COMPILE_FLAGS "-DPYTORCH_C10_DRIVER_API_SUPPORTED=1"
+    )
 
     set(ASYNC_MM_FILE "${TORCH_SRC_DIR}/csrc/distributed/c10d/cuda/AsyncMM.cu")
     # Disable the warning to make cutlass warp-specialized cooperative kernel build for gcc-9
@@ -483,9 +474,7 @@ if(USE_ROCM)
   endif()
   if(USE_DISTRIBUTED)
     append_filelist("libtorch_cuda_distributed_base_sources" Caffe2_HIP_SRCS)
-    if(NOT WIN32)
-      append_filelist("libtorch_cuda_distributed_extra_sources" Caffe2_HIP_SRCS)
-    endif()
+    append_filelist("libtorch_cuda_distributed_extra_sources" Caffe2_HIP_SRCS)
   endif()
   # caffe2_nvrtc's stubs to driver APIs are useful for HIP.
   # See NOTE [ ATen NVRTC Stub and HIP ]
@@ -695,11 +684,7 @@ endif()
 # specifying add_library() without a list of source files
 set(DUMMY_EMPTY_FILE ${CMAKE_BINARY_DIR}/empty.cpp)
 
-if(MSVC)
-  set(DUMMY_FILE_CONTENT "__declspec(dllexport) int ignore_this_library_placeholder(){return 0;}")
-else()
-  set(DUMMY_FILE_CONTENT "")
-endif()
+set(DUMMY_FILE_CONTENT "")
 
 # file(GENERATE) is copy-if-different, so re-configuring does not bump the
 # mtime and force a torch_cpu/torch relink.
@@ -727,8 +712,8 @@ endif()
 if(USE_ROCM)
   list(APPEND Caffe2_HIP_SRCS ${GENERATED_CXX_TORCH_CUDA})
   add_library(torch_hip ${Caffe2_HIP_SRCS})
-  # Use CXX linker (clang-cl) which handles MSVC-style link flags natively.
-  # HIP device code is compiled with -fno-gpu-rdc so no device link step needed.
+  # HIP device code is compiled with -fno-gpu-rdc, so there is no device link
+  # step and the C++ linker can drive this target.
   set_target_properties(torch_hip PROPERTIES LINKER_LANGUAGE CXX)
   if(USE_FLASH_ATTENTION OR USE_MEM_EFF_ATTENTION)
     target_link_libraries(torch_hip PRIVATE __caffe2_aotriton)
@@ -916,9 +901,7 @@ elseif(USE_CUDA)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/native/sparse/cuda/SparseBlasImpl.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
   endif()
   # Set driver api defined for PeerToPeerAccess
-  if(NOT WIN32)
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/cuda/PeerToPeerAccess.cpp PROPERTIES COMPILE_FLAGS "-DPYTORCH_C10_DRIVER_API_SUPPORTED=1")
-  endif()
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../aten/src/ATen/cuda/PeerToPeerAccess.cpp PROPERTIES COMPILE_FLAGS "-DPYTORCH_C10_DRIVER_API_SUPPORTED=1")
 
 endif()
 
@@ -1040,11 +1023,6 @@ target_include_directories(torch_cpu PRIVATE
   ${TORCH_SRC_DIR}/csrc/api
   ${TORCH_SRC_DIR}/csrc/api/include)
 
-if(USE_CUDA AND MSVC)
-  # -INCLUDE is used to ensure torch_cuda is linked against in a project that relies on them.
-  # Related issue: https://github.com/pytorch/pytorch/issues/31611
-  target_link_libraries(torch_cuda INTERFACE "-INCLUDE:?warp_size@cuda@at@@YAHXZ")
-endif()
 
 set(TH_CPU_INCLUDE
   # dense
@@ -1085,6 +1063,7 @@ endif()
 
 target_include_directories(torch_cpu PRIVATE
   ${TORCH_ROOT}/third_party/nlohmann/include)
+
 
 # The native .pftrace encoder's only extra build dep (perfetto) is pulled in
 # just when the CUPTI stubs were generated above (CUPTI_STUBS_GENERATED): the
@@ -1362,15 +1341,6 @@ if(PRINT_CMAKE_DEBUG_INFO)
   print_target_properties(torch_cpu)
 endif()
 
-# Install PDB files for MSVC builds
-if(MSVC AND BUILD_SHARED_LIBS)
-  install(FILES $<TARGET_PDB_FILE:torch_cpu> DESTINATION "${TORCH_INSTALL_LIB_DIR}" OPTIONAL)
-  if(USE_CUDA)
-    install(FILES $<TARGET_PDB_FILE:torch_cuda> DESTINATION "${TORCH_INSTALL_LIB_DIR}" OPTIONAL)
-  elseif(USE_ROCM)
-    install(FILES $<TARGET_PDB_FILE:torch_hip> DESTINATION "${TORCH_INSTALL_LIB_DIR}" OPTIONAL)
-  endif()
-endif()
 
 # ---[ CUDA library.
 if(USE_CUDA)
@@ -1419,11 +1389,7 @@ if(USE_XPU)
   # Ensure that torch_cpu is ready before being linked by torch_xpu.
   add_dependencies(torch_xpu torch_cpu)
 
-  if(MSVC)
-    target_link_libraries(torch_xpu PUBLIC torch_cpu_library)
-  else()
-    target_link_libraries(torch_xpu PRIVATE torch_cpu)
-  endif()
+  target_link_libraries(torch_xpu PRIVATE torch_cpu)
 endif()
 
 # ---[ Caffe2 HIP sources.
@@ -1496,39 +1462,32 @@ if(BUILD_TEST)
         list(GET CPU_CAPABILITY_FLAGS ${i} FLAGS)
         separate_arguments(FLAGS UNIX_COMMAND "${FLAGS}")
         # Build vec with minimal dependencies on all platforms but Windows
-        if(NOT MSVC)
-          add_executable(${test_name}_${CPU_CAPABILITY} "${test_src}")
-          # TODO: Get rid of c10 dependency (which is only needed for the error macros)
-          target_link_libraries(${test_name}_${CPU_CAPABILITY} c10 sleef gtest_main nlohmann)
-          if(USE_FBGEMM)
-            target_link_libraries(${test_name}_${CPU_CAPABILITY} fbgemm)
+        add_executable(${test_name}_${CPU_CAPABILITY} "${test_src}")
+        # TODO: Get rid of c10 dependency (which is only needed for the error macros)
+        target_link_libraries(${test_name}_${CPU_CAPABILITY} c10 sleef gtest_main nlohmann)
+        if(USE_FBGEMM)
+          target_link_libraries(${test_name}_${CPU_CAPABILITY} fbgemm)
+        endif()
+        if(USE_ASAN)
+          if(TARGET Sanitizer::address)
+            target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::address)
           endif()
-          if(USE_ASAN)
-            if(TARGET Sanitizer::address)
-              target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::address)
-            endif()
-          endif()
-          if(USE_UBSAN AND TARGET Sanitizer::undefined)
-            target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::undefined)
-          endif()
-          if(USE_LSAN AND TARGET Sanitizer::leak)
-            target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::leak)
-          endif()
-          if(USE_TSAN AND TARGET Sanitizer::thread)
-            target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::thread)
-          endif()
-        else()
-          add_executable(${test_name}_${CPU_CAPABILITY} "${test_src}")
-          target_link_libraries(${test_name}_${CPU_CAPABILITY} torch_library sleef gtest_main)
+        endif()
+        if(USE_UBSAN AND TARGET Sanitizer::undefined)
+          target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::undefined)
+        endif()
+        if(USE_LSAN AND TARGET Sanitizer::leak)
+          target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::leak)
+        endif()
+        if(USE_TSAN AND TARGET Sanitizer::thread)
+          target_link_libraries(${test_name}_${CPU_CAPABILITY} Sanitizer::thread)
         endif()
         target_include_directories(${test_name}_${CPU_CAPABILITY} PRIVATE $<INSTALL_INTERFACE:include>)
         target_include_directories(${test_name}_${CPU_CAPABILITY} PRIVATE $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>)
         target_include_directories(${test_name}_${CPU_CAPABILITY} PRIVATE ${ATen_CPU_INCLUDE})
         target_compile_definitions(${test_name}_${CPU_CAPABILITY} PRIVATE CPU_CAPABILITY=${CPU_CAPABILITY}  CPU_CAPABILITY_${CPU_CAPABILITY})
         target_compile_options(${test_name}_${CPU_CAPABILITY} PRIVATE  ${FLAGS})
-        if(NOT MSVC)
-              target_compile_options(${test_name}_${CPU_CAPABILITY} PRIVATE -Wno-ignored-qualifiers)
-        endif(NOT MSVC)
+            target_compile_options(${test_name}_${CPU_CAPABILITY} PRIVATE -Wno-ignored-qualifiers)
         add_test(NAME ${test_name}_${CPU_CAPABILITY} COMMAND $<TARGET_FILE:${test_name}_${CPU_CAPABILITY}>)
     endforeach()
   endforeach()
@@ -1537,9 +1496,7 @@ if(BUILD_TEST)
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
     target_link_libraries(${test_name} torch_library gtest_main gtest gmock)
-    if(NOT MSVC)
-      target_link_libraries(${test_name} stdc++)
-    endif()
+    target_link_libraries(${test_name} stdc++)
     target_include_directories(${test_name} PRIVATE $<INSTALL_INTERFACE:include>)
     target_include_directories(${test_name} PRIVATE $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>)
     target_include_directories(${test_name} PRIVATE ${Caffe2_CPU_INCLUDE})
@@ -1547,10 +1504,6 @@ if(BUILD_TEST)
     if(INSTALL_TEST)
       set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
       install(TARGETS ${test_name} DESTINATION test)
-      # Install PDB files for MSVC builds
-      if(MSVC AND BUILD_SHARED_LIBS)
-        install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
-      endif()
     endif()
   endforeach()
 
@@ -1568,11 +1521,7 @@ if(BUILD_TEST)
       if(INSTALL_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
-        # Install PDB files for MSVC builds
-        if(MSVC AND BUILD_SHARED_LIBS)
-          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
         endif()
-      endif()
     endforeach()
   endif()
 
@@ -1590,11 +1539,7 @@ if(BUILD_TEST)
       if(INSTALL_TEST)
         set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")
         install(TARGETS ${test_name} DESTINATION test)
-        # Install PDB files for MSVC builds
-        if(MSVC AND BUILD_SHARED_LIBS)
-          install(FILES $<TARGET_PDB_FILE:${test_name}> DESTINATION test OPTIONAL)
         endif()
-      endif()
     endforeach()
   endif()
 
@@ -1639,19 +1584,7 @@ if(BUILD_TEST)
   endif()
 endif()
 
-if(MSVC)
-  # This is used to enable the conforming lambda processor in MSVC
-  # Which allows us to capture constexpr in lambdas
-  # Note that this will be turned on by default for std=c++23 and above
-  # This should be applied globally when https://github.com/pytorch/pytorch/issues/92600 is fixed
-  foreach(tmp ${MEM_EFF_ATTENTION_CUDA_SOURCES})
-    # MEM_EFF_ATTENTION_CUDA is populated in pytorch/aten/src/ATen/CMakeLists.txt
-    # We iterate over these files, updating paths and adding the compile flag
-    FILE(RELATIVE_PATH tmp_path "${PROJECT_SOURCE_DIR}" "${tmp}")
-    SET(tmp_path "../${tmp_path}")
-    set_source_files_properties(${tmp_path} PROPERTIES COMPILE_FLAGS "-Xcompiler /Zc:lambda")
-  endforeach()
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # CUTLASS defines unused host helpers in generated kernels. Keep the warning,
   # but do not promote this third-party diagnostic to an error.
   foreach(tmp ${MEM_EFF_ATTENTION_CUDA_SOURCES})

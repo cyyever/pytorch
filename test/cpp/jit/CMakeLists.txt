@@ -48,9 +48,7 @@ endif()
 if(USE_CUDA)
   target_compile_definitions(test_jit PRIVATE USE_CUDA)
   # Suppress sign compare checks for NVFUSER JIT tests
-  if(NOT MSVC)
-    target_compile_options(test_jit PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-sign-compare>)
-  endif()
+  target_compile_options(test_jit PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-sign-compare>)
 elseif(USE_ROCM)
   target_link_libraries(test_jit PRIVATE
     hiprtc::hiprtc
@@ -66,8 +64,4 @@ if(INSTALL_TEST)
   install(FILES ${JIT_TEST_ROOT}/test_interpreter_async.pt DESTINATION bin)
   install(FILES ${JIT_TEST_ROOT}/script_module_v4.ptl DESTINATION bin)
   install(DIRECTORY ${JIT_TEST_ROOT}/upgrader_models DESTINATION bin)
-  # Install PDB files for MSVC builds
-  if(MSVC AND BUILD_SHARED_LIBS)
-    install(FILES $<TARGET_PDB_FILE:test_jit> DESTINATION bin OPTIONAL)
-  endif()
 endif()

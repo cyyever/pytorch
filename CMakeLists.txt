@@ -45,6 +45,13 @@
 
 cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 
+# This fork builds on Linux and macOS. The Windows paths were removed rather
+# than left to rot untested, so say so here instead of failing somewhere deep
+# in a toolchain check.
+if(WIN32)
+  message(FATAL_ERROR "This fork does not support Windows.")
+endif()
+
 # Prohibit in-source builds
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
   message(FATAL_ERROR "In-source build are not supported")
@@ -572,7 +579,7 @@ endif()
 # lld, not the default bfd: it links a library the size of libtorch_cuda.so in
 # a fraction of the time, and it is the linker that implements --icf. Skip it
 # when the toolchain has no ld.lld rather than failing the configure.
-if(NOT DEFINED CMAKE_LINKER_TYPE AND NOT APPLE AND NOT MSVC)
+if(NOT DEFINED CMAKE_LINKER_TYPE AND NOT APPLE)
   find_program(LLD_EXECUTABLE NAMES ld.lld)
   if(LLD_EXECUTABLE)
     set(CMAKE_LINKER_TYPE LLD)
