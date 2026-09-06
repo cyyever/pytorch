@@ -277,7 +277,10 @@ if(USE_FLASH_ATTENTION)
     set_source_files_properties(${ck_sdpa_sources_hip} PROPERTIES LANGUAGE HIP)
 
     add_library(ck_sdpa STATIC ${ck_sdpa_sources_hip})
-    target_compile_options(ck_sdpa PRIVATE $<$<COMPILE_LANGUAGE:HIP>:${CK_SDPA_EXTRA_HIPCC_FLAGS}> ${HIP_CXX_FLAGS})
+    target_compile_options(ck_sdpa PRIVATE
+      $<$<COMPILE_LANGUAGE:HIP>:${CK_SDPA_EXTRA_HIPCC_FLAGS}>
+      ${HIP_CXX_FLAGS}
+      $<$<COMPILE_LANGUAGE:HIP>:-fvisibility=hidden>)
     set_target_properties(ck_sdpa PROPERTIES
       POSITION_INDEPENDENT_CODE ON
       # Only the architectures CK SDPA instances were generated for, to limit
