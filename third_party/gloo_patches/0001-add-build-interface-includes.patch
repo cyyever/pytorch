@@ -1,9 +1,13 @@
 # Give gloo's targets their build-tree include directories.
+#
 # gloo declares only $<INSTALL_INTERFACE:include>, so a consumer that builds it
 # as a subproject rather than finding an installed copy gets no include path at
 # all. The binary directory comes first because gloo generates config.h there.
+#
+# SYSTEM because these are third-party headers: gloo does not compile clean
+# under the warning set a consumer like PyTorch turns into errors.
 diff --git a/gloo/CMakeLists.txt b/gloo/CMakeLists.txt
-index 10c1e4e..8351608 100644
+index 10c1e4e..572c221 100644
 --- a/gloo/CMakeLists.txt
 +++ b/gloo/CMakeLists.txt
 @@ -168,9 +168,15 @@ endif()
@@ -11,13 +15,13 @@ index 10c1e4e..8351608 100644
  
  # Add Interface include directories that are relocatable.
 -target_include_directories(gloo INTERFACE $<INSTALL_INTERFACE:include>)
-+target_include_directories(gloo INTERFACE
++target_include_directories(gloo SYSTEM INTERFACE
 +    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 +    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 +    $<INSTALL_INTERFACE:include>)
  if(USE_CUDA)
 -  target_include_directories(gloo_cuda INTERFACE $<INSTALL_INTERFACE:include>)
-+  target_include_directories(gloo_cuda INTERFACE
++  target_include_directories(gloo_cuda SYSTEM INTERFACE
 +    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 +    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 +    $<INSTALL_INTERFACE:include>)
@@ -29,7 +33,7 @@ index 10c1e4e..8351608 100644
  endif()
  if(USE_ROCM)
 -  target_include_directories(gloo_hip INTERFACE $<INSTALL_INTERFACE:include>)
-+  target_include_directories(gloo_hip INTERFACE
++  target_include_directories(gloo_hip SYSTEM INTERFACE
 +    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 +    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 +    $<INSTALL_INTERFACE:include>)
