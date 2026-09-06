@@ -52,7 +52,7 @@ name: !{{ build_environment }}
 
 {%- set docker_image_suffix = "" %}
 {%- set docker_registry_host = "" %}
-{%- set owner_if = "${{ github.repository_owner == 'pytorch' }}" %}
+{%- set owner_if = "${{ github.repository == vars.BINARY_RELEASE_REPOSITORY }}" %}
 
 on:
   push:
@@ -94,7 +94,7 @@ env:
 
 jobs:
   get-label-type:
-    if: github.repository_owner == 'pytorch'
+    if: github.repository == vars.BINARY_RELEASE_REPOSITORY
     name: get-label-type
     uses: pytorch/pytorch/.github/workflows/_runner-determinator.yml@main
     with:
@@ -178,7 +178,7 @@ jobs:
       - name: Build all wheels
         shell: bash
         run: |
-          # shellcheck disable=SC1091
+          # shellcheck disable=SC1090,SC1091
           source "${BINARY_ENV_FILE}"
           bash .ci/manywheel/build_all.sh
       # One artifact per built Python -- names must match what the test/upload
@@ -379,7 +379,7 @@ jobs:
       build_name: ${{ matrix.build_name }}
 {%- endif %}
 
-{%- if branches == "nightly" and build_configs %}
+{%- if enable_upload and branches == "nightly" and build_configs %}
 {#- One upload job per arch group rather than a single job over every config.
     `needs` is evaluated per job, not per matrix leg, so a single upload job
     cannot start until the slowest group in the whole workflow has finished --

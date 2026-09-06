@@ -51,7 +51,7 @@ jobs:
   # first ~80 min full build), thanks to the Python-cache invalidation in
   # tools/setup_helpers/cmake.py.
   wheel-build:
-    if: ${{ github.repository_owner == 'pytorch' }}
+    if: ${{ github.repository == vars.BINARY_RELEASE_REPOSITORY }}
     runs-on: !{{ macos_runner }}
     timeout-minutes: !{{ common.timeout_minutes }}
     env:
@@ -101,7 +101,9 @@ jobs:
         # One command, parallel downloads of everything in DESIRED_PYTHONS.
         # Cached under ~/.local/share/uv/python/; the build script's per-
         # iteration `uv python install <ver>` becomes a cache hit.
-        run: uv python install $DESIRED_PYTHONS
+        run: |
+          # shellcheck disable=SC2086
+          uv python install $DESIRED_PYTHONS
       - name: Build all wheels
         run: |
           # Per-Python build now delocates inline (repair_wheel.py); no
@@ -120,15 +122,11 @@ jobs:
 {%- endfor %}
 
 {%- if first["package_type"] == "wheel" %}
-  # Each matrix entry invokes _binary-test-macos.yml independently, so the
-  # test (on macos-26) -> upload (on ubuntu, via _binary-upload.yml) chain
-  # runs per-Python-version: test-X failing blocks only upload-X.
-  wheel-test-upload:
-    if: ${{ github.repository_owner == 'pytorch' }}
+  # Each matrix entry invokes _binary-test-macos.yml independently.
+  wheel-test{% if enable_upload %}-upload{% endif %}:
+    if: ${{ github.repository == vars.BINARY_RELEASE_REPOSITORY }}
     needs: wheel-build
-    # Must be granted at this level; permissions do not automatically flow into
-    # the upload step of the nested _binary-test-macos.yml → _binary-upload.yml
-    # chain, and the inner upload needs id-token:write for AWS OIDC.
+    # Keep upload permissions available when enable_upload is set.
     permissions:
       id-token: write
       contents: read
@@ -151,6 +149,7 @@ jobs:
       package_type: !{{ first["package_type"] }}
       desired_cuda: !{{ first["desired_cuda"] }}
       gpu_arch_type: !{{ first["gpu_arch_type"] }}
+      upload_enabled: !{{ enable_upload | string | lower }}
       docker_image: !{{ first["container_image"] }}
       docker_image_tag_prefix: !{{ first["container_image_tag_prefix"] }}
     secrets:
@@ -163,7 +162,7 @@ jobs:
 
 {%- for lt_config in libtorch_extraction_configs %}
   !{{ lt_config["build_name"] }}-extract:
-    if: ${{ github.repository_owner == 'pytorch' }}
+    if: ${{ github.repository == vars.BINARY_RELEASE_REPOSITORY }}
     needs: wheel-build
     runs-on: !{{ macos_runner }}
     timeout-minutes: 60

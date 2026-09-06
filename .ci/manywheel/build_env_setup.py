@@ -149,12 +149,19 @@ CPU_BUILD_ENV: dict[str, str] = {
 # XPU builds source the oneAPI environment and enable SYCL/MKL/XCCL.
 XPU_BUILD_ENV: dict[str, str] = {
     "TH_BINARY_BUILD": "1",
+    "BUILD_TEST": "0",
     "USE_CUDA": "0",
+    "USE_ROCM": "0",
+    "USE_NCCL": "0",
     "USE_STATIC_MKL": "1",
     "USE_ONEMKL": "1",
     "USE_XCCL": "1",
+    "USE_C10D_XCCL": "1",
     "USE_MPI": "0",
     "INSTALL_TEST": "0",
+    "CFLAGS": "-march=x86-64-v3",
+    "CXXFLAGS": "-march=x86-64-v3",
+    "CMAKE_ARGS": "-DTORCH_X86_BASELINE=x86-64-v3",
 }
 
 # ROCm builds use static linking and skip debug info; mirror the original
