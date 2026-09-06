@@ -685,7 +685,7 @@ mha_varlen_fwd(const at::Tensor &q,  // total_q x num_heads x head_size, total_q
     CHECK_SHAPE(cu_seqlens_q, batch_size + 1);
     CHECK_SHAPE(cu_seqlens_k, batch_size + 1);
     if (seqused_k.has_value()){
-        auto seqused_k_ = seqused_k.value();
+        const auto& seqused_k_ = seqused_k.value();
         TORCH_CHECK(seqused_k_.dtype() == at::kInt, "seqused_k must have dtype int32");
         TORCH_CHECK(seqused_k_.is_cuda(), "seqused_k must be on CUDA device");
         TORCH_CHECK(seqused_k_.is_contiguous(), "seqused_k must be contiguous");
@@ -1476,7 +1476,7 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
     }
 
     if (seqlens_k_.has_value()) {
-        auto seqlens_k = seqlens_k_.value();
+        const auto& seqlens_k = seqlens_k_.value();
         TORCH_CHECK(seqlens_k.dtype() == at::kInt, "seqlens_k must have dtype int32");
         CHECK_DEVICE(seqlens_k);
         CHECK_CONTIGUOUS(seqlens_k);
@@ -1487,7 +1487,7 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
 
     if (rotary_cos_.has_value()) {
         TORCH_CHECK(k_.has_value(), "If rotary cos/sin are provided, new key / value to be appended to KV cache must also be provided");
-        auto rotary_cos = rotary_cos_.value();
+        const auto& rotary_cos = rotary_cos_.value();
         CHECK_DEVICE(rotary_cos);
         params.rotary_dim = rotary_cos.size(1) * 2;
         TORCH_CHECK(params.rotary_dim <= head_size, "rotary_dim must be <= headdim");
@@ -1499,7 +1499,7 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
         TORCH_CHECK(rotary_cos.scalar_type() == q_dtype, "rotary_cos must have the same dtype as query");
 
         TORCH_CHECK(rotary_sin_.has_value(), "If rotary cos is provided, rotary sin must also be provided");
-        auto rotary_sin = rotary_sin_.value();
+        const auto& rotary_sin = rotary_sin_.value();
         CHECK_DEVICE(rotary_sin);
         CHECK_SHAPE(rotary_sin, seqlen_ro, params.rotary_dim / 2);
         CHECK_CONTIGUOUS(rotary_sin);
@@ -1512,7 +1512,7 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
     }
 
     if (cache_batch_idx_.has_value()) {
-        auto cache_batch_idx = cache_batch_idx_.value();
+        const auto& cache_batch_idx = cache_batch_idx_.value();
         CHECK_DEVICE(cache_batch_idx);
         CHECK_CONTIGUOUS(cache_batch_idx);
         TORCH_CHECK(cache_batch_idx.scalar_type() == at::kInt, "cache_batch_idx must have dtype int32");

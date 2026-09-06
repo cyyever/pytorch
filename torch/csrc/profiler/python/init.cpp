@@ -311,9 +311,9 @@ PyObject* RecordFunctionFast_enter(PyObject* selfGeneric, PyObject* unused) {
     }
     auto it = kwargs.find("scope");
     if (it != kwargs.end()) {
-      auto value = it->second;
+      const auto& value = it->second;
       if (value.isString()) {
-        auto value_str = value.toStringRef();
+        const auto& value_str = value.toStringRef();
         if (value_str == "user_scope") {
           scope = at::RecordScope::USER_SCOPE;
         }
