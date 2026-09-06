@@ -10,8 +10,6 @@
 #include <c10/util/accumulate.h>
 
 #include <ATen/ops/empty.h>
-#include <ATen/ops/sum.h>
-#include <ATen/ops/ones.h>
 #include <ATen/ops/slow_conv_dilated2d_native.h>
 #include <ATen/ops/slow_conv_dilated3d_native.h>
 
@@ -224,24 +222,6 @@ void slow_conv_dilated_all_cuda_template(
     ones.resize_({output_vsize});
     ones.fill_(1);
   }
-  /* MSVC does not like #ifdef-s inside the CPP macro
-     AT_DISPATCH_FLOATING_TYPES_AND_HALF. So, we define the code
-     branching outside the CPP macro: */
-#define CALCULATE_GRAD_BIAS                                \
-  at::cuda::blas::gemv<scalar_t>(                          \
-      /*trans=*/'t',                                       \
-      /*    m=*/output_vsize,                              \
-      /*    n=*/nOutputPlane,                              \
-      /*alpha=*/static_cast<scalar_t>(1),                  \
-      /*    A=*/grad_output_n.const_data_ptr<scalar_t>(),  \
-      /*  lda=*/output_vsize,                              \
-      /*    x=*/ones.const_data_ptr<scalar_t>(),           \
-      /* incx=*/1,                                         \
-      /* beta=*/static_cast<scalar_t>(1),                  \
-      /*    y=*/grad_bias.mutable_data_ptr<scalar_t>(),    \
-      /* incy=*/1)
-#else
-#define CALCULATE_GRAD_BIAS grad_bias += grad_output_n.sum(dims)
 #endif
 
   // Helpers
@@ -377,8 +357,22 @@ void slow_conv_dilated_all_cuda_template(
             /* For gemv argument derivation, see
                slow_conv_dilated_all_cpu_template in
                ATen/native/DilatedConvolution.cpp */
-            CALCULATE_GRAD_BIAS; /* MSVC does not like #ifdef-s
-                                    inside the CPP macros, see above. */
+#if defined(USE_ROCM)
+            at::cuda::blas::gemv<scalar_t>(
+                /*trans=*/'t',
+                /*    m=*/output_vsize,
+                /*    n=*/nOutputPlane,
+                /*alpha=*/static_cast<scalar_t>(1),
+                /*    A=*/grad_output_n.const_data_ptr<scalar_t>(),
+                /*  lda=*/output_vsize,
+                /*    x=*/ones.const_data_ptr<scalar_t>(),
+                /* incx=*/1,
+                /* beta=*/static_cast<scalar_t>(1),
+                /*    y=*/grad_bias.mutable_data_ptr<scalar_t>(),
+                /* incy=*/1);
+#else
+            grad_bias += grad_output_n.sum(dims);
+#endif
             /*
               TODO: when scale != 1 is introduced then use:
                 grad_bias += scale * grad_output_n.sum(dims);
