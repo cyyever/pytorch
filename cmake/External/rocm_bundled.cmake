@@ -243,26 +243,12 @@ install(DIRECTORY "${_bundled_rocm_install}/lib/"
   PATTERN "libhipblaslt.so*" EXCLUDE
   PATTERN "librocblas.so*" EXCLUDE)
 
-# Wheels materialize symlinks as full file copies. At install time, resolve the
-# upstream chain and copy only the unversioned linker name and runtime SONAME.
-function(install_bundled_rocm_library LINK_NAME)
-  set(_link_path "${_bundled_rocm_install}/lib/${LINK_NAME}")
-  install(CODE "
-    file(READ_SYMLINK \"${_link_path}\" _soname)
-    if(_soname STREQUAL \"\")
-      message(FATAL_ERROR \"${_link_path} is not a symlink\")
-    endif()
-    file(REAL_PATH \"${_link_path}\" _real_path)
-    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/lib\"
-      TYPE FILE FILES \"\${_real_path}\" RENAME \"${LINK_NAME}\")
-    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/lib\"
-      TYPE FILE FILES \"\${_real_path}\" RENAME \"\${_soname}\")
-  ")
-endfunction()
-
-install_bundled_rocm_library("libMIOpen.so")
-install_bundled_rocm_library("libhipblaslt.so")
-install_bundled_rocm_library("librocblas.so")
+torch_install_shared_library(
+  "${_bundled_rocm_install}/lib/libMIOpen.so" lib)
+torch_install_shared_library(
+  "${_bundled_rocm_install}/lib/libhipblaslt.so" lib)
+torch_install_shared_library(
+  "${_bundled_rocm_install}/lib/librocblas.so" lib)
 
 install(DIRECTORY "${_bundled_rocm_install}/share/hipblaslt"
   DESTINATION share

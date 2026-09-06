@@ -228,10 +228,8 @@ if(NOT __AOTRITON_INCLUDED)
   # (${PROJECT_SOURCE_DIR}/torch/lib/) without a cmake install() rule, so it
   # is absent from the installed wheel and causes link failures in downstream
   # cmake builds (e.g., custom op builds) that link against installed torch.
-  install(DIRECTORY "${__AOTRITON_INSTALL_DIR}/lib/"
-    DESTINATION "lib"
-    FILES_MATCHING PATTERN "libaotriton_v2*.so*"
-  )
+  torch_install_shared_library(
+    "${__AOTRITON_INSTALL_DIR}/${__AOTRITON_LIB}" lib)
   # Install aotriton GPU kernel images (compressed ISA blobs) into the wheel.
   install(DIRECTORY "${__AOTRITON_INSTALL_DIR}/lib/aotriton.images"
     DESTINATION "lib"
