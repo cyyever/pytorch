@@ -94,13 +94,21 @@ if [[ -n "${FBTRITON:-}" && "${FBTRITON}" != "0" ]]; then
     TRITON_PIN_TO_SHORTHASH=0
 fi
 
-if [[ "$PACKAGE_TYPE" =~ .*wheel.* &&  -n "${PYTORCH_EXTRA_INSTALL_REQUIREMENTS:-}" && ! "$PYTORCH_BUILD_VERSION" =~ .*xpu.* && ! "$PYTORCH_BUILD_VERSION" =~ .*rocm.* ]]; then
+append_triton_requirement() {
+  if [[ -z "${PYTORCH_EXTRA_INSTALL_REQUIREMENTS:-}" ]]; then
+    export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="$1"
+  else
+    export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${PYTORCH_EXTRA_INSTALL_REQUIREMENTS} | $1"
+  fi
+}
+
+if [[ "$PACKAGE_TYPE" =~ .*wheel.* && ( "${GPU_ARCH_TYPE:-}" == "cuda" || ( -n "${PYTORCH_EXTRA_INSTALL_REQUIREMENTS:-}" && ! "$PYTORCH_BUILD_VERSION" =~ .*xpu.* && ! "$PYTORCH_BUILD_VERSION" =~ .*rocm.* ) ) ]]; then
   TRITON_REQUIREMENT="${TRITON_CUDA_PKG}~=${TRITON_VERSION}; ${TRITON_CONSTRAINT}"
   if [[ "${TRITON_PIN_TO_SHORTHASH}" == "1" && -n "$PYTORCH_BUILD_VERSION" && "$PYTORCH_BUILD_VERSION" =~ .*dev.* ]]; then
       TRITON_SHORTHASH=$(cut -c1-8 $PYTORCH_ROOT/.ci/pins/triton.txt)
       TRITON_REQUIREMENT="${TRITON_CUDA_PKG}==${TRITON_VERSION}+git${TRITON_SHORTHASH}; ${TRITON_CONSTRAINT}"
   fi
-  export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${PYTORCH_EXTRA_INSTALL_REQUIREMENTS} | ${TRITON_REQUIREMENT}"
+  append_triton_requirement "${TRITON_REQUIREMENT}"
 fi
 
 # Set triton via PYTORCH_EXTRA_INSTALL_REQUIREMENTS for triton rocm package
@@ -110,11 +118,7 @@ if [[ "$PACKAGE_TYPE" =~ .*wheel.* && -n "$PYTORCH_BUILD_VERSION" && "$PYTORCH_B
         TRITON_SHORTHASH=$(cut -c1-8 $PYTORCH_ROOT/.ci/pins/triton.txt)
         TRITON_REQUIREMENT="${TRITON_ROCM_PKG}==${TRITON_VERSION}+git${TRITON_SHORTHASH}; ${TRITON_CONSTRAINT}"
     fi
-    if [[ -z "${PYTORCH_EXTRA_INSTALL_REQUIREMENTS:-}" ]]; then
-        export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${TRITON_REQUIREMENT}"
-    else
-        export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${PYTORCH_EXTRA_INSTALL_REQUIREMENTS} | ${TRITON_REQUIREMENT}"
-    fi
+    append_triton_requirement "${TRITON_REQUIREMENT}"
 fi
 
 # Set triton via PYTORCH_EXTRA_INSTALL_REQUIREMENTS for triton xpu package
@@ -129,11 +133,7 @@ if [[ "$PACKAGE_TYPE" =~ .*wheel.* && -n "$PYTORCH_BUILD_VERSION" && "$PYTORCH_B
         TRITON_SHORTHASH=$(cut -c1-8 $PYTORCH_ROOT/.ci/pins/triton-xpu.txt)
         TRITON_REQUIREMENT="triton-xpu==${TRITON_VERSION}+git${TRITON_SHORTHASH}; ${XPU_TRITON_CONSTRAINT}"
     fi
-    if [[ -z "${PYTORCH_EXTRA_INSTALL_REQUIREMENTS:-}" ]]; then
-        export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${TRITON_REQUIREMENT}"
-    else
-        export PYTORCH_EXTRA_INSTALL_REQUIREMENTS="${PYTORCH_EXTRA_INSTALL_REQUIREMENTS} | ${TRITON_REQUIREMENT}"
-    fi
+    append_triton_requirement "${TRITON_REQUIREMENT}"
 fi
 
 USE_GLOO_WITH_OPENSSL="OFF"
