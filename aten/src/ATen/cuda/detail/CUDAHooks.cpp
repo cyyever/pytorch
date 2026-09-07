@@ -31,6 +31,7 @@
 #include <sstream>
 #include <cstddef>
 #include <memory>
+#include <string_view>
 
 namespace c10::cuda::_internal {
 void setHasPrimaryContext(bool (*func)(DeviceIndex));
@@ -465,19 +466,14 @@ DeviceIndex CUDAHooks::getCurrentDevice() const {
 
 #ifdef USE_ROCM
 bool CUDAHooks::isGPUArch(const std::vector<std::string>& archs, DeviceIndex device_index) const {
-  hipDeviceProp_t* prop;
-  if (device_index == -1){
-      prop = at::cuda::getCurrentDeviceProperties();
-  } else {
-      prop = at::cuda::getDeviceProperties(device_index);
-  }
-
-  std::string device_arch = prop->gcnArchName;
-  for (std::string arch : archs) {
-      size_t substring = device_arch.find(arch);
-      if (substring != std::string::npos) {
-          return true;
-      }
+  const auto* prop = device_index == -1
+      ? at::cuda::getCurrentDeviceProperties()
+      : at::cuda::getDeviceProperties(device_index);
+  const std::string_view device_arch = prop->gcnArchName;
+  for (const auto& arch : archs) {
+    if (device_arch.find(arch) != std::string_view::npos) {
+      return true;
+    }
   }
   return false;
 }
