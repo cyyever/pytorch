@@ -51,9 +51,6 @@ environment is needed. Do NOT try to find alternatives or install these tools.
   workflow generator, binary matrix, or Jinja templates and then regenerate.
 - Do not connect release workflows to PyTorch's official upload services.
   Private-index upload changes require explicit user review and approval.
-- A publishable Linux wheel must come from the manylinux 2.28 release pipeline;
-  do not upload a wheel produced directly on the development host. Build macOS
-  arm64 wheels with the macOS release workflow.
 - Internal accelerator variants use separate `cuda`, `rocm`, `xpu`, and `mps`
   index channels while retaining the `torch` distribution name. Never expose
   multiple accelerator variants on the same `torch` simple-index page because
