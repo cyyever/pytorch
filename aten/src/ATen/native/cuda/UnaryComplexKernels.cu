@@ -63,17 +63,24 @@ void angle_kernel_cuda(TensorIteratorBase& iter) {
 }
 
 // NB: Ignores the negative bit on tensors
+#if AT_USE_JITERATOR()
 constexpr char conj_name[] = "conj_kernel";
+#endif
 void conj_kernel_cuda(TensorIteratorBase& iter) {
+#if AT_USE_JITERATOR()
+  // Hoisted out of the lambda below, not into it: a function-local static with
+  // a non-trivial destructor inside a lambda makes nvcc emit a null-callee
+  // __cxa_atexit into device IR at -std=c++23, which NVVM rejects.
+  static const auto conj_string = jiterator_stringify(
+    template <typename T>
+    T conj_kernel(T z) {
+      return std::conj(z);
+    }
+  );
+#endif
   auto conj_chalf = [&] {
     using scalar_t = c10::complex<at::Half>;
     #if AT_USE_JITERATOR()
-      static const auto conj_string = jiterator_stringify(
-        template <typename T>
-        T conj_kernel(T z) {
-          return std::conj(z);
-        }
-      );
       jitted_gpu_kernel<conj_name, scalar_t, scalar_t, 1>(iter, conj_string);
     #else
       gpu_kernel(iter, [] GPU_LAMBDA(scalar_t a) -> scalar_t {

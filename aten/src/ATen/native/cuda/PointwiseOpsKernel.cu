@@ -39,10 +39,10 @@ void addcmul_cuda_kernel(TensorIteratorBase& iter, const Scalar& value) {
   auto dtype = iter.common_dtype();
   if (at::isComplexType(dtype)) {
     #if AT_USE_JITERATOR()
+      static const auto addcmul_string = jiterator_stringify(
+        template <typename T> T addcmul(T a, T b, T c, T alpha) { return a + alpha * (b * c); });
       AT_DISPATCH_COMPLEX_TYPES(dtype, "addcmul_cuda", [&]() {
         auto alpha = value.to<scalar_t>();
-        static const auto addcmul_string = jiterator_stringify(
-          template <typename T> T addcmul(T a, T b, T c, T alpha) { return a + alpha * (b * c); });
         if (iter.is_cpu_scalar(3)) {
           auto tensor2_val = iter.scalar_value<scalar_t>(3);
           iter.remove_operand(3);
@@ -99,12 +99,11 @@ void addcmul_cuda_scalar_tensor2_kernel(TensorIteratorBase& iter, const Scalar& 
 
   if (at::isComplexType(dtype)) {
     #if AT_USE_JITERATOR()
+      static const auto addcmul_scalar_tensor2_string = jiterator_stringify(
+        template <typename T> T addcmul_scalar_tensor2(T a, T b, T c, T alpha) { return a + alpha * (b * c); });
       AT_DISPATCH_COMPLEX_TYPES(dtype, "addcmul_cuda", [&]() {
         auto c = scalar_tensor2.to<scalar_t>();
         auto alpha = value.to<scalar_t>();
-
-        static const auto addcmul_scalar_tensor2_string = jiterator_stringify(
-          template <typename T> T addcmul_scalar_tensor2(T a, T b, T c, T alpha) { return a + alpha * (b * c); });
 
         jitted_gpu_kernel<
             /*name=*/addcmul_scalar_tensor2_name,
@@ -148,11 +147,11 @@ void addcdiv_cuda_kernel(TensorIteratorBase& iter, const Scalar& value) {
   auto dtype = iter.common_dtype();
   if (at::isComplexType(dtype)) {
     #if AT_USE_JITERATOR()
+      static const auto addcdiv_string =
+          jiterator_stringify(template <typename T> T addcdiv(
+              T a, T b, T c, T alpha) { return a + alpha * (b / c); });
       AT_DISPATCH_COMPLEX_TYPES(dtype, "addcdiv_cuda", [&]() {
         auto alpha = value.to<scalar_t>();
-        static const auto addcdiv_string =
-            jiterator_stringify(template <typename T> T addcdiv(
-                T a, T b, T c, T alpha) { return a + alpha * (b / c); });
         jitted_gpu_kernel<
             /*name=*/addcdiv_name,
             /*return_dtype=*/scalar_t,
