@@ -12,10 +12,8 @@ inline Device getDeviceFromPtr(void* ptr) {
 
   AT_CUDA_CHECK(cudaPointerGetAttributes(&attr, ptr));
 
-#if !defined(USE_ROCM)
   TORCH_CHECK(attr.type != cudaMemoryTypeUnregistered,
     "The specified pointer resides on host memory and is not registered with any CUDA device.");
-#endif
 
   return {c10::DeviceType::CUDA, static_cast<DeviceIndex>(attr.device)};
 }

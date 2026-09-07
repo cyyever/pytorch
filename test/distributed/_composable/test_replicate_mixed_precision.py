@@ -30,7 +30,6 @@ from torch.testing._internal.common_fsdp import (
 )
 from torch.testing._internal.common_utils import (
     run_tests,
-    skipIfRocmVersionLessThan,
     TEST_HPU,
 )
 
@@ -64,7 +63,6 @@ class TestReplicateMixedPrecisionTraining(FSDPTestContinuous):
         optim = torch.optim.Adam(model.parameters(), lr=1e-2, foreach=True)
         return ref_model, ref_optim, model, optim
 
-    @skipIfRocmVersionLessThan((7, 0))
     @skip_if_lt_x_gpu(2)
     @requires_nccl_version((2, 10), "Need NCCL 2.10+ for bf16 collectives")
     def test_compute_dtype(self):
@@ -292,7 +290,6 @@ class TestReplicateMixedPrecisionTraining(FSDPTestContinuous):
 
             check_sharded_parity(self, ref_model, model)
 
-    @skipIfRocmVersionLessThan((7, 0))
     @skip_if_lt_x_gpu(2)
     @requires_nccl_version((2, 10), "Need NCCL 2.10+ for bf16 collectives")
     def test_reduce_dtype(self):

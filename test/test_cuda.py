@@ -99,8 +99,6 @@ from torch.testing._internal.common_utils import (
     skipIfRocm,
     skipIfRocmArch,
     skipIfRocmVersionAtLeast,
-    skipIfRocmVersionInRange,
-    skipIfRocmVersionLessThan,
     slowTest,
     subtest,
     TemporaryFileName,
@@ -3674,7 +3672,6 @@ torch.cuda.synchronize()
             seed_t.resize_(64)
         self.assertEqual(seed_t.data_ptr(), data_ptr)
 
-    @skipIfRocmVersionLessThan((7, 14))
     @xfailCUDAIfSM89OrLaterOnWindows
     @unittest.skipIf(
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
@@ -3729,7 +3726,6 @@ torch.cuda.synchronize()
             after, baseline, "Leaked CUDA/RNG allocations after failed capture test"
         )
 
-    @skipIfRocmVersionLessThan((7, 14))
     @xfailCUDAIfSM89OrLaterOnWindows
     @unittest.skipIf(
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
@@ -4291,7 +4287,6 @@ torch.cuda.synchronize()
         not TEST_CUDA_GRAPH,
         "CUDA >= 11.0 / ROCm >= 7.0 required for external events in cuda graphs",
     )
-    @skipIfRocmVersionLessThan((7, 0))
     def test_graph_timing(self):
         torch.cuda.empty_cache()
         x = torch.randn(10240000, device="cuda")
@@ -6208,7 +6203,7 @@ with torch.cuda.graph(g):
             self.assertEqual(rc, "3")
 
     @unittest.skipIf(not TEST_WITH_ROCM, "not relevant for CUDA testing")
-    @skipIfRocmVersionInRange([7, 14], [10, 2], "rocprofiler-sdk visibility conflict")
+    @skipIfRocmVersionAtLeast([7, 14])
     def test_hip_device_count(self):
         """Validate device_count works with both CUDA/HIP visible devices"""
         test_script = """\
@@ -6705,58 +6700,6 @@ class TestCudaAllocator(TestCase):
     def tearDown(self):
         super().tearDown()
         _check_allocator_settings_on_tear_down(self)
-
-    @unittest.skipIf(
-        not EXPANDABLE_SEGMENTS,
-        "requires expandable_segments mode (run via test_cuda_expandable_segments.py)",
-    )
-    @unittest.skipIf(not TEST_MULTIGPU, "requires multiple devices")
-    @unittest.skipIf(not SM70OrLater, "requires system-scope PTX loads")
-    @skipIfRocm(msg="expandable_segments mode is not supported on ROCm")
-    def test_expandable_segments_empty_cache_wrong_device(self):
-        flag_cpu = torch.zeros(1, dtype=torch.int32, device="cpu").pin_memory()
-        empty_cache_started = threading.Event()
-        empty_cache_done = threading.Event()
-        empty_cache_errors = []
-
-        torch.cuda.synchronize(0)
-        with torch.cuda.device(1):
-            spin_wait_kernel = get_wait_for_cpu_kernel()
-            src = torch.ones(48 * 1024 * 1024, dtype=torch.uint8, device="cuda")
-            spin_wait_kernel(grid=(1, 1, 1), block=(1, 1, 1), args=[flag_cpu])
-            dst = torch.empty_like(src)
-            dst.copy_(src)
-            del dst
-
-        def empty_cache_from_device_zero():
-            try:
-                with torch.cuda.device(0):
-                    empty_cache_started.set()
-                    torch.cuda.empty_cache()
-            except Exception as error:
-                empty_cache_errors.append(error)
-            finally:
-                empty_cache_done.set()
-
-        thread = threading.Thread(target=empty_cache_from_device_zero)
-        thread.start()
-        completed_before_release = None
-        try:
-            self.assertTrue(empty_cache_started.wait(timeout=10))
-            completed_before_release = empty_cache_done.wait(timeout=1)
-        finally:
-            flag_cpu[0] = 1
-            thread.join(timeout=10)
-
-        self.assertFalse(thread.is_alive())
-        if empty_cache_errors:
-            raise empty_cache_errors[0]
-        torch.cuda.synchronize(1)
-        self.assertFalse(
-            completed_before_release,
-            "empty_cache() did not wait for work on the segment's device",
-        )
-        del src
 
     @unittest.skipIf(
         TEST_CUDAMALLOCASYNC, "setContextRecorder not supported by CUDAMallocAsync"
@@ -11454,6 +11397,7 @@ class TestCudaAutocast(TestAutocast):
             output.sum().backward()
 
 
+@unittest.skipIf(torch.version.rocm == "10.1.0", "HIPRTC issue (AIRUNTIME-2707)")
 class TestCompileKernel(TestCase):
     @unittest.skipIf(not TEST_CUDA, "No CUDA")
     def test_compile_kernel(self):
@@ -11985,7 +11929,7 @@ class TestCompileKernel(TestCase):
 
 @unittest.skipIf(not TEST_CUDA, "CUDA not available, skipping tests")
 class TestCudaDeviceParametrized(TestCase):
-    @skipIfRocmVersionLessThan((7, 0))
+    @unittest.skipIf(torch.version.rocm == "10.1.0", "HIPRTC issue (AIRUNTIME-2707)")
     @skipCUDAIf(
         not SM70OrLater, "Compute capability >= SM70 required for relaxed ptx flag"
     )

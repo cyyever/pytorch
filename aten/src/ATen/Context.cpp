@@ -124,8 +124,6 @@ std::string cudnn_depthwise2str(CuDNNDepthwiseKernel k) {
   TORCH_CHECK(false, "Invalid enum CuDNNDepthwiseKernel(", static_cast<int>(k), ")");
 }
 
-static constexpr const auto rocm_allow_group_gemm_ck = "ROCM_ALLOW_GROUP_GEMM_CK";
-
 Context::Context() = default;
 
 // TODO: This could be bad juju if someone calls globalContext() in the
@@ -259,11 +257,6 @@ bool Context::allowTF32OneDNN() const {
   #else
   TORCH_WARN("TF32 acceleration on top of oneDNN is available for Intel GPUs. The current Torch version does not have Intel GPU Support.");
   #endif
-}
-
-bool Context::rocmAllowGroupGemmCk() const {
-    const auto allow_group_gemm_ck = c10::utils::check_env(rocm_allow_group_gemm_ck) == true;
-    return allow_group_gemm_ck;
 }
 
 bool Context::userEnabledFlashSDP() const {

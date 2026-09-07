@@ -1,4 +1,5 @@
 #include <ATen/core/CachingHostAllocator.h>
+#include <ATen/cuda/CUDABlasLtHandle.h>
 #include <ATen/cuda/CUDAContextLight.h>
 #include <ATen/cuda/CUDABlasWorkspace.h>
 #include <ATen/cuda/CUDAGeneratorImpl.h>
@@ -6,6 +7,7 @@
 #include <ATen/cuda/CUDAGraphsUtils.cuh>
 #include <ATen/cuda/Exceptions.h>
 #include <ATen/cuda/MemPool.h>
+#include <ATen/core/GraphImplInterface.h>
 #include <ATen/Functions.h>
 #include <c10/cuda/CUDAAllocatorConfig.h>
 #include <c10/cuda/CUDAFunctions.h>
@@ -667,5 +669,60 @@ std::function<bool(cudaStream_t)> CUDAGraph::create_child_allocate_filter() {
 #endif
 }
 
+namespace {
+
+struct CUDAGraphImpl final : CUDAGraph, GraphImplInterface {
+  explicit CUDAGraphImpl(const GraphImplArgs& args)
+      : CUDAGraph(args.keep_graph) {}
+
+  void capture_begin(
+      MempoolId_t pool,
+      GraphCaptureMode capture_mode) override {
+    switch (capture_mode) {
+      case GraphCaptureMode::Default:
+      case GraphCaptureMode::Global:
+        CUDAGraph::capture_begin(pool, cudaStreamCaptureModeGlobal);
+        break;
+      case GraphCaptureMode::ThreadLocal:
+        CUDAGraph::capture_begin(pool, cudaStreamCaptureModeThreadLocal);
+        break;
+      case GraphCaptureMode::Relaxed:
+        CUDAGraph::capture_begin(pool, cudaStreamCaptureModeRelaxed);
+        break;
+    }
+  }
+
+  void capture_end() override {
+    CUDAGraph::capture_end();
+  }
+
+  void instantiate() override {
+    CUDAGraph::instantiate();
+  }
+
+  void replay() override {
+    CUDAGraph::replay();
+  }
+
+  void reset() override {
+    CUDAGraph::reset();
+  }
+
+  MempoolId_t pool() const override {
+    return const_cast<CUDAGraphImpl*>(this)->CUDAGraph::pool();
+  }
+
+  void enable_debug_mode() override {
+    CUDAGraph::enable_debug_mode();
+  }
+
+  void debug_dump(const std::string& path) override {
+    AT_CUDA_CHECK(cudaGraphDebugDotPrint(raw_cuda_graph(), path.c_str(), 0));
+  }
+};
+
+} // namespace
+
+REGISTER_GRAPH_IMPL(CUDA, CUDAGraphImpl)
 
 } // namespace at::cuda

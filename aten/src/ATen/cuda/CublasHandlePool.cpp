@@ -187,9 +187,7 @@ size_t parseChosenWorkspaceSize() {
     // for extra convenience
     val = c10::utils::get_env("ROCBLAS_WORKSPACE_CONFIG");
   }
-  /* 32MiB default, 128MiB for gfx950/gfx1250 */
-  const bool gfx950_1250 = at::detail::getCUDAHooks().isGPUArch({"gfx950", "gfx1250"});
-  const size_t default_size = gfx950_1250 ? 1024 * 128 * 1024 : 1024 * 32 * 1024;
+  const size_t default_size = 1024 * 32 * 1024;
 #else
   /* :4096:2:16:8 default, 32MiB for Hopper and Blackwell */
   cudaDeviceProp* properties = at::cuda::getCurrentDeviceProperties();

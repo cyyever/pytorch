@@ -44,7 +44,7 @@ C10_EXPORT const char* _cublasGetErrorEnum(cublasStatus_t error) {
 } // namespace blas
 
 namespace solver {
-#if !defined(USE_ROCM)
+#if !defined(USE_ROCM) && !defined(__HIP_PLATFORM_AMD__)
 
 C10_EXPORT const char* cusolverGetErrorMessage(cusolverStatus_t status) {
   switch (status) {

@@ -2215,16 +2215,14 @@ class CachingAutotuner(KernelInterface):
         )
         kernel_binary = binary.asm[bin_type]
 
-        # ROCm multi-arch: capture LLVM IR
+        # ROCm packaged kernels are rebuilt from LLVM IR for gfx1201.
         if torch.version.hip and inductor_config.aot_inductor.emit_multi_arch_kernel:
-            # Multi-arch ROCm: Capture LLVM IR for cross-architecture compilation
             asm_type = "ll"
 
             # llir is the key to obtain LLVM IR from triton
             asm = binary.asm.get("llir", None)
 
-            # CRITICAL: Multi-arch compilation cannot proceed without LLVM IR
-            # Fail fast with clear error message pointing to the issue
+            # Packaged gfx1201 compilation cannot proceed without LLVM IR.
             if not asm:
                 available_keys = list(binary.asm.keys())
                 raise RuntimeError(

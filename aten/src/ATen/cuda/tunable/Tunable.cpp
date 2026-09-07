@@ -9,6 +9,7 @@
 //
 
 #include <ATen/core/functional.h>
+#include <ATen/cuda/CUDABlasLtHandle.h>
 #include <ATen/cuda/CUDAContextLight.h>
 #include <ATen/cuda/tunable/Tunable.h>
 #include <c10/util/Exception.h>

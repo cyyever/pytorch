@@ -42,6 +42,11 @@ function(c10d_add_test test_src)
     ${ARG_LINK_LIBRARIES}
   )
   add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
+  if(USE_ROCM)
+    set_property(TEST ${test_name} PROPERTY ENVIRONMENT_MODIFICATION
+      "LD_LIBRARY_PATH=path_list_prepend:${CMAKE_BINARY_DIR}/lib"
+      "LD_LIBRARY_PATH=path_list_prepend:${ROCM_PATH}/lib")
+  endif()
 
   if(ARG_INSTALL_TEST)
     set_target_properties(${test_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${_rpath_portable_origin}/../lib")

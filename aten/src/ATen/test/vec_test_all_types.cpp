@@ -894,25 +894,44 @@ namespace {
     TYPED_TEST(BitwiseFloatsAdditional, ZeroMask) {
         using vec = TypeParam;
         using VT = ValueType<TypeParam>;
+        static_assert(vec::size() <= std::numeric_limits<uint32_t>::digits);
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
         CACHE_ALIGN VT test_vals[vec::size()];
-        //all sets will be within 0  2^(n-1)
-        auto power_sets = 1UL << (vec::size());
-        for (const auto expected : c10::irange(power_sets)) {
-            // generate test_val based on expected
+
+        const auto check_mask = [&](uint32_t expected) {
             for (int i = 0; i < vec::size(); ++i)
             {
-                if (expected & (1 << i)) {
+                if (expected & (uint32_t{1} << i)) {
                     test_vals[i] = (VT)0;
                 }
                 else {
                     test_vals[i] = (VT)0.897;
                 }
             }
-            int actual = vec::loadu(test_vals).zero_mask();
+            const auto actual =
+                static_cast<uint32_t>(vec::loadu(test_vals).zero_mask());
             ASSERT_EQ(expected, actual) << "Failure Details:\n"
                 << std::hex << "Expected:\n#\t" << expected
                 << "\nActual:\n#\t" << actual;
+        };
+
+        if constexpr (vec::size() <= 16) {
+            for (const auto expected : c10::irange(uint32_t{1} << vec::size())) {
+                check_mask(expected);
+            }
+        }
+        else {
+            constexpr auto all = std::numeric_limits<uint32_t>::max() >>
+                (std::numeric_limits<uint32_t>::digits - vec::size());
+            check_mask(0);
+            check_mask(all);
+            check_mask(0xaaaaaaaa & all);
+            check_mask(0x55555555 & all);
+            for (const auto i : c10::irange(vec::size())) {
+                const auto bit = uint32_t{1} << i;
+                check_mask(bit);
+                check_mask(all ^ bit);
+            }
         }
     }
     TYPED_TEST(BitwiseFloatsAdditional, Convert) {
@@ -1449,13 +1468,9 @@ namespace {
         f32s[i] = static_cast<float>(i + 0.3);
       }
       for (const auto i : c10::irange(100)) {
-      #if (defined(__F16C__) || defined(__AVX512F__)) && !defined(__APPLE__)
-        uint16_t u16 = at::vec::float2half_scalar(f32s[i]);
-        float x = at::vec::half2float_scalar(u16);
-      #else
-        uint16_t u16 = c10::detail::fp16_ieee_from_fp32_value(f32s[i]);
-        float x = c10::detail::fp16_ieee_to_fp32_value(u16);
-      #endif
+        const auto half = c10::Half(f32s[i]);
+        const auto u16 = std::bit_cast<uint16_t>(half);
+        const auto x = static_cast<float>(std::bit_cast<c10::Half>(u16));
 
         EXPECT_EQ(u16, c10::detail::fp16_ieee_from_fp32_value(f32s[i]))
             << "Test failed for float to uint16 " << f32s[i] << '\n';

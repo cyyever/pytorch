@@ -10,7 +10,7 @@ files directly.
 | Platform | Backend | Variant | Python |
 |---|---|---|---|
 | Linux x86-64-v3 | CUDA | CUDA runtime version | 3.14, 3.15 |
-| Linux x86-64-v3 | ROCm | MI300X and ROCm runtime version | 3.14, 3.15 |
+| Linux x86-64-v3 | ROCm | gfx1201 and ROCm runtime version | 3.14, 3.15 |
 | Linux x86-64-v3 | XPU | Intel BMG | 3.14, 3.15 |
 | macOS arm64 | MPS | Apple Silicon | 3.14, 3.15 |
 
@@ -25,7 +25,7 @@ runtime variant, and source commit are encoded in the PEP 440 local version:
 
 ```text
 2.15.0.dev20260906+cuda.13.4.g0123abcd
-2.15.0.dev20260906+rocm.7.14.mi300x.g0123abcd
+2.15.0.dev20260906+rocm.10.0.gfx1201.g0123abcd
 2.15.0.dev20260906+xpu.bmg.g0123abcd
 2.15.0.dev20260906+mps.apple.silicon.g0123abcd
 ```

@@ -6,12 +6,13 @@ def initialize():
 
     rocm_sdk.initialize_process(
         preload_shortnames=["amd_comgr", "amdhip64", "roctx64", "hiprtc", "hipfile"],
+        rtld_global=False,
         check_version="@ROCM_VERSION_DEV_MAJOR@.@ROCM_VERSION_DEV_MINOR@.*",
     )
 
     lib_dir = Path(__file__).parent / "lib"
     for soname in ("librocblas.so.5", "libhipblaslt.so.1", "libMIOpen.so.1"):
-        ctypes.CDLL(lib_dir / soname, mode=ctypes.RTLD_GLOBAL)
+        ctypes.CDLL(lib_dir / soname, mode=ctypes.RTLD_LOCAL)
 
     rocm_sdk.initialize_process(
         preload_shortnames=[
@@ -22,5 +23,6 @@ def initialize():
             "hipsolver",
             "rccl",
         ],
+        rtld_global=False,
         check_version="@ROCM_VERSION_DEV_MAJOR@.@ROCM_VERSION_DEV_MINOR@.*",
     )

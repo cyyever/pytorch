@@ -62,7 +62,7 @@ if [[ "$(uname)" == 'Darwin' ]]; then
 elif [[ "${GPU_ARCH_TYPE:-}" == "xpu" ]]; then
   PACKAGE_BUILD_VARIANT="xpu.bmg"
 elif [[ "${GPU_ARCH_TYPE:-}" == "rocm" ]]; then
-  PACKAGE_BUILD_VARIANT="rocm.${GPU_ARCH_VERSION}.mi300x"
+  PACKAGE_BUILD_VARIANT="rocm.${GPU_ARCH_VERSION}.gfx1201"
 elif [[ "${GPU_ARCH_TYPE:-}" == "cuda" ]]; then
   PACKAGE_BUILD_VARIANT="cuda.${GPU_ARCH_VERSION}"
 else
