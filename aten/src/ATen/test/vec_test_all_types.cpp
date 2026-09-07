@@ -1983,6 +1983,39 @@ namespace {
     #undef TEST_MASK_CAST
     #undef TEST_MASK_CAST_N
     }
+    // The generic Vectorized<T> in vec_base.h is reached only by scalar types
+    // that no ISA header specializes, so the vec256/vec512 suites above never
+    // instantiate it. These three are unspecialized on every backend.
+    template <typename T>
+    void test_generic_reduce() {
+      using vec = at::vec::Vectorized<T>;
+      const auto seed = TestSeed();
+      // Explicit bounds: ValueGen's default range is min()..max(), which for
+      // uint64_t overflows the signed distribution it is built on.
+      ValueGen<T> generator(T(0), T(100), seed);
+      CACHE_ALIGN T values[vec::size()];
+      for (auto& value : values) {
+        value = generator.get();
+      }
+      // Seeded from values[0], mirroring the implementation: seeding the fold
+      // from T{} would give the wrong maximum for an all-negative vector.
+      T expected_sum = values[0];
+      T expected_max = values[0];
+      for (const auto i : c10::irange(1, vec::size())) {
+        expected_sum = static_cast<T>(expected_sum + values[i]);
+        expected_max = std::max(expected_max, values[i]);
+      }
+      const auto v = vec::loadu(values);
+      EXPECT_EQ(v.reduce_add(), expected_sum)
+          << "Failure Details:\nTest Seed to reproduce: " << seed;
+      EXPECT_EQ(v.reduce_max(), expected_max)
+          << "Failure Details:\nTest Seed to reproduce: " << seed;
+    }
+    TEST(GenericVectorized, Reduce) {
+      test_generic_reduce<uint16_t>();
+      test_generic_reduce<uint32_t>();
+      test_generic_reduce<uint64_t>();
+    }
 #else
 #error GTEST does not have TYPED_TEST
 #endif

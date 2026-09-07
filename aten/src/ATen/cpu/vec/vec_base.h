@@ -351,9 +351,9 @@ struct Vectorized {
     }
     return ret;
   }
-  T reduce(T (*const f)(T)) const {
-    T ret = 0;
-    for (int64_t i = 0; i != size(); i++) {
+  T reduce(T (*const f)(T, T)) const {
+    T ret = values[0];
+    for (int64_t i = 1; i != size(); i++) {
       ret = f(ret, values[i]);
     }
     return ret;
@@ -670,7 +670,7 @@ struct Vectorized {
     return reduce([](T x, T y) -> T { return x + y; });
   }
   T reduce_max() const {
-    return reduce(std::max);
+    return reduce([](T x, T y) -> T { return std::max(x, y); });
   }
 
  private:
