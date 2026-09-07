@@ -93,7 +93,7 @@ void SparseTensorImpl::set_indices_and_values_unsafe(const Tensor& indices, cons
 
   auto dense_size_original = sym_sizes().slice(sparse_dim_);
   std::vector<c10::SymInt> expected_values_size_vec = {values.sym_size(0)};
-  expected_values_size_vec.insert(expected_values_size_vec.end(), dense_size_original.begin(), dense_size_original.end());
+  expected_values_size_vec.append_range(dense_size_original);
   SymIntArrayRef expected_values_size(expected_values_size_vec);
   auto new_values_size = values.sym_sizes();
   TORCH_CHECK(

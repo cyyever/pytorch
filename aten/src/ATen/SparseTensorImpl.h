@@ -212,8 +212,7 @@ struct TORCH_API SparseTensorImpl : public TensorImpl {
       auto nnz = at::symint::sizes<T>(values())[0];
       std::vector<T> values_size = {nnz};
       auto dense_size = size.slice(sparse_dim);
-      values_size.insert(
-          values_size.end(), dense_size.begin(), dense_size.end());
+      values_size.append_range(dense_size);
       at::symint::resize_<T>(values_, values_size);
       at::symint::resize_<T>(indices_, {T(sparse_dim), nnz});
     }
@@ -266,7 +265,7 @@ struct TORCH_API SparseTensorImpl : public TensorImpl {
     auto empty_indices = at::empty({sparse_dim, 0}, indices().options());
     std::vector<int64_t> values_size = {0};
     auto dense_size = sizes().slice(sparse_dim);
-    values_size.insert(values_size.end(), dense_size.begin(), dense_size.end());
+    values_size.append_range(dense_size);
     auto empty_values = at::empty(values_size, values().options());
     set_indices_and_values_unsafe(empty_indices, empty_values);
     refresh_numel();

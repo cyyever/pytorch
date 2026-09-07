@@ -218,14 +218,14 @@ static Tensor sumproduct_pair(const Tensor& left_, const Tensor& right_, IntArra
   for (auto& d : ro) out_size.push_back(right.sym_size(d));
 
   std::vector<int64_t> lpermutation(lro);
-  lpermutation.insert(lpermutation.end(), lo.begin(), lo.end());
-  lpermutation.insert(lpermutation.end(), sum_dims_.begin(), sum_dims_.end());
-  lpermutation.insert(lpermutation.end(), ro.begin(), ro.end());
+  lpermutation.append_range(lo);
+  lpermutation.append_range(sum_dims_);
+  lpermutation.append_range(ro);
 
   std::vector<int64_t> rpermutation(lro);
-  rpermutation.insert(rpermutation.end(), sum_dims_.begin(), sum_dims_.end());
-  rpermutation.insert(rpermutation.end(), ro.begin(), ro.end());
-  rpermutation.insert(rpermutation.end(), lo.begin(), lo.end());
+  rpermutation.append_range(sum_dims_);
+  rpermutation.append_range(ro);
+  rpermutation.append_range(lo);
 
   std::vector<int64_t> opermutation(out_num_dim, -1);
   {

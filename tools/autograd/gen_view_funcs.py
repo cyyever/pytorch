@@ -177,7 +177,7 @@ def generate_state_getter_setter(
             # Handle list-likes.
             num_expr = f"{b.name}.size()"
             num_exprs.append(num_expr)
-            getter = f"{state_vec}.insert({state_vec}.end(), {b.name}.begin(), {b.name}.end());"
+            getter = f"{state_vec}.append_range({b.name});"
             setter = f"std::copy({state_vec}.begin() + i, {state_vec}.begin() + i + {b.name}.size(), {b.name}.begin());"
         elif isinstance(b.argument.type, OptionalType):
             # Handle optionals.

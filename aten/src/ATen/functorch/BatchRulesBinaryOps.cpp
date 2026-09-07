@@ -66,8 +66,7 @@ struct BinaryRandomPointwiseBatchRuleHelper<F, Func, typelist<T1, T2, T...>> {
     if (randomness == RandomnessType::Different && !tensor_bdim && !other_bdim) {
       auto shape = tensor_value.sizes();
       VmapSymDimVector shapeVec(1, maybe_layer->batchSize());
-      shapeVec.reserve(shape.size() + 1);
-      shapeVec.insert(shapeVec.end(), shape.begin(), shape.end());
+      shapeVec.append_range(shape);
 
       // not taken care of with binary batch rule, which assumes at least one input is batched
       tensor_value = tensor_value.expand_symint(shapeVec);

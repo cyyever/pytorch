@@ -160,8 +160,7 @@ struct TensorDataContainer {
     }
     sizes_.reserve(first_elem.sizes().size() + 1);
     sizes_.push_back(static_cast<int64_t>(init_list.size()));
-    sizes_.insert(
-        sizes_.end(), first_elem.sizes().begin(), first_elem.sizes().end());
+    sizes_.append_range(first_elem.sizes());
   }
 
 #define TENSOR(T, S)                                                          \

@@ -64,7 +64,7 @@ std::tuple<Tensor, Tensor> _pack_padded_sequence(const Tensor& _input, const Ten
     step_shape.reserve(input_sizes.size());
     auto s_input_sizes = input_sizes.slice(2);
     step_shape.push_back(-1);
-    step_shape.insert(step_shape.end(), s_input_sizes.begin(), s_input_sizes.end());
+    step_shape.append_range(s_input_sizes);
   }
 
   // To understand what's going on in this loop imagine that the input is a padded 2D
@@ -157,7 +157,7 @@ std::tuple<Tensor, Tensor> _pad_packed_sequence(const Tensor& data, const Tensor
     output_size.push_back(max_seq_length);
     output_size.push_back(max_batch_size);
     auto s_data_size = data.sizes().slice(1);
-    output_size.insert(output_size.end(), s_data_size.begin(), s_data_size.end());
+    output_size.append_range(s_data_size);
   }
   auto output = at::full(output_size, padding_value, data.options());
 
@@ -218,7 +218,7 @@ Tensor pad_sequence(TensorList sequences, bool batch_first, double padding_value
   } else {
     out_dims = {max_len, sequences_size};
   }
-  out_dims.insert(out_dims.end(), trailing_dims.begin(), trailing_dims.end());
+  out_dims.append_range(trailing_dims);
 
   Tensor out = at::full(out_dims, padding_value, sequences[0].options());
   for (const auto i : c10::irange(sequences_size)) {

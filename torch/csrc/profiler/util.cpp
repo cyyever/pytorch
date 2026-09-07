@@ -168,7 +168,7 @@ std::vector<std::vector<int64_t>> inputSizes(
       }
       // Extend the current sizes array by the array returned from input sizes
       if (!tmp_sizes.empty()) {
-        sizes.insert(sizes.end(), tmp_sizes.begin(), tmp_sizes.end());
+        sizes.append_range(tmp_sizes);
       } else {
         sizes.emplace_back();
       }
@@ -432,7 +432,7 @@ std::pair<bool, std::variant<int, std::vector<int>>> findStartAddrForTensors(
       auto [is_list, res] = findStartAddrForTensors(val_tuple[j]);
       if (is_list) {
         const auto& vec_res = std::get<std::vector<int>>(res);
-        responses.insert(responses.end(), vec_res.begin(), vec_res.end());
+        responses.append_range(vec_res);
       } else {
         responses.push_back(std::get<int>(res));
       }
@@ -447,7 +447,7 @@ std::pair<bool, std::variant<int, std::vector<int>>> findStartAddrForTensors(
       auto [is_list, res] = findStartAddrForTensors(val_list[j]);
       if (is_list) {
         auto const& vec_res = std::get<std::vector<int>>(res);
-        responses.insert(responses.end(), vec_res.begin(), vec_res.end());
+        responses.append_range(vec_res);
       } else {
         responses.push_back(std::get<int>(res));
       }

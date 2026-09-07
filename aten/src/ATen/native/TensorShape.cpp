@@ -1759,8 +1759,7 @@ Tensor repeat(const Tensor& self, IntArrayRef repeats) {
   // number of source dimensions.
   int64_t num_new_dimensions = repeats.size() - self.dim();
   DimVector padded_size(num_new_dimensions, 1);
-  padded_size.insert(
-      padded_size.end(), self.sizes().begin(), self.sizes().end());
+  padded_size.append_range(self.sizes());
   DimVector target_size(repeats.size());
   bool zero_tensor = false;
   for (const auto idx : c10::irange(repeats.size())) {

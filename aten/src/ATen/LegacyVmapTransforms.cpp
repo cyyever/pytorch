@@ -83,8 +83,8 @@ VmapDimVector VmapPhysicalView::getPhysicalShape(IntArrayRef logical_shape) cons
   VmapDimVector result;
   result.reserve(logical_shape.size() + numBatchDims());
   auto tensor_sizes = tensor_.sizes();
-  result.insert(result.end(), tensor_sizes.begin(), tensor_sizes.begin() + numBatchDims());
-  result.insert(result.end(), logical_shape.begin(), logical_shape.end());
+  result.append(tensor_sizes.begin(), tensor_sizes.begin() + numBatchDims());
+  result.append_range(logical_shape);
   return result;
 }
 
@@ -227,10 +227,7 @@ MultiBatchVmapTransform::logicalToPhysical(ITensorListRef logical_tensors) {
   for (const auto& physical_tensor : physical_tensors) {
     VmapDimVector expanded_size(batch_sizes.begin(), batch_sizes.end());
     auto physical_sizes = physical_tensor.sizes();
-    expanded_size.insert(
-        expanded_size.end(),
-        physical_sizes.begin() + num_batch_dims,
-        physical_sizes.end());
+    expanded_size.append(physical_sizes.begin() + num_batch_dims, physical_sizes.end());
     result.emplace_back(physical_tensor.expand(expanded_size), collective_levels);
   }
   return result;

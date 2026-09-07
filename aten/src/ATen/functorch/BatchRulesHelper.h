@@ -53,7 +53,7 @@ inline Tensor ensure_has_bdim(const Tensor& tensor, bool has_bdim, c10::SymInt b
   SymDimVector expanded_shape;
   expanded_shape.reserve(sizes.size());
   expanded_shape.emplace_back(std::move(batch_size));
-  expanded_shape.insert(expanded_shape.end(), sizes.begin(), sizes.end());
+  expanded_shape.append_range(sizes);
   return tensor.expand_symint(expanded_shape);
 }
 

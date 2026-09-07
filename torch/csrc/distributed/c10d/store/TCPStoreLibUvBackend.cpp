@@ -484,7 +484,7 @@ class StreamWriter {
 
   void write_vector(const std::vector<uint8_t>& val) {
     write_value<uint64_t>(val.size());
-    data.insert(data.end(), val.begin(), val.end());
+    data.append_range(val);
   }
 
   void write_string(const std::string& val) {
