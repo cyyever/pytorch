@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -34,6 +35,7 @@
 #include <limits>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <type_traits>
 #include <utility>
 
@@ -754,6 +756,28 @@ class SmallVectorImpl : public SmallVectorTemplateBase<T> {
 
   void append(const SmallVectorImpl& RHS) {
     append(RHS.begin(), RHS.end());
+  }
+
+  /// Add the elements of \p Range to the end. Mirrors
+  /// std::vector::append_range, so a SmallVector can stand in wherever a call
+  /// site spells the C++23 form. Sized ranges grow the buffer once.
+  template <std::ranges::input_range R>
+    requires std::convertible_to<std::ranges::range_reference_t<R>, T>
+  void append_range(R&& Range) {
+    if constexpr (
+        std::ranges::forward_range<R> && std::ranges::common_range<R> &&
+        requires {
+          this->append(std::ranges::begin(Range), std::ranges::end(Range));
+        }) {
+      append(std::ranges::begin(Range), std::ranges::end(Range));
+    } else {
+      if constexpr (std::ranges::sized_range<R> || std::ranges::forward_range<R>) {
+        this->reserve(this->size() + std::ranges::distance(Range));
+      }
+      for (auto&& Elt : Range) {
+        this->push_back(std::forward<decltype(Elt)>(Elt));
+      }
+    }
   }
 
   void assign(size_type NumElts, ValueParamT Elt) {
