@@ -210,6 +210,10 @@ ExternalProject_Add(pytorch_bundled_miopen
   BINARY_DIR "${_bundled_rocm_root}/build/miopen"
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
+  PATCH_COMMAND
+    "${CMAKE_COMMAND}"
+    "-DMIOPEN_SOURCE_DIR:PATH=<SOURCE_DIR>"
+    -P "${CMAKE_CURRENT_LIST_DIR}/miopen_kernel_filter.cmake"
   LIST_SEPARATOR "|"
   CMAKE_ARGS
     ${_bundled_rocm_common_cmake_args}
@@ -225,6 +229,7 @@ ExternalProject_Add(pytorch_bundled_miopen
     "-DMIOPEN_BUILD_PYTHON:BOOL=OFF"
     "-DMIOPEN_ENABLE_AI_IMMED_MODE_FALLBACK:BOOL=OFF"
     "-DMIOPEN_ENABLE_AI_KERNEL_TUNING:BOOL=OFF"
+    "-DMIOPEN_EMBED_BUILD_TARGET_KERNELS_ONLY:BOOL=ON"
     "-DMIOPEN_INSTALL_GPU_DATABASES:STRING=${_bundled_rocm_archs}"
     "-DMIOPEN_STANDALONE_BUILD:BOOL=OFF"
     "-DMIOPEN_USE_COMPOSABLEKERNEL:BOOL=OFF"
