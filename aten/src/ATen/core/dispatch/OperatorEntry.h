@@ -110,11 +110,7 @@ class TORCH_API OperatorEntry final {
     return name_;
   }
 
-#ifdef C10_DISPATCHER_ONE_KERNEL_PER_DISPATCH_KEY
-  using AnnotatedKernelContainer = std::array<AnnotatedKernel, 1>;
-#else
   using AnnotatedKernelContainer = std::list<AnnotatedKernel>;
-#endif
   using AnnotatedKernelContainerIterator = AnnotatedKernelContainer::iterator;
 
   // Why are kernels and fallback asymmetric?  It has to do with ownership.
@@ -264,16 +260,7 @@ class TORCH_API OperatorEntry final {
   // re-executed and then only allow one kernel here, i.e. error if a kernel
   // is already registered, but that's a lot of effort to implement and
   // currently not high-pri.
-  ska::flat_hash_map<
-      DispatchKey,
-#ifdef C10_DISPATCHER_ONE_KERNEL_PER_DISPATCH_KEY
-      // On mobile, we needn't worry about Jupyter notebooks.
-      std::array<AnnotatedKernel, 1>
-#else
-      std::list<AnnotatedKernel>
-#endif
-      >
-      kernels_;
+  ska::flat_hash_map<DispatchKey, AnnotatedKernelContainer> kernels_;
 
   const AnnotatedKernel& missingKernel() const;
   const AnnotatedKernel& ambiguousAutogradOtherKernel() const;
