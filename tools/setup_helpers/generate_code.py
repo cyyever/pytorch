@@ -21,6 +21,7 @@ def generate_code(
     install_dir: str | None = None,
     subset: str | None = None,
     disable_autograd: bool = False,
+    autograd_dir: str | None = None,
 ) -> None:
     from tools.autograd.gen_annotated_fn_args import gen_annotated
     from tools.autograd.gen_autograd import gen_autograd, gen_autograd_python
@@ -34,7 +35,8 @@ def generate_code(
     autograd_gen_dir = os.path.join(install_dir, "autograd", "generated")
     for d in (autograd_gen_dir, python_install_dir):
         os.makedirs(d, exist_ok=True)
-    autograd_dir = os.fspath(Path(__file__).parent.parent / "autograd")
+    if autograd_dir is None:
+        autograd_dir = os.fspath(Path(__file__).parent.parent / "autograd")
 
     if subset == "pybindings" or not subset:
         gen_autograd_python(
@@ -83,6 +85,10 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--autograd-dir",
+        help="Directory containing derivatives.yaml and autograd code templates.",
+    )
+    parser.add_argument(
         "--subset",
         help='Subset of source files to generate. Can be "libtorch" or "pybindings". Generates both when omitted.',
     )
@@ -105,6 +111,7 @@ def main() -> None:
         options.install_dir,
         options.subset,
         options.disable_autograd,
+        options.autograd_dir,
     )
 
     # Generate the python bindings for functionalization's `ViewMeta` classes.

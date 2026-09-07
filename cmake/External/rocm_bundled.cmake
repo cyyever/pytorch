@@ -14,6 +14,75 @@ set(_bundled_rocm_root "${PROJECT_BINARY_DIR}/bundled_rocm")
 set(_bundled_rocm_install "${_bundled_rocm_root}/install")
 file(MAKE_DIRECTORY "${_bundled_rocm_install}/include" "${_bundled_rocm_install}/lib")
 
+function(_pytorch_write_bundled_rocblas_version_script output_file)
+  set(_rocsolver_library "${ROCM_PATH}/lib/librocsolver.so")
+  if(NOT EXISTS "${_rocsolver_library}")
+    message(FATAL_ERROR
+      "Bundled rocBLAS export generation requires ${_rocsolver_library}")
+  endif()
+
+  execute_process(
+    COMMAND "${CMAKE_READELF}" --dyn-syms --wide "${_rocsolver_library}"
+    RESULT_VARIABLE _readelf_result
+    OUTPUT_VARIABLE _rocsolver_symbols
+    ERROR_VARIABLE _readelf_error)
+  if(NOT _readelf_result EQUAL 0)
+    message(FATAL_ERROR
+      "Failed to inspect rocSOLVER symbols: ${_readelf_error}")
+  endif()
+
+  string(REPLACE "\n" ";" _rocsolver_symbol_lines "${_rocsolver_symbols}")
+  set(_required_rocblas_internal_symbols)
+  foreach(_line IN LISTS _rocsolver_symbol_lines)
+    if(_line MATCHES "[ \t]UND[ \t]" AND
+        _line MATCHES "rocblas_internal_")
+      string(REGEX REPLACE ".*[ \t]([^ \t]+)$" "\\1" _symbol "${_line}")
+      list(APPEND _required_rocblas_internal_symbols "${_symbol}")
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES _required_rocblas_internal_symbols)
+  list(SORT _required_rocblas_internal_symbols)
+  if(NOT _required_rocblas_internal_symbols)
+    message(FATAL_ERROR
+      "rocSOLVER does not expose its required rocBLAS internal symbols")
+  endif()
+
+  set(_version_script "{\n  global:\n")
+  foreach(_symbol IN LISTS _required_rocblas_internal_symbols)
+    string(APPEND _version_script "    ${_symbol};\n")
+  endforeach()
+  string(APPEND _version_script [=[
+  local:
+    *rocblas_internal_*;
+    extern "C++" {
+      "std::*";
+      "__gnu_cxx::*";
+      "Tensile::*";
+    };
+};
+]=])
+  file(WRITE "${output_file}" "${_version_script}")
+endfunction()
+
+set(_bundled_rocblas_version_script
+  "${_bundled_rocm_root}/rocblas-version-script.map")
+_pytorch_write_bundled_rocblas_version_script(
+  "${_bundled_rocblas_version_script}")
+
+set(_bundled_hipblaslt_version_script
+  "${_bundled_rocm_root}/hipblaslt-version-script.map")
+file(WRITE "${_bundled_hipblaslt_version_script}" [=[
+{
+  local:
+    *hipblaslt_internal_*;
+    extern "C++" {
+      "std::*";
+      "__gnu_cxx::*";
+      "TensileLite::*";
+    };
+};
+]=])
+
 # The nonexistent SOURCE_SUBDIR makes FetchContent populate sources without
 # adding them. ExternalProject keeps each component's cache isolated from PyTorch.
 FetchContent_Declare(
@@ -89,6 +158,9 @@ ExternalProject_Add(pytorch_bundled_hipblaslt
     "-DHIPBLASLT_ENABLE_ROCROLLER:BOOL=OFF"
     "-DHIPBLASLT_ENABLE_THEROCK:BOOL=ON"
     "-DCMAKE_DISABLE_FIND_PACKAGE_origami:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING=-ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=-ffunction-sections -fdata-sections"
+    "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections -Wl,--version-script=${_bundled_hipblaslt_version_script}"
     "-DTENSILELITE_BUILD_TESTING:BOOL=OFF"
     "-DTENSILELITE_ENABLE_CLIENT:BOOL=OFF"
   BUILD_COMMAND ${_bundled_rocm_build_command}
@@ -116,6 +188,9 @@ ExternalProject_Add(pytorch_bundled_rocblas
     "-DBUILD_DOCS:BOOL=OFF"
     "-DBUILD_WITH_HIPBLASLT:BOOL=ON"
     "-DBUILD_WITH_TENSILE:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING=-ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=-ffunction-sections -fdata-sections"
+    "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections -Wl,--version-script=${_bundled_rocblas_version_script}"
     "-DHIPBLASLT_VERSION:STRING=1.4.1"
     "-DTENSILE_VERSION:STRING="
     "-DTensile_TEST_LOCAL_PATH:PATH=${_bundled_rocm_libraries_source}/shared/tensile"

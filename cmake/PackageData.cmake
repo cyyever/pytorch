@@ -88,9 +88,26 @@ install(FILES "${TORCH_SRC_DIR}/csrc/inductor/aoti_runtime/model.h"
 
 # Generated testing Python module (gitignored so not picked up by scikit-build-core
 # package scanning; install explicitly so it ends up in the wheel).
-install(FILES "${TORCH_SRC_DIR}/testing/_internal/generated/annotated_fn_args.py"
+set(_torch_generated_src_dir "${TORCH_SRC_DIR}")
+if(USE_ROCM)
+  set(_torch_generated_src_dir "${PYTORCH_HIPIFY_TORCH_DIR}")
+endif()
+install(FILES "${_torch_generated_src_dir}/testing/_internal/generated/annotated_fn_args.py"
   DESTINATION "${_torch_pkg}/testing/_internal/generated"
 )
+
+if(USE_ROCM)
+  set(_hipified_python_files
+    "_inductor/codegen/cuda/device_op_overrides.py"
+    "_inductor/codegen/cpp_wrapper_cpu.py"
+    "_inductor/codegen/cpp_wrapper_gpu.py"
+    "_inductor/codegen/wrapper.py")
+  foreach(_relative_path IN LISTS _hipified_python_files)
+    get_filename_component(_destination "${_relative_path}" DIRECTORY)
+    install(FILES "${PYTORCH_HIPIFY_TORCH_DIR}/${_relative_path}"
+      DESTINATION "${_torch_pkg}/${_destination}")
+  endforeach()
+endif()
 
 # Dynamo data
 install(FILES "${TORCH_SRC_DIR}/_dynamo/graph_break_registry.json"

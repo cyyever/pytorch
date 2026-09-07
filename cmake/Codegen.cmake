@@ -133,10 +133,18 @@ if(INTERN_BUILD_ATEN_OPS)
     set(GEN_XPU_FLAG --xpu)
   endif()
 
+  set(AOTI_INSTALL_DIR
+      "${CMAKE_CURRENT_LIST_DIR}/../torch/csrc/inductor/aoti_torch/generated")
+  if(USE_ROCM)
+    set(AOTI_INSTALL_DIR
+        "${PYTORCH_HIPIFY_TORCH_DIR}/csrc/inductor/aoti_torch/generated")
+  endif()
+
   set(GEN_COMMAND
       "${Python_EXECUTABLE}" -m torchgen.gen
       --source-path ${CMAKE_CURRENT_LIST_DIR}/../aten/src/ATen
       --install_dir ${CMAKE_BINARY_DIR}/aten/src/ATen
+      --aoti-install-dir ${AOTI_INSTALL_DIR}
       --headeronly-install-dir ${CMAKE_BINARY_DIR}/torch/headeronly/core
         ${GEN_ROCM_FLAG}
       ${GEN_MPS_FLAG}
@@ -202,6 +210,12 @@ if(INTERN_BUILD_ATEN_OPS)
     if(gen_type STREQUAL "headers")
       list(APPEND OUTPUT_LIST
         "${CMAKE_BINARY_DIR}/torch/headeronly/core/enum_tag.h")
+    endif()
+    if(USE_ROCM AND gen_type STREQUAL "sources")
+      list(APPEND OUTPUT_LIST
+        "${AOTI_INSTALL_DIR}/c_shim_aten.cpp"
+        "${AOTI_INSTALL_DIR}/c_shim_cpu.cpp"
+        "${AOTI_INSTALL_DIR}/c_shim_cuda.cpp")
     endif()
     if(USE_XPU)
       list(APPEND OUTPUT_LIST
