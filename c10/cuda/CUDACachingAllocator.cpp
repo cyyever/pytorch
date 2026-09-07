@@ -160,13 +160,14 @@ namespace Native {
 // counter to track order for Mempool Registration
 static std::atomic<int32_t> registration_counter_global{-1};
 
-static char SHAREABLE_HANDLE_VERSION = 3;
+namespace {
+
+char SHAREABLE_HANDLE_VERSION = 3;
+
 enum ShareableHandleType : char {
   SHAREABLE_CUDA_MALLOC = 'c',
   SHAREABLE_CUDA_EXPANDABLE_SEGMENT = 'e'
 };
-
-namespace {
 
 using stream_set = ska::flat_hash_set<cuda::CUDAStream>;
 
@@ -5395,6 +5396,8 @@ CUDAAllocator* allocator();
 
 } // namespace CudaMallocAsync
 
+// Only backend_static_initializer below names this.
+namespace {
 struct BackendStaticInitializer {
   // Parses the environment configuration for CUDA/ROCm allocator backend at
   // load time. This duplicates some logic from CUDAAllocatorConfig to ensure
@@ -5459,6 +5462,7 @@ struct BackendStaticInitializer {
 #undef HIP_MASQUERADING_AS_CUDA
   }
 };
+} // namespace
 
 std::atomic<CUDAAllocator*> allocator;
 static BackendStaticInitializer backend_static_initializer;

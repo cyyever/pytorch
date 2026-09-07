@@ -182,6 +182,8 @@ void TCPClient::setTimeout(std::chrono::milliseconds value) {
       sizeof(timeoutTV)));
 }
 
+// Private to this file; TCPServer and TCPClient are named from the header.
+namespace {
 class SendBuffer {
   // ethernet mtu 1500 - 40 (ip v6 header) - 20 (tcp header)
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -229,6 +231,7 @@ class SendBuffer {
     }
   }
 };
+} // namespace
 
 } // namespace detail
 
