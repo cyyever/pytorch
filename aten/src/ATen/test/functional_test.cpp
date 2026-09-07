@@ -10,11 +10,14 @@
 namespace {
 
 struct RefOverloadCallable {
-  int operator()(int&) const {
+  int operator()(int& /*value*/) const {
     return 1;
   }
 
-  int operator()(int&&) const {
+  // The overload exists to report which one was selected, so it cannot consume
+  // its argument.
+  // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
+  int operator()(int&& /*value*/) const {
     return 2;
   }
 };
@@ -34,7 +37,38 @@ struct CopyOnly {
   int value;
 };
 
+struct ConstRefCallable {
+  int operator()(const int& value) const {
+    return value;
+  }
+};
+
+struct MutableRefCallable {
+  int operator()(int& value) const {
+    return value;
+  }
+};
+
 } // namespace
+
+// A non-consuming fmap iterates its input as const, so a callable that can only
+// bind a mutable lvalue is rejected at the call instead of deep inside
+// std::invoke_result.
+template <typename R, typename F>
+concept fmappable = requires(const R& inputs, const F& fn) {
+  c10::fmap(inputs, fn);
+};
+static_assert(fmappable<std::vector<int>, ConstRefCallable>);
+static_assert(!fmappable<std::vector<int>, MutableRefCallable>);
+
+TEST(FMapTest, AcceptsARangeWithoutSizeOrMemberBegin) {
+  // A C array is the point of this test: it has no member begin() or size(),
+  // which the pre-ranges fmap required. std::array would not exercise that.
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
+  const int raw[] = {1, 2, 3};
+  auto negated = c10::fmap(raw, [](int x) { return -x; });
+  EXPECT_EQ(negated, (std::vector<int>{-1, -2, -3}));
+}
 
 TEST(FMapTest, RvalueVectorReusesStorageForSameType) {
   std::vector<int> inputs{1, 2, 3};
