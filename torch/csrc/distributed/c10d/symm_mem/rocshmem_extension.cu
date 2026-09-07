@@ -35,6 +35,7 @@
 #include <ATen/hip/cub.cuh>
 
 #include <c10/hip/HIPException.h>
+#include <hipcub/warp/warp_scan.hpp>
 #include <rocshmem/rocshmem.hpp>
 
 using namespace rocshmem;

@@ -810,7 +810,10 @@ if(USE_GLOO)
 
     # Build BFloat16 cuda kernels
     set(GLOO_USE_TORCH_DTYPES 1)
-    set(GLOO_TORCH_DIR ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+    set(GLOO_TORCH_DIR
+      ${PROJECT_SOURCE_DIR}
+      ${PROJECT_SOURCE_DIR}/aten/src
+      ${CMAKE_BINARY_DIR})
 
     # Temporarily override variables to avoid building Gloo tests/benchmarks
     set(__BUILD_TEST ${BUILD_TEST})
@@ -1175,6 +1178,13 @@ if(USE_KINETO)
 
   if(NOT TARGET kineto)
     add_subdirectory("${KINETO_SOURCE_DIR}")
+    if(KINETO_BACKEND STREQUAL "rocm" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      foreach(_kineto_target kineto_base kineto_api)
+        target_compile_options(
+          ${_kineto_target} PRIVATE
+          "--gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
+      endforeach()
+    endif()
     set_property(TARGET kineto PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
   list(APPEND Caffe2_DEPENDENCY_LIBS kineto)

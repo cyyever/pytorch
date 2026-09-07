@@ -302,13 +302,14 @@ std::tuple<at::Tensor, int64_t, int64_t, int64_t, int64_t> _cslt_sparse_mm_impl(
           C_type = CUDA_R_32F;
           break;
         default:
-          TORCH_CHECK(
-              false,
 #ifdef USE_ROCM
-              "Unsupported out_dtype passed, must be float32 for fp8 inputs on ROCm");
+          constexpr auto error_message =
+              "Unsupported out_dtype passed, must be float32 for fp8 inputs on ROCm";
 #else
-              "Unsupported out_dtype passed, must be one of {fp8, fp16, bf16, float32} for fp8 inputs");
+          constexpr auto error_message =
+              "Unsupported out_dtype passed, must be one of {fp8, fp16, bf16, float32} for fp8 inputs";
 #endif
+          TORCH_CHECK(false, error_message);
           break;
       }
     }
