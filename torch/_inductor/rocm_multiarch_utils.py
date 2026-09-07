@@ -1,18 +1,15 @@
-"""
-ROCm Multi-Architecture Support Utilities
-Compile LLVM IR to multi-arch bundles that HIP can load automatically.
-"""
+"""Compile LLVM IR to gfx1201 bundles that HIP can load automatically."""
 
 import logging
 import os
 import re
 import subprocess
 
-import torch
 from torch.utils.cpp_extension import _join_rocm_home, ROCM_HOME
 
 
 log = logging.getLogger(__name__)
+ROCM_TARGET_ARCH = "gfx1201"
 
 
 def get_rocm_compiler() -> str:
@@ -72,36 +69,6 @@ def get_rocm_bundler() -> str:
     return bundler_path
 
 
-def get_rocm_target_archs() -> list[str]:
-    env_archs = os.environ.get("PYTORCH_ROCM_ARCH", "").strip()
-    if env_archs:
-        archs = [arch.strip() for arch in env_archs.replace(";", ",").split(",")]
-        archs = [arch for arch in archs if arch]
-        if archs:
-            # Ensure current device arch is included
-            if torch.cuda.is_available():
-                for dev_idx in range(torch.cuda.device_count()):
-                    current_arch = torch.cuda.get_device_properties(
-                        dev_idx
-                    ).gcnArchName.split(":")[0]
-                    if current_arch not in archs:
-                        archs.append(current_arch)
-            return archs
-
-    try:
-        from torch._inductor import config
-
-        if hasattr(config, "rocm") and hasattr(config.rocm, "target_archs"):
-            archs = config.rocm.target_archs
-            if archs:
-                return archs
-
-    except Exception:
-        pass
-
-    return torch.cuda.get_arch_list()
-
-
 def _sanitize_llvm_ir_for_rocm(llvm_ir_path: str) -> str:
     """
     Sanitize LLVM IR to be compatible with ROCm's clang.
@@ -148,7 +115,7 @@ def compile_llvm_ir_to_code_object(
     Args:
         llvm_ir_path: Path to .ll file
         output_path: Where to write .hsaco file
-        target_arch: Target architecture (e.g., 'gfx950')
+        target_arch: Target architecture (gfx1201 in this fork)
 
     Returns:
         True if successful
@@ -190,21 +157,21 @@ def compile_llvm_ir_to_code_object(
         return False
 
 
-def create_multiarch_bundle(code_objects: dict, output_bundle_path: str) -> bool:
+def create_gfx1201_bundle(code_object_path: str, output_bundle_path: str) -> bool:
     """
-    Bundle multiple architecture code objects into a single multi-arch bundle.
+    Wrap a gfx1201 code object in the offload bundle expected by HIP.
 
-    Uses clang-offload-bundler to create a fat binary that HIP runtime can load.
-    The runtime automatically selects the correct architecture at load time.
+    The host entry and alignment are required by the HIP module loader even
+    though this fork contains only one device architecture.
 
     Args:
-        code_objects: Dict mapping architecture to code object path
+        code_object_path: Path to the gfx1201 code object
         output_bundle_path: Path for output bundle
 
     Returns:
         True if successful
     """
-    if not code_objects:
+    if not os.path.exists(code_object_path):
         return False
 
     os.makedirs(os.path.dirname(output_bundle_path), exist_ok=True)
@@ -214,23 +181,12 @@ def create_multiarch_bundle(code_objects: dict, output_bundle_path: str) -> bool
     except RuntimeError:
         return False
 
-    # Build targets and inputs lists for clang-offload-bundler
-    targets = ["host-x86_64-unknown-linux-gnu"]
-
     # We include a dummy host entry to satisfy the bundler format
-    inputs = ["/dev/null"]
-
-    for arch, path in sorted(code_objects.items()):
-        if not os.path.exists(path):
-            continue
-        # hipv4 = HIP version 4 code object format
-        # amdgcn-amd-amdhsa = target triple for ROCm/HSA runtime
-        # arch = specific GPU (gfx950, gfx1200, etc.)
-        targets.append(f"hipv4-amdgcn-amd-amdhsa--{arch}")
-        inputs.append(path)
-
-    if len(inputs) == 1:  # Only host, no device code
-        return False
+    targets = [
+        "host-x86_64-unknown-linux-gnu",
+        f"hipv4-amdgcn-amd-amdhsa--{ROCM_TARGET_ARCH}",
+    ]
+    inputs = ["/dev/null", code_object_path]
 
     cmd = [
         bundler,
@@ -258,53 +214,37 @@ def create_multiarch_bundle(code_objects: dict, output_bundle_path: str) -> bool
         return False
 
 
-def compile_multiarch_bundle_from_llvm_ir(
-    llvm_ir_path: str, output_bundle_path: str, target_archs: list[str] | None = None
+def compile_gfx1201_bundle_from_llvm_ir(
+    llvm_ir_path: str, output_bundle_path: str
 ) -> bool:
     """
-    Complete workflow: LLVM IR → multiple code objects → bundle.
+    Compile LLVM IR for gfx1201 and wrap it in a HIP offload bundle.
 
-    This is the main entry point for multi-arch compilation.
+    This is the main entry point for packaged ROCm kernel compilation.
 
     Args:
         llvm_ir_path: Path to .ll file
         output_bundle_path: Where to write bundle
-        target_archs: Optional list of architectures
 
     Returns:
         True if successful
     """
-    if target_archs is None:
-        # Get architectures from environment variable or config
-        target_archs = get_rocm_target_archs()
-
-    # Step 1: Compile LLVM IR to code object for each architecture
-    code_objects = {}
     temp_dir = os.path.dirname(output_bundle_path)
     kernel_name = os.path.splitext(os.path.basename(llvm_ir_path))[0]
+    code_object_path = os.path.join(
+        temp_dir, f"{kernel_name}_{ROCM_TARGET_ARCH}.co"
+    )
 
-    for arch in target_archs:
-        # Create temporary single-architecture code object
-        # Format: kernel_name_gfx950.co, kernel_name_gfx1200.co, etc.
-        co_path = os.path.join(temp_dir, f"{kernel_name}_{arch}.co")
-
-        # Compile with clang backend: LLVM IR → GPU machine code
-        if compile_llvm_ir_to_code_object(llvm_ir_path, co_path, arch):
-            code_objects[arch] = co_path
-
-    if not code_objects:
+    if not compile_llvm_ir_to_code_object(
+        llvm_ir_path, code_object_path, ROCM_TARGET_ARCH
+    ):
         return False
 
-    # Step 2: Bundle all code objects together
-    # Uses clang-offload-bundler to create fat binary
-    success = create_multiarch_bundle(code_objects, output_bundle_path)
+    success = create_gfx1201_bundle(code_object_path, output_bundle_path)
 
-    # Step 3: Clean up temporary single-arch code objects
-    # The bundle contains all the code, so intermediates are no longer needed
-    for co_path in code_objects.values():
-        try:
-            os.remove(co_path)
-        except Exception:
-            pass
+    try:
+        os.remove(code_object_path)
+    except OSError:
+        pass
 
     return success

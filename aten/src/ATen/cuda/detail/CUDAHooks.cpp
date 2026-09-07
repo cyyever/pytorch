@@ -368,15 +368,7 @@ std::string CUDAHooks::showConfig() const {
 
   auto printCudaStyleVersion = [&](size_t v) {
 #ifdef USE_ROCM
-    // HIP_VERSION value format was changed after ROCm v4.2 to include the patch number
-    if(v < 500) {
-      // If major=xx, minor=yy then format -> xxyy
-      oss << (v / 100) << '.' << (v % 10);
-    }
-    else {
-      // If major=xx, minor=yy & patch=zzzzz then format -> xxyyzzzzz
-      oss << (v / 10000000) << '.' << (v / 100000 % 100) << '.' << (v % 100000);
-    }
+    oss << (v / 10000000) << '.' << (v / 100000 % 100) << '.' << (v % 100000);
 #else
     oss << (v / 1000) << '.' << (v / 10 % 100);
     if (v % 10 != 0) {
@@ -491,21 +483,12 @@ bool CUDAHooks::isGPUArch(const std::vector<std::string>& archs, DeviceIndex dev
 }
 
 const std::vector<std::string>& CUDAHooks::getHipblasltPreferredArchs() const {
-  static const std::vector<std::string> archs = {
-    "gfx1200", "gfx1201",
-    "gfx950",
-    "gfx1151",
-    "gfx1250",
-  };
+  static const std::vector<std::string> archs = {"gfx1201"};
   return archs;
 }
 
 const std::vector<std::string>& CUDAHooks::getHipblasltSupportedArchs() const {
-  static const std::vector<std::string> archs = {
-    "gfx1200", "gfx1201",
-    "gfx950", "gfx1151",
-    "gfx1250"
-  };
+  static const std::vector<std::string> archs = {"gfx1201"};
   return archs;
 }
 #endif

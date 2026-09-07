@@ -201,17 +201,7 @@ inline int cublasLtMatmulScaleMode(
       return CUBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3;
     case at::blas::ScalingType::RowWise:
       TORCH_CHECK(scale_dtype == kFloat);
-#if !defined(USE_ROCM) || defined(HIPBLASLT_OUTER_VEC)
       return CUBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;
-#elif defined(USE_ROCM) && defined(HIPBLASLT_VEC_EXT)
-      // Old hipBLASLt rowwise mode is activated through SCALE_POINTER_VEC_EXT.
-      return 0;
-#else
-      TORCH_CHECK(
-          false,
-          "scaled_gemm with rowwise scaling requires hipBLASLt with outer-vec "
-          "or vec-ext support");
-#endif
     case at::blas::ScalingType::BlockWise1x128:
       TORCH_CHECK(scale_dtype == kFloat);
       TORCH_CHECK(

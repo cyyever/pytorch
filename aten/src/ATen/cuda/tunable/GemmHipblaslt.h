@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <ATen/cuda/CUDABlasLtHandle.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/CUDABlasWorkspace.h>
 #include <ATen/cuda/CUDADataType.h>
@@ -524,31 +525,14 @@ class HipblasltGemmOp : public Callable<ParamsT> {
       const void* mat2_scale_ptr = GetBScalePointerFromParams<CT>(params);
       const void* result_scale_ptr = GetDScalePointerFromParams<CT>(params);
       if (mat1_scale_ptr && mat2_scale_ptr) {
-        // Only RowWise sets a scale mode below, so BlockWise1x32 block scales
-        // arrive with no mode set and are not read as e8m0 blocks: these
-        // candidates are numerically wrong for MX FP8 in either swizzle layout.
-        // (MX FP4 never gets here; no TUNABLE_DISPATCH branch matches its
-        // dtype.) A wrong candidate wins silently, since the numerical check is
-        // off by default. Pre-existing; MX FP8 should stay on the Default op,
-        // which sets the mode via cublasLtMatmulScaleMode.
-        hipblasLtMatmulDescAttributes_t a_scale_ptr_desc = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
-        hipblasLtMatmulDescAttributes_t b_scale_ptr_desc = HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
         if (GetAScalingTypeFromParams<CT>(params) == ScalingType::RowWise) {
-#if defined(HIPBLASLT_OUTER_VEC)
           matmul.setAttribute(HIPBLASLT_MATMUL_DESC_A_SCALE_MODE, HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F);
-#elif defined(HIPBLASLT_VEC_EXT)
-          a_scale_ptr_desc = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT;
-#endif
         }
         if (GetBScalingTypeFromParams<CT>(params) == ScalingType::RowWise) {
-#if defined(HIPBLASLT_OUTER_VEC)
           matmul.setAttribute(HIPBLASLT_MATMUL_DESC_B_SCALE_MODE, HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F);
-#elif defined(HIPBLASLT_VEC_EXT)
-          b_scale_ptr_desc = HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT;
-#endif
         }
-        matmul.setAttribute(a_scale_ptr_desc, mat1_scale_ptr);
-        matmul.setAttribute(b_scale_ptr_desc, mat2_scale_ptr);
+        matmul.setAttribute(HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER, mat1_scale_ptr);
+        matmul.setAttribute(HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER, mat2_scale_ptr);
       }
       if (result_scale_ptr) {
         matmul.setAttribute(HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, result_scale_ptr);

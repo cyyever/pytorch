@@ -22,8 +22,6 @@
 #include <rocblas/rocblas.h>
 #include <ATen/native/hip/ck_gemm.h>
 #include <ATen/native/hip/ck_bgemm.h>
-#define PYTORCH_ROCBLAS_VERSION_DECIMAL (ROCBLAS_VERSION_MAJOR * 100 + ROCBLAS_VERSION_MINOR)
-#define USE_GEMM_FLAGS_FP16_ALT_IMPL (PYTORCH_ROCBLAS_VERSION_DECIMAL >= 242)
 // needed to work around calling rocblas API instead of hipblas API
 static rocblas_operation hipOperationToRocOperation(hipblasOperation_t op)
 {
@@ -71,27 +69,6 @@ static hipblasStatus_t rocBLASStatusToHIPStatus(rocblas_status error)
 }
 // hipblas does not have hipblasSetMathMode
 #define hipblasSetMathMode(handle, flags) HIPBLAS_STATUS_SUCCESS
-// until we use hiblas v2
-// hipify correctly maps things like CUDA_R_16F to HIP_R_16F,
-// however hipblas v1 is still using its custom type
-#ifndef HIPBLAS_V2
-#define HIP_R_16F  HIPBLAS_R_16F
-#define HIP_R_32F  HIPBLAS_R_32F
-#define HIP_R_64F  HIPBLAS_R_64F
-#define HIP_C_16F  HIPBLAS_C_16F
-#define HIP_C_32F  HIPBLAS_C_32F
-#define HIP_C_64F  HIPBLAS_C_64F
-#define HIP_R_8I   HIPBLAS_R_8I
-#define HIP_R_8U   HIPBLAS_R_8U
-#define HIP_R_32I  HIPBLAS_R_32I
-#define HIP_R_32U  HIPBLAS_R_32U
-#define HIP_C_8I   HIPBLAS_C_8I
-#define HIP_C_8U   HIPBLAS_C_8U
-#define HIP_C_32I  HIPBLAS_C_32I
-#define HIP_C_32U  HIPBLAS_C_32U
-#define HIP_R_16BF HIPBLAS_R_16B
-#define HIP_C_16BF HIPBLAS_C_16B
-#endif
 #endif
 
 #define CUDABLAS_POSINT_CHECK(FD, X)         \
@@ -582,12 +559,11 @@ inline void bgemm_internal_cublas_half_helper(CUDABLAS_BGEMM_ARGTYPES_AND_C_DTYP
   void * beta_ptr = &fbeta;
 #ifdef USE_ROCM
   auto raw_handle = static_cast<cublasHandle_t>(handle);
-  int flag = 0;
+  int flag = at::ROCmBackwardPassGuard::is_backward_pass()
+      ? rocblas_gemm_flags_fp16_alt_impl
+      : 0;
   rocblas_datatype c_type = std::is_same<C_Dtype, float>::value ? rocblas_datatype_f32_r : rocblas_datatype_f16_r;
   rocblas_datatype d_type = c_type;
-#if USE_GEMM_FLAGS_FP16_ALT_IMPL
-  flag = at::ROCmBackwardPassGuard::is_backward_pass() ? rocblas_gemm_flags_fp16_alt_impl : 0;
-#endif
   TORCH_CUDABLAS_CHECK(rocBLASStatusToHIPStatus(rocblas_gemm_strided_batched_ex(
                                     reinterpret_cast<rocblas_handle>(raw_handle),
                                    hipOperationToRocOperation(opa),
@@ -1038,12 +1014,11 @@ inline void gemm_internal_cublas_half_helper(CUDABLAS_GEMM_ARGTYPES_AND_C_DTYPE(
   GEMM_CHECK_ARGVALUES(at::Half);
 #ifdef USE_ROCM
   auto raw_handle = static_cast<cublasHandle_t>(handle);
-  int flag = 0;
+  int flag = at::ROCmBackwardPassGuard::is_backward_pass()
+      ? rocblas_gemm_flags_fp16_alt_impl
+      : 0;
   rocblas_datatype c_type = std::is_same<C_Dtype, float>::value ? rocblas_datatype_f32_r : rocblas_datatype_f16_r;
   rocblas_datatype d_type = c_type;
-#if USE_GEMM_FLAGS_FP16_ALT_IMPL
-  flag = at::ROCmBackwardPassGuard::is_backward_pass() ? rocblas_gemm_flags_fp16_alt_impl : 0;
-#endif
   TORCH_CUDABLAS_CHECK(rocBLASStatusToHIPStatus(rocblas_gemm_ex(
       reinterpret_cast<rocblas_handle>(raw_handle),
       hipOperationToRocOperation(opa),
@@ -1223,11 +1198,7 @@ void gemm_internal<float>(CUDABLAS_GEMM_ARGTYPES(float))
   }
 #if defined(USE_ROCM) && defined(USE_ROCM_CK_GEMM)
   else if (at::globalContext().blasPreferredBackend() == BlasBackend::Ck) {
-    if (at::detail::getCUDAHooks().isGPUArch({"gfx11", "gfx12"})) { //no CK GEMM version
-      gemm_internal_cublaslt<float>(CUDABLAS_GEMM_ARGS(float));
-    } else{
-      at::native::gemm_internal_ck<float>(CUDABLAS_GEMM_ARGS(float));
-    }
+    gemm_internal_cublaslt<float>(CUDABLAS_GEMM_ARGS(float));
   }
 #endif
   else {
@@ -1859,29 +1830,8 @@ void scaled_gemm(
   CuBlasLtMatmulDescriptor computeDesc(computeType, scaleType);
   computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_TRANSA, detail::cublasOpFromChar(transa));
   computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_TRANSB, detail::cublasOpFromChar(transb));
-  cublasLtMatmulDescAttributes_t matmulDescA = CUBLASLT_MATMUL_DESC_A_SCALE_POINTER;
-  cublasLtMatmulDescAttributes_t matmulDescB = CUBLASLT_MATMUL_DESC_B_SCALE_POINTER;
-#if defined(USE_ROCM) && !defined(HIPBLASLT_OUTER_VEC) && defined(HIPBLASLT_VEC_EXT)
-  // hipblaslt supported row-wise before cublas, and did so their own way (via
-  // the SCALE_POINTERSs), but then migrated to match how cublas does it (via
-  // the SCALE_MODEs). Here we check for this early custom mode.
-  bool use_rowwise = (mat1_scaling_type == ScalingType::RowWise && mat2_scaling_type == ScalingType::RowWise);
-  if (use_rowwise) {
-    matmulDescA = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT;
-    matmulDescB = HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT;
-  }
-  else if (mat1_scale_dtype == kFloat8_e8m0fnu && mat2_scale_dtype == kFloat8_e8m0fnu) {
-    std::vector<std::string> mx_archs{"gfx950", "gfx1250"};
-    if (at::detail::getCUDAHooks().isGPUArch(mx_archs)) {
-      // TODO: add constraints based on hipblaslt internals
-      TORCH_CHECK((m % 16 == 0) && (n % 16 == 0) && (k % 128 == 0),
-                 "M, N must be multiples of 16 and K should be multiple of 128 for MX format. "
-                 "Got m=", m, ", n=", n, ", k=", k);
-    }
-  }
-#endif  // if defined(USE_ROCM) && !defined(HIPBLASLT_OUTER_VEC) && defined(HIPBLASLT_VEC_EXT)
-  computeDesc.setAttribute(matmulDescA, mat1_scale_ptr);
-  computeDesc.setAttribute(matmulDescB, mat2_scale_ptr);
+  computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_A_SCALE_POINTER, mat1_scale_ptr);
+  computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_B_SCALE_POINTER, mat2_scale_ptr);
   if (result_scale_ptr != nullptr) {
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_D_SCALE_POINTER, result_scale_ptr);
   }
@@ -1964,7 +1914,6 @@ void scaled_gemm(
 
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_A_SCALE_MODE, a_scale_mode);
     computeDesc.setAttribute(CUBLASLT_MATMUL_DESC_B_SCALE_MODE, b_scale_mode);
-#endif // if !defined(USE_ROCM) || defined(HIPBLASLT_OUTER_VEC)
 
   CuBlasLtMatmulPreference preference;
   auto ltworkspace = CublasLtWorkspace();

@@ -5,6 +5,7 @@
 
 #define ROCBLAS_BETA_FEATURES_API
 
+#include <ATen/cuda/CUDABlasHandle.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/cuda/tunable/TunableOp.h>
 #include <ATen/cuda/tunable/GemmCommon.h>

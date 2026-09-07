@@ -133,23 +133,15 @@ inline __host__ __device__ uint32_t getAlignmentRoundUp(const void* p) {
 
 #if defined(USE_ROCM) || defined(CUDA_VERSION)
 
-#if defined(USE_ROCM)
-// TODO: Support RDNA
-constexpr int32_t kWarpSize = 64;
+constexpr int32_t kWarpSize = 32;
 
+#if defined(USE_ROCM)
 template<typename T, uint32_t Rank>
 using VecT = T __attribute__((ext_vector_type(Rank)));
 
-static bool isCDNA4orLater(int index) {
-    return at::detail::getCUDAHooks().isGPUArch({"gfx950"}, index);
+static bool isGFX1201(int index) {
+  return at::detail::getCUDAHooks().isGPUArch({"gfx1201"}, index);
 }
-
-static bool isCDNA5orLater(int index) {
-  return at::detail::getCUDAHooks().isGPUArch({"gfx1250"}, index);
-}
-
-#else
-constexpr int32_t kWarpSize = 32;
 #endif
 
 // f16 vector types
@@ -187,36 +179,16 @@ struct __align__(16) bf16x8 {
 };
 
 // bf162 vector types
-struct __align__(4) bf16x2x1 {
-  __nv_bfloat162 vals[1];
-};
-
-struct __align__(8) bf16x2x2 {
-  __nv_bfloat162 vals[2];
-};
-
 struct __align__(16) bf16x2x4 {
   __nv_bfloat162 vals[4];
 };
 
 struct __align__(16) bf16x2x4_u32 {
 #if defined(USE_ROCM)
-  VecT<short, 4> val[2];
+  VecT<short, 8> val;
 #else
   uint32_t vals[4];
 #endif
-};
-
-struct __align__(8) bf16x2x2_u32 {
-#if defined(USE_ROCM)
-  VecT<short, 4> val;
-#else
-  uint32_t vals[2];
-#endif
-};
-
-struct __align__(4) bf16x2x1_u32 {
-  uint32_t vals[1];
 };
 
 template <typename T, int N>
@@ -328,15 +300,11 @@ struct ALayout_RM {
       int32_t kTiles,
       int32_t kTileStart,
       int32_t laneId,
-#if defined(USE_ROCM)
-      bf16x2x2_u32 out[KTilesToLoad]
-#else
       bf16x2x4_u32 out[KTilesToLoad]
-#endif
   ) {
 #if defined(USE_ROCM)
     const auto mLane = mTile * kMTileSize + (laneId % kMTileSize);
-    const auto kLane = kTileStart * kKTileSize + (laneId / kMTileSize) * 4;
+    const auto kLane = kTileStart * kKTileSize + (laneId / kMTileSize) * 8;
 #else
     const auto mLane = mTile * kMTileSize + (laneId / 4);
     const auto kLane = kTileStart * kKTileSize + (laneId % 4) * 2;
@@ -357,7 +325,9 @@ struct ALayout_RM {
 #pragma unroll
     for (int i = 0; i < KTilesToLoad; ++i) {
 #if defined(USE_ROCM)
-      out[i].val = m0InBounds ? *((VecT<short, 4> *)(aPtr + i * kKTileSize)) : VecT<short, 4>{0, 0, 0, 0};
+      out[i].val = m0InBounds
+          ? *reinterpret_cast<const VecT<short, 8>*>(aPtr + i * kKTileSize)
+          : VecT<short, 8>{0, 0, 0, 0, 0, 0, 0, 0};
 #else
       out[i].vals[0] = m0InBounds
           ? *reinterpret_cast<const uint32_t*>(aPtr + i * kKTileSize)
@@ -385,12 +355,16 @@ struct ALayout_RM {
       int32_t nOutTiles,
       int32_t nTile,
       int32_t laneId,
+#if defined(USE_ROCM)
+      const VecT<float, 8>& out) {
+#else
       const float4& out) {
+#endif
     static_assert(ReduceType == KReductionType::None);
 
     if constexpr (ReduceType == KReductionType::None) {
 #if defined(USE_ROCM)
-      const int outRow = mTile * kMTileSize + (laneId / kNTileSize) * 4;
+      const int outRow = mTile * kMTileSize + (laneId / kNTileSize) * 8;
       const int outCol = nTile * kNTileSize + (laneId % kNTileSize);
 #else
       // sum.x / sum.y are written at
@@ -406,14 +380,12 @@ struct ALayout_RM {
       auto cPtr = reinterpret_cast<__nv_bfloat16*>(C) + outRow * n + outCol;
 
 #if defined(USE_ROCM)
-      if (outRow < m)
-        cPtr[0] = __float2bfloat16(out.x);
-      if ((outRow + 1) < m)
-        cPtr[n] = __float2bfloat16(out.y);
-      if ((outRow + 2) < m)
-        cPtr[2*n] = __float2bfloat16(out.z);
-      if ((outRow + 3) < m)
-        cPtr[3*n] = __float2bfloat16(out.w);
+#pragma unroll
+      for (int i = 0; i < 8; ++i) {
+        if (outRow + i < m) {
+          cPtr[i * n] = __float2bfloat16(out[i]);
+        }
+      }
 #else
       auto v01 = __float22bfloat162_rn(float2{out.x, out.y});
       auto v23 = __float22bfloat162_rn(float2{out.z, out.w});
@@ -465,7 +437,20 @@ struct BLayout_TC_int4 {
       int32_t kTiles,
       int32_t kTileStart,
       int32_t laneId,
+#if defined(USE_ROCM)
+      bf16x2x4_u32 out[KTilesToLoad / InnerKTiles][InnerKTiles]) {
+#else
       bf16x2x4_u32 out[KTilesToLoad / InnerKTiles][InnerKTiles / 2]) {
+#endif
+#if defined(USE_ROCM)
+    auto bPtr = reinterpret_cast<const int32_t*>(B) +
+        (((nTile * (kTiles / InnerKTiles) + (kTileStart / InnerKTiles)) *
+          kWarpSize) +
+         laneId) *
+            InnerKTiles;
+
+    int32_t b_int4[KTilesToLoad / InnerKTiles][InnerKTiles];
+#else
     // offset [nTile][kTileStart / InnerKTiles][laneId][0]
     auto bPtr = reinterpret_cast<const int32_t*>(B) +
         (((nTile * (kTiles / InnerKTiles) + (kTileStart / InnerKTiles)) *
@@ -474,9 +459,17 @@ struct BLayout_TC_int4 {
             (InnerKTiles / 2);
 
     int32_t b_int4[KTilesToLoad / InnerKTiles][InnerKTiles / 2];
+#endif
 
 #pragma unroll
     for (int i = 0; i < KTilesToLoad / InnerKTiles; ++i) {
+#if defined(USE_ROCM)
+      auto bPtrCur = bPtr + i * kWarpSize * InnerKTiles;
+#pragma unroll
+      for (int j = 0; j < InnerKTiles; ++j) {
+        b_int4[i][j] = bPtrCur[j];
+      }
+#else
       auto bPtrCur = bPtr + i * kWarpSize * (InnerKTiles / 2);
 
       if constexpr (InnerKTiles == 2) {
@@ -504,6 +497,7 @@ struct BLayout_TC_int4 {
         b_int4[i][2] = load16.z;
         b_int4[i][3] = load16.w;
       }
+#endif
     }
 
     // Load needed info for dequantization
@@ -559,10 +553,18 @@ struct BLayout_TC_int4 {
 #pragma unroll
       for (int i = 0; i < KTilesToLoad / InnerKTiles; ++i) {
 #pragma unroll
+#if defined(USE_ROCM)
+        for (int j = 0; j < InnerKTiles; ++j) {
+#else
         for (int j = 0; j < InnerKTiles / 2; ++j) {
+#endif
           bf16x2x4 v = convert_i4x8_to_bf16x2x4(b_int4[i][j]);
 
+#if defined(USE_ROCM)
+          int curKTile = i * InnerKTiles + j;
+#else
           int curKTile = i * InnerKTiles + j * 2;
+#endif
           int curQGroup = (curKTile * kKTileSize) / QGroupSize;
 
           // The dequantized values in `v` for a given lane have the same n
@@ -619,10 +621,6 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
     int32_t kTiles) {
   constexpr int32_t kMTileSize = 16;
 #if defined(USE_ROCM)
-  if (!__builtin_amdgcn_is_invocable(__builtin_amdgcn_mfma_f32_16x16x16bf16_1k)) {
-    printf("__builtin_amdgcn_mfma_f32_16x16x16bf16_1k is only supported on AMD gpu arch greater than or equal to CDNA4\n");
-    return;
-  }
   constexpr int32_t kNTileSize = 16;
 #else
   constexpr int32_t kNTileSize = 8;
@@ -659,7 +657,7 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
   int32_t nTile = blockIdx.y;
 
 #if defined(USE_ROCM)
-  VecT<float, 4> c{0.0f, 0.0f, 0.0f, 0.0f};
+  VecT<float, 8> c{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 #else
   float4 c{0.0f, 0.0f, 0.0f, 0.0f};
 #endif
@@ -674,11 +672,7 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
     //
     // Load data from A
     //
-#if defined(USE_ROCM)
-    bf16x2x2_u32 a[KTilesPerIteration];
-#else
     bf16x2x4_u32 a[KTilesPerIteration];
-#endif
     ALayout::template load<KTilesPerIteration>(
         A, m, k, mTiles, mTile, kTiles, kTileBase, laneId, a);
 
@@ -686,7 +680,11 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
     // Load data from B and de-quantize as needed
     // Each k-tile is bf16x2x2
     //
+#if defined(USE_ROCM)
+    bf16x2x4_u32 b[KTilesPerIteration / kInnerKTiles][kInnerKTiles];
+#else
     bf16x2x4_u32 b[KTilesPerIteration / kInnerKTiles][kInnerKTiles / 2];
+#endif
     BLayout::template load<KTilesPerIteration>(
         B,
         B_quantizationInfo,
@@ -706,40 +704,40 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
     // We accumulate across k-tiles here
 #pragma unroll
     for (int i = 0; i < KTilesPerIteration / kInnerKTiles; ++i) {
+#if defined(USE_ROCM)
+#pragma unroll
+      for (int j = 0; j < kInnerKTiles; ++j) {
+        VecT<float, 8> cTmp{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+// __gfx1201__ exists only in the device pass, so the host pass must fall
+// through; __amdgcn_processor__ marks the device pass, where an arch without
+// the builtin has to be an error rather than a silently zero accumulator.
+#if defined(__gfx1200__) || defined(__gfx1201__)
+        cTmp = __builtin_amdgcn_wmma_f32_16x16x16_bf16_w32_gfx12(
+            a[i * kInnerKTiles + j].val, b[i][j].val, cTmp);
+#elif defined(__amdgcn_processor__)
+#error "int4mm: no WMMA builtin for this AMD GPU target"
+#endif
+#pragma unroll
+        for (int k = 0; k < 8; ++k) {
+          c[k] += cTmp[k];
+        }
+      }
+#else
       static_assert(isEvenDivisor(kInnerKTiles, 2) && kInnerKTiles >= 2);
 #pragma unroll
       for (int j = 0; j < kInnerKTiles / 2; ++j) {
         // We don't simply accumulate into `c` as this creates a too-strong
         // execution dependency. Instead, we only periodically accumulate into
         // `c`
-#if defined(USE_ROCM)
-        // TODO: revisit this, we should not be diverging around the use of
-        //       vectors, it is possible to obtain the underlying native vector
-        //       type and feed it into the builtin.
-        VecT<float, 4> cTmp[2];
-#else
         float4 cTmp[2];
-#endif
 
 #pragma unroll
         for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM)
-          cTmp[k] = VecT<float, 4>{0.0f, 0.0f, 0.0f, 0.0f};
-#else
           cTmp[k] = float4{0.0f, 0.0f, 0.0f, 0.0f};
-#endif
         }
 
 #pragma unroll
         for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM)
-          if (__builtin_amdgcn_is_invocable(__builtin_amdgcn_mfma_f32_16x16x16bf16_1k)) {
-            cTmp[k] = __builtin_amdgcn_mfma_f32_16x16x16bf16_1k(
-                a[i * kInnerKTiles + j * 2 + k].val,
-                b[i][(j * 2 + k) / 2].val[((j * 2 + k) % 2)],
-                cTmp[k], 0, 0, 0);
-          }
-#elif !defined(USE_ROCM)
           asm volatile(
               "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
               "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};"
@@ -757,24 +755,17 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
                 "f"(cTmp[k].y),
                 "f"(cTmp[k].z),
                 "f"(cTmp[k].w));
-#endif
         }
 
 #pragma unroll
         for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM)
-          c[0] += cTmp[k][0];
-          c[1] += cTmp[k][1];
-          c[2] += cTmp[k][2];
-          c[3] += cTmp[k][3];
-#else
           c.x += cTmp[k].x;
           c.y += cTmp[k].y;
           c.z += cTmp[k].z;
           c.w += cTmp[k].w;
-#endif
         }
       }
+#endif
     }
   } // for all tiles under kTilesLimit
 
@@ -789,15 +780,15 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
   // If we have any remainder k-tiles, some warps will handle them, processing
   // kInnerKTiles k-tiles at a time
   if (kTileBaseRemaining < kTiles) {
-#if defined(USE_ROCM)
-    bf16x2x2_u32 a[kInnerKTiles];
-#else
     bf16x2x4_u32 a[kInnerKTiles];
-#endif
     ALayout::template load<kInnerKTiles>(
         A, m, k, mTiles, mTile, kTiles, kTileBaseRemaining, laneId, a);
 
+#if defined(USE_ROCM)
+    bf16x2x4_u32 b[1][kInnerKTiles];
+#else
     bf16x2x4_u32 b[1][kInnerKTiles / 2];
+#endif
     BLayout::template load<kInnerKTiles>(
         B,
         B_quantizationInfo,
@@ -810,36 +801,36 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
         laneId,
         b);
 
+#if defined(USE_ROCM)
+#pragma unroll
+    for (int j = 0; j < kInnerKTiles; ++j) {
+      VecT<float, 8> cTmp{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+#if defined(__gfx1200__) || defined(__gfx1201__)
+      cTmp = __builtin_amdgcn_wmma_f32_16x16x16_bf16_w32_gfx12(
+          a[j].val, b[0][j].val, cTmp);
+#elif defined(__amdgcn_processor__)
+#error "int4mm: no WMMA builtin for this AMD GPU target"
+#endif
+#pragma unroll
+      for (int k = 0; k < 8; ++k) {
+        c[k] += cTmp[k];
+      }
+    }
+#else
 #pragma unroll
     for (int j = 0; j < kInnerKTiles / 2; ++j) {
       // We don't simply accumulate into `c` as this creates a too-strong
       // execution dependency. Instead, we only periodically accumulate into
       // `c`
-#if defined(USE_ROCM)
-      VecT<float, 4> cTmp[2];
-#else
       float4 cTmp[2];
-#endif
 
 #pragma unroll
       for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM)
-        cTmp[k] = VecT<float, 4>{0.0f, 0.0f, 0.0f, 0.0f};
-#else
         cTmp[k] = float4{0.0f, 0.0f, 0.0f, 0.0f};
-#endif
       }
 
 #pragma unroll
       for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM)
-        if (__builtin_amdgcn_is_invocable(__builtin_amdgcn_mfma_f32_16x16x16bf16_1k)) {
-          cTmp[k] = __builtin_amdgcn_mfma_f32_16x16x16bf16_1k(
-            a[j * 2 + k].val,
-            b[0][(j * 2 + k) / 2].val[((j * 2 + k) % 2)],
-            cTmp[k], 0, 0, 0);
-        }
-#elif !defined(USE_ROCM)
         asm volatile(
             "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
             "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%10,%11,%12,%13};"
@@ -854,55 +845,57 @@ __launch_bounds__(Warps* kWarpSize) void tinygemm_m16n8k16_chunk_kernel(
               "f"(cTmp[k].y),
               "f"(cTmp[k].z),
               "f"(cTmp[k].w));
-#endif
       }
 
 #pragma unroll
       for (int k = 0; k < 2; ++k) {
-#if defined(USE_ROCM)
-        c[0] += cTmp[k][0];
-        c[1] += cTmp[k][1];
-        c[2] += cTmp[k][2];
-        c[3] += cTmp[k][3];
-#else
         c.x += cTmp[k].x;
         c.y += cTmp[k].y;
         c.z += cTmp[k].z;
         c.w += cTmp[k].w;
-#endif
       }
     }
+#endif
   }
 
   //
   // Reduce independent k-tiles (same m/n) across warps
   //
+#if defined(USE_ROCM)
+  __shared__ VecT<float, 8> smem_sum[Warps][kWarpSize];
+#else
   __shared__ float4 smem_sum[Warps][kWarpSize];
+#endif
 
   // FIXME: this likely doesn't need to be a true reduction tree, can just be a
   // serial sum, maybe (unless nvcc/ptxas goes back to its old ways)
   // smem_sum[warpId][laneId] = TreeReduce4<KTilesPerIteration>::reduce(c);
-#if defined(USE_ROCM)
-  smem_sum[warpId][laneId].x = c[0];
-  smem_sum[warpId][laneId].y = c[1];
-  smem_sum[warpId][laneId].z = c[2];
-  smem_sum[warpId][laneId].w = c[3];
-#else
   smem_sum[warpId][laneId] = c;
-#endif
 
   __syncthreads();
 
   if (warpId == 0) {
+#if defined(USE_ROCM)
+    VecT<float, 8> sum_f32{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+#else
     float4 sum_f32{0.0f, 0.0f, 0.0f, 0.0f};
+#endif
 
     // Reduce across the block in the first warp
     for (int i = 0; i < Warps; ++i) {
+#if defined(USE_ROCM)
+      auto v = smem_sum[i][laneId];
+#pragma unroll
+      for (int j = 0; j < 8; ++j) {
+        sum_f32[j] += v[j];
+      }
+#else
       float4 v = smem_sum[i][laneId];
       sum_f32.x += v.x;
       sum_f32.y += v.y;
       sum_f32.z += v.z;
       sum_f32.w += v.w;
+#endif
     }
 
     // Write the reduced result (in the first warp) into the output
@@ -1011,9 +1004,13 @@ static __global__ void matrix_to_m16n8k16_Bint4_layout(
   auto nTile = blockIdx.y;
   auto t = threadIdx.x;
 
-  // Two k-tiles are packed into an int32 at a time
+  // Pack the values consumed by each lane into int32 words.
 #pragma unroll
+#if defined(USE_ROCM)
+  for (int innerKTile = 0; innerKTile < InnerKTiles; ++innerKTile) {
+#else
   for (int innerKTile = 0; innerKTile < InnerKTiles; innerKTile += 2) {
+#endif
     // n dimension that this lane loads from
 #if defined(USE_ROCM)
     auto n0 = nTile * kNTileSize + (t % kNTileSize);
@@ -1026,16 +1023,16 @@ static __global__ void matrix_to_m16n8k16_Bint4_layout(
     // Four uint8 are packed into an int32
     int32_t ks[4];
 
-    auto kBase0 = (kOuterTile * InnerKTiles + innerKTile) * kKTileSize / 2;
-
 #if defined(USE_ROCM)
-    ks[0] = kBase0 + (t / kNTileSize) * 2;
+    auto kBase0 =
+        (kOuterTile * InnerKTiles + innerKTile) * kKTileSize / 2;
+    ks[0] = kBase0 + (t / kNTileSize) * 4;
     ks[1] = ks[0] + 1;
-
-    auto kBase1 = kBase0 + kKTileSize / 2;
-    ks[2] = kBase1 + (t / kNTileSize) * 2;
-    ks[3] = ks[2] + 1;
+    ks[2] = ks[0] + 2;
+    ks[3] = ks[0] + 3;
 #else
+    auto kBase0 =
+        (kOuterTile * InnerKTiles + innerKTile) * kKTileSize / 2;
     ks[0] = kBase0 + t % 4;
     ks[1] = ks[0] + 4;
 
@@ -1069,14 +1066,14 @@ static __global__ void matrix_to_m16n8k16_Bint4_layout(
 
     // inner k-tiles pack two at a time
 #if defined(USE_ROCM)
-    // The output tensor shape is [ceil(n / 8)][ceil(k / (InnerKTiles * 16))][32][InnerKTiles / 2], which is specific to Nvidia
-    // But AMD needs [ceil(n / 16)][ceil(k / (InnerKTiles * 16))][64][InnerKTiles / 2]
-    // So construct the pointer accordingly
+    // The public packed shape has twice as many N tiles and half as many
+    // per-lane words as the native wave32 layout. Reinterpret the same storage
+    // as [ceil(n / 16)][k super tiles][32 lanes][InnerKTiles].
     auto bPtr = out.data() +
-      ((nTile * out.size(1) * kWarpSize * (InnerKTiles / 2)) +
-        (kOuterTile * kWarpSize * (InnerKTiles / 2)) +
-          (t * (InnerKTiles / 2)) +
-            (innerKTile / 2));
+      ((nTile * out.size(1) * kWarpSize * InnerKTiles) +
+        (kOuterTile * kWarpSize * InnerKTiles) +
+          (t * InnerKTiles) +
+            innerKTile);
     *bPtr = pack;
 #else
     out[nTile][kOuterTile][t][innerKTile / 2] = pack;
@@ -1098,14 +1095,9 @@ at::Tensor _weight_int4pack_mm_cuda(
       A.device() == B.device() && A.device() == qScaleAndZeros.device());
 
 #if defined(USE_ROCM)
-  if (isCDNA5orLater(A.device().index())) {
-    TORCH_CHECK(false,
-                "_weight_int4pack_mm_cuda is not yet supported on gfx1250. "
-                "A WMMA-based implementation is required for gfx1250.");
-  }
-  if (!isCDNA4orLater(A.device().index())) {
-    TORCH_CHECK(false, "_weight_int4pack_mm_cuda is only supported on AMD gpu arch greater than or equal to CDNA4");
-  }
+  TORCH_CHECK(
+      isGFX1201(A.device().index()),
+      "_weight_int4pack_mm_cuda is supported only on gfx1201 in this build");
 #endif
 
   constexpr int32_t kMTileSize = 16;
@@ -1297,14 +1289,9 @@ at::Tensor _convert_weight_to_int4pack_cuda(
   TORCH_CHECK(innerKTiles == 2 || innerKTiles == 4 || innerKTiles == 8);
 
 #if defined(USE_ROCM)
-  if (isCDNA5orLater(in.device().index())) {
-    TORCH_CHECK(false,
-                "_convert_weight_to_int4pack_cuda is not yet supported on gfx1250. "
-                "A WMMA-based implementation is required for gfx1250.");
-  }
-  if (!isCDNA4orLater(in.device().index())) {
-    TORCH_CHECK(false, "_convert_weight_to_int4pack_cuda is only supported on AMD gpu arch greater than or equal to CDNA4");
-  }
+  TORCH_CHECK(
+      isGFX1201(in.device().index()),
+      "_convert_weight_to_int4pack_cuda is supported only on gfx1201 in this build");
   constexpr int32_t kNTileSize = 16;
 #else
   constexpr int32_t kNTileSize = 8;

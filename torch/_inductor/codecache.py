@@ -771,7 +771,7 @@ class FxGraphCachePickler(pickle.Pickler):
         # First encounter: probe whether the default reduce protocol works.
         try:
             result = obj.__reduce_ex__(pickle.DEFAULT_PROTOCOL)
-        except TypeError, AttributeError, pickle.PicklingError:
+        except (TypeError, AttributeError, pickle.PicklingError):
             self._pickleable_type_cache[t] = False
             return self._reduce_unpicklable(obj)
         except RuntimeError as e:
@@ -3313,35 +3313,33 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                         )
 
                     else:
-                        # ROCm multi-arch: compile LLVM IR to multi-arch bundle
+                        # Package the gfx1201 code object in the bundle HIP expects.
                         from torch._inductor.rocm_multiarch_utils import (
-                            compile_multiarch_bundle_from_llvm_ir,
+                            compile_gfx1201_bundle_from_llvm_ir,
                         )
 
                         # pyrefly: ignore [unbound-name]
                         if not os.path.exists(asm_file):
                             raise RuntimeError(
-                                f"Multi-arch ROCm compilation requires LLVM IR file, "
+                                f"gfx1201 ROCm compilation requires LLVM IR file, "
                                 # pyrefly: ignore [unbound-name]
                                 f"but {asm_file} not found. "
                                 f"Ensure asm_type='ll' is captured in triton_heuristics.py"
                             )
 
-                        # Compile for multiple archs and bundle them
-                        success = compile_multiarch_bundle_from_llvm_ir(
+                        success = compile_gfx1201_bundle_from_llvm_ir(
                             # pyrefly: ignore [unbound-name]
                             llvm_ir_path=asm_file,
                             output_bundle_path=cubin_file,
-                            target_archs=None,
                         )
 
                         if not success:
                             raise RuntimeError(
-                                f"Failed to compile multi-arch bundle for kernel {kernel_name}. "
+                                f"Failed to compile gfx1201 bundle for kernel {kernel_name}. "
                                 f"Check that ROCm toolchain is available and LLVM IR is valid."
                             )
 
-                        log.info("Created multi-arch bundle: %s", cubin_file)
+                        log.info("Created gfx1201 bundle: %s", cubin_file)
 
                 if config.aot_inductor.embed_kernel_binary:
                     cubins_to_embed.append((cubin_file, kernel_name))

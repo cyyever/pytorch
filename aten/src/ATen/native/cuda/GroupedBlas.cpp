@@ -15,9 +15,6 @@
 #endif
 #include <ATen/native/cuda/ScaledGroupMM.h>
 #include <ATen/native/cuda/GroupMM.h>
-#if defined(USE_ROCM) && defined(USE_ROCM_CK_GEMM)
-#include <ATen/native/hip/ck_group_gemm.h>
-#endif
 
 #ifdef USE_MSLK
 #include <mslk/gemm/gemm_torch.h>
@@ -740,22 +737,9 @@ std::optional<c10::ScalarType> out_dtype) {
     _grouped_mm_fallback(mat_a, mat_b, offs, bias, out_dtype, out);
   }
 #else
-  // On ROCm fast path routes to group_gemm_ck and slow path to _grouped_mm_fallback.
-  // Keep use_fast_path as false till ck kernel perf is optimal.
-  // To enable CK path, use env variable ROCM_ALLOW_GROUP_GEMM_CK=1.
   const auto out_dtype_ = _resolve_grouped_mm_out_dtype(mat_a, mat_b, out_dtype);
   Tensor out = create_grouped_gemm_output_tensor(mat_a, mat_b, offs, out_dtype_);
-#if defined(USE_ROCM_CK_GEMM)
-  // ifdef USE_ROCM_CK_GEMM is required since ROCm systems w/o CK should not call ck path.
-  // To enable CK path, use env variable ROCM_ALLOW_GROUP_GEMM_CK=1.
-  if (at::globalContext().rocmAllowGroupGemmCk() && at::detail::getCUDAHooks().isGPUArch({"gfx950"})) {
-    at::hip::detail::group_gemm_ck(mat_a, mat_b, offs, bias, out);
-  } else {
-    _grouped_mm_fallback(mat_a, mat_b, offs, bias, out_dtype, out);
-  }
-#else
   _grouped_mm_fallback(mat_a, mat_b, offs, bias, out_dtype, out);
-#endif //USE_ROCM_CK_GEMM
 #endif //ifndef USE_ROCM
   return out;
 }

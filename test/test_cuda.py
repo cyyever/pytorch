@@ -94,7 +94,6 @@ from torch.testing._internal.common_utils import (
     skipIfRocm,
     skipIfRocmArch,
     skipIfRocmVersionAtLeast,
-    skipIfRocmVersionLessThan,
     slowTest,
     subtest,
     TemporaryFileName,
@@ -3537,7 +3536,6 @@ torch.cuda.synchronize()
             seed_t.resize_(64)
         self.assertEqual(seed_t.data_ptr(), data_ptr)
 
-    @skipIfRocmVersionLessThan((7, 14))
     @xfailCUDAIfSM89OrLaterOnWindows
     @unittest.skipIf(
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
@@ -3592,7 +3590,6 @@ torch.cuda.synchronize()
             after, baseline, "Leaked CUDA/RNG allocations after failed capture test"
         )
 
-    @skipIfRocmVersionLessThan((7, 14))
     @xfailCUDAIfSM89OrLaterOnWindows
     @unittest.skipIf(
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
@@ -4154,7 +4151,6 @@ torch.cuda.synchronize()
         not TEST_CUDA_GRAPH,
         "CUDA >= 11.0 / ROCm >= 7.0 required for external events in cuda graphs",
     )
-    @skipIfRocmVersionLessThan((7, 0))
     def test_graph_timing(self):
         torch.cuda.empty_cache()
         x = torch.randn(10240000, device="cuda")
@@ -11798,7 +11794,6 @@ class TestCompileKernel(TestCase):
 @unittest.skipIf(not TEST_CUDA, "CUDA not available, skipping tests")
 class TestCudaDeviceParametrized(TestCase):
     @unittest.skipIf(torch.version.rocm == "10.1.0", "HIPRTC issue (AIRUNTIME-2707)")
-    @skipIfRocmVersionLessThan((7, 0))
     @skipCUDAIf(
         not SM70OrLater, "Compute capability >= SM70 required for relaxed ptx flag"
     )

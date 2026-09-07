@@ -51,26 +51,9 @@ set_bool(AT_CUDNN_ENABLED CAFFE2_USE_CUDNN)
 set_bool(AT_CUSPARSELT_ENABLED CAFFE2_USE_CUSPARSELT)
 set_bool(AT_HIPSPARSELT_ENABLED CAFFE2_USE_HIPSPARSELT)
 
-# The architectures CK SDPA kernels are built for: the candidates that
-# PYTORCH_ROCM_ARCH also asks for. The CK codegen target families, the ck_sdpa
-# target's HIP_ARCHITECTURES and the runtime check in Context.cpp are all
-# derived from this one list.
-#
-# gfx1200/gfx1201 (RDNA4, WMMA) is opt-in through USE_ROCM_CK_SDPA_GFX12 (OFF by
-# default): those arches are already in the ROCm wheel arch list, so building CK
-# SDPA for them would add code generation and compile cost to existing builds.
 set(AT_ROCM_CK_SDPA_ARCHS "")
-if(USE_ROCM AND USE_ROCM_CK_SDPA AND USE_FLASH_ATTENTION)
-  set(_ck_sdpa_candidate_archs gfx950)
-  if(USE_ROCM_CK_SDPA_GFX12)
-    list(APPEND _ck_sdpa_candidate_archs gfx1200 gfx1201)
-  endif()
-  foreach(ARCH IN LISTS _ck_sdpa_candidate_archs)
-    if("${ARCH}" IN_LIST PYTORCH_ROCM_ARCH)
-      list(APPEND AT_ROCM_CK_SDPA_ARCHS ${ARCH})
-    endif()
-  endforeach()
-  list(REMOVE_DUPLICATES AT_ROCM_CK_SDPA_ARCHS)
+if(USE_ROCM AND USE_ROCM_CK_SDPA AND USE_FLASH_ATTENTION AND USE_ROCM_CK_SDPA_GFX12)
+  set(AT_ROCM_CK_SDPA_ARCHS gfx1201)
 endif()
 string(REPLACE ";" "," AT_ROCM_CK_SDPA_ARCHS_STR "${AT_ROCM_CK_SDPA_ARCHS}")
 # Alongside the other generated ATen headers (see cmake/Codegen.cmake).
@@ -236,18 +219,11 @@ if(USE_FLASH_ATTENTION)
     # is built for. Auto-disable when it is empty; otherwise the ck_sdpa target
     # ends up with an empty HIP_ARCHITECTURES and CMake errors out.
     if(USE_ROCM_CK_SDPA AND NOT AT_ROCM_CK_SDPA_ARCHS)
-      message(STATUS "USE_ROCM_CK_SDPA disabled: PYTORCH_ROCM_ARCH (${PYTORCH_ROCM_ARCH}) has no arch CK SDPA is built for (gfx950; gfx1200/gfx1201 with USE_ROCM_CK_SDPA_GFX12)")
+      message(STATUS "USE_ROCM_CK_SDPA disabled: gfx1201 support requires USE_ROCM_CK_SDPA_GFX12")
       caffe2_update_option(USE_ROCM_CK_SDPA OFF)
     endif()
   endif()
   if(USE_ROCM AND USE_ROCM_CK_SDPA)
-    if(DEFINED ENV{PYTORCH_ROCM_ARCH})
-      list(LENGTH PYTORCH_ROCM_ARCH NUM_ARCHS)
-      if(NUM_ARCHS GREATER 1)
-        message(WARNING "Building CK for multiple archs can increase build time considerably!
-        Consider setting PYTORCH_ROCM_ARCH env var value as the gfx arch you need to build for")
-      endif()
-    endif()
     message(STATUS "USE_ROCM_CK_SDPA is set; building PyTorch with CK SDPA enabled")
 
     # CK SDPA sources require specific compilation flags
@@ -413,9 +389,6 @@ IF(USE_MSLK)
   set(MSLK_THIRD_PARTY ${PROJECT_SOURCE_DIR}/third_party/mslk/external/)
   set(MSLK_SRCS ${PROJECT_SOURCE_DIR}/third_party/mslk/csrc/gemm/)
   set(MSLK_INCLUDE ${PROJECT_SOURCE_DIR}/third_party/mslk/include/)
-  set(MSLK_HIPIFY_ROOT ${PYTORCH_HIPIFY_DIR}/third_party/mslk)
-  set(MSLK_HIPIFY_THIRD_PARTY ${MSLK_HIPIFY_ROOT}/external/)
-  set(MSLK_HIPIFY_INCLUDE ${MSLK_HIPIFY_ROOT}/include/)
 
   if(USE_CUDA)
     # To avoid increasing the build time/binary size unnecessarily, use an allow-list of kernels to build.
@@ -463,66 +436,6 @@ IF(USE_MSLK)
 
     # Add MSLK include directories for gemm_torch.h
     list(APPEND ATen_CUDA_INCLUDE ${MSLK_INCLUDE})
-  elseif(USE_ROCM)
-    # MSLK only supports gfx950. Auto-disable when that arch is not in
-    # PYTORCH_ROCM_ARCH; otherwise the mslk target ends up with an empty
-    # HIP_ARCHITECTURES and CMake errors out.
-    set(_mslk_hip_arches "")
-    if("gfx950" IN_LIST PYTORCH_ROCM_ARCH)
-      set(_mslk_hip_arches "gfx950")
-    endif()
-  endif()
-  if(USE_MSLK AND USE_ROCM AND _mslk_hip_arches STREQUAL "")
-    message(STATUS "USE_MSLK disabled: PYTORCH_ROCM_ARCH (${PYTORCH_ROCM_ARCH}) does not contain gfx950")
-    caffe2_update_option(USE_MSLK OFF)
-  endif()
-  if(USE_MSLK AND USE_ROCM)
-    # Path to vendored CK
-    set(MSLK_CK_DIR "${MSLK_THIRD_PARTY}/composable_kernel")
-    file(MAKE_DIRECTORY
-      "${MSLK_HIPIFY_THIRD_PARTY}/composable_kernel/include/ck")
-    rocm_generate_ck_conf(
-      "${MSLK_CK_DIR}/include/ck/config.h.in"
-      "${MSLK_HIPIFY_THIRD_PARTY}/composable_kernel/include/ck/config.h"
-    )
-    # Only include the kernels we want to build to avoid increasing binary size.
-    file(GLOB_RECURSE mslk_native_rocm_hip CONFIGURE_DEPENDS
-      "${MSLK_SRCS}/ck/fp8_rowwise_grouped/kernels/fp8_rowwise_grouped*.hip"
-      "${MSLK_SRCS}/ck/fp8_rowwise_grouped/fp8_rowwise_grouped_gemm.hip")
-    set_source_files_properties(${mslk_native_rocm_hip} PROPERTIES LANGUAGE HIP)
-
-    # Add additional HIP compiler flags for performance
-    set(MSLK_EXTRA_HIP_FLAGS
-      -mllvm=-enable-post-misched=0
-      -mllvm=-greedy-reverse-local-assignment=1
-      -fhip-new-launch-api)
-    if(DEFINED ROCM_VERSION_DEV AND ROCM_VERSION_DEV VERSION_LESS "7.2.0")
-        list(PREPEND MSLK_EXTRA_HIP_FLAGS -mllvm=-amdgpu-coerce-illegal-types=1)
-      endif()
-
-    add_library(mslk STATIC ${mslk_native_rocm_hip})
-    set_target_properties(mslk PROPERTIES
-      POSITION_INDEPENDENT_CODE ON
-      HIP_ARCHITECTURES "${_mslk_hip_arches}")
-    target_compile_options(mslk PRIVATE
-      $<$<COMPILE_LANGUAGE:HIP>:${MSLK_EXTRA_HIP_FLAGS}>
-      ${HIP_CXX_FLAGS}
-      $<$<COMPILE_LANGUAGE:HIP>:-fvisibility=hidden>)
-    target_compile_definitions(mslk PRIVATE MSLK_NO_EXTENDED_SHAPES)
-
-    target_include_directories(mslk PRIVATE
-      # MSLK version of Composable Kernel is used due to some customizations
-      ${MSLK_HIPIFY_THIRD_PARTY}/composable_kernel/include
-      ${MSLK_THIRD_PARTY}/composable_kernel/include
-      ${MSLK_THIRD_PARTY}/composable_kernel/library/include
-      ${MSLK_THIRD_PARTY}/cutlass/include
-      ${MSLK_THIRD_PARTY}/cutlass/tools/util/include
-      ${MSLK_HIPIFY_INCLUDE}
-      ${MSLK_INCLUDE} # includes mslk/gemm/gemm_torch.h, mslk/utils/utils.h, mslk/utils/tuning_cache.hpp
-    )
-
-    # Add MSLK include directories for gemm_torch.h
-    list(APPEND ATen_HIP_INCLUDE ${MSLK_HIPIFY_INCLUDE} ${MSLK_INCLUDE})
   endif()
 
   # Ensure torch_cpu is built before mslk to avoid race conditions
@@ -642,19 +555,13 @@ if(USE_ROCM)
     exclude(ATen_HIP_SRCS "${ATen_HIP_SRCS}"
       ${native_hip_bgemm} ${native_hip_ck})
   else()
-    # composable_kernel has no gfx1250 support yet, so its CK GEMM kernels fail to
-    # compile for that arch. Build CK GEMM as a separate library with gfx1250
-    # filtered out of HIP_ARCHITECTURES so every other requested arch still gets
-    # CK GEMM. Remove this filtering once the CK submodule supports gfx1250.
     exclude(ATen_HIP_SRCS "${ATen_HIP_SRCS}"
       ${native_hip_bgemm} ${native_hip_ck})
-    set(_ck_gemm_hip_arches ${PYTORCH_ROCM_ARCH})
-    list(REMOVE_ITEM _ck_gemm_hip_arches "gfx1250")
     set_source_files_properties(${native_hip_bgemm} ${native_hip_ck} PROPERTIES LANGUAGE HIP)
     add_library(ck_gemm STATIC ${native_hip_bgemm} ${native_hip_ck})
     set_target_properties(ck_gemm PROPERTIES
       POSITION_INDEPENDENT_CODE ON
-      HIP_ARCHITECTURES "${_ck_gemm_hip_arches}")
+      HIP_ARCHITECTURES "${PYTORCH_ROCM_ARCH}")
     target_compile_options(ck_gemm PRIVATE
       ${HIP_CXX_FLAGS}
       $<$<COMPILE_LANGUAGE:HIP>:-fvisibility=hidden>)

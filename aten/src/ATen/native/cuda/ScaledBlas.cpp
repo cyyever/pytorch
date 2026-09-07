@@ -63,11 +63,9 @@ bool _scaled_mm_is_fnuz() {
 }
 
 static void check_blockwise_e8m0fnu_arch_supported() {
-  std::vector<std::string> mx_archs{"gfx950", "gfx1250"};
   TORCH_CHECK_NOT_IMPLEMENTED(
-      at::detail::getCUDAHooks().isGPUArch(mx_archs),
-      "Block-wise scaling for Float8_e8m0fnu is only supported on ",
-      c10::Join(",", mx_archs));
+      false,
+      "Block-wise scaling for Float8_e8m0fnu is not supported on gfx1201");
 }
 #endif
 

@@ -42,7 +42,7 @@ from torch.testing._internal.common_dtype import (
     all_types, all_types_and_complex_and, floating_and_complex_types, integral_types,
     floating_and_complex_types_and, floating_types_and, complex_types,
 )
-from torch.testing._internal.common_cuda import BF16X9_SUPPORTED, CDNA2OrLater, CDNA5OrLater, SM80OrLater, SM90OrLater, tf32_enabled, tf32_on_and_off, \
+from torch.testing._internal.common_cuda import BF16X9_SUPPORTED, SM80OrLater, SM90OrLater, tf32_enabled, tf32_on_and_off, \
     _get_torch_cuda_version, TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, blas_library_context
 from torch.testing._internal.common_quantization import _group_quantize_tensor, _dynamically_quantize_per_channel, \
     _group_quantize_tensor_symmetric
@@ -7053,12 +7053,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
         if self.device_type == 'cuda' and not SM80OrLater:
             self.skipTest("requires SM80 or later")
 
-        if TEST_WITH_ROCM and self.device_type == 'cuda' and CDNA5OrLater():
-            self.skipTest("int4 mm not yet implemented for gfx1250 (needs WMMA)")
-
-        if TEST_WITH_ROCM and self.device_type == 'cuda' and not CDNA2OrLater():
-            self.skipTest("_convert_weight_to_int4pack_cuda is supported only for CDNA2 or later")
-
         q_group = 32
         inner_k_tiles = 2
 
@@ -7117,12 +7111,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
     def test_compile_int4_mm(self, device, m, k, n):
         if self.device_type == 'cuda' and not SM80OrLater:
             self.skipTest("requires SM80 or later")
-
-        if TEST_WITH_ROCM and self.device_type == 'cuda' and CDNA5OrLater():
-            self.skipTest("int4 mm not yet implemented for gfx1250 (needs WMMA)")
-
-        if TEST_WITH_ROCM and self.device_type == 'cuda' and not CDNA2OrLater():
-            self.skipTest("_convert_weight_to_int4pack_cuda supported only for CDNA2 or later")
 
         q_group = 32
         inner_k_tiles = 2
@@ -9175,10 +9163,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
 
     @skipCUDAIfNoLinalgsolver
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        TEST_WITH_ROCM and ROCM_VERSION < (7, 14),
-        "hipsolverDnXsytrs requires ROCm >= 7.14"
-    )
     @dtypes(*floating_and_complex_types())
     def test_ldl_solve(self, device, dtype):
         from torch.testing._internal.common_utils import random_hermitian_pd_matrix

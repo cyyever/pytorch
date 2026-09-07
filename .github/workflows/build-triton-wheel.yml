@@ -52,7 +52,7 @@ jobs:
     with:
       device: "rocm"
       runs_on: ${{ needs.select-runner.outputs.x86 }}
-      docker_image: "pytorch/manylinux2_28-builder:rocm7.2"
+      docker_image: "pytorch/manylinux2_28-builder:rocm10.0"
 
   build-wheel-xpu:
     if: github.repository_owner == 'pytorch'

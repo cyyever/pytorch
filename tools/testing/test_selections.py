@@ -46,14 +46,12 @@ THRESHOLD = 60 * 10  # 10 minutes
 
 # See Note [ROCm parallel CI testing]
 # Special logic for ROCm GHA runners to query number of GPUs available.
-# hipInfo gcnArchName lines also contain " gfx", so the same count works on Windows.
 if IS_ROCM and not IS_MEM_LEAK_CHECK:
-    gpu_info_cmds = ["hipInfo", "rocminfo"] if os.name == "nt" else ["rocminfo"]
+    gpu_info_cmds = ["rocminfo"]
     gpu_count = 0
     tool_ran = False
     for gpu_info_cmd in gpu_info_cmds:
         try:
-            # errors="replace" tolerates non-ASCII device marketing names on Windows.
             output = subprocess.check_output(
                 [gpu_info_cmd], encoding="utf-8", errors="replace"
             )

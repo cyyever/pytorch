@@ -378,7 +378,6 @@ class TORCH_API Context {
       bool allow_splitk = true);
   bool allowFP16AccumulationCuBLAS() const;
   void setAllowFP16AccumulationCuBLAS(bool /*b*/);
-  bool rocmAllowGroupGemmCk() const;
   bool preferCublasltGroupedGemm() const;
   void setPreferCublasltGroupedGemm(bool /*b*/);
 

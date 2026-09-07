@@ -2197,7 +2197,7 @@ elif [[ "${TEST_CONFIG}" == *operator_microbenchmark* ]]; then
         BASELINE_INDEX_URL="https://download.pytorch.org/whl/nightly/cu130"
       elif [[ "${BUILD_ENVIRONMENT}" == *rocm* ]]; then
         # Keep in sync with the ROCm version in the benchmarks docker image
-        BASELINE_INDEX_URL="https://download.pytorch.org/whl/nightly/rocm7.2"
+        BASELINE_INDEX_URL="https://download.pytorch.org/whl/nightly/rocm10.0"
       else
         echo "ERROR: cannot infer BASELINE_INDEX_URL from BUILD_ENVIRONMENT=${BUILD_ENVIRONMENT}"
         exit 1

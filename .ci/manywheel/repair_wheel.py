@@ -14,7 +14,6 @@ Environment variables:
     GPU_ARCH_TYPE      - cpu, cuda, rocm, xpu
     GPU_ARCH_VERSION   - 12.6, 13.0, 13.2, 6.4.1, etc. (empty for CPU)
     USE_CUDA           - "0" or "1"
-    PYTORCH_ROCM_ARCH  - ;-separated gfx targets (ROCm only)
     ROCM_HOME          - /opt/rocm (ROCm only)
 """
 
@@ -32,6 +31,7 @@ from build_env_setup import PLATFORM_TAGS
 
 
 PATCHELF = "/usr/local/bin/patchelf"
+ROCM_ARCH = "gfx1201"
 
 
 def wheel_platform_tags(wheel_name: str) -> list[str]:
@@ -164,13 +164,8 @@ ROCM_SO_FILES: list[str] = [
     "libhsa-amd-aqlprofile64.so",
     "librocm-core.so",
     "librocroller.so",
+    "libhipfile.so",
 ]
-
-# hipFile only ships with ROCm 7.14 and later, where it is required.
-_version_file = Path(os.environ.get("ROCM_HOME", "/opt/rocm")) / ".info" / "version"
-_rocm_version = _version_file.read_text().strip() if _version_file.is_file() else ""
-if tuple(int(x) for x in _rocm_version.split(".")[:2] if x.isdigit()) >= (7, 14):
-    ROCM_SO_FILES.append("libhipfile.so")
 
 
 def rocm_os_deps() -> list[Path]:
@@ -210,13 +205,7 @@ def find_rocm_lib(rocm_home: Path, basename: str) -> Path | None:
     return None
 
 
-def rocm_arch_filter(arch_list: str) -> list[str]:
-    return [a for a in arch_list.split(";") if a]
-
-
-def rocm_lib_kernels(
-    rocm_home: Path, lib_subdir: str, archs: list[str]
-) -> list[AuxFile]:
+def rocm_lib_kernels(rocm_home: Path, lib_subdir: str) -> list[AuxFile]:
     """Per-gfx kernel files under $ROCM_HOME/lib/<lib_subdir>/library/ plus the non-gfx common files."""
     src_dir = rocm_home / "lib" / lib_subdir / "library"
     if not src_dir.is_dir():
@@ -225,17 +214,15 @@ def rocm_lib_kernels(
     for entry in sorted(src_dir.iterdir()):
         if not entry.is_file():
             continue
-        # Pick gfx-specific files matching the arch set, plus common (non-gfx) files.
+        # Pick gfx1201-specific files plus common (non-gfx) files.
         name = entry.name
-        if "gfx" in name and not any(a in name for a in archs):
+        if "gfx" in name and ROCM_ARCH not in name:
             continue
         files.append(AuxFile(src=entry, rel_dest=f"lib/{lib_subdir}/library/{name}"))
     return files
 
 
-def rocm_bundle(
-    rocm_home: Path, gpu_arch_version: str
-) -> tuple[list[BundledLib], list[AuxFile]]:
+def rocm_bundle(rocm_home: Path) -> tuple[list[BundledLib], list[AuxFile]]:
     """Build the ROCm bundle spec: shared libs and auxiliary kernel/db files.
 
     Versioned ROCm sonames (libfoo.so.6) get renamed to bare .so to match the
@@ -245,9 +232,6 @@ def rocm_bundle(
     """
     libs: list[BundledLib] = []
     so_files = list(ROCM_SO_FILES)
-    # librocm_smi64.so is only needed for ROCm7.2 and earlier
-    if gpu_arch_version and tuple(map(int, gpu_arch_version.split(".")[:2])) <= (7, 2):
-        so_files.append("librocm_smi64.so")
     for stem in so_files:
         path = find_rocm_lib(rocm_home, stem)
         if path is None:
@@ -259,14 +243,13 @@ def rocm_bundle(
         if os_lib.is_file():
             libs.append(BundledLib(src=os_lib, dest_name=os_lib.name))
 
-    archs = rocm_arch_filter(os.environ.get("PYTORCH_ROCM_ARCH", ""))
     aux: list[AuxFile] = []
     for sub in ("rocblas", "hipblaslt", "hipsparselt"):
-        aux += rocm_lib_kernels(rocm_home, sub, archs)
+        aux += rocm_lib_kernels(rocm_home, sub)
     miopen_db = rocm_home / "share/miopen/db"
     if miopen_db.is_dir():
         for entry in sorted(miopen_db.iterdir()):
-            if entry.is_file() and any(a in entry.name for a in archs):
+            if entry.is_file() and ROCM_ARCH in entry.name:
                 aux.append(AuxFile(src=entry, rel_dest=f"share/miopen/db/{entry.name}"))
     rccl_dir = rocm_home / "share/rccl/msccl-algorithms"
     if rccl_dir.is_dir():
@@ -458,7 +441,7 @@ def main() -> None:
     elif is_rocm:
         rocm_home = Path(os.environ.get("ROCM_HOME", "/opt/rocm"))
         if "_rocm_sdk" in str(rocm_home):
-            # TheRock wheel layout (rocm7.14): ROCm ships as the `rocm` pip
+            # TheRock wheel layout: ROCm ships as the `rocm` pip
             # package (_rocm_sdk_core, a sibling of torch/). Resolve libs via
             # RPATH instead of bundling them, mirroring the CUDA/XPU wheels.
             rpaths = rocm_rpaths(rocm_home)
@@ -466,9 +449,9 @@ def main() -> None:
             lib_so_rpath = f"{rpaths}:$ORIGIN"
             force_rpath = True
         else:
-            # Legacy OS/tarball layout (/opt/rocm, e.g. rocm7.2): bundle the
+            # OS/tarball layout (/opt/rocm): bundle the
             # ROCm libs into the wheel so it stays self-contained.
-            bundled_libs, aux_files = rocm_bundle(rocm_home, gpu_arch_version)
+            bundled_libs, aux_files = rocm_bundle(rocm_home)
             c_so_rpath = "$ORIGIN:$ORIGIN/lib"
             lib_so_rpath = "$ORIGIN"
             force_rpath = True

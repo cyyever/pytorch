@@ -240,11 +240,9 @@ function install_fbgemm() {
     # the CUID hash, giving each object a distinct __hip_cuid. Inline (not exported) and
     # scoped to the ROCm build so it does not affect the PyTorch build (already built).
     if [[ "${build_variant}" == "rocm" ]]; then
-      # The inductor-periodic ROCm benchmark job runs its tests only on MI350
-      # (gfx950), so build fbgemm for that single arch instead of the image's
-      # multi-arch default to cut build time.
+      # Build fbgemm for the same single architecture as PyTorch.
       if [[ "${GITHUB_WORKFLOW}" == "inductor-periodic" ]]; then
-        SCCACHE_RECACHE=1 PYTORCH_ROCM_ARCH="gfx950" python setup.py bdist_wheel --build-target=default --build-variant="${build_variant}"
+        SCCACHE_RECACHE=1 PYTORCH_ROCM_ARCH="gfx1201" python setup.py bdist_wheel --build-target=default --build-variant="${build_variant}"
       else
         SCCACHE_RECACHE=1 python setup.py bdist_wheel --build-target=default --build-variant="${build_variant}"
       fi

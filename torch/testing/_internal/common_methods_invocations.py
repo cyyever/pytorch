@@ -43,7 +43,6 @@ from torch.testing._internal.common_quantized import (
     _bfloat16_to_float4_e2m1fn_x2,
 )
 from torch.testing._internal.common_utils import (
-    getRocmVersion,
     TEST_WITH_ROCM, IS_FBCODE, IS_LINUX, IS_MACOS, TEST_SCIPY,
     torch_to_numpy_dtype_dict, numpy_to_torch_dtype, TEST_WITH_ASAN,
     GRADCHECK_NONDET_TOL, slowTest, TEST_WITH_SLOW,
@@ -13685,11 +13684,8 @@ op_db: list[OpInfo] = [
            dtypesIfCUDA=floating_and_complex_types_and(torch.half, torch.bfloat16),
            backward_dtypesIfCUDA=floating_and_complex_types_and(
                torch.half, *([torch.bfloat16] if SM80OrLater else [])),
-           backward_dtypesIfROCM=(
-               floating_and_complex_types_and(torch.half, torch.bfloat16)
-               if TEST_WITH_ROCM and getRocmVersion() >= (7, 14)
-               else floating_and_complex_types()
-           ),
+           backward_dtypesIfROCM=floating_and_complex_types_and(
+               torch.half, torch.bfloat16),
            supports_autograd=True,
            sample_inputs_func=sample_inputs_sparse_sampled_addmm,
            decorators=[

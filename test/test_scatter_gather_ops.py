@@ -8,7 +8,6 @@ import torch
 
 from torch.testing import make_tensor
 from torch.testing._internal.common_cuda import (
-    gfx_arch_supports_opportunistic_fastatomics,
     SM90OrLater,
 )
 from torch.testing._internal.common_device_type import (
@@ -36,7 +35,6 @@ from torch.testing._internal.common_utils import (
     subtest,
     TestCase,
     TEST_CUDA,
-    TEST_WITH_ROCM,
 )
 
 # Protects against includes accidentally setting the default dtype
@@ -385,13 +383,7 @@ class TestScatterGatherDevice(TestCase):
             # precision types can be small differences
             self.assertEqual(actual, expected, atol=0.04, rtol=0.05)
         else:
-            # When we are running opportunistic_fastatomics, we will expect some floating point rounding
-            # errors as the order of operation is not guaranteed.
-            if TEST_WITH_ROCM and gfx_arch_supports_opportunistic_fastatomics() \
-                    and not torch.are_deterministic_algorithms_enabled():
-                self.assertEqual(actual, expected, atol=1e-9, rtol=1e-6)
-            else:
-                self.assertEqual(actual, expected, atol=0, rtol=0)
+            self.assertEqual(actual, expected, atol=0, rtol=0)
 
         # Tests empty index
         dst = make_tensor((2, 2), device=device, dtype=dtype)

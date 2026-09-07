@@ -48,7 +48,6 @@ from torch.testing._internal.common_distributed import (
     skip_if_rocm_arch_multiprocess,
     skip_if_rocm_multiprocess,
     skip_if_rocm_ver_atleast_multiprocess,
-    skip_if_rocm_ver_lessthan_multiprocess,
 )
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
@@ -1325,7 +1324,6 @@ class SymmMemEmptySetDeviceTest(MultiProcessTestCase):
     @skipIf(
         not PLATFORM_SUPPORTS_SYMM_MEM, "SymmMem is not supported on this ROCm arch"
     )
-    @skip_if_rocm_ver_lessthan_multiprocess((7, 0))
     @skip_if_lt_x_gpu(2)
     @skip_if_rocm_ver_atleast_multiprocess([7, 14])
     @parametrize("set_device", [True, False])

@@ -3,7 +3,6 @@
 import contextlib
 import json
 import math
-import os
 import unittest
 import warnings
 from functools import partial
@@ -15,7 +14,6 @@ from torch.profiler import profile, ProfilerActivity
 
 from torch.testing import make_tensor
 from torch.testing._internal.common_cuda import (
-    _get_torch_rocm_version,
     _get_torch_cuda_version,
     BF16X9_API_SUPPORTED,
     BF16X9_SUPPORTED,
@@ -74,23 +72,6 @@ def xfailIfSM100OrLaterNonRTXAndCondition(condition_fn):
         unittest.expectedFailure,
         lambda params: computeCapabilityCheck and condition_fn(params)
     )
-
-
-@contextlib.contextmanager
-def rocm_group_gemm_ck_env(value):
-    var = "ROCM_ALLOW_GROUP_GEMM_CK"
-    old = os.environ.get(var, None)
-    try:
-        if value is None:
-            os.environ.pop(var, None)
-        else:
-            os.environ[var] = value
-        yield
-    finally:
-        if old is None:
-            os.environ.pop(var, None)
-        else:
-            os.environ[var] = old
 
 
 @contextlib.contextmanager
@@ -1209,58 +1190,6 @@ class TestMatmulCuda(InductorTestCase):
             C = torch._grouped_mm(A, B, offs=offs)
         self.assertEqual(C, C_ref)
 
-    @skipCUDAIfNotRocm
-    # Fails with triton 3.7
-    def test_grouped_gemm_rocm_ck_flag(self):
-        CK_EQUAL_K_HINT = "kernel_grouped_gemm_xdl_splitk"
-        CK_UNEQUAL_K_HINT = "kernel_grouped_gemm_xdl_splitk"
-        HIPBLASLT_HINT = "Cijk_Alik_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs"
-
-        def has_ck_kernel(kernels: set[str], hint: str) -> bool:
-            return any(hint in k for k in kernels)
-
-        def uses_hipblaslt(kernels: set[str]) -> bool:
-            return any(HIPBLASLT_HINT in k for k in kernels)
-
-        def run_grouped_mm(equal_k: bool):
-            device = "cuda"
-            dtype = torch.bfloat16
-            if equal_k:
-                # 3d-3d grouped GEMM with identical K for all groups
-                G, M, N, K = 4, 16, 32, 64
-                a = torch.randn(G, M, K, device=device, dtype=dtype)
-                b = torch.randn(G, N, K, device=device, dtype=dtype)
-                return F.grouped_mm(a, b.transpose(-2, -1), out_dtype=dtype)
-
-            # 2d-2d grouped GEMM with non-uniform offs, i.e. per-group K is not equal
-            M, N = 16, 32
-            offs = torch.tensor([64, 136], device=device, dtype=torch.int32)
-            K_total = offs[-1].item()
-            a = torch.randn(M, K_total, device=device, dtype=dtype)
-            b = torch.randn(N, K_total, device=device, dtype=dtype)
-            return F.grouped_mm(a, b.transpose(-2, -1), offs=offs, out_dtype=dtype)
-
-        def collect_kernel_names(equal_k: bool):
-            kernels = set()
-            with profile(
-                activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-                record_shapes=False,
-                with_stack=False,
-            ) as prof:
-                run_grouped_mm(equal_k=equal_k)
-            for evt in prof.key_averages(group_by_input_shape=False):
-                kernels.add(evt.key)
-            return kernels
-
-        with rocm_group_gemm_ck_env(None):
-            self.assertTrue(uses_hipblaslt(collect_kernel_names(equal_k=True)))
-        with rocm_group_gemm_ck_env("1"):
-            ck_equal_kernels = collect_kernel_names(equal_k=True)
-            self.assertTrue(has_ck_kernel(ck_equal_kernels, CK_EQUAL_K_HINT))
-
-            ck_unequal_kernels = collect_kernel_names(equal_k=False)
-            self.assertTrue(has_ck_kernel(ck_unequal_kernels, CK_UNEQUAL_K_HINT))
-
     @onlyCUDA
     @parametrize("input_dtype", [torch.float32, torch.float16, torch.bfloat16])
     @parametrize("M", [1, 32, 64])
@@ -1269,17 +1198,6 @@ class TestMatmulCuda(InductorTestCase):
     @parametrize("batch_size", [None, 1, 16])
     @parametrize("backend", ["cublas", "cublaslt"])
     def test_mm_bmm_dtype_overload(self, input_dtype, M, N, K, batch_size, backend):
-        if torch.version.hip and _get_torch_rocm_version() < (7, 2, 1):
-            msg = "accuracy regression in hipblas and hipblaslt in ROCm 7.0 for certain shapes"
-            if input_dtype == torch.bfloat16 and N == 1 and K == 32 and batch_size:
-                raise unittest.SkipTest(msg)
-            if input_dtype == torch.bfloat16 and N == 1 and K == 64 and batch_size:
-                raise unittest.SkipTest(msg)
-            if input_dtype == torch.float16 and M == 32 and N == 1 and K == 64 and batch_size == 1:
-                raise unittest.SkipTest(msg)
-            if input_dtype == torch.float16 and M == 64 and N == 1 and K == 64 and batch_size == 1:
-                raise unittest.SkipTest(msg)
-
         device = "cuda"
         dtype = input_dtype
         with blas_library_context(backend):
@@ -1336,17 +1254,6 @@ class TestMatmulCuda(InductorTestCase):
     @parametrize("high_precision_self", [False, True])
     @parametrize("backend", ["cublas", "cublaslt"])
     def test_addmm_baddmm_dtype_overload(self, input_dtype, M, N, K, batch_size, broadcast_self, high_precision_self, backend):
-        if torch.version.hip and _get_torch_rocm_version() < (7, 2, 1):
-            msg = "accuracy regression in hipblas and hipblaslt in ROCm 7.0 for certain shapes"
-            if input_dtype == torch.bfloat16 and N == 1 and K == 32 and batch_size:
-                raise unittest.SkipTest(msg)
-            if input_dtype == torch.bfloat16 and N == 1 and K == 64 and batch_size:
-                raise unittest.SkipTest(msg)
-            if input_dtype == torch.float16 and M == 32 and N == 1 and K == 64 and batch_size == 1:
-                raise unittest.SkipTest(msg)
-            if input_dtype == torch.float16 and M == 64 and N == 1 and K == 64 and batch_size == 1:
-                raise unittest.SkipTest(msg)
-
         device = "cuda"
         dtype = input_dtype
         with blas_library_context(backend):

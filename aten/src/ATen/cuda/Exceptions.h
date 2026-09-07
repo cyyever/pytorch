@@ -7,10 +7,10 @@
 #include <cusparse.h>
 #include <c10/macros/Export.h>
 
-#if !defined(USE_ROCM)
-#include <cusolver_common.h>
-#else
+#if defined(USE_ROCM) || defined(__HIP_PLATFORM_AMD__)
 #include <hipsolver/hipsolver.h>
+#else
+#include <cusolver_common.h>
 #endif
 
 #if defined(USE_CUDSS)
@@ -108,7 +108,7 @@ C10_EXPORT const char* cudssGetErrorMessage(cudssStatus_t error);
 #endif
 
 namespace at::cuda::solver {
-#if !defined(USE_ROCM)
+#if !defined(USE_ROCM) && !defined(__HIP_PLATFORM_AMD__)
 
 C10_EXPORT const char* cusolverGetErrorMessage(cusolverStatus_t status);
 
@@ -140,7 +140,7 @@ constexpr const char* _cusolver_backend_suggestion =            \
     }                                                                   \
   } while (0)
 
-#else // defined(USE_ROCM)
+#else
 
 C10_EXPORT const char* hipsolverGetErrorMessage(hipsolverStatus_t status);
 
@@ -180,7 +180,7 @@ constexpr const char* _hipsolver_backend_suggestion =           \
 // This is here instead of in c10 because NVRTC is loaded dynamically via a stub
 // in ATen, and we need to use its nvrtcGetErrorString.
 // See NOTE [ USE OF NVRTC AND DRIVER API ].
-#if !defined(USE_ROCM)
+#if !defined(USE_ROCM) && !defined(__HIP_PLATFORM_AMD__)
 
 #define AT_CUDA_DRIVER_CHECK(EXPR)                                          \
   do {                                                                      \

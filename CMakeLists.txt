@@ -800,10 +800,7 @@ if(USE_FLASH_ATTENTION AND USE_CUDA AND NOT USE_ROCM)
 endif()
 
 
-IF(USE_ROCM AND "gfx950" IN_LIST PYTORCH_ROCM_ARCH)
-  message(WARNING "Setting USE_MSLK for gfx950 to ON by default, doing ROCM build")
-  set(USE_MSLK_DEFAULT ON)
-elseif(USE_CUDA AND "$ENV{TORCH_CUDA_ARCH_LIST}" MATCHES "10.0" AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.8)
+if(USE_CUDA AND "$ENV{TORCH_CUDA_ARCH_LIST}" MATCHES "10.0" AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.8)
   message(STATUS "Setting USE_MSLK to ON by default , doing CUDA build for SM100a")
   set(USE_MSLK_DEFAULT ON)
 else()
@@ -815,7 +812,7 @@ cmake_dependent_option(
   "Whether to build MSLK quantized GEMM kernels.\
   Will be disabled if not supported by the platform"
   ${USE_MSLK_DEFAULT}
-  "USE_CUDA OR USE_ROCM"
+  "USE_CUDA"
   OFF)
 
 

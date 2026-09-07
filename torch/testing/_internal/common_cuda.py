@@ -156,29 +156,6 @@ def evaluate_gfx_arch_within(arch_list):
     # Hence the matching should be done reversely
     return any(arch in effective_arch for arch in arch_list)
 
-# Per-generation gfx targets, ordered oldest -> newest. Each "OrLater" helper
-# below unions its own generation with every newer one, so the predicates are
-# nested by construction: CDNA5OrLater => CDNA3OrLater => CDNA2OrLater. No
-# supported CDNA2 target remains, so CDNA2OrLater matches the CDNA3+ set.
-_CDNA3_ARCHS = ["gfx950"]
-# GFX1250 (CDNA 5)
-_CDNA5_ARCHS = ["gfx1250"]
-
-def CDNA5OrLater():
-    return evaluate_gfx_arch_within(_CDNA5_ARCHS)
-
-def CDNA3OrLater():
-    return evaluate_gfx_arch_within(_CDNA3_ARCHS + _CDNA5_ARCHS)
-
-def CDNA2OrLater():
-    return CDNA3OrLater()
-
-# Archs that take the opportunistic_fastAtomicAdd path (packed 2x16 atomics + DPP
-# lane coalescing) in ScatterGatherKernel.cu. Keep in sync with that kernel's arch
-# gate; this is intentionally not CDNA3OrLater (gfx1250 uses plain fastAtomicAdd).
-def gfx_arch_supports_opportunistic_fastatomics():
-    return evaluate_gfx_arch_within(["gfx950"])
-
 def evaluate_platform_supports_flash_attention():
     if TEST_WITH_ROCM:
         # NOTE: gfx1250 is omitted until flash-attention artifacts ship for it.
@@ -259,13 +236,13 @@ def evaluate_platform_supports_bf16_atomics():
     if torch.version.cuda:
         return SM80OrLater
     elif torch.version.hip:
-        return ROCM_VERSION >= (8, 0)
+        return True
     return False
 
 
 def evaluate_platform_supports_half_atomics():
     if torch.version.hip:
-        return ROCM_VERSION >= (8, 0)
+        return True
     return True
 
 

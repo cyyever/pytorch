@@ -35,7 +35,7 @@ environment is needed. Do NOT try to find alternatives or install these tools.
 
 # Binary Releases
 
-- Build Python wheels only for CUDA, ROCm/MI300X, XPU/BMG, and macOS
+- Build Python wheels only for CUDA, ROCm/gfx1201, XPU/BMG, and macOS
   arm64/MPS. Do not add Linux CPU-only or Windows release jobs.
 - Support CPython 3.14 and 3.15. Do not add free-threaded Python ABIs unless
   explicitly requested.

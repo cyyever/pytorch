@@ -283,15 +283,7 @@ def has_rocm_fp8_hardware_support() -> bool:
     # Keep this in sync with torch.testing._internal.common_cuda.PLATFORM_SUPPORTS_FP8;
     # this is the production-side equivalent used to gate Triton FP8 lowering.
     arch = _rocm_gcn_arch()
-    rocm_version_str = getattr(torch.version, "rocm", None) or torch.version.hip
-    rocm_version = tuple(int(v) for v in rocm_version_str.split(".")[:2])
-    if arch.startswith("gfx94"):
-        return True
-    if arch.startswith("gfx120") and rocm_version >= (6, 3):
-        return True
-    if arch.startswith("gfx95") and rocm_version >= (6, 5):
-        return True
-    return False
+    return arch.startswith(("gfx94", "gfx95", "gfx120"))
 
 
 def has_scaled_grouped_mm_triton_support(mat_a: TensorBox, mat_b: TensorBox) -> bool:
