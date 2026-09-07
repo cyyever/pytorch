@@ -140,7 +140,8 @@ template<typename T, uint32_t Rank>
 using VecT = T __attribute__((ext_vector_type(Rank)));
 
 static bool isGFX1201(int index) {
-  return at::detail::getCUDAHooks().isGPUArch({"gfx1201"}, index);
+  static const std::vector<std::string> gfx1201_arch = {"gfx1201"};
+  return at::detail::getCUDAHooks().isGPUArch(gfx1201_arch, index);
 }
 #endif
 
