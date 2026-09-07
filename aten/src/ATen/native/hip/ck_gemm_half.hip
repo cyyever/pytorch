@@ -599,18 +599,11 @@ void dispatch_half_gemm_wmma(CUDABLAS_GEMM_ARGTYPES(at::Half)) {
 
 template <>
 void gemm_internal_ck<at::Half>(CUDABLAS_GEMM_ARGTYPES(at::Half)) {
-  static const std::vector<std::string> wmma_archs = {
-    "gfx1200", "gfx1201", "gfx1151"
-  };
-  if (at::detail::getCUDAHooks().isGPUArch(wmma_archs)) {
-    dispatch_half_gemm_wmma(CUDABLAS_GEMM_ARGS(at::Half));
-  }
-  else if (at::detail::getCUDAHooks().isGPUArch({"gfx9"})) {
-    dispatch_half_gemm(CUDABLAS_GEMM_ARGS(at::Half));
-  }
-  else {
-    TORCH_CHECK(false, "gemm_internal_ck<at::Half> unsupported gfx arch");
-  }
+  static const std::vector<std::string> gfx1201_arch = {"gfx1201"};
+  TORCH_CHECK(
+      at::detail::getCUDAHooks().isGPUArch(gfx1201_arch),
+      "gemm_internal_ck<at::Half> is supported only on gfx1201");
+  dispatch_half_gemm_wmma(CUDABLAS_GEMM_ARGS(at::Half));
 }
 
 } // namespace at::native

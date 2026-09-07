@@ -772,18 +772,11 @@ void dispatch_bfloat16_gemm_wmma(CUDABLAS_GEMM_ARGTYPES(at::BFloat16)) {
 
 template <>
 void gemm_internal_ck<at::BFloat16>(CUDABLAS_GEMM_ARGTYPES(at::BFloat16)) {
-  static const std::vector<std::string> wmma_archs = {
-    "gfx1200", "gfx1201", "gfx1151"
-  };
-  if (at::detail::getCUDAHooks().isGPUArch(wmma_archs)) {
-    dispatch_bfloat16_gemm_wmma(CUDABLAS_GEMM_ARGS(at::BFloat16));
-  }
-  else if (at::detail::getCUDAHooks().isGPUArch({"gfx9"})) {
-    dispatch_bfloat16_gemm(CUDABLAS_GEMM_ARGS(at::BFloat16));
-  }
-  else {
-    TORCH_CHECK(false, "gemm_internal_ck<at::BFloat16> unsupported gfx arch");
-  }
+  static const std::vector<std::string> gfx1201_arch = {"gfx1201"};
+  TORCH_CHECK(
+      at::detail::getCUDAHooks().isGPUArch(gfx1201_arch),
+      "gemm_internal_ck<at::BFloat16> is supported only on gfx1201");
+  dispatch_bfloat16_gemm_wmma(CUDABLAS_GEMM_ARGS(at::BFloat16));
 }
 
 } // namespace at::native
