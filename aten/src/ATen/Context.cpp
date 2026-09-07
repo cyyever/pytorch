@@ -16,11 +16,11 @@
 #endif
 #ifndef AT_ROCM_CK_SDPA_ARCHS
 // Non-CMake ROCm builds (e.g. Buck) do not generate the header but still
-// build CK SDPA, so fall back to the archs it supported before the header
-// existed. An empty list here would make ckSDPASupported() return false and
+// build CK SDPA, so fall back to the architecture supported by this build.
+// An empty list here would make ckSDPASupported() return false and
 // silently reroute a CK preference to AOTriton, which internal builds stub
 // out with a runtime error.
-#define AT_ROCM_CK_SDPA_ARCHS "gfx950"
+#define AT_ROCM_CK_SDPA_ARCHS "gfx1201"
 #endif
 
 #include <ATen/cpu/FlushDenormal.h>
@@ -595,9 +595,8 @@ bool Context::ckSDPASupported() {
 
 bool Context::ckGemmSupported() {
 #ifdef USE_ROCM
-  // CK GEMM support is broader than CK SDPA.
   static const std::vector<std::string> supported_archs = {
-      "gfx950",
+      "gfx1201",
   };
   for (auto index : c10::irange(detail::getCUDAHooks().deviceCount())) {
     if (!detail::getCUDAHooks().isGPUArch(supported_archs, index)) {

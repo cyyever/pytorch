@@ -5,17 +5,13 @@
 set(CK_FMHA_GENERATE python3 ${CMAKE_CURRENT_LIST_DIR}/generate_compat.py
     ${CMAKE_SOURCE_DIR}/third_party/composable_kernel/example/ck_tile/01_fmha/generate.py)
 
-# Ask the CK codegen for the architecture families behind AT_ROCM_CK_SDPA_ARCHS.
-# Without --targets the generator falls back to its own default ("gfx9,gfx950"),
-# so no instances are emitted for RDNA4 even when the build is configured for it.
+# Ask the CK codegen for the gfx1201 architecture family.
 set(_ck_fmha_targets "")
 foreach(ARCH IN LISTS AT_ROCM_CK_SDPA_ARCHS)
-  if(ARCH STREQUAL "gfx950")
-    list(APPEND _ck_fmha_targets gfx950)
-  elseif(ARCH MATCHES "^gfx12")
+  if(ARCH STREQUAL "gfx1201")
     list(APPEND _ck_fmha_targets gfx12)
   else()
-    message(FATAL_ERROR "CK Tile FMHA: no codegen target family known for ${ARCH}")
+    message(FATAL_ERROR "CK Tile FMHA: unsupported architecture ${ARCH}; expected gfx1201")
   endif()
 endforeach()
 list(REMOVE_DUPLICATES _ck_fmha_targets)
