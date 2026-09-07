@@ -19,6 +19,10 @@
 
 namespace c10d::detail {
 
+// Everything below is private to this backend; only
+// create_libuv_tcpstore_backend is named from outside.
+namespace {
+
 /*
 
 Exception safety:
@@ -1620,6 +1624,8 @@ bool LibUVStoreDaemon::barrier(
     return false;
   }
 }
+
+} // namespace
 
 std::unique_ptr<BackgroundThread> create_libuv_tcpstore_backend(
     const TCPStoreOptions& opts) {
