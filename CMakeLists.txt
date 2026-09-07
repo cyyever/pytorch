@@ -753,6 +753,7 @@ endif()
 # aotriton build decision later.
 
 include(cmake/Dependencies.cmake)
+include(cmake/Hipify.cmake)
 
 # oneAPI libraries such as libpti_view have indirect dependencies on the Intel
 # compiler runtime. DT_RUNPATH is not transitive, so XPU builds must retain the
@@ -966,16 +967,21 @@ if(NOT APPLE AND UNIX)
   list(APPEND Caffe2_DEPENDENCY_LIBS dl)
 endif()
 
-# Prefix path to Caffe2 headers. If a directory containing installed Caffe2
-# headers was inadvertently added to the list of include directories, prefixing
-# PROJECT_SOURCE_DIR means this source tree always takes precedence.
+# Prefix path to Caffe2 headers. ROCm then overlays hipified headers from the
+# generated tree without changing the checkout.
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
+if(USE_ROCM)
+  include_directories(BEFORE ${PYTORCH_HIPIFY_DIR})
+endif()
 
 # Prefix path to generated Caffe2 headers. These need to take precedence over
 # their empty counterparts located in PROJECT_SOURCE_DIR.
 include_directories(BEFORE ${PROJECT_BINARY_DIR})
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/aten/src/)
+if(USE_ROCM)
+  include_directories(BEFORE ${PYTORCH_HIPIFY_DIR}/aten/src)
+endif()
 include_directories(BEFORE ${CMAKE_BINARY_DIR}/aten/src/)
 
 if(USE_MIMALLOC)

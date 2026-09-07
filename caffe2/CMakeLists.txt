@@ -182,6 +182,14 @@ endif()
 
 set(TORCH_SRC_DIR "${PROJECT_SOURCE_DIR}/torch")
 set(TORCH_ROOT "${PROJECT_SOURCE_DIR}")
+set(TORCH_GENERATED_SRC_DIR "${TORCH_SRC_DIR}")
+set(TORCH_GEN_DIR "${TORCH_ROOT}")
+set(TORCH_AUTOGRAD_DIR "${TORCH_ROOT}/tools/autograd")
+if(USE_ROCM)
+  set(TORCH_GENERATED_SRC_DIR "${PYTORCH_HIPIFY_TORCH_DIR}")
+  set(TORCH_GEN_DIR "${PYTORCH_HIPIFY_DIR}")
+  set(TORCH_AUTOGRAD_DIR "${PYTORCH_HIPIFY_DIR}/tools/autograd")
+endif()
 
 if(NOT TORCH_INSTALL_BIN_DIR)
   set(TORCH_INSTALL_BIN_DIR bin)
@@ -206,67 +214,71 @@ configure_file("${TORCH_SRC_DIR}/_utils_internal.py"
 
 # Generate header with version info
 configure_file("${TORCH_SRC_DIR}/headeronly/version.h.in"
-  "${TORCH_SRC_DIR}/headeronly/version.h"
+  "${TORCH_GENERATED_SRC_DIR}/headeronly/version.h"
   @ONLY)
 
 set(GENERATED_CXX_TORCH
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/Functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/ViewFuncs.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/Functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/ViewFuncs.cpp"
   )
 
 append_filelist("libtorch_generated_sources('{}', only_type_vars=True)" GENERATED_CXX_TORCH)
+if(USE_ROCM)
+  pytorch_hipify_generated_source_list(
+    GENERATED_CXX_TORCH ${GENERATED_CXX_TORCH})
+endif()
 list(APPEND GENERATED_CXX_TORCH
-  "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
-  "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_aten.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_aten.cpp"
 )
 if(USE_MPS)
   list(APPEND GENERATED_CXX_TORCH
-    "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_mps.cpp"
+    "${TORCH_GENERATED_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_mps.cpp"
   )
 endif()
 
 set(GENERATED_H_TORCH
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/Functions.h"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/variable_factories.h"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/ViewFuncs.h"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/Functions.h"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/variable_factories.h"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/ViewFuncs.h"
   )
 
 list(APPEND GENERATED_H_TORCH
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/VariableType.h"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/VariableType.h"
 )
 
 set(GENERATED_CXX_PYTHON
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions_0.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions_1.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions_2.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions_3.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions_4.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_variable_methods.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_torch_functions_0.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_torch_functions_1.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_torch_functions_2.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_nn_functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_fft_functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_linalg_functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_nested_functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_sparse_functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_special_functions.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_return_types.cpp"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_enum_tag.cpp"
-  "${TORCH_SRC_DIR}/csrc/functionalization/generated/ViewMetaClassesPythonBinding.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_functions_0.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_functions_1.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_functions_2.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_functions_3.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_functions_4.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_variable_methods.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_torch_functions_0.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_torch_functions_1.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_torch_functions_2.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_nn_functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_fft_functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_linalg_functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_nested_functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_sparse_functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_special_functions.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_return_types.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_enum_tag.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/functionalization/generated/ViewMetaClassesPythonBinding.cpp"
   )
 
 set(GENERATED_H_PYTHON
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_functions.h"
-  "${TORCH_SRC_DIR}/csrc/autograd/generated/python_return_types.h"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_functions.h"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/autograd/generated/python_return_types.h"
   )
 
 set(GENERATED_TESTING_PYTHON
-  "${TORCH_SRC_DIR}/testing/_internal/generated/annotated_fn_args.py"
+  "${TORCH_GENERATED_SRC_DIR}/testing/_internal/generated/annotated_fn_args.py"
   )
 
 set(GENERATED_CXX_TORCH_CUDA
-  "${TORCH_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cuda.cpp"
+  "${TORCH_GENERATED_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cuda.cpp"
   )
 
 set(GENERATED_CXX_TORCH_XPU
@@ -279,8 +291,14 @@ set(TORCH_GENERATED_CODE
   ${GENERATED_CXX_PYTHON}
   ${GENERATED_H_PYTHON}
   ${GENERATED_TESTING_PYTHON}
-  ${GENERATED_CXX_TORCH_CUDA}
   )
+if(USE_ROCM)
+  list(REMOVE_ITEM TORCH_GENERATED_CODE
+    "${TORCH_GENERATED_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_cpu.cpp"
+    "${TORCH_GENERATED_SRC_DIR}/csrc/inductor/aoti_torch/generated/c_shim_aten.cpp")
+else()
+  list(APPEND TORCH_GENERATED_CODE ${GENERATED_CXX_TORCH_CUDA})
+endif()
 
 if(USE_XPU)
   list(APPEND TORCH_GENERATED_CODE ${GENERATED_CXX_TORCH_XPU})
@@ -296,6 +314,8 @@ add_custom_command(
   Python::Interpreter tools/setup_helpers/generate_code.py
     --native-functions-path "aten/src/ATen/native/native_functions.yaml"
     --tags-path "aten/src/ATen/native/tags.yaml"
+    --gen-dir "${TORCH_GEN_DIR}"
+    --autograd-dir "${TORCH_AUTOGRAD_DIR}"
   DEPENDS
     "${TORCH_ROOT}/aten/src/ATen/native/native_functions.yaml"
     "${TORCH_ROOT}/aten/src/ATen/native/tags.yaml"
@@ -378,7 +398,13 @@ list(APPEND LIBTORCH_CMAKE_SRCS "")
 append_filelist("libtorch_cmake_sources" LIBTORCH_CMAKE_SRCS)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # TODO: Delete this when https://github.com/pytorch/pytorch/issues/35026 is fixed
-  set_source_files_properties(../torch/csrc/autograd/record_function_ops.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+  set(_record_function_ops
+      "${TORCH_SRC_DIR}/csrc/autograd/record_function_ops.cpp")
+  if(USE_ROCM)
+    pytorch_hipify_source_list(_record_function_ops ${_record_function_ops})
+  endif()
+  set_source_files_properties(${_record_function_ops}
+    PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 list(APPEND TORCH_SRCS ${LIBTORCH_CMAKE_SRCS})
 
@@ -503,6 +529,12 @@ if(USE_MPS)
       file(TOUCH ${CMAKE_BINARY_DIR}/caffe2/aten/src/ATen/metallib_dummy.cpp)
       list(APPEND Caffe2_CPU_SRCS ${CMAKE_BINARY_DIR}/caffe2/aten/src/ATen/metallib_dummy.cpp)
   endif()
+endif()
+
+if(USE_ROCM)
+  pytorch_hipify_source_list(Caffe2_CPU_SRCS ${Caffe2_CPU_SRCS})
+  pytorch_hipify_source_list(Caffe2_HIP_SRCS ${Caffe2_HIP_SRCS})
+  pytorch_hipify_source_list(Caffe2_HIP_TEST_SRCS ${Caffe2_HIP_TEST_SRCS})
 endif()
 
 # NOTE [ Linking AVX and non-AVX files ]
@@ -1008,6 +1040,11 @@ target_include_directories(torch_cpu PRIVATE ${ATen_CPU_INCLUDE})
 target_include_directories(torch_cpu PRIVATE
   ${TORCH_SRC_DIR}/csrc
   ${TORCH_SRC_DIR}/headeronly)
+if(USE_ROCM)
+  target_include_directories(torch_cpu BEFORE PRIVATE
+    ${PYTORCH_HIPIFY_TORCH_DIR}/csrc
+    ${PYTORCH_HIPIFY_TORCH_DIR}/headeronly)
+endif()
 
 target_include_directories(torch_cpu PRIVATE
   ${TORCH_ROOT}/third_party/miniz-3.0.2)
@@ -1049,13 +1086,24 @@ install(DIRECTORY
   "${TORCH_SRC_DIR}/headeronly"
   DESTINATION ${TORCH_INSTALL_INCLUDE_DIR}/torch
   FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+if(USE_ROCM)
+  install(DIRECTORY
+    "${PYTORCH_HIPIFY_TORCH_DIR}/csrc"
+    "${PYTORCH_HIPIFY_TORCH_DIR}/headeronly"
+    DESTINATION ${TORCH_INSTALL_INCLUDE_DIR}/torch
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+endif()
 
+set(TORCH_HEADER_SRC_DIR "${TORCH_SRC_DIR}")
+if(USE_ROCM)
+  set(TORCH_HEADER_SRC_DIR "${PYTORCH_HIPIFY_TORCH_DIR}")
+endif()
 install(FILES
-  "${TORCH_SRC_DIR}/script.h"
-  "${TORCH_SRC_DIR}/extension.h"
-  "${TORCH_SRC_DIR}/custom_class.h"
-  "${TORCH_SRC_DIR}/library.h"
-  "${TORCH_SRC_DIR}/custom_class_detail.h"
+  "${TORCH_HEADER_SRC_DIR}/script.h"
+  "${TORCH_HEADER_SRC_DIR}/extension.h"
+  "${TORCH_HEADER_SRC_DIR}/custom_class.h"
+  "${TORCH_HEADER_SRC_DIR}/library.h"
+  "${TORCH_HEADER_SRC_DIR}/custom_class_detail.h"
   DESTINATION ${TORCH_INSTALL_INCLUDE_DIR}/torch)
 if(BUILD_TEST)
   add_subdirectory(${TORCH_ROOT}/test/cpp/jit ${CMAKE_BINARY_DIR}/test_jit)
@@ -1144,6 +1192,8 @@ if(USE_ROCM)
           "${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/NVSHMEMSymmetricMemoryKernels.cu"
           "${TORCH_SRC_DIR}/csrc/distributed/c10d/symm_mem/CUDASymmetricMemoryUtils.cpp"
         )
+        pytorch_hipify_source_list(
+          TORCH_ROCSHMEM_SRCS ${TORCH_ROCSHMEM_SRCS})
         set_source_files_properties(${TORCH_ROCSHMEM_SRCS} PROPERTIES LANGUAGE HIP)
 
         add_library(torch_rocshmem SHARED ${TORCH_ROCSHMEM_SRCS})

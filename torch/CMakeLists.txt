@@ -49,6 +49,11 @@ set(TORCH_PYTHON_INCLUDE_DIRECTORIES
     ${TORCH_SRC_DIR}/lib
     ${TORCH_SRC_DIR}/standalone
     )
+if(USE_ROCM)
+  list(PREPEND TORCH_PYTHON_INCLUDE_DIRECTORIES
+    ${PYTORCH_HIPIFY_DIR}
+    ${PYTORCH_HIPIFY_DIR}/aten/src)
+endif()
 
 set(TORCH_PYTHON_LINK_LIBRARIES
     Python::Module
@@ -142,8 +147,14 @@ if(USE_CUDNN OR USE_ROCM)
       ${TORCH_SRC_DIR}/csrc/cuda/shared/cudnn.cpp
       )
     if(USE_STATIC_CUDNN)
+        set(_torch_python_cudnn
+          "${TORCH_SRC_DIR}/csrc/cuda/shared/cudnn.cpp")
+        if(USE_ROCM)
+          pytorch_hipify_source_list(
+            _torch_python_cudnn ${_torch_python_cudnn})
+        endif()
         set_source_files_properties(
-          ${TORCH_SRC_DIR}/csrc/cuda/shared/cudnn.cpp
+          ${_torch_python_cudnn}
           PROPERTIES COMPILE_DEFINITIONS "USE_STATIC_CUDNN"
         )
     endif()
@@ -191,7 +202,14 @@ if(USE_DISTRIBUTED)
     append_filelist("libtorch_python_distributed_sources" TORCH_PYTHON_SRCS)
     # Disable certain warnings for GCC-9.X
     if(CMAKE_COMPILER_IS_GNUCXX)
-      set_source_files_properties(${TORCH_SRC_DIR}/csrc/distributed/c10d/init.cpp PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
+      set(_torch_python_c10d_init
+          "${TORCH_SRC_DIR}/csrc/distributed/c10d/init.cpp")
+      if(USE_ROCM)
+        pytorch_hipify_source_list(
+          _torch_python_c10d_init ${_torch_python_c10d_init})
+      endif()
+      set_source_files_properties(${_torch_python_c10d_init}
+        PROPERTIES COMPILE_FLAGS "-Wno-cast-function-type")
     endif()
     # NCCL is a private dependency of libtorch, but libtorch_python includes
     # some private headers of libtorch, which in turn include NCCL. As a hacky
@@ -210,6 +228,9 @@ if(USE_NCCL)
     list(APPEND TORCH_PYTHON_COMPILE_DEFINITIONS USE_NCCL)
 endif()
 
+if(USE_ROCM)
+  pytorch_hipify_source_list(TORCH_PYTHON_SRCS ${TORCH_PYTHON_SRCS})
+endif()
 
 add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})
 torch_compile_options(torch_python)  # see cmake/public/utils.cmake
@@ -304,7 +325,9 @@ endif()
 # Preserve HIP arch flags
 if(USE_ROCM)
   string(REPLACE ";" " " PYTORCH_ROCM_ARCH_readable "${PYTORCH_ROCM_ARCH}")
-  set_source_files_properties(${TORCH_SRC_DIR}/csrc/cuda/Module.cpp PROPERTIES COMPILE_FLAGS "-DCUDA_ARCH_FLAGS=\"${PYTORCH_ROCM_ARCH_readable}\"")
+  pytorch_hipify_source_list(
+    _torch_python_module_src ${TORCH_SRC_DIR}/csrc/cuda/Module.cpp)
+  set_source_files_properties(${_torch_python_module_src} PROPERTIES COMPILE_FLAGS "-DCUDA_ARCH_FLAGS=\"${PYTORCH_ROCM_ARCH_readable}\"")
 endif()
 
 # Preserve XPU arch flags

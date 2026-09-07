@@ -1,13 +1,22 @@
+set(C10D_HIP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(C10D_TORCH_INCLUDE_DIRS "${TORCH_SRC_DIR}/csrc/distributed")
+if(USE_ROCM)
+  set(C10D_HIP_SOURCE_DIR "${PYTORCH_HIPIFY_DIR}/test/cpp/c10d")
+  list(PREPEND C10D_TORCH_INCLUDE_DIRS
+    "${PYTORCH_HIPIFY_TORCH_DIR}/csrc/distributed")
+endif()
+
 if(USE_CUDA)
   add_library(c10d_cuda_test CUDATest.cu)
   target_include_directories(c10d_cuda_test PRIVATE $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/distributed>)
   target_link_libraries(c10d_cuda_test torch_cuda)
   add_dependencies(c10d_cuda_test torch_cuda)
 elseif(USE_ROCM)
-  set_source_files_properties(hip/HIPTest.hip PROPERTIES LANGUAGE HIP)
-  add_library(c10d_hip_test hip/HIPTest.hip)
+  set_source_files_properties(
+    "${C10D_HIP_SOURCE_DIR}/hip/HIPTest.hip" PROPERTIES LANGUAGE HIP)
+  add_library(c10d_hip_test "${C10D_HIP_SOURCE_DIR}/hip/HIPTest.hip")
   set_target_properties(c10d_hip_test PROPERTIES LINKER_LANGUAGE CXX)
-  target_include_directories(c10d_hip_test PRIVATE $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/distributed>)
+  target_include_directories(c10d_hip_test PRIVATE ${C10D_TORCH_INCLUDE_DIRS})
   target_link_libraries(c10d_hip_test torch_hip)
   add_dependencies(c10d_hip_test torch_hip)
 endif()
@@ -24,8 +33,8 @@ function(c10d_add_test test_src)
   get_filename_component(test_name ${test_src} NAME_WE)
   add_executable(${test_name} "${test_src}")
   target_include_directories(${test_name} PRIVATE
-      $<BUILD_INTERFACE:${TORCH_SRC_DIR}/test/cpp/c10d/hip>
-      $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/distributed>
+      $<BUILD_INTERFACE:${C10D_HIP_SOURCE_DIR}/hip>
+      ${C10D_TORCH_INCLUDE_DIRS}
       $<TARGET_PROPERTY:fmt::fmt-header-only,INTERFACE_INCLUDE_DIRECTORIES>
   )
   target_link_libraries(${test_name} PRIVATE
@@ -41,10 +50,10 @@ function(c10d_add_test test_src)
 endfunction()
 
 if(USE_ROCM)
-  c10d_add_test(hip/BackoffTest.cpp LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST OFF)
-  c10d_add_test(hip/FileStoreTest.cpp LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST ${INSTALL_TEST})
-  c10d_add_test(hip/TCPStoreTest.cpp LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST ${INSTALL_TEST})
-  c10d_add_test(hip/HashStoreTest.cpp LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST ${INSTALL_TEST})
+  c10d_add_test("${C10D_HIP_SOURCE_DIR}/hip/BackoffTest.cpp" LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST OFF)
+  c10d_add_test("${C10D_HIP_SOURCE_DIR}/hip/FileStoreTest.cpp" LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST ${INSTALL_TEST})
+  c10d_add_test("${C10D_HIP_SOURCE_DIR}/hip/TCPStoreTest.cpp" LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST ${INSTALL_TEST})
+  c10d_add_test("${C10D_HIP_SOURCE_DIR}/hip/HashStoreTest.cpp" LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST ${INSTALL_TEST})
 
 else()
   c10d_add_test(BackoffTest.cpp LINK_LIBRARIES torch_cpu gtest_main INSTALL_TEST OFF)
@@ -92,15 +101,15 @@ if(USE_CUDA)
   endif()
 elseif(USE_ROCM)
   if(USE_GLOO AND USE_C10D_GLOO)
-    c10d_add_test(hip/ProcessGroupGlooTest.cpp LINK_LIBRARIES torch_cpu c10d_hip_test gloo gtest_main INSTALL_TEST ${INSTALL_TEST})
-    c10d_add_test(hip/ProcessGroupGlooAsyncTest.cpp LINK_LIBRARIES torch_cpu c10d_hip_test gloo gtest_main INSTALL_TEST ${INSTALL_TEST})
+    c10d_add_test("${C10D_HIP_SOURCE_DIR}/hip/ProcessGroupGlooTest.cpp" LINK_LIBRARIES torch_cpu c10d_hip_test gloo gtest_main INSTALL_TEST ${INSTALL_TEST})
+    c10d_add_test("${C10D_HIP_SOURCE_DIR}/hip/ProcessGroupGlooAsyncTest.cpp" LINK_LIBRARIES torch_cpu c10d_hip_test gloo gtest_main INSTALL_TEST ${INSTALL_TEST})
   endif()
   if(USE_NCCL AND USE_C10D_NCCL)
     c10d_add_test(
-      hip/ProcessGroupNCCLTest.cpp
+      "${C10D_HIP_SOURCE_DIR}/hip/ProcessGroupNCCLTest.cpp"
       LINK_LIBRARIES torch_cpu c10d_hip_test gtest_main __caffe2_nccl INSTALL_TEST ${INSTALL_TEST})
     c10d_add_test(
-      hip/ProcessGroupNCCLErrorsTest.cpp
+      "${C10D_HIP_SOURCE_DIR}/hip/ProcessGroupNCCLErrorsTest.cpp"
       LINK_LIBRARIES torch_cpu c10d_hip_test gtest_main __caffe2_nccl INSTALL_TEST ${INSTALL_TEST})
     if(INSTALL_TEST)
       install(TARGETS c10d_hip_test DESTINATION lib)
@@ -113,8 +122,12 @@ else()
 endif()
 
 if(LINUX AND USE_GLOO AND USE_C10D_GLOO)
-  add_executable(example_allreduce example/allreduce.cpp)
-  target_include_directories(example_allreduce PRIVATE $<BUILD_INTERFACE:${TORCH_SRC_DIR}/csrc/distributed>)
+  set(_allreduce_source "${CMAKE_CURRENT_SOURCE_DIR}/example/allreduce.cpp")
+  if(USE_ROCM)
+    set(_allreduce_source "${C10D_HIP_SOURCE_DIR}/example/hip/allreduce.cpp")
+  endif()
+  add_executable(example_allreduce "${_allreduce_source}")
+  target_include_directories(example_allreduce PRIVATE ${C10D_TORCH_INCLUDE_DIRS})
   target_link_libraries(example_allreduce torch_cpu gloo)
   if(USE_CUDA)
     target_link_libraries(example_allreduce torch_cuda)

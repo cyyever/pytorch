@@ -76,14 +76,27 @@ string(REPLACE ";" "," AT_ROCM_CK_SDPA_ARCHS_STR "${AT_ROCM_CK_SDPA_ARCHS}")
 # Alongside the other generated ATen headers (see cmake/Codegen.cmake).
 configure_file(ROCmCKSDPAConfig.h.in "${CMAKE_BINARY_DIR}/aten/src/ATen/ROCmCKSDPAConfig.h" @ONLY)
 
-configure_file(Config.h.in "${CMAKE_CURRENT_SOURCE_DIR}/Config.h")
-# TODO: Do not generate CUDAConfig.h for ROCm BUILDS
-# At the moment, `jit_macros.h` include CUDAConfig.h for both CUDA and HIP builds
-if(USE_CUDA OR USE_ROCM)
-  configure_file(cuda/CUDAConfig.h.in "${CMAKE_CURRENT_SOURCE_DIR}/cuda/CUDAConfig.h")
-endif()
 if(USE_ROCM)
-  configure_file(hip/HIPConfig.h.in "${CMAKE_CURRENT_SOURCE_DIR}/hip/HIPConfig.h")
+  set(ATEN_HIP_SOURCE_DIR "${PYTORCH_HIPIFY_ATEN_DIR}")
+  set(ATEN_CONFIG_HEADER "${CMAKE_BINARY_DIR}/aten/src/ATen/Config.h")
+  set(ATEN_CUDA_CONFIG_HEADER
+      "${CMAKE_BINARY_DIR}/aten/src/ATen/cuda/CUDAConfig.h")
+  set(ATEN_HIP_CONFIG_HEADER
+      "${CMAKE_BINARY_DIR}/aten/src/ATen/hip/HIPConfig.h")
+  file(MAKE_DIRECTORY
+    "${CMAKE_BINARY_DIR}/aten/src/ATen/cuda"
+    "${CMAKE_BINARY_DIR}/aten/src/ATen/hip")
+  configure_file(Config.h.in "${ATEN_CONFIG_HEADER}")
+  configure_file(cuda/CUDAConfig.h.in "${ATEN_CUDA_CONFIG_HEADER}")
+  configure_file(
+      "${ATEN_HIP_SOURCE_DIR}/hip/HIPConfig.h.in"
+      "${ATEN_HIP_CONFIG_HEADER}")
+else()
+  set(ATEN_HIP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+  configure_file(Config.h.in "${CMAKE_CURRENT_SOURCE_DIR}/Config.h")
+  if(USE_CUDA)
+    configure_file(cuda/CUDAConfig.h.in "${CMAKE_CURRENT_SOURCE_DIR}/cuda/CUDAConfig.h")
+  endif()
 endif()
 
 # NB: If you edit these globs, you'll have to update setup.py package_data as well
@@ -107,12 +120,34 @@ file(GLOB ops_h CONFIGURE_DEPENDS "ops/*.h")
 file(GLOB xpu_h CONFIGURE_DEPENDS "xpu/*.h" "xpu/detail/*.h")
 file(GLOB xpu_cpp CONFIGURE_DEPENDS "xpu/*.cpp" "xpu/detail/*.cpp")
 
-file(GLOB hip_h CONFIGURE_DEPENDS "hip/*.h" "hip/detail/*.h" "hip/*.cuh" "hip/detail/*.cuh" "hip/impl/*.h" "hip/tunable/*.cuh" "hip/tunable/*.h")
-file(GLOB hip_cpp CONFIGURE_DEPENDS "hip/*.cpp" "hip/detail/*.cpp" "hip/impl/*.cpp" "hip/tunable/*.cpp")
-list(REMOVE_ITEM hip_cpp "${CMAKE_CURRENT_SOURCE_DIR}/hip/detail/LazyNVRTC.cpp")
-file(GLOB hip_hip CONFIGURE_DEPENDS "hip/*.hip" "hip/detail/*.hip" "hip/impl/*.hip" "hip/tunable/*.hip")
-file(GLOB hip_nvrtc_stub_h CONFIGURE_DEPENDS "hip/nvrtc_stub/*.h")
-file(GLOB hip_nvrtc_stub_cpp CONFIGURE_DEPENDS "hip/nvrtc_stub/*.cpp")
+file(GLOB hip_h CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/hip/*.h"
+  "${ATEN_HIP_SOURCE_DIR}/hip/detail/*.h"
+  "${ATEN_HIP_SOURCE_DIR}/hip/*.cuh"
+  "${ATEN_HIP_SOURCE_DIR}/hip/detail/*.cuh"
+  "${ATEN_HIP_SOURCE_DIR}/hip/impl/*.h"
+  "${ATEN_HIP_SOURCE_DIR}/hip/tunable/*.cuh"
+  "${ATEN_HIP_SOURCE_DIR}/hip/tunable/*.h")
+file(GLOB hip_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/hip/*.cpp"
+  "${ATEN_HIP_SOURCE_DIR}/hip/detail/*.cpp"
+  "${ATEN_HIP_SOURCE_DIR}/hip/impl/*.cpp"
+  "${ATEN_HIP_SOURCE_DIR}/hip/tunable/*.cpp")
+list(REMOVE_ITEM hip_cpp "${ATEN_HIP_SOURCE_DIR}/hip/detail/LazyNVRTC.cpp")
+file(GLOB hip_hip CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/hip/*.hip"
+  "${ATEN_HIP_SOURCE_DIR}/hip/detail/*.hip"
+  "${ATEN_HIP_SOURCE_DIR}/hip/impl/*.hip"
+  "${ATEN_HIP_SOURCE_DIR}/hip/tunable/*.hip")
+file(GLOB hip_nvrtc_stub_h CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/hip/nvrtc_stub/*.h")
+file(GLOB hip_nvrtc_stub_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/hip/nvrtc_stub/*.cpp")
+if(USE_ROCM)
+  list(REMOVE_ITEM base_h "${CMAKE_CURRENT_SOURCE_DIR}/Config.h")
+  list(REMOVE_ITEM cuda_h "${CMAKE_CURRENT_SOURCE_DIR}/cuda/CUDAConfig.h")
+  list(REMOVE_ITEM hip_h "${ATEN_HIP_SOURCE_DIR}/hip/HIPConfig.h")
+endif()
 file(GLOB miopen_h CONFIGURE_DEPENDS "miopen/*.h")
 file(GLOB miopen_cpp CONFIGURE_DEPENDS "miopen/*.cpp")
 
@@ -148,7 +183,10 @@ file(GLOB native_cuda_cpp CONFIGURE_DEPENDS "native/cuda/*.cpp")
 file(GLOB native_cuda_h CONFIGURE_DEPENDS "native/cuda/*.h" "native/cuda/*.cuh")
 file(GLOB native_cuda_linalg_cpp CONFIGURE_DEPENDS "native/cuda/linalg/*.cpp")
 file(GLOB native_cuda_linalg_cu CONFIGURE_DEPENDS "native/cuda/linalg/*.cu")
-file(GLOB native_hip_h CONFIGURE_DEPENDS "native/hip/*.h" "native/hip/*.cuh" "native/hip/bgemm_kernels/*.h")
+file(GLOB native_hip_h CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/*.h"
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/*.cuh"
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/bgemm_kernels/*.h")
 file(GLOB native_cudnn_cpp CONFIGURE_DEPENDS "native/cudnn/*.cpp")
 file(GLOB native_sparse_cuda_cu CONFIGURE_DEPENDS "native/sparse/cuda/*.cu")
 file(GLOB native_sparse_cuda_cpp CONFIGURE_DEPENDS "native/sparse/cuda/*.cpp")
@@ -156,19 +194,30 @@ file(GLOB native_nested_h CONFIGURE_DEPENDS "native/nested/*.h")
 file(GLOB native_nested_cuda_cu CONFIGURE_DEPENDS "native/nested/cuda/*.cu")
 file(GLOB native_nested_cuda_cpp CONFIGURE_DEPENDS "native/nested/cuda/*.cpp")
 
-file(GLOB native_hip_hip CONFIGURE_DEPENDS "native/hip/*.hip" "native/hip/bgemm_kernels/*.hip")
-file(GLOB native_hip_cpp CONFIGURE_DEPENDS "native/hip/*.cpp")
-file(GLOB native_hip_linalg_cpp CONFIGURE_DEPENDS "native/hip/linalg/*.cpp")
+file(GLOB native_hip_hip CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/*.hip"
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/bgemm_kernels/*.hip")
+file(GLOB native_hip_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/*.cpp")
+file(GLOB native_hip_linalg_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/hip/linalg/*.cpp")
 file(GLOB native_miopen_cpp CONFIGURE_DEPENDS "native/miopen/*.cpp")
-file(GLOB native_cudnn_hip_cpp CONFIGURE_DEPENDS "native/cudnn/hip/*.cpp")
-file(GLOB native_nested_hip_hip CONFIGURE_DEPENDS "native/nested/hip/*.hip")
-file(GLOB native_nested_hip_cpp CONFIGURE_DEPENDS "native/nested/hip/*.cpp")
-file(GLOB native_sparse_hip_hip CONFIGURE_DEPENDS "native/sparse/hip/*.hip")
-file(GLOB native_sparse_hip_cpp CONFIGURE_DEPENDS "native/sparse/hip/*.cpp")
+file(GLOB native_cudnn_hip_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/cudnn/hip/*.cpp")
+file(GLOB native_nested_hip_hip CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/nested/hip/*.hip")
+file(GLOB native_nested_hip_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/nested/hip/*.cpp")
+file(GLOB native_sparse_hip_hip CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/sparse/hip/*.hip")
+file(GLOB native_sparse_hip_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/sparse/hip/*.cpp")
 file(GLOB native_transformers_cuda_cu CONFIGURE_DEPENDS "native/transformers/cuda/*.cu")
 file(GLOB native_transformers_cuda_cpp CONFIGURE_DEPENDS "native/transformers/cuda/*.cpp")
-file(GLOB native_transformers_hip_hip CONFIGURE_DEPENDS "native/transformers/hip/*.hip")
-file(GLOB native_transformers_hip_cpp CONFIGURE_DEPENDS "native/transformers/hip/*.cpp")
+file(GLOB native_transformers_hip_hip CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/*.hip")
+file(GLOB native_transformers_hip_cpp CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/*.cpp")
 file(GLOB native_transformers_xpu_cpp CONFIGURE_DEPENDS "native/transformers/xpu/*.cpp")
 file(GLOB native_utils_cpp CONFIGURE_DEPENDS "native/utils/*.cpp")
 file(GLOB flash_attention_cuda_kernels_cu CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/third_party/flash-attention/csrc/flash_attn/src/*.cu)
@@ -177,7 +226,8 @@ file(GLOB native_flash_attn_api_cpp CONFIGURE_DEPENDS "native/transformers/cuda/
 
 
 # flash_attention hip sources
-file(GLOB flash_attention_hip_hip CONFIGURE_DEPENDS "native/transformers/hip/flash_attn/*.hip")
+file(GLOB flash_attention_hip_hip CONFIGURE_DEPENDS
+  "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/*.hip")
 # if USE_FLASH_ATTENTION is set, ensure CK instances get generated
 if(USE_FLASH_ATTENTION)
   # Now building CK by default
@@ -262,17 +312,18 @@ if(USE_FLASH_ATTENTION)
         USE_ROCM_CK_SDPA)
 
     message(STATUS "Generating CK kernel instances...")
-    add_subdirectory(native/transformers/hip/flash_attn/ck)
+    add_subdirectory(
+      "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/ck"
+      "${CMAKE_CURRENT_BINARY_DIR}/native/transformers/hip/flash_attn/ck")
     file(GLOB ck_sdpa_sources_hip CONFIGURE_DEPENDS
-         "native/transformers/hip/flash_attn/ck/*.hip")
+         "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/ck/*.hip")
     # Take the generated FMHA instances from the blob lists this configure
-    # wrote instead of from the glob: they are generated into the source tree,
-    # which can also hold instances from an earlier configure that asked for
-    # different target families.
+    # wrote instead of from the glob: the hipify tree can also hold instances
+    # from an earlier configure that asked for different target families.
     list(FILTER ck_sdpa_sources_hip EXCLUDE REGEX "/fmha_[^/]*\\.hip$")
     list(APPEND ck_sdpa_sources_hip ${CK_FMHA_GENERATED_SOURCES})
     list(APPEND ck_sdpa_sources_hip
-         "${CMAKE_CURRENT_SOURCE_DIR}/native/transformers/hip/flash_attn/ck/mha_bwd_dispatch_ck.hip")
+         "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/ck/mha_bwd_dispatch_ck.hip")
 
     set_source_files_properties(${ck_sdpa_sources_hip} PROPERTIES LANGUAGE HIP)
 
@@ -293,11 +344,13 @@ if(USE_FLASH_ATTENTION)
                                ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/example/ck_tile/01_fmha
                                ${CMAKE_CURRENT_BINARY_DIR}/composable_kernel
                                ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/aiter/csrc/include
-                               ${CMAKE_CURRENT_SOURCE_DIR}/native/transformers/hip/flash_attn/ck)
+                               ${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/ck)
 
   endif()
-  file(GLOB flash_attention_hip_aot_hip CONFIGURE_DEPENDS "native/transformers/hip/flash_attn/aot/*.hip")
-  file(GLOB flash_attention_src_hip_hip CONFIGURE_DEPENDS "native/transformers/hip/flash_attn/src/*.hip")
+  file(GLOB flash_attention_hip_aot_hip CONFIGURE_DEPENDS
+    "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/aot/*.hip")
+  file(GLOB flash_attention_src_hip_hip CONFIGURE_DEPENDS
+    "${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/src/*.hip")
 endif()
 
 #Mem_eff attention sources
@@ -352,9 +405,17 @@ endif()
 
 # MSLK
 IF(USE_MSLK)
+  apply_third_party_patches(
+      "${PROJECT_SOURCE_DIR}/third_party/mslk_patches"
+      "${PROJECT_SOURCE_DIR}/third_party/mslk"
+      MSLK)
+
   set(MSLK_THIRD_PARTY ${PROJECT_SOURCE_DIR}/third_party/mslk/external/)
   set(MSLK_SRCS ${PROJECT_SOURCE_DIR}/third_party/mslk/csrc/gemm/)
   set(MSLK_INCLUDE ${PROJECT_SOURCE_DIR}/third_party/mslk/include/)
+  set(MSLK_HIPIFY_ROOT ${PYTORCH_HIPIFY_DIR}/third_party/mslk)
+  set(MSLK_HIPIFY_THIRD_PARTY ${MSLK_HIPIFY_ROOT}/external/)
+  set(MSLK_HIPIFY_INCLUDE ${MSLK_HIPIFY_ROOT}/include/)
 
   if(USE_CUDA)
     # To avoid increasing the build time/binary size unnecessarily, use an allow-list of kernels to build.
@@ -418,9 +479,11 @@ IF(USE_MSLK)
   if(USE_MSLK AND USE_ROCM)
     # Path to vendored CK
     set(MSLK_CK_DIR "${MSLK_THIRD_PARTY}/composable_kernel")
+    file(MAKE_DIRECTORY
+      "${MSLK_HIPIFY_THIRD_PARTY}/composable_kernel/include/ck")
     rocm_generate_ck_conf(
       "${MSLK_CK_DIR}/include/ck/config.h.in"
-      "${MSLK_CK_DIR}/include/ck/config.h"
+      "${MSLK_HIPIFY_THIRD_PARTY}/composable_kernel/include/ck/config.h"
     )
     # Only include the kernels we want to build to avoid increasing binary size.
     file(GLOB_RECURSE mslk_native_rocm_hip CONFIGURE_DEPENDS
@@ -449,15 +512,17 @@ IF(USE_MSLK)
 
     target_include_directories(mslk PRIVATE
       # MSLK version of Composable Kernel is used due to some customizations
+      ${MSLK_HIPIFY_THIRD_PARTY}/composable_kernel/include
       ${MSLK_THIRD_PARTY}/composable_kernel/include
       ${MSLK_THIRD_PARTY}/composable_kernel/library/include
       ${MSLK_THIRD_PARTY}/cutlass/include
       ${MSLK_THIRD_PARTY}/cutlass/tools/util/include
+      ${MSLK_HIPIFY_INCLUDE}
       ${MSLK_INCLUDE} # includes mslk/gemm/gemm_torch.h, mslk/utils/utils.h, mslk/utils/tuning_cache.hpp
     )
 
     # Add MSLK include directories for gemm_torch.h
-    list(APPEND ATen_HIP_INCLUDE ${MSLK_INCLUDE})
+    list(APPEND ATen_HIP_INCLUDE ${MSLK_HIPIFY_INCLUDE} ${MSLK_INCLUDE})
   endif()
 
   # Ensure torch_cpu is built before mslk to avoid race conditions
@@ -538,7 +603,7 @@ endif()
 
 if(USE_ROCM)
   if((USE_FLASH_ATTENTION AND USE_ROCM_CK_SDPA) OR USE_ROCM_CK_GEMM)
-    list(APPEND ATen_HIP_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/hip)
+    list(APPEND ATen_HIP_INCLUDE ${ATEN_HIP_SOURCE_DIR}/hip)
     list(APPEND ATen_HIP_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/include)
     list(APPEND ATen_HIP_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/library/include)
     list(APPEND ATen_HIP_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/example/ck_tile/01_fmha)
@@ -559,7 +624,7 @@ if(USE_ROCM)
   list(APPEND ATen_HIP_INCLUDE $<TARGET_PROPERTY:fmt::fmt-header-only,INTERFACE_INCLUDE_DIRECTORIES>)
   list(APPEND ATen_HIP_DEPENDENCY_LIBS fmt::fmt-header-only)
   if(USE_FLASH_ATTENTION AND USE_ROCM_CK_SDPA)
-    list(APPEND ATen_HIP_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/native/transformers/hip/flash_attn/ck)
+    list(APPEND ATen_HIP_INCLUDE ${ATEN_HIP_SOURCE_DIR}/native/transformers/hip/flash_attn/ck)
   endif()
   list(APPEND ATen_HIP_SRCS
     ${ATen_HIP_SRCS}
@@ -569,8 +634,10 @@ if(USE_ROCM)
     ${native_sparse_hip_hip}
     ${native_transformers_hip_hip} ${native_transformers_src_hip_hip}
   )
-  file(GLOB native_hip_bgemm CONFIGURE_DEPENDS "native/hip/bgemm_kernels/*.hip")
-  file(GLOB native_hip_ck CONFIGURE_DEPENDS "native/hip/ck*.hip")
+  file(GLOB native_hip_bgemm CONFIGURE_DEPENDS
+    "${ATEN_HIP_SOURCE_DIR}/native/hip/bgemm_kernels/*.hip")
+  file(GLOB native_hip_ck CONFIGURE_DEPENDS
+    "${ATEN_HIP_SOURCE_DIR}/native/hip/ck*.hip")
   if(NOT USE_ROCM_CK_GEMM)
     exclude(ATen_HIP_SRCS "${ATen_HIP_SRCS}"
       ${native_hip_bgemm} ${native_hip_ck})
@@ -592,7 +659,7 @@ if(USE_ROCM)
       ${HIP_CXX_FLAGS}
       $<$<COMPILE_LANGUAGE:HIP>:-fvisibility=hidden>)
     target_include_directories(ck_gemm PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}/hip
+      ${ATEN_HIP_SOURCE_DIR}/hip
       ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/include
       ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/composable_kernel/library/include
       ${CMAKE_CURRENT_BINARY_DIR}/composable_kernel)
@@ -871,11 +938,24 @@ list(APPEND INSTALL_HEADERS ${native_h} ${cuda_h} ${native_cuda_h} ${native_hip_
 
 # https://stackoverflow.com/questions/11096471/how-can-i-install-a-hierarchy-of-files-using-cmake
 foreach(HEADER  ${INSTALL_HEADERS})
+  string(REPLACE "${ATEN_HIP_SOURCE_DIR}/" "ATen/" HEADER_SUB ${HEADER})
   string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "ATen/" HEADER_SUB ${HEADER})
   string(REPLACE "${CMAKE_SOURCE_DIR}/" "" HEADER_SUB ${HEADER_SUB})
   get_filename_component(DIR ${HEADER_SUB} DIRECTORY)
   install(FILES ${HEADER} DESTINATION "${AT_INSTALL_INCLUDE_DIR}/${DIR}")
 endforeach()
+
+if(USE_ROCM)
+  install(FILES
+    "${ATEN_CONFIG_HEADER}"
+    DESTINATION "${AT_INSTALL_INCLUDE_DIR}/ATen")
+  install(FILES
+    "${ATEN_CUDA_CONFIG_HEADER}"
+    DESTINATION "${AT_INSTALL_INCLUDE_DIR}/ATen/cuda")
+  install(FILES
+    "${ATEN_HIP_CONFIG_HEADER}"
+    DESTINATION "${AT_INSTALL_INCLUDE_DIR}/ATen/hip")
+endif()
 
 # TODO: Install hip_generated_headers when we have it
 foreach(HEADER ${generated_headers} ${cuda_generated_headers})

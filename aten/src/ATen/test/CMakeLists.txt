@@ -75,17 +75,17 @@ if(CAFFE2_USE_CUDNN)
 endif()
 
 list(APPEND ATen_HIP_TEST_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_apply_test.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_complex_math_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_complex_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_distributions_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_dlconvertor_test.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_generator_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_half_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_integer_divider_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_optional_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_packedtensoraccessor_test.hip
-  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_vectorized_test.hip)
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_apply_test.cpp
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_complex_math_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_complex_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_distributions_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_dlconvertor_test.cpp
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_generator_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_half_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_integer_divider_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_optional_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_packedtensoraccessor_test.hip
+  ${ATEN_HIP_SOURCE_DIR}/test/hip/hip_vectorized_test.hip)
 # TODO: fix and enable this
 #  ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_stream_test.cpp
 
