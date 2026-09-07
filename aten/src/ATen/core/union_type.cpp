@@ -1,12 +1,12 @@
 #include <ATen/core/Dict.h>
 #include <ATen/core/jit_type.h>
 #include <c10/macros/Macros.h>
-#include <c10/util/irange.h>
 #include <algorithm>
 #include <ostream>
 #include <sstream>
 #include <utility>
 
+#include <ATen/core/functional.h>
 #include <ranges>
 
 namespace c10 {
@@ -28,8 +28,6 @@ ListTypePtr ListType::ofOptionalTensors() {
 namespace {
 
 std::optional<TypePtr> subtractTypeSetFrom(std::vector<TypePtr>& to_subtract, ArrayRef<TypePtr> from) {
-  std::vector<TypePtr> types;
-
   // Given a TypePtr `lhs`, this function says whether or not `lhs` (or
   // one of its parent types) is in the `to_subtract` vector
   auto should_subtract = [&](const TypePtr& lhs) -> bool {
@@ -41,12 +39,7 @@ std::optional<TypePtr> subtractTypeSetFrom(std::vector<TypePtr>& to_subtract, Ar
 
   // Copy all the elements that should NOT be subtracted to the `types`
   // vector
-  types.reserve(from.size());
-  std::ranges::copy_if(from,
-              std::back_inserter(types),
-              [&](const TypePtr& t) {
-                return !should_subtract(t);
-              });
+  auto types = c10::filter(from, [&](const TypePtr& t) { return !should_subtract(t); });
 
   if (types.empty()) {
     return std::nullopt;
@@ -335,13 +328,13 @@ bool UnionType::isSubtypeOfExt(const Type& rhs, std::ostream* why_not) const {
     rhs_types.push_back(NoneType::get().get());
     if (optional_rhs->getElementType() == NumberType::get()) {
       std::array<const Type*, 3> number_types{IntType::get().get(), FloatType::get().get(), ComplexType::get().get()};
-      rhs_types.insert(rhs_types.end(), number_types.begin(), number_types.end());
+      rhs_types.append_range(number_types);
     } else {
       rhs_types.push_back(optional_rhs->getElementType().get());
     }
   } else if (const auto number_rhs = rhs.cast<NumberType>()) {
     std::array<const Type*, 3> number_types{IntType::get().get(), FloatType::get().get(), ComplexType::get().get()};
-    rhs_types.insert(rhs_types.end(), number_types.begin(), number_types.end());
+    rhs_types.append_range(number_types);
   } else {
     rhs_types.push_back(&rhs);
   }
