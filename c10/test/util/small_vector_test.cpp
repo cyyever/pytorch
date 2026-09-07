@@ -12,9 +12,12 @@
 
 #include <c10/util/ArrayRef.h>
 #include <c10/util/SmallVector.h>
+
 #include <gtest/gtest.h>
+
 #include <cstdarg>
 #include <list>
+#include <ranges>
 
 // NOLINTBEGIN(*arrays, bugprone-forwarding-reference-overload)
 using c10::SmallVector;
@@ -448,6 +451,32 @@ TYPED_TEST(SmallVectorTest, AppendTest) {
   this->assertValuesInOrder(this->theVector, 3u, 1, 2, 3);
 }
 
+TYPED_TEST(SmallVectorTest, AppendRangeTest) {
+  SCOPED_TRACE("AppendRangeTest");
+
+  this->makeSequence(this->otherVector, 2, 3);
+
+  this->theVector.push_back(Constructable(1));
+  this->theVector.append_range(this->otherVector);
+
+  this->assertValuesInOrder(this->theVector, 3u, 1, 2, 3);
+}
+
+// A view is not a common range, so this exercises the push_back path rather
+// than the iterator-pair append.
+TYPED_TEST(SmallVectorTest, AppendRangeAcceptsAView) {
+  SCOPED_TRACE("AppendRangeAcceptsAView");
+
+  this->makeSequence(this->otherVector, 1, 4);
+
+  this->theVector.append_range(
+      this->otherVector | std::views::filter([](const Constructable& v) {
+        return v.getValue() % 2 == 0;
+      }));
+
+  this->assertValuesInOrder(this->theVector, 2u, 2, 4);
+}
+
 // Append repeated test
 TYPED_TEST(SmallVectorTest, AppendRepeatedTest) {
   SCOPED_TRACE("AppendRepeatedTest");
@@ -811,7 +840,7 @@ class DualSmallVectorsTest<std::pair<VectorT1, VectorT2>>
   VectorT2 otherVector;
 
   template <typename T, unsigned N>
-  static unsigned NumBuiltinElts(const SmallVector<T, N>&) {
+  static unsigned NumBuiltinElts(const SmallVector<T, N>& /*vec*/) {
     return N;
   }
 };
@@ -922,7 +951,7 @@ struct EmplaceableArg {
       : State(X.State == EAS_Arg ? EAS_LValue : EAS_Failure) {}
 
   ~EmplaceableArg() = default;
-  explicit EmplaceableArg(bool) : State(EAS_Arg) {}
+  explicit EmplaceableArg(bool /*unused*/) : State(EAS_Arg) {}
 
   EmplaceableArg& operator=(EmplaceableArg&&) = delete;
   EmplaceableArg& operator=(const EmplaceableArg&) = delete;
@@ -964,8 +993,8 @@ struct Emplaceable {
         A3(std::forward<A3Ty>(A3)),
         State(ES_Emplaced) {}
 
-  Emplaceable(Emplaceable&&) noexcept : State(ES_Moved) {}
-  Emplaceable& operator=(Emplaceable&&) noexcept {
+  Emplaceable(Emplaceable&& /*other*/) noexcept : State(ES_Moved) {}
+  Emplaceable& operator=(Emplaceable&& /*other*/) noexcept {
     State = ES_Moved;
     return *this;
   }
@@ -1100,7 +1129,7 @@ class SmallVectorReferenceInvalidationTest : public SmallVectorTestBase {
   VectorT V;
 
   template <typename T, unsigned N>
-  static unsigned NumBuiltinElts(const SmallVector<T, N>&) {
+  static unsigned NumBuiltinElts(const SmallVector<T, N>& /*vec*/) {
     return N;
   }
 
@@ -1394,7 +1423,7 @@ class SmallVectorInternalReferenceInvalidationTest
   VectorT V;
 
   template <typename T, unsigned N>
-  static unsigned NumBuiltinElts(const SmallVector<T, N>&) {
+  static unsigned NumBuiltinElts(const SmallVector<T, N>& /*vec*/) {
     return N;
   }
 
