@@ -96,12 +96,12 @@ namespace detail {
 C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 #if defined(__CUDACC__) && \
     (!defined(USE_ROCM) && defined(__CUDA_ARCH__) || defined(USE_ROCM))
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return __bfloat16_as_ushort(__float2bfloat16(value));
   }
 #elif defined(__SYCL_DEVICE_ONLY__) && \
     defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return std::bit_cast<uint16_t>(sycl::ext::oneapi::bfloat16(value));
   }
 #endif
@@ -110,12 +110,12 @@ C10_HOST_DEVICE constexpr uint16_t float_to_bfloat16_bits(float value) {
 
 C10_HOST_DEVICE constexpr float bfloat16_bits_to_float(uint16_t x) {
 #if defined(__CUDACC__)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return __bfloat162float(*reinterpret_cast<const __nv_bfloat16*>(&x));
   }
 #elif defined(__SYCL_DEVICE_ONLY__) && \
     defined(SYCL_EXT_ONEAPI_BFLOAT16_MATH_FUNCTIONS)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return float(*reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(&x));
   }
 #endif
