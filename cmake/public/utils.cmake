@@ -625,8 +625,8 @@ function(torch_optimize_layout_if_enabled tgt)
 endfunction()
 
 ##############################################################################
-# Install the linker name and SONAME for a shared library without materializing
-# the complete symlink chain as duplicate files in wheel archives.
+# Install the SONAME and provide the unversioned linker name as a GNU ld script
+# so wheel archives do not materialize the shared library twice.
 function(torch_install_shared_library LINK_PATH DESTINATION)
   get_filename_component(_link_name "${LINK_PATH}" NAME)
   install(CODE "
@@ -660,8 +660,11 @@ function(torch_install_shared_library LINK_PATH DESTINATION)
       message(FATAL_ERROR \"Could not determine SONAME for \${_link_path}\")
     endif()
     file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${DESTINATION}\"
-      TYPE FILE FILES \"\${_real_path}\" RENAME \"${_link_name}\")
-    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${DESTINATION}\"
       TYPE FILE FILES \"\${_real_path}\" RENAME \"\${_soname}\")
+    if(NOT \"${_link_name}\" STREQUAL \"\${_soname}\")
+      file(WRITE
+        \"\${CMAKE_INSTALL_PREFIX}/${DESTINATION}/${_link_name}\"
+        \"INPUT ( \${_soname} )\\n\")
+    endif()
   ")
 endfunction()
