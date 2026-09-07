@@ -100,7 +100,7 @@ namespace detail {
  */
 C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
 #ifdef C10_X86_F16
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return _cvtsh_ss(h);
   }
 #endif
@@ -237,7 +237,7 @@ C10_HOST_DEVICE constexpr float fp16_ieee_to_fp32_value(uint16_t h) {
  */
 C10_HOST_DEVICE constexpr uint16_t fp16_ieee_from_fp32_value(float f) {
 #ifdef C10_X86_F16
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return _cvtss_sh(f, _MM_FROUND_TO_NEAREST_INT);
   }
 #endif
@@ -398,11 +398,11 @@ namespace detail {
 // agree on every input.
 C10_HOST_DEVICE constexpr uint16_t float_to_half_bits(float value) {
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return __half_as_short(__float2half(value));
   }
 #elif defined(__SYCL_DEVICE_ONLY__)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return std::bit_cast<uint16_t>(sycl::half(value));
   }
 #endif
@@ -413,11 +413,11 @@ C10_HOST_DEVICE constexpr uint16_t float_to_half_bits(float value) {
 
 C10_HOST_DEVICE constexpr float half_bits_to_float(uint16_t x) {
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return __half2float(*reinterpret_cast<const __half*>(&x));
   }
 #elif defined(__SYCL_DEVICE_ONLY__)
-  if (!std::is_constant_evaluated()) {
+  if !consteval {
     return float(std::bit_cast<sycl::half>(x));
   }
 #endif
