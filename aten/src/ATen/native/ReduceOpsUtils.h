@@ -39,9 +39,7 @@ inline Tensor restride_dim(
 
 inline void _dimreduce_setup(const Tensor &result, const Tensor &self,
                                 int64_t dim) {
-  IntArrayRef self_sizes = self.sizes();
-  std::vector<int64_t> result_sizes;
-  result_sizes.insert(result_sizes.end(), self_sizes.begin(), self_sizes.end());
+  auto result_sizes = self.sizes().vec();
   result_sizes[dim] = 1;
   result.resize_(result_sizes);
 }

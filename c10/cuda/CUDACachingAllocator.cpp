@@ -3338,22 +3338,21 @@ class DeviceCachingAllocator {
   // All private methods do not acquire the allocator mutex.
 
   std::vector<Block*> get_all_blocks() const {
-    std::vector<Block*> blocks;
-    blocks.insert(
-        blocks.end(), small_blocks.blocks.begin(), small_blocks.blocks.end());
-    blocks.insert(
-        blocks.end(), large_blocks.blocks.begin(), large_blocks.blocks.end());
+    size_t total = small_blocks.blocks.size() + large_blocks.blocks.size() +
+        active_blocks.size();
     for (const auto& gp : graph_pools) {
-      blocks.insert(
-          blocks.end(),
-          gp.second->small_blocks.blocks.begin(),
-          gp.second->small_blocks.blocks.end());
-      blocks.insert(
-          blocks.end(),
-          gp.second->large_blocks.blocks.begin(),
-          gp.second->large_blocks.blocks.end());
+      total += gp.second->small_blocks.blocks.size() +
+          gp.second->large_blocks.blocks.size();
     }
-    blocks.insert(blocks.end(), active_blocks.begin(), active_blocks.end());
+    std::vector<Block*> blocks;
+    blocks.reserve(total);
+    blocks.append_range(small_blocks.blocks);
+    blocks.append_range(large_blocks.blocks);
+    for (const auto& gp : graph_pools) {
+      blocks.append_range(gp.second->small_blocks.blocks);
+      blocks.append_range(gp.second->large_blocks.blocks);
+    }
+    blocks.append_range(active_blocks);
     return blocks;
   }
 

@@ -186,7 +186,8 @@ enum class bias_type_t { none = 0, scalar, m, n, mn };
 template <typename T>
 T concat(const T& t1, at::ScalarType d) {
   T t;
-  t.insert(t.end(), t1.begin(), t1.end());
+  t.reserve(t1.size() + 1);
+  t.append_range(t1);
   t.push_back((int64_t)d);
 
   return t;
@@ -195,7 +196,8 @@ T concat(const T& t1, at::ScalarType d) {
 template <typename T>
 T concat(const T& t1, bool b) {
   T t;
-  t.insert(t.end(), t1.begin(), t1.end());
+  t.reserve(t1.size() + 1);
+  t.append_range(t1);
   t.push_back(b);
 
   return t;
@@ -204,7 +206,8 @@ T concat(const T& t1, bool b) {
 template <typename T>
 T concat(const T& t1, int b) {
   T t;
-  t.insert(t.end(), t1.begin(), t1.end());
+  t.reserve(t1.size() + 1);
+  t.append_range(t1);
   t.push_back(b);
 
   return t;
@@ -213,8 +216,9 @@ T concat(const T& t1, int b) {
 template <typename T>
 T concat(const T& t1, const T& t2) {
   T t;
-  t.insert(t.end(), t1.begin(), t1.end());
-  t.insert(t.end(), t2.begin(), t2.end());
+  t.reserve(t1.size() + t2.size());
+  t.append_range(t1);
+  t.append_range(t2);
 
   return t;
 }

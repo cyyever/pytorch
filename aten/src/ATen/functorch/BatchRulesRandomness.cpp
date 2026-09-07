@@ -24,8 +24,7 @@ static Tensor random_batching_rule(SymIntArrayRef shape, ExtraArgs... extra_args
   auto maybe_layer = maybeCurrentDynamicLayer();
   TORCH_INTERNAL_ASSERT(maybe_layer.has_value());
   c10::SmallVector<SymInt> shapeVec(1, maybe_layer->batchSize());
-  shapeVec.reserve(shape.size() + 1);
-  shapeVec.insert(shapeVec.end(), shape.begin(), shape.end());
+  shapeVec.append_range(shape);
   RandomnessType randomness = maybe_layer->randomness();
   check_randomness(randomness);
   if (randomness == RandomnessType::Different) {
@@ -138,8 +137,7 @@ static Tensor unary_pointwise_random_batch_rule(const Tensor& tensor, ExtraArgs.
   check_randomness(randomness, tensor_bdim.has_value());
   auto shape = tensor_value.sizes();
   VmapSymDimVector shapeVec(1, maybe_layer->batchSize());
-  shapeVec.reserve(shape.size() + 1);
-  shapeVec.insert(shapeVec.end(), shape.begin(), shape.end());
+  shapeVec.append_range(shape);
 
   if (randomness == RandomnessType::Different && !tensor_bdim) {
     tensor_value = tensor_value.expand_symint(shapeVec);
@@ -167,8 +165,7 @@ static Tensor tensor_like_random_batch_rule(const Tensor& self, ExtraArgs... ext
   } else if (randomness == RandomnessType::Different && !tensor_bdim) {
     auto shape = tensor_value.sizes();
     VmapSymDimVector shapeVec(1, maybe_layer->batchSize());
-    shapeVec.reserve(shape.size() + 1);
-    shapeVec.insert(shapeVec.end(), shape.begin(), shape.end());
+    shapeVec.append_range(shape);
     tensor_value = tensor_value.expand_symint(shapeVec);
   }
 
@@ -196,8 +193,7 @@ static std::tuple<Tensor,Tensor> native_dropout_batching_rule(const Tensor& tens
       // calling dropout.
       auto shape = tensor_value.sizes();
       VmapSymDimVector shapeVec(1, maybe_layer->batchSize());
-      shapeVec.reserve(shape.size() + 1);
-      shapeVec.insert(shapeVec.end(), shape.begin(), shape.end());
+      shapeVec.append_range(shape);
       tensor_value = tensor_value.expand_symint(shapeVec);
     }
     auto [output, mask] = at::native_dropout(tensor_value, p, train);

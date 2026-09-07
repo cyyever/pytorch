@@ -594,11 +594,9 @@ class DeviceCachingAllocator {
 
   std::vector<Block*> get_all_blocks() const {
     std::vector<Block*> blocks;
-    blocks.insert(
-        blocks.end(), small_blocks.blocks.begin(), small_blocks.blocks.end());
-    blocks.insert(
-        blocks.end(), large_blocks.blocks.begin(), large_blocks.blocks.end());
-    blocks.insert(blocks.end(), active_blocks.begin(), active_blocks.end());
+    blocks.append_range(small_blocks.blocks);
+    blocks.append_range(large_blocks.blocks);
+    blocks.append_range(active_blocks);
     return blocks;
   }
 

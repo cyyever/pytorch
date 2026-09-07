@@ -205,13 +205,13 @@ class SendBuffer {
 
   void appendString(const std::string& str) {
     appendValue<uint64_t>(str.size());
-    buffer.insert(buffer.end(), str.begin(), str.end());
+    buffer.append_range(str);
     maybeFlush();
   }
 
   void appendBytes(const std::vector<uint8_t>& vec) {
     appendValue<uint64_t>(vec.size());
-    buffer.insert(buffer.end(), vec.begin(), vec.end());
+    buffer.append_range(vec);
     maybeFlush();
   }
 

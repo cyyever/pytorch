@@ -347,10 +347,7 @@ Tensor permute_batching_rule(const Tensor& self, IntArrayRef dims) {
   for (const auto bdim : c10::irange(self_physical.numBatchDims())) {
     all_dims_physical.push_back(bdim);
   }
-  all_dims_physical.insert(
-      all_dims_physical.end(),
-      dims_physical.begin(),
-      dims_physical.end());
+  all_dims_physical.append_range(dims_physical);
   auto result = self_physical.tensor().permute(all_dims_physical);
   return self_physical.getPhysicalToLogicalMap().apply(result);
 }
@@ -637,10 +634,8 @@ Tensor as_strided_batching_rule(
   auto batch_strides = physical_tensor.strides().slice(0, num_batch_dims);
   at::VmapDimVector physical_strides;
   physical_strides.reserve(num_batch_dims + strides.size());
-  physical_strides.insert(
-      physical_strides.end(), batch_strides.begin(), batch_strides.end());
-  physical_strides.insert(
-      physical_strides.end(), strides.begin(), strides.end());
+  physical_strides.append_range(batch_strides);
+  physical_strides.append_range(strides);
 
   // If zi = xs[i].as_strided(sizes, strides, offset + xs[i].offset() - xs.offset())
   // is valid for all i, then it turns out that
@@ -1055,7 +1050,7 @@ Tensor new_empty_strided_batching_rule(
   }
 
   // physical_strides = [B1 * B2 * S, B2 * S, S] + strides
-  physical_strides.insert(physical_strides.end(), stride.begin(), stride.end());
+  physical_strides.append_range(stride);
 
   auto result = physical_view.tensor().new_empty_strided(
       physical_size, physical_strides, dtype, layout, device, pin_memory);

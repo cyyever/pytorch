@@ -69,8 +69,8 @@ VmapDimVector VmapPhysicalView::getPhysicalShape(IntArrayRef logical_shape) cons
   VmapDimVector result;
   result.reserve(logical_shape.size() + numBatchDims());
   auto tensor_sizes = tensor_.sizes();
-  result.insert(result.end(), tensor_sizes.begin(), tensor_sizes.begin() + numBatchDims());
-  result.insert(result.end(), logical_shape.begin(), logical_shape.end());
+  result.append(tensor_sizes.begin(), tensor_sizes.begin() + numBatchDims());
+  result.append_range(logical_shape);
   return result;
 }
 
@@ -78,8 +78,8 @@ SymDimVector VmapPhysicalView::getPhysicalShape(c10::SymIntArrayRef logical_shap
   SymDimVector result;
   result.reserve(logical_shape.size() + numBatchDims());
   auto tensor_sizes = tensor_.sym_sizes();
-  result.insert(result.end(), tensor_sizes.begin(), tensor_sizes.begin() + numBatchDims());
-  result.insert(result.end(), logical_shape.begin(), logical_shape.end());
+  result.append(tensor_sizes.begin(), tensor_sizes.begin() + numBatchDims());
+  result.append_range(logical_shape);
   return result;
 }
 

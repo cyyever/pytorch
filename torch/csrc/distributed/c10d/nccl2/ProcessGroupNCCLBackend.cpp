@@ -602,10 +602,7 @@ c10::intrusive_ptr<::c10d::Work> ProcessGroupNCCL::allgather_coalesced(
         inputTensors.at(i),
         opts.asyncOp,
         operationTimeout(opts.timeout)));
-    outputs.insert(
-        outputs.end(),
-        outputTensorLists.at(i).begin(),
-        outputTensorLists.at(i).end());
+    outputs.append_range(outputTensorLists.at(i));
   }
   auto work = coalesceWorks(std::move(works), std::move(outputs));
   if (coalescing_batch_) {

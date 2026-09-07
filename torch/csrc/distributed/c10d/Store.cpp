@@ -39,7 +39,7 @@ void Store::append(const std::string& key, const std::vector<uint8_t>& value) {
   current = compareSet(key, current, expected);
   while (current != expected) {
     expected = current;
-    expected.insert(expected.end(), value.begin(), value.end());
+    expected.append_range(value);
     current = compareSet(key, current, expected);
   }
 }

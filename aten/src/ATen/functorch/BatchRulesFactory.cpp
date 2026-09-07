@@ -24,7 +24,7 @@ struct NewBlahBatchRuleHelperSymInt<F, Func, typelist<A, B, T...>> {
     c10::SmallVector<c10::SymInt> new_shape;
     new_shape.reserve(shape.size() + 1);
     new_shape.emplace_back(bdim_size);
-    new_shape.insert(new_shape.end(), shape.begin(), shape.end());
+    new_shape.append_range(shape);
     return std::make_tuple(Func(tensor, new_shape, std::forward<T>(extra_args)...), 0);
   }
 };
@@ -43,7 +43,7 @@ struct NewBlahBatchRuleHelper<F, Func, typelist<A, B, T...>> {
     VmapDimVector new_shape;
     new_shape.reserve(shape.size() + 1);
     new_shape.emplace_back(bdim_size);
-    new_shape.insert(new_shape.end(), shape.begin(), shape.end());
+    new_shape.append_range(shape);
     return std::make_tuple(Func(tensor, new_shape, std::forward<T>(extra_args)...), 0);
   }
 };

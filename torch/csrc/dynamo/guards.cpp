@@ -1562,8 +1562,8 @@ bool check_overlapping(
   // Merge the tensor lists.
   std::vector<Tensor> tensors;
   tensors.reserve(overlapping.size() + non_overlapping.size());
-  tensors.insert(tensors.end(), overlapping.begin(), overlapping.end());
-  tensors.insert(tensors.end(), non_overlapping.begin(), non_overlapping.end());
+  tensors.append_range(overlapping);
+  tensors.append_range(non_overlapping);
   // Check what is the current storage overlapping relation.
   auto indices = compute_overlapping_tensors<StaticMeta>(tensors);
   // Check that the set of indices of tensors that might overlap is equal to

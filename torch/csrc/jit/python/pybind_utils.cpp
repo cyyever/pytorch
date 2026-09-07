@@ -16,6 +16,7 @@
 
 #include <limits>
 #include <optional>
+#include <ranges>
 #include <utility>
 
 namespace torch::jit {
@@ -627,10 +628,8 @@ py::object toPyObject(IValue ivalue) {
           tuple_args, [](const Argument& arg) {
             return arg.default_value().has_value();
           });
-      std::transform(
-          it,
-          tuple_args.end(),
-          std::back_inserter(defaults),
+      defaults = c10::fmap(
+          std::ranges::subrange(it, tuple_args.end()),
           [](const Argument& arg) { return toPyObject(*arg.default_value()); });
 
       std::vector<std::string> fieldNames = fmap(

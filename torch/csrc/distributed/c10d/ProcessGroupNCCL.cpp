@@ -452,7 +452,7 @@ std::ostream& operator<<(
 
 void TensorShelf::stash(std::vector<at::Tensor>& tensors) {
   std::lock_guard<std::mutex> lock(mutex_);
-  tVector_.insert(tVector_.end(), tensors.begin(), tensors.end());
+  tVector_.append_range(tensors);
 }
 
 void TensorShelf::stash(TensorShelf& other) {
@@ -1141,8 +1141,7 @@ void ProcessGroupNCCL::deregisterMemPool(at::cuda::MemPool* pool) {
         DistBackendError,
         "NCCL communicator has not been initialized before mem pool creation. You can pass `device_id` to init_process_group -- one way of eager initialization -- to work around this issue");
   }
-  bool symm;
-  {
+  const bool symm = [&] {
     std::lock_guard<std::mutex> lock(ncclCommMemPoolMapMutex);
     auto iter = ncclCommMemPoolMap.find(ncclComm);
     auto mempool_it = std::find_if(
@@ -1152,9 +1151,10 @@ void ProcessGroupNCCL::deregisterMemPool(at::cuda::MemPool* pool) {
     TORCH_CHECK(
         mempool_it != iter->second.end(),
         "Trying to unregister not previously registered pool");
-    symm = std::get<1>(*mempool_it);
+    const bool is_symm = std::get<1>(*mempool_it);
     iter->second.erase(mempool_it);
-  }
+    return is_symm;
+  }();
   auto snapshot = c10::cuda::CUDACachingAllocator::snapshot(pool->id());
   for (const auto& segmentInfo : snapshot.segments) {
     TORCH_INTERNAL_ASSERT(
@@ -1261,14 +1261,12 @@ c10::intrusive_ptr<Backend> ProcessGroupNCCL::split(
       " has no device is bound to this rank.");
   auto device = at::Device(at::DeviceType::CUDA, deviceIdx);
   auto it = std::ranges::find(ranks, rank_);
-  int groupRank;
   if (it == ranks.end()) {
     // This rank is not in the new group, so no_color split should be called
     performNocolorSplit(device);
     return nullptr;
-  } else {
-    groupRank = std::distance(ranks.begin(), it);
   }
+  const auto groupRank = static_cast<int>(std::distance(ranks.begin(), it));
 
   auto ncclOpts = c10::dynamic_intrusive_pointer_cast<Options>(opts);
   TORCH_CHECK(ncclOpts != nullptr, "opts not a ProcessGroupNCCL::Options.");

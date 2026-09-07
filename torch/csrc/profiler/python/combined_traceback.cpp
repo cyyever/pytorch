@@ -61,7 +61,7 @@ struct PythonTraceback : public CapturedTraceback::Python {
   }
   void release(std::vector<CapturedTraceback::PyFrame>& frames) override {
     std::lock_guard<std::mutex> lock(to_free_frames_mutex);
-    to_free_frames.insert(to_free_frames.end(), frames.begin(), frames.end());
+    to_free_frames.append_range(frames);
   }
   using void_visitproc = int (*)(void* self, void* arg);
   int traverse(

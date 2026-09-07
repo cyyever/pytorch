@@ -1437,8 +1437,7 @@ at::Tensor _fbgemm_jagged_to_padded_dense_forward(
            1,
            std::multiplies<size_t>())});
   at::SymDimVector padded_values_shape({at::SymInt(offsets[0].size(0) - 1)});
-  padded_values_shape.insert(
-      padded_values_shape.end(), max_lengths.begin(), max_lengths.end());
+  padded_values_shape.append_range(max_lengths);
 
   // Canonicalize padded_values by unsqueeze the last dim if the inner dense
   // dimension is 1 and folded.

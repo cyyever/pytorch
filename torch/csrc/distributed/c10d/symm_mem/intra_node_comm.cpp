@@ -139,10 +139,7 @@ static NvlMesh getNvlMesh(const std::vector<int>& rankToDeviceIdx) {
           << static_cast<int>(ret);
       return {};
     }
-    processor_handles.insert(
-        processor_handles.end(),
-        _processor_handles.begin(),
-        _processor_handles.end());
+    processor_handles.append_range(_processor_handles);
   }
 
   for (size_t idx = 0; idx < worldSize; ++idx) {
