@@ -425,13 +425,13 @@ IDX_T threadgroup_argmin(
 // max(-FLT_MAX, -INFINITY) would incorrectly return -FLT_MAX.
 //
 // The isnan() calls below route through static_cast<float>() so the float
-// branch type-checks even when T is integral (Metal 3 lowers `if IF_CONSTEXPR`
-// to a runtime `if` and parses both arms). Both branches' bodies still get
-// dropped on Metal 4 where IF_CONSTEXPR is real `if constexpr`.
+// branch type-checks even when T is integral. That was required when these
+// were a runtime `if` on Metal 3, which parsed both arms; now that they are
+// `if constexpr` the untaken arm is discarded and the cast could go.
 template <typename T>
 struct MaxOp {
   static inline constexpr T identity() {
-    if IF_CONSTEXPR (::metal::is_floating_point_v<T>) {
+    if constexpr (::metal::is_floating_point_v<T>) {
       return T(-INFINITY);
     } else {
       return ::metal::numeric_limits<T>::lowest();
@@ -442,7 +442,7 @@ struct MaxOp {
   // cur. NaN-propagating: NaN cand beats finite cur; finite cand never beats
   // NaN cur.
   static inline bool replace(T cand, T cur) {
-    if IF_CONSTEXPR (::metal::is_floating_point_v<T>) {
+    if constexpr (::metal::is_floating_point_v<T>) {
       if (::metal::isnan(static_cast<float>(cur))) {
         return false;
       }
@@ -469,7 +469,7 @@ struct MaxOp {
 template <typename T>
 struct MinOp {
   static inline constexpr T identity() {
-    if IF_CONSTEXPR (::metal::is_floating_point_v<T>) {
+    if constexpr (::metal::is_floating_point_v<T>) {
       return T(INFINITY);
     } else {
       return ::metal::numeric_limits<T>::max();
@@ -477,7 +477,7 @@ struct MinOp {
   }
 
   static inline bool replace(T cand, T cur) {
-    if IF_CONSTEXPR (::metal::is_floating_point_v<T>) {
+    if constexpr (::metal::is_floating_point_v<T>) {
       if (::metal::isnan(static_cast<float>(cur))) {
         return false;
       }

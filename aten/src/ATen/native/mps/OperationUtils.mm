@@ -900,13 +900,7 @@ class BundledShaderLibrary : public MetalShaderLibrary {
     if (C10_UNLIKELY(!library)) {
       auto device = MPSDevice::getInstance()->device();
       NSError* error = nil;
-#ifdef CAN_BUILD_METAL_4
-      // kernels_40.metallib is built with -mmacos-version-min=26.2 (MPP
-      // cooperative-tensor ABI) and holds the only kernels has_mpp() gates.
-      const auto section_name = has_mpp() ? "metal_40" : "metal_basic";
-#else
       const auto section_name = "metal_basic";
-#endif
       library = [device newLibraryWithData:getSectionData(section_name) error:&error];
       TORCH_CHECK(library, "Failed to create metal library, error: ", [[error description] UTF8String]);
     }

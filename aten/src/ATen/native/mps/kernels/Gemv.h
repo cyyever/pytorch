@@ -7,7 +7,7 @@
 template <typename DT, int VEC, bool XC, typename IDX>
 inline ::c10::metal::aligned_vector<DT, VEC> load_x(device const DT* x, IDX k, IDX xs) {
   using Vec = ::c10::metal::aligned_vector<DT, VEC>;
-  if IF_CONSTEXPR (XC) {
+  if constexpr (XC) {
     return *((const device Vec*)(&x[k]));
   } else {
     Vec r;
@@ -22,7 +22,7 @@ inline ::c10::metal::aligned_vector<DT, VEC> load_x(device const DT* x, IDX k, I
 template <typename DT, int VEC, bool STRIDED, typename IDX>
 inline ::c10::metal::aligned_vector<DT, VEC> load_matrix(device const DT* matrix, IDX offset, IDX stride) {
   using Vec = ::c10::metal::aligned_vector<DT, VEC>;
-  if IF_CONSTEXPR (!STRIDED) {
+  if constexpr (!STRIDED) {
     return *((const device Vec*)(&matrix[offset]));
   } else {
     Vec result;
@@ -36,7 +36,7 @@ inline ::c10::metal::aligned_vector<DT, VEC> load_matrix(device const DT* matrix
 
 template <typename DT, bool STRIDED, typename IDX>
 inline DT load_matrix_element(device const DT* matrix, IDX offset, IDX stride) {
-  if IF_CONSTEXPR (STRIDED) {
+  if constexpr (STRIDED) {
     return matrix[offset * stride];
   } else {
     return matrix[offset];
@@ -56,7 +56,7 @@ inline OUT_T apply_epilogue(ACC_T acc,
                             float beta) {
   using op_t = ::c10::metal::opmath_t<OUT_T>;
   op_t v = static_cast<op_t>(acc);
-  if IF_CONSTEXPR (EPI == GemmEpilogue::Bias) {
+  if constexpr (EPI == GemmEpilogue::Bias) {
     v = alpha * v;
     if (beta != op_t(0)) {
       v += beta * static_cast<op_t>(bias[r * bias_r + c * bias_c]);

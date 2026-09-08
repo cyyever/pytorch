@@ -53,9 +53,9 @@ kernel void cdist_backward(
     if (t < tile_size) {
       const ulong g_idx = gr_row + static_cast<ulong>(j_base + t);
       const float g_val = static_cast<float>(grad[g_idx]);
-      if IF_CONSTEXPR (P_KIND == 0) {
+      if constexpr (P_KIND == 0) {
         s_reducer[t] = g_val;
-      } else if IF_CONSTEXPR (P_KIND == 1) {
+      } else if constexpr (P_KIND == 1) {
         s_reducer[t] = g_val;
         s_cdist[t] = cdist[g_idx];
       } else {
@@ -81,9 +81,9 @@ kernel void cdist_backward(
         }
         const float sij = (dij > 0.0f) ? 1.0f : -1.0f;
         const float r = s_reducer[t_off];
-        if IF_CONSTEXPR (P_KIND == 0) {
+        if constexpr (P_KIND == 0) {
           acc += r * sij;
-        } else if IF_CONSTEXPR (P_KIND == 1) {
+        } else if constexpr (P_KIND == 1) {
           if (::metal::precise::abs(dij) == s_cdist[t_off]) {
             acc += r * sij;
           }

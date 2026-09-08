@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Force the wheel's platform tag and compile arch to arm64 regardless of the
 # build host, via `_PYTHON_HOST_PLATFORM` / `ARCHFLAGS`.
-MACOS_PLATFORM = "macosx-14.0-arm64"
+MACOS_PLATFORM = "macosx-27.0-arm64"
 
 
 def main() -> None:

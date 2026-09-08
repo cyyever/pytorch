@@ -112,7 +112,7 @@ inline bool grouped_mm_tile(
   tile.rows = min(static_cast<uint32_t>(BM), params.m - row_start);
   tile.cols = min(static_cast<uint32_t>(BN), params.n - col_start);
   tile.k = params.k;
-  if IF_CONSTEXPR (MODE == GroupedMMMode::rows) {
+  if constexpr (MODE == GroupedMMMode::rows) {
     if (!grouped_mm_group_tile_broadcast<BM>(
             offsets,
             params.groups,
@@ -126,7 +126,7 @@ inline bool grouped_mm_tile(
       return false;
     }
     mat_b += static_cast<idx_t>(group) * params.batch_stride;
-  } else if IF_CONSTEXPR (MODE == GroupedMMMode::cols) {
+  } else if constexpr (MODE == GroupedMMMode::cols) {
     if (!grouped_mm_group_tile_broadcast<BN>(
             offsets,
             params.groups,

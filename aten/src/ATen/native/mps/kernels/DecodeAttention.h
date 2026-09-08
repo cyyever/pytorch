@@ -70,7 +70,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
   keys += batch_idx * k_batch_stride + kv_head_idx * k_head_stride + simd_gid * k_seq_stride + simd_lid * qk_per_thread;
   values +=
       batch_idx * v_batch_stride + kv_head_idx * v_head_stride + simd_gid * v_seq_stride + simd_lid * v_per_thread;
-  if IF_CONSTEXPR (HAS_MASK) {
+  if constexpr (HAS_MASK) {
     mask += batch_idx * mask_batch_stride + head_idx * mask_head_stride + simd_gid * mask_kv_seq_stride +
         q_seq_idx * mask_q_seq_stride;
   }
@@ -93,7 +93,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
     bool use_key = true;
     if (is_causal) {
       use_key = int(i) <= q_seq_idx;
-    } else if IF_CONSTEXPR (is_bool_mask) {
+    } else if constexpr (is_bool_mask) {
       use_key = mask[0];
     }
     if (use_key) {
@@ -109,7 +109,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
       }
       score = simd_sum(score);
 
-      if IF_CONSTEXPR (is_additive_mask) {
+      if constexpr (is_additive_mask) {
         score += static_cast<U>(mask[0]);
       }
 
@@ -137,7 +137,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
     // Move the pointers to the next kv
     keys += inner_k_stride;
     values += inner_v_stride;
-    if IF_CONSTEXPR (HAS_MASK) {
+    if constexpr (HAS_MASK) {
       mask += BN * mask_kv_seq_stride;
     }
   }
@@ -240,7 +240,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
   values += batch_idx * v_batch_stride + kv_head_idx * v_head_stride + (block_idx * BN + simd_gid) * v_seq_stride +
       simd_lid * v_per_thread;
   out += o_offset * blocks * V + block_idx * V + simd_lid * v_per_thread;
-  if IF_CONSTEXPR (HAS_MASK) {
+  if constexpr (HAS_MASK) {
     mask += batch_idx * mask_batch_stride + head_idx * mask_head_stride +
         (block_idx * BN + simd_gid) * mask_kv_seq_stride + q_seq_idx * mask_q_seq_stride;
   }
@@ -263,7 +263,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
     bool use_key = true;
     if (is_causal) {
       use_key = int(i) <= q_seq_idx;
-    } else if IF_CONSTEXPR (is_bool_mask) {
+    } else if constexpr (is_bool_mask) {
       use_key = mask[0];
     }
     if (use_key) {
@@ -279,7 +279,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
       }
       score = simd_sum(score);
 
-      if IF_CONSTEXPR (is_additive_mask) {
+      if constexpr (is_additive_mask) {
         score += static_cast<U>(mask[0]);
       }
 
@@ -307,7 +307,7 @@ template <typename T, int D, int V = D, bool is_causal = false, bool HAS_MASK = 
     // Move the pointers to the next kv
     keys += blocks * inner_k_stride;
     values += blocks * inner_v_stride;
-    if IF_CONSTEXPR (HAS_MASK) {
+    if constexpr (HAS_MASK) {
       mask += BN * blocks * mask_kv_seq_stride;
     }
   }

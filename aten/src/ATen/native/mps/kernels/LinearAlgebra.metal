@@ -1781,11 +1781,11 @@ INSTANTIATE_SYRK_TRAILING(L, false, 32, 128, 4)
 // its exact fma instruction sequence. Plain LU is purely algebraic, so the
 // complex path uses NO conjugation anywhere.
 //
-// Type dispatch below uses `if IF_CONSTEXPR`, which lowers to a plain runtime
-// `if` on Metal 3 (see c10/metal/common.h), so both arms are parsed and must
-// type-check for every T. Where an arm is well-formed for only one element
-// type -- the reciprocal, the pivot magnitude, and the float4 vectorized
-// stores -- it lives in an overload instead of a branch.
+// The type dispatch below is `if constexpr`, so only the taken arm is
+// instantiated. Three places still keep an arm in an overload rather than a
+// branch -- the reciprocal, the pivot magnitude, and the float4 vectorized
+// stores -- because both arms had to type-check for every T back when Metal 3
+// lowered these to a runtime `if`. They no longer have to.
 inline float luPivotMag(float v) {
   return ::metal::fabs(v);
 }
@@ -1863,7 +1863,7 @@ kernel void factorPanelLU(
     const uint lr = tid + uint(r) * G;
     if (lr < H) {
       device const T* src = Ab + ulong(d0 + lr) * N + d0;
-      if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+      if constexpr (c10::metal::is_complex_v<T>) {
 #pragma unroll
         for (short c = 0; c < W; c++) {
           row[r][c] = (uint(c) < nb) ? src[c] : T(0.0f);
@@ -1982,7 +1982,7 @@ kernel void factorPanelLU(
 #pragma unroll
           for (short c = 0; c < W; c++) {
             if (uint(c) > j) {
-              if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+              if constexpr (c10::metal::is_complex_v<T>) {
                 row[r][c] -= c10::metal::mul(l, uc[c]);
               } else {
                 row[r][c] = fma(-l, uc[c], row[r][c]);
@@ -2093,7 +2093,7 @@ kernel void luStreamUpdate(
       if (lane == uint(j)) {
         v = l;
       } else if (lane > j && lane < nb) {
-        if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+        if constexpr (c10::metal::is_complex_v<T>) {
           v -= c10::metal::mul(l, uc);
         } else {
           v = fma(-l, uc, v);
@@ -2339,7 +2339,7 @@ kernel void laswpGatherLU(
     const uint c = (v < W0) ? (w.x + v) : (w.z + (v - W0));
     const uint cnt = min(4u, W - v);
     device const T* sp = Ab + ulong(rowIds[r]) * N + c;
-    if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+    if constexpr (c10::metal::is_complex_v<T>) {
       for (uint e = 0; e < cnt; e++) {
         stage[r][q + e] = sp[e];
       }
@@ -2419,7 +2419,7 @@ kernel void trsmPanelLU(
   device T* Ab = A + ulong(tgid.x) * M * N;
 
   threadgroup T L[TS][TS + 1];
-  if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+  if constexpr (c10::metal::is_complex_v<T>) {
     // zero-pad the ragged block so the unrolled solve below stays a no-op
     // past nr (scalar loads; no float4 path for complex)
     for (uint i = tid; i < TS * TS; i += G) {
@@ -2460,7 +2460,7 @@ kernel void trsmPanelLU(
 #pragma unroll
   for (short c = 0; c < TS; c++) {
     const T xc = x[c];
-    if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+    if constexpr (c10::metal::is_complex_v<T>) {
       // no dcol register staging for complex: it would double the per-thread
       // register bytes; read L directly instead
 #pragma unroll
@@ -2775,7 +2775,7 @@ kernel void int_mm_mpp<64, 64, 4>(
     uint3 tgid [[threadgroup_position_in_grid]]);
 
 // Same Schur update C -= A*B (sgemm) as gemmSimdLU, but via MetalPerformance-
-// Primitives matmul2d (macOS 26.2+, gated by lu_has_matmul2d()).
+// Primitives matmul2d (gated by lu_has_matmul2d()).
 template <int BM, int BN, int NSG>
 kernel void gemmLU(
     device float* A [[buffer(0)]],
@@ -2881,7 +2881,7 @@ kernel void trsmDiagSolveLU(
   for (uint i = tid; i < TS * TS; i += G) {
     const uint r = i / TS;
     const uint c = i % TS;
-    if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+    if constexpr (c10::metal::is_complex_v<T>) {
       // pad with zeros; the divide below is guarded on c < nr so the zero
       // diagonal in the padding never produces a 0/0 NaN (no complex one)
       Td[r][c] = (r < nr && c < nr) ? Ab[ulong(d0 + r) * N + d0 + c] : T(0.0f);
@@ -2901,7 +2901,7 @@ kernel void trsmDiagSolveLU(
   for (short r = 0; r < TS; r++) {
     x[r] = (uint(r) < nr) ? Ab[ulong(d0 + r) * N + col] : T(0.0f);
   }
-  if IF_CONSTEXPR (c10::metal::is_complex_v<T>) {
+  if constexpr (c10::metal::is_complex_v<T>) {
     // no dcol register staging for complex: it would double the per-thread
     // register bytes; read Td directly instead (cf. trsmPanelLU)
     if (!upper) {

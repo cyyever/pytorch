@@ -280,7 +280,7 @@ static void conv3d_metal_launch(id<MTLComputePipelineState> pipeline,
   });
 }
 
-// conv3d forward on the Metal kernels: MPP on macOS 26.2+, simdgroup otherwise;
+// conv3d forward on the Metal kernels: MPP where available, simdgroup otherwise;
 // planes past int32 take the long-indexed simdgroup variant on any macOS.
 static void conv3d_metal_forward(const Tensor& input_t,
                                  const Tensor& weight_t,
