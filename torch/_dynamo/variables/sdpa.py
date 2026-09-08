@@ -1,6 +1,5 @@
 from inspect import getattr_static
-from typing import Any, TYPE_CHECKING
-from typing_extensions import TypeIs
+from typing import Any, TYPE_CHECKING, TypeIs
 
 from torch._guards import Source
 from torch.backends.cuda import SDPAParams
