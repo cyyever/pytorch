@@ -484,11 +484,11 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject* unused) {
     std::set<torch::profiler::impl::ActivityType> activities{
         torch::profiler::impl::ActivityType::CPU};
 #if defined(USE_KINETO)
-#if defined(HAS_CUPTI) || defined(HAS_ROCTRACER)
+#if defined(HAS_CUPTI) || defined(HAS_ROCPROFILER)
     if (at::getNumGPUs() > 0) {
       activities.insert(torch::profiler::impl::ActivityType::CUDA);
     }
-#endif // defined(HAS_CUPTI) || defined(HAS_ROCTRACER)
+#endif // defined(HAS_CUPTI) || defined(HAS_ROCPROFILER)
     if (at::hasXPU()) {
       activities.insert(torch::profiler::impl::ActivityType::XPU);
     }

@@ -136,8 +136,7 @@ endif()
 
 enable_language(HIP)
 if("X${CMAKE_HIP_STANDARD}" STREQUAL "X")
-  # ROCm Clang's HIP wrappers conflict with libstdc++ placement delete in C++26.
-  set(CMAKE_HIP_STANDARD 23)
+  set(CMAKE_HIP_STANDARD ${CMAKE_CXX_STANDARD})
 endif()
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 message(STATUS "HIP language enabled with compiler: ${CMAKE_HIP_COMPILER}")
