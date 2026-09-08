@@ -22,13 +22,6 @@ index 872749d5..73b6a333 100644
 -  m_vec4() = default;
 -  m_vec4(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
 +  T val[4];
-diff --git a/src/xccl/ProcessGroupXCCL.hpp b/src/xccl/ProcessGroupXCCL.hpp
-index 9a00a4f9..81a7b4f5 100644
---- a/src/xccl/ProcessGroupXCCL.hpp
-+++ b/src/xccl/ProcessGroupXCCL.hpp
-@@ -202 +202 @@ class TORCH_API ProcessGroupXCCL : public Backend {
--  bool isInitialized();
-+  bool isInitialized() override;
 diff --git a/src/xccl/XPUSymmetricMemory.cpp b/src/xccl/XPUSymmetricMemory.cpp
 index b7f2f867..43683da3 100644
 --- a/src/xccl/XPUSymmetricMemory.cpp
