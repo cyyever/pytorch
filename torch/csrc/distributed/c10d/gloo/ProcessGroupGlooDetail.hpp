@@ -5,6 +5,7 @@
 #include <c10/util/Registry.h>
 #include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
 #include <algorithm>
+#include <chrono>
 
 #include <gloo/allgather.h>
 #include <gloo/allgatherv.h>

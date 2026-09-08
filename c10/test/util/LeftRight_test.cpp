@@ -1,5 +1,6 @@
 #include <c10/util/LeftRight.h>
 #include <gtest/gtest.h>
+#include <chrono>
 #include <vector>
 
 using c10::LeftRight;

@@ -1,6 +1,7 @@
 #ifdef USE_C10D_NCCL
 
 #include <algorithm>
+#include <chrono>
 #include <nlohmann/json.hpp>
 #include <exception>
 #include <map>

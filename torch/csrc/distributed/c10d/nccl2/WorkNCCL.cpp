@@ -9,6 +9,7 @@
 #include <c10/cuda/CUDAException.h>
 #include <c10/cuda/CUDAGraphsC10Utils.h>
 
+#include <chrono>
 #include <iterator>
 #include <thread>
 

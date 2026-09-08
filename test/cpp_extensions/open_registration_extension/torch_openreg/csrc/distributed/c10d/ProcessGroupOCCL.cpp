@@ -1,4 +1,5 @@
 #if USE_DISTRIBUTED
+#include <chrono>
 #include <stdexcept>
 
 #include <ATen/core/Tensor.h>

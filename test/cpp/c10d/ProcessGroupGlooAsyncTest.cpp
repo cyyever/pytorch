@@ -7,6 +7,7 @@
 #include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
 #include "CUDATest.hpp"
 #include "TestUtils.hpp"
+#include <chrono>
 
 using namespace c10d::test;
 

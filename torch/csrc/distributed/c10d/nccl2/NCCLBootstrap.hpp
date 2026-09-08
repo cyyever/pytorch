@@ -4,6 +4,7 @@
 
 #ifdef USE_C10D_NCCL
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <string_view>

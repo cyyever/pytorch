@@ -1,5 +1,6 @@
 #include <ATen/core/dispatch/Dispatcher.h>
 #include <ATen/core/PythonOpRegistrationTrampoline.h>
+#include <chrono>
 #include <iostream>
 #include <list>
 #include <utility>

@@ -8,6 +8,7 @@
 #include <torch/csrc/distributed/c10d/cuda/StreamBlock.cuh>
 
 #include <ATen/ops/zeros.h>
+#include <chrono>
 
 namespace c10d::cuda::detail {
 

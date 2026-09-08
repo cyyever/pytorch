@@ -4,6 +4,7 @@
 #include <torch/csrc/distributed/c10d/Hooks.hpp>
 #include <torch/csrc/distributed/c10d/Work.hpp>
 #include <atomic>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <unordered_map>

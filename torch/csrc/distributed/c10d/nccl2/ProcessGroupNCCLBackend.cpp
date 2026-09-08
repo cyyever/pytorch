@@ -19,6 +19,7 @@
 
 #include <torch/csrc/distributed/c10d/nccl2/Logging.hpp>
 #include <torch/csrc/distributed/c10d/nccl2/WindowNCCL.hpp>
+#include <chrono>
 
 namespace c10d::nccl2 {
 

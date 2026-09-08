@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <iterator>
 
 #include <ATen/core/LegacyTypeDispatch.h>

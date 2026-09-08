@@ -2,6 +2,7 @@
 
 #ifdef USE_C10D_GLOO
 
+#include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <mutex>

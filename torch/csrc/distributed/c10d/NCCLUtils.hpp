@@ -3,6 +3,7 @@
 #ifdef USE_C10D_NCCL
 
 #include <sched.h>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 

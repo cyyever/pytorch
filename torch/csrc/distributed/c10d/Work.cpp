@@ -3,6 +3,7 @@
 #include <torch/csrc/distributed/c10d/cuda/StreamBlock.hpp>
 
 #include <torch/csrc/distributed/c10d/Work.hpp>
+#include <chrono>
 #include <utility>
 
 namespace c10d {
