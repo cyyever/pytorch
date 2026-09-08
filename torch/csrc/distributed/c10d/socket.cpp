@@ -21,7 +21,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
@@ -911,8 +910,8 @@ SocketConnectOp::ConnectResult SocketConnectOp::tryConnectCore(
 
 void SocketConnectOp::throwTimeoutError() const {
   auto msg = fmt::format(
-      "The client socket has timed out after {} while trying to connect to ({}, {}).",
-      opts_->connect_timeout(),
+      "The client socket has timed out after {}ms while trying to connect to ({}, {}).",
+      opts_->connect_timeout().count(),
       host_,
       port_);
 
