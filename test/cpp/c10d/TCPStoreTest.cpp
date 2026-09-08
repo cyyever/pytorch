@@ -1,6 +1,7 @@
 #include <c10/util/irange.h>
 #include "StoreTestCommon.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <string>
 #include <thread>

@@ -10,6 +10,7 @@
 #include <torch/csrc/distributed/c10d/nccl2/Logging.hpp>
 #include <torch/csrc/distributed/c10d/nccl2/NCCLCachingAllocatorHook.hpp>
 #include <algorithm>
+#include <chrono>
 #include <string>
 #include <variant>
 #include <vector>

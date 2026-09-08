@@ -2,6 +2,7 @@
 #include <torch/csrc/distributed/c10d/ProcessGroup.hpp>
 #include <torch/csrc/distributed/c10d/Types.hpp>
 #include <torch/library.h>
+#include <chrono>
 
 namespace c10d {
 namespace {

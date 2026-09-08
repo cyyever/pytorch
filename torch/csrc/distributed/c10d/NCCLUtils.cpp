@@ -2,6 +2,7 @@
 
 #ifdef USE_C10D_NCCL
 #include <fmt/format.h>
+#include <chrono>
 #include <thread>
 #include <vector>
 

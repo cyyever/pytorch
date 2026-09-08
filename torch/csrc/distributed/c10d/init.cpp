@@ -8,6 +8,7 @@
 #include <torch/csrc/distributed/c10d/TCPStore.hpp>
 #include <torch/csrc/distributed/c10d/hooks/FlightRecorderHook.hpp>
 #include <torch/csrc/distributed/c10d/hooks/NanCheckHook.hpp>
+#include <chrono>
 #include <string_view>
 #include <utility>
 #include <vector>

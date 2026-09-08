@@ -2,6 +2,7 @@
 #include "StoreTestCommon.hpp"
 
 #include <torch/csrc/distributed/c10d/Backoff.hpp>
+#include <chrono>
 
 TEST(BackoffTest, exponentialBackoffDefaults) {
   c10d::ExponentialBackoffWithJitter backoff;

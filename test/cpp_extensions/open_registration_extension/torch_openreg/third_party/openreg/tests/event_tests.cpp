@@ -2,6 +2,7 @@
 #include <include/openreg.h>
 
 #include <atomic>
+#include <chrono>
 #include <thread>
 
 namespace {

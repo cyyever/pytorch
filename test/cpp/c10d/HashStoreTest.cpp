@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 
+#include <chrono>
 #include <thread>
 
 #include <torch/csrc/distributed/c10d/HashStore.hpp>

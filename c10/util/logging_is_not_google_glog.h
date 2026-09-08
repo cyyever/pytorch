@@ -1,7 +1,6 @@
 #ifndef C10_UTIL_LOGGING_IS_NOT_GOOGLE_GLOG_H_
 #define C10_UTIL_LOGGING_IS_NOT_GOOGLE_GLOG_H_
 
-#include <chrono>
 #include <climits>
 #include <ctime>
 #include <iomanip>

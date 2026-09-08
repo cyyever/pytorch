@@ -3,9 +3,42 @@
 #include <c10/util/irange.h>
 
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <numeric>
+#include <type_traits>
 
 namespace c10 {
+
+namespace {
+using steady_clock_t = std::conditional_t<
+    std::chrono::high_resolution_clock::is_steady,
+    std::chrono::high_resolution_clock,
+    std::chrono::steady_clock>;
+} // namespace
+
+time_t getTimeSinceEpoch() {
+  auto now = std::chrono::system_clock::now().time_since_epoch();
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+}
+
+time_t getTime(bool allow_monotonic) {
+#if defined(__MACH__)
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+             steady_clock_t::now().time_since_epoch())
+      .count();
+#else
+  // clock_gettime is *much* faster than std::chrono implementation on Linux
+  struct timespec t{};
+  auto mode = CLOCK_REALTIME;
+  if (allow_monotonic) {
+    mode = CLOCK_MONOTONIC;
+  }
+  clock_gettime(mode, &t);
+  return static_cast<time_t>(t.tv_sec) * 1000000000 +
+      static_cast<time_t>(t.tv_nsec);
+#endif
+}
 
 ApproximateClockToUnixTimeConverter::ApproximateClockToUnixTimeConverter()
     : start_times_(measurePairs()) {}

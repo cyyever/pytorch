@@ -7,6 +7,7 @@
 #include <c10/util/Exception.h>
 #include <c10/util/intrusive_ptr.h>
 #include <c10/util/irange.h>
+#include <chrono>
 #include <optional>
 #include <stdexcept>
 #include <utility>

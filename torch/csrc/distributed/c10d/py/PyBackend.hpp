@@ -5,6 +5,7 @@
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pyobject_preservation.h>
+#include <chrono>
 
 namespace c10d {
 

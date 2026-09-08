@@ -1,5 +1,6 @@
 #include "cpp_c10d_extension.hpp"
 
+#include <chrono>
 #include <map>
 
 namespace c10d {

@@ -7,6 +7,7 @@
 #include <c10/cuda/CUDAGraphsC10Utils.h>
 
 #include <cuda_runtime_api.h>
+#include <chrono>
 #include <future>
 
 namespace at::cuda {

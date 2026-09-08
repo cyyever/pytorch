@@ -3,6 +3,7 @@
 #include <torch/csrc/distributed/c10d/ProcessGroup.hpp>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch/csrc/utils/pybind.h>
+#include <chrono>
 
 namespace c10d {
 

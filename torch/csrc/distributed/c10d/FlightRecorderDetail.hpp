@@ -4,6 +4,7 @@
 #include <c10/util/thread_name.h>
 
 #include <torch/csrc/distributed/c10d/FlightRecorder.hpp>
+#include <chrono>
 
 namespace c10d {
 

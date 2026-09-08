@@ -12,6 +12,7 @@
 #include <nccl.h>
 
 #include <sched.h>
+#include <chrono>
 #include <limits>
 #include <sstream>
 #include <type_traits>

@@ -6,6 +6,7 @@
 #include <c10/cuda/CUDAGuard.h>
 
 #include <atomic>
+#include <chrono>
 #include <thread>
 #include <vector>
 

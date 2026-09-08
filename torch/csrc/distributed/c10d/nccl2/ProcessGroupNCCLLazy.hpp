@@ -6,6 +6,7 @@
 
 #include <torch/csrc/distributed/c10d/lazy/LazyBackend.hpp>
 #include <torch/csrc/distributed/c10d/nccl2/ProcessGroupNCCL.hpp>
+#include <chrono>
 
 namespace c10d::nccl2 {
 
