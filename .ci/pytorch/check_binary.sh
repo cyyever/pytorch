@@ -11,15 +11,15 @@ set -eux -o pipefail
 # 3. There are no protobuf symbols of any sort anywhere (turned off, because
 #    this is currently not true)
 # 4. Standard Python imports work
-# 5. MKL is available everywhere except for MacOS wheels
+# 5. The configured BLAS backend is available
 # 6. CUDA is setup correctly and does not hang
 # 7. CuDNN is available for CUDA builds
 #
 # This script needs the env variables DESIRED_PYTHON, DESIRED_CUDA,
-# DESIRED_DEVTOOLSET and PACKAGE_TYPE
+# DESIRED_DEVTOOLSET and PACKAGE_TYPE. EXPECTED_BLAS defaults to OpenBLAS.
 #
-# This script expects PyTorch to be installed into the active Python (the
-# Python returned by `which python`). Or, if this is testing a libtorch
+# This script expects PyTorch to be installed into the active Python. Or, if
+# this is testing a libtorch
 # Pythonless binary, then it expects to be in the root folder of the unzipped
 # libtorch package.
 
@@ -61,7 +61,13 @@ else
     echo "Unexpected ${DESIRED_PYTHON} format"
     exit 1
   fi
-  export install_root="$(dirname $(which python))/../lib/python${py_dot}/site-packages/torch/"
+  actual_py_dot="$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+  if [[ "$actual_py_dot" != "${py_dot%t}" ]]; then
+    echo "Expected Python ${py_dot}, but the active Python is ${actual_py_dot}"
+    exit 1
+  fi
+  site_packages="$(python -c 'import sysconfig; print(sysconfig.get_path("platlib"))')"
+  export install_root="${site_packages}/torch/"
 fi
 
 ###############################################################################
@@ -183,17 +189,40 @@ fi
 
 
 ###############################################################################
-# Check for MKL
+# Check BLAS
 ###############################################################################
 
 if [[ "$PACKAGE_TYPE" == 'libtorch' ]]; then
-  echo "Checking that MKL is available"
-  build_and_run_example_cpp check-torch-mkl
+  if [[ "${EXPECTED_BLAS:-open}" == "mkl" ]]; then
+    echo "Checking that MKL is available"
+    build_and_run_example_cpp check-torch-mkl
+  else
+    echo "Skipping the MKL-specific check for ${EXPECTED_BLAS:-open} libtorch"
+  fi
 elif [[ "$(uname -m)" != "arm64" ]]; then
   if [[ "$(uname)" != 'Darwin' || "$PACKAGE_TYPE" != *wheel ]]; then
-    echo "Checking that MKL is available"
+    echo "Checking that the configured BLAS backend is available"
     pushd /tmp
-    python -c 'import torch; exit(0 if torch.backends.mkl.is_available() else 1)'
+    python - <<'PY'
+import re
+import os
+
+import torch
+
+config = torch.__config__.show()
+match = re.search(r"\bBLAS_INFO=([^,\s]+)", config)
+if match is None:
+    raise RuntimeError("BLAS_INFO is missing from torch.__config__.show()")
+
+blas = match.group(1)
+expected_blas = os.environ.get("EXPECTED_BLAS", "open")
+if blas != expected_blas:
+    raise RuntimeError(f"Expected BLAS_INFO={expected_blas}, found {blas}")
+if blas == "mkl" and not torch.backends.mkl.is_available():
+    raise RuntimeError("PyTorch was configured with MKL, but MKL is unavailable")
+
+print(f"Configured BLAS backend: {blas}")
+PY
     popd
   fi
 fi
@@ -205,6 +234,29 @@ if [[ "$DESIRED_CUDA" == 'xpu' && "$PACKAGE_TYPE" != 'libtorch' ]]; then
   echo "Checking that xpu is compiled"
   pushd /tmp
   python -c 'import torch; exit(0 if torch.xpu._is_compiled() else 1)'
+  popd
+fi
+
+###############################################################################
+# Check ROCm configured correctly
+###############################################################################
+if [[ "$DESIRED_CUDA" == *rocm* && "$PACKAGE_TYPE" != 'libtorch' ]]; then
+  echo "Checking that ROCm is compiled and usable"
+  pushd /tmp
+  timeout 120 python - <<'PY'
+import torch
+
+if not torch.cuda._is_compiled():
+    raise RuntimeError("ROCm support is not compiled")
+if torch.version.hip is None:
+    raise RuntimeError("HIP version is missing")
+if not torch.cuda.is_available():
+    raise RuntimeError("ROCm device is unavailable")
+
+x = torch.randn(32, 32, device="cuda")
+torch.mm(x, x)
+torch.cuda.synchronize()
+PY
   popd
 fi
 
@@ -257,7 +309,7 @@ fi # if cuda
 if [[ "$PACKAGE_TYPE" != 'libtorch' ]]; then
   pushd "$(dirname ${BASH_SOURCE[0]})/smoke_test"
   python -c "from smoke_test import test_linalg; test_linalg()"
-  if [[ "$DESIRED_CUDA" == *cuda* ]]; then
+  if [[ "$DESIRED_CUDA" == cu* || "$DESIRED_CUDA" == *rocm* ]]; then
     python -c "from smoke_test import test_linalg; test_linalg('cuda')"
   fi
   popd
