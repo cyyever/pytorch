@@ -9,6 +9,7 @@ from torch.testing._internal.common_device_type import (
     dtypesIfXPU,
     instantiate_device_type_tests,
     onlyAccelerator,
+    onlyXPU,
     skipMeta,
 )
 from torch.testing._internal.common_utils import (
@@ -119,6 +120,41 @@ class TestMHADevice(TestCase):
                 self._test_transform_bias_rescale_qkv_impl(
                     device, dtype, use_nt=True, use_padding=use_padding
                 )
+
+    @onlyXPU
+    @dtypes(torch.half)
+    def test_transform_bias_rescale_qkv_unaligned_input(self, device, dtype):
+        batch_size, sequence_length, embed_dim, num_heads = 4, 17, 64, 4
+        storage = torch.randn(
+            batch_size * sequence_length * 3 * embed_dim + 1,
+            device=device,
+            dtype=dtype,
+        )
+        qkv = storage[1:].view(batch_size, sequence_length, 3 * embed_dim)
+        bias = torch.randn(3 * embed_dim, device=device, dtype=dtype)
+
+        query, key, value = torch._transform_bias_rescale_qkv(
+            qkv, bias, num_heads
+        )
+        query_ref, key_ref, value_ref = torch.split(qkv, embed_dim, dim=-1)
+
+        def reshape(tensor):
+            return tensor.view(
+                batch_size,
+                sequence_length,
+                num_heads,
+                embed_dim // num_heads,
+            ).transpose(1, 2)
+
+        self.assertEqual(
+            query,
+            reshape((query_ref + bias[:embed_dim]) / math.sqrt(embed_dim // num_heads)),
+        )
+        self.assertEqual(
+            key,
+            reshape(key_ref + bias[embed_dim : 2 * embed_dim]),
+        )
+        self.assertEqual(value, reshape(value_ref + bias[2 * embed_dim :]))
 
     def _test_multihead_attention_impl(
         self, device, dtype, mode, use_nt, need_weights, average_attn_weights, use_padding=False, pad_all=False
