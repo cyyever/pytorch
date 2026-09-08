@@ -586,12 +586,13 @@ target_include_directories(torch::nvtx3 INTERFACE "${nvtx3_dir}")
 
 # ---[ HIP
 if(USE_ROCM)
-  set(PYTORCH_HIP_GCC_INSTALL_DIR "/usr/lib/gcc/x86_64-pc-linux-gnu/15.3.0")
-  if(NOT IS_DIRECTORY "${PYTORCH_HIP_GCC_INSTALL_DIR}")
-    message(FATAL_ERROR "HIP compilation requires GCC 15 at ${PYTORCH_HIP_GCC_INSTALL_DIR}")
-  endif()
-  string(APPEND CMAKE_HIP_FLAGS " --gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
-  message(STATUS "HIP compilation uses libstdc++ from ${PYTORCH_HIP_GCC_INSTALL_DIR}")
+  set(PYTORCH_HIP_LIBSTDCXX_COMPAT_FLAGS
+    -D__cpp_lib_constexpr_new=0
+    -D__cpp_lib_print=0
+    -D__cpp_lib_format_path=0)
+  string(JOIN " " _pytorch_hip_libstdcxx_compat_flags
+    ${PYTORCH_HIP_LIBSTDCXX_COMPAT_FLAGS})
+  string(APPEND CMAKE_HIP_FLAGS " ${_pytorch_hip_libstdcxx_compat_flags}")
 
   include(${CMAKE_CURRENT_LIST_DIR}/public/LoadHIP.cmake)
   if(PYTORCH_FOUND_HIP)
@@ -606,7 +607,7 @@ if(USE_ROCM)
     # HIP_CXX_FLAGS: applied to targets via target_compile_options (definitions, warnings).
     # These are used for both HIP device code and C++ code that needs HIP defines.
     string(APPEND CMAKE_HIP_FLAGS " -fPIC")
-    list(APPEND HIP_CXX_FLAGS "--gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
+    list(APPEND HIP_CXX_FLAGS ${PYTORCH_HIP_LIBSTDCXX_COMPAT_FLAGS})
     list(APPEND HIP_CXX_FLAGS -D__HIP_PLATFORM_AMD__=1)
     list(APPEND HIP_CXX_FLAGS -DCUDA_HAS_FP16=1)
     list(APPEND HIP_CXX_FLAGS -DUSE_ROCM)
@@ -1182,7 +1183,7 @@ if(USE_KINETO)
       foreach(_kineto_target kineto_base kineto_api)
         target_compile_options(
           ${_kineto_target} PRIVATE
-          "--gcc-install-dir=${PYTORCH_HIP_GCC_INSTALL_DIR}")
+          ${PYTORCH_HIP_LIBSTDCXX_COMPAT_FLAGS})
       endforeach()
     endif()
     set_property(TARGET kineto PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -1195,7 +1196,7 @@ if(USE_KINETO)
   if(KINETO_BACKEND STREQUAL "cuda")
     string(APPEND CMAKE_CXX_FLAGS " -DHAS_CUPTI")
   elseif(KINETO_BACKEND STREQUAL "rocm")
-    string(APPEND CMAKE_CXX_FLAGS " -DHAS_ROCTRACER")
+    string(APPEND CMAKE_CXX_FLAGS " -DHAS_ROCPROFILER")
   elseif(KINETO_BACKEND STREQUAL "xpu")
     string(APPEND CMAKE_CXX_FLAGS " -DHAS_XPUPTI")
   endif()

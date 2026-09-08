@@ -104,6 +104,8 @@ set(_bundled_miopen_source
 
 string(REPLACE ";" "|" _bundled_rocm_archs "${PYTORCH_ROCM_ARCH}")
 set(_bundled_rocm_prefix_path "${_bundled_rocm_install}|${ROCM_PATH}")
+string(JOIN " " _bundled_rocm_libstdcxx_compat_flags
+  ${PYTORCH_HIP_LIBSTDCXX_COMPAT_FLAGS})
 set(_bundled_rocm_common_cmake_args
   "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
   "-DCMAKE_INSTALL_PREFIX:PATH=${_bundled_rocm_install}"
@@ -127,6 +129,7 @@ endif()
 
 set(_bundled_rocm_build_environment
   "ROCM_PATH=set:${ROCM_PATH}"
+  "LD_LIBRARY_PATH=path_list_prepend:${ROCM_PATH}/lib"
   "PATH=path_list_prepend:${ROCM_PATH}/lib/llvm/bin"
   "PATH=path_list_prepend:${ROCM_PATH}/bin")
 
@@ -149,6 +152,7 @@ ExternalProject_Add(pytorch_bundled_hipblaslt
   BINARY_DIR "${_bundled_rocm_root}/build/hipblaslt"
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
+  CONFIGURE_HANDLED_BY_BUILD TRUE
   LIST_SEPARATOR "|"
   CMAKE_ARGS
     ${_bundled_rocm_common_cmake_args}
@@ -158,8 +162,12 @@ ExternalProject_Add(pytorch_bundled_hipblaslt
     "-DHIPBLASLT_ENABLE_ROCROLLER:BOOL=OFF"
     "-DHIPBLASLT_ENABLE_THEROCK:BOOL=ON"
     "-DCMAKE_DISABLE_FIND_PACKAGE_origami:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING=-ffunction-sections -fdata-sections"
-    "-DCMAKE_HIP_FLAGS:STRING=-ffunction-sections -fdata-sections"
+    "-DCMAKE_CXX_STANDARD:STRING=26"
+    "-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON"
+    "-DCMAKE_HIP_STANDARD:STRING=26"
+    "-DCMAKE_HIP_STANDARD_REQUIRED:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
     "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections -Wl,--version-script=${_bundled_hipblaslt_version_script}"
     "-DTENSILELITE_BUILD_TESTING:BOOL=OFF"
     "-DTENSILELITE_ENABLE_CLIENT:BOOL=OFF"
@@ -177,6 +185,7 @@ ExternalProject_Add(pytorch_bundled_rocblas
   BINARY_DIR "${_bundled_rocm_root}/build/rocblas"
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
+  CONFIGURE_HANDLED_BY_BUILD TRUE
   LIST_SEPARATOR "|"
   CMAKE_ARGS
     ${_bundled_rocm_common_cmake_args}
@@ -188,8 +197,12 @@ ExternalProject_Add(pytorch_bundled_rocblas
     "-DBUILD_DOCS:BOOL=OFF"
     "-DBUILD_WITH_HIPBLASLT:BOOL=ON"
     "-DBUILD_WITH_TENSILE:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING=-ffunction-sections -fdata-sections"
-    "-DCMAKE_HIP_FLAGS:STRING=-ffunction-sections -fdata-sections"
+    "-DCMAKE_CXX_STANDARD:STRING=26"
+    "-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON"
+    "-DCMAKE_HIP_STANDARD:STRING=26"
+    "-DCMAKE_HIP_STANDARD_REQUIRED:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
     "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections -Wl,--version-script=${_bundled_rocblas_version_script}"
     "-DHIPBLASLT_VERSION:STRING=1.4.1"
     "-DTENSILE_VERSION:STRING="
@@ -210,6 +223,7 @@ ExternalProject_Add(pytorch_bundled_miopen
   BINARY_DIR "${_bundled_rocm_root}/build/miopen"
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
+  CONFIGURE_HANDLED_BY_BUILD TRUE
   PATCH_COMMAND
     "${CMAKE_COMMAND}"
     "-DMIOPEN_SOURCE_DIR:PATH=<SOURCE_DIR>"
@@ -234,6 +248,13 @@ ExternalProject_Add(pytorch_bundled_miopen
     "-DMIOPEN_STANDALONE_BUILD:BOOL=OFF"
     "-DMIOPEN_USE_COMPOSABLEKERNEL:BOOL=OFF"
     "-DMIOPEN_USE_HIPCONV:BOOL=OFF"
+    "-DCMAKE_CXX_STANDARD:STRING=26"
+    "-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON"
+    "-DCMAKE_HIP_STANDARD:STRING=26"
+    "-DCMAKE_HIP_STANDARD_REQUIRED:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections"
     "-Drocblas_DIR:PATH=${_bundled_rocm_install}/lib/cmake/rocblas"
     "-Dhipblaslt_DIR:PATH=${_bundled_rocm_install}/lib/cmake/hipblaslt"
   BUILD_COMMAND ${_bundled_rocm_build_command}

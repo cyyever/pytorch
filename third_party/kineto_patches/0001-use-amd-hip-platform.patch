@@ -1,12 +1,180 @@
 diff --git a/libkineto/CMakeLists.txt b/libkineto/CMakeLists.txt
-index 2ee0899..c838892 100644
+index 2ee0899..810cb3f 100644
 --- a/libkineto/CMakeLists.txt
 +++ b/libkineto/CMakeLists.txt
-@@ -214,7 +214,6 @@ if(KINETO_BACKEND STREQUAL "cuda")
-   list(APPEND KINETO_DEFINITIONS "HAS_CUPTI")
- elseif(KINETO_BACKEND STREQUAL "rocm")
-   list(APPEND KINETO_DEFINITIONS "HAS_ROCTRACER")
+@@ -160,9 +159,0 @@ elseif(KINETO_BACKEND STREQUAL "rocm")
+-  # Kineto uses rocprofiler-sdk, which is supported on ROCm 7.0 and later.
+-  # roctracer was the only pre-7.0 path and has been removed, so older ROCm
+-  # versions are no longer supported.
+-  if(ROCM_VERSION_DEV_MAJOR LESS 7)
+-    message(FATAL_ERROR
+-      "KINETO_BACKEND=rocm requires ROCm >= 7.0 (rocprofiler-sdk); detected "
+-      "ROCm ${ROCM_VERSION_DEV_MAJOR}.${ROCM_VERSION_DEV_MINOR}. "
+-      "Upgrade ROCm or set KINETO_BACKEND=cpu.")
+-  endif()
+@@ -216,2 +207 @@ elseif(KINETO_BACKEND STREQUAL "rocm")
+-  list(APPEND KINETO_DEFINITIONS "HAS_ROCTRACER")
 -  target_compile_definitions(kineto_base PRIVATE "__HIP_PLATFORM_HCC__")
-   target_compile_definitions(kineto_base PRIVATE "__HIP_PLATFORM_AMD__")
- elseif(KINETO_BACKEND STREQUAL "xpu")
-   if(MSVC)
++  list(APPEND KINETO_DEFINITIONS "HAS_ROCPROFILER")
+@@ -299 +289 @@ set_target_properties(kineto kineto_base kineto_api PROPERTIES
+-      CXX_STANDARD 20
++      CXX_STANDARD 26
+diff --git a/libkineto/src/ActivityLoggerFactory.h b/libkineto/src/ActivityLoggerFactory.h
+index 4d1153e..fc90c81 100644
+--- a/libkineto/src/ActivityLoggerFactory.h
++++ b/libkineto/src/ActivityLoggerFactory.h
+@@ -11,0 +12 @@
++#include "output_base.h"
+@@ -24,2 +24,0 @@ namespace KINETO_NAMESPACE {
+-class ActivityLogger;
+-
+diff --git a/libkineto/src/ActivityProfilerController.cpp b/libkineto/src/ActivityProfilerController.cpp
+index ba5f0dc..057d578 100644
+--- a/libkineto/src/ActivityProfilerController.cpp
++++ b/libkineto/src/ActivityProfilerController.cpp
+@@ -23 +23 @@
+-#elif defined(HAS_ROCTRACER)
++#elif defined(HAS_ROCPROFILER)
+@@ -85 +85 @@ ActivityProfilerController::ActivityProfilerController(
+-#elif defined(HAS_ROCTRACER)
++#elif defined(HAS_ROCPROFILER)
+diff --git a/libkineto/src/DeviceProperties.cpp b/libkineto/src/DeviceProperties.cpp
+index b577b1f..f3eff39 100644
+--- a/libkineto/src/DeviceProperties.cpp
++++ b/libkineto/src/DeviceProperties.cpp
+@@ -23 +23 @@
+-#elif defined(HAS_ROCTRACER)
++#elif defined(HAS_ROCPROFILER)
+@@ -41 +41 @@ namespace DevicePropertyFields = libkineto::DevicePropertyMetadataFields;
+-#elif defined(HAS_ROCTRACER)
++#elif defined(HAS_ROCPROFILER)
+@@ -49 +49 @@ namespace DevicePropertyFields = libkineto::DevicePropertyMetadataFields;
+-#if defined(HAS_CUPTI) || defined(HAS_ROCTRACER)
++#if defined(HAS_CUPTI) || defined(HAS_ROCPROFILER)
+@@ -120 +120 @@ static void visitDeviceMetadata(
+-#elif defined(HAS_ROCTRACER)
++#elif defined(HAS_ROCPROFILER)
+@@ -138 +138 @@ static std::string createDevicePropertiesJson() {
+-#endif // HAS_CUPTI || HAS_ROCTRACER
++#endif // HAS_CUPTI || HAS_ROCPROFILER
+@@ -141 +141 @@ const std::string& devicePropertiesJson() {
+-#if defined(HAS_CUPTI) || defined(HAS_ROCTRACER)
++#if defined(HAS_CUPTI) || defined(HAS_ROCPROFILER)
+@@ -152 +152 @@ int smCount([[maybe_unused]] uint32_t deviceId) {
+-#if defined(HAS_CUPTI) || defined(HAS_ROCTRACER)
++#if defined(HAS_CUPTI) || defined(HAS_ROCPROFILER)
+diff --git a/libkineto/src/DeviceProperties.h b/libkineto/src/DeviceProperties.h
+index 5bd6a34..7cb41d1 100644
+--- a/libkineto/src/DeviceProperties.h
++++ b/libkineto/src/DeviceProperties.h
+@@ -26 +26 @@ int smCount(uint32_t deviceId);
+-// TODO: Implement the below for HAS_ROCTRACER
++// TODO: Implement the below for HAS_ROCPROFILER
+diff --git a/libkineto/src/DeviceUtil.cpp b/libkineto/src/DeviceUtil.cpp
+index 240ff63..d6cd6da 100644
+--- a/libkineto/src/DeviceUtil.cpp
++++ b/libkineto/src/DeviceUtil.cpp
+@@ -19 +19 @@ bool isAMDGpuAvailable() {
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+diff --git a/libkineto/src/DeviceUtil.h b/libkineto/src/DeviceUtil.h
+index 62fd90e..d74e31a 100644
+--- a/libkineto/src/DeviceUtil.h
++++ b/libkineto/src/DeviceUtil.h
+@@ -72 +72 @@
+-#elif defined(HAS_ROCTRACER)
++#elif defined(HAS_ROCPROFILER)
+diff --git a/libkineto/src/RocmActivityProfiler.cpp b/libkineto/src/RocmActivityProfiler.cpp
+index 5e54f67..c5f6597 100644
+--- a/libkineto/src/RocmActivityProfiler.cpp
++++ b/libkineto/src/RocmActivityProfiler.cpp
+@@ -9 +9 @@
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -214 +214 @@ void RocmActivityProfiler::handleRocprofActivity(
+-#endif // HAS_ROCTRACER
++#endif // HAS_ROCPROFILER
+diff --git a/libkineto/src/RocmActivityProfiler.h b/libkineto/src/RocmActivityProfiler.h
+index 732e423..f87466c 100644
+--- a/libkineto/src/RocmActivityProfiler.h
++++ b/libkineto/src/RocmActivityProfiler.h
+@@ -13 +13 @@
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -64 +64 @@ class RocmActivityProfiler : public GenericActivityProfiler {
+-#endif // HAS_ROCTRACER
++#endif // HAS_ROCPROFILER
+diff --git a/libkineto/src/RocmStreamQueue.h b/libkineto/src/RocmStreamQueue.h
+index ca3d6d0..c429909 100644
+--- a/libkineto/src/RocmStreamQueue.h
++++ b/libkineto/src/RocmStreamQueue.h
+@@ -11 +11 @@
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -141 +141 @@ void backfillAsyncStreams(
+-#endif // HAS_ROCTRACER
++#endif // HAS_ROCPROFILER
+diff --git a/libkineto/src/RocprofActivityApi.cpp b/libkineto/src/RocprofActivityApi.cpp
+index 165a284..3bbd434 100644
+--- a/libkineto/src/RocprofActivityApi.cpp
++++ b/libkineto/src/RocprofActivityApi.cpp
+@@ -9,2 +8,0 @@
+-#include "RocprofActivityApi.h"
+-
+@@ -17,0 +16,3 @@
++
++#include "RocprofActivityApi.h"
++
+@@ -51 +52 @@ void RocprofActivityApi::pushCorrelationID(int id, CorrelationFlowType type) {
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -61 +62 @@ void RocprofActivityApi::popCorrelationID(int id, CorrelationFlowType type) {
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -192 +193 @@ void RocprofActivityApi::enableActivities(
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -206 +207 @@ void RocprofActivityApi::disableActivities(
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+diff --git a/libkineto/src/RocprofActivityApi.h b/libkineto/src/RocprofActivityApi.h
+index 2ce39f3..0705a73 100644
+--- a/libkineto/src/RocprofActivityApi.h
++++ b/libkineto/src/RocprofActivityApi.h
+@@ -10 +10 @@
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+diff --git a/libkineto/src/RocprofLogger.cpp b/libkineto/src/RocprofLogger.cpp
+index 2988dec..54766b9 100644
+--- a/libkineto/src/RocprofLogger.cpp
++++ b/libkineto/src/RocprofLogger.cpp
+@@ -8,0 +9,6 @@
++#include <time.h>
++#include <unistd.h>
++#include <chrono>
++#include <cstring>
++#include <mutex>
++
+@@ -18,6 +23,0 @@
+-#include <time.h>
+-#include <unistd.h>
+-#include <chrono>
+-#include <cstring>
+-#include <mutex>
+-
+diff --git a/libkineto/src/init.cpp b/libkineto/src/init.cpp
+index 4e9fa66..efae014 100644
+--- a/libkineto/src/init.cpp
++++ b/libkineto/src/init.cpp
+@@ -22 +22 @@
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+@@ -85 +85 @@ void libkineto_init(bool cpuOnly, [[maybe_unused]] bool logOnError) {
+-#ifdef HAS_ROCTRACER
++#ifdef HAS_ROCPROFILER
+diff --git a/libkineto/test/CMakeLists.txt b/libkineto/test/CMakeLists.txt
+index fbc5b16..e55b3d1 100644
+--- a/libkineto/test/CMakeLists.txt
++++ b/libkineto/test/CMakeLists.txt
+@@ -193 +192,0 @@ target_compile_definitions(RocmActivityProfilerTest PRIVATE
+-    "__HIP_PLATFORM_HCC__"

@@ -5,7 +5,14 @@ def initialize():
     import rocm_sdk
 
     rocm_sdk.initialize_process(
-        preload_shortnames=["amd_comgr", "amdhip64", "roctx64", "hiprtc", "hipfile"],
+        preload_shortnames=[
+            "amd_comgr",
+            "amdhip64",
+            "rocprofiler-sdk",
+            "roctx64",
+            "hiprtc",
+            "hipfile",
+        ],
         rtld_global=False,
         check_version="@ROCM_VERSION_DEV_MAJOR@.@ROCM_VERSION_DEV_MINOR@.*",
     )
@@ -20,6 +27,7 @@ def initialize():
             "hipfft",
             "hiprand",
             "hipsparse",
+            "hipsparselt",
             "hipsolver",
             "rccl",
         ],
