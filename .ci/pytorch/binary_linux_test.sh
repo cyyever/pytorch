@@ -76,7 +76,7 @@ fi
 # Test the package
 /pytorch/.ci/pytorch/check_binary.sh
 
-if [[ "\$GPU_ARCH_TYPE" != *xpu* && "\$GPU_ARCH_TYPE" != *rocm*  && "$PACKAGE_TYPE" != libtorch ]]; then
+if [[ "\$GPU_ARCH_TYPE" != *xpu* && "$PACKAGE_TYPE" != libtorch ]]; then
 
   torch_pkg_size="$(ls -1 /final_pkgs/torch-* | sort |tail -1 |xargs wc -c |cut -d ' ' -f1)"
   # todo: implement check for large binaries

@@ -22,7 +22,7 @@ if "MATRIX_GPU_ARCH_VERSION" in os.environ:
     gpu_arch_ver = os.getenv("MATRIX_GPU_ARCH_VERSION")
 else:
     gpu_arch_ver = os.getenv("GPU_ARCH_VERSION")  # Use fallback if available
-gpu_arch_type = os.getenv("MATRIX_GPU_ARCH_TYPE")
+gpu_arch_type = os.getenv("MATRIX_GPU_ARCH_TYPE") or os.getenv("GPU_ARCH_TYPE")
 channel = os.getenv("MATRIX_CHANNEL")
 package_type = os.getenv("MATRIX_PACKAGE_TYPE")
 target_os = os.getenv("TARGET_OS", sys.platform)
@@ -30,6 +30,8 @@ BASE_DIR = Path(__file__).parent.parent.parent
 PYTORCH_ROOT = BASE_DIR.parent
 
 is_cuda_system = gpu_arch_type == "cuda"
+is_rocm_system = gpu_arch_type == "rocm"
+is_gpu_system = is_cuda_system or is_rocm_system
 NIGHTLY_ALLOWED_DELTA = 3
 
 MODULES = [
@@ -333,10 +335,12 @@ def smoke_test_cuda(
     torch_compile_check: str,
     pypi_pkg_check: str,
 ) -> None:
-    if not torch.cuda.is_available() and is_cuda_system:
-        raise RuntimeError(f"Expected CUDA {gpu_arch_ver}. However CUDA is not loaded.")
+    if not torch.cuda.is_available() and is_gpu_system:
+        raise RuntimeError(
+            f"Expected {gpu_arch_type} {gpu_arch_ver}. However no GPU is available."
+        )
 
-    if package in ["all", "torch_torchvision"] and is_cuda_system:
+    if package in ["all", "torch_torchvision"] and is_gpu_system:
         for module in get_modules_for_package(package):
             imported_module = importlib.import_module(module["name"])
             # TBD for vision move extension module to private so it will
@@ -364,50 +368,68 @@ def smoke_test_cuda(
         smoke_test_compile_dynamic_indirect_indexing()
 
     if torch.cuda.is_available():
-        if torch.version.cuda != gpu_arch_ver:
-            raise RuntimeError(
-                f"Wrong CUDA version. Loaded: {torch.version.cuda} Expected: {gpu_arch_ver}"
-            )
-
-        print(f"torch cuda: {torch.version.cuda}")
         torch.cuda.init()
-        print("CUDA initialized successfully")
-        print(f"Number of CUDA devices: {torch.cuda.device_count()}")
+        print(f"{gpu_arch_type} initialized successfully")
+        print(f"Number of {gpu_arch_type} devices: {torch.cuda.device_count()}")
         for i in range(torch.cuda.device_count()):
             print(f"Device {i}: {torch.cuda.get_device_name(i)}")
 
-        print(f"cuDNN enabled? {torch.backends.cudnn.enabled}")
-        torch_cudnn_version = cudnn_to_version_str(torch.backends.cudnn.version())
-        print(f"Torch cuDNN version: {torch_cudnn_version}")
+        if is_rocm_system:
+            if torch.version.hip is None:
+                raise RuntimeError("ROCm wheel does not report a HIP runtime version")
+            print(f"Torch HIP version: {torch.version.hip}")
+            print(f"Torch MIOpen version: {torch.backends.cudnn.version()}")
+            if sys.platform in ["linux", "linux2"] and hasattr(
+                torch._C, "_nccl_version"
+            ):
+                rccl_version = ".".join(str(v) for v in torch.cuda.nccl.version())
+                print(f"Torch RCCL version: {rccl_version}")
+        else:
+            if torch.version.cuda != gpu_arch_ver:
+                raise RuntimeError(
+                    f"Wrong CUDA version. Loaded: {torch.version.cuda} "
+                    f"Expected: {gpu_arch_ver}"
+                )
 
-        torch_cudnn_compile_version = torch._C._cudnn.getCompileVersion()
-        print(f"Torch cuDNN compile-time version: {torch_cudnn_compile_version}")
-        torch_cudnn_runtime_version = tuple(
-            [int(x) for x in torch_cudnn_version.split(".")]
-        )
-        if torch_cudnn_runtime_version != torch_cudnn_compile_version:
-            raise RuntimeError(
-                "cuDNN runtime version doesn't match comple version. "
-                f"Loaded: {torch_cudnn_runtime_version} "
-                f"Expected: {torch_cudnn_compile_version}"
+            print(f"torch cuda: {torch.version.cuda}")
+            print(f"cuDNN enabled? {torch.backends.cudnn.enabled}")
+            torch_cudnn_version = cudnn_to_version_str(torch.backends.cudnn.version())
+            print(f"Torch cuDNN version: {torch_cudnn_version}")
+
+            torch_cudnn_compile_version = torch._C._cudnn.getCompileVersion()
+            print(f"Torch cuDNN compile-time version: {torch_cudnn_compile_version}")
+            torch_cudnn_runtime_version = tuple(
+                [int(x) for x in torch_cudnn_version.split(".")]
             )
+            if torch_cudnn_runtime_version != torch_cudnn_compile_version:
+                raise RuntimeError(
+                    "cuDNN runtime version doesn't match compile version. "
+                    f"Loaded: {torch_cudnn_runtime_version} "
+                    f"Expected: {torch_cudnn_compile_version}"
+                )
 
-        check_cudnn_version(gpu_arch_ver, torch_cudnn_version)
+            check_cudnn_version(gpu_arch_ver, torch_cudnn_version)
 
-        if sys.platform in ["linux", "linux2"]:
-            torch_nccl_version = ".".join(str(v) for v in torch.cuda.nccl.version())
-            print(f"Torch nccl; version: {torch_nccl_version}")
+            if sys.platform in ["linux", "linux2"]:
+                torch_nccl_version = ".".join(
+                    str(v) for v in torch.cuda.nccl.version()
+                )
+                print(f"Torch NCCL version: {torch_nccl_version}")
 
-        # Pypi dependencies are installed on linux only and nccl is available only on Linux.
-        if pypi_pkg_check == "enabled" and sys.platform in ["linux", "linux2"]:
-            compare_pypi_to_torch_versions(
-                "cudnn", find_pypi_package_version("nvidia-cudnn"), torch_cudnn_version
-            )
-            compare_pypi_to_torch_versions(
-                "nccl", find_pypi_package_version("nvidia-nccl"), torch_nccl_version
-            )
+            # PyPI dependencies are installed on Linux only.
+            if pypi_pkg_check == "enabled" and sys.platform in ["linux", "linux2"]:
+                compare_pypi_to_torch_versions(
+                    "cudnn",
+                    find_pypi_package_version("nvidia-cudnn"),
+                    torch_cudnn_version,
+                )
+                compare_pypi_to_torch_versions(
+                    "nccl",
+                    find_pypi_package_version("nvidia-nccl"),
+                    torch_nccl_version,
+                )
 
-        if runtime_error_check == "enabled":
+        if runtime_error_check == "enabled" and is_cuda_system:
             test_cuda_runtime_errors_captured()
 
 
@@ -428,18 +450,18 @@ def smoke_test_conv2d() -> None:
     input = torch.randn(20, 16, 50, 100)
     output = basic_conv(input)
 
-    if is_cuda_system:
-        print("Testing smoke_test_conv2d with cuda")
+    if is_gpu_system:
+        print(f"Testing smoke_test_conv2d with {gpu_arch_type}")
         conv = nn.Conv2d(3, 3, 3).cuda()
         x = torch.randn(1, 3, 24, 24, device="cuda")
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             out = conv(x)
         if out is None:
-            raise AssertionError("Conv2d with cuda autocast returned None")
+            raise AssertionError(f"Conv2d with {gpu_arch_type} autocast returned None")
 
         supported_dtypes = [torch.float16, torch.float32, torch.float64]
         for dtype in supported_dtypes:
-            print(f"Testing smoke_test_conv2d with cuda for {dtype}")
+            print(f"Testing smoke_test_conv2d with {gpu_arch_type} for {dtype}")
             conv = basic_conv.to(dtype).cuda()
             input = torch.randn(20, 16, 50, 100, device="cuda").type(dtype)
             output = conv(input)
@@ -580,8 +602,8 @@ def smoke_test_compile_dynamic_indirect_indexing(device: str = "cuda") -> None:
 
 
 def smoke_test_nvshmem() -> None:
-    if not torch.cuda.is_available() or target_os == "windows":
-        print("Windows platform or CUDA is not available, skipping NVSHMEM test")
+    if not is_cuda_system or not torch.cuda.is_available() or target_os == "windows":
+        print("NVSHMEM requires an available CUDA device, skipping NVSHMEM test")
         return
 
     # Check if NVSHMEM is compiled in current build
@@ -685,10 +707,11 @@ def main() -> None:
     test_numpy()
     test_sdpa()
 
-    if is_cuda_system:
+    if is_gpu_system:
         test_linalg("cuda")
-        test_cuda_gds_errors_captured()
         test_sdpa("cuda")
+    if is_cuda_system:
+        test_cuda_gds_errors_captured()
 
     if options.package in ["all", "torch_torchvision"]:
         smoke_test_modules(options.package)

@@ -36,6 +36,7 @@ LIBTORCH_NAMESPACE_LIST = (
 
 # Patterns for detecting statically linked libstdc++ symbols
 STATICALLY_LINKED_CXX11_ABI = [re.compile(r".*recursive_directory_iterator.*")]
+CXX_STANDARD = "-std=c++23"
 
 
 def _apply_libtorch_symbols(symbols):
@@ -175,19 +176,14 @@ def check_stable_only_symbols(install_root: Path) -> None:
 #include <c10/core/DeviceType.h>
 #include <c10/core/ScalarType.h>
 #include <c10/core/TensorOptions.h>
-#include <c10/util/Optional.h>
+#include <c10/util/OptionalArrayRef.h>
 
 int main() { return 0; }
 """
 
     base_compile_flags = [
         "g++",
-        # The full torch C++ API (torch/all.h, ATen/ATen.h) enforces a C++20
-        # minimum via header guards; compile at C++20 to match. The other
-        # checks below stay at C++17 on purpose -- they exercise the stable /
-        # header-only / C-shim surface, which must remain buildable under the
-        # older standard.
-        "-std=c++23",
+        CXX_STANDARD,
         f"-I{include_dir}",
         f"-I{include_dir}/torch/csrc/api/include",
         "-c",  # Compile only, don't link
@@ -288,7 +284,7 @@ int main() {{ return 0; }}
 
     compile_flags = [
         "g++",
-        "-std=c++17",
+        CXX_STANDARD,
         f"-I{include_dir}",
         f"-I{include_dir}/torch/csrc/api/include",
         "-c",
@@ -357,7 +353,7 @@ int main() {{ return 0; }}
 
     compile_flags = [
         "g++",
-        "-std=c++17",
+        CXX_STANDARD,
         f"-I{include_dir}",
         f"-I{include_dir}/torch/csrc/api/include",
         "-c",
@@ -399,7 +395,7 @@ int main() {
 
     compile_flags = [
         "g++",
-        "-std=c++17",
+        CXX_STANDARD,
         f"-I{include_dir}",
         f"-I{include_dir}/torch/csrc/api/include",
         "-c",
@@ -446,7 +442,7 @@ int main() {
 
     compile_flags = [
         "g++",
-        "-std=c++17",
+        CXX_STANDARD,
         f"-I{include_dir}",
         f"-I{include_dir}/torch/csrc/api/include",
         "-c",

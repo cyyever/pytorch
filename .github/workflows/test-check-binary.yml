@@ -5,8 +5,10 @@ on:
   pull_request:
     paths:
       - .github/workflows/test-check-binary.yml
+      - .ci/pytorch/binary_linux_test.sh
       - .ci/pytorch/check_binary.sh
-      - .ci/pytorch//smoke_test/smoke_test.py
+      - .ci/pytorch/smoke_test/check_binary_symbols.py
+      - .ci/pytorch/smoke_test/smoke_test.py
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.event_name == 'workflow_dispatch' }}
@@ -25,7 +27,7 @@ jobs:
           pip install 'numpy>=1.21.2' 'protobuf>=3.20' 'typing-extensions>=4.8.0'
           pushd .ci/pytorch/
           pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
-          DESIRED_PYTHON=3.11 DESIRED_CUDA=cpu PACKAGE_TYPE=manywheel ./check_binary.sh
+          DESIRED_PYTHON=3.11 DESIRED_CUDA=cpu EXPECTED_BLAS=mkl PACKAGE_TYPE=manywheel ./check_binary.sh
           popd
 
   check_binary_linux_cuda:
@@ -43,5 +45,5 @@ jobs:
           CUDA_VERSION_NODOT=$(echo ${STABLE_CUDA_VERSION} | tr -d '.')
           pushd .ci/pytorch/
           pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu${CUDA_VERSION_NODOT}
-          DESIRED_PYTHON=3.11 DESIRED_CUDA=cu${CUDA_VERSION_NODOT} PACKAGE_TYPE=manywheel ./check_binary.sh
+          DESIRED_PYTHON=3.11 DESIRED_CUDA=cu${CUDA_VERSION_NODOT} EXPECTED_BLAS=mkl PACKAGE_TYPE=manywheel ./check_binary.sh
           popd
