@@ -6,9 +6,9 @@ from collections.abc import Iterable
 from typing import Any
 
 import cutlass.cute as cute
-from cutlass.operators.arch import TargetSm  # noqa: TC002
+from cutlass.operators.arch import TargetSm
 from cutlass.operators.arguments import GemmArguments
-from cutlass.operators.artifact import CompiledArtifact  # noqa: TC002
+from cutlass.operators.artifact import CompiledArtifact
 from cutlass.operators.fusion.library import ActivationOp
 from cutlass.operators.providers.cutedsl.evt import common_efc
 from cutlass.operators.providers.cutedsl.evt.converter import (
