@@ -8,10 +8,15 @@
 #include <ATen/native/cuda/thread_constants.h>
 #include <ATen/native/cuda/MemoryAccess.cuh>
 
-#include <tuple>
-
+// libcu++ on CUDA, libhipcxx on ROCm: the device-callable half of the standard
+// library. The host std::tuple and std::apply reach device code only through
+// nvcc's --expt-relaxed-constexpr, which hipcc does not have.
 #ifdef USE_ROCM
 #include <hip/std/tuple>
+namespace TORCH_DEVICE_STD_NS = ::hip::std;
+#else
+#include <cuda/std/tuple>
+namespace TORCH_DEVICE_STD_NS = ::cuda::std;
 #endif
 
 
@@ -47,11 +52,8 @@ template <bool reverted_idx = false, typename func_t, typename policy_t>
 __device__ inline void elementwise_kernel_helper(func_t f, policy_t policy) {
   using traits = function_traits<func_t>;
   using return_t = typename traits::result_type;
-#ifdef USE_ROCM
-  using args_t = typename traits::template ArgsTupleWith<::hip::std::tuple>;
-#else
-  using args_t = typename traits::ArgsTuple;
-#endif
+  using args_t =
+      typename traits::template ArgsTupleWith<TORCH_DEVICE_STD_NS::tuple>;
   constexpr int elems_per_thread = policy_t::tws;
 
   int idx = blockIdx.x;
@@ -68,11 +70,7 @@ __device__ inline void elementwise_kernel_helper(func_t f, policy_t policy) {
   #pragma unroll
   for (int i = 0; i < elems_per_thread; i++) {
     if (policy.check_inbounds(i)) {
-#ifdef USE_ROCM
-      results[i] = ::hip::std::apply(f, args[i]);
-#else
-      results[i] = std::apply(f, args[i]);
-#endif
+      results[i] = TORCH_DEVICE_STD_NS::apply(f, args[i]);
     }
   }
 
