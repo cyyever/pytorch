@@ -7,10 +7,10 @@ index 0d16ca12..4d896ec1 100644
 +#include <array>
 @@ -85 +85 @@ void transform_bias_rescale_qkv_add_padding_kernel(
 -    using LoadT = at::detail::Array<scalar_t, VEC>;
-+    using LoadT = std::array<scalar_t, VEC>;
++    using LoadT = memory::aligned_vector<scalar_t, VEC>;
 @@ -273 +273 @@ void transform_bias_rescale_qkv_kernel(
 -    using LoadT = at::detail::Array<scalar_t, VEC>;
-+    using LoadT = std::array<scalar_t, VEC>;
++    using LoadT = memory::aligned_vector<scalar_t, VEC>;
 diff --git a/src/ATen/native/xpu/sycl/EmbeddingBag.h b/src/ATen/native/xpu/sycl/EmbeddingBag.h
 index adb14d25..09617c6f 100644
 --- a/src/ATen/native/xpu/sycl/EmbeddingBag.h
