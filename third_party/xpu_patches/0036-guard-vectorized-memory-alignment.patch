@@ -1,0 +1,43 @@
+diff --git a/src/ATen/native/xpu/sycl/AdaptiveAveragePooling2dKernels.cpp b/src/ATen/native/xpu/sycl/AdaptiveAveragePooling2dKernels.cpp
+index 115299c9..84d97a47 100644
+--- a/src/ATen/native/xpu/sycl/AdaptiveAveragePooling2dKernels.cpp
++++ b/src/ATen/native/xpu/sycl/AdaptiveAveragePooling2dKernels.cpp
+@@ -764,3 +764,5 @@ void launch_adaptive_avg_pool2d_kernel_cl(const Tensor& input, Tensor& output) {
+-           8,
+-           memory::can_vectorize_up_to<scalar_t>(
+-               (char*)output.mutable_data_ptr<scalar_t>()));
++           {8,
++            memory::can_vectorize_up_to<scalar_t>(
++                (char*)output.mutable_data_ptr<scalar_t>()),
++            memory::can_vectorize_up_to<scalar_t>(
++                (char*)input.const_data_ptr<scalar_t>())});
+diff --git a/src/ATen/native/xpu/sycl/IndexKernelUtils.h b/src/ATen/native/xpu/sycl/IndexKernelUtils.h
+index edf173e0..e9e8790f 100644
+--- a/src/ATen/native/xpu/sycl/IndexKernelUtils.h
++++ b/src/ATen/native/xpu/sycl/IndexKernelUtils.h
+@@ -42 +42 @@ inline bool fast_gather_kernel_eligible(
+-      static_cast<size_t>(iter.strides(1)[1] == 0) &&
++      iter.strides(1)[1] == 0 &&
+diff --git a/src/ATen/native/xpu/sycl/TransposeKernel.cpp b/src/ATen/native/xpu/sycl/TransposeKernel.cpp
+index e188e758..01eb02cf 100644
+--- a/src/ATen/native/xpu/sycl/TransposeKernel.cpp
++++ b/src/ATen/native/xpu/sycl/TransposeKernel.cpp
+@@ -16,0 +17 @@
++#include <ATen/native/xpu/sycl/MemoryAccess.h>
+@@ -174,9 +175,7 @@ static void dispatch_transpose(
+-  int vec_size = 1;
+-  if constexpr (kMaxVec >= 4) {
+-    if (cols % 4 == 0 && rows % 4 == 0)
+-      vec_size = 4;
+-    else if (cols % 2 == 0 && rows % 2 == 0)
+-      vec_size = 2;
+-  } else if constexpr (kMaxVec >= 2) {
+-    if (cols % 2 == 0 && rows % 2 == 0)
+-      vec_size = 2;
++  int vec_size = std::min(
++      {kMaxVec,
++       memory::can_vectorize_up_to<scalar_t>(
++           reinterpret_cast<const char*>(src)),
++       memory::can_vectorize_up_to<scalar_t>(reinterpret_cast<char*>(dst))});
++  while (vec_size > 1 && (cols % vec_size != 0 || rows % vec_size != 0)) {
++    vec_size /= 2;
