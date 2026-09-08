@@ -46,8 +46,7 @@ from torch.testing._internal.common_utils import (
     TEST_WITH_ROCM, IS_FBCODE, IS_LINUX, IS_MACOS, TEST_SCIPY,
     torch_to_numpy_dtype_dict, numpy_to_torch_dtype, TEST_WITH_ASAN,
     GRADCHECK_NONDET_TOL, slowTest, TEST_WITH_SLOW,
-    TEST_WITH_TORCHINDUCTOR, skipIfNoTritonDSL, skipIfNoCuteDSL, skipIfRocm, TEST_XPU,
-    TEST_CUDA, skipIfNoFlyDSL
+    TEST_WITH_TORCHINDUCTOR, skipIfNoTritonDSL, skipIfNoCuteDSL, skipIfRocm, TEST_XPU
 )
 from torch.testing._utils import wrapper_set_seed
 
@@ -4816,23 +4815,6 @@ def sample_inputs_rms_norm_cutedsl(opinfo, device, dtype, requires_grad, **kwarg
     yield SampleInput(make_arg((8, 128)), args=((128,),), kwargs={'eps': 1e-5})
 
 
-def sample_inputs_rms_norm_flydsl(opinfo, device, dtype, requires_grad, **kwargs):
-    # Keep one large dispatching shape here; dedicated tests cover the other bands.
-    make_arg = partial(make_tensor, device=device, dtype=dtype, requires_grad=requires_grad)
-    cases = (
-        ((8192, 4096), (4096,), {}),
-        # Exercise row- and N-threshold fallbacks.
-        ((64, 4096), (4096,), {'eps': 1e-5}),
-        ((8, 128), (128,), {'eps': 1e-5}),
-        ((8, 128), (128,), {}),
-    )
-    for input_shape, normalized_shape, kw in cases:
-        weight = make_arg(normalized_shape)
-        yield SampleInput(make_arg(input_shape), args=(normalized_shape, weight), kwargs=kw)
-    # weight=None is declined by the predicate and handled by aten.
-    yield SampleInput(make_arg((8, 128)), args=((128,),), kwargs={'eps': 1e-5})
-
-
 def error_inputs_group_norm(opinfo, device, **kwargs):
     make_arg = partial(make_tensor, device=device, dtype=torch.float32, requires_grad=False)
 
@@ -5599,26 +5581,6 @@ def sample_inputs_cutedsl_topk(op_info, device, dtype, requires_grad, **kwargs):
 
     for K in (16, 32):
         N = _REGISTER_N_RANGE[K][1]
-        yield SampleInput(make_arg((256, N)).contiguous(), args=(K,))
-        yield SampleInput(make_arg((4, 64, N)).contiguous(), args=(K,))
-
-
-def sample_inputs_flydsl_topk(op_info, device, dtype, requires_grad, **kwargs):
-    from torch._native.ops.topk.flydsl_impl import _radix_n_range, _REGISTER_N_BOUNDS
-
-    make_arg = partial(_make_dsl_topk_arg, device=device, dtype=dtype)
-
-    # M=256 covers the gfx950 occupancy gate.
-    for K in (64, 256, 257, 383, 384, 831, 832, 1024):
-        n_range = _radix_n_range(K)
-        if n_range is None:
-            raise AssertionError(f"missing radix gate for K={K}")
-        N = n_range[0]
-        yield SampleInput(make_arg((256, N)).contiguous(), args=(K,))
-        yield SampleInput(make_arg((256, N)).contiguous(), args=(K, -1))
-        yield SampleInput(make_arg((4, 64, N)).contiguous(), args=(K,))
-
-    for K, N in ((2, _REGISTER_N_BOUNDS[0]), (16, _REGISTER_N_BOUNDS[1])):
         yield SampleInput(make_arg((256, N)).contiguous(), args=(K,))
         yield SampleInput(make_arg((4, 64, N)).contiguous(), args=(K,))
 
@@ -21882,106 +21844,6 @@ if "cutedsl" in dsl_ops_by_dsl:
             variant_test_name="cutedsl_optimized_deterministic",
             method_variant=_topk_method_deterministic,
             **_cutedsl_topk_kwargs,
-        ),
-    ])
-
-if "flydsl" in dsl_ops_by_dsl:
-    from torch._native import flydsl_utils as _flydsl_utils
-    from torch._native.ops.norm.flydsl_rmsnorm_impl import (
-        _SUPPORTED_ARCHES as _flydsl_rmsnorm_supported_arches,
-    )
-
-    dsl_ops_by_dsl["flydsl"].append(
-        OpInfo(
-            "nn.functional.rms_norm",
-            variant_test_name="flydsl",
-            aten_name="rms_norm",
-            ref=reference_rms_norm,
-            dtypes=custom_types(torch.float16, torch.bfloat16, torch.float32),
-            dtypesIfCUDA=custom_types(torch.float16, torch.bfloat16, torch.float32),
-            supports_out=False,
-            supports_forward_ad=False,
-            supports_fwgrad_bwgrad=False,
-            sample_inputs_func=sample_inputs_rms_norm_flydsl,
-            decorators=[
-                onlyCUDA,
-                skipIfNoFlyDSL,
-                skipCUDAIf(
-                    not (
-                        TEST_CUDA
-                        and _flydsl_utils._is_supported_arch(
-                            torch.cuda.current_device(),
-                            _flydsl_rmsnorm_supported_arches,
-                        )
-                    ),
-                    "flydsl rms_norm override requires gfx950",
-                ),
-            ],
-            skips=(
-                # Unsupported FlyDSL dtypes fall through to aten and appear supported,
-                # so the probe's dtype set never matches the one listed here. xfail
-                # rather than skip: the failure is a plain deterministic assertion, and
-                # an XPASS is the signal to reconcile the set and restore coverage.
-                DecorateInfo(
-                    unittest.expectedFailure,
-                    "TestCommon", "test_dtypes",
-                ),
-            ),
-        )
-    )
-
-    from torch._native.ops.topk.flydsl_impl import (
-        _SUPPORTED_ARCHES as _flydsl_topk_supported_arches,
-    )
-
-    # These are deterministic OpInfo assertion failures, not crashes.
-    # Keep them as xfails so an XPASS signals that coverage can be restored.
-    _flydsl_topk_skips = _topk_dsl_skips(skipIfNoFlyDSL) + (
-        DecorateInfo(unittest.expectedFailure, "TestCommon", "test_dtypes"),
-        DecorateInfo(unittest.expectedFailure, "TestCommon", "test_out"),
-        DecorateInfo(unittest.expectedFailure, "TestCommon", "test_out_warning"),
-    )
-    _flydsl_topk_kwargs = dict(
-        dtypes=_dispatch_dtypes((torch.float32,)),
-        dtypesIfCUDA=_dispatch_dtypes((torch.float32,)),
-        sample_inputs_func=sample_inputs_flydsl_topk,
-        ref=reference_topk,
-        supports_autograd=False,
-        supports_forward_ad=False,
-        supports_fwgrad_bwgrad=False,
-        supports_out=False,
-        decorators=[
-            DecorateInfo(onlyCUDA),
-            DecorateInfo(
-                skipCUDAIf(
-                    not (
-                        torch.cuda.is_available()
-                        and _flydsl_utils._is_supported_arch(
-                            torch.cuda.current_device(),
-                            _flydsl_topk_supported_arches,
-                        )
-                    ),
-                    "flydsl topk override requires gfx950",
-                )
-            ),
-        ],
-        skips=_flydsl_topk_skips,
-    )
-    dsl_ops_by_dsl["flydsl"].extend([
-        OpInfo(
-            "topk", op=torch.topk,
-            variant_test_name="flydsl_optimized",
-            skips=_flydsl_topk_skips + (
-                DecorateInfo(unittest.skip("nondeterministic on tied indices by design"),
-                             "TestCommon", "test_variant_consistency_eager"),
-            ),
-            **{k: v for k, v in _flydsl_topk_kwargs.items() if k != "skips"},
-        ),
-        OpInfo(
-            "topk", op=_topk_deterministic,
-            variant_test_name="flydsl_optimized_deterministic",
-            method_variant=_topk_method_deterministic,
-            **_flydsl_topk_kwargs,
         ),
     ])
 
