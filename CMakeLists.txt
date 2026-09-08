@@ -1036,6 +1036,12 @@ if(BUILD_SHARED_LIBS)
           ${PROJECT_SOURCE_DIR}/cmake/public/LoadHIP.cmake
     DESTINATION share/cmake/Caffe2/public
     COMPONENT dev)
+  if(USE_ROCM)
+    install(
+      FILES ${PROJECT_SOURCE_DIR}/cmake/External/rocm_bundled.cmake
+      DESTINATION share/cmake/Caffe2/External
+      COMPONENT dev)
+  endif()
   install(
     FILES ${PROJECT_SOURCE_DIR}/cmake/Modules/FindCUDNN.cmake
     DESTINATION share/cmake/Caffe2/
