@@ -444,9 +444,8 @@ directly. The non-obvious rules:
   `c10::metal::ceil_div` from `<c10/metal/common.h>` (unqualified after
   `using namespace c10::metal;`). Both wrap `(a + b - 1) / b`.
 
-- **`IF_CONSTEXPR` for Metal 3/4 portability.** Metal 4 has `if constexpr`;
-  Metal 3 doesn't. Use the macro from `<c10/metal/common.h>`, e.g.
-  `if IF_CONSTEXPR (sizeof(T) == 8) { ... }`.
+- **`if constexpr` is available.** The shaders are built for Metal 4, so use
+  it directly, e.g. `if constexpr (sizeof(T) == 8) { ... }`.
 
 - **Share the CPU/CUDA stub via `REGISTER_MPS_DISPATCH`.** When the op has a
   `DECLARE_DISPATCH` stub upstream (distributions, fused ops), wire MPS in

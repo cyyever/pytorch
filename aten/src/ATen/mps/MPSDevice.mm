@@ -28,43 +28,30 @@ MPSDevice::~MPSDevice() {
 }
 
 MPSDevice::MPSDevice() : _mtl_device(nil) {
-  // macOS 26.0 is the minimum supported version: every version gate in the MPS
-  // backend assumes it, so refuse to bring the device up below that.
-  if (!is_os_version_at_least(26, 0)) {
-    TORCH_WARN("MPS backend requires macOS 26.0 or newer, disabling it");
+  // macOS 27.0 is the minimum supported version: the shaders are built for
+  // Metal 4 against a 27.0 deployment target, and every workaround the backend
+  // carried for older releases has been dropped, so refuse to bring the device
+  // up below that.
+  if (!is_os_version_at_least(27, 0)) {
+    TORCH_WARN("MPS backend requires macOS 27.0 or newer, disabling it");
     return;
   }
 
   NSArray* devices = [MTLCopyAllDevices() autorelease];
   for (unsigned long i = 0; i < [devices count]; i++) {
     id<MTLDevice> device = devices[i];
-    if (![device supportsFamily:MTLGPUFamilyMac2]) {
-      // Exclude devices that does not support Metal 2.0
-      // Virtualised MPS device on MacOS 12.6 should fail this check
-      TORCH_WARN("Skipping device ", [[device name] UTF8String], " that does not support Metal 2.0");
+    // is_apple_family_or_newer cannot be used here: it reaches through the
+    // singleton that this constructor is still building.
+    if (![device supportsFamily:static_cast<MTLGPUFamily>(AppleGPUFamily::APPLE_8_PLUS)]) {
+      // M1 (Apple7) and older are not supported, and neither is anything that
+      // reports no Apple family at all, such as a virtualised device.
+      TORCH_WARN("Skipping device ", [[device name] UTF8String], " that is older than Apple8 (M2)");
       continue;
     }
     _mtl_device = [device retain];
     break;
   }
   TORCH_INTERNAL_ASSERT_DEBUG_ONLY(_mtl_device);
-}
-
-bool MPSDevice::isMacOS13Plus(MacOSVersion version) const {
-  static bool _macos_26_2_plus = is_os_version_at_least(26, 2);
-  static bool _macos_26_4_plus = is_os_version_at_least(26, 4);
-  static bool _macos_27_0_plus = is_os_version_at_least(27, 0);
-
-  switch (version) {
-    case MacOSVersion::MACOS_26_2:
-      return _macos_26_2_plus;
-    case MacOSVersion::MACOS_26_4:
-      return _macos_26_4_plus;
-    case MacOSVersion::MACOS_27_0:
-      return _macos_27_0_plus;
-    default:
-      return false;
-  }
 }
 
 std::string MPSDevice::getName() const {
@@ -101,10 +88,6 @@ bool is_available() {
   return MPSDevice::getInstance()->device() != nil;
 }
 
-bool is_macos_at_least(MacOSVersion version) {
-  return MPSDevice::getInstance()->isMacOS13Plus(version);
-}
-
 bool is_apple_family_or_newer(AppleGPUFamily family) {
   // some ops which are on MPSGraph behave differently between GPU families
   auto mtl_family = static_cast<MTLGPUFamily>(family);
@@ -112,8 +95,9 @@ bool is_apple_family_or_newer(AppleGPUFamily family) {
 }
 
 bool has_mpp() {
-  // MetalPerformancePrimitives matmul2d (cooperative tensors) needs macOS 26.2+
-  return is_macos_at_least(MacOSVersion::MACOS_26_2);
+  // MetalPerformancePrimitives matmul2d (cooperative tensors) needs macOS
+  // 26.2+, which is below this backend's floor.
+  return true;
 }
 
 } // namespace at::mps

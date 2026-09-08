@@ -790,25 +790,12 @@ if(USE_MPS)
     if(CAN_COMPILE_METAL)
         foreach(SHADER ${native_mps_metal} ${native_mps_sparse_metal})
             cmake_path(GET SHADER STEM TGT_STEM)
-            string(CONCAT TGT_BASIC ${TGT_STEM} "_31.air")
+            string(CONCAT TGT_BASIC ${TGT_STEM} ".air")
             list(APPEND AIR_BASIC ${TGT_BASIC})
-            metal_to_air(${SHADER} ${TGT_BASIC} "-std=metal3.1")
+            metal_to_air(${SHADER} ${TGT_BASIC} "-std=metal4.0;-mmacos-version-min=27.0")
         endforeach()
         air_to_metallib(kernels_basic.metallib ${AIR_BASIC})
         list(APPEND METALLIB_DEPS kernels_basic.metallib)
-        if(CAN_COMPILE_METAL_40)
-            foreach(SHADER ${native_mps_metal} ${native_mps_sparse_metal})
-                cmake_path(GET SHADER STEM TGT_STEM)
-                string(CONCAT TGT_40 ${TGT_STEM} "_40.air")
-                list(APPEND AIR_40 ${TGT_40})
-                # MetalPerformancePrimitives switches the cooperative-tensor ABI on the
-                # deployment target (__TENSOR_OPS_SUPPORT_DEPLOYMENT_TARGET_26_2); the
-                # MPP kernels assume the 26.2+ layout, so pin the target explicitly.
-                metal_to_air(${SHADER} ${TGT_40} "-std=metal4.0;-mmacos-version-min=26.2")
-            endforeach()
-            air_to_metallib(kernels_40.metallib ${AIR_40})
-            list(APPEND METALLIB_DEPS kernels_40.metallib)
-        endif()
         add_custom_command(
                           COMMAND echo "// $$(date)" > metallib_dummy.cpp
                           DEPENDS ${METALLIB_DEPS}

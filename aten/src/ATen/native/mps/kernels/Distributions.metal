@@ -182,7 +182,7 @@ kernel void random_int(
 
   for (uint i = 0; i < count; ++i) {
     long out;
-    if IF_CONSTEXPR (kBytes == 8) {
+    if constexpr (kBytes == 8) {
       ulong v = (static_cast<ulong>(raw[2 * i]) << 32) |
           static_cast<ulong>(raw[2 * i + 1]);
       out = (range == 0) ? static_cast<long>(v)

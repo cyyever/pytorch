@@ -676,9 +676,10 @@ inline bool supportedFloatingOrComplexType(const TensorBase& t) {
   return supportedFloatingOrComplexType(t.scalar_type());
 }
 
-inline bool needsGather(const TensorBase& t) {
-  static const bool is_macOS_15_0_or_newer = is_macos_at_least(MacOSVersion::MACOS_15_0);
-  return !is_macOS_15_0_or_newer && (!t.is_contiguous() || t.storage_offset());
+inline bool needsGather(const TensorBase&) {
+  // The gather was only needed below macOS 15, which is below this backend's
+  // macOS 26 floor.
+  return false;
 }
 
 template <typename T>

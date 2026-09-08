@@ -23,7 +23,7 @@ kernel void nchw_to_nhwc(
   device const T* s = src + (int64_t)tgid.z * C * X;
   device T* d = dst + (int64_t)tgid.z * C * X;
 
-  if IF_CONSTEXPR (VECR) {
+  if constexpr (VECR) {
     for (int i = tid; i < TC * (TX / 2); i += NTH) {
       const int x = (i % (TX / 2)) * 2, c = i / (TX / 2);
       const int gc = c0 + c, gx = x0 + x;
@@ -49,7 +49,7 @@ kernel void nchw_to_nhwc(
     }
   }
   threadgroup_barrier(mem_flags::mem_threadgroup);
-  if IF_CONSTEXPR (VECW) {
+  if constexpr (VECW) {
     for (int i = tid; i < (TC / 2) * TX; i += NTH) {
       const int c = (i % (TC / 2)) * 2, x = i / (TC / 2);
       const int gc = c0 + c, gx = x0 + x;

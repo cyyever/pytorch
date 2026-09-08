@@ -22,7 +22,7 @@ static bool needs_nd_workaround(const Tensor& input) {
   return input.dim() > 2 && is_m5_or_newer && (input.scalar_type() == kHalf || input.scalar_type() == kBFloat16);
 }
 
-// Apple7/8 (M1/M2) MPSGraph matmul intermittently returns wrong results when the
+// Apple8 (M2) MPSGraph matmul intermittently returns wrong results when the
 // reduction dimension exceeds 2^15 and both output dimensions are at least 16; the
 // corruption is allocator/session-state dependent and hits contiguous and transposed
 // operands alike. Apple9+ is fine. mm/addmm already divert such shapes to the
@@ -172,16 +172,12 @@ Tensor _mps_linear(const Tensor& input, const Tensor& weight_arg, const std::opt
   const bool is_contiguous = input.is_contiguous() && weight.is_contiguous() && bias.is_contiguous();
 
   if (is_contiguous && !is_complex) {
-    // The fused 3-source kernel drops the bias for vector-shaped (M==1) inputs on the M1
-    // (Apple7) family on macOS 26; add it separately there. Fixed in macOS 27.
-    static const bool decompose_bias = is_apple_family_or_newer(AppleGPUFamily::APPLE_7_PLUS) &&
-        !is_apple_family_or_newer(AppleGPUFamily::APPLE_8_PLUS) && !is_macos_at_least(MacOSVersion::MACOS_27_0);
     // linear's leading dims are a fake batch (weight is shared), so a >2D input is one 2D GEMM.
     // Passing it as a batched NDArray instead triggers a 2^16 batch-index wraparound (#189495) and
     // a small-batch GEMV perf cliff (#189847); flatten to 2D (a free view here) to avoid both.
     // A multi-dim bias cannot be flattened, so run the bias-free kernel there and add the bias afterwards.
     const bool needs_flatten = input.dim() > 2;
-    const bool add_bias_after = is_bias_defined && (decompose_bias || (needs_flatten && bias.dim() > 1));
+    const bool add_bias_after = is_bias_defined && needs_flatten && bias.dim() > 1;
     const Tensor kernel_bias = add_bias_after ? Tensor() : bias;
     if (needs_flatten) {
       auto input2d = input.flatten(0, -2);
@@ -333,7 +329,7 @@ static std::tuple<Tensor, Tensor> _mps_linear_backward_weights(const Tensor& gra
   const auto input_2d = input.dim() != 2 ? input.reshape({-1, input.size(-1)}) : input;
 
   // Route through at::mm so the dispatcher can pick the Metal fallback for K-dim
-  // overflow on Apple7/8 (M1/M2). See pytorch/pytorch#177116.
+  // overflow on Apple8 (M2). See pytorch/pytorch#177116.
   auto grad_weight = at::mm(grad_output_2d.t(), input_2d.contiguous()).view(weight.sizes());
   // autocast promotes sum() to float32, but linear_backward's meta keeps grad_output's
   // dtype; cast back so inductor's baked-in dtype matches the runtime buffer.

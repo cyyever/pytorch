@@ -147,7 +147,7 @@ static void calc_log_alpha_beta(
     if (s < S && target_length > 0) {
       target_token =
           get_target_prime(targets, params.tg_target_stride, s, params.BLANK);
-      if IF_CONSTEXPR (beta) {
+      if constexpr (beta) {
         use_C = ((s + 2) < S) &&
             (get_target_prime(
                  targets, params.tg_target_stride, s + 2, params.BLANK) !=

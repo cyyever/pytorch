@@ -25,7 +25,7 @@ from pathlib import Path
 MACOS_BUILD_ENV: dict[str, str] = {
     "TH_BINARY_BUILD": "1",
     "INSTALL_TEST": "0",
-    "MACOSX_DEPLOYMENT_TARGET": "14.0",
+    "MACOSX_DEPLOYMENT_TARGET": "27.0",
     "USE_DISTRIBUTED": "1",
     "USE_MKLDNN": "OFF",
     "BUILD_TEST": "OFF",
