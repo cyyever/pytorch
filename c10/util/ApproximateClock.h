@@ -33,8 +33,6 @@ namespace c10 {
 
 using time_t = int64_t;
 
-C10_API time_t getTimeSinceEpoch();
-
 C10_API time_t getTime(bool allow_monotonic = false);
 
 #if defined(C10_ARMTSC)

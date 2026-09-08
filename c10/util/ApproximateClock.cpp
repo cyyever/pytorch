@@ -17,11 +17,6 @@ using steady_clock_t = std::conditional_t<
     std::chrono::steady_clock>;
 } // namespace
 
-time_t getTimeSinceEpoch() {
-  auto now = std::chrono::system_clock::now().time_since_epoch();
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
-}
-
 time_t getTime(bool allow_monotonic) {
 #if defined(__MACH__)
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
