@@ -6,11 +6,18 @@
 # Utils functions.
 include("${CMAKE_CURRENT_LIST_DIR}/public/utils.cmake")
 
+# Note: the current list dir is _INSTALL_PREFIX/share/cmake/Caffe2.
+get_filename_component(
+    _INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # Depending on whether Caffe2 uses glog during compile time or
 # not, invoke glog.
 if (@USE_ROCM@)
+  set(PYTORCH_ROCM_USE_INSTALLED_LIBRARIES TRUE)
+  set(PYTORCH_ROCM_INSTALL_PREFIX "${_INSTALL_PREFIX}")
   include("${CMAKE_CURRENT_LIST_DIR}/public/LoadHIP.cmake")
+  unset(PYTORCH_ROCM_INSTALL_PREFIX)
+  unset(PYTORCH_ROCM_USE_INSTALLED_LIBRARIES)
 endif()
 
 if(@USE_CUDA@)
@@ -65,7 +72,4 @@ set(Caffe2_MAIN_LIBS torch_library)
 # The imported targets carry INTERFACE_INCLUDE_DIRECTORIES, so linking them
 # already adds this path. CAFFE2_INCLUDE_DIRS is kept only for backward
 # compatibility with consumers that use the old-style include path.
-# Note: the current list dir is _INSTALL_PREFIX/share/cmake/Caffe2.
-get_filename_component(
-    _INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 set(CAFFE2_INCLUDE_DIRS "${_INSTALL_PREFIX}/include")

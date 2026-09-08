@@ -1,3 +1,93 @@
+macro(_pytorch_define_bundled_rocm_targets
+    prefix rocblas_library hipblaslt_library miopen_library)
+  set(PYTORCH_ROCM_BUNDLED_PREFIX "${prefix}")
+
+  if(NOT TARGET roc::rocblas)
+    add_library(roc::rocblas SHARED IMPORTED GLOBAL)
+    set_target_properties(roc::rocblas PROPERTIES
+      IMPORTED_LOCATION "${PYTORCH_ROCM_BUNDLED_PREFIX}/lib/${rocblas_library}"
+      INTERFACE_INCLUDE_DIRECTORIES "${PYTORCH_ROCM_BUNDLED_PREFIX}/include"
+      INTERFACE_LINK_LIBRARIES hip::host)
+  endif()
+
+  if(NOT TARGET roc::hipblaslt)
+    add_library(roc::hipblaslt SHARED IMPORTED GLOBAL)
+    set_target_properties(roc::hipblaslt PROPERTIES
+      IMPORTED_LOCATION "${PYTORCH_ROCM_BUNDLED_PREFIX}/lib/${hipblaslt_library}"
+      INTERFACE_COMPILE_FEATURES cxx_std_17
+      INTERFACE_INCLUDE_DIRECTORIES "${PYTORCH_ROCM_BUNDLED_PREFIX}/include"
+      INTERFACE_LINK_LIBRARIES roc::hipblas-common)
+  endif()
+
+  if(NOT TARGET MIOpen)
+    add_library(MIOpen SHARED IMPORTED GLOBAL)
+    set_target_properties(MIOpen PROPERTIES
+      IMPORTED_LOCATION "${PYTORCH_ROCM_BUNDLED_PREFIX}/lib/${miopen_library}"
+      INTERFACE_INCLUDE_DIRECTORIES "${PYTORCH_ROCM_BUNDLED_PREFIX}/include"
+      INTERFACE_LINK_LIBRARIES hip::host)
+  endif()
+
+  set(rocblas_FOUND TRUE)
+  set(rocblas_VERSION "5.6.0")
+  set(rocblas_INCLUDE_DIR "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
+  set(rocblas_INCLUDE_DIRS "${rocblas_INCLUDE_DIR}")
+  set(rocblas_LIBRARY roc::rocblas)
+  set(rocblas_LIBRARIES roc::rocblas)
+  set(ROCBLAS_FOUND TRUE)
+  set(ROCBLAS_VERSION "${rocblas_VERSION}")
+  set(ROCBLAS_INCLUDE_DIR "${rocblas_INCLUDE_DIR}")
+  set(ROCBLAS_INCLUDE_DIRS "${rocblas_INCLUDE_DIR}")
+  set(ROCBLAS_LIBRARY roc::rocblas)
+  set(ROCBLAS_LIBRARIES roc::rocblas)
+
+  set(hipblaslt_FOUND TRUE)
+  set(hipblaslt_VERSION "1.4.1")
+  set(hipblaslt_INCLUDE_DIR "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
+  set(hipblaslt_INCLUDE_DIRS "${hipblaslt_INCLUDE_DIR}")
+  set(hipblaslt_LIBRARY roc::hipblaslt)
+  set(hipblaslt_LIBRARIES roc::hipblaslt)
+  set(HIPBLASLT_FOUND TRUE)
+  set(HIPBLASLT_VERSION "${hipblaslt_VERSION}")
+  set(HIPBLASLT_INCLUDE_DIR "${hipblaslt_INCLUDE_DIR}")
+  set(HIPBLASLT_INCLUDE_DIRS "${hipblaslt_INCLUDE_DIR}")
+  set(HIPBLASLT_LIBRARY roc::hipblaslt)
+  set(HIPBLASLT_LIBRARIES roc::hipblaslt)
+
+  set(miopen_FOUND TRUE)
+  set(miopen_VERSION "3.6.0")
+  set(miopen_INCLUDE_DIR "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
+  set(miopen_INCLUDE_DIRS "${miopen_INCLUDE_DIR}")
+  set(miopen_LIBRARY MIOpen)
+  set(miopen_LIBRARIES MIOpen)
+  set(MIOpen_FOUND TRUE)
+  set(MIOpen_VERSION "${miopen_VERSION}")
+  set(MIOpen_INCLUDE_DIR "${miopen_INCLUDE_DIR}")
+  set(MIOpen_INCLUDE_DIRS "${miopen_INCLUDE_DIR}")
+  set(MIOpen_LIBRARY MIOpen)
+  set(MIOpen_LIBRARIES MIOpen)
+  set(MIOPEN_FOUND TRUE)
+  set(MIOPEN_VERSION "${miopen_VERSION}")
+  set(MIOPEN_INCLUDE_DIR "${miopen_INCLUDE_DIR}")
+  set(MIOPEN_INCLUDE_DIRS "${miopen_INCLUDE_DIR}")
+  set(MIOPEN_LIBRARY MIOpen)
+  set(MIOPEN_LIBRARIES MIOpen)
+endmacro()
+
+if(PYTORCH_ROCM_USE_INSTALLED_LIBRARIES)
+  foreach(_library IN ITEMS librocblas.so.5 libhipblaslt.so.1 libMIOpen.so.1)
+    if(NOT EXISTS "${PYTORCH_ROCM_INSTALL_PREFIX}/lib/${_library}")
+      message(FATAL_ERROR
+        "Installed PyTorch is missing bundled ROCm library ${_library}")
+    endif()
+  endforeach()
+  _pytorch_define_bundled_rocm_targets(
+    "${PYTORCH_ROCM_INSTALL_PREFIX}"
+    "librocblas.so.5"
+    "libhipblaslt.so.1"
+    "libMIOpen.so.1")
+  return()
+endif()
+
 if(TARGET roc::rocblas AND TARGET roc::hipblaslt AND TARGET MIOpen)
   return()
 elseif(TARGET roc::rocblas OR TARGET roc::hipblaslt OR TARGET MIOpen)
@@ -266,75 +356,15 @@ ExternalProject_Add(pytorch_bundled_miopen
   USES_TERMINAL_BUILD TRUE
   USES_TERMINAL_INSTALL TRUE)
 
-set(PYTORCH_ROCM_BUNDLED_PREFIX "${_bundled_rocm_install}")
-
-add_library(roc::rocblas SHARED IMPORTED GLOBAL)
-set_target_properties(roc::rocblas PROPERTIES
-  IMPORTED_LOCATION "${PYTORCH_ROCM_BUNDLED_PREFIX}/lib/librocblas.so"
-  INTERFACE_INCLUDE_DIRECTORIES "${PYTORCH_ROCM_BUNDLED_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES hip::host)
-
-add_library(roc::hipblaslt SHARED IMPORTED GLOBAL)
-set_target_properties(roc::hipblaslt PROPERTIES
-  IMPORTED_LOCATION "${PYTORCH_ROCM_BUNDLED_PREFIX}/lib/libhipblaslt.so"
-  INTERFACE_COMPILE_FEATURES cxx_std_17
-  INTERFACE_INCLUDE_DIRECTORIES "${PYTORCH_ROCM_BUNDLED_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES roc::hipblas-common)
-
-add_library(MIOpen SHARED IMPORTED GLOBAL)
-set_target_properties(MIOpen PROPERTIES
-  IMPORTED_LOCATION "${PYTORCH_ROCM_BUNDLED_PREFIX}/lib/libMIOpen.so"
-  INTERFACE_INCLUDE_DIRECTORIES "${PYTORCH_ROCM_BUNDLED_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES hip::host)
+_pytorch_define_bundled_rocm_targets(
+  "${_bundled_rocm_install}"
+  "librocblas.so"
+  "libhipblaslt.so"
+  "libMIOpen.so")
 
 add_dependencies(roc::rocblas pytorch_bundled_rocblas)
 add_dependencies(roc::hipblaslt pytorch_bundled_hipblaslt)
 add_dependencies(MIOpen pytorch_bundled_miopen)
-
-set(rocblas_FOUND TRUE)
-set(rocblas_VERSION "5.6.0")
-set(rocblas_INCLUDE_DIR "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
-set(rocblas_INCLUDE_DIRS "${rocblas_INCLUDE_DIR}")
-set(rocblas_LIBRARY roc::rocblas)
-set(rocblas_LIBRARIES roc::rocblas)
-set(ROCBLAS_FOUND TRUE)
-set(ROCBLAS_VERSION "${rocblas_VERSION}")
-set(ROCBLAS_INCLUDE_DIR "${rocblas_INCLUDE_DIR}")
-set(ROCBLAS_INCLUDE_DIRS "${rocblas_INCLUDE_DIR}")
-set(ROCBLAS_LIBRARY roc::rocblas)
-set(ROCBLAS_LIBRARIES roc::rocblas)
-
-set(hipblaslt_FOUND TRUE)
-set(hipblaslt_VERSION "1.4.1")
-set(hipblaslt_INCLUDE_DIR "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
-set(hipblaslt_INCLUDE_DIRS "${hipblaslt_INCLUDE_DIR}")
-set(hipblaslt_LIBRARY roc::hipblaslt)
-set(hipblaslt_LIBRARIES roc::hipblaslt)
-set(HIPBLASLT_FOUND TRUE)
-set(HIPBLASLT_VERSION "${hipblaslt_VERSION}")
-set(HIPBLASLT_INCLUDE_DIR "${hipblaslt_INCLUDE_DIR}")
-set(HIPBLASLT_INCLUDE_DIRS "${hipblaslt_INCLUDE_DIR}")
-set(HIPBLASLT_LIBRARY roc::hipblaslt)
-set(HIPBLASLT_LIBRARIES roc::hipblaslt)
-
-set(miopen_FOUND TRUE)
-set(miopen_VERSION "3.6.0")
-set(miopen_INCLUDE_DIR "${PYTORCH_ROCM_BUNDLED_PREFIX}/include")
-set(miopen_INCLUDE_DIRS "${miopen_INCLUDE_DIR}")
-set(miopen_LIBRARY MIOpen)
-set(miopen_LIBRARIES MIOpen)
-set(MIOpen_FOUND TRUE)
-set(MIOpen_VERSION "${miopen_VERSION}")
-set(MIOpen_INCLUDE_DIR "${miopen_INCLUDE_DIR}")
-set(MIOpen_INCLUDE_DIRS "${miopen_INCLUDE_DIR}")
-set(MIOpen_LIBRARY MIOpen)
-set(MIOpen_LIBRARIES MIOpen)
-set(MIOPEN_FOUND TRUE)
-set(MIOPEN_VERSION "${miopen_VERSION}")
-set(MIOPEN_INCLUDE_DIR "${miopen_INCLUDE_DIR}")
-set(MIOPEN_INCLUDE_DIRS "${miopen_INCLUDE_DIR}")
-set(MIOPEN_LIBRARY MIOpen)
-set(MIOPEN_LIBRARIES MIOpen)
 
 install(DIRECTORY "${_bundled_rocm_install}/include/"
   DESTINATION include)
