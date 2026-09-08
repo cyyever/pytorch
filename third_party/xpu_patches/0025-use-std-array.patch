@@ -11,6 +11,17 @@ index 0d16ca12..4d896ec1 100644
 @@ -273 +273 @@ void transform_bias_rescale_qkv_kernel(
 -    using LoadT = at::detail::Array<scalar_t, VEC>;
 +    using LoadT = memory::aligned_vector<scalar_t, VEC>;
+@@ -419,3 +419,5 @@ void _transform_bias_rescale_qkv_kernel(
+             ((dim_per_head % TRANSFORM_BIAS_RESCALE_VEC) == 0) &&
++            is_aligned_for_vec<scalar_t, TRANSFORM_BIAS_RESCALE_VEC>(
++                qkv.const_data_ptr()) &&
+             is_aligned_for_vec<scalar_t, TRANSFORM_BIAS_RESCALE_VEC>(
+                 qkv_bias.const_data_ptr());
+@@ -446,3 +448 @@ void _transform_bias_rescale_qkv_kernel(
+-          if (bias_and_shape_aligned &&
+-              ((reinterpret_cast<intptr_t>(qkv.const_data_ptr()) %
+-                TRANSFORM_BIAS_RESCALE_VEC) == 0)) {
++          if (bias_and_shape_aligned) {
 diff --git a/src/ATen/native/xpu/sycl/EmbeddingBag.h b/src/ATen/native/xpu/sycl/EmbeddingBag.h
 index adb14d25..09617c6f 100644
 --- a/src/ATen/native/xpu/sycl/EmbeddingBag.h
