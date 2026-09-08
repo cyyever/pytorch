@@ -1,0 +1,159 @@
+diff --git a/src/ATen/native/xpu/sycl/Indexing.cpp b/src/ATen/native/xpu/sycl/Indexing.cpp
+index 765affd..2273e98 100644
+--- a/src/ATen/native/xpu/sycl/Indexing.cpp
++++ b/src/ATen/native/xpu/sycl/Indexing.cpp
+@@ -110,84 +110,89 @@ void masked_fill_kernel(TensorIterator& iter, const Scalar& value) {
+       kBComplex32);
+ }
+ 
+-template <typename ValType>
+-struct IndexFillScalarFunctor {
+-  void operator()(
+-      ValType* dst,
+-      const ValType* src,
+-      int64_t dst_off,
+-      int64_t src_off,
+-      int64_t idx,
+-      ValType alpha) const {
+-    dst[dst_off] = alpha;
++template <typename scalar_t, typename offset_cal_t>
++struct IndexFillLoopFunctor {
++  void operator()(int i) const {
++    const auto offsets = offset_calc_.get(i);
++    auto self_data = reinterpret_cast<scalar_t*>(self_ptr_ + offsets[0]);
++    auto idx = *reinterpret_cast<int64_t*>(idx_ptr_ + offsets[1]);
++    SYCL_KERNEL_ASSERT(idx >= -self_dim_size_ && idx < self_dim_size_);
++    if (idx < 0) {
++      idx += self_dim_size_;
++    }
++    self_data[idx * self_dim_stride_] = fill_value_;
+   }
++
++  IndexFillLoopFunctor(
++      offset_cal_t offset_calc,
++      char* self_ptr,
++      char* idx_ptr,
++      scalar_t fill_value,
++      const int64_t self_dim_size,
++      const int64_t self_dim_stride)
++      : offset_calc_(offset_calc),
++        self_ptr_(self_ptr),
++        idx_ptr_(idx_ptr),
++        fill_value_(fill_value),
++        self_dim_size_(self_dim_size),
++        self_dim_stride_(self_dim_stride) {}
++
++ private:
++  offset_cal_t offset_calc_;
++  char* self_ptr_;
++  char* idx_ptr_;
++  scalar_t fill_value_;
++  const int64_t self_dim_size_;
++  const int64_t self_dim_stride_;
+ };
+ 
+-void index_fill_kernel(
++template <typename scalar_t>
++void index_fill_kernel_impl(
+     TensorIterator& iter,
+-    const int64_t dim,
+     const int64_t self_dim_size,
+     const int64_t self_dim_stride,
+-    const Scalar& source) {
+-  const Tensor& self = iter.tensor(0);
+-  const Tensor& index = iter.tensor(1);
+-
+-  // index_fill operator generates TensorIterator as kernel input,
+-  // self tensor is restrided to meet TensorIterator broadcast requirements. But
+-  // xpu kernel doesn't support such restrided shape, so we restride self tensor
+-  // back here.
+-  auto self_sizes = self.sizes().vec();
+-  auto self_strides = self.strides().vec();
+-  self_sizes[dim] = self_dim_size;
+-  self_strides[dim] = self_dim_stride;
+-  auto self_restrided = self.as_strided(self_sizes, self_strides);
+-
+-  if (self_restrided.numel() == 0 || index.numel() == 0) {
++    const scalar_t fill_value) {
++  if (iter.numel() == 0) {
+     return;
+   }
+ 
+-  TORCH_CHECK(
+-      self_restrided.dim() <= XPU_MAX_TENSORINFO_DIMS,
+-      "self has too many (>",
+-      XPU_MAX_TENSORINFO_DIMS,
+-      ") dims");
+-  TORCH_CHECK(
+-      index.dim() <= XPU_MAX_TENSORINFO_DIMS,
+-      "index has too many (>",
+-      XPU_MAX_TENSORINFO_DIMS,
+-      ") dims");
++  if (!iter.can_use_32bit_indexing()) {
++    for (auto& sub_iter : iter.with_32bit_indexing()) {
++      index_fill_kernel_impl<scalar_t>(
++          sub_iter, self_dim_size, self_dim_stride, fill_value);
++    }
++    return;
++  }
++
++  char* self_ptr = reinterpret_cast<char*>(iter.data_ptr(0));
++  char* idx_ptr = reinterpret_cast<char*>(iter.data_ptr(1));
+ 
++  const auto offset_calc = make_offset_calculator<2>(iter);
++  auto fn = IndexFillLoopFunctor<scalar_t, decltype(offset_calc)>(
++      offset_calc,
++      self_ptr,
++      idx_ptr,
++      fill_value,
++      self_dim_size,
++      self_dim_stride);
++  launch_index_group_stride_kernel<4, decltype(fn)>(iter.numel(), fn);
++}
++
++void index_fill_kernel(
++    TensorIterator& iter,
++    const int64_t,
++    const int64_t self_dim_size,
++    const int64_t self_dim_stride,
++    const Scalar& source) {
+   AT_DISPATCH_V2(
+-      self_restrided.scalar_type(),
++      iter.dtype(),
+       "index_fill_xpu",
+       AT_WRAP([&] {
+-        TensorInfo<const int64_t, int64_t> index_info =
+-            getTensorInfo<const int64_t, int64_t>(index);
+-        index_info.collapseDims();
+-
+-        TensorInfo<scalar_t, int64_t> dst_info =
+-            getTensorInfo<scalar_t, int64_t>(self_restrided);
+-        int new_indexing_dim = dst_info.collapseDims(dim);
+-
+-        // No used in index kernel frame for index_fill.
+-        auto src_info = TensorInfo<const scalar_t, int64_t>();
+-
+-        using IdxConfig = IndexKernelConfig<
+-            decltype(src_info),
+-            decltype(dst_info),
+-            decltype(index_info),
+-            IndexFillScalarFunctor<scalar_t>>;
+-        using KernelClass = IndexKernel<IdxConfig, false, false>;
+-
+-        auto cfg = IdxConfig::template make_config<KernelClass>(
+-            src_info,
+-            dst_info,
+-            index_info,
+-            source.to<scalar_t>(),
+-            new_indexing_dim,
+-            true,
+-            IndexFillScalarFunctor<scalar_t>());
+-        launch_index_kernel(cfg);
++        using dtype = OpaqueType<sizeof(scalar_t)>;
++        const auto fill_val = source.to<scalar_t>();
++        const auto fill_val_opaque = *reinterpret_cast<const dtype*>(&fill_val);
++        index_fill_kernel_impl<dtype>(
++            iter, self_dim_size, self_dim_stride, fill_val_opaque);
+       }),
+       AT_EXPAND(AT_ALL_TYPES_AND_COMPLEX),
+       kBool,
