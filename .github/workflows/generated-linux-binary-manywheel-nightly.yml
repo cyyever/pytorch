@@ -50,26 +50,26 @@ jobs:
       curr_ref_type: ${{ github.ref_type }}
       check_experiments: lf
 
-  manywheel-cuda-cu134-build:
-    name: manywheel-cuda-cu134-build
+  manywheel-cuda-cu133-build:
+    name: manywheel-cuda-cu133-build
     if: ${{ github.repository == vars.BINARY_RELEASE_REPOSITORY }}
     needs: [get-label-type]
     runs-on: "${{ needs.get-label-type.outputs.label-type }}${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/nightly' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/v')) && 'rel-l-x86iavx512-44-340' || 'l-x86iavx512-48-384' }}"
     timeout-minutes: 280
     container:
-      image: pytorch/manylinux2_28-builder:cuda13.4
+      image: pytorch/manylinux2_28-builder:cuda13.3
     env:
       PYTORCH_ROOT: ${{ github.workspace }}
       PACKAGE_TYPE: manywheel
-      DESIRED_CUDA: cu134
-      GPU_ARCH_VERSION: "13.4"
+      DESIRED_CUDA: cu133
+      GPU_ARCH_VERSION: "13.3"
       GPU_ARCH_TYPE: cuda
-      DOCKER_IMAGE: pytorch/manylinux2_28-builder:cuda13.4
+      DOCKER_IMAGE: pytorch/manylinux2_28-builder:cuda13.3
       SKIP_ALL_TESTS: 1
       DESIRED_PYTHONS: "3.14 3.15"
       BUILD_NAME_PREFIX: "manywheel-py"
-      BUILD_NAME_SUFFIX: "-cuda13_4"
-      PYTORCH_EXTRA_INSTALL_REQUIREMENTS: "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.4.0rc1; platform_system == 'Linux' | cuda-bindings>=13.0.3,<14; platform_system == 'Linux' and python_version < '3.15' | nvidia-cudnn-cu13==9.25.1.1; platform_system == 'Linux' | nvidia-cusparselt-cu13==0.8.1; platform_system == 'Linux' | nvidia-nccl-cu13==2.31.2; platform_system == 'Linux' | nvidia-nvshmem-cu13==3.7.2; platform_system == 'Linux'"
+      BUILD_NAME_SUFFIX: "-cuda13_3"
+      PYTORCH_EXTRA_INSTALL_REQUIREMENTS: "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.3.1; platform_system == 'Linux' | cuda-bindings>=13.0.3,<14; platform_system == 'Linux' and python_version < '3.15' | nvidia-cudnn-cu13==9.25.1.1; platform_system == 'Linux' | nvidia-cusparselt-cu13==0.8.1; platform_system == 'Linux' | nvidia-nccl-cu13==2.31.2; platform_system == 'Linux' | nvidia-nvshmem-cu13==3.7.2; platform_system == 'Linux'"
     steps:
       - name: Configure git safe directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -100,14 +100,14 @@ jobs:
       # matrix below downloads.
       - uses: actions/upload-artifact@v4.4.0
         with:
-          name: manywheel-py3_14-cuda13_4
+          name: manywheel-py3_14-cuda13_3
           if-no-files-found: error
-          path: ${{ runner.temp }}/artifacts/manywheel-py3_14-cuda13_4/*
+          path: ${{ runner.temp }}/artifacts/manywheel-py3_14-cuda13_3/*
       - uses: actions/upload-artifact@v4.4.0
         with:
-          name: manywheel-py3_15-cuda13_4
+          name: manywheel-py3_15-cuda13_3
           if-no-files-found: error
-          path: ${{ runner.temp }}/artifacts/manywheel-py3_15-cuda13_4/*
+          path: ${{ runner.temp }}/artifacts/manywheel-py3_15-cuda13_3/*
 
   manywheel-build:
     name: ${{ matrix.build_name }}-build
@@ -175,30 +175,30 @@ jobs:
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  manywheel-cuda-cu134-test:
+  manywheel-cuda-cu133-test:
     name: ${{ matrix.build_name }}-test
     if: ${{ github.repository == vars.BINARY_RELEASE_REPOSITORY }}
-    needs: [get-label-type, manywheel-cuda-cu134-build]
+    needs: [get-label-type, manywheel-cuda-cu133-build]
     uses: ./.github/workflows/_binary-test-linux.yml
     strategy:
       fail-fast: false
       matrix:
         include:
           - desired_python: "3.14"
-            desired_cuda: "cu134"
-            gpu_arch_version: "13.4"
+            desired_cuda: "cu133"
+            gpu_arch_version: "13.3"
             gpu_arch_type: "cuda"
             docker_image: "manylinux2_28-builder"
-            docker_image_tag_prefix: "cuda13.4"
-            build_name: "manywheel-py3_14-cuda13_4"
+            docker_image_tag_prefix: "cuda13.3"
+            build_name: "manywheel-py3_14-cuda13_3"
             runs_on: "l-x86iavx512-29-115-t4"
           - desired_python: "3.15"
-            desired_cuda: "cu134"
-            gpu_arch_version: "13.4"
+            desired_cuda: "cu133"
+            gpu_arch_version: "13.3"
             gpu_arch_type: "cuda"
             docker_image: "manylinux2_28-builder"
-            docker_image_tag_prefix: "cuda13.4"
-            build_name: "manywheel-py3_15-cuda13_4"
+            docker_image_tag_prefix: "cuda13.3"
+            build_name: "manywheel-py3_15-cuda13_3"
             runs_on: "l-x86iavx512-29-115-t4"
     with:
       PYTORCH_ROOT: /pytorch

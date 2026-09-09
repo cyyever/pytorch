@@ -67,7 +67,7 @@ CUDA_BUILD_ENV_DEFAULTS: dict[str, str] = {
 # validate_runtime_release_table_consistency() in
 # .github/scripts/generate_binary_build_matrix.py.
 TORCH_CUDA_ARCH_LIST_TABLE: dict[str, dict[str, set[int]]] = {
-    "13.4": {
+    "13.3": {
         "x86_64": {120},
     },
 }
@@ -130,14 +130,6 @@ def cuda_build_env(cuda_version: str, arch: str) -> dict[str, str]:
         "TORCH_NVCC_FLAGS": nvcc_flags,
         "TORCH_CUDA_ARCH_LIST": torch_cuda_arch_list(cuda_version, arch),
     }
-    # Bundle the CUDA 13.4 ptxas binary into nightly wheels so that users on
-    # Rubin (sm_107) hardware can use torch.compile without needing to
-    # install the CUDA 13.4 toolkit separately. Triton's default ptxas only
-    # goes up to CUDA 13.3 and will fail with "Value 'sm_107a' is not defined".
-    # torch/_inductor/runtime/compile_tasks.py picks up torch/bin/ptxas via
-    # _set_triton_ptxas_path() automatically.
-    if cuda_version == "13.4":
-        env.setdefault("BUILD_BUNDLE_PTXAS", "1")
     return env
 
 

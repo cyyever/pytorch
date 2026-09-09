@@ -24,8 +24,8 @@ SCRIPT_DIR = Path(__file__).absolute().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
 
 
-CUDA_ARCHES = ["13.4"]
-CUDA_STABLE = "13.4"
+CUDA_ARCHES = ["13.3"]
+CUDA_STABLE = "13.3"
 
 ROCM_ARCHES = ["10.0"]
 
@@ -36,8 +36,8 @@ RELEASE_PYTHON_VERSIONS = [
 ]
 
 PYTORCH_EXTRA_INSTALL_REQUIREMENTS = {
-    "13.4": (
-        "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.4.0rc1; platform_system == 'Linux' | "
+    "13.3": (
+        "cuda-toolkit[nvrtc,cudart,cupti,cufft,cusolver,cusparse,cublas,cufile,nvjitlink,nvtx]==13.3.1; platform_system == 'Linux' | "
         "cuda-bindings>=13.0.3,<14; platform_system == 'Linux' and python_version < '3.15' | "
         "nvidia-cudnn-cu13==9.25.1.1; platform_system == 'Linux' | "
         "nvidia-cusparselt-cu13==0.8.1; platform_system == 'Linux' | "
