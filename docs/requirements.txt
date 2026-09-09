@@ -1,1 +1,1 @@
-../.ci/docker/requirements-docs.txt
+../.ci/requirements-docs.txt

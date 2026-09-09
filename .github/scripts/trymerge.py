@@ -576,6 +576,8 @@ def get_check_run_name_prefix(workflow_run: Any) -> str:
 
 def is_passing_status(status: str | None) -> bool:
     return status is not None and status.upper() in ["SUCCESS", "SKIPPED", "NEUTRAL"]
+
+
 def add_workflow_conclusions(
     checksuites: Any,
     get_next_checkruns_page: Callable[[list[dict[str, dict[str, Any]]], int, Any], Any],
@@ -992,6 +994,7 @@ class GitHubPR:
     def get_changed_submodules(self) -> list[str]:
         submodules = self.get_submodules()
         return [f for f in self.get_changed_files() if f in submodules]
+
     def has_invalid_submodule_updates(self) -> bool:
         """Submodule updates in PR are invalid if submodule keyword
         is not mentioned in neither the title nor body/description
@@ -2094,6 +2097,8 @@ def check_greenlight_reviewed_head_sha(
         raise MandatoryChecksMissingError(result.message)
     if result.verdict is GuardVerdict.DENY:
         raise MergeRuleFailedError(result.message)
+
+
 def checks_to_str(checks: list[tuple[str, str | None]]) -> str:
     return ", ".join(f"[{c[0]}]({c[1]})" if c[1] is not None else c[0] for c in checks)
 

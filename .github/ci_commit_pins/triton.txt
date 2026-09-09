@@ -1,1 +1,1 @@
-../../.ci/docker/ci_commit_pins/triton.txt
+../../.ci/pins/triton.txt

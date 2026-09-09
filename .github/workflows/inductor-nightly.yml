@@ -41,7 +41,6 @@ jobs:
     with:
       build-environment: linux-jammy-py3.10-gcc11-build
       docker-image-name: ci-image:pytorch-linux-jammy-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-default-label-prefix.outputs.ci-docker-hash }}
       runner_prefix: "${{ needs.get-default-label-prefix.outputs.label-type }}"
       test-matrix: |
         { include: [

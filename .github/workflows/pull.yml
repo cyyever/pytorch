@@ -80,7 +80,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.10-gcc11
       docker-image-name: ci-image:pytorch-linux-jammy-py3.10-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 10, runner: "${{ needs.get-label-type.outputs.label-type }}linux.4xlarge" },
@@ -143,7 +142,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.14t-clang21
       docker-image-name: ci-image:pytorch-linux-jammy-py3.14t-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 11, runner: "${{ needs.get-label-type.outputs.label-type }}linux.4xlarge" },
@@ -209,7 +207,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.10-gcc11-no-ops
       docker-image-name: ci-image:pytorch-linux-jammy-py3.10-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 1 },
@@ -234,7 +231,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.10-clang21-asan
       docker-image-name: ci-image:pytorch-linux-jammy-py3.10-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 18, runner: "${{ needs.get-label-type.outputs.label-type }}linux.4xlarge" },
@@ -299,7 +295,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.10-clang21
       docker-image-name: ci-image:pytorch-linux-jammy-py3.10-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 10, runner: "${{ needs.get-label-type.outputs.label-type }}linux.4xlarge" },
@@ -364,7 +359,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.14-clang21
       docker-image-name: ci-image:pytorch-linux-jammy-py3.14-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 10, runner: "${{ needs.get-label-type.outputs.label-type }}linux.4xlarge" },
@@ -424,7 +418,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-cuda13.0-cudnn9-py3.10-clang20
       docker-image-name: ci-image:pytorch-linux-jammy-cuda13.0-cudnn9-py3.10-clang20
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       cuda-arch-list: '7.5 8.0'
       test-matrix: |
         { include: [
@@ -450,7 +443,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-cuda13.2-cudnn9-py3.10-clang20
       docker-image-name: ci-image:pytorch-linux-jammy-cuda13.2-cudnn9-py3.10-clang20
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       cuda-arch-list: '7.5 8.0'
       test-matrix: |
         { include: [
@@ -477,7 +469,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-rocm-py3.10
       docker-image-name: ci-image:pytorch-linux-jammy-rocm-n-py3
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       # TODO (huydhn): Add this back once other workflow migrates
       # sync-tag: rocm-build
       python-version: "3.10"
@@ -499,7 +490,6 @@ jobs:
       runner: linux.c7i.8xlarge
       build-environment: linux-noble-xpu-n-py3.10
       docker-image-name: ci-image:pytorch-linux-noble-xpu-n-py3
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "default", shard: 1, num_shards: 4, runner: "linux.idc.xpu" },
@@ -522,7 +512,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py3.13-clang21
       docker-image-name: ci-image:pytorch-linux-jammy-py3.13-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "dynamo_cpython", shard: 1, num_shards: 1, runner: "${{ needs.get-label-type.outputs.label-type }}linux.c7i.2xlarge" },
