@@ -263,15 +263,6 @@ fi
 ###############################################################################
 # Check CUDA configured correctly
 ###############################################################################
-# Skip these for Windows machines without GPUs
-if [[ "$OSTYPE" == "msys" ]]; then
-    GPUS=$(wmic path win32_VideoController get name)
-    if [[ ! "$GPUS" == *NVIDIA* ]]; then
-        echo "Skip CUDA tests for machines without a Nvidia GPU card"
-        exit 0
-    fi
-fi
-
 # Test that CUDA builds are setup correctly
 if [[ "$DESIRED_CUDA" != 'cpu' && "$DESIRED_CUDA" != 'xpu' && "$DESIRED_CUDA" != 'cpu-cxx11-abi' && "$DESIRED_CUDA" != *"rocm"* ]]; then
   if [[ "$PACKAGE_TYPE" == 'libtorch' ]]; then

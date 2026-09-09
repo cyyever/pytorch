@@ -437,8 +437,7 @@ list(APPEND TORCH_SRCS
 )
 
 if(USE_DISTRIBUTED)
-  append_filelist("libtorch_distributed_base_sources" TORCH_SRCS)
-  append_filelist("libtorch_distributed_extra_sources" TORCH_SRCS)
+  append_filelist("libtorch_distributed_sources" TORCH_SRCS)
 endif()
 
 if(USE_CUDA OR USE_ROCM)
@@ -457,8 +456,7 @@ if(USE_CUDA)
       ${TORCH_SRC_DIR}/csrc/cuda/nccl.cpp)
   endif()
   if(USE_DISTRIBUTED)
-    append_filelist("libtorch_cuda_distributed_base_sources" Caffe2_GPU_SRCS)
-    append_filelist("libtorch_cuda_distributed_extra_sources" Caffe2_GPU_SRCS)
+    append_filelist("libtorch_cuda_distributed_sources" Caffe2_GPU_SRCS)
     set_source_files_properties(
       ${TORCH_SRC_DIR}/csrc/distributed/c10d/ProcessGroupNCCL.cpp
       ${TORCH_SRC_DIR}/csrc/distributed/c10d/cuda/utils.cpp
@@ -497,8 +495,7 @@ if(USE_ROCM)
       ${TORCH_SRC_DIR}/csrc/cuda/nccl.cpp)
   endif()
   if(USE_DISTRIBUTED)
-    append_filelist("libtorch_cuda_distributed_base_sources" Caffe2_HIP_SRCS)
-    append_filelist("libtorch_cuda_distributed_extra_sources" Caffe2_HIP_SRCS)
+    append_filelist("libtorch_cuda_distributed_sources" Caffe2_HIP_SRCS)
   endif()
   # caffe2_nvrtc's stubs to driver APIs are useful for HIP.
   # See NOTE [ ATen NVRTC Stub and HIP ]

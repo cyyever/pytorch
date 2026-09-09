@@ -497,8 +497,7 @@ def check_compiler_ok_for_platform(compiler: str) -> bool:
         compiler (str): The compiler executable to check.
 
     Returns:
-        True if the compiler is gcc/g++ on Linux or clang/clang++ on macOS,
-        and always True for Windows.
+        True if the compiler is gcc/g++ on Linux or clang/clang++ on macOS.
     """
     compiler_path = shutil.which(compiler)
     if compiler_path is None:
@@ -1006,7 +1005,6 @@ class BuildExtension(_LazyBuildExt):
         return super().get_export_symbols(ext)
 
     def _check_abi(self) -> tuple[str, TorchVersion]:
-        # On some platforms, like Windows, compiler_cxx is not available.
         if hasattr(self.compiler, 'compiler_cxx'):
             compiler = self.compiler.compiler_cxx[0]
         else:
@@ -1436,7 +1434,7 @@ def include_paths(device_type: str = "cpu", torch_include_dirs=True) -> list[str
     return paths
 
 
-def library_paths(device_type: str = "cpu", torch_include_dirs: bool = True, cross_target_platform: str | None = None) -> list[str]:
+def library_paths(device_type: str = "cpu", torch_include_dirs: bool = True) -> list[str]:
     """
     Get the library paths required to build a C++ or CUDA extension.
 
@@ -2554,7 +2552,7 @@ def _write_ninja_file_to_build_library(path,
     else:
         system_includes = include_paths("cpu")
     # sysconfig.get_path('include') gives us the location of Python.h
-    # Explicitly specify 'posix_prefix' scheme on non-Windows platforms to workaround error on some MacOS
+    # Explicitly specify 'posix_prefix' to work around an error on some macOS
     # installations where default `get_path` points to non-existing `/Library/Python/M.m/include` folder
     python_include_path = sysconfig.get_path('include', scheme='posix_prefix')
     if python_include_path is not None:
@@ -2565,7 +2563,6 @@ def _write_ninja_file_to_build_library(path,
         common_cflags.append(f'-DTORCH_EXTENSION_NAME={name}')
         common_cflags.append('-DTORCH_API_INCLUDE_EXTENSION_H')
 
-    # Windows does not understand `-isystem` and quotes flags later.
     common_cflags += [f'-I{shlex.quote(include)}' for include in user_includes]
     common_cflags += [f'-isystem {shlex.quote(include)}' for include in system_includes]
 

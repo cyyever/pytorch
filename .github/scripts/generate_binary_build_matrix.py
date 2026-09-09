@@ -54,7 +54,7 @@ NIGHTLY_SOURCE_MATRIX = {
     "cpu": dict(
         name="cpu",
         index_url=f"{PYTORCH_NIGHTLY_PIP_INDEX_URL}/cpu",
-        supported_platforms=["Linux", "macOS", "Windows"],
+        supported_platforms=["Linux", "macOS"],
         accelerator="cpu",
     )
 }

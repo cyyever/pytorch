@@ -10504,15 +10504,6 @@ class TestAOTInductorConfig(TestCase):
             with self.assertRaises(RuntimeError):
                 maybe_aoti_standalone_config(patches)
 
-    def test_compile_standalone_cross_compile_windows_package_format(self):
-        patches = {
-            "aot_inductor.cross_target_platform": "windows",
-            "aot_inductor.package_constants_in_so": True,
-        }
-        with self.assertRaises(RuntimeError):
-            maybe_aoti_standalone_config(patches)
-
-
 common_utils.instantiate_parametrized_tests(AOTInductorTestsTemplate)
 
 

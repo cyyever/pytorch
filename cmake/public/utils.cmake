@@ -489,7 +489,7 @@ function(torch_compile_options libname)
   if(NOT USE_ASAN AND NOT USE_UBSAN)
     # Enable hidden visibility by default to make it easier to debug issues with
     # TORCH_API annotations. Hidden visibility with selective default visibility
-    # behaves close enough to Windows' dllimport/dllexport.
+    # gives the ELF build explicit import/export semantics.
     #
     # Unfortunately, hidden visibility messes up some ubsan warnings because
     # templated classes crossing library boundary get duplicated (but identical)

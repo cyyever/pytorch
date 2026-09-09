@@ -88,8 +88,6 @@ extern "C" void __avx_chk_kernel() {
     # wheels preload ROCm libs from separate rocm-sdk packages with no rpath.
     # So a cold dlopen can fail even though the ISA is fine; retry after
     # importing torch before giving up (#189194).
-    # TODO: extend the no-import path to Windows once its CI build is green
-    # enough to validate it.
     _avx_py_load = """
 import sys
 if sys.platform != "linux":
@@ -128,8 +126,8 @@ except OSError:
         ``import torch`` to bring them into its address space. Prepend rather
         than append so a successful probe is guaranteed to bind against the
         torch we are currently running, not an older install on the user's
-        loader path. macOS and Windows do not use this fast path; they
-        ``import torch`` in the child instead (see ``_avx_py_load``).
+        loader path. macOS does not use this fast path and imports torch in the
+        child instead (see ``_avx_py_load``).
         """
         lib_dir = os.path.join(os.path.dirname(torch.__file__), "lib")
         env = python_subprocess_env()

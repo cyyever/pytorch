@@ -162,8 +162,7 @@ libtorch_core_sources = sorted(
     libtorch_profiler_sources,
 )
 
-# These files are the only ones that are supported on Windows.
-libtorch_distributed_base_sources = [
+libtorch_distributed_sources = [
     "torch/csrc/distributed/c10d/Backoff.cpp",
     "torch/csrc/distributed/c10d/Backend.cpp",
     "torch/csrc/distributed/c10d/FileStore.cpp",
@@ -201,14 +200,8 @@ libtorch_distributed_base_sources = [
     "torch/csrc/distributed/c10d/socket.cpp",
     "torch/csrc/distributed/c10d/symm_mem/DMAConnectivity.cpp",
     "torch/csrc/distributed/c10d/symm_mem/SymmetricMemory.cpp",
-]
-
-# These files are only supported on Linux (and others) but not on Windows.
-libtorch_distributed_extra_sources = [
     "torch/csrc/distributed/c10d/HashStore.cpp",
 ]
-
-libtorch_distributed_sources = libtorch_distributed_base_sources + libtorch_distributed_extra_sources
 
 jit_sources_full = []
 
@@ -300,13 +293,8 @@ libtorch_cuda_core_sources = [
     "torch/csrc/autograd/functions/comm.cpp",
 ]
 
-# These files are the only ones that are supported on Windows.
-libtorch_cuda_distributed_base_sources = [
+libtorch_cuda_distributed_sources = [
     "torch/csrc/distributed/c10d/reducer_cuda.cpp",
-]
-
-# These files are only supported on Linux (and others) but not on Windows.
-libtorch_cuda_distributed_extra_sources = [
     "torch/csrc/distributed/c10d/FlightRecorderCuda.cpp",
     "torch/csrc/distributed/c10d/NCCLUtils.cpp",
     "torch/csrc/distributed/c10d/NanCheck.cu",
@@ -345,8 +333,6 @@ libtorch_cuda_distributed_extra_sources = [
     "torch/csrc/distributed/c10d/symm_mem/intra_node_comm.cu",
     "torch/csrc/distributed/c10d/symm_mem/cuda_mem_pool.cpp",
 ]
-
-libtorch_cuda_distributed_sources = libtorch_cuda_distributed_base_sources + libtorch_cuda_distributed_extra_sources
 
 libtorch_python_cuda_core_sources = [
     "torch/csrc/cuda/Event.cpp",

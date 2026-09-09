@@ -60,9 +60,6 @@ def discover_tests(
         ]
     )
 
-    # Invert slashes on Windows
-    if sys.platform == "win32":
-        rc = [name.replace("\\", "/") for name in rc]
     rc = [test for test in rc if not skip_test_p(test)]
     if extra_tests is not None:
         rc += extra_tests
@@ -91,7 +88,6 @@ TESTS = discover_tests(
         "distributions/test_transforms",
         "distributions/test_utils",
         "test/inductor/test_aot_inductor_utils",
-        "inductor/test_aoti_cross_compile_windows",
         # These are not C++ tests
         f"{CPP_TEST_PREFIX}/CMakeFiles",
         f"{CPP_TEST_PREFIX}/CTestTestfile.cmake",

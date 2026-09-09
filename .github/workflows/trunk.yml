@@ -92,7 +92,7 @@ jobs:
     secrets: inherit
 
   linux-jammy-cuda13_0-py3_10-gcc11-build:
-    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-cuda13.0-py3.10-gcc11 ') || contains(needs.job-filter.outputs.jobs, ' cross-compile-linux-test-cuda13 ') }}
+    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-cuda13.0-py3.10-gcc11 ') }}
     name: linux-jammy-cuda13.0-py3.10-gcc11
     uses: ./.github/workflows/_linux-build.yml
     needs:
@@ -155,30 +155,6 @@ jobs:
       cuda-version: "13.0"
     secrets: inherit
 
-  # Test cross-compiled models with Windows libs extracted from wheel (CUDA 13.0).
-  # Independent of the main cuda13 test job so its other shards don't wait on the
-  # Windows build.
-  linux-jammy-cuda13_0-py3_10-gcc11-no-ops-build:
-    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-cuda13.0-py3.10-gcc11-no-ops ') }}
-    name: linux-jammy-cuda13.0-py3.10-gcc11-no-ops
-    uses: ./.github/workflows/_linux-build.yml
-    needs:
-      - get-label-type
-      - job-filter
-    with:
-      runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
-      build-environment: linux-jammy-cuda13.0-py3.10-gcc11-no-ops
-      cuda-arch-list: '7.5 8.9'
-      docker-image-name: ci-image:pytorch-linux-jammy-cuda13.0-cudnn9-py3-gcc11
-      test-matrix: |
-        { include: [
-          { config: "default", shard: 1, num_shards: 1 },
-        ]}
-      python-version: "3.10"
-      compiler: gcc11
-      cuda-version: "13.0"
-    secrets: inherit
-
   libtorch-linux-jammy-cuda13_2-py3_10-gcc11-debug-build:
     if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' libtorch-linux-jammy-cuda13.2-py3.10-gcc11-debug ') }}
     name: libtorch-linux-jammy-cuda13.2-py3.10-gcc11-debug
@@ -202,7 +178,7 @@ jobs:
     secrets: inherit
 
   linux-jammy-cuda13_2-py3_10-gcc11-build:
-    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-cuda13.2-py3.10-gcc11 ') || contains(needs.job-filter.outputs.jobs, ' cross-compile-linux-test-cuda132 ') }}
+    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-cuda13.2-py3.10-gcc11 ') }}
     name: linux-jammy-cuda13.2-py3.10-gcc11
     uses: ./.github/workflows/_linux-build.yml
     needs:
@@ -261,30 +237,6 @@ jobs:
       docker-image: ${{ needs.linux-jammy-cuda13_2-py3_10-gcc11-build.outputs.docker-image }}
       test-matrix: ${{ needs.linux-jammy-cuda13_2-py3_10-gcc11-build.outputs.test-matrix }}
       tests-to-include: ${{ github.event.inputs.tests-to-include || '' }}
-      python-version: "3.10"
-      compiler: gcc11
-      cuda-version: "13.2"
-    secrets: inherit
-
-  # Test cross-compiled models with Windows libs extracted from wheel (CUDA 13.2).
-  # Independent of the main cuda13 test job so its other shards don't wait on the
-  # Windows build.
-  linux-jammy-cuda13_2-py3_10-gcc11-no-ops-build:
-    if: ${{ needs.job-filter.outputs.jobs == '' || contains(needs.job-filter.outputs.jobs, ' linux-jammy-cuda13.2-py3.10-gcc11-no-ops ') }}
-    name: linux-jammy-cuda13.2-py3.10-gcc11-no-ops
-    uses: ./.github/workflows/_linux-build.yml
-    needs:
-      - get-label-type
-      - job-filter
-    with:
-      runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
-      build-environment: linux-jammy-cuda13.2-py3.10-gcc11-no-ops
-      cuda-arch-list: '7.5 8.9'
-      docker-image-name: ci-image:pytorch-linux-jammy-cuda13.2-cudnn9-py3-gcc11
-      test-matrix: |
-        { include: [
-          { config: "default", shard: 1, num_shards: 1 },
-        ]}
       python-version: "3.10"
       compiler: gcc11
       cuda-version: "13.2"
@@ -370,8 +322,6 @@ jobs:
       disable-monitor: false
     secrets: inherit
 
-  # NB: Windows runners are not available in OSDC, so we run this on Meta account
-  # for now until we get OSDC deployed to LF account
   linux-jammy-rocm-py3_10-build:
     name: linux-jammy-rocm-py3.10-mi350
     uses: ./.github/workflows/_linux-build.yml

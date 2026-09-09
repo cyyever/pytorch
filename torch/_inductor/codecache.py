@@ -32,7 +32,6 @@ from ctypes import c_void_p, CDLL, cdll
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
-from tempfile import _TemporaryFileWrapper
 from time import time, time_ns
 from types import (
     BuiltinFunctionType,
@@ -537,36 +536,6 @@ def get_hash(content: str | bytes, extra: str = "", hash_type: str = "code") -> 
     if hash_type in {"cubin", "hsaco", XPU_KERNEL_FORMAT}:
         return code_hash(repr(content))
     raise AssertionError(f"Unknown hash type {hash_type}")
-
-
-class WritableTempFile:
-    """
-    Avoid "Permission denied error" on Windows:
-      with tempfile.NamedTemporaryFile("w", suffix=".gv") as temp_file:
-        # Not writable on Windows:
-        # https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
-
-    Example:
-        with WritableTempFile("w", suffix=".gv") as temp_file:
-            tree.to_dotfile(temp_file.name)
-    """
-
-    def __init__(
-        self, mode: str = "w", *, encoding: Any = None, suffix: Any = None
-    ) -> None:
-        self.mode = mode
-        self.encoding = encoding
-        self.suffix = suffix
-
-    def __enter__(self) -> _TemporaryFileWrapper[Any]:
-        self.temp_file = tempfile.NamedTemporaryFile(
-            self.mode, encoding=self.encoding, suffix=self.suffix, delete=False
-        )
-        return self.temp_file
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self.temp_file.close()
-        os.unlink(self.temp_file.name)
 
 
 def write(
@@ -2747,17 +2716,7 @@ class AotCodeCompiler:
                 )
 
         # Log the AOTInductor wrapper and kernel code, if needed.
-        with WritableTempFile("w+") as t:
-            """
-            Avoid "Permission denied error" on Windows:
-            with tempfile.NamedTemporaryFile("w", suffix=".gv") as temp_file:
-                # Not writable on Windows:
-                # https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
-
-            Example:
-                with WritableTempFile("w", suffix=".gv") as temp_file:
-                    tree.to_dotfile(temp_file.name)
-            """
+        with tempfile.NamedTemporaryFile("w+") as t:
             t.writelines((wrapper_code, "\n", kernel_code, "\n"))
             t.flush()
             V.debug.output_code(t.name, extension="cpp")
@@ -3506,14 +3465,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS\t\n"""
                     os.remove(o_file)
 
                 if use_mmap_weights:
-                    if config.aot_inductor.cross_target_platform == "windows":
-                        raise RuntimeError(
-                            "when cross_target_platform is windows, use_mmap_weights should not be true."
-                        )
-
                     def get_page_size() -> int:
-                        # Don't use resource.getpagesize() on Windows, as it is a Unix specific package
-                        # as seen in https://docs.python.org/2/library/resource.html
                         import resource
 
                         sys_page_size = resource.getpagesize()
@@ -3630,8 +3582,6 @@ def _precompile_header(
     # us to properly invalidate the file cache when any header dependency changes.  This
     # is thread-safe, as each thread will get its own temporary directory.
     #
-    # N.B. we can't use NamedTemporaryFile here because Windows errors out on attempts
-    # to read from a file with an open write handle.
     with tempfile.TemporaryDirectory() as preprocessing_dir:
         preprocessing_header = Path(preprocessing_dir) / "header.hpp"
         preprocessing_header.write_text(f"#include <{header}>\n")
@@ -3645,7 +3595,6 @@ def _precompile_header(
         def _get_file_checksum(filename: str) -> str:
             """Reading the whole preprocessed header in for hashing is very expensive,
             but calling a fast hashing utility in a subprocess is cheap."""
-            # If Windows support needs to be added here, use certutil -hashfile.
             cmd_output = subprocess.run(
                 ("openssl", "sha512", filename), capture_output=True, text=True
             )

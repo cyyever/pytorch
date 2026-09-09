@@ -185,10 +185,6 @@ def test_cuda_gds_errors_captured() -> None:
     major_version = int(torch.version.cuda.split(".")[0])
     minor_version = int(torch.version.cuda.split(".")[1])
 
-    if target_os == "windows":
-        print(f"{target_os} is not supported for GDS smoke test")
-        return
-
     if major_version < 12 or (major_version == 12 and minor_version < 6):
         print("CUDA version is not supported for GDS smoke test")
         return
@@ -252,41 +248,11 @@ def get_expected_cudnn_version_linux(cuda_version: str) -> str | None:
     return None
 
 
-def get_expected_cudnn_version_windows(cuda_version: str) -> str | None:
-    """Parse expected cuDNN version from cuda_install.bat for Windows.
-
-    Reads the batch file and extracts EXPECTED_CUDNN_VERSION for the given
-    CUDA version (e.g. "12.6" maps to CUDA_VER 126).
-    """
-    bat_file = (
-        PYTORCH_ROOT / ".ci" / "pytorch" / "windows" / "internal" / "cuda_install.bat"
-    )
-    if not bat_file.exists():
-        print(f"Warning: {bat_file} not found, skipping cuDNN version check")
-        return None
-
-    content = bat_file.read_text()
-    # Convert "12.6" to "126" to match batch file's CUDA_VER format
-    cuda_ver_nodot = cuda_version.replace(".", "")
-    # Match: if %CUDA_VER% EQU 126 ( ... set EXPECTED_CUDNN_VERSION=9.10.2 )
-    pattern = (
-        rf"if %CUDA_VER% EQU {re.escape(cuda_ver_nodot)}\s*\("
-        r"[\s\S]*?set EXPECTED_CUDNN_VERSION=(\d+\.\d+\.\d+)"
-    )
-    match = re.search(pattern, content)
-    if match:
-        return match.group(1)
-    return None
-
-
 def check_cudnn_version(cuda_version: str, actual_cudnn_version: str) -> None:
     """Validate cuDNN version matches expected version from build config files."""
     if sys.platform in ["linux", "linux2"]:
         expected = get_expected_cudnn_version_linux(cuda_version)
         source = "generate_binary_build_matrix.py"
-    elif sys.platform == "win32":
-        expected = get_expected_cudnn_version_windows(cuda_version)
-        source = "cuda_install.bat"
     else:
         print(f"cuDNN version check not supported on platform {sys.platform}")
         return
@@ -602,7 +568,7 @@ def smoke_test_compile_dynamic_indirect_indexing(device: str = "cuda") -> None:
 
 
 def smoke_test_nvshmem() -> None:
-    if not is_cuda_system or not torch.cuda.is_available() or target_os == "windows":
+    if not is_cuda_system or not torch.cuda.is_available():
         print("NVSHMEM requires an available CUDA device, skipping NVSHMEM test")
         return
 
@@ -644,8 +610,6 @@ def smoke_test_modules(package: str):
                     ) from exc
             try:
                 smoke_test_command = f"python3 {module['smoke_test']}"
-                if target_os == "windows":
-                    smoke_test_command = f"python {module['smoke_test']}"
                 output = subprocess.check_output(
                     smoke_test_command,
                     stderr=subprocess.STDOUT,

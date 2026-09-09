@@ -1,4 +1,3 @@
-# This CPP builder is designed to support both Windows and Linux OS.
 # The design document please check this RFC: https://github.com/pytorch/pytorch/issues/124245
 
 import copy
@@ -30,7 +29,6 @@ from torch._inductor.runtime.runtime_utils import cache_dir
 from torch.torch_version import TorchVersion
 
 
-# Windows need setup a temp dir to store .obj files.
 _BUILD_TEMP_DIR = "CxxBuild"
 _HERE = os.path.abspath(__file__)
 _TORCH_PATH = os.path.dirname(os.path.dirname(_HERE))
@@ -286,28 +284,10 @@ def _is_gcc_version_less_than(cpp_compiler: str, major: int) -> bool:
 
 @functools.cache
 def _is_intel_compiler(cpp_compiler: str) -> bool:
-    def _check_minimal_version(compiler_version: TorchVersion) -> None:
-        """
-        On Windows: early version icx has `-print-file-name` issue, and can't preload correctly for inductor.
-        """
-        min_version = "0.0.0"
-        if compiler_version < TorchVersion(min_version):
-            raise RuntimeError(
-                f"Intel Compiler error: less than minimal version {min_version}."
-            )
-
     try:
         output_msg = _compiler_version_string(cpp_compiler)
         lines = output_msg.splitlines()
-        is_intel_compiler = bool(lines) and "Intel" in lines[0]
-        if is_intel_compiler:
-            # Version check
-            icx_ver_search = re.search(r"(\d+[.]\d+[.]\d+[.]\d+)", output_msg)
-            if icx_ver_search is not None:
-                icx_ver = icx_ver_search.group(1)
-                _check_minimal_version(TorchVersion(icx_ver))
-
-        return is_intel_compiler
+        return bool(lines) and "Intel" in lines[0]
     except FileNotFoundError:
         return False
     except subprocess.SubprocessError:
@@ -607,11 +587,7 @@ def _get_ffast_math_flags() -> list[str]:
 
 
 def _get_inductor_debug_symbol_cflags() -> tuple[list[str], list[str]]:
-    """
-    When we turn on generate debug symbol.
-    On Windows, it should create a [module_name].pdb file. It helps debug by WinDBG.
-    On Linux, it should create some debug sections in binary file.
-    """
+    """Return flags that emit debug sections in the binary."""
     cflags: list[str] = []
     ldflags: list[str] = []
 
@@ -810,7 +786,6 @@ def _get_build_args_of_chosen_isa(vec_isa: VecISA) -> tuple[list[str], list[str]
     macros: list[str] = []
     build_flags: list[str] = []
     if vec_isa != invalid_vec_isa:
-        # Add Windows support later.
         macros.extend(copy.deepcopy(x) for x in vec_isa.build_macro())
 
         build_flags = [vec_isa.build_arch_flags()]
@@ -1244,7 +1219,6 @@ def get_cpp_torch_device_options(
     libraries_dirs = cpp_extension.library_paths(
         device_type,
         torch_include_dirs=link_libtorch,
-        cross_target_platform=config.aot_inductor.cross_target_platform,
     )
     if device_type == "cuda":
         definitions.append(" USE_ROCM" if torch.version.hip else " USE_CUDA")
@@ -1383,9 +1357,7 @@ def get_name_and_dir_from_output_file_path(
         dir = /tmp/tmpof1n5g7t/5c/
 
     put 'name' and 'dir' to CppBuilder's 'name' and 'output_dir'.
-    CppBuilder --> get_target_file_path will format output path according OS:
-    Linux: /tmp/tmppu87g3mm/zh/czhwiz4z7ca7ep3qkxenxerfjxy42kehw6h5cjk6ven4qu4hql4i.so
-    Windows: [Windows temp path]/tmppu87g3mm/zh/czhwiz4z7ca7ep3qkxenxerfjxy42kehw6h5cjk6ven4qu4hql4i.dll
+    CppBuilder --> get_target_file_path formats the output path for the host OS.
     """
     name_and_ext = os.path.basename(file_path)
     name, _ext = os.path.splitext(name_and_ext)
@@ -1396,11 +1368,11 @@ def get_name_and_dir_from_output_file_path(
 
 class CppBuilder:
     """
-    CppBuilder is a cpp jit builder, and it supports both Windows, Linux and MacOS.
+    CppBuilder is a C++ JIT builder.
     Args:
         name:
             1. Build target name, the final target file will append extension type automatically.
-            2. Due to the CppBuilder is supports multiple OS, it will maintains ext for OS difference.
+            2. The builder selects the platform's shared-library extension.
         sources:
             Source code file list to be built.
         BuildOption:
@@ -1566,10 +1538,7 @@ class CppBuilder:
         return normalize_path_separator(self._target_file)
 
     def build(self) -> None:
-        """
-        It is must need a temporary directory to store object files in Windows.
-        After build completed, delete the temporary directory to save disk space.
-        """
+        """Build in a temporary object directory and remove it afterward."""
         _create_if_dir_not_exist(self._output_dir)
         _build_tmp_dir = os.path.join(
             self._output_dir, f"{self._name}_{_BUILD_TEMP_DIR}"

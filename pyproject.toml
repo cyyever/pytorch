@@ -53,29 +53,8 @@ cmake.build-type = "Debug"
 if.env.REL_WITH_DEB_INFO = true
 cmake.build-type = "RelWithDebInfo"
 
-[[tool.scikit-build.overrides]]
-# Force the Ninja generator on Windows. scikit-build-core otherwise defaults to
-# the Visual Studio (multi-config) generator, under which the oneDNN-XPU
-# ExternalProject's -DCMAKE_CXX_COMPILER=icx is ignored (VS picks the compiler by
-# toolset), so oneDNN configures with MSVC and fails its -fsycl driver check.
-# Generator resolution honors cmake.define.CMAKE_GENERATOR, so this lives
-# here as the single source of truth
-# (and covers plain non-CI editable builds too) instead of a CI-exported env var.
-#
-# Under Ninja, CMake does not default to MSVC: with the Intel oneAPI environment
-# active (XPU builds) icx is on PATH and gets picked up as the host compiler,
-# which miscompiles CPU code (icx passes sleef's __float128 cmake probe but then
-# cannot compile sleefqp.c on the Windows target, ENABLEFLOAT128 gets set, the
-# build fails). Pin CC/CXX=cl so the host build stays on MSVC while the XPU
-# sub-projects keep using icx. env.CC/CXX setdefault semantics respect an
-# explicitly set CC/CXX (e.g. clang-cl); platform-system matches sys.platform.
-if.platform-system = "win32"
-cmake.define.CMAKE_GENERATOR = "Ninja"
-env.CC = "cl"
-env.CXX = "cl"
-
-# Other than CMAKE_GENERATOR above (win32), cmake.define is intentionally absent
-# -- all BUILD_*/USE_* env vars and additional passthrough variables are
+# cmake.define is intentionally absent: all BUILD_*/USE_* env vars and
+# additional passthrough variables are
 # forwarded by cmake/EnvVarForwarding.cmake so there is a single source of truth.
 
 [[tool.dynamic-metadata]]
@@ -184,19 +163,6 @@ exclude = [
     "torch/share/cmake/ittapi/**",
     "torch/share/cmake/dnnl/**",
     "torch/share/cpuinfo/**",
-    # Windows analog of the above: third-party import libs and their CMake
-    # package configs / pkg-config files leak in via the subproject install()
-    # rules (GNUInstallDirs lib/cmake, plus *.lib), the way *.a + share/cmake/*
-    # do on Linux. The setuptools wheel ships none of these and downstream
-    # find_package(Torch) works: nothing in torch/share/cmake/ (the Torch
-    # config tree, shipped identically) consumes them -- MKLDNN resolves
-    # via QUIET + bundled-static fallbacks, and dnnl is statically linked into
-    # torch_cpu.dll. dnnl.lib alone is ~1.3GB uncompressed. Do NOT broaden to
-    # **/*.lib: torch's own c10/torch/torch_cpu/torch_python import libs are
-    # required for Windows downstream linking and must stay.
-    "torch/lib/dnnl.lib",
-    "torch/lib/kineto.lib",
-    "torch/lib/mimalloc-2.3/mimalloc.lib",
     "torch/lib/cmake/**",
     "torch/cmake/**",
     "torch/lib/pkgconfig/**",
