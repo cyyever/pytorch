@@ -182,9 +182,7 @@ WINDOWS_BLOCKLIST = [
 ]
 
 ROCM_BLOCKLIST = [
-    "test_determination",
     "test_cuda_nvml_based_avail",
-    "test_jit_cuda_fuser",
     "distributed/pipelining/test_dtensor_pp_integration",
     "inductor/test_cpu_repro",  # excessive runtimes compared to CUDA
 ]
@@ -262,7 +260,6 @@ CORE_TEST_LIST = [
 ]
 
 
-# if a test file takes longer than 5 min, we add it to TARGET_DET_LIST
 SLOW_TEST_THRESHOLD = 300
 
 DYNAMO_WRAPPED_TIMEOUT_MULTIPLIER_OVERRIDE: dict[str, int] = {
