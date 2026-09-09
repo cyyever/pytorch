@@ -1,0 +1,46 @@
+diff --git a/cmake/modules/CppLibrary.cmake b/cmake/modules/CppLibrary.cmake
+index b5c4d9ebf..67190b40b 100644
+--- a/cmake/modules/CppLibrary.cmake
++++ b/cmake/modules/CppLibrary.cmake
+@@ -200,7 +200,9 @@ function(cpp_library)
+         # Enforce -fPIC for STATIC library option, since they are to be
+         # integrated into other libraries down the line
+         # https://stackoverflow.com/questions/3961446/why-does-gcc-not-implicitly-supply-the-fpic-flag-when-compiling-static-librarie
+-        POSITION_INDEPENDENT_CODE ON)
++        POSITION_INDEPENDENT_CODE ON
++        CXX_VISIBILITY_PRESET hidden
++        VISIBILITY_INLINES_HIDDEN ON)
+ 
+     # Set IPO
+     if(args_ENABLE_IPO)
+diff --git a/cmake/modules/FindAVX.cmake b/cmake/modules/FindAVX.cmake
+index c6d81aaa7..5f965127e 100644
+--- a/cmake/modules/FindAVX.cmake
++++ b/cmake/modules/FindAVX.cmake
+@@ -60,7 +60,7 @@ SET(AVX2_CODE "
+ MACRO(CHECK_SSE lang type flags)
+   SET(__FLAG_I 1)
+   FOREACH(__FLAG ${flags})
+-    IF(NOT ${lang}_${type}_FOUND)
++    IF(NOT ${lang}_${type}_FOUND OR NOT ${lang}_${type}_FLAGS)
+       cmake_push_check_state(RESET)
+       unset(${lang}_HAS_${type}_${__FLAG_I} CACHE)
+       check_compiler_flag(${lang} ${__FLAG} ${lang}_HAS_${type}_${__FLAG_I})
+@@ -70,7 +70,7 @@ MACRO(CHECK_SSE lang type flags)
+       IF(${CHECK_AVX_COMPILE})
+         SET(${lang}_${type}_FOUND TRUE CACHE BOOL "${lang} ${type} support")
+         string(REPLACE " " ";" __FLAG "${__FLAG}")
+-        SET(${lang}_${type}_FLAGS "${__FLAG}" CACHE STRING "${lang} ${type} flags")
++        SET(${lang}_${type}_FLAGS "${__FLAG}" CACHE STRING "${lang} ${type} flags" FORCE)
+         MATH(EXPR __FLAG_I "${__FLAG_I}+1")
+         CONTINUE()
+       ENDIF()
+@@ -83,7 +83,7 @@ MACRO(CHECK_SSE lang type flags)
+       IF(${lang}_HAS_${type}_${__FLAG_I})
+         SET(${lang}_${type}_FOUND TRUE CACHE BOOL "${lang} ${type} support")
+         string(REPLACE " " ";" __FLAG "${__FLAG}")
+-        SET(${lang}_${type}_FLAGS "${__FLAG}" CACHE STRING "${lang} ${type} flags")
++        SET(${lang}_${type}_FLAGS "${__FLAG}" CACHE STRING "${lang} ${type} flags" FORCE)
+       ENDIF()
+       MATH(EXPR __FLAG_I "${__FLAG_I}+1")
+       cmake_pop_check_state()

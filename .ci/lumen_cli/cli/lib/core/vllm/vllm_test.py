@@ -58,7 +58,7 @@ class VllmTestParameters:
         "VLLM_WHEELS_PATH", "./dist/external/vllm/wheels"
     )
 
-    torch_cuda_arch_list: str = env_str_field("TORCH_CUDA_ARCH_LIST", "8.9")
+    torch_cuda_arch_list: str = env_str_field("TORCH_CUDA_ARCH_LIST", "12.0")
 
     cleaning_script: Path = env_path_field(
         "cleaning_script", ".github/ci_configs/vllm/use_existing_torch.py"

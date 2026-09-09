@@ -9,7 +9,7 @@ files directly.
 
 | Platform | Backend | Variant | Python |
 |---|---|---|---|
-| Linux x86-64-v3 | CUDA | CUDA runtime version | 3.14, 3.15 |
+| Linux x86-64-v3 | CUDA | sm120 and CUDA runtime version | 3.14, 3.15 |
 | Linux x86-64-v3 | ROCm | gfx1201 and ROCm runtime version | 3.14, 3.15 |
 | Linux x86-64-v3 | XPU | Intel BMG | 3.14, 3.15 |
 | macOS arm64 | MPS | Apple Silicon | 3.14, 3.15 |

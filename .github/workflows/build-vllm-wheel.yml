@@ -101,7 +101,7 @@ jobs:
         working-directory: vllm
         shell: bash
         env:
-          TORCH_CUDA_ARCH_LIST: '8.0;8.9;9.0;10.0;12.0'
+          TORCH_CUDA_ARCH_LIST: '12.0'
           # sccache to S3 needs creds; skip it (build still succeeds, just cold) if OIDC failed.
           SCCACHE_BUCKET: ${{ steps.aws-creds.outcome == 'success' && 'ossci-compiler-cache-circleci-v2' || '' }}
           SCCACHE_REGION: ${{ steps.aws-creds.outcome == 'success' && 'us-east-1' || '' }}

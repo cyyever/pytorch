@@ -1115,7 +1115,7 @@ test_single_dynamo_benchmark() {
 test_inductor_micro_benchmark() {
   # torchao requires cuda 8.0 or above for bfloat16 support
   if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
-    export TORCH_CUDA_ARCH_LIST="8.9"
+    export TORCH_CUDA_ARCH_LIST="12.0"
   fi
   install_torchao
   TEST_REPORTS_DIR=$(pwd)/test/test-reports

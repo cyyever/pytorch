@@ -62,7 +62,7 @@ CUDA_NIGHTLY_SOURCE_MATRIX = {
     f"cuda-{major}.{minor}": dict(
         name=f"cuda-{major}.{minor}",
         index_url=f"{PYTORCH_NIGHTLY_PIP_INDEX_URL}/cu{major}{minor}",
-        supported_platforms=["Linux", "Windows"],
+        supported_platforms=["Linux"],
         accelerator="cuda",
     )
     for major, minor in (map(int, version.split(".")) for version in CUDA_ARCHES)

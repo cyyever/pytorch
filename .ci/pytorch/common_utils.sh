@@ -157,7 +157,7 @@ function detect_cuda_arch() {
     elif [[ "${TEST_CONFIG}" == *nogpu* ]]; then
       # There won't be nvidia-smi in nogpu tests, so just set TORCH_CUDA_ARCH_LIST to the default
       # minimum supported value here
-      TORCH_CUDA_ARCH_LIST=8.9
+      TORCH_CUDA_ARCH_LIST=12.0
     fi
     export TORCH_CUDA_ARCH_LIST
   fi

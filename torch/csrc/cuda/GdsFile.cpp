@@ -27,7 +27,7 @@ std::string cuGDSFileGetErrorString(T status) requires (!std::is_integral_v<T>) 
   std::string errStr = cuGDSFileGetErrorString(static_cast<int>(status.err));
   if (IS_CUDA_ERR(status))
     errStr.append(".").append(
-        cudaGetErrorString(static_cast<cudaError_t>(status.hip_drv_err)));
+        cudaGetErrorString(static_cast<cudaError_t>(status.cu_err)));
   return errStr;
 }
 } // namespace

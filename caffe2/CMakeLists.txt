@@ -800,6 +800,16 @@ elseif(USE_CUDA)
   # Compile with NVSHMEM
   # Default value of `USE_NVSHMEM` is set in CMakeLists.txt under root, to ON.
   if(USE_NVSHMEM)
+    if(NOT NVSHMEM_PY_DIR)
+      execute_process(
+        COMMAND "${Python_EXECUTABLE}" -c
+          "import importlib.util; s=importlib.util.find_spec('nvidia.nvshmem'); print(next(iter(s.submodule_search_locations)) if s and s.submodule_search_locations else '', end='')"
+        OUTPUT_VARIABLE NVSHMEM_PY_DIR
+        RESULT_VARIABLE _nvshmem_python_result)
+      if(NOT _nvshmem_python_result EQUAL 0)
+        set(NVSHMEM_PY_DIR "")
+      endif()
+    endif()
     message(STATUS "NVSHMEM_HOME set to:  '$ENV{NVSHMEM_HOME}'")
     message(STATUS "NVSHMEM wheel installed at:  '${NVSHMEM_PY_DIR}'")
     # Search order:
@@ -855,6 +865,8 @@ elseif(USE_CUDA)
         ${NVSHMEM_HOST_LIB}
         ${NVSHMEM_DEVICE_LIB}
     )
+    set_property(TARGET torch_nvshmem APPEND PROPERTY
+        INSTALL_RPATH "${_rpath_portable_origin}/../../nvidia/nvshmem/lib")
     target_compile_definitions(torch_cuda PUBLIC USE_NVSHMEM)
     target_compile_definitions(torch_nvshmem PUBLIC USE_NVSHMEM)
     target_link_libraries(torch_cuda PRIVATE torch_nvshmem)

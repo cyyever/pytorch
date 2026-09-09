@@ -316,7 +316,6 @@ license-files = [
     "LICENSE",
     "third_party/**/LICENSE",
     "third_party/**/LICENSE.txt",
-    "third_party/**/LICENSE.rst",
 ]
 authors = [{ name = "PyTorch Team", email = "packages@pytorch.org" }]
 keywords = ["pytorch", "machine learning"]

@@ -90,7 +90,7 @@ class VllmBuildParameters:
 
     sccache_region: str = env_str_field("SCCACHE_REGION")
 
-    torch_cuda_arch_list: str = env_str_field("TORCH_CUDA_ARCH_LIST", "8.9")
+    torch_cuda_arch_list: str = env_str_field("TORCH_CUDA_ARCH_LIST", "12.0")
 
     def __post_init__(self):
         checks = [
