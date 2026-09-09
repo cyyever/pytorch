@@ -27,7 +27,9 @@
 
 #include <nlohmann/json.hpp>
 
-#ifdef USE_ROCM
+#ifdef USE_CUDA
+#include <ATen/cuda/EmptyTensor.h>
+#elif defined(USE_ROCM)
 #include <ATen/hip/EmptyTensor.h>
 #endif
 
@@ -1224,7 +1226,7 @@ static PyObject* _empty_strided_device(
     return THPVariable_Wrap(
         at::detail::empty_strided_cpu(sizes, strides, dtype, is_pinned));
   }
-#ifdef USE_ROCM
+#if defined(USE_CUDA) || defined(USE_ROCM)
   else if (device_type == c10::DeviceType::CUDA) {
     return THPVariable_Wrap(at::detail::empty_strided_cuda(
         sizes, strides, dtype, c10::DeviceType::CUDA));
