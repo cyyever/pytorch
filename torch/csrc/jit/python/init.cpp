@@ -20,6 +20,7 @@
 
 #include <c10/macros/Export.h>
 #include <c10/util/irange.h>
+#include <c10/util/signal_handler.h>
 #include <caffe2/serialize/inline_container.h>
 
 #include <pybind11/cast.h>

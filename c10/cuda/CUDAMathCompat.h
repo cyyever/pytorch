@@ -91,6 +91,12 @@ __MATH_FUNCTIONS_DECL__ double max(double x, double y) {
   return ::fmax(x, y);
 }
 
+#ifdef __HIPCC__
+using ::std::midpoint;
+#else
+using ::cuda::std::midpoint;
+#endif
+
 __MATH_FUNCTIONS_DECL__ float pow(float x, float y) {
   return ::powf(x, y);
 }

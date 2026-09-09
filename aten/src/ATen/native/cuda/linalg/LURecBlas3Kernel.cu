@@ -1,4 +1,5 @@
 #include <ATen/core/Tensor.h>
+#include <ATen/cuda/CUDABlasHandle.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/Dispatch.h>
 #include <ATen/native/LinearAlgebraUtils.h>
@@ -38,6 +39,13 @@ namespace {
 constexpr auto LinOff(auto i, auto j, auto lda) {
   return i + static_cast<size_t>(j) * lda;
 }
+
+template <typename T>
+__device__ auto abs_value(T value) {
+  using std::abs;
+  return abs(value);
+}
+
 // Small tile width for high occupancy (matches MAGMA's SWP_WIDTH=4)
 constexpr int SWP_WIDTH = 4;
 
@@ -454,7 +462,7 @@ batched_panel_register_resident_fused_kernel(
 
   for (int i = 0, ir = i + tid, irows = blockDim.x; i < nb; ++i, ++ir, --irows) {
     // 1. Write abs value to shared memory using current logical row position
-    sabsval[curr_row] = std::abs(rA[i]);
+    sabsval[curr_row] = abs_value(rA[i]);
     sargmax[tid] = tid;
     __syncthreads();
 
@@ -585,7 +593,7 @@ batched_panel_colserial_fused_kernel(
     auto my_max = static_cast<real_t>(-1);
     auto my_idx = -1;
     for (int i = k + tid; i < m; i += BS) {
-      auto v = std::abs(A[LinOff(i, k, lda)]);
+      auto v = abs_value(A[LinOff(i, k, lda)]);
       if (v > my_max) {
         my_max = v;
         my_idx = i;
@@ -609,13 +617,13 @@ batched_panel_colserial_fused_kernel(
     // 3. Scale (divide by diagonal - skip if zero for singular matrices)
     if (tid == 0) {
       sdiag = A[LinOff(k, k, lda)];
-      if (std::abs(sdiag) == 0 && dinfo[batch] == 0) {
+      if (abs_value(sdiag) == 0 && dinfo[batch] == 0) {
         dinfo[batch] = k + 1; // 1-based!
       }
     }
     __syncthreads();
 
-    if (std::abs(sdiag) != 0) {
+    if (abs_value(sdiag) != 0) {
       for (int i = k + 1 + tid; i < m; i += BS) {
         A[LinOff(i, k, lda)] /= sdiag;
       }
