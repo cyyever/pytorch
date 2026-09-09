@@ -119,7 +119,7 @@ static PyObject* THPStorage_pynew(
       case at::kCPU:
         allocator = c10::GetDefaultCPUAllocator();
         break;
-#ifdef USE_ROCM
+#if defined(USE_CUDA) || defined(USE_ROCM)
       case at::kCUDA:
         allocator = c10::cuda::CUDACachingAllocator::get();
         break;
