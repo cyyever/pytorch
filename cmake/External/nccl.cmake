@@ -10,10 +10,10 @@ if(NOT __NCCL_INCLUDED)
       target_include_directories(__caffe2_nccl SYSTEM INTERFACE ${NCCL_INCLUDE_DIRS})
     endif()
   else()
-    torch_cuda_get_nvcc_gencode_flag(NVCC_GENCODE)
-    string(REPLACE "-gencode;" "-gencode=" NVCC_GENCODE "${NVCC_GENCODE}")
-    # this second replacement is needed when there are multiple archs
-    string(REPLACE ";-gencode" " -gencode" NVCC_GENCODE "${NVCC_GENCODE}")
+    apply_third_party_patches(
+        "${PROJECT_SOURCE_DIR}/third_party/nccl_patches"
+        "${PROJECT_SOURCE_DIR}/third_party/nccl"
+        NCCL)
 
     if(DEFINED ENV{MAX_JOBS})
       set(MAX_JOBS "$ENV{MAX_JOBS}")
@@ -28,29 +28,44 @@ if(NOT __NCCL_INCLUDED)
       endif()
     endif()
 
-    if("${CMAKE_GENERATOR}" MATCHES "Make")
-      # Recursive make with jobserver for parallelism, and also put a load limit
-      # here to avoid flaky OOM, https://www.gnu.org/software/make/manual/html_node/Parallel.html
-      set(MAKE_COMMAND "$(MAKE)" "-l${MAX_JOBS}")
-    else()
-      # Parallel build with CPU load limit to avoid oversubscription
-      set(MAKE_COMMAND "make" "-j${MAX_JOBS}" "-l${MAX_JOBS}")
+    if((NOT DEFINED TORCH_CUDA_ARCH_LIST) AND (DEFINED ENV{TORCH_CUDA_ARCH_LIST}))
+      set(TORCH_CUDA_ARCH_LIST "$ENV{TORCH_CUDA_ARCH_LIST}")
+    endif()
+    string(REPLACE " " ";" __NCCL_ARCH_LIST "${TORCH_CUDA_ARCH_LIST}")
+    set(__NCCL_CMAKE_ARCHS "")
+    foreach(__arch IN LISTS __NCCL_ARCH_LIST)
+      if(__arch MATCHES "^([0-9]+)\\.([0-9]+)")
+        set(__cmake_arch "${CMAKE_MATCH_1}${CMAKE_MATCH_2}")
+        list(APPEND __NCCL_CMAKE_ARCHS "${__cmake_arch}-real")
+        if(__arch MATCHES "\\+PTX$")
+          list(APPEND __NCCL_CMAKE_ARCHS "${__cmake_arch}-virtual")
+        endif()
+      endif()
+    endforeach()
+    list(REMOVE_DUPLICATES __NCCL_CMAKE_ARCHS)
+    if(NOT __NCCL_CMAKE_ARCHS)
+      message(FATAL_ERROR
+        "Bundled NCCL requires numeric entries in TORCH_CUDA_ARCH_LIST")
     endif()
 
     set(__NCCL_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/nccl")
     ExternalProject_Add(nccl_external
       SOURCE_DIR ${PROJECT_SOURCE_DIR}/third_party/nccl
-      BUILD_IN_SOURCE 1
-      CONFIGURE_COMMAND ""
+      BINARY_DIR ${__NCCL_BUILD_DIR}
+      CMAKE_GENERATOR "${CMAKE_GENERATOR}"
+      CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_CUDA_COMPILER=${CMAKE_CUDA_COMPILER}
+        -DCMAKE_CUDA_HOST_COMPILER=${CMAKE_CXX_COMPILER}
+        "-DCMAKE_CUDA_ARCHITECTURES=${__NCCL_CMAKE_ARCHS}"
+        "-DCMAKE_CUDA_FLAGS=-Xcompiler --gcc-install-dir=${CUDA_HOST_GCC_INSTALL_DIR}"
+        -DPython3_EXECUTABLE=${Python_EXECUTABLE}
       BUILD_COMMAND
-        ${MAKE_COMMAND}
-        "CXX=${CMAKE_CXX_COMPILER}"
-        "CUDA_HOME=${CUDA_TOOLKIT_ROOT_DIR}"
-        "NVCC=${CUDA_NVCC_EXECUTABLE}"
-        "NVCC_GENCODE=${NVCC_GENCODE}"
-        "BUILDDIR=${__NCCL_BUILD_DIR}"
-        "VERBOSE=0"
-        "DEBUG=0"
+        ${CMAKE_COMMAND} --build <BINARY_DIR>
+        --target nccl_static
+        --parallel ${MAX_JOBS}
       BUILD_BYPRODUCTS "${__NCCL_BUILD_DIR}/lib/libnccl_static.a"
       INSTALL_COMMAND ""
       )

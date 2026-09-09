@@ -1,0 +1,494 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5032f6e..184c596 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -70,36 +70,22 @@ if(DEBUG)
+     set(CMAKE_BUILD_TYPE "Debug")
+ endif()
+ 
+-# Detect OS (use add_compile_definitions so CUDA .cu files get the define when built by NVCC)
+-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+-    set(NCCL_OS_WINDOWS ON)
+-    add_compile_definitions(NCCL_OS_WINDOWS)
+-    # Prevent windows.h from defining min/max macros so std::min/std::max work
+-    add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
+-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+-    set(NCCL_OS_LINUX ON)
+-    add_compile_definitions(NCCL_OS_LINUX)
+-else()
+-    message(FATAL_ERROR "Unsupported OS: ${CMAKE_SYSTEM_NAME}")
++# This fork only builds NCCL for Linux CUDA distributions.
++if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
++    message(FATAL_ERROR "NCCL is only supported on Linux")
+ endif()
++set(NCCL_OS_LINUX ON)
++add_compile_definitions(NCCL_OS_LINUX)
+ 
+-# Detect compiler
+-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+-    set(NCCL_COMPILER_MSVC ON)
+-    add_compile_definitions(NCCL_COMPILER_MSVC)
+-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+-    set(NCCL_COMPILER_GCC ON)
+-    add_compile_definitions(NCCL_COMPILER_GCC)
+-else()
++if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND
++   NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+     message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
+ endif()
++set(NCCL_COMPILER_GCC ON)
++add_compile_definitions(NCCL_COMPILER_GCC)
+ 
+ # Flag overrides applied when DEBUG=ON. Total replacement, not additive.
+-if(NCCL_COMPILER_GCC)
+-    set(DEBUG_HOST_FLAGS "-O0 -g -ggdb3" CACHE STRING "Host CXX flags applied when DEBUG=ON (overrides default)")
+-elseif(NCCL_COMPILER_MSVC)
+-    set(DEBUG_HOST_FLAGS "/Od /Zi /FS" CACHE STRING "Host CXX flags applied when DEBUG=ON (overrides default)")
+-endif()
++set(DEBUG_HOST_FLAGS "-O0 -g -ggdb3" CACHE STRING "Host CXX flags applied when DEBUG=ON (overrides default)")
+ set(DEBUG_DEVICE_FLAGS "-O0 -g -lineinfo" CACHE STRING "Device (NVCC) flags applied when DEBUG=ON (overrides default)")
+ 
+ find_package(CUDAToolkit REQUIRED)
+@@ -120,16 +106,10 @@ add_compile_definitions(
+     CUDA_MINOR=${CUDA_MINOR}
+ )
+ 
+-# CUDA 13.0 requires C++17
+-if(${CUDA_MAJOR} GREATER_EQUAL 13)
+-    set(CMAKE_CXX_STANDARD 17)
+-    set(CMAKE_CUDA_STANDARD 17)
+-    set(CMAKE_CXX_EXTENSIONS OFF)
+-else()
+-    set(CMAKE_CXX_STANDARD 14)
+-    set(CMAKE_CUDA_STANDARD 14)
+-    set(CMAKE_CXX_EXTENSIONS OFF)
+-endif()
++# Keep host and device code on the same standard as PyTorch.
++set(CMAKE_CXX_STANDARD 23)
++set(CMAKE_CUDA_STANDARD 23)
++set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+@@ -165,44 +145,25 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES OR CMAKE_CUDA_ARCHITECTURES STREQUAL "")
+ endif()
+ message(STATUS "Using CUDA_ARCHITECTURES: ${CMAKE_CUDA_ARCHITECTURES}")
+ 
+-# Compiler-specific flags
+-if(NCCL_COMPILER_GCC)
+-    # GCC/Clang-specific flags
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fvisibility=hidden -Wall -Wno-unused-function -Wno-sign-compare -Wvla -g")
+-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda -Xptxas -maxrregcount=96 -Xfatbin -compress-all -fPIC")
+-elseif(NCCL_COMPILER_MSVC)
+-    # MSVC-specific flags
+-    # /Zc:preprocessor enables conformant preprocessor for proper variadic macro handling (needed for NVTX)
+-    # /wd4146 disables "unary minus on unsigned" warning - intentional for two's complement and alignment masks
+-    # /wd4197 disables "top-level volatile in cast ignored" - benign when using atomic intrinsics
+-    # /wd5105 disables "macro expansion producing 'defined'" - triggered by Windows SDK headers (winbase.h)
+-    # /wd4805 disables "unsafe mix of type 'bool' and type 'int'" - intentional bool/int mixing for flags
+-    # /wd4018 disables "signed/unsigned mismatch" - safe comparisons where signed value is always positive
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3 /wd4267 /wd4244 /wd4996 /wd4146 /wd4197 /wd5105 /wd4805 /wd4018 /FS /Zc:preprocessor")
+-    # --compress-mode=balance is not supported by ptxas in CUDA 13.1 on Windows; omit for compatibility.
+-    # -Xcompiler /Zc:preprocessor passes the conformant preprocessor flag to cl.exe when invoked by nvcc
+-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda --compress-mode=balance --ptxas-options=-maxrregcount=96 -Xcompiler /Zc:preprocessor")
+-endif()
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fvisibility=hidden -Wall -Wno-unused-function -Wno-sign-compare -Wvla -g")
++set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda -Xptxas -maxrregcount=96 -Xfatbin -compress-all -fPIC")
+ 
+-# Sanitizer options (GCC/Clang only)
+-if(NCCL_COMPILER_GCC)
+-    if(ASAN)
+-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
+-    endif()
++if(ASAN)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
++    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
++endif()
+ 
+-    if(UBSAN)
+-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=undefined -static-libubsan")
+-    endif()
++if(UBSAN)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
++    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=undefined -static-libubsan")
++endif()
+ 
+-    if(TSAN)
+-        if(ASAN)
+-            message(FATAL_ERROR "TSAN and ASAN cannot be enabled simultaneously")
+-        endif()
+-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread -static-libtsan")
++if(TSAN)
++    if(ASAN)
++        message(FATAL_ERROR "TSAN and ASAN cannot be enabled simultaneously")
+     endif()
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
++    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread -static-libtsan")
+ endif()
+ 
+ # Additional options
+@@ -215,11 +176,7 @@ if(NOT NVTX)
+ endif()
+ 
+ if(WERROR)
+-    if(NCCL_COMPILER_MSVC)
+-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+-    else()
+-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+-    endif()
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+ endif()
+ 
+ if(PROFAPI)
+@@ -253,15 +210,9 @@ if(MAX_EXT_NET_PLUGINS GREATER 0)
+     add_definitions(-DNCCL_NET_MAX_PLUGINS=${MAX_EXT_NET_PLUGINS})
+ endif()
+ 
+-# GIN/DOCA (GDAKI): enable on non-Windows; skip only for Windows platform (no doca_gpunetio / InfiniBand)
+-if(NCCL_OS_WINDOWS)
+-    # Windows: explicitly disable GIN so all code (host + device) and headers see it as 0
+-    add_definitions(-DNCCL_GIN_PROXY_ENABLE=0)
+-else()
+-    add_definitions(-DDOCA_GPUNETIO_USE_CUDA_WRAPPER)
+-    add_definitions(-DDOCA_VERBS_USE_NET_WRAPPER)
+-    add_definitions(-DNCCL_GIN_PROXY_ENABLE=1)
+-endif()
++add_definitions(-DDOCA_GPUNETIO_USE_CUDA_WRAPPER)
++add_definitions(-DDOCA_VERBS_USE_NET_WRAPPER)
++add_definitions(-DNCCL_GIN_PROXY_ENABLE=1)
+ 
+ # Library dependencies
+ find_library(RT_LIBRARY NAMES rt)
+@@ -270,23 +221,17 @@ if(RT_LIBRARY)
+ endif()
+ 
+ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${DEBUG_HOST_FLAGS}")
+-if(NCCL_COMPILER_GCC)
+-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
+-elseif(NCCL_COMPILER_MSVC)
+-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} /O2 /FS")
+-endif()
++set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
+ set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} ${DEBUG_DEVICE_FLAGS}")
+ set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3")
+ 
+-if(NCCL_OS_LINUX)
+-  add_subdirectory(plugins/gin/example)
+-  add_subdirectory(plugins/mixed/example)
+-  add_subdirectory(plugins/net)
+-  add_subdirectory(plugins/profiler/example)
+-  add_subdirectory(plugins/rma/example)
+-  add_subdirectory(plugins/tuner/example)
+-  add_subdirectory(plugins/env/example)
+-endif()
++add_subdirectory(plugins/gin/example)
++add_subdirectory(plugins/mixed/example)
++add_subdirectory(plugins/net)
++add_subdirectory(plugins/profiler/example)
++add_subdirectory(plugins/rma/example)
++add_subdirectory(plugins/tuner/example)
++add_subdirectory(plugins/env/example)
+ 
+ add_subdirectory(src)
+ 
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index c87ec01..6c700e6 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -92,26 +92,16 @@ list(APPEND LIBSRCFILES
+     ${TUNING_SOURCES}
+ )
+ 
+-# Add GIN sources only on Linux
+-if(NCCL_OS_LINUX)
+-    list(APPEND LIBSRCFILES ${GIN_SOURCES})
+-    list(APPEND LIBSRCFILES diagnostics.cc ${DIAGNOSTICS_SOURCES})
+-endif()
++list(APPEND LIBSRCFILES ${GIN_SOURCES})
++list(APPEND LIBSRCFILES diagnostics.cc ${DIAGNOSTICS_SOURCES})
+ 
+ ###################### Create a shared NCCL library ############################
+ add_library(nccl SHARED)
+ 
+ target_sources(nccl PRIVATE ${LIBSRCFILES})
+-if(NCCL_OS_WINDOWS)
+-    target_link_libraries(nccl PRIVATE nccl_device)
+-else()
+-    target_sources(nccl PRIVATE $<TARGET_OBJECTS:nccl_device>)
+-endif()
+-if(NCCL_OS_LINUX)
+-    target_sources(nccl PRIVATE $<TARGET_OBJECTS:nccl_diagnostics_device>)
+-endif()
++target_sources(nccl PRIVATE $<TARGET_OBJECTS:nccl_device>)
++target_sources(nccl PRIVATE $<TARGET_OBJECTS:nccl_diagnostics_device>)
+ 
+-# Include directories; add DOCA only on non-Windows (skip for Windows platform)
+ set(NCCL_PRIVATE_INCLUDES
+     ${CMAKE_CURRENT_SOURCE_DIR}
+     ${CMAKE_CURRENT_SOURCE_DIR}/device
+@@ -121,7 +111,7 @@ set(NCCL_PRIVATE_INCLUDES
+     ${CUDAToolkit_INCLUDE_DIRS}/cccl
+     ${CMAKE_BINARY_DIR}/obj/include
+ )
+-if(NOT NCCL_OS_WINDOWS AND DOCA_HOME)
++if(DOCA_HOME)
+     list(APPEND NCCL_PRIVATE_INCLUDES ${DOCA_HOME}/include)
+ endif()
+ target_include_directories(nccl
+@@ -140,12 +130,6 @@ add_custom_command(
+ )
+ 
+ file(GLOB_RECURSE SRC_DEVICE_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include/nccl_device/*.h)
+-# On Windows, do not copy GIN device headers (GIN is Linux-only).
+-# Exclude nccl_device/gin.h and nccl_device/gin/* but keep nccl_device/gin_barrier.h etc.
+-if(NCCL_OS_WINDOWS)
+-    list(FILTER SRC_DEVICE_HEADERS EXCLUDE REGEX "nccl_device/gin\\.h")
+-    list(FILTER SRC_DEVICE_HEADERS EXCLUDE REGEX "nccl_device/gin/")
+-endif()
+ 
+ # Copy all device header files to the destination
+ # Note: The only public headers are nccl.h and nccl_device.h (and, by extension, nccl_device/*).
+@@ -155,43 +139,29 @@ foreach(HEADER_FILE ${SRC_DEVICE_HEADERS})
+     list(APPEND DEVICE_HEADERS ${CMAKE_BINARY_DIR}/${HEADER_FILE})
+ endforeach()
+ 
+-# On Windows, do not use gin.h; install the GIN device stub as gin_win_stub.h only (headers include it by name)
+-if(NCCL_OS_WINDOWS)
+-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/nccl_device/gin_win_stub.h ${CMAKE_BINARY_DIR}/include/nccl_device/gin_win_stub.h COPYONLY)
+-    list(APPEND DEVICE_HEADERS ${CMAKE_BINARY_DIR}/include/nccl_device/gin_win_stub.h)
+-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/gin/gin_host_win_stub.h ${CMAKE_BINARY_DIR}/include/gin/gin_host_win_stub.h COPYONLY)
+-endif()
+-
+ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/nccl_device.h ${CMAKE_BINARY_DIR}/include/nccl_device.h COPYONLY)
+ 
+-# Skip DOCA device headers for Windows platform; use on other platforms when set
+ set(NCCL_HEADER_DEPS ${CMAKE_BINARY_DIR}/include/nccl.h ${CMAKE_BINARY_DIR}/include/nccl_device.h ${DEVICE_HEADERS}
+     ${PARAM_HEADERS})
+-if(NOT NCCL_OS_WINDOWS AND DEVICE_DOCA_HEADERS)
++if(DEVICE_DOCA_HEADERS)
+     list(APPEND NCCL_HEADER_DEPS ${DEVICE_DOCA_HEADERS})
+ endif()
+-if(NOT NCCL_OS_WINDOWS AND DEVICE_EFA_DP_HEADERS)
++if(DEVICE_EFA_DP_HEADERS)
+     list(APPEND NCCL_HEADER_DEPS ${DEVICE_EFA_DP_HEADERS})
+ endif()
+ add_custom_target(nccl_header DEPENDS ${NCCL_HEADER_DEPS})
+ 
+ add_dependencies(nccl nccl_header)
+ add_dependencies(nccl_device nccl_header)
+-if(NCCL_OS_LINUX)
+-    add_dependencies(nccl_diagnostics_device nccl_header)
+-endif()
++add_dependencies(nccl_diagnostics_device nccl_header)
+ 
+ # Set version and output name
+-# On Windows, use nccl.dll/nccl.lib (no "lib" prefix) so the import library matches what linkers expect
+-# On Linux, use libnccl.so (PREFIX "lib" for Unix convention)
+ set_target_properties(nccl PROPERTIES
+     VERSION ${NCCL_MAJOR}.${NCCL_MINOR}.${NCCL_PATCH}
+     SOVERSION ${NCCL_MAJOR}
+     OUTPUT_NAME "nccl"
++    PREFIX "lib"
+ )
+-if(NCCL_OS_LINUX)
+-    set_target_properties(nccl PROPERTIES PREFIX "lib")
+-endif()
+ 
+ #
+ # Generate nccl_git_version.h
+@@ -242,13 +212,7 @@ set_target_properties(nccl PROPERTIES
+     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+ )
+ 
+-# On Windows, export all symbols to generate import library (nccl.lib) for DLL linking
+-if(NCCL_OS_WINDOWS)
+-    set_target_properties(nccl PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+-endif()
+-
+ ###################### Create a ras binary executable ############################
+-if(NOT NCCL_OS_WINDOWS)
+ set(RAS_BINSRCFILES ras/client.cc ras/ras_param.cc)
+ 
+ add_executable(ncclras ${RAS_BINSRCFILES})
+@@ -276,10 +240,8 @@ target_link_libraries(ncclras
+ set_target_properties(ncclras PROPERTIES
+     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+ )
+-endif()
+ 
+ ###################### Create a param tool binary executable #####################
+-if(NOT NCCL_OS_WINDOWS)
+ add_executable(ncclparam param/ncclparam.cc)
+ 
+ target_include_directories(ncclparam
+@@ -303,18 +265,11 @@ target_link_libraries(ncclparam
+ set_target_properties(ncclparam PROPERTIES
+     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+ )
+-endif()
+ 
+ ###################### Create a static NCCL library ############################
+ add_library(nccl_static STATIC ${LIBSRCFILES})
+-if(NCCL_OS_WINDOWS)
+-    target_link_libraries(nccl_static PRIVATE nccl_device)
+-else()
+-    target_sources(nccl_static PRIVATE $<TARGET_OBJECTS:nccl_device>)
+-endif()
+-if(NCCL_OS_LINUX)
+-    target_sources(nccl_static PRIVATE $<TARGET_OBJECTS:nccl_diagnostics_device>)
+-endif()
++target_sources(nccl_static PRIVATE $<TARGET_OBJECTS:nccl_device>)
++target_sources(nccl_static PRIVATE $<TARGET_OBJECTS:nccl_diagnostics_device>)
+ 
+ # Include directories
+ target_include_directories(nccl_static
+@@ -373,20 +328,10 @@ install(TARGETS nccl nccl_static
+   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+ )
+-# On Windows, nccl/nccl_static link to nccl_device (STATIC); export set must include it.
+-if(NCCL_OS_WINDOWS)
+-  install(TARGETS nccl_device
+-    EXPORT NCCLTargets
+-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+-  )
+-endif()
+-
+ # Install tools, but do not export them as linkable imported targets.
+-if(NOT NCCL_OS_WINDOWS)
+ install(TARGETS ncclras ncclparam
+   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+ )
+-endif()
+ 
+ # Install generated + copied public headers from the build tree.
+ install(DIRECTORY "${CMAKE_BINARY_DIR}/include/"
+diff --git a/src/device/CMakeLists.txt b/src/device/CMakeLists.txt
+index a582458..7671890 100644
+--- a/src/device/CMakeLists.txt
++++ b/src/device/CMakeLists.txt
+@@ -15,14 +15,6 @@ execute_process(
+ string(STRIP "${symmetric_files}" symmetric_files)
+ list(TRANSFORM symmetric_files PREPEND ${CMAKE_CURRENT_BINARY_DIR}/gensrc/symmetric/)
+ 
+-# On Windows, exclude GIN device sources (GIN backend implementation is Linux-only; would cause nvlink undefined refs).
+-set(device_files ${files})
+-set(device_symmetric_files ${symmetric_files})
+-if(NCCL_OS_WINDOWS)
+-  list(FILTER device_files EXCLUDE REGEX "gin")
+-  list(FILTER device_symmetric_files EXCLUDE REGEX "gin")
+-endif()
+-
+ # Create custom commands to generate source files with proper dependencies
+ add_custom_command(
+     OUTPUT  ${files}
+@@ -40,48 +32,17 @@ add_custom_command(
+     COMMENT "Generating symmetric device source files"
+ )
+ 
+-# On Linux, ncclGin_BackendMask<...> is provided by implicit instantiation in common.cu (no -G).
+-# On Windows, GIN device code is excluded (device_files / device_symmetric_files filtered above).
+-
+-# On Windows use STATIC so CUDA device linking runs (OBJECT libs don't support it); on Linux use OBJECT.
+-if(NCCL_OS_WINDOWS)
+-    add_library(nccl_device STATIC
+-                ${device_files}
+-                ${device_symmetric_files}
+-                ${CMAKE_CURRENT_SOURCE_DIR}/common.cu
+-                ${CMAKE_CURRENT_SOURCE_DIR}/onerank.cu
+-    )
+-    set_target_properties(nccl_device PROPERTIES
+-        CUDA_SEPARABLE_COMPILATION ON
+-        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+-        CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}"
+-        POSITION_INDEPENDENT_CODE ON
+-    )
+-else()
+-    add_library(nccl_device OBJECT
+-                ${files}
+-                ${symmetric_files}
+-                ${CMAKE_CURRENT_SOURCE_DIR}/common.cu
+-                ${CMAKE_CURRENT_SOURCE_DIR}/onerank.cu
+-    )
+-    set_target_properties(nccl_device PROPERTIES
+-        CUDA_SEPARABLE_COMPILATION ON
+-        CUDA_RESOLVE_DEVICE_SYMBOLS OFF
+-    )
+-endif()
+-
+-
+-# On Linux, define NCCL_OS_LINUX so nccl_device.h includes gin__funcs.h (required for ncclGin_BackendMask<...> in common.cu and symmetric GIN kernels)
+-if(NCCL_OS_LINUX)
+-    target_compile_definitions(nccl_device PRIVATE NCCL_OS_LINUX)
+-endif()
+-
+-# WIN32_LEAN_AND_MEAN prevents windows.h from pulling in winsock.h, so _WINSOCKAPI_
+-# is only defined once (by winsock2.h) and C4005 redefinition warnings are avoided.
+-# Skip GIN/DOCA (GDAKI) on Windows: doca_gpunetio headers are not available and GIN backend is Linux-only.
+-if(NCCL_OS_WINDOWS)
+-    target_compile_definitions(nccl_device PRIVATE WIN32_LEAN_AND_MEAN NCCL_GIN_GDAKI_ENABLE=0)
+-endif()
++add_library(nccl_device OBJECT
++            ${files}
++            ${symmetric_files}
++            ${CMAKE_CURRENT_SOURCE_DIR}/common.cu
++            ${CMAKE_CURRENT_SOURCE_DIR}/onerank.cu
++)
++set_target_properties(nccl_device PROPERTIES
++    CUDA_SEPARABLE_COMPILATION ON
++    CUDA_RESOLVE_DEVICE_SYMBOLS OFF
++)
++target_compile_definitions(nccl_device PRIVATE NCCL_OS_LINUX)
+ 
+ # Export-safe includes: only INSTALL_INTERFACE in PUBLIC; build paths in PRIVATE so export does not see source/build dirs.
+ target_include_directories(nccl_device PUBLIC
+diff --git a/src/device/reduce_kernel.h b/src/device/reduce_kernel.h
+index 7f21d53..bc72551 100644
+--- a/src/device/reduce_kernel.h
++++ b/src/device/reduce_kernel.h
+@@ -282,13 +282,13 @@ struct Apply_Cast<float, __nv_bfloat16, /*EltPerPack=*/2> {
+   template <> \
+   struct Apply_Cast<A, B, EltPerPack> { \
+     __device__ __forceinline__ static BytePack<sizeof(B) * EltPerPack> cast(BytePack<sizeof(A) * EltPerPack> a) { \
+-      return toPack(VecB(fromPack<VecA>(a))); \
++      return toPack(static_cast<VecB>(fromPack<VecA>(a))); \
+     } \
+   }; \
+   template <> \
+   struct Apply_Cast<B, A, EltPerPack> { \
+     __device__ __forceinline__ static BytePack<sizeof(A) * EltPerPack> cast(BytePack<sizeof(B) * EltPerPack> b) { \
+-      return toPack(VecA(fromPack<VecB>(b))); \
++      return toPack(static_cast<VecA>(fromPack<VecB>(b))); \
+     } \
+   };
+ 
+diff --git a/src/os/CMakeLists.txt b/src/os/CMakeLists.txt
+index b49f442..9162b22 100644
+--- a/src/os/CMakeLists.txt
++++ b/src/os/CMakeLists.txt
+@@ -1,16 +1,6 @@
+-if(NCCL_OS_LINUX)
+-    set(OS_SOURCES
+-        ${CMAKE_CURRENT_SOURCE_DIR}/linux.cc
+-        ${CMAKE_CURRENT_SOURCE_DIR}/linux_ipcsocket.cc
+-        ${CMAKE_CURRENT_SOURCE_DIR}/linux_socket_pair.cc
+-        PARENT_SCOPE
+-    )
+-elseif(NCCL_OS_WINDOWS)
+-    set(OS_SOURCES
+-        ${CMAKE_CURRENT_SOURCE_DIR}/windows.cc
+-        ${CMAKE_CURRENT_SOURCE_DIR}/windows_stubs.cc
+-        ${CMAKE_CURRENT_SOURCE_DIR}/windows_ipcsocket.cc
+-        ${CMAKE_CURRENT_SOURCE_DIR}/windows_socket_pair.cc
+-        PARENT_SCOPE
+-    )
+-endif()
++set(OS_SOURCES
++    ${CMAKE_CURRENT_SOURCE_DIR}/linux.cc
++    ${CMAKE_CURRENT_SOURCE_DIR}/linux_ipcsocket.cc
++    ${CMAKE_CURRENT_SOURCE_DIR}/linux_socket_pair.cc
++    PARENT_SCOPE
++)

@@ -28,6 +28,9 @@ if(NOT DEFINED USE_SYSTEM_LIBS OR NOT USE_SYSTEM_LIBS)
       "${PROJECT_SOURCE_DIR}/third_party/cutlass"
     )
   endif()
+  if(DEFINED USE_ROCM AND NOT USE_ROCM)
+    list(FILTER _submodule_folders EXCLUDE REGEX "/third_party/aiter$")
+  endif()
 
   set(_all_missing TRUE)
   foreach(_dir IN LISTS _submodule_folders)
@@ -142,7 +145,10 @@ if(NOT USE_SYSTEM_NCCL)
           GIT_SHALLOW    TRUE
           SOURCE_DIR     "${_nccl_dir}"
         )
+        cmake_policy(PUSH)
+        cmake_policy(SET CMP0169 OLD)
         FetchContent_Populate(nccl)
+        cmake_policy(POP)
       endif()
     endif()
   endif()
