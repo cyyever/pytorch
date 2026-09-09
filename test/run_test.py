@@ -183,7 +183,6 @@ WINDOWS_BLOCKLIST = [
 
 ROCM_BLOCKLIST = [
     "test_determination",
-    "test_jit_legacy",
     "test_cuda_nvml_based_avail",
     "test_jit_cuda_fuser",
     "distributed/pipelining/test_dtensor_pp_integration",
@@ -304,12 +303,6 @@ or `conda install ninja`. Alternatively, disable said tests with
 """
 
 PYTORCH_COLLECT_COVERAGE = bool(os.environ.get("PYTORCH_COLLECT_COVERAGE"))
-
-JIT_EXECUTOR_TESTS = [
-    "test_jit_profiling",
-    "test_jit_legacy",
-    "test_jit_fuser_legacy",
-]
 
 INDUCTOR_TESTS = [test for test in TESTS if test.startswith(INDUCTOR_TEST_PREFIX)]
 DISTRIBUTED_TESTS = [test for test in TESTS if test.startswith(DISTRIBUTED_TEST_PREFIX)]
@@ -1450,11 +1443,6 @@ def parse_args():
         help="run non-serial tests with N pytest-xdist workers",
     )
     parser.add_argument(
-        "--exclude-jit-executor",
-        action="store_true",
-        help="exclude tests that are run for a specific jit config",
-    )
-    parser.add_argument(
         "--exclude-torch-export-tests",
         action="store_true",
         help="exclude torch export tests",
@@ -1544,7 +1532,6 @@ def must_serial(file: str | ShardedTest) -> bool:
         or file in CUSTOM_HANDLERS
         or file in RUN_PARALLEL_BLOCKLIST
         or file in CI_SERIAL_LIST
-        or file in JIT_EXECUTOR_TESTS
         or NUM_PROCS == 1
     )
 
@@ -1644,9 +1631,6 @@ def get_selected_tests(options) -> list[str]:
         options.exclude.append("test_openreg")
 
     # process exclusion
-    if options.exclude_jit_executor:
-        options.exclude.extend(JIT_EXECUTOR_TESTS)
-
     if options.exclude_distributed_tests:
         options.exclude.extend(DISTRIBUTED_TESTS)
 

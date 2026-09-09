@@ -630,7 +630,6 @@
   "test-config/inductor-micro-benchmark-cpu-x86",
   "test-config/inductor_torchbench",
   "test-config/inductor_torchbench_smoketest_perf",
-  "test-config/jit_legacy",
   "test-config/mps",
   "test-config/multigpu",
   "test-config/nogpu_AVX512",

@@ -360,11 +360,6 @@ test_tsan() {
   assert_git_not_dirty
 }
 
-test_python_legacy_jit() {
-  time python test/run_test.py --include test_jit_legacy --verbose
-  assert_git_not_dirty
-}
-
 test_python_shard() {
   if [[ -z "$NUM_TEST_SHARDS" ]]; then
     echo "NUM_TEST_SHARDS must be defined to run a Python test shard"
@@ -376,14 +371,14 @@ test_python_shard() {
 
   # modify LD_LIBRARY_PATH to ensure it has the conda env.
   # This set of tests has been shown to be buggy without it for the split-build
-  time python test/run_test.py --exclude-jit-executor --exclude-distributed-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --shard "$1" "$NUM_TEST_SHARDS" --verbose $PYTHON_TEST_EXTRA_OPTION --upload-artifacts-while-running
+  time python test/run_test.py --exclude-distributed-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --shard "$1" "$NUM_TEST_SHARDS" --verbose $PYTHON_TEST_EXTRA_OPTION --upload-artifacts-while-running
 
   assert_git_not_dirty
 }
 
 test_python() {
   # shellcheck disable=SC2086
-  time python test/run_test.py --exclude-jit-executor --exclude-distributed-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --verbose $PYTHON_TEST_EXTRA_OPTION
+  time python test/run_test.py --exclude-distributed-tests $EXCLUDE_CLAUSE $INCLUDE_CLAUSE --verbose $PYTHON_TEST_EXTRA_OPTION
   assert_git_not_dirty
 }
 
@@ -575,7 +570,6 @@ test_dynamo_wrapped_shard() {
   # Instead, use @skipIfTorchDynamo on your tests.
   time python test/run_test.py --dynamo \
     --exclude-inductor-tests \
-    --exclude-jit-executor \
     --exclude-distributed-tests \
     --exclude-torch-export-tests \
     --exclude-aot-dispatch-tests \
@@ -1707,13 +1701,6 @@ test_distributed_single_gpu() {
   test_distributed not-multigpu
 }
 
-test_quantization() {
-  echo "Testing quantization"
-
-  python test/test_quantization.py
-}
-
-
 test_custom_script_ops() {
   echo "Testing custom script operators"
 
@@ -1950,12 +1937,6 @@ EOF
 }
 
 
-test_cpp_extensions() {
-  # This is to test whether cpp extension build is compatible with current env. No need to test both ninja and no-ninja build
-  time python test/run_test.py --include test_cpp_extensions_aot_ninja --verbose
-  assert_git_not_dirty
-}
-
 test_vec256() {
   # This is to test vec256 instructions DEFAULT/AVX/AVX2 (platform dependent, some platforms might not support AVX/AVX2)
   if [[ "$BUILD_ENVIRONMENT" != *rocm* ]]; then
@@ -2148,10 +2129,6 @@ elif [[ "$TEST_CONFIG" == *vllm* ]]; then
     python -m cli.run test external vllm --test-plan "$TEST_CONFIG" --shard-id "$SHARD_NUMBER" --num-shards "$NUM_TEST_SHARDS"
 elif [[ "$TEST_CONFIG" == *torchtitan* ]]; then
   test_torchtitan
-elif [[ "$TEST_CONFIG" == 'jit_legacy' ]]; then
-  test_python_legacy_jit
-elif [[ "$TEST_CONFIG" == 'quantization' ]]; then
-  test_quantization
 elif [[ "${BUILD_ENVIRONMENT}" == *libtorch* ]]; then
   # TODO: run some C++ tests
   echo "no-op at the moment"
