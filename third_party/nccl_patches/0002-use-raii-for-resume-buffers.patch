@@ -1,0 +1,153 @@
+diff --git a/src/mem_manager.cc b/src/mem_manager.cc
+index b3bc36c..66e1e44 100644
+--- a/src/mem_manager.cc
++++ b/src/mem_manager.cc
+@@ -568,10 +568,10 @@ ncclResult_t ncclCommMemResume(struct ncclComm* comm) {
+   size_t restoredPeerBytes = 0;
+ 
+   int localBroadcastCount = 0;
+-  int* allCounts = nullptr;
++  ncclUniqueArrayPtr<int> allCounts;
+   int totalInfoCount = 0;
+-  ncclDynMemP2pHandleInfo* localInfos = nullptr;
+-  ncclDynMemP2pHandleInfo* allInfos = nullptr;
++  ncclUniqueArrayPtr<ncclDynMemP2pHandleInfo> localInfos;
++  ncclUniqueArrayPtr<ncclDynMemP2pHandleInfo> allInfos;
+ 
+   // Step 1: Restore all local memory
+   ncclDynMemEntry* entry = manager->entries;
+@@ -697,29 +697,23 @@ ncclResult_t ncclCommMemResume(struct ncclComm* comm) {
+ 
+   // Gather counts from all ranks using AllGather
+   if (comm->bootstrap != nullptr && comm->nRanks > 1) {
+-    // Allocate buffer for all counts
+-    allCounts = (int*)malloc(comm->nRanks * sizeof(int));
+-    if (allCounts == nullptr) {
++    ret = ncclCalloc(allCounts, comm->nRanks);
++    if (ret != ncclSuccess) {
+       WARN("MemManager: Failed to allocate allCounts");
+-      return ncclSystemError;
++      return ret;
+     }
+-    memset(allCounts, 0, comm->nRanks * sizeof(int));
+     allCounts[comm->rank] = localBroadcastCount;
+ 
+     // AllGather counts: each rank contributes sizeof(int) at its position
+-    ret = bootstrapAllGather(comm->bootstrap, allCounts, sizeof(int));
++    ret = bootstrapAllGather(comm->bootstrap, allCounts.get(), sizeof(int));
+     if (ret != ncclSuccess) {
+-      free(allCounts);
+       WARN("MemManager: AllGather counts failed");
+       return ret;
+     }
+ 
+     // Calculate total and offsets
+-    int* offsets = (int*)malloc(comm->nRanks * sizeof(int));
+-    if (offsets == nullptr) {
+-      free(allCounts);
+-      return ncclSystemError;
+-    }
++    ncclUniqueArrayPtr<int> offsets;
++    NCCLCHECKGOTO(ncclCalloc(offsets, comm->nRanks), ret, fail);
+ 
+     totalInfoCount = 0;
+     for (int r = 0; r < comm->nRanks; r++) {
+@@ -730,12 +724,7 @@ ncclResult_t ncclCommMemResume(struct ncclComm* comm) {
+     if (totalInfoCount > 0) {
+       // Prepare local info to send
+       int localAllocCount = localBroadcastCount > 0 ? localBroadcastCount : 1;
+-      localInfos = (ncclDynMemP2pHandleInfo*)malloc(localAllocCount * sizeof(ncclDynMemP2pHandleInfo));
+-      if (localInfos == nullptr) {
+-        free(allCounts);
+-        free(offsets);
+-        return ncclSystemError;
+-      }
++      NCCLCHECKGOTO(ncclCalloc(localInfos, localAllocCount), ret, fail);
+ 
+       int idx = 0;
+       entry = manager->entries;
+@@ -767,30 +756,21 @@ ncclResult_t ncclCommMemResume(struct ncclComm* comm) {
+       }
+ 
+       // Allocate buffer for all infos
+-      allInfos = (ncclDynMemP2pHandleInfo*)malloc(totalInfoCount * sizeof(ncclDynMemP2pHandleInfo));
+-      if (allInfos == nullptr) {
+-        free(allCounts);
+-        free(offsets);
+-        free(localInfos);
+-        return ncclSystemError;
+-      }
++      NCCLCHECKGOTO(ncclCalloc(allInfos, totalInfoCount), ret, fail);
+ 
+       // Copy local data to correct position
+       if (localBroadcastCount > 0) {
+-        memcpy(allInfos + offsets[comm->rank], localInfos, localBroadcastCount * sizeof(ncclDynMemP2pHandleInfo));
++        memcpy(allInfos.get() + offsets[comm->rank], localInfos.get(),
++               localBroadcastCount * sizeof(ncclDynMemP2pHandleInfo));
+       }
+ 
+       // Exchange using Send/Recv (send first, then receive to avoid deadlock)
+       for (int r = 0; r < comm->nRanks; r++) {
+         if (r != comm->rank && localBroadcastCount > 0) {
+-          ret = bootstrapSend(comm->bootstrap, r, 0xFEED, localInfos,
++          ret = bootstrapSend(comm->bootstrap, r, 0xFEED, localInfos.get(),
+                               localBroadcastCount * sizeof(ncclDynMemP2pHandleInfo));
+           if (ret != ncclSuccess) {
+             WARN("MemManager: Send to rank %d failed - handle exchange incomplete", r);
+-            free(offsets);
+-            free(allCounts);
+-            free(localInfos);
+-            free(allInfos);
+             return ret;
+           }
+         }
+@@ -798,21 +778,15 @@ ncclResult_t ncclCommMemResume(struct ncclComm* comm) {
+ 
+       for (int r = 0; r < comm->nRanks; r++) {
+         if (r != comm->rank && allCounts[r] > 0) {
+-          ret = bootstrapRecv(comm->bootstrap, r, 0xFEED, allInfos + offsets[r],
++          ret = bootstrapRecv(comm->bootstrap, r, 0xFEED, allInfos.get() + offsets[r],
+                               allCounts[r] * sizeof(ncclDynMemP2pHandleInfo));
+           if (ret != ncclSuccess) {
+             WARN("MemManager: Recv from rank %d failed - handle exchange incomplete", r);
+-            free(offsets);
+-            free(allCounts);
+-            free(localInfos);
+-            free(allInfos);
+             return ret;
+           }
+         }
+       }
+     }
+-
+-    free(offsets);
+   }
+ 
+   /*
+@@ -918,26 +892,14 @@ ncclResult_t ncclCommMemResume(struct ncclComm* comm) {
+          restoredLocalCount, restoredPeerCount, restoredLocalBytes, restoredPeerBytes);
+     ret = bootstrapBarrier(comm->bootstrap, comm->rank, comm->nRanks, 0xCAFE);
+     if (ret != ncclSuccess) {
+-      // Cleanup
+-      if (allCounts) free(allCounts);
+-      if (localInfos) free(localInfos);
+-      if (allInfos) free(allInfos);
+       WARN("MemManager: Final barrier failed during resume");
+       return ret;
+     }
+   }
+ 
+-  // Cleanup
+-  if (allCounts) free(allCounts);
+-  if (localInfos) free(localInfos);
+-  if (allInfos) free(allInfos);
+-
+   return ncclSuccess;
+ 
+ fail:
+-  if (allCounts) free(allCounts);
+-  if (localInfos) free(localInfos);
+-  if (allInfos) free(allInfos);
+   return ret;
+ }
+ 
