@@ -1,7 +1,16 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 5032f6e..184c596 100644
+index 5032f6e..a0ac9d5 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -22,7 +22,7 @@ add_compile_definitions(
+ set(ENV{NCCL_USE_CMAKE} "1")
+ 
+ project(NCCL VERSION ${NCCL_MAJOR}.${NCCL_MINOR}.${NCCL_PATCH}
+-        LANGUAGES CUDA CXX C)
++        LANGUAGES CUDA CXX)
+ 
+ include(GNUInstallDirs)
+ 
 @@ -70,36 +70,22 @@ if(DEBUG)
      set(CMAKE_BUILD_TYPE "Debug")
  endif()
@@ -162,7 +171,7 @@ index 5032f6e..184c596 100644
  
  # Library dependencies
  find_library(RT_LIBRARY NAMES rt)
-@@ -270,23 +221,17 @@ if(RT_LIBRARY)
+@@ -270,23 +221,11 @@ if(RT_LIBRARY)
  endif()
  
  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${DEBUG_HOST_FLAGS}")
@@ -184,13 +193,7 @@ index 5032f6e..184c596 100644
 -  add_subdirectory(plugins/tuner/example)
 -  add_subdirectory(plugins/env/example)
 -endif()
-+add_subdirectory(plugins/gin/example)
-+add_subdirectory(plugins/mixed/example)
-+add_subdirectory(plugins/net)
 +add_subdirectory(plugins/profiler/example)
-+add_subdirectory(plugins/rma/example)
-+add_subdirectory(plugins/tuner/example)
-+add_subdirectory(plugins/env/example)
  
  add_subdirectory(src)
  
