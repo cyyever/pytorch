@@ -24,7 +24,7 @@ The distribution name remains `torch` so packages declaring
 runtime variant, and source commit are encoded in the PEP 440 local version:
 
 ```text
-2.15.0.dev20260906+cuda.13.4.g0123abcd
+2.15.0.dev20260906+cuda.13.3.g0123abcd
 2.15.0.dev20260906+rocm.10.0.gfx1201.g0123abcd
 2.15.0.dev20260906+xpu.bmg.g0123abcd
 2.15.0.dev20260906+mps.apple.silicon.g0123abcd
