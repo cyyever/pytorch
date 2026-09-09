@@ -54,20 +54,33 @@ if(USE_NATIVE_ARCH)
   endif()
 endif()
 
-# ---[ x86 baseline. x86-64-v3 covers post-2020 mainstream x86 CPUs, including
-# AMD Zen 3 and Intel consumer parts without AVX-512. ATen still dispatches to
-# AVX-512 kernels when available. Use x86-64-v4 explicitly for AVX-512-only
-# deployments, or USE_NATIVE_ARCH for a machine-specific build.
-set(TORCH_X86_BASELINE "x86-64-v3" CACHE STRING "-march baseline for x86 builds")
+# ---[ x86 baseline. AMD wheel builders target Zen 4, while other x86 hosts use
+# the portable x86-64-v3 baseline. Explicit TORCH_X86_BASELINE values still win.
+set(_torch_x86_baseline_default "x86-64-v3")
+if(CPU_INTEL AND NOT CMAKE_CROSSCOMPILING)
+  cmake_host_system_information(
+      RESULT _torch_processor_description QUERY PROCESSOR_DESCRIPTION)
+  if(_torch_processor_description MATCHES "(^| )AMD( |$)")
+    set(_torch_x86_baseline_default "znver4")
+  endif()
+endif()
+set(TORCH_X86_BASELINE "${_torch_x86_baseline_default}" CACHE STRING
+    "-march baseline for x86 builds")
 if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
   check_cxx_compiler_flag("-march=${TORCH_X86_BASELINE}" COMPILER_SUPPORTS_X86_BASELINE)
   if(COMPILER_SUPPORTS_X86_BASELINE)
     string(APPEND CMAKE_C_FLAGS " -march=${TORCH_X86_BASELINE}")
     string(APPEND CMAKE_CXX_FLAGS " -march=${TORCH_X86_BASELINE}")
+    if(USE_ROCM)
+      string(APPEND CMAKE_HIP_FLAGS
+          " -Xarch_host -march=${TORCH_X86_BASELINE}")
+    endif()
   else()
     message(WARNING "Compiler does not support -march=${TORCH_X86_BASELINE}; building for generic x86-64.")
   endif()
 endif()
+unset(_torch_processor_description)
+unset(_torch_x86_baseline_default)
 
 # The ATen CPU kernels have no separate AVX2 slice any more (see
 # cmake/Codegen.cmake): the DEFAULT slice is the AVX2 tier. Check the macro the
