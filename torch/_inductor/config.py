@@ -2600,9 +2600,6 @@ class aot_inductor:
     # Whether the compiled .so should link to libtorch
     link_libtorch: bool = True
 
-    cross_target_platform: str | None = None
-
-
 # a convenient class that automatically sets a group of the configs in aot_inductor
 # it should only control the flags in aot_inductor.
 # it should not do anything else.

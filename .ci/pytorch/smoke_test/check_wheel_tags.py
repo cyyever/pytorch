@@ -60,8 +60,6 @@ def check_wheel_platform_tag() -> None:
     wheel_dir = os.getenv("PYTORCH_FINAL_PACKAGE_DIR", "")
 
     target_os = os.getenv("TARGET_OS", sys.platform)
-    if target_os in ("win32", "windows") and platform.machine().lower() == "arm64":
-        target_os = "windows-arm64"
     expected_python = f"cp{sys.version_info.major}{sys.version_info.minor}"
     import sysconfig
 

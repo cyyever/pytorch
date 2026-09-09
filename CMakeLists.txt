@@ -39,8 +39,8 @@
 #    out of third_party/, cmake/PackageData.cmake installs the non-Python
 #    package data (stubs, headers, templates) into torch/, and
 #    cmake/PostBuildSteps.cmake merges compile_commands.json and registers the
-#    install-time fixups (TORCH_STABLE_ONLY header wrapping, Windows runtime
-#    DLL and macOS OpenMP bundling).
+#    install-time fixups (TORCH_STABLE_ONLY header wrapping and macOS OpenMP
+#    bundling).
 # 9. Summary (cmake/Summary.cmake): print the resolved configuration.
 
 cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
@@ -306,7 +306,7 @@ set(CPU_INTEL OFF)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "(AMD64|x86_64)")
   set(CPU_INTEL ON)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)")
-  # Linux reports "aarch64", macOS "arm64", and native Windows on Arm "ARM64".
+  # Linux reports "aarch64" and macOS reports "arm64".
   # CMake MATCHES is case-sensitive, so accept each spelling.
   set(CPU_AARCH64 ON)
 endif()

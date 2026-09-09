@@ -126,7 +126,7 @@ if [[ "$PACKAGE_TYPE" =~ .*wheel.* && -n "$PYTORCH_BUILD_VERSION" && "$PYTORCH_B
     TRITON_VERSION=$(cat $PYTORCH_ROOT/.ci/pins/triton_xpu_version.txt)
     # triton-xpu has no cp315 wheel yet; gate it to Python < 3.15 (matching the
     # CUDA/ROCm triton requirements above) so 3.15 xpu wheels don't pull an
-    # unavailable triton-xpu. Applies to both Linux and Windows xpu.
+    # unavailable triton-xpu.
     XPU_TRITON_CONSTRAINT="python_version < '3.15'"
     TRITON_REQUIREMENT="triton-xpu~=${TRITON_VERSION}; ${XPU_TRITON_CONSTRAINT}"
     if [[ -n "$PYTORCH_BUILD_VERSION" && "$PYTORCH_BUILD_VERSION" =~ .*dev.* ]]; then

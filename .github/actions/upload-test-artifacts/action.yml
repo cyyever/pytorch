@@ -34,13 +34,12 @@ runs:
   steps:
     # Always set up uv and zip files first (needed for S3, reusable for GHA fallback)
     - name: Setup uv
-      if: ${{ runner.os != 'Windows' && !env.UV_PYTHON }}
+      if: ${{ !env.UV_PYTHON }}
       uses: pytorch/test-infra/.github/actions/setup-uv@main
       with:
         python-version: "3.12"
 
     - name: Zip artifacts for upload
-      if: runner.os != 'Windows'
       shell: bash
       env:
         FILE_SUFFIX: ${{ inputs.file-suffix }}
@@ -77,35 +76,6 @@ runs:
           uv run --no-project python -c "$ZIP_CMD" \
             test/test-reports/tlparse_output "tlparse-${FILE_SUFFIX}.zip" '**/*'
         fi
-
-    # Windows zip
-    - name: Zip JSONs for upload
-      if: runner.os == 'Windows'
-      shell: powershell
-      env:
-        FILE_SUFFIX: ${{ inputs.file-suffix }}
-      run: |
-        # -ir => recursive include all files in pattern
-        7z a "test-jsons-$Env:FILE_SUFFIX.zip" -ir'!test\test-reports\*.json'
-
-    - name: Zip test reports for upload
-      if: runner.os == 'Windows'
-      shell: powershell
-      env:
-        FILE_SUFFIX: ${{ inputs.file-suffix }}
-      run: |
-        # -ir => recursive include all files in pattern
-        7z a "test-reports-$Env:FILE_SUFFIX.zip" -ir'!test\test-reports\*.xml' -ir'!test\test-reports\*.csv'
-
-    - name: Zip usage log for upload
-      if: runner.os == 'Windows'
-      continue-on-error: true
-      shell: powershell
-      env:
-        FILE_SUFFIX: ${{ inputs.file-suffix }}
-      run: |
-        # -ir => recursive include all files in pattern
-        7z a "logs-$Env:FILE_SUFFIX.zip" 'usage_log.txt' -ir'!test\test-reports\*.log'
 
     # ===========================================
     # S3 upload (primary path)

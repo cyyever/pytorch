@@ -7,7 +7,7 @@ libtorch_cpu.so into a separate debug zip.
 
 Usage:
     python extract_libtorch_from_wheel.py \
-        --wheel-dir DIR --output-dir DIR --platform linux|macos|windows
+        --wheel-dir DIR --output-dir DIR --platform linux|macos
 """
 
 import argparse
@@ -68,10 +68,8 @@ def _is_lib_file(name: str, platform: str) -> bool:
     """Return True if the file looks like a library or header to include."""
     if platform == "linux":
         return ".so" in name or name.endswith(".a")
-    elif platform == "macos":
+    if platform == "macos":
         return name.endswith((".dylib", ".a"))
-    elif platform == "windows":
-        return name.endswith((".dll", ".lib", ".pdb"))
     return False
 
 
@@ -289,16 +287,6 @@ def copy_cmake(torch_dir: Path, libtorch_share: Path) -> None:
     shutil.copytree(torch_cmake, cmake_dest, dirs_exist_ok=True)
 
 
-def copy_bin(torch_dir: Path, libtorch_bin: Path, platform: str) -> None:
-    """Copy binary executables (mainly relevant for Windows)."""
-    if platform == "windows":
-        torch_lib = torch_dir / "lib"
-        if torch_lib.is_dir():
-            for item in torch_lib.iterdir():
-                if item.suffix == ".dll" and not should_exclude_lib(item.name):
-                    shutil.copy2(item, libtorch_bin / item.name)
-
-
 def write_metadata(libtorch_dir: Path, version: str, git_hash: str) -> None:
     (libtorch_dir / "build-version").write_text(version + "\n")
     (libtorch_dir / "build-hash").write_text(git_hash + "\n")
@@ -405,25 +393,16 @@ def create_libtorch_zip(
 
 
 def compute_zip_prefix(
-    platform: str, desired_cuda: str, libtorch_variant: str, arch: str
+    platform: str, desired_cuda: str, libtorch_variant: str
 ) -> str:
     """Compute the zip filename prefix matching existing naming conventions.
 
     Linux:  libtorch-shared-with-deps
     macOS:  libtorch-macos-arm64
-    Windows: libtorch-win-shared-with-deps (or libtorch-win-arm64-shared-with-deps)
-
-    The arch component keeps the Windows x86_64 and arm64 packages from
-    sharing a filename and overwriting each other in the upload bucket.
     """
     if platform == "macos":
         return "libtorch-macos-arm64"
-    elif platform == "windows":
-        if arch == "arm64":
-            return f"libtorch-win-arm64-{libtorch_variant}"
-        return f"libtorch-win-{libtorch_variant}"
-    else:
-        return f"libtorch-{libtorch_variant}"
+    return f"libtorch-{libtorch_variant}"
 
 
 def main() -> None:
@@ -437,7 +416,7 @@ def main() -> None:
     parser.add_argument(
         "--platform",
         required=True,
-        choices=["linux", "macos", "windows"],
+        choices=["linux", "macos"],
         help="Target platform",
     )
     parser.add_argument(
@@ -449,12 +428,6 @@ def main() -> None:
         "--libtorch-variant",
         default="shared-with-deps",
         help="Libtorch variant (shared-with-deps, etc.)",
-    )
-    parser.add_argument(
-        "--arch",
-        default="x86_64",
-        choices=["x86_64", "arm64"],
-        help="Target architecture (used to disambiguate Windows package names)",
     )
     parser.add_argument(
         "--git-hash",
@@ -502,15 +475,13 @@ def main() -> None:
             fix_rpath(libtorch_dir / "lib")
         copy_includes(torch_dir, libtorch_dir / "include")
         copy_cmake(torch_dir, libtorch_dir / "share")
-        copy_bin(torch_dir, libtorch_dir / "bin", args.platform)
-
         # Write metadata
         git_hash = args.git_hash or get_git_hash(torch_dir)
         write_metadata(libtorch_dir, version, git_hash)
 
         # Compute zip prefix
         zip_prefix = compute_zip_prefix(
-            args.platform, args.desired_cuda, args.libtorch_variant, args.arch
+            args.platform, args.desired_cuda, args.libtorch_variant
         )
 
         # Split debug symbols on Linux

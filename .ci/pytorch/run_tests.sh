@@ -9,7 +9,6 @@ set -eux -o pipefail
 #
 # TODO Except for a few tests, this entire file is a giant TODO. Why are these
 # tests # failing?
-# TODO deal with Windows
 
 # This script expects to be in the pytorch root folder
 if [[ ! -d 'test' || ! -f 'test/run_test.py' ]]; then
@@ -83,7 +82,7 @@ pip freeze
 ##############################################################################
 # Smoke tests
 ##############################################################################
-# TODO use check_binary.sh, which requires making sure it runs on Windows
+# TODO use check_binary.sh.
 pushd /
 echo "Smoke testing imports"
 python -c 'import torch'
@@ -94,14 +93,6 @@ if [[ "$(uname)" == 'Darwin' && "$package_type" == *wheel ]]; then
 else
     echo "Checking that MKL is available"
     python -c 'import torch; exit(0 if torch.backends.mkl.is_available() else 1)'
-fi
-
-if [[ "$OSTYPE" == "msys" ]]; then
-    GPUS=$(wmic path win32_VideoController get name)
-    if [[ ! "$GPUS" == *NVIDIA* ]]; then
-        echo "Skip CUDA tests for machines without a Nvidia GPU card"
-        exit 0
-    fi
 fi
 
 # Test that the version number is consistent during building and testing

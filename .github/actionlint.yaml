@@ -32,8 +32,6 @@ self-hosted-runner:
     - lf.linux.24xlarge
     - lf.linux.g5.4xlarge.nvidia.gpu
     - lf.linux.c7i.2xlarge
-    # Organization wide AWS Windows runners
-    # Windows ARM64 runners
     # Organization-wide AMD-hosted runners
     # MI2xx runners
     - linux.rocm.gpu

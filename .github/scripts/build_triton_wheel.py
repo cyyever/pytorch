@@ -106,8 +106,7 @@ def build_triton(
 
         # change built wheel name and version
         env["TRITON_WHEEL_NAME"] = triton_pkg_name
-        if sys.platform != "win32":
-            env["TRITON_EXT_ENABLED"] = "ON"
+        env["TRITON_EXT_ENABLED"] = "ON"
         if with_clang_ldd:
             env["TRITON_BUILD_WITH_CLANG_LLD"] = "1"
 
