@@ -221,6 +221,10 @@ def repo_root() -> Path:
     )
 
 
+def ci_scripts() -> Path:
+    return repo_root() / ".ci/scripts"
+
+
 def os_name() -> str:
     for line in Path("/etc/os-release").read_text().splitlines():
         if line.startswith("NAME="):
@@ -278,9 +282,8 @@ def cuda_version_from_env() -> str:
 
 def install_cuda_toolkit(cuda_version: str) -> None:
     """Stage install_cuda.sh + its required siblings, then run install_cuda."""
-    root = repo_root()
-    scripts = root / ".ci/scripts"
-    pins = root / ".ci/pins"
+    scripts = ci_scripts()
+    pins = repo_root() / ".ci/pins"
 
     with tempfile.TemporaryDirectory() as tmp:
         stage = Path(tmp)
@@ -421,7 +424,7 @@ def main() -> None:
     if arch == "x86_64" and not Path("/opt/intel/lib").is_dir():
         print("MKL not found, installing...")
         subprocess.run(
-            ["bash", str(repo_root() / ".ci/scripts/install_mkl.sh")],
+            ["bash", str(ci_scripts() / "install_mkl.sh")],
             check=True,
         )
 

@@ -53,7 +53,6 @@ jobs:
     with:
       build-environment: linux-jammy-cuda13.0-py3.10-gcc11-sm86
       docker-image-name: ci-image:pytorch-linux-jammy-cuda13.0-cudnn9-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       cuda-arch-list: '8.6'
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       runner: linux.4xlarge.memory
@@ -94,7 +93,6 @@ jobs:
     with:
       build-environment: linux-jammy-cuda13.2-py3.10-gcc11-sm86
       docker-image-name: ci-image:pytorch-linux-jammy-cuda13.2-cudnn9-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       cuda-arch-list: '8.6'
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       runner: linux.4xlarge.memory
@@ -135,7 +133,6 @@ jobs:
     with:
       build-environment: linux-jammy-py3.10-gcc11-build
       docker-image-name: ci-image:pytorch-linux-jammy-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       test-matrix: |
         { include: [

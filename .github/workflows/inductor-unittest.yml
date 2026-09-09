@@ -40,7 +40,6 @@ jobs:
     with:
       build-environment: linux-jammy-cuda13.0-py3.10-gcc11-sm86
       docker-image-name: ci-image:pytorch-linux-jammy-cuda13.0-cudnn9-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       cuda-arch-list: '8.6'
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       test-matrix: |
@@ -78,7 +77,6 @@ jobs:
     with:
       build-environment: linux-jammy-cuda13.2-py3.10-gcc11-sm86
       docker-image-name: ci-image:pytorch-linux-jammy-cuda13.2-cudnn9-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       cuda-arch-list: '8.6'
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       test-matrix: |
@@ -116,7 +114,6 @@ jobs:
     with:
       build-environment: linux-jammy-py3.12-gcc11-triton-cpu
       docker-image-name: ci-image:pytorch-linux-jammy-py3.12-triton-cpu
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       test-matrix: |
         { include: [
@@ -147,7 +144,6 @@ jobs:
     with:
       build-environment: linux-jammy-py3.10-gcc11-build
       docker-image-name: ci-image:pytorch-linux-jammy-py3-gcc11-inductor-benchmarks
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       test-matrix: |
         { include: [
@@ -195,7 +191,6 @@ jobs:
       runner_prefix: "${{ needs.get-label-type.outputs.label-type }}"
       build-environment: linux-jammy-py${{ matrix.python-version }}-clang21
       docker-image-name: ci-image:pytorch-linux-jammy-py${{ matrix.python-version }}-clang21
-      ci-docker-hash: ${{ needs.get-label-type.outputs.ci-docker-hash }}
       test-matrix: |
         { include: [
           { config: "inductor_core", shard: 1, num_shards: 2, runner: "${{ needs.get-label-type.outputs.label-type }}linux.c7i.2xlarge" },
@@ -214,7 +209,7 @@ jobs:
         python-version: ['3.11', '3.12', '3.13']
     with:
       build-environment: linux-jammy-py${{ matrix.python-version }}-clang21
-      docker-image: 308535385114.dkr.ecr.us-east-1.amazonaws.com/pytorch/ci-image:pytorch-linux-jammy-py${{ matrix.python-version }}-clang21-${{ needs.get-label-type.outputs.ci-docker-hash }}
+      docker-image: 308535385114.dkr.ecr.us-east-1.amazonaws.com/pytorch/ci-image:pytorch-linux-jammy-py${{ matrix.python-version }}-clang21
       test-matrix: ${{ needs.inductor-cpu-core-build.outputs.test-matrix }}
       python-version: "${{ matrix.python-version }}"
       compiler: clang21

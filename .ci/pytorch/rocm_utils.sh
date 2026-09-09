@@ -17,7 +17,7 @@ build_rocm_ck_wheel() {
 
   echo "Building rocm-composable-kernel (ck4inductor) wheel at $(date)"
 
-  local pin_file="${ROCM_UTILS_DIR}/../docker/ci_commit_pins/rocm-composable-kernel.txt"
+  local pin_file="${ROCM_UTILS_DIR}/../pins/rocm-composable-kernel.txt"
   if [[ ! -f "$pin_file" ]]; then
     echo "build_rocm_ck_wheel: pin file not found at $pin_file" >&2
     return 1

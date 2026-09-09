@@ -1,6 +1,5 @@
 #pragma once
 
-#include <condition_variable>
 #include <functional>
 #include <stop_token>
 #include <thread>
@@ -106,13 +105,8 @@ class LayoutPlanner {
   void initialize_vectors(
       c10::FastMap<const Value*, AllocationSpec> value_to_allocation_spec);
 
-  void run_periodic(std::stop_token st, const std::function<void()>& f);
+  void run_periodic(std::stop_token st);
   void create_plan();
-
-  // the interval worker thread that refreshes the plan waits on cv_, so both
-  // it and mutex_ must outlive the join; worker_ itself is declared last.
-  std::condition_variable_any cv_;
-  std::mutex mutex_;
 
   std::vector<ValueId> unplanned_values_;
 

@@ -1,5 +1,8 @@
 #include <torch/nativert/executor/memory/LayoutPlanner.h>
 
+#include <condition_variable>
+#include <mutex>
+
 
 #include <torch/nativert/executor/ExecutionPlanner.h>
 #include <torch/nativert/executor/memory/AliasAnalyzer.h>
@@ -185,21 +188,20 @@ void LayoutPlanner::start_worker_if_not_started() {
     // make sure plan is populated by the time this
     // returns for the first time :P
     create_plan();
-    worker_ = std::jthread([this](std::stop_token st) {
-      run_periodic(st, [this] { create_plan(); });
-    });
+    worker_ = std::jthread([this](std::stop_token st) { run_periodic(st); });
   });
 }
 
-
-void LayoutPlanner::run_periodic(
-    std::stop_token st,
-    const std::function<void()>& f) {
-  std::unique_lock<std::mutex> l(mutex_);
-  while (!cv_.wait_for(l, st, settings_.planningInterval(), [&st]() {
+void LayoutPlanner::run_periodic(std::stop_token st) {
+  // Only this thread waits, so the mutex and condition variable are local; the
+  // stop callback wait_for registers is torn down before they go out of scope.
+  std::mutex m;
+  std::condition_variable_any cv;
+  std::unique_lock l(m);
+  while (!cv.wait_for(l, st, settings_.planningInterval(), [&st]() {
     return st.stop_requested();
   })) {
-    f();
+    create_plan();
   }
 }
 
