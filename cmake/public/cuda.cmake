@@ -67,42 +67,13 @@ enable_language(CUDA)
 set(CMAKE_CUDA_STANDARD 23)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-# nvcc's host pass, and only it, is pointed at libstdc++ 15. nvcc's EDG frontend
-# has not implemented P1787R6, the C++23 relaxation that lets a ref-qualified
-# and a non-ref-qualified member function share one overload set; libstdc++ 16
-# relies on it for P2438's `basic_string::substr() &&`, so under nvcc a bare
-# `#include <string>` fails to compile. libstdc++ 15 predates P2438.
-#
-# Scoped to CMAKE_CUDA_FLAGS on purpose: host C++ and every other backend keep
-# the standard library they were configured with. The halves then disagree on
-# libstdc++ minor version, which is the ordinary `-ccbin <older gcc>` situation
-# and safe across a shared ABI -- but it does mean shared headers must not
-# branch on library feature-test macros, since the two passes see different
-# values for them.
-set(CUDA_HOST_GCC_INSTALL_DIR "" CACHE PATH
-    "GCC install directory whose libstdc++ nvcc's host pass compiles against")
-
-if(NOT CUDA_HOST_GCC_INSTALL_DIR)
-  file(GLOB _cuda_gcc15_dirs LIST_DIRECTORIES true "/usr/lib/gcc/*/15" "/usr/lib/gcc/*/15.*")
-  list(SORT _cuda_gcc15_dirs COMPARE NATURAL ORDER DESCENDING)
-  foreach(_dir ${_cuda_gcc15_dirs})
-    if(IS_DIRECTORY "${_dir}/include/c++")
-      set(CUDA_HOST_GCC_INSTALL_DIR "${_dir}" CACHE PATH "" FORCE)
-      break()
-    endif()
-  endforeach()
-endif()
-
-if(NOT CUDA_HOST_GCC_INSTALL_DIR)
-  message(FATAL_ERROR
-    "Device code is built as C++23, which nvcc can only do against libstdc++ 15 "
-    "or older. No such toolchain was found under /usr/lib/gcc. Install GCC 15, "
-    "or set CUDA_HOST_GCC_INSTALL_DIR to a directory holding an older one.")
-endif()
-
+# nvcc's EDG frontend has not implemented P1787R6, but libstdc++ 16 uses it
+# for the C++23 basic_string::substr() && overloads. Preload <string> with those
+# overloads hidden, then restore C++23 mode for the rest of each CUDA source.
+set(PYTORCH_CUDA_HOST_COMPILER_COMPAT
+    "${PROJECT_SOURCE_DIR}/cmake/cuda_host_compiler_compat.h")
 string(APPEND CMAKE_CUDA_FLAGS
-       " -Xcompiler --gcc-install-dir=${CUDA_HOST_GCC_INSTALL_DIR}")
-message(STATUS "CUDA host pass uses libstdc++ from ${CUDA_HOST_GCC_INSTALL_DIR}")
+       " --pre-include=${PYTORCH_CUDA_HOST_COMPILER_COMPAT}")
 
 
 if(NOT CMAKE_CUDA_COMPILER_VERSION VERSION_EQUAL CUDAToolkit_VERSION)

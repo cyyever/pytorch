@@ -1,0 +1,177 @@
+diff --git a/src/include/alloc.h b/src/include/alloc.h
+index 18383b8..5215eca 100644
+--- a/src/include/alloc.h
++++ b/src/include/alloc.h
+@@ -40,8 +40,7 @@ constexpr size_t ncclSizeOfT<void>() {
+   return 1;
+ }
+
+-// C++14-compatible wrapper that captures function pointers through template parameters.
+-template <typename FunctionPtr, FunctionPtr Function>
++template <auto Function>
+ struct ncclDeleterWrapper {
+   template <typename... Args>
+   constexpr auto operator()(Args&&... args) const {
+@@ -49,7 +48,7 @@ struct ncclDeleterWrapper {
+   }
+ }; // struct ncclDeleterWrapper
+
+-using ncclDeleterFree = ncclDeleterWrapper<decltype(&std::free), std::free>;
++using ncclDeleterFree = ncclDeleterWrapper<std::free>;
+ template <typename T>
+ using ncclUniquePtr = std::unique_ptr<T, ncclDeleterFree>;
+ template <typename T>
+diff --git a/src/misc/gdrwrap.cc b/src/misc/gdrwrap.cc
+index 4c66e5a..c07cf08 100644
+--- a/src/misc/gdrwrap.cc
++++ b/src/misc/gdrwrap.cc
+@@ -126,6 +126,69 @@ static int ncclGdrCudaError(CUresult status, const char* call) {
+   return (int)status;
+ }
+
++#if defined(NCCL_OS_LINUX) && CUDA_VERSION >= 11070
++class ncclGdrContextGuard {
++ public:
++  int activate(CUdevice dev) {
++    CUresult status = CUPFN(cuCtxGetCurrent(&previous_));
++    if (status != CUDA_SUCCESS) return ncclGdrCudaError(status, "cuCtxGetCurrent");
++    if (previous_ != nullptr) return 0;
++
++    device_ = dev;
++    status = CUPFN(cuDevicePrimaryCtxRetain(&current_, device_));
++    if (status != CUDA_SUCCESS) return ncclGdrCudaError(status, "cuDevicePrimaryCtxRetain");
++    retained_ = true;
++
++    status = CUPFN(cuCtxSetCurrent(current_));
++    if (status != CUDA_SUCCESS) return ncclGdrCudaError(status, "cuCtxSetCurrent");
++    switched_ = true;
++    return 0;
++  }
++
++  ~ncclGdrContextGuard() {
++    if (switched_) {
++      CUresult status = CUPFN(cuCtxSetCurrent(previous_));
++      if (status != CUDA_SUCCESS) (void)ncclGdrCudaError(status, "cuCtxSetCurrent(previous)");
++    }
++    if (retained_) {
++      CUresult status = CUPFN(cuDevicePrimaryCtxRelease(device_));
++      if (status != CUDA_SUCCESS) (void)ncclGdrCudaError(status, "cuDevicePrimaryCtxRelease");
++    }
++  }
++
++ private:
++  CUdevice device_{};
++  CUcontext current_ = nullptr;
++  CUcontext previous_ = nullptr;
++  bool retained_ = false;
++  bool switched_ = false;
++};
++
++class ncclGdrFd {
++ public:
++  int* data() {
++    return &fd_;
++  }
++
++  int get() const {
++    return fd_;
++  }
++
++  int release() {
++    int fd = fd_;
++    fd_ = -1;
++    return fd;
++  }
++
++  ~ncclGdrFd() {
++    if (fd_ >= 0) (void)close(fd_);
++  }
++
++ private:
++  int fd_ = -1;
++};
++#endif
++
+ static int ncclGdrDmaBufSupported() {
+ #if defined(NCCL_OS_LINUX) && CUDA_VERSION >= 11070
+   int driverVersion = 0;
+@@ -195,12 +258,6 @@ static int ncclGdrDmaBufPin(gdr_t g, unsigned long addr, size_t size, uint32_t f
+   CUdevice dev;
+   int dmabufSupported = 0;
+   int coherent = 0;
+-  int fd = -1;
+-  CUcontext ctx = nullptr;
+-  CUcontext prevCtx = nullptr;
+-  bool switchedCtx = false;
+-  bool retainedPrimaryCtx = false;
+-  int ret = 0;
+   ncclGdrDmaBufMapping* mapping = nullptr;
+
+   CUresult status =
+@@ -220,33 +277,17 @@ static int ncclGdrDmaBufPin(gdr_t g, unsigned long addr, size_t size, uint32_t f
+     CUPFN(cuDeviceGetAttribute(&coherent, CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES, dev));
+   if (status != CUDA_SUCCESS) coherent = 0;
+
+-  status = CUPFN(cuCtxGetCurrent(&prevCtx));
+-  if (status != CUDA_SUCCESS) return ncclGdrCudaError(status, "cuCtxGetCurrent");
+-  if (prevCtx == nullptr) {
+-    status = CUPFN(cuDevicePrimaryCtxRetain(&ctx, dev));
+-    if (status != CUDA_SUCCESS) return ncclGdrCudaError(status, "cuDevicePrimaryCtxRetain");
+-    retainedPrimaryCtx = true;
+-
+-    status = CUPFN(cuCtxSetCurrent(ctx));
+-    if (status != CUDA_SUCCESS) {
+-      ret = ncclGdrCudaError(status, "cuCtxSetCurrent");
+-      goto cleanup;
+-    }
+-    switchedCtx = true;
+-  }
++  ncclGdrContextGuard context;
++  int ret = context.activate(dev);
++  if (ret != 0) return ret;
+
+-  status = CUPFN(cuMemGetHandleForAddressRange((void*)&fd, (CUdeviceptr)alignedPtr, alignedSize,
++  ncclGdrFd fd;
++  status = CUPFN(cuMemGetHandleForAddressRange((void*)fd.data(), (CUdeviceptr)alignedPtr, alignedSize,
+                                                CU_MEM_RANGE_HANDLE_TYPE_DMA_BUF_FD, dmabufFlags));
+-  if (status != CUDA_SUCCESS) {
+-    ret = ncclGdrCudaError(status, "cuMemGetHandleForAddressRange");
+-    goto cleanup;
+-  }
++  if (status != CUDA_SUCCESS) return ncclGdrCudaError(status, "cuMemGetHandleForAddressRange");
+
+-  if (ncclCalloc(&mapping, 1) != ncclSuccess) {
+-    ret = ENOMEM;
+-    goto cleanup;
+-  }
+-  mapping->fd = fd;
++  if (ncclCalloc(&mapping, 1) != ncclSuccess) return ENOMEM;
++  mapping->fd = fd.release();
+   mapping->va = addr;
+   mapping->pageOffset = pageOffset;
+   mapping->mappedSize = alignedSize;
+@@ -261,21 +302,10 @@ static int ncclGdrDmaBufPin(gdr_t g, unsigned long addr, size_t size, uint32_t f
+   TRACE(NCCL_INIT,
+         "GDRCOPY internal DMA-BUF pin: devVa 0x%lx alignedVa 0x%lx size %zu alignedSize %zu pageOffset %zu pageSize "
+         "%u fd %d flags 0x%x dmabufFlags 0x%llx cudaDev %d mappingType %s",
+-        addr, (unsigned long)alignedPtr, size, alignedSize, pageOffset, mapping->pageSize, fd, flags, dmabufFlags,
++        addr, (unsigned long)alignedPtr, size, alignedSize, pageOffset, mapping->pageSize, mapping->fd, flags,
++        dmabufFlags,
+         deviceOrdinal, ncclGdrMappingTypeName(mapping->mappingType));
+-  fd = -1;
+-
+-cleanup:
+-  if (ret != 0 && fd >= 0) (void)close(fd);
+-  if (switchedCtx) {
+-    CUresult cleanupStatus = CUPFN(cuCtxSetCurrent(prevCtx));
+-    if (cleanupStatus != CUDA_SUCCESS) (void)ncclGdrCudaError(cleanupStatus, "cuCtxSetCurrent(previous)");
+-  }
+-  if (retainedPrimaryCtx) {
+-    CUresult cleanupStatus = CUPFN(cuDevicePrimaryCtxRelease(dev));
+-    if (cleanupStatus != CUDA_SUCCESS) (void)ncclGdrCudaError(cleanupStatus, "cuDevicePrimaryCtxRelease");
+-  }
+-  return ret;
++  return 0;
+ #else
+   return ENOTSUP;
+ #endif
