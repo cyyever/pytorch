@@ -2,6 +2,7 @@
 
 #include <condition_variable>
 #include <functional>
+#include <stop_token>
 #include <thread>
 
 #include <c10/macros/Macros.h>
@@ -51,9 +52,6 @@ class LayoutPlanner {
           kernelSchemas,
       const std::vector<bool>& persistentValues,
       const torch::nativert::LayoutPlannerSettings& settings);
-  TORCH_API // TODO Doesn't work on msvc.
-      ~LayoutPlanner();
-
   LayoutPlanner(LayoutPlanner&& other) = delete;
   LayoutPlanner(const LayoutPlanner& other) = delete;
   LayoutPlanner operator=(LayoutPlanner&& other) = delete;
@@ -108,16 +106,13 @@ class LayoutPlanner {
   void initialize_vectors(
       c10::FastMap<const Value*, AllocationSpec> value_to_allocation_spec);
 
-  void run_periodic(const std::function<void()>& f);
+  void run_periodic(std::stop_token st, const std::function<void()>& f);
   void create_plan();
 
-  // variables for managing the state of the
-  // interval worker thread that refreshes
-  // the plan
-  std::condition_variable cv_;
+  // the interval worker thread that refreshes the plan waits on cv_, so both
+  // it and mutex_ must outlive the join; worker_ itself is declared last.
+  std::condition_variable_any cv_;
   std::mutex mutex_;
-  bool stopped_{false};
-  std::thread worker_;
 
   std::vector<ValueId> unplanned_values_;
 
@@ -139,6 +134,9 @@ class LayoutPlanner {
   AliasAnalyzer alias_analyzer_;
 #endif
   torch::nativert::LayoutPlannerSettings settings_;
+
+  // Last member: ~jthread joins, and the worker reads every member above.
+  std::jthread worker_;
 };
 
 } // namespace torch::nativert
