@@ -79,7 +79,6 @@ TESTS = discover_tests(
     blocklisted_tests=[
         "custom_operator/test_custom_ops",
         "test_cpp_extensions_aot",
-        "test_determination",
         "test_kernel_launch_checks",
         "test_throughput_benchmark",
         "distributed/bin/test_script",
