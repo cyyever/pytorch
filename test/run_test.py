@@ -2298,7 +2298,7 @@ def check_pip_packages() -> None:
             version(pkg)
     except PackageNotFoundError:
         print_to_stderr(
-            f"Missing pip dependency: {pkg}, please run `pip install -r .ci/docker/requirements-ci.txt`"
+            f"Missing pip dependency: {pkg}, please run `pip install -r .ci/requirements-ci.txt`"
         )
         sys.exit(1)
 

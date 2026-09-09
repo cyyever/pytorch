@@ -461,17 +461,6 @@ IGNORABLE_FAILED_CHECKS_THESHOLD = 10
 REVIEWS_PER_PAGE = 100
 REVIEW_PAGE_LIMIT = 10
 
-# CI docker images are keyed by the git tree hash of the .ci/docker directory
-# (see .github/workflows/docker-builds.yml, which tags the images it builds with
-# `git rev-parse HEAD:.ci/docker`).  A PR that touches these files must have its
-# images pre-built and pushed to ECR by the docker-builds (ciflow/docker)
-# workflow, and the .ci/docker tree hash of the merge commit must match the tree
-# hash that was actually built.  If another docker-affecting PR lands in the
-# skew window, the merge commit would reference an image tag that was never
-# built, leaving every downstream trunk job unable to find its image (see the
-# #190927 / #186302 land race).
-DOCKER_CI_PATH = ".ci/docker"
-DOCKER_BUILDS_WORKFLOW_NAME = "docker-builds"
 
 
 def iter_issue_timeline_until_comment(
@@ -587,28 +576,6 @@ def get_check_run_name_prefix(workflow_run: Any) -> str:
 
 def is_passing_status(status: str | None) -> bool:
     return status is not None and status.upper() in ["SUCCESS", "SKIPPED", "NEUTRAL"]
-
-
-def is_docker_affecting_files(files: Iterable[str]) -> bool:
-    """Whether any of the given files change the CI docker image tree hash.
-
-    The docker image tag is derived purely from the .ci/docker tree, so only
-    changes under that directory matter (changes to docker-builds.yml or
-    .lintrunner.toml re-trigger the build workflow but do not change the tag).
-    """
-    return any(f == DOCKER_CI_PATH or f.startswith(f"{DOCKER_CI_PATH}/") for f in files)
-
-
-def get_docker_build_checks(checks: JobNameToStateDict) -> JobNameToStateDict:
-    """Return the subset of checks that belong to the docker-builds workflow."""
-    return {
-        name: check
-        for name, check in checks.items()
-        if name == DOCKER_BUILDS_WORKFLOW_NAME
-        or name.startswith(f"{DOCKER_BUILDS_WORKFLOW_NAME} / ")
-    }
-
-
 def add_workflow_conclusions(
     checksuites: Any,
     get_next_checkruns_page: Callable[[list[dict[str, dict[str, Any]]], int, Any], Any],
@@ -1025,11 +992,6 @@ class GitHubPR:
     def get_changed_submodules(self) -> list[str]:
         submodules = self.get_submodules()
         return [f for f in self.get_changed_files() if f in submodules]
-
-    def is_docker_affecting(self) -> bool:
-        """Whether this PR modifies files that change the CI docker image tag."""
-        return is_docker_affecting_files(self.get_changed_files())
-
     def has_invalid_submodule_updates(self) -> bool:
         """Submodule updates in PR are invalid if submodule keyword
         is not mentioned in neither the title nor body/description
@@ -1533,14 +1495,6 @@ class GitHubPR:
             ignore_current_checks=ignore_current_checks,
         )
 
-        # A ghstack merge lands all open PRs below this one. Use the topmost
-        # docker-affecting PR because its cumulative head has the final docker
-        # tree for which images must have been built. Enforced even on force
-        # merges.
-        docker_pr = get_topmost_docker_pr(prs_to_merge)
-        if docker_pr is not None:
-            check_docker_builds_ready(docker_pr)
-
         # Dependabot commits are authored/signed by the bot; merge them through
         # GitHub's squash+merge API so that signature is preserved and dependabot
         # can track the merge, instead of re-authoring a squash commit locally.
@@ -1554,10 +1508,6 @@ class GitHubPR:
                 comment_id,
                 ghstack_prs=ghstack_prs,
             )
-
-            # Log, but do not block on, a docker land race.
-            if docker_pr is not None:
-                warn_on_docker_merge_skew(repo, docker_pr)
 
             repo.push(self.default_branch(), dry_run)
             # When the merge process reaches this part, we can assume that the
@@ -2144,104 +2094,6 @@ def check_greenlight_reviewed_head_sha(
         raise MandatoryChecksMissingError(result.message)
     if result.verdict is GuardVerdict.DENY:
         raise MergeRuleFailedError(result.message)
-
-
-def get_topmost_docker_pr(prs: list[GitHubPR]) -> GitHubPR | None:
-    """Find the highest docker-affecting PR in a bottom-to-top stack."""
-    return next((pr for pr in reversed(prs) if pr.is_docker_affecting()), None)
-
-
-def check_docker_builds_ready(pr: GitHubPR) -> None:
-    """Block merge of a docker-affecting PR unless its docker images have been
-    pre-built.
-
-    PRs that change .ci/docker must run the docker-builds (ciflow/docker)
-    workflow so the images are built and pushed to ECR before landing.  If they
-    aren't, every trunk job that needs one of those images fails because it
-    can't find the image (see the #190927 / #186302 land race).  This gate is
-    enforced even for force merges, since -f is exactly what bypassed it before.
-    """
-    if not pr.is_docker_affecting():
-        return
-
-    docker_checks = get_docker_build_checks(pr.get_checkrun_conclusions())
-
-    if not docker_checks:
-        raise MergeRuleFailedError(
-            f"This PR changes files under {DOCKER_CI_PATH}/, but the "
-            f"`{DOCKER_BUILDS_WORKFLOW_NAME}` workflow has not run on it. The CI "
-            "docker images must be pre-built and pushed to ECR before this lands, "
-            "otherwise trunk jobs will not be able to find the image they need. "
-            "Please add the `ciflow/docker` label to this PR, wait for the docker "
-            "builds to finish, and then re-issue the merge command."
-        )
-
-    pending = sorted(name for name, c in docker_checks.items() if c.status is None)
-    failed = sorted(
-        name
-        for name, c in docker_checks.items()
-        if c.status is not None and not is_passing_status(c.status)
-    )
-
-    if pending:
-        # Raise MandatoryChecksMissingError so that a normal (non-force) merge
-        # keeps retrying until the docker builds finish, mirroring how other
-        # mandatory checks are waited on.
-        raise MandatoryChecksMissingError(
-            f"This PR changes files under {DOCKER_CI_PATH}/, so the "
-            f"`{DOCKER_BUILDS_WORKFLOW_NAME}` builds must finish before merging. "
-            f"Still waiting for {len(pending)} docker build job(s), the first few "
-            f"are: {', '.join(pending[:5])}"
-        )
-
-    if failed:
-        raise MergeRuleFailedError(
-            f"This PR changes files under {DOCKER_CI_PATH}/, so the "
-            f"`{DOCKER_BUILDS_WORKFLOW_NAME}` builds must all pass before merging, "
-            f"but {len(failed)} of them failed, the first few are: "
-            f"{', '.join(failed[:5])}. The docker images could not be built, so "
-            "trunk jobs would be unable to find them. Please fix the docker build "
-            "and re-run `ciflow/docker` before merging."
-        )
-
-
-def warn_on_docker_merge_skew(repo: GitRepo, pr: GitHubPR) -> None:
-    """Log when a docker-affecting PR raced with another docker change.
-
-    The CI docker images are tagged by the git tree hash of .ci/docker, so a
-    docker change landing on the base after this PR's images were built leaves
-    the merge commit asking for an untested tree. This used to refuse the merge
-    (#191508); it now only warns, since docker-builds.yml publishes the merged
-    tree's images on push and jobs wait for them.
-
-    Must be called after the merge commit has been created locally.
-    """
-    if not pr.is_docker_affecting():
-        return
-
-    # HEAD is the freshly created (squash/cherry-picked) merge commit.
-    # A wholesale deletion of the directory intentionally fails this lookup.
-    merge_commit_tree = repo.rev_parse(f"HEAD:{DOCKER_CI_PATH}")
-
-    # Compare against the tree that CI actually built and tested on the PR head.
-    pr_head_sha = pr.last_commit_sha()
-    # The PR head commit may not be present locally (for example, for a fork
-    # PR), so make sure we have the object before reading its tree.
-    repo.fetch(pr_head_sha)
-    pr_head_tree = repo.rev_parse(f"{pr_head_sha}:{DOCKER_CI_PATH}")
-
-    if merge_commit_tree != pr_head_tree:
-        print(
-            f"WARNING: docker land race on PR #{pr.pr_num}: the {DOCKER_CI_PATH} "
-            f"tree of the merge commit ({merge_commit_tree}) does not match the "
-            f"tree that ciflow/docker built and tested on the PR head "
-            f"({pr_head_tree}). Another docker-affecting change landed on the base "
-            "branch after these images were built, so the first trunk jobs after "
-            "this merge may wait for docker-builds to publish the merged tree's "
-            "images, or rebuild them locally. Merging anyway."
-        )
-
-
 def checks_to_str(checks: list[tuple[str, str | None]]) -> str:
     return ", ".join(f"[{c[0]}]({c[1]})" if c[1] is not None else c[0] for c in checks)
 

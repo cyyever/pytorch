@@ -32,14 +32,6 @@ a `.venv` directory in the project root or its parent directory. If found,
 activate it and retry. If no `.venv` is found, stop and ask the user if an
 environment is needed. Do NOT try to find alternatives or install these tools.
 
-# CI Docker Images
-
-The `.ci/docker/` directory is content-hashed to determine whether Docker images
-need rebuilding. Any file change inside `.ci/docker/` (including the README)
-changes the hash and triggers a full Docker image rebuild. Do not make changes
-in this directory unless you intend to rebuild Docker images. When Docker builds
-are broken (e.g., due to an upstream Ubuntu outage), avoid touching this
-directory so you don't force a rebuild against the broken state.
 
 # Build
 

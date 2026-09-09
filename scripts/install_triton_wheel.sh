@@ -9,12 +9,12 @@ if [[ -z "${USE_XPU}" ]]; then
     # Default install from PyTorch source
 
     TRITON_PACKAGE="triton"
-    TRITON_VERSION="$(cat .ci/docker/triton_version.txt)"
-    TRITON_COMMIT_ID="$(head -c 8 .ci/docker/ci_commit_pins/triton.txt)"
+    TRITON_VERSION="$(cat .ci/pins/triton_version.txt)"
+    TRITON_COMMIT_ID="$(head -c 8 .ci/pins/triton.txt)"
 else
     TRITON_PACKAGE="triton-xpu"
-    TRITON_VERSION="$(cat .ci/docker/triton_xpu_version.txt)"
-    TRITON_COMMIT_ID="$(head -c 8 .ci/docker/ci_commit_pins/triton-xpu.txt)"
+    TRITON_VERSION="$(cat .ci/pins/triton_xpu_version.txt)"
+    TRITON_COMMIT_ID="$(head -c 8 .ci/pins/triton-xpu.txt)"
 fi
 
 if [[ "$BRANCH" =~ .*release.* ]]; then

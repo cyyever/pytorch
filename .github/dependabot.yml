@@ -2,7 +2,7 @@ version: 2
 updates:
   # Update to the latest transformers version with dependabot
   - package-ecosystem: "pip"
-    directory: "/.ci/docker/ci_commit_pins"
+    directory: "/.ci/pins"
     schedule:
       interval: "daily"
     target-branch: "main"

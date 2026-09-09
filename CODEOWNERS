@@ -905,12 +905,9 @@
 #
 # [infra_ci]
 /.ci/ @pytorch/pytorch-dev-infra
-/.ci/docker/ubuntu-rocm/ @jeffdaily
-/.ci/docker/common/install_roc*.sh @jeffdaily
-/.ci/docker/common/install_amdsmi.sh @jeffdaily
-/.ci/docker/ci_commit_pins/rocm-*.txt @jeffdaily
-/.ci/docker/ci_commit_pins/triton.txt @desertfire @Chillee @eellison @jeffdaily @jataylo @jithunnair-amd @pruthvistony
-/.ci/docker/ci_commit_pins/triton-xpu.txt @EikanWang @gujinghui
+/.ci/pins/rocm-*.txt @jeffdaily
+/.ci/pins/triton.txt @desertfire @Chillee @eellison @jeffdaily @jataylo @jithunnair-amd @pruthvistony
+/.ci/pins/triton-xpu.txt @EikanWang @gujinghui
 #
 # [infra_github_automation]
 /.github/ @pytorch/pytorch-dev-infra
@@ -919,7 +916,6 @@
 # /.ci/manywheel/
 # /.coveragerc
 # /.ctags.d/
-# /.dockerignore
 # /.editorconfig
 # /.gdbinit
 # /.git-blame-ignore-revs
@@ -929,7 +925,6 @@
 # /.spin/
 # /BUCK.oss
 # /CMakeLists.txt
-# /Dockerfile
 # /Makefile
 # /buckbuild.bzl
 # /build.bzl
@@ -937,7 +932,6 @@
 # /cmake/
 # /codex_setup.sh
 # /defs.bzl
-# /docker.Makefile
 # /pt_ops.bzl
 # /pt_template_srcs.bzl
 # /pyproject.toml

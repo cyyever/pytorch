@@ -38,7 +38,7 @@ def find_cupti_header() -> Path | None:
 
     1. ``CUPTI_INCLUDE_DIR`` -- explicit override for out-of-tree setups.
     2. ``/usr/local/cupti-headers-<major.minor>`` -- the CUPTI redist headers
-       staged into the CI Docker image by ``.ci/docker/common/install_cuda.sh``
+       staged into the CI Docker image by ``.ci/scripts/install_cuda.sh``
        (``install_cupti_headers``); the highest version present wins.
     3. The ``nvidia-cuda-cupti`` wheel (namespace package ``nvidia.cu13``) -- a
        convenience fallback for local builds where the wheel is already installed.

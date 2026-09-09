@@ -65,7 +65,7 @@ jobs:
         run: |
           # Replace symlink with actual file
           rm docs/requirements.txt || true
-          cp .ci/docker/requirements-docs.txt docs/requirements.txt
+          cp .ci/requirements-docs.txt docs/requirements.txt
       - name: Create source distribution
         run: |
           # Staged entirely under /tmp. Anything this step leaves in the working

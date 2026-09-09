@@ -67,8 +67,8 @@ on:
         description: Scale-config AMI variant prefix, e.g. "wincanary." (empty when none)
         value: ${{ jobs.runner-determinator.outputs.scale-config-label-type }}
       ci-docker-hash:
-        description: "Git tree hash of .ci/docker, used as the suffix of CI docker image tags"
-        value: ${{ jobs.runner-determinator.outputs.ci-docker-hash }}
+        description: Deprecated no-op alias; this fork builds no CI docker images.
+        value: ${{ '' }}
 
 jobs:
   runner-determinator:
@@ -83,7 +83,6 @@ jobs:
       amd-sandbox-label-type: ${{ steps.set-condition.outputs.amd-sandbox-label-type }}
       amd-dpx-label-type: ${{ steps.set-condition.outputs.amd-dpx-label-type }}
       scale-config-label-type: ${{ steps.set-condition.outputs.scale-config-label-type }}
-      ci-docker-hash: ${{ steps.ci-docker-hash.outputs.ci-docker-hash }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       ISSUE_NUMBER: ${{ inputs.issue_number }}
@@ -107,25 +106,6 @@ jobs:
           sparse-checkout: |
             .github/scripts/runner_determinator.py
           sparse-checkout-cone-mode: false
-
-      - name: Checkout .ci/docker from PR head
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          # .ci/docker is hashed from the PR's own branch (not the merge commit) so
-          # the resulting image tag reflects the docker changes the PR is actually
-          # introducing. See #182579.
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 1
-          path: pr-head
-          sparse-checkout: |
-            .ci/docker
-          sparse-checkout-cone-mode: false
-
-      - name: Compute .ci/docker tree hash
-        id: ci-docker-hash
-        shell: bash
-        run: |
-          echo "ci-docker-hash=$(git -C pr-head rev-parse HEAD:.ci/docker)" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: python3 -m pip install urllib3==1.26.18 PyGithub==2.3.0

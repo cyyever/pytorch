@@ -500,7 +500,7 @@ An example of this process can be found here:
 
 ## Triton dependency for the release
 
-In nightly builds for conda and wheels pytorch depend on Triton build by this workflow: https://hud.pytorch.org/hud/pytorch/pytorch/nightly/1?per_page=50&name_filter=Build%20Triton%20Wheel. The pinned version of triton used by this workflow is specified here:  https://github.com/pytorch/pytorch/blob/main/.ci/docker/ci_commit_pins/triton.txt .
+In nightly builds for conda and wheels pytorch depend on Triton build by this workflow: https://hud.pytorch.org/hud/pytorch/pytorch/nightly/1?per_page=50&name_filter=Build%20Triton%20Wheel. The pinned version of triton used by this workflow is specified here:  https://github.com/pytorch/pytorch/blob/main/.ci/pins/triton.txt .
 
 In Nightly builds we have following configuration:
 * Wheel builds, depend on : https://download.pytorch.org/whl/nightly/triton/
@@ -512,4 +512,4 @@ However for release we have following :
 * ROCm wheel builds, depend on : https://download.pytorch.org/whl/test/triton-rocm/ for test and https://download.pytorch.org/whl/triton-rocm/ for release
 * XPU wheel builds, depend on : https://download.pytorch.org/whl/test/triton-xpu/ for test and https://download.pytorch.org/whl/triton-xpu/ for release
 
-Important: The release of https://pypi.org/project/triton/ needs to be requested from OpenAI once branch cut is completed. Please include the release PIN hash in the request: https://github.com/pytorch/pytorch/blob/release/2.1/.ci/docker/ci_commit_pins/triton.txt .
+Important: The release of https://pypi.org/project/triton/ needs to be requested from OpenAI once branch cut is completed. Please include the release PIN hash in the request: https://github.com/pytorch/pytorch/blob/release/2.1/.ci/pins/triton.txt .

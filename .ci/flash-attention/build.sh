@@ -34,7 +34,7 @@ if [[ "$(uname -m)" == "aarch64" ]]; then
         export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-13/root/usr/lib64:/opt/rh/gcc-toolset-13/root/usr/lib:${LD_LIBRARY_PATH:-}
     fi
 
-    source "${PYTORCH_ROOT}/.ci/docker/common/install_cuda.sh"
+    source "${PYTORCH_ROOT}/.ci/scripts/install_cuda.sh"
     [[ -z "$CUDA_INSTALLER_NAME" ]] && fatal "CUDA_INSTALLER_NAME must be set for aarch64 builds"
     install_cuda "$CUDA_VERSION" "$CUDA_INSTALLER_NAME"
 

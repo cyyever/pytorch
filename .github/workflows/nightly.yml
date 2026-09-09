@@ -153,7 +153,7 @@ jobs:
           # - repo-name: executorch
           #   repo-owner: pytorch
           #   branch: main
-          #   pin-folder: .ci/docker/ci_commit_pins
+          #   pin-folder: .ci/pins
           - repo-name: vllm
             repo-owner: vllm-project
             branch: main
@@ -198,9 +198,9 @@ jobs:
           PR_TITLE: "[triton hash update] update the pinned triton hash"
         run: |
           set -euo pipefail
-          version="$(tr -d '[:space:]' < .ci/docker/triton_version.txt)"
+          version="$(tr -d '[:space:]' < .ci/pins/triton_version.txt)"
           release_branch="release/$(echo "${version}" | cut -d. -f1,2).x"
-          pin_file=".ci/docker/ci_commit_pins/triton.txt"
+          pin_file=".ci/pins/triton.txt"
           old_hash="$(tr -d '[:space:]' < "${pin_file}")"
           new_hash="$(git ls-remote "https://github.com/triton-lang/triton.git" "refs/heads/${release_branch}" | cut -f1)"
           if [ -z "${new_hash}" ]; then

@@ -26,27 +26,6 @@ REPO_ROOT = SCRIPT_DIR.parent.parent
 
 CUDA_ARCHES = ["13.0", "13.2", "13.4"]
 CUDA_STABLE = "13.0"
-# Only consumed by generate_docker_release_matrix.py, whose Dockerfile installs
-# an already-published torch nightly. A CUDA version belongs here only once its
-# wheels are on the download.pytorch.org index.
-CUDA_ARCHES_FULL_VERSION = {
-    "12.6": "12.6.3",
-    "13.0": "13.0.3",
-    "13.2": "13.2.1",
-    "13.4": "13.4.0",
-}
-# CUDA versions that can only produce the runtime docker image. The devel image
-# apt-installs cuda-toolkit-<major>-<minor> from NVIDIA's repo, which carries
-# 13-0 through 13-3 only: 13.4 is still a release candidate (13.4.0rc1). The
-# runtime image just pip-installs the published cu134 nightly, so it builds.
-# Drop an entry once its toolkit ships in the apt repo.
-CUDA_ARCHES_RUNTIME_IMAGE_ONLY = ["13.4"]
-CUDA_ARCHES_CUDNN_VERSION = {
-    "12.6": "9",
-    "13.0": "9",
-    "13.2": "9",
-    "13.4": "9",
-}
 
 # CUDA versions without a Windows installer on the ossci-windows bucket yet.
 CUDA_ARCHES_NO_WINDOWS = ["13.4"]
@@ -190,7 +169,7 @@ def validate_nccl_dep_consistency(arch_version: str) -> None:
 
 def _parse_linux_cudnn_versions() -> dict[str, str]:
     """Return {cuda_short_version: cudnn_version} from install_cuda.sh."""
-    text = (REPO_ROOT / ".ci" / "docker" / "common" / "install_cuda.sh").read_text()
+    text = (REPO_ROOT / ".ci" / "scripts" / "install_cuda.sh").read_text()
     results: dict[str, str] = {}
     func_re = re.compile(r"^function install_(\d+)\s*\{")
     cudnn_re = re.compile(r"^\s*CUDNN_VERSION=(\S+)")
@@ -244,7 +223,7 @@ def validate_cudnn_version_consistency(arch_version: str) -> None:
     if linux_ver != windows_ver:
         raise RuntimeError(
             f"cuDNN version mismatch for CUDA {arch_version}: "
-            f"Linux has {linux_ver} (.ci/docker/common/install_cuda.sh) "
+            f"Linux has {linux_ver} (.ci/scripts/install_cuda.sh) "
             f"but Windows has {windows_ver} (.ci/pytorch/windows/internal/cuda_install.bat)"
         )
 

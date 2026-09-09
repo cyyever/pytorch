@@ -40,7 +40,7 @@ def read_nccl_pin(cuda_version: str = "") -> str:
     if cuda_version.startswith("12.6") or cuda_version == "cu126":
         nccl_file = "nccl-cu126.txt"
 
-    nccl_pin_path = repo_root / ".ci" / "docker" / "ci_commit_pins" / nccl_file
+    nccl_pin_path = repo_root / ".ci" / "pins" / nccl_file
     return _read_file(nccl_pin_path)
 
 

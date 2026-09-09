@@ -289,7 +289,7 @@ if [[ "$BUILD_ENVIRONMENT" != *libtorch* ]]; then
   # CUDA-only, as in .ci/manywheel/build.sh: --wheel makes stage 2 refuse a torch that
   # does not import, and in the ASan and TSan images `import torch` cannot work.
   if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
-    # Installed HERE, not in .ci/docker/requirements-ci.txt, which every image
+    # Installed HERE, not in .ci/requirements-ci.txt, which every image
     # shares: that would put ~190 MB of CUDA-only tooling into the CPU/ROCm/XPU images.
     #
     # ONE owner of the decision: stage 2 prints the verdict, we install only on RUN.

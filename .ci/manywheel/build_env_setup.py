@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GPU/toolchain environment setup (runs once before any wheel is built).
 
-The manywheel builder image (.ci/docker/manywheel/Dockerfile_2_28) is
+The manylinux builder image published on Docker Hub is
 expected to ship the heavy build dependencies (CUDA, cuDNN, NCCL, MAGMA,
 cuSPARSELt, MKL, plus the standard OS package set). This script:
 
@@ -249,7 +249,7 @@ def os_name() -> str:
 
 def install_os_packages() -> None:
     # Everything else the build needs is baked into the manywheel image
-    # (.ci/docker/manywheel/Dockerfile_2_28). Only zip + openssl are not,
+    # by the manylinux builder image. Only zip + openssl are not,
     # matching the legacy build_common.sh contract.
     name = os_name()
     if any(distro in name for distro in ("AlmaLinux", "CentOS", "Red Hat")):
@@ -304,13 +304,13 @@ def cuda_version_from_env() -> str:
 def install_cuda_toolkit(cuda_version: str) -> None:
     """Stage install_cuda.sh + its required siblings, then run install_cuda + install_magma."""
     root = repo_root()
-    docker_common = root / ".ci/docker/common"
-    pins = root / ".ci/docker/ci_commit_pins"
+    scripts = root / ".ci/scripts"
+    pins = root / ".ci/pins"
 
     with tempfile.TemporaryDirectory() as tmp:
         stage = Path(tmp)
         for name in ("install_cuda.sh", "install_nccl.sh", "install_cusparselt.sh"):
-            shutil.copy(docker_common / name, stage / name)
+            shutil.copy(scripts / name, stage / name)
         (stage / "ci_commit_pins").mkdir()
         for nccl_pin in pins.glob("nccl*"):
             shutil.copy(nccl_pin, stage / "ci_commit_pins" / nccl_pin.name)
@@ -318,7 +318,7 @@ def install_cuda_toolkit(cuda_version: str) -> None:
         subprocess.run(["bash", "install_cuda.sh", cuda_version], cwd=stage, check=True)
 
     subprocess.run(
-        ["bash", str(docker_common / "install_magma.sh"), cuda_version], check=True
+        ["bash", str(scripts / "install_magma.sh"), cuda_version], check=True
     )
     print(f"CUDA {cuda_version} toolkit installation complete")
 
@@ -342,7 +342,7 @@ def setup_cuda(cuda_version: str) -> None:
         subprocess.run(
             [
                 "bash",
-                str(repo_root() / ".ci/docker/common/install_magma.sh"),
+                str(repo_root() / ".ci/scripts/install_magma.sh"),
                 cuda_version,
             ],
             check=True,
@@ -482,7 +482,7 @@ def main() -> None:
     if arch == "x86_64" and not Path("/opt/intel/lib").is_dir():
         print("MKL not found, installing...")
         subprocess.run(
-            ["bash", str(repo_root() / ".ci/docker/common/install_mkl.sh")],
+            ["bash", str(repo_root() / ".ci/scripts/install_mkl.sh")],
             check=True,
         )
 
