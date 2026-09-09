@@ -25,16 +25,10 @@ class SignalTest {
  public:
   SignalTest(std::string path) : path_(std::move(path)) {}
 
-  ~SignalTest() {
-    if (arm_.joinable()) {
-      arm_.join();
-    }
-  }
-
   // Arms test to send signal to PID when the semaphore unlocks. This
   // happens as soon as the first collective completes successfully.
   void arm(int pid, int signal) {
-    arm_ = std::thread([this, pid, signal] {
+    arm_ = std::jthread([this, pid, signal] {
       sem_.wait();
       kill(pid, signal);
     });
@@ -74,8 +68,10 @@ class SignalTest {
 
  protected:
   std::string path_;
-  std::thread arm_;
   Semaphore sem_;
+
+  // Last member: ~jthread joins, and the thread waits on sem_.
+  std::jthread arm_;
 };
 
 c10::intrusive_ptr<::c10d::Work> testSignal(

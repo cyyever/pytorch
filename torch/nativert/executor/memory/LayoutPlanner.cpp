@@ -185,26 +185,20 @@ void LayoutPlanner::start_worker_if_not_started() {
     // make sure plan is populated by the time this
     // returns for the first time :P
     create_plan();
-    worker_ =
-        std::thread([this]() { run_periodic([this] { create_plan(); }); });
+    worker_ = std::jthread([this](std::stop_token st) {
+      run_periodic(st, [this] { create_plan(); });
+    });
   });
 }
 
-LayoutPlanner::~LayoutPlanner() {
-  {
-    std::unique_lock<std::mutex> l(mutex_);
-    stopped_ = true;
-  }
-  cv_.notify_one();
-  if (worker_.joinable()) {
-    worker_.join();
-  }
-}
 
-void LayoutPlanner::run_periodic(const std::function<void()>& f) {
+void LayoutPlanner::run_periodic(
+    std::stop_token st,
+    const std::function<void()>& f) {
   std::unique_lock<std::mutex> l(mutex_);
-  while (!cv_.wait_for(
-      l, settings_.planningInterval(), [&]() { return stopped_; })) {
+  while (!cv_.wait_for(l, st, settings_.planningInterval(), [&st]() {
+    return st.stop_requested();
+  })) {
     f();
   }
 }
