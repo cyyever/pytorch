@@ -16,7 +16,7 @@ on:
         required: false
         type: string
         default: ""
-        description: Git tree hash of .ci/docker, used to construct docker image tags.
+        description: Deprecated no-op; this fork builds no CI docker images.
       build-generates-artifacts:
         required: false
         type: boolean

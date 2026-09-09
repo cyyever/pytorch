@@ -43,7 +43,7 @@ call choco upgrade -y cmake --no-progress --installargs 'ADD_CMAKE_TO_PATH=Syste
 if errorlevel 1 goto fail
 if not errorlevel 0 goto fail
 
-:: TODO: Move to .ci/docker/requirements-ci.txt
+:: TODO: Move to .ci/requirements-ci.txt
 call pip install mkl==2024.2.0 mkl-static==2024.2.0 mkl-include==2024.2.0
 if errorlevel 1 goto fail
 if not errorlevel 0 goto fail

@@ -2,7 +2,7 @@
 
 # Script for installing sccache on the xla build job, which uses xla's docker
 # image, which has sccache installed but doesn't write the stubs.  This is
-# mostly copied from .ci/docker/install_cache.sh.  Changes are: removing checks
+# mostly copied from the old CI image install_cache.sh.  Changes are: removing checks
 # that will always return the same thing, ex checks for for rocm, CUDA, changing
 # the path where sccache is installed, not changing /etc/environment, and not
 # installing/downloading sccache as it is already in the docker image.

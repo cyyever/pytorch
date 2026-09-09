@@ -22,7 +22,7 @@
 - torch/_functorch/_aot_autograd/**
 - torch/_functorch/aot_autograd.py
 - torch/_functorch/partitioners.py
-- .ci/docker/ci_commit_pins/**
+- .ci/pins/**
 - .github/ci_commit_pins/**
 - c10/core/Sym*
 - torch/fx/experimental/symbolic_shapes.py
@@ -79,7 +79,7 @@
 - test/quantization/**
 
 "ciflow/trunk":
-- .ci/docker/ci_commit_pins/triton.txt
+- .ci/pins/triton.txt
 
 "release notes: distributed (checkpoint)":
 - torch/distributed/checkpoint/**
@@ -124,9 +124,9 @@
 
 "ci-refresh-hf-cache":
 - .github/ci_commit_pins/vllm.txt
-- .ci/docker/ci_commit_pins/timm.txt
-- .ci/docker/ci_commit_pins/huggingface-requirements.txt
-- .ci/docker/ci_commit_pins/torchbench.txt
+- .ci/pins/timm.txt
+- .ci/pins/huggingface-requirements.txt
+- .ci/pins/torchbench.txt
 
 "ciflow/inductor-pallas":
 - torch/_inductor/codegen/pallas.py
@@ -135,10 +135,7 @@
 - test/inductor/pallas_expected_failures/**
 - test/inductor/pallas_skip_tests/**
 - .github/workflows/inductor-pallas.yml
-- .ci/docker/ci_commit_pins/jax.txt
-- .ci/docker/common/install_jax.sh
-- .ci/docker/common/install_torch_tpu.sh
-- .ci/docker/common/requirements_tpu.txt
+- .ci/pins/jax.txt
 - .github/ci_commit_pins/torch_tpu.txt
 
 "ciflow/b200":
@@ -208,14 +205,6 @@
 - torch/distributed/_symmetric_memory/**
 - test/distributed/**/*mem*
 - test/distributed/**/*mem*/**
-
-"ciflow/docker":
-- .ci/docker/**
-- .github/workflows/docker-builds.yml
-- .github/workflows/build-manywheel-images.yml
-- .github/workflows/build-almalinux-images.yml
-- .github/actions/binary-docker-build/**
-- .lintrunner.toml
 
 "ciflow/torchtitan":
 # torchtitan commit pin updates

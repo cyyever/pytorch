@@ -1465,7 +1465,7 @@ def cmd_repro(args):
         print(f"{cmd}\n")
 
 
-PIN_DIR = Path(".ci/docker/ci_commit_pins")
+PIN_DIR = Path(".ci/pins")
 
 
 def read_pin(name: str) -> str:
@@ -1492,9 +1492,9 @@ def cmd_prepare_repro(args):
     print("# These mirror what CI does in the inductor-benchmarks Docker image.")
     print("#")
     print("# Pinned versions (commits, package versions) are read live from")
-    print("#   .ci/docker/ci_commit_pins/")
+    print("#   .ci/pins/")
     print("# Install steps are based on:")
-    print("#   .ci/docker/common/install_inductor_benchmark_deps.sh  (build-time)")
+    print("#   .ci/scripts/install_inductor_benchmark_deps.sh  (build-time)")
     print("#   .ci/pytorch/test.sh                                   (runtime)")
     print("# If the setup process changes, check those files.")
     print()

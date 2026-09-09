@@ -109,8 +109,8 @@ def upstream_spec(pkg: str, version: str | None) -> str:
     if version:
         return f"{pkg}=={version}"
     try:
-        ver = (REPO_ROOT / ".ci/docker/triton_version.txt").read_text().strip()
-        sha = (REPO_ROOT / ".ci/docker/ci_commit_pins/triton.txt").read_text().strip()
+        ver = (REPO_ROOT / ".ci/pins/triton_version.txt").read_text().strip()
+        sha = (REPO_ROOT / ".ci/pins/triton.txt").read_text().strip()
     except OSError:
         return pkg
     return f"{pkg}=={ver}+git{sha[:8]}"

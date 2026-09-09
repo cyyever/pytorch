@@ -37,7 +37,7 @@ if [[ "$BUILD_ENVIRONMENT" == *cuda* ]]; then
   export PYTORCH_TESTING_DEVICE_ONLY_FOR="cuda"
 fi
 
-# TODO: Move this to .ci/docker/requirements-ci.txt
+# TODO: Move this to .ci/requirements-ci.txt
 python -m pip install "psutil==5.9.1" nvidia-ml-py "pytest-shard==0.1.2"
 
 run_tests() {

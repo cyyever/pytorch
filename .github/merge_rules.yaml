@@ -58,7 +58,7 @@
   - .github/ci_commit_pins/vision.txt
   - .github/ci_commit_pins/torchdynamo.txt
   - .github/ci_commit_pins/vllm.txt
-  - .ci/docker/ci_commit_pins/triton.txt
+  - .ci/pins/triton.txt
   approved_by:
   - pytorchbot
   mandatory_checks_name:
@@ -80,7 +80,7 @@
 
 - name: OSS CI /pytorchbot / Executorch
   patterns:
-  - .ci/docker/ci_commit_pins/executorch.txt
+  - .ci/pins/executorch.txt
   approved_by:
   - pytorchbot
   mandatory_checks_name:

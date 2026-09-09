@@ -67,7 +67,7 @@ amd backends, so they share a name. XPU is unaffected.
 
 No workflow sets `FBTRITON`, so this is **manual invocation only** today --
 wiring it into a release job is a separate change. `TRITON_VERSION` is
-deliberately shared with upstream via `.ci/docker/triton_version.txt`, because
+deliberately shared with upstream via `.ci/pins/triton_version.txt`, because
 FBTriton mirrors upstream's `X.Y.Z` (its `release/3.8.x` reports `3.8.0+fb`);
 a separate version file would live under `.ci/docker/` and invalidate every CI
 Docker image hash for a value that is identical anyway.

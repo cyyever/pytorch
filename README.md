@@ -35,9 +35,6 @@ Our trunk health (Continuous Integration signals) can be found at [hud.pytorch.o
     - [Install Dependencies](#install-dependencies)
     - [Install PyTorch](#install-pytorch)
       - [Adjust Build Options (Optional)](#adjust-build-options-optional)
-  - [Docker Image](#docker-image)
-    - [Using pre-built images](#using-pre-built-images)
-    - [Building the image yourself](#building-the-image-yourself)
   - [Building the Documentation](#building-the-documentation)
     - [Troubleshooting CI Errors](#troubleshooting-ci-errors)
     - [Building a PDF](#building-a-pdf)
@@ -404,40 +401,6 @@ reconfiguration does not use `--fresh` and environment variables only seed cache
 not already set. The corollary: once a variable is in the cache, changing its environment variable
 no longer affects it -- edit the cache directly (or delete `build/CMakeCache.txt`) to change it.
 The build type and compiler are the exception; the build always re-applies them.
-
-### Docker Image
-
-#### Using pre-built images
-
-You can also pull a pre-built docker image from Docker Hub and run with docker v23.0+
-
-```bash
-docker run --gpus all --rm -ti --ipc=host pytorch/pytorch:latest
-```
-
-Please note that PyTorch uses shared memory to share data between processes, so if torch multiprocessing is used (e.g.
-for multithreaded data loaders) the default shared memory segment size that container runs with is not enough, and you
-should increase shared memory size either with `--ipc=host` or `--shm-size` command line options to `nvidia-docker run`.
-
-#### Building the image yourself
-
-**NOTE:** Must be built with a Docker version >= 23.0
-
-The Dockerfile is supplied to build images with CUDA 12.6 support and cuDNN v9.
-You can pass `PYTHON_VERSION=x.y` make variable to specify which Python version is to be used by Miniconda, or leave it
-unset to use the default, as the Dockerfile uses system Python.
-
-```bash
-make -f docker.Makefile
-# images are tagged as docker.io/${your_docker_username}/pytorch
-```
-
-You can also pass the `CMAKE_VARS="..."` environment variable to specify additional CMake variables to be passed to CMake during the build.
-See [`cmake/EnvVarForwarding.cmake`](./cmake/EnvVarForwarding.cmake) for the list of available variables.
-
-```bash
-make -f docker.Makefile
-```
 
 ### Building the Documentation
 

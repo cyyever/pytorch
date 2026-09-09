@@ -100,7 +100,7 @@ jobs:
         shell: bash
         run: |
           set -eux
-          DOCKER_TAG=$(git rev-parse HEAD:.ci/docker)
+          DOCKER_TAG=$(git rev-parse HEAD:.github/ci_configs/vllm)
           IMAGE="308535385114.dkr.ecr.us-east-1.amazonaws.com/pytorch/ci-image:pytorch-linux-jammy-cuda13.0-cudnn9-py3.12-gcc11-vllm-${DOCKER_TAG}"
           echo "docker-image=${IMAGE}" >> "${GITHUB_OUTPUT}"
 
