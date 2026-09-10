@@ -1,3 +1,5 @@
+#pragma once
+
 #include <torch/headeronly/util/Half.h>
 
 // need to keep the following for BC because the APIs in here were exposed
