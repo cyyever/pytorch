@@ -29,12 +29,18 @@ if(NOT __AOTRITON_INCLUDED)
       SET(RECURSIVE "ON")
     endif()
     message(STATUS "PYTORCH_ROCM_ARCH ${PYTORCH_ROCM_ARCH}")
+    # The HIP half is compiled by amdclang++, not the compiler the baseline was
+    # validated against, so it gets its own probe.
+    torch_x86_arch_flag_for("${CMAKE_HIP_COMPILER}" _aotriton_hip_arch_flag)
     set(__AOTRITON_HOST_ARCH_ARGS "")
     if(PYTORCH_X86_ARCH_FLAG)
       list(APPEND __AOTRITON_HOST_ARCH_ARGS
         "-DCMAKE_C_FLAGS=${PYTORCH_X86_ARCH_FLAG}"
-        "-DCMAKE_CXX_FLAGS=${PYTORCH_X86_ARCH_FLAG}"
-        "-DCMAKE_HIP_FLAGS=-Xarch_host ${PYTORCH_X86_ARCH_FLAG}")
+        "-DCMAKE_CXX_FLAGS=${PYTORCH_X86_ARCH_FLAG}")
+    endif()
+    if(_aotriton_hip_arch_flag)
+      list(APPEND __AOTRITON_HOST_ARCH_ARGS
+        "-DCMAKE_HIP_FLAGS=-Xarch_host ${_aotriton_hip_arch_flag}")
     endif()
 
     ExternalProject_Add(${project}
