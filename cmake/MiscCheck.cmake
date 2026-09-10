@@ -42,10 +42,12 @@ check_cxx_compiler_flag("-rdynamic" COMPILER_SUPPORTS_RDYNAMIC)
 # ---[ Create CAFFE2_BUILD_SHARED_LIBS for macros.h.in usage.
 set(CAFFE2_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 
+set(PYTORCH_X86_ARCH_FLAG "")
 if(USE_NATIVE_ARCH)
   check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
   if(COMPILER_SUPPORTS_MARCH_NATIVE)
     add_definitions("-march=native")
+    set(PYTORCH_X86_ARCH_FLAG "-march=native")
   else()
     message(
         WARNING
@@ -71,16 +73,19 @@ if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
   if(COMPILER_SUPPORTS_X86_BASELINE)
     string(APPEND CMAKE_C_FLAGS " -march=${TORCH_X86_BASELINE}")
     string(APPEND CMAKE_CXX_FLAGS " -march=${TORCH_X86_BASELINE}")
-    if(USE_CUDA)
-      string(APPEND CMAKE_CUDA_FLAGS
-          " -Xcompiler=-march=${TORCH_X86_BASELINE}")
-    endif()
-    if(USE_ROCM)
-      string(APPEND CMAKE_HIP_FLAGS
-          " -Xarch_host -march=${TORCH_X86_BASELINE}")
-    endif()
+    set(PYTORCH_X86_ARCH_FLAG "-march=${TORCH_X86_BASELINE}")
   else()
     message(WARNING "Compiler does not support -march=${TORCH_X86_BASELINE}; building for generic x86-64.")
+  endif()
+endif()
+if(PYTORCH_X86_ARCH_FLAG)
+  if(USE_CUDA)
+    string(APPEND CMAKE_CUDA_FLAGS
+        " -Xcompiler=${PYTORCH_X86_ARCH_FLAG}")
+  endif()
+  if(USE_ROCM)
+    string(APPEND CMAKE_HIP_FLAGS
+        " -Xarch_host ${PYTORCH_X86_ARCH_FLAG}")
   endif()
 endif()
 unset(_torch_processor_description)

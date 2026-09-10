@@ -47,8 +47,8 @@ include(ExternalProject)
       LIST_SEPARATOR ","
       CMAKE_ARGS  -DCMAKE_C_COMPILER=${DNNL_C_COMPILER}
       -DCMAKE_CXX_COMPILER=${SYCL_CXX_DRIVER}
-      "-DCMAKE_C_FLAGS:STRING=-ffunction-sections -fdata-sections"
-      "-DCMAKE_CXX_FLAGS:STRING=-ffunction-sections -fdata-sections"
+      "-DCMAKE_C_FLAGS:STRING=${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
+      "-DCMAKE_CXX_FLAGS:STRING=${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
       -DDNNL_GPU_RUNTIME:STRING=SYCL
       -DDNNL_CPU_RUNTIME:STRING=NONE
       "-DDNNL_ENABLE_PRIMITIVE_GPU_ISA:STRING=XE2,XE3,XE3P"
