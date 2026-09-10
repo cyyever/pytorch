@@ -71,6 +71,10 @@ if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
   if(COMPILER_SUPPORTS_X86_BASELINE)
     string(APPEND CMAKE_C_FLAGS " -march=${TORCH_X86_BASELINE}")
     string(APPEND CMAKE_CXX_FLAGS " -march=${TORCH_X86_BASELINE}")
+    if(USE_CUDA)
+      string(APPEND CMAKE_CUDA_FLAGS
+          " -Xcompiler=-march=${TORCH_X86_BASELINE}")
+    endif()
     if(USE_ROCM)
       string(APPEND CMAKE_HIP_FLAGS
           " -Xarch_host -march=${TORCH_X86_BASELINE}")
