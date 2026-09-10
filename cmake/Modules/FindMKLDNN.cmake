@@ -39,6 +39,10 @@ include(ExternalProject)
         list(APPEND DNNL_MAKE_COMMAND "--" "-l" "$ENV{MAX_JOBS}")
       endif()
     endif()
+    # icx and icpx are separate drivers, and neither is the compiler the x86
+    # baseline was validated against, so probe each before forwarding it.
+    torch_x86_arch_flag_for("${DNNL_C_COMPILER}" _dnnl_c_arch_flag)
+    torch_x86_arch_flag_for("${SYCL_CXX_DRIVER}" _dnnl_cxx_arch_flag)
     ExternalProject_Add(xpu_mkldnn_proj
       GIT_REPOSITORY https://github.com/uxlfoundation/oneDNN
       GIT_TAG v3.12.3
@@ -47,8 +51,8 @@ include(ExternalProject)
       LIST_SEPARATOR ","
       CMAKE_ARGS  -DCMAKE_C_COMPILER=${DNNL_C_COMPILER}
       -DCMAKE_CXX_COMPILER=${SYCL_CXX_DRIVER}
-      "-DCMAKE_C_FLAGS:STRING=${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
-      "-DCMAKE_CXX_FLAGS:STRING=${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
+      "-DCMAKE_C_FLAGS:STRING=${_dnnl_c_arch_flag} -ffunction-sections -fdata-sections"
+      "-DCMAKE_CXX_FLAGS:STRING=${_dnnl_cxx_arch_flag} -ffunction-sections -fdata-sections"
       -DDNNL_GPU_RUNTIME:STRING=SYCL
       -DDNNL_CPU_RUNTIME:STRING=NONE
       "-DDNNL_ENABLE_PRIMITIVE_GPU_ISA:STRING=XE2,XE3,XE3P"

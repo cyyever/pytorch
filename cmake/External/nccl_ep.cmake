@@ -36,13 +36,18 @@ if(NOT __NCCL_EP_INCLUDED)
     list(REMOVE_DUPLICATES __NCCL_EP_ARCHS)
     set(__NCCL_EP_ARCH_ARG "-DCMAKE_CUDA_ARCHITECTURES=${__NCCL_EP_ARCHS}")
   endif()
+  set(__NCCL_EP_CUDA_FLAGS
+    "--pre-include=${PYTORCH_CUDA_HOST_COMPILER_COMPAT}")
   set(__NCCL_EP_HOST_ARCH_ARGS "")
   if(PYTORCH_X86_ARCH_FLAG)
+    string(APPEND __NCCL_EP_CUDA_FLAGS
+      " -Xcompiler=${PYTORCH_X86_ARCH_FLAG}")
     list(APPEND __NCCL_EP_HOST_ARCH_ARGS
       "-DCMAKE_C_FLAGS=${PYTORCH_X86_ARCH_FLAG}"
-      "-DCMAKE_CXX_FLAGS=${PYTORCH_X86_ARCH_FLAG}"
-      "-DCMAKE_CUDA_FLAGS=-Xcompiler=${PYTORCH_X86_ARCH_FLAG}")
+      "-DCMAKE_CXX_FLAGS=${PYTORCH_X86_ARCH_FLAG}")
   endif()
+  list(APPEND __NCCL_EP_HOST_ARCH_ARGS
+    "-DCMAKE_CUDA_FLAGS=${__NCCL_EP_CUDA_FLAGS}")
 
   # Branch on how torch links NCCL (USE_NCCL_EP supports both):
   #  - USE_SYSTEM_NCCL=OFF (source/dev): torch statically embeds the submodule

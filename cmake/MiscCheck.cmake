@@ -46,7 +46,8 @@ set(PYTORCH_X86_ARCH_FLAG "")
 if(USE_NATIVE_ARCH)
   check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
   if(COMPILER_SUPPORTS_MARCH_NATIVE)
-    add_definitions("-march=native")
+    string(APPEND CMAKE_C_FLAGS " -march=native")
+    string(APPEND CMAKE_CXX_FLAGS " -march=native")
     set(PYTORCH_X86_ARCH_FLAG "-march=native")
   else()
     message(
@@ -78,6 +79,38 @@ if(CPU_INTEL AND NOT USE_NATIVE_ARCH)
     message(WARNING "Compiler does not support -march=${TORCH_X86_BASELINE}; building for generic x86-64.")
   endif()
 endif()
+# The baseline above was validated against CMAKE_CXX_COMPILER. Sub-builds
+# compile with other toolchains -- amdclang++ for bundled ROCm and AOTriton,
+# icx/icpx for oneDNN-SYCL -- and a baseline one of them does not know turns a
+# configure that succeeded here into a sub-build that dies with "unknown target
+# CPU". znver4 is the default whenever the host reports AMD, so this is not
+# hypothetical. Probe the compiler that will actually consume the flag.
+function(torch_x86_arch_flag_for compiler out_var)
+  set(${out_var} "" PARENT_SCOPE)
+  if(NOT PYTORCH_X86_ARCH_FLAG OR NOT compiler)
+    return()
+  endif()
+  string(MAKE_C_IDENTIFIER "TORCH_ARCH_FLAG_ACCEPTED_${compiler}" _accepted)
+  if(NOT DEFINED ${_accepted})
+    execute_process(
+        COMMAND ${compiler} ${PYTORCH_X86_ARCH_FLAG} -x c++ -fsyntax-only -
+        INPUT_FILE /dev/null
+        RESULT_VARIABLE _probe_result
+        OUTPUT_QUIET ERROR_QUIET)
+    if(_probe_result EQUAL 0)
+      set(${_accepted} ON CACHE INTERNAL "")
+    else()
+      set(${_accepted} OFF CACHE INTERNAL "")
+      message(WARNING
+          "${compiler} does not accept ${PYTORCH_X86_ARCH_FLAG}; that sub-build "
+          "falls back to the compiler default architecture.")
+    endif()
+  endif()
+  if(${_accepted})
+    set(${out_var} "${PYTORCH_X86_ARCH_FLAG}" PARENT_SCOPE)
+  endif()
+endfunction()
+
 if(PYTORCH_X86_ARCH_FLAG)
   if(USE_CUDA)
     string(APPEND CMAKE_CUDA_FLAGS
