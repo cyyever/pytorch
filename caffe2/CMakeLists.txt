@@ -837,7 +837,7 @@ elseif(USE_CUDA)
     message(STATUS "NVSHMEM_INCLUDE_DIR:  '${NVSHMEM_INCLUDE_DIR}'")
   endif()
 
-  # If NVSHMEM_LIBRARY is found, we build torch_cuda with NVSHMEM support.
+  # If NVSHMEM libraries are found, build torch_cuda with NVSHMEM support.
   if(NVSHMEM_HOST_LIB AND NVSHMEM_DEVICE_LIB AND NVSHMEM_INCLUDE_DIR)
     message(STATUS "NVSHMEM found, building with NVSHMEM support")
     include_directories(${NVSHMEM_INCLUDE_DIR})
@@ -868,6 +868,10 @@ elseif(USE_CUDA)
     target_compile_definitions(torch_nvshmem PUBLIC USE_NVSHMEM)
     target_link_libraries(torch_cuda PRIVATE torch_nvshmem)
     install(TARGETS torch_nvshmem EXPORT Caffe2Targets DESTINATION "${TORCH_INSTALL_LIB_DIR}")
+  elseif(USE_NVSHMEM)
+    message(FATAL_ERROR
+      "CUDA distributed builds require the NVSHMEM host library, device library, "
+      "and headers")
   else()
     message(STATUS "NVSHMEM not found, not building with NVSHMEM support.")
   endif()

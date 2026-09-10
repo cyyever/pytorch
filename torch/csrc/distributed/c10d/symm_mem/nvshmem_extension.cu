@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include <ATen/ceil_div.h>
 #include <c10/cuda/CUDAGuard.h>
 
@@ -44,34 +43,9 @@ namespace c10d::nvshmem_extension {
 #define THREADS_PER_BLOCK 512
 #define WARP_SIZE 32
 
-extern "C" void nvshmem_init() __attribute__((weak));
-
 // Check if NVSHMEM is available
 bool is_nvshmem_available() {
-  // Runtime check
-  static std::mutex mutex;
-  static int is_available = -2;
-  std::lock_guard<std::mutex> lock(mutex);
-
-  // Checked if the symbol is statically linked
-  if(is_available == -2 && nvshmem_init) {
-    is_available = 1;
-  }
-
-  if (is_available == -2) {
-    void* handle{};
-    // Open the shared library, RTLD_LAZY defers symbol resolution until needed
-    handle = dlopen("libnvshmem_host.so.3", RTLD_LAZY);
-    if (!handle) {
-      std::cerr << dlerror() << '\n';
-      is_available = 0;
-    } else {
-      is_available = 1;
-      // Close the shared library
-      dlclose(handle);
-    }
-  }
-  return is_available == 1;
+  return true;
 }
 
 // Initializes the device state in CUmodule so that it’s able to perform NVSHMEM
