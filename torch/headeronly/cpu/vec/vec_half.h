@@ -8,7 +8,7 @@ HIDDEN_NAMESPACE_BEGIN(torch, headeronly, vec)
 inline namespace CPU_CAPABILITY {
 
 #if (defined(__F16C__) || defined(__AVX512F__)) && !defined(__APPLE__)
-static inline uint16_t float2half_scalar(float val) {
+[[maybe_unused]] static inline uint16_t float2half_scalar(float val) {
 #if defined(__F16C__)
   return _cvtss_sh(val, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
 #elif defined(__AVX512F__)
@@ -20,7 +20,7 @@ static inline uint16_t float2half_scalar(float val) {
 #endif
 }
 
-static inline float half2float_scalar(uint16_t val) {
+[[maybe_unused]] static inline float half2float_scalar(uint16_t val) {
 #if defined(__F16C__)
   return _cvtsh_ss(val);
 #elif defined(__AVX512F__)
