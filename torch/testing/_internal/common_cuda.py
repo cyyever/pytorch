@@ -158,17 +158,7 @@ def evaluate_gfx_arch_within(arch_list):
 
 def evaluate_platform_supports_flash_attention():
     if TEST_WITH_ROCM:
-        # NOTE: gfx1250 is omitted until flash-attention artifacts ship for it.
-        # The AOTriton path needs the gfx1250 GPU image from AOTriton 0.12.1b,
-        # which is wired up by PR #188242 (which also adds gfx1250 to this list);
-        # this gate-only PR leaves it out so the two changes do not conflict
-        # (see cmake/External/aotriton.cmake). The CK FAv3/AITER codegen is
-        # separately not yet wired for gfx1250
-        # (see aten/src/ATen/native/transformers/hip/flash_attn/ck/fav_v3/CMakeLists.txt).
-        arch_list = ["gfx1201", "gfx950"]
-        if os.environ.get("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "0") != "0":
-            arch_list += ["gfx1151", "gfx1200"]
-        return evaluate_gfx_arch_within(arch_list)
+        return evaluate_gfx_arch_within(["gfx1201"])
     if TEST_CUDA:
         return SM80OrLater
     if TEST_XPU:
@@ -183,15 +173,7 @@ def evaluate_platform_supports_ck_sdpa():
 
 def evaluate_platform_supports_efficient_attention():
     if TEST_WITH_ROCM:
-        # NOTE: gfx1250 is omitted until mem-efficient-attention artifacts ship
-        # for it. The AOTriton gfx1250 image (from AOTriton 0.12.1b) is wired up
-        # by PR #188242, which also adds gfx1250 here; this gate-only PR leaves
-        # it out to avoid conflicting with that change. The CK FAv3/AITER codegen
-        # is separately not yet wired for gfx1250.
-        arch_list = ["gfx1201", "gfx950"]
-        if os.environ.get("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "0") != "0":
-            arch_list += ["gfx1151", "gfx1200"]
-        return evaluate_gfx_arch_within(arch_list)
+        return evaluate_gfx_arch_within(["gfx1201"])
     if TEST_CUDA:
         return True
     if TEST_XPU:
@@ -266,11 +248,7 @@ PLATFORM_SUPPORTS_WORKQUEUE_CONFIG: bool = LazyVal(lambda: evaluate_platform_sup
 def evaluate_platform_supports_fp8():
     if torch.cuda.is_available():
         if torch.version.hip:
-            archs = ['gfx94', 'gfx95', 'gfx120', 'gfx1250']
-            for arch in archs:
-                if arch in torch.cuda.get_device_properties(0).gcnArchName:
-                    return True
-            return False
+            return evaluate_gfx_arch_within(["gfx1201"])
         else:
             return SM90OrLater or torch.cuda.get_device_capability() == (8, 9)
     if torch.xpu.is_available():
@@ -281,14 +259,7 @@ def evaluate_platform_supports_fp8():
 def evaluate_platform_supports_fp8_grouped_gemm():
     if torch.cuda.is_available():
         if torch.version.hip:
-            if "USE_MSLK" not in torch.__config__.show():
-                return False
-            # gfx1250 omitted: MSLK only builds gfx950 kernels (see the arch
-            # filter in aten/src/ATen/CMakeLists.txt). Add gfx1250 here once MSLK does.
-            archs = ['gfx950']
-            for arch in archs:
-                if arch in torch.cuda.get_device_properties(0).gcnArchName:
-                    return True
+            return evaluate_gfx_arch_within(["gfx1201"])
         else:
             return SM90OrLater and not SM100OrLater
     return False
@@ -296,8 +267,7 @@ def evaluate_platform_supports_fp8_grouped_gemm():
 def evaluate_platform_supports_mx_gemm():
     if torch.cuda.is_available():
         if torch.version.hip:
-            gcn_name = torch.cuda.get_device_properties(0).gcnArchName
-            return 'gfx950' in gcn_name or 'gfx1250' in gcn_name
+            return False
         else:
             return SM100OrLater
     if torch.xpu.is_available():
@@ -310,14 +280,8 @@ def evaluate_platform_supports_mxfp8_grouped_gemm():
         return built_with_mslk and IS_SM100
     return False
 
-def hipsparselt_supported_archs():
-    # Keep in sync with hipSparseLtSupportedArchs() in
-    # aten/src/ATen/native/sparse/cuda/cuSPARSELtOps.cpp. Gating on a wider set
-    # than the runtime supports turns a skip into a hard TORCH_CHECK failure.
-    return ['gfx950', 'gfx1250']
-
 def evaluate_platform_supports_hipsparselt():
-    return bool(torch.version.hip) and evaluate_gfx_arch_within(hipsparselt_supported_archs())
+    return False
 
 def evaluate_platform_supports_fp8_sparse():
     if torch.cuda.is_available():

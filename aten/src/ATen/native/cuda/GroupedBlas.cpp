@@ -2,6 +2,7 @@
 #include <limits>
 #include <c10/util/typeid.h>
 #include <c10/util/Exception.h>
+#include <c10/util/irange.h>
 #include <c10/core/ScalarType.h>
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/Context.h>
@@ -23,6 +24,7 @@
 #include <ATen/ops/_addmm_activation_native.h>
 #include <ATen/ops/_efficientzerotensor.h>
 #include <ATen/ops/_grouped_mm_native.h>
+#include <ATen/ops/_scaled_mm.h>
 #include <ATen/ops/_scaled_grouped_mm_native.h>
 #include <ATen/ops/_scaled_grouped_mm_v2_native.h>
 #include <ATen/ops/abs.h>
@@ -169,6 +171,32 @@ _f8_f8_bf16_rowwise_grouped_mm_cuda(
 // scaling=rowwise
 // only being called for rocm
 #ifdef USE_ROCM
+void _f8_f8_bf16_rowwise_mm_rocm(
+    const Tensor& mat_a,
+    const Tensor& mat_b,
+    const Tensor& scale_a,
+    const Tensor& scale_b,
+    bool use_fast_accum,
+    Tensor& out) {
+  if (out.numel() == 0) {
+    return;
+  }
+  if (mat_a.size(-1) == 0) {
+    out.zero_();
+    return;
+  }
+
+  out.copy_(at::_scaled_mm(
+      mat_a,
+      mat_b,
+      scale_a.reshape({-1, 1}),
+      scale_b.reshape({1, -1}),
+      std::nullopt,
+      std::nullopt,
+      at::kBFloat16,
+      use_fast_accum));
+}
+
 Tensor&
 _f8_f8_bf16_rowwise_grouped_mm_rocm(
       const Tensor& mat_a,
@@ -176,24 +204,75 @@ _f8_f8_bf16_rowwise_grouped_mm_rocm(
       const Tensor& scale_a,
       const Tensor& scale_b,
       const std::optional<Tensor>& offs,
+      bool use_fast_accum,
       Tensor& out) {
   TORCH_CHECK_VALUE(mat_a.dtype() == at::kFloat8_e4m3fn, "Expected mat_a to be Float8_e4m3 matrix got ", mat_a.scalar_type());
   TORCH_CHECK_VALUE(mat_b.dtype() == at::kFloat8_e4m3fn, "Expected mat_b to be Float8_e4m3 matrix got ", mat_b.scalar_type());
 
-#if defined(USE_MSLK) && defined(USE_ROCM)
-  mslk::gemm::f8f8bf16_rowwise_grouped_mm(
-      mat_a,
-      // FBGEMM expects B matrix shape to be (.., N, K)
-      mat_b.transpose(-2, -1),
-      scale_a,
-      scale_b,
-      offs,
-      out);
-  return out;
-#else
-  TORCH_CHECK_NOT_IMPLEMENTED(false, "grouped gemm is not supported without USE_MSLK on ROCM")
-#endif
+  const bool a_is_2d = mat_a.dim() == 2;
+  const bool b_is_2d = mat_b.dim() == 2;
 
+  if (a_is_2d && !b_is_2d) {
+    int64_t group_start = 0;
+    const auto offs_cpu = offs->cpu();
+    for (const auto group : c10::irange(offs_cpu.size(0))) {
+      const auto group_end = offs_cpu[group].item<int64_t>();
+      auto out_slice = out.slice(0, group_start, group_end);
+      _f8_f8_bf16_rowwise_mm_rocm(
+          mat_a.slice(0, group_start, group_end),
+          mat_b[group],
+          scale_a.slice(0, group_start, group_end),
+          scale_b[group],
+          use_fast_accum,
+          out_slice);
+      group_start = group_end;
+    }
+  } else if (!a_is_2d && b_is_2d) {
+    int64_t group_start = 0;
+    const auto offs_cpu = offs->cpu();
+    for (const auto group : c10::irange(offs_cpu.size(0))) {
+      const auto group_end = offs_cpu[group].item<int64_t>();
+      auto out_slice = out.slice(1, group_start, group_end);
+      _f8_f8_bf16_rowwise_mm_rocm(
+          mat_a[group],
+          mat_b.slice(1, group_start, group_end),
+          scale_a[group],
+          scale_b.slice(0, group_start, group_end),
+          use_fast_accum,
+          out_slice);
+      group_start = group_end;
+    }
+  } else if (a_is_2d && b_is_2d) {
+    int64_t group_start = 0;
+    const auto offs_cpu = offs->cpu();
+    const auto m = mat_a.size(0);
+    const auto n = mat_b.size(1);
+    for (const auto group : c10::irange(offs_cpu.size(0))) {
+      const auto group_end = offs_cpu[group].item<int64_t>();
+      auto out_slice = out[group];
+      _f8_f8_bf16_rowwise_mm_rocm(
+          mat_a.slice(1, group_start, group_end),
+          mat_b.slice(0, group_start, group_end),
+          scale_a.slice(0, group * m, (group + 1) * m),
+          scale_b.slice(0, group * n, (group + 1) * n),
+          use_fast_accum,
+          out_slice);
+      group_start = group_end;
+    }
+  } else {
+    for (const auto group : c10::irange(mat_a.size(0))) {
+      auto out_slice = out[group];
+      _f8_f8_bf16_rowwise_mm_rocm(
+          mat_a[group],
+          mat_b[group],
+          scale_a[group],
+          scale_b[group],
+          use_fast_accum,
+          out_slice);
+    }
+  }
+
+  return out;
 }
 #endif // USE_ROCM
 
@@ -222,7 +301,6 @@ _f8_f8_bf16_rowwise_grouped_mm(
       use_fast_accum,
       out);
 #else
-  // NOTE: ignore use_fast_accum
   TORCH_CHECK_VALUE(!bias.has_value(), "ROCM grouped gemm does not support bias")
   return _f8_f8_bf16_rowwise_grouped_mm_rocm(
       mat_a,
@@ -230,6 +308,7 @@ _f8_f8_bf16_rowwise_grouped_mm(
       scale_a,
       scale_b,
       offs,
+      use_fast_accum,
       out);
 #endif
 }

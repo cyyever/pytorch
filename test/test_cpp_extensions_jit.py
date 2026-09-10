@@ -83,6 +83,17 @@ with tempfile.TemporaryDirectory() as tmpdir:
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    @unittest.skipUnless(TEST_ROCM, "ROCm is not available")
+    def test_rocm_sdk_devel_library_path(self):
+        devel_home = torch.utils.cpp_extension.ROCM_DEVEL_HOME
+        if devel_home is None:
+            self.skipTest("ROCm is not installed from split SDK wheels")
+
+        self.assertIn(
+            os.path.join(devel_home, "lib"),
+            torch.utils.cpp_extension.library_paths("cuda"),
+        )
+
 
 # There's only one test that runs gradcheck, run slow mode manually
 @torch.testing._internal.common_utils.markDynamoStrictTest

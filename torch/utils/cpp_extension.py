@@ -188,6 +188,20 @@ def _find_rocm_home() -> str | None:
         logger.warning("No ROCm runtime is found, using ROCM_HOME='%s'", rocm_home)
     return rocm_home
 
+def _find_rocm_devel_home(rocm_home: str | None) -> str | None:
+    """Find the development package paired with a split ROCm SDK runtime."""
+    if rocm_home is None or Path(rocm_home).name != '_rocm_sdk_core':
+        return None
+
+    spec = importlib.util.find_spec('_rocm_sdk_devel')
+    if spec is None or spec.origin is None:
+        return None
+
+    devel_home = Path(spec.origin).parent.resolve()
+    if devel_home.parent != Path(rocm_home).resolve().parent:
+        return None
+    return str(devel_home)
+
 def _find_sycl_home() -> str | None:
     sycl_home = None
     icpx_path = shutil.which('icpx')
@@ -323,6 +337,7 @@ CUDA_NOT_FOUND_MESSAGE = (
     "environment variable or add NVCC to your system PATH. The extension compilation will fail."
 )
 ROCM_HOME = _find_rocm_home() if (torch.cuda._is_compiled() and torch.version.hip) else None
+ROCM_DEVEL_HOME = _find_rocm_devel_home(ROCM_HOME)
 HIP_HOME = _join_rocm_home('hip') if ROCM_HOME else None
 IS_HIP_EXTENSION = bool(ROCM_HOME is not None and torch.version.hip is not None)
 ROCM_VERSION = None
@@ -1441,6 +1456,8 @@ def library_paths(device_type: str = "cpu", torch_include_dirs: bool = True, cro
     if device_type == "cuda" and IS_HIP_EXTENSION:
         lib_dir = 'lib'
         paths.append(_join_rocm_home(lib_dir))
+        if ROCM_DEVEL_HOME is not None:
+            paths.append(os.path.join(ROCM_DEVEL_HOME, lib_dir))
         if HIP_HOME is not None:
             paths.append(os.path.join(HIP_HOME, 'lib'))
     elif device_type == "cuda":
@@ -2237,6 +2254,8 @@ def _prepare_ldflags(extra_ldflags, with_cuda, with_sycl, verbose, is_standalone
                 extra_ldflags.append(f'-L{os.path.join(CUDNN_HOME, "lib64")}')
         else:
             extra_ldflags.append(f'-L{_join_rocm_home("lib")}')
+            if ROCM_DEVEL_HOME is not None:
+                extra_ldflags.append(f'-L{os.path.join(ROCM_DEVEL_HOME, "lib")}')
             extra_ldflags.append('-lamdhip64')
     if with_sycl:
         extra_ldflags.append(f'-L{_join_sycl_home("lib")}')
