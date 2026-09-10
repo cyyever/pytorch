@@ -2279,7 +2279,12 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
         for flag in cflags:
             if 'TORCH_EXTENSION_NAME' in flag:
                 continue
-            if 'arch' in flag:
+            if flag.startswith((
+                '-arch',
+                '-gencode',
+                '--generate-code',
+                '--gpu-architecture',
+            )):
                 return []
 
     # Note: keep combined names ("arch1+arch2") above single names, otherwise

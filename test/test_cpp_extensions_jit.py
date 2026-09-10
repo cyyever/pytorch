@@ -475,7 +475,9 @@ class TestCppExtensionJIT(common.TestCase):
             len(default_flags), 0, "No args should generate default flags"
         )
 
-        non_arch_flags = _get_cuda_arch_flags(["-O2", "--use-fast-math"])
+        non_arch_flags = _get_cuda_arch_flags(
+            ["-O2", "--use-fast-math", "-Xcompiler=-march=znver4"]
+        )
         self.assertGreater(
             len(non_arch_flags), 0, "Non-arch flags should still generate defaults"
         )
