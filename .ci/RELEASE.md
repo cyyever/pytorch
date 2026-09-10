@@ -33,6 +33,62 @@ runtime variant, and source commit are encoded in the PEP 440 local version:
 The commit component is the first eight hexadecimal digits of the checked-out
 commit used for the build.
 
+## Accelerator-specific indexes
+
+Internal releases use one package-index channel per accelerator while retaining
+the `torch` distribution name:
+
+```text
+$ACCELERATOR_INDEX_URL-cuda
+$ACCELERATOR_INDEX_URL-rocm
+$ACCELERATOR_INDEX_URL-xpu
+$ACCELERATOR_INDEX_URL-mps
+```
+
+The base URL is not recorded in this repository: naming the host would publish
+it, and the organisation that owns it, in every clone and in the history. Set
+`ACCELERATOR_INDEX_URL` in the environment, or pass `--base-url` to the shared
+Breadkernel `accelerator-wheel-pipeline.py` tool.
+
+Each channel exposes its PEP 503 install endpoint under `/+simple/`. Do not put
+multiple accelerator variants on the same `torch` simple page: pip cannot use
+CUDA, ROCm, XPU, or MPS hardware to resolve wheel versions and may select the
+wrong local version.
+
+Install `torch` through the repository tool so users do not need to select or
+know the accelerator-specific index URL:
+
+```bash
+python /path/to/breadkernel/accelerator-wheel-pipeline.py install torch
+```
+
+Detection uses `/dev/kfd` for ROCm, the NVIDIA device or driver interface for
+CUDA, Intel DRM devices for XPU, and macOS arm64 for MPS. Set
+`ACCELERATOR=cuda|rocm|xpu|mps` when provisioning needs to override
+automatic detection. Detection failure and ambiguous CUDA/ROCm environments are
+fatal; the tool never falls back to a CPU or another accelerator package. The
+`configure` command remains available when an image should persist the selected
+index in pip configuration.
+
+Publish wheels with credentials supplied through twine's standard environment
+or keyring configuration:
+
+```bash
+python /path/to/breadkernel/accelerator-wheel-pipeline.py publish \
+  dist/torch-2.15.0+rocm.10.0.gfx1201.g0123abcd-cp314-cp314-linux_x86_64.whl
+```
+
+The publish command derives the channel from the wheel's local version,
+rejects mixed-accelerator uploads, and uploads to the channel repository URL.
+It does not overwrite existing releases or embed credentials. Use `--base-url`
+for another internal repository.
+
+Pass `--prune-old` to delete superseded development wheels after the upload
+succeeds. Pruning is limited to wheels with the same release line, accelerator
+variant, Python ABI, and platform tag, and only removes wheels from earlier
+dates. Stable releases, same-day commit builds, and unmatched wheel tags are
+retained. Deletion requires `TWINE_USERNAME` and `TWINE_PASSWORD`.
+
 ## Wheel contents
 
 Release builds set `BUILD_TEST=0` and `INSTALL_TEST=0`. Packaging also excludes
@@ -105,9 +161,10 @@ must be built and repaired in the repository's manylinux 2.28 pipeline.
 ## Publishing
 
 Generated workflows currently build, test, and retain wheel artifacts only.
-They do not invoke PyTorch's official S3 or R2 upload workflow. Configure the
-company private index separately, require human approval for promotion, and do
-not overwrite an existing version.
+They do not invoke PyTorch's official S3 or R2 upload workflow. Promotion to
+the accelerator-specific company index is a separate, human-approved step
+using the shared Breadkernel `accelerator-wheel-pipeline.py publish` tool. Do not
+overwrite an existing version.
 
 Set the `BINARY_RELEASE_REPOSITORY` GitHub repository variable to the canonical
 `owner/repository` name. Release jobs compare `github.repository` with this
