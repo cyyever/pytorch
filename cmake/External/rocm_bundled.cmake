@@ -196,6 +196,11 @@ string(REPLACE ";" "|" _bundled_rocm_archs "${PYTORCH_ROCM_ARCH}")
 set(_bundled_rocm_prefix_path "${_bundled_rocm_install}|${ROCM_PATH}")
 string(JOIN " " _bundled_rocm_libstdcxx_compat_flags
   ${PYTORCH_HIP_LIBSTDCXX_COMPAT_FLAGS})
+set(_bundled_rocm_host_arch_flags "")
+if(PYTORCH_X86_ARCH_FLAG)
+  set(_bundled_rocm_host_arch_flags
+    "-Xarch_host ${PYTORCH_X86_ARCH_FLAG}")
+endif()
 set(_bundled_rocm_common_cmake_args
   "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
   "-DCMAKE_INSTALL_PREFIX:PATH=${_bundled_rocm_install}"
@@ -205,6 +210,7 @@ set(_bundled_rocm_common_cmake_args
   "-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}"
   "-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_HIP_COMPILER}"
   "-DCMAKE_HIP_COMPILER:FILEPATH=${CMAKE_HIP_COMPILER}"
+  "-DCMAKE_C_FLAGS:STRING=${PYTORCH_X86_ARCH_FLAG}"
   "-DCMAKE_HIP_ARCHITECTURES:STRING=${_bundled_rocm_archs}"
   "-DGPU_TARGETS:STRING=${_bundled_rocm_archs}"
   "-DPython_EXECUTABLE:FILEPATH=${Python_EXECUTABLE}"
@@ -256,8 +262,8 @@ ExternalProject_Add(pytorch_bundled_hipblaslt
     "-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON"
     "-DCMAKE_HIP_STANDARD:STRING=26"
     "-DCMAKE_HIP_STANDARD_REQUIRED:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
-    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} ${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} ${_bundled_rocm_host_arch_flags} -ffunction-sections -fdata-sections"
     "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections -Wl,--version-script=${_bundled_hipblaslt_version_script}"
     "-DTENSILELITE_BUILD_TESTING:BOOL=OFF"
     "-DTENSILELITE_ENABLE_CLIENT:BOOL=OFF"
@@ -291,8 +297,8 @@ ExternalProject_Add(pytorch_bundled_rocblas
     "-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON"
     "-DCMAKE_HIP_STANDARD:STRING=26"
     "-DCMAKE_HIP_STANDARD_REQUIRED:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
-    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} ${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} ${_bundled_rocm_host_arch_flags} -ffunction-sections -fdata-sections"
     "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections -Wl,--version-script=${_bundled_rocblas_version_script}"
     "-DHIPBLASLT_VERSION:STRING=1.4.1"
     "-DTENSILE_VERSION:STRING="
@@ -342,8 +348,8 @@ ExternalProject_Add(pytorch_bundled_miopen
     "-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON"
     "-DCMAKE_HIP_STANDARD:STRING=26"
     "-DCMAKE_HIP_STANDARD_REQUIRED:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
-    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} -ffunction-sections -fdata-sections"
+    "-DCMAKE_CXX_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} ${PYTORCH_X86_ARCH_FLAG} -ffunction-sections -fdata-sections"
+    "-DCMAKE_HIP_FLAGS:STRING=${_bundled_rocm_libstdcxx_compat_flags} ${_bundled_rocm_host_arch_flags} -ffunction-sections -fdata-sections"
     "-DCMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,--gc-sections"
     "-Drocblas_DIR:PATH=${_bundled_rocm_install}/lib/cmake/rocblas"
     "-Dhipblaslt_DIR:PATH=${_bundled_rocm_install}/lib/cmake/hipblaslt"
