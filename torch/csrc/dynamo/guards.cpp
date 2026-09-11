@@ -54,6 +54,7 @@
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
+#include <ranges>
 #include <unistd.h>
 #include <cstdint>
 #include <functional>
@@ -3185,12 +3186,10 @@ struct WeakEntry {
 // TensorCheck expects.  All dimensions are treated as static (no nullopt).
 inline std::vector<std::optional<c10::SymInt>> to_opt_symint(
     c10::IntArrayRef vals) {
-  std::vector<std::optional<c10::SymInt>> out;
-  out.reserve(vals.size());
-  for (auto v : vals) {
-    out.emplace_back(c10::SymInt(v));
-  }
-  return out;
+  return vals
+      | std::views::transform(
+            [](auto v) { return std::optional<c10::SymInt>(c10::SymInt(v)); })
+      | std::ranges::to<std::vector>();
 }
 
 // Build a TensorCheck that validates all concrete metadata (dispatch key,
