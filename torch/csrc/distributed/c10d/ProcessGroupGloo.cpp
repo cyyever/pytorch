@@ -781,11 +781,9 @@ c10::intrusive_ptr<Backend> ProcessGroupGloo::split(
   }
 
   // TODO: we need to get rid of globalRanksInGroup eventually.
-  std::vector<uint64_t> globalRanksInGroup;
-  globalRanksInGroup.reserve(ranks.size());
-  for (auto rank : ranks) {
-    globalRanksInGroup.emplace_back(groupRanks()[rank]);
-  }
+  auto globalRanksInGroup = ranks
+      | std::views::transform([this](auto rank) { return groupRanks()[rank]; })
+      | std::ranges::to<std::vector<uint64_t>>();
   glooOpts->global_ranks_in_group = std::move(globalRanksInGroup);
   auto pg = c10::make_intrusive<ProcessGroupGloo>(
       store->clone(), groupRank, ranks.size(), glooOpts);
