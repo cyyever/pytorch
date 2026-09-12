@@ -206,6 +206,11 @@ class TORCH_API PyTorchStreamReader final {
     additional_reader_size_threshold_ = size;
   }
 
+  // The O_DIRECT descriptor of the underlying file, for readers that must
+  // bypass the page cache. -1 unless this reader was constructed from a file
+  // name and the file system honours the flag.
+  int directFd();
+
  private:
   void init();
   size_t read(uint64_t pos, char* buf, size_t n);

@@ -1,6 +1,7 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -8,6 +9,7 @@
 #include <c10/util/Logging.h>
 #include "c10/core/CPUAllocator.h"
 #include "c10/util/irange.h"
+#include "caffe2/serialize/file_adapter.h"
 #include "caffe2/serialize/in_memory_adapter.h"
 #include "caffe2/serialize/inline_container.h"
 
@@ -717,6 +719,36 @@ TEST(MemoryReadAdapterTest, ClampsReadsToBufferSize) {
   // In-bounds read returns full count.
   out.fill(0);
   EXPECT_EQ(adapter.read(0, out.data(), out.size()), out.size());
+}
+
+TEST(FileAdapterTest, DirectFdIsSeparateFromTheBufferedHandle) {
+  const std::string file_name = std::tmpnam(nullptr);
+  {
+    std::ofstream out(file_name, std::ios::binary);
+    const std::string payload(8192, 'x');
+    out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
+  }
+
+  FileAdapter adapter(file_name);
+  ASSERT_EQ(adapter.size(), 8192u);
+
+  const int fd = adapter.directFd();
+#ifdef __linux__
+  // /tmp is tmpfs on some machines, which rejects O_DIRECT; both outcomes are
+  // legitimate, so only the contract is asserted here.
+  if (fd >= 0) {
+    // Cached, so repeated calls hand back the same descriptor.
+    EXPECT_EQ(adapter.directFd(), fd);
+    // The buffered handle keeps working alongside it.
+    std::array<char, 16> buf{};
+    EXPECT_EQ(adapter.read(0, buf.data(), buf.size()), buf.size());
+    EXPECT_EQ(buf[0], 'x');
+  }
+#else
+  EXPECT_EQ(fd, -1);
+#endif
+
+  std::remove(file_name.c_str());
 }
 
 } // namespace

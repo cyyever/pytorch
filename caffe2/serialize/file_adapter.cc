@@ -4,6 +4,11 @@
 #include <cstdio>
 #include <string>
 
+#ifdef __linux__
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 namespace caffe2 {
 namespace serialize {
 
@@ -38,7 +43,8 @@ FileAdapter::RAIIFile::~RAIIFile() {
 }
 
 // FileAdapter directly calls C file API.
-FileAdapter::FileAdapter(const std::string& file_name) : file_(file_name) {
+FileAdapter::FileAdapter(const std::string& file_name)
+    : file_(file_name), file_name_(file_name) {
   const int fseek_ret = fseek(file_.fp_, 0L, SEEK_END);
   TORCH_CHECK(fseek_ret == 0, "fseek returned ", fseek_ret);
 #if defined(_MSC_VER)
@@ -75,7 +81,27 @@ size_t FileAdapter::read(uint64_t pos, void* buf, size_t n, const char* what)
   return fread(buf, 1, n, file_.fp_);
 }
 
-FileAdapter::~FileAdapter() = default;
+int FileAdapter::directFd() {
+#ifdef __linux__
+  std::call_once(direct_fd_once_, [this] {
+    // Not every file system honours O_DIRECT (tmpfs and some overlays reject
+    // it), so a failure here is expected and only costs the caller its fast
+    // path.
+    direct_fd_ = open(file_name_.c_str(), O_RDONLY | O_DIRECT);
+  });
+  return direct_fd_;
+#else
+  return -1;
+#endif
+}
+
+FileAdapter::~FileAdapter() {
+#ifdef __linux__
+  if (direct_fd_ >= 0) {
+    close(direct_fd_);
+  }
+#endif
+}
 
 } // namespace serialize
 } // namespace caffe2

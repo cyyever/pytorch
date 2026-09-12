@@ -636,6 +636,11 @@ size_t PyTorchStreamReader::getRecordOffset(const std::string& name) {
       extra_len;
 }
 
+int PyTorchStreamReader::directFd() {
+  auto* file_adapter = dynamic_cast<FileAdapter*>(in_.get());
+  return file_adapter == nullptr ? -1 : file_adapter->directFd();
+}
+
 size_t PyTorchStreamReader::getRecordSize(const std::string& name) {
   mz_zip_archive_file_stat stat;
   mz_zip_reader_file_stat(ar_.get(), getRecordID(name), &stat);
