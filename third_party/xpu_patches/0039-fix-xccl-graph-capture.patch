@@ -1,0 +1,16 @@
+# Register XCCL's internal stream with XPUGraph capture and make the graph test
+# import the public distributed.nn submodule it uses.
+diff --git a/src/xccl/ProcessGroupXCCL.cpp b/src/xccl/ProcessGroupXCCL.cpp
+index da443d10..93e5ab02 100644
+--- a/src/xccl/ProcessGroupXCCL.cpp
++++ b/src/xccl/ProcessGroupXCCL.cpp
+@@ -137,0 +138,3 @@ void syncStream(
++  // XCCL's internal stream must join the active graph capture before
++  // recording cross-stream dependencies.
++  c10::xpu::addStreamToCurrentCaptureIfCapturing(xcclStream);
+diff --git a/test/xpu/distributed/test_c10d_ops_xccl.py b/test/xpu/distributed/test_c10d_ops_xccl.py
+index cf36584a..8a1133ca 100644
+--- a/test/xpu/distributed/test_c10d_ops_xccl.py
++++ b/test/xpu/distributed/test_c10d_ops_xccl.py
+@@ -34,0 +35 @@ import torch.distributed as dist
++import torch.distributed.nn
