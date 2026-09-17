@@ -40,7 +40,7 @@ inline CaptureStatus currentStreamCaptureStatusMayInitCtx() {
 }
 
 inline void addStreamToCurrentCaptureIfCapturing(const XPUStream& stream) {
-  auto capture_stream = c10::xpu::getCurrentXPUStream();
+  auto capture_stream = c10::xpu::getCurrentXPUStream(stream.device_index());
   auto& capture_queue = capture_stream.queue();
   if (capture_queue.ext_oneapi_get_state() == queue_state::recording) {
     auto graph = capture_queue.ext_oneapi_get_graph();

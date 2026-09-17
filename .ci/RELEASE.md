@@ -113,11 +113,21 @@ remain external.
 
 ## XPU runtime dependencies
 
+XPU builds require oneAPI 2026.1 or newer (SYCL compiler version 20260100).
+
 XPU wheels target the Arch Linux hosts used by this fork and use the oneAPI
 installation under `/opt/intel/oneapi`. The wheel does not install Intel
 runtime packages from PyPI. XPU targets use transitive `DT_RPATH` entries so
 indirect dependencies such as the Intel compiler runtime resolve without
 sourcing `setvars.sh`.
+
+To bootstrap a compiler from an Intel offline installer, configure the
+standalone CMake project in `cmake/oneapi-bootstrap/` with
+`-DONEAPI_SHA256=<sha256>`. The official 2026.1.1.33 installer URL is the
+default; override it with `-DONEAPI_URL=<installer-url>` when needed. Run the
+resulting ExternalProject install first, then configure PyTorch with that
+installation's `setvars.sh`. Keep the host `CC`/`CXX` compiler selection
+separate from the SYCL driver (`icpx`).
 
 ## Bundled libuv
 

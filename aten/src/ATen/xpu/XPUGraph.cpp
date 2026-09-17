@@ -108,20 +108,14 @@ void XPUGraphImpl::capture_begin(
         return filter(XPUStream(XPUStream::UNCHECKED, stream));
       });
 
-  // Enable sycl graph native recording mode for sycl compiler version >=
-  // 2026.1.0, except on PVC.
+  // Native recording is incompatible with dynamically adding the XCCL queue.
   auto sycl_property = sycl::property_list{};
+#if !defined(USE_C10D_XCCL)
   const auto device_architecture =
       at::xpu::getCurrentDeviceProperties()->architecture;
-#if SYCL_COMPILER_VERSION >= 20260100
   if (!XPU_GRAPH_IS_PVC_ARCHITECTURE(device_architecture)) {
     sycl_property =
         sycl::property_list{property::graph::enable_native_recording{}};
-  }
-#else
-  if (!XPU_GRAPH_IS_PVC_ARCHITECTURE(device_architecture)) {
-    TORCH_WARN_ONCE(
-        "XPUGraph: Please use a PyTorch build compiled with oneAPI 2026.1.0 or newer for latest runtime support.");
   }
 #endif
 

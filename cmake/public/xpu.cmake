@@ -38,6 +38,12 @@ if(NOT SYCL_FOUND)
 endif()
 set(PYTORCH_FOUND_XPU TRUE)
 
+if(SYCL_COMPILER_VERSION LESS 20260100)
+  message(FATAL_ERROR
+    "PyTorch XPU requires oneAPI 2026.1 or newer. "
+    "Detected SYCL compiler version: ${SYCL_COMPILER_VERSION}.")
+endif()
+
 # SYCL library interface
 add_library(torch::sycl INTERFACE IMPORTED)
 
