@@ -38,11 +38,11 @@
     defined(_M_IX86)
 #if defined(__F16C__) &&                               \
     !(defined(__CUDA_ARCH__) || defined(__CUDACC__) || \
-      defined(__HIP_DEVICE_COMPILE__))
+      defined(__HIP_DEVICE_COMPILE__) || defined(__SYCL_DEVICE_ONLY__))
 #define C10_X86_F16 1
 #include <immintrin.h> // import conversion ops from f16cintrin.h
 #endif // defined(__F16C__) && !(defined(__CUDA_ARCH__) || defined(__CUDACC__)
-       // || defined(__HIP_DEVICE_COMPILE__))
+       // || defined(__HIP_DEVICE_COMPILE__) || defined(__SYCL_DEVICE_ONLY__))
 #endif // __x86_64__ || _M_X64 || __i386 || _M_IX86
 #endif // __GNUC__
 
