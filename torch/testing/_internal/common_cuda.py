@@ -256,11 +256,10 @@ def evaluate_platform_supports_fp8():
     return True
 
 def evaluate_platform_supports_fp8_grouped_gemm():
-    if torch.cuda.is_available():
-        if torch.version.hip:
-            return evaluate_gfx_arch_within(["gfx1201"])
-        else:
-            return SM90OrLater and not SM100OrLater
+    # sm_100 is this build's floor, so the SM90-but-not-SM100 window the CUDA
+    # branch used to gate on is empty; only ROCm gfx1201 qualifies.
+    if torch.cuda.is_available() and torch.version.hip:
+        return evaluate_gfx_arch_within(["gfx1201"])
     return False
 
 def evaluate_platform_supports_mx_gemm():
