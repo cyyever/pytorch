@@ -222,7 +222,7 @@ scaled_grouped_mm_configs_long = []
 
 if _should_generate_scaled_grouped_mm_configs():
     # FP8 tensorwise and rowwise: works on both CUDA and ROCm
-    # Requires PLATFORM_SUPPORTS_FP8_GROUPED_GEMM (SM90/H100, not SM100/B200)
+    # Requires PLATFORM_SUPPORTS_FP8_GROUPED_GEMM (ROCm gfx1201 in this build)
     if PLATFORM_SUPPORTS_FP8_GROUPED_GEMM:
         scaled_grouped_mm_configs_long += op_bench.config_list(
             attr_names=["M", "N", "K", "G"],
