@@ -547,12 +547,6 @@ class FusionTests(TestCase):
 
     @skipIfXpu(msg="copy_(cat()) fusion not supported on XPU")
     @unittest.skipIf(TEST_WITH_ROCM, "copy_(cat()) fusion not supported on ROCm")
-    # TODO(ivankobzarev): enable copy_(cat()) fusion for CUDA 13+
-    @unittest.skipIf(
-        torch.version.cuda
-        and tuple(int(x) for x in torch.version.cuda.split(".")) >= (13, 0),
-        "copy_(cat()) fusion not supported on CUDA 13+",
-    )
     def test_copy_cat_fusion(self):
         """copy_(cat(...)) should fuse: no intermediate allocation for cat."""
 

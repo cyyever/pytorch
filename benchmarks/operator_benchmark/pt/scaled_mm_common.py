@@ -3,7 +3,6 @@ import os
 from types import ModuleType
 
 import torch
-from torch.torch_version import TorchVersion
 
 
 """
@@ -113,9 +112,6 @@ def supports_fp8_deepseek_blockwise_scaling() -> bool:
     to SM90 (H100) only. On SM100 (B200) this errors with NotImplementedError.
     """
     if not torch.cuda.is_available() or torch.version.cuda is None:
-        return False
-    # These scaling modes require CUDA 12.9+ (see `aten/src/ATen/cuda/CUDABlas.cpp:get_scale_mode`).
-    if torch.version.hip is None and TorchVersion(torch.version.cuda) < "12.9":
         return False
     if (
         torch.version.hip is not None

@@ -1500,7 +1500,7 @@ class TestFP8Matmul(TestCase):
         with self.assertRaisesRegex(ValueError, "canonical contiguous"):
             scaled_addmm_(invalid_ld, mat1[:1], *args[1:])
 
-        if not (IS_SM90 and _get_torch_cuda_version() >= (12, 9)):
+        if not IS_SM90:
             row_scale_a = torch.ones(32, 1, device=device)
             row_scale_b = torch.ones(1, 32, device=device)
             with self.assertRaisesRegex(
@@ -1519,10 +1519,6 @@ class TestFP8Matmul(TestCase):
     @onlyCUDA
     @skipIfRocm
     @unittest.skipIf(not IS_SM90, "cuBLASLt accumulation requires SM90")
-    @unittest.skipIf(
-        _get_torch_cuda_version() < (12, 9),
-        "cuBLASLt accumulation requires CUDA 12.9+",
-    )
     @parametrize("output_dtype", [torch.bfloat16, torch.float16, torch.float32])
     @parametrize(
         "recipe_a,recipe_b",
@@ -2151,10 +2147,6 @@ class TestFP8Matmul(TestCase):
     @onlyOn(["cuda", "xpu"])
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8 or IS_WINDOWS, f8_msg)
     @skipCUDAIf(not IS_SM90, "DeepSeek style (1x128, 128x128) blockwise scaling requires SM90 (Hopper)")
-    @skipCUDAIf(
-        _get_torch_cuda_version() < (12, 9),
-        "cuBLAS blockwise scaling added in CUDA 12.9",
-    )
     @parametrize("output_dtype", [torch.bfloat16, torch.float32])
     @parametrize("lhs_block,rhs_block", [(1, 1), (128, 1), (1, 128)])
     @parametrize("M,N,K", [
@@ -2405,10 +2397,6 @@ class TestFP8Matmul(TestCase):
     @onlyOn(["cuda", "xpu"])
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8 or IS_WINDOWS, f8_msg)
     @skipCUDAIf(not IS_SM90, "DeepSeek style (1x128, 128x128) blockwise scaling requires SM90 (Hopper)")
-    @skipCUDAIf(
-        _get_torch_cuda_version() < (12, 9),
-        "cuBLAS blockwise scaling added in CUDA 12.9",
-    )
     @parametrize("output_dtype", [torch.bfloat16, torch.float32])
     @parametrize("lhs_block,rhs_block", [(1, 1), (128, 1), (1, 128)])
     @parametrize("M,N,K", [(256, 128, 256), (256, 256, 128)])
@@ -2491,10 +2479,6 @@ class TestFP8Matmul(TestCase):
     @onlyCUDA
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8 or IS_WINDOWS, f8_msg)
     @unittest.skipIf(IS_SM90, "DeepSeek style (1x128, 128x128) blockwise scaling works on SM90 (Hopper)")
-    @unittest.skipIf(
-        not torch.version.hip and _get_torch_cuda_version() < (12, 9),
-        "cuBLAS blockwise scaling added in CUDA 12.9",
-    )
     @runOnRocmArch(MI350_ARCH)
     @parametrize("output_dtype", [torch.bfloat16, ])
     @parametrize("lhs_block,rhs_block", [(1, 1), (128, 1), (1, 128)])

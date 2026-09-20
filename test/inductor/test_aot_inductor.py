@@ -57,7 +57,6 @@ from torch.testing._internal.common_cuda import (
     PLATFORM_SUPPORTS_FP8,
     PLATFORM_SUPPORTS_FP8_GROUPED_GEMM,
     PLATFORM_SUPPORTS_MEM_EFF_ATTENTION,
-    requires_triton_ptxas_compat,
     SM80OrLater,
     SM90OrLater,
     tf32_on_and_off,
@@ -96,7 +95,6 @@ from torch.testing._internal.common_utils import (
     skipIfWindowsXPU,
     skipIfXpu,
     TEST_MPS,
-    TEST_WITH_ROCM,
     TEST_XPU,
 )
 from torch.testing._internal.common_xpu import PLATFORM_SUPPORTS_FLASH_ATTENTION_XPU
@@ -553,7 +551,6 @@ class AOTInductorTestsTemplate:
     # Skip embed_kernel_binary == True for now as it shows random
     # failure on CI
     @common_utils.parametrize("embed_kernel_binary", [False])
-    @requires_triton_ptxas_compat
     def test_simple_multi_arch(self, embed_kernel_binary):
         if self.device != GPU_TYPE or self.device == "mps":
             raise unittest.SkipTest("requires GPU_TYPE")

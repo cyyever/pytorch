@@ -38,7 +38,6 @@ from torch.cuda._memory_viz import (
 from torch.testing._internal.autocast_test_lists import AutocastTestLists, TestAutocast
 from torch.testing._internal.common_cuda import (
     _create_scaling_case,
-    _get_torch_cuda_version,
     BF16X9_API_SUPPORTED,
     blas_library_context,
     has_device_side_assert,
@@ -6258,24 +6257,6 @@ print(f"{{r1}}, {{r2}}")
 
         x = torch.cuda.device_count()
         self.assertEqual(f"{x}, 1", r)
-
-    @unittest.skipUnless("CI" in os.environ, "Only run on CI")
-    @unittest.skipIf(
-        _get_torch_cuda_version() >= (13, 1),
-        "This test does not fail on CUDA 13.1 or newer",
-    )
-    @unittest.skipIf(
-        TEST_WITH_ROCM and torch.cuda.gds.is_available(),
-        "hipFile uses a POSIX compat fallback on ROCm, so GdsFile does not fail here",
-    )
-    def test_gds_fails_in_ci(self):
-        if torch.cuda.gds.is_available():
-            error_msg = "cuFileHandleRegister failed"
-        else:
-            error_msg = "is not supported on this platform"
-        with TemporaryFileName() as f:
-            with self.assertRaisesRegex(RuntimeError, error_msg):
-                torch.cuda.gds.GdsFile(f, os.O_CREAT | os.O_RDWR)
 
     @unittest.skipIf(
         IS_WINDOWS, "test relies on fork; Windows multiprocessing uses spawn"

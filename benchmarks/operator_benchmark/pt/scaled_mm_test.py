@@ -49,8 +49,6 @@ def _supports_fp8_rowwise_fp32_output() -> bool:
         return False
     if not torch.cuda.is_available() or torch.version.cuda is None:
         return False
-    if TorchVersion(torch.version.cuda) < "12.9":
-        return False
     return torch.cuda.get_device_capability(0) >= (9, 0)
 
 
@@ -541,23 +539,18 @@ if _should_generate_scaled_mm_configs():
         tags=["long"],
     )
 
-    # FP8 rowwise requires CUDA 12.9+ on CUDA builds (see `aten/src/ATen/cuda/CUDABlas.cpp:get_scale_mode`).
-    if torch.version.hip is None and TorchVersion(torch.version.cuda) < "12.9":
-        pass
-    else:
-        # Keep bf16-only for now.
-        rowwise_output_dtypes = ["bfloat16"]
-        scaled_mm_configs_long += op_bench.config_list(
-            attr_names=["M", "N", "K"],
-            attrs=_scaled_mm_long_shapes,
-            cross_product_configs={
-                "device": ["cuda"],
-                "float8_dtype": ["e4m3fn"],
-                "output_dtype": rowwise_output_dtypes,
-                "scaling": ["fp8_rowwise"],
-            },
-            tags=["long"],
-        )
+    # Keep bf16-only for now.
+    scaled_mm_configs_long += op_bench.config_list(
+        attr_names=["M", "N", "K"],
+        attrs=_scaled_mm_long_shapes,
+        cross_product_configs={
+            "device": ["cuda"],
+            "float8_dtype": ["e4m3fn"],
+            "output_dtype": ["bfloat16"],
+            "scaling": ["fp8_rowwise"],
+        },
+        tags=["long"],
+    )
 
     # MX supports both CUDA (with swizzle) and HIP (with NO_SWIZZLE).
     # NVFP4 is CUDA-only (non-HIP) due to swizzled scale requirements.
