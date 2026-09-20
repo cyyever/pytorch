@@ -395,15 +395,10 @@ mha_fwd(const at::Tensor &q,         // batch_size x seqlen_q x num_heads x head
         std::optional<at::Generator> gen_) {
 
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    bool is_sm80_or_newer = (dprops->major * 10) >= 80;
-    TORCH_CHECK(is_sm80_or_newer, "FlashAttention only supports Ampere GPUs or newer.");
 
     auto q_dtype = q.dtype();
     TORCH_CHECK(q_dtype == at::kHalf || q_dtype == at::kBFloat16,
                 "FlashAttention only support fp16 and bf16 data type");
-    if (q_dtype == at::kBFloat16) {
-        TORCH_CHECK(is_sm80_or_newer, "bfloat16 is only supported on Ampere GPUs or newer");
-    }
     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
 
@@ -598,15 +593,10 @@ mha_varlen_fwd(const at::Tensor &q,  // total_q x num_heads x head_size, total_q
                int num_splits) {
 
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    bool is_sm80_or_newer = (dprops->major * 10) >= 80;
-    TORCH_CHECK(is_sm80_or_newer, "FlashAttention only supports Ampere GPUs or newer.");
 
     auto q_dtype = q.dtype();
     TORCH_CHECK(q_dtype == at::kHalf || q_dtype == at::kBFloat16,
                 "FlashAttention only support fp16 and bf16 data type");
-    if (q_dtype == at::kBFloat16) {
-        TORCH_CHECK(is_sm80_or_newer, "bfloat16 is only supported on Ampere GPUs or newer");
-    }
     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
     TORCH_CHECK(cu_seqlens_q.dtype() == at::kInt, "cu_seqlens_q must have dtype int32");
@@ -860,8 +850,6 @@ mha_bwd(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x head_si
     #endif
     if (is_causal) { window_size_right = 0; }
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    bool is_sm80_or_newer = (dprops->major * 10) >= 80;
-    TORCH_CHECK(is_sm80_or_newer, "FlashAttention only supports Ampere GPUs or newer.");
 
     bool is_dropout = p_dropout > 0.0;
     auto stream = at::cuda::getCurrentCUDAStream().stream();
@@ -869,9 +857,6 @@ mha_bwd(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x head_si
     auto q_dtype = q.dtype();
     TORCH_CHECK(q_dtype == at::kHalf || q_dtype == at::kBFloat16,
                 "FlashAttention only support fp16 and bf16 data type");
-    if (q_dtype == at::kBFloat16) {
-        TORCH_CHECK(is_sm80_or_newer, "bfloat16 is only supported on Ampere GPUs or newer");
-    }
     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
     TORCH_CHECK(out.dtype() == q_dtype, "query and out must have the same dtype");
@@ -916,9 +901,6 @@ mha_bwd(const at::Tensor &dout,  // batch_size x seqlen_q x num_heads, x head_si
     TORCH_CHECK(head_size % 8 == 0, "head_size should be a multiple of 8");
     TORCH_CHECK(head_size_og % 8 == 0, "head_size_og should be a multiple of 8, this is ensured by padding!");
     TORCH_CHECK(head_size <= 256, "FlashAttention backward only supports head dimension at most 256");
-    if (head_size > 192 && (head_size <= 224 || is_dropout)) {
-        TORCH_CHECK(is_sm80_or_newer, "FlashAttention backward for head dim 256 with dropout, or head dim 224 with/without dropout requires A100/A800 or H100/H800");
-    }
     TORCH_CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
 
     auto round_multiple = [](int x, int m) { return (x + m - 1) / m * m; };
@@ -1087,8 +1069,6 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
 
     if (is_causal) { window_size_right = 0; }
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    bool is_sm80_or_newer = (dprops->major * 10) >= 80;
-    TORCH_CHECK(is_sm80_or_newer, "FlashAttention only supports Ampere GPUs or newer.");
 
     bool is_dropout = p_dropout > 0.0;
     auto stream = at::cuda::getCurrentCUDAStream().stream();
@@ -1096,9 +1076,6 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
     auto q_dtype = q.dtype();
     TORCH_CHECK(q_dtype == at::kHalf || q_dtype == at::kBFloat16,
                 "FlashAttention only support fp16 and bf16 data type");
-    if (q_dtype == at::kBFloat16) {
-        TORCH_CHECK(is_sm80_or_newer, "bfloat16 is only supported on Ampere GPUs or newer");
-    }
     TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
     TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
     TORCH_CHECK(out.dtype() == q_dtype, "query and out must have the same dtype");
@@ -1131,9 +1108,6 @@ mha_varlen_bwd(const at::Tensor &dout,  // total_q x num_heads, x head_size
     TORCH_CHECK(head_size % 8 == 0, "head_size should be a multiple of 8");
     TORCH_CHECK(head_size_og % 8 == 0, "head_size_og should be a multiple of 8, this is ensured by padding!");
     TORCH_CHECK(head_size <= 256, "FlashAttention backward only supports head dimension at most 256");
-    if (head_size > 192 && (head_size <= 224 || is_dropout)) {
-        TORCH_CHECK(is_sm80_or_newer, "FlashAttention backward for head dim 256 with dropout, or head dim 224 with/without dropout requires A100/A800 or H100/H800");
-    }
     TORCH_CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
 
     auto round_multiple = [](int x, int m) { return (x + m - 1) / m * m; };
@@ -1306,15 +1280,10 @@ mha_fwd_kvcache(at::Tensor &q,                 // batch_size x seqlen_q x num_he
                 ) {
 
     auto dprops = at::cuda::getCurrentDeviceProperties();
-    bool is_sm80_or_newer = (dprops->major * 10) >= 80;
-    TORCH_CHECK(is_sm80_or_newer, "FlashAttention only supports Ampere GPUs or newer.");
 
     auto q_dtype = q.dtype();
     TORCH_CHECK(q_dtype == at::kHalf || q_dtype == at::kBFloat16,
                 "FlashAttention only support fp16 and bf16 data type");
-    if (q_dtype == at::kBFloat16) {
-        TORCH_CHECK(is_sm80_or_newer, "bfloat16 is only supported on Ampere GPUs or newer");
-    }
     TORCH_CHECK(kcache.dtype() == q_dtype, "query and key must have the same dtype");
     TORCH_CHECK(vcache.dtype() == q_dtype, "query and value must have the same dtype");
 

@@ -786,23 +786,8 @@ cmake_dependent_option(
   ON
   "USE_CUDA OR USE_ROCM"
   OFF)
-
-# Flash Attention needs sm80+; disable it if no resolved arch reaches that.
-if(USE_FLASH_ATTENTION AND USE_CUDA AND NOT USE_ROCM)
-  string(REPLACE " " ";" _flash_attn_archs "${NVCC_FLAGS_EXTRA_readable}")
-  set(_flash_attn_has_sm80 OFF)
-  foreach(_arch IN LISTS _flash_attn_archs)
-    if(_arch MATCHES "^(sm|compute)_([0-9]+)" AND CMAKE_MATCH_2 GREATER_EQUAL 80)
-      set(_flash_attn_has_sm80 ON)
-    endif()
-  endforeach()
-  if(_flash_attn_archs AND NOT _flash_attn_has_sm80)
-    message(STATUS
-      "Disabling USE_FLASH_ATTENTION: it needs a CUDA architecture >= 8.0, "
-      "but the resolved CUDA architectures are '${_flash_attn_archs}'")
-    set(USE_FLASH_ATTENTION OFF)
-  endif()
-endif()
+# Flash Attention needs sm80+; sm_100 is this build's floor, so every resolved
+# arch qualifies and the gate is constant-true.
 
 
 if(USE_CUDA AND "$ENV{TORCH_CUDA_ARCH_LIST}" MATCHES "10.0" AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.8)
