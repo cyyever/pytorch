@@ -479,7 +479,7 @@ class Backend(str):  # noqa: SLOT000
 
     _plugins: dict[str, _BackendPlugin] = {}
 
-    backend_list = [UNDEFINED, GLOO, NCCL, XCCL, FAKE]
+    backend_list = [UNDEFINED, GLOO, NCCL, XCCL]
 
     # 3rd-party devices can register the default backend support here
     default_device_backend_map: dict[str, str] = {
@@ -7412,7 +7412,9 @@ def shrink_group(
 
     # Step 6: Handle cleanup and creation of new process group
     target_group_info["pg_options_override"] = pg_options
-    return _finalize_shrunk_group(target_group_info, excluded_ranks_set, new_backend)
+    return _finalize_shrunk_group(
+        target_group_info, excluded_ranks_set, new_backend, shrink_flags
+    )
 
 
 def _validate_shrink_inputs(ranks_to_exclude: list[int], shrink_flags: int) -> None:
@@ -7558,6 +7560,7 @@ def _finalize_shrunk_group(
     group_info: _ShrinkGroupInfo,
     excluded_ranks_set: set[int],
     new_backend: C10DBackend,
+    shrink_flags: int,
 ) -> ProcessGroup:
     """Clean up old group and create new shrunk process group."""
     target_pg = group_info["process_group"]
@@ -7577,7 +7580,11 @@ def _finalize_shrunk_group(
     ]
 
     # Clean up the original group
-    _cleanup_original_group(target_pg, is_default_group)
+    _cleanup_original_group(
+        target_pg,
+        is_default_group,
+        abort=bool(shrink_flags & SHRINK_ABORT),
+    )
 
     # Create and configure the new process group
     new_pg = _create_shrunk_process_group(
@@ -7630,10 +7637,15 @@ def _extract_group_metadata(target_pg: ProcessGroup) -> _GroupMetadata:
     }
 
 
-def _cleanup_original_group(target_pg: ProcessGroup, is_default_group: bool) -> None:
+def _cleanup_original_group(
+    target_pg: ProcessGroup, is_default_group: bool, *, abort: bool
+) -> None:
     """Clean up the original process group safely."""
     try:
-        destroy_process_group(target_pg)
+        if abort:
+            target_pg.abort()
+        else:
+            destroy_process_group(target_pg)
     except Exception:
         group_type = "default" if is_default_group else "non-default"
         logger.warning(
