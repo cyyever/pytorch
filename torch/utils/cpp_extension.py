@@ -1126,18 +1126,18 @@ def CUDAExtension(name, sources, *args, **kwargs):
     You can override the default behavior using `TORCH_CUDA_ARCH_LIST` to explicitly specify which
     CCs you want the extension to support:
 
-    ``TORCH_CUDA_ARCH_LIST="8.9 9.0" python build_my_extension.py``
-    ``TORCH_CUDA_ARCH_LIST="8.9 9.0 10.0 12.0+PTX" python build_my_extension.py``
+    ``TORCH_CUDA_ARCH_LIST="10.0 12.0" python build_my_extension.py``
+    ``TORCH_CUDA_ARCH_LIST="10.0 12.0+PTX" python build_my_extension.py``
 
     The +PTX option causes extension kernel binaries to include PTX instructions for the specified
     CC. PTX is an intermediate representation that allows kernels to runtime-compile for any CC >=
-    the specified CC (for example, 8.9+PTX generates PTX that can runtime-compile for any GPU with
-    CC >= 8.9). This improves your binary's forward compatibility. However, relying on older PTX to
-    provide forward compat by runtime-compiling for newer CCs can modestly reduce performance on
-    those newer CCs. If you know exact CC(s) of the GPUs you want to target, you're always better
-    off specifying them individually. For example, if you want your extension to run on 8.9 and 9.0,
-    "8.9+PTX" would work functionally because it includes PTX that can runtime-compile for 9.0, but
-    "8.9 9.0" would be better.
+    the specified CC (for example, 10.0+PTX generates PTX that can runtime-compile for any GPU
+    with CC >= 10.0). This improves your binary's forward compatibility. However, relying on older
+    PTX to provide forward compat by runtime-compiling for newer CCs can modestly reduce
+    performance on those newer CCs. If you know exact CC(s) of the GPUs you want to target, you're
+    always better off specifying them individually. For example, if you want your extension to run
+    on 10.0 and 12.0, "10.0+PTX" would work functionally because it includes PTX that can
+    runtime-compile for 12.0, but "10.0 12.0" would be better.
 
     Note that while it's possible to include all supported archs, the more archs get included the
     slower the building process will be, as it will build a separate kernel image for each arch.
@@ -2242,14 +2242,12 @@ def _get_cuda_arch_flags(cflags: list[str] | None = None) -> list[str]:
     # Note: keep combined names ("arch1+arch2") above single names, otherwise
     # string replacement may not do the right thing
     named_arches = collections.OrderedDict([
-        ('Ada', '8.9+PTX'),
-        ('Hopper', '9.0+PTX'),
         ('Blackwell+Tegra', '11.0'),
         ('Blackwell', '10.0;10.3;12.0;12.1+PTX'),
         ('Rubin', '10.7+PTX'),
     ])
 
-    supported_arches = ['8.9', '9.0', '9.0a', '10.0', '10.0a', '11.0', '11.0a',
+    supported_arches = ['10.0', '10.0a', '11.0', '11.0a',
                         '10.3', '10.3a', '10.7', '10.7a', '12.0', '12.0a', '12.1', '12.1a']
     valid_arch_strings = supported_arches + [s + "+PTX" for s in supported_arches]
 

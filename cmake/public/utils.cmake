@@ -178,14 +178,14 @@ macro(torch_xpu_get_arch_list store_var)
 endmacro()
 
 ##############################################################################
-# GPU architectures this build knows about. sm_89 (Ada) is the floor: the
+# GPU architectures this build knows about. sm_100 (Blackwell) is the floor: the
 # lists are also what clamps autodetection, so keep the numeric entries sorted
 # by release, not by value (Rubin's 10.7 is below Blackwell's 12.0).
 # Sets, in the caller's scope: _cuda_known_archs, _cuda_common_archs,
 # _cuda_min_arch and _cuda_limit_arch.
 macro(torch_cuda_architecture_lists)
-  set(_cuda_known_archs "Ada" "Hopper" "Blackwell")
-  set(_cuda_common_archs "8.9" "9.0" "9.0a" "10.0" "10.0a" "11.0a" "12.0" "12.0a")
+  set(_cuda_known_archs "Blackwell")
+  set(_cuda_common_archs "10.0" "10.0a" "11.0a" "12.0" "12.0a")
   if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 13.4)
     list(APPEND _cuda_known_archs "Rubin")
     list(APPEND _cuda_common_archs "10.7" "10.7a")
@@ -312,12 +312,6 @@ function(torch_cuda_select_nvcc_arch_flags out_variable)
     if(arch_name MATCHES "^([0-9]+\\.[0-9][af]?(\\([0-9]+\\.[0-9]\\))?)$")
       set(arch_bin ${CMAKE_MATCH_1})
       set(arch_ptx ${arch_bin})
-    elseif(arch_name STREQUAL "Ada")
-      set(arch_bin 8.9)
-      set(arch_ptx 8.9)
-    elseif(arch_name STREQUAL "Hopper")
-      set(arch_bin 9.0)
-      set(arch_ptx 9.0)
     elseif(arch_name STREQUAL "Blackwell+Tegra")
       set(arch_bin 10.1)
     elseif(arch_name STREQUAL "Blackwell")
@@ -390,13 +384,13 @@ macro(torch_cuda_get_nvcc_gencode_flag store_var)
     set(TORCH_CUDA_ARCH_LIST $ENV{TORCH_CUDA_ARCH_LIST})
   endif()
 
-  # sm_89 (Ada) is the oldest architecture this build supports, so anything
+  # sm_100 (Blackwell) is the oldest architecture this build supports, so anything
   # older cannot be built even if it is asked for.
   foreach(_torch_arch ${TORCH_CUDA_ARCH_LIST})
     if(_torch_arch MATCHES "^([0-9]+\\.[0-9]+)")
-      if(CMAKE_MATCH_1 VERSION_LESS 8.9)
+      if(CMAKE_MATCH_1 VERSION_LESS 10.0)
         message(FATAL_ERROR
-            "PyTorch needs compute capability 8.9 or above, but TORCH_CUDA_ARCH_LIST "
+            "PyTorch needs compute capability 10.0 or above, but TORCH_CUDA_ARCH_LIST "
             "contains ${_torch_arch}.")
       endif()
     endif()

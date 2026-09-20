@@ -50,19 +50,10 @@ uint32_t valueBase(int src, int dst, int size) {
 // is the entire point of the host-side CFT API.
 // NCCL's own NCCL_CFT_ENABLE cannot be used to gate this: cft__funcs.h ends
 // with an unconditional `#undef NCCL_CFT_ENABLE`, so it always reads as 0 in
-// consumer code and would silently compile the put away. Replicate NCCL's
-// arch condition instead (nccl_device/impl/cft__funcs.h).
-// Not `#define CFT_DEVICE_SUPPORTED (defined(...) && ...)`: `defined` inside
-// a macro expansion is undefined behavior and clang rejects it under
-// -Werror,-Wexpansion-to-defined.
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 1000
-#define CFT_DEVICE_SUPPORTED 1
-#else
-#define CFT_DEVICE_SUPPORTED 0
-#endif
-
+// consumer code and would silently compile the put away. Its arch condition
+// (sm_100+, nccl_device/impl/cft__funcs.h) always holds here: sm_100 is this
+// build's floor.
 __global__ void cftPutKernel(uint32_t leId, size_t leOffset, uint32_t base) {
-#if CFT_DEVICE_SUPPORTED
   __shared__ uint32_t payload[kSlotWords];
   __shared__ ncclCftSmem cftSmem;
 
@@ -87,7 +78,6 @@ __global__ void cftPutKernel(uint32_t leId, size_t leOffset, uint32_t base) {
   // reuse) and together they document the two distinct dependencies.
   cft.flushSmem(coop);
   cft.flush(coop);
-#endif
 }
 
 // Rendezvous barrier for the rank threads. The ranks live in one process, so a
@@ -260,21 +250,7 @@ class NCCLSymmetricMemoryCftDeviceTest : public ::testing::Test {
       LOG(INFO) << "Need at least 2 ranks, skipping test";
       return true;
     }
-    // cftPutKernel compiles to a no-op unless CFT_DEVICE_SUPPORTED held, and
-    // the host-side queries can still succeed then (they only need the driver
-    // and NCCL), so the readback would fail confusingly instead of skipping.
-    // ptxVersion is the virtual arch the loaded kernel variant was compiled
-    // for, i.e. its __CUDA_ARCH__/10; CUDART_VERSION is shared with the
-    // device pass of this TU.
-    cudaFuncAttributes attr{};
-    AT_CUDA_CHECK(cudaFuncGetAttributes(&attr, cftPutKernel));
-    if (attr.ptxVersion >= 100) {
-      return false;
-    }
-    LOG(INFO) << "cftPutKernel variant compiled for sm_" << attr.ptxVersion
-              << " with CUDART " << CUDART_VERSION
-              << ", needs sm_100+; skipping test";
-    return true;
+    return false;
   }
 
   int size_{1};
@@ -283,19 +259,6 @@ class NCCLSymmetricMemoryCftDeviceTest : public ::testing::Test {
 TEST_F(NCCLSymmetricMemoryCftDeviceTest, testDevicePutCft) {
   if (skipTest()) {
     return;
-  }
-  // cftPutKernel compiles to a no-op unless CFT_DEVICE_SUPPORTED held, and
-  // the host-side queries can still succeed then (they only need the driver
-  // and NCCL), so the readback would fail confusingly instead of skipping.
-  // ptxVersion is the virtual arch the loaded kernel variant was compiled
-  // for, i.e. its __CUDA_ARCH__/10; CUDART_VERSION is shared with the device
-  // pass of this TU.
-  cudaFuncAttributes attr{};
-  AT_CUDA_CHECK(cudaFuncGetAttributes(&attr, cftPutKernel));
-  const bool cftCompiled = attr.ptxVersion >= 100;
-  if (!cftCompiled) {
-    GTEST_SKIP() << "cftPutKernel compiled without CFT device support "
-                 << "(needs sm_100+ code)";
   }
   c10d::test::TemporaryFile file;
   ThreadBarrier barrier(size_);
