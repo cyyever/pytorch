@@ -55,7 +55,7 @@ uint32_t valueBase(int src, int dst, int size) {
 // Not `#define CFT_DEVICE_SUPPORTED (defined(...) && ...)`: `defined` inside
 // a macro expansion is undefined behavior and clang rejects it under
 // -Werror,-Wexpansion-to-defined.
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 1000 && CUDART_VERSION >= 13030
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 1000
 #define CFT_DEVICE_SUPPORTED 1
 #else
 #define CFT_DEVICE_SUPPORTED 0
@@ -266,7 +266,6 @@ class NCCLSymmetricMemoryCftDeviceTest : public ::testing::Test {
     // ptxVersion is the virtual arch the loaded kernel variant was compiled
     // for, i.e. its __CUDA_ARCH__/10; CUDART_VERSION is shared with the
     // device pass of this TU.
-#if CUDART_VERSION >= 13030
     cudaFuncAttributes attr{};
     AT_CUDA_CHECK(cudaFuncGetAttributes(&attr, cftPutKernel));
     if (attr.ptxVersion >= 100) {
@@ -274,11 +273,7 @@ class NCCLSymmetricMemoryCftDeviceTest : public ::testing::Test {
     }
     LOG(INFO) << "cftPutKernel variant compiled for sm_" << attr.ptxVersion
               << " with CUDART " << CUDART_VERSION
-              << ", needs sm_100+ and CUDA >= 13.3; skipping test";
-#else
-    LOG(INFO) << "cftPutKernel compiled with CUDART " << CUDART_VERSION
-              << ", needs CUDA >= 13.3; skipping test";
-#endif
+              << ", needs sm_100+; skipping test";
     return true;
   }
 
@@ -295,16 +290,12 @@ TEST_F(NCCLSymmetricMemoryCftDeviceTest, testDevicePutCft) {
   // ptxVersion is the virtual arch the loaded kernel variant was compiled
   // for, i.e. its __CUDA_ARCH__/10; CUDART_VERSION is shared with the device
   // pass of this TU.
-#if CUDART_VERSION >= 13030
   cudaFuncAttributes attr{};
   AT_CUDA_CHECK(cudaFuncGetAttributes(&attr, cftPutKernel));
   const bool cftCompiled = attr.ptxVersion >= 100;
-#else
-  const bool cftCompiled = false;
-#endif
   if (!cftCompiled) {
     GTEST_SKIP() << "cftPutKernel compiled without CFT device support "
-                 << "(needs sm_100+ code and CUDA >= 13.3)";
+                 << "(needs sm_100+ code)";
   }
   c10d::test::TemporaryFile file;
   ThreadBarrier barrier(size_);
