@@ -184,7 +184,7 @@ struct _cuda_scatter_gather_internal_kernel {
       }
     }
 #endif
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 11000
+#if !defined(USE_ROCM)
     if constexpr (is_scatter_like &&
         (std::is_same_v<func_t, ReduceMinimum> ||
          std::is_same_v<func_t, ReduceMaximum>) &&
@@ -200,7 +200,6 @@ struct _cuda_scatter_gather_internal_kernel {
         auto src_stride_bytes = iter.strides(1)[1];
         auto ind_dim_size = index_size;
         if (iter.numel() == 0) return;
-#if defined(CUDA_VERSION) && CUDA_VERSION >= 12080
         if (at::cuda::getCurrentDeviceProperties()->major >= 9) {
           if constexpr (std::is_same_v<func_t, ReduceMaximum>) {
             at::native::tma_scatter_kernel_launch<at::native::ScatterMaxOp, scalar_t, index_t>(
@@ -219,7 +218,6 @@ struct _cuda_scatter_gather_internal_kernel {
           }
           return;
         }
-#endif
         if constexpr (std::is_same_v<func_t, ReduceMaximum>) {
           at::native::vectorized_scatter_kernel_launch<at::native::ScatterMaxOp, alignment, scalar_t, index_t>(
               reinterpret_cast<scalar_t*>(self_ptr),

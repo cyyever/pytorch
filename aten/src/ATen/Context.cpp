@@ -481,8 +481,8 @@ void Context::setFloat32Precision(Float32Backend backend, Float32Op op, Float32P
         !cuda_hooks.hasROCM(),
         "bfx9 precision is only supported on NVIDIA CUDA");
     TORCH_CHECK(
-        cuda_hooks.hasCUDART() && cuda_hooks.versionCUDART() >= 12090,
-        "bfx9 precision requires PyTorch to be built with CUDA 12.9 or later");
+        cuda_hooks.hasCUDART(),
+        "bfx9 precision requires PyTorch to be built with CUDA");
   }
   TORCH_CHECK(
       p != Float32Precision::DEFAULT,

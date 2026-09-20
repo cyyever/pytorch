@@ -8,6 +8,10 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/Exception.h>
 
+#ifndef __HIPCC__
+#include <cuda/std/numeric>
+#endif
+
 #ifdef __HIPCC__
 #define __MATH_FUNCTIONS_DECL__ inline C10_DEVICE
 #else /* __HIPCC__ */

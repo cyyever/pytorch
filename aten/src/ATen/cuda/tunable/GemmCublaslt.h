@@ -593,7 +593,6 @@ class CublasltScaledGemmProblem : public CublasltGemmProblemBase {
       }
     }
 
-#if CUDA_VERSION >= 12080
     int a_scale_mode = at::cuda::blas::detail::cublasLtMatmulScaleMode(
         params_->a_scaling_type,
         params_->a_swizzle_type,
@@ -608,7 +607,6 @@ class CublasltScaledGemmProblem : public CublasltGemmProblemBase {
         CUBLASLT_MATMUL_DESC_A_SCALE_MODE, a_scale_mode);
     compute_desc_.setAttribute(
         CUBLASLT_MATMUL_DESC_B_SCALE_MODE, b_scale_mode);
-#endif
 
     adesc_ = std::make_unique<at::cuda::blas::detail::CuBlasLtMatrixLayout>(
         a_type_, params_->m, params_->k, params_->lda, params_->transa == 't');

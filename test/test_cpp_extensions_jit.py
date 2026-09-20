@@ -42,6 +42,20 @@ IS_LINUX = sys.platform.startswith("linux")
 
 
 class TestCppExtensionImport(common.TestCase):
+    def test_cuda_extension_requires_cuda_13_4(self):
+        extension = torch.utils.cpp_extension
+        with (
+            mock.patch.object(extension, "CUDA_HOME", "/cuda"),
+            mock.patch.object(extension.os.path, "exists", return_value=True),
+            mock.patch.object(torch.version, "cuda", "13.4"),
+            mock.patch.object(extension.subprocess, "check_output") as nvcc,
+        ):
+            nvcc.return_value = b"Cuda compilation tools, release 13.3, V13.3.73"
+            with self.assertRaisesRegex(RuntimeError, "requires CUDA 13.4"):
+                extension._check_cuda_version()
+            nvcc.return_value = b"Cuda compilation tools, release 13.4, V13.4.92"
+            extension._check_cuda_version()
+
     def test_cython_not_loaded_with_import_cpp_extension(self):
         script = """
 import importlib.util

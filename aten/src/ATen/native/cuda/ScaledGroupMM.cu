@@ -104,13 +104,6 @@ struct Schedule {
   using ClusterShape = cute::Shape<cute::_2, cute::_2, cute::_1>;
 };
 
-int ceildiv(int a, int b) {
-  return (a + b - 1) / b;
-}
-
-int round_up_to_nearest_multiple(int a, int b) {
-  return ceildiv(a, b) * b;
-}
 
 template <
     typename FastAccum,
@@ -246,14 +239,7 @@ void f8f8bf16_grouped_gemm_impl_sm90(
 
   const int64_t stride_size = 3 * group_count * ((int64_t)sizeof(StrideA));
 
-  // dummy tmas are created based on these pointer-to-pointers
-  // the actual values are never used, they are replaced
-  // by real addresses, but for dummy tma creation to succeed
-  // due to bug in cuda < 12.4 the pointers have to be aligned to 128 bits
-  const int group_alignment = 16 / sizeof(void*);
-  const int aligned_group_count =
-      round_up_to_nearest_multiple(group_count, group_alignment);
-  int64_t input_args_size = aligned_group_count * 5 * sizeof(void*) +
+  int64_t input_args_size = group_count * 5 * sizeof(void*) +
       problem_shape_size + stride_size;
 
   auto& allocator = *c10::cuda::CUDACachingAllocator::get();
@@ -261,17 +247,17 @@ void f8f8bf16_grouped_gemm_impl_sm90(
   void* buf_ptr = input_buf.get();
   DtypeA** inputA_ptrs = reinterpret_cast<DtypeA**>(buf_ptr);
   DtypeB** inputB_ptrs =
-      reinterpret_cast<DtypeB**>(inputA_ptrs + aligned_group_count);
+      reinterpret_cast<DtypeB**>(inputA_ptrs + group_count);
   DtypeOutput** output_ptrs =
-      reinterpret_cast<DtypeOutput**>(inputB_ptrs + aligned_group_count);
+      reinterpret_cast<DtypeOutput**>(inputB_ptrs + group_count);
   DtypeScale** inputA_scale_ptrs =
-      reinterpret_cast<DtypeScale**>(output_ptrs + aligned_group_count);
+      reinterpret_cast<DtypeScale**>(output_ptrs + group_count);
   DtypeScale** inputB_scale_ptrs =
-      reinterpret_cast<DtypeScale**>(inputA_scale_ptrs + aligned_group_count);
+      reinterpret_cast<DtypeScale**>(inputA_scale_ptrs + group_count);
   static_assert(
       sizeof(StrideA) == 8, "expected StrideA to be 8 bytes for alignment");
   StrideA* stride_A =
-      reinterpret_cast<StrideA*>(inputB_scale_ptrs + aligned_group_count);
+      reinterpret_cast<StrideA*>(inputB_scale_ptrs + group_count);
   StrideB* stride_B = reinterpret_cast<StrideB*>(stride_A + group_count);
   StrideOutput* stride_output =
       reinterpret_cast<StrideOutput*>(stride_B + group_count);
@@ -338,17 +324,17 @@ void f8f8bf16_grouped_gemm_impl_sm90(
   //   char* buf_ptr_cpu = (char*)buf_cpu.data_ptr();
   //   DtypeA** inputA_ptrs_h = reinterpret_cast<DtypeA**>(buf_ptr_cpu);
   //   DtypeB** inputB_ptrs_h =
-  //       reinterpret_cast<DtypeB**>(inputA_ptrs_h + aligned_group_count);
+  //       reinterpret_cast<DtypeB**>(inputA_ptrs_h + group_count);
   //   DtypeOutput** output_ptrs_h =
-  //       reinterpret_cast<DtypeOutput**>(inputB_ptrs_h + aligned_group_count);
+  //       reinterpret_cast<DtypeOutput**>(inputB_ptrs_h + group_count);
   //   DtypeScale** inputA_scale_ptrs_h =
-  //       reinterpret_cast<DtypeScale**>(output_ptrs_h + aligned_group_count);
+  //       reinterpret_cast<DtypeScale**>(output_ptrs_h + group_count);
   //   DtypeScale** inputB_scale_ptrs_h =
   //       reinterpret_cast<DtypeScale**>(inputA_scale_ptrs_h +
-  //       aligned_group_count);
+  //       group_count);
   //   StrideA* stride_A_h =
   //       reinterpret_cast<StrideA*>(inputB_scale_ptrs_h +
-  //       aligned_group_count);
+  //       group_count);
   //   StrideB* stride_B_h = reinterpret_cast<StrideB*>(stride_A_h +
   //   group_count); StrideOutput* stride_output_h =
   //       reinterpret_cast<StrideOutput*>(stride_B_h + group_count);

@@ -1027,11 +1027,6 @@ static void index_add_cuda_impl(const Tensor& self, int64_t dim, const Tensor& i
   // so scatter_add's own TMA/vectorized eligibility check + dispatch is the
   // single source of truth (see PR #182675). Pattern from
   // pytorch/pytorch#180430.
-  // Gated on CUDA >= 12.8: pre-12.8 builds compile out the TMA branch in
-  // scatter_add and fall back to its vectorized atomicAdd path, which
-  // regresses skewed/high-contention workloads vs indexFunc{Small,Large}Index
-  // (warp-per-entry scheduling concentrates atomic contention on hot rows).
-  // Older builds therefore stay on the existing indexFunc dispatch.
   // index_add supports {complex64, complex128, ComplexHalf, Bool} that
   // scatter_add does not, so exclude those and let them use indexFunc.
   // The dtype check is ordered FIRST so short-circuit evaluation skips
@@ -1225,7 +1220,7 @@ void index_reduce_func_cuda_impl(
 
   int mpc = at::cuda::getCurrentDeviceProperties()->multiProcessorCount;
 
-#if !defined(USE_ROCM) && defined(CUDA_VERSION) && CUDA_VERSION >= 11000
+#if !defined(USE_ROCM)
   // Fast path: index_reduce_(0, idx, src, amin/amax) is equivalent to
   // scatter_reduce_(0, idx.view({n, 1, ...}).expand_as(src), src). Reuse the
   // scatter path so eligibility and architecture-specific dispatch remain in one place.

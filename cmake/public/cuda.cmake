@@ -85,8 +85,8 @@ endif()
 message(STATUS "PyTorch: CUDA detected: " ${CUDAToolkit_VERSION})
 message(STATUS "PyTorch: CUDA nvcc is: " ${CUDAToolkit_NVCC_EXECUTABLE})
 message(STATUS "PyTorch: CUDA toolkit directory: " ${CUDA_TOOLKIT_ROOT_DIR})
-if(CUDAToolkit_VERSION VERSION_LESS 13.3)
-  message(FATAL_ERROR "PyTorch requires CUDA 13.3 or above.")
+if(CUDAToolkit_VERSION VERSION_LESS 13.4)
+  message(FATAL_ERROR "PyTorch requires CUDA 13.4 or above.")
 endif()
 
 # ---[ CUDA libraries wrapper
@@ -221,11 +221,6 @@ message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA}")
 # Debug and Release symbol support
 if(CUDA_DEVICE_DEBUG)
   list(APPEND CUDA_NVCC_FLAGS "-g" "-G")  # -G enables device code debugging symbols
-endif()
-
-# needed for compat with newer versions of clang that use C++20 mangling rules
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  list(APPEND CUDA_NVCC_FLAGS "-Xcompiler=-fclang-abi-compat=17")
 endif()
 
 # Required by headers that call constexpr host functions from device code.

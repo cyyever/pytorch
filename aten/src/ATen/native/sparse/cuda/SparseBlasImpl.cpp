@@ -38,7 +38,6 @@ c10::MaybeOwned<Tensor> prepare_column_major_matrix_for_cusparse(
 c10::MaybeOwned<Tensor> inline prepare_dense_matrix_for_cusparse(
     const Tensor& tensor) {
 #if defined(USE_ROCM)
-  // CUDA < 11.0 doesn't support row-major layout, return column-major in this case
   return prepare_column_major_matrix_for_cusparse(tensor);
 #else
   if (is_blas_compatible_row_major_order(tensor) ||

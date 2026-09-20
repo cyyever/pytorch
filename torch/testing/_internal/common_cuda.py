@@ -97,7 +97,6 @@ SM120OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_devi
 BF16X9_API_SUPPORTED = LazyVal(
     lambda: TEST_CUDA
     and not TEST_WITH_ROCM
-    and _get_torch_cuda_version() >= (12, 9)
 )
 BF16X9_SUPPORTED = LazyVal(
     lambda: BF16X9_API_SUPPORTED
@@ -105,8 +104,7 @@ BF16X9_SUPPORTED = LazyVal(
 )
 
 IS_THOR = LazyVal(lambda: torch.cuda.is_available() and torch.version.cuda is not None and
-                  ((torch.cuda.get_device_capability() == (11, 0) and int(torch.version.cuda[:2]) >= 13) or
-                   (torch.cuda.get_device_capability() == (10, 1) and int(torch.version.cuda[:2]) < 13)))
+                  torch.cuda.get_device_capability() == (11, 0))
 IS_JETSON = LazyVal(lambda: torch.cuda.is_available() and (torch.cuda.get_device_capability() in [(7, 2), (8, 7)] or IS_THOR))
 # These exact-match SM predicates identify specific NVIDIA architectures and must
 # be False on ROCm, where torch.cuda.get_device_capability() returns the gfx-arch
@@ -571,12 +569,6 @@ def xfailIfSM89(func):
 
 def xfailIfSM90(func):
     return func if not IS_SM90 else unittest.expectedFailure(func)
-
-def xfailIfSM89PreCUDA13(func):
-    """xfail on SM89 only for CUDA < 13. On CUDA 13+, test should pass on all architectures."""
-    if IS_SM89 and _get_torch_cuda_version() < (13, 0):
-        return unittest.expectedFailure(func)
-    return func
 
 def xfailIfSM100OrLater(func):
     # SMxxx LazyVals are derived from torch.cuda.get_device_capability(), which

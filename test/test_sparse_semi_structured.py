@@ -25,7 +25,6 @@ from torch.testing._internal.common_cuda import (
     PLATFORM_SUPPORTS_FP8,
     PLATFORM_SUPPORTS_FP8_SPARSE,
     evaluate_platform_supports_hipsparselt,
-    xfailIfSM89PreCUDA13,
 )
 from torch.testing._internal.common_device_type import (
     dtypes,
@@ -1383,7 +1382,6 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
         TEST_WITH_ROCM and not PLATFORM_SUPPORTS_FP8_SPARSE,
         "FP8 sparse requires MI300+ on ROCm 7.12+",
     )
-    @xfailIfSM89PreCUDA13
     @parametrize("dense_input_shape", [(256, 128)])
     def test_sparse_fp8fp8_mm(self, dense_input_shape, device):
         if torch.backends.cusparselt.version() < 602 and not torch.version.hip:
@@ -1409,7 +1407,6 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
         TEST_WITH_ROCM and not PLATFORM_SUPPORTS_FP8_SPARSE,
         "FP8 sparse requires MI300+ on ROCm 7.12+",
     )
-    @xfailIfSM89PreCUDA13
     def test_sparse_semi_structured_scaled_mm_fp8(self, device) -> None:
         (k, l, m) = (32, 64, 32)
         x = rand_sparse_semi_structured_mask(k, l, dtype=e4m3_type, device=device)
@@ -1431,9 +1428,7 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
         torch.testing.assert_close(out_fp32, out_fp32_sparse, rtol=1e-1, atol=1e-1)
 
     # Gated on FP8_SPARSE, not FP8: this compresses an fp8 tensor, which needs
-    # cuSPARSELt v0.6.2+. No xfailIfSM89PreCUDA13 either -- the dtype mismatch
-    # is rejected before any matmul runs, so the test passes on SM89 and an
-    # expectedFailure would turn into an unexpected success.
+    # cuSPARSELt v0.6.2+.
     @unittest.skipIf(
         not PLATFORM_SUPPORTS_FP8_SPARSE,
         "FP8 sparse requires cuSPARSELt v0.6.2+ on SM 8.9+ or MI300+ on ROCm 7.12+",
@@ -1466,7 +1461,6 @@ class TestSparseSemiStructuredCUSPARSELT(TestCase):
         TEST_WITH_ROCM and not PLATFORM_SUPPORTS_FP8_SPARSE,
         "FP8 sparse requires MI300+ on ROCm 7.12+",
     )
-    @xfailIfSM89PreCUDA13
     @parametrize("out_dtype", [torch.float16, torch.bfloat16, torch.float32])
     @parametrize("dense_input_shape", [(256, 128)])
     def test_sparse_semi_structured_scaled_mm(
