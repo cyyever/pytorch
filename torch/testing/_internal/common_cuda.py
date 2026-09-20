@@ -267,11 +267,9 @@ def evaluate_platform_supports_mx_gemm():
     if torch.cuda.is_available():
         if torch.version.hip:
             return False
-        else:
-            return SM100OrLater
-    if torch.xpu.is_available():
+        # sm_100 is this build's floor, so every CUDA device qualifies.
         return True
-    return False
+    return torch.xpu.is_available()
 
 def evaluate_platform_supports_mxfp8_grouped_gemm():
     if torch.cuda.is_available() and not torch.version.hip:
