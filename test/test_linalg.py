@@ -43,7 +43,7 @@ from torch.testing._internal.common_dtype import (
     floating_and_complex_types_and, floating_types_and, complex_types,
 )
 from torch.testing._internal.common_cuda import BF16X9_SUPPORTED, IS_SM90, SM80OrLater, SM90OrLater, tf32_enabled, tf32_on_and_off, \
-    _get_torch_cuda_version, TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, PLATFORM_SUPPORTS_MX_GEMM, blas_library_context
+    TEST_MULTIGPU, PLATFORM_SUPPORTS_FP8, PLATFORM_SUPPORTS_MX_GEMM, blas_library_context
 from torch.testing._internal.common_quantization import _group_quantize_tensor, _dynamically_quantize_per_channel, \
     _group_quantize_tensor_symmetric
 from torch.testing._internal.common_mkldnn import reduced_f32_on_and_off
@@ -2246,10 +2246,6 @@ class TestLinalg(TestCase):
         self.assertEqual(result, expected)
 
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     # NumPy computes only in float64 and complex128 precisions
     # for float32 or complex64 results might be very different from float64 or complex128
     @dtypes(torch.float64, torch.complex128)
@@ -2298,10 +2294,6 @@ class TestLinalg(TestCase):
             run_test(shape, symmetric=True)
 
     @onlyCUDA
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(*floating_and_complex_types())
     def test_eig_identity(self, device, dtype):
 
@@ -2361,10 +2353,6 @@ class TestLinalg(TestCase):
 
 
     @onlyCUDA
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(*floating_and_complex_types())
     def test_eigvals_out_variants(self, device, dtype):
         from torch.testing._internal.common_utils import random_symmetric_matrix
@@ -2406,10 +2394,6 @@ class TestLinalg(TestCase):
 
 
     @onlyCUDA
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(*floating_and_complex_types())
     def test_eig_out_variants(self, device, dtype):
         from torch.testing._internal.common_utils import random_symmetric_matrix
@@ -2462,10 +2446,6 @@ class TestLinalg(TestCase):
 
 
     @onlyCUDA
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(torch.float32, torch.float64)
     def test_eig_cuda_complex_eigenvectors(self, device, dtype):
         """Test CUDA eigenvector decoding with known ground truth, including batching."""
@@ -2551,10 +2531,6 @@ class TestLinalg(TestCase):
         self.assertEqual(lhs, rhs, atol=1e-5, rtol=1e-5)
 
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(*floating_and_complex_types())
     def test_eig_errors_and_warnings(self, device, dtype):
         # eig requires the input to be at least 2 dimensional tensor
@@ -2616,10 +2592,6 @@ class TestLinalg(TestCase):
                 torch.linalg.eig(a, out=(out_w, out_v))
 
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(*floating_and_complex_types())
     def test_eig_with_nan(self, device, dtype):
         for val in [np.inf, np.nan]:
@@ -2631,10 +2603,6 @@ class TestLinalg(TestCase):
                     torch.linalg.eig(a)
 
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     # NumPy computes only in float64 and complex128 precisions
     # for float32 or complex64 results might be very different from float64 or complex128
     @dtypes(torch.float64, torch.complex128)
@@ -2681,10 +2649,6 @@ class TestLinalg(TestCase):
 
 
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(*floating_and_complex_types())
     def test_eigvals_errors_and_warnings(self, device, dtype):
         # eig requires the input to be at least 2 dimensional tensor
@@ -3095,10 +3059,6 @@ class TestLinalg(TestCase):
                 self.assertEqual(S_s, S)
 
     @skipCPUIfNoLapack
-    @skipCUDAIf(
-        not TEST_WITH_ROCM and _get_torch_cuda_version() < (12, 8),
-        "torch.linalg.eig requires cuSOLVER geev, i.e. CUDA 12.8 or newer",
-    )
     @dtypes(torch.complex128)
     def test_invariance_error_spectral_decompositions(self, device, dtype):
         make_arg = partial(make_tensor, device=device, dtype=dtype, requires_grad=True)
@@ -6948,10 +6908,8 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
     @parametrize("use_transpose_a", [True, False])
     @parametrize("use_transpose_b", [True, False])
     def test__int_mm(self, device, k, n, use_transpose_a, use_transpose_b):
-        # Skip specific failing cases on CUDA 13.0
-        if (not TEST_WITH_ROCM) and _get_torch_cuda_version() >= (13, 0):
-            if not use_transpose_a and not use_transpose_b:
-                self.skipTest("xfail on CUDA 13 until cuBLAS adds the supported kernel")
+        if not TEST_WITH_ROCM and not use_transpose_a and not use_transpose_b:
+            self.skipTest("xfail on CUDA 13 until cuBLAS adds the supported kernel")
 
         def genf_int_float(x, y, use_transpose):
             if use_transpose:
@@ -6981,7 +6939,6 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
                 self.assertNotEqual(c_int32_result.float(), torch.mm(a_float, b_float))
 
         # NOTE: We're just exercising terrible failures here.
-        version = _get_torch_cuda_version()
         SM80OrLater = torch.cuda.is_available() and torch.cuda.get_device_capability() >= (8, 0)
         SM70 = torch.cuda.is_available() and torch.cuda.get_device_capability() == (7, 0)
         SM75 = torch.cuda.is_available() and torch.cuda.get_device_capability() == (7, 5)
@@ -6990,8 +6947,8 @@ scipy_lobpcg  | {eq_err_scipy:10.2e}  | {eq_err_general_scipy:10.2e}  | {iters2:
             _test(17, k, n, use_transpose_a, use_transpose_b, True)
         else:
             if not use_transpose_a and use_transpose_b:
-                if SM80OrLater or (version >= (12, 3) and (SM70 or SM75)):
-                    _test(17, k, n, use_transpose_a, use_transpose_b, version > (11, 7))
+                if SM80OrLater or SM70 or SM75:
+                    _test(17, k, n, use_transpose_a, use_transpose_b, True)
                 else:
                     with self.assertRaisesRegex(RuntimeError,
                                                 "CUDA error: CUBLAS_STATUS_NOT_SUPPORTED when calling cublasLtMatmul"):

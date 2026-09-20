@@ -13,7 +13,7 @@ from numbers import Number
 import torch
 from torch.testing import make_tensor
 from torch.testing._comparison import default_tolerances
-from torch.testing._internal.common_cuda import _get_torch_cuda_version, SM90OrLater
+from torch.testing._internal.common_cuda import SM90OrLater
 from torch.testing._internal.common_device_type import (
     deviceCountAtLeast,
     dtypes,
@@ -91,12 +91,8 @@ class ForeachFuncWrapper:
         actual = None
         zero_size = kwargs.pop("zero_size", False)
 
-        # Skip profiler check for CUDA 12.6, 12.8 as the upgrade makes profiler results flaky
-        # https://github.com/pytorch/pytorch/issues/148681. TODO: ADD IT BACK!!!
-        skip_profiler_check = _get_torch_cuda_version() in [(12, 6), (12, 8)]
         if (
             is_cuda
-            and not skip_profiler_check
             and torch.autograd.kineto_available()
             and torch.profiler.ProfilerActivity.CUDA
             in torch.profiler.supported_activities()

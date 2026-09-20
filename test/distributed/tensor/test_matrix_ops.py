@@ -28,7 +28,6 @@ from torch.distributed.tensor._ops.single_dim_strategy import (
 from torch.distributed.tensor.debug import CommDebugMode
 from torch.distributed.tensor.placement_types import _StridedShard
 from torch.testing._internal.common_cuda import (
-    _get_torch_cuda_version,
     PLATFORM_SUPPORTS_FP8,
     SM90OrLater,
 )
@@ -1051,8 +1050,6 @@ class DistMatrixOpsTest(DTensorTestBase):
     )
     def test_grouped_mm(self, backend, kwargs):
         if backend == "cublaslt":
-            if _get_torch_cuda_version() < (13, 3):
-                self.skipTest("cublaslt grouped gemm requires CUDA Toolkit >= 13.3")
             sm_major = torch.cuda.get_device_capability()[0]
             if sm_major < 9 or sm_major >= 12:
                 self.skipTest("cublaslt grouped gemm requires SM 9.0-11.0")

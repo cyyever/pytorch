@@ -20,7 +20,6 @@ from torch._inductor.utils import run_and_get_code, sympy_index_symbol_with_pref
 from torch._inductor.virtualized import V
 from torch.nn.functional import scaled_mm, ScalingType  # type: ignore[attr-defined]
 from torch.testing._internal.common_cuda import (
-    _get_torch_cuda_version,
     IS_SM90,
     PLATFORM_SUPPORTS_FP8,
     PLATFORM_SUPPORTS_MX_GEMM,
@@ -987,10 +986,6 @@ class TestFP8Lowering(TestCase):
     @onlyCUDA
     @skipIfRocm
     @unittest.skipIf(not IS_SM90, "cuBLAS DeepSeek scaling requires SM90")
-    @unittest.skipIf(
-        _get_torch_cuda_version() < (12, 9),
-        "cuBLAS blockwise scaling added in CUDA 12.9",
-    )
     @config.patch({"max_autotune": True, "max_autotune_gemm_backends": "ATEN"})
     def test_deepseek_v2_aten_routing(self, device):
         m, n, k = 384, 128, 1280
@@ -1651,10 +1646,6 @@ class TestFP8Lowering(TestCase):
     @unittest.skipIf(not PLATFORM_SUPPORTS_FP8, f8_msg)
     @unittest.skipIf(
         not has_triton_tma_device(), "Need device-side TMA support in Triton"
-    )
-    @unittest.skipIf(
-        _get_torch_cuda_version() < (12, 9),
-        "cuBLAS blockwise scaling added in CUDA 12.9",
     )
     @onlyOn(["cuda", "xpu"])
     @xfailIf(
