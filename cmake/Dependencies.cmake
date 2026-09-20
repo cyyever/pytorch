@@ -816,7 +816,10 @@ if(USE_GLOO)
 
     # Build BFloat16 cuda kernels
     set(GLOO_USE_TORCH_DTYPES 1)
-    set(GLOO_TORCH_DIR ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+    set(GLOO_TORCH_DIR
+      ${PROJECT_SOURCE_DIR}
+      ${PROJECT_SOURCE_DIR}/aten/src
+      ${CMAKE_BINARY_DIR})
 
     # Temporarily override variables to avoid building Gloo tests/benchmarks
     set(__BUILD_TEST ${BUILD_TEST})
