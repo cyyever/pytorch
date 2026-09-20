@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import torch
 from torch._higher_order_ops.inline_asm_elementwise import inline_asm_elementwise
-from torch.testing._internal.common_cuda import evaluate_gfx_arch_within, SM70OrLater
+from torch.testing._internal.common_cuda import evaluate_gfx_arch_within
 from torch.testing._internal.common_device_type import (
     instantiate_device_type_tests,
     onlyCUDA,
@@ -315,7 +315,6 @@ TEST_CASE_NAMES = [tc.name for tc in TEST_CASES]
 
 
 @unittest.skipIf(not TEST_CUDA, "CUDA not available")
-@unittest.skipIf(not SM70OrLater, "Requires SM70+")
 @instantiate_parametrized_tests
 class TestInlineAsmElementwise(TestCase):
     """Parametrized tests for inline_asm_elementwise."""
@@ -610,7 +609,6 @@ class TestInlineAsmElementwiseMultipleOutputs(TestCase):
 
 
 @unittest.skipIf(not TEST_CUDA, "CUDA not available")
-@unittest.skipIf(not SM70OrLater, "Requires SM70+")
 class TestInlineAsmElementwiseEdgeCases(TestCase):
     """Tests for edge cases."""
 
@@ -755,7 +753,6 @@ class TestInlineAsmElementwiseEdgeCases(TestCase):
 
 
 @unittest.skipIf(not TEST_CUDA, "CUDA not available")
-@unittest.skipIf(not SM70OrLater, "Requires SM70+")
 @xfailIfNoAcceleratorTriton
 class TestInlineAsmPackPadding(TestCase):
     """Test that pack padding works when block size < pack."""

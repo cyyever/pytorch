@@ -68,7 +68,6 @@ from torch.testing._internal.common_cuda import (
     PLATFORM_SUPPORTS_BF16,
     PLATFORM_SUPPORTS_FLASH_ATTENTION,
     PLATFORM_SUPPORTS_FP8,
-    SM70OrLater,
 )
 from torch.testing._internal.common_device_type import (
     E4M3_MAX_POS,
@@ -6316,10 +6315,6 @@ def forward(self, L_x_ : torch.Tensor, s77 : torch.SymInt, s27 : torch.SymInt):
         )
         self.assertEqual(actual_str, expected_str)
 
-    @unittest.skipIf(
-        not SM70OrLater,
-        "Triton only supports devices of CUDA capability >= 7.0",
-    )
     def test_add_complex_conj(self):
         def f(x):
             return x + x.conj()

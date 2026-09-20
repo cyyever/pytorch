@@ -85,14 +85,13 @@ def _cuda_graph_tools_id_available():
 
 TEST_CUDA_GRAPH_TOOLS_ID = LazyVal(_cuda_graph_tools_id_available)
 
-SM53OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (5, 3))
-SM60OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (6, 0))
-SM70OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (7, 0))
-SM75OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (7, 5))
-SM80OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (8, 0))
-SM89OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (8, 9))
-SM90OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (9, 0))
-SM100OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (10, 0))
+# sm_100 is this build's floor, so every OrLater up to SM100 holds on any
+# device that can load the built kernels; only the capability query for
+# SM120OrLater still depends on the device.
+SM80OrLater = LazyVal(torch.cuda.is_available)
+SM89OrLater = LazyVal(torch.cuda.is_available)
+SM90OrLater = LazyVal(torch.cuda.is_available)
+SM100OrLater = LazyVal(torch.cuda.is_available)
 SM120OrLater = LazyVal(lambda: torch.cuda.is_available() and torch.cuda.get_device_capability() >= (12, 0))
 BF16X9_API_SUPPORTED = LazyVal(
     lambda: TEST_CUDA

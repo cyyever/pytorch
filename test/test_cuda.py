@@ -44,8 +44,6 @@ from torch.testing._internal.common_cuda import (
     has_device_side_assert,
     PLATFORM_SUPPORTS_GREEN_CONTEXT,
     PLATFORM_SUPPORTS_WORKQUEUE_CONFIG,
-    ROCM_VERSION,
-    SM70OrLater,
     SM89OrLater,
     TEST_CUDNN,
     TEST_MULTIGPU,
@@ -62,7 +60,6 @@ from torch.testing._internal.common_device_type import (
     largeTensorTest,
     onlyCUDA,
     onlyNativeDeviceTypes,
-    skipCUDAIf,
 )
 from torch.testing._internal.common_optimizers import (
     _get_optim_inputs_including_global_cliquey_kwargs,
@@ -3826,7 +3823,6 @@ torch.cuda.synchronize()
     @unittest.skipIf(
         TEST_WITH_ROCM, "ROCM does not support nvrtc or external cuda graph events"
     )
-    @unittest.skipIf(not SM70OrLater, "SM70+ required for inline ptx")
     def test_graph_rng_replay_record_stream(self):
         """Verify RNG state tensors survive while a replay is in flight.
 
@@ -9641,9 +9637,6 @@ class TestMemPool(TestCase):
         not TEST_CUDA_GRAPH, "CUDA >= 11.0 or ROCM >= 5.3 required for graphs"
     )
     @unittest.skipIf(TEST_WITH_ROCM, "ROCM does not support nvrtc")
-    @unittest.skipIf(
-        not SM70OrLater, "Compute capability >= SM70 required for relaxed ptx flag"
-    )
     def test_graph_capture_pre_capture_stream_use(self):
         # Tests that a block with pre-capture stream uses is correctly handled
         # when freed during a subsequent capture on the same pool.
@@ -11930,9 +11923,6 @@ class TestCompileKernel(TestCase):
 @unittest.skipIf(not TEST_CUDA, "CUDA not available, skipping tests")
 class TestCudaDeviceParametrized(TestCase):
     @unittest.skipIf(torch.version.rocm == "10.1.0", "HIPRTC issue (AIRUNTIME-2707)")
-    @skipCUDAIf(
-        not SM70OrLater, "Compute capability >= SM70 required for relaxed ptx flag"
-    )
     def test_graph_external_wait_and_record(self):
         torch.cuda.empty_cache()
 
