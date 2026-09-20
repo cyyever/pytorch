@@ -9,6 +9,7 @@
 #include <ATen/Functions.h>
 #include <c10/core/ScalarType.h>
 #include <c10/cuda/CUDACachingAllocator.h>
+#include <c10/cuda/CUDAGuard.h>
 #include <c10/util/Half.h>
 #include <cusparse.h>
 #include <cstdint>
