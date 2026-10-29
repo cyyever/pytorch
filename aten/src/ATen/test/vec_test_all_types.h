@@ -75,6 +75,10 @@ template <>
 struct OpMathType<c10::Half> {
   using type = float;
 };
+template <>
+struct OpMathType<c10::BFloat16> {
+  using type = float;
+};
 
 
 template<typename T>
@@ -1389,23 +1393,42 @@ std::enable_if_t<is_complex<Complex<T>>::value, Complex<T>> local_division(Compl
 }
 
 
+// Whether a fused-op reference must itself be fused depends on the (ISA, type)
+// pair, not the ISA alone: VSX and ZVECTOR have no Vectorized<Half> or
+// Vectorized<BFloat16> specialization, so those types use vec_base.h's generic
+// fused ops, which round the product to T before adding or subtracting. The
+// reduced-float comparisons are exact, so the reference has to match bit for bit.
+template <typename T>
+constexpr bool unfused_reduced_float_v =
+#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
+    c10::is_reduced_floating_point_v<T>;
+#else
+    false;
+#endif
+
 template <typename T>
 std::enable_if_t<!is_complex<T>::value, T> local_fmadd(T a, T b, T c) {
 #if defined(TEST_AGAINST_DEFAULT)
     return a * b + c;
-#elif defined(CPU_CAPABILITY_VSX)
-    // VSX has no fmadd specialization for Vectorized<float>, so the vectorized
-    // path rounds the product before adding.
-    PreventFma noFma;
-    using op_math_t = typename OpMathType<T>::type;
-    auto ab = static_cast<op_math_t>(a) * static_cast<op_math_t>(b);
-    return static_cast<T>(noFma.add(ab, op_math_t(c)));
-#else /* defined(TEST_AGAINST_DEFAULT) */
-    using op_math_t = typename OpMathType<T>::type;
-    return static_cast<T>(std::fma(
-        static_cast<op_math_t>(a),
-        static_cast<op_math_t>(b),
-        static_cast<op_math_t>(c)));
+#else
+    if constexpr (unfused_reduced_float_v<T>) {
+      return a * b + c;
+    } else {
+#if defined(CPU_CAPABILITY_VSX)
+      // VSX has no fmadd specialization for Vectorized<float>, so the vectorized
+      // path rounds the product before adding.
+      PreventFma noFma;
+      using op_math_t = typename OpMathType<T>::type;
+      auto ab = static_cast<op_math_t>(a) * static_cast<op_math_t>(b);
+      return static_cast<T>(noFma.add(ab, op_math_t(c)));
+#else
+      using op_math_t = typename OpMathType<T>::type;
+      return static_cast<T>(std::fma(
+          static_cast<op_math_t>(a),
+          static_cast<op_math_t>(b),
+          static_cast<op_math_t>(c)));
+#endif
+    }
 #endif
 }
 
@@ -1413,19 +1436,25 @@ template <typename T>
 std::enable_if_t<!is_complex<T>::value, T> local_fmsub(T a, T b, T c) {
 #if defined(TEST_AGAINST_DEFAULT)
     return a * b - c;
-#elif defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
-    // Only the AVX paths specialize fmsub; elsewhere it falls back to a
-    // separately rounded multiply and subtract.
-    PreventFma noFma;
-    using op_math_t = typename OpMathType<T>::type;
-    auto ab = static_cast<op_math_t>(a) * static_cast<op_math_t>(b);
-    return static_cast<T>(noFma.sub(ab, op_math_t(c)));
-#else /* defined(TEST_AGAINST_DEFAULT) */
-    using op_math_t = typename OpMathType<T>::type;
-    return static_cast<T>(std::fma(
-        static_cast<op_math_t>(a),
-        static_cast<op_math_t>(b),
-        -static_cast<op_math_t>(c)));
+#else
+    if constexpr (unfused_reduced_float_v<T>) {
+      return a * b - c;
+    } else {
+#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
+      // Only the AVX paths specialize fmsub; elsewhere it falls back to a
+      // separately rounded multiply and subtract.
+      PreventFma noFma;
+      using op_math_t = typename OpMathType<T>::type;
+      auto ab = static_cast<op_math_t>(a) * static_cast<op_math_t>(b);
+      return static_cast<T>(noFma.sub(ab, op_math_t(c)));
+#else
+      using op_math_t = typename OpMathType<T>::type;
+      return static_cast<T>(std::fma(
+          static_cast<op_math_t>(a),
+          static_cast<op_math_t>(b),
+          -static_cast<op_math_t>(c)));
+#endif
+    }
 #endif
 }
 
@@ -1433,19 +1462,25 @@ template <typename T>
 std::enable_if_t<!is_complex<T>::value, T> local_fnmadd(T a, T b, T c) {
 #if defined(TEST_AGAINST_DEFAULT)
     return -(a * b) + c;
-#elif defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
-    // Only the AVX paths specialize fnmadd; elsewhere it falls back to a
-    // separately rounded multiply and add.
-    PreventFma noFma;
-    using op_math_t = typename OpMathType<T>::type;
-    auto ab = -(static_cast<op_math_t>(a) * static_cast<op_math_t>(b));
-    return static_cast<T>(noFma.add(ab, op_math_t(c)));
-#else /* defined(TEST_AGAINST_DEFAULT) */
-    using op_math_t = typename OpMathType<T>::type;
-    return static_cast<T>(std::fma(
-        -static_cast<op_math_t>(a),
-        static_cast<op_math_t>(b),
-        static_cast<op_math_t>(c)));
+#else
+    if constexpr (unfused_reduced_float_v<T>) {
+      return -(a * b) + c;
+    } else {
+#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
+      // Only the AVX paths specialize fnmadd; elsewhere it falls back to a
+      // separately rounded multiply and add.
+      PreventFma noFma;
+      using op_math_t = typename OpMathType<T>::type;
+      auto ab = -(static_cast<op_math_t>(a) * static_cast<op_math_t>(b));
+      return static_cast<T>(noFma.add(ab, op_math_t(c)));
+#else
+      using op_math_t = typename OpMathType<T>::type;
+      return static_cast<T>(std::fma(
+          -static_cast<op_math_t>(a),
+          static_cast<op_math_t>(b),
+          static_cast<op_math_t>(c)));
+#endif
+    }
 #endif
 }
 
@@ -1453,19 +1488,25 @@ template <typename T>
 std::enable_if_t<!is_complex<T>::value, T> local_fnmsub(T a, T b, T c) {
 #if defined(TEST_AGAINST_DEFAULT)
     return -(a * b) - c;
-#elif defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
-    // Only the AVX paths specialize fnmsub; elsewhere it falls back to a
-    // separately rounded multiply and subtract.
-    PreventFma noFma;
-    using op_math_t = typename OpMathType<T>::type;
-    auto ab = -(static_cast<op_math_t>(a) * static_cast<op_math_t>(b));
-    return static_cast<T>(noFma.sub(ab, op_math_t(c)));
-#else /* defined(TEST_AGAINST_DEFAULT) */
-    using op_math_t = typename OpMathType<T>::type;
-    return static_cast<T>(std::fma(
-        -static_cast<op_math_t>(a),
-        static_cast<op_math_t>(b),
-        -static_cast<op_math_t>(c)));
+#else
+    if constexpr (unfused_reduced_float_v<T>) {
+      return -(a * b) - c;
+    } else {
+#if defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR)
+      // Only the AVX paths specialize fnmsub; elsewhere it falls back to a
+      // separately rounded multiply and subtract.
+      PreventFma noFma;
+      using op_math_t = typename OpMathType<T>::type;
+      auto ab = -(static_cast<op_math_t>(a) * static_cast<op_math_t>(b));
+      return static_cast<T>(noFma.sub(ab, op_math_t(c)));
+#else
+      using op_math_t = typename OpMathType<T>::type;
+      return static_cast<T>(std::fma(
+          -static_cast<op_math_t>(a),
+          static_cast<op_math_t>(b),
+          -static_cast<op_math_t>(c)));
+#endif
+    }
 #endif
 }
 
